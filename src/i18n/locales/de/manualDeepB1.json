@@ -1,0 +1,370 @@
+{
+  "sections": {
+    "equipmentCategoryDeep": {
+      "title": "Ausstattung Kategorien und Boni",
+      "subtitle": "Die sechs Kategorien langlebiger Geräte.",
+      "overview": "Dauerhafte Ausrüstung umfasst Rahmen, Radsätze, Reifen, Gruppen, Helme und Schuhe.",
+      "facts": [
+        "Kategorien",
+        "Rahmen, Radsatz, Reifen, Gruppen, Helm, Schuhe",
+        "Prämien",
+        "Flach, hügelig, Berg, Kopfsteinpflaster, Zeitfahren, Sprint, Ermüdungsreduktion"
+      ],
+      "details": [
+        "Frames definieren oft die breite Setup-Identität.",
+        "Radsätze und Reifen sind sehr routenempfindlich.",
+        "Gruppen, Helme und Schuhe können wichtige Unterstützung Boni hinzufügen.",
+        "Spezialisierte Gegenstände können negative Kompromisse beinhalten.",
+        "Qualitätslabels sind Basic, Good und Super."
+      ],
+      "tips": [
+        "Ausrüstung mit dem Bühnentyp kombinieren."
+      ]
+    },
+    "equipmentCapsDeep": {
+      "title": "Gewichte und Kappen der Ausrüstung",
+      "subtitle": "Warum Gerätebonuse kontrolliert werden.",
+      "overview": "Ausrüstung hilft, aber gekappt Boni schützen Fahrer Fähigkeit und Spiel Gleichgewicht.",
+      "facts": [
+        "Bekannte Kappen",
+        "Ausrüstungsstadium ca. 4%, Teamunterstützung ca. 5%, Gesamtunterstützung ca. 8%, Ermüdungsreduktion ca. 10%"
+      ],
+      "details": [
+        "Ein Satz von +4% Artikeln wird nicht +24%.",
+        "Die Prämien werden nach Ausrüstungskategorien gewichtet.",
+        "Unterstützung Boni haben Kappen.",
+        "Müdigkeitsreduktion hat auch eine Kappe.",
+        "Spezialgetriebe sind in engen Rennen noch wertvoll."
+      ],
+      "tips": [
+        "Verwenden Sie Ausrüstung, um Strategie zu unterstützen, nicht ersetzen Fahrerqualität."
+      ]
+    },
+    "equipmentInventoryDeep": {
+      "title": "Inventar und Instandhaltung",
+      "subtitle": "Zustand, Status und Reparaturentscheidungen.",
+      "overview": "Die Inventarisierung zeigt aktive Ausrüstung und Wartung konzentriert sich auf Gegenstände, die Aufmerksamkeit brauchen.",
+      "facts": [
+        "Status",
+        "Bereit, zugewiesen, in Wartung, abgenutzt",
+        "Erhaltungsschwelle",
+        "Bedingung <= 90%"
+      ],
+      "details": [
+        "Verkaufte und verworfene Gegenstände werden aus dem aktiven Inventar ausgeblendet.",
+        "Ready und abgenutzte Gegenstände können normalerweise Aktionen ausführen, wenn Regeln es zulassen.",
+        "Zugeteilte Gegenstände sind gesperrt, weil sie im Einsatz sind.",
+        "Reparatur-Notierungen zeigen Kosten und Erlaubnis.",
+        "Der Zustand sollte vor wichtigen Rennen festgelegt werden."
+      ],
+      "tips": [
+        "Reparatur früh; warten Sie nicht, bis alle Ausrüstung getragen wird."
+      ]
+    },
+    "raceSuppliesDeep": {
+      "title": "Einzelheiten zu den Rassenvorräten",
+      "subtitle": "Bidonen, Gele, Ernährung, Trikots und Regenjacken.",
+      "overview": "Race-Lieferungen werden während der Bühnenpläne verbraucht oder verwendet und können Müdigkeit, Ausdauer, Bereitschaft und Wetterunterstützung beeinflussen.",
+      "facts": [
+        "Verbrauchsmaterialien",
+        "Lebensmittel, Lebensmittel, Lebensmittel, Lebensmittel",
+        "Dauerhafte",
+        "Race Jersey Komplett, Regenjacken"
+      ],
+      "details": [
+        "Bidonen: 1–4 pro Fahrer; Hydratation und Ermüdungskontrolle.",
+        "Gele: 0–4 pro Fahrer; Ausdauer und Endaufwand Unterstützung.",
+        "Ernährung: 0–2 pro Fahrer; Ausdauer- und Erholungsunterstützung.",
+        "Renntrikots: Pflicht-Dauer-Kit; 10 Stufen Einsatz pro Einheit.",
+        "Regenjacken: optionaler Dauerwetterartikel; 25 Einsatzstufen pro Einheit."
+      ],
+      "tips": [
+        "Die Etappenrennen verbrauchen schnell Vorräte."
+      ]
+    },
+    "technicalSponsorDeep": {
+      "title": "Technische Unterstützung für Sponsoren in der Ausrüstung",
+      "subtitle": "Rabatte und Unterstützung Budgets.",
+      "overview": "Technische Sponsoren können die Kosten für die Ausrüstung senken und Budgets für die Ausrüstungsunterstützung bereitstellen.",
+      "facts": [
+        "Vorteile",
+        "Barmittelhilfe, Ausrüstungshilfen-Budget, gebraucht/remaining Budget, Kategorie Rabatte"
+      ],
+      "details": [
+        "Ausrüstung Übersicht kann aktiven technischen Sponsor Support zeigen.",
+        "Marktkäufe können Kategorierabatte zitieren.",
+        "Restbudget hilft, Kauftermine zu planen.",
+        "Rabatte können nach Kategorien variieren.",
+        "Technische Sponsoren sind vor großen Getriebeaufrüstungen besonders nützlich."
+      ],
+      "tips": [
+        "Kaufen Sie teures Getriebe, während nützliche Unterstützung aktiv ist."
+      ]
+    },
+    "facilitiesOverviewDeep": {
+      "title": "Einrichtungen Übersicht",
+      "subtitle": "Gebäude und Personalkapazität.",
+      "overview": "Die Einrichtungen verbessern die Ausbildung, die Medizin, das Scouting, die Mechanik, die Jugend- und die Clubverwaltung.",
+      "facts": [
+        "Einrichtungen",
+        "Clubhaus, Schulungszentrum, Medizinisches Zentrum, Jugendakademie, Mechanik-Workshop, Scouting Office"
+      ],
+      "details": [
+        "Club House unterstützt Verwaltung und zukünftiges Management.",
+        "Training Center unterstützt Coaching und Entwicklung.",
+        "Medical Center unterstützt Ärzte, Physios, Ernährungswissenschaftler und Erholung.",
+        "Jugendakademie unterstützt U23/youth Entwicklung.",
+        "Mechanik-Workshop unterstützt Ausrüstung/repairs.",
+        "Scouting Office unterstützt Scouting-Berichte und Marktinformationen."
+      ],
+      "tips": [
+        "Wählen Sie Upgrades basierend auf Ihrem aktuellen Engpass."
+      ]
+    },
+    "facilityJobsDeep": {
+      "title": "Infrastruktur-Jobs",
+      "subtitle": "Baut, liefert, Zeitnischen und Rückerstattungen.",
+      "overview": "Infrastrukturaufträge sind noch ausstehende Fazilitätsaufrüstungen oder Asset-Lieferungen mit Barkosten und Spieltagdauer.",
+      "facts": [
+        "Arbeitsplatztypen",
+        "Modernisierung der Fazilitäten, Bereitstellung von Vermögenswerten",
+        "Status",
+        "Ausstehende, abgeschlossen, aufgehoben, gescheitert"
+      ],
+      "details": [
+        "Aktive Jobs zeigen bezahlte Kosten, Spieldauer und Fertigstellungsdatum.",
+        "Die Baulücken begrenzen, wie viele Baugruppen gleichzeitig gebaut werden können.",
+        "Stornierungsofferten zeigen Rückerstattung Bar, Rückerstattung Prozent, Stornierungskosten und Grund.",
+        "Sofortige Stornierung kann mehr als eine verspätete Stornierung zurückerstatten.",
+        "Beendete Jobs aktualisieren Anlagen oder liefern Vermögenswerte."
+      ],
+      "tips": [
+        "Beginnen Sie nicht zu viele teure Jobs während des Bargelddrucks."
+      ]
+    },
+    "assetsDeep": {
+      "title": "Überblick über die Aktiva",
+      "subtitle": "Team Autos, Busse und Support-Vans.",
+      "overview": "Aktiva sind Fahrzeuge/support Ressourcen mit Ebenen, Zustand, Zuweisungsstatus und Unterstützungswerten.",
+      "facts": [
+        "Forderungen",
+        "Team Autos, Team Bus, Ausrüstung Van, Mobile Werkstatt, Medical Van"
+      ],
+      "details": [
+        "Team Cars unterstützt den Rennkonvoi und kann als Team Car 1–3 ausgewählt werden.",
+        "Team Bus transportiert Fahrer und Personal.",
+        "Ausrüstung Van trägt Fahrräder und Ausrüstung.",
+        "Mobile Werkstatt unterstützt Reparaturen und technische Operationen.",
+        "Medical Van unterstützt medizinische/logistics Bedürfnisse.",
+        "Zugelassene oder gesperrte Vermögenswerte können nicht repariert oder verkauft werden."
+      ],
+      "tips": [
+        "Halten Sie wichtige Vermögenswerte vor Rennen repariert."
+      ]
+    },
+    "seasonCalendarDeep": {
+      "title": "Saison Kalender Details",
+      "subtitle": "Tägliche Teamaktivitäten planen.",
+      "overview": "Saisonkalender zeigt die tägliche Aktivität des Vereins und die größere Saison.",
+      "facts": [
+        "Filter",
+        "Rennen, Trainingscamps, Veranstaltungen, Urlaub",
+        "Spielmonatslänge",
+        "30 Tage im aktuellen UI-Netz"
+      ],
+      "details": [
+        "Verwenden Sie es, um Renntage, Lager und Veranstaltungen zu sehen.",
+        "Filter reduzieren Unordnung.",
+        "Kalender hilft zu vermeiden Überbuchung Fahrer und Personal.",
+        "Die Termine des Trainingslagers sollten hier überprüft werden.",
+        "Wichtige Rennmonate können im Voraus geplant werden."
+      ],
+      "tips": [
+        "Verwenden Sie Saisonkalender vor der Buchung Lager."
+      ]
+    },
+    "raceCalendarDeep": {
+      "title": "Einzelheiten zum Rennkalender",
+      "subtitle": "Race Karten und Anwendungsstatus.",
+      "overview": "Race Calendar listet alle Rennen und deren Anwendung Zustand.",
+      "facts": [
+        "Statuswerte",
+        "not_open, offen, geschlossen, race_active, race_finished, gestrichen"
+      ],
+      "details": [
+        "Race-Karten können Kategorie, Land, Host-Stadt, Typ, Start anzeigen/end Datum und Teamlimits.",
+        "Anwendungen sind nur möglich, wenn der Status geöffnet ist.",
+        "Die Anzahl der akzeptierten Teams zeigt, wie voll das Rennen ist.",
+        "Sponsorenziele können bestimmte Rennen oder Kategorien anvisieren.",
+        "Open Race sendet Benutzer auf die Race Detail Seite."
+      ],
+      "tips": [
+        "Bewerben Sie sich nur, wenn das Rennen zu Ihrem Team passt."
+      ]
+    },
+    "raceDetailDeep": {
+      "title": "Detailseite zum Rennen",
+      "subtitle": "Rennprofil, Etappen, Teilnehmer, Ergebnisse und Wiederholung.",
+      "overview": "Race Detail ist der volle Renndrehkreuz.",
+      "facts": [
+        "Registerkarten für Info",
+        "Teilnehmer, Ergebnisse",
+        "Einreihung",
+        "Allgemein, Punkte, Berg, jung, Team"
+      ],
+      "details": [
+        "Die Rennübersicht enthält Termine, Land, Kategorie, Renntyp und Status.",
+        "Die Einreiseregeln zeigen Fristen, Teamlimits, Fahrerlimits und Preisgeld.",
+        "Etappen zeigen Route, Gelände, Distanz, Wetter, Sprints und Anstiege.",
+        "Die Teilnehmer zeigen Team- und Fahrer-Snapshots.",
+        "Ergebnisse und Klassifizierungen werden je nach Rennzustand verfügbar.",
+        "Replay kann Live- oder historische Frames anzeigen, wenn der Zugriff dies erlaubt."
+      ],
+      "tips": [
+        "Überprüfen Sie die Renndetails, bevor Sie ein Team vorbereiten."
+      ]
+    },
+    "stageTerrainPoints": {
+      "title": "Etappe Terrain und Punkte",
+      "subtitle": "Flach, hügelig, Berg, TT, gepflastert, Sprints und KOM.",
+      "overview": "Die Definition von Gelände und Punkten hilft den Benutzern, Fahrer, Taktiken und Ausrüstung zu entscheiden.",
+      "facts": [
+        "Gelände",
+        "Flach, hügelig, Berg, individuelle Zeiterprobung, Teamzeiterprobung, Prolog, gepflastert",
+        "Punktetypen",
+        "START, INTERMEDIATE_SPRIINT, KOM, BONUS_SPRINT, FINNISCH"
+      ],
+      "details": [
+        "Flache Etappen bevorzugen oft Sprinter und Lead-Outs.",
+        "Hilly-Stadien begünstigen vielseitige Fahrer und Angreifer.",
+        "Bergetappen bevorzugen Kletterer und GC Führer.",
+        "TT/prologue Phasen bevorzugen Zeit-Trialisten und TT-Ausrüstung.",
+        "Kopfsteinpflasterstufen begünstigen Widerstand und Spezialausrüstung.",
+        "KOM und Sprintpunkte sind für sekundäre Klassifizierungen von Bedeutung."
+      ],
+      "tips": [
+        "Bühnengelände sollte fahren Stage Plan Rollen."
+      ]
+    },
+    "replayResultsDeep": {
+      "title": "Wiedergabe, Ergebnisse und Kommentar",
+      "subtitle": "Wie man versteht, was in einer Phase passiert ist.",
+      "overview": "Wiederholung und Kommentar erklären die Renndynamik über die Endergebnistabelle hinaus.",
+      "facts": [
+        "Wiedergabegeschwindigkeiten",
+        "1x, 2x, 4x, 8x",
+        "Rahmenbeschränkung",
+        "Bis zu 50000 Zeilen im aktuellen Code geladen"
+      ],
+      "details": [
+        "Replay Frames zeigen Gruppen, Lücken, Fahrer, Teams, Geschwindigkeit und Kilometermarkierungen.",
+        "Live-Zustand steuert, ob Ergebnisse sichtbar sind und ob die Wiedergabegeschwindigkeit gesperrt ist.",
+        "Stehende Reihen können Leader-Abzeichen und Gruppenposition anzeigen.",
+        "Bemerkungen/report Ereignisse beschreiben Angriffe, Sprints, Anstiege, Zwischenfälle und entscheidende Momente.",
+        "Ergebnisse zeigen Bühnenrang, Zeit, Lücke, Punkte, Bonus/penalty Sekunden und Status."
+      ],
+      "tips": [
+        "Verwenden Sie Wiederholung, um Taktiken und Fahrerleistung zu diagnostizieren."
+      ]
+    },
+    "racePlanDeep": {
+      "title": "Race Plan Einzelheiten",
+      "subtitle": "Fahrer, Personal, Vermögen, Ausrüstung und Zubehör.",
+      "overview": "Race Plan ist der vor der Veranstaltung eingereichte Race Plan Stage Plans.",
+      "facts": [
+        "Hauptstücke",
+        "Fahrer, Personal, Vermögenswerte, Ausrüstungsaufbau, Zubehör und Zitat"
+      ],
+      "details": [
+        "Fahrer müssen Rennen min/max Regeln.",
+        "Blockierte Fahrer können nicht für überlappende Ereignisse ausgewählt werden.",
+        "Personal und Vermögen können auch durch Zuweisungen blockiert werden.",
+        "Ausrüstungsaufbau sollte mit Renngelände übereinstimmen.",
+        "Die Lieferungen sollten für alle Stufen ausreichend sein.",
+        "Die Zitatvorschau sollte vor dem Absenden überprüft werden."
+      ],
+      "tips": [
+        "Geben Sie niemals einen Plan ohne Lesekosten und gesperrte Ressourcen ein."
+      ]
+    },
+    "stagePlanDeep": {
+      "title": "Stage Plan Einzelheiten",
+      "subtitle": "Rollen und Taktiken auf der Etappe.",
+      "overview": "Stage Plans dem Rennmotor mitteilen, was jeder Fahrer auf jeder Etappe tun soll.",
+      "facts": [
+        "Bestandteile",
+        "Rollen, Teamtaktik, individuelle Taktik, Ausrüstung, Zubehör"
+      ],
+      "details": [
+        "Eine flache Sprint-Stufe braucht andere Rollen als eine Bergbühne.",
+        "TT- und TTT-Stufen benötigen Tempo und Spezialausrüstung.",
+        "Die Lieferungen werden pro Stufe zugewiesen und können verbraucht oder langlebige Kapazitäten nutzen.",
+        "Die Bereitschaftsüberprüfungen zeigen an, ob ein Bühnenplan nutzbar ist.",
+        "Gespeicherte, aber leere Pläne sind nicht die gleichen wie komplette Pläne."
+      ],
+      "tips": [
+        "Prüfen Sie jede Etappe eines Etappenrennens."
+      ]
+    },
+    "stageRolesDeep": {
+      "title": "Rollen und Anwendungsfälle in der Phase",
+      "subtitle": "Auswahl von Führern, Sprintern, Helfern und Spezialisten.",
+      "overview": "Die Rollen der Etappe sollten mit den Fähigkeiten der Fahrer und den Zielen der Etappe übereinstimmen.",
+      "facts": [
+        "Aufgaben",
+        "Leader, Sprinter, Lead-out, Sprinter, Bergsteiger, Bergdomestique, Helfer, Ausreißer, Verfolger, Rouleur, geschützt, frei"
+      ],
+      "details": [
+        "Leiter des Teams/GC ist für Fahrer für die gesamte Zeit geschützt.",
+        "Sprinter braucht Sprint-Fähigkeit und Lead-out-Unterstützung.",
+        "Ausleitung/Sprint Der Zug hilft dem Sprinter in flachen Ausführungen.",
+        "Kletterer/Mountain Domestique ist für die Bergkontrolle.",
+        "Breakaway Rollen sind riskant, können aber Bühnengewinne oder Sichtbarkeit jagen.",
+        "Rouleurs und Helfer unterstützen Jagd, Tempo und Schutz."
+      ],
+      "tips": [
+        "Machen Sie nicht jeden Fahrer zum Anführer."
+      ]
+    },
+    "stageReadinessDeep": {
+      "title": "Stufe-Bedienungssystem",
+      "subtitle": "Grün/yellow/orange/red/gray Planprüfungen.",
+      "overview": "Readiness sagt den Benutzern, ob die Bühnenpläne für den Motor vollständig genug sind.",
+      "facts": [
+        "Zählungen",
+        "Gespeichert, nutzbar, fehlt, unvollständig, leer, ohne Vorrat",
+        "Tone",
+        "Grün, gelb, orange, rot, grau"
+      ],
+      "details": [
+        "Es sollten fehlende Pläne erstellt werden.",
+        "Leere Pläne sollten mit Rollen gefüllt werden/tactics/supplies.",
+        "Pläne ohne Lieferungen können riskant oder unvollständig sein.",
+        "Empfohlene Aktion erklärt, was zu beheben ist.",
+        "Alle erforderlichen Stage Plans sollten vor dem Renntag gespeichert werden."
+      ],
+      "tips": [
+        "Rot fixieren/orange Bereitschaft vor Ablauf der Frist."
+      ]
+    },
+    "sportDirectorDeep": {
+      "title": "Vorschläge für Sportdirektoren",
+      "subtitle": "Assistentin Vorschläge für Bühnenpläne.",
+      "overview": "Sportdirektor-Vorschläge können Managern helfen, Pläne zu erstellen, sollten aber das Urteil nicht ersetzen.",
+      "facts": [
+        "Vorschläge",
+        "Ausrüstung, Team, Einzelperson, Zubehör"
+      ],
+      "details": [
+        "Die Antwort kann Bühnenart, Bühnenname, Vorschlagsdaten und Erklärung umfassen.",
+        "Vorschläge können durch die Qualität des Personals oder die Logik des Backends begrenzt werden.",
+        "Die Nutzer sollten Vorschläge mit tatsächlichen Fahrer Fähigkeiten und Team-Ziele vergleichen.",
+        "Wetter und Vorräte sollten noch manuell überprüft werden.",
+        "Gute Manager passen Vorschläge an, anstatt blind zu wirken."
+      ],
+      "tips": [
+        "Verwenden Sie Vorschläge als Lernwerkzeug."
+      ]
+    }
+  }
+}

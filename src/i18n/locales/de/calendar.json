@@ -1,0 +1,28 @@
+{
+  "weekdays": {
+    "Sunday": "Sonntag",
+    "Monday": "Montag",
+    "Tuesday": "Dienstag",
+    "Wednesday": "Mittwoch",
+    "Thursday": "Donnerstag",
+    "Friday": "Freitag",
+    "Saturday": "Samstag"
+  },
+  "months": {
+    "January": "Januar",
+    "February": "Februar",
+    "March": "März",
+    "April": "März",
+    "May": "Mai",
+    "June": "Juni",
+    "July": "Juli",
+    "August": "März",
+    "September": "März",
+    "October": "Oktober",
+    "November": "November",
+    "December": "Dezember"
+  },
+  "date": "{{month}} {{day}}",
+  "gameTimeWithWeekday": "{{season}} {{seasonNumber}} · {{weekday}} · {{date}} · {{time}}",
+  "gameTimeWithoutWeekday": "{{season}} {{seasonNumber}} · {{date}} · {{time}}"
+}

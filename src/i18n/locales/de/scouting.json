@@ -1,0 +1,58 @@
+{
+  "page": {
+    "back": "← Zurück",
+    "title": "Überblick über die Pfadfinder",
+    "subtitle": "Alle abgeschlossenen Scout-Berichte an einem Ort. Filtern Sie nach Status und springen Sie direkt zum Reiterprofil.",
+    "loading": "Scout-Berichte werden geladen...",
+    "empty": "Es gibt noch keine Scout-Berichte, die mit diesem Filter übereinstimmen.",
+    "loadFailed": "Es ist nicht gelungen, die Berichte der Pfadfinder zu laden.",
+    "reviewFailed": "Nicht beschriftet."
+  },
+  "filters": {
+    "all": "Insgesamt",
+    "new": "Neu",
+    "reviewed": "Überprüfung"
+  },
+  "report": {
+    "unknownRider": "Unbekannter Fahrer",
+    "scout": "Pfadfinder",
+    "scoutName": "Pfadfinder: {{name}}",
+    "completed": "Ergänzt: {{date}}",
+    "overall": "Insgesamt",
+    "potential": "Mögliche",
+    "keyStrengths": "Schlüsselfaktoren",
+    "more": "(+mehr)",
+    "notes": "Anmerkungen:",
+    "openProfile": "Profil des geöffneten Fahrers"
+  },
+  "potential": {
+    "veryLow": "Sehr niedrig",
+    "low": "Niedrig",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "elite": "Elite"
+  },
+  "skills": {
+    "sprint": "Sprint",
+    "climbing": "Klettern",
+    "timeTrial": "Zeitprüfung",
+    "endurance": "Ausdauer",
+    "flat": "Flach",
+    "recovery": "Rückforderung",
+    "resistance": "Widerstandsfähigkeit",
+    "raceIq": "Rennen IQ",
+    "teamwork": "Teamarbeit",
+    "morale": "Moral"
+  },
+  "table": {
+    "riderScout": "Fahrer & Pfadfinder",
+    "overallPotential": "Gesamt-/Potenziell",
+    "strengthsNotes": "Wichtige Stärken & Anmerkungen",
+    "action": "Maßnahmen"
+  },
+  "pagination": {
+    "previous": "Zurück",
+    "next": "Nächste",
+    "page": "Seite {{page}} von {{total}}"
+  }
+}

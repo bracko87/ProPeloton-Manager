@@ -1,0 +1,55 @@
+{
+  "coins": {
+    "perRenewal": "{{cost}} Coins pro Erneuerung",
+    "toActivate": "{{cost}} Coins aktivieren",
+    "reactivationPrice": "Reaktivierungspreis: {{cost}} Coins",
+    "nextRenewal": "Nächste Verlängerung: {{cost}} Coins",
+    "firstActivation": "Erste Aktivierung: {{cost}} Coins"
+  },
+  "movement": {
+    "open": "Bewegungsfenster jetzt geöffnet: {{label}}",
+    "closed": "Fenster der Bewegung geschlossen. {{label}}",
+    "unavailable": "Bewegungsfenster nicht verfügbar.",
+    "currentWindow": "Aktuelles Fenster",
+    "unknown": "Unbekannt"
+  },
+  "activation": {
+    "reactivateForSeason": "Reaktivieren für Saison {{season}} — {{cost}} Coins",
+    "activate": "Entwicklungsteam aktivieren — {{cost}} Coins",
+    "activatedForSeason": "Team für Saison aktiviert entwickeln {{season}}. Automatische Erneuerung ist {{renewal}}.",
+    "activatedSuccessfully": "Team entwickeln erfolgreich aktiviert.",
+    "renewalEnabled": "Die automatische Erneuerung des Teams ist aktiviert.",
+    "renewalDisabled": "Team automatische Erneuerung deaktiviert.",
+    "on": "am",
+    "off": "Aus"
+  },
+  "errors": {
+    "loadStatus": "Es ist fehlgeschlagen, den Status des Entwicklungsteams zu laden.",
+    "activate": "Es ist fehlgeschlagen, das Developing Team zu aktivieren.",
+    "renewal": "Automatische Erneuerung konnte nicht aktualisiert werden."
+  },
+  "service": {
+    "summary": "Verfügbar für Freie und Premium Spieler. Erste Aktivierungskosten {{activation}} Coins. Jede spätere Saison Erneuerung oder Reaktivierung Kosten {{renewal}} Coins. Premium Die Mitgliedschaft verzichtet nicht auf diese Servicekosten.",
+    "eligibilityCosts": "Förderfähigkeit: 30 Real-Life-Tage oder 60 In-Game-Tage. Erste Aktivierung: {{activation}} Coins. Erneuerung und Reaktivierung: {{renewal}} Coins pro Saison.",
+    "accessUntilSeason": "Zugang bleibt bis zum Ende der Saison verfügbar {{season}}.",
+    "season": "Jahreszeit {{season}}",
+    "endSeason": "Ende der Saison {{season}}",
+    "startSeason": "Beginn der Saison {{season}}",
+    "coins": "{{count}} Coins",
+    "autoRenewHelp": "Wenn aktiviert, {{cost}} Coins werden zu Beginn der nächsten Saison abgezogen. Wenn Ihr Guthaben zu niedrig ist, wird die Erneuerung fehlschlagen und das Developing Team wird schreibgeschützt.",
+    "activateSeason": "Für Saison aktivieren {{season}}",
+    "existingTeam": "Ihr bestehendes Entwicklungsteam wird für diese Saison aktiviert.",
+    "newTeam": "Für diese Saison wird ein Entwicklungsteam erstellt und aktiviert.",
+    "activationAccess": "Der Zugriff dauert bis zum Ende der aktuellen Spielsaison. Die automatische Verlängerung ist standardmäßig aktiviert und kann jederzeit ausgeschaltet werden.",
+    "needCoins": "Du brauchst {{cost}} Coins aktivieren Developing Team Zugriff. Aktuelle Bilanz: {{balance}} Coins.",
+    "team": "Team: {{name}}",
+    "closeActivation": "Schließen Team-Aktivierungsbestätigung entwickeln",
+    "confirmActivate": "Entwicklerteam für Saison aktivieren {{season}}?",
+    "confirmReactivate": "Entwicklerteam für Saison reaktivieren {{season}}?",
+    "deductCoins": "{{cost}} Coins werden von Ihrer Brieftasche abgezogen.",
+    "accessThisSeason": "Der Zugang dauert bis zum Ende dieser Spielzeit.",
+    "autoRenewModal": "Die automatische Verlängerung wird standardmäßig aktiviert. Sie können sie jederzeit in Einstellungen oder Premium & Abrechnung.",
+    "actionActivate": "Aktivieren für {{cost}} Coins",
+    "actionReactivate": "Reaktivieren für {{cost}} Coins"
+  }
+}

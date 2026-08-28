@@ -1,0 +1,686 @@
+{
+  "sections": {
+    "publicHomeBeta": {
+      "title": "Public Home und Beta-Hinweis",
+      "subtitle": "Was Spieler vor dem Login sehen und warum die Beta-Benachrichtigung zählt.",
+      "overview": "Die öffentliche Homepage ist der Einstieg vor dem Dashboard. Sie kann authentifizierte Benutzer zu einem create-club oder Dashboard führen und Live-Informationen zu öffentlichen Spielen anzeigen.",
+      "facts": [
+        "Live-Überblick",
+        "Spielzeit, aktive Manager, Gesamtteams, Rennen und Etappen",
+        "Beta-Warnung",
+        "Spielsysteme, Benutzeroberfläche, Balance und Daten können sich noch ändern"
+      ],
+      "details": [
+        "Wenn der Benutzer angemeldet ist und keinen Club hat, führt die App zur Club-Erstellung.",
+        "Wenn der Benutzer angemeldet ist und bereits einen Club hat, führt die App zur Übersicht des Dashboards.",
+        "Die Beta-Meldung sagt Testern, dass das Spiel online ist, um zu testen, aber nicht endgültig.",
+        "Homepage Renntag Widgets können gestern, heute und morgen Rennen zeigen."
+      ],
+      "tips": [
+        "Halten Sie die Erwartungen der Spieler während der Beta klar."
+      ]
+    },
+    "sidebarFooterLayout": {
+      "title": "Sidebar, Footer und Dashboard Lock",
+      "subtitle": "Wie das Hauptlayout hilft, um das Spiel herum zu bewegen.",
+      "overview": "Die linke Seitenleiste ist die Hauptnavigation im Spiel, während die Fußzeile maßgebliche Live-Spielzeit zeigt. Einige Dashboard-Zustände können Interaktion sperren.",
+      "facts": [
+        "Seitenleiste",
+        "Übersicht, Squad, Kalender, Rennvorbereitung, Teamranking, Training, Ausrüstung, Infrastruktur, Finanzen, Transfers, Statistik",
+        "Fußzeile",
+        "Shows Saison, Wochentag, Datum und Uhrzeit"
+      ],
+      "details": [
+        "Die Seitenleistenbeschreibungen sagen den Benutzern, was jede Seite tut.",
+        "Die Fußzeile Spielzeit sollte als Quelle der Wahrheit für Fristen behandelt werden.",
+        "Dashboard Gesperrt bedeutet, dass der Spieler zu dieser Zeit keine Änderungen vornehmen kann.",
+        "Melden Sie sich an und Fehlerbericht live im unteren Seitenbereich."
+      ],
+      "tips": [
+        "Wenn ein Benutzer über Fristen verwirrt ist, sagen Sie ihnen zuerst, um Fußzeile Spielzeit zu überprüfen."
+      ]
+    },
+    "profileSettings": {
+      "title": "Mein Profil",
+      "subtitle": "Benutzerprofildaten, Benutzername, E-Mail und Passwort.",
+      "overview": "Mein Profil bearbeitet das Benutzerkonto-Profil. Es ist getrennt von Teamname, Teamlogo und Trikot.",
+      "facts": [
+        "Benutzerhandbuch",
+        "3–24 Zeichen; Buchstaben, Zahlen und Unterstriche",
+        "Geburtstagsregel",
+        "Einmal gespeichert während der Registrierung und erst später lesen"
+      ],
+      "details": [
+        "Der Benutzername wird durch Trimmen von Leerzeichen, Ändern von Leerzeichen zu Unterstrichen und Entfernen von nicht unterstützten Zeichen normalisiert.",
+        "Email-Änderungen verwenden das Auth-System und können eine Bestätigung erfordern.",
+        "Vorname, Nachname, Stadt und Land sind optionale Profilfelder.",
+        "Passwort kann mit Bestätigung von der Profilseite geändert werden.",
+        "Geburtstag wird angezeigt, aber nicht wieder aus meinem Profil gespeichert."
+      ],
+      "tips": [
+        "Sagen Sie den Benutzern, dass Profilanzeigename und Clubname unterschiedlich sind."
+      ],
+      "links": [
+        "Mein Profil"
+      ]
+    },
+    "preferencesNotifications": {
+      "title": "Einstellungen und Benachrichtigungseinstellungen",
+      "subtitle": "Wo Spieler Benachrichtigungen und spezielles Team kontrollieren/account Optionen.",
+      "overview": "Einstellungen speichert Benachrichtigungskontrollen, Entwicklung Team Kauf/status Maßnahmen in Gefahrenzonen.",
+      "facts": [
+        "Benachrichtigungsspeicherung",
+        "Lokale Einstellungen",
+        "Entwicklung von RPCs für das Team",
+        "get_developing_team_status und purchase_developing_team",
+        "Shutdown bestätigen",
+        "Benutzer muss DELETE eingeben"
+      ],
+      "details": [
+        "Benachrichtigungs-Klinken entscheiden, welche Benachrichtigungsgruppen der Spieler erhalten will.",
+        "Der Teamstatus zeigt Anforderungen, Münzkosten, Balance und Bewegung-Fenster-Informationen.",
+        "Nach dem Teamkauf wird der aktive Clubkontext wieder in den Hauptclub zurückversetzt.",
+        "Shutdown Team verwendet ein Backend Edge Function und erfordert das aktive Sitzungs-Token.",
+        "Team neu starten ist derzeit Platzhalter/action nicht als voll aktiv bezeichnet werden."
+      ],
+      "tips": [
+        "Verwenden Sie Einstellungen, wenn Benutzer sich über zu viele Benachrichtigungen beschweren."
+      ],
+      "links": [
+        "Einstellungen"
+      ]
+    },
+    "inviteFriends": {
+      "title": "Freunde einladen",
+      "subtitle": "Verweis, Verweiszustände und Münzbelohnung.",
+      "overview": "Einladen Freunde erstellt einen Verweis Link und zeigt die Empfehlung Aktivität. Die Belohnung wird gewährt, wenn ein Freund die erforderlichen Schritte abschließt.",
+      "facts": [
+        "Verweisungs-URL",
+        "/#/referral/:code",
+        "Belohnung",
+        "40 Coins",
+        "Status",
+        "Ausstehende, abgeschlossene, abgelehnte"
+      ],
+      "details": [
+        "Die Seite lädt den aktuellen Club-Bezugscode aus der Clubtabelle.",
+        "Der Verweis-Link verwendet die aktuelle Website Herkunft plus die Empfehlungsroute.",
+        "Ausstehende bedeutet, dass ein Freund einen Club gegründet hat, aber noch nicht das erste Münzpaket gekauft hat.",
+        "Abgeschlossen bedeutet, dass der erste Münzkauf passiert ist und die Belohnung gewährt wurde.",
+        "Benutzer- und Club-Identifikatoren sind für die Privatsphäre maskiert."
+      ],
+      "tips": [
+        "Verwenden Sie Freunde einladen, um die Gemeinschaft zu wachsen."
+      ],
+      "links": [
+        "Freunde einladen"
+      ]
+    },
+    "proPackagesDeep": {
+      "title": "Münzpakete Shop",
+      "subtitle": "Paketpreise, Kasse und Kauf Geschichte.",
+      "overview": "Coin Packages lädt Live-Pakete aus der Datenbank, zeigt Balance und startet die Kasse durch eine Edge Function.",
+      "facts": [
+        "Paketquelle",
+        "coin_packages",
+        "Saldoquelle",
+        "get_my_coin_status",
+        "Kasse",
+        "create-coin-checkout",
+        "Kaufhistorie",
+        "user_coin_ledger reason='purchase'"
+      ],
+      "details": [
+        "Genaue Preise sind datenbankgesteuert und sollten nicht im Handbuch festkodiert werden.",
+        "Der Shop berechnet den Preis pro Coins und kann den besten Wert hervorheben.",
+        "Paket-Taglines werden aus Münzmenge, wie Starter Boost oder Best für langfristiges Spiel generiert.",
+        "Die Kaufgeschichte zeigt absichtlich nicht Stripe technische Informationen über die Sitzung.",
+        "Coins sind Kontowährung, nicht Club bar."
+      ],
+      "tips": [
+        "Für aktuelle Preise, vertrauen Sie auf die Seite der Coins."
+      ],
+      "links": [
+        "Münzpakete"
+      ]
+    },
+    "contactForumSupport": {
+      "title": "Kontaktieren Sie uns, Forum und Discord",
+      "subtitle": "Wo Spieler Fragen stellen oder Probleme melden.",
+      "overview": "Kontaktieren Sie uns, Forum und Discord Unterstützung/community Eintragspunkte. Aktueller Kontakt Wir sind nur UI; Forum zeigt Benutzer an Discord.",
+      "facts": [
+        "Kontaktieren Sie uns",
+        "Nur UI-Form im aktuellen Code",
+        "Forum",
+        "Discord Seite zur Mitteilung",
+        "Discord Verwendung",
+        "Gemeinschaft, Hilfe, Handbücher und Fragen"
+      ],
+      "details": [
+        "Kontaktieren Sie uns hat Name, E-Mail und Nachricht Felder und zeigt eine Dankesnachricht nach dem Absenden.",
+        "Forum erklärt, dass es kein In-Game-Forum auf dieser Seite geben wird.",
+        "Discord ist der Ort der Gemeinschaft für Fragen und manuelle Hilfe.",
+        "Fehlerberichte sollten Seite, erwartetes Verhalten, tatsächliches Verhalten und Screenshots enthalten."
+      ],
+      "tips": [
+        "Versprich uns nicht Kontaktiere uns Backend Lieferung, bis es verdrahtet ist."
+      ],
+      "links": [
+        "Kontaktieren Sie uns",
+        "Forum"
+      ]
+    },
+    "clubCreationRoute": {
+      "title": "Club Creation und erster Club Check",
+      "subtitle": "Wie authentifizierte Benutzer in das Spiel geleitet werden.",
+      "overview": "Nach dem Login überprüft die App, ob der Benutzer einen Club hat. Benutzer ohne Club gehen zu Club erstellen; Benutzer mit einem Club gehen zur Übersicht.",
+      "facts": [
+        "Kein Verein",
+        "Art der Anwendung /create-club",
+        "Hat Verein",
+        "Art der Anwendung /dashboard/overview"
+      ],
+      "details": [
+        "Die öffentliche Homepage ruft get_my_club_id die nächste Route zu wählen.",
+        "Club-Erstellung ist getrennt von Profil-Erstellung.",
+        "Starten von Geld und genaue Startressourcen sollten von Backend-Konfiguration kommen, nicht erraten manuellen Text.",
+        "Nach der Club-Erstellung lösen die Dashboard-Seiten normalerweise automatisch den Hauptclub."
+      ],
+      "tips": [
+        "Erfinden Sie kein Startgeld, es sei denn, Backend-Konfiguration ist vorhanden."
+      ]
+    },
+    "customizeTeamDeep": {
+      "title": "Team anpassen",
+      "subtitle": "Branding, Teamfarben, Logo, Basis-Logo und Trikot.",
+      "overview": "Personalisieren Team verwaltet Clubname, primär/secondary Farben, Logo und Home Jersey Konfiguration.",
+      "facts": [
+        "Logo-Typen",
+        "JPG, PNG, WEBP",
+        "Zeichen max",
+        "0.5 MB",
+        "Höchstens in Jersey",
+        "1 MB und 512 × 512 px",
+        "Logo-Eimer",
+        "Verein-Logos"
+      ],
+      "details": [
+        "Hochgeladene Logos werden umgewandelt in PNG In-Browser vor der Lagerung.",
+        "Das Entfernen eines Logos stellt ein generiertes Schild-Stil Basis-Logo wieder her, anstatt kein Logo zu hinterlassen.",
+        "Teamfarben werden als Hexfarben validiert.",
+        "Jersey config wird in team_kits mit Namen nach Hause.",
+        "Ein Trikot kann generisch sein, von einem generischen Pool, einer entfernten Bild-URL oder einem hochgeladenen Bild."
+      ],
+      "tips": [
+        "Verwenden Sie kleine saubere Logos, weil sie in winzigen UI-Bereichen erscheinen."
+      ],
+      "links": [
+        "Team anpassen"
+      ]
+    },
+    "brandingLocks": {
+      "title": "Brandschlösser aus den Namensrechten",
+      "subtitle": "Warum Benutzer möglicherweise nicht in der Lage sein, einen Teamnamen oder ein Logo zu bearbeiten.",
+      "overview": "Sponsor-Namensrechte können temporär Brandingfelder sperren und den angezeigten Clubnamen ändern.",
+      "facts": [
+        "Statusquelle sperren",
+        "club_branding_lock_status_v1",
+        "Mögliche Felder",
+        "Name, Farben und Logo",
+        "Namen anzeigen",
+        "Original, Saison und voller Anzeigename"
+      ],
+      "details": [
+        "Personalisieren Team liest das Branding Schloss, bevor es Bearbeitungen erlaubt.",
+        "locked_by_sponsor bedeutet, dass die Club-Identität von einem Sponsor-Deal kontrolliert wird.",
+        "Standard-Sponsoren benennen normalerweise das Team nicht um.",
+        "Naming-Rechte Sponsoren zahlen in der Regel mehr, sondern beeinflussen die öffentliche Identität.",
+        "Anzeige-Namen-Helper sollten in Rankings verwendet werden/profiles wenn Sponsornamen wichtig sind."
+      ],
+      "tips": [
+        "Warner Spieler, bevor sie Namensrechte Angebote unterzeichnen."
+      ]
+    },
+    "teamProfileDeep": {
+      "title": "Teamprofil",
+      "subtitle": "Öffentliche Clubseite mit Identität, Sponsoren, Dienstplan und Punkten.",
+      "overview": "Mit Teamprofil können Benutzer einen anderen Club oder einen eigenen Club aus Rankings, Rennen und Statistiken inspizieren.",
+      "facts": [
+        "Art der Anwendung",
+        "/dashboard/teams/:clubId",
+        "Zeigt an",
+        "Logo, Land, Tier, Division, Sponsoren, Kit, Dienstplan, Punkte und aktuelle Rennen"
+      ],
+      "details": [
+        "Die Seite zeigt, ob der Club benutzer- oder KI-gesteuert ist.",
+        "Es kann aktive Sponsorenanzahl, monatliche Sponsorensummen und Hauptsponsor-Logo zeigen.",
+        "Es kann Kit-Vorschau von zeigen team_kits oder AI-Kit-Vorschauzeilen.",
+        "Es kann öffentliche Liste und die jüngsten Rennergebnisse zeigen.",
+        "Es enthält einen Bericht Spieler/team Taste für Moderation."
+      ],
+      "tips": [
+        "Verwenden Sie Teamprofil, um Rivalen vor wichtigen Rennen zu studieren."
+      ]
+    },
+    "overviewDeep": {
+      "title": "Übersicht Deep Guide",
+      "subtitle": "Alle wichtigen Blöcke auf dem Manager-Dashboard.",
+      "overview": "Übersicht ist die tägliche Kontrollraum kombiniert Alarme, KPIs, Kader Puls, Finanzen, Schulden, Rennwelt, Operationen, Nachrichten und Sponsordaten.",
+      "facts": [
+        "Kernblöcke",
+        "Alarme, KPIs, Operationen, Kaderpuls, Zeitplan, Nachrichten, Finanzen, Notschulden",
+        "Hauptanwendung",
+        "Tägliche Checkliste"
+      ],
+      "details": [
+        "Alarme zeigen, was zuerst Aufmerksamkeit braucht.",
+        "KPIs fassen Clubzustand in kompakten Karten zusammen.",
+        "Operations Karten zeigen aktive Systeme wie Training, Infrastruktur, Medizin, Sponsor, Posteingang, Finanzen oder System-Events.",
+        "Squad Pulse fasst Fitness, Moral, Bereitschaft, Verfügbarkeit und Vertragsrisiko zusammen.",
+        "Finanzen Gesundheit zeigt Bilanz, Betriebsergebnis/expense, Sponsoreneinkommen, Kosten und Reiseprognosen.",
+        "Notstandsschulden Gesundheit zeigt Rettungszahlen, ausstehender Kapitalbetrag, nächste Rückzahlung und Liquidation Risiko.",
+        "Rennen Welten Panels zeigen heute..........................................................................................................................................................................................................................................................."
+      ],
+      "tips": [
+        "Wenn Übersicht finanzielle Gefahr zeigt, öffnen Sie die Finanzen, bevor Sie etwas anderes tun."
+      ],
+      "links": [
+        "Übersicht"
+      ]
+    },
+    "overviewRaceWorld": {
+      "title": "Übersicht Race World",
+      "subtitle": "Heute Rennen, anstehende Zeitplan und Weltnachrichten.",
+      "overview": "Die Übersichtsseite enthält weltnahe Daten, damit Benutzer der Radwelt folgen können, auch wenn ihr eigenes Team nicht Rennen fährt.",
+      "facts": [
+        "Daten zur Tagesrennen",
+        "Titel, Untertitel, Zeitetikett, Land und Link",
+        "Nachrichtendaten",
+        "Titel, Untertitel, Zeit, Details und verwandte Links"
+      ],
+      "details": [
+        "Heute räsen helfen Benutzern zu sehen, was jetzt passiert.",
+        "Der nächste Zeitplan hilft, die Aufmerksamkeit in naher Zukunft zu planen.",
+        "Weltnachrichten machen die Spielwelt aktiv.",
+        "Verwandte Links können Rassen oder andere Spielseiten öffnen.",
+        "Erweiterten Text verwenden/detail Felder, wenn Benutzer mehr Kontext benötigen."
+      ],
+      "tips": [
+        "Verwenden Sie Übersicht für Bewusstsein, dann öffnen Sie detaillierte Seiten für Entscheidungen."
+      ]
+    },
+    "notificationCenterDeep": {
+      "title": "Benachrichtigungszentrum",
+      "subtitle": "Ungelesen/read Benachrichtigungsmanagement mit Suche und Kategorien.",
+      "overview": "Das vollständige Benachrichtigungszentrum hilft Benutzern Spiel zu handhaben/admin Benachrichtigungen ohne nennenswerte Fristen zu verlieren.",
+      "facts": [
+        "Tabulatoren",
+        "Ungelesen und Lesen",
+        "Werkzeuge",
+        "Suche, Kategoriefilter, Pagination, Aktionstasten",
+        "Lokales Abrufvolumen",
+        "Bis zu 500 pro Tab in der aktuellen Seite"
+      ],
+      "details": [
+        "Benachrichtigungen können nach Titel, Nachricht, Typ, Quelle, Präferenzgruppe und erzeugter Zeit gesucht werden.",
+        "Die Kategorie wird aus der Präferenzgruppe, dem Quell- oder Typcode abgeleitet.",
+        "Vorlagen können Bild, Intro-Text, Details, zusätzlichen Text und Aktionen hinzufügen.",
+        "Aktionen können direkt mit der Vorbereitung, Finanzierung, Infrastruktur, Transfers, Reiterprofilen oder Rennen verknüpft werden.",
+        "Einstellungen können verhindern, dass einige Benachrichtigungstypen angezeigt werden."
+      ],
+      "tips": [
+        "Benachrichtigungen vor Rennterminen lesen."
+      ],
+      "links": [
+        "Mitteilungen"
+      ]
+    },
+    "notificationExamples": {
+      "title": "Wichtige Benachrichtigungsbeispiele",
+      "subtitle": "Events Benutzer sollten nicht ignorieren.",
+      "overview": "Benachrichtigungen können wichtige staatliche Veränderungen in Bezug auf die Vorbereitung, Finanzierung, Infrastruktur, Transfers, Teamentwicklung und Sponsoren darstellen.",
+      "facts": [
+        "Beispiele",
+        "Race Plan Erinnerungen, Stage Plan Erinnerungen, Entwicklung Fenster, Notkredit, Einrichtung komplett, Fahrer Freigabe, Sponsor Ziel"
+      ],
+      "details": [
+        "Die Benachrichtigungen über die Vorbereitung der Rennen warnen, wenn Pläne oder Stage Plans Maßnahmen erfordern.",
+        "Entwicklungsteam-Fenster-Benachrichtigungen sagen den Benutzern, wann Bewegung möglich ist.",
+        "Meldungen über die Fertigstellung der Infrastruktur geben den Nutzern an, dass eine Einrichtung/asset ist bereit.",
+        "Not notifikationen für Darlehen bedeuten, dass der Verein nicht decken konnte eine obligatorische Kosten.",
+        "Fahrer Release-Benachrichtigungen Link zu Fahrerprofil oder Free-Agent-Markt.",
+        "Sponsor objektive Benachrichtigungen können mit Kalender oder Ziel Rennen verbinden."
+      ],
+      "tips": [
+        "Finanzierung behandeln/deadline Benachrichtigungen als hohe Priorität."
+      ]
+    },
+    "inboxDeep": {
+      "title": "Posteingang",
+      "subtitle": "Direkte und Admin-Gespräche.",
+      "overview": "Posteingang ist für Gespräche, im Gegensatz zu Benachrichtigungen, die System sind/game Alarme.",
+      "facts": [
+        "Gesprächsarten",
+        "Direkt und Admin direkt",
+        "Logik lesen",
+        "Ein Faden öffnet sich, es liest sich",
+        "Ziel festlegen",
+        "Kann aus der Sitzung initialisiert werden"
+      ],
+      "details": [
+        "Die Threadliste zeigt Anzeigename, Betreff, Vorschau, letzte Meldungszeit und ungelesene Anzahl.",
+        "Suchfilter nach Namen, Betreff und Vorschau.",
+        "Nachrichten werden durch Konversations-ID geladen und dann mit Lesen markiert.",
+        "Wenn der Benutzer komponieren zu einem bestehenden direkten Kontakt öffnet, wird die bestehende Konversation wiederverwendet.",
+        "Einige Gespräche können nicht je nach can_reply."
+      ],
+      "tips": [
+        "Verwenden Sie Posteingang für Gespräche, Benachrichtigungen für Spieleereignisse."
+      ],
+      "links": [
+        "Posteingang"
+      ]
+    },
+    "topMenu": {
+      "title": "Menü oben",
+      "subtitle": "Konto, Coins, Benachrichtigungen und Gebrauchsseiten.",
+      "overview": "Das Menü oben rechts enthält Konto- und Supportseiten, die nicht alle in der linken Seitenleiste sichtbar sind.",
+      "facts": [
+        "Typische Elemente",
+        "Posteingang, Profil, Personalisierung, Einstellungen, Hilfe, Kontakt, Münzpakete, Freunde einladen, Abmelden"
+      ],
+      "details": [
+        "Benutzer können Profileinstellungen und Passwort-Tools aus dem Menü erreichen.",
+        "Münzenpakete und Freunde einladen sind Konto/coin Werkzeuge.",
+        "Einstellungen steuert die Benachrichtigungseinstellungen und den Entwicklungsteam-Kauf.",
+        "Hilfe und Handbuch sollten auf diese Seite verweisen.",
+        "Die aktuelle Sitzung wird beendet."
+      ],
+      "tips": [
+        "Hilfe leisten/Manual leicht zu finden aus dem Menü."
+      ]
+    },
+    "firstSquadDeep": {
+      "title": "Erstes Schwadengefecht",
+      "subtitle": "Hauptreiter-Liste und Listenansichten.",
+      "overview": "Erste Squad ist, wo Benutzer ihre wichtigsten Dienstplan, finanzielle Informationen, Fähigkeiten und Form zu überprüfen.",
+      "facts": [
+        "Erste Mannschaft max in UI",
+        "18 Fahrer",
+        "Ansichten",
+        "Allgemeine, finanzielle, Fähigkeiten, Form"
+      ],
+      "details": [
+        "Allgemeiner Blick ist am besten für schnelle tägliche Dienstplan-Checks.",
+        "Die finanzielle Ansicht zeigt Gehalt, Marktwert und Verträge.",
+        "Skills-Ansicht hilft, Sprint, Klettern, Zeitfahren, flach, Ausdauer, Erholung, Widerstand, Rennen IQ, Teamwork und Moral zu vergleichen.",
+        "Formansicht hilft, Müdigkeit, Moral, Verfügbarkeit und Potenzial zu beurteilen.",
+        "Saison Dashboard Widgets können Siege, Podiumsplätze, Top 10s, am besten zeigen GC, letztes Rennen und nächste Auswahl."
+      ],
+      "tips": [
+        "Kaufen Sie keine Fahrer, bevor Sie die aktuelle Mannschaft verstehen."
+      ],
+      "links": [
+        "Team"
+      ]
+    },
+    "riderSkillsDeep": {
+      "title": "Fahrer Fähigkeiten erklärt",
+      "subtitle": "Wofür jede Fähigkeit nützlich ist.",
+      "overview": "Insgesamt ist eine nützliche Abkürzung, aber spezifische Fahrer Attribute entscheiden über die richtige Rennrolle und taktische Verwendung.",
+      "facts": [
+        "Kompetenzen",
+        "Sprint, Klettern, Zeitfahren, Ausdauer, flach, Erholung, Widerstand, Rennen IQ, Teamwork, Moral"
+      ],
+      "details": [
+        "Sprint zählt in den Massen- und Sprintzügen.",
+        "Klettern zählt auf Bergetappen und Gipfel endet.",
+        "Zeitfahren zählt in TT, Prolog und TTT Kontexten.",
+        "Ausdauer hält Fahrer durch lange Etappen stark.",
+        "Flache Hilfen beim Rollen/flat Straßen, Jagd und Positionierung.",
+        "Die Erholung spielt über Etappenrennen hinweg eine Rolle.",
+        "Widerstand hilft bei hartem Wetter, hohem Tempo und schwierigem Gelände.",
+        "Race IQ beeinflusst taktische Entscheidungen und Positionierung.",
+        "Teamwork hilft Domestiques, Lead-Outs und Jagen.",
+        "Morale beeinflusst das Vertrauen und kann die Leistung beeinflussen."
+      ],
+      "tips": [
+        "Passen Sie Fahrer Fähigkeiten zu Rolle und Etappe Art."
+      ]
+    },
+    "riderProfileDeep": {
+      "title": "Reiterprofil-Registerblätter",
+      "subtitle": "Überblick, Vertrag, Training, Vergleich und Geschichte.",
+      "overview": "Rider Profile ist die tiefe Seite für individuelle Fahrerentscheidungen.",
+      "facts": [
+        "Tabulatoren",
+        "Übersicht, Vertrag, Training, Vergleich, Geschichte",
+        "Ansicht der Fähigkeiten",
+        "Grundlegend oder modern"
+      ],
+      "details": [
+        "Übersicht zeigt Fahreridentität, Status und Kernzustand.",
+        "Der Vertrag zeigt Gehalt, Verlängerung und Freigabe-bezogene Informationen.",
+        "Ausbildungspläne/history falls verfügbar.",
+        "Vergleich erlaubt Benutzern zu vergleichen Fahrer, ohne die Seite zu verlassen.",
+        "Die Geschichte zeigt Karriere-Saisons und aktuelle Renndaten.",
+        "Transfer-listed Zustand ist sichtbar und kann Freigabe blockieren."
+      ],
+      "tips": [
+        "Offene Profile vor der Erneuerung, Verkauf oder Bau von Rennplänen."
+      ]
+    },
+    "fitnessHealthDeep": {
+      "title": "Fitness, Müdigkeit und Gesundheit",
+      "subtitle": "Warum ein starker Fahrer heute eine schlechte Wahl sein kann.",
+      "overview": "Die Leistung hängt von mehr als Attributen ab. Müdigkeit, Krankheit, Verletzung, nicht-voll-passender Status und Moral können alle den Rennwert ändern.",
+      "facts": [
+        "Verfügbarkeit",
+        "Fit, nicht voll fit, verletzt, krank",
+        "Bedingung",
+        "Müdigkeit, Moral, Gesundheitsfall, Genesung"
+      ],
+      "details": [
+        "Fit Fahrer sind normalerweise sicher, wenn nicht nach Zeitplan blockiert.",
+        "Nicht voll fit Fahrer können riskant sein und brauchen möglicherweise medizinische Unterstützung.",
+        "Verletzte oder kranke Fahrer sollten in der Regel nicht Rennen oder trainieren hart.",
+        "Hohe Ermüdung kann die Leistungsfähigkeit reduzieren und das Risiko erhöhen.",
+        "Moral sollte überwacht werden, weil niedrige Moral kann die Leistung verletzen.",
+        "Medizinisches Personal und Investitionen im Medical Center verbessern die Unterstützung bei der Erholung."
+      ],
+      "tips": [
+        "Ein müder Stern kann schlimmer wirken als ein frischer Helfer."
+      ]
+    },
+    "raceSharpnessDeep": {
+      "title": "Race Sharpness",
+      "subtitle": "Rennrhythmus und Überlastungsrisiko.",
+      "overview": "Die Rennschärfe zeigt, ob ein Fahrer genug Rennrhythmus hat oder zu viele Renntage überladen hat.",
+      "facts": [
+        "Verfolgt",
+        "Letztes Rennen Datum, letzte 14 Tage/30, Gesamtrennen Tage, Überlast Warnung"
+      ],
+      "details": [
+        "Zu wenig Rennen kann Schärfe reduzieren.",
+        "Zu viel Rennen kann Überlastung Strafe verursachen.",
+        "Schärfe sollte zusammen mit Müdigkeit und Gesundheit gelesen werden.",
+        "Race Vorbereitung kann Schärfe während der Auswahl zeigen.",
+        "Schärfe ist besonders nützlich, wenn man einen Rennkalender erstellt."
+      ],
+      "tips": [
+        "Verwenden Sie kleinere Rennen, um Fahrer für größere Ziele vorzubereiten."
+      ]
+    },
+    "contractsRenewalsRelease": {
+      "title": "Verträge, Erneuerungen und Freigabe",
+      "subtitle": "Finanzielle Entscheidungen rund um Fahrer.",
+      "overview": "Verträge betreffen Löhne, Ablauf, Freigabekosten, Verlängerungszeitpunkt und Übertragungslistenstatus.",
+      "facts": [
+        "Vorschau auf die Freigabe",
+        "Restwochen, Gehalt, Freigabekosten und Rest nach Freigabe",
+        "Blockieren",
+        "Freigabe blockiert während der Übertragung aufgeführt"
+      ],
+      "details": [
+        "Ein Fahrer mit hohem Gehalt kann zu einem finanziellen Problem werden.",
+        "Die Vertragslaufzeit sollte vor Saisonende überprüft werden.",
+        "Die Entlassung eines Fahrers kann das verbleibende Gehalt kosten/compensation.",
+        "Die Vorschau zeigt, ob sich der Club eine Freigabe leisten kann.",
+        "Transfer-Liste Fahrer können nicht veröffentlicht werden, während die Auflistung aktiv ist."
+      ],
+      "tips": [
+        "Überprüfe die Verträge vor der Übertragung."
+      ]
+    },
+    "developingTeamDeep": {
+      "title": "Entwicklung des Teams",
+      "subtitle": "U23/development Dienstplan, Kauf und Bewegung Fenster.",
+      "overview": "Entwicklungsteam ist ein zweites vernetztes Team für junge/development Fahrer.",
+      "facts": [
+        "Max in der Benutzeroberfläche",
+        "8 Fahrer",
+        "Kauf",
+        "Einstellungen",
+        "Bewegung",
+        "Nur bei Bewegungsfenstern",
+        "Alterswarnung",
+        "24+ Fahrer brauchen Aufmerksamkeit"
+      ],
+      "details": [
+        "Das Statuspanel zeigt reale Tage, Spieltage, Münzbilanz, Münzkosten und Kaufgenehmigung.",
+        "Nach dem Kauf muss die App den aktiven Clubkontext im Hauptclub behalten.",
+        "Bewegungsfenster-Labels erklären, wann Fahrer sich bewegen können.",
+        "Ältere Fahrer können Warnungen auslösen.",
+        "Entwicklungsteam-Fahrer können immer noch als Benutzer-Familie Fahrer in Rennen Ergebnis Displays behandelt werden."
+      ],
+      "tips": [
+        "Verwenden Sie es, um Talent zu entwickeln, nicht als unbegrenzte Liste Lagerung."
+      ],
+      "links": [
+        "Einstellungen"
+      ]
+    },
+    "staffRolesDeep": {
+      "title": "Aufgaben des Personals",
+      "subtitle": "Was die Mitarbeiter für den Club tun.",
+      "overview": "Das Personal beeinflusst Training, Erholung, Scouting, Ausrüstung und Rennplanung.",
+      "facts": [
+        "Aufgaben",
+        "Trainer, Obertrainer, U23 Cheftrainer, Doktor, Physio, Ernährungswissenschaftler, Mechaniker, Sportdirektor, Pfadfinder/Analyst"
+      ],
+      "details": [
+        "Head Coach unterstützt Training und Entwicklung.",
+        "Trainer verbessert die tägliche Trainingsqualität.",
+        "U23 Head Coach unterstützt die Entwicklung von Fahrern.",
+        "Team Doktor, Physio und Ernährungswissenschaftler unterstützen Gesundheit und Erholung.",
+        "Mechanik unterstützt Ausrüstung und technische Systeme.",
+        "Sportdirektor unterstützt die Renntaktik und Planung.",
+        "Pfadfinder/Analyst unterstützt Marktinformationen und Berichte."
+      ],
+      "tips": [
+        "Mietpersonal auf der Grundlage von Schwäche, nicht nur, weil sie verfügbar sind."
+      ]
+    },
+    "staffCapacityDeep": {
+      "title": "Personalkapazität",
+      "subtitle": "Warum kann man die Einstellung blockieren?",
+      "overview": "Die Personalrollen haben Grenzen. Infrastruktur bestimmt oft, wie viele Mitarbeiter jeder Rolle der Verein beschäftigen kann.",
+      "facts": [
+        "Kapazitätsfelder",
+        "Limit Count, aktive Anzahl, offene Slots, kann mieten"
+      ],
+      "details": [
+        "Wenn offene Slots 0 sind, wird die Einstellung für diese Rolle blockiert.",
+        "Infrastruktur-Upgrades können zusätzliche Personalkapazitäten freischalten.",
+        "Die Mitarbeiter können auch aufgrund von Kursen oder Aufträgen nicht verfügbar sein.",
+        "Eine höhere Personalgrenze bedeutet nicht, dass der Verein das Gehalt leisten kann.",
+        "Kapazitätswarnungen sollten die Nutzer gegebenenfalls auf Infrastruktur hinführen."
+      ],
+      "tips": [
+        "Überprüfen Sie sowohl offene Slots und Gehalt vor der Einstellung."
+      ]
+    },
+    "staffCoursesDeep": {
+      "title": "Lehrgänge für Mitarbeiter",
+      "subtitle": "Verbesserung der Mitarbeiter über Spieltage.",
+      "overview": "Personalkurse kosten Bargeld und nehmen Spieltage, können aber die Mitarbeiterattribute verbessern.",
+      "facts": [
+        "Gewinne",
+        "Kompetenz, Erfahrung, Potenzial, Führung, Effizienz, Loyalität"
+      ],
+      "details": [
+        "Aktive Kurse zeigen Startdatum, Fertigstellungsdatum, Dauer und Kosten.",
+        "Kürzlich abgeschlossene Kurse zeigen Attributgewinne.",
+        "Für einige Aufgaben können Mitarbeiter auf Kursen nicht zur Verfügung stehen.",
+        "Kurse sind am besten für Mitarbeiter der Club plant zu halten.",
+        "Die Kursausgaben sollten verzögert werden, wenn die Finanzen gefährlich sind."
+      ],
+      "tips": [
+        "Trainieren Sie wichtige Mitarbeiter, nicht Leiharbeit."
+      ]
+    },
+    "regularTrainingDeep": {
+      "title": "Regelmäßige Schulungsdetails",
+      "subtitle": "Team-Standards und individuelle Pläne.",
+      "overview": "Regelmäßiges Training ist das alltägliche Entwicklungssystem für Fahrer.",
+      "facts": [
+        "Intensitäten",
+        "Erholung, Licht, normal, hart",
+        "Schwerpunkte",
+        "Allgemein, Erholung, Sprint, Klettern, flach, Zeitfahren, Ausdauer, Widerstand, Rennen IQ, Teamarbeit"
+      ],
+      "details": [
+        "Team-Standards steuern den normalen Plan für einen Team-Scope.",
+        "Individuelle Fahrerpläne können Standardwerte überschreiben.",
+        "Hartes Training erhöht den Entwicklungsdruck, kann aber Ermüdung erzeugen.",
+        "Recovery Training hilft, Müdigkeit zu reduzieren und Fahrer zu schützen.",
+        "Focus sollte Fahrerrolle und zukünftige Ziele des Rennens entsprechen."
+      ],
+      "tips": [
+        "Verwenden Sie nicht hartes Training dauerhaft."
+      ]
+    },
+    "trainingCampsDeep": {
+      "title": "Schulungslager",
+      "subtitle": "Lage, Typ, Wetter, Personal und Kosten.",
+      "overview": "Trainingslager sind stärkere Entwicklungsblöcke mit höheren Planungsanforderungen und Kosten.",
+      "facts": [
+        "Lagertypen",
+        "Allgemein, Sprint, Klettern, flach, Zeitfahren",
+        "Regionen",
+        "Europa, Nordamerika, Südamerika, Asien, Afrika, Ozeanien, Naher Osten"
+      ],
+      "details": [
+        "Camps umfassen Sterne, Qualitätsmultiplikator, Erholung Komfort, Kostenindex und Wetternote.",
+        "Bevorzugte, riskante und geschlossene Wochen beeinflussen die Kalendertauglichkeit.",
+        "Die Preise beinhalten Reisen, Unterkunft, Campinggebühr, Logistik und Gesamtkosten.",
+        "Die Validierung kann verletzte Fahrer oder nicht vorhandenes Personal blockieren.",
+        "Mitarbeiter-Boosts können Entwicklung, Erholung, Organisation und Risikoreduktion verbessern."
+      ],
+      "tips": [
+        "Lager nur nach Überprüfung der Finanzen buchen."
+      ]
+    },
+    "currentCampDeep": {
+      "title": "Aktuelle Seite des Camps",
+      "subtitle": "Tägliche Lagerplanung und Berichte.",
+      "overview": "Die aktuelle Campseite zeigt aktiven Camp-Fortschritt, Wetter, Mitarbeiter-Boosts, Berichte und die Planung am nächsten Tag.",
+      "facts": [
+        "Mitgliedstaaten",
+        "Vorstart, aktiv, post, versteckt",
+        "Optionen für die Planung",
+        "Tag frei, leicht, normal, hart"
+      ],
+      "details": [
+        "Künftige Camps zeigen die volle Schnittstelle nur kurz vor dem Start.",
+        "Wettervorhersage hilft Benutzern, die Intensität anzupassen.",
+        "Tägliche Berichte zeigen abgeschlossen/missed Sitzungen und Müdigkeitsänderungen.",
+        "Die Zusammenfassung des Stabs Boost erklärt, was das Personal leistet.",
+        "Die nächsten drei Lagertage können von Team oder individueller Intensität geplant werden."
+      ],
+      "tips": [
+        "Verwenden Sie Tag frei, wenn Lagermüdigkeit zu hoch wird."
+      ]
+    }
+  }
+}

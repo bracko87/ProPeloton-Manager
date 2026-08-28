@@ -72,17 +72,6 @@ export default function LanguageSelector({
   const handleChange = async (language: SupportedLanguage): Promise<void> => {
     setIsOpen(false)
 
-    // German is exposed as a preview while its resource bundle is being completed.
-    // Until the generated `de` resources land, i18next falls back to English keys.
-    if (language === 'de') {
-      const supported = Array.isArray(i18n.options.supportedLngs)
-        ? i18n.options.supportedLngs
-        : []
-      if (!supported.includes('de')) {
-        i18n.options.supportedLngs = [...supported, 'de']
-      }
-    }
-
     await changeApplicationLanguage(language)
   }
 

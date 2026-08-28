@@ -1,0 +1,3270 @@
+{
+  "ui": {
+    "eyebrow": "Handbuch",
+    "title": "ProPeloton Manager Handbuch",
+    "description": "Dieses erweiterte Handbuch ist eine tiefe Spielerreferenz für ProPeloton Manager. Es umfasst Kontoseiten, Coins, Empfehlungen, Club-Identität, Dashboard-Navigation, Benachrichtigungen, Fahrer, Personal, Training, Lager, Ausrüstung, Infrastruktur, Kalender, Renndetails, Rennvorbereitung, Wiederholung, Rankings, Statistiken, Transfers, Scouting, Finanzen, Sponsoren, Steuern, Richtlinien, Liquidation und FAQ-Themen. Abschnitte sind standardmäßig geschlossen, so öffnen Sie nur das Thema, das Sie brauchen.",
+    "sectionCount_one": "{{count}} Abschnitt",
+    "sectionCount_other": "{{count}} Abschnitt",
+    "categoryCount_one": "{{count}} Kategorie",
+    "categoryCount_other": "{{count}} Kategorien",
+    "closedByDefault": "Alle Abschnitte standardmäßig geschlossen",
+    "backToHelp": "Zurück zu Hilfe",
+    "printPdf": "Drucken / Speichern unter PDF",
+    "askDiscord": "Fragen Sie an Discord",
+    "startHereTitle": "Hier anfangen",
+    "startHereDescription": "Neue Manager sollten zuerst Quick Start, Game Time, Übersicht, Squad, Training, Race Preparation und Finanzen lesen. Erfahrene Manager können die Suche nach bestimmten Themen wie Sponsor-Namensrechte, Rennbedarf, Playoffs, Steuerprüfungen, Notfallrettungen oder Entwicklungsteam-Bewegungsfenster verwenden.",
+    "searchLabel": "Suchhandbuch",
+    "searchPlaceholder": "Suche Coins, Sponsoren, Rennvorbereitung, Steuern, Ausrüstung...",
+    "categoryLabel": "Kategorie",
+    "allCategories": "Alle Kategorien",
+    "openVisible": "Sichtbar öffnen",
+    "closeAll": "Alle schließen",
+    "visibleCount_one": "Anzeigen {{count}} Abschnitt.",
+    "visibleCount_other": "Anzeigen {{count}} Abschnitten.",
+    "noSectionsTitle": "Keine manuellen Abschnitte gefunden",
+    "noSectionsDescription": "Versuchen Sie einen anderen Suchbegriff oder wechseln Sie Kategorie zurück zu allen.",
+    "open": "Öffnen",
+    "close": "Schließen",
+    "summary": "Zusammenfassung",
+    "detailedExplanation": "Ausführliche Erläuterung",
+    "rule": "Regel {{count}}",
+    "practicalTips": "Praktische Tipps",
+    "maintenanceTitle": "Manueller Wartungshinweis",
+    "maintenanceDescription": "Dieses Handbuch ist eine tiefe erste Version basierend auf den aktuellen Seiten und Systemen. Genaue Werte, die aus der Datenbank geladen werden, wie z.B. Preise für Live-Coins, einige Politikoptionskosten, Camp-Notierungen, Sponsoren bieten Werte und Infrastrukturkosten, sollten immer von der Live-Seite vertrauenswürdig sein, wenn sich die Backend-Konfiguration ändert.",
+    "contactUs": "Kontaktieren Sie uns"
+  },
+  "categories": {
+    "getting-started": "Erste Schritte",
+    "coins-and-account": "Coins und Konto",
+    "club-identity": "Identität des Vereins",
+    "dashboard": "Dashboard",
+    "riders": "Fahrer",
+    "training": "Training",
+    "equipment": "Ausrüstung",
+    "infrastructure": "Infrastruktur",
+    "calendar-and-races": "Kalender und Rennen",
+    "rankings-and-statistics": "Rankings und Statistiken",
+    "transfers": "Transfers",
+    "finance": "Finanzen",
+    "support-and-account": "Unterstützung und Konto",
+    "race-preparation": "Rennvorbereitung",
+    "transfers-and-scouting": "Transfers und Pfadfinder",
+    "faq": "FAQ"
+  },
+  "guide": {
+    "factParagraph": "Wichtige Referenzwerte für dieses Thema sind: {{factText}}. Behandeln Sie Live-Werte von der Spielseite als maßgeblich, wenn ein Wert datenbankgesteuert ist, da sich Preise, Zitate, Status oder zukünftiges Auswuchten ändern können, ohne dass das Handbuch einen Code neu schreiben muss.",
+    "noFactParagraph": "Dieses Thema hängt nicht von einem festen numerischen Wert ab. Verwenden Sie den Live-Seitenzustand, Warnungen und verfügbare Aktionen als maßgebliche Quelle bei der endgültigen Entscheidung.",
+    "categoryIntro": {
+      "getting-started": "{{title}} neu zu nutzen, um nicht alles sofort zu optimieren. Zuerst zu identifizieren, was die Seite kontrolliert, welche Informationen maßgeblich sind, welche Fristen existieren und welche Aktionen dauerhafte oder teure Folgen haben können.",
+      "coins-and-account": "{{title}} gehört zur Kontoschicht, nicht zur normalen Club-Bar-Wirtschaft. Benutzer sollten Konto-Level-Coins und Identität trennen/profile Einstellungen aus Teamfinanzierung. Wenn eine Funktion Coins verwendet, überprüfen Sie den Kontostand und genaue Live-Paket/service Preis vor Bestätigung alles.",
+      "club-identity": "{{title}} die öffentliche Identität des Vereins beeinflusst. Branding-Entscheidungen können in Rankings, Rennlisten und Teamprofilen sichtbar sein, während Namensgeberregeln vorübergehend Teile dieser Identität sperren oder ersetzen können.",
+      "dashboard": "{{title}} Dashboard Seiten sind so konzipiert, dass sie dem Manager mitteilen, was jetzt Aufmerksamkeit braucht. Wenn eine Karte oder Warnung Links zu einer anderen Seite, verwenden Sie diese tiefere Seite für die endgültige Entscheidung, anstatt nur auf die Zusammenfassung verlassen.",
+      "riders": "{{title}} ist mit der Qualität der Kader und der langfristigen Planung verbunden./staff Entscheidungen sollten aktuelle Leistung, Potenzial, Ermüdung kombinieren/health, Vertragskosten, Kapazität und künftige Rennen müssen eher als Fokus auf eine Überschrift.",
+      "training": "{{title}} ist eine Entscheidung für die Entwicklung mit einem Frische-Kosten. Training Qualität zählt, aber der beste Trainingsplan ist der, der Fahrer verbessert, während sie noch zu wichtigen Rennen fit genug, um zu erreichen.",
+      "equipment": "{{title}} Verbindung von Eigentum, Setup-Bonus, Zustand und Vorbereitung der Rennen. Ausrüstung sollte für das tatsächliche Rennprofil ausgewählt und in nutzbarem Zustand gehalten werden; Kauf teures Getriebe ohne Setups und Wartungsplanung Abfallwert.",
+      "infrastructure": "{{title}} ist eine langfristige Kapazitätsinvestition. Fazilitäts- und Vermögensentscheidungen sollten einen echten Engpass lösen, den Finanzplan anpassen und sich um den Bau kümmern/repair Dauern anstatt automatisch zu aktualisieren.",
+      "calendar-and-races": "{{title}} gehört zur Zeitleiste des Wettbewerbs./application/rider-submission Informationen mit maßgeblicher Spielzeit, dann verwenden Race Detail und Race Preparation für die tieferen Regeln und Aktionen.",
+      "race-preparation": "{{title}} ist Teil des finalen Workflows vor dem Rennen. Akzeptierter Eintrag reicht nicht aus: Fahrer, Support-Ressourcen, Ausrüstung, Lieferungen, Rollen und Taktik müssen vor dem entsprechenden Schloss abgeschlossen sein/deadline.",
+      "rankings-and-statistics": "{{title}} erklärt den Wettbewerbskontext des Vereins. Punkte, Platzierungen und Spezialtische sollten Saisonziele und Scouting leiten, aber Manager sollten noch Team öffnen/rider profile vor Entscheidungen aus Ranking-Nummern allein.",
+      "transfers": "{{title}} ist eine Entscheidung über den Kaderaufbau mit sportlichen und finanziellen Folgen. Vor der Begehung, Check-Rolle fit, Scouting Sicherheit, Gehalt, Dauer, Transfergebühr, ggf., Dienstplankapazität und die Auswirkungen auf den zukünftigen Club Cashflow.",
+      "transfers-and-scouting": "{{title}} Der Manager sollte Scouting nutzen, um Unsicherheiten zu verringern, und dann nur noch realistische Ziele verhandeln, die sowohl für die Mannschaft als auch für das Budget passen.",
+      "finance": "{{title}} beeinflusst das Überleben des Vereins./expense Die Kommission hat die Kommission aufgefordert, die von der Kommission vorgeschlagenen Maßnahmen zu prüfen, um die Auswirkungen der Umstrukturierung der Umstrukturierungs- und Umstrukturierungsvorhaben zu untersuchen.",
+      "support-and-account": "{{title}} ist ein Konto/support Funktion. Schützen Sie Kontoinformationen, verwenden Sie den richtigen Support-Kanal und erinnern Sie sich, dass Benutzer-Profil-Daten getrennt von öffentlichen Club-Branding-und Club-Finanz-Systeme.",
+      "faq": "{{title}} ist ein Fehlerbehebung Eintrag. Die schnellste Antwort kommt normalerweise von der Identifizierung, welche Spielzustand blockiert die Aktion, dann überprüfen Sie die Seite, die diesen Zustand besitzt, anstatt wiederholt auf die deaktivierte Aktion."
+    },
+    "commonMistake": {
+      "equipment": "Ein häufiger Fehler ist es, das stärkste Produkt zu kaufen, ohne den Zustand, den Zuweisungsstatus, das Rennprofil oder die Setup-Kompatibilität zu überprüfen.",
+      "finance": "Ein häufiger Fehler ist es, nur die aktuelle Bilanz zu betrachten. Ein gesundes Gleichgewicht kann zukünftige Gehalts-, Steuer-, Politik-, Reise- oder Schuldenpflichten verbergen.",
+      "calendar-and-races": "Ein häufiger Fehler ist es, das Datum des Rennens als das einzige wichtige Datum zu behandeln. Stage Plan Termine können alle früher passieren und das Team vor dem eigentlichen Start blockieren.",
+      "race-preparation": "Ein häufiger Fehler ist es, einen gespeicherten Plan zu sehen und anzunehmen, dass das Rennen bereit ist. Gespeichert, vollständig und nutzbar sind nicht immer der gleiche Zustand. Lesen Sie die Bereitschaftsübersicht und beheben Sie fehlende Vorräte, Rollen oder taktische Blöcke vor dem Schloss.",
+      "transfers": "Ein häufiger Fehler ist es, einen Deal nur durch Transfergebühr oder Gesamtbewertung zu beurteilen. Gehalt, Vertragslänge, Spähunsicherheit, Rollenpassung, Dienstplankapazität und zukünftiger Cashflow können einen billig aussehenden Transfer teuer machen.",
+      "transfers-and-scouting": "Ein häufiger Fehler ist es, zu verhandeln, bevor die Unsicherheit verringert wird. Scout wichtige Ziele zuerst, dann verwenden Sie Verhandlungsfeedback, um den schwächsten Teil des Angebots zu verbessern, anstatt zufällig jede Kosten zu erhöhen.",
+      "training": "Ein häufiger Fehler ist, die Trainingsintensität jeden Tag zu maximieren. Entwicklung hilft nur, wenn der Fahrer noch genügend Frische, Moral und Gesundheit hat, um zu erfüllen, wenn das wichtige Rennen ankommt.",
+      "infrastructure": "Ein häufiger Fehler ist, eine Einrichtung zu verbessern, weil ein höheres Niveau besser aussieht. Infrastruktur sollte Personalkapazität, Ausbildung, Medizin, Scouting, Mechaniker oder Logistik-Anforderungen, die der Verein tatsächlich hat, zu lösen.",
+      "default": "Ein häufiger Fehler ist es, die deaktivierten Nachrichten, Fristen oder Voraussetzungen zu ignorieren. Wenn eine Aktion nicht verfügbar ist, lesen Sie zuerst die sichtbare Anforderung und öffnen Sie dann die entsprechende Seite, die in den manuellen Links angezeigt wird."
+    },
+    "detail": {
+      "soldDiscarded": "Sobald die Ausrüstung verkauft oder verworfen wird, verlässt sie das aktive Inventar. Bevor sie bestätigt wird, überprüfen Sie, ob das Produkt noch in einem Standard- oder Spezialaufbau verwendet wird und ob ein Ersatz existiert. Verkauf ist eine Finanzaktion sowie eine Ausrüstungsaktion, weil die Entscheidung sowohl die Lagertiefe als auch das Clubgeld ändert.",
+      "readyWorn": "Status sollte vor dem Zustand gelesen werden. Bereit bedeutet, dass das Element normalerweise an normalen Aktionen teilnehmen kann; Zugewiesen bedeutet ein anderes Setup/event Derzeit besitzt das Element; In Maintenance bedeutet, dass es vorübergehend nicht verfügbar ist; Worn bedeutet, dass der Zustand Aufmerksamkeit benötigt. Die sicherste Vorlauf-Routine ist es, Status und Bedingung für jedes Element in der gewählten Einrichtung zu überprüfen.",
+      "assigned": "Zugewiesen ist ein Schutzzustand. Es verhindert, dass der Benutzer versehentlich verkaufen, reparieren oder wieder nutzen ein Element oder ein Asset, die ein anderer Plan derzeit abhängig ist. Öffnen Sie die Einrichtung, Race-Plan oder Zuordnung, die es besitzt, ersetzen/remove Es dort, dann zurück zu der Inventaraktion.",
+      "quote": "Ein Zitat ist die Spiel-Vorschau der realen Folge vor Bestätigung. Immer überprüfen Gesamtkosten/refund, Dauer, Förderfähigkeit und Warnungen. Der angegebene Wert ist zuverlässiger als ein altes manuelles Beispiel, weil Backend-Balance/configuration kann sich im Laufe der Zeit ändern.",
+      "condition": "Zustand ist ein Dauerhaltbarkeitssignal. Niedrigere Bedingung erhöht die Notwendigkeit für Wartung und kann reduzieren, wie sicher es ist, auf das Produkt zu verlassen/asset für wichtige Pläne. Warten Sie nicht, bis jedes Schlüsselstück gleichzeitig getragen wird; drehen Sie Reparaturen, so dass der Verein genug nutzbare Tiefe hält.",
+      "nutrition": "Die Verbrauchsgüter werden mit Fahrern und Etappen multipliziert. Der Manager sollte die benötigte Menge anhand der tatsächlichen Anzahl der ausgewählten Fahrer und der gesamten Etappenanzahl berechnen, dann eine kleine Reserve lassen, wenn möglich. Eine eintägige Bestandsschätzung reicht für ein mehrstufiges Rennen nicht aus.",
+      "durableSupplies": "Langlebige Rennbedarfe werden anders als Einmalverbraucher verfolgt. Ihre verbleibende Einsatzkapazität ist wichtig. Obligatorische Jersey-Verknappungen können die Bereitschaft blockieren; Regenjackenknappheit reduziert vor allem die Wetterflexibilität. Ersetzen Sie abgenutzte Einheiten vor einem wichtigen Rennblock.",
+      "sponsor": "Die Sponsoreninformationen sollten vor der Unterzeichnung oder dem Zielrennen gelesen werden. Garantiertes Geld ist nur ein Teil des Deals. Ziele, Bonuspools, technische Rabatte, Namensrechte und Fristen können ändern, was der Verein während der Saison tun sollte. Ein guter Sponsor Deal passt zum Teamkalender und der Teamstärke.",
+      "tax": "Steuer ist kein optionaler Hintergrundtext. Sie ist Teil des Finanzsystems und kann den realen Wert des Einkommens ändern. Wenn die Einnahmen von Sponsoren, Preisen oder Boni steigen, sollte der Manager Steuerermäßigung oder monatliche Anpassung Zeilen erwarten und sollte die Steuer Registerkarte verwenden, um die endgültige Bargeldposition zu verstehen.",
+      "deadline": "Windows und Fristen sind streng, weil die Rennmaschine und Saisonsysteme stabile Daten benötigen, bevor Simulation. Wenn eine Frist vergeht, kann der Benutzer die Chance verlieren, einen Plan zu bearbeiten, für ein Rennen zu beantragen, einen Fahrer zu bewegen oder einen Dienstplan einzureichen.",
+      "training": "Training und Müdigkeit müssen zusammen ausgeglichen werden. Der Manager versucht nicht, jede Trainingseinheit zu maximieren; der Manager versucht, wichtige Rennen mit Fahrern zu erreichen, die sowohl verbessern als auch frisch genug sind, um durchzuführen.",
+      "scouting": "Scouting reduziert Unsicherheit. Ein Spieler sollte unangefochtene externe Fahrer als unvollständige Informationen behandeln, nicht als bestätigte Werte. Scout-Berichte machen Transferentscheidungen sicherer, weil sie insgesamt, Potenziale, Stärken und andere versteckte Informationen mit einem Präzisionsniveau aufdecken oder schätzen.",
+      "finance": "Eine Erwähnung der Kosten sollte mit der Seite Finanzen verbunden werden. Der Benutzer sollte fragen: ist dies ein einmaliger Kosten, eine wöchentliche Kosten, eine monatliche Kosten, eine pro-Reise-Kosten oder eine saisonale Kosten? Der Unterschied ist wichtig, weil wiederkehrende Kosten leise mehr Gefahr als ein einzelner Kauf verursachen können.",
+      "roleSkills": "Die Rollen und Fähigkeiten sollten auf das Rennprofil abgestimmt werden. Insgesamt ist für einen schnellen Vergleich nützlich, aber Sprint, Klettern, Zeitfahren, flach, Ausdauer, Erholung, Widerstand, Rennen IQ und Teamwork entscheiden, wie ein Fahrer in bestimmten Situationen. Pick-Fahrer für die Route, nicht nur für die höchste Zahl.",
+      "results": "Wiederholung und Ergebnisse sollten als Erklärung für das Geschehen gelesen werden, nicht nur als finales Ranking. Gruppen, Lücken, Punkte, Bonussekunden, Etappenergebnisse und Einstufungen können dem Benutzer sagen, ob die Teamtaktik funktionierte, ob ein Fahrer isoliert war oder ob sich der nächste Race Plan ändern sollte.",
+      "default": "In der Praxis bedeutet dies, dass der Benutzer diese Regel mit den sichtbaren Kontrollen auf dem {{title}} Seite. Lesen Sie zuerst den Status, dann überprüfen Sie, ob der Button aktiviert ist, dann verstehen Sie, was nach dem Klicken ändert. Wenn die Seite zeigt eine Warnung, deaktivierten Zustand, Datum, Kosten, Zählen oder Anforderung, dass Informationen in der Regel wichtiger als die Schaltfläche Etikett selbst."
+    }
+  },
+  "sections": {
+    "quick-start": {
+      "category": "Erste Schritte",
+      "title": "Schnellstart für neue Manager",
+      "subtitle": "Die besten ersten Schritte nach der Gründung Ihres Clubs.",
+      "overview": "ProPeloton Manager ist ein komplettes Radclub-Management-Spiel. Sie wählen nicht nur Fahrer für Rennen. Sie verwalten Geld, Personal, Ausrüstung, Infrastruktur, Sponsoren, Training, Rennanwendungen, Rennvorbereitung und langfristige Rankings.",
+      "details": [
+        "Starten Sie auf Übersicht. Diese Seite zeigt Warnungen, Clubzustand, Finanzen, Sponsoren, kommende Rennen, Nachrichten, heute. Wenn etwas Wichtiges Aufmerksamkeit braucht, sollte Übersicht Sie in der Regel darauf hinweisen.",
+        "Öffnen Sie die Squad und lernen Sie Ihre Fahrer vor dem Kauf. Überprüfen Sie Rolle, Alter, Land, insgesamt, Potenzial, Müdigkeit, Moral, Gehalt, Vertrag und Fähigkeiten. Ein Fahrer mit hoher Gesamtsumme ist nicht automatisch der beste Fahrer für jedes Rennen.",
+        "Offenes Training und angemessenes Training. Hartes Training kann Entwicklung helfen, aber auch Müdigkeit verursachen. Ein müdes Team wird oft schlechter arbeiten, auch wenn die Fahrer stark auf Papier aussehen.",
+        "Öffnen Sie Kalender, um die Saison zu verstehen. Bewerben Sie sich für Rennen, die Ihr Team passen, aber nicht überladen Sie Ihre Fahrer. Ein kleines Team kann die Leistung schnell verlieren, wenn die gleichen Fahrer zu oft Rennen.",
+        "Open Race Vorbereitung, wenn Ihr Team für ein Rennen akzeptiert wird. Akzeptierte Eintrag ist nicht genug. Sie brauchen noch eine Race Plan und dann Stage Plans vor dem Rennen.",
+        "Offene Finanzierung vor Transfers, Ausrüstung, Infrastruktur oder Trainingslager. Bargeld wird für Gehälter, Personal, Steuern, Ausrüstung, Unterstützung für Rennen, Trainingslager, Richtlinien und Transfers benötigt."
+      ],
+      "facts": [
+        {
+          "label": "Hier anfangen",
+          "value": "Übersicht, Squad, Training, Kalender, Rennvorbereitung, Finanzen"
+        },
+        {
+          "label": "Haupt frühe Gefahr",
+          "value": "Zu viel ausgeben, bevor man die Gehälter und wiederkehrenden Kosten versteht"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Übersicht als Ihre tägliche Checkliste.",
+        "Bereiten Sie Rennen früh. Warten Sie nicht bis zum letzten Spieltag.",
+        "Nicht alle Startgeld für Transfers ausgeben, bevor Sie die Löhne und wiederkehrenden Kosten."
+      ],
+      "relatedLinks": [
+        "Übersicht öffnen",
+        "Offenes Schwaden",
+        "Offene Finanzen"
+      ]
+    },
+    "game-time": {
+      "category": "Erste Schritte",
+      "title": "Spielzeit und Fristen",
+      "subtitle": "Wie die Zeit im Spiel funktioniert im Vergleich zu dem realen Leben.",
+      "overview": "Spielzeit steuert Renntermine, Trainingslager, Marktauslauf, Finanzperioden, Steuerperioden und Saisonfluss. Die Fußzeile zeigt die maßgebliche Live-Spielzeit vom Backend.",
+      "details": [
+        "Ein Tag im Spiel entspricht 12 Echtzeitstunden. Dies bedeutet, dass zwei Tage im Spiel gleich einem Tag im Leben sind.",
+        "Wenn ein Fahrer Einreichungsfrist zwei in-Spiel Tage entfernt ist, haben Sie rund um einen realen Tag. Wenn es ein in-Spiel Tag entfernt, haben Sie etwa 12 Echtzeit-Stunden.",
+        "Spieldaten werden für Rennanwendungen, Fahrer-Einreichfristen, Bühnenplan-Schlösser, Trainingslager, Transfer-Auslauf, Finanztransaktionen und Steuerperioden verwendet.",
+        "Echte technische Zeitstempel sind nicht das gleiche wie Spielzeit. Einige Backend-Reihen haben created_at für die Sortierung oder Paginierung, aber das Datum, an dem der Spieler mitspielt, sollte gespeicherte Metadaten für das Spieldatum verwenden, wenn verfügbar.",
+        "Bereiten Sie sich immer vor dem letzten Moment. Fehlende Fristen können Race Plans blockieren oder Bühnenpläne unvollständig lassen."
+      ],
+      "facts": [
+        {
+          "label": "Zeitskala",
+          "value": "1 Spieltag = 12 Echtzeitstunden"
+        },
+        {
+          "label": "Umstellung",
+          "value": "2 Spieltage = 1 real-life Tag"
+        },
+        {
+          "label": "Angezeigt in",
+          "value": "Dashboard Fußzeile und viele Spiel-Date-Labels"
+        }
+      ],
+      "tips": [
+        "Überprüfen Sie die Fußzeile Spielzeit vor wichtigen Aktionen.",
+        "Verwenden Sie Kalender und Rennen Vorbereitung zusammen."
+      ]
+    },
+    "coins": {
+      "category": "Coins und Konto",
+      "title": "Coins, Coin-Pakete und Empfehlungsprämien",
+      "subtitle": "Der Unterschied zwischen Kontomünzen und Clubgeld.",
+      "overview": "Coins sind Kontowährung. Club-Bargeld ist die Team-Wirtschaft. Verwechseln Sie Coins nicht mit im Spiel Bargeld für Gehälter, Transfers, Ausrüstung und Infrastruktur verwendet.",
+      "details": [
+        "Die Seite Pro Packages lädt aktive Münzpakete aus der Datenbank. Dies bedeutet, dass genaue Paketgrößen und Preise datenbankgesteuert sind und von der Live-Shop-Seite vertrauenswürdig sein sollten.",
+        "Die Seite berechnet den Preis pro Coins und kann das beste Wertpaket hervorheben. Paketetiketten wie Starter Boost oder Beliebteste basieren auf Münzmenge.",
+        "Die Kaufhistorie wird geladen von user_coin_ledger wo Grund ist der Kauf. Stripe Sitzungsdetails werden absichtlich nicht an Benutzer angezeigt.",
+        "Einladen Freunde erstellt einen Verweis Link. Eine Empfehlung wird abgeschlossen, wenn der betroffene Benutzer einen Club erstellt und kauft ihr erstes Münzpaket. Der aktuelle Belohnung Text sagt 40 Coins.",
+        "Coins sind dem Benutzer angehängt/account. Wenn ein Verein liquidiert wird, bleiben das Benutzerkonto und die Coins aktiv; nur dieser Club ist geschlossen."
+      ],
+      "facts": [
+        {
+          "label": "Aktuelle Spielkostenkonstante",
+          "value": "2 Coins pro Tag auf der aktuellen Seite Pro Packages"
+        },
+        {
+          "label": "Paketquelle",
+          "value": "coin_packages Datenbanktabelle"
+        },
+        {
+          "label": "Kasse",
+          "value": "create-coin-checkout Edge Function"
+        },
+        {
+          "label": "Belohnung einladen",
+          "value": "40 Coins, wenn ein Freund einen Club kreiert und ihr erstes Münzpaket kauft"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Pro Packages für genaue Lebendpreise.",
+        "Verwenden Sie Freunde einladen, um Ihren Empfehlungslink zu teilen."
+      ],
+      "relatedLinks": [
+        "Münzpakete",
+        "Freunde einladen"
+      ]
+    },
+    "club-identity": {
+      "category": "Identität des Vereins",
+      "title": "Club Branding, Logo und Jersey",
+      "subtitle": "Teamname, Farben, Logo, Trikot und Sponsor Namensrechte Schlösser.",
+      "overview": "Ihre Club-Identität umfasst Namen, Farben, Logo und Trikot. Es wird durch Customize Team verwaltet, aber Sponsor Namensrechte Angebote können vorübergehend Sperren oder Teile der öffentlichen Anzeige ändern.",
+      "details": [
+        "Personalisieren Team weiterhin Branding durch Backend-Funktionen, nicht nur lokale Benutzeroberfläche Zustand. Dies ist wichtig, weil Sponsor-Namensrechte können den Namen sperren oder den Anzeigenamen beeinflussen.",
+        "Logo-Uploads werden für Typ und Dateigröße validiert, in PNG In-Browser und im Club-Logos Eimer gelagert.",
+        "Das Entfernen eines Logos stellt ein generiertes Basislogo wieder her, anstatt den Verein ohne Logo zu verlassen.",
+        "Das Jersey-System speichert ein Heimset in team_kits. Es kann generische Pool Trikots, generische Fallback, Bild-URLs oder hochgeladene Bilder je nach dem ausgewählten Modus verwenden.",
+        "Ein Namensgeber zahlt in der Regel mehr, ändert aber vorübergehend den Namen des Teams während der Saison. Der ursprüngliche Name kehrt zu Beginn der nächsten Saison zurück."
+      ],
+      "facts": [
+        {
+          "label": "Formate für das Logo",
+          "value": "JPG, PNG, WEBP"
+        },
+        {
+          "label": "Maximale Größe des Logos",
+          "value": "0.5 MB"
+        },
+        {
+          "label": "Jersey Formate",
+          "value": "JPG, PNG, WEBP"
+        },
+        {
+          "label": "Höchstgröße von Jersey",
+          "value": "1 MB und 512 × 512 px oder kleiner"
+        },
+        {
+          "label": "Logo-Speicher",
+          "value": "Hochgeladene Logos werden umgewandelt in PNG und in Club-Logos gelagert"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie klare Logos, die noch in kleinen Größen funktionieren.",
+        "Nehmen Sie nicht nur die Namensrechte für Geld an; verstehen Sie den Identitätseffekt."
+      ],
+      "relatedLinks": [
+        "Team anpassen"
+      ]
+    },
+    "overview": {
+      "category": "Dashboard",
+      "title": "Übersichtsseite",
+      "subtitle": "Ihr täglicher Kontrollraum.",
+      "overview": "Übersicht vereint die wichtigsten Informationen aus dem gesamten Club in einem Dashboard: Alarme, KPIs, Operationen, Kaderpuls, Zeitplan, Rennwelt, Finanzen, Notschulden, Nachrichten, schnelle Aktionen und Hauptsponsor.",
+      "details": [
+        "Alarme zeigen, was Aufmerksamkeit braucht. Wenn ein Alarm einen Link hat, öffnet er normalerweise die Seite, auf der das Problem behoben werden kann.",
+        "KPIs geben schnelle Zahlen, während Operations aktive Systeme wie Finanzen, Training, Infrastruktur, Medizin, Sponsor oder Posteingang Veranstaltungen zeigen.",
+        "Squad Pulse hilft Ihnen zu verstehen, ob das Team bereit ist. Hohe Müdigkeit, Verletzungen, Krankheit oder viele auslaufende Verträge sollten schnell behandelt werden.",
+        "Race World Panels zeigen kommenden Zeitplan, heute. Sie helfen Ihnen, die Spielwelt zu folgen, auch wenn Ihr Team nicht Rennen.",
+        "Finanzpanels helfen Ihnen, gefährliche Ausgaben zu vermeiden. Notfallschulden Gesundheit ist besonders wichtig, wenn Rettungsmaßnahmen verwendet wurden oder Liquidation Risiko besteht.",
+        "Das Hauptsponsor-Panel kann die Identität des Sponsors und den Link in das Sponsor-Dashboard zeigen."
+      ],
+      "facts": [
+        {
+          "label": "Hauptzweck",
+          "value": "Tägliche Checkliste und schnelle Navigation"
+        },
+        {
+          "label": "Wichtige Finanzdaten",
+          "value": "Saldo, Betriebsergebnis/expense, Sponsor Einkommen, Kosten, Reiseprognose und Schulden Gesundheit"
+        },
+        {
+          "label": "Schwadpulse",
+          "value": "Fitness, Moral, Bereitschaft, Form, Fahrer verfügbar, verletzt/sick/not voll fit Fahrer und Auslaufen Verträge"
+        }
+      ],
+      "tips": [
+        "Öffnen Sie Übersicht zuerst jedes Login.",
+        "Wenn Übersicht zeigt finanzielles Risiko, überprüfen Sie Finanzen vor Ausgaben."
+      ],
+      "relatedLinks": [
+        "Übersicht öffnen"
+      ]
+    },
+    "notifications-inbox": {
+      "category": "Dashboard",
+      "title": "Meldungen und Posteingang",
+      "subtitle": "Systemwarnungen, ungelesen/read Seiten und Gespräche.",
+      "overview": "Benachrichtigungen sind Spiel/admin Benachrichtigungen. Posteingang ist für direkte oder Admin-Gespräche. Zusammen helfen sie Benutzern, verpasste Fristen zu vermeiden und mit anderen Managern oder Admins zu kommunizieren.",
+      "details": [
+        "Benachrichtigungen können nach Titel, Nachricht, Typ, Quelle, Präferenzgruppe oder Erstellungszeit durchsucht werden.",
+        "Kategorien werden von Präferenzgruppe, Quell- oder Typcode gelöst. Dies hilft separate Finanz-, Rennen-, Sponsor-, Transfer- und Systemmeldungen.",
+        "Benachrichtigungseinstellungen können kontrollieren, welche Benachrichtigungstypen der Benutzer erhält.",
+        "Posteingang listet Gespräche, ungelesene Zählungen, letzte Nachrichtenvorschau und ob das Gespräch beantwortet werden kann.",
+        "Das Öffnen einer Konversation lädt Nachrichten und markiert sie als gelesen. Das Senden einer Nachricht verwendet Posteingang RPCs."
+      ],
+      "facts": [
+        {
+          "label": "Benachrichtigungsregister",
+          "value": "Ungelesen und Lesen"
+        },
+        {
+          "label": "Benachrichtigungswerkzeuge",
+          "value": "Suche, Kategoriefilter, Pagination, Actionlinks"
+        },
+        {
+          "label": "Einschubgewindetypen",
+          "value": "Direkt und Admin direkt"
+        }
+      ],
+      "tips": [
+        "Prüfen Sie ungelesene Benachrichtigungen vor den Rennterminen.",
+        "Verwenden Sie Posteingang für Gespräche, Benachrichtigungen für System/game Alarme."
+      ],
+      "relatedLinks": [
+        "Mitteilungen",
+        "Posteingang",
+        "Einstellungen"
+      ]
+    },
+    "squad-riders": {
+      "category": "Fahrer",
+      "title": "Mannschaft, erstes Team und Reiterlistenansichten",
+      "subtitle": "Wie Sie Ihren Dienstplan verstehen.",
+      "overview": "Squad ist, wo Sie verwalten und inspizieren Sie Ihre First Team Fahrer. Es enthält verschiedene Ansichten für allgemeine Dienstplandaten, Finanzen, Fähigkeiten und Form/development.",
+      "details": [
+        "Die Übersicht gibt Ihnen den schnellsten Überblick über Ihren Dienstplan. Nutzen Sie ihn für die täglichen Kontrollen.",
+        "Financial View zeigt Gehalt, Marktwert und Vertragsinformationen. Verwenden Sie es vor der Erneuerung, Freigabe oder Verkauf von Fahrern.",
+        "Skills View zeigt spezielle Attribute. Verwenden Sie es vor der Rennauswahl, weil ein Bergsteiger, Sprinter und Zeitfahrender unterschiedliche Fähigkeiten benötigen.",
+        "Form & Entwicklung zeigt Bereitschaftsdaten wie Müdigkeit, Moral, Potenzial und Verfügbarkeit.",
+        "Das Kader-Dashboard kann auch Siege, Podiumsplätze, Top 10s, Best GC, letzte Rennreihen, nächste Rennauswahl und Race-Typ Schnappschüsse."
+      ],
+      "facts": [
+        {
+          "label": "Erste Gruppe max in der Benutzeroberfläche",
+          "value": "18 Fahrer"
+        },
+        {
+          "label": "Ansichtsliste",
+          "value": "Allgemein, Finanzen, Fähigkeiten, Form & Entwicklung"
+        },
+        {
+          "label": "Allgemeine Daten für Fahrer",
+          "value": "Land, Rolle, Alter, Gesamt, Ermüdung, Status, Marktwert, Gehalt, Vertrag, Fähigkeiten, Moral und Potenzial"
+        }
+      ],
+      "tips": [
+        "Nicht beurteilen Fahrer nur insgesamt.",
+        "Überprüfe Verträge vor Ende der Saison.",
+        "Offene Fahrerprofile für tiefere Entscheidungen."
+      ],
+      "relatedLinks": [
+        "Offenes Schwaden"
+      ]
+    },
+    "rider-profile-skills": {
+      "category": "Fahrer",
+      "title": "Fahrerprofil, Fähigkeiten, Fitness und Race Sharpness",
+      "subtitle": "Warum Fahrerqualität mehr als insgesamt ist.",
+      "overview": "Reiterprofile zeigen Identität, Attribute, Vertrag, Training, Vergleich und Geschichte. Ein Fahrer ist ein echter Rennwert, der von Geschicklichkeitsmix, Fitness, Moral, Müdigkeit, Gesundheit und Rennschärfe abhängt.",
+      "details": [
+        "Insgesamt ist eine breite Zusammenfassung. Es ist nützlich, aber genaue Attribute entscheiden Rennrolle. Sprint zählt in Bund-Finishes. Klettern zählt auf Bergen. Zeit-Trial zählt in TT-Stadien. Erholung ist wichtig in Etappenrennen.",
+        "Müdigkeit steht für Müdigkeit und angesammelten Stress. Hohe Müdigkeit kann starke Fahrer unterbieten oder riskant werden, um auszuwählen.",
+        "Moral wirkt auf das Vertrauen und kann die Leistung beeinflussen. Niedrige Moral sollte nicht ignoriert werden.",
+        "Rennschärfe misst Rennrhythmus. Zu wenig Rennen kann Schärfe reduzieren, aber zu viel Rennen verursacht Überlastungsrisiko.",
+        "Der Reitervergleich zeigt zwei Fahrer nebeneinander mit Attributen wie Sprint, Klettern, Zeitfahren, Ausdauer, Flat, Erholung, Widerstand, Rennen IQ und Teamwork.",
+        "Externe Reiterprofile können genaue Informationen ausblenden, sofern nicht gescoutet. Scouting-Berichte verbessern die Präzision."
+      ],
+      "facts": [
+        {
+          "label": "Eigene Fahrer-Registerkarte",
+          "value": "Übersicht, Vertrag, Training, Vergleich, Geschichte"
+        },
+        {
+          "label": "Kernattribute",
+          "value": "Gesamt, Potenzial, Sprint, Klettern, Zeitfahren, Ausdauer, flach, Erholung, Widerstand, Rennen IQ, Teamarbeit"
+        },
+        {
+          "label": "Verfügbarkeitsstatus",
+          "value": "Fit, nicht voll fit, verletzt, krank"
+        }
+      ],
+      "tips": [
+        "Für Sprints, Check Sprint, Flat, Ausdauer und Teamwork.",
+        "Für Berge, überprüfen Sie Klettern, Ausdauer, Widerstand und Erholung.",
+        "Vergleich vor Übertragungsentscheidungen verwenden."
+      ]
+    },
+    "developing-team": {
+      "category": "Fahrer",
+      "title": "Entwicklung des Teams",
+      "subtitle": "U23/development Struktur, Kauf und Bewegung Fenster.",
+      "overview": "Das Developing Team ist ein zweites Team, das mit dem Hauptclub verbunden ist. Es wird für junge oder sekundäre Fahrer eingesetzt und hat eigene Richtlinien für die Begrenzung der Reise- und Bewegungsfreiheit.",
+      "details": [
+        "Voreinstellungen laden Entwicklung des Teamstatus vom Backend. Es zeigt Echtzeit-, Spieltage, Münzausgleich, Münzkosten, Anforderungsstatus, Bewegungs-Fensterzustand und ob der Kauf erlaubt ist.",
+        "Nach dem Kauf pinnt die App den aktiven Club zurück zum Hauptclub, so dass das Dashboard nicht versehentlich in den Entwicklungsclub wechselt.",
+        "Die Entwicklung der Teamfahrer kann nur dann in die Erste Mannschaft verschoben werden, wenn das Bewegungsfenster geöffnet ist und die Erste Mannschaft Platz hat.",
+        "Wenn ein Entwicklerteamfahrer 24 oder älter ist, kann die Benutzeroberfläche eine Actionwarnung anzeigen. Wenn das Bewegungsfenster geöffnet ist, ist jetzt Aktion erforderlich; ansonsten muss der Fahrer nächstes Fenster bewegen."
+      ],
+      "facts": [
+        {
+          "label": "Team max in UI entwickeln",
+          "value": "8 Fahrer"
+        },
+        {
+          "label": "Einkaufsort",
+          "value": "Präferenzen"
+        },
+        {
+          "label": "Bewegungsregeln",
+          "value": "Fahrer können sich nur bewegen, wenn das Bewegungsfenster geöffnet ist"
+        },
+        {
+          "label": "Alterswarnung",
+          "value": "Fahrer ab 24 Jahren benötigen Aufmerksamkeit"
+        }
+      ],
+      "tips": [
+        "Nutzen Sie das Developing Team für zukünftige Talente.",
+        "Halten Sie einen ersten Squad-Slot offen, wenn Sie einen Fahrer fördern wollen."
+      ],
+      "relatedLinks": [
+        "Einstellungen",
+        "Team"
+      ]
+    },
+    "staff": {
+      "category": "Fahrer",
+      "title": "Personal, Personalrollen und Personalkurse",
+      "subtitle": "Wie Mitarbeiter Ihren Club unterstützen.",
+      "overview": "Mitarbeiter verbessern Training, Erholung, Scouting, Mechanik, Rennunterstützung und Operationen. Mitarbeiterrollen haben Kapazitätsgrenzen, die oft mit Infrastruktur verbunden sind.",
+      "details": [
+        "Trainer und Trainer unterstützen regelmäßiges Training, Trainingslager und Fahrerentwicklung.",
+        "Team Doktor, Physio und Ernährungswissenschaftler unterstützen Gesundheit, Erholung, Müdigkeit und medizinische Handhabung.",
+        "Mechanik unterstützt die Wartung von Anlagen und technische Systeme.",
+        "Sportdirektor unterstützt die Vorbereitung, Taktik und Vorschläge für den Bühnenplan.",
+        "Scout / Analyst unterstützt Scout-Berichte und Marktwissen.",
+        "Die Kurse können aktiv oder vor kurzem abgeschlossen werden, mit Dauertagen, Kosten und Attributgewinnen.",
+        "Die Verlängerungen des Personalvertrags können aktuelles Gehalt, beantragtes Gehalt, Mindestlohn, Zinsscore, Bereitschaft und Entscheidungsgründe umfassen."
+      ],
+      "facts": [
+        {
+          "label": "Aufgaben",
+          "value": "Trainer, Obertrainer, U23 Cheftrainer, Teamarzt, Physio, Ernährungswissenschaftler, Mechaniker, Sportdirektor, Pfadfinder / Analyst"
+        },
+        {
+          "label": "Personalstatistik",
+          "value": "Kompetenz, Erfahrung, Potenzial, Führung, Effizienz, Loyalität"
+        },
+        {
+          "label": "Kurse",
+          "value": "Kann Mitarbeiterattribute über Spieltage verbessern und Geld kosten"
+        }
+      ],
+      "tips": [
+        "Mietpersonal auf der Grundlage von Clubschwäche.",
+        "Infrastruktur verbessern, wenn die Kapazität des Personals blockiert ist."
+      ],
+      "relatedLinks": [
+        "Personalmarkt",
+        "Infrastruktur"
+      ]
+    },
+    "training": {
+      "category": "Training",
+      "title": "Regelmäßige Trainings- und Trainingslager",
+      "subtitle": "Verbessern Sie Fahrer, ohne die Frische zu zerstören.",
+      "overview": "Training steuert Fahrerentwicklung und Müdigkeit. Regelmäßiges Training läuft. Trainingslager sind stärker, teurere Blöcke mit Standort, Wetter, Fahrer und Personal.",
+      "details": [
+        "Regelmäßiges Training kann Team-Standards und individuelle Fahrerpläne. Schwerpunkte sind allgemeine, Erholung, Sprint, Klettern, flach, Zeitfahren, Ausdauer, Widerstand, Rennen IQ und Teamwork.",
+        "Hartes Training kann mehr Gewinne, aber auch mehr Müdigkeit und Risiko. Recovery Training ist nach harten Rennen oder Etappenrennen nützlich.",
+        "Trainingslager umfassen Lage, Region, Lagertyp, Geländeprofil, Höhe, Sterne, Kostenindex, Qualitätsmultiplikator, Erholungskomfort, bevorzugte Wochen, riskante Wochen und geschlossene Wochen.",
+        "Camp-Angebote können Reisen, Unterkunft, Lagergebühr, Logistik, Gesamtkosten, pro-Fahrer Kosten, Wetterzustand, Training Modifikator, verpasste Tage Chance und Warnungen.",
+        "Aktuelle Camp-Seiten zeigen Teilnehmer, Mitarbeiter, Wetter, Mitarbeiter steigern Zusammenfassungen, tägliche Berichte und Trainingspläne für kommende Lagertage."
+      ],
+      "facts": [
+        {
+          "label": "Ausbildungsregister",
+          "value": "Regelmäßige und Camps"
+        },
+        {
+          "label": "Regelmäßige Intensitäten",
+          "value": "Erholung, Licht, normal, hart"
+        },
+        {
+          "label": "Lagertypen",
+          "value": "Allgemein, Sprint, Klettern, flach, Zeitfahren"
+        },
+        {
+          "label": "Intensitäten des Campplans",
+          "value": "Tag frei, leicht, normal, hart"
+        }
+      ],
+      "tips": [
+        "Trainieren Sie nicht alle hart die ganze Zeit.",
+        "Match Training zu Rennkalender und Fahrerrolle.",
+        "Check Camp Kosten vor der Buchung."
+      ],
+      "relatedLinks": [
+        "Offene Schulung"
+      ]
+    },
+    "equipment": {
+      "category": "Ausrüstung",
+      "title": "Ausrüstung, Setups, Inventar und Markt",
+      "subtitle": "Langlebige Rennausrüstung und Leistungsbonus.",
+      "overview": "Ausrüstung steuert Rennaufbau, eignes Getriebe, Marktkäufe, Wartung und technische Unterstützung von Sponsoren. Gute Ausrüstung kann die Geländeleistung verbessern und Ermüdung reduzieren.",
+      "details": [
+        "Übersicht zeigt Bereitschaft, Kategoriezusammenfassungen, Standard-Setup, Setup-Presets, Race-Supplies und technische Unterstützung für Sponsoren.",
+        "Standard Race Setup wird verwendet, wenn kein bestimmtes Setup gewählt wird. Setup-Voreinstellungen erlauben spezielle Setups für Sprint, Berg, Zeitfahren oder gepflasterte Rennen.",
+        "Inventar zeigt aktives Eigentum Ausrüstung. Verkaufte und verworfene Gegenstände sind aus aktivem Bestand versteckt.",
+        "Zu den Ausstattungsstatus gehören bereit, zugewiesen, in Wartung und abgenutzt. Fertige und abgenutzte Gegenstände können in der Regel repariert werden/sold/discarded, während zugewiesene Gegenstände eingeschränkt sind.",
+        "Reparatur ist in der Regel verfügbar, wenn die Bedingung 90% oder niedriger ist und das Element Aktionen ausführen kann.",
+        "Markt zeigt Artikel mit Kategorie, Qualität, Geländerolle, Boni, Sponsorenrabatte und Kaufaktion. Technische Sponsorenrabatte können die Anschaffungskosten reduzieren."
+      ],
+      "facts": [
+        {
+          "label": "Geräte-Registerblätter",
+          "value": "Übersicht, Inventar, Markt, Rennbedarf"
+        },
+        {
+          "label": "Dauerhafte Kategorien",
+          "value": "Rahmen, Radsatz, Reifen, Gruppen, Helm, Schuhe"
+        },
+        {
+          "label": "Prämienarten",
+          "value": "Flach, hügelig, Berg, Kopfsteinpflaster, Zeitfahren, Sprint, Ermüdungsreduktion"
+        },
+        {
+          "label": "Qualitätskennzeichnungen",
+          "value": "Grundlegend, Gut, Super"
+        }
+      ],
+      "tips": [
+        "Erstellen Sie Setups für verschiedene Rassentypen.",
+        "Reparatur wichtiger Ausrüstung vor wichtigen Rennen.",
+        "Überprüfen Sie Sponsor Rabatte vor dem Kauf."
+      ],
+      "relatedLinks": [
+        "Offene Ausrüstung"
+      ]
+    },
+    "race-supplies": {
+      "category": "Ausrüstung",
+      "title": "Rassenversorgung",
+      "subtitle": "Verbrauchsmaterialien und langlebige Bühnenplan-Lieferungen.",
+      "overview": "Race Supplies werden von Race Preparation und Stage Plans. Einige Vorräte werden in jeder Phase verbraucht, während Trikots und Regenjacken langlebige wiederverwendbare Gegenstände mit Bühnennutzungsbeschränkungen sind.",
+      "details": [
+        "Bidons verwenden 1–4 pro Fahrer im Bühnenaufbau. Sie sind Verbrauchsmaterialien für den einmaligen Gebrauch und unterstützen Hydratation und Ermüdungskontrolle. Unterhalb des Minimums kann das Ermüdungsrisiko erhöhen.",
+        "Energie Gele verwenden 0–4 pro Fahrer. Sie unterstützen Ausdauer und Endaufwand Effizienz. Es gibt keinen zusätzlichen Vorteil nach vier Gele pro Fahrer.",
+        "Die Ernährungspakete verwenden 0–2 pro Fahrer. Sie unterstützen Ausdauerstabilität und Erholung nach der Phase. Lange Stufen ohne Ernährung können den Ermüdungsdruck erhöhen.",
+        "Race Jersey Complete ist verpflichtend in Stage Plans. Fehlende Jersey-Kits können Bühnenaufbau blockieren.",
+        "Regenjacken sind optional aber wertvoll in nass/cold Wetter. Ausgerollte langlebige Vorräte sind nicht mehr nutzbar.",
+        "Die Etappenrennen verbrauchen schnell Vorräte, weil die Mengen pro Fahrer und Stufe verwendet werden."
+      ],
+      "facts": [
+        {
+          "label": "Verbrauchsmaterialien",
+          "value": "Bidonen / Wasserflaschen, Energie Gele, Ernährung Packs"
+        },
+        {
+          "label": "Dauerhafte Lieferungen",
+          "value": "Race Jersey komplett, Regenjacken"
+        },
+        {
+          "label": "Rennen Jersey abgeschlossen",
+          "value": "Pflicht; 10 Verwendungen pro Einheit"
+        },
+        {
+          "label": "Regenjacken",
+          "value": "Optionaler Wetterpunkt; 25 Einsatzstufen pro Einheit"
+        }
+      ],
+      "tips": [
+        "Kaufen Sie Vorräte vor Fristen.",
+        "Überprüfen Sie die Bestände vor Etappenrennen.",
+        "Verwenden Sie Regenjacken für schlechte Wetterstufen."
+      ],
+      "relatedLinks": [
+        "Rassenversorgung"
+      ]
+    },
+    "infrastructure": {
+      "category": "Infrastruktur",
+      "title": "Infrastruktureinrichtungen und Vermögenswerte",
+      "subtitle": "Langfristige Clubgebäude, Personalkapazität und Unterstützungsfahrzeuge.",
+      "overview": "Infrastruktur ist Ihr langfristiges Entwicklungssystem. Einrichtungen öffnen die Kapazität des Personals und verbessern Training, Gesundheit, Scouting und Mechanik. Assets bieten Fahrzeuge und Unterstützung Ressourcen für Rennen und Operationen.",
+      "details": [
+        "Club House ist das Hauptverwaltungsgebäude. Es unterstützt Organisations- und Zukunftsmanagementsysteme.",
+        "Training Center verbessert die Coaching-Wirksamkeit, die Trainingsqualität, die Entwicklungsunterstützung und das Überlastrisikomanagement.",
+        "Medical Center unterstützt Teamärzte, Physios und Ernährungswissenschaftler und verbessert die Verletzungsprävention/recovery Unterstützung.",
+        "Jugendakademie unterstützt zukünftige Fahrer und U23 Entwicklung und kann entsperren U23 - Kopf-Trainer-Systeme.",
+        "Mechanik-Workshop verbessert Reparaturen, technische Unterstützung und mechanische Kapazität.",
+        "Scouting Office verbessert Scouting-Bericht Qualität Kappe, Scouting-Kapazität und Marktinformationen.",
+        "Infrastruktur Jobs kosten Bargeld und nehmen Spieltage. Aktive Jobs zeigen Dauer, Fertigstellungsdatum, bezahlte Kosten und Bau-Slots.",
+        "Jobs und Vermögenswerte können Stornierung, Reparatur oder Verkauf Angebote. Zitate zeigen Rückerstattung/cost/value und ob die Aktion erlaubt ist.",
+        "Vermögenswerte haben Zustand und Status. Zugeordnete oder gesperrte Vermögenswerte können nicht repariert oder verkauft werden, bis kostenlos."
+      ],
+      "facts": [
+        {
+          "label": "Einrichtungen",
+          "value": "Clubhaus, Schulungszentrum, Medizinisches Zentrum, Jugendakademie, Mechanik-Workshop, Scouting Office"
+        },
+        {
+          "label": "Höchstwerte der Fazilität",
+          "value": "Club House 5, Training Center 5, Medical Center 5, Jugendakademie 2, Mechanik-Workshop 4, Scouting Office 4"
+        },
+        {
+          "label": "Forderungen",
+          "value": "Team Autos, Team Bus, Ausrüstung Van, Mobile Werkstatt, Medical Van"
+        }
+      ],
+      "tips": [
+        "Upgrade auf Basis Ihres Engpasses.",
+        "Beginnen Sie nicht zu viele teure Jobs auf einmal.",
+        "Halten Sie Rennvermögen repariert."
+      ],
+      "relatedLinks": [
+        "Offene Infrastruktur"
+      ]
+    },
+    "calendar-race-detail": {
+      "category": "Kalender und Rennen",
+      "title": "Kalender, Race-Anwendungen und Race Detail",
+      "subtitle": "Rennen finden, anwenden, Profile inspizieren und Ergebnisse verfolgen.",
+      "overview": "Der Kalender zeigt die Saison und die Rennmöglichkeiten. Race Detail zeigt das vollständige Profil, die Etappen, die Teilnehmer, die Ergebnisse, die Klassifizierungen und die Wiederholungsinformationen für ein Rennen.",
+      "details": [
+        "Saisonkalender zeigt einen Tages-Ansicht von Rennen, Camps, Events und Feiertagen.",
+        "Race Calendar zeigt Race Cards mit Kategorie, Land, Stadt, Datum, Race Type, Teamlimits, akzeptierten Teams und Anwendungsstatus.",
+        "Race-Anwendungen hängen von offenen/close Termine. Wenn die Bewerbungen geschlossen sind, kann sich Ihr Team nicht mehr bewerben.",
+        "Race Detail zeigt die Eintrittsregeln wie Teamlimits, Fahrerlimits, Bewerbungsfrist, Teamliste-Ankündigung, Rider-Einreichfrist und Preisgeld.",
+        "Die Details der Etappe können Route, Distanz, Gelände, Finish-Typ, Gipfel-Finish, Geländeanteile, Höhengewinn, Profilbild, Wetter, Sprints und KOM...............................................................................................................................................................................................................................................................",
+        "Nach einem Rennen startet, Race Detail kann Live-Zustand, Replay Frames, Kommentar, Platzierungen, Ergebnisse und Klassifizierungen."
+      ],
+      "facts": [
+        {
+          "label": "Kalenderansichten",
+          "value": "Jahreszeit und Rennen"
+        },
+        {
+          "label": "Jahreszeitenfilter",
+          "value": "Rennen, Trainingscamps, Veranstaltungen, Urlaub"
+        },
+        {
+          "label": "Status der Rasse",
+          "value": "Nicht offen, offen, geschlossen, Rennen aktiv, Rennen beendet, abgebrochen"
+        },
+        {
+          "label": "Einreihung",
+          "value": "Allgemein, Punkte, Berg, jung, Team"
+        }
+      ],
+      "tips": [
+        "Bewerben Sie sich für Rennen, die zu Ihrem Team passen.",
+        "Prüfen Sie die Etappenprofile vor der Vorbereitung.",
+        "Überprüfen Sie Wetter in der Nähe des Renntages."
+      ],
+      "relatedLinks": [
+        "Kalender öffnen"
+      ]
+    },
+    "race-preparation": {
+      "category": "Kalender und Rennen",
+      "title": "Vorbereitung der Rennen und Stage Plans",
+      "subtitle": "Akzeptierte Rassen, Race Plan, Stage Plans und Bereitschaft.",
+      "overview": "Race Preparation macht ein akzeptiertes Rennen zu einem echten Plan. Es ist eine der wichtigsten Seiten im Spiel, weil die Rennmaschine von Fahrerauswahl, Personal, Vermögen, Ausrüstung, Zubehör und Bühnentaktik abhängt.",
+      "details": [
+        "Akzeptierte Rennen zeigt Rennen, wo Ihr Team angenommen wurde und welchen Vorbereitungsstatus jedes Rennen hat.",
+        "Race Plan wählt Fahrer, Personal, Vermögenswerte, Ausrüstung und Rennbedarf. Fahrergrenzen müssen mit den Rennregeln übereinstimmen.",
+        "Blockierte Fahrer oder Vermögenswerte können bereits überlappenden Ereignissen zugeordnet werden. Dies verhindert unmögliche Zeitpläne.",
+        "Zitatvorschau zeigt Kosten und Unterstützungsbonus von Personal, Vermögenswerten, Ausrüstung und Richtlinien.",
+        "Nach Race Plan eingereicht wird, Stage Plans offen. Stage Plans Rollen, Teamtaktik, individuelle Taktik, Ausrüstung und Zubehör für jede Etappe.",
+        "Die Bereitschaft des Bühnenplans verfolgt gespeicherte Pläne, brauchbare Pläne, fehlende Pläne, leere Pläne, fehlende Vorräte, taktische Vollständigkeit und empfohlene Maßnahmen.",
+        "Sportdirektor Vorschläge können mit Ausrüstung, Teamtaktik, individuelle Taktik und Zubehör helfen, aber sie sind Führung, nicht garantiert perfekte Pläne."
+      ],
+      "facts": [
+        {
+          "label": "Tabulatoren",
+          "value": "Akzeptierte Rassen, Race Plan, Stage Plans"
+        },
+        {
+          "label": "Rennpersonal",
+          "value": "Sportdirektor, Team Doctor, Physio, Mechanik"
+        },
+        {
+          "label": "Rennvermögen",
+          "value": "Team Bus, Ausrüstung Van, Mobile Werkstatt, Medical Van, Team Auto 1–3"
+        },
+        {
+          "label": "Tonhöhe der Bühnenbereitschaft",
+          "value": "Grün, gelb, orange, rot, grau"
+        }
+      ],
+      "tips": [
+        "Bereiten Sie sich vor Fristen vor.",
+        "Verwenden Sie verschiedene Pläne für verschiedene Bühnentypen.",
+        "Nicht ignorieren Vorräte und Wetter."
+      ],
+      "relatedLinks": [
+        "Vorbereitung auf das offene Rennen"
+      ]
+    },
+    "team-ranking": {
+      "category": "Rankings und Statistiken",
+      "title": "Team Ranking, Tiers, Divisionen und Playoffs",
+      "subtitle": "Promotion, Relegation und Rangfolge.",
+      "overview": "Das Team Ranking zeigt Ihren Platz in der Welt des Radsports. Teams sammeln internationale Punkte aus den Rennergebnissen. Finalwertungen können Promotion, Playoffs und Relegation entscheiden.",
+      "details": [
+        "WorldTeam Die UI zeigt unten fünf relegiert.",
+        "ProTeam West und ProTeam Ost jeder Show-Gewinner direkt gefördert, 2.–4. in die Welt Playoff und unter fünf relegiert.",
+        "Continental Europa und Amerika ernähren Pro West Playoff. Continental Asien, Afrika und Ozeanien ernähren Pro East Playoff.",
+        "Continental Europa und Asien zeigen die sechs hintereinander abgeschobenen Länder. Continental Amerika und Afrika zeigen die untersten fünf abgeschobenen. Continental Ozeanien zeigt die untersten drei abgeschoben.",
+        "Amateur Ozeanien zeigt die drei besten direkt gefördert. Europäische Amateur Divisionen zeigen Gewinner direkt gefördert und 2.–3. Enter Promotion Playoff. Andere Amateur Divisionen zeigen Gewinner direkt gefördert und 2.–4. Enter Promotion Playoff.",
+        "Inaktive Manager können in der Rangliste sichtbar bleiben/results. Die UI kann ein Inaktiv Manager-Badge für inaktive und Saison-End-Removations-ausgebende Teams zeigen."
+      ],
+      "facts": [
+        {
+          "label": "Tierkategorien",
+          "value": "WorldTeam, ProTeam, Continental, Amateur"
+        },
+        {
+          "label": "Pro-Abteilungen",
+          "value": "ProTeam West, ProTeam Osten"
+        },
+        {
+          "label": "Continental Abteilungen",
+          "value": "Europa, Amerika, Asien, Afrika, Ozeanien"
+        },
+        {
+          "label": "Amateur-Divisionen",
+          "value": "Nordamerika, Südamerika, Westeuropa, Mitteleuropa, Süd- & Balkaneuropa, Nord- & Osteuropa, West- & Nordafrika, Mittel- & Südafrika, West- & Zentralasien, Südasien, Ost- & Südostasien, Ozeanien"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Ranking als Ihr langfristiges Ziel.",
+        "Konsequente Punkte können besser sein als ein glückliches Ergebnis."
+      ],
+      "relatedLinks": [
+        "Team-Ranking öffnen"
+      ]
+    },
+    "statistics-team-profile": {
+      "category": "Rankings und Statistiken",
+      "title": "Statistiken und Teamprofile",
+      "subtitle": "Vergleichen Sie Teams, Fahrer und Informationen über den öffentlichen Club.",
+      "overview": "Statistiken helfen, starke Teams und Fahrer zu identifizieren. Teamprofile zeigen öffentliche Informationen über Benutzer und AI-Clubs.",
+      "details": [
+        "Team Aktuell zeigt aktiv/current Teamleistung nach Ebene, Division und Punkten.",
+        "Team History zeigt frühere Gewinner und Snapshots, sobald mehrere Staffeln existieren.",
+        "Rider Rankings zeigen die besten Fahrer nach Punkten und können Rolle, Land, Alter, Club, Marktwert, Gehalt, Müdigkeit und Verfügbarkeit.",
+        "Rider Breakdown hilft Spezialisten zu finden, wie Sprinter oder Kletterer.",
+        "Teamprofil zeigt Logo, Land, Tier, Division, Sponsoren, Kit Preview, öffentliche Aufstellung, Punkteübersicht und aktuelle Rennen.",
+        "Teamprofil kann bei Bedarf eine Bericht-Schaltfläche für Moderation enthalten."
+      ],
+      "facts": [
+        {
+          "label": "Register für Statistiken",
+          "value": "Teams und Fahrer"
+        },
+        {
+          "label": "Unterabsätze des Teams",
+          "value": "Aktuell und Geschichte"
+        },
+        {
+          "label": "Untertappen für Fahrer",
+          "value": "Rankings und Aufschlüsselung"
+        },
+        {
+          "label": "Fahrerkennzahlen",
+          "value": "Gesamtsaisonpunkte, Sprintpunkte, Kletterpunkte"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Statistiken vor dem Kauf von Fahrern.",
+        "Verwenden Sie Teamprofile, um Rivalen zu studieren."
+      ],
+      "relatedLinks": [
+        "Offene Statistik",
+        "Team-Ranking öffnen"
+      ]
+    },
+    "transfers-scouting": {
+      "category": "Transfers",
+      "title": "Transfers, Free Agents, Verhandlungen und Scouting",
+      "subtitle": "Wie Sie Fahrer unterschreiben und den Markt verstehen.",
+      "overview": "Transfers ist, wo Sie die Liste durch Transfer-Liste Fahrer, freie Agenten, Scouting-Berichte und Personal Einstellung verbessern.",
+      "details": [
+        "Transfer-gelistete Fahrer gehören einem anderen Team. Sie machen zuerst ein Transferangebot an den verkaufenden Verein. Wenn angenommen, verhandeln Sie den Fahrervertrag.",
+        "Freie Agenten haben keinen Verkaufsclub. Sie verhandeln direkt mit dem Fahrer.",
+        "Verhandlungen Vorschauen können Akzeptanz Prozent, Akzeptanzband, prognostiziertes Ergebnis, Gehaltsscore, Dauerscore, Bonusscore, Fee-Score, Tierscore und Hardblock-Gründe zeigen.",
+        "Wiederholte schlechte Angebote können Versuche und kann zu Ablehnung, Gegenmaßnahmen, Ablauf oder Schließung führen.",
+        "Scouting reduziert Unsicherheit. Externe Reiterprofile können genaue Daten verstecken, bis ein Scout-Bericht existiert.",
+        "Scout-Berichte zeigen Fahrer, Scout, Fertigstellungsdatum, insgesamt, Potenzial, Stärken, Notizen und Neu/Reviewed status."
+      ],
+      "facts": [
+        {
+          "label": "Übertragen von Registerkarten",
+          "value": "Fahrer und Personal"
+        },
+        {
+          "label": "Untertappen für Fahrer",
+          "value": "Transferliste und kostenlose Agenten"
+        },
+        {
+          "label": "Verhandlungsstatus",
+          "value": "Entwurf, offen, anhängig, angenommen, abgelehnt, abgelaufen, abgelehnt, abgeschlossen, abgelehnt"
+        },
+        {
+          "label": "Vertragsjahre in Versetzungsverhandlungen UI",
+          "value": "1–5 Jahre"
+        },
+        {
+          "label": "Pfadfinder",
+          "value": "Alle, neu, überprüft"
+        }
+      ],
+      "tips": [
+        "Pfaden Sie teure Fahrer vor dem Bieten.",
+        "Überprüfen Sie Gehalt und Dauer, nicht nur Transferpreis.",
+        "Kaufen Sie keine Fahrer, die nicht passen Ihren Rennkalender."
+      ],
+      "relatedLinks": [
+        "Offene Übertragungen",
+        "Pfadfinder öffnen"
+      ]
+    },
+    "finance": {
+      "category": "Finanzen",
+      "title": "Finanzübersicht, Transaktionen und Steuern",
+      "subtitle": "Bilanz, operativer Cashflow, Kontokorrentreihen und monatliche Steuerprüfungen.",
+      "overview": "Die Finanzen zeigen die langfristige Sicherheit Ihres Clubs. Starke Fahrer sind egal, ob der Verein keine Gehälter, Steuern, Richtlinien, Ausrüstung oder Pflichtverpflichtungen zahlen kann.",
+      "details": [
+        "Finanzen Überblick trennt das reale Betriebsergebnis/expenses aus Schuldenbewegungen. Notkreditauszahlungen sind nicht Betriebseinkommen. Notkredit-Haupttilgung ist nicht Betriebsausgaben. Notkreditzinsen sind Betriebsausgaben.",
+        "Die Transaktionen zeigen das Buch. Verwenden Sie sie, um jede Balance Bewegung zu erklären: Gehälter, Sponsorenzahlungen, Steuern, Infrastruktur, Vermögenswerte, Ausrüstung, Trainingslager, Boni und Preisgeld.",
+        "Sichtbare Transaktionsdaten sollten aus Metadaten im Spiel stammen, nicht real created_at Zeitstempel.",
+        "Die Steuer zeigt steuerpflichtiges Einkommen, erwartete Steuer, bereits einbehalten, Anpassungsbetrag und Prüfungshistorie. Steuerzeilen umfassen Quellen, monatliche Anpassung und monatliche Rückerstattung.",
+        "Wenn der Verein verdient große Sponsor oder Preiseinnahmen, überprüfen Sie die Steuer-Tab für die Einbehaltung und monatliche Audit-Ergebnisse."
+      ],
+      "facts": [
+        {
+          "label": "Register für Finanzen",
+          "value": "Übersicht, Sponsoren, Transaktionen, Steuern, Team-Richtlinien & Operationen"
+        },
+        {
+          "label": "Cashflow-Gruppe",
+          "value": "Täglich, wöchentlich, monatlich"
+        },
+        {
+          "label": "Letzte Transaktionen",
+          "value": "Letzte 30 Spieltage"
+        },
+        {
+          "label": "Archivtransaktionen",
+          "value": "Ältere Reihen gruppiert nach Spielmonaten, vorherige 6 Spielmonate"
+        },
+        {
+          "label": "Status der Steuerprüfung",
+          "value": "OK, angepasst, erstattet"
+        }
+      ],
+      "tips": [
+        "Offene Finanzen vor großen Ausgaben.",
+        "Verwenden Sie Transaktionen, wenn sich der Saldo unerwartet ändert.",
+        "Nicht behandeln Notkredit Geld als Gewinn."
+      ],
+      "relatedLinks": [
+        "Offene Finanzen"
+      ]
+    },
+    "sponsors-policies": {
+      "category": "Finanzen",
+      "title": "Sponsoren, technische Sponsoren und Teamrichtlinien",
+      "subtitle": "Garantiertes Geld, Ziele, Rabatte, Namensrechte und Betriebsstandards.",
+      "overview": "Sponsoren bringen Einkommen und Ziele. Team-Richtlinien definieren Reisen, Unterkunft, Unterkunft, Ernährung, Erholung und Boni. Beide können den Club verbessern, aber beide können auch Verpflichtungen oder Kosten verursachen.",
+      "details": [
+        "Die wichtigsten Sponsoren sind die sichtbarsten. Sie können garantiertes Geld, Bonuspools und Ziele bieten.",
+        "Sekundärsponsoren bieten zusätzliche Unterstützung durch Slots und werden ohne Logos angezeigt/country In der aktuellen Benutzeroberfläche.",
+        "Technische Sponsoren können Geld-Unterstützung, Ausrüstungs-Unterstützung Budget und Kategorie Ausrüstung Rabatte.",
+        "Sponsorziele können terminiert, überprüft, erreicht, verpasst oder bezahlt werden. Sie können mit Zielrennen oder Kalenderansichten verknüpfen.",
+        "Standard-Sponsor-Verträge geben Geld, ohne den Teamnamen zu ändern. Naming-Rechte Verträge zahlen in der Regel mehr, aber vorübergehend ändern den Team-Anzeigenamen während der Saison.",
+        "Team-Richtlinien und Operationen beeinflussen wiederkehrende und Reisekosten. Bessere Reise-, Wohn-, Ernährung oder Erholungspolitik kann dem Verein helfen, aber die Ausgaben zu erhöhen.",
+        "Die politischen Schätzungen zeigen wöchentliche und monatliche Gesamtsummen, die tatsächlichen Kosten des letzten Monats und die bevorstehenden Reiseprognosen."
+      ],
+      "facts": [
+        {
+          "label": "Art des Sponsors",
+          "value": "Haupt, sekundäre, technische"
+        },
+        {
+          "label": "Wichtigste Ziele des Sponsors",
+          "value": "Start, Sieg, Podium, Top 5, Top 10, GC Top 10/top 5, Etappe Top 5, Etappensieg, Klassifizierungs-Sichtbarkeit"
+        },
+        {
+          "label": "Politische Maßnahmen",
+          "value": "Flüge, Unterkunft, Bodentransport, Logistik, Personalreisen"
+        },
+        {
+          "label": "Teamrichtlinien",
+          "value": "Wohnen, Ernährung, Erholung, Personalausstattung, Fahrerbonus, Personalbonus"
+        }
+      ],
+      "tips": [
+        "Prüfen Sie die Ziele des Sponsors, bevor Sie Angebote annehmen.",
+        "Technische Sponsoren sind wertvoll, wenn sie Ausrüstung kaufen.",
+        "Upgraden Sie keine Richtlinien, wenn der Club sich keine wiederkehrenden Kosten leisten kann."
+      ],
+      "relatedLinks": [
+        "Sponsoren",
+        "Teamrichtlinien"
+      ]
+    },
+    "emergency-liquidation": {
+      "category": "Finanzen",
+      "title": "Notfallrettung, Schulden und Clubliquidation",
+      "subtitle": "Was passiert, wenn ein Verein nicht verpflichtende Verpflichtungen erfüllen kann.",
+      "overview": "Das Spiel hat ein Rettungs- und Liquidationssystem. Notfallrettung schützt einen Verein vorübergehend, aber wiederholte Versäumnisse, Verpflichtungen zu decken, können den Verein schließen.",
+      "details": [
+        "Wenn ein Club liquidiert wird, wird das Dashboard durch einen Club Liquidated Bildschirm ersetzt.",
+        "Der Bildschirm erklärt, dass Rettungszahlen, Liquidation und Schließungszeit, wenn verfügbar.",
+        "Erstellen Sie neue Club löscht gespeicherte Club-IDs und sendet den Benutzer an Club-Erstellung.",
+        "Das Team neu starten ist derzeit Platzhalter/notice. Die zukünftige Version würde den liquidierten Club in der gleichen Konkurrenz mit einem neuen Kader, keine Mitarbeiter und Null Punkte zurücksetzen.",
+        "Notschulden erscheinen in Übersicht und Finanzen. Prinzip und Zinsen sollten separat gelesen werden."
+      ],
+      "facts": [
+        {
+          "label": "Rettungsmaßnahmen",
+          "value": "3"
+        },
+        {
+          "label": "Liquidationszustand in der UI gezeigt",
+          "value": "Alle 3 Rettungsmaßnahmen, dann eine weitere Pflichtpflicht nicht abgedeckt werden"
+        },
+        {
+          "label": "Nach der Liquidation",
+          "value": "Der Club kann keine Spielaktionen mehr durchführen"
+        },
+        {
+          "label": "Coins/account",
+          "value": "Nutzerkonto und Coins bleiben aktiv"
+        }
+      ],
+      "tips": [
+        "Vermeiden Sie riskante Ausgaben nach Rettungsmaßnahmen verwendet werden.",
+        "Sehen Sie sich die obligatorischen Kosten wie Gehälter, Steuern und Politik an."
+      ]
+    },
+    "support-account": {
+      "category": "Unterstützung und Konto",
+      "title": "Profil, Einstellungen, Kontakt, Forum und Fehlerberichte",
+      "subtitle": "Kontoeinstellungen, Benachrichtigungseinstellungen und Supportkanäle.",
+      "overview": "Konto- und Supportseiten helfen Benutzern Profildaten zu verwalten, Benachrichtigungseinstellungen, Entwicklungsteam-Kauf, Einladungslinks, Discord Unterstützung und Fehlerberichte.",
+      "details": [
+        "Mein Profil bearbeitet Benutzerprofildaten wie Benutzername, E-Mail, Vorname, Nachname, Stadt und Land. Es ist getrennt von Club-Branding.",
+        "Einstellungen speichert Benachrichtigungseinstellungen und beinhaltet den Kauf von Developing Team/status Maßnahmen der Gefahrenzone.",
+        "Shutdown Team benötigt ein gültiges Sitzungs-Token und eine genaue DELETE-Bestätigung.",
+        "Kontaktieren Sie uns zeigt derzeit ein Formular und Danksagung, aber Backend-Einreichung muss noch für die Produktion verbunden werden.",
+        "Forum ist ein Discord Die Kommission hat die Kommission aufgefordert, die Ergebnisse der Arbeiten der Kommission im Rahmen der Discord.",
+        "Fehlerbericht-Schaltflächen sollten aktuelle Seite enthalten/path Kontext. Gute Berichte umfassen Seitennamen, Team, Fahrer, Rennen, Screenshots und Reproduktionsschritte."
+      ],
+      "facts": [
+        {
+          "label": "Regel für den Benutzernamen des Profils",
+          "value": "3–24 Zeichen, Leerzeichen werden zu Unterstrichen, nur Buchstaben/numbers/underscore"
+        },
+        {
+          "label": "Geburtstagsregel",
+          "value": "Einmal gespeichert während der Registrierung und erst später lesen"
+        },
+        {
+          "label": "Bestätigung zum Abschalten",
+          "value": "Typ DELETE genau"
+        },
+        {
+          "label": "Kontaktieren Sie uns",
+          "value": "Aktuelle Form ist nur UI und zeigt eine Dankesnachricht"
+        },
+        {
+          "label": "Forum",
+          "value": "Die Diskussionen der Gemeinschaft Discord"
+        }
+      ],
+      "tips": [
+        "Verwenden Kontaktieren Sie uns für Support-Details.",
+        "Verwendung Discord für die Gemeinschaftshilfe.",
+        "Nie nach sensiblen Konto/payment Daten öffentlich."
+      ],
+      "relatedLinks": [
+        "Mein Profil",
+        "Einstellungen",
+        "Kontaktieren Sie uns",
+        "Forum"
+      ]
+    },
+    "public-home-beta": {
+      "category": "Erste Schritte",
+      "title": "Public Home und Beta-Hinweis",
+      "subtitle": "Was Spieler vor dem Login sehen und warum die Beta-Benachrichtigung zählt.",
+      "overview": "Die öffentliche Homepage ist der Einstieg vor dem Dashboard. Sie kann authentifizierte Benutzer zu einem create-club oder Dashboard führen und Live-Informationen zu öffentlichen Spielen anzeigen.",
+      "details": [
+        "Wenn der Benutzer angemeldet ist und keinen Club hat, führt die App zur Club-Erstellung.",
+        "Wenn der Benutzer angemeldet ist und bereits einen Club hat, führt die App zur Übersicht des Dashboards.",
+        "Die Beta-Meldung sagt Testern, dass das Spiel online ist, um zu testen, aber nicht endgültig.",
+        "Homepage Renntag Widgets können gestern, heute und morgen Rennen zeigen."
+      ],
+      "facts": [
+        {
+          "label": "Live-Überblick",
+          "value": "Spielzeit, aktive Manager, Gesamtteams, Rennen und Etappen"
+        },
+        {
+          "label": "Beta-Warnung",
+          "value": "Spielsysteme, Benutzeroberfläche, Balance und Daten können sich noch ändern"
+        }
+      ],
+      "tips": [
+        "Halten Sie die Erwartungen der Spieler während der Beta klar."
+      ]
+    },
+    "sidebar-footer-layout": {
+      "category": "Erste Schritte",
+      "title": "Sidebar, Footer und Dashboard Lock",
+      "subtitle": "Wie das Hauptlayout hilft, um das Spiel herum zu bewegen.",
+      "overview": "Die linke Seitenleiste ist die Hauptnavigation im Spiel, während die Fußzeile maßgebliche Live-Spielzeit zeigt. Einige Dashboard-Zustände können Interaktion sperren.",
+      "details": [
+        "Die Seitenleistenbeschreibungen sagen den Benutzern, was jede Seite tut.",
+        "Die Fußzeile Spielzeit sollte als Quelle der Wahrheit für Fristen behandelt werden.",
+        "Dashboard Gesperrt bedeutet, dass der Spieler zu dieser Zeit keine Änderungen vornehmen kann.",
+        "Melden Sie sich an und Fehlerbericht live im unteren Seitenbereich."
+      ],
+      "facts": [
+        {
+          "label": "Seitenleiste",
+          "value": "Übersicht, Squad, Kalender, Rennvorbereitung, Teamranking, Training, Ausrüstung, Infrastruktur, Finanzen, Transfers, Statistik"
+        },
+        {
+          "label": "Fußzeile",
+          "value": "Shows Saison, Wochentag, Datum und Uhrzeit"
+        }
+      ],
+      "tips": [
+        "Wenn ein Benutzer über Fristen verwirrt ist, sagen Sie ihnen zuerst, um Fußzeile Spielzeit zu überprüfen."
+      ]
+    },
+    "profile-settings": {
+      "category": "Coins und Konto",
+      "title": "Mein Profil",
+      "subtitle": "Benutzerprofildaten, Benutzername, E-Mail und Passwort.",
+      "overview": "Mein Profil bearbeitet das Benutzerkonto-Profil. Es ist getrennt von Teamname, Teamlogo und Trikot.",
+      "details": [
+        "Der Benutzername wird durch Trimmen von Leerzeichen, Ändern von Leerzeichen zu Unterstrichen und Entfernen von nicht unterstützten Zeichen normalisiert.",
+        "Email-Änderungen verwenden das Auth-System und können eine Bestätigung erfordern.",
+        "Vorname, Nachname, Stadt und Land sind optionale Profilfelder.",
+        "Passwort kann mit Bestätigung von der Profilseite geändert werden.",
+        "Geburtstag wird angezeigt, aber nicht wieder aus meinem Profil gespeichert."
+      ],
+      "facts": [
+        {
+          "label": "Benutzerhandbuch",
+          "value": "3–24 Zeichen; Buchstaben, Zahlen und Unterstriche"
+        },
+        {
+          "label": "Geburtstagsregel",
+          "value": "Einmal gespeichert während der Registrierung und erst später lesen"
+        }
+      ],
+      "tips": [
+        "Sagen Sie den Benutzern, dass Profilanzeigename und Clubname unterschiedlich sind."
+      ],
+      "relatedLinks": [
+        "Mein Profil"
+      ]
+    },
+    "preferences-notifications": {
+      "category": "Coins und Konto",
+      "title": "Einstellungen und Benachrichtigungseinstellungen",
+      "subtitle": "Wo Spieler Benachrichtigungen und spezielles Team kontrollieren/account Optionen.",
+      "overview": "Einstellungen speichert Benachrichtigungskontrollen, Entwicklung Team Kauf/status Maßnahmen in Gefahrenzonen.",
+      "details": [
+        "Benachrichtigungs-Klinken entscheiden, welche Benachrichtigungsgruppen der Spieler erhalten will.",
+        "Der Teamstatus zeigt Anforderungen, Münzkosten, Balance und Bewegung-Fenster-Informationen.",
+        "Nach dem Teamkauf wird der aktive Clubkontext wieder in den Hauptclub zurückversetzt.",
+        "Shutdown Team verwendet ein Backend Edge Function und erfordert das aktive Sitzungs-Token.",
+        "Team neu starten ist derzeit Platzhalter/action nicht als voll aktiv bezeichnet werden."
+      ],
+      "facts": [
+        {
+          "label": "Benachrichtigungsspeicherung",
+          "value": "Lokale Einstellungen"
+        },
+        {
+          "label": "Entwicklung von RPCs für das Team",
+          "value": "get_developing_team_status und purchase_developing_team"
+        },
+        {
+          "label": "Shutdown bestätigen",
+          "value": "Benutzer muss DELETE eingeben"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Einstellungen, wenn Benutzer sich über zu viele Benachrichtigungen beschweren."
+      ],
+      "relatedLinks": [
+        "Einstellungen"
+      ]
+    },
+    "invite-friends": {
+      "category": "Coins und Konto",
+      "title": "Freunde einladen",
+      "subtitle": "Verweis, Verweiszustände und Münzbelohnung.",
+      "overview": "Einladen Freunde erstellt einen Verweis Link und zeigt die Empfehlung Aktivität. Die Belohnung wird gewährt, wenn ein Freund die erforderlichen Schritte abschließt.",
+      "details": [
+        "Die Seite lädt den aktuellen Club-Bezugscode aus der Clubtabelle.",
+        "Der Verweis-Link verwendet die aktuelle Website Herkunft plus die Empfehlungsroute.",
+        "Ausstehende bedeutet, dass ein Freund einen Club gegründet hat, aber noch nicht das erste Münzpaket gekauft hat.",
+        "Abgeschlossen bedeutet, dass der erste Münzkauf passiert ist und die Belohnung gewährt wurde.",
+        "Benutzer- und Club-Identifikatoren sind für die Privatsphäre maskiert."
+      ],
+      "facts": [
+        {
+          "label": "Verweisungs-URL",
+          "value": "/#/referral/:code"
+        },
+        {
+          "label": "Belohnung",
+          "value": "40 Coins"
+        },
+        {
+          "label": "Status",
+          "value": "Ausstehende, abgeschlossene, abgelehnte"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Freunde einladen, um die Gemeinschaft zu wachsen."
+      ],
+      "relatedLinks": [
+        "Freunde einladen"
+      ]
+    },
+    "pro-packages-deep": {
+      "category": "Coins und Konto",
+      "title": "Münzpakete Shop",
+      "subtitle": "Paketpreise, Kasse und Kauf Geschichte.",
+      "overview": "Coin Packages lädt Live-Pakete aus der Datenbank, zeigt Balance und startet die Kasse durch eine Edge Function.",
+      "details": [
+        "Genaue Preise sind datenbankgesteuert und sollten nicht im Handbuch festkodiert werden.",
+        "Der Shop berechnet den Preis pro Coins und kann den besten Wert hervorheben.",
+        "Paket-Taglines werden aus Münzmenge, wie Starter Boost oder Best für langfristiges Spiel generiert.",
+        "Die Kaufgeschichte zeigt absichtlich nicht Stripe technische Informationen über die Sitzung.",
+        "Coins sind Kontowährung, nicht Club bar."
+      ],
+      "facts": [
+        {
+          "label": "Paketquelle",
+          "value": "coin_packages"
+        },
+        {
+          "label": "Saldoquelle",
+          "value": "get_my_coin_status"
+        },
+        {
+          "label": "Kasse",
+          "value": "create-coin-checkout"
+        },
+        {
+          "label": "Kaufhistorie",
+          "value": "user_coin_ledger reason='purchase'"
+        }
+      ],
+      "tips": [
+        "Für aktuelle Preise, vertrauen Sie auf die Seite der Coins."
+      ],
+      "relatedLinks": [
+        "Münzpakete"
+      ]
+    },
+    "contact-forum-support": {
+      "category": "Unterstützung und Konto",
+      "title": "Kontaktieren Sie uns, Forum und Discord",
+      "subtitle": "Wo Spieler Fragen stellen oder Probleme melden.",
+      "overview": "Kontaktieren Sie uns, Forum und Discord Unterstützung/community Eintragspunkte. Aktueller Kontakt Wir sind nur UI; Forum zeigt Benutzer an Discord.",
+      "details": [
+        "Kontaktieren Sie uns hat Name, E-Mail und Nachricht Felder und zeigt eine Dankesnachricht nach dem Absenden.",
+        "Forum erklärt, dass es kein In-Game-Forum auf dieser Seite geben wird.",
+        "Discord ist der Ort der Gemeinschaft für Fragen und manuelle Hilfe.",
+        "Fehlerberichte sollten Seite, erwartetes Verhalten, tatsächliches Verhalten und Screenshots enthalten."
+      ],
+      "facts": [
+        {
+          "label": "Kontaktieren Sie uns",
+          "value": "Nur UI-Form im aktuellen Code"
+        },
+        {
+          "label": "Forum",
+          "value": "Discord Seite zur Mitteilung"
+        },
+        {
+          "label": "Discord Verwendung",
+          "value": "Gemeinschaft, Hilfe, Handbücher und Fragen"
+        }
+      ],
+      "tips": [
+        "Versprich uns nicht Kontaktiere uns Backend Lieferung, bis es verdrahtet ist."
+      ],
+      "relatedLinks": [
+        "Kontaktieren Sie uns",
+        "Forum"
+      ]
+    },
+    "club-creation-route": {
+      "category": "Identität des Vereins",
+      "title": "Club Creation und erster Club Check",
+      "subtitle": "Wie authentifizierte Benutzer in das Spiel geleitet werden.",
+      "overview": "Nach dem Login überprüft die App, ob der Benutzer einen Club hat. Benutzer ohne Club gehen zu Club erstellen; Benutzer mit einem Club gehen zur Übersicht.",
+      "details": [
+        "Die öffentliche Homepage ruft get_my_club_id die nächste Route zu wählen.",
+        "Club-Erstellung ist getrennt von Profil-Erstellung.",
+        "Starten von Geld und genaue Startressourcen sollten von Backend-Konfiguration kommen, nicht erraten manuellen Text.",
+        "Nach der Club-Erstellung lösen die Dashboard-Seiten normalerweise automatisch den Hauptclub."
+      ],
+      "facts": [
+        {
+          "label": "Kein Verein",
+          "value": "Art der Anwendung /create-club"
+        },
+        {
+          "label": "Hat Verein",
+          "value": "Art der Anwendung /dashboard/overview"
+        }
+      ],
+      "tips": [
+        "Erfinden Sie kein Startgeld, es sei denn, Backend-Konfiguration ist vorhanden."
+      ]
+    },
+    "customize-team-deep": {
+      "category": "Identität des Vereins",
+      "title": "Team anpassen",
+      "subtitle": "Branding, Teamfarben, Logo, Basis-Logo und Trikot.",
+      "overview": "Personalisieren Team verwaltet Clubname, primär/secondary Farben, Logo und Home Jersey Konfiguration.",
+      "details": [
+        "Hochgeladene Logos werden umgewandelt in PNG In-Browser vor der Lagerung.",
+        "Das Entfernen eines Logos stellt ein generiertes Schild-Stil Basis-Logo wieder her, anstatt kein Logo zu hinterlassen.",
+        "Teamfarben werden als Hexfarben validiert.",
+        "Jersey config wird in team_kits mit Namen nach Hause.",
+        "Ein Trikot kann generisch sein, von einem generischen Pool, einer entfernten Bild-URL oder einem hochgeladenen Bild."
+      ],
+      "facts": [
+        {
+          "label": "Logo-Typen",
+          "value": "JPG, PNG, WEBP"
+        },
+        {
+          "label": "Zeichen max",
+          "value": "0.5 MB"
+        },
+        {
+          "label": "Höchstens in Jersey",
+          "value": "1 MB und 512 × 512 px"
+        },
+        {
+          "label": "Logo-Eimer",
+          "value": "Verein-Logos"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie kleine saubere Logos, weil sie in winzigen UI-Bereichen erscheinen."
+      ],
+      "relatedLinks": [
+        "Team anpassen"
+      ]
+    },
+    "branding-locks": {
+      "category": "Identität des Vereins",
+      "title": "Brandschlösser aus den Namensrechten",
+      "subtitle": "Warum Benutzer möglicherweise nicht in der Lage sein, einen Teamnamen oder ein Logo zu bearbeiten.",
+      "overview": "Sponsor-Namensrechte können temporär Brandingfelder sperren und den angezeigten Clubnamen ändern.",
+      "details": [
+        "Personalisieren Team liest das Branding Schloss, bevor es Bearbeitungen erlaubt.",
+        "locked_by_sponsor bedeutet, dass die Club-Identität von einem Sponsor-Deal kontrolliert wird.",
+        "Standard-Sponsoren benennen normalerweise das Team nicht um.",
+        "Naming-Rechte Sponsoren zahlen in der Regel mehr, sondern beeinflussen die öffentliche Identität.",
+        "Anzeige-Namen-Helper sollten in Rankings verwendet werden/profiles wenn Sponsornamen wichtig sind."
+      ],
+      "facts": [
+        {
+          "label": "Statusquelle sperren",
+          "value": "club_branding_lock_status_v1"
+        },
+        {
+          "label": "Mögliche Felder",
+          "value": "Name, Farben und Logo"
+        },
+        {
+          "label": "Namen anzeigen",
+          "value": "Original, Saison und voller Anzeigename"
+        }
+      ],
+      "tips": [
+        "Warner Spieler, bevor sie Namensrechte Angebote unterzeichnen."
+      ]
+    },
+    "team-profile-deep": {
+      "category": "Identität des Vereins",
+      "title": "Teamprofil",
+      "subtitle": "Öffentliche Clubseite mit Identität, Sponsoren, Dienstplan und Punkten.",
+      "overview": "Mit Teamprofil können Benutzer einen anderen Club oder einen eigenen Club aus Rankings, Rennen und Statistiken inspizieren.",
+      "details": [
+        "Die Seite zeigt, ob der Club benutzer- oder KI-gesteuert ist.",
+        "Es kann aktive Sponsorenanzahl, monatliche Sponsorensummen und Hauptsponsor-Logo zeigen.",
+        "Es kann Kit-Vorschau von zeigen team_kits oder AI-Kit-Vorschauzeilen.",
+        "Es kann öffentliche Liste und die jüngsten Rennergebnisse zeigen.",
+        "Es enthält einen Bericht Spieler/team Taste für Moderation."
+      ],
+      "facts": [
+        {
+          "label": "Art der Anwendung",
+          "value": "/dashboard/teams/:clubId"
+        },
+        {
+          "label": "Zeigt an",
+          "value": "Logo, Land, Tier, Division, Sponsoren, Kit, Dienstplan, Punkte und aktuelle Rennen"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Teamprofil, um Rivalen vor wichtigen Rennen zu studieren."
+      ]
+    },
+    "overview-deep": {
+      "category": "Dashboard",
+      "title": "Übersicht Deep Guide",
+      "subtitle": "Alle wichtigen Blöcke auf dem Manager-Dashboard.",
+      "overview": "Übersicht ist die tägliche Kontrollraum kombiniert Alarme, KPIs, Kader Puls, Finanzen, Schulden, Rennwelt, Operationen, Nachrichten und Sponsordaten.",
+      "details": [
+        "Alarme zeigen, was zuerst Aufmerksamkeit braucht.",
+        "KPIs fassen Clubzustand in kompakten Karten zusammen.",
+        "Operations Karten zeigen aktive Systeme wie Training, Infrastruktur, Medizin, Sponsor, Posteingang, Finanzen oder System-Events.",
+        "Squad Pulse fasst Fitness, Moral, Bereitschaft, Verfügbarkeit und Vertragsrisiko zusammen.",
+        "Finanzen Gesundheit zeigt Bilanz, Betriebsergebnis/expense, Sponsoreneinkommen, Kosten und Reiseprognosen.",
+        "Notstandsschulden Gesundheit zeigt Rettungszahlen, ausstehender Kapitalbetrag, nächste Rückzahlung und Liquidation Risiko.",
+        "Rennen Welten Panels zeigen heute..........................................................................................................................................................................................................................................................."
+      ],
+      "facts": [
+        {
+          "label": "Kernblöcke",
+          "value": "Alarme, KPIs, Operationen, Kaderpuls, Zeitplan, Nachrichten, Finanzen, Notschulden"
+        },
+        {
+          "label": "Hauptanwendung",
+          "value": "Tägliche Checkliste"
+        }
+      ],
+      "tips": [
+        "Wenn Übersicht finanzielle Gefahr zeigt, öffnen Sie die Finanzen, bevor Sie etwas anderes tun."
+      ],
+      "relatedLinks": [
+        "Übersicht"
+      ]
+    },
+    "overview-race-world": {
+      "category": "Dashboard",
+      "title": "Übersicht Race World",
+      "subtitle": "Heute Rennen, anstehende Zeitplan und Weltnachrichten.",
+      "overview": "Die Übersichtsseite enthält weltnahe Daten, damit Benutzer der Radwelt folgen können, auch wenn ihr eigenes Team nicht Rennen fährt.",
+      "details": [
+        "Heute räsen helfen Benutzern zu sehen, was jetzt passiert.",
+        "Der nächste Zeitplan hilft, die Aufmerksamkeit in naher Zukunft zu planen.",
+        "Weltnachrichten machen die Spielwelt aktiv.",
+        "Verwandte Links können Rassen oder andere Spielseiten öffnen.",
+        "Erweiterten Text verwenden/detail Felder, wenn Benutzer mehr Kontext benötigen."
+      ],
+      "facts": [
+        {
+          "label": "Daten zur Tagesrennen",
+          "value": "Titel, Untertitel, Zeitetikett, Land und Link"
+        },
+        {
+          "label": "Nachrichtendaten",
+          "value": "Titel, Untertitel, Zeit, Details und verwandte Links"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Übersicht für Bewusstsein, dann öffnen Sie detaillierte Seiten für Entscheidungen."
+      ]
+    },
+    "notification-center-deep": {
+      "category": "Dashboard",
+      "title": "Benachrichtigungszentrum",
+      "subtitle": "Ungelesen/read Benachrichtigungsmanagement mit Suche und Kategorien.",
+      "overview": "Das vollständige Benachrichtigungszentrum hilft Benutzern Spiel zu handhaben/admin Benachrichtigungen ohne nennenswerte Fristen zu verlieren.",
+      "details": [
+        "Benachrichtigungen können nach Titel, Nachricht, Typ, Quelle, Präferenzgruppe und erzeugter Zeit gesucht werden.",
+        "Die Kategorie wird aus der Präferenzgruppe, dem Quell- oder Typcode abgeleitet.",
+        "Vorlagen können Bild, Intro-Text, Details, zusätzlichen Text und Aktionen hinzufügen.",
+        "Aktionen können direkt mit der Vorbereitung, Finanzierung, Infrastruktur, Transfers, Reiterprofilen oder Rennen verknüpft werden.",
+        "Einstellungen können verhindern, dass einige Benachrichtigungstypen angezeigt werden."
+      ],
+      "facts": [
+        {
+          "label": "Tabulatoren",
+          "value": "Ungelesen und Lesen"
+        },
+        {
+          "label": "Werkzeuge",
+          "value": "Suche, Kategoriefilter, Pagination, Aktionstasten"
+        },
+        {
+          "label": "Lokales Abrufvolumen",
+          "value": "Bis zu 500 pro Tab in der aktuellen Seite"
+        }
+      ],
+      "tips": [
+        "Benachrichtigungen vor Rennterminen lesen."
+      ],
+      "relatedLinks": [
+        "Mitteilungen"
+      ]
+    },
+    "notification-examples": {
+      "category": "Dashboard",
+      "title": "Wichtige Benachrichtigungsbeispiele",
+      "subtitle": "Events Benutzer sollten nicht ignorieren.",
+      "overview": "Benachrichtigungen können wichtige staatliche Veränderungen in Bezug auf die Vorbereitung, Finanzierung, Infrastruktur, Transfers, Teamentwicklung und Sponsoren darstellen.",
+      "details": [
+        "Die Benachrichtigungen über die Vorbereitung der Rennen warnen, wenn Pläne oder Stage Plans Maßnahmen erfordern.",
+        "Entwicklungsteam-Fenster-Benachrichtigungen sagen den Benutzern, wann Bewegung möglich ist.",
+        "Meldungen über die Fertigstellung der Infrastruktur geben den Nutzern an, dass eine Einrichtung/asset ist bereit.",
+        "Not notifikationen für Darlehen bedeuten, dass der Verein nicht decken konnte eine obligatorische Kosten.",
+        "Fahrer Release-Benachrichtigungen Link zu Fahrerprofil oder Free-Agent-Markt.",
+        "Sponsor objektive Benachrichtigungen können mit Kalender oder Ziel Rennen verbinden."
+      ],
+      "facts": [
+        {
+          "label": "Beispiele",
+          "value": "Race Plan Erinnerungen, Stage Plan Erinnerungen, Entwicklung Fenster, Notkredit, Einrichtung komplett, Fahrer Freigabe, Sponsor Ziel"
+        }
+      ],
+      "tips": [
+        "Finanzierung behandeln/deadline Benachrichtigungen als hohe Priorität."
+      ]
+    },
+    "inbox-deep": {
+      "category": "Dashboard",
+      "title": "Posteingang",
+      "subtitle": "Direkte und Admin-Gespräche.",
+      "overview": "Posteingang ist für Gespräche, im Gegensatz zu Benachrichtigungen, die System sind/game Alarme.",
+      "details": [
+        "Die Threadliste zeigt Anzeigename, Betreff, Vorschau, letzte Meldungszeit und ungelesene Anzahl.",
+        "Suchfilter nach Namen, Betreff und Vorschau.",
+        "Nachrichten werden durch Konversations-ID geladen und dann mit Lesen markiert.",
+        "Wenn der Benutzer komponieren zu einem bestehenden direkten Kontakt öffnet, wird die bestehende Konversation wiederverwendet.",
+        "Einige Gespräche können nicht je nach can_reply."
+      ],
+      "facts": [
+        {
+          "label": "Gesprächsarten",
+          "value": "Direkt und Admin direkt"
+        },
+        {
+          "label": "Logik lesen",
+          "value": "Ein Faden öffnet sich, es liest sich"
+        },
+        {
+          "label": "Ziel festlegen",
+          "value": "Kann aus der Sitzung initialisiert werden"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Posteingang für Gespräche, Benachrichtigungen für Spieleereignisse."
+      ],
+      "relatedLinks": [
+        "Posteingang"
+      ]
+    },
+    "top-menu": {
+      "category": "Dashboard",
+      "title": "Menü oben",
+      "subtitle": "Konto, Coins, Benachrichtigungen und Gebrauchsseiten.",
+      "overview": "Das Menü oben rechts enthält Konto- und Supportseiten, die nicht alle in der linken Seitenleiste sichtbar sind.",
+      "details": [
+        "Benutzer können Profileinstellungen und Passwort-Tools aus dem Menü erreichen.",
+        "Münzenpakete und Freunde einladen sind Konto/coin Werkzeuge.",
+        "Einstellungen steuert die Benachrichtigungseinstellungen und den Entwicklungsteam-Kauf.",
+        "Hilfe und Handbuch sollten auf diese Seite verweisen.",
+        "Die aktuelle Sitzung wird beendet."
+      ],
+      "facts": [
+        {
+          "label": "Typische Elemente",
+          "value": "Posteingang, Profil, Personalisierung, Einstellungen, Hilfe, Kontakt, Münzpakete, Freunde einladen, Abmelden"
+        }
+      ],
+      "tips": [
+        "Hilfe leisten/Manual leicht zu finden aus dem Menü."
+      ]
+    },
+    "first-squad-deep": {
+      "category": "Fahrer",
+      "title": "Erstes Schwadengefecht",
+      "subtitle": "Hauptreiter-Liste und Listenansichten.",
+      "overview": "Erste Squad ist, wo Benutzer ihre wichtigsten Dienstplan, finanzielle Informationen, Fähigkeiten und Form zu überprüfen.",
+      "details": [
+        "Allgemein zeigt Identität, Rolle, Alter, Gesamt- und Status.",
+        "Finanzdaten über Gehalt, Marktwert und Vertragsdaten.",
+        "Fähigkeiten zeigen spezielle Eigenschaften.",
+        "Form & Entwicklung zeigt Müdigkeit, Moral, Verfügbarkeit, Potenzial und damit verbundene Entwicklungsinformationen.",
+        "Die Zusammenfassung des Dashboards kann Siege, Podiumsplätze, Top 10s, letztes Rennen und nächste Auswahl zeigen."
+      ],
+      "facts": [
+        {
+          "label": "Erstes Team max",
+          "value": "18 Fahrer"
+        },
+        {
+          "label": "Ansichten",
+          "value": "Allgemein, Finanzen, Fähigkeiten, Form & Entwicklung"
+        }
+      ],
+      "tips": [
+        "Offenes Fahrerprofil vor wichtigen Entscheidungen."
+      ],
+      "relatedLinks": [
+        "Team"
+      ]
+    },
+    "rider-skills-deep": {
+      "category": "Fahrer",
+      "title": "Fahrer Fähigkeiten und Fachbedeutung",
+      "subtitle": "Wie Attribute interpretiert werden sollen.",
+      "overview": "Insgesamt ist eine Zusammenfassung. Fachkenntnisse entscheiden, was ein Fahrer in bestimmten Rennen und Situationen tun kann.",
+      "details": [
+        "Sprint zählt am meisten in schnellen Finishes und Sprint-Rollen.",
+        "Klettern zählt auf Berg- und Bergprofilen.",
+        "Zeitvertreib zählt in ITT/TTT Die",
+        "Ausdauer hilft an langen Tagen und langen Rennen.",
+        "Flache Hilfen auf flachen Straßen, Positionierung und stetige Geschwindigkeit.",
+        "Die Erholung ist besonders wichtig bei Etappenrennen.",
+        "Widerstand unterstützt harte anhaltende Anstrengung.",
+        "Race IQ steht für taktische Entscheidungsqualität.",
+        "Teamwork hilft Fahrern, Teampläne zu unterstützen."
+      ],
+      "facts": [
+        {
+          "label": "Eigenschaften",
+          "value": "Sprint, Klettern, Zeitfahren, Ausdauer, flach, Erholung, Widerstand, Rennen IQ, Teamarbeit"
+        },
+        {
+          "label": "Sonstige wichtige Werte",
+          "value": "Potenzielle, moralische, Müdigkeit, Rasseschärfe"
+        }
+      ],
+      "tips": [
+        "Baue eine ausgeglichene Mannschaft statt nur High-Overall-Fahrer zu kaufen."
+      ]
+    },
+    "rider-profile-deep": {
+      "category": "Fahrer",
+      "title": "Fahrerprofil Tiefe Anleitung",
+      "subtitle": "Eigene Fahrer, externe Fahrer, vergleichen und Geschichte Ansichten.",
+      "overview": "Das Reiterprofil ändert sich je nachdem, ob der Fahrer zu Ihrem Club gehört oder extern ist.",
+      "details": [
+        "Übersicht zeigt Identität, Fitness, Bereitschaft, Schlüsselkompetenzen und Clubinformationen.",
+        "Vertrag zeigt Vertragsstatus und Verhandlung/release Aktionen für Fahrer im Besitz.",
+        "Das Training zeigt aktuelle Trainingsinformationen für eigene Fahrer.",
+        "Vergleich öffnet eine Seite-an-Seite-Fahrer Vergleich Route.",
+        "Geschichte kann Saison zeigen/race Geschichte und Karriereinformationen.",
+        "Externe Profile können Scout-Report-Aktionen und Marktstatus anzeigen."
+      ],
+      "facts": [
+        {
+          "label": "Eigene Register",
+          "value": "Übersicht, Vertrag, Training, Vergleich, Geschichte"
+        },
+        {
+          "label": "Externes Verhalten",
+          "value": "Genaue Attribute können bis zum Scouting ausgeblendet werden"
+        }
+      ],
+      "tips": [
+        "Verlassen Sie sich nicht auf genaue externe Attribute, bis das Scouting sie bestätigt."
+      ]
+    },
+    "fitness-health-deep": {
+      "category": "Fahrer",
+      "title": "Fitness, Müdigkeit, Verletzung und Krankheit",
+      "subtitle": "Warum ein starker Fahrer immer noch eine schlechte Auswahl sein kann.",
+      "overview": "Verfügbarkeit und Ermüdung können den praktischen Rennwert auch dann verringern, wenn die Fähigkeiten und die Gesamtleistung hoch sind.",
+      "details": [
+        "Ein fiter Fahrer kann immer noch hohe Müdigkeit haben.",
+        "Verletzte oder kranke Fahrer benötigen medizinische Erholung und nicht normale Rennen Auswahl.",
+        "Nicht voll fit bedeutet, dass der Fahrer zwar Rennen fahren kann, aber nicht in idealer Bereitschaft ist.",
+        "Hartes Training und schwere Rennkalender erhöhen beide das Überlastrisiko.",
+        "Medizinisches Personal und Systeme zur Wiederherstellung können die Behandlung von Gesundheitsproblemen verbessern."
+      ],
+      "facts": [
+        {
+          "label": "Verfügbarkeit",
+          "value": "Fit, nicht voll fit, verletzt, krank"
+        },
+        {
+          "label": "Müdigkeit",
+          "value": "Stellt angesammelte Müdigkeit und Stress dar"
+        }
+      ],
+      "tips": [
+        "Schützen Sie die wichtigsten Fahrer vor wichtigen Etappenrennen."
+      ]
+    },
+    "race-sharpness-deep": {
+      "category": "Fahrer",
+      "title": "Race Sharpness",
+      "subtitle": "Rennrhythmus gegen Überlastung.",
+      "overview": "Race Schärfe belohnt nützliche Rennrhythmus, aber sollte mit Müdigkeit und Frische ausgeglichen werden.",
+      "details": [
+        "Die Schärfe des Rennens ist nicht dasselbe wie die Fitness.",
+        "Ein ausgeruhter Fahrer mag noch immer an Rennrhythmus fehlen.",
+        "Ein scharfer Fahrer kann noch zu müde sein, um gut zu arbeiten.",
+        "Der beste Zustand hängt von der nächsten Ziel-Rennen und Fahrerrolle ab."
+      ],
+      "facts": [
+        {
+          "label": "Zu wenig Rennen",
+          "value": "Kann die Schärfe des Wettbewerbs verringern"
+        },
+        {
+          "label": "Zu viel Rennen",
+          "value": "Kann Ermüdung und Überlastung erzeugen"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie kleinere Rennen, um wichtige Fahrer vorzubereiten, wenn angemessen."
+      ]
+    },
+    "contracts-renewals-release": {
+      "category": "Fahrer",
+      "title": "Fahrerverträge, Erneuerung und Freigabe",
+      "subtitle": "Wie die Fahrverträge von Fahrern verwaltet werden.",
+      "overview": "Die im Besitz des Fahrers befindlichen Profile umfassen Vertragsdaten und können Verlängerungen, Freigaben oder transferbezogene Maßnahmen ermöglichen.",
+      "details": [
+        "Erneuerungen sollten berücksichtigt werden, bevor der Vertrag zu kurz vor Ablauf kommt.",
+        "Lange Verträge verringern das Risiko für den sofortigen Ablauf, schaffen aber Gehaltszusagen.",
+        "Die Entlassung eines Fahrers kann finanzielle oder saddle Folgen haben.",
+        "Transfer-Liste Fahrer folgen Sie dem Transfer Verhandlung Fluss statt einfache Freigabe.",
+        "Behalten Sie die erste Squad-Kapazität im Auge, bevor Sie neue Fahrer unterzeichnen."
+      ],
+      "facts": [
+        {
+          "label": "Vertragsfelder",
+          "value": "Gehalt, Startsaison, Endsaison, Status"
+        },
+        {
+          "label": "Entscheidungsfaktoren",
+          "value": "Gehalt, Dauer, Verein/tier Interesse und Bereitschaft des Fahrers"
+        }
+      ],
+      "tips": [
+        "Überprüfen Sie Financial View und Fahrerprofil zusammen vor der Erneuerung."
+      ]
+    },
+    "developing-team-deep": {
+      "category": "Fahrer",
+      "title": "Team-Tiefführer entwickeln",
+      "subtitle": "Kauf, Status, Dienstplan und Bewegungsfensterregeln.",
+      "overview": "Die Entwicklungsmannschaft wird separat verwaltet, bleibt aber mit dem Hauptklub und dem Konto verbunden.",
+      "details": [
+        "Der Kaufstatus wird vom Backend geladen und hängt von den Anforderungen und der Münzbilanz ab.",
+        "Der Haupt-Club-Kontext wird nach dem Kauf des Entwicklungsteams wiederhergestellt.",
+        "Die Förderung eines Fahrers erfordert sowohl ein offenes Bewegungsfenster als auch freie First Squad-Kapazität.",
+        "Alter 24+ Fahrer sollten bewegt werden, wenn das Spiel es erlaubt.",
+        "Wenn ein Fenster geschlossen ist, kann die Benutzeroberfläche die Benutzer warnen, im nächsten Fenster zu handeln."
+      ],
+      "facts": [
+        {
+          "label": "Liste max.",
+          "value": "8"
+        },
+        {
+          "label": "Bewegung",
+          "value": "Nur bei offenen Bewegungsfenstern"
+        },
+        {
+          "label": "Warnung für ältere Fahrer",
+          "value": "Alter 24+"
+        }
+      ],
+      "tips": [
+        "Planen Sie Bewegung, bevor die Alterswarnung dringend wird."
+      ],
+      "relatedLinks": [
+        "Einstellungen"
+      ]
+    },
+    "staff-roles-deep": {
+      "category": "Fahrer",
+      "title": "Mitarbeiterrollen",
+      "subtitle": "Was jede Mitarbeiterposition trägt.",
+      "overview": "Die Mitarbeiterfunktionen unterstützen verschiedene Teile der Fahrerentwicklung, der Rennvorbereitung, der medizinischen Versorgung, des Scouting und der Ausrüstung.",
+      "details": [
+        "Head Coach führt die Qualität und Entwicklung des Trainings.",
+        "Trainer erweitern Coaching-Unterstützung und Fahrerkapazität.",
+        "Sportdirektor unterstützt Taktiken, Bühnenpläne und Rennvorbereitungsvorschläge.",
+        "Team Doktor und Physio unterstützen Gesundheit und Erholung.",
+        "Ernährungswissenschaftler unterstützt Ernährung/recovery systeme.",
+        "Mechanik unterstützt Reparaturen und technische Systeme.",
+        "Scout / Analyst unterstützt externe Fahrerinformationen.",
+        "U23 Head Coach unterstützt Entwicklungs-Team Fahrer."
+      ],
+      "facts": [
+        {
+          "label": "Leistungsrollen",
+          "value": "Trainer, Trainer, Direktor für Sport"
+        },
+        {
+          "label": "Medizinische Aufgaben",
+          "value": "Team Doktor, Physio, Ernährungsberater"
+        },
+        {
+          "label": "Technische/knowledge Rollen",
+          "value": "Mechaniker, Pfadfinder / Analyst, U23 Obertrainer"
+        }
+      ],
+      "tips": [
+        "Mieten Sie die Mitarbeiterrolle, die den aktuellen Club Engpass löst."
+      ]
+    },
+    "staff-capacity-deep": {
+      "category": "Fahrer",
+      "title": "Personalkapazität und Infrastruktur",
+      "subtitle": "Warum eine Mitarbeiterrolle auch bei Bargeld gesperrt werden kann.",
+      "overview": "Die Personalkapazität ist an Einrichtungen angeschlossen. Infrastruktur-Upgrades können mehr Mitarbeiterpositionen freischalten.",
+      "details": [
+        "Ein Angebot auf dem Personalmarkt reicht nicht aus, wenn die Rollenkapazität bereits voll ist.",
+        "Infrastrukturseiten zeigen gebrauchte und max Slots für Personalgruppen.",
+        "Die Modernisierungspläne sollten sowohl unmittelbare Vorteile als auch künftige Einstellungserfordernisse berücksichtigen.",
+        "Die Einstellung ohne Kontrolle der Kapazität kann Planungszeit verschwenden."
+      ],
+      "facts": [
+        {
+          "label": "Ausbildungspersonal",
+          "value": "Verbindung zum Training Center / Club House Regeln"
+        },
+        {
+          "label": "Medizinisches Personal",
+          "value": "Verbindung zum medizinischen Zentrum"
+        },
+        {
+          "label": "Mechanik",
+          "value": "Verbindung zum Mechanischen Workshop"
+        },
+        {
+          "label": "Scouting",
+          "value": "Verbindung zu Scouting Office"
+        }
+      ],
+      "tips": [
+        "Überprüfen Sie die Infrastruktur, bevor Sie einen zusätzlichen Mitarbeiter einstellen."
+      ]
+    },
+    "staff-courses-deep": {
+      "category": "Fahrer",
+      "title": "Lehrgänge für Mitarbeiter",
+      "subtitle": "Zeitarbeitsplätze für die Personalentwicklung.",
+      "overview": "Personalkurse kosten Geld, nehmen Spieltage und können ausgewählte Mitarbeiterattribute verbessern.",
+      "details": [
+        "Nur förderungsberechtigte Mitarbeiter sollten einen Kurs beginnen.",
+        "Die Kursdetails-Vorschau sollte vor der Zahlung überprüft werden.",
+        "Aktive Kurse zeigen Fortschritte und bleiben/completion Informationen.",
+        "Abgeschlossene Kurse können in der jüngeren Geschichte gezeigt werden.",
+        "Die Kurskosten sollten mit Finance geplant werden."
+      ],
+      "facts": [
+        {
+          "label": "Kursdaten",
+          "value": "Titel, Kategorie, Dauer, Kosten und Attributgewinne"
+        },
+        {
+          "label": "Kursangaben",
+          "value": "Aktiv und vor kurzem abgeschlossen"
+        }
+      ],
+      "tips": [
+        "Trainieren Sie wertvolles Personal, nicht jede Leiharbeit."
+      ]
+    },
+    "regular-training-deep": {
+      "category": "Training",
+      "title": "Regelmäßiges Training",
+      "subtitle": "Team Standardtraining, individuelle Pläne und Intensität.",
+      "overview": "Regelmäßiges Training ist das normale kontinuierliche Entwicklungssystem für Fahrer außerhalb von Lagern.",
+      "details": [
+        "Die Standardeinstellungen des Teams geben dem Kader einen Basistrainingsansatz.",
+        "Individuelle Pläne überschreiben die Team-Standard, wenn ein Fahrer braucht spezialisierte Arbeit.",
+        "Harte Intensität erhöht Trainingsstress und Ermüdungsrisiko.",
+        "Erholung Intensität ist nützlich um harte Rennen Blöcke.",
+        "Das Training sollte den Rollen- und Kalenderzielen der Fahrer folgen."
+      ],
+      "facts": [
+        {
+          "label": "Schwerpunkte",
+          "value": "Allgemein, Erholung, Sprint, Klettern, flach, Zeitfahren, Ausdauer, Widerstand, Rennen IQ, Teamarbeit"
+        },
+        {
+          "label": "Intensität",
+          "value": "Erholung, Licht, normal, hart"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Hard nicht als permanente Standardeinstellung für die gesamte Mannschaft."
+      ]
+    },
+    "training-camps-deep": {
+      "category": "Training",
+      "title": "Schulungscamps im tiefen Führer",
+      "subtitle": "Lagerplätze, Angebote, Wetter und Buchungslogik.",
+      "overview": "Trainingslager sind stärkere geplante Entwicklungsblöcke mit Reisen, Unterkunft, Lagergebühren und speziellen Trainingseffekten.",
+      "details": [
+        "Camp-Standorte haben Qualität, Höhe, Gelände und Kalender-Vorlieben.",
+        "Bevorzugte Wochen können das Camperlebnis verbessern, während riskante Wochen es reduzieren können.",
+        "Geschlossene Wochen verhindern die Buchung.",
+        "Die Preise sollten vor der Begehung überprüft werden, da Reisen und Unterkunft hohe Kosten verursachen können.",
+        "Wetter kann den Trainingswert reduzieren oder verpasste Sitzungen erstellen.",
+        "Die Auswahl der Mitarbeiter und Fahrer beeinflusst das Ergebnis des Lagers."
+      ],
+      "facts": [
+        {
+          "label": "Lagertypen",
+          "value": "Allgemein, Sprint, Klettern, flach, Zeitfahren"
+        },
+        {
+          "label": "Bestandteile der Zitate",
+          "value": "Reise, Unterkunft, Lagergebühr, Logistik, Gesamtkosten"
+        },
+        {
+          "label": "Wetter",
+          "value": "Kann Modifikator, verpasste Tages-Chance und Warnungen ändern"
+        }
+      ],
+      "tips": [
+        "Buche Lager um große Ziele, nicht zufällig."
+      ]
+    },
+    "current-camp-deep": {
+      "category": "Training",
+      "title": "Aktuelles Schulungslager",
+      "subtitle": "Wie man eine aktive Seite des Lagers liest.",
+      "overview": "Eine aktive Campseite zeigt Teilnehmer, Mitarbeiter, Wetter, Trainingsplan, tägliche Berichte und Fortschritt.",
+      "details": [
+        "Die aktuelle Camp-Seite sollte verwendet werden, um zu überwachen, was tatsächlich passiert, nicht nur das ursprüngliche Buchungsangebot.",
+        "Wetter- und Personaleffekte können die effektive Trainingsqualität verändern.",
+        "Tägliche Berichte zeigen abgeschlossene Sitzungen und Fahrereinwirkung.",
+        "Der nächste Trainingsplan sollte nur angepasst werden, wenn das Spiel es erlaubt.",
+        "Lagermüdigkeit sollte vor dem nächsten Rennen in Betracht gezogen werden."
+      ],
+      "facts": [
+        {
+          "label": "Teilnehmer",
+          "value": "Ausgewählte Fahrer und zugewiesene Mitarbeiter"
+        },
+        {
+          "label": "Plan",
+          "value": "Tag frei, leicht, normal oder hart für Lagertage"
+        },
+        {
+          "label": "Berichte",
+          "value": "Abgeschlossene Tagesgewinne und Ermüdungseffekte"
+        }
+      ],
+      "tips": [
+        "Nach dem Camp, geben Sie Fahrer genug Erholung vor wichtigen Rennen."
+      ]
+    },
+    "equipment-category-deep": {
+      "category": "Ausrüstung",
+      "title": "Ausstattung Kategorien und Gelände Boni",
+      "subtitle": "Was jede langlebige Ausrüstungskategorie zur Rennleistung beiträgt.",
+      "overview": "Die Ausrüstung ist in langlebige Kategorien aufgeteilt. Jedes Element kann Qualität, Gelände Boni, Ermüdungsreduzierung Wert, Zustand und Status tragen. Das beste Element ist nicht immer das mit dem höchsten Preis; es ist das, das das Rennprofil und das Setup, das Sie tatsächlich zu verwenden planen passt.",
+      "details": [
+        "Rahmen sind die Grundlage eines Setups und können je nach Element unterschiedliche Geländestärken unterstützen.",
+        "Radsätze können sich stark auf flache, kletternde oder zeitfahrende Leistungen auswirken, so dass sie auf den Kurs abgestimmt werden sollten, anstatt in jedem Fall blind zu verwenden.",
+        "Reifen sind besonders wichtig, wenn sich Oberfläche und Gelände ändern. Kopftücher und schlechtes Wetter können die Reifenwahl wichtiger machen als auf einer normalen flachen Etappe.",
+        "Gruppen unterstützen die Effizienz des Antriebsstrangs und können je nach Marktposition zu geländespezifischen Boni beitragen.",
+        "Helme und Schuhe sind kleinere Teile des Setups, tragen aber trotzdem zu Boni bei und können wichtig sein, wenn das gesamte Setup optimiert ist.",
+        "Ermüdungs-Reduktionsboni sind nützlich, wenn der Fahrer Energie über lange Etappen oder mehrtägige Rennen erhalten muss.",
+        "Ein spezialisiertes Setup kann stärker sein als ein generisches Setup, auch wenn ein einzelnes Element eine niedrigere Headline-Rating hat."
+      ],
+      "facts": [
+        {
+          "label": "Dauerhafte Kategorien",
+          "value": "Rahmen, Radsatz, Reifen, Gruppen, Helm, Schuhe"
+        },
+        {
+          "label": "Bodenprämien",
+          "value": "Flach, hügelig, Berg, Kopfsteinpflaster, Zeitfahren, Sprint"
+        },
+        {
+          "label": "Zusätzliche Wirkung",
+          "value": "Ermüdungsreduktion"
+        },
+        {
+          "label": "Qualitätskennzeichnungen",
+          "value": "Grundlegend, Gut, Super"
+        }
+      ],
+      "tips": [
+        "Mindestens einen Sprint erstellen/flat Setup, ein Berg-Setup und ein Zeit-Test-Setup, wenn Ihr Inventar es erlaubt.",
+        "Überprüfen Sie das Bühnenprofil vor der Auswahl der Ausrüstung."
+      ],
+      "relatedLinks": [
+        "Ausrüstung"
+      ]
+    },
+    "equipment-caps-deep": {
+      "category": "Ausrüstung",
+      "title": "Ausrüstung Bonus Caps und Setup Logic",
+      "subtitle": "Warum Stapeln jeden Bonus nicht unbegrenzte Leistungsgewinne.",
+      "overview": "Ausrüstung Boni sind nützlich, aber sollte im Spiel bleiben. Ein Setup ist ein Paket von Ausrüstung für einen Renntyp, und der Manager sollte über den kombinierten Effekt denken, anstatt eine Zahl ohne Kontext zu jagen.",
+      "details": [
+        "Das Standard Race Setup wird verwendet, wenn kein race-spezifisches Setup ausgewählt ist.",
+        "Gespeicherte Setup-Voreinstellungen helfen Managern, vor jedem Rennen die gleiche Kombination wiederherzustellen.",
+        "Terrain Boni sollten als Unterstützung für die Fahrerleistung gelesen werden, nicht als Ersatz für Fahrerfähigkeit.",
+        "Wenn mehrere Elemente die gleiche Art von Bonus bieten, kann das Spiel den gesamten nützlichen Effekt begrenzen. Manager sollten daher ausgewogene Setups anstatt davon ausgehen, dass jeder zusätzliche Punkt Stapel für immer.",
+        "Ein Fahrer braucht noch die richtigen Spezialattribute. Mountain Equipment macht aus einem schwachen Bergsteiger keinen Elitekletterer.",
+        "Ein starkes, aber abgenutztes Produkt kann eine schlechtere praktische Wahl als ein etwas schwächeres Element in gutem Zustand sein."
+      ],
+      "facts": [
+        {
+          "label": "Einrichtung",
+          "value": "Standard Race Setup plus gespeicherte spezielle Setup-Voreinstellungen"
+        },
+        {
+          "label": "Häufige Voreinstellungen",
+          "value": "Sprint, Berg, Zeitfahren, gepflasterte / spezialisierte Rennaufbauten"
+        },
+        {
+          "label": "Wichtige Einschränkung",
+          "value": "Ausrüstung Boni sind durch das Spielsystem begrenzt / begrenzt"
+        }
+      ],
+      "tips": [
+        "Denken Sie in kompletten Setups, nicht isolierte Elemente.",
+        "Bewahren Sie die Sicherungsausrüstung für wichtige Rennblöcke auf."
+      ]
+    },
+    "equipment-inventory-deep": {
+      "category": "Ausrüstung",
+      "title": "Ausrüstungsbestand, Zustand und Maßnahmen",
+      "subtitle": "Bereit, zugewiesen, Wartung und Verschleißzustände plus Reparatur/sell/discard Regeln.",
+      "overview": "Inventar zeigt die Ausrüstung, die der Verein noch besitzt und möglicherweise verwenden kann. Status und Bedingung entscheiden, welche Aktionen verfügbar sind.",
+      "details": [
+        "Ready Items können normalerweise Setups zugeordnet werden und können je nach Zustand und anderen Regeln auch für Reparatur, Verkauf oder Rückwurf in Frage kommen.",
+        "Zugeteilte Elemente werden derzeit von einem anderen Spielsystem verwendet oder reserviert. Sie sollten vor Aktionen, die sie nicht verfügbar machen würden, freigegeben werden.",
+        "In der Wartung bedeutet, dass das Produkt bereits repariert wird und nicht normal verwendet werden kann, bis die Wartung beendet ist.",
+        "Geschädigt bedeutet, dass der Zustand genug gefallen ist, dass das Element Aufmerksamkeit braucht. Geschädigte Gegenstände können die Zuverlässigkeit reduzieren und sollten nicht vor wichtigen Rennen ignoriert werden.",
+        "Reparatur-Notierungen sollten die Kosten vor der Bestätigung zeigen. Der Manager sollte Reparaturkosten mit Artikelwert und Ersatzkosten vergleichen.",
+        "Der Verkauf wandelt ein Eigentumteil in Bargeld um, wenn der Verkauf erlaubt ist.",
+        "Das Verwerfen entfernt einen Gegenstand ohne normalen Verkauf. Dieser sollte nur für Ausrüstung verwendet werden, die der Verein nicht mehr benötigt oder nicht rechtfertigen kann."
+      ],
+      "facts": [
+        {
+          "label": "Gemeinsamer Stand",
+          "value": "Bereit, Zugewiesen, In Wartung, Gewürmt"
+        },
+        {
+          "label": "Aktives Inventar",
+          "value": "Verkaufte und verworfene Gegenstände sind aus normalem aktiven Inventar ausgeblendet"
+        },
+        {
+          "label": "Typische Reparaturschwelle",
+          "value": "Bedingung 90 % oder weniger, wenn der Posten anderweitig förderfähig ist"
+        }
+      ],
+      "tips": [
+        "Reparatur wichtiger Gegenstände vor kritischen Rennen.",
+        "Verkaufen Sie nicht zugewiesene Ausrüstung, ohne zuerst das Setup, das es verwendet zu ändern."
+      ]
+    },
+    "race-supplies-deep": {
+      "category": "Ausrüstung",
+      "title": "Race liefert tiefe Anleitung",
+      "subtitle": "Wie Verbrauchsmaterialien und langlebige Bühnenvorräte gezählt und verwendet werden.",
+      "overview": "Race Supplies verbinden Ausrüstung mit Race Preparation. Der Manager kauft im Voraus Aktien, dann Stage Plans den erforderlichen Betrag pro Fahrer und pro Etappe verbrauchen oder zuweisen.",
+      "details": [
+        "Bidonen unterstützen Hydratation und Ermüdungskontrolle. Ein Bühnenplan unterhalb des erforderlichen Hydratationsminimums kann den Ermüdungsdruck erhöhen.",
+        "Energy Gels unterstützen Ausdauer und Endeffekteffizienz. Mehr als die nützliche Kappe schafft keinen zusätzlichen Nutzen.",
+        "Nutrition Packs unterstützen Ausdauerstabilität und Erholung, vor allem auf langen Etappen und Etappenrennen.",
+        "Race Jersey Complete ist Pflicht. Ein Team ohne genügend nutzbare Trikot-Stage-Uses kann von einem kompletten Bühnenaufbau blockiert werden.",
+        "Regenjacken sind nicht auf jeder Etappe obligatorisch, aber werden wertvoll in der Kälte/wet Wetter. Das Spiel sollte abgenutzte langlebige Versorgungseinheiten als unbrauchbar behandeln.",
+        "Die Etappenrennen vermehren sich, weil die Vorräte pro Fahrer und Etappe berechnet werden. Ein Bestand, der für ein eintägiges Rennen groß aussieht, kann für ein siebenstufiges Rennen zu klein sein."
+      ],
+      "facts": [
+        {
+          "label": "Bidonen / Wasserflaschen",
+          "value": "1–4 pro Fahrer; Verbrauchsmaterial für eine Verwendung"
+        },
+        {
+          "label": "Energie Gele",
+          "value": "0–4 je Fahrer; Verbrauchsmaterial für eine Verwendung"
+        },
+        {
+          "label": "Ernährungspakete",
+          "value": "0–2 je Fahrer; Verbrauchsmaterial für eine Verwendung"
+        },
+        {
+          "label": "Rennen Jersey abgeschlossen",
+          "value": "Pflichtartikel mit dauerhafter Lebensdauer; 10 Verwendungen pro Stück"
+        },
+        {
+          "label": "Regenjacken",
+          "value": "Optionaler Wetterpunkt; 25 Einsatzstufen pro Einheit"
+        }
+      ],
+      "tips": [
+        "Berechnen Sie die Lagerbestände vor der Vorlage von Fahrern und den Fristen für den Stage Plan.",
+        "Nehmen Sie nicht an, gestern ist der Bestand nach mehreren Etappen noch genug."
+      ],
+      "relatedLinks": [
+        "Rassenversorgung",
+        "Rennvorbereitung"
+      ]
+    },
+    "technical-sponsor-deep": {
+      "category": "Ausrüstung",
+      "title": "Technische Unterstützung für Sponsorenausrüstung",
+      "subtitle": "Barunterstützung, Ausrüstungsbudget und Marktrabatte von einem technischen Sponsor.",
+      "overview": "Technische Sponsoren unterscheiden sich von normalen Hauptsponsoren/secondary Sponsoren, weil sie das System direkt unterstützen können.",
+      "details": [
+        "Ein technischer Sponsor kann direkte Geld-Unterstützung und ein separates Ausrüstungs-Unterstützungsbudget anbieten.",
+        "Kategorierabatte können die effektiven Anschaffungskosten für zugelassene Marktgegenstände verringern.",
+        "Der Manager sollte den Support des Sponsors überprüfen, bevor er teure Ausrüstung kauft, weil derselbe Artikel weniger kosten kann, während der technische Deal aktiv ist.",
+        "Der technische Sponsorwert sollte mit dem tatsächlichen Ausrüstungsbedarf des Vereins verglichen werden. Ein großer Rabatt ist weniger nützlich, wenn die diskontierte Kategorie bereits stark ist.",
+        "Sponsor-Unterstützung kann langfristige Ausrüstungsplanung verbessern, aber nicht entfernen Zustand, Wartung oder Inventar Grenzen."
+      ],
+      "facts": [
+        {
+          "label": "Mögliche Unterstützung",
+          "value": "Barhilfe, Ausrüstungshilfen Budget, Kategorie Rabatte"
+        },
+        {
+          "label": "Gilt für",
+          "value": "Ausgewählte Gerätekategorien / Marktkäufe"
+        },
+        {
+          "label": "Praktische Wirkung",
+          "value": "Geringere Anschaffungskosten und einfachere Geräteentwicklung"
+        }
+      ],
+      "tips": [
+        "Kaufen Sie wichtige qualifizierte Ausrüstung, während nützliche Sponsoren Rabatte aktiv sind.",
+        "Nicht nur durch garantiertes Bargeld technische Sponsoren bewerten."
+      ]
+    },
+    "facilities-overview-deep": {
+      "category": "Infrastruktur",
+      "title": "Einrichtungen Deep Guide",
+      "subtitle": "Club House, Training Center, Medical Center, Jugendakademie, Workshop und Scouting Office.",
+      "overview": "Einrichtungen sind dauerhafte langfristige Investitionen, die Kapazität freischalten und verbessern den Verein, Fähigkeit, zu trainieren, zu heilen, zu scout, Reparatur und Entwicklung Fahrer.",
+      "details": [
+        "Club House unterstützt Verwaltung und breitere Cluborganisation. Es kann auch als Voraussetzung für andere Systeme dienen.",
+        "Training Center verbessert die Trainingsqualität, die Coaching-Wirksamkeit und die Entwicklungsunterstützung.",
+        "Medical Center erhöht die Kapazität des medizinischen Personals und verbessert die Verletzung/recovery Unterstützung.",
+        "Jugendakademie unterstützt U23/development Systeme und künftige Funktionalitäten im Jugendbereich.",
+        "Mechanik-Workshop verbessert Reparaturen und technische Mitarbeiterkapazität.",
+        "Scouting Office verbessert die Scouting-Kapazität und die Grenzen der Berichtqualität.",
+        "Facility Upgrades kosten Bargeld, nehmen Spieltage und nutzen die Baukapazität."
+      ],
+      "facts": [
+        {
+          "label": "Clubhaus max",
+          "value": "Stufe 5"
+        },
+        {
+          "label": "Schulungszentrum max",
+          "value": "Stufe 5"
+        },
+        {
+          "label": "Medizinisches Zentrum max",
+          "value": "Stufe 5"
+        },
+        {
+          "label": "Jugendakademie max",
+          "value": "Stufe 2"
+        },
+        {
+          "label": "Mechanik-Workshop max",
+          "value": "Stufe 4"
+        },
+        {
+          "label": "Scouting-Büro max",
+          "value": "Stufe 4"
+        }
+      ],
+      "tips": [
+        "Upgrade der Anlage, die den aktuellen Engpass löst.",
+        "Aktualisieren Sie nicht alles auf einmal, wenn die Finanzen es nicht unterstützen können."
+      ],
+      "relatedLinks": [
+        "Infrastruktur"
+      ]
+    },
+    "facility-jobs-deep": {
+      "category": "Infrastruktur",
+      "title": "Infrastruktur Jobs, Zitate und Bau-Slots",
+      "subtitle": "Wie Upgrades, Reparaturen und Stornierungen über Spielzeit funktionieren.",
+      "overview": "Infrastrukturmaßnahmen sind nicht sofort. Jobs haben Kosten, Dauer, Start/completion Spieldaten und kann begrenzte Bau-Slots verwenden.",
+      "details": [
+        "Vor dem Start einer Facility Upgrade sollte die Seite zeigen, ob Voraussetzungen und Cash-Anforderungen erfüllt sind.",
+        "Ein aktiver Job nimmt einen Bauplatz bis zum Abschluss oder erfolgreichen Abbruch ein.",
+        "Das Fertigstellungsdatum ist ein In-Game-Datum. Der Manager sollte es mit der Fußzeile Spielzeit und zukünftigen Kalenderplänen vergleichen.",
+        "Stornierung kann nur einen Teil des bezahlten Wertes zurückgeben. Das Angebot sollte vor der Bestätigung überprüft werden.",
+        "Ein langes Upgrade kann den Zugriff auf Personalkapazität oder Boni verzögern, so dass Timing so viel wie Preis zählt."
+      ],
+      "facts": [
+        {
+          "label": "Arbeitsplatzdaten",
+          "value": "Kosten, Dauer, Startdatum, Fertigstellungsdatum, Status"
+        },
+        {
+          "label": "Kapazität",
+          "value": "Bauplätze können gleichzeitige Projekte begrenzen"
+        },
+        {
+          "label": "Aufhebung",
+          "value": "Verwendet ein Zitat/refund Regel, wenn die Stornierung erlaubt ist"
+        }
+      ],
+      "tips": [
+        "Starten Sie lange Jobs, wenn der Club ohne das fehlende Upgrade für mehrere Spieltage leben kann.",
+        "Halten Sie Bargeld für Gehälter und Steuern, während der Bau aktiv ist."
+      ]
+    },
+    "assets-deep": {
+      "category": "Infrastruktur",
+      "title": "Rennsportanlagen und Stützfahrzeuge",
+      "subtitle": "Team Autos, Bus, Ausrüstung van, mobile Werkstatt und medizinischer Transporter.",
+      "overview": "Vermögenswerte sind clubeigene Unterstützungsressourcen. Sie können Race Plans zugeordnet werden und haben Zustand, Status, Kaufwert, Reparaturkosten und Verkaufswert.",
+      "details": [
+        "Team Cars unterstützt den Rennbetrieb und kann je nach Plan in unterschiedlichen Mengen benötigt werden.",
+        "Team Bus unterstützt Transport und Teamlogistik.",
+        "Equipment Van unterstützt die Gerätebewegung und die Race Setup-Logistik.",
+        "Mobile Workshop bietet technische Unterstützung während des Rennsports/travel.",
+        "Medical Van bietet zusätzliche medizinische Unterstützung.",
+        "Zugelassene oder gesperrte Vermögenswerte sollten nicht repariert oder verkauft werden, bis sie aus dem Rennen freigegeben sind/job Das benutzt sie.",
+        "Der Zustand sollte vor wichtigen Rennen überprüft werden, da ein technisch verfügbarer Vermögenswert noch in schlechter Form sein kann."
+      ],
+      "facts": [
+        {
+          "label": "Art der Vermögenswerte",
+          "value": "Team Autos, Team Bus, Ausrüstung Van, Mobile Werkstatt, Medical Van"
+        },
+        {
+          "label": "Wichtige Werte",
+          "value": "Zustand, Status, Anschaffungskosten, Reparaturangebot, Kaufangebot"
+        },
+        {
+          "label": "Einsatz von Rassen",
+          "value": "Ausgewählt in Race Plan Logistik/support"
+        }
+      ],
+      "tips": [
+        "Reparatur Unterstützung Vermögenswerte vor wichtigen Rennblöcken.",
+        "Verkaufen Sie keine Vermögenswerte, die von einem kommenden Race Plan."
+      ]
+    },
+    "season-calendar-deep": {
+      "category": "Kalender und Rennen",
+      "title": "Saisonkalender Tiefe Anleitung",
+      "subtitle": "Tag für Tag Blick auf Rennen, Camps, Veranstaltungen und Feiertage.",
+      "overview": "Saisonkalender ist die breite Zeitplanungsansicht. Es hilft dem Manager zu verstehen, was über Spieltage im Club passiert, anstatt nur einzelne Rennen zu betrachten.",
+      "details": [
+        "Die Termine sollten zusammen mit der Bewerbung und den Fristen für die Einreichung des Fahrers gelesen werden.",
+        "Trainingslager nehmen Zeit in Anspruch und können mit wichtigen Rassenvorbereitungen kollidieren, wenn sie schlecht geplant sind.",
+        "Veranstaltungen und Feiertage können beeinflussen, wie die Spielwelt dargestellt wird oder wie bestimmte Systeme geplant sind.",
+        "Der Kalender ist der beste Ort, um zu überprüfen, ob mehrere wichtige Aktionen in der Nähe zusammen stattfinden.",
+        "Verwenden Sie die Fußzeile Spielzeit als aktuelles Datum Referenz und Kalender als Zukunftsplan Referenz."
+      ],
+      "facts": [
+        {
+          "label": "Filter",
+          "value": "Rennen, Trainingscamps, Veranstaltungen, Urlaub"
+        },
+        {
+          "label": "Hauptzweck",
+          "value": "Langfristige Termin- und Termin-Bewusstwer-dung"
+        },
+        {
+          "label": "Zeitquelle",
+          "value": "Datum des Spielkalenders"
+        }
+      ],
+      "tips": [
+        "Planen Sie mindestens mehrere Spieltage vor.",
+        "Vermeiden Sie Lager unmittelbar vor wichtigen Rennen, es sei denn, die Erholung ist geplant."
+      ],
+      "relatedLinks": [
+        "Kalender"
+      ]
+    },
+    "race-calendar-deep": {
+      "category": "Kalender und Rennen",
+      "title": "Race Kalender, Anwendungen und Status des Eintrags",
+      "subtitle": "Wie Teams Rennen finden und von der Bewerbung zu akzeptierten Eintrag wechseln.",
+      "overview": "Race Calendar zeigt verfügbare Rennen und den aktuellen Anwendungszustand. Akzeptanz ist nur der erste Schritt; das Team muss später die Fahrerauswahl und die Vorbereitung des Rennens abschließen.",
+      "details": [
+        "Anwendungen sind nur innerhalb des Race Application Fensters verfügbar.",
+        "Das Rennen kann die zugelassenen Teams nach Stufen, Divisionen oder anderen Einreiseregeln einschränken.",
+        "Der Manager sollte prüfen, wie viele Teams angenommen werden können und wie viele bereits angewendet haben/been angenommen.",
+        "Ein geschlossenes Anwendungsfenster kann vom Spieler nicht wieder geöffnet werden.",
+        "Wenn angenommen, wird das Rennen relevant auf Race Preparation und später Fahrer-Vorlage Fristen.",
+        "Verwechseln Sie nicht Akzeptiert mit Bereit. Akzeptiert bedeutet nur, dass der Club einen Platz in der Veranstaltung hat."
+      ],
+      "facts": [
+        {
+          "label": "Gemeinsamer Stand",
+          "value": "Nicht offen, offen, geschlossen, Rennen aktiv, Rennen beendet, abgebrochen"
+        },
+        {
+          "label": "Daten zur Rasse",
+          "value": "Kategorie, Land, Stadt, Datum, Renntyp, Teamlimits, akzeptierte Teams"
+        },
+        {
+          "label": "Wichtiger nächster Schritt",
+          "value": "Akzeptiertes Team muss noch komplett sein Race Plan / Stage Plans"
+        }
+      ],
+      "tips": [
+        "Bewerben Sie sich früh, wenn das Rennen wichtig ist.",
+        "Nach der Annahme sofort überprüfen Race Vorbereitung Fristen."
+      ],
+      "relatedLinks": [
+        "Kalender",
+        "Rennvorbereitung"
+      ]
+    },
+    "race-detail-deep": {
+      "category": "Kalender und Rennen",
+      "title": "Race Detail Tiefe Anleitung",
+      "subtitle": "Eintrittsregeln, Stufen, Teilnehmer, Ergebnisse, Klassifikationen und Live-Zustand.",
+      "overview": "Race Detail ist die Hauptreferenzseite für ein bestimmtes Ereignis. Vor dem Rennen erklärt es die Route und Regeln. Während/after das Rennen wird es zum Ergebnis und Replay Hub.",
+      "details": [
+        "Die Einstiegsinformationen können max Teams, Fahrer pro Team, Bewerbungsfrist, Teamliste Ankündigung, Fahrer Einreichungsfrist und Preisfonds umfassen.",
+        "Teilnehmerlisten zeigen, welche Teams akzeptiert wurden und welche Fahrer später auf der Startlist stehen.",
+        "Etappenlisten zeigen Route, Gelände, Distanz, Zieltyp, Profil und Wetterinformationen.",
+        "Ein Etappenrennen kann die Gesamtwertung von General, Points, Mountain, Young und Team beibehalten.",
+        "Race Detail sollte verwendet werden, um offizielle Ergebnisdaten zu überprüfen, anstatt nur auf eine Benachrichtigung oder Übersichtskarte zu setzen.",
+        "Beendete Rennen bleiben wichtig, weil sie zum Fahrer beitragen/team Statistiken und Rankingpunkte."
+      ],
+      "facts": [
+        {
+          "label": "Vor dem Rennen",
+          "value": "Regeln, Anwendung, Teilnehmer- und Bühneninformationen"
+        },
+        {
+          "label": "Während des Rennens",
+          "value": "Live-Zustand / Wiedergabe / Kommentar, wenn verfügbar"
+        },
+        {
+          "label": "Nach dem Rennen",
+          "value": "Ergebnisse und Klassifikationen der Stufen"
+        }
+      ],
+      "tips": [
+        "Open Race Detail vor Rennen Vorbereitung zu verstehen, welche Art von Fahrern und Ausrüstung die Veranstaltung braucht."
+      ]
+    },
+    "stage-terrain-points": {
+      "category": "Kalender und Rennen",
+      "title": "Bühnengelände, Finish-Typen, Sprints und KOM",
+      "subtitle": "Wie man die Profilinformationen liest, die die Vorbereitung der Rennen antreiben.",
+      "overview": "Die Streckenprofile kommunizieren, was die Route verlangt. Geländemischung, Finish-Typ, Höhen, Zwischenspurten und Bergpunkte sollen die Fahrerauswahl beeinflussen und Stage Plans.",
+      "details": [
+        "Flachlastige Etappen bevorzugen meist Sprinter, Rouleure und starke Lead-Out-Unterstützung.",
+        "Bergetappen bevorzugen Klettern, Ausdauer, Widerstand und Erholung, vor allem in Etappenrennen.",
+        "Hilly/puncheur Stufen belohnen Beschleunigung und Kletterkraft, ohne voll Bergstufen.",
+        "Die Phasen der Zeitplanung hängen stark von TT-Fähigkeiten und geeigneten Geräten ab.",
+        "Gepflasterte Sektoren erhöhen die Bedeutung von oberflächenspezifischen Geräten und geeigneten Fahreigenschaften.",
+        "Zwischenspurts beeinflussen Punkte und können taktische Ziele sein, auch wenn der Fahrer die Etappe nicht gewinnen kann.",
+        "KOM Punkte sind für Bergklassifikationen von Bedeutung und können abtrünnige Taktiken rechtfertigen."
+      ],
+      "facts": [
+        {
+          "label": "Typisches Gelände",
+          "value": "Flach, hügelig, Berg, Kopfsteinpflaster, Zeitfahren / Mischprofile"
+        },
+        {
+          "label": "Informationen beenden",
+          "value": "Finish Typ und mögliche Gipfel-Finish"
+        },
+        {
+          "label": "Punkte Orte",
+          "value": "Zwischenspurt und KOM Begriffsbestimmungen"
+        }
+      ],
+      "tips": [
+        "Lesen Sie die Route vor der Zuweisung von Rollen.",
+        "Nicht das gleiche verwenden Stage Plan auf jedem Profil."
+      ]
+    },
+    "replay-results-deep": {
+      "category": "Kalender und Rennen",
+      "title": "Wiederholung, Kommentar, Ergebnisse und Klassifikationen",
+      "subtitle": "Wie man versteht, was passiert ist, nachdem der Motor die Etappe berechnet.",
+      "overview": "Die Wiedergabe ist eine Darstellung des gleichen offiziellen Simulationsergebnisses. Ergebnisse und Wiederholung sollten synchronisiert bleiben, damit der Spieler ein konsistentes Ergebnis sieht.",
+      "details": [
+        "Das Spiel sollte nicht ein anderes Ergebnis als das offizielle Ergebnis berechnen. Replay ist eine schreibgeschützte Darstellung des gespeicherten Ergebnisses.",
+        "Gruppen und Zeitlücken zeigen, wie sich das Rennen aufspaltete und wo Fahrer Zeit verloren oder gewonnen haben.",
+        "Kommentar beschreibt wichtige Angriffe, Ausbrüche, Verfolgungen, Besteigungen, Sprints und Endereignisse.",
+        "Das Etappenergebnis ist nur ein Teil eines Etappenrennens. GC, Punkte, Berg, Jung und Team-Klassifikationen können sich nach jeder Etappe ändern.",
+        "Ein Fahrer kann eine schlechte Bühnenposition haben, aber dennoch ein taktisches Ziel wie Punkte erreichen, KOM Punkte oder einen Führer zu schützen.",
+        "Wiedergabe verwenden/results als Feedback für zukünftige Taktiken statt die bereits abgeschlossene Phase zu verändern."
+      ],
+      "facts": [
+        {
+          "label": "Ergebnisquelle",
+          "value": "Eine offizielle Rennmotorberechnung"
+        },
+        {
+          "label": "Wiederholungszweck",
+          "value": "Visuelle Zeitleiste/Checkpoints der gleichen Berechnung"
+        },
+        {
+          "label": "Daten nach der Stufe",
+          "value": "Ergebnis der Stufe, GC/classifications, Lücken, Punkte und Kommentare"
+        }
+      ],
+      "tips": [
+        "Überprüfen Sie, wo das Team Zeit verloren, bevor die nächste Stage Plan.",
+        "Nach jeder wichtigen Etappe die Klassifizierung überprüfen."
+      ]
+    },
+    "race-plan-deep": {
+      "category": "Rennvorbereitung",
+      "title": "Race Plan Tiefe Anleitung",
+      "subtitle": "Fahrerauswahl, Personal, Logistik, Ausrüstung, Zubehör und Gesamtunterstützung Zitat.",
+      "overview": "Race Plan ist der Event-Level-Plan, der nach der Annahme eines Teams erstellt wurde. Er definiert, wer zum Rennen geht und welche Unterstützungsressourcen mit ihnen reisen.",
+      "details": [
+        "Das Race Plan sollte kurz nach der Annahme erstellt werden, weil sich überschneidende Ereignisse Fahrer oder Vermögenswerte später blockieren können.",
+        "Fahrer, die bereits überlappenden Rennen verpflichtet sind/camps kann aus der Auswahl blockiert werden.",
+        "Mitarbeiterzuweisungen bieten Unterstützungsbonus und können auch durch Konflikte blockiert werden.",
+        "Vermögenswerte schaffen Reisen/logistics Unterstützung und kann Kosten oder Bereitschaft beeinträchtigen.",
+        "Ausrüstungsaufbau bestimmt, welche haltbaren Getriebe das Team zu verwenden plant.",
+        "Die Rennbedarfe müssen für das gesamte Event, insbesondere für mehrstufige Rennen, ausreichen.",
+        "Die Zitatvorschau kann Reisekosten, Personaleffekte, Asset Support, Ausrüstung und Policy Effekte kombinieren.",
+        "Übermittlung einer Race Plan die Zubereitung nicht beendet; Stage Plans muss noch abgeschlossen sein."
+      ],
+      "facts": [
+        {
+          "label": "Auswahl des Fahrers",
+          "value": "Muss die Grenzen des Rennfahrers erfüllen"
+        },
+        {
+          "label": "Rennpersonal",
+          "value": "Sportdirektor, Team Doctor, Physio, Mechanik"
+        },
+        {
+          "label": "Forderungen",
+          "value": "Bus, Transporter, mobile Werkstatt, medizinischer Transporter, Teamautos"
+        },
+        {
+          "label": "Sonstige",
+          "value": "Ausrüstungsaufbau und Rennbedarf"
+        }
+      ],
+      "tips": [
+        "Tun Sie die Race Plan vor der Frist wird dringend.",
+        "Fahrer wieder auflösen/asset Konflikte, bevor sie versuchen, sich zu unterwerfen."
+      ],
+      "relatedLinks": [
+        "Rennvorbereitung"
+      ]
+    },
+    "stage-plan-deep": {
+      "category": "Rennvorbereitung",
+      "title": "Stage Plans Tiefe Anleitung",
+      "subtitle": "Pro-Stadium Rollen, Teamtaktik, individuelle Taktik, Ausrüstung und Zubehör.",
+      "overview": "Stage Plans sind die taktische Schicht der Race Preparation. Der Manager kann für jede Etappe einen anderen Plan auf Grund von Gelände, Fahrern, Wetter und Zielen vorbereiten.",
+      "details": [
+        "Jede Etappe sollte einen Plan haben, der ihrem Profil entspricht. Eine Sprint- und eine Bergetappe sollten nicht identische Rollenzuweisungen verwenden.",
+        "Teamtaktik definieren die Gesamtabsicht: Kontrolle, Schutz, Verfolgung, Unterstützung eines Sprints, Ziel eines Ausbruchs, Verteidigung GC oder ein anderes Ziel.",
+        "Individuelle Taktiken sagen den Fahrern, wie sie sich in diesem Teamplan verhalten.",
+        "Ausrüstung sollte Gelände und Wetter entsprechen.",
+        "Die Lieferungen werden pro Fahrer eingegeben/stage und muss im Lager bleiben.",
+        "Gespeichert bedeutet nicht immer, dass ein gespeicherter Plan noch unvollständig sein kann, wenn wichtige Daten oder Lieferungen fehlen.",
+        "Die Bereitschaftsliste sollte als die letzte Checkliste vor der Plansperre behandelt werden."
+      ],
+      "facts": [
+        {
+          "label": "Pro-Stufen-Daten",
+          "value": "Rollen, Teamtaktik, individuelle Taktik, Ausrüstung, Zubehör"
+        },
+        {
+          "label": "Bereitschaft",
+          "value": "Gespeichert, nutzbar, unvollständig, fehlende Vorräte / taktische Lücken"
+        },
+        {
+          "label": "Beratung",
+          "value": "Sportdirektor Vorschläge können führen, aber nicht garantieren das beste Ergebnis"
+        }
+      ],
+      "tips": [
+        "Bereiten Sie alle Stufen früh vor, dann verfeinern Sie die nächste Stufe nach dem vorherigen Ergebnis, wenn die Bearbeitung noch offen ist.",
+        "Verwenden Sie Bereitschaftswarnungen, anstatt davon auszugehen, dass ein gespeicherter Plan abgeschlossen ist."
+      ]
+    },
+    "stage-roles-deep": {
+      "category": "Rennvorbereitung",
+      "title": "Rollen und Verantwortung des Fahrers",
+      "subtitle": "Leader, Sprinter, Bergsteiger, Breakaway und Support Konzepte in einem Stage Plan.",
+      "overview": "Die Rollen der Etappe zeigen dem Motor, welche Verantwortung jeder ausgewählte Fahrer hat. Rollen sollten die Fähigkeiten des Fahrers und das Bühnenziel widerspiegeln.",
+      "details": [
+        "A GC Führer sollte normalerweise Schutz auf Berg erhalten/hilly Die Kommission sollte dies in den ersten drei Monaten des Jahres tun und sollte nicht unnötige Arbeiten zu Beginn der Phase erhalten.",
+        "Ein Sprinter braucht Ausstieg/support und genug Frische für die letzten Kilometer.",
+        "Kletterspezialisten können eine GC Führungs- oder Zielbergstufen/classifications.",
+        "Breakaway-Fahrer sollten für das Gelände und das Team Ziel ausgewählt werden. Ein schlechter Bergsteiger sollte nicht die Standard- KOM Jäger an einem harten Bergtag.",
+        "Domestiques sind wertvoll, auch wenn ihre persönliche Zielposition schlecht ist, weil ihre Aufgabe ist es, einen anderen Fahrer zu unterstützen.",
+        "Rollen sollten auch Müdigkeit, Moral, Gesundheit und Rasse Schärfe, nicht nur rohe Fähigkeiten."
+      ],
+      "facts": [
+        {
+          "label": "Leader-Konzept",
+          "value": "Geschützter Fahrer für GC/stage Ziel"
+        },
+        {
+          "label": "Sprinterkonzept",
+          "value": "Hauptschnellveredler auf geeigneten Stufen"
+        },
+        {
+          "label": "Unterstützungskonzept",
+          "value": "Domestiques / Helfer schützen, jagen, gehen oder helfen"
+        },
+        {
+          "label": "Ausweichkonzept",
+          "value": "Fahrer gab Freiheit zum Mitmachen/target Frühe Bewegungen"
+        }
+      ],
+      "tips": [
+        "Geben Sie jedem Fahrer einen Job, der Sinn macht.",
+        "Nicht mehrere gegensätzliche Führer ohne einen klaren Teamplan zuweisen."
+      ]
+    },
+    "stage-readiness-deep": {
+      "category": "Rennvorbereitung",
+      "title": "Stage Plan Bereitschaft und Sperrzustand",
+      "subtitle": "Wie man grün liest/yellow/orange/red/gray Die",
+      "overview": "Bereitschaft ist eine Zusammenfassung, ob Stage Plans Es ist so konzipiert, dass Manager vor Ablauf der Frist gewarnt werden, anstatt einen unvollständigen Plan stillschweigend scheitern zu lassen.",
+      "details": [
+        "Grün stellt im Allgemeinen eine bereit/complete n.",
+        "Gelb/orange Warnungen oder teilweise Vorbereitung, die Aufmerksamkeit verdient.",
+        "Rot bedeutet, dass die Zubereitung nicht nutzbar ist oder eine kritische Anforderung fehlt.",
+        "Gray kann eine Stufe darstellen, die je nach Seitenzustand noch nicht relevant, nicht verfügbar oder bereits gesperrt ist.",
+        "Ein Plan kann Fahrerrollen enthalten, aber trotzdem nicht bereit sein, wenn Vorräte oder ein anderer benötigter Block fehlen.",
+        "Wenn die Bearbeitung gesperrt ist, muss der Manager den abgeschlossenen gespeicherten Plan akzeptieren."
+      ],
+      "facts": [
+        {
+          "label": "Kontrollen",
+          "value": "Gespeicherte Pläne, brauchbare Pläne, fehlende Pläne, leere Pläne, Lieferungen, taktische Vollständigkeit"
+        },
+        {
+          "label": "Verriegelung",
+          "value": "Bearbeitung nach entsprechender Frist / Rennzustand nicht verfügbar"
+        },
+        {
+          "label": "Empfohlene Maßnahmen",
+          "value": "Die Bereitschaftsanzeige kann dem Manager mitteilen, was behoben werden muss"
+        }
+      ],
+      "tips": [
+        "Ziel ist es, dass alle Stufen vor der endgültigen Frist einen nutzbaren Bereitschaftszustand aufweisen."
+      ]
+    },
+    "sport-director-deep": {
+      "category": "Rennvorbereitung",
+      "title": "Vorschläge für Sportdirektoren",
+      "subtitle": "Wie Berater Empfehlungen helfen, ohne den Manager zu ersetzen.",
+      "overview": "Der Sportdirektor kann Vorschläge für die Bühnenvorbereitung geben. Beratung ist nützlich für Lernen und Geschwindigkeit, aber der Spieler bleibt für die endgültige Entscheidung verantwortlich.",
+      "details": [
+        "Beratervorschläge sollten das aktuelle Bühnenprofil, Wetter, ausgewählte Fahrer und verfügbare Ressourcen verwenden.",
+        "Der Manager sollte Vorschläge mit Teamzielen vergleichen. Ein Sportdirektor kann einen sicheren generischen Plan vorschlagen, wenn der Benutzer ein aggressives Breakaway-Ziel will.",
+        "Vorschläge sind am wertvollsten für neue Spieler, die noch nicht alle Bühnenplan-Steuerungen verstehen.",
+        "Premium Komfort-Funktionen sollten nicht heimlich verbessern Race-Berechnungen. Der Vorteil ist die Analyse/convenience, nicht versteckte Leistungsfähigkeit.",
+        "Speichern Sie immer den endgültigen Plan nach Überprüfung der Beratung."
+      ],
+      "facts": [
+        {
+          "label": "Mögliche Beratung",
+          "value": "Ausrüstung, Teamtaktik, individuelle Taktik, Zubehör / Vorbereitung"
+        },
+        {
+          "label": "Zweck",
+          "value": "Orientierung und Bequemlichkeit"
+        },
+        {
+          "label": "Garantie",
+          "value": "Bietet keine Garantie für ein perfektes Ergebnis"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Rat, um zu lernen, dann passen Sie es an Ihr eigenes Ziel Rennen."
+      ]
+    },
+    "ranking-tiers-deep": {
+      "category": "Rankings und Statistiken",
+      "title": "Wettbewerb Pyramide, Tiers und Divisionen",
+      "subtitle": "Wie die Weltstruktur organisiert ist aus WorldTeam an Amateur.",
+      "overview": "Die Wettkampfpyramide gibt jedem Verein einen langfristigen Platz in der Welt. Teams verdienen internationale Punkte durch Rennergebnisse und nutzen die Platzierungen, um für die Förderung zu kämpfen, zu vermeiden, Absprung oder qualifizieren sich für Playoffs.",
+      "details": [
+        "WorldTeam ist die Top-Division. Clubs dort stehen vor dem stärksten Wettbewerb und dem anspruchsvollsten langfristigen Ranking-Druck.",
+        "ProTeam ist in West und Ost aufgeteilt. Vereine kämpfen für direkte Beförderung, Playoff-Orte und Überleben.",
+        "Continental Europa und Amerika ernähren sich von der Pro West-Pfade, während Asien, Afrika und Ozeanien den Pro East-Pfad füttern.",
+        "Amateur ist in detailliertere regionale Wettbewerbe unterteilt, so dass die Entwicklung von Vereinen gegen geographisch geeignete Rivalen spielen kann.",
+        "Internationale Punkte aus den Rennergebnissen bauen die offizielle Wertung. Ein Team sollte sich daher um die konsequente Wertung über die gesamte Saison kümmern, nicht nur gelegentliche Siege.",
+        "Inaktive Manager können für historische Integrität und Saison-End-Verarbeitung sichtbar bleiben, auch wenn sie nicht mehr aktiv den Verein kontrollieren."
+      ],
+      "facts": [
+        {
+          "label": "Stufe 1",
+          "value": "WorldTeam"
+        },
+        {
+          "label": "Stufe 2",
+          "value": "ProTeam West und ProTeam Osten"
+        },
+        {
+          "label": "Stufe 3",
+          "value": "Continental Europa, Amerika, Asien, Afrika, Ozeanien"
+        },
+        {
+          "label": "Stufe 4",
+          "value": "Regionale Amateurdivisionen"
+        }
+      ],
+      "tips": [
+        "Setze ein Saisonziel basierend auf der genauen Förderung/relegation Zone Ihrer Division.",
+        "Verwenden Sie regelmäßig Team Ranking statt auf die letzte Woche warten."
+      ],
+      "relatedLinks": [
+        "Team-Rangliste"
+      ]
+    },
+    "promotion-relegation-deep": {
+      "category": "Rankings und Statistiken",
+      "title": "Förderung, Abschiebung und Playoff-Regeln",
+      "subtitle": "Was verschiedene Endposition am Saisonende bedeuten.",
+      "overview": "Promotion und Relegation Regeln hängen von der Ebene und Division. Einige Orte fördern direkt, einige geben Playoffs und einige relegate automatisch. Der Manager sollte die stehenden Farben lesen/notes als Teil des Saisonziels.",
+      "details": [
+        "WorldTeam Die Clubs in den unteren fünf sind in der Abtretungszone dargestellt.",
+        "Jedes ProTeam Division sendet den Gewinner direkt an WorldTeam und schickt 2.–4. zum World Playoff.",
+        "Continental Europa und Amerika verbinden sich mit der Pro-West-Promotionsroute; Continental Asien, Afrika und Ozeanien verbinden sich mit Pro East.",
+        "Die Abtretungstiefe ist unterschiedlich durch Continental Die Aufteilung ist deshalb unterschiedlich, weil die Aufteilungsgrößen und die unteren Strukturen unterschiedlich sind.",
+        "Amateur-Europa-Divisionen verwenden Sieger-Direkt plus 2.–3. Playoff-Regeln.",
+        "Die meisten nicht-europäischen Amateur Divisionen verwenden Gewinner-direkt plus 2.–4. Playoff-Regeln, während Amateur Ozeanien fördert seine Top drei direkt.",
+        "Die stehende Seite ist die Quelle der Wahrheit für die aktuelle Saison, weil zukünftige Wettbewerbs-Regel Änderungen dort gezeigt werden sollten."
+      ],
+      "facts": [
+        {
+          "label": "WorldTeam",
+          "value": "Unter 5 abgeschoben"
+        },
+        {
+          "label": "Pro West / Ost",
+          "value": "Gewinner direkt nach oben; 2.–4. Welt-Playoff; untere 5 nach unten"
+        },
+        {
+          "label": "Continental Europa / Asien",
+          "value": "Untere 6 relegiert"
+        },
+        {
+          "label": "Continental Amerika / Afrika",
+          "value": "Unter 5 abgeschoben"
+        },
+        {
+          "label": "Continental Ozeanien",
+          "value": "Untere 3 relegiert"
+        },
+        {
+          "label": "Europäische Amateure",
+          "value": "Gewinner direkt nach oben; 2.–3. Playoff"
+        },
+        {
+          "label": "Andere Amateure",
+          "value": "Gewinner direkt nach oben; 2.–4. Playoff"
+        },
+        {
+          "label": "Amateur Ozeanien",
+          "value": "Top 3 direkt gefördert"
+        }
+      ],
+      "tips": [
+        "Wissen Sie, ob Ihr Ziel direkte Förderung ist oder einfach die Playoff-Zone erreicht.",
+        "Gegen Saisonende, Punkte gegen direkte Rivalen schützen."
+      ]
+    },
+    "statistics-deep": {
+      "category": "Rankings und Statistiken",
+      "title": "Statistischer Leitfaden",
+      "subtitle": "Teams, Fahrer, aktuelle Rankings, Geschichte und Fachausfälle.",
+      "overview": "Statistiken sind die Analyseseite für die breitere Spielwelt. Sie helfen den Benutzern zu verstehen, wer jetzt stark ist, wer vorher stark war und welche Fahrer bestimmte Punktklassifikationen dominieren.",
+      "details": [
+        "Team Current lässt den Benutzer aktive Clubs nach Ebene vergleichen/division und Punkte.",
+        "Team History wird nach mehreren abgeschlossenen Saisons nützlicher, da es frühere Champions und Snapshots zeigen kann.",
+        "Rider Rankings identifizieren die Fahrer mit der höchsten Rangfolge in der aktuellen Saison.",
+        "Rider Breakdown hilft, Spezialisten zu identifizieren. Ein Fahrer kann in Sprint- oder Kletterpunkten hochrangig sein, ohne die Gesamtpunktetabelle zu führen.",
+        "Statistiken sollten zusammen mit Fahrerprofilen und Teamprofilen verwendet werden. Eine Rangliste gibt dem Benutzer an, der Punkte erzielte; das Profil erklärt, warum.",
+        "Historische Informationen sollten durch zukünftige Engine-Upgrades unverändert bleiben, da offizielle Ergebnisse aus der Vergangenheit Teil der Spielgeschichte sind."
+      ],
+      "facts": [
+        {
+          "label": "Gruppen-Registerkarte",
+          "value": "Aktuell und Geschichte"
+        },
+        {
+          "label": "Fahrer-Registerkarte",
+          "value": "Rankings und Aufschlüsselung"
+        },
+        {
+          "label": "Fahrerpunkttypen",
+          "value": "Gesamtsaisonpunkte, Sprintpunkte, Kletterpunkte"
+        },
+        {
+          "label": "Nützlicher Kontext",
+          "value": "Land, Rolle, Alter, Verein, Marktwert, Gehalt, Müdigkeit, Verfügbarkeit"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Statistiken vor Übertragungsfenstern, um realistische Ziele zu identifizieren.",
+        "Vergleichen Sie die Punkte mit den Rennen, die Sie anvisieren möchten."
+      ],
+      "relatedLinks": [
+        "Statistiken",
+        "Team-Rangliste"
+      ]
+    },
+    "transfer-list-deep": {
+      "category": "Transfers und Pfadfinder",
+      "title": "Verzeichnis der Übertragungsliste",
+      "subtitle": "Kauf eines Fahrers, der derzeit unter Vertrag mit einem anderen Verein.",
+      "overview": "Ein Transfer-Classed-Fahrer hat einen aktuellen Club. Der Kaufmanager verhandelt zunächst eine Transfergebühr mit diesem Club. Erst nach der Übernahme des Verkaufsvereins kann die Vertragsverhandlungen mit dem Fahrer abgeschlossen werden.",
+      "details": [
+        "Die Transferliste sollte nach dem Typ des Fahrers gefiltert werden, den der Trupp tatsächlich benötigt.",
+        "Der verkaufende Verein bewertet die Transfergebühr und kann die Verhandlung je nach Marktlogik akzeptieren, ablehnen, ablehnen oder ablehnen oder die Verhandlung ablaufen lassen.",
+        "Ein akzeptiertes Clubangebot bedeutet nicht, dass der Fahrer automatisch beitritt. Der Spieler muss noch Vertragsbedingungen mit dem Fahrer vereinbaren.",
+        "Die Transferausgaben sollten sowohl die sofortige Gebühr als auch die künftige Gehaltsbindung in den Finanzplan einschließen.",
+        "Der Manager sollte die Dienstplankapazität vor dem Abschluss einer neuen Unterzeichnung überprüfen.",
+        "Ein Fahrer kann insgesamt attraktiv sein, aber trotzdem ein schlechter taktischer fit für den Club sein."
+      ],
+      "facts": [
+        {
+          "label": "Schritt 1",
+          "value": "Suche nach Fahrern in der Transferliste"
+        },
+        {
+          "label": "Schritt 2",
+          "value": "Angebot zum Verkauf Club"
+        },
+        {
+          "label": "Schritt 3",
+          "value": "Wenn angenommen, verhandeln Fahrer Vertrag"
+        },
+        {
+          "label": "Wichtige Kosten",
+          "value": "Transfergebühr plus neues Gehalt / Vertragsbedingungen"
+        }
+      ],
+      "tips": [
+        "Spähen Sie teure Ziele vor dem Bieten.",
+        "Lassen Sie genügend Geld für Gehalt und normale Betriebskosten nach der Überweisungsgebühr."
+      ],
+      "relatedLinks": [
+        "Transfers"
+      ]
+    },
+    "free-agents-deep": {
+      "category": "Transfers und Pfadfinder",
+      "title": "Freie Agenten-Führer",
+      "subtitle": "Unterschreiben Fahrer ohne eine verkaufende Club-Überweisung Gebühr zu zahlen.",
+      "overview": "Freie Agenten sind Fahrer ohne einen aktuellen Verkaufsclub. Der Manager verhandelt direkt mit dem Fahrer, aber der Fahrer bewertet noch Gehalt, Vertragslänge, Boni und sportliche Situation.",
+      "details": [
+        "Free Agent bedeutet nicht, dass die Kosten kostenlos. Gehalt, Unterzeichnung/contract Die Bedingungen und die künftigen Löhne sind nach wie vor von Bedeutung.",
+        "Der Fahrer kann einen Club ablehnen, der schlechtes Gehalt, schlechte Dauer oder eine unattraktive sportliche Situation bietet.",
+        "Kostenlose Agenten können nützlich sein, wenn die Mannschaft Tiefe ohne eine große Transfergebühr benötigt.",
+        "Ältere oder unterpotenzielle freie Agenten können kurzfristige Probleme lösen, sollten aber wichtige Entwicklungsplätze nicht ohne Grund blockieren.",
+        "Junge freie Agenten können wertvoll sein, aber müssen noch Scouting/analysis wenn Informationen unsicher sind."
+      ],
+      "facts": [
+        {
+          "label": "Verkauf",
+          "value": "Keine"
+        },
+        {
+          "label": "Übertragungsgebühr",
+          "value": "Keine normale Club-zu-Club-Überweisungsgebühr"
+        },
+        {
+          "label": "Noch erforderlich",
+          "value": "Akzeptabler Fahrervertrag und freie Dienstplankapazität"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie kostenlose Agenten für Tiefe, wenn Transfer-Gebühren Bargeld begrenzt ist.",
+        "Nicht ignorieren langfristiges Gehalt, nur weil es keine Transfergebühr."
+      ]
+    },
+    "transfer-negotiation-deep": {
+      "category": "Transfers und Pfadfinder",
+      "title": "Übertragung und Vertragsverhandlungen",
+      "subtitle": "Akzeptanzbänder, Versuche, Zähler und Hardblock-Gründe.",
+      "overview": "Verhandlungen sind wahrscheinlich/interest-based Entscheidungen mit sichtbarer Analyse. Der Manager sollte das komplette Angebot verbessern, anstatt immer wieder nur eine Zahl zu ändern, ohne zu verstehen, warum die andere Seite unglücklich ist.",
+      "details": [
+        "Der Annahmeprozentsatz ist ein Leitfaden, wie attraktiv das aktuelle Angebot ist; es ist kein garantiertes Endergebnis.",
+        "Annahmebänder/predicted Ergebnis helfen dem Manager zu verstehen, ob ein Angebot stark, grenzübergreifend oder unrealistisch ist.",
+        "Die Gehaltsnote misst, wie der Lohn mit den Erwartungen der Fahrer vergleicht.",
+        "Die Dauer des Punktes misst, ob die Vertragslänge den Erwartungen des Fahrers und der Karrieresituation entspricht.",
+        "Bonus- und Gebührenpunkte können die Attraktivität verbessern, wenn diese Komponenten gelten.",
+        "Tierart/sporting Score stellt dar, wie attraktiv der Kaufverein aus sportlicher Sicht ist.",
+        "Die Gründe für die Hardblock-Regelung bedeuten, dass der Deal nicht unter der aktuellen Situation weitergeführt werden kann, auch wenn eine Zahl hoch ist.",
+        "Wiederholte schwache Angebote können Versuche konsumieren und zu Ablehnung, Ablauf oder Gegenangebot führen."
+      ],
+      "facts": [
+        {
+          "label": "Status",
+          "value": "Entwurf, offen, anhängig, angenommen, abgelehnt, abgelaufen, abgelehnt, abgeschlossen, abgelehnt"
+        },
+        {
+          "label": "Laufzeit UI",
+          "value": "1–5 Jahre"
+        },
+        {
+          "label": "Vorschauwerte",
+          "value": "Annahme %, Bandbreite, prognostiziertes Ergebnis und Komponentenwerte"
+        },
+        {
+          "label": "Mögliche Komponentenwerte",
+          "value": "Gehalt, Dauer, Bonus, Gebühr, Tier / Sportsituation"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie die Vorschau vor dem Absenden.",
+        "Fixieren Sie die schwächste relevante Komponente, anstatt blind erhöhen alle Kosten."
+      ]
+    },
+    "scouting-deep": {
+      "category": "Transfers und Pfadfinder",
+      "title": "Berichte und Informationen über die Pfadfinderunsicherheit",
+      "subtitle": "Warum externe Fahrerdaten versteckt werden können und wie Berichte die Präzision verbessern.",
+      "overview": "Scouting verhindert, dass der Transfermarkt zu einer perfekten Informationstabelle wird. Manager sollten in Wissen investieren, bevor sie teure oder langfristige Transferentscheidungen treffen.",
+      "details": [
+        "Ein unbedachter Fahrer kann je nach Seitenregeln ungefähre oder begrenzte Informationen anzeigen.",
+        "Ein abgeschlossener Bericht verbessert die Präzision und kann insgesamt, Potenziale, spezielle Stärken und Scout Notes aufdecken.",
+        "Ein Bericht ist mit dem Scout verbunden, der ihn abgeschlossen hat, also Personalqualität/capacity das breitere Scouting-System betrifft.",
+        "Neu/Reviewed Status hilft Benutzern viele Berichte zu verwalten, ohne ungelesene Informationen zu vergessen.",
+        "Scouting sollte auf realistische Transferziele anstatt Ressourcen für jeden Fahrer in der Datenbank konzentrieren.",
+        "Die Berichte sollten Entscheidungen informieren, aber nicht garantieren, dass der Fahrer den Verein akzeptiert oder dass der verkaufende Verein ein Angebot annimmt."
+      ],
+      "facts": [
+        {
+          "label": "Filter für Berichte",
+          "value": "Alle, neu, überprüft"
+        },
+        {
+          "label": "Inhalt des Berichts",
+          "value": "Fahrer, Scout, Fertigstellungsdatum, insgesamt, Potenzial, Stärken, Notizen"
+        },
+        {
+          "label": "Externes Profil",
+          "value": "Exakte Werte können bis zum Vorhandensein von Scouting verborgen bleiben"
+        }
+      ],
+      "tips": [
+        "Scout-High-Cost- oder High-Potential-Ziele zuerst.",
+        "Überprüfe alte Berichte, bevor du unnötige Scouting wiederholt."
+      ],
+      "relatedLinks": [
+        "Scouting"
+      ]
+    },
+    "staff-market-deep": {
+      "category": "Transfers und Pfadfinder",
+      "title": "Personalmarkt und Personalvermittlung",
+      "subtitle": "Finden von Spezialisten unter Wahrung der Rollenkapazität und Gehaltskosten.",
+      "overview": "Personaleinstellung ist Teil der Transferseite, muss aber zusammen mit Infrastruktur und Finanzen geplant werden. Ein guter Personalanwärter ist nutzlos, wenn die Rolle keinen freien Zeitnischen hat oder das Gehalt das Budget bricht.",
+      "details": [
+        "Der Personalmarkt sollte nach der Rolle gefiltert werden, die der Verein braucht.",
+        "Rollenkapazität kann durch fehlenden/low Infrastruktur auch wenn der Benutzer das Gehalt leisten kann.",
+        "Expertise steht für aktuelle Fachqualität, während Potenzial längerfristige Obergrenzen aufweist.",
+        "Erfahrung und Führung können Personal in komplexen Aufgabenstellungen nützlicher machen.",
+        "Effizienz und Loyalität können je nach Personalsystem langfristig von Bedeutung sein.",
+        "Personalgehalt wird zu einer wiederkehrenden Finanzierungskosten, so dass die Einstellung von mehreren starken Mitarbeitern auf einmal kann ein verstecktes Budget Problem zu schaffen."
+      ],
+      "facts": [
+        {
+          "label": "Stabeigenschaften",
+          "value": "Kompetenz, Erfahrung, Potenzial, Führung, Effizienz, Loyalität"
+        },
+        {
+          "label": "Vor der Einstellung",
+          "value": "Kontrollfunktion, Gehalt, Kapazität und Infrastrukturbedarf"
+        },
+        {
+          "label": "Langfristige Entwicklung",
+          "value": "Kurse können geeignete Mitarbeiter nach der Einstellung verbessern"
+        }
+      ],
+      "tips": [
+        "Verwendete Prüfinfrastruktur/max Zeitnischen für das Personal vor der Verhandlung.",
+        "Mieten Sie eine Rolle, nicht nur für die höchsten insgesamt aussehenden Zahlen."
+      ],
+      "relatedLinks": [
+        "Personalmarkt",
+        "Infrastruktur"
+      ]
+    },
+    "finance-health-deep": {
+      "category": "Finanzen",
+      "title": "Finanzen Gesundheit und operativer Cashflow",
+      "subtitle": "Wie man echte Club-Ökonomie von Notschuldenbewegung trennt.",
+      "overview": "Finanz Health ist darüber, ob die normale Club-Operation kann sich selbst zu unterstützen. Notfall-Darlehen können den Club vorübergehend sparen, aber Darlehen Geld sollte nicht für gesunde Betriebseinkommen verwechselt werden.",
+      "details": [
+        "Ein positives Gleichgewicht bedeutet nicht automatisch, dass der Verein gesund ist. Das Gleichgewicht kann ausgeliehenes Notgeld beinhalten.",
+        "Betriebseinnahmen sollten aus echten Vereinsaktivitäten wie Sponsoren und Rennen stammen.",
+        "Die Betriebskosten beinhalten wiederkehrende Verpflichtungen, die auch dann weiterlaufen, wenn der Club keine Transfers kauft.",
+        "Notkredit-Hauptforderung ist Schuldenbewegung, nicht Gewinn/loss. Zinsen sind eine echte Kosten für die Nutzung des Rettungssystems.",
+        "Übersicht Finanzen Gesundheit sollte für die schnelle Risikoerkennung verwendet werden, während die vollständige Finanzseite die detaillierten Zahlen erklärt.",
+        "Der Manager sollte wöchentlich vergleichen/monthly wiederkehrende Kosten mit erwarteten Sponsoren und Renneinnahmen vor optionalen Einkäufen."
+      ],
+      "facts": [
+        {
+          "label": "Betriebsergebnis",
+          "value": "Sponsoreneinkommen, Preisgeld und andere echte Clubeinkommen"
+        },
+        {
+          "label": "Betriebsaufwendungen",
+          "value": "Gehälter, Personal, Politik, Steuern, Ausrüstung, Lager, Infrastruktur und andere reale Kosten"
+        },
+        {
+          "label": "Ohne Betriebsergebnis",
+          "value": "Auszahlung von Sofortdarlehen"
+        },
+        {
+          "label": "Nicht Betriebsaufwendungen",
+          "value": "Hauptforderung für Soforthilfedarlehen"
+        },
+        {
+          "label": "Betriebskosten",
+          "value": "Sofortzinsen für Darlehen"
+        }
+      ],
+      "tips": [
+        "Niemals notleidend Geld ausgeben, als wäre es ein Bonus.",
+        "Verwenden Sie den operativen Cashflow, um zu entscheiden, ob der Verein höhere Gehälter oder Policen leisten kann."
+      ],
+      "relatedLinks": [
+        "Finanzen"
+      ]
+    },
+    "transactions-deep": {
+      "category": "Finanzen",
+      "title": "Transaktionen und In-Game-Erklärungen Geschichte",
+      "subtitle": "Wie man jede Balance Änderung ohne Verwendung von echten technischen Zeitstempeln als Spieldaten erklären.",
+      "overview": "Transaktionen sind die Konten. Wenn sich der Club-Balance unerwartet ändert, sollte der Manager diese Registerkarte verwenden, um die genaue Zeile zu identifizieren, anstatt zu erraten, welches System sie verursacht hat.",
+      "details": [
+        "Jede wichtige Club-Bargeldbewegung sollte als Transaktionszeile mit Typ, Beschreibung, Betrag und In-Game-Datum erscheinen.",
+        "Gehalt, Personal, Steuern, Sponsorenzahlungen, Preisgeld, Richtlinien, Ausrüstung, Infrastruktur, Lager und Boni sollten hier nachverfolgt werden können.",
+        "Aktuelle Transaktionen halten die tägliche Aussage lesen einfach, während ältere Zeilen in Archivmonate gruppiert werden können.",
+        "created_at ist ein echter technischer Zeitstempel für die Datenbankbestellung/pagination. Es sollte nicht das In-Game-Transaktionsdatum in der Benutzeroberfläche ersetzen.",
+        "Positive und negative Zeilen sollten im Kontext ihres Transaktionstyps interpretiert werden, anstatt nur Farbe zu tragen.",
+        "Wenn Sie einen Finanzfehler untersuchen, vergleichen Sie immer die Transaktionszeile mit dem Backend-Gründer/source statt die sichtbare Balance direkt zu bearbeiten."
+      ],
+      "facts": [
+        {
+          "label": "Letztes Fenster",
+          "value": "Letzte 30 Spieltage"
+        },
+        {
+          "label": "Archiv",
+          "value": "Ältere Reihen gruppiert nach Spielmonaten, vorherige 6 Spielmonate"
+        },
+        {
+          "label": "Datumsregel",
+          "value": "Spieler-Anweisung Datum sollte gespeicherte Spiel-Datum Metadaten verwenden"
+        }
+      ],
+      "tips": [
+        "Verwenden Sie Transaktionen, wenn ein Benutzer fragt, \"Wo ist mein Geld gegangen?",
+        "Überprüfen Sie Spieldatum und Transaktionstyp, bevor Sie annehmen, dass die Zeile falsch ist."
+      ]
+    },
+    "tax-deep": {
+      "category": "Finanzen",
+      "title": "Steuer-, Einbehaltungs- und Monatsprüfungen",
+      "subtitle": "Wie steuerpflichtiges Einkommen berechnet, angepasst und teilweise erstattet wird.",
+      "overview": "Die Steuer ist ein echter Clubaufwand im Zusammenhang mit steuerpflichtigen Einkommen. Das System kann Steuern während des Monats zurückhalten und dann den endgültigen monatlichen Betrag überprüfen, wodurch eine Anpassung oder Rückerstattung, wenn nötig.",
+      "details": [
+        "Die Steuereinnahmen sollten aus den definierten steuerpflichtigen Transaktionsarten und nicht aus jeder positiven Bilanzbewegung berechnet werden.",
+        "Die Einbehaltung beseitigt einen Teil des steuerpflichtigen Einkommens während des Monats, so dass der Club nicht von der vollen Steuerrechnung am Monatsende überrascht ist.",
+        "Die monatliche Rechnungsprüfung vergleicht die erwartete Endsteuer mit dem, was bereits einbehalten wurde.",
+        "Wenn zu wenig zurückgehalten wurde, entstehen durch die Prüfung zusätzliche Anpassungskosten.",
+        "Wenn zu viel zurückgehalten wurde, kann die Prüfung eine Rückerstattung schaffen.",
+        "Eine Rückerstattung ist kein neuer Sponsor/race Einkommen. Es ist eine Korrektur der zuvor einbehaltenen Steuern.",
+        "Große Sponsoren- oder Preiszahlungen können kurz nach der Einkommenstransaktion sichtbare Steuerzeilen erstellen."
+      ],
+      "facts": [
+        {
+          "label": "Steueransicht",
+          "value": "Laufendes steuerpflichtiges Einkommen, erwartete Steuer, einbehaltener Betrag und Anpassung"
+        },
+        {
+          "label": "Prüfungsstatus",
+          "value": "OK, angepasst, erstattet"
+        },
+        {
+          "label": "Steuerliche Transaktionsarten",
+          "value": "Einbehaltung, monatliche Anpassung, monatliche Erstattung"
+        }
+      ],
+      "tips": [
+        "Halten Sie Bargeld auch nach einem großen Preis für Steuern zur Verfügung/sponsor Zahlung.",
+        "Die Steuertabelle dient zur Unterscheidung zwischen der Quellensteuer und der endgültigen monatlichen Anpassung."
+      ],
+      "relatedLinks": [
+        "Steuer"
+      ]
+    },
+    "sponsors-deep": {
+      "category": "Finanzen",
+      "title": "Haupt-, Sekundär- und technische Sponsoren",
+      "subtitle": "Einkommen, Sichtbarkeit, Unterstützung und Vertragsunterschiede.",
+      "overview": "Sponsoren sind eines der Haupteinkommenssysteme des Vereins. Verschiedene Sponsorenarten bieten unterschiedlichen Wert: Hauptsponsoren konzentrieren sich auf Sichtbarkeit und Ziele, Sekundärsponsoren ergänzen die Unterstützungsplätze und technische Sponsoren verbinden sich stark mit Ausrüstung.",
+      "details": [
+        "Hauptsponsoren sind die sichtbarsten Handelspartner und können Saisonziele haben, die Bonuszahlungen schaffen.",
+        "Sekundärsponsoren bieten zusätzliches Geld/support und werden in einfacheren Slots in der aktuellen Benutzeroberfläche angezeigt.",
+        "Technische Sponsoren können die Wirtschaftlichkeit des Gerätekaufs direkt verbessern.",
+        "Sponsorenangebote sollten nicht nur durch die Überschrift, sondern auch durch garantiertes Geld, Boni, Ziele, Einschränkungen und Identitätseffekte verglichen werden.",
+        "Ein schwaches Team kann unrealistische Sponsorziele scheitern, auch wenn der Vertrag attraktiv aussieht.",
+        "Sponsorzahlungen und Boni können steuerpflichtig sein, so dass der Bruttosponsorwert nicht immer das letzte vom Verein einbehaltene Bargeld ist."
+      ],
+      "facts": [
+        {
+          "label": "Haupt",
+          "value": "Hohe Sichtbarkeit, garantiertes Geld, Bonuspool, Ziele"
+        },
+        {
+          "label": "Sekundarbereich",
+          "value": "Zusätzliche Unterstützung durch Sponsoren durch verfügbare Slots"
+        },
+        {
+          "label": "Technische",
+          "value": "Bargeld/equipment Rabatte für Budget und Ausrüstungskategorien"
+        }
+      ],
+      "tips": [
+        "Ziele akzeptieren, die Ihr aktueller Kader/calendar realistisch zu erreichen.",
+        "Steuerliche Auswirkungen nach großen Sponsorenzahlungen prüfen."
+      ],
+      "relatedLinks": [
+        "Sponsoren"
+      ]
+    },
+    "sponsor-objectives-deep": {
+      "category": "Finanzen",
+      "title": "Fördererziele und Namensrechte",
+      "subtitle": "Race Ziele, Bonus Auszahlungen und temporäre Club Identität Änderungen.",
+      "overview": "Sponsorenverträge können Ziele beinhalten, die an die Rennleistung gebunden sind. Naming-Rechte Verträge fügen einen Identitäts-Tradeoff hinzu, indem sie vorübergehend den öffentlichen Teamnamen ändern, im Austausch für einen höheren kommerziellen Wert.",
+      "details": [
+        "Sponsor-Ziele können auf ein bestimmtes Rennen oder eine breitere Saison Leistungsbedingungen zeigen.",
+        "Geplante Ziele sollten frühzeitig überprüft werden, damit das Rennen im Teamkalender enthalten ist und richtige Fahrer zur Verfügung stehen.",
+        "Nach dem Zielrennen/eventDas System prüft, ob das Ziel erreicht oder nicht.",
+        "Erreichte Ziele können eine Bonuszahlung nach dem Vertrag erstellen.",
+        "Standard-Sponsor-Angebote lassen den normalen Teamnamen unverändert.",
+        "Naming-rights Deals können die Team-Namen-Bearbeitung sperren und den sichtbaren Saison-Anzeigenamen durch den Sponsor-bezogenen Namen ersetzen.",
+        "Die ursprüngliche Club-Identität sollte nach der Saison-End-Namensrechte-Regel zurück."
+      ],
+      "facts": [
+        {
+          "label": "Zielbeispiele",
+          "value": "Start, Sieg, Podium, Top 5, Top 10, GC Ziel, Etappenziel, Klassifizierungssicht"
+        },
+        {
+          "label": "Zielstaaten",
+          "value": "Geplant, überprüft, erreicht, verpasst, bezahlt"
+        },
+        {
+          "label": "Benennungsrechte",
+          "value": "Normalerweise höhere Bezahlung, aber temporäre Änderung des öffentlichen Teamnamens"
+        }
+      ],
+      "tips": [
+        "Lesen Sie jedes Ziel, bevor Sie den Deal annehmen.",
+        "Opfern Sie Club-Identität nicht für einen Namensrechte-Deal, es sei denn, der zusätzliche Wert ist es wert, Sie."
+      ]
+    },
+    "team-policies-deep": {
+      "category": "Finanzen",
+      "title": "Team-Richtlinien und Operationen",
+      "subtitle": "Reisen, Unterkunft, Logistik, Unterkunft, Ernährung, Erholung und Boni.",
+      "overview": "Richtlinien lassen Sie den Manager wählen den Club. Bessere Optionen können Komfort verbessern/support aber größere wiederkehrende und tripspezifische Kosten verursachen.",
+      "details": [
+        "Flugpolitik beeinflusst, wie das Team zu Rennen reist/camps und kann Reisekosten ändern.",
+        "Unterkunftspolitik ändert Hotel/room nissen und damit Reisekosten.",
+        "Die Bodenverkehrs- und Logistikpolitik betrifft die Unterstützung der Rennen.",
+        "Die Politik im Bereich der Wohnungs-, Ernährungs- und Erholungspolitik kann das Arbeitsumfeld für Fahrer verbessern, aber wiederkehrende Kosten verursachen.",
+        "Personalausstattung und Bonuspolitik beeinflussen die Betriebskosten und die Vergütungsstruktur des Personals.",
+        "Rider Bonus-Richtlinien können Kosten nach erfolgreichen Rennen je nach konfigurierten Regeln erhöhen.",
+        "Das Panel der Schätzungen sollte verwendet werden, bevor mehrere Richtlinien gleichzeitig erhöht werden."
+      ],
+      "facts": [
+        {
+          "label": "Reisebetrieb",
+          "value": "Flüge, Unterkunft, Bodentransport, Logistik, Personalreisen"
+        },
+        {
+          "label": "Teamrichtlinien",
+          "value": "Wohnen, Ernährung, Erholung, Personalausstattung, Fahrerbonus, Personalbonus"
+        },
+        {
+          "label": "Finanzierungsleistung",
+          "value": "Wöchentliche Schätzung, monatliche Schätzung, aktuelle und bevorstehende Reiseprognose des letzten Monats"
+        }
+      ],
+      "tips": [
+        "Upgrade-Richtlinien allmählich, wenn der Cashflow stabil ist.",
+        "Überprüfen Sie die Reiseprognose vor teuren Rennen oder Camps."
+      ],
+      "relatedLinks": [
+        "Teamrichtlinien"
+      ]
+    },
+    "liquidation-deep": {
+      "category": "Finanzen",
+      "title": "Notfallrettung und Club Liquidation Deep Guide",
+      "subtitle": "Was passiert nach wiederholten Zahlungsausfällen.",
+      "overview": "Eine Notrettung besteht, um eine schlechte Zahlung von sofortiger Beendigung eines Vereins zu stoppen, aber es ist begrenzt. Ein Manager, der wiederholt nicht obligatorische Verpflichtungen decken kann, kann schließlich den Verein verlieren, um die Liquidation.",
+      "details": [
+        "Ein obligatorischer Zahlungsausfall kann eine Notfallrettung auslösen, wenn die Rettungskapazität erhalten bleibt.",
+        "Die Rettung fügt Schulden hinzu, die später zurückgezahlt werden müssen; sie sollten nicht als normales Einkommen betrachtet werden.",
+        "Übersicht Notstandsschulden Gesundheit zeigt Rettungszahlen, ausstehende Kapital, Rückzahlungsinformationen und Risiken.",
+        "Nach der Verwendung aller Rettungsmaßnahmen kann eine weitere ungedeckte Pflichtpflicht die Liquidation auslösen.",
+        "Ein liquidierter Club kann keine normalen Spielaktionen mehr durchführen. Das Dashboard zeigt stattdessen den Liquidationszustand.",
+        "Das Benutzerkonto überlebt, einschließlich der Coins auf Kontoebene.",
+        "Erstellen Sie einen neuen Club beginnt den Weg zu einem neuen Club. Neu starten Team Verhalten ist immer noch ein Platzhalter/future Rücklauf und sollte nicht als fertiges Produktionsmerkmal beschrieben werden."
+      ],
+      "facts": [
+        {
+          "label": "Lebenslange Rettungsgrenze",
+          "value": "3"
+        },
+        {
+          "label": "Kritischer Zustand",
+          "value": "Alle drei Rettungsmaßnahmen und eine weitere Pflichtpflicht können nicht abgedeckt werden"
+        },
+        {
+          "label": "Liquidierter Verein",
+          "value": "Spielaktionen blockiert"
+        },
+        {
+          "label": "Benutzerkonto / Coins",
+          "value": "Wirksam bleiben"
+        }
+      ],
+      "tips": [
+        "Nach der ersten Rettung sofort die fakultativen Ausgaben senken und wiederkehrende Kosten inspizieren.",
+        "Nach der zweiten/third Rettung, jede Pflichtzahlung als kritisch behandeln."
+      ]
+    },
+    "faq-application-blocked": {
+      "category": "FAQ",
+      "title": "FAQ: Warum kann ich mich für ein Rennen bewerben?",
+      "subtitle": "Gemeinsame Rennanwendungsblöcke und was zuerst zu überprüfen ist.",
+      "overview": "Probleme bei der Race-Anwendung werden in der Regel durch das Bewerbungsfenster, die Berechtigungsregeln, den Race-Status oder eine bestehende Team-Anwendung verursacht./Race Detailseiten sollten den jeweiligen Zustand anzeigen.",
+      "details": [
+        "Wenn das Anwendungsfenster noch nicht geöffnet ist, sollte die Anwendung nicht verfügbar bleiben.",
+        "Wenn die Bewerbungsfrist abgelaufen ist, kann das Team auch dann nicht mehr gelten, wenn das Rennen selbst nicht gestartet ist.",
+        "Das Rennen kann die qualifizierten Teams durch Ebenen, Divisionen oder andere Regeln einschränken.",
+        "Ein gestrichenes/finished/active Rennen akzeptiert keine normalen neuen Anwendungen.",
+        "Wenn der Verein bereits eine Bewerbung hat/accepted n.b. die Seite sollte diesen Zustand anstelle einer zweiten Anwendung zeigen.",
+        "Verwenden Sie Race Detail für die genaue Deadline und die Erklärung der Einsteigerregeln."
+      ],
+      "facts": [
+        {
+          "label": "Erst überprüfen",
+          "value": "Anwendung offen/close Datum"
+        },
+        {
+          "label": "Dann überprüfen Sie",
+          "value": "Qualifikation des Teams, Status des Rennens und ob sich der Verein bereits beworben hat"
+        }
+      ],
+      "tips": [
+        "Überprüfen Sie die Fußzeile Spielzeit und Race Application Deadline zusammen.",
+        "Bewerben Sie sich früh für wichtige Rennen."
+      ],
+      "relatedLinks": [
+        "Kalender"
+      ]
+    },
+    "faq-accepted-not-ready": {
+      "category": "FAQ",
+      "title": "FAQ: Mein Team wurde akzeptiert. Warum ist das Rennen noch nicht fertig?",
+      "subtitle": "Der akzeptierte Eintrag ist nicht der gleiche wie die fertige Vorbereitung.",
+      "overview": "Die Annahme behält sich nur einen Teamplatz im Event vor. Der Manager muss noch die richtige Fahrerauswahl einreichen und die Race Plan / Stage Plans vor den entsprechenden Fristen.",
+      "details": [
+        "Offenes Rennen Vorbereitung nach der Annahme.",
+        "Ergänzen Sie die Race Plan mit der erforderlichen Anzahl an Fahrern und förderfähigen Unterstützungsressourcen.",
+        "Lösen Sie jeden Fahrer/staff/asset Konflikte durch sich überschneidende Ereignisse.",
+        "Stellen Sie sicher, dass genügend Rennvorräte für das Event vorhanden sind.",
+        "Öffnen Stage Plans und den taktischen Plan für jede erforderliche Etappe zu vollenden.",
+        "Ein gespeichertes Stage Plan kann noch unvollständig sein. Lesen Sie die Bereitschaftswarnung, bevor das Team bereit ist."
+      ],
+      "facts": [
+        {
+          "label": "Angenommen",
+          "value": "Team hat einen Veranstaltungsslot"
+        },
+        {
+          "label": "Noch gebraucht",
+          "value": "Fahrer, Personal/assets, Ausrüstung/supplies und Stage Plans"
+        },
+        {
+          "label": "Endkontrolle",
+          "value": "Die Bühnenbereitschaft muss nutzbar sein/complete vor dem Schloss"
+        }
+      ],
+      "tips": [
+        "Warten Sie nicht bis die Fahrer-Einreichung/stage-plan Frist.",
+        "Ziel für alle Stufen grün sein/usable vor dem Schloss."
+      ],
+      "relatedLinks": [
+        "Rennvorbereitung"
+      ]
+    },
+    "faq-rider-underperformed": {
+      "category": "FAQ",
+      "title": "FAQ: Warum hat mein High-Overall-Fahrer unterbesetzt?",
+      "subtitle": "Insgesamt ist nur ein Teil der Rennleistung.",
+      "overview": "Ein Fahrer kann eine hohe Gesamtbewertung haben, aber trotzdem schlecht durchführen, wenn das Rennprofil, Fachkenntnisse, Müdigkeit, Moral, Gesundheit, Schärfe, Ausrüstung oder Taktik falsch sind.",
+      "details": [
+        "Insgesamt ist ein Durchschnitt/summary und garantiert nicht die Leistung der Elite auf jedem Gelände.",
+        "Ein Sprinter kann insgesamt hoch sein, verliert aber immer noch stark an einem Bergende.",
+        "Ein Bergsteiger kann insgesamt stark sein, aber fehlt die Wohnung/sprint Qualitäten für ein paar Finish.",
+        "Hohe Müdigkeit oder schlechte Gesundheit kann die effektive Leistungsfähigkeit zu reduzieren.",
+        "Geringe Moral oder schlechte Rasse Schärfe kann einen normalerweise starken Fahrer weniger effektiv.",
+        "Eine falsche Rolle kann den Fahrer Energie ausgeben, die jemand anderes unterstützt, anstatt für persönliches Ergebnis zu radeln.",
+        "Ausrüstung, Lieferungen und Teamunterstützung können auch das Endergebnis ändern."
+      ],
+      "facts": [
+        {
+          "label": "Prüfer",
+          "value": "Fachkenntnisse, Ermüdung, Moral, Verfügbarkeit, Schärfe"
+        },
+        {
+          "label": "Prüfstufe",
+          "value": "Terrain, Entfernung, Ziel, Wetter"
+        },
+        {
+          "label": "Kontrollplan",
+          "value": "Rolle, Teamtaktik, individuelle Taktik, Ausrüstung und Zubehör"
+        }
+      ],
+      "tips": [
+        "Urteilen Sie das Ergebnis gegen den Fahrer Job, nicht nur die Endposition.",
+        "Wiedergabe verwenden/results zu bestimmen, wo Zeit/position war verloren."
+      ]
+    },
+    "faq-money": {
+      "category": "FAQ",
+      "title": "FAQ: Wo ist mein Clubgeld hin?",
+      "subtitle": "Wie man eine unerwartete Gleichgewichtsverminderung untersucht.",
+      "overview": "Die richtige Antwort sollte von Finance Transactions kommen. Das Spiel hat viele wiederkehrende und einmalige Kosten, so dass das Abschätzen aus der endgültigen Bilanz unzuverlässig ist.",
+      "details": [
+        "Öffnen Sie Transaktionen und finden Sie die negativen Zeilen um das Spieldatum, wenn sich der Saldo geändert hat.",
+        "Prüfen Sie, ob die Kosten wöchentlich, monatlich, trip-based, einmalig oder steuerbezogen sind.",
+        "Fahrer/staff Die Gehälter werden immer wieder und können nach mehreren Unterzeichnungen groß werden.",
+        "Team Richtlinien und Rennreisen können Kosten verursachen, auch wenn der Club keinen Transfer gekauft hat.",
+        "Steuerabzug kann sofort nach steuerpflichtigem Einkommen erscheinen, so ein großer Sponsor/prize Die Zahlung kann durch eine Steuerzeile gefolgt werden.",
+        "Notkredit Haupttilgung ist Schuldenbewegung. Zinsen sind eine reale Ausgabe."
+      ],
+      "facts": [
+        {
+          "label": "Erste Seite",
+          "value": "Finanzen → Transaktionen"
+        },
+        {
+          "label": "Gemeinsame Kosten",
+          "value": "Fahrergehalt, Personalgehalt, Steuern, Richtlinien, Reisen, Ausrüstung, Infrastruktur, Lager, Transfers"
+        },
+        {
+          "label": "Schuldverschreibung",
+          "value": "Die Hauptbewegung des Darlehens und die Darlehenszinsen müssen getrennt werden"
+        }
+      ],
+      "tips": [
+        "Transaktionsbeschreibungen verwenden/types Statt zu raten.",
+        "Vergleichen Übersicht Finanzen Gesundheit mit der detaillierten Aussage."
+      ],
+      "relatedLinks": [
+        "Transaktionen"
+      ]
+    },
+    "faq-equipment": {
+      "category": "FAQ",
+      "title": "FAQ: Warum kann ich ein Gerät verwenden oder reparieren?",
+      "subtitle": "Status, Zustand und Zuordnungsbeschränkungen.",
+      "overview": "Geräteaktionen hängen vom Objektstatus, der Bedingung und ob ein anderes System das Element derzeit verwendet. Ein Element kann im Inventar vorhanden sein, aber für eine bestimmte Aktion vorübergehend nicht verfügbar sein.",
+      "details": [
+        "Zugeordnete Ausrüstung wird bereits verwendet/reserved durch ein Setup oder Ereignis und kann nicht immer sofort geändert werden.",
+        "Wartungsausrüstung muss vor dem normalen Gebrauch die Reparatur beenden.",
+        "Reparatur ist nicht erforderlich, wenn der Zustand zu hoch ist und kann blockiert werden, wenn das Element sonst nicht verfügbar ist.",
+        "Getragene Gegenstände erfordern Aufmerksamkeit und können ein Risiko für wichtige Ereignisse werden.",
+        "Wenn ein Artikel nicht verkauft werden kann/discarded, überprüfen, ob es durch eine andere Aktion zugewiesen oder gesperrt wird.",
+        "Ändern Sie die Einrichtung/assignment zunächst, wenn der Gegenstand für einen anderen Zweck benötigt wird."
+      ],
+      "facts": [
+        {
+          "label": "Mögliche Blocker",
+          "value": "Zugewiesen, in Wartung, falscher Zustand, abgenutzt/locked Zustand"
+        },
+        {
+          "label": "Reparatur",
+          "value": "Normalerweise bei einem anderen Anspruch von 90% oder weniger"
+        },
+        {
+          "label": "Einsatz von Rassen",
+          "value": "Artikel muss verfügbar und über die entsprechende Einrichtung ausgewählt sein"
+        }
+      ],
+      "tips": [
+        "Halten Sie Backup-Ausrüstung, so dass eine Reparatur nicht das gesamte Rennen Setup blockieren.",
+        "Bedingung vor der Prüfung prüfen Race Plan Unterwerfung."
+      ],
+      "relatedLinks": [
+        "Ausrüstung"
+      ]
+    },
+    "faq-staff-hiring": {
+      "category": "FAQ",
+      "title": "FAQ: Warum kann ich diesen Mitarbeiter einstellen?",
+      "subtitle": "Rollenkapazität, Fazilitätsanforderungen und Finanzkontrollen.",
+      "overview": "Der häufigste Grund ist nicht der Kandidat – es ist der Club. Mitarbeiter Einstellung kann blockiert werden, weil die Rolle hat keine freien Slot, die Einrichtung Ebene ist zu niedrig, der Club fehlt Bargeld oder eine andere Einstellung Regel ist nicht zufrieden.",
+      "details": [
+        "Offene Infrastruktur und inspizieren Sie die verwendeten/max Kapazität für die betreffende Personalgruppe.",
+        "Ist die Kapazität voll, kann eine Erweiterung der Anlage vor einer anderen Mietdauer erforderlich sein.",
+        "Prüfen Sie, ob die Kandidatenrolle der Einrichtungsgruppe gehört, die Sie denken.",
+        "Auch mit freier Kapazität braucht der Club noch genug Bargeld und einen akzeptablen Vertrag/offer.",
+        "Personalgehalt wird zu einem wiederkehrenden Kosten nach der Einstellung, so sollte die Finanzen vor der Bestätigung überprüft werden.",
+        "Wenn die Seite zeigt eine harte Anforderung Nachricht, beheben Sie diese Anforderung, bevor Sie das Gehalt wiederholt ändern."
+      ],
+      "facts": [
+        {
+          "label": "Kontrollkapazität",
+          "value": "Verwendete Slots versus max Slots für diese Personalrolle/group"
+        },
+        {
+          "label": "Kontrolleinrichtung",
+          "value": "Ausbildung, Medizin, Workshop, Pfadfinder- oder Jugendinfrastruktur"
+        },
+        {
+          "label": "Finanzkontrolle",
+          "value": "Sofortige Kosten und wiederkehrendes Gehalt"
+        }
+      ],
+      "tips": [
+        "Infrastruktur und Transfer/Staff Der Markt sollte zusammen genutzt werden.",
+        "Nicht über-hire Personal, nur weil die slots existieren."
+      ],
+      "relatedLinks": [
+        "Personalmarkt",
+        "Infrastruktur"
+      ]
+    }
+  }
+}

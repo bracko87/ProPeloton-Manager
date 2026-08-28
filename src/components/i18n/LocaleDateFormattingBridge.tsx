@@ -36,7 +36,9 @@ const MONTH_INDEX: Record<string, number> = {
 }
 
 function localeForLanguage(language: string | undefined): string {
-  return language?.startsWith('sr') ? 'sr-Latn-RS' : 'en-GB'
+  if (language?.startsWith('sr')) return 'sr-Latn-RS'
+  if (language?.startsWith('de')) return 'de-DE'
+  return 'en-GB'
 }
 
 function parseEnglishDate(value: string): Date | null {

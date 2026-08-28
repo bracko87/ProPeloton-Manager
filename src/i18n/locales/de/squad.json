@@ -1,0 +1,159 @@
+{
+  "page": {
+    "subtitle": "Verwalten Sie Ihre First-Team-Trupp und sehen Sie sich Saison-Insights."
+  },
+  "common": {
+    "unknownRider": "Unbekannter Fahrer",
+    "notAuthenticated": "Nicht authentifiziert.",
+    "noClub": "Für diesen Benutzer wurde kein Club gefunden."
+  },
+  "nav": {
+    "firstSquad": "Erstes Schwadengefecht",
+    "developingTeam": "Entwicklung des Teams",
+    "staff": "Personal",
+    "developingUnavailable": "Das Entwicklungsteam ist derzeit nicht verfügbar.",
+    "unlockDeveloping": "Entsperren Sie zuerst das Entwicklungsteam in Einstellungen."
+  },
+  "roster": {
+    "firstSquad": "Erstes Schwadengefecht",
+    "riders": "Fahrer",
+    "squadFull": "Die Mannschaft ist voll ({{max}} Fahrer). Transfers, Unterzeichnungen und Aktionen müssen die Kader-Cap respektieren.",
+    "loading": "Die Einheit wird geladen...",
+    "loadFailed": "Der Kader kann nicht geladen werden",
+    "noRiders": "Für diesen Club haben noch keine Fahrer gefunden.",
+    "view": "Ansicht",
+    "generalView": "Allgemeine Ansicht",
+    "financialView": "Finanzielle Vorausschau",
+    "skillsView": "Ansicht der Kompetenzen",
+    "formDevelopment": "Form & Entwicklung",
+    "checkingPremium": "Überprüfung Premium Zugriff...",
+    "advancedPremium": "Erweiterte Squad-Ansichten erfordern Premium.",
+    "viewPremium": "Ansicht Premium",
+    "onlyPremium": "Nur für Premium Verwender",
+    "premiumOnly": "Premium Nur"
+  },
+  "columns": {
+    "name": "Bezeichnung",
+    "country": "Empfänger",
+    "role": "Rolle",
+    "activity": "Tätigkeit",
+    "age": "Alter",
+    "overall": "Insgesamt",
+    "status": "Status",
+    "move": "Bewegung",
+    "value": "Wert",
+    "wage": "Löhne",
+    "contractExpires": "Vertragslaufzeit",
+    "potential": "Mögliche",
+    "morale": "Moral",
+    "fatigue": "Müdigkeit",
+    "health": "Gesundheit",
+    "rider": "Fahrer",
+    "case": "Rechtssache",
+    "stage": "Etappe",
+    "severity": "Schweregrad",
+    "expectedRecovery": "Erwartete Erholung",
+    "result": "Ergebnis",
+    "internationalPoints": "Int. pts",
+    "sharpness": "Schärfe"
+  },
+  "status": {
+    "fit": "Passend",
+    "injured": "Verletzte",
+    "sick": "Krankheit",
+    "notFullyFit": "Nicht voll fit",
+    "fresh": "frisch",
+    "normal": "Normal",
+    "tired": "Müde",
+    "veryTired": "Sehr müde",
+    "exhausted": "Erschöpft",
+    "bad": "Schlechte",
+    "low": "Niedrig",
+    "okay": "- Okay. - Okay. - Okay.",
+    "good": "Gut.",
+    "great": "Großartig",
+    "limited": "Begrenzt",
+    "average": "Durchschnitt",
+    "promising": "Versprechend",
+    "high": "Hoch",
+    "elite": "Elite"
+  },
+  "activity": {
+    "race": "Rennen",
+    "trainingCamp": "Ausbildungslager",
+    "free": "Frei",
+    "stage": "Etappe {{number}}",
+    "until": "Bis {{date}}"
+  },
+  "movement": {
+    "windowClosed": "Bewegungsfenster ist geschlossen.",
+    "windowClosedNext": "Das Fenster der Bewegung ist geschlossen. {{window}}.",
+    "windowClosedNextNoPeriod": "Fenster der Bewegung geschlossen. {{window}}",
+    "windowOpen": "Bewegungsfenster jetzt geöffnet: {{window}}",
+    "currentWindow": "Aktuelles Fenster",
+    "unknown": "Unbekannt",
+    "movedToDeveloping": "Der Fahrer zog ins Entwicklungsteam.",
+    "couldNotMove": "Der Fahrer konnte nicht ins Entwicklungsteam umsteigen.",
+    "ageLimit": "Nur Fahrer im Alter von 23 Jahren oder jünger können dem Developing Team beitreten.",
+    "moveToDeveloping": "Zum Team entwickeln"
+  },
+  "premium": {
+    "label": "Premium",
+    "unlock": "Entsperren mit Premium"
+  },
+  "healthReport": {
+    "title": "Gesundheitsbericht",
+    "subtitle": "Aktuelle verletzt, krank und erholen erste Mannschaft Fahrer",
+    "none": "Keine aktiven Gesundheitsprobleme im Kader.",
+    "lockedTitle": "Gesundheitsbericht der Schwaden",
+    "lockedDescription": "Siehe gruppenweite Verletzungs-, Krankheits- und Erholungsinformationen in einem konsolidierten Bericht."
+  },
+  "season": {
+    "wins": "Saisonsiege",
+    "podiums": "Saison-Podiums",
+    "top10": "Die 10 besten Ergebnisse",
+    "bestGc": "Am besten GC",
+    "performanceTitle": "Zusammenfassung der Saisonleistung",
+    "performanceDescription": "Saisonsiege, Podiumsplätze, Top 10 Ergebnisse und beste allgemeine Einstufungsleistung.",
+    "teamResults": "Team Ergebnisse in dieser Saison",
+    "teamResultsDescription": "Sehen Sie sich monatliche Team-Performance-Trends in der aktuellen Saison an.",
+    "podiumsPlacings": "Podiumsdiskussionen und Platzierungen",
+    "podiumsPlacingsDescription": "Analyse Siege, Podiumsplätze und Finishing-Positionsverteilung.",
+    "raceType": "Race Type Snapshot",
+    "raceTypeDescription": "Vergleichen Sie Ihre Ergebnisse über Klassiker, Bergtage, Etappen- und Zeitversuche.",
+    "oneDayClassics": "Eintägige Klassiker",
+    "stageFinishes": "Endbearbeitung",
+    "mountainDays": "Bergtage",
+    "timeTrials": "Zeitversuche",
+    "winsChart": "Gewinne",
+    "second": "Zweiter",
+    "third": "3.",
+    "top10Chart": "Top10",
+    "top20Chart": "Die 20 besten"
+  },
+  "races": {
+    "lastTeamRace": "Letztes Teamrennen",
+    "nextTeamRace": "Nächstes Teamrennen",
+    "noRace": "Noch kein Rennen gefunden",
+    "noFinished": "Noch keine vollständige Einstufung für diese Mannschaft gefunden.",
+    "noNext": "Für diese Mannschaft wurde noch kein nicht gestarteter Race Plan gefunden.",
+    "stages": "{{count}} Stufen"
+  },
+  "transfer": {
+    "listed": "Fahrer ist auf der Transferliste"
+  },
+  "months": {
+    "Jan": "Januar",
+    "Feb": "Februar",
+    "Mar": "März",
+    "Apr": "April",
+    "May": "Mai",
+    "Jun": "Jun wird",
+    "Jul": "Juli",
+    "Aug": "JAHR",
+    "Sep": "GESAMTRECHNUNG",
+    "Oct": "Oktober",
+    "Nov": "Versch.",
+    "Dec": "Dezember"
+  }
+}

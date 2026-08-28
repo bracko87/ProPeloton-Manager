@@ -1,0 +1,320 @@
+{
+  "sections": {
+    "rankingTiersDeep": {
+      "title": "Wettbewerbsbereiche",
+      "subtitle": "WorldTeam, ProTeam, Continental und Amateur.",
+      "overview": "Team-Ranking wird in eine Wettbewerbspyramide mit Promotion, Playoffs und Relegation organisiert.",
+      "facts": [
+        "Tierkategorien",
+        "WorldTeam, ProTeam, Continental, Amateur"
+      ],
+      "details": [
+        "WorldTeam ist die oberste Ebene.",
+        "ProTeam ist in West und Ost aufgeteilt.",
+        "Continental wird in Europa, Amerika, Asien, Afrika und Ozeanien aufgeteilt.",
+        "Amateur ist in viele regionale Divisionen aufgeteilt.",
+        "Punkte entscheiden über Positionen und Folgen für das Saisonende."
+      ],
+      "tips": [
+        "Verfolgen Sie zuerst Ihre eigene Abteilung."
+      ]
+    },
+    "promotionRelegationDeep": {
+      "title": "Förderung, Playoffs und Relegation",
+      "subtitle": "Wie die Bewegung am Saisonende gezeigt wird.",
+      "overview": "Stehende Etiketten erklären, welche Positionen fördern, Playoffs betreten oder abtreten.",
+      "facts": [
+        "WorldTeam",
+        "Unter 5 abgeschoben",
+        "ProTeam",
+        "Gewinner befördert, 2.–4. World Playoff, untere 5 relegiert"
+      ],
+      "details": [
+        "Continental Europa/America Pro West Playoff zu füttern.",
+        "Continental Asien/Africa/Oceania Pro East Playoff zu füttern.",
+        "Unterschiedlich Continental Die Divisionen haben unterschiedliche Abspaltungen.",
+        "Amateur Ozeanien fördert die drei besten direkt.",
+        "European Amateur Divisions nutzen Gewinner direkte und 2.-3. Playoff.",
+        "Andere Amateur Divisionen nutzen Gewinner direkt und 2.–4. Playoff."
+      ],
+      "tips": [
+        "Lesen Sie das Etikett für die ausgewählte Division."
+      ]
+    },
+    "statisticsDeep": {
+      "title": "Statistischer Leitfaden",
+      "subtitle": "Teams, Fahrer, Filter und Geschichte.",
+      "overview": "Statistiken helfen, Leistung zu vergleichen und die Spielwelt zu erkunden.",
+      "facts": [
+        "Hauptablagen",
+        "Teams und Fahrer",
+        "Fahrerkennzahlen",
+        "Insgesamt Sprint- und Kletter-Saisonpunkte"
+      ],
+      "details": [
+        "Team Current vergleicht aktuelle Werte und Punkte.",
+        "Team History speichert vergangene Gewinner und Snapshots.",
+        "Rider Rankings zeigen Top-Performer.",
+        "Rider Breakdown hilft Spezialisten zu finden.",
+        "Die Filter umfassen Saison, Teamtyp, Status, Tier, Division, Land und Suche.",
+        "Das Öffnen eines Fahrers verwendet eigene oder externe Profilroute, abhängig von der Eigentümerschaft."
+      ],
+      "tips": [
+        "Statistik vor Transfers verwenden."
+      ]
+    },
+    "transferListDeep": {
+      "title": "Übertragen Liste Riders",
+      "subtitle": "Kauf von einem anderen Club.",
+      "overview": "Transfer-gelistete Fahrer benötigen ein Club-to-Club-Angebot vor der Fahrervertrag Verhandlungen.",
+      "facts": [
+        "Liste der Daten",
+        "Verkäufer, Preis, Gehalt, Marktwert, Ablauf, Verfügbarkeit"
+      ],
+      "details": [
+        "Der verkaufende Club kann akzeptieren/reject Angebote.",
+        "Die Preisanfrage kann automatisch eingespannt werden.",
+        "Wenn angenommen, beginnt eine separate Fahrerverhandlung.",
+        "Scouting kann beeinflussen, wie viele genaue Informationen sichtbar sind.",
+        "Die Listen laufen bis zum Spieldatum ab."
+      ],
+      "tips": [
+        "Überprüfe das Gehalt, bevor du ein großes Transferangebot machst."
+      ]
+    },
+    "freeAgentsDeep": {
+      "title": "Freie Agenten",
+      "subtitle": "Unterschreiben Sie ungebundene Fahrer.",
+      "overview": "Freie Agenten verlangen kein Verkaufsangebot, aber Vertragsverhandlungen sind noch wichtig.",
+      "facts": [
+        "Verhandlungen",
+        "Gehalt, Dauer, Signierbonus, Agentengebühr und Stufenanpassung"
+      ],
+      "details": [
+        "Kostenlose Agenten können billiger sein, weil es keine Transfergebühr gibt.",
+        "Sie können immer noch hohe Gehalt oder Boni verlangen.",
+        "Die Angebotsvorschau hilft, die Akzeptanz zu schätzen.",
+        "Harte Blöcke können einen Deal verhindern.",
+        "Verhandlungen können auslaufen oder entgegengenommen werden/rejected."
+      ],
+      "tips": [
+        "Null Transfergebühr bedeutet nicht, dass ein billiger Fahrer."
+      ]
+    },
+    "transferNegotiationDeep": {
+      "title": "Ausblick auf Verhandlungen",
+      "subtitle": "Akzeptanzprozent, Punkte und Ablehnungsgründe.",
+      "overview": "Verhandlungsvorschau hilft Benutzern zu verstehen, warum ein Angebot erfolgreich sein oder scheitern kann.",
+      "facts": [
+        "Ergebnisse",
+        "Gehalt, Dauer, Bonus, Gebühr, Tier und Gesamtpunktzahl",
+        "Status",
+        "Offen, anhängig, angenommen, abgelehnt, abgelaufen, abgelehnt, abgeschlossen, abgelehnt"
+      ],
+      "details": [
+        "Akzeptanzprozent ist nur eine Vorschau, keine Garantie.",
+        "Der primäre Grund sagt, was mit dem Angebot nicht stimmt.",
+        "Die Punktezahl kann wichtig sein, wenn ein Fahrer ein höheres Wettkampfniveau will.",
+        "Versuch zählt Begrenzung wiederholte Angebote.",
+        "Gesperrt bis zu sofortigen Wiederholungsverhandlungen."
+      ],
+      "tips": [
+        "Verbessern Sie den Grund, warum der Fahrer sich beschwert, nicht zufällige Felder."
+      ]
+    },
+    "scoutingDeep": {
+      "title": "Berichte über die Pfadfinder",
+      "subtitle": "Verringerung des versteckten Informationsrisikos.",
+      "overview": "Scouting-Berichte helfen Benutzern, schlechte Transferentscheidungen zu vermeiden, indem sie das Wissen über externe Fahrer verbessern.",
+      "facts": [
+        "Filter",
+        "Alle, neu, überprüft",
+        "Berichtsfelder",
+        "Fahrer, Scout, Datum, insgesamt, Potenzial, Stärken, Notizen"
+      ],
+      "details": [
+        "Berichte verwenden echte Fahrer UUIDs, so dass Profil-Links funktionieren.",
+        "Neue Berichte sollten vor dem Gebot überprüft werden.",
+        "Insgesamt und Potenzial können Etiketten statt exakte Werte sein.",
+        "Stärken identifizieren, was der Fahrer gut kann.",
+        "Anmerkungen bieten Scouting-Kontext."
+      ],
+      "tips": [
+        "Pfadfinder vor teuren Unterzeichnungen."
+      ]
+    },
+    "staffMarketDeep": {
+      "title": "Personalmarkt",
+      "subtitle": "Ich heuere freie Mitarbeiter an.",
+      "overview": "Die Registerkarte Personal listet verfügbare Mitarbeiter auf und respektiert die Rollenkapazität.",
+      "facts": [
+        "Aufgaben",
+        "Trainer, Trainer, U23 trainer, doktor, physio, ernährungswissenschaftler, mechaniker, sportdirektor, scout/analyst",
+        "Sortieren",
+        "Gehalt, Fähigkeiten, Name, Land"
+      ],
+      "details": [
+        "Die Kandidaten zeigen Expertise, Erfahrung, Potenzial, Führung, Effizienz, Loyalität und Gehalt.",
+        "Rollenbeschränkungen können die Einstellung blockieren.",
+        "Scouting Office kann die Berichtsqualität für Kandidaten beeinflussen.",
+        "Wöchentliches Gehalt wirkt sich auf langfristige Finanzierung aus.",
+        "Das Personal sollte für einen klaren Zweck eingestellt werden."
+      ],
+      "tips": [
+        "Stellen Sie keine Mitarbeiter ein, wenn die Kapazität oder das Budget knapp ist."
+      ]
+    },
+    "financeHealthDeep": {
+      "title": "Finanzierung Gesundheit",
+      "subtitle": "Wie man finanzielle Sicherheit liest.",
+      "overview": "Bei der Finanzierung von Gesundheit geht es nicht nur um die aktuelle Bilanz, sondern um Nachhaltigkeit.",
+      "facts": [
+        "Betriebsansicht",
+        "Einkommen, Aufwendungen und Nettoeinnahmen/week/month",
+        "Schuldentrennung",
+        "Ausschüttung und Kapital des Darlehens werden vom operativen Cashflow getrennt"
+      ],
+      "details": [
+        "Ein hohes Gleichgewicht kann immer noch unsicher sein, wenn die wiederkehrenden Ausgaben zu hoch sind.",
+        "Gehälter, Politik, Personal, Steuern und Kreditrückzahlungen können zu einem künftigen Druck führen.",
+        "Die Einkünfte des Sponsors können monatlich oder durch Vertragszeitpunkt eintreffen.",
+        "Rennprämien sind leistungsabhängig und sollten nicht angenommen werden.",
+        "Verwenden Sie Cashflow-Trends zu verstehen, ob der Club verbessert oder sinkt."
+      ],
+      "tips": [
+        "Überprüfen Sie die Finanzen vor jeder größeren Ausgabenentscheidung."
+      ]
+    },
+    "transactionsDeep": {
+      "title": "Transaktionen",
+      "subtitle": "Finanzbuch und Archiv.",
+      "overview": "Transaktionen sind der Ort, um genau zu prüfen, warum Geld bewegt.",
+      "facts": [
+        "Letzte",
+        "Letzte 30 Spieltage",
+        "Archiv",
+        "Vorherige 6 Spielmonate",
+        "Seitengröße",
+        "20"
+      ],
+      "details": [
+        "Sichtbare Daten verwenden Metadaten zum Spieldatum.",
+        "created_at ist nur ein technischer Rückfall.",
+        "Bekannte Transaktionstypen haben lesbare Etiketten.",
+        "Unbekannte Transaktionstypen werden automatisch vorgestellt.",
+        "Archiv gruppen alte Reihen nach in-game Monat."
+      ],
+      "tips": [
+        "Verwenden Sie Transaktionen, wenn Balance überrascht Sie."
+      ]
+    },
+    "taxDeep": {
+      "title": "Steuerprüfungen",
+      "subtitle": "Einbehaltung, monatliche Anpassung und Erstattung.",
+      "overview": "Steuerabzüge steuerpflichtige Einkünfte und monatliche Prüfungsergebnisse.",
+      "facts": [
+        "Typen",
+        "tax_withholding, tax_monthly_adjustment, tax_monthly_refund",
+        "Status",
+        "OK, angepasst, erstattet"
+      ],
+      "details": [
+        "Die Steuer wird aus steuerpflichtigen Bruttoeinkommen und Steuersatz berechnet.",
+        "Bereits einbehalten wird bereits Steuer genommen.",
+        "Der Betrag der Anpassung muss berechnet oder zurückerstattet werden.",
+        "Die monatliche Rechnungsprüfung vergleicht die erwartete Steuer mit dem gezahlten Betrag.",
+        "Steuern können nach großen Einkommensereignissen gefährlich werden."
+      ],
+      "tips": [
+        "Halten Sie Bargeld für Steueranpassungen zur Verfügung."
+      ]
+    },
+    "sponsorsDeep": {
+      "title": "Förderer tiefe Anleitung",
+      "subtitle": "Haupt-, sekundäre und technische Sponsoren.",
+      "overview": "Sponsoren bringen garantiertes Geld, Bonuspools und Ziele. Technische Sponsoren können auch Ausrüstung helfen.",
+      "facts": [
+        "Art",
+        "Haupt, sekundäre, technische",
+        "Geld",
+        "Garantierter Betrag, Bonuspool, monatlicher Betrag",
+        "Technische",
+        "Rabatt Prozentsatz und Support-Paket"
+      ],
+      "details": [
+        "Die wichtigsten Sponsoren sind am sichtbarsten.",
+        "Sekundärsponsoren füllen Slots und fügen Unterstützung hinzu.",
+        "Technische Sponsoren unterstützen den Kauf von Ausrüstung.",
+        "Sponsorenangebote können ablaufen.",
+        "Proration bedeutet, dass ein Teilsaisonvertrag nicht die Werte der Vollsaison zahlt."
+      ],
+      "tips": [
+        "Vergleichen Sie garantiertes Geld, Ziele und Branding Wirkung."
+      ]
+    },
+    "sponsorObjectivesDeep": {
+      "title": "Förderziele",
+      "subtitle": "Ziele, Überprüfung und Auszahlungen.",
+      "overview": "Ziele belohnen den Verein, wenn die Sponsorziele erreicht werden.",
+      "facts": [
+        "Ergebnisse",
+        "Start, Sieg, Podium, Top 5, Top 10, GC Top 5/top 10, Etappe 5/win, Sichtbarkeit der Klassifikation"
+      ],
+      "details": [
+        "Ziele können exakte Rennen, Länder oder Kategorien anvisieren.",
+        "Fortschritt zeigt Ziel und aktuellen Wert.",
+        "Status kann terminiert, überprüft, erreicht, verpasst oder bezahlt werden.",
+        "Der Grund für die Fehlentscheidung ist, dass die Ziele nicht erreicht wurden.",
+        "Auszahlungstransaktion id erscheint nach Zahlung."
+      ],
+      "tips": [
+        "Planen Sie Sponsorenziele bei der Wahl von Rennen."
+      ]
+    },
+    "teamPoliciesDeep": {
+      "title": "Teampolitik und -operationen",
+      "subtitle": "Wiederkehrende und tripbezogene Clubstandards.",
+      "overview": "Politik verbessert den Komfort/support kann aber wöchentlich, monatlich und Reisekosten erhöhen.",
+      "facts": [
+        "Vorhaben",
+        "Flüge, Unterkunft, Bodentransport, Logistik, Personalreisen",
+        "Politik",
+        "Wohnen, Ernährung, Erholung, Personalausstattung, Fahrerbonus, Personalbonus"
+      ],
+      "details": [
+        "Flüge, Hotel- und Bodentransporte beeinflussen Reisen.",
+        "Wohnen, Ernährung und Erholung unterstützen wiederkehrende Operationen.",
+        "Personalausstattung kann bei der Einstellung von Personal gelten.",
+        "Bonuspläne können saisonale oder ergebnisbasierte Kosten verursachen.",
+        "Die Prognosen zeigen die anstehenden Reisekosten.",
+        "Letzten Monat die tatsächlichen Kosten hilft Audit Ausgaben."
+      ],
+      "tips": [
+        "Wenn die Finanzen gefährlich sind, muss das politische Niveau gesenkt werden."
+      ]
+    },
+    "liquidationDeep": {
+      "title": "Liquidation und Neustart",
+      "subtitle": "Was passiert, wenn dem Club der Rettungsschutz ausgeht?",
+      "overview": "Liquidation Blocks Gameplay für diesen Club nach Rettungslimits erschöpft sind und eine weitere Pflicht nicht mehr.",
+      "facts": [
+        "Rettungslimit",
+        "3 Rettungsaktionen für die Lebensdauer",
+        "Kontomünzen",
+        "Wirksam bleiben",
+        "Neustart",
+        "Zukunft/not aktive Meldung in der aktuellen Benutzeroberfläche"
+      ],
+      "details": [
+        "Der liquidierte Club kann keine Aktionen mehr durchführen.",
+        "Der Benutzer kann einen neuen Club in einem freien Platz erstellen.",
+        "Das Team neu starten erklärt derzeit nur das zukünftige Reset-Verhalten.",
+        "Künftige Neustart würde alte Fahrer freilassen, Personal entfernen und Punkte zurücksetzen/progress.",
+        "Liquidationsgründe und Zeitstempel können angezeigt werden."
+      ],
+      "tips": [
+        "Erklären Sie, dass die Liquidation Club-Ebene ist, nicht Kontolöschung."
+      ]
+    }
+  }
+}

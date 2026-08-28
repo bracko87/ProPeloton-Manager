@@ -1,0 +1,216 @@
+{
+  "page": {
+    "title": "Einstellungen",
+    "description": "Real nutzbare Einstellungen: In-Game-Benachrichtigungssteuerung und Team-Gefahrzone-Aktionen."
+  },
+  "notifications": {
+    "title": "Benachrichtigungen im Spiel",
+    "description": "Kernspiel-Benachrichtigungen und bezahlte Personalberater-Benachrichtigungen werden separat kontrolliert.",
+    "coreTitle": "Kernmeldungen",
+    "coreDescription": "Normale Spiel-Benachrichtigungen, die ohne bezahlten Personalberater verfügbar bleiben.",
+    "advisorTitle": "Personalberater-Benachrichtigungen",
+    "advisorDescription": "Bezahlte Berater-Benachrichtigungen gruppiert nach Themen. Schalten einer Kategorie aus stummt jeder Benachrichtigungstyp in diesem Thema. Einzelne Benachrichtigungstypen können dann von ihrer Benachrichtigungskarte ungeändert werden, ohne diese Kategorie Checkbox zu ändern.",
+    "advisorSaveError": "Die Einstellung Staff Advisor kann nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+    "advisorInactiveSuffix": "Aktivieren Sie den erforderlichen Personalberater, um diese Benachrichtigung zu kontrollieren.",
+    "coreAdvisorNote": "Eine Core-Benachrichtigung und eine Advisor-Benachrichtigung können dasselbe Thema abdecken, ohne das gleiche Ereignis zu sein. Beispiel: Race Supplies Low bleibt Core, während Equipment & Workshop Review bezahlt Analyse.",
+    "enabledCount": "{{enabled}}/{{total}} am"
+  },
+  "sections": {
+    "race": {
+      "title": "Rassenmeldungen",
+      "description": "Einladungen, Vorbereitung, Wetter, Bühnenpläne, Renntage-Themen und Ergebnisse."
+    },
+    "team": {
+      "title": "Benachrichtigungen über Team & Fahrer",
+      "description": "Fahrer, Personal, Transfers, Trainingslager, Ausfindigmachen und Pensionierungen."
+    },
+    "club": {
+      "title": "Meldungen zur Clubverwaltung",
+      "description": "Finanzen, Coins, Belohnungen, Lieferungen, Ausrüstung, Steuern und Infrastruktur."
+    },
+    "account": {
+      "title": "Konto- & Systemmeldungen",
+      "description": "Offizielle Spielnachrichten und Informationen an Bord."
+    }
+  },
+  "groups": {
+    "raceInvitations": {
+      "label": "Einladungen zum Rennen",
+      "description": "Benachrichtigungen anzeigen, wenn Ihr Team eine Einladung erhält."
+    },
+    "raceApplicationResults": {
+      "label": "Ergebnisse der Race-Anwendung",
+      "description": "Anzeigen Sie Benachrichtigungen, wenn Ihr Team für ein Rennen akzeptiert oder abgelehnt wird."
+    },
+    "races": {
+      "label": "Updates für den Renntag",
+      "description": "Startlist, verpasste Startlist, Renntag und Rennstrafen-Updates anzeigen."
+    },
+    "racePreparation": {
+      "label": "Status der Vorbereitung auf die Rennen",
+      "description": "Anzeigen Kernstatus und Folgen Meldungen für die Vorbereitung der Rennen. Proaktive Fahrer-Deadline-Beratung gehört Sportdirektor Advisory."
+    },
+    "stagePlanReminders": {
+      "label": "Status des Plans",
+      "description": "Anzeigen Core Bühnenplan Öffnung und Sperrzustand Benachrichtigungen. Fehlende Plan Beratung gehört Sportdirektor Advisory."
+    },
+    "raceWeather": {
+      "label": "Rennwetter",
+      "description": "Anzeigen von Benachrichtigungen, wenn Etappen, Rennen oder rennenbezogene Aktivitäten vom Wetter betroffen sind."
+    },
+    "raceResults": {
+      "label": "Ergebnisse der Rennen",
+      "description": "Anzeigen von Meldungen für fertige Rennen, Etappenergebnisse, Klassifizierungen und Rennzusammenfassungen."
+    },
+    "teamUpdates": {
+      "label": "Aktualisierungen des Teams",
+      "description": "Anzeigen von Benachrichtigungen über Fahrer, Moral, Gesundheit, Verträge, Personal und interne Teamänderungen."
+    },
+    "staffContracts": {
+      "label": "Personalverträge",
+      "description": "Anzeigen von Benachrichtigungen über auslaufende Personalverträge und Verlängerungstermin."
+    },
+    "staffCourses": {
+      "label": "Personalkurse",
+      "description": "Anzeigen von Benachrichtigungen, wenn ein Mitarbeiterkurs abgeschlossen ist und Gewinne angewendet werden."
+    },
+    "transferUpdates": {
+      "label": "Aktualisierungen übertragen",
+      "description": "Fahrertransfer, Free Agent, Angebot, Angebot und Verhandlungsnotifizierungen anzeigen."
+    },
+    "trainingCamps": {
+      "label": "Ausbildungslager",
+      "description": "Anzeigen von Benachrichtigungen für Trainingslagerstarts, Tagesberichte, Wetterwarnungen und -abläufe."
+    },
+    "scoutingReports": {
+      "label": "Scouting-Berichte",
+      "description": "Benachrichtigungen anzeigen, wenn ein Scouting-Bericht abgeschlossen ist."
+    },
+    "retirementUpdates": {
+      "label": "Aktualisierungen in den Ruhestand",
+      "description": "Anzeigen von Benachrichtigungen, wenn Fahrer oder Mitarbeiter den Ruhestand ankündigen und wenn die Pensionierungen abgeschlossen sind."
+    },
+    "financeAlerts": {
+      "label": "Ausschreibungen finanzieren",
+      "description": "Zeigen Sie wichtige Finanzwarnungen, Sponsorenziele, Notkredite, Steueralarme, Gehaltsabrechnungsfragen und Insolvenzbenachrichtigungen."
+    },
+    "walletRewards": {
+      "label": "Coins & Belohnungen",
+      "description": "Zeigen Sie Münzkäufe, Münzgutschriften, Geburtstagsgeschenke, Empfehlung Belohnungen und Brieftasche Belohnung Nachrichten."
+    },
+    "competitionRewards": {
+      "label": "Wettbewerbsprämien",
+      "description": "Show Season Rollover Belohnungen für Liga und Wettbewerb Ergebnisse."
+    },
+    "taxUpdates": {
+      "label": "Steuerliche Aktualisierungen",
+      "description": "Anzeigen von Meldungen für Steuerprüfungen und steuerbezogene Finanzereignisse."
+    },
+    "raceSupplies": {
+      "label": "Rennbedarf",
+      "description": "Anzeigen Sie Benachrichtigungen, wenn die Rennvorräte niedrig sind, fehlen oder vor Ereignissen wieder aufstocken müssen."
+    },
+    "equipmentUpdates": {
+      "label": "Aktualisierung der Ausrüstung",
+      "description": "Anzeigen von Benachrichtigungen für Wartung, Verkauf, Rückwurfaktionen und Gerätelebenszyklus-Updates."
+    },
+    "infrastructureUpdates": {
+      "label": "Aktualisierung der Infrastruktur",
+      "description": "Anzeigen von Benachrichtigungen für Infrastrukturaufträge, Lieferungen, Reparaturen, Verkäufe, Upgrades und Zustandswarnungen."
+    },
+    "systemMessages": {
+      "label": "Systemmeldungen",
+      "description": "Zeige Willkommensbotschaften und allgemeine offizielle Spielbotschaften."
+    }
+  },
+  "advisorCategories": {
+    "trainingReadiness": {
+      "label": "Training & Fahrbereitschaft",
+      "description": "Trainingsbelastung, Ermüdung, Verfügbarkeit des Fahrers, Trainingslücken, Bereitschaft der Mannschaft und Fahrerentwicklungsberatungen."
+    },
+    "raceProgrammePreparation": {
+      "label": "Rennprogramm & Vorbereitung",
+      "description": "Überprüfungen und Lücken des Rennprogramms, fehlende Vorbereitung und Vorbereitungs-Vorbereitung."
+    },
+    "startlistStagePlans": {
+      "label": "Startlist & Stage Plans",
+      "description": "Startlist Fristausschreibungen sowie fehlende oder unvollständige Bestandsaufnahmen."
+    },
+    "medicalRecovery": {
+      "label": "Medizinische & Erholung",
+      "description": "Medizinische Berichte, Verletzungs- und Krankheitsbehandlungspläne, Genesungsänderungen und medizinische Aufklärungsberatungen."
+    },
+    "equipmentWorkshopSupplies": {
+      "label": "Ausrüstung, Werkstatt & Rennbedarf",
+      "description": "Ausrüstungszustand, Werkstattbereitschaft und analytische Rennangebots-Berater."
+    },
+    "scoutingRecruitment": {
+      "label": "Pfadfinder & Einstellung",
+      "description": "Personalbeschaffungs-Intelligenz, Scouting-Überprüfung und vorrangige Berater."
+    }
+  },
+  "developingTeam": {
+    "title": "Entwicklung des Teams",
+    "description": "Bauen und verwalten Sie eine U23 Entwicklungsteam mit saisonalem Münzzugang.",
+    "loading": "Status des Entwicklungsteams wird geladen...",
+    "realLifeProgress": "Fortschritt in der Praxis",
+    "realLifeMinimum": "Mindestens 30 Tage erforderlich",
+    "gameProgress": "Fortschritte im Spiel",
+    "gameMinimum": "Mindestens 60 Tage erforderlich",
+    "coins": "Coins",
+    "eligibility": "Förderfähigkeit: 30 Echtzeit-Tage oder 60 Spieltage.",
+    "active": "Team aktiv entwickeln",
+    "activeBadge": "Aktiv",
+    "currentSeason": "Aktuelle Saison",
+    "accessEnds": "Zugangsdaten",
+    "renewalPrice": "Verlängerungspreis",
+    "nextRenewal": "Nächste Verlängerung",
+    "autoRenew": "Jede Saison automatisch erneuern",
+    "expired": "Entwicklung des Teamzugangs abgelaufen",
+    "expiredDescription": "Ihr Team, Fahrer, Verträge, Ergebnisse und Geschichte bleiben gespeichert. Das Developing Team ist derzeit schreibgeschützt.",
+    "reactivating": "Reaktivieren...",
+    "activating": "Aktiviere...",
+    "getCoins": "Coins holen",
+    "notEligible": "Noch nicht förderfähig",
+    "notEligibleDescription": "Das Entwicklungsteam wird nach 30 Echtzeit- oder 60 Spieltagen verfügbar.",
+    "specialRules": "Besondere Vorschriften",
+    "teamNameRule": "Der Teamname wird Ihr Hauptclubname plus sein U23.",
+    "raceRule": "Dieses Team kann sich für Rennen in der Regel bewerben, während der saisonale Zugang aktiv ist.",
+    "competitionRule": "Dieses Team kann nicht oben befördert werden Continental n.",
+    "rosterRule": "Maximale Dienstplangröße: 8 Fahrer.",
+    "ageRule": "Nur Fahrer im Alter von 23 oder jünger sind berechtigt.",
+    "movementRule": "Fahrer bewegen sich zwischen den Mannschaften nur während der Bewegung Fenster.",
+    "teamLabel": "Team"
+  },
+  "dangerZone": {
+    "title": "Gefahrenzone",
+    "description": "Diese sind destruktive Aktionen und sollten von normalen Vorlieben getrennt bleiben.",
+    "badge": "Maßnahmen mit hohem Wirkungsdruck",
+    "restartTitle": "Team neu starten",
+    "restartDescription": "Starten Sie diesen Club wieder in einen neuen Starterzustand, während Sie den gleichen Clubnamen, Logo, Trikot, Land und Wettbewerbs-Slot behalten.",
+    "restartDetail": "Aktuelle Fahrer werden zu freien Agenten, Saisonpunkte auf 0 zurückgesetzt, und das Team erhält eine neue Starter-Trupp basierend auf seiner aktuellen Ebene.",
+    "restartButton": "Team neu starten",
+    "shutdownTitle": "Abschalten",
+    "shutdownDescription": "Löschen Sie dieses Benutzerteam UND das Authentifizierungskonto dauerhaft. Nach erfolgreicher Löschung werden Sie zur Homepage weitergeleitet und können sich mit derselben E-Mail erneut anmelden.",
+    "shutdownDetail": "Dies sollte nur die aktuellen Benutzer-Team-Daten löschen, nicht andere Benutzer oder andere Teams.",
+    "shuttingDown": "- Ich schalte ab...",
+    "shutdownButton": "Abschalten",
+    "systemNote": "Das Benachrichtigungssystem sollte diese gespeicherten Einstellungen überprüfen, bevor jeder Benachrichtigungstyp erstellt oder angezeigt wird.",
+    "confirmTitle": "Team-Schließung bestätigen",
+    "confirmDescription": "Diese Aktion ist dauerhaft und kann nicht rückgängig gemacht werden.",
+    "aboutToDelete": "Sie sind dabei, dauerhaft zu löschen:",
+    "deleteTeam": "Ihr aktuelles Team",
+    "deleteGameData": "Ihre Teamfahrer, Ausrüstung und teambezogene Spieldaten",
+    "deleteAccount": "Ihr Authentifizierungskonto für diese E-Mail",
+    "afterDelete": "Nach erfolgreicher Löschung werden Sie angemeldet und zur Homepage weitergeleitet. Sie können sich dann erneut mit derselben E-Mail-Adresse wie ein brandneuer Benutzer registrieren.",
+    "typeDelete": "Typ DELETE zur Bestätigung",
+    "placeholder": "Typ DELETE hier",
+    "cancel": "Abbrechen",
+    "permanentButton": "Dauerhaft geschlossenes Team",
+    "exactDeleteError": "Sie müssen DELETE genau eingeben, um diese Aktion zu bestätigen.",
+    "missingSession": "Bitte melden Sie sich noch einmal an und versuchen Sie es erneut.",
+    "shutdownFailed": "Es ist nicht gelungen, das Team zu schließen.",
+    "shutdownUnexpected": "Es ist fehlgeschlagen, das Team wegen eines unerwarteten Fehlers zu schließen.",
+    "closeAria": "Bestätigung des Shutdown-Teams schließen"
+  }
+}

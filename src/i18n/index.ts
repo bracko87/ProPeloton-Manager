@@ -77,6 +77,44 @@ import srTraining from './locales/sr-Latn/training.json'
 import srTransfers from './locales/sr-Latn/transfers.json'
 import srTutorials from './locales/sr-Latn/tutorials.json'
 
+import deAccountPages from './locales/de/accountPages.json'
+import deAppShell from './locales/de/appShell.json'
+import deAuth from './locales/de/auth.json'
+import deCalendar from './locales/de/calendar.json'
+import deCalendarPage from './locales/de/calendarPage.json'
+import deClub from './locales/de/club.json'
+import deCommon from './locales/de/common.json'
+import deCreateClub from './locales/de/createClub.json'
+import deCustomizeTeam from './locales/de/customizeTeam.json'
+import deDevelopingTeam from './locales/de/developingTeam.json'
+import deEquipment from './locales/de/equipment.json'
+import deFinance from './locales/de/finance.json'
+import deHelp from './locales/de/help.json'
+import deManual from './locales/de/manual.json'
+import deHome from './locales/de/home.json'
+import deInfrastructure from './locales/de/infrastructure.json'
+import deNavigation from './locales/de/navigation.json'
+import deNotifications from './locales/de/notifications.json'
+import deOverview from './locales/de/overview.json'
+import dePreferences from './locales/de/preferences.json'
+import dePreferencesDynamic from './locales/de/preferencesDynamic.json'
+import deProPackages from './locales/de/proPackages.json'
+import deProfile from './locales/de/profile.json'
+import dePublicInfo from './locales/de/publicInfo.json'
+import deRaceDetail from './locales/de/raceDetail.json'
+import deRacePreparation from './locales/de/racePreparation.json'
+import deRiderProfile from './locales/de/riderProfile.json'
+import deScouting from './locales/de/scouting.json'
+import deSeasonReset from './locales/de/seasonReset.json'
+import deSharedRiderModal from './locales/de/sharedRiderModal.json'
+import deSquad from './locales/de/squad.json'
+import deStaff from './locales/de/staff.json'
+import deStatistics from './locales/de/statistics.json'
+import deTeamRanking from './locales/de/teamRanking.json'
+import deTraining from './locales/de/training.json'
+import deTransfers from './locales/de/transfers.json'
+import deTutorials from './locales/de/tutorials.json'
+
 import {
   DEFAULT_LANGUAGE,
   getLanguageDefinition,
@@ -165,6 +203,45 @@ const resources = {
     transfers: srTransfers,
     tutorials: srTutorials,
   },
+  de: {
+    accountPages: deAccountPages,
+    appShell: deAppShell,
+    auth: deAuth,
+    calendar: deCalendar,
+    calendarPage: deCalendarPage,
+    club: deClub,
+    common: deCommon,
+    createClub: deCreateClub,
+    customizeTeam: deCustomizeTeam,
+    developingTeam: deDevelopingTeam,
+    equipment: deEquipment,
+    finance: deFinance,
+    help: deHelp,
+    manual: deManual,
+    home: deHome,
+    infrastructure: deInfrastructure,
+    navigation: deNavigation,
+    notifications: deNotifications,
+    overview: deOverview,
+    preferences: dePreferences,
+    preferencesDynamic: dePreferencesDynamic,
+    proPackages: deProPackages,
+    profile: deProfile,
+    publicInfo: dePublicInfo,
+    raceDetail: deRaceDetail,
+    racePreparation: deRacePreparation,
+    riderProfile: deRiderProfile,
+    scouting: deScouting,
+    seasonReset: deSeasonReset,
+    sharedRiderModal: deSharedRiderModal,
+    squad: deSquad,
+    staff: deStaff,
+    statistics: deStatistics,
+    teamRanking: deTeamRanking,
+    training: deTraining,
+    transfers: deTransfers,
+    tutorials: deTutorials,
+  },
 } as const
 
 const initialLanguage = getStoredLanguage()
@@ -175,7 +252,7 @@ void i18n
     resources,
     lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,
-    supportedLngs: ['en', 'sr-Latn'],
+    supportedLngs: ['en', 'sr-Latn', 'de'],
     defaultNS: 'common',
     ns: [
       'accountPages',

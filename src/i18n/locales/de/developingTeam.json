@@ -1,0 +1,41 @@
+{
+  "page": {
+    "title": "Team",
+    "subtitle": "Verwalten Sie Ihre Developing Team Dienstplan und Bewegungsfenster.",
+    "loading": "Entwicklerteam wird geladen...",
+    "loadFailed": "Entwicklungsteam kann nicht geladen werden",
+    "riders": "Fahrer",
+    "currentCompetition": "Laufender Wettbewerb",
+    "loadingCompetition": "Wettbewerb wird geladen...",
+    "competitionUnavailable": "Wettbewerb nicht verfügbar",
+    "noRiders": "Für das Entwicklungsteam haben noch keine Fahrer gefunden."
+  },
+  "movement": {
+    "firstSquadUnavailable": "Erstes Squad ist nicht verfügbar.",
+    "windowClosed": "Bewegungsfenster ist geschlossen.",
+    "windowClosedNext": "Das Fenster der Bewegung ist geschlossen. {{window}}.",
+    "windowClosedNextNoPeriod": "Fenster der Bewegung geschlossen. {{window}}",
+    "windowOpen": "Bewegungsfenster jetzt geöffnet: {{window}}",
+    "currentWindow": "Aktuelles Fenster",
+    "unknown": "Unbekannt",
+    "firstSquadFull": "Die erste Squad ist voll ({{count}}/{{max}}).",
+    "moveToFirstSquad": "Zur ersten Mannschaft wechseln",
+    "movedToFirstSquad": "Der Fahrer zog in die erste Squad.",
+    "couldNotMove": "Der Fahrer konnte nicht zum ersten Squad fahren.",
+    "actionRequiredNow": "Jetzt erforderliche Maßnahmen",
+    "mustMoveNextWindow": "Muss nächstes Fenster verschieben"
+  },
+  "healthReport": {
+    "subtitle": "Aktuelle verletzt, krank und erholende Teamfahrer",
+    "lockedTitle": "Entwicklung des Gesundheitsberichts des Teams",
+    "lockedDescription": "Siehe squad-weite Verletzung, Krankheit und Erholung Informationen für Ihre Entwicklungsfahrer in einem konsolidierten Bericht."
+  },
+  "season": {
+    "resultsLockedTitle": "Teamergebnisse in dieser Saison entwickeln",
+    "resultsLockedDescription": "Sehen Sie sich monatliche Entwicklungs-Team-Performance-Trends in der aktuellen Saison an.",
+    "podiumsLockedTitle": "Team-Podiums & Platzierungen entwickeln",
+    "podiumsLockedDescription": "Analyse Siege, Podiumsplätze und Endpositionsverteilung für Ihre Entwicklungsmannschaft.",
+    "raceTypeLockedTitle": "Entwicklung Team Race Typ Snapshot",
+    "raceTypeLockedDescription": "Vergleichen Sie die Entwicklungs-Team-Ergebnisse über Klassiker, Bergtage, Etappen- und Zeitversuche."
+  }
+}

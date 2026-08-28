@@ -1,0 +1,13 @@
+{
+  "preferences": {
+    "title": "Einstellungen",
+    "languageSectionTitle": "Sprache",
+    "languageSectionDescription": "Wählen Sie die Sprache, die Sie verwenden ProPeloton Manager."
+  },
+  "dropdown": {
+    "guest": "Gast",
+    "club": "Verein",
+    "menu": "Profilmenü",
+    "signedInAs": "Unterzeichnet als"
+  }
+}

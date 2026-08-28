@@ -1,0 +1,97 @@
+{
+  "sections": {
+    "applicationBlocked": {
+      "title": "FAQ: Warum kann ich mich für ein Rennen bewerben?",
+      "subtitle": "Gemeinsame Anwendung Blocker.",
+      "overview": "Eine Bewerbung kann durch den Rennstatus, Fristen, Kapazität oder Berechtigung blockiert werden.",
+      "details": [
+        "Die Bewerbungen sind möglicherweise noch nicht offen.",
+        "Die Bewerbungen können bereits geschlossen werden.",
+        "Das Rennen kann aktiv, beendet oder abgebrochen werden.",
+        "Das Rennen könnte voll sein.",
+        "Ihr Team darf nicht mit den Einreiseanforderungen übereinstimmen.",
+        "Sie haben vielleicht schon eine Bewerbung/entry."
+      ],
+      "tips": [
+        "Öffnen Sie Race Detail und überprüfen Sie die Regeln für den Eintrag."
+      ]
+    },
+    "acceptedNotReady": {
+      "title": "FAQ: Warum bin ich akzeptiert, aber nicht bereit?",
+      "subtitle": "Der akzeptierte Eintritt ist kein vollständiger Race Plan.",
+      "overview": "Akzeptiert bedeutet, dass Ihr Team einen Platz hat; bereit bedeutet, dass Fahrer, Personal, Vermögenswerte, Ausrüstung, Vorräte und Bühnenpläne nutzbar sind.",
+      "details": [
+        "Race Plan Es muss noch eingereicht werden.",
+        "Stage Plans Vielleicht fehlt es noch.",
+        "Vorräte können fehlen.",
+        "Leichtfertigkeit kann Probleme zeigen.",
+        "Fristen können Änderungen sperren, wenn verpasst."
+      ],
+      "tips": [
+        "Offenes Rennen Vorbereitung nach jedem akzeptierten Rennen."
+      ]
+    },
+    "riderUnderperformed": {
+      "title": "FAQ: Warum hat mein Fahrer unterbesetzt?",
+      "subtitle": "Leistung hat viele Ursachen.",
+      "overview": "Ein starker Fahrer kann schlecht auftreten, wenn die Rolle, die Etappe, der Zustand, die Taktik oder die Unterstützung falsch waren.",
+      "details": [
+        "Prüfen Sie, ob die Fähigkeiten des Fahrers dem Gelände entsprechen.",
+        "Prüfen Sie Müdigkeit und Verfügbarkeit.",
+        "Prüfen Sie Moral und Rasse Schärfe.",
+        "Prüfen Sie die Rolle und Taktik der Etappe.",
+        "Überprüfen Sie die Ausrüstung und das Zubehör.",
+        "Prüfen Sie Wetter und Zwischenfälle.",
+        "Kontrollpersonal/assets Unterstützung."
+      ],
+      "tips": [
+        "Verwenden Sie Wiederholung und Kommentar zu lernen."
+      ]
+    },
+    "money": {
+      "title": "FAQ: Wo ist mein Geld hin?",
+      "subtitle": "Wie man Gleichgewichtsänderungen untersucht.",
+      "overview": "Finanztransaktionen sind die Quelle für Bilanzbewegungen.",
+      "details": [
+        "Offene Finanzen → Transaktionen.",
+        "Überprüfung der Gehälter, Steuern, Sponsorenzahlungen, Transfers, Ausrüstung, Infrastruktur, Lager und Richtlinien.",
+        "Offene Steuer für monatliche Prüfung.",
+        "Offene Teamrichtlinien für wiederkehrende Kosten.",
+        "Denken Sie daran, dass Kredite Schulden sind, nicht Einkommen."
+      ],
+      "tips": [
+        "Transaktionen sind die erste Seite für Finanzfragen."
+      ]
+    },
+    "equipment": {
+      "title": "FAQ: Warum ist mein Equipment Bonus klein?",
+      "subtitle": "Bonus-Caps und Trade-Offs.",
+      "overview": "Die Ausrüstung wird gewichtet und gedeckelt, so dass sie unterstützt, aber nicht ersetzt Fahrerqualität.",
+      "details": [
+        "Die Prämien werden nach Kategorien gewichtet.",
+        "Der Bühnenbonus ist gedeckelt.",
+        "Team/non-rider Unterstützung ist begrenzt.",
+        "Die Ermüdungsreduktion ist begrenzt.",
+        "Spezialgeräte können negative Kompromisse haben."
+      ],
+      "tips": [
+        "Nutzen Sie die richtige Einstellung für die richtige Etappe."
+      ]
+    },
+    "staffHiring": {
+      "title": "FAQ: Warum kann ich Personal einstellen?",
+      "subtitle": "Gemeinsame Einstellung Blocker.",
+      "overview": "Die Einstellung von Personal hängt von der Kapazität, der Verfügbarkeit und dem Geld ab.",
+      "details": [
+        "Überprüfen Sie offene Slots für die Rolle.",
+        "Infrastruktur verbessern, wenn die Kapazität voll ist.",
+        "Prüfen Sie die Verfügbarkeit der Kandidaten.",
+        "Überprüfen Sie wöchentliches Gehalt und Gleichgewicht.",
+        "Prüfen Sie, ob die Rolle durch Einrichtungen freigestellt wird."
+      ],
+      "tips": [
+        "Kapazitätsprobleme weisen in der Regel auf Infrastruktur hin."
+      ]
+    }
+  }
+}
