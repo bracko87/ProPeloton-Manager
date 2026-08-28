@@ -106,6 +106,7 @@ export default function MyProfilePage(): JSX.Element {
   const [savingProfile, setSavingProfile] = useState(false)
   const [sendingPasswordReset, setSendingPasswordReset] = useState(false)
   const [savingLanguage, setSavingLanguage] = useState(false)
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
 
   const [profile, setProfile] = useState<ProfileRow | null>(null)
 
@@ -125,6 +126,9 @@ export default function MyProfilePage(): JSX.Element {
   const currentLanguage: SupportedLanguage = isSupportedLanguage(locale)
     ? locale
     : getApplicationLanguage()
+  const activeLanguageDefinition =
+    SUPPORTED_LANGUAGES.find(language => language.code === currentLanguage) ??
+    SUPPORTED_LANGUAGES[0]
 
   const birthdayLabel = useMemo(
     () => formatBirthday(profile, locale, t('profile.notSet')),
@@ -521,35 +525,86 @@ export default function MyProfilePage(): JSX.Element {
             {t('profile.languageDescription')}
           </p>
 
-          <div className="mt-4 flex flex-wrap gap-3">
-            {SUPPORTED_LANGUAGES.map(language => {
-              const active = currentLanguage === language.code
+          <div
+            className="relative mt-4 w-full max-w-sm"
+            onBlur={event => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                setLanguageMenuOpen(false)
+              }
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setLanguageMenuOpen(open => !open)}
+              disabled={savingLanguage}
+              aria-haspopup="listbox"
+              aria-expanded={languageMenuOpen}
+              className="flex w-full items-center gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-left text-sm shadow-sm transition hover:border-yellow-400 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-200 disabled:cursor-wait disabled:opacity-70"
+            >
+              <img
+                src={`/flags/${activeLanguageDefinition.countryCode.toLowerCase()}.svg`}
+                alt=""
+                className="h-[18px] w-6 shrink-0 rounded-[2px] border border-gray-200 object-cover"
+                aria-hidden="true"
+              />
+              <span className="font-semibold text-gray-900">
+                {activeLanguageDefinition.label}
+              </span>
+              <span className="ml-auto rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                {t('profile.languageActive')}
+              </span>
+              <span
+                aria-hidden="true"
+                className={`text-gray-500 transition-transform ${languageMenuOpen ? 'rotate-180' : ''}`}
+              >
+                ▾
+              </span>
+            </button>
 
-              return (
-                <button
-                  key={language.code}
-                  type="button"
-                  onClick={() => void handleLanguageChange(language.code)}
-                  disabled={savingLanguage || active}
-                  aria-pressed={active}
-                  className={[
-                    'inline-flex min-w-[150px] items-center gap-2 rounded-lg border px-4 py-3 text-sm font-semibold transition',
-                    active
-                      ? 'border-yellow-400 bg-yellow-50 text-gray-950 ring-1 ring-yellow-300'
-                      : 'border-gray-300 bg-white text-gray-800 hover:border-yellow-300 hover:bg-yellow-50',
-                    savingLanguage ? 'cursor-wait opacity-70' : '',
-                  ].join(' ')}
-                >
-                  <span className="text-xl" aria-hidden="true">{language.flag}</span>
-                  <span>{language.label}</span>
-                  {active ? (
-                    <span className="ml-auto text-xs font-medium text-green-700">
-                      {t('profile.languageActive')}
-                    </span>
-                  ) : null}
-                </button>
-              )
-            })}
+            {languageMenuOpen ? (
+              <div
+                role="listbox"
+                aria-label={t('profile.languageSelect')}
+                className="absolute z-20 mt-2 w-full overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+              >
+                {SUPPORTED_LANGUAGES.map(language => {
+                  const active = currentLanguage === language.code
+
+                  return (
+                    <button
+                      key={language.code}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      disabled={savingLanguage}
+                      onClick={() => {
+                        setLanguageMenuOpen(false)
+                        if (!active) void handleLanguageChange(language.code)
+                      }}
+                      className={[
+                        'flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition',
+                        active
+                          ? 'bg-yellow-50 text-gray-950'
+                          : 'text-gray-800 hover:bg-gray-50',
+                      ].join(' ')}
+                    >
+                      <img
+                        src={`/flags/${language.countryCode.toLowerCase()}.svg`}
+                        alt=""
+                        className="h-[18px] w-6 shrink-0 rounded-[2px] border border-gray-200 object-cover"
+                        aria-hidden="true"
+                      />
+                      <span className="font-medium">{language.label}</span>
+                      {active ? (
+                        <span className="ml-auto text-xs font-medium text-green-700">
+                          {t('profile.languageActive')}
+                        </span>
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-3 text-xs text-gray-500">

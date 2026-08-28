@@ -79,7 +79,8 @@
     "languageSaving": "Saving language...",
     "languageAccountHelp": "This preference is saved to your account and will be used on your other devices and future sign-ins.",
     "languageSaved": "Game language changed to {{language}}.",
-    "languageSaveFailed": "The game language could not be saved. Please try again."
+    "languageSaveFailed": "The game language could not be saved. Please try again.",
+    "languageSelect": "Choose language"
   },
   "invite": {
     "title": "Invite Friends",

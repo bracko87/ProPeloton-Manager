@@ -79,7 +79,8 @@
     "languageSaving": "Čuvanje jezika...",
     "languageAccountHelp": "Ovo podešavanje se čuva na vašem nalogu i koristiće se na drugim uređajima i pri budućim prijavama.",
     "languageSaved": "Jezik igre je promenjen na {{language}}.",
-    "languageSaveFailed": "Jezik igre nije mogao da se sačuva. Pokušajte ponovo."
+    "languageSaveFailed": "Jezik igre nije mogao da se sačuva. Pokušajte ponovo.",
+    "languageSelect": "Izaberite jezik"
   },
   "invite": {
     "title": "Pozovi prijatelje",

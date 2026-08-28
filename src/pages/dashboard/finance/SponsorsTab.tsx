@@ -209,7 +209,7 @@ function formatMoney(n: number, currency: 'USD' | 'EUR' = 'USD'): string {
 }
 
 function formatCashAmount(value: number | null | undefined): string {
-  return `${new Intl.NumberFormat('en-US').format(value ?? 0)} cash`
+  return formatMoney(value ?? 0)
 }
 
 function sponsorObjectiveBadgeClass(variant: string): string {
@@ -397,7 +397,35 @@ function getMetadataStringArray(
 function getSponsorDescription(
   metadata: Record<string, unknown> | null | undefined
 ): string | null {
-  return getMetadataValue(metadata, 'description')
+  const description = getMetadataValue(metadata, 'description')
+  if (!description) return null
+
+  // Newer sponsor economics store TOTAL VALUE as a backend metadata headline.
+  // Render it as a localized UI field instead of leaking backend English copy.
+  if (/^\s*TOTAL VALUE\s*:/i.test(description)) return null
+
+  return description
+}
+
+function getSponsorTotalValue(
+  metadata: Record<string, unknown> | null | undefined
+): number | null {
+  const candidates = [
+    metadata?.contract_total_value,
+    metadata?.full_season_contract_total_value,
+  ]
+
+  for (const value of candidates) {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  }
+
+  const description = getMetadataValue(metadata, 'description')
+  const match = description?.match(/TOTAL VALUE\s*:\s*\$?([0-9,]+)/i)
+  if (!match) return null
+
+  const parsed = Number(match[1].replace(/,/g, ''))
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null
 }
 
 function getSponsorPreviewGoals(
@@ -413,7 +441,8 @@ type MainSponsorObjectiveExplanation = {
 }
 
 function getMainSponsorPreviewObjectives(
-  metadata: Record<string, unknown> | null | undefined
+  metadata: Record<string, unknown> | null | undefined,
+  t: FinanceT
 ): MainSponsorObjectiveExplanation[] {
   const raw = metadata?.preview_objectives
   if (!Array.isArray(raw)) return []
@@ -423,9 +452,11 @@ function getMainSponsorPreviewObjectives(
       if (!item || typeof item !== 'object') return null
 
       const record = item as Record<string, unknown>
-      const title = typeof record.title === 'string' ? record.title.trim() : ''
-      const description = typeof record.description === 'string' ? record.description.trim() : ''
-      const rewardAmount = toNumber(record.estimated_reward_amount)
+      const objectiveCode = String(
+        record.objective_code ?? record.required_result ?? ''
+      ).trim()
+      const raceName = String(record.target_race_name ?? '').trim()
+      const rewardAmount = toNumber(record.estimated_reward_amount ?? record.reward_amount)
       const rewardLabel =
         typeof record.reward_label === 'string' && record.reward_label.trim().length > 0
           ? record.reward_label.trim()
@@ -433,71 +464,108 @@ function getMainSponsorPreviewObjectives(
             ? formatCashAmount(rewardAmount)
             : undefined
 
-      if (!title && !description) return null
+      const titleKeyByCode: Record<string, string> = {
+        race_start: 'sponsors.previewRaceStartTitle',
+        classification_visibility: 'sponsors.previewClassificationTitle',
+        stage_top_5: 'sponsors.previewStageTop5Title',
+        stage_win: 'sponsors.previewStageWinTitle',
+        race_podium: 'sponsors.previewRacePodiumTitle',
+        race_win: 'sponsors.previewRaceWinTitle',
+        race_top_5: 'sponsors.previewRaceTop5Title',
+        race_top_10: 'sponsors.previewRaceTop10Title',
+        gc_top_5: 'sponsors.previewGcTop5Title',
+        gc_top_10: 'sponsors.previewGcTop10Title',
+      }
+
+      const descriptionKeyByCode: Record<string, string> = {
+        race_start: 'sponsors.previewRaceStartDescription',
+        classification_visibility: 'sponsors.previewClassificationDescription',
+        stage_top_5: 'sponsors.previewStageTop5Description',
+        stage_win: 'sponsors.previewStageWinDescription',
+        race_podium: 'sponsors.previewRacePodiumDescription',
+        race_win: 'sponsors.previewRaceWinDescription',
+        race_top_5: 'sponsors.previewRaceTop5Description',
+        race_top_10: 'sponsors.previewRaceTop10Description',
+        gc_top_5: 'sponsors.previewGcTop5Description',
+        gc_top_10: 'sponsors.previewGcTop10Description',
+      }
+
+      const titleKey = titleKeyByCode[objectiveCode]
+      const descriptionKey = descriptionKeyByCode[objectiveCode]
+
+      const title = titleKey
+        ? t(titleKey, { race: raceName || t('sponsors.objective') })
+        : t('sponsors.previewGenericTitle', {
+            race: raceName || t('sponsors.objective'),
+          })
+
+      const description = descriptionKey
+        ? t(descriptionKey, { race: raceName || t('sponsors.objective') })
+        : t('sponsors.previewGenericDescription', {
+            race: raceName || t('sponsors.objective'),
+          })
 
       return {
-        title: title || 'Sponsor objective',
-        description: description || 'This objective is checked after the relevant race result is finalized.',
+        title,
+        description,
         rewardLabel,
       }
     })
     .filter((item): item is MainSponsorObjectiveExplanation => item !== null)
 }
 
-function explainMainSponsorObjective(goal: string): MainSponsorObjectiveExplanation {
+function explainMainSponsorObjective(
+  goal: string,
+  t: FinanceT
+): MainSponsorObjectiveExplanation {
   const normalizedGoal = goal.toLowerCase()
 
   if (normalizedGoal.includes('start')) {
     return {
-      title: 'Sponsor-market race starts',
-      description:
-        'The sponsor wants visible participation in races connected to its country, region, or global market. This is normally checked through accepted race entries and completed starts.',
+      title: t('sponsors.previewMarketStartsTitle'),
+      description: t('sponsors.previewMarketStartsDescription'),
     }
   }
 
   if (normalizedGoal.includes('podium') || normalizedGoal.includes('win')) {
     return {
-      title: 'High-profile result target',
-      description:
-        'The sponsor expects a headline result such as a win, podium, or strong GC finish in a race connected to its market or prestige calendar.',
+      title: t('sponsors.previewHighProfileTitle'),
+      description: t('sponsors.previewHighProfileDescription'),
     }
   }
 
   if (normalizedGoal.includes('top-5') || normalizedGoal.includes('top 5')) {
     return {
-      title: 'Multiple top-5 results',
-      description:
-        'The sponsor wants repeatable sporting visibility, usually several top-5 stage or race results instead of one single lucky result.',
+      title: t('sponsors.previewMultipleTop5Title'),
+      description: t('sponsors.previewMultipleTop5Description'),
     }
   }
 
   if (normalizedGoal.includes('top 10') || normalizedGoal.includes('top-10')) {
     return {
-      title: 'Top-10 performance target',
-      description:
-        'The sponsor expects a reliable competitive result, normally a top-10 placing in a race, stage, or general classification tied to its market.',
+      title: t('sponsors.previewTop10Title'),
+      description: t('sponsors.previewTop10Description'),
     }
   }
 
   if (normalizedGoal.includes('visibility')) {
     return {
-      title: 'Market visibility objective',
-      description:
-        'The sponsor wants exposure in its home market through participation, branding, and realistic competitive presence during the season.',
+      title: t('sponsors.previewVisibilityTitle'),
+      description: t('sponsors.previewVisibilityDescription'),
     }
   }
 
   return {
-    title: goal,
-    description:
-      'This bonus objective is checked against your race participation or final results after the relevant race has been completed.',
+    title: t('sponsors.previewGenericFocusTitle'),
+    description: t('sponsors.previewGenericFocusDescription'),
   }
 }
 
 function getMainSponsorObjectiveExplanations(
-  metadata: Record<string, unknown> | null | undefined
+  metadata: Record<string, unknown> | null | undefined,
+  t: FinanceT
 ): MainSponsorObjectiveExplanation[] {
-  const structuredObjectives = getMainSponsorPreviewObjectives(metadata)
+  const structuredObjectives = getMainSponsorPreviewObjectives(metadata, t)
   if (structuredObjectives.length > 0) return structuredObjectives
 
   const goals = getSponsorPreviewGoals(metadata)
@@ -505,24 +573,21 @@ function getMainSponsorObjectiveExplanations(
   if (goals.length === 0) {
     return [
       {
-        title: 'Season visibility',
-        description:
-          'The sponsor expects your team to appear in races that matter for its market and brand exposure.',
+        title: t('sponsors.previewSeasonVisibilityTitle'),
+        description: t('sponsors.previewSeasonVisibilityDescription'),
       },
       {
-        title: 'Sporting results',
-        description:
-          'Bonus money is tied to race results such as wins, podiums, top-5 finishes, top-10 finishes, or GC targets.',
+        title: t('sponsors.previewSportingResultsTitle'),
+        description: t('sponsors.previewSportingResultsDescription'),
       },
       {
-        title: 'Checked after races',
-        description:
-          'Objectives are evaluated only after the target race or stage result is finalized, then bonuses are paid through the finance ledger.',
+        title: t('sponsors.previewCheckedAfterRacesTitle'),
+        description: t('sponsors.previewCheckedAfterRacesDescription'),
       },
     ]
   }
 
-  return goals.map(explainMainSponsorObjective)
+  return goals.map(goal => explainMainSponsorObjective(goal, t))
 }
 
 function countryCodeToEmoji(countryCode: string | null | undefined): string {
@@ -931,7 +996,7 @@ function OfferModal({
               onClick={onClose}
               className="px-3 py-2 rounded-md bg-white border text-sm hover:bg-gray-50"
             >
-              Close
+              {t('common.close')}
             </button>
           </div>
 
@@ -952,7 +1017,8 @@ function OfferModal({
                       : null
 
                   const description = getSponsorDescription(offer.metadata)
-                  const objectiveExplanations = getMainSponsorObjectiveExplanations(offer.metadata)
+                  const totalValue = getSponsorTotalValue(offer.metadata)
+                  const objectiveExplanations = getMainSponsorObjectiveExplanations(offer.metadata, t)
                   const resolvedLogoUrl = getSponsorLogoUrl(
                     offer.sponsor_kind,
                     offer.logo_url,
@@ -1023,6 +1089,17 @@ function OfferModal({
                                 {description}
                               </div>
                             )}
+
+                            {offer.sponsor_kind === 'main' && totalValue !== null ? (
+                              <div className="mt-3 inline-flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 shadow-sm">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                                  {t('sponsors.totalValue')}
+                                </span>
+                                <span className="text-sm font-bold text-blue-950">
+                                  {formatMoney(totalValue, currency)}
+                                </span>
+                              </div>
+                            ) : null}
 
                             <div className="flex flex-wrap gap-2 mt-3">
                               <StatusPill label={`${t('common.season')} ${offer.season_number}`} tone="blue" />
