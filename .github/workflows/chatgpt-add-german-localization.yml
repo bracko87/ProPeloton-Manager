@@ -17,7 +17,7 @@ permissions:
 jobs:
   localize-german:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 150
 
     steps:
       - name: Checkout main
@@ -94,10 +94,6 @@ jobs:
           print(f'Coverage OK: {len(en_files)} English files == {len(de_files)} German files')
           PY
 
-      - name: Inspect language preference storage constraints
-        run: |
-          grep -Rni --exclude-dir=node_modules "preferred_language" supabase src 2>/dev/null || true
-
       - name: Install app dependencies
         run: npm ci
 
@@ -118,5 +114,6 @@ jobs:
             echo 'No German localization changes to commit.'
             exit 0
           fi
-          git commit -m 'Improve remaining German localization'
+          git commit -m 'Improve remaining German localization with NLLB'
+          git pull --rebase origin main
           git push origin main
