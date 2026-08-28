@@ -1,0 +1,69 @@
+name: Polish German Race Detail
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/scripts/polish_de_race_detail_20260828.py'
+      - '.github/workflows/chatgpt-polish-german-race-detail.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  polish-race-detail:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply German Race Detail translations
+        run: python .github/scripts/polish_de_race_detail_20260828.py
+
+      - name: Verify structure and placeholders
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          en=json.loads(Path('src/i18n/locales/en/raceDetail.json').read_text(encoding='utf-8'))
+          de=json.loads(Path('src/i18n/locales/de/raceDetail.json').read_text(encoding='utf-8'))
+          def check(a,b,path='raceDetail'):
+              assert type(a) is type(b), f'{path}: type mismatch'
+              if isinstance(a,dict):
+                  assert list(a)==list(b), f'{path}: keys changed'
+                  for k in a: check(a[k],b[k],f'{path}.{k}')
+              elif isinstance(a,list):
+                  assert len(a)==len(b), f'{path}: list length changed'
+                  for i,(x,y) in enumerate(zip(a,b)): check(x,y,f'{path}[{i}]')
+              elif isinstance(a,str):
+                  assert sorted(re.findall(r'\{\{[^{}]+\}\}',a))==sorted(re.findall(r'\{\{[^{}]+\}\}',b)), f'{path}: placeholders changed'
+          check(en,de)
+          joined=Path('src/i18n/locales/de/raceDetail.json').read_text(encoding='utf-8')
+          for bad in ('Jahreszeit','Schulungslager','Pfadfinder','Rasse-Format','Alle Rassen',' Stufe ',' Stufen','................................................................'):
+              assert bad not in joined, f'Bad German term remains: {bad}'
+          print('German Race Detail structure and terminology OK')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit Race Detail checkpoint
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/de/raceDetail.json
+          if git diff --cached --quiet; then
+            echo 'No Race Detail localization changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Polish German Race Detail localization'
+          git push origin main
