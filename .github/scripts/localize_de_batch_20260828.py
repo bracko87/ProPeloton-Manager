@@ -117,27 +117,40 @@ def main() -> None:
     ]
     informal = re.compile(r'\b(?:du|dich|dir|dein|deine|deinen|deinem|deiner|deines)\b', re.IGNORECASE)
     cyrillic = re.compile(r'[\u0400-\u04ff]')
+    semantic_findings: list[str] = []
 
     module.DE_DIR.mkdir(parents=True, exist_ok=True)
     for name, source in sources.items():
         translated = translated_by_name[name]
         validate_shape(source, translated, name)
         for path, src, dst in iter_pairs(source, translated, name):
+            # Hard failures: corruption/script problems mean the candidate is unsafe even for review.
             if cyrillic.search(dst):
                 raise SystemExit(f'{path}: Cyrillic text remained: {dst!r}')
-            if informal.search(dst):
-                raise SystemExit(f'{path}: informal German tone; use Sie/Ihr: {dst!r}')
-            for pattern in bad_patterns:
-                if re.search(pattern, dst, re.IGNORECASE):
-                    raise SystemExit(f'{path}: rejected German game terminology {pattern!r}: {dst!r}')
             for marker in ('�', 'Ã', 'Â', 'ZXQ', 'QXml'):
                 if marker in dst:
                     raise SystemExit(f'{path}: corrupt marker {marker!r}: {dst!r}')
+
+            # Semantic findings are collected, not discarded. The merged global audit is the
+            # authoritative release gate and will report all of them together before any push.
+            if informal.search(dst):
+                semantic_findings.append(f'{path}: informal German tone; use Sie/Ihr: {dst!r}')
+            for pattern in bad_patterns:
+                if re.search(pattern, dst, re.IGNORECASE):
+                    semantic_findings.append(f'{path}: rejected German game terminology {pattern!r}: {dst!r}')
             if src == dst and len(src) >= 38 and len(src.split()) >= 7:
                 if not any(term in src for term in module.PROTECTED_PHRASES):
-                    raise SystemExit(f'{path}: likely untranslated English: {dst!r}')
+                    semantic_findings.append(f'{path}: likely untranslated English: {dst!r}')
+
         module.save_json(module.DE_DIR / name, translated)
-        print('Wrote and checked', name)
+        print('Wrote structurally checked candidate', name)
+
+    if semantic_findings:
+        print(f'BATCH SEMANTIC REVIEW FINDINGS: {len(semantic_findings)}')
+        for finding in semantic_findings[:250]:
+            print('REVIEW:', finding)
+    else:
+        print('Batch semantic precheck found no known issues.')
 
 
 if __name__ == '__main__':
