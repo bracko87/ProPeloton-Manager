@@ -39,7 +39,16 @@ jobs:
         env:
           HF_HUB_DISABLE_XET: '1'
           TOKENIZERS_PARALLELISM: 'false'
-        run: python .github/scripts/localize_full_manual_sr_latn_20260828.py
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/localize_full_manual_sr_latn_20260828.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('BATCH_SIZE = 12', 'BATCH_SIZE = 24', 1)
+          text = text.replace('num_beams=3', 'num_beams=1', 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+          python .github/scripts/localize_full_manual_sr_latn_20260828.py
 
       - name: Verify manual structure and quality
         run: |
