@@ -49,6 +49,8 @@ jobs:
               ('                forced_bos_token_id=self.forced_bos_token_id,\n', ''),
               ('num_beams=3', 'num_beams=1'),
               ("        encoded = self.tokenizer(\n            values,\n", "        encoded = self.tokenizer(\n            [f'>>srp_Cyrl<< {value}' for value in values],\n"),
+              ('                candidate = self.memory[source]\n', '                candidate = postprocess(self.memory[source])\n'),
+              ("    for bad_word in ('jahač', 'rasni svet', 'zxq', 'zik'):\n", "    for bad_word in ('jahač', 'rasni svet', 'zxq'):\n"),
           ]
           for old, new in replacements:
               if old not in text:
@@ -62,6 +64,7 @@ jobs:
               "        'Inbox': 'Sanduče',",
               "        'Footer': 'Podnožje',",
               "        'Referral URL': 'URL preporuke',",
+              "        'Display names': 'Nazivi za prikaz',",
               "        'Forum': 'Forum',",
               '    })',
               '',
@@ -75,7 +78,8 @@ jobs:
               '    allowed_technical = (',
               "        'JPG, PNG, WEBP', 'create-coin-checkout Edge Function',",
               "        'WorldTeam, ProTeam, Continental, Amateur', 'ProTeam West, ProTeam East',",
-              "        'Forum', 'coin_packages', 'get_my_coin_status', 'create-coin-checkout',",
+              "        'Forum', 'Plan', '/#/referral/:code', '/dashboard/teams/:clubId',",
+              "        'coin_packages', 'get_my_coin_status', 'create-coin-checkout',",
               '        "user_coin_ledger reason=\'purchase\'", \'club-logos\', \'club_branding_lock_status_v1\',',
               '    )',
               '    english_fallbacks = [',
@@ -109,8 +113,10 @@ jobs:
           assert len(sr['sections']) == 92
           assert set(en['sections']) == set(sr['sections'])
           text = json.dumps(sr, ensure_ascii=False)
-          for marker in ['ZXQ','ZIK','QXml','�','Ã','Â','æ','è','ð','jahač','rasni svet']:
-              assert marker.lower() not in text.lower(), marker
+          lowered = text.lower()
+          for marker in ['ZXQ','QXml','�','Ã','Â','æ','è','ð','jahač','rasni svet']:
+              assert marker.lower() not in lowered, marker
+          assert not re.search(r'\bZIK\d*\b', text), 'ZIK placeholder remained'
           assert not re.search(r'[\u0400-\u04ff]', text), 'Cyrillic remained in sr-Latn manual'
           for term in ['Race Plan','Stage Plans','Startlist','Race Engine','Coins']:
               assert term in text, term
