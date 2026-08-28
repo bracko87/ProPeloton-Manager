@@ -41,5 +41,15 @@ if generic_modal_patch_anchor not in source:
     raise SystemExit('Could not augment GenericAssetGaragePanel acquire modal patch')
 source = source.replace(generic_modal_patch_anchor, generic_modal_patch, 1)
 
+# assetCopy is intentionally used by GenericAssetGaragePanel. The original
+# assertion searched the whole AssetsSection file and therefore reported a
+# false crash regression even though AssetAcquireModal had been fixed. Scope
+# the check to just the modal function.
+old_asset_assertion = "if 't(assetCopy.title)' in assets_source or 't(assetCopy.description)' in assets_source.split('function TeamCarGaragePanel', 1)[0]:\n    raise SystemExit('AssetAcquireModal still references out-of-scope assetCopy')"
+new_asset_assertion = "asset_modal_source = assets_source.split('function AssetAcquireModal', 1)[1].split('function TeamCarGaragePanel', 1)[0]\nif 'assetCopy.' in asset_modal_source:\n    raise SystemExit('AssetAcquireModal still references out-of-scope assetCopy')"
+if old_asset_assertion not in source:
+    raise SystemExit('Could not scope AssetAcquireModal assertion')
+source = source.replace(old_asset_assertion, new_asset_assertion, 1)
+
 compiled = compile(source, str(script_path), 'exec')
 exec(compiled, {'__name__': '__main__', '__file__': str(script_path)})
