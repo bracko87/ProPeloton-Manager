@@ -1,0 +1,27 @@
+name: Export English locales for German review
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/chatgpt-export-en-locales.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Archive English locale resources
+        uses: actions/upload-artifact@v4
+        with:
+          name: en-locale-review-source
+          path: src/i18n/locales/en/*.json
+          if-no-files-found: error
+          retention-days: 1
