@@ -10,6 +10,13 @@ replacements = [
         "    'Next': 'Nächste',\n"
         "    'Coins': 'Coins',\n"
         "    'Coins, Coin Packages and Referral Rewards': 'Coins, Coin-Pakete und Empfehlungsprämien',\n"
+        "    'Main club update failed.': 'Aktualisierung des Hauptclubs fehlgeschlagen.',\n"
+        "    'Needs attention': 'Aufmerksamkeit erforderlich',\n"
+        "    '🏁 Mountain finish': '🏁 Bergankunft',\n"
+        "    '{{age}} yrs': '{{age}} J.',\n"
+        "    'Could not load scout task.': 'Scout-Aufgabe konnte nicht geladen werden.',\n"
+        "    '{{count}} pts': '{{count}} Pkt.',\n"
+        "    'Using team defaults': 'Team-Standardwerte werden verwendet',\n"
         "    \"Today's races\": 'Heutige Rennen',\n"
         "    \"Today's races help users see what is happening now.\": "
         "'Die heutigen Rennen helfen den Nutzern zu sehen, was gerade passiert.',\n"
@@ -44,6 +51,14 @@ replacements = [
         "            if re.search(phrase_pattern, source) and not re.search(phrase_pattern, target):\n"
         "                problems.append(f'{path}: protected term lost: {phrase}')"
     ),
+    (
+        "    if problems:\n"
+        "        raise SystemExit('German localization validation failed:\\n' + '\\n'.join(problems[:100]))",
+        "    if length_warnings:\n"
+        "        problems.extend(f'German text-length review required: {item}' for item in length_warnings[:100])\n\n"
+        "    if problems:\n"
+        "        raise SystemExit('German localization validation failed:\\n' + '\\n'.join(problems[:100]))"
+    ),
 ]
 
 for old, new in replacements:
@@ -55,5 +70,3 @@ for old, new in replacements:
 
 path.write_text(text, encoding='utf-8')
 print('Prepared German translator quality fixes.')
-
-# German preview selector is intentionally available before the full de bundle lands.
