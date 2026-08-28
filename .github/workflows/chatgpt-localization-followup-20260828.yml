@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
 
+# Retry marker: literal-safe regex replacements enabled.
 jobs:
   apply:
     runs-on: ubuntu-latest
