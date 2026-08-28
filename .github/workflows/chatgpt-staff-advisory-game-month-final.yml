@@ -1,0 +1,71 @@
+name: Verify Staff Advisory game-month patch on current main
+
+on:
+  push:
+    branches:
+      - chatgpt/staff-advisory-game-month-final
+    paths:
+      - '.github/workflows/chatgpt-staff-advisory-game-month-final.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/staff-advisory-game-month-final
+          fetch-depth: 0
+
+      - name: Copy verified Staff Advisory files
+        shell: bash
+        run: |
+          git fetch origin chatgpt/staff-advisory-game-month
+          expected='a67fec0906a7c64ccc1e7401d25e78f222be74c0'
+          actual="$(git rev-parse origin/chatgpt/staff-advisory-game-month)"
+          test "$actual" = "$expected"
+
+          git show "$expected:src/pages/dashboard/Overview.tsx" > src/pages/dashboard/Overview.tsx
+          git show "$expected:src/i18n/locales/en/overview.json" > src/i18n/locales/en/overview.json
+          git show "$expected:src/i18n/locales/sr-Latn/overview.json" > src/i18n/locales/sr-Latn/overview.json
+
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected_changed="$(printf '%s\n' \
+            'src/i18n/locales/en/overview.json' \
+            'src/i18n/locales/sr-Latn/overview.json' \
+            'src/pages/dashboard/Overview.tsx' | sort)"
+          test "$changed" = "$expected_changed"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify Staff Advisory game-month cutover
+        shell: bash
+        run: |
+          grep -q 'staff_advisory_get_overview_v2' src/pages/dashboard/Overview.tsx
+          grep -q 'staff_advisory_quote_v2' src/pages/dashboard/Overview.tsx
+          grep -q 'staff_advisory_get_role_renewal_quote_v2' src/pages/dashboard/Overview.tsx
+          grep -q 'duration_game_months' src/pages/dashboard/Overview.tsx
+          grep -q 'remaining_game_seconds' src/pages/dashboard/Overview.tsx
+          grep -q 'proposed_remaining_paid_game_seconds' src/pages/dashboard/Overview.tsx
+          grep -q '"withTitle": "With Staff Advisory — 5 coins / 1 in-game month"' src/i18n/locales/en/overview.json
+          grep -q '"withTitle": "Sa Staff Advisory uslugom — 5 novčića / 1 mesec u igri"' src/i18n/locales/sr-Latn/overview.json
+          ! grep -q '30 real-life days' src/pages/dashboard/Overview.tsx
+          ! grep -q 'duration_real_days' src/pages/dashboard/Overview.tsx
+          git diff --check
+
+      - name: Commit clean final patch
+        shell: bash
+        run: |
+          git config user.name 'ChatGPT'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/chatgpt-staff-advisory-game-month-final.yml
+          git add src/pages/dashboard/Overview.tsx src/i18n/locales/en/overview.json src/i18n/locales/sr-Latn/overview.json
+          git commit -m 'Use in-game months for Staff Advisory access'
+          git push origin HEAD:chatgpt/staff-advisory-game-month-final
