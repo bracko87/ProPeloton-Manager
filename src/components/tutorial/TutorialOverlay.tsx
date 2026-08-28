@@ -18,6 +18,42 @@ type TutorialOverlayProps = {
   compact?: boolean
 }
 
+/**
+ * Build a lookup from the canonical English tutorial text to its i18n key.
+ *
+ * Tutorial step metadata is still defined in src/lib/tutorials.ts because that
+ * file also owns targets, step keys and progression data. Keeping that metadata
+ * untouched avoids changing tutorial flow/progress behavior. The overlay uses
+ * the English resource as the bridge from those canonical literals to the
+ * currently selected application language.
+ */
+function buildTutorialLiteralKeyMap(
+  value: unknown,
+  prefix = '',
+  map = new Map<string, string>(),
+): Map<string, string> {
+  if (typeof value === 'string') {
+    if (prefix && !map.has(value)) {
+      map.set(value, prefix)
+    }
+
+    return map
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return map
+  }
+
+  for (const [key, nestedValue] of Object.entries(
+    value as Record<string, unknown>,
+  )) {
+    const nestedPrefix = prefix ? `${prefix}.${key}` : key
+    buildTutorialLiteralKeyMap(nestedValue, nestedPrefix, map)
+  }
+
+  return map
+}
+
 export default function TutorialOverlay({
   open,
   title,
@@ -32,7 +68,33 @@ export default function TutorialOverlay({
   primaryDisabled = false,
   compact = false,
 }: TutorialOverlayProps): JSX.Element | null {
-  const { t } = useTranslation('tutorials')
+  const { t, i18n } = useTranslation('tutorials')
+
+  const englishLiteralKeys = React.useMemo(() => {
+    return buildTutorialLiteralKeyMap(
+      i18n.getResourceBundle('en', 'tutorials'),
+    )
+  }, [i18n])
+
+  const localizeTutorialLiteral = React.useCallback(
+    (value: string | undefined): string | undefined => {
+      if (!value) return value
+
+      const key = englishLiteralKeys.get(value)
+      if (!key) return value
+
+      const translated = t(key)
+      return typeof translated === 'string' ? translated : value
+    },
+    [englishLiteralKeys, t],
+  )
+
+  const localizedTitle = localizeTutorialLiteral(title) ?? title
+  const localizedBody = localizeTutorialLiteral(body) ?? body
+  const localizedPrimaryAction =
+    localizeTutorialLiteral(primaryAction) ?? primaryAction
+  const localizedSecondaryAction =
+    localizeTutorialLiteral(secondaryAction) ?? secondaryAction
 
   if (!open) return null
 
@@ -54,22 +116,22 @@ export default function TutorialOverlay({
 
             <span>
               <span className="block text-sm font-normal text-slate-900">
-                {title}
+                {localizedTitle}
               </span>
               <span className="mt-0.5 block max-w-[280px] text-xs leading-5 text-slate-500">
-                {body}
+                {localizedBody}
               </span>
             </span>
           </button>
 
           <div className="flex items-center justify-between gap-3 px-4 py-3">
-            {secondaryAction && onSecondary ? (
+            {localizedSecondaryAction && onSecondary ? (
               <button
                 type="button"
                 onClick={onSecondary}
                 className="text-xs font-normal text-slate-500 hover:text-black hover:underline"
               >
-                {secondaryAction}
+                {localizedSecondaryAction}
               </button>
             ) : (
               <span />
@@ -81,7 +143,7 @@ export default function TutorialOverlay({
               disabled={primaryDisabled}
               className="rounded-xl bg-yellow-400 px-4 py-2 text-xs font-normal text-black shadow-sm transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {primaryAction}
+              {localizedPrimaryAction}
             </button>
           </div>
         </div>
@@ -110,7 +172,7 @@ export default function TutorialOverlay({
               ) : null}
 
               <h3 className="text-xl font-normal leading-7 text-white">
-                {title}
+                {localizedTitle}
               </h3>
             </div>
 
@@ -133,24 +195,24 @@ export default function TutorialOverlay({
           }`}
         >
           <div className="whitespace-pre-line text-sm font-normal leading-7 text-slate-700">
-            {body}
+            {localizedBody}
           </div>
         </div>
 
         <div
           className={`shrink-0 border-t border-slate-100 bg-white px-6 py-4 ${
-            secondaryAction && onSecondary
+            localizedSecondaryAction && onSecondary
               ? 'flex items-center justify-between gap-3'
               : 'flex items-center justify-end'
           }`}
         >
-          {secondaryAction && onSecondary ? (
+          {localizedSecondaryAction && onSecondary ? (
             <button
               type="button"
               onClick={onSecondary}
               className="text-sm font-normal text-slate-500 hover:text-black hover:underline"
             >
-              {secondaryAction}
+              {localizedSecondaryAction}
             </button>
           ) : null}
 
@@ -160,7 +222,7 @@ export default function TutorialOverlay({
             disabled={primaryDisabled}
             className="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-normal text-black shadow-sm transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {primaryAction}
+            {localizedPrimaryAction}
           </button>
         </div>
       </aside>
