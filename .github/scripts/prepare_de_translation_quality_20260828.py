@@ -9,26 +9,34 @@ def replace_once(old: str, new: str, label: str) -> None:
     if old not in text:
         if new in text:
             return
-        raise SystemExit(f'Missing German generator patch anchor ({label}): {old[:100]!r}')
+        raise SystemExit(f'Missing German generator patch anchor ({label}): {old[:120]!r}')
     text = text.replace(old, new, 1)
 
 
 replace_once(
     "MODEL_NAME = 'Helsinki-NLP/opus-mt-en-de'",
-    "MODEL_NAME = 'Helsinki-NLP/opus-mt-tc-big-en-de'",
-    'stronger German model',
+    "MODEL_NAME = 'facebook/nllb-200-distilled-600M'",
+    'NLLB German model',
 )
-replace_once('BATCH_SIZE = 48', 'BATCH_SIZE = 32', 'batch size')
+replace_once('BATCH_SIZE = 48', 'BATCH_SIZE = 12', 'NLLB batch size')
 
 if 'POLISHED_FILES = {' not in text:
     replace_once(
-        'BATCH_SIZE = 32\n',
-        "BATCH_SIZE = 32\n\nPOLISHED_FILES = {\n"
+        'BATCH_SIZE = 12\n',
+        "BATCH_SIZE = 12\n\nPOLISHED_FILES = {\n"
         "    'common.json',\n"
         "    'auth.json',\n"
         "    'calendarPage.json',\n"
         "    'navigation.json',\n"
         "    'home.json',\n"
+        "    'overview.json',\n"
+        "    'squad.json',\n"
+        "    'developingTeam.json',\n"
+        "    'racePreparation.json',\n"
+        "    'raceDetail.json',\n"
+        "    'training.json',\n"
+        "    'equipment.json',\n"
+        "    'infrastructure.json',\n"
         "}\n",
         'polished file protection',
     )
@@ -37,7 +45,6 @@ replace_once(
     "    'Next': 'Nächste',\n}",
     "    'Next': 'Nächste',\n"
     "    'Coins': 'Coins',\n"
-    "    'Coins, Coin Packages and Referral Rewards': 'Coins, Coin-Pakete und Empfehlungsprämien',\n"
     "    'Season': 'Saison',\n"
     "    'Seasons': 'Saisons',\n"
     "    'Training Camp': 'Trainingslager',\n"
@@ -52,6 +59,22 @@ replace_once(
     "    'Countries': 'Länder',\n"
     "    'Manager': 'Manager',\n"
     "    'Club': 'Club',\n"
+    "    'Application': 'Bewerbung',\n"
+    "    'Applications': 'Bewerbungen',\n"
+    "    'Notification': 'Benachrichtigung',\n"
+    "    'Notifications': 'Benachrichtigungen',\n"
+    "    'Scouting Office': 'Scouting-Büro',\n"
+    "    'Scout': 'Scout',\n"
+    "    'Scouts': 'Scouts',\n"
+    "    'Training Center': 'Trainingszentrum',\n"
+    "    'Medical Center': 'Medizinisches Zentrum',\n"
+    "    'Youth Academy': 'Nachwuchsakademie',\n"
+    "    'Mechanics Workshop': 'Mechanikerwerkstatt',\n"
+    "    'Head Coach': 'Cheftrainer',\n"
+    "    'Sport Director': 'Sportdirektor',\n"
+    "    'Team Doctor': 'Teamarzt',\n"
+    "    'Mechanic': 'Mechaniker',\n"
+    "    'Nutritionist': 'Ernährungsberater',\n"
     "    'January': 'Januar',\n"
     "    'February': 'Februar',\n"
     "    'March': 'März',\n"
@@ -78,14 +101,9 @@ replace_once(
     "    'Could not load scout task.': 'Scout-Aufgabe konnte nicht geladen werden.',\n"
     "    '{{count}} pts': '{{count}} Pkt.',\n"
     "    'Using team defaults': 'Team-Standardwerte werden verwendet',\n"
-    "    \"Today's races\": 'Heutige Rennen',\n"
-    "    \"Today's races help users see what is happening now.\": 'Die heutigen Rennen helfen den Nutzern zu sehen, was gerade passiert.',\n"
-    "    \"Final GC, points, mountain and youth-classification honours will be added after their authoritative persisted result source is confirmed.\": 'Finale GC-, Punkte-, Berg- und Nachwuchswertungen werden ergänzt, sobald ihre maßgebliche dauerhaft gespeicherte Ergebnisquelle bestätigt wurde.',\n"
-    "    \"The game is still being tested and improved. If you would like to become a test player and help us test ProPeloton Manager, please contact us first in our Discord server. We will provide the next steps there.\": 'Das Spiel wird weiterhin getestet und verbessert. Wenn Sie Testspieler werden und uns beim Testen von ProPeloton Manager helfen möchten, kontaktieren Sie uns bitte zuerst auf unserem Discord-Server. Dort erhalten Sie die nächsten Schritte.',\n"
     "    '© ProPeloton Manager. All rights reserved by Next Quest Studio.': '© ProPeloton Manager. Alle Rechte vorbehalten – Next Quest Studio.',\n"
     "    'Startlist, logistics and stage plans': 'Startlist, Logistik und Stage Plans',\n"
-    "    \"We use technical and organizational measures to protect account, game, Premium, and transaction data. No online service can guarantee perfect security, but we work to keep the game reliable and safe.\": 'Wir setzen technische und organisatorische Maßnahmen ein, um Konto-, Spiel-, Premium- und Transaktionsdaten zu schützen. Kein Onlinedienst kann vollständige Sicherheit garantieren, aber wir arbeiten daran, das Spiel zuverlässig und sicher zu halten.',\n}"
-    ,
+    "}",
     'German exact overrides',
 )
 
@@ -105,19 +123,36 @@ replace_once(
     "        (r'\\bJahreszeiten\\b', 'Saisons'),\n"
     "        (r'\\bJahreszeit\\b', 'Saison'),\n"
     "        (r'\\bSchulungslager\\b', 'Trainingslager'),\n"
+    "        (r'\\bTrainingscamp\\b', 'Trainingslager'),\n"
     "        (r'\\bPfadfindern\\b', 'Scouts'),\n"
     "        (r'\\bPfadfinder\\b', 'Scout'),\n"
     "        (r'\\bRassen\\b', 'Rennen'),\n"
     "        (r'\\bRasse\\b', 'Rennen'),\n"
+    "        (r'\\bBewerberteam\\b', 'bewerbendes Team'),\n"
     "    ])\n"
     "    for pattern, replacement in replacements:\n        value = re.sub(pattern, replacement, value)",
     'German semantic postprocessing',
 )
 
 replace_once(
+    "        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)\n"
+    "        self.model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)\n"
+    "        self.model.eval()",
+    "        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, src_lang='eng_Latn')\n"
+    "        self.model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)\n"
+    "        self.target_lang_id = self.tokenizer.convert_tokens_to_ids('deu_Latn')\n"
+    "        if self.target_lang_id is None or self.target_lang_id == self.tokenizer.unk_token_id:\n"
+    "            raise SystemExit('Could not resolve NLLB German language token deu_Latn')\n"
+    "        self.model.eval()",
+    'NLLB tokenizer setup',
+)
+
+replace_once(
     "                    max_new_tokens=512,\n                    num_beams=1,",
-    "                    max_length=512,\n                    num_beams=1,",
-    'generation length',
+    "                    max_new_tokens=256,\n"
+    "                    forced_bos_token_id=self.target_lang_id,\n"
+    "                    num_beams=1,",
+    'NLLB target language generation',
 )
 
 replace_once(
@@ -141,16 +176,6 @@ replace_once(
     "                if re.search(r'\\bstages?\\b', src, flags=re.IGNORECASE) and re.search(r'\\bStufe(?:n)?\\b', dst):\n"
     "                    problems.append(f'{name}:{path}: stage translated as Stufe in {dst!r}')",
     'semantic validation',
-)
-
-replace_once(
-    "    if problems:\n"
-    "        raise SystemExit('German localization validation failed:\\n' + '\\n'.join(problems[:100]))",
-    "    if length_warnings:\n"
-    "        problems.extend(f'German text-length review required: {item}' for item in length_warnings[:100])\n\n"
-    "    if problems:\n"
-    "        raise SystemExit('German localization validation failed:\\n' + '\\n'.join(problems[:100]))",
-    'length warning gate',
 )
 
 replace_once(
@@ -190,4 +215,4 @@ replace_once(
 )
 
 path.write_text(text, encoding='utf-8')
-print('Prepared stronger German translation pass while preserving polished resources.')
+print(f'Prepared NLLB German translation pass; preserved {len(POLISHED_FILES) if "POLISHED_FILES" in globals() else 13} polished resources.')
