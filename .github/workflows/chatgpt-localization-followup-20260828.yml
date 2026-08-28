@@ -9,7 +9,7 @@ on:
 permissions:
   contents: write
 
-# Retry marker: literal-safe regex replacements enabled.
+# Retry marker: assertions and generic asset modal fixed.
 jobs:
   apply:
     runs-on: ubuntu-latest
