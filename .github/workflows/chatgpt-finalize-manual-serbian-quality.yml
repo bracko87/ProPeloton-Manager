@@ -1,0 +1,130 @@
+name: Finalize Serbian manual quality
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/chatgpt-finalize-manual-serbian-quality.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install translator
+        run: |
+          python -m pip install --quiet sentencepiece sacremoses protobuf 'transformers==4.53.0'
+          python -m pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Prepare Serbian Cyrillic to Latin translator
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/scripts/localize_full_manual_sr_latn_20260828.py')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = [
+              ("MODEL_NAME = 'facebook/nllb-200-distilled-600M'", "MODEL_NAME = 'Helsinki-NLP/opus-mt-en-sla'"),
+              ('BATCH_SIZE = 12', 'BATCH_SIZE = 32'),
+              ('self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, src_lang=SRC_LANG)', 'self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)'),
+              ('self.forced_bos_token_id = self.tokenizer.convert_tokens_to_ids(TARGET_LANG)', 'self.forced_bos_token_id = None'),
+              ('                forced_bos_token_id=self.forced_bos_token_id,\n', ''),
+              ('num_beams=3', 'num_beams=1'),
+              ("        encoded = self.tokenizer(\n            values,\n", "        encoded = self.tokenizer(\n            [f'>>srp_Cyrl<< {value}' for value in values],\n"),
+          ]
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'Missing translator anchor: {old}')
+              text = text.replace(old, new, 1)
+
+          # Explicit Serbian UI terminology for short labels that should not remain English.
+          anchor = '    memory = build_translation_memory()\n'
+          injected = """    memory = build_translation_memory()
+    memory.update({
+        'Inbox': 'Sanduče',
+        'Footer': 'Podnožje',
+        'Referral URL': 'URL preporuke',
+        'Forum': 'Forum',
+    })
+"""
+          if anchor not in text:
+              raise SystemExit('Missing translation memory anchor')
+          text = text.replace(anchor, injected, 1)
+
+          # Allow only identifiers/technical values that intentionally stay unchanged.
+          old = "    if len(english_fallbacks) > 3:\n        problems.extend(f'English fallback: {item}' for item in english_fallbacks[:20])"
+          new = """    allowed_technical = (
+        'JPG, PNG, WEBP', 'create-coin-checkout Edge Function',
+        'WorldTeam, ProTeam, Continental, Amateur', 'ProTeam West, ProTeam East',
+        'Forum', 'coin_packages', 'get_my_coin_status', 'create-coin-checkout',
+        "user_coin_ledger reason='purchase'", 'club-logos', 'club_branding_lock_status_v1',
+    )
+    english_fallbacks = [
+        item for item in english_fallbacks
+        if not any(item.endswith(marker) for marker in allowed_technical)
+    ]
+    if len(english_fallbacks) > 3:
+        problems.extend(f'English fallback: {item}' for item in english_fallbacks[:20])"""
+          if old not in text:
+              raise SystemExit('Missing English fallback validation anchor')
+          text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Translate all manual sections
+        env:
+          HF_HUB_DISABLE_XET: '1'
+          TOKENIZERS_PARALLELISM: 'false'
+        run: python .github/scripts/localize_full_manual_sr_latn_20260828.py
+
+      - name: Validate all 92 sections
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          en = json.loads(Path('src/i18n/locales/en/manual.json').read_text(encoding='utf-8'))
+          sr = json.loads(Path('src/i18n/locales/sr-Latn/manual.json').read_text(encoding='utf-8'))
+          assert len(en['sections']) == 92
+          assert len(sr['sections']) == 92
+          assert set(en['sections']) == set(sr['sections'])
+          text = json.dumps(sr, ensure_ascii=False)
+          for marker in ['ZXQ','ZIK','QXml','�','Ã','Â','æ','è','ð','jahač','rasni svet']:
+              assert marker.lower() not in text.lower(), marker
+          assert not re.search(r'[\u0400-\u04ff]', text), 'Cyrillic remained in sr-Latn manual'
+          for term in ['Race Plan','Stage Plans','Startlist','Race Engine','Coins']:
+              assert term in text, term
+          print('Manual quality validation passed for 92 sections.')
+          PY
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit translated manual
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/sr-Latn/manual.json
+          git commit -m 'Finish Serbian Latin game manual translation'
+          git push origin main
