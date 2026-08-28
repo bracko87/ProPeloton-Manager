@@ -9,6 +9,7 @@ replacements = [
         "    'Next': 'Nächste',\n}",
         "    'Next': 'Nächste',\n"
         "    'Coins': 'Coins',\n"
+        "    'Coins, Coin Packages and Referral Rewards': 'Coins, Coin-Pakete und Empfehlungsprämien',\n"
         "    \"Today's races\": 'Heutige Rennen',\n"
         "    \"Today's races help users see what is happening now.\": "
         "'Die heutigen Rennen helfen den Nutzern zu sehen, was gerade passiert.',\n"
