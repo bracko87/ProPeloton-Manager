@@ -20,6 +20,15 @@ export const SUPPORTED_LANGUAGES = [
     htmlLang: 'sr-Latn',
     locale: 'sr-Latn-RS',
   },
+  {
+    code: 'de',
+    label: 'Deutsch',
+    shortLabel: 'DE',
+    flag: '🇩🇪',
+    countryCode: 'DE',
+    htmlLang: 'de',
+    locale: 'de-DE',
+  },
 ] as const
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]['code']

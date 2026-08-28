@@ -55,3 +55,5 @@ for old, new in replacements:
 
 path.write_text(text, encoding='utf-8')
 print('Prepared German translator quality fixes.')
+
+# German preview selector is intentionally available before the full de bundle lands.
