@@ -12,8 +12,10 @@ import {
   Calendar,
   List,
   Grid,
+  Bike,
   ShoppingCart,
   BarChart2,
+  LineChart,
   DollarSign,
   LogOut,
   ClipboardCheck,
@@ -78,7 +80,7 @@ const navItems: NavItem[] = [
     to: '/dashboard/equipment',
     labelKey: 'equipment',
     descriptionKey: 'descriptions.equipment',
-    icon: Grid,
+    icon: Bike,
   },
   {
     to: '/dashboard/infrastructure',
@@ -102,7 +104,7 @@ const navItems: NavItem[] = [
     to: '/dashboard/statistics',
     labelKey: 'statistics',
     descriptionKey: 'descriptions.statistics',
-    icon: BarChart2,
+    icon: LineChart,
   },
 ]
 
