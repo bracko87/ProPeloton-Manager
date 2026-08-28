@@ -103,6 +103,178 @@ jobs:
           TOKENIZERS_PARALLELISM: 'false'
         run: python .github/scripts/localize_full_manual_sr_latn_20260828.py
 
+      - name: Polish Serbian manual wording
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          path = Path('src/i18n/locales/sr-Latn/manual.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+
+          replacements = [
+              ('također', 'takođe'), ('Također', 'Takođe'),
+              ('sustav', 'sistem'), ('Sustav', 'Sistem'),
+              ('izvješće', 'izveštaj'), ('Izvješće', 'Izveštaj'),
+              ('izvješća', 'izveštaji'), ('Izvješća', 'Izveštaji'),
+              ('razina', 'nivo'), ('Razina', 'Nivo'),
+              ('sljedeći', 'sledeći'), ('Sljedeći', 'Sledeći'),
+              ('trenutačno', 'trenutno'), ('Trenutačno', 'Trenutno'),
+              ('točka', 'tačka'), ('Točka', 'Tačka'),
+              ('odjeljak', 'odeljak'), ('Odjeljak', 'Odeljak'),
+              ('smještaj', 'smeštaj'), ('Smještaj', 'Smeštaj'),
+              ('izbornik', 'meni'), ('Izbornik', 'Meni'),
+              ('povijest', 'istorija'), ('Povijest', 'Istorija'),
+              ('tjedan', 'nedelja'), ('Tjedan', 'Nedelja'),
+              ('mjesec', 'mesec'), ('Mjesec', 'Mesec'),
+              ('natjecanje', 'takmičenje'), ('Natjecanje', 'Takmičenje'),
+              ('usporedba', 'poređenje'), ('Usporedba', 'Poređenje'),
+              ('rostera', 'sastava'), ('rosteru', 'sastavu'), ('roster', 'sastav'),
+              ('sponsorsku', 'sponzorsku'), ('sponsorski', 'sponzorski'),
+              ('Naming-rights', 'Prava sponzora na ime'),
+              ('naming-rights', 'prava sponzora na ime'),
+              ('naming rights', 'prava sponzora na ime'),
+              ('Naming rights', 'Prava sponzora na ime'),
+              ('screenshot-ove', 'snimke ekrana'),
+              ('screenshotove', 'snimke ekrana'),
+              ('Widget-i', 'Vidžeti'), ('widget-i', 'vidžeti'),
+              ('equipment setup', 'podešavanje opreme'),
+              ('setup-e', 'podešavanja'), ('setup-u', 'podešavanju'),
+              ('setup etape', 'podešavanje etape'), ('setup opreme', 'podešavanje opreme'),
+              ('summit finish', 'cilj na usponu'),
+              ('live stanje', 'stanje uživo'),
+              ('replay frame-ove', 'kadrove replay-a'),
+              ('cashflow-a', 'toka novca'), ('cashflow', 'tok novca'),
+              ('metadata datuma igre', 'metapodataka o datumu igre'),
+              ('created_at timestamp-a', 'created_at vremenskog zapisa'),
+              ('plata plate', 'plati plate'),
+              ('referral linkovima', 'linkovima preporuke'),
+              ('referral linka', 'linka preporuke'),
+              ('referral link', 'link preporuke'),
+              ('Footeru', 'podnožju'), ('footeru', 'podnožju'),
+              ('browseru', 'pregledaču'),
+              ('pool-a', 'skupa'),
+              ('generički fallback', 'generičku rezervnu varijantu'),
+              ('Emergency Debt Health', 'Stanje hitnog duga'),
+              ('nakon korišćenja spasavanja', 'nakon korišćenja hitne finansijske pomoći'),
+              ('korišćena spasavanja', 'korišćena hitna finansijska pomoć'),
+              ('korišćenja spasavanja', 'korišćenja hitne finansijske pomoći'),
+              ('Hitno spasavanje', 'Hitna finansijska pomoć'),
+              ('hitno spasavanje', 'hitna finansijska pomoć'),
+          ]
+
+          coin_forms = re.compile(r'\b(?:Novčići|novčići|Novčića|novčića|Novčić|novčić|Novčićima|novčićima)\b')
+
+          def polish(value):
+              if isinstance(value, str):
+                  value = coin_forms.sub('Coins', value)
+                  for old, new in replacements:
+                      value = value.replace(old, new)
+                  value = re.sub(r'\bspasavanja\b', 'korišćenja hitne finansijske pomoći', value)
+                  value = re.sub(r'\bspasavanje\b', 'hitna finansijska pomoć', value)
+                  value = re.sub(r' {2,}', ' ', value)
+                  return value
+              if isinstance(value, list):
+                  return [polish(item) for item in value]
+              if isinstance(value, dict):
+                  return {key: polish(item) for key, item in value.items()}
+              return value
+
+          data = polish(data)
+          sections = data['sections']
+
+          coins = sections['coins']
+          coins['title'] = 'Coins, paketi i nagrade za preporuke'
+          coins['subtitle'] = 'Razlika između Coins valute naloga i novca kluba.'
+          coins['overview'] = 'Coins su valuta korisničkog naloga. Novac kluba je ekonomija tima. Nemojte mešati Coins sa novcem u igri koji se koristi za plate, transfere, opremu i infrastrukturu.'
+          coins['details'] = [
+              'Stranica Pro Packages učitava aktivne Coins pakete iz baze. Zato su tačne veličine paketa i cene određene podacima iz baze i treba koristiti aktuelne vrednosti iz prodavnice.',
+              'Stranica izračunava cenu po jedinici i može označiti paket sa najboljom vrednošću. Oznake paketa kao što su Starter boost ili Most popular zasnovane su na količini Coins-a.',
+              "Istorija kupovina učitava se iz user_coin_ledger kada je reason='purchase'. Tehnički podaci Stripe sesije namerno se ne prikazuju korisnicima.",
+              'Invite Friends kreira link preporuke. Preporuka je završena kada preporučeni korisnik kreira klub i kupi svoj prvi Coins paket. Trenutni tekst nagrade navodi 40 Coins.',
+              'Coins su vezani za korisnički nalog. Ako je klub likvidiran, korisnički nalog i Coins ostaju aktivni; zatvara se samo taj klub.'
+          ]
+          coins['facts'][0]['label'] = 'Trenutni trošak igranja'
+          coins['facts'][0]['value'] = '2 Coins dnevno na trenutnoj Pro Packages stranici'
+          coins['facts'][3]['value'] = '40 Coins kada preporučeni prijatelj kreira klub i kupi svoj prvi Coins paket'
+          coins['tips'] = [
+              'Koristite Pro Packages za tačne aktuelne cene.',
+              'Koristite Invite Friends za deljenje linka preporuke.'
+          ]
+          coins['relatedLinks'] = ['Coins paketi', 'Pozovi prijatelje']
+
+          club = sections['club-identity']
+          club['subtitle'] = 'Ime tima, boje, logo, dres i blokade koje mogu nastati zbog ugovora o pravima sponzora na ime.'
+          club['overview'] = 'Identitet vašeg kluba uključuje ime, boje, logo i dres. Njime se upravlja preko Prilagodi tim, ali ugovori o pravima sponzora na ime mogu privremeno zaključati ili promeniti delove javnog prikaza.'
+          club['details'][0] = 'Prilagodi tim čuva brendiranje preko backend funkcija, a ne samo u lokalnom UI stanju. To je važno zato što ugovor o pravima sponzora na ime može zaključati ime ili uticati na prikazano ime.'
+          club['details'][1] = 'Otpremanje logotipa proverava tip i veličinu fajla, konvertuje ga u PNG u pregledaču i čuva u club-logos bucketu.'
+          club['details'][3] = 'Sistem dresova čuva domaći komplet u team_kits. Može koristiti dres iz generičkog skupa, generičku rezervnu varijantu, URL slike ili otpremljenu sliku, zavisno od izabranog režima.'
+          club['details'][4] = 'Sponzor sa pravom na ime obično plaća više, ali privremeno menja prikazano ime tima tokom sezone. Originalno ime se vraća na početku sledeće sezone.'
+          club['tips'][1] = 'Ne prihvatajte prava sponzora na ime samo zbog novca; razumite uticaj na identitet kluba.'
+
+          overview = sections['overview']
+          overview['details'][4] = 'Finansijski paneli pomažu da izbegnete opasnu potrošnju. Stanje hitnog duga je posebno važno ako je klub već koristio hitnu finansijsku pomoć ili postoji rizik od likvidacije.'
+          overview['details'][5] = 'Panel glavnog sponzora može prikazati identitet sponzora i voditi na sponzorsku kontrolnu tablu.'
+
+          inbox = sections['notifications-inbox']
+          inbox['overview'] = 'Obaveštenja su upozorenja igre ili administratora. Sanduče je namenjeno direktnim ili administratorskim razgovorima. Zajedno pomažu korisnicima da ne propuste rokove i da komuniciraju sa drugim menadžerima ili administratorima.'
+          inbox['details'][1] = 'Kategorije se određuju prema grupi podešavanja, izvoru ili kodu tipa. To pomaže da se odvoje finansijske, trkačke, sponzorske, transferne i sistemske poruke.'
+          inbox['details'][4] = 'Otvaranjem razgovora učitavaju se poruke i razgovor se označava kao pročitan. Slanje poruke koristi RPC funkcije Sandučeta.'
+
+          rider = sections['rider-profile-skills']
+          rider['details'][3] = 'Race Sharpness meri ritam trkanja. Premalo trkanja može smanjiti Race Sharpness, dok previše trkanja stvara rizik od preopterećenja.'
+
+          supplies = sections['race-supplies']
+          supplies['details'][0] = 'Bidoni koriste 1–4 po vozaču u podešavanju etape. Jednokratni su i podržavaju hidrataciju i kontrolu umora. Količina ispod minimuma može povećati rizik od umora.'
+          supplies['details'][3] = 'Komplet trkačkog dresa je obavezan u Stage Plans. Nedostatak kompleta može blokirati podešavanje etape.'
+          supplies['tips'][0] = 'Kupite potrebne zalihe pre rokova.'
+
+          race_detail = sections['calendar-race-detail']
+          race_detail['details'][4] = 'Detalji etape mogu uključivati rutu, distancu, teren, tip finiša, cilj na usponu, procente terena, ukupno penjanje, profilnu sliku, vreme, sprintove i KOM tačke.'
+          race_detail['details'][5] = 'Nakon početka trke, Detalji trke mogu prikazivati stanje uživo, replay kadrove, komentar, tabelu, rezultate i klasifikacije.'
+
+          prep = sections['race-preparation']
+          prep['details'][1] = 'Race Plan bira vozače, osoblje, vozila, podešavanje opreme i zalihe za trku. Ograničenja vozača moraju odgovarati pravilima trke.'
+          prep['details'][3] = 'Sažetak podrške prikazuje troškove i bonuse osoblja, vozila, opreme i politika.'
+
+          transfers = sections['transfers-scouting']
+          transfers['details'][3] = 'Ponovljene loše ponude koriste pokušaje i mogu dovesti do odbijanja, kontraponude, isteka ili zatvaranja pregovora.'
+          transfers['tips'][1] = 'Proverite platu i trajanje ugovora, ne samo cenu transfera.'
+
+          finance = sections['finance']
+          finance['subtitle'] = 'Stanje, operativni tok novca, transakcije i mesečne poreske kontrole.'
+          finance['overview'] = 'Finansije prikazuju dugoročnu sigurnost vašeg kluba. Jaki vozači ne znače ništa ako klub ne može da plati plate, poreze, politike, opremu ili obavezne troškove.'
+          finance['details'][1] = 'Transakcije prikazuju evidenciju svih promena. Koristite ih da objasnite svako pomeranje stanja: plate, sponzorske uplate, porez, infrastrukturu, vozila, opremu, trening kampove, bonuse i nagradni fond.'
+          finance['details'][2] = 'Vidljivi datumi transakcija treba da dolaze iz metapodataka o datumu igre, a ne iz stvarnog created_at vremenskog zapisa.'
+          finance['details'][3] = 'Porez prikazuje oporezivi prihod, očekivani porez, već zadržani porez, iznos korekcije i istoriju kontrola. Poreske transakcije uključuju zadržavanje, mesečnu korekciju i mesečni povraćaj.'
+          finance['facts'][1]['label'] = 'Grupisanje toka novca'
+
+          sponsors = sections['sponsors-policies']
+          sponsors['subtitle'] = 'Garantovani novac, ciljevi, popusti, prava sponzora na ime i operativni standardi.'
+          sponsors['details'][1] = 'Sekundarni sponzori pružaju dodatnu podršku kroz raspoloživa mesta i u trenutnom UI prikazuju se bez logotipa ili zemlje.'
+          sponsors['details'][4] = 'Standardni sponzorski ugovori daju novac bez promene imena tima. Ugovori o pravima sponzora na ime obično plaćaju više, ali privremeno menjaju prikazano ime tima tokom sezone.'
+
+          emergency = sections['emergency-liquidation']
+          emergency['title'] = 'Hitna finansijska pomoć, dug i likvidacija kluba'
+          emergency['overview'] = 'Igra ima sistem hitne finansijske pomoći i likvidacije. Hitna finansijska pomoć privremeno štiti klub, ali ponovljeni neuspeh u pokrivanju obaveza može dovesti do zatvaranja kluba.'
+          emergency['details'][1] = 'Ekran objašnjava broj korišćenja hitne finansijske pomoći, razlog likvidacije i vreme zatvaranja kada su ti podaci dostupni.'
+          emergency['facts'][0]['label'] = 'Doživotno dostupna hitna pomoć'
+          emergency['facts'][1]['value'] = 'Sva 3 korišćenja hitne finansijske pomoći su iskorišćena, a zatim nova obavezna obaveza ne može biti pokrivena'
+          emergency['facts'][3]['label'] = 'Coins / nalog'
+          emergency['facts'][3]['value'] = 'Korisnički nalog i Coins ostaju aktivni'
+          emergency['tips'][0] = 'Izbegavajte rizičnu potrošnju nakon korišćenja hitne finansijske pomoći.'
+
+          support = sections['support-account']
+          support['overview'] = 'Stranice naloga i podrške pomažu korisnicima da upravljaju profilom, podešavanjima obaveštenja, kupovinom Razvojnog tima, linkovima preporuke, Discord podrškom i prijavama grešaka.'
+          support['details'][2] = 'Gašenje tima zahteva važeći token sesije i tačnu potvrdu DELETE.'
+          support['details'][5] = 'Dugmad za prijavu greške treba da uključe kontekst trenutne stranice ili putanje. Dobre prijave uključuju ime stranice, tim, vozača, trku, snimke ekrana i korake za reprodukciju.'
+
+          public_home = sections['public-home-beta']
+          public_home['details'][3] = 'Vidžeti trka na početnoj stranici mogu prikazati jučerašnje, današnje i sutrašnje trke.'
+
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
       - name: Validate all 92 sections
         run: |
           python - <<'PY'
@@ -120,10 +292,20 @@ jobs:
               assert marker.lower() not in lowered, marker
           assert not re.search(r'\bZIK\d*\b', text), 'ZIK placeholder remained'
           assert not re.search(r'[\u0400-\u04ff]', text), 'Cyrillic remained in sr-Latn manual'
+          for croatian in ['također','sustav','izvješće','razina','sljedeći','trenutačno','točka','odjeljak','smještaj','izbornik','povijest','tjedan','mjesec','natjecanje','usporedba']:
+              assert croatian not in lowered, f'Croatian terminology remained: {croatian}'
+          assert not re.search(r'\bnovči', lowered), 'Coins was translated to novčić/novčići'
+          assert 'sponsorsk' not in lowered, 'Bad sponzorski spelling remained'
+          assert 'plata plate' not in lowered, 'Bad finance grammar remained'
+          assert 'spasavanj' not in lowered, 'Unnatural bailout wording remained'
           for term in ['Race Plan','Stage Plans','Startlist','Race Engine','Coins']:
               if term in en_text:
                   assert term in text, f'Missing preserved game term: {term}'
           print('Manual quality validation passed for 92 sections.')
+          print('Representative Serbian manual QA:')
+          for sid in ['quick-start','coins','squad-riders','rider-profile-skills','race-preparation','transfers-scouting','finance','emergency-liquidation','support-account']:
+              section = sr['sections'][sid]
+              print(f"[{sid}] {section['title']} :: {section['overview']}")
           PY
 
       - name: Install app dependencies
@@ -141,5 +323,5 @@ jobs:
             echo 'No manual changes to commit.'
             exit 0
           fi
-          git commit -m 'Finish Serbian Latin game manual translation'
+          git commit -m 'Polish Serbian Latin game manual translation'
           git push origin main
