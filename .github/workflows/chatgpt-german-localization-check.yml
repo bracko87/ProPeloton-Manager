@@ -1,0 +1,80 @@
+name: German localization checkpoint
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/i18n/locales/de/**'
+      - 'src/i18n/index.ts'
+      - 'src/i18n/languages.ts'
+      - 'src/components/i18n/LanguageSelector.tsx'
+      - 'src/components/i18n/LocaleDateFormattingBridge.tsx'
+      - '.github/workflows/chatgpt-german-localization-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-german:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Verify German resource structure
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          en_dir = Path('src/i18n/locales/en')
+          de_dir = Path('src/i18n/locales/de')
+          en_files = sorted(p.name for p in en_dir.glob('*.json'))
+          de_files = sorted(p.name for p in de_dir.glob('*.json'))
+          assert en_files == de_files, 'German locale filenames must mirror English exactly'
+
+          def check(a, b, path='root'):
+              assert type(a) is type(b), f'{path}: type mismatch'
+              if isinstance(a, dict):
+                  assert list(a) == list(b), f'{path}: keys/order mismatch'
+                  for key in a:
+                      check(a[key], b[key], f'{path}.{key}')
+              elif isinstance(a, list):
+                  assert len(a) == len(b), f'{path}: list length mismatch'
+                  for index, (left, right) in enumerate(zip(a, b)):
+                      check(left, right, f'{path}[{index}]')
+              elif isinstance(a, str):
+                  left_vars = sorted(re.findall(r'\{\{[^{}]+\}\}', a))
+                  right_vars = sorted(re.findall(r'\{\{[^{}]+\}\}', b))
+                  assert left_vars == right_vars, f'{path}: placeholders changed'
+
+          for filename in en_files:
+              en = json.loads((en_dir / filename).read_text(encoding='utf-8'))
+              de = json.loads((de_dir / filename).read_text(encoding='utf-8'))
+              check(en, de, filename)
+
+          bad_terms = {
+              'Jahreszeit': 'use Saison for game season',
+              'Schulungslager': 'use Trainingslager',
+              'Pfadfinder': 'use Scout/Scouting',
+              'Rasse-Format': 'use Rennformat',
+              'Alle Rassen': 'use Alle Rennen',
+          }
+          joined = '\n'.join(p.read_text(encoding='utf-8') for p in de_dir.glob('*.json'))
+          for term, reason in bad_terms.items():
+              assert term not in joined, f'Bad German term {term!r}: {reason}'
+
+          print(f'German structure OK: {len(de_files)} locale files')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
