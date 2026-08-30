@@ -221,7 +221,7 @@
     padding-left: 0 !important;
     padding-right: 0 !important;
     text-align: center;
-    font-size: 0.5rem !important;
+    font-size: 0.5625rem !important;
     line-height: 0.75rem !important;
     white-space: nowrap;
     text-overflow: clip;
@@ -236,7 +236,7 @@
 
   [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div > div:first-child {
     overflow: hidden;
-    font-size: 0.5625rem !important;
+    font-size: 0.625rem !important;
     line-height: 0.75rem !important;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -301,7 +301,49 @@
   }
 
   [data-ppm-dashboard-page='races'] button.rounded-full[class*='px-'] {
-    min-height: 40px;
+    min-height: 44px;
+  }
+
+  /* Training: compact desktop camp controls become proper touch targets and
+     both training dialogs remain usable on short phone screens. */
+  [data-ppm-dashboard-page='training'] button.h-8[class*='min-w-'] {
+    height: 44px !important;
+    min-height: 44px;
+  }
+
+  [data-ppm-dashboard-page='training'] .fixed.inset-0 > .w-full[class*='max-w-'] {
+    max-height: calc(100dvh - 1rem);
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  /* Equipment: inventory actions are card-based already; constrain its quote /
+     confirmation modal to the mobile viewport and keep actions easy to tap. */
+  [data-ppm-dashboard-page='equipment'] .fixed.inset-0 > .w-full[class*='max-w-'] {
+    max-height: calc(100dvh - 1rem);
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  [data-ppm-dashboard-page='equipment'] .fixed.inset-0 > .w-full[class*='max-w-'] button {
+    min-height: 44px;
+  }
+
+  /* Transfers: keep both the main Riders/Staff switch and the three rider
+     market subtabs reachable when German labels exceed the available width. */
+  [data-ppm-dashboard-page='transfers'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm,
+  [data-ppm-dashboard-page='transfers'] .mt-4.border-b.border-gray-200 > .flex.items-center.gap-8 {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-ppm-dashboard-page='transfers'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm > button,
+  [data-ppm-dashboard-page='transfers'] .mt-4.border-b.border-gray-200 > .flex.items-center.gap-8 > button {
+    min-height: 44px;
+    flex: 0 0 auto;
   }
 
   /* Advisor notification details use several table-like CSS grids. On desktop
