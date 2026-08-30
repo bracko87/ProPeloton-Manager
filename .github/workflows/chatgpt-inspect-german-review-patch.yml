@@ -1,0 +1,66 @@
+name: Inspect staged German review patch
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/chatgpt-inspect-german-review-patch.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  decode-review-patch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Decode staged review patch
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import zlib
+          from pathlib import Path
+
+          root = Path('.github/scripts/de_review_patch_parts')
+          parts = sorted(root.glob('part*.txt'))
+          assert parts, 'No German review patch parts found'
+          encoded = ''.join(p.read_text(encoding='utf-8').strip() for p in parts)
+          raw = base64.b64decode(encoded)
+          decoded = zlib.decompress(raw)
+          out = Path('/tmp/de-review-patch-decoded.txt')
+          out.write_bytes(decoded)
+
+          print(f'parts={len(parts)} encoded_chars={len(encoded)} decoded_bytes={len(decoded)}')
+          try:
+              data = json.loads(decoded.decode('utf-8'))
+              print('decoded_type=json')
+              if isinstance(data, dict):
+                  print('top_level_keys=' + ','.join(list(data)[:40]))
+                  print('top_level_count=' + str(len(data)))
+              elif isinstance(data, list):
+                  print('top_level_list_count=' + str(len(data)))
+          except Exception as exc:
+              print('decoded_type=text_or_other')
+              print('json_error=' + repr(exc))
+              preview = decoded[:1200].decode('utf-8', errors='replace')
+              print('preview_start')
+              print(preview)
+              print('preview_end')
+          PY
+
+      - name: Upload decoded review patch
+        uses: actions/upload-artifact@v4
+        with:
+          name: de-review-patch-decoded
+          path: /tmp/de-review-patch-decoded.txt
+          if-no-files-found: error
+          retention-days: 1
