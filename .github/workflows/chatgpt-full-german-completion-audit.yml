@@ -1,0 +1,171 @@
+name: Full German completion audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-full-german-completion-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Audit German locale coverage and UI source
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import base64
+          import json
+          import re
+          import zlib
+          from pathlib import Path
+
+          root = Path('.')
+          en_dir = root / 'src/i18n/locales/en'
+          de_dir = root / 'src/i18n/locales/de'
+          report = []
+          blockers = []
+          warnings = []
+
+          protected = {
+              'ProPeloton Manager','Race Plan','Race Plans','Stage Plan','Stage Plans','Startlist',
+              'Race Engine','Replay Engine','Race Sharpness','WorldTeam','WorldTour','ProTeam',
+              'ProSeries','Continental','Supabase','Stripe','Discord','RPC','KPI','GC','KOM','U23','UCI',
+              'Coins','Premium','FTP','VO2','DNF','DNS','OTL','ITT','TTT','AI'
+          }
+          placeholder = re.compile(r'\{\{[^{}]+\}\}')
+          cyrillic = re.compile(r'[\u0400-\u04ff]')
+          informal = re.compile(r'\b(?:du|dich|dir|dein|deine|deinen|deinem|deiner|deines)\b', re.I)
+          bad_patterns = [
+              r'\bJahreszeiten?\b', r'\bSchulungslager\b', r'\bPfadfinder(?:n|s)?\b',
+              r'\bRassen?\b', r'\bReiter(?:in(?:nen)?|n|s)?\b', r'\bBühnen?\b',
+              r'\bÜbertragungsgebühr\b', r'\bSignierbonus\b', r'\bHauptfach\b',
+              r'\bVertragsglück\b', r'\bSaisonbeschäftigte\b', r'\bVermißt\b',
+              r'Fahrrad-Vermächtnis', r'Ich unterschreibe', r'L 347 vom',
+              r'Ich lege eine Bar', r'kostenlose Vermittlung von Agenten',
+              r'Reiten als eins', r'Generika-Kit', r'Speicherkübel', r'Vierteljährlich'
+          ]
+
+          def load(path):
+              return json.loads(path.read_text(encoding='utf-8'))
+
+          def walk_pair(a, b, path):
+              if type(a) is not type(b):
+                  blockers.append(f'{path}: type mismatch')
+                  return
+              if isinstance(a, dict):
+                  if list(a) != list(b):
+                      blockers.append(f'{path}: keys/order mismatch')
+                  for k in a:
+                      if k in b:
+                          walk_pair(a[k], b[k], f'{path}.{k}')
+              elif isinstance(a, list):
+                  if len(a) != len(b):
+                      blockers.append(f'{path}: list length mismatch')
+                  for i, (x, y) in enumerate(zip(a, b)):
+                      walk_pair(x, y, f'{path}[{i}]')
+              elif isinstance(a, str):
+                  if sorted(placeholder.findall(a)) != sorted(placeholder.findall(b)):
+                      blockers.append(f'{path}: placeholders changed')
+                  if not isinstance(b, str):
+                      return
+                  if cyrillic.search(b):
+                      blockers.append(f'{path}: Cyrillic remains: {b!r}')
+                  if informal.search(b):
+                      blockers.append(f'{path}: informal German tone: {b!r}')
+                  for pat in bad_patterns:
+                      if re.search(pat, b, re.I):
+                          blockers.append(f'{path}: suspicious/bad German: {b!r}')
+                          break
+                  src = a.strip(); dst = b.strip()
+                  if src == dst and len(src) >= 24 and len(src.split()) >= 4 and not any(t in src for t in protected):
+                      warnings.append(f'{path}: unchanged English candidate: {src!r}')
+
+          en_files = sorted(p.name for p in en_dir.glob('*.json'))
+          de_files = sorted(p.name for p in de_dir.glob('*.json'))
+          report.append(f'English locale files: {len(en_files)}')
+          report.append(f'German locale files: {len(de_files)}')
+          if en_files != de_files:
+              blockers.append('German locale filenames do not mirror English exactly')
+          for name in en_files:
+              if not (de_dir/name).exists():
+                  continue
+              walk_pair(load(en_dir/name), load(de_dir/name), name)
+
+          parts = sorted((root/'.github/scripts/de_app_review_parts').glob('part*.txt'))
+          if parts:
+              try:
+                  encoded = ''.join(p.read_text(encoding='utf-8').strip() for p in parts)
+                  payload = json.loads(zlib.decompress(base64.b64decode(encoded)).decode('utf-8'))
+                  report.append(f'Staged reviewed German app payload files: {len(payload)}')
+                  report.append('Staged payload keys: ' + ', '.join(sorted(payload)))
+              except Exception as exc:
+                  blockers.append(f'Could not decode staged German app review payload: {exc!r}')
+          else:
+              report.append('No staged German app review payload found.')
+
+          # UI-source diagnostic. This intentionally produces candidates, not automatic blockers.
+          jsx_text = re.compile(r'>([^<{][^<>{}]*[A-Za-zÄÖÜäöüß][^<>{}]*)<')
+          attr_text = re.compile(r'\b(?:placeholder|title|aria-label|alt)=(["\'])([^"\']*[A-Za-z][^"\']*)\1')
+          call_text = re.compile(r'\b(?:setError|setMessage|alert|confirm|window\.alert|window\.confirm)\(\s*(["\'])([^"\']*[A-Za-z][^"\']*)\1')
+          ignore_fragments = ('http://','https://','image/','linear-gradient','px','rem','svg','viewBox','data-','aria-')
+          source_candidates = []
+          files = sorted(list((root/'src/pages').rglob('*.tsx')) + list((root/'src/components').rglob('*.tsx')))
+          for path in files:
+              text = path.read_text(encoding='utf-8', errors='replace')
+              rel = path.as_posix()
+              for kind, rx in [('jsx', jsx_text), ('attr', attr_text), ('call', call_text)]:
+                  for m in rx.finditer(text):
+                      value = (m.group(1) if kind == 'jsx' else m.group(2)).strip()
+                      if not value or len(value) < 2:
+                          continue
+                      if any(f in value for f in ignore_fragments):
+                          continue
+                      if value in {'×','—','–','OK'}:
+                          continue
+                      line = text.count('\n', 0, m.start()) + 1
+                      source_candidates.append((rel, line, kind, value[:180]))
+
+          report.append(f'Hardcoded UI text candidates: {len(source_candidates)}')
+          by_file = {}
+          for item in source_candidates:
+              by_file.setdefault(item[0], 0)
+              by_file[item[0]] += 1
+          report.append('Files with most hardcoded UI candidates:')
+          for file, count in sorted(by_file.items(), key=lambda x: (-x[1], x[0]))[:80]:
+              report.append(f'  {count:3d}  {file}')
+          report.append('Hardcoded candidate details:')
+          for rel, line, kind, value in source_candidates[:600]:
+              report.append(f'  {rel}:{line} [{kind}] {value}')
+
+          report.append(f'Locale blockers: {len(blockers)}')
+          for item in blockers[:400]:
+              report.append('BLOCKER: ' + item)
+          report.append(f'Locale warnings: {len(warnings)}')
+          for item in warnings[:400]:
+              report.append('WARNING: ' + item)
+
+          out = Path('/tmp/german-full-audit.txt')
+          out.write_text('\n'.join(report) + '\n', encoding='utf-8')
+          print('\n'.join(report[:900]))
+          print(f'FULL_AUDIT_REPORT={out}')
+          PY
+
+      - name: Upload German audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: german-full-completion-audit
+          path: /tmp/german-full-audit.txt
+          retention-days: 1
+          if-no-files-found: error
