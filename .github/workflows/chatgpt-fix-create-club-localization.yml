@@ -1,0 +1,108 @@
+name: Fix Create Club localization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/scripts/fix_create_club_localization_20260830.py'
+      - '.github/workflows/chatgpt-fix-create-club-localization.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  create-club-localization:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Apply Serbian and German Create Club localization
+        run: python .github/scripts/fix_create_club_localization_20260830.py
+
+      - name: Verify Create Club locale quality
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          root = Path('src/i18n/locales')
+          en = json.loads((root / 'en/createClub.json').read_text(encoding='utf-8'))
+          sr = json.loads((root / 'sr-Latn/createClub.json').read_text(encoding='utf-8'))
+          de = json.loads((root / 'de/createClub.json').read_text(encoding='utf-8'))
+
+          def compare(a, b, path='root'):
+              assert type(a) is type(b), f'{path}: type mismatch'
+              if isinstance(a, dict):
+                  assert list(a) == list(b), f'{path}: key/order mismatch'
+                  for key in a:
+                      compare(a[key], b[key], f'{path}.{key}')
+              elif isinstance(a, list):
+                  assert len(a) == len(b), f'{path}: list length mismatch'
+                  for i, (x, y) in enumerate(zip(a, b)):
+                      compare(x, y, f'{path}[{i}]')
+              elif isinstance(a, str):
+                  pa = sorted(re.findall(r'\{\{[^{}]+\}\}', a))
+                  pb = sorted(re.findall(r'\{\{[^{}]+\}\}', b))
+                  assert pa == pb, f'{path}: placeholders changed: {pa} != {pb}'
+
+          compare(en, sr, 'sr-Latn/createClub.json')
+          compare(en, de, 'de/createClub.json')
+
+          de_text = json.dumps(de, ensure_ascii=False)
+          bad_de = [
+              'Reiten als eins', 'fakultativ', 'Generika-Kit', 'Gespeicherte Marke',
+              'Speicherkübel', 'Innenstil', 'Vierteljährlich', 'Scrollen-Kits',
+              'Team Jersey', 'Personalisieren Team',
+          ]
+          for bad in bad_de:
+              assert bad not in de_text, f'Bad German Create Club text remains: {bad}'
+
+          sr_text = json.dumps(sr, ensure_ascii=False)
+          for bad in ['Team Jersey', 'Interior Style', 'Create Team', 'Team Preview']:
+              assert bad not in sr_text, f'Untranslated Serbian Create Club text remains: {bad}'
+
+          page = Path('src/pages/CreateClub.tsx').read_text(encoding='utf-8')
+          assert "useTranslation('createClub')" in page
+          assert 'LanguageSelector' in page
+          assert 'new Intl.DisplayNames' in page
+          assert "countryDisplayNames?.of(c.code.toUpperCase()) || c.name" in page
+          assert "alt={t('page.backgroundAlt')}" in page
+          assert 'alt="background"' not in page
+          print('Create Club localization quality checks passed.')
+          PY
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit verified Create Club localization
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            src/pages/CreateClub.tsx \
+            src/i18n/locales/sr-Latn/createClub.json \
+            src/i18n/locales/de/createClub.json
+          if git diff --cached --quiet; then
+            echo 'No Create Club localization changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Fix Create Club Serbian and German localization'
+          git pull --rebase origin main
+          git push origin main
