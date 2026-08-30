@@ -1,0 +1,57 @@
+name: Mobile Responsive Build Check
+
+on:
+  push:
+    branches:
+      - feature/mobile-responsive
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/components/layout/MobileDashboardResponsiveBridge.tsx'
+      - 'src/mobile-responsive.css'
+      - 'src/main.tsx'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/build.mjs'
+      - '.github/workflows/mobile-responsive-build-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Verify required build output
+        shell: bash
+        run: |
+          test -f dist/index.html
+          test -f dist/main.js
+          test -f dist/main.css
+          echo "Production bundle output verified."
+
+      - name: Upload production build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-responsive-production-build
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
