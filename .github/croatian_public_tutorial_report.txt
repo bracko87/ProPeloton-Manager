@@ -1,0 +1,62 @@
+Croatian public/tutorial gate found 17 issue(s):
+publicInfo.json.how.step4Text: /\btreba da\b/ -> Kalendar utrka sadrži različite kategorije, države, rute i tipove etapa. Birajte utrke koje odgovaraju vašoj ekipi. Mali ili mlad tim ne treba da preoptereti vozače prevelikim brojem utrka.
+publicInfo.json.support.accountText: /\bmožete da\b/ -> Koristite podršku ako ne možete da se prijavite, ne možete da pristupite klubu, imate problem sa resetovanjem lozinke ili mislite da se podaci računa ne učitavaju ispravno.
+publicInfo.json.privacy.s4p1: /\bkorisćen|\bkorišćen/ -> ProPeloton Manager trenutno ne koristi oglašavanje trećih strana. Ako se to u budućnosti promijeni, ova Politika privatnosti biće ažurirana pre korišćenja takvih usluga.
+publicInfo.json.privacy.s10p1: /\bprenos/ -> Ovisno o primjenjivom zakonu, možete imati prava na pristup, ispravak, brisanje, ograničenje obrade, prigovor ili prenosivost osobnih podataka. Neke podatke igre, plaćanja ili sigurnosti možda ćemo morati zadržati kada je čuvanje zakonski obvezno ili potrebno radi zaštite usluge.
+publicInfo.json.terms.heroText: /\bkorisćen|\bkorišćen/ -> Ovi uvjeti objašnjavaju pravila korišćenja ProPeloton Managera, upravljanja računom, kupovine Coins i korišćenja Premium funkcija.
+publicInfo.json.terms.s5p1: /\bprenos/ -> Coins su valuta u igri povezana s računom i koriste se samo unutar ProPeloton Managera. Coins nisu pravi novac, nemaju novčanu vrijednost, ne mogu se povući niti prodavati, prenositi ili mijenjati izvan igre osim ako takvu mogućnost izričito ne uvedemo.
+publicInfo.json.terms.s5p4: /\bkorisćen|\bkorišćen/ -> Neiskorišćeni Coins ostaju vezani za račun i ne ističu tokom normalnog korišćenja računa niti nakon otkazivanja Premiuma. Coins povezani sa refundiranim, storniranim, osporenim, prevarnim ili neovlašćenim plaćanjem mogu biti uklonjeni ili korigovani.
+tutorials.json.training.welcome.body: /\butič/ -> Možemo vam pokazati kako funkcionišu redovni trening i trening kampovi i kako utiču na razvoj vozača, umor i pripremu za utrke.
+tutorials.json.facilities.projects.body: /\bvideti\b/ -> Kada otvorite detalje objekta, možete videti cenu sljedećeg nivoa, trajanje izgradnje i bonuse ili otključavanja koje će doneti.
+
+Projekat izgradnje ili unapređenja možete pokrenuti kada klub ima dovoljno novca i slobodan kapacitet za projekte.
+
+Projekat infrastrukture možete i otkazati. Ako ga otkažete odmah, dobijate pun povraćaj novca. Ako ga otkažete kasnije, povraćaj može biti manji.
+tutorials.json.calendar.season.body: /\bvideti\b/ -> Ovo je Kalendar sezone.
+
+Daje vam pregled svakodnevnih aktivnosti vašeg tima. Za svaki dan možete videti šta se dešava u klubu, uključujući utrke, trening kampove, događaje, praznike i druge važne aktivnosti.
+
+Koristite ovaj prikaz kada želite da razumete raspored tima iz dana u dan.
+tutorials.json.calendar.races.body: /\bovde\b/ -> Ovo je Kalendar utrka.
+
+Ovde možete videti sve utrke u sezoni. Utrke mogu biti jednodnevne ili višednevne etapne utrke. Svaka utrka prikazuje korisne informacije kao što su datum, status utrke, kategorija, tip utrke, ograničenja broja timova i status prijave.
+
+Utrke su podeljene po mjesecima, tako da svaki mjesec ima svoju listu dostupnih utrka.
+tutorials.json.raceDetail.overview.body: /\bovde\b/ -> Ovo je stranica Profil utrke.
+
+Ovde možete videti najvažnije informacije o utrci: koliko timova može sudjelovati, nagradni fond, kada se prijave zatvaraju, kada se objavljuju timovi sudionici i koliko vozača svaki tim može prijaviti.
+
+Kod etapnih utrka možete videti i koliko etapa utrka ima.
+tutorials.json.racePreparation.acceptedRaces.body: /\bovde\b/ -> Ovo je stranica Priprema utrke.
+
+Kartica Prihvaćene utrke prikazuje utrke na kojima je vaš tim prihvaćen za sudjelovanje.
+
+Ovde možete videti najvažnije informacije o utrci, ali i status pripreme vašeg tima. Na primer, možete videti Plan utrke otvoren, Planovi etapa otvoreni, Rok za vozače dostignut, Utrka aktivna, Utrka završena ili Sve spremno.
+
+Kada vaš tim bude prihvaćen na utrku, ovde treba da pripremite vozače, osoblje, sredstva, opremu, zalihe i taktiku. Ovo je jedna od stranica koju ćete najčešće posećivati tokom sezone.
+tutorials.json.teamRanking.points.body: /\btreba da\b/ -> Timovi osvajaju međunarodne bodove na utrkama. Bolji rezultati na većim utrkama obično donose više bodova.
+
+Ti bodovi određuju poziciju svakog tima unutar njegovog natjecanja. Na kraju sezone timovi mogu biti promovisani u viši nivo ili ispasti u niži, u zavisnosti od konačne pozicije.
+
+Ova stranica je važna jer pokazuje gde se vaš tim nalazi u odnosu na druge i šta treba da postignete da biste napredovali.
+
+Nakon Rangiranja timova, sljedeća preporučena stranica je Statistika.
+tutorials.json.statistics.teamsCurrent.body: /\bvideti\b/ -> Ovo je stranica Statistika.
+
+Odjeljak Timovi prikazuje statistiku timova iz svih natjecanja na jednom mjestu. U prikazu Trenutno možete videti aktuelnu sezonu i uporediti koji timovi su najuspešniji po broju bodova.
+
+Filterima možete pregledati različite nivoe, divizije, države, korisničke timove, AI timove, aktivne i neaktivne timove. Takođe možete otvoriti profil tima i videti više detalja.
+tutorials.json.statistics.teamsHistory.body: /\bovde\b/ -> Odjeljak Povijest prikazuje prethodne sezone.
+
+Ovde možete pregledati ranije pobednike, stare preseke sezona, povijesne pozicije i učinak timova u prethodnim sezonama.
+
+Ovaj deo postaje sve korisniji kako vaš svijet prolazi kroz više sezona.
+tutorials.json.finance.sponsors.body: /\btreba da\b/ -> Kartica Sponzori prikazuje sponzore sa kojima je vaš tim već potpisao ugovor.
+
+Sponzori mogu donositi novac klubu, ali mogu imati i ciljeve ili bonus zadatke. Ti ciljevi objašnjavaju šta vaš tim treba da postigne i koliko novca možete dobiti.
+
+Sponzorski ugovori mogu biti standardni ili ugovori sa naming-rights pravima. Standardni ugovor donosi sponzorski novac bez promjene imena vašeg tima.
+
+Ugovor sa naming-rights pravima obično vredi više, ali ime sponzora postaje deo imena vašeg tima tokom sezone. Na početku sljedeće sezone vraća se originalno ime tima.
+
+Ako vaš tim još nema sponzora, možete koristiti deo sa ponudama sponzora da pronađete novi ugovor.
