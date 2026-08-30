@@ -1,0 +1,153 @@
+name: Finalize remaining German localization
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/finalize_german_remaining_20260830.py'
+      - '.github/workflows/chatgpt-finalize-german-remaining.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply final German residual fixes
+        run: |
+          python .github/scripts/finalize_german_remaining_20260830.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('src/i18n/locales/sr-Latn/customizeTeam.json')
+          data=json.loads(p.read_text(encoding='utf-8'))
+          data['kitDesigner']['collar']='Kragna'
+          p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Validate locale structures and placeholders
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          root=Path('src/i18n/locales')
+          ph=re.compile(r'\{\{[^{}]+\}\}')
+          en_files=sorted(p.name for p in (root/'en').glob('*.json'))
+          for lang in ['sr-Latn','de']:
+              files=sorted(p.name for p in (root/lang).glob('*.json'))
+              assert files==en_files, f'{lang}: file set differs from English'
+              def check(a,b,path):
+                  assert type(a) is type(b), f'{lang}:{path}: type mismatch'
+                  if isinstance(a,dict):
+                      assert list(a)==list(b), f'{lang}:{path}: key/order mismatch'
+                      for k in a: check(a[k],b[k],f'{path}.{k}')
+                  elif isinstance(a,list):
+                      assert len(a)==len(b), f'{lang}:{path}: list length mismatch'
+                      for i,(x,y) in enumerate(zip(a,b)): check(x,y,f'{path}[{i}]')
+                  elif isinstance(a,str):
+                      assert sorted(ph.findall(a))==sorted(ph.findall(b)), f'{lang}:{path}: placeholder mismatch'
+              for name in en_files:
+                  check(
+                    json.loads((root/'en'/name).read_text(encoding='utf-8')),
+                    json.loads((root/lang/name).read_text(encoding='utf-8')),
+                    name,
+                  )
+          print(f'Locale structure/placeholder validation passed for {len(en_files)} files in Serbian and German.')
+          PY
+
+      - name: Run German semantic residual gate
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          root=Path('src/i18n/locales/de')
+          bad=[
+            r'\bJahreszeiten?\b',r'\bSchulungslager\b',r'\bPfadfinder(?:n|s)?\b',r'\bRassen?\b',
+            r'\bReiter(?:in(?:nen)?|n|s)?\b',r'\bBühnen?\b',r'\bÜbertragungsgebühr\b',r'\bSignierbonus\b',
+            r'\bHauptfach\b',r'\bVertragsglück\b',r'\bSaisonbeschäftigte\b',r'\bVermißt\b',
+            r'Fahrrad-Vermächtnis',r'Ich unterschreibe',r'L 347 vom',r'Ich lege eine Bar',
+            r'kostenlose Vermittlung von Agenten',r'Reiten als eins',r'Generika-Kit',r'Speicherkübel',r'Vierteljährlich'
+          ]
+          informal=re.compile(r'\b(?:du|dich|dir|dein|deine|deinen|deinem|deiner|deines)\b',re.I)
+          cyr=re.compile(r'[\u0400-\u04ff]')
+          failures=[]
+          def walk(x,path):
+              if isinstance(x,dict):
+                  for k,v in x.items(): walk(v,f'{path}.{k}')
+              elif isinstance(x,list):
+                  for i,v in enumerate(x): walk(v,f'{path}[{i}]')
+              elif isinstance(x,str):
+                  if informal.search(x): failures.append(f'{path}: informal German: {x!r}')
+                  if cyr.search(x): failures.append(f'{path}: Cyrillic remains: {x!r}')
+                  for p in bad:
+                      if re.search(p,x,re.I):
+                          failures.append(f'{path}: bad German pattern: {x!r}')
+                          break
+          for file in sorted(root.glob('*.json')):
+              walk(json.loads(file.read_text(encoding='utf-8')),file.name)
+          if failures:
+              raise SystemExit('German residual semantic gate failed:\n'+'\n'.join(failures[:300]))
+          print('German residual semantic gate passed.')
+          PY
+
+      - name: Verify hardcoded UI gaps are removed
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          checks={
+            'src/components/layout/MainLayout.tsx':['You will be logged out soon','Stay logged in'],
+            'src/components/team/RestartTeamModal.tsx':['Confirm Team Restart','You will keep','You will lose/reset','You must type RESTART exactly to confirm this action.'],
+            'src/components/ui/KitDesigner.tsx':['>Kit name</label>','>Pattern</label>','>Sponsor text</label>','>Shirt number</label>','>Live preview</div>','Team kits table not ready yet.'],
+            'src/components/ui/JerseyPreview.tsx':['aria-label="Team jersey preview"'],
+            'src/pages/dashboard/DevelopingTeam.tsx':['title="Unlock Developing Team in Preferences first."'],
+          }
+          failures=[]
+          for name,needles in checks.items():
+              text=Path(name).read_text(encoding='utf-8')
+              for needle in needles:
+                  if needle in text: failures.append(f'{name}: {needle}')
+          if failures:
+              raise SystemExit('Hardcoded localization gaps remain:\n'+'\n'.join(failures))
+          assert "useTranslation('appShell')" in Path('src/components/layout/MainLayout.tsx').read_text()
+          assert "useTranslation('appShell')" in Path('src/components/team/RestartTeamModal.tsx').read_text()
+          assert "useTranslation('customizeTeam')" in Path('src/components/ui/KitDesigner.tsx').read_text()
+          print('Focused source localization gate passed.')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit final German localization
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            src/components/layout/MainLayout.tsx \
+            src/components/team/RestartTeamModal.tsx \
+            src/components/ui/KitDesigner.tsx \
+            src/components/ui/JerseyPreview.tsx \
+            src/pages/dashboard/DevelopingTeam.tsx \
+            src/i18n/locales/de/*.json \
+            src/i18n/locales/en/customizeTeam.json \
+            src/i18n/locales/sr-Latn/customizeTeam.json \
+            src/i18n/locales/en/developingTeam.json \
+            src/i18n/locales/sr-Latn/developingTeam.json
+          if git diff --cached --quiet; then
+            echo 'No final German localization changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Finish remaining German localization gaps'
+          git pull --rebase origin main
+          git push origin main
