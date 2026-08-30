@@ -20,6 +20,8 @@ jobs:
           fetch-depth: 0
       - name: Generate hypothetical Croatian management state
         run: python .github/scripts/polish_croatian_management_20260830.py
+      - name: Restore canonical placeholder names
+        run: python .github/scripts/repair_croatian_placeholders_20260830.py
       - name: Capture terminology report
         run: |
           python .github/scripts/validate_croatian_management_20260830.py > .github/croatian_management_report.txt 2>&1 || true
@@ -36,6 +38,10 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add .github/croatian_management_report.txt
-          git commit -m 'Record Croatian management polish diagnostics'
+          if git diff --cached --quiet; then
+            echo 'Diagnostic report unchanged.'
+            exit 0
+          fi
+          git commit -m 'Update Croatian management polish diagnostics'
           git pull --rebase origin main
           git push origin main
