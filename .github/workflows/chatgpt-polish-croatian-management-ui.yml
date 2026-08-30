@@ -22,6 +22,9 @@ jobs:
       - name: Apply Croatian management polish
         run: python .github/scripts/polish_croatian_management_20260830.py
 
+      - name: Restore canonical placeholder names
+        run: python .github/scripts/repair_croatian_placeholders_20260830.py
+
       - name: Validate Croatian management localization
         run: python .github/scripts/validate_croatian_management_20260830.py
 
