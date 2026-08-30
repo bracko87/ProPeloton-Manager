@@ -31,27 +31,27 @@
     },
     "simpleOrDeep": {
       "title": "Igrajte jednostavno ili idite u dubinu",
-      "body": "Ne morate odmah razumeti sve.\n\nNa početku možete igrati jednostavno: pratite upozorenja, proveravajte ekipu, prijavljujte se na utrke, pripremajte tim i pratite rezultate.\n\nKasnije, ako želite više dubine, možete koristiti napredne sisteme kao što su umor vozača, moral, race sharpness, ciljevi sponzora, bonusi opreme, trening kampovi, skauting, pregovori o transferima, porezi, infrastruktura i promocija ili ispadanje.",
+      "body": "Ne morate odmah razumjeti sve.\n\nNa početku možete igrati jednostavno: pratite upozorenja, provjeravajte momčad, prijavljujte se na utrke, pripremajte tim i pratite rezultate.\n\nKasnije, ako želite više dubine, možete koristiti napredne sustave kao što su umor vozača, moral, race sharpness, ciljevi sponzora, bonusi opreme, trening kampovi, skauting, pregovori o transferima, porezi, infrastruktura te promocija ili ispadanje.",
       "primary": "Dalje"
     },
     "purpose": {
       "title": "Šta će ovaj vodič uraditi",
-      "body": "Ovaj vodič će vas jednu po jednu provesti kroz glavne stranice igre.\n\nSaznaćete čemu svaka stranica služi, koja dugmad su važna i šta bi novi menadžer trebalo da proverava.\n\nVodič neće odjednom objašnjavati svaki sitan detalj. Za detaljnija objašnjenja kasnije uvek možete koristiti kompletan priručnik igre.",
+      "body": "Ovaj vodič provest će vas, korak po korak, kroz glavne stranice igre.\n\nSaznat ćete čemu svaka stranica služi, koji su gumbi važni i što bi novi menadžer trebao provjeravati.\n\nVodič neće odjednom objašnjavati svaki sitan detalj. Za detaljnija objašnjenja kasnije uvijek možete koristiti potpuni priručnik igre.",
       "primary": "Dalje"
     },
     "startOverview": {
       "title": "Počnimo sa stranicom Pregled",
-      "body": "Počećemo sa stranicom Pregled.\n\nTo je vaša glavna menadžerska kontrolna tabla. Najbrže vam pokazuje stanje tima: trenutna upozorenja, vesti, finansije, utrke, poruke sponzora, stanje vozača i napredak sezone.\n\nNakon ovog uvoda objasniću stranicu Pregled korak po korak.",
+      "body": "Počet ćemo sa stranicom Pregled.\n\nTo je vaša glavna menadžerska nadzorna ploča. Najbrže vam pokazuje stanje tima: trenutačna upozorenja, vijesti, financije, utrke, poruke sponzora, stanje vozača i napredak sezone.\n\nNakon ovog uvoda objasnit ću stranicu Pregled korak po korak.",
       "primary": "Pokreni vodič za Pregled"
     },
     "dashboard": {
       "title": "Vaša menadžerska kontrolna tabla",
-      "body": "Ovo je stranica Pregled — glavna kontrolna tabla vašeg tima.\n\nPosmatrajte je kao svakodnevni kontrolni centar. Kada se prijavite, ovo je obično prvo mjesto koje treba proveriti.\n\nOvde možete brzo videti najvažnije informacije o klubu, uključujući stanje tima, trenutna upozorenja, finansije, utrke, stanje vozača i napredak sezone.",
+      "body": "Ovo je stranica Pregled — glavna nadzorna ploča vašeg tima.\n\nPromatrajte je kao svakodnevni kontrolni centar. Kada se prijavite, ovo je obično prvo mjesto koje trebate provjeriti.\n\nOvdje možete brzo vidjeti najvažnije informacije o klubu, uključujući stanje tima, trenutačna upozorenja, financije, utrke, stanje vozača i napredak sezone.",
       "primary": "Dalje"
     },
     "staffBriefing": {
-      "title": "Centar za izveštaje osoblja",
-      "body": "Ovaj panel prikazuje vaše pomoćno osoblje i uloge savjetnika.\n\nOvde možete videti važne članove tima kao što su glavni trener, sportski direktor, doktor tima, glavni mehaničar i druge pomoćne uloge kada su dostupne.\n\nOvi savjetnici vam pomažu da efikasnije upravljate važnim dijelovima kluba, kao što su planiranje utrke, zdravlje vozača, priprema i podrška oko opreme.\n\nNeke funkcije savjetnika, alati osoblja ili opcije povezane sa automatizacijom mogu zahtevati Premium račun ili kupovinu Coins da biste ih koristili u potpunosti.",
+      "title": "Centar za izvještaje osoblja",
+      "body": "Ovaj panel prikazuje vaše pomoćno osoblje i uloge savjetnika.\n\nOvdje možete vidjeti važne članove tima kao što su glavni trener, sportski direktor, liječnik tima, glavni mehaničar i druge pomoćne uloge kada su dostupne.\n\nTi savjetnici pomažu vam učinkovitije upravljati važnim dijelovima kluba, kao što su planiranje utrke, zdravlje vozača, priprema i podrška oko opreme.\n\nNeke funkcije savjetnika, alati osoblja ili opcije povezane s automatizacijom mogu zahtijevati Premium račun ili kupnju Coins kako biste ih koristili u potpunosti.",
       "primary": "Dalje"
     },
     "newsBoard": {
@@ -61,22 +61,22 @@
     },
     "nextRace": {
       "title": "Sljedeća utrka tima",
-      "body": "Panel Sljedeća utrka tima pomaže vam da vidite šta uskoro očekuje vaš tim.\n\nOvo je važno jer prihvaćene utrke često i dalje zahtevaju pripremu. Pre rokova ćete možda morati da izaberete vozače, osoblje, vozila i druga sredstva, opremu, zalihe i taktiku za etape.\n\nAko ovaj panel prikazuje predstojeću utrku, trebalo bi rano da provjerite Pripremu utrke.",
+      "body": "Panel Sljedeća utrka tima pomaže vam vidjeti što uskoro očekuje vaš tim.\n\nTo je važno jer prihvaćene utrke često i dalje zahtijevaju pripremu. Prije rokova možda ćete morati odabrati vozače, osoblje, vozila i druga sredstva, opremu, zalihe i taktiku za etape.\n\nAko ovaj panel prikazuje predstojeću utrku, trebali biste rano provjeriti Pripremu utrke.",
       "primary": "Dalje"
     },
     "lastRace": {
       "title": "Posljednja utrka tima",
-      "body": "Panel Posljednja utrka tima prikazuje poslednju završenu utrku vašeg tima kada je dostupna.\n\nKoristite ga da brzo pregledate učinak tima. Rezultati vam mogu pomoći da odlučite da li vozačima treba odmor, da li je taktika dobro funkcionisala ili je potrebno promeniti ekipu pre sljedećeg događaja.",
+      "body": "Panel Posljednja utrka tima prikazuje posljednju završenu utrku vašeg tima kada je dostupna.\n\nKoristite ga za brz pregled učinka tima. Rezultati vam mogu pomoći odlučiti trebaju li vozači odmor, je li taktika dobro funkcionirala ili je potrebno promijeniti momčad prije sljedećeg događaja.",
       "primary": "Dalje"
     },
     "sponsor": {
       "title": "Glavni sponzor",
-      "body": "Panel Glavni sponzor prikazuje informacije o vašem glavnom sponzoru kada imate aktivan ugovor.\n\nSponzori su važni jer mogu donositi novac, bonuse, ciljeve i ponekad uticati na brendiranje. Neki ugovori su jednostavni, dok sponzori sa naming-rights pravima mogu privremeno promeniti ime vašeg tima tokom sezone.",
+      "body": "Panel Glavni sponzor prikazuje informacije o vašem glavnom sponzoru kada imate aktivan ugovor.\n\nSponzori su važni jer mogu donositi novac, bonuse, ciljeve i ponekad utjecati na brendiranje. Neki su ugovori jednostavni, dok sponzori s naming-rights pravima mogu privremeno promijeniti ime vašeg tima tijekom sezone.",
       "primary": "Dalje"
     },
     "progress": {
       "title": "Zdravlje tima i napredak sezone",
-      "body": "Ostatak stranice Pregled pomaže vam da pratite stanje i napredak tima.\n\nOvde možete pratiti stanje vozača, finansijsko zdravlje, aktivnosti sponzora, aktivnosti na utrkama, aktivne operacije, podatke pregleda sezone i opšti napredak kroz sezonu.\n\nNeki napredni dijelovi kontrolne table, sažeci ili dodatni prikazi podataka mogu zahtevati Premium račun ili kupovinu Coins. Ako je panel zaključan, i dalje možete normalno igrati, ali Premium ili Coins mogu olakšati igru i dati detaljniji pregled kluba.\n\nKako klub raste, ova stranica postaje sve korisnija jer pomaže da povežete kratkoročne zadatke, poput pripreme sljedeće utrke, sa dugoročnim ciljevima kao što su izgradnja jače ekipe i poboljšanje plasmana.",
+      "body": "Ostatak stranice Pregled pomaže vam pratiti stanje i napredak tima.\n\nOvdje možete pratiti stanje vozača, financijsko zdravlje, aktivnosti sponzora, aktivnosti na utrkama, aktivne operacije, podatke pregleda sezone i opći napredak kroz sezonu.\n\nNeki napredni dijelovi nadzorne ploče, sažeci ili dodatni prikazi podataka mogu zahtijevati Premium račun ili kupnju Coins. Ako je panel zaključan, i dalje možete normalno igrati, ali Premium ili Coins mogu olakšati igru i dati detaljniji pregled kluba.\n\nKako klub raste, ova stranica postaje sve korisnija jer pomaže povezati kratkoročne zadatke, poput pripreme sljedeće utrke, s dugoročnim ciljevima kao što su izgradnja jače momčadi i poboljšanje plasmana.",
       "primary": "Nastavi na Ekipu",
       "secondary": "Završi za sada"
     }
@@ -90,17 +90,17 @@
     },
     "riders": {
       "title": "Vaši vozači",
-      "body": "Ovo je stranica Ekipe — glavno mjesto gde su prikazani vozači vašeg tima.\n\nU opštem prikazu možete videti važne informacije o vozaču kao što su godine, država, uloga, ukupni nivo, stanje, tržišna vrijednost, plaća, detalji ugovora i međunarodni bodovi.\n\nKoristite ovu stranicu kad god želite da razumete trenutnu snagu i strukturu svog tima.",
+      "body": "Ovo je stranica Momčad — glavno mjesto na kojem su prikazani vozači vašeg tima.\n\nU općem prikazu možete vidjeti važne informacije o vozaču kao što su godine, država, uloga, ukupna razina, stanje, tržišna vrijednost, plaća, pojedinosti ugovora i međunarodni bodovi.\n\nKoristite ovu stranicu kad god želite razumjeti trenutačnu snagu i strukturu svojeg tima.",
       "primary": "Dalje"
     },
     "details": {
       "title": "Prikazi i profili vozača",
-      "body": "Stranica Ekipe nudi više načina za pregled vozača.\n\nMožete proveriti finansijske informacije, vještine, formu, razvoj, zdravlje i dostupnost. Vještine se vremenom mogu poboljšavati, pa vam ova stranica pomaže da pratite razvoj svakog vozača.\n\nKlikom na gumb Prikaz možete otvoriti kompletan profil vozača sa detaljnijim informacijama.\n\nNeki napredni alati za vozače, dodatne kontrolne table ili praktične funkcije mogu zahtevati Premium račun ili kupovinu Coins.",
+      "body": "Stranica Momčad nudi više načina za pregled vozača.\n\nMožete provjeriti financijske informacije, vještine, formu, razvoj, zdravlje i dostupnost. Vještine se s vremenom mogu poboljšavati, pa vam ova stranica pomaže pratiti razvoj svakog vozača.\n\nKlikom na gumb Prikaz možete otvoriti potpuni profil vozača s detaljnijim informacijama.\n\nNeki napredni alati za vozače, dodatne nadzorne ploče ili praktične funkcije mogu zahtijevati Premium račun ili kupnju Coins.",
       "primary": "Dalje"
     },
     "developing": {
       "title": "Razvojni tim i period za premeštanje",
-      "body": "Razvojni tim je vaš drugi tim. Može se koristiti za mlade vozače koji još nisu spremni za prvi tim, ali i dalje mogu da se takmiče u dodeljenim natjecanjima.\n\nRazvojni tim prvo mora biti otključan. Više informacija možete pronaći u Podešavanjima.\n\nVozači se između Prvog i Razvojnog tima mogu premeštati samo tokom perioda za premeštanje. Ovi periodi se otvaraju četiri puta godišnje, a stranica Ekipe pokazuje kada je dostupan sljedeći period.\n\nNeki dodatni alati za upravljanje, prošireni prikazi ili praktične funkcije povezane sa ovim delom mogu zahtevati Premium račun ili kupovinu Coins.",
+      "body": "Razvojni tim vaš je drugi tim. Može se koristiti za mlade vozače koji još nisu spremni za Prvi tim, ali se i dalje mogu natjecati u dodijeljenim natjecanjima.\n\nRazvojni tim prvo mora biti otključan. Više informacija možete pronaći u Postavkama.\n\nVozači se između Prvog i Razvojnog tima mogu premještati samo tijekom razdoblja za premještanje. Ta se razdoblja otvaraju četiri puta godišnje, a stranica Momčad pokazuje kada je dostupno sljedeće razdoblje.\n\nNeki dodatni alati za upravljanje, prošireni prikazi ili praktične funkcije povezane s ovim dijelom mogu zahtijevati Premium račun ili kupnju Coins.",
       "primary": "Dalje"
     },
     "staff": {
@@ -113,13 +113,13 @@
   "training": {
     "welcome": {
       "title": "Treba vam pomoć sa Treningom?",
-      "body": "Možemo vam pokazati kako funkcionišu redovni trening i trening kampovi i kako utiču na razvoj vozača, umor i pripremu za utrke.",
+      "body": "Možemo vam pokazati kako funkcioniraju redovni trening i trening kampovi te kako utječu na razvoj vozača, umor i pripremu za utrke.",
       "primary": "Pokreni vodič",
       "secondary": "Ne, hvala"
     },
     "regular": {
       "title": "Redovni trening",
-      "body": "Ovo je stranica Trening.\n\nU Redovnom treningu možete odrediti šta vozači treniraju kada nisu raspoređeni na neku drugu aktivnost, kao što su utrka ili trening kamp.\n\nMožete podesiti podrazumevani trening tima za Prvi tim i Razvojni tim, a možete menjati trening i za pojedinačne vozače. Svaki vozač može trenirati određeni fokus, kao što su sprint, usponi, ravnica, hronometar, izdržljivost, otpornost, race IQ, timski rad ili oporavak.\n\nIntenzitet treninga je važan. Teži trening može brže unaprediti vozače, ali ih može i više umoriti pred naredne utrke. Kada je vozaču potreban odmor i smanjenje umora, možete izabrati i Slobodan dan.",
+      "body": "Ovo je stranica Trening.\n\nU Redovnom treningu možete odrediti što vozači treniraju kada nisu raspoređeni na neku drugu aktivnost, kao što su utrka ili trening kamp.\n\nMožete postaviti zadani trening tima za Prvi tim i Razvojni tim, a možete mijenjati trening i za pojedinačne vozače. Svaki vozač može trenirati određeni fokus, kao što su sprint, usponi, ravnica, kronometar, izdržljivost, otpornost, Race IQ, timski rad ili oporavak.\n\nIntenzitet treninga važan je. Teži trening može brže unaprijediti vozače, ali ih može i više umoriti prije sljedećih utrka. Kada je vozaču potreban odmor i smanjenje umora, možete odabrati i Slobodan dan.",
       "primary": "Dalje"
     },
     "camps": {
@@ -138,12 +138,12 @@
     },
     "overview": {
       "title": "Pregled opreme",
-      "body": "Ovo je stranica Oprema.\n\nKartica Pregled daje sažetak timske opreme i konfiguracija postavki za utrku.\n\nPodrazumevana postavka za utrku koristi se kada za određenu utrku ne izaberete posebnu postavku. Ispod nje možete napraviti različite konfiguracije postavki koje kasnije možete birati u Pripremi utrke.\n\nSvaka postavka može doneti različite bonuse vozačima, u zavisnosti od opreme koju sadrži i broja upotrebljivih komada.",
+      "body": "Ovo je stranica Oprema.\n\nKartica Pregled daje sažetak timske opreme i Race Setup konfiguracija.\n\nZadani Race Setup koristi se kada za određenu utrku ne odaberete poseban setup. Ispod njega možete izraditi različite Race Setup konfiguracije koje poslije možete odabrati u Race Preparation.\n\nSvaki setup može donijeti različite bonuse vozačima, ovisno o opremi koju sadrži i broju dostupnih upotrebljivih jedinica.",
       "primary": "Dalje"
     },
     "inventory": {
       "title": "Inventar",
-      "body": "Kartica Inventar prikazuje svu opremu koju vaš tim trenutno poseduje.\n\nOvde možete videti predmete kao što su bicikli, kotači, gume i druga kupljena oprema. Možete proveriti kvalitet, stanje, vrijednost, bonuse i dostupnost.\n\nAko vam neka oprema više nije potrebna, možete je prodati iz inventara.",
+      "body": "Kartica Inventar prikazuje svu opremu koju vaš tim trenutačno posjeduje.\n\nOvdje možete vidjeti predmete kao što su bicikli, kotači, gume i druga kupljena oprema. Možete provjeriti kvalitetu, stanje, vrijednost, bonuse i dostupnost.\n\nAko vam neka oprema više nije potrebna, možete je prodati iz inventara.",
       "primary": "Dalje"
     },
     "market": {
@@ -153,7 +153,7 @@
     },
     "raceSupplies": {
       "title": "Zalihe za utrku",
-      "body": "Kartica Zalihe za utrku prikazuje potrošne zalihe koje vaš tim može koristiti na utrkama.\n\nNeke zalihe mogu se koristiti samo jednom, dok se druge mogu koristiti više puta. Zalihe mogu pomoći da zaštitite vozače od teških uvjeta na utrci.\n\nBez odgovarajućih zaliha vozači mogu pretrpeti negativne efekte u veoma toplim, hladnim ili zahtevnim vremenskim uvjetima.\n\nNakon Opreme, sljedeća preporučena stranica je Infrastruktura.",
+      "body": "Kartica Zalihe za utrku prikazuje potrošne zalihe koje vaš tim može koristiti na utrkama.\n\nNeke zalihe mogu se koristiti samo jednom, dok se druge mogu koristiti više puta. Zalihe mogu pomoći zaštititi vozače od teških uvjeta na utrci.\n\nBez odgovarajućih zaliha vozači mogu pretrpjeti negativne učinke u vrlo toplim, hladnim ili zahtjevnim vremenskim uvjetima.\n\nNakon Opreme, sljedeća preporučena stranica je Infrastruktura.",
       "primary": "Nastavi na Infrastrukturu",
       "secondary": "Završi za sada"
     }
@@ -172,12 +172,12 @@
     },
     "projects": {
       "title": "Izgradnja, unapređenja i povraćaj novca",
-      "body": "Kada otvorite detalje objekta, možete videti cenu sljedećeg nivoa, trajanje izgradnje i bonuse ili otključavanja koje će doneti.\n\nProjekat izgradnje ili unapređenja možete pokrenuti kada klub ima dovoljno novca i slobodan kapacitet za projekte.\n\nProjekat infrastrukture možete i otkazati. Ako ga otkažete odmah, dobijate pun povraćaj novca. Ako ga otkažete kasnije, povraćaj može biti manji.",
+      "body": "Kada otvorite detalje objekta, možete vidjeti cijenu sljedeće razine, trajanje izgradnje i bonuse ili otključavanja koje će donijeti.\n\nProjekt izgradnje ili nadogradnje možete pokrenuti kada klub ima dovoljno novca i slobodan kapacitet za projekte.\n\nProjekt infrastrukture možete i otkazati. Ako ga otkažete odmah, dobit ćete puni povrat novca. Ako ga otkažete kasnije, povrat može biti manji.",
       "primary": "Dalje"
     },
     "assets": {
       "title": "Timska sredstva",
-      "body": "Kartica Sredstva prikazuje vozila i pomoćna sredstva koja vaš tim može koristiti.\n\nTo uključuje timske automobile, autobuse, kombije za opremu, mobilne radionice i medicinske kombije. Ova sredstva mogu podržati tim tokom utrka, putovanja, pripreme i trening kampova.\n\nSvako sredstvo može imati različite nivoe, troškove, stanje, bonuse i ograničenja. Otvorite detalje svakog sredstva da biste razumeli šta donosi i kako može pomoći timu da bude uspešniji.\n\nZa potpuno korišćenje ove stranice neke napredne funkcije, opcije upravljanja ili prošireni alati mogu zahtevati Premium račun ili kupovinu Coins.",
+      "body": "Kartica Sredstva prikazuje vozila i pomoćna sredstva koja vaš tim može koristiti.\n\nTo uključuje timske automobile, autobuse, kombije za opremu, mobilne radionice i medicinske kombije. Ta sredstva mogu podržati tim tijekom utrka, putovanja, pripreme i trening kampova.\n\nSvako sredstvo može imati različite razine, troškove, stanje, bonuse i ograničenja. Otvorite detalje svakog sredstva kako biste razumjeli što donosi i kako može pomoći timu da bude uspješniji.\n\nZa potpuno korištenje ove stranice neke napredne funkcije, opcije upravljanja ili prošireni alati mogu zahtijevati Premium račun ili kupnju Coins.",
       "primary": "Nastavi na Kalendar",
       "secondary": "Završi za sada"
     }
@@ -185,23 +185,23 @@
   "calendar": {
     "welcome": {
       "title": "Treba vam pomoć sa Kalendarom?",
-      "body": "Možemo vam pokazati kako Kalendar funkcioniše, uključujući dnevne aktivnosti tima, mesece utrka, ciljeve sponzora vezane za utrke i profile utrka.",
+      "body": "Možemo vam pokazati kako Kalendar funkcionira, uključujući dnevne aktivnosti tima, mjesece utrka, ciljeve sponzora povezane s utrkama i profile utrka.",
       "primary": "Pokreni vodič",
       "secondary": "Ne, hvala"
     },
     "season": {
       "title": "Kalendar sezone",
-      "body": "Ovo je Kalendar sezone.\n\nDaje vam pregled svakodnevnih aktivnosti vašeg tima. Za svaki dan možete videti šta se dešava u klubu, uključujući utrke, trening kampove, događaje, praznike i druge važne aktivnosti.\n\nKoristite ovaj prikaz kada želite da razumete raspored tima iz dana u dan.",
+      "body": "Ovo je Kalendar sezone.\n\nDaje vam pregled svakodnevnih aktivnosti vašeg tima. Za svaki dan možete vidjeti što se događa u klubu, uključujući utrke, trening kampove, događaje, praznike i druge važne aktivnosti.\n\nKoristite ovaj prikaz kada želite razumjeti raspored tima iz dana u dan.",
       "primary": "Dalje"
     },
     "races": {
       "title": "Kalendar utrka",
-      "body": "Ovo je Kalendar utrka.\n\nOvde možete videti sve utrke u sezoni. Utrke mogu biti jednodnevne ili višednevne etapne utrke. Svaka utrka prikazuje korisne informacije kao što su datum, status utrke, kategorija, tip utrke, ograničenja broja timova i status prijave.\n\nUtrke su podeljene po mjesecima, tako da svaki mjesec ima svoju listu dostupnih utrka.",
+      "body": "Ovo je Kalendar utrka.\n\nOvdje možete vidjeti sve utrke u sezoni. Utrke mogu biti jednodnevne ili višednevne etapne utrke. Svaka utrka prikazuje korisne informacije kao što su datum, status utrke, kategorija, tip utrke, ograničenja broja timova i status prijave.\n\nUtrke su podijeljene po mjesecima, tako da svaki mjesec ima svoj popis dostupnih utrka.",
       "primary": "Dalje"
     },
     "openRace": {
       "title": "Otvorite profil utrke",
-      "body": "Neke utrke mogu imati oznaku cilja sponzora. To znači da je utrka povezana sa bonus ciljem sponzora, na primer učešćem ili ostvarivanjem određenog rezultata.\n\nKoristite gumb Otvori utrku kada želite da vidite više detalja o utrci ili da se prijavite.\n\nSljedeće ćemo otvoriti jedan profil utrke kako biste videli koje informacije su tamo dostupne.",
+      "body": "Neke utrke mogu imati oznaku cilja sponzora. To znači da je utrka povezana s bonus ciljem sponzora, primjerice sudjelovanjem ili ostvarivanjem određenog rezultata.\n\nKoristite gumb Otvori utrku kada želite vidjeti više detalja o utrci ili se prijaviti.\n\nSljedeće ćemo otvoriti jedan profil utrke kako biste vidjeli koje su informacije tamo dostupne.",
       "primary": "Otvori profil utrke",
       "secondary": "Završi za sada"
     }
@@ -209,12 +209,12 @@
   "raceDetail": {
     "overview": {
       "title": "Profil utrke",
-      "body": "Ovo je stranica Profil utrke.\n\nOvde možete videti najvažnije informacije o utrci: koliko timova može sudjelovati, nagradni fond, kada se prijave zatvaraju, kada se objavljuju timovi sudionici i koliko vozača svaki tim može prijaviti.\n\nKod etapnih utrka možete videti i koliko etapa utrka ima.",
+      "body": "Ovo je stranica Profil utrke.\n\nOvdje možete vidjeti najvažnije informacije o utrci: koliko timova može sudjelovati, nagradni fond, kada se prijave zatvaraju, kada se objavljuju timovi sudionici i koliko vozača svaki tim može prijaviti.\n\nKod etapnih utrka možete vidjeti i koliko etapa utrka ima.",
       "primary": "Dalje"
     },
     "stagesResults": {
       "title": "Etape, rezultati i replay",
-      "body": "Profil utrke prikazuje i detaljne informacije o etapama.\n\nMožete pregledati profile etapa, mape ruta, raspodelu terena, vremenske uslove na etapi, sprint bodove, brdske bodove i druge detalje. Vremenska prognoza se objavljuje tek neposredno pred utrku, pa se može pojaviti kasnije.\n\nNiže na stranici, Informacije o utrci prikazuju timove i vozače učesnike pre utrke, a rezultate nakon utrke. Ako vaš tim sudjeluje i utrka je aktivna ili završena, možete koristiti Gledaj utrku ili Gledaj replay da pratite akciju na mapi.",
+      "body": "Profil utrke prikazuje i detaljne informacije o etapama.\n\nMožete pregledati profile etapa, karte ruta, raspodjelu terena, vremenske uvjete na etapi, sprint bodove, brdske bodove i druge detalje. Vremenska prognoza objavljuje se tek neposredno prije utrke, pa se može pojaviti kasnije.\n\nNiže na stranici Informacije o utrci prikazuju timove i vozače sudionike prije utrke, a rezultate nakon utrke. Ako vaš tim sudjeluje i utrka je aktivna ili završena, možete koristiti Gledaj utrku ili Gledaj replay kako biste pratili akciju na karti.",
       "primary": "Nastavi na Pripremu utrke",
       "secondary": "Završi za sada"
     }
@@ -228,17 +228,17 @@
     },
     "acceptedRaces": {
       "title": "Prihvaćene utrke",
-      "body": "Ovo je stranica Priprema utrke.\n\nKartica Prihvaćene utrke prikazuje utrke na kojima je vaš tim prihvaćen za sudjelovanje.\n\nOvde možete videti najvažnije informacije o utrci, ali i status pripreme vašeg tima. Na primer, možete videti Plan utrke otvoren, Planovi etapa otvoreni, Rok za vozače dostignut, Utrka aktivna, Utrka završena ili Sve spremno.\n\nKada vaš tim bude prihvaćen na utrku, ovde treba da pripremite vozače, osoblje, sredstva, opremu, zalihe i taktiku. Ovo je jedna od stranica koju ćete najčešće posećivati tokom sezone.",
+      "body": "Ovo je stranica Priprema utrke.\n\nKartica Prihvaćene utrke prikazuje utrke na kojima je vaš tim prihvaćen za sudjelovanje.\n\nOvdje možete vidjeti najvažnije informacije o utrci, ali i status pripreme vašeg tima. Primjerice, možete vidjeti Race Plan otvoren, Stage Plans otvoreni, rok za vozače dosegnut, utrka aktivna, utrka završena ili Sve spremno.\n\nKada vaš tim bude prihvaćen na utrku, ovdje trebate pripremiti vozače, osoblje, sredstva, opremu, zalihe i taktiku. Ovo je jedna od stranica koju ćete najčešće posjećivati tijekom sezone.",
       "primary": "Dalje"
     },
     "racePlan": {
       "title": "Plan utrke",
-      "body": "Kartica Plan utrke je mjesto gde pripremate tim za prihvaćenu utrku.\n\nVažno: vrijeme u igri teče brže nego u stvarnom životu. Jedan dan u igri traje 12 sati stvarnog vremena. To znači da dva dana u igri odgovaraju jednom stvarnom danu. Imajte ovo na umu kada proveravate periode za Plan utrke, rok za prijavu vozača i rokove za Planove etapa.\n\nKada je period za Plan utrke otvoren, možete izabrati da li će nastupiti Prvi tim ili Razvojni tim, ako vam je Razvojni tim dostupan.\n\nMorate proveriti i rok za prijavu vozača. Do tog datuma možete birati vozače koji će sudjelovati. Stranica prikazuje minimalan i maksimalan broj dozvoljenih vozača za utrku.\n\nLista vozača pokazuje ko može biti izabran, a ko je blokiran jer je već raspoređen na drugu utrku koja se vremenski preklapa. Takođe možete dodijeliti osoblje i timska sredstva za utrku ako su dostupni.\n\nPregled troškova se ažurira dok pravite plan, tako da možete videti koliko će utrka koštati. Sa desne strane pregled bonusa prikazuje moguće bonuse podrške od osoblja, sredstava, opreme i timskih politika.",
+      "body": "Kartica Race Plan mjesto je na kojem pripremate tim za prihvaćenu utrku.\n\nVažno: vrijeme u igri teče brže nego u stvarnom životu. Jedan dan u igri traje 12 sati stvarnog vremena. To znači da dva dana u igri odgovaraju jednom stvarnom danu. Imajte to na umu kada provjeravate razdoblje za Race Plan, rok za prijavu vozača i rokove za Stage Plans.\n\nKada je razdoblje za Race Plan otvoreno, možete odabrati hoće li nastupiti Prvi tim ili Razvojni tim, ako vam je Razvojni tim dostupan.\n\nMorate provjeriti i rok za prijavu vozača. Do tog datuma možete birati vozače koji će sudjelovati. Stranica prikazuje minimalan i maksimalan broj dopuštenih vozača za utrku.\n\nPopis vozača pokazuje tko može biti odabran, a tko je blokiran jer je već raspoređen na drugu utrku koja se vremenski preklapa. Također možete dodijeliti osoblje i timska sredstva za utrku ako su dostupni.\n\nPregled troškova ažurira se dok izrađujete plan, tako da možete vidjeti koliko će utrka koštati. S desne strane pregled bonusa prikazuje moguće bonuse podrške od osoblja, sredstava, opreme i timskih politika.",
       "primary": "Dalje"
     },
     "stagePlans": {
       "title": "Planovi etapa",
-      "body": "Kartica Planovi etapa otvara se nakon što je Plan utrke predat.\n\nOvde pripremate taktiku za svaku etapu. Za svaku etapu možete definisati uloge vozača, opremu, zalihe, timsku taktiku i individualnu taktiku.\n\nPlanovi etapa su važni jer različite etape zahtevaju različite planove. Ravna sprinterska etapa, planinska etapa, hronometar ili valovita etapa mogu zahtevati različite vozače, taktiku i podršku.\n\nNakon Pripreme utrke, sljedeća preporučena stranica je Rangiranje timova.",
+      "body": "Kartica Stage Plans otvara se nakon što je Race Plan predan.\n\nOvdje pripremate taktiku za svaku etapu. Za svaku etapu možete definirati uloge vozača, opremu, zalihe, timsku taktiku i individualnu taktiku.\n\nStage Plans važni su jer različite etape zahtijevaju različite planove. Ravna sprinterska etapa, planinska etapa, kronometar ili valovita etapa mogu zahtijevati različite vozače, taktiku i podršku.\n\nNakon Pripreme utrke, sljedeća preporučena stranica je Rangiranje timova.",
       "primary": "Nastavi na Rangiranje timova",
       "secondary": "Završi za sada"
     }
@@ -252,12 +252,12 @@
     },
     "competitions": {
       "title": "Natjecanja i nivoi",
-      "body": "Ovo je stranica Rangiranje timova.\n\nOvde možete videti rang-liste svih natjecanja i nivoa, uključujući WorldTeam, ProTeam, Continental i Amateur divizije.\n\nSvaki tim ima mjesto u svom takmičenju na osnovu međunarodnih bodova osvojenih tokom sezone. Možete prelaziti između nivoa i divizija da vidite kako su timovi rangirani u celom biciklističkom svijetu.",
+      "body": "Ovo je stranica Rangiranje timova.\n\nOvdje možete vidjeti poretke svih natjecanja i razina, uključujući WorldTeam, ProTeam, Continental i Amateur divizije.\n\nSvaki tim ima mjesto u svojem natjecanju na temelju međunarodnih bodova osvojenih tijekom sezone. Možete prelaziti između razina i divizija kako biste vidjeli kako su timovi rangirani u cijelom biciklističkom svijetu.",
       "primary": "Dalje"
     },
     "points": {
       "title": "Međunarodni bodovi i promjene na kraju sezone",
-      "body": "Timovi osvajaju međunarodne bodove na utrkama. Bolji rezultati na većim utrkama obično donose više bodova.\n\nTi bodovi određuju poziciju svakog tima unutar njegovog natjecanja. Na kraju sezone timovi mogu biti promovisani u viši nivo ili ispasti u niži, u zavisnosti od konačne pozicije.\n\nOva stranica je važna jer pokazuje gde se vaš tim nalazi u odnosu na druge i šta treba da postignete da biste napredovali.\n\nNakon Rangiranja timova, sljedeća preporučena stranica je Statistika.",
+      "body": "Timovi osvajaju međunarodne bodove na utrkama. Bolji rezultati na većim utrkama obično donose više bodova.\n\nTi bodovi određuju poziciju svakog tima unutar njegova natjecanja. Na kraju sezone timovi mogu biti promovirani u višu razinu ili ispasti u nižu, ovisno o konačnoj poziciji.\n\nOva stranica važna je jer pokazuje gdje se vaš tim nalazi u odnosu na druge i što morate ostvariti kako biste napredovali.\n\nNakon Rangiranja timova, sljedeća preporučena stranica je Statistika.",
       "primary": "Nastavi na Statistiku",
       "secondary": "Završi za sada"
     }
@@ -265,23 +265,23 @@
   "statistics": {
     "welcome": {
       "title": "Treba vam pomoć sa Statistikom?",
-      "body": "Možemo vam pokazati kako funkcionišu statistike timova i vozača, uključujući rang-liste trenutne sezone, povijesne rezultate, bodove vozača, podijume i majice.",
+      "body": "Možemo vam pokazati kako funkcioniraju statistike timova i vozača, uključujući poretke trenutačne sezone, povijesne rezultate, bodove vozača, postolja i dresove.",
       "primary": "Pokreni vodič",
       "secondary": "Ne, hvala"
     },
     "teamsCurrent": {
       "title": "Statistika timova",
-      "body": "Ovo je stranica Statistika.\n\nOdjeljak Timovi prikazuje statistiku timova iz svih natjecanja na jednom mjestu. U prikazu Trenutno možete videti aktuelnu sezonu i uporediti koji timovi su najuspešniji po broju bodova.\n\nFilterima možete pregledati različite nivoe, divizije, države, korisničke timove, AI timove, aktivne i neaktivne timove. Takođe možete otvoriti profil tima i videti više detalja.",
+      "body": "Ovo je stranica Statistika.\n\nOdjeljak Timovi prikazuje statistiku timova iz svih natjecanja na jednom mjestu. U prikazu Trenutačno možete vidjeti aktualnu sezonu i usporediti koji su timovi najuspješniji po broju bodova.\n\nFiltrima možete pregledati različite razine, divizije, države, korisničke timove, AI timove te aktivne i neaktivne timove. Također možete otvoriti profil tima i vidjeti više detalja.",
       "primary": "Dalje"
     },
     "teamsHistory": {
       "title": "Povijest timova",
-      "body": "Odjeljak Povijest prikazuje prethodne sezone.\n\nOvde možete pregledati ranije pobednike, stare preseke sezona, povijesne pozicije i učinak timova u prethodnim sezonama.\n\nOvaj deo postaje sve korisniji kako vaš svijet prolazi kroz više sezona.",
+      "body": "Odjeljak Povijest prikazuje prethodne sezone.\n\nOvdje možete pregledati ranije pobjednike, stare presjeke sezona, povijesne pozicije i učinak timova u prethodnim sezonama.\n\nOvaj dio postaje sve korisniji kako vaš svijet prolazi kroz više sezona.",
       "primary": "Dalje"
     },
     "riders": {
       "title": "Statistika vozača",
-      "body": "Odjeljak Vozači prikazuje najbolje vozače u biciklističkom svijetu.\n\nMožete porediti vozače po međunarodnim bodovima, bodovima za plasmane na etapama, bodovima za generalni plasman i jednodnevne utrke. Možete videti i vozače sa najviše podijuma i najviše majica.\n\nOva stranica vam pomaže da razumete koji vozači dominiraju sezonom i koje vozače bi moglo biti zanimljivo pratiti, skautirati ili potpisati.\n\nNakon Statistike, sljedeća preporučena stranica su Transferi.",
+      "body": "Odjeljak Vozači prikazuje najbolje vozače u biciklističkom svijetu.\n\nMožete uspoređivati vozače prema međunarodnim bodovima, bodovima za plasmane na etapama, bodovima za generalni plasman i jednodnevne utrke. Možete vidjeti i vozače s najviše postolja i najviše dresova.\n\nOva stranica pomaže vam razumjeti koji vozači dominiraju sezonom i koje bi vozače moglo biti zanimljivo pratiti, skautirati ili potpisati.\n\nNakon Statistike, sljedeća preporučena stranica su Transferi.",
       "primary": "Nastavi na Transfere",
       "secondary": "Završi za sada"
     }
@@ -295,7 +295,7 @@
     },
     "riderTransferList": {
       "title": "Transfer lista vozača",
-      "body": "Ovo je stranica Transferi.\n\nU odeljku Vozači, Transfer lista prikazuje vozače koje su drugi timovi, uključujući AI timove, trenutno stavili na transfer listu.\n\nPre skautiranja neke informacije o vozaču mogu biti skrivene ili manje precizne. Skauting vam daje bolje informacije o njegovim vještinama i potencijalu.\n\nSvaka transfer ponuda prikazuje koliko dugo važi i početnu cenu za pregovore. Ako kliknete na Pošalji ponudu, možete ponuditi novac timu koji prodaje vozača. Ako tim prihvati, zatim pregovarate o ugovoru sa vozačem.",
+      "body": "Ovo je stranica Transferi.\n\nU odjeljku Vozači, Transfer lista prikazuje vozače koje su drugi timovi, uključujući AI timove, trenutačno stavili na transfer listu.\n\nPrije skautiranja neke informacije o vozaču mogu biti skrivene ili manje precizne. Skauting vam daje bolje informacije o njegovim vještinama i potencijalu.\n\nSvaka transfer ponuda prikazuje koliko dugo vrijedi i početnu cijenu za pregovore. Ako kliknete na Pošalji ponudu, možete ponuditi novac timu koji prodaje vozača. Ako tim prihvati, zatim pregovarate o ugovoru s vozačem.",
       "primary": "Dalje"
     },
     "riderFreeAgents": {
@@ -305,41 +305,41 @@
     },
     "staff": {
       "title": "Tržište osoblja",
-      "body": "Kartica Osoblje prikazuje dostupne članove osoblja bez ugovora.\n\nOvde možete pregledati vještine osoblja, ulogu, plaću, specijalizaciju i dostupnost. Mogu se zaposliti samo članovi osoblja koji su slobodni agenti.\n\nOgraničenja osoblja su važna. Ako je klub već dostigao maksimalan broj za određenu ulogu, ne možete zaposliti još jednu osobu za tu ulogu dok ne povećate limit, obično unapređenjem infrastrukture.\n\nNakon Transfera, sljedeća preporučena stranica su Finansije.",
-      "primary": "Nastavi na Finansije",
+      "body": "Kartica Osoblje prikazuje dostupne članove osoblja bez ugovora.\n\nOvdje možete pregledati vještine osoblja, ulogu, plaću, specijalizaciju i dostupnost. Mogu se zaposliti samo članovi osoblja koji su slobodni.\n\nOgraničenja osoblja važna su. Ako je klub već dosegnuo maksimalan broj za određenu ulogu, ne možete zaposliti još jednu osobu za tu ulogu dok ne povećate limit, obično nadogradnjom infrastrukture.\n\nNakon Transfera, sljedeća preporučena stranica su Financije.",
+      "primary": "Nastavi na Financije",
       "secondary": "Završi za sada"
     }
   },
   "finance": {
     "welcome": {
-      "title": "Treba vam pomoć sa Finansijama?",
-      "body": "Možemo vam pokazati kako funkcionišu finansije kluba, uključujući stanje računa, sponzore, transakcije, poreze i timske politike.",
+      "title": "Trebate pomoć s Financijama?",
+      "body": "Možemo vam pokazati kako funkcioniraju financije kluba, uključujući stanje računa, sponzore, transakcije, poreze i timske politike.",
       "primary": "Pokreni vodič",
       "secondary": "Ne, hvala"
     },
     "overview": {
-      "title": "Pregled finansija",
-      "body": "Ovo je stranica Finansije.\n\nKartica Pregled prikazuje glavnu finansijsku situaciju kluba, uključujući trenutno stanje, prihode, rashode, tok novca i finansijske sažetke.\n\nAko vaš tim ima hitni dug ili finansijske probleme, ovde možete brzo razumeti trenutno stanje.",
+      "title": "Pregled financija",
+      "body": "Ovo je stranica Financije.\n\nKartica Pregled prikazuje glavnu financijsku situaciju kluba, uključujući trenutačno stanje, prihode, rashode, novčani tok i financijske sažetke.\n\nAko vaš tim ima hitan dug ili financijske probleme, ovdje možete brzo razumjeti trenutačno stanje.",
       "primary": "Dalje"
     },
     "sponsors": {
       "title": "Sponzori",
-      "body": "Kartica Sponzori prikazuje sponzore sa kojima je vaš tim već potpisao ugovor.\n\nSponzori mogu donositi novac klubu, ali mogu imati i ciljeve ili bonus zadatke. Ti ciljevi objašnjavaju šta vaš tim treba da postigne i koliko novca možete dobiti.\n\nSponzorski ugovori mogu biti standardni ili ugovori sa naming-rights pravima. Standardni ugovor donosi sponzorski novac bez promjene imena vašeg tima.\n\nUgovor sa naming-rights pravima obično vredi više, ali ime sponzora postaje deo imena vašeg tima tokom sezone. Na početku sljedeće sezone vraća se originalno ime tima.\n\nAko vaš tim još nema sponzora, možete koristiti deo sa ponudama sponzora da pronađete novi ugovor.",
+      "body": "Kartica Sponzori prikazuje sponzore s kojima je vaš tim već potpisao ugovor.\n\nSponzori mogu donositi novac klubu, ali mogu imati i ciljeve ili bonus zadatke. Ti ciljevi objašnjavaju što vaš tim mora ostvariti i koliko novca možete dobiti.\n\nSponzorski ugovori mogu biti standardni ili ugovori s naming-rights pravima. Standardni ugovor donosi sponzorski novac bez promjene imena vašeg tima.\n\nUgovor s naming-rights pravima obično vrijedi više, ali ime sponzora postaje dio imena vašeg tima tijekom sezone. Na početku sljedeće sezone vraća se izvorno ime tima.\n\nAko vaš tim još nema sponzora, možete koristiti dio s ponudama sponzora kako biste pronašli novi ugovor.",
       "primary": "Dalje"
     },
     "transactions": {
       "title": "Transakcije",
-      "body": "Kartica Transakcije prikazuje finansijsku istoriju vašeg kluba.\n\nOvde možete videti prihode i rashode tokom sezone, uključujući nagradni novac, uplate sponzora, plaće, transfere, troškove infrastrukture, kupovinu opreme, trening kampove, naplatu poreza i druga finansijska kretanja.",
+      "body": "Kartica Transakcije prikazuje financijsku povijest vašeg kluba.\n\nOvdje možete vidjeti prihode i rashode tijekom sezone, uključujući nagradni novac, uplate sponzora, plaće, transfere, troškove infrastrukture, kupnju opreme, trening kampove, naplatu poreza i druga financijska kretanja.",
       "primary": "Dalje"
     },
     "tax": {
       "title": "Porez",
-      "body": "Kartica Porez prikazuje poresku situaciju vašeg kluba.\n\nTransakcije mogu stvarati poreske obaveze, a poreska kontrola se obavlja jednom mjesečno. Ova stranica vam pomaže da vidite koliko je poreza obračunato, koliko je već plaćeno i koliko još treba platiti.",
+      "body": "Kartica Porez prikazuje poreznu situaciju vašeg kluba.\n\nTransakcije mogu stvarati porezne obveze, a porezna kontrola obavlja se jednom mjesečno. Ova stranica pomaže vam vidjeti koliko je poreza obračunato, koliko je već plaćeno i koliko još treba platiti.",
       "primary": "Dalje"
     },
     "policies": {
       "title": "Timske politike i operacije",
-      "body": "Timske politike i operacije određuju kako se vaš klub vodi.\n\nPromjena politika može učiniti klub privlačnijim vozačima i osoblju, ali može povećati i troškove putovanja, podrške na utrkama, trening kampova i svakodnevnih operacija.\n\nOvaj odjeljak pomaže vam da pronađete ravnotežu između komfora, učinka, privlačnosti i troškova.\n\nNakon Finansija, sljedeći deo vodiča objasniće glavni Meni.",
+      "body": "Timske politike i operacije određuju kako se vaš klub vodi.\n\nPromjena politika može učiniti klub privlačnijim vozačima i osoblju, ali može povećati i troškove putovanja, podrške na utrkama, trening kampova i svakodnevnih operacija.\n\nOvaj odjeljak pomaže vam pronaći ravnotežu između udobnosti, učinka, privlačnosti i troškova.\n\nNakon Financija, sljedeći dio vodiča objasnit će glavni Meni.",
       "primary": "Nastavi na Meni",
       "secondary": "Završi za sada"
     }
@@ -358,12 +358,12 @@
     },
     "notifications": {
       "title": "Obavijesti",
-      "body": "Ova ikonica zvona otvara obavijesti u igri.\n\nObavijesti vas informišu o važnim događajima kao što su rokovi za utrke, podsetnici za pripremu, novosti sponzora, finansije, transferi i druge akcije u igri koje zahtevaju vašu pažnju.\n\nKoja obavijesti želite da primate možete podesiti kroz opciju Postavke u Meniju.",
+      "body": "Ova ikona zvona otvara obavijesti u igri.\n\nObavijesti vas informiraju o važnim događajima kao što su rokovi za utrke, podsjetnici za pripremu, novosti sponzora, financije, transferi i druge radnje u igri koje zahtijevaju vašu pažnju.\n\nKoje obavijesti želite primati možete postaviti kroz opciju Postavke u Meniju.",
       "primary": "Dalje"
     },
     "coins": {
       "title": "Coins",
-      "body": "Ovde vidite trenutno stanje Coins.\n\nCoins se koriste za određene funkcije igre, otključavanja i dodatne praktične opcije u ProPeloton Manager-u.\n\nStanje možete proveriti ovde u bilo kom trenutku, a dodatne Coins možete kupiti kroz Meni → Pro paketi.\n\nMalo Coins neće suspendovati vaš račun. Možete nastaviti da igrate, ali neke opcione funkcije ili akcije slične Premium funkcijama možda neće biti dostupne dok ne dodate još Coins.",
+      "body": "Ovdje vidite trenutačno stanje Coins.\n\nCoins se koriste za određene funkcije igre, otključavanja i dodatne praktične opcije u ProPeloton Manageru.\n\nStanje možete provjeriti ovdje u bilo kojem trenutku, a dodatne Coins možete kupiti kroz Meni → Pro paketi.\n\nMalo Coins neće suspendirati vaš račun. Možete nastaviti igrati, ali neke opcionalne funkcije ili radnje slične Premium funkcijama možda neće biti dostupne dok ne dodate još Coins.",
       "primary": "Dalje"
     },
     "premium": {
