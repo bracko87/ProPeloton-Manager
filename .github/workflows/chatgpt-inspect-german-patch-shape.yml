@@ -1,0 +1,29 @@
+name: Inspect reviewed German patch structure
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/chatgpt-inspect-german-patch-shape.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Decode and inspect
+        run: |
+          python - <<'PY'
+          import base64, json, zlib
+          from pathlib import Path
+          parts=sorted(Path('.github/scripts/de_review_patch_parts').glob('part*.txt'))
+          data=json.loads(zlib.decompress(base64.b64decode(''.join(p.read_text().strip() for p in parts))).decode())
+          print('files', len(data))
+          for name in list(data)[:8]:
+              value=data[name]
+              print('FILE',name,'TYPE',type(value).__name__,'COUNT',len(value) if hasattr(value,'__len__') else '-')
+              if isinstance(value,dict):
+                  for k,v in list(value.items())[:6]: print(' ',repr(k),'=',repr(v)[:220])
+          PY
