@@ -41,7 +41,7 @@
     "existingTeam": "Ihr bestehendes Entwicklungsteam wird für diese Saison aktiviert.",
     "newTeam": "Für diese Saison wird ein Entwicklungsteam erstellt und aktiviert.",
     "activationAccess": "Der Zugriff dauert bis zum Ende der aktuellen Spielsaison. Die automatische Verlängerung ist standardmäßig aktiviert und kann jederzeit ausgeschaltet werden.",
-    "needCoins": "Du brauchst {{cost}} Coins aktivieren Developing Team Zugriff. Aktuelle Bilanz: {{balance}} Coins.",
+    "needCoins": "Sie benötigen {{cost}} Coins, um den Zugang zum Entwicklungsteam zu aktivieren. Aktueller Kontostand: {{balance}} Coins.",
     "team": "Team: {{name}}",
     "closeActivation": "Schließen Team-Aktivierungsbestätigung entwickeln",
     "confirmActivate": "Entwicklerteam für Saison aktivieren {{season}}?",

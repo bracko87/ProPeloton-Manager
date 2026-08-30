@@ -16,12 +16,12 @@
     },
     "skipped": {
       "title": "Kein Problem!",
-      "body": "Sie können immer Hilfe später durch die Hilfe Abschnitt, das Spiel-Handbuch, oder unsere Discord community. Viel Glück und genießen Sie Ihre erste Saison!",
+      "body": "Sie können später jederzeit über den Hilfebereich, das Spielhandbuch oder unsere Discord-Community Hilfe finden.\n\nViel Erfolg und viel Spaß in Ihrer ersten Saison!",
       "primary": "Weiter"
     },
     "welcomeGame": {
       "title": "Willkommen bei ProPeloton Manager",
-      "body": "Willkommen bei ProPeloton Manager. Sie sind jetzt der Manager Ihres eigenen Radsportteams. Ihre Aufgabe ist es, den Verein zu bauen, sich um Ihre Fahrer zu kümmern, Rennen vorzubereiten, Geld zu verwalten, das Team zu verbessern und Ihren Verein durch die Saison zu führen.",
+      "body": "Willkommen bei ProPeloton Manager.\n\nSie sind jetzt Manager Ihres eigenen Radsportteams. Ihre Aufgabe ist es, den Club aufzubauen, sich um Ihre Fahrer zu kümmern, Rennen vorzubereiten, Finanzen zu verwalten, das Team weiterzuentwickeln und Ihren Club durch die Saison zu führen.",
       "primary": "Nächste"
     },
     "gameType": {
@@ -30,8 +30,8 @@
       "primary": "Nächste"
     },
     "simpleOrDeep": {
-      "title": "Einfach spielen oder tief gehen",
-      "body": "Am Anfang können Sie einfach spielen: Alarme befolgen, Ihre Mannschaft überprüfen, Rennen starten, Ihr Team vorbereiten und Ergebnisse beobachten. Später, wenn Sie mehr Tiefe wollen, können Sie fortgeschrittene Systeme wie Fahrermüdigkeit, Moral, Rennschärfe, Sponsorenziele, Ausrüstungsbonus, Trainingslager, Scouting, Transferverhandlungen, Steuern, Infrastruktur und Förderung oder Abschiebung verwenden.",
+      "title": "Einfach starten oder ins Detail gehen",
+      "body": "Sie müssen nicht sofort alles verstehen.\n\nZu Beginn können Sie einfach spielen: Folgen Sie Warnungen, prüfen Sie Ihren Kader, melden Sie sich für Rennen an, bereiten Sie Ihr Team vor und verfolgen Sie die Ergebnisse.\n\nWenn Sie später tiefer einsteigen möchten, können Sie erweiterte Systeme wie Fahrerermüdung, Moral, Race Sharpness, Sponsorziele, Ausrüstungsboni, Trainingslager, Scouting, Transferverhandlungen, Steuern, Infrastruktur sowie Auf- und Abstieg nutzen.",
       "primary": "Nächste"
     },
     "purpose": {
@@ -61,7 +61,7 @@
     },
     "nextRace": {
       "title": "Nächstes Teamrennen",
-      "body": "Das Next Team Race Panel hilft Ihnen, zu sehen, was in Kürze für Ihr Team kommt. Dies ist wichtig, weil akzeptierte Rennen oft noch Vorbereitung brauchen. Sie müssen sich vor den Fristen für Fahrer, Personal, Ausrüstung, Zubehör und Bühnentaktik entscheiden. Wenn dieses Panel ein bevorstehendes Rennen zeigt, sollten Sie die Race Preparation frühzeitig überprüfen.",
+      "body": "Das Panel Next Team Race hilft Ihnen zu sehen, was für Ihr Team in Kürze kommt. Dies ist wichtig, weil akzeptierte Rennen oft noch Vorbereitung benötigen. Sie müssen möglicherweise Rennfahrer, Mitarbeiter, Vermögenswerte, Ausrüstung, Vorräte und Etappentaktik vor den Fristen auswählen. Wenn dieses Panel ein bevorstehendes Rennen zeigt, sollten Sie Rennvorbereitung frühzeitig überprüfen.",
       "primary": "Nächste"
     },
     "lastRace": {
@@ -77,13 +77,13 @@
     "progress": {
       "title": "Team Gesundheit und Saisonfortschritt",
       "body": "Der Rest der Übersichtsseite hilft Ihnen, Ihrem Team zu folgen Zustand und Fortschritt. Hier können Sie Fahrerzustand überwachen, Finanzen Gesundheit, Sponsor Aktivität, Rennaktivität, aktive Operationen, Saison-Snapshot-Daten und allgemeinen Saison Fortschritt. Einige erweiterte Dashboard-Abschnitte, Zusammenfassungen oder zusätzliche Datenansichten erfordern möglicherweise eine Premium Konto oder Münzkauf zu entsperren. Wenn ein Panel gesperrt ist, können Sie immer noch normal spielen, aber Premium oder Coins können das Spiel einfacher machen und geben Ihnen einen tieferen Blick auf Ihren Club. Während Ihr Club wächst, wird diese Seite nützlicher, weil es Ihnen hilft, kurzfristige Aktionen, wie die Vorbereitung des nächsten Rennens, mit langfristigen Zielen wie den Aufbau einer stärkeren Kader und die Verbesserung Ihrer Rangliste verbinden.",
-      "primary": "Weiter zum Schwaden",
+      "primary": "Weiter in die Kader.",
       "secondary": "Fertig für jetzt"
     }
   },
   "squad": {
     "welcome": {
-      "title": "Brauchst du Hilfe bei deiner Squad?",
+      "title": "Brauchen Sie Hilfe bei Ihrer Kader?",
       "body": "Wir zeigen Ihnen eine kurze Einführung in die Squad-Seite, wo Sie Ihre Fahrer verwalten, Team, Bewegungsfenster und Mitarbeiter entwickeln.",
       "primary": "Tutorial starten",
       "secondary": "Nein, danke."
@@ -112,14 +112,14 @@
   },
   "training": {
     "welcome": {
-      "title": "Brauchen Sie Hilfe bei der Ausbildung?",
+      "title": "Brauchen Sie Hilfe bei der Training?",
       "body": "Wir können Ihnen zeigen, wie regelmäßig Trainings- und Trainingslager funktionieren und wie sie die Entwicklung, Ermüdung und die Vorbereitung der Rennen beeinflussen.",
       "primary": "Tutorial starten",
       "secondary": "Nein, danke."
     },
     "regular": {
-      "title": "Regelmäßige Schulung",
-      "body": "Das ist die Trainingsseite. Im Regular Training können Sie kontrollieren, was Ihre Fahrer trainieren, wenn sie nicht einer anderen Aktivität zugeordnet sind, wie z.B. einem Rennen oder einem Trainingslager. Sie können das Team-Standardtraining für das First Team und das Developing Team festlegen und Sie können auch das Training für einzelne Fahrer anpassen. Jeder Fahrer kann einen bestimmten Schwerpunkt wie Sprint, Klettern, Flat, Zeitfahren, Ausdauer, Widerstand, Rennen IQ, Teamwork oder Erholung trainieren. Trainingsintensität zählt. Härteres Training kann Fahrer schneller verbessern, aber es kann sie auch müder machen, bevor die Rennen anstehen. Sie können auch Day Off wählen, wenn ein Fahrer Ruhe und Ermüdungserholung braucht.",
+      "title": "Regelmäßige Training",
+      "body": "In Regular Training können Sie kontrollieren, was Ihre Fahrer trainieren, wenn sie nicht zu einer anderen Aktivität wie einem Rennen oder einem Trainingslager zugewiesen werden. Sie können das Standardtraining des Teams für das Erste Team und das Entwicklungsteam festlegen und auch das Training für einzelne Fahrer anpassen. Jeder Fahrer kann einen bestimmten Fokus wie Sprint, Klettern, Flach, Zeitfahren, Ausdauer, Widerstand, Renn IQ, Teamwork oder Erholung trainieren. Die Trainingsintensität zählt. Harteres Training kann Fahrer schneller verbessern, kann sie aber auch vor den kommenden Rennen müder machen. Sie können auch Off Day wählen, wenn ein Fahrer Ruhe und Erschöpfungsanfall benötigt.",
       "primary": "Nächste"
     },
     "camps": {
@@ -196,7 +196,7 @@
     },
     "races": {
       "title": "Rennkalender",
-      "body": "Hier können Sie alle Rennen in der Saison sehen. Rennen können eintägige Rennen oder mehrtägige Etappenrennen sein. Jedes Rennen zeigt nützliche Informationen wie Datum, Status, Kategorie, Typ, Teamlimits und Anwendungsstatus. Rennen sind nach Monaten aufgeteilt, so dass jeder Monat eine eigene Liste der verfügbaren Rennen hat.",
+      "body": "Dies ist der Rennkalender.\n\nHier sehen Sie alle Rennen der Saison. Rennen können Eintagesrennen oder mehrtägige Etappenrennen sein. Jedes Rennen zeigt nützliche Informationen wie Datum, Rennstatus, Rennkategorie, Renntyp, Teamlimits und Bewerbungsstatus.\n\nDie Rennen sind nach Monaten gegliedert, sodass jeder Monat eine eigene Liste verfügbarer Rennen hat.",
       "primary": "Nächste"
     },
     "openRace": {
@@ -209,26 +209,26 @@
   "raceDetail": {
     "overview": {
       "title": "Rennprofil",
-      "body": "Hier sehen Sie die wichtigsten Renninformationen: wie viele Teams teilnehmen können, den Preisfonds, wenn Bewerbungen schließen, wenn teilnehmende Teams angekündigt werden, und wie viele Fahrer jedes Team mitbringen kann. Bei Etappenrennen können Sie auch sehen, wie viele Etappen mit einbezogen werden.",
+      "body": "Hier finden Sie die wichtigsten Renninformationen: wie viele Teams teilnehmen können, der Preisfonds, wann die Bewerbungen abgeschlossen werden, wann die teilnehmenden Teams angekündigt werden und wie viele Fahrer jedes Teams mitbringen kann. Für Etappenrennen können Sie auch sehen, wie viele Etappen enthalten sind.",
       "primary": "Nächste"
     },
     "stagesResults": {
-      "title": "Etappen, Ergebnisse und Wiederholung",
-      "body": "Das Rennprofil zeigt auch detaillierte Etappeninformationen. Sie können Etappenprofile, Routenpläne, Geländespaltungen, Etappenwetter, Sprintpunkte, Bergpunkte und andere Etappendetails überprüfen. Das Wetter wird nur in der Nähe des Rennens veröffentlicht, so dass es später erscheinen kann. Weiter unten zeigt Race Information teilnehmende Teams und Fahrer vor dem Rennen und Ergebnisse nach dem Rennen. Wenn Ihr Team teilnimmt und das Rennen aktiv oder beendet ist, können Sie Watch Race oder Watch Replay verwenden, um der Aktion auf der Karte zu folgen.",
-      "primary": "Weiter zur Vorbereitung auf die Rennen",
+      "title": "Etappen, Ergebnisse und Replay",
+      "body": "Das Rennprofil zeigt auch detaillierte Etappeninformationen an. Sie können Etappenprofile, Routenkarten, Gelände-Split, Etappenwetter, Sprintpunkte, Bergpunkte und andere Etappendetails überprüfen. Das Wetter wird nur in der Nähe des Rennens veröffentlicht, so dass es später erscheinen kann. weiter unten zeigt Race Information die teilnehmenden Teams und Fahrer vor dem Rennen und die Ergebnisse nach dem Rennen. Wenn Ihr Team teilnimmt und das Rennen aktiv oder abgeschlossen ist, können Sie Watch Race oder Watch Replay verwenden, um die Aktion auf der Karte zu verfolgen.",
+      "primary": "Weiter zur Rennvorbereitung",
       "secondary": "Fertig für jetzt"
     }
   },
   "racePreparation": {
     "welcome": {
       "title": "Brauchen Sie Hilfe bei der Vorbereitung auf Rennen?",
-      "body": "Wir können Ihnen zeigen, wie Akzeptierte Rassen, Race Plans, und Stage Plans Arbeit. Dies ist eine der wichtigsten Seiten während der Saison.",
+      "body": "Wir zeigen Ihnen, wie akzeptierte Rennen, Race Plans und Stage Plans funktionieren. Dies ist eine der wichtigsten Seiten während der Saison.",
       "primary": "Tutorial starten",
       "secondary": "Nein, danke."
     },
     "acceptedRaces": {
       "title": "Akzeptierte Rassen",
-      "body": "Dies ist die Race Preparation Seite. Die Registerkarte Akzeptierte Rennen zeigt Rennen, wo Ihr Team zur Teilnahme akzeptiert wurde. Hier können Sie die wichtigsten Race Informationen, aber auch Ihr Team Vorbereitung Status sehen. Zum Beispiel, Sie können sehen, Race Plan Öffnen, Stage Plans Offene, Fahrer-Deadline Erreicht, Rennen aktiv, Rennen beendet, oder alle Set. Wenn Ihr Team wird zu einem Rennen akzeptiert, sollten Sie hierher kommen, um Ihre Fahrer, Mitarbeiter, Vermögenswerte, Ausrüstung, Zubehör und Taktik vorzubereiten. Dies ist eine der Seiten, die Sie am häufigsten während der Saison besuchen.",
+      "body": "Dies ist die Seite Rennvorbereitung.\n\nDie Registerkarte „Akzeptierte Rennen“ zeigt Rennen, für die Ihr Team zur Teilnahme angenommen wurde.\n\nHier sehen Sie die wichtigsten Renninformationen und den Vorbereitungsstatus Ihres Teams. Mögliche Status sind zum Beispiel Race Plan Open, Stage Plans Open, Fahrer Deadline Reached, Race Active, Race Finished oder All Set.\n\nSobald Ihr Team für ein Rennen akzeptiert wurde, bereiten Sie hier Fahrer, Personal, Assets, Ausrüstung, Vorräte und Taktiken vor. Diese Seite werden Sie während der Saison besonders häufig nutzen.",
       "primary": "Nächste"
     },
     "racePlan": {
@@ -238,7 +238,7 @@
     },
     "stagePlans": {
       "title": "Stage Plans",
-      "body": "Das Stage Plans Tab öffnet sich nach der Race Plan Hier werden die Taktiken für jede Etappe vorbereitet. Sie können Rollen, Ausrüstung, Zubehör, Teamtaktik und individuelle Taktiken für jede Etappe definieren.\n\nStage Plans sind wichtig, weil verschiedene Etappen unterschiedliche Pläne brauchen. Eine flache Sprint-Stufe, Berg-Etappe, Zeitfahren oder hügelige Etappe können alle verschiedene Fahrer, Taktiken und Unterstützung erfordern. Nach der Race Preparation, die nächste empfohlene Seite ist Team Ranking.",
+      "body": "Die Stage Plans Tab öffnet sich nach der Race Plan Hier können Sie die Fahrer-Rollen, Ausrüstung, Vorräte, Teammänge und individuelle Taktiken für jede Etappe definieren.\n\nStage Plans Die Rennvorbereitung ist eine wichtige Aufgabe, die von verschiedenen Etappen unterschiedliche Pläne benötigt werden.",
       "primary": "Weiter zum Team-Ranking",
       "secondary": "Fertig für jetzt"
     }
@@ -246,18 +246,18 @@
   "teamRanking": {
     "welcome": {
       "title": "Brauchen Sie Hilfe beim Team Ranking?",
-      "body": "Wir können Ihnen zeigen, wie Team-Rankings, Wettbewerbsstufen, internationale Punkte, Promotion und Relegation funktionieren.",
+      "body": "Wir können Ihnen zeigen, wie das Team Ranking, die Wettbewerbsplätze, die internationalen Punkte, die Aufstieg und die Abstiegswertung funktionieren.",
       "primary": "Tutorial starten",
       "secondary": "Nein, danke."
     },
     "competitions": {
       "title": "Wettbewerbe und Tierkategorien",
-      "body": "Hier ist die Team Ranking Seite. Hier sehen Sie die Ranglisten für alle Wettbewerbe und Stufen, einschließlich WorldTeam, ProTeam, Continental, und Amateur Divisionen. Jedes Team hat einen Platz in seinem Wettbewerb auf der Grundlage internationaler Punkte während der Saison verdient. Sie können zwischen Ebenen und Divisionen wechseln, um zu sehen, wie Teams in der gesamten Radsportwelt gereiht werden.",
+      "body": "Dies ist die Seite Team-Rangliste.\n\nHier sehen Sie Ranglisten für alle Wettbewerbe und Ebenen, einschließlich WorldTeam, ProTeam, Continental und Amateur-Divisionen.\n\nJedes Team hat innerhalb seines Wettbewerbs eine Platzierung, die auf den während der Saison erzielten internationalen Punkten basiert. Sie können zwischen Ebenen und Divisionen wechseln, um zu sehen, wie die Teams in der gesamten Radsportwelt eingeordnet sind.",
       "primary": "Nächste"
     },
     "points": {
       "title": "Internationale Punkte und Jahreszeitenbewegung",
-      "body": "Teams sammeln internationale Punkte aus Rennen. Bessere Ergebnisse in größeren Rennen bringen in der Regel mehr Punkte. Diese Punkte entscheiden die Rangliste jedes Teams in seinem Wettbewerb. Am Ende der Saison können Teams in eine höhere Ebene befördert oder in eine niedrigere Ebene je nach ihrer endgültigen Position abgeschoben werden. Diese Seite ist wichtig, weil es zeigt, wo Ihr Team steht im Vergleich zu anderen Teams, und was Sie erreichen müssen, um nach oben zu bewegen. Nach dem Team Ranking, die nächste empfohlene Seite ist Statistik.",
+      "body": "Teams erhalten internationale Punkte aus Rennen. Bessere Ergebnisse bei größeren Rennen bringen in der Regel mehr Punkte.\n\nDiese Punkte bestimmen die Ranglistenposition jedes Teams innerhalb seines Wettbewerbs. Am Saisonende können Teams abhängig von ihrer endgültigen Position in eine höhere Ebene aufsteigen oder in eine niedrigere Ebene absteigen.\n\nDiese Seite ist wichtig, weil sie zeigt, wo Ihr Team im Vergleich zu anderen Teams steht und was Sie für einen Aufstieg erreichen müssen.\n\nNach der Team-Rangliste wird als Nächstes die Seite Statistiken empfohlen.",
       "primary": "Weiter zur Statistik",
       "secondary": "Fertig für jetzt"
     }
@@ -271,7 +271,7 @@
     },
     "teamsCurrent": {
       "title": "Teamstatistik",
-      "body": "Hier ist die Seite Statistik. Im Teambereich werden die Teamstatistiken über alle Wettkämpfe hinweg an einem Ort angezeigt. In Current können Sie die aktuelle Saison sehen und vergleichen, welche Teams nach Punkten die erfolgreichsten sind. Sie können Filter verwenden, um verschiedene Ebenen, Divisionen, Länder, Benutzerteams, AI-Teams, aktive Teams und inaktive Teams zu betrachten. Sie können auch ein Teamprofil öffnen, um mehr Details über dieses Team zu sehen.",
+      "body": "Das ist die Seite Statistik. Im Teams-Team-Team-Team-Team-Team-Statistiken werden an einem Ort alle Wettbewerbe aufgestellt. In Current können Sie die aktuelle Saison sehen und vergleichen, welche Teams am erfolgreichsten sind nach Punkten. Sie können Filter verwenden, um verschiedene Ebenen, Divisionen, Länder, Benutzerteams, KI-Teams, aktive Teams und inaktive Teams zu betrachten. Sie können auch ein Teamprofil öffnen, um mehr Details über dieses Team zu sehen.",
       "primary": "Nächste"
     },
     "teamsHistory": {
@@ -281,7 +281,7 @@
     },
     "riders": {
       "title": "Fahrerstatistik",
-      "body": "Die Riders Sektion zeigt die besten Fahrer der Welt. Sie können Fahrer durch internationale Punkte, Etappenzielpunkte, allgemeine Klassifizierung und eintägige Rennpunkte vergleichen. Sie können auch Fahrer mit den meisten Podiums und Trikots sehen. Diese Seite hilft Ihnen zu verstehen, welche Fahrer die Saison dominieren und welche Fahrer interessant sein können, zu folgen, Scout, oder Zeichen. Nach Statistik, die nächste empfohlene Seite ist Transfers.",
+      "body": "Der Bereich Fahrer zeigt die besten Fahrer der Radsportwelt.\n\nSie können Fahrer nach internationalen Punkten, Punkten aus Etappenplatzierungen, Gesamtwertung und Punkten aus Eintagesrennen vergleichen. Außerdem sehen Sie Fahrer mit den meisten Podiumsplätzen und den meisten Trikots.\n\nDiese Seite hilft Ihnen zu erkennen, welche Fahrer die Saison dominieren und welche Fahrer interessant sein könnten, um sie zu verfolgen, zu scouten oder zu verpflichten.\n\nNach Statistiken wird als Nächstes die Seite Transfers empfohlen.",
       "primary": "Weiter zu Transfers",
       "secondary": "Fertig für jetzt"
     }
@@ -289,18 +289,18 @@
   "transfers": {
     "welcome": {
       "title": "Brauchen Sie Hilfe bei Transfers?",
-      "body": "Wir können Ihnen zeigen, wie Fahrertransfers, freie Agenten, Scouting, Vertragsverhandlungen und Personaleinstellung arbeiten.",
+      "body": "Wir zeigen Ihnen, wie Fahrertransfers, vertragslose Fahrer, Scouting, Vertragsverhandlungen und die Einstellung von Personal funktionieren.",
       "primary": "Tutorial starten",
       "secondary": "Nein, danke."
     },
     "riderTransferList": {
-      "title": "Liste der Fahrerübertragungen",
-      "body": "Dies ist die Seite Transfers. Im Abschnitt Riders zeigt die Transferliste Fahrer, die derzeit von anderen Teams, einschließlich AI-Teams, aufgelistet sind. Bevor Sie einen Fahrer suchen, können einige Informationen versteckt oder weniger präzise sein. Scouting gibt Ihnen bessere Informationen über die Fähigkeiten und Potenziale des Fahrers. Jede Transferliste zeigt, wie lange das Angebot gültig ist und der Startpreis für Verhandlungen. Wenn Sie auf Angebot machen klicken, können Sie Geld für das Verkaufsteam anbieten. Wenn das Team akzeptiert, dann verhandeln Sie den Fahrervertrag.",
+      "title": "Transferliste",
+      "body": "Dies ist die Seite Transfers.\n\nIm Bereich „Fahrer“ zeigt die Transferliste Fahrer, die aktuell von anderen Teams – einschließlich KI-Teams – angeboten werden.\n\nBevor Sie einen Fahrer scouten, können bestimmte Informationen verborgen oder weniger genau sein. Scouting liefert bessere Informationen über die Fähigkeiten und das Potenzial des Fahrers.\n\nJeder Eintrag auf der Transferliste zeigt, wie lange das Angebot gültig ist und mit welcher Ablösesumme die Verhandlungen beginnen. Wenn Sie auf „Angebot abgeben“ klicken, können Sie dem verkaufenden Team eine Summe anbieten. Akzeptiert das Team, verhandeln Sie anschließend den Vertrag mit dem Fahrer.",
       "primary": "Nächste"
     },
     "riderFreeAgents": {
-      "title": "Freie Agent Riders",
-      "body": "Free Agents sind Fahrer ohne Team. Der große Unterschied ist, dass es kein Verkaufsteam zwischen Ihnen und dem Fahrer. Wenn Sie einen freien Agenten wollen, gehen Sie direkt in Vertragsverhandlungen. Sie können Gehalt, Vertragsdauer und Agentengebühr verhandeln. Das Angebot Aussichten hilft Ihnen zu verstehen, ob Ihr Angebot stark, riskant oder unwahrscheinlich, erfolgreich aussieht.",
+      "title": "Vertragslose Fahrer",
+      "body": "Vertragslose Fahrer gehören aktuell keinem Team an.\n\nDer große Unterschied besteht darin, dass zwischen Ihnen und dem Fahrer kein verkaufendes Team steht. Wenn Sie einen vertragslosen Fahrer verpflichten möchten, steigen Sie direkt in die Vertragsverhandlung ein.\n\nSie können über Gehalt, Vertragsdauer und Agentengebühr verhandeln. Die Einschätzung des Angebots hilft Ihnen zu erkennen, ob Ihr Angebot stark, riskant oder wenig erfolgversprechend ist.",
       "primary": "Nächste"
     },
     "staff": {
@@ -339,14 +339,14 @@
     },
     "policies": {
       "title": "Teampolitik und -operationen",
-      "body": "Team Richtlinien und Operationen Kontrolle, wie Ihr Club läuft. Ändern der Richtlinien können Ihren Club attraktiver für Fahrer und Mitarbeiter, aber es kann auch die Kosten für Reisen, Rennunterstützung, Trainingslager und täglichen Betrieb erhöhen. Dieser Abschnitt hilft Ihnen, Komfort, Leistung, Attraktivität und Kosten auszugleichen.",
+      "body": "Team Policies und der operative Bereich bestimmen, wie Ihr Club geführt wird.\n\nÄnderungen an den Richtlinien können Ihren Club für Fahrer und Personal attraktiver machen, zugleich aber die Kosten für Reisen, Rennbetreuung, Trainingslager und den täglichen Betrieb erhöhen.\n\nDieser Bereich hilft Ihnen, Komfort, Leistung, Attraktivität und Kosten gegeneinander abzuwägen.\n\nNach Finanzen erklärt das nächste Tutorial das Hauptmenü.",
       "primary": "Weiter zum Menü",
       "secondary": "Fertig für jetzt"
     }
   },
   "menu": {
     "welcome": {
-      "title": "Brauchen Sie Hilfe beim Menü?",
+      "title": "Benötigen Sie Hilfe mit dem Menü?",
       "body": "Wir können Ihnen zeigen, wo Sie das Hauptmenü, Benachrichtigungen und Coins in der oberen rechten Ecke finden.",
       "primary": "Tutorial starten",
       "secondary": "Nein, danke."
@@ -363,12 +363,12 @@
     },
     "coins": {
       "title": "Coins",
-      "body": "Das zeigt Ihre aktuelle Münzbilanz.\n\nCoins werden für ausgewählte Spielfunktionen, Entsperrungen und Komfort-Optionen im Inneren verwendet ProPeloton Manager. Sie können Ihr Guthaben hier jederzeit überprüfen und mehr über Menü → Pro Pakete kaufen. Niedrige Coins setzen Ihr Konto nicht aus. Sie können weiter spielen, aber einige optionale Funktionen oder Premium-Stil Aktionen können nicht verfügbar sein, bis Sie weitere Coins hinzufügen.",
+      "body": "Hier sehen Sie Ihren aktuellen Coin-Kontostand.\n\nCoins werden in ProPeloton Manager für ausgewählte Spielfunktionen, Freischaltungen und Komfortoptionen verwendet.\n\nSie können Ihren Kontostand jederzeit hier prüfen und über Menü → Pro Packages weitere Coins kaufen.\n\nEin niedriger Coin-Kontostand sperrt Ihr Konto nicht. Sie können weiterspielen, allerdings sind manche optionalen Funktionen oder Premium-ähnlichen Aktionen möglicherweise erst wieder verfügbar, nachdem Sie weitere Coins hinzugefügt haben.",
       "primary": "Nächste"
     },
     "premium": {
       "title": "Premium Konto",
-      "body": "Das ist dein Premium Zugangsbereich. A Premium Konto kann das Spiel einfacher und komfortabler durch den Zugang zu zusätzlichen Funktionen, erweiterte Ansichten und nützliche Convenience-Tools.\n\nPremium können auch helfen, Sie entsperren mehr des Spiels volle Management-Erfahrung. Premium oder Pro Packages, unterstützen Sie unser Team direkt und helfen uns weiter zu entwickeln ProPeloton Manager schneller und besser.",
+      "body": "Dies ist Ihr Premium-Bereich.\n\nEin Premium-Konto kann das Spiel einfacher und komfortabler machen, indem es zusätzliche Funktionen, erweiterte Ansichten und nützliche Komfortwerkzeuge freischaltet.\n\nPremium kann Ihnen außerdem Zugang zu weiteren Teilen des vollständigen Management-Erlebnisses geben.\n\nMit dem Kauf von Premium oder Pro Packages unterstützen Sie unser Team direkt und helfen uns, ProPeloton Manager schneller und besser weiterzuentwickeln.",
       "primary": "Nächste"
     },
     "finished": {

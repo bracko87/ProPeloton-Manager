@@ -3,7 +3,7 @@
     "rankingTiersDeep": {
       "title": "Wettbewerbsbereiche",
       "subtitle": "WorldTeam, ProTeam, Continental und Amateur.",
-      "overview": "Team-Ranking wird in eine Wettbewerbspyramide mit Promotion, Playoffs und Relegation organisiert.",
+      "overview": "Das Team Ranking wird in eine Wettbewerbspyramide mit Aufstieg, Playoffs und Abstieg organisiert.",
       "facts": [
         "Tierkategorien",
         "WorldTeam, ProTeam, Continental, Amateur"
@@ -20,7 +20,7 @@
       ]
     },
     "promotionRelegationDeep": {
-      "title": "Förderung, Playoffs und Relegation",
+      "title": "Aufstieg, Playoffs und Entlassung",
       "subtitle": "Wie die Bewegung am Saisonende gezeigt wird.",
       "overview": "Stehende Etiketten erklären, welche Positionen fördern, Playoffs betreten oder abtreten.",
       "facts": [
@@ -42,7 +42,7 @@
       ]
     },
     "statisticsDeep": {
-      "title": "Statistischer Leitfaden",
+      "title": "Statistiken – ausführlicher Leitfaden",
       "subtitle": "Teams, Fahrer, Filter und Geschichte.",
       "overview": "Statistiken helfen, Leistung zu vergleichen und die Spielwelt zu erkunden.",
       "facts": [
@@ -54,19 +54,19 @@
       "details": [
         "Team Current vergleicht aktuelle Werte und Punkte.",
         "Team History speichert vergangene Gewinner und Snapshots.",
-        "Rider Rankings zeigen Top-Performer.",
-        "Rider Breakdown hilft Spezialisten zu finden.",
+        "Die Fahrer-Rankings zeigen die Top-Leistungs-Leistungen.",
+        "Fahrer Breakdown hilft dabei, Spezialisten zu finden.",
         "Die Filter umfassen Saison, Teamtyp, Status, Tier, Division, Land und Suche.",
         "Das Öffnen eines Fahrers verwendet eigene oder externe Profilroute, abhängig von der Eigentümerschaft."
       ],
       "tips": [
-        "Statistik vor Transfers verwenden."
+        "Verwenden Sie Statistiken vor der Transfer."
       ]
     },
     "transferListDeep": {
-      "title": "Übertragen Liste Riders",
+      "title": "Transferliste",
       "subtitle": "Kauf von einem anderen Club.",
-      "overview": "Transfer-gelistete Fahrer benötigen ein Club-to-Club-Angebot vor der Fahrervertrag Verhandlungen.",
+      "overview": "Für die Transferliste sind Fahrer vor der Verhandlung über den Vertrag von Rennfahrern ein Club-zu-Club-Angebot erforderlich.",
       "facts": [
         "Liste der Daten",
         "Verkäufer, Preis, Gehalt, Marktwert, Ablauf, Verfügbarkeit"
@@ -83,15 +83,15 @@
       ]
     },
     "freeAgentsDeep": {
-      "title": "Freie Agenten",
+      "title": "Vertragslose Fahrer",
       "subtitle": "Unterschreiben Sie ungebundene Fahrer.",
-      "overview": "Freie Agenten verlangen kein Verkaufsangebot, aber Vertragsverhandlungen sind noch wichtig.",
+      "overview": "Vertragslose Fahrer benötigen kein Angebot an einen verkaufenden Club, doch die Vertragsverhandlung bleibt entscheidend.",
       "facts": [
         "Verhandlungen",
         "Gehalt, Dauer, Signierbonus, Agentengebühr und Stufenanpassung"
       ],
       "details": [
-        "Kostenlose Agenten können billiger sein, weil es keine Transfergebühr gibt.",
+        "Vertragslose Fahrer können günstiger sein, weil keine Ablösesumme anfällt.",
         "Sie können immer noch hohe Gehalt oder Boni verlangen.",
         "Die Angebotsvorschau hilft, die Akzeptanz zu schätzen.",
         "Harte Blöcke können einen Deal verhindern.",
@@ -123,9 +123,9 @@
       ]
     },
     "scoutingDeep": {
-      "title": "Berichte über die Pfadfinder",
+      "title": "Scouting-Berichte",
       "subtitle": "Verringerung des versteckten Informationsrisikos.",
-      "overview": "Scouting-Berichte helfen Benutzern, schlechte Transferentscheidungen zu vermeiden, indem sie das Wissen über externe Fahrer verbessern.",
+      "overview": "Die Scouting-Berichte helfen den Benutzern, schlechte Transferentscheidungen zu vermeiden, indem sie die Kenntnisse externer Fahrer verbessern.",
       "facts": [
         "Filter",
         "Alle, neu, überprüft",
@@ -137,7 +137,7 @@
         "Neue Berichte sollten vor dem Gebot überprüft werden.",
         "Insgesamt und Potenzial können Etiketten statt exakte Werte sein.",
         "Stärken identifizieren, was der Fahrer gut kann.",
-        "Anmerkungen bieten Scouting-Kontext."
+        "Die Notizen stellen einen Zusammenhang für die Scouting dar."
       ],
       "tips": [
         "Pfadfinder vor teuren Unterzeichnungen."
@@ -146,7 +146,7 @@
     "staffMarketDeep": {
       "title": "Personalmarkt",
       "subtitle": "Ich heuere freie Mitarbeiter an.",
-      "overview": "Die Registerkarte Personal listet verfügbare Mitarbeiter auf und respektiert die Rollenkapazität.",
+      "overview": "Die Registerkarte Personal listet verfügbares Personal auf und berücksichtigt die Kapazität der jeweiligen Rollen.",
       "facts": [
         "Aufgaben",
         "Trainer, Trainer, U23 trainer, doktor, physio, ernährungswissenschaftler, mechaniker, sportdirektor, scout/analyst",
@@ -258,7 +258,7 @@
       "overview": "Ziele belohnen den Verein, wenn die Sponsorziele erreicht werden.",
       "facts": [
         "Ergebnisse",
-        "Start, Sieg, Podium, Top 5, Top 10, GC Top 5/top 10, Etappe 5/win, Sichtbarkeit der Klassifikation"
+        "Start, Sieg, Podium, Top 5, Top 10, GC Top 5/top 10, Etappe 5/win, Klassifizierungssicht"
       ],
       "details": [
         "Ziele können exakte Rennen, Länder oder Kategorien anvisieren.",

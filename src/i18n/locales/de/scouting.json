@@ -1,11 +1,11 @@
 {
   "page": {
     "back": "← Zurück",
-    "title": "Überblick über die Pfadfinder",
+    "title": "Scouting",
     "subtitle": "Alle abgeschlossenen Scout-Berichte an einem Ort. Filtern Sie nach Status und springen Sie direkt zum Reiterprofil.",
-    "loading": "Scout-Berichte werden geladen...",
-    "empty": "Es gibt noch keine Scout-Berichte, die mit diesem Filter übereinstimmen.",
-    "loadFailed": "Es ist nicht gelungen, die Berichte der Pfadfinder zu laden.",
+    "loading": "Scouting-Berichte werden geladen...",
+    "empty": "Noch keine Scouting-Berichte entsprechen diesem Filter.",
+    "loadFailed": "Scouting-Berichte konnten nicht geladen werden.",
     "reviewFailed": "Nicht beschriftet."
   },
   "filters": {
@@ -16,7 +16,7 @@
   "report": {
     "unknownRider": "Unbekannter Fahrer",
     "scout": "Pfadfinder",
-    "scoutName": "Pfadfinder: {{name}}",
+    "scoutName": "Scout: {{name}}",
     "completed": "Ergänzt: {{date}}",
     "overall": "Insgesamt",
     "potential": "Mögliche",
@@ -35,7 +35,7 @@
   "skills": {
     "sprint": "Sprint",
     "climbing": "Klettern",
-    "timeTrial": "Zeitprüfung",
+    "timeTrial": "Zeitfahren",
     "endurance": "Ausdauer",
     "flat": "Flach",
     "recovery": "Rückforderung",
@@ -45,7 +45,7 @@
     "morale": "Moral"
   },
   "table": {
-    "riderScout": "Fahrer & Pfadfinder",
+    "riderScout": "Fahrer & Scout",
     "overallPotential": "Gesamt-/Potenziell",
     "strengthsNotes": "Wichtige Stärken & Anmerkungen",
     "action": "Maßnahmen"

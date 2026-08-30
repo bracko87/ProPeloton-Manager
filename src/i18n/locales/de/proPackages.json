@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Premium & Rechnungsstellung",
-    "description": "Normales Gameplay ist kostenlos. Premium Mitgliedschaft und Münzpakete sind optional.",
+    "description": "Normaler Gameplay ist kostenlos. Premium Die Mitgliedschaft und die Coin-Pakete sind optional.",
     "refresh": "Aktualisieren"
   },
   "premium": {
@@ -16,7 +16,7 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "pro realer Lebensmonat",
     "membership": "Premium Mitgliedschaft",
-    "advancedTools": "Fortgeschrittene Schulungs-, Transfer-, Scouting- und Management-Tools.",
+    "advancedTools": "Weiterbildung, Transfer, Scouting und Management-Tools.",
     "marketTools": "Gespeicherte Suchanfragen, Marktwarnungen, Fahrer-Kurzliste und tiefere Analyse.",
     "capacity": "Zusätzliche Ausrüstung und Infrastruktur-Komfortkapazität.",
     "receive": "Empfangen",
@@ -33,13 +33,13 @@
     "alreadyExists": "Abonnement bereits vorhanden",
     "become": "Werden Premium",
     "manageHelp": "Rechnungsdetails verwalten, Ansicht Stripe Rechnungen oder die künftige Verlängerung stornieren.",
-    "checkoutHelp": "Sicher wiederkehrende Stripe Kasse. Premium ist optional und normales Gameplay bleibt frei.",
+    "checkoutHelp": "Sichere wiederkehrende Zahlung über Stripe. Premium ist optional; das normale Spielerlebnis bleibt kostenlos.",
     "noRenewal": "Keine weitere Verlängerung",
     "detailsFailed": "Nicht geladen Premium Einzelheiten zur Mitgliedschaft.",
     "checkoutUrlMissing": "Premium URL fehlt",
     "checkoutFailed": "Premium Die Kasse ist ausgefallen.",
     "portalUrlMissing": "Stripe URL des Kundenportals fehlt",
-    "portalFailed": "Abonnementverwaltung kann nicht geöffnet werden.",
+    "portalFailed": "Die Abonnementverwaltung konnte nicht geöffnet werden.",
     "returnSessionFailed": "Ihre Zahlungsrückgabe wurde empfangen, die Login-Sitzung konnte jedoch nicht wiederhergestellt werden. Bitte melden Sie sich erneut an; die abgeschlossene Stripe Die Zahlungen bleiben auf dem Konto.",
     "checkoutCanceled": "Premium Die Kasse wurde storniert.",
     "confirming": "Zahlung abgeschlossen. Bestätigung Premium Zugang und die 50-Coin-Zuschuss...",
@@ -56,7 +56,7 @@
   "advantages": {
     "a1": "50 Coins nach jedem erfolgreichen Monat Premium Zahlung.",
     "a2": "Erweiterte Automatisierung der Ausbildung und Analyse der Fahrerentwicklung.",
-    "a3": "Premium Transfer-Tools: gespeicherte Suchanfragen, automatische Alarme, Shortlist und Verhandlungsanalyse.",
+    "a3": "Premium-Transferwerkzeuge: gespeicherte Suchen, automatische Benachrichtigungen, Shortlist und Verhandlungsanalyse.",
     "a4": "Zusätzliche Ausrüstung Setup-Slots und erweitert enthalten Garage Kapazität.",
     "a5": "Zugriff auf erweiterte Team-Politik-Optionen und ausgewählte Kalenderfilter.",
     "a6": "Zusätzliche externe Fahrer Geschichte, aktuelle Ergebnisse und Karriere-Ehrungen Ansichten.",
@@ -74,7 +74,7 @@
     "r4": "Zugang zum Konto ohne Coins",
     "r5": "Premium Analyse und Werkzeuge",
     "r6": "Monatlich Premium Münzbelohnung",
-    "r7": "Kaufen Sie zusätzliche Münzpakete",
+    "r7": "Kaufen Sie zusätzliche Coin-Pakete",
     "r8": "Optionale Münzmerkmale verwenden",
     "developing": "Team-Service entwickeln",
     "activationRenewal": "{{activation}} Aktivierung / {{renewal}} Verlängerung",
@@ -118,10 +118,10 @@
   },
   "services": {
     "title": "Dienstleistungen von aktiven Münzdiensten",
-    "description": "Verwalten Sie optionale Club-Services mit Coins gekauft. Diese Dienste sind verfügbar für Free und Premium Spieler.",
+    "description": "Verwalten Sie optionale Club-Dienste, die mit Coins gekauft werden. Diese Dienste stehen Free- und Premium-Spielern zur Verfügung.",
     "loading": "Münzdienste werden geladen...",
     "unavailable": "Die Entwicklung von Team-Service-Informationen ist derzeit nicht verfügbar.",
-    "unavailableHelp": "Die übrigen Premium, Rechnungswesen und Münzverwaltung weiterhin verfügbar.",
+    "unavailableHelp": "Der übrige Premium-, Abrechnungs- und Coin-Verwaltungsbereich bleibt verfügbar.",
     "developing": "Entwicklung des Teams",
     "active": "Aktiv",
     "expired": "Abgelaufen",
@@ -151,8 +151,8 @@
     "coinsPerSeason": "{{cost}} Coins pro Saison",
     "autoEnabled": "Automatische Erneuerung aktiviert. {{cost}} Coins werden zu Beginn der nächsten Saison in Rechnung gestellt.",
     "autoDisabled": "Automatische Erneuerung deaktiviert. Keine Entwicklung Team Erneuerung Gebühr wird automatisch gemacht.",
-    "autoFailed": "Fehler beim Update der automatischen Erneuerung des Teams.",
-    "loadFailed": "Es ist fehlgeschlagen, den Developing Team Service zu laden."
+    "autoFailed": "Die automatische Verlängerung des Entwicklungsteam-Dienstes konnte nicht aktualisiert werden.",
+    "loadFailed": "Der Dienst für das Entwicklungsteam konnte nicht geladen werden."
   },
   "history": {
     "title": "Rechnungs- und Kaufgeschichte",
@@ -179,12 +179,12 @@
     "coins": "Coins",
     "price": "Preis",
     "details": "Einzelheiten",
-    "coinPackage": "Münzpackung",
+    "coinPackage": "Coin-Paket",
     "page": "Seite {{page}} von {{pages}}",
     "previous": "Zurück",
     "next": "Nächste",
     "invoiceFailed": "Nicht geladen Premium Rechnungsverlauf.",
-    "purchaseFailed": "Es ist nicht gelungen, die Kaufhistorie zu laden.",
+    "purchaseFailed": "Der Kaufverlauf konnte nicht geladen werden.",
     "ledgerFailed": "Es ist nicht gelungen, die Geschichte der Münztransaktion zu laden.",
     "billingSubscriptionCycle": "Abonnementzyklus",
     "billingSubscriptionCreate": "Abonnement erstellt",
@@ -205,7 +205,7 @@
     "developingSeasonalRenewal": "Entwicklung der Saisonerneuerung des Teams",
     "developingReactivation": "Reaktivierung des Teams entwickeln — Jahreszeit {{season}}",
     "developingSeasonalReactivation": "Entwicklung der saisonalen Reaktivierung des Teams",
-    "extraScout": "Extra-Scouting-Bericht",
+    "extraScout": "Zusätzlicher Scouting-Bericht",
     "premiumGrant": "Premium monatliche Münzzulage"
   },
   "common": {

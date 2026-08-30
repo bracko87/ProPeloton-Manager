@@ -18,10 +18,10 @@
   "sections": {
     "race": {
       "title": "Rassenmeldungen",
-      "description": "Einladungen, Vorbereitung, Wetter, Bühnenpläne, Renntage-Themen und Ergebnisse."
+      "description": "Einladungen, Vorbereitung, Wetter, Etappenpläne, Renntagsaufgaben und Ergebnisse."
     },
     "team": {
-      "title": "Benachrichtigungen über Team & Fahrer",
+      "title": "Teams & Fahrer Benachrichtigungen",
       "description": "Fahrer, Personal, Transfers, Trainingslager, Ausfindigmachen und Pensionierungen."
     },
     "club": {
@@ -51,12 +51,12 @@
       "description": "Anzeigen Kernstatus und Folgen Meldungen für die Vorbereitung der Rennen. Proaktive Fahrer-Deadline-Beratung gehört Sportdirektor Advisory."
     },
     "stagePlanReminders": {
-      "label": "Status des Plans",
+      "label": "Status des Etappenplans",
       "description": "Anzeigen Core Bühnenplan Öffnung und Sperrzustand Benachrichtigungen. Fehlende Plan Beratung gehört Sportdirektor Advisory."
     },
     "raceWeather": {
       "label": "Rennwetter",
-      "description": "Anzeigen von Benachrichtigungen, wenn Etappen, Rennen oder rennenbezogene Aktivitäten vom Wetter betroffen sind."
+      "description": "Anzeigen Sie Benachrichtigungen, wenn Etappen, Rennen oder Rennaktivitäten durch das Wetter beeinflusst werden."
     },
     "raceResults": {
       "label": "Ergebnisse der Rennen",
@@ -75,16 +75,16 @@
       "description": "Anzeigen von Benachrichtigungen, wenn ein Mitarbeiterkurs abgeschlossen ist und Gewinne angewendet werden."
     },
     "transferUpdates": {
-      "label": "Aktualisierungen übertragen",
+      "label": "Transfer-Updates",
       "description": "Fahrertransfer, Free Agent, Angebot, Angebot und Verhandlungsnotifizierungen anzeigen."
     },
     "trainingCamps": {
-      "label": "Ausbildungslager",
+      "label": "Trainingslager",
       "description": "Anzeigen von Benachrichtigungen für Trainingslagerstarts, Tagesberichte, Wetterwarnungen und -abläufe."
     },
     "scoutingReports": {
       "label": "Scouting-Berichte",
-      "description": "Benachrichtigungen anzeigen, wenn ein Scouting-Bericht abgeschlossen ist."
+      "description": "Anzeigen Sie Benachrichtigungen, wenn ein Scouting-Bericht abgeschlossen ist."
     },
     "retirementUpdates": {
       "label": "Aktualisierungen in den Ruhestand",
@@ -96,7 +96,7 @@
     },
     "walletRewards": {
       "label": "Coins & Belohnungen",
-      "description": "Zeigen Sie Münzkäufe, Münzgutschriften, Geburtstagsgeschenke, Empfehlung Belohnungen und Brieftasche Belohnung Nachrichten."
+      "description": "Zeigen Sie Coin-Käufe, Münzkredite, Geburtstagsgeschenke, Empfehlungsgelder und Brieftaschen."
     },
     "competitionRewards": {
       "label": "Wettbewerbsprämien",
@@ -125,8 +125,8 @@
   },
   "advisorCategories": {
     "trainingReadiness": {
-      "label": "Training & Fahrbereitschaft",
-      "description": "Trainingsbelastung, Ermüdung, Verfügbarkeit des Fahrers, Trainingslücken, Bereitschaft der Mannschaft und Fahrerentwicklungsberatungen."
+      "label": "Training und Bereitschaft zum Fahrer",
+      "description": "Trainingsbelastung, Müdigkeit, Fahrerverfügbarkeit, Trainingslücken, Teambereitschaft und Riderentwicklungsanzeigen."
     },
     "raceProgrammePreparation": {
       "label": "Rennprogramm & Vorbereitung",
@@ -134,19 +134,19 @@
     },
     "startlistStagePlans": {
       "label": "Startlist & Stage Plans",
-      "description": "Startlist Fristausschreibungen sowie fehlende oder unvollständige Bestandsaufnahmen."
+      "description": "Startlist Fristmeldungen sowie fehlende oder unvollständige Ratschläge über den Etappenplan."
     },
     "medicalRecovery": {
       "label": "Medizinische & Erholung",
-      "description": "Medizinische Berichte, Verletzungs- und Krankheitsbehandlungspläne, Genesungsänderungen und medizinische Aufklärungsberatungen."
+      "description": "Medizinische Berichte, Behandlungspläne für Verletzungen und Krankheiten, Veränderungen der Erholung sowie Empfehlungen zur medizinischen Freigabe."
     },
     "equipmentWorkshopSupplies": {
       "label": "Ausrüstung, Werkstatt & Rennbedarf",
       "description": "Ausrüstungszustand, Werkstattbereitschaft und analytische Rennangebots-Berater."
     },
     "scoutingRecruitment": {
-      "label": "Pfadfinder & Einstellung",
-      "description": "Personalbeschaffungs-Intelligenz, Scouting-Überprüfung und vorrangige Berater."
+      "label": "Scouting und Rekrutierung",
+      "description": "Recruiting-Informationen, Scouting-Auswertung und Empfehlungen zu priorisierten Talenten."
     }
   },
   "developingTeam": {
@@ -179,7 +179,7 @@
     "competitionRule": "Dieses Team kann nicht oben befördert werden Continental n.",
     "rosterRule": "Maximale Dienstplangröße: 8 Fahrer.",
     "ageRule": "Nur Fahrer im Alter von 23 oder jünger sind berechtigt.",
-    "movementRule": "Fahrer bewegen sich zwischen den Mannschaften nur während der Bewegung Fenster.",
+    "movementRule": "Die Fahrer bewegen sich nur während der Bewegungsfenster zwischen den Kader.",
     "teamLabel": "Team"
   },
   "dangerZone": {
@@ -193,7 +193,7 @@
     "shutdownTitle": "Abschalten",
     "shutdownDescription": "Löschen Sie dieses Benutzerteam UND das Authentifizierungskonto dauerhaft. Nach erfolgreicher Löschung werden Sie zur Homepage weitergeleitet und können sich mit derselben E-Mail erneut anmelden.",
     "shutdownDetail": "Dies sollte nur die aktuellen Benutzer-Team-Daten löschen, nicht andere Benutzer oder andere Teams.",
-    "shuttingDown": "- Ich schalte ab...",
+    "shuttingDown": "Wird beendet...",
     "shutdownButton": "Abschalten",
     "systemNote": "Das Benachrichtigungssystem sollte diese gespeicherten Einstellungen überprüfen, bevor jeder Benachrichtigungstyp erstellt oder angezeigt wird.",
     "confirmTitle": "Team-Schließung bestätigen",

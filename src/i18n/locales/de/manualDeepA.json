@@ -26,7 +26,7 @@
       "overview": "Die linke Seitenleiste ist die Hauptnavigation im Spiel, während die Fußzeile maßgebliche Live-Spielzeit zeigt. Einige Dashboard-Zustände können Interaktion sperren.",
       "facts": [
         "Seitenleiste",
-        "Übersicht, Squad, Kalender, Rennvorbereitung, Teamranking, Training, Ausrüstung, Infrastruktur, Finanzen, Transfers, Statistik",
+        "Überblick, Team, Kalender, Rennvorbereitung, Teamranglierung, Training, Ausrüstung, Infrastruktur, Finanzen, Transfers, Statistik",
         "Fußzeile",
         "Shows Saison, Wochentag, Datum und Uhrzeit"
       ],
@@ -105,7 +105,7 @@
       "details": [
         "Die Seite lädt den aktuellen Club-Bezugscode aus der Clubtabelle.",
         "Der Verweis-Link verwendet die aktuelle Website Herkunft plus die Empfehlungsroute.",
-        "Ausstehende bedeutet, dass ein Freund einen Club gegründet hat, aber noch nicht das erste Münzpaket gekauft hat.",
+        "Ein Freund hat einen Club gegründet, hat aber noch nicht das erste Coin-Paket gekauft.",
         "Abgeschlossen bedeutet, dass der erste Münzkauf passiert ist und die Belohnung gewährt wurde.",
         "Benutzer- und Club-Identifikatoren sind für die Privatsphäre maskiert."
       ],
@@ -141,7 +141,7 @@
         "Für aktuelle Preise, vertrauen Sie auf die Seite der Coins."
       ],
       "links": [
-        "Münzpakete"
+        "Coin-Pakete"
       ]
     },
     "contactForumSupport": {
@@ -275,7 +275,7 @@
       "details": [
         "Alarme zeigen, was zuerst Aufmerksamkeit braucht.",
         "KPIs fassen Clubzustand in kompakten Karten zusammen.",
-        "Operations Karten zeigen aktive Systeme wie Training, Infrastruktur, Medizin, Sponsor, Posteingang, Finanzen oder System-Events.",
+        "Die Betriebskaarte zeigt aktive Systeme wie Training, Infrastruktur, Medizin, Sponsoren, Posteingang, Finanzen oder Systemveranstaltungen an.",
         "Squad Pulse fasst Fitness, Moral, Bereitschaft, Verfügbarkeit und Vertragsrisiko zusammen.",
         "Finanzen Gesundheit zeigt Bilanz, Betriebsergebnis/expense, Sponsoreneinkommen, Kosten und Reiseprognosen.",
         "Notstandsschulden Gesundheit zeigt Rettungszahlen, ausstehender Kapitalbetrag, nächste Rückzahlung und Liquidation Risiko.",
@@ -341,12 +341,12 @@
       "overview": "Benachrichtigungen können wichtige staatliche Veränderungen in Bezug auf die Vorbereitung, Finanzierung, Infrastruktur, Transfers, Teamentwicklung und Sponsoren darstellen.",
       "facts": [
         "Beispiele",
-        "Race Plan Erinnerungen, Stage Plan Erinnerungen, Entwicklung Fenster, Notkredit, Einrichtung komplett, Fahrer Freigabe, Sponsor Ziel"
+        "Erinnerungen an den Race Plan, Erinnerungen an den Etappenplan, Entwicklungsfenster, Notfallkredit, Einrichtung vollständig, Freigabe des Fahrers, Ziel des Sponsors"
       ],
       "details": [
         "Die Benachrichtigungen über die Vorbereitung der Rennen warnen, wenn Pläne oder Stage Plans Maßnahmen erfordern.",
         "Entwicklungsteam-Fenster-Benachrichtigungen sagen den Benutzern, wann Bewegung möglich ist.",
-        "Meldungen über die Fertigstellung der Infrastruktur geben den Nutzern an, dass eine Einrichtung/asset ist bereit.",
+        "Benachrichtigungen über abgeschlossene Infrastrukturarbeiten informieren Sie darüber, dass eine Einrichtung oder ein Asset bereit ist.",
         "Not notifikationen für Darlehen bedeuten, dass der Verein nicht decken konnte eine obligatorische Kosten.",
         "Fahrer Release-Benachrichtigungen Link zu Fahrerprofil oder Free-Agent-Markt.",
         "Sponsor objektive Benachrichtigungen können mit Kalender oder Ziel Rennen verbinden."
@@ -387,11 +387,11 @@
       "overview": "Das Menü oben rechts enthält Konto- und Supportseiten, die nicht alle in der linken Seitenleiste sichtbar sind.",
       "facts": [
         "Typische Elemente",
-        "Posteingang, Profil, Personalisierung, Einstellungen, Hilfe, Kontakt, Münzpakete, Freunde einladen, Abmelden"
+        "Inbox, Profil, Personalteam, Präferenzen, Hilfe, Kontakt, Coin-Pakete, Freunde einladen, Log-out"
       ],
       "details": [
         "Benutzer können Profileinstellungen und Passwort-Tools aus dem Menü erreichen.",
-        "Münzenpakete und Freunde einladen sind Konto/coin Werkzeuge.",
+        "Coin-Pakete und Freunde einladen sind Konto/coin Werkzeuge.",
         "Einstellungen steuert die Benachrichtigungseinstellungen und den Entwicklungsteam-Kauf.",
         "Hilfe und Handbuch sollten auf diese Seite verweisen.",
         "Die aktuelle Sitzung wird beendet."
@@ -401,7 +401,7 @@
       ]
     },
     "firstSquadDeep": {
-      "title": "Erstes Schwadengefecht",
+      "title": "Erste Kader",
       "subtitle": "Hauptreiter-Liste und Listenansichten.",
       "overview": "Erste Squad ist, wo Benutzer ihre wichtigsten Dienstplan, finanzielle Informationen, Fähigkeiten und Form zu überprüfen.",
       "facts": [
@@ -413,12 +413,12 @@
       "details": [
         "Allgemeiner Blick ist am besten für schnelle tägliche Dienstplan-Checks.",
         "Die finanzielle Ansicht zeigt Gehalt, Marktwert und Verträge.",
-        "Skills-Ansicht hilft, Sprint, Klettern, Zeitfahren, flach, Ausdauer, Erholung, Widerstand, Rennen IQ, Teamwork und Moral zu vergleichen.",
+        "Skills view hilft beim Vergleich von Sprint, Klettern, Zeitfahren, Flach, Ausdauer, Erholung, Widerstand, Renn-IQ, Teamwork und Moral.",
         "Formansicht hilft, Müdigkeit, Moral, Verfügbarkeit und Potenzial zu beurteilen.",
         "Saison Dashboard Widgets können Siege, Podiumsplätze, Top 10s, am besten zeigen GC, letztes Rennen und nächste Auswahl."
       ],
       "tips": [
-        "Kaufen Sie keine Fahrer, bevor Sie die aktuelle Mannschaft verstehen."
+        "Kaufen Sie keine Fahrer, bevor Sie die aktuelle Kader verstehen."
       ],
       "links": [
         "Team"
@@ -430,7 +430,7 @@
       "overview": "Insgesamt ist eine nützliche Abkürzung, aber spezifische Fahrer Attribute entscheiden über die richtige Rennrolle und taktische Verwendung.",
       "facts": [
         "Kompetenzen",
-        "Sprint, Klettern, Zeitfahren, Ausdauer, flach, Erholung, Widerstand, Rennen IQ, Teamwork, Moral"
+        "Sprint, Klettern, Zeitfahren, Ausdauer, Flach, Erholung, Widerstand, Rennen IQ, Teamwork, Moral"
       ],
       "details": [
         "Sprint zählt in den Massen- und Sprintzügen.",
@@ -451,20 +451,20 @@
     "riderProfileDeep": {
       "title": "Reiterprofil-Registerblätter",
       "subtitle": "Überblick, Vertrag, Training, Vergleich und Geschichte.",
-      "overview": "Rider Profile ist die tiefe Seite für individuelle Fahrerentscheidungen.",
+      "overview": "Das Fahrerprofil ist die Detailseite für Entscheidungen zu einzelnen Fahrern.",
       "facts": [
         "Tabulatoren",
-        "Übersicht, Vertrag, Training, Vergleich, Geschichte",
+        "Überblick, Vertrag, Training, Vergleich, Geschichte",
         "Ansicht der Fähigkeiten",
         "Grundlegend oder modern"
       ],
       "details": [
         "Übersicht zeigt Fahreridentität, Status und Kernzustand.",
         "Der Vertrag zeigt Gehalt, Verlängerung und Freigabe-bezogene Informationen.",
-        "Ausbildungspläne/history falls verfügbar.",
+        "Die Training zeigt Pläne/history wenn sie verfügbar sind.",
         "Vergleich erlaubt Benutzern zu vergleichen Fahrer, ohne die Seite zu verlassen.",
         "Die Geschichte zeigt Karriere-Saisons und aktuelle Renndaten.",
-        "Transfer-listed Zustand ist sichtbar und kann Freigabe blockieren."
+        "Der Status „auf der Transferliste“ ist sichtbar und kann eine Freigabe blockieren."
       ],
       "tips": [
         "Offene Profile vor der Erneuerung, Verkauf oder Bau von Rennplänen."
@@ -481,7 +481,7 @@
         "Müdigkeit, Moral, Gesundheitsfall, Genesung"
       ],
       "details": [
-        "Fit Fahrer sind normalerweise sicher, wenn nicht nach Zeitplan blockiert.",
+        "Fit-Fahrer sind normalerweise sicher, wenn sie nicht nach dem Zeitplan blockiert werden.",
         "Nicht voll fit Fahrer können riskant sein und brauchen möglicherweise medizinische Unterstützung.",
         "Verletzte oder kranke Fahrer sollten in der Regel nicht Rennen oder trainieren hart.",
         "Hohe Ermüdung kann die Leistungsfähigkeit reduzieren und das Risiko erhöhen.",
@@ -514,28 +514,28 @@
     "contractsRenewalsRelease": {
       "title": "Verträge, Erneuerungen und Freigabe",
       "subtitle": "Finanzielle Entscheidungen rund um Fahrer.",
-      "overview": "Verträge betreffen Löhne, Ablauf, Freigabekosten, Verlängerungszeitpunkt und Übertragungslistenstatus.",
+      "overview": "Die Verträge betreffen Löhne, Ablauf, Freisetzungskosten, Verlängerungszäit und Status der Transferliste.",
       "facts": [
         "Vorschau auf die Freigabe",
         "Restwochen, Gehalt, Freigabekosten und Rest nach Freigabe",
         "Blockieren",
-        "Freigabe blockiert während der Übertragung aufgeführt"
+        "Veröffentlichung blockiert während der Transfer aufgeführt"
       ],
       "details": [
         "Ein Fahrer mit hohem Gehalt kann zu einem finanziellen Problem werden.",
         "Die Vertragslaufzeit sollte vor Saisonende überprüft werden.",
         "Die Entlassung eines Fahrers kann das verbleibende Gehalt kosten/compensation.",
         "Die Vorschau zeigt, ob sich der Club eine Freigabe leisten kann.",
-        "Transfer-Liste Fahrer können nicht veröffentlicht werden, während die Auflistung aktiv ist."
+        "Die auf der Transfer gelisteten Fahrer können nicht während der Aufnahme freigegeben werden."
       ],
       "tips": [
-        "Überprüfe die Verträge vor der Übertragung."
+        "Überprüfen Sie die Verträge, bevor Sie Transfers machen."
       ]
     },
     "developingTeamDeep": {
       "title": "Entwicklung des Teams",
       "subtitle": "U23/development Dienstplan, Kauf und Bewegung Fenster.",
-      "overview": "Entwicklungsteam ist ein zweites vernetztes Team für junge/development Fahrer.",
+      "overview": "Das Entwicklerteam ist ein zweites verbundenes Team für junge Menschen./development Fahrer.",
       "facts": [
         "Max in der Benutzeroberfläche",
         "8 Fahrer",
@@ -547,7 +547,7 @@
         "24+ Fahrer brauchen Aufmerksamkeit"
       ],
       "details": [
-        "Das Statuspanel zeigt reale Tage, Spieltage, Münzbilanz, Münzkosten und Kaufgenehmigung.",
+        "Das Status-Panel zeigt die tatsächlichen gespielten Tage, die gespielten Spieltage, den Coin-Kontostand, die Münzkosten und die Kaufgenehmigung an.",
         "Nach dem Kauf muss die App den aktiven Clubkontext im Hauptclub behalten.",
         "Bewegungsfenster-Labels erklären, wann Fahrer sich bewegen können.",
         "Ältere Fahrer können Warnungen auslösen.",
@@ -563,13 +563,13 @@
     "staffRolesDeep": {
       "title": "Aufgaben des Personals",
       "subtitle": "Was die Mitarbeiter für den Club tun.",
-      "overview": "Das Personal beeinflusst Training, Erholung, Scouting, Ausrüstung und Rennplanung.",
+      "overview": "Das Personal betreut Training, Erholung, Scouting, Ausrüstung und Rennplanung.",
       "facts": [
         "Aufgaben",
         "Trainer, Obertrainer, U23 Cheftrainer, Doktor, Physio, Ernährungswissenschaftler, Mechaniker, Sportdirektor, Pfadfinder/Analyst"
       ],
       "details": [
-        "Head Coach unterstützt Training und Entwicklung.",
+        "Der Head Coach unterstützt Training und Entwicklung.",
         "Trainer verbessert die tägliche Trainingsqualität.",
         "U23 Head Coach unterstützt die Entwicklung von Fahrern.",
         "Team Doktor, Physio und Ernährungswissenschaftler unterstützen Gesundheit und Erholung.",
@@ -620,14 +620,14 @@
       ]
     },
     "regularTrainingDeep": {
-      "title": "Regelmäßige Schulungsdetails",
+      "title": "Einzelheiten zur regelmäßigen Training",
       "subtitle": "Team-Standards und individuelle Pläne.",
-      "overview": "Regelmäßiges Training ist das alltägliche Entwicklungssystem für Fahrer.",
+      "overview": "Regelmäßige Training ist das tägliche Entwicklungssystem für Fahrer.",
       "facts": [
         "Intensitäten",
         "Erholung, Licht, normal, hart",
         "Schwerpunkte",
-        "Allgemein, Erholung, Sprint, Klettern, flach, Zeitfahren, Ausdauer, Widerstand, Rennen IQ, Teamarbeit"
+        "Allgemeine, Erholung, Sprint, Klettern, Flach, Zeitfahren, Ausdauer, Widerstand, Renn-IQ, Teamarbeit"
       ],
       "details": [
         "Team-Standards steuern den normalen Plan für einen Team-Scope.",
@@ -637,23 +637,23 @@
         "Focus sollte Fahrerrolle und zukünftige Ziele des Rennens entsprechen."
       ],
       "tips": [
-        "Verwenden Sie nicht hartes Training dauerhaft."
+        "Verwenden Sie nicht dauerhaft harte Training."
       ]
     },
     "trainingCampsDeep": {
       "title": "Schulungslager",
       "subtitle": "Lage, Typ, Wetter, Personal und Kosten.",
-      "overview": "Trainingslager sind stärkere Entwicklungsblöcke mit höheren Planungsanforderungen und Kosten.",
+      "overview": "Trainingslager sind intensivere Entwicklungsblöcke mit höheren Anforderungen an Planung und Budget.",
       "facts": [
         "Lagertypen",
-        "Allgemein, Sprint, Klettern, flach, Zeitfahren",
+        "General, Sprint, Klettern, Flach, Zeitfahren",
         "Regionen",
         "Europa, Nordamerika, Südamerika, Asien, Afrika, Ozeanien, Naher Osten"
       ],
       "details": [
         "Camps umfassen Sterne, Qualitätsmultiplikator, Erholung Komfort, Kostenindex und Wetternote.",
         "Bevorzugte, riskante und geschlossene Wochen beeinflussen die Kalendertauglichkeit.",
-        "Die Preise beinhalten Reisen, Unterkunft, Campinggebühr, Logistik und Gesamtkosten.",
+        "Das Angebot umfasst Reise, Unterkunft, Lagergebühr, Logistik und Gesamtkosten.",
         "Die Validierung kann verletzte Fahrer oder nicht vorhandenes Personal blockieren.",
         "Mitarbeiter-Boosts können Entwicklung, Erholung, Organisation und Risikoreduktion verbessern."
       ],

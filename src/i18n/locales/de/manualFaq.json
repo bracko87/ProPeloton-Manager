@@ -19,7 +19,7 @@
     "acceptedNotReady": {
       "title": "FAQ: Warum bin ich akzeptiert, aber nicht bereit?",
       "subtitle": "Der akzeptierte Eintritt ist kein vollständiger Race Plan.",
-      "overview": "Akzeptiert bedeutet, dass Ihr Team einen Platz hat; bereit bedeutet, dass Fahrer, Personal, Vermögenswerte, Ausrüstung, Vorräte und Bühnenpläne nutzbar sind.",
+      "overview": "Akzeptiert bedeutet, dass Ihr Team einen Platz hat; bereit bedeutet, dass Fahrer, Mitarbeiter, Vermögenswerte, Ausrüstung, Vorräte und Etappenpläne nutzbar sind.",
       "details": [
         "Race Plan Es muss noch eingereicht werden.",
         "Stage Plans Vielleicht fehlt es noch.",
@@ -54,7 +54,7 @@
       "overview": "Finanztransaktionen sind die Quelle für Bilanzbewegungen.",
       "details": [
         "Offene Finanzen → Transaktionen.",
-        "Überprüfung der Gehälter, Steuern, Sponsorenzahlungen, Transfers, Ausrüstung, Infrastruktur, Lager und Richtlinien.",
+        "Überprüfung von Gehältern, Steuern, Sponsorzahlungen, Transfers, Ausrüstung, Infrastruktur, Lagern und Politiken.",
         "Offene Steuer für monatliche Prüfung.",
         "Offene Teamrichtlinien für wiederkehrende Kosten.",
         "Denken Sie daran, dass Kredite Schulden sind, nicht Einkommen."
@@ -70,7 +70,7 @@
       "details": [
         "Die Prämien werden nach Kategorien gewichtet.",
         "Der Bühnenbonus ist gedeckelt.",
-        "Team/non-rider Unterstützung ist begrenzt.",
+        "Die Unterstützung für Team bzw. Nicht-Fahrer ist begrenzt.",
         "Die Ermüdungsreduktion ist begrenzt.",
         "Spezialgeräte können negative Kompromisse haben."
       ],

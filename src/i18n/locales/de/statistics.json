@@ -1,13 +1,13 @@
 {
   "page": {
     "title": "Statistiken",
-    "subtitle": "Team- und Reiterstatistiken in Ihrer Radsportwelt. Fahrer-Ranking hier sind global, so dass sie die besten Fahrer aus allen Teams im Spiel vergleichen.",
+    "subtitle": "Die Fahrer-Rankings sind global, so dass sie die besten Rennern aller Teams im Spiel vergleichen.",
     "teams": "Teams",
     "riders": "Fahrer",
     "loading": "Ladestatistiken",
     "fetching": "Daten holen...",
     "error": "Fehler bei der Statistik",
-    "loadFailed": "Es ist nicht möglich, Statistiken zu laden."
+    "loadFailed": "Statistiken konnten nicht geladen werden."
   },
   "common": {
     "current": "Aktuell",
@@ -18,7 +18,7 @@
     "rider": "Fahrer",
     "country": "Empfänger",
     "tier": "Tierart",
-    "division": "Abteilung",
+    "division": "Division",
     "type": "Art",
     "status": "Status",
     "season": "Jahreszeit",
@@ -49,12 +49,12 @@
     "fitOnly": "Nur für die Passform",
     "unavailableOnly": "Nur nicht verfügbar",
     "allTiers": "Alle Ebenen",
-    "allDivisions": "Alle Abteilungen",
+    "allDivisions": "Alle Divisionen",
     "allCountries": "Alle Länder",
     "allSeasons": "Alle Jahreszeiten",
     "sortInternational": "Sortieren: Internationale Punkte",
     "sortStageFinish": "Sortierung: Etappenende Punkte",
-    "sortGcOneDay": "Sortieren: GC / eintägige Punkte"
+    "sortGcOneDay": "Sortieren: GC / Eintagesrennen-Punkte"
   },
   "competition": {
     "worldTeam": "WorldTeam",
@@ -84,11 +84,11 @@
   },
   "metrics": {
     "international": "Internationale",
-    "stageFinish": "Endstand",
+    "stageFinish": "Abschluss der Etappe",
     "gcOneDay": "GC - Ein Tag",
     "internationalPoints": "Internationale Punkte",
-    "stageFinishPoints": "Punkte für den Etappenabschluss",
-    "gcOneDayPoints": "GC / eintägige Punkte",
+    "stageFinishPoints": "Abschlusspunkte der Etappe",
+    "gcOneDayPoints": "GC / Eintagesrennen-Punkte",
     "pointsTemplate": "{{metric}} Punkte",
     "sortedBy": "Sortiert nach: {{metric}}."
   },
@@ -154,7 +154,7 @@
     "noAgeDescription": "Alter Eimer erscheinen, sobald Fahrer geladen sind.",
     "topValueSalary": "Top-Wert / Gehalt Fahrer",
     "topValueSalarySubtitle": "Nützlich, wenn Sie später Vertrags- und Transfer-bezogene Statistiken hier wollen.",
-    "noFinanceData": "Keine Daten über die Fahrfinanzierung",
+    "noFinanceData": "Keine Finanzdaten für Fahrer",
     "noFinanceDescription": "Dieser Bereich kann später zu Wert, Löhnen und Vertragsauslauf Zusammenfassungen werden."
   },
   "roles": {
@@ -175,11 +175,11 @@
     "start": "Tutorial starten",
     "noThanks": "Nein, danke.",
     "teamsCurrentTitle": "Teamstatistik",
-    "teamsCurrentBody": "Hier ist die Seite Statistik. Im Teambereich werden die Teamstatistiken über alle Wettkämpfe hinweg an einem Ort angezeigt. In Current können Sie die aktuelle Saison sehen und vergleichen, welche Teams nach Punkten die erfolgreichsten sind. Sie können Filter verwenden, um verschiedene Ebenen, Divisionen, Länder, Benutzerteams, AI-Teams, aktive Teams und inaktive Teams zu betrachten. Sie können auch ein Teamprofil öffnen, um mehr Details über dieses Team zu sehen.",
+    "teamsCurrentBody": "Das ist die Seite Statistik. Im Teams-Team-Team-Team-Team-Team-Statistiken werden an einem Ort alle Wettbewerbe aufgestellt. In Current können Sie die aktuelle Saison sehen und vergleichen, welche Teams am erfolgreichsten sind nach Punkten. Sie können Filter verwenden, um verschiedene Ebenen, Divisionen, Länder, Benutzerteams, KI-Teams, aktive Teams und inaktive Teams zu betrachten. Sie können auch ein Teamprofil öffnen, um mehr Details über dieses Team zu sehen.",
     "teamsHistoryTitle": "Team-Geschichte",
     "teamsHistoryBody": "Der Abschnitt Geschichte zeigt die vorherigen Saisons. Hier können Sie die vergangenen Gewinner, alte Saison-Snapshots, historische Positionen und wie Teams in früheren Saisons durchgeführt. Dies wird nützlicher, wenn Ihre Welt Fortschritte durch mehrere Jahreszeiten.",
     "ridersTitle": "Fahrerstatistik",
-    "ridersBody": "Die Riders Sektion zeigt die besten Fahrer der Welt. Sie können Fahrer durch internationale Punkte, Etappenzielpunkte, allgemeine Klassifizierung und eintägige Rennpunkte vergleichen. Sie können auch Fahrer mit den meisten Podiums und Trikots sehen. Diese Seite hilft Ihnen zu verstehen, welche Fahrer die Saison dominieren und welche Fahrer interessant sein können, zu folgen, Scout, oder Zeichen. Nach Statistik, die nächste empfohlene Seite ist Transfers.",
+    "ridersBody": "Der Bereich Fahrer zeigt die besten Fahrer der Radsportwelt.\n\nSie können Fahrer nach internationalen Punkten, Punkten aus Etappenplatzierungen, Gesamtwertung und Punkten aus Eintagesrennen vergleichen. Außerdem sehen Sie Fahrer mit den meisten Podiumsplätzen und den meisten Trikots.\n\nDiese Seite hilft Ihnen zu erkennen, welche Fahrer die Saison dominieren und welche Fahrer interessant sein könnten, um sie zu verfolgen, zu scouten oder zu verpflichten.\n\nNach Statistiken wird als Nächstes die Seite Transfers empfohlen.",
     "next": "Nächste",
     "continueTransfers": "Weiter zu Transfers",
     "finish": "Fertig für jetzt",

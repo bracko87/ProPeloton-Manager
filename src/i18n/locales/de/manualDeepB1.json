@@ -8,7 +8,7 @@
         "Kategorien",
         "Rahmen, Radsatz, Reifen, Gruppen, Helm, Schuhe",
         "Prämien",
-        "Flach, hügelig, Berg, Kopfsteinpflaster, Zeitfahren, Sprint, Ermüdungsreduktion"
+        "Flach, hügelig, bergschaftlich, Kopfsteinpflaster, Zeitfahren, sprint, müdigkeitsabnahme"
       ],
       "details": [
         "Frames definieren oft die breite Setup-Identität.",
@@ -64,7 +64,7 @@
     "raceSuppliesDeep": {
       "title": "Einzelheiten zu den Rassenvorräten",
       "subtitle": "Bidonen, Gele, Ernährung, Trikots und Regenjacken.",
-      "overview": "Race-Lieferungen werden während der Bühnenpläne verbraucht oder verwendet und können Müdigkeit, Ausdauer, Bereitschaft und Wetterunterstützung beeinflussen.",
+      "overview": "Die Verbrauchsmaterialien der Rennstrecke werden während der Etappenplanung verbraucht oder verwendet und können Erschöpfung, Ausdauer, Bereitschaft und Wetterunterstützung beeinflussen.",
       "facts": [
         "Verbrauchsmaterialien",
         "Lebensmittel, Lebensmittel, Lebensmittel, Lebensmittel",
@@ -75,8 +75,8 @@
         "Bidonen: 1–4 pro Fahrer; Hydratation und Ermüdungskontrolle.",
         "Gele: 0–4 pro Fahrer; Ausdauer und Endaufwand Unterstützung.",
         "Ernährung: 0–2 pro Fahrer; Ausdauer- und Erholungsunterstützung.",
-        "Renntrikots: Pflicht-Dauer-Kit; 10 Stufen Einsatz pro Einheit.",
-        "Regenjacken: optionaler Dauerwetterartikel; 25 Einsatzstufen pro Einheit."
+        "Renntröse: obligatorisches, haltbares Set; 10 Etappenverwendungen pro Einheit.",
+        "Regenjasken: optionaler, langlebiger Wetterartikel; 25 Etappenverwendungen pro Einheit."
       ],
       "tips": [
         "Die Etappenrennen verbrauchen schnell Vorräte."
@@ -104,10 +104,10 @@
     "facilitiesOverviewDeep": {
       "title": "Einrichtungen Übersicht",
       "subtitle": "Gebäude und Personalkapazität.",
-      "overview": "Die Einrichtungen verbessern die Ausbildung, die Medizin, das Scouting, die Mechanik, die Jugend- und die Clubverwaltung.",
+      "overview": "Die Einrichtungen verbessern die Systeme der Training, Medizin, Scouting, Mechanik, Jugend und Vereinsverwaltung.",
       "facts": [
         "Einrichtungen",
-        "Clubhaus, Schulungszentrum, Medizinisches Zentrum, Jugendakademie, Mechanik-Workshop, Scouting Office"
+        "Clubhaus, Trainingszentrum, Medizinisches Zentrum, Jugendakademie, Mechanikwerkstatt, Scouting-Büro"
       ],
       "details": [
         "Club House unterstützt Verwaltung und zukünftiges Management.",
@@ -115,7 +115,7 @@
         "Medical Center unterstützt Ärzte, Physios, Ernährungswissenschaftler und Erholung.",
         "Jugendakademie unterstützt U23/youth Entwicklung.",
         "Mechanik-Workshop unterstützt Ausrüstung/repairs.",
-        "Scouting Office unterstützt Scouting-Berichte und Marktinformationen."
+        "Das Scouting Office unterstützt die Scouting-Berichte und Marktinformationen."
       ],
       "tips": [
         "Wählen Sie Upgrades basierend auf Ihrem aktuellen Engpass."
@@ -204,7 +204,7 @@
     },
     "raceDetailDeep": {
       "title": "Detailseite zum Rennen",
-      "subtitle": "Rennprofil, Etappen, Teilnehmer, Ergebnisse und Wiederholung.",
+      "subtitle": "Rennenprofil, Etappen, Teilnehmer, Ergebnisse und Replay.",
       "overview": "Race Detail ist der volle Renndrehkreuz.",
       "facts": [
         "Registerkarten für Info",
@@ -218,14 +218,14 @@
         "Etappen zeigen Route, Gelände, Distanz, Wetter, Sprints und Anstiege.",
         "Die Teilnehmer zeigen Team- und Fahrer-Snapshots.",
         "Ergebnisse und Klassifizierungen werden je nach Rennzustand verfügbar.",
-        "Replay kann Live- oder historische Frames anzeigen, wenn der Zugriff dies erlaubt."
+        "Replay kann – sofern der Zugriff erlaubt ist – Live- oder historische Frames anzeigen."
       ],
       "tips": [
         "Überprüfen Sie die Renndetails, bevor Sie ein Team vorbereiten."
       ]
     },
     "stageTerrainPoints": {
-      "title": "Etappe Terrain und Punkte",
+      "title": "Etappenfeld und Punkte",
       "subtitle": "Flach, hügelig, Berg, TT, gepflastert, Sprints und KOM.",
       "overview": "Die Definition von Gelände und Punkten hilft den Benutzern, Fahrer, Taktiken und Ausrüstung zu entscheiden.",
       "facts": [
@@ -239,7 +239,7 @@
         "Hilly-Stadien begünstigen vielseitige Fahrer und Angreifer.",
         "Bergetappen bevorzugen Kletterer und GC Führer.",
         "TT/prologue Phasen bevorzugen Zeit-Trialisten und TT-Ausrüstung.",
-        "Kopfsteinpflasterstufen begünstigen Widerstand und Spezialausrüstung.",
+        "Kohleförmige Etappen fördern Widerstand und spezielle Ausrüstung.",
         "KOM und Sprintpunkte sind für sekundäre Klassifizierungen von Bedeutung."
       ],
       "tips": [
@@ -247,9 +247,9 @@
       ]
     },
     "replayResultsDeep": {
-      "title": "Wiedergabe, Ergebnisse und Kommentar",
+      "title": "Replay, Ergebnisse und Kommentar",
       "subtitle": "Wie man versteht, was in einer Phase passiert ist.",
-      "overview": "Wiederholung und Kommentar erklären die Renndynamik über die Endergebnistabelle hinaus.",
+      "overview": "Replay und Kommentar erklären die Renndynamik jenseits der Endresultatafel.",
       "facts": [
         "Wiedergabegeschwindigkeiten",
         "1x, 2x, 4x, 8x",
@@ -257,14 +257,14 @@
         "Bis zu 50000 Zeilen im aktuellen Code geladen"
       ],
       "details": [
-        "Replay Frames zeigen Gruppen, Lücken, Fahrer, Teams, Geschwindigkeit und Kilometermarkierungen.",
+        "Replay-Frames zeigen Gruppen, Abstände, Fahrer, Teams, Geschwindigkeit und Kilometermarkierungen.",
         "Live-Zustand steuert, ob Ergebnisse sichtbar sind und ob die Wiedergabegeschwindigkeit gesperrt ist.",
         "Stehende Reihen können Leader-Abzeichen und Gruppenposition anzeigen.",
         "Bemerkungen/report Ereignisse beschreiben Angriffe, Sprints, Anstiege, Zwischenfälle und entscheidende Momente.",
         "Ergebnisse zeigen Bühnenrang, Zeit, Lücke, Punkte, Bonus/penalty Sekunden und Status."
       ],
       "tips": [
-        "Verwenden Sie Wiederholung, um Taktiken und Fahrerleistung zu diagnostizieren."
+        "Verwenden Sie Replay, um Taktiken und Fahrerleistung zu diagnostizieren."
       ]
     },
     "racePlanDeep": {
@@ -280,7 +280,7 @@
         "Blockierte Fahrer können nicht für überlappende Ereignisse ausgewählt werden.",
         "Personal und Vermögen können auch durch Zuweisungen blockiert werden.",
         "Ausrüstungsaufbau sollte mit Renngelände übereinstimmen.",
-        "Die Lieferungen sollten für alle Stufen ausreichend sein.",
+        "Für alle Etappen sollte die Versorgung ausreichend sein.",
         "Die Zitatvorschau sollte vor dem Absenden überprüft werden."
       ],
       "tips": [
@@ -289,7 +289,7 @@
     },
     "stagePlanDeep": {
       "title": "Stage Plan Einzelheiten",
-      "subtitle": "Rollen und Taktiken auf der Etappe.",
+      "subtitle": "Rollen und Taktiken pro Etappe.",
       "overview": "Stage Plans dem Rennmotor mitteilen, was jeder Fahrer auf jeder Etappe tun soll.",
       "facts": [
         "Bestandteile",
@@ -297,9 +297,9 @@
       ],
       "details": [
         "Eine flache Sprint-Stufe braucht andere Rollen als eine Bergbühne.",
-        "TT- und TTT-Stufen benötigen Tempo und Spezialausrüstung.",
-        "Die Lieferungen werden pro Stufe zugewiesen und können verbraucht oder langlebige Kapazitäten nutzen.",
-        "Die Bereitschaftsüberprüfungen zeigen an, ob ein Bühnenplan nutzbar ist.",
+        "Die TT- und TTT-Etappen erfordern eine Pacing- und Spezialgeräte.",
+        "Die Lieferungen werden pro Etappe zugeordnet und können verbraucht oder langlebige Kapazitäten genutzt werden.",
+        "Die Bereitschaftsprüfungen zeigen, ob ein Etappenplan nutzbar ist.",
         "Gespeicherte, aber leere Pläne sind nicht die gleichen wie komplette Pläne."
       ],
       "tips": [
@@ -307,9 +307,9 @@
       ]
     },
     "stageRolesDeep": {
-      "title": "Rollen und Anwendungsfälle in der Phase",
+      "title": "Die Rolle der Etappen und die Verwendungszwecke",
       "subtitle": "Auswahl von Führern, Sprintern, Helfern und Spezialisten.",
-      "overview": "Die Rollen der Etappe sollten mit den Fähigkeiten der Fahrer und den Zielen der Etappe übereinstimmen.",
+      "overview": "Die Etappenrollen sollten den Fähigkeiten der Fahrer und den Etappenzielen entsprechen.",
       "facts": [
         "Aufgaben",
         "Leader, Sprinter, Lead-out, Sprinter, Bergsteiger, Bergdomestique, Helfer, Ausreißer, Verfolger, Rouleur, geschützt, frei"
@@ -341,7 +341,7 @@
         "Leere Pläne sollten mit Rollen gefüllt werden/tactics/supplies.",
         "Pläne ohne Lieferungen können riskant oder unvollständig sein.",
         "Empfohlene Aktion erklärt, was zu beheben ist.",
-        "Alle erforderlichen Stage Plans sollten vor dem Renntag gespeichert werden."
+        "Alle erforderlichen Etappenpläne sollten vor dem Renntag gespeichert werden."
       ],
       "tips": [
         "Rot fixieren/orange Bereitschaft vor Ablauf der Frist."
@@ -349,14 +349,14 @@
     },
     "sportDirectorDeep": {
       "title": "Vorschläge für Sportdirektoren",
-      "subtitle": "Assistentin Vorschläge für Bühnenpläne.",
+      "subtitle": "Hilfsvorschläge für Etappenplanung.",
       "overview": "Sportdirektor-Vorschläge können Managern helfen, Pläne zu erstellen, sollten aber das Urteil nicht ersetzen.",
       "facts": [
         "Vorschläge",
         "Ausrüstung, Team, Einzelperson, Zubehör"
       ],
       "details": [
-        "Die Antwort kann Bühnenart, Bühnenname, Vorschlagsdaten und Erklärung umfassen.",
+        "Die Antwort auf die Vorschläge kann die Art der Etappe, den Etappennamen, die Vorschlagsdaten und die Erklärung umfassen.",
         "Vorschläge können durch die Qualität des Personals oder die Logik des Backends begrenzt werden.",
         "Die Nutzer sollten Vorschläge mit tatsächlichen Fahrer Fähigkeiten und Team-Ziele vergleichen.",
         "Wetter und Vorräte sollten noch manuell überprüft werden.",

@@ -1,17 +1,17 @@
 {
   "page": {
     "title": "Vorschau auf Saison zurücksetzen",
-    "description": "Überprüfen Sie Promotion und Abschiebungsbewegungen vor der Anwendung der Saison Rollover.",
+    "description": "Überprüfung der Bewegungen bei der Aufstieg und der Abschaltung vor der Anwendung des Saisonübergangs.",
     "loading": "Vorschau zum Zurücksetzen der Saison wird geladen...",
     "failed": "Die Saison-Reset-Vorschau konnte nicht durchgeführt werden."
   },
   "table": {
     "team": "Team",
     "country": "Empfänger",
-    "division": "Abteilung",
+    "division": "Division",
     "points": "Punkte",
     "from": "Von",
-    "to": "An",
+    "to": "Nach",
     "reason": "Begründung",
     "removed": "REMOVED",
     "countryFlag": "{{country}} Flagge"
@@ -77,7 +77,7 @@
     "promoted": "Gefördert",
     "relegated": "Abgeleitet",
     "directPromotion": "Direkte Beförderung",
-    "playoffPromotion": "Playoff-Förderung",
+    "playoffPromotion": "Aufstieg in die Playoffs",
     "inactiveRemoved": "Inaktive Entfernung"
   },
   "divisions": {
