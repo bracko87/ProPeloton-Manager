@@ -2,8 +2,19 @@ import React, { useEffect, useState } from 'react'
 
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
 
+function getClientPath(): string {
+  if (typeof window === 'undefined') return ''
+
+  const hash = window.location.hash
+  if (hash.startsWith('#/')) {
+    return hash.slice(1)
+  }
+
+  return window.location.pathname
+}
+
 function isDashboardPath(): boolean {
-  return typeof window !== 'undefined' && window.location.pathname.startsWith('/dashboard')
+  return getClientPath().startsWith('/dashboard')
 }
 
 function tagDashboardElements(): void {
@@ -56,6 +67,11 @@ export default function MobileDashboardResponsiveBridge(): JSX.Element | null {
       }
     }
 
+    const handleHashChange = () => {
+      setIsMobileNavigationOpen(false)
+      window.requestAnimationFrame(retag)
+    }
+
     retag()
 
     const observer = new MutationObserver(retag)
@@ -101,12 +117,14 @@ export default function MobileDashboardResponsiveBridge(): JSX.Element | null {
 
     document.addEventListener('click', handleDocumentClick, true)
     document.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('hashchange', handleHashChange)
     mobileMediaQuery.addEventListener('change', handleViewportChange)
 
     return () => {
       observer.disconnect()
       document.removeEventListener('click', handleDocumentClick, true)
       document.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('hashchange', handleHashChange)
       mobileMediaQuery.removeEventListener('change', handleViewportChange)
       delete document.body.dataset.ppmMobileNavOpen
     }
