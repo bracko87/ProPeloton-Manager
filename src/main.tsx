@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import './shadcn.css'
 import './mobile-responsive.css'
+import './mobile-responsive-audit.css'
 import './i18n'
 import App from './App'
 import MobileDashboardResponsiveBridge from './components/layout/MobileDashboardResponsiveBridge'
