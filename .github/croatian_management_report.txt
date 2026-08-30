@@ -1,10 +1,31 @@
-Traceback (most recent call last):
-  File "/home/runner/work/ProPeloton-Manager/ProPeloton-Manager/.github/scripts/validate_croatian_management_20260830.py", line 71, in <module>
-    check_schema(en, hr, filename)
-  File "/home/runner/work/ProPeloton-Manager/ProPeloton-Manager/.github/scripts/validate_croatian_management_20260830.py", line 40, in check_schema
-    check_schema(a[key], b[key], f'{path}.{key}')
-  File "/home/runner/work/ProPeloton-Manager/ProPeloton-Manager/.github/scripts/validate_croatian_management_20260830.py", line 40, in check_schema
-    check_schema(a[key], b[key], f'{path}.{key}')
-  File "/home/runner/work/ProPeloton-Manager/ProPeloton-Manager/.github/scripts/validate_croatian_management_20260830.py", line 48, in check_schema
-    raise AssertionError(f'{path}: placeholder mismatch {PH.findall(a)} != {PH.findall(b)}')
-AssertionError: finance.json.overview.incomePeriod: placeholder mismatch ['{{period}}'] != ['{{razdoblje}}']
+Croatian management terminology gate found 30 issue(s):
+finance.json.overview.lastPeriods: suspicious normalization /razdoblje[a-zčćžšđ]+/ -> posljednjih {{count}} razdobljea
+finance.json.sponsors.historyLabel: Serbian form /\bistorij/ -> Naziv u istoriji nakon ugovora: {{name}}
+finance.json.sponsors.historyLabelPrefix: Serbian form /\bistorij/ -> Naziv u istoriji nakon ugovora:
+finance.json.sponsors.contractSummaryDescription: Serbian form /\bpromen/ -> Ova polja pripadaju aktivnom ugovoru glavnog sponzora i promeniće se kada se u nekoj narednoj sezoni potpiše novi glavni sponzor.
+finance.json.sponsors.noSlotSponsor: Serbian form /\bdodel/ -> Još nema sponzora dodeljenog ovom mjestu.
+finance.json.sponsors.previewCheckedAfterRacesDescription: Serbian form /\bprover/ -> Ciljevi se proveravaju nakon konačnog rezultata ciljane utrke ili etape, a bonus se zatim isplaćuje kroz financije.
+finance.json.transactions.noMonth: suspicious normalization /razdoblje[a-zčćžšđ]+/ -> Nema transakcija u razdobljeu {{month}}.
+finance.json.transactions.showMonth: suspicious normalization /razdoblje[a-zčćžšđ]+/ -> Prikazano {{start}}-{{end}} od {{total}} stavki u razdobljeu {{month}}.
+finance.json.policies.saveFailed: Serbian form /\bsačuv/ -> Politike tima nisu se mogle sačuvaju.
+finance.json.policies.staffEquipmentDescription: Serbian form /\bprimen/ -> Minimalni paket opreme koji se primenjuje jednokratno kada se zaposli novi član osoblja.
+finance.json.policies.applyChangesDescription: Serbian form /\bprimen/ -> Ovim se odjednom primenjuju sva promijenjena polja politika. Izmene se čuvaju tek nakon što kliknete Primijeni.
+transfers.json.staffMarket.noCurrentStaff: Serbian form /\bdodel/ -> Trenutno nema osoblja dodeljenog ovoj ulozi
+transfers.json.staffMarket.noStaffOpen: Serbian form /\bdodel/ -> Nema dodeljenog osoblja • {{slots}} slobodnih mjesta
+transfers.json.intelligence.premiumLimit: Serbian form /\bsačuv/ -> Premium: do {{limit}} sačuvanih pretraga
+transfers.json.intelligence.limitReached: Serbian form /\bsačuv/ -> Dostignut je limit sačuvanih pretraga ({{limit}}).
+transfers.json.intelligence.slotUnlocked: Serbian form /\bsačuv/ -> Mjesto za sačuvanu pretragu {{slot}} trajno je otključano.
+transfers.json.negotiation.lockExplanation: Serbian form /\bposled/ -> Vozač nije bio zadovoljan vašom poslednjom ponudom i pauzirao je pregovore do
+riderProfile.json.premiumBid.statuses.likely_counteroffer: Serbian form /\bverovat/ -> Verovatna kontra-ponuda
+riderProfile.json.ownedContract.u23Open: suspicious normalization /razdoblje[a-zčćžšđ]+/ -> Ovaj vozač je napunio 24 godine i više nema pravo nastupa za Razvojni tim. Mora biti premešten u Prvi tim ili otpušten pre zatvaranja trenutnog razdobljea za premeštanje.
+riderProfile.json.ownedContract.u23Closed: suspicious normalization /razdoblje[a-zčćžšđ]+/ -> Ovaj vozač je napunio 24 godine i više nema pravo nastupa za Razvojni tim. Može ostati tamo do sljedećeg razdobljea za premeštanje, ali pre zatvaranja tog razdobljea mora biti premešten u Prvi tim ili otpušten.
+riderProfile.json.ownedTraining.teamDefault: Serbian form /\bpodrazumevan/ -> Podrazumevano za tim:
+riderProfile.json.ownedAnalysis.attributeHeatmapSubtitle: Serbian form /\bprose/ -> Trenutna vizuelna klasifikacija elitnih, jakih, prosečnih i slabih oblasti
+riderProfile.json.ownedRenewal.likelyMinimum: Serbian form /\bverovat/ -> Verovatni minimum
+preferences.json.groups.racePreparation.description: Serbian form /\bposled/ -> Prikaži osnovna statusna obavijesti i posledice vezane za pripremu utrke. Proaktivni savjet o rokovima vozača pripadaju Sports Director Advisory sustavu.
+preferences.json.groups.systemMessages.label: suspicious normalization /sustavsk\w*/ -> Sustavske poruke
+preferences.json.developingTeam.movementRule: suspicious normalization /razdoblje[a-zčćžšđ]+/ -> Vozači prelaze između ekipa samo tokom movement window razdobljea.
+notifications.json.page.subtitle: suspicious normalization /sustavsk\w*/ -> Događaji u igri, administratorske poruke i sustavska ažuriranja za vaš klub.
+notifications.json.categories.systemMessages: suspicious normalization /sustavsk\w*/ -> Sustavske poruke
+notifications.json.headCoach.windowStart: suspicious normalization /razdoblje[a-zčćžšđ]+/ -> Početak razdobljea
+notifications.json.headCoach.windowEnd: suspicious normalization /razdoblje[a-zčćžšđ]+/ -> Kraj razdobljea
