@@ -1,0 +1,162 @@
+name: Bootstrap Croatian localization
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/bootstrap_croatian_localization_20260830.py'
+      - '.github/workflows/chatgpt-bootstrap-croatian-localization.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Generate Croatian locale and wire application
+        run: python .github/scripts/bootstrap_croatian_localization_20260830.py
+
+      - name: Validate Croatian structure and placeholders
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          root=Path('src/i18n/locales')
+          en_dir=root/'en'; hr_dir=root/'hr'
+          ph=re.compile(r'\{\{[^{}]+\}\}')
+          en_files=sorted(p.name for p in en_dir.glob('*.json'))
+          hr_files=sorted(p.name for p in hr_dir.glob('*.json'))
+          assert en_files==hr_files, f'Croatian file set differs from English: en={len(en_files)} hr={len(hr_files)}'
+          def check(a,b,path):
+              assert type(a) is type(b), f'{path}: type mismatch'
+              if isinstance(a,dict):
+                  assert list(a)==list(b), f'{path}: key/order mismatch'
+                  for k in a: check(a[k],b[k],f'{path}.{k}')
+              elif isinstance(a,list):
+                  assert len(a)==len(b), f'{path}: list length mismatch'
+                  for i,(x,y) in enumerate(zip(a,b)): check(x,y,f'{path}[{i}]')
+              elif isinstance(a,str):
+                  assert sorted(ph.findall(a))==sorted(ph.findall(b)), f'{path}: placeholder mismatch'
+          for name in en_files:
+              check(json.loads((en_dir/name).read_text(encoding='utf-8')),json.loads((hr_dir/name).read_text(encoding='utf-8')),name)
+          print(f'Croatian structure and placeholders validated across {len(en_files)} files.')
+          PY
+
+      - name: Croatian baseline terminology gate
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          patterns={
+            'Serbian settings':r'\bpodešav',
+            'Serbian notifications':r'\bobavešten',
+            'Serbian competition':r'\btakmič',
+            'Serbian participation':r'\bučestv|\bučešće',
+            'Serbian conditions':r'\buslov',
+            'Serbian value':r'\bvrednost',
+            'Serbian next':r'\bslede',
+            'Serbian report':r'\bizvešt',
+            'Serbian injury':r'\bpovre',
+            'Serbian adviser':r'\bsavet',
+            'Serbian security':r'\bbezbed',
+            'Serbian change':r'\bpromen',
+            'Serbian check':r'\bprover',
+            'Serbian section':r'\bodelj',
+            'Serbian choose':r'\bizaber',
+            'Serbian rating':r'\bocen',
+            'Serbian average':r'\bprose',
+            'Serbian probability':r'\bverovat',
+            'Serbian thousand':r'\bhiljad',
+            'Serbian million':r'\bmilion',
+            'Serbian wheel':r'\btočkov|\btočak',
+            'Serbian shifter':r'\bmenjač',
+            'Serbian month':r'\bmesec',
+            'Serbian history':r'\bistorij',
+            'Serbian assign':r'\bdodel',
+            'Serbian apply':r'\bprimen',
+            'Serbian solution':r'\brešen',
+            'Serbian request':r'\bzahtev',
+            'Serbian translation':r'\bprevod',
+            'Serbian transfer/transmission':r'\bprenos',
+            'Serbian last':r'\bposled',
+            'Serbian doctor':r'\blekar',
+            'Serbian save':r'\bsačuv',
+            'Serbian skill':r'\bvešt',
+            'Serbian race':r'\btrka',
+            'Serbian account':r'\bnalog',
+            'Serbian world':r'\bsvet(?:u|a)?\b',
+            'Serbian again':r'\bponovo\b',
+            'Serbian instructions':r'\buputstv',
+            'Serbian January':r'\bjanuar\b',
+            'Serbian February':r'\bfebruar\b',
+            'Serbian March':r'\bmart\b',
+            'Serbian May':r'\bmaj\b',
+            'Serbian June':r'\bjun\b',
+            'Serbian July':r'\bjul\b',
+            'Serbian August':r'\bavgust\b',
+            'Serbian September':r'\bseptembar\b',
+            'Serbian October':r'\boktobar\b',
+            'Serbian November':r'\bnovembar\b',
+            'Serbian December':r'\bdecembar\b',
+          }
+          cyr=re.compile(r'[\u0400-\u04ff]')
+          failures=[]
+          def walk(value,path):
+              if isinstance(value,dict):
+                  for k,v in value.items(): walk(v,f'{path}.{k}')
+              elif isinstance(value,list):
+                  for i,v in enumerate(value): walk(v,f'{path}[{i}]')
+              elif isinstance(value,str):
+                  if cyr.search(value): failures.append(f'{path}: Cyrillic: {value!r}')
+                  for label,pat in patterns.items():
+                      if re.search(pat,value,re.I):
+                          failures.append(f'{path}: {label}: {value!r}')
+                          break
+          for file in sorted(Path('src/i18n/locales/hr').glob('*.json')):
+              walk(json.loads(file.read_text(encoding='utf-8')),file.name)
+          if failures:
+              print('\n'.join(failures[:250]))
+              raise SystemExit(f'Croatian baseline terminology gate found {len(failures)} residuals.')
+          print('Croatian baseline terminology gate passed.')
+          PY
+
+      - name: Verify Croatian application wiring
+        run: |
+          grep -q "code: 'hr'" src/i18n/languages.ts
+          grep -q "locale: 'hr-HR'" src/i18n/languages.ts
+          grep -q "supportedLngs: \['en', 'sr-Latn', 'de', 'hr'\]" src/i18n/index.ts
+          grep -q "hr: 'hr'" src/components/i18n/LanguageSelector.tsx
+          grep -q "startsWith('hr')" src/components/i18n/LocaleDateFormattingBridge.tsx
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit Croatian baseline
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            src/i18n/languages.ts \
+            src/i18n/index.ts \
+            src/i18n/locales/hr \
+            src/components/i18n/LanguageSelector.tsx \
+            src/components/i18n/LocaleDateFormattingBridge.tsx
+          if git diff --cached --quiet; then
+            echo 'No Croatian baseline changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Add Croatian localization baseline'
+          git pull --rebase origin main
+          git push origin main
