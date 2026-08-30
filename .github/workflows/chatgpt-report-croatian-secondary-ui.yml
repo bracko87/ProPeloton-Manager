@@ -1,0 +1,32 @@
+name: Report Croatian secondary UI wording
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-report-croatian-secondary-ui.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Generate Croatian secondary UI report
+        run: |
+          python .github/scripts/audit_croatian_secondary_ui_20260830.py > .github/croatian_secondary_report.txt
+          cat .github/croatian_secondary_report.txt
+      - name: Commit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/croatian_secondary_report.txt
+          git commit -m 'Record Croatian secondary UI diagnostics'
+          git pull --rebase origin main
+          git push origin main
