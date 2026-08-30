@@ -1,0 +1,155 @@
+/*
+ * Public homepage mobile refinements.
+ *
+ * Scope: phones only (<768px). Desktop homepage styling remains unchanged.
+ * Registration availability/locking is intentionally not changed here.
+ */
+
+@media (max-width: 767px) {
+  #public-homepage {
+    width: 100%;
+    min-width: 0;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Public header: move from one crowded desktop row to a clean stacked
+     mobile layout so branding, Sign In, Start Playing and language controls
+     never overlap. */
+  #public-homepage > header > div {
+    width: 100%;
+    min-width: 0;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem !important;
+  }
+
+  #public-homepage > header > div > div:first-child {
+    min-width: 0;
+    gap: 0.625rem !important;
+  }
+
+  #public-homepage > header > div > div:first-child > img {
+    height: 3rem !important;
+    width: auto;
+    max-width: 7.5rem;
+  }
+
+  #public-homepage > header > div > div:first-child > div {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 1rem !important;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  #public-homepage > header nav {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    gap: 0.5rem !important;
+    width: 100%;
+    min-width: 0;
+  }
+
+  #public-homepage > header nav > a,
+  #public-homepage > header nav > button {
+    display: inline-flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    padding: 0.625rem 0.75rem !important;
+    text-align: center;
+  }
+
+  #public-homepage > header nav > a {
+    border: 1px solid rgb(255 255 255 / 0.2);
+    background: rgb(255 255 255 / 0.05);
+  }
+
+  /* LanguageSelectorHost portals this control as the third nav child. Give it
+     its own full-width row instead of squeezing it beside both CTA buttons. */
+  #public-homepage > header nav > div {
+    grid-column: 1 / -1;
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    gap: 0.5rem !important;
+  }
+
+  #public-homepage > header nav > div > button {
+    width: 100%;
+    min-width: 0 !important;
+    min-height: 44px;
+  }
+
+  /* Hero: reduce desktop spacing and make the two primary actions impossible
+     to miss on phones. Start Playing can remain disabled by existing logic. */
+  #public-homepage main > section:first-child {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+
+  #public-homepage main > section:first-child > div.relative.z-10 {
+    gap: 2rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  #public-homepage main > section:first-child h1 {
+    font-size: 2rem !important;
+    line-height: 1.12 !important;
+  }
+
+  #public-homepage main > section:first-child h1 + p {
+    margin-top: 1.25rem !important;
+    font-size: 1rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  #public-homepage main > section:first-child .mt-8.flex.flex-wrap.items-center.gap-4 {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem !important;
+    width: 100%;
+  }
+
+  #public-homepage main > section:first-child .mt-8.flex.flex-wrap.items-center.gap-4 > a {
+    display: inline-flex;
+    width: 100%;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  #public-homepage main > section:first-child .mt-10.grid {
+    margin-top: 1.75rem !important;
+  }
+
+  /* Keep the beta notice usable on short phones as well as narrow phones. */
+  #public-homepage [role='dialog'] > div {
+    max-height: calc(100dvh - 1rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 359px) {
+  #public-homepage > header > div {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  #public-homepage main > section:first-child > div.relative.z-10 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}
