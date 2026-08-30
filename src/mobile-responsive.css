@@ -303,6 +303,35 @@
   [data-ppm-dashboard-page='races'] button.rounded-full[class*='px-'] {
     min-height: 40px;
   }
+
+  /* Advisor notification details use several table-like CSS grids. On desktop
+     they stay clipped as designed; on mobile the containing card becomes the
+     local horizontal scroller instead of losing the right-hand columns. */
+  [data-ppm-dashboard-page='notifications'] .mt-2.overflow-hidden.rounded-lg.border.border-slate-200.bg-white:has(> .grid[class*='grid-cols-[']) {
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Confirmation dialogs: prevent long translated content or small phone
+     heights from placing actions outside the viewport. */
+  [data-ppm-dashboard-page='infrastructure'] .fixed.inset-0 > .relative[class*='max-w-'],
+  [data-ppm-dashboard-page='preferences'] .fixed.inset-0 > .relative[class*='max-w-'] {
+    max-height: calc(100dvh - 1rem);
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  [data-ppm-dashboard-page='infrastructure'] .fixed.inset-0 > .relative[class*='max-w-'] > div:last-child,
+  [data-ppm-dashboard-page='preferences'] .fixed.inset-0 > .relative[class*='max-w-'] > div:last-child {
+    flex-wrap: wrap;
+  }
+
+  /* Profile is already one column below md; reduce only the phone card padding
+     so fields keep useful width on 320px devices. */
+  [data-ppm-dashboard-page='my-profile'] .bg-white.rounded.shadow.border.border-gray-200.flex-1.overflow-y-auto.p-6 {
+    padding: 1rem !important;
+  }
 }
 
 @media (max-width: 359px) {
