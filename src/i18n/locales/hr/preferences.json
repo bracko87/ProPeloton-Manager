@@ -1,18 +1,18 @@
 {
   "page": {
     "title": "Postavke",
-    "description": "Praktična postavke: kontrola obavijesti u igri i rizične akcije vezane za tim."
+    "description": "Praktične postavke: upravljanje obavijestima u igri i rizičnim radnjama povezanim s timom."
   },
   "notifications": {
     "title": "Obavijesti u igri",
-    "description": "Osnovna obavijesti igre i plaćena obavijesti Staff Advisor sistema podešavaju se odvojeno.",
-    "coreTitle": "Osnovna obavijesti",
-    "coreDescription": "Standardna obavijesti igre koja ostaju dostupna i bez plaćenog Staff Advisor-a.",
-    "advisorTitle": "Staff Advisor obavijesti",
-    "advisorDescription": "Plaćena savetodavna obavijesti grupisana su po temi. Isključivanje kategorije utišava sve tipove obavijesti u toj temi. Pojedinačni tipovi kasnije mogu ponovno da se uključe sa njihove kartice obavijesti bez promjene ove kategorije.",
-    "advisorSaveError": "Nije moguće sačuvati Staff Advisor postavka obavijesti. Pokušajte ponovno.",
-    "advisorInactiveSuffix": "Aktivirajte potrebnog Staff Advisor-a da biste upravljali ovim obaveštenjem.",
-    "coreAdvisorNote": "Osnovno obavijest i Advisor obavijest mogu pokrivati istu temu, a da nisu isti događaj. Primer: Race Supplies Low ostaje osnovno obavijest, dok je Equipment & Workshop Review plaćena analiza.",
+    "description": "Osnovne obavijesti igre i plaćene obavijesti sustava Staff Advisor postavljaju se odvojeno.",
+    "coreTitle": "Osnovne obavijesti",
+    "coreDescription": "Standardne obavijesti igre koje ostaju dostupne i bez plaćene usluge Staff Advisor.",
+    "advisorTitle": "Obavijesti Staff Advisor",
+    "advisorDescription": "Plaćene savjetodavne obavijesti grupirane su po temi. Isključivanje kategorije utišava sve vrste obavijesti u toj temi. Pojedinačne vrste poslije se mogu ponovno uključiti na njihovoj kartici bez promjene cijele kategorije.",
+    "advisorSaveError": "Nije moguće spremiti postavke obavijesti Staff Advisor. Pokušajte ponovno.",
+    "advisorInactiveSuffix": "Aktivirajte potrebnog Staff Advisor kako biste upravljali ovom obavijesti.",
+    "coreAdvisorNote": "Osnovna obavijest i obavijest savjetnika mogu pokrivati istu temu, a da nisu isti događaj. Primjer: Race Supplies Low ostaje osnovna obavijest, dok je Equipment & Workshop Review plaćena analiza.",
     "enabledCount": "{{enabled}}/{{total}} uključeno"
   },
   "sections": {
@@ -22,15 +22,15 @@
     },
     "team": {
       "title": "Obavijesti o timu i vozačima",
-      "description": "Vozači, osoblje, transferi, trening kampovi, skauting i penzionisanja."
+      "description": "Vozači, osoblje, transferi, trening kampovi, skauting i umirovljenje."
     },
     "club": {
       "title": "Obavijesti o upravljanju klubom",
-      "description": "Finansije, Coins, nagrade, zalihe, oprema, porezi i infrastruktura."
+      "description": "Financije, Coins, nagrade, zalihe, oprema, porezi i infrastruktura."
     },
     "account": {
-      "title": "Obavijesti računa i sistema",
-      "description": "Zvanične poruke igre i informacije za početak igranja."
+      "title": "Obavijesti računa i sustava",
+      "description": "službeno poruke igre i informacije za početak igranja."
     }
   },
   "groups": {
@@ -48,11 +48,11 @@
     },
     "racePreparation": {
       "label": "Status pripreme utrke",
-      "description": "Prikaži osnovna statusna obavijesti i posledice vezane za pripremu utrke. Proaktivni saveti o rokovima vozača pripadaju Sports Director Advisory sistemu."
+      "description": "Prikaži osnovne statusne obavijesti i posljedice povezane s pripremom utrke. Proaktivni savjeti o rokovima vozača pripadaju sustavu Sports Director Advisory."
     },
     "stagePlanReminders": {
       "label": "Status plana etape",
-      "description": "Prikaži osnovna obavijesti o otvaranju i zaključavanju Stage Plan-a. Saveti o nedostajućem planu pripadaju Sports Director Advisory sistemu."
+      "description": "Prikaži osnovna obavijesti o otvaranju i zaključavanju Stage Plan-a. savjet o nedostajućem planu pripadaju Sports Director Advisory sustavu."
     },
     "raceWeather": {
       "label": "Vrijeme na utrci",
@@ -87,24 +87,24 @@
       "description": "Prikaži obavijest kada je skauting izvještaj završen."
     },
     "retirementUpdates": {
-      "label": "Ažuriranja o penzionisanju",
-      "description": "Prikaži obavijesti kada vozači ili osoblje najave penzionisanje i kada ono bude završeno."
+      "label": "Ažuriranja o umirovljenje",
+      "description": "Prikaži obavijesti kada vozači ili osoblje najave umirovljenje i kada ono bude završeno."
     },
     "financeAlerts": {
-      "label": "Finansijska upozorenja",
-      "description": "Prikaži važna finansijska upozorenja, ciljeve sponzora, hitne zajmove, poreska upozorenja, probleme sa plaćama i obavijesti o nelikvidnosti."
+      "label": "Financijska upozorenja",
+      "description": "Prikaži važna financijska upozorenja, ciljeve sponzora, hitne zajmove, porezna upozorenja, probleme sa plaćama i obavijesti o nelikvidnosti."
     },
     "walletRewards": {
       "label": "Coins i nagrade",
-      "description": "Prikaži kupovine Coins-a, dodeljene Coins, rođendanske poklone, referral nagrade i poruke novčanika."
+      "description": "Prikaži kupovine Coins-a, dodjela Coins, rođendanske poklone, referral nagrade i poruke novčanika."
     },
     "competitionRewards": {
       "label": "Nagrade natjecanja",
       "description": "Prikaži nagrade pri prelasku sezone za rezultate u ligama i natjecanjima."
     },
     "taxUpdates": {
-      "label": "Poreska ažuriranja",
-      "description": "Prikaži obavijesti o poreskim kontrolama i drugim poreskim finansijskim događajima."
+      "label": "Porezna ažuriranja",
+      "description": "Prikaži obavijesti o poreznim kontrolama i drugim poreznim financijskim događajima."
     },
     "raceSupplies": {
       "label": "Zalihe za utrku",
@@ -119,26 +119,26 @@
       "description": "Prikaži obavijesti o narudžbinama, isporukama, popravkama, prodaji, unapređenjima i upozorenjima stanja infrastrukture."
     },
     "systemMessages": {
-      "label": "Sistemske poruke",
-      "description": "Prikaži poruke dobrodošlice i opšte zvanične poruke igre."
+      "label": "Sustavne poruke",
+      "description": "Prikaži poruke dobrodošlice i opće službeno poruke igre."
     }
   },
   "advisorCategories": {
     "trainingReadiness": {
       "label": "Trening i spremnost vozača",
-      "description": "Opterećenje treninga, umor, dostupnost vozača, praznine u treningu, spremnost ekipe i saveti o razvoju vozača."
+      "description": "Opterećenje treninga, umor, dostupnost vozača, praznine u treningu, spremnost ekipe i savjet o razvoju vozača."
     },
     "raceProgrammePreparation": {
       "label": "Program utrka i priprema",
-      "description": "Pregledi programa utrka i praznina, nedostajuća priprema i saveti da je priprema spremna."
+      "description": "Pregledi programa utrka i praznina, nedostajuća priprema i savjet da je priprema spremna."
     },
     "startlistStagePlans": {
       "label": "Startlist i Stage Plans",
-      "description": "Upozorenja za Startlist rokove i saveti o nedostajućim ili nepotpunim Stage Plan-ovima."
+      "description": "Upozorenja za Startlist rokove i savjet o nedostajućim ili nepotpunim Stage Plan-ovima."
     },
     "medicalRecovery": {
       "label": "Medicina i oporavak",
-      "description": "Medicinski izvještaji, planovi lečenja ozljeda i bolesti, promjene oporavka i saveti o medicinskom odobrenju."
+      "description": "Medicinski izvještaji, planovi lečenja ozljeda i bolesti, promjene oporavka i savjet o medicinskom odobrenju."
     },
     "equipmentWorkshopSupplies": {
       "label": "Oprema, radionica i zalihe za utrku",
@@ -146,7 +146,7 @@
     },
     "scoutingRecruitment": {
       "label": "Skauting i regrutacija",
-      "description": "Informacije o regrutaciji, skauting pregledi i saveti o prioritetnim kandidatima."
+      "description": "Informacije o regrutaciji, skauting pregledi i savjet o prioritetnim kandidatima."
     }
   },
   "developingTeam": {
@@ -158,51 +158,51 @@
     "gameProgress": "Napredak u igri",
     "gameMinimum": "Potrebno najmanje 60 dana",
     "coins": "Coins",
-    "eligibility": "Uvjet: 30 realnih dana ili 60 dana u igri.",
+    "eligibility": "Uvjet: 30 stvarnih dana ili 60 dana u igri.",
     "active": "Razvojni tim je aktivan",
     "activeBadge": "Aktivno",
     "currentSeason": "Trenutna sezona",
     "accessEnds": "Pristup ističe",
-    "renewalPrice": "Cena obnove",
+    "renewalPrice": "Cijena obnove",
     "nextRenewal": "Sljedeća obnova",
     "autoRenew": "Automatski obnovi svake sezone",
     "expired": "Pristup Razvojnom timu je istekao",
-    "expiredDescription": "Vaš tim, vozači, ugovori, rezultati i povijest ostaju sačuvani. Razvojni tim je trenutno samo za čitanje.",
+    "expiredDescription": "Vaš tim, vozači, ugovori, rezultati i povijest ostaju spremi. Razvojni tim je trenutno samo za čitanje.",
     "reactivating": "Ponovna aktivacija...",
     "activating": "Aktivacija...",
     "getCoins": "Nabavi Coins",
-    "notEligible": "Još uvek nema uvjeta",
-    "notEligibleDescription": "Razvojni tim postaje dostupan nakon 30 realnih dana ili 60 dana u igri.",
+    "notEligible": "Uvjet još nije ispunjen",
+    "notEligibleDescription": "Razvojni tim postaje dostupan nakon 30 stvarnih dana ili 60 dana u igri.",
     "specialRules": "Posebna pravila",
-    "teamNameRule": "Ime tima biće ime vašeg glavnog kluba uz dodatak U23.",
-    "raceRule": "Ovaj tim može normalno da se prijavljuje za utrke dok je sezonski pristup aktivan.",
-    "competitionRule": "Ovaj tim ne može biti promovisan iznad Continental nivoa.",
-    "rosterRule": "Maksimalna veličina rostera: 8 vozača.",
+    "teamNameRule": "Ime tima bit će ime vašeg glavnog kluba uz dodatak U23.",
+    "raceRule": "Ovaj tim može se normalno prijavljivati na utrke dok je sezonski pristup aktivan.",
+    "competitionRule": "Ovaj tim ne može biti promoviran iznad Continental razine.",
+    "rosterRule": "Maksimalna veličina kadra: 8 vozača.",
     "ageRule": "Mogu sudjelovati samo vozači od 23 godine ili mlađi.",
-    "movementRule": "Vozači prelaze između ekipa samo tokom movement window perioda.",
+    "movementRule": "Vozači prelaze između ekipa samo tijekom razdoblja za premještanje.",
     "teamLabel": "Tim"
   },
   "dangerZone": {
     "title": "Opasna zona",
-    "description": "Ovo su destruktivne akcije i treba da ostanu odvojene od normalnih postavke.",
+    "description": "Ovo su destruktivne radnje i trebaju ostati odvojene od uobičajenih postavki.",
     "badge": "Akcije velikog uticaja",
     "restartTitle": "Restartuj tim",
-    "restartDescription": "Vratite ovaj klub u početno stanje, uz zadržavanje istog imena kluba, logotipa, dresa, države i mjesta u takmičenju.",
-    "restartDetail": "Trenutni vozači postaju slobodni agenti, sezonski bodovi se vraćaju na 0, a tim dobija novu početnu ekipu prema svom trenutnom nivou.",
+    "restartDescription": "Vratite ovaj klub u početno stanje uz zadržavanje istog imena kluba, logotipa, dresa, države i mjesta u natjecanju.",
+    "restartDetail": "Trenutni vozači postaju slobodni vozači, sezonski bodovi se vraćaju na 0, a tim dobija novu početnu ekipu prema svom trenutnom nivou.",
     "restartButton": "Restartuj tim",
     "shutdownTitle": "Ugasi tim",
-    "shutdownDescription": "Trajno izbrišite ovaj korisnički tim I autentifikacioni račun. Nakon uspešnog brisanja bićete preusmereni na početnu stranu i moći ćete ponovno da se registrujete sa istim emailom.",
+    "shutdownDescription": "Trajno izbrišite ovaj korisnički tim i autentifikacijski račun. Nakon uspješnog brisanja bit ćete preusmjereni na početnu stranicu i moći ćete se ponovno registrirati istim e-mailom.",
     "shutdownDetail": "Ovo treba da izbriše samo podatke trenutnog korisnika i njegovog tima, a ne druge korisnike ili druge timove.",
     "shuttingDown": "Gašenje...",
     "shutdownButton": "Ugasi tim",
-    "systemNote": "Sistem obavijesti treba da provjeri ova sačuvana postavke pre kreiranja ili prikazivanja svakog tipa obavijesti.",
+    "systemNote": "Sustav obavijesti treba provjeriti spremljene postavke prije stvaranja ili prikazivanja svake vrste obavijesti.",
     "confirmTitle": "Potvrdite gašenje tima",
     "confirmDescription": "Ova akcija je trajna i ne može se poništiti.",
     "aboutToDelete": "Trajno ćete izbrisati:",
     "deleteTeam": "Vaš trenutni tim",
     "deleteGameData": "Vozače tima, opremu i podatke igre povezane sa timom",
-    "deleteAccount": "Vaš autentifikacioni račun za ovaj email",
-    "afterDelete": "Nakon uspešnog brisanja bićete odjavljeni i preusmereni na početnu stranu. Zatim možete ponovno da se registrujete sa istom email adresom kao potpuno novi korisnik.",
+    "deleteAccount": "Vaš autentifikacioni račun za ovaj e-mail",
+    "afterDelete": "Nakon uspešnog brisanja bit ćete odjavljeni i preusmjeren na početnu stranu. Zatim možete ponovno da se registrujete sa istom e-mail adresom kao potpuno novi korisnik.",
     "typeDelete": "Unesite DELETE za potvrdu",
     "placeholder": "Unesite DELETE ovde",
     "cancel": "Otkaži",

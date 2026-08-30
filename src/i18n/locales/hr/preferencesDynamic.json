@@ -2,15 +2,15 @@
   "coins": {
     "perRenewal": "{{cost}} Coins po obnovi",
     "toActivate": "{{cost}} Coins za aktivaciju",
-    "reactivationPrice": "Cena ponovne aktivacije: {{cost}} Coins",
+    "reactivationPrice": "Cijena ponovne aktivacije: {{cost}} Coins",
     "nextRenewal": "Sljedeća obnova: {{cost}} Coins",
     "firstActivation": "Prva aktivacija: {{cost}} Coins"
   },
   "movement": {
     "open": "Movement window je trenutno otvoren: {{label}}",
-    "closed": "Movement window je zatvoren. Sljedeći period: {{label}}",
+    "closed": "Movement window je zatvoren. Sljedeći razdoblje: {{label}}",
     "unavailable": "Movement window trenutno nije dostupan.",
-    "currentWindow": "Trenutni period",
+    "currentWindow": "Trenutni razdoblje",
     "unknown": "Nepoznato"
   },
   "activation": {
@@ -29,26 +29,26 @@
     "renewal": "Nije moguće ažurirati automatsku obnovu."
   },
   "service": {
-    "summary": "Dostupno igračima sa besplatnim i Premium računom. Prva aktivacija košta {{activation}} Coins. Svaka naredna sezonska obnova ili reaktivacija košta {{renewal}} Coins. Premium članstvo ne ukida ove troškove usluge.",
-    "eligibilityCosts": "Uvjet: 30 dana u stvarnom vremenu ili 60 dana u igri. Prva aktivacija: {{activation}} Coins. Obnova i reaktivacija: {{renewal}} Coins po sezoni.",
+    "summary": "Dostupno igračima s besplatnim i Premium računom. Prva aktivacija košta {{activation}} Coins. Svaka sljedeća sezonska obnova ili reaktivacija košta {{renewal}} Coins. Premium članstvo ne ukida ove troškove usluge.",
+    "eligibilityCosts": "Uvjet: 30 stvarnih dana ili 60 dana u igri. Prva aktivacija: {{activation}} Coins. Obnova i reaktivacija: {{renewal}} Coins po sezoni.",
     "accessUntilSeason": "Pristup ostaje dostupan do kraja sezone {{season}}.",
     "season": "Sezona {{season}}",
     "endSeason": "Kraj sezone {{season}}",
     "startSeason": "Početak sezone {{season}}",
     "coins": "{{count}} Coins",
-    "autoRenewHelp": "Kada je uključeno, {{cost}} Coins biće oduzeto na početku sljedeće sezone. Ako je stanje prenisko, obnova neće uspeti i Razvojni tim će preći u režim samo za čitanje.",
+    "autoRenewHelp": "Kada je uključeno, {{cost}} Coins bit će oduzeto na početku sljedeće sezone. Ako je stanje prenisko, obnova neće uspjeti i Razvojni tim prijeći će u način samo za čitanje.",
     "activateSeason": "Aktiviraj za sezonu {{season}}",
-    "existingTeam": "Vaš postojeći Razvojni tim biće aktiviran za ovu sezonu.",
+    "existingTeam": "Vaš postojeći Razvojni tim bit će aktiviran za ovu sezonu.",
     "newTeam": "Biće kreiran i aktiviran Razvojni tim za ovu sezonu.",
-    "activationAccess": "Pristup traje do kraja trenutne sezone u igri. Automatska obnova je podrazumevano uključena i možete je isključiti u bilo kom trenutku.",
+    "activationAccess": "Pristup traje do kraja trenutačne sezone u igri. Automatska obnova zadano je uključena i možete je isključiti u bilo kojem trenutku.",
     "needCoins": "Potrebno vam je {{cost}} Coins za aktivaciju Razvojnog tima. Trenutno stanje: {{balance}} Coins.",
     "team": "Tim: {{name}}",
     "closeActivation": "Zatvori potvrdu aktivacije Razvojnog tima",
     "confirmActivate": "Aktivirati Razvojni tim za sezonu {{season}}?",
     "confirmReactivate": "Ponovno aktivirati Razvojni tim za sezonu {{season}}?",
-    "deductCoins": "{{cost}} Coins biće oduzeto iz vašeg novčanika.",
+    "deductCoins": "{{cost}} Coins bit će oduzeto iz vašeg novčanika.",
     "accessThisSeason": "Pristup traje do kraja ove sezone u igri.",
-    "autoRenewModal": "Automatska obnova biće podrazumevano uključena. Možete je isključiti u bilo kom trenutku u Podešavanjima ili na stranici Premium i naplata.",
+    "autoRenewModal": "Automatska obnova bit će zadano uključena. Možete je isključiti u bilo kojem trenutku u Postavkama ili na stranici Premium i naplata.",
     "actionActivate": "Aktiviraj za {{cost}} Coins",
     "actionReactivate": "Ponovno aktiviraj za {{cost}} Coins"
   }
