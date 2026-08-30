@@ -23,7 +23,7 @@ jobs:
         with:
           ref: main
 
-      - name: Audit German locale coverage and focused UI source
+      - name: Audit German locale coverage and rendered UI source
         shell: bash
         run: |
           python - <<'PY'
@@ -93,31 +93,33 @@ jobs:
           for name in en_files:
               if (de_dir/name).exists(): walk_pair(load(en_dir/name), load(de_dir/name), name)
 
-          # Focus on known real user-facing hardcoded English rather than broad TS regex false positives.
+          # Exact rendered/source forms only. Do not count developer comments as player-visible text.
           focused_checks = {
             'src/components/layout/MainLayout.tsx': [
-              'You will be logged out soon', 'Your game has been inactive for almost 30 minutes.', 'Stay logged in'
+              '                You will be logged out soon\n',
+              '                Your game has been inactive for almost 30 minutes.\n',
+              '            Stay logged in\n',
             ],
             'src/components/team/RestartTeamModal.tsx': [
-              'Confirm Team Restart', 'This will reset your club back to a fresh starter state.',
-              'You will keep', 'You will lose/reset', 'Type', 'to confirm', 'Cancel',
-              'You must type RESTART exactly to confirm this action.'
+              '                Confirm Team Restart\n',
+              '<div className="font-semibold text-gray-900">You will keep</div>',
+              '<div className="font-semibold text-gray-900">You will lose/reset</div>',
+              "setError('You must type RESTART exactly to confirm this action.')",
             ],
             'src/components/ui/KitDesigner.tsx': [
-              'Kit name','Pattern','Solid','Stripes','Hoops','Sash','Primary','Secondary','Sleeves','Collar','Trim',
-              'Sponsor text','Shirt number','Live preview','How your kit will appear in-game',
-              'Team kits table not ready yet. You can still preview and try saving.'
+              '>Kit name</label>', '>Pattern</label>', '>Sponsor text</label>', '>Shirt number</label>',
+              '>Live preview</div>', "setMessage('Team kits table not ready yet.",
             ],
-            'src/pages/dashboard/DevelopingTeam.tsx': ['Unlock Developing Team in Preferences first.'],
+            'src/components/ui/JerseyPreview.tsx': ['aria-label="Team jersey preview"'],
+            'src/pages/dashboard/DevelopingTeam.tsx': ['title="Unlock Developing Team in Preferences first."'],
           }
-          source_blockers=[]
           for rel, needles in focused_checks.items():
               path=root/rel
               if not path.exists(): continue
               text=path.read_text(encoding='utf-8', errors='replace')
               for needle in needles:
-                  if needle in text: source_blockers.append(f'{rel}: hardcoded visible English remains: {needle!r}')
-          blockers.extend(source_blockers)
+                  if needle in text:
+                      blockers.append(f'{rel}: rendered hardcoded English remains: {needle!r}')
 
           report.append(f'Locale/UI blockers: {len(blockers)}')
           for item in blockers[:500]: report.append('BLOCKER: '+item)
@@ -126,9 +128,12 @@ jobs:
           out=Path('/tmp/german-full-audit.txt')
           out.write_text('\n'.join(report)+'\n', encoding='utf-8')
           print('\n'.join(report))
+          if blockers:
+              raise SystemExit(f'German completion audit found {len(blockers)} blockers.')
           PY
 
       - name: Upload German audit report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: german-full-completion-audit
