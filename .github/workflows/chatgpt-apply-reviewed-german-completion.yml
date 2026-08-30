@@ -1,0 +1,125 @@
+name: Apply reviewed German completion
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-apply-reviewed-german-completion.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply reviewed German dotted-path corrections
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import base64, json, re, zlib
+          from pathlib import Path
+
+          root = Path('.')
+          parts = sorted((root/'.github/scripts/de_review_patch_parts').glob('part*.txt'))
+          assert len(parts) == 7, f'Expected 7 reviewed patch parts, found {len(parts)}'
+          encoded = ''.join(p.read_text(encoding='utf-8').strip() for p in parts)
+          patch = json.loads(zlib.decompress(base64.b64decode(encoded)).decode('utf-8'))
+          de_dir = root/'src/i18n/locales/de'
+
+          token_rx = re.compile(r'([^\.\[\]]+)|\[(\d+)\]')
+          def tokens(path: str):
+              out=[]
+              for m in token_rx.finditer(path):
+                  out.append(int(m.group(2)) if m.group(2) is not None else m.group(1))
+              return out
+
+          changed=[]
+          applied=0
+          skipped=0
+          for name, edits in patch.items():
+              if name == 'createClub.json':
+                  skipped += len(edits)
+                  continue
+              file = de_dir/name
+              assert file.exists(), f'Missing German locale file {name}'
+              data = json.loads(file.read_text(encoding='utf-8'))
+              for dotted, value in edits.items():
+                  current=data
+                  parts2=tokens(dotted)
+                  assert parts2, f'Invalid patch path {name}:{dotted}'
+                  for token in parts2[:-1]:
+                      if isinstance(token,int):
+                          assert isinstance(current,list) and 0 <= token < len(current), f'Bad list path {name}:{dotted}'
+                          current=current[token]
+                      else:
+                          assert isinstance(current,dict) and token in current, f'Bad key path {name}:{dotted}'
+                          current=current[token]
+                  last=parts2[-1]
+                  if isinstance(last,int):
+                      assert isinstance(current,list) and 0 <= last < len(current), f'Bad terminal list path {name}:{dotted}'
+                      current[last]=value
+                  else:
+                      assert isinstance(current,dict) and last in current, f'Bad terminal key path {name}:{dotted}'
+                      current[last]=value
+                  applied += 1
+              file.write_text(json.dumps(data, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
+              changed.append(name)
+          print(f'Applied {applied} reviewed German corrections across {len(changed)} files; skipped {skipped} Create Club edits to preserve newer translation.')
+          print('Files:', ', '.join(sorted(changed)))
+          PY
+
+      - name: Verify all German locale structures and placeholders
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          root=Path('src/i18n/locales')
+          en_files=sorted(p.name for p in (root/'en').glob('*.json'))
+          de_files=sorted(p.name for p in (root/'de').glob('*.json'))
+          assert en_files == de_files, 'German filenames must mirror English'
+          ph=re.compile(r'\{\{[^{}]+\}\}')
+          def check(a,b,path):
+              assert type(a) is type(b), f'{path}: type mismatch'
+              if isinstance(a,dict):
+                  assert list(a)==list(b), f'{path}: key/order mismatch'
+                  for k in a: check(a[k],b[k],f'{path}.{k}')
+              elif isinstance(a,list):
+                  assert len(a)==len(b), f'{path}: list length mismatch'
+                  for i,(x,y) in enumerate(zip(a,b)): check(x,y,f'{path}[{i}]')
+              elif isinstance(a,str):
+                  assert sorted(ph.findall(a))==sorted(ph.findall(b)), f'{path}: placeholder mismatch'
+          for name in en_files:
+              a=json.loads((root/'en'/name).read_text(encoding='utf-8'))
+              b=json.loads((root/'de'/name).read_text(encoding='utf-8'))
+              check(a,b,name)
+          print(f'German structural/placeholder validation passed for {len(en_files)} locale files.')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit reviewed German corrections
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/de/*.json
+          git reset src/i18n/locales/de/createClub.json || true
+          if git diff --cached --quiet; then
+            echo 'No German corrections to commit.'
+            exit 0
+          fi
+          git commit -m 'Apply reviewed German localization corrections'
+          git pull --rebase origin main
+          git push origin main
