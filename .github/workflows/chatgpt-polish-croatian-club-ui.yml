@@ -1,0 +1,66 @@
+name: Polish Croatian club and account UI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/polish_croatian_club_ui_20260830.py'
+      - '.github/workflows/chatgpt-polish-croatian-club-ui.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply Croatian club UI polish
+        run: python .github/scripts/polish_croatian_club_ui_20260830.py
+      - name: Validate Croatian schema and polished terminology
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          root=Path('src/i18n/locales'); en=root/'en'; hr=root/'hr'; ph=re.compile(r'\{\{[^{}]+\}\}')
+          en_files=sorted(p.name for p in en.glob('*.json')); assert en_files==sorted(p.name for p in hr.glob('*.json'))
+          def check(a,b,path):
+              assert type(a) is type(b), f'{path}: type mismatch'
+              if isinstance(a,dict):
+                  assert list(a)==list(b), f'{path}: keys/order mismatch'
+                  for k in a: check(a[k],b[k],f'{path}.{k}')
+              elif isinstance(a,list):
+                  assert len(a)==len(b), f'{path}: length mismatch'
+                  for i,(x,y) in enumerate(zip(a,b)): check(x,y,f'{path}[{i}]')
+              elif isinstance(a,str): assert sorted(ph.findall(a))==sorted(ph.findall(b)), f'{path}: placeholder mismatch'
+          for name in en_files: check(json.loads((en/name).read_text(encoding='utf-8')),json.loads((hr/name).read_text(encoding='utf-8')),name)
+          polished=['developingTeam.json','club.json','createClub.json','customizeTeam.json','accountPages.json','help.json']
+          bad=[r'\bpodešav',r'\bobavešten',r'\btakmič',r'\bučestv|\bučešće',r'\buslov',r'\bvrednost',r'\bslede',r'\bizvešt',r'\bpovre',r'\bsavet',r'\bbezbed',r'\bpromen',r'\bprover',r'\bodelj',r'\bizaber',r'\bocen',r'\bprose',r'\bverovat',r'\bhiljad',r'\bmilion',r'\btočkov|\btočak',r'\bmenjač',r'\bmesec',r'\bistorij',r'\bdodel',r'\bprimen',r'\brešen',r'\bzahtev',r'\bprevod',r'\bprenos',r'\bposled',r'\blekar',r'\bsačuv',r'\bvešt',r'\btrka',r'\bnalog',r'\bponovo\b',r'\buputstv']
+          failures=[]
+          def walk(x,path):
+              if isinstance(x,dict):
+                  for k,v in x.items(): walk(v,f'{path}.{k}')
+              elif isinstance(x,list):
+                  for i,v in enumerate(x): walk(v,f'{path}[{i}]')
+              elif isinstance(x,str) and any(re.search(p,x,re.I) for p in bad): failures.append(f'{path}: {x}')
+          for name in polished: walk(json.loads((hr/name).read_text(encoding='utf-8')),name)
+          if failures: raise SystemExit('Croatian club UI gate failed:\n'+'\n'.join(failures[:200]))
+          print('Croatian schema and club/account terminology gates passed.')
+          PY
+      - run: npm ci
+      - name: Production build
+        run: npm run build
+      - name: Commit Croatian club UI polish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/hr/developingTeam.json src/i18n/locales/hr/club.json src/i18n/locales/hr/createClub.json src/i18n/locales/hr/customizeTeam.json src/i18n/locales/hr/accountPages.json src/i18n/locales/hr/help.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Polish Croatian club and account localization'
+          git pull --rebase origin main
+          git push origin main
