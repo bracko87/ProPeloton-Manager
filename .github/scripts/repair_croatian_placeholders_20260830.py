@@ -20,11 +20,17 @@ def repair(en_value, hr_value, path: str):
     if isinstance(en_value, str) and isinstance(hr_value, str):
         en_ph = PH.findall(en_value)
         hr_ph = PH.findall(hr_value)
-        if en_ph == hr_ph:
+        # Croatian may naturally reorder the same placeholders (especially dates
+        # and summary sentences). Preserve that local word order when the set of
+        # canonical placeholder names is already correct.
+        if en_ph == hr_ph or sorted(en_ph) == sorted(hr_ph):
             return hr_value
         if len(en_ph) != len(hr_ph):
             errors.append(f'{path}: English {en_ph} Croatian {hr_ph}')
             return hr_value
+        # For inherited Serbian strings where the placeholder *name* changed in
+        # English (for example positionNumber -> positionOrdinal), rename by the
+        # corresponding position while keeping all surrounding Croatian text.
         iterator = iter(en_ph)
         repaired = PH.sub(lambda _m: next(iterator), hr_value)
         repairs.append(f'{path}: {hr_ph} -> {en_ph}')
