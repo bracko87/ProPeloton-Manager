@@ -257,6 +257,52 @@
     white-space: nowrap;
     text-overflow: ellipsis;
   }
+
+  /* Race Preparation: tabs remain one row and become a local scroller when
+     longer translations no longer fit the phone width. */
+  [data-ppm-dashboard-page='race-preparation'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm,
+  [data-ppm-dashboard-page='team-schedule'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm > button,
+  [data-ppm-dashboard-page='team-schedule'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm > button {
+    min-height: 44px;
+    flex: 0 0 auto;
+  }
+
+  /* Race Detail / Replay: tables already have local scroll containers in the
+     page. Remove only metadata/control minimum widths that can exceed phones. */
+  [data-ppm-dashboard-page='races'] div[class~='min-w-[220px]'][class~='text-right'],
+  [data-ppm-dashboard-page='races'] div[class~='min-w-[260px]'][class~='text-right'] {
+    width: 100%;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+
+  [data-ppm-dashboard-page='races'] select[class~='min-w-[260px]'] {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+
+  [data-ppm-dashboard-page='races'] div[class~='min-w-[280px]'][class~='grid'] {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  [data-ppm-dashboard-page='races'] .grid[class~='grid-cols-[1fr_1.25fr_1fr_1fr]'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+
+  [data-ppm-dashboard-page='races'] button.rounded-full[class*='px-'] {
+    min-height: 40px;
+  }
 }
 
 @media (max-width: 359px) {
