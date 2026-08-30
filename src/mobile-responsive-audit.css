@@ -1,0 +1,54 @@
+/*
+ * Additional mobile-only refinements found during the second responsive audit.
+ * Kept separate from the validated foundation so these page-specific rules are
+ * easy to review or remove independently.
+ */
+
+@media (max-width: 767px) {
+  /* Team Profile: six desktop banner stats are too narrow on phones. Keep all
+     information visible in a readable two-column grid without changing desktop. */
+  [data-ppm-dashboard-page='teams'] .grid.grid-cols-6.divide-x.divide-slate-200 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    row-gap: 0.75rem;
+  }
+
+  [data-ppm-dashboard-page='teams'] .grid.grid-cols-6.divide-x.divide-slate-200 > * {
+    min-width: 0;
+  }
+
+  [data-ppm-dashboard-page='teams'] .grid.grid-cols-6.divide-x.divide-slate-200 > :nth-child(odd) {
+    border-left-width: 0 !important;
+  }
+
+  /* Team roster stays a table, but becomes a local scroller instead of
+     squeezing/clipping every column into the phone viewport. */
+  [data-ppm-dashboard-page='teams'] .mt-5.overflow-hidden.rounded-xl.border.border-slate-200.bg-white:has(> table) {
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-ppm-dashboard-page='teams'] .mt-5.overflow-hidden.rounded-xl.border.border-slate-200.bg-white > table {
+    min-width: 560px;
+  }
+
+  /* Inbox: desktop shows thread list and conversation side-by-side. On phones
+     they stack; limit the thread list height so an open conversation remains
+     reachable without scrolling through a nearly full viewport of threads. */
+  [data-ppm-dashboard-page='inbox'] aside {
+    max-height: 42dvh;
+    overflow: hidden;
+    border-right-width: 0 !important;
+    border-bottom: 1px solid rgb(226 232 240);
+  }
+
+  [data-ppm-dashboard-page='inbox'] aside > div:last-child {
+    max-height: calc(42dvh - 4.75rem) !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  [data-ppm-dashboard-page='inbox'] section {
+    min-height: 55dvh !important;
+  }
+}
