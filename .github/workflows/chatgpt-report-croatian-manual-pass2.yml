@@ -1,0 +1,36 @@
+name: Report Croatian Manual pass 2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-report-croatian-manual-pass2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - run: python .github/scripts/normalize_croatian_manual_20260830.py
+      - run: python .github/scripts/normalize_croatian_manual_pass2_20260830.py
+      - run: python .github/scripts/repair_croatian_placeholders_20260830.py
+      - name: Generate remaining report
+        run: |
+          python .github/scripts/audit_croatian_manual_family_20260830.py > .github/croatian_manual_pass2_report.txt
+          head -80 .github/croatian_manual_pass2_report.txt
+      - name: Restore locale files and commit report
+        run: |
+          git checkout -- src/i18n/locales/hr/manual.json src/i18n/locales/hr/manualCore.json src/i18n/locales/hr/manualDeepA.json src/i18n/locales/hr/manualDeepB1.json src/i18n/locales/hr/manualDeepB2.json src/i18n/locales/hr/manualDynamic.json src/i18n/locales/hr/manualFaq.json src/i18n/locales/hr/manualLegacyDynamic.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/croatian_manual_pass2_report.txt
+          git commit -m 'Record Croatian Manual pass 2 diagnostics'
+          git pull --rebase origin main
+          git push origin main
