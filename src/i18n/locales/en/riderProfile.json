@@ -454,7 +454,7 @@
     "oneOpenOfferNote": "1 open offer on this listing",
     "openOffersNote": "{{count}} open offers on this listing",
     "riderListed": "Rider is currently on the transfer list",
-    "listedSummary": "Asking price {{price}} · {{time}} · {{count}} open offer{{suffix}}.",
+    "listedSummary": "Asking price {{price}} · {{time}} · open offers: {{count}}.",
     "u23Warning": "U23 eligibility warning",
     "u23Open": "This rider has turned 24 and is no longer eligible for the Developing Team. He must be moved to the First Squad or released before the current movement window closes.",
     "u23Closed": "This rider has turned 24 and is no longer eligible for the Developing Team. He may remain there until the next movement window, but before that window closes he must be moved to the First Squad or released.",

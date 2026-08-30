@@ -454,7 +454,7 @@
     "oneOpenOfferNote": "1 offenes Angebot auf dieser Liste",
     "openOffersNote": "{{count}} Offene Angebote auf dieser Liste",
     "riderListed": "Der Fahrer ist derzeit auf der Transferliste.",
-    "listedSummary": "Preis {{price}} · {{time}} · {{count}} Offenes Angebot{{suffix}}.",
+    "listedSummary": "Preis {{price}} · {{time}} · offene Angebote: {{count}}.",
     "u23Warning": "U23 Berechtigungswarnung",
     "u23Open": "Dieser Fahrer ist 24 Jahre alt und ist nicht mehr für das Entwicklerteam berechtigt. Er muss in die erste Kader gebracht oder freigelassen werden, bevor das aktuelle Bewegungsefenster geschlossen wird.",
     "u23Closed": "Dieser Fahrer ist 24 Jahre alt und kann nicht mehr für das Developing Team eingesetzt werden. Er kann dort bis zum nächsten Bewegungsfenster bleiben, aber bevor das Fenster zugeht, muss er ins Erste Squad verschoben oder freigegeben werden.",

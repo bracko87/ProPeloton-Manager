@@ -115,6 +115,44 @@ import deTraining from './locales/de/training.json'
 import deTransfers from './locales/de/transfers.json'
 import deTutorials from './locales/de/tutorials.json'
 
+import hrAccountPages from './locales/hr/accountPages.json'
+import hrAppShell from './locales/hr/appShell.json'
+import hrAuth from './locales/hr/auth.json'
+import hrCalendar from './locales/hr/calendar.json'
+import hrCalendarPage from './locales/hr/calendarPage.json'
+import hrClub from './locales/hr/club.json'
+import hrCommon from './locales/hr/common.json'
+import hrCreateClub from './locales/hr/createClub.json'
+import hrCustomizeTeam from './locales/hr/customizeTeam.json'
+import hrDevelopingTeam from './locales/hr/developingTeam.json'
+import hrEquipment from './locales/hr/equipment.json'
+import hrFinance from './locales/hr/finance.json'
+import hrHelp from './locales/hr/help.json'
+import hrManual from './locales/hr/manual.json'
+import hrHome from './locales/hr/home.json'
+import hrInfrastructure from './locales/hr/infrastructure.json'
+import hrNavigation from './locales/hr/navigation.json'
+import hrNotifications from './locales/hr/notifications.json'
+import hrOverview from './locales/hr/overview.json'
+import hrPreferences from './locales/hr/preferences.json'
+import hrPreferencesDynamic from './locales/hr/preferencesDynamic.json'
+import hrProPackages from './locales/hr/proPackages.json'
+import hrProfile from './locales/hr/profile.json'
+import hrPublicInfo from './locales/hr/publicInfo.json'
+import hrRaceDetail from './locales/hr/raceDetail.json'
+import hrRacePreparation from './locales/hr/racePreparation.json'
+import hrRiderProfile from './locales/hr/riderProfile.json'
+import hrScouting from './locales/hr/scouting.json'
+import hrSeasonReset from './locales/hr/seasonReset.json'
+import hrSharedRiderModal from './locales/hr/sharedRiderModal.json'
+import hrSquad from './locales/hr/squad.json'
+import hrStaff from './locales/hr/staff.json'
+import hrStatistics from './locales/hr/statistics.json'
+import hrTeamRanking from './locales/hr/teamRanking.json'
+import hrTraining from './locales/hr/training.json'
+import hrTransfers from './locales/hr/transfers.json'
+import hrTutorials from './locales/hr/tutorials.json'
+
 import {
   DEFAULT_LANGUAGE,
   getLanguageDefinition,
@@ -242,6 +280,45 @@ const resources = {
     transfers: deTransfers,
     tutorials: deTutorials,
   },
+  hr: {
+    accountPages: hrAccountPages,
+    appShell: hrAppShell,
+    auth: hrAuth,
+    calendar: hrCalendar,
+    calendarPage: hrCalendarPage,
+    club: hrClub,
+    common: hrCommon,
+    createClub: hrCreateClub,
+    customizeTeam: hrCustomizeTeam,
+    developingTeam: hrDevelopingTeam,
+    equipment: hrEquipment,
+    finance: hrFinance,
+    help: hrHelp,
+    manual: hrManual,
+    home: hrHome,
+    infrastructure: hrInfrastructure,
+    navigation: hrNavigation,
+    notifications: hrNotifications,
+    overview: hrOverview,
+    preferences: hrPreferences,
+    preferencesDynamic: hrPreferencesDynamic,
+    proPackages: hrProPackages,
+    profile: hrProfile,
+    publicInfo: hrPublicInfo,
+    raceDetail: hrRaceDetail,
+    racePreparation: hrRacePreparation,
+    riderProfile: hrRiderProfile,
+    scouting: hrScouting,
+    seasonReset: hrSeasonReset,
+    sharedRiderModal: hrSharedRiderModal,
+    squad: hrSquad,
+    staff: hrStaff,
+    statistics: hrStatistics,
+    teamRanking: hrTeamRanking,
+    training: hrTraining,
+    transfers: hrTransfers,
+    tutorials: hrTutorials,
+  },
 } as const
 
 const initialLanguage = getStoredLanguage()
@@ -252,7 +329,7 @@ void i18n
     resources,
     lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,
-    supportedLngs: ['en', 'sr-Latn', 'de'],
+    supportedLngs: ['en', 'sr-Latn', 'de', 'hr'],
     defaultNS: 'common',
     ns: [
       'accountPages',

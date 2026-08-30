@@ -23,6 +23,7 @@ const LANGUAGE_FLAG_CODES: Record<SupportedLanguage, string> = {
   en: 'gb',
   'sr-Latn': 'rs',
   de: 'de',
+  hr: 'hr',
 }
 
 function getLanguageFlagUrl(language: SupportedLanguage): string {

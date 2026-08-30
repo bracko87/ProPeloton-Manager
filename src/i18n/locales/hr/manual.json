@@ -1,0 +1,3270 @@
+{
+  "ui": {
+    "eyebrow": "PRIRUČNIK",
+    "title": "ProPeloton Manager priručnik",
+    "description": "Ovaj prošireni priručnik je detaljna referenca za igrače ProPeloton Managera. Obuhvata stranice računa, Coins, preporuke, identitet kluba, navigaciju kontrolne table, obavijesti, vozače, osoblje, trening, kampove, opremu, infrastrukturu, kalendar, detalje utrke, pripremu utrke, replay, rang-liste, statistiku, transfere, skauting, finansije, sponzore, poreze, politike, likvidaciju i česta pitanja. Odjeljci su podrazumevano zatvoreni, pa otvorite samo temu koja vam je potrebna.",
+    "sectionCount_one": "{{count}} odjeljak",
+    "sectionCount_other": "{{count}} odeljaka",
+    "categoryCount_one": "{{count}} kategorija",
+    "categoryCount_other": "{{count}} kategorija",
+    "closedByDefault": "Svi odjeljci su podrazumevano zatvoreni",
+    "backToHelp": "Nazad na pomoć",
+    "printPdf": "Štampaj / spremi kao PDF",
+    "askDiscord": "Pitaj na Discordu",
+    "startHereTitle": "Počnite ovde",
+    "startHereDescription": "Novi menadžeri prvo treba da pročitaju Brzi početak, Vrijeme u igri, Pregled, Ekipu, Trening, Pripremu utrke i Finansije. Iskusni menadžeri mogu koristiti pretragu za određene teme kao što su prava sponzora na naziv, zalihe za utrku, plej-of, poreske provjere, hitna finansijska pomoć ili periodi za prebacivanje vozača u Razvojni tim.",
+    "searchLabel": "Pretraži priručnik",
+    "searchPlaceholder": "Pretraži Coins, sponzore, pripremu utrke, porez, opremu...",
+    "categoryLabel": "Kategorija",
+    "allCategories": "Sve kategorije",
+    "openVisible": "Otvori prikazano",
+    "closeAll": "Zatvori sve",
+    "visibleCount_one": "Prikazan je {{count}} odjeljak.",
+    "visibleCount_other": "Prikazano je {{count}} odeljaka.",
+    "noSectionsTitle": "Nema pronađenih odeljaka priručnika",
+    "noSectionsDescription": "Pokušajte sa drugim pojmom za pretragu ili vratite kategoriju na sve.",
+    "open": "Otvori",
+    "close": "Zatvori",
+    "summary": "Sažetak",
+    "detailedExplanation": "Detaljno objašnjenje",
+    "rule": "Pravilo {{count}}",
+    "practicalTips": "Praktični saveti",
+    "maintenanceTitle": "Napomena o održavanju priručnika",
+    "maintenanceDescription": "Ovaj priručnik je detaljna prva verzija zasnovana na trenutnim stranicama i sistemima. Tačne vrijednosti koje se učitavaju iz baze podataka, kao što su aktuelne cene Coins paketa, troškovi pojedinih opcija politika, ponude kampova, vrijednosti sponzorskih ponuda i troškovi infrastrukture, uvek treba proveravati na aktuelnoj stranici igre ako se backend konfiguracija promijeni.",
+    "contactUs": "Kontaktirajte nas"
+  },
+  "categories": {
+    "getting-started": "Početak",
+    "coins-and-account": "Coins i račun",
+    "club-identity": "Identitet kluba",
+    "dashboard": "Kontrolna tabla",
+    "riders": "Vozači",
+    "training": "Trening",
+    "equipment": "Oprema",
+    "infrastructure": "Infrastruktura",
+    "calendar-and-races": "Kalendar i utrke",
+    "rankings-and-statistics": "Rang-liste i statistika",
+    "transfers": "Transferi",
+    "finance": "Finansije",
+    "support-and-account": "Podrška i račun",
+    "race-preparation": "Priprema utrke",
+    "transfers-and-scouting": "Transferi i skauting",
+    "faq": "Česta pitanja"
+  },
+  "guide": {
+    "factParagraph": "Važne referentne vrijednosti za ovu temu su: {{factText}}. Kad god se vrijednost učitava iz baze podataka, kao merodavne koristite aktuelne vrijednosti sa stranice igre, jer se cene, ponude, statusi ili budući balans mogu promeniti bez izmene koda priručnika.",
+    "noFactParagraph": "Ova tema ne zavisi od jedne fiksne brojčane vrijednosti. Pri konačnoj odluci koristite aktuelno stanje stranice, upozorenja i dostupne radnje kao merodavan izvor.",
+    "categoryIntro": {
+      "getting-started": "{{title}} treba razumeti kao deo početne rutine upravljanja. Novi igrači ne treba odmah da pokušavaju da optimizuju sve. Najpre utvrdite čime stranica upravlja, koji podaci su merodavni, koji rokovi postoje i koje radnje mogu imati trajne ili skupe posledice.",
+      "coins-and-account": "{{title}} pripada nivou korisničkog računa, a ne standardnoj ekonomiji klupskog novca. Razdvojite Coins i postavke identiteta/profila na nivou računa od timskih finansija. Ako funkcija koristi Coins, pre potvrde provjerite stanje računa i tačnu aktuelnu cenu paketa ili usluge.",
+      "club-identity": "{{title}} utiče na javni identitet kluba. Odluke o brendiranju mogu biti vidljive na rang-listama, startnim listama i profilima timova, dok pravila sponzora sa pravom na naziv mogu privremeno zaključati ili zameniti delove tog identiteta.",
+      "dashboard": "{{title}} je deo svakodnevnog toka informacija. Stranice kontrolne table treba da pokažu menadžeru šta trenutno zahtjeva pažnju. Kada kartica ili upozorenje vodi na drugu stranicu, za konačnu odluku koristite tu detaljniju stranicu umesto samo sažetka.",
+      "riders": "{{title}} je povezano sa kvalitetom ekipe i dugoročnim planiranjem rostera. Odluke o vozačima i osoblju treba da kombinuju trenutne performanse, potencijal, umor/zdravlje, trošak ugovora, kapacitet i buduće potrebe na utrkama, umesto fokusiranja na samo jedan glavni broj.",
+      "training": "{{title}} je odluka o razvoju koja utiče na svežinu. Kvalitet treninga je važan, ali najbolji plan treninga je onaj koji razvija vozače i istovremeno im omogućava da na važne utrke stignu dovoljno odmorni za dobar učinak.",
+      "equipment": "{{title}} povezuje posedovane predmete, bonuse postavke, stanje i pripremu utrke. Opremu birajte prema stvarnom profilu utrke i održavajte je upotrebljivom; kupovina skupe opreme bez planiranja setova i održavanja rasipa vrijednost.",
+      "infrastructure": "{{title}} je dugoročno ulaganje u kapacitet. Odluke o objektima i resursima treba da reše stvarno usko grlo, uklapaju se u finansijski plan i budu tempirane prema trajanju izgradnje ili popravke, umesto automatskog unapređivanja.",
+      "calendar-and-races": "{{title}} pripada vremenskoj liniji natjecanja. Uvek uporedite podatke o utrci, prijavi i predaji vozača sa merodavnim vremenom u igri, a zatim koristite Detalje utrke i Pripremu utrke za detaljnija pravila i radnje.",
+      "race-preparation": "{{title}} je deo završnog toka pripreme pre utrke. Prihvaćena prijava nije dovoljna: vozači, podrška, oprema, zalihe, uloge i taktike moraju biti kompletirani pre odgovarajućeg zaključavanja ili roka.",
+      "rankings-and-statistics": "{{title}} objašnjava natjecateljski kontekst kluba. Bodovi, plasmani i specijalističke tabele treba da usmere sezonske ciljeve i skauting, ali menadžeri i dalje treba da otvore profile timova i vozača pre donošenja odluka samo na osnovu rangiranja.",
+      "transfers": "{{title}} je odluka o izgradnji ekipe sa sportskim i finansijskim posledicama. Pre potvrde provjerite uklapanje u ulogu, sigurnost skautinga, plaću, trajanje, transfernu naknadu kada postoji, kapacitet rostera i uticaj na budući novčani tok kluba.",
+      "transfers-and-scouting": "{{title}} kombinuje tržišne radnje sa kvalitetom informacija. Koristite skauting da smanjite neizvesnost, a zatim pregovarajte samo za realne mete koje odgovaraju i ekipi i budžetu.",
+      "finance": "{{title}} utiče na opstanak kluba. Uvek razlikujte operativne prihode i rashode od kretanja duga, koristite transakcije da objasnite promjene stanja i zadržite dovoljno novca za obavezne ponavljajuće troškove pre plaćanja opcionih poboljšanja.",
+      "support-and-account": "{{title}} je funkcija računa i podrške. Zaštitite podatke računa, koristite odgovarajući kanal podrške i zapamtite da su podaci korisničkog profila odvojeni od javnog brendiranja kluba i sistema klupskih finansija.",
+      "faq": "{{title}} je stavka za rešavanje problema. Najbrži odgovor se obično dobija utvrđivanjem koje stanje igre blokira radnju, a zatim proverom stranice koja upravlja tim stanjem, umesto ponovnog klikanja na onemogućenu radnju."
+    },
+    "commonMistake": {
+      "equipment": "Česta greška je kupovina predmeta koji izgleda najjače bez provjere stanja, statusa dodele, profila utrke ili kompatibilnosti sa setom. Bezbedniji pristup je izgraditi kompletne specijalističke setove i održavati predmete od kojih oni zavise.",
+      "finance": "Česta greška je gledati samo trenutno stanje. Dobro stanje može skrivati buduće obaveze za plaće, porez, politike, putovanja ili dug. Pre trošenja novca zajedno provjerite ponavljajuće troškove i Transakcije.",
+      "calendar-and-races": "Česta greška je posmatrati datum utrke kao jedini važan datum. Rokovi za prijavu, listu timova, predaju vozača i Stage Plan mogu nastupiti ranije i blokirati tim pre početka same utrke.",
+      "race-preparation": "Česta greška je videti sačuvan plan i pretpostaviti da je utrka spremna. Spremljeno, kompletno i upotrebljivo nisu uvek isto stanje. Pročitajte sažetak spremnosti i ispravite nedostajuće zalihe, uloge ili taktičke blokove pre zaključavanja.",
+      "transfers": "Česta greška je proceniti posao samo prema transfernoj naknadi ili overall oceni. Plaća, dužina ugovora, neizvesnost skautinga, uklapanje u ulogu, kapacitet rostera i budući novčani tok mogu naizgled jeftin transfer učiniti skupim.",
+      "transfers-and-scouting": "Česta greška je pregovarati pre smanjenja neizvesnosti. Prvo skautirajte važne mete, a zatim koristite povratne informacije iz pregovora da poboljšate najslabiji deo ponude umesto nasumičnog povećavanja svih troškova.",
+      "training": "Česta greška je svakog dana maksimalno povećavati intenzitet treninga. Razvoj pomaže samo ako vozač i dalje ima dovoljno svežine, morala i zdravlja da nastupi kada stigne važna utrka.",
+      "infrastructure": "Česta greška je unaprediti objekat samo zato što viši nivo izgleda bolje. Infrastruktura treba da rešava stvarne potrebe kluba za kapacitetom osoblja, treningom, medicinom, skautingom, mehaničarima ili logistikom.",
+      "default": "Česta greška je ignorisati poruke o onemogućenom stanju, rokove ili preduslove. Kada radnja nije dostupna, prvo pročitajte vidljiv zahtjev, a zatim otvorite povezanu stranicu navedenu u linkovima priručnika."
+    },
+    "detail": {
+      "soldDiscarded": "Kada se oprema proda ili odbaci, napušta aktivni inventar. Pre potvrde provjerite da li se predmet još koristi u podrazumevanom ili specijalističkom setu i da li postoji zamjena. Prodaja je i finansijska i operativna odluka jer menja dubinu zaliha i klupski novac.",
+      "readyWorn": "Status treba čitati pre stanja. Ready znači da predmet normalno može sudjelovati u uobičajenim radnjama; Assigned znači da ga trenutno koristi drugi set ili događaj; In Maintenance znači da je privremeno nedostupan; Worn znači da stanje zahtjeva pažnju. Najbezbednija rutina pre utrke je proveriti i status i stanje svakog predmeta u izabranom setu.",
+      "assigned": "Assigned je zaštitno stanje. Sprečava slučajnu prodaju, popravku ili ponovnu upotrebu predmeta ili resursa od kojeg drugi plan trenutno zavisi. Otvorite set, Race Plan ili dodelu koja ga koristi, tamo ga zamenite ili uklonite, pa se vratite na radnju u inventaru.",
+      "quote": "Ponuda je pregled stvarne posledice u igri pre potvrde. Uvek provjerite ukupan trošak ili povraćaj, trajanje, uslove i upozorenja. Prikazana ponuda je pouzdanija od starog primera iz priručnika jer se backend balans i konfiguracija mogu menjati tokom vremena.",
+      "condition": "Stanje je signal izdržljivosti. Niže stanje povećava potrebu za održavanjem i može smanjiti pouzdanost predmeta ili resursa u važnim planovima. Ne čekajte da svi ključni predmeti budu istrošeni istovremeno; rotirajte popravke kako bi klub zadržao dovoljnu upotrebljivu dubinu.",
+      "nutrition": "Potrošne zalihe se množe brojem vozača i etapa. Potrebnu količinu računajte prema stvarnom broju izabranih vozača i ukupnom broju etapa, a kada je moguće ostavite malu rezervu. Procena za jedan dan nije dovoljna za višednevnu utrku.",
+      "durableSupplies": "Trajne zalihe za utrku prate se drugačije od potrošnog materijala za jednokratnu upotrebu. Važan je njihov preostali kapacitet korišćenja po etapama. Nedostatak obaveznih dresova može blokirati spremnost; nedostatak jakni za kišu uglavnom smanjuje fleksibilnost po lošem vremenu. Zamenite istrošene jedinice pre važnog bloka utrka.",
+      "sponsor": "Informacije o sponzoru treba pročitati pre potpisivanja ili ciljanja utrka. Garantovani novac je samo jedan deo ugovora. Ciljevi, bonus fondovi, tehnički popusti, zaključavanje prava na naziv i rokovi mogu promeniti šta klub treba da radi tokom sezone. Dobar sponzorski ugovor odgovara kalendaru tima i snazi ekipe.",
+      "tax": "Porez nije opciona pozadinska informacija. On je deo finansijskog sistema i može promeniti stvarnu vrijednost prihoda. Kada prihodi porastu zbog sponzora, nagrada ili bonusa, očekujte poresko zadržavanje ili mjesečne korekcije i koristite karticu Porez da razumete konačnu poziciju gotovine.",
+      "deadline": "Periodi i rokovi su strogi jer Race Engine i sezonski sistemi moraju imati stabilne podatke pre simulacije. Ako rok prođe, možete izgubiti mogućnost da izmenite plan, prijavite utrku, premestite vozača ili predate roster. Uvek uporedite datum na stranici sa vremenom igre u podnožju.",
+      "training": "Trening i umor moraju biti u ravnoteži. Cilj nije maksimalno opteretiti svaki trening, već stići na važne utrke sa vozačima koji napreduju i istovremeno su dovoljno sveži za dobar nastup. Ako umor postane previsok, smanjite intenzitet ili planirajte oporavak.",
+      "scouting": "Skauting smanjuje neizvesnost. Neskautirane spoljne vozače posmatrajte kao nepotpunu informaciju, a ne kao potvrđene vrijednosti. Skautski izvještaji čine transferne odluke sigurnijim jer otkrivaju ili procenjuju overall, potencijal, prednosti i druge skrivene podatke uz određeni nivo preciznosti.",
+      "finance": "Svako pominjanje troška treba povezati sa stranicom Finansije. Pitajte se: da li je ovo jednokratni, tjedni, mjesečni, trošak po putovanju ili sezonski trošak? Razlika je važna jer ponavljajući troškovi mogu neprimetno stvoriti više opasnosti od jedne kupovine.",
+      "roleSkills": "Uloge i vještine treba uskladiti sa profilom utrke. Overall je koristan za brzo poređenje, ali sprint, climbing, time trial, flat, endurance, recovery, resistance, race IQ i teamwork odlučuju kako vozač nastupa u određenim situacijama. Birajte vozače prema ruti, ne samo prema najvišem broju.",
+      "results": "Replay i rezultate treba čitati kao objašnjenje onoga što se dogodilo, a ne samo kao konačan plasman. Grupe, razlike, bodovi, bonus sekunde, rezultati etapa i klasifikacije mogu pokazati da li je taktika uspela, da li je vozač ostao izolovan ili treba promeniti plan za sledeću utrku.",
+      "default": "U praksi to znači da ovo pravilo treba povezati sa vidljivim kontrolama na stranici {{title}}. Prvo pročitajte status, zatim provjerite da li je gumb omogućeno, pa razumite šta će se promeniti nakon klika. Ako stranica prikazuje upozorenje, onemogućeno stanje, datum, trošak, broj ili zahtjev, ta informacija je obično važnija od samog naziva gumba."
+    }
+  },
+  "sections": {
+    "quick-start": {
+      "category": "Početak",
+      "title": "Brzi početak za nove menadžere",
+      "subtitle": "Najbolji prvi koraci nakon kreiranja kluba.",
+      "overview": "ProPeloton Manager je kompletna igra upravljanja biciklističkim klubom. Ne birate samo vozače za utrke. Upravljate novcem, osobljem, opremom, infrastrukturom, sponzorima, treningom, prijavama za utrke, pripremom utrke i dugoročnim rangiranjem.",
+      "details": [
+        "Počnite na Pregledu. Ova stranica prikazuje upozorenja, stanje kluba, finansije, sponzore, predstojeće utrke, vesti, današnje utrke i brze akcije. Ako nešto važno zahtjeva pažnju, Pregled bi obično trebalo da vas usmeri ka tome.",
+        "Otvorite Tim i upoznajte svoje vozače pre nego što bilo koga kupite. Provjerite ulogu, godine, zemlju, overall, potencijal, umor, moral, plaću, ugovor i vještine. Vozač sa visokim overall-om nije automatski najbolji za svaku utrku.",
+        "Otvorite Trening i postavite razuman plan. Jak trening može pomoći razvoju, ali može i povećati umor. Umoran tim će često voziti lošije čak i kada vozači na papiru deluju veoma jaki.",
+        "Otvorite Kalendar da biste razumeli sezonu. Prijavljujte se na utrke koje odgovaraju vašem timu, ali nemojte preopteretiti vozače. Mali tim može brzo izgubiti performanse ako isti vozači voze previše često.",
+        "Otvorite Pripremu utrke kada je vaš tim prihvaćen za utrku. Prihvaćena prijava nije dovoljna. I dalje morate napraviti Race Plan, a zatim Stage Plans pre utrke.",
+        "Otvorite Finansije pre transfera, kupovine opreme, razvoja infrastrukture ili trening kampova. Novac je potreban za plaće, osoblje, porez, opremu, podršku utrci, trening kampove, politike i transfere."
+      ],
+      "facts": [
+        {
+          "label": "Počnite ovde",
+          "value": "Pregled, Tim, Trening, Kalendar, Priprema utrke, Finansije"
+        },
+        {
+          "label": "Glavna rana opasnost",
+          "value": "Prevelika potrošnja pre razumevanja plaća i stalnih troškova"
+        }
+      ],
+      "tips": [
+        "Koristite Pregled kao dnevnu kontrolnu listu.",
+        "Pripremite utrke na vrijeme. Ne čekajte posljednji dan igre.",
+        "Nemojte potrošiti sav početni novac na transfere pre nego što provjerite plaće i stalne troškove."
+      ],
+      "relatedLinks": [
+        "Otvori Pregled",
+        "Otvori Tim",
+        "Otvori Finansije"
+      ]
+    },
+    "game-time": {
+      "category": "Početak",
+      "title": "Vrijeme igre i rokovi",
+      "subtitle": "Kako vrijeme u igri funkcioniše u odnosu na stvarni život.",
+      "overview": "Vrijeme igre određuje rokove za utrke, trening kampove, isteke na tržištu, finansijske periode, poreske periode i tok sezone. Podnožje prikazuje zvanično trenutno vrijeme igre iz backenda.",
+      "details": [
+        "Jedan dan u igri traje 12 sati u stvarnom životu. To znači da dva dana u igri predstavljaju jedan dan u stvarnom životu.",
+        "Ako je rok za prijavu vozača za dva dana u igri, imate oko jedan stvarni dan. Ako je rok za jedan dan u igri, imate oko 12 stvarnih sati.",
+        "Datumi igre koriste se za prijave na utrke, rokove za slanje vozača, zaključavanje Stage Plan-a, trening kampove, isteke transfera, finansijske transakcije i poreske periode.",
+        "Stvarni tehnički vremenski zapisi nisu isto što i vrijeme igre. Neki backend redovi imaju created_at za sortiranje ili paginaciju, ali datum koji vidi igrač treba da koristi sačuvane podatke o datumu igre kad god su dostupni.",
+        "Uvek pripremajte stvari pre poslednjeg trenutka. Propušteni rokovi mogu blokirati Race Plan ili ostaviti Stage Plans nepotpunim."
+      ],
+      "facts": [
+        {
+          "label": "Odnos vremena",
+          "value": "1 dan u igri = 12 sati u stvarnom životu"
+        },
+        {
+          "label": "Konverzija",
+          "value": "2 dana u igri = 1 dan u stvarnom životu"
+        },
+        {
+          "label": "Prikazuje se u",
+          "value": "Footeru kontrolne table i brojnim datumima u igri"
+        }
+      ],
+      "tips": [
+        "Pre važnih akcija provjerite vrijeme igre u footeru.",
+        "Koristite Kalendar i Pripremu utrke zajedno."
+      ]
+    },
+    "coins": {
+      "category": "Coins i račun",
+      "title": "Coins, paketi Coins i nagrade za preporuke",
+      "subtitle": "Razlika između Coins računa i novca kluba.",
+      "overview": "Coins su valuta korisničkog računa. Novac kluba je ekonomija tima. Nemojte mešati Coins sa novcem u igri koji se koristi za plaće, transfere, opremu i infrastrukturu.",
+      "details": [
+        "Pro Packages stranica učitava aktivne pakete Coins iz baze. To znači da su tačne veličine paketa i cene vođene bazom i da treba verovati aktuelnoj prodavnici.",
+        "Stranica izračunava cenu po novčiću i može označiti paket sa najboljom vrednošću. Oznake paketa kao što su Starter boost ili Most popular zasnovane su na količini Coins.",
+        "Povijest kupovina učitava se iz user_coin_ledger gde je reason purchase. Tehnički podaci Stripe sesije namerno se ne prikazuju korisnicima.",
+        "Invite Friends kreira referral link. Preporuka je završena kada preporučeni korisnik kreira klub i kupi svoj prvi paket Coins. Trenutni tekst nagrade navodi 40 Coins.",
+        "Coins su vezani za korisnika/račun. Ako je klub likvidiran, korisnički račun i Coins ostaju aktivni; zatvara se samo taj klub."
+      ],
+      "facts": [
+        {
+          "label": "Trenutna konstanta troška igranja",
+          "value": "2 Coins dnevno na trenutnoj Pro Packages stranici"
+        },
+        {
+          "label": "Izvor paketa",
+          "value": "coin_packages tabela baze"
+        },
+        {
+          "label": "Plaćanje",
+          "value": "create-coin-checkout Edge Function"
+        },
+        {
+          "label": "Nagrada za poziv",
+          "value": "40 Coins kada preporučeni prijatelj kreira klub i kupi svoj prvi paket Coins"
+        }
+      ],
+      "tips": [
+        "Koristite Pro Packages za tačne aktuelne cene.",
+        "Koristite Invite Friends za deljenje referral linka."
+      ],
+      "relatedLinks": [
+        "Paketi Coins",
+        "Pozovi prijatelje"
+      ]
+    },
+    "club-identity": {
+      "category": "Identitet kluba",
+      "title": "Brendiranje kluba, logo i dres",
+      "subtitle": "Ime tima, boje, logo, dres i blokade zbog prava sponzora na ime ugovora.",
+      "overview": "Identitet vašeg kluba uključuje ime, boje, logo i dres. Njime se upravlja preko Prilagodi tim, ali prava sponzora na ime ugovori mogu privremeno zaključati ili promeniti delove javnog prikaza.",
+      "details": [
+        "Prilagodi tim čuva brendiranje preko backend funkcija, a ne samo u lokalnom UI stanju. To je važno zato što prava sponzora na ime može zaključati ime ili uticati na prikazano ime.",
+        "Upload logotipa proverava tip i veličinu datoteke, konvertuje ga u PNG u browseru i čuva u club-logos bucketu.",
+        "Uklanjanje logotipa vraća generisani osnovni logo umesto da klub ostane bez logotipa. Osnovni logo koristi boje tima.",
+        "Sistem dresova čuva domaći komplet u team_kits. Može koristiti dres iz generičkog pool-a, generički fallback, URL slike ili uploadovane slike, zavisno od izabranog režima.",
+        "Naming-rights sponzor obično plaća više, ali privremeno menja prikazano ime tima tokom sezone. Originalno ime se vraća na početku sljedeće sezone."
+      ],
+      "facts": [
+        {
+          "label": "Formati logotipa",
+          "value": "JPG, PNG, WEBP"
+        },
+        {
+          "label": "Maksimalna veličina logotipa",
+          "value": "0.5 MB"
+        },
+        {
+          "label": "Formati dresa",
+          "value": "JPG, PNG, WEBP"
+        },
+        {
+          "label": "Maksimalna veličina dresa",
+          "value": "1 MB i 512 × 512 px ili manje"
+        },
+        {
+          "label": "Skladište logotipa",
+          "value": "Otpremljeni logotipi se konvertuju u PNG i čuvaju u club-logos"
+        }
+      ],
+      "tips": [
+        "Koristite jasan logo koji dobro izgleda i u malim dimenzijama.",
+        "Ne prihvatajte naming rights samo zbog novca; razumite uticaj na identitet."
+      ],
+      "relatedLinks": [
+        "Prilagodi tim"
+      ]
+    },
+    "overview": {
+      "category": "Kontrolna tabla",
+      "title": "Stranica Pregled",
+      "subtitle": "Vaš dnevni kontrolni centar.",
+      "overview": "Pregled kombinuje najvažnije informacije iz celog kluba u jednu kontrolnu tablu: upozorenja, KPI-jeve, operacije, stanje tima, raspored, svijet utrka, finansije, hitni dug, vesti, brze akcije i glavnog sponzora.",
+      "details": [
+        "Upozorenja pokazuju šta zahtjeva pažnju. Ako upozorenje ima link, on obično otvara stranicu na kojoj problem može biti rešen.",
+        "KPI kartice daju brze brojeve, dok Operacije prikazuju aktivne sisteme kao što su finansije, trening, infrastruktura, medicina, sponzori ili inbox događaji.",
+        "Stanje tima pomaže da razumete da li je ekipa spremna. Visok umor, ozljede, bolest ili veliki broj ugovora koji ističu treba brzo rešavati.",
+        "Paneli svijeta utrka prikazuju predstojeći raspored, današnje utrke i vesti. Pomažu vam da pratite svijet igre čak i kada vaš tim ne vozi.",
+        "Finansijski paneli pomažu da izbegnete opasnu potrošnju. Emergency Debt Health je posebno važan ako su korišćena spasavanja ili postoji rizik od likvidacije.",
+        "Panel glavnog sponzora može prikazati identitet sponzora i voditi na sponsorsku kontrolnu tablu."
+      ],
+      "facts": [
+        {
+          "label": "Glavna svrha",
+          "value": "Dnevna kontrolna lista i brza navigacija"
+        },
+        {
+          "label": "Važni finansijski podaci",
+          "value": "Stanje, operativni prihodi/rashodi, prihod sponzora, trošak politika, prognoza putovanja i stanje duga"
+        },
+        {
+          "label": "Stanje tima",
+          "value": "Forma, moral, spremnost, dostupni vozači, ozlijeđeni/bolesni/nepotpuno spremni vozači i ugovori koji ističu"
+        }
+      ],
+      "tips": [
+        "Otvorite Pregled pri svakom prijavljivanju.",
+        "Ako Pregled pokazuje finansijski rizik, provjerite Finansije pre potrošnje."
+      ],
+      "relatedLinks": [
+        "Otvori Pregled"
+      ]
+    },
+    "notifications-inbox": {
+      "category": "Kontrolna tabla",
+      "title": "Obavijesti i Sanduče",
+      "subtitle": "Sistemska upozorenja, nepročitane/pročitane stranice i razgovori.",
+      "overview": "Obavijesti su upozorenja igre ili administratora. Sanduče je namenjen direktnim ili administratorskim razgovorima. Zajedno pomažu korisnicima da ne propuste rokove i da komuniciraju sa drugim menadžerima ili administratorima.",
+      "details": [
+        "Obavijesti se mogu pretraživati prema naslovu, poruci, tipu, izvoru, grupi postavke ili vremenu kreiranja.",
+        "Kategorije se određuju prema grupi postavke, izvoru ili kodu tipa. To pomaže da se odvoje finansijske, natjecateljske, sponzorske, transfer i sistemske poruke.",
+        "Postavke obavijesti mogu kontrolisati koje tipove obavijesti korisnik prima.",
+        "Sanduče prikazuje razgovore, broj nepročitanih poruka, pregled posljednje poruke i da li je moguće odgovoriti.",
+        "Otvaranjem razgovora učitavaju se poruke i razgovor se označava kao pročitan. Slanje poruke koristi Sanduče RPC funkcije."
+      ],
+      "facts": [
+        {
+          "label": "Kartice obavijesti",
+          "value": "Nepročitano i Pročitano"
+        },
+        {
+          "label": "Alati za obavijesti",
+          "value": "Pretraga, filter kategorija, paginacija, linkovi za akcije"
+        },
+        {
+          "label": "Tipovi Sanduče razgovora",
+          "value": "Direktni i administratorski direktni"
+        }
+      ],
+      "tips": [
+        "Provjerite nepročitana obavijesti pre rokova za utrke.",
+        "Koristite Sanduče za razgovore, a Obavijesti za sistemska/natjecateljska upozorenja."
+      ],
+      "relatedLinks": [
+        "Obavijesti",
+        "Sanduče",
+        "Postavke"
+      ]
+    },
+    "squad-riders": {
+      "category": "Vozači",
+      "title": "Tim, Prvi tim i prikazi liste vozača",
+      "subtitle": "Kako razumeti svoj sastav.",
+      "overview": "Tim je mjesto gde upravljate i pregledate vozače Prvog tima. Uključuje različite prikaze za opšte podatke, finansije, vještine i formu/razvoj.",
+      "details": [
+        "Opšti prikaz daje najbrži pregled sastava. Koristite ga za svakodnevne provjere.",
+        "Finansijski prikaz pokazuje plaću, tržišnu vrijednost i podatke o ugovoru. Koristite ga pre produženja, otpuštanja ili prodaje vozača.",
+        "Prikaz vještina pokazuje specijalističke atribute. Koristite ga pre izbora za utrku jer penjač, sprinter i hronometraš zahtevaju različite vještine.",
+        "Forma i razvoj prikazuju podatke o spremnosti kao što su umor, moral, potencijal i dostupnost.",
+        "Kontrolna tabla tima može prikazati pobede, podijume, top 10, najbolji GC, posljednje utrke, odabir za sledeću utrku i preglede po tipu utrke."
+      ],
+      "facts": [
+        {
+          "label": "Maksimum Prvog tima u UI",
+          "value": "18 vozača"
+        },
+        {
+          "label": "Prikazi liste",
+          "value": "Opšti, Finansijski, Vještine, Forma i razvoj"
+        },
+        {
+          "label": "Uobičajeni podaci vozača",
+          "value": "Zemlja, uloga, godine, overall, umor, status, tržišna vrijednost, plaća, ugovor, vještine, moral i potencijal"
+        }
+      ],
+      "tips": [
+        "Ne procenjujte vozače samo po overall-u.",
+        "Provjerite ugovore pre kraja sezone.",
+        "Otvorite profile vozača za dublje odluke."
+      ],
+      "relatedLinks": [
+        "Otvori Tim"
+      ]
+    },
+    "rider-profile-skills": {
+      "category": "Vozači",
+      "title": "Profil vozača, vještine, forma i Race Sharpness",
+      "subtitle": "Zašto kvalitet vozača znači više od overall-a.",
+      "overview": "Profili vozača prikazuju identitet, atribute, ugovor, trening, poređenje i istoriju. Stvarna vrijednost vozača na utrci zavisi od kombinacije vještina, forme, morala, umora, zdravlja i Race Sharpness-a.",
+      "details": [
+        "Overall je široki sažetak. Koristan je, ali konkretni atributi određuju ulogu na utrci. Sprint je važan u masovnom finišu. Uspon je važan na planinama. Hronometar je važan na TT etapama. Oporavak je važan u etapnim utrkama.",
+        "Umor predstavlja iscrpljenost i nagomilani stres. Visok umor može učiniti da jaki vozači podbace ili postanu rizičan odabir.",
+        "Moral utiče na samopouzdanje i može uticati na performanse. Nizak moral ne treba ignorisati.",
+        "Race Sharpness meri ritam trkanja. Premalo trkanja može smanjiti sharpness, dok previše trkanja stvara rizik od preopterećenja.",
+        "Poređenje vozača prikazuje dva vozača jedan pored drugog sa atributima kao što su sprint, uspon, hronometar, izdržljivost, ravničarski, oporavak, otpornost, Race IQ i timski rad.",
+        "Profili eksternih vozača mogu sakriti tačne informacije dok vozač nije skautiran. Skauting izvještaji poboljšavaju preciznost."
+      ],
+      "facts": [
+        {
+          "label": "Kartice sopstvenog vozača",
+          "value": "Pregled, Ugovor, Trening, Poređenje, Povijest"
+        },
+        {
+          "label": "Glavni atributi",
+          "value": "Overall, potencijal, sprint, uspon, hronometar, izdržljivost, ravničarski, oporavak, otpornost, Race IQ, timski rad"
+        },
+        {
+          "label": "Statusi dostupnosti",
+          "value": "Spreman, nepotpuno spreman, ozlijeđen, bolestan"
+        }
+      ],
+      "tips": [
+        "Za sprint provjerite sprint, ravničarski, izdržljivost i timski rad.",
+        "Za planine provjerite uspon, izdržljivost, otpornost i oporavak.",
+        "Koristite poređenje pre transfer odluka."
+      ]
+    },
+    "developing-team": {
+      "category": "Vozači",
+      "title": "Razvojni tim",
+      "subtitle": "U23/razvojna struktura, kupovina i periodi za premeštanje.",
+      "overview": "Razvojni tim je drugi tim povezan sa glavnim klubom. Koristi se za mlade ili sekundarne vozače i ima sopstveno ograničenje sastava i pravila perioda za premeštanje.",
+      "details": [
+        "Postavke učitavaju status Razvojnog tima iz backenda. Prikazuju stvarne dane igranja, dane igre, stanje Coins, cenu u Coins, status uvjeta, stanje perioda za premeštanje i da li je kupovina dozvoljena.",
+        "Nakon kupovine, aplikacija zadržava aktivni klub na glavnom klubu kako kontrolna tabla ne bi slučajno prešla na razvojni klub.",
+        "Vozači Razvojnog tima mogu biti prebačeni u Prvi tim samo ako je period za premeštanje otvoren i Prvi tim ima slobodno mjesto.",
+        "Ako vozač Razvojnog tima ima 24 godine ili više, UI može prikazati upozorenje za akciju. Ako je period otvoren, akcija je potrebna odmah; u suprotnom vozač mora biti premešten u sljedećem periodu."
+      ],
+      "facts": [
+        {
+          "label": "Maksimum Razvojnog tima u UI",
+          "value": "8 vozača"
+        },
+        {
+          "label": "Mjesto kupovine",
+          "value": "Stranica Postavke"
+        },
+        {
+          "label": "Pravilo premeštanja",
+          "value": "Vozači se mogu premeštati samo kada je period za premeštanje otvoren"
+        },
+        {
+          "label": "Upozorenje za godine",
+          "value": "Vozači od 24+ godine zahtevaju pažnju"
+        }
+      ],
+      "tips": [
+        "Koristite Razvojni tim za buduće talente.",
+        "Ostavite slobodno mjesto u Prvom timu ako planirate promociju vozača."
+      ],
+      "relatedLinks": [
+        "Postavke",
+        "Ekipa"
+      ]
+    },
+    "staff": {
+      "category": "Vozači",
+      "title": "Osoblje, uloge osoblja i kursevi",
+      "subtitle": "Kako osoblje podržava vaš klub.",
+      "overview": "Osoblje poboljšava trening, oporavak, skauting, mehaniku, podršku na utrci i operacije. Uloge osoblja imaju ograničenja kapaciteta koja su često povezana sa infrastrukturom.",
+      "details": [
+        "Glavni trener i treneri podržavaju redovni trening, trening kampove i razvoj vozača.",
+        "Doktor tima, fizioterapeut i nutricionista podržavaju zdravlje, oporavak, umor i medicinsko vođenje.",
+        "Mehaničar podržava održavanje opreme i tehničke sisteme.",
+        "Sportski direktor podržava pripremu utrke, taktiku i predloge za Stage Plan.",
+        "Skaut / Analitičar podržava skauting izveštaje i poznavanje tržišta.",
+        "Kursevi osoblja mogu biti aktivni ili nedavno završeni, sa trajanjem, cenom i poboljšanjima atributa.",
+        "Produženje ugovora osoblja može uključivati trenutnu plaću, traženu plaću, minimalno prihvatljivu plaću, interesovanje, spremnost i razloge odluke."
+      ],
+      "facts": [
+        {
+          "label": "Uloge",
+          "value": "Glavni trener, Trener, U23 Glavni trener, Doktor tima, Fizioterapeut, Nutricionista, Mehaničar, Sportski direktor, Skaut / Analitičar"
+        },
+        {
+          "label": "Atributi osoblja",
+          "value": "Ekspertiza, iskustvo, potencijal, liderstvo, efikasnost, lojalnost"
+        },
+        {
+          "label": "Kursevi",
+          "value": "Mogu poboljšati atribute osoblja tokom dana igre i koštaju novac"
+        }
+      ],
+      "tips": [
+        "Angažujte osoblje prema slabostima kluba.",
+        "Nadogradite infrastrukturu ako je kapacitet osoblja blokiran."
+      ],
+      "relatedLinks": [
+        "Tržište osoblja",
+        "Infrastruktura"
+      ]
+    },
+    "training": {
+      "category": "Trening",
+      "title": "Redovni trening i trening kampovi",
+      "subtitle": "Razvijajte vozače bez uništavanja svežine.",
+      "overview": "Trening kontroliše razvoj vozača i umor. Redovni trening je kontinuiran. Trening kampovi su jači i skuplji blokovi sa lokacijom, vremenom, vozačima i osobljem.",
+      "details": [
+        "Redovni trening može koristiti timska podrazumevana postavke i individualne planove vozača. Fokus uključuje opšti, oporavak, sprint, uspon, ravničarski, hronometar, izdržljivost, otpornost, Race IQ i timski rad.",
+        "Jak trening može doneti više napretka, ali i više umora i rizika. Trening oporavka je koristan nakon teških utrka ili etapnih utrka.",
+        "Trening kampovi uključuju lokaciju, region, tip kampa, profil terena, nadmorsku visinu, zvezdice, indeks troška, multiplikator kvaliteta, komfor oporavka, preporučene nedelje, rizične nedelje i zatvorene nedelje.",
+        "Ponude kampova mogu uključiti putovanje, smeštaj, naknadu kampa, logistiku, ukupnu cenu, cenu po vozaču, stanje vremena, modifikator treninga, šansu za propušten dan i upozorenja.",
+        "Stranice trenutnog kampa prikazuju učesnike, osoblje, vrijeme, pregled bonusa osoblja, dnevne izveštaje i planove treninga za predstojeće dane kampa."
+      ],
+      "facts": [
+        {
+          "label": "Kartice treninga",
+          "value": "Redovni i Kampovi"
+        },
+        {
+          "label": "Intenziteti redovnog treninga",
+          "value": "Oporavak, lagano, normalno, jako"
+        },
+        {
+          "label": "Tipovi kampova",
+          "value": "Opšti, sprint, uspon, ravničarski, hronometar"
+        },
+        {
+          "label": "Intenziteti plana kampa",
+          "value": "Dan odmora, lagano, normalno, jako"
+        }
+      ],
+      "tips": [
+        "Nemojte stalno trenirati sve vozače jako.",
+        "Uskladite trening sa kalendarom utrka i ulogom vozača.",
+        "Provjerite cenu kampa pre rezervacije."
+      ],
+      "relatedLinks": [
+        "Otvori Trening"
+      ]
+    },
+    "equipment": {
+      "category": "Oprema",
+      "title": "Oprema, setup-i, inventar i tržište",
+      "subtitle": "Trajna oprema za utrku i bonusi performansi.",
+      "overview": "Oprema kontroliše Race Setup, opremu u vlasništvu, kupovinu na tržištu, održavanje i podršku tehničkog sponzora. Dobra oprema može poboljšati performanse na terenu i smanjiti umor.",
+      "details": [
+        "Pregled prikazuje spremnost, sažetke kategorija, podrazumevani setup, setup presets, zalihe za utrku i podršku tehničkog sponzora.",
+        "Podrazumevani Race Setup koristi se kada nije izabran poseban setup. Setup presets omogućavaju specijalizovane konfiguracije za sprint, planinu, hronometar ili kocku.",
+        "Inventar prikazuje aktivnu opremu u vlasništvu. Prodate i odbačene stavke su sakrivene iz aktivnog inventara.",
+        "Statusi opreme uključuju spremno, dodijeljeno, na održavanju i istrošeno. Spremne i istrošene stavke se obično mogu popravljati/prodavati/odbacivati, dok su dodeljene stavke ograničene.",
+        "Popravka je uglavnom dostupna kada je stanje 90% ili niže i stavka može izvršavati akcije.",
+        "Tržište prikazuje stavke sa kategorijom, kvalitetom, ulogom terena, bonusima, popustima sponzora i akcijom kupovine. Popusti tehničkog sponzora mogu smanjiti cenu."
+      ],
+      "facts": [
+        {
+          "label": "Kartice opreme",
+          "value": "Pregled, Inventar, Tržište, Zalihe za utrke"
+        },
+        {
+          "label": "Trajne kategorije",
+          "value": "Ram, set kotača, gume, grupa, kaciga, cipele"
+        },
+        {
+          "label": "Tipovi bonusa",
+          "value": "Ravničarski, brdovito, planina, kocka, hronometar, sprint, smanjenje umora"
+        },
+        {
+          "label": "Oznake kvaliteta",
+          "value": "Osnovno, Dobro, Odlično"
+        }
+      ],
+      "tips": [
+        "Kreirajte setup-e za različite tipove utrka.",
+        "Popravite važnu opremu pre ključnih utrka.",
+        "Provjerite popuste sponzora pre kupovine."
+      ],
+      "relatedLinks": [
+        "Otvori Opremu"
+      ]
+    },
+    "race-supplies": {
+      "category": "Oprema",
+      "title": "Zalihe za utrke",
+      "subtitle": "Potrošne i trajne zalihe za Stage Plan.",
+      "overview": "Zalihe za utrke koriste Race Preparation i Stage Plans. Neke zalihe se troše na svakoj etapi, dok su dresovi i kišne jakne trajne višekratne stavke sa ograničenim brojem korišćenja.",
+      "details": [
+        "Bidoni koriste 1–4 po vozaču u setup-u etape. Jednokratni su i podržavaju hidrataciju i kontrolu umora. Ispod minimuma može povećati rizik od umora.",
+        "Energetski gelovi koriste 0–4 po vozaču. Podržavaju izdržljivost i efikasnost završnog napora. Nema dodatnog efekta nakon četiri gela po vozaču.",
+        "Paketi ishrane koriste 0–2 po vozaču. Podržavaju stabilnost izdržljivosti i oporavak nakon etape. Duge etape bez ishrane mogu povećati pritisak umora.",
+        "Komplet natjecateljskog dresa je obavezan u Stage Plans. Nedostatak kompleta može blokirati setup etape.",
+        "Kišne jakne su opcione, ali vredne po mokrom/hladnom vremenu. Istrošene trajne zalihe više se ne mogu koristiti.",
+        "Etapne utrke brzo troše zalihe jer se količine koriste po vozaču po etapi."
+      ],
+      "facts": [
+        {
+          "label": "Potrošne zalihe",
+          "value": "Bidoni / flaše za vodu, Energetski gelovi, Paketi ishrane"
+        },
+        {
+          "label": "Trajne zalihe",
+          "value": "Komplet natjecateljskog dresa, Kišne jakne"
+        },
+        {
+          "label": "Komplet natjecateljskog dresa",
+          "value": "Obavezno; 10 korišćenja na etapama po jedinici"
+        },
+        {
+          "label": "Kišne jakne",
+          "value": "Opciono za loše vrijeme; 25 korišćenja po jedinici"
+        }
+      ],
+      "tips": [
+        "Kupite zalihe pre rokova.",
+        "Provjerite stanje zaliha pre etapnih utrka.",
+        "Koristite kišne jakne na etapama sa lošim vremenom."
+      ],
+      "relatedLinks": [
+        "Zalihe za utrke"
+      ]
+    },
+    "infrastructure": {
+      "category": "Infrastruktura",
+      "title": "Infrastrukturni objekti i vozila",
+      "subtitle": "Dugoročne zgrade kluba, kapacitet osoblja i pomoćna vozila.",
+      "overview": "Infrastruktura je vaš dugoročni sistem razvoja. Objekti otključavaju kapacitet osoblja i poboljšavaju trening, zdravlje, skauting i mehaniku. Vozila i prateća oprema pružaju podršku utrkama i operacijama.",
+      "details": [
+        "Sedište kluba je glavni administrativni centar. Podržava organizaciju i buduće sisteme upravljanja.",
+        "Trening centar poboljšava efikasnost trenera, kvalitet treninga, podršku razvoju i upravljanje rizikom od preopterećenja.",
+        "Medicinski centar podržava doktore tima, fizioterapeute i nutricioniste i poboljšava prevenciju ozljeda i oporavak.",
+        "Akademija mladih podržava buduće vozače i U23 razvoj i može otključati U23 sisteme Glavnog trenera.",
+        "Mehaničarska radionica poboljšava popravke, tehničku podršku i kapacitet mehaničara.",
+        "Skauting kancelarija poboljšava maksimalni kvalitet skautskih izvještaja, kapacitet skautinga i tržišne informacije.",
+        "Infrastrukturni projekti koštaju novac i traju dane igre. Aktivni projekti prikazuju trajanje, datum završetka, plaćenu cenu i mjesta za izgradnju.",
+        "Projekti i vozila mogu imati ponude za otkazivanje, popravku ili prodaju. Ponude prikazuju povraćaj/cenu/vrijednost i da li je akcija dozvoljena.",
+        "Vozila imaju stanje i status. Dodijeljena ili zaključana vozila ne mogu se popravljati ili prodavati dok se ne oslobode."
+      ],
+      "facts": [
+        {
+          "label": "Objekti",
+          "value": "Sedište kluba, Trening centar, Medicinski centar, Akademija mladih, Mehaničarska radionica, Skauting kancelarija"
+        },
+        {
+          "label": "Maksimalni nivoi objekata",
+          "value": "Sedište kluba 5, Trening centar 5, Medicinski centar 5, Akademija mladih 2, Mehaničarska radionica 4, Skauting kancelarija 4"
+        },
+        {
+          "label": "Vozila",
+          "value": "Timski automobili, Timski autobus, Kombi za opremu, Mobilna radionica, Medicinski kombi"
+        }
+      ],
+      "tips": [
+        "Nadograđujte prema uskom grlu kluba.",
+        "Ne pokrećite previše skupih projekata odjednom.",
+        "Održavajte vozila za utrke."
+      ],
+      "relatedLinks": [
+        "Otvori Infrastrukturu"
+      ]
+    },
+    "calendar-race-detail": {
+      "category": "Kalendar i utrke",
+      "title": "Kalendar, prijave na utrke i detalji utrke",
+      "subtitle": "Pronađite utrke, prijavite se, pregledajte profile i pratite rezultate.",
+      "overview": "Kalendar prikazuje sezonu i mogućnosti za utrke. Detalji utrke prikazuju kompletan profil, etape, učesnike, rezultate, klasifikacije i replay informacije za utrku.",
+      "details": [
+        "Kalendar sezone prikazuje dan-po-dan pregled utrka, kampova, događaja i praznika.",
+        "Kalendar utrka prikazuje kartice utrka sa kategorijom, zemljom, gradom, datumom, tipom utrke, ograničenjem timova, prihvaćenim timovima i statusom prijave.",
+        "Prijave na utrke zavise od datuma otvaranja/zatvaranja. Ako su prijave zatvorene, vaš tim se više ne može prijaviti.",
+        "Detalji utrke prikazuju pravila ulaska kao što su ograničenja timova, ograničenja vozača, rok za prijavu, objava liste timova, rok za slanje vozača i nagradni fond.",
+        "Detalji etape mogu uključivati rutu, distancu, teren, tip finiša, summit finish, procente terena, ukupno penjanje, profilnu sliku, vrijeme, sprintove i KOM tačke.",
+        "Nakon početka utrke, Detalji utrke mogu prikazivati live stanje, replay frame-ove, komentar, tabelu, rezultate i klasifikacije."
+      ],
+      "facts": [
+        {
+          "label": "Prikazi Kalendara",
+          "value": "Sezona i Utrke"
+        },
+        {
+          "label": "Filteri sezone",
+          "value": "Utrke, Trening kampovi, Događaji, Praznici"
+        },
+        {
+          "label": "Statusi utrke",
+          "value": "Nije otvoreno, otvoreno, zatvoreno, utrka aktivna, utrka završena, otkazano"
+        },
+        {
+          "label": "Klasifikacije",
+          "value": "Generalna, bodovi, planinska, mladi, timska"
+        }
+      ],
+      "tips": [
+        "Prijavljujte se na utrke koje odgovaraju vašem timu.",
+        "Pregledajte profile etapa pre pripreme utrke.",
+        "Provjerite vrijeme blizu dana utrke."
+      ],
+      "relatedLinks": [
+        "Otvori Kalendar"
+      ]
+    },
+    "race-preparation": {
+      "category": "Kalendar i utrke",
+      "title": "Priprema utrke i Stage Plans",
+      "subtitle": "Prihvaćene utrke, Race Plan, Stage Plans i spremnost.",
+      "overview": "Priprema utrke pretvara prihvaćenu utrku u stvarni plan. To je jedna od najvažnijih stranica u igri jer Race Engine zavisi od izbora vozača, osoblja, vozila, opreme, zaliha i taktika za etapu.",
+      "details": [
+        "Prihvaćene utrke prikazuju utrke na kojima je vaš tim prihvaćen i status pripreme svake utrke.",
+        "Race Plan bira vozače, osoblje, vozila, equipment setup i zalihe za utrku. Ograničenja vozača moraju odgovarati pravilima utrke.",
+        "Blokirani vozači ili vozila možda su već dodeljeni događajima koji se preklapaju. Time se sprečavaju nemogući rasporedi.",
+        "Pregled ponude prikazuje troškove i bonuse podrške osoblja, vozila, opreme i politika.",
+        "Nakon slanja Race Plan-a otvaraju se Stage Plans. Oni postavljaju uloge vozača, timske taktike, individualne taktike, opremu i zalihe za svaku etapu.",
+        "Spremnost Stage Plan-a prati sačuvane planove, upotrebljive planove, nedostajuće planove, prazne planove, nedostajuće zalihe, taktičku kompletnost i preporučenu akciju.",
+        "Prijedlozi Sportskog direktora mogu pomoći sa opremom, timskim taktikama, individualnim taktikama i zalihama, ali predstavljaju smernice, a ne garantovano savršene planove."
+      ],
+      "facts": [
+        {
+          "label": "Kartice",
+          "value": "Prihvaćene utrke, Race Plan, Stage Plans"
+        },
+        {
+          "label": "Osoblje za utrku",
+          "value": "Sportski direktor, Doktor tima, Fizioterapeut, Mehaničar"
+        },
+        {
+          "label": "Vozila za utrku",
+          "value": "Timski autobus, Kombi za opremu, Mobilna radionica, Medicinski kombi, Timski automobil 1–3"
+        },
+        {
+          "label": "Nivoi spremnosti Stage Plan-a",
+          "value": "Zeleno, žuto, narandžasto, crveno, sivo"
+        }
+      ],
+      "tips": [
+        "Pripremite se pre rokova.",
+        "Koristite različite planove za različite tipove etapa.",
+        "Ne ignorišite zalihe i vrijeme."
+      ],
+      "relatedLinks": [
+        "Otvori Pripremu utrke"
+      ]
+    },
+    "team-ranking": {
+      "category": "Rang-liste i statistika",
+      "title": "Rang-lista timova, nivoi, divizije i plej-of",
+      "subtitle": "Promocija, ispadanje i struktura rangiranja.",
+      "overview": "Rang-lista timova prikazuje vaše mjesto u biciklističkom svijetu. Timovi osvajaju međunarodne bodove rezultatima na utrkama. Konačna tabela može odlučiti promociju, plej-of i ispadanje.",
+      "details": [
+        "WorldTeam je najviši nivo. UI prikazuje posljednjih pet timova kao ispadanje.",
+        "ProTeam West i ProTeam East imaju direktnu promociju pobednika, 2–4. mjesto ide u World playoff, a posljednjih pet ispada.",
+        "Continental Europe i America vode u Pro West playoff. Continental Asia, Africa i Oceania vode u Pro East playoff.",
+        "Continental Europe i Asia imaju posljednjih šest kao ispadanje. Continental America i Africa imaju posljednjih pet. Continental Oceania ima posljednja tri.",
+        "Amateur Oceania direktno promoviše prva tri. Evropske Amateur divizije direktno promovišu pobednika, dok 2–3. mjesto ide u promotion playoff. Ostale Amateur divizije direktno promovišu pobednika, dok 2–4. mjesto ide u promotion playoff.",
+        "Neaktivni menadžeri mogu ostati vidljivi u tabelama/rezultatima. UI može prikazati oznaku Neaktivan menadžer za neaktivne timove i timove koji čekaju uklanjanje na kraju sezone."
+      ],
+      "facts": [
+        {
+          "label": "Nivoi",
+          "value": "WorldTeam, ProTeam, Continental, Amateur"
+        },
+        {
+          "label": "Pro divizije",
+          "value": "ProTeam West, ProTeam East"
+        },
+        {
+          "label": "Continental divizije",
+          "value": "Evropa, Amerika, Azija, Afrika, Okeanija"
+        },
+        {
+          "label": "Amateur divizije",
+          "value": "Severna Amerika, Južna Amerika, Zapadna Evropa, Centralna Evropa, Južna i Balkanska Evropa, Severna i Istočna Evropa, Zapadna i Severna Afrika, Centralna i Južna Afrika, Zapadna i Centralna Azija, Južna Azija, Istočna i Jugoistočna Azija, Okeanija"
+        }
+      ],
+      "tips": [
+        "Koristite rang-listu kao dugoročni cilj.",
+        "Dosledno osvajanje bodova može biti vrednije od jednog srećnog rezultata."
+      ],
+      "relatedLinks": [
+        "Otvori Rang-listu timova"
+      ]
+    },
+    "statistics-team-profile": {
+      "category": "Rang-liste i statistika",
+      "title": "Statistika i profili timova",
+      "subtitle": "Poredite timove, vozače i javne informacije o klubovima.",
+      "overview": "Statistika pomaže da prepoznate jake timove i vozače. Profili timova prikazuju javne informacije o korisničkim i AI klubovima.",
+      "details": [
+        "Trenutni timovi prikazuju aktuelne performanse prema nivou, diviziji i bodovima.",
+        "Povijest timova prikazuje prethodne pobednike i snapshot-e kada postoji više sezona.",
+        "Rang-lista vozača prikazuje najbolje vozače prema bodovima i može uključivati ulogu, zemlju, godine, klub, tržišnu vrijednost, plaću, umor i dostupnost.",
+        "Analiza vozača pomaže u pronalaženju specijalista kao što su sprinteri ili penjači.",
+        "Profil tima prikazuje logo, zemlju, nivo, diviziju, sponzore, pregled dresa, javni sastav, sažetak bodova i skorašnje utrke.",
+        "Profil tima može imati gumb za prijavu moderatorima kada je potrebno."
+      ],
+      "facts": [
+        {
+          "label": "Kartice Statistike",
+          "value": "Timovi i Vozači"
+        },
+        {
+          "label": "Podkartice Timova",
+          "value": "Trenutno i Povijest"
+        },
+        {
+          "label": "Podkartice Vozača",
+          "value": "Rang-lista i Analiza"
+        },
+        {
+          "label": "Metrike vozača",
+          "value": "Ukupni sezonski bodovi, sprint bodovi, bodovi za uspon"
+        }
+      ],
+      "tips": [
+        "Koristite Statistiku pre kupovine vozača.",
+        "Koristite Profile timova za proučavanje rivala."
+      ],
+      "relatedLinks": [
+        "Otvori Statistiku",
+        "Otvori Rang-listu timova"
+      ]
+    },
+    "transfers-scouting": {
+      "category": "Transferi",
+      "title": "Transferi, slobodni vozači, pregovori i skauting",
+      "subtitle": "Kako potpisati vozače i razumeti tržište.",
+      "overview": "Transferi su mjesto gde poboljšavate sastav kroz vozače na transfer listi, slobodne vozače, skauting izveštaje i angažovanje osoblja.",
+      "details": [
+        "Vozači na transfer listi pripadaju drugom timu. Prvo šaljete transfer ponudu prodajnom klubu. Ako je prihvaćena, pregovarate ugovor sa vozačem.",
+        "Slobodni vozači nemaju prodajni klub. Pregovarate direktno sa vozačem.",
+        "Pregled pregovora može prikazati procenat prihvatanja, raspon prihvatanja, predviđeni ishod, ocenu plaće, trajanja, bonusa, naknade, nivoa i razloge koji potpuno blokiraju dogovor.",
+        "Ponovljene loše ponude koriste pokušaje i mogu dovesti do odbijanja, kontra-ponude, isteka ili zatvaranja pregovora.",
+        "Skauting smanjuje neizvesnost. Profili eksternih vozača mogu sakriti tačne podatke dok ne postoji skauting izvještaj.",
+        "Skauting izvještaji prikazuju vozača, skauta, datum završetka, overall, potencijal, prednosti, beleške i status Novo/Pregledano."
+      ],
+      "facts": [
+        {
+          "label": "Kartice Transfera",
+          "value": "Vozači i Osoblje"
+        },
+        {
+          "label": "Podkartice Vozača",
+          "value": "Transfer lista i Slobodni vozači"
+        },
+        {
+          "label": "Statusi pregovora",
+          "value": "Nacrt, otvoreno, na čekanju, prihvaćeno, odbijeno, isteklo, odbijeno od strane korisnika, završeno, kontra-ponuda"
+        },
+        {
+          "label": "Godine ugovora u UI transfer pregovora",
+          "value": "1–5 godina"
+        },
+        {
+          "label": "Skauting filteri",
+          "value": "Sve, Novo, Pregledano"
+        }
+      ],
+      "tips": [
+        "Skautirajte skupe vozače pre ponude.",
+        "Provjerite plaću i trajanje ugovora, ne samo transfer cenu.",
+        "Ne kupujte vozače koji ne odgovaraju vašem kalendaru utrka."
+      ],
+      "relatedLinks": [
+        "Otvori Transfere",
+        "Otvori Skauting"
+      ]
+    },
+    "finance": {
+      "category": "Finansije",
+      "title": "Pregled finansija, transakcije i porezi",
+      "subtitle": "Stanje, operativni cashflow, redovi izvoda i mjesečne poreske kontrole.",
+      "overview": "Finansije prikazuju dugoročnu sigurnost vašeg kluba. Jaki vozači ne znače ništa ako klub ne može da plaća plaće, poreze, politike, opremu ili obavezne troškove.",
+      "details": [
+        "Pregled Finansija odvaja stvarni operativni prihod/rashod od kretanja duga. Isplata hitnog kredita nije operativni prihod. Otplata glavnice hitnog kredita nije operativni rashod. Kamata na hitni kredit jeste operativni rashod.",
+        "Transakcije prikazuju ledger. Koristite ih da objasnite svako pomeranje stanja: plaće, sponzorske uplate, porez, infrastruktura, vozila, oprema, trening kampovi, bonusi i nagradni fond.",
+        "Vidljivi datumi transakcija treba da dolaze iz metadata datuma igre, a ne iz stvarnog created_at timestamp-a.",
+        "Porez prikazuje oporezivi prihod, očekivani porez, već zadržani porez, iznos korekcije i istoriju kontrola. Poreski redovi uključuju zadržavanje, mesečnu korekciju i mjesečni refund.",
+        "Ako klub zaradi veliki sponzorski ili nagradni prihod, provjerite karticu Porez zbog zadržavanja i rezultata mjesečne kontrole."
+      ],
+      "facts": [
+        {
+          "label": "Kartice Finansija",
+          "value": "Pregled, Sponzori, Transakcije, Porez, Politike tima i operacije"
+        },
+        {
+          "label": "Grupisanje cashflow-a",
+          "value": "Dnevno, tjedno, mjesečno"
+        },
+        {
+          "label": "Skorašnje transakcije",
+          "value": "Posljednjih 30 dana igre"
+        },
+        {
+          "label": "Arhiva transakcija",
+          "value": "Stariji redovi grupisani po mesecu igre, prethodnih 6 mjeseci igre"
+        },
+        {
+          "label": "Statusi poreske kontrole",
+          "value": "OK, korigovano, refundirano"
+        }
+      ],
+      "tips": [
+        "Otvorite Finansije pre velike potrošnje.",
+        "Koristite Transakcije kada se stanje neočekivano promijeni.",
+        "Ne tretirajte novac hitnog kredita kao profit."
+      ],
+      "relatedLinks": [
+        "Otvori Finansije"
+      ]
+    },
+    "sponsors-policies": {
+      "category": "Finansije",
+      "title": "Sponzori, tehnički sponzori i politike tima",
+      "subtitle": "Garantovani novac, ciljevi, popusti, naming rights i operativni standardi.",
+      "overview": "Sponzori donose prihod i ciljeve. Politike tima određuju putovanja, smeštaj, stanovanje, ishranu, oporavak i bonuse. Oba sistema mogu poboljšati klub, ali mogu stvoriti obaveze ili troškove.",
+      "details": [
+        "Glavni sponzori su najvidljiviji. Mogu obezbediti garantovani novac, bonus fond i ciljeve.",
+        "Sekundarni sponzori pružaju dodatnu podršku kroz slotove i u trenutnom UI prikazuju se bez logotipa/zemlje.",
+        "Tehnički sponzori mogu obezbediti novčanu podršku, budžet podrške za opremu i popuste po kategorijama opreme.",
+        "Sponzorski ciljevi mogu biti zakazani, provereni, ostvareni, promašeni ili isplaćeni. Mogu voditi na ciljane utrke ili prikaze Kalendara.",
+        "Standardni sponzorski ugovori daju novac bez promjene imena tima. Naming-rights ugovori obično plaćaju više, ali privremeno menjaju prikazano ime tima tokom sezone.",
+        "Politike tima i operacije utiču na stalne troškove i troškove putovanja. Bolje putovanje, stanovanje, ishrana ili oporavak mogu pomoći klubu, ali povećavaju troškove.",
+        "Procene politika prikazuju tjedne i mjesečne ukupne troškove, stvarne troškove prošlog mjeseca i prognozu predstojećih putovanja."
+      ],
+      "facts": [
+        {
+          "label": "Vrste sponzora",
+          "value": "Glavni, sekundarni, tehnički"
+        },
+        {
+          "label": "Ciljevi glavnog sponzora",
+          "value": "Start utrke, pobeda, podijum, top 5, top 10, GC top 10/top 5, top 5 etape, pobeda etape, vidljivost u klasifikacijama"
+        },
+        {
+          "label": "Operacije politika",
+          "value": "Letovi, smeštaj, kopneni transport, logistika, smeštaj osoblja na putovanju"
+        },
+        {
+          "label": "Politike tima",
+          "value": "Stanovanje, ishrana, oporavak, oprema osoblja, bonus vozača, bonus osoblja"
+        }
+      ],
+      "tips": [
+        "Provjerite ciljeve sponzora pre prihvatanja ponuda.",
+        "Tehnički sponzori su vredni ako kupujete opremu.",
+        "Ne unapređujte politike ako klub ne može da podnese stalne troškove."
+      ],
+      "relatedLinks": [
+        "Sponzori",
+        "Politike tima"
+      ]
+    },
+    "emergency-liquidation": {
+      "category": "Finansije",
+      "title": "Hitna spasavanja, dug i likvidacija kluba",
+      "subtitle": "Šta se dešava kada klub ne može da plati obavezne troškove.",
+      "overview": "Igra ima sistem spasavanja i likvidacije. Hitno spasavanje privremeno štiti klub, ali ponovljeni neuspjeh u pokrivanju obaveza može zatvoriti klub.",
+      "details": [
+        "Ako je klub likvidiran, kontrolnu tablu zamenjuje ekran Klub je likvidiran.",
+        "Ekran objašnjava broj spasavanja, razlog likvidacije i vrijeme zatvaranja kada su dostupni.",
+        "Kreiraj novi klub briše sačuvane ID-jeve kluba i šalje korisnika na kreiranje kluba.",
+        "Ponovno pokretanje tima više nije samo ideja; trenutni sistem može resetovati likvidirani klub u istom mjestu natjecanja sa novim početnim sastavom, bez prethodnog osoblja i sa nula bodova.",
+        "Hitni dug se prikazuje na Pregledu i u Finansijama. Glavnicu i kamatu treba posmatrati odvojeno."
+      ],
+      "facts": [
+        {
+          "label": "Doživotna spasavanja",
+          "value": "3"
+        },
+        {
+          "label": "Uvjet likvidacije prikazan u UI",
+          "value": "Sva 3 spasavanja su iskorišćena, zatim nova obavezna obaveza ne može biti pokrivena"
+        },
+        {
+          "label": "Nakon likvidacije",
+          "value": "Klub više ne može izvršavati akcije u igri"
+        },
+        {
+          "label": "Coins/račun",
+          "value": "Korisnički račun i Coins ostaju aktivni"
+        }
+      ],
+      "tips": [
+        "Izbegavajte rizičnu potrošnju nakon korišćenja spasavanja.",
+        "Pratite obavezne troškove kao što su plaće, porezi i politike."
+      ]
+    },
+    "support-account": {
+      "category": "Podrška i račun",
+      "title": "Profil, Postavke, Kontakt, Forum i prijave grešaka",
+      "subtitle": "Postavke računa, postavke obavijesti i kanali podrške.",
+      "overview": "Stranice računa i podrške pomažu korisnicima da upravljaju profilom, podešavanjima obavijesti, kupovinom Razvojnog tima, referral linkovima, Discord podrškom i prijavama grešaka.",
+      "details": [
+        "Moj profil menja podatke korisničkog profila kao što su korisničko ime, email, ime, prezime, grad i zemlja. Odvojen je od brendiranja kluba.",
+        "Postavke čuvaju postavke obavijesti i uključuju kupovinu/status Razvojnog tima i akcije Danger Zone.",
+        "Gašenje tima zahtjeva važeći session token i tačnu potvrdu DELETE.",
+        "Kontaktirajte nas trenutno prikazuje formular i poruku zahvalnosti, ali backend slanje još treba povezati za produkciju.",
+        "Forum je Discord notice stranica. Diskusije zajednice, pitanja i pomoć oko priručnika treba da idu na Discord.",
+        "Dugmad za prijavu greške treba da uključe kontekst trenutne stranice/putanje. Dobre prijave uključuju ime stranice, tim, vozača, utrku, screenshot-ove i korake za reprodukciju."
+      ],
+      "facts": [
+        {
+          "label": "Pravilo korisničkog imena",
+          "value": "3–24 karaktera, razmaci postaju donje crte, dozvoljena su samo slova/brojevi/donja crta"
+        },
+        {
+          "label": "Pravilo rođendana",
+          "value": "Čuva se jednom tokom registracije i kasnije je samo za čitanje"
+        },
+        {
+          "label": "Potvrda gašenja",
+          "value": "Unesite DELETE točno"
+        },
+        {
+          "label": "Kontaktirajte nas",
+          "value": "Trenutni formular je samo UI i prikazuje poruku zahvalnosti"
+        },
+        {
+          "label": "Forum",
+          "value": "Diskusije zajednice se premeštaju na Discord"
+        }
+      ],
+      "tips": [
+        "Koristite Kontaktirajte nas za detalje podrške.",
+        "Koristite Discord za pomoć zajednice.",
+        "Nikada javno ne objavljujte osetljive podatke računa ili plaćanja."
+      ],
+      "relatedLinks": [
+        "Moj profil",
+        "Postavke",
+        "Kontaktirajte nas",
+        "Forum"
+      ]
+    },
+    "public-home-beta": {
+      "category": "Početak",
+      "title": "Javna početna stranica i Beta obavijest",
+      "subtitle": "Šta igrači vide pre prijave i zašto je Beta obavijest važno.",
+      "overview": "Javna početna stranica je ulazna tačka pre kontrolne table. Može usmeriti prijavljene korisnike na kreiranje kluba ili kontrolnu tablu i prikazuje aktuelne javne informacije o igri.",
+      "details": [
+        "Ako je korisnik prijavljen i nema klub, aplikacija ga vodi na kreiranje kluba.",
+        "Ako je korisnik prijavljen i već ima klub, aplikacija ga vodi na Pregled kontrolne table.",
+        "Beta obavijest govori testerima da je igra dostupna za testiranje, ali još nije finalna.",
+        "Widget-i utrka na početnoj stranici mogu prikazati jučerašnje, današnje i sutrašnje utrke."
+      ],
+      "facts": [
+        {
+          "label": "Aktuelni pregled",
+          "value": "Vrijeme igre, aktivni menadžeri, ukupan broj timova, utrke i etape"
+        },
+        {
+          "label": "Beta upozorenje",
+          "value": "Sistemi igre, UI, balans i podaci mogu se i dalje menjati"
+        }
+      ],
+      "tips": [
+        "Tokom bete jasno komunicirajte šta igrači mogu očekivati."
+      ]
+    },
+    "sidebar-footer-layout": {
+      "category": "Početak",
+      "title": "Sidebar, footer i zaključavanje kontrolne table",
+      "subtitle": "Kako glavni raspored pomaže korisnicima da se kreću kroz igru.",
+      "overview": "Levi sidebar je glavna navigacija u igri, dok footer prikazuje zvanično trenutno vrijeme igre. Neka stanja kontrolne table mogu zaključati interakciju.",
+      "details": [
+        "Opisi u sidebar-u objašnjavaju šta radi svaka stranica.",
+        "Vrijeme igre u footeru treba posmatrati kao glavni izvor istine za rokove.",
+        "Dashboard Locked znači da igrač u tom trenutku ne može praviti izmene.",
+        "Odjava i prijava greške nalaze se u donjem delu sidebar-a."
+      ],
+      "facts": [
+        {
+          "label": "Stranice sidebar-a",
+          "value": "Pregled, Tim, Kalendar, Priprema utrke, Rang-lista timova, Trening, Oprema, Infrastruktura, Finansije, Transferi, Statistika"
+        },
+        {
+          "label": "Podnožje",
+          "value": "Prikazuje sezonu, dan u nedelji, datum i vrijeme"
+        }
+      ],
+      "tips": [
+        "Kada je korisnik zbunjen oko rokova, prvo mu recite da provjeri vrijeme igre u footeru."
+      ]
+    },
+    "profile-settings": {
+      "category": "Coins i račun",
+      "title": "Moj profil",
+      "subtitle": "Podaci korisničkog profila, korisničko ime, email i lozinka.",
+      "overview": "Moj profil menja profil korisničkog računa. Odvojen je od imena tima, logotipa tima i dresa.",
+      "details": [
+        "Korisničko ime se normalizuje uklanjanjem suvišnih razmaka, pretvaranjem razmaka u donje crte i uklanjanjem nepodržanih karaktera.",
+        "Promjena email adrese koristi auth sistem i može zahtevati potvrdu.",
+        "Ime, prezime, grad i zemlja su opciona polja profila.",
+        "Lozinka se može promeniti sa stranice profila uz potvrdu.",
+        "Rođendan se prikazuje, ali se više ne čuva ponovno sa stranice Moj profil."
+      ],
+      "facts": [
+        {
+          "label": "Pravilo korisničkog imena",
+          "value": "3–24 karaktera; slova, brojevi i donje crte"
+        },
+        {
+          "label": "Pravilo rođendana",
+          "value": "Čuva se jednom tokom registracije i kasnije je samo za čitanje"
+        }
+      ],
+      "tips": [
+        "Objasnite korisnicima da su prikazano ime profila i ime kluba različite stvari."
+      ],
+      "relatedLinks": [
+        "Moj profil"
+      ]
+    },
+    "preferences-notifications": {
+      "category": "Coins i račun",
+      "title": "Postavke i postavke obavijesti",
+      "subtitle": "Gde igrači kontrolišu obavijesti i posebne opcije tima/računa.",
+      "overview": "Postavke čuvaju kontrole obavijesti, kupovinu/status Razvojnog tima i akcije Danger Zone.",
+      "details": [
+        "Prekidači za obavijesti određuju koje grupe obavijesti igrač želi da prima.",
+        "Status Razvojnog tima prikazuje uslove, cenu u Coins, stanje Coins i informacije o periodu za premeštanje.",
+        "Nakon kupovine Razvojnog tima, aktivni kontekst kluba vraća se na glavni klub.",
+        "Shutdown Team koristi backend Edge Function i zahtjeva aktivni session token.",
+        "Restart Team je u aktuelnoj verziji aktivna funkcija za ponovno pokretanje tima i treba pažljivo pročitati šta se čuva, a šta resetuje."
+      ],
+      "facts": [
+        {
+          "label": "Spremanje obavijesti",
+          "value": "Lokalna postavke preferencija"
+        },
+        {
+          "label": "RPC funkcije Razvojnog tima",
+          "value": "get_developing_team_status i purchase_developing_team"
+        },
+        {
+          "label": "Potvrda gašenja",
+          "value": "Korisnik mora točno uneti DELETE"
+        }
+      ],
+      "tips": [
+        "Koristite Postavke kada korisnici žele manje obavijesti."
+      ],
+      "relatedLinks": [
+        "Postavke"
+      ]
+    },
+    "invite-friends": {
+      "category": "Coins i račun",
+      "title": "Pozovi prijatelje",
+      "subtitle": "Referral link, status preporuke i nagrada u Coins.",
+      "overview": "Pozovi prijatelje kreira referral link i prikazuje aktivnost preporuka. Nagrada se dodeljuje kada prijatelj ispuni potrebne korake.",
+      "details": [
+        "Stranica učitava referral kod trenutnog kluba iz tabele clubs.",
+        "Referral link koristi trenutno poreklo sajta zajedno sa referral rutom.",
+        "Na čekanju znači da je prijatelj kreirao klub, ali još nije kupio prvi paket Coins.",
+        "Završeno znači da je izvršena prva kupovina Coins i nagrada je dodijeljena.",
+        "Identifikatori korisnika i kluba su maskirani radi privatnosti."
+      ],
+      "facts": [
+        {
+          "label": "URL preporuke",
+          "value": "/#/referral/:code"
+        },
+        {
+          "label": "Nagrada",
+          "value": "40 Coins"
+        },
+        {
+          "label": "Statusi",
+          "value": "Na čekanju, završeno, odbijeno"
+        }
+      ],
+      "tips": [
+        "Koristite Pozovi prijatelje za širenje zajednice."
+      ],
+      "relatedLinks": [
+        "Pozovi prijatelje"
+      ]
+    },
+    "pro-packages-deep": {
+      "category": "Coins i račun",
+      "title": "Prodavnica paketa Coins",
+      "subtitle": "Cene paketa, plaćanje i povijest kupovina.",
+      "overview": "Paketi Coins učitavaju aktuelne pakete iz baze, prikazuju stanje i pokreću plaćanje preko Edge Function-a.",
+      "details": [
+        "Tačne cene su vođene bazom i ne treba ih hardkodovati u priručnik.",
+        "Prodavnica izračunava cenu po novčiću i može označiti najbolju vrijednost.",
+        "Tagline paketa se generiše prema broju Coins, na primer Starter boost ili Best for long-term play.",
+        "Povijest kupovina namerno ne prikazuje tehničke informacije Stripe sesije.",
+        "Coins su valuta računa, a ne novac kluba."
+      ],
+      "facts": [
+        {
+          "label": "Izvor paketa",
+          "value": "coin_packages"
+        },
+        {
+          "label": "Izvor stanja",
+          "value": "get_my_coin_status"
+        },
+        {
+          "label": "Plaćanje",
+          "value": "create-coin-checkout"
+        },
+        {
+          "label": "Povijest kupovina",
+          "value": "user_coin_ledger reason='purchase'"
+        }
+      ],
+      "tips": [
+        "Za aktuelne cene uvek verujte aktivnoj stranici Paketi Coins."
+      ],
+      "relatedLinks": [
+        "Paketi Coins"
+      ]
+    },
+    "contact-forum-support": {
+      "category": "Podrška i račun",
+      "title": "Kontakt, Forum i Discord",
+      "subtitle": "Gde igrači postavljaju pitanja ili prijavljuju probleme.",
+      "overview": "Kontakt, Forum i Discord su ulazne tačke za podršku i zajednicu. Trenutni Kontakt formular je samo UI; Forum usmerava korisnike na Discord.",
+      "details": [
+        "Kontakt ima polja za ime, email i poruku i nakon slanja prikazuje zahvalnicu.",
+        "Forum objašnjava da na toj stranici neće postojati forum unutar igre.",
+        "Discord je mjesto zajednice za pitanja i pomoć oko priručnika.",
+        "Prijave grešaka treba da sadrže stranicu, očekivano ponašanje, stvarno ponašanje i screenshot-ove."
+      ],
+      "facts": [
+        {
+          "label": "Kontaktirajte nas",
+          "value": "UI-only formular u trenutnom kodu"
+        },
+        {
+          "label": "Forum",
+          "value": "Discord notice stranica"
+        },
+        {
+          "label": "Upotreba Discorda",
+          "value": "Zajednica, pomoć, priručnici i pitanja"
+        }
+      ],
+      "tips": [
+        "Ne obećavajte backend isporuku Kontakt poruke dok nije povezana."
+      ],
+      "relatedLinks": [
+        "Kontaktirajte nas",
+        "Forum"
+      ]
+    },
+    "club-creation-route": {
+      "category": "Identitet kluba",
+      "title": "Kreiranje kluba i prva provjera kluba",
+      "subtitle": "Kako se prijavljeni korisnici usmeravaju u igru.",
+      "overview": "Nakon prijave aplikacija proverava da li korisnik ima klub. Korisnici bez kluba idu na Kreiranje kluba; korisnici sa klubom idu na Pregled.",
+      "details": [
+        "Javna početna stranica poziva get_my_club_id da odredi sledeću rutu.",
+        "Kreiranje kluba je odvojeno od kreiranja profila.",
+        "Početni novac i točni početni resursi treba da dolaze iz backend konfiguracije, a ne iz pretpostavljenog teksta priručnika.",
+        "Nakon kreiranja kluba, stranice kontrolne table obično automatski određuju glavni klub."
+      ],
+      "facts": [
+        {
+          "label": "Bez kluba",
+          "value": "Ruta ka /create-club"
+        },
+        {
+          "label": "Ima klub",
+          "value": "Ruta ka /dashboard/overview"
+        }
+      ],
+      "tips": [
+        "Ne izmišljajte početni novac ako backend konfiguracija nije dostupna."
+      ]
+    },
+    "customize-team-deep": {
+      "category": "Identitet kluba",
+      "title": "Prilagodi tim",
+      "subtitle": "Brendiranje, boje tima, logo, osnovni logo i dres.",
+      "overview": "Prilagodi tim upravlja imenom kluba, primarnom/sekundarnom bojom, logotipom i konfiguracijom domaćeg dresa.",
+      "details": [
+        "Uploadovani logotipi se konvertuju u PNG u browseru pre čuvanja.",
+        "Uklanjanje logotipa vraća generisani osnovni logo u obliku štita umesto da klub ostane bez logotipa.",
+        "Boje tima se proveravaju kao hex boje.",
+        "Konfiguracija dresa čuva se u team_kits sa imenom home.",
+        "Dres može biti generički, iz generičkog pool-a, remote URL slike ili uploadovana slika."
+      ],
+      "facts": [
+        {
+          "label": "Tipovi logotipa",
+          "value": "JPG, PNG, WEBP"
+        },
+        {
+          "label": "Maksimum logotipa",
+          "value": "0.5 MB"
+        },
+        {
+          "label": "Maksimum dresa",
+          "value": "1 MB i 512 × 512 px"
+        },
+        {
+          "label": "Bucket logotipa",
+          "value": "club-logos"
+        }
+      ],
+      "tips": [
+        "Koristite male i čiste logotipe jer se pojavljuju u veoma malim UI područjima."
+      ],
+      "relatedLinks": [
+        "Prilagodi tim"
+      ]
+    },
+    "branding-locks": {
+      "category": "Identitet kluba",
+      "title": "Zaključavanje brendiranja zbog Naming Rights",
+      "subtitle": "Zašto korisnik možda ne može da menja ime tima ili logo.",
+      "overview": "Sponsor naming-rights može privremeno zaključati polja brendiranja i promeniti prikazano ime kluba.",
+      "details": [
+        "Prilagodi tim čita status zaključavanja brendiranja pre dozvole izmena.",
+        "locked_by_sponsor znači da identitet kluba kontroliše sponzorski ugovor.",
+        "Standardni sponzori obično ne menjaju ime tima.",
+        "Naming-rights sponzori obično plaćaju više, ali utiču na javni identitet.",
+        "Display-name helperi treba da se koriste u rang-listama/profilima kada su imena sponzora važna."
+      ],
+      "facts": [
+        {
+          "label": "Izvor statusa zaključavanja",
+          "value": "club_branding_lock_status_v1"
+        },
+        {
+          "label": "Moguća polja",
+          "value": "Ime, boje i logo"
+        },
+        {
+          "label": "Nazivi za prikaz",
+          "value": "Originalno, sezonsko i puno prikazano ime"
+        }
+      ],
+      "tips": [
+        "Upozorite igrače pre potpisivanja naming-rights ugovora."
+      ]
+    },
+    "team-profile-deep": {
+      "category": "Identitet kluba",
+      "title": "Profil tima",
+      "subtitle": "Javna stranica kluba sa identitetom, sponzorima, rosterom i bodovima.",
+      "overview": "Profil tima omogućava korisnicima da pregledaju drugi klub ili sopstveni klub iz rang-lista, utrka i statistike.",
+      "details": [
+        "Stranica prikazuje da li klub kontroliše korisnik ili AI.",
+        "Može prikazati broj aktivnih sponzora, mjesečne ukupne sponzorske iznose i logo glavnog sponzora.",
+        "Može prikazati dres iz team_kits ili AI kit preview redova.",
+        "Može prikazati javni sastav i skorašnje rezultate utrka.",
+        "Uključuje gumb za prijavu igrača/tima moderatorima."
+      ],
+      "facts": [
+        {
+          "label": "Ruta",
+          "value": "/dashboard/teams/:clubId"
+        },
+        {
+          "label": "Prikazuje",
+          "value": "Logo, zemlju, nivo, diviziju, sponzore, dres, sastav, bodove i skorašnje utrke"
+        }
+      ],
+      "tips": [
+        "Koristite Profil tima za proučavanje rivala pre važnih utrka."
+      ]
+    },
+    "overview-deep": {
+      "category": "Kontrolna tabla",
+      "title": "Detaljni vodič za Pregled",
+      "subtitle": "Svi glavni blokovi na kontrolnoj tabli menadžera.",
+      "overview": "Pregled je dnevni kontrolni centar koji kombinuje upozorenja, KPI-jeve, stanje tima, finansije, dug, svijet utrka, operacije, vesti i podatke o sponzorima.",
+      "details": [
+        "Upozorenja prvo pokazuju šta zahtjeva pažnju.",
+        "KPI kartice sažimaju stanje kluba u kompaktnom obliku.",
+        "Kartice Operacija prikazuju aktivne sisteme poput treninga, infrastrukture, medicine, sponzora, Sanduče-a, finansija ili sistemskih događaja.",
+        "Squad Pulse sažima formu, moral, spremnost, dostupnost i rizik ugovora.",
+        "Finance Health prikazuje stanje, operativni prihod/rashod, sponzorski prihod, cenu politika i prognozu putovanja.",
+        "Emergency Debt Health prikazuje broj spasavanja, preostalu glavnicu, sledeću otplatu i rizik od likvidacije.",
+        "Paneli svijeta utrka prikazuju današnje utrke, predstojeće utrke i vesti."
+      ],
+      "facts": [
+        {
+          "label": "Glavni blokovi",
+          "value": "Upozorenja, KPI, operacije, stanje tima, raspored, vesti, finansije, hitni dug"
+        },
+        {
+          "label": "Glavna upotreba",
+          "value": "Dnevna kontrolna lista"
+        }
+      ],
+      "tips": [
+        "Ako Pregled pokazuje finansijsku opasnost, otvorite Finansije pre bilo čega drugog."
+      ],
+      "relatedLinks": [
+        "Pregled"
+      ]
+    },
+    "overview-race-world": {
+      "category": "Kontrolna tabla",
+      "title": "Svijet utrka na Pregledu",
+      "subtitle": "Današnje utrke, predstojeći raspored i svetske vesti.",
+      "overview": "Pregled sadrži podatke iz svijeta igre kako bi korisnici mogli pratiti biciklistički svijet čak i kada njihov tim ne vozi.",
+      "details": [
+        "Današnje utrke pomažu korisnicima da vide šta se trenutno dešava.",
+        "Predstojeći raspored pomaže u planiranju pažnje u bliskoj budućnosti.",
+        "Svetske vesti čine svijet igre aktivnijim.",
+        "Povezani linkovi mogu otvoriti utrke ili druge stranice igre.",
+        "Koristite prošireni tekst/detalje kada korisnicima treba više konteksta."
+      ],
+      "facts": [
+        {
+          "label": "Podaci dnevne utrke",
+          "value": "Naslov, podnaslov, oznaka vremena, zemlja i link"
+        },
+        {
+          "label": "Podaci vesti",
+          "value": "Naslov, podnaslov, vrijeme, detalji i povezani linkovi"
+        }
+      ],
+      "tips": [
+        "Koristite Pregled za svest o stanju, zatim otvorite detaljne stranice za odluke."
+      ]
+    },
+    "notification-center-deep": {
+      "category": "Kontrolna tabla",
+      "title": "Centar obavijesti",
+      "subtitle": "Upravljanje nepročitanim/pročitanim obavijestima uz pretragu i kategorije.",
+      "overview": "Kompletan Centar obavijesti pomaže korisnicima da upravljaju game/admin obavijestima bez propuštanja važnih rokova.",
+      "details": [
+        "Obavijesti se mogu pretraživati po naslovu, poruci, tipu, izvoru, grupi postavke i vremenu kreiranja.",
+        "Kategorija se određuje prema preference group, izvoru ili kodu tipa.",
+        "Template-i mogu dodati sliku, uvodni tekst, detalje, dodatni tekst i akcije.",
+        "Akcije mogu direktno voditi na pripremu utrke, finansije, infrastrukturu, transfere, profile vozača ili utrke.",
+        "Postavke mogu sprečiti prikaz određenih tipova obavijesti."
+      ],
+      "facts": [
+        {
+          "label": "Kartice",
+          "value": "Nepročitano i Pročitano"
+        },
+        {
+          "label": "Alati",
+          "value": "Pretraga, filter kategorija, paginacija, dugmad za akcije"
+        },
+        {
+          "label": "Lokalna veličina učitavanja",
+          "value": "Do 500 po kartici na trenutnoj stranici"
+        }
+      ],
+      "tips": [
+        "Pročitajte obavijesti pre rokova za utrke."
+      ],
+      "relatedLinks": [
+        "Obavijesti"
+      ]
+    },
+    "notification-examples": {
+      "category": "Kontrolna tabla",
+      "title": "Primeri važnih obavijesti",
+      "subtitle": "Događaji koje korisnici ne treba da ignorišu.",
+      "overview": "Obavijesti mogu predstavljati važne promjene stanja u pripremi utrke, finansijama, infrastrukturi, transferima, Razvojnom timu i sponzorima.",
+      "details": [
+        "Obavijesti o pripremi utrke upozoravaju kada Race Plan ili Stage Plans zahtevaju akciju.",
+        "Obavijesti o periodu Razvojnog tima govore korisnicima kada je premeštanje moguće.",
+        "Obavijesti o završetku infrastrukture govore da je objekat/vozilo spremno.",
+        "Obavijesti o hitnom kreditu znače da klub nije mogao da pokrije obavezni trošak.",
+        "Obavijesti o otpuštanju vozača vode na profil vozača ili tržište slobodnih vozača.",
+        "Obavijesti o ciljevima sponzora mogu voditi na Kalendar ili ciljnu utrku."
+      ],
+      "facts": [
+        {
+          "label": "Primeri",
+          "value": "Podsetnici za Race Plan, podsetnici za Stage Plan, razvojni period, hitni kredit, završen objekat, otpuštanje vozača, cilj sponzora"
+        }
+      ],
+      "tips": [
+        "Finansijska obavijesti i obavijesti o rokovima tretirajte kao visok prioritet."
+      ]
+    },
+    "inbox-deep": {
+      "category": "Kontrolna tabla",
+      "title": "Sanduče",
+      "subtitle": "Direktni i administratorski razgovori.",
+      "overview": "Sanduče je namenjen razgovorima, za razliku od Obavijesti koja predstavljaju sistemska/game upozorenja.",
+      "details": [
+        "Lista razgovora prikazuje prikazano ime, predmet, pregled, vrijeme posljednje poruke i broj nepročitanih.",
+        "Pretraga filtrira razgovore prema imenu, predmetu i pregledu.",
+        "Poruke se učitavaju prema conversation ID-u i zatim označavaju kao pročitane.",
+        "Ako korisnik otvori novu poruku prema postojećem direktnom kontaktu, koristi se postojeći razgovor.",
+        "Na neke razgovore nije moguće odgovoriti u zavisnosti od can_reply."
+      ],
+      "facts": [
+        {
+          "label": "Tipovi razgovora",
+          "value": "Direktni i administratorski direktni"
+        },
+        {
+          "label": "Logika pročitanog",
+          "value": "Otvaranje razgovora ga označava kao pročitan"
+        },
+        {
+          "label": "Cilj za novu poruku",
+          "value": "Može biti inicijalizovan iz sessionStorage"
+        }
+      ],
+      "tips": [
+        "Koristite Sanduče za razgovore, a Obavijesti za događaje u igri."
+      ],
+      "relatedLinks": [
+        "Sanduče"
+      ]
+    },
+    "top-menu": {
+      "category": "Kontrolna tabla",
+      "title": "Gornji meni",
+      "subtitle": "Račun, Coins, obavijesti i pomoćne stranice.",
+      "overview": "Gornji desni meni sadrži stranice računa i podrške koje nisu sve vidljive u levom sidebar-u.",
+      "details": [
+        "Korisnici iz menija mogu pristupiti podešavanjima profila i alatima za lozinku.",
+        "Paketi Coins i Pozovi prijatelje su alati za račun/Coins.",
+        "Postavke kontrolišu postavke obavijesti i Razvojni tim.",
+        "Pomoć i Priručnik treba da vode na odgovarajuće stranice.",
+        "Odjava završava trenutnu sesiju."
+      ],
+      "facts": [
+        {
+          "label": "Uobičajene stavke",
+          "value": "Sanduče, profil, prilagodi tim, postavke, pomoć, kontakt, paketi Coins, pozovi prijatelje, odjava"
+        }
+      ],
+      "tips": [
+        "Pomoć/Priručnik treba da budu lako dostupni iz menija."
+      ]
+    },
+    "first-squad-deep": {
+      "category": "Vozači",
+      "title": "Prvi tim",
+      "subtitle": "Glavni sastav vozača i prikazi liste.",
+      "overview": "Prvi tim je mjesto gde korisnici pregledaju glavni sastav, finansijske informacije, vještine i formu.",
+      "details": [
+        "Opšte pokazuje identitet, ulogu, starost, ukupno i status.",
+        "Finansijski pokazuje plaću, tržišnu vrijednost i ugovorne podatke.",
+        "Vještine pokazuju specijalne atribute.",
+        "Formula i razvoj pokazuju umor, moral, dostupnost, potencijal i srodne informacije o razvoju.",
+        "Sažetak table može da pokaže pobede, podijume, vrhunskih desetica, poslednju utrku i sljedeći odabir utrke."
+      ],
+      "facts": [
+        {
+          "label": "Prvi odred maks.",
+          "value": "18 vozača"
+        },
+        {
+          "label": "Prikazi",
+          "value": "Opšti, Finansijski, Vještine, Forma i razvoj"
+        }
+      ],
+      "tips": [
+        "Otvori profil vozača pre važnih odluka."
+      ],
+      "relatedLinks": [
+        "Ekipa"
+      ]
+    },
+    "rider-skills-deep": {
+      "category": "Vozači",
+      "title": "Vozač vještine i specijalista značenje",
+      "subtitle": "Kako treba da se tumače atributi.",
+      "overview": "Specijalne vještine odlučuju šta vozač može da uradi u određenim rasama i situacijama.",
+      "details": [
+        "Sprint je najvažniji u brzom završetku i uloge Sprinta.",
+        "Penjanje stvari na planinama i uzbrdo profila.",
+        "Vremenski suđenje je važno u situacijama ITT/TTT.",
+        "Izdržavanje pomaže u dugim danima i dugim utrkama.",
+        "Ravan pomaže na ravni putevi, pozicioniranje i stabilna brzina.",
+        "Oporavak je posebno važno tokom utrka.",
+        "Otpor podržava težak napor.",
+        "Utrka IK predstavlja taktički kvalitet odluka.",
+        "Timski rad pomaže vozačima podršku timske planove."
+      ],
+      "facts": [
+        {
+          "label": "Atributi",
+          "value": "Sprint, penjanje, vrijeme suđenje, izdržljivost, ravan, oporavak, otpor, utrka inteligencije, timski rad"
+        },
+        {
+          "label": "Ostale važne vr› ijednosti",
+          "value": "Potencijalno, moral, umor, race sharpness"
+        }
+      ],
+      "tips": [
+        "Izgradite uravnoteženu jedinicu umesto da kupujete samo visoke vozače."
+      ]
+    },
+    "rider-profile-deep": {
+      "category": "Vozači",
+      "title": "Vozač profila",
+      "subtitle": "Vlasni vozač, spoljašnji vozač, uporedi i povijest pogleda.",
+      "overview": "Profil vozača se menja u zavisnosti od toga da li vozač pripada vašem klubu ili je spoljašnji.",
+      "details": [
+        "Pregled pokazuje identitet, fitnes, spremnost, ključne vještine i informacije o klubu.",
+        "Ugovor pokazuje status ugovora i pregovore/oslobađanje za vlasnike.",
+        "Trening pokazuje trenutne informacije o obuci za vlasnike.",
+        "Poredite otvara rutu poređenja vozača.",
+        "Povijest može prikazati istoriju sezone i utrke i informacije o karijeri.",
+        "Spoljašnji profili mogu da prikazuju izviđačke izveštaje o akcijama i stanju tržišta."
+      ],
+      "facts": [
+        {
+          "label": "Vlasni jezičci",
+          "value": "Pregled, Ugovor, Trening, Poređenje, Povijest"
+        },
+        {
+          "label": "Spoljašnje ponašanje",
+          "value": "Može sakriti tačne atribute dok ne postoji izviđanje"
+        }
+      ],
+      "tips": [
+        "Ne oslanjajte se na tačne spoljašnje atribute dok ih ne potvrdi izviđanje."
+      ]
+    },
+    "fitness-health-deep": {
+      "category": "Vozači",
+      "title": "Fitnes, umor, ozljeda i bolest",
+      "subtitle": "Zašto jak vozač još uvek može biti loš odabir.",
+      "overview": "Dostupnost i umor mogu da smanjuju praktičnu vrijednost utrke čak i kada su sveukupno i vještine visoke.",
+      "details": [
+        "Vozač još uvek može da ima visok umor.",
+        "Ozlijeđeni ili bolesni vozači zahtevaju medicinsku oporavak, a ne normalan odabir utrke.",
+        "Ne u potpunosti odgovara znači da se vozač može trkati, ali nije idealno spreman.",
+        "Teška obuka i teška utrka kalendari i povećavaju rizik preopterećenja.",
+        "Medicinsko osoblje i sistemi za oporavak mogu da poboljšaju rešavanje zdravstvenih problema."
+      ],
+      "facts": [
+        {
+          "label": "Dostupnost",
+          "value": "Spreman, nepotpuno spreman, ozlijeđen, bolestan"
+        },
+        {
+          "label": "Umor",
+          "value": "Predstavlja akumulisano umor i stres"
+        }
+      ],
+      "tips": [
+        "Zaštiti ključne vozače pre važnih utrka."
+      ]
+    },
+    "race-sharpness-deep": {
+      "category": "Vozači",
+      "title": "Race Sharpness",
+      "subtitle": "Ritam utrka protiv preopterećenja.",
+      "overview": "race sharpness nagrađuje korisne natjecateljske ritam, ali treba da bude uravnotežen sa umorom i svežećešću.",
+      "details": [
+        "race sharpness nije isto kao trening fitnes.",
+        "Odmoreni vozač još uvek može nedostajati utrka ritam.",
+        "Oštar vozač još uvek može biti previše umorna da dobro funkcioniše.",
+        "Najbolja država zavisi od sljedeće ciljne utrke i uloge vozača."
+      ],
+      "facts": [
+        {
+          "label": "Premalo trkanje",
+          "value": "Može da smanji konkurentnu oštrinu"
+        },
+        {
+          "label": "Previše trkanja.",
+          "value": "Može da stvori umor i preopterećenje."
+        }
+      ],
+      "tips": [
+        "Koristite manje utrke da pripremite ključne vozače kada je to u redu."
+      ]
+    },
+    "contracts-renewals-release": {
+      "category": "Vozači",
+      "title": "Ugovori vozača, obnova i oslobađanje",
+      "subtitle": "Kako se upravlja ugovorima vozača.",
+      "overview": "Profili vozača u pripadnosti uključuju podatke ugovora i mogu da omogućavaju obnovu, oslobađanje ili radnje povezane sa prenošenjem.",
+      "details": [
+        "Obnovljene treba razmotriti pre nego što ugovor priđe preblizu isteku.",
+        "Dugi ugovori smanjuju rizik za ispaljenje, ali stvaraju obaveze za plaće.",
+        "Oslobađanje vozača može imati finansijske ili odredske posledice.",
+        "Vozači sa liste prijenosa prate pregovarački protok umesto jednostavnog oslobađanja.",
+        "Imajte na umu prvi odred kapacitet pre potpisivanja novih vozača."
+      ],
+      "facts": [
+        {
+          "label": "Ugovorna polja",
+          "value": "Plaća, početak sezone, kraj sezone, status"
+        },
+        {
+          "label": "Činioci odluke",
+          "value": "Plaća, trajanje, klub/ured kamata i spremnost vozača"
+        }
+      ],
+      "tips": [
+        "Provjerite profil finansijskog prikaza i vozača zajedno pre obnove."
+      ]
+    },
+    "developing-team-deep": {
+      "category": "Vozači",
+      "title": "Vodič za razvoj dubokog tima",
+      "subtitle": "Kupovanje, status, spisak i pravila za pokret.",
+      "overview": "Razvijački odred se upravlja odvojeno, ali ostaje povezan sa glavnim klubom i računom.",
+      "details": [
+        "Stanje kupovine je učitano iz pozadine i zavisi od zahtjeva i balansa Coins.",
+        "Glavni kontekst kluba je obnovljen nakon kupovine razvojnog tima.",
+        "Promocija vozača zahtjeva otvoren prozor i slobodan prvi kapacitet.",
+        "Vozači bi trebalo da se pomere kada igra to dozvoli.",
+        "Ako je prozor zatvoren, sučelje može upozoriti korisnike da glume u sljedećem prozoru."
+      ],
+      "facts": [
+        {
+          "label": "maks. registra",
+          "value": "8"
+        },
+        {
+          "label": "Premeštanje",
+          "value": "Samo tokom otvorenih prozora"
+        },
+        {
+          "label": "Stariji vozač upozorava",
+          "value": "24 godine"
+        }
+      ],
+      "tips": [
+        "Planirajte kretanje pre nego što upozorenje na doba postane hitno."
+      ],
+      "relatedLinks": [
+        "Postavke"
+      ]
+    },
+    "staff-roles-deep": {
+      "category": "Vozači",
+      "title": "Vodič uloga osoblja",
+      "subtitle": "Ono što svaki osoblje doprinosi.",
+      "overview": "Uloge osoblja podržavaju različite delove razvoja vozača, pripreme utrke, medicinske nege, izvidnice i opreme.",
+      "details": [
+        "Glavni trener vodi kvalitet i razvoj treninga.",
+        "Treneri prošire podršku za trenere i kapacitet vozača.",
+        "Direktor sporta podržava taktiku, scene planove i rasne pripreme sugestije.",
+        "Tim doktor i fizičar podršku zdravlje i oporavak.",
+        "Hranioc podržava sistem ishrane i oporavivanja.",
+        "Mehanika podržava popravke i tehnički sistem.",
+        "Izviđač / Analitičar podržava spoljašnje podatke o vozaču.",
+        "U23 Glavni trener podržava razvoj-team vozača."
+      ],
+      "facts": [
+        {
+          "label": "Uloge izvršavanja",
+          "value": "Glavni trener, trener, direktor sporta"
+        },
+        {
+          "label": "Medicinski uloge",
+          "value": "Timski doktor, fizičar, nutricionist"
+        },
+        {
+          "label": "Tehnički/znanje",
+          "value": "Mehanički, izviđači / analizatori, U23 Glavni trener"
+        }
+      ],
+      "tips": [
+        "Unajmi ulogu osoblja koja rešava trenutno usko u klubu."
+      ]
+    },
+    "staff-capacity-deep": {
+      "category": "Vozači",
+      "title": "kapacitet i infrastruktura za personal",
+      "subtitle": "Zašto uloga osoblja može biti zaključana čak i kada imate gotovinu.",
+      "overview": "Unapređenja infrastrukture mogu da otključaju više osoblja.",
+      "details": [
+        "Ponuda tržišta osoblja nije dovoljna ako je kapacitet uloge već pun.",
+        "Infrastrukturne stranice prikazuju korišćene i maksimalne slotove za grupe osoblja.",
+        "Planovi za nadogradnje treba da razmotri i trenutne prednosti i buduće potrebe za zapošljavanjem.",
+        "Unajmljivanje bez provjere kapaciteta može da traći vrijeme planiranja."
+      ],
+      "facts": [
+        {
+          "label": "Obučno osoblje",
+          "value": "Povezana sa Trening centrom / Klub Haus pravila"
+        },
+        {
+          "label": "Medicinsko osoblje",
+          "value": "Povezano sa medicinskim centarom"
+        },
+        {
+          "label": "Mehanika",
+          "value": "Povezana sa mehaničkom radnjom"
+        },
+        {
+          "label": "Skauting",
+          "value": "Povezana sa kancelarijom izviđača."
+        }
+      ],
+      "tips": [
+        "Provjerite infrastrukturu pre zapošljavanja dodatnog člana osoblja."
+      ]
+    },
+    "staff-courses-deep": {
+      "category": "Vozači",
+      "title": "Kursevi osoblja",
+      "subtitle": "Privremeni radni mjesta za razvoj osoblja.",
+      "overview": "Kurs osoblja košta novac, uzimanje dana igre i može poboljšati odabrane atribute osoblja.",
+      "details": [
+        "Samo prihvatljivo osoblje treba da počne kurs.",
+        "Pregled detalja terena treba proveriti pre plaćanja.",
+        "Aktivni kursevi prikazuju napredak i podatke o preostalim/dovršenim.",
+        "Završeni kursevi mogu se prikazati u nedavnom istorijatu.",
+        "Troškovi kursa treba planirati sa finansijama."
+      ],
+      "facts": [
+        {
+          "label": "Podaci terena",
+          "value": "Naslov, kategorija, trajanje, cena i atribut dobijanja"
+        },
+        {
+          "label": "Stanje terena",
+          "value": "Aktivno i nedavno završeno"
+        }
+      ],
+      "tips": [
+        "Treniraj vredno dugoročno osoblje, ne svaki privremeni zaposleni."
+      ]
+    },
+    "regular-training-deep": {
+      "category": "Trening",
+      "title": "Redovni vođa za obuku",
+      "subtitle": "Timski obuku, pojedinačni planovi i intenzitet.",
+      "overview": "Redovna obuka je normalan sistem razvoja za vozače van logora.",
+      "details": [
+        "Timski standardi daju timu pristup za obuku.",
+        "Pojedinačni planovi prevazilaze timski podrazumevani kada vozaču treba specijalni rad.",
+        "Težak intenzitet povećava stres i rizik od umora.",
+        "Intenzitet oporavka je korisna oko teških utrka blokova.",
+        "Trening treba pratiti ulogu vozača i kalendarske mete."
+      ],
+      "facts": [
+        {
+          "label": "Fokusi",
+          "value": "Opšti, oporavak, sprint, uspon, ravničarski, hronometar, izdržljivost, otpornost, Race IQ, timski rad"
+        },
+        {
+          "label": "Intenzitet",
+          "value": "Oporavak, lagano, normalno, jako"
+        }
+      ],
+      "tips": [
+        "Ne koristite Hard kao stalno podrazumevano za ceo odred."
+      ]
+    },
+    "training-camps-deep": {
+      "category": "Trening",
+      "title": "Vodič za obuku u kampovima",
+      "subtitle": "Lokacije kampa, citate, vrijeme i logika rezervacije.",
+      "overview": "Kampovi za obuku su jači planirani razvojni blokovi sa putovanjem, smestenjem, kampovanjem i specijalnim efektima za obuku.",
+      "details": [
+        "Lokacija kampa imaju kvalitet, visine, teren i kalendarske postavke.",
+        "Poželjne nedelje mogu da poboljšaju kamp iskustvo dok rizični nedelje mogu da ga smanji.",
+        "Zatvorene nedelje sprečavaju rezervaciju.",
+        "Citate treba pregledati pre nego što se počini jer putovanje i smestenje mogu biti veliki troškovi.",
+        "Vrijeme može da smanji vrijednost obuke ili da napravi propuštene sesije.",
+        "Odabir osoblja i vozača utiče na ishod kampa."
+      ],
+      "facts": [
+        {
+          "label": "Tipovi kampova",
+          "value": "Opšti, sprint, uspon, ravničarski, hronometar"
+        },
+        {
+          "label": "Citiram komponente",
+          "value": "Putovanje, smestenje, kamp naknada, logistika, ukupna cena"
+        },
+        {
+          "label": "Vrijeme",
+          "value": "Modifikator, promašio- dan i upozorenja"
+        }
+      ],
+      "tips": [
+        "Knjižni logori oko glavnih meta, ne nasumično."
+      ]
+    },
+    "current-camp-deep": {
+      "category": "Trening",
+      "title": "Trenutni trening kamp",
+      "subtitle": "Kako da pročitate aktivnu stranu kampa.",
+      "overview": "Aktivna kamp stranica prikazuje učesnike, osoblje, vrijeme, plan obuke, dnevna izvještaja i napredak.",
+      "details": [
+        "Trenutna stranica kampa treba da se koristi za praćenje onoga što se zapravo dešava, ne samo prvobitni citat rezervacije.",
+        "Vremenski i osoblje efekti mogu promeniti efikasan kvalitet obuke.",
+        "Dnevni izvještaji pokazuju završene sesije i udar vozača.",
+        "Prisušni plan obuke treba prilagođavati samo kada ga igra omogućava.",
+        "Kamp umor treba razmotriti pre sljedeće utrke."
+      ],
+      "facts": [
+        {
+          "label": "Sudionici",
+          "value": "Odabrani vozači i dodijeljeno osoblje"
+        },
+        {
+          "label": "Plan",
+          "value": "Danas je slobodan, svetlost, normalan ili težak za kampove"
+        },
+        {
+          "label": "Izvještaji",
+          "value": "Završeno-dan dobitak i umor"
+        }
+      ],
+      "tips": [
+        "Posle kampa, daj vozačima dovoljno oporavka pre ključnih utrka."
+      ]
+    },
+    "equipment-category-deep": {
+      "category": "Oprema",
+      "title": "Kategorije opreme i bonusi za teren",
+      "subtitle": "Ono što svaka kategorija trajne opreme doprinosi trkačkim performansama.",
+      "overview": "Oprema se podeli na trajne kategorije. Svaka stavka može da nosi kvalitet, bonuse terena, vrijednost smanjenja umora, stanje i stanje. Najbolja stavka nije uvek onaj sa najvišom cenom; onaj koji odgovara profilu utrke i postavka koje planirate da koristite.",
+      "details": [
+        "Okviri su osnova postavke i mogu da podržavaju različite jačine terena u zavisnosti od stavke.",
+        "Kotači mogu jako da utiču na ravan, penjanje ili vremenski suđenje performanse, tako da bi trebalo da se uklapaju u kursu, a ne da se koriste slepo u svakom slučaju.",
+        "Gume su materije posebno kada se površina i teren menjaju.",
+        "Grupe podržavaju efikasnost vožnje i mogu doprineti bonusima specifičnim za teren, u zavisnosti od stavke tržišta.",
+        "Kacige i cipele su manji dijelovi postavke, ali i dalje doprinose bonuse i mogu biti bitni kada se sve postavka optimizuje.",
+        "Umorni bonusi za redukciju su korisni kada vozač mora da očuva energiju u dugim fazama ili višednevnim utrkama.",
+        "Specijalna postava može biti jača od generičke postave, čak i ako jedna pojedinačna stavka ima niži naslovni rejting."
+      ],
+      "facts": [
+        {
+          "label": "Trajne kategorije",
+          "value": "Ram, set kotača, gume, grupa, kaciga, cipele"
+        },
+        {
+          "label": "Bonusi za teren",
+          "value": "Ravan, brdački, planina, Cobbl, vrijeme suđenja, Sprint"
+        },
+        {
+          "label": "Efekat dodatnog",
+          "value": "smanjenje umornosti"
+        },
+        {
+          "label": "Oznake kvaliteta",
+          "value": "Osnovno, Dobro, Odlično"
+        }
+      ],
+      "tips": [
+        "Napravite bar jedan sprint/flat postavu, jedan planinski postav i jedan vremenski proces kada je inventar to dozvoli.",
+        "Provjerite fazi profil pre izbora opreme."
+      ],
+      "relatedLinks": [
+        "Oprema"
+      ]
+    },
+    "equipment-caps-deep": {
+      "category": "Oprema",
+      "title": "Bonus kaps opreme i postavka logike",
+      "subtitle": "Zašto slaganje svakog bonusa ne stvara neograničeno dobijanje performansi.",
+      "overview": "Bonusi opreme su korisni, ali treba da ostanu unutar ograničenja igre. Postavka je paket opreme za tip utrke, a menadžer treba da razmisli o kombinovanom efektu umesto da juri jedan broj bez konteksta.",
+      "details": [
+        "Podrazum› ijevano postavka utrke se koristi kada nije odabrano postavljanje po rasi.",
+        "Sačuvane postave pomažu menadžerima da izbegnu obnovu iste kombinacije pre svake utrke.",
+        "Bonuse za teren treba da se čitaju kao podrška za performanse vozača, a ne kao zamjena za vještine vozača.",
+        "Ako nekoliko stavki daje isti tip bonusa, igra može ograničiti ukupno korisne efekte. Menadžeri bi trebalo da izgrade uravnotežene postave, a ne da pretpostavljaju da su sva dodatna poena zauvek.",
+        "Vozaču još uvek trebaju točni specijalisti, a oprema za planine ne pretvara slabog penjača u elitnog penjača.",
+        "Kvalitet postave takođe treba da razmotri uvjet. Jaka, ali istrošena stavka može biti gori praktični odabir od malo slabije stavku u dobrom stanju."
+      ],
+      "facts": [
+        {
+          "label": "Postavka korišćenja",
+          "value": "Podrazum› ijevano postavka utrke plus sačuvane specijalne postave"
+        },
+        {
+          "label": "Zajednički pretpodešavanja",
+          "value": "Sprint, planina, vrijeme suđenja, Cobbled / specijalisti utrke"
+        },
+        {
+          "label": "Važno ograničenje",
+          "value": "Bonuse opreme su ograničeni / ograničeni igramnim sistemom"
+        }
+      ],
+      "tips": [
+        "Razmislite o kompletnim postavke, ne o izolovanim predmetima.",
+        "Zadrži rezervnu opremu za važne blokove utrka."
+      ]
+    },
+    "equipment-inventory-deep": {
+      "category": "Oprema",
+      "title": "Ilterator opreme, stanje i radnje",
+      "subtitle": "Spremni, dodeljeni, održavanje i nosenje stanja plus popravka / prodaje/diskarta pravila.",
+      "overview": "Intulator prikazuje opremu koju klub još uvek poseduje i može da koristi. Stanje i uvjet odlučuju koje su akcije dostupne.",
+      "details": [
+        "Pripremljene stavke obično mogu biti dodeljene postavkima, a takođe mogu postati prihvatljive za popravku, prodaju ili odbacivanje u zavisnosti od uvjeta i drugih pravila.",
+        "Dodeljene stavke trenutno koriste ili rezervišu drugi sistem igre. Oni treba da se oslobode pre radnji koje bi ih učinile nedostupnim.",
+        "U održavanju znači da se stavka već popravlja i ne može se koristiti normalno dok se održavanje ne završi.",
+        "Uvjet je pao dovoljno da je stavka potrebna pažnja. Stavke mogu da smanji pouzdanost i ne treba da se ignorišu pre važan utrka.",
+        "Popravke citatata treba da prikazuju troškove pre potvrde. Menadžer treba da uporedi troškove popravke sa vrijednosti stavke i troškovima za zam› jenu.",
+        "Prodaja pretvara posedovanu stavku u gotovinu kada je dozvoljena. Stavka ostavlja aktivan inventar.",
+        "Odbacivanje uklanja stavku bez običnog prodaje. Ovo treba da se koristi samo za opremu koju klub više ne treba ili ne može da opravda održavanje."
+      ],
+      "facts": [
+        {
+          "label": "Uobičajeni stanja",
+          "value": "Spremni, dodeljeni, u održavanju, u kršu"
+        },
+        {
+          "label": "Aktivni inventar",
+          "value": "Prodate i odbačene stavke su sakrivene od običnog aktivnog inventara"
+        },
+        {
+          "label": "Tipični prag popravke",
+          "value": "Uvjet 90% ili manji kada je stavka drugačije prihvatljiva"
+        }
+      ],
+      "tips": [
+        "Popravljanje važnih stvari pre kritičnih utrka.",
+        "Ne prodajte dodeljenu opremu bez prvog menjanja postave koja je koristi."
+      ]
+    },
+    "race-supplies-deep": {
+      "category": "Oprema",
+      "title": "Vodič za utrke",
+      "subtitle": "Kako se potrošljive stvari i trajne zalihe broje i koriste.",
+      "overview": "Natjecateljski zalihi povežu opremu sa pripremom za utrku. Menadžer unapred kupuje akcii, zatim Stage Plans konzumira ili dodeli neophodnu količinu po vozaču i po fazi.",
+      "details": [
+        "Bidonsi podržavaju hidraciju i kontrolu zamora, a plan ispod potrebne hidracije može da poveća pritisak umora.",
+        "Energetski gelovi podržavaju izdržljivost i efikasnost konačne efikasnosti. Više od korisne kape ne stvara ekstra korist.",
+        "Hranenje paketi podržavaju stabilnost i oporavak, posebno na dugim fazama i utrkama.",
+        "Tim bez dovoljno korišćenih drolja-korisa može biti blokiran od kompletnog postavljanja scene.",
+        "Kišne jakne nisu obavezne na svakoj sceni, već postaju vredne u hladnom/mokrom vremenu. Igra bi trebalo da tretira istrošene trajne jedinice snabdevanja kao neupotrebljive.",
+        "Utrke na fazi množe potrošnju jer se zalihe izračunavaju po vozaču po fazi."
+      ],
+      "facts": [
+        {
+          "label": "Bidoni / flaše za vodu",
+          "value": "1– 4 po vozaču; jednoupotrebna potrošljiva"
+        },
+        {
+          "label": "Energetski gelovi",
+          "value": "0– 4 po vozaču; jednokoristna potrošljiva"
+        },
+        {
+          "label": "Paketi ishrane",
+          "value": "0– 2 po vozaču; jednokoristna potrošljiva"
+        },
+        {
+          "label": "Komplet natjecateljskog dresa",
+          "value": "Obavezna trajna stavka; 10 faza koristi po jedinici"
+        },
+        {
+          "label": "Kišne jakne",
+          "value": "Opciono za loše vrijeme; 25 korišćenja po jedinici"
+        }
+      ],
+      "tips": [
+        "Izračunajte akcije pre predaje i rokova za plan.",
+        "Ne pretpostavljajte da je jučerašnja zaliha još uvek dovoljno posle nekoliko faza."
+      ],
+      "relatedLinks": [
+        "Zalihe za utrke",
+        "Priprema utrke"
+      ]
+    },
+    "technical-sponsor-deep": {
+      "category": "Oprema",
+      "title": "Podrška tehničkih sponzora",
+      "subtitle": "Podrška u gotovini, budžet za opremu i popuste na tržište od tehničkog sponzora.",
+      "overview": "Tehnički sponzori su različiti od normalnih glavnih/sekundarni sponzori jer mogu direktno podržati sistem opreme.",
+      "details": [
+        "Tehnički sponzor može da obezbedi direktnu gotovinu i poseban budžet za podršku opreme.",
+        "Kategorije popusta može da smanji efikasnu troškove kupovine povoljnih tržišnih stavki.",
+        "Menadžer bi trebalo da provjeri podršku sponzora pre kupovine skupe opreme jer ista stavka može koštati manje dok je tehnički dogovor aktivan.",
+        "Tehnički sponzorski pokret treba da se upoređuje sa potrebama kluba za opremu. Veliki popust je manje korisan ako je kategorija popusta već jaka.",
+        "Podrška sponzora može da poboljša dugoročno planiranje opreme, ali ne uklanja ograničenja stanja, održavanja ili inventara."
+      ],
+      "facts": [
+        {
+          "label": "Moguća podrška",
+          "value": "Podrška za gotovinu, budžet za podršku opreme, popust kategorije"
+        },
+        {
+          "label": "Primenjuje se",
+          "value": "Odabrane kategorije opreme / prihvatljive kupovine tržišta"
+        },
+        {
+          "label": "Praktičan efekat",
+          "value": "Niža cena kupovine i lakši razvoj opreme"
+        }
+      ],
+      "tips": [
+        "Kupite važnu opremu, dok su korisni popusti sponzora aktivni.",
+        "Ne procenujte tehničke sponzore samo po garancijom gotovine."
+      ]
+    },
+    "facilities-overview-deep": {
+      "category": "Infrastruktura",
+      "title": "Objekti Duboki vodič",
+      "subtitle": "Klub Kuća, Trening Centar, Medicinski centar, Mladeška akademija, Radionica i Izviđački kancelarija.",
+      "overview": "Objekti su trajne dugoročne investicije koje otključavaju kapacitet i poboljšavaju mogućnost kluba da trenira, leči, izviđa, popravlja i razvija vozače.",
+      "details": [
+        "Klub Haus podržava administraciju i širu klubsku organizaciju, takođe može da deluje kao preduslov za druge sisteme.",
+        "Centar za obuku poboljšava kvalitet obuke, trening efikasnost i podršku za razvoj.",
+        "Medicinski centar povećava kapacitet medicinskog osoblja i poboljšava podršku ozljede i oporave.",
+        "Akademija mladih podržava U23/razvojne sisteme i buduću funkcionalnost u vezi sa mladima.",
+        "Mehanička radionica poboljšava popravke i tehnički kapacitet osoblja.",
+        "Izvidnički ured poboljšava kapacitet i granice kvaliteta izvještaja.",
+        "Nadogradnje objekta koštaju gotovinu, uzimaju igre dana i koriste kapacitet izgradnje."
+      ],
+      "facts": [
+        {
+          "label": "maks. kluba",
+          "value": "nivo 5"
+        },
+        {
+          "label": "maks. centar za obuku",
+          "value": "nivo 5"
+        },
+        {
+          "label": "maks. medicinski centar",
+          "value": "nivo 5"
+        },
+        {
+          "label": "Akademija za mlade maks.",
+          "value": "Nivo 2"
+        },
+        {
+          "label": "Mehanika, maks.",
+          "value": "Nivo 4"
+        },
+        {
+          "label": "Izviđačka kancelarija maks.",
+          "value": "Nivo 4"
+        }
+      ],
+      "tips": [
+        "Nadogradite objekt koji rešava trenutno usko usko.",
+        "Ne nadogradnjajte sve odjednom ako Finansije ne mogu da ga podržavaju."
+      ],
+      "relatedLinks": [
+        "Infrastruktura"
+      ]
+    },
+    "facility-jobs-deep": {
+      "category": "Infrastruktura",
+      "title": "Infrastrukturni poslovi, citati i gradežni slotovi",
+      "subtitle": "Kako nadogradnje, popravke i otkaza rade tokom vremena igre.",
+      "overview": "Radnje infrastrukture nisu trenutne. Poslovi imaju troškove, trajanje, datume početka i dovršenja i mogu da koriste ograničene gradežničke slotove.",
+      "details": [
+        "Pre početka nadogradnje objekta, stranica treba da pokaže da li su preduslovi i zahtjevi za gotovinom zadovoljni.",
+        "Aktivni posao zauzima gradežni slot do dovršenja ili uspešnog otkaza.",
+        "Datum dopune je datum igre. Menadžer treba da ga uporedi sa vremenom igre podnožja i budućim kalendarskim planovima.",
+        "Otkaz može da vrati samo deo platne vrijednosti. Citat treba pregledati pre potvrđivanja.",
+        "Duga nadogradnja može odložiti pristup kapacitetu osoblja ili bonusa, tako da je vrijeme važno koliko i cena."
+      ],
+      "facts": [
+        {
+          "label": "Podaci o poslu",
+          "value": "troškovi, trajanje, datum početka, datum dopune, stanje"
+        },
+        {
+          "label": "kapacitet",
+          "value": "Gradežni slotovi mogu ograničiti simultane projekte"
+        },
+        {
+          "label": "Otkaz",
+          "value": "Koristi pravilo o poništavanju/oduzimanju računa kada je dozvoljeno otpuštanje"
+        }
+      ],
+      "tips": [
+        "Počni duge poslove kada klub može da živi bez nestalog nadogradnje nekoliko dana igre.",
+        "Držite gotovinu za plaće i porez dok je gradnja aktivna."
+      ]
+    },
+    "assets-deep": {
+      "category": "Infrastruktura",
+      "title": "Natjecateljski sredstva i podrška vozila",
+      "subtitle": "Timska kola, autobus, kombi sa opremom, mobilna radionica i medicinski kombi.",
+      "overview": "Aktivi su podrške u vlasništvu kluba, mogu biti dodeljeni rasnim planovima i imaju stanje, status, kupovinu, troškove i prodaju vrijednost.",
+      "details": [
+        "Tim automobili podržavaju natjecateljske operacije i može biti potrebno u različitim količinama zavisno od plana.",
+        "Tim Bus podržava transport i tim logistiku.",
+        "Oprema kombi podržava pokrete opreme i rasne postave logistike.",
+        "Mobilna radionica obezbeđuje tehničku podršku tokom utrka/puteva.",
+        "Medicinski kombi obezbeđuje ekstra medicinsku podršku.",
+        "Dodijeljena ili zaključana imovina ne treba da se popravlja ili prodaje dok se ne pušteni iz utrke/posao koji ih koristi.",
+        "Uvjet treba proveriti pre važnih utrka jer tehnički dostupni sredstva još uvek mogu biti u lošem stanju."
+      ],
+      "facts": [
+        {
+          "label": "Tipovi aktiva",
+          "value": "Timski automobili, Timski autobus, Kombi za opremu, Mobilna radionica, Medicinski kombi"
+        },
+        {
+          "label": "Važne vr› ijednosti",
+          "value": "Uvjet, status, cena kupovine, popravka, prodaja"
+        },
+        {
+          "label": "Upotreba utrka",
+          "value": "Odabrano u Race Plan logistike/ podrške"
+        }
+      ],
+      "tips": [
+        "Popravka podrške imovine pre važnih trkačkih blokova.",
+        "Ne prodajte imovinu koja je zahtevana u predstojećem Race Plan."
+      ]
+    },
+    "season-calendar-deep": {
+      "category": "Kalendar i utrke",
+      "title": "Vodič za duboki kalendar",
+      "subtitle": "Danas pogled na utrke, logore, događaje i praznike.",
+      "overview": "Sezonski kalendar je širok prikaz za planiranje vremena. Pomaže menadžeru da shvati šta se dešava oko kluba preko dana igre, umesto da gleda samo u pojedinačne utrke.",
+      "details": [
+        "Datumi utrke treba da se čitaju zajedno sa aplikacijom i rokovima za predaju.",
+        "Laboratorije za trening zauzimaju vrijeme i mogu sukobi sa važnim rasnim pripremama ako je zakazano loše.",
+        "Događaji i praznici mogu da utiču na to kako se svijet igara predstavlja ili kako se određeni sistemi planiraju.",
+        "Kalendar je najbolje mjesto za prov› jeru da li se nekoliko važnih radnji dešava blisko zajedno.",
+        "Koristi vrijeme igre podnožja kao referencu dana i kalendar kao upućivač za budući plan."
+      ],
+      "facts": [
+        {
+          "label": "Filteri",
+          "value": "Utrke, Trening kampovi, Događaji, Praznici"
+        },
+        {
+          "label": "Glavna svrha",
+          "value": "Dugoročno raspoređivanje i svest o roku"
+        },
+        {
+          "label": "Izvor vremena",
+          "value": "datum kalendara u igri"
+        }
+      ],
+      "tips": [
+        "Planirajte bar nekoliko dana ispred.",
+        "Izbegavaj stavljanje logora odmah pred ključne utrke osim ako se ne planira oporavak."
+      ],
+      "relatedLinks": [
+        "Kalendar"
+      ]
+    },
+    "race-calendar-deep": {
+      "category": "Kalendar i utrke",
+      "title": "Kalendar utrka, programi i stanje unosa",
+      "subtitle": "Kako timovi pronađu utrke i prelaze iz aplikacije na prihvateni ulaz.",
+      "overview": "Natjecateljski kalendar prikazuje raspoložive utrke i trenutno stanje programa. Prihvatanje je samo prvi korak; tim mora kasnije da kompletni odabir vozača i priprema utrka.",
+      "details": [
+        "Programi su dostupni samo unutar prozora natjecateljskog programa.",
+        "Utrka može da ograniči timove po redu, odeljenju ili drugim pravilama ulaska.",
+        "Menadžer treba da provjeri koliko timova može biti prihvaćeno i koliko već prim› ijenjeno/bilo prihvati.",
+        "Igrač ne može ponovno otvoriti zatvoren prozor programa.",
+        "Kada se prihvate, utrka postaje značajna na utrka pripreme i kasnije predaju rokove.",
+        "Ne mešajte prihvaćeno sa spremnim. Prihvateno samo znači da klub ima mjesto u događaju."
+      ],
+      "facts": [
+        {
+          "label": "Uobičajeni stanja",
+          "value": "Nije otvoreno, otvoreno, zatvoreno, utrka aktivna, utrka završena, otkazano"
+        },
+        {
+          "label": "Podaci o utrci",
+          "value": "Kategorija, zemlja, grad, datum, vrsta utrke, ograničenja tima, prihvatljeni timovi"
+        },
+        {
+          "label": "Važan sljedeći korak",
+          "value": "Prihvaćen tim mora još uvek da završi Race Plan / Stage Plans"
+        }
+      ],
+      "tips": [
+        "Primijeni rano kada je utrka važna.",
+        "Nakon prihvatanja, odmah provjerite rokove za pripremu utrka."
+      ],
+      "relatedLinks": [
+        "Kalendar",
+        "Priprema utrke"
+      ]
+    },
+    "race-detail-deep": {
+      "category": "Kalendar i utrke",
+      "title": "Vodič za detalje utrke",
+      "subtitle": "Pravila, faze, sudionici, rezultati, klasifikacije i stanje uživo.",
+      "overview": "Detalj utrke je glavna upućivačica za određeni događaj. Pre utrke objašnjava rutu i pravila. Tokom i posle utrke postaje centar rezultata i ponovnog igranja.",
+      "details": [
+        "Informacije o ulazu mogu da uključe maks. timove, vozače po timu, rok za prijavu, saopštenje spiska tima, rok predaje vozača i fond za nagrade.",
+        "Sudionici pokazuju koje timove su prihvatene, a kasnije koji su vozači na početku.",
+        "Listi stadijuma prikazuju rutu, teren, udaljenost, vrstu završetka, profil i vremenski podaci.",
+        "Utrka može da održi klasifikacije generala, poena, planine, mladih i tima.",
+        "Detalj utrke treba koristiti za prov› jeru zvaničnih rezultata umesto oslanjanja na obavijest ili pregled kartice.",
+        "Završene utrke ostaju važne jer doprinose statistici vozača/tima i rangiranje tačaka."
+      ],
+      "facts": [
+        {
+          "label": "Pre utrke",
+          "value": "Pravila, aplikacija, sudionik i podaci o fazi"
+        },
+        {
+          "label": "Tokom utrke",
+          "value": "Stanje uživo / ponavljanje / komentar kada je dostupno"
+        },
+        {
+          "label": "Nakon utrke",
+          "value": "Rezultati faze i klasifikacije"
+        }
+      ],
+      "tips": [
+        "Otvorena utrka Detalj pre utrke Priprema da shvatite kakav vrstu vozača i opreme događaja treba."
+      ]
+    },
+    "stage-terrain-points": {
+      "category": "Kalendar i utrke",
+      "title": "Prizemlje, vrste završetaka, Sprints i KOM",
+      "subtitle": "Kako da pročitate podatke o profilu koji pokreće pripremu utrke.",
+      "overview": "Faza profila komunicira šta traže ruta. Terenski mješain, vrsta, visina, srednje sprint i planinski tačke treba da utiče na odabir vozača i Stage Plans.",
+      "details": [
+        "Ravna teška faza obično favorit Sprinters, ruleri i jaka podrška za olovo.",
+        "Planinskoj fazi prednost penjanju, izdržljivosti, otpora i oporavka, posebno u utrkama.",
+        "Hili/penzioničar faza nagrade ubrzanje i penjanje snage bez da bude puna planinska faza.",
+        "Vremenski suđenje faza jako zavisi od TT vještine i odgovarajuće opreme.",
+        "Ukupno ugrađeni sektori povećavaju značaj opreme specifične za površinu i odgovarajuće karakteristike vozača.",
+        "Posrednici sprintovi utiču na tačke i mogu biti taktički ciljevi čak i kada vozač ne može da pobedi na sceni.",
+        "KOM poeni materiju za planinski klasifikacije i može opravdati taktiku odbijanja."
+      ],
+      "facts": [
+        {
+          "label": "Tipični teren",
+          "value": "Ravan, brdački, planina, kobble, vremenski test / mešovi profili"
+        },
+        {
+          "label": "Podaci o završetku",
+          "value": "Tip i mogući vrh"
+        },
+        {
+          "label": "Pozicije",
+          "value": "Posredne definicije sprinta i KOM‐ a"
+        }
+      ],
+      "tips": [
+        "Pročitajte rutu pre dodeljenja uloga.",
+        "Ne koristite isti Stage Plan na svakom profilu."
+      ]
+    },
+    "replay-results-deep": {
+      "category": "Kalendar i utrke",
+      "title": "Ponavljanje, komentar, rezultati i klasifikacije",
+      "subtitle": "Kako da shvatimo šta se desilo nakon što motor izračunava scenu.",
+      "overview": "Ponavljanje je prezentacija istog zvaničnog rezultata simulacije. Rezultati i ponavljanje treba da ostanu sinhronizovani tako da igrač vidi jedan konzistentni ishod.",
+      "details": [
+        "Igra ne treba izračunati drugačiji rezultat ponavljanja od zvaničnog rezultata. Ponavljanje je samo za čitanje prikaza skladištenog ishoda.",
+        "Grupe i vremenski praznine pokazuju kako se utrka razdvojila i gde su vozači izgubili ili dobili vrijeme.",
+        "Komentar opisuje važne napade, skidanje, potera, pope, sprintove i završava događaje.",
+        "Rezultat faze je samo jedan deo utrke. GC, poena, planina, mladi i tim klasifikacija može da se promijeni posle svake faze.",
+        "Vozač može imati loš položaj, ali i dalje postići taktički cilj kao što su tačke, KOM ukazuje ili štiti vođu.",
+        "Koristi regroj/rezultate kao povratnu reakciju za buduću taktiku, umesto da menja već završenu fazu."
+      ],
+      "facts": [
+        {
+          "label": "Izvor rezultata",
+          "value": "Jedan zvanični proračunak utrke-motor"
+        },
+        {
+          "label": "Ponovi svrhu",
+          "value": "Vizuelni vremenski / kontrolni tački istih proračuna"
+        },
+        {
+          "label": "Postfajl podaci",
+          "value": "Rezultat faze, GC/klasifikacije, praznine, tačke i komentar"
+        }
+      ],
+      "tips": [
+        "Pregledamo gde je tim izgubio vrijeme pre promjene sljedećeg Stage Plan.",
+        "Provjeri klasifikacije posle svake važnoj faze."
+      ]
+    },
+    "race-plan-deep": {
+      "category": "Priprema utrke",
+      "title": "Race Plan Duboki Vodič",
+      "subtitle": "Odabir vozača, osoblje, logistika, oprema, zalihe i ukupna podrška citat.",
+      "overview": "Race Plan je plan događaja na nivou napravljen nakon prihvatanja tima. Definiše ko ide u utrku i koji resursi podrške putuju sa njima.",
+      "details": [
+        "Race Plan treba da se stvori ubrzo posle prihvatanja jer preklapanje događaja može kasnije blokirati vozače ili imovinu.",
+        "Vozači su već posvećeni preklapanju utrka/kampanja mogu biti blokirani od izbora.",
+        "Zadaci osoblja obezbeđuju bonuse za podršku, a takođe mogu biti blokirani sukobama.",
+        "Aset stvara podršku za putovanje/logistiku i može uticati na troškove ili spremnost.",
+        "Postava opreme određuje koja trajna oprema tim planira da koristi.",
+        "Natjecateljski zalihi moraju biti dovoljne za ceo događaj, posebno višestacione utrke.",
+        "Citatski pregled može da kombinuje troškove putovanja, efekte osoblja, podršku imovine, opremu i političke efekte.",
+        "Podnošenje Race Plan ne završi pripremu; Stage Plans i dalje mora biti završeno."
+      ],
+      "facts": [
+        {
+          "label": "Odabir vozača",
+          "value": "Mora da zadovolji ograničenja trkača"
+        },
+        {
+          "label": "Osoblje za utrku",
+          "value": "Sportski direktor, Doktor tima, Fizioterapeut, Mehaničar"
+        },
+        {
+          "label": "Vozila",
+          "value": "Autobus, kombi, mobilna radionica, medicinska kola, timska kola"
+        },
+        {
+          "label": "Ostalo",
+          "value": "Postavke opreme i utrka zalihe"
+        }
+      ],
+      "tips": [
+        "Uradite Race Plan pre nego što rok postane hitan.",
+        "Reši sukobe vozača/asanta pre nego što pokušaš da se predaš."
+      ],
+      "relatedLinks": [
+        "Priprema utrke"
+      ]
+    },
+    "stage-plan-deep": {
+      "category": "Priprema utrke",
+      "title": "Stage Plans Duboki Vodič",
+      "subtitle": "Uloge po fazi, tim taktike, pojedinačne taktike, oprema i zalihe.",
+      "overview": "Stage Plans su taktički sloj pripreme za utrku. Menadžer može da pripremi drugačiji plan za svaku fazu zasnovan na terenu, vozačima, vremenu i ciljevima.",
+      "details": [
+        "Svaka faza treba da ima plan koji odgovara svom profilu. Sprint stadijum i planinska faza ne bi trebalo da koriste identične zadatke.",
+        "Timska taktika definiše ukupnu nameru: kontrolu, zaštitu, podržavanje, podržavanje sprinta, cilj za otpuštanje, odbranu GC ili drugi cilj utrke.",
+        "Pojedinačna taktika govori vozačima kako da se ponašaju unutar tog tima plana.",
+        "Oprema treba da odgovara terenu i vremenu.",
+        "Zalihe se upisuju po vozaču/stadini i moraju ostati unutar zaliha.",
+        "Spremljeno ne znači uvek upotrebljivo. Sačuvani plan može biti i dalje nepotpun ako nema važnih podataka ili zaliha.",
+        "Pre nego što plan zaključa, tabla spremnosti treba da se tretira kao konačna lista."
+      ],
+      "facts": [
+        {
+          "label": "Podaci po fazi",
+          "value": "Uloge, timske taktike, individualne taktike, oprema, zalihe"
+        },
+        {
+          "label": "Spremnost",
+          "value": "Spremljeno, korisno, nepotpuno, nedostaju zalihe / taktičke praznine"
+        },
+        {
+          "label": "Savjet",
+          "value": "Predlogi direktora sporta mogu da nas vode, ali ne garantuju najbolji rezultat"
+        }
+      ],
+      "tips": [
+        "Pripremite sve faze ranije, zatim izradite sledeću fazu nakon prethodnog rezultata ako je uređivanje još uvek otvoreno.",
+        "Upozorenja spremnosti umesto da se pretpostavi da je sačuvani plan završen."
+      ]
+    },
+    "stage-roles-deep": {
+      "category": "Priprema utrke",
+      "title": "Uloge i odgovornosti vozača",
+      "subtitle": "Vođa, sprinter, penjač, skidanje i podrška koncepti unutar Stage Plan.",
+      "overview": "Uloge u fazi kažu motoru koja odgovornost svakog izabranog vozača ima.",
+      "details": [
+        "Vođa GC obično treba da dobije zaštitu na planinama i brdo danima i ne treba da se daje nepotreban rad ranije u bini.",
+        "Sprinteru treba olovo-out / podrška i dovoljno svežesti za konačne kilometre.",
+        "Specijalisti za penjanje mogu podržati GC lidera ili ciljne planine/ klasifikacije.",
+        "Vozači koji se krše treba izabrati za teren i cilj tima. Loš penjač ne bi trebalo da bude podrazumevani lovac na OM na težak dan planine.",
+        "Domestike su vredne čak i kada njihova osobna krajnja pozicija je siromašna jer njihov posao je da podrži drugog vozača.",
+        "Uloge takođe treba da razmotri umor, moral, zdravlje i race sharpness, ne samo sirove vještine."
+      ],
+      "facts": [
+        {
+          "label": "Koncept vođe",
+          "value": "Zaštićeni vozač za GC/stadijski cilj"
+        },
+        {
+          "label": "Koncept sprinkera",
+          "value": "Glavni brzo završavač na odgovarajućim fazama"
+        },
+        {
+          "label": "Koncept podrške",
+          "value": "Domestike / pomoćnici štite, jure, tempo ili pomažu"
+        },
+        {
+          "label": "Koncept kršenja",
+          "value": "Vozač je dao slobodu da se pridruži / cilj ranih poteza"
+        }
+      ],
+      "tips": [
+        "Dajte svakom vozaču posao koji ima smisla.",
+        "Ne dod› ijeljujte nekoliko sukobnih lidera bez jasnog tima plana."
+      ]
+    },
+    "stage-readiness-deep": {
+      "category": "Priprema utrke",
+      "title": "Stage Plan Gotovost i stanje zaključavanja",
+      "subtitle": "Kako da čitate zelene/žute/narandžaste/crvene/sive stanje pripreme.",
+      "overview": "Gotovost je sažetak o tome da li Stage Plans postoji i da li je upotrebljiv. Napravljen je da upozorava menadžere pre roka, umesto da dozvoli da neuspjeh nepotpunog plana.",
+      "details": [
+        "Zeleno obično predstavlja spremno/celosno stanje.",
+        "Žuta/orandžesta ukazuju na upozorenja ili delimična priprema koja zaslužuje pažnju.",
+        "Crvena znači da priprema nije korisna ili je nestao kritični uvjet.",
+        "Siva može predstavljati scenu koja još nije relevantna, nedostupna ili već zaključana u zavisnosti od stanja stranice.",
+        "Plan može sadržati uloge vozača, ali i dalje ne uspe ako nedostaje zaliha ili drugi zahtevan blok.",
+        "Kada je uređivanje zaključano, menadžer mora da prihvati završeni skladišteni plan."
+      ],
+      "facts": [
+        {
+          "label": "Provjere",
+          "value": "Sačuvao planove, upotrebljive planove, nestale planove, prazne planove, zalihe, taktička kompletnost"
+        },
+        {
+          "label": "Zaključavanje",
+          "value": "Uređivanje postaje nedostupno nakon relevantnog roka / stanja utrke"
+        },
+        {
+          "label": "Preporučena radnja",
+          "value": "Panel spremnosti može reći menadžeru šta mora biti popravljeno"
+        }
+      ],
+      "tips": [
+        "Cilj za sve faze da pokaže upotrebnu stanju spremnosti pre krajnjeg roka."
+      ]
+    },
+    "sport-director-deep": {
+      "category": "Priprema utrke",
+      "title": "Prijedlozi Sportskog direktora",
+      "subtitle": "Kako savjetnik preporuke pomoći bez zamene menadžera.",
+      "overview": "Direktor sporta može da da predloge za pripremu faze. Savjet je korisan za učenje i brzinu, ali igrač i dalje odgovara za konačnu odluku.",
+      "details": [
+        "Predlogi savjetnika treba da koriste trenutni bini profil, vrijeme, odabrane vozače i raspoložive resurse.",
+        "Menadžer treba da uporedi sugestije sa ciljevima tima. Direktor sporta može predložiti siguran generički plan kada korisnik želi agresivnu metu za otpuštanje.",
+        "Predlogi su najvredniji za nove igrače koji još uvek ne razumeju sve kontrole pozorničkog plana.",
+        "Premium udobnosti ne bi trebalo tajno da poboljšavaju rasne proračune. Prednost je analiza/konvencija, a ne skrivena moć performansi.",
+        "Uvek spremi konačni plan nakon pregleda savjeta."
+      ],
+      "facts": [
+        {
+          "label": "Mogući savjet",
+          "value": "Oprema, timska taktika, pojedinačne taktike, zalihe / priprema"
+        },
+        {
+          "label": "svrha",
+          "value": "Upute i prilika"
+        },
+        {
+          "label": "Garancija",
+          "value": "Ne garantuje savršen rezultat"
+        }
+      ],
+      "tips": [
+        "Koristite savjet da naučite, a onda ga prilagodite sopstvenom cilju utrke."
+      ]
+    },
+    "ranking-tiers-deep": {
+      "category": "Rang-liste i statistika",
+      "title": "Piramida konkurencije, nivoi i odeljenja",
+      "subtitle": "Kako je svetska struktura organizovana od WorldTeam do Amatera.",
+      "overview": "Piramida konkurencije daje svakom klubu dugoročno mjesto na svijetu. Timovi zarađuju međunarodne poene kroz rezultate utrke i koriste stavove za borbu za unapređenje, izbegavanje prijenosa ili kvalifikovanje za plejof.",
+      "details": [
+        "WorldTeam je vrhunska divizija. Klubovi se suočavaju sa najjačim takmičenjem i najzahtevnijim dugoročnim pritiskom.",
+        "ProTeam je podeljen na zapad i istok. Klubovi se bore za direktno unapređenje, plejof mjesta i opstanak.",
+        "Continental je podeljen kontinentom. Evropa i Amerika hrane pro-zapadnim putem dok Azija, Afrika i Okeanija hrane pro-istočnim putem.",
+        "Amater je podeljen na detaljnija regionalna natjecanja, tako da klubovi mogu da igraju protiv geografski odgovarajućih rivala.",
+        "Međunarodne poene zarađene od rasnih rezultata izgrade zvanične položaje.",
+        "Neaktivni menadžeri mogu ostati vidljivi za povijesni integritet i procesovanje kraja sezone čak i kada više ne upravljaju klubom."
+      ],
+      "facts": [
+        {
+          "label": "Nivo 1",
+          "value": "WorldTeam"
+        },
+        {
+          "label": "Niz 2",
+          "value": "ProTeam Zapad i ProTeam Istok"
+        },
+        {
+          "label": "Niz 3",
+          "value": "Continental Evropa, Amerika, Azija, Afrika, Okeanija"
+        },
+        {
+          "label": "Niz 4",
+          "value": "Regionalne amaterske divizije"
+        }
+      ],
+      "tips": [
+        "Postavite sezonski cilj zasnovan na tačnoj zoni promocije/relegacije vašeg odeljenja.",
+        "Regularno koristi timski ranging umesto da čeka poslednju nedelju."
+      ],
+      "relatedLinks": [
+        "Rangiranje timova"
+      ]
+    },
+    "promotion-relegation-deep": {
+      "category": "Rang-liste i statistika",
+      "title": "Promocija, legacija i pravila za plejof",
+      "subtitle": "Šta različite završne pozicije znače na kraju sezone.",
+      "overview": "Pravila promocije i prenošenja zavise od nivoa i odeljenja. Neki mjesta direktno promovišu, neke ulaze u plejof i neke automatski se oslobađaju. Menadžer bi trebalo da čita stojeće boje i beleške kao deo vremenskog cilja.",
+      "details": [
+        "WorldTeam klubovi u donjem peti su prikazani u zoni za prenošenje.",
+        "Svaka ProTeam divizija šalje pobednika direktno na WorldTeam i šalje 2.-4. svetskom plejofu.",
+        "Continental Evropa i Amerika povezuju se sa pro-zapadnim promocionalnim putem; Continental Azija, Afrika i Okeanija povezuju sa Pro Istokom.",
+        "Dubina relegacije je drugačija po Continental deljenju jer su veličine deljenja i niže nivoe strukture različite.",
+        "Amaterievske podelbe koriste pobednika direktno plus 2.-3. pravila plejofa.",
+        "Većina neevropskih amaterskih divizija koristi pobednik direktno plus 2.-4. pravila plejofa, dok Amaterska Okeanija promovira svoje prve tri direktno.",
+        "Stojića stranica je izvor istine za tekuću sezonu, jer bi ovde trebalo da bude prikazano buduće izm› jene pravila konkurencije."
+      ],
+      "facts": [
+        {
+          "label": "WorldTeam",
+          "value": "Posljednjih 5 ispada"
+        },
+        {
+          "label": "Prozapad/ istok",
+          "value": "Pobednik direktno, 2.-4. svetski plejof, 5."
+        },
+        {
+          "label": "Continental Evropa / Azija",
+          "value": "Posljednjih 6 ispada"
+        },
+        {
+          "label": "Continental Amerika / Afrika",
+          "value": "Posljednjih 5 ispada"
+        },
+        {
+          "label": "Continental Okeanija",
+          "value": "Posljednja 3 ispadaju"
+        },
+        {
+          "label": "evropski amater",
+          "value": "Pobednik direktno, 2.-3. plejof"
+        },
+        {
+          "label": "Drugi amater",
+          "value": "Pobednik direktno, 2.-4. plejof"
+        },
+        {
+          "label": "Amaterski OkeanijaName",
+          "value": "Prva 3 direktno napreduju"
+        }
+      ],
+      "tips": [
+        "Znaj da li je tvoja meta direktna unapređenje ili jednostavno dostiže do plejofa zone.",
+        "Blizu kraja sezone, štiti poene od direktnih rivala."
+      ]
+    },
+    "statistics-deep": {
+      "category": "Rang-liste i statistika",
+      "title": "Detaljni vodič za Statistiku",
+      "subtitle": "Timovi, vozači, trenutni rang, povijest i specijalni slomovi.",
+      "overview": "Statistika je stranica za analizu šireg svijeta igara. Pomaže korisnicima da shvate ko je jak sada, ko je bio jak pre i koji vozači dominiraju u određenim tačkama klasifikacija.",
+      "details": [
+        "Team Trenutni dozvoljava korisniku da uporedi aktivne klubove po nivou/diviziji i tačkama.",
+        "Povijest timova postaje korisnija nakon nekoliko završenih sezona jer može da pokaže prethodne šampione i snimake.",
+        "Vozači identifikuje najviše ocenjivanih vozača u trenutnoj sezoni.",
+        "Vozač pomaže u identifikovanju specijalista, a vozač može da se visoko redi u sprint ili penjanje, bez vodećih tabela ukupnih tačaka.",
+        "Statistike treba koristiti zajedno sa profilima vozača i timskim profilima. Rasterantni broj govori korisniku koji je postigao poene; profil objašnjava zašto.",
+        "Povijesne informacije treba da ostanu nepromenjene budućim nadogradnjama motora jer su zvanični rezultati prošlosti deo povijesti igara."
+      ],
+      "facts": [
+        {
+          "label": "Jezičci tima",
+          "value": "Trenutno i Povijest"
+        },
+        {
+          "label": "Jezičci vozača",
+          "value": "Rang-lista i Analiza"
+        },
+        {
+          "label": "Tipovi vozača",
+          "value": "Ukupni sezonski bodovi, sprint bodovi, bodovi za uspon"
+        },
+        {
+          "label": "Korisni kontekst",
+          "value": "Država, uloga, godina, klub, tržišna vrijednost, plaća, umor, dostupnost"
+        }
+      ],
+      "tips": [
+        "Koristite statistiku pre prijenosa prozora da biste identifikovali realne mete.",
+        "Poredi specijalne tačke sa utrkama koje želite da mete."
+      ],
+      "relatedLinks": [
+        "Statistika",
+        "Rangiranje timova"
+      ]
+    },
+    "transfer-list-deep": {
+      "category": "Transferi i skauting",
+      "title": "Vodič dubokog prijenosa",
+      "subtitle": "Kupujući vozača koji je trenutno pod ugovorom sa drugim klubom.",
+      "overview": "Vozač na spisku transfera ima trenutni klub, menadžer kupovine prvo pregovara o transferu naknade sa tim klubom, tek nakon što prihvata ugovor sa vozačem može biti završen.",
+      "details": [
+        "Pregledanje liste transfera treba da se filtrira tipom vozača kojim je zapravo potreban odred.",
+        "Prodaje se naknada za transfer i može da prihvati, odbaci, kontra ili neka pregovaranje istekne zavisno od logike tržišta.",
+        "Prihvaćena ponuda kluba ne znači da se vozač automatski pridruži.",
+        "Potrošenje transfera bi trebalo da uključi i hitnu naknadu i buduću plaćanu obavezu u planu finansija.",
+        "Menadžer treba da provjeri kapacitet spiska pre finalizacije novog potpisivanja.",
+        "Vozač može biti privlačan na sveukupno, ali i dalje je loše taktički odgovaraju za klub."
+      ],
+      "facts": [
+        {
+          "label": "Korak 1",
+          "value": "Traži vozača na spisku prijenosa"
+        },
+        {
+          "label": "Korak 2",
+          "value": "Ponudi se prodaje kluba."
+        },
+        {
+          "label": "Korak 3",
+          "value": "Ako prihvatate, pregovarajte o ugovoru vozača"
+        },
+        {
+          "label": "Važni troškovi",
+          "value": "Naknada za prijenos plus novi uvjeti za plaću/ugovor"
+        }
+      ],
+      "tips": [
+        "Skupe mete pre nadmetanje.",
+        "Ostavite dovoljno novca za plaću i normalne operacione troškove nakon transferne naknade."
+      ],
+      "relatedLinks": [
+        "Transferi"
+      ]
+    },
+    "free-agents-deep": {
+      "category": "Transferi i skauting",
+      "title": "Slobodni agenti duboki vodič",
+      "subtitle": "Potpisivanje vozača bez plaćanja prodaju klub transfer naknadu.",
+      "overview": "Besplatni agenti su vozači bez trenutnog kluba za prodaju, menadžer direktno pregovara sa vozačem, ali vozač i dalje procenuje plaću, dužinu ugovora, bonuse i sportsku situaciju.",
+      "details": [
+        "Slobodni agent ne znači besplatnu ukupnu cenu.",
+        "Vozač može odbiti klub koji nudi slabu plaću, loše trajanje ili neprivlačnu sportsku situaciju.",
+        "Slobodni agenti mogu biti korisni kada tim treba dubinu bez velike naknade za prijenos.",
+        "Stariji ili niži moćilni slobodni agenti mogu da rešavaju kratkoročne probleme, ali ne treba da blokiraju značajne razvojne slotove bez razloga.",
+        "Mladi slobodni agenti mogu biti vredni, ali i dalje treba izviđanje/analiza kada informacije nisu sigurni."
+      ],
+      "facts": [
+        {
+          "label": "Prodaje klub",
+          "value": "Nema"
+        },
+        {
+          "label": "Transferna naknada",
+          "value": "Nema normalnog transfera kluba u klub"
+        },
+        {
+          "label": "I dalje je potrebno",
+          "value": "Prihvatljiv ugovor za vozača i slobodnog spiska"
+        }
+      ],
+      "tips": [
+        "Koristite besplatne agente za dubinu kada je transfer-fee gotovina ograničena.",
+        "Ne ignorišite dugoročnu plaću samo zato što nema naknade za prijenos."
+      ]
+    },
+    "transfer-negotiation-deep": {
+      "category": "Transferi i skauting",
+      "title": "Prijenos i ugovor pregovaranje",
+      "subtitle": "Prihvatačke bendovi, pokušaji, kontra i teško-blok razloge.",
+      "overview": "Pregovori su vjerojatnost/katestova odluke sa vidljivom analizom. Menadžer treba da poboljša potpunu ponudu, a ne da više puta menja samo jedan broj bez razumevanja zašto je druga strana nesrećna.",
+      "details": [
+        "Procenat prihvatanja je vodič koliko je privlačna trenutna ponuda; nije garantovan konačni rezultat.",
+        "Prihvatački bend/predvidljivi ishod pomaže menadžeru da shvati da li je ponuda jaka, granična ili nerealna.",
+        "Plaća meri kako se plaća uporedi sa očekivanjima vozača.",
+        "Ocjena trajanja meri da li dužina ugovora odgovara očekivanjima vozača i situaciji karijere.",
+        "Bonus i rezultati naknada mogu poboljšati privlačnost kada se te komponente primenjuju.",
+        "Ocjena niza/sportiranje predstavlja koliko je klub kupovine privlačan iz sportske perspektive.",
+        "Razlogi su hard-blok, što znači da dogovor ne može da se nastavi pod trenutnom situacijom, čak i ako je jedan broj visok.",
+        "Ponavljanje slabe ponude može da konzumira pokušaje i dovesti do odbijanja, isteka ili kontraponude."
+      ],
+      "facts": [
+        {
+          "label": "Statusi",
+          "value": "Nacrt, otvoreno, na čekanju, prihvaćeno, odbijeno, isteklo, odbijeno od strane korisnika, završeno, kontra-ponuda"
+        },
+        {
+          "label": "Ugovorno sučelje za trajanje",
+          "value": "1–5 godina"
+        },
+        {
+          "label": "Pregled vrijednosti",
+          "value": "Prihvatanje %, bend, predvideni rezultati i rezultati komponenta"
+        },
+        {
+          "label": "Mogući rezultati komponenta",
+          "value": "Plaćanje, trajanje, bonus, naknada, stanje / sportska situacija"
+        }
+      ],
+      "tips": [
+        "Koristi pregled pre predaje.",
+        "Popravi najslabiju relevantnu komponentu umesto da slepo povećaš svaku cenu."
+      ]
+    },
+    "scouting-deep": {
+      "category": "Transferi i skauting",
+      "title": "Izvještaji i informacije nesigurnost",
+      "subtitle": "Zašto spoljašnji vozač može biti sakriven i kako izvještaji poboljšavaju preciznost.",
+      "overview": "Menadžeri treba da investiraju u znanje pre donošenja skupih ili dugoročnih odluka o prenosu.",
+      "details": [
+        "Neukočeni vozač može prikazati približne ili ograničene podatke u zavisnosti od pravila stranice.",
+        "Završeni izvještaj poboljšava preciznost i može da otkrije sveukupno, potencijal, specijalne snage i izviđačke beleške.",
+        "Izvještaj je povezan sa izviđačem koji ga je završio, tako da su stvari osoblja kvaliteta/kapacijelnosti u širi sistem izviđanja.",
+        "Novi/ pregledani status pomaže korisnicima da upravljaju mnogim izv› ještajima bez zaboravljanja nepročitanih informacija.",
+        "Skautiranje treba da bude fokusirano na realistične mete prijenosa umesto trošenje resursa na svakog vozača u bazi podataka.",
+        "Izvještaji treba da obaveštevaju odluke, ali ne garantuju da će vozač prihvatiti klub ili da će prodavački klub prihvatiti ponudu."
+      ],
+      "facts": [
+        {
+          "label": "Prijavi filtere",
+          "value": "Sve, Novo, Pregledano"
+        },
+        {
+          "label": "Prijavi sadržaj",
+          "value": "Vozač, izviđač, datum dovršenja, ukupno, potencijal, snage, beleške"
+        },
+        {
+          "label": "Spoljašnji profil",
+          "value": "Tačne vrijednosti mogu ostati sakrivene dok ne postoji izviđanje"
+        }
+      ],
+      "tips": [
+        "Prvo izviđači, ili visoko-potencijalne mete.",
+        "Pregledajte stare izveštaje pre ponavljanja nepotrebno izviđanje."
+      ],
+      "relatedLinks": [
+        "Skauting"
+      ]
+    },
+    "staff-market-deep": {
+      "category": "Transferi i skauting",
+      "title": "Tržište i zapošljavanje",
+      "subtitle": "Pronalaženje specijalista, poštovanje kapaciteta i plaće.",
+      "overview": "Zapošljavanje osoblja je deo stranice Transfers, ali mora biti isplanirano zajedno sa infrastrukturom i finansijama. Dobar kandidat za osoblje je beskorisan ako uloga nema slobodnog slota ili plaće krše budžet.",
+      "details": [
+        "Tržište osoblja treba da se filtrira ulogom kluba treba.",
+        "Potpuni kapacitet uloge može biti blokiran nedostajućim/malim infrastrukturom čak i ako korisnik može da priušti plaću.",
+        "Ekspertiza predstavlja trenutni specijalni kvalitet, dok potencijal pokazuje dugoročni plafon.",
+        "Iskustvo i vođstvo mogu učiniti osoblje više korisnim u složenim odgovornostima.",
+        "Efikasnost i odanost mogu biti važni za dugoročnu vrijednost zavisno od sistema osoblja.",
+        "Plaća za osoblje postaje ponavljajući troškovi finansija, tako da zapošljavanje nekoliko jakih osoblja odjednom može da stvori skriveni budžetski problem."
+      ],
+      "facts": [
+        {
+          "label": "Atributi osoblja",
+          "value": "Ekspertiza, iskustvo, potencijal, liderstvo, efikasnost, lojalnost"
+        },
+        {
+          "label": "Pre zapošljavanja",
+          "value": "Provjerite ulogu, plaću, kapacitet i infrastrukturu"
+        },
+        {
+          "label": "Dugoročni razvoj",
+          "value": "Tečaji mogu da poboljšaju odgovarajuće osoblje nakon zapošljavanja"
+        }
+      ],
+      "tips": [
+        "Provjerite infrastrukturu korišćena / maksimum slotova osoblja pre pregovora.",
+        "Unajmi ulogu, ne samo za najviše brojeve u celom svijetu."
+      ],
+      "relatedLinks": [
+        "Tržište osoblja",
+        "Infrastruktura"
+      ]
+    },
+    "finance-health-deep": {
+      "category": "Finansije",
+      "title": "Finansije Zdravlje i operativni protok",
+      "subtitle": "Kako da se odvoji stvarna ekonomija kluba od hitnih pokreta duga.",
+      "overview": "Finansije zdravlje je o tome da li se normalno rad kluba može podršku. Hitno pozajmljivanje može privremeno da sačuva klub, ali pozajmice novac ne treba da se pogreši sa zdravim prihodom rada.",
+      "details": [
+        "Pozitivna ravnoteža ne znači da je klub zdrav, već pozajmljen novac.",
+        "Operativni prihod treba da dolazi od stvarne klubske aktivnosti kao što su sponzori i utrke.",
+        "Operativni troškovi uključuju ponavljajuće obaveze koje se nastavljaju čak i kada klub ne kupuje transfere.",
+        "Glavni kredit je pokret dugova, a ne profit/gubljenje.",
+        "Pregled Finansije Zdravlje treba da se koristi za brzo otkrivanje rizika, dok puna stranica finansija objašnjava detaljne brojeve.",
+        "Menadžer bi trebalo da uporedi tjedno-mjesečno ponavljajuće troškove sa očekivanim sponzorom i rasnim prihodom pre nego što napravi opcionu kupovinu."
+      ],
+      "facts": [
+        {
+          "label": "Operativni prihod",
+          "value": "Prihod sponzora, novac nagrade i drugi pravi prihod kluba"
+        },
+        {
+          "label": "Operativni troškovi",
+          "value": "Plaće, osoblje, politika, porez, oprema, logori, infrastruktura i drugi stvarni troškovi"
+        },
+        {
+          "label": "Ne radni prihod",
+          "value": "Hitno isplata kredita"
+        },
+        {
+          "label": "Ne radni troškovi",
+          "value": "Vraćanje glavnih kredita u slučaju hitne primedbe"
+        },
+        {
+          "label": "Operativni troškovi",
+          "value": "Kata hitnih pozajmljivanja"
+        }
+      ],
+      "tips": [
+        "Nikada ne troši hitan kredit gotovinom kao da je bonus.",
+        "Koristite operativni novčani tok da odlučite da li klub može da priušti veće plaće ili politike."
+      ],
+      "relatedLinks": [
+        "Finansije"
+      ]
+    },
+    "transactions-deep": {
+      "category": "Finansije",
+      "title": "Povijest transakcija i izjave u igri",
+      "subtitle": "Kako da objasnite svaku promenu balansa bez korišćenja pravih tehničkih vremenskih tamenata kao datumi igre.",
+      "overview": "Tranzacije su računovodski trag. Ako se balans kluba neočekivano promijeni, menadžer bi trebalo da koristi ovaj jezičak da identifikuje tačan red umesto da pretpostavi koji je sistem izazval.",
+      "details": [
+        "Svaki važni pokret novca kluba treba da se pojavi kao transakcijski red sa tipom, opisom, količinom i datumom u igri.",
+        "Plaćanje, osoblje, porez, sponzorska isplata, nagrada, politika, oprema, infrastruktura, logori i bonusi treba da se prate ovde.",
+        "Nedavne transakcije održavaju jednostavno čitanje svakodnevnog iskaza dok stariji redovi mogu biti grupisani u arhivske mjeseci.",
+        "created_at je pravi tehnički vremenski tabela za naručivanje/ paginaciju baze podataka. Ne bi trebalo da zam› ijenjuje datum transakcije u igru u sučelju.",
+        "Pozitivni i negativni redovi treba da se tumače u kontekstu njihovog tipa transakcije, a ne u boji samo.",
+        "Pri istraživanju greške finansija, uvek upoređujte red transakcije sa razlogom/ izvorom pozadine umesto direktnog uređivanja vidljivog balansa."
+      ],
+      "facts": [
+        {
+          "label": "Skorašnji prozor",
+          "value": "Posljednjih 30 dana igre"
+        },
+        {
+          "label": "Arhiva",
+          "value": "Stariji redovi grupisani po mesecu igre, prethodnih 6 mjeseci igre"
+        },
+        {
+          "label": "Pravilo datuma",
+          "value": "Izjava za izjavu koji pokreće igrač treba da koristi skladištene metapodateke datuma igre"
+        }
+      ],
+      "tips": [
+        "Koristite transakcije kad god korisnik pita „ gde je moj novac otišao?“",
+        "Prov› jerite datum i tip igre pre nego što pretpostavite da je red pogrešan."
+      ]
+    },
+    "tax-deep": {
+      "category": "Finansije",
+      "title": "Porez, odlaganje i mjesečne revizije",
+      "subtitle": "Kako se poreski prihod naplaćuje, korišćava i ponekad se vraća.",
+      "overview": "Porez je pravi trošak kluba povezan sa poreznim prihodom. Sistem može da odustane od poreza tokom mjeseca, a zatim da revizira konačnu mesečnu iznosnu sumu, stvarajući prilagođavanje ili povratak, ako je neophodno.",
+      "details": [
+        "Poreski prihod treba izračunati iz definisanih tipova poreskih transakcija u igri, a ne iz svakog pozitivnog pokreta balansa.",
+        "Odlaganje uklanja deo poreznog prihoda tokom mjeseca tako da klub nije iznenađen punim porezom računa na kraju mjeseca.",
+        "Mjesečna revizija upoređuje očekivani konačni porez sa onim što je već zadržano.",
+        "Ako je previše malo zadržano, revizija stvara dodatnu trošak prilagođavanja.",
+        "Ako je previše zadržano, revizija može da napravi povratnu kaznu.",
+        "Vraćanje nije novi prihod sponzora/utrke, već ispravka prethodno ukinutog poreza.",
+        "Velike sponzorske ili nagradne isplate mogu da stvore vidljive redove poreza ubrzo posle transakcije prihoda."
+      ],
+      "facts": [
+        {
+          "label": "Prikaz poreza",
+          "value": "Trenutni poreski prihod, očekivani porez, zadržan iznos i prilagođavanje"
+        },
+        {
+          "label": "Stanje revizije",
+          "value": "OK, korigovano, refundirano"
+        },
+        {
+          "label": "Tipovi poreznih transakcija",
+          "value": "Odlaganje, m› jesečna prilagođavanje, mjesečno vraćanje"
+        }
+      ],
+      "tips": [
+        "Držite gotovinu na raspolaganju za porez čak i posle velike nagrade/sponzorske isplate.",
+        "Porez jezičak za razliku od konačne m› jesečne prilagođavanja."
+      ],
+      "relatedLinks": [
+        "Porez"
+      ]
+    },
+    "sponsors-deep": {
+      "category": "Finansije",
+      "title": "Glavni, sekundarni i tehnički sponzori",
+      "subtitle": "Prihod, vidljivost, podrška i ugovorne razlike.",
+      "overview": "Sponzori su jedan od glavnih sistema prihoda kluba. Različitih vrsta sponzora pruža različitu vrijednost: glavni sponzori se fokusiraju na vidljivost i ciljeve, sekundarni sponzori dodaju slotove za podršku, a tehnički sponzori se jako povezuju sa opremom.",
+      "details": [
+        "Glavni sponzori su najviđaviji komercijalni partneri i mogu imati sezonske ciljeve koji stvaraju bonus plaćanja.",
+        "Sekundarni sponzori obezbeđuju dodatni novac/podršku i prikazuju se u jednostavnijim slotovima u tekućem UI‐ u.",
+        "Tehnički sponzori mogu direktno da poboljšaju ekonomiju kupovine opreme.",
+        "Sponzorske ponude treba uporediti sa zagarantovanim novcem, bonusima, ciljevima, ograničenjima i efektima identiteta, ne samo sa naslovnim brojem.",
+        "Slaba ekipa može propustiti nerealni sponzorske ciljeve čak i ako ugovor izgleda privlačno.",
+        "Sponzorske plaćanja i bonuse mogu biti poreski, tako da bruto sponzor vrijednost nije uvek konačna gotovina zadržana od strane kluba."
+      ],
+      "facts": [
+        {
+          "label": "Glavni",
+          "value": "Visoka vidljivost, zagarantovani novac, bonus bazen, ciljevi"
+        },
+        {
+          "label": "sekundarni",
+          "value": "Dodatna podrška sponzora kroz dostupna slota"
+        },
+        {
+          "label": "Tehnički",
+          "value": "Budžet za gotovinu i ekvivalent i popuste kategorije opreme"
+        }
+      ],
+      "tips": [
+        "Prihvati ciljeve koji tvoj trenutni odred može realno da postigne.",
+        "Provjerite uticaj poreza nakon velikih sponzora."
+      ],
+      "relatedLinks": [
+        "Sponzori"
+      ]
+    },
+    "sponsor-objectives-deep": {
+      "category": "Finansije",
+      "title": "Sponzorski cilj i prava namen",
+      "subtitle": "Mete utrka, bonus isplate i privremene klubske promjene.",
+      "overview": "Ugovori sponzora mogu da uključe ciljeve vezane za natjecateljske performanse. Ugovori o namenskim pravima dodaju trgovinu identitetom privremenom promjene imena javnog tima u zamenu za veću komercijalnu vrijednost.",
+      "details": [
+        "Sponzorski ciljevi mogu da ukazuju na određenu utrku ili širi uvjeti sezone performanse.",
+        "Zakazani ciljevi treba pregledati ranije tako da utrka je uključena u tima kalendar i ispravni vozači su dostupni.",
+        "Nakon utrke/događaja, sistem proverava da li je cilj postignut ili propušten.",
+        "Postignuti ciljevi mogu da stvore bonus plaćanje prema ugovoru.",
+        "Standardni poslovi sponzora ne prom› jenjuju normalno ime tima.",
+        "Podeli namen-desnice mogu da zaključaju uređivanje tima i zam› ijenjuju vidljivo ime prikaza sezone imenom povezanim sa sponzorom.",
+        "Originalni klub identitet treba da se vrati prema pravilu imena-desnice kraja sezone."
+      ],
+      "facts": [
+        {
+          "label": "Ciljni primeri",
+          "value": "Utrka početak, pobeda, podijum, top 5, top 10, GC meta, faza meta, klasifikacija vidljivosti"
+        },
+        {
+          "label": "Ciljne stanje",
+          "value": "Zakazano, prov› jereno, postignuto, promašeno, isplateno"
+        },
+        {
+          "label": "Prava na ime",
+          "value": "Obično veća plaća, ali privremena promjena imena javnog tima"
+        }
+      ],
+      "tips": [
+        "Pročitajte svaki cilj pre prihvatanja dogovora.",
+        "Ne žrtvuje klub identitet za dogovor imena-desnice osim ako dodatna vrijednost je vredan za vas."
+      ]
+    },
+    "team-policies-deep": {
+      "category": "Finansije",
+      "title": "Sm› jernica i radni vodič timova",
+      "subtitle": "Putovanje, smestenje, logistika, stanovište, ishrana, oporavak i bonus.",
+      "overview": "Politike omogućavaju menadžeru da izabere operativni standard kluba. Bolje opcije mogu da poboljšaju udobnost/ podršku, ali da stvore veće troškove koji se ponavljaju i posebne za putovanje.",
+      "details": [
+        "Politika leta utiče na putovanje tima u utrke/kampe i može da promijeni troškove putovanja.",
+        "Politika smestenja menja standarde hotela i sobe, i zato troškove za putovanje.",
+        "Prizemljni transport i logistička politika utiču na operacije za podršku utrke.",
+        "Politike za stanovljenje, ishrane i oporavak mogu da poboljšaju radnu sredinu za vozače, ali da stvore ponavljajuće troškove.",
+        "Oprema i bonus pravila osoblja utiču na operacione troškove i strukturu nagrade.",
+        "Bonus za vozača može povećati troškove nakon uspešnih utrka, u zavisnosti od podešenih pravila.",
+        "Panel za procene treba da se koristi pre nego što se odjednom poveća višestruke sm› jernice."
+      ],
+      "facts": [
+        {
+          "label": "Poslovne operacije",
+          "value": "Letovi, smeštaj, kopneni transport, logistika, smeštaj osoblja na putovanju"
+        },
+        {
+          "label": "Politike tima",
+          "value": "Stanovanje, ishrana, oporavak, oprema osoblja, bonus vozača, bonus osoblja"
+        },
+        {
+          "label": "Finansijski izlaz",
+          "value": "Procena nedelje, mjesečna procena, prošle godine stvarna i predstojeća prognoza putovanja"
+        }
+      ],
+      "tips": [
+        "Smernice nadogradnje postepeno kada je operativni protok gotovine stabilan.",
+        "Provjerite predstojeću prognozu putovanja pre skupih utrka ili logora."
+      ],
+      "relatedLinks": [
+        "Politike tima"
+      ]
+    },
+    "liquidation-deep": {
+      "category": "Finansije",
+      "title": "Upotrebno spasavanje i likvidacija kluba",
+      "subtitle": "Šta se dešava nakon ponavljanja obaveznog plaćanja neuspeha.",
+      "overview": "U redu je da se zaustavi jedna loša isplata od odmahg završetka kluba, ali je ograničena.",
+      "details": [
+        "Obavezni neuspjeh u plaćanju može pokrenuti hitno spasavanje kada spasavanje kapaciteta ostaje.",
+        "Spasavanje dodaje dug koji kasnije mora biti isplatljen; ne treba da se smatra normalnim prihodom.",
+        "Pregled Hitne dugove zdravlje pokazuje broj spasavanja, neizvesni direktor, otplata informacija i rizik.",
+        "Nakon sve spasenja se koriste, još jedna otkrivena obaveza može pokrenuti likvidaciju.",
+        "Klub koji je likvidiran više ne može da izvrši normalne igre. Tabla prikazuje umesto toga državu likvidacije.",
+        "Korisnički račun preživljava, uključujući i nivo računa Coins.",
+        "Napravi novi klub pokreće put prema novom klubu. Ponovno ponašanje tima je još uvek m› jestodržan/budući reset protok i ne treba ga opisati kao završenu funkciju proizvodnje."
+      ],
+      "facts": [
+        {
+          "label": "Ograničenje spasavanja života",
+          "value": "3"
+        },
+        {
+          "label": "kritično stanje",
+          "value": "Sva tri spasavanja i još jedna obavezna obaveza ne mogu biti pokriveni"
+        },
+        {
+          "label": "Klub likvidacije",
+          "value": "Radnje igre blokirane"
+        },
+        {
+          "label": "Korisnički račun / Coins",
+          "value": "Ostaju aktivni"
+        }
+      ],
+      "tips": [
+        "Nakon prvog spašavanja, odmah smanji opcionu potrošnju i provjeri ponavljajuće troškove.",
+        "Posle drugog/trećeg spašavanja, svaka obavezna isplata je kritična."
+      ]
+    },
+    "faq-application-blocked": {
+      "category": "Česta pitanja",
+      "title": "Često zadavana pitanja: Zašto ne mogu da se prijavim za utrku?",
+      "subtitle": "Zajednički blokovi utrke-aplakisanja i šta prvo da provjerite.",
+      "overview": "Probleme sa programama za utrku obično izazivaju prozor programa, pravila opravdanja, stanje utrke ili postojeći program tima. Stranice Kalendar/ Race Detalj treba da prikazuju relevantno stanje.",
+      "details": [
+        "Ako se prozor programa još nije otvorio, radnja prim› jena treba da ostane nedostupna.",
+        "Ako je rok za prijavu prošao, tim više ne može da se primenjuje čak i ako utrka sama nije počela.",
+        "Utrka može da ograniči timove po nivou, podeli ili drugim pravilima.",
+        "Otkazana/dovršena/aktivna utrka ne prihvata nove programe.",
+        "Ako klub već ima prihvatljenu stavku, stranica bi trebalo da pokaže da je stanje umesto druge prim› ijenjene radnje.",
+        "Detalj utrke za tačan rok i objašnjenje ulaska."
+      ],
+      "facts": [
+        {
+          "label": "Provjeri prvo",
+          "value": "datumi otvaranja/ zatvoranja programa"
+        },
+        {
+          "label": "Onda provjeri",
+          "value": "Timski pristup, status utrke i da li je klub već primijenjen"
+        }
+      ],
+      "tips": [
+        "Provjerite vrijeme igru podnožja i rok za trkanje zajedno.",
+        "Prijavi se rano za važne utrke."
+      ],
+      "relatedLinks": [
+        "Kalendar"
+      ]
+    },
+    "faq-accepted-not-ready": {
+      "category": "Česta pitanja",
+      "title": "Pitanja: Prihvatena je moja ekipa. Zašto utrka još nije spremna?",
+      "subtitle": "Prihvaćen unos nije isti kao i završena priprema.",
+      "overview": "Prihvatanje rezerviše samo mjesto tima u ovom događaju. Menadžer još uvek mora da podnese ispravan odabir vozača i potpuni Race Plan / Stage Plans pre relevantnih rokova.",
+      "details": [
+        "Otvorena utrka priprema nakon prihvatanja.",
+        "Dovršite Race Plan sa neophodnim brojem vozača i prihvatljivim resursima podrške.",
+        "Reši bilo koji vozač/osoblje/asant sukob izazvan preklapanjem događaja.",
+        "Pobrini se da postoji dovoljno utrka za događaj.",
+        "Otvorite Stage Plans i dovršite taktički plan za svaku neophodnu fazu.",
+        "Sačuvani Stage Plan još uvek može biti nepotpun. Pročitajte upozorenje o spremnosti pre nego što se pretpostavi da je tim spreman."
+      ],
+      "facts": [
+        {
+          "label": "Prihvaćeno",
+          "value": "Tim ima slot događaja"
+        },
+        {
+          "label": "Još uvek je potrebno",
+          "value": "Vozači, osoblje/asanti, oprema/dobavljači i Stage Plans"
+        },
+        {
+          "label": "Konačna provjera",
+          "value": "Priprema faze mora biti korisna/dovršena pre zaključavanja"
+        }
+      ],
+      "tips": [
+        "Ne čekajte da vam se preda rok za predaju.",
+        "Cilj za sve faze da budu zelene/korisne pre brave."
+      ],
+      "relatedLinks": [
+        "Priprema utrke"
+      ]
+    },
+    "faq-rider-underperformed": {
+      "category": "Česta pitanja",
+      "title": "Zašto je moj visoki vozač bio neuspešan?",
+      "subtitle": "Sveukupno je samo jedan deo rasne performanse.",
+      "overview": "Vozač može imati visok ukupni rejting, ali i dalje loše radi kada natjecateljski profil, specijalne vještine, umor, moral, zdravlje, oštrina, oprema ili taktike su pogrešne.",
+      "details": [
+        "Ukupno je prosječna/sumirana i ne garantuje elitnu performansu na svakom terenu.",
+        "Sprinter može biti visok ukupno, ali i dalje gubi teško na planinskim krajevima.",
+        "Penjač može biti jak ukupno, ali nedostaje kvaliteta ravna/otpečata za gomilu završeta.",
+        "Visoki umor ili loše zdravlje može da smanji efikasnu performansu.",
+        "Niski moral ili siromašni race sharpness može normalno jak vozač manje efikasan.",
+        "Pogrešna uloga može da natera vozača da potroši energiju podršku nekoga drugog umesto da se utrka za osobni rezultat.",
+        "Oprema, zalihe i podrška timu takođe mogu da promjene konačni ishod."
+      ],
+      "facts": [
+        {
+          "label": "Prov› jeri vozača",
+          "value": "Specijalne vještine, umor, moral, dostupnost, oštrina"
+        },
+        {
+          "label": "Prov› jeri fazu",
+          "value": "Teren, udaljenost, kraj, vrijeme"
+        },
+        {
+          "label": "Prov› jeri plan",
+          "value": "Uloga, timska taktika, pojedinačna taktika, oprema i zalihe"
+        }
+      ],
+      "tips": [
+        "Sudi rezultat protiv vozača posao, ne samo da završi položaj.",
+        "Ponavljanje/rezultati za određivanje gde je izgubljeno vrijeme/ položaj."
+      ]
+    },
+    "faq-money": {
+      "category": "Česta pitanja",
+      "title": "Gde je moj novac od kluba?",
+      "subtitle": "Kako da istraži neočekivano smanjiti balans.",
+      "overview": "Tačan odgovor treba da dolazi iz finansijskih transakcija. Igra ima mnogo ponavljajućih i jednokratnih troškova, tako da pretpostavljanje iz konačnog balansa nije pouzdan.",
+      "details": [
+        "Otvorite transakcije i nađite negativne redove oko datuma igre kada se balans promenio.",
+        "Provjerite da li je cena tjedna, mjesečna, trip-baziran, jednokratno ili porezno povezana.",
+        "Plaće vozača/osoblja se ponavljaju i mogu postati velike posle nekoliko potpisa.",
+        "Politike i trkanja mogu da stvore troškove čak i kada klub nije kupio transfer.",
+        "Oduzimanje poreza može se pojaviti odmah posle poreskog prihoda, tako da velikom sponzoru/pruzu može biti praćena porezna vrsta.",
+        "Uslovno povratak kredita je pokret duga."
+      ],
+      "facts": [
+        {
+          "label": "Prva stranica",
+          "value": "Finansije → transakcije"
+        },
+        {
+          "label": "Zajednički troškovi",
+          "value": "Plaća vozača, plaća za osoblje, porez, politika, putovanja, oprema, infrastruktura, logori, transferi"
+        },
+        {
+          "label": "Dugovna napomena",
+          "value": "Glavni pokret za pozajmice i kamata za pozajmice moraju biti razdvojeni"
+        }
+      ],
+      "tips": [
+        "Koristi opise/tipe transakcije umesto da nagađaš.",
+        "Poredi pregled finansija zdravlje sa detaljnom izjavom."
+      ],
+      "relatedLinks": [
+        "Transakcije"
+      ]
+    },
+    "faq-equipment": {
+      "category": "Česta pitanja",
+      "title": "Često zadana pitanja: Zašto ne mogu da koristim ili popravim opremu?",
+      "subtitle": "Stanje, stanje i dodeljenje ograničenja.",
+      "overview": "Radnje opreme zavise od stanja stavke, uvjeta i da li drugi sistem trenutno koristi stavku. Stavka može da postoji u inventaru, ali privremeno nije dostupna za određenu radnju.",
+      "details": [
+        "Dodijeljena oprema već se koristi/zadržava postavom ili događajem, i ne može uvek biti odmah izm› ijenjena.",
+        "Oprema za održavanje mora završiti popravku pre normalne upotrebe.",
+        "Popravka nije potrebna kada je uvjet previsok i može biti blokiran kada je stavka inače nedostupna.",
+        "Pokvarene stvari zahtevaju pažnju i mogu postati rizik za značajne događaje.",
+        "Ako se stavka ne može prodati/ destirirati, provjerite da li je dodijeljena ili zaključana drugom radnjom.",
+        "Prom› ijenite postavu/ uspostavljanje prvo kada je stavka potrebna za drugu svrhu."
+      ],
+      "facts": [
+        {
+          "label": "Mogući blokirači",
+          "value": "Dodeljen, u održavanju, pogrešno stanje, unošeno/zaključano stanje"
+        },
+        {
+          "label": "Popravi",
+          "value": "Obično dostupno pod uslovom 90% ili manje kada je drugačije prihvatljivo"
+        },
+        {
+          "label": "Upotreba utrka",
+          "value": "Stavka mora biti dostupna i odabrana kroz relevantnu postavka"
+        }
+      ],
+      "tips": [
+        "Drži rezervnu opremu tako da jedan popravak ne blokira celu utrku postavljen.",
+        "Provjerite stanje pre podnošenja Race Plan."
+      ],
+      "relatedLinks": [
+        "Oprema"
+      ]
+    },
+    "faq-staff-hiring": {
+      "category": "Česta pitanja",
+      "title": "Česta pitanja: Zašto ne mogu da zaposlim ovog člana osoblja?",
+      "subtitle": "Uloge kapacitet, zahtjevi za postrojenje i finansijske provjere.",
+      "overview": "Najčešći razlog nije kandidat, već klub. Zapošljavanje osoblja može biti blokirano jer uloga nema slobodno mjesto, nivo objekta je prenizak, klubu nedostaje novac ili drugo pravilo za zapošljavanje nije zadovoljno.",
+      "details": [
+        "Otvori infrastrukturu i provjerite iskorišćeni/maksimalni kapacitet za relevantnu grupu osoblja.",
+        "Ako je kapacitet pun, nadogradnja objekta može biti potrebna pre drugog zapošljavanja.",
+        "Provjerite da li kandidatska uloga pripada grupi objekta mislite da to radi.",
+        "Čak i sa slobodnom kapacitetom, klubu još uvek treba dovoljno novca i prihvatljiv ugovor/ponuda.",
+        "Plaća zaposlenog postaje ponavljajući troškovi nakon zapošljavanja, pa treba da se provjeri finansije pre potvrđivanja.",
+        "Ako stranica prikaže tešku poruku zahtjeva, popravite taj uvjet pre nego što se izm› ijeni plaća više puta."
+      ],
+      "facts": [
+        {
+          "label": "Prov› jeri kapacitet",
+          "value": "Koristi slotove naspram maks. slotova za tu ulogu/grupu osoblja"
+        },
+        {
+          "label": "Provjerite objekt",
+          "value": "Obuka, medicina, radionica, izvidnica ili mladeška infrastruktura"
+        },
+        {
+          "label": "Prov› jeri finansije",
+          "value": "Odmah troškovi i ponavljajuća plaća"
+        }
+      ],
+      "tips": [
+        "Infrastruktura i transferi/bacanje stanica treba da se koristi zajedno.",
+        "Ne zaposlite previše osoblja samo zato što slotovi postoje."
+      ],
+      "relatedLinks": [
+        "Tržište osoblja",
+        "Infrastruktura"
+      ]
+    }
+  }
+}

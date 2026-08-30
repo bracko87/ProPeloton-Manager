@@ -1,0 +1,42 @@
+{
+  "page": {
+    "title": "Ekipa",
+    "subtitle": "Upravljajte rosterom Razvojnog tima i periodima za premeštanje.",
+    "loading": "Učitavanje Razvojnog tima…",
+    "loadFailed": "Razvojni tim nije mogao da se učita",
+    "riders": "Vozači",
+    "currentCompetition": "Trenutno natjecanje",
+    "loadingCompetition": "Učitavanje natjecanja…",
+    "competitionUnavailable": "Natjecanje nije dostupno",
+    "noRiders": "Još nema pronađenih vozača u Razvojnom timu.",
+    "unlockInPreferences": "Prvo omogućite razvojni tim u Podešavanjima."
+  },
+  "movement": {
+    "firstSquadUnavailable": "Prvi tim nije dostupan.",
+    "windowClosed": "Period za premeštanje je zatvoren.",
+    "windowClosedNext": "Period za premeštanje je zatvoren. Sljedeći period: {{window}}.",
+    "windowClosedNextNoPeriod": "Period za premeštanje je zatvoren. Sljedeći period: {{window}}",
+    "windowOpen": "Period za premeštanje je trenutno otvoren: {{window}}",
+    "currentWindow": "Trenutni period",
+    "unknown": "Nepoznato",
+    "firstSquadFull": "Prvi tim je pun ({{count}}/{{max}}).",
+    "moveToFirstSquad": "Premesti u Prvi tim",
+    "movedToFirstSquad": "Vozač je premešten u Prvi tim.",
+    "couldNotMove": "Vozač nije mogao da bude premešten u Prvi tim.",
+    "actionRequiredNow": "Potrebna je akcija sada",
+    "mustMoveNextWindow": "Mora biti premešten u sljedećem periodu"
+  },
+  "healthReport": {
+    "subtitle": "Trenutno ozlijeđeni, bolesni i vozači Razvojnog tima u oporavku",
+    "lockedTitle": "Zdravstveni izvještaj Razvojnog tima",
+    "lockedDescription": "Pogledajte objedinjene informacije o ozljedama, bolestima i oporavku vozača Razvojnog tima."
+  },
+  "season": {
+    "resultsLockedTitle": "Rezultati Razvojnog tima ove sezone",
+    "resultsLockedDescription": "Pogledajte mjesečne trendove učinka Razvojnog tima tokom tekuće sezone.",
+    "podiumsLockedTitle": "Podijumi i plasmani Razvojnog tima",
+    "podiumsLockedDescription": "Analizirajte pobede, podijume i raspodelu završnih plasmana Razvojnog tima.",
+    "raceTypeLockedTitle": "Pregled tipova utrka Razvojnog tima",
+    "raceTypeLockedDescription": "Uporedite rezultate Razvojnog tima na klasicima, brdskim etapama, završnicama etapa i hronometrima."
+  }
+}

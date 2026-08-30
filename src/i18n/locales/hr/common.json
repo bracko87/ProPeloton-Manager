@@ -1,0 +1,32 @@
+{
+  "language": {
+    "label": "Jezik",
+    "applicationLanguage": "Jezik aplikacije",
+    "description": "Odaberite jezik koji će se koristiti u ProPeloton Manageru.",
+    "english": "Engleski",
+    "serbian": "Srpski"
+  },
+  "actions": {
+    "save": "Spremi",
+    "cancel": "Odustani",
+    "close": "Zatvori",
+    "continue": "Nastavi",
+    "confirm": "Potvrdi",
+    "back": "Natrag",
+    "skipTutorial": "Preskoči tutorijal"
+  },
+  "status": {
+    "loading": "Učitavanje...",
+    "error": "Došlo je do greške"
+  },
+  "forum": {
+    "title": "Forum",
+    "movingTitle": "Rasprave zajednice sele se na Discord",
+    "movingText": "Na ovoj stranici neće biti foruma unutar igre. Svi razgovori o igri, priručnici, pitanja i rasprave zajednice bit će dostupni na našem Discord kanalu.",
+    "joinHint": "Pridružite se našem Discord serveru pomoću gumba ispod.",
+    "community": "Discord zajednica",
+    "joinTitle": "Pridružite se našem Discord serveru",
+    "joinText": "Razgovarajte s drugim igračima, postavljajte pitanja, potražite pomoć u priručnicima i pratite najnovije obavijesti zajednice.",
+    "join": "Pridruži se Discordu"
+  }
+}

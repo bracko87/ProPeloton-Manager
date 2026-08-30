@@ -1,0 +1,56 @@
+{
+  "common": {
+    "back": "Nazad",
+    "close": "Zatvori",
+    "unknown": "Nepoznato",
+    "unknownRider": "Nepoznat vozač",
+    "rider": "Vozač",
+    "noImage": "Nema slike",
+    "age": "Godine {{age}}",
+    "club": "Klub:",
+    "noClub": "Bez kluba",
+    "marketValue": "Tržišna vrijednost:",
+    "salary": "Plaća:",
+    "availability": "Dostupnost:",
+    "contractSeason": "Sezona isteka ugovora:",
+    "seasonPoints": "Sezonski bodovi",
+    "sprintPoints": "Sprint bodovi",
+    "climbingPoints": "Brdski bodovi",
+    "markScouted": "Označi kao skautiranog",
+    "unmarkScouted": "Ukloni oznaku skautiran",
+    "showHistory": "Prikaži istoriju",
+    "hideHistory": "Sakrij istoriju",
+    "openTeam": "Otvori tim",
+    "historyPlaceholder": "Privremeni prikaz povijesti vozača."
+  },
+  "skills": {
+    "ovr": "OVR",
+    "pot": "POT",
+    "sprint": "Sprint",
+    "climbing": "Brdo",
+    "tt": "TT",
+    "endurance": "Izdržljivost",
+    "flat": "Ravno",
+    "recovery": "Oporavak",
+    "resistance": "Otpornost",
+    "raceIq": "Natjecateljski IQ",
+    "teamwork": "Timski rad",
+    "morale": "Moral"
+  },
+  "availability": {
+    "fit": "Spreman",
+    "notFullyFit": "Nije potpuno spreman",
+    "injured": "Ozlijeđen",
+    "sick": "Bolestan"
+  },
+  "roles": {
+    "sprinter": "Sprinter",
+    "climber": "Brdaš",
+    "timeTrialist": "Hronometraš",
+    "gc": "GC vozač",
+    "puncheur": "Puncheur",
+    "rouleur": "Rouleur",
+    "domestique": "Pomoćni vozač",
+    "allRounder": "Svestrani vozač"
+  }
+}

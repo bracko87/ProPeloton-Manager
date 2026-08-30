@@ -75,7 +75,10 @@ function rp(key: string, options?: Record<string, unknown>): string {
 
 function getRiderProfileLocale(): string {
   const language = appI18n.resolvedLanguage ?? appI18n.language ?? 'en'
-  return language.startsWith('sr') ? 'sr-Latn-RS' : 'en-GB'
+  if (language.startsWith('sr')) return 'sr-Latn-RS'
+  if (language.startsWith('de')) return 'de-DE'
+  if (language.startsWith('hr')) return 'hr-HR'
+  return 'en-GB'
 }
 
 function localizeKnownStatusLabel(label?: string | null): string {

@@ -1,0 +1,459 @@
+{
+  "page": {
+    "title": "Osoblje tima",
+    "subtitle": "Upravljajte različitim ulogama osoblja kroz posebne kartice i liste za svaku ulogu.",
+    "loading": "Učitavanje osoblja...",
+    "explainPositions": "Objasni sve pozicije osoblja"
+  },
+  "summary": {
+    "weeklyWages": "Tjedne plaće osoblja",
+    "weeklyWagesSubtext": "Trenutni ukupni trošak plaća",
+    "openSlots": "Slobodna mjesta za osoblje",
+    "openSlotsSubtext": "Trenutno slobodna mjesta u svim ulogama osoblja",
+    "totalCapacity": "Ukupan kapacitet osoblja",
+    "totalCapacitySubtext": "Aktuelna ograničenja uloga iz sistema",
+    "warnings": "Upozorenja",
+    "warningsSubtext": "Nivo objekata može ograničiti neke bonuse"
+  },
+  "rolesSection": {
+    "title": "Uloge osoblja",
+    "subtitle": "Odaberite ulogu da vidite dodijeljeno osoblje, trenutno ograničenje i pregled doprinosa uloge.",
+    "staffList": "{{role}} — lista osoblja",
+    "assigned": "{{count}}/{{limit}} dodijeljeno ovoj ulozi.",
+    "assignedCompact": "Dodijeljeno {{count}}/{{limit}}",
+    "noAssigned": "Nema dodeljenih: {{role}}",
+    "usage": "Trenutno korišćenje uloge: {{count}}/{{limit}}. Dovedite osoblje sa tržišta osoblja da popunite ovu ulogu.",
+    "findStaff": "Pronađi osoblje"
+  },
+  "roles": {
+    "headCoach": {
+      "label": "Glavni trener",
+      "subtitle": "Vodi treniranje, planiranje treninga i dugoročni razvoj vozača."
+    },
+    "trainer": {
+      "label": "Trener",
+      "subtitle": "Poboljšava svakodnevni trening i podržava planove glavnog trenera."
+    },
+    "teamDoctor": {
+      "label": "Doktor tima",
+      "subtitle": "Vodi medicinski oporavak, dijagnostiku i prevenciju ozljeda."
+    },
+    "physio": {
+      "label": "Fizioterapeut",
+      "subtitle": "Fokusira se na rehabilitaciju, brzinu oporavka i povratak u punu spremnost."
+    },
+    "nutritionist": {
+      "label": "Nutricionista",
+      "subtitle": "Podržava oporavak, stabilnost forme i rad medicinskog osoblja."
+    },
+    "mechanic": {
+      "label": "Mehaničar",
+      "subtitle": "Postavka bicikala, efikasnost održavanja i mehanička pouzdanost tokom utrke."
+    },
+    "sportDirector": {
+      "label": "Sportski direktor",
+      "subtitle": "Planirane taktike utrke, moral, timski rad i podrška domestique vozača."
+    },
+    "scoutAnalyst": {
+      "label": "Skaut / Analitičar",
+      "subtitle": "Kvalitet skautinga, pregled potencijalnih vozača i informacije za transfere."
+    },
+    "u23HeadCoach": {
+      "label": "Glavni trener U23",
+      "subtitle": "Planirani trening Razvojnog tima i taktička podrška na U23 utrkama."
+    }
+  },
+  "impactAreas": {
+    "regularTraining": "Redovni trening",
+    "trainingCamps": "Trening kampovi",
+    "riderDevelopment": "Razvoj vozača",
+    "dailyTraining": "Dnevni trening",
+    "trainingQuality": "Kvalitet treninga",
+    "recoverySpeed": "Brzina oporavka",
+    "injuryPrevention": "Prevencija ozljeda",
+    "medicalCaseHandling": "Vođenje medicinskih slučajeva",
+    "returnToFitness": "Povratak u formu",
+    "fatigueRecovery": "Oporavak od umora",
+    "recoverySupport": "Podrška oporavku",
+    "fitnessConsistency": "Stabilnost forme",
+    "racePreparation": "Priprema utrke",
+    "equipmentSetup": "Postavka opreme",
+    "maintenanceEfficiency": "Efikasnost održavanja",
+    "mechanicalReliability": "Mehanička pouzdanost",
+    "raceTactics": "Taktika utrke",
+    "teamMorale": "Moral tima",
+    "domestiqueSupport": "Podrška domestique vozača",
+    "scoutingAccuracy": "Preciznost skautinga",
+    "prospectDiscovery": "Pronalaženje talenata",
+    "transferIntelligence": "Transfer informacije",
+    "u23Training": "U23 trening",
+    "youthDevelopment": "Razvoj mladih",
+    "u23RaceTactics": "U23 taktika utrke"
+  },
+  "common": {
+    "close": "Zatvori",
+    "cancel": "Otkaži",
+    "unknown": "Nepoznato",
+    "age": "Godine",
+    "ageUnknown": "Godine nisu poznate",
+    "ageYears": "{{age}} godina",
+    "born": "Rođen: {{date}}",
+    "scope": "Tim: {{scope}}",
+    "firstTeam": "prvi tim",
+    "u23": "U23",
+    "all": "svi",
+    "weeklyWage": "Tjedna plaća",
+    "contract": "Ugovor",
+    "currentAssignment": "Trenutno zaduženje",
+    "activeEffects": "Aktivni efekti",
+    "staffAttributes": "Atributi osoblja",
+    "focus": "Fokus: {{value}}",
+    "duration": "Trajanje: {{count}} dana",
+    "cost": "Cena: {{value}}",
+    "completed": "Završeno: {{date}}"
+  },
+  "assignment": {
+    "notAssigned": "Trenutno nije dodeljen",
+    "expiresToday": "Ističe danas",
+    "oneDayLeft": "Preostao 1 dan",
+    "daysLeft": "Preostalo {{count}} dana",
+    "openProfile": "Otvori profil osoblja"
+  },
+  "attributes": {
+    "training": "Trening",
+    "recoveryPlanning": "Planiranje oporavka",
+    "youthDevelopment": "Razvoj mladih",
+    "experience": "Iskustvo",
+    "leadership": "Liderstvo",
+    "loyalty": "Lojalnost",
+    "dailyTraining": "Dnevni trening",
+    "trainingEfficiency": "Efikasnost treninga",
+    "potentialGrowth": "Razvoj potencijala",
+    "recovery": "Oporavak",
+    "prevention": "Prevencija",
+    "diagnosis": "Dijagnostika",
+    "rehabilitation": "Rehabilitacija",
+    "recoverySpeed": "Brzina oporavka",
+    "nutrition": "Ishrana",
+    "consistency": "Stabilnost",
+    "bikeSetup": "Postavka bicikla",
+    "reliability": "Pouzdanost",
+    "racePlanning": "Planiranje utrke",
+    "teamControl": "Kontrola tima",
+    "evaluation": "Procena",
+    "network": "Mreža",
+    "accuracy": "Preciznost"
+  },
+  "premium": {
+    "analysisTitle": "Premium analiza osoblja",
+    "analysisDescription": "Pogledajte zajednički uticaj osoblja, prosječne profile vještina i rezultate završenih kurseva.",
+    "detailDescription": "Pogledajte izračunati kvalitet trenerskog rada, ograničenja infrastrukture, poređenja osoblja i preporučene pravce razvoja.",
+    "loading": "Učitavanje Premium pristupa"
+  },
+  "analysis": {
+    "averageSkillProfile": "Prosečan profil vještina",
+    "averageSkillProfileSubtitle": "Prosječne vrijednosti osoblja trenutno dodeljenog ovoj grupi uticaja.",
+    "noStaff": "Još nema osoblja dodeljenog ovoj grupi uticaja, pa nema aktivnog profila vještina za prikaz.",
+    "whereRoleHelps": "Gde ova uloga pomaže",
+    "whereRoleHelpsSubtitle": "Glavni sistemi igre na koje ova uloga utiče.",
+    "recentCourseResults": "Nedavni rezultati kurseva",
+    "recentCourseResultsSubtitle": "Završeni kursevi razvoja osoblja i primenjena poboljšanja atributa."
+  },
+  "quality": {
+    "facility": "Objekat",
+    "scoutingQuality": "Kvalitet skautinga",
+    "scoutAbility": "Sposobnost skauta",
+    "currentReportQuality": "Trenutni kvalitet izvještaja",
+    "reportTime": "Vrijeme izrade izvještaja",
+    "scoutingOffice": "Skauting kancelarija",
+    "coachingQuality": "Kvalitet trenerskog rada",
+    "coachAbility": "Sposobnost trenera",
+    "trainingQuality": "Kvalitet treninga",
+    "developmentSupport": "Podrška razvoju",
+    "trainerAbility": "Sposobnost trenera",
+    "sessionQuality": "Kvalitet trening sesije",
+    "loadManagement": "Upravljanje opterećenjem",
+    "medicalQuality": "Medicinski kvalitet",
+    "medicalAbility": "Medicinska sposobnost",
+    "injuryPrevention": "Prevencija ozljeda",
+    "returnToFitness": "Povratak u formu",
+    "recoveryQuality": "Kvalitet oporavka",
+    "recoveryAbility": "Sposobnost oporavka",
+    "rehabilitationQuality": "Kvalitet rehabilitacije",
+    "recoverySpeed": "Brzina oporavka",
+    "nutritionQuality": "Kvalitet ishrane",
+    "nutritionAbility": "Znanje o ishrani",
+    "recoverySupport": "Podrška oporavku",
+    "consistencySupport": "Podrška stabilnosti forme",
+    "technicalQuality": "Tehnički kvalitet",
+    "technicalAbility": "Tehnička sposobnost",
+    "bikeSetupQuality": "Kvalitet postavke bicikla",
+    "reliabilitySupport": "Podrška pouzdanosti",
+    "tacticalQuality": "Taktički kvalitet",
+    "directorAbility": "Sposobnost sportskog direktora",
+    "racePlanQuality": "Kvalitet plana utrke",
+    "teamControl": "Kontrola tima",
+    "raceEngineRole": "Uloga u sistemu utrke",
+    "prepared": "Spreman",
+    "youthCoachingQuality": "Kvalitet rada sa mladima",
+    "youthCoachAbility": "Sposobnost trenera mladih",
+    "talentDevelopment": "Razvoj talenata",
+    "raceReadiness": "Spremnost za utrku"
+  },
+  "detail": {
+    "currentCourse": "Trenutni kurs",
+    "courseInProgress": "Kurs u toku: {{course}}. Završetak: {{date}}.",
+    "courseCannotCancel": "Kurs se ne može otkazati nakon što je započet. Bonusi ove uloge su pauzirani do završetka.",
+    "lastCourseGains": "Poboljšanja poslednjeg kursa",
+    "extendContract": "Produži ugovor",
+    "courseInProgressButton": "Kurs je u toku",
+    "sendOnCourse": "Pošalji na kurs",
+    "release": "Otpusti",
+    "scoutingReports": "Skauting izvještaji"
+  },
+  "release": {
+    "title": "Otpusti člana osoblja",
+    "subtitle": "Potvrdite ovu odluku pre nastavka.",
+    "aboutToRelease": "Spremate se da otpustite {{name}}",
+    "role": "Uloga: {{role}}",
+    "weeklyWage": "Tjedna plaća: {{value}}",
+    "age": "Godine: {{value}}",
+    "compensation": "Naknada za otpuštanje (6 nedelja): {{value}}",
+    "warning": "Član osoblja će odmah biti uklonjen iz tima. Bonusi ovog mjesta prestaće dok ne angažujete zamenu.",
+    "payment": "Klub će platiti jednokratnu naknadu za otpuštanje u visini šest nedeljnih plaća.",
+    "releasing": "Otpuštanje...",
+    "confirm": "Potvrdi otpuštanje"
+  },
+  "contract": {
+    "title": "Produži ugovor",
+    "subtitle": "Pregovarajte o novom ugovoru za {{name}}.",
+    "currentSalary": "Trenutna plaća",
+    "currentContract": "Trenutni ugovor",
+    "extensionLength": "Dužina produženja",
+    "oneSeason": "1 sezona",
+    "twoSeasons": "2 sezone",
+    "loadingQuote": "Učitavanje ponude ugovora...",
+    "requestedSalary": "Tražena plaća",
+    "raiseRequest": "Traženo povećanje: {{value}}%",
+    "minimumAcceptable": "Minimalno prihvatljivo",
+    "newContractTarget": "Novi cilj ugovora",
+    "staffInterest": "Interesovanje člana osoblja",
+    "interestUnknown": "Interesovanje nije poznato",
+    "chanceRenew": "Šansa za produženje",
+    "chanceUnknown": "Šansa nije poznata",
+    "veryLikely": "Vrlo vjerojatno prihvata",
+    "possible": "Moguće, ali može tražiti više",
+    "unlikely": "Malo vjerojatno sa ovom platom",
+    "veryUnlikely": "Vrlo malo vjerojatno",
+    "noQuote": "Ponuda nije dostupna.",
+    "salaryOffer": "Vaša ponuda plaće",
+    "salaryPlaceholder": "Unesite nedeljnu plaću",
+    "submitting": "Slanje...",
+    "submit": "Pošalji ponudu",
+    "extended": "Ugovor člana osoblja je uspješno produžen.",
+    "discussionCompleted": "Pregovori o ugovoru su završeni."
+  },
+  "course": {
+    "title": "Kurs za osoblje",
+    "subtitle": "Planirajte razvojni rad za {{name}}.",
+    "liveStart": "Pokretanje kursa",
+    "liveStartText": "Pokretanjem kursa kreira se stvarni zapis kursa za osoblje. Poboljšanja atributa primenjuju se kada backend proces završi kurs. Kurs se ne može otkazati nakon rezervacije. Bonusi ove uloge su pauzirani dok kurs ne bude završen.",
+    "staffAge": "Godine člana osoblja",
+    "start": "Pokreni kurs",
+    "starting": "Pokretanje...",
+    "none": "Za ovu ulogu još nisu podešene opcije kurseva. Time se sprečava pokretanje pogrešnog kursa dok odgovarajući backend kodovi ne budu dodati.",
+    "back": "Nazad na osoblje"
+  },
+  "information": {
+    "title": "Objašnjenje pozicija osoblja",
+    "subtitle": "Odgovornosti, važni atributi i trenutna povezanost sa sistemima igre za svaku ulogu osoblja.",
+    "close": "Zatvori informacije o pozicijama osoblja",
+    "importantAttributes": "Važni atributi",
+    "gameplayConnection": "Povezanost sa igrom",
+    "live": "Aktivno",
+    "coreLive": "Osnovni sistem aktivan",
+    "trainingLive": "Trening aktivan",
+    "plannedConnection": "Planirana integracija"
+  },
+  "impactI18n": {
+    "assigned": "Dodijeljeno",
+    "openSlotAvailable": "Slobodno mjesto je dostupno",
+    "currentBasicCapReached": "Dostignut je osnovni limit",
+    "forGroup": "Za ovu grupu uticaja",
+    "activeCourses": "Aktivni kursevi",
+    "coursesPaused": "Bonusi su delimično pauzirani dok se osoblje usavršava",
+    "fillVacancies": "Koristite Transferi → Osoblje da popunite slobodna mjesta",
+    "combinedTitle": "Zajednički uticaj tima",
+    "combinedMedical": "Zajednička medicinska podrška doktora tima, fizioterapeuta i nutricioniste.",
+    "combinedCoach": "Trenerski efekat koji sistem primenjuje preko člana osoblja {{name}}.",
+    "combinedCurrent": "Trenutni zajednički uticaj aktivnog osoblja u ovoj grupi.",
+    "coachingTitle": "Zajednički uticaj trenerskog osoblja",
+    "medicalTitle": "Zajednički uticaj medicinskog osoblja",
+    "mechanicTitle": "Uticaj mehaničarskog osoblja",
+    "directorTitle": "Uticaj sportskih direktora",
+    "u23Title": "Uticaj U23 trenerskog osoblja",
+    "scoutingTitle": "Uticaj skauting osoblja"
+  },
+  "scoutingExplainer": {
+    "title": "Kako funkcioniše kvalitet skautinga",
+    "body": "Atributi skauta određuju njegovu stvarnu sposobnost. Nivo Skauting kancelarije može ograničiti konačni kvalitet izvještaja, pa i veoma dobar skaut može praviti samo osnovne izveštaje dok se kancelarija ne unapredi.",
+    "abilityLevels": "Nivoi sposobnosti skauta",
+    "reportLevels": "Nivoi kvaliteta izvještaja",
+    "levelScale": "Osnovno → Solidno → Jako → Elitno",
+    "thresholds": "Pragovi sposobnosti skauta",
+    "thresholdValues": "Osnovno: ispod 55 · Solidno: 55–69 · Jako: 70–84 · Elitno: 85+",
+    "upgrade": "Bolja Skauting kancelarija otključava viši kvalitet izvještaja. Trenutni nivo: Lv {{level}}.",
+    "upgradeNoLevel": "Bolja Skauting kancelarija otključava viši kvalitet izvještaja.",
+    "limited": "Ograničeno nivoom Skauting kancelarije Lv {{level}}.",
+    "basicWithScore": "Osnovno ({{score}})",
+    "solidWithScore": "Solidno ({{score}})",
+    "strongWithScore": "Jako ({{score}})",
+    "eliteWithScore": "Elitno ({{score}})"
+  },
+  "effectText": {
+    "scoutingAccuracy": "+{{value}}% preciznosti skautinga",
+    "prospectVisibility": "+{{value}}% vidljivosti potencijalnih vozača",
+    "combinedScoutingAccuracy": "+{{value}}% zajedničke preciznosti skautinga",
+    "combinedProspectVisibility": "+{{value}}% zajedničke vidljivosti potencijalnih vozača",
+    "futureTransferYouth": "U budućnosti: informacije o transferima i izvještaji o mladim vozačima",
+    "futureBroaderTransferYouth": "U budućnosti: šire informacije o transferima i mladim vozačima",
+    "scoutingOfficeCap": "Skauting kancelarija Lv {{level}} ograničava deo bonusa skauta i analitičara."
+  },
+  "courseOptions": {
+    "coach_elite_methodology": {
+      "title": "Kurs elitne metodologije",
+      "description": "Poboljšava strukturu treninga i ukupni kvalitet napretka vozača.",
+      "focus": "Trening + razvoj"
+    },
+    "coach_recovery_planning": {
+      "title": "Seminar planiranja oporavka",
+      "description": "Fokus na balansiranju opterećenja, sprečavanju umora i planiranju mikro-ciklusa.",
+      "focus": "Planiranje oporavka"
+    },
+    "coach_youth_programme": {
+      "title": "Program razvoja mladih",
+      "description": "Specijalizovan kurs za bolji rad sa mladim vozačima i vozačima u razvoju.",
+      "focus": "Razvoj mladih"
+    },
+    "trainer_daily_training_methods": {
+      "title": "Metode svakodnevnog treninga",
+      "description": "Poboljšava svakodnevno sprovođenje treninga, strukturu sesija i doslednost rada sa vozačima.",
+      "focus": "Dnevni trening + efikasnost"
+    },
+    "trainer_load_management": {
+      "title": "Radionica upravljanja opterećenjem",
+      "description": "Fokusira se na balansiranje opterećenja, smanjenje rizika od preopterećenja i bolji oporavak između sesija.",
+      "focus": "Efikasnost + iskustvo"
+    },
+    "trainer_potential_growth": {
+      "title": "Program razvoja potencijala",
+      "description": "Specijalizovan kurs za dugoročni razvoj vozača i bolju podršku rastu potencijala.",
+      "focus": "Razvoj potencijala + dnevni trening"
+    },
+    "doctor_sports_medicine": {
+      "title": "Kurs sportske medicine",
+      "description": "Poboljšava kvalitet dijagnoze i odluke o tretmanu prilagođene sportistima.",
+      "focus": "Dijagnoza + oporavak"
+    },
+    "doctor_prevention_lab": {
+      "title": "Laboratorija prevencije ozljeda",
+      "description": "Fokusira se na procenu rizika i preventivne protokole.",
+      "focus": "Prevencija"
+    },
+    "doctor_rehab_acceleration": {
+      "title": "Program ubrzane rehabilitacije",
+      "description": "Napredno planiranje rehabilitacije za brži povratak vozača.",
+      "focus": "Brzina oporavka"
+    },
+    "physio_rehab_methods": {
+      "title": "Metode rehabilitacije",
+      "description": "Poboljšava planiranje rehabilitacije, brzinu oporavka i povratak pune spremnosti.",
+      "focus": "Rehabilitacija + brzina oporavka"
+    },
+    "physio_load_recovery": {
+      "title": "Radionica oporavka od opterećenja",
+      "description": "Fokusira se na smanjenje uticaja umora i bolji oporavak posle treninga.",
+      "focus": "Brzina oporavka + iskustvo"
+    },
+    "physio_injury_return": {
+      "title": "Program povratka u punu spremnost",
+      "description": "Specijalizovan program za efikasniji oporavak vozača od ozljeda.",
+      "focus": "Rehabilitacija + iskustvo"
+    },
+    "nutritionist_race_nutrition": {
+      "title": "Planiranje ishrane za utrku",
+      "description": "Poboljšava plan ishrane na utrci, stabilnost vozača i podršku oporavku.",
+      "focus": "Plan ishrane + doslednost"
+    },
+    "nutritionist_recovery_diet": {
+      "title": "Radionica ishrane za oporavak",
+      "description": "Fokusira se na režime ishrane koji podržavaju svakodnevni oporavak od umora.",
+      "focus": "Podrška oporavku + ishrana"
+    },
+    "nutritionist_endurance_fueling": {
+      "title": "Program ishrane za izdržljivost",
+      "description": "Napredno planiranje ishrane za dugoročnu izdržljivost vozača i kvalitet treninga.",
+      "focus": "Ishrana + dugoročna podrška"
+    },
+    "mechanic_tt_setup": {
+      "title": "Kurs postavke za hronometar",
+      "description": "Napredno aerodinamičko postavka i optimizacija TT pozicije.",
+      "focus": "Postavka"
+    },
+    "mechanic_reliability": {
+      "title": "Radionica pouzdanosti",
+      "description": "Poboljšava stabilnost opreme i pouzdanost na dan utrke.",
+      "focus": "Pouzdanost"
+    },
+    "mechanic_weather_adaptation": {
+      "title": "Trening prilagođavanja vremenu",
+      "description": "Fokusira se na tehničku podršku u mokrim i promenljivim uvjetima.",
+      "focus": "Podrška u uvjetima"
+    },
+    "director_tactics": {
+      "title": "Seminar taktike utrke",
+      "description": "Poboljšava taktičke odluke, planiranje tempa i upravljanje utrkom.",
+      "focus": "Taktika"
+    },
+    "director_leadership": {
+      "title": "Intenzivni kurs liderstva",
+      "description": "Jača motivaciju, liderstvo i komunikaciju unutar tima.",
+      "focus": "Liderstvo"
+    },
+    "director_stage_strategy": {
+      "title": "Program strategije etapa",
+      "description": "Specijalizovano taktičko planiranje za etapne utrke i podršku generalnom plasmanu.",
+      "focus": "Strategija etapa"
+    },
+    "u23_youth_development_methods": {
+      "title": "Metode razvoja mladih",
+      "description": "Poboljšava strukturu treninga mladih, planiranje razvoja i dugoročni napredak vozača.",
+      "focus": "Razvoj mladih + trening mladih"
+    },
+    "u23_talent_pathway_programme": {
+      "title": "Program razvoja talenata",
+      "description": "Fokusira se na prepoznavanje razvojnih puteva i bolju podršku rastu potencijala.",
+      "focus": "Razvoj potencijala + iskustvo"
+    },
+    "u23_race_readiness_course": {
+      "title": "U23 kurs pripreme za utrku",
+      "description": "Priprema mlade vozače za strukturu dana utrke, disciplinu i taktički razvoj.",
+      "focus": "Trening mladih + liderstvo"
+    },
+    "scout_evaluation": {
+      "title": "Kurs preciznosti procene",
+      "description": "Poboljšava procenu vozača i kvalitet izvještaja.",
+      "focus": "Procena"
+    },
+    "scout_networking": {
+      "title": "Kamp razvoja skauting mreže",
+      "description": "Gradi kontakte i poboljšava pokrivenost pri pronalaženju talenata.",
+      "focus": "Mreža"
+    },
+    "scout_data_analysis": {
+      "title": "Analiza podataka o učinku",
+      "description": "Poboljšava analitički pregled vozača i izvještaja za pripremu utrke.",
+      "focus": "Preciznost + analiza"
+    }
+  }
+}
