@@ -1,0 +1,41 @@
+name: Report Croatian management polish
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-report-croatian-management-polish.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Generate hypothetical Croatian management state
+        run: python .github/scripts/polish_croatian_management_20260830.py
+      - name: Capture terminology report
+        run: |
+          python .github/scripts/validate_croatian_management_20260830.py > .github/croatian_management_report.txt 2>&1 || true
+          cat .github/croatian_management_report.txt
+      - name: Restore locale files and commit report only
+        run: |
+          git checkout -- \
+            src/i18n/locales/hr/finance.json \
+            src/i18n/locales/hr/transfers.json \
+            src/i18n/locales/hr/riderProfile.json \
+            src/i18n/locales/hr/preferences.json \
+            src/i18n/locales/hr/preferencesDynamic.json \
+            src/i18n/locales/hr/notifications.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/croatian_management_report.txt
+          git commit -m 'Record Croatian management polish diagnostics'
+          git pull --rebase origin main
+          git push origin main
