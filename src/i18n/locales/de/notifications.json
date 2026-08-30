@@ -132,8 +132,8 @@
     "sportsDirector": "Direktor für Sport",
     "teamDoctor": "Teamarzt",
     "chiefMechanic": "Hauptmechaniker",
-    "scout": "Pfadfinder",
-    "scoutAnalyst": "Pfadfinder-Analyst",
+    "scout": "Scout",
+    "scoutAnalyst": "Scout / Analyst",
     "mechanic": "Mechanisch"
   },
   "common": {
@@ -268,7 +268,7 @@
     "activeScouting": "Aktive Scouting-Aufträge",
     "completes": "Abgeschlossen",
     "paid": "Bezahlt",
-    "recommendations": "Empfehlungen für Pfadfinder"
+    "recommendations": "Scout-Empfehlungen"
   },
   "templateLabels": {
     "facility": "Einrichtung",
@@ -396,7 +396,7 @@
     "STOCK": "Mitgliedstaat",
     "TRAINING": "Training",
     "CAMP": "Lager",
-    "SCOUT": "Pfadfinder",
+    "SCOUT": "Scout",
     "REPORT": "Bericht",
     "EQUIPMENT": "Ausrüstung",
     "INFRASTRUCTURE": "Infrastruktur",
@@ -434,7 +434,7 @@
     "NEEDS": "Bedarf",
     "OPEN": "Öffnen",
     "REMINDER": "Erinnerung",
-    "MISSED": "Vermißt",
+    "MISSED": "Verpasst",
     "PENALTY": "Strafen",
     "HEALTH": "Gesundheit",
     "INJURY": "Verletzung",

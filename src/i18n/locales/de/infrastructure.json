@@ -251,7 +251,7 @@
     "closeAria": "Dialog für Asset-Aktion schließen",
     "repairAsset": "Asset reparieren",
     "sellAsset": "Asset verkaufen",
-    "levelAsset": "Level {{level}} · {{asset}}",
+    "levelAsset": "Stufe {{level}} · {{asset}}",
     "calculating": "Angebot wird berechnet...",
     "repairQuote": "Reparaturangebot",
     "currentCondition": "Aktueller Zustand",

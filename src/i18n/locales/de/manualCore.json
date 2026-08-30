@@ -310,7 +310,7 @@
       "overview": "Die Training, die Erholung, die Scouting, die Mechanik, die Unterstützung und die Betriebsführung des Personals verbessern.",
       "facts": [
         "Aufgaben",
-        "Trainer, Obertrainer, U23 Cheftrainer, Teamarzt, Physio, Ernährungswissenschaftler, Mechaniker, Sportdirektor, Pfadfinder / Analyst",
+        "Trainer, Cheftrainer, U23-Cheftrainer, Teamarzt, Physiotherapeut, Ernährungsberater, Mechaniker, Sportdirektor, Scout / Analyst",
         "Personalstatistik",
         "Kompetenz, Erfahrung, Potenzial, Führung, Effizienz, Loyalität",
         "Kurse",
@@ -467,7 +467,7 @@
         "Jahreszeit und Rennen",
         "Jahreszeitenfilter",
         "Rennen, Trainingscamps, Veranstaltungen, Urlaub",
-        "Status der Rasse",
+        "Rennstatus",
         "Nicht offen, offen, geschlossen, Rennen aktiv, Rennen beendet, abgebrochen",
         "Einreihung",
         "Allgemein, Punkte, Berg, jung, Team"
@@ -491,11 +491,11 @@
     },
     "racePreparation": {
       "title": "Vorbereitung der Rennen und Stage Plans",
-      "subtitle": "Akzeptierte Rassen, Race Plan, Stage Plans und Bereitschaft.",
+      "subtitle": "Angenommene Rennen, Race Plan, Stage Plans und Bereitschaft.",
       "overview": "Die Rennvorbereitung verwandelt ein akzeptiertes Rennen in einen echten Plan. Es ist eine der wichtigsten Seiten des Spiels, da der Rennmotor von der Fahrerwahl, dem Personal, den Vermögenswerten, der Ausrüstung, den Vorräten und der Etappentaktik abhängt.",
       "facts": [
         "Tabulatoren",
-        "Akzeptierte Rassen, Race Plan, Stage Plans",
+        "Angenommene Rennen, Race Plan, Stage Plans",
         "Rennpersonal",
         "Sportdirektor, Team Doctor, Physio, Mechanik",
         "Rennvermögen",
@@ -595,7 +595,7 @@
         "Entwurf, offen, anhängig, angenommen, abgelehnt, abgelaufen, abgelehnt, abgeschlossen, abgelehnt",
         "Vertragsjahre in der Transferverhandlungs-UI",
         "1–5 Jahre",
-        "Pfadfinder",
+        "Scout",
         "Alle, neu, überprüft"
       ],
       "details": [

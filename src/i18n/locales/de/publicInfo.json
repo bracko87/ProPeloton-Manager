@@ -9,7 +9,7 @@
   },
   "about": {
     "eyebrow": "Über ProPeloton Manager",
-    "title": "Baue dein Fahrrad-Vermächtnis auf.",
+    "title": "Bauen Sie Ihr Radsport-Vermächtnis auf.",
     "intro": "ProPeloton Manager ist ein Online-Rad-Management-Spiel, bei dem Spieler ein Radteam erstellen und entwickeln, Rennkalender vorbereiten, Fahrer verwalten, Finanzen handhaben, Transfers verhandeln, Rankings verfolgen und über eine lange Saison-basierte Fahrradwelt konkurrieren.",
     "learn": "Lernen Sie, wie man spielt",
     "whatTitle": "Worum es beim Spiel geht",
@@ -22,7 +22,7 @@
     "seasonTitle": "Saisonfortschritt",
     "seasonText": "Teams verdienen Punkte, bestiegen Rangliste, verwalten Sponsoren, zahlen Gehälter und planen Aufstieg, Abstieg und langfristiges Clubwachstum.",
     "developmentTitle": "Entwicklungsstand",
-    "developmentText": "ProPeloton Manager Spielsysteme, Balance, Rennsimulation, Benutzeroberfläche, Benachrichtigungen und Wirtschaftlichkeitswerte können sich im Laufe der Spielentwicklung weiter ändern. Ziel ist es, ein tiefes Fahrradmanagererlebnis zu schaffen, das fair, verständlich und nachhaltig für Spieler über viele Jahreszeiten ist."
+    "developmentText": "Die Spielsysteme, Balance, Rennsimulation, Benutzeroberfläche, Benachrichtigungen und Wirtschaftswerte von ProPeloton Manager können sich während der Entwicklung weiter verändern. Ziel ist ein tiefgehendes Radsport-Manager-Erlebnis, das über viele Saisons hinweg fair, verständlich und nachhaltig bleibt."
   },
   "how": {
     "eyebrow": "Wie man spielt",
@@ -118,7 +118,7 @@
   },
   "privacy": {
     "eyebrow": "Datenschutz",
-    "heroTitle": "Deine Privatsphäre ist wichtig.",
+    "heroTitle": "Ihre Privatsphäre ist wichtig.",
     "heroText": "Erfahren Sie, welche Informationen ProPeloton Manager erfassen kann, wie sie verwendet werden und wie Konto-, Spiel-, Premium- und Zahlungsdaten verarbeitet werden.",
     "title": "Datenschutzbestimmungen für ProPeloton Manager",
     "updated": "Letzte Aktualisierung: Juli 2026",

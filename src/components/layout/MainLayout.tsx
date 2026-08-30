@@ -30,6 +30,7 @@ import React, {
   useRef,
 } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import Footer from './Footer'
@@ -75,6 +76,7 @@ const INACTIVITY_ACTIVITY_WRITE_THROTTLE_MS = 5 * 1000
 const LAST_ACTIVITY_STORAGE_KEY = 'ppm-last-user-activity'
 
 export default function MainLayout({ children }: MainLayoutProps) {
+  const { t } = useTranslation('appShell')
   const [collapsed, setCollapsed] = useState(false)
   const [coinBalance, setCoinBalance] = useState(0)
 
@@ -653,13 +655,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
             <div className="min-w-0">
               <div className="text-base font-bold text-slate-900">
-                You will be logged out soon
+                {t('inactivity.title')}
               </div>
 
               <p className="mt-1 text-sm leading-6 text-slate-600">
-                Your game has been inactive for almost 30 minutes.
-                You will be logged out automatically in approximately
-                one minute.
+                {t('inactivity.body')}
               </p>
             </div>
           </div>
@@ -669,7 +669,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             onClick={() => markUserActive(true)}
             className="mt-4 w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
           >
-            Stay logged in
+            {t('inactivity.stay')}
           </button>
         </div>
       ) : null}

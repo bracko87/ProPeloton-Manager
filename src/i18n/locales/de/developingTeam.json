@@ -8,7 +8,8 @@
     "currentCompetition": "Aktueller Wettbewerb",
     "loadingCompetition": "Wettbewerb wird geladen…",
     "competitionUnavailable": "Wettbewerb nicht verfügbar",
-    "noRiders": "Für das Entwicklungsteam wurden noch keine Fahrer gefunden."
+    "noRiders": "Für das Entwicklungsteam wurden noch keine Fahrer gefunden.",
+    "unlockInPreferences": "Aktivieren Sie zuerst das Entwicklungsteam in den Einstellungen."
   },
   "movement": {
     "firstSquadUnavailable": "Die erste Mannschaft ist nicht verfügbar.",

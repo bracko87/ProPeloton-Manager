@@ -132,5 +132,33 @@
   "coins": {
     "coins": "{{count}} Coins",
     "coin": "{{count}} Coins"
+  },
+  "kitDesigner": {
+    "tableNotReady": "Die Teamtrikots sind noch nicht verfügbar. Sie können das Trikot trotzdem ansehen und versuchen, es zu speichern.",
+    "saved": "Trikot gespeichert.",
+    "saveFailed": "Das Trikot konnte nicht gespeichert werden.",
+    "name": "Trikotname",
+    "namePlaceholder": "Heim",
+    "pattern": "Muster",
+    "solid": "Einfarbig",
+    "stripes": "Längsstreifen",
+    "hoops": "Querstreifen",
+    "sash": "Diagonaler Balken",
+    "primary": "Primärfarbe",
+    "secondary": "Sekundärfarbe",
+    "sleeves": "Ärmel",
+    "collar": "Kragen",
+    "trim": "Besatz",
+    "numberColor": "Nummer",
+    "sponsorText": "Sponsorentext",
+    "defaultSponsor": "IHR CLUB",
+    "shirtNumber": "Trikotnummer",
+    "saving": "Wird gespeichert…",
+    "loading": "Wird geladen…",
+    "save": "Trikot speichern",
+    "livePreview": "Live-Vorschau",
+    "previewDescription": "So wird Ihr Trikot im Spiel angezeigt",
+    "nameValue": "Name: {{name}}",
+    "previewAria": "Vorschau des Teamtrikots"
   }
 }

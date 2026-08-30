@@ -132,5 +132,33 @@
   "coins": {
     "coins": "{{count}} coins",
     "coin": "{{count}} coin"
+  },
+  "kitDesigner": {
+    "tableNotReady": "Team kits are not ready yet. You can still preview the kit and try saving it.",
+    "saved": "Kit saved.",
+    "saveFailed": "The kit could not be saved.",
+    "name": "Kit name",
+    "namePlaceholder": "Home",
+    "pattern": "Pattern",
+    "solid": "Solid",
+    "stripes": "Stripes",
+    "hoops": "Hoops",
+    "sash": "Sash",
+    "primary": "Primary",
+    "secondary": "Secondary",
+    "sleeves": "Sleeves",
+    "collar": "Collar",
+    "trim": "Trim",
+    "numberColor": "Number",
+    "sponsorText": "Sponsor text",
+    "defaultSponsor": "YOUR CLUB",
+    "shirtNumber": "Shirt number",
+    "saving": "Saving…",
+    "loading": "Loading…",
+    "save": "Save kit",
+    "livePreview": "Live preview",
+    "previewDescription": "How your kit will appear in-game",
+    "nameValue": "Name: {{name}}",
+    "previewAria": "Team jersey preview"
   }
 }

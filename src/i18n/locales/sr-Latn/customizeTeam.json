@@ -132,5 +132,33 @@
   "coins": {
     "coins": "{{count}} novčića",
     "coin": "{{count}} novčić"
+  },
+  "kitDesigner": {
+    "tableNotReady": "Dresovi tima još nisu spremni. I dalje možete pregledati dres i pokušati da ga sačuvate.",
+    "saved": "Dres je sačuvan.",
+    "saveFailed": "Dres nije mogao da se sačuva.",
+    "name": "Naziv dresa",
+    "namePlaceholder": "Domaći",
+    "pattern": "Šara",
+    "solid": "Jednobojno",
+    "stripes": "Vertikalne pruge",
+    "hoops": "Horizontalne pruge",
+    "sash": "Dijagonalna traka",
+    "primary": "Primarna",
+    "secondary": "Sekundarna",
+    "sleeves": "Rukavi",
+    "collar": "Kragna",
+    "trim": "Detalji",
+    "numberColor": "Broj",
+    "sponsorText": "Tekst sponzora",
+    "defaultSponsor": "VAŠ KLUB",
+    "shirtNumber": "Broj na dresu",
+    "saving": "Čuvanje…",
+    "loading": "Učitavanje…",
+    "save": "Sačuvaj dres",
+    "livePreview": "Pregled uživo",
+    "previewDescription": "Ovako će vaš dres izgledati u igri",
+    "nameValue": "Naziv: {{name}}",
+    "previewAria": "Pregled dresa tima"
   }
 }

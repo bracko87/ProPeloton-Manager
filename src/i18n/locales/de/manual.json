@@ -443,7 +443,7 @@
       "facts": [
         {
           "label": "Aufgaben",
-          "value": "Trainer, Obertrainer, U23 Cheftrainer, Teamarzt, Physio, Ernährungswissenschaftler, Mechaniker, Sportdirektor, Pfadfinder / Analyst"
+          "value": "Trainer, Cheftrainer, U23-Cheftrainer, Teamarzt, Physiotherapeut, Ernährungsberater, Mechaniker, Sportdirektor, Scout / Analyst"
         },
         {
           "label": "Personalstatistik",
@@ -644,7 +644,7 @@
           "value": "Rennen, Trainingscamps, Veranstaltungen, Urlaub"
         },
         {
-          "label": "Status der Rasse",
+          "label": "Rennstatus",
           "value": "Nicht offen, offen, geschlossen, Rennen aktiv, Rennen beendet, abgebrochen"
         },
         {
@@ -664,7 +664,7 @@
     "race-preparation": {
       "category": "Kalender und Rennen",
       "title": "Vorbereitung der Rennen und Stage Plans",
-      "subtitle": "Akzeptierte Rassen, Race Plan, Stage Plans und Bereitschaft.",
+      "subtitle": "Angenommene Rennen, Race Plan, Stage Plans und Bereitschaft.",
       "overview": "Die Rennvorbereitung verwandelt ein akzeptiertes Rennen in einen echten Plan. Es ist eine der wichtigsten Seiten des Spiels, da der Rennmotor von der Fahrerwahl, dem Personal, den Vermögenswerten, der Ausrüstung, den Vorräten und der Etappentaktik abhängt.",
       "details": [
         "Akzeptierte Rennen zeigt Rennen, wo Ihr Team angenommen wurde und welchen Vorbereitungsstatus jedes Rennen hat.",
@@ -678,7 +678,7 @@
       "facts": [
         {
           "label": "Tabulatoren",
-          "value": "Akzeptierte Rassen, Race Plan, Stage Plans"
+          "value": "Angenommene Rennen, Race Plan, Stage Plans"
         },
         {
           "label": "Rennpersonal",
@@ -812,7 +812,7 @@
           "value": "1–5 Jahre"
         },
         {
-          "label": "Pfadfinder",
+          "label": "Scout",
           "value": "Alle, neu, überprüft"
         }
       ],
@@ -1366,7 +1366,7 @@
         "Heute räsen helfen Benutzern zu sehen, was jetzt passiert.",
         "Der nächste Zeitplan hilft, die Aufmerksamkeit in naher Zukunft zu planen.",
         "Weltnachrichten machen die Spielwelt aktiv.",
-        "Verwandte Links können Rassen oder andere Spielseiten öffnen.",
+        "Verwandte Links können Rennen oder andere Spielseiten öffnen.",
         "Erweiterten Text verwenden/detail Felder, wenn Benutzer mehr Kontext benötigen."
       ],
       "facts": [
@@ -1716,7 +1716,7 @@
         },
         {
           "label": "Technische/knowledge Rollen",
-          "value": "Mechaniker, Pfadfinder / Analyst, U23 Obertrainer"
+          "value": "Mechaniker, Scout / Analyst, U23-Cheftrainer"
         }
       ],
       "tips": [
@@ -2152,7 +2152,7 @@
           "value": "Zustand, Status, Anschaffungskosten, Reparaturangebot, Kaufangebot"
         },
         {
-          "label": "Einsatz von Rassen",
+          "label": "Renneinsatz",
           "value": "Ausgewählt in Race Plan Logistik/support"
         }
       ],
@@ -2214,7 +2214,7 @@
           "value": "Nicht offen, offen, geschlossen, Rennen aktiv, Rennen beendet, abgebrochen"
         },
         {
-          "label": "Daten zur Rasse",
+          "label": "Renndaten",
           "value": "Kategorie, Land, Stadt, Datum, Renntyp, Teamlimits, akzeptierte Teams"
         },
         {
@@ -2412,7 +2412,7 @@
         "Kletterspezialisten können eine GC Führungs- oder Zielbergstufen/classifications.",
         "Breakaway-Fahrer sollten für das Gelände und das Team Ziel ausgewählt werden. Ein schlechter Bergsteiger sollte nicht die Standard- KOM Jäger an einem harten Bergtag.",
         "Domestiques sind wertvoll, auch wenn ihre persönliche Zielposition schlecht ist, weil ihre Aufgabe ist es, einen anderen Fahrer zu unterstützen.",
-        "Rollen sollten auch Müdigkeit, Moral, Gesundheit und Rasse Schärfe, nicht nur rohe Fähigkeiten."
+        "Rollen sollten auch Ermüdung, Moral, Gesundheit und Race Sharpness berücksichtigen, nicht nur die reinen Fähigkeiten."
       ],
       "facts": [
         {
@@ -3137,7 +3137,7 @@
         "Ein Sprinter kann insgesamt hoch sein, verliert aber immer noch stark an einem Bergende.",
         "Ein Bergsteiger kann insgesamt stark sein, aber fehlt die Wohnung/sprint Qualitäten für ein paar Finish.",
         "Hohe Müdigkeit oder schlechte Gesundheit kann die effektive Leistungsfähigkeit zu reduzieren.",
-        "Geringe Moral oder schlechte Rasse Schärfe kann einen normalerweise starken Fahrer weniger effektiv.",
+        "Niedrige Moral oder geringe Race Sharpness können einen normalerweise starken Fahrer weniger effektiv machen.",
         "Eine falsche Rolle kann den Fahrer Energie ausgeben, die jemand anderes unterstützt, anstatt für persönliches Ergebnis zu radeln.",
         "Ausrüstung, Lieferungen und Teamunterstützung können auch das Endergebnis ändern."
       ],
@@ -3218,7 +3218,7 @@
           "value": "Normalerweise bei einem anderen Anspruch von 90% oder weniger"
         },
         {
-          "label": "Einsatz von Rassen",
+          "label": "Renneinsatz",
           "value": "Artikel muss verfügbar und über die entsprechende Einrichtung ausgewählt sein"
         }
       ],

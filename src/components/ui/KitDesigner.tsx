@@ -23,6 +23,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import JerseyPreview, { JerseyConfig, JerseyPattern } from './JerseyPreview'
 
@@ -30,14 +31,14 @@ import JerseyPreview, { JerseyConfig, JerseyPattern } from './JerseyPreview'
  * makeDefaultConfig
  * Create sensible jersey defaults using the team's identity colors.
  */
-const makeDefaultConfig = (primary: string, secondary: string): JerseyConfig => ({
+const makeDefaultConfig = (primary: string, secondary: string, sponsorText: string): JerseyConfig => ({
   primaryColor: primary,
   secondaryColor: secondary,
   sleeveColor: '#f8fafc',
   collarColor: '#111827',
   trimColor: '#cbd5e1',
   pattern: 'stripes',
-  sponsorText: 'YOUR CLUB',
+  sponsorText,
   number: '10',
   numberColor: '#ffffff',
 })
@@ -57,9 +58,10 @@ export function KitDesigner({
   primaryColor: string
   secondaryColor: string
 }): JSX.Element {
+  const { t } = useTranslation('customizeTeam')
   const [name, setName] = useState('Home')
   const [config, setConfig] = useState<JerseyConfig>(
-    makeDefaultConfig(primaryColor, secondaryColor),
+    makeDefaultConfig(primaryColor, secondaryColor, t('kitDesigner.defaultSponsor')),
   )
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -106,7 +108,7 @@ export function KitDesigner({
       if (!active) return
 
       if (error) {
-        setMessage('Team kits table not ready yet. You can still preview and try saving.')
+        setMessage(t('kitDesigner.tableNotReady'))
         setLoading(false)
         return
       }
@@ -124,7 +126,7 @@ export function KitDesigner({
     return () => {
       active = false
     }
-  }, [supabase, teamId])
+  }, [supabase, teamId, t])
 
   /**
    * saveKit
@@ -147,7 +149,12 @@ export function KitDesigner({
     )
 
     setSaving(false)
-    setMessage(error ? error.message : 'Kit saved.')
+    if (error) {
+      console.error('Failed to save kit', error)
+      setMessage(t('kitDesigner.saveFailed'))
+    } else {
+      setMessage(t('kitDesigner.saved'))
+    }
   }
 
   return (
@@ -160,32 +167,32 @@ export function KitDesigner({
         className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
       >
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Kit name</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">{t('kitDesigner.name')}</label>
           <input
             value={name}
             onChange={e => setName(e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-0 focus:border-slate-500"
-            placeholder="Home"
+            placeholder={t('kitDesigner.namePlaceholder')}
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Pattern</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">{t('kitDesigner.pattern')}</label>
           <select
             value={config.pattern}
             onChange={e => update('pattern', e.target.value as JerseyPattern)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
           >
-            <option value="solid">Solid</option>
-            <option value="stripes">Stripes</option>
-            <option value="hoops">Hoops</option>
-            <option value="sash">Sash</option>
+            <option value="solid">{t('kitDesigner.solid')}</option>
+            <option value="stripes">{t('kitDesigner.stripes')}</option>
+            <option value="hoops">{t('kitDesigner.hoops')}</option>
+            <option value="sash">{t('kitDesigner.sash')}</option>
           </select>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm font-medium text-slate-700">
-            Primary
+            {t('kitDesigner.primary')}
             <input
               type="color"
               value={config.primaryColor}
@@ -195,7 +202,7 @@ export function KitDesigner({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Secondary
+            {t('kitDesigner.secondary')}
             <input
               type="color"
               value={config.secondaryColor}
@@ -205,7 +212,7 @@ export function KitDesigner({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Sleeves
+            {t('kitDesigner.sleeves')}
             <input
               type="color"
               value={config.sleeveColor}
@@ -215,7 +222,7 @@ export function KitDesigner({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Collar
+            {t('kitDesigner.collar')}
             <input
               type="color"
               value={config.collarColor}
@@ -225,7 +232,7 @@ export function KitDesigner({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Trim
+            {t('kitDesigner.trim')}
             <input
               type="color"
               value={config.trimColor}
@@ -235,7 +242,7 @@ export function KitDesigner({
           </label>
 
           <label className="block text-sm font-medium text-slate-700">
-            Number
+            {t('kitDesigner.numberColor')}
             <input
               type="color"
               value={config.numberColor}
@@ -246,18 +253,18 @@ export function KitDesigner({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Sponsor text</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">{t('kitDesigner.sponsorText')}</label>
           <input
             value={config.sponsorText ?? ''}
             onChange={e => update('sponsorText', e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-            placeholder="YOUR CLUB"
+            placeholder={t('kitDesigner.defaultSponsor')}
             maxLength={18}
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Shirt number</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">{t('kitDesigner.shirtNumber')}</label>
           <input
             value={config.number ?? ''}
             onChange={e => update('number', e.target.value.replace(/\D/g, '').slice(0, 2))}
@@ -271,7 +278,7 @@ export function KitDesigner({
           disabled={!canSave}
           className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {saving ? 'Saving…' : loading ? 'Loading…' : 'Save kit'}
+          {saving ? t('kitDesigner.saving') : loading ? t('kitDesigner.loading') : t('kitDesigner.save')}
         </button>
 
         {message ? <p className="text-sm text-slate-600">{message}</p> : null}
@@ -280,10 +287,10 @@ export function KitDesigner({
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-slate-700">Live preview</div>
-            <div className="text-xs text-slate-500">How your kit will appear in-game</div>
+            <div className="text-sm font-medium text-slate-700">{t('kitDesigner.livePreview')}</div>
+            <div className="text-xs text-slate-500">{t('kitDesigner.previewDescription')}</div>
           </div>
-          <div className="text-xs text-slate-400">Name: {name}</div>
+          <div className="text-xs text-slate-400">{t('kitDesigner.nameValue', { name })}</div>
         </div>
 
         <div className="flex items-center justify-center">

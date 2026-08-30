@@ -79,7 +79,7 @@
         "Die Listen laufen bis zum Spieldatum ab."
       ],
       "tips": [
-        "Überprüfe das Gehalt, bevor du ein großes Transferangebot machst."
+        "Prüfen Sie das Gehalt, bevor Sie ein großes Transferangebot abgeben."
       ]
     },
     "freeAgentsDeep": {
@@ -88,7 +88,7 @@
       "overview": "Vertragslose Fahrer benötigen kein Angebot an einen verkaufenden Club, doch die Vertragsverhandlung bleibt entscheidend.",
       "facts": [
         "Verhandlungen",
-        "Gehalt, Dauer, Signierbonus, Agentengebühr und Stufenanpassung"
+        "Gehalt, Laufzeit, Unterschriftsbonus, Agentengebühr und Stufenanpassung"
       ],
       "details": [
         "Vertragslose Fahrer können günstiger sein, weil keine Ablösesumme anfällt.",
@@ -140,7 +140,7 @@
         "Die Notizen stellen einen Zusammenhang für die Scouting dar."
       ],
       "tips": [
-        "Pfadfinder vor teuren Unterzeichnungen."
+        "Scouten Sie Fahrer vor teuren Verpflichtungen."
       ]
     },
     "staffMarketDeep": {

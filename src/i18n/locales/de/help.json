@@ -99,7 +99,7 @@
     "a3": "Ein Spieltag entspricht 12 Stunden im realen Leben. Zwei Spieltage entsprechen einem Realitätstag. Dies ist wichtig für Rennplanfenster, Fahrer-Einsendungsfristen, Etappenplanfristen, Trainingslager und andere zeitbasierte Spielsysteme.",
     "q4": "Wofür wird Race Preparation angewendet?",
     "a4": "Die Rennvorbereitung ist die Vorbereitung der akzeptierten Rennen. Sie wählen Fahrer, Mitarbeiter, Vermögenswerte, Ausrüstung, Vorräte und Etappentaktiken aus. Für Etappenrennen bereiten Sie auch Taktiken für jede Etappe vor, nachdem der Race Plan eingereicht wurde.",
-    "q5": "Warum sehe ich in Akzeptierten Rassen unterschiedliche Statusstufen?",
+    "q5": "Warum werden bei angenommenen Rennen unterschiedliche Statusstufen angezeigt?",
     "a5": "Akzeptierte Rennen können Status wie Race Plan Öffnen, Fahrer Deadline erreicht, Stage Plans Diese Status geben Ihnen an, welche Aktion derzeit notwendig ist.",
     "q6": "Wie kann ich meine Fahrer schneller verbessern?",
     "a6": "Verwenden Sie Training konsequent, wählen Sie nützliche Fokusbereiche, überwachen Sie Müdigkeit und nutzen Sie Trainingslager, wenn sie Sinn machen. Training zu hart die ganze Zeit kann Frische und Rennleistung verletzen.",
@@ -131,7 +131,7 @@
     "a19": "Verwenden Kontaktieren Sie uns oder Discord und enthalten klare Schritte, um das Problem zu reproduzieren. Screenshots, Rennnamen, Fahrernamen, Teamnamen und die genaue Seite, auf der das Problem passiert ist, sind sehr hilfreich."
   },
   "footer": {
-    "title": "Brauchst du noch Hilfe?",
+    "title": "Benötigen Sie weitere Hilfe?",
     "description": "Falls etwas schief aussieht, bitte den Seitennamen, Teamnamen, Fahrernamen, Rennnamen, Screenshots und die Schritte zur Reproduktion des Problems angeben. Dies hilft uns, Probleme schneller zu finden und zu beheben.",
     "contact": "Kontaktieren Sie uns",
     "discord": "Fragen Sie an Discord"

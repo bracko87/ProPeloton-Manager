@@ -12,6 +12,7 @@
  */
 
 import React, { useId } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /**
  * JerseyPattern
@@ -152,6 +153,7 @@ function PatternLayer({
  * High‑fidelity visual preview of a team jersey using SVG.
  */
 export function JerseyPreview({ config, className = '' }: JerseyPreviewProps): JSX.Element {
+  const { t } = useTranslation('customizeTeam')
   const idBase = useId().replace(/:/g, '')
   const torsoClipId = `${idBase}-torso-clip`
   const fabricLightId = `${idBase}-fabric-light`
@@ -163,7 +165,7 @@ export function JerseyPreview({ config, className = '' }: JerseyPreviewProps): J
       className={`h-auto w-48 drop-shadow-md ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="Team jersey preview"
+      aria-label={t('kitDesigner.previewAria')}
       shapeRendering="geometricPrecision"
       preserveAspectRatio="xMidYMid meet"
     >

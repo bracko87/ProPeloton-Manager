@@ -898,7 +898,7 @@ function TopNav({
         ) : isDevelopingTeamStatusResolved ? (
           <span
             className="inline-flex cursor-not-allowed items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-gray-400"
-            title="Unlock Developing Team in Preferences first."
+            title={t('page.unlockInPreferences')}
             aria-disabled="true"
           >
             <span>{t('squad:nav.developingTeam')}</span>

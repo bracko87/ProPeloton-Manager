@@ -8,7 +8,8 @@
     "currentCompetition": "Trenutno takmičenje",
     "loadingCompetition": "Učitavanje takmičenja…",
     "competitionUnavailable": "Takmičenje nije dostupno",
-    "noRiders": "Još nema pronađenih vozača u Razvojnom timu."
+    "noRiders": "Još nema pronađenih vozača u Razvojnom timu.",
+    "unlockInPreferences": "Prvo omogućite razvojni tim u Podešavanjima."
   },
   "movement": {
     "firstSquadUnavailable": "Prvi tim nije dostupan.",

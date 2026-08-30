@@ -51,7 +51,7 @@
     "allTiers": "Alle Ebenen",
     "allDivisions": "Alle Divisionen",
     "allCountries": "Alle Länder",
-    "allSeasons": "Alle Jahreszeiten",
+    "allSeasons": "Alle Saisons",
     "sortInternational": "Sortieren: Internationale Punkte",
     "sortStageFinish": "Sortierung: Etappenende Punkte",
     "sortGcOneDay": "Sortieren: GC / Eintagesrennen-Punkte"
@@ -126,7 +126,7 @@
     "historicalFinishes": "Historische Oberflächen",
     "historicalFinishesSubtitle": "Saison-für-Saison-Finishing Positionen über Divisionen.",
     "noHistory": "Noch keine Saisongeschichte",
-    "noHistoryDescription": "Ihr Spiel ist derzeit in Saison 1, so dass es noch keine abgeschlossenen historischen Jahreszeiten zu zeigen gibt."
+    "noHistoryDescription": "Ihre Spielwelt befindet sich derzeit in Saison 1, daher gibt es noch keine abgeschlossenen historischen Saisons."
   },
   "riders": {
     "mostInternational": "Die meisten internationalen Punkte",
@@ -177,7 +177,7 @@
     "teamsCurrentTitle": "Teamstatistik",
     "teamsCurrentBody": "Das ist die Seite Statistik. Im Teams-Team-Team-Team-Team-Team-Statistiken werden an einem Ort alle Wettbewerbe aufgestellt. In Current können Sie die aktuelle Saison sehen und vergleichen, welche Teams am erfolgreichsten sind nach Punkten. Sie können Filter verwenden, um verschiedene Ebenen, Divisionen, Länder, Benutzerteams, KI-Teams, aktive Teams und inaktive Teams zu betrachten. Sie können auch ein Teamprofil öffnen, um mehr Details über dieses Team zu sehen.",
     "teamsHistoryTitle": "Team-Geschichte",
-    "teamsHistoryBody": "Der Abschnitt Geschichte zeigt die vorherigen Saisons. Hier können Sie die vergangenen Gewinner, alte Saison-Snapshots, historische Positionen und wie Teams in früheren Saisons durchgeführt. Dies wird nützlicher, wenn Ihre Welt Fortschritte durch mehrere Jahreszeiten.",
+    "teamsHistoryBody": "Der Bereich Verlauf zeigt frühere Saisons. Dort sehen Sie vergangene Sieger, Saison-Snapshots, historische Platzierungen und die Entwicklung der Teams in früheren Saisons. Dieser Bereich wird mit jeder weiteren Saison Ihrer Spielwelt aussagekräftiger.",
     "ridersTitle": "Fahrerstatistik",
     "ridersBody": "Der Bereich Fahrer zeigt die besten Fahrer der Radsportwelt.\n\nSie können Fahrer nach internationalen Punkten, Punkten aus Etappenplatzierungen, Gesamtwertung und Punkten aus Eintagesrennen vergleichen. Außerdem sehen Sie Fahrer mit den meisten Podiumsplätzen und den meisten Trikots.\n\nDiese Seite hilft Ihnen zu erkennen, welche Fahrer die Saison dominieren und welche Fahrer interessant sein könnten, um sie zu verfolgen, zu scouten oder zu verpflichten.\n\nNach Statistiken wird als Nächstes die Seite Transfers empfohlen.",
     "next": "Nächste",

@@ -15,7 +15,7 @@
   },
   "report": {
     "unknownRider": "Unbekannter Fahrer",
-    "scout": "Pfadfinder",
+    "scout": "Scout",
     "scoutName": "Scout: {{name}}",
     "completed": "Ergänzt: {{date}}",
     "overall": "Insgesamt",

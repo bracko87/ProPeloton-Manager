@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 
 type RestartTeamModalProps = {
@@ -41,6 +42,7 @@ export default function RestartTeamModal({
   redirectTo = '/dashboard/overview',
 }: RestartTeamModalProps): JSX.Element | null {
   const navigate = useNavigate()
+  const { t } = useTranslation('appShell')
 
   const [confirmText, setConfirmText] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -85,7 +87,7 @@ export default function RestartTeamModal({
     if (isRestarting) return
 
     if (confirmText.trim() !== 'RESTART') {
-      setError('You must type RESTART exactly to confirm this action.')
+      setError(t('restartModal.confirmExact'))
       return
     }
 
@@ -98,7 +100,8 @@ export default function RestartTeamModal({
       })
 
       if (rpcError) {
-        setError(rpcError.message || 'Failed to restart team.')
+        console.error('Failed to restart team', rpcError)
+        setError(t('restartModal.failed'))
         setIsRestarting(false)
         return
       }
@@ -125,7 +128,8 @@ export default function RestartTeamModal({
         window.location.reload()
       }, 150)
     } catch (e: any) {
-      setError(e?.message ?? 'Failed to restart team due to an unexpected error.')
+      console.error('Unexpected restart team error', e)
+      setError(t('restartModal.unexpected'))
       setIsRestarting(false)
     }
   }
@@ -141,7 +145,7 @@ export default function RestartTeamModal({
     >
       <button
         type="button"
-        aria-label="Close restart team confirmation"
+        aria-label={t('restartModal.close')}
         className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
         onClick={handleClose}
       />
@@ -154,10 +158,10 @@ export default function RestartTeamModal({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 id="restart-team-modal-title" className="text-lg font-semibold text-amber-800">
-                Confirm Team Restart
+                {t('restartModal.title')}
               </h3>
               <p className="mt-1 text-sm text-amber-700">
-                This will reset your club back to a fresh starter state.
+                {t('restartModal.subtitle')}
               </p>
             </div>
 
@@ -175,49 +179,47 @@ export default function RestartTeamModal({
         <div className="px-6 py-5">
           <div className="rounded-lg border border-amber-100 bg-amber-50/60 p-4 text-sm text-gray-700">
             <p>
-              Restart Team keeps your club identity and competition slot, but it resets the sporting
-              and gameplay state of the team.
+              {t('restartModal.intro')}
             </p>
 
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <div className="font-semibold text-gray-900">You will keep</div>
+                <div className="font-semibold text-gray-900">{t('restartModal.keep')}</div>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  <li>User account and coins</li>
-                  <li>Club ID</li>
-                  <li>Club name</li>
-                  <li>Logo and badge</li>
-                  <li>Jersey</li>
-                  <li>Country</li>
-                  <li>Current tier/division/competition slot</li>
+                  <li>{t('restartModal.keepAccount')}</li>
+                  <li>{t('restartModal.keepClubId')}</li>
+                  <li>{t('restartModal.keepName')}</li>
+                  <li>{t('restartModal.keepLogo')}</li>
+                  <li>{t('restartModal.keepJersey')}</li>
+                  <li>{t('restartModal.keepCountry')}</li>
+                  <li>{t('restartModal.keepCompetition')}</li>
                 </ul>
               </div>
 
               <div>
-                <div className="font-semibold text-gray-900">You will lose/reset</div>
+                <div className="font-semibold text-gray-900">{t('restartModal.lose')}</div>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  <li>All current season points</li>
-                  <li>Current ranking/standings position</li>
-                  <li>Current riders, who become free agents</li>
-                  <li>Staff</li>
-                  <li>Sponsors and naming-rights sponsor</li>
-                  <li>Equipment progress, assets, and supplies</li>
-                  <li>Infrastructure upgrades</li>
-                  <li>Training, scouting, transfer, and race-preparation state</li>
-                  <li>Notifications and visible history</li>
-                  <li>Liquidation/insolvency status</li>
+                  <li>{t('restartModal.losePoints')}</li>
+                  <li>{t('restartModal.loseRanking')}</li>
+                  <li>{t('restartModal.loseRiders')}</li>
+                  <li>{t('restartModal.loseStaff')}</li>
+                  <li>{t('restartModal.loseSponsors')}</li>
+                  <li>{t('restartModal.loseEquipment')}</li>
+                  <li>{t('restartModal.loseInfrastructure')}</li>
+                  <li>{t('restartModal.loseGameplay')}</li>
+                  <li>{t('restartModal.loseNotifications')}</li>
+                  <li>{t('restartModal.loseLiquidation')}</li>
                 </ul>
               </div>
             </div>
 
             <p className="mt-4">
-              After restart, your team receives a new starter squad based on its current competition
-              tier, starter equipment, starter infrastructure, and zero season points.
+              {t('restartModal.after')}
             </p>
           </div>
 
           <label className="mt-5 block text-sm font-medium text-gray-700">
-            Type <span className="font-semibold text-amber-700">RESTART</span> to confirm
+            {t('restartModal.typeConfirm')}
           </label>
 
           <input
@@ -245,7 +247,7 @@ export default function RestartTeamModal({
             disabled={isRestarting}
             className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Cancel
+            {t('restartModal.cancel')}
           </button>
 
           <button
@@ -256,7 +258,7 @@ export default function RestartTeamModal({
             disabled={isRestarting}
             className="inline-flex items-center rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isRestarting ? 'Restarting...' : 'Restart Team'}
+            {isRestarting ? t('restartModal.restarting') : t('restartModal.restart')}
           </button>
         </div>
       </div>

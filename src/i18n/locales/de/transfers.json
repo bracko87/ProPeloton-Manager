@@ -52,7 +52,7 @@
     "yearsOld": "{{age}} Jahre alt",
     "weekly": "/week",
     "season": "{{count}} Jahreszeit",
-    "seasons": "{{count}} Jahreszeiten",
+    "seasons": "{{count}} Saisons",
     "seasonGeneric": "{{count}} Jahreszeit(en)",
     "updating": "Wird aktualisiert…",
     "scouted": "Scouting",
@@ -146,7 +146,7 @@
     "offerReceived": "Erhaltenes Angebot",
     "buyerSubmitted": "Ein Käuferclub hat ein Transferangebot für Ihren Fahrer eingereicht.",
     "checkOffer": "Angebot prüfen",
-    "rejectedByYou": "Von dir abgelehnt",
+    "rejectedByYou": "Von Ihnen abgelehnt",
     "youRejected": "Sie haben das Angebot von {{buyer}} für {{rider}} abgelehnt.",
     "offerExpired": "Das Angebot lief vor Abschluss aus.",
     "offerExpiredReason": "Angebot abgelaufen ({{reason}}).",
@@ -285,7 +285,7 @@
     "nutritionist": "Ernährungswissenschaftler",
     "mechanic": "Mechanisch",
     "sportDirector": "Direktor für Sport",
-    "scoutAnalyst": "Pfadfinder / Analyst"
+    "scoutAnalyst": "Scout / Analyst"
   },
   "staffQuality": {
     "elite": "Elite",
@@ -436,7 +436,7 @@
     "draftInfo": "Die Verhandlung beginnt erst, nachdem Sie dieses Angebot eingereicht haben.",
     "weeklySalaryOffer": "Wochenlohnangebot",
     "contractLength": "Vertragsdauer (Zeiträume)",
-    "signingBonus": "Signierbonus",
+    "signingBonus": "Unterschriftsbonus",
     "agentFee": "Vermittlungsgebühr",
     "current": "Laufende Nummer:",
     "optionalExtra": "Optional. Extra Anreiz für den Fahrer. Aktuell:",

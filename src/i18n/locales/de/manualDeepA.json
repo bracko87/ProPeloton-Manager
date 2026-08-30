@@ -302,7 +302,7 @@
         "Heute räsen helfen Benutzern zu sehen, was jetzt passiert.",
         "Der nächste Zeitplan hilft, die Aufmerksamkeit in naher Zukunft zu planen.",
         "Weltnachrichten machen die Spielwelt aktiv.",
-        "Verwandte Links können Rassen oder andere Spielseiten öffnen.",
+        "Verwandte Links können Rennen oder andere Spielseiten öffnen.",
         "Erweiterten Text verwenden/detail Felder, wenn Benutzer mehr Kontext benötigen."
       ],
       "tips": [
@@ -566,7 +566,7 @@
       "overview": "Das Personal betreut Training, Erholung, Scouting, Ausrüstung und Rennplanung.",
       "facts": [
         "Aufgaben",
-        "Trainer, Obertrainer, U23 Cheftrainer, Doktor, Physio, Ernährungswissenschaftler, Mechaniker, Sportdirektor, Pfadfinder/Analyst"
+        "Trainer, Cheftrainer, U23-Cheftrainer, Teamarzt, Physiotherapeut, Ernährungsberater, Mechaniker, Sportdirektor, Scout / Analyst"
       ],
       "details": [
         "Der Head Coach unterstützt Training und Entwicklung.",
@@ -575,7 +575,7 @@
         "Team Doktor, Physio und Ernährungswissenschaftler unterstützen Gesundheit und Erholung.",
         "Mechanik unterstützt Ausrüstung und technische Systeme.",
         "Sportdirektor unterstützt die Renntaktik und Planung.",
-        "Pfadfinder/Analyst unterstützt Marktinformationen und Berichte."
+        "Der Scout / Analyst unterstützt Marktinformationen und Scouting-Berichte."
       ],
       "tips": [
         "Mietpersonal auf der Grundlage von Schwäche, nicht nur, weil sie verfügbar sind."
@@ -641,7 +641,7 @@
       ]
     },
     "trainingCampsDeep": {
-      "title": "Schulungslager",
+      "title": "Trainingslager",
       "subtitle": "Lage, Typ, Wetter, Personal und Kosten.",
       "overview": "Trainingslager sind intensivere Entwicklungsblöcke mit höheren Anforderungen an Planung und Budget.",
       "facts": [

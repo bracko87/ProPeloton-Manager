@@ -123,7 +123,7 @@
       "primary": "Nächste"
     },
     "camps": {
-      "title": "Schulungslager",
+      "title": "Trainingslager",
       "body": "Trainingscamps sind spezielle Trainingsblöcke, in denen Sie ausgewählte Fahrer mehrere Tage lang wegschicken. Ein Trainingscamp kann eine stärkere Kompetenzentwicklung als ein regelmäßiges tägliches Training bieten, aber es kostet viel mehr. Sie wählen den Lagertyp, den Standort, die Daten, die Dauer, die Fahrer und das verfügbare Personal. Mitarbeiter können die Wirkung des Camps verbessern oder helfen, Fahrer besser zu schützen, je nach ihren Fähigkeiten und Verfügbarkeit. Vor der Buchung können Sie die Kosten, Wetterrisiko, ausgewählte Fahrer, ausgewählte Mitarbeiter und Validierung Warnungen überprüfen. Nach dem Training, die nächste empfohlene Seite ist Ausrüstung.",
       "primary": "Weiter zu Ausrüstung",
       "secondary": "Fertig für jetzt"
@@ -227,7 +227,7 @@
       "secondary": "Nein, danke."
     },
     "acceptedRaces": {
-      "title": "Akzeptierte Rassen",
+      "title": "Angenommene Rennen",
       "body": "Dies ist die Seite Rennvorbereitung.\n\nDie Registerkarte „Akzeptierte Rennen“ zeigt Rennen, für die Ihr Team zur Teilnahme angenommen wurde.\n\nHier sehen Sie die wichtigsten Renninformationen und den Vorbereitungsstatus Ihres Teams. Mögliche Status sind zum Beispiel Race Plan Open, Stage Plans Open, Fahrer Deadline Reached, Race Active, Race Finished oder All Set.\n\nSobald Ihr Team für ein Rennen akzeptiert wurde, bereiten Sie hier Fahrer, Personal, Assets, Ausrüstung, Vorräte und Taktiken vor. Diese Seite werden Sie während der Saison besonders häufig nutzen.",
       "primary": "Nächste"
     },
@@ -276,7 +276,7 @@
     },
     "teamsHistory": {
       "title": "Team-Geschichte",
-      "body": "Der Abschnitt Geschichte zeigt die vorherigen Saisons. Hier können Sie die vergangenen Gewinner, alte Saison-Snapshots, historische Positionen und wie Teams in früheren Saisons durchgeführt. Dies wird nützlicher, wenn Ihre Welt Fortschritte durch mehrere Jahreszeiten.",
+      "body": "Der Bereich Verlauf zeigt frühere Saisons. Dort sehen Sie vergangene Sieger, Saison-Snapshots, historische Platzierungen und die Entwicklung der Teams in früheren Saisons. Dieser Bereich wird mit jeder weiteren Saison Ihrer Spielwelt aussagekräftiger.",
       "primary": "Nächste"
     },
     "riders": {

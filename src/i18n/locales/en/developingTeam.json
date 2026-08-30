@@ -8,7 +8,8 @@
     "currentCompetition": "Current Competition",
     "loadingCompetition": "Loading competition…",
     "competitionUnavailable": "Competition unavailable",
-    "noRiders": "No riders found for the Developing Team yet."
+    "noRiders": "No riders found for the Developing Team yet.",
+    "unlockInPreferences": "Unlock Developing Team in Preferences first."
   },
   "movement": {
     "firstSquadUnavailable": "First Squad is unavailable.",
