@@ -32,6 +32,25 @@ jobs:
       - name: Apply Serbian and German Create Club localization
         run: python .github/scripts/fix_create_club_localization_20260830.py
 
+      - name: Keep English locale structure aligned
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('src/i18n/locales/en/createClub.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          page = data['page']
+          if 'backgroundAlt' not in page:
+              rebuilt = {}
+              for key, value in page.items():
+                  rebuilt[key] = value
+                  if key == 'chooseJerseyFirst':
+                      rebuilt['backgroundAlt'] = 'Cycling background'
+              data['page'] = rebuilt
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
       - name: Verify Create Club locale quality
         run: |
           python - <<'PY'
@@ -97,6 +116,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
             src/pages/CreateClub.tsx \
+            src/i18n/locales/en/createClub.json \
             src/i18n/locales/sr-Latn/createClub.json \
             src/i18n/locales/de/createClub.json
           if git diff --cached --quiet; then
