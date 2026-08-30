@@ -25,6 +25,9 @@ jobs:
       - name: Restore canonical placeholder names
         run: python .github/scripts/repair_croatian_placeholders_20260830.py
 
+      - name: Apply exact Croatian wording fixes
+        run: python .github/scripts/fix_croatian_management_gate_20260830.py
+
       - name: Validate Croatian management localization
         run: python .github/scripts/validate_croatian_management_20260830.py
 
