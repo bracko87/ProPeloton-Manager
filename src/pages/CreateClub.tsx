@@ -42,6 +42,7 @@ import { useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthProvider'
 import { applyPendingReferral, getPendingReferralCode } from '../lib/referrals'
+import LanguageSelector from '../components/i18n/LanguageSelector'
 
 /**
  * CountryOption
@@ -792,7 +793,7 @@ function GenericKitSelector({
  * Team creation form with backend RPC integration.
  */
 export default function CreateClubPage(): JSX.Element {
-  const { t } = useTranslation('createClub')
+  const { t, i18n } = useTranslation('createClub')
   const navigate = useNavigate()
   const { user } = useAuth()
 
@@ -1152,7 +1153,8 @@ export default function CreateClubPage(): JSX.Element {
       if (!createdClubId) {
         await cleanupFailedLogoUpload(uploadedLogoPath)
       }
-      setError(err?.message ?? t('errors.unexpected'))
+      console.error('Create team failed', err)
+      setError(t('errors.unexpected'))
     } finally {
       setSubmitting(false)
     }
@@ -1162,13 +1164,27 @@ export default function CreateClubPage(): JSX.Element {
   const isTeamNameValid = form.name.trim().length >= 3
   const canCreateTeam = Boolean(isTeamNameValid && form.countryCode && selectedKitUrl && !loadingCountries && !submitting)
   const flagUrl = form.countryCode ? `https://flagcdn.com/w40/${form.countryCode.toLowerCase()}.png` : ''
+  const countryDisplayNames = React.useMemo(() => {
+    const language = i18n.resolvedLanguage ?? i18n.language
+    const locale = language.startsWith('sr')
+      ? 'sr-Latn-RS'
+      : language.startsWith('de')
+        ? 'de-DE'
+        : 'en-GB'
+
+    try {
+      return new Intl.DisplayNames([locale], { type: 'region' })
+    } catch {
+      return null
+    }
+  }, [i18n.language, i18n.resolvedLanguage])
 
   return (
     <div className="relative isolate min-h-screen bg-[#081224] flex items-center justify-center p-6 overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
         <img
           src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2009_47_05%20PM.png"
-          alt="background"
+          alt={t('page.backgroundAlt')}
           className="object-cover w-full h-full"
           style={
             {
@@ -1192,7 +1208,14 @@ export default function CreateClubPage(): JSX.Element {
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl w-full bg-white rounded-xl shadow-2xl overflow-hidden p-6 lg:p-8 space-y-6">
+      <div className="relative z-10 max-w-7xl w-full bg-white rounded-xl shadow-2xl overflow-hidden p-6 lg:p-8 space-y-4">
+        <div className="flex justify-end">
+          <LanguageSelector
+            compact
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm"
+            selectClassName="border-0 bg-transparent text-slate-800 shadow-none focus:ring-1"
+          />
+        </div>
         <div className="rounded-xl border-2 border-emerald-400 bg-white/95 overflow-hidden">
           <div className="grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
             <div className="min-w-0 p-8 lg:p-10 flex flex-col h-full">
@@ -1240,7 +1263,7 @@ export default function CreateClubPage(): JSX.Element {
                         ) : (
                           countries.map(c => (
                             <option key={c.code} value={c.code}>
-                              {c.name}
+                              {countryDisplayNames?.of(c.code.toUpperCase()) || c.name}
                             </option>
                           ))
                         )}

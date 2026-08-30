@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Kreirajte svoj tim",
-    "subtitle": "Dizajnirajte identitet tima i uđite u ProPeloton svet.",
+    "subtitle": "Osmislite identitet svog tima i zakoračite u ProPeloton svet.",
     "teamName": "Naziv tima",
     "teamNamePlaceholder": "npr. Horizon Racing",
     "teamCountry": "Država tima",
@@ -11,24 +11,25 @@
     "primaryColor": "Primarna boja",
     "secondaryColor": "Sekundarna boja",
     "motto": "Moto tima (opciono)",
-    "mottoPlaceholder": "npr. Vozimo kao jedan",
+    "mottoPlaceholder": "npr. Zajedno do cilja",
     "cancel": "Otkaži",
-    "creating": "Kreiranje...",
+    "creating": "Kreiranje tima...",
     "createTeam": "Kreiraj tim",
-    "chooseJerseyFirst": "Prvo izaberite dres tima"
+    "chooseJerseyFirst": "Prvo izaberite dres tima",
+    "backgroundAlt": "Biciklistička pozadina"
   },
   "jersey": {
     "title": "Dres tima",
-    "description": "Izaberite jedan dres da biste omogućili kreiranje tima. Kasnije ga možete promeniti u opciji Prilagodi tim.",
+    "description": "Izaberite jedan dres da biste mogli da kreirate tim. Kasnije ga možete promeniti u opciji Prilagodi tim.",
     "scrollLeft": "Pomeri dresove ulevo",
     "scrollRight": "Pomeri dresove udesno",
-    "select": "Izaberi generički dres {{index}}",
-    "alt": "Generički dres tima {{index}}",
+    "select": "Izaberi standardni dres {{index}}",
+    "alt": "Standardni dres tima {{index}}",
     "required": "Morate izabrati dres pre nego što kreirate tim."
   },
   "preview": {
     "title": "Pregled tima",
-    "description": "Unutrašnji raspored i boje ažuriraju se uživo.",
+    "description": "Dizajn i boje ažuriraju se uživo.",
     "customLogoAlt": "Pregled prilagođenog logotipa tima",
     "defaultTeam": "Moj tim",
     "logoSize": "Veličina logotipa",
@@ -36,13 +37,13 @@
     "larger": "Veće"
   },
   "patterns": {
-    "title": "Unutrašnji stil",
-    "description": "Izaberite kako su primarna i sekundarna boja raspoređene.",
-    "customDescription": "Unutrašnji stil se primenjuje samo na generisani grb tima.",
-    "select": "Izaberi šablon {{pattern}}",
+    "title": "Dizajn grba",
+    "description": "Izaberite kako će primarna i sekundarna boja biti raspoređene na grbu.",
+    "customDescription": "Dizajn grba primenjuje se samo na automatski generisani grb tima.",
+    "select": "Izaberi šaru {{pattern}}",
     "solid": "Jednobojno",
-    "band": "Traka",
-    "doubleBand": "Dupla traka",
+    "band": "Poprečna traka",
+    "doubleBand": "Dupla poprečna traka",
     "verticalSplit": "Vertikalna podela",
     "horizontalSplit": "Horizontalna podela",
     "diagonalSash": "Dijagonalna traka",
@@ -51,36 +52,36 @@
     "horizontalStripes": "Horizontalne pruge",
     "chevron": "Ševron",
     "centerStripe": "Centralna pruga",
-    "quartered": "Četvrtine"
+    "quartered": "Podeljeno na četvrtine"
   },
   "logo": {
     "title": "Logo tima",
-    "description": "Opciono. Otpremite logo ili koristite URL slike. Ako ništa ne izaberete, koristiće se generisani grb iznad.",
+    "description": "Opciono. Otpremite logo ili unesite URL slike. Ako ništa ne izaberete, koristiće se automatski generisani grb iznad.",
     "useGenerated": "Koristi generisani grb",
     "fileHelp": "PNG, JPEG/JPG ili BMP · maksimalno 2 MB.",
-    "orUrl": "ili koristite URL",
+    "orUrl": "ili koristite URL slike",
     "urlPlaceholder": "https://example.com/team-logo.png",
     "applying": "Primena...",
     "apply": "Primeni",
     "uploaded": "Izabran je otpremljeni logo: {{name}}",
-    "urlApplied": "Prilagođeni logo sa URL-a je primenjen."
+    "urlApplied": "Logo sa URL-a je primenjen."
   },
   "errors": {
     "invalidType": "Logo mora biti PNG, JPEG/JPG ili BMP slika.",
-    "tooLarge": "Fajl logotipa mora biti 2 MB ili manji.",
-    "pasteUrl": "Prvo nalepite URL logotipa.",
+    "tooLarge": "Fajl logotipa mora biti veličine 2 MB ili manji.",
+    "pasteUrl": "Prvo unesite URL logotipa.",
     "invalidUrl": "Unesite ispravan URL logotipa.",
     "httpUrl": "URL logotipa mora počinjati sa http:// ili https://.",
-    "loadUrl": "Logo nije mogao da se učita sa ovog URL-a.",
-    "countries": "Države nisu mogle da se učitaju",
+    "loadUrl": "Logo nije moguće učitati sa ovog URL-a.",
+    "countries": "Učitavanje država nije uspelo",
     "nameRequired": "Naziv tima je obavezan",
     "countryRequired": "Država tima je obavezna",
     "jerseyRequired": "Izaberite dres tima pre kreiranja tima.",
     "signIn": "Morate biti prijavljeni da biste kreirali tim.",
-    "bucketMissing": "Storage bucket \"club-logos\" nije pronađen. Prvo ga kreirajte u Supabase Storage.",
-    "uploadLogo": "Logo tima nije mogao da se otpremi",
-    "saveBadge": "Grb tima nije mogao da se sačuva",
-    "create": "Tim nije mogao da se kreira",
+    "bucketMissing": "Storage bucket \"club-logos\" nije pronađen. Prvo ga kreirajte u Supabase Storage-u.",
+    "uploadLogo": "Otpremanje logotipa tima nije uspelo",
+    "saveBadge": "Čuvanje grba tima nije uspelo",
+    "create": "Kreiranje tima nije uspelo",
     "unexpected": "Došlo je do neočekivane greške"
   }
 }

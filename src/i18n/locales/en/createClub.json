@@ -15,7 +15,8 @@
     "cancel": "Cancel",
     "creating": "Creating...",
     "createTeam": "Create Team",
-    "chooseJerseyFirst": "Choose one team jersey first"
+    "chooseJerseyFirst": "Choose one team jersey first",
+    "backgroundAlt": "Cycling background"
   },
   "jersey": {
     "title": "Team Jersey",
