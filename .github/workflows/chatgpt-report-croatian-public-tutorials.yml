@@ -1,0 +1,34 @@
+name: Report Croatian public tutorial gate issues
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-report-croatian-public-tutorials.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - run: python .github/scripts/polish_croatian_public_tutorials_20260830.py
+      - name: Capture remaining gate issues
+        run: |
+          python .github/scripts/validate_croatian_public_tutorials_20260830.py > .github/croatian_public_tutorial_report.txt 2>&1 || true
+          cat .github/croatian_public_tutorial_report.txt
+      - name: Restore locale files and commit report
+        run: |
+          git checkout -- src/i18n/locales/hr/publicInfo.json src/i18n/locales/hr/tutorials.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/croatian_public_tutorial_report.txt
+          git commit -m 'Record Croatian public tutorial diagnostics'
+          git pull --rebase origin main
+          git push origin main
