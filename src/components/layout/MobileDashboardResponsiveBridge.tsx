@@ -13,8 +13,25 @@ function getClientPath(): string {
   return window.location.pathname
 }
 
+function getDashboardPath(): string {
+  return getClientPath().split('?')[0]?.split('#')[0] ?? ''
+}
+
 function isDashboardPath(): boolean {
-  return getClientPath().startsWith('/dashboard')
+  return getDashboardPath().startsWith('/dashboard')
+}
+
+function getDashboardPageKey(): string {
+  const path = getDashboardPath()
+  if (!path.startsWith('/dashboard')) return ''
+
+  const relativePath = path.slice('/dashboard'.length).replace(/^\/+|\/+$/g, '')
+  if (!relativePath) return 'dashboard'
+
+  return relativePath
+    .split('/')[0]
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .toLowerCase()
 }
 
 function tagDashboardElements(): void {
@@ -48,6 +65,13 @@ function tagDashboardElements(): void {
 
   if (main) {
     main.dataset.ppmDashboardMain = 'true'
+
+    const pageKey = getDashboardPageKey()
+    if (pageKey) {
+      main.dataset.ppmDashboardPage = pageKey
+    } else {
+      delete main.dataset.ppmDashboardPage
+    }
   }
 }
 
