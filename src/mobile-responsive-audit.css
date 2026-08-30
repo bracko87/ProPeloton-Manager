@@ -1,10 +1,149 @@
 /*
- * Additional mobile-only refinements found during the second responsive audit.
+ * Additional mobile-only refinements found during responsive visual audits.
  * Kept separate from the validated foundation so these page-specific rules are
  * easy to review or remove independently.
  */
 
 @media (max-width: 767px) {
+  /* Header visual pass: the naming-rights badge and the literal "Team Name:"
+     label consume too much of the first phone row. The displayed club name is
+     already the naming-rights identity, so keep the important identity while
+     making the row readable at 320-430px. */
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child {
+    gap: 0.5rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child > div.h-12.w-12 {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child > div:last-child > div:first-child {
+    max-width: 100%;
+    font-size: 1rem !important;
+    line-height: 1.2rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child > div:last-child > div:first-child > span.font-normal:first-child,
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child > div:last-child > div:first-child > span.ml-2.rounded-full {
+    display: none !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child > div:last-child > div:last-child {
+    flex-wrap: nowrap !important;
+    gap: 0.35rem !important;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    white-space: nowrap;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child > div:last-child > div:last-child > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Race Preparation: there are exactly three primary tabs. A three-column
+     phone grid is clearer than hiding Stage Plans behind horizontal scrolling. */
+  [data-ppm-dashboard-page='race-preparation'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm:not(.border-slate-200) {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    max-width: 100%;
+    overflow: visible !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm:not(.border-slate-200) > button {
+    min-width: 0;
+    min-height: 44px;
+    padding-left: 0.4rem !important;
+    padding-right: 0.4rem !important;
+    font-size: 0.78rem !important;
+    line-height: 1rem !important;
+    text-align: center;
+    white-space: normal;
+  }
+
+  /* Calendar visual pass: the first audit compressed the seven columns enough
+     to fit the phone, but real testing showed full date labels becoming
+     unreadable (for example "Janua..."). Keep the calendar as a seven-day
+     month grid, give each day useful width, and make only this calendar area a
+     small local horizontal scroller. */
+  [data-ppm-dashboard-page='calendar'] .w-full.rounded-lg.border.border-gray-100.bg-white.p-6.shadow:has(.grid.w-full.grid-cols-7.text-sm) {
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .mb-2.grid.w-full.grid-cols-7,
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm {
+    min-width: 448px;
+    gap: 0.25rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .mb-2.grid.w-full.grid-cols-7 > div {
+    overflow: visible;
+    padding-left: 0.2rem !important;
+    padding-right: 0.2rem !important;
+    font-size: 0.6875rem !important;
+    line-height: 0.875rem !important;
+    text-overflow: clip;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div {
+    min-height: 96px !important;
+    overflow: hidden;
+    padding: 0.375rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div > div:first-child {
+    font-size: 0.625rem !important;
+    line-height: 0.8rem !important;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div .rounded-md {
+    padding: 0.15rem 0.2rem !important;
+    font-size: 0.5625rem !important;
+    line-height: 0.75rem !important;
+  }
+
+  /* Squad / Developing Team: keep the data tables horizontally scrollable,
+     but trim their desktop-only minimum widths so the first useful columns are
+     less aggressively cut off on a phone. */
+  [data-ppm-dashboard-page='squad'] .overflow-x-auto:has(> table[class*='min-w-']),
+  [data-ppm-dashboard-page='developing-team'] .overflow-x-auto:has(> table[class*='min-w-']) {
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  [data-ppm-dashboard-page='squad'] table[class~='min-w-[1020px]'],
+  [data-ppm-dashboard-page='developing-team'] table[class~='min-w-[1020px]'] {
+    min-width: 900px !important;
+  }
+
+  [data-ppm-dashboard-page='squad'] table[class~='min-w-[1100px]'],
+  [data-ppm-dashboard-page='developing-team'] table[class~='min-w-[1100px]'] {
+    min-width: 980px !important;
+  }
+
+  [data-ppm-dashboard-page='squad'] table[class~='min-w-[1140px]'],
+  [data-ppm-dashboard-page='developing-team'] table[class~='min-w-[1140px]'] {
+    min-width: 1000px !important;
+  }
+
+  [data-ppm-dashboard-page='squad'] table[class~='min-w-[1040px]'],
+  [data-ppm-dashboard-page='developing-team'] table[class~='min-w-[1040px]'] {
+    min-width: 960px !important;
+  }
+
   /* Team Profile: six desktop banner stats are too narrow on phones. Keep all
      information visible in a readable two-column grid without changing desktop. */
   [data-ppm-dashboard-page='teams'] .grid.grid-cols-6.divide-x.divide-slate-200 {
