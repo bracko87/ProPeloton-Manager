@@ -1,0 +1,57 @@
+name: Polish Croatian public and tutorials
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-polish-croatian-public-tutorials.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply Croatian public/tutorial polish
+        run: python .github/scripts/polish_croatian_public_tutorials_20260830.py
+      - name: Validate Croatian public/tutorial resources
+        run: python .github/scripts/validate_croatian_public_tutorials_20260830.py
+      - name: Validate all Croatian schemas and placeholders
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          root=Path('src/i18n/locales'); en=root/'en'; hr=root/'hr'; ph=re.compile(r'\{\{[^{}]+\}\}')
+          e=sorted(p.name for p in en.glob('*.json')); h=sorted(p.name for p in hr.glob('*.json'))
+          assert e==h
+          def check(a,b,path):
+              assert type(a) is type(b), f'{path}: type mismatch'
+              if isinstance(a,dict):
+                  assert list(a)==list(b), f'{path}: key/order mismatch'
+                  for k in a: check(a[k],b[k],f'{path}.{k}')
+              elif isinstance(a,list):
+                  assert len(a)==len(b), f'{path}: list length mismatch'
+                  for i,(x,y) in enumerate(zip(a,b)): check(x,y,f'{path}[{i}]')
+              elif isinstance(a,str):
+                  assert sorted(ph.findall(a))==sorted(ph.findall(b)), f'{path}: placeholder mismatch'
+          for n in e: check(json.loads((en/n).read_text(encoding='utf-8')),json.loads((hr/n).read_text(encoding='utf-8')),n)
+          print(f'PASS: all {len(e)} Croatian resources preserve canonical structure/placeholders.')
+          PY
+      - run: npm ci
+      - name: Production build
+        run: npm run build
+      - name: Commit Croatian public/tutorial polish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/hr/publicInfo.json src/i18n/locales/hr/tutorials.json
+          if git diff --cached --quiet; then echo 'No changes.'; exit 0; fi
+          git commit -m 'Polish Croatian public and tutorial localization'
+          git pull --rebase origin main
+          git push origin main
