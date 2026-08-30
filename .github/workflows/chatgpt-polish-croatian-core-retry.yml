@@ -1,0 +1,69 @@
+name: Polish Croatian core UI retry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/polish_croatian_core_fix_20260830.py'
+      - '.github/workflows/chatgpt-polish-croatian-core-retry.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply Croatian core polish
+        run: |
+          python .github/scripts/polish_croatian_core_20260830.py
+          python .github/scripts/polish_croatian_core_fix_20260830.py
+      - name: Validate Croatian all resources and polished core
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          root=Path('src/i18n/locales'); en=root/'en'; hr=root/'hr'; ph=re.compile(r'\{\{[^{}]+\}\}')
+          en_files=sorted(p.name for p in en.glob('*.json')); hr_files=sorted(p.name for p in hr.glob('*.json')); assert en_files==hr_files
+          def check(a,b,path):
+              assert type(a) is type(b), f'{path}: type mismatch'
+              if isinstance(a,dict):
+                  assert list(a)==list(b), f'{path}: key/order mismatch'
+                  for k in a: check(a[k],b[k],f'{path}.{k}')
+              elif isinstance(a,list):
+                  assert len(a)==len(b), f'{path}: length mismatch'
+                  for i,(x,y) in enumerate(zip(a,b)): check(x,y,f'{path}[{i}]')
+              elif isinstance(a,str):
+                  assert sorted(ph.findall(a))==sorted(ph.findall(b)), f'{path}: placeholder mismatch'
+          for name in en_files: check(json.loads((en/name).read_text(encoding='utf-8')),json.loads((hr/name).read_text(encoding='utf-8')),name)
+          polished=['common.json','auth.json','calendar.json','calendarPage.json','navigation.json','home.json','appShell.json','overview.json','squad.json']
+          bad=[r'\bpodešav',r'\bobavešten',r'\btakmič',r'\bučestv|\bučešće',r'\buslov',r'\bvrednost',r'\bslede',r'\bizvešt',r'\bpovre',r'\bsavet',r'\bbezbed',r'\bpromen',r'\bprover',r'\bodelj',r'\bizaber',r'\bocen',r'\bprose',r'\bverovat',r'\bhiljad',r'\bmilion',r'\btočkov|\btočak',r'\bmenjač',r'\bmesec',r'\bistorij',r'\bdodel',r'\bprimen',r'\brešen',r'\bzahtev',r'\bprevod',r'\bprenos',r'\bposled',r'\blekar',r'\bsačuv',r'\bvešt',r'\btrka',r'\bnalog',r'\bponovo\b',r'\buputstv']
+          failures=[]
+          def walk(x,path):
+              if isinstance(x,dict):
+                  for k,v in x.items(): walk(v,f'{path}.{k}')
+              elif isinstance(x,list):
+                  for i,v in enumerate(x): walk(v,f'{path}[{i}]')
+              elif isinstance(x,str) and any(re.search(p,x,re.I) for p in bad): failures.append(f'{path}: {x}')
+          for name in polished: walk(json.loads((hr/name).read_text(encoding='utf-8')),name)
+          if failures: raise SystemExit('Croatian polished-core gate failed:\n'+'\n'.join(failures[:200]))
+          print('Croatian 44-file schema and polished core gates passed.')
+          PY
+      - run: npm ci
+      - name: Production build
+        run: npm run build
+      - name: Commit Croatian core polish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/hr/appShell.json src/i18n/locales/hr/auth.json src/i18n/locales/hr/calendarPage.json src/i18n/locales/hr/home.json src/i18n/locales/hr/overview.json src/i18n/locales/hr/squad.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Polish Croatian core localization'
+          git pull --rebase origin main
+          git push origin main
