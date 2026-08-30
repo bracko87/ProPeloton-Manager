@@ -1,0 +1,34 @@
+name: Audit Croatian club and account UI wording
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-audit-croatian-club-ui.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Print Croatian club UI candidates
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          files=['developingTeam.json','club.json','createClub.json','customizeTeam.json','accountPages.json','help.json']
+          bad=[r'\bpodešav',r'\bobavešten',r'\btakmič',r'\bučestv|\bučešće',r'\buslov',r'\bvrednost',r'\bslede',r'\bizvešt',r'\bpovre',r'\bsavet',r'\bbezbed',r'\bpromen',r'\bprover',r'\bodelj',r'\bizaber',r'\bocen',r'\bprose',r'\bverovat',r'\bhiljad',r'\bmilion',r'\btočkov|\btočak',r'\bmenjač',r'\bmesec',r'\bistorij',r'\bdodel',r'\bprimen',r'\brešen',r'\bzahtev',r'\bprevod',r'\bprenos',r'\bposled',r'\blekar',r'\bsačuv',r'\bvešt',r'\btrka',r'\bnalog',r'\bponovo\b',r'\buputstv']
+          def walk(x,path):
+              if isinstance(x,dict):
+                  for k,v in x.items(): walk(v,f'{path}.{k}')
+              elif isinstance(x,list):
+                  for i,v in enumerate(x): walk(v,f'{path}[{i}]')
+              elif isinstance(x,str) and any(re.search(p,x,re.I) for p in bad): print(f'{path} = {x}')
+          for name in files: walk(json.loads((Path('src/i18n/locales/hr')/name).read_text(encoding='utf-8')),name)
+          PY
