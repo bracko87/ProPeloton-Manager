@@ -21,7 +21,7 @@
     "staffList": "{{role}} — lista osoblja",
     "assigned": "{{count}}/{{limit}} dodijeljeno ovoj ulozi.",
     "assignedCompact": "Dodijeljeno {{count}}/{{limit}}",
-    "noAssigned": "Nema dodeljenih: {{role}}",
+    "noAssigned": "Nema dodijeljenih: {{role}}",
     "usage": "Trenutno korišćenje uloge: {{count}}/{{limit}}. Dovedite osoblje sa tržišta osoblja da popunite ovu ulogu.",
     "findStaff": "Pronađi osoblje"
   },
@@ -113,7 +113,7 @@
     "completed": "Završeno: {{date}}"
   },
   "assignment": {
-    "notAssigned": "Trenutno nije dodeljen",
+    "notAssigned": "Trenutačno nije dodijeljen",
     "expiresToday": "Ističe danas",
     "oneDayLeft": "Preostao 1 dan",
     "daysLeft": "Preostalo {{count}} dana",
@@ -151,13 +151,13 @@
     "loading": "Učitavanje Premium pristupa"
   },
   "analysis": {
-    "averageSkillProfile": "Prosečan profil vještina",
-    "averageSkillProfileSubtitle": "Prosječne vrijednosti osoblja trenutno dodeljenog ovoj grupi uticaja.",
-    "noStaff": "Još nema osoblja dodeljenog ovoj grupi uticaja, pa nema aktivnog profila vještina za prikaz.",
+    "averageSkillProfile": "Prosječan profil vještina",
+    "averageSkillProfileSubtitle": "Prosječne vrijednosti osoblja trenutačno dodijeljenog ovoj grupi utjecaja.",
+    "noStaff": "Još nema osoblja dodijeljenog ovoj grupi utjecaja, pa nema aktivnog profila vještina za prikaz.",
     "whereRoleHelps": "Gde ova uloga pomaže",
     "whereRoleHelpsSubtitle": "Glavni sistemi igre na koje ova uloga utiče.",
     "recentCourseResults": "Nedavni rezultati kurseva",
-    "recentCourseResultsSubtitle": "Završeni kursevi razvoja osoblja i primenjena poboljšanja atributa."
+    "recentCourseResultsSubtitle": "Završeni tečajevi razvoja osoblja i primijenjena poboljšanja atributa."
   },
   "quality": {
     "facility": "Objekat",
@@ -204,7 +204,7 @@
     "currentCourse": "Trenutni kurs",
     "courseInProgress": "Kurs u toku: {{course}}. Završetak: {{date}}.",
     "courseCannotCancel": "Kurs se ne može otkazati nakon što je započet. Bonusi ove uloge su pauzirani do završetka.",
-    "lastCourseGains": "Poboljšanja poslednjeg kursa",
+    "lastCourseGains": "Poboljšanja posljednjeg tečaja",
     "extendContract": "Produži ugovor",
     "courseInProgressButton": "Kurs je u toku",
     "sendOnCourse": "Pošalji na kurs",
@@ -257,7 +257,7 @@
     "title": "Kurs za osoblje",
     "subtitle": "Planirajte razvojni rad za {{name}}.",
     "liveStart": "Pokretanje kursa",
-    "liveStartText": "Pokretanjem kursa kreira se stvarni zapis kursa za osoblje. Poboljšanja atributa primenjuju se kada backend proces završi kurs. Kurs se ne može otkazati nakon rezervacije. Bonusi ove uloge su pauzirani dok kurs ne bude završen.",
+    "liveStartText": "Pokretanjem tečaja stvara se stvarni zapis tečaja za osoblje. Poboljšanja atributa primjenjuju se kada pozadinski proces završi tečaj. Tečaj se ne može otkazati nakon rezervacije. Bonusi ove uloge pauzirani su dok tečaj ne završi.",
     "staffAge": "Godine člana osoblja",
     "start": "Pokreni kurs",
     "starting": "Pokretanje...",
@@ -285,7 +285,7 @@
     "fillVacancies": "Koristite Transferi → Osoblje da popunite slobodna mjesta",
     "combinedTitle": "Zajednički uticaj tima",
     "combinedMedical": "Zajednička medicinska podrška doktora tima, fizioterapeuta i nutricioniste.",
-    "combinedCoach": "Trenerski efekat koji sistem primenjuje preko člana osoblja {{name}}.",
+    "combinedCoach": "Trenerski učinak koji sustav primjenjuje preko člana osoblja {{name}}.",
     "combinedCurrent": "Trenutni zajednički uticaj aktivnog osoblja u ovoj grupi.",
     "coachingTitle": "Zajednički uticaj trenerskog osoblja",
     "medicalTitle": "Zajednički uticaj medicinskog osoblja",
@@ -296,7 +296,7 @@
   },
   "scoutingExplainer": {
     "title": "Kako funkcioniše kvalitet skautinga",
-    "body": "Atributi skauta određuju njegovu stvarnu sposobnost. Nivo Skauting kancelarije može ograničiti konačni kvalitet izvještaja, pa i veoma dobar skaut može praviti samo osnovne izveštaje dok se kancelarija ne unapredi.",
+    "body": "Atributi skauta određuju njegovu stvarnu sposobnost. Razina Skauting ureda može ograničiti konačnu kvalitetu izvještaja, pa čak i vrlo dobar skaut može izrađivati samo osnovne izvještaje dok se ured ne nadogradi.",
     "abilityLevels": "Nivoi sposobnosti skauta",
     "reportLevels": "Nivoi kvaliteta izvještaja",
     "levelScale": "Osnovno → Solidno → Jako → Elitno",
@@ -396,7 +396,7 @@
       "focus": "Ishrana + dugoročna podrška"
     },
     "mechanic_tt_setup": {
-      "title": "Kurs postavke za hronometar",
+      "title": "Tečaj postavki za kronometar",
       "description": "Napredno aerodinamičko postavka i optimizacija TT pozicije.",
       "focus": "Postavka"
     },
@@ -407,7 +407,7 @@
     },
     "mechanic_weather_adaptation": {
       "title": "Trening prilagođavanja vremenu",
-      "description": "Fokusira se na tehničku podršku u mokrim i promenljivim uvjetima.",
+      "description": "Usredotočuje se na tehničku podršku u mokrim i promjenjivim uvjetima.",
       "focus": "Podrška u uvjetima"
     },
     "director_tactics": {

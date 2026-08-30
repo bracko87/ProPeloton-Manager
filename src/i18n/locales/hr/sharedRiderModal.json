@@ -18,8 +18,8 @@
     "climbingPoints": "Brdski bodovi",
     "markScouted": "Označi kao skautiranog",
     "unmarkScouted": "Ukloni oznaku skautiran",
-    "showHistory": "Prikaži istoriju",
-    "hideHistory": "Sakrij istoriju",
+    "showHistory": "Prikaži povijest",
+    "hideHistory": "Sakrij povijest",
     "openTeam": "Otvori tim",
     "historyPlaceholder": "Privremeni prikaz povijesti vozača."
   },
@@ -46,7 +46,7 @@
   "roles": {
     "sprinter": "Sprinter",
     "climber": "Brdaš",
-    "timeTrialist": "Hronometraš",
+    "timeTrialist": "Kronometraš",
     "gc": "GC vozač",
     "puncheur": "Puncheur",
     "rouleur": "Rouleur",
