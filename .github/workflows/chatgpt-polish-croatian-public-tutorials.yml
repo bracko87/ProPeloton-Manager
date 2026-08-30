@@ -20,6 +20,8 @@ jobs:
           fetch-depth: 0
       - name: Apply Croatian public/tutorial polish
         run: python .github/scripts/polish_croatian_public_tutorials_20260830.py
+      - name: Apply remaining Croatian public/tutorial fixes
+        run: python .github/scripts/fix_croatian_public_tutorial_gate_20260830.py
       - name: Validate Croatian public/tutorial resources
         run: python .github/scripts/validate_croatian_public_tutorials_20260830.py
       - name: Validate all Croatian schemas and placeholders
