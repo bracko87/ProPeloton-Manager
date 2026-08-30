@@ -91,7 +91,7 @@
     "inactiveManager": "Neaktivan menadžer",
     "seasonEndInactiveDescription": "Ovaj tim ostaje vidljiv do kraja sezone. Ako se menadžer ne vrati, mjesto tima može nakon kraja sezone preuzeti AI tim iz rezervnog fonda.",
     "seasonEndReview": "Provjera na kraju sezone",
-    "inactiveDescription": "Ovaj tim je trenutno neaktivan, ali ostaje u tabelama, istoriji utrka, rezultatima i kalendaru.",
+    "inactiveDescription": "Ovaj tim trenutačno nije aktivan, ali ostaje u tablicama, povijesti utrka, rezultatima i kalendaru.",
     "inactive": "Neaktivan"
   },
   "identity": {
@@ -104,7 +104,7 @@
     "baseName": "Osnovno ime kluba",
     "displayName": "Vidljivo ime",
     "originalName": "Originalno ime kluba",
-    "historyName": "Istorijsko/puno ime",
+    "historyName": "Povijesno/puno ime",
     "lockedBySponsor": "Zaključano zbog sponzora",
     "lockedUntil": "Zaključano do",
     "lockReason": "Razlog zaključavanja",
@@ -118,7 +118,7 @@
     "welcomeTitle": "Dobro došli nazad u ponovno pokrenuti tim",
     "welcomeSubtitle": "Vaš klub je dobio novi početak.",
     "welcomeBodyOne": "Vaš tim je ponovno aktivan sa novom početnom ekipom, početnom opremom, početnim finansijama i 0 sezonskih bodova.",
-    "welcomeBodyTwo": "Ime kluba, logo, dres, država i mjesto u takmičenju su sačuvani. Stari vozači su pušteni na tržište slobodnih vozača, a klub je spreman za novi početak.",
+    "welcomeBodyTwo": "Ime kluba, logo, dres, država i mjesto u natjecanju ostaju zadržani. Stari vozači pušteni su na tržište slobodnih vozača, a klub je spreman za novi početak.",
     "welcomeGoodLuck": "Srećno ovog puta. Gradite pažljivo, upravljajte budžetom i vratite klub još jači.",
     "continueDashboard": "Nastavi na pregled",
     "liquidatedLabel": "Klub je likvidiran",
@@ -133,9 +133,9 @@
     "restartKeepsIdentityDescription": "ID kluba, vlasnički račun, ime tima, logo, dres, država i mjesto u nivou/diviziji ostaju isti. Trenutni vozači se puštaju na tržište slobodnih vozača, svi sezonski bodovi se vraćaju na 0, a klub dobija novu početnu ekipu prema trenutnom nivou natjecanja.",
     "createNewClub": "Napravi novi klub",
     "restartTeam": "Ponovno pokreni tim",
-    "accessCheckFailed": "Nije moguće proveriti pristup klubu",
+    "accessCheckFailed": "Nije moguće provjeriti pristup klubu",
     "noActiveClub": "Za ovaj račun nije pronađen aktivan klub.",
-    "accessStatusFailed": "Nije moguće proveriti status pristupa klubu.",
+    "accessStatusFailed": "Nije moguće provjeriti status pristupa klubu.",
     "checkingStatus": "Provjera statusa kluba...",
     "cannotPlay": "Ovim klubom trenutno nije moguće igrati."
   },
@@ -147,7 +147,7 @@
     "title": "Povijest kluba",
     "founded": "Osnovan {{date}}",
     "totalHonours": "Ukupno dostignuća",
-    "totalHonoursHint": "Sačuvani top-10 rezultati jednodnevnih utrka i etapa",
+    "totalHonoursHint": "Spremljeni top-10 rezultati jednodnevnih utrka i etapa",
     "victories": "Pobede",
     "victoriesHint": "Pobede na utrkama i etapama",
     "podiums": "Podijumi",
@@ -169,7 +169,7 @@
     "resultsCount": "{{count}} rezultata",
     "empty": "Nijedno klupsko dostignuće ne odgovara izabranim filterima.",
     "page": "Stranica {{page}} od {{total}}",
-    "deferred": "Dostignuća u konačnom GC, bodovnoj, brdskoj i omladinskoj klasifikaciji biće dodata kada njihov autoritativni sačuvani izvor rezultata bude potvrđen."
+    "deferred": "Postignuća u konačnom GC-u, bodovnoj, brdskoj i omladinskoj klasifikaciji bit će dodana kada se potvrdi njihov mjerodavni izvor spremljenih rezultata."
   },
   "report": {
     "checkingError": "Postojeća prijava nije mogla da se provjeri.",

@@ -20,7 +20,7 @@
   },
   "jersey": {
     "title": "Dres tima",
-    "description": "Odaberite jedan dres da biste mogli da kreirate tim. Kasnije ga možete promeniti u opciji Prilagodi tim.",
+    "description": "Odaberite jedan dres kako biste mogli izraditi tim. Kasnije ga možete promijeniti u opciji Prilagodi tim.",
     "scrollLeft": "Pomeri dresove ulevo",
     "scrollRight": "Pomeri dresove udesno",
     "select": "Odaberi standardni dres {{index}}",
@@ -39,7 +39,7 @@
   "patterns": {
     "title": "Dizajn grba",
     "description": "Odaberite kako će primarna i sekundarna boja biti raspoređene na grbu.",
-    "customDescription": "Dizajn grba primenjuje se samo na automatski generisani grb tima.",
+    "customDescription": "Dizajn grba primjenjuje se samo na automatski generirani grb tima.",
     "select": "Odaberi šaru {{pattern}}",
     "solid": "Jednobojno",
     "band": "Poprečna traka",
@@ -56,12 +56,12 @@
   },
   "logo": {
     "title": "Logo tima",
-    "description": "Opciono. Otpremite logo ili unesite URL slike. Ako ništa ne izaberete, koristiće se automatski generisani grb iznad.",
+    "description": "Neobavezno. Prenesite logo ili unesite URL slike. Ako ništa ne odaberete, upotrijebit će se automatski generirani grb iznad.",
     "useGenerated": "Koristi generisani grb",
     "fileHelp": "PNG, JPEG/JPG ili BMP · maksimalno 2 MB.",
     "orUrl": "ili koristite URL slike",
     "urlPlaceholder": "https://example.com/team-logo.png",
-    "applying": "Primena...",
+    "applying": "Primjena...",
     "apply": "Primijeni",
     "uploaded": "Izabran je otpremljeni logo: {{name}}",
     "urlApplied": "Logo sa URL-a je primijenjen."
