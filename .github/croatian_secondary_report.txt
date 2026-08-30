@@ -1,0 +1,275 @@
+Croatian secondary UI candidates: 108
+scouting.json.skills.timeTrial = Hronometar
+statistics.json.teams.noTitlesDescription = Kada prethodni pobednici budu sačuvani, ovde će se prikazati tabela titula.
+statistics.json.teams.noHistoryDescription = Igra je trenutno u Sezoni 1, pa još nema završenih istorijskih sezona za prikaz.
+statistics.json.riders.mostPodiums = Najviše podijuma
+statistics.json.riders.averageOverall = Prosečan overall
+statistics.json.riders.averageFatigue = Prosečan umor
+statistics.json.riders.noFinanceData = Nema finansijskih podataka vozača
+statistics.json.roles.timeTrialist = Hronometraš
+statistics.json.roles.tt = Hronometraš
+statistics.json.tutorial.welcomeBody = Možemo vam pokazati kako funkcionišu statistike timova i vozača, uključujući poretke tekuće sezone, povijesne rezultate, bodove vozača, podijume i majice.
+statistics.json.tutorial.ridersBody = Deo Vozači prikazuje najbolje vozače biciklističkog svijeta.
+
+Možete porediti vozače prema međunarodnim bodovima, bodovima na cilju etape, generalnom plasmanu i bodovima jednodnevnih utrka. Možete videti i vozače sa najviše podijuma i osvojenih majica.
+
+Ova stranica pomaže da vidite koji vozači dominiraju sezonom i koje bi vozače moglo biti zanimljivo pratiti, skautirati ili potpisati.
+
+Posle Statistike, sljedeća preporučena stranica su Transferi.
+teamRanking.json.tutorial.competitionsBody = Ovo je stranica Rangiranje timova.
+
+Ovde možete videti poretke svih natjecanja i rangova, uključujući WorldTeam, ProTeam, Continental i Amaterske divizije.
+
+Svaki tim zauzima mjesto u svom takmičenju prema međunarodnim bodovima osvojenim tokom sezone. Možete menjati rangove i divizije kako biste videli poredak timova u celom biciklističkom svijetu.
+teamRanking.json.tutorial.pointsBody = Timovi osvajaju međunarodne bodove na utrkama. Bolji rezultati na većim utrkama obično donose više bodova.
+
+Ti bodovi određuju mjesto svakog tima u njegovom takmičenju. Na kraju sezone timovi mogu napredovati u viši rang ili ispasti u niži, zavisno od konačne pozicije.
+
+Ova stranica je važna jer pokazuje gde se vaš tim nalazi u odnosu na druge timove i šta morate ostvariti da biste napredovali.
+
+Posle Rangiranja timova, sljedeća preporučena stranica je Statistika.
+staff.json.rolesSection.noAssigned = Nema dodeljenih: {{role}}
+staff.json.assignment.notAssigned = Trenutno nije dodeljen
+staff.json.analysis.averageSkillProfile = Prosečan profil vještina
+staff.json.analysis.averageSkillProfileSubtitle = Prosječne vrijednosti osoblja trenutno dodeljenog ovoj grupi uticaja.
+staff.json.analysis.noStaff = Još nema osoblja dodeljenog ovoj grupi uticaja, pa nema aktivnog profila vještina za prikaz.
+staff.json.analysis.recentCourseResultsSubtitle = Završeni kursevi razvoja osoblja i primenjena poboljšanja atributa.
+staff.json.detail.lastCourseGains = Poboljšanja poslednjeg kursa
+staff.json.course.liveStartText = Pokretanjem kursa kreira se stvarni zapis kursa za osoblje. Poboljšanja atributa primenjuju se kada backend proces završi kurs. Kurs se ne može otkazati nakon rezervacije. Bonusi ove uloge su pauzirani dok kurs ne bude završen.
+staff.json.impactI18n.combinedCoach = Trenerski efekat koji sistem primenjuje preko člana osoblja {{name}}.
+staff.json.scoutingExplainer.body = Atributi skauta određuju njegovu stvarnu sposobnost. Nivo Skauting kancelarije može ograničiti konačni kvalitet izvještaja, pa i veoma dobar skaut može praviti samo osnovne izveštaje dok se kancelarija ne unapredi.
+staff.json.courseOptions.mechanic_tt_setup.title = Kurs postavke za hronometar
+staff.json.courseOptions.mechanic_weather_adaptation.description = Fokusira se na tehničku podršku u mokrim i promenljivim uvjetima.
+proPackages.json.page.refresh = Osveži
+proPackages.json.premium.marketTools = Sačuvane pretrage, upozorenja sa tržišta, uži odabir vozača i dublje analize.
+proPackages.json.premium.confirming = Plaćanje je završeno. Potvrđujemo Premium pristup i dodelu 50 Coins…
+proPackages.json.premium.processing = Plaćanje je završeno, ali Stripe potvrda se još obrađuje. Koristite Osveži za nekoliko trenutaka; nemojte ponovno kupovati.
+proPackages.json.advantages.a3 = Premium alati za transfere: sačuvane pretrage, automatska upozorenja, uži odabir i analiza pregovora.
+proPackages.json.services.readOnly = Tim i svi sačuvani podaci ostaju dostupni u režimu samo za čitanje.
+proPackages.json.services.reactivatePreferences = Reaktiviraj u Podešavanjima
+proPackages.json.services.managePreferences = Upravljaj u Podešavanjima
+proPackages.json.history.premiumInvoicesSubtitle = Uspešne Premium uplate i mjesečne dodele Coins
+proPackages.json.history.ledgerSubtitle = Sve dodele, kupovine, nagrade i trošenje Coins na opcione funkcije
+proPackages.json.history.show = Prikaži istoriju
+proPackages.json.history.hide = Sakrij istoriju
+proPackages.json.history.coinsGranted = Dodeljeni Coins
+proPackages.json.transactions.dailyUnlock = Istorijsko dnevno otključavanje igranja
+publicInfo.json.about.intro = ProPeloton Manager je online biciklistička menadžerska igra u kojoj igrači kreiraju i razvijaju biciklistički tim, planiraju kalendar utrka, upravljaju vozačima, finansijama i transferima, prate rang-liste i takmiče se kroz dugačak sezonski biciklistički svijet.
+publicInfo.json.about.what1 = ProPeloton Manager je namenjen igračima koji vole biciklizam, strategiju, dugoročno planiranje i multiplayer natjecanje. Umesto da direktno kontrolišete vozača, vi ste menadžer biciklističkog kluba. Vaš zadatak je da izgradite uravnoteženu ekipu, pripremate utrke, čuvate finansijsku stabilnost, razvijate vozače, upravljate osobljem, unapređujete objekte i donosite odluke koje utiču na celu sezonu.
+publicInfo.json.about.what2 = Svijet igre uključuje kalendar utrka, rangiranje timova, pripremu utrka, planove etapa, opremu, trening, osoblje, sponzore, transfere, finansijsko upravljanje i sistem Razvojnog tima. Svaki klub mora da uskladi ambicije sa dugoročnom stabilnošću.
+publicInfo.json.about.teamText = Izgradite ekipu sa sprinterima, brdašima, hronometrašima, pomagačima, liderima i mladim vozačima. Ugovori, moral, umor, potencijal i razvoj su važni.
+publicInfo.json.about.raceText = Prijavljujte se za utrke, birajte vozače, dodeljujte osoblje i resurse, birajte opremu, pripremajte zalihe i kreirajte planove etapa pre rokova.
+publicInfo.json.how.intro = ProPeloton Manager se zasniva na povezanim odlukama. Svaka utrka, transfer, odabir treninga, cilj sponzora i finansijski potez mogu uticati na budućnost vašeg kluba.
+publicInfo.json.how.step1Text = Počnite kreiranjem identiteta svog biciklističkog tima. Klub postaje centar vaše sezone: vozači, finansije, kalendar utrka, sponzori, transferi, oprema i rang-liste povezani su sa vašim timom.
+publicInfo.json.how.step2Text = Pregledajte vozače pre velikih odluka. Jakom timu su potrebni različiti tipovi vozača, poput sprintera, brdaša, hronometraša, pomagača, rouleur vozača i lidera. Ukupna ocjena je korisna, ali konkretne vještine i uloge vozača u mnogim utrkama znače više.
+publicInfo.json.how.step5Text = Prihvaćena prijava nije dovoljna. Pre utrke menadžeri pripremaju vozače, osoblje, timska vozila, opremu, zalihe i taktičke planove. Etapne utrke zahtevaju i planiranje za svaku etapu.
+publicInfo.json.how.step6Title = 6. Upravljajte finansijama
+publicInfo.json.how.step6Text = Vaš klub ima prihode i troškove. Plaće, osoblje, oprema, infrastruktura, trening kampovi, sponzori, porezi, putovanja i operativni troškovi utrka utiču na stanje budžeta. Finansijska disciplina je deo dugoročnog uspeha.
+publicInfo.json.how.system10 = Finansije, porez, plaće i operacije
+publicInfo.json.how.timeText = ProPeloton Manager koristi vrijeme u igri za rokove utrka, trening kampove, transfere, finansijske periode i tok sezone. Menadžeri treba uvek da provjere prikazano vrijeme u igri i pripreme sve pre poslednjeg roka. Propušten rok može ostaviti tim loše pripremljenim za važnu utrku.
+publicInfo.json.support.gameplayText = Pitajte o pripremi utrke, planovima etapa, transferima, sponzorima, finansijama, rangiranju, treningu, umoru ili bilo kom sistemu koji nije jasan.
+publicInfo.json.contactPage.publicIntro = Koristite ovu stranicu za zahteve za podršku, prijavu grešaka, pitanja o računu, povratne informacije o igri, pitanja privatnosti i opšti kontakt u vezi sa ProPeloton Managerom.
+publicInfo.json.contactPage.dashboardIntro = Pošaljite zahtjev za podršku, prijavu greške, pitanje o računu, povratnu informaciju o igri, pitanje privatnosti ili opštu poruku direktno podršci.
+publicInfo.json.privacy.s2p2 = Podaci igre mogu uključivati detalje kluba, vozače, osoblje, finansije, pripremu utrka, obavijesti, rang-liste, kupovine, stanje Coins, Premium status, pretplate, aktivacije usluga i druge podatke igre povezane sa računom.
+publicInfo.json.privacy.s3p3 = Te podatke koristimo da aktiviramo ili završimo Premium pristup, dodelimo mjesečne Coins nakon uspešnog plaćanja, obradimo jednokratne kupovine Coins, prikažemo istoriju naplate, sprečimo duple dodele, upravljamo otkazivanjem, istražimo greške u plaćanju i odgovorimo na povraćaje novca, sporove, storniranja ili prevare.
+publicInfo.json.privacy.s8p2 = Podaci o plaćanjima, računima, coin ledgeru, pretplatama, povraćajima, sporovima i sprečavanju prevara mogu se čuvati duže kada je to potrebno zbog računovodstvenih, poreskih, zakonskih, sigurnosnih ili zahtjeva pružaoca usluga plaćanja.
+publicInfo.json.privacy.s10p1 = U zavisnosti od primenljivog zakona, možete imati prava u vezi sa pristupom, ispravkom, brisanjem, ograničenjem, prigovorom ili prenosivošću osobnih podataka. Neki podaci igre, plaćanja ili sigurnosti možda moraju biti zadržani kada je spremanje zakonski obavezno ili potrebno za zaštitu usluge.
+publicInfo.json.privacy.s11Prefix = Za pitanja ili zahteve u vezi sa privatnošću kontaktirajte nas na
+publicInfo.json.terms.s1p1 = Kreiranjem računa, korišćenjem ProPeloton Managera, kupovinom Coins ili pretplatom na Premium prihvatate ove Uslove korišćenja. Ako se ne slažete, ne treba da koristite igru.
+publicInfo.json.terms.s2p1 = ProPeloton Manager je online biciklistička menadžerska igra. Igra može uključivati kreiranje tima, upravljanje vozačima, trening, pripremu utrka, transfere, rangiranje, finansijske sisteme, sponzore, Premium funkcije, Coins i druge funkcije igre.
+publicInfo.json.terms.s4p2 = Možemo ograničiti pristup, poništiti nepošteno stečenu korist, ukloniti neprihvatljiv sadržaj, ispraviti stanje ili suspendovati naloge kada je to razumno potrebno radi zaštite igre i drugih igrača.
+publicInfo.json.terms.s5p1 = Coins su valuta u igri vezana za račun i koriste se samo unutar ProPeloton Managera. Coins nisu pravi novac, nemaju novčanu vrijednost, ne mogu se povući i ne mogu se prodavati, prenositi ili menjati van igre osim ako takvu mogućnost izričito ne uvedemo.
+publicInfo.json.terms.s5p3 = Kada je plaćanje završeno i Coins su dodeljeni, kupovina je konačna, osim kada je povraćaj novca obavezan prema primenljivom zakonu ili kada potvrdimo duplu, neovlašćenu ili tehnički pogrešnu naplatu.
+publicInfo.json.terms.s8p2 = Ništa u ovim uvjetima ne ukida prava potrošača koja se zakonski ne mogu isključiti. Kada primenljivi zakon zahtjeva refundaciju, pravo otkaza, pravo na odustanak ili drugi pravni lek, taj zakonski zahtjev ima prednost.
+seasonReset.json.page.description = Pregledajte promocije i ispadanja pre primene prelaska u novu sezonu.
+sharedRiderModal.json.common.showHistory = Prikaži istoriju
+sharedRiderModal.json.common.hideHistory = Sakrij istoriju
+sharedRiderModal.json.roles.timeTrialist = Hronometraš
+tutorials.json.overview.simpleOrDeep.body = Ne morate odmah razumeti sve.
+
+Na početku možete igrati jednostavno: pratite upozorenja, proveravajte ekipu, prijavljujte se na utrke, pripremajte tim i pratite rezultate.
+
+Kasnije, ako želite više dubine, možete koristiti napredne sisteme kao što su umor vozača, moral, race sharpness, ciljevi sponzora, bonusi opreme, trening kampovi, skauting, pregovori o transferima, porezi, infrastruktura i promocija ili ispadanje.
+tutorials.json.overview.purpose.body = Ovaj vodič će vas jednu po jednu provesti kroz glavne stranice igre.
+
+Saznaćete čemu svaka stranica služi, koja dugmad su važna i šta bi novi menadžer trebalo da proverava.
+
+Vodič neće odjednom objašnjavati svaki sitan detalj. Za detaljnija objašnjenja kasnije uvek možete koristiti kompletan priručnik igre.
+tutorials.json.overview.startOverview.body = Počećemo sa stranicom Pregled.
+
+To je vaša glavna menadžerska kontrolna tabla. Najbrže vam pokazuje stanje tima: trenutna upozorenja, vesti, finansije, utrke, poruke sponzora, stanje vozača i napredak sezone.
+
+Nakon ovog uvoda objasniću stranicu Pregled korak po korak.
+tutorials.json.overview.dashboard.body = Ovo je stranica Pregled — glavna kontrolna tabla vašeg tima.
+
+Posmatrajte je kao svakodnevni kontrolni centar. Kada se prijavite, ovo je obično prvo mjesto koje treba proveriti.
+
+Ovde možete brzo videti najvažnije informacije o klubu, uključujući stanje tima, trenutna upozorenja, finansije, utrke, stanje vozača i napredak sezone.
+tutorials.json.overview.staffBriefing.title = Centar za izveštaje osoblja
+tutorials.json.overview.staffBriefing.body = Ovaj panel prikazuje vaše pomoćno osoblje i uloge savjetnika.
+
+Ovde možete videti važne članove tima kao što su glavni trener, sportski direktor, doktor tima, glavni mehaničar i druge pomoćne uloge kada su dostupne.
+
+Ovi savjetnici vam pomažu da efikasnije upravljate važnim dijelovima kluba, kao što su planiranje utrke, zdravlje vozača, priprema i podrška oko opreme.
+
+Neke funkcije savjetnika, alati osoblja ili opcije povezane sa automatizacijom mogu zahtevati Premium račun ili kupovinu Coins da biste ih koristili u potpunosti.
+tutorials.json.overview.nextRace.body = Panel Sljedeća utrka tima pomaže vam da vidite šta uskoro očekuje vaš tim.
+
+Ovo je važno jer prihvaćene utrke često i dalje zahtevaju pripremu. Pre rokova ćete možda morati da izaberete vozače, osoblje, vozila i druga sredstva, opremu, zalihe i taktiku za etape.
+
+Ako ovaj panel prikazuje predstojeću utrku, trebalo bi rano da provjerite Pripremu utrke.
+tutorials.json.overview.lastRace.body = Panel Posljednja utrka tima prikazuje poslednju završenu utrku vašeg tima kada je dostupna.
+
+Koristite ga da brzo pregledate učinak tima. Rezultati vam mogu pomoći da odlučite da li vozačima treba odmor, da li je taktika dobro funkcionisala ili je potrebno promeniti ekipu pre sljedećeg događaja.
+tutorials.json.overview.sponsor.body = Panel Glavni sponzor prikazuje informacije o vašem glavnom sponzoru kada imate aktivan ugovor.
+
+Sponzori su važni jer mogu donositi novac, bonuse, ciljeve i ponekad uticati na brendiranje. Neki ugovori su jednostavni, dok sponzori sa naming-rights pravima mogu privremeno promeniti ime vašeg tima tokom sezone.
+tutorials.json.overview.progress.body = Ostatak stranice Pregled pomaže vam da pratite stanje i napredak tima.
+
+Ovde možete pratiti stanje vozača, finansijsko zdravlje, aktivnosti sponzora, aktivnosti na utrkama, aktivne operacije, podatke pregleda sezone i opšti napredak kroz sezonu.
+
+Neki napredni dijelovi kontrolne table, sažeci ili dodatni prikazi podataka mogu zahtevati Premium račun ili kupovinu Coins. Ako je panel zaključan, i dalje možete normalno igrati, ali Premium ili Coins mogu olakšati igru i dati detaljniji pregled kluba.
+
+Kako klub raste, ova stranica postaje sve korisnija jer pomaže da povežete kratkoročne zadatke, poput pripreme sljedeće utrke, sa dugoročnim ciljevima kao što su izgradnja jače ekipe i poboljšanje plasmana.
+tutorials.json.squad.riders.body = Ovo je stranica Ekipe — glavno mjesto gde su prikazani vozači vašeg tima.
+
+U opštem prikazu možete videti važne informacije o vozaču kao što su godine, država, uloga, ukupni nivo, stanje, tržišna vrijednost, plaća, detalji ugovora i međunarodni bodovi.
+
+Koristite ovu stranicu kad god želite da razumete trenutnu snagu i strukturu svog tima.
+tutorials.json.squad.details.body = Stranica Ekipe nudi više načina za pregled vozača.
+
+Možete proveriti finansijske informacije, vještine, formu, razvoj, zdravlje i dostupnost. Vještine se vremenom mogu poboljšavati, pa vam ova stranica pomaže da pratite razvoj svakog vozača.
+
+Klikom na gumb Prikaz možete otvoriti kompletan profil vozača sa detaljnijim informacijama.
+
+Neki napredni alati za vozače, dodatne kontrolne table ili praktične funkcije mogu zahtevati Premium račun ili kupovinu Coins.
+tutorials.json.squad.developing.body = Razvojni tim je vaš drugi tim. Može se koristiti za mlade vozače koji još nisu spremni za prvi tim, ali i dalje mogu da se takmiče u dodeljenim natjecanjima.
+
+Razvojni tim prvo mora biti otključan. Više informacija možete pronaći u Podešavanjima.
+
+Vozači se između Prvog i Razvojnog tima mogu premeštati samo tokom perioda za premeštanje. Ovi periodi se otvaraju četiri puta godišnje, a stranica Ekipe pokazuje kada je dostupan sljedeći period.
+
+Neki dodatni alati za upravljanje, prošireni prikazi ili praktične funkcije povezane sa ovim delom mogu zahtevati Premium račun ili kupovinu Coins.
+tutorials.json.training.regular.body = Ovo je stranica Trening.
+
+U Redovnom treningu možete odrediti šta vozači treniraju kada nisu raspoređeni na neku drugu aktivnost, kao što su utrka ili trening kamp.
+
+Možete podesiti podrazumevani trening tima za Prvi tim i Razvojni tim, a možete menjati trening i za pojedinačne vozače. Svaki vozač može trenirati određeni fokus, kao što su sprint, usponi, ravnica, hronometar, izdržljivost, otpornost, race IQ, timski rad ili oporavak.
+
+Intenzitet treninga je važan. Teži trening može brže unaprediti vozače, ali ih može i više umoriti pred naredne utrke. Kada je vozaču potreban odmor i smanjenje umora, možete izabrati i Slobodan dan.
+tutorials.json.equipment.overview.body = Ovo je stranica Oprema.
+
+Kartica Pregled daje sažetak timske opreme i konfiguracija postavki za utrku.
+
+Podrazumevana postavka za utrku koristi se kada za određenu utrku ne izaberete posebnu postavku. Ispod nje možete napraviti različite konfiguracije postavki koje kasnije možete birati u Pripremi utrke.
+
+Svaka postavka može doneti različite bonuse vozačima, u zavisnosti od opreme koju sadrži i broja upotrebljivih komada.
+tutorials.json.equipment.inventory.body = Kartica Inventar prikazuje svu opremu koju vaš tim trenutno poseduje.
+
+Ovde možete videti predmete kao što su bicikli, kotači, gume i druga kupljena oprema. Možete proveriti kvalitet, stanje, vrijednost, bonuse i dostupnost.
+
+Ako vam neka oprema više nije potrebna, možete je prodati iz inventara.
+tutorials.json.equipment.raceSupplies.body = Kartica Zalihe za utrku prikazuje potrošne zalihe koje vaš tim može koristiti na utrkama.
+
+Neke zalihe mogu se koristiti samo jednom, dok se druge mogu koristiti više puta. Zalihe mogu pomoći da zaštitite vozače od teških uvjeta na utrci.
+
+Bez odgovarajućih zaliha vozači mogu pretrpeti negativne efekte u veoma toplim, hladnim ili zahtevnim vremenskim uvjetima.
+
+Nakon Opreme, sljedeća preporučena stranica je Infrastruktura.
+tutorials.json.facilities.assets.body = Kartica Sredstva prikazuje vozila i pomoćna sredstva koja vaš tim može koristiti.
+
+To uključuje timske automobile, autobuse, kombije za opremu, mobilne radionice i medicinske kombije. Ova sredstva mogu podržati tim tokom utrka, putovanja, pripreme i trening kampova.
+
+Svako sredstvo može imati različite nivoe, troškove, stanje, bonuse i ograničenja. Otvorite detalje svakog sredstva da biste razumeli šta donosi i kako može pomoći timu da bude uspešniji.
+
+Za potpuno korišćenje ove stranice neke napredne funkcije, opcije upravljanja ili prošireni alati mogu zahtevati Premium račun ili kupovinu Coins.
+tutorials.json.calendar.welcome.body = Možemo vam pokazati kako Kalendar funkcioniše, uključujući dnevne aktivnosti tima, mesece utrka, ciljeve sponzora vezane za utrke i profile utrka.
+tutorials.json.calendar.openRace.body = Neke utrke mogu imati oznaku cilja sponzora. To znači da je utrka povezana sa bonus ciljem sponzora, na primer učešćem ili ostvarivanjem određenog rezultata.
+
+Koristite gumb Otvori utrku kada želite da vidite više detalja o utrci ili da se prijavite.
+
+Sljedeće ćemo otvoriti jedan profil utrke kako biste videli koje informacije su tamo dostupne.
+tutorials.json.raceDetail.stagesResults.body = Profil utrke prikazuje i detaljne informacije o etapama.
+
+Možete pregledati profile etapa, mape ruta, raspodelu terena, vremenske uslove na etapi, sprint bodove, brdske bodove i druge detalje. Vremenska prognoza se objavljuje tek neposredno pred utrku, pa se može pojaviti kasnije.
+
+Niže na stranici, Informacije o utrci prikazuju timove i vozače učesnike pre utrke, a rezultate nakon utrke. Ako vaš tim sudjeluje i utrka je aktivna ili završena, možete koristiti Gledaj utrku ili Gledaj replay da pratite akciju na mapi.
+tutorials.json.racePreparation.racePlan.body = Kartica Plan utrke je mjesto gde pripremate tim za prihvaćenu utrku.
+
+Važno: vrijeme u igri teče brže nego u stvarnom životu. Jedan dan u igri traje 12 sati stvarnog vremena. To znači da dva dana u igri odgovaraju jednom stvarnom danu. Imajte ovo na umu kada proveravate periode za Plan utrke, rok za prijavu vozača i rokove za Planove etapa.
+
+Kada je period za Plan utrke otvoren, možete izabrati da li će nastupiti Prvi tim ili Razvojni tim, ako vam je Razvojni tim dostupan.
+
+Morate proveriti i rok za prijavu vozača. Do tog datuma možete birati vozače koji će sudjelovati. Stranica prikazuje minimalan i maksimalan broj dozvoljenih vozača za utrku.
+
+Lista vozača pokazuje ko može biti izabran, a ko je blokiran jer je već raspoređen na drugu utrku koja se vremenski preklapa. Takođe možete dodijeliti osoblje i timska sredstva za utrku ako su dostupni.
+
+Pregled troškova se ažurira dok pravite plan, tako da možete videti koliko će utrka koštati. Sa desne strane pregled bonusa prikazuje moguće bonuse podrške od osoblja, sredstava, opreme i timskih politika.
+tutorials.json.racePreparation.stagePlans.body = Kartica Planovi etapa otvara se nakon što je Plan utrke predat.
+
+Ovde pripremate taktiku za svaku etapu. Za svaku etapu možete definisati uloge vozača, opremu, zalihe, timsku taktiku i individualnu taktiku.
+
+Planovi etapa su važni jer različite etape zahtevaju različite planove. Ravna sprinterska etapa, planinska etapa, hronometar ili valovita etapa mogu zahtevati različite vozače, taktiku i podršku.
+
+Nakon Pripreme utrke, sljedeća preporučena stranica je Rangiranje timova.
+tutorials.json.teamRanking.competitions.body = Ovo je stranica Rangiranje timova.
+
+Ovde možete videti rang-liste svih natjecanja i nivoa, uključujući WorldTeam, ProTeam, Continental i Amateur divizije.
+
+Svaki tim ima mjesto u svom takmičenju na osnovu međunarodnih bodova osvojenih tokom sezone. Možete prelaziti između nivoa i divizija da vidite kako su timovi rangirani u celom biciklističkom svijetu.
+tutorials.json.statistics.welcome.body = Možemo vam pokazati kako funkcionišu statistike timova i vozača, uključujući rang-liste trenutne sezone, povijesne rezultate, bodove vozača, podijume i majice.
+tutorials.json.statistics.riders.body = Odjeljak Vozači prikazuje najbolje vozače u biciklističkom svijetu.
+
+Možete porediti vozače po međunarodnim bodovima, bodovima za plasmane na etapama, bodovima za generalni plasman i jednodnevne utrke. Možete videti i vozače sa najviše podijuma i najviše majica.
+
+Ova stranica vam pomaže da razumete koji vozači dominiraju sezonom i koje vozače bi moglo biti zanimljivo pratiti, skautirati ili potpisati.
+
+Nakon Statistike, sljedeća preporučena stranica su Transferi.
+tutorials.json.transfers.riderTransferList.body = Ovo je stranica Transferi.
+
+U odeljku Vozači, Transfer lista prikazuje vozače koje su drugi timovi, uključujući AI timove, trenutno stavili na transfer listu.
+
+Pre skautiranja neke informacije o vozaču mogu biti skrivene ili manje precizne. Skauting vam daje bolje informacije o njegovim vještinama i potencijalu.
+
+Svaka transfer ponuda prikazuje koliko dugo važi i početnu cenu za pregovore. Ako kliknete na Pošalji ponudu, možete ponuditi novac timu koji prodaje vozača. Ako tim prihvati, zatim pregovarate o ugovoru sa vozačem.
+tutorials.json.transfers.staff.body = Kartica Osoblje prikazuje dostupne članove osoblja bez ugovora.
+
+Ovde možete pregledati vještine osoblja, ulogu, plaću, specijalizaciju i dostupnost. Mogu se zaposliti samo članovi osoblja koji su slobodni agenti.
+
+Ograničenja osoblja su važna. Ako je klub već dostigao maksimalan broj za određenu ulogu, ne možete zaposliti još jednu osobu za tu ulogu dok ne povećate limit, obično unapređenjem infrastrukture.
+
+Nakon Transfera, sljedeća preporučena stranica su Finansije.
+tutorials.json.transfers.staff.primary = Nastavi na Finansije
+tutorials.json.finance.welcome.title = Treba vam pomoć sa Finansijama?
+tutorials.json.finance.welcome.body = Možemo vam pokazati kako funkcionišu finansije kluba, uključujući stanje računa, sponzore, transakcije, poreze i timske politike.
+tutorials.json.finance.overview.title = Pregled finansija
+tutorials.json.finance.overview.body = Ovo je stranica Finansije.
+
+Kartica Pregled prikazuje glavnu finansijsku situaciju kluba, uključujući trenutno stanje, prihode, rashode, tok novca i finansijske sažetke.
+
+Ako vaš tim ima hitni dug ili finansijske probleme, ovde možete brzo razumeti trenutno stanje.
+tutorials.json.finance.transactions.body = Kartica Transakcije prikazuje finansijsku istoriju vašeg kluba.
+
+Ovde možete videti prihode i rashode tokom sezone, uključujući nagradni novac, uplate sponzora, plaće, transfere, troškove infrastrukture, kupovinu opreme, trening kampove, naplatu poreza i druga finansijska kretanja.
+tutorials.json.finance.tax.body = Kartica Porez prikazuje poresku situaciju vašeg kluba.
+
+Transakcije mogu stvarati poreske obaveze, a poreska kontrola se obavlja jednom mjesečno. Ova stranica vam pomaže da vidite koliko je poreza obračunato, koliko je već plaćeno i koliko još treba platiti.
+tutorials.json.finance.policies.body = Timske politike i operacije određuju kako se vaš klub vodi.
+
+Promjena politika može učiniti klub privlačnijim vozačima i osoblju, ali može povećati i troškove putovanja, podrške na utrkama, trening kampova i svakodnevnih operacija.
+
+Ovaj odjeljak pomaže vam da pronađete ravnotežu između komfora, učinka, privlačnosti i troškova.
+
+Nakon Finansija, sljedeći deo vodiča objasniće glavni Meni.
+tutorials.json.menu.notifications.body = Ova ikonica zvona otvara obavijesti u igri.
+
+Obavijesti vas informišu o važnim događajima kao što su rokovi za utrke, podsetnici za pripremu, novosti sponzora, finansije, transferi i druge akcije u igri koje zahtevaju vašu pažnju.
+
+Koja obavijesti želite da primate možete podesiti kroz opciju Postavke u Meniju.
+tutorials.json.menu.coins.body = Ovde vidite trenutno stanje Coins.
+
+Coins se koriste za određene funkcije igre, otključavanja i dodatne praktične opcije u ProPeloton Manager-u.
+
+Stanje možete proveriti ovde u bilo kom trenutku, a dodatne Coins možete kupiti kroz Meni → Pro paketi.
+
+Malo Coins neće suspendovati vaš račun. Možete nastaviti da igrate, ali neke opcione funkcije ili akcije slične Premium funkcijama možda neće biti dostupne dok ne dodate još Coins.
