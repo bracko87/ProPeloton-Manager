@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/scripts/bootstrap_croatian_localization_20260830.py'
       - '.github/scripts/align_croatian_locale_structure_20260830.py'
+      - '.github/scripts/repair_croatian_placeholders_20260830.py'
       - '.github/workflows/chatgpt-bootstrap-croatian-localization.yml'
 
 permissions:
@@ -27,6 +28,7 @@ jobs:
         run: |
           python .github/scripts/bootstrap_croatian_localization_20260830.py
           python .github/scripts/align_croatian_locale_structure_20260830.py
+          python .github/scripts/repair_croatian_placeholders_20260830.py
 
       - name: Validate Croatian structure and placeholders
         run: |
