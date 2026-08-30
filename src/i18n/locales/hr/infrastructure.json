@@ -133,8 +133,8 @@
     "youthAcademyLong": "Akademija mladih je strateška dugoročna investicija. Podržava sisteme razvoja mladih, otključava ulogu U23 Glavnog trenera i kasnije poboljšava trening i razvoj U23 vozača.",
     "mechanicsWorkshopShort": "Tehnička baza za održavanje opreme i podršku timu.",
     "mechanicsWorkshopLong": "Mehaničarska radionica povećava kapacitet tehničke podrške i priprema klub za naprednije sisteme opreme, brže popravke i niže troškove održavanja. Viši nivoi otključavaju dodatna mjesta za mehaničare.",
-    "scoutingOfficeShort": "Centar za skauting, izveštaje, informacije sa tržišta i otkrivanje talenata.",
-    "scoutingOfficeLong": "Skauting kancelarija određuje maksimalni kvalitet skautskih izvještaja, kapacitet skautinga i buduće sisteme tržišnih informacija. Viši nivoi otključavaju dodatna mjesta za skaute i kvalitetnije izveštaje."
+    "scoutingOfficeShort": "Centar za skauting, izvještaje, informacije s tržišta i otkrivanje talenata.",
+    "scoutingOfficeLong": "Ured za skauting određuje maksimalnu kvalitetu skautskih izvještaja, kapacitet skautinga i buduće sustave tržišnih informacija. Više razine otključavaju dodatna mjesta za skaute i kvalitetnije izvještaje."
   },
   "assets": {
     "teamCars": "Timski automobili",
@@ -170,11 +170,11 @@
     "noTiers": "Još nisu konfigurisani nivoi nabavke za ovaj tip vozila.",
     "startDelivery": "Naruči",
     "garageSupportTitle": "Podrška garaže i stvarna dodjela za utrku",
-    "teamCarAssignment": "Garaža pokazuje šta klub poseduje i šta je trenutno u isporuci. Bonusi na utrci treba da dolaze samo od automobila dodeljenih konkretnom događaju. Jača garaža daje više opcija, ali samo dodijeljena i dostupna vozila treba da utiču na rezultat.",
-    "teamBusAssignment": "Garaža pokazuje šta klub poseduje i šta je u isporuci. Bonusi treba da dolaze samo od autobusa dodeljenih konkretnom događaju ili turi.",
-    "equipmentVanAssignment": "Garaža pokazuje šta klub poseduje i šta je u isporuci. Bonusi treba da dolaze samo od kombija za opremu dodeljenih konkretnom događaju.",
-    "mobileWorkshopAssignment": "Garaža pokazuje šta klub poseduje i šta je u isporuci. Tehnički bonusi treba da dolaze samo od mobilnih radionica dodeljenih konkretnom događaju.",
-    "medicalVanAssignment": "Garaža pokazuje šta klub poseduje i šta je u isporuci. Medicinski bonusi treba da dolaze samo od medicinskih kombija dodeljenih konkretnom događaju.",
+    "teamCarAssignment": "Garaža prikazuje što klub posjeduje i što je trenutačno u isporuci. Bonusi na utrci trebaju dolaziti samo od automobila dodijeljenih konkretnom događaju. Jača garaža daje više opcija, ali samo dodijeljena i dostupna vozila trebaju utjecati na rezultat.",
+    "teamBusAssignment": "Garaža prikazuje što klub posjeduje i što je u isporuci. Bonusi trebaju dolaziti samo od autobusa dodijeljenih konkretnom događaju ili turi.",
+    "equipmentVanAssignment": "Garaža prikazuje što klub posjeduje i što je u isporuci. Bonusi trebaju dolaziti samo od kombija za opremu dodijeljenih konkretnom događaju.",
+    "mobileWorkshopAssignment": "Garaža prikazuje što klub posjeduje i što je u isporuci. Tehnički bonusi trebaju dolaziti samo od mobilnih radionica dodijeljenih konkretnom događaju.",
+    "medicalVanAssignment": "Garaža prikazuje što klub posjeduje i što je u isporuci. Medicinski bonusi trebaju dolaziti samo od medicinskih kombija dodijeljenih konkretnom događaju.",
     "garageSlotsTeamCar": "Automobili u vlasništvu prikazuju se prvi, zatim isporuke na čekanju, dok slobodna mjesta ostaju dostupna za buduće nabavke.",
     "garageSlotsGeneric": "Vozila u vlasništvu prikazuju se prva, zatim isporuke na čekanju, dok slobodna mjesta ostaju dostupna za buduće nabavke.",
     "freePremiumMax": "Besplatno {{free}} · Premium {{premium}} · Maks. {{max}}",
@@ -289,7 +289,7 @@
     "projectsTitle": "Izgradnja, nadogradnje i povraćaj novca",
     "projectsBody": "Kada otvorite detalje objekta, možete videti cenu sljedećeg nivoa, trajanje izgradnje i bonuse ili opcije koje će otključati.\n\nProjekat izgradnje ili nadogradnje možete pokrenuti kada klub ima dovoljno novca i slobodan kapacitet projekata.\n\nInfrastrukturni projekat možete i otkazati. Ako ga otkažete odmah, dobijate pun povraćaj novca. Ako ga otkažete kasnije, povraćaj može biti manji.",
     "assetsTitle": "Timska vozila i oprema",
-    "assetsBody": "Kartica Vozila i oprema prikazuje vozila i prateću opremu koju tim može koristiti.\n\nTu spadaju timski automobili, timski autobusi, kombiji za opremu, mobilne radionice i medicinski kombiji. Oni mogu podržati tim tokom utrka, putovanja, priprema i trening kampova.\n\nSvako vozilo može imati različite nivoe, cene, stanje, bonuse i ograničenja. Otvorite detalje da biste videli šta konkretno donosi timu.\n\nNeke napredne funkcije, opcije upravljanja ili dodatni alati mogu zahtevati Premium račun ili kupovinu uz coins.",
+    "assetsBody": "Kartica Vozila i oprema prikazuje vozila i prateću opremu koju tim može koristiti.\n\nTu spadaju timski automobili, timski autobusi, kombiji za opremu, mobilne radionice i medicinski kombiji. Oni mogu podržati tim tijekom utrka, putovanja, priprema i trening kampova.\n\nSvako vozilo može imati različite razine, cijene, stanje, bonuse i ograničenja. Otvorite detalje kako biste vidjeli što konkretno donosi timu.\n\nNeke napredne funkcije, opcije upravljanja ili dodatni alati mogu zahtijevati Premium račun ili kupnju uz Coins.",
     "next": "Sljedeće",
     "continueCalendar": "Nastavi na Kalendar",
     "finish": "Završi za sada",
@@ -418,7 +418,7 @@
       },
       "level2": {
         "unlock": "Otključava treće mjesto za Mehaničara i 10% brže popravke opreme.",
-        "effect": "Popravke opreme postaju brže kada sistem opreme primenjuje ovaj efekat."
+        "effect": "Popravci opreme postaju brži kada sustav opreme primjenjuje ovaj učinak."
       },
       "level3": {
         "unlock": "Otključava četvrto mjesto za Mehaničara i 20% brže i 20% jeftinije popravke opreme.",
@@ -498,7 +498,7 @@
       },
       "level2": {
         "unlock": "Bolja podrška razvoju mladih.",
-        "effect": "U23 vozači dobijaju 10% bonusa na trening i razvoj kada U23 sistem primenjuje ovaj efekat."
+        "effect": "U23 vozači dobivaju 10% bonusa na trening i razvoj kada U23 sustav primjenjuje ovaj učinak."
       }
     }
   }
