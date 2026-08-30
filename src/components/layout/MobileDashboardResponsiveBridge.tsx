@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
+const MOBILE_SIDEBAR_ID = 'ppm-mobile-dashboard-navigation'
 
 function getClientPath(): string {
   if (typeof window === 'undefined') return ''
@@ -61,6 +62,7 @@ function tagDashboardElements(): void {
 
   if (sidebar) {
     sidebar.dataset.ppmMobileSidebar = 'true'
+    sidebar.id = MOBILE_SIDEBAR_ID
   }
 
   if (main) {
@@ -116,9 +118,22 @@ export default function MobileDashboardResponsiveBridge(): JSX.Element | null {
       const clickedButton = target.closest('button')
 
       if (toggleButton && clickedButton === toggleButton) {
+        const desktopSidebarIsCollapsed = sidebar?.classList.contains('w-24') === true
+
+        setIsMobileNavigationOpen(previous => !previous)
+
+        /*
+         * If the user collapsed the desktop sidebar and then resized the same
+         * browser window to mobile, allow this one click to reach MainLayout's
+         * original toggle handler so the navigation labels are rendered again.
+         * Normal mobile clicks stay isolated from the desktop collapsed state.
+         */
+        if (desktopSidebarIsCollapsed) {
+          return
+        }
+
         event.preventDefault()
         event.stopPropagation()
-        setIsMobileNavigationOpen(previous => !previous)
         return
       }
 
@@ -161,6 +176,14 @@ export default function MobileDashboardResponsiveBridge(): JSX.Element | null {
       isMobileNavigationOpen &&
       isDashboardPath() &&
       window.matchMedia(MOBILE_MEDIA_QUERY).matches
+
+    const header = document.querySelector<HTMLElement>('[data-ppm-dashboard-header="true"]')
+    const toggleButton = header?.querySelector<HTMLButtonElement>('button')
+
+    if (toggleButton && window.matchMedia(MOBILE_MEDIA_QUERY).matches) {
+      toggleButton.setAttribute('aria-controls', MOBILE_SIDEBAR_ID)
+      toggleButton.setAttribute('aria-expanded', String(shouldOpen))
+    }
 
     if (shouldOpen) {
       document.body.dataset.ppmMobileNavOpen = 'true'
