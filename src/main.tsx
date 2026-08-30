@@ -3,9 +3,11 @@ import './shadcn.css'
 import './mobile-responsive.css'
 import './mobile-responsive-audit.css'
 import './home-mobile.css'
+import './mobile-dashboard-sections.css'
 import './i18n'
 import App from './App'
 import MobileDashboardResponsiveBridge from './components/layout/MobileDashboardResponsiveBridge'
+import MobileDashboardSectionPreferences from './components/layout/MobileDashboardSectionPreferences'
 import LanguagePreferenceSync from './components/i18n/LanguagePreferenceSync'
 import LanguageSelectorHost from './components/i18n/LanguageSelectorHost'
 import AppShellLegacyLocalizationBridge from './components/i18n/AppShellLegacyLocalizationBridge'
@@ -49,6 +51,7 @@ const root = createRoot(document.getElementById('app')!)
 root.render(
   <>
     <MobileDashboardResponsiveBridge />
+    <MobileDashboardSectionPreferences />
     <LanguagePreferenceSync />
     <LanguageSelectorHost />
     <AppShellLegacyLocalizationBridge />
