@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
 
+# Refresh marker: 2026-08-30 German semantic review.
 jobs:
   export:
     runs-on: ubuntu-24.04
