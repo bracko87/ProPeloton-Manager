@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/runner/work/ProPeloton-Manager/ProPeloton-Manager/.github/scripts/validate_croatian_management_20260830.py", line 71, in <module>
+    check_schema(en, hr, filename)
+  File "/home/runner/work/ProPeloton-Manager/ProPeloton-Manager/.github/scripts/validate_croatian_management_20260830.py", line 40, in check_schema
+    check_schema(a[key], b[key], f'{path}.{key}')
+  File "/home/runner/work/ProPeloton-Manager/ProPeloton-Manager/.github/scripts/validate_croatian_management_20260830.py", line 40, in check_schema
+    check_schema(a[key], b[key], f'{path}.{key}')
+  File "/home/runner/work/ProPeloton-Manager/ProPeloton-Manager/.github/scripts/validate_croatian_management_20260830.py", line 48, in check_schema
+    raise AssertionError(f'{path}: placeholder mismatch {PH.findall(a)} != {PH.findall(b)}')
+AssertionError: finance.json.overview.incomePeriod: placeholder mismatch ['{{period}}'] != ['{{razdoblje}}']
