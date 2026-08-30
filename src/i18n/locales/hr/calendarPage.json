@@ -17,7 +17,7 @@
     "rain": "Padavine",
     "noData": "Podaci o vremenu za zemlju tima još nisu dostupni.",
     "noWeatherData": "Nema podataka o vremenu",
-    "mixed": "Promenljivi uvjeti",
+    "mixed": "Promjenjivi uvjeti",
     "clear": "Vedro",
     "partlyCloudy": "Delimično oblačno",
     "overcast": "Oblačno",
@@ -109,7 +109,7 @@
     "premiumDescription": "Filtrirajte utrke prema zemlji, kategoriji, formatu utrke, statusu prijava i ciljevima sponzora.",
     "unlockPremium": "Otključaj uz Premium",
     "activeCount": "{{count}} aktivnih",
-    "showing": "Prikazano {{shown}} od {{total}} utrka u mesecu {{month}}",
+    "showing": "Prikazano {{shown}} od {{total}} utrka u mjesecu {{month}}",
     "noMatch": "Nijedna utrka ne odgovara izabranim Premium filterima za {{month}}.",
     "noScheduled": "Nema zakazanih utrka za {{month}}."
   },
@@ -185,7 +185,7 @@
   },
   "tutorial": {
     "welcomeTitle": "Potrebna vam je pomoć sa Kalendarom?",
-    "welcomeBody": "Možemo vam pokazati kako funkcioniše Kalendar, uključujući dnevne aktivnosti tima, mesece utrka, ciljeve sponzora i profile utrka.",
+    "welcomeBody": "Možemo vam pokazati kako funkcionira Kalendar, uključujući dnevne aktivnosti tima, mjesece utrka, ciljeve sponzora i profile utrka.",
     "start": "Pokreni tutorijal",
     "noThanks": "Ne, hvala",
     "seasonTitle": "Kalendar sezone",

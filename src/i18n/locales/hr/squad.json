@@ -12,7 +12,7 @@
     "developingTeam": "Razvojni tim",
     "staff": "Osoblje",
     "developingUnavailable": "Razvojni tim trenutno nije dostupan.",
-    "unlockDeveloping": "Prvo otključajte Razvojni tim u Podešavanjima."
+    "unlockDeveloping": "Najprije otključajte Razvojni tim u Postavkama."
   },
   "roster": {
     "firstSquad": "Prvi tim",
@@ -27,7 +27,7 @@
     "skillsView": "Prikaz vještina",
     "formDevelopment": "Forma i razvoj",
     "checkingPremium": "Provjera Premium pristupa…",
-    "advancedPremium": "Napredni prikazi tima zahtevaju Premium.",
+    "advancedPremium": "Napredni prikazi momčadi zahtijevaju Premium.",
     "viewPremium": "Prikaži Premium",
     "onlyPremium": "Samo za Premium korisnike",
     "premiumOnly": "Samo Premium"
@@ -73,7 +73,7 @@
     "good": "Dobro",
     "great": "Odlično",
     "limited": "Ograničen",
-    "average": "Prosečan",
+    "average": "Prosječan",
     "promising": "Obećavajući",
     "high": "Visok",
     "elite": "Elitan"
