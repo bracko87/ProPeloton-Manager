@@ -1,7 +1,9 @@
 import { createRoot } from 'react-dom/client'
 import './shadcn.css'
+import './mobile-responsive.css'
 import './i18n'
 import App from './App'
+import MobileDashboardResponsiveBridge from './components/layout/MobileDashboardResponsiveBridge'
 import LanguagePreferenceSync from './components/i18n/LanguagePreferenceSync'
 import LanguageSelectorHost from './components/i18n/LanguageSelectorHost'
 import AppShellLegacyLocalizationBridge from './components/i18n/AppShellLegacyLocalizationBridge'
@@ -44,6 +46,7 @@ const root = createRoot(document.getElementById('app')!)
 
 root.render(
   <>
+    <MobileDashboardResponsiveBridge />
     <LanguagePreferenceSync />
     <LanguageSelectorHost />
     <AppShellLegacyLocalizationBridge />
