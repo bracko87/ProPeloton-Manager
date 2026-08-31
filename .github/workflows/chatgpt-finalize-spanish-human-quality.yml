@@ -1,0 +1,77 @@
+name: Finalize Spanish human quality
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/finalize_spanish_human_quality_20260831.py'
+      - '.github/scripts/audit_spanish_human_quality_20260831.py'
+      - '.github/scripts/audit_spanish_hardcoded_ui_20260831.py'
+      - '.github/workflows/chatgpt-finalize-spanish-human-quality.yml'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply human-reviewed Spanish corrections
+        run: python .github/scripts/finalize_spanish_human_quality_20260831.py
+
+      - name: Scan React pages and components for hardcoded English
+        run: python .github/scripts/audit_spanish_hardcoded_ui_20260831.py
+
+      - name: Run Spanish human-language gate
+        shell: bash
+        run: python .github/scripts/audit_spanish_human_quality_20260831.py | tee /tmp/spanish-human-quality.txt
+
+      - name: Run final Spanish semantic/schema/placeholder gate
+        shell: bash
+        run: python .github/scripts/audit_spanish_final_20260831.py | tee /tmp/spanish-final-semantic.txt
+
+      - name: Run broad Spanish completion report
+        run: python .github/scripts/audit_spanish_completion_20260831.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push build-gated Spanish fixes
+        shell: bash
+        run: |
+          if git diff --quiet -- src/i18n/locales/es; then
+            echo 'No Spanish locale changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/es
+          git commit -m 'Finish Spanish language quality pass'
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Upload Spanish final review artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spanish-final-human-quality
+          path: |
+            spanish_hardcoded_ui_audit.tsv
+            spanish_completion_audit.tsv
+            /tmp/spanish-human-quality.txt
+            /tmp/spanish-final-semantic.txt
+          retention-days: 3
+          if-no-files-found: warn
