@@ -99,7 +99,16 @@ function toNumber(value: unknown): number {
 }
 
 function getUiLocale(language?: string): string {
-  return language?.toLowerCase().startsWith('sr') ? 'sr-Latn-RS' : 'en-US'
+  const normalized = String(language ?? 'en').toLowerCase()
+
+  if (normalized.startsWith('sr')) return 'sr-Latn-RS'
+  if (normalized.startsWith('de')) return 'de-DE'
+  if (normalized.startsWith('hr')) return 'hr-HR'
+  if (normalized.startsWith('es')) return 'es-ES'
+  if (normalized.startsWith('it')) return 'it-IT'
+  if (normalized.startsWith('fr')) return 'fr-FR'
+  if (normalized.startsWith('ru')) return 'ru-RU'
+  return 'en-GB'
 }
 
 function formatTime(hour24: number, minute2: number): string {
