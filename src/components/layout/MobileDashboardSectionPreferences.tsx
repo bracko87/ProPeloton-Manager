@@ -69,24 +69,46 @@ function writeCollapsedIds(pageKey: string, values: Set<string>): void {
   }
 }
 
-function findSectionHeading(element: HTMLElement): HTMLElement | null {
-  const headings = Array.from(
-    element.querySelectorAll<HTMLElement>('h2, h3'),
+function isExcludedElement(element: HTMLElement): boolean {
+  return Boolean(
+    element.closest(
+      '[role="dialog"], [aria-modal="true"], [data-radix-popper-content-wrapper], nav, header, footer',
+    ),
   )
+}
+
+function looksLikeDashboardWindow(element: HTMLElement): boolean {
+  const className = element.className
+  const classText = typeof className === 'string' ? className : ''
 
   return (
-    headings.find(heading => {
-      let current: HTMLElement | null = heading.parentElement
-      let depth = 0
-
-      while (current && current !== element && depth <= 2) {
-        current = current.parentElement
-        depth += 1
-      }
-
-      return current === element && depth <= 2
-    }) ?? null
+    /rounded-(?:md|lg|xl|2xl|3xl)/.test(classText) ||
+    /(?:^|\s)border(?:\s|$|-)/.test(classText) ||
+    /(?:^|\s)shadow(?:\s|$|-)/.test(classText) ||
+    /(?:^|\s)bg-(?:white|slate-50|slate-100|gray-50)(?:\s|$|\/)/.test(classText)
   )
+}
+
+function findWindowForHeading(
+  heading: HTMLElement,
+  root: HTMLElement,
+): HTMLElement | null {
+  let current = heading.parentElement
+  let depth = 0
+
+  while (current && current !== root && depth < 7) {
+    if (isExcludedElement(current)) return null
+
+    if (looksLikeDashboardWindow(current)) {
+      const contentHeight = Math.max(current.scrollHeight, current.offsetHeight)
+      if (contentHeight >= 76) return current
+    }
+
+    current = current.parentElement
+    depth += 1
+  }
+
+  return null
 }
 
 function getStructuralPath(element: HTMLElement, root: HTMLElement): string {
@@ -123,34 +145,66 @@ function getStableSectionId(
   return `${pageKey}:path:${getStructuralPath(element, root)}`
 }
 
-function isEligibleSection(element: HTMLElement, root: HTMLElement): boolean {
-  if (element === root) return false
-  if (element.dataset.ppmMobileSectionToggleHost === 'true') return true
+function normalizeTitle(value: string | null | undefined): string {
+  return String(value ?? '').replace(/\s+/g, ' ').trim()
+}
 
-  if (
-    element.closest(
-      '[role="dialog"], [aria-modal="true"], [data-radix-popper-content-wrapper], nav, header, footer',
+function discoverHeadingTargets(root: HTMLElement): Array<{
+  element: HTMLElement
+  title: string
+}> {
+  const headings = Array.from(
+    root.querySelectorAll<HTMLElement>('h1, h2, h3, h4'),
+  )
+
+  const byElement = new Map<HTMLElement, string>()
+
+  headings.forEach(heading => {
+    if (isExcludedElement(heading)) return
+
+    const title = normalizeTitle(heading.textContent)
+    if (!title) return
+
+    const element = findWindowForHeading(heading, root)
+    if (!element || element === root) return
+
+    // Keep the first/highest visible heading as the window label.
+    if (!byElement.has(element)) {
+      byElement.set(element, title)
+    }
+  })
+
+  return Array.from(byElement.entries()).map(([element, title]) => ({
+    element,
+    title,
+  }))
+}
+
+function discoverExplicitCardTargets(root: HTMLElement): Array<{
+  element: HTMLElement
+  title: string
+}> {
+  const candidates = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      '[data-ppm-mobile-collapsible-title], [data-tutorial-target]',
+    ),
+  )
+
+  return candidates
+    .map(element => {
+      if (element === root || isExcludedElement(element)) return null
+      if (!looksLikeDashboardWindow(element)) return null
+
+      const explicitTitle = normalizeTitle(
+        element.dataset.ppmMobileCollapsibleTitle,
+      )
+      if (!explicitTitle) return null
+
+      return { element, title: explicitTitle }
+    })
+    .filter(
+      (value): value is { element: HTMLElement; title: string } => Boolean(value),
     )
-  ) {
-    return false
-  }
-
-  const heading = findSectionHeading(element)
-  if (!heading || !heading.textContent?.trim()) return false
-
-  const className = element.className
-  const classText = typeof className === 'string' ? className : ''
-  const looksLikeCard =
-    element.tagName === 'SECTION' ||
-    element.tagName === 'ARTICLE' ||
-    /rounded-(?:lg|xl|2xl)/.test(classText) ||
-    /\bborder\b/.test(classText) ||
-    /\bbg-white\b/.test(classText)
-
-  if (!looksLikeCard) return false
-
-  const contentHeight = Math.max(element.scrollHeight, element.offsetHeight)
-  return contentHeight >= 110
 }
 
 function removeEnhancementMarks(): void {
@@ -171,22 +225,24 @@ function discoverTargets(): CollapsibleTarget[] {
   if (!ENABLED_PAGE_KEYS.has(pageKey)) return []
 
   const collapsedIds = readCollapsedIds(pageKey)
-  const rawCandidates = Array.from(
-    root.querySelectorAll<HTMLElement>(
-      'section, article, div.rounded-lg, div.rounded-xl, div.rounded-2xl',
-    ),
-  ).filter(element => isEligibleSection(element, root))
+  const merged = new Map<HTMLElement, string>()
 
-  const candidates: HTMLElement[] = []
-
-  rawCandidates.forEach(element => {
-    const alreadyCoveredByParent = candidates.some(parent => parent.contains(element))
-    if (!alreadyCoveredByParent) candidates.push(element)
+  discoverHeadingTargets(root).forEach(({ element, title }) => {
+    merged.set(element, title)
   })
 
-  return candidates.slice(0, 18).map(element => {
-    const heading = findSectionHeading(element)
-    const title = heading?.textContent?.replace(/\s+/g, ' ').trim() || 'Section'
+  discoverExplicitCardTargets(root).forEach(({ element, title }) => {
+    if (!merged.has(element)) merged.set(element, title)
+  })
+
+  const candidates = Array.from(merged.entries())
+    .map(([element, title]) => ({ element, title }))
+    .filter(({ element }) => {
+      const contentHeight = Math.max(element.scrollHeight, element.offsetHeight)
+      return contentHeight >= 76
+    })
+
+  return candidates.slice(0, 40).map(({ element, title }) => {
     const id = getStableSectionId(pageKey, element, root)
     const collapsed = collapsedIds.has(id)
 
@@ -321,7 +377,7 @@ export default function MobileDashboardSectionPreferences(): JSX.Element | null 
           >
             <span className="ppm-mobile-section-toggle-title">{target.title}</span>
             <span className="ppm-mobile-section-toggle-icon" aria-hidden="true">
-              {target.collapsed ? '▸' : '▾'}
+              {target.collapsed ? '+' : '−'}
             </span>
           </button>,
           target.element,
