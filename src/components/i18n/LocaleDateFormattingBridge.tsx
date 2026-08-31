@@ -40,6 +40,7 @@ function localeForLanguage(language: string | undefined): string {
   if (language?.startsWith('de')) return 'de-DE'
   if (language?.startsWith('hr')) return 'hr-HR'
   if (language?.startsWith('es')) return 'es-ES'
+  if (language?.startsWith('it')) return 'it-IT'
   return 'en-GB'
 }
 
