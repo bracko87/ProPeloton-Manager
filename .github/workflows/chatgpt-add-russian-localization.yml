@@ -8,6 +8,8 @@ on:
       - '.github/scripts/add_russian_localization_20260831.py'
       - '.github/scripts/add_russian_localization_v2_20260831.py'
       - '.github/scripts/add_russian_localization_v3_20260831.py'
+      - '.github/scripts/translate_russian_shard_20260831.py'
+      - '.github/scripts/assemble_russian_shards_20260831.py'
       - '.github/scripts/polish_russian_baseline_20260831.py'
       - '.github/scripts/polish_russian_quality_v2_20260831.py'
       - '.github/scripts/polish_russian_final_20260831.py'
@@ -29,9 +31,52 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  russian:
+  translate:
+    name: russian-shard-${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     runs-on: ubuntu-24.04
-    timeout-minutes: 150
+    timeout-minutes: 70
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install CPU translation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install transformers sentencepiece
+
+      - name: Translate Russian shard
+        env:
+          RU_SHARD_INDEX: ${{ matrix.shard }}
+          RU_SHARD_COUNT: '4'
+          RU_SHARD_OUTPUT: .russian-shard
+        run: python .github/scripts/translate_russian_shard_20260831.py
+
+      - name: Upload Russian shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: russian-shard-${{ matrix.shard }}
+          path: .russian-shard/*.json
+          retention-days: 1
+          if-no-files-found: error
+
+  finalize:
+    name: russian-final
+    needs: translate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -44,13 +89,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install translation dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install torch transformers sentencepiece
+      - name: Download translated Russian shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: russian-shard-*
+          path: .russian-merged
+          merge-multiple: true
 
-      - name: Generate protected-safe Russian locale package
-        run: python .github/scripts/add_russian_localization_v3_20260831.py
+      - name: Assemble Russian package
+        run: python .github/scripts/assemble_russian_shards_20260831.py
 
       - name: Apply Russian cycling and human-quality polish
         run: python .github/scripts/polish_russian_quality_v2_20260831.py
@@ -90,7 +137,7 @@ jobs:
             echo 'No Russian changes to commit.'
             exit 0
           fi
-          git commit -m 'Polish Russian language package'
+          git commit -m 'Finish Russian language package'
           git pull --rebase origin main
           git push origin main
 
