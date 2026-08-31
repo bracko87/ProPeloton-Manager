@@ -17,6 +17,8 @@ BLOCK_PATTERNS = [
     (re.compile(r'\bстади(?:я|и|ю|ей|ях|ями)\b', re.I), 'stage translated as generic стадия'),
     (re.compile(r'\bсвободн(?:ый|ые|ого|ых)\s+агент', re.I), 'free-agent wording should be свободный гонщик'),
     (re.compile(r'\bтренировочн(?:ый|ого|ом|ые|ых)\s+лагер', re.I), 'Training Camp should use тренировочный сбор'),
+    (re.compile(r'\bжучк(?:а|е|и|у|ой|ами|ах)?\b', re.I), 'software bug translated as insect'),
+    (re.compile(r'\bвелосипедн(?:ый|ые|ых|ыми)\s+мотоцикл', re.I), 'equipment translated as motorcycle'),
 ]
 
 VISIBLE_EXPECTED = {
@@ -24,12 +26,28 @@ VISIBLE_EXPECTED = {
     'home.json.hero.titleLine1': 'Создайте свою велосипедную легенду.',
     'home.json.hero.titleLine2': 'Управляйте командой.',
     'home.json.hero.titleLine3': 'Доминируйте в сезоне.',
+    'home.json.hero.description': 'ProPeloton Manager — онлайн-игра о менеджменте велокоманды. Создавайте клуб, развивайте гонщиков, планируйте календарь, ведите трансферные переговоры и соревнуйтесь с реальными менеджерами в живом сезонном мире велоспорта.',
+    'home.json.raceSchedule.title': 'Календарь гонок',
+    'home.json.stats.title': 'Краткая статистика',
     'home.json.stats.activeManagers': 'Активные менеджеры',
+    'home.json.guide.title': 'Как работает ProPeloton Manager',
+    'home.json.screenshots.title': 'Скриншоты игры',
+    'auth.json.signInTitle': 'Войдите в ProPeloton Manager',
+    'auth.json.signInSubtitle': 'Введите данные для входа, чтобы продолжить.',
+    'auth.json.forgotPassword': 'Забыли пароль?',
+    'auth.json.createAccount': 'Создать аккаунт',
+    'auth.json.register.createAccount': 'Создать аккаунт',
+    'auth.json.register.alreadyHave': 'Уже есть аккаунт?',
+    'navigation.json.subtitle': 'Многопользовательский веломенеджер',
+    'navigation.json.customizeTeam': 'Настроить команду',
+    'navigation.json.proPackages': 'Пакеты Coins',
+    'navigation.json.bugReport.button': 'Сообщить об ошибке',
+    'navigation.json.playerReport.reportPlayer': 'Пожаловаться на игрока',
+    'navigation.json.premiumFeature.unlock': 'Разблокировать с Premium',
     'common.json.language.applicationLanguage': 'Язык приложения',
     'common.json.actions.save': 'Сохранить',
     'common.json.actions.cancel': 'Отмена',
     'profile.json.dropdown.signedInAs': 'Вы вошли как',
-    'navigation.json.subtitle': 'Многопользовательский веломенеджер',
     'accountPages.json.profile.languageTitle': 'Язык игры',
     'accountPages.json.profile.languageSelect': 'Выберите язык',
 }
@@ -90,10 +108,13 @@ def walk(source: Any, target: Any, path: str, blockers: list[str]) -> None:
             if 'Training Camp' in reason:
                 if 'training camp' not in low:
                     continue
+            if 'software bug' in reason and 'bug' not in low:
+                continue
+            if 'motorcycle' in reason and 'equipment' not in low and 'bikes' not in low:
+                continue
             blockers.append(f'{path}: {reason}: {target!r}')
             break
 
-    # High-confidence untranslated UI fragments outside protected vocabulary.
     if re.search(r'\b(?:Loading|Saving|Cancel|Close|Continue|Confirm|Previous|Next|Rider|Riders|Team|Teams|Race|Races|Stage|Stages)\b', semantic):
         blockers.append(f'{path}: visible English UI fragment remains: {target!r}')
 
