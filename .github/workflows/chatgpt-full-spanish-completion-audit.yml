@@ -115,13 +115,14 @@ jobs:
           for name in en_files:
             if (es_dir/name).exists(): walk_pair(load(en_dir/name),load(es_dir/name),name)
 
-          # Spanish wiring / locale formatting.
+          # Spanish wiring / locale formatting. Other supported languages may be added later.
           languages=(root/'src/i18n/languages.ts').read_text(encoding='utf-8')
           index=(root/'src/i18n/index.ts').read_text(encoding='utf-8')
           date_bridge=(root/'src/components/i18n/LocaleDateFormattingBridge.tsx').read_text(encoding='utf-8')
           if "code: 'es'" not in languages or "countryCode: 'ES'" not in languages or "locale: 'es-ES'" not in languages:
             blockers.append('Spanish language metadata/wiring missing')
-          if "supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es']" not in index:
+          supported_match = re.search(r"supportedLngs:\s*\[([^\]]+)\]", index)
+          if not supported_match or not re.search(r"['\"]es['\"]", supported_match.group(1)):
             blockers.append('Spanish missing from supportedLngs')
           if "language?.startsWith('es')" not in date_bridge or "return 'es-ES'" not in date_bridge:
             blockers.append('Spanish locale date formatting missing')
