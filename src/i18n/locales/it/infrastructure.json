@@ -127,9 +127,9 @@
     "clubHouseLong": "La Club House è la base operativa principale del team. Supporta l'amministrazione, l'organizzazione del club e la crescita futura del business. Livelli più elevati aiutano a sbloccare una struttura più ampia del personale e sistemi di gestione futuri.",
     "trainingCenterShort": "Base di addestramento per lo sviluppo del ciclista e il lavoro di coaching quotidiano.",
     "trainingCenterLong": "Il Centro di formazione migliora l'efficacia del personale di coaching e supporta la qualità di formazione del ciclista, il supporto allo sviluppo e la gestione del rischio di sovraccarico.",
-    "medicalCenterShort": "Struttura medica per la prevenzione, il trattamento, il recupero e la salute del cavaliere.",
+    "medicalCenterShort": "Struttura medica per la prevenzione, il trattamento, il recupero e la salute del ciclista.",
     "medicalCenterLong": "Il Centro Medico supporta il Team Medici, Fisici e Nutrizionisti. Riduce le dure limitazioni mediche, migliora la prevenzione delle lesioni e il supporto al recupero, ed espande la capacità del personale medico.",
-    "youthAcademyShort": "Facilità di sviluppo a lungo termine per i futuri cavalieri e la progressione dei giovani.",
+    "youthAcademyShort": "Facilità di sviluppo a lungo termine per i futuri ciclisti e la progressione dei giovani.",
     "youthAcademyLong": "L'Accademia Giovanile è un investimento strategico a lungo termine. Supporta i sistemi di sviluppo giovanile, sblocca il ruolo di Coach capo U23 e successivamente migliora la formazione e lo sviluppo per i ciclisti U23.",
     "mechanicsWorkshopShort": "Base operativa tecnica per la manutenzione e il supporto delle apparecchiature.",
     "mechanicsWorkshopLong": "L'officina Meccanica migliora la capacità di supporto tecnico e prepara il club per sistemi di attrezzature più profondi, velocità di riparazione e riduzione dei costi di manutenzione.",
@@ -152,7 +152,7 @@
     "medicalVans": "Vani medici",
     "medicalVanGarage": "Garage medico Van",
     "teamCarDescription": "Team Cars fornire supporto gara, comunicazione tattica, copertura alimentare, e riduzione della fatica nei giorni di gara. Gestire il garage da slot, avviare nuove consegne, riparare auto usurate, o vendere auto disponibili.",
-    "teamBusDescription": "Team Bus migliorare il comfort di viaggio del ciclista, recupero, controllo della fatica, e la logistica del palcoscenico. Gestire il garage con slot, avviare nuove consegne, riparare autobus usurati, o vendere autobus disponibili.",
+    "teamBusDescription": "Team Bus migliorare il comfort di viaggio del ciclista, recupero, controllo della fatica, e la logistica del tappa. Gestire il garage con slot, avviare nuove consegne, riparare autobus usurati, o vendere autobus disponibili.",
     "equipmentVanDescription": "Attrezzature I furgoni supportano il trasporto di biciclette, la copertura dei pezzi di ricambio, la logistica delle attrezzature da corsa e la disponibilità di eventi più ampia. Gestire il garage con lo slot, avviare nuove consegne, riparare furgoni usurati o vendere furgoni disponibili.",
     "mobileWorkshopDescription": "I laboratori mobili supportano le riparazioni tecniche in loco, la risposta più rapida al problema, la copertura meccanica e la capacità di servizio delle attrezzature. Gestire il garage tramite slot, avviare nuove consegne, riparare officine usurate o vendere officine disponibili.",
     "medicalVanDescription": "I furgoni medici supportano la risposta sanitaria gara-giorno, l'accesso al trattamento del ciclista, il controllo delle lesioni, e la copertura medica. Gestire il garage da fessura, avviare nuove consegne, riparare furgoni usurati, o vendere furgoni disponibili.",
@@ -213,7 +213,7 @@
     "teamCarPotential": "Il più alto livello di Team Car configurato che può essere acquisito attraverso il sistema di garage.",
     "travelComfort": "Comfort di viaggio",
     "travelComfortDescription": "Il miglior valore di supporto per autobus di proprietà disponibile per il comfort del ciclista e la logistica del programma di gara.",
-    "riderRecovery": "Recupero del cavaliere",
+    "riderRecovery": "Recupero del ciclista",
     "riderRecoveryDescription": "Riduzione della fatica di un giorno del livello del garage dall'attuale riepilogo del Team Bus.",
     "tourFatigueCover": "Copertura della fatica del tour",
     "tourFatigueDescription": "Il livello di supporto attuale più alto disponibile da Team Bus di proprietà e la loro condizione.",
@@ -346,7 +346,7 @@
       },
       "level2": {
         "name": "Bus del team di recupero",
-        "effect": "Buona riduzione della fatica durante le gare di palcoscenico e blocchi di viaggio lunghi."
+        "effect": "Buona riduzione della fatica durante le gare di tappa e blocchi di viaggio lunghi."
       },
       "level3": {
         "name": "Tour Bus Elite",
@@ -360,7 +360,7 @@
       },
       "level2": {
         "name": "Attrezzatura di servizio Van",
-        "effect": "Media spinta alla risposta di ricambio, preparazione pre-fase e riduzione della perdita di condizioni dell'attrezzatura."
+        "effect": "Media spinta alla risposta di ricambio, preparazione pre-tappa e riduzione della perdita di condizioni dell'attrezzatura."
       },
       "level3": {
         "name": "Pro Equipment Van",
@@ -380,11 +380,11 @@
     "medical_van": {
       "level1": {
         "name": "Vano medico di base",
-        "effect": "Piccolo bonus di risposta medica, piccola riduzione del rischio di lesioni minori e supporto di recupero post-fase."
+        "effect": "Piccolo bonus di risposta medica, piccola riduzione del rischio di lesioni minori e supporto di recupero post-tappa."
       },
       "level2": {
         "name": "Recupero furgoncino medico",
-        "effect": "Bonus di risposta medica media, riduzione del rischio minore di lesioni, supporto idratazione e migliore recupero dopo le fasi."
+        "effect": "Bonus di risposta medica media, riduzione del rischio minore di lesioni, supporto idratazione e migliore recupero dopo le tappe."
       },
       "level3": {
         "name": "Unità Pro Medica",
@@ -504,7 +504,7 @@
   },
   "legacyUi": {
     "teamBusGarage": "Garage per il Team Bus",
-    "teamBusGarageDescription": "Team Bus migliorare il comfort di viaggio del ciclista, recupero, controllo della fatica, e la logistica del palcoscenico. Gestire il garage con slot, avviare nuove consegne, riparare autobus usurati, o vendere autobus disponibili.",
+    "teamBusGarageDescription": "Team Bus migliorare il comfort di viaggio del ciclista, recupero, controllo della fatica, e la logistica del tappa. Gestire il garage con slot, avviare nuove consegne, riparare autobus usurati, o vendere autobus disponibili.",
     "equipmentVanGarage": "Attrezzatura Van Garage",
     "equipmentVanGarageDescription": "Attrezzature I furgoni supportano il trasporto di biciclette, la copertura dei pezzi di ricambio, la logistica delle attrezzature da corsa e la disponibilità di eventi più ampia. Gestire il garage con lo slot, avviare nuove consegne, riparare furgoni usurati o vendere furgoni disponibili.",
     "mobileWorkshopGarageDescription": "I laboratori mobili supportano le riparazioni tecniche in loco, la risposta più rapida al problema, la copertura meccanica e la capacità di servizio delle attrezzature. Gestire il garage tramite slot, avviare nuove consegne, riparare officine usurate o vendere officine disponibili.",

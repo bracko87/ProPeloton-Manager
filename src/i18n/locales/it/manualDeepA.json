@@ -341,10 +341,10 @@
       "overview": "Le notifiche possono rappresentare importanti cambiamenti di stato nella preparazione delle gare, nella finanza, nelle infrastrutture, nei trasferimenti, nello sviluppo di team e sponsor.",
       "facts": [
         "Esempi",
-        "Racing plan promemoria, piano di scena promemoria, sviluppo finestra, prestito di emergenza, struttura completa, rilascio rider, obiettivo sponsor"
+        "Race Plan promemoria, Stage Plan promemoria, sviluppo finestra, prestito di emergenza, struttura completa, rilascio rider, obiettivo sponsor"
       ],
       "details": [
-        "Le notifiche di preparazione della gara avvisano quando i piani o i piani di fase hanno bisogno di azione.",
+        "Le notifiche di preparazione della gara avvisano quando i piani o i Stage Plans hanno bisogno di azione.",
         "Le notifiche della finestra di sviluppo del team indicano agli utenti quando è possibile il movimento.",
         "Le notifiche di completamento dell'infrastruttura indicano agli utenti che un impianto/asset è pronto.",
         "Le notifiche di prestito d'urgenza non consentono al club di coprire un costo obbligatorio.",
@@ -406,7 +406,7 @@
       "overview": "Prima Squadra è dove gli utenti ispezionano il loro roster principale, informazioni finanziarie, competenze e forma.",
       "facts": [
         "Prima squadra max in UI",
-        "18 cavalieri",
+        "18 ciclisti",
         "Vista",
         "Generale, finanziario, competenze, forma"
       ],
@@ -425,7 +425,7 @@
       ]
     },
     "riderSkillsDeep": {
-      "title": "Capacità di cavaliere spiegata",
+      "title": "Capacità di ciclista spiegata",
       "subtitle": "A cosa serve ogni abilità.",
       "overview": "Nel complesso è una scorciatoia utile, ma attributi specifici del ciclista decidono il ruolo corretto di gara e l'uso tattico.",
       "facts": [
@@ -436,16 +436,16 @@
         "Sprint conta nelle finiture a mazzo e nei treni a mazzo.",
         "Arrampicare sulle tappe delle montagne e sulle finiture della vetta.",
         "Time trial conta in TT, prologo e TTT contesti.",
-        "La resistenza mantiene i cavalieri forti attraverso le fasi lunghe.",
+        "La resistenza mantiene i ciclisti forti attraverso le tappe lunghe.",
         "Piatto aiuta su strade piane/rotolanti, inseguimenti e posizionamento.",
-        "Il recupero conta per le gare di palcoscenico.",
+        "Il recupero conta per le gare di tappa.",
         "La resistenza aiuta in condizioni di tempo difficile, ritmo elevato e terreno difficile.",
         "Il QI di gara influenza le decisioni tattiche e il posizionamento.",
         "Il lavoro di squadra aiuta le domestiche, le lead-out e la caccia.",
         "Il morale influenza la fiducia e può influenzare le prestazioni."
       ],
       "tips": [
-        "Abbinare le abilità del ciclista al ruolo e tipo di palcoscenico."
+        "Abbinare le abilità del ciclista al ruolo e tipo di tappa."
       ]
     },
     "riderProfileDeep": {
@@ -467,13 +467,13 @@
         "Lo stato di trasferimento elencato è visibile e può bloccare il rilascio."
       ],
       "tips": [
-        "Aprire profili prima di rinnovare, vendere o costruire piani di gara."
+        "Aprire profili prima di rinnovare, vendere o costruire Race Plans."
       ]
     },
     "fitnessHealthDeep": {
       "title": "Fitness, Affaticamento e Salute",
-      "subtitle": "Perché un cavaliere forte può essere una scelta pessima oggi.",
-      "overview": "La prestazione dipende da più che attributi. Fatica, malattia, lesioni, status e morale non-completamente-adattato possono cambiare il valore della razza.",
+      "subtitle": "Perché un ciclista forte può essere una scelta pessima oggi.",
+      "overview": "La prestazione dipende da più che attributi. Fatica, malattia, lesioni, status e morale non-completamente-adattato possono cambiare il valore della gara.",
       "facts": [
         "Disponibilità",
         "Adatto, non perfettamente in forma, ferito, malato",
@@ -495,7 +495,7 @@
     "raceSharpnessDeep": {
       "title": "Race Sharpness",
       "subtitle": "Ritmo di corsa e rischio di sovraccarico.",
-      "overview": "La nitidezza della gara aiuta a mostrare se un ciclista ha abbastanza ritmo di corsa recente o è sovraccaricato da troppi giorni di gara.",
+      "overview": "La Race Sharpness aiuta a mostrare se un ciclista ha abbastanza ritmo di corsa recente o è sovraccaricato da troppi giorni di gara.",
       "facts": [
         "Tracciato",
         "Ultima data di gara, giorni di gara ultimi 14/30, giorni di gara totali, avviso di sovraccarico"
@@ -522,7 +522,7 @@
         "Rilascia bloccato durante il trasferimento elencato"
       ],
       "details": [
-        "Un cavaliere con un alto stipendio può diventare un problema finanziario.",
+        "Un ciclista con un alto stipendio può diventare un problema finanziario.",
         "I contratti di scadenza dovrebbero essere riesaminati prima della fine della stagione.",
         "Rilasciare un ciclista può costare lo stipendio / compensazione restante.",
         "L'anteprima mostra se il club può permettersi il rilascio.",
@@ -538,7 +538,7 @@
       "overview": "Il team di sviluppo è un secondo team connesso per i giovani/passeggeri di sviluppo.",
       "facts": [
         "Massimo in UI",
-        "8 cavalieri",
+        "8 ciclisti",
         "Acquisto",
         "Preferenze",
         "Movimento",

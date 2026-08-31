@@ -15,7 +15,7 @@
   },
   "activation": {
     "reactivateForSeason": "Riattivare per la stagione {{season}} {{cost}} Coins",
-    "activate": "Activate Developing Team — {{cost}} Coins",
+    "activate": "Attiva Developing Team — {{cost}} Coins",
     "activatedForSeason": "Sviluppo del team attivato per la stagione {{season}}. Il rinnovo automatico è {{renewal}}.",
     "activatedSuccessfully": "Il team di sviluppo ha attivato con successo.",
     "renewalEnabled": "Sviluppo del team di rinnovo automatico abilitato.",
@@ -41,7 +41,7 @@
     "existingTeam": "Il tuo team di sviluppo esistente sarà attivato per questa stagione.",
     "newTeam": "Un team di sviluppo sarà creato e attivato per questa stagione.",
     "activationAccess": "L'accesso dura fino alla fine della stagione corrente del gioco. Il rinnovo automatico è abilitato per impostazione predefinita e può essere disattivato in qualsiasi momento.",
-    "needCoins": "You need {{cost}} coins to activate Developing Team access. Current balance: {{balance}} coins.",
+    "needCoins": "Ti servono {{cost}} Coins per attivare l'accesso a Developing Team. Saldo attuale: {{balance}} Coins.",
     "team": "Squadra: {{name}}",
     "closeActivation": "Chiudi Conferma di attivazione del team di sviluppo",
     "confirmActivate": "Attiva il team di sviluppo per la stagione {{season}}?",

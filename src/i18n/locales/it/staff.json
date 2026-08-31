@@ -421,9 +421,9 @@
       "focus": "Leadership"
     },
     "director_stage_strategy": {
-      "title": "Programma strategico per le fasi",
-      "description": "Pianificazione tattica specializzata per gare di palcoscenico e supporto GC.",
-      "focus": "Strategia di fase"
+      "title": "Programma strategico per le tappe",
+      "description": "Pianificazione tattica specializzata per gare di tappa e supporto GC.",
+      "focus": "Strategia di tappa"
     },
     "u23_youth_development_methods": {
       "title": "Metodi di sviluppo dei giovani",

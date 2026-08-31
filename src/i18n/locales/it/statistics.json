@@ -53,7 +53,7 @@
     "allCountries": "Tutti i paesi",
     "allSeasons": "Tutte le stagioni",
     "sortInternational": "Sort: Punti internazionali",
-    "sortStageFinish": "Ordina: Punti di finitura del palco",
+    "sortStageFinish": "Ordina: Punti di finitura del tappa",
     "sortGcOneDay": "Ordinare: GC / un giorno punti"
   },
   "competition": {
@@ -87,7 +87,7 @@
     "stageFinish": "Finitura stadio",
     "gcOneDay": "GC / un giorno",
     "internationalPoints": "Punti internazionali",
-    "stageFinishPoints": "Punti di arrivo del palco",
+    "stageFinishPoints": "Punti di arrivo del tappa",
     "gcOneDayPoints": "GC / un giorno",
     "pointsTemplate": "Punti {{metric}}",
     "sortedBy": "Ordinato da: {{metric}}."
@@ -132,7 +132,7 @@
     "mostInternational": "Punti più internazionali",
     "mostPodiums": "La maggior parte dei podi",
     "mostJerseys": "La maggior parte delle maglie",
-    "ridersInFilter": "Cavalieri in filtro",
+    "ridersInFilter": "Ciclisti in filtro",
     "topRiders": "I migliori ciclisti",
     "noRidersFound": "Nessun ciclista trovato",
     "tryRiderFilters": "Prova a cambiare i filtri del ciclista.",

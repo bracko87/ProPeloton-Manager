@@ -64,7 +64,7 @@
     "raceSuppliesDeep": {
       "title": "Dettagli del rifornimento di gara",
       "subtitle": "Bidon, gel, nutrizione, magliette e giacche antipioggia.",
-      "overview": "I rifornimenti di gara sono consumati o utilizzati durante i piani di fase e possono influenzare la fatica, la resistenza, la prontezza e il supporto meteo.",
+      "overview": "I rifornimenti di gara sono consumati o utilizzati durante i Stage Plans e possono influenzare la fatica, la resistenza, la prontezza e il supporto meteo.",
       "facts": [
         "Consumabili",
         "Bidon, gel energetici, confezioni nutritive",
@@ -79,7 +79,7 @@
         "Giacche antipioggia: elemento tempo durevole opzionale; 25 usi scenici per unità."
       ],
       "tips": [
-        "Le gare di palco consumano rapidamente le forniture."
+        "Le gare di tappa consumano rapidamente le forniture."
       ]
     },
     "technicalSponsorDeep": {
@@ -152,7 +152,7 @@
       ],
       "details": [
         "Team Cars supporta convoglio di gara e può essere selezionato come Team Car 1 0403.",
-        "Team Bus trasporta cavalieri e personale.",
+        "Team Bus trasporta ciclisti e personale.",
         "Attrezzatura Van porta biciclette e attrezzi.",
         "Mobile Workshop supporta le riparazioni e le operazioni tecniche.",
         "Il furgone medico supporta le esigenze medico-logistiche.",
@@ -168,14 +168,14 @@
       "overview": "Calendario della stagione mostra il club di attività quotidiana e la stagione più ampia.",
       "facts": [
         "Filtri",
-        "Razze, Campi di formazione, Eventi, Vacanze",
+        "Gare, Campi di formazione, Eventi, Vacanze",
         "Durata del mese di gioco",
         "30 giorni nella griglia attuale dell'interfaccia utente"
       ],
       "details": [
         "Usalo per vedere giorni di gara, campi ed eventi.",
         "I filtri riducono l'ingombro.",
-        "Calendario aiuta a evitare overbooking cavalieri e personale.",
+        "Calendario aiuta a evitare overbooking ciclisti e personale.",
         "Le date del campo di addestramento dovrebbero essere controllate qui.",
         "Importanti mesi di gara possono essere pianificati in anticipo."
       ],
@@ -204,7 +204,7 @@
     },
     "raceDetailDeep": {
       "title": "Pagina dettagliata della corsa",
-      "subtitle": "Profilo di gara, fasi, partecipanti, risultati e ripetizioni.",
+      "subtitle": "Profilo di gara, tappe, partecipanti, risultati e ripetizioni.",
       "overview": "Dettaglio gara è il centro completo gara.",
       "facts": [
         "Schede informazioni",
@@ -217,7 +217,7 @@
         "Le regole di ingresso mostrano scadenze, limiti di squadra, limiti di ciclista e fondo premio.",
         "Le tappe mostrano percorso, terreno, distanza, tempo, sprint e salite.",
         "Partecipanti mostrano team e rider snapshot.",
-        "Risultati e classificazioni diventano disponibili secondo lo stato di razza.",
+        "Risultati e classificazioni diventano disponibili secondo lo stato di gara.",
         "Il replay può mostrare fotogrammi dal vivo o storici se l'accesso permette."
       ],
       "tips": [
@@ -225,9 +225,9 @@
       ]
     },
     "stageTerrainPoints": {
-      "title": "Terreno e punti di fase",
+      "title": "Terreno e punti di tappa",
       "subtitle": "Piatto, collinare, montano, TT, acciottolato, sprint e KOM.",
-      "overview": "Le definizioni di palcoscenico e punto aiutano gli utenti a decidere i ciclisti, le tattiche e le attrezzature.",
+      "overview": "Le definizioni di tappa e punto aiutano gli utenti a decidere i ciclisti, le tattiche e le attrezzature.",
       "facts": [
         "Terreno",
         "Piatto, collinare, montagna, prova individuale, prova di gruppo, prova di gruppo, prologo, ciottolato",
@@ -235,20 +235,20 @@
         "START, INTERMISTERMIATE_SPRINT, KOM, BONUS_SPRINT, FINISH"
       ],
       "details": [
-        "Le fasi piatte spesso favoriscono velocisti e lead-out.",
-        "Hilly palcoscenici favoriscono ciclisti versatili e attaccanti.",
+        "Le tappe piatte spesso favoriscono velocisti e lead-out.",
+        "Hilly tappe favoriscono ciclisti versatili e attaccanti.",
         "Le tappe di montagna favoriscono gli scalatori e i leader GC.",
-        "Le fasi TT/prologo favoriscono i tempisti e le apparecchiature TT.",
-        "Le fasi acciottolate favoriscono la resistenza e le attrezzature specialistiche.",
+        "Le tappe TT/prologo favoriscono i tempisti e le apparecchiature TT.",
+        "Le tappe acciottolate favoriscono la resistenza e le attrezzature specialistiche.",
         "KOM e punti di sprint contano per classificazioni secondarie."
       ],
       "tips": [
-        "Il terreno di palco dovrebbe guidare i ruoli Stage Plan."
+        "Il terreno di tappa dovrebbe guidare i ruoli Stage Plan."
       ]
     },
     "replayResultsDeep": {
       "title": "Replay, risultati e commenti",
-      "subtitle": "Come capire cosa è successo in un palcoscenico.",
+      "subtitle": "Come capire cosa è successo in un tappa.",
       "overview": "Replay e commento spiegano le dinamiche di gara oltre la tabella dei risultati finali.",
       "facts": [
         "Velocità di riproduzione",
@@ -269,18 +269,18 @@
     },
     "racePlanDeep": {
       "title": "Dettagli Race Plan",
-      "subtitle": "Cavalieri, personale, beni, attrezzature e forniture.",
+      "subtitle": "Ciclisti, personale, beni, attrezzature e forniture.",
       "overview": "Race Plan è il piano di gara presentato prima di Stage Plans.",
       "facts": [
         "Parti principali",
-        "Cavalieri, personale, asset, installazione di attrezzature, forniture e preventivi"
+        "Ciclisti, personale, asset, installazione di attrezzature, forniture e preventivi"
       ],
       "details": [
         "I ciclisti devono corrispondere alle regole di gara min/max.",
         "I ciclisti bloccati non possono essere selezionati per eventi sovrapposti.",
         "Il personale e le attività possono essere bloccati anche da incarichi.",
         "L'allestimento dell'attrezzatura dovrebbe corrispondere al terreno di gara.",
-        "Le forniture dovrebbero essere sufficienti per tutte le fasi.",
+        "Le forniture dovrebbero essere sufficienti per tutte le tappe.",
         "L'anteprima delle citazioni deve essere controllata prima di inviare."
       ],
       "tips": [
@@ -290,16 +290,16 @@
     "stagePlanDeep": {
       "title": "Dettagli Stage Plan",
       "subtitle": "Per-stage ruoli e tattiche.",
-      "overview": "Stage Plans dire al motore di gara che cosa ogni ciclista dovrebbe fare su ogni fase.",
+      "overview": "Stage Plans dire al Race Engine che cosa ogni ciclista dovrebbe fare su ogni tappa.",
       "facts": [
         "Componenti",
         "Ruoli, tattiche di squadra, tattiche individuali, attrezzature, forniture"
       ],
       "details": [
-        "Una fase di sprint piatta ha bisogno di ruoli diversi da una fase di montagna.",
+        "Una tappa di sprint piatta ha bisogno di ruoli diversi da una tappa di montagna.",
         "Gli stadi TT e TTT necessitano di attrezzature specialistiche e di pacing.",
-        "Le forniture sono assegnate per fase e possono essere consumate o utilizzare capacità durevole.",
-        "I controlli di prontezza indicano se un piano di fase è utilizzabile.",
+        "Le forniture sono assegnate per tappa e possono essere consumate o utilizzare capacità durevole.",
+        "I controlli di prontezza indicano se un Stage Plan è utilizzabile.",
         "I piani salvati ma vuoti non sono gli stessi dei piani completi."
       ],
       "tips": [
@@ -307,9 +307,9 @@
       ]
     },
     "stageRolesDeep": {
-      "title": "Ruoli di fase e casi di utilizzo",
+      "title": "Ruoli di tappa e casi di utilizzo",
       "subtitle": "Scegliere leader, velocisti, aiutanti e specialisti.",
-      "overview": "I ruoli di palco dovrebbero abbinare le abilità del ciclista e gli obiettivi di palco.",
+      "overview": "I ruoli di tappa dovrebbero abbinare le abilità del ciclista e gli obiettivi di tappa.",
       "facts": [
         "Ruoli",
         "Leader, sprint, lead-out, sprint train, climber, mountain domestique, helper, breakaway, chaser, rouleur, protected, free"
@@ -327,9 +327,9 @@
       ]
     },
     "stageReadinessDeep": {
-      "title": "Sistema di prontezza delle fasi",
+      "title": "Sistema di prontezza delle tappe",
       "subtitle": "Verifiche del piano verde/giallo/arancio/rosso/grigio.",
-      "overview": "La prontezza dice agli utenti se i piani di fase sono sufficientemente completi per il motore.",
+      "overview": "La prontezza dice agli utenti se i Stage Plans sono sufficientemente completi per il motore.",
       "facts": [
         "Conti",
         "Salvato, utilizzabile, mancante, incompleto, vuoto, senza provviste",
@@ -349,7 +349,7 @@
     },
     "sportDirectorDeep": {
       "title": "Suggerimenti per il direttore sportivo",
-      "subtitle": "Suggerimenti per i piani di scena.",
+      "subtitle": "Suggerimenti per i Stage Plans.",
       "overview": "I suggerimenti del Direttore dello Sport possono aiutare i manager a costruire i piani ma non dovrebbero sostituire il giudizio.",
       "facts": [
         "Zone di suggerimento",

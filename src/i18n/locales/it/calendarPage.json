@@ -46,7 +46,7 @@
     "noCamps": "Non ci sono ancora campi di addestramento pianificati o attivi.",
     "camp": "Campo",
     "trainingCamp": "Ritiro di allenamento",
-    "riders": "Cavalieri:",
+    "riders": "Ciclisti:",
     "planned": "pianificato",
     "active": "attivo",
     "completed": "completato",
@@ -61,7 +61,7 @@
     "sponsorGoal": "★ Obiettivo dello sponsor",
     "sponsorObjectiveTarget": "Obiettivo obiettivo sponsorizzato",
     "stage": "Tappa",
-    "stageBadge": "{{race}} · Stage {{stage}}",
+    "stageBadge": "{{race}} · Tappa {{stage}}",
     "stageBadgeCanceled": "{{race}} · Stage {{stage}} · Annullato ({{reason}})",
     "noRaceTutorial": "Non è ancora disponibile nessuna gara.",
     "applicationsNotOpen": "Applicazioni non aperte",
@@ -71,13 +71,13 @@
     "accepted": "Accettato",
     "declined": "Declinato",
     "withdrawn": "Ritiro",
-    "missedStartlist": "Elenco iniziale mancante",
+    "missedStartlist": "Startlist mancante",
     "raceActive": "Corsa attiva",
     "raceFinished": "Gara terminata",
     "raceCanceled": "Gara annullata",
     "partlyCanceled": "parzialmente annullata",
     "oneDay": "Un giorno",
-    "stageRace": "Corsa di palcoscenico"
+    "stageRace": "Corsa a tappe"
   },
   "filters": {
     "races": "Gare",
@@ -98,8 +98,8 @@
     "allCategories": "Tutte le categorie",
     "raceFormat": "Formato gara",
     "allFormats": "Tutti i formati",
-    "myRaceStatus": "Il mio stato di razza",
-    "allRaces": "Tutte le razze",
+    "myRaceStatus": "Il mio stato di gara",
+    "allRaces": "Tutte le gare",
     "notEntered": "Non inserito",
     "applicationStatus": "Stato dell'applicazione",
     "allStatuses": "Tutti gli stati",
@@ -118,7 +118,7 @@
     "hostArea": "Area di accoglienza: {{city}}",
     "detailsSoon": "Dettagli del percorso in arrivo",
     "stages": "{{route}} · Stadi {{count}}",
-    "stageOne": "{{route}} · Fase {{count}}"
+    "stageOne": "{{route}} · Tappa {{count}}"
   },
   "dates": {
     "seasonMonth": "Stagione {{season}} - {{month}}",

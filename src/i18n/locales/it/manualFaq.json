@@ -18,8 +18,8 @@
     },
     "acceptedNotReady": {
       "title": "FAQ: Perché sono accettato ma non sono pronto?",
-      "subtitle": "L'ingresso accettato non è un piano di gara completo.",
-      "overview": "Accettato significa che il vostro team ha un posto; mezzi pronti cavalieri, personale, beni, attrezzature, forniture e piani di scena sono utilizzabili.",
+      "subtitle": "L'ingresso accettato non è un Race Plan completo.",
+      "overview": "Accettato significa che il vostro team ha un posto; mezzi pronti ciclisti, personale, beni, attrezzature, forniture e Stage Plans sono utilizzabili.",
       "details": [
         "Race Plan deve ancora essere presentato.",
         "Stage Plans potrebbe ancora essere mancante.",
@@ -34,11 +34,11 @@
     "riderUnderperformed": {
       "title": "FAQ: Perché il mio ciclista ha fatto un po' di sottoperformance?",
       "subtitle": "La prestazione ha molte cause.",
-      "overview": "Un cavaliere forte può svolgere male se il ruolo, il palcoscenico, le condizioni, le tattiche o il supporto erano sbagliati.",
+      "overview": "Un ciclista forte può svolgere male se il ruolo, il tappa, le condizioni, le tattiche o il supporto erano sbagliati.",
       "details": [
         "Controlla se le abilità del ciclista corrispondono al terreno.",
         "Verificare la fatica e la disponibilità.",
-        "Controllare morale e la precisione della razza.",
+        "Controllare morale e la Race Sharpness.",
         "Controllare ruolo di scena e tattiche.",
         "Controllare le attrezzature e le forniture.",
         "Controllate il tempo e gli incidenti.",
@@ -53,7 +53,7 @@
       "subtitle": "Come indagare i cambiamenti di equilibrio.",
       "overview": "Finance Transactions è la fonte dei movimenti di bilancio.",
       "details": [
-        "Open Finance → Transactions.",
+        "Apri Finanze → Transazioni.",
         "Rivedere stipendi, imposte, pagamenti sponsor, trasferimenti, attrezzature, infrastrutture, campi e politiche.",
         "Imposta aperta per la revisione mensile.",
         "Open Team Policies per i costi ricorrenti.",
@@ -69,13 +69,13 @@
       "overview": "L'attrezzatura è pesata e limitata in modo da supportare ma non sostituisce la qualità del ciclista.",
       "details": [
         "I bonus sono ponderati per categoria.",
-        "Il bonus di fase è limitato.",
+        "Il bonus di tappa è limitato.",
         "Il supporto di squadra/non ciclista è limitato.",
         "La riduzione dell'affaticamento è limitata.",
         "Gli attrezzi specialisti possono avere compromessi negativi."
       ],
       "tips": [
-        "Usa la configurazione giusta per la fase giusta."
+        "Usa la configurazione giusta per la tappa giusta."
       ]
     },
     "staffHiring": {

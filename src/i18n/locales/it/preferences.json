@@ -18,11 +18,11 @@
   "sections": {
     "race": {
       "title": "Notificazioni di gara",
-      "description": "Inviti, preparazione, tempo, piani di scena, problemi di gara-giorno, e risultati."
+      "description": "Inviti, preparazione, tempo, Stage Plans, problemi di gara-giorno, e risultati."
     },
     "team": {
       "title": "Notificazione del & ciclista di squadra",
-      "description": "Cavalieri, personale, trasferimenti, campi di addestramento, esplorazioni e ritiri."
+      "description": "Ciclisti, personale, trasferimenti, campi di addestramento, esplorazioni e ritiri."
     },
     "club": {
       "title": "Notificazione gestione club",
@@ -51,12 +51,12 @@
       "description": "Mostra le notifiche di stato e conseguenze per la preparazione della gara. Il consiglio proattivo del ciclista-morte appartiene a Sports Director Advisory."
     },
     "stagePlanReminders": {
-      "label": "Stato del piano di fase",
+      "label": "Stato del Stage Plan",
       "description": "Mostra le notifiche di apertura e di blocco dello stato del piano principale. Il consiglio mancante appartiene al direttore sportivo Advisory."
     },
     "raceWeather": {
       "label": "Tempo di gara",
-      "description": "Mostra le notifiche quando le fasi, le gare o le attività legate alla gara sono influenzate dal tempo."
+      "description": "Mostra le notifiche quando le tappe, le gare o le attività legate alla gara sono influenzate dal tempo."
     },
     "raceResults": {
       "label": "Risultati della gara",
@@ -133,7 +133,7 @@
       "description": "Recensioni e lacune del programma di gara, preparazione della gara mancante e consulenze pronte per la preparazione."
     },
     "startlistStagePlans": {
-      "label": "Startlist & Stage Plans",
+      "label": "Startlist e Stage Plans",
       "description": "Avvisi Startlist, più avvisi mancanti o incompleti."
     },
     "medicalRecovery": {
@@ -142,7 +142,7 @@
     },
     "equipmentWorkshopSupplies": {
       "label": "Attrezzature, officine e forniture per gare",
-      "description": "Condizioni dell'attrezzatura, preparazione dell'officina e consulenza analitica per la revisione dell'offerta di razza."
+      "description": "Condizioni dell'attrezzatura, preparazione dell'officina e consulenza analitica per la revisione dell'offerta di gara."
     },
     "scoutingRecruitment": {
       "label": "Scouting e reclutamento",
@@ -200,7 +200,7 @@
     "confirmDescription": "Questa azione è permanente e non può essere annullata.",
     "aboutToDelete": "Stai per eliminare definitivamente:",
     "deleteTeam": "La tua squadra attuale",
-    "deleteGameData": "I tuoi cavalieri di squadra, attrezzature e dati di gioco relativi al team",
+    "deleteGameData": "I tuoi ciclisti di squadra, attrezzature e dati di gioco relativi al team",
     "deleteAccount": "Il tuo account di autenticazione per questa email",
     "afterDelete": "Dopo la cancellazione di successo, verrai firmato e reindirizzato alla homepage. Si può quindi registrare di nuovo con lo stesso indirizzo email di un nuovo utente.",
     "typeDelete": "Digitare DELETE per confermare",

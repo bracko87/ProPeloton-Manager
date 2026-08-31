@@ -40,7 +40,7 @@
     "training": "Allenamento",
     "equipment": "Equipaggiamento",
     "infrastructure": "Infrastrutture",
-    "calendarRaces": "Calendario e razze",
+    "calendarRaces": "Calendario e gare",
     "racePreparation": "Preparazione gara",
     "rankingsStatistics": "Classificazioni e statistiche",
     "transfers": "Mercato",
@@ -94,9 +94,9 @@
       "details": [
         "Un giorno di gioco equivale a 12 ore di vita reale, questo significa due giorni di gioco uguale a un giorno di vita reale.",
         "Se un termine di presentazione del ciclista è di due giorni di gioco, si ha circa un giorno di vita reale. Se è un giorno di gioco di distanza, si dispone di circa 12 ore di vita reale.",
-        "Le date di gioco sono utilizzate per le applicazioni di gara, le scadenze di presentazione del ciclista, le serrature del piano di fase, campi di formazione, scadenza di trasferimento, transazioni finanziarie e periodi fiscali.",
+        "Le date di gioco sono utilizzate per le applicazioni di gara, le scadenze di presentazione del ciclista, le serrature del Stage Plan, campi di formazione, scadenza di trasferimento, transazioni finanziarie e periodi fiscali.",
         "I tempi tecnici reali non sono la stessa cosa del tempo di gioco. Alcune righe di backend hanno created_at per l'ordinamento o la paginazione, ma la data di riferimento del giocatore dovrebbe usare metadati memorizzati data di gioco quando disponibili.",
-        "Prepararsi sempre prima dell'ultimo momento. Le scadenze mancanti possono bloccare i piani di gara o lasciare i piani di fase incompleti."
+        "Prepararsi sempre prima dell'ultimo momento. Le scadenze mancanti possono bloccare i Race Plans o lasciare i Stage Plans incompleti."
       ],
       "tips": [
         "Controllare l'ora di gioco del piè di pagina prima di azioni importanti.",
@@ -227,7 +227,7 @@
       "overview": "La squadra è dove gestisci e ispeziona i tuoi ciclisti del primo team. Esso include diverse viste per i dati generali del roster, le finanze, le abilità e la forma/sviluppo.",
       "facts": [
         "Prima Squadra max in UI",
-        "18 cavalieri",
+        "18 ciclisti",
         "Vista elenco",
         "Generalità, finanziari, competenze, forma e sviluppo",
         "Dati comuni del ciclista",
@@ -241,7 +241,7 @@
         "Il cruscotto della squadra può anche mostrare vittorie, podi, primi 10s, migliori GC, ultime righe di gara, selezione prossima gara e istantanee tipo gara."
       ],
       "tips": [
-        "Non giudicare i cavalieri solo dal totale.",
+        "Non giudicare i ciclisti solo dal totale.",
         "Controllare i contratti prima della fine della stagione.",
         "Profili aperti per decisioni più profonde."
       ],
@@ -252,7 +252,7 @@
     "riderProfileSkills": {
       "title": "Profilo del ciclista, abilità, idoneità e Race Sharpness",
       "subtitle": "Perché la qualità del ciclista è più che complessiva.",
-      "overview": "I profili dei ciclisti mostrano identità, attributi, contratto, allenamento, confronto e storia. Un ciclista ha un valore reale della gara dipende dal mix di abilità, fitness, morale, fatica, salute e nitidezza della corsa.",
+      "overview": "I profili dei ciclisti mostrano identità, attributi, contratto, allenamento, confronto e storia. Un ciclista ha un valore reale della gara dipende dal mix di abilità, fitness, morale, fatica, salute e Race Sharpness.",
       "facts": [
         "Tab del ciclista proprie",
         "Panoramica, Contratto, Formazione, Confronta, Storia",
@@ -262,10 +262,10 @@
         "Adatto, non perfettamente in forma, ferito, malato"
       ],
       "details": [
-        "Nel complesso è un ampio riassunto. È utile, ma gli attributi esatti decidono ruolo gara. Sprint ha importanza nelle finiture a mazzetto. Arrampicare questioni sulle montagne. Tempo di prova questioni nelle fasi TT. Recupero è importante nelle gare di palcoscenico.",
-        "La fatica rappresenta stanchezza e stress accumulato. L'elevata fatica può rendere i cavalieri forti sottoperformi o diventare rischiosi da selezionare.",
+        "Nel complesso è un ampio riassunto. È utile, ma gli attributi esatti decidono ruolo gara. Sprint ha importanza nelle finiture a mazzetto. Arrampicare questioni sulle montagne. Tempo di prova questioni nelle tappe TT. Recupero è importante nelle gare di tappa.",
+        "La fatica rappresenta stanchezza e stress accumulato. L'elevata fatica può rendere i ciclisti forti sottoperformi o diventare rischiosi da selezionare.",
         "Il morale influenza la fiducia e può influenzare le prestazioni. Il morale basso non deve essere ignorato.",
-        "La nitidezza della corsa misura il ritmo delle corse. Troppo poca corsa può ridurre la nitidezza, ma troppe corse creano il rischio di sovraccarico.",
+        "La Race Sharpness misura il ritmo delle corse. Troppo poca corsa può ridurre la nitidezza, ma troppe corse creano il rischio di sovraccarico.",
         "Il confronto tra ciclisti mostra due ciclisti affiancati con attributi come sprint, arrampicata, cronometro, resistenza, piano, recupero, resistenza, IQ di gara e lavoro di squadra.",
         "I profili esterni del ciclista possono nascondere informazioni esatte a meno che non siano esplorate."
       ],
@@ -281,7 +281,7 @@
       "overview": "Il Team Sviluppo è un secondo team collegato al club principale. Viene utilizzato per i ciclisti giovani o secondari e ha il proprio limite di rotazione e le regole di movimento-finestra.",
       "facts": [
         "Gruppo di sviluppo max in UI",
-        "8 cavalieri",
+        "8 ciclisti",
         "Luogo dell'acquisto",
         "Pagina delle preferenze",
         "Regola del movimento",
@@ -336,8 +336,8 @@
     },
     "training": {
       "title": "Campi di formazione e formazione regolari",
-      "subtitle": "Migliorare i cavalieri senza distruggere la freschezza.",
-      "overview": "L'addestramento controlla lo sviluppo del ciclista e la fatica. L'addestramento regolare è in corso. I campi di addestramento sono più forti, blocchi più costosi con location, tempo, cavalieri e personale.",
+      "subtitle": "Migliorare i ciclisti senza distruggere la freschezza.",
+      "overview": "L'addestramento controlla lo sviluppo del ciclista e la fatica. L'addestramento regolare è in corso. I campi di addestramento sono più forti, blocchi più costosi con location, tempo, ciclisti e personale.",
       "facts": [
         "Schede di allenamento",
         "Regolari e campi",
@@ -350,7 +350,7 @@
       ],
       "details": [
         "L'allenamento regolare può utilizzare i predefiniti team e piani individuali del ciclista. Le aree di messa a fuoco includono generale, recupero, sprint, arrampicata, piano, cronometro, resistenza, resistenza, IQ gara e lavoro di squadra.",
-        "L'allenamento duro può creare più guadagni ma anche più fatica e rischio. L'allenamento di recupero è utile dopo le gare difficili o le gare di palcoscenico.",
+        "L'allenamento duro può creare più guadagni ma anche più fatica e rischio. L'allenamento di recupero è utile dopo le gare difficili o le gare di tappa.",
         "Campi di formazione includono posizione, regione, tipo di campeggio, profilo del terreno, altitudine, stelle, indice di costo, moltiplicatore di qualità, comfort di recupero, settimane preferite, settimane rischiose e settimane chiuse.",
         "Citazioni del campeggio possono includere viaggio, alloggio, tassa del campeggio, logistica, costo totale, per-rider costo, stato meteo, modificatore di formazione, occasione persa-giorno e avvertimenti.",
         "Le attuali pagine del campo mostrano i partecipanti, il personale, il tempo, il personale amplificano i riassunti, i report giornalieri e i piani di formazione per i prossimi giorni del campo."
@@ -398,7 +398,7 @@
     "raceSupplies": {
       "title": "Forniture per corse",
       "subtitle": "Consumabili e forniture di stage-plan durevole.",
-      "overview": "I prodotti Race sono utilizzati da Race Preparation e Stage Plans. Alcune forniture vengono consumate ogni fase, mentre maglie e giacche sono articoli riutilizzabili durevoli con limiti di utilizzo del palco.",
+      "overview": "I prodotti Race sono utilizzati da Race Preparation e Stage Plans. Alcune forniture vengono consumate ogni tappa, mentre maglie e giacche sono articoli riutilizzabili durevoli con limiti di utilizzo del tappa.",
       "facts": [
         "Consumabili",
         "Bidons / Borracce d'acqua, Gel energetici, Confezioni nutritive",
@@ -410,17 +410,17 @@
         "Elemento meteo opzionale; 25 impieghi per unità"
       ],
       "details": [
-        "I bidoni usano 1 04014 per ogni ciclista nella configurazione del palcoscenico. Sono consumabili monouso e supportano l'idratazione e il controllo della fatica.",
-        "I Gel Energy utilizzano 0.12.1.4 per ciclista. Sostengono la resistenza e l'efficienza finale dello sforzo. Non c'è alcun beneficio extra dopo quattro gel per ciclista.",
-        "I pacco nutrizionisti utilizzano 0.19.12 per ciclista. Sostenono la stabilità della resistenza e il recupero post-stadio. Le fasi lunghe senza nutrizione possono aumentare la pressione di fatica.",
-        "Race Jersey Complete è obbligatorio in Stage Plans. I kit di jersey mancanti possono bloccare l'installazione del palco.",
+        "Le borracce si usano in quantità da 1 a 4 per ciclista nella configurazione della tappa. Sono consumabili monouso e aiutano idratazione e controllo della fatica. Restare sotto il minimo può aumentare il rischio di fatica.",
+        "I gel energetici si usano in quantità da 0 a 4 per ciclista. Supportano la resistenza e l’efficacia dello sforzo finale. Oltre quattro gel per ciclista non ci sono benefici aggiuntivi.",
+        "I pacchetti nutrizionali si usano in quantità da 0 a 2 per ciclista. Aiutano la stabilità della resistenza e il recupero dopo la tappa. Le tappe lunghe senza nutrizione possono aumentare la pressione della fatica.",
+        "Race Jersey Complete è obbligatorio in Stage Plans. I kit di jersey mancanti possono bloccare l'installazione del tappa.",
         "Giacca pioggia sono opzionali, ma preziosi in tempo umido / freddo. Forniture durevoli indossate non sono più utilizzabili.",
-        "Le gare di palco consumano rapidamente le forniture perché le quantità sono utilizzate per ciclista per tappa."
+        "Le gare di tappa consumano rapidamente le forniture perché le quantità sono utilizzate per ciclista per tappa."
       ],
       "tips": [
         "Comprare forniture prima delle scadenze.",
         "Controllare stock prima delle gare di tappa.",
-        "Usare giacche pioggia per le fasi di cattivo tempo."
+        "Usare giacche pioggia per le tappe di cattivo tempo."
       ],
       "links": [
         "Forniture per corse"
@@ -452,7 +452,7 @@
       "tips": [
         "Aggiornamento basato sul collo di bottiglia.",
         "Non iniziare troppi lavori costosi in una sola volta.",
-        "Tenete gli asset di razza riparati."
+        "Tenete gli asset di gara riparati."
       ],
       "links": [
         "Infrastrutture aperte"
@@ -464,9 +464,9 @@
       "overview": "Calendario mostra le opportunità di stagione e gara. Dettaglio gara mostra il profilo completo, tappe, partecipanti, risultati, classificazioni e replay informazioni per una gara.",
       "facts": [
         "Vista calendario",
-        "Stagione e Razze",
+        "Stagione e Gare",
         "Filtri di stagione",
-        "Razze, Campi di formazione, Eventi, Vacanze",
+        "Gare, Campi di formazione, Eventi, Vacanze",
         "Stato della corsa",
         "Non aperto, aperto, chiuso, attivo, finito, annullato",
         "Classificazioni",
@@ -477,12 +477,12 @@
         "Calendario delle corse mostra le carte di gara con categoria, paese, città, data, tipo di gara, limiti di squadra, squadre accettate e stato di applicazione.",
         "Le applicazioni Race dipendono dalle date aperte/chiuse. Se le applicazioni sono chiuse, il team non può più applicarle.",
         "Dettaglio gara mostra le regole di ingresso come limiti di squadra, limiti di ciclista, scadenza di applicazione, annuncio lista di squadra, scadenza di presentazione del ciclista e fondo premio.",
-        "I dettagli del palcoscenico possono includere percorso, distanza, terreno, tipo di finitura, finitura in cima, percentuali del terreno, guadagno di elevazione, immagine del profilo, tempo, sprint e punti KOM.",
+        "I dettagli del tappa possono includere percorso, distanza, terreno, tipo di finitura, finitura in cima, percentuali del terreno, guadagno di elevazione, immagine del profilo, tempo, sprint e punti KOM.",
         "Dopo l'inizio di una gara, Race Detail può mostrare stato dal vivo, rigiocare fotogrammi, commenti, classifiche, risultati e classificazioni."
       ],
       "tips": [
         "Applica alle gare che si adattano alla tua squadra.",
-        "Ispezionare i profili di fase prima della preparazione gara.",
+        "Ispezionare i profili di tappa prima della preparazione gara.",
         "Controllare il tempo vicino alla giornata di gara."
       ],
       "links": [
@@ -492,23 +492,23 @@
     "racePreparation": {
       "title": "Preparazione della gara e Stage Plans",
       "subtitle": "Gara accettate, Race Plan, Stage Plans e prontezza.",
-      "overview": "Preparazione della gara trasforma una gara accettata in un vero e proprio piano. Si tratta di una delle pagine più importanti del gioco perché il motore della gara dipende dalla selezione del ciclista, personale, asset, attrezzature, forniture e tattiche di scena.",
+      "overview": "Preparazione della gara trasforma una gara accettata in un vero e proprio piano. Si tratta di una delle pagine più importanti del gioco perché il Race Engine dipende dalla selezione del ciclista, personale, asset, attrezzature, forniture e tattiche di scena.",
       "facts": [
         "Schede",
-        "Razze accettate, Race Plan, Stage Plans",
+        "Gare accettate, Race Plan, Stage Plans",
         "Personale di gara",
         "Direttore sportivo, Team Doctor, Physio, Meccanico",
         "Attività di corsa",
         "Autobus di squadra, furgoncino attrezzature, laboratorio mobile, furgoncino medico, auto di squadra 1 04063",
-        "Toni di preparazione al palco",
+        "Toni di preparazione al tappa",
         "Verde, giallo, arancio, rosso, grigio"
       ],
       "details": [
-        "Le razze accettate mostrano le gare dove la tua squadra è stata accettata e lo stato di preparazione di ogni gara.",
+        "Le gare accettate mostrano le gare dove la tua squadra è stata accettata e lo stato di preparazione di ogni gara.",
         "Race Plan seleziona ciclisti, personale, asset, setup delle attrezzature e forniture da gara. I limiti del ciclista devono corrispondere alle regole di gara.",
         "I ciclisti o gli asset bloccati possono già essere assegnati a eventi sovrapposti. Ciò impedisce orari impossibili.",
         "L'anteprima delle citazioni mostra i costi e i bonus di supporto da personale, asset, attrezzature e politiche.",
-        "Dopo Race Plan è presentato, Stage Plans aperto. Stage Plans ruoli di ciclista impostato, tattiche di squadra, tattiche individuali, attrezzature e forniture per ogni fase.",
+        "Dopo Race Plan è presentato, Stage Plans aperto. Stage Plans ruoli di ciclista impostato, tattiche di squadra, tattiche individuali, attrezzature e forniture per ogni tappa.",
         "Piano di preparazione traccia piani salvati, piani utilizzabili, piani mancanti, piani vuoti, forniture mancanti, completezza tattica e azione raccomandata.",
         "I suggerimenti del Direttore dello Sport possono aiutare con le attrezzature, le tattiche del team, le tattiche individuali e le forniture, ma sono guida, non garantiti piani perfetti."
       ],
@@ -557,7 +557,7 @@
       "overview": "Statistiche aiuta a identificare squadre forti e ciclisti. Team Profili mostrano informazioni pubbliche sugli utenti e club AI.",
       "facts": [
         "Schede statistiche",
-        "Squadre e Cavalieri",
+        "Squadre e Ciclisti",
         "Sotto-tabs del gruppo",
         "Attuale e storia",
         "Sottotab dei rider",
@@ -588,7 +588,7 @@
       "overview": "I trasferimenti sono dove si migliora la roster attraverso riders-list di trasferimento, agenti liberi, rapporti di scouting e assunzione del personale.",
       "facts": [
         "Schede di trasferimento",
-        "Cavalieri e personale",
+        "Ciclisti e personale",
         "Sottotab dei rider",
         "Elenco dei trasferimenti e agenti liberi",
         "Status di negoziato",
@@ -607,7 +607,7 @@
         "I rapporti scout mostrano ciclista, scout, data di completamento, complessivamente, potenziale, punti di forza, note e stato Nuovo/Reviewed."
       ],
       "tips": [
-        "Scout cavalieri costosi prima di fare offerte.",
+        "Scout ciclisti costosi prima di fare offerte.",
         "Verificare lo stipendio e la durata, non solo il prezzo di trasferimento.",
         "Non comprare i ciclisti che non si adattano al calendario della gara."
       ],
@@ -619,7 +619,7 @@
     "finance": {
       "title": "Panoramica finanziaria, transazioni e imposte",
       "subtitle": "Saldo, flusso di cassa operativo, righe di dichiarazione e audit fiscali mensili.",
-      "overview": "La finanza mostra la sicurezza a lungo termine del vostro club. I cavalieri forti non importa se il club non può pagare stipendi, tasse, politiche, attrezzature o obblighi obbligatori.",
+      "overview": "La finanza mostra la sicurezza a lungo termine del vostro club. I ciclisti forti non importa se il club non può pagare stipendi, tasse, politiche, attrezzature o obblighi obbligatori.",
       "facts": [
         "Schede finanziarie",
         "Panoramica, sponsor, transazioni, imposte, politiche e operazioni di squadra",
@@ -660,7 +660,7 @@
         "Operazioni politiche",
         "Voli, alloggio, trasporto a terra, logistica, alloggio per il personale",
         "Politiche del gruppo",
-        "Alloggio, nutrizione, recupero, attrezzature per il personale, bonus per il cavaliere, bonus per il personale"
+        "Alloggio, nutrizione, recupero, attrezzature per il personale, bonus per il ciclista, bonus per il personale"
       ],
       "details": [
         "I principali sponsor sono i più visibili, che possono fornire denaro garantito, pool bonus e obiettivi.",

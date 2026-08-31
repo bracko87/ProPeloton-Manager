@@ -20,7 +20,7 @@
     "squadFull": "La squadra è piena ({{max}} riders). Trasferimenti, firme e promozioni devono rispettare il tappo della squadra.",
     "loading": "Caricamento squadra...",
     "loadFailed": "Impossibile caricare la squadra",
-    "noRiders": "Non hanno ancora trovato nessun cavaliere per questo club.",
+    "noRiders": "Non hanno ancora trovato nessun ciclista per questo club.",
     "view": "Vista",
     "generalView": "Vista generale",
     "financialView": "Vista finanziaria",
@@ -122,7 +122,7 @@
     "raceType": "Istantanea tipo corsa",
     "raceTypeDescription": "Confronta i tuoi risultati con classici, giornate di montagna, finiture e cronometri.",
     "oneDayClassics": "Classici di un giorno",
-    "stageFinishes": "Finiture di fase",
+    "stageFinishes": "Finiture di tappa",
     "mountainDays": "Giornate di montagna",
     "timeTrials": "Prove temporali",
     "winsChart": "Vittorie",
@@ -134,9 +134,9 @@
   "races": {
     "lastTeamRace": "Ultima gara di squadra",
     "nextTeamRace": "Prossima gara del team",
-    "noRace": "Nessuna razza trovata",
+    "noRace": "Nessuna gara trovata",
     "noFinished": "Non è ancora stata trovata alcuna classificazione completa per questa squadra.",
-    "noNext": "Non è stato trovato nessun prossimo piano di gara non avviato per questa squadra.",
+    "noNext": "Non è stato trovato nessun prossimo Race Plan non avviato per questa squadra.",
     "stages": "Stadi {{count}}"
   },
   "transfer": {

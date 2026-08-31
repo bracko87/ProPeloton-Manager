@@ -31,7 +31,7 @@
     },
     "simpleOrDeep": {
       "title": "Gioca semplice o andare in profondità",
-      "body": "All'inizio, puoi giocare in modo semplice: seguire gli avvisi, controllare la tua squadra, entrare in gare, preparare la tua squadra e guardare i risultati. Più tardi, se vuoi una maggiore profondità, puoi utilizzare sistemi avanzati come fatica del ciclista, morale, nitidezza della corsa, obiettivi sponsor, bonus delle attrezzature, campi di addestramento, trattative di trasferimento, tasse, infrastrutture e promozione o retrocessione.",
+      "body": "All'inizio, puoi giocare in modo semplice: seguire gli avvisi, controllare la tua squadra, entrare in gare, preparare la tua squadra e guardare i risultati. Più tardi, se vuoi una maggiore profondità, puoi utilizzare sistemi avanzati come fatica del ciclista, morale, Race Sharpness, obiettivi sponsor, bonus delle attrezzature, campi di addestramento, trattative di trasferimento, tasse, infrastrutture e promozione o retrocessione.",
       "primary": "Successivo"
     },
     "purpose": {
@@ -61,7 +61,7 @@
     },
     "nextRace": {
       "title": "Prossima gara del team",
-      "body": "Il pannello Next Team Race ti aiuta a vedere cosa sta per arrivare per il tuo team. Questo è importante perché le gare accettate spesso necessitano ancora di preparazione. Potresti aver bisogno di selezionare ciclisti, personale, risorse, attrezzature, forniture e tattiche di palco prima delle scadenze. Se questo pannello mostra una prossima gara, dovresti controllare la preparazione della gara in anticipo.",
+      "body": "Il pannello Next Team Race ti aiuta a vedere cosa sta per arrivare per il tuo team. Questo è importante perché le gare accettate spesso necessitano ancora di preparazione. Potresti aver bisogno di selezionare ciclisti, personale, risorse, attrezzature, forniture e tattiche di tappa prima delle scadenze. Se questo pannello mostra una prossima gara, dovresti controllare la preparazione della gara in anticipo.",
       "primary": "Successivo"
     },
     "lastRace": {
@@ -89,7 +89,7 @@
       "secondary": "No grazie."
     },
     "riders": {
-      "title": "I tuoi Cavalieri",
+      "title": "I tuoi Ciclisti",
       "body": "Questa è la pagina della Squadra • il luogo principale dove vengono visualizzati i tuoi ciclisti di squadra. Nella vista generale, puoi vedere informazioni importanti come età, paese, ruolo, livello complessivo, condizione, valore di mercato, salari, dettagli del contratto e punti internazionali. Usa questa pagina ogni volta che vuoi capire la forza e la struttura attuale del tuo team.",
       "primary": "Successivo"
     },
@@ -124,7 +124,7 @@
     },
     "camps": {
       "title": "Ritiri di allenamento",
-      "body": "I campi di addestramento sono speciali blocchi di formazione dove si inviano i cavalieri selezionati via per diversi giorni. Un campo di addestramento può dare uno sviluppo di competenze più forte rispetto alle normali formazioni quotidiane, ma costa molto di più. Si sceglie il tipo di campo, posizione, date, durata, cavalieri e personale disponibile. Il personale può migliorare l'effetto del campo o aiutare a proteggere meglio i cavalieri, a seconda delle loro abilità e disponibilità. Prima di prenotare, è possibile rivedere il costo, il rischio meteo, i cavalieri selezionati, personale selezionato e avvisi di convalida. Dopo l'addestramento, la pagina successiva raccomandata è l'apparecchiatura.",
+      "body": "I campi di addestramento sono speciali blocchi di formazione dove si inviano i ciclisti selezionati via per diversi giorni. Un campo di addestramento può dare uno sviluppo di competenze più forte rispetto alle normali formazioni quotidiane, ma costa molto di più. Si sceglie il tipo di campo, posizione, date, durata, ciclisti e personale disponibile. Il personale può migliorare l'effetto del campo o aiutare a proteggere meglio i ciclisti, a seconda delle loro abilità e disponibilità. Prima di prenotare, è possibile rivedere il costo, il rischio meteo, i ciclisti selezionati, personale selezionato e avvisi di convalida. Dopo l'addestramento, la pagina successiva raccomandata è l'apparecchiatura.",
       "primary": "Continua all'equipaggiamento",
       "secondary": "Finisci per ora"
     }
@@ -209,12 +209,12 @@
   "raceDetail": {
     "overview": {
       "title": "Profilo di gara",
-      "body": "Questa è la pagina del profilo di gara. Qui potete vedere le informazioni più importanti di gara: quanti team possono partecipare, il fondo premio, quando le domande di partecipazione si chiudono, quando le squadre partecipanti sono annunciate, e quanti ciclisti ogni squadra può portare. Per le gare di palcoscenico, è anche possibile vedere quante fasi sono incluse.",
+      "body": "Questa è la pagina del profilo di gara. Qui potete vedere le informazioni più importanti di gara: quanti team possono partecipare, il fondo premio, quando le domande di partecipazione si chiudono, quando le squadre partecipanti sono annunciate, e quanti ciclisti ogni squadra può portare. Per le gare di tappa, è anche possibile vedere quante tappe sono incluse.",
       "primary": "Successivo"
     },
     "stagesResults": {
       "title": "Stage, risultati e riproduzione",
-      "body": "Il profilo della gara mostra anche informazioni dettagliate sul palcoscenico. È possibile esaminare i profili del palcoscenico, mappe del percorso, ripartizione del terreno, tempo di tappa, punti di sprint, punti di montagna e altri dettagli del palco. Il tempo viene pubblicato solo vicino alla gara, in modo che possa apparire più tardi. Più in basso, Race Information mostra squadre partecipanti e ciclisti prima della gara, e risultati dopo la gara. Se la tua squadra partecipa e la gara è attiva o finita, è possibile utilizzare Watch Race o Watch Replay per seguire l'azione sulla mappa.",
+      "body": "Il profilo della gara mostra anche informazioni dettagliate sul tappa. È possibile esaminare i profili del tappa, mappe del percorso, ripartizione del terreno, tempo di tappa, punti di sprint, punti di montagna e altri dettagli del tappa. Il tempo viene pubblicato solo vicino alla gara, in modo che possa apparire più tardi. Più in basso, Race Information mostra squadre partecipanti e ciclisti prima della gara, e risultati dopo la gara. Se la tua squadra partecipa e la gara è attiva o finita, è possibile utilizzare Watch Race o Watch Replay per seguire l'azione sulla mappa.",
       "primary": "Continua a preparare la gara",
       "secondary": "Finisci per ora"
     }
@@ -227,18 +227,18 @@
       "secondary": "No grazie."
     },
     "acceptedRaces": {
-      "title": "Razze accettate",
+      "title": "Gare accettate",
       "body": "Questa è la pagina di Preparazione della Gara. La scheda Races accettata mostra le gare in cui il tuo team è stato accettato per partecipare. Qui puoi vedere le informazioni più importanti sulla gara, ma anche lo stato di preparazione del tuo team. Ad esempio, puoi vedere Race Plan Open, Stage Plans Open, Rider Deadline Rached, Race Active, Race Finito, o All Set. Quando il tuo team è accettato per una gara, dovresti venire qui per preparare i tuoi ciclisti, personale, risorse, attrezzature, forniture e tattiche. Questa è una delle pagine che visiterai più spesso durante la stagione.",
       "primary": "Successivo"
     },
     "racePlan": {
       "title": "Race Plan",
-      "body": "La scheda Race Plan è dove si prepara il team per una gara accettata. Importante: il tempo di gioco si muove più velocemente della vita reale. Un giorno di gioco è 12 ore in tempo reale. Ciò significa due giorni di gioco uguali a una giornata di vita reale. Tenete a mente questo quando si controlla il piano di gara finestre, scadenze del ciclista, e scadenze del piano di palco. Quando la finestra Race Plan è aperta, è possibile scegliere se il tuo primo team o squadra di sviluppo gareggerà, se si dispone di un team di sviluppo disponibile. È necessario anche controllare la scadenza di presentazione del ciclista. Fino a quella data, è possibile scegliere i ciclisti che parteciperanno. La pagina mostra il numero minimo e massimo di ciclisti ammessi per la gara. La lista del ciclista mostra chi può essere selezionato e chi è bloccato perché sono già assegnati ad un'altra gara sovrapposta.",
+      "body": "La scheda Race Plan è dove si prepara il team per una gara accettata. Importante: il tempo di gioco si muove più velocemente della vita reale. Un giorno di gioco è 12 ore in tempo reale. Ciò significa due giorni di gioco uguali a una giornata di vita reale. Tenete a mente questo quando si controlla il piano di gara finestre, scadenze del ciclista, e scadenze del Stage Plan. Quando la finestra Race Plan è aperta, è possibile scegliere se il tuo primo team o squadra di sviluppo gareggerà, se si dispone di un team di sviluppo disponibile. È necessario anche controllare la scadenza di presentazione del ciclista. Fino a quella data, è possibile scegliere i ciclisti che parteciperanno. La pagina mostra il numero minimo e massimo di ciclisti ammessi per la gara. La lista del ciclista mostra chi può essere selezionato e chi è bloccato perché sono già assegnati ad un'altra gara sovrapposta.",
       "primary": "Successivo"
     },
     "stagePlans": {
       "title": "Stage Plans",
-      "body": "La scheda Stage Plans si apre dopo che è stato presentato il Race Plan. Qui si prepara la tattica per ogni fase. È possibile definire ruoli del ciclista, attrezzature, forniture, tattiche di squadra e tattiche individuali per ogni fase. Stage Plans sono importanti perché diverse fasi hanno bisogno di piani diversi. Una fase di sprint piatta, fase di montagna, prova a tempo o fase collinare possono tutti richiedere diversi ciclisti, tattiche e supporto. Dopo Preparazione gara, la pagina successiva consigliata è Team Ranking.",
+      "body": "La scheda Stage Plans si apre dopo che è stato presentato il Race Plan. Qui si prepara la tattica per ogni tappa. È possibile definire ruoli del ciclista, attrezzature, forniture, tattiche di squadra e tattiche individuali per ogni tappa. Stage Plans sono importanti perché diverse tappe hanno bisogno di piani diversi. Una tappa di sprint piatta, tappa di montagna, prova a tempo o tappa collinare possono tutti richiedere diversi ciclisti, tattiche e supporto. Dopo Preparazione gara, la pagina successiva consigliata è Team Ranking.",
       "primary": "Continua a classificarti",
       "secondary": "Finisci per ora"
     }
@@ -289,18 +289,18 @@
   "transfers": {
     "welcome": {
       "title": "Hai bisogno di aiuto con i trasferimenti?",
-      "body": "Possiamo mostrarvi come trasferimento di cavalieri, agenti liberi, esploratori, trattative contrattuali e il personale che assume lavoro.",
+      "body": "Possiamo mostrarvi come trasferimento di ciclisti, agenti liberi, esploratori, trattative contrattuali e il personale che assume lavoro.",
       "primary": "Avvia tutorial",
       "secondary": "No grazie."
     },
     "riderTransferList": {
       "title": "Elenco trasferimenti rider",
-      "body": "Questa è la pagina Trasferimenti. Nella sezione Cavalieri, la lista dei trasferimenti mostra i ciclisti attualmente elencati da altre squadre, tra cui squadre AI. Prima di esplorare un ciclista, alcune informazioni possono essere nascoste o meno precise. Scouting ti dà migliori informazioni sulle abilità e il potenziale del ciclista. Ogni elenco dei trasferimenti mostra quanto tempo l'offerta è valida e il prezzo di partenza per le trattative. Se si fa clic su Make Offer, è possibile offrire soldi al team di vendita. Se il team accetta, si negozia il contratto del ciclista.",
+      "body": "Questa è la pagina Trasferimenti. Nella sezione Ciclisti, la lista dei trasferimenti mostra i ciclisti attualmente elencati da altre squadre, tra cui squadre AI. Prima di esplorare un ciclista, alcune informazioni possono essere nascoste o meno precise. Scouting ti dà migliori informazioni sulle abilità e il potenziale del ciclista. Ogni elenco dei trasferimenti mostra quanto tempo l'offerta è valida e il prezzo di partenza per le trattative. Se si fa clic su Make Offer, è possibile offrire soldi al team di vendita. Se il team accetta, si negozia il contratto del ciclista.",
       "primary": "Successivo"
     },
     "riderFreeAgents": {
       "title": "Agente Riders libero",
-      "body": "Gli agenti liberi sono cavalieri senza una squadra. La grande differenza è che non c'è una squadra di vendita tra voi e il ciclista. Se si desidera un agente libero, si va direttamente in negoziazione contratto. È possibile negoziare stipendio, durata del contratto, e tassa agente. L'ottica offerta aiuta a capire se la vostra offerta sembra forte, rischioso, o improbabile di successo.",
+      "body": "Gli agenti liberi sono ciclisti senza una squadra. La grande differenza è che non c'è una squadra di vendita tra voi e il ciclista. Se si desidera un agente libero, si va direttamente in negoziazione contratto. È possibile negoziare stipendio, durata del contratto, e tassa agente. L'ottica offerta aiuta a capire se la vostra offerta sembra forte, rischioso, o improbabile di successo.",
       "primary": "Successivo"
     },
     "staff": {

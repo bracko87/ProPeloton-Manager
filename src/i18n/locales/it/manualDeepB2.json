@@ -31,7 +31,7 @@
       ],
       "details": [
         "Continental Europa/America feed Pro West playoff.",
-        "Continental Asia/Africa/Oceania feed Pro East playoff.",
+        "Continental Asia/Africa/Oceania alimentano il playoff Pro East.",
         "Diverse divisioni Continental hanno differenti tagli alla retrocessione.",
         "L'Oceania amatoriale promuove direttamente la terza posizione.",
         "Le divisioni europee dimateur usano il vincitore diretto e il secondo playoff.",
@@ -47,7 +47,7 @@
       "overview": "Statistiche aiuta a confrontare le prestazioni e scout il mondo del gioco.",
       "facts": [
         "Schede principali",
-        "Squadre e Cavalieri",
+        "Squadre e Ciclisti",
         "metriche del ciclista",
         "Punti stagione, sprint e arrampicata"
       ],
@@ -84,7 +84,7 @@
     },
     "freeAgentsDeep": {
       "title": "Agenti liberi",
-      "subtitle": "Firmare cavalieri non iscritti.",
+      "subtitle": "Firmare ciclisti non iscritti.",
       "overview": "Gli agenti liberi non richiedono un'offerta di vendita del club, ma la negoziazione del contratto è ancora importante.",
       "facts": [
         "Negoziazione",
@@ -125,7 +125,7 @@
     "scoutingDeep": {
       "title": "Relazioni di scouting",
       "subtitle": "Ridurre il rischio di informazioni nascoste.",
-      "overview": "I rapporti di scouting aiutano gli utenti a evitare decisioni di trasferimento sbagliate migliorando la conoscenza dei cavalieri esterni.",
+      "overview": "I rapporti di scouting aiutano gli utenti a evitare decisioni di trasferimento sbagliate migliorando la conoscenza dei ciclisti esterni.",
       "facts": [
         "Filtri",
         "Tutti, nuovi, recensiti",
@@ -279,7 +279,7 @@
         "Operazioni",
         "Voli, alloggio, trasporto a terra, logistica, alloggio per il personale",
         "Politiche",
-        "Alloggio, nutrizione, recupero, attrezzature per il personale, bonus per il cavaliere, bonus per il personale"
+        "Alloggio, nutrizione, recupero, attrezzature per il personale, bonus per il ciclista, bonus per il personale"
       ],
       "details": [
         "I voli, gli hotel e i trasporti a terra influenzano i viaggi.",
