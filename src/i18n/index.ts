@@ -268,6 +268,44 @@ import frTraining from './locales/fr/training.json'
 import frTransfers from './locales/fr/transfers.json'
 import frTutorials from './locales/fr/tutorials.json'
 
+import ruAccountPages from './locales/ru/accountPages.json'
+import ruAppShell from './locales/ru/appShell.json'
+import ruAuth from './locales/ru/auth.json'
+import ruCalendar from './locales/ru/calendar.json'
+import ruCalendarPage from './locales/ru/calendarPage.json'
+import ruClub from './locales/ru/club.json'
+import ruCommon from './locales/ru/common.json'
+import ruCreateClub from './locales/ru/createClub.json'
+import ruCustomizeTeam from './locales/ru/customizeTeam.json'
+import ruDevelopingTeam from './locales/ru/developingTeam.json'
+import ruEquipment from './locales/ru/equipment.json'
+import ruFinance from './locales/ru/finance.json'
+import ruHelp from './locales/ru/help.json'
+import ruManual from './locales/ru/manual.json'
+import ruHome from './locales/ru/home.json'
+import ruInfrastructure from './locales/ru/infrastructure.json'
+import ruNavigation from './locales/ru/navigation.json'
+import ruNotifications from './locales/ru/notifications.json'
+import ruOverview from './locales/ru/overview.json'
+import ruPreferences from './locales/ru/preferences.json'
+import ruPreferencesDynamic from './locales/ru/preferencesDynamic.json'
+import ruProPackages from './locales/ru/proPackages.json'
+import ruProfile from './locales/ru/profile.json'
+import ruPublicInfo from './locales/ru/publicInfo.json'
+import ruRaceDetail from './locales/ru/raceDetail.json'
+import ruRacePreparation from './locales/ru/racePreparation.json'
+import ruRiderProfile from './locales/ru/riderProfile.json'
+import ruScouting from './locales/ru/scouting.json'
+import ruSeasonReset from './locales/ru/seasonReset.json'
+import ruSharedRiderModal from './locales/ru/sharedRiderModal.json'
+import ruSquad from './locales/ru/squad.json'
+import ruStaff from './locales/ru/staff.json'
+import ruStatistics from './locales/ru/statistics.json'
+import ruTeamRanking from './locales/ru/teamRanking.json'
+import ruTraining from './locales/ru/training.json'
+import ruTransfers from './locales/ru/transfers.json'
+import ruTutorials from './locales/ru/tutorials.json'
+
 import {
   DEFAULT_LANGUAGE,
   getLanguageDefinition,
@@ -551,6 +589,45 @@ const resources = {
     transfers: frTransfers,
     tutorials: frTutorials,
   },
+  ru: {
+    accountPages: ruAccountPages,
+    appShell: ruAppShell,
+    auth: ruAuth,
+    calendar: ruCalendar,
+    calendarPage: ruCalendarPage,
+    club: ruClub,
+    common: ruCommon,
+    createClub: ruCreateClub,
+    customizeTeam: ruCustomizeTeam,
+    developingTeam: ruDevelopingTeam,
+    equipment: ruEquipment,
+    finance: ruFinance,
+    help: ruHelp,
+    manual: ruManual,
+    home: ruHome,
+    infrastructure: ruInfrastructure,
+    navigation: ruNavigation,
+    notifications: ruNotifications,
+    overview: ruOverview,
+    preferences: ruPreferences,
+    preferencesDynamic: ruPreferencesDynamic,
+    proPackages: ruProPackages,
+    profile: ruProfile,
+    publicInfo: ruPublicInfo,
+    raceDetail: ruRaceDetail,
+    racePreparation: ruRacePreparation,
+    riderProfile: ruRiderProfile,
+    scouting: ruScouting,
+    seasonReset: ruSeasonReset,
+    sharedRiderModal: ruSharedRiderModal,
+    squad: ruSquad,
+    staff: ruStaff,
+    statistics: ruStatistics,
+    teamRanking: ruTeamRanking,
+    training: ruTraining,
+    transfers: ruTransfers,
+    tutorials: ruTutorials,
+  },
 } as const
 
 const initialLanguage = getStoredLanguage()
@@ -561,7 +638,7 @@ void i18n
     resources,
     lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,
-    supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es', 'it', 'fr'],
+    supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es', 'it', 'fr', 'ru'],
     defaultNS: 'common',
     ns: [
       'accountPages',

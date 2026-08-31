@@ -1,0 +1,56 @@
+{
+  "common": {
+    "back": "Назад",
+    "close": "Закрыть",
+    "unknown": "Неизвестно",
+    "unknownRider": "Неизвестный гонщик",
+    "rider": "Гонщик",
+    "noImage": "Нет изображения",
+    "age": "Возраст {{age}}",
+    "club": "Клуб:",
+    "noClub": "Нет клуба",
+    "marketValue": "Рыночная стоимость:",
+    "salary": "Оклад:",
+    "availability": "Наличие:",
+    "contractSeason": "Контрактный сезон:",
+    "seasonPoints": "Сезонные точки",
+    "sprintPoints": "Спринтеры",
+    "climbingPoints": "Пункты подъема",
+    "markScouted": "Отметить как скаут",
+    "unmarkScouted": "Незаметный скаут",
+    "showHistory": "Показать историю",
+    "hideHistory": "Скрыть историю",
+    "openTeam": "Открытая команда",
+    "historyPlaceholder": "Ведущий истории."
+  },
+  "skills": {
+    "ovr": "OVR",
+    "pot": "POT",
+    "sprint": "Спринт",
+    "climbing": "Поднимаясь",
+    "tt": "TT",
+    "endurance": "Терпение",
+    "flat": "Плоский",
+    "recovery": "Восстановление",
+    "resistance": "Стойкость",
+    "raceIq": "гоночный IQ",
+    "teamwork": "Командная работа",
+    "morale": "Моральный подход"
+  },
+  "availability": {
+    "fit": "Подстроиться",
+    "notFullyFit": "Не полностью подходит",
+    "injured": "Раненые",
+    "sick": "Больной"
+  },
+  "roles": {
+    "sprinter": "Спринтер",
+    "climber": "Горняк",
+    "timeTrialist": "Судебный судоводитель по вопросам времени",
+    "gc": "GC гонщик",
+    "puncheur": "Пушистик",
+    "rouleur": "Рулевой",
+    "domestique": "Доместика",
+    "allRounder": "Всеохватный"
+  }
+}

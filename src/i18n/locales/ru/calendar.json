@@ -1,0 +1,28 @@
+{
+  "weekdays": {
+    "Sunday": "Воскресенье",
+    "Monday": "Понедельник",
+    "Tuesday": "Вторник",
+    "Wednesday": "Среда",
+    "Thursday": "Четверг",
+    "Friday": "Пятница",
+    "Saturday": "Суббота"
+  },
+  "months": {
+    "January": "Январь",
+    "February": "Февраль",
+    "March": "март",
+    "April": "апрель",
+    "May": "Май",
+    "June": "Июнь",
+    "July": "Июль",
+    "August": "Август",
+    "September": "сентябрь",
+    "October": "Октябрь",
+    "November": "ноябрь",
+    "December": "декабрь"
+  },
+  "date": "{{month}} {{day}}",
+  "gameTimeWithWeekday": "{{season}} {{seasonNumber}} · {{weekday}} · {{date}} · {{time}}",
+  "gameTimeWithoutWeekday": "{{season}} {{seasonNumber}} · {{date}} · {{time}}"
+}

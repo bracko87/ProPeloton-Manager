@@ -1,0 +1,32 @@
+{
+  "language": {
+    "label": "Язык",
+    "applicationLanguage": "Язык приложения",
+    "description": "Выберите язык интерфейса ProPeloton Manager.",
+    "english": "English",
+    "serbian": "Сербский"
+  },
+  "actions": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "close": "Закрыть",
+    "continue": "Продолжить",
+    "confirm": "Подтвердить",
+    "back": "Назад",
+    "skipTutorial": "Пропустить обучение"
+  },
+  "status": {
+    "loading": "Загрузка...",
+    "error": "Что-то пошло не так."
+  },
+  "forum": {
+    "title": "Форум",
+    "movingTitle": "Обсуждение в общинах Discord",
+    "movingText": "На этой странице мы не будем иметь игрового форума. Discord Канал.",
+    "joinHint": "Присоединяйтесь к нам. Discord сервер с помощью кнопки ниже.",
+    "community": "Discord Сообщество",
+    "joinTitle": "Присоединяйтесь к нам. Discord сервер",
+    "joinText": "Говорить с другими игроками, задавать вопросы, получать ручную помощь и оставаться в курсе последних новостей.",
+    "join": "Присоединяйтесь Discord"
+  }
+}
