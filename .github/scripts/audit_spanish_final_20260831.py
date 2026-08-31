@@ -12,17 +12,14 @@ PLACEHOLDER = re.compile(r'\{\{[^{}]+\}\}')
 CORRUPTION = re.compile(r'(?:\ufffd|Ã|Â|â€|ZXQ|QXml)')
 CYRILLIC = re.compile(r'[\u0400-\u04ff]')
 
+# Exact product/game vocabulary. Race/Stage plan singular/plural are handled as families below.
 PROTECTED = [
-    'ProPeloton Manager', 'Race Plan', 'Race Plans', 'Stage Plan', 'Stage Plans',
-    'Startlist', 'Race Engine', 'Replay Engine', 'Team Policy', 'Race Sharpness',
-    'WorldTeam', 'WorldTour', 'ProTeam', 'ProSeries', 'Continental', 'Supabase',
-    'Stripe', 'Discord', 'Edge Function', 'RPC', 'KPI', 'GC', 'KOM', 'U23', 'UCI',
-    'JPG', 'JPEG', 'PNG', 'WEBP', 'PDF', 'CSV', 'Coins', 'Premium', 'FTP', 'VO2',
-    'DNF', 'DNS', 'OTL', 'ITT', 'TTT',
+    'ProPeloton Manager', 'Startlist', 'Race Engine', 'Replay Engine', 'Team Policy',
+    'Race Sharpness', 'WorldTeam', 'WorldTour', 'ProTeam', 'ProSeries', 'Continental',
+    'Supabase', 'Discord', 'Edge Function', 'RPC', 'KPI', 'GC', 'KOM', 'U23', 'UCI',
+    'JPG', 'JPEG', 'PNG', 'WEBP', 'PDF', 'CSV', 'Coins', 'FTP', 'VO2', 'DNF', 'DNS',
+    'OTL', 'ITT', 'TTT',
 ]
-
-# Stripe is a company/product term only when it is a complete token, not the English word "stripes".
-# Word-boundary phrase matching below prevents that false positive.
 
 BAD_GLOBAL = [
     r'\brazas?\b', r'\bjinetes?\b', r'\breproductor(?:es)?\b',
@@ -45,8 +42,9 @@ ALLOWED_IDENTICAL_PATHS = {
 }
 
 
-def phrase(text: str, value: str) -> bool:
-    return re.search(rf'(?<!\w){re.escape(value)}(?!\w)', text, re.I) is not None
+def phrase(text: str, value: str, *, ignore_case: bool = True) -> bool:
+    flags = re.I if ignore_case else 0
+    return re.search(rf'(?<!\w){re.escape(value)}(?!\w)', text, flags) is not None
 
 
 def load(path: Path) -> Any:
@@ -80,9 +78,19 @@ def walk(source: Any, target: Any, path: str, blockers: list[str], warnings: lis
     if CYRILLIC.search(target):
         blockers.append(f'{path}: Cyrillic text remains: {target!r}')
 
+    # Race Plan(s) and Stage Plan(s) are one protected vocabulary family each; grammatical number may differ.
+    if (phrase(source, 'Race Plan') or phrase(source, 'Race Plans')) and not (phrase(target, 'Race Plan') or phrase(target, 'Race Plans')):
+        blockers.append(f'{path}: Race Plan vocabulary changed: {target!r}')
+    if (phrase(source, 'Stage Plan') or phrase(source, 'Stage Plans')) and not (phrase(target, 'Stage Plan') or phrase(target, 'Stage Plans')):
+        blockers.append(f'{path}: Stage Plan vocabulary changed: {target!r}')
+
     for term in PROTECTED:
         if phrase(source, term) and not phrase(target, term):
             blockers.append(f'{path}: protected term {term!r} changed: {target!r}')
+
+    # Premium is protected only as the named product/tier, not lowercase descriptive "premium".
+    if phrase(source, 'Premium', ignore_case=False) and not phrase(target, 'Premium', ignore_case=False):
+        blockers.append(f'{path}: protected term \'Premium\' changed: {target!r}')
 
     for pattern in BAD_GLOBAL:
         if re.search(pattern, target, re.I):
@@ -90,7 +98,10 @@ def walk(source: Any, target: Any, path: str, blockers: list[str], warnings: lis
             break
 
     low_source = source.lower()
-    if re.search(r'\bmanagers?\b', low_source) and re.search(r'\b(?:administrador(?:es)?|gerente(?:s)?)\b', target, re.I):
+    # "administrator" is valid where English also explicitly mentions admin; only reject it for manager-only copy.
+    source_mentions_manager = re.search(r'\bmanagers?\b', low_source) is not None
+    source_mentions_admin = re.search(r'\badmins?|administrators?\b', low_source) is not None
+    if source_mentions_manager and not source_mentions_admin and re.search(r'\b(?:administrador(?:es)?|gerente(?:s)?)\b', target, re.I):
         blockers.append(f'{path}: cycling manager rendered as generic administrator/gerente: {target!r}')
     if re.search(r'\breviews?\b', low_source) and re.search(r'\bex[aá]men(?:es)?\b', target, re.I):
         blockers.append(f'{path}: review rendered as exam: {target!r}')
@@ -98,8 +109,6 @@ def walk(source: Any, target: Any, path: str, blockers: list[str], warnings: lis
         blockers.append(f'{path}: use concise Spanish IA for AI: {target!r}')
 
     if source.strip() == target.strip() and len(source.split()) >= 4 and path not in ALLOWED_IDENTICAL_PATHS:
-        # Entire multi-word English sentences must not leak through. Product vocabulary inside a translated
-        # sentence is fine; a whole unchanged English sentence is not.
         if re.search(r'\b(?:the|and|you|your|with|from|this|that|for|are|is|can|will|should|must)\b', source, re.I):
             blockers.append(f'{path}: unchanged English sentence: {source!r}')
         else:
