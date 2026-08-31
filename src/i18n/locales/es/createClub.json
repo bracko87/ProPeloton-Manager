@@ -11,7 +11,7 @@
     "primaryColor": "Color principal",
     "secondaryColor": "Color secundario",
     "motto": "Lema del equipo (opcional)",
-    "mottoPlaceholder": "Por ejemplo, montar como uno solo",
+    "mottoPlaceholder": "Por ejemplo, todos a una",
     "cancel": "Cancelar",
     "creating": "Creando...",
     "createTeam": "Crear equipo",
@@ -20,16 +20,16 @@
   },
   "jersey": {
     "title": "Maillot del equipo",
-    "description": "Elige un maillot para desbloquear la creación del equipo. Podrás cambiarlo más tarde en Personalizar equipo.",
+    "description": "Elige un maillot para desbloquear la creación del equipo. Podrás cambiarlo más adelante en Personalizar equipo.",
     "scrollLeft": "Desplazar maillots a la izquierda",
     "scrollRight": "Desplazar maillots a la derecha",
     "select": "Seleccionar maillot genérico {{index}}",
     "alt": "Maillot genérico {{index}}",
-    "required": "Debes seleccionar un maillot antes de crear tu equipo."
+    "required": "Debes seleccionar un maillot antes de crear el equipo."
   },
   "preview": {
     "title": "Vista previa del equipo",
-    "description": "El diseño y los colores se actualizan en tiempo real.",
+    "description": "El diseño interior y los colores se actualizan en tiempo real.",
     "customLogoAlt": "Vista previa del logo del equipo personalizado",
     "defaultTeam": "Mi equipo",
     "logoSize": "Tamaño del logotipo",
@@ -39,7 +39,7 @@
   "patterns": {
     "title": "Estilo interior",
     "description": "Elija cómo se dividen los colores primario y secundario.",
-    "customDescription": "El estilo interior solo se aplica al escudo generado del equipo.",
+    "customDescription": "El estilo interior solo se aplica al escudo de equipo generado.",
     "select": "Seleccionar el patrón {{pattern}}",
     "solid": "Sólido",
     "band": "Banda",
@@ -56,10 +56,10 @@
   },
   "logo": {
     "title": "Logotipo de equipo",
-    "description": "Opcional. Sube un logotipo o utiliza una URL de imagen. Si no eliges ninguno, se utilizará el escudo generado.",
+    "description": "Opcional. Sube un logotipo o utiliza una URL de imagen. Si no seleccionas ninguno, se utilizará el escudo generado arriba.",
     "useGenerated": "Usar el escudo generado",
     "fileHelp": "PNG, JPEG/JPG o BMP · máximo 2 MB.",
-    "orUrl": "o usar una URL",
+    "orUrl": "o utiliza una URL",
     "urlPlaceholder": "https://example.com/team-logo.png",
     "applying": "Aplicando...",
     "apply": "Aplicar",
@@ -67,21 +67,21 @@
     "urlApplied": "Logotipo de URL personalizado aplicado."
   },
   "errors": {
-    "invalidType": "El logotipo debe ser una imagen PNG, JPEG/JPG, o BMP.",
-    "tooLarge": "El archivo de logotipo debe ser de 2 MB o más pequeño.",
-    "pasteUrl": "Pega primero la URL del logotipo.",
+    "invalidType": "El logotipo debe ser una imagen PNG, JPEG/JPG o BMP.",
+    "tooLarge": "El archivo del logotipo debe ocupar como máximo 2 MB.",
+    "pasteUrl": "Pega primero una URL del logotipo.",
     "invalidUrl": "Introduce una URL válida para el logotipo.",
-    "httpUrl": "La URL del logotipo debe empezar por http:// o https://.",
+    "httpUrl": "La URL del logotipo debe comenzar por http:// o https://.",
     "loadUrl": "No se pudo cargar el logo desde esta URL.",
-    "countries": "No se pudieron cargar los países",
-    "nameRequired": "El nombre del equipo es obligatorio",
-    "countryRequired": "El país del equipo es obligatorio",
-    "jerseyRequired": "Elige un maillot antes de crear tu equipo.",
+    "countries": "No se pudieron cargar los países.",
+    "nameRequired": "El nombre del equipo es obligatorio.",
+    "countryRequired": "El país del equipo es obligatorio.",
+    "jerseyRequired": "Elige un maillot antes de crear el equipo.",
     "signIn": "Debes iniciar sesión para crear un equipo.",
     "bucketMissing": "No se encontró el cubo de almacenamiento \"club-logos\". Por favor, creelo en Supabase Storage primero.",
-    "uploadLogo": "Fallo al cargar el logo del equipo",
-    "saveBadge": "Fallo al guardar la insignia del equipo",
-    "create": "Fallo al crear el equipo",
+    "uploadLogo": "No se pudo subir el logotipo del equipo.",
+    "saveBadge": "No se pudo guardar el escudo del equipo.",
+    "create": "No se pudo crear el equipo.",
     "unexpected": "Ocurrió un error inesperado"
   }
 }

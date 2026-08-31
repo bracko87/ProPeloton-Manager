@@ -14,11 +14,11 @@
     "closeLabel": "Cerrar la notificación beta"
   },
   "hero": {
-    "seasonalMultiplayer": "Multijugador estacional",
+    "seasonalMultiplayer": "Multijugador por temporadas",
     "titleLine1": "Construye tu legado de ciclismo.",
-    "titleLine2": "Maneja el equipo.",
+    "titleLine2": "Dirige el equipo.",
     "titleLine3": "Domina la temporada.",
-    "description": "ProPeloton Manager es un juego online de gestión ciclista en el que creas tu club, desarrollas ciclistas, planificas el calendario de carreras, negocias fichajes y compites contra otros mánagers en un mundo ciclista organizado por temporadas.",
+    "description": "ProPeloton Manager es un juego de gestión de ciclismo online en el que creas tu club, desarrollas ciclistas, planificas calendarios de carreras, negocias fichajes y compites contra otros mánagers en un mundo ciclista por temporadas.",
     "gameTime": "Hora del juego",
     "multiplayer": "Multijugador",
     "liveManagerLeagues": "Ligas de mánagers en vivo",
@@ -42,7 +42,7 @@
   },
   "stats": {
     "title": "Estadísticas rápidas",
-    "subtitle": "Vista en directo del mundo ProPeloton.",
+    "subtitle": "Resumen en vivo del mundo de ProPeloton.",
     "activeManagers": "Mánagers activos",
     "teams": "Equipos",
     "races": "Carreras",
@@ -55,25 +55,25 @@
   "features": {
     "title": "Características básicas",
     "subtitle": "Todo lo que necesitas para gestionar un club ciclista de clase mundial.",
-    "squadTitle": "Gestión avanzada de la plantilla",
+    "squadTitle": "Gestión profunda de la plantilla",
     "squadDescription": "Entrena, rota y desarrolla ciclistas teniendo en cuenta la forma, la fatiga y la progresión del talento.",
     "racesTitle": "Carreras tácticas",
-    "racesDescription": "Elige cuándo atacar, gestiona las escapadas y ejecuta tácticas para ganar etapas.",
+    "racesDescription": "Elige los momentos de ataque, gestiona las escapadas y ejecuta tácticas ganadoras en cada etapa.",
     "marketTitle": "Mercado y transferencias",
-    "marketDescription": "Ojea ciclistas, realiza ofertas y negocia contratos en un mercado de fichajes dinámico."
+    "marketDescription": "Ojea, puja y negocia contratos en un mercado de fichajes dinámico."
   },
   "guide": {
     "eyebrow": "Guía del juego",
     "headline": "Aprende lo que ofrece ProPeloton Manager antes de unirte.",
-    "intro": "ProPeloton Manager está construido en torno a la gestión de ciclismo a largo plazo. Las páginas públicas explican el juego, pero la página web también ofrece a los visitantes una visión directa de los principales sistemas: team building, desarrollo de ciclista, preparación de carreras, tácticas, finanzas, soporte y clasificación de temporada.",
-    "title": "Cómo actúa ProPeloton Manager",
-    "subtitle": "Construye el club detrás de los ciclista y toma las decisiones que conforman cada temporada.",
+    "intro": "ProPeloton Manager está diseñado alrededor de la gestión ciclista a largo plazo. Las páginas públicas explican el juego y ofrecen una visión directa de sus sistemas principales: creación del equipo, desarrollo de ciclistas, preparación de carreras, tácticas, finanzas, soporte y clasificación de temporada.",
+    "title": "Cómo funciona ProPeloton Manager",
+    "subtitle": "Construye el club que hay detrás de los ciclistas y toma las decisiones que definen cada temporada.",
     "whatTitle": "¿Qué es ProPeloton Manager?",
-    "whatText": "ProPeloton Manager es un juego de gestión de ciclismo online donde se crea y desarrolla un club de ciclismo. En lugar de controlar a un ciclista directamente, se gestiona el equipo detrás de la carrera: ciclista, entrenamiento, planes de carreras, personal, equipos, finanzas, patrocinadores, transferencias y progreso en el ranking a largo plazo.",
+    "whatText": "ProPeloton Manager es un juego de gestión de ciclismo online en el que creas y desarrollas un club. En lugar de controlar directamente a un ciclista, gestionas todo lo que hay detrás de las carreras: ciclistas, entrenamiento, Race Plans, personal, equipamiento, finanzas, patrocinadores, fichajes y progreso a largo plazo en la clasificación.",
     "howTitle": "¿Cómo juegas?",
-    "howText": "Los gerentes construyen un equipo, estudian el calendario de carreras, solicitan carreras adecuadas, preparan planes de carreras, escogen ciclista, asignan roles, gestionan suministros y siguen los resultados. Las buenas decisiones dependen de las habilidades del ciclista, fatiga, moral, perfil de carrera, clima, presupuesto y metas de temporada.",
+    "howText": "Los mánagers construyen una plantilla, estudian el calendario, solicitan las carreras adecuadas, preparan Race Plans, eligen ciclistas, asignan roles, gestionan suministros y siguen los resultados. Las buenas decisiones dependen de las habilidades del ciclista, la fatiga, la moral, el perfil de la carrera, el clima, el presupuesto y los objetivos de temporada.",
     "preparationTitle": "¿Por qué importa la preparación?",
-    "preparationText": "Un ciclista fuerte no es suficiente por sí solo. La preparación de la carrera conecta a los ciclista, personal, vehículos, equipos, suministros y tácticas. La planificación previa ayuda a tu equipo a llegar listo para sprints, subidas, pruebas de tiempo, carreras de etapa y condiciones meteorológicas difíciles."
+    "preparationText": "Un ciclista fuerte no basta por sí solo. La preparación de carrera conecta ciclistas, personal, vehículos, equipamiento, suministros y tácticas. Planificar con antelación ayuda al equipo a llegar preparado para sprints, subidas, contrarrelojes, carreras por etapas y condiciones meteorológicas difíciles."
   },
   "screenshots": {
     "title": "Capturas de pantalla en el juego",
@@ -91,7 +91,7 @@
     "unavailable": "Las opiniones no están disponibles temporalmente.",
     "recently": "Recientemente",
     "previous": "Reseña anterior",
-    "next": "Siguiente reseña",
+    "next": "Reseña siguiente",
     "leaveReview": "Dejar una valoración",
     "addReview": "Añadir reseña",
     "closeForm": "Cerrar formulario de revisión",
@@ -121,7 +121,7 @@
     "messageMin": "Por favor escriba al menos 20 caracteres.",
     "messageMax": "Por favor, mantenga su revisión bajo 1200 caracteres.",
     "submitFailed": "No se pudo enviar la reseña.",
-    "submitSuccess": "Gracias. Tu reseña se ha enviado y aparecerá después de ser aprobada."
+    "submitSuccess": "Gracias. Tu reseña se ha enviado y aparecerá cuando sea aprobada."
   },
   "cta": {
     "badge": "Únete al concurso",
@@ -131,7 +131,7 @@
     "signIn": "Iniciar sesión"
   },
   "footer": {
-    "description": "Un juego premium de gestión ciclista online de Next Quest Studio. Construye un equipo, gestiona ciclistas, prepara carreras, sigue las clasificaciones y desarrolla tu club a lo largo de una temporada viva.",
+    "description": "Un juego de gestión ciclista online de Next Quest Studio. Construye un equipo, gestiona ciclistas, prepara carreras, sigue las clasificaciones y desarrolla tu club a lo largo de una temporada ciclista viva.",
     "copyright": "© ProPeloton Manager. Todos los derechos reservados por Next Quest Studio.",
     "game": "Juego",
     "gameAria": "Información sobre el juego",
