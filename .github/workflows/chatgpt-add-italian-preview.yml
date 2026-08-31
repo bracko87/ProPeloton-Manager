@@ -1,0 +1,48 @@
+name: Add Italian language preview
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/wire_italian_preview_20260831.py'
+      - '.github/workflows/chatgpt-add-italian-preview.yml'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  add-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Wire and validate Italian preview
+        run: python .github/scripts/wire_italian_preview_20260831.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit build-gated Italian preview
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No generated Italian preview changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/index.ts .github
+          git commit -m 'Wire Italian language preview'
+          git pull --rebase origin main
+          git push origin main
