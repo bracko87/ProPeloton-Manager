@@ -47,6 +47,15 @@ export const SUPPORTED_LANGUAGES = [
     htmlLang: 'es',
     locale: 'es-ES',
   },
+  {
+    code: 'it',
+    label: 'Italiano',
+    shortLabel: 'IT',
+    flag: '🇮🇹',
+    countryCode: 'IT',
+    htmlLang: 'it',
+    locale: 'it-IT',
+  },
 ] as const
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]['code']
