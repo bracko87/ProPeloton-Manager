@@ -187,7 +187,7 @@
     "description": "Il s'agit d'actions destructrices et devraient rester séparées des préférences normales.",
     "badge": "Actions à haut impact",
     "restartTitle": "Redémarrer l'équipe",
-    "restartDescription": "Redémarrez ce club dans un nouvel état de départ tout en gardant le même nom de club, logo, maillot, pays et la fente de compétition.",
+    "restartDescription": "Redémarrez ce club dans un nouvel état de départ tout en gardant le même nom de club, logo, maillot, pays et la emplacement de compétition.",
     "restartDetail": "Les coureurs actuels deviennent des agents libres, les points de saison se remettent à 0, et l'équipe reçoit une nouvelle équipe de départ basée sur son niveau actuel.",
     "restartButton": "Redémarrer l'équipe",
     "shutdownTitle": "Équipe d'arrêt",
@@ -201,7 +201,7 @@
     "aboutToDelete": "Vous êtes sur le point de supprimer définitivement:",
     "deleteTeam": "Votre équipe actuelle",
     "deleteGameData": "Vos coureurs d'équipe, équipements et données de jeu liées à l'équipe",
-    "deleteAccount": "Votre compte d'authentification pour ce courriel",
+    "deleteAccount": "Votre compte d'authentification pour ce e-mail",
     "afterDelete": "Après avoir réussi à supprimer, vous serez déconnecté et redirigé vers la page d'accueil. Vous pouvez ensuite vous inscrire à nouveau avec la même adresse e-mail qu'un nouvel utilisateur.",
     "typeDelete": "Type DELETE à confirmer",
     "placeholder": "Type DELETE ici",
@@ -209,7 +209,7 @@
     "permanentButton": "Équipe permanente",
     "exactDeleteError": "Vous devez taper DELETE exactement pour confirmer cette action.",
     "missingSession": "Votre session a disparu.",
-    "shutdownFailed": "Il a échoué à fermer l'équipe.",
+    "shutdownFailed": "Impossible de fermer l'équipe.",
     "shutdownUnexpected": "L'équipe a échoué en raison d'une erreur inattendue.",
     "closeAria": "Fermeture de l'équipe de confirmation"
   }

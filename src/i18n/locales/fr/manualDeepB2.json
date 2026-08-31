@@ -1,7 +1,7 @@
 {
   "sections": {
     "rankingTiersDeep": {
-      "title": "Niveau de concurrence",
+      "title": "Niveau de compétition",
       "subtitle": "WorldTeam, ProTeam, Continental et Amateur.",
       "overview": "Le classement par équipe est organisé en pyramide de compétition avec promotion, éliminatoires et relégation.",
       "facts": [
@@ -243,7 +243,7 @@
       ],
       "details": [
         "Les principaux sponsors sont les plus visibles.",
-        "Les sponsors secondaires remplissent les fentes et ajoutent le soutien.",
+        "Les sponsors secondaires remplissent les emplacements et ajoutent le soutien.",
         "Les sponsors techniques soutiennent les achats d'équipement.",
         "Les offres de sponsor peuvent expirer.",
         "La proration signifie qu'un contrat de saison partielle ne peut pas payer de valeur de saison complète."

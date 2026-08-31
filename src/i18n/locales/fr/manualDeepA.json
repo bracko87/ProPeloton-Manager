@@ -6,7 +6,7 @@
       "overview": "La page d'accueil publique est le point d'entrée avant le tableau de bord. Il peut router les utilisateurs authentifiés pour créer-club ou tableau de bord et montre des informations de jeu public en direct.",
       "facts": [
         "Snapshot en direct",
-        "Temps de jeu, gestionnaires actifs, total équipes, courses et étapes",
+        "Temps de jeu, managers actifs, total équipes, courses et étapes",
         "Avertissement bêta",
         "Les systèmes de jeu, l'interface utilisateur, l'équilibrage et les données peuvent encore changer"
       ],
@@ -14,7 +14,7 @@
         "Si l'utilisateur est connecté et n'a pas de club, les voies d'application à la création de club.",
         "Si l'utilisateur est connecté et a déjà un club, les itinéraires de l'application vers le tableau de bord aperçu.",
         "L'avis bêta indique aux testeurs que le jeu est en ligne pour les tests mais pas définitif.",
-        "Page d'accueil les widgets de la journée de course peuvent montrer hier, aujourd'hui et demain courses."
+        "Les widgets de la page d’accueil peuvent afficher les courses d’hier, d’aujourd’hui et de demain."
       ],
       "tips": [
         "Gardez les attentes des joueurs claires pendant la bêta."
@@ -42,7 +42,7 @@
     },
     "profileSettings": {
       "title": "Mon profil",
-      "subtitle": "Données de profil utilisateur, nom d'utilisateur, courriel et mot de passe.",
+      "subtitle": "Données de profil utilisateur, nom d'utilisateur, e-mail et mot de passe.",
       "overview": "Mon profil modifie le profil de compte utilisateur. Il est séparé du nom de l'équipe, du logo de l'équipe et du maillot.",
       "facts": [
         "Règle du nom d'utilisateur",
@@ -52,7 +52,7 @@
       ],
       "details": [
         "Le nom d'utilisateur est normalisé par la taille des espaces, le changement des espaces pour souligner et supprimer les caractères non pris en charge.",
-        "Les modifications par courriel utilisent le système d'authentification et peuvent nécessiter une confirmation.",
+        "Les modifications par e-mail utilisent le système d'authentification et peuvent nécessiter une confirmation.",
         "Prénom, nom, ville et pays sont des champs optionnels de profil.",
         "Le mot de passe peut être modifié depuis la page de profil avec confirmation.",
         "L'anniversaire est affiché mais pas sauvegardé à nouveau depuis Mon Profil."
@@ -157,7 +157,7 @@
         "Communauté, aide, manuels et questions"
       ],
       "details": [
-        "Contactez-nous a des champs nom, courriel et message et affiche un message de remerciement après soumission.",
+        "Contactez-nous a des champs nom, e-mail et message et affiche un message de remerciement après soumission.",
         "Forum explique qu'il n'y aura pas de forum dans le jeu sur cette page.",
         "Discord est le lieu communautaire pour les questions et l'aide manuelle.",
         "Les rapports de bogue doivent inclure la page, le comportement attendu, le comportement réel et les captures d'écran."
@@ -587,7 +587,7 @@
       "overview": "Les rôles du personnel sont limités. L'infrastructure détermine souvent le nombre de membres du personnel de chaque rôle que le club peut employer.",
       "facts": [
         "Champs de capacité",
-        "Nombre limite, nombre actif, fentes ouvertes, peut louer"
+        "Nombre limite, nombre actif, emplacements ouvertes, peut louer"
       ],
       "details": [
         "Si les créneaux ouverts est 0, l'embauche est bloquée pour ce rôle.",

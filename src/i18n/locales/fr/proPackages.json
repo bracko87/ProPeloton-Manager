@@ -2,7 +2,7 @@
   "page": {
     "title": "Premium & Facturation",
     "description": "Le gameplay normal est gratuit. L'adhésion à Premium et les paquets de Coins sont optionnels.",
-    "refresh": "Rafraîchir"
+    "refresh": "Actualiser"
   },
   "premium": {
     "label": "PREMIUM",
@@ -43,7 +43,7 @@
     "returnSessionFailed": "Votre retour de paiement a été reçu, mais la session de connexion n'a pas pu être restaurée. Veuillez vous connecter à nouveau; le paiement Stripe complété reste enregistré.",
     "checkoutCanceled": "La commande Premium a été annulée. Aucun paiement n'a été effectué.",
     "confirming": "Paiement effectué. Confirmation de l'accès Premium et de la subvention de 50 Coins...",
-    "refreshing": "Gestion de la facturation terminée. Rafraîchir votre statut d'abonnement...",
+    "refreshing": "Gestion de la facturation terminée. Actualiser votre statut d'abonnement...",
     "activated": "Premium est actif et votre récompense mensuelle a été ajoutée.",
     "billingRefreshed": "Votre statut de facturation et d'abonnement a été actualisé.",
     "processing": "Le paiement a été effectué, mais la confirmation Stripe est toujours en cours de traitement. Utilisez Actualiser dans quelques instants; ne pas acheter à nouveau.",
@@ -57,7 +57,7 @@
     "a1": "50 Coins après chaque paiement mensuel réussi Premium.",
     "a2": "Automatisation de la formation avancée et analyse du développement des coureurs.",
     "a3": "Outils de transfert Premium: recherches sauvegardées, alertes automatiques, liste restreinte et analyse de négociation.",
-    "a4": "L'équipement supplémentaire de configuration des fentes et élargi comprend la capacité de garage.",
+    "a4": "L'équipement supplémentaire de configuration des emplacements et élargi comprend la capacité de garage.",
     "a5": "Accès aux options avancées de politique d'équipe et aux filtres de calendrier sélectionnés.",
     "a6": "Autres antécédents externes, résultats récents et points de vue sur l'honneur de carrière.",
     "a7": "Premium fonctions de commodité jamais améliorer les résultats de course, transfert d'acceptation ou les compétences de coureur cachées."
@@ -210,7 +210,7 @@
   },
   "common": {
     "coins": "Coins de monnaie {{count}}",
-    "coin": "Pièce {{count}}",
+    "coin": "Coin {{count}}",
     "notAuthenticated": "Non authentifié. Veuillez vous connecter à nouveau."
   }
 }

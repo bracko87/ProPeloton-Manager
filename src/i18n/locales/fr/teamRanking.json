@@ -85,7 +85,7 @@
     "previousChampions": "Champions de la saison précédente.",
     "close": "Fermer",
     "loading": "Chargement des anciens gagnants...",
-    "loadFailed": "Il a échoué à charger les gagnants passés.",
+    "loadFailed": "Impossible de charger les gagnants passés.",
     "noneTitle": "Pas encore de vainqueurs",
     "noneDescription": "La saison 1 est toujours en cours, donc il n'y a pas de champions à montrer.",
     "season": "Saison",

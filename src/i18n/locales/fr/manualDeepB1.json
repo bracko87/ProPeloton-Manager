@@ -88,7 +88,7 @@
       "overview": "Les promoteurs techniques peuvent réduire les coûts d'équipement et fournir des budgets d'appui à l'équipement.",
       "facts": [
         "Avantages",
-        "Appui en espèces, budget d ' appui au matériel, budget utilisé/retenu, rabais par catégorie"
+        "Support en espèces, budget d ' appui au matériel, budget utilisé/retenu, rabais par catégorie"
       ],
       "details": [
         "Aperçu de l'équipement peut montrer le soutien technique actif du sponsor.",
@@ -123,7 +123,7 @@
     },
     "facilityJobsDeep": {
       "title": "Emplois dans le secteur des infrastructures",
-      "subtitle": "Constructions, livraisons, fentes et remboursements.",
+      "subtitle": "Constructions, livraisons, emplacements et remboursements.",
       "overview": "Les travaux d'infrastructure sont en attente de modernisation des installations ou de livraison d'actifs avec des coûts en espèces et la durée du jeu-jour.",
       "facts": [
         "Types d'emplois",
@@ -148,12 +148,12 @@
       "overview": "Les biens sont des véhicules et des ressources de soutien avec des niveaux, des conditions, un statut d'affectation et des valeurs de soutien.",
       "facts": [
         "Actifs",
-        "Voitures d'équipe, Bus d'équipe, Van équipement, Atelier mobile, Van médical"
+        "Voitures d'équipe, Bus d'équipe, Van équipement, Atelier mobile, fourgon médical"
       ],
       "details": [
         "Les voitures d'équipe soutiennent le convoi de course et peuvent être sélectionnées comme voitures d'équipe 1–3.",
         "Team Bus transporte les coureurs et le personnel.",
-        "Équipement Van transporte des vélos et des équipements.",
+        "Fourgon d’équipement transporte des vélos et des équipements.",
         "Mobile Workshop soutient les réparations et les opérations techniques.",
         "La fourgonnette médicale répond aux besoins médicaux et logistiques.",
         "Les biens cédés ou immobilisés ne peuvent être réparés ou vendus."
@@ -350,7 +350,7 @@
     "sportDirectorDeep": {
       "title": "Suggestions du directeur du sport",
       "subtitle": "Propositions d'assistants pour les Stage Plans.",
-      "overview": "Les suggestions des directeurs du sport peuvent aider les gestionnaires à élaborer des plans, mais ne doivent pas remplacer le jugement.",
+      "overview": "Les suggestions des directeurs du sport peuvent aider les managers à élaborer des plans, mais ne doivent pas remplacer le jugement.",
       "facts": [
         "Domaines de suggestions",
         "Équipement, équipe, individuel, fournitures"
@@ -360,7 +360,7 @@
         "Les suggestions peuvent être limitées par la qualité du personnel ou la logique de backend.",
         "Les utilisateurs doivent comparer les suggestions avec les compétences réelles des coureurs et les objectifs de l'équipe.",
         "Les conditions météorologiques et les fournitures doivent encore être vérifiées manuellement.",
-        "Les bons gestionnaires ajustent les suggestions au lieu de les appliquer aveuglément."
+        "Les bons managers ajustent les suggestions au lieu de les appliquer aveuglément."
       ],
       "tips": [
         "Utiliser les suggestions comme outil d'apprentissage."

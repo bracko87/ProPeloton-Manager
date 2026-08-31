@@ -1,21 +1,21 @@
 {
   "page": {
     "title": "Infrastructure",
-    "description": "Les bâtiments utilisent maintenant une construction réaliste à l'heure du jeu. L'infrastructure contrôle la capacité du personnel, les plafonds d'effets du personnel, les limites de repérage et les systèmes d'équipement futurs.",
+    "description": "Les bâtiments utilisent désormais des durées de construction basées sur le temps de jeu. L’infrastructure détermine la capacité du staff, les plafonds de ses effets, les limites de scouting et prépare les futurs systèmes d’équipement.",
     "loading": "Chargement de l'infrastructure...",
     "noData": "Aucune donnée sur l'infrastructure n'a été trouvée.",
-    "refresh": "Rafraîchir",
-    "refreshing": "Rafraîchissant...",
+    "refresh": "Actualiser",
+    "refreshing": "Actualisation...",
     "facilities": "Installations",
     "assets": "Actifs",
-    "currentGameDate": "Date actuelle du jeu:",
-    "staffContextError": "Infrastructure chargée, mais le contexte d'impact du personnel ne pouvait pas être chargé:"
+    "currentGameDate": "Date actuelle du jeu :",
+    "staffContextError": "L’infrastructure a été chargée, mais le contexte des effets du staff n’a pas pu être récupéré :"
   },
   "common": {
     "close": "Fermer",
     "cancel": "Annuler",
     "save": "Enregistrer",
-    "saving": "Sauver...",
+    "saving": "Enregistrement...",
     "starting": "Commencer...",
     "repair": "Réparation",
     "sell": "Vendre",
@@ -23,16 +23,16 @@
     "assigned": "Affecté",
     "inRepair": "En réparation",
     "condition": "État",
-    "support": "Appui",
+    "support": "Support",
     "acquired": "acquis",
     "currentStatus": "Situation actuelle",
     "cost": "Coût",
     "duration": "Durée",
     "delivery": "Livraison",
-    "owned": "Propriété",
+    "owned": "Possédé",
     "pending": "En attente",
     "quantity": "Quantité",
-    "completes": "Complètes",
+    "completes": "Se termine",
     "costPaid": "Coût payé",
     "premium": "Premium",
     "unlockPremium": "Déverrouiller avec Premium",
@@ -49,52 +49,52 @@
     "built": "Construit",
     "notBuilt": "Non construit",
     "inProgress": "En cours",
-    "upgrade": "Mise à jour",
+    "upgrade": "Améliorer",
     "build": "Construire",
     "maxLevel": "Niveau max",
-    "slotsFull": "Fentes pleines",
-    "configMissing": "Config de manque",
+    "slotsFull": "Emplacements complets",
+    "configMissing": "Configuration manquante",
     "deliveryStatus": "Livraison",
     "details": "Détails",
     "allClear": "Tout est clair",
-    "currentCoinBalance": "Solde des Coins courantes:",
+    "currentCoinBalance": "Solde actuel de Coins :",
     "noValue": "N/A",
     "none": "Aucune",
     "gameDay": "{{count}} jour de jeu",
     "gameDays": "{{count}} jours de jeu"
   },
   "facilities": {
-    "activeJobs": "Emplois actifs",
-    "noJobs": "Aucun emploi dans la construction d'installations n'est en cours",
+    "activeJobs": "Travaux en cours",
+    "noJobs": "Aucun chantier d’infrastructure n’est actuellement en cours.",
     "constructionSlots": "Emplacements de construction d'installations:",
     "active": "actif",
-    "open": "ouvert",
-    "jobsInProgress": "{{count}} emplois en cours d'infrastructure",
-    "jobInProgress": "{{count}} travail d'infrastructure en cours",
+    "open": "libre",
+    "jobsInProgress": "{{count}} travaux d’infrastructure en cours",
+    "jobInProgress": "{{count}} chantier d’infrastructure en cours",
     "gameDuration": "Durée du jeu:",
     "paid": "Payé",
     "realTimeRemaining": "restant en temps réel:",
-    "refundNow": "Remboursement maintenant",
+    "refundNow": "Remboursement immédiat",
     "refundPercent": "Pourcentage de remboursement",
     "cancellationCost": "Frais d'annulation",
     "cancelling": "Annulation...",
     "cancelJob": "Annuler le travail",
-    "detailsTitle": "Détails de l'infrastructure",
-    "imagePlaceholder": "Porte-photo",
+    "detailsTitle": "Détails de l’installation",
+    "imagePlaceholder": "Emplacement de l’image",
     "addImageLater": "Ajouter l'image {{name}} ici plus tard.",
     "currentStatus": "Situation actuelle",
     "status": "État:",
-    "currentImpact": "Impact actuel connecté",
+    "currentImpact": "Effet actuel",
     "nextLevel": "Niveau suivant",
     "unlock": "Déverrouiller:",
     "effect": "Effet:",
     "constructionTime": "Temps de construction",
     "estimatedCompletion": "Achèvement prévu",
-    "jobProgress": "Emploi en cours",
-    "fallbackRemaining": "Retard en temps réel restant:",
-    "lockedDuringConstruction": "Cette installation est fermée pendant que la construction est en cours.",
-    "costCharged": "Les coûts de construction sont facturés immédiatement au moment du début de l'emploi.",
-    "noUpgrade": "Aucune mise à jour n'est actuellement disponible.",
+    "jobProgress": "Avancement des travaux",
+    "fallbackRemaining": "Temps réel restant :",
+    "lockedDuringConstruction": "Cette installation est indisponible pendant les travaux.",
+    "costCharged": "Le coût des travaux est débité immédiatement au démarrage.",
+    "noUpgrade": "Aucune amélioration n’est actuellement disponible.",
     "currentLevel": "Niveau actuel: {{level}} / {{max}}",
     "nextLevelValue": "Niveau suivant: {{level}}",
     "queuedUpgrade": "Mise à niveau en attente vers le niveau {{level}}",
@@ -103,8 +103,8 @@
     "staffCapacityImpact": "La capacité du personnel et les plafonds d'effet sont élevés avec ce niveau d'installation.",
     "coachingImpact": "La formation et les effets de développement des entraîneurs-chefs sont appliqués en fonction de cette installation.",
     "medicalImpact": "Les effets de la récupération médicale et de la protection contre les blessures sont appliqués en fonction de cette installation.",
-    "upgradeStarted": "{{name}} mise à jour/construction commencée.",
-    "jobCancelled": "L'emploi d'infrastructure annulé et le remboursement traité."
+    "upgradeStarted": "Amélioration/construction de {{name}} lancée.",
+    "jobCancelled": "Travaux d’infrastructure annulés et remboursement traité."
   },
   "facilityTypes": {
     "club": "club",
@@ -112,28 +112,28 @@
     "medical": "médical",
     "youth": "jeunes",
     "mechanics": "mécanique",
-    "scouting": "le dépistage"
+    "scouting": "scouting"
   },
   "facilityNames": {
-    "clubHouse": "Maison de club",
-    "trainingCenter": "Centre de formation",
+    "clubHouse": "Club House",
+    "trainingCenter": "Centre d’entraînement",
     "medicalCenter": "Centre médical",
-    "youthAcademy": "Académie de la jeunesse",
-    "mechanicsWorkshop": "Atelier sur la mécanique",
-    "scoutingOffice": "Bureau de scoutisme"
+    "youthAcademy": "Académie des jeunes",
+    "mechanicsWorkshop": "Atelier mécanique",
+    "scoutingOffice": "Bureau de scouting"
   },
   "facilityDescriptions": {
     "clubHouseShort": "Le siège administratif principal de votre équipe cycliste.",
     "clubHouseLong": "Le Club House est la base opérationnelle de base de l'équipe. Il soutient l'administration, l'organisation du club et la croissance future des entreprises.",
-    "trainingCenterShort": "Base de formation de base pour le développement des coureurs et le travail d'encadrement quotidien.",
+    "trainingCenterShort": "Centre d’entraînement principal pour le développement des coureurs et le travail quotidien du staff.",
     "trainingCenterLong": "Le Centre de formation améliore l'efficacité du personnel d'encadrement et soutient la qualité de la formation des coureurs, le soutien au développement et la gestion des risques de surcharge.",
-    "medicalCenterShort": "Centre médical de prévention, de traitement, de rétablissement et de santé des coureurs.",
+    "medicalCenterShort": "Centre médical dédié à la prévention, aux soins, à la récupération et à la santé des coureurs.",
     "medicalCenterLong": "Le Centre médical soutient les médecins, les médecins et les nutritionnistes. Il réduit les limites médicales sévères, améliore la prévention des blessures et le soutien à la récupération, et augmente les capacités du personnel médical.",
     "youthAcademyShort": "Facilité de développement à long terme pour les futurs coureurs et la progression des jeunes.",
     "youthAcademyLong": "L'Académie des Jeunes est un investissement stratégique à long terme. Elle soutient les systèmes de développement des jeunes, débloque le rôle de U23 Head Coach, et améliore ensuite la formation et le développement des coureurs U23.",
     "mechanicsWorkshopShort": "Base d'opérations techniques pour l'entretien et le soutien du matériel.",
     "mechanicsWorkshopLong": "L'atelier de mécanique améliore la capacité de soutien technique et prépare le club pour des systèmes d'équipement plus profonds, la vitesse de réparation et les réductions des coûts d'entretien.",
-    "scoutingOfficeShort": "Centre de scoutisme et de renseignement pour les rapports, l'information sur le marché et la découverte de talents.",
+    "scoutingOfficeShort": "Centre de scouting et d’analyse pour les rapports, le marché et la détection de talents.",
     "scoutingOfficeLong": "Le Bureau de scoutisme contrôle le contrôle de la qualité des rapports de scoutisme, la capacité de scoutisme et les systèmes de renseignement ultérieurs du marché."
   },
   "assets": {
@@ -142,54 +142,54 @@
     "teamCarFleet": "Flotte de voiture d'équipe",
     "teamBus": "Bus d'équipe",
     "teamBusGarage": "Garage d'autobus d'équipe",
-    "equipmentVan": "Équipement Van",
-    "equipmentVans": "Vannes d'équipement",
-    "equipmentVanGarage": "Équipement Van Garage",
+    "equipmentVan": "Fourgon d’équipement",
+    "equipmentVans": "Fourgons d’équipement",
+    "equipmentVanGarage": "Garage des fourgons d’équipement",
     "mobileWorkshop": "Atelier mobile",
     "mobileWorkshops": "Ateliers mobiles",
     "mobileWorkshopGarage": "Garage d'atelier mobile",
-    "medicalVan": "Vanne médicale",
-    "medicalVans": "Vannes médicales",
-    "medicalVanGarage": "Garage de fourgonnettes médicales",
+    "medicalVan": "Fourgon médical",
+    "medicalVans": "Fourgons médicaux",
+    "medicalVanGarage": "Garage des fourgons médicaux",
     "teamCarDescription": "Les Team Cars assurent le soutien de course, la communication tactique, la couverture alimentaire et la réduction de la fatigue les jours de course. Gérer le garage par emplacement, commencer de nouvelles livraisons, réparer des voitures usées ou vendre des voitures disponibles.",
     "teamBusDescription": "Les bus d'équipe améliorent le confort de voyage des coureurs, la récupération, le contrôle de la fatigue et la logistique de la course sur étape.",
-    "equipmentVanDescription": "Équipement Vans support vélo transport, couverture des Coins de rechange, logistique de l'équipement de course, et plus large préparation à l'événement. Gérer le garage par fente, commencer de nouvelles livraisons, réparer des fourgonnettes usées, ou vendre des fourgonnettes disponibles.",
+    "equipmentVanDescription": "Équipement Vans support vélo transport, couverture des Coins de rechange, logistique de l'équipement de course, et plus large préparation à l'événement. Gérer le garage par emplacement, commencer de nouvelles livraisons, réparer des fourgonnettes usées, ou vendre des fourgonnettes disponibles.",
     "mobileWorkshopDescription": "Les ateliers mobiles soutiennent les réparations techniques sur place, la réponse aux problèmes plus rapide, la couverture mécanique et la capacité de service d'équipement. Gérer le garage par emplacement, commencer de nouvelles livraisons, réparer des ateliers usés, ou vendre des ateliers disponibles.",
     "medicalVanDescription": "Les fourgonnettes médicales soutiennent la réponse médicale de jour de course, l'accès au traitement des coureurs, le contrôle des blessures et la couverture médicale.",
     "acquireTeamCar": "Commandez une voiture d'équipe",
     "acquireTeamBus": "Commander un bus d'équipe",
-    "acquireEquipmentVan": "Van de commande de matériel",
+    "acquireEquipmentVan": "Commander un fourgon d’équipement",
     "acquireMobileWorkshop": "Commandez un atelier mobile",
-    "acquireMedicalVan": "Ordre Van médical",
+    "acquireMedicalVan": "Commander un fourgon médical",
     "teamCarAcquireDescription": "Choisissez un niveau Team Car. La livraison entrera dans la file d'attente du garage et se terminera après la durée de jeu configurée.",
     "teamBusAcquireDescription": "Choisissez un niveau Team Bus. La livraison entrera dans la file d'attente du garage et se terminera après la durée de jeu configurée.",
     "equipmentVanAcquireDescription": "Choisissez un niveau de fourgonnette d'équipement. La livraison entrera dans la file d'attente du garage et se terminera après la durée de jeu configurée.",
     "mobileWorkshopAcquireDescription": "Choisissez un niveau d'atelier mobile. La livraison entrera dans la file d'attente du garage et se terminera après la durée de jeu configurée.",
-    "medicalVanAcquireDescription": "Choisissez un niveau Van médical. La livraison entrera dans la file d'attente du garage et se terminera après la durée de jeu configurée.",
+    "medicalVanAcquireDescription": "Choisissez un niveau fourgon médical. La livraison entrera dans la file d'attente du garage et se terminera après la durée de jeu configurée.",
     "garageFullDescription": "La capacité du garage est complète. Annuler une livraison en attente, vendre un actif disponible, ou attendre des améliorations futures de capacité avant de commencer une autre livraison.",
     "noTiers": "Aucun niveau d'acquisition n'est encore configuré pour ce type d'actif.",
     "startDelivery": "Commande de livraison",
     "garageSupportTitle": "Soutien au garage par rapport à l'affectation réelle de la course",
     "teamCarAssignment": "Le garage montre ce que votre club possède et ce qui est livré. Les bonus de course réels devraient toujours provenir des voitures affectées à un événement spécifique. Un garage fort augmente vos options disponibles, mais seules les voitures assignées et éligibles devraient affecter un résultat de course.",
     "teamBusAssignment": "Le garage montre ce que votre club possède et ce qui est livré. Les bonus de course réels devraient toujours venir des bus affectés à un événement ou une visite spécifique. Un garage plus fort améliore les options logistiques disponibles, mais seulement les bus assignés et éligibles devraient affecter les effets de course-jour ou de visite.",
-    "equipmentVanAssignment": "Le garage montre ce que votre club possède et ce qui est livré. Les bonus de course ou d'événement réels devraient encore venir de Vans d'équipement affectés à un événement spécifique. Un garage plus fort améliore les options logistiques disponibles, mais seulement les vans assignés et éligibles devraient affecter les calculs d'événement.",
+    "equipmentVanAssignment": "Le garage montre ce que votre club possède et ce qui est livré. Les bonus de course ou d'événement réels devraient encore venir de fourgons d’équipement affectés à un événement spécifique. Un garage plus fort améliore les options logistiques disponibles, mais seulement les vans assignés et éligibles devraient affecter les calculs d'événement.",
     "mobileWorkshopAssignment": "Le garage montre ce que votre club possède et ce qui est livré. Les bonus techniques réels devraient encore provenir des ateliers mobiles assignés à un événement spécifique. Un garage plus fort améliore les options de service, mais seulement les ateliers assignés et éligibles devraient affecter les calculs de la journée de course.",
-    "medicalVanAssignment": "Le garage montre ce que votre club possède et ce qui est livré. Les bonus médicaux réels devraient encore venir de Vans médicaux assignés à un événement spécifique. Un garage plus fort améliore les options de réponse santé disponibles, mais seulement les vans assignés et éligibles devraient affecter les calculs médicaux de la course-jour.",
-    "garageSlotsTeamCar": "Les voitures appartenant à la société apparaissent en premier, les livraisons en attente remplissent les prochaines fentes vides, et les fentes ouvertes restent disponibles pour les acquisitions futures.",
-    "garageSlotsGeneric": "Les actifs en propriété apparaissent en premier, les livraisons en attente remplissent les prochaines fentes vides, et les créneaux ouverts restent disponibles pour les acquisitions futures.",
+    "medicalVanAssignment": "Le garage montre ce que votre club possède et ce qui est livré. Les bonus médicaux réels devraient encore venir de fourgons médicaux assignés à un événement spécifique. Un garage plus fort améliore les options de réponse santé disponibles, mais seulement les vans assignés et éligibles devraient affecter les calculs médicaux de la course-jour.",
+    "garageSlotsTeamCar": "Les voitures appartenant à la société apparaissent en premier, les livraisons en attente remplissent les prochaines emplacements vides, et les emplacements ouvertes restent disponibles pour les acquisitions futures.",
+    "garageSlotsGeneric": "Les actifs en propriété apparaissent en premier, les livraisons en attente remplissent les prochaines emplacements vides, et les créneaux ouverts restent disponibles pour les acquisitions futures.",
     "freePremiumMax": "Gratuit {{free}} · Premium {{premium}} · Max {{max}}",
-    "ownedPending": "Owned {{owned}} · Pending {{pending}}",
-    "activeMaximum": "{{active}} actif des fentes maximales {{max}}",
-    "slot": "Fente #{{slot}}",
-    "slots": "{{count}} fentes",
-    "slotOne": "{{count}} fente",
+    "ownedPending": "Possédés {{owned}} · En attente {{pending}}",
+    "activeMaximum": "{{active}} actif des emplacements maximales {{max}}",
+    "slot": "emplacement #{{slot}}",
+    "slots": "{{count}} emplacements",
+    "slotOne": "{{count}} emplacement",
     "deliveryItem": "Produit de livraison {{current}} de {{total}}",
     "cancelDelivery": "Annuler la livraison",
     "emptyTeamCar": "Emplacement de voiture vide Team disponible pour une nouvelle livraison.",
     "emptyTeamBus": "Emplacement de bus vide pour équipe disponible pour une nouvelle livraison.",
     "emptyEquipmentVan": "Van de matériel vide disponible pour une nouvelle livraison.",
     "emptyMobileWorkshop": "Emplacement vide pour atelier mobile disponible pour une nouvelle livraison.",
-    "emptyMedicalVan": "Van médical vide disponible pour une nouvelle livraison.",
+    "emptyMedicalVan": "fourgon médical vide disponible pour une nouvelle livraison.",
     "premiumSlotDescription": "Disponible automatiquement pendant que Premium est actif, ou en permanence avec des Coins.",
     "additionalTeamCarCapacity": "Capacité supplémentaire permanente de garage Team Car.",
     "additionalCapacity": "Capacité de garage permanente supplémentaire.",
@@ -223,8 +223,8 @@
     "raceReadiness": "Préparation à la course",
     "equipmentReadinessDescription": "Matériel de garage ou soutien logistique du résumé actuel du Van de matériel.",
     "equipmentCover": "Couverture du matériel",
-    "equipmentCoverDescription": "Niveau de soutien le plus élevé disponible à partir des Vannes d'équipement et de leur état.",
-    "equipmentVanPotential": "Niveau Van d'équipement le plus élevé configuré qui peut être acquis par le système de garage.",
+    "equipmentCoverDescription": "Niveau de soutien le plus élevé disponible à partir des Fourgons d’équipement et de leur état.",
+    "equipmentVanPotential": "Niveau maximal de fourgon d’équipement actuellement configuré et disponible à l’acquisition via le garage.",
     "technicalService": "Service technique",
     "technicalServiceDescription": "Valeur de soutien des ateliers la mieux détenue disponible pour le service sur place et la réponse mécanique.",
     "repairResponse": "Réponse à la réparation",
@@ -235,10 +235,10 @@
     "medicalResponse": "Réponse médicale",
     "medicalResponseDescription": "Valeur de soutien de fourgon la mieux détenue disponible pour l'accès au traitement de jour de course et l'intervention d'urgence.",
     "healthCoverage": "Couverture sanitaire",
-    "healthCoverageDescription": "Réponse médicale au niveau du garage, traitement, récupération ou soutien sanitaire à partir du présent résumé de la Vanne médicale.",
+    "healthCoverageDescription": "Réponse médicale au niveau du garage, traitement, récupération ou soutien sanitaire à partir du présent résumé de la Fourgon médical.",
     "medicalCover": "Couverture médicale",
-    "medicalCoverDescription": "Niveau de soutien le plus élevé disponible des Vans médicaux et de leur état.",
-    "medicalVanPotential": "Niveau de Van médical le plus élevé configuré qui peut être acquis par le système de garage.",
+    "medicalCoverDescription": "Niveau de soutien le plus élevé disponible des fourgons médicaux et de leur état.",
+    "medicalVanPotential": "Niveau de fourgon médical le plus élevé configuré qui peut être acquis par le système de garage.",
     "deliveryCancelled": "Livraison annulée. Remboursement complet retourné au club.",
     "deliveryStarted": "{{asset}} Niveau {{level}} a commencé la livraison.",
     "serviceUnavailable": "Service de livraison d ' actifs non disponible",
@@ -355,15 +355,15 @@
     },
     "equipment_van": {
       "level1": {
-        "name": "Vanne d'équipement de base",
+        "name": "Fourgon d’équipement de base",
         "effect": "Petite augmentation de la préparation à l'équipement avant le stade et petite réduction de la perte de temps d'incident mécanique."
       },
       "level2": {
-        "name": "Vanne d'équipement de service",
+        "name": "Fourgon d’équipement de service",
         "effect": "Un bond moyen pour la réponse de la moto de secours, la préparation préalable au stade et la réduction de l'état de perte d'équipement."
       },
       "level3": {
-        "name": "Vanne d'équipement Pro",
+        "name": "Fourgon d’équipement Pro",
         "effect": "Un fort coup de pouce pour la réponse aux vélos de secours, le soutien au changement de roue et la préparation des équipements de course sur étape."
       }
     },
@@ -379,11 +379,11 @@
     },
     "medical_van": {
       "level1": {
-        "name": "Vanne médicale de base",
+        "name": "Fourgon médical de base",
         "effect": "Prime de réponse médicale de petite taille, réduction du risque de blessures mineures et soutien de base après l'étape de la récupération."
       },
       "level2": {
-        "name": "Van médical de récupération",
+        "name": "fourgon médical de récupération",
         "effect": "Prime de réponse médicale moyenne, réduction du risque de blessures mineures plus forte, soutien à l'hydratation et une meilleure récupération après les étapes."
       },
       "level3": {
@@ -395,7 +395,7 @@
   "facilityUpgrades": {
     "club_house": {
       "level2": {
-        "unlock": "Débloque la fente du directeur sportif.",
+        "unlock": "Débloque la emplacement du directeur sportif.",
         "effect": "Améliore la fondation d'administration du club et prépare les futurs systèmes de sponsor/contrat."
       },
       "level3": {
@@ -413,59 +413,59 @@
     },
     "mechanics_workshop": {
       "level1": {
-        "unlock": "Enlève le bouchon mécanique sévère et déverrouille la deuxième fente mécanique.",
+        "unlock": "Enlève le bouchon mécanique sévère et déverrouille la deuxième emplacement mécanique.",
         "effect": "Améliore les bases de soutien technique pour les futurs équipements et systèmes de service de course."
       },
       "level2": {
-        "unlock": "Débloque la troisième fente mécanique plus 10% plus rapide réparation d'équipement.",
+        "unlock": "Débloque la troisième emplacement mécanique plus 10% plus rapide réparation d'équipement.",
         "effect": "Les réparations futures de l'équipement deviennent plus rapides lorsque le système d'équipement applique cet effet."
       },
       "level3": {
-        "unlock": "Débloque la quatrième fente mécanique plus 20% plus rapide et 20% moins cher réparation d'équipement.",
+        "unlock": "Débloque la quatrième emplacement mécanique plus 20% plus rapide et 20% moins cher réparation d'équipement.",
         "effect": "Les réparations futures de matériel deviennent plus rapides et moins coûteuses."
       },
       "level4": {
-        "unlock": "Débloque cinquième fente mécanique plus 30% plus rapide et 30% moins cher réparation d'équipement.",
+        "unlock": "Débloque cinquième emplacement mécanique plus 30% plus rapide et 30% moins cher réparation d'équipement.",
         "effect": "Soutien maximum mécanique-atelier pour l'entretien de l'équipement."
       }
     },
     "medical_center": {
       "level1": {
-        "unlock": "Enlève le bouchon médical Lv 0 et déverrouille la deuxième fente Physio.",
+        "unlock": "Enlève le bouchon médical Lv 0 et déverrouille la deuxième emplacement Physio.",
         "effect": "Améliore l'efficacité du personnel médical pour la prévention des blessures, la durée de récupération et la réduction de la fatigue-sol."
       },
       "level2": {
-        "unlock": "Débloquer la fente nutritionniste plus les primes de récupération de blessures jusqu'à 3%.",
+        "unlock": "Débloquer la emplacement nutritionniste plus les primes de récupération de blessures jusqu'à 3%.",
         "effect": "Permet une contribution nutritionniste et améliore le soutien au retour à l'adaptation."
       },
       "level3": {
-        "unlock": "Débloque la troisième fente Physio et la deuxième fente de docteur d'équipe.",
+        "unlock": "Débloque la troisième emplacement Physio et la deuxième emplacement de docteur d'équipe.",
         "effect": "Améliore la capacité médicale et permet de renforcer les effets combinés santé/récupération."
       },
       "level4": {
-        "unlock": "Débloque quatrième fente Physio plus les primes de récupération de blessures jusqu'à 5%.",
+        "unlock": "Débloque quatrième emplacement Physio plus les primes de récupération de blessures jusqu'à 5%.",
         "effect": "Améliore la vitesse de récupération et la profondeur médicale pour les équipes de haut niveau."
       },
       "level5": {
-        "unlock": "Débloque cinquième fente Physio plus les primes de récupération de blessures jusqu'à 8%.",
+        "unlock": "Débloque cinquième emplacement Physio plus les primes de récupération de blessures jusqu'à 8%.",
         "effect": "Centre médical Elite avec un maximum de récupération et de soutien de prévention."
       }
     },
     "scouting_office": {
       "level1": {
-        "unlock": "Configuration de base de scoutisme plus déverrouille la deuxième fente Scout / Analyste.",
+        "unlock": "Configuration de base de scoutisme plus déverrouille la deuxième emplacement Scout / Analyste.",
         "effect": "Garde un plafond de qualité de rapport de base, mais améliore la capacité de scoutisme."
       },
       "level2": {
-        "unlock": "Débloque la troisième fente Scout / Analyste plus Solid rapport qualité.",
+        "unlock": "Débloque la troisième emplacement Scout / Analyste plus Solid rapport qualité.",
         "effect": "Levez le capuchon de rapport de scoutisme à Solid."
       },
       "level3": {
-        "unlock": "Débloque la quatrième fente Scout / Analyste plus Forte qualité de rapport.",
+        "unlock": "Débloque la quatrième emplacement Scout / Analyste plus Forte qualité de rapport.",
         "effect": "Élever le capuchon du rapport de dépistage à Strong."
       },
       "level4": {
-        "unlock": "Débloque cinquième fente Scout / Analyste plus Elite rapport qualité.",
+        "unlock": "Débloque cinquième emplacement Scout / Analyste plus Elite rapport qualité.",
         "effect": "Élever le capuchon de rapport de scoutisme à Elite."
       }
     },
@@ -479,7 +479,7 @@
         "effect": "Relève le plafond de coaching efficace pour la formation et le soutien au développement."
       },
       "level3": {
-        "unlock": "Débloque la deuxième fente du formateur.",
+        "unlock": "Débloque la deuxième emplacement du formateur.",
         "effect": "Permet de renforcer le personnel d'encadrement et de renforcer l'impact combiné de la formation et du perfectionnement."
       },
       "level4": {
@@ -493,7 +493,7 @@
     },
     "youth_academy": {
       "level1": {
-        "unlock": "Débloque U23 fente de l'entraîneur-chef.",
+        "unlock": "Débloque U23 emplacement de l'entraîneur-chef.",
         "effect": "Permet un support dédié U23/development-team coaching."
       },
       "level2": {
@@ -505,8 +505,8 @@
   "legacyUi": {
     "teamBusGarage": "Garage d'autobus d'équipe",
     "teamBusGarageDescription": "Les bus d'équipe améliorent le confort de voyage des coureurs, la récupération, le contrôle de la fatigue et la logistique de la course sur étape.",
-    "equipmentVanGarage": "Équipement Van Garage",
-    "equipmentVanGarageDescription": "Équipement Vans support vélo transport, couverture des Coins de rechange, logistique de l'équipement de course, et plus large préparation à l'événement. Gérer le garage par fente, commencer de nouvelles livraisons, réparer des fourgonnettes usées, ou vendre des fourgonnettes disponibles.",
+    "equipmentVanGarage": "Fourgon d’équipement Garage",
+    "equipmentVanGarageDescription": "Équipement Vans support vélo transport, couverture des Coins de rechange, logistique de l'équipement de course, et plus large préparation à l'événement. Gérer le garage par emplacement, commencer de nouvelles livraisons, réparer des fourgonnettes usées, ou vendre des fourgonnettes disponibles.",
     "mobileWorkshopGarageDescription": "Les ateliers mobiles soutiennent les réparations techniques sur place, la réponse aux problèmes plus rapide, la couverture mécanique et la capacité de service d'équipement. Gérer le garage par emplacement, commencer de nouvelles livraisons, réparer des ateliers usés, ou vendre des ateliers disponibles.",
     "medicalVanGarageDescription": "Les fourgonnettes médicales soutiennent la réponse médicale de jour de course, l'accès au traitement des coureurs, le contrôle des blessures et la couverture médicale."
   }

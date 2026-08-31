@@ -1,7 +1,7 @@
 {
   "common": {
     "backHome": "← Retour à la maison",
-    "contact": "Personne à contacter",
+    "contact": "Contact",
     "contactUs": "Contactez-nous",
     "privacyPolicy": "Politique de confidentialité",
     "terms": "Termes",
@@ -37,7 +37,7 @@
     "step4Title": "4. Demander des courses appropriées",
     "step4Text": "Le calendrier de course comprend différentes catégories, pays, itinéraires et types d'étape. Choisissez des courses qui correspondent à votre équipe. Une petite ou jeune équipe ne devrait pas surcharger les coureurs avec trop d'événements.",
     "step5Title": "5. Préparer des Race Plans",
-    "step5Text": "Avant une course, les gestionnaires préparent les coureurs, le personnel, les voitures d'équipe, l'équipement, les fournitures et les plans tactiques. Les courses d'étape ont également besoin de planification étape par étape.",
+    "step5Text": "Avant une course, les managers préparent les coureurs, le personnel, les voitures d'équipe, l'équipement, les fournitures et les plans tactiques. Les courses d'étape ont également besoin de planification étape par étape.",
     "step6Title": "6. Gérer les finances",
     "step6Text": "Les salaires, le personnel, l'équipement, l'infrastructure, les camps d'entraînement, les sponsors, les impôts, les voyages et les opérations de course affectent tous votre équilibre. La discipline financière fait partie du succès à long terme.",
     "systemsTitle": "Principaux systèmes de jeux",
@@ -53,11 +53,11 @@
     "system9": "Classement et statistiques des équipes",
     "system10": "Finances, impôts, salaires et opérations",
     "timeTitle": "Temps de jeu et délais",
-    "timeText": "ProPeloton Manager utilise le temps de jeu en-jeu pour les dates limites de course, les camps d'entraînement, les transferts, les périodes de financement et le flux de saison. Les gestionnaires doivent toujours vérifier le temps de jeu affiché et se préparer avant la date limite finale.",
+    "timeText": "ProPeloton Manager utilise le temps de jeu en-jeu pour les dates limites de course, les camps d'entraînement, les transferts, les périodes de financement et le flux de saison. Les managers doivent toujours vérifier le temps de jeu affiché et se préparer avant la date limite finale.",
     "readMore": "En savoir plus sur le jeu"
   },
   "support": {
-    "eyebrow": "Appui",
+    "eyebrow": "Support",
     "title": "Aide pour les joueurs et les visiteurs.",
     "intro": "Cette page explique comment contacter le support ProPeloton Manager, quels détails inclure dans un rapport, et où aller pour le compte, gameplay, paiement, pièce, ou questions techniques.",
     "send": "Envoyer un message d'assistance",
@@ -84,7 +84,7 @@
     "title": "Besoin d'aide ou de signaler un problème?",
     "publicIntro": "Utilisez cette page pour les demandes de support, les rapports de bogues, les questions de compte, les commentaires de gameplay, les questions de confidentialité et le contact général sur ProPeloton Manager.",
     "dashboardIntro": "Envoyez des demandes de support, des rapports de bogues, des questions de compte, des commentaires de gameplay, des questions de confidentialité ou des messages de contact généraux directement pour soutenir.",
-    "supportEmail": "Supporter le courriel",
+    "supportEmail": "Supporter le e-mail",
     "supportEmailText": "Vous pouvez également nous contacter directement à l'adresse suivante:",
     "bugTitle": "Les bons rapports de bogue incluent",
     "bug1": "La page où le problème s'est produit.",
@@ -102,7 +102,7 @@
     "website": "Site Web",
     "name": "Dénomination",
     "namePlaceholder": "Votre nom",
-    "email": "Courriel",
+    "email": "E-mail",
     "emailPlaceholder": "vous@exemple.com",
     "message": "Message",
     "messagePlaceholder": "Écris ton message...",
@@ -113,7 +113,7 @@
     "emailInvalid": "Veuillez saisir une adresse email valide.",
     "messageRequired": "Veuillez écrire un message.",
     "messageDetail": "Veuillez écrire un peu plus de détails.",
-    "connectFailed": "Impossible de se connecter au service de contact. Veuillez réessayer ou nous envoyer un courriel manuellement.",
+    "connectFailed": "Impossible de se connecter au service de contact. Veuillez réessayer ou nous envoyer un e-mail manuellement.",
     "sendFailed": "Impossible d'envoyer votre message. Veuillez réessayer."
   },
   "privacy": {
@@ -123,9 +123,9 @@
     "title": "Politique de confidentialité pour ProPeloton Manager",
     "updated": "Dernière mise à jour: juillet 2026",
     "s1Title": "1. Aperçu général",
-    "s1p1": "ProPeloton Manager est un jeu de gestion de vélo en ligne. Cette politique de confidentialité explique quelles informations peuvent être collectées, comment il est utilisé, quand il peut être partagé avec les fournisseurs de services, et comment les joueurs peuvent nous contacter sur les questions de confidentialité.",
+    "s1p1": "ProPeloton Manager est un jeu de gestion cycliste en ligne. Cette politique de confidentialité explique quelles informations peuvent être collectées, comment il est utilisé, quand il peut être partagé avec les fournisseurs de services, et comment les joueurs peuvent nous contacter sur les questions de confidentialité.",
     "s2Title": "2. Informations que nous recueillons",
-    "s2p1": "Nous pouvons recueillir des informations de compte telles que l'adresse courriel, le nom d'utilisateur, les détails de profil, les identifiants d'authentification, les informations d'équipe, les progrès du jeu, les actions en jeu, les messages de soutien et les informations techniques nécessaires pour faire fonctionner le jeu en toute sécurité.",
+    "s2p1": "Nous pouvons recueillir des informations de compte telles que l'adresse e-mail, le nom d'utilisateur, les détails de profil, les identifiants d'authentification, les informations d'équipe, les progrès du jeu, les actions en jeu, les messages de soutien et les informations techniques nécessaires pour faire fonctionner le jeu en toute sécurité.",
     "s2p2": "Les données du jeu peuvent inclure les détails du club, les coureurs, le personnel, les finances, la préparation de la course, les notifications, les classements, les achats, le solde de Coins, le statut Premium, les abonnements, les activations de service et d'autres enregistrements de gameplay connectés au compte.",
     "s3Title": "3. Paiements, Premium, et Coins",
     "s3p1": "ProPeloton Manager peut proposer des abonnements Premium, des packs de Coins et d’autres fonctionnalités payantes. Le traitement des paiements est assuré par des prestataires externes tels que Stripe. Nous ne stockons pas les numéros complets de carte bancaire ni les codes de sécurité sur nos propres serveurs d’application.",
@@ -138,7 +138,7 @@
     "s6Title": "6. Comment nous utilisons l'information",
     "s6p1": "Nous utilisons des informations pour gérer le jeu, tenir des comptes de joueur, traiter des actions de gameplay, afficher des classements et des résultats de course, fournir un soutien, prévenir les abus, améliorer les performances, gérer Premium et paiements de Coins, maintenir l'historique des transactions, et se conformer aux exigences légales ou de plate-forme.",
     "s7Title": "7. Partage de l ' information",
-    "s7p1": "Nous pouvons partager des informations limitées avec les fournisseurs de services qui aident à gérer le jeu, y compris l'hébergement, la base de données, l'authentification, le traitement des paiements, le courriel, l'analyse, la surveillance et les outils de soutien.",
+    "s7p1": "Nous pouvons partager des informations limitées avec les fournisseurs de services qui aident à gérer le jeu, y compris l'hébergement, la base de données, l'authentification, le traitement des paiements, le e-mail, l'analyse, la surveillance et les outils de soutien.",
     "s7p2": "Stripe reçoit et traite les informations de paiement et de facturation nécessaires au passage en caisse, à la facturation récurrente, aux factures, aux moyens de paiement, à la gestion des abonnements, aux remboursements et au traitement des litiges. Stripe traite ces informations conformément à ses propres règles de confidentialité.",
     "s7p3": "Nous ne vendons pas les informations de compte joueur comme un produit autonome.",
     "s8Title": "8. Conservation des données",
@@ -148,7 +148,7 @@
     "s9p1": "Nous utilisons des mesures techniques et organisationnelles pour protéger les données de compte, de jeu, Premium et de transaction. Aucun service en ligne ne peut garantir une sécurité parfaite, mais nous travaillons pour garder le jeu fiable et sûr.",
     "s10Title": "10. Vos demandes de confidentialité",
     "s10p1": "Selon la loi applicable, vous pouvez avoir des droits relatifs à l'accès, la correction, la suppression, la restriction, l'objection ou la portabilité des renseignements personnels. Certains fichiers de jeu, de paiement ou de sécurité peuvent devoir être conservés lorsque la conservation est légalement nécessaire pour protéger le service.",
-    "s11Title": "11. Personne à contacter",
+    "s11Title": "11. Contact",
     "s11Prefix": "Pour toute question ou demande de confidentialité, veuillez communiquer avec nous à:"
   },
   "terms": {
@@ -160,7 +160,7 @@
     "s1Title": "1. Acceptation des termes",
     "s1p1": "En créant un compte, en utilisant ProPeloton Manager, en achetant des Coins ou en vous inscrivant à Premium, vous acceptez ces conditions d'utilisation. Si vous n'êtes pas d'accord, vous ne devriez pas utiliser le jeu.",
     "s2Title": "2. Service de jeux",
-    "s2p1": "ProPeloton Manager est un jeu de gestion de vélo en ligne. Le jeu peut inclure la création d'équipe, la gestion des coureurs, l'entraînement, la préparation de course, les transferts, les classements, les systèmes financiers, les sponsors, les fonctionnalités Premium, les Coins de monnaie et d'autres fonctionnalités de gameplay.",
+    "s2p1": "ProPeloton Manager est un jeu de gestion cycliste en ligne. Le jeu peut inclure la création d'équipe, la gestion des coureurs, l'entraînement, la préparation de course, les transferts, les classements, les systèmes financiers, les sponsors, les fonctionnalités Premium, les Coins de monnaie et d'autres fonctionnalités de gameplay.",
     "s2p2": "Les caractéristiques, l'équilibre, les prix, les valeurs économiques, les systèmes de course, l'interface utilisateur et la disponibilité peuvent changer avec le temps. Les fonctionnalités de commodité Premium ne garantissent pas de meilleurs résultats de course, d'acceptation de transfert ou d'accès aux compétences de coureurs cachés.",
     "s3Title": "3. Comptes",
     "s3p1": "Vous êtes responsable de votre activité de compte. Ne partagez pas vos données de connexion, tentez d'accéder à un autre compte, ou utilisez le jeu d'une manière qui perturbe les autres joueurs.",
@@ -187,7 +187,7 @@
     "s9p1": "Si le jeu comprend des messages, des noms, des rapports, des liens de forum ou des fonctionnalités communautaires, les utilisateurs ne doivent pas afficher de contenu haineux, illégal, abusif, trompeur, adulte, violent ou nuisible.",
     "s10Title": "10. Disponibilité",
     "s10p1": "Nous essayons de garder le jeu disponible et fiable, mais des interruptions, maintenance, bogues, corrections de données, changements d'équilibre, interruptions de paiement-fournisseur, ou des changements de service peuvent se produire.",
-    "s11Title": "11. Personne à contacter",
+    "s11Title": "11. Contact",
     "s11Prefix": "Pour toute question concernant ces conditions, la facturation, Premium ou les achats de Coins, contactez-nous à"
   }
 }

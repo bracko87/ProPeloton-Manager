@@ -248,8 +248,8 @@
     "roleCapacity": "Rôle à capacité ({{current}}/{{limit}}).",
     "assignedNames": "Attribué: {{names}}.",
     "cannotHire": "Ce rôle ne peut pas être engagé pour le moment pour ce club.",
-    "currentlyAssigned": "Actuellement assigné: {{names}}. Ouvrez les fentes gauche: {{slots}}.",
-    "noneAssigned": "Personne n'a encore été assigné. Ouvrez les fentes gauche: {{slots}}.",
+    "currentlyAssigned": "Actuellement assigné: {{names}}. Ouvrez les emplacements gauche: {{slots}}.",
+    "noneAssigned": "Personne n'a encore été assigné. Ouvrez les emplacements gauche: {{slots}}.",
     "showing": "Affichage des candidats {{start}}-{{end}} de {{total}}",
     "candidateDetails": "Détails du candidat",
     "selectCandidate": "Sélectionnez un candidat pour voir les détails.",
@@ -259,7 +259,7 @@
     "roleCapacityTitle": "Capacité de rôle",
     "currentStaff": "Personnel actuel: {{names}}",
     "noCurrentStaff": "Aucun personnel actuellement affecté à ce rôle",
-    "openSlots": "Ouvrir les fentes à gauche: {{slots}}",
+    "openSlots": "Ouvrir les emplacements à gauche: {{slots}}",
     "attributes": "Attributs du personnel",
     "contractTerm": "Durée du contrat",
     "currentSeason": "Fin de la saison en cours",
@@ -268,12 +268,12 @@
     "candidateUnavailableShort": "Le candidat n'est plus disponible",
     "roleUnavailableShort": "Ce rôle n'est pas disponible actuellement.",
     "fullCapacity": "Le rôle est déjà à pleine capacité",
-    "slotsAvailable": "{{slots}} fente(s) ouverte(s) disponible(s)",
+    "slotsAvailable": "{{slots}} emplacement(s) ouverte(s) disponible(s)",
     "hiring": "Embaucher...",
     "hire": "Emploi de personnel",
     "currentRoles": "Rôles actuels du personnel",
-    "assignedOpen": "{{current}} assigné • {{slots}} fente(s) ouverte(s)",
-    "noStaffOpen": "Aucun personnel affecté • {{slots}} fente(s) ouverte(s)"
+    "assignedOpen": "{{current}} assigné • {{slots}} emplacement(s) ouverte(s)",
+    "noStaffOpen": "Aucun personnel affecté • {{slots}} emplacement(s) ouverte(s)"
   },
   "staffRoles": {
     "all": "Tous les rôles",
@@ -299,7 +299,7 @@
     "coachingQuality": "Qualité de l'entraînement",
     "coachAbility": "Capacité d'entraîneur",
     "trainingQuality": "Qualité de la formation",
-    "developmentSupport": "Appui au développement",
+    "developmentSupport": "Support au développement",
     "trainingAbility": "Capacité de formation",
     "sessionQuality": "Qualité des séances",
     "loadManagement": "Gestion des charges",
@@ -314,7 +314,7 @@
     "nutritionQuality": "Qualité nutritionnelle",
     "nutritionAbility": "Capacité nutritionnelle",
     "recoverySupport": "Soutien à la récupération",
-    "consistencySupport": "Appui à la cohérence",
+    "consistencySupport": "Support à la cohérence",
     "technicalQuality": "Qualité technique",
     "technicalAbility": "Capacité technique",
     "bikeSetupQuality": "Qualité de la configuration du vélo",
@@ -355,13 +355,13 @@
     "premiumOnly": "Les recherches sauvegardées sont disponibles uniquement avec Premium.",
     "enterName": "Saisissez un nom de recherche sauvegardé.",
     "limitReached": "Limite de recherche enregistrée atteinte ({{limit}}).",
-    "savedSlot": "Recherche enregistrée dans la fente {{slot}}.",
+    "savedSlot": "Recherche enregistrée dans la emplacement {{slot}}.",
     "saveFailed": "Impossible d'enregistrer la recherche.",
     "slotUnlocked": "Slot de recherche sauvegardé {{slot}} déverrouillé en permanence.",
-    "unlockFailed": "Impossible de débloquer la fente.",
+    "unlockFailed": "Impossible de débloquer la emplacement.",
     "deleted": "Recherche sauvegardée supprimée.",
     "deleteFailed": "Impossible de supprimer la recherche.",
-    "loadFailed": "Il a échoué à charger les renseignements de transfert."
+    "loadFailed": "Impossible de charger les renseignements de transfert."
   },
   "offerModal": {
     "title": "Faire une offre de transfert",
@@ -381,13 +381,13 @@
     "reject": "Rejet",
     "accept": "Accepter",
     "rejected": "Offre rejetée.",
-    "rejectFailed": "Il a échoué à rejeter l'offre.",
+    "rejectFailed": "Impossible de rejeter l'offre.",
     "cancelled": "Offre annulée.",
     "cancelFailed": "L'offre a échoué.",
     "negotiationCancelled": "Les négociations de transfert ont été annulées.",
     "negotiationMarket": "La négociation de transfert a été annulée. Le coureur est retourné sur le marché de transfert.",
     "negotiationExpired": "La négociation de transfert a été annulée. La liste de transfert a déjà expiré.",
-    "negotiationCancelFailed": "Il a échoué à annuler les négociations de transfert."
+    "negotiationCancelFailed": "Impossible de annuler les négociations de transfert."
   },
   "negotiation": {
     "loadingTransfer": "Chargement de la négociation de transfert...",
@@ -469,7 +469,7 @@
     "freeAgentExpired": "Cette opportunité libre-agent a déjà expiré et ne peut plus être commencée.",
     "signingMinimum": "Le bonus de signature ne peut pas être inférieur au minimum de {{amount}}.",
     "agentMinimum": "Les frais d'agent ne peuvent pas être inférieurs au minimum de {{amount}}.",
-    "submitFailed": "Il a échoué à présenter une offre de contrat de coureur.",
+    "submitFailed": "Impossible de présenter une offre de contrat de coureur.",
     "submitOfferFailed": "L'offre a échoué.",
     "outlookExtremelyDifficult": "Très difficile",
     "outlookVeryHigh": "Très fort risque",
@@ -515,7 +515,7 @@
     "weak": "Faible",
     "veryWeak": "Très faible",
     "hiddenHelp": "Les étiquettes résument l'aperçu déjà disponible pour le moteur de négociation. Les seuils exacts cachés et les valeurs minimales d'acceptation ne sont pas révélés.",
-    "loadFailed": "Il a échoué à charger les renseignements de transfert."
+    "loadFailed": "Impossible de charger les renseignements de transfert."
   },
   "tutorial": {
     "welcomeTitle": "Besoin d'aide pour les transferts?",

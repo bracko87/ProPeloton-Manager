@@ -12,7 +12,7 @@
     "printPdf": "Imprimer / Enregistrer sous PDF",
     "askDiscord": "Demandez sur Discord",
     "startHereTitle": "Commencez ici.",
-    "startHereDescription": "Les nouveaux gestionnaires devraient d'abord lire Quick Start, Game Time, Overview, Squad, Training, Course Preparation and Finance. Les gestionnaires expérimentés peuvent utiliser la recherche pour des sujets spécifiques tels que les droits de noms de sponsor, les fournitures de course, les séries éliminatoires, les audits fiscaux, les secours d'urgence ou les fenêtres de mouvement de l'équipe en développement.",
+    "startHereDescription": "Les nouveaux managers devraient d'abord lire Quick Start, Game Time, Overview, Squad, Training, Course Preparation and Finance. Les managers expérimentés peuvent utiliser la recherche pour des sujets spécifiques tels que les droits de noms de sponsor, les fournitures de course, les séries éliminatoires, les audits fiscaux, les secours d'urgence ou les fenêtres de mouvement de l'équipe en développement.",
     "searchLabel": "Manuel de recherche",
     "searchPlaceholder": "Recherche Coins, sponsors, préparation de course, taxes, équipements...",
     "categoryLabel": "Catégorie",
@@ -46,7 +46,7 @@
     "rankings-and-statistics": "Classements et statistiques",
     "transfers": "Transferts",
     "finance": "Finances",
-    "support-and-account": "Appui et compte",
+    "support-and-account": "Support et compte",
     "race-preparation": "Préparation de course",
     "transfers-and-scouting": "Transferts et scoutisme",
     "faq": "FAQ"
@@ -65,7 +65,7 @@
       "infrastructure": "{{title}} est un investissement de capacité à long terme. Les décisions relatives aux installations et aux actifs devraient résoudre un vrai goulot d'étranglement, s'adapter au plan financier et être échelonnées autour des durées de construction/réparation plutôt que mises à niveau automatiquement.",
       "calendar-and-races": "{{title}} appartient à la chronologie de la compétition. Toujours comparer les informations de course/application/rider-soumission avec le temps de jeu faisant autorité, puis utiliser Course Detail et Course Preparation pour les règles et actions plus profondes.",
       "race-preparation": "{{title}} fait partie du workflow final de pré-course. L'entrée acceptée n'est pas suffisante: les coureurs, les ressources de soutien, l'équipement, les fournitures, les rôles et les tactiques doivent être complets avant le verrouillage/la date limite.",
-      "rankings-and-statistics": "{{title}} explique le contexte concurrentiel du club. Les points, le classement et les tables spécialisées devraient guider les cibles de saison et le scoutisme, mais les gestionnaires devraient encore ouvrir des profils d'équipe/rider avant de prendre des décisions à partir des seuls numéros de classement.",
+      "rankings-and-statistics": "{{title}} explique le contexte concurrentiel du club. Les points, le classement et les tables spécialisées devraient guider les cibles de saison et le scoutisme, mais les managers devraient encore ouvrir des profils d'équipe/rider avant de prendre des décisions à partir des seuls numéros de classement.",
       "transfers": "{{title}} est une décision de formation avec des conséquences sportives et financières. Avant de s'engager, vérifier l'ajustement de rôle, la certitude de scoutisme, le salaire, la durée, les frais de transfert, le cas échéant, la capacité de formation et l'effet sur les flux de trésorerie futurs du club.",
       "transfers-and-scouting": "{{title}} combine l'action du marché et la qualité de l'information. Le gestionnaire devrait utiliser le scoutisme pour réduire l'incertitude, puis négocier uniquement pour des objectifs réalistes qui correspondent à la fois à l'équipe et au budget.",
       "finance": "{{title}} affecte la survie du club. Toujours distinguer le revenu d'exploitation/dépense du mouvement de la dette, utiliser les lignes de transaction pour expliquer les changements de solde, et garder suffisamment d'argent pour les coûts récurrents obligatoires avant de payer pour les améliorations optionnelles.",
@@ -105,7 +105,7 @@
   "sections": {
     "quick-start": {
       "category": "Commencer",
-      "title": "Début rapide pour les nouveaux gestionnaires",
+      "title": "Début rapide pour les nouveaux managers",
       "subtitle": "Les meilleures premières étapes après la création de votre club.",
       "overview": "ProPeloton Manager est un jeu de gestion de club de cyclisme complet. Vous ne choisissez pas seulement les coureurs pour les courses. Vous gérez argent, personnel, équipement, infrastructure, sponsors, formation, applications de course, préparation de course et classements à long terme.",
       "details": [
@@ -288,7 +288,7 @@
       "category": "Tableau de bord",
       "title": "Notifications et boîte de réception",
       "subtitle": "Alertes système, pages non lues/lites et conversations.",
-      "overview": "Les notifications sont des alertes de jeu/admin. La boîte de réception est pour les conversations directes ou administratives. Ensemble, ils aident les utilisateurs à éviter les délais manqués et à communiquer avec d'autres gestionnaires ou administrateurs.",
+      "overview": "Les notifications sont des alertes de jeu/admin. La boîte de réception est pour les conversations directes ou administratives. Ensemble, ils aident les utilisateurs à éviter les délais manqués et à communiquer avec d'autres managers ou administrateurs.",
       "details": [
         "Les notifications peuvent être recherchées par titre, message, type, source, groupe de préférences ou temps de création.",
         "Les catégories sont résolues à partir du code de groupe de préférence, de source ou de type. Cela aide à séparer les messages financiers, de course, de sponsor, de transfert et de système.",
@@ -419,7 +419,7 @@
       ],
       "tips": [
         "Utilisez Équipe de développement pour les talents futurs.",
-        "Gardez une première fente Squad ouverte si vous prévoyez de promouvoir un coureur."
+        "Gardez une première emplacement Squad ouverte si vous prévoyez de promouvoir un coureur."
       ],
       "relatedLinks": [
         "Préférences",
@@ -609,7 +609,7 @@
         },
         {
           "label": "Actifs",
-          "value": "Voitures d'équipe, Bus d'équipe, Van équipement, Atelier mobile, Van médical"
+          "value": "Voitures d'équipe, Bus d'équipe, Van équipement, Atelier mobile, fourgon médical"
         }
       ],
       "tips": [
@@ -686,7 +686,7 @@
         },
         {
           "label": "Actifs de course",
-          "value": "Autobus d'équipe, Van d'équipement, Atelier mobile, Van médical, Voiture d'équipe 1–3"
+          "value": "Bus d’équipe, fourgon d’équipement, atelier mobile, fourgon médical, voitures d’équipe 1–3"
         },
         {
           "label": "Tonalités de préparation à l'étape",
@@ -713,7 +713,7 @@
         "Continental Europe et Amérique alimentent les séries éliminatoires Pro West. Continental Asie, Afrique et Océanie alimentent les séries éliminatoires Pro East.",
         "Continental Europe et Asie montrent en bas six relégués. Continental Amérique et Afrique montrent en bas cinq relégués. Continental Océanie montre en bas trois relégués.",
         "Amateur Océanie montre le top trois promu directement. European Amateur divisions show gagnant promu directement et 2ème–3ème en promotion éliminatoire. Autres divisions Amateur spectacle gagnant promu directement et 2ème–4ème en promotion éliminatoire.",
-        "Les gestionnaires inactifs peuvent rester visibles en classement/résultats. L'assurance-chômage peut montrer un badge de gestionnaire inactif pour les équipes inactives et en fin de saison en attente de retrait."
+        "Les managers inactifs peuvent rester visibles en classement/résultats. L'assurance-chômage peut montrer un badge de gestionnaire inactif pour les équipes inactives et en fin de saison en attente de retrait."
       ],
       "facts": [
         {
@@ -947,7 +947,7 @@
       ]
     },
     "support-account": {
-      "category": "Appui et compte",
+      "category": "Support et compte",
       "title": "Profil, préférences, rapports de contact, de forum et de bogues",
       "subtitle": "Paramètres de compte, paramètres de notification et canaux de support.",
       "overview": "Les pages de compte et de support aident les utilisateurs à gérer les données de profil, les préférences de notification, l'achat de l'équipe de développement, les liens d'invitation, le support Discord et les rapports de bogues.",
@@ -1002,12 +1002,12 @@
         "Si l'utilisateur est connecté et n'a pas de club, les voies d'application à la création de club.",
         "Si l'utilisateur est connecté et a déjà un club, les itinéraires de l'application vers le tableau de bord aperçu.",
         "L'avis bêta indique aux testeurs que le jeu est en ligne pour les tests mais pas définitif.",
-        "Page d'accueil les widgets de la journée de course peuvent montrer hier, aujourd'hui et demain courses."
+        "Les widgets de la page d’accueil peuvent afficher les courses d’hier, d’aujourd’hui et de demain."
       ],
       "facts": [
         {
           "label": "Snapshot en direct",
-          "value": "Temps de jeu, gestionnaires actifs, total équipes, courses et étapes"
+          "value": "Temps de jeu, managers actifs, total équipes, courses et étapes"
         },
         {
           "label": "Avertissement bêta",
@@ -1046,11 +1046,11 @@
     "profile-settings": {
       "category": "Coins et compte",
       "title": "Mon profil",
-      "subtitle": "Données de profil utilisateur, nom d'utilisateur, courriel et mot de passe.",
+      "subtitle": "Données de profil utilisateur, nom d'utilisateur, e-mail et mot de passe.",
       "overview": "Mon profil modifie le profil de compte utilisateur. Il est séparé du nom de l'équipe, du logo de l'équipe et du maillot.",
       "details": [
         "Le nom d'utilisateur est normalisé par la taille des espaces, le changement des espaces pour souligner et supprimer les caractères non pris en charge.",
-        "Les modifications par courriel utilisent le système d'authentification et peuvent nécessiter une confirmation.",
+        "Les modifications par e-mail utilisent le système d'authentification et peuvent nécessiter une confirmation.",
         "Prénom, nom, ville et pays sont des champs optionnels de profil.",
         "Le mot de passe peut être modifié depuis la page de profil avec confirmation.",
         "L'anniversaire est affiché mais pas sauvegardé à nouveau depuis Mon Profil."
@@ -1176,12 +1176,12 @@
       ]
     },
     "contact-forum-support": {
-      "category": "Appui et compte",
+      "category": "Support et compte",
       "title": "Contactez-nous, Forum et Discord",
       "subtitle": "Où les joueurs posent des questions ou signalent des problèmes.",
       "overview": "Contact Us, le Forum et Discord sont les principaux points d’accès à l’assistance et à la communauté. Pour le moment, Contact Us fonctionne uniquement dans l’interface, tandis que le Forum redirige les joueurs vers Discord.",
       "details": [
-        "Contactez-nous a des champs nom, courriel et message et affiche un message de remerciement après soumission.",
+        "Contactez-nous a des champs nom, e-mail et message et affiche un message de remerciement après soumission.",
         "Forum explique qu'il n'y aura pas de forum dans le jeu sur cette page.",
         "Discord est le lieu communautaire pour les questions et l'aide manuelle.",
         "Les rapports de bogue doivent inclure la page, le comportement attendu, le comportement réel et les captures d'écran."
@@ -1916,9 +1916,9 @@
       "overview": "Les bonus d'équipement sont utiles mais doivent rester à l'intérieur des limites conçues par le jeu. Une configuration est un paquet d'équipement pour un type de course, et le gestionnaire devrait penser à l'effet combiné au lieu de chasser un nombre sans contexte.",
       "details": [
         "La configuration par défaut de la course est utilisée lorsqu'aucune configuration spécifique à la course n'est sélectionnée.",
-        "Les préréglages de configuration sauvegardés aident les gestionnaires à éviter de reconstruire la même combinaison avant chaque course.",
+        "Les préréglages de configuration sauvegardés aident les managers à éviter de reconstruire la même combinaison avant chaque course.",
         "Les primes de terrain doivent être lues comme un support pour la performance du coureur, et non comme un remplacement pour la compétence du coureur.",
-        "Si plusieurs éléments fournissent le même type de bonus, le jeu peut limiter l'effet utile total. Les gestionnaires doivent donc construire des configurations équilibrées plutôt que d'assumer chaque pile de points supplémentaires pour toujours.",
+        "Si plusieurs éléments fournissent le même type de bonus, le jeu peut limiter l'effet utile total. Les managers doivent donc construire des configurations équilibrées plutôt que d'assumer chaque pile de points supplémentaires pour toujours.",
         "Un coureur a encore besoin des attributs de spécialiste correct. L'équipement de montagne ne transforme pas un grimpeur faible en grimpeur d'élite.",
         "La qualité de l'installation devrait également tenir compte de l'état. Un article solide mais usé peut être un choix pratique pire qu'un article légèrement plus faible en bon état."
       ],
@@ -2032,8 +2032,8 @@
       ],
       "facts": [
         {
-          "label": "Appui éventuel",
-          "value": "Appui en espèces, budget d ' appui au matériel, rabais par catégorie"
+          "label": "Support éventuel",
+          "value": "Support en espèces, budget d ' appui au matériel, rabais par catégorie"
         },
         {
           "label": "S'applique à",
@@ -2136,7 +2136,7 @@
       "details": [
         "Team Cars soutient les opérations de course et peut être exigé en différentes quantités selon le plan.",
         "Team Bus soutient le transport et la logistique de l'équipe.",
-        "Équipement Van supporte le mouvement de l'équipement et la logistique de configuration de course.",
+        "Fourgon d’équipement supporte le mouvement de l'équipement et la logistique de configuration de course.",
         "Mobile Workshop fournit un soutien technique pendant les courses/voyages.",
         "Medical Van fournit un soutien médical supplémentaire.",
         "Les biens assignés ou immobilisés ne devraient pas être réparés ou vendus avant d'être libérés de la course ou de l'emploi qui les utilise.",
@@ -2145,7 +2145,7 @@
       "facts": [
         {
           "label": "Types d'actifs",
-          "value": "Voitures d'équipe, Bus d'équipe, Van équipement, Atelier mobile, Van médical"
+          "value": "Voitures d'équipe, Bus d'équipe, Van équipement, Atelier mobile, fourgon médical"
         },
         {
           "label": "Valeurs importantes",
@@ -2441,7 +2441,7 @@
       "category": "Préparation de course",
       "title": "Stage Plan État de préparation et de verrouillage",
       "subtitle": "Comment lire les états de préparation vert/jaune/orange/rouge/gris.",
-      "overview": "La disponibilité est un résumé de l'existence et de la facilité d'utilisation de Stage Plans. Elle est conçue pour avertir les gestionnaires avant la date limite au lieu de laisser un plan incomplet échouer silencieusement.",
+      "overview": "La disponibilité est un résumé de l'existence et de la facilité d'utilisation de Stage Plans. Elle est conçue pour avertir les managers avant la date limite au lieu de laisser un plan incomplet échouer silencieusement.",
       "details": [
         "Le vert représente généralement un état prêt/complète.",
         "Le jaune/orange indique des avertissements ou une préparation partielle qui mérite attention.",
@@ -2504,12 +2504,12 @@
       "subtitle": "Comment la structure du monde est organisée de WorldTeam à Amateur.",
       "overview": "La pyramide des compétitions donne à chaque club une place de longue durée dans le monde. Les équipes gagnent des points internationaux grâce aux résultats de course et utilisent le classement pour se battre pour la promotion, éviter la relégation ou se qualifier pour les séries éliminatoires.",
       "details": [
-        "WorldTeam est la division la plus importante. Les clubs y font face à la plus forte concurrence et à la pression de classement la plus exigeante à long terme.",
+        "WorldTeam est la division la plus importante. Les clubs y font face à la plus forte compétition et à la pression de classement la plus exigeante à long terme.",
         "ProTeam est divisé en Ouest et Est. Clubs se battent pour la promotion directe, les lieux de séries éliminatoires et la survie.",
         "Continental est divisé par continent. L'Europe et l'Amérique alimentent le sentier Pro West tandis que l'Asie, l'Afrique et l'Océanie alimentent le sentier Pro East.",
         "Amateur est divisé en compétitions régionales plus détaillées afin de développer des clubs peuvent jouer contre des concurrents géographiquement appropriés.",
         "Les points internationaux obtenus grâce aux résultats de course construisent le classement officiel. Une équipe devrait donc se soucier de marquer régulièrement toute la saison, et pas seulement des victoires occasionnelles.",
-        "Les gestionnaires inactifs peuvent rester visibles pour l'intégrité historique et le traitement en fin de saison même lorsqu'ils ne contrôlent plus activement le club."
+        "Les managers inactifs peuvent rester visibles pour l'intégrité historique et le traitement en fin de saison même lorsqu'ils ne contrôlent plus activement le club."
       ],
       "facts": [
         {
@@ -2742,7 +2742,7 @@
       "category": "Transferts et scoutisme",
       "title": "Rapports de scoutisme et incertitude en matière d'information",
       "subtitle": "Pourquoi les données externes du coureur peuvent être cachées et comment les rapports améliorent la précision.",
-      "overview": "Le scoutisme empêche le marché du transfert de devenir un tableur d'information parfait. Les gestionnaires devraient investir dans le savoir avant de prendre des décisions de transfert coûteuses ou à long terme.",
+      "overview": "Le scoutisme empêche le marché du transfert de devenir un tableur d'information parfait. Les managers devraient investir dans le savoir avant de prendre des décisions de transfert coûteuses ou à long terme.",
       "details": [
         "Un coureur non-mutué peut afficher des informations approximatives ou limitées selon les règles de page.",
         "Un rapport complet améliore la précision et peut révéler des forces globales, potentielles, spécialisées et des notes de scout.",
@@ -3048,7 +3048,7 @@
           "value": "Les trois sauvetages utilisés et une autre obligation obligatoire ne peuvent être couverts"
         },
         {
-          "label": "Club liquide",
+          "label": "Club liquidé",
           "value": "Actions de jeu bloquées"
         },
         {
@@ -3259,7 +3259,7 @@
       ],
       "tips": [
         "Infrastructure et transferts/marché du personnel devraient être utilisés ensemble.",
-        "Ne pas sur-embaucher le personnel juste parce que les fentes existent."
+        "Ne pas sur-embaucher le personnel juste parce que les emplacements existent."
       ],
       "relatedLinks": [
         "Marché du personnel",

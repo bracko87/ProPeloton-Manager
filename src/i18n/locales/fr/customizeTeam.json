@@ -5,7 +5,7 @@
     "saving": "Sauver les changements...",
     "loginRequired": "Vous devez être connecté pour personnaliser votre club.",
     "contextMissing": "Contexte du club principal non trouvé.",
-    "loadFailed": "Il a échoué à charger le club.",
+    "loadFailed": "Impossible de charger le club.",
     "notResolved": "Le club principal n'est pas résolu.",
     "updateFailed": "La mise à jour du club principal a échoué.",
     "clubNotFound": "Club introuvable.",
@@ -33,7 +33,7 @@
     "nameResultMissing": "La mise à jour du nom de l'équipe n'a pas retourné le club mis à jour.",
     "nameUpdated": "Le nom de l'équipe est mis à jour.",
     "nameChanged": "Nom de l'équipe changé à \"{{name}}\" pour 30 Coins.",
-    "nameFailed": "Il a échoué à changer de nom d'équipe.",
+    "nameFailed": "Impossible de changer de nom d'équipe.",
     "colorsLocked": "Les couleurs de l'équipe sont verrouillées par un sponsor de nommage-droits.",
     "hexInvalid": "Veuillez utiliser les couleurs HEX valides comme #ff0000.",
     "colorsSame": "Les couleurs primaires et secondaires doivent être différentes.",
@@ -124,14 +124,14 @@
     "urlInvalid": "Veuillez fournir une URL d'image en jersey valide.",
     "originalRestored": "Jersey d'équipe original restauré en avant-première. Cliquez sur Appliquer jersey pour l'enregistrer.",
     "defaultRestored": "Jersey par défaut basé sur la couleur restauré dans l'aperçu. Cliquez sur Appliquer jersey pour l'enregistrer.",
-    "saveFailed": "Il a échoué à sauver le maillot.",
+    "saveFailed": "Impossible de sauver le maillot.",
     "saveFailedWithError": "Échec de l'enregistrement du maillot: {{error}}",
     "savedPaid": "Jersey a appliqué et enregistré pour {{cost}} Coins.",
     "savedFree": "Jersey appliqué et sauvé. Cette saison, le changement de jersey libre a été utilisé."
   },
   "coins": {
     "coins": "Coins de monnaie {{count}}",
-    "coin": "Pièce {{count}}"
+    "coin": "Coin {{count}}"
   },
   "kitDesigner": {
     "tableNotReady": "Les kits d'équipe ne sont pas encore prêts. Vous pouvez toujours prévisualiser le kit et essayer de le sauvegarder.",
@@ -153,7 +153,7 @@
     "sponsorText": "Texte du parrain",
     "defaultSponsor": "YOUR CLUB",
     "shirtNumber": "Numéro de chemise",
-    "saving": "Sauver...",
+    "saving": "Enregistrement...",
     "loading": "Chargement…",
     "save": "Enregistrer le kit",
     "livePreview": "Aperçu en direct",

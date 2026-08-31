@@ -5,7 +5,7 @@
     "subtitle": "Tous les rapports de scout terminés en un seul endroit. Filtrer par statut et sauter directement au profil du coureur.",
     "loading": "Chargement des rapports de scouts...",
     "empty": "Aucun rapport de scout ne correspond à ce filtre.",
-    "loadFailed": "Il a échoué à charger des rapports de scout.",
+    "loadFailed": "Impossible de charger des rapports de scout.",
     "reviewFailed": "Le rapport a échoué comme il a été examiné."
   },
   "filters": {

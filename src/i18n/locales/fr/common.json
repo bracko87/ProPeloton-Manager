@@ -1,7 +1,7 @@
 {
   "language": {
     "label": "Langue",
-    "applicationLanguage": "Langue de la demande",
+    "applicationLanguage": "Langue de l’application",
     "description": "Choisissez la langue utilisée dans ProPeloton Manager.",
     "english": "English",
     "serbian": "Serbe"
@@ -13,7 +13,7 @@
     "continue": "Continuer",
     "confirm": "Confirmer",
     "back": "Retour",
-    "skipTutorial": "Sauter le tutoriel"
+    "skipTutorial": "Passer le tutoriel"
   },
   "status": {
     "loading": "Chargement...",
@@ -22,11 +22,11 @@
   "forum": {
     "title": "Forum",
     "movingTitle": "Les discussions communautaires passent à Discord",
-    "movingText": "Nous n'aurons pas de forum dans le jeu sur cette page. Toutes les conversations de jeu, manuels, questions et discussions communautaires seront disponibles dans notre canal Discord.",
+    "movingText": "Le forum intégré n’est pas utilisé pour le moment. Les discussions sur le jeu, les guides, les questions et les échanges avec la communauté se déroulent sur notre serveur Discord.",
     "joinHint": "Rejoignez notre serveur Discord en utilisant le bouton ci-dessous.",
     "community": "Communauté Discord",
     "joinTitle": "Rejoignez notre serveur Discord",
-    "joinText": "Dialoguez avec d'autres joueurs, posez des questions, obtenez de l'aide manuelle et restez à jour avec les dernières mises à jour de la communauté.",
+    "joinText": "Échangez avec d’autres joueurs, posez vos questions, obtenez de l’aide sur le jeu et suivez les dernières nouvelles de la communauté.",
     "join": "Rejoignez Discord"
   }
 }

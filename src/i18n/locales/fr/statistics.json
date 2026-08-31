@@ -7,7 +7,7 @@
     "loading": "Chargement des statistiques",
     "fetching": "Je récupère des données...",
     "error": "Erreur statistique",
-    "loadFailed": "Il a échoué à charger des statistiques."
+    "loadFailed": "Impossible de charger des statistiques."
   },
   "common": {
     "current": "Actuel",

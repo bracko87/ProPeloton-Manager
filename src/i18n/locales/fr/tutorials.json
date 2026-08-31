@@ -31,7 +31,7 @@
     },
     "simpleOrDeep": {
       "title": "Jouer simple ou aller de fond",
-      "body": "Au début, vous pouvez jouer simplement : suivez les alertes, vérifiez votre équipe, inscrivez-vous aux courses, préparez votre formation et consultez les résultats. Plus tard, si vous souhaitez davantage de profondeur, vous pourrez utiliser des systèmes avancés comme la fatigue des coureurs, le moral, la Race Sharpness, les objectifs sponsors, les bonus d’équipement, les stages d’entraînement, les négociations de transfert, la fiscalité, les infrastructures ainsi que la promotion et la relégation.",
+      "body": "Au début, vous pouvez jouer simplement: suivez les alertes, vérifiez votre équipe, inscrivez-vous aux courses, préparez votre formation et consultez les résultats. Plus tard, si vous souhaitez davantage de profondeur, vous pourrez utiliser des systèmes avancés comme la fatigue des coureurs, le moral, la Race Sharpness, les objectifs sponsors, les bonus d’équipement, les stages d’entraînement, les négociations de transfert, la fiscalité, les infrastructures ainsi que la promotion et la relégation.",
       "primary": "Suivant"
     },
     "purpose": {
@@ -95,7 +95,7 @@
     },
     "details": {
       "title": "Vues et profils des coureurs",
-      "body": "La page Effectif vous permet d’analyser vos coureurs sous plusieurs angles.\n\nVous pouvez consulter les informations financières, les compétences, la forme, le développement, la santé et la disponibilité. Les compétences peuvent progresser au fil du temps : cette page vous aide donc à suivre l’évolution de chaque coureur.\n\nEn cliquant sur le bouton Voir, vous ouvrez le profil complet du coureur avec des informations plus détaillées.\n\nCertains outils avancés, tableaux supplémentaires ou fonctions de confort peuvent nécessiter un compte Premium ou un achat en Coins.",
+      "body": "La page Effectif vous permet d’analyser vos coureurs sous plusieurs angles.\n\nVous pouvez consulter les informations financières, les compétences, la forme, le développement, la santé et la disponibilité. Les compétences peuvent progresser au fil du temps: cette page vous aide donc à suivre l’évolution de chaque coureur.\n\nEn cliquant sur le bouton Voir, vous ouvrez le profil complet du coureur avec des informations plus détaillées.\n\nCertains outils avancés, tableaux supplémentaires ou fonctions de confort peuvent nécessiter un compte Premium ou un achat en Coins.",
       "primary": "Suivant"
     },
     "developing": {
@@ -233,7 +233,7 @@
     },
     "racePlan": {
       "title": "Race Plan",
-      "body": "L’onglet Race Plan sert à préparer votre équipe pour une course acceptée. Important : le temps de jeu avance plus vite que le temps réel. Une journée de jeu correspond à 12 heures réelles, donc deux jours de jeu correspondent à une journée réelle. Gardez cela à l’esprit lorsque vous vérifiez les fenêtres du Race Plan, les échéances de sélection des coureurs et les échéances des Stage Plans, avec un Stage Plan propre à chaque étape. Lorsque la fenêtre Race Plan est ouverte, vous pouvez choisir si votre équipe première ou Developing Team participera, si Developing Team est disponible. Vérifiez aussi l’échéance de sélection des coureurs. Jusqu’à cette date, vous pouvez choisir les coureurs participants. La page indique le nombre minimum et maximum de coureurs autorisés. La liste montre qui peut être sélectionné et qui est bloqué parce qu’il est déjà affecté à une autre course qui se chevauche. Vous pouvez également affecter le staff et les ressources de course disponibles.",
+      "body": "L’onglet Race Plan sert à préparer votre équipe pour une course acceptée. Important: le temps de jeu avance plus vite que le temps réel. Une journée de jeu correspond à 12 heures réelles, donc deux jours de jeu correspondent à une journée réelle. Gardez cela à l’esprit lorsque vous vérifiez les fenêtres du Race Plan, les échéances de sélection des coureurs et les échéances des Stage Plans, avec un Stage Plan propre à chaque étape. Lorsque la fenêtre Race Plan est ouverte, vous pouvez choisir si votre équipe première ou Developing Team participera, si Developing Team est disponible. Vérifiez aussi l’échéance de sélection des coureurs. Jusqu’à cette date, vous pouvez choisir les coureurs participants. La page indique le nombre minimum et maximum de coureurs autorisés. La liste montre qui peut être sélectionné et qui est bloqué parce qu’il est déjà affecté à une autre course qui se chevauche. Vous pouvez également affecter le staff et les ressources de course disponibles.",
       "primary": "Suivant"
     },
     "stagePlans": {
@@ -353,7 +353,7 @@
     },
     "main": {
       "title": "Menu principal",
-      "body": "Dans le menu, vous pouvez trouver la boîte de réception pour les messages internes, les paramètres de profil, les thèmes et les paramètres de personnalisation, les liens forum ou Discord, les préférences de jeu, l'aide avec le manuel de jeu et les questions fréquemment posées, Contactez-nous, les paquets Pro et Invitez les Amis à progresser vers la référence. Utilisez ce menu chaque fois que vous avez besoin de paramètres de compte, d'aide, de support, de préférences ou d'options de jeu supplémentaires.",
+      "body": "Dans le menu, vous pouvez trouver la boîte de réception pour les messages internes, les paramètres de profil, les thèmes et les paramètres de personnalisation, les liens forum ou Discord, les préférences de jeu, l'aide avec le manuel de jeu et les questions fréquemment posées, Contactez-nous, les Packs Pro et Invitez les Amis à progresser vers la référence. Utilisez ce menu chaque fois que vous avez besoin de paramètres de compte, d'aide, de support, de préférences ou d'options de jeu supplémentaires.",
       "primary": "Suivant"
     },
     "notifications": {

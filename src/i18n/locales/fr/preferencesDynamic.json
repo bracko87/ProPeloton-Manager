@@ -24,7 +24,7 @@
     "off": "Départ"
   },
   "errors": {
-    "loadStatus": "Il a échoué à charger le statut d'équipe en développement.",
+    "loadStatus": "Impossible de charger le statut d'équipe en développement.",
     "activate": "Impossible d'activer l'équipe en développement.",
     "renewal": "Impossible de mettre à jour le renouvellement automatique."
   },
@@ -41,7 +41,7 @@
     "existingTeam": "Votre équipe de développement existante sera activée pour cette saison.",
     "newTeam": "Une équipe en développement sera créée et activée pour cette saison.",
     "activationAccess": "L'accès dure jusqu'à la fin de la saison en cours. Le renouvellement automatique est activé par défaut et peut être désactivé à tout moment.",
-    "needCoins": "Il vous faut {{cost}} Coins pour activer l’accès à Developing Team. Solde actuel : {{balance}} Coins.",
+    "needCoins": "Il vous faut {{cost}} Coins pour activer l’accès à Developing Team. Solde actuel: {{balance}} Coins.",
     "team": "Équipe: {{name}}",
     "closeActivation": "Fermer Développement de la confirmation d'activation de l'équipe",
     "confirmActivate": "Activer l'équipe de développement pour la saison {{season}}?",

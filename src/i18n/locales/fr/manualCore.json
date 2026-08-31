@@ -11,7 +11,7 @@
     "print": "Imprimer / Enregistrer sous PDF",
     "discord": "Demandez sur Discord",
     "startHere": "Commencez ici.",
-    "startHereBody": "Les nouveaux gestionnaires devraient d'abord lire Quick Start, Game Time, Overview, Squad, Training, Course Preparation and Finance. Les gestionnaires expérimentés peuvent utiliser la recherche pour des sujets spécifiques tels que les droits de noms de sponsor, les fournitures de course, les séries éliminatoires, les audits fiscaux, les secours d'urgence ou les fenêtres de mouvement de l'équipe en développement.",
+    "startHereBody": "Les nouveaux managers devraient d'abord lire Quick Start, Game Time, Overview, Squad, Training, Course Preparation and Finance. Les managers expérimentés peuvent utiliser la recherche pour des sujets spécifiques tels que les droits de noms de sponsor, les fournitures de course, les séries éliminatoires, les audits fiscaux, les secours d'urgence ou les fenêtres de mouvement de l'équipe en développement.",
     "search": "Manuel de recherche",
     "searchPlaceholder": "Recherche Coins, sponsors, préparation de course, taxes, équipements...",
     "category": "Catégorie",
@@ -46,12 +46,12 @@
     "transfers": "Transferts",
     "transfersScouting": "Transferts et scoutisme",
     "finance": "Finances",
-    "supportAccount": "Appui et compte",
+    "supportAccount": "Support et compte",
     "faq": "FAQ"
   },
   "sections": {
     "quickStart": {
-      "title": "Début rapide pour les nouveaux gestionnaires",
+      "title": "Début rapide pour les nouveaux managers",
       "subtitle": "Les meilleures premières étapes après la création de votre club.",
       "overview": "ProPeloton Manager est un jeu de gestion de club de cyclisme complet. Vous ne choisissez pas seulement les coureurs pour les courses. Vous gérez argent, personnel, équipement, infrastructure, sponsors, formation, applications de course, préparation de course et classements à long terme.",
       "facts": [
@@ -195,7 +195,7 @@
     "notificationsInbox": {
       "title": "Notifications et boîte de réception",
       "subtitle": "Alertes système, pages non lues/lites et conversations.",
-      "overview": "Les notifications sont des alertes de jeu/admin. La boîte de réception est pour les conversations directes ou administratives. Ensemble, ils aident les utilisateurs à éviter les délais manqués et à communiquer avec d'autres gestionnaires ou administrateurs.",
+      "overview": "Les notifications sont des alertes de jeu/admin. La boîte de réception est pour les conversations directes ou administratives. Ensemble, ils aident les utilisateurs à éviter les délais manqués et à communiquer avec d'autres managers ou administrateurs.",
       "facts": [
         "Onglets de notification",
         "Non lu et lu",
@@ -297,7 +297,7 @@
       ],
       "tips": [
         "Utilisez Équipe de développement pour les talents futurs.",
-        "Gardez une première fente Squad ouverte si vous prévoyez de promouvoir un coureur."
+        "Gardez une première emplacement Squad ouverte si vous prévoyez de promouvoir un coureur."
       ],
       "links": [
         "Préférences",
@@ -436,7 +436,7 @@
         "Niveaux maximaux des installations",
         "Club House 5, Centre de formation 5, Centre médical 5, Académie de la jeunesse 2, Atelier de mécanique 4, Bureau de scoutisme 4",
         "Actifs",
-        "Voitures d'équipe, Bus d'équipe, Van équipement, Atelier mobile, Van médical"
+        "Voitures d'équipe, Bus d'équipe, Van équipement, Atelier mobile, fourgon médical"
       ],
       "details": [
         "Le Club House est le principal siège administratif et soutient l'organisation et les systèmes de gestion futurs.",
@@ -499,7 +499,7 @@
         "Personnel de course",
         "Directeur du sport, Docteur d'équipe, Physio, Mécanicien",
         "Actifs de course",
-        "Autobus d'équipe, Van d'équipement, Atelier mobile, Van médical, Voiture d'équipe 1–3",
+        "Bus d’équipe, fourgon d’équipement, atelier mobile, fourgon médical, voitures d’équipe 1–3",
         "Tonalités de préparation à l'étape",
         "Vert, jaune, orange, rouge, gris"
       ],
@@ -541,7 +541,7 @@
         "Continental Europe et Amérique alimentent les séries éliminatoires Pro West. Continental Asie, Afrique et Océanie alimentent les séries éliminatoires Pro East.",
         "Continental Europe et Asie montrent en bas six relégués. Continental Amérique et Afrique montrent en bas cinq relégués. Continental Océanie montre en bas trois relégués.",
         "Amateur Océanie montre le top trois promu directement. European Amateur divisions show gagnant promu directement et 2ème–3ème en promotion éliminatoire. Autres divisions Amateur spectacle gagnant promu directement et 2ème–4ème en promotion éliminatoire.",
-        "Les gestionnaires inactifs peuvent rester visibles en classement/résultats. L'assurance-chômage peut montrer un badge de gestionnaire inactif pour les équipes inactives et en fin de saison en attente de retrait."
+        "Les managers inactifs peuvent rester visibles en classement/résultats. L'assurance-chômage peut montrer un badge de gestionnaire inactif pour les équipes inactives et en fin de saison en attente de retrait."
       ],
       "tips": [
         "Utilisez le classement comme cible à long terme.",
