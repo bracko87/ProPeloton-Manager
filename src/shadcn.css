@@ -106,3 +106,8 @@ html > body * {
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--border)) transparent;
 }
+
+/* Header membership control is visible only for active Premium users. */
+button[data-tutorial-target='header-membership'].bg-white\/45 {
+  display: none;
+}
