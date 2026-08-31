@@ -18,6 +18,10 @@ on:
       - '.github/scripts/audit_russian_human_quality_20260831.py'
   workflow_dispatch:
 
+concurrency:
+  group: russian-localization-main
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
