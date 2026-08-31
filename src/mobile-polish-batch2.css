@@ -1,0 +1,414 @@
+/*
+ * ProPeloton Manager — mobile polish batch 2.
+ *
+ * This file is intentionally mobile-only. Existing desktop/tablet component
+ * classes remain the source of truth from 768px upward.
+ */
+
+@media (max-width: 767px) {
+  /* ----------------------------------------------------------------------- */
+  /* Notifications                                                          */
+  /* ----------------------------------------------------------------------- */
+  [data-ppm-dashboard-page='notifications'],
+  [data-ppm-dashboard-page='notifications'] * {
+    min-width: 0;
+  }
+
+  [data-ppm-dashboard-page='notifications'] main.space-y-5 {
+    gap: 0.75rem;
+  }
+
+  [data-ppm-dashboard-page='notifications'] .rounded-2xl.border.border-slate-200.bg-white {
+    border-radius: 0.875rem !important;
+  }
+
+  [data-ppm-dashboard-page='notifications'] .border-b.border-slate-200.px-4.py-3,
+  [data-ppm-dashboard-page='notifications'] .border-b.border-slate-200.px-5.py-4,
+  [data-ppm-dashboard-page='notifications'] .px-4.py-3,
+  [data-ppm-dashboard-page='notifications'] .px-5.py-4 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  [data-ppm-dashboard-page='notifications'] input,
+  [data-ppm-dashboard-page='notifications'] select,
+  [data-ppm-dashboard-page='notifications'] textarea {
+    max-width: 100%;
+  }
+
+  [data-ppm-dashboard-page='notifications'] img {
+    display: block;
+    width: auto;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 300px;
+    margin-inline: auto;
+    object-fit: contain;
+  }
+
+  [data-ppm-dashboard-page='notifications'] [class*='overflow-hidden'] {
+    max-width: 100%;
+  }
+
+  [data-ppm-dashboard-page='notifications'] p,
+  [data-ppm-dashboard-page='notifications'] span,
+  [data-ppm-dashboard-page='notifications'] div {
+    overflow-wrap: anywhere;
+  }
+
+  /* ----------------------------------------------------------------------- */
+  /* Customize Team — keep the jersey preview useful without taking a page. */
+  /* ----------------------------------------------------------------------- */
+  [data-ppm-dashboard-page='customize-team'] [class~='min-h-[360px]'] {
+    min-height: 260px !important;
+    max-height: 360px;
+    padding: 0.75rem !important;
+  }
+
+  [data-ppm-dashboard-page='customize-team'] [class~='min-h-[360px]'] > img {
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 330px !important;
+    object-fit: contain !important;
+  }
+
+  /* ----------------------------------------------------------------------- */
+  /* Rider profile — compact hero + Points / Podiums / Jerseys all visible. */
+  /* ----------------------------------------------------------------------- */
+  [data-ppm-dashboard-page='riders'] [data-tutorial-target='rider-profile-header'],
+  [data-ppm-dashboard-page='my-riders'] [data-tutorial-target='rider-profile-header'],
+  [data-ppm-dashboard-page='external-riders'] [data-tutorial-target='rider-profile-header'] {
+    margin-bottom: 1rem !important;
+    padding: 1rem !important;
+    border-radius: 1rem !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] [data-tutorial-target='rider-profile-header'] h1,
+  [data-ppm-dashboard-page='my-riders'] [data-tutorial-target='rider-profile-header'] h1,
+  [data-ppm-dashboard-page='external-riders'] [data-tutorial-target='rider-profile-header'] h1 {
+    font-size: 1.65rem !important;
+    line-height: 1.9rem !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] [data-tutorial-target='rider-profile-header'] [class~='lg:max-w-xl'],
+  [data-ppm-dashboard-page='my-riders'] [data-tutorial-target='rider-profile-header'] [class~='lg:max-w-xl'],
+  [data-ppm-dashboard-page='external-riders'] [data-tutorial-target='rider-profile-header'] [class~='lg:max-w-xl'] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] [data-tutorial-target='rider-profile-header'] [class~='lg:max-w-xl'] > .flex,
+  [data-ppm-dashboard-page='my-riders'] [data-tutorial-target='rider-profile-header'] [class~='lg:max-w-xl'] > .flex,
+  [data-ppm-dashboard-page='external-riders'] [data-tutorial-target='rider-profile-header'] [class~='lg:max-w-xl'] > .flex {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 0.25rem;
+    padding: 0 !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] [data-tutorial-target='rider-profile-header'] [class~='min-w-[120px]'],
+  [data-ppm-dashboard-page='my-riders'] [data-tutorial-target='rider-profile-header'] [class~='min-w-[120px]'],
+  [data-ppm-dashboard-page='external-riders'] [data-tutorial-target='rider-profile-header'] [class~='min-w-[120px]'] {
+    min-width: 0 !important;
+    width: auto !important;
+    padding: 0.65rem 0.2rem !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] [data-tutorial-target='rider-profile-header'] .h-12.w-px,
+  [data-ppm-dashboard-page='my-riders'] [data-tutorial-target='rider-profile-header'] .h-12.w-px,
+  [data-ppm-dashboard-page='external-riders'] [data-tutorial-target='rider-profile-header'] .h-12.w-px {
+    display: none !important;
+  }
+
+  /* Keep the six profile tabs balanced on two clean rows. */
+  [data-ppm-dashboard-page='riders'] [role='tablist'],
+  [data-ppm-dashboard-page='my-riders'] [role='tablist'],
+  [data-ppm-dashboard-page='external-riders'] [role='tablist'] {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  /* ----------------------------------------------------------------------- */
+  /* Calendar month + race cards.                                            */
+  /* ----------------------------------------------------------------------- */
+  [data-ppm-dashboard-page='calendar'] .mb-2.grid.w-full.grid-cols-7,
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm {
+    display: grid !important;
+    grid-template-columns: repeat(7, 72px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.25rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .mb-2.grid.w-full.grid-cols-7 > div {
+    width: 72px;
+    padding-inline: 0.125rem !important;
+    font-size: 0.65rem !important;
+    line-height: 0.9rem !important;
+    text-align: center;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div {
+    width: 72px;
+    min-width: 72px;
+    min-height: 94px !important;
+    padding: 0.35rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div > div:first-child {
+    font-size: 0.625rem !important;
+    line-height: 0.8rem !important;
+    white-space: normal !important;
+    overflow-wrap: normal;
+  }
+
+  /* Race-list action badges: category sits above; the 3 actual actions share
+     one row — application status, race type and Open Race. */
+  [data-ppm-dashboard-page='calendar'] .flex.flex-wrap.items-center.gap-2:has(> a[href*='/dashboard/races/']) {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem !important;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .flex.flex-wrap.items-center.gap-2:has(> a[href*='/dashboard/races/']) > span:first-child {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .flex.flex-wrap.items-center.gap-2:has(> a[href*='/dashboard/races/']) > .bg-purple-100 {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: start;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .flex.flex-wrap.items-center.gap-2:has(> a[href*='/dashboard/races/']) > span:not(:first-child):not(.bg-purple-100) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .flex.flex-wrap.items-center.gap-2:has(> a[href*='/dashboard/races/']) > a:last-child {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .flex.flex-wrap.items-center.gap-2:has(> a[href*='/dashboard/races/']) > span:not(.bg-purple-100),
+  [data-ppm-dashboard-page='calendar'] .flex.flex-wrap.items-center.gap-2:has(> a[href*='/dashboard/races/']) > a {
+    display: inline-flex;
+    min-width: 0;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.25rem !important;
+    font-size: 0.65rem !important;
+    line-height: 0.8rem !important;
+    text-align: center;
+    white-space: normal !important;
+  }
+
+  /* ----------------------------------------------------------------------- */
+  /* Race detail / replay — use width and allow profile fullscreen overlay.  */
+  /* ----------------------------------------------------------------------- */
+  [data-ppm-dashboard-page='races'],
+  [data-ppm-dashboard-page='races'] * {
+    min-width: 0;
+  }
+
+  [data-ppm-dashboard-page='races'] [class*='max-w-'] {
+    max-width: 100%;
+  }
+
+  [data-ppm-dashboard-page='races'] .rounded-2xl,
+  [data-ppm-dashboard-page='races'] .rounded-3xl {
+    max-width: 100%;
+  }
+
+  [data-ppm-dashboard-page='races'] [data-tutorial-target='race-profile'] {
+    position: relative;
+    max-width: 100%;
+  }
+
+  [data-ppm-dashboard-page='races'] [data-tutorial-target='race-profile'] svg {
+    display: block;
+    width: 100% !important;
+    min-height: 145px;
+  }
+
+  .ppm-mobile-race-profile-expand {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 30;
+    min-height: 38px;
+    border: 1px solid rgb(203 213 225);
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.96);
+    padding: 0.4rem 0.75rem;
+    color: rgb(15 23 42);
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: 0 2px 10px rgb(15 23 42 / 0.14);
+  }
+
+  body[data-ppm-mobile-race-profile-open='true'] {
+    overflow: hidden !important;
+  }
+
+  [data-ppm-mobile-race-profile-expanded='true'] {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1000 !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: white !important;
+    padding: 3.75rem 0.75rem 1rem !important;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  [data-ppm-mobile-race-profile-expanded='true'] svg {
+    width: 100% !important;
+    height: min(58dvh, 520px) !important;
+    min-height: 320px !important;
+  }
+
+  [data-ppm-mobile-race-profile-expanded='true'] > .ppm-mobile-race-profile-expand {
+    position: fixed;
+    top: max(0.65rem, env(safe-area-inset-top));
+    right: 0.65rem;
+  }
+
+  /* Result/classification panels should fill the available mobile width. */
+  [data-ppm-dashboard-page='races'] select,
+  [data-ppm-dashboard-page='races'] button,
+  [data-ppm-dashboard-page='races'] input {
+    max-width: 100%;
+  }
+
+  /* ----------------------------------------------------------------------- */
+  /* Team profile — prevent the profile/roster frames escaping the viewport. */
+  /* ----------------------------------------------------------------------- */
+  [data-ppm-dashboard-page='teams'],
+  [data-ppm-dashboard-page='teams'] * {
+    min-width: 0;
+  }
+
+  [data-ppm-dashboard-page='teams'] [class*='max-w-'] {
+    max-width: 100% !important;
+  }
+
+  [data-ppm-dashboard-page='teams'] .rounded-2xl,
+  [data-ppm-dashboard-page='teams'] .rounded-xl {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  [data-ppm-dashboard-page='teams'] .overflow-hidden:has(table),
+  [data-ppm-dashboard-page='teams'] .overflow-hidden:has([role='table']) {
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-ppm-dashboard-page='teams'] table {
+    width: max(100%, 500px);
+  }
+
+  /* ----------------------------------------------------------------------- */
+  /* Equipment — all four primary tabs in one row.                           */
+  /* ----------------------------------------------------------------------- */
+  [data-ppm-dashboard-page='equipment'] .mb-4.inline-flex.flex-wrap.rounded-lg.border.border-slate-200.bg-white.p-1.shadow-sm {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    max-width: 100%;
+    gap: 0.2rem;
+  }
+
+  [data-ppm-dashboard-page='equipment'] .mb-4.inline-flex.flex-wrap.rounded-lg.border.border-slate-200.bg-white.p-1.shadow-sm > button {
+    min-width: 0;
+    min-height: 42px;
+    padding: 0.4rem 0.2rem !important;
+    font-size: 0.68rem !important;
+    line-height: 0.85rem;
+    white-space: normal;
+  }
+
+  /* ----------------------------------------------------------------------- */
+  /* Infrastructure — remove the redundant standalone Refresh on mobile.     */
+  /* ----------------------------------------------------------------------- */
+  [data-ppm-dashboard-page='infrastructure'] .flex.flex-wrap.items-center.gap-2 > button:first-child {
+    display: none !important;
+  }
+
+  [data-ppm-dashboard-page='infrastructure'] .flex.flex-wrap.items-center.gap-2 > .inline-flex.rounded-lg {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-ppm-dashboard-page='infrastructure'] .flex.flex-wrap.items-center.gap-2 > .inline-flex.rounded-lg > button {
+    min-height: 44px;
+  }
+
+  /* ----------------------------------------------------------------------- */
+  /* Main Sponsor Offers — isolated by MobilePolishBatch2Bridge.             */
+  /* ----------------------------------------------------------------------- */
+  [data-ppm-mobile-sponsor-offer-modal='true'] {
+    width: calc(100vw - 1rem) !important;
+    max-width: 430px !important;
+    max-height: calc(100dvh - 1rem) !important;
+    margin: 0.5rem auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    border-radius: 1rem !important;
+  }
+
+  [data-ppm-mobile-sponsor-offer-modal='true'] img {
+    display: block;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 190px !important;
+    margin: 0 auto !important;
+    object-fit: contain !important;
+  }
+
+  [data-ppm-mobile-sponsor-offer-modal='true'] button {
+    position: static !important;
+    max-width: 100%;
+    min-height: 44px;
+  }
+
+  [data-ppm-mobile-sponsor-offer-modal='true'] [class*='absolute'] button,
+  [data-ppm-mobile-sponsor-offer-modal='true'] button[class*='absolute'] {
+    position: static !important;
+    width: 100% !important;
+    margin-top: 0.5rem;
+  }
+
+  [data-ppm-mobile-sponsor-offer-modal='true'] [class*='p-6'] {
+    padding: 0.85rem !important;
+  }
+
+  [data-ppm-mobile-sponsor-offer-modal='true'] [class*='h-['] {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+}
