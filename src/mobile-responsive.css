@@ -1,0 +1,406 @@
+/*
+ * ProPeloton Manager mobile responsive foundation.
+ *
+ * IMPORTANT:
+ * - These rules are intentionally limited to viewports below 768px.
+ * - Desktop/tablet styling at 768px and above remains controlled by the
+ *   existing component classes and is therefore unchanged.
+ * - Page-specific rules are scoped by data-ppm-dashboard-page so mobile fixes
+ *   cannot leak into unrelated dashboard pages.
+ */
+
+.ppm-mobile-nav-backdrop {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  body[data-ppm-mobile-nav-open='true'] {
+    overflow: hidden;
+  }
+
+  [data-ppm-dashboard-shell='true'] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100vw;
+  }
+
+  [data-ppm-dashboard-shell='true'] > div:not([data-ppm-mobile-sidebar='true']) {
+    min-width: 0;
+    width: 100%;
+  }
+
+  [data-ppm-mobile-sidebar='true'] {
+    position: fixed !important;
+    inset: 0 auto 0 0;
+    z-index: 120;
+    width: min(20rem, 88vw) !important;
+    max-width: 88vw;
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform: translateX(-105%);
+    transition: transform 200ms ease;
+    box-shadow: 0 20px 50px rgb(0 0 0 / 0.35);
+  }
+
+  body[data-ppm-mobile-nav-open='true'] [data-ppm-mobile-sidebar='true'] {
+    transform: translateX(0);
+  }
+
+  [data-ppm-mobile-sidebar='true'] > div {
+    min-height: 100%;
+  }
+
+  .ppm-mobile-nav-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    padding: 0;
+    background: rgb(0 0 0 / 0.46);
+    cursor: default;
+  }
+
+  [data-ppm-dashboard-header='true'] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch !important;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child {
+    width: 100%;
+    min-width: 0;
+    flex-shrink: 1 !important;
+    gap: 0.5rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > button:first-child {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.625rem !important;
+    flex-shrink: 0;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child > div:last-child {
+    min-width: 0;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:last-child {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) 44px auto;
+    align-items: center;
+    gap: 0.375rem !important;
+    width: 100%;
+    min-width: 0;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-membership'] {
+    min-width: 0 !important;
+    min-height: 44px;
+    padding-left: 0.625rem !important;
+    padding-right: 0.625rem !important;
+    white-space: nowrap;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-coins'] {
+    min-width: 0 !important;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-notifications'] {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-menu'] {
+    min-height: 44px;
+    padding-left: 0.625rem !important;
+    padding-right: 0.625rem !important;
+    white-space: nowrap;
+  }
+
+  [data-ppm-dashboard-header='true'] [role='menu'] {
+    right: 0;
+    width: min(16rem, calc(100vw - 1.5rem));
+    max-height: calc(100dvh - 8rem);
+    overflow-y: auto;
+  }
+
+  [data-ppm-dashboard-main='true'] {
+    min-width: 0;
+    width: 100%;
+    max-width: 100vw;
+    padding: 0.75rem !important;
+  }
+
+  /* Squad/Staff top navigation: keep every destination available without
+     squeezing translated labels into unreadable buttons. */
+  [data-ppm-dashboard-page='squad'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm,
+  [data-ppm-dashboard-page='staff'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm:has(> a[href='#/dashboard/squad']) {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-ppm-dashboard-page='squad'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm > button,
+  [data-ppm-dashboard-page='squad'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm > span,
+  [data-ppm-dashboard-page='staff'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm:has(> a[href='#/dashboard/squad']) > a {
+    min-height: 44px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Calendar: retain the familiar seven-day month view, but compact the cells
+     enough to fit common 320-430px phones instead of creating page overflow. */
+  [data-ppm-dashboard-page='calendar'] .w-full.rounded-lg.border.border-gray-100.bg-white.p-6.shadow {
+    padding: 0.75rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .inline-flex.items-center.gap-2.rounded-lg.border.border-gray-200.bg-white.p-1.shadow-sm {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 0.25rem !important;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .inline-flex.items-center.gap-2.rounded-lg.border.border-gray-200.bg-white.p-1.shadow-sm > button {
+    min-width: 0;
+    min-height: 44px;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.75rem !important;
+    white-space: normal;
+    line-height: 1rem;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .inline-flex.items-center.gap-2.rounded-lg.border.border-gray-200.bg-white.p-1.shadow-sm > [class~='min-w-[140px]'] {
+    min-width: 0 !important;
+    padding-left: 0.375rem !important;
+    padding-right: 0.375rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7 {
+    gap: 0.125rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .mb-2.grid.w-full.grid-cols-7 > div {
+    min-width: 0;
+    overflow: hidden;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    text-align: center;
+    font-size: 0.5625rem !important;
+    line-height: 0.75rem !important;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div {
+    min-width: 0;
+    min-height: 84px !important;
+    overflow: hidden;
+    padding: 0.25rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div > div:first-child {
+    overflow: hidden;
+    font-size: 0.625rem !important;
+    line-height: 0.75rem !important;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div .rounded-md {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0.125rem 0.1875rem !important;
+    font-size: 0.5rem !important;
+    line-height: 0.6875rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div button {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Race Preparation: tabs remain one row and become a local scroller when
+     longer translations no longer fit the phone width. */
+  [data-ppm-dashboard-page='race-preparation'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm,
+  [data-ppm-dashboard-page='team-schedule'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm > button,
+  [data-ppm-dashboard-page='team-schedule'] .inline-flex.rounded-xl.border.bg-white.p-1.shadow-sm > button {
+    min-height: 44px;
+    flex: 0 0 auto;
+  }
+
+  /* Race Detail / Replay: tables already have local scroll containers in the
+     page. Remove only metadata/control minimum widths that can exceed phones. */
+  [data-ppm-dashboard-page='races'] div[class~='min-w-[220px]'][class~='text-right'],
+  [data-ppm-dashboard-page='races'] div[class~='min-w-[260px]'][class~='text-right'] {
+    width: 100%;
+    min-width: 0 !important;
+    text-align: left !important;
+  }
+
+  [data-ppm-dashboard-page='races'] select[class~='min-w-[260px]'] {
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+
+  [data-ppm-dashboard-page='races'] div[class~='min-w-[280px]'][class~='grid'] {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  [data-ppm-dashboard-page='races'] .grid[class~='grid-cols-[1fr_1.25fr_1fr_1fr]'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+  }
+
+  [data-ppm-dashboard-page='races'] button.rounded-full[class*='px-'] {
+    min-height: 44px;
+  }
+
+  /* Training: compact desktop camp controls become proper touch targets and
+     both training dialogs remain usable on short phone screens. */
+  [data-ppm-dashboard-page='training'] button.h-8[class*='min-w-'] {
+    height: 44px !important;
+    min-height: 44px;
+  }
+
+  [data-ppm-dashboard-page='training'] .fixed.inset-0 > .w-full[class*='max-w-'] {
+    max-height: calc(100dvh - 1rem);
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  /* Equipment: inventory actions are card-based already; constrain its quote /
+     confirmation modal to the mobile viewport and keep actions easy to tap. */
+  [data-ppm-dashboard-page='equipment'] .fixed.inset-0 > .w-full[class*='max-w-'] {
+    max-height: calc(100dvh - 1rem);
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  [data-ppm-dashboard-page='equipment'] .fixed.inset-0 > .w-full[class*='max-w-'] button {
+    min-height: 44px;
+  }
+
+  /* Transfers: keep both the main Riders/Staff switch and the three rider
+     market subtabs reachable when German labels exceed the available width. */
+  [data-ppm-dashboard-page='transfers'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm,
+  [data-ppm-dashboard-page='transfers'] .mt-4.border-b.border-gray-200 > .flex.items-center.gap-8 {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-ppm-dashboard-page='transfers'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm > button,
+  [data-ppm-dashboard-page='transfers'] .mt-4.border-b.border-gray-200 > .flex.items-center.gap-8 > button {
+    min-height: 44px;
+    flex: 0 0 auto;
+  }
+
+  /* Advisor notification details use several table-like CSS grids. On desktop
+     they stay clipped as designed; on mobile the containing card becomes the
+     local horizontal scroller instead of losing the right-hand columns. */
+  [data-ppm-dashboard-page='notifications'] .mt-2.overflow-hidden.rounded-lg.border.border-slate-200.bg-white:has(> .grid[class*='grid-cols-[']) {
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Confirmation dialogs: prevent long translated content or small phone
+     heights from placing actions outside the viewport. */
+  [data-ppm-dashboard-page='infrastructure'] .fixed.inset-0 > .relative[class*='max-w-'],
+  [data-ppm-dashboard-page='preferences'] .fixed.inset-0 > .relative[class*='max-w-'] {
+    max-height: calc(100dvh - 1rem);
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  [data-ppm-dashboard-page='infrastructure'] .fixed.inset-0 > .relative[class*='max-w-'] > div:last-child,
+  [data-ppm-dashboard-page='preferences'] .fixed.inset-0 > .relative[class*='max-w-'] > div:last-child {
+    flex-wrap: wrap;
+  }
+
+  /* Profile is already one column below md; reduce only the phone card padding
+     so fields keep useful width on 320px devices. */
+  [data-ppm-dashboard-page='my-profile'] .bg-white.rounded.shadow.border.border-gray-200.flex-1.overflow-y-auto.p-6 {
+    padding: 1rem !important;
+  }
+}
+
+@media (max-width: 359px) {
+  [data-ppm-dashboard-header='true'] {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:last-child {
+    grid-template-columns: auto minmax(0, 1fr) 44px auto;
+    gap: 0.25rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-membership'],
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-menu'] {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  [data-ppm-dashboard-main='true'] {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .w-full.rounded-lg.border.border-gray-100.bg-white.p-6.shadow {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
