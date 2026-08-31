@@ -9,7 +9,6 @@ import add_russian_localization_20260831 as base
 import add_russian_localization_v2_20260831 as robust
 
 MODEL_NAME = 'facebook/nllb-200-distilled-600M'
-BATCH_SIZE = 12
 SRC_LANG = 'eng_Latn'
 TGT_LANG = 'rus_Cyrl'
 
@@ -19,9 +18,25 @@ class NllbTranslator:
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, src_lang=SRC_LANG)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)
         self.model.eval()
-        torch.set_num_threads(max(1, min(4, torch.get_num_threads())))
+        torch.set_num_threads(max(1, min(8, torch.get_num_threads())))
         self.target_bos = self.tokenizer.convert_tokens_to_ids(TGT_LANG)
         self.cache: dict[str, str] = {}
+
+    @staticmethod
+    def _batch_size(segment: str) -> int:
+        # Keep similarly sized strings together so short UI labels do not wait on
+        # long manual/help paragraphs. This is substantially faster on CPU while
+        # leaving the model and translation quality unchanged.
+        size = len(segment)
+        if size <= 45:
+            return 64
+        if size <= 110:
+            return 40
+        if size <= 260:
+            return 24
+        if size <= 600:
+            return 12
+        return 6
 
     def translate_many(self, sources: list[str]) -> None:
         unique_sources = list(dict.fromkeys(sources))
@@ -44,9 +59,20 @@ class NllbTranslator:
                     pending_segments.append(segment)
 
         segment_cache: dict[str, str] = {}
-        pending = list(dict.fromkeys(pending_segments))
-        for start in range(0, len(pending), BATCH_SIZE):
-            batch = pending[start:start + BATCH_SIZE]
+        # Deduplicate and length-sort to minimize padding and decoder waste.
+        pending = sorted(dict.fromkeys(pending_segments), key=len)
+        translated_count = 0
+        start = 0
+
+        while start < len(pending):
+            batch_size = self._batch_size(pending[start])
+            # Avoid mixing very different string sizes in the same batch.
+            first_len = len(pending[start])
+            end = min(start + batch_size, len(pending))
+            while end > start + 1 and len(pending[end - 1]) > max(first_len * 2, first_len + 80):
+                end -= 1
+
+            batch = pending[start:end]
             encoded = self.tokenizer(
                 batch,
                 return_tensors='pt',
@@ -60,6 +86,7 @@ class NllbTranslator:
                     forced_bos_token_id=self.target_bos,
                     max_new_tokens=512,
                     num_beams=1,
+                    use_cache=True,
                 )
             decoded = self.tokenizer.batch_decode(output, skip_special_tokens=True)
             for segment, translated in zip(batch, decoded):
@@ -67,7 +94,10 @@ class NllbTranslator:
                 trailing = re.search(r'\s*$', segment).group(0)
                 core = base.postprocess(translated)
                 segment_cache[segment] = f'{leading}{core}{trailing}'
-            print(f'Translated {min(start + len(batch), len(pending))}/{len(pending)} NLLB Russian segments')
+
+            translated_count += len(batch)
+            print(f'Translated {translated_count}/{len(pending)} NLLB Russian segments', flush=True)
+            start = end
 
         for source, chunks in source_chunks.items():
             assembled: list[str] = []
