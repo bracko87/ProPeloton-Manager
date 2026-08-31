@@ -1,13 +1,15 @@
 import i18n from '@/i18n'
 import type { NotificationItem } from './notificationHelpers'
 
-function isSerbian(): boolean {
-  const language = i18n.resolvedLanguage ?? i18n.language ?? 'en'
-  return String(language).toLowerCase().startsWith('sr')
+function shouldLocalizeNotifications(): boolean {
+  const language = String(i18n.resolvedLanguage ?? i18n.language ?? 'en').toLowerCase()
+  return language !== 'en' && !language.startsWith('en-')
 }
 
+// Kept for backwards compatibility with notificationHelpers. The helper uses
+// this as a switch for whether hardcoded English expanded copy should render.
 export function isSerbianNotificationLocale(): boolean {
-  return isSerbian()
+  return shouldLocalizeNotifications()
 }
 
 function nt(key: string, options?: Record<string, unknown>): string {
@@ -50,17 +52,27 @@ function getPrimaryEntity(item: NotificationItem): string | null {
   return readString(payload, [
     'rider_full_name',
     'rider_name',
+    'riderName',
     'staff_full_name',
     'staff_name',
+    'staffName',
     'employee_name',
     'company_name',
+    'companyName',
     'sponsor_name',
+    'sponsorName',
     'race_name',
+    'raceName',
     'stage_name',
+    'stageName',
     'facility_name',
+    'facilityName',
     'asset_name',
+    'assetName',
     'club_name',
+    'clubName',
     'team_name',
+    'teamName',
     'name',
   ])
 }
@@ -74,7 +86,7 @@ function normalizePhrase(value: string): string {
 }
 
 function localizeRole(value: string | null): string | null {
-  if (!value || !isSerbian()) return value
+  if (!value || !shouldLocalizeNotifications()) return value
   const normalized = normalizePhrase(value)
   const keyByRole: Record<string, string> = {
     'scout analyst': 'roles.scoutAnalyst',
@@ -134,7 +146,7 @@ const CATEGORY_KEY_BY_NORMALIZED: Record<string, string> = {
 
 function localizeCategory(value: string | null | undefined): string | null {
   if (!value) return null
-  if (!isSerbian()) return value
+  if (!shouldLocalizeNotifications()) return value
   const normalized = value.replace(/[_-]+/g, '').replace(/\s+/g, '').toLowerCase()
   const key = CATEGORY_KEY_BY_NORMALIZED[normalized]
   return key ? nt(key) : null
@@ -142,7 +154,7 @@ function localizeCategory(value: string | null | undefined): string | null {
 
 function localizeTypeCode(typeCode: string | null | undefined): string | null {
   if (!typeCode) return null
-  if (!isSerbian()) return typeCode
+  if (!shouldLocalizeNotifications()) return typeCode
 
   const tokens = String(typeCode)
     .toUpperCase()
@@ -178,7 +190,7 @@ function looksEnglish(value: string | null | undefined): boolean {
 }
 
 export function localizeNotificationItem(item: NotificationItem): NotificationItem {
-  if (!isSerbian()) return item
+  if (!shouldLocalizeNotifications()) return item
 
   const payload = payloadOf(item)
   const typeCode = String(item.type_code ?? '').toUpperCase()
@@ -216,9 +228,17 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
     }
   }
 
+  // Unknown/legacy notification types must remain readable. If the type code
+  // cannot be localized from our template-word dictionary, keep the persisted
+  // backend title/message unchanged instead of inventing a misleading label.
+  const localizedType = localizeTypeCode(item.type_code)
+  if (typeCode && !localizedType) return item
+
   // Preserve already-localized/non-English admin or backend copy. Otherwise do
   // not leak English template prose: show a localized, type-aware fallback.
-  const topic = getTopic(item)
+  // Dynamic rider/team/race/sponsor/company names come from payload_json and
+  // are interpolated verbatim; only the surrounding UI prose is translated.
+  const topic = localizedType || getTopic(item)
   const localizedTitle = item.title && !looksEnglish(item.title)
     ? item.title
     : nt('templateLocalization.genericTitle', { topic })
@@ -240,7 +260,7 @@ export function localizeNotificationNarrative(
   item?: NotificationItem
 ): string | null {
   if (!text) return null
-  if (!isSerbian()) return text
+  if (!shouldLocalizeNotifications()) return text
 
   const value = text.trim()
   const payload = item ? payloadOf(item) : {}
@@ -335,13 +355,13 @@ const DETAIL_LABEL_KEYS: Record<string, string> = {
 }
 
 export function localizeNotificationDetailLabel(label: string): string {
-  if (!isSerbian()) return label
+  if (!shouldLocalizeNotifications()) return label
   const key = DETAIL_LABEL_KEYS[normalizePhrase(label)]
   return key ? nt(key) : nt('common.detail')
 }
 
 export function localizeNotificationValue(value: string): string {
-  if (!isSerbian()) return value
+  if (!shouldLocalizeNotifications()) return value
   const normalized = normalizePhrase(value)
 
   const role = localizeRole(value)
@@ -405,7 +425,7 @@ const ACTION_KEY_BY_LABEL: Record<string, string> = {
 }
 
 export function localizeNotificationActionLabel(label: string): string {
-  if (!isSerbian()) return label
+  if (!shouldLocalizeNotifications()) return label
   const normalized = normalizePhrase(label)
   const key = ACTION_KEY_BY_LABEL[normalized]
   if (key) return nt(key)
@@ -421,7 +441,7 @@ export function localizeNotificationExtraText(
   item?: NotificationItem
 ): string | null {
   if (!text) return null
-  if (!isSerbian()) return text
+  if (!shouldLocalizeNotifications()) return text
   const localized = localizeNotificationNarrative(text, item)
   if (localized === nt('templateLocalization.moreDetails')) return null
   return localized
