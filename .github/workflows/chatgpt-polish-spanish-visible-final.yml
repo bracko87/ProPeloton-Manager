@@ -1,0 +1,72 @@
+name: Polish Spanish visible pages final
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/polish_spanish_visible_pages_20260831.py'
+      - '.github/workflows/chatgpt-polish-spanish-visible-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Apply visible Spanish polish
+        run: python .github/scripts/polish_spanish_visible_pages_20260831.py
+
+      - name: Validate Spanish schemas and placeholders
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          en=Path('src/i18n/locales/en'); es=Path('src/i18n/locales/es')
+          ph=re.compile(r'\{\{\s*([^{}]+?)\s*\}\}')
+          def walk(v,p=''):
+              if isinstance(v,dict):
+                  for k,x in v.items(): yield from walk(x,f'{p}.{k}' if p else k)
+              elif isinstance(v,list):
+                  for i,x in enumerate(v): yield from walk(x,f'{p}[{i}]')
+              else: yield p,v
+          def schema(v):
+              if isinstance(v,dict): return {k:schema(x) for k,x in v.items()}
+              if isinstance(v,list): return [schema(x) for x in v]
+              return type(v).__name__
+          for name in ['common.json','accountPages.json','navigation.json','home.json','createClub.json']:
+              a=json.loads((en/name).read_text(encoding='utf-8')); b=json.loads((es/name).read_text(encoding='utf-8'))
+              assert schema(a)==schema(b), name
+              bm=dict(walk(b))
+              for k,v in walk(a):
+                  if isinstance(v,str) and isinstance(bm.get(k),str):
+                      assert sorted(ph.findall(v))==sorted(ph.findall(bm[k])), f'{name}:{k}'
+          print('Visible Spanish schema/placeholders OK')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push Spanish visible polish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/es/common.json src/i18n/locales/es/accountPages.json src/i18n/locales/es/navigation.json src/i18n/locales/es/home.json src/i18n/locales/es/createClub.json
+          if git diff --cached --quiet; then
+            echo 'No visible Spanish changes.'
+            exit 0
+          fi
+          git commit -m 'Polish final Spanish visible pages'
+          git pull --rebase origin main
+          git push origin main
