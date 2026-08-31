@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/scripts/finalize_spanish_human_quality_20260831.py'
+      - '.github/scripts/finalize_spanish_human_quality_residual_20260831.py'
       - '.github/scripts/audit_spanish_human_quality_20260831.py'
       - '.github/scripts/audit_spanish_hardcoded_ui_20260831.py'
       - '.github/workflows/chatgpt-finalize-spanish-human-quality.yml'
@@ -27,7 +28,9 @@ jobs:
           ref: main
 
       - name: Apply human-reviewed Spanish corrections
-        run: python .github/scripts/finalize_spanish_human_quality_20260831.py
+        run: |
+          python .github/scripts/finalize_spanish_human_quality_20260831.py
+          python .github/scripts/finalize_spanish_human_quality_residual_20260831.py
 
       - name: Scan React pages and components for hardcoded English
         run: python .github/scripts/audit_spanish_hardcoded_ui_20260831.py
