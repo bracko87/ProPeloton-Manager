@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/scripts/polish_french_human_quality_20260831.py'
       - '.github/scripts/polish_french_human_quality_followup_20260831.py'
+      - '.github/scripts/polish_french_final_warning_cleanup_20260831.py'
       - '.github/scripts/audit_french_human_quality_20260831.py'
       - '.github/workflows/chatgpt-french-human-polish.yml'
   workflow_dispatch:
@@ -26,7 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: Apply human-quality French polish
-        run: python .github/scripts/polish_french_human_quality_followup_20260831.py
+        run: python .github/scripts/polish_french_final_warning_cleanup_20260831.py
 
       - name: Structural and semantic French gate
         run: python .github/scripts/audit_french_completion_20260831.py
@@ -50,6 +51,6 @@ jobs:
             echo 'No French locale changes to commit.'
             exit 0
           fi
-          git commit -m 'Polish French language quality'
+          git commit -m 'Finish French language polish'
           git pull --rebase origin main
           git push origin main
