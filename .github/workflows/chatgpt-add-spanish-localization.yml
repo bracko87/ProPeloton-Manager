@@ -1,0 +1,106 @@
+name: Add Spanish localization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-add-spanish-localization.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  spanish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install translation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch transformers sentencepiece
+
+      - name: Generate Spanish locale package and wiring
+        run: python .github/scripts/add_spanish_localization_20260831.py
+
+      - name: Validate Spanish resources
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          root = Path('.')
+          en_dir = root / 'src/i18n/locales/en'
+          es_dir = root / 'src/i18n/locales/es'
+          en_files = sorted(p.name for p in en_dir.glob('*.json'))
+          es_files = sorted(p.name for p in es_dir.glob('*.json'))
+          assert en_files == es_files, (len(en_files), len(es_files), set(en_files) ^ set(es_files))
+
+          ph = re.compile(r'\{\{[^{}]+\}\}')
+          def walk(a, b, path=''):
+              assert type(a) is type(b), f'type mismatch {path}'
+              if isinstance(a, dict):
+                  assert list(a) == list(b), f'key/order mismatch {path}'
+                  for k in a:
+                      walk(a[k], b[k], f'{path}.{k}' if path else k)
+              elif isinstance(a, list):
+                  assert len(a) == len(b), f'list mismatch {path}'
+                  for i, (x, y) in enumerate(zip(a, b)):
+                      walk(x, y, f'{path}[{i}]')
+              elif isinstance(a, str):
+                  assert sorted(ph.findall(a)) == sorted(ph.findall(b)), f'placeholder mismatch {path}'
+
+          for name in en_files:
+              en = json.loads((en_dir / name).read_text(encoding='utf-8'))
+              es = json.loads((es_dir / name).read_text(encoding='utf-8'))
+              walk(en, es, name)
+
+          languages = (root / 'src/i18n/languages.ts').read_text(encoding='utf-8')
+          assert "code: 'es'" in languages
+          assert "label: 'Español'" in languages
+          assert "flag: '🇪🇸'" in languages
+          assert "countryCode: 'ES'" in languages
+          assert "locale: 'es-ES'" in languages
+
+          index = (root / 'src/i18n/index.ts').read_text(encoding='utf-8')
+          assert "./locales/es/accountPages.json" in index
+          assert "supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es']" in index
+          assert '\n  es: {\n' in index
+
+          bridge = (root / 'src/components/i18n/LocaleDateFormattingBridge.tsx').read_text(encoding='utf-8')
+          assert "startsWith('es')" in bridge and "'es-ES'" in bridge
+
+          profile = (root / 'src/pages/MyProfile.tsx').read_text(encoding='utf-8')
+          assert 'language.countryCode.toLowerCase()' in profile
+          assert 'activeLanguageDefinition.countryCode.toLowerCase()' in profile
+
+          print(f'Spanish validation passed: {len(es_files)} resources')
+          PY
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push Spanish package
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/i18n/locales/es src/i18n/languages.ts src/i18n/index.ts src/components/i18n/LocaleDateFormattingBridge.tsx
+          if git diff --cached --quiet; then
+            echo "No Spanish changes to commit"
+            exit 0
+          fi
+          git commit -m "Add Spanish language package"
+          git pull --rebase origin main
+          git push origin main
