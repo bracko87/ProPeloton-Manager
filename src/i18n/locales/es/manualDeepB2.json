@@ -60,13 +60,13 @@
         "La apertura de un ciclista utiliza una ruta de perfil propia o externa dependiendo de la propiedad."
       ],
       "tips": [
-        "Utilice Estadísticas antes de Transferencias."
+        "Usa Estadísticas antes de Transferencias."
       ]
     },
     "transferListDeep": {
       "title": "ciclista de la lista de transferencias",
       "subtitle": "Comprando de otro club.",
-      "overview": "Los ciclista que se encuentran en la lista de traslados requieren una oferta de club a club antes de negociar el contrato de ciclista.",
+      "overview": "los ciclistas que se encuentran en la lista de traslados requieren una oferta de club a club antes de negociar el contrato de ciclista.",
       "facts": [
         "Datos de inclusión en la lista",
         "Vendedor, pidiendo precio, salario, valor de mercado, vencimiento, disponibilidad"
@@ -79,7 +79,7 @@
         "Las listas expiran por fecha de juego."
       ],
       "tips": [
-        "Compruebe el salario antes de hacer una gran oferta de transferencia."
+        "Comprueba el salario antes de hacer una gran oferta de transferencia."
       ]
     },
     "freeAgentsDeep": {
@@ -125,12 +125,12 @@
     "scoutingDeep": {
       "title": "Informes de exploración",
       "subtitle": "Reducción del riesgo de información oculta.",
-      "overview": "Los informes de exploración ayudan a los usuarios a evitar malas decisiones de transferencia al mejorar el conocimiento de los ciclista externos.",
+      "overview": "Los informes de exploración ayudan a los usuarios a evitar malas decisiones de transferencia al mejorar el conocimiento de los ciclistas externos.",
       "facts": [
         "Filtros",
         "Todo, Nuevo, Revisado",
         "Campos de informes",
-        "ciclista, explorador, fecha, en general, potencial, fortalezas, notas"
+        "ciclista, scout, fecha, en general, potencial, fortalezas, notas"
       ],
       "details": [
         "Los informes usan los verdaderos IUIDs para que los enlaces de perfil funcionen.",
@@ -149,7 +149,7 @@
       "overview": "En la pestaña Personal se enumeran los funcionarios disponibles y se respeta la capacidad de desempeñar funciones.",
       "facts": [
         "Funciones",
-        "Head coach, trainer, U23 coach, doctor, physio, nutritionist, mechanic, sport director, scout/analyst",
+        "Entrenador principal, preparador, entrenador U23, médico, fisioterapeuta, nutricionista, mecánico, director deportivo y scout/analista",
         "Ordenar",
         "Salario, habilidades, nombre, país"
       ],
@@ -179,10 +179,10 @@
         "Los sueldos, las políticas, el personal, los impuestos y los reembolsos de préstamos pueden crear presión en el futuro.",
         "Los ingresos del patrocinador pueden llegar mensualmente o por contrato.",
         "Las recompensas de carrera dependen del rendimiento y no deben asumirse.",
-        "Utilice las tendencias de flujo de caja para entender si el club está mejorando o disminuyendo."
+        "Usa las tendencias de flujo de caja para entender si el club está mejorando o disminuyendo."
       ],
       "tips": [
-        "Compruebe Finanzas antes de cada decisión de gasto importante."
+        "Comprueba Finanzas antes de cada decisión de gasto importante."
       ]
     },
     "transactionsDeep": {
@@ -205,7 +205,7 @@
         "Archivo agrupa filas viejas por mes de juego."
       ],
       "tips": [
-        "Utilice las transacciones cuando el equilibrio le sorprenda."
+        "Usa las transacciones cuando el equilibrio le sorprenda."
       ]
     },
     "taxDeep": {
@@ -226,7 +226,7 @@
         "Los impuestos pueden volverse peligrosos después de grandes eventos de ingresos."
       ],
       "tips": [
-        "Mantenga el efectivo disponible para ajustes fiscales."
+        "Mantén el efectivo disponible para ajustes fiscales."
       ]
     },
     "sponsorsDeep": {
@@ -261,7 +261,7 @@
         "Inicio de carrera, victoria, podio, top 5, top 10, GC top 5/top 10, stage top 5/win, visibilidad de la clasificación"
       ],
       "details": [
-        "Los objetivos pueden dirigirse a razas, países o categorías exactos.",
+        "Los objetivos pueden dirigirse a carreras, países o categorías exactos.",
         "El progreso muestra el valor objetivo y actual.",
         "El estado puede ser programado, comprobado, logrado, perdido o pagado.",
         "La razón fallida explica los objetivos perdidos.",
@@ -307,7 +307,7 @@
       ],
       "details": [
         "El club liquidado ya no puede realizar acciones.",
-        "El usuario puede crear un nuevo club en un lugar libre disponible.",
+        "El usuario puede crear un nuevo club en un lugar gratis disponible.",
         "Actualmente, el equipo de reinicio solo explica el comportamiento futuro de reinicio.",
         "El reinicio futuro liberaría a los antiguos ciclista, eliminaría el personal y restablecería los puntos/progresos.",
         "Se puede mostrar la razón de la liquidación y la marca de tiempo."

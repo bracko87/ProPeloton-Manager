@@ -21,7 +21,7 @@
     "clear": "Limpiar",
     "partlyCloudy": "Parcialmente nublado",
     "overcast": "Cubierto de nubes",
-    "foggy": "Foggy",
+    "foggy": "Con niebla",
     "drizzle": "Llovizna",
     "rainCondition": "Lluvia",
     "heavyRain": "Lluvia fuerte",
@@ -74,7 +74,7 @@
     "missedStartlist": "Falta la lista inicial",
     "raceActive": "Carrera activa",
     "raceFinished": "Carrera terminada",
-    "raceCanceled": "Raza cancelada",
+    "raceCanceled": "carrera cancelada",
     "partlyCanceled": "Cancelado parcialmente",
     "oneDay": "Un día",
     "stageRace": "Carrera de etapa"
@@ -99,7 +99,7 @@
     "raceFormat": "Formato de carrera",
     "allFormats": "Todos los formatos",
     "myRaceStatus": "Mi estado racial",
-    "allRaces": "Todas las razas",
+    "allRaces": "Todas las carreras",
     "notEntered": "No se ha introducido",
     "applicationStatus": "Estado de la aplicación",
     "allStatuses": "Todos los estados",
@@ -181,7 +181,7 @@
   "errors": {
     "noClub": "No se encontró ningún club para el usuario que entró.",
     "raceSource": "Calendario de carreras está listo, pero la fuente de la carrera no está disponible todavía.",
-    "loadFailed": "Falló al cargar el calendario."
+    "loadFailed": "No se pudo cargar el calendario."
   },
   "tutorial": {
     "welcomeTitle": "¿Necesitas ayuda con el calendario?",

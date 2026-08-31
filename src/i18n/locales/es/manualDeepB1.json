@@ -8,7 +8,7 @@
         "Categorías",
         "Marco, ruedas, neumáticos, grupo, casco, zapatos",
         "Bonificaciones",
-        "Piso, montaÃ±o, adoquin, prueba de tiempo, sprint, reducción de fatiga"
+        "Llano, montaña, adoquín, contrarreloj, sprint, reducción de fatiga"
       ],
       "details": [
         "Los marcos a menudo definen la identidad de configuración amplia.",
@@ -18,7 +18,7 @@
         "Las etiquetas de calidad incluyen Basic, Good y Super."
       ],
       "tips": [
-        "Coincidir con el equipo para el tipo de escenario."
+        "Coincidir con el equipo para el tipo de etapa."
       ]
     },
     "equipmentCapsDeep": {
@@ -37,7 +37,7 @@
         "El equipo especializado sigue siendo valioso en carreras cercanas."
       ],
       "tips": [
-        "Utilice el engranaje para apoyar la estrategia, no reemplazar la calidad del motorista."
+        "Usa el engranaje para apoyar la estrategia, no reemplazar la calidad del motorista."
       ]
     },
     "equipmentInventoryDeep": {
@@ -55,7 +55,7 @@
         "Los artículos listos y usados pueden ejecutar acciones si las reglas lo permiten.",
         "Los artículos asignados están bloqueados porque están en uso.",
         "Las cotizaciones de reparación muestran costo y permiso.",
-        "La condición debe ser fijada antes de las razas importantes."
+        "La condición debe ser fijada antes de las carreras importantes."
       ],
       "tips": [
         "Reparar temprano; no espere hasta que todo el equipo se use."
@@ -69,7 +69,7 @@
         "Consumibles",
         "Bidón, geles energéticos, paquetes de nutrición",
         "Duraderos",
-        "Carrera Jersey Completa, chaquetas de lluvia"
+        "Carrera maillot Completa, chaquetas de lluvia"
       ],
       "details": [
         "Bidón: 1-4 por ciclista; control de hidratación y fatiga.",
@@ -118,7 +118,7 @@
         "La Oficina de Scouts apoya informes de scouts e inteligencia de mercado."
       ],
       "tips": [
-        "Elija actualizaciones basadas en su cuello de botella actual."
+        "Elige actualizaciones basadas en su cuello de botella actual."
       ]
     },
     "facilityJobsDeep": {
@@ -159,7 +159,7 @@
         "Los activos asignados o bloqueados no pueden repararse ni venderse."
       ],
       "tips": [
-        "Mantenga los activos importantes reparados antes de las carreras."
+        "Mantén los activos importantes reparados antes de las carreras."
       ]
     },
     "seasonCalendarDeep": {
@@ -180,13 +180,13 @@
         "Se pueden planificar meses importantes de carrera con antelación."
       ],
       "tips": [
-        "Utilice Calendario de temporada antes de reservar campamentos."
+        "Usa Calendario de temporada antes de reservar campamentos."
       ]
     },
     "raceCalendarDeep": {
       "title": "Detalles del calendario de carreras",
       "subtitle": "Tarjetas de carreras y estados de aplicación.",
-      "overview": "Calendario de carreras lista todas las razas y su estado de aplicación.",
+      "overview": "Calendario de carreras lista todas las carreras y su estado de aplicación.",
       "facts": [
         "Valores de estado",
         "not_open, abierto, cerrado, race_active, race_finished, cancelado"
@@ -199,11 +199,11 @@
         "Open Race envía a los usuarios a la página Race Detail."
       ],
       "tips": [
-        "Aplicar sólo cuando la carrera se adapte a su equipo."
+        "Aplicar sólo cuando la carrera se adapte a tu equipo."
       ]
     },
     "raceDetailDeep": {
-      "title": "Página de detalle de la raza",
+      "title": "Página de detalle de la carrera",
       "subtitle": "Perfil de carrera, etapas, participantes, resultados y repetición.",
       "overview": "Race Detail es el centro de carreras completo.",
       "facts": [
@@ -213,11 +213,11 @@
         "General, puntos, montaña, joven, equipo"
       ],
       "details": [
-        "La descripción general de la carrera incluye fechas, país, categoría, tipo de raza y estado.",
+        "La descripción general de la carrera incluye fechas, país, categoría, tipo de carrera y estado.",
         "Las reglas de entrada muestran plazos, límites de equipo, límites de ciclista y fondo de premios.",
-        "Los escenarios muestran ruta, terreno, distancia, clima, sprints y subidas.",
+        "Los etapas muestran ruta, terreno, distancia, clima, sprints y subidas.",
         "Los participantes muestran instantáneas del equipo y del ciclista.",
-        "Los resultados y clasificaciones están disponibles según el estado de la raza.",
+        "Los resultados y clasificaciones están disponibles según el estado de la carrera.",
         "La reproducción puede mostrar marcos en vivo o históricos si el acceso lo permite."
       ],
       "tips": [
@@ -226,17 +226,17 @@
     },
     "stageTerrainPoints": {
       "title": "Terreno de etapa y puntos",
-      "subtitle": "Piso, montañoso, de montaña, TT, adoquinado, sprints y KOM.",
-      "overview": "Las definiciones de terreno y punto ayudan a los usuarios a decidir los ciclista, tácticas y equipos.",
+      "subtitle": "Llano, montañoso, de montaña, TT, adoquinado, sprints y KOM.",
+      "overview": "Las definiciones de terreno y punto ayudan a los usuarios a decidir los ciclistas, tácticas y equipos.",
       "facts": [
         "Terreno",
-        "Piso, montaÃ±a, prueba individual, prueba de tiempo en equipo, prÃ3logo, empedrado",
+        "Llano, montaña, contrarreloj individual, contrarreloj en equipo, prólogo, empedrado",
         "Tipos de puntos",
         "Inicio, Intermediate_SPRINT, KOM, BONUS_SPRINT, FINAL"
       ],
       "details": [
         "Las etapas planas a menudo favorecen los velocistas y los lead-outs.",
-        "Las etapas montañosas favorecen a los ciclista y atacantes versátiles.",
+        "Las etapas montañosas favorecen a los ciclistas y atacantes versátiles.",
         "Las etapas de montaña favorecen a los escaladores y líderes de GC.",
         "Las etapas TT/prólogo favorecen a los tiempo-trialistas y el equipo TT.",
         "Etapas encogidas favorecen la resistencia y el equipo especializado.",
@@ -264,7 +264,7 @@
         "Los resultados muestran rango de etapa, tiempo, brecha, puntos, segundos de bonificación/penalidad y estado."
       ],
       "tips": [
-        "Utilice la repetición para diagnosticar tácticas y rendimiento del ciclista."
+        "Usa la repetición para diagnosticar tácticas y rendimiento del ciclista."
       ]
     },
     "racePlanDeep": {
@@ -276,8 +276,8 @@
         "ciclista, personal, activos, equipo, suministros y presupuesto"
       ],
       "details": [
-        "Los ciclista deben coincidir con las reglas de carrera min/max.",
-        "Los ciclista bloqueados no pueden ser seleccionados para eventos superpuestos.",
+        "los ciclistas deben coincidir con las reglas de carrera min/max.",
+        "los ciclistas bloqueados no pueden ser seleccionados para eventos superpuestos.",
         "El personal y los activos también pueden ser bloqueados por asignaciones.",
         "La configuración del equipo debe coincidir con el terreno de la carrera.",
         "Los suministros deben ser suficientes para todas las etapas.",
@@ -296,7 +296,7 @@
         "Roles, tácticas de equipo, tácticas individuales, equipo, suministros"
       ],
       "details": [
-        "Un escenario de sprint plano necesita diferentes roles que un escenario de montaña.",
+        "Un etapa de sprint plano necesita diferentes roles que un etapa de montaña.",
         "Las etapas TT y TTT necesitan de estimulación y equipo especializado.",
         "Los suministros se asignan por etapa y pueden consumirse o utilizar capacidad duradera.",
         "Los controles de preparación indican si un plan de etapa es utilizable.",
@@ -312,7 +312,7 @@
       "overview": "Los roles de etapa deben coincidir con las habilidades del ciclista y los objetivos de etapa.",
       "facts": [
         "Funciones",
-        "Líder, velocista, lead-out, tren de sprint, escalador, montaña domostique, ayudante, fuga, perseguidor, rouleur, protegido, libre"
+        "Líder, velocista, lead-out, tren de sprint, escalador, montaña domostique, ayudante, fuga, perseguidor, rouleur, protegido, gratis"
       ],
       "details": [
         "El líder del equipo/GC es para ciclista protegidos durante el tiempo total.",
@@ -350,7 +350,7 @@
     "sportDirectorDeep": {
       "title": "Sugerencias del Director del Deporte",
       "subtitle": "Sugerencias de asistentes para los planes de etapa.",
-      "overview": "Las sugerencias del Director de Deportes pueden ayudar a los gerentes a construir planes, pero no deben reemplazar el juicio.",
+      "overview": "Las sugerencias del Director de Deportes pueden ayudar a los mánagers a construir planes, pero no deben reemplazar el juicio.",
       "facts": [
         "Ámbitos de sugerencias",
         "Equipo, equipo, personal, suministros"
@@ -360,10 +360,10 @@
         "Las sugerencias pueden estar limitadas por la calidad del personal o la lógica de backend.",
         "Los usuarios deben comparar las sugerencias con las habilidades reales del ciclista y los objetivos del equipo.",
         "El tiempo y los suministros deben ser revisados manualmente.",
-        "Los buenos gerentes ajustan las sugerencias en lugar de aplicar ciegamente."
+        "Los buenos mánagers ajustan las sugerencias en lugar de aplicar ciegamente."
       ],
       "tips": [
-        "Utilice las sugerencias como una herramienta de aprendizaje."
+        "Usa las sugerencias como una herramienta de aprendizaje."
       ]
     }
   }

@@ -17,7 +17,7 @@
   },
   "rolesSection": {
     "title": "Funciones del personal",
-    "subtitle": "Seleccione un rol para ver el personal asignado, el límite de rol en vivo y el resumen de contribución de rol.",
+    "subtitle": "Selecciona un rol para ver el personal asignado, el límite de rol en vivo y el resumen de contribución de rol.",
     "staffList": "Lista de personal de {{role}}",
     "assigned": "{{count}}/{{limit}} asignado para este rol.",
     "assignedCompact": "Asignado {{count}}/{{limit}}",
@@ -59,7 +59,7 @@
       "subtitle": "Explorando calidad, visibilidad de la perspectiva y transferencia de inteligencia."
     },
     "u23HeadCoach": {
-      "label": "U23 Head Coach",
+      "label": "Entrenador principal U23",
       "subtitle": "Planeado el entrenamiento de equipo y el apoyo táctico de carrera U23."
     }
   },
@@ -76,7 +76,7 @@
     "fatigueRecovery": "Recuperación de la fatiga",
     "recoverySupport": "Apoyo a la recuperación",
     "fitnessConsistency": "Consistencia de la aptitud",
-    "racePreparation": "Preparación de la raza",
+    "racePreparation": "Preparación de la carrera",
     "equipmentSetup": "Configuración del equipo",
     "maintenanceEfficiency": "Eficiencia en el mantenimiento",
     "mechanicalReliability": "Fiabilidad mecánica",
@@ -88,7 +88,7 @@
     "transferIntelligence": "Transferencia de información",
     "u23Training": "Entrenamiento U23",
     "youthDevelopment": "Desarrollo de la juventud",
-    "u23RaceTactics": "U23 tácticas de raza"
+    "u23RaceTactics": "U23 tácticas de carrera"
   },
   "common": {
     "close": "Cerrar",
@@ -138,7 +138,7 @@
     "consistency": "Coherencia",
     "bikeSetup": "Configuración de la bicicleta",
     "reliability": "Fiabilidad",
-    "racePlanning": "Planificación de la raza",
+    "racePlanning": "Planificación de la carrera",
     "teamControl": "Control de equipo",
     "evaluation": "Evaluación",
     "network": "Red",
@@ -162,7 +162,7 @@
   "quality": {
     "facility": "Instalación",
     "scoutingQuality": "Calidad de exploración",
-    "scoutAbility": "Capacidad del explorador",
+    "scoutAbility": "Capacidad del scout",
     "currentReportQuality": "Calidad del informe actual",
     "reportTime": "Tiempo de presentación del informe",
     "scoutingOffice": "Oficina de Exploración",
@@ -213,7 +213,7 @@
   },
   "release": {
     "title": "Personal de liberación",
-    "subtitle": "Confirme esta decisión del personal antes de continuar.",
+    "subtitle": "Confirma esta decisión del personal antes de continuar.",
     "aboutToRelease": "Usted está a punto de liberar {{name}}",
     "role": "Rol: {{role}}",
     "weeklyWage": "Salario semanal: {{value}}",
@@ -295,12 +295,12 @@
     "scoutingTitle": "Impacto del personal de exploración"
   },
   "scoutingExplainer": {
-    "title": "Cómo funciona la calidad de los exploradores",
-    "body": "Los atributos Scout crean la verdadera habilidad del explorador. La Oficina Scout puede limitar la calidad del informe final, por lo que un explorador fuerte puede producir informes básicos hasta que la oficina sea actualizada.",
-    "abilityLevels": "Niveles de habilidad del explorador",
+    "title": "Cómo funciona la calidad de los scouts",
+    "body": "Los atributos Scout crean la verdadera habilidad del scout. La Oficina Scout puede limitar la calidad del informe final, por lo que un scout fuerte puede producir informes básicos hasta que la oficina sea actualizada.",
+    "abilityLevels": "Niveles de habilidad del scout",
     "reportLevels": "Informe Niveles de calidad",
     "levelScale": "Básico → Sólido → Fuerte → Elite",
-    "thresholds": "Umbrales de capacidad del explorador",
+    "thresholds": "Umbrales de capacidad del scout",
     "thresholdValues": "Básico: por debajo de 55 · Sólido: 55–69 · Fuerte: 70–84 · Elite: 85+",
     "upgrade": "Mejor Oficina de Scouts desbloquea una mayor calidad de informe. Nivel actual: Lv {{level}}.",
     "upgradeNoLevel": "Mejor Oficina Scout desbloquea mayor calidad de informe.",
@@ -317,7 +317,7 @@
     "combinedProspectVisibility": "+{{value}}% visibilidad de prospecto combinada",
     "futureTransferYouth": "Futuro: transferencia de información e informes sobre la juventud",
     "futureBroaderTransferYouth": "Futuro: transferencia más amplia e inteligencia de la juventud",
-    "scoutingOfficeCap": "Oficina de Scouts Lv {{level}} tapa parte de los bonos de explorador y analista."
+    "scoutingOfficeCap": "Oficina de Scouts Lv {{level}} tapa parte de los bonos de scout y analista."
   },
   "courseOptions": {
     "coach_elite_methodology": {
@@ -422,7 +422,7 @@
     },
     "director_stage_strategy": {
       "title": "Programa de estrategia de etapa",
-      "description": "Planificación táctica especializada para carreras de escenario y soporte GC.",
+      "description": "Planificación táctica especializada para carreras de etapa y soporte GC.",
       "focus": "Estrategia de la etapa"
     },
     "u23_youth_development_methods": {
@@ -452,7 +452,7 @@
     },
     "scout_data_analysis": {
       "title": "Análisis de los datos de rendimiento",
-      "description": "Mejora la revisión analítica de los ciclista y los informes de preparación de carreras.",
+      "description": "Mejora la revisión analítica de los ciclistas y los informes de preparación de carreras.",
       "focus": "Precisión + Análisis"
     }
   }

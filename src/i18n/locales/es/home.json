@@ -21,7 +21,7 @@
     "description": "ProPeloton Manager es un juego de gestión de ciclismo online en el que creas tu club, desarrollas ciclistas, planificas calendarios de carreras, negocias fichajes y compites contra otros mánagers en un mundo ciclista por temporadas.",
     "gameTime": "Hora del juego",
     "multiplayer": "Multijugador",
-    "liveManagerLeagues": "Ligas de mánagers en vivo",
+    "liveManagerLeagues": "Ligas con mánagers reales",
     "progression": "Progresión",
     "progressionValue": "Competiciones, clasificaciones y recompensas",
     "imageAlt": "Ciclistas escalando una montaña",
@@ -56,9 +56,9 @@
     "title": "Características básicas",
     "subtitle": "Todo lo que necesitas para gestionar un club ciclista de clase mundial.",
     "squadTitle": "Gestión profunda de la plantilla",
-    "squadDescription": "Entrena, rota y desarrolla ciclistas teniendo en cuenta la forma, la fatiga y la progresión del talento.",
+    "squadDescription": "Entrena, rota y desarrolla ciclistas con forma, fatiga y progresión del talento realistas.",
     "racesTitle": "Carreras tácticas",
-    "racesDescription": "Elige los momentos de ataque, gestiona las escapadas y ejecuta tácticas ganadoras en cada etapa.",
+    "racesDescription": "Elige los momentos de ataque, gestiona las escapadas y ejecuta tácticas ganadoras de etapa.",
     "marketTitle": "Mercado y transferencias",
     "marketDescription": "Ojea, puja y negocia contratos en un mercado de fichajes dinámico."
   },
@@ -69,11 +69,11 @@
     "title": "Cómo funciona ProPeloton Manager",
     "subtitle": "Construye el club que hay detrás de los ciclistas y toma las decisiones que definen cada temporada.",
     "whatTitle": "¿Qué es ProPeloton Manager?",
-    "whatText": "ProPeloton Manager es un juego de gestión de ciclismo online en el que creas y desarrollas un club. En lugar de controlar directamente a un ciclista, gestionas todo lo que hay detrás de las carreras: ciclistas, entrenamiento, Race Plans, personal, equipamiento, finanzas, patrocinadores, fichajes y progreso a largo plazo en la clasificación.",
+    "whatText": "ProPeloton Manager es un juego online de gestión ciclista en el que creas y desarrollas un club. En lugar de controlar directamente a un ciclista, gestionas todo lo que rodea a las carreras: ciclistas, entrenamiento, Race Plans, personal, equipamiento, finanzas, patrocinadores, fichajes y progresión a largo plazo en las clasificaciones.",
     "howTitle": "¿Cómo juegas?",
-    "howText": "Los mánagers construyen una plantilla, estudian el calendario, solicitan las carreras adecuadas, preparan Race Plans, eligen ciclistas, asignan roles, gestionan suministros y siguen los resultados. Las buenas decisiones dependen de las habilidades del ciclista, la fatiga, la moral, el perfil de la carrera, el clima, el presupuesto y los objetivos de temporada.",
+    "howText": "Los mánagers construyen una plantilla, estudian el calendario, solicitan las carreras adecuadas, preparan Race Plans, eligen ciclistas, asignan roles, gestionan suministros y siguen los resultados. Las buenas decisiones dependen de las habilidades, la fatiga, la moral, el perfil de carrera, el clima, el presupuesto y los objetivos de temporada.",
     "preparationTitle": "¿Por qué importa la preparación?",
-    "preparationText": "Un ciclista fuerte no basta por sí solo. La preparación de carrera conecta ciclistas, personal, vehículos, equipamiento, suministros y tácticas. Planificar con antelación ayuda al equipo a llegar preparado para sprints, subidas, contrarrelojes, carreras por etapas y condiciones meteorológicas difíciles."
+    "preparationText": "Un ciclista fuerte no basta por sí solo. La preparación conecta ciclistas, personal, vehículos, equipamiento, suministros y tácticas. Planificar con antelación ayuda a que el equipo llegue preparado para sprints, ascensos, contrarrelojes, carreras por etapas y condiciones meteorológicas difíciles."
   },
   "screenshots": {
     "title": "Capturas de pantalla en el juego",
@@ -112,10 +112,10 @@
     "twoStars": "2 estrellas",
     "oneStar": "1 estrella",
     "reviewPosition": "Reseña {{current}} de {{total}}",
-    "nameRequired": "Por favor, introduzca su nombre.",
-    "nameMin": "Por favor, introduzca al menos 2 caracteres.",
-    "emailRequired": "Por favor, introduzca su correo electrónico.",
-    "emailInvalid": "Introduzca una dirección de correo electrónico válida.",
+    "nameRequired": "Introduce su nombre.",
+    "nameMin": "Introduce al menos 2 caracteres.",
+    "emailRequired": "Introduce tu correo electrónico.",
+    "emailInvalid": "Introduce una dirección de correo electrónico válida.",
     "ratingInvalid": "Por favor, elija una calificación de 1 a 5.",
     "messageRequired": "Por favor, escriba su opinión.",
     "messageMin": "Por favor escriba al menos 20 caracteres.",
@@ -151,12 +151,12 @@
     "email": "Correo electrónico"
   },
   "status": {
-    "preparingAccount": "Preparando tu cuenta de gerente...",
+    "preparingAccount": "Preparando tu cuenta de mánager...",
     "loadingGameTime": "Cargando el tiempo del juego...",
     "gameTimeUnavailable": "Tiempo de juego no disponible",
     "homepageDataUnavailable": "Los datos de la página web en vivo no están disponibles temporalmente.",
     "homepageDataUnexpected": "Los datos de la página web en vivo devolvieron un formato inesperado.",
     "clubStatusError": "Usted ha iniciado sesión, pero no pudimos cargar su estado club. Por favor, refresque o vuelva a intentarlo.",
-    "clubCreationDisabled": "La creación de un nuevo club está temporalmente desactivada mientras ProPeloton Manager está todavía en desarrollo. Los gerentes existentes pueden continuar iniciando sesión."
+    "clubCreationDisabled": "La creación de un nuevo club está temporalmente desactivada mientras ProPeloton Manager está todavía en desarrollo. Los mánagers existentes pueden continuar iniciando sesión."
   }
 }

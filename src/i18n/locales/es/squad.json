@@ -17,7 +17,7 @@
   "roster": {
     "firstSquad": "Primer escuadrón",
     "riders": "Ciclistas",
-    "squadFull": "El escuadrón está lleno (los ciclista {{max}}) y los traslados, firmas y promociones deben respetar la gorra del escuadrón.",
+    "squadFull": "El escuadrón está lleno (los ciclistas {{max}}) y los traslados, firmas y promociones deben respetar la gorra del escuadrón.",
     "loading": "Cargando escuadrón...",
     "loadFailed": "No se pudo cargar el escuadrón",
     "noRiders": "No se encontraron ciclista para este club todavía.",
@@ -81,7 +81,7 @@
   "activity": {
     "race": "Carrera",
     "trainingCamp": "Campamento de capacitación",
-    "free": "Libre",
+    "free": "gratis",
     "stage": "Etapa {{number}}",
     "until": "Hasta {{date}}"
   },
@@ -94,7 +94,7 @@
     "unknown": "Desconocido",
     "movedToDeveloping": "Rider se mudó al equipo de desarrollo.",
     "couldNotMove": "No se pudo mover al ciclista al equipo de desarrollo.",
-    "ageLimit": "Sólo los ciclista de 23 años o menos pueden unirse al equipo de desarrollo.",
+    "ageLimit": "Sólo los ciclistas de 23 años o menos pueden unirse al equipo de desarrollo.",
     "moveToDeveloping": "Mover al equipo de desarrollo"
   },
   "premium": {
@@ -120,7 +120,7 @@
     "podiumsPlacings": "Podios y colocaciones",
     "podiumsPlacingsDescription": "Analizar victorias, podios y distribución de posiciones de acabado.",
     "raceType": "Tipo de carrera instantánea",
-    "raceTypeDescription": "Compare sus resultados con clásicos, días de montaña, acabados de escenarios y pruebas de tiempo.",
+    "raceTypeDescription": "Compare sus resultados con clásicos, días de montaña, acabados de etapas y pruebas de tiempo.",
     "oneDayClassics": "Clásicos de un día",
     "stageFinishes": "Finalización de la etapa",
     "mountainDays": "Días de montaña",
@@ -134,7 +134,7 @@
   "races": {
     "lastTeamRace": "Última carrera de equipo",
     "nextTeamRace": "Siguiente carrera de equipo",
-    "noRace": "No se ha encontrado ninguna raza todavía",
+    "noRace": "No se ha encontrado ninguna carrera todavía",
     "noFinished": "No se ha encontrado ninguna clasificación completa de carrera para este escuadrón todavía.",
     "noNext": "No se ha encontrado ningún plan de carrera para este escuadrón.",
     "stages": "{{count}} etapas"

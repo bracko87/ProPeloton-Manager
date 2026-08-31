@@ -2,10 +2,10 @@
   "page": {
     "back": "← Volver",
     "title": "Visión general del scout",
-    "subtitle": "Todos los informes de exploradores completados en un solo lugar. Filtrar por estado y saltar directamente al perfil del ciclista.",
-    "loading": "Cargando informes de exploradores...",
-    "empty": "Todavía no hay reportes de exploradores que coincidan con este filtro.",
-    "loadFailed": "Falló al cargar los informes del explorador.",
+    "subtitle": "Todos los informes de scouts completados en un solo lugar. Filtrar por estado y saltar directamente al perfil del ciclista.",
+    "loading": "Cargando informes de scouts...",
+    "empty": "Todavía no hay reportes de scouts que coincidan con este filtro.",
+    "loadFailed": "No se pudo cargar los informes del scout.",
     "reviewFailed": "No se pudo marcar el informe como revisado."
   },
   "filters": {
@@ -40,12 +40,12 @@
     "flat": "Plano",
     "recovery": "Recuperación",
     "resistance": "Resistencia",
-    "raceIq": "IQ de raza",
+    "raceIq": "IQ de carrera",
     "teamwork": "Trabajo en equipo",
     "morale": "Moral"
   },
   "table": {
-    "riderScout": "& Explorador de & ciclista",
+    "riderScout": "& scout de & ciclista",
     "overallPotential": "Total / Potencial",
     "strengthsNotes": "Puntos fuertes y notas clave",
     "action": "Medidas adoptadas"

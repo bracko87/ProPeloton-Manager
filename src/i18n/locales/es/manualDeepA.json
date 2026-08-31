@@ -17,11 +17,11 @@
         "Página web de la carrera de día widgets pueden mostrar ayer, hoy y mañana carreras."
       ],
       "tips": [
-        "Mantenga claras las expectativas del jugador durante la beta."
+        "Mantén claras las expectativas del jugador durante la beta."
       ]
     },
     "sidebarFooterLayout": {
-      "title": "Bloqueo lateral, pie y tablero de mando",
+      "title": "Bloqueo lateral, pie y Panel",
       "subtitle": "Cómo el diseño principal ayuda a los usuarios a moverse por el juego.",
       "overview": "La barra lateral izquierda es la navegación principal en el juego, mientras que el pie de página muestra tiempo de juego en vivo autorizado. Algunos estados del tablero de instrumentos pueden bloquear la interacción.",
       "facts": [
@@ -43,7 +43,7 @@
     "profileSettings": {
       "title": "Mi perfil",
       "subtitle": "Datos de perfil de usuario, nombre de usuario, correo electrónico y contraseña.",
-      "overview": "Mi perfil edita el perfil de la cuenta de usuario. Está separado del nombre del equipo, logo del equipo y jersey.",
+      "overview": "Mi perfil edita el perfil de la cuenta de usuario. Está separado del nombre del equipo, logo del equipo y maillot.",
       "facts": [
         "Regla de nombre de usuario",
         "3–24 caracteres; letras, números y subrayados",
@@ -192,14 +192,14 @@
     },
     "customizeTeamDeep": {
       "title": "Personalizar equipo",
-      "subtitle": "Marca, colores de equipo, logotipo, logotipo base y jersey.",
-      "overview": "Personalizar Team gestiona el nombre del club, colores primarios/secundarios, logotipo y configuración de jersey en casa.",
+      "subtitle": "Marca, colores de equipo, logotipo, logotipo base y maillot.",
+      "overview": "Personalizar Team gestiona el nombre del club, colores primarios/secundarios, logotipo y configuración de maillot en casa.",
       "facts": [
         "Tipos de logotipo",
         "JPG, PNG, WEBP",
         "Logo max",
         "0.5 MB",
-        "Jersey max",
+        "maillot max",
         "1 MB y 512 × 512 px",
         "Cuchara de logotipos",
         "club-logos"
@@ -208,11 +208,11 @@
         "Los logotipos cargados se convierten a PNG en navegador antes de almacenarlos.",
         "Eliminar un logotipo restaura un logotipo base de estilo escudo generado en lugar de dejar ningún logotipo.",
         "Los colores del equipo se validan como colores hexadecimal.",
-        "Jersey config se almacena en team_kits con el nombre de casa.",
+        "maillot config se almacena en team_kits con el nombre de casa.",
         "Una camiseta puede ser genérica, desde un pool genérico, una URL de imagen remota o una imagen subida."
       ],
       "tips": [
-        "Utilice logos limpios pequeños porque aparecen en pequeñas áreas de la interfaz de usuario."
+        "Usa logos limpios pequeños porque aparecen en pequeñas áreas de la interfaz de usuario."
       ],
       "links": [
         "Personalizar equipo"
@@ -234,7 +234,7 @@
         "Personalizar Equipo lee el bloqueo de marca antes de permitir ediciones.",
         "locked_by_sponsor significa que la identidad del club está controlada por un acuerdo de patrocinador.",
         "Los patrocinadores estándar normalmente no renombran al equipo.",
-        "Los patrocinadores de los derechos de designación suelen pagar más, pero afectan a la identidad pública.",
+        "Los patrocinadores de los Derechos de denominación suelen pagar más, pero afectan a la identidad pública.",
         "Los ayudantes de nombre de pantalla deben ser usados en rankings/perfiles cuando los nombres de patrocinadores importan."
       ],
       "tips": [
@@ -259,12 +259,12 @@
         "Incluye un botón de informe jugador / equipo para la moderación."
       ],
       "tips": [
-        "Utilice Team Profile para estudiar rivales antes de carreras importantes."
+        "Usa Team Profile para estudiar rivales antes de carreras importantes."
       ]
     },
     "overviewDeep": {
       "title": "Guía profunda",
-      "subtitle": "Todos los bloques principales en el tablero de mando.",
+      "subtitle": "Todos los bloques principales en el Panel.",
       "overview": "Visión general es la sala de control diaria que combina alertas, KPI, pulso de escuadrón, finanzas, deuda, mundo de carreras, operaciones, noticias y datos de patrocinadores.",
       "facts": [
         "Bloques básicos",
@@ -306,7 +306,7 @@
         "Use campos de texto/detalles ampliados cuando los usuarios necesiten más contexto."
       ],
       "tips": [
-        "Utilice la descripción general para la sensibilización, luego abra páginas detalladas para las decisiones."
+        "Usa la descripción general para la sensibilización, luego abra páginas detalladas para las decisiones."
       ]
     },
     "notificationCenterDeep": {
@@ -325,7 +325,7 @@
         "Las notificaciones pueden ser buscadas por título, mensaje, tipo, fuente, grupo de preferencias y tiempo creado.",
         "La categoría se deriva del grupo de preferencias, código fuente o tipo.",
         "Las plantillas pueden añadir imagen, texto introductorio, detalles, texto extra y acciones.",
-        "Las acciones pueden vincularse directamente a la preparación de carreras, las finanzas, la infraestructura, las transferencias, los perfiles de los ciclista o las carreras.",
+        "Las acciones pueden vincularse directamente a la preparación de carreras, las finanzas, la infraestructura, las transferencias, los perfiles de los ciclistas o las carreras.",
         "Las preferencias pueden evitar que algunos tipos de notificación se muestren."
       ],
       "tips": [
@@ -338,7 +338,7 @@
     "notificationExamples": {
       "title": "Ejemplos importantes de notificaciones",
       "subtitle": "Los usuarios de eventos no deben ignorar.",
-      "overview": "Las notificaciones pueden representar cambios importantes en el estado en la preparación de la raza, las finanzas, la infraestructura, las transferencias, el desarrollo del equipo y los patrocinadores.",
+      "overview": "Las notificaciones pueden representar cambios importantes en el estado en la preparación de la carrera, las finanzas, la infraestructura, las transferencias, el desarrollo del equipo y los patrocinadores.",
       "facts": [
         "Ejemplos",
         "Plan de carreras recordatorios, plan de etapas recordatorios, desarrollo de ventana, préstamo de emergencia, instalación completa, ciclista de liberación, objetivo patrocinador"
@@ -375,7 +375,7 @@
         "Algunas conversaciones no pueden ser respondidas dependiendo de can_reply."
       ],
       "tips": [
-        "Utilice el buzón de entrada para conversaciones, notificaciones para eventos de juego."
+        "Usa el buzón de entrada para conversaciones, notificaciones para eventos de juego."
       ],
       "links": [
         "Bandeja de entrada"
@@ -413,7 +413,7 @@
       "details": [
         "La vista general es mejor para los cheques diarios rápidos.",
         "La visión financiera muestra el salario, el valor de mercado y los contratos.",
-        "La vista de habilidades ayuda a comparar sprint, escalada, prueba de tiempo, plano, resistencia, recuperación, resistencia, coeficiente intelectual de carrera, trabajo en equipo y moral.",
+        "La vista de habilidades ayuda a comparar sprint, escalada, contrarreloj, plano, resistencia, recuperación, resistencia, coeficiente intelectual de carrera, trabajo en equipo y moral.",
         "La vista de formulario ayuda a juzgar la fatiga, la moral, la disponibilidad y el potencial.",
         "Los widgets de salpicadero de temporada pueden mostrar victorias, podios, top 10s, mejor GC, última carrera y próxima selección."
       ],
@@ -430,13 +430,13 @@
       "overview": "En general es un atajo útil, pero los atributos específicos del ciclista deciden el rol de carrera correcto y el uso táctico.",
       "facts": [
         "Habilidades",
-        "Sprint, escalada, prueba de tiempo, resistencia, plano, recuperación, resistencia, carrera IQ, trabajo en equipo, moral"
+        "Sprint, escalada, contrarreloj, resistencia, plano, recuperación, resistencia, carrera IQ, trabajo en equipo, moral"
       ],
       "details": [
         "Sprint importa en los acabados de manojos y trenes de sprint.",
         "Suba en etapas de montaña y termina en la cima.",
         "Cuestiones de prueba temporal en contextos de TT, prólogo y TTT.",
-        "El aguante mantiene fuertes a los ciclista a través de largas etapas.",
+        "El aguante mantiene fuertes a los ciclistas a través de largas etapas.",
         "El plano ayuda en carreteras de rodadura/plana, persecución y posicionamiento.",
         "La recuperación importa entre las carreras escénicas.",
         "La resistencia ayuda en el clima duro, el ritmo alto y el terreno difícil.",
@@ -445,7 +445,7 @@
         "La moral afecta la confianza y puede influir en el desempeño."
       ],
       "tips": [
-        "Coincidir con las habilidades del ciclista en función y tipo de escenario."
+        "Coincidir con las habilidades del ciclista en función y tipo de etapa."
       ]
     },
     "riderProfileDeep": {
@@ -473,7 +473,7 @@
     "fitnessHealthDeep": {
       "title": "Fitness, fatiga y salud",
       "subtitle": "Por qué un ciclista fuerte puede ser una mala elección hoy en día.",
-      "overview": "El rendimiento depende de algo más que atributos. Fatiga, enfermedad, lesión, estado de inadaptación y moral pueden cambiar el valor de la raza.",
+      "overview": "El rendimiento depende de algo más que atributos. Fatiga, enfermedad, lesión, estado de inadaptación y moral pueden cambiar el valor de la carrera.",
       "facts": [
         "Disponibilidad",
         "En forma, no totalmente en forma, herido, enfermo",
@@ -481,9 +481,9 @@
         "Fatiga, moral, caso de salud, recuperación"
       ],
       "details": [
-        "Los ciclista aptos normalmente son seguros si no están bloqueados por el horario.",
+        "los ciclistas aptos normalmente son seguros si no están bloqueados por el horario.",
         "Los ciclistas que no están en condiciones de adaptarse completamente pueden ser riesgosos y pueden necesitar apoyo médico.",
-        "Los ciclista heridos o enfermos no deben correr ni entrenar con fuerza.",
+        "los ciclistas heridos o enfermos no deben correr ni entrenar con fuerza.",
         "La alta fatiga puede reducir el rendimiento y aumentar el riesgo.",
         "La moral debe ser monitoreada porque la baja moral puede dañar la producción.",
         "El personal médico y la inversión del Centro Médico mejoran el apoyo a la recuperación."
@@ -508,12 +508,12 @@
         "La nitidez es especialmente útil cuando se construye un calendario de carreras."
       ],
       "tips": [
-        "Utilice carreras más pequeñas para preparar a los ciclista para objetivos más grandes."
+        "Usa carreras más pequeñas para preparar a los ciclistas para objetivos más grandes."
       ]
     },
     "contractsRenewalsRelease": {
       "title": "Contratos, renovaciones y liberación",
-      "subtitle": "Decisiones financieras en torno a los ciclista.",
+      "subtitle": "Decisiones financieras en torno a los ciclistas.",
       "overview": "Los contratos afectan a los salarios, la expiración, el costo de liberación, el calendario de renovación y el estado de la lista de transferencias.",
       "facts": [
         "Previsualización de la versión",
@@ -526,10 +526,10 @@
         "Los contratos que expiran deben revisarse antes de que finalice la temporada.",
         "Liberar a un ciclista puede costar el salario restante/compensación.",
         "La vista previa muestra si el club puede permitirse el lujo de la liberación.",
-        "Los ciclista que están en la lista de transferencia no pueden ser liberados mientras el listado está activo."
+        "los ciclistas que están en la lista de transferencia no pueden ser liberados mientras el listado está activo."
       ],
       "tips": [
-        "Compruebe los contratos antes de hacer transferencias."
+        "Comprueba los contratos antes de hacer transferencias."
       ]
     },
     "developingTeamDeep": {
@@ -549,9 +549,9 @@
       "details": [
         "El panel de estado muestra días reales jugados, días de juego jugados, balance de Coins, costo de Coins y permiso de compra.",
         "Después de la compra, la aplicación debe mantener el contexto del club activo en el club principal.",
-        "Las etiquetas de las ventanas de movimiento explican cuándo los ciclista pueden moverse.",
+        "Las etiquetas de las ventanas de movimiento explican cuándo los ciclistas pueden moverse.",
         "Los ciclistas en desarrollo más viejos pueden desencadenar advertencias.",
-        "Los ciclista de equipo en desarrollo pueden ser tratados como ciclista de la familia de usuarios en las pantallas de resultados de carreras."
+        "los ciclistas de equipo en desarrollo pueden ser tratados como ciclista de la familia de usuarios en las pantallas de resultados de carreras."
       ],
       "tips": [
         "Úsalo para desarrollar talento, no como almacenamiento ilimitado de listas."
@@ -566,12 +566,12 @@
       "overview": "El personal afecta la capacitación, recuperación, exploración, equipo y planificación de carreras.",
       "facts": [
         "Funciones",
-        "Entrenador, entrenador, entrenador de U23, médico, fisioterapeuta, nutricionista, mecánico, director deportivo, explorador/analista"
+        "Entrenador, entrenador, entrenador de U23, médico, fisioterapeuta, nutricionista, mecánico, director deportivo, scout/analista"
       ],
       "details": [
         "Head Coach apoya la formación y el desarrollo.",
         "El formador mejora la calidad de la formación diaria.",
-        "U23 Head Coach apoya el desarrollo de los ciclista.",
+        "U23 Head Coach apoya el desarrollo de los ciclistas.",
         "Equipo Doctor, Fisioterapeuta y Nutricionista apoyan la salud y la recuperación.",
         "Mecánica apoya equipos y sistemas técnicos.",
         "El director deportivo apoya las tácticas y la planificación de la carrera.",
@@ -597,7 +597,7 @@
         "Las advertencias de capacidad deben guiar a los usuarios a la infraestructura cuando proceda."
       ],
       "tips": [
-        "Compruebe tanto las ranuras abiertas y el salario antes de contratar."
+        "Comprueba tanto las ranuras abiertas y el salario antes de contratar."
       ]
     },
     "staffCoursesDeep": {
@@ -627,7 +627,7 @@
         "Intensidad",
         "Recuperación, ligera, normal, dura",
         "Enfoques",
-        "General, recuperación, sprint, escalada, plano, prueba de tiempo, resistencia, resistencia, carrera IQ, trabajo en equipo"
+        "General, recuperación, sprint, escalada, plano, contrarreloj, resistencia, resistencia, carrera IQ, trabajo en equipo"
       ],
       "details": [
         "Los valores predeterminados del equipo controlan el plan normal para un alcance de equipo.",

@@ -3,7 +3,7 @@
     "title": "Vista previa de reinicio de temporada",
     "description": "Revisa los movimientos de promoción y descenso antes de aplicar la temporada de vuelco.",
     "loading": "Cargando vista previa de restablecimiento de temporada...",
-    "failed": "Fallo al previsualizar el restablecimiento de la temporada."
+    "failed": "No se pudo previsualizar el restablecimiento de la temporada."
   },
   "table": {
     "team": "Equipo",

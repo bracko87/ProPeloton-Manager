@@ -18,7 +18,7 @@
   "sections": {
     "race": {
       "title": "Notificaciones de carreras",
-      "description": "Invitaciones, preparación, clima, planes de escenarios, problemas de la carrera y resultados."
+      "description": "Invitaciones, preparación, clima, planes de etapas, problemas de la carrera y resultados."
     },
     "team": {
       "title": "Notificaciones de equipo y ciclista",
@@ -35,32 +35,32 @@
   },
   "groups": {
     "raceInvitations": {
-      "label": "Invitaciones de raza",
-      "description": "Mostrar notificaciones cuando su equipo reciba una invitación de carrera."
+      "label": "Invitaciones de carrera",
+      "description": "Mostrar notificaciones cuando tu equipo reciba una invitación de carrera."
     },
     "raceApplicationResults": {
-      "label": "Resultados de la aplicación de la raza",
-      "description": "Mostrar notificaciones cuando su equipo es aceptado o rechazado para una carrera."
+      "label": "Resultados de la aplicación de la carrera",
+      "description": "Mostrar notificaciones cuando tu equipo es aceptado o rechazado para una carrera."
     },
     "races": {
       "label": "Actualizaciones del día de carrera",
-      "description": "Mostrar actualizaciones de la lista inicial, lista de inicio perdida, día de carrera y penalizaciones de carrera."
+      "description": "Mostrar actualizaciones de Startlist, plazos de Startlist perdidos, día de carrera y penalizaciones."
     },
     "racePreparation": {
-      "label": "Estado de preparación de la raza",
+      "label": "Estado de preparación de la carrera",
       "description": "Mostrar el estado básico y las notificaciones de consecuencias para la preparación de la carrera."
     },
     "stagePlanReminders": {
       "label": "Estado del plan de etapa",
-      "description": "Mostrar la apertura del plan de escenario y notificaciones de estado de bloqueo."
+      "description": "Mostrar la apertura del plan de etapa y notificaciones de estado de bloqueo."
     },
     "raceWeather": {
       "label": "Tiempo de carrera",
-      "description": "Mostrar notificaciones cuando las etapas, carreras o actividades relacionadas con la raza se ven afectadas por el clima."
+      "description": "Mostrar notificaciones cuando las etapas, carreras o actividades relacionadas con la carrera se ven afectadas por el clima."
     },
     "raceResults": {
       "label": "Resultados de las carreras",
-      "description": "Mostrar notificaciones para carreras terminadas, resultados de escenarios, clasificaciones y resúmenes de carreras."
+      "description": "Mostrar notificaciones para carreras terminadas, resultados de etapas, clasificaciones y resúmenes de carreras."
     },
     "teamUpdates": {
       "label": "Actualizaciones de equipos",
@@ -88,7 +88,7 @@
     },
     "retirementUpdates": {
       "label": "Actualizaciones de la jubilación",
-      "description": "Mostrar notificaciones cuando los ciclista o el personal anuncian la jubilación y cuando las jubilaciones se finalizan."
+      "description": "Mostrar notificaciones cuando los ciclistas o el personal anuncian la jubilación y cuando las jubilaciones se finalizan."
     },
     "financeAlerts": {
       "label": "Alertas financieras",
@@ -167,7 +167,7 @@
     "nextRenewal": "Próxima renovación",
     "autoRenew": "Renovar automáticamente cada temporada",
     "expired": "El acceso al equipo de desarrollo expiró",
-    "expiredDescription": "Su equipo, ciclista, contratos, resultados e historia permanecen almacenados. El equipo en desarrollo está actualmente solo de lectura.",
+    "expiredDescription": "tu equipo, ciclista, contratos, resultados e historia permanecen almacenados. El equipo en desarrollo está actualmente solo de lectura.",
     "reactivating": "Reactivando...",
     "activating": "Activando...",
     "getCoins": "Consigue Coins",
@@ -179,7 +179,7 @@
     "competitionRule": "Este equipo no puede ser promovido por encima del nivel Continental.",
     "rosterRule": "Tamaño máximo de la lista: 8 ciclista.",
     "ageRule": "Sólo los ciclistas de 23 años o menos son elegibles.",
-    "movementRule": "Los ciclista se mueven entre escuadrones sólo durante las ventanas de movimiento.",
+    "movementRule": "los ciclistas se mueven entre escuadrones sólo durante las ventanas de movimiento.",
     "teamLabel": "Equipo"
   },
   "dangerZone": {
@@ -200,7 +200,7 @@
     "confirmDescription": "Esta acción es permanente y no puede ser deshecho.",
     "aboutToDelete": "Usted está a punto de eliminar permanentemente:",
     "deleteTeam": "Su equipo actual",
-    "deleteGameData": "Los ciclista de su equipo, el equipo y los datos de juego relacionados con el equipo",
+    "deleteGameData": "los ciclistas de tu equipo, el equipo y los datos de juego relacionados con el equipo",
     "deleteAccount": "Su cuenta de autenticación para este correo electrónico",
     "afterDelete": "Después de la eliminación exitosa, usted será eliminado y redirigido a la página principal. Usted puede entonces registrarse de nuevo con la misma dirección de correo electrónico que un nuevo usuario.",
     "typeDelete": "Tipo DELETE para confirmar",
@@ -209,8 +209,8 @@
     "permanentButton": "Equipo de cierre permanente",
     "exactDeleteError": "Debe escribir DELETE exactamente para confirmar esta acción.",
     "missingSession": "Su sesión está perdida. Por favor, regístrese y vuelva a intentarlo.",
-    "shutdownFailed": "Falló al cerrar el equipo.",
-    "shutdownUnexpected": "Fallo al cerrar el equipo debido a un error inesperado.",
+    "shutdownFailed": "No se pudo cerrar el equipo.",
+    "shutdownUnexpected": "No se pudo cerrar el equipo debido a un error inesperado.",
     "closeAria": "Cerrar confirmación del equipo de apagado"
   }
 }

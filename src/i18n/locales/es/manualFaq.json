@@ -3,23 +3,23 @@
     "applicationBlocked": {
       "title": "FAQ: ¿Por qué no puedo aplicar a una carrera?",
       "subtitle": "Bloqueadores de aplicaciones comunes.",
-      "overview": "Una solicitud de carrera puede ser bloqueada por el estado de la raza, plazos, capacidad o elegibilidad.",
+      "overview": "Una solicitud de carrera puede ser bloqueada por el estado de la carrera, plazos, capacidad o elegibilidad.",
       "details": [
         "Las solicitudes pueden no estar abiertas todavía.",
         "Las solicitudes pueden estar cerradas.",
         "La carrera puede estar activa, terminada o cancelada.",
         "La carrera puede estar llena.",
-        "Su equipo puede no coincidir con los requisitos de entrada.",
+        "tu equipo puede no coincidir con los requisitos de entrada.",
         "Es posible que ya tenga una solicitud/entrada."
       ],
       "tips": [
-        "Abra el Detalle de Carrera y compruebe las reglas de entrada."
+        "Abre el Detalle de Carrera y compruebe las reglas de entrada."
       ]
     },
     "acceptedNotReady": {
       "title": "FAQ: ¿Por qué soy aceptado pero no estoy listo?",
       "subtitle": "La entrada aceptada no es un plan de carrera completo.",
-      "overview": "Aceptado significa que su equipo tiene un lugar; listo significa que los ciclista, personal, activos, equipos, suministros y planes de etapa son utilizables.",
+      "overview": "Aceptado significa que tu equipo tiene un lugar; listo significa que los ciclistas, personal, activos, equipos, suministros y planes de etapa son utilizables.",
       "details": [
         "Race Plan todavía necesita ser enviado.",
         "Stage Plans puede estar desaparecido.",
@@ -36,16 +36,16 @@
       "subtitle": "El rendimiento tiene muchas causas.",
       "overview": "Un ciclista fuerte puede desempeñar mal si el papel, la etapa, la condición, las tácticas o el apoyo estaban equivocados.",
       "details": [
-        "Compruebe si las habilidades del ciclista coinciden con el terreno.",
-        "Compruebe la fatiga y la disponibilidad.",
-        "Revisa la moral y la agudeza de la raza.",
+        "Comprueba si las habilidades del ciclista coinciden con el terreno.",
+        "Comprueba la fatiga y la disponibilidad.",
+        "Revisa la moral y la agudeza de la carrera.",
         "Revisa el papel y las tácticas.",
         "Comprobar el equipo y los suministros.",
-        "Compruebe el tiempo y los incidentes.",
+        "Comprueba el tiempo y los incidentes.",
         "Comprobar el apoyo del personal/activo."
       ],
       "tips": [
-        "Utilice la repetición y el comentario para aprender."
+        "Usa la repetición y el comentario para aprender."
       ]
     },
     "money": {
@@ -75,7 +75,7 @@
         "El equipo especializado puede tener compensaciones negativas."
       ],
       "tips": [
-        "Utilice la configuración correcta para el escenario correcto."
+        "Usa la configuración correcta para el etapa correcto."
       ]
     },
     "staffHiring": {
@@ -83,11 +83,11 @@
       "subtitle": "Bloqueadores de contratación comunes.",
       "overview": "La contratación de personal depende de la capacidad, la disponibilidad y el dinero.",
       "details": [
-        "Compruebe las ranuras abiertas para el papel.",
+        "Comprueba las ranuras abiertas para el papel.",
         "Actualizar la infraestructura si la capacidad está llena.",
         "Comprobar la disponibilidad de candidatos.",
-        "Compruebe el salario y el equilibrio semanal.",
-        "Compruebe si el papel está desbloqueado por las instalaciones."
+        "Comprueba el salario y el equilibrio semanal.",
+        "Comprueba si el papel está desbloqueado por las instalaciones."
       ],
       "tips": [
         "Los problemas de capacidad suelen apuntar a la infraestructura."

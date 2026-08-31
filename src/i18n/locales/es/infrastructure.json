@@ -15,7 +15,7 @@
     "close": "Cerrar",
     "cancel": "Cancelar",
     "save": "Guardar",
-    "saving": "Salvando...",
+    "saving": "Guardando...",
     "starting": "Comenzando...",
     "repair": "Reparación",
     "sell": "Vender",
@@ -115,7 +115,7 @@
     "scouting": "exploración"
   },
   "facilityNames": {
-    "clubHouse": "Club House",
+    "clubHouse": "Casa club",
     "trainingCenter": "Centro de capacitación",
     "medicalCenter": "Centro Médico",
     "youthAcademy": "Academia de la Juventud",
@@ -126,18 +126,18 @@
     "clubHouseShort": "La sede principal administrativa de su equipo de ciclismo.",
     "clubHouseLong": "La Casa Club es la base operativa principal del equipo. Apoya la administración, organización del club y crecimiento futuro del negocio. Los niveles más altos ayudan a desbloquear una estructura más amplia del personal y sistemas de gestión futuros.",
     "trainingCenterShort": "Base básica de entrenamiento para el desarrollo de ciclista y trabajo diario de coaching.",
-    "trainingCenterLong": "El Centro de Capacitación mejora la eficacia del personal de entrenamiento y apoya la calidad de la capacitación de los ciclista, el apoyo al desarrollo y la gestión de los riesgos de sobrecarga.",
+    "trainingCenterLong": "El Centro de Capacitación mejora la eficacia del personal de entrenamiento y apoya la calidad de la capacitación de los ciclistas, el apoyo al desarrollo y la gestión de los riesgos de sobrecarga.",
     "medicalCenterShort": "Instalaciones médicas para la prevención, tratamiento, recuperación y salud de los conductores.",
     "medicalCenterLong": "El Centro Médico apoya a Médicos de Equipo, Fisioterapeutas y Nutricionistas. Reduce las severas limitaciones médicas, mejora la prevención de lesiones y el apoyo para la recuperación, y amplía la capacidad del personal médico.",
     "youthAcademyShort": "Mecanismo de desarrollo a largo plazo para futuros ciclista y jóvenes.",
-    "youthAcademyLong": "La Academia Juvenil es una inversión estratégica a largo plazo. Apoya los sistemas de desarrollo juvenil, desbloquea el papel de entrenador jefe U23 y mejora posteriormente la formación y el desarrollo de los ciclista U23.",
+    "youthAcademyLong": "La Academia Juvenil es una inversión estratégica a largo plazo. Apoya los sistemas de desarrollo juvenil, desbloquea el papel de entrenador jefe U23 y mejora posteriormente la formación y el desarrollo de los ciclistas U23.",
     "mechanicsWorkshopShort": "Base de operaciones técnicas para mantenimiento y soporte de equipo.",
     "mechanicsWorkshopLong": "El taller de mecánica mejora la capacidad de soporte técnico y prepara el club para sistemas de equipos más profundos, velocidad de reparación y reducción de costos de mantenimiento.",
     "scoutingOfficeShort": "Centro de exploración e inteligencia para informes, información de mercado y descubrimiento de talentos.",
     "scoutingOfficeLong": "La Oficina de Scouts controla la tapa de calidad de los informes de scouts, la capacidad de scouts y los sistemas de inteligencia de mercado posteriores."
   },
   "assets": {
-    "teamCars": "Team Cars",
+    "teamCars": "Coches de equipo",
     "teamCar": "Coche de equipo",
     "teamCarFleet": "Flota de coches de equipo",
     "teamBus": "Autobús del equipo",
@@ -161,20 +161,20 @@
     "acquireEquipmentVan": "Van de equipo de pedido",
     "acquireMobileWorkshop": "Orden Taller móvil",
     "acquireMedicalVan": "Orden Van médica",
-    "teamCarAcquireDescription": "Elija un nivel de Team Car. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
-    "teamBusAcquireDescription": "Elija un nivel de Team Bus. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
-    "equipmentVanAcquireDescription": "Elija un nivel de Van de equipo. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
-    "mobileWorkshopAcquireDescription": "Elija un nivel de taller móvil. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
-    "medicalVanAcquireDescription": "Elija un nivel de Van médica. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
+    "teamCarAcquireDescription": "Elige un nivel de Team Car. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
+    "teamBusAcquireDescription": "Elige un nivel de Team Bus. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
+    "equipmentVanAcquireDescription": "Elige un nivel de Van de equipo. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
+    "mobileWorkshopAcquireDescription": "Elige un nivel de taller móvil. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
+    "medicalVanAcquireDescription": "Elige un nivel de Van médica. La entrega entrará en la cola del garaje y se completará después de la duración del juego configurado.",
     "garageFullDescription": "La capacidad del garaje está llena. Cancele una entrega pendiente, venda un activo disponible o espere a futuras actualizaciones de capacidad antes de comenzar otra entrega.",
     "noTiers": "No se han configurado niveles de adquisición para este tipo de activos todavía.",
     "startDelivery": "Orden de entrega",
     "garageSupportTitle": "Apoyo de garaje frente a asignación real de la carrera",
-    "teamCarAssignment": "El garaje muestra lo que posee su club y lo que se está entregando. Las bonificaciones reales de la carrera deben seguir procediendo de los coches asignados a un evento específico. Un garaje fuerte aumenta sus opciones disponibles, pero sólo los coches asignados y elegibles deben afectar a un resultado de la carrera.",
-    "teamBusAssignment": "El garaje muestra lo que posee su club y lo que se está entregando. Los bonos reales de carrera deben venir de los autobuses asignados a un evento o tour específico. Un garaje más fuerte mejora las opciones logísticas disponibles, pero sólo los autobuses asignados y elegibles deben afectar a los efectos de carrera o tour.",
-    "equipmentVanAssignment": "El garaje muestra lo que posee su club y lo que se está entregando. Los bonos reales de carrera o evento deben venir de las furgonetas de equipamiento asignadas a un evento específico. Un garaje más fuerte mejora las opciones logísticas disponibles, pero sólo las furgonetas asignadas y elegibles deben afectar los cálculos de eventos.",
-    "mobileWorkshopAssignment": "El garaje muestra lo que posee su club y lo que se está entregando. Las bonificaciones técnicas reales deben venir de los talleres móviles asignados a un evento específico. Un garaje más fuerte mejora las opciones de servicio, pero sólo los talleres asignados y elegibles deben afectar los cálculos de la carrera-día.",
-    "medicalVanAssignment": "El garaje muestra lo que posee su club y lo que se está entregando. Los bonos médicos reales deben venir de Vans médicas asignadas a un evento específico. Un garaje más fuerte mejora las opciones disponibles de respuesta a la salud, pero sólo asignados y elegibles camionetas deben afectar los cálculos médicos de día de carrera.",
+    "teamCarAssignment": "El garaje muestra lo que posee tu club y lo que se está entregando. Las bonificaciones reales de la carrera deben seguir procediendo de los coches asignados a un evento específico. Un garaje fuerte aumenta sus opciones disponibles, pero sólo los coches asignados y elegibles deben afectar a un resultado de la carrera.",
+    "teamBusAssignment": "El garaje muestra lo que posee tu club y lo que se está entregando. Los bonos reales de carrera deben venir de los autobuses asignados a un evento o tour específico. Un garaje más fuerte mejora las opciones logísticas disponibles, pero sólo los autobuses asignados y elegibles deben afectar a los efectos de carrera o tour.",
+    "equipmentVanAssignment": "El garaje muestra lo que posee tu club y lo que se está entregando. Los bonos reales de carrera o evento deben venir de las furgonetas de equipamiento asignadas a un evento específico. Un garaje más fuerte mejora las opciones logísticas disponibles, pero sólo las furgonetas asignadas y elegibles deben afectar los cálculos de eventos.",
+    "mobileWorkshopAssignment": "El garaje muestra lo que posee tu club y lo que se está entregando. Las bonificaciones técnicas reales deben venir de los talleres móviles asignados a un evento específico. Un garaje más fuerte mejora las opciones de servicio, pero sólo los talleres asignados y elegibles deben afectar los cálculos de la carrera-día.",
+    "medicalVanAssignment": "El garaje muestra lo que posee tu club y lo que se está entregando. Los bonos médicos reales deben venir de Vans médicas asignadas a un evento específico. Un garaje más fuerte mejora las opciones disponibles de respuesta a la salud, pero sólo asignados y elegibles camionetas deben afectar los cálculos médicos de día de carrera.",
     "garageSlotsTeamCar": "Los coches propios aparecen primero, las entregas pendientes llenan los próximos huecos vacíos, y los huecos abiertos siguen disponibles para futuras adquisiciones.",
     "garageSlotsGeneric": "Los activos propios aparecen primero, las entregas pendientes llenan los siguientes huecos vacíos, y los huecos abiertos permanecen disponibles para futuras adquisiciones.",
     "freePremiumMax": "{{free}} · Premium {{premium}} · Max {{max}}",
@@ -199,7 +199,7 @@
     "assignedLocked": "Este activo está actualmente asignado y bloqueado.",
     "renameTeamCar": "Cambiar el nombre del coche del equipo",
     "rename": "Cambiar el nombre de {{name}}",
-    "enterName": "Introduzca un nombre {{asset}}.",
+    "enterName": "Introduce un nombre {{asset}}.",
     "inRepairUntil": "En reparación hasta {{date}}",
     "inUse": "En uso: {{assignment}}",
     "inUseUntil": "En uso: {{assignment}} hasta {{date}}",
@@ -245,7 +245,7 @@
     "serviceUnavailableMessage": "No se pudo contactar con el servicio de entrega de activos. Inténtelo de nuevo.",
     "acquisitionBlocked": "Bloqueo de la adquisición de activos",
     "cannotAcquire": "Este activo no puede ser adquirido ahora mismo.",
-    "renameFailed": "Fallo al renombrar {{asset}}."
+    "renameFailed": "No se pudo renombrar {{asset}}."
   },
   "assetModal": {
     "closeAria": "Activos cerrados modal",
@@ -271,7 +271,7 @@
   "staffRoles": {
     "headCoach": "Entrenador principal",
     "trainer": "Formador",
-    "u23HeadCoach": "U23 Head Coach",
+    "u23HeadCoach": "Entrenador principal U23",
     "teamDoctor": "Equipo Doctor",
     "physio": "Fisio",
     "nutritionist": "Nutricionista",
@@ -289,7 +289,7 @@
     "projectsTitle": "Construye, actualiza y reembolsa",
     "projectsBody": "Cuando abres los detalles de una instalación, puedes ver los costos del siguiente nivel, cuánto tiempo lleva la construcción y qué bonos o desbloqueos traerá. Puedes iniciar un proyecto de construcción o actualización cuando tu club tenga suficiente dinero y capacidad de proyecto disponible. También puedes cancelar un proyecto de infraestructura. Si cancelas inmediatamente, recibirás un reembolso completo. Si cancelas más tarde, el reembolso puede ser menor.",
     "assetsTitle": "Equipo de activos",
-    "assetsBody": "La pestaña de activos muestra los vehículos y los activos de apoyo que su equipo puede utilizar. Esto incluye coches de equipo, autobuses de equipo, furgonetas de equipo, talleres móviles y furgonetas médicas. Estos activos pueden apoyar a su equipo durante carreras, viajes, preparación y campos de entrenamiento. Cada activo puede tener diferentes niveles, costos, condiciones, bonificaciones y límites. Abra los detalles de cada activo para entender lo que aporta y cómo puede ayudar a su equipo a funcionar mejor. Para usar esta página completamente, algunas funciones avanzadas, opciones de gestión o herramientas extendidas pueden requerir una cuenta Premium o una compra de Coins.",
+    "assetsBody": "La pestaña de activos muestra los vehículos y los activos de apoyo que tu equipo puede utilizar. Esto incluye coches de equipo, autobuses de equipo, furgonetas de equipo, talleres móviles y furgonetas médicas. Estos activos pueden apoyar a tu equipo durante carreras, viajes, preparación y campos de entrenamiento. Cada activo puede tener diferentes niveles, costos, condiciones, bonificaciones y límites. Abra los detalles de cada activo para entender lo que aporta y cómo puede ayudar a tu equipo a funcionar mejor. Para usar esta página completamente, algunas funciones avanzadas, opciones de gestión o herramientas extendidas pueden requerir una cuenta Premium o una compra de Coins.",
     "next": "Siguiente",
     "continueCalendar": "Continuar al calendario",
     "finish": "Termina por ahora.",
@@ -320,7 +320,7 @@
     "team_car": {
       "level1": {
         "name": "Coche Club básico",
-        "effect": "Proporciona cobertura básica de apoyo de raza, respuesta mecánica y soporte de alimentación."
+        "effect": "Proporciona cobertura básica de apoyo de carrera, respuesta mecánica y soporte de alimentación."
       },
       "level2": {
         "name": "Coche de soporte confiable",
@@ -374,7 +374,7 @@
       },
       "level2": {
         "name": "Taller Pro Mobile",
-        "effect": "Fuerte bonificación de velocidad de reparación, mayor reducción de costos de reparación y mejor recuperación de la condición post-raza."
+        "effect": "Fuerte bonificación de velocidad de reparación, mayor reducción de costos de reparación y mejor recuperación de la condición post-carrera."
       }
     },
     "medical_van": {
@@ -498,7 +498,7 @@
       },
       "level2": {
         "unlock": "Mejor apoyo al desarrollo de los jóvenes.",
-        "effect": "Los ciclista de U23 reciben un 10% de bonificación en entrenamiento y desarrollo una vez que el sistema U23 aplica este efecto."
+        "effect": "los ciclistas de U23 reciben un 10% de bonificación en entrenamiento y desarrollo una vez que el sistema U23 aplica este efecto."
       }
     }
   }

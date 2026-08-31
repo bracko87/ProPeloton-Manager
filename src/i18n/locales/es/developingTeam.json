@@ -27,9 +27,9 @@
     "mustMoveNextWindow": "Debe mover la siguiente ventana"
   },
   "healthReport": {
-    "subtitle": "Actual heridos, enfermos y en recuperación de los ciclista de equipo en desarrollo",
+    "subtitle": "Actual heridos, enfermos y en recuperación de los ciclistas de equipo en desarrollo",
     "lockedTitle": "Elaboración del informe de salud del equipo",
-    "lockedDescription": "Vea la información de lesiones, enfermedades y recuperación de todo el escuadrón para sus ciclista de desarrollo en un informe consolidado."
+    "lockedDescription": "Vea la información de lesiones, enfermedades y recuperación de todo el escuadrón para sus ciclistas de desarrollo en un informe consolidado."
   },
   "season": {
     "resultsLockedTitle": "Desarrollo de los resultados del equipo en esta temporada",

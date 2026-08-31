@@ -11,7 +11,7 @@
     "print": "Imprimir / Guardar como PDF",
     "discord": "Preguntar en Discord",
     "startHere": "Empieza aquí.",
-    "startHereBody": "Los nuevos gerentes deben leer por primera vez Inicio rápido, Tiempo de juego, Visión general, Escuadrón, Entrenamiento, Preparación de Carrera y Finanzas. Los gerentes experimentados pueden utilizar la búsqueda de temas específicos como derechos de nombres de patrocinadores, suministros de carreras, playoffs, auditorías de impuestos, rescates de emergencia o ventanas de movimiento de equipos en desarrollo.",
+    "startHereBody": "Los nuevos mánagers deben leer por primera vez Inicio rápido, Tiempo de juego, Visión general, Escuadrón, Entrenamiento, Preparación de Carrera y Finanzas. Los mánagers experimentados pueden utilizar la búsqueda de temas específicos como derechos de nombres de patrocinadores, suministros de carreras, playoffs, auditorías de impuestos, rescates de emergencia o ventanas de movimiento de equipos en desarrollo.",
     "search": "Manual de búsqueda",
     "searchPlaceholder": "Buscar Coins, patrocinadores, preparación de carreras, impuestos, equipos...",
     "category": "Categoría",
@@ -35,7 +35,7 @@
     "gettingStarted": "Cómo empezar",
     "coinsAccount": "Coins y cuenta",
     "clubIdentity": "Identidad del club",
-    "dashboard": "Tablero de mando",
+    "dashboard": "Panel",
     "riders": "Ciclistas",
     "training": "Entrenamiento",
     "equipment": "Equipamiento",
@@ -62,14 +62,14 @@
       ],
       "details": [
         "Esta página muestra alertas, condición del club, finanzas, patrocinadores, próximas carreras, noticias, carreras de hoy y acciones rápidas. Si algo importante necesita atención, Visión general generalmente debe apuntar hacia ella.",
-        "Abra Squad y aprenda a sus ciclista antes de comprar a nadie. Compruebe el papel, edad, país, en general, potencial, fatiga, moral, salario, contrato y habilidades. Un ciclista con un alto en general no es automáticamente el mejor ciclista para cada carrera.",
-        "Abierto Entrenamiento y establecer entrenamiento razonable. El entrenamiento duro puede ayudar al desarrollo, pero también puede crear fatiga. Un equipo cansado a menudo se desempeñará peor incluso cuando los ciclista se ven fuertes en el papel.",
-        "Abra Calendario para entender la temporada. Solicite carreras que se ajusten a su equipo, pero no sobrecargar a sus ciclista. Un equipo pequeño puede perder el rendimiento rápidamente si los mismos ciclista compiten con demasiada frecuencia.",
-        "Preparación de carrera abierta cuando su equipo es aceptado para una carrera. La entrada aceptada no es suficiente. Todavía necesita un Race Plan y luego Stage Plans antes de la carrera.",
+        "Abre Squad y aprenda a tus ciclistas antes de comprar a nadie. Compruebe el papel, edad, país, en general, potencial, fatiga, moral, salario, contrato y habilidades. Un ciclista con un alto en general no es automáticamente el mejor ciclista para cada carrera.",
+        "Abierto Entrenamiento y establecer entrenamiento razonable. El entrenamiento duro puede ayudar al desarrollo, pero también puede crear fatiga. Un equipo cansado a menudo se desempeñará peor incluso cuando los ciclistas se ven fuertes en el papel.",
+        "Abre Calendario para entender la temporada. Solicite carreras que se ajusten a tu equipo, pero no sobrecargar a tus ciclistas. Un equipo pequeño puede perder el rendimiento rápidamente si los mismos ciclista compiten con demasiada frecuencia.",
+        "Preparación de carrera abierta cuando tu equipo es aceptado para una carrera. La entrada aceptada no es suficiente. Todavía necesita un Race Plan y luego Stage Plans antes de la carrera.",
         "Abierto Finanzas antes de transferencias, equipo, infraestructura o campamentos de entrenamiento. Se necesita dinero en efectivo para sueldos, personal, impuestos, equipo, apoyo de carreras, campamentos de entrenamiento, políticas y transferencias."
       ],
       "tips": [
-        "Utilice la descripción general como su lista de verificación diaria.",
+        "Usa la descripción general como su lista de verificación diaria.",
         "Preparar las carreras temprano. No espere hasta el día final del juego.",
         "No gaste todo el dinero inicial en transferencias antes de comprobar los salarios y los costos recurrentes."
       ],
@@ -99,8 +99,8 @@
         "Siempre prepárese antes del último momento. Los plazos que faltan pueden bloquear los planes de carrera o dejar los planes de etapa incompletos."
       ],
       "tips": [
-        "Compruebe el tiempo de juego de pie de página antes de las acciones importantes.",
-        "Utilice el Calendario y la Preparación de la Carrera juntos."
+        "Comprueba el tiempo de juego de pie de página antes de las acciones importantes.",
+        "Usa el Calendario y la Preparación de la Carrera juntos."
       ]
     },
     "coins": {
@@ -125,8 +125,8 @@
         "Coins se adjuntan al usuario/cuenta. Si se liquida un club, la cuenta de usuario y las Coins permanecen activas; sólo que el club está cerrado."
       ],
       "tips": [
-        "Utilice los paquetes Pro para precios exactos en vivo.",
-        "Utilice Invitar a amigos para compartir su enlace de referencia."
+        "Usa los paquetes Pro para precios exactos en vivo.",
+        "Usa Invitar a amigos para compartir su enlace de referencia."
       ],
       "links": [
         "Paquetes de Coins",
@@ -134,17 +134,17 @@
       ]
     },
     "clubIdentity": {
-      "title": "Club Branding, Logotipo y Jersey",
+      "title": "Club Branding, Logotipo y maillot",
       "subtitle": "Nombre del equipo, colores, logotipo, camiseta y sponsor de nombres-derechos cerraduras.",
-      "overview": "Su identidad club incluye nombre, colores, logotipo y jersey. Se gestiona a través de Personalizar Equipo, pero las ofertas de nombres de patrocinadores pueden bloquear o cambiar temporalmente partes de la pantalla pública.",
+      "overview": "Su identidad club incluye nombre, colores, logotipo y maillot. Se gestiona a través de Personalizar Equipo, pero las ofertas de nombres de patrocinadores pueden bloquear o cambiar temporalmente partes de la pantalla pública.",
       "facts": [
         "Formatos de logotipo",
         "JPG, PNG, WEBP",
         "Tamaño máximo del logotipo",
         "0.5 MB",
-        "Formatos de Jersey",
+        "Formatos de maillot",
         "JPG, PNG, WEBP",
-        "Jersey tamaño máx.",
+        "maillot tamaño máx.",
         "1 MB y 512 × 512 px o más pequeños",
         "Almacenamiento de logotipos",
         "Los logotipos cargados se convierten a PNG y se almacenan en club-logos"
@@ -153,11 +153,11 @@
         "Personalizar Equipo persiste en la marca a través de funciones de backend, no sólo estado UI local. Esto es importante porque los derechos de nombre de patrocinadores pueden bloquear el nombre o afectar el nombre de la pantalla.",
         "Las subidas de logotipo se validan para el tipo y tamaño de archivo, se convierten a PNG en navegador y se almacenan en el cubo club-logos.",
         "La eliminación de un logotipo restaura un logotipo base generado en lugar de dejar el club sin un logotipo. El logotipo base utiliza los colores del equipo.",
-        "El sistema jersey almacena un kit casero en team_kits. Puede utilizar jerseys genéricos de pool, backback genérico, URLs de imágenes o imágenes subidas dependiendo del modo seleccionado.",
+        "El sistema maillot almacena un kit casero en team_kits. Puede utilizar maillots genéricos de pool, backback genérico, URLs de imágenes o imágenes subidas dependiendo del modo seleccionado.",
         "Un patrocinador de derechos de nominación suele pagar más, pero cambia temporalmente el nombre del equipo mostrado durante la temporada. El nombre original regresa al comienzo de la próxima temporada."
       ],
       "tips": [
-        "Utilice logotipos claros que aún funcionan en tamaños pequeños.",
+        "Usa logotipos claros que aún funcionan en tamaños pequeños.",
         "No acepte los derechos de nominación sólo por dinero; entienda el efecto de identidad."
       ],
       "links": [
@@ -212,8 +212,8 @@
         "Abrir una conversación carga mensajes y lo marca como leído. Enviar un mensaje utiliza RPCs de la bandeja de entrada."
       ],
       "tips": [
-        "Compruebe las notificaciones no leídas antes de los plazos de carrera.",
-        "Utilice el buzón de entrada para conversaciones, notificaciones para alertas de sistema/juego."
+        "Comprueba las notificaciones no leídas antes de los plazos de carrera.",
+        "Usa el buzón de entrada para conversaciones, notificaciones para alertas de sistema/juego."
       ],
       "links": [
         "Notificaciones",
@@ -224,7 +224,7 @@
     "squadRiders": {
       "title": "Vista de la lista de equipo, primer equipo y ciclista",
       "subtitle": "Cómo entender tu lista.",
-      "overview": "Escuadrón es donde usted administra e inspecciona a sus ciclista del Primer Equipo. Incluye diferentes vistas para los datos generales de la lista, finanzas, habilidades y formulario / desarrollo.",
+      "overview": "Escuadrón es donde usted administra e inspecciona a sus ciclistas del Primer Equipo. Incluye diferentes vistas para los datos generales de la lista, finanzas, habilidades y formulario / desarrollo.",
       "facts": [
         "Primer escuadrón máximo en UI",
         "18 ciclista",
@@ -238,10 +238,10 @@
         "Financial View muestra la información sobre salarios, valor de mercado e contratos. Úselo antes de renovar, liberar o vender ciclista.",
         "Skills View muestra atributos especializados. Úsalo antes de la selección de carreras porque un escalador, un velocista y un ciclista de prueba temporal necesitan habilidades diferentes.",
         "Forma y desarrollo muestra datos de preparación como fatiga, moral, potencial y disponibilidad.",
-        "El tablero de mando de la escuadra también puede mostrar victorias, podios, top 10s, mejores GC, últimas filas de carreras, próxima selección de carreras y instantáneas de tipo carrera."
+        "El Panel de la escuadra también puede mostrar victorias, podios, top 10s, mejores GC, últimas filas de carreras, próxima selección de carreras y instantáneas de tipo carrera."
       ],
       "tips": [
-        "No juzgue a los ciclista sólo por el total.",
+        "No juzgue a los ciclistas sólo por el total.",
         "Verifica los contratos antes de que termine la temporada.",
         "Abrir perfiles de ciclista para tomar decisiones más profundas."
       ],
@@ -252,22 +252,22 @@
     "riderProfileSkills": {
       "title": "Perfil del ciclista, habilidades, aptitud y Race Sharpness",
       "subtitle": "Por qué la calidad del ciclista es más que general.",
-      "overview": "Los perfiles de los ciclista muestran identidad, atributos, contrato, entrenamiento, comparación e historia. El valor real de la carrera del ciclista depende de la mezcla de habilidades, aptitud, moral, fatiga, salud y agudeza de la carrera.",
+      "overview": "Los perfiles de los ciclistas muestran identidad, atributos, contrato, entrenamiento, comparación e historia. El valor real de la carrera del ciclista depende de la mezcla de habilidades, aptitud, moral, fatiga, salud y agudeza de la carrera.",
       "facts": [
         "Pestañas de ciclista propias",
         "Resumen, Contrato, Entrenamiento, Comparar, Historia",
         "Atributos básicos",
-        "En general, potencial, sprint, escalada, prueba de tiempo, resistencia, plano, recuperación, resistencia, carrera IQ, trabajo en equipo",
+        "En general, potencial, sprint, escalada, contrarreloj, resistencia, plano, recuperación, resistencia, carrera IQ, trabajo en equipo",
         "Estado de disponibilidad",
         "En forma, no totalmente en forma, herido, enfermo"
       ],
       "details": [
-        "En general es un resumen amplio. Es útil, pero los atributos exactos deciden el papel de la raza. Sprint importa en los acabados de racimo. Escalar asuntos en las montañas. Tiempo de prueba importa en etapas TT. La recuperación es importante en las carreras de escenario.",
-        "La fatiga representa cansancio y estrés acumulado. La alta fatiga puede hacer que los ciclista fuertes no se den cuenta o se vuelvan arriesgados para seleccionar.",
+        "En general es un resumen amplio. Es útil, pero los atributos exactos deciden el papel de la carrera. Sprint importa en los acabados de racimo. Escalar asuntos en las montañas. Tiempo de prueba importa en etapas TT. La recuperación es importante en las carreras de etapa.",
+        "La fatiga representa cansancio y estrés acumulado. La alta fatiga puede hacer que los ciclistas fuertes no se den cuenta o se vuelvan arriesgados para seleccionar.",
         "La moral afecta la confianza y puede influir en el rendimiento.",
         "La nitidez de la carrera mide el ritmo de la carrera. Muy poca carrera puede reducir la nitidez, pero demasiada carrera crea riesgo de sobrecarga.",
-        "La comparación de ciclista muestra dos ciclista lado a lado con atributos como sprint, escalada, prueba de tiempo, resistencia, plano, recuperación, resistencia, coeficiente intelectual de carrera y trabajo en equipo.",
-        "Los perfiles externos de los ciclista pueden ocultar información exacta a menos que se explore."
+        "La comparación de ciclista muestra dos ciclista lado a lado con atributos como sprint, escalada, contrarreloj, resistencia, plano, recuperación, resistencia, coeficiente intelectual de carrera y trabajo en equipo.",
+        "Los perfiles externos de los ciclistas pueden ocultar información exacta a menos que se explore."
       ],
       "tips": [
         "Para sprints, comprobar sprints, planos, resistencia y trabajo en equipo.",
@@ -278,26 +278,26 @@
     "developingTeam": {
       "title": "Equipo de desarrollo",
       "subtitle": "U23/estructura de desarrollo, ventanas de compra y movimiento.",
-      "overview": "El equipo de desarrollo es un segundo equipo conectado al club principal. Se utiliza para ciclista jóvenes o secundarios y tiene su propio límite de lista y reglas de movimiento-ventana.",
+      "overview": "El equipo de desarrollo es un segundo equipo conectado al club principal. Se utiliza para ciclistas jóvenes o secundarios y tiene su propio límite de lista y reglas de movimiento-ventana.",
       "facts": [
         "Equipo de desarrollo max en UI",
         "8 ciclista",
         "Ubicación de la compra",
         "Página de preferencias",
         "Regla de circulación",
-        "Los ciclista sólo pueden moverse cuando la ventana de movimiento está abierta",
+        "los ciclistas sólo pueden moverse cuando la ventana de movimiento está abierta",
         "Alerta de edad",
-        "Los ciclista de 24 años y más requieren atención"
+        "los ciclistas de 24 años y más requieren atención"
       ],
       "details": [
         "Preferencias carga el estado de desarrollo del equipo desde el motor. Muestra días reales jugados, días de juego jugados, balance de Coins, costo de Coins, estado de requisito, estado de la ventana de movimiento y si la compra está permitida.",
         "Después de la compra, la aplicación coloca el club activo de vuelta al club principal para que el tablero de instrumentos no cambie accidentalmente al club en desarrollo.",
-        "Los ciclista del equipo en desarrollo sólo pueden ser trasladados al Primer Escuadrón si la ventana de movimiento está abierta y el Primer Escuadrón tiene espacio.",
+        "los ciclistas del equipo en desarrollo sólo pueden ser trasladados al Primer Escuadrón si la ventana de movimiento está abierta y el Primer Escuadrón tiene espacio.",
         "Si un ciclista del equipo en desarrollo tiene 24 años o más, la interfaz de usuario puede mostrar una advertencia de acción. Si la ventana de movimiento está abierta, se requiere acción ahora; de lo contrario, el ciclista debe mover la siguiente ventana."
       ],
       "tips": [
-        "Utilice el equipo de desarrollo para el talento futuro.",
-        "Mantenga una ranura de First Squad abierta si planea promover a un ciclista."
+        "Usa el equipo de desarrollo para el talento futuro.",
+        "Mantén una ranura de First Squad abierta si planea promover a un ciclista."
       ],
       "links": [
         "Preferencias",
@@ -306,11 +306,11 @@
     },
     "staff": {
       "title": "Funciones del personal y cursos para el personal",
-      "subtitle": "Cómo el personal apoya a su club.",
+      "subtitle": "Cómo el personal apoya a tu club.",
       "overview": "El personal mejora la capacitación, la recuperación, la exploración, la mecánica, el apoyo a las carreras y las operaciones.",
       "facts": [
         "Funciones",
-        "Entrenador, entrenador, entrenador jefe U23, médico de equipo, fisioterapeuta, nutricionista, mecánico, director deportivo, explorador / analista",
+        "Entrenador, entrenador, entrenador jefe U23, médico de equipo, fisioterapeuta, nutricionista, mecánico, director deportivo, scout / analista",
         "Estadísticas del personal",
         "Experiencia, experiencia, potencial, liderazgo, eficiencia, lealtad",
         "Cursos",
@@ -336,7 +336,7 @@
     },
     "training": {
       "title": "Campamentos de capacitación y entrenamiento regulares",
-      "subtitle": "Mejorar los ciclista sin destruir la frescura.",
+      "subtitle": "Mejorar los ciclistas sin destruir la frescura.",
       "overview": "El entrenamiento controla el desarrollo y la fatiga del ciclista. El entrenamiento regular es continuo. Los campos de entrenamiento son más fuertes, bloques más caros con ubicación, clima, ciclista y personal.",
       "facts": [
         "Tabuladores de entrenamiento",
@@ -349,7 +349,7 @@
         "Día libre, ligero, normal, duro"
       ],
       "details": [
-        "El entrenamiento regular puede utilizar los planes de los ciclista individuales y los de los equipos predeterminados. Las áreas de enfoque incluyen general, recuperación, sprint, escalada, plano, prueba de tiempo, resistencia, resistencia, coeficiente intelectual de carrera y trabajo en equipo.",
+        "El entrenamiento regular puede utilizar los planes de los ciclistas individuales y los de los equipos predeterminados. Las áreas de enfoque incluyen general, recuperación, sprint, escalada, plano, contrarreloj, resistencia, resistencia, coeficiente intelectual de carrera y trabajo en equipo.",
         "El entrenamiento duro puede crear más ganancias, pero también más fatiga y riesgo. El entrenamiento de recuperación es útil después de carreras duras o carreras de etapa.",
         "Los campamentos de entrenamiento incluyen ubicación, región, tipo de campamento, perfil del terreno, altitud, estrellas, índice de costos, multiplicador de calidad, comodidad de recuperación, semanas preferidas, semanas de riesgo y semanas cerradas.",
         "Las cotizaciones del campamento pueden incluir viajes, alojamiento, tarifa del campamento, logística, costo total, costo por rider, estado del tiempo, modificador de entrenamiento, oportunidad de día perdido y advertencias.",
@@ -358,7 +358,7 @@
       "tips": [
         "No entrenen a todos todo el tiempo.",
         "Coincidir entrenamiento para el calendario de carreras y rol del ciclista.",
-        "Compruebe el costo del campamento antes de reservar."
+        "Comprueba el costo del campamento antes de reservar."
       ],
       "links": [
         "Capacitación abierta"
@@ -374,13 +374,13 @@
         "Categorías duraderas",
         "Marco, ruedas, neumáticos, grupo, casco, zapatos",
         "Tipos de bonificación",
-        "Piso, montaÃ±o, adoquin, prueba de tiempo, sprint, reducción de fatiga",
+        "Llano, montaña, adoquín, contrarreloj, sprint, reducción de fatiga",
         "Etiquetas de calidad",
         "Básico, bueno, super"
       ],
       "details": [
         "La descripción general muestra preparación, resúmenes de categorías, configuración predeterminada, presets de configuración, suministros de carreras y soporte técnico para patrocinadores.",
-        "La configuración predeterminada de carrera se utiliza cuando no se elige ninguna configuración específica. Los presets de configuración permiten configuraciones especializadas para carreras de sprint, montaña, prueba de tiempo o adoquinado.",
+        "La configuración predeterminada de carrera se utiliza cuando no se elige ninguna configuración específica. Los presets de configuración permiten configuraciones especializadas para carreras de sprint, montaña, contrarreloj o adoquinado.",
         "El inventario muestra el equipo de propiedad activa. Los artículos vendidos y desechados están ocultos del inventario activo.",
         "Los estados del equipo incluyen listos, asignados, en mantenimiento y usados. Los artículos listos y usados pueden ser reparados/vendidos/desechados, mientras que los artículos asignados están restringidos.",
         "La reparación está generalmente disponible cuando la condición es 90% o inferior y el elemento puede ejecutar acciones.",
@@ -389,7 +389,7 @@
       "tips": [
         "Cree configuraciones para diferentes tipos de carreras.",
         "Repare equipos importantes antes de las carreras clave.",
-        "Compruebe los descuentos de patrocinador antes de comprar."
+        "Comprueba los descuentos de patrocinador antes de comprar."
       ],
       "links": [
         "Equipo abierto"
@@ -398,13 +398,13 @@
     "raceSupplies": {
       "title": "Suministros de carreras",
       "subtitle": "Consumibles y suministros duraderos para la etapa.",
-      "overview": "Los suministros de carreras son utilizados por Race Pready y Stage Plans. Algunos suministros se consumen en cada etapa, mientras que los jerseys y los impermeables son artículos reutilizables duraderos con límites de uso en etapas.",
+      "overview": "Los suministros de carreras son utilizados por Race Pready y Stage Plans. Algunos suministros se consumen en cada etapa, mientras que los maillots y los impermeables son artículos reutilizables duraderos con límites de uso en etapas.",
       "facts": [
         "Consumibles",
         "Bidónes / Botellas de agua, Gels de energía, Paquetes de nutrición",
         "Suministros duraderos",
-        "Carrera Jersey completa, chaquetas de lluvia",
-        "Carrera Jersey completa",
+        "Carrera maillot completa, chaquetas de lluvia",
+        "Carrera maillot completa",
         "Obligatorio; 10 usos en etapas por unidad",
         "Chaquetas para lluvia",
         "Elemento de tiempo opcional; 25 usos de la etapa por unidad"
@@ -413,7 +413,7 @@
         "Los bidónes utilizan 1-4 por ciclista en la configuración de la etapa. Son consumibles de un solo uso y soportan el control de la hidratación y la fatiga.",
         "Los Gels de energía utilizan 0-4 por ciclista. Soportan resistencia y eficiencia de esfuerzo final. No hay beneficio adicional después de cuatro geles por ciclista.",
         "Los paquetes de nutrición utilizan 0-2 por ciclista. Soportan estabilidad de resistencia y recuperación post-etapa. Las etapas largas sin nutrición pueden aumentar la presión de fatiga.",
-        "Carrera Jersey completa es obligatorio en Stage Plans. Los kits de jersey que faltan pueden bloquear la configuración del escenario.",
+        "Carrera maillot completa es obligatorio en Stage Plans. Los kits de maillot que faltan pueden bloquear la configuración del etapa.",
         "Las chaquetas de lluvia son opcionales pero valiosas en clima húmedo/frío. Los suministros duraderos ya no se pueden usar.",
         "Las carreras de etapa consumen rápidamente suministros porque se utilizan cantidades por ciclista por etapa."
       ],
@@ -452,7 +452,7 @@
       "tips": [
         "Actualizar basado en su cuello de botella.",
         "No empieces demasiados trabajos caros a la vez.",
-        "Mantenga los activos de la carrera reparados."
+        "Mantén los activos de la carrera reparados."
       ],
       "links": [
         "Infraestructura abierta"
@@ -475,15 +475,15 @@
       "details": [
         "Calendario de temporada muestra una vista diaria de las carreras, campamentos, eventos y días festivos.",
         "Calendario de carreras muestra las tarjetas de carreras con categoría, país, ciudad, fecha, tipo de carrera, límites de equipo, equipos aceptados y estado de la aplicación.",
-        "Las aplicaciones de carreras dependen de fechas abiertas/cerradas. Si las aplicaciones están cerradas, su equipo no puede solicitar más.",
+        "Las aplicaciones de carreras dependen de fechas abiertas/cerradas. Si las aplicaciones están cerradas, tu equipo no puede solicitar más.",
         "El detalle de la carrera muestra las reglas de entrada, como límites de equipo, límites de ciclista, fecha límite de solicitud, anuncio de lista de equipo, fecha límite de presentación del ciclista y fondo de premio.",
         "Los detalles de la etapa pueden incluir ruta, distancia, terreno, tipo de acabado, acabado en la cima, porcentajes de terreno, aumento de elevación, imagen de perfil, tiempo, sprints y puntos KOM.",
         "Después de que una carrera comienza, Race Detail puede mostrar estado en vivo, volver a reproducir marcos, comentarios, posiciones, resultados y clasificaciones."
       ],
       "tips": [
-        "Aplicar a carreras que se ajusten a su equipo.",
+        "Aplicar a carreras que se ajusten a tu equipo.",
         "Inspeccione los perfiles de la etapa antes de la preparación de la carrera.",
-        "Compruebe el tiempo cerca del día de carrera."
+        "Comprueba el tiempo cerca del día de carrera."
       ],
       "links": [
         "Abrir calendario"
@@ -492,13 +492,13 @@
     "racePreparation": {
       "title": "Preparación de la carrera y Stage Plans",
       "subtitle": "Carreras aceptadas, Race Plan, Stage Plans y preparación.",
-      "overview": "La preparación de la carrera convierte una carrera aceptada en un plan real. Es una de las páginas más importantes del juego porque el motor de carrera depende de la selección del ciclista, personal, activos, equipos, suministros y tácticas de escenario.",
+      "overview": "La preparación de la carrera convierte una carrera aceptada en un plan real. Es una de las páginas más importantes del juego porque el motor de carrera depende de la selección del ciclista, personal, activos, equipos, suministros y tácticas de etapa.",
       "facts": [
         "Tabuladores",
         "Carreras aceptadas, Race Plan, Stage Plans",
         "Personal de carrera",
         "Director de Deportes, Doctor en Equipo, Mecánico",
-        "Bienes de la raza",
+        "Bienes de la carrera",
         "Autobús del equipo, Van de equipo, taller móvil, furgoneta médica, coche del equipo 1-3",
         "Tonificación de la preparación para la etapa",
         "Verde, amarillo, naranja, rojo, gris"
@@ -508,13 +508,13 @@
         "Race Plan selecciona ciclista, personal, activos, equipo de configuración y suministros de carreras.",
         "Los corredores bloqueados o los activos pueden ser asignados a eventos superpuestos. Esto evita horarios imposibles.",
         "Previsualización de presupuesto muestra los costos y bonos de apoyo del personal, activos, equipo y políticas.",
-        "After Race Plan is submitted, Stage Plans open. Stage Plans set rider roles, team tactics, individual tactics, equipment and supplies for each stage.",
+        "Después de enviar Race Plan, se habilitan Stage Plans. Stage Plans define los roles de los ciclistas, las tácticas de equipo, las tácticas individuales, el equipamiento y los suministros de cada etapa.",
         "La preparación del plan de etapa rastrea los planes guardados, los planes utilizables, los planes perdidos, los planes vacíos, los suministros perdidos, la integridad táctica y la acción recomendada.",
         "Las sugerencias del Director de Deportes pueden ayudar con el equipo, tácticas de equipo, tácticas individuales y suministros, pero son guía, no garantizan planes perfectos."
       ],
       "tips": [
         "Prepárense antes de los plazos.",
-        "Utilice diferentes planes para diferentes tipos de etapas.",
+        "Usa diferentes planes para diferentes tipos de etapas.",
         "No ignore los suministros y el clima."
       ],
       "links": [
@@ -541,10 +541,10 @@
         "Continental Europa y América alimentan a Pro West playoff. Continental Asia, África y Oceanía alimentan a Pro East playoff.",
         "Continental Europa y Asia muestran los seis últimos relegados. Continental América y África muestran los cinco últimos relegados. Continental Oceanía muestra los tres últimos relegados.",
         "Amateur Oceania muestra los tres primeros puestos promovidos directamente. European Amateur Divisions show promoted directamente y 2nd-3rd entrar en el playoff de promoción. Otras divisiones Amateur show promoted directamente y 2nd-4th entrar en el playoff de promoción.",
-        "Los gerentes inactivos pueden permanecer visibles en posiciones/resultados. La interfaz de usuario puede mostrar una insignia de administrador inactivo para equipos inactivos y pendientes de retiro de fin de temporada."
+        "Los mánagers inactivos pueden permanecer visibles en posiciones/resultados. La interfaz de usuario puede mostrar una insignia de administrador inactivo para equipos inactivos y pendientes de retiro de fin de temporada."
       ],
       "tips": [
-        "Utilice el ranking como su objetivo a largo plazo.",
+        "Usa el ranking como su objetivo a largo plazo.",
         "Los puntos consistentes pueden ser mejores que un resultado afortunado."
       ],
       "links": [
@@ -574,8 +574,8 @@
         "El perfil del equipo puede incluir un botón de informe para la moderación cuando sea necesario."
       ],
       "tips": [
-        "Utilice Estadísticas antes de comprar ciclista.",
-        "Utilice los Perfiles de Equipo para estudiar rivales."
+        "Usa Estadísticas antes de comprar ciclista.",
+        "Usa los Perfiles de Equipo para estudiar rivales."
       ],
       "links": [
         "Estadísticas abiertas",
@@ -599,16 +599,16 @@
         "Todo, Nuevo, Revisado"
       ],
       "details": [
-        "Los ciclista que se encuentran en la lista de transferencia pertenecen a otro equipo. Primero, realiza una oferta de transferencia al club de venta. Si se acepta, se negocia el contrato del ciclista.",
+        "los ciclistas que se encuentran en la lista de transferencia pertenecen a otro equipo. Primero, realiza una oferta de transferencia al club de venta. Si se acepta, se negocia el contrato del ciclista.",
         "Los agentes libres no tienen un club de venta. Usted negocia directamente con el ciclista.",
         "Las previsualizaciones de negociación pueden mostrar porcentaje de aceptación, banda de aceptación, resultado predicho, puntuación salarial, puntuación de duración, puntuación de bonificación, puntuación de honorarios, puntuación de nivel y razones de bloqueo duro.",
         "Las ofertas deficientes repetidas pueden utilizar intentos y pueden conducir a rechazo, oposición, caducidad o cierre.",
-        "Los perfiles externos de los ciclista pueden ocultar datos exactos hasta que exista un informe de explorador.",
-        "Los informes Scout muestran al ciclista, explorador, fecha de finalización, en general, potencial, fortalezas, notas y estado Nuevo/Revisado."
+        "Los perfiles externos de los ciclistas pueden ocultar datos exactos hasta que exista un informe de scout.",
+        "Los informes Scout muestran al ciclista, scout, fecha de finalización, en general, potencial, fortalezas, notas y estado Nuevo/Revisado."
       ],
       "tips": [
-        "Explorador de los ciclista caros antes de pujar.",
-        "Compruebe el salario y la duración, no sólo el precio de transferencia.",
+        "scout de los ciclistas caros antes de pujar.",
+        "Comprueba el salario y la duración, no sólo el precio de transferencia.",
         "No compre ciclista que no se ajusten a su calendario de carreras."
       ],
       "links": [
@@ -619,7 +619,7 @@
     "finance": {
       "title": "Resumen financiero, transacciones e impuestos",
       "subtitle": "Saldo, flujo de caja operativo, filas de estados de cuentas y auditorías tributarias mensuales.",
-      "overview": "Las finanzas muestran la seguridad a largo plazo de su club. Los ciclista fuertes no importan si el club no puede pagar salarios, impuestos, pólizas, equipos u obligaciones obligatorias.",
+      "overview": "Las finanzas muestran la seguridad a largo plazo de tu club. los ciclistas fuertes no importan si el club no puede pagar salarios, impuestos, pólizas, equipos u obligaciones obligatorias.",
       "facts": [
         "Fichas de finanzas",
         "Resumen, Patrocinadores, Transacciones, Impuestos, Políticas y Operaciones de Equipo",
@@ -667,12 +667,12 @@
         "Los patrocinadores secundarios proporcionan soporte adicional a través de ranuras y se muestran sin logotipos/país en la interfaz de usuario actual.",
         "Los patrocinadores técnicos pueden proporcionar apoyo en efectivo, presupuesto de apoyo al equipo y descuentos en el equipo de categoría.",
         "Los objetivos del patrocinador pueden ser programados, comprobados, alcanzados, perdidos o pagados. Pueden vincularse a carreras de destino o a vistas de calendario.",
-        "Los contratos estándar de patrocinadores dan dinero sin cambiar el nombre del equipo. Los contratos de derechos de designación suelen pagar más, pero temporalmente cambian el nombre de la pantalla del equipo durante la temporada.",
+        "Los contratos estándar de patrocinadores dan dinero sin cambiar el nombre del equipo. Los contratos de Derechos de denominación suelen pagar más, pero temporalmente cambian el nombre de la pantalla del equipo durante la temporada.",
         "Políticas y operaciones del equipo afectan los costos recurrentes y de viaje. Mejores políticas de viajes, vivienda, nutrición o recuperación pueden ayudar al club pero aumentar el gasto.",
         "Las estimaciones de las políticas muestran totales semanales y mensuales, los costos reales del mes pasado y las previsiones de los próximos viajes."
       ],
       "tips": [
-        "Compruebe los objetivos del patrocinador antes de aceptar ofertas.",
+        "Comprueba los objetivos del patrocinador antes de aceptar ofertas.",
         "Los patrocinadores técnicos son valiosos si compran equipo.",
         "No actualice las políticas si el club no puede permitirse costos recurrentes."
       ],
@@ -696,7 +696,7 @@
         "La cuenta de usuario y las Coins siguen activas"
       ],
       "details": [
-        "Si se liquida un club, el tablero de mando se sustituye por una pantalla liquidada del club.",
+        "Si se liquida un club, el Panel se sustituye por una pantalla liquidada del club.",
         "La pantalla explica el recuento de rescate, la razón de liquidación y el tiempo de cierre cuando está disponible.",
         "Crea un nuevo club borra los IDs almacenados del club y envía al usuario a la creación del club.",
         "El equipo de reinicio es actualmente un marcador de posición/notice. La versión futura restablecería el club liquidado en la misma competencia con un equipo nuevo, sin personal y cero puntos.",
@@ -713,7 +713,7 @@
       "overview": "Las páginas de cuenta y soporte ayudan a los usuarios a gestionar datos de perfil, preferencias de notificación, compra de equipos de desarrollo, invitar enlaces, soporte Discord e informes de errores.",
       "facts": [
         "Regla de nombre de usuario del perfil",
-        "3–24 caracteres, espacios se convierten en subrayados, sólo letras/números/substrato",
+        "3–24 caracteres, espacios se convierten en guiones bajos; solo se permiten letras, números y guiones bajos",
         "Regla de cumpleaños",
         "Se guardó una vez durante el registro y sólo se leyó más tarde",
         "Confirmación de apagado",
@@ -732,8 +732,8 @@
         "Los botones de reporte de errores deben incluir el contexto actual de página/ruta. Los buenos informes incluyen el nombre de página, equipo, ciclista, carrera, capturas de pantalla y pasos de reproducción."
       ],
       "tips": [
-        "Utilice Contáctenos para obtener detalles de soporte.",
-        "Utilice Discord para ayuda comunitaria.",
+        "Usa Contáctenos para obtener detalles de soporte.",
+        "Usa Discord para ayuda comunitaria.",
         "Nunca publiques públicamente datos de cuentas/pagos sensibles."
       ],
       "links": [

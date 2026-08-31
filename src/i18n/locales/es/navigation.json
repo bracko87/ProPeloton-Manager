@@ -28,10 +28,10 @@
   "subtitle": "Gestión del ciclismo multijugador",
   "descriptions": {
     "overview": "Resumen y novedades del club",
-    "squad": "Gestiona los ciclistas y la plantilla",
+    "squad": "Gestiona la plantilla y los ciclistas",
     "calendar": "Próximas carreras y eventos",
     "racePreparation": "Startlist, logística y Stage Plans",
-    "teamRanking": "Clasificación y posición de los equipos",
+    "teamRanking": "Clasificaciones y posiciones",
     "training": "Entrenamiento y sesiones de los ciclistas",
     "equipment": "Bicicletas, ruedas y equipamiento",
     "infrastructure": "Instalaciones y desarrollo",
@@ -59,7 +59,7 @@
     "team": "Equipo:",
     "originalClub": "Club original:",
     "clubCountry": "País del club",
-    "manager": "Manager",
+    "manager": "Mánager",
     "ranking": "{{positionOrdinal}} en el ranking {{competition}}"
   },
   "footer": {
@@ -103,7 +103,7 @@
     "steps": "Pasos para reproducir",
     "stepsPlaceholder": "1. Ir a... 2. Haga clic en... 3. Ver problema...",
     "screenshot": "Captura de pantalla (opcional)",
-    "chooseImage": "Elija archivo de imagen (max {{size}} MB)",
+    "chooseImage": "Elige archivo de imagen (max {{size}} MB)",
     "removeScreenshot": "Eliminar la captura de pantalla",
     "cancel": "Cancelar",
     "sending": "Enviando...",
@@ -114,12 +114,12 @@
     "sendFailed": "No se pudo enviar el informe de error."
   },
   "playerReport": {
-    "reportPlayer": "Reportar jugador",
+    "reportPlayer": "Denunciar jugador",
     "checking": "Comprobando...",
     "alreadyReported": "Ya se ha informado",
     "alreadyPending": "Este usuario ya está informado y pendiente de revisión.",
     "sent": "Informe enviado.",
-    "title": "Reportar jugador o equipo",
+    "title": "Denunciar jugador o equipo",
     "subtitle": "Proporcione detalles para ayudar a nuestro equipo de moderación.",
     "close": "Cerrar",
     "reported": "Informado:",
@@ -127,7 +127,7 @@
     "page": "Página:",
     "reason": "Motivo",
     "abuse": "Abuso/acoso",
-    "cheating": "Trampas / Explotación de errores",
+    "cheating": "Trampas / exploits",
     "spam": "Spam / Publicidad",
     "other": "Otros",
     "severity": "Severidad",
@@ -146,7 +146,7 @@
     "imageTooLarge": "La captura de pantalla debe ser {{size}} MB o más pequeña.",
     "describeRequired": "Describe el problema.",
     "loginRequired": "Debes estar conectado para enviar un informe.",
-    "checkFailed": "Fallo al comprobar el informe existente.",
+    "checkFailed": "No se pudo comprobar el informe existente.",
     "sendFailed": "No se pudo enviar el informe."
   },
   "premiumFeature": {

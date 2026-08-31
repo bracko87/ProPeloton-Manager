@@ -24,12 +24,12 @@
     "off": "apagado"
   },
   "errors": {
-    "loadStatus": "Falló al cargar el estado de Developing Team.",
-    "activate": "Fallo al activar el Equipo de Desarrollo.",
-    "renewal": "Falló al actualizar la renovación automática."
+    "loadStatus": "No se pudo cargar el estado de Developing Team.",
+    "activate": "No se pudo activar el Equipo de Desarrollo.",
+    "renewal": "No se pudo actualizar la renovación automática."
   },
   "service": {
-    "summary": "Available to Free and Premium players. First activation costs {{activation}} coins. Each later season renewal or reactivation costs {{renewal}} coins. Premium membership does not waive these service costs.",
+    "summary": "Disponible para jugadores Free y Premium. La primera activación cuesta {{activation}} Coins. Cada renovación o reactivación en temporadas posteriores cuesta {{renewal}} Coins. La membresía Premium no elimina estos costes del servicio.",
     "eligibilityCosts": "Elegibilidad: 30 días de la vida real o 60 días en el juego. Primera activación: {{activation}} Coins. Renovación y reactivación: {{renewal}} Coins por temporada.",
     "accessUntilSeason": "El acceso sigue disponible hasta el final de la temporada {{season}}.",
     "season": "Temporada {{season}}",

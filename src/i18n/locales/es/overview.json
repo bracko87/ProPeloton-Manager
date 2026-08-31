@@ -1,7 +1,7 @@
 {
   "attention": {
     "allClear": "Todo claro, no hay tareas urgentes ahora mismo.",
-    "clickToExpand": "Haga clic para ampliar",
+    "clickToExpand": "Haz clic para ampliar",
     "due": "Deuda {{date}}",
     "until": "Hasta {{date}}",
     "dueToday": "A la vista de hoy",
@@ -22,7 +22,7 @@
     "closedSetup": "Configuración cerrada",
     "raceDeadline": "Plazo de la carrera",
     "raceEntry": "Entrada en la carrera",
-    "racePlanning": "Planificación de la raza",
+    "racePlanning": "Planificación de la carrera",
     "resultsReview": "Examen de los resultados",
     "applications": "Aplicaciones",
     "contracts": "Contratos",
@@ -145,7 +145,7 @@
     "unlock": "Desbloquear con Premium"
   },
   "news": {
-    "boardTitle": "News Board",
+    "boardTitle": "Panel de noticias",
     "boardSubtitle": "Último equipo y noticias mundiales. Haga clic en una fila para ampliarlo.",
     "team": "Equipo",
     "world": "Mundo",
@@ -158,13 +158,13 @@
     "cyclingNews": "Noticias sobre ciclismo",
     "latest": "Última",
     "noExternal": "No hay titulares de ciclismo externos disponibles todavía. La tarjeta se llenará automáticamente después de que el importador de noticias y RPC están instalados.",
-    "actionMayBeRequired": "Puede ser necesario actuar desde el panel de gestión de su equipo.",
+    "actionMayBeRequired": "Puede ser necesario actuar desde el panel de gestión de tu equipo.",
     "openRelatedPage": "Abrir página relacionada",
     "sponsorOffersReady": "Sponsor ofrece listo para la temporada {{season}}",
-    "sponsorOffersReadyBody": "Nuevas ofertas de patrocinadores están disponibles para su equipo. Elija sus patrocinadores para la temporada actual.",
+    "sponsorOffersReadyBody": "Nuevas ofertas de patrocinadores están disponibles para tu equipo. Elija sus patrocinadores para la temporada actual.",
     "staffHired": "Personal contratado: {{name}}",
-    "staffHiredBody": "{{name}} se ha unido a su club como {{role}}.",
-    "staffHiredBodyGeneric": "{{name}} se ha unido a su club. Abra la página relacionada para revisar la actualización.",
+    "staffHiredBody": "{{name}} se ha unido a tu club como {{role}}.",
+    "staffHiredBodyGeneric": "{{name}} se ha unido a tu club. Abra la página relacionada para revisar la actualización.",
     "staffRoleScoutAnalyst": "Analista Scout"
   },
   "races": {
@@ -185,7 +185,7 @@
     "todayCurrent": "Las carreras que ocurren en el día de juego actual.",
     "noToday": "No hay carreras en esta fecha",
     "noTodaySubtitle": "No hay eventos de carreras programados para el día de juego actual.",
-    "noRace": "No se ha encontrado ninguna raza todavía",
+    "noRace": "No se ha encontrado ninguna carrera todavía",
     "stages": "{{count}} etapas",
     "today": "Hoy"
   },
@@ -194,7 +194,7 @@
     "premiumDescription": "Vea preparación de la escuadra, estado físico, moral, salud, disponibilidad y presión contractual en un solo lugar.",
     "subtitle": "Predisposición, moral, salud y presión contraída.",
     "compactSubtitle": "Fitness y estado de la brigada inmediata.",
-    "fitness": "Fitness",
+    "fitness": "Condición física",
     "morale": "Moral",
     "readiness": "Preparación",
     "form": "Formulario",
@@ -268,7 +268,7 @@
     "wins": "Gana",
     "podiums": "Podio",
     "top10": "10 resultados principales",
-    "jerseys": "Jerseys",
+    "jerseys": "Maillots",
     "bestGc": "Mejor GC"
   },
   "clubSnapshot": {
@@ -278,7 +278,7 @@
   "common": {
     "open": "Abrir",
     "unknownCountry": "País desconocido",
-    "failedToLoad": "Fallo al cargar el tablero",
+    "failedToLoad": "No se pudo cargar el tablero",
     "unknownError": "Error desconocido"
   },
   "months": {
