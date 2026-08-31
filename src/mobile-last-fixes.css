@@ -1,5 +1,16 @@
 /* ProPeloton Manager — final mobile last-fixes layer. Desktop/tablet unchanged. */
 @media (max-width: 767px) {
+  /* Header: keep Coins compact instead of letting it consume the free space. */
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-coins'] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 92px !important;
+    max-width: 112px !important;
+    padding-left: 0.55rem !important;
+    padding-right: 0.55rem !important;
+    white-space: nowrap !important;
+  }
+
   /* Rider profile: country / role / age / OVR stay on one row. */
   [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2,
   [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2,
@@ -13,15 +24,24 @@
   [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span,
   [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span,
   [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span {
+    display: flex !important;
     width: 100% !important;
     min-width: 0 !important;
+    align-items: center !important;
     justify-content: center !important;
+    text-align: center !important;
     padding: 0.42rem 0.22rem !important;
     font-size: 0.68rem !important;
     line-height: 0.86rem !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span > *,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span > *,
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span > * {
+    flex: 0 0 auto !important;
   }
 
   /* A fifth status chip (for example Transfer Listed) can use a second row. */
