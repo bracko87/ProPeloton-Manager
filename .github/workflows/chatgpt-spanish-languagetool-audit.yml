@@ -1,0 +1,80 @@
+name: Spanish LanguageTool quality audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-spanish-languagetool-audit.yml'
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install LanguageTool Python bridge
+        run: pip install --disable-pip-version-check language-tool-python
+      - name: Scan Spanish locale strings
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          import language_tool_python
+
+          root=Path('src/i18n/locales/es')
+          tool=language_tool_python.LanguageTool('es')
+          placeholder=re.compile(r'\{\{[^{}]+\}\}')
+          protected=['ProPeloton Manager','Race Plan','Race Plans','Stage Plan','Stage Plans','Startlist','Race Engine','Replay Engine','Team Policy','Race Sharpness','WorldTeam','WorldTour','ProTeam','ProSeries','Continental','Coins','Premium','Supabase','Stripe','Discord','GC','KOM','U23','UCI','FTP','VO2','DNF','DNS','OTL','ITT','TTT']
+          ignore_rules={
+            'MORFOLOGIK_RULE_ES','HUNSPELL_RULE','UPPERCASE_SENTENCE_START','WHITESPACE_RULE',
+          }
+          rows=[]
+          def walk(v,path,file):
+            if isinstance(v,dict):
+              for k,x in v.items(): walk(x,f'{path}.{k}' if path else k,file)
+            elif isinstance(v,list):
+              for i,x in enumerate(v): walk(x,f'{path}[{i}]',file)
+            elif isinstance(v,str) and len(v.strip())>=4:
+              text=placeholder.sub('VALOR',v)
+              for term in protected:
+                text=text.replace(term,'PRODUCTO')
+              # Skip code-like or label-only values.
+              if len(text.split())<2 and not re.search(r'[.!?]',text): return
+              try: matches=tool.check(text)
+              except Exception as e:
+                rows.append((file,path,'TOOL_ERROR',str(e),v,'')); return
+              for m in matches:
+                rid=getattr(m,'rule_id','')
+                if rid in ignore_rules: continue
+                cat=str(getattr(m,'category',''))
+                msg=getattr(m,'message','')
+                repl=', '.join((getattr(m,'replacements',[]) or [])[:5])
+                rows.append((file,path,rid,f'{cat}: {msg}',v,repl))
+          for p in sorted(root.glob('*.json')):
+            walk(json.loads(p.read_text(encoding='utf-8')),'',p.name)
+          out=Path('/tmp/spanish-languagetool.tsv')
+          with out.open('w',encoding='utf-8') as f:
+            f.write('file\tpath\trule\tmessage\ttext\treplacements\n')
+            for row in rows:
+              f.write('\t'.join(str(x).replace('\t',' ').replace('\n',' ') for x in row)+'\n')
+          print('LanguageTool findings:',len(rows))
+          from collections import Counter
+          for rule,count in Counter(r[2] for r in rows).most_common(30): print(count,rule)
+          PY
+      - name: Upload grammar report
+        uses: actions/upload-artifact@v4
+        with:
+          name: spanish-languagetool-audit
+          path: /tmp/spanish-languagetool.tsv
+          retention-days: 2
