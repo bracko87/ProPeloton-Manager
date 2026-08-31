@@ -62,7 +62,7 @@
     "sponsorObjectiveTarget": "Objectif du promoteur",
     "stage": "Étape",
     "stageBadge": "{{race}} · Étape {{stage}}",
-    "stageBadgeCanceled": "{{race}} · Stage {{stage}} · Annulé ({{reason}})",
+    "stageBadgeCanceled": "{{race}} · Étape {{stage}} · Annulée ({{reason}})",
     "noRaceTutorial": "Aucune course n'est encore disponible pour ouvrir.",
     "applicationsNotOpen": "Demandes non ouvertes",
     "openApplications": "Ouvert aux applications",

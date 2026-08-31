@@ -251,7 +251,7 @@
     "offer": "Offre Premium",
     "marketValue": "Valeur de marché:",
     "notAvailable": "Ce coureur n'est pas disponible pour une offre premium en ce moment.",
-    "acceptedMissingId": "L'option de soumission à prix élevé acceptée est manquante.",
+    "acceptedMissingId": "L’offre Premium acceptée ne contient pas l’identifiant attendu. Fermez cette fenêtre puis rechargez le profil avant de réessayer.",
     "accepted": "Premium offre de {{amount}} a été accepté par le club AI. Continuer la négociation de contrat de coureur.",
     "counter": "Le club de l'IA a envoyé une contre-offre.",
     "counterAmount": "Le club AI veut {{amount}}. Vous pouvez fermer ce modal et soumettre une nouvelle offre premium à ce montant.",

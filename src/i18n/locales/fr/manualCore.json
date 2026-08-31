@@ -252,7 +252,7 @@
     "riderProfileSkills": {
       "title": "Profil de rider, compétences, fitness et Race Sharpness",
       "subtitle": "Pourquoi la qualité du coureur est plus que globale.",
-      "overview": "Les profils de rider montrent l'identité, les attributs, le contrat, l'entraînement, la comparaison et l'histoire.",
+      "overview": "Le profil d’un coureur présente son identité, ses attributs, son contrat, son entraînement, les comparaisons et son historique. Sa valeur réelle en course dépend de la combinaison de ses compétences, de sa forme, de son moral, de sa fatigue, de sa santé et de sa Race Sharpness.",
       "facts": [
         "Les propres onglets de motard",
         "Aperçu, Contrat, Formation, Comparer, Historique",

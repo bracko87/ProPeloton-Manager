@@ -147,7 +147,7 @@
     "contactForumSupport": {
       "title": "Contactez-nous, Forum et Discord",
       "subtitle": "Où les joueurs posent des questions ou signalent des problèmes.",
-      "overview": "Contact Us, Forum and Discord are support/community entry points. Current Contact Us is UI-only; Forum points users to Discord.",
+      "overview": "Contact Us, le Forum et Discord sont les principaux points d’accès à l’assistance et à la communauté. Pour le moment, Contact Us fonctionne uniquement dans l’interface, tandis que le Forum redirige les joueurs vers Discord.",
       "facts": [
         "Contactez-nous",
         "Formulaire de l'interface utilisateur uniquement dans le code courant",
@@ -341,7 +341,7 @@
       "overview": "Les notifications peuvent représenter des changements importants d'état dans la préparation de course, les finances, l'infrastructure, les transferts, le développement de l'équipe et les sponsors.",
       "facts": [
         "Exemples",
-        "Rappels de Race Plan, rappels de plan de étape, développement de fenêtre, prêt d'urgence, installation complète, libération des coureurs, objectif du promoteur"
+        "Rappels Race Plan, rappels Stage Plan, fenêtre de développement, prêt d’urgence, installation terminée, libération d’un coureur, objectif sponsor"
       ],
       "details": [
         "Les avis de préparation à la course avertissent lorsque les plans ou les Stage Plans doivent être pris en compte.",

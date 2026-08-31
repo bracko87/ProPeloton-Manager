@@ -31,7 +31,7 @@
     },
     "simpleOrDeep": {
       "title": "Jouer simple ou aller de fond",
-      "body": "Au début, vous pouvez jouer de manière simple: suivre les alertes, vérifier votre équipe, entrer dans les courses, préparer votre équipe et regarder les résultats. Plus tard, si vous voulez plus de profondeur, vous pouvez utiliser des systèmes avancés comme la fatigue des coureurs, le moral, la netteté de course, les objectifs de sponsor, les bonus d'équipement, les camps d'entraînement, le scoutisme, les négociations de transfert, les taxes, l'infrastructure, et la promotion ou la relégation.",
+      "body": "Au début, vous pouvez jouer simplement : suivez les alertes, vérifiez votre équipe, inscrivez-vous aux courses, préparez votre formation et consultez les résultats. Plus tard, si vous souhaitez davantage de profondeur, vous pourrez utiliser des systèmes avancés comme la fatigue des coureurs, le moral, la Race Sharpness, les objectifs sponsors, les bonus d’équipement, les stages d’entraînement, les négociations de transfert, la fiscalité, les infrastructures ainsi que la promotion et la relégation.",
       "primary": "Suivant"
     },
     "purpose": {
@@ -95,7 +95,7 @@
     },
     "details": {
       "title": "Vues et profils des coureurs",
-      "body": "The Squad page gives you different ways to look at your riders.\n\nYou can check financial information, skills, form, development, health, and availability. Skills can improve over time, so this page helps you follow how each rider is developing.\n\nBy clicking the View button, you can open the full rider profile with more detailed information.\n\nSome advanced rider tools, additional dashboards, or convenience features may require a Premium account or coin purchase.",
+      "body": "La page Effectif vous permet d’analyser vos coureurs sous plusieurs angles.\n\nVous pouvez consulter les informations financières, les compétences, la forme, le développement, la santé et la disponibilité. Les compétences peuvent progresser au fil du temps : cette page vous aide donc à suivre l’évolution de chaque coureur.\n\nEn cliquant sur le bouton Voir, vous ouvrez le profil complet du coureur avec des informations plus détaillées.\n\nCertains outils avancés, tableaux supplémentaires ou fonctions de confort peuvent nécessiter un compte Premium ou un achat en Coins.",
       "primary": "Suivant"
     },
     "developing": {
@@ -233,7 +233,7 @@
     },
     "racePlan": {
       "title": "Race Plan",
-      "body": "L'onglet Race Plan est l'endroit où vous préparez votre équipe pour une course acceptée. Important: le temps de jeu se déplace plus vite que la vie réelle. Une journée en jeu est de 12 heures en temps réel. Cela signifie deux jours en jeu égaux à une journée réelle. Gardez cela en tête lors de la vérification des fenêtres du plan de course, des délais pour les coureurs et des délais pour les plans d'étape. Lorsque la fenêtre Race Plan est ouverte, vous pouvez choisir si votre Première Équipe ou Developing Team va courir, si vous avez une Équipe en développement disponible. Vous devez également vérifier la date limite de soumission des coureurs. Jusqu'à cette date, vous pouvez choisir les coureurs qui participeront. La page montre le nombre minimal et maximal de coureurs autorisés pour la course. La liste des coureurs montre qui peut être sélectionné et qui est bloqué parce qu'ils sont déjà affectés à une autre course en chevauchement. Vous pouvez également affecter du personnel de course et des actifs de course s'ils sont disponibles.",
+      "body": "L’onglet Race Plan sert à préparer votre équipe pour une course acceptée. Important : le temps de jeu avance plus vite que le temps réel. Une journée de jeu correspond à 12 heures réelles, donc deux jours de jeu correspondent à une journée réelle. Gardez cela à l’esprit lorsque vous vérifiez les fenêtres du Race Plan, les échéances de sélection des coureurs et les échéances des Stage Plans, avec un Stage Plan propre à chaque étape. Lorsque la fenêtre Race Plan est ouverte, vous pouvez choisir si votre équipe première ou Developing Team participera, si Developing Team est disponible. Vérifiez aussi l’échéance de sélection des coureurs. Jusqu’à cette date, vous pouvez choisir les coureurs participants. La page indique le nombre minimum et maximum de coureurs autorisés. La liste montre qui peut être sélectionné et qui est bloqué parce qu’il est déjà affecté à une autre course qui se chevauche. Vous pouvez également affecter le staff et les ressources de course disponibles.",
       "primary": "Suivant"
     },
     "stagePlans": {
@@ -368,7 +368,7 @@
     },
     "premium": {
       "title": "Compte Premium",
-      "body": "This is your Premium access area.\n\nA Premium account can make the game easier and more comfortable by giving access to extra features, more advanced views, and useful convenience tools.\n\nPremium can also help you unlock more of the game’s full management experience.\n\nBy purchasing Premium or Pro Packages, you also directly support our team and help us continue developing ProPeloton Manager faster and better.",
+      "body": "Voici votre espace Premium.\n\nUn compte Premium peut rendre le jeu plus confortable en donnant accès à des fonctionnalités supplémentaires, des vues plus avancées et des outils pratiques.\n\nPremium peut également vous permettre de profiter plus largement de l’expérience complète de gestion.\n\nEn achetant Premium ou des Pro Packages, vous soutenez directement notre équipe et nous aidez à poursuivre le développement de ProPeloton Manager plus rapidement et dans de meilleures conditions.",
       "primary": "Suivant"
     },
     "finished": {

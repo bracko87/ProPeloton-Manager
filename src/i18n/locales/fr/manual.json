@@ -359,7 +359,7 @@
       "category": "Coureurs",
       "title": "Profil de rider, compétences, fitness et Race Sharpness",
       "subtitle": "Pourquoi la qualité du coureur est plus que globale.",
-      "overview": "Les profils de rider montrent l'identité, les attributs, le contrat, l'entraînement, la comparaison et l'histoire.",
+      "overview": "Le profil d’un coureur présente son identité, ses attributs, son contrat, son entraînement, les comparaisons et son historique. Sa valeur réelle en course dépend de la combinaison de ses compétences, de sa forme, de son moral, de sa fatigue, de sa santé et de sa Race Sharpness.",
       "details": [
         "Globalement est un résumé général. Il est utile, mais les attributs exacts décident le rôle de la course. Sprint compte dans les finitions groupées. L'escalade compte sur les montagnes.",
         "La fatigue représente la fatigue et le stress accumulé. La fatigue élevée peut rendre les coureurs forts sous-performants ou devenir risqués à choisir.",
@@ -1179,7 +1179,7 @@
       "category": "Appui et compte",
       "title": "Contactez-nous, Forum et Discord",
       "subtitle": "Où les joueurs posent des questions ou signalent des problèmes.",
-      "overview": "Contact Us, Forum and Discord are support/community entry points. Current Contact Us is UI-only; Forum points users to Discord.",
+      "overview": "Contact Us, le Forum et Discord sont les principaux points d’accès à l’assistance et à la communauté. Pour le moment, Contact Us fonctionne uniquement dans l’interface, tandis que le Forum redirige les joueurs vers Discord.",
       "details": [
         "Contactez-nous a des champs nom, courriel et message et affiche un message de remerciement après soumission.",
         "Forum explique qu'il n'y aura pas de forum dans le jeu sur cette page.",
@@ -1432,7 +1432,7 @@
       "facts": [
         {
           "label": "Exemples",
-          "value": "Rappels de Race Plan, rappels de plan de étape, développement de fenêtre, prêt d'urgence, installation complète, libération des coureurs, objectif du promoteur"
+          "value": "Rappels Race Plan, rappels Stage Plan, fenêtre de développement, prêt d’urgence, installation terminée, libération d’un coureur, objectif sponsor"
         }
       ],
       "tips": [
@@ -1546,7 +1546,7 @@
         },
         {
           "label": "Autres valeurs importantes",
-          "value": "Potentiel, moral, fatigue, netteté de la course"
+          "value": "Potentiel, moral, fatigue, Race Sharpness"
         }
       ],
       "tips": [
@@ -1612,7 +1612,7 @@
       "subtitle": "Rythme de course contre surcharge.",
       "overview": "La netteté de course récompense le Race Sharpness utile mais doit être équilibrée avec la fatigue et la fraîcheur.",
       "details": [
-        "La netteté de course n'est pas la même que la forme physique d'entraînement.",
+        "La Race Sharpness n’est pas la même chose que la forme obtenue à l’entraînement.",
         "Un coureur reposé peut encore manquer de rythme de course.",
         "Un coureur pointu peut encore être trop fatigué pour bien se comporter.",
         "Le meilleur état dépend de la prochaine course cible et le rôle du coureur."
@@ -1698,7 +1698,7 @@
       "details": [
         "Le coach principal dirige la qualité et le développement de la formation.",
         "Les formateurs augmentent le soutien au coaching et la capacité des coureurs.",
-        "Le directeur du sport appuie les tactiques, les plans de étape et les suggestions de préparation de course.",
+        "Le Directeur sportif soutient les tactiques, les Stage Plans et les recommandations de préparation de course.",
         "Le médecin d'équipe et Physio soutiennent la santé et le rétablissement.",
         "Nutritionniste soutient les systèmes de nutrition et de récupération.",
         "Le mécanicien soutient les réparations et les systèmes techniques.",
@@ -2412,7 +2412,7 @@
         "Les spécialistes de l'escalade peuvent supporter un leader GC ou cibler les étapes/classifications de montagne.",
         "Les coureurs de cassure devraient être sélectionnés pour le terrain et l'objectif de l'équipe. Un mauvais grimpeur ne devrait pas être le chasseur par défaut KOM lors d'une dure journée de montagne.",
         "Les domintiques sont précieuses même lorsque leur position d'arrivée personnelle est mauvaise parce que leur travail est de soutenir un autre coureur.",
-        "Les rôles devraient aussi tenir compte de la fatigue, du moral, de la santé et de la netteté de la course, et non seulement de la compétence brute."
+        "Les rôles doivent aussi tenir compte de la fatigue, du moral, de la santé et de la Race Sharpness, pas uniquement des qualités brutes du coureur."
       ],
       "facts": [
         {
@@ -3137,7 +3137,7 @@
         "Un sprinteur peut être élevé dans l'ensemble mais perd encore fortement sur une montagne.",
         "Un grimpeur peut être fort dans l'ensemble mais ne pas avoir les qualités d'impression/plat pour un chevron.",
         "Une fatigue élevée ou une mauvaise santé peut réduire les performances efficaces.",
-        "Un moral bas ou une faible netteté de course peut rendre un coureur normalement fort moins efficace.",
+        "Un moral faible ou une Race Sharpness insuffisante peut rendre un coureur normalement très fort moins efficace.",
         "Un mauvais rôle peut faire que le coureur dépense de l'énergie pour soutenir quelqu'un d'autre au lieu de courir pour un résultat personnel.",
         "L'équipement, les fournitures et le soutien de l'équipe peuvent également changer le résultat final."
       ],

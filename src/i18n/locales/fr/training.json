@@ -233,7 +233,7 @@
     "bookingBlocked": "Réservation bloquée",
     "warnings": "Avertissements",
     "genericShort": "{{city}} offre un environnement de formation ciblé {{type}} pour la préparation des coureurs.",
-    "genericLong": "This camp in {{city}} provides structured conditions for {{type}} training, team preparation, and rider development.",
+    "genericLong": "Ce stage d’entraînement à {{city}} offre des conditions structurées pour l’entraînement {{type}}, la préparation de l’équipe et le développement des coureurs.",
     "genericBestFor": "Les coureurs et les équipes se sont concentrés sur la préparation {{type}}.",
     "genericWeatherNote": "Vérifiez soigneusement les conditions de prévision et de saison avant de réserver.",
     "unknownStaff": "Personnel inconnu",

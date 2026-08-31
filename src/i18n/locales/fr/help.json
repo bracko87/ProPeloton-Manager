@@ -98,7 +98,7 @@
     "q3": "Comment fonctionne le temps de jeu?",
     "a3": "Un jour de jeu équivaut à 12 heures réelles. Deux jours de jeu équivalent à un jour de vie réelle. Ceci est important pour les fenêtres du Race Plan, les délais de soumission des coureurs, les délais du Stage Plan, les camps d'entraînement et d'autres systèmes de jeu basés sur le temps.",
     "q4": "Dans quel cas Course Preparation est -il utilisé?",
-    "a4": "La préparation des courses est l'endroit où les courses sont préparées. Vous sélectionnez les coureurs, le personnel, les actifs, l'équipement, les fournitures et les tactiques de étape.",
+    "a4": "La préparation de course est l’espace où vous préparez les courses auxquelles votre équipe a été acceptée. Sélectionnez les coureurs, le staff, les véhicules et autres ressources, l’équipement, le ravitaillement et les tactiques d’étape. Pour une course par étapes, préparez également les tactiques de chaque étape après l’envoi du Race Plan.",
     "q5": "Pourquoi est-ce que je vois différents statuts dans les courses acceptées?",
     "a5": "Les courses acceptées peuvent afficher des statuts tels que Race Plan Open, Rider Reached, Stage Plans Open, Course Active, Course Fined ou All Set. Ces statuts vous indiquent quelle action est actuellement nécessaire.",
     "q6": "Comment améliorer mes coureurs plus rapidement?",
