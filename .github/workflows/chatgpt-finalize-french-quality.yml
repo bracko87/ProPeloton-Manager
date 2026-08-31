@@ -1,0 +1,61 @@
+name: Finalize French quality
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-finalize-french-quality.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  finalize-french:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply final French human-quality corrections
+        run: python .github/scripts/finalize_french_quality_20260831.py
+
+      - name: Strict French semantic and structural audit
+        shell: bash
+        run: python .github/scripts/audit_french_completion_20260831.py | tee /tmp/french-finalize.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit finalized French package
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/fr
+          if git diff --cached --quiet; then
+            echo 'No French locale changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Finalize French language quality'
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Upload final French quality report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: french-finalize-quality-audit
+          path: /tmp/french-finalize.txt
+          retention-days: 3
+          if-no-files-found: warn
