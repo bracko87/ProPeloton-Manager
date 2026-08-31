@@ -1,0 +1,64 @@
+name: Polish Italian localization baseline
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/polish_italian_baseline_20260831.py'
+      - '.github/workflows/chatgpt-polish-italian-baseline.yml'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  polish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply Italian cycling terminology polish
+        run: python .github/scripts/polish_italian_baseline_20260831.py
+
+      - name: Measure remaining Italian semantic blockers
+        id: semantic_audit
+        continue-on-error: true
+        shell: bash
+        run: python .github/scripts/audit_italian_completion_20260831.py | tee /tmp/italian-after-polish.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit polished Italian package
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/it
+          if git diff --cached --quiet; then
+            echo 'No Italian locale changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Polish Italian cycling terminology'
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Upload Italian polish audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: italian-baseline-polish-audit
+          path: /tmp/italian-after-polish.txt
+          retention-days: 3
+          if-no-files-found: warn
