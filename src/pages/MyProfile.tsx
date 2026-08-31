@@ -542,9 +542,7 @@ export default function MyProfilePage(): JSX.Element {
               className="flex w-full items-center gap-3 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-left text-sm shadow-sm transition hover:border-yellow-400 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-200 disabled:cursor-wait disabled:opacity-70"
             >
               <img
-      src={activeLanguageDefinition.code === 'sr-Latn'
-        ? 'https://flagcdn.com/w40/rs.png'
-        : 'https://flagcdn.com/w40/gb.png'}
+      src={`https://flagcdn.com/w40/${activeLanguageDefinition.countryCode.toLowerCase()}.png`}
       alt=""
       aria-hidden="true"
       className="h-4 w-6 shrink-0 rounded-[2px] object-cover"
@@ -591,9 +589,7 @@ export default function MyProfilePage(): JSX.Element {
                       ].join(' ')}
                     >
                       <img
-              src={language.code === 'sr-Latn'
-                ? 'https://flagcdn.com/w40/rs.png'
-                : 'https://flagcdn.com/w40/gb.png'}
+              src={`https://flagcdn.com/w40/${language.countryCode.toLowerCase()}.png`}
               alt=""
               aria-hidden="true"
               className="h-4 w-6 shrink-0 rounded-[2px] object-cover"
