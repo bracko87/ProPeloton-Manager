@@ -1,0 +1,54 @@
+name: French human quality polish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/polish_french_human_quality_20260831.py'
+      - '.github/scripts/audit_french_human_quality_20260831.py'
+      - '.github/workflows/chatgpt-french-human-polish.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  french-human-polish:
+    runs-on: ubuntu-24.04
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply human-quality French polish
+        run: python .github/scripts/polish_french_human_quality_20260831.py
+
+      - name: Structural and semantic French gate
+        run: python .github/scripts/audit_french_completion_20260831.py
+
+      - name: Human-quality French gate
+        run: python .github/scripts/audit_french_human_quality_20260831.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit polished French locale
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/fr
+          if git diff --cached --quiet; then
+            echo 'No French locale changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Polish French language quality'
+          git pull --rebase origin main
+          git push origin main
