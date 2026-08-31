@@ -1,0 +1,13 @@
+{
+  "preferences": {
+    "title": "Préférences",
+    "languageSectionTitle": "Langue",
+    "languageSectionDescription": "Choisissez la langue utilisée dans ProPeloton Manager."
+  },
+  "dropdown": {
+    "guest": "Invité",
+    "club": "Club",
+    "menu": "Menu du profil",
+    "signedInAs": "Signé comme"
+  }
+}

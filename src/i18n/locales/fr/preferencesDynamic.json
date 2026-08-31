@@ -1,0 +1,55 @@
+{
+  "coins": {
+    "perRenewal": "Coins {{cost}} par renouvellement",
+    "toActivate": "{{cost}} Coins à activer",
+    "reactivationPrice": "Prix de réactivation: {{cost}} Coins",
+    "nextRenewal": "Prochain renouvellement: {{cost}} coins",
+    "firstActivation": "Première activation: {{cost}} Coins"
+  },
+  "movement": {
+    "open": "Fenêtre de mouvement ouverte maintenant: {{label}}",
+    "closed": "Fenêtre de mouvement fermée. Fenêtre suivante: {{label}}",
+    "unavailable": "Fenêtre de mouvement non disponible.",
+    "currentWindow": "Fenêtre actuelle",
+    "unknown": "Inconnu"
+  },
+  "activation": {
+    "reactivateForSeason": "Réactiver pour la saison {{season}} — {{cost}} Coins",
+    "activate": "Activer Developing Team — {{cost}} Coins",
+    "activatedForSeason": "Équipe de développement activée pour la saison {{season}}. Le renouvellement automatique est {{renewal}}.",
+    "activatedSuccessfully": "L'équipe de développement s'est activée avec succès.",
+    "renewalEnabled": "Développement de l'équipe de renouvellement automatique activé.",
+    "renewalDisabled": "Développement de l'équipe de renouvellement automatique désactivé.",
+    "on": "le",
+    "off": "Départ"
+  },
+  "errors": {
+    "loadStatus": "Il a échoué à charger le statut d'équipe en développement.",
+    "activate": "Impossible d'activer l'équipe en développement.",
+    "renewal": "Impossible de mettre à jour le renouvellement automatique."
+  },
+  "service": {
+    "summary": "Disponible pour les joueurs gratuits et Premium. Premier coût d'activation {{activation}} Coins. Chaque frais de renouvellement ou de réactivation de saison ultérieure {{renewal}} Coins. Premium adhésion ne dispense pas ces coûts de service.",
+    "eligibilityCosts": "Admissibilité: 30 jours réels ou 60 jours en jeu. Première activation: {{activation}} coins. Renouvellement et réactivation: {{renewal}} coins par saison.",
+    "accessUntilSeason": "L'accès reste disponible jusqu'à la fin de la saison {{season}}.",
+    "season": "Saison {{season}}",
+    "endSeason": "Fin de saison {{season}}",
+    "startSeason": "Début de la saison {{season}}",
+    "coins": "Coins de monnaie {{count}}",
+    "autoRenewHelp": "Lorsque activé, les Coins {{cost}} seront déduites au début de la saison prochaine. Si votre solde est trop bas, le renouvellement échouera et l'équipe en développement deviendra en lecture seule.",
+    "activateSeason": "Activer pour la saison {{season}}",
+    "existingTeam": "Votre équipe de développement existante sera activée pour cette saison.",
+    "newTeam": "Une équipe en développement sera créée et activée pour cette saison.",
+    "activationAccess": "L'accès dure jusqu'à la fin de la saison en cours. Le renouvellement automatique est activé par défaut et peut être désactivé à tout moment.",
+    "needCoins": "Il vous faut {{cost}} Coins pour activer l’accès à Developing Team. Solde actuel : {{balance}} Coins.",
+    "team": "Équipe: {{name}}",
+    "closeActivation": "Fermer Développement de la confirmation d'activation de l'équipe",
+    "confirmActivate": "Activer l'équipe de développement pour la saison {{season}}?",
+    "confirmReactivate": "Réactiver l'équipe de développement pour la saison {{season}}?",
+    "deductCoins": "{{cost}} Coins seront déduites de votre portefeuille.",
+    "accessThisSeason": "L'accès dure jusqu'à la fin de cette saison en jeu.",
+    "autoRenewModal": "Le renouvellement automatique sera activé par défaut. Vous pouvez l'éteindre à tout moment dans Préférences ou Premium & Billing.",
+    "actionActivate": "Activer pour {{cost}} Coins",
+    "actionReactivate": "Réactiver pour {{cost}} Coins"
+  }
+}

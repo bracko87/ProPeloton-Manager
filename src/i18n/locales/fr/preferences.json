@@ -1,0 +1,216 @@
+{
+  "page": {
+    "title": "Préférences",
+    "description": "De vrais paramètres utilisables: contrôle de notification dans le jeu et actions de zone de danger de l'équipe."
+  },
+  "notifications": {
+    "title": "Notifications dans le même format",
+    "description": "Les notifications de base et les notifications de conseillers du personnel sont contrôlées séparément.",
+    "coreTitle": "Notifications essentielles",
+    "coreDescription": "Notifications de jeu normales qui restent disponibles sans un conseiller du personnel rémunéré.",
+    "advisorTitle": "Avis aux conseillers du personnel",
+    "advisorDescription": "Les notifications de conseillers payants regroupées par sujet. La commutation d'une catégorie hors de tout mute chaque type de notification dans ce sujet. Les types de notification individuels peuvent ensuite être démutulés de leur carte de notification sans changer cette case de catégorie.",
+    "advisorSaveError": "Impossible d'enregistrer le paramètre de notification du conseiller du personnel. Veuillez réessayer.",
+    "advisorInactiveSuffix": "Activer le conseiller du personnel requis pour contrôler cette notification.",
+    "coreAdvisorNote": "Une notification de base et une notification de conseiller peuvent couvrir le même sujet sans être le même événement. Exemple: Course Supplies Low reste Core, tandis que l'analyse de l'équipement et de l'atelier est payée.",
+    "enabledCount": "{{enabled}}/{{total}} sur"
+  },
+  "sections": {
+    "race": {
+      "title": "Notifications de course",
+      "description": "Invitations, préparation, météo, Stage Plans, questions de jour de course, et résultats."
+    },
+    "team": {
+      "title": "Notifications d'équipe et de coureur",
+      "description": "Riders, personnel, transferts, camps d'entraînement, scoutisme et retraites."
+    },
+    "club": {
+      "title": "Notifications de gestion de club",
+      "description": "Finances, Coins de monnaie, récompenses, fournitures, équipement, taxes et infrastructures."
+    },
+    "account": {
+      "title": "Notifications de compte et système",
+      "description": "Messages officiels de jeu et informations d'embarquement."
+    }
+  },
+  "groups": {
+    "raceInvitations": {
+      "label": "Invitations à la course",
+      "description": "Afficher les notifications lorsque votre équipe reçoit une invitation à la course."
+    },
+    "raceApplicationResults": {
+      "label": "Résultats de l'application course",
+      "description": "Afficher les notifications lorsque votre équipe est acceptée ou refusée pour une course."
+    },
+    "races": {
+      "label": "Mises à jour du jour de course",
+      "description": "Afficher les mises à jour de la startlist, de la startlist manquée, du jour de course et de la pénalité de course."
+    },
+    "racePreparation": {
+      "label": "État de préparation des courses",
+      "description": "Afficher les notifications de statut et de conséquence de base pour la préparation de la course. Les conseils proactifs de coureur-morte-ligne appartient à Sports Director Advisory."
+    },
+    "stagePlanReminders": {
+      "label": "État d'avancement du Stage Plan",
+      "description": "Afficher les avis d'ouverture et d'état d'écluse de plan de base."
+    },
+    "raceWeather": {
+      "label": "Météo de course",
+      "description": "Afficher les notifications lorsque les étapes, les courses ou les activités liées à la course sont affectées par la météo."
+    },
+    "raceResults": {
+      "label": "Résultats de course",
+      "description": "Afficher les notifications pour les courses terminées, les résultats d'étape, les classifications et les résumés de course."
+    },
+    "teamUpdates": {
+      "label": "Mises à jour de l'équipe",
+      "description": "Afficher les notifications relatives aux coureurs, moral, santé, contrats, personnel et changements d'équipe interne."
+    },
+    "staffContracts": {
+      "label": "Contrats de personnel",
+      "description": "Afficher les notifications concernant les contrats de personnel qui expirent et le calendrier de renouvellement."
+    },
+    "staffCourses": {
+      "label": "Cours de personnel",
+      "description": "Afficher les notifications lorsqu'un cours du personnel est terminé et que des gains sont appliqués."
+    },
+    "transferUpdates": {
+      "label": "Mises à jour du transfert",
+      "description": "Afficher le transfert de coureur, coureur libre, offre, et les notifications de négociation."
+    },
+    "trainingCamps": {
+      "label": "Camps d ' entraînement",
+      "description": "Afficher les notifications pour les débuts du camp d'entraînement, les rapports quotidiens, les avertissements météorologiques et les achèvements."
+    },
+    "scoutingReports": {
+      "label": "Rapports de scoutisme",
+      "description": "Afficher les notifications lorsqu'un rapport de dépistage est terminé."
+    },
+    "retirementUpdates": {
+      "label": "Mises à jour sur la retraite",
+      "description": "Afficher les avis lorsque les coureurs ou le personnel annoncent la retraite et lorsque les départs à la retraite sont finalisés."
+    },
+    "financeAlerts": {
+      "label": "Alertes financières",
+      "description": "Présentez les avertissements financiers importants, les objectifs du promoteur, les prêts d'urgence, les alertes fiscales, les questions de paie et les avis d'insolvabilité."
+    },
+    "walletRewards": {
+      "label": "Coins & récompenses",
+      "description": "Afficher les achats de Coins, les crédits de Coins, les cadeaux d'anniversaire, les récompenses de référence et les messages de récompense de portefeuille."
+    },
+    "competitionRewards": {
+      "label": "Récompenses de concours",
+      "description": "Montrez les récompenses de la saison de roulement pour les résultats de la ligue et de la compétition."
+    },
+    "taxUpdates": {
+      "label": "Mises à jour fiscales",
+      "description": "Afficher les notifications pour les audits fiscaux et les événements financiers liés à l'impôt."
+    },
+    "raceSupplies": {
+      "label": "Fournitures pour les courses",
+      "description": "Afficher les notifications lorsque les fournitures de course sont faibles, manquantes ou doivent être restockées avant les événements."
+    },
+    "equipmentUpdates": {
+      "label": "Mise à jour du matériel",
+      "description": "Afficher les notifications pour l'entretien de l'équipement, les ventes, les actions de rejet et les mises à jour du cycle de vie de l'équipement."
+    },
+    "infrastructureUpdates": {
+      "label": "Mises à jour des infrastructures",
+      "description": "Afficher les notifications pour les commandes d'infrastructure, les livraisons, les réparations, les ventes, les mises à niveau et les avertissements d'état."
+    },
+    "systemMessages": {
+      "label": "Messages système",
+      "description": "Afficher les messages de bienvenue et les messages de jeu officiels généraux."
+    }
+  },
+  "advisorCategories": {
+    "trainingReadiness": {
+      "label": "Formation et préparation des coureurs",
+      "description": "Charge d'entraînement, fatigue, disponibilité des coureurs, lacunes dans l'entraînement, préparation des équipes et avis de développement des coureurs."
+    },
+    "raceProgrammePreparation": {
+      "label": "Programme de course et préparation",
+      "description": "Examens et lacunes du programme de course, absence de préparation et avis de préparation."
+    },
+    "startlistStagePlans": {
+      "label": "Startlist et Stage Plans",
+      "description": "Startlist alertes de délai plus des avis manquants ou incomplets de plan d'étape."
+    },
+    "medicalRecovery": {
+      "label": "Médecine & récupération",
+      "description": "Rapports médicaux, plans de traitement des blessures et des maladies, changements de rétablissement et avis de vérification médicale."
+    },
+    "equipmentWorkshopSupplies": {
+      "label": "Matériel, ateliers et fournitures de course",
+      "description": "État de l'équipement, préparation à l'atelier et avis analytiques d'examen de l'offre de course."
+    },
+    "scoutingRecruitment": {
+      "label": "Scoutisme et recrutement",
+      "description": "Recrutement, examen des activités de dépistage et avis de priorités."
+    }
+  },
+  "developingTeam": {
+    "title": "Équipe en développement",
+    "description": "Construisez et gérez une équipe de développement U23 avec accès saisonnier aux Coins.",
+    "loading": "Chargement du statut d'équipe en développement...",
+    "realLifeProgress": "Progrès réels",
+    "realLifeMinimum": "Au moins 30 jours requis",
+    "gameProgress": "Progrès réalisés dans le jeu",
+    "gameMinimum": "Au moins 60 jours requis",
+    "coins": "Coins",
+    "eligibility": "Admissibilité: 30 jours réels ou 60 jours en jeu.",
+    "active": "Équipe en développement active",
+    "activeBadge": "Actif",
+    "currentSeason": "Saison en cours",
+    "accessEnds": "Fin de l'accès",
+    "renewalPrice": "Prix de renouvellement",
+    "nextRenewal": "Prochain renouvellement",
+    "autoRenew": "Renouveler automatiquement chaque saison",
+    "expired": "L'accès de l'équipe en développement a expiré",
+    "expiredDescription": "Votre équipe, les coureurs, les contrats, les résultats et l'historique restent stockés. L'équipe en développement est actuellement en lecture seule.",
+    "reactivating": "Réactivation...",
+    "activating": "Activer...",
+    "getCoins": "Obtenez des Coins",
+    "notEligible": "Pas encore éligible",
+    "notEligibleDescription": "L'équipe en développement devient disponible après 30 jours réels ou 60 jours en jeu.",
+    "specialRules": "Règles particulières",
+    "teamNameRule": "Le nom de l'équipe sera votre nom de club principal plus U23.",
+    "raceRule": "Cette équipe peut s'appliquer aux courses normalement alors que l'accès saisonnier est actif.",
+    "competitionRule": "Cette équipe ne peut pas être promue au-dessus du niveau Continental.",
+    "rosterRule": "Taille maximale de l'alignement: 8 coureurs.",
+    "ageRule": "Seuls les coureurs âgés de 23 ans ou plus sont éligibles.",
+    "movementRule": "Les coureurs ne se déplacent entre les équipes que pendant les fenêtres de mouvement.",
+    "teamLabel": "Équipe"
+  },
+  "dangerZone": {
+    "title": "Zone de danger",
+    "description": "Il s'agit d'actions destructrices et devraient rester séparées des préférences normales.",
+    "badge": "Actions à haut impact",
+    "restartTitle": "Redémarrer l'équipe",
+    "restartDescription": "Redémarrez ce club dans un nouvel état de départ tout en gardant le même nom de club, logo, maillot, pays et la fente de compétition.",
+    "restartDetail": "Les coureurs actuels deviennent des agents libres, les points de saison se remettent à 0, et l'équipe reçoit une nouvelle équipe de départ basée sur son niveau actuel.",
+    "restartButton": "Redémarrer l'équipe",
+    "shutdownTitle": "Équipe d'arrêt",
+    "shutdownDescription": "Supprimez définitivement cette équipe d'utilisateurs ET le compte d'authentification. Après avoir réussi à supprimer, vous serez redirigé vers la page d'accueil et vous pourrez vous inscrire à nouveau avec le même e-mail.",
+    "shutdownDetail": "Cela devrait supprimer uniquement les données de l'équipe utilisateur actuelle, pas les autres utilisateurs ou d'autres équipes.",
+    "shuttingDown": "Arrêter...",
+    "shutdownButton": "Équipe d'arrêt",
+    "systemNote": "Le système de notification devrait vérifier ces préférences sauvegardées avant de créer ou d'afficher chaque type de notification.",
+    "confirmTitle": "Confirmer l'arrêt de l'équipe",
+    "confirmDescription": "Cette action est permanente et ne peut être annulée.",
+    "aboutToDelete": "Vous êtes sur le point de supprimer définitivement:",
+    "deleteTeam": "Votre équipe actuelle",
+    "deleteGameData": "Vos coureurs d'équipe, équipements et données de jeu liées à l'équipe",
+    "deleteAccount": "Votre compte d'authentification pour ce courriel",
+    "afterDelete": "Après avoir réussi à supprimer, vous serez déconnecté et redirigé vers la page d'accueil. Vous pouvez ensuite vous inscrire à nouveau avec la même adresse e-mail qu'un nouvel utilisateur.",
+    "typeDelete": "Type DELETE à confirmer",
+    "placeholder": "Type DELETE ici",
+    "cancel": "Annuler",
+    "permanentButton": "Équipe permanente",
+    "exactDeleteError": "Vous devez taper DELETE exactement pour confirmer cette action.",
+    "missingSession": "Votre session a disparu.",
+    "shutdownFailed": "Il a échoué à fermer l'équipe.",
+    "shutdownUnexpected": "L'équipe a échoué en raison d'une erreur inattendue.",
+    "closeAria": "Fermeture de l'équipe de confirmation"
+  }
+}

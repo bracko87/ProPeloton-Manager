@@ -1,0 +1,320 @@
+{
+  "sections": {
+    "rankingTiersDeep": {
+      "title": "Niveau de concurrence",
+      "subtitle": "WorldTeam, ProTeam, Continental et Amateur.",
+      "overview": "Le classement par équipe est organisé en pyramide de compétition avec promotion, éliminatoires et relégation.",
+      "facts": [
+        "Niveaux",
+        "WorldTeam, ProTeam, Continental, Amateur"
+      ],
+      "details": [
+        "WorldTeam est le niveau supérieur.",
+        "ProTeam est divisé en Ouest et Est.",
+        "Continental est divisé en Europe, Amérique, Asie, Afrique et Océanie.",
+        "Amateur est divisé en plusieurs divisions régionales.",
+        "Les points déterminent les positions et les conséquences de fin de saison."
+      ],
+      "tips": [
+        "Suivez votre propre division d'abord."
+      ]
+    },
+    "promotionRelegationDeep": {
+      "title": "Promotion, playoffs et relégation",
+      "subtitle": "Comment le mouvement en fin de saison est montré.",
+      "overview": "Les étiquettes permanentes expliquent quels postes favorisent, entrent dans les séries éliminatoires ou relégués.",
+      "facts": [
+        "WorldTeam",
+        "5e étage relégué",
+        "ProTeam",
+        "Lauréat promu, 2e-4e éliminatoire mondiale, 5e reléguée"
+      ],
+      "details": [
+        "Continental Europe/Amérique feed Série éliminatoire Pro West.",
+        "Continental Asia/Africa/Oceania alimentent le playoff Pro East.",
+        "Différentes divisions Continental ont des seuils de relégation différents.",
+        "Amateur Océanie fait la promotion des trois premiers directement.",
+        "Les divisions Amateur européennes utilisent les vainqueurs directs et les 2ème à 3ème séries éliminatoires.",
+        "D'autres divisions Amateur utilisent le gagnant direct et la 2e-4e éliminatoire."
+      ],
+      "tips": [
+        "Lisez l'étiquette de la division sélectionnée."
+      ]
+    },
+    "statisticsDeep": {
+      "title": "Guide détaillé des statistiques",
+      "subtitle": "Équipes, coureurs, filtres et histoire.",
+      "overview": "Les statistiques aident à comparer les performances et à repérer le monde du jeu.",
+      "facts": [
+        "Onglets principaux",
+        "Équipes et coureurs",
+        "Paramètres du coureur",
+        "Dans l'ensemble, les points de sprint et d'escalade"
+      ],
+      "details": [
+        "Team Current compare les points et les points actuels.",
+        "L'histoire de l'équipe stocke les gagnants et les instantanés passés.",
+        "Les classements de Rider montrent les meilleurs artistes.",
+        "Rider Discovery aide à trouver des spécialistes.",
+        "Les filtres comprennent la saison, le type d'équipe, le statut, le niveau, la division, le pays et la recherche.",
+        "Ouverture d'un coureur utilise son propre itinéraire de profil ou externe selon la propriété."
+      ],
+      "tips": [
+        "Utiliser les statistiques avant les transferts."
+      ]
+    },
+    "transferListDeep": {
+      "title": "Les coureurs de la liste de transfert",
+      "subtitle": "Acheter dans un autre club.",
+      "overview": "Les coureurs inscrits sur la liste de transfert doivent avoir une offre club-to-club avant la négociation du contrat de coureur.",
+      "facts": [
+        "Liste des données",
+        "Vendeur, demande de prix, salaire, valeur marchande, expiration, disponibilité"
+      ],
+      "details": [
+        "Le club de vente peut accepter/rejeter des offres.",
+        "Les prix de demande peuvent être automatiquement serrés.",
+        "Si elle est acceptée, une négociation distincte commence.",
+        "Le scoutisme peut influer sur la quantité d'information exacte visible.",
+        "Les annonces expirent par la date du jeu."
+      ],
+      "tips": [
+        "Vérifiez le salaire avant de faire une offre de transfert importante."
+      ]
+    },
+    "freeAgentsDeep": {
+      "title": "Coureurs libres",
+      "subtitle": "Signer des coureurs non liés.",
+      "overview": "Les agents libres n'ont pas besoin d'une offre de club de vente, mais la négociation de contrat reste importante.",
+      "facts": [
+        "Négociation",
+        "Salaire, durée, prime à la signature, frais d'agent et niveau d'ajustement"
+      ],
+      "details": [
+        "Les coureurs libres peuvent être moins chers parce qu'il n'y a pas de frais de transfert.",
+        "Ils peuvent encore exiger un salaire élevé ou des primes.",
+        "L'aperçu de l'offre aide à estimer l'acceptation.",
+        "Les blocs durs peuvent empêcher un accord.",
+        "Les négociations peuvent prendre fin ou être contre-exposées ou rejetées."
+      ],
+      "tips": [
+        "Les frais de transfert zéro ne signifient pas un rider bon marché."
+      ]
+    },
+    "transferNegotiationDeep": {
+      "title": "Perspectives de négociation",
+      "subtitle": "Pourcentage d'acceptation, scores et raisons de rejet.",
+      "overview": "Les prévisualisations de négociation aident les utilisateurs à comprendre pourquoi une offre peut réussir ou échouer.",
+      "facts": [
+        "Taux",
+        "Salaire, durée, bonus, frais, niveau et score total",
+        "Statuts",
+        "Ouvert, en attente, accepté, rejeté, expiré, refusé, complété, résilié"
+      ],
+      "details": [
+        "Acceptation pour cent n'est qu'un aperçu, pas une garantie.",
+        "La raison principale dit ce qui ne va pas avec l'offre.",
+        "Le score de niveau peut être important si un coureur veut un niveau de compétition plus élevé.",
+        "Tentative de nombres limites offres répétées.",
+        "Verrouillés jusqu'à empêcher les négociations répétées immédiates."
+      ],
+      "tips": [
+        "Améliorer la raison pour laquelle le coureur se plaint, pas les champs aléatoires."
+      ]
+    },
+    "scoutingDeep": {
+      "title": "Rapports de scoutisme",
+      "subtitle": "Réduire le risque d'information cachée.",
+      "overview": "Les rapports de scoutisme aident les utilisateurs à éviter les mauvaises décisions de transfert en améliorant la connaissance des coureurs externes.",
+      "facts": [
+        "Filtres",
+        "Tous, nouveaux, révisés",
+        "Champs de rapport",
+        "Rider, scout, date, global, potentiel, forces, notes"
+      ],
+      "details": [
+        "Les rapports utilisent de vrais UUIDs rider pour que les liens de profil fonctionnent.",
+        "Les nouveaux rapports devraient être examinés avant la soumission des soumissions.",
+        "Dans l'ensemble et le potentiel peuvent être des étiquettes plutôt que des valeurs exactes.",
+        "Les forces identifient ce que le coureur est bon.",
+        "Les notes fournissent un contexte de scoutisme."
+      ],
+      "tips": [
+        "Scout avant les signatures coûteuses."
+      ]
+    },
+    "staffMarketDeep": {
+      "title": "Marché du personnel",
+      "subtitle": "Embaucher du personnel libre.",
+      "overview": "L'onglet Personnel énumère le personnel disponible et respecte la capacité de rôle.",
+      "facts": [
+        "Rôles",
+        "Entraîneur-chef, entraîneur, U23 entraîneur, médecin, physiologie, nutritionniste, mécanicien, directeur sportif, scout/analyste",
+        "Tri",
+        "Salaire, compétences, nom, pays"
+      ],
+      "details": [
+        "Les candidats font preuve d'expertise, d'expérience, de potentiel, de leadership, d'efficacité, de loyauté et de salaire.",
+        "Les limites de rôles peuvent bloquer l'embauche.",
+        "Le bureau de scoutisme peut affecter la qualité des rapports pour les candidats.",
+        "Le salaire hebdomadaire affecte le financement à long terme.",
+        "Le personnel devrait être embauché à des fins claires."
+      ],
+      "tips": [
+        "N'embauchez pas de personnel si la capacité ou le budget est serré."
+      ]
+    },
+    "financeHealthDeep": {
+      "title": "Financement Santé",
+      "subtitle": "Comment lire la sécurité financière.",
+      "overview": "Financer la santé, c'est la durabilité, et pas seulement l'équilibre actuel.",
+      "facts": [
+        "Vue de fonctionnement",
+        "Revenus, charges et montants nets par jour/semaine/mois",
+        "Séparation de dettes",
+        "Les décaissements de prêts et le principal sont séparés des flux de trésorerie opérationnels"
+      ],
+      "details": [
+        "Un solde élevé peut encore être dangereux si les dépenses récurrentes sont trop élevées.",
+        "Les salaires, les politiques, le personnel, les impôts et les remboursements de prêts peuvent créer des pressions futures.",
+        "Les revenus des promoteurs peuvent arriver mensuellement ou selon le calendrier contractuel.",
+        "Les récompenses de course sont fonction de la performance et ne doivent pas être assumées.",
+        "Utilisez les tendances de trésorerie pour comprendre si le club s'améliore ou diminue."
+      ],
+      "tips": [
+        "Vérifiez les finances avant chaque décision importante de dépenser."
+      ]
+    },
+    "transactionsDeep": {
+      "title": "Opérations",
+      "subtitle": "Livre financier et archives.",
+      "overview": "Les transactions sont l'endroit où vérifier exactement pourquoi l'argent a déménagé.",
+      "facts": [
+        "Récent",
+        "Les 30 derniers jours de jeu",
+        "Archive",
+        "6 mois de jeu précédents",
+        "Taille de la page",
+        "20"
+      ],
+      "details": [
+        "Les dates visibles utilisent des métadonnées de la date du jeu.",
+        "created_at n'est qu'un revers technique.",
+        "Les types connus de transactions ont des étiquettes lisibles.",
+        "Les types de transactions inconnus sont prétifiés automatiquement.",
+        "Archive regroupe les anciennes lignes par mois de jeu."
+      ],
+      "tips": [
+        "Utilisez Transactions quand le solde vous surprend."
+      ]
+    },
+    "taxDeep": {
+      "title": "Vérifications fiscales",
+      "subtitle": "Retenue, rajustement mensuel et remboursement.",
+      "overview": "L'impôt suit le revenu imposable et les résultats de la vérification mensuelle.",
+      "facts": [
+        "Types",
+        "tax_withholding, tax_monthly_adjustment, tax_monthly_refund",
+        "Statuts",
+        "OK, ajusté, remboursé"
+      ],
+      "details": [
+        "L'impôt prévu est calculé à partir du revenu brut imposable et du taux d'imposition.",
+        "Déjà retenu est l'impôt déjà pris.",
+        "Le montant du rajustement est ce qui doit être facturé ou remboursé.",
+        "La vérification mensuelle compare l'impôt prévu à ce qui a été payé.",
+        "L'impôt peut devenir dangereux après les grands événements de revenu."
+      ],
+      "tips": [
+        "Gardez les liquidités disponibles pour les rajustements fiscaux."
+      ]
+    },
+    "sponsorsDeep": {
+      "title": "Guide détaillé des commanditaires",
+      "subtitle": "Les principaux sponsors, secondaires et techniques.",
+      "overview": "Les sponsors apportent de l'argent garanti, des piscines de bonus et des objectifs.",
+      "facts": [
+        "Genres",
+        "Principale, secondaire, technique",
+        "Monnaie",
+        "Montant garanti, bonus, montant mensuel",
+        "Technique",
+        "Pourcentage de rabais et forfait de soutien"
+      ],
+      "details": [
+        "Les principaux sponsors sont les plus visibles.",
+        "Les sponsors secondaires remplissent les fentes et ajoutent le soutien.",
+        "Les sponsors techniques soutiennent les achats d'équipement.",
+        "Les offres de sponsor peuvent expirer.",
+        "La proration signifie qu'un contrat de saison partielle ne peut pas payer de valeur de saison complète."
+      ],
+      "tips": [
+        "Comparer l'argent garanti, les objectifs et l'impact de la marque."
+      ]
+    },
+    "sponsorObjectivesDeep": {
+      "title": "Objectifs du promoteur",
+      "subtitle": "Cibles, vérifications et paiements.",
+      "overview": "Les objectifs récompensent le club lorsque les cibles du sponsor sont atteintes.",
+      "facts": [
+        "Résultats",
+        "Course départ, victoire, podium, top 5, top 10, GC top 5/top 10, top 5/win de l'étape, visibilité de classement"
+      ],
+      "details": [
+        "Les objectifs peuvent cibler des courses, des pays ou des catégories précises.",
+        "Les progrès montrent la cible et la valeur actuelle.",
+        "L'état peut être programmé, vérifié, réalisé, manqué ou payé.",
+        "La raison de l'échec explique les objectifs manqués.",
+        "L'identifiant de transaction de paiement apparaît après paiement."
+      ],
+      "tips": [
+        "Planifier les objectifs de sponsor lors du choix des courses."
+      ]
+    },
+    "teamPoliciesDeep": {
+      "title": "Politiques et opérations de l'équipe",
+      "subtitle": "Normes du club récurrent et lié au voyage.",
+      "overview": "Les politiques améliorent le confort et le soutien, mais peuvent augmenter les coûts hebdomadaires, mensuels et de voyage.",
+      "facts": [
+        "Opérations",
+        "Vols, hébergement, transport terrestre, logistique, hébergement pour le personnel",
+        "Politiques",
+        "Logement, nutrition, récupération, équipement du personnel, prime aux coureurs, prime au personnel"
+      ],
+      "details": [
+        "Les vols, les hôtels et les transports terrestres ont une incidence sur les voyages.",
+        "Le logement, la nutrition et la récupération soutiennent les opérations récurrentes.",
+        "L'équipement du personnel peut s'appliquer lors de l'embauche du personnel.",
+        "Les régimes de primes peuvent créer des coûts saisonniers ou axés sur les résultats.",
+        "Les prévisions indiquent les coûts du voyage à venir.",
+        "Le mois dernier, le coût réel aide à la vérification des dépenses."
+      ],
+      "tips": [
+        "Réduire le niveau des politiques si les finances sont dangereuses."
+      ]
+    },
+    "liquidationDeep": {
+      "title": "Avis de liquidation et de redémarrage",
+      "subtitle": "Ce qui arrive quand le club manque de protection.",
+      "overview": "La liquidation bloque le gameplay pour ce club après que les limites de sauvetage sont épuisées et une autre obligation obligatoire échoue.",
+      "facts": [
+        "Limite de sauvetage",
+        "3 sauvetages d'urgence à vie",
+        "Coins de compte",
+        "Rester actif",
+        "Redémarrer",
+        "Avis futur/non actif dans l'assurance-chômage actuelle"
+      ],
+      "details": [
+        "Le club liquidé ne peut plus effectuer d'actions.",
+        "L'utilisateur peut créer un nouveau club dans un endroit libre disponible.",
+        "Redémarrer l'équipe n'explique actuellement que le comportement futur de réinitialisation.",
+        "Le redémarrage futur libérerait les anciens coureurs, retirerait le personnel et réinitialiserait les points/progrès.",
+        "La raison de la liquidation et l'horodatage peuvent être montrés."
+      ],
+      "tips": [
+        "Expliquez que la liquidation est au niveau du club, et non la suppression de compte."
+      ]
+    }
+  }
+}

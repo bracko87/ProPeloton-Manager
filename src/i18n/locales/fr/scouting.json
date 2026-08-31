@@ -1,0 +1,58 @@
+{
+  "page": {
+    "back": "← Retour",
+    "title": "Aperçu du scoutisme",
+    "subtitle": "Tous les rapports de scout terminés en un seul endroit. Filtrer par statut et sauter directement au profil du coureur.",
+    "loading": "Chargement des rapports de scouts...",
+    "empty": "Aucun rapport de scout ne correspond à ce filtre.",
+    "loadFailed": "Il a échoué à charger des rapports de scout.",
+    "reviewFailed": "Le rapport a échoué comme il a été examiné."
+  },
+  "filters": {
+    "all": "Tous",
+    "new": "Nouveau",
+    "reviewed": "Réexamen"
+  },
+  "report": {
+    "unknownRider": "Coureur inconnu",
+    "scout": "Scout",
+    "scoutName": "Scout: {{name}}",
+    "completed": "Terminé: {{date}}",
+    "overall": "Généralités",
+    "potential": "Potentiel",
+    "keyStrengths": "Principaux points forts",
+    "more": "(+plus)",
+    "notes": "Remarques:",
+    "openProfile": "Ouvrir le profil du coureur"
+  },
+  "potential": {
+    "veryLow": "Très faible",
+    "low": "Faible",
+    "medium": "Moyenne",
+    "high": "Élevée",
+    "elite": "Elite"
+  },
+  "skills": {
+    "sprint": "Sprint",
+    "climbing": "Escalade",
+    "timeTrial": "Procès-verbal",
+    "endurance": "Endurance",
+    "flat": "Plat",
+    "recovery": "Récupération",
+    "resistance": "Résistance",
+    "raceIq": "IQ de la course",
+    "teamwork": "Travail d'équipe",
+    "morale": "Morale"
+  },
+  "table": {
+    "riderScout": "Rider & scout",
+    "overallPotential": "Généralités / potentiels",
+    "strengthsNotes": "Points forts et notes clés",
+    "action": "Décision"
+  },
+  "pagination": {
+    "previous": "Précédent",
+    "next": "Suivant",
+    "page": "Page {{page}} de {{total}}"
+  }
+}

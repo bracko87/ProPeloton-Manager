@@ -1,0 +1,97 @@
+{
+  "sections": {
+    "applicationBlocked": {
+      "title": "FAQ: Pourquoi puis-je postuler à une course?",
+      "subtitle": "Les bloqueurs d'application courants.",
+      "overview": "Une demande de course peut être bloquée par le statut de course, les délais, la capacité ou l'éligibilité.",
+      "details": [
+        "Les demandes peuvent ne pas être encore ouvertes.",
+        "Les demandes peuvent déjà être classées.",
+        "La course peut être active, terminée ou annulée.",
+        "La course peut être pleine.",
+        "Votre équipe ne correspond peut-être pas aux exigences d'entrée.",
+        "Vous pouvez déjà avoir une demande/entrée."
+      ],
+      "tips": [
+        "Ouvrez les règles de détail de la course et vérifiez les règles d'entrée."
+      ]
+    },
+    "acceptedNotReady": {
+      "title": "FAQ: Pourquoi suis-je accepté mais pas prêt?",
+      "subtitle": "L'entrée acceptée n'est pas un Race Plan complet.",
+      "overview": "Accepté signifie que votre équipe a une place; prêt signifie que les coureurs, le personnel, les actifs, l'équipement, les fournitures et les Stage Plans sont utilisables.",
+      "details": [
+        "Race Plan doit encore être soumis.",
+        "Stage Plans peut encore manquer.",
+        "Il peut manquer des fournitures.",
+        "La préparation peut présenter des problèmes.",
+        "Les échéances peuvent bloquer les changements si vous manquez."
+      ],
+      "tips": [
+        "Préparation à la course ouverte après chaque course acceptée."
+      ]
+    },
+    "riderUnderperformed": {
+      "title": "FAQ: Pourquoi mon coureur a-t-il fait un mauvais rendement?",
+      "subtitle": "La performance a de nombreuses causes.",
+      "overview": "Un coureur fort peut se comporter mal si le rôle, l'étape, la condition, la tactique ou le soutien étaient erronés.",
+      "details": [
+        "Vérifiez si les compétences du coureur correspondaient au terrain.",
+        "Vérifiez la fatigue et la disponibilité.",
+        "Vérifiez le moral et la netteté de la course.",
+        "Vérifiez le rôle et la tactique de la étape.",
+        "Vérifiez le matériel et les fournitures.",
+        "Vérifiez les conditions météorologiques et les incidents.",
+        "Vérifiez le soutien personnel/actifs."
+      ],
+      "tips": [
+        "Utilisez le replay et le commentaire pour apprendre."
+      ]
+    },
+    "money": {
+      "title": "FAQ: Où est passé mon argent?",
+      "subtitle": "Comment étudier les changements d'équilibre.",
+      "overview": "Les opérations financières sont la source des mouvements de solde.",
+      "details": [
+        "Ouvrez Finances → Transactions.",
+        "Examiner les salaires, les impôts, les paiements de parrainage, les transferts, l'équipement, l'infrastructure, les camps et les politiques.",
+        "Taxe ouverte pour la vérification mensuelle.",
+        "Politiques d'équipe ouverte pour les coûts récurrents.",
+        "Rappelez-vous que les prêts sont des dettes, pas des revenus."
+      ],
+      "tips": [
+        "Les transactions sont la première page pour les questions de financement."
+      ]
+    },
+    "equipment": {
+      "title": "FAQ: Pourquoi mon équipement est petit bonus?",
+      "subtitle": "Bonus et compromis.",
+      "overview": "L'équipement est pondéré et plafonné de sorte qu'il supporte mais ne remplace pas la qualité du coureur.",
+      "details": [
+        "Les primes sont pondérées par catégorie.",
+        "Le bonus de la étape est plafonné.",
+        "Le soutien de l'équipe/non-rider est plafonné.",
+        "La réduction de la fatigue est plafonnée.",
+        "Les engins spécialisés peuvent avoir des compromis négatifs."
+      ],
+      "tips": [
+        "Utilisez la bonne configuration pour la bonne étape."
+      ]
+    },
+    "staffHiring": {
+      "title": "FAQ: Pourquoi puis-je embaucher du personnel?",
+      "subtitle": "Des bloqueurs d'embauche.",
+      "overview": "L'embauche du personnel dépend de la capacité de rôle, de la disponibilité et de l'argent.",
+      "details": [
+        "Vérifiez les emplacements ouverts pour le rôle.",
+        "Améliorer l'infrastructure si la capacité est pleine.",
+        "Vérifiez la disponibilité des candidats.",
+        "Vérifiez le salaire hebdomadaire et l'équilibre.",
+        "Vérifiez si le rôle est déverrouillé par les installations."
+      ],
+      "tips": [
+        "Les problèmes de capacité portent habituellement sur les infrastructures."
+      ]
+    }
+  }
+}

@@ -230,6 +230,44 @@ import itTraining from './locales/it/training.json'
 import itTransfers from './locales/it/transfers.json'
 import itTutorials from './locales/it/tutorials.json'
 
+import frAccountPages from './locales/fr/accountPages.json'
+import frAppShell from './locales/fr/appShell.json'
+import frAuth from './locales/fr/auth.json'
+import frCalendar from './locales/fr/calendar.json'
+import frCalendarPage from './locales/fr/calendarPage.json'
+import frClub from './locales/fr/club.json'
+import frCommon from './locales/fr/common.json'
+import frCreateClub from './locales/fr/createClub.json'
+import frCustomizeTeam from './locales/fr/customizeTeam.json'
+import frDevelopingTeam from './locales/fr/developingTeam.json'
+import frEquipment from './locales/fr/equipment.json'
+import frFinance from './locales/fr/finance.json'
+import frHelp from './locales/fr/help.json'
+import frManual from './locales/fr/manual.json'
+import frHome from './locales/fr/home.json'
+import frInfrastructure from './locales/fr/infrastructure.json'
+import frNavigation from './locales/fr/navigation.json'
+import frNotifications from './locales/fr/notifications.json'
+import frOverview from './locales/fr/overview.json'
+import frPreferences from './locales/fr/preferences.json'
+import frPreferencesDynamic from './locales/fr/preferencesDynamic.json'
+import frProPackages from './locales/fr/proPackages.json'
+import frProfile from './locales/fr/profile.json'
+import frPublicInfo from './locales/fr/publicInfo.json'
+import frRaceDetail from './locales/fr/raceDetail.json'
+import frRacePreparation from './locales/fr/racePreparation.json'
+import frRiderProfile from './locales/fr/riderProfile.json'
+import frScouting from './locales/fr/scouting.json'
+import frSeasonReset from './locales/fr/seasonReset.json'
+import frSharedRiderModal from './locales/fr/sharedRiderModal.json'
+import frSquad from './locales/fr/squad.json'
+import frStaff from './locales/fr/staff.json'
+import frStatistics from './locales/fr/statistics.json'
+import frTeamRanking from './locales/fr/teamRanking.json'
+import frTraining from './locales/fr/training.json'
+import frTransfers from './locales/fr/transfers.json'
+import frTutorials from './locales/fr/tutorials.json'
+
 import {
   DEFAULT_LANGUAGE,
   getLanguageDefinition,
@@ -474,6 +512,45 @@ const resources = {
     transfers: itTransfers,
     tutorials: itTutorials,
   },
+  fr: {
+    accountPages: frAccountPages,
+    appShell: frAppShell,
+    auth: frAuth,
+    calendar: frCalendar,
+    calendarPage: frCalendarPage,
+    club: frClub,
+    common: frCommon,
+    createClub: frCreateClub,
+    customizeTeam: frCustomizeTeam,
+    developingTeam: frDevelopingTeam,
+    equipment: frEquipment,
+    finance: frFinance,
+    help: frHelp,
+    manual: frManual,
+    home: frHome,
+    infrastructure: frInfrastructure,
+    navigation: frNavigation,
+    notifications: frNotifications,
+    overview: frOverview,
+    preferences: frPreferences,
+    preferencesDynamic: frPreferencesDynamic,
+    proPackages: frProPackages,
+    profile: frProfile,
+    publicInfo: frPublicInfo,
+    raceDetail: frRaceDetail,
+    racePreparation: frRacePreparation,
+    riderProfile: frRiderProfile,
+    scouting: frScouting,
+    seasonReset: frSeasonReset,
+    sharedRiderModal: frSharedRiderModal,
+    squad: frSquad,
+    staff: frStaff,
+    statistics: frStatistics,
+    teamRanking: frTeamRanking,
+    training: frTraining,
+    transfers: frTransfers,
+    tutorials: frTutorials,
+  },
 } as const
 
 const initialLanguage = getStoredLanguage()
@@ -484,7 +561,7 @@ void i18n
     resources,
     lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,
-    supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es', 'it'],
+    supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es', 'it', 'fr'],
     defaultNS: 'common',
     ns: [
       'accountPages',

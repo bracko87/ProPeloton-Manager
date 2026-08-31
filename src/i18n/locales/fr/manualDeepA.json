@@ -1,0 +1,686 @@
+{
+  "sections": {
+    "publicHomeBeta": {
+      "title": "Maison publique et avis de bêta",
+      "subtitle": "Ce que les joueurs voient avant de se connecter et pourquoi la note bêta compte.",
+      "overview": "La page d'accueil publique est le point d'entrée avant le tableau de bord. Il peut router les utilisateurs authentifiés pour créer-club ou tableau de bord et montre des informations de jeu public en direct.",
+      "facts": [
+        "Snapshot en direct",
+        "Temps de jeu, gestionnaires actifs, total équipes, courses et étapes",
+        "Avertissement bêta",
+        "Les systèmes de jeu, l'interface utilisateur, l'équilibrage et les données peuvent encore changer"
+      ],
+      "details": [
+        "Si l'utilisateur est connecté et n'a pas de club, les voies d'application à la création de club.",
+        "Si l'utilisateur est connecté et a déjà un club, les itinéraires de l'application vers le tableau de bord aperçu.",
+        "L'avis bêta indique aux testeurs que le jeu est en ligne pour les tests mais pas définitif.",
+        "Page d'accueil les widgets de la journée de course peuvent montrer hier, aujourd'hui et demain courses."
+      ],
+      "tips": [
+        "Gardez les attentes des joueurs claires pendant la bêta."
+      ]
+    },
+    "sidebarFooterLayout": {
+      "title": "Serrure de barre latérale, de pied de page et de tableau de bord",
+      "subtitle": "Comment la mise en page principale aide les utilisateurs à se déplacer autour du jeu.",
+      "overview": "La barre latérale gauche est la principale navigation en jeu, tandis que le pied de page montre une durée de jeu en direct autorisée. Certains états du tableau de bord peuvent verrouiller l'interaction.",
+      "facts": [
+        "Pages de la barre latérale",
+        "Aperçu, Équipe, Calendrier, Préparation de course, Classement d'équipe, Formation, Équipement, Infrastructure, Finances, Transferts, Statistiques",
+        "Pied de page",
+        "Spectacles Saison, jour de semaine, date et heure"
+      ],
+      "details": [
+        "Les descriptions de la barre latérale indiquent aux utilisateurs ce que chaque page fait.",
+        "Le temps de jeu de pied de page devrait être traité comme la source de la vérité pour les délais.",
+        "Tableau de bord verrouillé signifie que le joueur ne peut pas apporter de modifications à ce moment-là.",
+        "Sign Out et Bug Report vivent dans la zone inférieure de la barre latérale."
+      ],
+      "tips": [
+        "Lorsqu'un utilisateur est confus sur les délais, d'abord lui dire de vérifier l'heure de jeu de pied de page."
+      ]
+    },
+    "profileSettings": {
+      "title": "Mon profil",
+      "subtitle": "Données de profil utilisateur, nom d'utilisateur, courriel et mot de passe.",
+      "overview": "Mon profil modifie le profil de compte utilisateur. Il est séparé du nom de l'équipe, du logo de l'équipe et du maillot.",
+      "facts": [
+        "Règle du nom d'utilisateur",
+        "3 à 24 caractères; lettres, chiffres et soulignés",
+        "Règle relative à l ' anniversaire",
+        "Sauvé une fois pendant l'enregistrement et en lecture seule plus tard"
+      ],
+      "details": [
+        "Le nom d'utilisateur est normalisé par la taille des espaces, le changement des espaces pour souligner et supprimer les caractères non pris en charge.",
+        "Les modifications par courriel utilisent le système d'authentification et peuvent nécessiter une confirmation.",
+        "Prénom, nom, ville et pays sont des champs optionnels de profil.",
+        "Le mot de passe peut être modifié depuis la page de profil avec confirmation.",
+        "L'anniversaire est affiché mais pas sauvegardé à nouveau depuis Mon Profil."
+      ],
+      "tips": [
+        "Dites aux utilisateurs que le nom de l'affichage du profil et le nom du club sont différents."
+      ],
+      "links": [
+        "Mon profil"
+      ]
+    },
+    "preferencesNotifications": {
+      "title": "Préférences et paramètres de notification",
+      "subtitle": "Où les joueurs contrôlent les notifications et les options spéciales équipe/compte.",
+      "overview": "Préférences stocke les contrôles de notification, Développement des actions d'achat/de statut et de zone de danger de l'équipe.",
+      "facts": [
+        "Stockage des notifications",
+        "Paramètres de préférences locales",
+        "Développement d'équipes de CPR",
+        "get_developing_team_status et purchase_developing_team",
+        "Confirmation de l'arrêt",
+        "L'utilisateur doit taper DELETE"
+      ],
+      "details": [
+        "Notification toggles décide quels groupes de notification le joueur veut recevoir.",
+        "L'état d'avancement de l'équipe en développement indique les besoins, le coût des Coins, le solde et les renseignements sur les guichets de mouvement.",
+        "Après l'achat de l'équipe de développement, le contexte du club actif est replacé dans le club principal.",
+        "L'équipe d'arrêt utilise un moteur Edge Function et nécessite le jeton de session actif.",
+        "Redémarrer l'équipe est actuellement un avis de placement/action et ne devrait pas être décrit comme étant pleinement actif."
+      ],
+      "tips": [
+        "Utiliser les préférences lorsque les utilisateurs se plaignent d'un trop grand nombre de notifications."
+      ],
+      "links": [
+        "Préférences"
+      ]
+    },
+    "inviteFriends": {
+      "title": "Inviter des amis",
+      "subtitle": "Lien de référence, états de référence et récompense de pièce.",
+      "overview": "Inviter les Amis crée un lien de référence et montre l'activité de référence. La récompense est accordée quand un ami complète les étapes requises.",
+      "facts": [
+        "URL de référence",
+        "/#/référencé/:code",
+        "Récompenses",
+        "40 Coins",
+        "Statuts",
+        "En attente, achevée, rejetée"
+      ],
+      "details": [
+        "La page charge le code de référence du club actuel à partir de la table des clubs.",
+        "Le lien de référence utilise l'origine du site Web actuel plus la voie de référence.",
+        "En attendant, un ami a créé un club, mais n'a pas encore acheté le premier paquet de Coins.",
+        "Terminé signifie que le premier achat de pièce a eu lieu et la récompense a été accordée.",
+        "Les identifiants d'utilisateur et de club sont masqués pour assurer la confidentialité."
+      ],
+      "tips": [
+        "Utilisez Invitez des amis à développer la communauté."
+      ],
+      "links": [
+        "Inviter des amis"
+      ]
+    },
+    "proPackagesDeep": {
+      "title": "Magasin de Coins de monnaie",
+      "subtitle": "Prix de forfait, caisse et historique d'achat.",
+      "overview": "Les paquets de Coins chargent les paquets en direct de la base de données, affichent l'équilibre et démarrent la commande par un Edge Function.",
+      "facts": [
+        "Source de l'emballage",
+        "coin_packages",
+        "Solde source",
+        "get_my_coin_status",
+        "Départ",
+        "créer-coin-checkout",
+        "Historique des achats",
+        "user_coin_ledger raison='achat'"
+      ],
+      "details": [
+        "Les prix exacts sont basés sur la base de données et ne devraient pas être codés en dur dans le manuel.",
+        "Le magasin calcule le prix par pièce et peut mettre en valeur la meilleure valeur.",
+        "Les balises de paquet sont générées à partir de la quantité de pièce, comme Starter boost ou Best pour le jeu à long terme.",
+        "L'historique d'achat ne montre pas intentionnellement les informations techniques de la session Stripe.",
+        "Coins sont la monnaie du compte, pas l'argent du club."
+      ],
+      "tips": [
+        "Pour les prix courants, faites confiance à la page des forfaits en direct."
+      ],
+      "links": [
+        "Paquets de Coins"
+      ]
+    },
+    "contactForumSupport": {
+      "title": "Contactez-nous, Forum et Discord",
+      "subtitle": "Où les joueurs posent des questions ou signalent des problèmes.",
+      "overview": "Contact Us, Forum and Discord are support/community entry points. Current Contact Us is UI-only; Forum points users to Discord.",
+      "facts": [
+        "Contactez-nous",
+        "Formulaire de l'interface utilisateur uniquement dans le code courant",
+        "Forum",
+        "Page d'avis Discord",
+        "Utilisation de Discord",
+        "Communauté, aide, manuels et questions"
+      ],
+      "details": [
+        "Contactez-nous a des champs nom, courriel et message et affiche un message de remerciement après soumission.",
+        "Forum explique qu'il n'y aura pas de forum dans le jeu sur cette page.",
+        "Discord est le lieu communautaire pour les questions et l'aide manuelle.",
+        "Les rapports de bogue doivent inclure la page, le comportement attendu, le comportement réel et les captures d'écran."
+      ],
+      "tips": [
+        "Ne nous promets pas de nous contacter livraison backend jusqu'à ce qu'il soit câblé."
+      ],
+      "links": [
+        "Contactez-nous",
+        "Forum"
+      ]
+    },
+    "clubCreationRoute": {
+      "title": "Création de Club et Premier Contrôle de Club",
+      "subtitle": "Comment les utilisateurs authentifiés sont acheminés dans le jeu.",
+      "overview": "Après la connexion, l'application vérifie si l'utilisateur a un club. Les utilisateurs sans club vont à Create Club; les utilisateurs avec un club vont à Overview.",
+      "facts": [
+        "Pas de club",
+        "Route vers /create-club",
+        "A un club",
+        "Route vers /dashboard/overview"
+      ],
+      "details": [
+        "La page d'accueil publique appelle get_my_club_id pour choisir le prochain itinéraire.",
+        "La création de club est séparée de la création de profil.",
+        "Le démarrage de l'argent et les ressources de démarrage exactes devraient provenir de la configuration backend, pas du texte manuel de deviné.",
+        "Après la création du club, les pages du tableau de bord résolvent le club principal automatiquement."
+      ],
+      "tips": [
+        "Ne pas inventer de l'argent comptant de départ à moins que la configuration de l'arrière-plan ne soit fournie."
+      ]
+    },
+    "customizeTeamDeep": {
+      "title": "Personnaliser l'équipe",
+      "subtitle": "Marque, couleurs de l'équipe, logo, base logo et jersey.",
+      "overview": "Personnaliser Team gère le nom du club, les couleurs primaires/secondaires, le logo et la configuration du maillot de maison.",
+      "facts": [
+        "Types de logos",
+        "JPG, PNG, WEBP",
+        "Logo max",
+        "0.5 MB",
+        "Jersey max",
+        "1 MB et 512 × 512 px",
+        "Seau de logo",
+        "club-logos"
+      ],
+      "details": [
+        "Les logos téléchargés sont convertis en PNG dans le navigateur avant stockage.",
+        "Enlever un logo restaure un logo de base généré de style bouclier au lieu de ne laisser aucun logo.",
+        "Les couleurs de l'équipe sont validées comme des couleurs hexagonales.",
+        "La configuration de Jersey est stockée dans team_kits avec le nom de la maison.",
+        "Un maillot peut être générique, à partir d'un pool générique, d'une URL d'image distante ou d'une image téléchargée."
+      ],
+      "tips": [
+        "Utilisez de petits logos propres car ils apparaissent dans de minuscules zones d'interface utilisateur."
+      ],
+      "links": [
+        "Personnaliser l'équipe"
+      ]
+    },
+    "brandingLocks": {
+      "title": "Marquer les serrures de Naming Rights",
+      "subtitle": "Pourquoi les utilisateurs ne peuvent pas modifier un nom d'équipe ou un logo.",
+      "overview": "Les droits de nom des sponsors peuvent verrouiller temporairement les champs de marque et changer le nom du club affiché.",
+      "facts": [
+        "Source d'état de verrouillage",
+        "club_branding_lock_status_v1",
+        "Champs possibles",
+        "Nom, couleurs et logo",
+        "Afficher les noms",
+        "Nom original, de saison et de l'affichage complet"
+      ],
+      "details": [
+        "Personnalisez Team lit le verrou de marque avant d'autoriser les modifications.",
+        "locked_by_sponsor signifie que l'identité du club est contrôlée par un accord de sponsor.",
+        "Les sponsors standard ne renomment pas normalement l'équipe.",
+        "Les commanditaires de droits de désignation paient généralement plus, mais affectent l'identité publique.",
+        "Les aides à l'affichage des noms doivent être utilisées dans les classements/profils lorsque les noms de sponsors comptent."
+      ],
+      "tips": [
+        "Préviens les joueurs avant qu'ils signent des contrats de droit de noms."
+      ]
+    },
+    "teamProfileDeep": {
+      "title": "Profil d'équipe",
+      "subtitle": "Page du club public avec identité, sponsors, liste et points.",
+      "overview": "Le profil d'équipe permet aux utilisateurs d'inspecter un autre club ou leur propre club à partir de classements, de courses et de statistiques.",
+      "facts": [
+        "Itinéraire",
+        "/tableau de bord/équipes/:clubId",
+        "Affiche",
+        "Logo, pays, niveau, division, sponsors, kit, liste, points et courses récentes"
+      ],
+      "details": [
+        "La page montre si le club est contrôlé par l'utilisateur ou par l'IA.",
+        "Il peut montrer le nombre de sponsors actifs, les totaux mensuels des sponsors et le logo principal du sponsor.",
+        "Il peut afficher l'aperçu du kit à partir des lignes d'aperçu du kit team_kits ou AI.",
+        "Il peut montrer la liste publique et les résultats récents de la course.",
+        "Il comprend un bouton de rapport joueur/équipe pour la modération."
+      ],
+      "tips": [
+        "Utilisez le profil d'équipe pour étudier les rivaux avant les courses importantes."
+      ]
+    },
+    "overviewDeep": {
+      "title": "Aperçu Guide détaillé",
+      "subtitle": "Tous les blocs principaux sur le tableau de bord du gestionnaire.",
+      "overview": "Aperçu est la salle de contrôle quotidienne combinant alertes, KPIs, impulsion de l'équipe, finance, dette, monde de course, opérations, nouvelles et données sponsor.",
+      "facts": [
+        "Blocs de base",
+        "Alertes, ICR, opérations, pouls, horaires, nouvelles, finances, dette d'urgence",
+        "Utilisation principale",
+        "Liste de contrôle quotidienne"
+      ],
+      "details": [
+        "Les alertes montrent ce qui a besoin d'attention en premier.",
+        "Les KPI résument l'état du club en cartes compactes.",
+        "Les cartes d'exploitation montrent des systèmes actifs comme la formation, l'infrastructure, la médecine, le sponsor, la boîte de réception, la finance ou les événements système.",
+        "Squad Pulse résume la forme physique, le moral, la préparation, la disponibilité et le risque contractuel.",
+        "Finances La santé présente le solde, le revenu d'exploitation/les dépenses, le revenu du promoteur, les coûts de la politique et les prévisions de voyage.",
+        "Dette d'urgence Santé montre le nombre de secours, le principal impayé, le prochain remboursement et le risque de liquidation.",
+        "Les panneaux du monde de course montrent aujourd'hui les courses, les courses à venir et les nouvelles."
+      ],
+      "tips": [
+        "Si Aperçu montre un danger financier, ouvrez le ministère des Finances avant de faire autre chose."
+      ],
+      "links": [
+        "Vue d’ensemble"
+      ]
+    },
+    "overviewRaceWorld": {
+      "title": "Aperçu Course World",
+      "subtitle": "Courses d'aujourd'hui, calendrier à venir et nouvelles du monde.",
+      "overview": "La page Aperçu comprend des données de dimension mondiale afin que les utilisateurs puissent suivre le monde du cyclisme même lorsque leur propre équipe ne fait pas de course.",
+      "facts": [
+        "Données de course de jour",
+        "Titre, sous-titre, date, pays et lien",
+        "Nouvelles",
+        "Titre, sous-titre, heure, détails et liens connexes"
+      ],
+      "details": [
+        "Aujourd'hui, les courses aident les utilisateurs à voir ce qui se passe maintenant.",
+        "Le prochain calendrier aide à planifier l'attention proche de l'avenir.",
+        "Les nouvelles du monde font que le monde du jeu se sent actif.",
+        "Des liens connexes peuvent ouvrir des courses ou d'autres pages de jeu.",
+        "Utilisez des champs texte/détail élargis lorsque les utilisateurs ont besoin de plus de contexte."
+      ],
+      "tips": [
+        "Utilisez Aperçu pour la sensibilisation, puis ouvrez des pages détaillées pour les décisions."
+      ]
+    },
+    "notificationCenterDeep": {
+      "title": "Centre de notification",
+      "subtitle": "Gestion des notifications non lues/lites avec recherche et catégories.",
+      "overview": "Le centre de notification complet aide les utilisateurs à gérer les notifications de jeu/admin sans perdre des délais importants.",
+      "facts": [
+        "Tables",
+        "Non lu et lu",
+        "Outils",
+        "Recherche, filtre de catégorie, pagination, boutons d'action",
+        "Taille de la récupération locale",
+        "Jusqu'à 500 par onglet dans la page actuelle"
+      ],
+      "details": [
+        "Les notifications peuvent être recherchées par titre, message, type, source, groupe de préférences et temps créé.",
+        "La catégorie est dérivée du groupe de préférence, de la source ou du code de type.",
+        "Les modèles peuvent ajouter image, texte intro, détails, texte supplémentaire et actions.",
+        "Les actions peuvent être directement liées à la préparation, au financement, à l'infrastructure, aux transferts, aux profils de coureurs ou aux courses.",
+        "Les préférences peuvent empêcher certains types de notification de s'afficher."
+      ],
+      "tips": [
+        "Lisez les notifications avant les dates limites de course."
+      ],
+      "links": [
+        "Notifications"
+      ]
+    },
+    "notificationExamples": {
+      "title": "Exemples importants de notification",
+      "subtitle": "Les utilisateurs d'événements ne doivent pas ignorer.",
+      "overview": "Les notifications peuvent représenter des changements importants d'état dans la préparation de course, les finances, l'infrastructure, les transferts, le développement de l'équipe et les sponsors.",
+      "facts": [
+        "Exemples",
+        "Rappels de Race Plan, rappels de plan de étape, développement de fenêtre, prêt d'urgence, installation complète, libération des coureurs, objectif du promoteur"
+      ],
+      "details": [
+        "Les avis de préparation à la course avertissent lorsque les plans ou les Stage Plans doivent être pris en compte.",
+        "Les notifications de fenêtre de développement d'équipe indiquent aux utilisateurs quand le mouvement est possible.",
+        "Les avis d'achèvement de l'infrastructure indiquent aux utilisateurs qu'une installation ou un équipement est prêt.",
+        "Les notifications de prêt d'urgence signifient que le club ne pouvait pas couvrir un coût obligatoire.",
+        "Les notifications de libération de Rider sont liées au profil du coureur ou au marché libre-agent.",
+        "Les notifications objectives du sponsor peuvent être liées à un calendrier ou à une course cible."
+      ],
+      "tips": [
+        "Traiter les notifications de financement ou de retard comme hautement prioritaires."
+      ]
+    },
+    "inboxDeep": {
+      "title": "Boîte de réception",
+      "subtitle": "Conversations directes et administratives.",
+      "overview": "La boîte de réception est pour les conversations, contrairement aux notifications qui sont des alertes système/jeu.",
+      "facts": [
+        "Types de conversation",
+        "Direct et direct administratif",
+        "Lire la logique",
+        "Ouvrir un fil marque qu'il lit",
+        "Compléter la cible",
+        "Peut être initialisé à partir de sessionStorage"
+      ],
+      "details": [
+        "La liste des threads affiche le nom, le sujet, l'aperçu, la dernière fois que le message est envoyé et le nombre non lu.",
+        "Filtres de recherche par nom, sujet et aperçu.",
+        "Les messages sont chargés par l'identifiant de conversation et ensuite marqués à lire.",
+        "Si l'utilisateur s'ouvre à un contact direct existant, la conversation existante est réutilisée.",
+        "Certaines conversations ne peuvent pas être répondues en fonction de can_reply."
+      ],
+      "tips": [
+        "Utilisez la boîte de réception pour les conversations, les notifications pour les événements de jeu."
+      ],
+      "links": [
+        "Boîte de réception"
+      ]
+    },
+    "topMenu": {
+      "title": "Menu supérieur",
+      "subtitle": "Compte, Coins, notifications et pages utilitaires.",
+      "overview": "Le menu en haut à droite contient des pages de compte et de support qui ne sont pas toutes visibles dans la barre latérale gauche.",
+      "facts": [
+        "Éléments typiques",
+        "Boîte de réception, profil, personnaliser l'équipe, préférences, aide, contact, paquets de Coins, inviter des amis, déconnecter"
+      ],
+      "details": [
+        "Les utilisateurs peuvent accéder aux paramètres de profil et aux outils de mot de passe à partir du menu.",
+        "Les paquets de Coins et les amis invités sont des outils de compte/coin.",
+        "Préférences contrôle les paramètres de notification et l'achat d'équipes de développement.",
+        "Aide et manuel doivent être reliés à cette page.",
+        "La session en cours est terminée."
+      ],
+      "tips": [
+        "Rendre l'aide/Manuel facile à trouver dans le menu."
+      ]
+    },
+    "firstSquadDeep": {
+      "title": "Première équipe",
+      "subtitle": "Principale liste de coureurs et vues de liste.",
+      "overview": "La première équipe est celle où les utilisateurs inspectent leur fichier principal, leurs informations financières, leurs compétences et leur forme.",
+      "facts": [
+        "Première équipe max en UI",
+        "18 coureurs",
+        "Vues",
+        "Général, financier, compétences, forme"
+      ],
+      "details": [
+        "Vue générale est la meilleure pour des vérifications rapides de la liste quotidienne.",
+        "La vue financière montre le salaire, la valeur marchande et les contrats.",
+        "La vue sur les compétences permet de comparer sprint, escalade, contre-la-montre, plat, endurance, récupération, résistance, course IQ, travail d'équipe et moral.",
+        "La vue de forme aide à juger la fatigue, le moral, la disponibilité et le potentiel.",
+        "Les widgets de la saison de tableau de bord peuvent montrer les victoires, les podiums, les top 10, le meilleur GC, la dernière course et la sélection suivante."
+      ],
+      "tips": [
+        "Ne pas acheter des coureurs avant de comprendre l'équipe actuelle."
+      ],
+      "links": [
+        "Effectif"
+      ]
+    },
+    "riderSkillsDeep": {
+      "title": "Compétences du coureur expliquées",
+      "subtitle": "Pour quoi chaque compétence est utile.",
+      "overview": "Globalement, c'est un raccourci utile, mais certains attributs du coureur décident du rôle de course et de l'utilisation tactique.",
+      "facts": [
+        "Compétences",
+        "Sprint, escalade, contre-la-montre, endurance, plat, récupération, résistance, course IQ, travail d'équipe, moral"
+      ],
+      "details": [
+        "Le sprint est important dans les trains de sprint et les finitions.",
+        "L'escalade des étapes et des sommets.",
+        "Les procès-verbaux sont en cours dans les contextes TT, prologue et TTT.",
+        "L'endurance maintient les coureurs forts à travers de longues étapes.",
+        "Flat aide sur les routes de laminage / plat, la poursuite et le positionnement.",
+        "Le rétablissement est important dans les courses de étape.",
+        "La résistance aide dans les conditions climatiques difficiles, le rythme élevé et le terrain difficile.",
+        "La course IQ affecte les décisions tactiques et le positionnement.",
+        "Le travail d'équipe aide les dômes, les plombs et les chasseurs.",
+        "Le moral affecte la confiance et peut influencer la performance."
+      ],
+      "tips": [
+        "Faire correspondre les compétences des coureurs au rôle et au type de étape."
+      ]
+    },
+    "riderProfileDeep": {
+      "title": "Tables de profil de rider",
+      "subtitle": "Aperçu, contrat, formation, comparaison et historique.",
+      "overview": "Profil de coureur est la page profonde pour les décisions individuelles de coureur.",
+      "facts": [
+        "Tables",
+        "Aperçu, Contrat, Formation, Comparer, Historique",
+        "Vue des compétences",
+        "Fondamental ou moderne"
+      ],
+      "details": [
+        "Aperçu montre l'identité du coureur, son statut et son état de base.",
+        "Le contrat indique les salaires, le renouvellement et les renseignements liés à la mainlevée.",
+        "La formation montre les plans/histoires quand ils sont disponibles.",
+        "Comparer permet aux utilisateurs de comparer les coureurs sans quitter la page.",
+        "L'histoire montre les saisons de carrière et les données de course récentes.",
+        "L'état de transfert est visible et peut bloquer la libération."
+      ],
+      "tips": [
+        "Ouvrir les profils avant de renouveler, vendre ou construire des Race Plans."
+      ]
+    },
+    "fitnessHealthDeep": {
+      "title": "Fitness, fatigue et santé",
+      "subtitle": "Pourquoi un coureur fort peut être un mauvais choix aujourd'hui.",
+      "overview": "La performance dépend plus que des attributs. La fatigue, la maladie, les blessures, le statut de personne à mobilité réduite et le moral peuvent tous changer la valeur de la course.",
+      "facts": [
+        "Disponibilité",
+        "En forme, pas en forme, blessé, malade",
+        "État",
+        "Fatigue, moral, santé, rétablissement"
+      ],
+      "details": [
+        "Les coureurs de coupe sont normalement en sécurité si ils ne sont pas bloqués par le calendrier.",
+        "Les coureurs qui ne sont pas en pleine forme peuvent être risqués et peuvent avoir besoin d'un soutien médical.",
+        "Les coureurs blessés ou malades ne devraient généralement pas courir ou s'entraîner dur.",
+        "Une fatigue élevée peut réduire les performances et augmenter le risque.",
+        "Le moral doit être surveillé car un faible moral peut nuire à la production.",
+        "Le personnel médical et l'investissement du Centre médical améliorent l'aide à la récupération."
+      ],
+      "tips": [
+        "Une étoile fatiguée peut se comporter pire qu'une aide fraîche."
+      ]
+    },
+    "raceSharpnessDeep": {
+      "title": "Race Sharpness",
+      "subtitle": "Rythme de course et risque de surcharge.",
+      "overview": "La netteté de course permet de voir si un coureur a assez de Race Sharpness récent ou est surchargé par trop de jours de course.",
+      "facts": [
+        "Suivi",
+        "Dernière date de course, jours de course derniers 14/30, jours de course totaux, avertissement de surcharge"
+      ],
+      "details": [
+        "Trop peu de course peut réduire la netteté.",
+        "Trop de course peut créer une pénalité de surcharge.",
+        "La netteté doit être lue avec fatigue et santé.",
+        "La préparation de course peut montrer une netteté lors de la sélection.",
+        "La netteté est particulièrement utile pour construire un calendrier de course."
+      ],
+      "tips": [
+        "Utilisez des courses plus petites pour préparer les coureurs à des buts plus grands."
+      ]
+    },
+    "contractsRenewalsRelease": {
+      "title": "Contrats, renouvellements et mainlevée",
+      "subtitle": "Les décisions financières autour des coureurs.",
+      "overview": "Les contrats ont une incidence sur les salaires, l'expiration, les coûts de mainlevée, le calendrier de renouvellement et le statut de liste de transfert.",
+      "facts": [
+        "Aperçu de la publication",
+        "Durée restante des semaines, salaire, coût de mainlevée et solde après mainlevée",
+        "Bloc",
+        "Release bloquée pendant le transfert"
+      ],
+      "details": [
+        "Un coureur à salaire élevé peut devenir un problème financier.",
+        "Les contrats d'expiration devraient être revus avant la fin de la saison.",
+        "Le fait de libérer un coureur peut coûter le reste du salaire/compensation.",
+        "L'aperçu montre si le club peut se permettre la libération.",
+        "Les coureurs inscrits sur la liste de transfert ne peuvent pas être libérés tant que la liste est active."
+      ],
+      "tips": [
+        "Vérifier les contrats avant de procéder à des transferts."
+      ]
+    },
+    "developingTeamDeep": {
+      "title": "Équipe en développement",
+      "subtitle": "U23/development listing, buy and movement windows.",
+      "overview": "Development Team est une deuxième équipe connectée pour les jeunes/développeurs.",
+      "facts": [
+        "Max en UI",
+        "8 coureurs",
+        "Achat",
+        "Préférences",
+        "Mouvement",
+        "Seulement pendant les fenêtres de mouvement",
+        "Avertissement concernant l'âge",
+        "24 coureurs et plus nécessitent une attention particulière"
+      ],
+      "details": [
+        "Le panneau d'état montre les jours réels joués, les jours de jeu joués, le solde des Coins, le coût des Coins et la permission d'achat.",
+        "Après l'achat, l'application doit garder le contexte actif club sur le club principal.",
+        "Les étiquettes de fenêtre de mouvement expliquent quand les coureurs peuvent se déplacer.",
+        "Les anciens coureurs en développement peuvent déclencher des avertissements.",
+        "Les coureurs en développement d'équipe peuvent encore être traités comme des coureurs de famille-utilisateur dans les affichages de résultats de course."
+      ],
+      "tips": [
+        "Utilisez-le pour développer le talent, pas comme un stockage illimité de la liste."
+      ],
+      "links": [
+        "Préférences"
+      ]
+    },
+    "staffRolesDeep": {
+      "title": "Rôles du personnel",
+      "subtitle": "Ce que le personnel fait pour le club.",
+      "overview": "Le personnel affecte l'entraînement, la récupération, le scoutisme, l'équipement et la planification des courses.",
+      "facts": [
+        "Rôles",
+        "Entraîneur-chef, formateur, U23 Entraîneur-chef, Docteur, Physio, Nutritionniste, Mécanicien, Directeur sportif, Scout/Analyst"
+      ],
+      "details": [
+        "L'entraîneur-chef soutient la formation et le développement.",
+        "Le formateur améliore la qualité de la formation quotidienne.",
+        "U23 Head Coach prend en charge les coureurs en développement.",
+        "Docteur d'équipe, Physio et nutritionniste soutiennent la santé et le rétablissement.",
+        "Matériel de soutien mécanique et systèmes techniques.",
+        "Le directeur du sport appuie les tactiques et la planification de la course.",
+        "Scout/Analyst soutient les renseignements et les rapports sur le marché."
+      ],
+      "tips": [
+        "Embaucher du personnel en fonction de sa faiblesse, pas seulement parce qu'il est disponible."
+      ]
+    },
+    "staffCapacityDeep": {
+      "title": "Capacités du personnel",
+      "subtitle": "Pourquoi l'embauche peut être bloquée.",
+      "overview": "Les rôles du personnel sont limités. L'infrastructure détermine souvent le nombre de membres du personnel de chaque rôle que le club peut employer.",
+      "facts": [
+        "Champs de capacité",
+        "Nombre limite, nombre actif, fentes ouvertes, peut louer"
+      ],
+      "details": [
+        "Si les créneaux ouverts est 0, l'embauche est bloquée pour ce rôle.",
+        "Les améliorations apportées à l'infrastructure peuvent libérer des capacités supplémentaires de personnel.",
+        "Le personnel peut également être indisponible en raison de cours ou d'affectations.",
+        "Une limite de personnel plus élevée ne signifie pas que le club peut se permettre le salaire.",
+        "Les avertissements de capacité devraient guider les utilisateurs vers l'infrastructure, le cas échéant."
+      ],
+      "tips": [
+        "Vérifiez les deux machines à sous ouvertes et le salaire avant d'embaucher."
+      ]
+    },
+    "staffCoursesDeep": {
+      "title": "Cours de personnel",
+      "subtitle": "Améliorer le personnel pendant les jours de jeu.",
+      "overview": "Les cours du personnel coûtent de l'argent et prennent des jours de jeu, mais peuvent améliorer les attributs du personnel.",
+      "facts": [
+        "Gains",
+        "Expertise, expérience, potentiel, leadership, efficacité, loyauté"
+      ],
+      "details": [
+        "Les cours actifs indiquent la date de début, la date d'achèvement, la durée et le coût.",
+        "Les cours récents complétés montrent les gains d'attribut.",
+        "Le personnel des cours peut ne pas être disponible pour certaines tâches.",
+        "Les cours sont les meilleurs pour le personnel que le club prévoit de garder.",
+        "Les dépenses de cours devraient être retardées si les finances sont dangereuses."
+      ],
+      "tips": [
+        "Former le personnel important, pas les employés temporaires."
+      ]
+    },
+    "regularTrainingDeep": {
+      "title": "Détails de la formation régulière",
+      "subtitle": "Les défauts d'équipe et les plans individuels.",
+      "overview": "La formation régulière est le système de développement quotidien pour les coureurs.",
+      "facts": [
+        "Intensités",
+        "Récupération, lumière, normale, dure",
+        "Les axes",
+        "Général, récupération, sprint, escalade, plat, contre-la-montre, endurance, résistance, course IQ, travail d'équipe"
+      ],
+      "details": [
+        "Les équipes par défaut contrôlent le plan normal pour une portée d'équipe.",
+        "Les plans individuels des coureurs peuvent remplacer les valeurs par défaut.",
+        "L'entraînement dur augmente la pression de développement, mais peut créer de la fatigue.",
+        "L'entraînement de récupération aide à réduire la fatigue et à protéger les coureurs.",
+        "Focus devrait correspondre au rôle du coureur et aux objectifs de course futurs."
+      ],
+      "tips": [
+        "Ne pas utiliser l'entraînement dur de façon permanente."
+      ]
+    },
+    "trainingCampsDeep": {
+      "title": "Stages d’entraînement",
+      "subtitle": "Emplacement, type, météo, personnel et coût.",
+      "overview": "Les camps d'entraînement sont des blocs de développement plus solides, avec des besoins et des coûts plus élevés en matière de planification.",
+      "facts": [
+        "Types de camps",
+        "Général, sprint, escalade, plat, contre-la-montre",
+        "Régions",
+        "Europe, Amérique du Nord, Amérique du Sud, Asie, Afrique, Océanie, Moyen-Orient"
+      ],
+      "details": [
+        "Les camps comprennent des étoiles, un multiplicateur de qualité, un confort de récupération, un indice de coût et une note météorologique.",
+        "Les semaines de congé, les semaines à risque et les semaines fermées ont une incidence sur l'adéquation du calendrier.",
+        "Les devis comprennent les frais de voyage, d'hébergement, de camp, de logistique et de coût total.",
+        "La validation peut bloquer les coureurs blessés ou le personnel non disponible.",
+        "Les mesures d'encouragement du personnel peuvent améliorer le développement, le rétablissement, l'organisation et la réduction des risques."
+      ],
+      "tips": [
+        "Réservez des camps seulement après avoir vérifié les finances."
+      ]
+    },
+    "currentCampDeep": {
+      "title": "Page actuelle du camp",
+      "subtitle": "Planification quotidienne des camps et rapports.",
+      "overview": "La page actuelle du camp montre les progrès actifs du camp, la météo, les renforts du personnel, les rapports et la planification du lendemain.",
+      "facts": [
+        "États",
+        "Remarque, prédémarrage, actif, poster, caché",
+        "Options possibles",
+        "Jour de repos, lumière, normal, dur"
+      ],
+      "details": [
+        "Les camps futurs montrent l'interface complète seulement près de commencer.",
+        "Les prévisions météorologiques aident les utilisateurs à ajuster l'intensité.",
+        "Les rapports quotidiens montrent des séances terminées/manquantes et des changements de fatigue.",
+        "Le résumé du renforcement du personnel explique ce que le personnel contribue.",
+        "Les trois prochains jours de camp peuvent être planifiés par équipe ou par intensité individuelle."
+      ],
+      "tips": [
+        "Utilisez un jour de congé lorsque la fatigue du camp devient trop élevée."
+      ]
+    }
+  }
+}

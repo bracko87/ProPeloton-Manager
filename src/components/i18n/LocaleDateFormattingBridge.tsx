@@ -41,6 +41,7 @@ function localeForLanguage(language: string | undefined): string {
   if (language?.startsWith('hr')) return 'hr-HR'
   if (language?.startsWith('es')) return 'es-ES'
   if (language?.startsWith('it')) return 'it-IT'
+  if (language?.startsWith('fr')) return 'fr-FR'
   return 'en-GB'
 }
 

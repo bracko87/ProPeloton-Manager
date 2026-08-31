@@ -1,0 +1,370 @@
+{
+  "sections": {
+    "equipmentCategoryDeep": {
+      "title": "Catégories d'équipement et primes",
+      "subtitle": "Les six catégories d'équipements durables.",
+      "overview": "L'équipement durable comprend les cadres, les roues, les pneus, les groupes, les casques et les chaussures.",
+      "facts": [
+        "Catégories",
+        "Cadre, jantes, pneus, groupes, casque, chaussures",
+        "Bonus",
+        "Plat, vallonné, montagne, galets, contre-la-montre, sprint, réduction de la fatigue"
+      ],
+      "details": [
+        "Les cadres définissent souvent l'identité de configuration large.",
+        "Les roues et les pneus sont très sensibles à la route.",
+        "Les groupes, casques et chaussures peuvent ajouter des bonus de soutien importants.",
+        "Les articles spécialisés peuvent inclure des compromis négatifs.",
+        "Les étiquettes de qualité comprennent Basic, Good et Super."
+      ],
+      "tips": [
+        "Équipement de correspondance avec le type de étape."
+      ]
+    },
+    "equipmentCapsDeep": {
+      "title": "Poids et bouchons de l'équipement",
+      "subtitle": "Pourquoi les primes d'équipement sont contrôlées.",
+      "overview": "L'équipement aide, mais les bonus plafonnés protègent la capacité du coureur et l'équilibre du jeu.",
+      "facts": [
+        "Casquettes connues",
+        "Étape d'équipement autour de 4%, soutien d'équipe autour de 5%, soutien total autour de 8%, réduction de fatigue autour de 10%"
+      ],
+      "details": [
+        "Un ensemble complet de +4% d'articles ne devient pas +24%.",
+        "Les primes sont pondérées par catégorie d'équipement.",
+        "Les primes de soutien ont des plafonds.",
+        "La réduction de la fatigue a également un plafond.",
+        "Les engins spécialisés sont encore précieux en course rapprochée."
+      ],
+      "tips": [
+        "Utilisez l'équipement pour soutenir la stratégie, pas remplacer la qualité du coureur."
+      ]
+    },
+    "equipmentInventoryDeep": {
+      "title": "Inventaire et entretien",
+      "subtitle": "État, statut et décisions de réparation.",
+      "overview": "L'inventaire montre que le matériel et l'entretien en propriété active sont axés sur les articles nécessitant une attention particulière.",
+      "facts": [
+        "Statuts",
+        "Prêt, assigné, en entretien, porté",
+        "Seuil d'entretien",
+        "Condition <= 90%"
+      ],
+      "details": [
+        "Les articles vendus et jetés sont cachés de l'inventaire actif.",
+        "Les objets prêts et usés peuvent généralement exécuter des actions si les règles le permettent.",
+        "Les objets attribués sont verrouillés parce qu'ils sont utilisés.",
+        "Réparation des devis afficher le coût et la permission.",
+        "La condition doit être fixée avant les courses importantes."
+      ],
+      "tips": [
+        "Réparer tôt; n'attendez pas que tout le matériel soit porté."
+      ]
+    },
+    "raceSuppliesDeep": {
+      "title": "Détails des fournitures de course",
+      "subtitle": "Bidons, gels, nutrition, maillots et vestes de pluie.",
+      "overview": "Les approvisionnements en course sont consommés ou utilisés pendant les Stage Plans et peuvent affecter la fatigue, l'endurance, la préparation et le soutien météorologique.",
+      "facts": [
+        "Produits consommables",
+        "Bidons, gels énergétiques, packs nutritionnels",
+        "Produits durables",
+        "Course Jersey Complete, vestes de pluie"
+      ],
+      "details": [
+        "Bidons: 1–4 par coureur; hydratation et contrôle de la fatigue.",
+        "Gels: 0–4 par coureur; support d'endurance et de dernier effort.",
+        "Nutrition: 0-2 par coureur; soutien à la récupération et à l'endurance.",
+        "Maillots de course: kit durable obligatoire; 10 étapes par unité.",
+        "Vestes de pluie: en option, élément de temps durable; 25 utilisations de étape par unité."
+      ],
+      "tips": [
+        "Les courses de étape consomment des fournitures rapidement."
+      ]
+    },
+    "technicalSponsorDeep": {
+      "title": "Soutien technique dans le matériel",
+      "subtitle": "Réductions et budgets d'appui.",
+      "overview": "Les promoteurs techniques peuvent réduire les coûts d'équipement et fournir des budgets d'appui à l'équipement.",
+      "facts": [
+        "Avantages",
+        "Appui en espèces, budget d ' appui au matériel, budget utilisé/retenu, rabais par catégorie"
+      ],
+      "details": [
+        "Aperçu de l'équipement peut montrer le soutien technique actif du sponsor.",
+        "Les achats sur le marché peuvent faire des rabais de catégorie.",
+        "Le reste du budget aide à planifier le calendrier d'achat.",
+        "Les réductions peuvent différer selon la catégorie.",
+        "Les sponsors techniques sont particulièrement utiles avant les mises à niveau majeures."
+      ],
+      "tips": [
+        "Acheter des équipements coûteux tandis que le support utile est actif."
+      ]
+    },
+    "facilitiesOverviewDeep": {
+      "title": "Aperçu général des installations",
+      "subtitle": "Bâtiments et capacité du personnel.",
+      "overview": "Les installations améliorent les systèmes de formation, de soins médicaux, de scoutisme, de mécanique, d'administration des jeunes et des clubs.",
+      "facts": [
+        "Installations",
+        "Club House, Centre de formation, Centre médical, Académie de la jeunesse, Atelier de mécanique, Bureau de scoutisme"
+      ],
+      "details": [
+        "Club House soutient l'administration et la gestion future.",
+        "Le Centre de formation soutient le coaching et le développement.",
+        "Le Centre médical soutient les médecins, les physiciens, les nutritionnistes et la récupération.",
+        "Youth Academy soutient le développement de U23/jeunesse.",
+        "Mécanique L'atelier soutient l'équipement et les réparations.",
+        "Le Bureau de scoutisme appuie les rapports de scoutisme et les renseignements sur le marché."
+      ],
+      "tips": [
+        "Choisissez des mises à jour en fonction de votre goulot d'étranglement actuel."
+      ]
+    },
+    "facilityJobsDeep": {
+      "title": "Emplois dans le secteur des infrastructures",
+      "subtitle": "Constructions, livraisons, fentes et remboursements.",
+      "overview": "Les travaux d'infrastructure sont en attente de modernisation des installations ou de livraison d'actifs avec des coûts en espèces et la durée du jeu-jour.",
+      "facts": [
+        "Types d'emplois",
+        "Amélioration des installations, fourniture des biens",
+        "Statuts",
+        "En attente, terminée, annulée, échouée"
+      ],
+      "details": [
+        "Les emplois actifs montrent les coûts payés, la durée du jeu et la date d'achèvement.",
+        "Les créneaux de construction d'installations limitent le nombre de constructions qui peuvent se produire à la fois.",
+        "Les offres d'annulation montrent remboursement en espèces, remboursement pour cent, coût d'annulation et raison.",
+        "Annulation immédiate peut rembourser plus que l'annulation tardive.",
+        "Mise à jour des installations ou livraison des biens."
+      ],
+      "tips": [
+        "Ne commencez pas trop d'emplois coûteux pendant la pression de trésorerie."
+      ]
+    },
+    "assetsDeep": {
+      "title": "Aperçu général des actifs",
+      "subtitle": "Voitures d'équipe, bus et fourgonnettes de soutien.",
+      "overview": "Les biens sont des véhicules et des ressources de soutien avec des niveaux, des conditions, un statut d'affectation et des valeurs de soutien.",
+      "facts": [
+        "Actifs",
+        "Voitures d'équipe, Bus d'équipe, Van équipement, Atelier mobile, Van médical"
+      ],
+      "details": [
+        "Les voitures d'équipe soutiennent le convoi de course et peuvent être sélectionnées comme voitures d'équipe 1–3.",
+        "Team Bus transporte les coureurs et le personnel.",
+        "Équipement Van transporte des vélos et des équipements.",
+        "Mobile Workshop soutient les réparations et les opérations techniques.",
+        "La fourgonnette médicale répond aux besoins médicaux et logistiques.",
+        "Les biens cédés ou immobilisés ne peuvent être réparés ou vendus."
+      ],
+      "tips": [
+        "Gardez des biens importants réparés avant les courses."
+      ]
+    },
+    "seasonCalendarDeep": {
+      "title": "Détails du calendrier de saison",
+      "subtitle": "Planification quotidienne des activités de l'équipe.",
+      "overview": "Le calendrier de saison montre l'activité quotidienne du club et la saison plus large.",
+      "facts": [
+        "Filtres",
+        "Courses, Camps d'entraînement, Événements, Vacances",
+        "Durée du mois de jeu",
+        "30 jours dans la grille actuelle de l'assurance-chômage"
+      ],
+      "details": [
+        "Utilisez-le pour voir les jours de course, les camps et les événements.",
+        "Les filtres réduisent l'encombrement.",
+        "Le calendrier permet d'éviter les surréservations des coureurs et du personnel.",
+        "Les dates du camp d'entraînement devraient être vérifiées ici.",
+        "Des mois de course importants peuvent être prévus à l'avance."
+      ],
+      "tips": [
+        "Utilisez le calendrier de saison avant de réserver des camps."
+      ]
+    },
+    "raceCalendarDeep": {
+      "title": "Détails du calendrier de course",
+      "subtitle": "Cartes de course et statut d'application.",
+      "overview": "Calendrier des courses liste toutes les courses et leur état d'application.",
+      "facts": [
+        "Valeurs de l'état",
+        "not_open, ouvert, fermé, race_active, race_finished, annulé"
+      ],
+      "details": [
+        "Les cartes de course peuvent afficher la catégorie, le pays, la ville hôte, le type, la date de début/fin et les limites de l'équipe.",
+        "Les applications ne sont possibles que lorsque le statut est ouvert.",
+        "Le décompte des équipes acceptées montre à quel point la course est complète.",
+        "Les objectifs du sponsor peuvent cibler des courses ou des catégories spécifiques.",
+        "Open Course envoie les utilisateurs à la page Course Detail."
+      ],
+      "tips": [
+        "Appliquer uniquement lorsque la course convient à votre équipe."
+      ]
+    },
+    "raceDetailDeep": {
+      "title": "Page détaillée de course",
+      "subtitle": "Profil de course, étapes, participants, résultats et replay.",
+      "overview": "Course Detail est le centre de course complet.",
+      "facts": [
+        "Onglets Info",
+        "Participants, résultats",
+        "Classements",
+        "Général, points, montagne, jeune, équipe"
+      ],
+      "details": [
+        "La description de la course comprend les dates, le pays, la catégorie, le type de course et le statut.",
+        "Les règles d'entrée indiquent les délais, les limites de l'équipe, les limites des coureurs et le fonds de prix.",
+        "Les étapes montrent route, terrain, distance, météo, sprints et montées.",
+        "Les participants présentent des instantanés d'équipe et de coureur.",
+        "Les résultats et les classifications sont disponibles selon l'état de la course.",
+        "Le replay peut afficher des cadres en direct ou historiques si l'accès le permet."
+      ],
+      "tips": [
+        "Passez en revue les détails de la course avant de préparer une équipe."
+      ]
+    },
+    "stageTerrainPoints": {
+      "title": "Terrain et points de l'étape",
+      "subtitle": "Plat, vallonné, montagne, TT, pavé, sprints et KOM.",
+      "overview": "Les définitions de terrain et de points de étape aident les utilisateurs à choisir les coureurs, les tactiques et l'équipement.",
+      "facts": [
+        "Terrain",
+        "Flat, vallonné, montagne, contre-la-montre individuel, contre-la-montre en équipe, prologue, pavé",
+        "Types de points",
+        "DÉBUT, INTERMÉDIAT, KOM, BONUS_SPRINT, FINIS"
+      ],
+      "details": [
+        "Les étapes plates favorisent souvent les sprinteurs et les plombs.",
+        "Les étapes Hilly favorisent les coureurs et les attaquants polyvalents.",
+        "Les étapes de montagne favorisent les grimpeurs et les leaders GC.",
+        "Les étapes de TT/prologue favorisent les procès-verbaux et les équipements TT.",
+        "Les étapes pavées favorisent la résistance et les équipements spécialisés.",
+        "Les points KOM et sprint sont importants pour les classifications secondaires."
+      ],
+      "tips": [
+        "Le terrain de étape devrait conduire les rôles Stage Plan."
+      ]
+    },
+    "replayResultsDeep": {
+      "title": "Rejouer, résultats et commentaires",
+      "subtitle": "Comment comprendre ce qui s'est passé dans une étape.",
+      "overview": "Rejouer et commenter explique la dynamique de la course au-delà du tableau de résultats final.",
+      "facts": [
+        "Rejouer les vitesses",
+        "1x, 2x, 4x, 8x",
+        "Limite de la trame",
+        "Jusqu'à 50000 lignes chargées dans le code courant"
+      ],
+      "details": [
+        "Rejouer les cadres montre les groupes, les lacunes, les coureurs, les équipes, la vitesse et les marqueurs de kilomètre.",
+        "L'état en direct contrôle si les résultats sont visibles et si la vitesse de rejouage est verrouillée.",
+        "Les rangées debout peuvent montrer les badges de leader et la position du groupe.",
+        "Les événements commentés/rapportés décrivent les attaques, les sprints, les montées, les incidents et les moments décisifs.",
+        "Les résultats montrent le rang de stade, le temps, l'écart, les points, les secondes bonus/pénales et le statut."
+      ],
+      "tips": [
+        "Utilisez le replay pour diagnostiquer les tactiques et les performances des coureurs."
+      ]
+    },
+    "racePlanDeep": {
+      "title": "Détails de Race Plan",
+      "subtitle": "Riders, personnel, biens, matériel et fournitures.",
+      "overview": "Race Plan est le plan de niveau de course soumis avant Stage Plans.",
+      "facts": [
+        "Coins principales",
+        "Riders, personnel, actifs, équipement, fournitures et devis"
+      ],
+      "details": [
+        "Les coureurs doivent correspondre aux règles de la course min/max.",
+        "Les coureurs bloqués ne peuvent pas être sélectionnés pour les événements qui se chevauchent.",
+        "Le personnel et les biens peuvent également être bloqués par des affectations.",
+        "L'équipement doit correspondre au terrain de course.",
+        "Les fournitures devraient être suffisantes pour toutes les étapes.",
+        "L'aperçu des cotes doit être vérifié avant de soumettre."
+      ],
+      "tips": [
+        "Ne jamais soumettre un plan sans lire les coûts et bloquer les ressources."
+      ]
+    },
+    "stagePlanDeep": {
+      "title": "Détails de Stage Plan",
+      "subtitle": "Rôles et tactiques par étape.",
+      "overview": "Stage Plans indique au Race Engine ce que chaque coureur doit faire sur chaque étape.",
+      "facts": [
+        "Composantes",
+        "Rôles, tactiques d'équipe, tactiques individuelles, équipement, fournitures"
+      ],
+      "details": [
+        "Une étape de sprint plat a besoin de rôles différents de ceux d'une étape de montagne.",
+        "Les étapes TT et TTT ont besoin d'équipement de pacing et de spécialiste.",
+        "Les fournitures sont attribuées par étape et peuvent être consommées ou utiliser une capacité durable.",
+        "Les contrôles de la disponibilité indiquent si un Stage Plan est utilisable.",
+        "Les plans sauvegardés mais vides ne sont pas les mêmes que les plans complets."
+      ],
+      "tips": [
+        "Vérifiez chaque étape d'une course d'étape."
+      ]
+    },
+    "stageRolesDeep": {
+      "title": "Rôles et cas d'utilisation",
+      "subtitle": "Choisir des leaders, des sprinteurs, des aides et des spécialistes.",
+      "overview": "Les rôles de étape devraient correspondre aux compétences des coureurs et aux objectifs de étape.",
+      "facts": [
+        "Rôles",
+        "Leader, sprinter, plomb, sprint train, grimpeur, montagne dômestique, aide, échappé, chasse, rouleur, protégé, libre"
+      ],
+      "details": [
+        "Le Team Leader/GC est pour les coureurs protégés pendant le temps total.",
+        "Sprinter a besoin de compétences de sprint et de soutien de plomb.",
+        "Lead-out/Sprint Train aide le sprinter dans les finitions plates.",
+        "Climber/Mountain Domestique est pour le contrôle des montagnes.",
+        "Les rôles de dissident sont risqués mais peuvent poursuivre les victoires d'étape ou la visibilité.",
+        "Rouleurs et aides soutiennent la poursuite, le paçage et la protection."
+      ],
+      "tips": [
+        "Ne faites pas de chaque coureur un leader."
+      ]
+    },
+    "stageReadinessDeep": {
+      "title": "Système de préparation à l'étape",
+      "subtitle": "Vérifications du plan vert/jaune/orange/rouge/gris.",
+      "overview": "L'état de préparation indique aux utilisateurs si les Stage Plans sont suffisamment complets pour le moteur.",
+      "facts": [
+        "Nombres",
+        "Sauvé, utilisable, manquant, incomplet, vide, sans fournitures",
+        "Tons",
+        "Vert, jaune, orange, rouge, gris"
+      ],
+      "details": [
+        "Il faudrait créer des plans manquants.",
+        "Les plans vides devraient être remplis de rôles/tactiques/fournitures.",
+        "Les plans sans fournitures peuvent être risqués ou incomplets.",
+        "Action recommandée explique ce qu'il faut corriger.",
+        "Tous les Stage Plans requis doivent être sauvegardés avant la journée de course."
+      ],
+      "tips": [
+        "Fixer la préparation rouge/orange avant la date limite."
+      ]
+    },
+    "sportDirectorDeep": {
+      "title": "Suggestions du directeur du sport",
+      "subtitle": "Propositions d'assistants pour les Stage Plans.",
+      "overview": "Les suggestions des directeurs du sport peuvent aider les gestionnaires à élaborer des plans, mais ne doivent pas remplacer le jugement.",
+      "facts": [
+        "Domaines de suggestions",
+        "Équipement, équipe, individuel, fournitures"
+      ],
+      "details": [
+        "La réponse à la suggestion peut inclure le genre de stade, le nom de l'étape, les données de suggestion et l'explication.",
+        "Les suggestions peuvent être limitées par la qualité du personnel ou la logique de backend.",
+        "Les utilisateurs doivent comparer les suggestions avec les compétences réelles des coureurs et les objectifs de l'équipe.",
+        "Les conditions météorologiques et les fournitures doivent encore être vérifiées manuellement.",
+        "Les bons gestionnaires ajustent les suggestions au lieu de les appliquer aveuglément."
+      ],
+      "tips": [
+        "Utiliser les suggestions comme outil d'apprentissage."
+      ]
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "page": {
+    "title": "Effectif",
+    "subtitle": "Gérer votre liste d'équipes en développement et les fenêtres de mouvement.",
+    "loading": "Chargement de l'équipe en développement...",
+    "loadFailed": "Impossible de charger l'équipe de développement",
+    "riders": "Coureurs",
+    "currentCompetition": "Concours actuel",
+    "loadingCompetition": "Chargement de la compétition...",
+    "competitionUnavailable": "Concours non disponible",
+    "noRiders": "Aucun coureur trouvé pour l'équipe en développement.",
+    "unlockInPreferences": "Débloquer l'équipe de développement dans Préférences d'abord."
+  },
+  "movement": {
+    "firstSquadUnavailable": "La première escouade n'est pas disponible.",
+    "windowClosed": "La fenêtre de mouvement est fermée.",
+    "windowClosedNext": "La fenêtre de mouvement est fermée. La fenêtre suivante est {{window}}.",
+    "windowClosedNextNoPeriod": "Fenêtre de mouvement fermée. Fenêtre suivante: {{window}}",
+    "windowOpen": "Fenêtre de mouvement ouverte maintenant: {{window}}",
+    "currentWindow": "Fenêtre actuelle",
+    "unknown": "Inconnu",
+    "firstSquadFull": "La première équipe est pleine ({{count}}/{{max}}).",
+    "moveToFirstSquad": "Déplacer vers la première escouade",
+    "movedToFirstSquad": "Rider est parti à la 1re brigade.",
+    "couldNotMove": "Impossible de déplacer le coureur à la 1re brigade.",
+    "actionRequiredNow": "Mesures à prendre dès maintenant",
+    "mustMoveNextWindow": "Doit déplacer la fenêtre suivante"
+  },
+  "healthReport": {
+    "subtitle": "Les coureurs en développement de l'équipe sont actuellement blessés, malades et en voie de guérison",
+    "lockedTitle": "Élaboration du rapport sur la santé des équipes",
+    "lockedDescription": "Consultez les renseignements sur les blessures, les maladies et le rétablissement pour vos coureurs de développement dans un rapport consolidé."
+  },
+  "season": {
+    "resultsLockedTitle": "Résultats de l'équipe en développement cette saison",
+    "resultsLockedDescription": "Voir les tendances mensuelles de la performance des équipes de développement au cours de la saison en cours.",
+    "podiumsLockedTitle": "Développement de l'équipe Podiums et Placements",
+    "podiumsLockedDescription": "Analysez les victoires, les podiums et la distribution des positions finales pour votre équipe de développement.",
+    "raceTypeLockedTitle": "Développement de l'équipe Type de course Snapshot",
+    "raceTypeLockedDescription": "Comparer les résultats de l'équipe de développement à travers les classiques, les journées de montagne, les finitions de étape et les essais temporels."
+  }
+}

@@ -1,0 +1,380 @@
+{
+  "common": {
+    "startTutorial": "Début du tutoriel",
+    "noThanks": "Pas de merci",
+    "next": "Suivant",
+    "finishForNow": "Terminez pour l'instant",
+    "closeTutorial": "Fermer le tutoriel",
+    "continue": "Continuer"
+  },
+  "overview": {
+    "welcome": {
+      "title": "Bienvenue sur ProPeloton Manager",
+      "body": "Bienvenue dans le jeu. Ce tutoriel peut vous aider à comprendre les pages principales et les systèmes les plus importants étape par étape. Vous pouvez démarrer le tutoriel maintenant, ou le sauter et utiliser le manuel de jeu plus tard.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "skipped": {
+      "title": "Pas de problème!",
+      "body": "Vous pouvez toujours trouver de l'aide plus tard à travers la section Aide, le manuel de jeu, ou notre communauté Discord. Bonne chance et profitez de votre première saison!",
+      "primary": "Continuer"
+    },
+    "welcomeGame": {
+      "title": "Bienvenue sur ProPeloton Manager",
+      "body": "Bienvenue à ProPeloton Manager. Vous êtes maintenant le manager de votre propre équipe de cyclisme. Votre travail est de construire le club, prendre soin de vos coureurs, préparer les courses, gérer l'argent, améliorer l'équipe, et guider votre club pendant la saison.",
+      "primary": "Suivant"
+    },
+    "gameType": {
+      "title": "C'est quoi, ce jeu?",
+      "body": "Vous ne contrôlez pas la moto directement pendant la course. Vous prenez plutôt les décisions importantes du manager avant et pendant la saison: quels coureurs garder, comment les former, quelles courses à entrer, quel équipement utiliser, quel personnel engager et comment dépenser votre argent.",
+      "primary": "Suivant"
+    },
+    "simpleOrDeep": {
+      "title": "Jouer simple ou aller de fond",
+      "body": "Au début, vous pouvez jouer de manière simple: suivre les alertes, vérifier votre équipe, entrer dans les courses, préparer votre équipe et regarder les résultats. Plus tard, si vous voulez plus de profondeur, vous pouvez utiliser des systèmes avancés comme la fatigue des coureurs, le moral, la netteté de course, les objectifs de sponsor, les bonus d'équipement, les camps d'entraînement, le scoutisme, les négociations de transfert, les taxes, l'infrastructure, et la promotion ou la relégation.",
+      "primary": "Suivant"
+    },
+    "purpose": {
+      "title": "Ce que fera ce tutoriel",
+      "body": "Ce tutoriel vous guidera à travers les pages principales du jeu une par une. Vous apprendrez à quoi sert chaque page, à quels boutons sont importants, et ce que vous devriez vérifier en tant que nouveau gestionnaire. Le tutoriel n'expliquera pas chaque petit détail à la fois. Pour des explications plus approfondies, vous pouvez toujours utiliser le manuel complet du jeu plus tard.",
+      "primary": "Suivant"
+    },
+    "startOverview": {
+      "title": "Let-S Commence par la page d'aperçu",
+      "body": "Nous allons commencer par la page Aperçu. Ceci est votre tableau de bord principal manager. Il vous donne l'image la plus rapide de votre équipe: alertes actuelles, nouvelles, finances, courses, messages sponsors, condition du coureur, et progression de saison. Après cette introduction, je vais expliquer la page Aperçu étape par étape.",
+      "primary": "Début du tutoriel Aperçu"
+    },
+    "dashboard": {
+      "title": "Votre tableau de bord gestionnaire",
+      "body": "C'est votre page Aperçu — le tableau de bord principal de votre équipe. Pensez à cette page comme votre salle de contrôle quotidienne. Lorsque vous vous connectez, c'est généralement la première place que vous devriez vérifier. Ici vous pouvez rapidement voir les informations les plus importantes sur votre club, y compris le statut de l'équipe, alertes actuelles, finances, courses, condition du coureur, et progression de saison.",
+      "primary": "Suivant"
+    },
+    "staffBriefing": {
+      "title": "Centre d ' information du personnel",
+      "body": "This panel shows your support staff and assistant roles.\n\nHere you can see important team helpers such as the Head Coach, Sports Director, Team Doctor, Chief Mechanic, and other assistant roles when available.\n\nThese assistants help you manage important parts of your club more efficiently, such as course planning, rider health, preparation, and equipment support.\n\nSome assistant functions, staff tools, or automation-related features may require a Premium account or coin purchase to use fully.",
+      "primary": "Suivant"
+    },
+    "newsBoard": {
+      "title": "Conseil d'administration",
+      "body": "Le News Board présente des nouvelles importantes de l'équipe et du monde. Certaines nouvelles concernent votre propre équipe, comme les offres de sponsor, les anniversaires ou les mises à jour de l'équipe. D'autres nouvelles peuvent être sur le monde de course plus large, comme les résultats de course ou les événements cyclistes importants.",
+      "primary": "Suivant"
+    },
+    "nextRace": {
+      "title": "Prochaine course d'équipe",
+      "body": "Le panel Next Team Course vous aide à voir ce qui va arriver bientôt pour votre équipe. C'est important car les courses acceptées ont souvent besoin de préparation. Vous devrez peut-être sélectionner les coureurs, le personnel, les actifs, l'équipement, les fournitures et les tactiques d'étape avant les dates limites.",
+      "primary": "Suivant"
+    },
+    "lastRace": {
+      "title": "Dernière course d'équipe",
+      "body": "Le panel de la dernière course de l'équipe montre votre dernière course terminée lorsque disponible. Utilisez-le pour examiner rapidement comment votre équipe a effectué. Les résultats peuvent vous aider à décider si les coureurs ont besoin de repos, si les tactiques ont bien fonctionné, ou si votre équipe a besoin de changements avant le prochain événement.",
+      "primary": "Suivant"
+    },
+    "sponsor": {
+      "title": "Parrain principal",
+      "body": "Le panneau principal du sponsor affiche les informations sur votre sponsor principal lorsque vous avez un sponsor principal actif. Les sponsors sont importants parce qu'ils peuvent fournir de l'argent, des bonus, des objectifs et parfois des effets de marque. Certains contrats de sponsor sont simples, tandis que les sponsors de noms-droits peuvent changer temporairement votre nom d'équipe pendant la saison.",
+      "primary": "Suivant"
+    },
+    "progress": {
+      "title": "Santé de l'équipe et progrès de la saison",
+      "body": "Le reste de la page Aperçu vous aide à suivre votre état d'équipe et de progrès. Ici, vous pouvez surveiller l'état du coureur, financer la santé, l'activité sponsor, l'activité de course, les opérations actives, les données de saison instantanés, et les progrès de saison générale. Certaines sections avancées de tableau de bord, des résumés, ou des vues de données supplémentaires peuvent nécessiter un compte Premium ou un achat de pièce pour débloquer. Si un panneau est verrouillé, vous pouvez toujours jouer normalement, mais Premium ou Coins peuvent rendre le jeu plus facile et vous donner une vue plus profonde de votre club.",
+      "primary": "Continuer à Squad",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "squad": {
+    "welcome": {
+      "title": "Besoin d'aide avec votre brigade?",
+      "body": "Nous pouvons vous montrer une brève introduction à la page Squad, où vous gérez vos coureurs, développant l'équipe, les fenêtres de mouvement et le personnel.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "riders": {
+      "title": "Vos coureurs",
+      "body": "C'est la page Squad, le lieu principal où vos coureurs sont affichés. Dans la vue générale, vous pouvez voir des informations importantes sur les coureurs tels que l'âge, le pays, le rôle, le niveau global, la condition, la valeur marchande, les salaires, les détails du contrat, et les points internationaux. Utilisez cette page chaque fois que vous voulez comprendre la force et la structure actuelles de votre équipe.",
+      "primary": "Suivant"
+    },
+    "details": {
+      "title": "Vues et profils des coureurs",
+      "body": "The Squad page gives you different ways to look at your riders.\n\nYou can check financial information, skills, form, development, health, and availability. Skills can improve over time, so this page helps you follow how each rider is developing.\n\nBy clicking the View button, you can open the full rider profile with more detailed information.\n\nSome advanced rider tools, additional dashboards, or convenience features may require a Premium account or coin purchase.",
+      "primary": "Suivant"
+    },
+    "developing": {
+      "title": "Développement de l'équipe et fenêtre de mouvement",
+      "body": "Your Developing Team is your second team. It can be used for young riders who are not yet ready for the first squad but can still course in assigned competitions.\n\nThe Developing Team must be unlocked first. You can find more about this in Preferences.\n\nRiders can only be moved between the First Squad and Developing Team during movement windows. These windows open four times per year, and the Squad page shows when the next movement window is available.\n\nSome extra management tools, extended views, or convenience features related to this area may require a Premium account or coin purchase.",
+      "primary": "Suivant"
+    },
+    "staff": {
+      "title": "Personnel et page suivante",
+      "body": "Le bouton Staff affiche les membres du personnel travaillant pour votre club et les limites actuelles de votre configuration du personnel. Les membres du personnel ont leurs propres compétences et peuvent être envoyés sur les cours. Les limites du personnel peuvent également être améliorées en améliorant votre infrastructure. Après Squad, la page suivante recommandée est Training, où vous pouvez mettre en place des camps d'entraînement et de planification réguliers pour vos coureurs.",
+      "primary": "Continuer à suivre la formation",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "training": {
+    "welcome": {
+      "title": "Besoin d'aide pour la formation?",
+      "body": "Nous pouvons vous montrer comment fonctionnent les camps d'entraînement et d'entraînement réguliers, et comment ils affectent le développement des coureurs, la fatigue et la préparation de la course.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "regular": {
+      "title": "Formation régulière",
+      "body": "Vous pouvez également régler l'entraînement par équipe pour la première équipe et le team de développement, et vous pouvez également ajuster l'entraînement pour les coureurs individuels. Chaque coureur peut former un objectif spécifique comme le sprint, l'escalade, le plat, le contre-la-montre, l'endurance, la résistance, la course IQ, le travail d'équipe ou la récupération. L'intensité de l'entraînement est importante. L'entraînement plus dur peut améliorer les coureurs plus rapidement, mais il peut aussi les rendre plus fatigués avant les prochaines courses.",
+      "primary": "Suivant"
+    },
+    "camps": {
+      "title": "Stages d’entraînement",
+      "body": "Les camps d'entraînement sont des blocs spéciaux d'entraînement où vous envoyez des coureurs sélectionnés pour plusieurs jours. Un camp d'entraînement peut donner un développement de compétences plus fort que l'entraînement quotidien régulier, mais il coûte beaucoup plus cher. Vous choisissez le type de camp, l'emplacement, les dates, la durée, les coureurs et le personnel disponible. Le personnel peut améliorer l'effet du camp ou aider à mieux protéger les coureurs, en fonction de leurs compétences et de disponibilité.",
+      "primary": "Continuer à acheter du matériel",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "equipment": {
+    "welcome": {
+      "title": "Besoin d'aide avec l'équipement?",
+      "body": "Nous pouvons vous montrer comment fonctionne l'équipement, y compris les configurations de course, l'inventaire, les achats de marché, et les fournitures de course.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "overview": {
+      "title": "Aperçu général de l'équipement",
+      "body": "Ceci est la page Équipement. L'onglet Aperçu vous donne un résumé de votre équipement d'équipe et de vos configurations de configuration de course. La configuration par défaut de course est la configuration utilisée lorsque vous ne choisissez pas une configuration spécifique pour une course. Ci-dessous, vous pouvez créer différentes configurations de configuration de course qui peuvent être sélectionnées plus tard dans la préparation de course. Chaque configuration peut apporter différents bonus à vos coureurs, en fonction de l'équipement à l'intérieur et du nombre d'éléments utilisables disponibles.",
+      "primary": "Suivant"
+    },
+    "inventory": {
+      "title": "Inventaire",
+      "body": "L'onglet Inventaire affiche tous les équipements que votre équipe possède actuellement. Ici, vous pouvez voir des articles tels que les vélos, roues, pneus et autres équipements que vous avez achetés. Vous pouvez vérifier la qualité, l'état, la valeur, les bonus et la disponibilité. Si vous n'avez plus besoin de certains équipements, vous pouvez le vendre à partir de votre inventaire.",
+      "primary": "Suivant"
+    },
+    "market": {
+      "title": "Marché des équipements",
+      "body": "L'onglet Marché est l'endroit où vous achetez de nouveaux équipements. Chaque article a un prix et peut apporter des bonus différents. Un meilleur équipement peut améliorer les performances de course, mais il coûte aussi plus cher. Lorsque vous achetez des équipements, il est envoyé à votre inventaire et peut ensuite être utilisé dans les configurations de course.",
+      "primary": "Suivant"
+    },
+    "raceSupplies": {
+      "title": "Ravitaillement de course",
+      "body": "L'onglet Course Supplies montre les fournitures consommables que votre équipe peut utiliser pour les courses. Certaines fournitures peuvent être utilisées une seule fois, tandis que d'autres peuvent être utilisées plusieurs fois. Les fournitures peuvent aider à protéger les coureurs contre les conditions de course difficiles.",
+      "primary": "Continuer à l'infrastructure",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "facilities": {
+    "welcome": {
+      "title": "Besoin d'aide pour l'infrastructure?",
+      "body": "Nous pouvons vous montrer comment fonctionnent les installations et les équipements d'équipe, y compris les améliorations, les limites du personnel, les véhicules, les primes et les projets de construction.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "buildings": {
+      "title": "Installations",
+      "body": "Vous trouverez ici la page Infrastructure. L'onglet Installations montre les bâtiments que votre club peut posséder et mettre à niveau. Chaque équipe commence par un club de niveau 1 de base. Plus tard, vous pouvez construire et mettre à niveau des installations importantes telles que le centre de formation, le centre médical, l'académie de la jeunesse, l'atelier de mécanique et le bureau de scoutisme.",
+      "primary": "Suivant"
+    },
+    "projects": {
+      "title": "Constructions, mises à niveau et remboursements",
+      "body": "Lorsque vous ouvrez les détails d'une installation, vous pouvez voir ce que le prochain niveau coûte, combien de temps la construction prend, et quels bonus ou déverrouillages il apportera. Vous pouvez démarrer un projet de construction ou de mise à niveau lorsque votre club a assez d'argent et la capacité disponible du projet. Vous pouvez également annuler un projet d'infrastructure.",
+      "primary": "Suivant"
+    },
+    "assets": {
+      "title": "Actifs de l'équipe",
+      "body": "The Assets tab shows vehicles and support assets your team can use.\n\nThis includes team cars, team buses, equipment vans, mobile workshops, and medical vans. These assets can support your team during courses, travel, preparation, and training camps.\n\nEach asset can have different levels, costs, condition, bonuses, and limits. Open the details for each asset to understand what it brings and how it can help your team perform better.\n\nTo use this page fully, some advanced functions, management options, or extended tools may require a Premium account or coin purchase.",
+      "primary": "Continuer vers le calendrier",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "calendar": {
+    "welcome": {
+      "title": "Besoin d'aide pour le calendrier?",
+      "body": "Nous pouvons vous montrer comment fonctionne le calendrier, y compris les activités quotidiennes de l'équipe, les mois de course, les objectifs de course sponsor et les pages de profil de course.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "season": {
+      "title": "Calendrier des saisons",
+      "body": "C'est le calendrier de la saison. Il vous donne un aperçu des activités quotidiennes de votre équipe. Pour chaque jour, vous pouvez voir ce qui se passe avec votre club, y compris les courses, les camps d'entraînement, les événements, les vacances, et d'autres activités importantes. Utilisez cette vue lorsque vous voulez comprendre votre horaire d'équipe jour après jour.",
+      "primary": "Suivant"
+    },
+    "races": {
+      "title": "Calendrier des courses",
+      "body": "Voici le calendrier des courses. Ici vous pouvez voir toutes les courses de la saison. Les courses peuvent être des courses d'une journée ou des courses sur étape de plusieurs jours. Chaque course montre des informations utiles telles que la date, le statut de course, la catégorie de course, le type de course, les limites d'équipe et le statut d'application.",
+      "primary": "Suivant"
+    },
+    "openRace": {
+      "title": "Ouvrir un profil de course",
+      "body": "Certaines courses peuvent montrer un but de sponsor. Cela signifie que la course est connectée à un objectif de bonus de sponsor, comme participer ou atteindre un résultat spécifique. Utilisez le bouton Ouvrir la course lorsque vous voulez voir plus de détails sur une course ou de demander pour elle. Ensuite, nous allons ouvrir un profil de course pour que vous puissiez voir quelles informations sont disponibles là.",
+      "primary": "Ouvrir le profil de la course",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "raceDetail": {
+    "overview": {
+      "title": "Profil de la course",
+      "body": "Voici la page Profil de course. Ici vous pouvez voir les informations les plus importantes de course: combien d'équipes peuvent participer, le fonds de prix, quand les candidatures se terminent, quand les équipes participantes sont annoncées, et combien de coureurs chaque équipe peut apporter.",
+      "primary": "Suivant"
+    },
+    "stagesResults": {
+      "title": "Étapes, résultats et replay",
+      "body": "Le profil de la course montre également des informations détaillées sur l'étape. Vous pouvez consulter les profils d'étape, les cartes d'itinéraire, la répartition du terrain, la météo, les points de sprint, les points de montagne et d'autres détails sur l'étape. La météo n'est publiée qu'à proximité de la course, donc elle peut apparaître plus tard.",
+      "primary": "Continuer à préparer la course",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "racePreparation": {
+    "welcome": {
+      "title": "Besoin d'aide pour la préparation de course?",
+      "body": "Nous pouvons vous montrer comment fonctionne la course acceptée, Race Plans et Stage Plans. C'est l'une des pages les plus importantes de la saison.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "acceptedRaces": {
+      "title": "Courses acceptées",
+      "body": "Voici la page Préparation de course. L'onglet Courses acceptées montre les courses où votre équipe a été acceptée pour participer. Ici, vous pouvez voir les informations les plus importantes, mais aussi le statut de préparation de votre équipe. Par exemple, vous pouvez voir Race Plan Open, Stage Plans Open, Rider Reline Reached, Course Active, Course Fined, ou All Set. Lorsque votre équipe est acceptée à une course, vous devriez venir ici pour préparer vos coureurs, personnel, actifs, équipements, fournitures et tactiques.",
+      "primary": "Suivant"
+    },
+    "racePlan": {
+      "title": "Race Plan",
+      "body": "L'onglet Race Plan est l'endroit où vous préparez votre équipe pour une course acceptée. Important: le temps de jeu se déplace plus vite que la vie réelle. Une journée en jeu est de 12 heures en temps réel. Cela signifie deux jours en jeu égaux à une journée réelle. Gardez cela en tête lors de la vérification des fenêtres du plan de course, des délais pour les coureurs et des délais pour les plans d'étape. Lorsque la fenêtre Race Plan est ouverte, vous pouvez choisir si votre Première Équipe ou Developing Team va courir, si vous avez une Équipe en développement disponible. Vous devez également vérifier la date limite de soumission des coureurs. Jusqu'à cette date, vous pouvez choisir les coureurs qui participeront. La page montre le nombre minimal et maximal de coureurs autorisés pour la course. La liste des coureurs montre qui peut être sélectionné et qui est bloqué parce qu'ils sont déjà affectés à une autre course en chevauchement. Vous pouvez également affecter du personnel de course et des actifs de course s'ils sont disponibles.",
+      "primary": "Suivant"
+    },
+    "stagePlans": {
+      "title": "Stage Plans",
+      "body": "L'onglet Stage Plans s'ouvre après la soumission du Race Plan. Ici, vous préparez les tactiques pour chaque étape. Vous pouvez définir les rôles des coureurs, l'équipement, les fournitures, les tactiques d'équipe et les tactiques individuelles pour chaque étape. Stage Plans sont importants parce que les différentes étapes ont besoin de différents plans.",
+      "primary": "Continuer à classer les équipes",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "teamRanking": {
+    "welcome": {
+      "title": "Besoin d'aide pour le classement d'équipe?",
+      "body": "Nous pouvons vous montrer comment fonctionnent les classements d'équipe, les niveaux de compétition, les points internationaux, la promotion et la relégation.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "competitions": {
+      "title": "Concours et niveaux",
+      "body": "Ici vous pouvez voir les classements pour toutes les compétitions et les niveaux, y compris WorldTeam, ProTeam, Continental, et les divisions Amateur. Chaque équipe a une place dans sa compétition basée sur des points internationaux gagnés pendant la saison. Vous pouvez basculer entre les niveaux et les divisions pour voir comment les équipes sont classées dans le monde du cyclisme.",
+      "primary": "Suivant"
+    },
+    "points": {
+      "title": "Mouvement international des points et des saisons",
+      "body": "Les équipes gagnent des points internationaux de courses. De meilleurs résultats dans les courses plus grandes apportent généralement plus de points. Ces points décident la position de classement de chaque équipe dans sa compétition. À la fin de la saison, les équipes peuvent être promues à un niveau supérieur ou reléguées à un niveau inférieur selon leur position finale. Cette page est importante parce qu'elle montre où votre équipe se situe par rapport aux autres équipes, et ce que vous devez atteindre pour passer à l'avant.",
+      "primary": "Continuer à suivre les statistiques",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "statistics": {
+    "welcome": {
+      "title": "Besoin d'aide pour les statistiques?",
+      "body": "Nous pouvons vous montrer comment les statistiques de l'équipe et du coureur fonctionnent, y compris les classements de la saison en cours, les résultats historiques, les points du coureur, les podiums et les maillots.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "teamsCurrent": {
+      "title": "Statistiques de l'équipe",
+      "body": "La section des équipes présente les statistiques de l'équipe dans toutes les compétitions en un seul endroit. En courant, vous pouvez voir la saison en cours et comparer les équipes les plus réussies par points. Vous pouvez utiliser des filtres pour regarder différents niveaux, divisions, pays, équipes d'utilisateurs, équipes d'IA, équipes actives et équipes inactives. Vous pouvez également ouvrir un profil d'équipe pour voir plus de détails sur cette équipe.",
+      "primary": "Suivant"
+    },
+    "teamsHistory": {
+      "title": "Historique de l'équipe",
+      "body": "La section Histoire montre les saisons précédentes. Ici, vous pouvez passer en revue les gagnants passés, les clichés de la vieille saison, les positions historiques, et la façon dont les équipes ont effectué les saisons précédentes.",
+      "primary": "Suivant"
+    },
+    "riders": {
+      "title": "Statistiques sur les conducteurs",
+      "body": "La section Riders montre les meilleurs coureurs du monde du cyclisme. Vous pouvez comparer les coureurs par points internationaux, points d'arrivée d'étape, classement général et points de course d'une journée. Vous pouvez également voir les coureurs avec le plus de podiums et de maillots. Cette page vous aide à comprendre quels coureurs dominent la saison et quels coureurs peuvent être intéressants à suivre, à scouter ou à signer.",
+      "primary": "Continuer les transferts",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "transfers": {
+    "welcome": {
+      "title": "Besoin d'aide pour les transferts?",
+      "body": "Nous pouvons vous montrer comment les coureurs transfèrent, agents libres, scoutisme, négociations contractuelles et le personnel qui recrute du travail.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "riderTransferList": {
+      "title": "Liste des transferts de coureurs",
+      "body": "Dans la section Riders, la liste de transfert montre les coureurs actuellement listés par d'autres équipes, y compris les équipes AI. Avant de rechercher un coureur, certaines informations peuvent être cachées ou moins précises. Le scoutisme vous donne de meilleures informations sur les compétences et le potentiel du coureur. Chaque liste de transfert indique la durée de validité de l'offre et le prix de départ des négociations. Si vous cliquez sur Faire une offre, vous pouvez offrir de l'argent à l'équipe de vente. Si l'équipe accepte, vous négociez alors le contrat de coureur.",
+      "primary": "Suivant"
+    },
+    "riderFreeAgents": {
+      "title": "Agent libre Riders",
+      "body": "Les agents libres sont des coureurs sans équipe. La grande différence est qu'il n'y a pas d'équipe de vente entre vous et le coureur. Si vous voulez un agent libre, vous allez directement dans la négociation de contrat. Vous pouvez négocier salaire, durée du contrat, et frais d'agent.",
+      "primary": "Suivant"
+    },
+    "staff": {
+      "title": "Marché du personnel",
+      "body": "L'onglet Personnel affiche les membres du personnel disponibles gratuitement. Ici, vous pouvez examiner les compétences du personnel, le rôle, le salaire, la spécialisation et la disponibilité. Seul le personnel libre-agent peut être embauché. Les limites du personnel sont importantes. Si votre club a déjà atteint le nombre maximum pour un rôle de personnel, vous ne pouvez pas embaucher un autre membre du personnel pour ce rôle jusqu'à ce que vous augmentez la limite, généralement par des mises à niveau d'infrastructure.",
+      "primary": "Continuer à financer",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "finance": {
+    "welcome": {
+      "title": "Besoin d'aide pour les finances?",
+      "body": "Nous pouvons vous montrer comment les finances du club fonctionnent, y compris l'équilibre, les sponsors, les transactions, les impôts et les politiques d'équipe.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "overview": {
+      "title": "Aperçu des finances",
+      "body": "L'onglet Aperçu montre la situation financière principale de votre club, y compris le solde actuel, les revenus, les dépenses, les flux de trésorerie et les résumés financiers. Si votre équipe a des problèmes de dette ou de financement d'urgence, c'est là que vous pouvez rapidement comprendre la situation actuelle.",
+      "primary": "Suivant"
+    },
+    "sponsors": {
+      "title": "Sponsors",
+      "body": "L'onglet Sponsors montre les sponsors déjà signés. Les sponsors peuvent apporter de l'argent au club, mais ils peuvent également avoir des cibles ou des objectifs de bonus. Ces cibles expliquent ce que votre équipe a besoin d'atteindre et combien d'argent vous pouvez recevoir. Les contrats sponsor peuvent être des contrats standard ou des contrats de droits de noms. Un contrat sponsor standard donne de l'argent à votre club sponsor sans changer de nom d'équipe. Un contrat de droits de noms vaut généralement plus d'argent, mais le nom du sponsor devient une partie du nom de votre équipe pendant la saison. Au début de la saison prochaine, votre nom d'équipe original revient. Si votre équipe n'a pas encore de sponsor, vous pouvez utiliser la zone d'offre sponsor pour chercher de nouvelles offres.",
+      "primary": "Suivant"
+    },
+    "transactions": {
+      "title": "Opérations",
+      "body": "L'onglet Transactions affiche l'historique financier de votre club. Ici vous pouvez voir les revenus et les dépenses pendant la saison, y compris l'argent de prix, les paiements de sponsor, les salaires, les transferts, les coûts d'infrastructure, les achats d'équipement, les camps d'entraînement, les retraits d'impôt et autres mouvements financiers.",
+      "primary": "Suivant"
+    },
+    "tax": {
+      "title": "Impôt",
+      "body": "L'onglet Impôt affiche la situation fiscale de votre club. Les transactions peuvent créer des obligations fiscales, et une vérification fiscale se produit une fois par mois. Cette page vous aide à voir combien d'impôts ont été calculés, ce qui a déjà été payé, et ce qui doit encore être payé.",
+      "primary": "Suivant"
+    },
+    "policies": {
+      "title": "Politiques et opérations de l'équipe",
+      "body": "Les politiques d'équipe et les opérations contrôlent la façon dont votre club est géré. Les politiques changeantes peuvent rendre votre club plus attrayant pour les coureurs et le personnel, mais elles peuvent également augmenter le coût des voyages, du soutien de course, des camps d'entraînement et des opérations quotidiennes.",
+      "primary": "Continuer vers le menu",
+      "secondary": "Terminez pour l'instant"
+    }
+  },
+  "menu": {
+    "welcome": {
+      "title": "Besoin d'aide avec le menu?",
+      "body": "Nous pouvons vous montrer où trouver le menu principal, les notifications et les Coins dans le coin supérieur droit.",
+      "primary": "Début du tutoriel",
+      "secondary": "Pas de merci"
+    },
+    "main": {
+      "title": "Menu principal",
+      "body": "Dans le menu, vous pouvez trouver la boîte de réception pour les messages internes, les paramètres de profil, les thèmes et les paramètres de personnalisation, les liens forum ou Discord, les préférences de jeu, l'aide avec le manuel de jeu et les questions fréquemment posées, Contactez-nous, les paquets Pro et Invitez les Amis à progresser vers la référence. Utilisez ce menu chaque fois que vous avez besoin de paramètres de compte, d'aide, de support, de préférences ou d'options de jeu supplémentaires.",
+      "primary": "Suivant"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "body": "Cette icône de cloche ouvre vos notifications dans le jeu. Les notifications vous parlent d'événements importants tels que les dates limites de course, les rappels de préparation, les mises à jour du sponsor, les finances, les transferts et autres actions de jeu qui nécessitent votre attention.",
+      "primary": "Suivant"
+    },
+    "coins": {
+      "title": "Coins",
+      "body": "Cela montre votre solde de pièce actuel. Coins sont utilisés pour les fonctionnalités de jeu sélectionnées, les déverrouillages, et les options de commodité à l'intérieur de ProPeloton Manager. Vous pouvez vérifier votre solde ici à tout moment et acheter plus via Menu → Packages Pro. L'exécution faible sur les Coins ne suspend pas votre compte. Vous pouvez continuer à jouer, mais certaines fonctionnalités optionnelles ou les actions de style premium peuvent ne pas être disponibles jusqu'à ce que vous ajoutez plus de Coins.",
+      "primary": "Suivant"
+    },
+    "premium": {
+      "title": "Compte Premium",
+      "body": "This is your Premium access area.\n\nA Premium account can make the game easier and more comfortable by giving access to extra features, more advanced views, and useful convenience tools.\n\nPremium can also help you unlock more of the game’s full management experience.\n\nBy purchasing Premium or Pro Packages, you also directly support our team and help us continue developing ProPeloton Manager faster and better.",
+      "primary": "Suivant"
+    },
+    "finished": {
+      "title": "Tutoriel terminé",
+      "body": "Vous avez terminé avec succès le tutoriel de base ProPeloton Manager. Si vous avez des questions plus tard, vous pouvez toujours vérifier le manuel de jeu, lire les questions fréquemment posées, nous contacter ou rejoindre notre communauté Discord. Bonne chance avec votre équipe!",
+      "primary": "Tutoriel de fin"
+    }
+  }
+}

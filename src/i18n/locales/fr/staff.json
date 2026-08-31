@@ -1,0 +1,462 @@
+{
+  "page": {
+    "title": "Personnel d ' équipe",
+    "subtitle": "Gérer plusieurs rôles de personnel au moyen d'onglets de rôles et de listes de personnel par rôle.",
+    "loading": "Chargement du personnel...",
+    "explainPositions": "Expliquer tous les postes d'agent"
+  },
+  "summary": {
+    "weeklyWages": "Salaires hebdomadaires du personnel",
+    "weeklyWagesSubtext": "Total actuel des états de paie",
+    "openSlots": "Ouvrir les emplacements du personnel",
+    "openSlotsSubtext": "En direct des machines à sous ouvertes dans tous les rôles du personnel",
+    "totalCapacity": "Capacité totale du personnel",
+    "totalCapacitySubtext": "Limites de rôle en direct",
+    "warnings": "Avertissements",
+    "warningsSubtext": "Le niveau de l'installation peut plafonner certains bonus"
+  },
+  "rolesSection": {
+    "title": "Rôles du personnel",
+    "subtitle": "Choisissez un rôle pour voir le personnel affecté, la limite de rôle en direct et le résumé de contribution du rôle.",
+    "staffList": "Liste des membres du personnel {{role}}",
+    "assigned": "{{count}}/{{limit}} assigné pour ce rôle.",
+    "assignedCompact": "Attribué {{count}}/{{limit}}",
+    "noAssigned": "Pas d'attribution de {{role}}",
+    "usage": "Utilisation actuelle du rôle: {{count}}/{{limit}}. Signez le personnel du marché du personnel pour remplir ce rôle.",
+    "findStaff": "Trouver le personnel"
+  },
+  "roles": {
+    "headCoach": {
+      "label": "Entraîneur-chef",
+      "subtitle": "Dirige l'encadrement, la planification de la formation et le développement à long terme des coureurs."
+    },
+    "trainer": {
+      "label": "Formateur",
+      "subtitle": "Améliore les résultats de formation quotidiens et soutient les plans d'entraîneur-chef."
+    },
+    "teamDoctor": {
+      "label": "Docteur d'équipe",
+      "subtitle": "Dirige la récupération médicale, le diagnostic et la prévention des blessures."
+    },
+    "physio": {
+      "label": "Physio",
+      "subtitle": "Il se concentre sur la réadaptation, la vitesse de récupération et le retour à l'état d'adaptation."
+    },
+    "nutritionist": {
+      "label": "Nutritionniste",
+      "subtitle": "Soutient la récupération, la constance de la condition physique et le rendement du personnel médical."
+    },
+    "mechanic": {
+      "label": "Mécanique",
+      "subtitle": "Configuration du vélo, efficacité de maintenance et fiabilité mécanique de la course-jour."
+    },
+    "sportDirector": {
+      "label": "Directeur du sport",
+      "subtitle": "Tacticité de course prévue, moral, travail d'équipe et soutien dômes."
+    },
+    "scoutAnalyst": {
+      "label": "Scout / Analyste",
+      "subtitle": "Qualité du scoutisme, visibilité de la perspective et transfert de l'intelligence."
+    },
+    "u23HeadCoach": {
+      "label": "U23 Coach chef",
+      "subtitle": "Formation en équipe de développement prévue et soutien tactique de course U23."
+    }
+  },
+  "impactAreas": {
+    "regularTraining": "Formation régulière",
+    "trainingCamps": "Camps d ' entraînement",
+    "riderDevelopment": "Développement de la cavalière",
+    "dailyTraining": "Formation quotidienne",
+    "trainingQuality": "Qualité de la formation",
+    "recoverySpeed": "Vitesse de récupération",
+    "injuryPrevention": "Prévention des blessures",
+    "medicalCaseHandling": "Traitement des dossiers médicaux",
+    "returnToFitness": "Retour à la forme physique",
+    "fatigueRecovery": "Récupération de la fatigue",
+    "recoverySupport": "Appui au relèvement",
+    "fitnessConsistency": "Cohérence de la condition physique",
+    "racePreparation": "Préparation des courses",
+    "equipmentSetup": "Configuration de l'équipement",
+    "maintenanceEfficiency": "Efficacité de l'entretien",
+    "mechanicalReliability": "Fiabilité mécanique",
+    "raceTactics": "Tacticité de course",
+    "teamMorale": "moral de l'équipe",
+    "domestiqueSupport": "Soutien domestique",
+    "scoutingAccuracy": "Précision du scoutisme",
+    "prospectDiscovery": "Prospection de découverte",
+    "transferIntelligence": "Transfert de renseignements",
+    "u23Training": "Formation U23",
+    "youthDevelopment": "Développement de la jeunesse",
+    "u23RaceTactics": "U23 tactique de course"
+  },
+  "common": {
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "unknown": "Inconnu",
+    "age": "Âge",
+    "ageUnknown": "Âge inconnu",
+    "ageYears": "{{age}} ans",
+    "born": "Naissance: {{date}}",
+    "scope": "Portée: {{scope}}",
+    "firstTeam": "première équipe",
+    "u23": "U23",
+    "all": "tous",
+    "weeklyWage": "Salaire hebdomadaire",
+    "contract": "Contrat",
+    "currentAssignment": "Affectation actuelle",
+    "activeEffects": "Effets actifs",
+    "staffAttributes": "Attributs du personnel",
+    "focus": "Focus: {{value}}",
+    "duration": "Durée: {{count}} jours",
+    "cost": "Coût: {{value}}",
+    "completed": "Terminé: {{date}}"
+  },
+  "assignment": {
+    "notAssigned": "Actuellement non assigné",
+    "expiresToday": "Expire aujourd'hui",
+    "oneDayLeft": "1 jour à gauche",
+    "daysLeft": "{{count}} jours restants",
+    "openProfile": "Profil du personnel ouvert"
+  },
+  "attributes": {
+    "training": "Entraînement",
+    "recoveryPlanning": "Planification du rétablissement",
+    "youthDevelopment": "Développement de la jeunesse",
+    "experience": "Expérience",
+    "leadership": "Leadership",
+    "loyalty": "Fidélité",
+    "dailyTraining": "Formation quotidienne",
+    "trainingEfficiency": "Efficacité de la formation",
+    "potentialGrowth": "Croissance potentielle",
+    "recovery": "Récupération",
+    "prevention": "Prévention",
+    "diagnosis": "Diagnostic",
+    "rehabilitation": "Réhabilitation",
+    "recoverySpeed": "Vitesse de récupération",
+    "nutrition": "Nutrition",
+    "consistency": "Cohérence",
+    "bikeSetup": "Configuration du vélo",
+    "reliability": "Fiabilité",
+    "racePlanning": "Planification raciale",
+    "teamControl": "Contrôle d'équipe",
+    "evaluation": "Évaluation",
+    "network": "Réseau",
+    "accuracy": "Précision"
+  },
+  "premium": {
+    "analysisTitle": "Premium analyse du personnel",
+    "analysisDescription": "Voir l'impact combiné du personnel, les profils de compétences moyens et les résultats des cours.",
+    "detailDescription": "Voir la qualité des coaching calculée, les limites de l'infrastructure, les comparaisons du personnel et les pistes de développement recommandées.",
+    "loading": "Chargement de l'accès Premium"
+  },
+  "analysis": {
+    "averageSkillProfile": "Profil moyen des compétences",
+    "averageSkillProfileSubtitle": "Valeurs moyennes pour l'ensemble du personnel actuellement affecté à ce groupe d'impact.",
+    "noStaff": "Aucun membre du personnel affecté à ce groupe d'impact n'a encore été affecté, de sorte qu'il n'y a pas de profil de compétences actif à résumer.",
+    "whereRoleHelps": "Où ce rôle aide",
+    "whereRoleHelpsSubtitle": "Principaux systèmes de jeu influencés par ce rôle.",
+    "recentCourseResults": "Résultats récents du cours",
+    "recentCourseResultsSubtitle": "Achevé des cours de perfectionnement du personnel et appliqué des gains statistiques."
+  },
+  "quality": {
+    "facility": "Facilité",
+    "scoutingQuality": "Qualité du scoutisme",
+    "scoutAbility": "Capacité scout",
+    "currentReportQuality": "Qualité du rapport actuel",
+    "reportTime": "Heure du rapport",
+    "scoutingOffice": "Bureau de scoutisme",
+    "coachingQuality": "Qualité de l'entraînement",
+    "coachAbility": "Capacité d'entraîneur",
+    "trainingQuality": "Qualité de la formation",
+    "developmentSupport": "Appui au développement",
+    "trainerAbility": "Capacité de formateur",
+    "sessionQuality": "Qualité des séances",
+    "loadManagement": "Gestion des charges",
+    "medicalQuality": "Qualité médicale",
+    "medicalAbility": "Capacité médicale",
+    "injuryPrevention": "Prévention des blessures",
+    "returnToFitness": "Retour à la situation",
+    "recoveryQuality": "Qualité de récupération",
+    "recoveryAbility": "Capacité de récupération",
+    "rehabilitationQuality": "Qualité de la réadaptation",
+    "recoverySpeed": "Vitesse de récupération",
+    "nutritionQuality": "Qualité nutritionnelle",
+    "nutritionAbility": "Capacité nutritionnelle",
+    "recoverySupport": "Soutien à la récupération",
+    "consistencySupport": "Appui à la cohérence",
+    "technicalQuality": "Qualité technique",
+    "technicalAbility": "Capacité technique",
+    "bikeSetupQuality": "Qualité de la configuration du vélo",
+    "reliabilitySupport": "Soutien à la fiabilité",
+    "tacticalQuality": "Qualité tactique",
+    "directorAbility": "Fonction de directeur",
+    "racePlanQuality": "Qualité Race Plan",
+    "teamControl": "Contrôle d'équipe",
+    "raceEngineRole": "Rôle Race Engine",
+    "prepared": "Préparé",
+    "youthCoachingQuality": "Qualité de l'encadrement des jeunes",
+    "youthCoachAbility": "Capacité d'entraîneurs pour les jeunes",
+    "talentDevelopment": "Développement des talents",
+    "raceReadiness": "État de préparation à la course"
+  },
+  "detail": {
+    "currentCourse": "Cours en cours",
+    "courseInProgress": "Cours en cours: {{course}}. Achèvement: {{date}}.",
+    "courseCannotCancel": "Ce cours ne peut être annulé une fois réservé. Les primes du personnel de ce rôle sont suspendues jusqu'à la fin.",
+    "lastCourseGains": "Les derniers gains de cours",
+    "extendContract": "Prolongation du contrat",
+    "courseInProgressButton": "Cours en cours",
+    "sendOnCourse": "Envoyer sur le cours",
+    "release": "Libération",
+    "scoutingReports": "Rapports de scoutisme"
+  },
+  "release": {
+    "title": "Personnel de libération",
+    "subtitle": "Confirmer cette décision du personnel avant de poursuivre.",
+    "aboutToRelease": "Vous êtes sur le point de libérer {{name}}",
+    "role": "Rôle: {{role}}",
+    "weeklyWage": "Salaire hebdomadaire: {{value}}",
+    "age": "Âge: {{value}}",
+    "compensation": "Compensation de sortie (6 semaines): {{value}}",
+    "warning": "Cela va retirer le membre du personnel de l'équipe immédiatement. Les primes du personnel de cette fente s'arrêtera jusqu'à ce que vous signez un remplacement.",
+    "payment": "Le club versera une indemnité unique de libération égale à 6 semaines de salaire.",
+    "releasing": "Relâcher...",
+    "confirm": "Confirmer la publication"
+  },
+  "contract": {
+    "title": "Prolongation du contrat",
+    "subtitle": "Négocier une nouvelle offre de personnel pour {{name}}.",
+    "currentSalary": "Salaire actuel",
+    "currentContract": "Contrat actuel",
+    "extensionLength": "Longueur de la prolongation",
+    "oneSeason": "1 saison",
+    "twoSeasons": "2 Saisons",
+    "loadingQuote": "Chargement de la soumission du contrat...",
+    "requestedSalary": "Traitement demandé",
+    "raiseRequest": "Requête de levée: {{value}}%",
+    "minimumAcceptable": "Minimum acceptable",
+    "newContractTarget": "Nouveau contrat-cible",
+    "staffInterest": "Intérêts du personnel",
+    "interestUnknown": "Intérêt inconnu",
+    "chanceRenew": "Possibilité de renouvellement",
+    "chanceUnknown": "Chance inconnue",
+    "veryLikely": "Très susceptible d'accepter",
+    "possible": "Possible, mais peut demander plus",
+    "unlikely": "Peu probable à ce salaire",
+    "veryUnlikely": "Très peu probable",
+    "noQuote": "Pas de devis disponible.",
+    "salaryOffer": "Votre offre salariale",
+    "salaryPlaceholder": "Inscrivez le salaire hebdomadaire",
+    "submitting": "Soumettre...",
+    "submit": "Soumettre l'offre",
+    "extended": "Le contrat de travail a été prolongé avec succès.",
+    "discussionCompleted": "Fin de la discussion sur le contrat."
+  },
+  "course": {
+    "title": "Cours de personnel",
+    "subtitle": "Planifier les travaux de développement pour {{name}}.",
+    "liveStart": "Début du cours en direct",
+    "liveStartText": "Le démarrage d'un cours crée une entrée de cours de personnel réel. Les gains Stat s'appliquent lorsque le processeur d'achèvement du moteur termine le cours. Les cours ne peuvent pas être annulés une fois réservé.",
+    "staffAge": "Âge du personnel",
+    "start": "Début du cours",
+    "starting": "Commencer...",
+    "none": "Aucune option de cours n'est encore configurée pour ce rôle de personnel. Cela empêche le mauvais type de cours d'être démarré jusqu'à ce que des codes de cours de backend soient ajoutés pour ce rôle.",
+    "back": "Retour au personnel"
+  },
+  "information": {
+    "title": "Postes expliqués",
+    "subtitle": "Responsabilités, attributs importants et connexion de gameplay actuelle pour chaque rôle du personnel.",
+    "close": "Fermez l'information sur les postes",
+    "importantAttributes": "Attributs importants",
+    "gameplayConnection": "Connexion de jeu",
+    "live": "Vivant",
+    "coreLive": "Noyau vivant",
+    "trainingLive": "Formation en direct",
+    "plannedConnection": "Connexion prévue"
+  },
+  "impactI18n": {
+    "assigned": "Affecté",
+    "openSlotAvailable": "Ouvrir la fente disponible",
+    "currentBasicCapReached": "Plafond de base actuel atteint",
+    "forGroup": "Pour ce groupe d'impact",
+    "activeCourses": "Cours actifs",
+    "coursesPaused": "Les bonus sont partiellement interrompus pendant l'étude du personnel",
+    "fillVacancies": "Utiliser les transferts → Le personnel pour pourvoir des postes vacants",
+    "combinedTitle": "Impact combiné de l'équipe",
+    "combinedMedical": "Soutien médical combiné de la part du médecin, du médecin et de la nutritionniste.",
+    "combinedCoach": "Effet de coaching appliqué par le moteur de recherche {{name}}.",
+    "combinedCurrent": "Impact combiné actuel du personnel actif de ce groupe.",
+    "coachingTitle": "Impact combiné du personnel d'encadrement",
+    "medicalTitle": "Impact combiné du personnel médical",
+    "mechanicTitle": "Impact du personnel mécanicien",
+    "directorTitle": "Impact du personnel du directeur du sport",
+    "u23Title": "U23 Impact du personnel d'entraîneur",
+    "scoutingTitle": "Impact du personnel de scoutisme"
+  },
+  "scoutingExplainer": {
+    "title": "Comment fonctionne la qualité scout",
+    "body": "Les attributs scouts créent la véritable capacité scout. Le bureau scout peut plafonner la qualité du rapport final, de sorte qu'un scout fort peut encore produire des rapports de base jusqu'à ce que le bureau soit amélioré.",
+    "abilityLevels": "Niveau de capacité scout",
+    "reportLevels": "Niveau de qualité",
+    "levelScale": "Basic → Solid → Fort → Elite",
+    "thresholds": "Seuils de capacité scout",
+    "thresholdValues": "Base: en dessous de 55 · Solide: 55–69 · Fort: 70–84 · Elite: 85+",
+    "upgrade": "Un Bureau de Scout meilleur déverrouille la qualité de rapport supérieure. Niveau actuel: Lv {{level}}.",
+    "upgradeNoLevel": "Un meilleur bureau de scoutisme permet de débloquer des rapports de meilleure qualité.",
+    "limited": "Limité par le bureau de scoutisme Lv {{level}}.",
+    "basicWithScore": "Base ({{score}})",
+    "solidWithScore": "Solide ({{score}})",
+    "strongWithScore": "Fort ({{score}})",
+    "eliteWithScore": "Elite ({{score}})"
+  },
+  "effectText": {
+    "scoutingAccuracy": "+{{value}}% précision de repérage",
+    "prospectVisibility": "+{{value}}% visibilité de la perspective",
+    "combinedScoutingAccuracy": "+{{value}}% précision de repérage combinée",
+    "combinedProspectVisibility": "+{{value}}% visibilité combinée de la perspective",
+    "futureTransferYouth": "Futur: transfert de renseignements et de rapports sur la jeunesse",
+    "futureBroaderTransferYouth": "Futur: transfert plus large et intelligence des jeunes",
+    "scoutingOfficeCap": "Bureau de scoutisme Lv {{level}} capte une partie des bonus de scoutisme et d'analyste."
+  },
+  "courseOptions": {
+    "coach_elite_methodology": {
+      "title": "Cours de méthodologie Elite",
+      "description": "Améliore la structure de formation et la qualité globale de progression des coureurs.",
+      "focus": "Formation + Développement"
+    },
+    "coach_recovery_planning": {
+      "title": "Séminaire sur la planification du relèvement",
+      "description": "Se concentrer sur l'équilibrage des charges, la prévention de la fatigue et la planification des micro-cycles.",
+      "focus": "Planification du rétablissement"
+    },
+    "coach_youth_programme": {
+      "title": "Programme de développement de la jeunesse",
+      "description": "Cours spécialisé pour améliorer le travail avec les jeunes et les coureurs en développement.",
+      "focus": "Développement de la jeunesse"
+    },
+    "trainer_daily_training_methods": {
+      "title": "Méthodes de formation quotidiennes",
+      "description": "Améliorer la prestation de la formation quotidienne, la structure des séances et la cohérence de la formation des coureurs.",
+      "focus": "Formation quotidienne + efficacité"
+    },
+    "trainer_load_management": {
+      "title": "Atelier sur la gestion des charges",
+      "description": "Se concentre sur l'équilibre de la charge de formation, la réduction du risque de surcharge et l'amélioration de la récupération entre les sessions.",
+      "focus": "Efficacité + expérience"
+    },
+    "trainer_potential_growth": {
+      "title": "Programme de croissance potentielle",
+      "description": "Cours de formateur spécialisé pour améliorer le développement des coureurs à long terme et le soutien potentiel à la croissance.",
+      "focus": "Croissance potentielle + formation quotidienne"
+    },
+    "doctor_sports_medicine": {
+      "title": "Cours de médecine sportive",
+      "description": "Améliore la qualité du diagnostic et les décisions de traitement propres aux athlètes.",
+      "focus": "Diagnostic + Récupération"
+    },
+    "doctor_prevention_lab": {
+      "title": "Laboratoire de prévention des blessures",
+      "description": "Se concentre sur le dépistage des risques et les protocoles de prévention.",
+      "focus": "Prévention"
+    },
+    "doctor_rehab_acceleration": {
+      "title": "Programme d ' accélération de la réadaptation",
+      "description": "Planification de la réadaptation avancée pour des délais de retour plus courts.",
+      "focus": "Vitesse de récupération"
+    },
+    "physio_rehab_methods": {
+      "title": "Méthodes de réadaptation",
+      "description": "Améliore la planification de la réadaptation, la vitesse de récupération et le soutien au retour à l'adaptation.",
+      "focus": "Réhabilitation + vitesse de récupération"
+    },
+    "physio_load_recovery": {
+      "title": "Atelier de récupération de charge",
+      "description": "Il s'attache à réduire l'impact de la fatigue et à améliorer la récupération après l'entraînement.",
+      "focus": "Vitesse de récupération + expérience"
+    },
+    "physio_injury_return": {
+      "title": "Programme de retour à la vie active",
+      "description": "Programme spécialisé pour aider les coureurs à se remettre plus efficacement des blessures.",
+      "focus": "Réadaptation + expérience"
+    },
+    "nutritionist_race_nutrition": {
+      "title": "Planification de la nutrition raciale",
+      "description": "Améliore les plans de nutrition de la course, la cohérence des coureurs et le soutien de la récupération.",
+      "focus": "Plan de nutrition + Cohérence"
+    },
+    "nutritionist_recovery_diet": {
+      "title": "Atelier sur la restauration de régime alimentaire",
+      "description": "Se concentre sur les routines nutritionnelles qui favorisent la récupération quotidienne de la fatigue.",
+      "focus": "Soutien à la récupération + nutrition"
+    },
+    "nutritionist_endurance_fueling": {
+      "title": "Programme de ravitaillement en carburant pour les endurances",
+      "description": "Planification nutritionnelle avancée pour l'endurance et la qualité d'entraînement des coureurs à long terme.",
+      "focus": "Nutrition + soutien à long terme"
+    },
+    "mechanic_tt_setup": {
+      "title": "Cours de configuration des essais dans le temps",
+      "description": "Aérodynamique avancée et optimisation de la position TT.",
+      "focus": "Configuration"
+    },
+    "mechanic_reliability": {
+      "title": "Atelier sur la fiabilité",
+      "description": "Améliore la cohérence des équipements et la fiabilité des courses.",
+      "focus": "Fiabilité"
+    },
+    "mechanic_weather_adaptation": {
+      "title": "Formation sur l'adaptation aux conditions météorologiques",
+      "description": "Se concentre sur le support technique dans des conditions humides et mixtes.",
+      "focus": "Soutien des conditions"
+    },
+    "director_tactics": {
+      "title": "Séminaire sur les tactiques raciales",
+      "description": "Améliore les appels tactiques, les plans de rotation et les décisions de gestion de course.",
+      "focus": "Tactiques"
+    },
+    "director_leadership": {
+      "title": "Leadership intensif",
+      "description": "Renforcer la motivation, le leadership et la communication au sein de l'équipe.",
+      "focus": "Leadership"
+    },
+    "director_stage_strategy": {
+      "title": "Programme de stratégie pour l ' étape",
+      "description": "Planification tactique spécialisée pour les courses d'étape et le soutien GC.",
+      "focus": "Stratégie de l'étape"
+    },
+    "u23_youth_development_methods": {
+      "title": "Méthodes de développement de la jeunesse",
+      "description": "Améliorer la structure de formation des jeunes, la planification du développement et la croissance à long terme des coureurs.",
+      "focus": "Développement des jeunes + Formation des jeunes"
+    },
+    "u23_talent_pathway_programme": {
+      "title": "Programme de cheminement des talents",
+      "description": "Il s'attache à identifier les voies de développement et à améliorer le soutien potentiel à la croissance.",
+      "focus": "Croissance potentielle + expérience"
+    },
+    "u23_race_readiness_course": {
+      "title": "U23 Cours de préparation à la course",
+      "description": "Prépare les jeunes coureurs pour la structure de la journée de course, la discipline et le développement tactique.",
+      "focus": "Formation des jeunes + Leadership"
+    },
+    "scout_evaluation": {
+      "title": "Cours d'exactitude de l'évaluation",
+      "description": "Améliore l'évaluation des coureurs et la qualité des rapports.",
+      "focus": "Évaluation"
+    },
+    "scout_networking": {
+      "title": "Camp du Réseau de Scoutisme",
+      "description": "Bâtir des connexions et améliorer la couverture d'identification des talents.",
+      "focus": "Réseau"
+    },
+    "scout_data_analysis": {
+      "title": "Analyse des données sur le rendement",
+      "description": "Améliore l'examen analytique des coureurs et des rapports de préparation de course.",
+      "focus": "Précision + analyse"
+    }
+  },
+  "legacyUi": {
+    "unlockDevelopingTeam": "Débloquer l'équipe de développement dans Préférences d'abord."
+  }
+}
