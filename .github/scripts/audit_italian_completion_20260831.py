@@ -12,10 +12,13 @@ PLACEHOLDER = re.compile(r'\{\{[^{}]+\}\}')
 CORRUPTION = re.compile(r'(?:\ufffd|Ã|Â|â€|ZXQ|QXml)')
 CYRILLIC = re.compile(r'[\u0400-\u04ff]')
 
+# Product/game vocabulary that remains canonical in every language. Do not include
+# ordinary English UI words such as "Stripe" here: in locale resources that word
+# can describe a jersey pattern rather than the payment provider.
 PROTECTED = [
     'ProPeloton Manager', 'Startlist', 'Race Engine', 'Replay Engine', 'Team Policy',
     'Race Sharpness', 'WorldTeam', 'WorldTour', 'ProTeam', 'ProSeries', 'Continental',
-    'Supabase', 'Stripe', 'Discord', 'Edge Function', 'RPC', 'KPI', 'GC', 'KOM', 'U23',
+    'Supabase', 'Discord', 'Edge Function', 'RPC', 'KPI', 'GC', 'KOM', 'U23',
     'UCI', 'JPG', 'JPEG', 'PNG', 'WEBP', 'PDF', 'CSV', 'Coins', 'Premium', 'FTP',
     'VO2', 'DNF', 'DNS', 'OTL', 'ITT', 'TTT',
 ]
@@ -90,8 +93,6 @@ def walk(source: Any, target: Any, path: str, blockers: list[str], warnings: lis
     low_source = source.lower()
     if re.search(r'\briders?\b', low_source) and re.search(r'\bpilot[ai]\b|\bpiloti\b', target, re.I):
         blockers.append(f'{path}: cycling rider rendered as pilota: {target!r}')
-    if re.search(r'\bstages?\b', low_source) and re.search(r'\bpalcoscenic[oi]\b', target, re.I):
-        blockers.append(f'{path}: cycling stage rendered as theatre stage: {target!r}')
     source_mentions_manager = re.search(r'\bmanagers?\b', low_source) is not None
     source_mentions_admin = re.search(r'\badmins?|administrators?\b', low_source) is not None
     if source_mentions_manager and not source_mentions_admin and re.search(r'\bamministrator[ei]\b', target, re.I):
