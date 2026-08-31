@@ -5,6 +5,8 @@ on:
   push:
     branches: [main]
     paths:
+      - '.github/scripts/audit_italian_completion_20260831.py'
+      - '.github/workflows/chatgpt-full-italian-completion-audit.yml'
       - 'src/i18n/locales/it/**'
       - 'src/i18n/index.ts'
       - 'src/i18n/languages.ts'
