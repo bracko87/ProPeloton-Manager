@@ -1,0 +1,56 @@
+name: Test higher quality Spanish translation route
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-test-spanish-google-translation.yml'
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test representative strings
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.parse
+          import urllib.request
+          import time
+          samples=[
+            'Failed to load finance data.', 'Tab crashed.', 'Competition reward',
+            'Training camp refund','Staff release cost','Free-agent signing cost paid',
+            '+5 morale','Net operating: €12,000','Hover a bar to see details.',
+            'Your main seasonal partner and largest sponsorship income.',
+            'Equipment partner providing cash support and sponsor-brand equipment discounts.',
+            'This deal pays guaranteed money immediately when signed. The bonus pool is paid later only if your team completes sponsor objectives such as race starts, wins, podiums, top-5 results, or GC targets.',
+            'Stage top 5','Stage win',
+            'The race engine can later choose any available unit of the selected type and fall back to the next available type if needed.',
+            'One game day equals 12 real-life hours. Use this when checking deadlines, race-preparation windows and Stage Plan locks.',
+            'Race Plans, rider submissions and Stage Plans have deadlines. Missing them can leave your team badly prepared or unable to race correctly.'
+          ]
+          for s in samples:
+            params=urllib.parse.urlencode({'client':'gtx','sl':'en','tl':'es','dt':'t','q':s})
+            url='https://translate.googleapis.com/translate_a/single?'+params
+            req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
+            with urllib.request.urlopen(req,timeout=20) as r:
+              data=json.loads(r.read().decode('utf-8'))
+            translated=''.join(part[0] for part in data[0] if part and part[0])
+            print('EN:',s)
+            print('ES:',translated)
+            print()
+            time.sleep(0.1)
+          PY
