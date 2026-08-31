@@ -32,24 +32,49 @@ VISIBLE_EXPECTED = {
     'home.json.stats.activeManagers': 'Активные менеджеры',
     'home.json.guide.title': 'Как работает ProPeloton Manager',
     'home.json.screenshots.title': 'Скриншоты игры',
+
     'auth.json.signInTitle': 'Войдите в ProPeloton Manager',
     'auth.json.signInSubtitle': 'Введите данные для входа, чтобы продолжить.',
     'auth.json.forgotPassword': 'Забыли пароль?',
     'auth.json.createAccount': 'Создать аккаунт',
     'auth.json.register.createAccount': 'Создать аккаунт',
     'auth.json.register.alreadyHave': 'Уже есть аккаунт?',
+    'auth.json.register.passwordLength': 'Пароль должен содержать не менее 8 символов.',
+
     'navigation.json.subtitle': 'Многопользовательский веломенеджер',
     'navigation.json.customizeTeam': 'Настроить команду',
     'navigation.json.proPackages': 'Пакеты Coins',
     'navigation.json.bugReport.button': 'Сообщить об ошибке',
     'navigation.json.playerReport.reportPlayer': 'Пожаловаться на игрока',
     'navigation.json.premiumFeature.unlock': 'Разблокировать с Premium',
+
     'common.json.language.applicationLanguage': 'Язык приложения',
     'common.json.actions.save': 'Сохранить',
     'common.json.actions.cancel': 'Отмена',
+    'common.json.forum.movingTitle': 'Обсуждения сообщества в Discord',
+    'common.json.forum.join': 'Присоединиться к Discord',
+
     'profile.json.dropdown.signedInAs': 'Вы вошли как',
+    'profile.json.dropdown.menu': 'Меню профиля',
+
     'accountPages.json.profile.languageTitle': 'Язык игры',
     'accountPages.json.profile.languageSelect': 'Выберите язык',
+    'accountPages.json.profile.displayName': 'Имя пользователя',
+    'accountPages.json.profile.saving': 'Сохраняем...',
+    'accountPages.json.inbox.unreadMessages': 'Непрочитанные сообщения',
+    'accountPages.json.inbox.chooseThread': 'Выберите диалог слева.',
+    'accountPages.json.invite.title': 'Пригласить друзей',
+    'accountPages.json.invite.copied': 'Скопировано!',
+    'accountPages.json.forum.joinDiscord': 'Присоединиться к Discord',
+
+    'createClub.json.page.title': 'Создайте свою команду',
+    'createClub.json.page.subtitle': 'Оформите свою команду и войдите в мир ProPeloton Manager.',
+    'createClub.json.page.createTeam': 'Создать команду',
+    'createClub.json.jersey.title': 'Форма команды',
+    'createClub.json.jersey.required': 'Для создания команды необходимо выбрать форму.',
+    'createClub.json.patterns.title': 'Стиль эмблемы',
+    'createClub.json.logo.title': 'Логотип',
+    'createClub.json.errors.signIn': 'Войдите в систему, чтобы создать команду.',
 }
 
 PROTECTED = [
