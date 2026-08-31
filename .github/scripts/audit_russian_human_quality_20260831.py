@@ -35,8 +35,8 @@ VISIBLE_EXPECTED = {
 }
 
 PROTECTED = [
-    'ProPeloton Manager', 'Startlist', 'Race Engine', 'Replay Engine', 'Team Policy',
-    'Race Sharpness', 'Race Plans', 'Race Plan', 'Stage Plans', 'Stage Plan',
+    'ProPeloton Manager', 'Next Quest Studio', 'Startlist', 'Race Engine', 'Replay Engine',
+    'Team Policy', 'Race Sharpness', 'Race Plans', 'Race Plan', 'Stage Plans', 'Stage Plan',
     'WorldTeam', 'WorldTour', 'ProTeam', 'ProSeries', 'Continental', 'Supabase',
     'Stripe', 'Discord', 'Edge Function', 'RPC', 'KPI', 'GC', 'KOM', 'U23', 'UCI',
     'Coins', 'Premium', 'FTP', 'VO2', 'DNF', 'DNS', 'OTL', 'ITT', 'TTT', 'JPG',
@@ -58,12 +58,15 @@ def get_path(data: Any, dotted: str) -> Any:
 def walk(source: Any, target: Any, path: str, blockers: list[str]) -> None:
     if isinstance(source, dict) and isinstance(target, dict):
         for key in source:
-            if key in target: walk(source[key], target[key], f'{path}.{key}' if path else key, blockers)
+            if key in target:
+                walk(source[key], target[key], f'{path}.{key}' if path else key, blockers)
         return
     if isinstance(source, list) and isinstance(target, list):
-        for i, (a, b) in enumerate(zip(source, target)): walk(a, b, f'{path}[{i}]', blockers)
+        for i, (a, b) in enumerate(zip(source, target)):
+            walk(a, b, f'{path}[{i}]', blockers)
         return
-    if not isinstance(source, str) or not isinstance(target, str): return
+    if not isinstance(source, str) or not isinstance(target, str):
+        return
 
     semantic = target
     for term in sorted(PROTECTED, key=len, reverse=True):
@@ -73,15 +76,20 @@ def walk(source: Any, target: Any, path: str, blockers: list[str]) -> None:
         if pattern.search(semantic):
             low = source.lower()
             if 'horse-rider' in reason or 'райдер' in reason:
-                if not re.search(r'\briders?\b', low): continue
+                if not re.search(r'\briders?\b', low):
+                    continue
             if 'race translated' in reason:
-                if not re.search(r'\braces?\b', low): continue
+                if not re.search(r'\braces?\b', low):
+                    continue
             if 'stage translated' in reason:
-                if not re.search(r'\bstages?\b', low): continue
+                if not re.search(r'\bstages?\b', low):
+                    continue
             if 'free-agent' in reason:
-                if not re.search(r'\bfree agents?\b', low): continue
+                if not re.search(r'\bfree agents?\b', low):
+                    continue
             if 'Training Camp' in reason:
-                if 'training camp' not in low: continue
+                if 'training camp' not in low:
+                    continue
             blockers.append(f'{path}: {reason}: {target!r}')
             break
 
@@ -95,22 +103,26 @@ def main() -> None:
     files = sorted(RU.glob('*.json'))
     for ru_path in files:
         en_path = EN / ru_path.name
-        if not en_path.exists(): continue
+        if not en_path.exists():
+            continue
         walk(load(en_path), load(ru_path), ru_path.name, blockers)
 
     cache: dict[str, Any] = {}
     for full_path, expected in VISIBLE_EXPECTED.items():
         file_name, dotted = full_path.split('.json.', 1)
         file_name += '.json'
-        if file_name not in cache: cache[file_name] = load(RU / file_name)
+        if file_name not in cache:
+            cache[file_name] = load(RU / file_name)
         actual = get_path(cache[file_name], dotted)
         if actual != expected:
             blockers.append(f'{full_path}: expected polished visible wording {expected!r}, got {actual!r}')
 
     print(f'Russian human-quality files checked: {len(files)}')
     print(f'Russian human-quality blockers: {len(blockers)}')
-    for item in blockers[:1000]: print('BLOCKER:', item)
-    if blockers: raise SystemExit(1)
+    for item in blockers[:1000]:
+        print('BLOCKER:', item)
+    if blockers:
+        raise SystemExit(1)
 
 
 if __name__ == '__main__':
