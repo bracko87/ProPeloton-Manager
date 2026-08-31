@@ -2329,7 +2329,7 @@
     },
     "race-plan-deep": {
       "category": "Préparation de course",
-      "title": "Race Plan Deep Guide",
+      "title": "Guide approfondi du Race Plan",
       "subtitle": "Sélection de coureurs, personnel, logistique, matériel, fournitures et devis de soutien total.",
       "overview": "Race Plan est le plan d'événement créé après l'acceptation d'une équipe. Il définit qui va à la course et quelles ressources d'appui voyagent avec eux.",
       "details": [
@@ -2370,7 +2370,7 @@
     },
     "stage-plan-deep": {
       "category": "Préparation de course",
-      "title": "Stage Plans Deep Guide",
+      "title": "Guide approfondi des Stage Plans",
       "subtitle": "Rôles à chaque étape, tactiques d'équipe, tactiques individuelles, équipement et fournitures.",
       "overview": "Stage Plans est la couche tactique de préparation de course. Le manager peut préparer un plan différent pour chaque étape en fonction du terrain, des coureurs, de la météo et des objectifs.",
       "details": [

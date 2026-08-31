@@ -108,7 +108,7 @@
     "blockedAssets": "{{count}} actifs indisponibles parce qu'ils sont déjà affectés à une course de chevauchement.",
     "blockedAsset": "{{count}} actif non disponible car il est déjà affecté à une course de chevauchement.",
     "noAsset": "Aucun actif sélectionné",
-    "assetOption": "Lv {{level}} · {{condition}}% condition",
+    "assetOption": "Niv. {{level}} · état {{condition}} %",
     "alreadySelectedSlot": "déjà sélectionné dans une autre emplacement",
     "costPreview": "Aperçu des coûts",
     "travelTickets": "Billets de voyage",
