@@ -1,0 +1,68 @@
+name: Fix notification localization all languages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix_notification_localization_all_languages_20260831.py'
+      - '.github/workflows/chatgpt-fix-notification-localization-all-languages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-build-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply notification localization fixes
+        run: python3 .github/scripts/fix_notification_localization_all_languages_20260831.py
+
+      - name: Validate locale JSON
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for locale in ['en','sr-Latn','de','hr','es','it','fr','ru']:
+              path = Path('src/i18n/locales') / locale / 'notifications.json'
+              json.loads(path.read_text(encoding='utf-8'))
+              print('OK', path)
+          PY
+
+      - name: Audit notification type coverage
+        run: python3 .github/scripts/audit_notification_language_coverage_20260831.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit localized notifications
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/features/notifications/notificationLocalization.ts src/pages/dashboard/Overview.tsx \
+            src/i18n/locales/en/notifications.json \
+            src/i18n/locales/sr-Latn/notifications.json \
+            src/i18n/locales/de/notifications.json \
+            src/i18n/locales/hr/notifications.json \
+            src/i18n/locales/es/notifications.json \
+            src/i18n/locales/it/notifications.json \
+            src/i18n/locales/fr/notifications.json \
+            src/i18n/locales/ru/notifications.json
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+          else
+            git commit -m 'Localize dashboard notifications in all languages'
+            git push origin HEAD:main
+          fi
