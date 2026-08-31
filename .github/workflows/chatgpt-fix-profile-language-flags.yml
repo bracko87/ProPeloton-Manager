@@ -1,0 +1,54 @@
+name: Fix My Profile language flags
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/scripts/fix_profile_language_flags_20260831.py'
+      - '.github/workflows/chatgpt-fix-profile-language-flags.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply My Profile language flag fix
+        run: python .github/scripts/fix_profile_language_flags_20260831.py
+
+      - name: Verify all four language flags use country codes
+        run: |
+          grep -F 'activeLanguageDefinition.countryCode.toLowerCase()' src/pages/MyProfile.tsx
+          grep -F 'language.countryCode.toLowerCase()' src/pages/MyProfile.tsx
+          grep -F "countryCode: 'GB'" src/i18n/languages.ts
+          grep -F "countryCode: 'RS'" src/i18n/languages.ts
+          grep -F "countryCode: 'DE'" src/i18n/languages.ts
+          grep -F "countryCode: 'HR'" src/i18n/languages.ts
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push fix
+        run: |
+          if git diff --quiet; then
+            echo 'No source changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/MyProfile.tsx
+          git commit -m 'Fix German and Croatian flags on My Profile'
+          git pull --rebase origin main
+          git push origin main
