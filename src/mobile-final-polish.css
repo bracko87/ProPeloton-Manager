@@ -67,28 +67,40 @@
     padding: 0.75rem !important;
   }
 
-  /* External Rider — same compact 3-KPI hero concept as own/public rider pages. */
+  /* Rider profile — make the three season KPIs actually fit on phones. */
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow,
   [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow {
     margin-bottom: 1rem !important;
     padding: 1rem !important;
     border-radius: 1rem !important;
   }
 
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow > .flex.flex-col,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow > .flex.flex-col,
   [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow > .flex.flex-col {
-    gap: 1rem !important;
+    gap: 0.85rem !important;
   }
 
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow h2,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow h2,
   [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow h2 {
-    font-size: 1.7rem !important;
+    font-size: 1.75rem !important;
     line-height: 2rem !important;
     white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
 
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .w-full.lg\:max-w-xl,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .w-full.lg\:max-w-xl,
   [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .w-full.lg\:max-w-xl {
     width: 100% !important;
     max-width: 100% !important;
   }
 
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .w-full.lg\:max-w-xl > .flex,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .w-full.lg\:max-w-xl > .flex,
   [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .w-full.lg\:max-w-xl > .flex {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -98,13 +110,31 @@
     justify-items: stretch !important;
   }
 
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\],
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\],
   [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\] {
     min-width: 0 !important;
     width: auto !important;
-    padding: 0.4rem 0.15rem !important;
+    padding: 0.4rem 0.1rem !important;
     text-align: center !important;
   }
 
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\] > div:first-child,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\] > div:first-child,
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\] > div:first-child {
+    font-size: 0.6rem !important;
+    letter-spacing: 0.11em !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\] > div:last-child,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\] > div:last-child,
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\] > div:last-child {
+    margin-top: 0.35rem !important;
+    font-size: 2rem !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .mx-6.h-12.w-px,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .mx-6.h-12.w-px,
   [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .mx-6.h-12.w-px {
     display: none !important;
   }
@@ -203,5 +233,158 @@
   [data-ppm-final-staff-info-host='true'] > div:first-child,
   [data-ppm-final-staff-info-host='true'] > div:first-child > div:first-child {
     padding-right: 3rem !important;
+  }
+
+  /* Dashboard header — use flex for the action row so Free/Premium being
+     present/absent can never shift Menu into a 44px grid cell. */
+  [data-ppm-dashboard-header='true'] > div:last-child {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 0.35rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-membership'],
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-coins'] {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding-left: 0.45rem !important;
+    padding-right: 0.45rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-notifications'] {
+    flex: 0 0 44px !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-menu'] {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    padding-left: 0.45rem !important;
+    padding-right: 0.45rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-menu'] span {
+    font-size: 0.75rem !important;
+  }
+
+  /* Calendar — undo the earlier 448px/72px scroller experiments. Keep all
+     seven weekdays inside the phone and use compact labels supplied by the
+     final mobile bridge (Mo/Tu..., and day number only). */
+  [data-ppm-dashboard-page='calendar'] .w-full.rounded-lg.border.border-gray-100.bg-white.p-6.shadow:has(.grid.w-full.grid-cols-7.text-sm) {
+    overflow-x: visible !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .mb-2.grid.w-full.grid-cols-7,
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: visible !important;
+    gap: 0.15rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .mb-2.grid.w-full.grid-cols-7 > div {
+    width: auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 0.1rem 0 !important;
+    font-size: 0.62rem !important;
+    line-height: 0.8rem !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div {
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 78px !important;
+    overflow: hidden !important;
+    padding: 0.2rem !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div > div:first-child {
+    overflow: visible !important;
+    font-size: 0.65rem !important;
+    line-height: 0.8rem !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    text-overflow: clip !important;
+  }
+
+  [data-ppm-dashboard-page='calendar'] .grid.w-full.grid-cols-7.text-sm > div .rounded-md {
+    padding: 0.1rem 0.12rem !important;
+    font-size: 0.48rem !important;
+    line-height: 0.62rem !important;
+  }
+
+  /* Race-calendar cards: category moves to the card corner while the three
+     real controls stay in one clean row. */
+  [data-ppm-final-calendar-race-card='true'] {
+    position: relative !important;
+    padding: 0.75rem !important;
+    gap: 0.65rem !important;
+  }
+
+  [data-ppm-final-calendar-race-info='true'] {
+    padding-right: 2.8rem !important;
+  }
+
+  [data-ppm-final-calendar-category='true'] {
+    position: absolute !important;
+    top: 0.7rem !important;
+    right: 0.7rem !important;
+    z-index: 3 !important;
+    margin: 0 !important;
+    padding: 0.25rem 0.45rem !important;
+    font-size: 0.65rem !important;
+    line-height: 0.8rem !important;
+  }
+
+  [data-ppm-final-calendar-actions='true'] {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    gap: 0.35rem !important;
+    align-items: stretch !important;
+  }
+
+  [data-ppm-final-calendar-sponsor-goal='true'] {
+    grid-column: 1 / -1 !important;
+    justify-self: start !important;
+  }
+
+  [data-ppm-final-calendar-actions='true'] > :not([data-ppm-final-calendar-category='true']):not([data-ppm-final-calendar-sponsor-goal='true']) {
+    display: inline-flex !important;
+    min-width: 0 !important;
+    min-height: 38px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.3rem 0.2rem !important;
+    font-size: 0.65rem !important;
+    line-height: 0.8rem !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  /* Infrastructure — exact top toolbar selector; the previous generic selector
+     missed this flex-col wrapper, which is why Refresh stayed visible. */
+  [data-ppm-dashboard-page='infrastructure'] .mb-5.flex.flex-col.gap-4.sm\:flex-row > div:last-child > button:first-child {
+    display: none !important;
+  }
+
+  [data-ppm-dashboard-page='infrastructure'] .mb-5.flex.flex-col.gap-4.sm\:flex-row > div:last-child {
+    width: 100% !important;
+  }
+
+  [data-ppm-dashboard-page='infrastructure'] .mb-5.flex.flex-col.gap-4.sm\:flex-row > div:last-child > .inline-flex {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
   }
 }
