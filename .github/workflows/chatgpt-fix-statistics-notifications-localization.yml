@@ -1,0 +1,63 @@
+name: Fix statistics and notifications localization
+
+on:
+  push:
+    paths:
+      - '.github/scripts/fix_statistics_notifications_localization_20260831.py'
+      - '.github/workflows/chatgpt-fix-statistics-notifications-localization.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply localization fixes
+        run: python .github/scripts/fix_statistics_notifications_localization_20260831.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Validate localized notification runtime
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
+          assert "!isSerbian()" not in p
+          assert "return language !== 'en' && !language.startsWith('en-')" in p
+          assert "if (typeCode && !localizedType) return item" in p
+          print('Notification runtime localization validation passed.')
+          PY
+
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/features/notifications/notificationLocalization.ts src/i18n/locales/*/statistics.json
+          if git diff --cached --quiet; then
+            echo "No localization changes to commit."
+          else
+            git commit -m "Fix localized statistics and notifications"
+            git push origin main
+          fi
