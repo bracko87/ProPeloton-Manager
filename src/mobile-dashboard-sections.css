@@ -1,0 +1,91 @@
+/*
+ * Mobile-only collapsible dashboard boxes.
+ * Desktop/tablet remain untouched. Collapsed choices are applied by
+ * MobileDashboardSectionPreferences and persisted per dashboard page.
+ */
+
+@media (max-width: 767px) {
+  [data-ppm-mobile-section-toggle-host='true'] {
+    position: relative;
+  }
+
+  .ppm-mobile-section-toggle {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+    z-index: 12;
+    display: inline-flex;
+    min-height: 36px;
+    min-width: 36px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgb(203 213 225 / 0.95);
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.94);
+    padding: 0.375rem;
+    color: rgb(51 65 85);
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.12);
+    touch-action: manipulation;
+  }
+
+  .ppm-mobile-section-toggle:focus-visible {
+    outline: 2px solid rgb(234 179 8);
+    outline-offset: 2px;
+  }
+
+  .ppm-mobile-section-toggle-title {
+    display: none;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    font-size: 0.875rem;
+    font-weight: 650;
+  }
+
+  .ppm-mobile-section-toggle-icon {
+    display: inline-flex;
+    height: 24px;
+    width: 24px;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  [data-ppm-mobile-section-collapsed='true'] {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  [data-ppm-mobile-section-collapsed='true'] > :not(.ppm-mobile-section-toggle) {
+    display: none !important;
+  }
+
+  [data-ppm-mobile-section-collapsed='true'] > .ppm-mobile-section-toggle {
+    position: static;
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    padding: 0.7rem 0.9rem;
+    box-shadow: none;
+    color: inherit;
+  }
+
+  [data-ppm-mobile-section-collapsed='true'] .ppm-mobile-section-toggle-title {
+    display: block;
+    flex: 1 1 auto;
+  }
+
+  [data-ppm-mobile-section-collapsed='true'] .ppm-mobile-section-toggle-icon {
+    flex: 0 0 auto;
+  }
+}
