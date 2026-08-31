@@ -1,0 +1,62 @@
+name: Italian final zero-blocker gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix_italian_final_blockers_20260831.py'
+      - '.github/workflows/chatgpt-italian-final-gate.yml'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  italian-final:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fix final Italian blockers
+        run: python .github/scripts/fix_italian_final_blockers_20260831.py
+
+      - name: Italian semantic completion audit
+        shell: bash
+        run: python .github/scripts/audit_italian_completion_20260831.py | tee /tmp/italian-final-audit.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit final Italian polish
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/it
+          if git diff --cached --quiet; then
+            echo 'No final Italian locale changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Complete Italian language polish'
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Upload Italian final audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: italian-final-zero-blocker-audit
+          path: /tmp/italian-final-audit.txt
+          retention-days: 3
+          if-no-files-found: warn
