@@ -1,0 +1,67 @@
+name: Test stronger Spanish translation model
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-test-spanish-tcbig.yml'
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install model dependencies
+        run: pip install --disable-pip-version-check 'transformers<5' sentencepiece torch safetensors
+      - name: Translate representative game strings
+        shell: bash
+        run: |
+          python - <<'PY'
+          from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+          import torch
+          model_name='Helsinki-NLP/opus-mt-tc-big-en-es'
+          tok=AutoTokenizer.from_pretrained(model_name)
+          model=AutoModelForSeq2SeqLM.from_pretrained(model_name)
+          model.eval()
+          samples=[
+            'Failed to load finance data.',
+            'Tab crashed.',
+            'Competition reward',
+            'Training camp refund',
+            'Training camp booking',
+            'Staff release cost',
+            'Free-agent signing cost paid',
+            '+5 morale',
+            'Net operating: €12,000',
+            'Emergency debt movement',
+            'Hover a bar to see details.',
+            'Hover a dot to see details.',
+            'Your main seasonal partner and largest sponsorship income.',
+            'Equipment partner providing cash support and sponsor-brand equipment discounts.',
+            'This deal pays guaranteed money immediately when signed. The bonus pool is paid later only if your team completes sponsor objectives such as race starts, wins, podiums, top-5 results, or GC targets.',
+            'Stage top 5',
+            'Stage win',
+            'The race engine can later choose any available unit of the selected type and fall back to the next available type if needed.',
+            'One game day equals 12 real-life hours. Use this when checking deadlines, race-preparation windows and Stage Plan locks.',
+            'Race Plans, rider submissions and Stage Plans have deadlines. Missing them can leave your team badly prepared or unable to race correctly.',
+          ]
+          enc=tok(samples,return_tensors='pt',padding=True,truncation=True,max_length=512)
+          with torch.inference_mode():
+            out=model.generate(**enc,max_new_tokens=256,num_beams=4)
+          dec=tok.batch_decode(out,skip_special_tokens=True)
+          for s,t in zip(samples,dec):
+            print('EN:',s)
+            print('ES:',t)
+            print()
+          PY
