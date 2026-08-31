@@ -7,6 +7,7 @@ on:
       - '.github/workflows/chatgpt-add-russian-localization.yml'
       - '.github/scripts/add_russian_localization_20260831.py'
       - '.github/scripts/add_russian_localization_v2_20260831.py'
+      - '.github/scripts/add_russian_localization_v3_20260831.py'
       - '.github/scripts/polish_russian_baseline_20260831.py'
       - '.github/scripts/polish_russian_quality_v2_20260831.py'
       - '.github/scripts/polish_russian_final_20260831.py'
@@ -43,7 +44,7 @@ jobs:
           pip install torch transformers sentencepiece
 
       - name: Generate protected-safe Russian locale package
-        run: python .github/scripts/add_russian_localization_v2_20260831.py
+        run: python .github/scripts/add_russian_localization_v3_20260831.py
 
       - name: Apply Russian cycling and human-quality polish
         run: python .github/scripts/polish_russian_quality_v2_20260831.py
@@ -77,7 +78,7 @@ jobs:
             echo 'No Russian changes to commit.'
             exit 0
           fi
-          git commit -m 'Add Russian language package'
+          git commit -m 'Polish Russian language package'
           git pull --rebase origin main
           git push origin main
 
