@@ -1,0 +1,207 @@
+/* ProPeloton Manager — final mobile polish. Desktop/tablet stay untouched. */
+@media (max-width: 767px) {
+  /* Sponsor offer dialogs — compact logo/offer layout and denser offer metrics. */
+  [data-ppm-final-sponsor-modal='true'] {
+    width: calc(100vw - 20px) !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 20px) !important;
+    margin: 10px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  [data-ppm-final-sponsor-offer-card='true'] {
+    position: relative !important;
+    max-width: 100% !important;
+    padding: 0.8rem !important;
+    overflow: hidden !important;
+  }
+
+  [data-ppm-final-sponsor-sign-button='true'] {
+    position: absolute !important;
+    top: 0.65rem !important;
+    right: 0.65rem !important;
+    z-index: 5 !important;
+    min-height: 42px !important;
+    max-width: 74px !important;
+    padding: 0.45rem 0.6rem !important;
+    font-size: 0.76rem !important;
+    line-height: 1rem !important;
+    text-align: center !important;
+  }
+
+  [data-ppm-final-sponsor-logo-host='true'] {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 155px !important;
+    padding: 0.4rem 3.8rem 0.35rem 0.25rem !important;
+    overflow: hidden !important;
+  }
+
+  [data-ppm-final-sponsor-offer-image='true'] {
+    display: block !important;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 130px !important;
+    margin-inline: auto !important;
+    object-fit: contain !important;
+  }
+
+  [data-ppm-final-sponsor-metrics='true'] {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  [data-ppm-final-sponsor-metric='true'] {
+    min-width: 0 !important;
+    padding: 0.7rem !important;
+  }
+
+  [data-ppm-final-sponsor-modal='true'] .bg-emerald-50,
+  [data-ppm-final-sponsor-modal='true'] .bg-green-50,
+  [data-ppm-final-sponsor-modal='true'] .bg-amber-50,
+  [data-ppm-final-sponsor-modal='true'] .bg-yellow-50 {
+    padding: 0.75rem !important;
+  }
+
+  /* External Rider — same compact 3-KPI hero concept as own/public rider pages. */
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow {
+    margin-bottom: 1rem !important;
+    padding: 1rem !important;
+    border-radius: 1rem !important;
+  }
+
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow > .flex.flex-col {
+    gap: 1rem !important;
+  }
+
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow h2 {
+    font-size: 1.7rem !important;
+    line-height: 2rem !important;
+    white-space: normal !important;
+  }
+
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .w-full.lg\:max-w-xl {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .w-full.lg\:max-w-xl > .flex {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.2rem !important;
+    width: 100% !important;
+    padding: 0 !important;
+    justify-items: stretch !important;
+  }
+
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-\[120px\] {
+    min-width: 0 !important;
+    width: auto !important;
+    padding: 0.4rem 0.15rem !important;
+    text-align: center !important;
+  }
+
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .mx-6.h-12.w-px {
+    display: none !important;
+  }
+
+  /* Transfers — both tab rows must fit the phone without clipping. */
+  [data-ppm-dashboard-page='transfers'] .flex.items-start.justify-between.gap-4:has(> .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0.7rem !important;
+  }
+
+  [data-ppm-dashboard-page='transfers'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 0.25rem !important;
+  }
+
+  [data-ppm-dashboard-page='transfers'] .inline-flex.rounded-lg.border.border-gray-100.bg-white.p-1.shadow-sm > button {
+    min-width: 0 !important;
+    min-height: 42px !important;
+    padding: 0.45rem 0.3rem !important;
+    font-size: 0.78rem !important;
+    white-space: normal !important;
+  }
+
+  [data-ppm-dashboard-page='transfers'] [aria-label*='Rider market tabs'] > .flex.items-center.gap-8 {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0 !important;
+    width: 100% !important;
+  }
+
+  [data-ppm-dashboard-page='transfers'] [aria-label*='Rider market tabs'] > .flex.items-center.gap-8 > button {
+    min-width: 0 !important;
+    padding: 0.7rem 0.2rem !important;
+    font-size: 0.73rem !important;
+    line-height: 0.95rem !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  /* Statistics — keep the five-column current leaderboard inside the card. */
+  [data-ppm-final-statistics-five-col='true'] {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
+    font-size: 0.72rem !important;
+  }
+
+  [data-ppm-final-statistics-five-col='true'] th,
+  [data-ppm-final-statistics-five-col='true'] td {
+    min-width: 0 !important;
+    padding-right: 0.3rem !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    vertical-align: top !important;
+  }
+
+  [data-ppm-final-statistics-five-col='true'] th:nth-child(1),
+  [data-ppm-final-statistics-five-col='true'] td:nth-child(1) { width: 7% !important; }
+  [data-ppm-final-statistics-five-col='true'] th:nth-child(2),
+  [data-ppm-final-statistics-five-col='true'] td:nth-child(2) { width: 28% !important; }
+  [data-ppm-final-statistics-five-col='true'] th:nth-child(3),
+  [data-ppm-final-statistics-five-col='true'] td:nth-child(3) { width: 13% !important; }
+  [data-ppm-final-statistics-five-col='true'] th:nth-child(4),
+  [data-ppm-final-statistics-five-col='true'] td:nth-child(4) { width: 31% !important; }
+  [data-ppm-final-statistics-five-col='true'] th:nth-child(5),
+  [data-ppm-final-statistics-five-col='true'] td:nth-child(5) { width: 21% !important; }
+
+  [data-ppm-final-statistics-five-col='true'] th:nth-child(5) {
+    font-size: 0.63rem !important;
+    line-height: 0.8rem !important;
+  }
+
+  [data-ppm-final-statistics-five-col='true'] button {
+    max-width: 100% !important;
+    white-space: normal !important;
+    line-height: 1rem !important;
+    text-align: left !important;
+  }
+
+  /* Staff page — information button belongs in the Team Staff card top-right. */
+  [data-ppm-final-staff-info-host='true'] {
+    position: relative !important;
+  }
+
+  [data-ppm-final-staff-info-button='true'] {
+    position: absolute !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    z-index: 4 !important;
+  }
+
+  [data-ppm-final-staff-info-host='true'] > div:first-child,
+  [data-ppm-final-staff-info-host='true'] > div:first-child > div:first-child {
+    padding-right: 3rem !important;
+  }
+}
