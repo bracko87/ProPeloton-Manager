@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
 import TutorialTargetFrame from "../../components/tutorial/TutorialTargetFrame";
 import { supabase } from "../../lib/supabase";
+import { localizeNotificationFeedCopy } from "../../features/notifications/notificationLocalization";
 import {
   menuTutorialSteps,
   menuWelcomeTutorial,
@@ -6013,6 +6014,11 @@ function localizeOverviewTeamFeedCopy(
 ): { title: string; subtitle: string } {
   const cleanTitle = (title ?? "").trim();
   const cleanSubtitle = (subtitle ?? "").trim();
+
+  const sharedCopy = localizeNotificationFeedCopy(cleanTitle, cleanSubtitle);
+  if (sharedCopy.title !== cleanTitle || sharedCopy.message !== cleanSubtitle) {
+    return { title: sharedCopy.title, subtitle: sharedCopy.message };
+  }
 
   const sponsorOffersMatch = /^Sponsor offers ready for season\s+(\d+)$/i.exec(cleanTitle);
   if (sponsorOffersMatch) {

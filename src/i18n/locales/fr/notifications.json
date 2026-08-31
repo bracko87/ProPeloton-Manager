@@ -324,6 +324,31 @@
       "title": "Sélection des promoteurs requise",
       "message": "Les offres de sponsor sont prêtes à être examinées.",
       "messageSeason": "Les offres sponsor pour la saison {{season}} sont prêtes à être examinées."
+    },
+    "feed": {
+      "teamUpdateTitle": "Mise à jour de l’équipe",
+      "teamUpdateMessage": "Ouvrez les Notifications pour consulter tous les détails de cette mise à jour de l’équipe.",
+      "sponsorKinds": {
+        "main": "principal",
+        "secondary": "secondaire",
+        "technical": "technique"
+      },
+      "sponsorSigned": {
+        "title": "{{name}} engagé comme sponsor {{kind}}",
+        "seasonMessage": "{{name}} est désormais votre sponsor {{kind}} pour la saison {{season}}.",
+        "guaranteedMessage": "{{name}} est désormais votre sponsor {{kind}} pour la saison {{season}}. Paiement garanti : {{amount}}.",
+        "technicalMessage": "{{name}} est désormais votre sponsor {{kind}} pour la saison {{season}}. Paiement immédiat : {{cash}}. Fonds de soutien pour l’équipement : {{fund}}.",
+        "genericMessage": "{{name}} est désormais votre sponsor {{kind}}."
+      },
+      "scoutAdvisory": {
+        "title": "Conseil du scout — bilan recrutement et scouting",
+        "message": "Bilan du recrutement : {{reports}} rapports de scouting terminés, {{recent}} terminés au cours des sept derniers jours réels, {{highElite}} rapports avec un potentiel élevé ou élite et {{active}} missions de scouting actives.",
+        "genericMessage": "Votre scout a préparé un bilan de recrutement et de scouting."
+      },
+      "sponsorOffersReady": {
+        "title": "Offres de sponsors prêtes pour la saison {{season}}",
+        "message": "De nouvelles offres de sponsors sont disponibles pour votre équipe. Choisissez vos sponsors pour la saison en cours."
+      }
     }
   },
   "templateValues": {
@@ -452,7 +477,45 @@
     "POINTS": "Paragraphes",
     "CLASSIFICATION": "Classement",
     "INVITATION": "Invitation",
-    "INVITED": "Invité"
+    "INVITED": "Invité",
+    "10": "10",
+    "AGAIN": "À nouveau",
+    "AGE": "Âge",
+    "AGENTS": "Agents",
+    "ASSET": "Équipement",
+    "CHIEF": "Chef",
+    "CLUB": "Club",
+    "CONDITION": "État",
+    "COUNTERED": "Contre-offre",
+    "DEADLINE": "Échéance",
+    "DECLINED": "Refusé",
+    "DEVELOPING": "Développement",
+    "DOCTOR": "Médecin",
+    "EMERGENCY": "Urgence",
+    "FINAL": "Final",
+    "FINISHED": "Terminé",
+    "FIT": "Apte",
+    "FULLY": "Entièrement",
+    "INJURED": "Blessé",
+    "JERSEYS": "Maillots",
+    "LIMIT": "Limite",
+    "LIQUIDATED": "Liquidé",
+    "LIQUIDATION": "Liquidation",
+    "LOAN": "Prêt",
+    "MANDATORY": "Obligatoire",
+    "MECHANIC": "Mécanicien",
+    "NOT": "Non",
+    "ORDERED": "Commandé",
+    "REACHED": "Atteint",
+    "RELEASE": "Libération",
+    "REPAID": "Remboursé",
+    "REPAIRED": "Réparé",
+    "SICK": "Malade",
+    "SOLD": "Vendu",
+    "START": "Début",
+    "TO": "À",
+    "WELCOME": "Bienvenue",
+    "WINDOW": "Période"
   },
   "reportVariants": {
     "rider_skill_change": "Changement de compétence du coureur",

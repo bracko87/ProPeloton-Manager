@@ -324,6 +324,31 @@
       "title": "Sponsor selection required",
       "message": "Sponsor offers are ready for review.",
       "messageSeason": "Sponsor offers for Season {{season}} are ready for review."
+    },
+    "feed": {
+      "teamUpdateTitle": "Team update",
+      "teamUpdateMessage": "Open Notifications for the full details of this team update.",
+      "sponsorKinds": {
+        "main": "main",
+        "secondary": "secondary",
+        "technical": "technical"
+      },
+      "sponsorSigned": {
+        "title": "{{name}} signed as {{kind}} sponsor",
+        "seasonMessage": "{{name}} is now your {{kind}} sponsor for Season {{season}}.",
+        "guaranteedMessage": "{{name}} is now your {{kind}} sponsor for Season {{season}}. Guaranteed payment: {{amount}}.",
+        "technicalMessage": "{{name}} is now your {{kind}} sponsor for Season {{season}}. Cash paid now: {{cash}}. Equipment support fund: {{fund}}.",
+        "genericMessage": "{{name}} is now your {{kind}} sponsor."
+      },
+      "scoutAdvisory": {
+        "title": "Scout Advisory — Recruitment & Scouting Review",
+        "message": "Recruitment review: {{reports}} completed scouting reports, {{recent}} completed in the last seven real-life days, {{highElite}} High or Elite potential reports, and {{active}} active scouting assignments.",
+        "genericMessage": "Your Scout has prepared a recruitment and scouting review."
+      },
+      "sponsorOffersReady": {
+        "title": "Sponsor offers ready for Season {{season}}",
+        "message": "New sponsor offers are available for your team. Choose your sponsors for the current season."
+      }
     }
   },
   "templateValues": {
@@ -452,7 +477,45 @@
     "POINTS": "Points",
     "CLASSIFICATION": "Classification",
     "INVITATION": "Invitation",
-    "INVITED": "Invited"
+    "INVITED": "Invited",
+    "10": "10",
+    "AGAIN": "Again",
+    "AGE": "Age",
+    "AGENTS": "Agents",
+    "ASSET": "Asset",
+    "CHIEF": "Chief",
+    "CLUB": "Club",
+    "CONDITION": "Condition",
+    "COUNTERED": "Countered",
+    "DEADLINE": "Deadline",
+    "DECLINED": "Declined",
+    "DEVELOPING": "Developing",
+    "DOCTOR": "Doctor",
+    "EMERGENCY": "Emergency",
+    "FINAL": "Final",
+    "FINISHED": "Finished",
+    "FIT": "Fit",
+    "FULLY": "Fully",
+    "INJURED": "Injured",
+    "JERSEYS": "Jerseys",
+    "LIMIT": "Limit",
+    "LIQUIDATED": "Liquidated",
+    "LIQUIDATION": "Liquidation",
+    "LOAN": "Loan",
+    "MANDATORY": "Mandatory",
+    "MECHANIC": "Mechanic",
+    "NOT": "Not",
+    "ORDERED": "Ordered",
+    "REACHED": "Reached",
+    "RELEASE": "Release",
+    "REPAID": "Repaid",
+    "REPAIRED": "Repaired",
+    "SICK": "Sick",
+    "SOLD": "Sold",
+    "START": "Start",
+    "TO": "To",
+    "WELCOME": "Welcome",
+    "WINDOW": "Window"
   },
   "reportVariants": {
     "rider_skill_change": "Rider skill change",

@@ -324,6 +324,31 @@
       "title": "Gewünschte Sponsorenauswahl",
       "message": "Sponsorenangebote sind für die Überprüfung bereit.",
       "messageSeason": "Sponsorenangebote für Saison {{season}} sind bereit für die Überprüfung."
+    },
+    "feed": {
+      "teamUpdateTitle": "Team-Update",
+      "teamUpdateMessage": "Öffne die Benachrichtigungen, um alle Details zu diesem Team-Update zu sehen.",
+      "sponsorKinds": {
+        "main": "Haupt",
+        "secondary": "Sekundär",
+        "technical": "Technik"
+      },
+      "sponsorSigned": {
+        "title": "{{name}} als {{kind}}sponsor verpflichtet",
+        "seasonMessage": "{{name}} ist jetzt dein {{kind}}sponsor für Saison {{season}}.",
+        "guaranteedMessage": "{{name}} ist jetzt dein {{kind}}sponsor für Saison {{season}}. Garantierte Zahlung: {{amount}}.",
+        "technicalMessage": "{{name}} ist jetzt dein {{kind}}sponsor für Saison {{season}}. Sofortzahlung: {{cash}}. Ausrüstungsfonds: {{fund}}.",
+        "genericMessage": "{{name}} ist jetzt dein {{kind}}sponsor."
+      },
+      "scoutAdvisory": {
+        "title": "Scout-Beratung — Rekrutierungs- und Scoutingbericht",
+        "message": "Rekrutierungsbericht: {{reports}} abgeschlossene Scoutingberichte, davon {{recent}} in den letzten sieben Echtzeittagen, {{highElite}} Berichte mit hohem oder Elite-Potenzial und {{active}} aktive Scoutingaufträge.",
+        "genericMessage": "Dein Scout hat einen Rekrutierungs- und Scoutingbericht erstellt."
+      },
+      "sponsorOffersReady": {
+        "title": "Sponsorenangebote für Saison {{season}} verfügbar",
+        "message": "Neue Sponsorenangebote sind für dein Team verfügbar. Wähle deine Sponsoren für die aktuelle Saison."
+      }
     }
   },
   "templateValues": {
@@ -452,7 +477,45 @@
     "POINTS": "Punkte",
     "CLASSIFICATION": "Einreihung",
     "INVITATION": "Einladung",
-    "INVITED": "Eingeladen"
+    "INVITED": "Eingeladen",
+    "10": "10",
+    "AGAIN": "Wieder",
+    "AGE": "Alter",
+    "AGENTS": "Agenten",
+    "ASSET": "Anlage",
+    "CHIEF": "Chef",
+    "CLUB": "Club",
+    "CONDITION": "Zustand",
+    "COUNTERED": "Gegenangebot",
+    "DEADLINE": "Frist",
+    "DECLINED": "Abgelehnt",
+    "DEVELOPING": "Entwicklung",
+    "DOCTOR": "Arzt",
+    "EMERGENCY": "Notfall",
+    "FINAL": "Final",
+    "FINISHED": "Beendet",
+    "FIT": "Fit",
+    "FULLY": "Vollständig",
+    "INJURED": "Verletzt",
+    "JERSEYS": "Trikots",
+    "LIMIT": "Limit",
+    "LIQUIDATED": "Aufgelöst",
+    "LIQUIDATION": "Liquidation",
+    "LOAN": "Darlehen",
+    "MANDATORY": "Verpflichtend",
+    "MECHANIC": "Mechaniker",
+    "NOT": "Nicht",
+    "ORDERED": "Bestellt",
+    "REACHED": "Erreicht",
+    "RELEASE": "Freigabe",
+    "REPAID": "Zurückgezahlt",
+    "REPAIRED": "Repariert",
+    "SICK": "Krank",
+    "SOLD": "Verkauft",
+    "START": "Start",
+    "TO": "An",
+    "WELCOME": "Willkommen",
+    "WINDOW": "Zeitraum"
   },
   "reportVariants": {
     "rider_skill_change": "Veränderung der Fähigkeiten des Fahrers",

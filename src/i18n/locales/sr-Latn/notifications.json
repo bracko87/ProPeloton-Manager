@@ -324,6 +324,31 @@
       "title": "Potreban izbor sponzora",
       "message": "Ponude sponzora su spremne za pregled.",
       "messageSeason": "Ponude sponzora za sezonu {{season}} spremne su za pregled."
+    },
+    "feed": {
+      "teamUpdateTitle": "Ažuriranje tima",
+      "teamUpdateMessage": "Otvorite Obaveštenja za sve detalje ovog ažuriranja tima.",
+      "sponsorKinds": {
+        "main": "glavni",
+        "secondary": "sekundarni",
+        "technical": "tehnički"
+      },
+      "sponsorSigned": {
+        "title": "{{name}} je potpisan kao {{kind}} sponzor",
+        "seasonMessage": "{{name}} je sada vaš {{kind}} sponzor za sezonu {{season}}.",
+        "guaranteedMessage": "{{name}} je sada vaš {{kind}} sponzor za sezonu {{season}}. Garantovana isplata: {{amount}}.",
+        "technicalMessage": "{{name}} je sada vaš {{kind}} sponzor za sezonu {{season}}. Isplaćeno odmah: {{cash}}. Fond za opremu: {{fund}}.",
+        "genericMessage": "{{name}} je sada vaš {{kind}} sponzor."
+      },
+      "scoutAdvisory": {
+        "title": "Savet skauta — pregled regrutovanja i skautinga",
+        "message": "Pregled regrutovanja: završeno je {{reports}} skautskih izveštaja, {{recent}} u poslednjih sedam dana u stvarnom vremenu, {{highElite}} izveštaja sa visokim ili elitnim potencijalom i {{active}} aktivnih skautskih zadataka.",
+        "genericMessage": "Vaš skaut je pripremio pregled regrutovanja i skautinga."
+      },
+      "sponsorOffersReady": {
+        "title": "Ponude sponzora spremne za sezonu {{season}}",
+        "message": "Nove ponude sponzora dostupne su vašem timu. Izaberite sponzore za tekuću sezonu."
+      }
     }
   },
   "templateValues": {
@@ -452,7 +477,45 @@
     "POINTS": "Bodovi",
     "CLASSIFICATION": "Klasifikacija",
     "INVITATION": "Poziv",
-    "INVITED": "Pozvan"
+    "INVITED": "Pozvan",
+    "10": "10",
+    "AGAIN": "Ponovo",
+    "AGE": "Godine",
+    "AGENTS": "Agenti",
+    "ASSET": "Sredstvo",
+    "CHIEF": "Glavni",
+    "CLUB": "Klub",
+    "CONDITION": "Stanje",
+    "COUNTERED": "Kontraponuda",
+    "DEADLINE": "Rok",
+    "DECLINED": "Odbijeno",
+    "DEVELOPING": "Razvojni",
+    "DOCTOR": "Doktor",
+    "EMERGENCY": "Hitni",
+    "FINAL": "Završno",
+    "FINISHED": "Završen",
+    "FIT": "Spreman",
+    "FULLY": "Potpuno",
+    "INJURED": "Povređen",
+    "JERSEYS": "Majice",
+    "LIMIT": "Ograničenje",
+    "LIQUIDATED": "Likvidiran",
+    "LIQUIDATION": "Likvidacija",
+    "LOAN": "Kredit",
+    "MANDATORY": "Obavezno",
+    "MECHANIC": "Mehaničar",
+    "NOT": "Nije",
+    "ORDERED": "Naručeno",
+    "REACHED": "Dostignuto",
+    "RELEASE": "Raskid",
+    "REPAID": "Otplata",
+    "REPAIRED": "Popravljeno",
+    "SICK": "Bolestan",
+    "SOLD": "Prodato",
+    "START": "Početak",
+    "TO": "Ka",
+    "WELCOME": "Dobrodošlica",
+    "WINDOW": "Period"
   },
   "reportVariants": {
     "rider_skill_change": "Promena veštine vozača",

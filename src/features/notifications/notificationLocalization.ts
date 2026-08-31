@@ -189,12 +189,101 @@ function looksEnglish(value: string | null | undefined): boolean {
   return /\b(the|your|you|has|have|is|are|was|were|will|can|could|should|joined|available|review|open|staff|rider|sponsor|race|stage|contract|offer|team|club|week|season|completed|required|selected|selection|transfer|warning|reward|results|report|new|for|from|with|without|this|that|as|to|of|and)\b/.test(text)
 }
 
+
+export function localizeNotificationFeedCopy(
+  title: string | null | undefined,
+  message: string | null | undefined,
+  options?: { genericFallback?: boolean }
+): { title: string; message: string } {
+  const cleanTitle = String(title ?? '').trim()
+  const cleanMessage = String(message ?? '').trim()
+
+  if (!shouldLocalizeNotifications()) {
+    return { title: cleanTitle, message: cleanMessage }
+  }
+
+  const staffHiredMatch = /^Staff hired:\s*(.+)$/i.exec(cleanTitle)
+  if (staffHiredMatch) {
+    const name = staffHiredMatch[1].trim()
+    const roleMatch = /has joined your club as\s+(.+?)(?:\.|$)/i.exec(cleanMessage)
+    const rawRole = roleMatch?.[1]?.trim() || null
+    const role = localizeRole(rawRole) || rawRole || nt('roles.staffAdvisor')
+    return {
+      title: nt('templateLocalization.staffHired.title', { name }),
+      message: nt('templateLocalization.staffHired.message', { name, role }),
+    }
+  }
+
+  const sponsorOffersMatch = /^Sponsor offers ready for season\s+(\d+)$/i.exec(cleanTitle)
+  if (sponsorOffersMatch) {
+    return {
+      title: nt('templateLocalization.feed.sponsorOffersReady.title', { season: sponsorOffersMatch[1] }),
+      message: nt('templateLocalization.feed.sponsorOffersReady.message'),
+    }
+  }
+
+  const sponsorSignedMatch = /^(.+?)\s+signed as\s+(main|secondary|technical)\s+sponsor$/i.exec(cleanTitle)
+  if (sponsorSignedMatch) {
+    const name = sponsorSignedMatch[1].trim()
+    const kindCode = sponsorSignedMatch[2].toLowerCase()
+    const kind = nt(`templateLocalization.feed.sponsorKinds.${kindCode}`)
+    const season = /for season\s+(\d+)/i.exec(cleanMessage)?.[1]
+    const guaranteed = /Guaranteed payment:\s*([^\.]+)\.?/i.exec(cleanMessage)?.[1]?.trim()
+    const cash = /Cash paid now:\s*([^\.]+)\.?/i.exec(cleanMessage)?.[1]?.trim()
+    const fund = /Equipment support fund:\s*([^\.]+)\.?/i.exec(cleanMessage)?.[1]?.trim()
+
+    let localizedMessage = nt('templateLocalization.feed.sponsorSigned.genericMessage', { name, kind })
+    if (season && guaranteed) {
+      localizedMessage = nt('templateLocalization.feed.sponsorSigned.guaranteedMessage', {
+        name, kind, season, amount: guaranteed,
+      })
+    } else if (season && cash && fund) {
+      localizedMessage = nt('templateLocalization.feed.sponsorSigned.technicalMessage', {
+        name, kind, season, cash, fund,
+      })
+    } else if (season) {
+      localizedMessage = nt('templateLocalization.feed.sponsorSigned.seasonMessage', { name, kind, season })
+    }
+
+    return {
+      title: nt('templateLocalization.feed.sponsorSigned.title', { name, kind }),
+      message: localizedMessage,
+    }
+  }
+
+  if (/^Scout Advisory\s*[—-]\s*Recruitment\s*&\s*Scouting Review$/i.test(cleanTitle) || /^Recruitment review:/i.test(cleanMessage)) {
+    const stats = /Recruitment review:\s*(\d+) completed scouting reports,\s*(\d+) completed in the last seven real-life days,\s*(\d+) High or Elite potential reports, and\s*(\d+) active scouting assignments\.?/i.exec(cleanMessage)
+    return {
+      title: nt('templateLocalization.feed.scoutAdvisory.title'),
+      message: stats
+        ? nt('templateLocalization.feed.scoutAdvisory.message', {
+            reports: stats[1], recent: stats[2], highElite: stats[3], active: stats[4],
+          })
+        : nt('templateLocalization.feed.scoutAdvisory.genericMessage'),
+    }
+  }
+
+  if (options?.genericFallback !== false && (looksEnglish(cleanTitle) || looksEnglish(cleanMessage))) {
+    return {
+      title: looksEnglish(cleanTitle) ? nt('templateLocalization.feed.teamUpdateTitle') : cleanTitle,
+      message: looksEnglish(cleanMessage) ? nt('templateLocalization.feed.teamUpdateMessage') : cleanMessage,
+    }
+  }
+
+  return { title: cleanTitle, message: cleanMessage }
+}
+
 export function localizeNotificationItem(item: NotificationItem): NotificationItem {
   if (!shouldLocalizeNotifications()) return item
 
   const payload = payloadOf(item)
   const typeCode = String(item.type_code ?? '').toUpperCase()
   const entity = getPrimaryEntity(item)
+
+  const feedCopy = localizeNotificationFeedCopy(item.title, item.message, { genericFallback: false })
+  if (feedCopy.title !== String(item.title ?? '').trim() || feedCopy.message !== String(item.message ?? '').trim()) {
+    return { ...item, title: feedCopy.title, message: feedCopy.message }
+  }
 
   if (typeCode === 'STAFF_HIRED') {
     const staffName =
