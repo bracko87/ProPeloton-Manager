@@ -55,7 +55,7 @@
         "Los cambios de correo electrónico utilizan el sistema de autenticación y pueden requerir confirmación.",
         "Nombre, apellido, ciudad y país son campos de perfil opcionales.",
         "La contraseña se puede cambiar de la página de perfil con confirmación.",
-        "Cumpleaños se muestra pero no se guarda de nuevo de Mi Perfil."
+        "La fecha de cumpleaños se muestra en Mi Perfil, pero no se vuelve a guardar desde allí."
       ],
       "tips": [
         "Dígale a los usuarios que el nombre de la pantalla del perfil y el nombre del club son diferentes."
@@ -105,7 +105,7 @@
       "details": [
         "La página carga el código de referencia del club actual de la mesa de clubes.",
         "El enlace de referencia utiliza el origen actual del sitio web más la ruta de referencia.",
-        "Pendiente significa que un amigo creó un club pero no ha comprado el primer paquete de Coins todavía.",
+        "Pendiente significa que un amigo creó un club, pero todavía no ha comprado su primer paquete de Coins.",
         "Completado significa que la primera compra de Coins ocurrió y la recompensa fue concedida.",
         "Los identificadores de usuario y club se enmascaran para la privacidad."
       ],
@@ -135,7 +135,7 @@
         "La tienda calcula el precio por Coins y puede destacar el mejor valor.",
         "Los paquetes de etiquetas se generan a partir de la cantidad de Coins, como el impulso de arranque o Mejor para el juego a largo plazo.",
         "Historial de compra intencionalmente no muestra información técnica de sesión Stripe.",
-        "Coins son Coins de cuenta, no efectivo del club."
+        "Las Coins pertenecen a la cuenta, no son efectivo del club."
       ],
       "tips": [
         "Para los precios actuales, confíe en la página de paquetes de Coins en vivo."
@@ -348,7 +348,7 @@
         "Las notificaciones de las ventanas de equipos de desarrollo indican a los usuarios cuándo es posible el movimiento.",
         "Las notificaciones de finalización de infraestructura indican a los usuarios que una instalación/activo está listo.",
         "Las notificaciones de préstamos de emergencia significan que el club no podía cubrir un costo obligatorio.",
-        "Notificación de lanzamiento de Rider enlace al perfil del ciclista o mercado de agentes libres.",
+        "La notificación de liberación de un ciclista enlaza con su perfil o con el mercado de agentes libres.",
         "Las notificaciones objetivas del patrocinador pueden vincularse al calendario o a la carrera de destino."
       ],
       "tips": [
@@ -361,7 +361,7 @@
       "overview": "El buzón de entrada es para conversaciones, a diferencia de las notificaciones que son alertas de sistema/juego.",
       "facts": [
         "Tipos de conversación",
-        "Directo y de administración directo",
+        "Mensajes directos y mensajes directos de administración",
         "Leer lógica",
         "Abrir un hilo marca que leyó",
         "Preparar el objetivo",
@@ -406,7 +406,7 @@
       "overview": "Primera Brigada es donde los usuarios inspeccionan su lista principal, información financiera, habilidades y forma.",
       "facts": [
         "Primer escuadrón máximo en UI",
-        "18 ciclista",
+        "18 ciclistas",
         "Opiniones",
         "General, financiero, de competencias, forma"
       ],
@@ -538,7 +538,7 @@
       "overview": "El equipo de desarrollo es un segundo equipo conectado para jóvenes/development.",
       "facts": [
         "Max en UI",
-        "8 ciclista",
+        "8 ciclistas",
         "Compra",
         "Preferencias",
         "Movimiento",
@@ -584,7 +584,7 @@
     "staffCapacityDeep": {
       "title": "Capacidad del personal",
       "subtitle": "¿Por qué se puede bloquear la contratación?",
-      "overview": "Las funciones del personal tienen límites.La infraestructura a menudo determina cuántos miembros del personal de cada función que el club puede emplear.",
+      "overview": "Las funciones del personal tienen límites. La infraestructura suele determinar cuántos miembros de cada función puede contratar el club.",
       "facts": [
         "Ámbitos de capacidad",
         "Conteo de límites, conteo activo, ranuras abiertas, puede contratar"

@@ -82,7 +82,7 @@
   },
   "packages": {
     "title": "¿Necesitas Coins adicionales?",
-    "description": "Los jugadores de Free y Premium pueden comprar Coins adicionales para funciones y expansiones opcionales. Comprar Coins no activa la membresía Premium.",
+    "description": "Las cuentas Gratis y Premium pueden comprar Coins adicionales para funciones y expansiones opcionales. Comprar Coins no activa la membresía Premium.",
     "loading": "Cargando paquetes...",
     "bestValue": "Mejor valor",
     "mostPopular": "Más populares",
@@ -144,12 +144,12 @@
     "startSeason": "Inicio de la temporada {{season}}",
     "autoRenew": "Renovar automáticamente cada temporada",
     "autoRenewPrefix": "Cuando esté habilitado,",
-    "autoRenewSuffix": "las Coins se deducirán al comienzo de la próxima temporada. Si el saldo de la cartera es demasiado bajo, la renovación fallará y el equipo de desarrollo se convertirá en sólo lectura.",
+    "autoRenewSuffix": "el coste en Coins se descontará al comienzo de la próxima temporada. Si el saldo es demasiado bajo, la renovación fallará y el equipo de desarrollo pasará a modo de solo lectura.",
     "reactivation": "Precio de reactivación",
     "firstActivation": "Primera activación",
     "laterRenewals": "Renovaciones posteriores",
     "coinsPerSeason": "{{cost}} Coins por temporada",
-    "autoEnabled": "Renovación automática activada. Las Coins {{cost}} se cargarán al comienzo de la próxima temporada.",
+    "autoEnabled": "Renovación automática activada. Se cobrarán {{cost}} Coins al comienzo de la próxima temporada.",
     "autoDisabled": "Renovación automática deshabilitada. No se realizará automáticamente ningún cargo por renovación del equipo de desarrollo.",
     "autoFailed": "No se pudo actualizar la renovación automática del Equipo de desarrollo.",
     "loadFailed": "No se pudo cargar el servicio Developing Team."

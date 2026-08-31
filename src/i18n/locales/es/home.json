@@ -156,7 +156,7 @@
     "gameTimeUnavailable": "Tiempo de juego no disponible",
     "homepageDataUnavailable": "Los datos de la página web en vivo no están disponibles temporalmente.",
     "homepageDataUnexpected": "Los datos de la página web en vivo devolvieron un formato inesperado.",
-    "clubStatusError": "Usted ha iniciado sesión, pero no pudimos cargar su estado club. Por favor, refresque o vuelva a intentarlo.",
+    "clubStatusError": "Has iniciado sesión, pero no hemos podido cargar el estado de tu club. Actualiza la página o inténtalo de nuevo.",
     "clubCreationDisabled": "La creación de un nuevo club está temporalmente desactivada mientras ProPeloton Manager está todavía en desarrollo. Los mánagers existentes pueden continuar iniciando sesión."
   }
 }

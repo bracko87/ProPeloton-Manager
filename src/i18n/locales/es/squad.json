@@ -103,7 +103,7 @@
   },
   "healthReport": {
     "title": "Informe sobre la salud",
-    "subtitle": "Actual heridos, enfermos y recuperando los primeros ciclista de la escuadra",
+    "subtitle": "Estado actual de los ciclistas lesionados, enfermos y en recuperación de la plantilla",
     "none": "No hay problemas de salud en el escuadrón ahora mismo.",
     "lockedTitle": "Informe de Salud de la Escuadra",
     "lockedDescription": "Véase información sobre lesiones, enfermedades y recuperación en un informe consolidado."

@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Preparación de carrera",
-    "subtitle": "Las carreras aceptadas aparecen primero. Race Plan gestiona la Startlist completa de la carrera, viajes, personal, activos y costes. Stage Plans gestiona las tácticas etapa por etapa después de enviar Race Plan.",
+    "subtitle": "Las carreras aceptadas aparecen primero. Race Plan gestiona la Startlist completa de la carrera, los viajes, el personal, los activos y los costes. Stage Plans gestionan las tácticas etapa por etapa después de enviar Race Plan.",
     "loading": "Cargando preparación de la carrera...",
     "noAcceptedSelected": "No se ha seleccionado ninguna carrera aceptada.",
     "noAcceptedFound": "No se han encontrado carreras aceptadas para este club."
@@ -70,7 +70,7 @@
     "riderFreshnessHelp": "Ayuda de frescura del ciclista",
     "freshnessTitle": "Frescura, agudeza y fatiga",
     "sharpnessHelp": "Race Sharpness muestra si un ciclista tiene suficiente ritmo competitivo reciente. Un valor más alto ayuda a empezar la carrera mejor preparado y a rendir con mayor regularidad.",
-    "fatigueHelp": "La fatiga sigue siendo el principal limitador. Un ciclista con buen Race Sharpness pero una fatiga muy alta no comenzará la carrera completamente fresco.",
+    "fatigueHelp": "La fatiga sigue siendo el principal limitador. Un ciclista con buen Race Sharpness, pero con una fatiga muy alta, no comenzará la carrera completamente fresco.",
     "freshnessBarHelp": "La barra roja de frescura inicial combina fatiga y Race Sharpness. Está limitada entre 50 y 100 para que ningún ciclista seleccionado comience una carrera con un nivel irrealmente bajo.",
     "submittedRidersOnly": "Debido a que este Race Plan ya está enviado, sólo los ciclistas seleccionados para esta carrera se muestran aquí.",
     "selectedRequired": "ciclistas seleccionados: {{selected}} · Requerido: {{min}}–{{max}}",
@@ -96,7 +96,7 @@
     "tacticalPlannerHelp": "Elige la planificación manual del Director del Deporte o la planificación automática del entrenador principal U23. Ambos no pueden estar activos juntos.",
     "sportDirector": "Director de Deportes",
     "u23HeadCoach": "Entrenador principal U23",
-    "sportDirectorPlanHelp": "Usted administra Stage Plans manualmente y puede pedir sugerencias al Director de Deportes.",
+    "sportDirectorPlanHelp": "Gestionas Stage Plans manualmente y puedes pedir sugerencias al director deportivo.",
     "u23PlanHelp": "El entrenador prepara automáticamente Stage Plans. Los planes permanecen sólo con vistas hasta que vuelva a un director deportivo.",
     "noSportDirector": "No se ha seleccionado ningún director deportivo",
     "noU23HeadCoach": "No se ha seleccionado ningún entrenador de cabeza U23",
@@ -179,7 +179,7 @@
     "cancel": "Cancelar",
     "changeSquad": "Cambio de equipo",
     "submitTitle": "¿Enviar Race Plan ahora?",
-    "submitBody": "Si usted envía el Race Plan ahora, los ciclistas, el personal de carreras y los activos de la carrera se bloquearán para esta carrera. Stage Plans abrirá inmediatamente después de la presentación.",
+    "submitBody": "Si envías Race Plan ahora, los ciclistas, el personal y los activos de carrera quedarán bloqueados para esta carrera. Stage Plans se abrirá inmediatamente después del envío.",
     "warning": "Advertencia: este Race Plan no está completamente asignado.",
     "warningBody": "Si continúa, el Race Plan se enviará exactamente así y los ciclistas, personal o activos que falten permanecerán vacíos.",
     "submitAnyway": "Sí, enviar de todos modos",
@@ -187,7 +187,7 @@
     "changingToFragment": "Cambiar a",
     "changeSquadTail": "eliminará a los ciclistas actualmente seleccionados y restablecerá el planificador táctico. El personal de apoyo, los activos, los suministros y los ajustes de equipo permanecerán sin cambios.",
     "riderDeadlineIs": "El plazo de entrega es",
-    "submitTail": ". Si usted envía el Race Plan ahora, los ciclistas, el personal de carreras y los activos de la carrera se bloquearán para esta carrera. Stage Plans abrirá inmediatamente después de la presentación."
+    "submitTail": ". Si envías Race Plan ahora, los ciclistas, el personal y los activos de carrera quedarán bloqueados para esta carrera. Stage Plans se abrirá inmediatamente después del envío."
   },
   "errors": {
     "changeSquad": "No se pudo cambiar la competencia.",
@@ -200,8 +200,8 @@
     "blockedU23": "Este entrenador de cabeza U23 ya está asignado a una carrera de superposición presentada.",
     "blockedAsset": "Este activo ya está asignado a una carrera de superposición presentada.",
     "duplicateAsset": "Este activo ya está seleccionado en otra ranura Race Plan.",
-    "selectU23Save": "Selecciona un entrenador de cabeza U23 o cambie el planificador táctico de nuevo al Director de Deportes antes de guardar el Race Plan.",
-    "selectU23Submit": "Selecciona un entrenador de cabeza U23 o cambie el planificador táctico de nuevo al Director de Deportes antes de enviar el Race Plan.",
+    "selectU23Save": "Selecciona un entrenador principal U23 o vuelve a asignar la planificación táctica al director deportivo antes de guardar el Race Plan.",
+    "selectU23Submit": "Selecciona un entrenador principal U23 o vuelve a asignar la planificación táctica al director deportivo antes de enviar el Race Plan.",
     "selectRidersSubmit": "Selecciona los ciclistas {{min}}–{{max}} antes de enviar el Race Plan.",
     "selectU23BeforeSave": "Selecciona un entrenador de cabeza U23 antes de guardar este Race Plan del equipo en desarrollo."
   },
@@ -281,11 +281,11 @@
     "ttBalanced": "Paciente equilibrado",
     "ttFastStart": "Inicio rápido",
     "ttNegativeSplit": "Dividir negativo",
-    "ttAllOut": "contrarreloj completo",
+    "ttAllOut": "contrarreloj a tope",
     "ttBalancedDesc": "Incluso esfuerzo en toda la etapa. Seguro por defecto con bajo riesgo de explosión.",
-    "ttFastStartDesc": "Primero la mitad dura, luego mantener el ritmo. Bueno para prólogos cortos, riesgoso para los ciclistas TT más débiles.",
+    "ttFastStartDesc": "Primera mitad a máxima intensidad y después mantener el ritmo. Buena opción para prólogos cortos, pero arriesgada para los contrarrelojistas más débiles.",
     "ttNegativeSplitDesc": "Controlado la primera mitad, más fuerte la segunda mitad. Es bueno para ITTs más largos y ciclista con resistencia.",
-    "ttAllOutDesc": "Máxima velocidad desde el inicio. Opción más rápida pero alta fatiga y riesgo de explosión."
+    "ttAllOutDesc": "Máxima velocidad desde el inicio. Es la opción más rápida, pero provoca mucha fatiga y aumenta el riesgo de desfallecer."
   },
   "supplies": {
     "bidons": "Bidónes / Botellas de agua",

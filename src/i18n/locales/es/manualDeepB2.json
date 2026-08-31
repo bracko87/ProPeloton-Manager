@@ -220,7 +220,7 @@
       ],
       "details": [
         "El impuesto previsto se calcula a partir de la renta bruta imponible y el tipo impositivo.",
-        "Ya retenido es impuesto ya tomado.",
+        "Ya retenido indica el impuesto que ya se ha descontado.",
         "El importe de ajuste es lo que debe ser cargado o reembolsado.",
         "La auditoría mensual compara los impuestos esperados con los pagados.",
         "Los impuestos pueden volverse peligrosos después de grandes eventos de ingresos."
@@ -309,7 +309,7 @@
         "El club liquidado ya no puede realizar acciones.",
         "El usuario puede crear un nuevo club en un lugar gratis disponible.",
         "Actualmente, el equipo de reinicio solo explica el comportamiento futuro de reinicio.",
-        "El reinicio futuro liberaría a los antiguos ciclista, eliminaría el personal y restablecería los puntos/progresos.",
+        "Un reinicio posterior liberaría a los antiguos ciclistas, eliminaría el personal y restablecería los puntos y el progreso.",
         "Se puede mostrar la razón de la liquidación y la marca de tiempo."
       ],
       "tips": [

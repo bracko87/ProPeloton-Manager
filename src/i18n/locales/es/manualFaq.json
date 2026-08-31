@@ -17,7 +17,7 @@
       ]
     },
     "acceptedNotReady": {
-      "title": "FAQ: ¿Por qué soy aceptado pero no estoy listo?",
+      "title": "FAQ: ¿Por qué estoy aceptado, pero todavía no estoy listo?",
       "subtitle": "La entrada aceptada no es un Race Plan completo.",
       "overview": "Aceptado significa que tu equipo tiene plaza; listo significa que ciclistas, personal, activos, equipamiento, suministros y Stage Plans pueden utilizarse correctamente.",
       "details": [
@@ -75,7 +75,7 @@
         "El equipo especializado puede tener compensaciones negativas."
       ],
       "tips": [
-        "Usa la configuración correcta para el etapa correcto."
+        "Usa la configuración adecuada para cada etapa."
       ]
     },
     "staffHiring": {

@@ -57,7 +57,7 @@
     "deliveryStatus": "Entrega",
     "details": "Detalles",
     "allClear": "Todo despejado.",
-    "currentCoinBalance": "Saldo actual de las Coins:",
+    "currentCoinBalance": "Saldo actual de Coins:",
     "noValue": "N/A",
     "none": "Ninguno",
     "gameDay": "{{count}} día de juego",
@@ -70,7 +70,7 @@
     "active": "activo",
     "open": "abierto",
     "jobsInProgress": "{{count}} trabajos de infraestructura en curso",
-    "jobInProgress": "{{count}} trabajo de infraestructura en curso",
+    "jobInProgress": "Trabajos de infraestructura en curso: {{count}}",
     "gameDuration": "Duración del juego:",
     "paid": "Pagada:",
     "realTimeRemaining": "Remanente en tiempo real:",
@@ -101,8 +101,8 @@
     "upgradingTo": "Mejorando a nivel {{level}}",
     "impactLevel": "El nivel {{level}} {{kind}} contribuye a la infraestructura de todo el club.",
     "staffCapacityImpact": "Capacidad del personal y escala de efectos con este nivel de instalación.",
-    "coachingImpact": "Los efectos de formación y desarrollo de los entrenadores jefes se aplican en base a esta instalación.",
-    "medicalImpact": "Los efectos de recuperación médica y protección de lesiones se aplican en base a esta instalación.",
+    "coachingImpact": "Los efectos de entrenamiento y desarrollo de los entrenadores principales dependen del nivel de esta instalación.",
+    "medicalImpact": "Los efectos de recuperación médica y prevención de lesiones dependen del nivel de esta instalación.",
     "upgradeStarted": "{{name}} upgrade/build comenzó.",
     "jobCancelled": "Trabajos de infraestructura cancelados y reembolsos procesados."
   },
@@ -141,7 +141,7 @@
     "teamCar": "Coche de equipo",
     "teamCarFleet": "Flota de coches de equipo",
     "teamBus": "Autobús del equipo",
-    "teamBusGarage": "Equipo de autobús Garaje",
+    "teamBusGarage": "Garaje de autobuses del equipo",
     "equipmentVan": "Van de equipo",
     "equipmentVans": "Vans de equipo",
     "equipmentVanGarage": "Equipo Van Garaje",
@@ -151,10 +151,10 @@
     "medicalVan": "Van médica",
     "medicalVans": "Vans médicas",
     "medicalVanGarage": "Garaje para furgonetas médicas",
-    "teamCarDescription": "Team Cars proporciona soporte para carreras, comunicación táctica, cobertura de alimentación y reducción de fatiga en los días de carrera.Gestione el garaje por ranura, comience nuevas entregas, repare coches usados o venda coches disponibles.",
-    "teamBusDescription": "Team Buses mejora la comodidad de viaje del ciclista, la recuperación, el control de fatiga y la logística de la carrera.Gestione el garaje por ranura, comience nuevas entregas, repare autobuses usados o venda los autobuses disponibles.",
+    "teamCarDescription": "Los coches del equipo aportan apoyo en carrera, comunicación táctica, cobertura de avituallamiento y reducción de la fatiga en los días de competición. Gestiona el garaje por plazas: encarga nuevas unidades, repara coches usados o vende los que estén disponibles.",
+    "teamBusDescription": "Los autobuses del equipo mejoran la comodidad de viaje de los ciclistas, la recuperación, el control de la fatiga y la logística de carrera. Gestiona el garaje por plazas: encarga nuevas unidades, repara autobuses usados o vende los que estén disponibles.",
     "equipmentVanDescription": "Equipamiento Vans soporte transporte de bicicletas, cobertura de repuestos, logística de equipos de carreras y preparación para eventos más amplia. Administrar el garaje por ranura, iniciar nuevas entregas, reparar furgonetas desgastadas, o vender furgonetas disponibles.",
-    "mobileWorkshopDescription": "Los talleres móviles admiten reparaciones técnicas in situ, respuesta de problemas más rápida, cobertura mecánica y capacidad de servicio de equipo.Gestione el garaje por ranura, comience nuevas entregas, repare talleres desgastados o venda talleres disponibles.",
+    "mobileWorkshopDescription": "Los talleres móviles permiten realizar reparaciones técnicas in situ, responder más rápido a los problemas y mejorar la cobertura mecánica y la capacidad de mantenimiento del equipamiento. Gestiona el garaje por plazas: encarga nuevas unidades, repara talleres desgastados o vende los que estén disponibles.",
     "medicalVanDescription": "Vans médicas apoyan la respuesta de salud de la carrera-día, acceso al tratamiento del ciclista, control de lesiones, y cobertura médica.",
     "acquireTeamCar": "Orden del coche del equipo",
     "acquireTeamBus": "Orden del autobús del equipo",
@@ -248,7 +248,7 @@
     "renameFailed": "No se pudo renombrar {{asset}}."
   },
   "assetModal": {
-    "closeAria": "Activos cerrados modal",
+    "closeAria": "Cerrar modal de activos",
     "repairAsset": "Reparación de activos",
     "sellAsset": "Venta de activos",
     "levelAsset": "Nivel {{level}} · {{asset}}",
@@ -421,7 +421,7 @@
         "effect": "Las reparaciones futuras del equipo se hacen más rápidas una vez que el sistema de equipos aplica este efecto."
       },
       "level3": {
-        "unlock": "Desbloquea la cuarta ranura mecánica más 20% más rápido y 20% más barato reparación de equipos.",
+        "unlock": "Desbloquea la cuarta plaza de mecánico y permite reparar el equipamiento un 20% más rápido y con un 20% menos de coste.",
         "effect": "Las reparaciones futuras del equipo se vuelven más rápidas y baratas."
       },
       "level4": {
@@ -454,7 +454,7 @@
     "scouting_office": {
       "level1": {
         "unlock": "Configuración básica de exploración más desbloquea la segunda ranura Scout / Analista.",
-        "effect": "Mantiene la tapa de calidad de informe básica pero mejora la capacidad de exploración."
+        "effect": "Mantiene el límite básico de calidad de los informes, pero mejora la capacidad de scouting."
       },
       "level2": {
         "unlock": "Desbloquea la tercera ranura Scout / Analista más la calidad del informe sólido.",

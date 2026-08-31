@@ -215,7 +215,7 @@
       "details": [
         "La descripción general de la carrera incluye fechas, país, categoría, tipo de carrera y estado.",
         "Las reglas de entrada muestran plazos, límites de equipo, límites de ciclista y fondo de premios.",
-        "Los etapas muestran ruta, terreno, distancia, clima, sprints y subidas.",
+        "Las etapas muestran ruta, terreno, distancia, clima, sprints y ascensiones.",
         "Los participantes muestran instantáneas del equipo y del ciclista.",
         "Los resultados y clasificaciones están disponibles según el estado de la carrera.",
         "La reproducción puede mostrar marcos en vivo o históricos si el acceso lo permite."
@@ -296,11 +296,11 @@
         "Roles, tácticas de equipo, tácticas individuales, equipo, suministros"
       ],
       "details": [
-        "Un etapa de sprint plano necesita diferentes roles que un etapa de montaña.",
+        "Una etapa llana para sprinters necesita roles distintos a una etapa de montaña.",
         "Las etapas TT y TTT necesitan de estimulación y equipo especializado.",
         "Los suministros se asignan por etapa y pueden consumirse o utilizar capacidad duradera.",
         "Los controles de preparación indican si un Stage Plan es utilizable.",
-        "Los planes guardados pero vacíos no son lo mismo que los planes completos."
+        "Los planes guardados, pero vacíos, no son lo mismo que los planes completos."
       ],
       "tips": [
         "Revisa cada etapa de una carrera."
@@ -315,7 +315,7 @@
         "Líder, velocista, lead-out, tren de sprint, escalador, montaña domostique, ayudante, fuga, perseguidor, rouleur, protegido, gratis"
       ],
       "details": [
-        "El líder del equipo/GC es para ciclista protegidos durante el tiempo total.",
+        "El líder del equipo o de GC debe ser un ciclista protegido para la clasificación general.",
         "Sprinter necesita habilidad de sprint y soporte de lead-out.",
         "El tren de salida/de impresión ayuda al velocista en acabados planos.",
         "Climber/Montaña Domestique es para el control de montaña.",

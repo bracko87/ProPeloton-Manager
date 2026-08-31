@@ -52,7 +52,7 @@
     },
     "sportDirector": {
       "label": "Director de Deportes",
-      "subtitle": "Tácticas de carrera planificadas, moral, trabajo en equipo y apoyo domestico."
+      "subtitle": "Tácticas de carrera planificadas, moral, trabajo en equipo y apoyo de gregarios."
     },
     "scoutAnalyst": {
       "label": "Scout / Analista",
@@ -88,7 +88,7 @@
     "transferIntelligence": "Transferencia de información",
     "u23Training": "Entrenamiento U23",
     "youthDevelopment": "Desarrollo de la juventud",
-    "u23RaceTactics": "U23 tácticas de carrera"
+    "u23RaceTactics": "Tácticas de carrera U23"
   },
   "common": {
     "close": "Cerrar",
@@ -214,7 +214,7 @@
   "release": {
     "title": "Personal de liberación",
     "subtitle": "Confirma esta decisión del personal antes de continuar.",
-    "aboutToRelease": "Usted está a punto de liberar {{name}}",
+    "aboutToRelease": "Estás a punto de liberar a {{name}}",
     "role": "Rol: {{role}}",
     "weeklyWage": "Salario semanal: {{value}}",
     "age": "Edad: {{value}}",
@@ -437,7 +437,7 @@
     },
     "u23_race_readiness_course": {
       "title": "Curso de preparación para carreras U23",
-      "description": "Prepara a jóvenes ciclista para la estructura de la jornada de carreras, disciplina y desarrollo táctico.",
+      "description": "Prepara a jóvenes ciclistas para la estructura del día de carrera, la disciplina y el desarrollo táctico.",
       "focus": "Formación de jóvenes + liderazgo"
     },
     "scout_evaluation": {
