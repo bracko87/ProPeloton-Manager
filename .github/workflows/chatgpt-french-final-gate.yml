@@ -1,0 +1,47 @@
+name: French final quality gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/i18n/locales/fr/**'
+      - 'src/i18n/index.ts'
+      - 'src/i18n/languages.ts'
+      - 'src/components/i18n/LanguageSelector.tsx'
+      - 'src/components/i18n/LocaleDateFormattingBridge.tsx'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  french-final:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: French semantic and structural audit
+        shell: bash
+        run: python .github/scripts/audit_french_completion_20260831.py | tee /tmp/french-final.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Upload French final report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: french-final-quality-audit
+          path: /tmp/french-final.txt
+          retention-days: 3
+          if-no-files-found: warn
