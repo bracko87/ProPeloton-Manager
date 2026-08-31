@@ -1,0 +1,61 @@
+name: Finalize French zero blockers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-finalize-french-quality-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  french-zero:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply French final corrections
+        run: python .github/scripts/finalize_french_quality_v2_20260831.py
+
+      - name: Zero-blocker French audit
+        shell: bash
+        run: python .github/scripts/audit_french_completion_20260831.py | tee /tmp/french-zero.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit French completion
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/fr
+          if git diff --cached --quiet; then
+            echo 'No French locale changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Complete French language quality pass'
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Upload French zero-blocker report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: french-zero-blocker-audit
+          path: /tmp/french-zero.txt
+          retention-days: 3
+          if-no-files-found: warn
