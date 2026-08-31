@@ -6,6 +6,11 @@ import torch
 
 import add_russian_localization_20260831 as base
 
+# Company names are user-visible proper names and must remain unchanged in every locale.
+# Add this at the protected-safe wrapper layer so the translation model never sees it.
+if 'Next Quest Studio' not in base.PROTECTED_PHRASES:
+    base.PROTECTED_PHRASES.append('Next Quest Studio')
+
 
 def _overlaps(start: int, end: int, spans: list[tuple[int, int, str]]) -> bool:
     return any(start < old_end and end > old_start for old_start, old_end, _ in spans)
