@@ -1,0 +1,58 @@
+{
+  "page": {
+    "back": "← Indietro",
+    "title": "Panoramica di scouting",
+    "subtitle": "Tutti i rapporti di scout completati in un unico posto. Filtra per stato e salta direttamente al profilo del ciclista.",
+    "loading": "Caricamento dei rapporti di scout...",
+    "empty": "Nessun rapporto di esploratore corrisponde a questo filtro.",
+    "loadFailed": "Caricamento dei rapporti di scout non riuscito.",
+    "reviewFailed": "Segnalazione non riuscita come revisionata."
+  },
+  "filters": {
+    "all": "Tutti",
+    "new": "Nuovo",
+    "reviewed": "Revisione"
+  },
+  "report": {
+    "unknownRider": "Rider sconosciuto",
+    "scout": "Scout",
+    "scoutName": "Scout: {{name}}",
+    "completed": "Completato: {{date}}",
+    "overall": "Totale",
+    "potential": "Potenziale",
+    "keyStrengths": "Punti di forza principali",
+    "more": "(+più)",
+    "notes": "Note:",
+    "openProfile": "Profilo del ciclista aperto"
+  },
+  "potential": {
+    "veryLow": "Molto bassa",
+    "low": "Bassa",
+    "medium": "Media",
+    "high": "Alto",
+    "elite": "Elite"
+  },
+  "skills": {
+    "sprint": "Sprint",
+    "climbing": "Arrampicata",
+    "timeTrial": "Prova a tempo determinato",
+    "endurance": "Endurance",
+    "flat": "Piano",
+    "recovery": "Recupero",
+    "resistance": "Resistenza",
+    "raceIq": "QI gara",
+    "teamwork": "Lavoro di squadra",
+    "morale": "Morale"
+  },
+  "table": {
+    "riderScout": "& Scout del ciclista",
+    "overallPotential": "Totale / Potenziale",
+    "strengthsNotes": "Punti di forza e note chiave",
+    "action": "Azione"
+  },
+  "pagination": {
+    "previous": "Precedente",
+    "next": "Successivo",
+    "page": "Pagina {{page}} di {{total}}"
+  }
+}

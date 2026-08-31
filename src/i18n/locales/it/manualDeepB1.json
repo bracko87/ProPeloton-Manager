@@ -1,0 +1,370 @@
+{
+  "sections": {
+    "equipmentCategoryDeep": {
+      "title": "Categorie di attrezzature e Bonus",
+      "subtitle": "Le sei categorie di attrezzature durevoli.",
+      "overview": "Le attrezzature durevoli comprendono telai, sale montate, pneumatici, gruppi, caschi e scarpe.",
+      "facts": [
+        "Categorie",
+        "Telaio, ruote, pneumatici, gruppi, casco, scarpe",
+        "Bonus",
+        "Piatto, collinare, montano, ciottolo, cronometro, sprint, riduzione della fatica"
+      ],
+      "details": [
+        "Spesso i quadri definiscono l'identità di configurazione generale.",
+        "Ruote e pneumatici sono molto sensibili alla rotta.",
+        "Gruppi, caschi e scarpe possono aggiungere importanti bonus di supporto.",
+        "Gli articoli specialisti possono includere compromessi negativi.",
+        "Le etichette di qualità includono Basic, Good e Super."
+      ],
+      "tips": [
+        "Abbinamento attrezzatura al tipo di stadio."
+      ]
+    },
+    "equipmentCapsDeep": {
+      "title": "Pesi e tappi dell'attrezzatura",
+      "subtitle": "Perché i bonus delle attrezzature sono controllati.",
+      "overview": "Le attrezzature aiutano, ma i bonus limitati proteggono la capacità del ciclista e l'equilibrio di gioco.",
+      "facts": [
+        "Berretti noti",
+        "Stadio dell'attrezzatura intorno al 4%, supporto del team circa il 5%, supporto totale circa l'8%, riduzione della fatica circa il 10%"
+      ],
+      "details": [
+        "Un set completo di +4% di articoli non diventa +24%.",
+        "I bonus sono ponderati per categoria di apparecchiature.",
+        "I bonus di supporto hanno dei tappi.",
+        "Anche la riduzione dell'affaticamento ha un tappo.",
+        "L'attrezzatura specialistica è ancora preziosa nelle gare ravvicinate."
+      ],
+      "tips": [
+        "Usare attrezzi per supportare la strategia, non sostituire la qualità del ciclista."
+      ]
+    },
+    "equipmentInventoryDeep": {
+      "title": "Inventario e manutenzione",
+      "subtitle": "Condizioni, status e decisioni di riparazione.",
+      "overview": "L'inventario mostra attrezzature e manutenzione di proprietà attiva si concentra su oggetti che richiedono attenzione.",
+      "facts": [
+        "Status",
+        "Pronto, assegnato, in manutenzione, consumato",
+        "Soglia di mantenimento",
+        "Condizioni <= 90%"
+      ],
+      "details": [
+        "Gli oggetti venduti e scartati sono nascosti dall'inventario attivo.",
+        "Gli oggetti pronti e usurati possono di solito eseguire azioni se le regole lo consentono.",
+        "Gli elementi assegnati sono bloccati perché in uso.",
+        "Le citazioni di riparazione mostrano costo e permesso.",
+        "Le condizioni devono essere fissate prima di gare importanti."
+      ],
+      "tips": [
+        "Riparare presto; non aspettare che tutto l'attrezzatura sia indossato."
+      ]
+    },
+    "raceSuppliesDeep": {
+      "title": "Dettagli del rifornimento di gara",
+      "subtitle": "Bidon, gel, nutrizione, magliette e giacche antipioggia.",
+      "overview": "I rifornimenti di gara sono consumati o utilizzati durante i piani di fase e possono influenzare la fatica, la resistenza, la prontezza e il supporto meteo.",
+      "facts": [
+        "Consumabili",
+        "Bidon, gel energetici, confezioni nutritive",
+        "Durevoli",
+        "Race Jersey Completo, giacche antipioggia"
+      ],
+      "details": [
+        "Bidon: 1 040/44 per ciclista; controllo dell'idratazione e della fatica.",
+        "Gel: 0,036-4 per ciclista; resistenza e supporto finale allo sforzo.",
+        "Nutrizione: 0,0122 per ciclista; supporto di resistenza e recupero.",
+        "Maglia da gara: kit resistente obbligatorio; 10 stage per unità.",
+        "Giacche antipioggia: elemento tempo durevole opzionale; 25 usi scenici per unità."
+      ],
+      "tips": [
+        "Le gare di palco consumano rapidamente le forniture."
+      ]
+    },
+    "technicalSponsorDeep": {
+      "title": "Supporto sponsor tecnico nelle attrezzature",
+      "subtitle": "Sconti e bilanci di sostegno.",
+      "overview": "Gli sponsor tecnici possono ridurre i costi delle attrezzature e fornire bilanci di supporto alle attrezzature.",
+      "facts": [
+        "Prestazioni",
+        "Sostegno in contanti, sostegno al bilancio delle attrezzature, budget utilizzato/rimanente, sconti per categoria"
+      ],
+      "details": [
+        "La panoramica delle attrezzature può mostrare il supporto attivo dello sponsor tecnico.",
+        "Gli acquisti di mercato possono citare sconti di categoria.",
+        "Il budget rimanente aiuta a pianificare i tempi di acquisto.",
+        "Gli sconti possono differire per categoria.",
+        "Gli sponsor tecnici sono particolarmente utili prima di importanti aggiornamenti di marcia."
+      ],
+      "tips": [
+        "Acquistare attrezzi costosi mentre il supporto utile è attivo."
+      ]
+    },
+    "facilitiesOverviewDeep": {
+      "title": "Panoramica delle strutture",
+      "subtitle": "Edifici e capacità del personale.",
+      "overview": "Le strutture migliorano la formazione, la medicina, lo scouting, la meccanica, i sistemi di amministrazione giovanile e dei club.",
+      "facts": [
+        "Strutture",
+        "Club House, Centro di formazione, Centro medico, Accademia Giovanile, Laboratorio di Meccanica, Ufficio di Scouting"
+      ],
+      "details": [
+        "Club House sostiene l'amministrazione e la gestione futura.",
+        "Centro di formazione sostiene l'allenamento e lo sviluppo.",
+        "Medical Center supporta medici, fisioterapista, nutrizionisti e recupero.",
+        "Youth Academy supporta lo sviluppo di U23/youth.",
+        "Meccanica Workshop supporta attrezzature / riparazioni.",
+        "Scouting Office supporta i rapporti di scouting e le informazioni di mercato."
+      ],
+      "tips": [
+        "Scegli gli aggiornamenti in base al tuo collo di bottiglia attuale."
+      ]
+    },
+    "facilityJobsDeep": {
+      "title": "Lavori infrastrutturali",
+      "subtitle": "Costruisce, consegna, slot e rimborsi.",
+      "overview": "I lavori infrastrutturali sono in attesa di aggiornamenti o consegne di beni con il costo del denaro e durata del gioco.",
+      "facts": [
+        "Tipi di lavoro",
+        "Miglioramento della struttura, consegna delle attività",
+        "Status",
+        "In attesa, completata, annullata, non riuscita"
+      ],
+      "details": [
+        "I lavori attivi mostrano costo pagato, durata del gioco e data di completamento.",
+        "Facility costruzione slot limitare quanti build possono accadere in una sola volta.",
+        "Le citazioni di cancellazione mostrano il rimborso in contanti, percentuale di rimborso, costo di cancellazione e ragione.",
+        "Cancellazione immediata può rimborsare più di cancellazione tardiva.",
+        "I lavori completati aggiornano le strutture o forniscono le risorse."
+      ],
+      "tips": [
+        "Non iniziare troppi lavori costosi durante la pressione di cassa."
+      ]
+    },
+    "assetsDeep": {
+      "title": "Panoramica delle attività",
+      "subtitle": "Auto di squadra, autobus e furgoni di supporto.",
+      "overview": "I beni sono veicoli/risorse di supporto con livelli, condizioni, stato di assegnazione e valori di supporto.",
+      "facts": [
+        "Attivo",
+        "Auto di squadra, Autobus di squadra, Attrezzatura Van, Officina mobile, Van medico"
+      ],
+      "details": [
+        "Team Cars supporta convoglio di gara e può essere selezionato come Team Car 1 0403.",
+        "Team Bus trasporta cavalieri e personale.",
+        "Attrezzatura Van porta biciclette e attrezzi.",
+        "Mobile Workshop supporta le riparazioni e le operazioni tecniche.",
+        "Il furgone medico supporta le esigenze medico-logistiche.",
+        "Le attività assegnate o bloccate non possono essere riparate o vendute."
+      ],
+      "tips": [
+        "Mantenere importanti beni riparati prima delle gare."
+      ]
+    },
+    "seasonCalendarDeep": {
+      "title": "Dettagli calendario stagione",
+      "subtitle": "Pianificazione quotidiana delle attività del team.",
+      "overview": "Calendario della stagione mostra il club di attività quotidiana e la stagione più ampia.",
+      "facts": [
+        "Filtri",
+        "Razze, Campi di formazione, Eventi, Vacanze",
+        "Durata del mese di gioco",
+        "30 giorni nella griglia attuale dell'interfaccia utente"
+      ],
+      "details": [
+        "Usalo per vedere giorni di gara, campi ed eventi.",
+        "I filtri riducono l'ingombro.",
+        "Calendario aiuta a evitare overbooking cavalieri e personale.",
+        "Le date del campo di addestramento dovrebbero essere controllate qui.",
+        "Importanti mesi di gara possono essere pianificati in anticipo."
+      ],
+      "tips": [
+        "Usa il calendario della stagione prima di prenotare i campi."
+      ]
+    },
+    "raceCalendarDeep": {
+      "title": "Dettagli calendario corsa",
+      "subtitle": "Carte da corsa e stati delle applicazioni.",
+      "overview": "Calendario delle corse elenca tutte le gare e il loro stato di applicazione.",
+      "facts": [
+        "Valori di stato",
+        "not_open, aperto, chiuso, race_active, race_finished, annullato"
+      ],
+      "details": [
+        "Le carte di gara possono mostrare categoria, paese, città ospitante, tipo, data di inizio/fine e limiti di squadra.",
+        "Le applicazioni sono possibili solo quando lo stato è aperto.",
+        "Le squadre accettate contano mostra quanto sia piena la gara.",
+        "Gli obiettivi dello sponsor possono essere mirati a specifiche gare o categorie.",
+        "Apri Gara invia gli utenti alla pagina Dettaglio gara."
+      ],
+      "tips": [
+        "Applicare solo quando la gara si adatta alla tua squadra."
+      ]
+    },
+    "raceDetailDeep": {
+      "title": "Pagina dettagliata della corsa",
+      "subtitle": "Profilo di gara, fasi, partecipanti, risultati e ripetizioni.",
+      "overview": "Dettaglio gara è il centro completo gara.",
+      "facts": [
+        "Schede informazioni",
+        "Partecipanti, Risultati",
+        "Classificazioni",
+        "Generale, punti, montagna, giovane, squadra"
+      ],
+      "details": [
+        "La panoramica della gara include date, paese, categoria, tipo e stato di gara.",
+        "Le regole di ingresso mostrano scadenze, limiti di squadra, limiti di ciclista e fondo premio.",
+        "Le tappe mostrano percorso, terreno, distanza, tempo, sprint e salite.",
+        "Partecipanti mostrano team e rider snapshot.",
+        "Risultati e classificazioni diventano disponibili secondo lo stato di razza.",
+        "Il replay può mostrare fotogrammi dal vivo o storici se l'accesso permette."
+      ],
+      "tips": [
+        "Rivedere i dettagli della gara prima di preparare una squadra."
+      ]
+    },
+    "stageTerrainPoints": {
+      "title": "Terreno e punti di fase",
+      "subtitle": "Piatto, collinare, montano, TT, acciottolato, sprint e KOM.",
+      "overview": "Le definizioni di palcoscenico e punto aiutano gli utenti a decidere i ciclisti, le tattiche e le attrezzature.",
+      "facts": [
+        "Terreno",
+        "Piatto, collinare, montagna, prova individuale, prova di gruppo, prova di gruppo, prologo, ciottolato",
+        "Tipi di punti",
+        "START, INTERMISTERMIATE_SPRINT, KOM, BONUS_SPRINT, FINISH"
+      ],
+      "details": [
+        "Le fasi piatte spesso favoriscono velocisti e lead-out.",
+        "Hilly palcoscenici favoriscono ciclisti versatili e attaccanti.",
+        "Le tappe di montagna favoriscono gli scalatori e i leader GC.",
+        "Le fasi TT/prologo favoriscono i tempisti e le apparecchiature TT.",
+        "Le fasi acciottolate favoriscono la resistenza e le attrezzature specialistiche.",
+        "KOM e punti di sprint contano per classificazioni secondarie."
+      ],
+      "tips": [
+        "Il terreno di palco dovrebbe guidare i ruoli Stage Plan."
+      ]
+    },
+    "replayResultsDeep": {
+      "title": "Replay, risultati e commenti",
+      "subtitle": "Come capire cosa è successo in un palcoscenico.",
+      "overview": "Replay e commento spiegano le dinamiche di gara oltre la tabella dei risultati finali.",
+      "facts": [
+        "Velocità di riproduzione",
+        "1x, 2x, 4x, 8x",
+        "Limite quadro",
+        "Fino a 50000 righe caricate nel codice corrente"
+      ],
+      "details": [
+        "I fotogrammi replay mostrano gruppi, lacune, ciclisti, squadre, velocità e chilometro marcatori.",
+        "Live state controlla se i risultati sono visibili e se la velocità di riproduzione è bloccata.",
+        "Le righe in piedi possono mostrare i distintivi del leader e la posizione di gruppo.",
+        "Commento/relazione degli eventi descrive attacchi, sprint, salite, incidenti e momenti decisivi.",
+        "I risultati mostrano rango di stadio, tempo, gap, punti, bonus/penalità secondi e stato."
+      ],
+      "tips": [
+        "Usare replay per diagnosticare tattiche e prestazioni del ciclista."
+      ]
+    },
+    "racePlanDeep": {
+      "title": "Dettagli Race Plan",
+      "subtitle": "Cavalieri, personale, beni, attrezzature e forniture.",
+      "overview": "Race Plan è il piano di gara presentato prima di Stage Plans.",
+      "facts": [
+        "Parti principali",
+        "Cavalieri, personale, asset, installazione di attrezzature, forniture e preventivi"
+      ],
+      "details": [
+        "I ciclisti devono corrispondere alle regole di gara min/max.",
+        "I ciclisti bloccati non possono essere selezionati per eventi sovrapposti.",
+        "Il personale e le attività possono essere bloccati anche da incarichi.",
+        "L'allestimento dell'attrezzatura dovrebbe corrispondere al terreno di gara.",
+        "Le forniture dovrebbero essere sufficienti per tutte le fasi.",
+        "L'anteprima delle citazioni deve essere controllata prima di inviare."
+      ],
+      "tips": [
+        "Non presentare mai un piano senza leggere i costi e le risorse bloccate."
+      ]
+    },
+    "stagePlanDeep": {
+      "title": "Dettagli Stage Plan",
+      "subtitle": "Per-stage ruoli e tattiche.",
+      "overview": "Stage Plans dire al motore di gara che cosa ogni ciclista dovrebbe fare su ogni fase.",
+      "facts": [
+        "Componenti",
+        "Ruoli, tattiche di squadra, tattiche individuali, attrezzature, forniture"
+      ],
+      "details": [
+        "Una fase di sprint piatta ha bisogno di ruoli diversi da una fase di montagna.",
+        "Gli stadi TT e TTT necessitano di attrezzature specialistiche e di pacing.",
+        "Le forniture sono assegnate per fase e possono essere consumate o utilizzare capacità durevole.",
+        "I controlli di prontezza indicano se un piano di fase è utilizzabile.",
+        "I piani salvati ma vuoti non sono gli stessi dei piani completi."
+      ],
+      "tips": [
+        "Controllate ogni tappa di una gara."
+      ]
+    },
+    "stageRolesDeep": {
+      "title": "Ruoli di fase e casi di utilizzo",
+      "subtitle": "Scegliere leader, velocisti, aiutanti e specialisti.",
+      "overview": "I ruoli di palco dovrebbero abbinare le abilità del ciclista e gli obiettivi di palco.",
+      "facts": [
+        "Ruoli",
+        "Leader, sprint, lead-out, sprint train, climber, mountain domestique, helper, breakaway, chaser, rouleur, protected, free"
+      ],
+      "details": [
+        "Team Leader/GC è per i ciclisti protetti per il tempo complessivo.",
+        "Sprinter ha bisogno di abilità di sprint e supporto di lead-out.",
+        "Lead-out/Sprint Train aiuta lo sprint in finiture piatte.",
+        "Climber / Mountain Domestique è per il controllo della montagna.",
+        "I ruoli di rottura sono rischiosi ma possono inseguire le vittorie o la visibilità.",
+        "I rouleurs e gli helpers supportano la caccia, il pacing e la protezione."
+      ],
+      "tips": [
+        "Non fare di ogni ciclista un leader."
+      ]
+    },
+    "stageReadinessDeep": {
+      "title": "Sistema di prontezza delle fasi",
+      "subtitle": "Verifiche del piano verde/giallo/arancio/rosso/grigio.",
+      "overview": "La prontezza dice agli utenti se i piani di fase sono sufficientemente completi per il motore.",
+      "facts": [
+        "Conti",
+        "Salvato, utilizzabile, mancante, incompleto, vuoto, senza provviste",
+        "Toni",
+        "Verde, giallo, arancio, rosso, grigio"
+      ],
+      "details": [
+        "Dovrebbero essere creati piani mancanti.",
+        "I piani vuoti dovrebbero essere riempiti con ruoli/tattiche/supplies.",
+        "I piani senza forniture possono essere rischiosi o incompleti.",
+        "Azione consigliata spiega cosa risolvere.",
+        "Tutti i piani necessari devono essere salvati prima del giorno della gara."
+      ],
+      "tips": [
+        "Fissare la disponibilità rossa/arancio prima della scadenza."
+      ]
+    },
+    "sportDirectorDeep": {
+      "title": "Suggerimenti per il direttore sportivo",
+      "subtitle": "Suggerimenti per i piani di scena.",
+      "overview": "I suggerimenti del Direttore dello Sport possono aiutare i manager a costruire i piani ma non dovrebbero sostituire il giudizio.",
+      "facts": [
+        "Zone di suggerimento",
+        "Attrezzature, team, individuali, forniture"
+      ],
+      "details": [
+        "La risposta al suggerimento può includere tipo di stadio, nome dello stadio, dati di suggerimento e spiegazione.",
+        "Le proposte possono essere limitate dalla qualità del personale o dalla logica del backend.",
+        "Gli utenti dovrebbero confrontare suggerimenti con le abilità del ciclista e gli obiettivi del team.",
+        "Il tempo e le forniture devono essere controllati manualmente.",
+        "I buoni manager regolano i suggerimenti invece di applicare ciecamente."
+      ],
+      "tips": [
+        "Usare suggerimenti come strumento di apprendimento."
+      ]
+    }
+  }
+}

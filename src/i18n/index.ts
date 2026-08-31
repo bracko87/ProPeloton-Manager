@@ -199,6 +199,37 @@ import itHome from './locales/it/home.json'
 import itNavigation from './locales/it/navigation.json'
 import itProfile from './locales/it/profile.json'
 
+import itAppShell from './locales/it/appShell.json'
+import itCalendar from './locales/it/calendar.json'
+import itCalendarPage from './locales/it/calendarPage.json'
+import itClub from './locales/it/club.json'
+import itCustomizeTeam from './locales/it/customizeTeam.json'
+import itDevelopingTeam from './locales/it/developingTeam.json'
+import itEquipment from './locales/it/equipment.json'
+import itFinance from './locales/it/finance.json'
+import itHelp from './locales/it/help.json'
+import itManual from './locales/it/manual.json'
+import itInfrastructure from './locales/it/infrastructure.json'
+import itNotifications from './locales/it/notifications.json'
+import itOverview from './locales/it/overview.json'
+import itPreferences from './locales/it/preferences.json'
+import itPreferencesDynamic from './locales/it/preferencesDynamic.json'
+import itProPackages from './locales/it/proPackages.json'
+import itPublicInfo from './locales/it/publicInfo.json'
+import itRaceDetail from './locales/it/raceDetail.json'
+import itRacePreparation from './locales/it/racePreparation.json'
+import itRiderProfile from './locales/it/riderProfile.json'
+import itScouting from './locales/it/scouting.json'
+import itSeasonReset from './locales/it/seasonReset.json'
+import itSharedRiderModal from './locales/it/sharedRiderModal.json'
+import itSquad from './locales/it/squad.json'
+import itStaff from './locales/it/staff.json'
+import itStatistics from './locales/it/statistics.json'
+import itTeamRanking from './locales/it/teamRanking.json'
+import itTraining from './locales/it/training.json'
+import itTransfers from './locales/it/transfers.json'
+import itTutorials from './locales/it/tutorials.json'
+
 import {
   DEFAULT_LANGUAGE,
   getLanguageDefinition,
@@ -406,12 +437,42 @@ const resources = {
   },
   it: {
     accountPages: itAccountPages,
+    appShell: itAppShell,
     auth: itAuth,
+    calendar: itCalendar,
+    calendarPage: itCalendarPage,
+    club: itClub,
     common: itCommon,
     createClub: itCreateClub,
+    customizeTeam: itCustomizeTeam,
+    developingTeam: itDevelopingTeam,
+    equipment: itEquipment,
+    finance: itFinance,
+    help: itHelp,
+    manual: itManual,
     home: itHome,
+    infrastructure: itInfrastructure,
     navigation: itNavigation,
+    notifications: itNotifications,
+    overview: itOverview,
+    preferences: itPreferences,
+    preferencesDynamic: itPreferencesDynamic,
+    proPackages: itProPackages,
     profile: itProfile,
+    publicInfo: itPublicInfo,
+    raceDetail: itRaceDetail,
+    racePreparation: itRacePreparation,
+    riderProfile: itRiderProfile,
+    scouting: itScouting,
+    seasonReset: itSeasonReset,
+    sharedRiderModal: itSharedRiderModal,
+    squad: itSquad,
+    staff: itStaff,
+    statistics: itStatistics,
+    teamRanking: itTeamRanking,
+    training: itTraining,
+    transfers: itTransfers,
+    tutorials: itTutorials,
   },
 } as const
 

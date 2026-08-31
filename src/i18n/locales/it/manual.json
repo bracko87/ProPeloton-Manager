@@ -1,0 +1,3270 @@
+{
+  "ui": {
+    "eyebrow": "Manuale",
+    "title": "Manuale di ProPeloton Manager",
+    "description": "Questo manuale ampliato è un riferimento profondo per ProPeloton Manager. Copre pagine di conto, Coins, referral, identità del club, navigazione da cruscotto, notifiche, ciclisti, personale, addestramento, campi, attrezzature, infrastruttura, calendario, dettaglio gara, preparazione gara, replay, classifiche, statistiche, trasferimenti, scouting, finanza, sponsor, tasse, politiche, liquidazione e argomenti FAQ. Le sezioni sono chiuse per impostazione predefinita, quindi apri solo l'argomento che ti serve.",
+    "sectionCount_one": "Sezione {{count}}",
+    "sectionCount_other": "sezioni {{count}}",
+    "categoryCount_one": "Categoria {{count}}",
+    "categoryCount_other": "Categorie {{count}}",
+    "closedByDefault": "Tutte le sezioni chiuse per impostazione predefinita",
+    "backToHelp": "Torna all'aiuto",
+    "printPdf": "Stampa / Salva come PDF",
+    "askDiscord": "Chiedi su Discord",
+    "startHereTitle": "Inizia da qui",
+    "startHereDescription": "I nuovi manager dovrebbero prima leggere Quick Start, Game Time, Panoramica, Squadra, Formazione, Preparazione alla gara e Finanza. I manager esperti possono utilizzare la ricerca di argomenti specifici come diritti di nomina sponsor, forniture di gara, playoff, audit fiscali, salvataggi di emergenza o finestre di movimento di sviluppo-squadra.",
+    "searchLabel": "Manuale di ricerca",
+    "searchPlaceholder": "Ricerca Coins, sponsor, preparazione gara, tasse, attrezzature...",
+    "categoryLabel": "Categoria",
+    "allCategories": "Tutte le categorie",
+    "openVisible": "Apri visibile",
+    "closeAll": "Chiudi tutti",
+    "visibleCount_one": "Mostrando la sezione {{count}}.",
+    "visibleCount_other": "Mostrando sezioni {{count}}.",
+    "noSectionsTitle": "Nessuna sezione manuale trovata",
+    "noSectionsDescription": "Provare un termine di ricerca diverso o cambiare categoria di nuovo a tutti.",
+    "open": "Apri",
+    "close": "Chiudi",
+    "summary": "Sommario",
+    "detailedExplanation": "Spiegazione dettagliata",
+    "rule": "Regola {{count}}",
+    "practicalTips": "Consigli pratici",
+    "maintenanceTitle": "Nota di manutenzione manuale",
+    "maintenanceDescription": "Questo manuale è una prima versione profonda basata sulle pagine e sui sistemi attuali. I valori esatti caricati dal database, come i prezzi dei pacchetti di Coins live, alcuni costi delle opzioni, le citazioni del campo, i valori delle offerte sponsor e i costi dell'infrastruttura, dovrebbero sempre essere fidati della pagina live se la configurazione del backend cambia.",
+    "contactUs": "Contattaci"
+  },
+  "categories": {
+    "getting-started": "Per iniziare",
+    "coins-and-account": "Coins e account",
+    "club-identity": "Identità del club",
+    "dashboard": "Cruscotto",
+    "riders": "Ciclisti",
+    "training": "Allenamento",
+    "equipment": "Equipaggiamento",
+    "infrastructure": "Infrastrutture",
+    "calendar-and-races": "Calendario e razze",
+    "rankings-and-statistics": "Classificazioni e statistiche",
+    "transfers": "Mercato",
+    "finance": "Finanze",
+    "support-and-account": "Supporto e account",
+    "race-preparation": "Preparazione gara",
+    "transfers-and-scouting": "Trasferimenti e scouting",
+    "faq": "FAQ"
+  },
+  "guide": {
+    "factParagraph": "Importanti valori di riferimento per questo argomento sono: {{factText}}. Trattare i valori live dalla pagina di gioco come autorevoli ogni volta che un valore è basato su database, perché prezzi, citazioni, stati o bilanciamento futuro possono cambiare senza il manuale che necessita di una riscrittura di codice.",
+    "noFactParagraph": "Questo argomento non dipende da un valore numerico fisso. Usa lo stato live page, gli avvisi e le azioni disponibili come fonte autorevole quando si prende la decisione finale.",
+    "categoryIntro": {
+      "getting-started": "{{title}} dovrebbe essere inteso come parte della procedura di prima gestione. I nuovi utenti non dovrebbero cercare di ottimizzare tutto immediatamente. Prima di tutto identificare ciò che la pagina controlla, quali informazioni sono autorevoli, quali scadenze esistono, e quali azioni possono creare conseguenze permanenti o costose.",
+      "coins-and-account": "{{title}} appartiene al livello del conto, non al normale club-cash economy. Gli utenti dovrebbero separare le Coins a livello di conto e le impostazioni di identità/profilo dal finanziamento del team. Se una funzione utilizza le Coins, controllare il saldo del conto e il prezzo esatto del pacchetto/servizio live prima di confermare qualsiasi cosa.",
+      "club-identity": "{{title}} influenza l'identità pubblica del club. Le decisioni di branding possono essere visibili in classifiche, liste di gare e profili di squadra, mentre le regole di sponsor dei diritti di denominazione possono temporaneamente bloccare o sostituire parti di tale identità.",
+      "dashboard": "{{title}} fa parte del flusso di informazioni giornaliero. Le pagine del cruscotto sono progettate per dire al manager cosa serve attenzione ora. Quando una scheda o un link di avviso ad un'altra pagina, utilizzare quella pagina più profonda per la decisione finale invece di affidarsi solo al riassunto.",
+      "riders": "{{title}} è collegato alla qualità della squadra e alla pianificazione dei turni a lungo termine. Le decisioni del ciclista/personale dovrebbero combinare prestazioni attuali, potenziale, fatica/salute, costo contrattuale, capacità e future esigenze di gara piuttosto che concentrarsi su un numero principale.",
+      "training": "{{title}} è una decisione di sviluppo con un costo di freschezza. La qualità dell'allenamento è importante, ma il miglior piano di allenamento è quello che migliora i ciclisti pur permettendo loro di arrivare a gare importanti abbastanza adatte da potersi svolgere.",
+      "equipment": "{{title}} collega oggetti di proprietà, bonus di configurazione, condizioni e preparazione gara. Le attrezzature devono essere selezionate per il profilo di gara effettivo e mantenute in condizioni utilizzabili; acquistare attrezzi costosi senza setup e manutenzione valore di pianificazione rifiuti.",
+      "infrastructure": "{{title}} è un investimento di capacità a lungo termine. Le decisioni di strutture e asset dovrebbero risolvere un vero e proprio collo di bottiglia, adattarsi al piano finanziario e essere cronometrati intorno alle durate di costruzione/riparazione piuttosto che aggiornato automaticamente.",
+      "calendar-and-races": "{{title}} appartiene alla timeline della competizione. Confrontare sempre le informazioni di gara/applicazione/rider-sottomissione con il tempo di gioco autorevole, quindi utilizzare Dettaglio gara e Preparazione gara per le regole e le azioni più profonde.",
+      "race-preparation": "{{title}} fa parte del flusso di lavoro finale pre-razza. L'ingresso accettato non è sufficiente: i ciclisti, le risorse di supporto, le attrezzature, le forniture, i ruoli e le tattiche devono essere completi prima della relativa serratura/morte.",
+      "rankings-and-statistics": "{{title}} spiega il contesto competitivo del club. Punti, classifiche e tabelle specializzate dovrebbero guidare gli obiettivi della stagione e scouting, ma i manager dovrebbero ancora aprire i profili di squadra / rider prima di prendere decisioni dai soli numeri di classifica.",
+      "transfers": "{{title}} è una decisione di costruzione di squadre con conseguenze sia sportive che finanziarie. Prima di impegnarsi, controllare il ruolo adatto, la certezza di scouting, stipendio, durata, tassa di trasferimento se applicabile, capacità roster e l'effetto sul futuro cashflow club.",
+      "transfers-and-scouting": "{{title}} combina l'azione di mercato con la qualità delle informazioni. Il manager dovrebbe utilizzare lo scouting per ridurre l'incertezza, quindi negoziare solo per obiettivi realistici che si adattano sia alla squadra che al budget.",
+      "finance": "{{title}} influenza la sopravvivenza del club. Distinguere sempre il reddito operativo/spese dal movimento del debito, utilizzare le righe delle transazioni per spiegare le variazioni del saldo e mantenere abbastanza denaro per i costi ricorrenti obbligatori prima di pagare per miglioramenti opzionali.",
+      "support-and-account": "{{title}} è una funzione di account/supporto. Proteggi le informazioni sull'account, usa il canale di supporto corretto e ricorda che i dati del profilo utente sono separati dai sistemi di branding e finanziamento del club pubblici.",
+      "faq": "{{title}} è una voce di risoluzione dei problemi. La risposta più veloce viene normalmente dall'identificazione dello stato di gioco che blocca l'azione, quindi controllando la pagina che possiede tale stato invece di fare clic ripetutamente sull'azione disabilitata."
+    },
+    "commonMistake": {
+      "equipment": "Un errore comune è quello di acquistare l'elemento più forte senza controllare le condizioni, lo stato di assegnazione, profilo di gara o la compatibilità di configurazione. L'approccio più sicuro è quello di costruire setup specializzati completi e mantenere gli elementi che tali setup dipendono.",
+      "finance": "Un errore comune è quello di guardare solo al saldo corrente. Un equilibrio sano può nascondere futuri stipendi, imposte, politiche, viaggi o debiti. Utilizzare informazioni e transazioni a costi ricorrenti insieme prima di commettere contanti.",
+      "calendar-and-races": "Un errore comune è quello di trattare la data di gara come l'unica data importante. Applicazione, lista di team, sottomissione del ciclista e Stage Plan scadenze possono accadere prima e possono bloccare la squadra prima che la gara reale inizia.",
+      "race-preparation": "Un errore comune è quello di vedere un piano salvato e assumere che la gara sia pronta. Salvato, completo ed utilizzabile non sono sempre lo stesso stato. Leggere il riepilogo della prontezza e correggere le forniture mancanti, ruoli o blocchi tattici prima della serratura.",
+      "transfers": "Un errore comune è quello di giudicare un accordo solo tramite spese di trasferimento o rating complessivo. Stipendio, durata del contratto, incertezza scouting, ruolo adatto, capacità roster e cashflow futuro può rendere un trasferimento economico-aspetto costoso.",
+      "transfers-and-scouting": "Un errore comune è quello di negoziare prima di ridurre l'incertezza. Scout obiettivi importanti prima, poi utilizzare feedback negoziazione per migliorare la parte più debole dell'offerta, piuttosto che aumentare casualmente ogni costo.",
+      "training": "Un errore comune è quello di massimizzare l'intensità di allenamento ogni giorno. Lo sviluppo aiuta solo se il ciclista ha ancora abbastanza freschezza, morale e salute da eseguire quando arriva la gara importante.",
+      "infrastructure": "Un errore comune è quello di aggiornare una struttura perché un livello superiore sembra meglio. L'infrastruttura dovrebbe risolvere le esigenze di personale-capacità, formazione, medico, scouting, meccanico o logistica che il club ha effettivamente.",
+      "default": "Un errore comune è quello di ignorare i messaggi, le scadenze o i prerequisiti di stato disabilitati. Quando un'azione non è disponibile, prima leggere il requisito visibile e poi aprire la pagina relativa mostrata nei collegamenti manuali."
+    },
+    "detail": {
+      "soldDiscarded": "Una volta che l'attrezzatura è venduta o scartata lascia l'inventario attivo. Prima di confermare, controllare se l'articolo è ancora utilizzato in un setup predefinito o specialista e se esiste una sostituzione. Vendere è un'azione finanziaria e un'azione di equipaggiamento perché la decisione cambia sia la profondità delle scorte che il denaro del club.",
+      "readyWorn": "Stato deve essere letto prima della condizione. Pronto significa che l'elemento può normalmente partecipare alle azioni normali; Assegnato significa che un altro setup / evento attualmente possiede l'elemento; In Manutenzione significa che è temporaneamente non disponibile; In Worn significa condizione ha bisogno di attenzione. La procedura pre-corsa più sicura è quello di verificare sia lo stato e le condizioni per ogni elemento nella configurazione selezionata.",
+      "assigned": "Assegnato è uno stato di protezione. Impedisce all'utente di vendere, riparare o riutilizzare accidentalmente un elemento o un bene da cui dipende attualmente un altro piano. Aprire l'impostazione, il piano di gara o l'assegnazione che lo possiede, sostituirlo/rimuovere lì, quindi tornare all'azione di inventario.",
+      "quote": "Una citazione è l'anteprima delle conseguenze reali prima della conferma. Rivedi sempre il costo totale/rimborso, la durata, l'idoneità e gli avvertimenti. Il valore citato è più affidabile di un vecchio esempio manuale perché il bilanciamento/configurazione del backend può cambiare nel tempo.",
+      "condition": "Condizione è un segnale di durata. La condizione inferiore aumenta la necessità di manutenzione e può ridurre la sicurezza di contare sull'elemento / asset per i piani importanti. Non aspettare fino a quando ogni elemento chiave viene indossato allo stesso tempo; ruotare le riparazioni in modo che il club mantiene abbastanza profondità utilizzabile.",
+      "nutrition": "I consumi sono moltiplicati per ciclisti e palchi. Il manager dovrebbe calcolare lo stock richiesto utilizzando il numero effettivo di ciclisti selezionati e l'intero conteggio dello stadio, quindi lasciare una piccola riserva quando possibile. Una stima dello stock di un giorno non è sufficiente per una gara multi-stadio.",
+      "durableSupplies": "Le forniture da gara durabili sono tracciate in modo diverso dai consumabili monouso. La loro capacità di utilizzo del palcoscenico è importante. La carenza di maglia obbligatoria può bloccare la prontezza; la carenza di giacca antipioggia riduce principalmente la flessibilità meteo. Sostituire le unità usurate prima di un importante blocco gara.",
+      "sponsor": "Le informazioni dello sponsor devono essere lette prima di firmare o di puntare le gare. Soldi garantiti è solo una parte dell'affare. Obiettivi, pool bonus, sconti tecnici, serrature nomi-diritti e scadenze possono cambiare ciò che il club dovrebbe fare durante la stagione. Un buon accordo sponsor si adatta al calendario della squadra e forza della squadra.",
+      "tax": "L'imposta non è un testo di sfondo facoltativo. Fa parte del sistema finanziario e può cambiare il valore reale del reddito. Quando il reddito aumenta da sponsor, premi o bonus, il gestore dovrebbe aspettarsi ritenute fiscali o righe di aggiustamento mensile e dovrebbe utilizzare la scheda fiscale per capire la posizione finale in contanti.",
+      "deadline": "Le finestre e le scadenze sono rigide perché i sistemi di motore e stagione di gara hanno bisogno di dati stabili prima della simulazione. Se una scadenza passa, l'utente potrebbe perdere la possibilità di modificare un piano, richiedere una gara, spostare un ciclista o inviare un roster. Confrontare sempre la data della pagina con l'ora di gioco del piè di pagina.",
+      "training": "L'allenamento e la fatica devono essere bilanciati insieme. Il manager non sta cercando di massimizzare ogni sessione di allenamento; il manager sta cercando di arrivare a gare importanti con ciclisti che sono sia in miglioramento e abbastanza fresco da eseguire. Se la fatica aumenta troppo alto, ridurre l'intensità o il recupero piano.",
+      "scouting": "Il gioco dello scout riduce l'incertezza. Un giocatore dovrebbe trattare i ciclisti esterni non scordati come informazioni incomplete, non come valori confermati. I rapporti dello scout rendono più sicure le decisioni di trasferimento perché rivelano o stimano complessivamente, potenziale, punti di forza e altre informazioni nascoste con un livello di precisione.",
+      "finance": "Qualsiasi menzione di costo dovrebbe essere collegata alla pagina Finance. L'utente dovrebbe chiedere: è un costo una tantum, un costo settimanale, un costo mensile, un costo per viaggio, o un costo stagionale? La differenza è importante perché i costi ricorrenti possono tranquillamente creare più pericolo di un singolo acquisto.",
+      "roleSkills": "I ruoli e le competenze vanno abbinati al profilo di gara. Nel complesso è utile per un rapido confronto, ma sprint, arrampicata, cronometro, piatto, resistenza, recupero, resistenza, IQ di gara e lavoro di squadra decidono come un ciclista si comporta in situazioni specifiche. Scegli i ciclisti per la via, non solo per il numero più alto.",
+      "results": "I risultati e i risultati devono essere letti come una spiegazione di ciò che è successo, non solo come una classifica finale. Gruppi, lacune, punti, secondi bonus, risultati di fase e classificazioni possono dire all'utente se la tattica della squadra ha funzionato, se un ciclista è stato isolato, o se il prossimo piano di gara dovrebbe cambiare.",
+      "default": "In termini pratici, questo significa che l'utente dovrebbe collegare questa regola ai controlli visibili sulla pagina {{title}}. Leggere lo stato prima, quindi controllare se il pulsante è abilitato, quindi capire cosa cambierà dopo aver cliccato. Se la pagina mostra un avviso, stato disabilitato, data, costo, conteggio o requisito, che le informazioni sono di solito più importanti rispetto all'etichetta del pulsante stesso."
+    }
+  },
+  "sections": {
+    "quick-start": {
+      "category": "Per iniziare",
+      "title": "Avvio rapido per i nuovi manager",
+      "subtitle": "I migliori primi passi dopo aver creato il tuo club.",
+      "overview": "ProPeloton Manager è un gioco completo di gestione del club di ciclismo. Non si sta solo scegliendo ciclisti per le gare. Si sta gestendo denaro, personale, attrezzature, infrastrutture, sponsor, formazione, applicazioni di gara, preparazione gara e classifiche a lungo termine.",
+      "details": [
+        "Inizia su Panoramica. Questa pagina mostra avvisi, condizioni del club, finanze, sponsor, prossime gare, notizie, oggi 's races e azioni rapide. Se qualcosa di importante ha bisogno di attenzione, Panoramica dovrebbe di solito puntare verso di esso.",
+        "Aprire la squadra e imparare i tuoi ciclisti prima di acquistare chiunque. Controllare ruolo, età, paese, nel complesso, potenziale, fatica, morale, stipendio, contratto e competenze. Un ciclista con alto nel complesso non è automaticamente il miglior ciclista per ogni gara.",
+        "Allenamento aperto e allenamento ragionevole. Allenamento duro può aiutare lo sviluppo, ma può anche creare stanchezza. Un team stanco spesso si esibirà peggio anche quando i ciclisti sembrano forti sulla carta.",
+        "Apri calendario per capire la stagione. Applica per le gare che si adattano al tuo team, ma non sovraccaricare i tuoi ciclisti. Una piccola squadra può perdere le prestazioni rapidamente se gli stessi ciclisti gareggiano troppo spesso.",
+        "Preparazione della gara aperta quando il tuo team è accettato per una gara. L'ingresso accettato non è sufficiente. Hai ancora bisogno di un Race Plan e poi di Stage Plans prima della gara.",
+        "Finanza aperta prima di trasferimenti, attrezzature, infrastrutture o campi di formazione. Contanti sono necessari per stipendi, personale, tasse, attrezzature, supporto gara, campi di formazione, politiche e trasferimenti."
+      ],
+      "facts": [
+        {
+          "label": "Inizia da qui",
+          "value": "Panoramica, Squadra, Formazione, Calendario, Preparazione della corsa, Finanza"
+        },
+        {
+          "label": "Principale pericolo precoce",
+          "value": "Spese troppo prima di comprendere gli stipendi e i costi ricorrenti"
+        }
+      ],
+      "tips": [
+        "Usa la panoramica come lista di controllo giornaliera.",
+        "Preparate le gare in anticipo. Non aspettate fino alla giornata finale di gioco.",
+        "Non spendere tutti i soldi iniziali per i trasferimenti prima di controllare i salari e i costi ricorrenti."
+      ],
+      "relatedLinks": [
+        "Apri panoramica",
+        "Apri squadra",
+        "Apri finanza"
+      ]
+    },
+    "game-time": {
+      "category": "Per iniziare",
+      "title": "Tempo e scadenze del gioco",
+      "subtitle": "Come funziona il tempo di gioco rispetto alla vita reale.",
+      "overview": "Il tempo di gioco controlla le scadenze di gara, campi di allenamento, scadenza del mercato, periodi finanziari, periodi fiscali e flusso di stagione. Il piè di pagina mostra l'autorevole tempo di gioco dal vivo dal backend.",
+      "details": [
+        "Un giorno di gioco equivale a 12 ore di vita reale, questo significa due giorni di gioco uguale a un giorno di vita reale.",
+        "Se un termine di presentazione del ciclista è di due giorni di gioco, si ha circa un giorno di vita reale. Se è un giorno di gioco di distanza, si dispone di circa 12 ore di vita reale.",
+        "Le date di gioco sono utilizzate per le applicazioni di gara, le scadenze di presentazione del ciclista, le serrature del piano di fase, campi di formazione, scadenza di trasferimento, transazioni finanziarie e periodi fiscali.",
+        "I tempi tecnici reali non sono la stessa cosa del tempo di gioco. Alcune righe di backend hanno created_at per l'ordinamento o la paginazione, ma la data di riferimento del giocatore dovrebbe usare metadati memorizzati data di gioco quando disponibili.",
+        "Prepararsi sempre prima dell'ultimo momento. Le scadenze mancanti possono bloccare i piani di gara o lasciare i piani di fase incompleti."
+      ],
+      "facts": [
+        {
+          "label": "Scala temporale",
+          "value": "1 giorno di gioco = 12 ore di vita reale"
+        },
+        {
+          "label": "Conversione",
+          "value": "2 giorni di gioco = 1 giorno di vita reale"
+        },
+        {
+          "label": "Mostrato in",
+          "value": "Footer da cruscotto e molte etichette data di gioco"
+        }
+      ],
+      "tips": [
+        "Controllare l'ora di gioco del piè di pagina prima di azioni importanti.",
+        "Usare Calendar e Race Preparation insieme."
+      ]
+    },
+    "coins": {
+      "category": "Coins e account",
+      "title": "Coins, pacchetti di Coins e ricompense di riferimento",
+      "subtitle": "La differenza tra Coins del conto e contanti del club.",
+      "overview": "Coins sono valuta del conto. Il denaro del club è l'economia del team. Non confondere le Coins con il denaro in-game utilizzato per stipendi, trasferimenti, attrezzature e infrastrutture.",
+      "details": [
+        "La pagina Pacchetti Pro carica pacchetti di Coins attivi dal database. Ciò significa che le dimensioni esatte dei pacchetti e i prezzi sono guidati dal database e dovrebbero essere affidabili dalla pagina live shop.",
+        "La pagina calcola il prezzo per Coins e può evidenziare il miglior pacchetto di valore. Etichette del pacchetto come Starter boost o I più popolari sono basati su quantità di Coins.",
+        "La cronologia degli acquisti viene caricata da user_coin_ledger dove la ragione è l'acquisto. I dettagli della sessione Stripe non vengono visualizzati intenzionalmente agli utenti.",
+        "Invita Amici crea un link di riferimento. Un riferimento è completato quando l'utente di cui crea un club e acquista il loro primo pacchetto di Coins. Il testo attuale ricompensa dice 40 Coins.",
+        "Coins è collegato all'utente/account. Se un club è liquidato, l'account utente e le Coins rimangono attive; solo che il club è chiuso."
+      ],
+      "facts": [
+        {
+          "label": "Costante attuale del costo di gioco",
+          "value": "2 Coins al giorno nella pagina dei pacchetti Pro corrente"
+        },
+        {
+          "label": "Fonte del pacchetto",
+          "value": "Tabella del database coin_packages"
+        },
+        {
+          "label": "Checkout",
+          "value": "crea-coin-checkout Edge Function"
+        },
+        {
+          "label": "Invita ricompensa",
+          "value": "40 Coins quando un amico di riferimento crea un club e compra il loro primo pacchetto di Coins"
+        }
+      ],
+      "tips": [
+        "Usare pacchetti Pro per i prezzi esatti dal vivo.",
+        "Utilizzare Invita amici per condividere il link di referral."
+      ],
+      "relatedLinks": [
+        "Pacchetti di Coins",
+        "Invita amici"
+      ]
+    },
+    "club-identity": {
+      "category": "Identità del club",
+      "title": "Club Branding, Logo e Jersey",
+      "subtitle": "Nome della squadra, colori, logo, maglia e lo sponsor nomi-destri serrature.",
+      "overview": "La tua identità del club include nome, colori, logo e jersey. È gestito tramite Personalizza Team, ma sponsorizzare le offerte di nomi-diritti può temporaneamente bloccare o cambiare parti del pubblico display.",
+      "details": [
+        "Personalizza il team perseverando nel branding attraverso le funzioni di backend, non solo lo stato dell'interfaccia utente locale. Questo è importante perché i nomi-detti sponsor possono bloccare il nome o influenzare il nome del display.",
+        "Gli upload di logo sono convalidati per il tipo e la dimensione del file, convertiti in PNG in-browser e memorizzati nel secchio club-logos.",
+        "Rimozione di un logo ripristina un logo di base generato invece di lasciare il club senza un logo. Il logo di base utilizza i colori del team.",
+        "Il sistema jersey memorizza un kit domestico in team_kits. Può utilizzare maglie da piscina generiche, ripiego generico, URL di immagine o immagini caricate a seconda della modalità selezionata.",
+        "Uno sponsor di nomi-diritti paga di solito di più, ma cambia temporaneamente il nome della squadra visualizzata durante la stagione. Il nome originale ritorna all'inizio della prossima stagione."
+      ],
+      "facts": [
+        {
+          "label": "Formati di logo",
+          "value": "JPG, PNG, WEBP"
+        },
+        {
+          "label": "Dimensione massima logo",
+          "value": "0.5 MB"
+        },
+        {
+          "label": "Formati Jersey",
+          "value": "JPG, PNG, WEBP"
+        },
+        {
+          "label": "Dimensione massima maglia",
+          "value": "1 MB e 512 × 512 px o più piccoli"
+        },
+        {
+          "label": "Memorizzazione logo",
+          "value": "I loghi caricati vengono convertiti in PNG e memorizzati in club-logos"
+        }
+      ],
+      "tips": [
+        "Usa loghi chiari che funzionano ancora a piccole dimensioni.",
+        "Non accettare i diritti di denominazione solo per denaro; comprendere l'effetto identità."
+      ],
+      "relatedLinks": [
+        "Personalizza squadra"
+      ]
+    },
+    "overview": {
+      "category": "Cruscotto",
+      "title": "Pagina di panoramica",
+      "subtitle": "La tua sala di controllo quotidiana.",
+      "overview": "Panoramica combina le informazioni più importanti da tutto il club in un cruscotto: avvisi, KPI, operazioni, impulsi di squadra, calendario, mondo della corsa, finanza, debito di emergenza, notizie, azioni rapide e sponsor principale.",
+      "details": [
+        "Gli avvisi mostrano cosa serve attenzione. Se un avviso ha un link, di solito apre la pagina dove il problema può essere risolto.",
+        "I KPI danno numeri rapidi, mentre le Operazioni mostrano sistemi attivi come finanza, formazione, infrastrutture, eventi medici, sponsor o inbox.",
+        "Squad Pulse ti aiuta a capire se la squadra è pronta. Alta fatica, lesioni, malattia o molti contratti in scadenza devono essere gestiti rapidamente.",
+        "I pannelli del mondo di gara mostrano il prossimo programma, oggi le gare e le notizie. Ti aiutano a seguire il mondo di gioco anche quando la tua squadra non sta correndo.",
+        "I pannelli finanziari aiutano a evitare spese pericolose. Emergenza debito Salute è particolarmente importante se i salvataggi sono stati utilizzati o il rischio di liquidazione esiste.",
+        "Il pannello principale Sponsor può mostrare l'identità dello sponsor e il collegamento nel cruscotto dello sponsor."
+      ],
+      "facts": [
+        {
+          "label": "Scopo principale",
+          "value": "Checklist giornaliero e navigazione rapida"
+        },
+        {
+          "label": "Dati finanziari importanti",
+          "value": "Saldo, entrate/spese operative, entrate sponsorizzate, costi di politica, previsioni di viaggio e stato del debito"
+        },
+        {
+          "label": "Polso della squadra",
+          "value": "Fitness, morale, disponibilità, forma, disponibili, feriti/malati/non pienamente in forma e contratti in scadenza"
+        }
+      ],
+      "tips": [
+        "Apri panoramica prima ogni login.",
+        "Se Panoramica mostra il rischio finanziario, controllare Finanza prima della spesa."
+      ],
+      "relatedLinks": [
+        "Apri panoramica"
+      ]
+    },
+    "notifications-inbox": {
+      "category": "Cruscotto",
+      "title": "Notifiche e Posta in arrivo",
+      "subtitle": "Avvisi di sistema, pagine non lette/lette e conversazioni.",
+      "overview": "Le notifiche sono avvisi di gioco/admin. La Posta in arrivo è per conversazioni dirette o di amministrazione. Insieme aiutano gli utenti ad evitare le scadenze perse e a comunicare con altri manager o amministratori.",
+      "details": [
+        "Le notifiche possono essere cercate per titolo, messaggio, tipo, sorgente, gruppo di preferenze o tempo di creazione.",
+        "Le categorie vengono risolte dal gruppo di preferenze, dal codice sorgente o dal tipo. Ciò aiuta a separare i messaggi di finanza, corsa, sponsor, trasferimento e sistema.",
+        "Le preferenze di notifica possono controllare quali tipi di notifica ricevono l'utente.",
+        "In arrivo elenca le conversazioni, i conti non letti, l'ultima anteprima del messaggio e se la conversazione può essere risposto.",
+        "L'apertura di una conversazione carica messaggi e la segna come letta. L'invio di un messaggio utilizza i RPC in arrivo."
+      ],
+      "facts": [
+        {
+          "label": "Schede di notifica",
+          "value": "Non letta e letta"
+        },
+        {
+          "label": "Strumenti di notifica",
+          "value": "Ricerca, categoria filtro, paginazione, link d'azione"
+        },
+        {
+          "label": "Tipi di filettatura in arrivo",
+          "value": "Diretto e diretto amministratore"
+        }
+      ],
+      "tips": [
+        "Controlla le notifiche non lette prima delle scadenze della gara.",
+        "Usare Posta in arrivo per conversazioni, Notifiche per avvisi di sistema/gioco."
+      ],
+      "relatedLinks": [
+        "Notifiche",
+        "Posta in arrivo",
+        "Preferenze"
+      ]
+    },
+    "squad-riders": {
+      "category": "Ciclisti",
+      "title": "Squadra, Primo Team e vista elenco dei ciclisti",
+      "subtitle": "Come capire il tuo roster.",
+      "overview": "La squadra è dove gestisci e ispeziona i tuoi ciclisti del primo team. Esso include diverse viste per i dati generali del roster, le finanze, le abilità e la forma/sviluppo.",
+      "details": [
+        "General View offre la panoramica più veloce del tuo roster. Usalo per i controlli quotidiani.",
+        "Financial View mostra stipendio, valore di mercato e informazioni sul contratto. Utilizzarlo prima di rinnovare, rilasciare o vendere ciclisti.",
+        "Skills View mostra attributi speciali. Usalo prima della selezione della gara perché un climber, uno sprint e un ciclista time-trial hanno bisogno di competenze diverse.",
+        "Il modulo & sviluppo mostra dati di prontezza come affaticamento, morale, potenziale e disponibilità.",
+        "Il cruscotto della squadra può anche mostrare vittorie, podi, primi 10s, migliori GC, ultime righe di gara, selezione prossima gara e istantanee tipo gara."
+      ],
+      "facts": [
+        {
+          "label": "Prima Squadra max in UI",
+          "value": "18 cavalieri"
+        },
+        {
+          "label": "Vista elenco",
+          "value": "Generalità, finanziari, competenze, forma e sviluppo"
+        },
+        {
+          "label": "Dati comuni del ciclista",
+          "value": "Paese, ruolo, età, generale, fatica, stato, valore di mercato, stipendio, contratto, competenze, morale e potenziale"
+        }
+      ],
+      "tips": [
+        "Non giudicare i cavalieri solo dal totale.",
+        "Controllare i contratti prima della fine della stagione.",
+        "Profili aperti per decisioni più profonde."
+      ],
+      "relatedLinks": [
+        "Apri squadra"
+      ]
+    },
+    "rider-profile-skills": {
+      "category": "Ciclisti",
+      "title": "Profilo del ciclista, abilità, idoneità e Race Sharpness",
+      "subtitle": "Perché la qualità del ciclista è più che complessiva.",
+      "overview": "I profili dei ciclisti mostrano identità, attributi, contratto, allenamento, confronto e storia. Un ciclista ha un valore reale della gara dipende dal mix di abilità, fitness, morale, fatica, salute e nitidezza della corsa.",
+      "details": [
+        "Nel complesso è un ampio riassunto. È utile, ma gli attributi esatti decidono ruolo gara. Sprint ha importanza nelle finiture a mazzetto. Arrampicare questioni sulle montagne. Tempo di prova questioni nelle fasi TT. Recupero è importante nelle gare di palcoscenico.",
+        "La fatica rappresenta stanchezza e stress accumulato. L'elevata fatica può rendere i cavalieri forti sottoperformi o diventare rischiosi da selezionare.",
+        "Il morale influenza la fiducia e può influenzare le prestazioni. Il morale basso non deve essere ignorato.",
+        "La nitidezza della corsa misura il ritmo delle corse. Troppo poca corsa può ridurre la nitidezza, ma troppe corse creano il rischio di sovraccarico.",
+        "Il confronto tra ciclisti mostra due ciclisti affiancati con attributi come sprint, arrampicata, cronometro, resistenza, piano, recupero, resistenza, IQ di gara e lavoro di squadra.",
+        "I profili esterni del ciclista possono nascondere informazioni esatte a meno che non siano esplorate."
+      ],
+      "facts": [
+        {
+          "label": "Tab del ciclista proprie",
+          "value": "Panoramica, Contratto, Formazione, Confronta, Storia"
+        },
+        {
+          "label": "Attributi principali",
+          "value": "Complessivamente, potenziale, sprint, arrampicata, cronometro, resistenza, piatto, recupero, resistenza, gara QI, lavoro di squadra"
+        },
+        {
+          "label": "Stato della disponibilità",
+          "value": "Adatto, non perfettamente in forma, ferito, malato"
+        }
+      ],
+      "tips": [
+        "Per sprint, check sprint, flat, endurance e lavoro di squadra.",
+        "Per le montagne, controllare l'arrampicata, la resistenza, la resistenza e il recupero.",
+        "Usare il confronto prima delle decisioni di trasferimento."
+      ]
+    },
+    "developing-team": {
+      "category": "Ciclisti",
+      "title": "Gruppo di sviluppo",
+      "subtitle": "U23/struttura di sviluppo, finestre di acquisto e movimento.",
+      "overview": "Il Team Sviluppo è un secondo team collegato al club principale. Viene utilizzato per i ciclisti giovani o secondari e ha il proprio limite di rotazione e le regole di movimento-finestra.",
+      "details": [
+        "Preferenze carichi Sviluppo dello stato del Team dal backend. Mostra giorni reali giocati, giorni di gioco giocati, saldo delle Coins, costo della Coins, stato dei requisiti, stato di movimento-finestra e se l'acquisto è consentito.",
+        "Dopo l'acquisto, l'app per il club attivo torna al club principale in modo che il cruscotto non accidentalmente passare al club in via di sviluppo.",
+        "I ciclisti del Team di sviluppo possono essere spostati nella Prima Squadra solo se la finestra di movimento è aperta e la Prima Squadra ha spazio.",
+        "Se un ciclista del team di sviluppo ha 24 o più anni, l'interfaccia utente può mostrare un avviso di azione. Se la finestra di movimento è aperta, è necessaria l'azione ora; altrimenti il ciclista deve spostare la finestra successiva."
+      ],
+      "facts": [
+        {
+          "label": "Gruppo di sviluppo max in UI",
+          "value": "8 cavalieri"
+        },
+        {
+          "label": "Luogo dell'acquisto",
+          "value": "Pagina delle preferenze"
+        },
+        {
+          "label": "Regola del movimento",
+          "value": "I ciclisti possono muoversi solo quando la finestra di movimento è aperta"
+        },
+        {
+          "label": "Attenzione all'età",
+          "value": "I ciclisti di età superiore ai 24 anni richiedono attenzione"
+        }
+      ],
+      "tips": [
+        "Usare il team di sviluppo per il futuro talento.",
+        "Tenere una prima slot Squadra aperta se si prevede di promuovere un ciclista."
+      ],
+      "relatedLinks": [
+        "Preferenze",
+        "Rosa"
+      ]
+    },
+    "staff": {
+      "category": "Ciclisti",
+      "title": "Personale, ruoli e corsi di personale",
+      "subtitle": "Come lo staff sostiene il tuo club.",
+      "overview": "Il personale migliora la formazione, il recupero, lo scouting, la meccanica, il supporto e le operazioni. I ruoli del personale hanno limiti di capacità che sono spesso collegati all'infrastruttura.",
+      "details": [
+        "Head Coach e Trainer supportano la formazione regolare, campi di formazione e lo sviluppo del ciclista.",
+        "Team Doctor, Physio e Nutrizionista supportano salute, recupero, affaticamento e manipolazione medica.",
+        "Meccanica supporta la manutenzione delle apparecchiature e sistemi tecnici.",
+        "Il Direttore dello Sport supporta la preparazione della gara, le tattiche e le proposte di piano.",
+        "Scout / Analyst supporta report di scouting e conoscenze di mercato.",
+        "I corsi del personale possono essere attivi o completati di recente, con giorni di durata, costi e guadagni attributi.",
+        "Le estensioni del contratto del personale possono includere stipendio corrente, stipendio richiesto, salario minimo accettabile, punteggio degli interessi, volontà e motivi di decisione."
+      ],
+      "facts": [
+        {
+          "label": "Ruoli",
+          "value": "Coach, Trainer, U23 Coach, Dottore di squadra, Fisio, Nutrizionista, Meccanico, Direttore sportivo, Scout / Analista"
+        },
+        {
+          "label": "Statistiche del personale",
+          "value": "competenza, esperienza, potenziale, leadership, efficienza, lealtà"
+        },
+        {
+          "label": "Corsi",
+          "value": "Può migliorare gli attributi del personale nei giorni di gioco e denaro di costo"
+        }
+      ],
+      "tips": [
+        "Affittare personale basato sulla debolezza del club.",
+        "Aggiornare l'infrastruttura se la capacità del personale è bloccata."
+      ],
+      "relatedLinks": [
+        "Mercato del personale",
+        "Infrastrutture"
+      ]
+    },
+    "training": {
+      "category": "Allenamento",
+      "title": "Campi di formazione e formazione regolari",
+      "subtitle": "Migliorare i cavalieri senza distruggere la freschezza.",
+      "overview": "L'addestramento controlla lo sviluppo del ciclista e la fatica. L'addestramento regolare è in corso. I campi di addestramento sono più forti, blocchi più costosi con location, tempo, cavalieri e personale.",
+      "details": [
+        "L'allenamento regolare può utilizzare i predefiniti team e piani individuali del ciclista. Le aree di messa a fuoco includono generale, recupero, sprint, arrampicata, piano, cronometro, resistenza, resistenza, IQ gara e lavoro di squadra.",
+        "L'allenamento duro può creare più guadagni ma anche più fatica e rischio. L'allenamento di recupero è utile dopo le gare difficili o le gare di palcoscenico.",
+        "Campi di formazione includono posizione, regione, tipo di campeggio, profilo del terreno, altitudine, stelle, indice di costo, moltiplicatore di qualità, comfort di recupero, settimane preferite, settimane rischiose e settimane chiuse.",
+        "Citazioni del campeggio possono includere viaggio, alloggio, tassa del campeggio, logistica, costo totale, per-rider costo, stato meteo, modificatore di formazione, occasione persa-giorno e avvertimenti.",
+        "Le attuali pagine del campo mostrano i partecipanti, il personale, il tempo, il personale amplificano i riassunti, i report giornalieri e i piani di formazione per i prossimi giorni del campo."
+      ],
+      "facts": [
+        {
+          "label": "Schede di allenamento",
+          "value": "Regolari e campi"
+        },
+        {
+          "label": "Intensità regolari",
+          "value": "Recupero, luce, normale, duro"
+        },
+        {
+          "label": "Tipi di campo",
+          "value": "Generale, sprint, arrampicata, piatto, cronometro"
+        },
+        {
+          "label": "Intensità del piano di campeggio",
+          "value": "Giorno libero, luce, normale, duro"
+        }
+      ],
+      "tips": [
+        "Non allenate tutti duramente tutto il tempo.",
+        "Allenamento di corrispondenza al calendario di gara e ruolo del ciclista.",
+        "Controllare il costo del campeggio prima della prenotazione."
+      ],
+      "relatedLinks": [
+        "Formazione aperta"
+      ]
+    },
+    "equipment": {
+      "category": "Equipaggiamento",
+      "title": "Attrezzature, installazioni, inventario e mercato",
+      "subtitle": "Resistenza e bonus di prestazioni.",
+      "overview": "Le attrezzature controllano le configurazioni da corsa, gli attrezzi di proprietà, gli acquisti di mercato, la manutenzione e il supporto tecnico degli sponsor.",
+      "details": [
+        "Panoramica mostra disponibilità, riassunti delle categorie, impostazione predefinita, setup preset, forniture di gara e supporto tecnico sponsor.",
+        "Il setup predefinito della corsa viene utilizzato quando non viene scelta alcuna configurazione specifica. I settaggi di configurazione consentono impostazioni specializzate per sprint, mountain, time trial o corse acciottolate.",
+        "L'inventario mostra le attrezzature di proprietà attiva. Gli oggetti venduti e scartati sono nascosti dall'inventario attivo.",
+        "Gli stati delle attrezzature includono pronti, assegnati, in manutenzione e usurati. Gli articoli pronti e usurati possono essere di solito riparati/venduti/scarti, mentre gli oggetti assegnati sono limitati.",
+        "La riparazione è generalmente disponibile quando la condizione è 90% o inferiore e l'elemento può eseguire azioni.",
+        "Il mercato mostra articoli con categoria, qualità, ruolo del terreno, bonus, sconti sponsor e azione di acquisto."
+      ],
+      "facts": [
+        {
+          "label": "Schede apparecchiature",
+          "value": "Panoramica, Inventario, Mercato, Forniture di Gara"
+        },
+        {
+          "label": "Categorie durevoli",
+          "value": "Telaio, ruote, pneumatici, gruppi, casco, scarpe"
+        },
+        {
+          "label": "Tipi di bonus",
+          "value": "Piatto, collinare, montano, ciottolo, cronometro, sprint, riduzione della fatica"
+        },
+        {
+          "label": "Etichette di qualità",
+          "value": "Basic, Good, Super"
+        }
+      ],
+      "tips": [
+        "Crea impostazioni per diversi tipi di gara.",
+        "Riparare attrezzature importanti prima delle gare chiave.",
+        "Controllare gli sconti sponsor prima di acquistare."
+      ],
+      "relatedLinks": [
+        "Aperto"
+      ]
+    },
+    "race-supplies": {
+      "category": "Equipaggiamento",
+      "title": "Forniture per corse",
+      "subtitle": "Consumabili e forniture di stage-plan durevole.",
+      "overview": "I prodotti Race sono utilizzati da Race Preparation e Stage Plans. Alcune forniture vengono consumate ogni fase, mentre maglie e giacche sono articoli riutilizzabili durevoli con limiti di utilizzo del palco.",
+      "details": [
+        "I bidoni usano 1 04014 per ogni ciclista nella configurazione del palcoscenico. Sono consumabili monouso e supportano l'idratazione e il controllo della fatica.",
+        "I Gel Energy utilizzano 0.12.1.4 per ciclista. Sostengono la resistenza e l'efficienza finale dello sforzo. Non c'è alcun beneficio extra dopo quattro gel per ciclista.",
+        "I pacco nutrizionisti utilizzano 0.19.12 per ciclista. Sostenono la stabilità della resistenza e il recupero post-stadio. Le fasi lunghe senza nutrizione possono aumentare la pressione di fatica.",
+        "Race Jersey Complete è obbligatorio in Stage Plans. I kit di jersey mancanti possono bloccare l'installazione del palco.",
+        "Giacca pioggia sono opzionali, ma preziosi in tempo umido / freddo. Forniture durevoli indossate non sono più utilizzabili.",
+        "Le gare di palco consumano rapidamente le forniture perché le quantità sono utilizzate per ciclista per tappa."
+      ],
+      "facts": [
+        {
+          "label": "Consumabili",
+          "value": "Bidons / Borracce d'acqua, Gel energetici, Confezioni nutritive"
+        },
+        {
+          "label": "Forniture durevoli",
+          "value": "Gara Jersey Completo, Giacche Rain"
+        },
+        {
+          "label": "Gara Jersey Completa",
+          "value": "Obbligatoria; 10 impieghi per unità"
+        },
+        {
+          "label": "Giacche a pioggia",
+          "value": "Elemento meteo opzionale; 25 impieghi per unità"
+        }
+      ],
+      "tips": [
+        "Comprare forniture prima delle scadenze.",
+        "Controllare stock prima delle gare di tappa.",
+        "Usare giacche pioggia per le fasi di cattivo tempo."
+      ],
+      "relatedLinks": [
+        "Forniture per corse"
+      ]
+    },
+    "infrastructure": {
+      "category": "Infrastrutture",
+      "title": "Infrastrutture e attività",
+      "subtitle": "Edifici per club a lungo termine, capacità del personale e veicoli di supporto.",
+      "overview": "Le infrastrutture sono il vostro sistema di sviluppo a lungo termine. Le strutture sbloccano la capacità del personale e migliorano la formazione, la salute, lo scouting e la meccanica.",
+      "details": [
+        "Club House è la principale sede amministrativa. Supporta l'organizzazione e i futuri sistemi di gestione.",
+        "Il Centro di formazione migliora l'efficacia del coaching, la qualità della formazione, il supporto allo sviluppo e la gestione del rischio di sovraccarico.",
+        "Medical Center supporta il Team Medici, Fisici e Nutrizionisti e migliora la prevenzione delle lesioni / sostegno recupero.",
+        "Youth Academy supporta i futuri ciclisti e lo sviluppo U23 e può sbloccare i sistemi U23 Head Coach.",
+        "Meccanica Workshop migliora le riparazioni, il supporto tecnico e la capacità meccanica.",
+        "Scouting Office migliora il rapporto di scouting qualità cap, capacità di scouting e di mercato di intelligence.",
+        "I lavori di infrastruttura costano in contanti e prendono giorni di gioco. I lavori attivi mostrano la durata, la data di completamento, costo pagato e le bande orarie di costruzione.",
+        "I lavori e le attività possono avere preventivi di cancellazione, riparazione o vendita. Le quotazioni mostrano il rimborso/costo/valore e se l'azione è consentita.",
+        "Le attività hanno condizione e stato. Le attività assegnate o bloccate non possono essere riparate o vendute fino a quando non sono libere."
+      ],
+      "facts": [
+        {
+          "label": "Strutture",
+          "value": "Club House, Centro di formazione, Centro medico, Accademia Giovanile, Laboratorio di Meccanica, Ufficio di Scouting"
+        },
+        {
+          "label": "Livelli massimi di impianto",
+          "value": "Club House 5, Centro di formazione 5, Centro medico 5, Accademia Giovanile 2, Laboratorio Meccanico 4, Ufficio Scouting 4"
+        },
+        {
+          "label": "Attivo",
+          "value": "Auto di squadra, Autobus di squadra, Attrezzatura Van, Officina mobile, Van medico"
+        }
+      ],
+      "tips": [
+        "Aggiornamento basato sul collo di bottiglia.",
+        "Non iniziare troppi lavori costosi in una sola volta.",
+        "Tenete gli asset di razza riparati."
+      ],
+      "relatedLinks": [
+        "Infrastrutture aperte"
+      ]
+    },
+    "calendar-race-detail": {
+      "category": "Calendario e razze",
+      "title": "Calendario, applicazioni di gara e dettaglio di gara",
+      "subtitle": "Trova gare, applica, controlla i profili e segui i risultati.",
+      "overview": "Calendario mostra le opportunità di stagione e gara. Dettaglio gara mostra il profilo completo, tappe, partecipanti, risultati, classificazioni e replay informazioni per una gara.",
+      "details": [
+        "Calendario Stagione mostra una vista giorno per giorno di gare, campi, eventi e vacanze.",
+        "Calendario delle corse mostra le carte di gara con categoria, paese, città, data, tipo di gara, limiti di squadra, squadre accettate e stato di applicazione.",
+        "Le applicazioni Race dipendono dalle date aperte/chiuse. Se le applicazioni sono chiuse, il team non può più applicarle.",
+        "Dettaglio gara mostra le regole di ingresso come limiti di squadra, limiti di ciclista, scadenza di applicazione, annuncio lista di squadra, scadenza di presentazione del ciclista e fondo premio.",
+        "I dettagli del palcoscenico possono includere percorso, distanza, terreno, tipo di finitura, finitura in cima, percentuali del terreno, guadagno di elevazione, immagine del profilo, tempo, sprint e punti KOM.",
+        "Dopo l'inizio di una gara, Race Detail può mostrare stato dal vivo, rigiocare fotogrammi, commenti, classifiche, risultati e classificazioni."
+      ],
+      "facts": [
+        {
+          "label": "Vista calendario",
+          "value": "Stagione e Razze"
+        },
+        {
+          "label": "Filtri di stagione",
+          "value": "Razze, Campi di formazione, Eventi, Vacanze"
+        },
+        {
+          "label": "Stato della corsa",
+          "value": "Non aperto, aperto, chiuso, attivo, finito, annullato"
+        },
+        {
+          "label": "Classificazioni",
+          "value": "Generale, punti, montagna, giovane, squadra"
+        }
+      ],
+      "tips": [
+        "Applica alle gare che si adattano alla tua squadra.",
+        "Ispezionare i profili di fase prima della preparazione gara.",
+        "Controllare il tempo vicino alla giornata di gara."
+      ],
+      "relatedLinks": [
+        "Apri calendario"
+      ]
+    },
+    "race-preparation": {
+      "category": "Calendario e razze",
+      "title": "Preparazione della gara e Stage Plans",
+      "subtitle": "Gara accettate, Race Plan, Stage Plans e prontezza.",
+      "overview": "Preparazione della gara trasforma una gara accettata in un vero e proprio piano. Si tratta di una delle pagine più importanti del gioco perché il motore della gara dipende dalla selezione del ciclista, personale, asset, attrezzature, forniture e tattiche di scena.",
+      "details": [
+        "Le razze accettate mostrano le gare dove la tua squadra è stata accettata e lo stato di preparazione di ogni gara.",
+        "Race Plan seleziona ciclisti, personale, asset, setup delle attrezzature e forniture da gara. I limiti del ciclista devono corrispondere alle regole di gara.",
+        "I ciclisti o gli asset bloccati possono già essere assegnati a eventi sovrapposti. Ciò impedisce orari impossibili.",
+        "L'anteprima delle citazioni mostra i costi e i bonus di supporto da personale, asset, attrezzature e politiche.",
+        "Dopo Race Plan è presentato, Stage Plans aperto. Stage Plans ruoli di ciclista impostato, tattiche di squadra, tattiche individuali, attrezzature e forniture per ogni fase.",
+        "Piano di preparazione traccia piani salvati, piani utilizzabili, piani mancanti, piani vuoti, forniture mancanti, completezza tattica e azione raccomandata.",
+        "I suggerimenti del Direttore dello Sport possono aiutare con le attrezzature, le tattiche del team, le tattiche individuali e le forniture, ma sono guida, non garantiti piani perfetti."
+      ],
+      "facts": [
+        {
+          "label": "Schede",
+          "value": "Razze accettate, Race Plan, Stage Plans"
+        },
+        {
+          "label": "Personale di gara",
+          "value": "Direttore sportivo, Team Doctor, Physio, Meccanico"
+        },
+        {
+          "label": "Attività di corsa",
+          "value": "Autobus di squadra, furgoncino attrezzature, laboratorio mobile, furgoncino medico, auto di squadra 1 04063"
+        },
+        {
+          "label": "Toni di preparazione al palco",
+          "value": "Verde, giallo, arancio, rosso, grigio"
+        }
+      ],
+      "tips": [
+        "Preparatevi prima delle scadenze.",
+        "Utilizzare piani diversi per diversi tipi di stadio.",
+        "Non ignorare le forniture e il tempo."
+      ],
+      "relatedLinks": [
+        "Preparazione della gara aperta"
+      ]
+    },
+    "team-ranking": {
+      "category": "Classificazioni e statistiche",
+      "title": "Classifica della squadra, livelli, divisioni e playoff",
+      "subtitle": "Promozione, retrocessione e struttura di standing.",
+      "overview": "Il Team Ranking mostra il tuo posto nel mondo del ciclismo. Le squadre guadagnano punti internazionali dai risultati della gara. La classifica finale può decidere la promozione, i playoff e la retrocessione.",
+      "details": [
+        "WorldTeam è il top standing. L'interfaccia utente mostra i cinque inferiori relegati.",
+        "ProTeam West e ProTeam East ogni vincitore dello spettacolo ha promosso direttamente, 2nd Swiss4th entra nel playoff mondiale e i cinque finalisti sono stati relegati.",
+        "Continental Europa e America alimentano il playoff Pro West. Continental Asia, Africa e Oceania alimentano il playoff Pro East.",
+        "Continental Europa e Asia mostrano i sei inferiori relegati. Continental America e Africa mostrano i cinque inferiori relegati. Continental Oceania mostra i tre inferiori relegati.",
+        "L'Oceania dilettantistica mostra i primi tre promossi direttamente. Il vincitore dello spettacolo europeo dilettanti ha promosso direttamente e il secondo giocatore di promozione di ingresso. Altri vincitori dello spettacolo dilettantistica promosso direttamente e il secondo giocatore di promozione di ingresso di 2 °.",
+        "I manager inattivi possono rimanere visibili in classifica/risultati. L'interfaccia utente può mostrare un badge manager inattivo per squadre inattive e in uscita dalla stagione."
+      ],
+      "facts": [
+        {
+          "label": "Livelli",
+          "value": "WorldTeam, ProTeam, Continental, Amatoriali"
+        },
+        {
+          "label": "Divisioni pro",
+          "value": "ProTeam West, ProTeam East"
+        },
+        {
+          "label": "Divisioni Continental",
+          "value": "Europa, America, Asia, Africa, Oceania"
+        },
+        {
+          "label": "Divisioni amatoriale",
+          "value": "America del Nord, America del Sud, Europa occidentale, Europa centrale, Europa meridionale e Balcani, Europa settentrionale e orientale, Africa occidentale e settentrionale, Africa centrale e meridionale, Asia occidentale e centrale, Asia meridionale, Asia orientale e sudorientale, Oceania"
+        }
+      ],
+      "tips": [
+        "Usa il ranking come obiettivo a lungo termine.",
+        "I punti costanti possono essere migliori di un risultato fortunato."
+      ],
+      "relatedLinks": [
+        "Apri classifica del team"
+      ]
+    },
+    "statistics-team-profile": {
+      "category": "Classificazioni e statistiche",
+      "title": "Statistiche e profili di squadra",
+      "subtitle": "Confronta squadre, ciclisti e informazioni sul club pubblico.",
+      "overview": "Statistiche aiuta a identificare squadre forti e ciclisti. Team Profili mostrano informazioni pubbliche sugli utenti e club AI.",
+      "details": [
+        "Team Current mostra le prestazioni del team attivo/attuale per livello, divisione e punti.",
+        "La storia del team mostra i vincitori precedenti e le istantanee una volta che esistono più stagioni.",
+        "Le classifiche dei ciclisti mostrano i migliori ciclisti per punti e possono includere ruolo, paese, età, club, valore di mercato, stipendio, fatica e disponibilità.",
+        "Rider District aiuta a trovare specialisti, come velocisti o scalatori.",
+        "Team Profile mostra logo, paese, livello, divisione, sponsor, anteprima kit, roster pubblico, riepilogo punti e gare recenti.",
+        "Il profilo del team può includere un pulsante di segnalazione per la moderazione quando necessario."
+      ],
+      "facts": [
+        {
+          "label": "Schede statistiche",
+          "value": "Squadre e Cavalieri"
+        },
+        {
+          "label": "Sotto-tabs del gruppo",
+          "value": "Attuale e storia"
+        },
+        {
+          "label": "Sottotab dei rider",
+          "value": "Classificazioni e ripartizione"
+        },
+        {
+          "label": "metriche del ciclista",
+          "value": "Punti di stagione, punti di sprint, punti di arrampicata"
+        }
+      ],
+      "tips": [
+        "Usare statistiche prima di acquistare ciclisti.",
+        "Usa i profili del team per studiare i rivali."
+      ],
+      "relatedLinks": [
+        "Statistiche aperte",
+        "Apri classifica del team"
+      ]
+    },
+    "transfers-scouting": {
+      "category": "Mercato",
+      "title": "Trasferimenti, agenti liberi, negoziati e scouting",
+      "subtitle": "Come firmare i ciclisti e capire il mercato.",
+      "overview": "I trasferimenti sono dove si migliora la roster attraverso riders-list di trasferimento, agenti liberi, rapporti di scouting e assunzione del personale.",
+      "details": [
+        "I ciclisti iscritti al trasferimento appartengono a un'altra squadra. Prima fai un'offerta di trasferimento al club di vendita. Se accettato, negozia il contratto del ciclista.",
+        "Gli agenti liberi non hanno un club di vendita. Si negozia direttamente con il ciclista.",
+        "Le anteprime di negoziazione possono mostrare l'accettazione per cento, banda di accettazione, risultato previsto, punteggio stipendio, punteggio della durata, punteggio bonus, punteggio fee, punteggio di livello e ragioni di blocco duro.",
+        "Le ripetute offerte scadenti possono utilizzare tentativi e possono portare a rigetto, contro, scadenza o chiusura.",
+        "Lo scout riduce l'incertezza. I profili esterni del ciclista possono nascondere i dati esatti fino a quando non esiste un rapporto di scout.",
+        "I rapporti scout mostrano ciclista, scout, data di completamento, complessivamente, potenziale, punti di forza, note e stato Nuovo/Reviewed."
+      ],
+      "facts": [
+        {
+          "label": "Schede di trasferimento",
+          "value": "Cavalieri e personale"
+        },
+        {
+          "label": "Sottotab dei rider",
+          "value": "Elenco dei trasferimenti e agenti liberi"
+        },
+        {
+          "label": "Status di negoziato",
+          "value": ",,,,,,,,,,,,,"
+        },
+        {
+          "label": "Anni contrattuali in negoziazione di trasferimento UI",
+          "value": "1 04015 anni"
+        },
+        {
+          "label": "Filtri di scouting",
+          "value": "Tutti, nuovi, recensiti"
+        }
+      ],
+      "tips": [
+        "Scout cavalieri costosi prima di fare offerte.",
+        "Verificare lo stipendio e la durata, non solo il prezzo di trasferimento.",
+        "Non comprare i ciclisti che non si adattano al calendario della gara."
+      ],
+      "relatedLinks": [
+        "Apri trasferimenti",
+        "Apri scouting"
+      ]
+    },
+    "finance": {
+      "category": "Finanze",
+      "title": "Panoramica finanziaria, transazioni e imposte",
+      "subtitle": "Saldo, flusso di cassa operativo, righe di dichiarazione e audit fiscali mensili.",
+      "overview": "La finanza mostra la sicurezza a lungo termine del vostro club. I cavalieri forti non importa se il club non può pagare stipendi, tasse, politiche, attrezzature o obblighi obbligatori.",
+      "details": [
+        "La panoramica finanziaria separa il reddito operativo reale / spese dal movimento del debito. Esborsi di prestito di emergenza non è reddito operativo. Emergenza rimborso capitale prestito non è spese operative. Interessi di prestito di emergenza è spese operative.",
+        "Le transazioni mostrano il registro. Usali per spiegare ogni movimento di equilibrio: stipendi, pagamenti sponsor, imposte, infrastrutture, asset, attrezzature, campi di formazione, bonus e premi in denaro.",
+        "Le date di transazione visibili dovrebbero provenire da metadati in-game date, non da orari created_at reali.",
+        "L'imposta mostra il reddito imponibile, l'imposta prevista, già trattenuto, l'importo di adeguamento e la storia di revisione contabile.",
+        "Se il club guadagna grandi sponsor o premi di reddito, controllare la scheda Tassa per la ritenuta e risultati di audit mensili."
+      ],
+      "facts": [
+        {
+          "label": "Schede finanziarie",
+          "value": "Panoramica, sponsor, transazioni, imposte, politiche e operazioni di squadra"
+        },
+        {
+          "label": "Gruppo di flussi di cassa",
+          "value": "Giornaliero, settimanale, mensile"
+        },
+        {
+          "label": "Operazioni recenti",
+          "value": "Ultimi 30 giorni di gioco"
+        },
+        {
+          "label": "Archivio transazioni",
+          "value": "File più vecchie raggruppate per mese di gioco, precedenti 6 mesi di gioco"
+        },
+        {
+          "label": "Status di audit fiscale",
+          "value": "OK, aggiustato, rimborsato"
+        }
+      ],
+      "tips": [
+        "Open Finance prima di grandi spese.",
+        "Usa transazioni quando il saldo cambia inaspettatamente.",
+        "Non trattare i soldi di prestito di emergenza come profitto."
+      ],
+      "relatedLinks": [
+        "Apri finanza"
+      ]
+    },
+    "sponsors-policies": {
+      "category": "Finanze",
+      "title": "Sponsor, sponsor tecnici e politiche di squadra",
+      "subtitle": "Soldi garantiti, obiettivi, sconti, diritti di denominazione e standard operativi.",
+      "overview": "Gli sponsor portano reddito e obiettivi. Le politiche del team definiscono viaggi, alloggi, alloggi, nutrizione, recupero e bonus. Entrambi possono migliorare il club ma entrambi possono anche creare obblighi o costi.",
+      "details": [
+        "I principali sponsor sono i più visibili, che possono fornire denaro garantito, pool bonus e obiettivi.",
+        "Gli sponsor secondari forniscono un supporto aggiuntivo tramite slot e sono visualizzati senza logo/paese nell'interfaccia utente corrente.",
+        "Gli sponsor tecnici possono fornire il supporto in contanti, attrezzature di supporto budget e categoria attrezzature sconti.",
+        "Gli obiettivi dello sponsor possono essere programmati, controllati, raggiunti, persi o pagati. Possono collegarsi a gare di destinazione o viste sul calendario.",
+        "I contratti standard di sponsor danno soldi senza cambiare il nome della squadra. I contratti di nomi-diritti di solito pagano di più ma cambiano temporaneamente il nome della squadra durante la stagione.",
+        "Le politiche e le operazioni del team influenzano i costi ricorrenti e di viaggio. Migliore politica di viaggio, alloggio, nutrizione o recupero può aiutare il club, ma aumentare la spesa.",
+        "Le stime politiche mostrano totali settimanali e mensili, costi effettivi del mese scorso e previsioni di viaggio imminenti."
+      ],
+      "facts": [
+        {
+          "label": "Tipi di sponsor",
+          "value": "Principale, secondario, tecnico"
+        },
+        {
+          "label": "Principali obiettivi sponsorizzati",
+          "value": "Corsa di inizio, vittoria, podio, top 5, top 10, GC top 10/top 5, tappa top 5, vittoria di tappa, visibilità classificazione"
+        },
+        {
+          "label": "Operazioni politiche",
+          "value": "Voli, alloggio, trasporto a terra, logistica, alloggio per il personale"
+        },
+        {
+          "label": "Politiche del gruppo",
+          "value": "Alloggio, nutrizione, recupero, attrezzature per il personale, bonus per il cavaliere, bonus per il personale"
+        }
+      ],
+      "tips": [
+        "Controllare gli obiettivi dello sponsor prima di accettare le offerte.",
+        "Gli sponsor tecnici sono preziosi se si acquistano attrezzature.",
+        "Non aggiornare le politiche se il club non può permettersi costi ricorrenti."
+      ],
+      "relatedLinks": [
+        "Sponsor",
+        "Politiche del gruppo"
+      ]
+    },
+    "emergency-liquidation": {
+      "category": "Finanze",
+      "title": "Salvataggio di emergenza, debito e liquidazione del club",
+      "subtitle": "Cosa succede quando un club non può pagare obblighi obbligatori.",
+      "overview": "Il gioco ha un sistema di salvataggio e liquidazione. Il salvataggio di emergenza protegge temporaneamente un club, ma il mancato rispetto ripetuto di rispettare gli obblighi può chiudere il club.",
+      "details": [
+        "Se un club viene liquidato, il cruscotto viene sostituito da uno schermo liquidato Club.",
+        "Lo schermo spiega il conteggio dei soccorsi, la ragione di liquidazione e il tempo di chiusura quando disponibile.",
+        "Crea un nuovo club cancella gli ID del club memorizzati e invia l'utente alla creazione del club.",
+        "La squadra di riavvio è attualmente un segnaposto/avviso. La versione futura reimposta il club liquidato nella stessa gara con una squadra nuova, nessun personale e zero punti.",
+        "Il debito d'urgenza figura in Panoramica e finanza. Il capitale e gli interessi devono essere letti separatamente."
+      ],
+      "facts": [
+        {
+          "label": "Salvataggi a vita",
+          "value": "3"
+        },
+        {
+          "label": "Stato di liquidazione mostrato in UI",
+          "value": "Tutti e 3 i soccorsi utilizzati, poi un altro obbligo obbligatorio non può essere coperto"
+        },
+        {
+          "label": "Dopo la liquidazione",
+          "value": "Il club non può più eseguire azioni di gioco"
+        },
+        {
+          "label": "Coins/account",
+          "value": "Conto utente e Coins rimangono attive"
+        }
+      ],
+      "tips": [
+        "Evitare spese rischiose dopo che i soccorsi sono utilizzati.",
+        "Guarda i costi obbligatori come stipendi, tasse e politiche."
+      ]
+    },
+    "support-account": {
+      "category": "Supporto e account",
+      "title": "Profilo, Preferenze, Contatti, Forum e Bug Report",
+      "subtitle": "Impostazioni account, impostazioni notifica e canali di supporto.",
+      "overview": "Pagine di account e supporto aiutano gli utenti a gestire i dati del profilo, le preferenze di notifica, lo sviluppo di team di acquisto, inviti link, supporto Discord e segnalazioni di bug.",
+      "details": [
+        "Il mio profilo modifica i dati del profilo utente come nome utente, email, nome, cognome, città e paese. È separato dal marchio del club.",
+        "Preferenze memorizza le impostazioni di notifica e include le azioni di sviluppo di team di acquisto/status e Danger Zone.",
+        "Il team di spegnimento richiede un token di sessione valido e una conferma DELETE esatta.",
+        "Contattateci mostra un messaggio di ringraziamento e di modulo, ma la presentazione del backend deve ancora essere collegata per la produzione.",
+        "Forum è una pagina di avviso Discord. discussioni, domande e aiuto manuale della comunità dovrebbero andare a Discord.",
+        "I pulsanti di segnalazione dei bug dovrebbero includere il contesto corrente pagina/path. I buoni rapporti includono nome pagina, team, rider, gara, screenshot e passi di riproduzione."
+      ],
+      "facts": [
+        {
+          "label": "Regola nome utente profilo",
+          "value": "3 04024 caratteri, gli spazi diventano sottolineature, solo lettere/numeri/sottoscore"
+        },
+        {
+          "label": "Regola del compleanno",
+          "value": "Salvato una volta durante la registrazione e in sola lettura successivamente"
+        },
+        {
+          "label": "Conferma di arresto",
+          "value": "Tipo DELETE esattamente"
+        },
+        {
+          "label": "Contattaci",
+          "value": "Il modulo attuale è solo UI e mostra un messaggio di ringraziamento"
+        },
+        {
+          "label": "Forum",
+          "value": "Le discussioni della Comunità passano a Discord"
+        }
+      ],
+      "tips": [
+        "Usare Contattaci per i dettagli del supporto.",
+        "Usa Discord per l'aiuto della comunità.",
+        "Non pubblicare mai i dati sensibili di conto / pagamento pubblicamente."
+      ],
+      "relatedLinks": [
+        "Il mio profilo",
+        "Preferenze",
+        "Contattaci",
+        "Forum"
+      ]
+    },
+    "public-home-beta": {
+      "category": "Per iniziare",
+      "title": "Avviso pubblico a casa e Beta",
+      "subtitle": "Che cosa i giocatori vedono prima del login e perché la beta avviso importa.",
+      "overview": "La home page pubblica è il punto di ingresso prima del cruscotto. Può indirizzare gli utenti autenticati per creare-club o cruscotto e mostra informazioni di gioco pubblico dal vivo.",
+      "details": [
+        "Se l'utente è registrato e non ha club, l'app si sposta verso la creazione di club.",
+        "Se l'utente è registrato e ha già un club, l'app si sposta alla panoramica del cruscotto.",
+        "La comunicazione beta dice ai tester che il gioco è online per i test, ma non finale.",
+        "I widget della homepage possono mostrare ieri, oggi e domani le gare."
+      ],
+      "facts": [
+        {
+          "label": "Istantanea in diretta",
+          "value": "Tempo di gioco, manager attivi, squadre totali, gare e tappe"
+        },
+        {
+          "label": "Avviso Beta",
+          "value": "Sistemi di gioco, UI, bilanciamento e dati possono ancora cambiare"
+        }
+      ],
+      "tips": [
+        "Mantenere chiare le aspettative del giocatore durante la beta."
+      ]
+    },
+    "sidebar-footer-layout": {
+      "category": "Per iniziare",
+      "title": "Barra laterale, piè di pagina e blocco da cruscotto",
+      "subtitle": "Come il layout principale aiuta gli utenti a muoversi intorno al gioco.",
+      "overview": "La barra laterale sinistra è la navigazione principale in-game, mentre il piè di pagina mostra autorevole tempo di gioco dal vivo. Alcuni stati cruscotto possono bloccare l'interazione.",
+      "details": [
+        "Le descrizioni della barra laterale dicono agli utenti cosa fa ogni pagina.",
+        "Il tempo di gioco dei piè di pagina dovrebbe essere trattato come la fonte della verità per le scadenze.",
+        "Dashboard Locked significa che il giocatore non può apportare modifiche in quel momento.",
+        "Esci e segnala bug in diretta nella barra inferiore."
+      ],
+      "facts": [
+        {
+          "label": "Pagine laterali",
+          "value": "Panoramica, Squadra, Calendario, Preparazione della corsa, Classifica del team, Formazione, Attrezzature, Infrastrutture, Finanza, Trasferimenti, Statistiche"
+        },
+        {
+          "label": "Piedistallo",
+          "value": "Spettacoli Stagione, giorno della settimana, data e ora"
+        }
+      ],
+      "tips": [
+        "Quando un utente è confuso circa le scadenze, prima di dire loro di controllare tempo di gioco a piè di pagina."
+      ]
+    },
+    "profile-settings": {
+      "category": "Coins e account",
+      "title": "Il mio profilo",
+      "subtitle": "Dati del profilo utente, nome utente, email e password.",
+      "overview": "Il mio profilo modifica il profilo dell'account utente. È separato dal nome del team, dal logo del team e dalla maglia.",
+      "details": [
+        "Il nome utente è normalizzato rifilando spazi, cambiando spazi per sottolineare e rimuovendo caratteri non supportati.",
+        "Le modifiche e-mail utilizzano il sistema auth e potrebbero richiedere conferma.",
+        "Nome, cognome, città e paese sono campi di profilo opzionali.",
+        "La password può essere cambiata dalla pagina del profilo con conferma.",
+        "Il compleanno viene visualizzato ma non salvato di nuovo dal mio profilo."
+      ],
+      "facts": [
+        {
+          "label": "Regola nome utente",
+          "value": "3 040224 caratteri; lettere, numeri e sottolineature"
+        },
+        {
+          "label": "Regola del compleanno",
+          "value": "Salvato una volta durante la registrazione e in sola lettura successivamente"
+        }
+      ],
+      "tips": [
+        "Dite agli utenti che il nome del profilo e il nome del club sono diversi."
+      ],
+      "relatedLinks": [
+        "Il mio profilo"
+      ]
+    },
+    "preferences-notifications": {
+      "category": "Coins e account",
+      "title": "Preferenze e impostazioni di notifica",
+      "subtitle": "Dove i giocatori controllano le notifiche e le opzioni speciali di squadra/account.",
+      "overview": "Preferenze memorizza i controlli di notifica, sviluppo di team di acquisto / stato e azioni zona di pericolo.",
+      "details": [
+        "Attivazione di notifica decide quali gruppi di notifica il giocatore vuole ricevere.",
+        "Lo stato del team di sviluppo mostra requisiti, costi delle Coins, equilibrio e informazioni sulla finestra di movimento.",
+        "Dopo l'acquisto di Developing Team, il contesto attivo del club è bloccato al club principale.",
+        "Il team di spegnimento utilizza un backend Edge Function e richiede il token di sessione attivo.",
+        "Il team di riavvio è attualmente un segnaposto/avviso di azione e non dovrebbe essere descritto come pienamente attivo."
+      ],
+      "facts": [
+        {
+          "label": "Conservazione delle notifiche",
+          "value": "Impostazioni delle preferenze locali"
+        },
+        {
+          "label": "Sviluppo di RPC team",
+          "value": "get_developing_team_status e purchase_developing_team"
+        },
+        {
+          "label": "Conferma di arresto",
+          "value": "L'utente deve digitare DELETE"
+        }
+      ],
+      "tips": [
+        "Usa Preferenze quando gli utenti si lamentano di troppe notifiche."
+      ],
+      "relatedLinks": [
+        "Preferenze"
+      ]
+    },
+    "invite-friends": {
+      "category": "Coins e account",
+      "title": "Invita amici",
+      "subtitle": "Collegamento di riferimento, stato di riferimento e premio di Coins.",
+      "overview": "Invita Amici crea un link di referral e mostra attività di referral. La ricompensa viene concessa quando un amico completa i passaggi richiesti.",
+      "details": [
+        "La pagina carica il codice attuale di riferimento club dalla tabella club.",
+        "Il link di rinvio utilizza l'origine del sito web corrente più la rotta di rinvio.",
+        "In attesa significa che un amico ha creato un club ma non ha ancora acquistato il primo pacchetto di Coins.",
+        "Completato significa che il primo acquisto di Coins è avvenuto e la ricompensa è stata concessa.",
+        "Gli identificatori utente e club sono mascherati per la privacy."
+      ],
+      "facts": [
+        {
+          "label": "URL di riferimento",
+          "value": "/#/referral/:code"
+        },
+        {
+          "label": "Premio",
+          "value": "40 Coins"
+        },
+        {
+          "label": "Status",
+          "value": "In attesa, completata, respinta"
+        }
+      ],
+      "tips": [
+        "Usa Invita gli amici per far crescere la comunità."
+      ],
+      "relatedLinks": [
+        "Invita amici"
+      ]
+    },
+    "pro-packages-deep": {
+      "category": "Coins e account",
+      "title": "Negozio di pacchetti di Coins",
+      "subtitle": "Prezzi dei pacchetti, checkout e storia dell'acquisto.",
+      "overview": "Coin Packages carica pacchetti dal database, mostra il bilanciamento e inizia il checkout tramite un Edge Function.",
+      "details": [
+        "I prezzi esatti sono basati su database e non devono essere codificati in modo rigido nel manuale.",
+        "Il negozio calcola il prezzo per Coins e può evidenziare il miglior valore.",
+        "Tagline pacchetto sono generati da quantità di Coins, come Starter boost o Best per il gioco a lungo termine.",
+        "La cronologia degli acquisti non mostra intenzionalmente le informazioni tecniche di sessione Stripe.",
+        "Coins sono valuta del conto, non contanti club."
+      ],
+      "facts": [
+        {
+          "label": "Fonte del pacchetto",
+          "value": "coin_packages"
+        },
+        {
+          "label": "Fonte di bilancio",
+          "value": "get_my_coin_status"
+        },
+        {
+          "label": "Checkout",
+          "value": "crea-coin-checkout"
+        },
+        {
+          "label": "Cronologia acquisti",
+          "value": "user_coin_ledger reason='acquist'"
+        }
+      ],
+      "tips": [
+        "Per i prezzi attuali, fidati della pagina Pacchetti Coins dal vivo."
+      ],
+      "relatedLinks": [
+        "Pacchetti di Coins"
+      ]
+    },
+    "contact-forum-support": {
+      "category": "Supporto e account",
+      "title": "Contattaci, Forum e Discord",
+      "subtitle": "Dove i giocatori fanno domande o segnalano problemi.",
+      "overview": "Contattaci, il Forum e Discord sono punti di supporto/ingresso alla comunità. Contattaci ora è solo UI; il Forum punta gli utenti a Discord.",
+      "details": [
+        "Contattaci ha nome, email e campi di messaggi e mostra un messaggio di ringraziamento dopo l'invio.",
+        "Forum spiega che non ci sarà un forum in-game in quella pagina.",
+        "Discord è il luogo della comunità per domande e aiuto manuale.",
+        "I rapporti di bug dovrebbero includere pagina, comportamento atteso, comportamento effettivo e screenshot."
+      ],
+      "facts": [
+        {
+          "label": "Contattaci",
+          "value": "Solo forma UI nel codice corrente"
+        },
+        {
+          "label": "Forum",
+          "value": "Pagina di avviso Discord"
+        },
+        {
+          "label": "Uso Discord",
+          "value": "Comunità, aiuto, manuali e questioni"
+        }
+      ],
+      "tips": [
+        "Non promettete Contattateci la consegna del backend fino a quando non sarà cablata."
+      ],
+      "relatedLinks": [
+        "Contattaci",
+        "Forum"
+      ]
+    },
+    "club-creation-route": {
+      "category": "Identità del club",
+      "title": "Creazione di club e primo controllo Club",
+      "subtitle": "Come gli utenti autenticati sono indirizzati nel gioco.",
+      "overview": "Dopo il login, l'app controlla se l'utente ha un club. Gli utenti senza un club vanno a Crea Club; gli utenti con un club vanno a Panoramica.",
+      "details": [
+        "La homepage pubblica chiama get_my_club_id per scegliere il prossimo percorso.",
+        "La creazione del club è separata dalla creazione del profilo.",
+        "Avviare denaro e risorse di partenza esatte dovrebbe provenire da backend config, non testo manuale indovinato.",
+        "Dopo la creazione del club, le pagine del cruscotto normalmente risolvono automaticamente il club principale."
+      ],
+      "facts": [
+        {
+          "label": "Nessun club",
+          "value": "Percorso per /creare-club"
+        },
+        {
+          "label": "Ha club",
+          "value": "Instradamento verso /dashboard/overview"
+        }
+      ],
+      "tips": [
+        "Non inventare il denaro iniziale a meno che non sia fornita la configurazione del backend."
+      ]
+    },
+    "customize-team-deep": {
+      "category": "Identità del club",
+      "title": "Personalizza squadra",
+      "subtitle": "Branding, colori della squadra, logo, logo base e jersey.",
+      "overview": "Personalizza il team gestisce il nome del club, i colori primari/secondari, il logo e la configurazione della maglia domestica.",
+      "details": [
+        "I loghi caricati vengono convertiti in PNG nel browser prima dell'archiviazione.",
+        "Rimozione di un logo ripristina un logo di base in stile schermato generato invece di lasciare nessun logo.",
+        "I colori del team sono convalidati come colori esadecimali.",
+        "Jersey config è memorizzato in team_kits con nome home.",
+        "Una maglia può essere generica, da un pool generico, un URL di immagine remoto o un'immagine caricata."
+      ],
+      "facts": [
+        {
+          "label": "Tipi di logo",
+          "value": "JPG, PNG, WEBP"
+        },
+        {
+          "label": "Logo max",
+          "value": "0.5 MB"
+        },
+        {
+          "label": "Jersey max",
+          "value": "1 MB e 512 × 512 px"
+        },
+        {
+          "label": "Secchio di logo",
+          "value": "club-logos"
+        }
+      ],
+      "tips": [
+        "Utilizzare piccoli loghi puliti perché appaiono in piccole aree UI."
+      ],
+      "relatedLinks": [
+        "Personalizza squadra"
+      ]
+    },
+    "branding-locks": {
+      "category": "Identità del club",
+      "title": "Branding Locks da diritti di denominazione",
+      "subtitle": "Perché gli utenti potrebbero non essere in grado di modificare un nome di squadra o logo.",
+      "overview": "I nomi-destra dello sponsor possono bloccare temporaneamente i campi di branding e cambiare il nome del club visualizzato.",
+      "details": [
+        "Personalizza il team legge la serratura prima di consentire le modifiche.",
+        "locked_by_sponsor significa che l'identità del club è controllata da un accordo sponsor.",
+        "Gli sponsor standard normalmente non rinominano la squadra.",
+        "I nomi-diritti sponsor di solito pagano di più, ma influenzano l'identità pubblica.",
+        "Gli helper di nome-display dovrebbero essere usati nelle classifiche/profili quando i nomi degli sponsor contano."
+      ],
+      "facts": [
+        {
+          "label": "Blocca sorgente di stato",
+          "value": "club_branding_lock_status_v1"
+        },
+        {
+          "label": "Campi possibili",
+          "value": "Nome, colori e logo"
+        },
+        {
+          "label": "Mostra i nomi",
+          "value": "Nome originale, stagione e completo"
+        }
+      ],
+      "tips": [
+        "Avvisa i giocatori prima che firmino accordi con i diritti di nomina."
+      ]
+    },
+    "team-profile-deep": {
+      "category": "Identità del club",
+      "title": "Profilo della squadra",
+      "subtitle": "Pagina pubblica del club con identità, sponsor, roster e punti.",
+      "overview": "Profilo di squadra consente agli utenti di ispezionare un altro club o il proprio club da classifiche, gare e statistiche.",
+      "details": [
+        "La pagina mostra se il club è utente o AI controllato.",
+        "Può mostrare il conteggio attivo degli sponsor, i totali mensili degli sponsor e il logo principale degli sponsor.",
+        "Può mostrare l'anteprima del kit da righe di anteprima del kit team_kits o AI.",
+        "Può mostrare i risultati della classifica pubblica e recenti gare.",
+        "Esso include un pulsante di report giocatore / squadra per la moderazione."
+      ],
+      "facts": [
+        {
+          "label": "Via",
+          "value": "/dashboard/teams/:clubId"
+        },
+        {
+          "label": "Mostra",
+          "value": "Logo, paese, livello, divisione, sponsor, kit, roster, punti e gare recenti"
+        }
+      ],
+      "tips": [
+        "Usa il Team Profile per studiare i rivali prima di gare importanti."
+      ]
+    },
+    "overview-deep": {
+      "category": "Cruscotto",
+      "title": "Guida generale approfondita",
+      "subtitle": "Tutti i blocchi principali sul cruscotto manager.",
+      "overview": "Panoramica è la sala di controllo quotidiana che combina avvisi, KPI, impulsi di squadra, finanza, debito, mondo delle corse, operazioni, notizie e dati sponsor.",
+      "details": [
+        "Gli avvisi mostrano cosa serve prima attenzione.",
+        "I KPI riassumono lo stato del club in schede compatte.",
+        "Le schede operative mostrano sistemi attivi come formazione, infrastrutture, medica, sponsor, posta in arrivo, finanza o eventi di sistema.",
+        "Squad Pulse riassume fitness, morale, disponibilità, disponibilità e rischio contrattuale.",
+        "Finanza La salute mostra il saldo, il reddito operativo / spese, sponsor reddito, costi politici e previsioni di viaggio.",
+        "Emergency Debt Health mostra il conteggio dei soccorsi, il capitale in essere, il rischio di rimborso successivo e liquidazione.",
+        "I pannelli mondiali di gara mostrano oggi le gare, le prossime gare e le notizie."
+      ],
+      "facts": [
+        {
+          "label": "Blocchi di base",
+          "value": "Avvisi, KPI, operazioni, impulsi di squadra, calendario, notizie, finanza, debito d'emergenza"
+        },
+        {
+          "label": "Uso principale",
+          "value": "Checklist giornaliero"
+        }
+      ],
+      "tips": [
+        "Se Panoramica mostra il pericolo finanziario, aprire Finanza prima di fare qualsiasi altra cosa."
+      ],
+      "relatedLinks": [
+        "Panoramica"
+      ]
+    },
+    "overview-race-world": {
+      "category": "Cruscotto",
+      "title": "Panoramica del mondo della corsa",
+      "subtitle": "Oggi le corse dei killer, il prossimo programma e le notizie del mondo.",
+      "overview": "La pagina Panoramica include dati orientati al mondo in modo che gli utenti possano seguire il mondo ciclistico anche quando il proprio team non sta correndo.",
+      "details": [
+        "Oggi le corse di sugli sugli sugli sugli utenti aiutano a vedere cosa sta accadendo.",
+        "Il prossimo programma aiuta a pianificare l'attenzione quasi futura.",
+        "Le notizie mondiali fanno sentire il mondo di gioco attivo.",
+        "Collegamenti correlati possono aprire gare o altre pagine di gioco.",
+        "Usare i campi testo/dettaglio espanso quando gli utenti hanno bisogno di più contesto."
+      ],
+      "facts": [
+        {
+          "label": "Dati relativi alla gara giornaliera",
+          "value": "Titolo, sottotitolo, time label, paese e link"
+        },
+        {
+          "label": "Dati di attualità",
+          "value": "Titolo, sottotitolo, ora, dettagli e link correlati"
+        }
+      ],
+      "tips": [
+        "Usa Panoramica per la consapevolezza, poi apri pagine dettagliate per le decisioni."
+      ]
+    },
+    "notification-center-deep": {
+      "category": "Cruscotto",
+      "title": "Centro notifiche",
+      "subtitle": "Gestione delle notifiche non letta/letta con ricerca e categorie.",
+      "overview": "Il centro di notifica completa aiuta gli utenti a gestire le notifiche di gioco / admin senza perdere importanti scadenze.",
+      "details": [
+        "Le notifiche possono essere cercate per titolo, messaggio, tipo, sorgente, gruppo di preferenze e tempo creato.",
+        "La categoria è derivata dal gruppo di preferenze, dal codice sorgente o dal codice tipo.",
+        "I modelli possono aggiungere immagine, testo introduttivo, dettagli, testo extra e azioni.",
+        "Le azioni possono collegarsi direttamente alla preparazione della gara, alla finanza, alle infrastrutture, ai trasferimenti, ai profili dei ciclisti o alle gare.",
+        "Le preferenze possono impedire che alcuni tipi di notifica mostrino."
+      ],
+      "facts": [
+        {
+          "label": "Schede",
+          "value": "Non letta e letta"
+        },
+        {
+          "label": "Strumenti",
+          "value": "Ricerca, categoria filtro, paginazione, pulsanti azione"
+        },
+        {
+          "label": "Dimensione del prelievo locale",
+          "value": "Fino a 500 per scheda nella pagina corrente"
+        }
+      ],
+      "tips": [
+        "Leggi le notifiche prima delle scadenze della gara."
+      ],
+      "relatedLinks": [
+        "Notifiche"
+      ]
+    },
+    "notification-examples": {
+      "category": "Cruscotto",
+      "title": "Esempi di notifica importanti",
+      "subtitle": "Gli utenti degli eventi non devono ignorare.",
+      "overview": "Le notifiche possono rappresentare importanti cambiamenti di stato nella preparazione delle gare, nella finanza, nelle infrastrutture, nei trasferimenti, nello sviluppo di team e sponsor.",
+      "details": [
+        "Le notifiche di preparazione della gara avvisano quando i piani o i piani di fase hanno bisogno di azione.",
+        "Le notifiche della finestra di sviluppo del team indicano agli utenti quando è possibile il movimento.",
+        "Le notifiche di completamento dell'infrastruttura indicano agli utenti che un impianto/asset è pronto.",
+        "Le notifiche di prestito d'urgenza non consentono al club di coprire un costo obbligatorio.",
+        "Rider notifiche di rilascio link al profilo del ciclista o free-agent mercato.",
+        "Le notifiche oggettive dello sponsor possono collegarsi al calendario o alla gara di destinazione."
+      ],
+      "facts": [
+        {
+          "label": "Esempi",
+          "value": "Racing plan promemoria, piano di scena promemoria, sviluppo finestra, prestito di emergenza, struttura completa, rilascio rider, obiettivo sponsor"
+        }
+      ],
+      "tips": [
+        "Trattare le notifiche finanziarie/deadline come priorità assoluta."
+      ]
+    },
+    "inbox-deep": {
+      "category": "Cruscotto",
+      "title": "Posta in arrivo",
+      "subtitle": "Conversazioni dirette e amministrative.",
+      "overview": "La Posta in arrivo è per le conversazioni, a differenza delle notifiche che sono avvisi di sistema/gioco.",
+      "details": [
+        "L'elenco delle discussioni mostra nome, oggetto, anteprima, ultima ora del messaggio e conteggio non letto.",
+        "Filtri di ricerca thread per nome, oggetto e anteprima.",
+        "I messaggi vengono caricati da un id della conversazione e poi letti con un segno.",
+        "Se l'utente si apre comporre un contatto diretto esistente, la conversazione esistente viene riutilizzata.",
+        "Alcune conversazioni non possono essere risposto a seconda di can_reply."
+      ],
+      "facts": [
+        {
+          "label": "Tipi di conversazione",
+          "value": "Diretto e diretto amministratore"
+        },
+        {
+          "label": "Leggi logica",
+          "value": "Aprendo un thread segna la lettura"
+        },
+        {
+          "label": "Componi obiettivo",
+          "value": "Può essere inizializzato da sessionStorage"
+        }
+      ],
+      "tips": [
+        "Usa Posta in arrivo per conversazioni, notifiche per eventi di gioco."
+      ],
+      "relatedLinks": [
+        "Posta in arrivo"
+      ]
+    },
+    "top-menu": {
+      "category": "Cruscotto",
+      "title": "Menu in alto",
+      "subtitle": "Account, Coins, notifiche e pagine di utilità.",
+      "overview": "Il menu in alto a destra contiene pagine di account e supporto che non sono tutte visibili nella barra laterale sinistra.",
+      "details": [
+        "Gli utenti possono raggiungere le impostazioni del profilo e gli strumenti di password dal menu.",
+        "Pacchetti di Coins e inviti Gli amici sono strumenti di account/Coins.",
+        "Preferenze controlla le impostazioni di notifica e lo sviluppo-team acquisto.",
+        "Aiuto e manuale dovrebbero collegarsi a questa pagina.",
+        "Il logout termina la sessione corrente."
+      ],
+      "facts": [
+        {
+          "label": "Elementi tipici",
+          "value": "In arrivo, profilo, personalizzare team, preferenze, aiuto, contatto, pacchetti di Coins, invitare amici, disconnessione"
+        }
+      ],
+      "tips": [
+        "Rendere facile trovare Aiuto / manuale dal menu."
+      ]
+    },
+    "first-squad-deep": {
+      "category": "Ciclisti",
+      "title": "Prima squadra",
+      "subtitle": "Principale rider roster e visualizzazioni lista.",
+      "overview": "Prima Squadra è dove gli utenti ispezionano il loro roster principale, informazioni finanziarie, competenze e forma.",
+      "details": [
+        "Generale mostra identità, ruolo, età, generale e status.",
+        "I dati finanziari mostrano stipendio, valore di mercato e dati contrattuali.",
+        "Le competenze mostrano attributi speciali.",
+        "Il modulo e lo sviluppo mostrano fatica, morale, disponibilità, potenziale e informazioni relative allo sviluppo.",
+        "Il riepilogo del cruscotto può mostrare vittorie, podi, primi 10, ultima gara e selezione prossima gara."
+      ],
+      "facts": [
+        {
+          "label": "Prima Squadra max",
+          "value": "18 cavalieri"
+        },
+        {
+          "label": "Vista",
+          "value": "Generalità, finanziari, competenze, forma e sviluppo"
+        }
+      ],
+      "tips": [
+        "Aprire il profilo del ciclista prima di decisioni importanti."
+      ],
+      "relatedLinks": [
+        "Rosa"
+      ]
+    },
+    "rider-skills-deep": {
+      "category": "Ciclisti",
+      "title": "Capacità di cavaliere e significato specialistico",
+      "subtitle": "Come gli attributi dovrebbero essere interpretati.",
+      "overview": "Nel complesso è un riassunto. Le competenze specialistiche decidono cosa un ciclista può fare in gare e situazioni specifiche.",
+      "details": [
+        "Sprint conta di più nelle finiture veloci e nei ruoli di sprint.",
+        "Arrampicare sulle montagne e sui profili in salita.",
+        "La prova temporale è importante in situazioni ITT/TTT.",
+        "La resistenza aiuta nelle lunghe giornate e nelle lunghe gare.",
+        "Piatto aiuta su strade piane, posizionamento e velocità costante.",
+        "Il recupero è particolarmente importante durante le gare di palcoscenico.",
+        "La resistenza sostiene lo sforzo sostenuto duro.",
+        "Il QI di gara rappresenta la qualità delle decisioni tattiche.",
+        "Il lavoro di squadra aiuta i cavalieri a sostenere i piani di squadra."
+      ],
+      "facts": [
+        {
+          "label": "Attributi",
+          "value": "Sprint, arrampicata, cronometro, resistenza, piatto, recupero, resistenza, gara IQ, lavoro di squadra"
+        },
+        {
+          "label": "Altri valori importanti",
+          "value": "Potenziale, morale, fatica, affilato"
+        }
+      ],
+      "tips": [
+        "Costruire una squadra equilibrata invece di acquistare solo ciclisti di alto livello."
+      ]
+    },
+    "rider-profile-deep": {
+      "category": "Ciclisti",
+      "title": "Guida profonda profilo del ciclista",
+      "subtitle": "Proprio ciclista, ciclista esterno, confrontare e la storia viste.",
+      "overview": "Il profilo del ciclista cambia a seconda che il ciclista appartenga al tuo club o sia esterno.",
+      "details": [
+        "Panoramica mostra identità, idoneità, disponibilità, competenze chiave e informazioni club.",
+        "Il contratto mostra lo stato del contratto e le azioni di negoziazione/rilascio per i ciclisti di proprietà.",
+        "La formazione mostra le informazioni attuali sulla formazione per i ciclisti di proprietà.",
+        "Confronta apre un percorso di confronto motociclista side-by-side.",
+        "La storia può mostrare la storia della stagione/corsa e informazioni sulla carriera.",
+        "I profili esterni possono mostrare azioni di report Scout e lo stato di mercato."
+      ],
+      "facts": [
+        {
+          "label": "Schede proprie",
+          "value": "Panoramica, Contratto, Formazione, Confronta, Storia"
+        },
+        {
+          "label": "Comportamento esterno",
+          "value": "Può nascondere gli attributi esatti fino all'esistenza dello scouting"
+        }
+      ],
+      "tips": [
+        "Non fare affidamento su attributi esterni esatti fino a quando lo scouting non li conferma."
+      ]
+    },
+    "fitness-health-deep": {
+      "category": "Ciclisti",
+      "title": "Fitness, affaticamento, lesioni e malattie",
+      "subtitle": "Perché un cavaliere forte può ancora essere una cattiva selezione.",
+      "overview": "Disponibilità e fatica possono ridurre il valore pratico della gara anche quando la qualità complessiva e le abilità sono elevate.",
+      "details": [
+        "Un cavaliere in forma può ancora avere un'elevata fatica.",
+        "I ciclisti feriti o malati richiedono un recupero medico piuttosto che una normale selezione di corse.",
+        "Non completamente in forma significa che il ciclista può correre ma non è in perfetta disponibilità.",
+        "Allenamento duro e calendari di gara pesanti aumentano entrambi il rischio di sovraccarico.",
+        "Il personale medico e i sistemi di recupero possono migliorare la gestione dei problemi sanitari."
+      ],
+      "facts": [
+        {
+          "label": "Disponibilità",
+          "value": "Adatto, non perfettamente in forma, ferito, malato"
+        },
+        {
+          "label": "Affaticamento",
+          "value": "Rappresenta stanchezza e stress accumulati"
+        }
+      ],
+      "tips": [
+        "Proteggi i ciclisti chiave prima di gare importanti."
+      ]
+    },
+    "race-sharpness-deep": {
+      "category": "Ciclisti",
+      "title": "Race Sharpness",
+      "subtitle": "Ritmo di corsa contro sovraccarico.",
+      "overview": "La nitidezza della gara premia il ritmo di corse ma deve essere bilanciata con fatica e freschezza.",
+      "details": [
+        "La precisione della corsa non è la stessa di allenamento.",
+        "Un ciclista riposato potrebbe ancora mancare di ritmo di gara.",
+        "Un cavaliere affilato può ancora essere troppo stanco per eseguire bene.",
+        "Lo stato migliore dipende dal prossimo ruolo di ciclista e di gara di destinazione."
+      ],
+      "facts": [
+        {
+          "label": "Troppo poca corsa",
+          "value": "Può ridurre la nitidezza competitiva"
+        },
+        {
+          "label": "Troppe corse",
+          "value": "Può creare affaticamento e sovraccarico"
+        }
+      ],
+      "tips": [
+        "Usare gare più piccole per preparare i ciclisti chiave quando appropriato."
+      ]
+    },
+    "contracts-renewals-release": {
+      "category": "Ciclisti",
+      "title": "Contratti di rider, rinnovo e rilascio",
+      "subtitle": "Come i contratti di proprietà del ciclista sono gestiti.",
+      "overview": "I profili dei ciclisti di proprietà includono i dati contrattuali e possono consentire azioni di rinnovo, rilascio o trasferimento.",
+      "details": [
+        "I rinnovi devono essere presi in considerazione prima che il contratto si avvicini troppo alla scadenza.",
+        "I contratti lunghi riducono il rischio di scadenza immediata, ma creano impegni salariali.",
+        "Rilasciare un ciclista può avere conseguenze finanziarie o di squadra.",
+        "I ciclisti iscritti all'elenco dei trasferimenti seguono il flusso di negoziazione dei trasferimenti invece di una semplice release.",
+        "Tenete a mente la capacità della Prima Squadra prima di firmare nuovi ciclisti."
+      ],
+      "facts": [
+        {
+          "label": "Settori contrattuali",
+          "value": "Salario, inizio stagione, fine stagione, status"
+        },
+        {
+          "label": "Fattori decisionali",
+          "value": "Stipendio, durata, interesse club/tier e disponibilità del ciclista"
+        }
+      ],
+      "tips": [
+        "Controllare la vista finanziaria e il profilo del ciclista insieme prima del rinnovo."
+      ]
+    },
+    "developing-team-deep": {
+      "category": "Ciclisti",
+      "title": "Guida profonda del team di sviluppo",
+      "subtitle": "Regole di acquisto, stato, roster e movimento-finestra.",
+      "overview": "La squadra di sviluppo è gestita separatamente, ma rimane collegato al club principale e conto.",
+      "details": [
+        "Lo stato di acquisto viene caricato dal backend e dipende dai requisiti e dal saldo delle Coins.",
+        "Il contesto principale del club viene ripristinato dopo aver acquistato il team di sviluppo.",
+        "Promuovere un ciclista richiede sia una finestra di movimento aperto e la capacità di First Squad gratuita.",
+        "Età 24+ ciclisti dovrebbero essere spostati quando il gioco lo permette.",
+        "Se una finestra è chiusa, l'interfaccia utente può avvertire gli utenti di agire nella finestra successiva."
+      ],
+      "facts": [
+        {
+          "label": "Roster max",
+          "value": "8"
+        },
+        {
+          "label": "Movimento",
+          "value": "Solo durante le finestre di movimento aperto"
+        },
+        {
+          "label": "Avviso per il ciclista più anziano",
+          "value": "Età 24+"
+        }
+      ],
+      "tips": [
+        "Pianificare il movimento prima che l'avviso di età diventa urgente."
+      ],
+      "relatedLinks": [
+        "Preferenze"
+      ]
+    },
+    "staff-roles-deep": {
+      "category": "Ciclisti",
+      "title": "Guida profonda dei ruoli del personale",
+      "subtitle": "Ciò che ogni personale contribuisce.",
+      "overview": "I ruoli del personale supportano diverse parti dello sviluppo del ciclista, preparazione della gara, assistenza medica, scouting e attrezzature.",
+      "details": [
+        "Head Coach guida la qualità di formazione e lo sviluppo.",
+        "I formatori ampliano il supporto di allenamento e la capacità del ciclista.",
+        "Il Direttore dello Sport supporta tattiche, piani di gara e suggerimenti di preparazione della gara.",
+        "Team Doctor e Physio supportano la salute e la guarigione.",
+        "Nutrizionista sostiene sistemi di nutrizione / recupero.",
+        "Meccanica supporta le riparazioni e i sistemi tecnici.",
+        "Scout / Analyst supporta informazioni esterne del ciclista.",
+        "U23 Head Coach supporta lo sviluppo di ciclisti di team."
+      ],
+      "facts": [
+        {
+          "label": "Ruolo di esecuzione",
+          "value": "Coach capo, allenatore, direttore sportivo"
+        },
+        {
+          "label": "Ruolo medico",
+          "value": "Team Doctor, Physio, Nutrizionista"
+        },
+        {
+          "label": "Ruolo tecnico/conoscenza",
+          "value": "Meccanico, Scout / Analista, U23 Head Coach"
+        }
+      ],
+      "tips": [
+        "Assumi il ruolo del personale che risolve l'attuale collo di bottiglia del club."
+      ]
+    },
+    "staff-capacity-deep": {
+      "category": "Ciclisti",
+      "title": "Capacità e infrastrutture del personale",
+      "subtitle": "Perché un ruolo del personale può essere bloccato anche quando si dispone di contanti.",
+      "overview": "La capacità del personale è collegata alle strutture. Gli aggiornamenti dell'infrastruttura possono sbloccare più posizioni del personale.",
+      "details": [
+        "Un'offerta di mercato del personale non è sufficiente se la capacità di ruolo è già piena.",
+        "Le pagine dell'infrastruttura mostrano slot usate e max per gruppi di personale.",
+        "I piani di aggiornamento dovrebbero considerare sia i benefici immediati che le future esigenze di assunzione.",
+        "Noleggio senza controllo capacità può perdere tempo di pianificazione."
+      ],
+      "facts": [
+        {
+          "label": "Personale di formazione",
+          "value": "Collegato al centro di formazione / Club House regole"
+        },
+        {
+          "label": "Personale medico",
+          "value": "Collegato al centro medico"
+        },
+        {
+          "label": "Meccanica",
+          "value": "Collegato al laboratorio di meccanica"
+        },
+        {
+          "label": "Scouting",
+          "value": "Collegato all'ufficio di scouting"
+        }
+      ],
+      "tips": [
+        "Controllare l'infrastruttura prima di assumere un membro del personale in più."
+      ]
+    },
+    "staff-courses-deep": {
+      "category": "Ciclisti",
+      "title": "Corsi di perfezionamento",
+      "subtitle": "Lavoro temporaneo di sviluppo del personale.",
+      "overview": "I corsi del personale costano soldi, prendono giorni di gioco e possono migliorare gli attributi del personale selezionato.",
+      "details": [
+        "Solo il personale idoneo dovrebbe iniziare un corso.",
+        "L'anteprima del dettaglio del corso deve essere controllata prima di pagare.",
+        "I corsi attivi mostrano progressi e informazioni rimanenti/completamento.",
+        "I corsi completati possono essere mostrati nella storia recente.",
+        "I costi del corso dovrebbero essere pianificati con Finanza."
+      ],
+      "facts": [
+        {
+          "label": "Dati del corso",
+          "value": "Titolo, categoria, durata, costo e attributi"
+        },
+        {
+          "label": "Stato di corso",
+          "value": "Attivo e ultimato"
+        }
+      ],
+      "tips": [
+        "Formare personale prezioso a lungo termine, non ogni assunzione temporanea."
+      ]
+    },
+    "regular-training-deep": {
+      "category": "Allenamento",
+      "title": "Guida pratica regolare per la formazione",
+      "subtitle": "Allenamento di default del team, piani individuali e intensità.",
+      "overview": "L'addestramento regolare è il normale sistema di sviluppo continuo per i cavalieri fuori dai campi.",
+      "details": [
+        "I default della squadra danno alla squadra un approccio di addestramento di base.",
+        "Piani individuali sovrascrivere il team predefinito quando un ciclista ha bisogno di lavoro specializzato.",
+        "La forte intensità aumenta lo stress da allenamento e il rischio di affaticamento.",
+        "L'intensità di recupero è utile intorno a blocchi di gara duri.",
+        "L'addestramento dovrebbe seguire il ruolo del ciclista e gli obiettivi del calendario."
+      ],
+      "facts": [
+        {
+          "label": "Obiettivi",
+          "value": "generale, sprint, arrampicata, piatto, prova a tempo, resistenza, resistenza, gara IQ, lavoro di squadra"
+        },
+        {
+          "label": "Intensità",
+          "value": "Recupero, luce, normale, duro"
+        }
+      ],
+      "tips": [
+        "Non usare Hard come default permanente per tutta la squadra."
+      ]
+    },
+    "training-camps-deep": {
+      "category": "Allenamento",
+      "title": "Guida profonda dei campi di addestramento",
+      "subtitle": "Località del campeggio, citazioni, meteo e logica di prenotazione.",
+      "overview": "I campi di formazione sono blocchi di sviluppo più forti pianificati con viaggi, alloggi, tasse di campeggio e effetti di formazione speciali.",
+      "details": [
+        "I luoghi del campeggio hanno preferenze di qualità, altitudine, terreno e calendario.",
+        "Le settimane preferite possono migliorare l'esperienza del campo mentre le settimane rischiose possono ridurlo.",
+        "Le settimane chiuse impediscono la prenotazione.",
+        "Le citazioni dovrebbero essere recensite prima di impegnarsi perché il viaggio e l'alloggio possono essere grandi costi.",
+        "Il tempo può ridurre il valore dell'allenamento o creare sessioni perse.",
+        "Il personale e la selezione del ciclista influenzano l'esito del campo."
+      ],
+      "facts": [
+        {
+          "label": "Tipi di campo",
+          "value": "Generale, sprint, arrampicata, piatto, cronometro"
+        },
+        {
+          "label": "Componenti delle citazioni",
+          "value": "Viaggi, alloggio, tassa di campeggio, logistica, costo totale"
+        },
+        {
+          "label": "Meteo",
+          "value": "Può cambiare modificatore, la possibilità di perdere giorno e avvisi"
+        }
+      ],
+      "tips": [
+        "Prenotare campi intorno ai principali obiettivi, non a caso."
+      ]
+    },
+    "current-camp-deep": {
+      "category": "Allenamento",
+      "title": "Attuale campo di formazione",
+      "subtitle": "Come leggere una pagina attiva del campo.",
+      "overview": "Una pagina attiva del campo mostra i partecipanti, il personale, il tempo, il piano di formazione, i rapporti giornalieri e i progressi.",
+      "details": [
+        "La pagina del campo attuale dovrebbe essere utilizzata per monitorare ciò che sta accadendo, non solo la citazione originale della prenotazione.",
+        "Gli effetti meteo e del personale possono cambiare la qualità della formazione.",
+        "I rapporti giornalieri mostrano sessioni completate e impatto del ciclista.",
+        "Il prossimo piano di allenamento dovrebbe essere regolato solo quando il gioco lo permette.",
+        "La fatica del campo deve essere considerata prima della prossima gara."
+      ],
+      "facts": [
+        {
+          "label": "Partecipanti",
+          "value": "Rider selezionati e personale assegnato"
+        },
+        {
+          "label": "Piano",
+          "value": "Giorno libero, leggero, normale o duro per i giorni del campo"
+        },
+        {
+          "label": "Rapporti",
+          "value": "Guadagni giornalieri e effetti di affaticamento"
+        }
+      ],
+      "tips": [
+        "Dopo il campo, dare ai ciclisti abbastanza recupero prima delle gare chiave."
+      ]
+    },
+    "equipment-category-deep": {
+      "category": "Equipaggiamento",
+      "title": "Categorie di attrezzature e Bonus di terra",
+      "subtitle": "Ciò che ogni categoria di attrezzature durevoli contribuisce alle prestazioni della gara.",
+      "overview": "Ogni elemento può trasportare qualità, bonus sul terreno, valore di riduzione della fatica, condizione e stato. L'elemento migliore non è sempre quello con il prezzo più alto; è quello che si adatta al profilo di gara e la configurazione che si prevede di utilizzare.",
+      "details": [
+        "I quadri sono il fondamento di una configurazione e possono supportare diversi punti di forza del terreno a seconda dell'elemento.",
+        "I set possono influenzare fortemente le prestazioni piane, arrampicate o cronometrate, quindi dovrebbero essere abbinati al percorso piuttosto che utilizzati ciecamente in ogni evento.",
+        "Gli pneumatici sono importanti soprattutto quando la superficie e il terreno cambiano. I ciottoli e il maltempo possono rendere la scelta dei pneumatici più importante che su un normale stadio piatto.",
+        "Gruppi supportano l'efficienza della trasmissione e possono contribuire a bonus specifici del terreno a seconda dell'elemento di mercato.",
+        "Caschi e scarpe sono parti più piccole della configurazione, ma ancora contribuire bonus e può importare quando l'intera configurazione è ottimizzata.",
+        "I bonus di riduzione della fatica sono utili quando il ciclista ha bisogno di conservare l'energia attraverso le fasi lunghe o le gare di più giorni.",
+        "Una configurazione specializzata può essere più forte di una configurazione generica anche se un singolo elemento ha un rating inferiore."
+      ],
+      "facts": [
+        {
+          "label": "Categorie durevoli",
+          "value": "Telaio, ruote, pneumatici, gruppi, casco, scarpe"
+        },
+        {
+          "label": "Premi per i terreni",
+          "value": "ciottoli, ciottoli, ciottoli, cronometro, sprint"
+        },
+        {
+          "label": "Effetto aggiuntivo",
+          "value": "Riduzione dell'affaticamento"
+        },
+        {
+          "label": "Etichette di qualità",
+          "value": "Basic, Good, Super"
+        }
+      ],
+      "tips": [
+        "Creare almeno un setup sprint/flat, un setup di montagna e un setup time-trial quando il tuo inventario lo permette.",
+        "Controllare il profilo del palcoscenico prima di scegliere l'attrezzatura."
+      ],
+      "relatedLinks": [
+        "Equipaggiamento"
+      ]
+    },
+    "equipment-caps-deep": {
+      "category": "Equipaggiamento",
+      "title": "Tappi bonus e logica di configurazione dell'attrezzatura",
+      "subtitle": "Perché impilare ogni bonus non crea guadagni di prestazioni illimitati.",
+      "overview": "I bonus sulle attrezzature sono utili ma dovrebbero rimanere all'interno dei limiti progettati per i trucchi di gioco. Una configurazione è un pacchetto di attrezzature per un tipo di gara, e il manager dovrebbe pensare all'effetto combinato invece di inseguire un numero senza contesto.",
+      "details": [
+        "L'impostazione predefinita della corsa viene usata quando non è selezionata alcuna configurazione specifica per la gara.",
+        "I preset salvati aiutano i manager a evitare la ricostruzione della stessa combinazione prima di ogni gara.",
+        "I bonus di terra dovrebbero essere letti come supporto per le prestazioni del ciclista, non come sostituzione per l'abilità del ciclista.",
+        "Se più elementi forniscono lo stesso tipo di bonus, il gioco può limitare l'effetto utile totale. I manager dovrebbero quindi creare impostazioni bilanciate piuttosto che assumere ogni stack di punti in più per sempre.",
+        "Un ciclista ha ancora bisogno degli attributi specifici corretti. L'attrezzatura di montagna non trasforma un debole arrampicatore in un climber d'elite.",
+        "La qualità di configurazione dovrebbe anche considerare le condizioni. Un elemento forte ma indossato può essere una scelta più difficile di un elemento leggermente più debole in buone condizioni."
+      ],
+      "facts": [
+        {
+          "label": "Uso configurazione",
+          "value": "Impostazione predefinita della corsa più impostazioni speciali salvate"
+        },
+        {
+          "label": "Preset comuni",
+          "value": "Sprint, montagna, cronometro, setup di corse specialistiche"
+        },
+        {
+          "label": "Limitazioni importanti",
+          "value": "I bonus delle attrezzature sono limitati / limitati dal sistema di gioco"
+        }
+      ],
+      "tips": [
+        "Pensa in setup completi, non oggetti isolati.",
+        "Tenere attrezzature di riserva per importanti blocchi di gara."
+      ]
+    },
+    "equipment-inventory-deep": {
+      "category": "Equipaggiamento",
+      "title": "Inventario, condizione e azioni delle attrezzature",
+      "subtitle": "Pronti, assegnati, manutenzione e stati usurati più regole di riparazione/vendita/scarta.",
+      "overview": "L'inventario mostra che il club possiede ancora e può potenzialmente utilizzare le attrezzature. Stato e condizione decidono quali azioni sono disponibili.",
+      "details": [
+        "Gli elementi pronti possono essere normalmente assegnati alle configurazioni e possono anche diventare idonei per la riparazione, vendita o scarto a seconda delle condizioni e di altre regole.",
+        "Gli elementi assegnati sono attualmente in uso o riservati da un altro sistema di gioco. Essi dovrebbero essere liberati prima di azioni che li renderebbe non disponibili.",
+        "In Manutenzione significa che l'articolo è già in fase di riparazione e non può essere utilizzato normalmente fino a quando la manutenzione non termina.",
+        "La condizione di Worn significa che è calato abbastanza che l'articolo ha bisogno di attenzione. Gli articoli Worn possono ridurre l'affidabilità e non dovrebbe essere ignorato prima di gare importanti.",
+        "Le quotazioni di riparazione devono mostrare il costo prima della conferma. Il gestore dovrebbe confrontare il costo di riparazione con il valore dell'articolo e il costo di sostituzione.",
+        "La vendita converte un oggetto di proprietà in contanti quando la vendita è consentita. L'articolo lascia quindi l'inventario attivo.",
+        "Lo scarto rimuove un oggetto senza una vendita normale. Questo deve essere utilizzato solo per l'attrezzatura che il club non ha più bisogno o non può giustificare la conservazione."
+      ],
+      "facts": [
+        {
+          "label": "Status comuni",
+          "value": "Pronto, assegnato, in manutenzione, indossato"
+        },
+        {
+          "label": "Inventario attivo",
+          "value": "Gli oggetti venduti e scartati sono nascosti dal normale inventario attivo"
+        },
+        {
+          "label": "Soglia tipica di riparazione",
+          "value": "Condizione 90% o inferiore quando l'elemento è altrimenti ammissibile"
+        }
+      ],
+      "tips": [
+        "Riparare oggetti importanti prima di gare critiche.",
+        "Non vendere gli attrezzi assegnati senza prima cambiare l'impostazione che lo utilizza."
+      ]
+    },
+    "race-supplies-deep": {
+      "category": "Equipaggiamento",
+      "title": "Guida profonda per i rifornimenti di gara",
+      "subtitle": "Come si contano e si utilizzano i materiali di consumo e le forniture durature.",
+      "overview": "Gara Forniture collegare attrezzature con Race Preparazione. Il gestore acquista stock in anticipo, poi Stage Plans consumare o allocare la quantità necessaria per ciclista e per tappa.",
+      "details": [
+        "I bidoni supportano l'idratazione e il controllo della fatica. Un piano di fase inferiore al minimo di idratazione richiesto può aumentare la pressione di fatica.",
+        "Energy Gel supportano la resistenza e l'efficienza finale-effrazione. Più che il tappo utile non crea vantaggi aggiuntivi.",
+        "Nutrizione I pacchetti supportano stabilità e recupero della resistenza, soprattutto su tappe lunghe e gare di palcoscenico.",
+        "Gara Jersey Complete è obbligatorio. Un team senza abbastanza jersey usa il palco può essere bloccato da una configurazione completa del palco.",
+        "Giacca pioggia non sono obbligatori su ogni fase, ma diventano preziosi in tempo freddo / umido. Il gioco dovrebbe trattare le unità di alimentazione durevole logoro come inutilizzabile.",
+        "Le gare di palco moltiplicano i consumi perché le forniture sono calcolate per ciclista per tappa. Un titolo che sembra grande per una gara di un giorno può essere troppo piccolo per una gara di sette palchi."
+      ],
+      "facts": [
+        {
+          "label": "Bidons / Bottiglie d'acqua",
+          "value": "1 04064 per ciclista; consumabile monouso"
+        },
+        {
+          "label": "Gel energetici",
+          "value": "0,014 per ciclista; consumabile monouso"
+        },
+        {
+          "label": "Confezioni nutrizionali",
+          "value": "0,0122 per ciclista; consumabile monouso"
+        },
+        {
+          "label": "Gara Jersey Completa",
+          "value": "Articolo durevole obbligatorio; 10 impieghi di fase per unità"
+        },
+        {
+          "label": "Giacche a pioggia",
+          "value": "Elemento meteo opzionale; 25 impieghi per unità"
+        }
+      ],
+      "tips": [
+        "Calcolare stock prima della presentazione del ciclista e delle scadenze del piano di fase.",
+        "Non assumere ieri stock di galattosio è ancora sufficiente dopo diverse fasi."
+      ],
+      "relatedLinks": [
+        "Forniture per corse",
+        "Preparazione gara"
+      ]
+    },
+    "technical-sponsor-deep": {
+      "category": "Equipaggiamento",
+      "title": "Supporto tecnico Sponsor Equipment",
+      "subtitle": "Supporto in contanti, budget delle attrezzature e sconti sul mercato da parte di uno sponsor tecnico.",
+      "overview": "Gli sponsor tecnici sono diversi dai normali sponsor principali/secondari perché possono supportare direttamente il sistema di apparecchiature.",
+      "details": [
+        "Uno sponsor tecnico può fornire un sostegno diretto in contanti e un bilancio separato di supporto alle attrezzature.",
+        "Gli sconti di categoria possono ridurre il costo effettivo di acquisto degli elementi del mercato ammissibili.",
+        "Il gestore dovrebbe controllare il supporto sponsor prima di acquistare attrezzature costose perché lo stesso articolo può costare meno mentre l'affare tecnico è attivo.",
+        "Il valore dello sponsor tecnico dovrebbe essere confrontato con il fabbisogno reale di attrezzature del club. Un grande sconto è meno utile se la categoria scontata è già forte.",
+        "Il supporto sponsor può migliorare la pianificazione delle attrezzature a lungo termine, ma non elimina i limiti di condizione, manutenzione o inventario."
+      ],
+      "facts": [
+        {
+          "label": "Possibile sostegno",
+          "value": "Supporto in contanti, sostegno attrezzature budget, categoria sconti"
+        },
+        {
+          "label": "Riguarda solo",
+          "value": "Categorie selezionate di attrezzature / acquisti di mercato ammissibili"
+        },
+        {
+          "label": "Effetto pratico",
+          "value": "Riduzione dei costi di acquisto e sviluppo di attrezzature più semplici"
+        }
+      ],
+      "tips": [
+        "Acquista importanti attrezzature idonee mentre gli sconti sponsor utili sono attivi.",
+        "Non valutare gli sponsor tecnici solo con contanti garantiti."
+      ]
+    },
+    "facilities-overview-deep": {
+      "category": "Infrastrutture",
+      "title": "Guida profonda delle strutture",
+      "subtitle": "Club House, Centro di formazione, Centro medico, Accademia Giovanile, Workshop e Ufficio Scouting.",
+      "overview": "Le strutture sono investimenti permanenti a lungo termine che sbloccano la capacità e migliorano la capacità dei club di allenare, guarire, scout, riparare e sviluppare ciclisti.",
+      "details": [
+        "Club House sostiene l'amministrazione e l'organizzazione più ampia del club. Può anche fungere da prerequisito per altri sistemi.",
+        "Il Centro di formazione migliora la qualità della formazione, l'efficacia del coaching e il supporto allo sviluppo.",
+        "Medical Center aumenta la capacità del personale medico e migliora il supporto alle lesioni / recupero.",
+        "Youth Academy supporta i sistemi U23/sviluppo e le funzionalità future legate ai giovani.",
+        "Meccanica Workshop migliora le riparazioni e la capacità del personale tecnico.",
+        "Scouting Office migliora la capacità di scouting e i limiti di qualità dei report.",
+        "Facility potenzia i costi in contanti, prendere giorni di gioco e utilizzare la capacità di costruzione."
+      ],
+      "facts": [
+        {
+          "label": "Club House max",
+          "value": "Livello 5"
+        },
+        {
+          "label": "Centro di formazione max",
+          "value": "Livello 5"
+        },
+        {
+          "label": "Centro medico max",
+          "value": "Livello 5"
+        },
+        {
+          "label": "Accademia Giovani max",
+          "value": "Livello 2"
+        },
+        {
+          "label": "Meccanica Workshop max",
+          "value": "Livello 4"
+        },
+        {
+          "label": "Ufficio di scout max",
+          "value": "Livello 4"
+        }
+      ],
+      "tips": [
+        "Aggiornare la struttura che risolve il collo di bottiglia attuale.",
+        "Non aggiornare tutto in una volta se Finanza non può supportarlo."
+      ],
+      "relatedLinks": [
+        "Infrastrutture"
+      ]
+    },
+    "facility-jobs-deep": {
+      "category": "Infrastrutture",
+      "title": "Infrastrutture Jobs, Citazioni e Slot per la costruzione",
+      "subtitle": "Come gli aggiornamenti, le riparazioni e le cancellazioni funzionano nel tempo di gioco.",
+      "overview": "Le azioni infrastrutturali non sono istantanee. I lavori hanno costi, durata, date di inizio/completamento del gioco e possono utilizzare slot di costruzione limitate.",
+      "details": [
+        "Prima di iniziare un aggiornamento della struttura, la pagina dovrebbe mostrare se i requisiti di prerequisiti e di contanti sono soddisfatti.",
+        "Un lavoro attivo occupa una fessura di costruzione fino al completamento o la cancellazione riuscita.",
+        "La data di completamento è una data in-game. Il manager dovrebbe confrontarla con il tempo di gioco dei piè di pagina e con i piani di calendario futuri.",
+        "La cancellazione può restituire solo una parte del valore pagato. La citazione deve essere rivista prima di confermare.",
+        "Un aggiornamento lungo può ritardare l'accesso alla capacità del personale o bonus, quindi il tempo è importante tanto quanto il prezzo."
+      ],
+      "facts": [
+        {
+          "label": "Dati relativi all'attività lavorativa",
+          "value": "Costo, durata, data di inizio, data di completamento, stato"
+        },
+        {
+          "label": "Capacità",
+          "value": "Le bande orarie possono limitare i progetti simultanei"
+        },
+        {
+          "label": "Cancellazione",
+          "value": "Usa una regola di preventivo/rimborso quando è consentita la cancellazione"
+        }
+      ],
+      "tips": [
+        "Avviare lavori lunghi quando il club può vivere senza l'aggiornamento mancante per diversi giorni di gioco.",
+        "Mantenere in contanti per gli stipendi e le tasse mentre la costruzione è attiva."
+      ]
+    },
+    "assets-deep": {
+      "category": "Infrastrutture",
+      "title": "Attività e veicoli di supporto della corsa",
+      "subtitle": "Auto di squadra, autobus, furgoncino delle attrezzature, officina mobile e furgoncino medico.",
+      "overview": "I beni sono risorse di supporto di proprietà di club. Possono essere assegnati a piani di gara e hanno condizione, stato, valore di acquisto, costo di riparazione e valore di vendita.",
+      "details": [
+        "Team Cars supporta le operazioni di gara e può essere richiesto in quantità diverse a seconda del piano.",
+        "Team Bus supporta il trasporto e la logistica del team.",
+        "Equipaggiamento Van supporta il movimento delle attrezzature e la logistica di configurazione gara.",
+        "Mobile Workshop fornisce supporto tecnico durante le corse / viaggi.",
+        "Il furgone medico fornisce supporto medico extra.",
+        "Le attività assegnate o bloccate non dovrebbero essere riparate o vendute fino a quando non vengono liberate dalla gara/lavoro che le utilizza.",
+        "Le condizioni devono essere controllate prima di gare importanti perché un bene tecnicamente disponibile può ancora essere in pessima forma."
+      ],
+      "facts": [
+        {
+          "label": "Tipi di attività",
+          "value": "Auto di squadra, Autobus di squadra, Attrezzatura Van, Officina mobile, Van medico"
+        },
+        {
+          "label": "Valori importanti",
+          "value": "Stato, stato, costo di acquisto, preventivo di riparazione, preventivo di vendita"
+        },
+        {
+          "label": "Uso della razza",
+          "value": "Selezionato in Race Plan logistica/supporto"
+        }
+      ],
+      "tips": [
+        "Riparare le risorse di supporto prima di importanti blocchi di gara.",
+        "Non vendere un bene che è richiesto da un prossimo Race Plan."
+      ]
+    },
+    "season-calendar-deep": {
+      "category": "Calendario e razze",
+      "title": "Guida profonda del calendario della stagione",
+      "subtitle": "Visualizzazione giornaliera di razze, campi, eventi e festività.",
+      "overview": "Il calendario delle stagioni è la visione ampia della pianificazione temporale. Aiuta il manager a capire cosa sta accadendo nel club durante i giorni di gioco piuttosto che guardare solo alle gare individuali.",
+      "details": [
+        "Le date di gara devono essere lette insieme con le scadenze di applicazione e di presentazione del ciclista.",
+        "I campi di addestramento occupano tempo e possono entrare in conflitto con la preparazione di gara importante se programmato male.",
+        "Eventi e vacanze possono influenzare come il mondo di gioco viene presentato o come certi sistemi sono programmati.",
+        "Il calendario è il posto migliore per verificare se diverse azioni importanti stanno accadendo insieme.",
+        "Usa il tempo di gioco a piè di pagina come riferimento e calendario del giorno corrente come riferimento del futuro piano."
+      ],
+      "facts": [
+        {
+          "label": "Filtri",
+          "value": "Razze, Campi di formazione, Eventi, Vacanze"
+        },
+        {
+          "label": "Scopo principale",
+          "value": "Programmazione a lungo termine e sensibilizzazione alla scadenza"
+        },
+        {
+          "label": "Sorgente temporale",
+          "value": "Data di calendario del gioco"
+        }
+      ],
+      "tips": [
+        "Pianifica almeno diversi giorni di gioco.",
+        "Evitare di mettere i campi immediatamente prima delle gare chiave a meno che non sia previsto il recupero."
+      ],
+      "relatedLinks": [
+        "Calendario"
+      ]
+    },
+    "race-calendar-deep": {
+      "category": "Calendario e razze",
+      "title": "Calendario, applicazioni e stato di ingresso della gara",
+      "subtitle": "Come i team trovano le gare e passare dall'applicazione all'ingresso accettato.",
+      "overview": "Calendario delle gare mostra le gare disponibili e lo stato attuale delle applicazioni. L'accettazione è solo il primo passo; il team deve successivamente completare la selezione del ciclista e la preparazione della gara.",
+      "details": [
+        "Le applicazioni sono disponibili solo all'interno della finestra dell'applicazione gara.",
+        "La gara può limitare le squadre ammissibili per livello, divisione o altre regole di entrata.",
+        "Il manager dovrebbe verificare quanti team possono essere accettati e quanti sono già stati accettati.",
+        "Una finestra di applicazione chiusa non può essere riaperta dal giocatore.",
+        "Quando la gara è accettata, la gara diventa rilevante sulla preparazione della gara e successivamente sulle scadenze per la consegna del ciclista.",
+        "Non confondere Accettato con Pronto. Accettato significa solo che il club ha un posto nell'evento."
+      ],
+      "facts": [
+        {
+          "label": "Status comuni",
+          "value": "Non aperto, aperto, chiuso, attivo, finito, annullato"
+        },
+        {
+          "label": "Dati di gara",
+          "value": "Categoria, paese, città, data, tipo di gara, limiti di squadra, squadre accettate"
+        },
+        {
+          "label": "Passo successivo importante",
+          "value": "Il team accettato deve ancora completare Race Plan / Stage Plans"
+        }
+      ],
+      "tips": [
+        "Applicare in anticipo quando la gara è importante.",
+        "Dopo l'accettazione, controllare immediatamente le scadenze di preparazione della gara."
+      ],
+      "relatedLinks": [
+        "Calendario",
+        "Preparazione gara"
+      ]
+    },
+    "race-detail-deep": {
+      "category": "Calendario e razze",
+      "title": "Guida dettagliata della corsa",
+      "subtitle": "Regole di ingresso, fasi, partecipanti, risultati, classificazioni e stato di vita.",
+      "overview": "Dettaglio gara è la pagina di riferimento principale per un evento specifico. Prima della gara spiega il percorso e le regole. Durante / dopo la gara diventa il risultato e il hub di riproduzione.",
+      "details": [
+        "Le informazioni di ingresso possono includere max team, ciclisti per squadra, scadenza di applicazione, annuncio lista di squadra, scadenza di presentazione del ciclista e fondo premio.",
+        "Gli elenchi dei partecipanti mostrano quali squadre sono state accettate e in seguito quali ciclisti sono nella lista di partenza.",
+        "Le liste di palco mostrano percorso, terreno, distanza, tipo di finitura, profilo e informazioni meteo.",
+        "Una gara di palcoscenico può mantenere generale, punti, montagna, giovani e classificazioni del team.",
+        "Dettaglio gara dovrebbe essere utilizzato per verificare i dati ufficiali dei risultati invece di affidarsi solo a una notifica o scheda Panoramica.",
+        "Le gare terminate rimangono importanti perché contribuiscono alle statistiche del ciclista/team e ai punti di classifica."
+      ],
+      "facts": [
+        {
+          "label": "Prima della gara",
+          "value": "Regole, domanda, partecipante e informazioni di fase"
+        },
+        {
+          "label": "Durante la gara",
+          "value": "Stato / riproduzione / commento dal vivo quando disponibile"
+        },
+        {
+          "label": "Dopo la gara",
+          "value": "Risultati delle fasi e classificazioni"
+        }
+      ],
+      "tips": [
+        "Dettaglio gara aperta prima della gara Preparazione per capire che tipo di ciclisti e attrezzature l'evento ha bisogno."
+      ]
+    },
+    "stage-terrain-points": {
+      "category": "Calendario e razze",
+      "title": "Terreno di fase, tipi di finitura, stampe e KOM",
+      "subtitle": "Come leggere le informazioni sul profilo che guidano la preparazione della gara.",
+      "overview": "I profili di fase comunicano ciò che il percorso richiede. Il mix di terreno, il tipo di finitura, l'elevazione, gli sprint intermedi e i punti di montagna dovrebbero influenzare la selezione del ciclista e Stage Plans.",
+      "details": [
+        "Gli stadi piatti-pesanti di solito favoriscono velocisti, rouleurs e forte sostegno di piombo-out.",
+        "Le tappe di montagna favoriscono l'arrampicata, la resistenza, la resistenza e il recupero, soprattutto nelle gare di palcoscenico.",
+        "Gli stadi Hilly/Puncheur premiano accelerazione e forza di arrampicata senza essere stadi completi di montagna.",
+        "Gli stadi di prova dipendono fortemente dall'abilità del TT e dalle attrezzature adatte.",
+        "I settori acciottolati aumentano l'importanza delle attrezzature specifiche per superficie e delle caratteristiche del ciclista.",
+        "Gli sprint intermedi influenzano i punti e possono essere obiettivi tattici anche quando il ciclista non può vincere la tappa.",
+        "KOM punti contano per le classificazioni di montagna e possono giustificare le tattiche di fuga."
+      ],
+      "facts": [
+        {
+          "label": "Terreno tipico",
+          "value": "Piatto, collinare, montagna, ciottolo, prova a tempo / profili misti"
+        },
+        {
+          "label": "Informazioni finali",
+          "value": "Tipo di finitura e eventuale finitura in cima"
+        },
+        {
+          "label": "Punti di posizione",
+          "value": "Definizioni intermedie di sprint e KOM"
+        }
+      ],
+      "tips": [
+        "Leggere il percorso prima di assegnare i ruoli.",
+        "Non usare lo stesso Stage Plan su ogni profilo."
+      ]
+    },
+    "replay-results-deep": {
+      "category": "Calendario e razze",
+      "title": "Replay, Commento, Risultati e Classificazioni",
+      "subtitle": "Come capire cosa è successo dopo che il motore calcola la fase.",
+      "overview": "Il replay è una presentazione dello stesso risultato ufficiale di simulazione. I risultati e il replay dovrebbero rimanere sincronizzati in modo che il giocatore veda un risultato coerente.",
+      "details": [
+        "Il gioco non dovrebbe calcolare un risultato diverso dal risultato ufficiale. Il replay è la presentazione in sola lettura del risultato memorizzato.",
+        "Gruppi e intervalli di tempo mostrano come la gara si è divisa e dove i ciclisti hanno perso o guadagnato tempo.",
+        "Il commento descrive attacchi importanti, fughe, inseguimenti, salite, sprint ed eventi di finitura.",
+        "Il risultato di tappa è solo una parte di una gara di palcoscenico. GC, punti, montagna, giovani e classificazioni di squadra possono cambiare dopo ogni fase.",
+        "Un ciclista può avere una posizione di palcoscenico scadente ma comunque raggiungere un obiettivo tattico come punti, punti KOM o proteggere un leader.",
+        "Usare replay/risultati come feedback per le tattiche future piuttosto che cambiare la fase già finalizzata."
+      ],
+      "facts": [
+        {
+          "label": "Fonte del risultato",
+          "value": "Calcolo ufficiale del motore da corsa"
+        },
+        {
+          "label": "Scopo di riproduzione",
+          "value": "Linea temporale / punti di controllo visivi dello stesso calcolo"
+        },
+        {
+          "label": "Dati post-fase",
+          "value": "Risultati di fase, GC/classifiche, lacune, punti e commenti"
+        }
+      ],
+      "tips": [
+        "Rivedere dove il team ha perso tempo prima di cambiare il prossimo Stage Plan.",
+        "Controllare le classificazioni dopo ogni fase importante."
+      ]
+    },
+    "race-plan-deep": {
+      "category": "Preparazione gara",
+      "title": "Guida profonda Race Plan",
+      "subtitle": "Selezione dei ciclisti, personale, logistica, attrezzature, forniture e preventivo totale di supporto.",
+      "overview": "Race Plan è il piano di livello evento creato dopo l'accettazione di un team. Definisce chi va in gara e quali risorse di supporto viaggiano con loro.",
+      "details": [
+        "Il Race Plan dovrebbe essere creato subito dopo l'accettazione perché gli eventi sovrapposti possono bloccare i ciclisti o le risorse in seguito.",
+        "I ciclisti già impegnati a gare/campi sovrapposti possono essere bloccati dalla selezione.",
+        "Gli incarichi del personale forniscono bonus di supporto e possono anche essere bloccati da conflitti.",
+        "I beni creano supporto travel/logistics e possono influenzare i costi o la disponibilità.",
+        "L'allestimento dell'attrezzatura determina quale attrezzatura durevole il team prevede di utilizzare.",
+        "Le forniture di gara devono essere sufficienti per l'intero evento, soprattutto per le gare multi-stage.",
+        "L'anteprima delle citazioni può combinare costi di viaggio, effetti del personale, supporto patrimoniale, attrezzature ed effetti politici.",
+        "Inviare un Race Plan non finisce la preparazione; Stage Plans deve ancora essere completato."
+      ],
+      "facts": [
+        {
+          "label": "Selezione del ciclista",
+          "value": "Deve soddisfare i limiti del ciclista di gara"
+        },
+        {
+          "label": "Personale di gara",
+          "value": "Direttore sportivo, Team Doctor, Physio, Meccanico"
+        },
+        {
+          "label": "Attivo",
+          "value": "Autobus, furgoni, officina mobile, furgoncino medico, auto di squadra"
+        },
+        {
+          "label": "Altri",
+          "value": "Allestimento attrezzature e forniture da corsa"
+        }
+      ],
+      "tips": [
+        "Fai il Race Plan prima che la scadenza diventi urgente.",
+        "Risolvere i conflitti tra ciclista e asset prima di provare a inviare."
+      ],
+      "relatedLinks": [
+        "Preparazione gara"
+      ]
+    },
+    "stage-plan-deep": {
+      "category": "Preparazione gara",
+      "title": "Guida profonda Stage Plans",
+      "subtitle": "Ruoli per stadio, tattiche di squadra, tattiche individuali, attrezzature e forniture.",
+      "overview": "Stage Plans sono lo strato tattico della preparazione della gara. Il manager può preparare un piano diverso per ogni fase in base a terreno, cavalieri, meteo e obiettivi.",
+      "details": [
+        "Ogni tappa dovrebbe avere un piano che corrisponda al suo profilo. Una fase di sprint e una fase di montagna non dovrebbero utilizzare ruoli identici.",
+        "Le tattiche di squadra definiscono l'intenzione generale: controllare, proteggere, inseguire, supportare uno sprint, puntare a un breakaway, difendere GC o un altro obiettivo di gara.",
+        "Le tattiche individuali dicono ai cavalieri come comportarsi all'interno di quel piano di squadra.",
+        "Le attrezzature dovrebbero corrispondere al terreno e al tempo.",
+        "Le forniture sono inserite per ciclista/stage e devono rimanere all'interno dello stock.",
+        "Salvato non significa sempre utilizzabile. Un piano salvato può essere ancora incompleto se mancano dati o forniture importanti.",
+        "Il gruppo di preparazione deve essere trattato come la lista di controllo finale prima che il piano si blocchi."
+      ],
+      "facts": [
+        {
+          "label": "Dati per stadio",
+          "value": "Ruoli, tattiche di squadra, tattiche individuali, attrezzature, forniture"
+        },
+        {
+          "label": "Prontità",
+          "value": "Salvato, utilizzabile, incompleto, mancante forniture / lacune tattiche"
+        },
+        {
+          "label": "Consigli",
+          "value": "I suggerimenti del Direttore dello Sport possono guidare ma non garantiscono il miglior risultato"
+        }
+      ],
+      "tips": [
+        "Preparare tutti gli stadi in anticipo, quindi affinare la fase successiva dopo il risultato precedente se la modifica è ancora aperta.",
+        "Usare avvertimenti di prontezza invece di assumere un piano salvato è completo."
+      ]
+    },
+    "stage-roles-deep": {
+      "category": "Preparazione gara",
+      "title": "Ruoli di palcoscenico e responsabilità di cavaliere",
+      "subtitle": "Leader, velocista, scalatore, breakaway e concetti di supporto all'interno di un Stage Plan.",
+      "overview": "I ruoli di scena indicano al motore quale responsabilità ha ogni ciclista selezionato. I ruoli dovrebbero riflettere l'abilità del ciclista e l'obiettivo di tappa.",
+      "details": [
+        "Un leader GC dovrebbe di solito ricevere protezione nei giorni di montagna/collina e non dovrebbe essere dato lavoro inutile all'inizio della fase.",
+        "Uno sprint ha bisogno di un vantaggio/supporto e di una sufficiente freschezza per gli ultimi chilometri.",
+        "Gli specialisti dell'arrampicata possono supportare un leader GC o le fasi/classifiche di montagna target.",
+        "I ciclisti di strada dovrebbero essere selezionati per il terreno e l'obiettivo della squadra. Un povero climber non dovrebbe essere il cacciatore KOM predefinito in una giornata di montagna dura.",
+        "Le domestiche sono preziose anche quando la loro posizione finale personale è scarsa perché il loro lavoro è quello di sostenere un altro ciclista.",
+        "I ruoli dovrebbero anche considerare la stanchezza, il morale, la salute e la nitidezza della razza, non solo la capacità cruda."
+      ],
+      "facts": [
+        {
+          "label": "Concetto di Leader",
+          "value": "Rider protetto per obiettivo GC/stage"
+        },
+        {
+          "label": "Concetto di sprinte",
+          "value": "Finitura veloce principale su stadi adatti"
+        },
+        {
+          "label": "Concetto di supporto",
+          "value": "Domestiche / aiutanti proteggere, inseguire, ritmo o assistere"
+        },
+        {
+          "label": "Concetto di interruzione",
+          "value": "Rider dato la libertà di unire / bersaglio mosse precoci"
+        }
+      ],
+      "tips": [
+        "Dare a ogni cavaliere un lavoro che abbia senso.",
+        "Non assegnare diversi leader in conflitto senza un piano di squadra chiaro."
+      ]
+    },
+    "stage-readiness-deep": {
+      "category": "Preparazione gara",
+      "title": "Stage Plan Stato di prontezza e blocco",
+      "subtitle": "Come leggere gli stati di preparazione verde/giallo/arancio/rosso/grigio.",
+      "overview": "La prontezza è un riassunto di se Stage Plans esiste e sono utilizzabili. È progettato per avvertire i manager prima della scadenza invece di lasciare che un piano incompleto fallisca silenziosamente.",
+      "details": [
+        "Il verde rappresenta generalmente uno stato pronto/completo.",
+        "Giallo/arancione indicano avvertimenti o preparazione parziale che meritano attenzione.",
+        "Rosso significa che la preparazione non è utilizzabile o manca un requisito critico.",
+        "Il grigio può rappresentare uno stadio che non è ancora rilevante, non disponibile o già bloccato a seconda dello stato della pagina.",
+        "Un piano può contenere ruoli da ciclista ma ancora non riesce a prepararsi se mancano forniture o un altro blocco richiesto.",
+        "Quando la modifica è bloccata, il gestore deve accettare il piano archiviato finalizzato."
+      ],
+      "facts": [
+        {
+          "label": "Controlli",
+          "value": "Piani salvati, piani utilizzabili, piani mancanti, piani vuoti, forniture, completezza tattica"
+        },
+        {
+          "label": "Blocco",
+          "value": "La modifica diventa non disponibile dopo la scadenza / stato di gara"
+        },
+        {
+          "label": "Azione raccomandata",
+          "value": "Pannello di prontezza può dire al gestore cosa deve essere fissato"
+        }
+      ],
+      "tips": [
+        "Mirare a tutte le fasi per mostrare uno stato di prontezza utilizzabile prima della scadenza finale."
+      ]
+    },
+    "sport-director-deep": {
+      "category": "Preparazione gara",
+      "title": "Suggerimenti per il direttore sportivo",
+      "subtitle": "Come le raccomandazioni dei consulenti aiutano senza sostituire il manager.",
+      "overview": "Il Direttore dello Sport può fornire suggerimenti per la preparazione del palcoscenico. Consigli utili per l'apprendimento e la velocità, ma il giocatore rimane responsabile della decisione finale.",
+      "details": [
+        "I suggerimenti dei consulenti dovrebbero utilizzare il profilo attuale della fase, il meteo, i ciclisti selezionati e le risorse disponibili.",
+        "Il manager dovrebbe confrontare i suggerimenti con gli obiettivi del team. Un direttore sportivo può suggerire un piano generico sicuro quando l'utente vuole un obiettivo di fuga aggressivo.",
+        "Le proposte sono più preziose per i nuovi giocatori che non capiscono ancora tutti i controlli di stage-plan.",
+        "Le funzionalità di convenienza Premium non dovrebbero migliorare segretamente i calcoli di gara. Il vantaggio è l'analisi/convenienza, non la potenza di prestazione nascosta.",
+        "Salvare sempre il piano finale dopo aver rivisto i consigli."
+      ],
+      "facts": [
+        {
+          "label": "Possibili consigli",
+          "value": "Attrezzature, tattiche di squadra, tattiche individuali, forniture / preparazione"
+        },
+        {
+          "label": "Oggetto",
+          "value": "Guida e convenienza"
+        },
+        {
+          "label": "Garanzia",
+          "value": "Non garantisce un risultato perfetto"
+        }
+      ],
+      "tips": [
+        "Usare consigli per imparare, quindi regolarlo al proprio obiettivo di gara."
+      ]
+    },
+    "ranking-tiers-deep": {
+      "category": "Classificazioni e statistiche",
+      "title": "Concorrenza Piramide, livelli e divisioni",
+      "subtitle": "Come la struttura mondiale è organizzata da WorldTeam ad Amateur.",
+      "overview": "La piramide della competizione dà ad ogni club un posto a lungo termine nel mondo. Le squadre guadagnano punti internazionali attraverso i risultati della gara e usano la classifica per lottare per la promozione, evitare retrocessione o qualificarsi per i playoff.",
+      "details": [
+        "WorldTeam è la divisione di punta. I club si trovano ad affrontare la concorrenza più forte e la pressione più esigente a lungo termine.",
+        "ProTeam è diviso in West e East. I club lottano per la promozione diretta, playoff e sopravvivenza.",
+        "Continental è diviso per continente. Europa e America alimentano il percorso Pro West mentre Asia, Africa e Oceania alimentano il percorso Pro East.",
+        "Amateur è diviso in concorsi regionali più dettagliati in modo da sviluppare club possono giocare contro rivalità geograficamente appropriate.",
+        "I punti internazionali ottenuti grazie ai risultati delle gare costruiscono la classifica ufficiale. Una squadra dovrebbe quindi preoccuparsi di un punteggio costante durante tutta la stagione, non solo occasionalmente vittorie.",
+        "I manager inattivi possono rimanere visibili per l'integrità storica e l'elaborazione di fine stagione anche quando non controllano più attivamente il club."
+      ],
+      "facts": [
+        {
+          "label": "Livello 1",
+          "value": "WorldTeam"
+        },
+        {
+          "label": "Livello 2",
+          "value": "ProTeam West e ProTeam East"
+        },
+        {
+          "label": "Livello 3",
+          "value": "Continental Europa, America, Asia, Africa, Oceania"
+        },
+        {
+          "label": "Livello 4",
+          "value": "Divisioni regionali amatoriali"
+        }
+      ],
+      "tips": [
+        "Imposta un obiettivo stagionale basato sull'esatta zona di promozione/rilegazione della tua divisione.",
+        "Usare Team Ranking regolarmente invece di aspettare per l'ultima settimana."
+      ],
+      "relatedLinks": [
+        "Classifica squadre"
+      ]
+    },
+    "promotion-relegation-deep": {
+      "category": "Classificazioni e statistiche",
+      "title": "Regole di promozione, relegazione e playoff",
+      "subtitle": "Che cosa significano posizioni di finitura diverse alla fine della stagione.",
+      "overview": "Le regole di promozione e retrocessione dipendono dal livello e dalla divisione. Alcuni luoghi promuovono direttamente, alcuni entrano nei playoff e altri relegano automaticamente. Il manager dovrebbe leggere i colori/note in piedi come parte dell'obiettivo della stagione.",
+      "details": [
+        "I club WorldTeam nelle ultime cinque sono mostrati nella zona di retrocessione.",
+        "Ogni divisione ProTeam invia il vincitore direttamente a WorldTeam e invia il secondo al playoff mondiale.",
+        "Continental Europa e America si connettono alla Pro West promotion route; Continental Asia, Africa e Oceania connettono a Pro East.",
+        "La profondità di relegazione è diversa dalla divisione Continental perché le dimensioni delle divisioni e le strutture di livello inferiore sono diverse.",
+        "Le divisioni europee dilettanti utilizzano le regole del vincitore-direct più 2nd (direttore) del playoff.",
+        "La maggior parte delle divisioni non europee dimagranti utilizzano le regole del playoff vincitore-direct più 2nd [49]4th, mentre Amateur Oceania promuove direttamente i suoi tre migliori.",
+        "La pagina in piedi è la fonte di verità per la stagione in corso, perché future regole di concorrenza cambiamenti dovrebbero essere mostrati lì."
+      ],
+      "facts": [
+        {
+          "label": "WorldTeam",
+          "value": "Bottom 5 relegato"
+        },
+        {
+          "label": "Pro West / Est",
+          "value": "Vincitore diretto in su; 2° playoff mondiale; basso 5 in giù"
+        },
+        {
+          "label": "Continental Europa / Asia",
+          "value": "Bottom 6 relegato"
+        },
+        {
+          "label": "Continental America / Africa",
+          "value": "Bottom 5 relegato"
+        },
+        {
+          "label": "Continental Oceania",
+          "value": "Bottom 3 relegato"
+        },
+        {
+          "label": "Amatori europei",
+          "value": "Vincitore diretto; 2° playoff"
+        },
+        {
+          "label": "Altro dilettante",
+          "value": "Vincitore diretto; 2° playoff"
+        },
+        {
+          "label": "Amatoriale Oceania",
+          "value": "Top 3 promosso direttamente"
+        }
+      ],
+      "tips": [
+        "Sapere se il vostro obiettivo è la promozione diretta o semplicemente raggiungere la zona di playoff.",
+        "Vicino alla fine della stagione, proteggere i punti contro i rivali diretti."
+      ]
+    },
+    "statistics-deep": {
+      "category": "Classificazioni e statistiche",
+      "title": "Guida dettagliata delle statistiche",
+      "subtitle": "Squadre, ciclisti, classifiche attuali, storia e guasti specialistici.",
+      "overview": "Le statistiche sono la pagina di analisi per il mondo del gioco più ampio. Aiuta gli utenti a capire chi è forte ora, chi era forte prima e quali ciclisti dominano specifiche classificazioni di punti.",
+      "details": [
+        "Team Current permette all'utente di confrontare i club attivi per livello/divisione e punti.",
+        "La storia del team diventa più utile dopo diverse stagioni completate perché può mostrare campioni precedenti e istantanee.",
+        "Le classifiche dei ciclisti identificano i ciclisti più alti della stagione in corso.",
+        "Rider District aiuta a identificare gli specialisti. Un ciclista può classificare altamente in punti di sprint o di arrampicata senza guidare la tabella dei punti generali.",
+        "Le statistiche devono essere utilizzate insieme ai profili del ciclista e del team. Un numero di classifica indica all'utente chi ha segnato i punti; il profilo spiega perché.",
+        "Le informazioni storiche dovrebbero rimanere invariate dai futuri aggiornamenti dei motori perché i risultati ufficiali del passato fanno parte della storia del gioco."
+      ],
+      "facts": [
+        {
+          "label": "Schede squadra",
+          "value": "Attuale e storia"
+        },
+        {
+          "label": "Schede di rider",
+          "value": "Classificazioni e ripartizione"
+        },
+        {
+          "label": "Tipi di punti di fuga",
+          "value": "Punti di stagione, punti di sprint, punti di arrampicata"
+        },
+        {
+          "label": "Contesto utile",
+          "value": "Paese, ruolo, età, club, valore di mercato, stipendio, fatica, disponibilità"
+        }
+      ],
+      "tips": [
+        "Usare le statistiche prima delle finestre di trasferimento per identificare obiettivi realistici.",
+        "Confronta i punti speciali con le gare che vuoi puntare."
+      ],
+      "relatedLinks": [
+        "Statistiche",
+        "Classifica squadre"
+      ]
+    },
+    "transfer-list-deep": {
+      "category": "Trasferimenti e scouting",
+      "title": "Guida profonda elenco di trasferimento",
+      "subtitle": "Comprare un ciclista che è attualmente sotto contratto con un altro club.",
+      "overview": "Un ciclista quotato al trasferimento ha un club attuale. Il responsabile dell'acquisto negozia prima una tassa di trasferimento con quel club. Solo dopo che il club di vendita accetta può la negoziazione contrattuale con il ciclista essere completato.",
+      "details": [
+        "La navigazione trasfer-list dovrebbe essere filtrata dal tipo di ciclista di cui la squadra ha bisogno.",
+        "Il club di vendita valuta la tassa di trasferimento e può accettare, rifiutare, contrastare o lasciare che la negoziazione scada a seconda della logica di mercato.",
+        "Un'offerta accettata non significa che il ciclista si unisca automaticamente. Il giocatore deve comunque concordare i termini del contratto con il ciclista.",
+        "Le spese di trasferimento dovrebbero includere nel piano finanziario sia la tassa immediata che l'impegno salariale futuro.",
+        "Il manager dovrebbe controllare la capacità del roster prima di finalizzare una nuova firma.",
+        "Un ciclista può essere attraente sul generale, ma ancora essere una scarsa tattica adatta per il club."
+      ],
+      "facts": [
+        {
+          "label": "Fase 1",
+          "value": "Trova il ciclista selezionato per il trasferimento"
+        },
+        {
+          "label": "Fase 2",
+          "value": "Fai l'offerta per vendere club"
+        },
+        {
+          "label": "Fase 3",
+          "value": "Se accettato, negoziare il contratto di ciclista"
+        },
+        {
+          "label": "Costi importanti",
+          "value": "Tassa di trasferimento più nuovo stipendio / termini contrattuali"
+        }
+      ],
+      "tips": [
+        "Scout obiettivi costosi prima di fare offerte.",
+        "Lasciare abbastanza soldi per stipendio e normali costi operativi dopo la tassa di trasferimento."
+      ],
+      "relatedLinks": [
+        "Mercato"
+      ]
+    },
+    "free-agents-deep": {
+      "category": "Trasferimenti e scouting",
+      "title": "Guida profonda degli agenti liberi",
+      "subtitle": "Firmeggiare i ciclisti senza pagare una tassa di trasferimento del club di vendita.",
+      "overview": "Gli agenti liberi sono cavalieri senza un club di vendita corrente. Il manager negozia direttamente con il ciclista, ma il ciclista valuta ancora stipendio, durata del contratto, bonus e situazione sportiva.",
+      "details": [
+        "L'agente libero non significa costo totale gratuito. Stipendio, condizioni di firma / contratto e salari futuri ancora contano.",
+        "Il ciclista può rifiutare un club che offre uno stipendio scarso, una durata cattiva o una situazione sportiva poco attraente.",
+        "Gli agenti liberi possono essere utili quando la squadra ha bisogno di profondità senza una grossa tassa di trasferimento.",
+        "Agenti liberi più vecchi o meno potenziali possono risolvere problemi a breve termine, ma non dovrebbero bloccare importanti slot di sviluppo senza un motivo.",
+        "I giovani agenti liberi possono essere preziosi ma hanno ancora bisogno di scouting/analisi quando le informazioni sono incerte."
+      ],
+      "facts": [
+        {
+          "label": "Club di vendita",
+          "value": "Nessuno"
+        },
+        {
+          "label": "Diritti di trasferimento",
+          "value": "Nessuna normale tassa di trasferimento club-club"
+        },
+        {
+          "label": "Ancora richiesto",
+          "value": "Contratto di guida accettabile e capacità libera di roster"
+        }
+      ],
+      "tips": [
+        "Utilizzare agenti liberi per la profondità quando il contante a pagamento è limitato.",
+        "Non ignorare lo stipendio a lungo termine solo perché non vi è alcuna tassa di trasferimento."
+      ]
+    },
+    "transfer-negotiation-deep": {
+      "category": "Trasferimenti e scouting",
+      "title": "Trasferimento e negoziazione contrattuale",
+      "subtitle": "Bande di accettazione, tentativi, contatori e ragioni di blocco.",
+      "overview": "I negoziati sono decisioni basate su probabilità/interessi con analisi visibili. Il manager dovrebbe migliorare l'offerta completa piuttosto che cambiare ripetutamente solo un numero senza capire perché l'altro lato è infelice.",
+      "details": [
+        "La percentuale di accettazione è una guida per quanto attraente sia l'offerta attuale; non è un risultato finale garantito.",
+        "Bande di accettazione / risultato previsto aiutare il manager a capire se un'offerta è forte, borderline o irrealistico.",
+        "Il salario misura come il salario confronta con le aspettative del ciclista.",
+        "Durata misura se la lunghezza del contratto corrisponde alle aspettative del ciclista e la situazione della carriera.",
+        "I punteggi bonus e fee possono migliorare l'attrattiva quando tali componenti si applicano.",
+        "Il punteggio di livello/sport rappresenta quanto sia attraente il club d'acquisto dal punto di vista sportivo.",
+        "Le ragioni di blocco duro significano che l'accordo non può procedere sotto la situazione attuale anche se un numero è alto.",
+        "Le ripetute offerte deboli possono consumare tentativi e portare al rifiuto, alla scadenza o ad una controofferta."
+      ],
+      "facts": [
+        {
+          "label": "Status",
+          "value": ",,,,,,,,,,,,,"
+        },
+        {
+          "label": "Durata del contratto UI",
+          "value": "1 04015 anni"
+        },
+        {
+          "label": "Valori di anteprima",
+          "value": "Accettazione %, banda, risultati previsti e punteggi dei componenti"
+        },
+        {
+          "label": "Possibili punteggi dei componenti",
+          "value": "Stipendio, durata, bonus, tassa, livello / situazione sportiva"
+        }
+      ],
+      "tips": [
+        "Usa l'anteprima prima di inviare.",
+        "Fissare il componente rilevante più debole invece di aumentare ciecamente ogni costo."
+      ]
+    },
+    "scouting-deep": {
+      "category": "Trasferimenti e scouting",
+      "title": "Relazioni di scouting e informazioni incerte",
+      "subtitle": "Perché i dati esterni del ciclista possono essere nascosti e come i report migliorano la precisione.",
+      "overview": "Scouting impedisce al mercato dei trasferimenti di diventare un foglio di calcolo perfetto. I manager dovrebbero investire nella conoscenza prima di prendere decisioni di trasferimento costose o a lungo termine.",
+      "details": [
+        "Un ciclista non scrutato può mostrare informazioni approssimative o limitate a seconda delle regole della pagina.",
+        "Un rapporto completato migliora la precisione e può rivelare complessivamente, potenziale, punti di forza speciali e note di scout.",
+        "Un rapporto è collegato al esploratore che lo ha completato, quindi la qualità del personale/capacità è importante per il sistema di scouting più ampio.",
+        "Il nuovo stato/reviewed aiuta gli utenti a gestire molti report senza dimenticare le informazioni non lette.",
+        "Lo scouting dovrebbe essere focalizzato su obiettivi di trasferimento realistici invece di spendere risorse su ogni ciclista della banca dati.",
+        "I rapporti dovrebbero informare le decisioni, ma non garantiscono che il ciclista accetterà il club o che il club di vendita accetterà un'offerta."
+      ],
+      "facts": [
+        {
+          "label": "Filtri di segnalazione",
+          "value": "Tutti, nuovi, recensiti"
+        },
+        {
+          "label": "Contenuto della relazione",
+          "value": "appuntamento, data di completamento, appuntamento, datazione, datazione, datazione, datazione, datazione"
+        },
+        {
+          "label": "Profilo esterno",
+          "value": "I valori esatti possono rimanere nascosti fino all'esistenza dello scouting"
+        }
+      ],
+      "tips": [
+        "Prima scout ad alto costo o ad alto potenziale.",
+        "Rivedere i vecchi rapporti prima di ripetere lo scouting inutile."
+      ],
+      "relatedLinks": [
+        "Scouting"
+      ]
+    },
+    "staff-market-deep": {
+      "category": "Trasferimenti e scouting",
+      "title": "Mercato del personale e noleggio",
+      "subtitle": "Trovare specialisti nel rispetto della capacità di ruolo e del costo del salario.",
+      "overview": "L'assunzione del personale fa parte della pagina Transfers ma deve essere pianificata insieme a Infrastrutture e Finanza. Un buon candidato del personale è inutile se il ruolo non ha slot gratuito o lo stipendio rompe il budget.",
+      "details": [
+        "Il mercato del personale dovrebbe essere filtrato dal ruolo di cui ha bisogno il club.",
+        "La capacità di ruolo può essere bloccata dalla mancanza/bassa infrastruttura anche se l'utente può permettersi lo stipendio.",
+        "La competenza rappresenta l'attuale qualità specializzata, mentre il potenziale presenta un massimale a lungo termine.",
+        "L'esperienza e la leadership possono rendere il personale più utile in responsabilità complesse.",
+        "Efficienza e fedeltà possono avere importanza per il valore a lungo termine a seconda del sistema del personale.",
+        "Lo stipendio del personale diventa un costo finanziario ricorrente, quindi assumere più personale forte in una sola volta può creare un problema di bilancio nascosto."
+      ],
+      "facts": [
+        {
+          "label": "Attributi del personale",
+          "value": "competenza, esperienza, potenziale, leadership, efficienza, lealtà"
+        },
+        {
+          "label": "Prima dell'assunzione",
+          "value": "Controllo del ruolo, della retribuzione, della capacità e dell'infrastruttura"
+        },
+        {
+          "label": "Sviluppo a lungo termine",
+          "value": "I corsi possono migliorare il personale adatto dopo l'assunzione"
+        }
+      ],
+      "tips": [
+        "Controllare le bande orarie del personale utilizzato/max prima di negoziare.",
+        "Affittare un ruolo, non solo per i più alti numeri generali."
+      ],
+      "relatedLinks": [
+        "Mercato del personale",
+        "Infrastrutture"
+      ]
+    },
+    "finance-health-deep": {
+      "category": "Finanze",
+      "title": "Finanza Salute e gestione del flusso di cassa",
+      "subtitle": "Come separare l'economia reale club dal movimento di debito di emergenza.",
+      "overview": "Finanza Salute è circa se la normale operazione del club può sostenersi. L'assunzione di emergenza può salvare temporaneamente il club, ma i soldi di prestito non dovrebbero essere scambiati per reddito operativo sano.",
+      "details": [
+        "Un saldo positivo non significa automaticamente che il club è sano. Il saldo può includere denaro di emergenza preso in prestito.",
+        "Il reddito operativo dovrebbe provenire da attività di club reali come sponsor e corse.",
+        "Le spese operative comprendono impegni ricorrenti che continuano anche quando il club non acquista trasferimenti.",
+        "Il capitale di prestito d'emergenza è il movimento del debito, non il profitto/perdita. L'interesse è un costo reale di utilizzo del sistema di salvataggio.",
+        "Panoramica Finance Health dovrebbe essere utilizzato per la rilevazione rapida dei rischi, mentre la pagina completa Finance spiega i numeri dettagliati.",
+        "Il gestore dovrebbe confrontare i costi ricorrenti settimanali/mensili con i redditi attesi dagli sponsor e dalle corse prima di effettuare acquisti facoltativi."
+      ],
+      "facts": [
+        {
+          "label": "Reddito da capitale",
+          "value": "Ingresso sponsor, montepremi e altri redditi da club genuini"
+        },
+        {
+          "label": "Spese di funzionamento",
+          "value": "Stipendi, personale, politiche, imposte, attrezzature, campi, infrastrutture e altri costi reali"
+        },
+        {
+          "label": "Utile di esercizio",
+          "value": "Esborsi di prestiti d'urgenza"
+        },
+        {
+          "label": "Spese di funzionamento non",
+          "value": "Rimborso del capitale del prestito d'urgenza"
+        },
+        {
+          "label": "Spese di funzionamento",
+          "value": "Interessi di prestito d'urgenza"
+        }
+      ],
+      "tips": [
+        "Non spendere mai denaro in prestito d'emergenza come se fosse un bonus.",
+        "Utilizzare il flusso di cassa operativo per decidere se il club può permettersi salari o politiche più elevati."
+      ],
+      "relatedLinks": [
+        "Finanze"
+      ]
+    },
+    "transactions-deep": {
+      "category": "Finanze",
+      "title": "Transazioni e cronologia dichiarazione di In-Game",
+      "subtitle": "Come spiegare ogni cambiamento di equilibrio senza usare il tempo reale tecnico come date di gioco.",
+      "overview": "Le transazioni sono la traccia contabile. Se il saldo del club cambia inaspettatamente, il gestore dovrebbe usare questa scheda per identificare la riga esatta invece di indovinare quale sistema l'ha causata.",
+      "details": [
+        "Ogni importante movimento di cassa del club dovrebbe apparire come una riga di transazione con tipo, descrizione, importo e data di gioco.",
+        "Stipendio, personale, tasse, pagamenti sponsor, premi, politiche, attrezzature, infrastrutture, campi e bonus dovrebbero essere rintracciabili qui.",
+        "Le transazioni recenti mantengono la lettura quotidiana semplice delle dichiarazioni mentre le righe più vecchie possono essere raggruppate in mesi di archivio.",
+        "created_at è un timestamp tecnico reale usato per ordinare/paginare il database. Non dovrebbe sostituire la data di transazione in-game nell'interfaccia utente.",
+        "Le righe positive e negative dovrebbero essere interpretate nel contesto del tipo di transazione piuttosto che solo nel colore.",
+        "Quando si indaga su un bug finanziario, confronta sempre la riga delle transazioni con il motivo/sorgente del backend invece di modificare direttamente il saldo visibile."
+      ],
+      "facts": [
+        {
+          "label": "Finestra recente",
+          "value": "Ultimi 30 giorni di gioco"
+        },
+        {
+          "label": "Archivio",
+          "value": "File più vecchie raggruppate per mese di gioco, precedenti 6 mesi di gioco"
+        },
+        {
+          "label": "Regola data",
+          "value": "La data di dichiarazione del giocatore dovrebbe utilizzare metadati memorizzati per la data di gioco"
+        }
+      ],
+      "tips": [
+        "Usa transazioni ogni volta che un utente chiede... dove sono andati i miei soldi?",
+        "Controllare la data di gioco e il tipo di transazione prima di assumere la riga è sbagliato."
+      ]
+    },
+    "tax-deep": {
+      "category": "Finanze",
+      "title": "Imposte, prelievi e verifiche mensili",
+      "subtitle": "Come il reddito imponibile è riscosso, corretto e talvolta rimborsato.",
+      "overview": "L'imposta è una spesa reale del club collegato al reddito imponibile. Il sistema può trattenere l'imposta durante il mese e poi controllare l'importo mensile finale, creando un adeguamento o un rimborso, se necessario.",
+      "details": [
+        "Il reddito imponibile dovrebbe essere calcolato dai tipi di transazioni imponibili definiti dai \"game-counterpartments,\" non da ogni movimento positivo di bilancio.",
+        "La detenzione rimuove parte del reddito imponibile durante il mese in modo che il club non è sorpreso dalla bolletta fiscale completa a fine mese.",
+        "L'audit mensile confronta l'imposta finale prevista con quella già trattenuta.",
+        "Se si è tenuto troppo poco, l'audit crea un costo aggiuntivo di adeguamento.",
+        "Se si è tenuto troppo, l'audit può creare un rimborso.",
+        "Un rimborso non è un nuovo sponsor / reddito da corsa. Si tratta di una correzione di imposta precedentemente trattenuta.",
+        "I grandi pagamenti di sponsor o premi possono creare righe fiscali visibili subito dopo la transazione del reddito."
+      ],
+      "facts": [
+        {
+          "label": "Vista fiscale",
+          "value": "Reddito imponibile attuale, imposte attese, importo trattenuto e rettifica"
+        },
+        {
+          "label": "Status di audit",
+          "value": "OK, aggiustato, rimborsato"
+        },
+        {
+          "label": "Tipi di operazioni fiscali",
+          "value": "Rimborsazione, adeguamento mensile, rimborso mensile"
+        }
+      ],
+      "tips": [
+        "Tenere a disposizione denaro per le tasse anche dopo un grande premio / pagamento sponsor.",
+        "Utilizzare la scheda Imposta per distinguere ritenuta dall'aggiustamento mensile finale."
+      ],
+      "relatedLinks": [
+        "Imposta"
+      ]
+    },
+    "sponsors-deep": {
+      "category": "Finanze",
+      "title": "Sponsor principali, secondari e tecnici",
+      "subtitle": "Reddito, visibilità, sostegno e differenze contrattuali.",
+      "overview": "Gli sponsor sono uno dei principali sistemi di reddito del club. Diversi tipi di sponsor forniscono un valore diverso: i principali sponsor si concentrano sulla visibilità e gli obiettivi, gli sponsor secondari aggiungono slot di supporto, e gli sponsor tecnici si collegano fortemente alle attrezzature.",
+      "details": [
+        "I principali sponsor sono i partner commerciali più visibili e possono avere obiettivi stagionali che creano pagamenti bonus.",
+        "Gli sponsor secondari forniscono denaro/supporto extra e sono visualizzati in slot più semplici nell'interfaccia utente corrente.",
+        "Gli sponsor tecnici possono migliorare direttamente l'economia dell'acquisto di attrezzature.",
+        "Le offerte dello sponsor dovrebbero essere confrontate con denaro garantito, bonus, obiettivi, restrizioni e effetti di identità, non solo dal numero principale.",
+        "Una squadra debole può fallire obiettivi sponsor irrealistici anche se il contratto sembra attraente.",
+        "I pagamenti sponsorizzati e i bonus possono essere tassabili, quindi il valore lordo degli sponsor non è sempre il denaro contante finale trattenuto dal club."
+      ],
+      "facts": [
+        {
+          "label": "Principale",
+          "value": "Alta visibilità, denaro garantito, pool bonus, obiettivi"
+        },
+        {
+          "label": "Secondario",
+          "value": "Supporto aggiuntivo tramite slot disponibili"
+        },
+        {
+          "label": "Tecnica",
+          "value": "Sconti sul bilancio di cassa/attrezzature e sulla categoria di attrezzature"
+        }
+      ],
+      "tips": [
+        "Accetta gli obiettivi che la tua squadra/calendario attuale può realisticamente raggiungere.",
+        "Controllare l'impatto fiscale dopo i pagamenti dei grandi sponsor."
+      ],
+      "relatedLinks": [
+        "Sponsor"
+      ]
+    },
+    "sponsor-objectives-deep": {
+      "category": "Finanze",
+      "title": "Obiettivi sponsorizzati e diritti di denominazione",
+      "subtitle": "Obiettivi di gara, bonus di vincita e cambiamenti di identità temporanea club.",
+      "overview": "I contratti con sponsor possono includere obiettivi legati alle prestazioni delle corse. I contratti con i diritti di nomina aggiungono un compromesso di identità cambiando temporaneamente il nome della squadra pubblica in cambio di un valore commerciale più elevato.",
+      "details": [
+        "Gli obiettivi dello sponsor possono indicare una gara specifica o una condizione di performance stagionale più ampia.",
+        "Gli obiettivi programmati dovrebbero essere rivisti in anticipo in modo che la gara sia inclusa nel calendario della squadra e che i ciclisti corretti siano disponibili.",
+        "Dopo la gara/evento di destinazione, il sistema verifica se l'obiettivo è stato raggiunto o mancato.",
+        "Gli obiettivi raggiunti possono creare un pagamento bonus in base al contratto.",
+        "Gli accordi standard con gli sponsor lasciano il nome normale della squadra invariato.",
+        "Le offerte di nomi-diritti possono bloccare la modifica del nome di squadra e sostituire il nome visibile della visualizzazione della stagione con il nome relativo allo sponsor.",
+        "L'identità originale del club dovrebbe tornare secondo la regola dei diritti di denominazione di fine stagione."
+      ],
+      "facts": [
+        {
+          "label": "Esempi obiettivi",
+          "value": "Corsa di partenza, vittoria, podio, top 5, top 10, GC target, obiettivo di fase, visibilità classificazione"
+        },
+        {
+          "label": "Stati obiettivi",
+          "value": "programmato, controllato, raggiunto, mancato, pagato"
+        },
+        {
+          "label": "Diritti di denominazione",
+          "value": "Di solito più alto stipendio ma temporaneo cambiamento di nome di squadra pubblico"
+        }
+      ],
+      "tips": [
+        "Leggere ogni obiettivo prima di accettare l'accordo.",
+        "Non sacrificare l'identità del club per un affare di nomi-diritti a meno che il valore extra vale la pena per voi."
+      ]
+    },
+    "team-policies-deep": {
+      "category": "Finanze",
+      "title": "Politiche e operazioni del team Guida approfondita",
+      "subtitle": "Viaggi, alloggio, logistica, alloggio, nutrizione, recupero e bonus.",
+      "overview": "Le politiche permettono al manager di scegliere lo standard operativo Club. Opzioni migliori possono migliorare il comfort / supporto, ma creare più grandi costi ricorrenti e specifici per il viaggio.",
+      "details": [
+        "La politica di volo influisce su come il team viaggia verso gare/campi e può cambiare il costo del viaggio.",
+        "La politica di alloggio cambia gli standard di albergo / camera e quindi le spese di viaggio.",
+        "Le politiche di trasporto a terra e logistica influenzano le operazioni di supporto alle corse.",
+        "Le politiche di alloggio, nutrizione e recupero possono migliorare l'ambiente di lavoro dei ciclisti, ma creare costi ricorrenti.",
+        "Le politiche di dotazione e di indennità del personale incidono sui costi operativi e sulla struttura dei premi.",
+        "Rider bonus politiche possono aumentare la spesa dopo corse di successo a seconda delle regole configurate.",
+        "Il gruppo di esperti dovrebbe essere utilizzato prima di aumentare le politiche multiple contemporaneamente."
+      ],
+      "facts": [
+        {
+          "label": "Operazioni di viaggio",
+          "value": "Voli, alloggio, trasporto a terra, logistica, alloggio per il personale"
+        },
+        {
+          "label": "Politiche del gruppo",
+          "value": "Alloggio, nutrizione, recupero, attrezzature per il personale, bonus per il cavaliere, bonus per il personale"
+        },
+        {
+          "label": "Produzione finanziaria",
+          "value": "Stima settimanale, stima mensile, previsione dell'ultimo mese del viaggio effettivo e imminente"
+        }
+      ],
+      "tips": [
+        "Aggiornare gradualmente le politiche quando il flusso di cassa operativo è stabile.",
+        "Controllare le previsioni di viaggio in arrivo prima di corse o campi costosi."
+      ],
+      "relatedLinks": [
+        "Politiche del gruppo"
+      ]
+    },
+    "liquidation-deep": {
+      "category": "Finanze",
+      "title": "Guida profonda per il salvataggio e la liquidazione dei locali di emergenza",
+      "subtitle": "Cosa succede dopo ripetuti errori di pagamento obbligatorio.",
+      "overview": "Il salvataggio d'emergenza esiste per fermare un cattivo pagamento da immediatamente la fine di un club, ma è limitato. Un manager che ripetutamente non può coprire obblighi obbligatori può alla fine perdere il club alla liquidazione.",
+      "details": [
+        "Un guasto obbligatorio al pagamento può innescare un salvataggio di emergenza quando la capacità di salvataggio rimane.",
+        "Il salvataggio aggiunge debito che deve essere successivamente rimborsato; non dovrebbe essere considerato reddito normale.",
+        "Panoramica Emergency Debt Health mostra il conteggio dei soccorsi, il capitale in sospeso, le informazioni sul rimborso e il rischio.",
+        "Dopo che tutti i soccorsi sono stati utilizzati, un altro obbligo obbligatorio scoperto può innescare la liquidazione.",
+        "Un club liquidato non può più eseguire le normali azioni di gioco. Il cruscotto mostra invece lo stato di liquidazione.",
+        "Il conto utente sopravvive, comprese le Coins a livello di conto.",
+        "Crea un nuovo club inizia il percorso verso un nuovo club. Riavvia il comportamento del Team è ancora un segnaposto/futuro reimposta il flusso e non dovrebbe essere descritto come una funzione di produzione completata."
+      ],
+      "facts": [
+        {
+          "label": "Limite di salvataggio a vita",
+          "value": "3"
+        },
+        {
+          "label": "Stato critico",
+          "value": "Non è possibile coprire tutti e tre i soccorsi utilizzati e un altro obbligo obbligatorio"
+        },
+        {
+          "label": "Club liquidato",
+          "value": "Azioni del gioco bloccate"
+        },
+        {
+          "label": "Conto utente / Coins",
+          "value": "Resta attivo"
+        }
+      ],
+      "tips": [
+        "Dopo il primo salvataggio, ridurre immediatamente la spesa facoltativa e ispezionare i costi ricorrenti.",
+        "Dopo il secondo/terzo salvataggio, trattare ogni pagamento obbligatorio come critico."
+      ]
+    },
+    "faq-application-blocked": {
+      "category": "FAQ",
+      "title": "FAQ: Perché posso candidarmi per una gara?",
+      "subtitle": "Blocchi comuni di applicazione della razza e cosa controllare prima.",
+      "overview": "I problemi delle applicazioni Race sono solitamente causati dalla finestra delle applicazioni, dalle regole di ammissibilità, dallo stato di gara o da un'applicazione del team esistente. Le pagine Dettaglio calendario/corsa devono mostrare lo stato pertinente.",
+      "details": [
+        "Se la finestra dell'applicazione non è ancora aperta, l'azione applica non dovrebbe essere disponibile.",
+        "Se la scadenza per l'applicazione è passata, la squadra non può più applicare anche se la gara stessa non è iniziata.",
+        "La gara può limitare le squadre ammissibili per livello, divisione o altre regole.",
+        "Una gara annullata/finita/attiva non accetta le nuove applicazioni normali.",
+        "Se il club ha già una voce di applicazione/accettata, la pagina dovrebbe mostrare lo stato invece di una seconda azione.",
+        "Usare il dettaglio della gara per la scadenza esatta e la spiegazione del regolamento di entrata."
+      ],
+      "facts": [
+        {
+          "label": "Controlla prima",
+          "value": "Data di apertura/chiusura dell'applicazione"
+        },
+        {
+          "label": "Poi controlla",
+          "value": "Eleggibilità del team, stato di gara e se il club già applicato"
+        }
+      ],
+      "tips": [
+        "Controllare il tempo di gioco a piè di pagina e la scadenza di applicazione gara insieme.",
+        "Applicare in anticipo per le gare importanti."
+      ],
+      "relatedLinks": [
+        "Calendario"
+      ]
+    },
+    "faq-accepted-not-ready": {
+      "category": "FAQ",
+      "title": "FAQ: La mia squadra è stata accettata. Perché la gara non è ancora pronta?",
+      "subtitle": "L'iscrizione accettata non è la stessa della preparazione completata.",
+      "overview": "L'accettazione si riserva solo un posto di squadra nell'evento. Il manager deve comunque inviare la corretta selezione del ciclista e completare Race Plan / Stage Plans prima delle scadenze pertinenti.",
+      "details": [
+        "Preparazione della gara aperta dopo l'accettazione.",
+        "Completa il Race Plan con il numero richiesto di ciclisti e risorse di supporto ammissibili.",
+        "Risolvere qualsiasi conflitto tra ciclista/personale/asset causato da eventi sovrapposti.",
+        "Assicurati che ci siano abbastanza rifornimenti per l'evento.",
+        "Aprire Stage Plans e completare il piano tattico per ogni fase richiesta.",
+        "Un Stage Plan salvato può essere ancora incompleto. Leggere l'avviso di disponibilità prima di assumere che il team sia pronto."
+      ],
+      "facts": [
+        {
+          "label": "Accettato",
+          "value": "La squadra ha una slot per eventi"
+        },
+        {
+          "label": "Ancora necessario",
+          "value": "Cavalieri, personale/asset, attrezzature/supplies e Stage Plans"
+        },
+        {
+          "label": "Controllo finale",
+          "value": "La disponibilità dello stadio deve essere utilizzabile/completa prima della chiusura"
+        }
+      ],
+      "tips": [
+        "Non aspettare la scadenza del termine per la presentazione/progettazione del ciclista.",
+        "Mirare a tutte le fasi di essere verde / utilizzabile prima della serratura."
+      ],
+      "relatedLinks": [
+        "Preparazione gara"
+      ]
+    },
+    "faq-rider-underperformed": {
+      "category": "FAQ",
+      "title": "FAQ: Perché il mio ciclista in alto fuori dal mondo ha perso la forma?",
+      "subtitle": "Nel complesso è solo una parte delle prestazioni di gara.",
+      "overview": "Un ciclista può avere un alto punteggio complessivo ma comunque eseguire male quando il profilo di gara, le competenze specialistiche, la fatica, il morale, la salute, la nitidezza, le attrezzature o le tattiche sono sbagliate.",
+      "details": [
+        "Complessivamente è una media/sommario e non garantisce prestazioni d'elite su ogni terreno.",
+        "Uno sprint può essere alto nel complesso ma comunque perdere pesantemente su un finale di montagna.",
+        "Un climber può essere forte nel complesso ma non ha le qualità piatte/sprint per un mazzo di finiture.",
+        "Alta fatica o scarsa salute può ridurre le prestazioni efficaci.",
+        "L'acutezza della corsa bassa o scarsa può rendere meno efficace un ciclista normalmente forte.",
+        "Un ruolo sbagliato può rendere il ciclista spendere energia sostenendo qualcun altro invece di correre per il risultato personale.",
+        "Anche le attrezzature, le forniture e il supporto di squadra possono cambiare il risultato finale."
+      ],
+      "facts": [
+        {
+          "label": "Check rider",
+          "value": "Specialisti, fatica, morale, disponibilità, nitidezza"
+        },
+        {
+          "label": "Check stage",
+          "value": "Terreno, distanza, finitura, tempo"
+        },
+        {
+          "label": "Controlla piano",
+          "value": "Ruolo, tattica di squadra, tattica individuale, attrezzature e forniture"
+        }
+      ],
+      "tips": [
+        "Giudicare il risultato contro il lavoro del ciclista sidro, non solo finire posizione.",
+        "Usare Replay/risultati per identificare dove il tempo/posizione è stato perso."
+      ]
+    },
+    "faq-money": {
+      "category": "FAQ",
+      "title": "FAQ: Dove sono finiti i miei soldi del club?",
+      "subtitle": "Come indagare una diminuzione di equilibrio inaspettata.",
+      "overview": "La risposta corretta dovrebbe venire da Finance Transactions. Il gioco ha molti costi ricorrenti e una tantum, quindi indovinare dal saldo finale è inaffidabile.",
+      "details": [
+        "Apri Transazioni e trova le righe negative intorno alla data di gioco quando il saldo è cambiato.",
+        "Verificare se il costo è settimanale, mensile, viaggio-based, una volta o fiscale-relative.",
+        "Rider / personale stipendi sono ricorrenti e possono diventare grandi dopo diverse firme.",
+        "Le politiche di squadra e i viaggi in gara possono creare costi anche quando il club non ha acquistato un trasferimento.",
+        "La ritenuta fiscale può comparire immediatamente dopo il reddito imponibile, in modo da un grande sponsor / pagamento di prize può essere seguito da una riga fiscale.",
+        "Il rimborso del capitale del prestito d'emergenza è movimento del debito. L'interesse è una spesa reale."
+      ],
+      "facts": [
+        {
+          "label": "Prima pagina",
+          "value": "Finanza → Operazioni"
+        },
+        {
+          "label": "Costi comuni",
+          "value": "Rider stipendio, personale stipendio, tasse, politiche, viaggi, attrezzature, infrastrutture, campi, trasferimenti"
+        },
+        {
+          "label": "Nota di debito",
+          "value": "La circolazione principale del prestito e gli interessi sui prestiti devono essere separati"
+        }
+      ],
+      "tips": [
+        "Usa descrizioni/tipi di transazione invece di indovinare.",
+        "Confronta Panoramica Finance Health con la dichiarazione dettagliata."
+      ],
+      "relatedLinks": [
+        "Operazioni"
+      ]
+    },
+    "faq-equipment": {
+      "category": "FAQ",
+      "title": "FAQ: Perché posso utilizzare o riparare un oggetto?",
+      "subtitle": "Stato, condizioni e restrizioni di assegnazione.",
+      "overview": "Le azioni di equipaggiamento dipendono dallo stato dell'elemento, dalle condizioni e dal fatto che un altro sistema usi attualmente l'elemento. Un elemento può esistere in inventario ma essere ancora temporaneamente non disponibile per un'azione specifica.",
+      "details": [
+        "Le apparecchiature assegnate sono già utilizzate/riservate da un setup o da un evento e non possono essere sempre modificate immediatamente.",
+        "Le attrezzature di manutenzione devono finire la riparazione prima dell'uso normale.",
+        "La riparazione non è necessaria quando le condizioni sono troppo alte e può essere bloccato quando l'articolo è altrimenti non disponibile.",
+        "Gli oggetti indossati richiedono attenzione e possono diventare un rischio per eventi importanti.",
+        "Se un elemento non può essere venduto/scartato, controllare se è assegnato o bloccato da un'altra azione.",
+        "Cambiare la configurazione/assegnazione prima quando l'elemento è necessario per un altro scopo."
+      ],
+      "facts": [
+        {
+          "label": "Possibili blocchi",
+          "value": "Assegnato, in stato di manutenzione, stato errato, stato consumato/bloccato"
+        },
+        {
+          "label": "Riparazione",
+          "value": "Di solito disponibile a condizione 90% o inferiore se altrimenti ammissibile"
+        },
+        {
+          "label": "Uso della razza",
+          "value": "L'elemento deve essere disponibile e selezionato attraverso la relativa configurazione"
+        }
+      ],
+      "tips": [
+        "Tenere attrezzature di backup in modo che una riparazione non blocca l'intera configurazione gara.",
+        "Verificare le condizioni prima dell'invio di Race Plan."
+      ],
+      "relatedLinks": [
+        "Equipaggiamento"
+      ]
+    },
+    "faq-staff-hiring": {
+      "category": "FAQ",
+      "title": "FAQ: Perché posso assumere questo membro del personale?",
+      "subtitle": "Capacità di ruolo, requisiti di impianto e controlli finanziari.",
+      "overview": "La ragione più comune non è il candidato è il club. L'assunzione del personale può essere bloccato perché il ruolo non ha slot gratuito, il livello della struttura è troppo basso, il club manca di denaro o un'altra regola di assunzione non è soddisfatto.",
+      "details": [
+        "Infrastruttura aperta e controllare la capacità utilizzata/max per il gruppo di personale interessato.",
+        "Se la capacità è piena, un aggiornamento della struttura può essere richiesto prima di un altro noleggio.",
+        "Controlla se il ruolo del candidato appartiene al gruppo di strutture che credi che faccia.",
+        "Anche con capacità gratuita, il club ha ancora bisogno di abbastanza denaro e un contratto / offerta accettabile.",
+        "Lo stipendio del personale diventa un costo ricorrente dopo l'assunzione, in modo da finanza dovrebbe essere controllata prima di confermare.",
+        "Se la pagina mostra un messaggio di necessità difficile, correggere tale requisito prima di cambiare stipendio ripetutamente."
+      ],
+      "facts": [
+        {
+          "label": "Verifica della capacità",
+          "value": "Slot usate contro slot max per quel ruolo/gruppo di personale"
+        },
+        {
+          "label": "Verifica impianto",
+          "value": "Formazione, Medica, Workshop, Scouting o Gioventù infrastrutture"
+        },
+        {
+          "label": "Controllo finanziario",
+          "value": "Costi immediati e stipendio ricorrente"
+        }
+      ],
+      "tips": [
+        "Le infrastrutture e i trasferimenti/il mercato del personale dovrebbero essere utilizzati insieme.",
+        "Non sovra-noleggio personale solo perché le slot esistono."
+      ],
+      "relatedLinks": [
+        "Mercato del personale",
+        "Infrastrutture"
+      ]
+    }
+  }
+}

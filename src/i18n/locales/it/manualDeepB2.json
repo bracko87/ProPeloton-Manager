@@ -1,0 +1,320 @@
+{
+  "sections": {
+    "rankingTiersDeep": {
+      "title": "Livelli di concorrenza",
+      "subtitle": "WorldTeam, ProTeam, Continental e Amateur.",
+      "overview": "La classifica di squadra è organizzata in una piramide di competizione con promozione, playoff e retrocessione.",
+      "facts": [
+        "Livelli",
+        "WorldTeam, ProTeam, Continental, Amatoriali"
+      ],
+      "details": [
+        "WorldTeam è il livello superiore.",
+        "ProTeam è diviso in ovest e est.",
+        "Continental è diviso in Europa, America, Asia, Africa e Oceania.",
+        "L'amante è diviso in molte divisioni regionali.",
+        "I punti decidono posizioni e conseguenze di fine stagione."
+      ],
+      "tips": [
+        "Prima rintraccia la tua divisione."
+      ]
+    },
+    "promotionRelegationDeep": {
+      "title": "Promozione, playoff e relegazione",
+      "subtitle": "Come si mostra il movimento di fine stagione.",
+      "overview": "Le etichette in piedi spiegano quali posizioni promuovono, entrano nei playoff o relegano.",
+      "facts": [
+        "WorldTeam",
+        "Bottom 5 relegato",
+        "ProTeam",
+        "Il vincitore ha promosso il secondo playoff mondiale, in basso 5 relegato"
+      ],
+      "details": [
+        "Continental Europa/America feed Pro West playoff.",
+        "Continental Asia/Africa/Oceania feed Pro East playoff.",
+        "Diverse divisioni Continental hanno differenti tagli alla retrocessione.",
+        "L'Oceania amatoriale promuove direttamente la terza posizione.",
+        "Le divisioni europee dimateur usano il vincitore diretto e il secondo playoff.",
+        "Altre divisioni dimateur usano il vincitore diretto e il secondo playoff."
+      ],
+      "tips": [
+        "Leggi l'etichetta per la divisione selezionata."
+      ]
+    },
+    "statisticsDeep": {
+      "title": "Guida dettagliata delle statistiche",
+      "subtitle": "Squadre, ciclisti, filtri e storia.",
+      "overview": "Statistiche aiuta a confrontare le prestazioni e scout il mondo del gioco.",
+      "facts": [
+        "Schede principali",
+        "Squadre e Cavalieri",
+        "metriche del ciclista",
+        "Punti stagione, sprint e arrampicata"
+      ],
+      "details": [
+        "Team Current confronta posizioni e punti correnti.",
+        "La storia del team memorizza i vincitori e le istantanee passate.",
+        "Le classifiche dei ciclisti mostrano i migliori artisti.",
+        "Rider District aiuta a trovare specialisti.",
+        "I filtri includono stagione, tipo di squadra, stato, livello, divisione, paese e ricerca.",
+        "L'apertura di un ciclista utilizza un percorso di profilo proprio o esterno a seconda della proprietà."
+      ],
+      "tips": [
+        "Usare statistiche prima dei trasferimenti."
+      ]
+    },
+    "transferListDeep": {
+      "title": "Riders elenco trasferimenti",
+      "subtitle": "Comprare da un altro club.",
+      "overview": "I ciclisti iscritti al trasferimento richiedono un'offerta club-to-club prima della negoziazione del contratto di ciclista.",
+      "facts": [
+        "Dati di lista",
+        "Venditore, prezzo, stipendio, valore di mercato, scadenza, disponibilità"
+      ],
+      "details": [
+        "Il club di vendita può accettare / rifiutare offerte.",
+        "Chiedere prezzi può essere automaticamente bloccato.",
+        "Se accettato, inizia una trattativa separata.",
+        "Scouting può influenzare la quantità di informazioni esatte è visibile.",
+        "Gli elenchi scadono entro la data di gioco."
+      ],
+      "tips": [
+        "Controllare lo stipendio prima di fare una grande offerta di trasferimento."
+      ]
+    },
+    "freeAgentsDeep": {
+      "title": "Agenti liberi",
+      "subtitle": "Firmare cavalieri non iscritti.",
+      "overview": "Gli agenti liberi non richiedono un'offerta di vendita del club, ma la negoziazione del contratto è ancora importante.",
+      "facts": [
+        "Negoziazione",
+        "Stipendio, durata, bonus di firma, commissione agente e vestibilità di livello"
+      ],
+      "details": [
+        "Gli agenti liberi possono essere più economici perché non vi è alcuna tassa di trasferimento.",
+        "Essi possono ancora richiedere un alto stipendio o bonus.",
+        "Offerta anteprima aiuta a stimare l'accettazione.",
+        "I blocchi duri possono impedire un accordo.",
+        "I negoziati possono scadere o essere contrattati/respinti."
+      ],
+      "tips": [
+        "Zero trasferimento tassa non significa un ciclista a buon mercato."
+      ]
+    },
+    "transferNegotiationDeep": {
+      "title": "Prospettive di negoziato",
+      "subtitle": "Per cento di accettazione, punteggi e motivi di rifiuto.",
+      "overview": "Le anteprime di negoziazione aiutano gli utenti a capire perché un'offerta può avere successo o fallire.",
+      "facts": [
+        "Punteggi",
+        "Stipendio, durata, bonus, commissioni, livelli e punteggio totale",
+        "Status",
+        "reintegro, reietto, reietto, reietto, reietto, reietto, reietto, reietto"
+      ],
+      "details": [
+        "Accettare la percentuale è solo un'anteprima, non una garanzia.",
+        "La ragione principale dice cosa c'è di sbagliato nell'offerta.",
+        "Il punteggio di livello può essere importante se un ciclista vuole un livello di concorrenza più elevato.",
+        "Tentativo conta limitare le offerte ripetute.",
+        "Bloccato fino a che non impedisce di ripetere immediatamente i negoziati."
+      ],
+      "tips": [
+        "Migliorare il motivo per cui il ciclista si lamenta, non campi casuali."
+      ]
+    },
+    "scoutingDeep": {
+      "title": "Relazioni di scouting",
+      "subtitle": "Ridurre il rischio di informazioni nascoste.",
+      "overview": "I rapporti di scouting aiutano gli utenti a evitare decisioni di trasferimento sbagliate migliorando la conoscenza dei cavalieri esterni.",
+      "facts": [
+        "Filtri",
+        "Tutti, nuovi, recensiti",
+        "Campi di relazione",
+        "appuntamento, data, datazione, datazione, datazione, datazione, nota, nota"
+      ],
+      "details": [
+        "I rapporti usano UUID del ciclista reale in modo da i collegamenti del profilo funzionano.",
+        "Le nuove relazioni dovrebbero essere riesaminate prima di presentare offerte.",
+        "Nel complesso e potenziale possono essere etichette piuttosto che valori esatti.",
+        "I punti di forza identificano in cosa è bravo il ciclista.",
+        "Le note forniscono un contesto di scouting."
+      ],
+      "tips": [
+        "Scout prima di firme costose."
+      ]
+    },
+    "staffMarketDeep": {
+      "title": "Mercato del personale",
+      "subtitle": "Assumere personale free-agent.",
+      "overview": "La scheda Personale elenca il personale disponibile e rispetta la capacità di ruolo.",
+      "facts": [
+        "Ruoli",
+        "Coach, allenatore, U23 coach, medico, fisioterapista, nutrizionista, meccanico, direttore sportivo, scout/analista",
+        "Ordina",
+        "Stipendio, abilità, nome, paese"
+      ],
+      "details": [
+        "I candidati mostrano competenza, esperienza, potenziale, leadership, efficienza, lealtà e stipendio.",
+        "I limiti di ruolo possono bloccare l'assunzione.",
+        "Scouting Office può influenzare la qualità del report per i candidati.",
+        "Lo stipendio settimanale colpisce finanza a lungo termine.",
+        "Il personale dovrebbe essere assunto per un chiaro scopo."
+      ],
+      "tips": [
+        "Non assumere personale se la capacità o il budget è stretto."
+      ]
+    },
+    "financeHealthDeep": {
+      "title": "Finanza Sanità",
+      "subtitle": "Come leggere la sicurezza finanziaria.",
+      "overview": "La salute finanziaria è una questione di sostenibilità, non solo di equilibrio attuale.",
+      "facts": [
+        "Vista operativa",
+        "Entrate, oneri e netti per giorno/settimana/mese",
+        "Separazione del debito",
+        "L'erogazione di prestiti e il capitale sono separati dal flusso di cassa operativo"
+      ],
+      "details": [
+        "Un alto equilibrio può ancora essere pericoloso se le spese ricorrenti sono troppo elevate.",
+        "Stipendi, politiche, personale, imposte e rimborsi di prestiti possono creare pressioni future.",
+        "Il reddito dello sponsor può arrivare mensilmente o per tempi di contratto.",
+        "I premi di gara sono dipendenti dalle prestazioni e non devono essere assunti.",
+        "Usa le tendenze del flusso di cassa per capire se il club sta migliorando o diminuendo."
+      ],
+      "tips": [
+        "Controllare la finanza prima di ogni decisione di spesa importante."
+      ]
+    },
+    "transactionsDeep": {
+      "title": "Operazioni",
+      "subtitle": "Libretto finanziario e archivio.",
+      "overview": "Le transazioni sono il luogo per verificare esattamente perché il denaro si è spostato.",
+      "facts": [
+        "Recenti",
+        "Ultimi 30 giorni di gioco",
+        "Archivio",
+        "Precedenti 6 mesi di gioco",
+        "Dimensione pagina",
+        "20"
+      ],
+      "details": [
+        "Le date visibili usano i metadati della data di gioco.",
+        "created_at è solo un ripiego tecnico.",
+        "I tipi di transazione noti hanno etichette leggibili.",
+        "Tipi di transazione sconosciuti sono pretificati automaticamente.",
+        "Archivio raggruppa le vecchie righe per il mese del gioco."
+      ],
+      "tips": [
+        "Usa Transazioni quando il saldo ti sorprende."
+      ]
+    },
+    "taxDeep": {
+      "title": "Audit fiscali",
+      "subtitle": "Ritiro, adeguamento mensile e rimborso.",
+      "overview": "Le imposte tengono conto del reddito imponibile e dei risultati mensili della revisione contabile.",
+      "facts": [
+        "Tipi",
+        "tax_withholding, tax_monthly_adjustment, tax_monthly_refund",
+        "Status",
+        "OK, aggiustato, rimborsato"
+      ],
+      "details": [
+        "L'imposta prevista è calcolata dal reddito lordo imponibile e dall'aliquota fiscale.",
+        "Già trattenuto è già preso le tasse.",
+        "L'importo di adeguamento è ciò che deve essere addebitato o rimborsato.",
+        "L'audit mensile confronta le imposte previste con quelle pagate.",
+        "Le tasse possono diventare pericolose dopo grandi eventi di reddito."
+      ],
+      "tips": [
+        "Tenere a disposizione contanti per le rettifiche fiscali."
+      ]
+    },
+    "sponsorsDeep": {
+      "title": "Sponsor Guida profonda",
+      "subtitle": "Principali sponsor, secondari e tecnici.",
+      "overview": "Gli sponsor portano denaro garantito, pool bonus e obiettivi. Gli sponsor tecnici possono anche aiutare le attrezzature.",
+      "facts": [
+        "Genti",
+        "Principale, secondario, tecnico",
+        "Denaro",
+        "Importo garantito, pool bonus, importo mensile",
+        "Tecnica",
+        "Percentuale di sconto e pacchetto di sostegno"
+      ],
+      "details": [
+        "I principali sponsor sono i più visibili.",
+        "Sponsor secondari riempiono slot e aggiungono supporto.",
+        "Gli sponsor tecnici supportano gli acquisti di attrezzature.",
+        "Le offerte dello sponsor possono scadere.",
+        "Per prora si intende un contratto di stagione parziale che non può pagare i valori di stagione intera."
+      ],
+      "tips": [
+        "Confrontare denaro garantito, obiettivi e impatto marchio."
+      ]
+    },
+    "sponsorObjectivesDeep": {
+      "title": "Obiettivi dello sponsor",
+      "subtitle": "Obiettivi, controlli e pagamenti.",
+      "overview": "Gli obiettivi premiano il club quando gli obiettivi degli sponsor sono raggiunti.",
+      "facts": [
+        "Risultati",
+        "Corsa di partenza, vittoria, podio, top 5, top 10, GC top 5/top 10, tappa top 5/win, visibilità classifica"
+      ],
+      "details": [
+        "Gli obiettivi possono essere mirati a gare, paesi o categorie esatte.",
+        "I progressi mostrano obiettivo e valore corrente.",
+        "Lo stato può essere programmato, controllato, raggiunto, mancato o pagato.",
+        "La ragione non riuscita spiega gli obiettivi persi.",
+        "Il codice identificativo della transazione di pagamento appare dopo il pagamento."
+      ],
+      "tips": [
+        "Pianifica obiettivi sponsorizzati quando si scelgono le gare."
+      ]
+    },
+    "teamPoliciesDeep": {
+      "title": "Politiche e operazioni del gruppo",
+      "subtitle": "Standard di club ricorrenti e relativi ai viaggi.",
+      "overview": "Le politiche migliorano il comfort/il supporto, ma possono aumentare i costi settimanali, mensili e di viaggio.",
+      "facts": [
+        "Operazioni",
+        "Voli, alloggio, trasporto a terra, logistica, alloggio per il personale",
+        "Politiche",
+        "Alloggio, nutrizione, recupero, attrezzature per il personale, bonus per il cavaliere, bonus per il personale"
+      ],
+      "details": [
+        "I voli, gli hotel e i trasporti a terra influenzano i viaggi.",
+        "L'alloggio, la nutrizione e il recupero supportano le operazioni ricorrenti.",
+        "Il personale può essere utilizzato quando assume personale.",
+        "I piani bonus possono creare costi stagionali o basati sui risultati.",
+        "Le previsioni mostrano i prossimi costi di viaggio.",
+        "Il mese scorso il costo effettivo aiuta la spesa per la revisione contabile."
+      ],
+      "tips": [
+        "Ridurre il livello politico se le finanze sono pericolose."
+      ]
+    },
+    "liquidationDeep": {
+      "title": "Avviso di liquidazione e di riavvio",
+      "subtitle": "Cosa succede quando il club finisce la protezione di soccorso.",
+      "overview": "La liquidazione blocca il gameplay per quel club dopo che i limiti di salvataggio sono esauriti e un altro obbligo obbligatorio non riesce.",
+      "facts": [
+        "Limite di salvataggio",
+        "3 salvataggi di emergenza a vita",
+        "Coins per conto proprio",
+        "Resta attivo",
+        "Riavvia",
+        "Avviso futuro/non attivo nell'interfaccia utente corrente"
+      ],
+      "details": [
+        "Il club liquidato non può più eseguire azioni.",
+        "L'utente può creare un nuovo club in un posto libero disponibile.",
+        "Il team di riavvio attualmente spiega solo il comportamento di ripristino futuro.",
+        "Il riavvio futuro rilascerà vecchi ciclisti, rimuoverà il personale e reimpostare punti/progressi.",
+        "La ragione di liquidazione e il timestamp possono essere mostrati."
+      ],
+      "tips": [
+        "Spiega che la liquidazione è a livello di club, non cancellazione dei conti."
+      ]
+    }
+  }
+}

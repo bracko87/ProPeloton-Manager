@@ -1,0 +1,97 @@
+{
+  "sections": {
+    "applicationBlocked": {
+      "title": "FAQ: Perché posso candidarmi a una gara?",
+      "subtitle": "Bloccatori comuni.",
+      "overview": "Una domanda di gara può essere bloccata dallo stato di gara, dalle scadenze, dalla capacità o dall'ammissibilità.",
+      "details": [
+        "Le domande potrebbero non essere ancora aperte.",
+        "Le domande possono essere già chiuse.",
+        "La gara può essere attiva, terminata o annullata.",
+        "La gara potrebbe essere piena.",
+        "La tua squadra potrebbe non corrispondere ai requisiti di ingresso.",
+        "Si può già avere una domanda/ingresso."
+      ],
+      "tips": [
+        "Aprire Dettaglio gara e controllare le regole di entrata."
+      ]
+    },
+    "acceptedNotReady": {
+      "title": "FAQ: Perché sono accettato ma non sono pronto?",
+      "subtitle": "L'ingresso accettato non è un piano di gara completo.",
+      "overview": "Accettato significa che il vostro team ha un posto; mezzi pronti cavalieri, personale, beni, attrezzature, forniture e piani di scena sono utilizzabili.",
+      "details": [
+        "Race Plan deve ancora essere presentato.",
+        "Stage Plans potrebbe ancora essere mancante.",
+        "Potrebbero mancare delle provviste.",
+        "La prontezza può mostrare problemi.",
+        "I termini possono bloccare le modifiche se non sono stati raggiunti."
+      ],
+      "tips": [
+        "Preparazione della gara aperta dopo ogni gara accettata."
+      ]
+    },
+    "riderUnderperformed": {
+      "title": "FAQ: Perché il mio ciclista ha fatto un po' di sottoperformance?",
+      "subtitle": "La prestazione ha molte cause.",
+      "overview": "Un cavaliere forte può svolgere male se il ruolo, il palcoscenico, le condizioni, le tattiche o il supporto erano sbagliati.",
+      "details": [
+        "Controlla se le abilità del ciclista corrispondono al terreno.",
+        "Verificare la fatica e la disponibilità.",
+        "Controllare morale e la precisione della razza.",
+        "Controllare ruolo di scena e tattiche.",
+        "Controllare le attrezzature e le forniture.",
+        "Controllate il tempo e gli incidenti.",
+        "Controllare il supporto personale/asset."
+      ],
+      "tips": [
+        "Usare replay e commento per imparare."
+      ]
+    },
+    "money": {
+      "title": "FAQ: Dove sono finiti i miei soldi?",
+      "subtitle": "Come indagare i cambiamenti di equilibrio.",
+      "overview": "Finance Transactions è la fonte dei movimenti di bilancio.",
+      "details": [
+        "Open Finance → Transactions.",
+        "Rivedere stipendi, imposte, pagamenti sponsor, trasferimenti, attrezzature, infrastrutture, campi e politiche.",
+        "Imposta aperta per la revisione mensile.",
+        "Open Team Policies per i costi ricorrenti.",
+        "Ricordate che i prestiti sono debiti, non reddito."
+      ],
+      "tips": [
+        "Le transazioni sono la prima pagina per le domande finanziarie."
+      ]
+    },
+    "equipment": {
+      "title": "FAQ: Perché il mio bonus è piccolo?",
+      "subtitle": "Tappi bonus e compromessi.",
+      "overview": "L'attrezzatura è pesata e limitata in modo da supportare ma non sostituisce la qualità del ciclista.",
+      "details": [
+        "I bonus sono ponderati per categoria.",
+        "Il bonus di fase è limitato.",
+        "Il supporto di squadra/non ciclista è limitato.",
+        "La riduzione dell'affaticamento è limitata.",
+        "Gli attrezzi specialisti possono avere compromessi negativi."
+      ],
+      "tips": [
+        "Usa la configurazione giusta per la fase giusta."
+      ]
+    },
+    "staffHiring": {
+      "title": "FAQ: Perché posso assumere personale?",
+      "subtitle": "Solitamente si assume un bloccanti.",
+      "overview": "L'assunzione del personale dipende dalla capacità di ruolo, dalla disponibilità e dal denaro.",
+      "details": [
+        "Controllare le slot machine aperte per il ruolo.",
+        "Aggiornare l'infrastruttura se la capacità è piena.",
+        "Controlla la disponibilità dei candidati.",
+        "Controllare lo stipendio settimanale e il saldo.",
+        "Verificare se il ruolo è sbloccato da strutture."
+      ],
+      "tips": [
+        "I problemi di capacità di solito indicano l'infrastruttura."
+      ]
+    }
+  }
+}

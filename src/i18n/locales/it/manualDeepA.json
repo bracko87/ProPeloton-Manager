@@ -1,0 +1,686 @@
+{
+  "sections": {
+    "publicHomeBeta": {
+      "title": "Avviso pubblico a casa e Beta",
+      "subtitle": "Che cosa i giocatori vedono prima del login e perché la beta avviso importa.",
+      "overview": "La home page pubblica è il punto di ingresso prima del cruscotto. Può indirizzare gli utenti autenticati per creare-club o cruscotto e mostra informazioni di gioco pubblico dal vivo.",
+      "facts": [
+        "Istantanea in diretta",
+        "Tempo di gioco, manager attivi, squadre totali, gare e tappe",
+        "Avviso Beta",
+        "Sistemi di gioco, UI, bilanciamento e dati possono ancora cambiare"
+      ],
+      "details": [
+        "Se l'utente è registrato e non ha club, l'app si sposta verso la creazione di club.",
+        "Se l'utente è registrato e ha già un club, l'app si sposta alla panoramica del cruscotto.",
+        "La comunicazione beta dice ai tester che il gioco è online per i test, ma non finale.",
+        "I widget della homepage possono mostrare ieri, oggi e domani le gare."
+      ],
+      "tips": [
+        "Mantenere chiare le aspettative del giocatore durante la beta."
+      ]
+    },
+    "sidebarFooterLayout": {
+      "title": "Barra laterale, piè di pagina e blocco da cruscotto",
+      "subtitle": "Come il layout principale aiuta gli utenti a muoversi intorno al gioco.",
+      "overview": "La barra laterale sinistra è la navigazione principale in-game, mentre il piè di pagina mostra autorevole tempo di gioco dal vivo. Alcuni stati cruscotto possono bloccare l'interazione.",
+      "facts": [
+        "Pagine laterali",
+        "Panoramica, Squadra, Calendario, Preparazione della corsa, Classifica del team, Formazione, Attrezzature, Infrastrutture, Finanza, Trasferimenti, Statistiche",
+        "Piedistallo",
+        "Spettacoli Stagione, giorno della settimana, data e ora"
+      ],
+      "details": [
+        "Le descrizioni della barra laterale dicono agli utenti cosa fa ogni pagina.",
+        "Il tempo di gioco dei piè di pagina dovrebbe essere trattato come la fonte della verità per le scadenze.",
+        "Dashboard Locked significa che il giocatore non può apportare modifiche in quel momento.",
+        "Esci e segnala bug in diretta nella barra inferiore."
+      ],
+      "tips": [
+        "Quando un utente è confuso circa le scadenze, prima di dire loro di controllare tempo di gioco a piè di pagina."
+      ]
+    },
+    "profileSettings": {
+      "title": "Il mio profilo",
+      "subtitle": "Dati del profilo utente, nome utente, email e password.",
+      "overview": "Il mio profilo modifica il profilo dell'account utente. È separato dal nome del team, dal logo del team e dalla maglia.",
+      "facts": [
+        "Regola nome utente",
+        "3 040224 caratteri; lettere, numeri e sottolineature",
+        "Regola del compleanno",
+        "Salvato una volta durante la registrazione e in sola lettura successivamente"
+      ],
+      "details": [
+        "Il nome utente è normalizzato rifilando spazi, cambiando spazi per sottolineare e rimuovendo caratteri non supportati.",
+        "Le modifiche e-mail utilizzano il sistema auth e potrebbero richiedere conferma.",
+        "Nome, cognome, città e paese sono campi di profilo opzionali.",
+        "La password può essere cambiata dalla pagina del profilo con conferma.",
+        "Il compleanno viene visualizzato ma non salvato di nuovo dal mio profilo."
+      ],
+      "tips": [
+        "Dite agli utenti che il nome del profilo e il nome del club sono diversi."
+      ],
+      "links": [
+        "Il mio profilo"
+      ]
+    },
+    "preferencesNotifications": {
+      "title": "Preferenze e impostazioni di notifica",
+      "subtitle": "Dove i giocatori controllano le notifiche e le opzioni speciali di squadra/account.",
+      "overview": "Preferenze memorizza i controlli di notifica, sviluppo di team di acquisto / stato e azioni zona di pericolo.",
+      "facts": [
+        "Conservazione delle notifiche",
+        "Impostazioni delle preferenze locali",
+        "Sviluppo di RPC team",
+        "get_developing_team_status e purchase_developing_team",
+        "Conferma di arresto",
+        "L'utente deve digitare DELETE"
+      ],
+      "details": [
+        "Attivazione di notifica decide quali gruppi di notifica il giocatore vuole ricevere.",
+        "Lo stato del team di sviluppo mostra requisiti, costi delle Coins, equilibrio e informazioni sulla finestra di movimento.",
+        "Dopo l'acquisto di Developing Team, il contesto attivo del club è bloccato al club principale.",
+        "Il team di spegnimento utilizza un backend Edge Function e richiede il token di sessione attivo.",
+        "Il team di riavvio è attualmente un segnaposto/avviso di azione e non dovrebbe essere descritto come pienamente attivo."
+      ],
+      "tips": [
+        "Usa Preferenze quando gli utenti si lamentano di troppe notifiche."
+      ],
+      "links": [
+        "Preferenze"
+      ]
+    },
+    "inviteFriends": {
+      "title": "Invita amici",
+      "subtitle": "Collegamento di riferimento, stato di riferimento e premio di Coins.",
+      "overview": "Invita Amici crea un link di referral e mostra attività di referral. La ricompensa viene concessa quando un amico completa i passaggi richiesti.",
+      "facts": [
+        "URL di riferimento",
+        "/#/referral/:code",
+        "Premio",
+        "40 Coins",
+        "Status",
+        "In attesa, completata, respinta"
+      ],
+      "details": [
+        "La pagina carica il codice attuale di riferimento club dalla tabella club.",
+        "Il link di rinvio utilizza l'origine del sito web corrente più la rotta di rinvio.",
+        "In attesa significa che un amico ha creato un club ma non ha ancora acquistato il primo pacchetto di Coins.",
+        "Completato significa che il primo acquisto di Coins è avvenuto e la ricompensa è stata concessa.",
+        "Gli identificatori utente e club sono mascherati per la privacy."
+      ],
+      "tips": [
+        "Usa Invita gli amici per far crescere la comunità."
+      ],
+      "links": [
+        "Invita amici"
+      ]
+    },
+    "proPackagesDeep": {
+      "title": "Negozio di pacchetti di Coins",
+      "subtitle": "Prezzi dei pacchetti, checkout e storia dell'acquisto.",
+      "overview": "Coin Packages carica pacchetti dal database, mostra il bilanciamento e inizia il checkout tramite un Edge Function.",
+      "facts": [
+        "Fonte del pacchetto",
+        "coin_packages",
+        "Fonte di bilancio",
+        "get_my_coin_status",
+        "Checkout",
+        "crea-coin-checkout",
+        "Cronologia acquisti",
+        "user_coin_ledger reason='acquist'"
+      ],
+      "details": [
+        "I prezzi esatti sono basati su database e non devono essere codificati in modo rigido nel manuale.",
+        "Il negozio calcola il prezzo per Coins e può evidenziare il miglior valore.",
+        "Tagline pacchetto sono generati da quantità di Coins, come Starter boost o Best per il gioco a lungo termine.",
+        "La cronologia degli acquisti non mostra intenzionalmente le informazioni tecniche di sessione Stripe.",
+        "Coins sono valuta del conto, non contanti club."
+      ],
+      "tips": [
+        "Per i prezzi attuali, fidati della pagina Pacchetti Coins dal vivo."
+      ],
+      "links": [
+        "Pacchetti di Coins"
+      ]
+    },
+    "contactForumSupport": {
+      "title": "Contattaci, Forum e Discord",
+      "subtitle": "Dove i giocatori fanno domande o segnalano problemi.",
+      "overview": "Contattaci, il Forum e Discord sono punti di supporto/ingresso alla comunità. Contattaci ora è solo UI; il Forum punta gli utenti a Discord.",
+      "facts": [
+        "Contattaci",
+        "Solo forma UI nel codice corrente",
+        "Forum",
+        "Pagina di avviso Discord",
+        "Uso Discord",
+        "Comunità, aiuto, manuali e questioni"
+      ],
+      "details": [
+        "Contattaci ha nome, email e campi di messaggi e mostra un messaggio di ringraziamento dopo l'invio.",
+        "Forum spiega che non ci sarà un forum in-game in quella pagina.",
+        "Discord è il luogo della comunità per domande e aiuto manuale.",
+        "I rapporti di bug dovrebbero includere pagina, comportamento atteso, comportamento effettivo e screenshot."
+      ],
+      "tips": [
+        "Non promettete Contattateci la consegna del backend fino a quando non sarà cablata."
+      ],
+      "links": [
+        "Contattaci",
+        "Forum"
+      ]
+    },
+    "clubCreationRoute": {
+      "title": "Creazione di club e primo controllo Club",
+      "subtitle": "Come gli utenti autenticati sono indirizzati nel gioco.",
+      "overview": "Dopo il login, l'app controlla se l'utente ha un club. Gli utenti senza un club vanno a Crea Club; gli utenti con un club vanno a Panoramica.",
+      "facts": [
+        "Nessun club",
+        "Percorso per /creare-club",
+        "Ha club",
+        "Instradamento verso /dashboard/overview"
+      ],
+      "details": [
+        "La homepage pubblica chiama get_my_club_id per scegliere il prossimo percorso.",
+        "La creazione del club è separata dalla creazione del profilo.",
+        "Avviare denaro e risorse di partenza esatte dovrebbe provenire da backend config, non testo manuale indovinato.",
+        "Dopo la creazione del club, le pagine del cruscotto normalmente risolvono automaticamente il club principale."
+      ],
+      "tips": [
+        "Non inventare il denaro iniziale a meno che non sia fornita la configurazione del backend."
+      ]
+    },
+    "customizeTeamDeep": {
+      "title": "Personalizza squadra",
+      "subtitle": "Branding, colori della squadra, logo, logo base e jersey.",
+      "overview": "Personalizza il team gestisce il nome del club, i colori primari/secondari, il logo e la configurazione della maglia domestica.",
+      "facts": [
+        "Tipi di logo",
+        "JPG, PNG, WEBP",
+        "Logo max",
+        "0.5 MB",
+        "Jersey max",
+        "1 MB e 512 × 512 px",
+        "Secchio di logo",
+        "club-logos"
+      ],
+      "details": [
+        "I loghi caricati vengono convertiti in PNG nel browser prima dell'archiviazione.",
+        "Rimozione di un logo ripristina un logo di base in stile schermato generato invece di lasciare nessun logo.",
+        "I colori del team sono convalidati come colori esadecimali.",
+        "Jersey config è memorizzato in team_kits con nome home.",
+        "Una maglia può essere generica, da un pool generico, un URL di immagine remoto o un'immagine caricata."
+      ],
+      "tips": [
+        "Utilizzare piccoli loghi puliti perché appaiono in piccole aree UI."
+      ],
+      "links": [
+        "Personalizza squadra"
+      ]
+    },
+    "brandingLocks": {
+      "title": "Branding Locks da diritti di denominazione",
+      "subtitle": "Perché gli utenti potrebbero non essere in grado di modificare un nome di squadra o logo.",
+      "overview": "I nomi-destra dello sponsor possono bloccare temporaneamente i campi di branding e cambiare il nome del club visualizzato.",
+      "facts": [
+        "Blocca sorgente di stato",
+        "club_branding_lock_status_v1",
+        "Campi possibili",
+        "Nome, colori e logo",
+        "Mostra i nomi",
+        "Nome originale, stagione e completo"
+      ],
+      "details": [
+        "Personalizza il team legge la serratura prima di consentire le modifiche.",
+        "locked_by_sponsor significa che l'identità del club è controllata da un accordo sponsor.",
+        "Gli sponsor standard normalmente non rinominano la squadra.",
+        "I nomi-diritti sponsor di solito pagano di più, ma influenzano l'identità pubblica.",
+        "Gli helper di nome-display dovrebbero essere usati nelle classifiche/profili quando i nomi degli sponsor contano."
+      ],
+      "tips": [
+        "Avvisa i giocatori prima che firmino accordi con i diritti di nomina."
+      ]
+    },
+    "teamProfileDeep": {
+      "title": "Profilo della squadra",
+      "subtitle": "Pagina pubblica del club con identità, sponsor, roster e punti.",
+      "overview": "Profilo di squadra consente agli utenti di ispezionare un altro club o il proprio club da classifiche, gare e statistiche.",
+      "facts": [
+        "Via",
+        "/dashboard/teams/:clubId",
+        "Mostra",
+        "Logo, paese, livello, divisione, sponsor, kit, roster, punti e gare recenti"
+      ],
+      "details": [
+        "La pagina mostra se il club è utente o AI controllato.",
+        "Può mostrare il conteggio attivo degli sponsor, i totali mensili degli sponsor e il logo principale degli sponsor.",
+        "Può mostrare l'anteprima del kit da righe di anteprima del kit team_kits o AI.",
+        "Può mostrare i risultati della classifica pubblica e recenti gare.",
+        "Esso include un pulsante di report giocatore / squadra per la moderazione."
+      ],
+      "tips": [
+        "Usa il Team Profile per studiare i rivali prima di gare importanti."
+      ]
+    },
+    "overviewDeep": {
+      "title": "Guida generale approfondita",
+      "subtitle": "Tutti i blocchi principali sul cruscotto manager.",
+      "overview": "Panoramica è la sala di controllo quotidiana che combina avvisi, KPI, impulsi di squadra, finanza, debito, mondo delle corse, operazioni, notizie e dati sponsor.",
+      "facts": [
+        "Blocchi di base",
+        "Avvisi, KPI, operazioni, impulsi di squadra, calendario, notizie, finanza, debito d'emergenza",
+        "Uso principale",
+        "Checklist giornaliero"
+      ],
+      "details": [
+        "Gli avvisi mostrano cosa serve prima attenzione.",
+        "I KPI riassumono lo stato del club in schede compatte.",
+        "Le schede operative mostrano sistemi attivi come formazione, infrastrutture, medica, sponsor, posta in arrivo, finanza o eventi di sistema.",
+        "Squad Pulse riassume fitness, morale, disponibilità, disponibilità e rischio contrattuale.",
+        "Finanza La salute mostra il saldo, il reddito operativo / spese, sponsor reddito, costi politici e previsioni di viaggio.",
+        "Emergency Debt Health mostra il conteggio dei soccorsi, il capitale in essere, il rischio di rimborso successivo e liquidazione.",
+        "I pannelli mondiali di gara mostrano oggi le gare, le prossime gare e le notizie."
+      ],
+      "tips": [
+        "Se Panoramica mostra il pericolo finanziario, aprire Finanza prima di fare qualsiasi altra cosa."
+      ],
+      "links": [
+        "Panoramica"
+      ]
+    },
+    "overviewRaceWorld": {
+      "title": "Panoramica del mondo della corsa",
+      "subtitle": "Oggi le corse dei killer, il prossimo programma e le notizie del mondo.",
+      "overview": "La pagina Panoramica include dati orientati al mondo in modo che gli utenti possano seguire il mondo ciclistico anche quando il proprio team non sta correndo.",
+      "facts": [
+        "Dati relativi alla gara giornaliera",
+        "Titolo, sottotitolo, time label, paese e link",
+        "Dati di attualità",
+        "Titolo, sottotitolo, ora, dettagli e link correlati"
+      ],
+      "details": [
+        "Oggi le corse di sugli sugli sugli sugli utenti aiutano a vedere cosa sta accadendo.",
+        "Il prossimo programma aiuta a pianificare l'attenzione quasi futura.",
+        "Le notizie mondiali fanno sentire il mondo di gioco attivo.",
+        "Collegamenti correlati possono aprire gare o altre pagine di gioco.",
+        "Usare i campi testo/dettaglio espanso quando gli utenti hanno bisogno di più contesto."
+      ],
+      "tips": [
+        "Usa Panoramica per la consapevolezza, poi apri pagine dettagliate per le decisioni."
+      ]
+    },
+    "notificationCenterDeep": {
+      "title": "Centro notifiche",
+      "subtitle": "Gestione delle notifiche non letta/letta con ricerca e categorie.",
+      "overview": "Il centro di notifica completa aiuta gli utenti a gestire le notifiche di gioco / admin senza perdere importanti scadenze.",
+      "facts": [
+        "Schede",
+        "Non letta e letta",
+        "Strumenti",
+        "Ricerca, categoria filtro, paginazione, pulsanti azione",
+        "Dimensione del prelievo locale",
+        "Fino a 500 per scheda nella pagina corrente"
+      ],
+      "details": [
+        "Le notifiche possono essere cercate per titolo, messaggio, tipo, sorgente, gruppo di preferenze e tempo creato.",
+        "La categoria è derivata dal gruppo di preferenze, dal codice sorgente o dal codice tipo.",
+        "I modelli possono aggiungere immagine, testo introduttivo, dettagli, testo extra e azioni.",
+        "Le azioni possono collegarsi direttamente alla preparazione della gara, alla finanza, alle infrastrutture, ai trasferimenti, ai profili dei ciclisti o alle gare.",
+        "Le preferenze possono impedire che alcuni tipi di notifica mostrino."
+      ],
+      "tips": [
+        "Leggi le notifiche prima delle scadenze della gara."
+      ],
+      "links": [
+        "Notifiche"
+      ]
+    },
+    "notificationExamples": {
+      "title": "Esempi di notifica importanti",
+      "subtitle": "Gli utenti degli eventi non devono ignorare.",
+      "overview": "Le notifiche possono rappresentare importanti cambiamenti di stato nella preparazione delle gare, nella finanza, nelle infrastrutture, nei trasferimenti, nello sviluppo di team e sponsor.",
+      "facts": [
+        "Esempi",
+        "Racing plan promemoria, piano di scena promemoria, sviluppo finestra, prestito di emergenza, struttura completa, rilascio rider, obiettivo sponsor"
+      ],
+      "details": [
+        "Le notifiche di preparazione della gara avvisano quando i piani o i piani di fase hanno bisogno di azione.",
+        "Le notifiche della finestra di sviluppo del team indicano agli utenti quando è possibile il movimento.",
+        "Le notifiche di completamento dell'infrastruttura indicano agli utenti che un impianto/asset è pronto.",
+        "Le notifiche di prestito d'urgenza non consentono al club di coprire un costo obbligatorio.",
+        "Rider notifiche di rilascio link al profilo del ciclista o free-agent mercato.",
+        "Le notifiche oggettive dello sponsor possono collegarsi al calendario o alla gara di destinazione."
+      ],
+      "tips": [
+        "Trattare le notifiche finanziarie/deadline come priorità assoluta."
+      ]
+    },
+    "inboxDeep": {
+      "title": "Posta in arrivo",
+      "subtitle": "Conversazioni dirette e amministrative.",
+      "overview": "La Posta in arrivo è per le conversazioni, a differenza delle notifiche che sono avvisi di sistema/gioco.",
+      "facts": [
+        "Tipi di conversazione",
+        "Diretto e diretto amministratore",
+        "Leggi logica",
+        "Aprendo un thread segna la lettura",
+        "Componi obiettivo",
+        "Può essere inizializzato da sessionStorage"
+      ],
+      "details": [
+        "L'elenco delle discussioni mostra nome, oggetto, anteprima, ultima ora del messaggio e conteggio non letto.",
+        "Filtri di ricerca thread per nome, oggetto e anteprima.",
+        "I messaggi vengono caricati da un id della conversazione e poi letti con un segno.",
+        "Se l'utente si apre comporre un contatto diretto esistente, la conversazione esistente viene riutilizzata.",
+        "Alcune conversazioni non possono essere risposto a seconda di can_reply."
+      ],
+      "tips": [
+        "Usa Posta in arrivo per conversazioni, notifiche per eventi di gioco."
+      ],
+      "links": [
+        "Posta in arrivo"
+      ]
+    },
+    "topMenu": {
+      "title": "Menu in alto",
+      "subtitle": "Account, Coins, notifiche e pagine di utilità.",
+      "overview": "Il menu in alto a destra contiene pagine di account e supporto che non sono tutte visibili nella barra laterale sinistra.",
+      "facts": [
+        "Elementi tipici",
+        "In arrivo, profilo, personalizzare team, preferenze, aiuto, contatto, pacchetti di Coins, invitare amici, disconnessione"
+      ],
+      "details": [
+        "Gli utenti possono raggiungere le impostazioni del profilo e gli strumenti di password dal menu.",
+        "Pacchetti di Coins e inviti Gli amici sono strumenti di account/Coins.",
+        "Preferenze controlla le impostazioni di notifica e lo sviluppo-team acquisto.",
+        "Aiuto e manuale dovrebbero collegarsi a questa pagina.",
+        "Il logout termina la sessione corrente."
+      ],
+      "tips": [
+        "Rendere facile trovare Aiuto / manuale dal menu."
+      ]
+    },
+    "firstSquadDeep": {
+      "title": "Prima squadra",
+      "subtitle": "Principale rider roster e visualizzazioni lista.",
+      "overview": "Prima Squadra è dove gli utenti ispezionano il loro roster principale, informazioni finanziarie, competenze e forma.",
+      "facts": [
+        "Prima squadra max in UI",
+        "18 cavalieri",
+        "Vista",
+        "Generale, finanziario, competenze, forma"
+      ],
+      "details": [
+        "Vista generale è meglio per i controlli rapidi quotidiani roster.",
+        "La visione finanziaria mostra stipendio, valore di mercato e contratti.",
+        "La vista delle abilità aiuta a confrontare sprint, arrampicata, cronometro, piatto, resistenza, recupero, resistenza, IQ da corsa, lavoro di squadra e morale.",
+        "La vista forma aiuta a giudicare la stanchezza, il morale, la disponibilità e il potenziale.",
+        "I widget da cruscotto della stagione possono mostrare vittorie, podi, primi 10s, migliori GC, ultima gara e selezione successiva."
+      ],
+      "tips": [
+        "Non comprare i ciclisti prima di capire la squadra attuale."
+      ],
+      "links": [
+        "Rosa"
+      ]
+    },
+    "riderSkillsDeep": {
+      "title": "Capacità di cavaliere spiegata",
+      "subtitle": "A cosa serve ogni abilità.",
+      "overview": "Nel complesso è una scorciatoia utile, ma attributi specifici del ciclista decidono il ruolo corretto di gara e l'uso tattico.",
+      "facts": [
+        "Competenze",
+        "Sprint, arrampicata, cronometro, resistenza, piatto, recupero, resistenza, gara IQ, lavoro di squadra, morale"
+      ],
+      "details": [
+        "Sprint conta nelle finiture a mazzo e nei treni a mazzo.",
+        "Arrampicare sulle tappe delle montagne e sulle finiture della vetta.",
+        "Time trial conta in TT, prologo e TTT contesti.",
+        "La resistenza mantiene i cavalieri forti attraverso le fasi lunghe.",
+        "Piatto aiuta su strade piane/rotolanti, inseguimenti e posizionamento.",
+        "Il recupero conta per le gare di palcoscenico.",
+        "La resistenza aiuta in condizioni di tempo difficile, ritmo elevato e terreno difficile.",
+        "Il QI di gara influenza le decisioni tattiche e il posizionamento.",
+        "Il lavoro di squadra aiuta le domestiche, le lead-out e la caccia.",
+        "Il morale influenza la fiducia e può influenzare le prestazioni."
+      ],
+      "tips": [
+        "Abbinare le abilità del ciclista al ruolo e tipo di palcoscenico."
+      ]
+    },
+    "riderProfileDeep": {
+      "title": "Schede profilo rider",
+      "subtitle": "Panoramica, contratto, formazione, confronto e storia.",
+      "overview": "Profilo Rider è la pagina profonda per le decisioni individuali del ciclista.",
+      "facts": [
+        "Schede",
+        "Panoramica, Contratto, Formazione, Confronta, Storia",
+        "Vista abilità",
+        "Basic o modern"
+      ],
+      "details": [
+        "Panoramica mostra l'identità del ciclista, lo stato e le condizioni principali.",
+        "Il contratto mostra le informazioni relative a stipendio, rinnovo e rilascio.",
+        "La formazione mostra i piani/storia quando disponibili.",
+        "Confronta permette agli utenti di confrontare i ciclisti senza lasciare la pagina.",
+        "La storia mostra le stagioni di carriera e i dati recenti di gara.",
+        "Lo stato di trasferimento elencato è visibile e può bloccare il rilascio."
+      ],
+      "tips": [
+        "Aprire profili prima di rinnovare, vendere o costruire piani di gara."
+      ]
+    },
+    "fitnessHealthDeep": {
+      "title": "Fitness, Affaticamento e Salute",
+      "subtitle": "Perché un cavaliere forte può essere una scelta pessima oggi.",
+      "overview": "La prestazione dipende da più che attributi. Fatica, malattia, lesioni, status e morale non-completamente-adattato possono cambiare il valore della razza.",
+      "facts": [
+        "Disponibilità",
+        "Adatto, non perfettamente in forma, ferito, malato",
+        "Condizione",
+        "Affaticamento, morale, salute, recupero"
+      ],
+      "details": [
+        "I ciclisti idonei sono normalmente sicuri se non bloccati dal programma.",
+        "I ciclisti non completamente in forma possono essere rischiosi e possono aver bisogno di assistenza medica.",
+        "I ciclisti feriti o malati non dovrebbero di solito correre o allenare duro.",
+        "L'elevata fatica può ridurre le prestazioni e aumentare il rischio.",
+        "Il morale dovrebbe essere monitorato perché il morale basso può danneggiare l'output.",
+        "Il personale medico e gli investimenti del Centro medico migliorano il supporto al recupero."
+      ],
+      "tips": [
+        "Una stella stanca può fare peggio di un aiutante fresco."
+      ]
+    },
+    "raceSharpnessDeep": {
+      "title": "Race Sharpness",
+      "subtitle": "Ritmo di corsa e rischio di sovraccarico.",
+      "overview": "La nitidezza della gara aiuta a mostrare se un ciclista ha abbastanza ritmo di corsa recente o è sovraccaricato da troppi giorni di gara.",
+      "facts": [
+        "Tracciato",
+        "Ultima data di gara, giorni di gara ultimi 14/30, giorni di gara totali, avviso di sovraccarico"
+      ],
+      "details": [
+        "Troppo poca corsa può ridurre la nitidezza.",
+        "Troppe corse possono creare una penalità di sovraccarico.",
+        "La nitidezza deve essere letta insieme con la fatica e la salute.",
+        "Preparazione della corsa può mostrare nitidezza durante la selezione.",
+        "La nitidezza è particolarmente utile quando si costruisce un calendario di gara."
+      ],
+      "tips": [
+        "Usare gare più piccole per preparare i ciclisti per obiettivi più grandi."
+      ]
+    },
+    "contractsRenewalsRelease": {
+      "title": "Contratti, rinnovi e rilascio",
+      "subtitle": "Decisioni finanziarie intorno ai ciclisti.",
+      "overview": "I contratti influenzano i salari, la scadenza, il costo del rilascio, il rinnovo e lo status di lista di trasferimento.",
+      "facts": [
+        "Anteprima rilascio",
+        "Settimane rimanenti, stipendio, costo di rilascio e saldo dopo il rilascio",
+        "Blocco",
+        "Rilascia bloccato durante il trasferimento elencato"
+      ],
+      "details": [
+        "Un cavaliere con un alto stipendio può diventare un problema finanziario.",
+        "I contratti di scadenza dovrebbero essere riesaminati prima della fine della stagione.",
+        "Rilasciare un ciclista può costare lo stipendio / compensazione restante.",
+        "L'anteprima mostra se il club può permettersi il rilascio.",
+        "I ciclisti elencati per il trasferimento non possono essere rilasciati mentre l'elenco è attivo."
+      ],
+      "tips": [
+        "Controllare i contratti prima di effettuare trasferimenti."
+      ]
+    },
+    "developingTeamDeep": {
+      "title": "Gruppo di sviluppo",
+      "subtitle": "U23/roster di sviluppo, acquisto e finestre di movimento.",
+      "overview": "Il team di sviluppo è un secondo team connesso per i giovani/passeggeri di sviluppo.",
+      "facts": [
+        "Massimo in UI",
+        "8 cavalieri",
+        "Acquisto",
+        "Preferenze",
+        "Movimento",
+        "Solo durante le finestre di movimento",
+        "Attenzione all'età",
+        "24+ ciclisti richiedono attenzione"
+      ],
+      "details": [
+        "Il pannello di stato mostra giorni reali giocati, giorni di gioco giocati, saldo della Coins, costo della Coins e permesso di acquisto.",
+        "Dopo l'acquisto, l'app deve mantenere il contesto attivo del club sul club principale.",
+        "Le etichette delle finestre di movimento spiegano quando i ciclisti possono muoversi.",
+        "I più anziani che sviluppano i ciclisti possono innescare avvertimenti.",
+        "I ciclisti che sviluppano il team possono ancora essere trattati come ciclisti della famiglia degli utenti nei display dei risultati della gara."
+      ],
+      "tips": [
+        "Usalo per sviluppare talenti, non come un deposito illimitato di roster."
+      ],
+      "links": [
+        "Preferenze"
+      ]
+    },
+    "staffRolesDeep": {
+      "title": "Ruolo del personale",
+      "subtitle": "Quello che fa lo staff per il club.",
+      "overview": "Il personale influisce sulla formazione, recupero, scouting, attrezzature e pianificazione della gara.",
+      "facts": [
+        "Ruoli",
+        "Coach, Trainer, U23 Coach, Medico, Fisiologico, Nutrizionista, Meccanico, Direttore sportivo, Scout/Analyst"
+      ],
+      "details": [
+        "Head Coach sostiene la formazione e lo sviluppo.",
+        "Il formatore migliora la qualità dell'allenamento quotidiano.",
+        "U23 Head Coach supporta lo sviluppo di ciclisti.",
+        "Team Doctor, Physio e Nutrizionista sostengono la salute e la guarigione.",
+        "Meccanica supporta apparecchiature e sistemi tecnici.",
+        "Il Direttore dello Sport supporta le tattiche di gara e la pianificazione.",
+        "Scout/Analyst supporta l'intelligenza di mercato e i rapporti."
+      ],
+      "tips": [
+        "Noleggio personale basato sulla debolezza, non solo perché sono disponibili."
+      ]
+    },
+    "staffCapacityDeep": {
+      "title": "Capacità del personale",
+      "subtitle": "Perché assumere può essere bloccato.",
+      "overview": "I ruoli del personale hanno dei limiti. L'infrastruttura determina spesso quanti membri del personale di ogni ruolo il club può assumere.",
+      "facts": [
+        "Campi di capacità",
+        "Limitare il conteggio, il conteggio attivo, le slot aperte, può noleggiare"
+      ],
+      "details": [
+        "Se le slot aperte sono 0, l'assunzione è bloccata per quel ruolo.",
+        "Gli aggiornamenti dell'infrastruttura possono sbloccare capacità aggiuntive del personale.",
+        "Il personale può anche essere non disponibile a causa di corsi o incarichi.",
+        "Un limite superiore del personale non significa che il club può permettersi lo stipendio.",
+        "Gli avvisi di capacità dovrebbero guidare gli utenti verso l'infrastruttura se pertinenti."
+      ],
+      "tips": [
+        "Controllare sia le bande orarie aperte e stipendio prima di assumere."
+      ]
+    },
+    "staffCoursesDeep": {
+      "title": "Corsi di perfezionamento",
+      "subtitle": "Migliorare il personale durante i giorni di gioco.",
+      "overview": "I corsi del personale costano in contanti e prendono giorni di gioco, ma possono migliorare gli attributi del personale.",
+      "facts": [
+        "Guadagni",
+        "competenza, esperienza, potenziale, leadership, efficienza, lealtà"
+      ],
+      "details": [
+        "Corsi attivi mostrano data di inizio, data di completamento, durata e costo.",
+        "I corsi completati recenti mostrano guadagni di attributi.",
+        "Il personale dei corsi può non essere disponibile per alcuni compiti.",
+        "I corsi sono migliori per il personale che il club prevede di mantenere.",
+        "La spesa per le spese di viaggio dovrebbe essere ritardata se le finanze sono pericolose."
+      ],
+      "tips": [
+        "Formare personale importante, non assunzioni temporanee."
+      ]
+    },
+    "regularTrainingDeep": {
+      "title": "Dettagli di formazione regolari",
+      "subtitle": "Predefiniti team e piani individuali.",
+      "overview": "L'allenamento regolare è il sistema di sviluppo quotidiano per i ciclisti.",
+      "facts": [
+        "Intensità",
+        "Recupero, luce, normale, duro",
+        "Obiettivi",
+        "generale, sprint, arrampicata, piatto, prova a tempo, resistenza, resistenza, gara IQ, lavoro di squadra"
+      ],
+      "details": [
+        "I default di squadra controllano il piano normale per un campo di applicazione di squadra.",
+        "I piani individuali del ciclista possono annullare i valori predefiniti.",
+        "L'allenamento duro aumenta la pressione di sviluppo ma può creare affaticamento.",
+        "L'addestramento di recupero aiuta a ridurre la fatica e proteggere i ciclisti.",
+        "Il focus dovrebbe abbinare il ruolo del ciclista e gli obiettivi futuri della gara."
+      ],
+      "tips": [
+        "Non usare un allenamento duro in modo permanente."
+      ]
+    },
+    "trainingCampsDeep": {
+      "title": "Ritiri di allenamento",
+      "subtitle": "Posizione, tipo, tempo, personale e costo.",
+      "overview": "I campi di formazione sono blocchi di sviluppo più forti con requisiti di pianificazione e costi più elevati.",
+      "facts": [
+        "Tipi di campo",
+        "Generale, sprint, arrampicata, piatto, cronometro",
+        "Regioni",
+        "Europa, America del Nord, America del Sud, Asia, Africa, Oceania, Medio Oriente"
+      ],
+      "details": [
+        "I campi includono stelle, moltiplicatore di qualità, comfort di recupero, indice dei costi e nota meteo.",
+        "Le settimane preferite, rischiose e chiuse influenzano l'idoneità al calendario.",
+        "Le citazioni includono viaggio, alloggio, tassa di campeggio, logistica e costo totale.",
+        "La convalida può bloccare i ciclisti feriti o il personale non disponibile.",
+        "Il personale può migliorare lo sviluppo, il recupero, l'organizzazione e la riduzione dei rischi."
+      ],
+      "tips": [
+        "Prenotare campi solo dopo aver controllato la Finanza."
+      ]
+    },
+    "currentCampDeep": {
+      "title": "Pagina corrente del campo",
+      "subtitle": "Pianificazioni e rapporti giornalieri.",
+      "overview": "La pagina attuale mostra i progressi attivi del campo, il tempo, le spinte del personale, i rapporti e la pianificazione del giorno successivo.",
+      "facts": [
+        "Stati",
+        "avviso prenotato, preavvio, attivo, post, nascosto",
+        "Opzioni di piano",
+        "Giorno libero, luce, normale, duro"
+      ],
+      "details": [
+        "I campi futuri mostrano l'interfaccia completa solo vicino all'inizio.",
+        "Le previsioni meteorologiche aiutano gli utenti a regolare l'intensità.",
+        "I rapporti giornalieri mostrano sessioni completate/mancate e cambiamenti di fatica.",
+        "Il riassunto dell'aumento del personale spiega il contributo del personale.",
+        "I prossimi tre giorni di campeggio possono essere pianificati da squadra o intensità individuale."
+      ],
+      "tips": [
+        "Usare giorno libero quando la fatica del campo diventa troppo alto."
+      ]
+    }
+  }
+}

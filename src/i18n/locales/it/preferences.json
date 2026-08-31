@@ -1,0 +1,216 @@
+{
+  "page": {
+    "title": "Preferenze",
+    "description": "Impostazioni utilizzabili: controllo delle notifiche in-game e azioni della zona di pericolo del team."
+  },
+  "notifications": {
+    "title": "Notifiche di gioco",
+    "description": "Le notifiche di gioco core e le notifiche di Staff Advisor a pagamento sono controllate separatamente.",
+    "coreTitle": "Notifiche principali",
+    "coreDescription": "Normale notifiche di gioco che rimangono disponibili senza un consulente personale pagato.",
+    "advisorTitle": "Notifica del consulente del personale",
+    "advisorDescription": "Notificazioni di consulenti a pagamento raggruppate per argomento. Interrompere una categoria di messaggi di ogni tipo di notifica in tale argomento. I singoli tipi di notifica possono quindi essere non modificati dalla loro scheda di notifica senza modificare questa categoria casella di controllo.",
+    "advisorSaveError": "Impossibile salvare l' impostazione di notifica Staff Advisor. Provare di nuovo.",
+    "advisorInactiveSuffix": "Attiva il consulente personale richiesto per controllare questa notifica.",
+    "coreAdvisorNote": "Una notifica del core e una notifica del consulente possono riguardare lo stesso argomento senza essere lo stesso evento. Esempio: Race Supplies Low rimane il core, mentre Equipment & Workshop Review è l'analisi a pagamento.",
+    "enabledCount": "{{enabled}}/{{total}} su"
+  },
+  "sections": {
+    "race": {
+      "title": "Notificazioni di gara",
+      "description": "Inviti, preparazione, tempo, piani di scena, problemi di gara-giorno, e risultati."
+    },
+    "team": {
+      "title": "Notificazione del & ciclista di squadra",
+      "description": "Cavalieri, personale, trasferimenti, campi di addestramento, esplorazioni e ritiri."
+    },
+    "club": {
+      "title": "Notificazione gestione club",
+      "description": "Finanza, Coins, premi, forniture, attrezzature, tasse e infrastrutture."
+    },
+    "account": {
+      "title": "Notificazione account e sistema",
+      "description": "Messaggi ufficiali di gioco e informazioni di bordo."
+    }
+  },
+  "groups": {
+    "raceInvitations": {
+      "label": "Inviti alla gara",
+      "description": "Mostra le notifiche quando il tuo team riceve un invito di gara."
+    },
+    "raceApplicationResults": {
+      "label": "Risultati dell'applicazione Race",
+      "description": "Mostra le notifiche quando il tuo team è accettato o rifiutato per una gara."
+    },
+    "races": {
+      "label": "Aggiornamenti del giorno della gara",
+      "description": "Mostra gli aggiornamenti di inizio, inizio saltato, gara-giorno e penalità di gara."
+    },
+    "racePreparation": {
+      "label": "Stato di preparazione della gara",
+      "description": "Mostra le notifiche di stato e conseguenze per la preparazione della gara. Il consiglio proattivo del ciclista-morte appartiene a Sports Director Advisory."
+    },
+    "stagePlanReminders": {
+      "label": "Stato del piano di fase",
+      "description": "Mostra le notifiche di apertura e di blocco dello stato del piano principale. Il consiglio mancante appartiene al direttore sportivo Advisory."
+    },
+    "raceWeather": {
+      "label": "Tempo di gara",
+      "description": "Mostra le notifiche quando le fasi, le gare o le attività legate alla gara sono influenzate dal tempo."
+    },
+    "raceResults": {
+      "label": "Risultati della gara",
+      "description": "Mostra notifiche per gare finite, risultati di tappa, classificazioni e riassunti di gara."
+    },
+    "teamUpdates": {
+      "label": "Aggiornamenti della squadra",
+      "description": "Mostra notifiche relative a ciclisti, morale, salute, contratti, personale e cambiamenti di squadra interna."
+    },
+    "staffContracts": {
+      "label": "Contratti di personale",
+      "description": "Mostra le notifiche relative alla scadenza dei contratti del personale e dei tempi di rinnovo."
+    },
+    "staffCourses": {
+      "label": "Corsi di perfezionamento",
+      "description": "Mostra le notifiche quando un corso del personale è completato e i guadagni sono applicati."
+    },
+    "transferUpdates": {
+      "label": "Aggiornamenti di trasferimento",
+      "description": "Mostra il trasferimento del ciclista, agente libero, offerta, offerta e le notifiche di negoziazione."
+    },
+    "trainingCamps": {
+      "label": "Campi di addestramento",
+      "description": "Mostra notifiche per gli allenamenti, report giornalieri, avvisi meteo e completamento."
+    },
+    "scoutingReports": {
+      "label": "Relazioni di scouting",
+      "description": "Mostra le notifiche quando un rapporto di ricerca è completato."
+    },
+    "retirementUpdates": {
+      "label": "Aggiornamenti sulla pensione",
+      "description": "Mostra le notifiche quando i ciclisti o il personale annunciano la pensione e quando i pensionati sono finalizzati."
+    },
+    "financeAlerts": {
+      "label": "Avvisi finanziari",
+      "description": "Mostra avvisi finanziari importanti, obiettivi sponsor, prestiti d'emergenza, avvisi fiscali, problemi di paga e avvisi di insolvenza."
+    },
+    "walletRewards": {
+      "label": "& Ricompense Coins",
+      "description": "Mostra gli acquisti di Coins, i crediti di Coins, regali di compleanno, ricompense di rinvio, e i messaggi di ricompensa portafoglio."
+    },
+    "competitionRewards": {
+      "label": "Premi per la concorrenza",
+      "description": "Mostra premi di stagione per il rinnovo per campionato e risultati di gara."
+    },
+    "taxUpdates": {
+      "label": "Aggiornamenti fiscali",
+      "description": "Mostra le notifiche per gli audit fiscali e gli eventi finanziari connessi alle imposte."
+    },
+    "raceSupplies": {
+      "label": "Forniture per corse",
+      "description": "Mostra le notifiche quando le forniture di gara sono basse, mancanti o necessarie per il ripopolamento prima degli eventi."
+    },
+    "equipmentUpdates": {
+      "label": "Aggiornamenti delle attrezzature",
+      "description": "Mostra le notifiche per la manutenzione, le vendite, le azioni di scarto e gli aggiornamenti del ciclo di vita delle apparecchiature."
+    },
+    "infrastructureUpdates": {
+      "label": "Aggiornamenti dell'infrastruttura",
+      "description": "Mostra notifiche per ordini di infrastruttura, consegne, riparazioni, vendite, aggiornamenti e avvisi di condizione."
+    },
+    "systemMessages": {
+      "label": "Messaggi di sistema",
+      "description": "Mostra messaggi di benvenuto e messaggi di gioco ufficiali generali."
+    }
+  },
+  "advisorCategories": {
+    "trainingReadiness": {
+      "label": "Allenamento e preparazione del ciclista",
+      "description": "Carico di allenamento, fatica, disponibilità del ciclista, lacune di allenamento, disponibilità della squadra e consigli di sviluppo del ciclista."
+    },
+    "raceProgrammePreparation": {
+      "label": "Programma e preparazione della gara",
+      "description": "Recensioni e lacune del programma di gara, preparazione della gara mancante e consulenze pronte per la preparazione."
+    },
+    "startlistStagePlans": {
+      "label": "Startlist & Stage Plans",
+      "description": "Avvisi Startlist, più avvisi mancanti o incompleti."
+    },
+    "medicalRecovery": {
+      "label": "Medico e recupero",
+      "description": "Rapporti medici, piani di trattamento delle lesioni e malattie, cambiamenti di recupero e consulenze medico-pulizia."
+    },
+    "equipmentWorkshopSupplies": {
+      "label": "Attrezzature, officine e forniture per gare",
+      "description": "Condizioni dell'attrezzatura, preparazione dell'officina e consulenza analitica per la revisione dell'offerta di razza."
+    },
+    "scoutingRecruitment": {
+      "label": "Scouting e reclutamento",
+      "description": "Intelligence di reclutamento, analisi di ricognizione e consulenze di priorità."
+    }
+  },
+  "developingTeam": {
+    "title": "Gruppo di sviluppo",
+    "description": "Costruisci e gestisci una squadra di sviluppo U23 con accesso stagionale alle Coins.",
+    "loading": "Caricamento dello stato del team di sviluppo...",
+    "realLifeProgress": "Progressi nella vita reale",
+    "realLifeMinimum": "Minimo 30 giorni richiesti",
+    "gameProgress": "Progressi in-game",
+    "gameMinimum": "Minimo 60 giorni richiesti",
+    "coins": "Coins",
+    "eligibility": "Eleggibilità: 30 giorni di vita reale o 60 giorni di gioco.",
+    "active": "Gruppo di sviluppo attivo",
+    "activeBadge": "Attivo",
+    "currentSeason": "Stagione corrente",
+    "accessEnds": "Fine dell'accesso",
+    "renewalPrice": "Prezzo di rinnovo",
+    "nextRenewal": "Rinnovo successivo",
+    "autoRenew": "Rinnovare automaticamente ogni stagione",
+    "expired": "Accesso al team di sviluppo scaduto",
+    "expiredDescription": "Il tuo team, i ciclisti, i contratti, i risultati e la cronologia rimangono memorizzati. Il team di sviluppo è attualmente in sola lettura.",
+    "reactivating": "Riattivare...",
+    "activating": "Attivazione...",
+    "getCoins": "Ottenere Coins",
+    "notEligible": "Non ancora ammissibile",
+    "notEligibleDescription": "Il team di sviluppo diventa disponibile dopo 30 giorni di vita reale o 60 giorni di gioco.",
+    "specialRules": "Norme speciali",
+    "teamNameRule": "Il nome della squadra sarà il nome principale del club più U23.",
+    "raceRule": "Questa squadra può applicare alle gare normalmente mentre l'accesso stagionale è attivo.",
+    "competitionRule": "Questo team non può essere promosso al di sopra del livello Continental.",
+    "rosterRule": "Dimensione massima del roster: 8 ciclisti.",
+    "ageRule": "Solo i ciclisti di età pari o inferiore a 23 anni sono ammissibili.",
+    "movementRule": "I ciclisti si muovono tra le squadre solo durante le finestre di movimento.",
+    "teamLabel": "Squadra"
+  },
+  "dangerZone": {
+    "title": "Zona pericolosa",
+    "description": "Si tratta di azioni distruttive e dovrebbero rimanere separate dalle normali preferenze.",
+    "badge": "Azioni ad alto impatto",
+    "restartTitle": "Riavvia squadra",
+    "restartDescription": "Riavviare questo club di nuovo a uno stato di avviamento, mantenendo lo stesso nome club, logo, maglia, paese, e slot di competizione.",
+    "restartDetail": "I ciclisti attuali diventano agenti liberi, i punti di stagione vengono ripristinati a 0, e la squadra riceve una nuova squadra di avviamento in base al suo livello attuale.",
+    "restartButton": "Riavvia squadra",
+    "shutdownTitle": "Squadra di arresto",
+    "shutdownDescription": "Elimina definitivamente questo team utente E l'account di autenticazione. Dopo la cancellazione riuscita, verrai reindirizzato alla homepage e potresti registrarti di nuovo con la stessa email.",
+    "shutdownDetail": "Questo dovrebbe eliminare solo i dati attuali del team di utenti, non altri utenti o altri team.",
+    "shuttingDown": "Chiudere...",
+    "shutdownButton": "Squadra di arresto",
+    "systemNote": "Il sistema di notifica dovrebbe controllare queste preferenze salvate prima di creare o mostrare ogni tipo di notifica.",
+    "confirmTitle": "Conferma chiusura squadra",
+    "confirmDescription": "Questa azione è permanente e non può essere annullata.",
+    "aboutToDelete": "Stai per eliminare definitivamente:",
+    "deleteTeam": "La tua squadra attuale",
+    "deleteGameData": "I tuoi cavalieri di squadra, attrezzature e dati di gioco relativi al team",
+    "deleteAccount": "Il tuo account di autenticazione per questa email",
+    "afterDelete": "Dopo la cancellazione di successo, verrai firmato e reindirizzato alla homepage. Si può quindi registrare di nuovo con lo stesso indirizzo email di un nuovo utente.",
+    "typeDelete": "Digitare DELETE per confermare",
+    "placeholder": "Digitare DELETE qui",
+    "cancel": "Annulla",
+    "permanentButton": "Squadra di arresto permanente",
+    "exactDeleteError": "È necessario digitare DELETE esattamente per confermare questa azione.",
+    "missingSession": "La sessione è scomparsa, per favore, registrati di nuovo e riprova.",
+    "shutdownFailed": "Non è riuscito a chiudere la squadra.",
+    "shutdownUnexpected": "Non è stato possibile chiudere il team a causa di un errore inaspettato.",
+    "closeAria": "Chiudere la conferma del team di spegnimento"
+  }
+}

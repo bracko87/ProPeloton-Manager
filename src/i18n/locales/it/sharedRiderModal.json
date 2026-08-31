@@ -1,0 +1,56 @@
+{
+  "common": {
+    "back": "Indietro",
+    "close": "Chiudi",
+    "unknown": "Sconosciuto",
+    "unknownRider": "Rider sconosciuto",
+    "rider": "Ciclista",
+    "noImage": "Nessuna immagine",
+    "age": "Età {{age}}",
+    "club": "Club:",
+    "noClub": "Nessun club",
+    "marketValue": "Valore di mercato:",
+    "salary": "Stipendio:",
+    "availability": "Disponibilità:",
+    "contractSeason": "Periodo contrattuale:",
+    "seasonPoints": "Punti stagione",
+    "sprintPoints": "Punti di scatto",
+    "climbingPoints": "Punti di arrampicata",
+    "markScouted": "Contrassegna come scorito",
+    "unmarkScouted": "Scoiattoli non marcati",
+    "showHistory": "Mostra cronologia",
+    "hideHistory": "Nascondi cronologia",
+    "openTeam": "Apri squadra",
+    "historyPlaceholder": "Segnaposto del pannello di storia del ciclista."
+  },
+  "skills": {
+    "ovr": "OVR",
+    "pot": "POT",
+    "sprint": "Sprint",
+    "climbing": "Arrampicata",
+    "tt": "TT",
+    "endurance": "Endurance",
+    "flat": "Piano",
+    "recovery": "Recupero",
+    "resistance": "Resistenza",
+    "raceIq": "QI gara",
+    "teamwork": "Lavoro di squadra",
+    "morale": "Morale"
+  },
+  "availability": {
+    "fit": "Adatta",
+    "notFullyFit": "Non perfettamente in forma",
+    "injured": "Ferito",
+    "sick": "Malato"
+  },
+  "roles": {
+    "sprinter": "Sprinter",
+    "climber": "Climber",
+    "timeTrialist": "Trilaterale",
+    "gc": "Rider GC",
+    "puncheur": "Puncheur",
+    "rouleur": "RouleurCity in New Jersey USA",
+    "domestique": "Domestica",
+    "allRounder": "Tuttofare"
+  }
+}

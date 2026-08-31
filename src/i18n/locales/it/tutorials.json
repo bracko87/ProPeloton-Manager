@@ -1,0 +1,380 @@
+{
+  "common": {
+    "startTutorial": "Avvia tutorial",
+    "noThanks": "No grazie.",
+    "next": "Successivo",
+    "finishForNow": "Finisci per ora",
+    "closeTutorial": "Chiudi tutorial",
+    "continue": "Continua"
+  },
+  "overview": {
+    "welcome": {
+      "title": "Benvenuti su ProPeloton Manager",
+      "body": "Benvenuti al gioco. Questo tutorial può aiutarvi a capire le pagine principali e i sistemi più importanti passo dopo passo. È possibile avviare il tutorial ora, o saltare e utilizzare il manuale di gioco in seguito.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "skipped": {
+      "title": "Nessun problema!",
+      "body": "Puoi sempre trovare aiuto più tardi attraverso la sezione Aiuto, il manuale di gioco o la nostra community Discord. Buona fortuna e godetevi la vostra prima stagione!",
+      "primary": "Continua"
+    },
+    "welcomeGame": {
+      "title": "Benvenuti su ProPeloton Manager",
+      "body": "Benvenuti su ProPeloton Manager. Ora sei il manager della tua squadra di ciclismo. Il tuo compito è quello di costruire il club, prenderti cura dei tuoi ciclisti, preparare le gare, gestire i soldi, migliorare la squadra e guidare il tuo club durante la stagione.",
+      "primary": "Successivo"
+    },
+    "gameType": {
+      "title": "Che razza di gioco e' questo?",
+      "body": "Questo è un gioco di gestione ciclistica. Non si controlla la moto direttamente durante la gara. Invece, si prendono le decisioni importanti manager prima e durante la stagione: quali ciclisti da mantenere, come addestrarli, quali gare di entrare, quali attrezzature da usare, quale personale da assumere, e come spendere i vostri soldi.",
+      "primary": "Successivo"
+    },
+    "simpleOrDeep": {
+      "title": "Gioca semplice o andare in profondità",
+      "body": "All'inizio, puoi giocare in modo semplice: seguire gli avvisi, controllare la tua squadra, entrare in gare, preparare la tua squadra e guardare i risultati. Più tardi, se vuoi una maggiore profondità, puoi utilizzare sistemi avanzati come fatica del ciclista, morale, nitidezza della corsa, obiettivi sponsor, bonus delle attrezzature, campi di addestramento, trattative di trasferimento, tasse, infrastrutture e promozione o retrocessione.",
+      "primary": "Successivo"
+    },
+    "purpose": {
+      "title": "Che cosa farà questo tutorial",
+      "body": "Questo tutorial vi guiderà attraverso le pagine principali del gioco uno per uno. Imparerete a cosa serve ogni pagina, quali pulsanti sono importanti e cosa dovreste controllare come nuovo manager. Il tutorial non spiegherà ogni piccolo dettaglio in una volta. Per spiegazioni più profonde, potete sempre utilizzare il manuale di gioco completo in seguito.",
+      "primary": "Successivo"
+    },
+    "startOverview": {
+      "title": "Lasciate che i CGO inizino con la pagina Panoramica",
+      "body": "Inizieremo con la pagina Panoramica. Questa è la dashboard del vostro manager principale. Vi dà l'immagine più veloce del vostro team: avvisi attuali, notizie, finanze, gare, messaggi sponsor, condizioni del ciclista e progresso stagionale. Dopo questa introduzione, vi spiegherò la pagina Panoramica passo dopo passo.",
+      "primary": "Inizia tutorial panoramica"
+    },
+    "dashboard": {
+      "title": "Il tuo Dashboard manager",
+      "body": "Questa è la tua pagina Panoramica • il cruscotto principale per il tuo team. Pensa a questa pagina come la tua sala di controllo quotidiana. Quando ti accedi, di solito è il primo posto che dovresti controllare. Qui puoi vedere rapidamente le informazioni più importanti sul tuo club, incluso lo stato del team, avvisi correnti, finanze, gare, condizioni del ciclista e progresso stagionale.",
+      "primary": "Successivo"
+    },
+    "staffBriefing": {
+      "title": "Centro di informazione del personale",
+      "body": "Questo pannello mostra il personale di supporto e ruoli assistente. Qui è possibile vedere importanti aiutanti del team come il Head Coach, Direttore sportivo, Team Doctor, Capo Meccanico, e altri ruoli assistente, quando disponibili. Questi assistenti aiutano a gestire parti importanti del vostro club in modo più efficiente, come la pianificazione della gara, la salute del ciclista, la preparazione, e il supporto attrezzature. Alcune funzioni assistente, strumenti del personale, o funzioni legate all'automazione possono richiedere un account Premium o l'acquisto di Coins per utilizzare completamente.",
+      "primary": "Successivo"
+    },
+    "newsBoard": {
+      "title": "News Board",
+      "body": "Il News Board mostra importanti novità di squadra e mondiali. Alcune novità riguardano il tuo team, come le offerte di sponsor, compleanni o aggiornamenti di squadra. Altre novità possono riguardare il mondo della gara più ampio, come i risultati di gara o importanti eventi ciclistici. Cliccando su una news row puoi rivelare maggiori informazioni quando sono disponibili ulteriori dettagli.",
+      "primary": "Successivo"
+    },
+    "nextRace": {
+      "title": "Prossima gara del team",
+      "body": "Il pannello Next Team Race ti aiuta a vedere cosa sta per arrivare per il tuo team. Questo è importante perché le gare accettate spesso necessitano ancora di preparazione. Potresti aver bisogno di selezionare ciclisti, personale, risorse, attrezzature, forniture e tattiche di palco prima delle scadenze. Se questo pannello mostra una prossima gara, dovresti controllare la preparazione della gara in anticipo.",
+      "primary": "Successivo"
+    },
+    "lastRace": {
+      "title": "Ultima gara di squadra",
+      "body": "Il pannello Last Team Race mostra la tua ultima gara finita quando disponibile. Usala per rivedere rapidamente come hai eseguito il team. I risultati possono aiutarti a decidere se i ciclisti hanno bisogno di riposo, se la tattica ha funzionato bene, o se la tua squadra ha bisogno di cambiamenti prima del prossimo evento.",
+      "primary": "Successivo"
+    },
+    "sponsor": {
+      "title": "Sponsor principale",
+      "body": "Il pannello principale dello sponsor mostra le informazioni principali dello sponsor quando si dispone di uno sponsor principale attivo. Gli sponsor sono importanti perché possono fornire denaro, bonus, obiettivi e talvolta effetti di branding. Alcuni contratti di sponsor sono semplici, mentre gli sponsor di nomi-diritti possono cambiare temporaneamente il nome della squadra durante la stagione.",
+      "primary": "Successivo"
+    },
+    "progress": {
+      "title": "Team Salute e progresso della stagione",
+      "body": "Il resto della pagina Panoramica ti aiuta a seguire le condizioni e i progressi del tuo team. Qui puoi monitorare le condizioni del ciclista, finanziare le attività di salute, sponsor, le operazioni di gara, le operazioni attive, i dati delle istantanee di stagione e i progressi della stagione. Alcune sezioni avanzate del cruscotto, riassunti o viste aggiuntive dei dati possono richiedere un account Premium o l'acquisto di Coins per sbloccare. Se un pannello è bloccato, puoi comunque giocare normalmente, ma Premium o Coins possono rendere il gioco più facile e darti una visione più profonda del tuo club. Con la crescita del tuo club, questa pagina diventa più utile perché ti aiuta a collegare azioni a breve termine, come preparare la prossima gara, con obiettivi a lungo termine come la costruzione di una squadra più forte e migliorare la tua classifica.",
+      "primary": "Continua alla squadra",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "squad": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con la tua squadra?",
+      "body": "Possiamo mostrarvi una breve introduzione alla pagina della Squad, dove gestisci i tuoi ciclisti, sviluppando team, finestre di movimento e personale.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "riders": {
+      "title": "I tuoi Cavalieri",
+      "body": "Questa è la pagina della Squadra • il luogo principale dove vengono visualizzati i tuoi ciclisti di squadra. Nella vista generale, puoi vedere informazioni importanti come età, paese, ruolo, livello complessivo, condizione, valore di mercato, salari, dettagli del contratto e punti internazionali. Usa questa pagina ogni volta che vuoi capire la forza e la struttura attuale del tuo team.",
+      "primary": "Successivo"
+    },
+    "details": {
+      "title": "Visualizzazioni e profili dei rider",
+      "body": "La pagina Squad ti dà diversi modi per guardare i tuoi ciclisti. È possibile controllare informazioni finanziarie, abilità, forma, sviluppo, salute e disponibilità. Le abilità possono migliorare nel tempo, in modo che questa pagina ti aiuta a seguire come ogni ciclista sta sviluppando. Facendo clic sul pulsante Visualizza, è possibile aprire il profilo completo del ciclista con informazioni più dettagliate. Alcuni strumenti ciclista avanzati, dashboard aggiuntivi, o funzionalità di convenienza possono richiedere un account Premium o l'acquisto di Coins.",
+      "primary": "Successivo"
+    },
+    "developing": {
+      "title": "Sviluppo della finestra di squadra e movimento",
+      "body": "Il tuo team di sviluppo è il tuo secondo team. Può essere utilizzato per i giovani ciclisti che non sono ancora pronti per la prima squadra ma possono ancora correre in gare assegnate. Il team di sviluppo deve essere sbloccato per primo. Puoi trovare di più su questo in Preferenze. I ciclisti possono essere spostati solo tra la prima squadra e il team di sviluppo durante le finestre dei movimenti. Queste finestre si aprono quattro volte all'anno, e la pagina della squadra mostra quando la finestra di movimento successiva è disponibile. Alcuni strumenti di gestione aggiuntivi, viste estese o funzionalità di convenienza relative a questa area possono richiedere un account Premium o l'acquisto di Coins.",
+      "primary": "Successivo"
+    },
+    "staff": {
+      "title": "Personale e Pagina successiva",
+      "body": "Il pulsante Staff mostra i membri del personale che lavorano per il vostro club e i limiti attuali della configurazione del vostro personale. I membri del personale hanno le proprie competenze e possono essere inviati sui corsi. I limiti del personale possono anche essere migliorati aggiornando la vostra infrastruttura. Dopo la Squadra, la prossima pagina raccomandata è l'allenamento, dove è possibile impostare regolarmente corsi di formazione e pianificare campi di formazione per i vostri ciclisti.",
+      "primary": "Continuare a allenarsi",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "training": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con la formazione?",
+      "body": "Possiamo mostrarvi come funzionano regolarmente i campi di addestramento e di addestramento, e come influenzano lo sviluppo del ciclista, la fatica e la preparazione della gara.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "regular": {
+      "title": "Formazione regolare",
+      "body": "Questa è la pagina Training. Nell'allenamento regolare, puoi controllare ciò che i tuoi ciclisti allenano quando non sono assegnati ad un'altra attività come un campo di gara o di allenamento. Puoi impostare l'allenamento predefinito per il team di primo team e il team di sviluppo, e puoi anche regolare l'allenamento per i singoli ciclisti. Ogni ciclista può allenare un focus specifico come sprint, arrampicata, piano, cronometro, resistenza, resistenza, IQ di gara, lavoro di squadra o recupero. L'allenamento più duro può migliorare i ciclisti più velocemente, ma può anche renderli più stanchi prima delle prossime gare. Puoi anche scegliere Day Off quando un ciclista ha bisogno di riposo e recupero fatica.",
+      "primary": "Successivo"
+    },
+    "camps": {
+      "title": "Ritiri di allenamento",
+      "body": "I campi di addestramento sono speciali blocchi di formazione dove si inviano i cavalieri selezionati via per diversi giorni. Un campo di addestramento può dare uno sviluppo di competenze più forte rispetto alle normali formazioni quotidiane, ma costa molto di più. Si sceglie il tipo di campo, posizione, date, durata, cavalieri e personale disponibile. Il personale può migliorare l'effetto del campo o aiutare a proteggere meglio i cavalieri, a seconda delle loro abilità e disponibilità. Prima di prenotare, è possibile rivedere il costo, il rischio meteo, i cavalieri selezionati, personale selezionato e avvisi di convalida. Dopo l'addestramento, la pagina successiva raccomandata è l'apparecchiatura.",
+      "primary": "Continua all'equipaggiamento",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "equipment": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con l'Attrezzatura?",
+      "body": "Possiamo mostrarvi come funziona l'equipaggiamento, compresi setup di gara, inventario, acquisti di mercato e forniture di gara.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "overview": {
+      "title": "Panoramica delle apparecchiature",
+      "body": "Questa è la pagina Equipaggiamento. La scheda Panoramica fornisce un riepilogo delle vostre attrezzature di squadra e delle configurazioni di configurazione della gara. La configurazione di gara predefinita è la configurazione utilizzata quando non si sceglie una configurazione specifica per una gara. Sotto di essa, è possibile creare diverse configurazioni di configurazione della gara che possono essere selezionate successivamente in Preparazione della gara. Ogni configurazione può portare diversi bonus ai ciclisti, a seconda dell'attrezzatura che contiene e di quanti elementi utilizzabili sono disponibili.",
+      "primary": "Successivo"
+    },
+    "inventory": {
+      "title": "Inventario",
+      "body": "La scheda Inventario mostra tutte le attrezzature che il tuo team possiede attualmente. Qui puoi vedere articoli come biciclette, ruote, pneumatici e altre attrezzature che hai acquistato. Puoi controllare la qualità, lo stato, il valore, i bonus e la disponibilità. Se non hai più bisogno di alcune attrezzature, puoi venderlo dal tuo inventario.",
+      "primary": "Successivo"
+    },
+    "market": {
+      "title": "Mercato delle attrezzature",
+      "body": "La scheda Mercato è dove si acquista nuova attrezzatura. Ogni elemento ha un prezzo e può portare diversi bonus. Migliore attrezzatura può migliorare le prestazioni della gara, ma costa anche di più. Quando si acquista attrezzature, viene inviato al tuo Inventario e può essere successivamente utilizzato in setup gara.",
+      "primary": "Successivo"
+    },
+    "raceSupplies": {
+      "title": "Forniture per corse",
+      "body": "La scheda Forniture per la gara mostra le forniture di consumo che il team può utilizzare per le gare. Alcune forniture possono essere utilizzate solo una volta, mentre altre possono essere utilizzate più volte. Le forniture possono aiutare a proteggere i ciclisti dalle condizioni di gara difficili. Senza le forniture di gara giuste, i ciclisti possono ricevere effetti negativi in condizioni meteorologiche molto calde, fredde o difficili. Dopo l'equipaggiamento, la prossima pagina raccomandata è Infrastruttura.",
+      "primary": "Continua all'infrastruttura",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "facilities": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con l'infrastruttura?",
+      "body": "Possiamo mostrarvi come funzionano le strutture e le risorse del team, compresi gli aggiornamenti, i limiti del personale, i veicoli, i bonus e i progetti di costruzione.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "buildings": {
+      "title": "Strutture",
+      "body": "Questa è la pagina Infrastruttura. La scheda Servizi mostra gli edifici che il vostro club può possedere e aggiornare. Ogni squadra inizia con una Clubhouse di livello 1 di base. Più tardi, è possibile costruire e aggiornare strutture importanti come il Centro di formazione, Medical Center, Accademia Giovanile, Meccanica Workshop, e Scouting Office. Servizi sono importanti perché migliorano il vostro club e può anche definire quanti membri del personale si è autorizzati a avere.",
+      "primary": "Successivo"
+    },
+    "projects": {
+      "title": "Costruisce, aggiorna e rimborsa",
+      "body": "Quando si aprono i dettagli di una struttura, è possibile vedere i costi del livello successivo, quanto tempo richiede la costruzione e quali bonus o sblocca. È possibile avviare un progetto di compilazione o aggiornamento quando il vostro club ha abbastanza soldi e capacità di progetto disponibile. È anche possibile annullare un progetto di infrastruttura. Se si annulla immediatamente, si riceve un rimborso completo. Se si annulla in seguito, il rimborso può essere più piccolo.",
+      "primary": "Successivo"
+    },
+    "assets": {
+      "title": "Attività della squadra",
+      "body": "La scheda Attività mostra i veicoli e le risorse di supporto che il team può utilizzare. Questo include team car, team bus, furgoni, officine mobili e furgoni medici. Questi beni possono supportare il team durante le gare, i viaggi, la preparazione e i campi di addestramento. Ogni risorsa può avere diversi livelli, costi, condizioni, bonus e limiti. Aprire i dettagli per ogni risorsa per capire cosa porta e come può aiutare il team a migliorare le prestazioni. Per utilizzare questa pagina completamente, alcune funzioni avanzate, opzioni di gestione o strumenti estesi possono richiedere un conto Premium o l'acquisto di Coins.",
+      "primary": "Continua al calendario",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "calendar": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con il Calendario?",
+      "body": "Possiamo mostrarvi come funziona il Calendario, comprese le attività quotidiane del team, i mesi di gara, gli obiettivi di gara sponsorizzati e le pagine del profilo di gara.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "season": {
+      "title": "Calendario stagione",
+      "body": "Questo è il calendario della stagione. Ti dà una panoramica delle attività quotidiane del tuo team. Per ogni giorno, puoi vedere cosa sta succedendo al tuo club, comprese le gare, i campi di allenamento, gli eventi, le vacanze e altre attività importanti. Usa questa vista quando vuoi capire il tuo programma di squadra giorno per giorno.",
+      "primary": "Successivo"
+    },
+    "races": {
+      "title": "Calendario corsa",
+      "body": "Questo è il Calendario delle gare. Qui potete vedere tutte le gare della stagione. Le gare possono essere gare di un giorno o gare di più giorni. Ogni gara mostra informazioni utili come data, stato di gara, categoria di gara, tipo di gara, limiti di squadra e lo stato di applicazione. Le gare sono divise per mese, così ogni mese ha la propria lista di gare disponibili.",
+      "primary": "Successivo"
+    },
+    "openRace": {
+      "title": "Apri un profilo di gara",
+      "body": "Alcune gare possono mostrare un marcatore di gol sponsor. Ciò significa che la gara è collegata ad un obiettivo bonus sponsor, come partecipare o raggiungere un risultato specifico. Utilizzare il pulsante Open Race quando si desidera vedere maggiori dettagli su una gara o applicare per esso. Successivamente, apriremo un profilo di gara in modo da poter vedere quali informazioni sono disponibili lì.",
+      "primary": "Apri profilo di gara",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "raceDetail": {
+    "overview": {
+      "title": "Profilo di gara",
+      "body": "Questa è la pagina del profilo di gara. Qui potete vedere le informazioni più importanti di gara: quanti team possono partecipare, il fondo premio, quando le domande di partecipazione si chiudono, quando le squadre partecipanti sono annunciate, e quanti ciclisti ogni squadra può portare. Per le gare di palcoscenico, è anche possibile vedere quante fasi sono incluse.",
+      "primary": "Successivo"
+    },
+    "stagesResults": {
+      "title": "Stage, risultati e riproduzione",
+      "body": "Il profilo della gara mostra anche informazioni dettagliate sul palcoscenico. È possibile esaminare i profili del palcoscenico, mappe del percorso, ripartizione del terreno, tempo di tappa, punti di sprint, punti di montagna e altri dettagli del palco. Il tempo viene pubblicato solo vicino alla gara, in modo che possa apparire più tardi. Più in basso, Race Information mostra squadre partecipanti e ciclisti prima della gara, e risultati dopo la gara. Se la tua squadra partecipa e la gara è attiva o finita, è possibile utilizzare Watch Race o Watch Replay per seguire l'azione sulla mappa.",
+      "primary": "Continua a preparare la gara",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "racePreparation": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con la preparazione della gara?",
+      "body": "Possiamo mostrarvi come funzionano le Races accettate, Race Plans e Stage Plans. Questa è una delle pagine più importanti della stagione.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "acceptedRaces": {
+      "title": "Razze accettate",
+      "body": "Questa è la pagina di Preparazione della Gara. La scheda Races accettata mostra le gare in cui il tuo team è stato accettato per partecipare. Qui puoi vedere le informazioni più importanti sulla gara, ma anche lo stato di preparazione del tuo team. Ad esempio, puoi vedere Race Plan Open, Stage Plans Open, Rider Deadline Rached, Race Active, Race Finito, o All Set. Quando il tuo team è accettato per una gara, dovresti venire qui per preparare i tuoi ciclisti, personale, risorse, attrezzature, forniture e tattiche. Questa è una delle pagine che visiterai più spesso durante la stagione.",
+      "primary": "Successivo"
+    },
+    "racePlan": {
+      "title": "Race Plan",
+      "body": "La scheda Race Plan è dove si prepara il team per una gara accettata. Importante: il tempo di gioco si muove più velocemente della vita reale. Un giorno di gioco è 12 ore in tempo reale. Ciò significa due giorni di gioco uguali a una giornata di vita reale. Tenete a mente questo quando si controlla il piano di gara finestre, scadenze del ciclista, e scadenze del piano di palco. Quando la finestra Race Plan è aperta, è possibile scegliere se il tuo primo team o squadra di sviluppo gareggerà, se si dispone di un team di sviluppo disponibile. È necessario anche controllare la scadenza di presentazione del ciclista. Fino a quella data, è possibile scegliere i ciclisti che parteciperanno. La pagina mostra il numero minimo e massimo di ciclisti ammessi per la gara. La lista del ciclista mostra chi può essere selezionato e chi è bloccato perché sono già assegnati ad un'altra gara sovrapposta.",
+      "primary": "Successivo"
+    },
+    "stagePlans": {
+      "title": "Stage Plans",
+      "body": "La scheda Stage Plans si apre dopo che è stato presentato il Race Plan. Qui si prepara la tattica per ogni fase. È possibile definire ruoli del ciclista, attrezzature, forniture, tattiche di squadra e tattiche individuali per ogni fase. Stage Plans sono importanti perché diverse fasi hanno bisogno di piani diversi. Una fase di sprint piatta, fase di montagna, prova a tempo o fase collinare possono tutti richiedere diversi ciclisti, tattiche e supporto. Dopo Preparazione gara, la pagina successiva consigliata è Team Ranking.",
+      "primary": "Continua a classificarti",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "teamRanking": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con il Team Ranking?",
+      "body": "Possiamo mostrarvi come lavorano le classifiche di squadra, i livelli di competizione, i punti internazionali, la promozione e la retrocessione.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "competitions": {
+      "title": "Concorsi e livelli",
+      "body": "Questa è la pagina del Team Ranking. Qui puoi vedere le classifiche di tutte le competizioni e i livelli, tra cui WorldTeam, ProTeam, Continental e le divisioni Amateur. Ogni squadra ha un posto nella sua competizione in base ai punti internazionali guadagnati durante la stagione. Puoi passare tra i livelli e le divisioni per vedere come le squadre sono classificate in tutto il mondo ciclistico.",
+      "primary": "Successivo"
+    },
+    "points": {
+      "title": "Punti internazionali e movimento stagionale",
+      "body": "I team guadagnano punti internazionali dalle gare. I migliori risultati nelle gare più grandi solitamente portano più punti. Questi punti decidono la posizione di classifica di ogni squadra all'interno della sua competizione. Alla fine della stagione, le squadre possono essere promosse ad un livello più alto o relegate ad un livello più basso a seconda della loro posizione finale. Questa pagina è importante perché mostra dove il team si trova rispetto ad altre squadre, e che cosa dovete raggiungere per salire. Dopo il Team Ranking, la prossima pagina raccomandata è Statistiche.",
+      "primary": "Continua a Statistiche",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "statistics": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con le statistiche?",
+      "body": "Possiamo mostrarvi come funzionano le statistiche di team e rider, incluse le classifiche di stagione in corso, i risultati storici, i punti rider, i podi e le maglie.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "teamsCurrent": {
+      "title": "Statistiche del gruppo",
+      "body": "Questa è la pagina Statistiche. La sezione Team mostra le statistiche del team in tutte le competizioni in un unico posto. In Attuale, è possibile vedere la stagione corrente e confrontare quali squadre sono i più riusciti per punti. È possibile utilizzare filtri per guardare diversi livelli, divisioni, paesi, team utenti, squadre AI, squadre attive e squadre inattive. È anche possibile aprire un profilo del team per vedere maggiori dettagli su quella squadra.",
+      "primary": "Successivo"
+    },
+    "teamsHistory": {
+      "title": "Cronologia squadre",
+      "body": "La sezione Storia mostra le stagioni precedenti. Qui è possibile rivedere i vincitori passati, vecchie istantanee di stagione, posizioni storiche, e come le squadre si sono esibite nelle prime stagioni. Ciò diventa più utile come il vostro mondo progredisce attraverso più stagioni.",
+      "primary": "Successivo"
+    },
+    "riders": {
+      "title": "Statistiche del ciclista",
+      "body": "La sezione Riders mostra i migliori ciclisti del mondo ciclistico. È possibile confrontare i ciclisti con punti internazionali, punti di arrivo tappa, classificazione generale e punti gara di un giorno. È anche possibile vedere ciclisti con il maggior numero di podi e maglie. Questa pagina aiuta a capire quali ciclisti stanno dominando la stagione e quali ciclisti possono essere interessanti da seguire, scout, o segno. Dopo Statistiche, la prossima pagina consigliata è Transfers.",
+      "primary": "Continua ai trasferimenti",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "transfers": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con i trasferimenti?",
+      "body": "Possiamo mostrarvi come trasferimento di cavalieri, agenti liberi, esploratori, trattative contrattuali e il personale che assume lavoro.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "riderTransferList": {
+      "title": "Elenco trasferimenti rider",
+      "body": "Questa è la pagina Trasferimenti. Nella sezione Cavalieri, la lista dei trasferimenti mostra i ciclisti attualmente elencati da altre squadre, tra cui squadre AI. Prima di esplorare un ciclista, alcune informazioni possono essere nascoste o meno precise. Scouting ti dà migliori informazioni sulle abilità e il potenziale del ciclista. Ogni elenco dei trasferimenti mostra quanto tempo l'offerta è valida e il prezzo di partenza per le trattative. Se si fa clic su Make Offer, è possibile offrire soldi al team di vendita. Se il team accetta, si negozia il contratto del ciclista.",
+      "primary": "Successivo"
+    },
+    "riderFreeAgents": {
+      "title": "Agente Riders libero",
+      "body": "Gli agenti liberi sono cavalieri senza una squadra. La grande differenza è che non c'è una squadra di vendita tra voi e il ciclista. Se si desidera un agente libero, si va direttamente in negoziazione contratto. È possibile negoziare stipendio, durata del contratto, e tassa agente. L'ottica offerta aiuta a capire se la vostra offerta sembra forte, rischioso, o improbabile di successo.",
+      "primary": "Successivo"
+    },
+    "staff": {
+      "title": "Mercato del personale",
+      "body": "La scheda Personale mostra i membri del personale free-agent disponibili. Qui è possibile rivedere le competenze del personale, ruolo, stipendio, specializzazione, e disponibilità. Solo il personale free-agent può essere assunto. I limiti del personale sono importanti. Se il vostro club ha già raggiunto il numero massimo per un ruolo di personale, non è possibile assumere un altro membro del personale per tale ruolo fino ad aumentare il limite, di solito attraverso gli aggiornamenti dell'infrastruttura. Dopo i trasferimenti, la prossima pagina raccomandata è Finance.",
+      "primary": "Continua a Finanza",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "finance": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con Finanza?",
+      "body": "Possiamo mostrarvi come il club finanzia il lavoro, compresi l'equilibrio, gli sponsor, le transazioni, le tasse e le politiche di squadra.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "overview": {
+      "title": "Panoramica finanziaria",
+      "body": "Questa è la pagina Finance. La scheda Panoramica mostra la situazione finanziaria principale del vostro club, inclusi saldo corrente, entrate, spese, flusso di cassa e sintesi finanziaria. Se il vostro team ha debiti di emergenza o problemi finanziari, questo è dove si può capire rapidamente la situazione attuale.",
+      "primary": "Successivo"
+    },
+    "sponsors": {
+      "title": "Sponsor",
+      "body": "La scheda Sponsor mostra gli sponsor che il tuo team ha già firmato. Gli sponsor possono portare denaro al club, ma possono anche avere obiettivi o bonus. Questi obiettivi spiegano cosa deve raggiungere il tuo team e quanto denaro puoi ricevere. I contratti con gli sponsor possono essere contratti standard o contratti con diritti di denominazione. Un contratto standard con sponsor dà al tuo club denaro sponsor senza cambiare il tuo nome di squadra. Un contratto con diritti di denominazione vale di solito più soldi, ma il nome dello sponsor diventa parte del tuo nome di squadra durante la stagione. All'inizio della prossima stagione, il tuo nome di squadra originale ritorna. Se il tuo team non ha ancora uno sponsor, puoi utilizzare l'area offerte sponsor per cercare nuove offerte.",
+      "primary": "Successivo"
+    },
+    "transactions": {
+      "title": "Operazioni",
+      "body": "La scheda Transazioni mostra la storia finanziaria del club. Qui potete vedere entrate e spese durante la stagione, compresi premi in denaro, pagamenti sponsor, stipendi, trasferimenti, costi di infrastruttura, acquisti di attrezzature, campi di formazione, prelievi fiscali e altri movimenti finanziari.",
+      "primary": "Successivo"
+    },
+    "tax": {
+      "title": "Imposta",
+      "body": "La scheda fiscale mostra la situazione fiscale del club. Le transazioni possono creare obblighi fiscali, e un audit fiscale avviene una volta al mese. Questa pagina ti aiuta a vedere quanta tassa è stata calcolata, che cosa è già stato pagato, e che cosa ancora deve essere pagato.",
+      "primary": "Successivo"
+    },
+    "policies": {
+      "title": "Politiche e operazioni del gruppo",
+      "body": "Le politiche e le operazioni del team controllano come il vostro club è gestito. Cambiare le politiche può rendere il vostro club più attraente per i ciclisti e il personale, ma può anche aumentare il costo di viaggio, supporto gara, campi di allenamento e le operazioni quotidiane. Questa sezione aiuta a bilanciare il comfort, le prestazioni, l'attrattiva e i costi. Dopo la finanza, il prossimo tutorial vi spiegherà il Menu principale.",
+      "primary": "Continua al menu",
+      "secondary": "Finisci per ora"
+    }
+  },
+  "menu": {
+    "welcome": {
+      "title": "Hai bisogno di aiuto con il Menu?",
+      "body": "Possiamo mostrarvi dove trovare il menu principale, notifiche e Coins nell'angolo in alto a destra.",
+      "primary": "Avvia tutorial",
+      "secondary": "No grazie."
+    },
+    "main": {
+      "title": "Menu principale",
+      "body": "Questo è il pulsante principale del menu nell'angolo in alto a destra. All'interno del menu, è possibile trovare Posta in arrivo per messaggi interni, impostazioni del profilo, temi e impostazioni di personalizzazione, forum o collegamenti Discord, preferenze di gioco, aiuto con il manuale di gioco e domande frequenti, Contattaci, Pacchetti Pro e Invita gli amici ad avanzare. Usa questo menu ogni volta che hai bisogno di impostazioni dell'account, aiuto, supporto, preferenze o opzioni di gioco aggiuntive.",
+      "primary": "Successivo"
+    },
+    "notifications": {
+      "title": "Notifiche",
+      "body": "Questa icona di campanella apre le notifiche di gioco. Le notifiche ti informano di eventi importanti come scadenze di gara, promemoria di preparazione, aggiornamenti sponsor, finanze, trasferimenti e altre azioni di gioco che necessitano della tua attenzione. Puoi gestire quali notifiche vuoi ricevere dall'opzione Preferenze all'interno del Menu.",
+      "primary": "Successivo"
+    },
+    "coins": {
+      "title": "Coins",
+      "body": "Questo mostra il saldo corrente delle Coins. Coins sono utilizzati per le caratteristiche di gioco selezionate, sblocca e opzioni di convenienza all'interno di ProPeloton Manager. È possibile controllare il saldo qui in qualsiasi momento e acquistare di più attraverso Menu → Pacchetti Pro. Esecuzione a basso costo di Coins non sospende il tuo account. È possibile continuare a giocare, ma alcune caratteristiche opzionali o azioni premium-stile potrebbero non essere disponibili fino a quando non si aggiungono altre Coins.",
+      "primary": "Successivo"
+    },
+    "premium": {
+      "title": "Account Premium",
+      "body": "Questa è la tua area di accesso Premium. Un account Premium può rendere il gioco più facile e confortevole dando accesso a funzionalità aggiuntive, viste più avanzate e utili strumenti di convenienza. Premium può anche aiutarti a sbloccare più dell'esperienza di gestione completa del gioco. Acquistando Premium o Pacchetti Pro, supporti direttamente il nostro team e ci aiuti a continuare a sviluppare ProPeloton Manager più velocemente e meglio.",
+      "primary": "Successivo"
+    },
+    "finished": {
+      "title": "Tutorial completato",
+      "body": "Hai terminato con successo il tutorial di base di ProPeloton Manager. Se hai domande in seguito, puoi sempre controllare il manuale di gioco, leggere le domande frequenti, contattarci o unirti alla nostra community Discord. Buona fortuna con il tuo team!",
+      "primary": "Termina tutorial"
+    }
+  }
+}
