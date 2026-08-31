@@ -1,0 +1,61 @@
+name: Spanish post-commit final gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-spanish-postcommit-gate.yml'
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Human Spanish language gate
+        shell: bash
+        run: python .github/scripts/audit_spanish_human_quality_20260831.py | tee /tmp/spanish-human-quality.txt
+
+      - name: Semantic schema placeholder gate
+        shell: bash
+        run: python .github/scripts/audit_spanish_final_20260831.py | tee /tmp/spanish-final-semantic.txt
+
+      - name: Hardcoded visible English gate
+        shell: bash
+        run: python .github/scripts/audit_spanish_hardcoded_ui_20260831.py | tee /tmp/spanish-hardcoded-ui.txt
+
+      - name: Full 44-file completion audit
+        shell: bash
+        run: python .github/scripts/audit_spanish_completion_20260831.py | tee /tmp/spanish-completion.txt
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Upload post-commit audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spanish-postcommit-final-gate
+          path: |
+            spanish_hardcoded_ui_audit.tsv
+            spanish_completion_audit.tsv
+            /tmp/spanish-human-quality.txt
+            /tmp/spanish-final-semantic.txt
+            /tmp/spanish-hardcoded-ui.txt
+            /tmp/spanish-completion.txt
+          retention-days: 3
+          if-no-files-found: warn
