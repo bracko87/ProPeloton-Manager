@@ -1,0 +1,52 @@
+name: Language selector build gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/i18n/languages.ts'
+      - 'src/components/i18n/LanguageSelector.tsx'
+      - '.github/workflows/language-selector-build-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Verify every language has a flag image code
+        shell: bash
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          languages = Path('src/i18n/languages.ts').read_text(encoding='utf-8')
+          selector = Path('src/components/i18n/LanguageSelector.tsx').read_text(encoding='utf-8')
+
+          supported_block = languages.split('SUPPORTED_LANGUAGES = [', 1)[1].split('] as const', 1)[0]
+          codes = re.findall(r"\bcode:\s*'([^']+)'", supported_block)
+
+          mapping_block = selector.split('LANGUAGE_FLAG_CODES:', 1)[1].split('}', 1)[0]
+          mapped = set(re.findall(r"(?:^|\n)\s*(?:'([^']+)'|([A-Za-z][A-Za-z0-9-]*)):\s*'[^']+'", mapping_block))
+          mapped_codes = {a or b for a, b in mapped}
+
+          missing = [code for code in codes if code not in mapped_codes]
+          print('Supported languages:', ', '.join(codes))
+          print('Flag mappings:', ', '.join(sorted(mapped_codes)))
+
+          if missing:
+              raise SystemExit('Missing flag mappings: ' + ', '.join(missing))
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
