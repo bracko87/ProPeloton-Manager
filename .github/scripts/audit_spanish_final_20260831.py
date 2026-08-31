@@ -132,7 +132,8 @@ def main() -> None:
     date_bridge = (ROOT / 'src/components/i18n/LocaleDateFormattingBridge.tsx').read_text(encoding='utf-8')
     if "code: 'es'" not in languages or "countryCode: 'ES'" not in languages or "locale: 'es-ES'" not in languages:
         blockers.append('Spanish language metadata incomplete')
-    if "supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es']" not in index:
+    supported_match = re.search(r"supportedLngs:\s*\[([^\]]+)\]", index)
+    if not supported_match or not re.search(r"['\"]es['\"]", supported_match.group(1)):
         blockers.append('Spanish missing from supportedLngs')
     if "language?.startsWith('es')" not in date_bridge or "return 'es-ES'" not in date_bridge:
         blockers.append('Spanish locale date formatting missing')
