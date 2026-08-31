@@ -70,7 +70,7 @@
     "riderFreshnessHelp": "Ayuda de frescura del ciclista",
     "freshnessTitle": "Frescura, agudeza y fatiga",
     "sharpnessHelp": "Race Sharpness muestra si un ciclista tiene suficiente ritmo competitivo reciente. Un valor más alto ayuda a empezar la carrera mejor preparado y a rendir con mayor regularidad.",
-    "fatigueHelp": "La fatiga sigue siendo el principal limitador. Un ciclista con buen Race Sharpness, pero con una fatiga muy alta, no comenzará la carrera completamente fresco.",
+    "fatigueHelp": "La fatiga sigue siendo el principal limitador. Un ciclista con buen Race Sharpness pero una fatiga muy alta no comenzará la carrera completamente fresco.",
     "freshnessBarHelp": "La barra roja de frescura inicial combina fatiga y Race Sharpness. Está limitada entre 50 y 100 para que ningún ciclista seleccionado comience una carrera con un nivel irrealmente bajo.",
     "submittedRidersOnly": "Debido a que este Race Plan ya está enviado, sólo los ciclistas seleccionados para esta carrera se muestran aquí.",
     "selectedRequired": "ciclistas seleccionados: {{selected}} · Requerido: {{min}}–{{max}}",
