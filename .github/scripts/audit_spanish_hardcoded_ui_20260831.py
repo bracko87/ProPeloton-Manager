@@ -29,8 +29,9 @@ IGNORE_FRAGMENTS = (
 )
 CODE_MARKERS = (
     'const ', 'let ', 'return (', 'useState', 'useMemo', 'useEffect', 'Record<',
-    '.filter(', '.map(', '.reduce(', '=>', ' as const', 'setState', 'setError',
-    'setLoading', 'Promise<', 'Math.', 'String(', 'Boolean(', 'new Map', 'new Set',
+    ' as Record', '.filter(', '.map(', '.reduce(', '=>', ' as const', 'setState',
+    'setError', 'setLoading', 'Promise<', 'Math.', 'String(', 'Boolean(', 'new Map',
+    'new Set', 'async function', '&&', '||', '...',
 )
 INTENTIONAL = {
     'ProPeloton Manager',
@@ -41,6 +42,21 @@ def clean(text: str) -> str:
     return re.sub(r'\s+', ' ', html.unescape(text)).strip()
 
 
+def looks_like_code_spill(text: str) -> bool:
+    if any(x in text for x in CODE_MARKERS):
+        return True
+    if text[:1] in '()[]{}=;,.':
+        return True
+    punctuation = sum(text.count(ch) for ch in '()[]{}=;')
+    if punctuation >= 2:
+        return True
+    if re.search(r'\b(?:if|for|while|function|async)\s*\(', text):
+        return True
+    if re.search(r'\b[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*\)?,', text):
+        return True
+    return False
+
+
 def candidate(text: str) -> bool:
     text = clean(text)
     if len(text) < 5 or not ENGLISH.search(text):
@@ -49,12 +65,9 @@ def candidate(text: str) -> bool:
         return False
     if any(x in text for x in IGNORE_FRAGMENTS):
         return False
-    if any(x in text for x in CODE_MARKERS):
+    if looks_like_code_spill(text):
         return False
     if text == 'error' or re.fullmatch(r'[a-z][A-Za-z0-9_]*', text):
-        return False
-    # Long fragments with obvious source-code punctuation are parser spill, not UI copy.
-    if len(text) > 80 and sum(text.count(ch) for ch in '()[]{}=;') >= 3:
         return False
     # CSS/class strings and identifiers are not user-visible copy.
     if re.fullmatch(r'[A-Za-z0-9_./:#@%+\- ]+', text) and ('-' in text or ':' in text) and len(text.split()) > 5:
