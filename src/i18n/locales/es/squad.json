@@ -1,0 +1,159 @@
+{
+  "page": {
+    "subtitle": "Administra tu equipo de primer equipo y mira las perspectivas de la temporada."
+  },
+  "common": {
+    "unknownRider": "ciclista desconocido",
+    "notAuthenticated": "No autenticado.",
+    "noClub": "No se encontró ningún club para este usuario."
+  },
+  "nav": {
+    "firstSquad": "Primer escuadrón",
+    "developingTeam": "Equipo de desarrollo",
+    "staff": "Personal",
+    "developingUnavailable": "El Equipo de Desarrollo no está disponible actualmente.",
+    "unlockDeveloping": "Desbloquear el equipo de desarrollo en preferencias primero."
+  },
+  "roster": {
+    "firstSquad": "Primer escuadrón",
+    "riders": "Ciclistas",
+    "squadFull": "El escuadrón está lleno (los ciclista {{max}}) y los traslados, firmas y promociones deben respetar la gorra del escuadrón.",
+    "loading": "Cargando escuadrón...",
+    "loadFailed": "No se pudo cargar el escuadrón",
+    "noRiders": "No se encontraron ciclista para este club todavía.",
+    "view": "Ver",
+    "generalView": "Vista general",
+    "financialView": "Opinión financiera",
+    "skillsView": "Vista de habilidades",
+    "formDevelopment": "Forma y desarrollo",
+    "checkingPremium": "Comprobando el acceso Premium...",
+    "advancedPremium": "Las vistas avanzadas de los equipos requieren Premium.",
+    "viewPremium": "Ver Premium",
+    "onlyPremium": "Sólo para usuarios de Premium",
+    "premiumOnly": "Sólo Premium"
+  },
+  "columns": {
+    "name": "Nombre",
+    "country": "País",
+    "role": "Función",
+    "activity": "Actividad",
+    "age": "Edad",
+    "overall": "Necesidades generales",
+    "status": "Situación",
+    "move": "Muévete",
+    "value": "Valor",
+    "wage": "Salario",
+    "contractExpires": "Expira el contrato",
+    "potential": "Potencial",
+    "morale": "Moral",
+    "fatigue": "Fatiga",
+    "health": "Salud",
+    "rider": "Ciclista",
+    "case": "Caso",
+    "stage": "Etapa",
+    "severity": "Severidad",
+    "expectedRecovery": "Recuperación prevista",
+    "result": "Resultado",
+    "internationalPoints": "int. pts",
+    "sharpness": "Agudeza"
+  },
+  "status": {
+    "fit": "Ajustar",
+    "injured": "Heridos",
+    "sick": "Enfermo",
+    "notFullyFit": "No encajan completamente",
+    "fresh": "Fresco",
+    "normal": "Normal",
+    "tired": "Cansado",
+    "veryTired": "Muy cansado",
+    "exhausted": "Agotado",
+    "bad": "Mal",
+    "low": "Baja",
+    "okay": "Bien.",
+    "good": "Bien.",
+    "great": "Genial.",
+    "limited": "Limitado",
+    "average": "Promedio",
+    "promising": "Prometiendo",
+    "high": "Alta",
+    "elite": "Elite"
+  },
+  "activity": {
+    "race": "Carrera",
+    "trainingCamp": "Campamento de capacitación",
+    "free": "Libre",
+    "stage": "Etapa {{number}}",
+    "until": "Hasta {{date}}"
+  },
+  "movement": {
+    "windowClosed": "La ventana de movimiento está cerrada.",
+    "windowClosedNext": "Ventana de movimiento cerrada. Ventana siguiente: {{window}}.",
+    "windowClosedNextNoPeriod": "Ventana de movimiento cerrada. Ventana siguiente: {{window}}",
+    "windowOpen": "Ventana de movimiento abierta ahora: {{window}}",
+    "currentWindow": "Ventana actual",
+    "unknown": "Desconocido",
+    "movedToDeveloping": "Rider se mudó al equipo de desarrollo.",
+    "couldNotMove": "No se pudo mover al ciclista al equipo de desarrollo.",
+    "ageLimit": "Sólo los ciclista de 23 años o menos pueden unirse al equipo de desarrollo.",
+    "moveToDeveloping": "Mover al equipo de desarrollo"
+  },
+  "premium": {
+    "label": "Premium",
+    "unlock": "Desbloquear con Premium"
+  },
+  "healthReport": {
+    "title": "Informe sobre la salud",
+    "subtitle": "Actual heridos, enfermos y recuperando los primeros ciclista de la escuadra",
+    "none": "No hay problemas de salud en el escuadrón ahora mismo.",
+    "lockedTitle": "Informe de Salud de la Escuadra",
+    "lockedDescription": "Véase información sobre lesiones, enfermedades y recuperación en un informe consolidado."
+  },
+  "season": {
+    "wins": "Gana la temporada",
+    "podiums": "Podio de temporada",
+    "top10": "Los 10 resultados principales",
+    "bestGc": "Mejor GC",
+    "performanceTitle": "Resumen de la actuación de la temporada",
+    "performanceDescription": "Desbloquear temporada gana, podios, 10 mejores resultados y mejor rendimiento de clasificación general.",
+    "teamResults": "Resultados del equipo en esta temporada",
+    "teamResultsDescription": "Vea las tendencias mensuales de rendimiento del equipo en la temporada actual.",
+    "podiumsPlacings": "Podios y colocaciones",
+    "podiumsPlacingsDescription": "Analizar victorias, podios y distribución de posiciones de acabado.",
+    "raceType": "Tipo de carrera instantánea",
+    "raceTypeDescription": "Compare sus resultados con clásicos, días de montaña, acabados de escenarios y pruebas de tiempo.",
+    "oneDayClassics": "Clásicos de un día",
+    "stageFinishes": "Finalización de la etapa",
+    "mountainDays": "Días de montaña",
+    "timeTrials": "Ensayos temporales",
+    "winsChart": "Gana",
+    "second": "2a",
+    "third": "Tercera",
+    "top10Chart": "Top10",
+    "top20Chart": "Top20"
+  },
+  "races": {
+    "lastTeamRace": "Última carrera de equipo",
+    "nextTeamRace": "Siguiente carrera de equipo",
+    "noRace": "No se ha encontrado ninguna raza todavía",
+    "noFinished": "No se ha encontrado ninguna clasificación completa de carrera para este escuadrón todavía.",
+    "noNext": "No se ha encontrado ningún plan de carrera para este escuadrón.",
+    "stages": "{{count}} etapas"
+  },
+  "transfer": {
+    "listed": "El ciclista está en la lista de transferencias"
+  },
+  "months": {
+    "Jan": "Jan",
+    "Feb": "Feb",
+    "Mar": "Mar",
+    "Apr": "Abr",
+    "May": "Mayo",
+    "Jun": "Jun",
+    "Jul": "Jul",
+    "Aug": "Ago",
+    "Sep": "Sep",
+    "Oct": "Oct",
+    "Nov": "Nov",
+    "Dec": "Dic"
+  }
+}

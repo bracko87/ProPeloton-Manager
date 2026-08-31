@@ -1,0 +1,55 @@
+{
+  "coins": {
+    "perRenewal": "{{cost}} Coins por renovación",
+    "toActivate": "Coins {{cost}} para activar",
+    "reactivationPrice": "Precio de reactivación: {{cost}} Coins",
+    "nextRenewal": "Próxima renovación: {{cost}} Coins",
+    "firstActivation": "Primera activación: {{cost}} Coins"
+  },
+  "movement": {
+    "open": "Ventana de movimiento abierta ahora: {{label}}",
+    "closed": "Ventana de movimiento cerrada. Ventana siguiente: {{label}}",
+    "unavailable": "Ventana de movimiento no disponible.",
+    "currentWindow": "Ventana actual",
+    "unknown": "Desconocido"
+  },
+  "activation": {
+    "reactivateForSeason": "Reactivar para la estación {{season}} — {{cost}} Coins",
+    "activate": "Activar el equipo de desarrollo — {{cost}} Coins",
+    "activatedForSeason": "Equipo de desarrollo activado para la temporada {{season}}. Renovación automática es {{renewal}}.",
+    "activatedSuccessfully": "El equipo de desarrollo se activó con éxito.",
+    "renewalEnabled": "Renovación automática del equipo de desarrollo activada.",
+    "renewalDisabled": "Desarrollo de renovación automática del equipo desactivado.",
+    "on": "el",
+    "off": "apagado"
+  },
+  "errors": {
+    "loadStatus": "Falló al cargar el estado de Developing Team.",
+    "activate": "Fallo al activar el Equipo de Desarrollo.",
+    "renewal": "Falló al actualizar la renovación automática."
+  },
+  "service": {
+    "summary": "Available to Free and Premium players. First activation costs {{activation}} coins. Each later season renewal or reactivation costs {{renewal}} coins. Premium membership does not waive these service costs.",
+    "eligibilityCosts": "Elegibilidad: 30 días de la vida real o 60 días en el juego. Primera activación: {{activation}} Coins. Renovación y reactivación: {{renewal}} Coins por temporada.",
+    "accessUntilSeason": "El acceso sigue disponible hasta el final de la temporada {{season}}.",
+    "season": "Temporada {{season}}",
+    "endSeason": "Fin de temporada {{season}}",
+    "startSeason": "Inicio de la temporada {{season}}",
+    "coins": "Coins {{count}}",
+    "autoRenewHelp": "Cuando esté activado, las Coins {{cost}} se deducirán al comienzo de la próxima temporada. Si su saldo es demasiado bajo, la renovación fallará y el equipo de desarrollo se convertirá en solo lectura.",
+    "activateSeason": "Activar para la temporada {{season}}",
+    "existingTeam": "Su equipo de desarrollo existente será activado para esta temporada.",
+    "newTeam": "Se creará y activará un equipo de desarrollo para esta temporada.",
+    "activationAccess": "El acceso dura hasta el final de la temporada actual del juego. La renovación automática está habilitada por defecto y puede desactivarse en cualquier momento.",
+    "needCoins": "Necesitas Coins {{cost}} para activar el acceso al equipo de desarrollo. Balance actual: Coins {{balance}}.",
+    "team": "Equipo: {{name}}",
+    "closeActivation": "Cerrar confirmación de activación del equipo de desarrollo",
+    "confirmActivate": "Activar el equipo de desarrollo para la temporada {{season}}?",
+    "confirmReactivate": "¿Reactivar el equipo de desarrollo para la temporada {{season}}?",
+    "deductCoins": "Las Coins {{cost}} se deducirán de su cartera.",
+    "accessThisSeason": "El acceso dura hasta el final de esta temporada del juego.",
+    "autoRenewModal": "La renovación automática se activará por defecto. Puede desactivarla en cualquier momento en Preferencias o Premium & Facturación.",
+    "actionActivate": "Activar para {{cost}} Coins",
+    "actionReactivate": "Reactivar para {{cost}} Coins"
+  }
+}

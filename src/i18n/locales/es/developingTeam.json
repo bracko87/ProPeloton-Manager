@@ -1,0 +1,42 @@
+{
+  "page": {
+    "title": "Plantilla",
+    "subtitle": "Administra tu lista de equipos de desarrollo y ventanas de movimiento.",
+    "loading": "Cargando el equipo de desarrollo...",
+    "loadFailed": "No se pudo cargar el equipo de desarrollo",
+    "riders": "Ciclistas",
+    "currentCompetition": "Competencia actual",
+    "loadingCompetition": "Cargando competición...",
+    "competitionUnavailable": "Competencia no disponible",
+    "noRiders": "No se encontraron ciclista para el equipo de desarrollo todavía.",
+    "unlockInPreferences": "Desbloquear el equipo de desarrollo en preferencias primero."
+  },
+  "movement": {
+    "firstSquadUnavailable": "El primer escuadrón no está disponible.",
+    "windowClosed": "La ventana de movimiento está cerrada.",
+    "windowClosedNext": "Ventana de movimiento cerrada. Ventana siguiente: {{window}}.",
+    "windowClosedNextNoPeriod": "Ventana de movimiento cerrada. Ventana siguiente: {{window}}",
+    "windowOpen": "Ventana de movimiento abierta ahora: {{window}}",
+    "currentWindow": "Ventana actual",
+    "unknown": "Desconocido",
+    "firstSquadFull": "El primer escuadrón está lleno ({{count}}/{{max}}).",
+    "moveToFirstSquad": "Muevase a la Primera Escuadra",
+    "movedToFirstSquad": "Rider se mudó al Primer Escuadrón.",
+    "couldNotMove": "No se pudo mover al ciclista al Primer Escuadrón.",
+    "actionRequiredNow": "Medidas que se requieren ahora",
+    "mustMoveNextWindow": "Debe mover la siguiente ventana"
+  },
+  "healthReport": {
+    "subtitle": "Actual heridos, enfermos y en recuperación de los ciclista de equipo en desarrollo",
+    "lockedTitle": "Elaboración del informe de salud del equipo",
+    "lockedDescription": "Vea la información de lesiones, enfermedades y recuperación de todo el escuadrón para sus ciclista de desarrollo en un informe consolidado."
+  },
+  "season": {
+    "resultsLockedTitle": "Desarrollo de los resultados del equipo en esta temporada",
+    "resultsLockedDescription": "Vea las tendencias mensuales de desarrollo-equipo de rendimiento a lo largo de la temporada actual.",
+    "podiumsLockedTitle": "Desarrollo de Podios y Colocaciones en Equipo",
+    "podiumsLockedDescription": "Analizar victorias, podios y distribución de posiciones de acabado para su equipo de desarrollo.",
+    "raceTypeLockedTitle": "Desarrollo de equipo Race Tipo de instantánea",
+    "raceTypeLockedDescription": "Compare los resultados de los equipos de desarrollo con los clásicos, los días de montaña, los acabados de las etapas y las pruebas de tiempo."
+  }
+}

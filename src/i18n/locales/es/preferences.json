@@ -1,0 +1,216 @@
+{
+  "page": {
+    "title": "Preferencias",
+    "description": "Configuración real utilizable: control de notificaciones en el juego y acciones en la zona de peligro del equipo."
+  },
+  "notifications": {
+    "title": "Notificaciones en el juego",
+    "description": "Las notificaciones básicas de juegos y las notificaciones pagadas de los asesores de personal se controlan por separado.",
+    "coreTitle": "Notificaciones básicas",
+    "coreDescription": "Notificaciones normales de juego que permanecen disponibles sin un asesor de personal pagado.",
+    "advisorTitle": "Notificaciones del asesor del personal",
+    "advisorDescription": "Notificaciones de asesores pagados agrupadas por tema. Al desactivar una categoría se silencia cada tipo de notificación en ese tema. Los tipos de notificación individuales pueden entonces no ser mutilados desde su tarjeta de notificación sin cambiar esta casilla de verificación de categoría.",
+    "advisorSaveError": "No se pudo guardar la configuración de notificación de Staff Advisor. Inténtelo de nuevo.",
+    "advisorInactiveSuffix": "Active el Asesor de Personal requerido para controlar esta notificación.",
+    "coreAdvisorNote": "Una notificación Core y una notificación Advisor pueden cubrir el mismo tema sin ser el mismo evento. Ejemplo: Race Supplies Low queda como Core, mientras que Equipment & Workshop Review es un análisis pagado.",
+    "enabledCount": "{{enabled}}/{{total}} en"
+  },
+  "sections": {
+    "race": {
+      "title": "Notificaciones de carreras",
+      "description": "Invitaciones, preparación, clima, planes de escenarios, problemas de la carrera y resultados."
+    },
+    "team": {
+      "title": "Notificaciones de equipo y ciclista",
+      "description": "ciclista, personal, traslados, campamentos de entrenamiento, exploración y retiros."
+    },
+    "club": {
+      "title": "Notificaciones de gestión de clubes",
+      "description": "Finanzas, Coins, recompensas, suministros, equipo, impuestos e infraestructura."
+    },
+    "account": {
+      "title": "Notificación de cuenta y sistema",
+      "description": "Mensajes oficiales del juego e información de incorporación."
+    }
+  },
+  "groups": {
+    "raceInvitations": {
+      "label": "Invitaciones de raza",
+      "description": "Mostrar notificaciones cuando su equipo reciba una invitación de carrera."
+    },
+    "raceApplicationResults": {
+      "label": "Resultados de la aplicación de la raza",
+      "description": "Mostrar notificaciones cuando su equipo es aceptado o rechazado para una carrera."
+    },
+    "races": {
+      "label": "Actualizaciones del día de carrera",
+      "description": "Mostrar actualizaciones de la lista inicial, lista de inicio perdida, día de carrera y penalizaciones de carrera."
+    },
+    "racePreparation": {
+      "label": "Estado de preparación de la raza",
+      "description": "Mostrar el estado básico y las notificaciones de consecuencias para la preparación de la carrera."
+    },
+    "stagePlanReminders": {
+      "label": "Estado del plan de etapa",
+      "description": "Mostrar la apertura del plan de escenario y notificaciones de estado de bloqueo."
+    },
+    "raceWeather": {
+      "label": "Tiempo de carrera",
+      "description": "Mostrar notificaciones cuando las etapas, carreras o actividades relacionadas con la raza se ven afectadas por el clima."
+    },
+    "raceResults": {
+      "label": "Resultados de las carreras",
+      "description": "Mostrar notificaciones para carreras terminadas, resultados de escenarios, clasificaciones y resúmenes de carreras."
+    },
+    "teamUpdates": {
+      "label": "Actualizaciones de equipos",
+      "description": "Mostrar notificaciones relacionadas con los cambios de ciclista, moral, salud, contratos, personal y equipo interno."
+    },
+    "staffContracts": {
+      "label": "Contratos de personal",
+      "description": "Mostrar notificaciones sobre contratos de personal que expiran y tiempo de renovación."
+    },
+    "staffCourses": {
+      "label": "Cursos para el personal",
+      "description": "Mostrar notificaciones cuando se completa un curso de personal y se aplican las ganancias."
+    },
+    "transferUpdates": {
+      "label": "Actualizaciones de transferencia",
+      "description": "Mostrar notificaciones de transferencia, agente libre, oferta, oferta y negociación."
+    },
+    "trainingCamps": {
+      "label": "Campamentos de capacitación",
+      "description": "Mostrar notificaciones para inicios de campamento de entrenamiento, informes diarios, advertencias meteorológicas y terminaciones."
+    },
+    "scoutingReports": {
+      "label": "Informes de exploración",
+      "description": "Mostrar notificaciones cuando se complete un informe de exploración."
+    },
+    "retirementUpdates": {
+      "label": "Actualizaciones de la jubilación",
+      "description": "Mostrar notificaciones cuando los ciclista o el personal anuncian la jubilación y cuando las jubilaciones se finalizan."
+    },
+    "financeAlerts": {
+      "label": "Alertas financieras",
+      "description": "Muestra advertencias financieras importantes, objetivos de patrocinio, préstamos de emergencia, alertas fiscales, problemas de nómina y avisos de insolvencia."
+    },
+    "walletRewards": {
+      "label": "Coins & recompensas",
+      "description": "Mostrar compras de Coins, créditos de Coins, regalos de cumpleaños, recompensas de referencia y mensajes de recompensa de cartera."
+    },
+    "competitionRewards": {
+      "label": "Recompensas de la competencia",
+      "description": "Mostrar premios de temporada de rollover para los resultados de liga y competición."
+    },
+    "taxUpdates": {
+      "label": "Actualizaciones fiscales",
+      "description": "Mostrar notificaciones para auditorías fiscales y eventos financieros relacionados con impuestos."
+    },
+    "raceSupplies": {
+      "label": "Suministros para carreras",
+      "description": "Mostrar notificaciones cuando los suministros de carreras son bajos, faltan o necesitan reabastecimiento antes de los eventos."
+    },
+    "equipmentUpdates": {
+      "label": "Actualizaciones del equipo",
+      "description": "Mostrar notificaciones para el mantenimiento de equipos, ventas, acciones de descartes y actualizaciones del ciclo de vida del equipo."
+    },
+    "infrastructureUpdates": {
+      "label": "Actualizaciones de la infraestructura",
+      "description": "Muestra notificaciones para pedidos de infraestructura, entregas, reparaciones, ventas, actualizaciones y avisos de condiciones."
+    },
+    "systemMessages": {
+      "label": "Mensajes del sistema",
+      "description": "Mostrar mensajes de bienvenida y mensajes oficiales generales del juego."
+    }
+  },
+  "advisorCategories": {
+    "trainingReadiness": {
+      "label": "Entrenamiento y preparación para el ciclista",
+      "description": "Carga de entrenamiento, fatiga, disponibilidad del ciclista, lagunas de entrenamiento, preparación del equipo y avisos de desarrollo del ciclista."
+    },
+    "raceProgrammePreparation": {
+      "label": "Programa y preparación de carreras",
+      "description": "Revisiones y lagunas del programa de carreras, falta de preparación y de asesoramiento sobre preparación para la carrera."
+    },
+    "startlistStagePlans": {
+      "label": "Startlist & Stage Plans",
+      "description": "Alertas de fecha límite Startlist más advertencias de planes de etapa ausentes o incompletas."
+    },
+    "medicalRecovery": {
+      "label": "Recuperación y servicios médicos",
+      "description": "Informes médicos, planes de tratamiento de lesiones y enfermedades, cambios en la recuperación y avisos de autorización médica."
+    },
+    "equipmentWorkshopSupplies": {
+      "label": "Equipo, talleres y suministros de carreras",
+      "description": "Estado del equipo, preparación para el taller y recomendaciones analíticas de revisión de la oferta de carreras."
+    },
+    "scoutingRecruitment": {
+      "label": "Exploración y reclutamiento",
+      "description": "Reclutar inteligencia, revisar los estudios y dar aviso de prioridades."
+    }
+  },
+  "developingTeam": {
+    "title": "Equipo de desarrollo",
+    "description": "Construye y administra un equipo de desarrollo U23 con acceso a Coins de temporada.",
+    "loading": "Cargando el estado del equipo en desarrollo...",
+    "realLifeProgress": "Progresos en la vida real",
+    "realLifeMinimum": "Mínimo 30 días requeridos",
+    "gameProgress": "Progresos en el juego",
+    "gameMinimum": "Mínimo 60 días",
+    "coins": "Coins",
+    "eligibility": "Elegibilidad: 30 días de la vida real o 60 días en el juego.",
+    "active": "Equipo de desarrollo activo",
+    "activeBadge": "Activa",
+    "currentSeason": "Temporada actual",
+    "accessEnds": "Acceso a los fines",
+    "renewalPrice": "Precio de renovación",
+    "nextRenewal": "Próxima renovación",
+    "autoRenew": "Renovar automáticamente cada temporada",
+    "expired": "El acceso al equipo de desarrollo expiró",
+    "expiredDescription": "Su equipo, ciclista, contratos, resultados e historia permanecen almacenados. El equipo en desarrollo está actualmente solo de lectura.",
+    "reactivating": "Reactivando...",
+    "activating": "Activando...",
+    "getCoins": "Consigue Coins",
+    "notEligible": "No elegible todavía",
+    "notEligibleDescription": "El equipo de desarrollo está disponible después de 30 días de vida real o 60 días en el juego.",
+    "specialRules": "Normas especiales",
+    "teamNameRule": "El nombre del equipo será su nombre principal del club más U23.",
+    "raceRule": "Este equipo puede aplicar a las carreras normalmente mientras el acceso estacional está activo.",
+    "competitionRule": "Este equipo no puede ser promovido por encima del nivel Continental.",
+    "rosterRule": "Tamaño máximo de la lista: 8 ciclista.",
+    "ageRule": "Sólo los ciclistas de 23 años o menos son elegibles.",
+    "movementRule": "Los ciclista se mueven entre escuadrones sólo durante las ventanas de movimiento.",
+    "teamLabel": "Equipo"
+  },
+  "dangerZone": {
+    "title": "Zona de peligro",
+    "description": "Estas son acciones destructivas y deben mantenerse separadas de las preferencias normales.",
+    "badge": "Medidas de gran impacto",
+    "restartTitle": "Reiniciar equipo",
+    "restartDescription": "Reinicie este club de nuevo a un nuevo estado de arranque mientras mantiene el mismo nombre del club, logotipo, camiseta, país, y la competencia ranura.",
+    "restartDetail": "Los actuales ciclista se convierten en agentes libres, los puntos de temporada se restablecen a 0, y el equipo recibe un nuevo equipo de arranque basado en su nivel actual.",
+    "restartButton": "Reiniciar equipo",
+    "shutdownTitle": "Apagar equipo",
+    "shutdownDescription": "Elimina permanentemente este equipo de usuario Y la cuenta de autenticación. Después de la eliminación exitosa, se le redirige a la página principal y puede registrarse de nuevo con el mismo correo electrónico.",
+    "shutdownDetail": "Esto debería eliminar sólo los datos del equipo del usuario actual, no otros usuarios u otros equipos.",
+    "shuttingDown": "Apagando...",
+    "shutdownButton": "Apagar equipo",
+    "systemNote": "El sistema de notificación debe comprobar estas preferencias guardadas antes de crear o mostrar cada tipo de notificación.",
+    "confirmTitle": "Confirmar el cierre del equipo",
+    "confirmDescription": "Esta acción es permanente y no puede ser deshecho.",
+    "aboutToDelete": "Usted está a punto de eliminar permanentemente:",
+    "deleteTeam": "Su equipo actual",
+    "deleteGameData": "Los ciclista de su equipo, el equipo y los datos de juego relacionados con el equipo",
+    "deleteAccount": "Su cuenta de autenticación para este correo electrónico",
+    "afterDelete": "Después de la eliminación exitosa, usted será eliminado y redirigido a la página principal. Usted puede entonces registrarse de nuevo con la misma dirección de correo electrónico que un nuevo usuario.",
+    "typeDelete": "Tipo DELETE para confirmar",
+    "placeholder": "Escriba DELETE aquí",
+    "cancel": "Cancelar",
+    "permanentButton": "Equipo de cierre permanente",
+    "exactDeleteError": "Debe escribir DELETE exactamente para confirmar esta acción.",
+    "missingSession": "Su sesión está perdida. Por favor, regístrese y vuelva a intentarlo.",
+    "shutdownFailed": "Falló al cerrar el equipo.",
+    "shutdownUnexpected": "Fallo al cerrar el equipo debido a un error inesperado.",
+    "closeAria": "Cerrar confirmación del equipo de apagado"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "page": {
+    "back": "← Volver",
+    "title": "Visión general del scout",
+    "subtitle": "Todos los informes de exploradores completados en un solo lugar. Filtrar por estado y saltar directamente al perfil del ciclista.",
+    "loading": "Cargando informes de exploradores...",
+    "empty": "Todavía no hay reportes de exploradores que coincidan con este filtro.",
+    "loadFailed": "Falló al cargar los informes del explorador.",
+    "reviewFailed": "No se pudo marcar el informe como revisado."
+  },
+  "filters": {
+    "all": "Todos",
+    "new": "Nuevo",
+    "reviewed": "Revisado"
+  },
+  "report": {
+    "unknownRider": "ciclista desconocido",
+    "scout": "Scout",
+    "scoutName": "Scout: {{name}}",
+    "completed": "Terminado: {{date}}",
+    "overall": "Necesidades generales",
+    "potential": "Potencial",
+    "keyStrengths": "Puntos fuertes clave",
+    "more": "(+más)",
+    "notes": "Notas:",
+    "openProfile": "Abrir perfil del ciclista"
+  },
+  "potential": {
+    "veryLow": "Muy baja",
+    "low": "Baja",
+    "medium": "Medio",
+    "high": "Alta",
+    "elite": "Elite"
+  },
+  "skills": {
+    "sprint": "Sprint",
+    "climbing": "Escalada",
+    "timeTrial": "Juicio temporal",
+    "endurance": "Resistencia",
+    "flat": "Plano",
+    "recovery": "Recuperación",
+    "resistance": "Resistencia",
+    "raceIq": "IQ de raza",
+    "teamwork": "Trabajo en equipo",
+    "morale": "Moral"
+  },
+  "table": {
+    "riderScout": "& Explorador de & ciclista",
+    "overallPotential": "Total / Potencial",
+    "strengthsNotes": "Puntos fuertes y notas clave",
+    "action": "Medidas adoptadas"
+  },
+  "pagination": {
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Página {{page}} de {{total}}"
+  }
+}

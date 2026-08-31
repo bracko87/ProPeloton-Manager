@@ -1,0 +1,56 @@
+{
+  "common": {
+    "back": "Atrás",
+    "close": "Cerrar",
+    "unknown": "Desconocido",
+    "unknownRider": "ciclista desconocido",
+    "rider": "Ciclista",
+    "noImage": "Sin imagen",
+    "age": "Edad {{age}}",
+    "club": "Club:",
+    "noClub": "Sin club",
+    "marketValue": "Valor de mercado:",
+    "salary": "Salario:",
+    "availability": "Disponibilidad:",
+    "contractSeason": "Temporada de contrato:",
+    "seasonPoints": "Puntos de temporada",
+    "sprintPoints": "Puntos Sprint",
+    "climbingPoints": "Puntos de escalada",
+    "markScouted": "Marca como explorador",
+    "unmarkScouted": "Sin marcar",
+    "showHistory": "Mostrar el historial",
+    "hideHistory": "Ocultar el historial",
+    "openTeam": "Equipo abierto",
+    "historyPlaceholder": "Marcador de posición del panel de historia del ciclista."
+  },
+  "skills": {
+    "ovr": "OVR",
+    "pot": "POT",
+    "sprint": "Sprint",
+    "climbing": "Escalada",
+    "tt": "TT",
+    "endurance": "Resistencia",
+    "flat": "Plano",
+    "recovery": "Recuperación",
+    "resistance": "Resistencia",
+    "raceIq": "IQ de raza",
+    "teamwork": "Trabajo en equipo",
+    "morale": "Moral"
+  },
+  "availability": {
+    "fit": "Ajustar",
+    "notFullyFit": "No encajan completamente",
+    "injured": "Heridos",
+    "sick": "Enfermo"
+  },
+  "roles": {
+    "sprinter": "Sprinter",
+    "climber": "Escalador",
+    "timeTrialist": "Trialista temporal",
+    "gc": "GC rider",
+    "puncheur": "Puncheur",
+    "rouleur": "Rouleur",
+    "domestique": "Domestique",
+    "allRounder": "Todoterreno"
+  }
+}

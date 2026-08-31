@@ -1,0 +1,370 @@
+{
+  "sections": {
+    "equipmentCategoryDeep": {
+      "title": "Categorías de equipos y bonificaciones",
+      "subtitle": "Las seis categorías de equipos duraderos.",
+      "overview": "El equipo duradero incluye marcos, ruedas, neumáticos, grupos, cascos y zapatos.",
+      "facts": [
+        "Categorías",
+        "Marco, ruedas, neumáticos, grupo, casco, zapatos",
+        "Bonificaciones",
+        "Piso, montaÃ±o, adoquin, prueba de tiempo, sprint, reducción de fatiga"
+      ],
+      "details": [
+        "Los marcos a menudo definen la identidad de configuración amplia.",
+        "Los juegos de ruedas y neumáticos son muy sensibles a la ruta.",
+        "Grupos, cascos y zapatos pueden añadir importantes bonos de apoyo.",
+        "Los artículos especializados pueden incluir compensaciones negativas.",
+        "Las etiquetas de calidad incluyen Basic, Good y Super."
+      ],
+      "tips": [
+        "Coincidir con el equipo para el tipo de escenario."
+      ]
+    },
+    "equipmentCapsDeep": {
+      "title": "Pesos y tapas del equipo",
+      "subtitle": "Por qué se controlan los bonos de equipamiento.",
+      "overview": "El equipo ayuda, pero los bonos con tope protegen la capacidad del ciclista y el equilibrio del juego.",
+      "facts": [
+        "Tapas conocidas",
+        "Etapa de equipamiento alrededor del 4%, soporte de equipo alrededor del 5%, soporte total alrededor del 8%, reducción de fatiga alrededor del 10%"
+      ],
+      "details": [
+        "Un conjunto completo de ítems +4% no se convierte en +24%.",
+        "Los bonos se ponderan por categoría de equipo.",
+        "Los bonos de apoyo tienen límites.",
+        "La reducción de la fatiga también tiene un tapón.",
+        "El equipo especializado sigue siendo valioso en carreras cercanas."
+      ],
+      "tips": [
+        "Utilice el engranaje para apoyar la estrategia, no reemplazar la calidad del motorista."
+      ]
+    },
+    "equipmentInventoryDeep": {
+      "title": "Inventario y mantenimiento",
+      "subtitle": "Condición, estados y decisiones de reparación.",
+      "overview": "El inventario muestra equipo de propiedad activa y el mantenimiento se centra en artículos que necesitan atención.",
+      "facts": [
+        "Situación",
+        "Preparados, asignados, en mantenimiento, desgastados",
+        "Umbral de mantenimiento",
+        "Condición < 90%"
+      ],
+      "details": [
+        "Los artículos vendidos y desechados están ocultos del inventario activo.",
+        "Los artículos listos y usados pueden ejecutar acciones si las reglas lo permiten.",
+        "Los artículos asignados están bloqueados porque están en uso.",
+        "Las cotizaciones de reparación muestran costo y permiso.",
+        "La condición debe ser fijada antes de las razas importantes."
+      ],
+      "tips": [
+        "Reparar temprano; no espere hasta que todo el equipo se use."
+      ]
+    },
+    "raceSuppliesDeep": {
+      "title": "Detalles de los suministros de carreras",
+      "subtitle": "Bidón, geles, nutrición, camisetas y chaquetas de lluvia.",
+      "overview": "Los suministros de carreras se consumen o utilizan durante los planes de etapa y pueden afectar la fatiga, la resistencia, la preparación y el apoyo climático.",
+      "facts": [
+        "Consumibles",
+        "Bidón, geles energéticos, paquetes de nutrición",
+        "Duraderos",
+        "Carrera Jersey Completa, chaquetas de lluvia"
+      ],
+      "details": [
+        "Bidón: 1-4 por ciclista; control de hidratación y fatiga.",
+        "Gels: 0-4 por ciclista; resistencia y soporte de esfuerzo final.",
+        "Nutrición: 0-2 por ciclista; resistencia y soporte de recuperación.",
+        "Camisetas de carrera: kit de larga duración obligatorio; 10 usos de etapa por unidad.",
+        "Chaquetas de lluvia: elemento opcional tiempo durable; 25 usos de la etapa por unidad."
+      ],
+      "tips": [
+        "Las carreras de etapas consumen suministros rápidamente."
+      ]
+    },
+    "technicalSponsorDeep": {
+      "title": "Soporte técnico de Patrocinador en Equipos",
+      "subtitle": "Descuentos y presupuestos de apoyo.",
+      "overview": "Los patrocinadores técnicos pueden reducir los costos de equipo y proporcionar presupuestos de apoyo al equipo.",
+      "facts": [
+        "Prestaciones",
+        "Apoyo en efectivo, presupuesto de apoyo al equipo, presupuesto utilizado/presupuesto restante, descuentos por categoría"
+      ],
+      "details": [
+        "Descripción general del equipo puede mostrar apoyo técnico activo del patrocinador.",
+        "Las compras en el mercado pueden cotizar descuentos de categoría.",
+        "El presupuesto restante ayuda a planificar el calendario de compra.",
+        "Los descuentos pueden diferir por categoría.",
+        "Los patrocinadores técnicos son especialmente útiles antes de las mejoras de marcha importantes."
+      ],
+      "tips": [
+        "Compra equipo caro mientras el soporte útil está activo."
+      ]
+    },
+    "facilitiesOverviewDeep": {
+      "title": "Información general sobre las instalaciones",
+      "subtitle": "Edificios y capacidad del personal.",
+      "overview": "Las instalaciones mejoran los sistemas de capacitación, médicos, de exploración, mecánicos, de juventud y administración de clubes.",
+      "facts": [
+        "Instalaciones",
+        "Centro Médico, Escuela de la Juventud, Taller de Mecánica, Oficina de Scouts, Club House"
+      ],
+      "details": [
+        "Club House apoya la administración y la gestión futura.",
+        "El Centro de Capacitación apoya el entrenamiento y el desarrollo.",
+        "El Centro Médico apoya a médicos, fisioterapeutas, nutricionistas y recuperación.",
+        "La Academia Juvenil apoya el desarrollo de U23/jóvenes.",
+        "Taller de mecánica soporta equipos/reparaciones.",
+        "La Oficina de Scouts apoya informes de scouts e inteligencia de mercado."
+      ],
+      "tips": [
+        "Elija actualizaciones basadas en su cuello de botella actual."
+      ]
+    },
+    "facilityJobsDeep": {
+      "title": "Trabajos de infraestructura",
+      "subtitle": "Construye, entrega, ranuras y reembolsos.",
+      "overview": "Los trabajos de infraestructura están pendientes de mejoras de las instalaciones o entregas de activos con costo de caja y duración del día de juego.",
+      "facts": [
+        "Tipos de trabajo",
+        "Mejoramiento de la instalación, entrega de activos",
+        "Situación",
+        "Pendiente, completada, cancelada, fallida"
+      ],
+      "details": [
+        "Los trabajos activos muestran costo pagado, duración del juego y fecha de finalización.",
+        "Las ranuras de construcción de instalaciones limitan la cantidad de construcciones que pueden ocurrir a la vez.",
+        "Las cotizaciones de cancelación muestran reembolso en efectivo, porcentaje de reembolso, costo de cancelación y razón.",
+        "La cancelación inmediata puede reembolsar más que la cancelación tardía.",
+        "Trabajos completados actualizan las instalaciones o entregan activos."
+      ],
+      "tips": [
+        "No empiece demasiados trabajos caros durante la presión de efectivo."
+      ]
+    },
+    "assetsDeep": {
+      "title": "Sinopsis de los activos",
+      "subtitle": "Coches de equipo, autobuses y camionetas de apoyo.",
+      "overview": "Los activos son vehículos/recursos de apoyo con niveles, condiciones, estado de asignación y valores de apoyo.",
+      "facts": [
+        "Activo",
+        "Autos de equipo, Autobús de equipo, Van de equipo, Taller móvil, Van médica"
+      ],
+      "details": [
+        "Team Cars soporta el convoy de carreras y puede ser seleccionado como Team Car 1-3.",
+        "Equipo de transporte de autobuses ciclista y personal.",
+        "Equipamiento Van lleva bicicletas y equipo.",
+        "Taller móvil soporta reparaciones y operaciones técnicas.",
+        "La Van médica apoya las necesidades médicas/logísticas.",
+        "Los activos asignados o bloqueados no pueden repararse ni venderse."
+      ],
+      "tips": [
+        "Mantenga los activos importantes reparados antes de las carreras."
+      ]
+    },
+    "seasonCalendarDeep": {
+      "title": "Detalles del calendario de temporada",
+      "subtitle": "Planificación diaria de la actividad del equipo.",
+      "overview": "Calendario de temporada muestra la actividad diaria del club y la temporada más amplia.",
+      "facts": [
+        "Filtros",
+        "Carreras, Campamentos de Entrenamiento, Eventos, Vacaciones",
+        "Duración del mes de juego",
+        "30 días en la red actual de interfaz de usuario"
+      ],
+      "details": [
+        "Úsalo para ver días de carrera, campamentos y eventos.",
+        "Los filtros reducen el desorden.",
+        "Calendar ayuda a evitar sobrereservar ciclista y personal.",
+        "Las fechas de los campamentos de entrenamiento deben ser revisadas aquí.",
+        "Se pueden planificar meses importantes de carrera con antelación."
+      ],
+      "tips": [
+        "Utilice Calendario de temporada antes de reservar campamentos."
+      ]
+    },
+    "raceCalendarDeep": {
+      "title": "Detalles del calendario de carreras",
+      "subtitle": "Tarjetas de carreras y estados de aplicación.",
+      "overview": "Calendario de carreras lista todas las razas y su estado de aplicación.",
+      "facts": [
+        "Valores de estado",
+        "not_open, abierto, cerrado, race_active, race_finished, cancelado"
+      ],
+      "details": [
+        "Las tarjetas de carreras pueden mostrar categoría, país, ciudad anfitriona, tipo, fecha de inicio/final y límites de equipo.",
+        "Las aplicaciones son posibles sólo mientras el estado está abierto.",
+        "El conteo de equipos aceptados muestra lo llena que está la carrera.",
+        "Los objetivos del patrocinador pueden dirigirse a carreras o categorías específicas.",
+        "Open Race envía a los usuarios a la página Race Detail."
+      ],
+      "tips": [
+        "Aplicar sólo cuando la carrera se adapte a su equipo."
+      ]
+    },
+    "raceDetailDeep": {
+      "title": "Página de detalle de la raza",
+      "subtitle": "Perfil de carrera, etapas, participantes, resultados y repetición.",
+      "overview": "Race Detail es el centro de carreras completo.",
+      "facts": [
+        "Fichas de información",
+        "Participantes, resultados",
+        "Clasificaciones",
+        "General, puntos, montaña, joven, equipo"
+      ],
+      "details": [
+        "La descripción general de la carrera incluye fechas, país, categoría, tipo de raza y estado.",
+        "Las reglas de entrada muestran plazos, límites de equipo, límites de ciclista y fondo de premios.",
+        "Los escenarios muestran ruta, terreno, distancia, clima, sprints y subidas.",
+        "Los participantes muestran instantáneas del equipo y del ciclista.",
+        "Los resultados y clasificaciones están disponibles según el estado de la raza.",
+        "La reproducción puede mostrar marcos en vivo o históricos si el acceso lo permite."
+      ],
+      "tips": [
+        "Revisa el detalle de la carrera antes de preparar un equipo."
+      ]
+    },
+    "stageTerrainPoints": {
+      "title": "Terreno de etapa y puntos",
+      "subtitle": "Piso, montañoso, de montaña, TT, adoquinado, sprints y KOM.",
+      "overview": "Las definiciones de terreno y punto ayudan a los usuarios a decidir los ciclista, tácticas y equipos.",
+      "facts": [
+        "Terreno",
+        "Piso, montaÃ±a, prueba individual, prueba de tiempo en equipo, prÃ3logo, empedrado",
+        "Tipos de puntos",
+        "Inicio, Intermediate_SPRINT, KOM, BONUS_SPRINT, FINAL"
+      ],
+      "details": [
+        "Las etapas planas a menudo favorecen los velocistas y los lead-outs.",
+        "Las etapas montañosas favorecen a los ciclista y atacantes versátiles.",
+        "Las etapas de montaña favorecen a los escaladores y líderes de GC.",
+        "Las etapas TT/prólogo favorecen a los tiempo-trialistas y el equipo TT.",
+        "Etapas encogidas favorecen la resistencia y el equipo especializado.",
+        "KOM y sprint points importan para clasificaciones secundarias."
+      ],
+      "tips": [
+        "El terreno de la etapa debe conducir Stage Plan roles."
+      ]
+    },
+    "replayResultsDeep": {
+      "title": "Reproducir, resultados y comentarios",
+      "subtitle": "Cómo entender lo que pasó en una etapa.",
+      "overview": "La repetición y el comentario explican la dinámica racial más allá de la tabla de resultados finales.",
+      "facts": [
+        "Velocidades de repetición",
+        "1x, 2x, 4x, 8x",
+        "Límite del marco",
+        "Hasta 50000 filas cargadas en el código actual"
+      ],
+      "details": [
+        "Los marcos de repetición muestran grupos, huecos, ciclista, equipos, marcadores de velocidad y kilómetros.",
+        "El estado vivo controla si los resultados son visibles y si la velocidad de repetición está bloqueada.",
+        "Las filas de pie pueden mostrar insignias de líder y posición de grupo.",
+        "Los eventos de comentarios/informes describen ataques, sprints, subidas, incidentes y momentos decisivos.",
+        "Los resultados muestran rango de etapa, tiempo, brecha, puntos, segundos de bonificación/penalidad y estado."
+      ],
+      "tips": [
+        "Utilice la repetición para diagnosticar tácticas y rendimiento del ciclista."
+      ]
+    },
+    "racePlanDeep": {
+      "title": "Race Plan Detalles",
+      "subtitle": "ciclista, personal, bienes, equipo y suministros.",
+      "overview": "Race Plan es el plan de nivel de carrera presentado antes de Stage Plans.",
+      "facts": [
+        "Piezas principales",
+        "ciclista, personal, activos, equipo, suministros y presupuesto"
+      ],
+      "details": [
+        "Los ciclista deben coincidir con las reglas de carrera min/max.",
+        "Los ciclista bloqueados no pueden ser seleccionados para eventos superpuestos.",
+        "El personal y los activos también pueden ser bloqueados por asignaciones.",
+        "La configuración del equipo debe coincidir con el terreno de la carrera.",
+        "Los suministros deben ser suficientes para todas las etapas.",
+        "La vista previa de la cotización debe ser revisada antes de enviar."
+      ],
+      "tips": [
+        "Nunca envíe un plan sin costo de lectura y recursos bloqueados."
+      ]
+    },
+    "stagePlanDeep": {
+      "title": "Stage Plan Detalles",
+      "subtitle": "Roles y tácticas por etapa.",
+      "overview": "Stage Plans decirle al motor de carrera lo que cada ciclista debe hacer en cada etapa.",
+      "facts": [
+        "Componentes",
+        "Roles, tácticas de equipo, tácticas individuales, equipo, suministros"
+      ],
+      "details": [
+        "Un escenario de sprint plano necesita diferentes roles que un escenario de montaña.",
+        "Las etapas TT y TTT necesitan de estimulación y equipo especializado.",
+        "Los suministros se asignan por etapa y pueden consumirse o utilizar capacidad duradera.",
+        "Los controles de preparación indican si un plan de etapa es utilizable.",
+        "Los planes guardados pero vacíos no son lo mismo que los planes completos."
+      ],
+      "tips": [
+        "Revisa cada etapa de una carrera."
+      ]
+    },
+    "stageRolesDeep": {
+      "title": "Funciones de etapa y casos de uso",
+      "subtitle": "Elegir líderes, velocistas, ayudantes y especialistas.",
+      "overview": "Los roles de etapa deben coincidir con las habilidades del ciclista y los objetivos de etapa.",
+      "facts": [
+        "Funciones",
+        "Líder, velocista, lead-out, tren de sprint, escalador, montaña domostique, ayudante, fuga, perseguidor, rouleur, protegido, libre"
+      ],
+      "details": [
+        "El líder del equipo/GC es para ciclista protegidos durante el tiempo total.",
+        "Sprinter necesita habilidad de sprint y soporte de lead-out.",
+        "El tren de salida/de impresión ayuda al velocista en acabados planos.",
+        "Climber/Montaña Domestique es para el control de montaña.",
+        "Los roles de ruptura son riesgosos, pero pueden perseguir victorias de etapa o visibilidad.",
+        "Los roleurs y ayudantes apoyan la persecución, el ritmo y la protección."
+      ],
+      "tips": [
+        "No hagas de cada ciclista un líder."
+      ]
+    },
+    "stageReadinessDeep": {
+      "title": "Sistema de preparación de etapas",
+      "subtitle": "Verificaciones de planes verdes/amarillos/naranja/rojo/gris.",
+      "overview": "La preparación indica a los usuarios si los planes de etapa son lo suficientemente completos para el motor.",
+      "facts": [
+        "Conteos",
+        "Guardado, utilizable, faltante, incompleto, vacío, sin suministros",
+        "Tonos",
+        "Verde, amarillo, naranja, rojo, gris"
+      ],
+      "details": [
+        "Deberían crearse planes que faltan.",
+        "Los planes vacíos deben llenarse con roles/tácticas/suministros.",
+        "Los planes sin suministros pueden ser riesgosos o incompletos.",
+        "La acción recomendada explica qué arreglar.",
+        "Todos los planes de etapa requeridos deben ser salvados antes del día de la carrera."
+      ],
+      "tips": [
+        "Fijar la preparación rojo/naranja antes de la fecha límite."
+      ]
+    },
+    "sportDirectorDeep": {
+      "title": "Sugerencias del Director del Deporte",
+      "subtitle": "Sugerencias de asistentes para los planes de etapa.",
+      "overview": "Las sugerencias del Director de Deportes pueden ayudar a los gerentes a construir planes, pero no deben reemplazar el juicio.",
+      "facts": [
+        "Ámbitos de sugerencias",
+        "Equipo, equipo, personal, suministros"
+      ],
+      "details": [
+        "La respuesta a la sugerencia puede incluir el tipo de etapa, el nombre de la etapa, los datos de la sugerencia y la explicación.",
+        "Las sugerencias pueden estar limitadas por la calidad del personal o la lógica de backend.",
+        "Los usuarios deben comparar las sugerencias con las habilidades reales del ciclista y los objetivos del equipo.",
+        "El tiempo y los suministros deben ser revisados manualmente.",
+        "Los buenos gerentes ajustan las sugerencias en lugar de aplicar ciegamente."
+      ],
+      "tips": [
+        "Utilice las sugerencias como una herramienta de aprendizaje."
+      ]
+    }
+  }
+}

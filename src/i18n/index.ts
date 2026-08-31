@@ -153,6 +153,44 @@ import hrTraining from './locales/hr/training.json'
 import hrTransfers from './locales/hr/transfers.json'
 import hrTutorials from './locales/hr/tutorials.json'
 
+import esAccountPages from './locales/es/accountPages.json'
+import esAppShell from './locales/es/appShell.json'
+import esAuth from './locales/es/auth.json'
+import esCalendar from './locales/es/calendar.json'
+import esCalendarPage from './locales/es/calendarPage.json'
+import esClub from './locales/es/club.json'
+import esCommon from './locales/es/common.json'
+import esCreateClub from './locales/es/createClub.json'
+import esCustomizeTeam from './locales/es/customizeTeam.json'
+import esDevelopingTeam from './locales/es/developingTeam.json'
+import esEquipment from './locales/es/equipment.json'
+import esFinance from './locales/es/finance.json'
+import esHelp from './locales/es/help.json'
+import esManual from './locales/es/manual.json'
+import esHome from './locales/es/home.json'
+import esInfrastructure from './locales/es/infrastructure.json'
+import esNavigation from './locales/es/navigation.json'
+import esNotifications from './locales/es/notifications.json'
+import esOverview from './locales/es/overview.json'
+import esPreferences from './locales/es/preferences.json'
+import esPreferencesDynamic from './locales/es/preferencesDynamic.json'
+import esProPackages from './locales/es/proPackages.json'
+import esProfile from './locales/es/profile.json'
+import esPublicInfo from './locales/es/publicInfo.json'
+import esRaceDetail from './locales/es/raceDetail.json'
+import esRacePreparation from './locales/es/racePreparation.json'
+import esRiderProfile from './locales/es/riderProfile.json'
+import esScouting from './locales/es/scouting.json'
+import esSeasonReset from './locales/es/seasonReset.json'
+import esSharedRiderModal from './locales/es/sharedRiderModal.json'
+import esSquad from './locales/es/squad.json'
+import esStaff from './locales/es/staff.json'
+import esStatistics from './locales/es/statistics.json'
+import esTeamRanking from './locales/es/teamRanking.json'
+import esTraining from './locales/es/training.json'
+import esTransfers from './locales/es/transfers.json'
+import esTutorials from './locales/es/tutorials.json'
+
 import {
   DEFAULT_LANGUAGE,
   getLanguageDefinition,
@@ -319,6 +357,45 @@ const resources = {
     transfers: hrTransfers,
     tutorials: hrTutorials,
   },
+  es: {
+    accountPages: esAccountPages,
+    appShell: esAppShell,
+    auth: esAuth,
+    calendar: esCalendar,
+    calendarPage: esCalendarPage,
+    club: esClub,
+    common: esCommon,
+    createClub: esCreateClub,
+    customizeTeam: esCustomizeTeam,
+    developingTeam: esDevelopingTeam,
+    equipment: esEquipment,
+    finance: esFinance,
+    help: esHelp,
+    manual: esManual,
+    home: esHome,
+    infrastructure: esInfrastructure,
+    navigation: esNavigation,
+    notifications: esNotifications,
+    overview: esOverview,
+    preferences: esPreferences,
+    preferencesDynamic: esPreferencesDynamic,
+    proPackages: esProPackages,
+    profile: esProfile,
+    publicInfo: esPublicInfo,
+    raceDetail: esRaceDetail,
+    racePreparation: esRacePreparation,
+    riderProfile: esRiderProfile,
+    scouting: esScouting,
+    seasonReset: esSeasonReset,
+    sharedRiderModal: esSharedRiderModal,
+    squad: esSquad,
+    staff: esStaff,
+    statistics: esStatistics,
+    teamRanking: esTeamRanking,
+    training: esTraining,
+    transfers: esTransfers,
+    tutorials: esTutorials,
+  },
 } as const
 
 const initialLanguage = getStoredLanguage()
@@ -329,7 +406,7 @@ void i18n
     resources,
     lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,
-    supportedLngs: ['en', 'sr-Latn', 'de', 'hr'],
+    supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es'],
     defaultNS: 'common',
     ns: [
       'accountPages',
