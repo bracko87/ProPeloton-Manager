@@ -1,0 +1,52 @@
+name: Finalize Spanish semantics
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/finalize_spanish_semantics_20260831.py'
+      - '.github/scripts/audit_spanish_final_20260831.py'
+      - '.github/workflows/chatgpt-finalize-spanish-semantics.yml'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply final Spanish semantic cleanup
+        run: python .github/scripts/finalize_spanish_semantics_20260831.py
+
+      - name: Run final Spanish semantic audit
+        run: python .github/scripts/audit_spanish_final_20260831.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push final Spanish semantics
+        shell: bash
+        run: |
+          if git diff --quiet -- src/i18n/locales/es; then
+            echo 'No Spanish locale changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/es
+          git commit -m 'Finalize Spanish localization semantics'
+          git pull --rebase origin main
+          git push origin main
