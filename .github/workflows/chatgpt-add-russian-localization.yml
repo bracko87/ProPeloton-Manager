@@ -44,6 +44,9 @@ jobs:
         shell: bash
         run: python .github/scripts/audit_russian_completion_20260831.py | tee /tmp/russian-completion.txt
 
+      - name: Russian human quality gate
+        run: python .github/scripts/audit_russian_human_quality_20260831.py
+
       - name: Install app dependencies
         run: npm ci
 
