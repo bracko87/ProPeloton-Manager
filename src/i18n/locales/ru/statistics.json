@@ -25,7 +25,7 @@
     "position": "Поз.",
     "role": "Роль",
     "age": "Возраст",
-    "internationalPoints": "Международные очки",
+    "internationalPoints": "Очки UCI",
     "previous": "Назад",
     "next": "Далее",
     "showing": "Показать {{start}}-{{end}} В процентах {{total}}",
@@ -52,7 +52,7 @@
     "allDivisions": "Все отделы",
     "allCountries": "Все страны",
     "allSeasons": "Все сезоны",
-    "sortInternational": "Сорт: международные пункты",
+    "sortInternational": "Сортировка: очки UCI",
     "sortStageFinish": "Сорт: Очки завершения этапы",
     "sortGcOneDay": "Сорт: GC однодневные очки"
   },
@@ -83,10 +83,10 @@
     "oceania": "Океания"
   },
   "metrics": {
-    "international": "Международные",
+    "international": "UCI",
     "stageFinish": "Завершение этапа",
     "gcOneDay": "GC Один день",
-    "internationalPoints": "Международные пункты",
+    "internationalPoints": "Очки UCI",
     "stageFinishPoints": "Этапные финальные точки",
     "gcOneDayPoints": "GC однодневные очки",
     "pointsTemplate": "{{metric}} точки",
@@ -98,7 +98,7 @@
     "aiTeams": "Группы АИ",
     "currentLeader": "Нынешний руководитель",
     "currentLeaderboard": "Текущая доска для руководителей",
-    "currentLeaderboardSubtitle": "Лучшие команды международных точек в выбранном фильтре.",
+    "currentLeaderboardSubtitle": "Лучшие команды по очкам UCI в выбранном фильтре.",
     "noTeamsFound": "Команды не найдены",
     "tryFilters": "Попробуйте изменить термин фильтров или поиска.",
     "tierDivision": "Уровень/подразделение",
@@ -129,7 +129,7 @@
     "noHistoryDescription": "Ваша игра сейчас в первом сезоне, так что пока не будет законченных исторических сезонов."
   },
   "riders": {
-    "mostInternational": "Большинство международных пунктов",
+    "mostInternational": "Больше всего очков UCI",
     "mostPodiums": "Большинство подиумов",
     "mostJerseys": "Большинство футболок",
     "ridersInFilter": "гонщики в фильтре",
@@ -155,7 +155,12 @@
     "topValueSalary": "гонщики с максимальной стоимостью/оклады",
     "topValueSalarySubtitle": "Полезно, когда вы хотите получить данные о контрактах и передаче.",
     "noFinanceData": "Данные о финансировании гонщика отсутствуют",
-    "noFinanceDescription": "Позднее эта область может стать ценностью, зарплатой и резюме сроков действия контрактов."
+    "noFinanceDescription": "Позднее эта область может стать ценностью, зарплатой и резюме сроков действия контрактов.",
+    "columns": {
+      "name": "Имя",
+      "teamRole": "Роль в команде",
+      "uciPoints": "Очки UCI"
+    }
   },
   "roles": {
     "sprinter": "Спринтер",

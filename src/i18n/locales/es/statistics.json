@@ -25,7 +25,7 @@
     "position": "Pos.",
     "role": "Rol",
     "age": "Edad",
-    "internationalPoints": "Puntos internacionales",
+    "internationalPoints": "Puntos UCI",
     "previous": "Anterior",
     "next": "Siguiente",
     "showing": "Mostrando {{start}}-{{end}} de {{total}}",
@@ -52,7 +52,7 @@
     "allDivisions": "Todas las divisiones",
     "allCountries": "Todos los países",
     "allSeasons": "Todas las estaciones",
-    "sortInternational": "Ordenar: Puntos internacionales",
+    "sortInternational": "Ordenar: Puntos UCI",
     "sortStageFinish": "Ordenar: Puntos de meta de la etapa",
     "sortGcOneDay": "Ordenar: GC / puntos de un día"
   },
@@ -83,10 +83,10 @@
     "oceania": "Oceanía"
   },
   "metrics": {
-    "international": "Internacionales",
+    "international": "UCI",
     "stageFinish": "Final de etapa",
     "gcOneDay": "GC / un día",
-    "internationalPoints": "Puntos internacionales",
+    "internationalPoints": "Puntos UCI",
     "stageFinishPoints": "Puntos de finalización de la etapa",
     "gcOneDayPoints": "GC / puntos de un día",
     "pointsTemplate": "Puntos {{metric}}",
@@ -98,7 +98,7 @@
     "aiTeams": "Equipos de IA",
     "currentLeader": "Líder actual",
     "currentLeaderboard": "Tabla de clasificación actual",
-    "currentLeaderboardSubtitle": "Los mejores equipos por puntos internacionales en el filtro seleccionado.",
+    "currentLeaderboardSubtitle": "Mejores equipos por puntos UCI en el filtro seleccionado.",
     "noTeamsFound": "No se encontraron equipos",
     "tryFilters": "Intente cambiar los filtros o el término de búsqueda.",
     "tierDivision": "Nivel / División",
@@ -129,7 +129,7 @@
     "noHistoryDescription": "Su juego está actualmente en la temporada 1, por lo que no hay temporadas históricas completadas para mostrar todavía."
   },
   "riders": {
-    "mostInternational": "La mayoría de los puntos internacionales",
+    "mostInternational": "Más puntos UCI",
     "mostPodiums": "La mayoría de los podios",
     "mostJerseys": "La mayoría de camisetas",
     "ridersInFilter": "ciclista en filtro",
@@ -155,7 +155,12 @@
     "topValueSalary": "Valor superior / ciclista de salario",
     "topValueSalarySubtitle": "Útil cuando más tarde desea las estadísticas relacionadas con contratos y transferencias aquí.",
     "noFinanceData": "No hay datos financieros de los corredores",
-    "noFinanceDescription": "Esta área puede convertirse más tarde en valor, salarios y resúmenes de vencimiento de contratos."
+    "noFinanceDescription": "Esta área puede convertirse más tarde en valor, salarios y resúmenes de vencimiento de contratos.",
+    "columns": {
+      "name": "Nombre",
+      "teamRole": "Rol en el equipo",
+      "uciPoints": "Puntos UCI"
+    }
   },
   "roles": {
     "sprinter": "Sprinter",

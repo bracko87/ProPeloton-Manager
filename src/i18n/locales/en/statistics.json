@@ -25,7 +25,7 @@
     "position": "Pos",
     "role": "Role",
     "age": "Age",
-    "internationalPoints": "International points",
+    "internationalPoints": "UCI points",
     "previous": "Previous",
     "next": "Next",
     "showing": "Showing {{start}}-{{end}} of {{total}}",
@@ -52,7 +52,7 @@
     "allDivisions": "All divisions",
     "allCountries": "All countries",
     "allSeasons": "All seasons",
-    "sortInternational": "Sort: International points",
+    "sortInternational": "Sort: UCI points",
     "sortStageFinish": "Sort: Stage finish points",
     "sortGcOneDay": "Sort: GC / one-day points"
   },
@@ -83,10 +83,10 @@
     "oceania": "Oceania"
   },
   "metrics": {
-    "international": "International",
+    "international": "UCI",
     "stageFinish": "Stage finish",
     "gcOneDay": "GC / one-day",
-    "internationalPoints": "International points",
+    "internationalPoints": "UCI points",
     "stageFinishPoints": "Stage finish points",
     "gcOneDayPoints": "GC / one-day points",
     "pointsTemplate": "{{metric}} points",
@@ -98,7 +98,7 @@
     "aiTeams": "AI teams",
     "currentLeader": "Current leader",
     "currentLeaderboard": "Current leaderboard",
-    "currentLeaderboardSubtitle": "Best teams by international points in the selected filter.",
+    "currentLeaderboardSubtitle": "Best teams by UCI points in the selected filter.",
     "noTeamsFound": "No teams found",
     "tryFilters": "Try changing the filters or search term.",
     "tierDivision": "Tier / Division",
@@ -129,7 +129,7 @@
     "noHistoryDescription": "Your game is currently in Season 1, so there are no completed historical seasons to show yet."
   },
   "riders": {
-    "mostInternational": "Most international points",
+    "mostInternational": "Most UCI points",
     "mostPodiums": "Most podiums",
     "mostJerseys": "Most jerseys",
     "ridersInFilter": "Riders in filter",
@@ -155,7 +155,12 @@
     "topValueSalary": "Top value / salary riders",
     "topValueSalarySubtitle": "Useful when you later want contract and transfer-related stats here.",
     "noFinanceData": "No rider finance data",
-    "noFinanceDescription": "This area can later become value, wages, and contract expiry summaries."
+    "noFinanceDescription": "This area can later become value, wages, and contract expiry summaries.",
+    "columns": {
+      "name": "Name",
+      "teamRole": "Team role",
+      "uciPoints": "UCI points"
+    }
   },
   "roles": {
     "sprinter": "Sprinter",

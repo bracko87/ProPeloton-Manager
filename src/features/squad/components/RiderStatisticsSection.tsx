@@ -577,13 +577,15 @@ export default function RiderStatisticsSection({
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
-                        <th className="pb-3 pr-3">{t('common.rider')}</th>
+                        <th className="pb-3 pr-3">{t('riders.columns.name')}</th>
                         <th className="pb-3 pr-3">{t('common.country')}</th>
-                        <th className="pb-3 pr-3">{t('common.role')}</th>
+                        <th className="pb-3 pr-3">{t('riders.columns.teamRole')}</th>
                         <th className="pb-3 pr-3">{t('common.team')}</th>
                         <th className="pb-3 pr-3">{t('common.age')}</th>
                         <th className="pb-3 text-right">
-                          {formatRiderMetricLabel(riderMetric)} points
+                          {riderMetric === 'season_points_overall'
+                            ? t('riders.columns.uciPoints')
+                            : t('metrics.pointsTemplate', { metric: formatRiderMetricLabel(riderMetric) })}
                         </th>
                       </tr>
                     </thead>
@@ -673,13 +675,15 @@ export default function RiderStatisticsSection({
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 text-left text-slate-500">
-                        <th className="pb-3 pr-3">{t('common.rider')}</th>
+                        <th className="pb-3 pr-3">{t('riders.columns.name')}</th>
                         <th className="pb-3 pr-3">{t('common.country')}</th>
-                        <th className="pb-3 pr-3">{t('common.role')}</th>
+                        <th className="pb-3 pr-3">{t('riders.columns.teamRole')}</th>
                         <th className="pb-3 pr-3">{t('common.team')}</th>
                         <th className="pb-3 pr-3">{t('common.age')}</th>
                         <th className="pb-3 text-right">
-                          {formatRiderMetricLabel(riderTableMetric)} points
+                          {riderTableMetric === 'season_points_overall'
+                            ? t('riders.columns.uciPoints')
+                            : t('metrics.pointsTemplate', { metric: formatRiderMetricLabel(riderTableMetric) })}
                         </th>
                       </tr>
                     </thead>

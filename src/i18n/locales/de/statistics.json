@@ -25,7 +25,7 @@
     "position": "Pos.",
     "role": "Rolle",
     "age": "Alter",
-    "internationalPoints": "Internationale Punkte",
+    "internationalPoints": "UCI-Punkte",
     "previous": "Zurück",
     "next": "Weiter",
     "showing": "Anzeigen {{start}}-{{end}} von {{total}}",
@@ -52,7 +52,7 @@
     "allDivisions": "Alle Divisionen",
     "allCountries": "Alle Länder",
     "allSeasons": "Alle Saisons",
-    "sortInternational": "Sortieren: Internationale Punkte",
+    "sortInternational": "Sortieren: UCI-Punkte",
     "sortStageFinish": "Sortierung: Etappenende Punkte",
     "sortGcOneDay": "Sortieren: GC / Eintagesrennen-Punkte"
   },
@@ -83,10 +83,10 @@
     "oceania": "Ozeanien"
   },
   "metrics": {
-    "international": "Internationale",
+    "international": "UCI",
     "stageFinish": "Abschluss der Etappe",
     "gcOneDay": "GC - Ein Tag",
-    "internationalPoints": "Internationale Punkte",
+    "internationalPoints": "UCI-Punkte",
     "stageFinishPoints": "Abschlusspunkte der Etappe",
     "gcOneDayPoints": "GC / Eintagesrennen-Punkte",
     "pointsTemplate": "{{metric}} Punkte",
@@ -98,7 +98,7 @@
     "aiTeams": "KI-Teams",
     "currentLeader": "Derzeitiger Führer",
     "currentLeaderboard": "Derzeitige Rangliste",
-    "currentLeaderboardSubtitle": "Beste Teams nach internationalen Punkten im ausgewählten Filter.",
+    "currentLeaderboardSubtitle": "Beste Teams nach UCI-Punkten im ausgewählten Filter.",
     "noTeamsFound": "Keine Teams gefunden",
     "tryFilters": "Versuchen Sie, die Filter oder Suchbegriff ändern.",
     "tierDivision": "Dienstalter/Abteilung",
@@ -129,7 +129,7 @@
     "noHistoryDescription": "Ihre Spielwelt befindet sich derzeit in Saison 1, daher gibt es noch keine abgeschlossenen historischen Saisons."
   },
   "riders": {
-    "mostInternational": "Die meisten internationalen Punkte",
+    "mostInternational": "Meiste UCI-Punkte",
     "mostPodiums": "Die meisten Podiumsplätze",
     "mostJerseys": "Die meisten Trikots",
     "ridersInFilter": "Fahrer im Filter",
@@ -155,7 +155,12 @@
     "topValueSalary": "Top-Wert / Gehalt Fahrer",
     "topValueSalarySubtitle": "Nützlich, wenn Sie später Vertrags- und Transfer-bezogene Statistiken hier wollen.",
     "noFinanceData": "Keine Finanzdaten für Fahrer",
-    "noFinanceDescription": "Dieser Bereich kann später zu Wert, Löhnen und Vertragsauslauf Zusammenfassungen werden."
+    "noFinanceDescription": "Dieser Bereich kann später zu Wert, Löhnen und Vertragsauslauf Zusammenfassungen werden.",
+    "columns": {
+      "name": "Name",
+      "teamRole": "Rolle im Team",
+      "uciPoints": "UCI-Punkte"
+    }
   },
   "roles": {
     "sprinter": "Sprinter",

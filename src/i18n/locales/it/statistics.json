@@ -25,7 +25,7 @@
     "position": "Pos.",
     "role": "Ruolo",
     "age": "Età",
-    "internationalPoints": "Punti internazionali",
+    "internationalPoints": "Punti UCI",
     "previous": "Precedente",
     "next": "Successivo",
     "showing": "Mostrando {{start}}-{{end}} di {{total}}",
@@ -52,7 +52,7 @@
     "allDivisions": "Tutte le divisioni",
     "allCountries": "Tutti i paesi",
     "allSeasons": "Tutte le stagioni",
-    "sortInternational": "Sort: Punti internazionali",
+    "sortInternational": "Ordina: Punti UCI",
     "sortStageFinish": "Ordina: Punti di finitura del tappa",
     "sortGcOneDay": "Ordinare: GC / un giorno punti"
   },
@@ -83,10 +83,10 @@
     "oceania": "Oceania"
   },
   "metrics": {
-    "international": "Internazionale",
+    "international": "UCI",
     "stageFinish": "Finitura stadio",
     "gcOneDay": "GC / un giorno",
-    "internationalPoints": "Punti internazionali",
+    "internationalPoints": "Punti UCI",
     "stageFinishPoints": "Punti di arrivo del tappa",
     "gcOneDayPoints": "GC / un giorno",
     "pointsTemplate": "Punti {{metric}}",
@@ -98,7 +98,7 @@
     "aiTeams": "Squadre AI",
     "currentLeader": "Leader attuale",
     "currentLeaderboard": "Leaderboard attuale",
-    "currentLeaderboardSubtitle": "I migliori team per punti internazionali nel filtro selezionato.",
+    "currentLeaderboardSubtitle": "Migliori squadre per punti UCI nel filtro selezionato.",
     "noTeamsFound": "Nessuna squadra trovata",
     "tryFilters": "Prova a cambiare i filtri o il termine di ricerca.",
     "tierDivision": "Livello / Divisione",
@@ -129,7 +129,7 @@
     "noHistoryDescription": "Il tuo gioco è attualmente nella Stagione 1, quindi non ci sono stagioni storiche completate da mostrare ancora."
   },
   "riders": {
-    "mostInternational": "Punti più internazionali",
+    "mostInternational": "Più punti UCI",
     "mostPodiums": "La maggior parte dei podi",
     "mostJerseys": "La maggior parte delle maglie",
     "ridersInFilter": "Ciclisti in filtro",
@@ -155,7 +155,12 @@
     "topValueSalary": "I ciclisti di alto valore / stipendio",
     "topValueSalarySubtitle": "Utile quando si desidera più tardi contratto e statistiche relative al trasferimento qui.",
     "noFinanceData": "Nessun dato finanziario del ciclista",
-    "noFinanceDescription": "Questa zona può diventare successivamente valore, salari, e sintesi scadenza contratto."
+    "noFinanceDescription": "Questa zona può diventare successivamente valore, salari, e sintesi scadenza contratto.",
+    "columns": {
+      "name": "Nome",
+      "teamRole": "Ruolo in squadra",
+      "uciPoints": "Punti UCI"
+    }
   },
   "roles": {
     "sprinter": "Sprinter",

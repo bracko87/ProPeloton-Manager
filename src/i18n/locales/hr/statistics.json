@@ -25,7 +25,7 @@
     "position": "Poz.",
     "role": "Uloga",
     "age": "Dob",
-    "internationalPoints": "Međunarodni bodovi",
+    "internationalPoints": "UCI bodovi",
     "previous": "Prethodno",
     "next": "Sljedeće",
     "showing": "Prikazano {{start}}-{{end}} od {{total}}",
@@ -52,7 +52,7 @@
     "allDivisions": "Sve divizije",
     "allCountries": "Sve zemlje",
     "allSeasons": "Sve sezone",
-    "sortInternational": "Sortiraj: Međunarodni bodovi",
+    "sortInternational": "Sortiraj: UCI bodovi",
     "sortStageFinish": "Sortiraj: Bodovi na cilju etape",
     "sortGcOneDay": "Sortiraj: GC / jednodnevni bodovi"
   },
@@ -83,10 +83,10 @@
     "oceania": "Okeanija"
   },
   "metrics": {
-    "international": "Međunarodni",
+    "international": "UCI",
     "stageFinish": "Cilj etape",
     "gcOneDay": "GC / jednodnevne",
-    "internationalPoints": "Međunarodni bodovi",
+    "internationalPoints": "UCI bodovi",
     "stageFinishPoints": "Bodovi na cilju etape",
     "gcOneDayPoints": "GC / jednodnevni bodovi",
     "pointsTemplate": "{{metric}} bodovi",
@@ -98,7 +98,7 @@
     "aiTeams": "AI timovi",
     "currentLeader": "Trenutni lider",
     "currentLeaderboard": "Trenutni vodeći timovi",
-    "currentLeaderboardSubtitle": "Najbolji timovi prema međunarodnim bodovima u izabranom filteru.",
+    "currentLeaderboardSubtitle": "Najbolji timovi prema UCI bodovima u odabranom filtru.",
     "noTeamsFound": "Nema pronađenih timova",
     "tryFilters": "Promijenite filtere ili pojam pretrage.",
     "tierDivision": "Rang / Divizija",
@@ -129,7 +129,7 @@
     "noHistoryDescription": "Igra je trenutačno u Sezoni 1, pa još nema završenih povijesnih sezona za prikaz."
   },
   "riders": {
-    "mostInternational": "Najviše međunarodnih bodova",
+    "mostInternational": "Najviše UCI bodova",
     "mostPodiums": "Najviše postolja",
     "mostJerseys": "Najviše majica",
     "ridersInFilter": "Vozači u filteru",
@@ -155,7 +155,12 @@
     "topValueSalary": "Vozači sa najvećom vrednošću / platom",
     "topValueSalarySubtitle": "Korisno za budući pregled statistike ugovora i transfera.",
     "noFinanceData": "Nema financijskih podataka vozača",
-    "noFinanceDescription": "Ovde se kasnije mogu prikazivati vrijednost, plaće i isteci ugovora."
+    "noFinanceDescription": "Ovde se kasnije mogu prikazivati vrijednost, plaće i isteci ugovora.",
+    "columns": {
+      "name": "Ime",
+      "teamRole": "Uloga u timu",
+      "uciPoints": "UCI bodovi"
+    }
   },
   "roles": {
     "sprinter": "Sprinter",
