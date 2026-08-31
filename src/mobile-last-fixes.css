@@ -1,0 +1,137 @@
+/* ProPeloton Manager — final mobile last-fixes layer. Desktop/tablet unchanged. */
+@media (max-width: 767px) {
+  /* Header: keep Coins compact instead of letting it consume the free space. */
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-coins'] {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 92px !important;
+    max-width: 112px !important;
+    padding-left: 0.55rem !important;
+    padding-right: 0.55rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* Rider profile: country / role / age / OVR stay on one row. */
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2,
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span,
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 0.42rem 0.22rem !important;
+    font-size: 0.68rem !important;
+    line-height: 0.86rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span > *,
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span > *,
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span > * {
+    flex: 0 0 auto !important;
+  }
+
+  /* A fifth status chip (for example Transfer Listed) can use a second row. */
+  [data-ppm-dashboard-page='riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span:nth-child(n+5),
+  [data-ppm-dashboard-page='my-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span:nth-child(n+5),
+  [data-ppm-dashboard-page='external-riders'] .mb-6.rounded-xl.border.border-yellow-500.bg-yellow-400.p-6.shadow .min-w-0 > .mt-4.flex.flex-wrap.gap-2 > span:nth-child(n+5) {
+    grid-column: span 2;
+  }
+
+  /* Race Detail: use almost the full phone width instead of a narrow centered column. */
+  main[data-ppm-dashboard-main='true'][data-ppm-dashboard-page='races'] {
+    padding-left: 0.35rem !important;
+    padding-right: 0.35rem !important;
+  }
+
+  main[data-ppm-dashboard-main='true'][data-ppm-dashboard-page='races'] > * {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  [data-ppm-last-race-hero='true'] {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  [data-ppm-last-race-hero='true'] .px-6,
+  [data-ppm-last-race-hero='true'].px-6,
+  [data-ppm-last-race-hero='true'] .p-6,
+  [data-ppm-last-race-hero='true'].p-6 {
+    padding-left: 0.9rem !important;
+    padding-right: 0.9rem !important;
+  }
+
+  /* Race/stage profile: tap the graph to open a large phone view. */
+  [data-ppm-last-race-profile='true'] {
+    position: relative !important;
+    cursor: zoom-in;
+    touch-action: manipulation;
+  }
+
+  [data-ppm-last-race-profile='true'] > svg {
+    width: 100% !important;
+    min-height: 160px !important;
+  }
+
+  [data-ppm-last-race-profile='true'][data-ppm-mobile-race-profile-expanded='true'] {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1200 !important;
+    display: flex !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: white !important;
+    padding: 3.5rem 0.5rem 1rem !important;
+    overflow: auto !important;
+    cursor: zoom-out;
+  }
+
+  [data-ppm-last-race-profile='true'][data-ppm-mobile-race-profile-expanded='true'] > svg {
+    width: 100% !important;
+    height: auto !important;
+    min-height: min(68dvh, 520px) !important;
+    max-height: calc(100dvh - 5rem) !important;
+  }
+
+  /* Fallback expand row used only if the normal portal control disappears. */
+  .ppm-mobile-section-toggle-fallback {
+    position: static !important;
+    display: flex !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border: 0 !important;
+    border-radius: inherit !important;
+    background: transparent !important;
+    padding: 0.7rem 0.9rem !important;
+    box-shadow: none !important;
+  }
+
+  .ppm-mobile-section-toggle-fallback .ppm-mobile-section-toggle-title {
+    display: block !important;
+    flex: 1 1 auto;
+  }
+}
