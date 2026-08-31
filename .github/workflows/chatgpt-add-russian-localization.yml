@@ -34,11 +34,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install torch transformers sentencepiece
 
-      - name: Generate complete Russian locale package
-        run: python .github/scripts/add_russian_localization_20260831.py
+      - name: Generate protected-safe Russian locale package
+        run: python .github/scripts/add_russian_localization_v2_20260831.py
 
-      - name: Apply Russian cycling terminology polish
-        run: python .github/scripts/polish_russian_baseline_20260831.py
+      - name: Apply Russian cycling and human-quality polish
+        run: python .github/scripts/polish_russian_quality_v2_20260831.py
 
       - name: Russian structural and semantic gate
         shell: bash
