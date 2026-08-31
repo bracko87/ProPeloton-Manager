@@ -44,7 +44,7 @@
     },
     "races": {
       "label": "Aggiornamenti del giorno della gara",
-      "description": "Mostra gli aggiornamenti di inizio, inizio saltato, gara-giorno e penalità di gara."
+      "description": "Mostra gli aggiornamenti relativi a Startlist, Startlist mancata, giorno di gara e penalità di gara."
     },
     "racePreparation": {
       "label": "Stato di preparazione della gara",

@@ -672,7 +672,7 @@
         "I ciclisti o gli asset bloccati possono già essere assegnati a eventi sovrapposti. Ciò impedisce orari impossibili.",
         "L'anteprima delle citazioni mostra i costi e i bonus di supporto da personale, asset, attrezzature e politiche.",
         "Dopo Race Plan è presentato, Stage Plans aperto. Stage Plans ruoli di ciclista impostato, tattiche di squadra, tattiche individuali, attrezzature e forniture per ogni tappa.",
-        "Piano di preparazione traccia piani salvati, piani utilizzabili, piani mancanti, piani vuoti, forniture mancanti, completezza tattica e azione raccomandata.",
+        "La prontezza degli Stage Plan tiene traccia dei piani salvati, utilizzabili, mancanti o vuoti, delle forniture mancanti, della completezza tattica e dell’azione consigliata.",
         "I suggerimenti del Direttore dello Sport possono aiutare con le attrezzature, le tattiche del team, le tattiche individuali e le forniture, ma sono guida, non garantiti piani perfetti."
       ],
       "facts": [
@@ -1698,7 +1698,7 @@
       "details": [
         "Head Coach guida la qualità di formazione e lo sviluppo.",
         "I formatori ampliano il supporto di allenamento e la capacità del ciclista.",
-        "Il Direttore dello Sport supporta tattiche, piani di gara e suggerimenti di preparazione della gara.",
+        "Il Direttore Sportivo supporta le tattiche, gli Stage Plans e i suggerimenti per la preparazione della gara.",
         "Team Doctor e Physio supportano la salute e la guarigione.",
         "Nutrizionista sostiene sistemi di nutrizione / recupero.",
         "Meccanica supporta le riparazioni e i sistemi tecnici.",
