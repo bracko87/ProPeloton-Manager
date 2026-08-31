@@ -1,0 +1,73 @@
+name: Polish Spanish full package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/polish_spanish_full_20260831.py'
+      - '.github/workflows/chatgpt-polish-spanish-full.yml'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  polish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply full Spanish semantic polish
+        run: python .github/scripts/polish_spanish_full_20260831.py
+
+      - name: Validate all Spanish structures and placeholders
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          en=Path('src/i18n/locales/en'); es=Path('src/i18n/locales/es')
+          ph=re.compile(r'\{\{[^{}]+\}\}')
+          def walk(a,b,p):
+            if type(a) is not type(b): raise SystemExit(f'{p}: type mismatch')
+            if isinstance(a,dict):
+              if list(a)!=list(b): raise SystemExit(f'{p}: key/order mismatch')
+              for k in a: walk(a[k],b[k],f'{p}.{k}')
+            elif isinstance(a,list):
+              if len(a)!=len(b): raise SystemExit(f'{p}: list length mismatch')
+              for i,(x,y) in enumerate(zip(a,b)): walk(x,y,f'{p}[{i}]')
+            elif isinstance(a,str):
+              if sorted(ph.findall(a))!=sorted(ph.findall(b)): raise SystemExit(f'{p}: placeholder mismatch')
+          ef=sorted(p.name for p in en.glob('*.json')); sf=sorted(p.name for p in es.glob('*.json'))
+          if ef!=sf: raise SystemExit('Spanish filenames do not match English')
+          for name in ef:
+            walk(json.loads((en/name).read_text()),json.loads((es/name).read_text()),name)
+          print(f'Validated {len(ef)} Spanish resources.')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push Spanish polish
+        shell: bash
+        run: |
+          if git diff --quiet -- src/i18n/locales/es; then
+            echo 'No Spanish locale changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/es
+          git commit -m 'Polish full Spanish localization package'
+          git pull --rebase origin main
+          git push origin main
