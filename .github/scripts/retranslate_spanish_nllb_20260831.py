@@ -11,6 +11,7 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 ROOT = Path(__file__).resolve().parents[2]
 EN_DIR = ROOT / 'src/i18n/locales/en'
+ES_DIR = ROOT / 'src/i18n/locales/es'
 OUT_DIR = Path(os.environ.get('SPANISH_BATCH_OUTPUT', str(ROOT / '_spanish_batch')))
 MODEL = 'facebook/nllb-200-distilled-600M'
 BATCH_INDEX = int(os.environ.get('SPANISH_BATCH_INDEX', '0'))
@@ -153,7 +154,6 @@ def protect(text: str) -> tuple[str, dict[str, str]]:
 def restore(text: str, mapping: dict[str, str]) -> str:
     result = text
     for token, original in mapping.items():
-        # NLLB normally preserves these tokens. Handle occasional inserted spaces as well.
         candidates = {
             token,
             token.replace('{{', '{ {').replace('}}', '} }'),
@@ -189,13 +189,14 @@ def postprocess(text: str) -> str:
 
 
 class Translator:
-    def __init__(self) -> None:
+    def __init__(self, fallbacks: dict[str, str]) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL, src_lang='eng_Latn')
         self.model = AutoModelForSeq2SeqLM.from_pretrained(MODEL)
         self.model.eval()
         self.target_id = self.tokenizer.convert_tokens_to_ids('spa_Latn')
         torch.set_num_threads(max(1, min(4, torch.get_num_threads())))
         self.cache: dict[str, str] = {}
+        self.fallbacks = fallbacks
 
     def translate_many(self, sources: list[str]) -> None:
         unique = list(dict.fromkeys(sources))
@@ -224,7 +225,16 @@ class Translator:
                 )
             decoded = self.tokenizer.batch_decode(out, skip_special_tokens=True)
             for (source, _, mapping), translated in zip(batch, decoded):
-                self.cache[source] = postprocess(restore(translated, mapping))
+                try:
+                    restored = restore(translated, mapping)
+                except RuntimeError as exc:
+                    fallback = self.fallbacks.get(source)
+                    if fallback is None:
+                        raise
+                    self.cache[source] = fallback
+                    print(f'batch {BATCH_INDEX}: protected-token fallback used: {exc}', flush=True)
+                else:
+                    self.cache[source] = postprocess(restored)
             print(f'batch {BATCH_INDEX}: translated {min(start + len(batch), len(pending))}/{len(pending)} unique strings', flush=True)
 
     def translate_value(self, value: Any) -> Any:
@@ -248,12 +258,33 @@ def collect_strings(value: Any, out: list[str]) -> None:
             collect_strings(v, out)
 
 
+def collect_fallbacks(source: Any, fallback: Any, out: dict[str, str]) -> None:
+    if isinstance(source, str) and isinstance(fallback, str):
+        out.setdefault(source, fallback)
+    elif isinstance(source, dict) and isinstance(fallback, dict):
+        for key, value in source.items():
+            if key in fallback:
+                collect_fallbacks(value, fallback[key], out)
+    elif isinstance(source, list) and isinstance(fallback, list):
+        for value, old in zip(source, fallback):
+            collect_fallbacks(value, old, out)
+
+
 def main() -> None:
     names = [p.name for p in sorted(EN_DIR.glob('*.json')) if p.name not in PROTECTED_FILES]
     mine = [name for idx, name in enumerate(names) if idx % TOTAL_BATCHES == BATCH_INDEX]
     print(f'batch {BATCH_INDEX}/{TOTAL_BATCHES}: {mine}', flush=True)
-    translator = Translator()
+
     values: dict[str, Any] = {name: load(EN_DIR / name) for name in mine}
+    old_spanish: dict[str, Any] = {
+        name: load(ES_DIR / name) for name in mine if (ES_DIR / name).exists()
+    }
+    fallbacks: dict[str, str] = {}
+    for name, value in values.items():
+        if name in old_spanish:
+            collect_fallbacks(value, old_spanish[name], fallbacks)
+
+    translator = Translator(fallbacks)
     strings: list[str] = []
     for value in values.values():
         collect_strings(value, strings)
