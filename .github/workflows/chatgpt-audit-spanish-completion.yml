@@ -1,0 +1,36 @@
+name: Audit Spanish completion
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/audit_spanish_completion_20260831.py'
+      - '.github/workflows/chatgpt-audit-spanish-completion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Spanish semantic audit
+        run: python .github/scripts/audit_spanish_completion_20260831.py
+
+      - name: Show first 250 findings
+        run: sed -n '1,251p' spanish_completion_audit.tsv
+
+      - name: Upload full Spanish audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: spanish-completion-audit
+          path: spanish_completion_audit.tsv
+          retention-days: 7
