@@ -1,0 +1,146 @@
+name: Full Spanish completion audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-full-spanish-completion-audit.yml'
+      - 'src/i18n/locales/es/**'
+      - 'src/pages/**'
+      - 'src/components/**'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Audit Spanish locale coverage and semantics
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          import re
+          from pathlib import Path
+
+          root = Path('.')
+          en_dir = root / 'src/i18n/locales/en'
+          es_dir = root / 'src/i18n/locales/es'
+          report=[]; blockers=[]; warnings=[]
+
+          protected = [
+            'ProPeloton Manager','Race Plan','Race Plans','Stage Plan','Stage Plans','Startlist',
+            'Race Engine','Replay Engine','Team Policy','Race Sharpness','WorldTeam','WorldTour','ProTeam',
+            'ProSeries','Continental','Supabase','Stripe','Discord','RPC','KPI','GC','KOM','U23','UCI',
+            'Coins','Premium','FTP','VO2','DNF','DNS','OTL','ITT','TTT','AI'
+          ]
+          placeholder = re.compile(r'\{\{[^{}]+\}\}')
+          cyrillic = re.compile(r'[\u0400-\u04ff]')
+          corruption = re.compile(r'(?:\ufffd|Ã|Â|â€|ZXQ|QXml)')
+
+          bad_patterns = [
+            r'\brazas?\b', r'\bjinetes?\b', r'\breproductor(?:es)?\b',
+            r'\bsalvando\b', r'\bsalvar\b', r'\bsubstrato\b',
+            r'\bInformer\b', r'\bExplota\b', r'\bpaseos\b',
+            r'\bexamen(?:es)?\b', r'\bAñádase\b',
+            r'\bplanes? de etapas?\b', r'\bplanos? de etapas?\b',
+            r'\bplanes? de carreras?\b', r'\bplano(?:s)? de carreras?\b',
+            r'\bMotor de carreras?\b', r'\bMotor de repetici[oó]n\b',
+            r'\bPol[ií]tica de equipo\b', r'\bNitidez de carrera\b',
+            r'\bLista de salida\b', r'\bMonedas\b',
+            r'\blos ciclista\b', r'\blas ciclista\b', r'\blos gerente\b',
+            r'\blos corredor\b', r'\blos jugador\b', r'\blos equipo\b',
+            r'\bde los ciclista\b', r'\ba los ciclista\b', r'\bpara los ciclista\b',
+            r'\bAdministradores activos\b', r'\bclasificaci[oó]n y clasificaci[oó]n\b',
+            r'\bEnviar contraseña Cambiar correo electr[oó]nico\b',
+            r'\bSalvando el lenguaje\b', r'\bEl lenguaje del juego\b',
+            r'\bEquipo Jersey\b', r'\bKits de desplazamiento\b',
+            r'\bDiseño interior y colores actualizar\b', r'\bTrimestral\b'
+          ]
+
+          def load(path): return json.loads(path.read_text(encoding='utf-8'))
+
+          def walk_pair(src, dst, path):
+            if type(src) is not type(dst): blockers.append(f'{path}: type mismatch'); return
+            if isinstance(src, dict):
+              if list(src) != list(dst): blockers.append(f'{path}: keys/order mismatch')
+              for k in src:
+                if k in dst: walk_pair(src[k], dst[k], f'{path}.{k}')
+            elif isinstance(src, list):
+              if len(src) != len(dst): blockers.append(f'{path}: list length mismatch')
+              for i,(a,b) in enumerate(zip(src,dst)): walk_pair(a,b,f'{path}[{i}]')
+            elif isinstance(src, str):
+              if sorted(placeholder.findall(src)) != sorted(placeholder.findall(dst)):
+                blockers.append(f'{path}: placeholders changed')
+              if not isinstance(dst, str): return
+              if cyrillic.search(dst): blockers.append(f'{path}: Cyrillic remains: {dst!r}')
+              if corruption.search(dst): blockers.append(f'{path}: encoding/corruption marker: {dst!r}')
+              for term in protected:
+                if term in src and term not in dst:
+                  blockers.append(f'{path}: protected term {term!r} was changed: {dst!r}')
+              for pat in bad_patterns:
+                if re.search(pat, dst, re.I):
+                  blockers.append(f'{path}: suspicious/bad Spanish: {dst!r}')
+                  break
+
+              low_src=src.lower(); low_dst=dst.lower()
+              semantic_pairs=[
+                ('race','raza'),('races','razas'),('rider','jinete'),('riders','jinetes'),
+                ('stage','escenario'),('stages','escenarios'),('player','reproductor'),('players','reproductores'),
+                ('manager','administrador'),('managers','administradores'),('scout','explorador'),('scouts','exploradores'),
+                ('tour','paseo'),('tours','paseos'),('review','examen'),('reviews','exámenes')
+              ]
+              for eng,bad in semantic_pairs:
+                if re.search(rf'\b{re.escape(eng)}\b',low_src) and re.search(rf'\b{re.escape(bad)}\b',low_dst):
+                  blockers.append(f'{path}: semantic MT mismatch {eng!r}->{bad!r}: {dst!r}')
+                  break
+
+              s=src.strip(); d=dst.strip()
+              if s == d and len(s)>=24 and len(s.split())>=4 and not any(t in s for t in protected):
+                warnings.append(f'{path}: unchanged English candidate: {s!r}')
+
+          en_files=sorted(p.name for p in en_dir.glob('*.json'))
+          es_files=sorted(p.name for p in es_dir.glob('*.json'))
+          report += [f'English locale files: {len(en_files)}',f'Spanish locale files: {len(es_files)}']
+          if en_files != es_files: blockers.append('Spanish locale filenames do not mirror English exactly')
+          for name in en_files:
+            if (es_dir/name).exists(): walk_pair(load(en_dir/name),load(es_dir/name),name)
+
+          # Spanish wiring / locale formatting.
+          languages=(root/'src/i18n/languages.ts').read_text(encoding='utf-8')
+          index=(root/'src/i18n/index.ts').read_text(encoding='utf-8')
+          date_bridge=(root/'src/components/i18n/LocaleDateFormattingBridge.tsx').read_text(encoding='utf-8')
+          if "code: 'es'" not in languages or "countryCode: 'ES'" not in languages or "locale: 'es-ES'" not in languages:
+            blockers.append('Spanish language metadata/wiring missing')
+          if "supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es']" not in index:
+            blockers.append('Spanish missing from supportedLngs')
+          if "language?.startsWith('es')" not in date_bridge or "return 'es-ES'" not in date_bridge:
+            blockers.append('Spanish locale date formatting missing')
+
+          report.append(f'Locale/UI blockers: {len(blockers)}')
+          for item in blockers[:1500]: report.append('BLOCKER: '+item)
+          report.append(f'Locale warnings: {len(warnings)}')
+          for item in warnings[:1500]: report.append('WARNING: '+item)
+          out=Path('/tmp/spanish-full-audit.txt')
+          out.write_text('\n'.join(report)+'\n',encoding='utf-8')
+          print('\n'.join(report))
+          if blockers: raise SystemExit(f'Spanish completion audit found {len(blockers)} blockers.')
+          PY
+
+      - name: Upload Spanish audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spanish-full-completion-audit
+          path: /tmp/spanish-full-audit.txt
+          retention-days: 1
+          if-no-files-found: error
