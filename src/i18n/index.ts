@@ -191,6 +191,14 @@ import esTraining from './locales/es/training.json'
 import esTransfers from './locales/es/transfers.json'
 import esTutorials from './locales/es/tutorials.json'
 
+import itAccountPages from './locales/it/accountPages.json'
+import itAuth from './locales/it/auth.json'
+import itCommon from './locales/it/common.json'
+import itCreateClub from './locales/it/createClub.json'
+import itHome from './locales/it/home.json'
+import itNavigation from './locales/it/navigation.json'
+import itProfile from './locales/it/profile.json'
+
 import {
   DEFAULT_LANGUAGE,
   getLanguageDefinition,
@@ -396,6 +404,15 @@ const resources = {
     transfers: esTransfers,
     tutorials: esTutorials,
   },
+  it: {
+    accountPages: itAccountPages,
+    auth: itAuth,
+    common: itCommon,
+    createClub: itCreateClub,
+    home: itHome,
+    navigation: itNavigation,
+    profile: itProfile,
+  },
 } as const
 
 const initialLanguage = getStoredLanguage()
@@ -406,7 +423,7 @@ void i18n
     resources,
     lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,
-    supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es'],
+    supportedLngs: ['en', 'sr-Latn', 'de', 'hr', 'es', 'it'],
     defaultNS: 'common',
     ns: [
       'accountPages',
