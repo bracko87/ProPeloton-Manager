@@ -12,6 +12,7 @@ on:
       - '.github/scripts/polish_russian_quality_v2_20260831.py'
       - '.github/scripts/polish_russian_final_20260831.py'
       - '.github/scripts/polish_russian_human_final_20260831.py'
+      - '.github/scripts/polish_russian_visible_v3_20260831.py'
       - '.github/scripts/audit_russian_completion_20260831.py'
       - '.github/scripts/audit_russian_human_quality_20260831.py'
   workflow_dispatch:
@@ -54,6 +55,9 @@ jobs:
 
       - name: Apply final Russian human-quality fixes
         run: python .github/scripts/polish_russian_human_final_20260831.py
+
+      - name: Apply polished Russian core UI
+        run: python .github/scripts/polish_russian_visible_v3_20260831.py
 
       - name: Russian structural and semantic gate
         shell: bash
