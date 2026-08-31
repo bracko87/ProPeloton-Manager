@@ -7,8 +7,6 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 FR = ROOT / 'src/i18n/locales/fr'
 
-# Final human-quality corrections after the broad EN→FR generation pass.
-# Values deliberately preserve ProPeloton Manager protected vocabulary.
 OVERRIDES: dict[str, str] = {
     'calendarPage.json.races.stageBadgeCanceled': '{{race}} · Étape {{stage}} · Annulée ({{reason}})',
     'finance.json.sponsors.previewGcTop5Title': '{{race}} : top 5 final au GC',
@@ -44,15 +42,21 @@ OVERRIDES: dict[str, str] = {
 
 
 def parse_path(path: str) -> tuple[str, list[str | int]]:
-    file_name, rest = path.split('.', 1)
+    marker = '.json.'
+    if marker not in path:
+        raise ValueError(f'Invalid locale path: {path}')
+    stem, rest = path.split(marker, 1)
+    file_name = stem + '.json'
     tokens: list[str | int] = []
     for part in rest.split('.'):
         while '[' in part:
             before, tail = part.split('[', 1)
-            if before: tokens.append(before)
+            if before:
+                tokens.append(before)
             idx, part = tail.split(']', 1)
             tokens.append(int(idx))
-        if part: tokens.append(part)
+        if part:
+            tokens.append(part)
     return file_name, tokens
 
 
@@ -65,6 +69,7 @@ def set_path(data: Any, tokens: list[str | int], value: str) -> None:
 
 def main() -> None:
     changed_files: set[str] = set()
+    changed_strings = 0
     for full_path, value in OVERRIDES.items():
         file_name, tokens = parse_path(full_path)
         path = FR / file_name
@@ -77,7 +82,8 @@ def main() -> None:
         set_path(data, tokens, value)
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         changed_files.add(file_name)
-    print(f'Applied {len(OVERRIDES)} French quality overrides across {len(changed_files)} files.')
+        changed_strings += 1
+    print(f'Applied {changed_strings} French quality overrides across {len(changed_files)} files.')
 
 
 if __name__ == '__main__':
