@@ -501,5 +501,13 @@
         "effect": "U23 riders receive 10% bonus on training and development once the U23 system applies this effect."
       }
     }
+  },
+  "legacyUi": {
+    "teamBusGarage": "Team Bus Garage",
+    "teamBusGarageDescription": "Team Buses improve rider travel comfort, recovery, fatigue control, and stage-race logistics. Manage the garage by slot, start new deliveries, repair worn buses, or sell available buses.",
+    "equipmentVanGarage": "Equipment Van Garage",
+    "equipmentVanGarageDescription": "Equipment Vans support bike transport, spare parts coverage, race equipment logistics, and broader event readiness. Manage the garage by slot, start new deliveries, repair worn vans, or sell available vans.",
+    "mobileWorkshopGarageDescription": "Mobile Workshops support on-site technical repairs, faster issue response, mechanic coverage, and equipment service capacity. Manage the garage by slot, start new deliveries, repair worn workshops, or sell available workshops.",
+    "medicalVanGarageDescription": "Medical Vans support race-day health response, rider treatment access, injury control, and medical coverage. Manage the garage by slot, start new deliveries, repair worn vans, or sell available vans."
   }
 }

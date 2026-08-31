@@ -101,5 +101,15 @@
     "title": "Pronto estarás fuera de sesión",
     "body": "Tu juego ha estado inactivo durante casi 30 minutos. Se cerrará automáticamente en aproximadamente un minuto.",
     "stay": "Mantenerse conectado"
+  },
+  "legacyUi": {
+    "close": "Cerrar",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "previousSlide": "Diapositiva anterior",
+    "nextSlide": "Diapositiva siguiente",
+    "closeNavigation": "Cerrar navegación",
+    "previousPage": "Ir a la página anterior",
+    "nextPage": "Ir a la página siguiente"
   }
 }

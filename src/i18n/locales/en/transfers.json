@@ -532,5 +532,15 @@
     "continueFinance": "Continue to Finance",
     "finish": "Finish for now",
     "skip": "Skip tutorial"
+  },
+  "legacyUi": {
+    "riderColon": "Rider:",
+    "loadingNegotiation": "Loading transfer negotiation…",
+    "rider": "Rider",
+    "preferredMinimumSalary": "Preferred minimum salary",
+    "preferredContract": "Preferred contract",
+    "riderResponse": "Rider Response",
+    "salary": "Salary",
+    "country": "Country"
   }
 }

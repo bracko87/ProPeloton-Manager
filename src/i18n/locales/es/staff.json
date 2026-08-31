@@ -455,5 +455,8 @@
       "description": "Mejora la revisión analítica de los ciclistas y los informes de preparación de carreras.",
       "focus": "Precisión + Análisis"
     }
+  },
+  "legacyUi": {
+    "unlockDevelopingTeam": "Desbloquea primero el equipo de desarrollo en Preferencias."
   }
 }

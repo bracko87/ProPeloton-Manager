@@ -375,5 +375,16 @@
     "coastal": "coastal",
     "mixed": "mixed",
     "tt_friendly": "TT friendly"
+  },
+  "legacyUi": {
+    "noCurrentCamp": "No current training camp found",
+    "ridersBooked": "Riders booked",
+    "riders": "Riders",
+    "staff": "Staff",
+    "trainingProgram": "Training program",
+    "rider": "Rider",
+    "riderProgress": "Rider progress",
+    "staffBoostSummary": "Staff boost summary",
+    "campStaffBoosts": "Camp staff & boosts"
   }
 }

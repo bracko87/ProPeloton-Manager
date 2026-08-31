@@ -455,5 +455,8 @@
       "description": "Improves analytical review of riders and race preparation reports.",
       "focus": "Accuracy + Analysis"
     }
+  },
+  "legacyUi": {
+    "unlockDevelopingTeam": "Unlock Developing Team in Preferences first."
   }
 }

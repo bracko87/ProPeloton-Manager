@@ -207,5 +207,9 @@
     "cancel": "Cancel",
     "sending": "Sending...",
     "send": "Send report"
+  },
+  "legacyUi": {
+    "jerseyPreviewUnavailable": "Jersey preview unavailable",
+    "unknownCountry": "Unknown country"
   }
 }

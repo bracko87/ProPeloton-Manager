@@ -350,5 +350,14 @@
   },
   "dates": {
     "compactSeason": "S{{season}}"
+  },
+  "legacyUi": {
+    "rider": "Ciclista",
+    "preRaceAvailability": "Disponibilidad antes de la carrera",
+    "stageUses": "Usos de etapa antes / usados / después",
+    "riderTeam": "Ciclista / equipo",
+    "stageResult": "Resultado de etapa",
+    "generalClassification": "Clasificación general",
+    "invalidRaceId": "ID de carrera no válido o ausente."
   }
 }

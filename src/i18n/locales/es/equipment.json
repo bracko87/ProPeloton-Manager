@@ -417,5 +417,11 @@
     "finish": "Termina por ahora.",
     "skip": "Saltar tutorial",
     "close": "Cerrar tutorial"
+  },
+  "legacyUi": {
+    "activeStatuses": "Estados activos",
+    "maintenanceTitle": "Equipamiento que necesita mantenimiento",
+    "loadingMaintenance": "Cargando mantenimiento...",
+    "searchEquipment": "Buscar equipamiento..."
   }
 }

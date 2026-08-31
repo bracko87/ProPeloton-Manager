@@ -505,5 +505,15 @@
     "continueMenu": "Continuar al menú",
     "finishNow": "Termina por ahora.",
     "skip": "Saltar tutorial"
+  },
+  "legacyUi": {
+    "planningTitle": "Centro de planificación financiera",
+    "saved": "Guardado",
+    "selectPreset": "Seleccionar preajuste",
+    "noSchedules": "No hay programaciones de Team Policy guardadas.",
+    "presetApplied": "Preajuste aplicado a las Team Policy activas del club.",
+    "selectPresetDate": "Selecciona un preajuste y una fecha del juego.",
+    "scheduleSaved": "Programación automática de Team Policy guardada.",
+    "limitsSaved": "Límites de planificación financiera guardados."
   }
 }

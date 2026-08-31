@@ -350,5 +350,14 @@
   },
   "dates": {
     "compactSeason": "S{{season}}"
+  },
+  "legacyUi": {
+    "rider": "Rider",
+    "preRaceAvailability": "Pre-race availability",
+    "stageUses": "Stage uses before / used / after",
+    "riderTeam": "Rider / team",
+    "stageResult": "Stage result",
+    "generalClassification": "General classification",
+    "invalidRaceId": "Invalid or missing race id."
   }
 }

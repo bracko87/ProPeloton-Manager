@@ -501,5 +501,13 @@
         "effect": "los ciclistas de U23 reciben un 10% de bonificación en entrenamiento y desarrollo una vez que el sistema U23 aplica este efecto."
       }
     }
+  },
+  "legacyUi": {
+    "teamBusGarage": "Garaje de autobuses del equipo",
+    "teamBusGarageDescription": "Los autobuses del equipo mejoran la comodidad de viaje de los ciclistas, la recuperación, el control de la fatiga y la logística de las carreras por etapas. Gestiona el garaje por plazas: inicia nuevas entregas, repara autobuses desgastados o vende los disponibles.",
+    "equipmentVanGarage": "Garaje de furgonetas de equipamiento",
+    "equipmentVanGarageDescription": "Las furgonetas de equipamiento facilitan el transporte de bicicletas, la cobertura de repuestos, la logística del material de carrera y la preparación general para los eventos. Gestiona el garaje por plazas: inicia nuevas entregas, repara furgonetas desgastadas o vende las disponibles.",
+    "mobileWorkshopGarageDescription": "Los talleres móviles permiten realizar reparaciones técnicas in situ, responder más rápido a los problemas y mejorar la cobertura mecánica y la capacidad de mantenimiento del equipamiento. Gestiona el garaje por plazas: inicia nuevas entregas, repara talleres desgastados o vende los disponibles.",
+    "medicalVanGarageDescription": "Las furgonetas médicas facilitan la respuesta sanitaria en carrera, el acceso al tratamiento de los ciclistas, el control de lesiones y la cobertura médica. Gestiona el garaje por plazas: inicia nuevas entregas, repara furgonetas desgastadas o vende las disponibles."
   }
 }

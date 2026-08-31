@@ -417,5 +417,11 @@
     "finish": "Finish for now",
     "skip": "Skip tutorial",
     "close": "Close tutorial"
+  },
+  "legacyUi": {
+    "activeStatuses": "Active statuses",
+    "maintenanceTitle": "Equipment Needing Maintenance",
+    "loadingMaintenance": "Loading maintenance...",
+    "searchEquipment": "Search equipment..."
   }
 }

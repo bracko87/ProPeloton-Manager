@@ -505,5 +505,15 @@
     "continueMenu": "Continue to Menu",
     "finishNow": "Finish for now",
     "skip": "Skip tutorial"
+  },
+  "legacyUi": {
+    "planningTitle": "Finance Planning Centre",
+    "saved": "Saved",
+    "selectPreset": "Select preset",
+    "noSchedules": "No policy schedules saved.",
+    "presetApplied": "Preset applied to active club policies.",
+    "selectPresetDate": "Select a preset and game date.",
+    "scheduleSaved": "Automatic policy schedule saved.",
+    "limitsSaved": "Finance planning limits saved."
   }
 }

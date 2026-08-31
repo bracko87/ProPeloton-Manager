@@ -101,5 +101,15 @@
     "title": "You will be logged out soon",
     "body": "Your game has been inactive for almost 30 minutes. You will be logged out automatically in approximately one minute.",
     "stay": "Stay logged in"
+  },
+  "legacyUi": {
+    "close": "Close",
+    "previous": "Previous",
+    "next": "Next",
+    "previousSlide": "Previous slide",
+    "nextSlide": "Next slide",
+    "closeNavigation": "Close navigation",
+    "previousPage": "Go to previous page",
+    "nextPage": "Go to next page"
   }
 }

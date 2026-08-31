@@ -375,5 +375,16 @@
     "coastal": "costero",
     "mixed": "mezcla",
     "tt_friendly": "TT friendly"
+  },
+  "legacyUi": {
+    "noCurrentCamp": "No se encontró ninguna concentración de entrenamiento actual",
+    "ridersBooked": "Ciclistas inscritos",
+    "riders": "Ciclistas",
+    "staff": "Personal",
+    "trainingProgram": "Programa de entrenamiento",
+    "rider": "Ciclista",
+    "riderProgress": "Progreso del ciclista",
+    "staffBoostSummary": "Resumen de bonificaciones del personal",
+    "campStaffBoosts": "Personal y bonificaciones de la concentración"
   }
 }

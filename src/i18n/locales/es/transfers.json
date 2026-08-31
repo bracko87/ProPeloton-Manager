@@ -532,5 +532,15 @@
     "continueFinance": "Continuar con la financiación",
     "finish": "Termina por ahora.",
     "skip": "Saltar tutorial"
+  },
+  "legacyUi": {
+    "riderColon": "Ciclista:",
+    "loadingNegotiation": "Cargando negociación de transferencia…",
+    "rider": "Ciclista",
+    "preferredMinimumSalary": "Salario mínimo preferido",
+    "preferredContract": "Contrato preferido",
+    "riderResponse": "Respuesta del ciclista",
+    "salary": "Salario",
+    "country": "País"
   }
 }
