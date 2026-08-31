@@ -1,0 +1,23 @@
+name: Audit notification language coverage
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/features/notifications/**'
+      - 'src/i18n/locales/**/notifications.json'
+      - '.github/scripts/audit_notification_language_coverage_20260831.py'
+      - '.github/workflows/chatgpt-audit-notification-language-coverage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Audit notification localization coverage
+        run: python3 .github/scripts/audit_notification_language_coverage_20260831.py
