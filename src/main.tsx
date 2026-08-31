@@ -5,11 +5,15 @@ import './mobile-responsive-audit.css'
 import './home-mobile.css'
 import './mobile-dashboard-sections.css'
 import './mobile-polish-batch2.css'
+import './mobile-final-polish.css'
+import './mobile-last-fixes.css'
 import './i18n'
 import App from './App'
 import MobileDashboardResponsiveBridge from './components/layout/MobileDashboardResponsiveBridge'
 import MobileDashboardSectionPreferences from './components/layout/MobileDashboardSectionPreferences'
 import MobilePolishBatch2Bridge from './components/layout/MobilePolishBatch2Bridge'
+import MobileFinalPolishBridge from './components/layout/MobileFinalPolishBridge'
+import MobileLastFixesBridge from './components/layout/MobileLastFixesBridge'
 import LanguagePreferenceSync from './components/i18n/LanguagePreferenceSync'
 import LanguageSelectorHost from './components/i18n/LanguageSelectorHost'
 import AppShellLegacyLocalizationBridge from './components/i18n/AppShellLegacyLocalizationBridge'
@@ -55,6 +59,8 @@ root.render(
     <MobileDashboardResponsiveBridge />
     <MobileDashboardSectionPreferences />
     <MobilePolishBatch2Bridge />
+    <MobileFinalPolishBridge />
+    <MobileLastFixesBridge />
     <LanguagePreferenceSync />
     <LanguageSelectorHost />
     <AppShellLegacyLocalizationBridge />
