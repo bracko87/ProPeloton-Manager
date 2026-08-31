@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
+const CALENDAR_ORIGINAL_TEXT_ATTR = 'data-ppm-final-calendar-original-text'
+const CALENDAR_COMPACT_ATTR = 'data-ppm-final-calendar-compact'
 
 function textOf(element: Element | null | undefined): string {
   return (element?.textContent ?? '').replace(/\s+/g, ' ').trim().toLowerCase()
@@ -17,6 +19,11 @@ function clearMarks(): void {
   document.querySelectorAll<HTMLElement>('[data-ppm-final-statistics-five-col="true"]').forEach(el => el.removeAttribute('data-ppm-final-statistics-five-col'))
   document.querySelectorAll<HTMLElement>('[data-ppm-final-staff-info-host="true"]').forEach(el => el.removeAttribute('data-ppm-final-staff-info-host'))
   document.querySelectorAll<HTMLElement>('[data-ppm-final-staff-info-button="true"]').forEach(el => el.removeAttribute('data-ppm-final-staff-info-button'))
+  document.querySelectorAll<HTMLElement>('[data-ppm-final-calendar-race-card="true"]').forEach(el => el.removeAttribute('data-ppm-final-calendar-race-card'))
+  document.querySelectorAll<HTMLElement>('[data-ppm-final-calendar-actions="true"]').forEach(el => el.removeAttribute('data-ppm-final-calendar-actions'))
+  document.querySelectorAll<HTMLElement>('[data-ppm-final-calendar-category="true"]').forEach(el => el.removeAttribute('data-ppm-final-calendar-category'))
+  document.querySelectorAll<HTMLElement>('[data-ppm-final-calendar-sponsor-goal="true"]').forEach(el => el.removeAttribute('data-ppm-final-calendar-sponsor-goal'))
+  document.querySelectorAll<HTMLElement>('[data-ppm-final-calendar-race-info="true"]').forEach(el => el.removeAttribute('data-ppm-final-calendar-race-info'))
 }
 
 function isSponsorDialog(dialog: HTMLElement): boolean {
@@ -161,6 +168,81 @@ function markStaffInfoButton(): void {
   })
 }
 
+function abbreviateWeekday(value: string): string {
+  const trimmed = value.trim()
+  if (trimmed.length <= 2) return trimmed
+  return Array.from(trimmed).slice(0, 2).join('')
+}
+
+function compactCalendarDayLabel(value: string): string {
+  const trimmed = value.trim()
+  const match = trimmed.match(/(\d{1,2})\s*$/)
+  return match?.[1] ?? trimmed
+}
+
+function compactCalendarTextElement(element: HTMLElement, compactValue: string): void {
+  if (element.hasAttribute(CALENDAR_COMPACT_ATTR)) return
+
+  const originalValue = element.textContent?.trim() ?? ''
+  if (!originalValue || !compactValue || compactValue === originalValue) return
+
+  element.setAttribute(CALENDAR_ORIGINAL_TEXT_ATTR, originalValue)
+  element.setAttribute(CALENDAR_COMPACT_ATTR, 'true')
+  element.textContent = compactValue
+}
+
+function compactCalendarLabels(): void {
+  const page = document.querySelector<HTMLElement>('main[data-ppm-dashboard-main="true"][data-ppm-dashboard-page="calendar"]')
+  if (!page) return
+
+  page
+    .querySelectorAll<HTMLElement>('.mb-2.grid.w-full.grid-cols-7 > div')
+    .forEach(element => compactCalendarTextElement(element, abbreviateWeekday(element.textContent ?? '')))
+
+  page
+    .querySelectorAll<HTMLElement>('.grid.w-full.grid-cols-7.text-sm > div > div:first-child')
+    .forEach(element => compactCalendarTextElement(element, compactCalendarDayLabel(element.textContent ?? '')))
+}
+
+function restoreCalendarLabels(): void {
+  document
+    .querySelectorAll<HTMLElement>(`[${CALENDAR_COMPACT_ATTR}="true"]`)
+    .forEach(element => {
+      const originalValue = element.getAttribute(CALENDAR_ORIGINAL_TEXT_ATTR)
+      if (originalValue !== null) element.textContent = originalValue
+      element.removeAttribute(CALENDAR_ORIGINAL_TEXT_ATTR)
+      element.removeAttribute(CALENDAR_COMPACT_ATTR)
+    })
+}
+
+function markCalendarRaceCards(): void {
+  const page = document.querySelector<HTMLElement>('main[data-ppm-dashboard-main="true"][data-ppm-dashboard-page="calendar"]')
+  if (!page) return
+
+  page.querySelectorAll<HTMLElement>('li[data-race-id]').forEach(card => {
+    const openRaceLink = card.querySelector<HTMLAnchorElement>('a[href*="/dashboard/races/"]')
+    const actions = openRaceLink?.parentElement
+    if (!openRaceLink || !actions) return
+
+    card.setAttribute('data-ppm-final-calendar-race-card', 'true')
+    actions.setAttribute('data-ppm-final-calendar-actions', 'true')
+
+    const category = actions.querySelector<HTMLElement>('.bg-purple-100')
+    category?.setAttribute('data-ppm-final-calendar-category', 'true')
+
+    const sponsorGoal = Array.from(actions.children).find(child =>
+      child instanceof HTMLElement && child.classList.contains('bg-yellow-100'),
+    ) as HTMLElement | undefined
+    sponsorGoal?.setAttribute('data-ppm-final-calendar-sponsor-goal', 'true')
+
+    const primaryRow = card.firstElementChild
+    const raceInfo = primaryRow?.lastElementChild
+    if (raceInfo instanceof HTMLElement) {
+      raceInfo.setAttribute('data-ppm-final-calendar-race-info', 'true')
+    }
+  })
+}
+
 export default function MobileFinalPolishBridge(): null {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return
@@ -171,10 +253,17 @@ export default function MobileFinalPolishBridge(): null {
     const scan = () => {
       frameId = 0
       clearMarks()
-      if (!mediaQuery.matches) return
+
+      if (!mediaQuery.matches) {
+        restoreCalendarLabels()
+        return
+      }
+
       markSponsorDialogs()
       markStatisticsTables()
       markStaffInfoButton()
+      compactCalendarLabels()
+      markCalendarRaceCards()
     }
 
     const scheduleScan = () => {
@@ -199,6 +288,7 @@ export default function MobileFinalPolishBridge(): null {
       window.removeEventListener('hashchange', handleHashChange)
       mediaQuery.removeEventListener('change', handleMediaChange)
       clearMarks()
+      restoreCalendarLabels()
     }
   }, [])
 
