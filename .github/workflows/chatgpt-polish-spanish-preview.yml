@@ -1,0 +1,83 @@
+name: Polish Spanish preview
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-polish-spanish-preview.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply visible Spanish quality polish
+        run: python .github/scripts/polish_spanish_preview_20260831.py
+
+      - name: Validate all Spanish resource structures and placeholders
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          en_dir = Path('src/i18n/locales/en')
+          es_dir = Path('src/i18n/locales/es')
+          ph = re.compile(r'\{\{[^{}]+\}\}')
+          en_files = sorted(p.name for p in en_dir.glob('*.json'))
+          es_files = sorted(p.name for p in es_dir.glob('*.json'))
+          assert en_files == es_files
+
+          def walk(a, b, path=''):
+              assert type(a) is type(b), path
+              if isinstance(a, dict):
+                  assert list(a) == list(b), path
+                  for k in a:
+                      walk(a[k], b[k], f'{path}.{k}' if path else k)
+              elif isinstance(a, list):
+                  assert len(a) == len(b), path
+                  for i, (x, y) in enumerate(zip(a, b)):
+                      walk(x, y, f'{path}[{i}]')
+              elif isinstance(a, str):
+                  assert sorted(ph.findall(a)) == sorted(ph.findall(b)), path
+
+          for name in en_files:
+              walk(
+                  json.loads((en_dir/name).read_text(encoding='utf-8')),
+                  json.loads((es_dir/name).read_text(encoding='utf-8')),
+                  name,
+              )
+          print(f'Validated {len(es_files)} Spanish resources')
+          PY
+
+      - name: Verify Spanish selector wiring
+        run: |
+          grep -q "code: 'es'" src/i18n/languages.ts
+          grep -q "flag: '🇪🇸'" src/i18n/languages.ts
+          grep -q "countryCode: 'ES'" src/i18n/languages.ts
+          grep -q "supportedLngs: \['en', 'sr-Latn', 'de', 'hr', 'es'\]" src/i18n/index.ts
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push Spanish polish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/i18n/locales/es/navigation.json src/i18n/locales/es/accountPages.json src/i18n/locales/es/createClub.json src/i18n/locales/es/home.json
+          if git diff --cached --quiet; then
+            echo "No Spanish polish changes to commit"
+            exit 0
+          fi
+          git commit -m "Polish Spanish preview pages"
+          git pull --rebase origin main
+          git push origin main
