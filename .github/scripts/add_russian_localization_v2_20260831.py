@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable
 
 import torch
 
@@ -15,23 +14,25 @@ def _overlaps(start: int, end: int, spans: list[tuple[int, int, str]]) -> bool:
 def split_protected(source: str) -> list[tuple[bool, str]]:
     """Split source into translatable and protected chunks.
 
-    Protected product/game terminology is matched case-insensitively and restored with
-    canonical project spelling. Placeholders, URLs, code identifiers and function names
-    are carried through byte-for-byte. The translation model never sees these chunks.
+    Placeholders, URLs, backend/code identifiers and function names are protected first
+    and carried through byte-for-byte. Product/game terminology is matched only after
+    those spans are reserved, so words such as ``coins`` inside ``{{coins}}`` cannot be
+    mistaken for the protected visible term ``Coins``.
     """
     spans: list[tuple[int, int, str]] = []
+
+    # Structured tokens must win over ordinary protected words.
+    for pattern in (base.PLACEHOLDER_RE, base.URL_RE, base.CODE_RE, base.FUNC_RE):
+        for match in pattern.finditer(source):
+            start, end = match.span()
+            if not _overlaps(start, end, spans):
+                spans.append((start, end, match.group(0)))
 
     for phrase in sorted(base.PROTECTED_PHRASES, key=len, reverse=True):
         for match in re.finditer(rf'(?<!\w){re.escape(phrase)}(?!\w)', source, flags=re.I):
             start, end = match.span()
             if not _overlaps(start, end, spans):
                 spans.append((start, end, phrase))
-
-    for pattern in (base.PLACEHOLDER_RE, base.URL_RE, base.CODE_RE, base.FUNC_RE):
-        for match in pattern.finditer(source):
-            start, end = match.span()
-            if not _overlaps(start, end, spans):
-                spans.append((start, end, match.group(0)))
 
     if not spans:
         return [(False, source)]
