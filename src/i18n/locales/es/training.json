@@ -358,7 +358,7 @@
     "regularBody": "Esta es la página de Entrenamiento. En Entrenamiento Regular, puedes controlar lo que tus ciclistas entrenan cuando no están asignados a otra actividad como una carrera o un campo de entrenamiento. Puedes establecer entrenamiento por defecto para el equipo del Primer Equipo y el Equipo de Desarrollo, y también puedes ajustar el entrenamiento para los ciclistas individuales. Cada ciclista puede entrenar un enfoque específico como sprint, escalada, prueba plana, prueba temporal, resistencia, resistencia, IQ de carrera, trabajo en equipo o recuperación.",
     "next": "Siguiente",
     "campsTitle": "Concentraciones de entrenamiento",
-    "campsBody": "Los campamentos de entrenamiento son bloques especiales de entrenamiento donde se envía a los ciclistas seleccionados fuera durante varios días. Un campamento de entrenamiento puede dar un desarrollo de habilidades más fuerte que el entrenamiento diario regular, pero cuesta mucho más. Usted elige el tipo de campamento, ubicación, fechas, duración, ciclista, y personal disponible. El personal puede mejorar el efecto del campamento o ayudar a proteger mejor a los ciclistas, dependiendo de sus habilidades y disponibilidad. Antes de reservar, usted puede revisar el costo, riesgo climático, ciclista seleccionados, personal seleccionado, y advertencias de validación.",
+    "campsBody": "Los campamentos de entrenamiento son bloques especiales de entrenamiento donde se envía a los ciclistas seleccionados fuera durante varios días. Un campamento de entrenamiento puede dar un desarrollo de habilidades más fuerte que el entrenamiento diario regular, pero cuesta mucho más. Usted elige el tipo de campamento, ubicación, fechas, duración, ciclista, y personal disponible. El personal puede mejorar el efecto del campamento o ayudar a proteger mejor a los ciclistas, dependiendo de sus habilidades y disponibilidad. Antes de reservar, usted puede revisar el costo, riesgo climático, ciclistas seleccionados, personal seleccionado, y advertencias de validación.",
     "continueEquipment": "Continuar con Equipo",
     "finish": "Termina por ahora.",
     "skip": "Saltar tutorial"
@@ -366,7 +366,7 @@
   "campTags": {
     "standard": "estándar",
     "budget": "Presupuesto",
-    "premium": "prima",
+    "premium": "Premium",
     "elite": "élite",
     "flat": "plano",
     "mountain": "Montaña",

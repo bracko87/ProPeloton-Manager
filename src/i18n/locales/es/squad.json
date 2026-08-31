@@ -136,7 +136,7 @@
     "nextTeamRace": "Siguiente carrera de equipo",
     "noRace": "No se ha encontrado ninguna carrera todavía",
     "noFinished": "No se ha encontrado ninguna clasificación completa de carrera para este escuadrón todavía.",
-    "noNext": "No se ha encontrado ningún plan de carrera para este escuadrón.",
+    "noNext": "No se ha encontrado ningún Race Plan para este escuadrón.",
     "stages": "{{count}} etapas"
   },
   "transfer": {

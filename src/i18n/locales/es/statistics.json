@@ -42,7 +42,7 @@
     "searchRidersTeams": "Buscar ciclista o equipos...",
     "allTeamTypes": "Todos los tipos de equipo",
     "userTeams": "Equipos de usuarios",
-    "aiTeams": "Equipos de inteligencia artificial",
+    "aiTeams": "Equipos de IA",
     "allStatus": "Todo el estado",
     "activeOnly": "Activar solamente",
     "inactiveOnly": "Inactivo únicamente",
@@ -95,7 +95,7 @@
   "teams": {
     "teamsInFilter": "Equipos en filtro",
     "userTeams": "Equipos de usuarios",
-    "aiTeams": "Equipos de inteligencia artificial",
+    "aiTeams": "Equipos de IA",
     "currentLeader": "Líder actual",
     "currentLeaderboard": "Tabla de clasificación actual",
     "currentLeaderboardSubtitle": "Los mejores equipos por puntos internacionales en el filtro seleccionado.",

@@ -51,7 +51,7 @@
   },
   "sections": {
     "quickStart": {
-      "title": "Inicio rápido para nuevos administradores",
+      "title": "Inicio rápido para nuevos mánagers",
       "subtitle": "Los mejores primeros pasos después de crear tu club.",
       "overview": "ProPeloton Manager es un juego completo de gestión de clubes de ciclismo. Usted no sólo está eligiendo ciclista para carreras. Usted está gestionando dinero, personal, equipo, infraestructura, patrocinadores, entrenamiento, aplicaciones de carreras, preparación de carreras y clasificaciones a largo plazo.",
       "facts": [
@@ -94,9 +94,9 @@
       "details": [
         "Un día en el juego es igual a 12 horas de la vida real. Esto significa que dos días en el juego son iguales a un día en la vida real.",
         "Si un plazo de entrega del ciclista está a dos días del juego, tienes alrededor de un día de la vida real. Si está a un día del juego, tienes alrededor de 12 horas de la vida real.",
-        "Las fechas de juego se utilizan para las solicitudes de carreras, plazos de presentación del ciclista, estrado de bloqueos, campos de entrenamiento, vencimiento de la transferencia, transacciones financieras y períodos impositivos.",
+        "Las fechas del juego se utilizan para solicitudes de carreras, plazos de inscripción de ciclistas, bloqueos de Stage Plans, campos de entrenamiento, vencimientos de fichajes, transacciones financieras y periodos fiscales.",
         "Las marcas de tiempo técnicas reales no son lo mismo que el tiempo de juego. Algunas filas de backend tienen created_at para ordenar o paginar, pero la fecha de inicio del juego debe usar metadatos almacenados cuando estén disponibles.",
-        "Siempre prepárese antes del último momento. Los plazos que faltan pueden bloquear los planes de carrera o dejar los planes de etapa incompletos."
+        "Prepárate siempre con antelación. Incumplir los plazos puede bloquear Race Plans o dejar Stage Plans incompletos."
       ],
       "tips": [
         "Comprueba el tiempo de juego de pie de página antes de las acciones importantes.",
@@ -195,7 +195,7 @@
     "notificationsInbox": {
       "title": "Notificaciones y bandeja de entrada",
       "subtitle": "Alertas del sistema, páginas no leídas/leídas y conversaciones.",
-      "overview": "Las notificaciones son alertas de juego/administración. El buzón de entrada es para conversaciones directas o de administración. Juntos ayudan a los usuarios a evitar plazos perdidos y comunicarse con otros administradores o administradores.",
+      "overview": "Las notificaciones son alertas del juego o de administración. La bandeja de entrada sirve para conversaciones directas o mensajes administrativos. Juntas ayudan a evitar plazos perdidos y a comunicarse con otros mánagers o administradores.",
       "facts": [
         "Pestañas de notificación",
         "No leído y leído",
@@ -252,7 +252,7 @@
     "riderProfileSkills": {
       "title": "Perfil del ciclista, habilidades, aptitud y Race Sharpness",
       "subtitle": "Por qué la calidad del ciclista es más que general.",
-      "overview": "Los perfiles de los ciclistas muestran identidad, atributos, contrato, entrenamiento, comparación e historia. El valor real de la carrera del ciclista depende de la mezcla de habilidades, aptitud, moral, fatiga, salud y agudeza de la carrera.",
+      "overview": "Los perfiles de ciclista muestran identidad, atributos, contrato, entrenamiento, comparaciones e historial. El rendimiento real en carrera depende de la combinación de habilidades, forma, moral, fatiga, salud y Race Sharpness.",
       "facts": [
         "Pestañas de ciclista propias",
         "Resumen, Contrato, Entrenamiento, Comparar, Historia",
@@ -265,7 +265,7 @@
         "En general es un resumen amplio. Es útil, pero los atributos exactos deciden el papel de la carrera. Sprint importa en los acabados de racimo. Escalar asuntos en las montañas. Tiempo de prueba importa en etapas TT. La recuperación es importante en las carreras de etapa.",
         "La fatiga representa cansancio y estrés acumulado. La alta fatiga puede hacer que los ciclistas fuertes no se den cuenta o se vuelvan arriesgados para seleccionar.",
         "La moral afecta la confianza y puede influir en el rendimiento.",
-        "La nitidez de la carrera mide el ritmo de la carrera. Muy poca carrera puede reducir la nitidez, pero demasiada carrera crea riesgo de sobrecarga.",
+        "Race Sharpness mide el ritmo competitivo reciente. Competir demasiado poco puede reducirlo, mientras que competir demasiado aumenta el riesgo de sobrecarga.",
         "La comparación de ciclista muestra dos ciclista lado a lado con atributos como sprint, escalada, contrarreloj, resistencia, plano, recuperación, resistencia, coeficiente intelectual de carrera y trabajo en equipo.",
         "Los perfiles externos de los ciclistas pueden ocultar información exacta a menos que se explore."
       ],
@@ -320,7 +320,7 @@
         "Entrenador y entrenadores principales apoyan entrenamiento regular, entrenamiento campamentos y desarrollo de ciclista.",
         "Equipo Doctor, Fisioterapeuta y Nutricionista apoyan la salud, recuperación, fatiga y manejo médico.",
         "Mecánica apoya el mantenimiento de equipos y sistemas técnicos.",
-        "El director deportivo apoya la preparación de la carrera, tácticas y sugerencias de planes de etapa.",
+        "El director deportivo ayuda con la preparación de carrera, las tácticas y las sugerencias para Stage Plans.",
         "Scout / Analista apoya informes de exploración y conocimiento de mercado.",
         "Los cursos del personal pueden estar activos o terminados recientemente, con duración de días, costo y beneficios de atributos.",
         "Las prórrogas de los contratos del personal pueden incluir el sueldo actual, el sueldo solicitado, el salario mínimo aceptable, la puntuación de intereses, la voluntad y las razones de decisión."
@@ -492,7 +492,7 @@
     "racePreparation": {
       "title": "Preparación de la carrera y Stage Plans",
       "subtitle": "Carreras aceptadas, Race Plan, Stage Plans y preparación.",
-      "overview": "La preparación de la carrera convierte una carrera aceptada en un plan real. Es una de las páginas más importantes del juego porque el motor de carrera depende de la selección del ciclista, personal, activos, equipos, suministros y tácticas de etapa.",
+      "overview": "La preparación de carrera convierte una carrera aceptada en un plan real. Es una de las páginas más importantes del juego porque Race Engine depende de la selección de ciclistas, personal, activos, equipamiento, suministros y tácticas de etapa.",
       "facts": [
         "Tabuladores",
         "Carreras aceptadas, Race Plan, Stage Plans",
@@ -509,7 +509,7 @@
         "Los corredores bloqueados o los activos pueden ser asignados a eventos superpuestos. Esto evita horarios imposibles.",
         "Previsualización de presupuesto muestra los costos y bonos de apoyo del personal, activos, equipo y políticas.",
         "Después de enviar Race Plan, se habilitan Stage Plans. Stage Plans define los roles de los ciclistas, las tácticas de equipo, las tácticas individuales, el equipamiento y los suministros de cada etapa.",
-        "La preparación del plan de etapa rastrea los planes guardados, los planes utilizables, los planes perdidos, los planes vacíos, los suministros perdidos, la integridad táctica y la acción recomendada.",
+        "La preparación del Stage Plan rastrea los planes guardados, los planes utilizables, los planes perdidos, los planes vacíos, los suministros perdidos, la integridad táctica y la acción recomendada.",
         "Las sugerencias del Director de Deportes pueden ayudar con el equipo, tácticas de equipo, tácticas individuales y suministros, pero son guía, no garantizan planes perfectos."
       ],
       "tips": [
@@ -541,7 +541,7 @@
         "Continental Europa y América alimentan a Pro West playoff. Continental Asia, África y Oceanía alimentan a Pro East playoff.",
         "Continental Europa y Asia muestran los seis últimos relegados. Continental América y África muestran los cinco últimos relegados. Continental Oceanía muestra los tres últimos relegados.",
         "Amateur Oceania muestra los tres primeros puestos promovidos directamente. European Amateur Divisions show promoted directamente y 2nd-3rd entrar en el playoff de promoción. Otras divisiones Amateur show promoted directamente y 2nd-4th entrar en el playoff de promoción.",
-        "Los mánagers inactivos pueden permanecer visibles en posiciones/resultados. La interfaz de usuario puede mostrar una insignia de administrador inactivo para equipos inactivos y pendientes de retiro de fin de temporada."
+        "Los mánagers inactivos pueden seguir visibles en posiciones o resultados. La interfaz puede mostrar una insignia de mánager inactivo para equipos inactivos pendientes de retirada al final de la temporada."
       ],
       "tips": [
         "Usa el ranking como su objetivo a largo plazo.",
@@ -554,7 +554,7 @@
     "statisticsTeamProfile": {
       "title": "Estadísticas y perfiles de los equipos",
       "subtitle": "Compare equipos, ciclista e información del club público.",
-      "overview": "Las estadísticas ayudan a identificar equipos y ciclista fuertes.Los perfiles de equipos muestran información pública sobre clubes de usuarios y de IA.",
+      "overview": "Las estadísticas ayudan a identificar equipos y ciclistas fuertes. Los perfiles de equipo muestran información pública sobre clubes controlados por usuarios y por IA.",
       "facts": [
         "Fichas estadísticas",
         "Equipos y ciclista",
@@ -649,9 +649,9 @@
       ]
     },
     "sponsorsPolicies": {
-      "title": "Patrocinadores, Patrocinadores Técnicos y Políticas de Equipo",
+      "title": "Patrocinadores, patrocinadores técnicos y Team Policy",
       "subtitle": "Dinero garantizado, objetivos, descuentos, derechos de nominación y estándares operativos.",
-      "overview": "Las políticas de equipo definen los viajes, alojamiento, vivienda, nutrición, recuperación y bonificaciones. Ambos pueden mejorar el club, pero ambos también pueden crear obligaciones o costos.",
+      "overview": "Team Policy define los viajes, el alojamiento, la vivienda, la nutrición, la recuperación y las bonificaciones. Tanto los patrocinadores como estas políticas pueden mejorar el club, pero también crear obligaciones o costes.",
       "facts": [
         "Tipos de patrocinadores",
         "Principal, secundaria, técnica",
@@ -678,7 +678,7 @@
       ],
       "links": [
         "Patrocinadores",
-        "Políticas de equipo"
+        "Team Policy"
       ]
     },
     "emergencyLiquidation": {

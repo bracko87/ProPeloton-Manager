@@ -89,7 +89,7 @@
     "teamPosition": "Posición del equipo:",
     "uciPoints": "Puntos UCI:",
     "inactiveManager": "Gestor inactivo",
-    "seasonEndInactiveDescription": "Este equipo permanece visible hasta el final de la temporada. Si el director no regresa, el lugar del equipo puede ser reemplazado por un equipo de AI después de finalizar la temporada.",
+    "seasonEndInactiveDescription": "Este equipo permanece visible hasta el final de la temporada. Si el director no regresa, el lugar del equipo puede ser reemplazado por un equipo de IA después de finalizar la temporada.",
     "seasonEndReview": "Revisión de final de temporada",
     "inactiveDescription": "Este equipo está actualmente inactivo, pero permanece en la clasificación, historia de la carrera, resultados y calendario.",
     "inactive": "Inactivo"
@@ -169,7 +169,7 @@
     "resultsCount": "Resultados de {{count}}",
     "empty": "Ningún club honra los filtros seleccionados.",
     "page": "Página {{page}} de {{total}}",
-    "deferred": "Final GC, points, mountain and youth-classification honours will be added after their authoritative persisted result source is confirmed."
+    "deferred": "Los honores finales de GC, puntos, montaña y clasificación juvenil se añadirán cuando se confirme su fuente autorizada y persistida de resultados."
   },
   "report": {
     "checkingError": "No se pudo comprobar el informe existente.",
@@ -192,7 +192,7 @@
     "page": "Página:",
     "reason": "Motivo",
     "abuse": "Abuso/acoso",
-    "cheating": "Trampa / Explota",
+    "cheating": "Trampas / exploits",
     "spam": "Spam / Publicidad",
     "other": "Otros",
     "severity": "Severidad",

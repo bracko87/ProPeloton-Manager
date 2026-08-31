@@ -252,7 +252,7 @@
         "Logotipo, país, nivel, división, patrocinadores, kit, lista, puntos y carreras recientes"
       ],
       "details": [
-        "La página muestra si el club es de usuario o IA controlado.",
+        "La página muestra si el club está controlado por un usuario o por IA.",
         "Puede mostrar cuenta de patrocinadores activos, totales de patrocinadores mensuales y el logotipo principal del patrocinador.",
         "Puede mostrar la vista previa del kit desde las filas de vista previa del kit team_kits o AI.",
         "Puede mostrar listas públicas y resultados recientes de las carreras.",
@@ -341,10 +341,10 @@
       "overview": "Las notificaciones pueden representar cambios importantes en el estado en la preparación de la carrera, las finanzas, la infraestructura, las transferencias, el desarrollo del equipo y los patrocinadores.",
       "facts": [
         "Ejemplos",
-        "Plan de carreras recordatorios, plan de etapas recordatorios, desarrollo de ventana, préstamo de emergencia, instalación completa, ciclista de liberación, objetivo patrocinador"
+        "Recordatorios de Race Plans, recordatorios de Stage Plans, ventana de desarrollo, préstamo de emergencia, instalación terminada, liberación de ciclista, objetivo de patrocinador"
       ],
       "details": [
-        "Las notificaciones de preparación de carreras advierten cuando los planes o los planes de etapa necesitan acción.",
+        "Las notificaciones de preparación de carrera avisan cuando Race Plans o Stage Plans requieren atención.",
         "Las notificaciones de las ventanas de equipos de desarrollo indican a los usuarios cuándo es posible el movimiento.",
         "Las notificaciones de finalización de infraestructura indican a los usuarios que una instalación/activo está listo.",
         "Las notificaciones de préstamos de emergencia significan que el club no podía cubrir un costo obligatorio.",
@@ -467,7 +467,7 @@
         "El estado de la lista de transferencias es visible y puede bloquear la liberación."
       ],
       "tips": [
-        "Abrir perfiles antes de renovar, vender o construir planes de carreras."
+        "Abre los perfiles antes de renovar, vender o preparar Race Plans."
       ]
     },
     "fitnessHealthDeep": {
@@ -495,7 +495,7 @@
     "raceSharpnessDeep": {
       "title": "Race Sharpness",
       "subtitle": "Ritmo de carrera y riesgo de sobrecarga.",
-      "overview": "La nitidez de la carrera ayuda a demostrar si un ciclista tiene bastante ritmo de carreras reciente o está sobrecargado por demasiados días de carrera.",
+      "overview": "Race Sharpness ayuda a mostrar si un ciclista tiene suficiente ritmo competitivo reciente o está sobrecargado por demasiados días de carrera.",
       "facts": [
         "Seguimiento",
         "Última fecha de la carrera, los días de la carrera pasados 14/30, días de la carrera total, advertencia de sobrecarga"

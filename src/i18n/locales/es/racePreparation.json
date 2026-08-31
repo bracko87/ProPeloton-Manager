@@ -61,7 +61,7 @@
     "raceDates": "Fechas de la carrera",
     "class": "Clase",
     "riders": "Ciclistas",
-    "missedStartlist": "Tu equipo perdió la lista de salida del ciclista y no participa en esta carrera."
+    "missedStartlist": "Tu equipo perdió el plazo de la Startlist y no participa en esta carrera."
   },
   "racePlan": {
     "notOpen": "Race Plan no está abierto todavía. Se abre en {{date}}.",
@@ -69,11 +69,11 @@
     "ridersTitle": "1. ciclista",
     "riderFreshnessHelp": "Ayuda de frescura del ciclista",
     "freshnessTitle": "Frescura, agudeza y fatiga",
-    "sharpnessHelp": "La nitidez de la carrera muestra si un ciclista tiene ritmo de carrera bastante reciente. La nitidez más alta ayuda a un ciclista a empezar más nítido y a realizar más confiablemente.",
-    "fatigueHelp": "La fatiga sigue siendo el principal limitador. Un ciclista con buena nitidez pero muy alta fatiga no comenzará la carrera completamente fresca.",
-    "freshnessBarHelp": "La barra de frescura roja de arranque combina fatiga y nitidez de carrera. Está limitada entre 50 y 100, por lo que ningún ciclista seleccionado comienza una carrera irrealmente vacía.",
+    "sharpnessHelp": "Race Sharpness muestra si un ciclista tiene suficiente ritmo competitivo reciente. Un valor más alto ayuda a empezar la carrera mejor preparado y a rendir con mayor regularidad.",
+    "fatigueHelp": "La fatiga sigue siendo el principal limitador. Un ciclista con buen Race Sharpness pero una fatiga muy alta no comenzará la carrera completamente fresco.",
+    "freshnessBarHelp": "La barra roja de frescura inicial combina fatiga y Race Sharpness. Está limitada entre 50 y 100 para que ningún ciclista seleccionado comience una carrera con un nivel irrealmente bajo.",
     "submittedRidersOnly": "Debido a que este Race Plan ya está enviado, sólo los ciclistas seleccionados para esta carrera se muestran aquí.",
-    "selectedRequired": "ciclista seleccionados: {{selected}} · Requerido: {{min}}–{{max}}",
+    "selectedRequired": "ciclistas seleccionados: {{selected}} · Requerido: {{min}}–{{max}}",
     "removeBeforeSaving": "Quitar los ciclistas {{count}} antes de guardar.",
     "removeOneBeforeSaving": "Quitar el ciclista {{count}} antes de guardar.",
     "selectAtLeast": "Selecciona al menos los ciclistas {{count}} antes de enviar.",
@@ -130,7 +130,7 @@
     "competingSquadChangedTo": "El equipo de competición cambió a {{squad}}.",
     "submittedSuccess": "Race Plan enviado con éxito.",
     "u23ActiveShort": "La automatización U23 está activa.",
-    "u23GeneratedFirst": "The U23 Head Coach generated the first eligible Stage Plan."
+    "u23GeneratedFirst": "El entrenador principal U23 generó el primer Stage Plan elegible."
   },
   "assets": {
     "teamBus": "Autobús del equipo",
@@ -151,7 +151,7 @@
   "bonus": {
     "title": "Race Plan Bono Previsual",
     "standardized": "Porcentajes de bonificación de carrera normalizados",
-    "description": "El personal de carreras, activos de carreras y políticas de equipo se convierten en estos bonos de porcentaje de motor de carreras estandarizados.",
+    "description": "El personal de carrera, los activos de carrera y Team Policy se convierten en estos bonos porcentuales estandarizados de Race Engine.",
     "details": "detalles",
     "defaultDescription": "Bonificación estándar de soporte para motores de carrera.",
     "breakdown": "Desglose {{name}}",
@@ -159,7 +159,7 @@
     "rawEffect": "Efecto en bruto: {{value}}",
     "sourceContribution": "Fuente",
     "standardizedTotal": "Total normalizado",
-    "capHelp": "Si estos dos números difieren más tarde, la tapa del motor de carrera o regla de estandarización ha limitado el bono final.",
+    "capHelp": "Si estos dos valores difieren posteriormente, el límite o la regla de estandarización de Race Engine ha limitado el bono final.",
     "noBreakdown": "Todavía no hay filas de origen detalladas disponibles para este bono. Las filas Team Policy aparecen sólo cuando la configuración de política actual da un bono no cero.",
     "none": "No hay bonos de carrera estandarizados disponibles todavía. Actualizar la cotización después de seleccionar el personal de carrera y activos de la carrera.",
     "fatigueControl": "Control de fatiga",
@@ -191,9 +191,9 @@
   },
   "errors": {
     "changeSquad": "No se pudo cambiar la competencia.",
-    "quote": "No se pudo citar el plan de carrera.",
+    "quote": "No se pudo citar el Race Plan.",
     "save": "No se pudo guardar Race Plan.",
-    "submit": "No se pudo enviar el plan de carrera.",
+    "submit": "No se pudo enviar el Race Plan.",
     "blockedRider": "Este ciclista ya está asignado a una carrera superpuesta.",
     "maxRiders": "Puede seleccionar al máximo los ciclistas {{max}}.",
     "blockedStaff": "Este funcionario ya está asignado a una carrera superpuesta presentada.",
@@ -342,7 +342,7 @@
     "stageCanceledTitle": "Etapa cancelada debido al tiempo",
     "raceCanceledTitle": "carrera cancelada debido al tiempo",
     "partlyCanceledTitle": "Carrera parcialmente cancelada por el tiempo",
-    "stageCanceledBody": "This stage was canceled by the race engine ({{reason}}). Stage Plans are locked because no result, points, prize money, fatigue or replay will be generated for this stage.",
+    "stageCanceledBody": "Esta etapa fue cancelada por Race Engine ({{reason}}). Stage Plans están bloqueados porque no se generarán resultados, puntos, premios, fatiga ni replay para esta etapa.",
     "raceCanceledBody": "Esta carrera fue cancelada debido al tiempo. La preparación de la carrera ya no es necesaria para esta carrera.",
     "partlyCanceledBody": "Al menos una etapa de esta carrera fue cancelada debido al clima. Los tramos restantes sin cancelaciones pueden continuar normalmente.",
     "likelyTitle": "Cancelación del tiempo probable: {{reason}}",

@@ -194,7 +194,7 @@
     "programme": "Programa",
     "futureRaces": "Futuras carreras · 30 días",
     "managementPriorities": "Prioridades de gestión",
-    "missingStagePlans": "Planes de etapa perdidos",
+    "missingStagePlans": "Faltan Stage Plans",
     "incompleteStagePlans": "Stage Plans incompletos",
     "programmeGap": "Brecha entre los programas",
     "nextAcceptedRace": "Siguiente carrera aceptada",
@@ -255,7 +255,7 @@
     "potentialScore": "Puntuación potencial",
     "precision": "Precisión",
     "precisionTier": "Nivel de precisión",
-    "reviewStatus": "Situación del examen",
+    "reviewStatus": "Estado de la revisión",
     "completedReports": "Informes terminados",
     "reports7Days": "Informes · últimos 7 días reales",
     "highElite": "Perspectivas de alta / élite",
@@ -465,11 +465,11 @@
     "race_preparation_missing": "Falta preparación de la carrera",
     "race_preparation_ready": "Preparación de la carrera lista",
     "startlist_deadline_alert": "Alerta de fecha límite Startlist",
-    "stage_plans_missing": "Faltan planes de etapa",
-    "stage_plans_incomplete": "Planes de etapa incompletos",
+    "stage_plans_missing": "Faltan Stage Plans",
+    "stage_plans_incomplete": "Stage Plans incompletos",
     "priority_prospect": "Perspectiva de prioridad",
     "medical_treatment": "Tratamiento médico",
-    "equipment_workshop_review": "Examen de equipos y talleres",
-    "recruitment_review": "Examen de la contratación"
+    "equipment_workshop_review": "Revisión de equipamiento y taller",
+    "recruitment_review": "Revisión de contratación"
   }
 }

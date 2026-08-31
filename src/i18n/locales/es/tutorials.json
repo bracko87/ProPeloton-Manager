@@ -31,7 +31,7 @@
     },
     "simpleOrDeep": {
       "title": "Juega Simple o Profundiza",
-      "body": "No necesitas entender todo de inmediato. Al principio, puedes jugar de una manera sencilla: seguir alertas, comprobar tu equipo, entrar en carreras, preparar a tu equipo y ver resultados. Más tarde, si quieres más profundidad, puedes utilizar sistemas avanzados como fatiga de los ciclistas, moral, nitidez de carrera, objetivos de patrocinio, bonos de equipamiento, campamentos de entrenamiento, exploración, negociaciones de transferencia, impuestos, infraestructura, y promoción o descenso.",
+      "body": "No necesitas entenderlo todo de inmediato. Al principio puedes jugar de forma sencilla: seguir las alertas, revisar tu equipo, participar en carreras, preparar a tu plantilla y ver los resultados. Más adelante, si quieres más profundidad, puedes utilizar sistemas avanzados como fatiga, moral, Race Sharpness, objetivos de patrocinadores, bonos de equipamiento, campos de entrenamiento, scouting, negociaciones de fichajes, impuestos, infraestructura y ascensos o descensos.",
       "primary": "Siguiente"
     },
     "purpose": {
@@ -45,7 +45,7 @@
       "primary": "Iniciar tutorial de vista general"
     },
     "dashboard": {
-      "title": "Su administrador Dashboard",
+      "title": "Tu panel de mánager",
       "body": "Esta es tu página de información general — el panel principal para tu equipo. Piensa en esta página como tu sala de control diaria. Cuando inicias sesión, este es generalmente el primer lugar donde debes consultar. Aquí puedes ver rápidamente la información más importante sobre tu club, incluyendo el estado del equipo, alertas actuales, finanzas, carreras, condición del ciclista y progreso de temporada.",
       "primary": "Siguiente"
     },
@@ -124,7 +124,7 @@
     },
     "camps": {
       "title": "Concentraciones de entrenamiento",
-      "body": "Los campamentos de entrenamiento son bloques especiales de entrenamiento donde se envía a los ciclistas seleccionados fuera durante varios días. Un campamento de entrenamiento puede dar un desarrollo de habilidades más fuerte que el entrenamiento diario regular, pero cuesta mucho más. Usted elige el tipo de campamento, ubicación, fechas, duración, ciclista, y personal disponible. El personal puede mejorar el efecto del campamento o ayudar a proteger mejor a los ciclistas, dependiendo de sus habilidades y disponibilidad. Antes de reservar, usted puede revisar el costo, riesgo climático, ciclista seleccionados, personal seleccionado, y advertencias de validación.",
+      "body": "Los campamentos de entrenamiento son bloques especiales de entrenamiento donde se envía a los ciclistas seleccionados fuera durante varios días. Un campamento de entrenamiento puede dar un desarrollo de habilidades más fuerte que el entrenamiento diario regular, pero cuesta mucho más. Usted elige el tipo de campamento, ubicación, fechas, duración, ciclista, y personal disponible. El personal puede mejorar el efecto del campamento o ayudar a proteger mejor a los ciclistas, dependiendo de sus habilidades y disponibilidad. Antes de reservar, usted puede revisar el costo, riesgo climático, ciclistas seleccionados, personal seleccionado, y advertencias de validación.",
       "primary": "Continuar con Equipo",
       "secondary": "Termina por ahora."
     }
@@ -233,7 +233,7 @@
     },
     "racePlan": {
       "title": "Race Plan",
-      "body": "La pestaña Race Plan es donde preparas a tu equipo para una carrera aceptada. Importante: el tiempo de juego se mueve más rápido que la vida real. Un día en el juego es 12 horas en tiempo real. Esto significa que dos días en el juego equivalen a un día de vida real. Ten esto en cuenta al comprobar las ventanas del plan de carrera, los plazos del ciclista y los plazos del plan de etapa. Cuando la ventana Race Plan está abierta, puedes elegir si tu primer equipo o equipo de desarrollo competirá, si tienes un equipo de desarrollo disponible. También debes comprobar el plazo de presentación del ciclista. Hasta esa fecha, puedes elegir a los ciclistas que participarán. La página muestra el número mínimo y máximo de ciclista permitidos para la carrera. La lista del ciclista muestra quién puede ser seleccionado y quién está bloqueado porque ya están asignados a otra carrera superpuesta. También puedes asignar personal de carrera y activos de la carrera si están disponibles. La vista previa de costos actualiza mientras construyes el plan, así que puedes ver cuánto costará la carrera.",
+      "body": "La pestaña Race Plan es donde preparas a tu equipo para una carrera aceptada. Importante: el tiempo de juego se mueve más rápido que la vida real. Un día en el juego es 12 horas en tiempo real. Esto significa que dos días en el juego equivalen a un día de vida real. Ten esto en cuenta al comprobar las ventanas del plan de carrera, los plazos del ciclista y los plazos del Stage Plan. Cuando la ventana Race Plan está abierta, puedes elegir si tu primer equipo o equipo de desarrollo competirá, si tienes un equipo de desarrollo disponible. También debes comprobar el plazo de presentación del ciclista. Hasta esa fecha, puedes elegir a los ciclistas que participarán. La página muestra el número mínimo y máximo de ciclista permitidos para la carrera. La lista del ciclista muestra quién puede ser seleccionado y quién está bloqueado porque ya están asignados a otra carrera superpuesta. También puedes asignar personal de carrera y activos de la carrera si están disponibles. La vista previa de costos actualiza mientras construyes el plan, así que puedes ver cuánto costará la carrera.",
       "primary": "Siguiente"
     },
     "stagePlans": {
@@ -313,7 +313,7 @@
   "finance": {
     "welcome": {
       "title": "¿Necesita ayuda con Finanzas?",
-      "body": "Podemos mostrarle cómo funcionan las finanzas del club, incluyendo el equilibrio, patrocinadores, transacciones, impuestos y políticas de equipo.",
+      "body": "Te mostraremos cómo funcionan las finanzas del club, incluidos el saldo, los patrocinadores, las transacciones, los impuestos y Team Policy.",
       "primary": "Iniciar tutorial",
       "secondary": "No, gracias."
     },

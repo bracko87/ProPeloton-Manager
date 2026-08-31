@@ -18,7 +18,7 @@
   "sections": {
     "race": {
       "title": "Notificaciones de carreras",
-      "description": "Invitaciones, preparación, clima, planes de etapas, problemas de la carrera y resultados."
+      "description": "Invitaciones, preparación, clima, Stage Plans, problemas de carrera y resultados."
     },
     "team": {
       "title": "Notificaciones de equipo y ciclista",
@@ -51,7 +51,7 @@
       "description": "Mostrar el estado básico y las notificaciones de consecuencias para la preparación de la carrera."
     },
     "stagePlanReminders": {
-      "label": "Estado del plan de etapa",
+      "label": "Estado del Stage Plan",
       "description": "Mostrar la apertura del plan de etapa y notificaciones de estado de bloqueo."
     },
     "raceWeather": {
@@ -134,7 +134,7 @@
     },
     "startlistStagePlans": {
       "label": "Startlist & Stage Plans",
-      "description": "Alertas de fecha límite Startlist más advertencias de planes de etapa ausentes o incompletas."
+      "description": "Alertas del plazo de Startlist y advertencias sobre Stage Plans ausentes o incompletos."
     },
     "medicalRecovery": {
       "label": "Recuperación y servicios médicos",

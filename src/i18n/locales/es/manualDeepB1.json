@@ -64,7 +64,7 @@
     "raceSuppliesDeep": {
       "title": "Detalles de los suministros de carreras",
       "subtitle": "Bidón, geles, nutrición, camisetas y chaquetas de lluvia.",
-      "overview": "Los suministros de carreras se consumen o utilizan durante los planes de etapa y pueden afectar la fatiga, la resistencia, la preparación y el apoyo climático.",
+      "overview": "Los suministros de carrera se consumen o utilizan mediante Stage Plans y pueden afectar a la fatiga, la resistencia, la preparación y el apoyo ante las condiciones meteorológicas.",
       "facts": [
         "Consumibles",
         "Bidón, geles energéticos, paquetes de nutrición",
@@ -290,7 +290,7 @@
     "stagePlanDeep": {
       "title": "Stage Plan Detalles",
       "subtitle": "Roles y tácticas por etapa.",
-      "overview": "Stage Plans decirle al motor de carrera lo que cada ciclista debe hacer en cada etapa.",
+      "overview": "Stage Plans indican a Race Engine lo que debe hacer cada ciclista en cada etapa.",
       "facts": [
         "Componentes",
         "Roles, tácticas de equipo, tácticas individuales, equipo, suministros"
@@ -299,7 +299,7 @@
         "Un etapa de sprint plano necesita diferentes roles que un etapa de montaña.",
         "Las etapas TT y TTT necesitan de estimulación y equipo especializado.",
         "Los suministros se asignan por etapa y pueden consumirse o utilizar capacidad duradera.",
-        "Los controles de preparación indican si un plan de etapa es utilizable.",
+        "Los controles de preparación indican si un Stage Plan es utilizable.",
         "Los planes guardados pero vacíos no son lo mismo que los planes completos."
       ],
       "tips": [
@@ -329,7 +329,7 @@
     "stageReadinessDeep": {
       "title": "Sistema de preparación de etapas",
       "subtitle": "Verificaciones de planes verdes/amarillos/naranja/rojo/gris.",
-      "overview": "La preparación indica a los usuarios si los planes de etapa son lo suficientemente completos para el motor.",
+      "overview": "Los indicadores de preparación muestran si Stage Plans están lo bastante completos para Race Engine.",
       "facts": [
         "Conteos",
         "Guardado, utilizable, faltante, incompleto, vacío, sin suministros",
@@ -341,7 +341,7 @@
         "Los planes vacíos deben llenarse con roles/tácticas/suministros.",
         "Los planes sin suministros pueden ser riesgosos o incompletos.",
         "La acción recomendada explica qué arreglar.",
-        "Todos los planes de etapa requeridos deben ser salvados antes del día de la carrera."
+        "Todos los Stage Plans requeridos deben estar guardados antes del día de la carrera."
       ],
       "tips": [
         "Fijar la preparación rojo/naranja antes de la fecha límite."
@@ -349,7 +349,7 @@
     },
     "sportDirectorDeep": {
       "title": "Sugerencias del Director del Deporte",
-      "subtitle": "Sugerencias de asistentes para los planes de etapa.",
+      "subtitle": "Sugerencias del asistente para Stage Plans.",
       "overview": "Las sugerencias del Director de Deportes pueden ayudar a los mánagers a construir planes, pero no deben reemplazar el juicio.",
       "facts": [
         "Ámbitos de sugerencias",

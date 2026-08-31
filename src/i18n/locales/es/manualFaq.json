@@ -18,8 +18,8 @@
     },
     "acceptedNotReady": {
       "title": "FAQ: ¿Por qué soy aceptado pero no estoy listo?",
-      "subtitle": "La entrada aceptada no es un plan de carrera completo.",
-      "overview": "Aceptado significa que tu equipo tiene un lugar; listo significa que los ciclistas, personal, activos, equipos, suministros y planes de etapa son utilizables.",
+      "subtitle": "La entrada aceptada no es un Race Plan completo.",
+      "overview": "Aceptado significa que tu equipo tiene plaza; listo significa que ciclistas, personal, activos, equipamiento, suministros y Stage Plans pueden utilizarse correctamente.",
       "details": [
         "Race Plan todavía necesita ser enviado.",
         "Stage Plans puede estar desaparecido.",
@@ -38,7 +38,7 @@
       "details": [
         "Comprueba si las habilidades del ciclista coinciden con el terreno.",
         "Comprueba la fatiga y la disponibilidad.",
-        "Revisa la moral y la agudeza de la carrera.",
+        "Comprueba la moral y Race Sharpness.",
         "Revisa el papel y las tácticas.",
         "Comprobar el equipo y los suministros.",
         "Comprueba el tiempo y los incidentes.",
