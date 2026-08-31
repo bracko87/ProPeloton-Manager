@@ -1,0 +1,75 @@
+name: Add French localization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-add-french-localization.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  french:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install translation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch transformers sentencepiece
+
+      - name: Generate complete French locale package
+        run: python .github/scripts/add_french_localization_20260831.py
+
+      - name: Apply French cycling terminology polish
+        run: python .github/scripts/polish_french_baseline_20260831.py
+
+      - name: Measure French completion quality
+        continue-on-error: true
+        shell: bash
+        run: python .github/scripts/audit_french_completion_20260831.py | tee /tmp/french-completion.txt
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push French package
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/fr src/i18n/languages.ts src/i18n/index.ts src/components/i18n/LanguageSelector.tsx src/components/i18n/LocaleDateFormattingBridge.tsx
+          if git diff --cached --quiet; then
+            echo 'No French changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Add French language package'
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Upload French completion report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: french-completion-audit
+          path: /tmp/french-completion.txt
+          retention-days: 3
+          if-no-files-found: warn
