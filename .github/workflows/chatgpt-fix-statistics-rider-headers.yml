@@ -1,0 +1,165 @@
+name: Fix Statistics rider headers
+
+on:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-fix-statistics-rider-headers.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply Statistics rider header fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          labels = {
+              'en': {
+                  'name': 'Name',
+                  'teamRole': 'Team role',
+                  'uciPoints': 'UCI points',
+                  'sortInternational': 'Sort: UCI points',
+                  'mostInternational': 'Most UCI points',
+                  'leaderboard': 'Best teams by UCI points in the selected filter.',
+              },
+              'sr-Latn': {
+                  'name': 'Ime',
+                  'teamRole': 'Uloga u timu',
+                  'uciPoints': 'UCI bodovi',
+                  'sortInternational': 'Sortiraj: UCI bodovi',
+                  'mostInternational': 'Najviše UCI bodova',
+                  'leaderboard': 'Najbolji timovi po UCI bodovima u izabranom filteru.',
+              },
+              'de': {
+                  'name': 'Name',
+                  'teamRole': 'Rolle im Team',
+                  'uciPoints': 'UCI-Punkte',
+                  'sortInternational': 'Sortieren: UCI-Punkte',
+                  'mostInternational': 'Meiste UCI-Punkte',
+                  'leaderboard': 'Beste Teams nach UCI-Punkten im ausgewählten Filter.',
+              },
+              'hr': {
+                  'name': 'Ime',
+                  'teamRole': 'Uloga u timu',
+                  'uciPoints': 'UCI bodovi',
+                  'sortInternational': 'Sortiraj: UCI bodovi',
+                  'mostInternational': 'Najviše UCI bodova',
+                  'leaderboard': 'Najbolji timovi prema UCI bodovima u odabranom filtru.',
+              },
+              'es': {
+                  'name': 'Nombre',
+                  'teamRole': 'Rol en el equipo',
+                  'uciPoints': 'Puntos UCI',
+                  'sortInternational': 'Ordenar: Puntos UCI',
+                  'mostInternational': 'Más puntos UCI',
+                  'leaderboard': 'Mejores equipos por puntos UCI en el filtro seleccionado.',
+              },
+              'it': {
+                  'name': 'Nome',
+                  'teamRole': 'Ruolo in squadra',
+                  'uciPoints': 'Punti UCI',
+                  'sortInternational': 'Ordina: Punti UCI',
+                  'mostInternational': 'Più punti UCI',
+                  'leaderboard': 'Migliori squadre per punti UCI nel filtro selezionato.',
+              },
+              'fr': {
+                  'name': 'Nom',
+                  'teamRole': 'Rôle dans l’équipe',
+                  'uciPoints': 'Points UCI',
+                  'sortInternational': 'Trier : Points UCI',
+                  'mostInternational': 'Plus de points UCI',
+                  'leaderboard': 'Meilleures équipes selon les points UCI dans le filtre sélectionné.',
+              },
+              'ru': {
+                  'name': 'Имя',
+                  'teamRole': 'Роль в команде',
+                  'uciPoints': 'Очки UCI',
+                  'sortInternational': 'Сортировка: очки UCI',
+                  'mostInternational': 'Больше всего очков UCI',
+                  'leaderboard': 'Лучшие команды по очкам UCI в выбранном фильтре.',
+              },
+          }
+
+          for locale, values in labels.items():
+              path = Path('src/i18n/locales') / locale / 'statistics.json'
+              data = json.loads(path.read_text(encoding='utf-8'))
+              data.setdefault('riders', {})['columns'] = {
+                  'name': values['name'],
+                  'teamRole': values['teamRole'],
+                  'uciPoints': values['uciPoints'],
+              }
+              data['common']['internationalPoints'] = values['uciPoints']
+              data['filters']['sortInternational'] = values['sortInternational']
+              data['metrics']['international'] = 'UCI'
+              data['metrics']['internationalPoints'] = values['uciPoints']
+              data['riders']['mostInternational'] = values['mostInternational']
+              data['teams']['currentLeaderboardSubtitle'] = values['leaderboard']
+              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          component_path = Path('src/features/squad/components/RiderStatisticsSection.tsx')
+          text = component_path.read_text(encoding='utf-8')
+          text = text.replace("{t('common.rider')}</th>", "{t('riders.columns.name')}</th>")
+          text = text.replace("{t('common.role')}</th>", "{t('riders.columns.teamRole')}</th>")
+          text = text.replace(
+              "{formatRiderMetricLabel(riderMetric)} points",
+              "{riderMetric === 'season_points_overall'\n                            ? t('riders.columns.uciPoints')\n                            : t('metrics.pointsTemplate', { metric: formatRiderMetricLabel(riderMetric) })}",
+          )
+          text = text.replace(
+              "{formatRiderMetricLabel(riderTableMetric)} points",
+              "{riderTableMetric === 'season_points_overall'\n                            ? t('riders.columns.uciPoints')\n                            : t('metrics.pointsTemplate', { metric: formatRiderMetricLabel(riderTableMetric) })}",
+          )
+          component_path.write_text(text, encoding='utf-8')
+
+          # Fail fast if the exact old rider table headers or hardcoded English suffix remain.
+          updated = component_path.read_text(encoding='utf-8')
+          assert "{t('common.rider')}</th>" not in updated
+          assert "{t('common.role')}</th>" not in updated
+          assert '} points' not in updated
+          assert updated.count("t('riders.columns.name')") == 2
+          assert updated.count("t('riders.columns.teamRole')") == 2
+          assert updated.count("t('riders.columns.uciPoints')") == 2
+
+          for locale, values in labels.items():
+              data = json.loads((Path('src/i18n/locales') / locale / 'statistics.json').read_text(encoding='utf-8'))
+              assert data['riders']['columns']['name'] == values['name']
+              assert data['riders']['columns']['teamRole'] == values['teamRole']
+              assert data['riders']['columns']['uciPoints'] == values['uciPoints']
+              assert data['common']['internationalPoints'] == values['uciPoints']
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit fixes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/features/squad/components/RiderStatisticsSection.tsx src/i18n/locales/*/statistics.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Use localized Statistics rider headers"
+          git push origin HEAD:main
