@@ -1,0 +1,134 @@
+name: Finish Spanish localization with NLLB
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/retranslate_spanish_nllb_20260831.py'
+      - '.github/workflows/chatgpt-finish-spanish-nllb.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        batch: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install NLLB dependencies
+        run: pip install --quiet torch transformers sentencepiece
+
+      - name: Translate Spanish batch
+        env:
+          SPANISH_BATCH_INDEX: ${{ matrix.batch }}
+          SPANISH_TOTAL_BATCHES: '8'
+          SPANISH_BATCH_OUTPUT: _spanish_batch
+        run: python .github/scripts/retranslate_spanish_nllb_20260831.py
+
+      - name: Upload Spanish batch
+        uses: actions/upload-artifact@v4
+        with:
+          name: spanish-nllb-${{ matrix.batch }}
+          path: _spanish_batch/*.json
+          retention-days: 2
+
+  merge:
+    needs: translate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download translated batches
+        uses: actions/download-artifact@v4
+        with:
+          pattern: spanish-nllb-*
+          path: _spanish_nllb
+          merge-multiple: true
+
+      - name: Merge translated Spanish while preserving reviewed preview files
+        run: |
+          cp _spanish_nllb/*.json src/i18n/locales/es/
+          echo "Translated files: $(find _spanish_nllb -maxdepth 1 -name '*.json' | wc -l)"
+          test "$(find _spanish_nllb -maxdepth 1 -name '*.json' | wc -l)" -eq 39
+
+      - name: Validate all 44 Spanish resources and placeholders
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          en = Path('src/i18n/locales/en')
+          es = Path('src/i18n/locales/es')
+          ef = sorted(p.name for p in en.glob('*.json'))
+          sf = sorted(p.name for p in es.glob('*.json'))
+          assert ef == sf, (len(ef), len(sf), set(ef)-set(sf), set(sf)-set(ef))
+          assert len(ef) == 44, len(ef)
+          ph = re.compile(r'\{\{\s*([^{}]+?)\s*\}\}')
+          def walk(v, p=''):
+              if isinstance(v, dict):
+                  for k,x in v.items():
+                      yield from walk(x, f'{p}.{k}' if p else k)
+              elif isinstance(v, list):
+                  for i,x in enumerate(v):
+                      yield from walk(x, f'{p}[{i}]')
+              else: yield p,v
+          def schema(v):
+              if isinstance(v, dict): return {k:schema(x) for k,x in v.items()}
+              if isinstance(v, list): return [schema(x) for x in v]
+              return type(v).__name__
+          for name in ef:
+              a=json.loads((en/name).read_text(encoding='utf-8'))
+              b=json.loads((es/name).read_text(encoding='utf-8'))
+              assert schema(a)==schema(b), f'structure {name}'
+              bm=dict(walk(b))
+              for k,v in walk(a):
+                  if isinstance(v,str) and isinstance(bm.get(k),str):
+                      assert sorted(ph.findall(v))==sorted(ph.findall(bm[k])), f'placeholder {name}:{k}'
+          print('Spanish structure/placeholders: 44/44 OK')
+          PY
+
+      - name: Run Spanish semantic audit
+        run: python .github/scripts/audit_spanish_completion_20260831.py
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push final Spanish translation candidate
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/es
+          if git diff --cached --quiet; then
+            echo 'No Spanish changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Improve remaining Spanish localization with NLLB'
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Upload post-translation Spanish audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: spanish-post-nllb-audit
+          path: spanish_completion_audit.tsv
+          retention-days: 7
