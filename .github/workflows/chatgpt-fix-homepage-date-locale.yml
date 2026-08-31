@@ -1,0 +1,59 @@
+name: Fix homepage date locale
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix_homepage_date_locale_20260831.py'
+      - '.github/workflows/chatgpt-fix-homepage-date-locale.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply homepage date locale fix
+        run: python .github/scripts/fix_homepage_date_locale_20260831.py
+
+      - name: Verify locale mappings
+        run: |
+          grep -q "startsWith('fr')" src/pages/Home.tsx
+          grep -q "startsWith('ru')" src/pages/Home.tsx
+          grep -q "return 'en-GB'" src/pages/Home.tsx
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/Home.tsx
+          if git diff --cached --quiet; then
+            echo "No homepage date locale changes to commit."
+            exit 0
+          fi
+          git commit -m "Localize homepage game date"
+          git push
