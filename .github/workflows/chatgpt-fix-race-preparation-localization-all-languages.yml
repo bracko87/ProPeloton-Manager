@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/scripts/fix_race_preparation_localization_all_languages_20260901.py'
+      - '.github/scripts/polish_race_preparation_localization_all_languages_20260901.py'
       - '.github/scripts/audit_race_preparation_localization_all_languages_20260901.py'
       - '.github/workflows/chatgpt-fix-race-preparation-localization-all-languages.yml'
   workflow_dispatch:
@@ -21,6 +22,9 @@ jobs:
 
       - name: Apply Race Preparation localization fixes
         run: python3 .github/scripts/fix_race_preparation_localization_all_languages_20260901.py
+
+      - name: Apply Race Preparation localization polish
+        run: python3 .github/scripts/polish_race_preparation_localization_all_languages_20260901.py
 
       - name: Validate Race Preparation locale JSON
         run: |
