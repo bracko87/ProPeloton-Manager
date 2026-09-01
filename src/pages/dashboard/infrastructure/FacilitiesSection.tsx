@@ -433,6 +433,13 @@ function InfrastructureCard({
       </button>
 
       <div className="p-4">
+        <div className="mb-4 space-y-2">
+          <p className="text-sm leading-5 text-gray-600">{item.description}</p>
+          {item.longDescription && (
+            <p className="text-sm leading-6 text-gray-600">{item.longDescription}</p>
+          )}
+        </div>
+
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-medium text-gray-700">{item.valueLabel}</div>
           {facilityLevel(item) < facilityMaxLevel(item) && !item.pendingJob && (
