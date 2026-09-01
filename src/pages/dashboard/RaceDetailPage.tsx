@@ -1393,9 +1393,15 @@ function formatGameDateDisplay(
 }
 
 function getRaceDetailLocale(): string {
-  return String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase().startsWith('sr')
-    ? 'sr-Latn-RS'
-    : 'en-GB'
+  const language = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase()
+  if (language.startsWith('sr')) return 'sr-Latn-RS'
+  if (language.startsWith('de')) return 'de-DE'
+  if (language.startsWith('hr')) return 'hr-HR'
+  if (language.startsWith('es')) return 'es-ES'
+  if (language.startsWith('it')) return 'it-IT'
+  if (language.startsWith('fr')) return 'fr-FR'
+  if (language.startsWith('ru')) return 'ru-RU'
+  return 'en-GB'
 }
 
 function getGameMonthShortName(monthNumber: number): string {
@@ -1449,12 +1455,12 @@ function formatRaceDateRangeLabel(
   void currentSeasonNumber
   void currentMonthNumber
 
-  if (!race) return 'Race dates: —'
+  if (!race) return `${trRaceDetail('summary.raceDates')}: —`
 
   const startParts = getGameDatePartsFromStoredRaceDate(race.start_date)
   const endParts = getGameDatePartsFromStoredRaceDate(race.end_date ?? race.start_date)
 
-  if (!startParts || !endParts) return 'Race dates: —'
+  if (!startParts || !endParts) return `${trRaceDetail('summary.raceDates')}: —`
 
   const startLabel = formatCompactGameDateDisplay(
     startParts.seasonNumber,
@@ -1473,7 +1479,9 @@ function formatRaceDateRangeLabel(
     startParts.monthNumber === endParts.monthNumber &&
     startParts.dayNumber === endParts.dayNumber
 
-  return sameDay ? `Race date: ${startLabel}` : `Race dates: ${startLabel} → ${endLabel}`
+  return sameDay
+    ? `${trRaceDetail('summary.raceDate')}: ${startLabel}`
+    : `${trRaceDetail('summary.raceDates')}: ${startLabel} → ${endLabel}`
 }
 
 function formatRaceHeaderHostLine(
@@ -1622,6 +1630,115 @@ function formatMeters(value?: number | null): string {
   return `${value.toLocaleString()} m`
 }
 
+function raceDetailLanguageCode(): string {
+  return String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase()
+}
+
+function isRaceDetailEnglish(): boolean {
+  const language = raceDetailLanguageCode()
+  return language === 'en' || language.startsWith('en-')
+}
+
+function trRaceDetail(key: string, options?: Record<string, unknown>): string {
+  return String(i18n.t(`raceDetail:${key}`, options))
+}
+
+function getLocalizedTerrainLabel(value?: string | null): string {
+  const normalized = String(value ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  const keys: Record<string, string> = {
+    flat: 'stage.flat',
+    hilly: 'stage.hilly',
+    mountain: 'stage.mountain',
+    cobbled: 'stage.cobbled',
+    individual_time_trial: 'stage.individualTimeTrial',
+    team_time_trial: 'stage.teamTimeTrial',
+    time_trial: 'stage.timeTrial',
+    prologue: 'stage.prologue',
+  }
+  const key = keys[normalized]
+  if (key) return trRaceDetail(key)
+  return value ? humanizeCode(value) : '—'
+}
+
+function getLocalizedRiderProfileLabel(value?: string | null): string {
+  const normalized = String(value ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  const keys: Record<string, string> = {
+    sprinter: 'stage.profileSprinter',
+    puncheur: 'stage.profilePuncheur',
+    puncher: 'stage.profilePuncheur',
+    climber: 'stage.profileClimber',
+    all_rounder: 'stage.profileAllRounder',
+    allrounder: 'stage.profileAllRounder',
+    time_trialist: 'stage.profileTimeTrialist',
+    time_trial: 'stage.profileTimeTrialist',
+    tt: 'stage.profileTimeTrialist',
+  }
+  const key = keys[normalized]
+  if (key) return trRaceDetail(key)
+  return value ? humanizeCode(value) : '—'
+}
+
+function getLocalizedApplicationChanceLabel(raw?: string | null, fallbackKey = 'application.estimatedChance'): string {
+  if (!raw?.trim()) return trRaceDetail(fallbackKey)
+  if (isRaceDetailEnglish()) return raw.trim()
+  const normalized = raw.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
+  if (normalized.includes('very low')) return trRaceDetail('application.chanceVeryLow')
+  if (normalized.includes('very high')) return trRaceDetail('application.chanceVeryHigh')
+  if (normalized.includes('medium') || normalized.includes('moderate')) return trRaceDetail('application.chanceMedium')
+  if (normalized.includes('low')) return trRaceDetail('application.chanceLow')
+  if (normalized.includes('high')) return trRaceDetail('application.chanceHigh')
+  return trRaceDetail(fallbackKey)
+}
+
+function getLocalizedCompetitionPressure(raw?: string | null): string {
+  if (!raw?.trim()) return trRaceDetail('application.competitionPressure')
+  if (isRaceDetailEnglish()) return raw.trim()
+  const normalized = raw.toLowerCase().replace(/[_-]+/g, ' ').trim()
+  if (normalized.includes('low')) return trRaceDetail('application.competitionLow')
+  if (normalized.includes('medium') || normalized.includes('moderate')) return trRaceDetail('application.competitionMedium')
+  if (normalized.includes('high')) return trRaceDetail('application.competitionHigh')
+  return trRaceDetail('application.competitionPressure')
+}
+
+function getLocalizedApplicationChanceSummary(raw?: string | null): string {
+  if (isRaceDetailEnglish() && raw?.trim()) return raw.trim()
+  return trRaceDetail('application.estimateExplanation')
+}
+
+function getLocalizedRouteMarkerLabel(label?: string | null, type?: string | null): string {
+  const raw = String(label ?? '').trim()
+  const normalizedType = String(type ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  const normalizedLabel = raw.toLowerCase().replace(/[\s_-]+/g, ' ').trim()
+  if (normalizedType === 'start' || normalizedLabel === 'start') return trRaceDetail('stage.start')
+  if (normalizedType === 'finish' || normalizedLabel === 'finish') return trRaceDetail('stage.finish')
+  if (normalizedLabel === 'finish sprint') return trRaceDetail('stage.finishSprint').replace(/^🏁\s*/, '')
+  const sprint = normalizedLabel.match(/^(?:intermediate )?sprint\s*(\d+)$/)
+  if (sprint) return trRaceDetail('stage.sprintNumber', { number: sprint[1] })
+  return raw || (type ? humanizeCode(type) : '—')
+}
+
+function getLocalizedStageSummary(profile: {
+  stage_summary?: string | null
+  distance_km?: number | null
+  elevation_gain_m?: number | null
+  terrain_type?: string | null
+  profile_type?: string | null
+}): string | null {
+  if (isRaceDetailEnglish()) return profile.stage_summary?.trim() || null
+  const distanceValue = Number(profile.distance_km)
+  const elevationValue = Number(profile.elevation_gain_m)
+  const distance = Number.isFinite(distanceValue)
+    ? (Number.isInteger(distanceValue) ? String(distanceValue) : distanceValue.toFixed(1))
+    : '—'
+  const elevation = Number.isFinite(elevationValue) ? String(Math.round(elevationValue)) : '—'
+  return trRaceDetail('stage.localizedProfileSummary', {
+    distance,
+    elevation,
+    terrain: getLocalizedTerrainLabel(profile.terrain_type),
+    profile: getLocalizedRiderProfileLabel(profile.profile_type),
+  })
+}
+
 function humanizeCode(value?: string | null): string {
   if (!value) return '—'
 
@@ -1696,7 +1813,7 @@ function isRacePartlyWeatherCanceled(race?: Race | null): boolean {
 }
 
 function getRaceWeatherCancellationDisplayStatus(race?: Race | null): string | null {
-  if (isRaceAllWeatherCanceled(race)) return 'Race canceled'
+  if (isRaceAllWeatherCanceled(race)) return trRaceDetail('status.raceCanceled')
   if (isRacePartlyWeatherCanceled(race)) return 'Weather affected'
 
   return null
@@ -1889,19 +2006,19 @@ function getWeatherIcon(condition: string | null | undefined): string {
 function getRaceApplicationBadgeLabel(status?: string | null): string {
   switch (status) {
     case 'not_open':
-      return 'Applications not open'
+      return trRaceDetail('status.applicationsNotOpen')
     case 'open':
-      return 'Open for Applications'
+      return trRaceDetail('status.openApplications')
     case 'closed':
-      return 'Applications closed'
+      return trRaceDetail('status.applicationsClosed')
     case 'race_active':
-      return 'Race active'
+      return trRaceDetail('status.raceActive')
     case 'race_finished':
-      return 'Race finished'
+      return trRaceDetail('status.raceFinished')
     case 'cancelled':
-      return 'Race canceled'
+      return trRaceDetail('status.raceCanceled')
     default:
-      return 'Applications closed'
+      return trRaceDetail('status.applicationsClosed')
   }
 }
 
@@ -1933,15 +2050,15 @@ function getTeamRaceEntryStatusLabel(status?: string | null): string | null {
     case 'application_submitted':
     case 'application submitted':
     case 'pending':
-      return 'Application submitted'
+      return trRaceDetail('status.applicationSubmitted')
     case 'accepted':
-      return 'Accepted'
+      return trRaceDetail('status.accepted')
     case 'declined':
-      return 'Declined'
+      return trRaceDetail('status.declined')
     case 'withdrawn':
-      return 'Withdrawn'
+      return trRaceDetail('status.withdrawn')
     case 'missed_startlist':
-      return 'Missed startlist'
+      return trRaceDetail('status.missedStartlist')
     case 'cancelled':
       return 'Canceled'
     default:
@@ -1967,9 +2084,9 @@ function getRaceDetailStatusLabel(
 ): string {
   const normalizedRaceStatus = raceStatus?.toLowerCase() ?? null
 
-  if (normalizedRaceStatus === 'active') return 'Race active'
+  if (normalizedRaceStatus === 'active') return trRaceDetail('status.raceActive')
   if (normalizedRaceStatus === 'completed' || normalizedRaceStatus === 'archived') {
-    return 'Race finished'
+    return trRaceDetail('status.raceFinished')
   }
   if (normalizedRaceStatus === 'cancelled') return 'Canceled'
 
@@ -6373,7 +6490,7 @@ function ApplicationPendingInfoCard({
             {formatPendingApplicationChance(quote.estimated_acceptance_chance_pct)}
           </div>
           <div className="mt-1 text-xs font-semibold text-sky-700">
-            {quote.chance_label ?? t('application.applicationEstimate')}
+            {getLocalizedApplicationChanceLabel(quote.chance_label, 'application.applicationEstimate')}
           </div>
         </div>
       </div>
@@ -6416,7 +6533,7 @@ function ApplicationPendingInfoCard({
       </div>
 
       {quote.chance_summary ? (
-        <p className="mt-4 text-xs leading-5 text-slate-500">{quote.chance_summary}</p>
+        <p className="mt-4 text-xs leading-5 text-slate-500">{getLocalizedApplicationChanceSummary(quote.chance_summary)}</p>
       ) : null}
     </div>
   )
@@ -7329,7 +7446,7 @@ function RaceResultsHub({
         </div>
 
         <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
-          {isExpanded ? 'Hide' : 'Show'}
+          {isExpanded ? t('participants.hide') : t('participants.show')}
         </span>
       </button>
 
@@ -8530,9 +8647,9 @@ function normalizeStageRouteMarker(value: unknown): StageRouteMarker | null {
     km,
     label:
       typeof marker.label === 'string' && marker.label.trim()
-        ? marker.label
+        ? getLocalizedRouteMarkerLabel(marker.label, typeof marker.type === 'string' ? marker.type : null)
         : typeof marker.type === 'string'
-          ? humanizeCode(marker.type)
+          ? getLocalizedRouteMarkerLabel(null, marker.type)
           : 'Marker',
     category: categoryValue,
   }
@@ -8839,7 +8956,7 @@ function StageFinishPointCard({
   return (
     <div className="flex w-full items-start justify-between gap-4 rounded-2xl border border-green-200 bg-green-50/60 px-4 py-3 text-sm">
       <div className="min-w-0">
-        <div className="font-semibold text-slate-950">🏁 Finish sprint</div>
+        <div className="font-semibold text-slate-950">{trRaceDetail('stage.finishSprint')}</div>
         <div className="mt-1 text-slate-600">km {formatProfileDetailValue(finishKm)}</div>
       </div>
 
@@ -9063,8 +9180,8 @@ function StageProfileChart({
   const chartMarkers = filteredChartMarkers.length
     ? filteredChartMarkers
     : buildStageProfileChartMarkers([
-        { type: 'start', km: 0, label: 'Start' },
-        { type: 'finish', km: safeDistanceKm, label: 'Finish' },
+        { type: 'start', km: 0, label: trRaceDetail('stage.start') },
+        { type: 'finish', km: safeDistanceKm, label: trRaceDetail('stage.finish') },
       ])
 
   const replayProgressFraction =
@@ -10651,12 +10768,12 @@ function getSimpleReplayStagePointLabel(point: RaceStagePoint): string {
   const pointType = String(point.point_type ?? '').toUpperCase()
 
   if (point.name?.trim()) return point.name.trim()
-  if (pointType === 'INTERMEDIATE_SPRINT') return 'Intermediate sprint'
-  if (pointType === 'BONUS_SPRINT') return 'Bonus sprint'
+  if (pointType === 'INTERMEDIATE_SPRINT') return trRaceDetail('stage.intermediateSprint')
+  if (pointType === 'BONUS_SPRINT') return trRaceDetail('stage.bonusSprint')
   if (pointType === 'KOM') {
     return point.kom_category ? `KOM · Cat ${point.kom_category}` : 'KOM'
   }
-  if (pointType === 'FINISH') return 'Finish sprint'
+  if (pointType === 'FINISH') return trRaceDetail('stage.finishSprint').replace(/^🏁\s*/, '')
 
   return humanizeCode(pointType)
 }
@@ -14877,7 +14994,7 @@ function UniversalRaceReplayPage({
     const distanceKm = Math.max(1, Number(stage.distance_km ?? 1))
 
     return [
-      { type: 'start', km: 0, label: 'Start', category: null },
+      { type: 'start', km: 0, label: trRaceDetail('stage.start'), category: null },
       ...effectiveStagePoints
         .filter((point) =>
           [
@@ -14889,13 +15006,13 @@ function UniversalRaceReplayPage({
         .map((point) => ({
           type: String(point.point_type).toLowerCase(),
           km: Number(point.km_from_start),
-          label: point.name ?? humanizeCode(point.point_type),
+          label: getLocalizedRouteMarkerLabel(point.name, point.point_type),
           category: point.kom_category ?? null,
         })),
       {
         type: 'finish',
         km: distanceKm,
-        label: 'Finish',
+        label: trRaceDetail('stage.finish'),
         category: null,
       },
     ]
@@ -16306,9 +16423,9 @@ function RaceStageProfilePanel({
                 {profile.stage_title ?? t('stage.stageNumber', { stage: profile.stage_number })}
               </h3>
               <p className="mt-1 text-sm text-slate-600">{profile.route_label ?? t('stage.routeTbd')}</p>
-              {profile.stage_summary ? (
+              {getLocalizedStageSummary(profile) ? (
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  {profile.stage_summary}
+                  {getLocalizedStageSummary(profile)}
                 </p>
               ) : null}
             </div>
@@ -16324,14 +16441,14 @@ function RaceStageProfilePanel({
               <div>
                 <div className="text-xs text-slate-500">{t('stage.terrain')}</div>
                 <div className="mt-1 font-semibold text-slate-950">
-                  {profile.terrain_type ? humanizeCode(profile.terrain_type) : '—'}
+                  {profile.terrain_type ? getLocalizedTerrainLabel(profile.terrain_type) : '—'}
                 </div>
               </div>
 
               <div>
                 <div className="text-xs text-slate-500">{t('stage.profileLabel')}</div>
                 <div className="mt-1 font-semibold text-slate-950">
-                  {profile.profile_type ? humanizeCode(profile.profile_type) : '—'}
+                  {profile.profile_type ? getLocalizedRiderProfileLabel(profile.profile_type) : '—'}
                 </div>
               </div>
 
@@ -17673,7 +17790,7 @@ export default function RaceDetailPage({
     }
 
     if (quote.can_apply === false) {
-      return quote.message ?? t('application.cannotApply')
+      return isRaceDetailEnglish() ? (quote.message ?? t('application.cannotApply')) : t('application.cannotApply')
     }
 
     return t('application.review')
@@ -17703,7 +17820,7 @@ export default function RaceDetailPage({
     if (result.success === false) {
       setApplicationQuote(result)
       setApplicationQuoteError(
-        result.error ?? result.message ?? 'Could not load application preview.'
+        isRaceDetailEnglish() ? (result.error ?? result.message ?? 'Could not load application preview.') : t('application.previewLoadFailed')
       )
       setApplicationQuoteLoading(false)
       return
@@ -17809,13 +17926,13 @@ export default function RaceDetailPage({
     }
 
     if (result.success === false) {
-      setApplicationActionError(result.error ?? result.message ?? 'Race application failed.')
+      setApplicationActionError(isRaceDetailEnglish() ? (result.error ?? result.message ?? 'Race application failed.') : t('application.applyFailed'))
       setApplicationActionLoading(null)
       return
     }
 
     syncLocalEntryStatus(result.entry_status ?? 'applied')
-    setApplicationActionMessage(result.message ?? 'Application submitted.')
+    setApplicationActionMessage(isRaceDetailEnglish() ? (result.message ?? 'Application submitted.') : t('application.submittedSuccess'))
     setShowApplicationModal(false)
     setApplicationQuote(null)
     setApplicationQuoteError(null)
@@ -17850,13 +17967,13 @@ export default function RaceDetailPage({
     }
 
     if (result.success === false) {
-      setApplicationActionError(result.error ?? result.message ?? 'Cancel application failed.')
+      setApplicationActionError(isRaceDetailEnglish() ? (result.error ?? result.message ?? 'Cancel application failed.') : t('application.cancelFailed'))
       setApplicationActionLoading(null)
       return
     }
 
     syncLocalEntryStatus(result.entry_status ?? 'withdrawn')
-    setApplicationActionMessage(result.message ?? 'Application cancelled.')
+    setApplicationActionMessage(isRaceDetailEnglish() ? (result.message ?? 'Application cancelled.') : t('application.cancelledSuccess'))
     setRaceDetailReloadKey((value) => value + 1)
     setApplicationActionLoading(null)
   }
@@ -18103,12 +18220,12 @@ export default function RaceDetailPage({
                         {formatApplicationChance(applicationQuote.estimated_acceptance_chance_pct)}
                       </div>
                       <div className="mt-1 text-sm font-semibold text-slate-700">
-                        {applicationQuote.chance_label ?? t('application.estimatedChance')}
+                        {getLocalizedApplicationChanceLabel(applicationQuote.chance_label)}
                       </div>
                     </div>
 
                     <div className="text-right text-xs text-slate-500">
-                      {applicationQuote.competition_pressure_label ?? t('application.competitionPressure')}
+                      {getLocalizedCompetitionPressure(applicationQuote.competition_pressure_label)}
                     </div>
                   </div>
 
@@ -18124,8 +18241,7 @@ export default function RaceDetailPage({
                   </div>
 
                   <p className="mt-3 text-xs leading-5 text-slate-500">
-                    {applicationQuote.chance_summary ??
-                      t('application.estimateExplanation')}
+                    {getLocalizedApplicationChanceSummary(applicationQuote.chance_summary)}
                   </p>
                 </div>
 

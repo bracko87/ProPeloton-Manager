@@ -23,7 +23,9 @@
     "apply": "Apply for race",
     "applying": "Applying…",
     "cancelApplication": "Cancel application",
-    "cancelling": "Cancelling…"
+    "cancelling": "Cancelling…",
+    "raceDate": "Race date",
+    "raceDates": "Race dates"
   },
   "status": {
     "applicationsNotOpen": "Applications not open",
@@ -39,7 +41,8 @@
     "partlyCanceled": "Partly canceled",
     "activeNotice": "Race active. The startlist is locked and this race is awaiting race simulation.",
     "finishedNotice": "Race finished. Applications and rider submissions are closed.",
-    "cancelledNotice": "Race cancelled. Applications and rider submissions are closed."
+    "cancelledNotice": "Race cancelled. Applications and rider submissions are closed.",
+    "missedStartlist": "Missed Startlist"
   },
   "application": {
     "preview": "Race application preview",
@@ -74,7 +77,21 @@
     "waitingDescription": "Official participants are not confirmed yet. Accepted teams and riders will replace this estimate once the team list is published.",
     "applicationEstimate": "Application estimate",
     "alreadyAcceptedCount": "Already accepted",
-    "targetMaxTeams": "Target / max teams"
+    "targetMaxTeams": "Target / max teams",
+    "alreadySubmittedWaitingReview": "Your application is already submitted and waiting for review.",
+    "submittedSuccess": "Application submitted and waiting for review.",
+    "cancelledSuccess": "Application cancelled.",
+    "applyFailed": "Race application failed.",
+    "cancelFailed": "Cancel application failed.",
+    "previewLoadFailed": "Could not load application preview.",
+    "chanceVeryLow": "Very low chance",
+    "chanceLow": "Low chance",
+    "chanceMedium": "Medium chance",
+    "chanceHigh": "High chance",
+    "chanceVeryHigh": "Very high chance",
+    "competitionLow": "Low competition",
+    "competitionMedium": "Medium competition",
+    "competitionHigh": "High competition"
   },
   "stage": {
     "stage": "Stage",
@@ -111,7 +128,17 @@
     "mountainClassification": "Mountain classification:",
     "gcTimeBonuses": "GC time bonuses:",
     "finishSprint": "🏁 Finish sprint",
-    "pointsClassificationFinish": "Points classification finish:"
+    "pointsClassificationFinish": "Points classification finish:",
+    "start": "Start",
+    "finish": "Finish",
+    "intermediateSprint": "Intermediate sprint",
+    "bonusSprint": "Bonus sprint",
+    "profileSprinter": "Sprinter",
+    "profilePuncheur": "Puncheur",
+    "profileClimber": "Climber",
+    "profileAllRounder": "All-rounder",
+    "profileTimeTrialist": "Time trialist",
+    "localizedProfileSummary": "A {{distance}} km {{terrain}} stage with {{elevation}} m of climbing, suited to {{profile}} riders."
   },
   "weather": {
     "title": "Stage weather",

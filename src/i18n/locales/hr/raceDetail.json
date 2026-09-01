@@ -23,7 +23,9 @@
     "apply": "Prijavi se za utrku",
     "applying": "Prijavljivanje…",
     "cancelApplication": "Otkaži prijavu",
-    "cancelling": "Otkazivanje…"
+    "cancelling": "Otkazivanje…",
+    "raceDate": "Datum utrke",
+    "raceDates": "Datumi utrke"
   },
   "status": {
     "applicationsNotOpen": "Prijave još nisu otvorene",
@@ -39,7 +41,8 @@
     "partlyCanceled": "Delimično otkazano",
     "activeNotice": "Utrka je aktivna. Startlist je zaključan i utrka čeka pokretanje simulacije.",
     "finishedNotice": "Utrka je završena. Prijave timova i vozača su zatvorene.",
-    "cancelledNotice": "Utrka je otkazana. Prijave timova i vozača su zatvorene."
+    "cancelledNotice": "Utrka je otkazana. Prijave timova i vozača su zatvorene.",
+    "missedStartlist": "Propušten Startlist"
   },
   "application": {
     "preview": "Pregled prijave za utrku",
@@ -74,7 +77,21 @@
     "waitingDescription": "Zvanični sudionici još nisu potvrđeni. Prihvaćeni timovi i vozači zameniće ovu procenu kada lista timova bude objavljena.",
     "applicationEstimate": "Procena prijave",
     "alreadyAcceptedCount": "Već prihvaćeno",
-    "targetMaxTeams": "Cilj / maksimum timova"
+    "targetMaxTeams": "Cilj / maksimum timova",
+    "alreadySubmittedWaitingReview": "Vaša prijava je već poslana i čeka pregled.",
+    "submittedSuccess": "Prijava je poslana i čeka pregled.",
+    "cancelledSuccess": "Prijava je otkazana.",
+    "applyFailed": "Prijava za utrku nije uspjela.",
+    "cancelFailed": "Otkazivanje prijave nije uspjelo.",
+    "previewLoadFailed": "Pregled prijave nije se mogao učitati.",
+    "chanceVeryLow": "Vrlo mala šansa",
+    "chanceLow": "Mala šansa",
+    "chanceMedium": "Srednja šansa",
+    "chanceHigh": "Velika šansa",
+    "chanceVeryHigh": "Vrlo velika šansa",
+    "competitionLow": "Mala konkurencija",
+    "competitionMedium": "Srednja konkurencija",
+    "competitionHigh": "Velika konkurencija"
   },
   "stage": {
     "stage": "Etapa",
@@ -111,7 +128,17 @@
     "mountainClassification": "Brdska klasifikacija:",
     "gcTimeBonuses": "GC vremenski bonusi:",
     "finishSprint": "🏁 Završni sprint",
-    "pointsClassificationFinish": "Bodovi za bodovnu klasifikaciju na cilju:"
+    "pointsClassificationFinish": "Bodovi za bodovnu klasifikaciju na cilju:",
+    "start": "Start",
+    "finish": "Cilj",
+    "intermediateSprint": "Prolazni sprint",
+    "bonusSprint": "Bonus sprint",
+    "profileSprinter": "Sprinter",
+    "profilePuncheur": "Puncheur",
+    "profileClimber": "Brdaš",
+    "profileAllRounder": "Svestrani vozač",
+    "profileTimeTrialist": "Kronometraš",
+    "localizedProfileSummary": "Etapa duga {{distance}} km, {{terrain}}, s {{elevation}} m uspona, pogodna za profil {{profile}}."
   },
   "weather": {
     "title": "Vrijeme na etapi",

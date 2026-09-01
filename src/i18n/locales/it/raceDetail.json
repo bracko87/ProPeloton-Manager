@@ -23,7 +23,9 @@
     "apply": "Domanda di gara",
     "applying": "Applicazione...",
     "cancelApplication": "Annulla applicazione",
-    "cancelling": "Annullamento..."
+    "cancelling": "Annullamento...",
+    "raceDate": "Data della gara",
+    "raceDates": "Date della gara"
   },
   "status": {
     "applicationsNotOpen": "Applicazioni non aperte",
@@ -39,7 +41,8 @@
     "partlyCanceled": "parzialmente annullata",
     "activeNotice": "Gara attiva. La Startlist è bloccata e questa gara è in attesa di simulazione di gara.",
     "finishedNotice": "Gara finita. Le domande e le candidature del ciclista sono chiuse.",
-    "cancelledNotice": "Gara annullata. Le domande e le richieste di partecipazione del ciclista sono chiuse."
+    "cancelledNotice": "Gara annullata. Le domande e le richieste di partecipazione del ciclista sono chiuse.",
+    "missedStartlist": "Startlist non presentata"
   },
   "application": {
     "preview": "Anteprima applicazione Race",
@@ -74,7 +77,21 @@
     "waitingDescription": "I partecipanti ufficiali non sono ancora confermati. Le squadre e i ciclisti accettati sostituiranno questa stima una volta che la lista del team sarà pubblicata.",
     "applicationEstimate": "Stima dell'applicazione",
     "alreadyAcceptedCount": "Già accettato",
-    "targetMaxTeams": "Squadre target/max"
+    "targetMaxTeams": "Squadre target/max",
+    "alreadySubmittedWaitingReview": "La tua domanda è già stata inviata ed è in attesa di revisione.",
+    "submittedSuccess": "Domanda inviata e in attesa di revisione.",
+    "cancelledSuccess": "Domanda annullata.",
+    "applyFailed": "Invio della domanda di gara non riuscito.",
+    "cancelFailed": "Impossibile annullare la domanda.",
+    "previewLoadFailed": "Impossibile caricare l’anteprima della domanda.",
+    "chanceVeryLow": "Probabilità molto bassa",
+    "chanceLow": "Probabilità bassa",
+    "chanceMedium": "Probabilità media",
+    "chanceHigh": "Probabilità alta",
+    "chanceVeryHigh": "Probabilità molto alta",
+    "competitionLow": "Concorrenza bassa",
+    "competitionMedium": "Concorrenza media",
+    "competitionHigh": "Concorrenza alta"
   },
   "stage": {
     "stage": "Tappa",
@@ -94,10 +111,10 @@
     "profileLabel": "Profilo",
     "elevation": "Aumento",
     "terrainSplit": "Suddivisione del terreno",
-    "flat": "Piano",
-    "hilly": "Hilly",
+    "flat": "Pianeggiante",
+    "hilly": "Collinare",
     "mountain": "Montagna",
-    "cobbled": "Ciottolati",
+    "cobbled": "Pavé",
     "timeTrial": "Prova temporale",
     "individualTimeTrial": "Prova individuale del tempo",
     "teamTimeTrial": "Prova del tempo di squadra",
@@ -110,8 +127,18 @@
     "mountainFinish": "• Finitura di montagna",
     "mountainClassification": "Classificazione delle montagne:",
     "gcTimeBonuses": "Bonus GC time:",
-    "finishSprint": "• Finitura sprint",
-    "pointsClassificationFinish": "Finitura classificazione punti:"
+    "finishSprint": "🏁 Sprint finale",
+    "pointsClassificationFinish": "Finitura classificazione punti:",
+    "start": "Partenza",
+    "finish": "Arrivo",
+    "intermediateSprint": "Sprint intermedio",
+    "bonusSprint": "Sprint bonus",
+    "profileSprinter": "Velocista",
+    "profilePuncheur": "Puncheur",
+    "profileClimber": "Scalatore",
+    "profileAllRounder": "Ciclista completo",
+    "profileTimeTrialist": "Cronoman",
+    "localizedProfileSummary": "Tappa di {{distance}} km, con terreno {{terrain}} e {{elevation}} m di dislivello positivo, adatta al profilo {{profile}}."
   },
   "weather": {
     "title": "Tempo di tappa",

@@ -23,7 +23,9 @@
     "apply": "Подать заявление на гонку",
     "applying": "Применить...",
     "cancelApplication": "Отмена приложения",
-    "cancelling": "Отмена..."
+    "cancelling": "Отмена...",
+    "raceDate": "Дата гонки",
+    "raceDates": "Даты гонки"
   },
   "status": {
     "applicationsNotOpen": "Заявления не открыты",
@@ -39,7 +41,8 @@
     "partlyCanceled": "Отменено частично",
     "activeNotice": "гонка активна. Startlist Закрыто, и эта гонка ждет симуляции гонки.",
     "finishedNotice": "Заявления и представления гонщиков закрыты.",
-    "cancelledNotice": "Заявления и представления гонщиков закрыты."
+    "cancelledNotice": "Заявления и представления гонщиков закрыты.",
+    "missedStartlist": "Startlist не подан"
   },
   "application": {
     "preview": "Предварительный просмотр приложения",
@@ -74,7 +77,21 @@
     "waitingDescription": "Официальные участники пока еще не подтверждены.",
     "applicationEstimate": "Оценка применения",
     "alreadyAcceptedCount": "Уже приняты",
-    "targetMaxTeams": "Целевые/максимальные группы"
+    "targetMaxTeams": "Целевые/максимальные группы",
+    "alreadySubmittedWaitingReview": "Ваша заявка уже отправлена и ожидает рассмотрения.",
+    "submittedSuccess": "Заявка отправлена и ожидает рассмотрения.",
+    "cancelledSuccess": "Заявка отменена.",
+    "applyFailed": "Не удалось подать заявку на гонку.",
+    "cancelFailed": "Не удалось отменить заявку.",
+    "previewLoadFailed": "Не удалось загрузить предварительный просмотр заявки.",
+    "chanceVeryLow": "Очень низкая вероятность",
+    "chanceLow": "Низкая вероятность",
+    "chanceMedium": "Средняя вероятность",
+    "chanceHigh": "Высокая вероятность",
+    "chanceVeryHigh": "Очень высокая вероятность",
+    "competitionLow": "Низкая конкуренция",
+    "competitionMedium": "Средняя конкуренция",
+    "competitionHigh": "Высокая конкуренция"
   },
   "stage": {
     "stage": "Этап",
@@ -94,10 +111,10 @@
     "profileLabel": "Профиль",
     "elevation": "Подъём",
     "terrainSplit": "Разделение дистанции",
-    "flat": "Плоский",
-    "hilly": "Хили",
-    "mountain": "Гора",
-    "cobbled": "Скрученные",
+    "flat": "Равнинный",
+    "hilly": "Холмистый",
+    "mountain": "Горный",
+    "cobbled": "Брусчатка",
     "timeTrial": "Гонка с раздельным стартом",
     "individualTimeTrial": "Индивидуальная гонка с раздельным стартом",
     "teamTimeTrial": "Командная гонка с раздельным стартом",
@@ -110,8 +127,18 @@
     "mountainFinish": "▪ Горный кончик",
     "mountainClassification": "Классификация горных районов:",
     "gcTimeBonuses": "GC - размер премии за работу:",
-    "finishSprint": "▪ Закончить спринт",
-    "pointsClassificationFinish": "Завершение классификации точек:"
+    "finishSprint": "🏁 Финишный спринт",
+    "pointsClassificationFinish": "Завершение классификации точек:",
+    "start": "Старт",
+    "finish": "Финиш",
+    "intermediateSprint": "Промежуточный спринт",
+    "bonusSprint": "Бонусный спринт",
+    "profileSprinter": "Спринтер",
+    "profilePuncheur": "Панчёр",
+    "profileClimber": "Горняк",
+    "profileAllRounder": "Универсал",
+    "profileTimeTrialist": "Раздельщик",
+    "localizedProfileSummary": "Этап длиной {{distance}} км, рельеф: {{terrain}}, набор высоты {{elevation}} м; лучше всего подходит гонщикам типа «{{profile}}»."
   },
   "weather": {
     "title": "Погода на этапы",

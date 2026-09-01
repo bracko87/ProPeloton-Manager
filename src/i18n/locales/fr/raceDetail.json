@@ -23,7 +23,9 @@
     "apply": "Demande de course",
     "applying": "Appliquer...",
     "cancelApplication": "Annuler l'application",
-    "cancelling": "Annulation..."
+    "cancelling": "Annulation...",
+    "raceDate": "Date de la course",
+    "raceDates": "Dates de la course"
   },
   "status": {
     "applicationsNotOpen": "Demandes non ouvertes",
@@ -39,7 +41,8 @@
     "partlyCanceled": "Partiellement annulé",
     "activeNotice": "Course active. La startlist est verrouillée et cette course attend une simulation de course.",
     "finishedNotice": "Fin de course. Les candidatures et les soumissions des coureurs sont closes.",
-    "cancelledNotice": "Course annulée. Les candidatures et les soumissions des coureurs sont fermées."
+    "cancelledNotice": "Course annulée. Les candidatures et les soumissions des coureurs sont fermées.",
+    "missedStartlist": "Startlist non remise"
   },
   "application": {
     "preview": "Aperçu de l'application Course",
@@ -74,7 +77,21 @@
     "waitingDescription": "Les participants officiels ne sont pas encore confirmés. Les équipes et les coureurs acceptés remplaceront cette estimation une fois la liste des équipes publiée.",
     "applicationEstimate": "Estimation de la demande",
     "alreadyAcceptedCount": "Déjà accepté",
-    "targetMaxTeams": "Équipes cibles / max"
+    "targetMaxTeams": "Équipes cibles / max",
+    "alreadySubmittedWaitingReview": "Votre candidature a déjà été envoyée et attend d’être examinée.",
+    "submittedSuccess": "Candidature envoyée et en attente d’examen.",
+    "cancelledSuccess": "Candidature annulée.",
+    "applyFailed": "Échec de la candidature à la course.",
+    "cancelFailed": "Impossible d’annuler la candidature.",
+    "previewLoadFailed": "Impossible de charger l’aperçu de la candidature.",
+    "chanceVeryLow": "Très faible chance",
+    "chanceLow": "Faible chance",
+    "chanceMedium": "Chance moyenne",
+    "chanceHigh": "Forte chance",
+    "chanceVeryHigh": "Très forte chance",
+    "competitionLow": "Faible concurrence",
+    "competitionMedium": "Concurrence moyenne",
+    "competitionHigh": "Forte concurrence"
   },
   "stage": {
     "stage": "Étape",
@@ -95,9 +112,9 @@
     "elevation": "Élévation",
     "terrainSplit": "Terrain divisé",
     "flat": "Plat",
-    "hilly": "Hilly",
+    "hilly": "Vallonné",
     "mountain": "Montagne",
-    "cobbled": "Cobbled",
+    "cobbled": "Pavés",
     "timeTrial": "Contre-la-montre",
     "individualTimeTrial": "Contre-la-montre individuel",
     "teamTimeTrial": "Contre-la-montre par équipes",
@@ -110,8 +127,18 @@
     "mountainFinish": "- Finition montagne",
     "mountainClassification": "Classement des montagnes:",
     "gcTimeBonuses": "Primes GC temps:",
-    "finishSprint": "- Terminer le sprint",
-    "pointsClassificationFinish": "Finition du classement des points:"
+    "finishSprint": "🏁 Sprint final",
+    "pointsClassificationFinish": "Finition du classement des points:",
+    "start": "Départ",
+    "finish": "Arrivée",
+    "intermediateSprint": "Sprint intermédiaire",
+    "bonusSprint": "Sprint bonus",
+    "profileSprinter": "Sprinteur",
+    "profilePuncheur": "Puncheur",
+    "profileClimber": "Grimpeur",
+    "profileAllRounder": "Polyvalent",
+    "profileTimeTrialist": "Rouleur",
+    "localizedProfileSummary": "Une étape de {{distance}} km au terrain {{terrain}}, avec {{elevation}} m de dénivelé positif, adaptée au profil {{profile}}."
   },
   "weather": {
     "title": "Météo de étape",

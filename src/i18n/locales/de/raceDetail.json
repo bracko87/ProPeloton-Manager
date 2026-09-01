@@ -23,7 +23,9 @@
     "apply": "Für Rennen anmelden",
     "applying": "Anmeldung läuft…",
     "cancelApplication": "Anmeldung zurückziehen",
-    "cancelling": "Wird zurückgezogen…"
+    "cancelling": "Wird zurückgezogen…",
+    "raceDate": "Renndatum",
+    "raceDates": "Renndaten"
   },
   "status": {
     "applicationsNotOpen": "Anmeldungen noch nicht geöffnet",
@@ -39,7 +41,8 @@
     "partlyCanceled": "Teilweise abgesagt",
     "activeNotice": "Das Rennen läuft. Die Startlist ist gesperrt und das Rennen wartet auf die Simulation durch die Race Engine.",
     "finishedNotice": "Rennen beendet. Anmeldungen und Fahrermeldungen sind geschlossen.",
-    "cancelledNotice": "Rennen abgesagt. Anmeldungen und Fahrermeldungen sind geschlossen."
+    "cancelledNotice": "Rennen abgesagt. Anmeldungen und Fahrermeldungen sind geschlossen.",
+    "missedStartlist": "Startlist verpasst"
   },
   "application": {
     "preview": "Vorschau der Rennanmeldung",
@@ -74,7 +77,21 @@
     "waitingDescription": "Die offiziellen Teilnehmer stehen noch nicht fest. Angenommene Teams und Fahrer ersetzen diese Schätzung, sobald die Teamliste veröffentlicht wurde.",
     "applicationEstimate": "Anmeldeprognose",
     "alreadyAcceptedCount": "Bereits angenommen",
-    "targetMaxTeams": "Ziel / max. Teams"
+    "targetMaxTeams": "Ziel / max. Teams",
+    "alreadySubmittedWaitingReview": "Ihre Anmeldung wurde bereits eingereicht und wartet auf Prüfung.",
+    "submittedSuccess": "Anmeldung eingereicht und zur Prüfung vorgemerkt.",
+    "cancelledSuccess": "Anmeldung zurückgezogen.",
+    "applyFailed": "Rennanmeldung fehlgeschlagen.",
+    "cancelFailed": "Anmeldung konnte nicht zurückgezogen werden.",
+    "previewLoadFailed": "Anmeldevorschau konnte nicht geladen werden.",
+    "chanceVeryLow": "Sehr geringe Chance",
+    "chanceLow": "Geringe Chance",
+    "chanceMedium": "Mittlere Chance",
+    "chanceHigh": "Hohe Chance",
+    "chanceVeryHigh": "Sehr hohe Chance",
+    "competitionLow": "Geringer Konkurrenzdruck",
+    "competitionMedium": "Mittlerer Konkurrenzdruck",
+    "competitionHigh": "Hoher Konkurrenzdruck"
   },
   "stage": {
     "stage": "Etappe",
@@ -111,7 +128,17 @@
     "mountainClassification": "Bergwertung:",
     "gcTimeBonuses": "GC-Zeitbonifikationen:",
     "finishSprint": "🏁 Zielsprint",
-    "pointsClassificationFinish": "Punktewertung im Ziel:"
+    "pointsClassificationFinish": "Punktewertung im Ziel:",
+    "start": "Start",
+    "finish": "Ziel",
+    "intermediateSprint": "Zwischensprint",
+    "bonusSprint": "Bonussprint",
+    "profileSprinter": "Sprinter",
+    "profilePuncheur": "Puncheur",
+    "profileClimber": "Kletterer",
+    "profileAllRounder": "Allrounder",
+    "profileTimeTrialist": "Zeitfahrer",
+    "localizedProfileSummary": "Eine {{distance}} km lange {{terrain}} Etappe mit {{elevation}} Höhenmetern, passend für den Fahrertyp {{profile}}."
   },
   "weather": {
     "title": "Etappenwetter",
