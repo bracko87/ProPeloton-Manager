@@ -1,0 +1,296 @@
+name: Apply Stage Supply effects UI fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-fix-stage-supply-effects-20260901.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Patch Race Preparation Stage Supply preview
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/dashboard/RacePreparation.tsx')
+          text = path.read_text(encoding='utf-8')
+          original = text
+
+          def replace_once(source: str, old: str, new: str, label: str) -> str:
+              count = source.count(old)
+              assert count == 1, f'{label}: expected exactly one match, found {count}'
+              return source.replace(old, new, 1)
+
+          # Keep the help copy aligned with the actual live Phase 9 supply formulas.
+          text = replace_once(
+              text,
+              '''    positiveEffects: [
+              "Hydration support: +0.2% stamina stability per bidon",
+              "Fatigue control: -0.2% stage fatigue per bidon",
+            ],
+            negativeEffects: [
+              "Below minimum: +1% fatigue risk",
+              "No extra benefit after 10 bidons per rider",
+            ],'''.replace('            ', '    '),
+              '''    positiveEffects: [
+              "Energy saving: +0.6% per usable bidon per rider",
+              "Fatigue reduction: +0.6% per usable bidon per rider",
+            ],
+            negativeEffects: [
+              "Stock shortages reduce the positive effect and can add a +3% fatigue penalty",
+              "No additional selection beyond 10 bidons per rider",
+            ],'''.replace('            ', '    '),
+              'bidon help copy',
+          )
+
+          text = replace_once(
+              text,
+              '''    positiveEffects: [
+              "Energy boost: +0.5% stamina per gel",
+              "Final effort support: +0.25% sprint/climb/attack efficiency per gel",
+            ],
+            negativeEffects: [
+              "No gels: -1% final-phase stamina support",
+              "No extra benefit after 4 gels per rider",
+            ],'''.replace('            ', '    '),
+              '''    positiveEffects: [
+              "Energy saving: +1.5% per usable gel per rider",
+              "Race support: +0.75 points per usable gel per rider",
+              "Power gels: up to 2 effective gels per rider, +5 live energy each from the late-race checkpoints",
+            ],
+            negativeEffects: [
+              "Stock shortages reduce the positive effect and can add a +3% fatigue penalty",
+              "General supply effects use up to 4 gels per rider; the separate live-energy Power Gel effect uses at most 2",
+            ],'''.replace('            ', '    '),
+              'gel help copy',
+          )
+
+          text = replace_once(
+              text,
+              '''    positiveEffects: [
+              "Endurance support: +1% stamina stability per pack",
+              "Recovery support: +0.5% post-stage recovery per pack",
+            ],
+            negativeEffects: [
+              "No nutrition on long stages: +1% fatigue pressure",
+              "No extra benefit after 2 packs per rider",
+            ],'''.replace('            ', '    '),
+              '''    positiveEffects: [
+              "Energy saving: +3% per usable nutrition pack per rider",
+              "Post-stage recovery: +1.5 points per usable nutrition pack per rider",
+            ],
+            negativeEffects: [
+              "Stock shortages reduce the positive effect and can add a +3% fatigue penalty",
+              "No additional selection beyond 2 nutrition packs per rider",
+            ],'''.replace('            ', '    '),
+              'nutrition help copy',
+          )
+
+          text = replace_once(
+              text,
+              '''    positiveEffects: [
+              "Race readiness: +0.5% setup readiness",
+              "Comfort support: +0.25% fatigue control",
+            ],
+            negativeEffects: ["Missing jersey kit: blocks stage setup"],'''.replace('            ', '    '),
+              '''    positiveEffects: [
+              "Race support: +1.5 points when a usable jersey kit is available per rider",
+              "Fatigue reduction: +0.75% when a usable jersey kit is available per rider",
+            ],
+            negativeEffects: ["Missing jersey kit: blocks stage setup"],'''.replace('            ', '    '),
+              'jersey help copy',
+          )
+
+          # Add a frontend preview that mirrors the default live Phase 9 formulas.
+          if 'type StageSupplyEffectPreview =' not in text:
+              signature = 'function getStageSupplyNeeds('
+              start = text.index(signature)
+              next_function = text.index('\nfunction ', start + len(signature))
+              helper = r'''
+
+type StageSupplyEffectPreview = {
+  supportPoints: number;
+  energySavingPct: number;
+  fatigueReductionPct: number;
+  recoveryBonusPoints: number;
+  fatiguePenaltyPct: number;
+  powerGelsEffectivePerRider: number;
+  powerGelLiveEnergyMax: number;
+  shortages: string[];
+};
+
+function formatStageSupplyEffectNumber(value: number): string {
+  const rounded = Math.round((Number.isFinite(value) ? value : 0) * 100) / 100;
+  return rounded.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function getStageSupplyEffectPreview({
+  riders,
+  plan,
+  supplyOptions,
+  stage,
+}: {
+  riders: JsonRecord[];
+  plan: StageTeamSupplyPlan;
+  supplyOptions: RaceSupplyOption[];
+  stage: JsonRecord | null;
+}): StageSupplyEffectPreview {
+  const needs = getStageSupplyNeeds(riders, plan, stage);
+  const riderCount = needs.riderCount;
+
+  if (riderCount <= 0) {
+    return {
+      supportPoints: 0,
+      energySavingPct: 0,
+      fatigueReductionPct: 0,
+      recoveryBonusPoints: 0,
+      fatiguePenaltyPct: 0,
+      powerGelsEffectivePerRider: 0,
+      powerGelLiveEnergyMax: 0,
+      shortages: [],
+    };
+  }
+
+  const shortages: string[] = [];
+  const usable = (
+    label: string,
+    supplyKey: string,
+    plannedQuantity: number,
+  ) => {
+    const planned = Math.max(0, plannedQuantity);
+    const available = Math.max(
+      0,
+      getSupplyAvailableQuantity(supplyOptions, supplyKey),
+    );
+
+    if (planned > available) {
+      shortages.push(`${label}: ${available} available / ${planned} planned`);
+    }
+
+    return {
+      planned,
+      available,
+      usable: Math.min(planned, available),
+      shortage: planned > available,
+    };
+  };
+
+  const bidons = usable(
+    "Bidons",
+    "bidons_water_bottles",
+    needs.bidons_water_bottles,
+  );
+  const gels = usable("Energy gels", "energy_gels", needs.energy_gels);
+  const nutrition = usable(
+    "Nutrition packs",
+    "nutrition_packs",
+    needs.nutrition_packs,
+  );
+  const jerseys = usable(
+    "Race jerseys",
+    "race_jersey_complete",
+    needs.race_jersey_complete,
+  );
+
+  const supportPoints =
+    (0.75 * gels.usable) / riderCount +
+    (1.5 * jerseys.usable) / riderCount;
+  const energySavingPct =
+    (0.6 * bidons.usable) / riderCount +
+    (1.5 * gels.usable) / riderCount +
+    (3.0 * nutrition.usable) / riderCount;
+  const fatigueReductionPct =
+    (0.6 * bidons.usable) / riderCount +
+    (0.75 * jerseys.usable) / riderCount;
+  const recoveryBonusPoints = (1.5 * nutrition.usable) / riderCount;
+  const hasConsumableShortage =
+    bidons.shortage || gels.shortage || nutrition.shortage;
+  const powerGelsEffectivePerRider = Math.min(
+    2,
+    Math.floor(gels.usable / riderCount),
+  );
+
+  return {
+    supportPoints,
+    energySavingPct,
+    fatigueReductionPct,
+    recoveryBonusPoints,
+    fatiguePenaltyPct: hasConsumableShortage ? 3 : 0,
+    powerGelsEffectivePerRider,
+    powerGelLiveEnergyMax: powerGelsEffectivePerRider * 5,
+    shortages,
+  };
+}
+'''
+              text = text[:next_function] + helper + text[next_function:]
+
+          # Patch only the Final Stage Calculation component.
+          card_start = text.index('function StageFinalCalculationCard(')
+          card_end = text.index('\nfunction ', card_start + len('function StageFinalCalculationCard('))
+          card = text[card_start:card_end]
+          assert 'Stage Supply Effects' not in card, 'Stage Supply Effects block already exists unexpectedly'
+
+          card = replace_once(
+              card,
+              '  const needs = getStageSupplyNeeds(riders, teamPlan, stage);\n',
+              '''  const needs = getStageSupplyNeeds(riders, teamPlan, stage);\n  const supplyEffects = getStageSupplyEffectPreview({\n    riders,\n    plan: teamPlan,\n    supplyOptions,\n    stage,\n  });\n''',
+              'supply effect calculation',
+          )
+
+          card = replace_once(
+              card,
+              'label="Race Plan bonus total"',
+              'label="Race Plan bonus (staff/assets/policies)"',
+              'top Race Plan bonus label',
+          )
+
+          card = replace_once(
+              card,
+              '''              <div className="text-sm font-semibold text-slate-900">\n                Race Plan bonuses\n              </div>\n              <div className="mt-3 space-y-2">''',
+              '''              <div className="text-sm font-semibold text-slate-900">\n                Race Plan bonuses (staff/assets/policies)\n              </div>\n              <p className="mt-1 text-xs leading-5 text-slate-500">\n                Stage supplies are calculated separately below. A +0% Race Plan\n                row does not mean your selected bidons, gels, nutrition or\n                jerseys have no effect.\n              </p>\n              <div className="mt-3 space-y-2">''',
+              'Race Plan bonus explanation',
+          )
+
+          stage_supply_anchor = '''              <div className="text-sm font-semibold text-slate-900">\n                Stage supplies\n              </div>\n              <div className="mt-3 grid gap-2 text-sm">'''
+          stage_supply_replacement = '''              <div className="text-sm font-semibold text-slate-900">\n                Stage supplies\n              </div>\n\n              <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">\n                <div className="flex flex-wrap items-start justify-between gap-2">\n                  <div>\n                    <div className="text-sm font-semibold text-emerald-900">\n                      Stage Supply Effects\n                    </div>\n                    <p className="mt-1 text-xs leading-5 text-emerald-800/80">\n                      Live preview from this stage plan and currently available\n                      stock. These effects are separate from the Race Plan bonus\n                      rows above.\n                    </p>\n                  </div>\n                  <span className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-emerald-700 shadow-sm">\n                    Engine preview\n                  </span>\n                </div>\n\n                <div className="mt-3 grid gap-2 sm:grid-cols-2">\n                  <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm">\n                    <span className="text-slate-600">Energy saving</span>\n                    <strong className="text-emerald-700">\n                      +{formatStageSupplyEffectNumber(supplyEffects.energySavingPct)}%\n                    </strong>\n                  </div>\n                  <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm">\n                    <span className="text-slate-600">Fatigue reduction</span>\n                    <strong className="text-emerald-700">\n                      +{formatStageSupplyEffectNumber(supplyEffects.fatigueReductionPct)}%\n                    </strong>\n                  </div>\n                  <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm">\n                    <span className="text-slate-600">Race support</span>\n                    <strong className="text-emerald-700">\n                      +{formatStageSupplyEffectNumber(supplyEffects.supportPoints)} pts\n                    </strong>\n                  </div>\n                  <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm">\n                    <span className="text-slate-600">Post-stage recovery</span>\n                    <strong className="text-emerald-700">\n                      +{formatStageSupplyEffectNumber(supplyEffects.recoveryBonusPoints)} pts\n                    </strong>\n                  </div>\n                </div>\n\n                <div className="mt-2 rounded-lg bg-white/80 px-3 py-2 text-xs leading-5 text-slate-600">\n                  <span className="font-semibold text-slate-800">Power gels:</span>{" "}\n                  {supplyEffects.powerGelsEffectivePerRider} effective per rider\n                  for the separate live-energy effect · up to +\n                  {formatStageSupplyEffectNumber(supplyEffects.powerGelLiveEnergyMax)}\n                  {" "}live energy.\n                </div>\n\n                {supplyEffects.fatiguePenaltyPct > 0 ? (\n                  <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium leading-5 text-amber-800">\n                    Supply shortage penalty: +\n                    {formatStageSupplyEffectNumber(supplyEffects.fatiguePenaltyPct)}%\n                    {" "}fatigue pressure. Positive supply effects are also capped\n                    by available stock.\n                  </div>\n                ) : null}\n\n                {supplyEffects.shortages.length > 0 ? (\n                  <div className="mt-2 text-xs leading-5 text-amber-800">\n                    <span className="font-semibold">Stock limits:</span>{" "}\n                    {supplyEffects.shortages.join(" · ")}\n                  </div>\n                ) : null}\n              </div>\n\n              <div className="mt-3 grid gap-2 text-sm">'''
+          card = replace_once(
+              card,
+              stage_supply_anchor,
+              stage_supply_replacement,
+              'Stage Supply Effects panel',
+          )
+
+          text = text[:card_start] + card + text[card_end:]
+          assert text != original, 'No RacePreparation changes were produced'
+          path.write_text(text, encoding='utf-8')
+          print('Patched Stage Supply help copy and Final Stage Calculation preview.')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit Stage Supply UI fix and remove one-off workflow
+        run: |
+          rm -f .github/workflows/chatgpt-fix-stage-supply-effects-20260901.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/dashboard/RacePreparation.tsx .github/workflows/chatgpt-fix-stage-supply-effects-20260901.yml
+          git commit -m 'Show Stage Supply effects in final calculation'
+          git pull --rebase origin main
+          git push origin main
