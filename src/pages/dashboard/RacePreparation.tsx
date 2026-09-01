@@ -13,6 +13,7 @@
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import appI18n from "../../i18n";
 import type { TFunction } from "i18next";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router";
@@ -300,6 +301,72 @@ const fullMonthLabels = [
   "November",
   "December",
 ];
+
+const RACE_PREP_LOCALES: Record<string, string> = {
+  en: "en-GB",
+  "sr-Latn": "sr-Latn-RS",
+  de: "de-DE",
+  hr: "hr-HR",
+  es: "es-ES",
+  it: "it-IT",
+  fr: "fr-FR",
+  ru: "ru-RU",
+};
+
+function racePrepText(key: string, options: Record<string, unknown> = {}): string {
+  return String(appI18n.t(key, { ns: "racePreparation", ...options }));
+}
+
+function getRacePrepLocale(): string {
+  const language = appI18n.resolvedLanguage || appI18n.language || "en";
+  const normalized = language.startsWith("sr") ? "sr-Latn" : language.split("-")[0];
+  return RACE_PREP_LOCALES[normalized] || "en-GB";
+}
+
+function localizedGameMonth(month: number, style: "short" | "long" = "short"): string {
+  const safeMonth = Math.min(12, Math.max(1, Number(month) || 1));
+  return new Intl.DateTimeFormat(getRacePrepLocale(), {
+    month: style,
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(2026, safeMonth - 1, 1)));
+}
+
+function localizeRacePrepBackendText(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return raw;
+  const exact: Record<string, string> = {
+    "Race Ready": "screen.raceReady",
+    Fit: "screen.fit",
+    Leader: "riderRoles.teamLeader",
+    Sprinter: "riderRoles.sprinter",
+    Climber: "riderRoles.climber",
+    Domestique: "riderRoles.helper",
+    Breakaway: "riderRoles.breakawayRider",
+    "Breakaway Rider": "riderRoles.breakawayRider",
+    "All-rounder": "screen.allRounder",
+    "Free Role": "screen.freeRole",
+    "Follow Stage Role": "screen.followStageRole",
+    "Default Race Setup": "screen.defaultRaceSetup",
+    "Missing Stage Plans": "screen.missingStagePlans",
+    "Missing Stage Plan": "screen.missingStagePlan",
+    Open: "screen.statusOpenValue",
+    Locked: "screen.statusLockedValue",
+    "No Sport Director selected. Tactics execution may be weaker.": "screen.validationNoSportDirector",
+    "No Mechanic selected. Mechanical and equipment support may be weaker.": "screen.validationNoMechanic",
+    "No race-level assets selected.": "screen.validationNoAssets",
+  };
+  const exactKey = exact[raw];
+  if (exactKey) return racePrepText(exactKey);
+
+  const riderCount = raw.match(/^Selected rider count (\d+) is outside allowed range (\d+)[–-](\d+)\.$/);
+  if (riderCount) {
+    return racePrepText("screen.validationSelectedRiders", {
+      count: riderCount[1], min: riderCount[2], max: riderCount[3],
+    });
+  }
+  return raw;
+}
+
 
 function asRecord(value: unknown): JsonRecord {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -649,7 +716,7 @@ function formatGameDate(value: unknown) {
   const parts = parseDateParts(value);
   if (!parts) return "—";
 
-  return `S${parts.season} · ${monthLabels[parts.month - 1]} ${String(
+  return `S${parts.season} · ${localizedGameMonth(parts.month, "short")} ${String(
     parts.day,
   ).padStart(2, "0")}`;
 }
@@ -658,9 +725,7 @@ function formatFullGameDate(value: unknown) {
   const parts = parseDateParts(value);
   if (!parts) return "—";
 
-  return `Season ${parts.season} - ${
-    fullMonthLabels[parts.month - 1]
-  } ${String(parts.day).padStart(2, "0")}`;
+  return `${racePrepText("screen.season")} ${parts.season} - ${localizedGameMonth(parts.month, "long")} ${String(parts.day).padStart(2, "0")}`;
 }
 
 function formatFullStageDateTime(stage: JsonRecord) {
@@ -3916,10 +3981,10 @@ export default function RacePreparationPage(): JSX.Element {
                       <div className="space-y-2">
                         {quote.errors.map((error) => (
                           <div
-                            key={error}
+                            key={localizeRacePrepBackendText(error)}
                             className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800"
                           >
-                            {error}
+                            {localizeRacePrepBackendText(error)}
                           </div>
                         ))}
                       </div>
@@ -3933,10 +3998,10 @@ export default function RacePreparationPage(): JSX.Element {
                       <div className="mt-4 space-y-2">
                         {quote.warnings.map((warning) => (
                           <div
-                            key={warning}
+                            key={localizeRacePrepBackendText(warning)}
                             className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800"
                           >
-                            {warning}
+                            {localizeRacePrepBackendText(warning)}
                           </div>
                         ))}
                       </div>
@@ -4030,7 +4095,7 @@ export default function RacePreparationPage(): JSX.Element {
 
                 <ul className="mt-3 list-disc space-y-2 pl-5 text-sm font-semibold text-red-700">
                   {submitPlanWarnings.map((warning) => (
-                    <li key={warning}>{warning}</li>
+                    <li key={localizeRacePrepBackendText(warning)}>{localizeRacePrepBackendText(warning)}</li>
                   ))}
                 </ul>
 
@@ -4574,7 +4639,7 @@ function RaceHeaderStageChip({
 
   const stageNumber = String(stage.stage_number ?? index + 1);
   const kind = getStageHeaderProfileKind(stage);
-  const title = `${t("stagePlans.stage", { stage: stageNumber })}: ${getStageProfileLabel(stage)} · ${
+  const title = `${t("stagePlans.stage", { stage: stageNumber })}: ${localizeRacePrepBackendText(getStageProfileLabel(stage))} · ${
     getStageDistance(stage) || t("header.distancePending")
   }`;
   const hasProfileChart = profile
@@ -4939,7 +5004,7 @@ function RaceHeaderCard({
                     ].join(" ")}
                     title={option.name}
                   >
-                    <span className="block">{option.label}</span>
+                    <span className="block">{localizeRacePrepBackendText(option.label)}</span>
                     <span className="block max-w-[180px] truncate text-[11px] font-medium opacity-75">
                       {option.name}
                     </span>
@@ -5088,9 +5153,7 @@ function RacePlanBonusPreview({
     <RacePackageCard title="Race Plan Bonus Preview">
       <div className="space-y-3" onMouseLeave={() => setActiveGroupKey(null)}>
         <div>
-          <h4 className="text-sm font-semibold text-slate-900">
-            Standardized Race Bonus Percentages
-          </h4>
+          <h4 className="text-sm font-semibold text-slate-900">{racePrepText("screen.bonusStandardized")}</h4>
           <p className="mt-1 text-xs text-slate-500">
             Race staff, race assets, and team policies are converted into these
             standardized race-engine percentage bonuses. Hover or click a card
@@ -5193,9 +5256,7 @@ function StandardizedBonusCard({
               <div className="text-sm font-semibold text-slate-900">
                 {displayName}
               </div>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                details
-              </span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">{racePrepText("screen.details")}</span>
             </div>
 
             <div className="mt-1 text-xs leading-5 text-slate-500">
@@ -6888,11 +6949,11 @@ function formatGameTimestampLabel(value: number | null) {
 
   const date = new Date(value);
   const season = date.getUTCFullYear() - 1999;
-  const weekday = date.toLocaleDateString(undefined, {
+  const weekday = date.toLocaleDateString(getRacePrepLocale(), {
     weekday: "short",
     timeZone: "UTC",
   });
-  const monthLabel = monthLabels[date.getUTCMonth()] ?? "—";
+  const monthLabel = localizedGameMonth(date.getUTCMonth() + 1, "short");
   const day = String(date.getUTCDate()).padStart(2, "0");
   const hour = String(date.getUTCHours()).padStart(2, "0");
   const minute = String(date.getUTCMinutes()).padStart(2, "0");
@@ -6950,8 +7011,8 @@ function getStagePlanLockInfo({
     statusLabel: isLocked ? "Locked" : "Open",
     statusTone: isLocked ? ("locked" as const) : ("open" as const),
     statusHint: isLocked
-      ? "This stage plan is locked because the current game time is already at or after the stage lock time."
-      : "This stage plan is still open and can be edited until the lock time is reached.",
+      ? racePrepText("screen.lockedLockHint")
+      : racePrepText("screen.openLockHint"),
     lockMessage: isLocked
       ? `Stage Plan locked. This stage starts in less than ${STAGE_PLAN_LOCK_HOURS_BEFORE_START} hours, so changes can no longer be saved.`
       : "",
@@ -7829,9 +7890,7 @@ function StagePlansTab({
               type="button"
               onClick={() => onOpenRacePreview(raceId)}
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Open Race Page
-            </button>
+            >{racePrepText("screen.openRacePage")}</button>
           )}
         </div>
 
@@ -8014,14 +8073,14 @@ function StagePlansTab({
         ].join(" ")}
       >
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="font-semibold text-slate-900">Stage Plan lock</span>
+          <span className="font-semibold text-slate-900">{racePrepText("screen.stagePlanLock")}</span>
           <span className="text-slate-400">·</span>
           <span className="text-slate-700">
-            Lock time: {lockInfo.lockAtLabel}
+            {racePrepText("screen.lockTime")}: {lockInfo.lockAtLabel}
           </span>
           <span className="text-slate-400">·</span>
           <span className="text-slate-700">
-            Stage start: {lockInfo.stageStartLabel}
+            {racePrepText("screen.stageStart")}: {lockInfo.stageStartLabel}
           </span>
           <span className="text-slate-400">·</span>
           <span
@@ -8066,13 +8125,11 @@ function StagePlansTab({
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
           <div className="space-y-1 text-sm text-slate-600">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold text-slate-900">
-                Selected stage save
-              </span>
+              <span className="font-semibold text-slate-900">{racePrepText("screen.selectedStageSave")}</span>
               <span className="text-slate-400">·</span>
               <span>{lockInfo.lockLabel}</span>
               <span className="text-slate-400">·</span>
-              <span>Lock time: {lockInfo.lockAtLabel}</span>
+              <span>{racePrepText("screen.lockTime")}: {lockInfo.lockAtLabel}</span>
               <span className="text-slate-400">·</span>
               <span
                 className={[
@@ -8102,7 +8159,7 @@ function StagePlansTab({
                     ],
                   ].join(" ")}
                 >
-                  {selectedStageReadiness.readiness_label}
+                  {localizeRacePrepBackendText(selectedStageReadiness.readiness_label)}
                 </span>
               ) : null}
             </div>
@@ -8112,7 +8169,7 @@ function StagePlansTab({
                   Last saved {formatTimestampLabel(selectedDraft.lastSavedAt)}
                 </span>
               ) : (
-                <span>Not saved yet</span>
+                <span>{racePrepText("screen.notSavedYet")}</span>
               )}
             </div>
             {isU23ManagedRace ? (
@@ -8121,7 +8178,7 @@ function StagePlansTab({
               </div>
             ) : selectedStageReadiness?.recommended_action ? (
               <div className="text-xs text-slate-500">
-                {selectedStageReadiness.recommended_action}
+                {localizeRacePrepBackendText(selectedStageReadiness.recommended_action)}
               </div>
             ) : null}
           </div>
@@ -8611,19 +8668,19 @@ function StageWeatherMiniCard({
       {hasWeather ? (
         <div className="mt-2 grid gap-2 text-sm text-slate-700 sm:grid-cols-3">
           <div>
-            <div className="text-[11px] text-slate-400">Temp</div>
+            <div className="text-[11px] text-slate-400">{racePrepText("screen.temp")}</div>
             <div className="font-semibold text-slate-900">
               {temperature !== null ? `${temperature.toFixed(1)}°C` : "—"}
             </div>
           </div>
           <div>
-            <div className="text-[11px] text-slate-400">Wind</div>
+            <div className="text-[11px] text-slate-400">{racePrepText("screen.wind")}</div>
             <div className="font-semibold text-slate-900">
               {wind !== null ? `${Math.round(wind)} km/h` : "—"}
             </div>
           </div>
           <div>
-            <div className="text-[11px] text-slate-400">Rain</div>
+            <div className="text-[11px] text-slate-400">{racePrepText("screen.rain")}</div>
             <div className="font-semibold text-slate-900">{rainLabel}</div>
           </div>
         </div>
@@ -9224,7 +9281,7 @@ function StageCardsScroller({
                 stagePlanReadinessBadgeClasses[readiness.ui_tone],
               ].join(" ")}
             >
-              {readiness.readiness_label}
+              {localizeRacePrepBackendText(readiness.readiness_label)}
             </span>
           ) : null}
         </div>
@@ -9234,7 +9291,7 @@ function StageCardsScroller({
         </div>
 
         <div className="mt-1 text-xs opacity-75">
-          {getStageProfileLabel(stage)} · {getStageDistance(stage) || "—"}
+          {localizeRacePrepBackendText(getStageProfileLabel(stage))} · {getStageDistance(stage) || "—"}
         </div>
 
         {weatherCanceled ? (
@@ -9254,7 +9311,7 @@ function StageCardsScroller({
           </div>
         ) : readiness?.recommended_action ? (
           <div className="mt-2 line-clamp-2 text-[11px] opacity-70">
-            {readiness.recommended_action}
+            {localizeRacePrepBackendText(readiness.recommended_action)}
           </div>
         ) : null}
       </button>
@@ -9533,19 +9590,17 @@ function RoleExplanationTooltip({ stage }: { stage?: JsonRecord | null }) {
       <div className="space-y-2">
         {STAGE_TACTIC_PLAN_OPTIONS.map((option) => (
           <div key={option.value}>
-            <span className="font-semibold text-slate-900">{option.label}</span>{" "}
+            <span className="font-semibold text-slate-900">{localizeRacePrepBackendText(option.label)}</span>{" "}
             — {option.description}
           </div>
         ))}
       </div>
 
-      <div className="mb-2 mt-4 text-sm font-semibold text-slate-900">
-        Rider stage roles
-      </div>
+      <div className="mb-2 mt-4 text-sm font-semibold text-slate-900">{racePrepText("screen.riderStageRoles")}</div>
       <div className="space-y-2">
         {STAGE_RIDER_ROLE_OPTIONS.map((option) => (
           <div key={option.value}>
-            <span className="font-semibold text-slate-900">{option.label}</span>{" "}
+            <span className="font-semibold text-slate-900">{localizeRacePrepBackendText(option.label)}</span>{" "}
             — {option.description}
           </div>
         ))}
@@ -10392,12 +10447,8 @@ function StageRiderEquipmentCard({
     <section className="flex h-full flex-col rounded-2xl border bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
-            1. Rider Equipment Packages
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Choose one equipment package for each rider for this stage.
-          </p>
+          <h2 className="text-lg font-semibold text-slate-900">{racePrepText("screen.riderEquipmentPackages")}</h2>
+          <p className="mt-1 text-sm text-slate-600">{racePrepText("screen.chooseEquipmentPackage")}</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           {showSportDirectorAction ? (
@@ -11090,9 +11141,7 @@ function StageRaceSuppliesCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
-            4. Stage Race Supplies
-          </h2>
+          <h2 className="text-lg font-semibold text-slate-900">{racePrepText("screen.stageRaceSupplies")}</h2>
           <p className="mt-1 text-sm text-slate-600">
             Team-level supply setup for this stage. Consumables are applied per
             rider; Race Jersey Kit is mandatory and Rain Jackets are a team-wide
@@ -11234,9 +11283,7 @@ function StageRaceSuppliesCard({
       <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">
-              Stage supply setup
-            </h3>
+            <h3 className="text-sm font-semibold text-slate-900">{racePrepText("screen.stageSupplySetup")}</h3>
             <p className="mt-1 text-xs text-slate-500">
               Choose the per-rider consumables and team-wide reusable items for
               this selected stage.
@@ -11249,9 +11296,7 @@ function StageRaceSuppliesCard({
         </div>
 
         <div className="mt-4 space-y-3">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Stage supplies
-          </div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{racePrepText("screen.stageSuppliesSummary")}</div>
 
           <StageSupplyRowInput
             label="Bidons"
@@ -11356,18 +11401,14 @@ function StageRaceSuppliesCard({
       <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">
-              Stage stock check
-            </h3>
+            <h3 className="text-sm font-semibold text-slate-900">{racePrepText("screen.stageStockCheck")}</h3>
             <p className="mt-1 text-xs text-slate-500">
               Needed for this stage compared with currently available club
               stock.
             </p>
           </div>
 
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
-            Plan only
-          </span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">{racePrepText("screen.planOnly")}</span>
         </div>
 
         <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -11613,13 +11654,11 @@ function StageFinalCalculationCard({
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
-            5. Final Stage Calculation
-          </h2>
+          <h2 className="text-lg font-semibold text-slate-900">{racePrepText("screen.finalStageCalculation")}</h2>
           <p className="mt-1 text-sm text-slate-600">
             {isTTStage
-              ? "Time-trial engine preview for equipment, support, fatigue, weather and pacing risk."
-              : "Team-level engine preview for this exact stage setup: Race Plan bonuses, equipment, supplies, weather and risk factors."}
+              ? racePrepText("screen.ttFinalCalcDesc")
+              : racePrepText("screen.finalCalcDesc")}
           </p>
         </div>
 
@@ -11773,9 +11812,7 @@ function StageFinalCalculationCard({
 
           <div className="mt-4 space-y-4">
             <div className="rounded-xl border border-slate-200 p-4">
-              <div className="text-sm font-semibold text-slate-900">
-                Race Plan bonuses
-              </div>
+              <div className="text-sm font-semibold text-slate-900">{racePrepText("screen.racePlanBonuses")}</div>
               <div className="mt-3 space-y-2">
                 {raceBonusRows.length > 0 ? (
                   raceBonusRows.map((row) => (
@@ -11805,28 +11842,26 @@ function StageFinalCalculationCard({
             </div>
 
             <div className="rounded-xl border border-slate-200 p-4">
-              <div className="text-sm font-semibold text-slate-900">
-                Stage supplies
-              </div>
+              <div className="text-sm font-semibold text-slate-900">{racePrepText("screen.stageSuppliesSummary")}</div>
               <div className="mt-3 grid gap-2 text-sm">
                 <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-                  <span>Bidons needed</span>
+                  <span>{racePrepText("screen.bidonsNeeded")}</span>
                   <strong>{needs.bidons_water_bottles}</strong>
                 </div>
                 <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-                  <span>Energy gels needed</span>
+                  <span>{racePrepText("screen.energyGelsNeeded")}</span>
                   <strong>{needs.energy_gels}</strong>
                 </div>
                 <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-                  <span>Nutrition packs needed</span>
+                  <span>{racePrepText("screen.nutritionPacksNeeded")}</span>
                   <strong>{needs.nutrition_packs}</strong>
                 </div>
                 <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-                  <span>Race jerseys needed</span>
+                  <span>{racePrepText("screen.raceJerseysNeeded")}</span>
                   <strong>{needs.race_jersey_complete}</strong>
                 </div>
                 <div className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-                  <span>Rain jackets needed</span>
+                  <span>{racePrepText("screen.rainJacketsNeeded")}</span>
                   <strong>{needs.rain_jackets}</strong>
                 </div>
               </div>
@@ -11894,7 +11929,7 @@ function StageTeamTacticCard({
           <p className="mt-1 text-sm text-slate-600">
             {isTTStage
               ? "Time-trial pacing plan and read-only engine roles for this selected stage."
-              : "Choose one clear role for each rider. Detailed race orders are set below in Individual Tactics."}
+              : racePrepText("screen.chooseRole")}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -11950,7 +11985,7 @@ function StageTeamTacticCard({
             >
               {tacticOptions.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {localizeRacePrepBackendText(option.label)}
                 </option>
               ))}
             </select>
@@ -11958,9 +11993,7 @@ function StageTeamTacticCard({
         ) : null}
 
         <div>
-          <div className="mb-2 text-sm font-semibold text-slate-900">
-            Rider stage roles
-          </div>
+          <div className="mb-2 text-sm font-semibold text-slate-900">{racePrepText("screen.riderStageRoles")}</div>
 
           {isTTStage ? (
             <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
@@ -12030,7 +12063,7 @@ function StageTeamTacticCard({
                   >
                     {STAGE_RIDER_ROLE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>
-                        {option.label}
+                        {localizeRacePrepBackendText(option.label)}
                       </option>
                     ))}
                   </select>
@@ -12083,9 +12116,7 @@ function StageIndividualTacticsCard({
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">
-            3. Individual Tactics
-          </h2>
+          <h2 className="text-lg font-semibold text-slate-900">{racePrepText("screen.individualTactics")}</h2>
           <p className="mt-1 text-sm text-slate-600">
             {isTTStage
               ? "Time-trial pacing is split into Before split and After split."
@@ -12175,7 +12206,7 @@ function StageIndividualTacticsCard({
                   {STAGE_INDIVIDUAL_TACTIC_OPTIONS.map((option) => (
                     <div key={option.value}>
                       <span className="font-semibold text-slate-900">
-                        {option.label}
+                        {localizeRacePrepBackendText(option.label)}
                       </span>{" "}
                       — {option.description}
                     </div>
@@ -12282,7 +12313,7 @@ function StageIndividualTacticsCard({
                     >
                       {phaseOptions.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {localizeRacePrepBackendText(option.label)}
                         </option>
                       ))}
                     </select>
@@ -12804,7 +12835,7 @@ function RaceSharpnessInlineText({
     <span
       className={`shrink-0 text-xs font-semibold ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
     >
-      Race Sharpness: {percent}/100 · {sharpness.race_sharpness_label}
+      Race Sharpness: {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
     </span>
   );
 }
@@ -12833,7 +12864,7 @@ function RaceSharpnessDetailBox({
             Race Sharpness
           </div>
           <div className="mt-0.5 text-sm font-bold">
-            {percent}/100 · {sharpness.race_sharpness_label}
+            {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
           </div>
         </div>
         <div className="text-right text-[11px] font-semibold opacity-80">
@@ -12849,7 +12880,7 @@ function RaceSharpnessDetailBox({
         />
       </div>
       <div className="mt-2 text-[11px] leading-relaxed opacity-85">
-        {sharpness.race_sharpness_message}
+        {localizeRacePrepBackendText(sharpness.race_sharpness_message)}
       </div>
       <div className="mt-2 rounded-lg bg-white/60 px-2 py-1.5 text-[11px] leading-relaxed opacity-90">
         Race sharpness improves rhythm, but it does not cancel heavy fatigue.
@@ -12942,9 +12973,9 @@ function RiderSelectionCard({
         {medicallyUnavailable ? (
           <div className="mt-3 space-y-2">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span>Role: {String(option.assigned_role ?? "—")}</span>
+              <span>{racePrepText("screen.role")}: {localizeRacePrepBackendText(option.assigned_role ?? "—")}</span>
               <span>·</span>
-              <span>Availability: {availabilityLabel}</span>
+              <span>{racePrepText("screen.availability")}: {localizeRacePrepBackendText(availabilityLabel)}</span>
             </div>
 
             <div className="rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs font-semibold text-red-800">
@@ -12963,13 +12994,13 @@ function RiderSelectionCard({
         ) : (
           <>
             <div className="mt-1 flex items-center justify-between gap-3 text-xs text-slate-500">
-              <span>Role: {String(option.assigned_role ?? "—")}</span>
+              <span>{racePrepText("screen.role")}: {localizeRacePrepBackendText(option.assigned_role ?? "—")}</span>
               <RaceSharpnessInlineText sharpness={raceSharpness} />
             </div>
 
             <div className="mt-2 text-xs text-slate-500">
-              Fatigue: {String(rider.fatigue ?? "—")} · Availability:{" "}
-              {availabilityLabel}
+              {racePrepText("screen.fatigue")}: {String(rider.fatigue ?? "—")} · {racePrepText("screen.availability")}:{" "}
+              {localizeRacePrepBackendText(availabilityLabel)}
             </div>
             <div className="mt-2 text-[11px] leading-relaxed text-slate-400">
               Starting freshness combines fatigue and race sharpness. High
