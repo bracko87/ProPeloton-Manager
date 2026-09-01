@@ -65,12 +65,12 @@ export function toNumber(
 //////////////////////////
 
 /**
- * Format a monetary value in a compact, human-readable way.
+ * Format an infrastructure monetary value in US dollars.
  *
  * Examples:
- * - 0         -> "€0"
- * - 1_200     -> "€1,200"
- * - 2_500_000 -> "€2.5M"
+ * - 0         -> "$0"
+ * - 1_200     -> "$1,200"
+ * - 2_500_000 -> "$2.5M"
  *
  * @param raw - Amount as number/string/unknown.
  */
@@ -102,37 +102,76 @@ export function formatCash(
     )
 
   if (abs >= 1_000_000_000) {
-    return `${sign}€${(
+    return `${sign}$${(
       abs / 1_000_000_000
     ).toFixed(1)}B`
   }
 
   if (abs >= 1_000_000) {
-    return `${sign}€${(
+    return `${sign}$${(
       abs / 1_000_000
     ).toFixed(1)}M`
   }
 
   if (abs >= 1_000) {
-    return `${sign}€${formatWithSeparators(
+    return `${sign}$${formatWithSeparators(
       abs,
     )}`
   }
 
-  return `${sign}€${abs.toFixed(0)}`
+  return `${sign}$${abs.toFixed(0)}`
 }
 
 //////////////////////////
 // Game date helpers
 //////////////////////////
 
+const infrastructureMonthLabels = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
+
+function normalizeCanonicalGameDate(
+  raw: string | null | undefined,
+): string | null {
+  if (!raw) {
+    return null
+  }
+
+  const trimmed = raw.trim()
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed
+  }
+
+  const timestamp = Date.parse(trimmed)
+
+  if (Number.isNaN(timestamp)) {
+    return null
+  }
+
+  return new Date(timestamp).toISOString().slice(0, 10)
+}
+
 /**
- * Format a game-date string into a stable "YYYY-MM-DD" representation.
+ * Format a stored canonical game date for display using the game's season
+ * notation instead of exposing the internal simulation year.
  *
- * If the input already looks like "YYYY-MM-DD", it is returned unchanged.
- * If the value cannot be parsed as a date, the raw string is returned.
+ * Examples:
+ * - 2000-01-11 -> "S1 · Jan 11"
+ * - 1999-12-21 -> "S0 · Dec 21"
  *
- * @param raw - Game date string (e.g. "2026-03-15") or null/undefined.
+ * Internal date arithmetic continues to use canonical YYYY-MM-DD values.
  */
 export function formatGameDate(
   raw: string | null | undefined,
@@ -141,34 +180,35 @@ export function formatGameDate(
     return 'TBD'
   }
 
-  const trimmed =
-    raw.trim()
+  const canonical = normalizeCanonicalGameDate(raw)
 
-  // Already in canonical game-date form.
-  if (
-    /^\d{4}-\d{2}-\d{2}$/.test(
-      trimmed,
-    )
-  ) {
-    return trimmed
+  if (!canonical) {
+    return raw.trim()
   }
 
-  const timestamp =
-    Date.parse(trimmed)
+  const match = canonical.match(/^(\d{4})-(\d{2})-(\d{2})$/)
 
-  if (
-    Number.isNaN(timestamp)
-  ) {
-    return trimmed
+  if (!match) {
+    return canonical
   }
 
-  // Normalise to UTC date-only string.
-  return new Date(timestamp)
-    .toISOString()
-    .slice(
-      0,
-      10,
-    )
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const season = year - 1999
+  const monthLabel = infrastructureMonthLabels[month - 1]
+
+  if (
+    !Number.isFinite(season) ||
+    season < 0 ||
+    !monthLabel ||
+    day < 1 ||
+    day > 31
+  ) {
+    return canonical
+  }
+
+  return `S${season} · ${monthLabel} ${day}`
 }
 
 /**
@@ -200,6 +240,7 @@ export function formatGameDays(
  * - a value parsable by the JS Date constructor.
  *
  * The returned value is always in "YYYY-MM-DD" form where possible.
+ * Display formatting must be applied separately with formatGameDate().
  *
  * @param gameDate - Base game date string.
  * @param rawDays - Number of days to add.
@@ -223,9 +264,7 @@ export function addGameDays(
     )
 
   if (days === 0) {
-    return formatGameDate(
-      gameDate,
-    )
+    return normalizeCanonicalGameDate(gameDate)
   }
 
   // If already in YYYY-MM-DD, construct a UTC date from it.
@@ -283,7 +322,7 @@ export function addGameDays(
  * - Values < 10 and non-integer: 1 decimal (e.g. 3.5 -> "3.5%").
  * - Other values: 0 decimals (e.g. 25 -> "25%").
  *
- * @param raw - Percentage value as number|string|unknown.
+ * @param raw - Percentage value as number|string/unknown.
  */
 export function formatAssetPercent(
   raw: unknown,
