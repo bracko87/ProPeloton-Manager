@@ -39,10 +39,11 @@ CRITICAL_KEYS = {
     'allRounder', 'statusOpenValue', 'statusLockedValue',
 }
 
-# Strings that may legitimately remain identical across languages because they are
-# protected/canonical game terms or internationally conventional labels.
+# These words are either protected/international or naturally identical in one or
+# more target languages (for example French "Fatigue" / "Distance" and German
+# "Phase"). Equality here is not evidence of English fallback.
 ALLOW_IDENTICAL = {
-    'start', 'sprint', 'raceJerseyKit',
+    'start', 'sprint', 'raceJerseyKit', 'phase', 'distance', 'fatigue',
 }
 
 
@@ -82,8 +83,6 @@ def main() -> None:
             for key in CRITICAL_KEYS - ALLOW_IDENTICAL:
                 value = str(screen.get(key, '')).strip()
                 en_value = str(en_screen.get(key, '')).strip()
-                # Very short technical tokens can naturally match; user-facing
-                # sentence/heading equality is what indicates fallback English.
                 if value == en_value and len(en_value) >= 6:
                     errors.append(f'{locale}: untranslated screen.{key}: {value!r}')
 
