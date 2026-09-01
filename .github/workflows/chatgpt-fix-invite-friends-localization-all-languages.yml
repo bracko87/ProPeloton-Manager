@@ -1,0 +1,81 @@
+name: Fix Invite Friends localization all languages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-fix-invite-friends-localization-all-languages.yml'
+      - '.github/scripts/fix_invite_friends_localization_20260901.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-build-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply Invite Friends localization fixes
+        run: python .github/scripts/fix_invite_friends_localization_20260901.py
+
+      - name: Validate Invite Friends locale coverage
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          locales = ['en', 'sr-Latn', 'de', 'hr', 'es', 'it', 'fr', 'ru']
+          base = Path('src/i18n/locales')
+          required = {
+              'v2Subtitle', 'v2LinkDescription', 'v2StatsTitle',
+              'v2TotalReferrals', 'v2PendingReferrals', 'v2ActivePlayers',
+              'v2PaidConversions', 'v2ActivityCoins', 'v2PaidCoins', 'v2TotalCoins',
+              'v2ActivityDescription', 'v2NoActivity', 'v2ActiveDays', 'v2Coins',
+              'v2MonthlyCapReached', 'v2PremiumConversion', 'v2CoinConversion',
+              'v2PaidConversion', 'v2RejectedDescription', 'v2PaidCompletedDescription',
+              'v2ActivityCompletedDescription', 'v2CappedDescription',
+              'v2PendingDescription', 'v2Step1', 'v2Step2', 'v2Step3', 'v2Step4',
+              'v2AntiAbuseNote'
+          }
+          for locale in locales:
+              data = json.loads((base / locale / 'accountPages.json').read_text(encoding='utf-8'))
+              invite = data['invite']
+              missing = sorted(required - set(invite))
+              if missing:
+                  raise SystemExit(f'{locale}: missing keys {missing}')
+              if 'maximum of 10' in ' '.join(map(str, invite.values())).lower():
+                  raise SystemExit(f'{locale}: removed maximum-10 sentence is still present')
+              for key in ('v2ActiveDays', 'v2PaidCompletedDescription', 'v2PendingDescription'):
+                  if key not in invite:
+                      raise SystemExit(f'{locale}: missing {key}')
+          print('Invite Friends locale coverage OK for all 8 languages')
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit Invite Friends localization
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/InviteFriends.tsx src/i18n/locales/*/accountPages.json
+          if git diff --cached --quiet; then
+            echo 'No Invite Friends changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Localize Invite Friends in all languages'
+          git push origin main
