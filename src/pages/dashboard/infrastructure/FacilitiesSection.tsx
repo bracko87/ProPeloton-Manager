@@ -1,17 +1,11 @@
-/**
- * FacilitiesSection.tsx
- *
- * Facilities UI with visual progression by infrastructure level.
- * Existing build/upgrade/cancel callbacks remain owned by Infrastructure.tsx;
- * this file only changes presentation and level-aware image rendering.
- */
-
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { supabase } from '@/lib/supabase'
 import type {
   ActiveJobView,
   FacilityJobCapacityRow,
   FacilityKey,
+  FacilityUpgradeConfigRow,
   InfrastructureCancellationQuoteRow,
   InfrastructureItem,
 } from './infrastructureTypes'
@@ -33,6 +27,20 @@ function facilityLevel(item: InfrastructureItem): number {
 
 function facilityMaxLevel(item: InfrastructureItem): number {
   return Math.max(facilityLevel(item), Math.floor(Number(item.maxValue) || 1), 1)
+}
+
+function configForLevel(
+  configs: FacilityUpgradeConfigRow[],
+  item: InfrastructureItem,
+  level: number,
+): FacilityUpgradeConfigRow | null {
+  return configs.find(row => row.facility_key === item.id && row.target_level === level) ?? null
+}
+
+function maintenanceLabel(): string {
+  // Facilities currently have no separate maintenance-cost field in the
+  // canonical infrastructure facility configuration. Do not invent a value.
+  return 'No separate cost configured'
 }
 
 function FacilityVisual({
@@ -205,14 +213,25 @@ function ActiveJobsPanel({
   )
 }
 
+function BenefitLine({ label, value }: { label: string; value: string | null | undefined }): JSX.Element | null {
+  if (!value) return null
+  return (
+    <div className="text-sm leading-5 text-gray-700">
+      <span className="font-semibold text-gray-900">{label}</span> {value}
+    </div>
+  )
+}
+
 function FacilityDetailsModal({
   item,
+  configs,
   isProcessing,
   onClose,
   onAction,
   nowMs,
 }: {
   item: InfrastructureItem
+  configs: FacilityUpgradeConfigRow[]
   isProcessing: boolean
   onClose: () => void
   onAction: (item: InfrastructureItem) => void
@@ -220,6 +239,12 @@ function FacilityDetailsModal({
 }): JSX.Element {
   const { t } = useTranslation('infrastructure')
   const isDisabled = isProcessing || !item.canAct
+  const currentLevel = facilityLevel(item)
+  const maxLevel = facilityMaxLevel(item)
+  const levelRows = Array.from({ length: maxLevel + 1 }, (_, level) => ({
+    level,
+    config: configForLevel(configs, item, level),
+  }))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
@@ -274,73 +299,75 @@ function FacilityDetailsModal({
               </div>
             )}
 
-            {item.impactLines && item.impactLines.length > 0 && (
-              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-                <div className="text-sm font-semibold text-blue-900">{t('facilities.currentImpact')}</div>
-                <div className="mt-2 space-y-1">
-                  {item.impactLines.map((line, index) => (
-                    <div key={`${item.id}:impact:${index}`} className="text-sm text-blue-800">{line}</div>
-                  ))}
-                </div>
+            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-gray-900">All facility levels</div>
+                <div className="text-xs text-gray-500">Current: Level {currentLevel}</div>
               </div>
-            )}
+              <div className="space-y-3">
+                {levelRows.map(({ level, config }) => {
+                  const isCurrent = level === currentLevel
+                  const isOwned = level <= currentLevel
+                  const fallbackUnlock = isCurrent && !config
+                    ? item.impactLines?.join(' · ')
+                    : level === 0
+                      ? 'Facility not built. No level-specific unlocks are active.'
+                      : 'Base level; no separate upgrade configuration entry exists.'
+                  const fallbackEffect = isCurrent && !config
+                    ? 'Current connected gameplay effects are shown by the active impact summary.'
+                    : level === 0
+                      ? 'No facility-level bonus is active.'
+                      : null
 
-            {!item.pendingJob && item.nextValueLabel && (
-              <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-gray-900">{t('facilities.nextLevel')}</div>
-                  {facilityLevel(item) < facilityMaxLevel(item) && (
-                    <span className="text-xs font-medium text-gray-500">
-                      Level {facilityLevel(item)} → {facilityLevel(item) + 1}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-2 text-sm text-gray-700">{item.nextValueLabel}</div>
-                {item.unlockSummary && (
-                  <div className="mt-3 text-sm text-gray-700">
-                    <span className="font-semibold">{t('facilities.unlock')}</span> {item.unlockSummary}
-                  </div>
-                )}
-                {item.effectSummary && (
-                  <div className="mt-2 text-sm text-gray-700">
-                    <span className="font-semibold">{t('facilities.effect')}</span> {item.effectSummary}
-                  </div>
-                )}
-
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <div className="text-xs text-gray-400">{t('common.cost')}</div>
-                    <div className="mt-1 text-sm font-semibold text-gray-900">{formatCash(item.previewCostCash)}</div>
-                  </div>
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <div className="text-xs text-gray-400">{t('facilities.constructionTime')}</div>
-                    <div className="mt-1 text-sm font-semibold text-gray-900">{formatGameDays(item.previewDurationGameDays)}</div>
-                  </div>
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-                    <div className="text-xs text-gray-400">{t('facilities.estimatedCompletion')}</div>
-                    <div className="mt-1 text-sm font-semibold text-gray-900">{formatGameDate(item.previewCompleteGameDate)}</div>
-                  </div>
-                </div>
+                  return (
+                    <div
+                      key={`${item.id}:level:${level}`}
+                      className={`rounded-lg border p-3 ${
+                        isCurrent
+                          ? 'border-blue-200 bg-blue-50'
+                          : isOwned
+                            ? 'border-green-100 bg-green-50/50'
+                            : 'border-gray-100 bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="font-semibold text-gray-900">Level {level}</div>
+                        <div className="flex items-center gap-2 text-xs">
+                          {isCurrent && <span className="rounded-full bg-blue-100 px-2 py-1 font-semibold text-blue-700">Current</span>}
+                          {!isCurrent && isOwned && <span className="rounded-full bg-green-100 px-2 py-1 font-medium text-green-700">Unlocked</span>}
+                        </div>
+                      </div>
+                      <div className="mt-2 space-y-1.5">
+                        <BenefitLine label="Unlocks:" value={config?.unlock_summary ?? fallbackUnlock} />
+                        <BenefitLine label="Effect:" value={config?.effect_summary ?? fallbackEffect} />
+                        <BenefitLine label="Maintenance:" value={maintenanceLabel()} />
+                      </div>
+                      {config && (
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+                          <div>
+                            <span className="block text-gray-400">Upgrade cost</span>
+                            <span className="font-medium text-gray-800">{formatCash(config.cost_cash)}</span>
+                          </div>
+                          <div>
+                            <span className="block text-gray-400">Construction</span>
+                            <span className="font-medium text-gray-800">{formatGameDays(config.duration_game_days)}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
-            )}
+            </div>
 
             {item.pendingJob && (
               <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
                 <div className="text-sm font-semibold text-yellow-900">{t('facilities.jobProgress')}</div>
                 <div className="mt-2 text-sm text-yellow-800">{item.pendingSummary}</div>
                 <div className="mt-3 grid grid-cols-1 gap-3 text-sm text-yellow-800 sm:grid-cols-3">
-                  <div>
-                    <span className="block text-yellow-700">{t('common.duration')}</span>
-                    <span className="font-semibold">{formatGameDays(item.pendingJob.duration_game_days)}</span>
-                  </div>
-                  <div>
-                    <span className="block text-yellow-700">{t('common.completes')}</span>
-                    <span className="font-semibold">{formatGameDate(item.pendingJob.complete_game_date)}</span>
-                  </div>
-                  <div>
-                    <span className="block text-yellow-700">{t('common.costPaid')}</span>
-                    <span className="font-semibold">{formatCash(item.pendingJob.cost_cash)}</span>
-                  </div>
+                  <div><span className="block text-yellow-700">{t('common.duration')}</span><span className="font-semibold">{formatGameDays(item.pendingJob.duration_game_days)}</span></div>
+                  <div><span className="block text-yellow-700">{t('common.completes')}</span><span className="font-semibold">{formatGameDate(item.pendingJob.complete_game_date)}</span></div>
+                  <div><span className="block text-yellow-700">{t('common.costPaid')}</span><span className="font-semibold">{formatCash(item.pendingJob.cost_cash)}</span></div>
                 </div>
                 {!item.pendingJob.complete_game_date && (
                   <div className="mt-2 text-xs text-yellow-700">
@@ -361,11 +388,7 @@ function FacilityDetailsModal({
                 : t('facilities.noUpgrade')}
           </div>
           <div className="flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
+            <button type="button" onClick={onClose} className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
               {t('common.cancel')}
             </button>
             <button
@@ -389,12 +412,14 @@ function FacilityDetailsModal({
 
 function InfrastructureCard({
   item,
+  configs,
   isProcessing,
   onAction,
   onDetails,
   nowMs,
 }: {
   item: InfrastructureItem
+  configs: FacilityUpgradeConfigRow[]
   isProcessing: boolean
   onAction: (item: InfrastructureItem) => void
   onDetails: (item: InfrastructureItem) => void
@@ -406,6 +431,14 @@ function InfrastructureCard({
     : item.owned
       ? 'bg-green-100 text-green-700'
       : 'bg-gray-100 text-gray-600'
+  const currentLevel = facilityLevel(item)
+  const maxLevel = facilityMaxLevel(item)
+  const currentConfig = configForLevel(configs, item, currentLevel)
+  const nextConfig = currentLevel < maxLevel ? configForLevel(configs, item, currentLevel + 1) : null
+  const currentUnlock = currentConfig?.unlock_summary ?? (item.impactLines?.length ? item.impactLines.join(' · ') : currentLevel === 0 ? 'Facility not built.' : 'Base facility level.')
+  const currentEffect = currentConfig?.effect_summary ?? (currentLevel === 0 ? 'No facility-level bonus is active.' : null)
+  const nextUnlock = nextConfig?.unlock_summary ?? item.unlockSummary
+  const nextEffect = nextConfig?.effect_summary ?? item.effectSummary
 
   return (
     <article className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md">
@@ -415,17 +448,10 @@ function InfrastructureCard({
         className="group relative block aspect-[16/8] w-full overflow-hidden bg-gray-100 text-left sm:aspect-[16/7]"
         aria-label={`${item.name} ${t('common.details')}`}
       >
-        <FacilityVisual
-          item={item}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.015]"
-        />
+        <FacilityVisual item={item} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.015]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/10" />
-        <div className="absolute left-3 top-3 sm:left-4 sm:top-4">
-          <LevelBadge item={item} dark />
-        </div>
-        <span className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm sm:right-4 sm:top-4 ${badgeClasses}`}>
-          {item.badgeLabel}
-        </span>
+        <div className="absolute left-3 top-3 sm:left-4 sm:top-4"><LevelBadge item={item} dark /></div>
+        <span className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm sm:right-4 sm:top-4 ${badgeClasses}`}>{item.badgeLabel}</span>
         <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
           <h3 className="text-base font-semibold text-white sm:text-lg">{item.name}</h3>
           <p className="mt-1 line-clamp-2 text-xs text-white/85 sm:text-sm">{item.description}</p>
@@ -435,34 +461,36 @@ function InfrastructureCard({
       <div className="p-4">
         <div className="mb-4 space-y-2">
           <p className="text-sm leading-5 text-gray-600">{item.description}</p>
-          {item.longDescription && (
-            <p className="text-sm leading-6 text-gray-600">{item.longDescription}</p>
-          )}
+          {item.longDescription && <p className="text-sm leading-6 text-gray-600">{item.longDescription}</p>}
         </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-medium text-gray-700">{item.valueLabel}</div>
-          {facilityLevel(item) < facilityMaxLevel(item) && !item.pendingJob && (
-            <div className="text-xs text-gray-400">Level {facilityLevel(item)} → {facilityLevel(item) + 1}</div>
-          )}
+        <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-sm font-semibold text-blue-950">Current Level {currentLevel}</div>
+            <span className="text-xs font-medium text-blue-700">Active now</span>
+          </div>
+          <div className="mt-2 space-y-1.5">
+            <BenefitLine label="Unlocks:" value={currentUnlock} />
+            <BenefitLine label="Effect:" value={currentEffect} />
+            <BenefitLine label="Maintenance:" value={maintenanceLabel()} />
+          </div>
         </div>
 
-        {!item.pendingJob && item.canAct && (
+        {!item.pendingJob && currentLevel < maxLevel && (
           <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
-            {item.nextValueLabel && <div className="text-sm font-semibold text-gray-800">{item.nextValueLabel}</div>}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-sm font-semibold text-gray-900">Next Level {currentLevel + 1}</div>
+              <div className="text-xs text-gray-400">Level {currentLevel} → {currentLevel + 1}</div>
+            </div>
+            <div className="mt-2 space-y-1.5">
+              <BenefitLine label="Unlocks:" value={nextUnlock} />
+              <BenefitLine label="Effect:" value={nextEffect} />
+              <BenefitLine label="Maintenance:" value={maintenanceLabel()} />
+            </div>
             <div className="mt-3 grid grid-cols-1 gap-3 text-xs text-gray-600 sm:grid-cols-3">
-              <div>
-                <span className="block text-gray-400">{t('common.cost')}</span>
-                <span className="font-medium text-gray-800">{formatCash(item.previewCostCash)}</span>
-              </div>
-              <div>
-                <span className="block text-gray-400">{t('facilities.constructionTime')}</span>
-                <span className="font-medium text-gray-800">{formatGameDays(item.previewDurationGameDays)}</span>
-              </div>
-              <div>
-                <span className="block text-gray-400">{t('facilities.estimatedCompletion')}</span>
-                <span className="font-medium text-gray-800">{formatGameDate(item.previewCompleteGameDate)}</span>
-              </div>
+              <div><span className="block text-gray-400">{t('common.cost')}</span><span className="font-medium text-gray-800">{formatCash(item.previewCostCash)}</span></div>
+              <div><span className="block text-gray-400">{t('facilities.constructionTime')}</span><span className="font-medium text-gray-800">{formatGameDays(item.previewDurationGameDays)}</span></div>
+              <div><span className="block text-gray-400">{t('facilities.estimatedCompletion')}</span><span className="font-medium text-gray-800">{formatGameDate(item.previewCompleteGameDate)}</span></div>
             </div>
           </div>
         )}
@@ -475,14 +503,12 @@ function InfrastructureCard({
               {' · '}{t('common.completes')}: {formatGameDate(item.pendingJob.complete_game_date)}
             </div>
             {!item.pendingJob.complete_game_date && (
-              <div className="mt-1 text-xs text-yellow-700">
-                {t('facilities.realTimeRemaining')} {formatTimeRemaining(item.pendingJob.complete_at, nowMs)}
-              </div>
+              <div className="mt-1 text-xs text-yellow-700">{t('facilities.realTimeRemaining')} {formatTimeRemaining(item.pendingJob.complete_at, nowMs)}</div>
             )}
           </div>
         )}
 
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="mt-4 flex items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => onDetails(item)}
@@ -533,6 +559,31 @@ export function FacilitiesSection({
   onOpenDetails: (item: InfrastructureItem) => void
   onCloseDetails: () => void
 }): JSX.Element {
+  const [configs, setConfigs] = useState<FacilityUpgradeConfigRow[]>([])
+
+  useEffect(() => {
+    let active = true
+
+    const loadConfigs = async () => {
+      const { data, error } = await supabase
+        .from('infrastructure_facility_upgrade_config')
+        .select('facility_key,target_level,cost_cash,duration_game_days,unlock_summary,effect_summary')
+        .order('facility_key')
+        .order('target_level')
+
+      if (!active || error || !data) return
+      setConfigs(data as FacilityUpgradeConfigRow[])
+    }
+
+    void loadConfigs()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const facilityConfigs = useMemo(() => configs, [configs])
+
   return (
     <>
       <ActiveJobsPanel
@@ -549,6 +600,7 @@ export function FacilitiesSection({
           <InfrastructureCard
             key={`${item.type}:${item.id}`}
             item={item}
+            configs={facilityConfigs}
             onAction={onFacilityAction}
             onDetails={onOpenDetails}
             isProcessing={processingKey === `${item.type}:${item.id}`}
@@ -560,6 +612,7 @@ export function FacilitiesSection({
       {selectedItem && selectedItem.type === 'facility' && (
         <FacilityDetailsModal
           item={selectedItem}
+          configs={facilityConfigs}
           isProcessing={processingKey === `${selectedItem.type}:${selectedItem.id}`}
           onClose={onCloseDetails}
           onAction={onFacilityAction}
