@@ -122,7 +122,6 @@
     "missingCode": "Referral code is missing.",
     "loadLinkFailed": "Unable to load your invite link right now.",
     "loadActivityFailed": "Unable to load referral activity right now.",
-
     "v2Subtitle": "Earn 2 Coins when an invited player becomes genuinely active, plus 40 Coins if that player later buys Premium or their first Coin package.",
     "v2LinkDescription": "Share your personal link. The referral is attached when your friend registers and creates their team.",
     "v2StatsTitle": "Referral overview",
@@ -144,11 +143,11 @@
     "v2RejectedDescription": "This referral is no longer eligible for rewards.",
     "v2PaidCompletedDescription": "Paid conversion completed via {{type}}. The one-time 40-Coin reward was granted.",
     "v2ActivityCompletedDescription": "The player recorded activity on 3 separate real days. The 2-Coin activity reward was granted.",
-    "v2CappedDescription": "The player qualified as active, but your monthly limit of 10 free activity rewards had already been reached.",
+    "v2CappedDescription": "The player qualified as active, but the monthly free activity reward limit had already been reached.",
     "v2PendingDescription": "The player has recorded {{count}} of the 3 separate active days required for the small activity reward.",
     "v2Step1": "Copy or share your personal invite link.",
     "v2Step2": "Your friend opens the link, verifies their account, signs up, and creates a real team.",
-    "v2Step3": "After activity on 3 separate real days, you receive 2 Coins. A maximum of 10 such free activity rewards can be paid to you per real calendar month.",
+    "v2Step3": "After activity on 3 separate real days, you receive 2 Coins.",
     "v2Step4": "If that same referred player later makes their first Premium purchase or first Coin-package purchase, you receive one additional 40-Coin reward. Premium + Coins still count only once for this paid reward.",
     "v2AntiAbuseNote": "Self-referrals, deleted/ownerless teams and duplicate referred users do not qualify. Activity is counted by distinct UTC calendar days and the free reward is monthly capped."
   },

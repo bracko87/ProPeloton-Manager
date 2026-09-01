@@ -4,7 +4,6 @@
  *
  * Reward model:
  * - +2 Coins when the referred player records activity on 3 distinct real days.
- * - Maximum 10 free activity rewards per inviter per real calendar month.
  * - +40 Coins once when that referred player first buys Premium OR a Coin package.
  */
 
