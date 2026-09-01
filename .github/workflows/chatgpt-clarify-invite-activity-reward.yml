@@ -1,0 +1,67 @@
+name: Clarify Invite Friends one-time reward wording
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/clarify_invite_activity_reward_20260901.py'
+      - '.github/workflows/chatgpt-clarify-invite-activity-reward.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-build-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply one-time reward wording
+        run: python .github/scripts/clarify_invite_activity_reward_20260901.py
+
+      - name: Validate wording in all locales
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          locales = ['en','sr-Latn','de','hr','es','it','fr','ru']
+          for loc in locales:
+              p = Path('src/i18n/locales') / loc / 'accountPages.json'
+              data = json.loads(p.read_text(encoding='utf-8'))
+              invite = data['invite']
+              for key in ['v2Subtitle','v2Step3','v2ActivityCompletedDescription']:
+                  value = invite.get(key, '')
+                  if not value:
+                      raise SystemExit(f'{loc}: missing {key}')
+              if 'maximum of 10' in invite.get('v2Step3','').lower():
+                  raise SystemExit(f'{loc}: obsolete max-10 wording remains')
+          print('Validated one-time reward wording in 8 locales.')
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit wording fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/*/accountPages.json
+          if git diff --cached --quiet; then
+            echo 'No localization changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Clarify one-time referral activity reward'
+          git push origin main
