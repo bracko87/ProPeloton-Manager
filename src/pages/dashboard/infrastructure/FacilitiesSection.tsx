@@ -11,7 +11,6 @@ import type {
 } from './infrastructureTypes'
 import {
   formatCash,
-  formatGameDate,
   formatGameDays,
   formatTimeRemaining,
 } from './infrastructureHelpers'
@@ -38,6 +37,35 @@ function facilityMaxLevel(item: InfrastructureItem): number {
 
 function formatUsd(raw: unknown): string {
   return formatCash(raw).replace('€', '$')
+}
+
+function formatSeasonDate(raw: string | null | undefined): string {
+  if (!raw) return 'TBD'
+
+  const trimmed = raw.trim()
+  const canonicalMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  let year: number
+  let month: number
+  let day: number
+
+  if (canonicalMatch) {
+    year = Number(canonicalMatch[1])
+    month = Number(canonicalMatch[2])
+    day = Number(canonicalMatch[3])
+  } else {
+    const timestamp = Date.parse(trimmed)
+    if (Number.isNaN(timestamp)) return trimmed
+    const date = new Date(timestamp)
+    year = date.getUTCFullYear()
+    month = date.getUTCMonth() + 1
+    day = date.getUTCDate()
+  }
+
+  const season = year - 1999
+  if (season < 1 || month < 1 || month > 12 || day < 1 || day > 31) return trimmed
+
+  const monthLabel = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month - 1]
+  return `S${season} · ${monthLabel} ${day}`
 }
 
 const fallbackMonthlyMaintenance: Record<FacilityKey, number[]> = {
@@ -241,7 +269,7 @@ function ActiveJobsPanel({
 
               <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-yellow-800 sm:grid-cols-3">
                 <span>{t('facilities.gameDuration')} {formatGameDays(job.durationGameDays)}</span>
-                <span>{t('common.completes')}: {formatGameDate(job.completeGameDate)}</span>
+                <span>{t('common.completes')}: {formatSeasonDate(job.completeGameDate)}</span>
                 <span>{t('facilities.paid')} {formatUsd(job.costCash)}</span>
               </div>
 
@@ -301,7 +329,7 @@ function LevelInfoPanel({
       <div className="mt-3 space-y-2 text-sm leading-5 text-gray-700">
         <div><span className="font-semibold text-gray-900">Unlocks:</span> {detail.unlock}</div>
         <div>
-          <span className="font-semibold text-gray-900">Effects:</span>
+          <span className="font-semibold text-gray-900">Effects:</span>{' '}
           <EffectList text={detail.effect} />
         </div>
         <div>
@@ -321,8 +349,8 @@ function LevelInfoPanel({
             <span className="font-medium text-gray-900">{formatGameDays(item.previewDurationGameDays)}</span>
           </div>
           <div>
-            <span className="block text-gray-400">Estimated completion</span>
-            <span className="font-medium text-gray-900">{formatGameDate(item.previewCompleteGameDate)}</span>
+            <span className="block whitespace-nowrap text-gray-400">Est. completion</span>
+            <span className="whitespace-nowrap font-medium text-gray-900">{formatSeasonDate(item.previewCompleteGameDate)}</span>
           </div>
         </div>
       )}
@@ -416,7 +444,7 @@ function FacilityDetailsModal({
                   <div className="mt-2 space-y-2 text-sm text-gray-700">
                     <div><span className="font-semibold">Unlocks:</span> {detail.unlock}</div>
                     <div>
-                      <span className="font-semibold">Effects:</span>
+                      <span className="font-semibold">Effects:</span>{' '}
                       <EffectList text={detail.effect} />
                     </div>
                     <div>
@@ -524,7 +552,7 @@ function InfrastructureCard({
           <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
             <div className="text-sm font-medium text-yellow-800">{item.pendingSummary}</div>
             <div className="mt-1 text-xs text-yellow-700">
-              {t('facilities.gameDuration')} {formatGameDays(item.pendingJob.duration_game_days)} · {t('common.completes')}: {formatGameDate(item.pendingJob.complete_game_date)}
+              {t('facilities.gameDuration')} {formatGameDays(item.pendingJob.duration_game_days)} · {t('common.completes')}: {formatSeasonDate(item.pendingJob.complete_game_date)}
             </div>
             {!item.pendingJob.complete_game_date && (
               <div className="mt-1 text-xs text-yellow-700">
