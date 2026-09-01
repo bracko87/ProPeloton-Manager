@@ -70,7 +70,7 @@ function formatSeasonDate(raw: string | null | undefined): string {
 
 const fallbackMonthlyMaintenance: Record<FacilityKey, number[]> = {
   club_house: [0, 1500, 3500, 6000, 10000, 15000],
-  training_center: [0, 12000, 30000, 60000, 110000, 180000],
+  training_center: [0, 2000, 4000, 7000, 11000, 17000],
   medical_center: [0, 10000, 25000, 55000, 100000, 170000],
   youth_academy: [0, 15000, 40000],
   mechanics_workshop: [0, 8000, 20000, 45000, 80000],
@@ -83,8 +83,8 @@ const levelZeroDetails: Record<FacilityKey, { unlock: string; effect: string }> 
     effect: 'No Club House financial bonus is active.',
   },
   training_center: {
-    unlock: 'Basic coaching setup only; higher coaching effectiveness remains capped.',
-    effect: 'Training, development and overload-risk support use the Level 0 coaching cap.',
+    unlock: 'Basic training facilities only.',
+    effect: 'No Training Center development, coaching-effectiveness, fatigue-load or training-risk bonus is active.',
   },
   medical_center: {
     unlock: 'Basic medical support only; advanced medical staff capacity remains limited.',
