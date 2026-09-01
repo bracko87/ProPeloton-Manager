@@ -7,7 +7,7 @@ import './mobile-dashboard-sections.css'
 import './mobile-polish-batch2.css'
 import './mobile-final-polish.css'
 import './mobile-last-fixes.css'
-import './i18n'
+import i18n from './i18n'
 import App from './App'
 import MobileDashboardResponsiveBridge from './components/layout/MobileDashboardResponsiveBridge'
 import MobileDashboardSectionPreferences from './components/layout/MobileDashboardSectionPreferences'
@@ -51,6 +51,14 @@ import SeasonResetLegacyLocalizationBridge from './components/i18n/SeasonResetLe
 import CustomizeTeamLegacyLocalizationBridge from './components/i18n/CustomizeTeamLegacyLocalizationBridge'
 import ProPackagesLegacyLocalizationBridge from './components/i18n/ProPackagesLegacyLocalizationBridge'
 import ManualLegacyLocalizationBridge from './components/i18n/ManualLegacyLocalizationBridge'
+
+// Compatibility fallback for legacy/top-level helpers that read `locale`
+// without receiving it as a component prop. Keep it dynamic so switching
+// the application language updates formatting without reloading the page.
+Object.defineProperty(globalThis, 'locale', {
+  configurable: true,
+  get: () => i18n.resolvedLanguage || i18n.language || document.documentElement.lang || 'en',
+})
 
 const root = createRoot(document.getElementById('app')!)
 
