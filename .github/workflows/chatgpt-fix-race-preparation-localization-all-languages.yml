@@ -1,0 +1,69 @@
+name: Fix Race Preparation localization all languages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix_race_preparation_localization_all_languages_20260901.py'
+      - '.github/scripts/audit_race_preparation_localization_all_languages_20260901.py'
+      - '.github/workflows/chatgpt-fix-race-preparation-localization-all-languages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-build-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply Race Preparation localization fixes
+        run: python3 .github/scripts/fix_race_preparation_localization_all_languages_20260901.py
+
+      - name: Validate Race Preparation locale JSON
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for locale in ['en','sr-Latn','de','hr','es','it','fr','ru']:
+              path = Path('src/i18n/locales') / locale / 'racePreparation.json'
+              json.loads(path.read_text(encoding='utf-8'))
+              print('OK', path)
+          PY
+
+      - name: Audit Race Preparation localization coverage
+        run: python3 .github/scripts/audit_race_preparation_localization_all_languages_20260901.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit Race Preparation localization
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/dashboard/RacePreparation.tsx \
+            src/i18n/locales/en/racePreparation.json \
+            src/i18n/locales/sr-Latn/racePreparation.json \
+            src/i18n/locales/de/racePreparation.json \
+            src/i18n/locales/hr/racePreparation.json \
+            src/i18n/locales/es/racePreparation.json \
+            src/i18n/locales/it/racePreparation.json \
+            src/i18n/locales/fr/racePreparation.json \
+            src/i18n/locales/ru/racePreparation.json
+          if git diff --cached --quiet; then
+            echo 'No Race Preparation localization changes to commit.'
+          else
+            git commit -m 'Localize Race Preparation in all languages'
+            git push origin HEAD:main
+          fi
