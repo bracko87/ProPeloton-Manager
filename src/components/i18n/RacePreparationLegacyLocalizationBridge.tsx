@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 import enRacePreparation from '../../i18n/locales/en/racePreparation.json'
 import srRacePreparation from '../../i18n/locales/sr-Latn/racePreparation.json'
 import {
@@ -23,18 +25,35 @@ const ASSET_KEYS: Record<string, string> = {
   'Team Car 3': 'racePreparation:assets.teamCar3',
 }
 
+function getCurrentPath(): string {
+  if (typeof window === 'undefined') return '/'
+
+  const hashPath = window.location.hash
+    .replace(/^#/, '')
+    .split('?')[0]
+
+  return hashPath || window.location.pathname
+}
+
+function isRacePreparationPath(path = getCurrentPath()): boolean {
+  const clean = path.split('?')[0]
+
+  return (
+    clean === '/dashboard/race-preparation' ||
+    clean.startsWith('/dashboard/race-preparation/') ||
+    clean === '/dashboard/team-schedule' ||
+    clean.startsWith('/dashboard/team-schedule/')
+  )
+}
+
 const options: LegacyLocalizationBridgeOptions = {
   namespace: 'racePreparation',
   enResource: enRacePreparation,
   srResource: srRacePreparation,
-  routeMatch: path => {
-    const clean = path.split('?')[0]
-
-    return (
-      clean === '/dashboard/race-preparation' ||
-      clean.startsWith('/dashboard/race-preparation/')
-    )
-  },
+  // The wrapper below mounts this bridge only on Race Preparation routes.
+  // Keep this true so SPA pushState navigation cannot leave the bridge with a
+  // stale route snapshot from before React Router changed the URL.
+  routeMatch: () => true,
   aliases: {
     'Race Preparation': 'page.title',
     'Accepted races are listed first. Race Plan handles whole-race startlist, travel, staff, assets and costs. Stage Plans handle stage-by-stage tactics after the race plan is submitted.':
@@ -109,4 +128,44 @@ const options: LegacyLocalizationBridgeOptions = {
   },
 }
 
-export default createLegacyLocalizationBridge(options)
+const ActiveRacePreparationLegacyLocalizationBridge =
+  createLegacyLocalizationBridge(options)
+
+export default function RacePreparationLegacyLocalizationBridge(): JSX.Element | null {
+  const [active, setActive] = useState(() => isRacePreparationPath())
+
+  useEffect(() => {
+    const updateRoute = (): void => {
+      setActive(isRacePreparationPath())
+    }
+
+    const originalPushState = window.history.pushState
+    const originalReplaceState = window.history.replaceState
+
+    window.history.pushState = function (...args) {
+      originalPushState.apply(this, args)
+      queueMicrotask(updateRoute)
+    }
+
+    window.history.replaceState = function (...args) {
+      originalReplaceState.apply(this, args)
+      queueMicrotask(updateRoute)
+    }
+
+    window.addEventListener('popstate', updateRoute)
+    window.addEventListener('hashchange', updateRoute)
+
+    // Re-check once after App/Router has mounted in case the initial render
+    // changed the route before this effect attached its listeners.
+    queueMicrotask(updateRoute)
+
+    return () => {
+      window.history.pushState = originalPushState
+      window.history.replaceState = originalReplaceState
+      window.removeEventListener('popstate', updateRoute)
+      window.removeEventListener('hashchange', updateRoute)
+    }
+  }, [])
+
+  return active ? <ActiveRacePreparationLegacyLocalizationBridge /> : null
+}
