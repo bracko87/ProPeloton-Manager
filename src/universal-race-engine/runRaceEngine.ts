@@ -59,7 +59,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11f-dynamic-race-tactics-v2-2026-08-25' as const
+  'phase11g-organic-race-physics-v1-2026-09-02' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -1766,6 +1766,10 @@ export interface UniversalRoadPhase2DevelopmentResult {
   readonly startGapSeconds: number
   readonly endGapSeconds: number
   readonly gapDeltaSeconds: number
+  /** Exact physical catch kilometre when the opening breakaway is neutralized in Phase 2. */
+  readonly breakawayCatchKm: number | null
+  /** Physical opening-breakaway gap samples used by the replay; no synthetic reconstruction. */
+  readonly physicalGapTrajectory: readonly UniversalRoadPhysicalGapSample[]
   readonly breakawayRiderIdsAtStart: readonly string[]
   readonly breakawayRiderIdsAtEnd: readonly string[]
   readonly pelotonRiderIdsAtEnd: readonly string[]
@@ -1779,6 +1783,8 @@ export interface UniversalRoadPhase2DevelopmentResult {
    * peloton at the 50% boundary without replacing the original B lineage.
    */
   readonly secondaryFrontRiderIdsAtEnd: readonly string[]
+  /** Formation kilometre for a replacement Phase-2 front after the original B has been caught. */
+  readonly secondaryFrontLaunchKm: number | null
   readonly secondaryFrontGapToPelotonSeconds: number
   readonly supportActions: readonly UniversalRoadSupportAction[]
   readonly pointBattles: readonly UniversalRoadPointBattleResult[]
@@ -1892,10 +1898,13 @@ export interface UniversalRoadPhase3DecisiveResult {
   readonly attackAttempts: readonly UniversalRoadDecisiveAttackAttempt[]
   readonly successfulAttackRiderIds: readonly string[]
   readonly pointBattles: readonly UniversalRoadPointBattleResult[]
-  /** Phase 11F physical escape state at the 70% boundary. */
+  /** Physical escape state carried through the decisive section. */
+  readonly physicalEscapeRiderIdsAtStart: readonly string[]
   readonly physicalEscapeRiderIdsAtEnd: readonly string[]
   readonly physicalStartGapSeconds: number
   readonly physicalEndGapSeconds: number
+  /** Exact physical catch kilometre when the Phase-3 leading escape is neutralized. */
+  readonly physicalCatchKm: number | null
   readonly physicalChasingTeamIds: readonly string[]
   readonly physicalGapTrajectory: readonly UniversalRoadPhysicalGapSample[]
   readonly riderStates: readonly UniversalRoadDecisiveRiderState[]
@@ -4854,10 +4863,25 @@ function calculatePhase9WeatherModifiers(
   const windKmh = clamp(weather?.windKmh ?? 0, 0, 100)
   const headwindPct = clamp(
     phase9Number(snapshot, 'headwindPct') ||
+      phase9Number(snapshot, 'headwind_pct') ||
       (condition.includes('headwind') ? 100 : 0),
     0,
     100,
   )
+  const crosswindPct = clamp(
+    phase9Number(snapshot, 'crosswindPct') ||
+      phase9Number(snapshot, 'crosswind_pct'),
+    0,
+    100,
+  )
+  const tailwindPct = clamp(
+    phase9Number(snapshot, 'tailwindPct') ||
+      phase9Number(snapshot, 'tailwind_pct') ||
+      (condition.includes('tailwind') ? 100 : 0),
+    0,
+    100,
+  )
+  const crosswindRiskLevel = weatherRiskLevel(weather?.crosswindRisk)
   const rainSeverity =
     condition === 'storm' ||
     condition === 'thunderstorm' ||
@@ -4882,7 +4906,18 @@ function calculatePhase9WeatherModifiers(
     0,
     1,
   )
-  const genericWindSeverity = clamp(Math.max(windKmh - 40, 0) / 40, 0, 1)
+  const genericWindSeverity = clamp(Math.max(windKmh - 15, 0) / 60, 0, 1)
+  const crosswindSeverity = clamp(
+    (Math.max(windKmh - 15, 0) / 40) *
+      Math.max(crosswindPct / 100, crosswindRiskLevel / 4),
+    0,
+    1,
+  )
+  const tailwindSeverity = clamp(
+    (Math.max(windKmh - 15, 0) / 50) * (tailwindPct / 100),
+    0,
+    1,
+  )
   const severe =
     rainSeverity >= 1 ||
     heatSeverity >= 0.9 ||
@@ -4894,8 +4929,10 @@ function calculatePhase9WeatherModifiers(
       clamp(
         1 -
           headwindSeverity * 0.025 -
+          crosswindSeverity * 0.012 -
           rainSeverity * 0.012 -
-          genericWindSeverity * 0.01,
+          genericWindSeverity * 0.01 +
+          tailwindSeverity * 0.008,
         ...PHASE9_CAPS.speedMultiplier,
       ),
       6,
@@ -4904,8 +4941,11 @@ function calculatePhase9WeatherModifiers(
       clamp(
         1 +
           headwindSeverity * 0.08 +
+          crosswindSeverity * 0.045 +
           heatSeverity * 0.07 +
-          coldSeverity * 0.05,
+          coldSeverity * 0.05 +
+          genericWindSeverity * 0.03 -
+          tailwindSeverity * 0.012,
         ...PHASE9_CAPS.energyCostMultiplier,
       ),
       6,
@@ -4915,14 +4955,20 @@ function calculatePhase9WeatherModifiers(
         1 +
           heatSeverity * 0.09 +
           coldSeverity * 0.035 +
-          rainSeverity * 0.025,
+          rainSeverity * 0.025 +
+          crosswindSeverity * 0.025 +
+          genericWindSeverity * 0.02,
         ...PHASE9_CAPS.fatigueMultiplier,
       ),
       6,
     ),
     breakawaySurvivalMultiplier: deterministicRound(
       clamp(
-        1 - headwindSeverity * 0.08 - genericWindSeverity * 0.02,
+        1 -
+          headwindSeverity * 0.08 -
+          crosswindSeverity * 0.045 -
+          genericWindSeverity * 0.02 +
+          tailwindSeverity * 0.012,
         ...PHASE9_CAPS.breakawaySurvivalMultiplier,
       ),
       6,
@@ -4931,6 +4977,7 @@ function calculatePhase9WeatherModifiers(
       clamp(
         1 +
           rainSeverity * 0.22 +
+          crosswindSeverity * 0.12 +
           genericWindSeverity * 0.12 +
           (severe ? 0.08 : 0),
         ...PHASE9_CAPS.incidentRiskMultiplier,
@@ -8203,6 +8250,199 @@ function getRoadOpeningSegmentAtKm(
   }
 }
 
+/**
+ * Phase 11G route-speed reference. The physics loop probes the actual route
+ * at the current kilometre instead of applying one stage-wide road speed.
+ */
+function calculateRoadReferencePaceKmh(
+  stage: UniversalStageInput,
+  km: number,
+): number {
+  const segment = getRoadOpeningSegmentAtKm(stage, km)
+  let basePaceKmh = 42
+  switch (segment.terrainType) {
+    case 'steep_climb':
+      basePaceKmh = 25.5
+      break
+    case 'climb':
+      basePaceKmh = 31.5
+      break
+    case 'false_flat':
+      basePaceKmh = 39
+      break
+    case 'descent':
+      basePaceKmh = 48
+      break
+    case 'technical_descent':
+      basePaceKmh = 43.5
+      break
+    case 'cobbled':
+    case 'cobble':
+    case 'gravel':
+      basePaceKmh = 37.5
+      break
+    case 'flat':
+    default:
+      basePaceKmh = 42
+      break
+  }
+
+  // Gradients inside the broad terrain class still matter.
+  const gradientAdjustment =
+    segment.slopePercent > 0
+      ? -Math.min(9, segment.slopePercent * 0.85)
+      : Math.min(5.5, Math.abs(segment.slopePercent) * 0.45)
+  return deterministicRound(clamp(basePaceKmh + gradientAdjustment, 20, 55), 6)
+}
+
+
+/**
+ * Phase 11G wind exposure is strongest on fast/open roads and reduced on
+ * steep climbs where aerodynamic drag contributes much less to group speed.
+ */
+function calculateRoadWindExposureFactor(
+  stage: UniversalStageInput,
+  km: number,
+): number {
+  const segment = getRoadOpeningSegmentAtKm(stage, km)
+  switch (segment.terrainType) {
+    case 'steep_climb':
+      return 0.3
+    case 'climb':
+      return 0.5
+    case 'false_flat':
+      return 0.8
+    case 'technical_descent':
+      return 0.75
+    case 'descent':
+      return 0.9
+    case 'cobbled':
+    case 'cobble':
+    case 'gravel':
+      return 0.85
+    case 'flat':
+    default:
+      return 1
+  }
+}
+
+function applyRoadWindExposureToMultiplier(
+  multiplier: number,
+  stage: UniversalStageInput,
+  km: number,
+): number {
+  const exposure = calculateRoadWindExposureFactor(stage, km)
+  return deterministicRound(1 + (multiplier - 1) * exposure, 6)
+}
+
+/**
+ * Recalculates how willingly/efficiently a physical escape works at this
+ * exact point in the race. This deliberately changes during the race instead
+ * of storing one cooperation coefficient for an entire phase.
+ */
+function calculateRoadEscapeCooperationMultiplier(
+  riderIds: readonly string[],
+  ridersById: ReadonlyMap<string, UniversalRiderInput>,
+  roadCommandResolution: UniversalRoadCommandResolutionSummary,
+  phaseNumber: RoadRacePhaseNumber,
+  liveEnergyByRiderId: ReadonlyMap<string, number>,
+  kmFromStart: number,
+  stagePoints: readonly UniversalStagePointInput[],
+): number {
+  if (riderIds.length === 0) return 1
+
+  const resolutionByRiderId = new Map(
+    roadCommandResolution.riders.map((row) => [row.riderId, row] as const),
+  )
+  const nextPoint = stagePoints
+    .filter(
+      (point) =>
+        point.pointType !== 'START' &&
+        point.pointType !== 'FINISH' &&
+        point.kmFromStart >= kmFromStart - 0.000001,
+    )
+    .slice()
+    .sort(
+      (left, right) =>
+        left.kmFromStart - right.kmFromStart ||
+        left.sortOrder - right.sortOrder ||
+        left.pointId.localeCompare(right.pointId),
+    )[0]
+  const pointWithinFourKm = Boolean(
+    nextPoint && nextPoint.kmFromStart - kmFromStart <= 4,
+  )
+
+  const pullFactors = riderIds.map((riderId) => {
+    const rider = ridersById.get(riderId)
+    const commandRow = resolutionByRiderId.get(riderId)
+    if (!rider || !commandRow) return 0.8
+    const phase = commandRow.phases.find(
+      (entry) => entry.phaseNumber === phaseNumber,
+    )
+    const energyFraction = clamp(
+      (liveEnergyByRiderId.get(riderId) ?? 0) / 70,
+      0.4,
+      1.08,
+    )
+    const teamworkFactor = clamp(0.84 + rider.teamwork * 0.0022, 0.84, 1.06)
+    let willingness = 1
+
+    switch (phase?.behaviour) {
+      case 'energy_conservation':
+        willingness = 0.56
+        break
+      case 'team_work':
+      case 'race_control':
+        willingness = 1.08
+        break
+      case 'attack':
+        willingness = 1.04
+        break
+      case 'intermediate_sprint_contest':
+      case 'kom_contest':
+        willingness = pointWithinFourKm ? 0.72 : 0.93
+        break
+      case 'stage_result':
+      case 'time_gc_result':
+        willingness = 0.86
+        break
+      case 'leader_protection':
+      case 'jersey_protection':
+      case 'leader_support':
+        willingness = 0.82
+        break
+      default:
+        willingness = 1
+        break
+    }
+
+    return energyFraction * teamworkFactor * willingness
+  })
+
+  const representedTeamCount = new Set(
+    riderIds.map((riderId) => ridersById.get(riderId)?.teamId ?? riderId),
+  ).size
+  const rotationBenefit = Math.min(0.07, Math.log2(riderIds.length + 1) * 0.018)
+  const oversizedGroupPenalty =
+    riderIds.length > 8 ? Math.min(0.09, (riderIds.length - 8) * 0.008) : 0
+  const multiTeamCoordinationPenalty =
+    representedTeamCount > 4
+      ? Math.min(0.055, (representedTeamCount - 4) * 0.006)
+      : 0
+
+  return deterministicRound(
+    clamp(
+      average(pullFactors) +
+        rotationBenefit -
+        oversizedGroupPenalty -
+        multiTeamCoordinationPenalty,
+      0.72,
+      1.09,
+    ),
+    6,
+  )
+}
+
 function calculateOpeningAttackIntent(
   rider: UniversalRiderInput,
   stageRole: RiderStageRole,
@@ -8538,98 +8778,9 @@ function calculateOpeningAttackOutcome(
 }
 
 /**
- * Phase 11F v2 later-race attack calibration.
- *
- * Phase 2/3 attacks remain deterministic and skill/energy weighted, but a
- * credible multi-rider attack wave should not resolve as 100% covered every
- * time. When at least three physically credible attempts exist in the same
- * phase, preserve all natural successes and guarantee a small deterministic
- * lower band of roughly 20-30% successful moves by promoting only the closest
- * failed near-misses. The promoted riders still have to spend the attack
- * energy and become physical front/bridge candidates; success never means an
- * automatic bridge to the existing breakaway or an automatic stage win.
+ * Phase 11G: later attacks are resolved only from their deterministic
+ * probability/roll pair. There is deliberately no phase-wide success quota.
  */
-function calibrateLaterAttackWave(
-  attempts: readonly UniversalRoadDecisiveAttackAttempt[],
-  phaseNumber: 2 | 3,
-  promotedPositionScoreBonus: (
-    attempt: UniversalRoadDecisiveAttackAttempt,
-  ) => number,
-): UniversalRoadDecisiveAttackAttempt[] {
-  const credibleAttempts = attempts.filter(
-    (attempt) =>
-      attempt.attackEnergyCost > 0 &&
-      attempt.energyBeforeAttempt >= 25 &&
-      attempt.attackIntentScore >= 40 &&
-      attempt.attackSuccessProbability >= 0.18,
-  )
-
-  if (credibleAttempts.length < 3) return [...attempts]
-
-  const minimumSuccessCount = Math.ceil(credibleAttempts.length * 0.2)
-  const naturalSuccessCount = credibleAttempts.filter(
-    (attempt) => attempt.attackSucceeded,
-  ).length
-  const requiredPromotions = Math.max(
-    0,
-    minimumSuccessCount - naturalSuccessCount,
-  )
-
-  if (requiredPromotions === 0) return [...attempts]
-
-  const promotedRiderIds = new Set(
-    credibleAttempts
-      .filter((attempt) => !attempt.attackSucceeded)
-      .slice()
-      .sort(
-        (left, right) =>
-          left.deterministicOutcomeRoll -
-            left.attackSuccessProbability -
-            (right.deterministicOutcomeRoll -
-              right.attackSuccessProbability) ||
-          right.attackIntentScore - left.attackIntentScore ||
-          right.attackExecutionSkillScore -
-            left.attackExecutionSkillScore ||
-          left.riderId.localeCompare(right.riderId),
-      )
-      .slice(0, requiredPromotions)
-      .map((attempt) => attempt.riderId),
-  )
-
-  return attempts.map((attempt) => {
-    if (!promotedRiderIds.has(attempt.riderId)) return attempt
-
-    /*
-     * Keep the published probability/roll pair internally consistent. The
-     * calibrated roll is deterministic and only applies to the selected
-     * near-miss inside this phase-wide attack wave.
-     */
-    const calibratedRoll = deterministicRound(
-      Math.min(
-        attempt.deterministicOutcomeRoll,
-        Math.max(
-          0,
-          attempt.attackSuccessProbability -
-            (phaseNumber === 2 ? 0.006 : 0.004),
-        ),
-      ),
-      12,
-    )
-
-    return {
-      ...attempt,
-      deterministicOutcomeRoll: calibratedRoll,
-      attackSucceeded: true,
-      positionScoreBonus: deterministicRound(
-        Math.max(
-          attempt.positionScoreBonus,
-          promotedPositionScoreBonus(attempt),
-        ),
-        6,
-      ),
-    }
-  })
-}
 
 function getOpeningSeparationBand(
   physicallyValidAttempt: boolean,
@@ -8776,7 +8927,14 @@ export function resolveRoadPhase1Opening(
     teamCount > 0
       ? Math.max(1, Math.ceil(Math.max(totalLockedRiderCount, 1) / teamCount))
       : baseWaveCap
-  const effectiveWaveCap = Math.min(baseWaveCap, averageTeamSizeCap)
+  const legacyJoinWaveCap = Math.min(baseWaveCap, averageTeamSizeCap)
+  /*
+   * Phase 11G command contract: an explicit Attack is an attempt, never a
+   * request that may be silently discarded by a wave-size cap. The historical
+   * cap remains only as a limit for join_breakaway riders after every explicit
+   * attacker has been admitted.
+   */
+  const effectiveWaveCap = Math.max(eligibleAttackers.length, legacyJoinWaveCap)
 
   const sortedCandidates = [...candidates].sort((left, right) => {
     if (left.command !== right.command) {
@@ -8819,10 +8977,36 @@ export function resolveRoadPhase1Opening(
     const teamPlan = planByTeamId.get(candidate.teamId)!
     const waveCode: UniversalRoadOpeningWaveCode =
       index < firstWaveSize ? 'first_wave' : 'second_wave'
-    const attemptKm =
+    const waveBaseKm =
       waveCode === 'first_wave'
         ? firstWaveAttemptKm!
         : secondWaveAttemptKm!
+    const waveLocalIndex =
+      waveCode === 'first_wave' ? index : index - firstWaveSize
+    const waveCount =
+      waveCode === 'first_wave'
+        ? firstWaveSize
+        : selectedCandidates.length - firstWaveSize
+    const waveSpreadKm = Math.min(
+      0.9,
+      Math.max(0.2, (phaseBoundary.endKm - phaseBoundary.startKm) * 0.025),
+    )
+    const orderedOffset =
+      waveCount <= 1
+        ? 0
+        : ((waveLocalIndex / Math.max(1, waveCount - 1)) - 0.5) * waveSpreadKm
+    const timingJitter =
+      (calculateDeterministicUnitRoll(
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11g-opening-timing|${candidate.riderId}`,
+      ) - 0.5) * Math.min(0.16, waveSpreadKm * 0.25)
+    const attemptKm = deterministicRound(
+      clamp(
+        waveBaseKm + orderedOffset + timingJitter,
+        phaseBoundary.startKm + 0.05,
+        phaseBoundary.endKm - 0.05,
+      ),
+      6,
+    )
     const routeSegment = getRoadOpeningSegmentAtKm(input.stage, attemptKm)
     const commandEffortMultiplier = getGeneralPhaseEffortMultiplier(phase)
     const baselineEnergyCostBeforeAttempt = calculateRoadEnergyCostForRange(
@@ -9212,7 +9396,7 @@ function phase11fPaceVariationKmh(
   amplitudeKmh: number,
 ): number {
   const roll = calculateDeterministicUnitRoll(
-    `${deterministicSeed}|phase11f|${label}|${deterministicRound(kmFromStart, 3)}`,
+    `${deterministicSeed}|phase11g|${label}|${deterministicRound(kmFromStart, 3)}`,
   )
   return deterministicRound((roll - 0.5) * 2 * amplitudeKmh, 6)
 }
@@ -9355,35 +9539,17 @@ function calculatePelotonResponseComponents(
       )
     : 0
 
-  let baseTargetGapUpperSeconds: number
-  if (isFinishNear || remaining <= 5) baseTargetGapUpperSeconds = 0
-  else if (remaining <= 10) baseTargetGapUpperSeconds = remaining * 1.5
-  else if (remaining <= 20) baseTargetGapUpperSeconds = 20 + remaining * 1.5
-  else if (progress < 0.2) {
-    baseTargetGapUpperSeconds =
-      210 + Math.max(0, escapeRiders - 1) * 25 +
-      Math.max(0, escapeTeams - 1) * 10
-  } else if (progress < 0.5) {
-    baseTargetGapUpperSeconds =
-      150 + Math.max(0, escapeRiders - 1) * 20 +
-      Math.max(0, escapeTeams - 1) * 8
-  } else if (progress < 0.75) {
-    baseTargetGapUpperSeconds =
-      90 + Math.max(0, escapeRiders - 1) * 15 +
-      Math.max(0, escapeTeams - 1) * 6
-  } else if (progress < 0.9) {
-    baseTargetGapUpperSeconds = 45 + Math.max(0, escapeRiders - 1) * 10
-  } else {
-    baseTargetGapUpperSeconds = Math.max(8, remaining * 1.25)
-  }
-
+  /*
+   * Phase 11G removes the historical 210/150/90/45-second target staircase.
+   * Chase urgency is now a response to actual road state: team interest,
+   * remaining distance, the current escape/peloton speed relationship, and
+   * how much time per remaining kilometre would physically have to be closed.
+   * The two target fields remain as zero-valued compatibility diagnostics and
+   * are not used to steer the race.
+   */
+  const targetGapUpperSeconds = 0
+  const targetGapLowerSeconds = 0
   const requiredHoldMultiplier = clamp(escapePace / pelotonPace, 0.85, 1.15)
-  const targetGapUpperSeconds = Math.max(
-    0,
-    baseTargetGapUpperSeconds * (1 - chaseInterestScore * 0.25) *
-      (isPointGateNear ? 0.7 : 1),
-  )
-  const targetGapLowerSeconds = targetGapUpperSeconds * 0.65
   const maximumPursuitMultiplier = hasOrganizedChaseInterest
     ? Math.min(
         1.09,
@@ -9391,44 +9557,27 @@ function calculatePelotonResponseComponents(
       )
     : 1
 
-  let gapUrgencyFraction: number
-  if (targetGapUpperSeconds <= 0) gapUrgencyFraction = gap > 0.5 ? 1 : 0
-  else if (gap <= targetGapLowerSeconds) gapUrgencyFraction = 0
-  else if (gap < targetGapUpperSeconds) {
-    gapUrgencyFraction = Math.min(
-      0.4,
-      ((gap - targetGapLowerSeconds) /
-        Math.max(targetGapUpperSeconds * 0.35, 0.000001)) *
-        0.4,
-    )
-  } else {
-    gapUrgencyFraction = Math.min(
-      1,
-      0.5 +
-        ((gap - targetGapUpperSeconds) /
-          Math.max(30, targetGapUpperSeconds)) *
-          0.5,
-    )
-  }
-
+  const closureDemandSecondsPerKm = gap / Math.max(1, remaining)
+  const closureDemandFraction = clamp(closureDemandSecondsPerKm / 6, 0, 1)
   const distanceUrgencyFraction =
     remaining <= 10
       ? 1
       : remaining <= 25
-        ? 0.75
+        ? 0.78
         : remaining <= 50
-          ? 0.45
-          : Math.min(0.35, progress * 0.35)
+          ? 0.48
+          : Math.min(0.4, progress * 0.4)
   const escapeStrengthUrgencyFraction = Math.min(
     1,
     Math.max(0, requiredHoldMultiplier - 1) * 20,
   )
   const chaseUrgencyScore = clamp(
-    gapUrgencyFraction * 0.45 +
+    chaseInterestScore * 0.35 +
       distanceUrgencyFraction * 0.3 +
-      escapeStrengthUrgencyFraction * 0.15 +
-      (isPointGateNear ? 0.1 : 0) +
-      (isFinishNear ? 0.3 : 0),
+      closureDemandFraction * 0.15 +
+      escapeStrengthUrgencyFraction * 0.12 +
+      (isPointGateNear ? 0.08 : 0) +
+      (isFinishNear ? 0.25 : 0),
     0,
     1,
   )
@@ -9437,47 +9586,39 @@ function calculatePelotonResponseComponents(
   if (gap <= 0.5) responseMode = 'no_active_escape'
   else if (!hasOrganizedChaseInterest) responseMode = 'uninterested_peloton'
   else if (isFinishNear || remaining <= 5) responseMode = 'emergency_chase'
-  else if (gap < targetGapLowerSeconds && remaining > 20 && !isPointGateNear) {
-    responseMode = 'release_escape'
-  } else if (gap <= targetGapUpperSeconds) responseMode = 'control_gap'
-  else responseMode = 'organized_chase'
+  else if (chaseUrgencyScore >= 0.58 || isPointGateNear) {
+    responseMode = 'organized_chase'
+  } else {
+    responseMode = 'control_gap'
+  }
 
   let selectedResponseMultiplier: number
   switch (responseMode) {
     case 'no_active_escape':
-      selectedResponseMultiplier = 1
-      break
     case 'uninterested_peloton':
-      // Normal race pace only. A late bunch may still accelerate for its own
-      // sprint below, but the engine does not pace-match the breakaway or
-      // manufacture an organized chase.
       selectedResponseMultiplier = 1
       break
-    case 'release_escape':
+    case 'control_gap':
+      /*
+       * Compatibility name only. Phase 11G does NOT match escape speed or
+       * steer toward a target gap. This is a steady tempo selected solely
+       * from the teams that are actually willing and able to work.
+       */
       selectedResponseMultiplier = clamp(
-        requiredHoldMultiplier - (0.006 + (1 - progress) * 0.01),
-        0.9,
-        0.995,
-      )
-      break
-    case 'control_gap': {
-      const midpoint = (targetGapLowerSeconds + targetGapUpperSeconds) / 2
-      const adjustment =
-        targetGapUpperSeconds <= 0
-          ? 0
-          : ((gap - midpoint) / Math.max(30, targetGapUpperSeconds)) * 0.01
-      selectedResponseMultiplier = clamp(
-        requiredHoldMultiplier + adjustment,
-        0.92,
+        0.982 +
+          chaseInterestScore * 0.012 +
+          chaseCapacityScore * 0.007 +
+          coordinationFactor * 0.004 +
+          largeCoalitionBonus * 0.25,
+        0.975,
         maximumPursuitMultiplier,
       )
       break
-    }
     case 'organized_chase':
       selectedResponseMultiplier = clamp(
         requiredHoldMultiplier +
-          0.006 +
-          chaseUrgencyScore * 0.024 +
+          0.004 +
+          chaseUrgencyScore * 0.023 +
           largeCoalitionBonus * 0.6,
         0.97,
         maximumPursuitMultiplier,
@@ -9749,7 +9890,6 @@ export function resolveRoadPhase2Development(
   const explicitPhase2AttackRows = phase2Rows
     .filter(({ row, phase }) =>
       row.eligibleToStart &&
-      !phase1.breakawayRiderIds.includes(row.riderId) &&
       phase.deliberateAttack.eligible &&
       phase.resolvedCommand === 'attack',
     )
@@ -9763,18 +9903,8 @@ export function resolveRoadPhase2Development(
         left.row.riderId.localeCompare(right.row.riderId)
       )
     })
-  const selectedPhase2AttackRows: typeof explicitPhase2AttackRows = []
-  const selectedPhase2AttackTeams = new Set<string>()
-  for (const candidate of explicitPhase2AttackRows) {
-    if (
-      selectedPhase2AttackRows.length >= 4 ||
-      selectedPhase2AttackTeams.has(candidate.row.teamId)
-    ) {
-      continue
-    }
-    selectedPhase2AttackRows.push(candidate)
-    selectedPhase2AttackTeams.add(candidate.row.teamId)
-  }
+  // Phase 11G: every explicit Phase 2 Attack command receives an attempt.
+  const selectedPhase2AttackRows = [...explicitPhase2AttackRows]
 
   const phase2AttackEnergyCostByRiderId = new Map<string, number>()
   const rawPhase2AttackAttempts: UniversalRoadDecisiveAttackAttempt[] =
@@ -9782,12 +9912,23 @@ export function resolveRoadPhase2Development(
       const rider = ridersById.get(row.riderId)!
       const readiness = readinessByRiderId.get(row.riderId)!
       const startEnergy = phase1EnergyByRiderId.get(row.riderId) ?? 0
+      const phase2AttackWindowStart = clamp(
+        phase2AttackTerrain.kmStart,
+        phaseBoundary.startKm + 0.5,
+        phaseBoundary.endKm - 0.5,
+      )
+      const phase2AttackWindowEnd = clamp(
+        phase2AttackTerrain.kmEnd,
+        phase2AttackWindowStart,
+        phaseBoundary.endKm - 0.5,
+      )
+      const phase2AttackTimingRoll = calculateDeterministicUnitRoll(
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11g-phase2-attack-timing|${row.riderId}`,
+      )
       const attemptKm = deterministicRound(
-        clamp(
-          (phase2AttackTerrain.kmStart + phase2AttackTerrain.kmEnd) / 2,
-          phaseBoundary.startKm + 0.5,
-          phaseBoundary.endKm - 0.5,
-        ),
+        phase2AttackWindowStart +
+          (phase2AttackWindowEnd - phase2AttackWindowStart) *
+            (0.15 + phase2AttackTimingRoll * 0.7),
         6,
       )
       const energyBeforeAttempt = deterministicRound(
@@ -9853,7 +9994,9 @@ export function resolveRoadPhase2Development(
       return {
         riderId: row.riderId,
         teamId: row.teamId,
-        sourceGroupCode: 'main_peloton',
+        sourceGroupCode: phase1.breakawayRiderIds.includes(row.riderId)
+          ? 'breakaway'
+          : 'main_peloton',
         attemptKm,
         effectiveTerrainType: phase2AttackTerrain.terrainType,
         energyBeforeAttempt,
@@ -9876,29 +10019,47 @@ export function resolveRoadPhase2Development(
         modelVersion: 'production_attack_outcome_v2',
       }
     })
-  const phase2AttackAttempts = calibrateLaterAttackWave(
-    rawPhase2AttackAttempts,
-    2,
-    (attempt) =>
-      4 + attempt.attackExecutionSkillScore * 0.03,
-  )
+  const phase2AttackAttempts = [...rawPhase2AttackAttempts]
   const successfulPhase2AttackRiderIds = phase2AttackAttempts
     .filter((attempt) => attempt.attackSucceeded)
     .map((attempt) => attempt.riderId)
     .sort()
+  const successfulPhase2PelotonAttackAttempts = phase2AttackAttempts.filter(
+    (attempt) =>
+      attempt.attackSucceeded && attempt.sourceGroupCode === 'main_peloton',
+  )
+  const successfulPhase2BreakawayAttackAttempts = phase2AttackAttempts.filter(
+    (attempt) =>
+      attempt.attackSucceeded && attempt.sourceGroupCode === 'breakaway',
+  )
+  const breakawayAttackSurgeMultiplier = deterministicRound(
+    clamp(
+      1 +
+        average(
+          successfulPhase2BreakawayAttackAttempts.map(
+            (attempt) => attempt.attackExecutionSkillScore,
+          ),
+        ) *
+          0.00025 *
+          Math.min(3, successfulPhase2BreakawayAttackAttempts.length),
+      1,
+      1.045,
+    ),
+    6,
+  )
   const rawSecondaryFrontGapToPelotonSeconds =
-    successfulPhase2AttackRiderIds.length > 0
+    successfulPhase2PelotonAttackAttempts.length > 0
       ? deterministicRound(
           clamp(
             8 +
               average(
-                phase2AttackAttempts
-                  .filter((attempt) => attempt.attackSucceeded)
-                  .map((attempt) => attempt.attackExecutionSkillScore),
+                successfulPhase2PelotonAttackAttempts.map(
+                  (attempt) => attempt.attackExecutionSkillScore,
+                ),
               ) *
                 0.12 +
               calculateDeterministicUnitRoll(
-                `${input.engine.deterministicSeed}|phase11f|phase2-secondary-front-gap`,
+                `${input.engine.deterministicSeed}|phase11g|phase2-secondary-front-gap`,
               ) *
                 8,
             8,
@@ -9945,7 +10106,7 @@ export function resolveRoadPhase2Development(
     ...chasingTeamIds,
     ...controllingTeamIds,
   ])
-  const availableChaseAssets = phase2Rows.filter(
+  const phase2ChaseWorkerRows = phase2Rows.filter(
     ({ row, phase }) =>
       interestedTeamIds.has(row.teamId) &&
       (
@@ -9956,7 +10117,8 @@ export function resolveRoadPhase2Development(
         row.stageRole === 'rouleur' ||
         row.stageRole === 'breakaway_chaser'
       ),
-  ).length
+  )
+  const availableChaseAssets = phase2ChaseWorkerRows.length
   const totalSprintAssets = phase2Rows.filter(
     ({ row, phase }) =>
       interestedTeamIds.has(row.teamId) &&
@@ -9976,9 +10138,21 @@ export function resolveRoadPhase2Development(
       ),
   ).length
 
-  const baselinePelotonPaceKmh = 40
-  const projectedEscapePaceKmh =
-    breakawayCooperation?.projectedEscapePaceKmh ?? baselinePelotonPaceKmh
+  const baselinePelotonPaceKmh = calculateRoadReferencePaceKmh(
+    input.stage,
+    phaseBoundary.startKm,
+  )
+  const phase11gWeather = calculatePhase9WeatherModifiers(input.weather)
+  const cooperationPaceRatio = clamp(
+    0.94 +
+      (breakawayCooperation?.averageStageSuitability ?? 50) * 0.0012,
+    0.94,
+    1.06,
+  )
+  const projectedEscapePaceKmh = deterministicRound(
+    baselinePelotonPaceKmh * cooperationPaceRatio,
+    6,
+  )
   let pelotonComponents = calculatePelotonResponseComponents(
     phaseBoundary.startFraction,
     input.stage.distanceKm - phaseBoundary.startKm,
@@ -10017,18 +10191,97 @@ export function resolveRoadPhase2Development(
   let currentKm = phaseBoundary.startKm
   let effectivePelotonPaceKmh = baselinePelotonPaceKmh
   let phase2CatchKm: number | null = null
+  const phase2PhysicalGapTrajectory: UniversalRoadPhysicalGapSample[] = []
+  if (breakawayActive && currentGapSeconds > 0) {
+    phase2PhysicalGapTrajectory.push({
+      kmFromStart: deterministicRound(phaseBoundary.startKm, 6),
+      gapSeconds: deterministicRound(currentGapSeconds, 6),
+    })
+  }
 
   while (
     breakawayActive &&
     currentGapSeconds > 0.5 &&
     currentKm < phaseBoundary.endKm - 0.000001
   ) {
-    const stepEndKm = Math.min(phaseBoundary.endKm, currentKm + 5)
+    const stepEndKm = Math.min(phaseBoundary.endKm, currentKm + 2)
     const stepDistanceKm = stepEndKm - currentKm
     const isPointGateNear = phase2Points.some(
       (point) =>
         point.kmFromStart >= currentKm - 0.000001 &&
-        point.kmFromStart <= stepEndKm + 5,
+        point.kmFromStart <= stepEndKm + 2,
+    )
+    const stepReferencePaceKmh = calculateRoadReferencePaceKmh(
+      input.stage,
+      (currentKm + stepEndKm) / 2,
+    )
+    const stepMidKm = (currentKm + stepEndKm) / 2
+    const phase2EscapeLiveEnergyByRiderId = new Map(
+      phase1.breakawayRiderIds.map((riderId) => {
+        const rider = ridersById.get(riderId)!
+        const readiness = readinessByRiderId.get(riderId)!
+        const startEnergy = phase1EnergyByRiderId.get(riderId) ?? 0
+        const spent = calculateRoadEnergyCostForRange(
+          input,
+          rider,
+          readiness,
+          1,
+          phaseBoundary.startKm,
+          stepMidKm,
+        )
+        return [riderId, Math.max(0, startEnergy - spent)] as const
+      }),
+    )
+    const phase2DynamicCooperationMultiplier =
+      calculateRoadEscapeCooperationMultiplier(
+        phase1.breakawayRiderIds,
+        ridersById,
+        roadCommandResolution,
+        2,
+        phase2EscapeLiveEnergyByRiderId,
+        stepMidKm,
+        phase2Points,
+      )
+    const stepEscapeReferencePaceKmh = deterministicRound(
+      stepReferencePaceKmh *
+        cooperationPaceRatio *
+        phase2DynamicCooperationMultiplier,
+      6,
+    )
+    const phase2WorkloadFraction = clamp(
+      (stepEndKm - phaseBoundary.startKm) /
+        Math.max(1, (phaseBoundary.endKm - phaseBoundary.startKm)),
+      0,
+      1,
+    )
+    const phase2WorkerEnergyFraction = clamp(
+      average(
+        phase2ChaseWorkerRows.map(({ row }) => {
+          const rider = ridersById.get(row.riderId)!
+          const readiness = readinessByRiderId.get(row.riderId)!
+          const startEnergy = phase1EnergyByRiderId.get(row.riderId) ?? 0
+          const spent = calculateRoadEnergyCostForRange(
+            input,
+            rider,
+            readiness,
+            1.18,
+            phaseBoundary.startKm,
+            stepMidKm,
+          )
+          return Math.max(0, startEnergy - spent)
+        }),
+      ) / 70,
+      0.3,
+      1,
+    )
+    const phase2FiniteChaseAssets = Math.ceil(
+      availableChaseAssets *
+        clamp(
+          phase2WorkerEnergyFraction *
+            (1 - phase2WorkloadFraction * 0.28),
+          0.25,
+          1,
+        ),
     )
     pelotonComponents = calculatePelotonResponseComponents(
       stepEndKm / input.stage.distanceKm,
@@ -10044,11 +10297,11 @@ export function resolveRoadPhase2Development(
         ).size,
       ),
       chasingTeamIds.length + controllingTeamIds.length,
-      availableChaseAssets,
+      phase2FiniteChaseAssets,
       totalSprintAssets,
       totalProtectedAssets,
-      baselinePelotonPaceKmh,
-      projectedEscapePaceKmh,
+      stepReferencePaceKmh,
+      stepEscapeReferencePaceKmh,
       isPointGateNear,
       false,
       true,
@@ -10065,24 +10318,49 @@ export function resolveRoadPhase2Development(
       stepEndKm,
       0.75,
     )
+    const phase2WindSpeedMultiplier = applyRoadWindExposureToMultiplier(
+      phase11gWeather.speedMultiplier,
+      input.stage,
+      stepMidKm,
+    )
+    const phase2WindBreakawayMultiplier = applyRoadWindExposureToMultiplier(
+      phase11gWeather.breakawaySurvivalMultiplier,
+      input.stage,
+      stepMidKm,
+    )
     effectivePelotonPaceKmh = clamp(
-      baselinePelotonPaceKmh * pelotonComponents.selectedResponseMultiplier +
+      stepReferencePaceKmh *
+        pelotonComponents.selectedResponseMultiplier *
+        phase2WindSpeedMultiplier +
         pelotonVariationKmh,
-      32,
-      52,
+      20,
+      55,
     )
     const variedEscapePaceKmh = clamp(
-      effectiveEscapePaceKmh + escapeVariationKmh,
-      31,
-      50,
+      stepEscapeReferencePaceKmh *
+        Math.max(0.9, 1 - postAttackPenaltyFraction) *
+        breakawayAttackSurgeMultiplier *
+        phase2WindSpeedMultiplier *
+        phase2WindBreakawayMultiplier +
+        escapeVariationKmh,
+      20,
+      55,
     )
     const pelotonStepSeconds =
       (stepDistanceKm / Math.max(5, effectivePelotonPaceKmh)) * 3600
     const escapeStepSeconds =
       (stepDistanceKm / Math.max(5, variedEscapePaceKmh)) * 3600
-    currentGapSeconds = Math.max(
+    const calculatedNextGapSeconds = Math.max(
       0,
       currentGapSeconds + pelotonStepSeconds - escapeStepSeconds,
+    )
+    currentGapSeconds = limitRoadChaseGapClosure(
+      currentGapSeconds,
+      calculatedNextGapSeconds,
+      currentKm,
+      stepEndKm,
+      input.stage.distanceKm,
+      input.stage.terrainType,
     )
     currentKm = stepEndKm
     if (
@@ -10092,6 +10370,10 @@ export function resolveRoadPhase2Development(
       phase2CatchKm = stepEndKm
       currentGapSeconds = 0
     }
+    phase2PhysicalGapTrajectory.push({
+      kmFromStart: deterministicRound(stepEndKm, 6),
+      gapSeconds: deterministicRound(currentGapSeconds, 6),
+    })
   }
 
   const endGapSeconds = deterministicRound(currentGapSeconds, 6)
@@ -10099,39 +10381,49 @@ export function resolveRoadPhase2Development(
   const breakawayRiderIdsAtEnd = breakawaySurvivesPhase2
     ? [...phase1.breakawayRiderIds]
     : []
-  const canHoldDistinctSecondaryFrontBehindBreakaway =
-    breakawaySurvivesPhase2 &&
-    endGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS * 2 + 1
-  const secondaryFrontRiderIdsAtEnd =
-    successfulPhase2AttackRiderIds.length === 0
-      ? []
-      : breakawaySurvivesPhase2
-        ? canHoldDistinctSecondaryFrontBehindBreakaway
-          ? [...successfulPhase2AttackRiderIds]
-          : []
-        : [...successfulPhase2AttackRiderIds]
+  /*
+   * Phase 11G front-lineage rule:
+   * - while the original B remains active, Phase-2 counterattacks may succeed
+   *   as attempts but do not become an invented persistent F group;
+   * - if B is caught, only successful attacks launched after that catch may
+   *   establish a replacement front;
+   * - if there was no opening B, successful Phase-2 attacks may establish F1.
+   */
+  const persistentPhase2FrontAttempts = phase2AttackAttempts
+    .filter(
+      (attempt) =>
+        attempt.attackSucceeded && attempt.sourceGroupCode === 'main_peloton',
+    )
+    .filter((attempt) => {
+      if (!breakawayActive) return true
+      if (breakawaySurvivesPhase2) return false
+      return (
+        phase2CatchKm !== null &&
+        attempt.attemptKm > phase2CatchKm + 0.000001
+      )
+    })
+    .sort(
+      (left, right) =>
+        left.attemptKm - right.attemptKm ||
+        left.riderId.localeCompare(right.riderId),
+    )
+  const secondaryFrontRiderIdsAtEnd = persistentPhase2FrontAttempts
+    .map((attempt) => attempt.riderId)
+    .sort()
+  const secondaryFrontLaunchKm =
+    persistentPhase2FrontAttempts.length > 0
+      ? persistentPhase2FrontAttempts[0].attemptKm
+      : null
   const secondaryFrontGapToPelotonSeconds =
     secondaryFrontRiderIdsAtEnd.length === 0
       ? 0
-      : breakawaySurvivesPhase2
-        ? deterministicRound(
-            clamp(
-              rawSecondaryFrontGapToPelotonSeconds,
-              PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-              Math.max(
-                PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-                endGapSeconds - PHASE5_GROUP_MERGE_TOLERANCE_SECONDS - 1,
-              ),
-            ),
-            6,
-          )
-        : deterministicRound(
-            Math.max(
-              PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-              rawSecondaryFrontGapToPelotonSeconds,
-            ),
-            6,
-          )
+      : deterministicRound(
+          Math.max(
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+            rawSecondaryFrontGapToPelotonSeconds,
+          ),
+          6,
+        )
   const eligibleRiderIds = roadCommandResolution.riders
     .filter((row) => row.eligibleToStart)
     .map((row) => row.riderId)
@@ -10263,17 +10555,10 @@ export function resolveRoadPhase2Development(
       const openingBreakawayStillAheadAtPoint =
         breakawayActive &&
         (phase2CatchKm === null || point.kmFromStart < phase2CatchKm)
-      const phase2AttackLaunchKm = phase2AttackAttempts
-        .filter((attempt) => attempt.attackSucceeded)
-        .reduce<number | null>(
-          (minimum, attempt) =>
-            minimum === null ? attempt.attemptKm : Math.min(minimum, attempt.attemptKm),
-          null,
-        )
       const physicalFrontOccupantIds = new Set<string>([
         ...(openingBreakawayStillAheadAtPoint ? phase1.breakawayRiderIds : []),
-        ...(phase2AttackLaunchKm !== null &&
-        point.kmFromStart >= phase2AttackLaunchKm &&
+        ...(secondaryFrontLaunchKm !== null &&
+        point.kmFromStart >= secondaryFrontLaunchKm - 0.000001 &&
         secondaryFrontRiderIdsAtEnd.length > 0
           ? secondaryFrontRiderIdsAtEnd
           : []),
@@ -10447,6 +10732,10 @@ export function resolveRoadPhase2Development(
           (breakawayActive ? phase1.initialGapSeconds : 0),
         6,
       ),
+      breakawayCatchKm: phase2CatchKm === null
+        ? null
+        : deterministicRound(phase2CatchKm, 6),
+      physicalGapTrajectory: phase2PhysicalGapTrajectory,
       breakawayRiderIdsAtStart: [...phase1.breakawayRiderIds],
       breakawayRiderIdsAtEnd,
       pelotonRiderIdsAtEnd,
@@ -10481,6 +10770,7 @@ export function resolveRoadPhase2Development(
       attackAttempts: phase2AttackAttempts,
       successfulAttackRiderIds: successfulPhase2AttackRiderIds,
       secondaryFrontRiderIdsAtEnd,
+      secondaryFrontLaunchKm,
       secondaryFrontGapToPelotonSeconds,
       supportActions,
       pointBattles,
@@ -10791,13 +11081,10 @@ export function resolveRoadPhase3Decisive(
       return rightSuitability - leftSuitability || left.riderId.localeCompare(right.riderId)
     })
 
-  const selectedAttackRows: UniversalRoadRiderCommandResolution[] = []
-  const selectedTeams = new Set<string>()
-  explicitAttackRows.forEach((row) => {
-    if (selectedAttackRows.length >= 6 || selectedTeams.has(row.teamId)) return
-    selectedAttackRows.push(row)
-    selectedTeams.add(row.teamId)
-  })
+  // Phase 11G: every explicit Phase 3 Attack command receives an attempt.
+  const selectedAttackRows: UniversalRoadRiderCommandResolution[] = [
+    ...explicitAttackRows,
+  ]
 
   const attackEnergyCostByRiderId = new Map<string, number>()
   const attackPositionBonusByRiderId = new Map<string, number>()
@@ -10813,8 +11100,23 @@ export function resolveRoadPhase3Decisive(
         slopePercent: decisiveTerrain.averageGradientPercent,
         terrainType: decisiveTerrain.terrainType,
       }
+      const phase3AttackWindowStart = clamp(
+        decisiveTerrain.kmStart,
+        phaseBoundary.startKm + 0.25,
+        phaseBoundary.endKm - 0.25,
+      )
+      const phase3AttackWindowEnd = clamp(
+        decisiveTerrain.kmEnd,
+        phase3AttackWindowStart,
+        phaseBoundary.endKm - 0.25,
+      )
+      const phase3AttackTimingRoll = calculateDeterministicUnitRoll(
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11g-phase3-attack-timing|${row.riderId}`,
+      )
       const attemptKm = deterministicRound(
-        (decisiveTerrain.kmStart + decisiveTerrain.kmEnd) / 2,
+        phase3AttackWindowStart +
+          (phase3AttackWindowEnd - phase3AttackWindowStart) *
+            (0.12 + phase3AttackTimingRoll * 0.76),
         6,
       )
       const pointGateCount = phase3Points.filter(
@@ -10885,14 +11187,7 @@ export function resolveRoadPhase3Decisive(
       }
     },
   )
-  const attackAttempts = calibrateLaterAttackWave(
-    rawAttackAttempts,
-    3,
-    (attempt) =>
-      6 +
-      attempt.attackExecutionSkillScore * 0.04 +
-      decisiveTerrain.selectionSeverity * 4,
-  )
+  const attackAttempts = [...rawAttackAttempts]
   attackAttempts.forEach((attempt) => {
     attackPositionBonusByRiderId.set(
       attempt.riderId,
@@ -10935,7 +11230,7 @@ export function resolveRoadPhase3Decisive(
                     .map((attempt) => attempt.attackExecutionSkillScore),
                 ) * 0.12 +
                 calculateDeterministicUnitRoll(
-                  `${input.engine.deterministicSeed}|phase11f|phase3-new-front-gap`,
+                  `${input.engine.deterministicSeed}|phase11g|phase3-new-front-gap`,
                 ) * 8,
               PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
               30,
@@ -10980,7 +11275,7 @@ export function resolveRoadPhase3Decisive(
     new Set([...explicitPhase3ChasingTeamIds, ...phase3GcThreatTeamIds]),
   ).sort()
   const physicalChasingTeamSet = new Set(physicalChasingTeamIds)
-  const phase3AvailableChaseAssets = phase3Rows.filter(({ row, phase }) =>
+  const phase3ChaseWorkerRows = phase3Rows.filter(({ row, phase }) =>
     physicalChasingTeamSet.has(row.teamId) &&
     (phase.behaviour === 'chase' ||
       phase.behaviour === 'race_control' ||
@@ -10988,7 +11283,8 @@ export function resolveRoadPhase3Decisive(
       row.stageRole === 'helper_domestique' ||
       row.stageRole === 'rouleur' ||
       row.stageRole === 'breakaway_chaser'),
-  ).length
+  )
+  const phase3AvailableChaseAssets = phase3ChaseWorkerRows.length
   const phase3SprintAssets = phase3Rows.filter(({ row }) =>
     physicalChasingTeamSet.has(row.teamId) &&
     (row.stageRole === 'sprinter' || row.stageRole === 'lead_out_rider'),
@@ -11036,18 +11332,92 @@ export function resolveRoadPhase3Decisive(
     })
   }
   let phase3PhysicalKm = phase3PhysicalStartKm
+  let phase3PhysicalCatchKm: number | null = null
   while (
     physicalEscapeRiderIds.length > 0 &&
     physicalCurrentGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
     phase3PhysicalKm < phaseBoundary.endKm - 0.000001
   ) {
-    const stepEndKm = Math.min(phaseBoundary.endKm, phase3PhysicalKm + 5)
+    const stepEndKm = Math.min(phaseBoundary.endKm, phase3PhysicalKm + 2)
     const stepDistanceKm = stepEndKm - phase3PhysicalKm
     const isPointGateNear = phase3Points.some(
       (point) =>
         point.kmFromStart >= phase3PhysicalKm - 0.000001 &&
-        point.kmFromStart <= stepEndKm + 5,
+        point.kmFromStart <= stepEndKm + 2,
     )
+    const stepReferencePaceKmh = calculateRoadReferencePaceKmh(
+      input.stage,
+      (phase3PhysicalKm + stepEndKm) / 2,
+    )
+    const phase3TerrainScale = stepReferencePaceKmh /
+      Math.max(5, phase3BaselinePelotonPaceKmh)
+    const stepMidKm = (phase3PhysicalKm + stepEndKm) / 2
+    const phase3EscapeLiveEnergyByRiderId = new Map(
+      physicalEscapeRiderIds.map((riderId) => {
+        const rider = ridersById.get(riderId)!
+        const readiness = readinessByRiderId.get(riderId)!
+        const startEnergy = phase2EnergyByRiderId.get(riderId)?.energyAfterPhase ?? 0
+        const spent = calculateRoadEnergyCostForRange(
+          input,
+          rider,
+          readiness,
+          1,
+          phaseBoundary.startKm,
+          stepMidKm,
+        )
+        return [riderId, Math.max(0, startEnergy - spent)] as const
+      }),
+    )
+    const phase3DynamicCooperationMultiplier =
+      calculateRoadEscapeCooperationMultiplier(
+        physicalEscapeRiderIds,
+        ridersById,
+        roadCommandResolution,
+        3,
+        phase3EscapeLiveEnergyByRiderId,
+        stepMidKm,
+        phase3Points,
+      )
+    const stepEscapePaceReferenceKmh =
+      phase3EscapePaceKmh *
+      phase3TerrainScale *
+      phase3DynamicCooperationMultiplier
+    const phase3WorkloadFraction = clamp(
+      (stepEndKm - phaseBoundary.startKm) /
+        Math.max(1, (phaseBoundary.endKm - phaseBoundary.startKm)),
+      0,
+      1,
+    )
+    const phase3WorkerEnergyFraction = clamp(
+      average(
+        phase3ChaseWorkerRows.map(({ row }) => {
+          const rider = ridersById.get(row.riderId)!
+          const readiness = readinessByRiderId.get(row.riderId)!
+          const startEnergy = phase2EnergyByRiderId.get(row.riderId)?.energyAfterPhase ?? 0
+          const spent = calculateRoadEnergyCostForRange(
+            input,
+            rider,
+            readiness,
+            1.2,
+            phaseBoundary.startKm,
+            stepMidKm,
+          )
+          return Math.max(0, startEnergy - spent)
+        }),
+      ) / 70,
+      0.3,
+      1,
+    )
+    const phase3FiniteChaseAssets = Math.ceil(
+      phase3AvailableChaseAssets *
+        clamp(
+          phase3WorkerEnergyFraction *
+            (1 - phase3WorkloadFraction * 0.32),
+          0.22,
+          1,
+        ),
+    )
+    const phase11gWeather = calculatePhase9WeatherModifiers(input.weather)
     const response = calculatePelotonResponseComponents(
       stepEndKm / input.stage.distanceKm,
       input.stage.distanceKm - stepEndKm,
@@ -11055,18 +11425,29 @@ export function resolveRoadPhase3Decisive(
       Math.max(1, physicalEscapeRiderIds.length),
       Math.max(1, physicalEscapeTeamIds.size),
       physicalChasingTeamIds.length,
-      phase3AvailableChaseAssets,
+      phase3FiniteChaseAssets,
       phase3SprintAssets,
       phase3ProtectedAssets,
-      phase3BaselinePelotonPaceKmh,
-      phase3EscapePaceKmh,
+      stepReferencePaceKmh,
+      stepEscapePaceReferenceKmh,
       isPointGateNear,
       false,
       true,
     )
+    const phase3WindSpeedMultiplier = applyRoadWindExposureToMultiplier(
+      phase11gWeather.speedMultiplier,
+      input.stage,
+      stepMidKm,
+    )
+    const phase3WindBreakawayMultiplier = applyRoadWindExposureToMultiplier(
+      phase11gWeather.breakawaySurvivalMultiplier,
+      input.stage,
+      stepMidKm,
+    )
     const pelotonPaceKmh = clamp(
-      phase3BaselinePelotonPaceKmh *
-        Math.max(1, response.selectedResponseMultiplier) +
+      stepReferencePaceKmh *
+        response.selectedResponseMultiplier *
+        phase3WindSpeedMultiplier +
         phase11fPaceVariationKmh(
           input.engine.deterministicSeed,
           'phase3-peloton',
@@ -11077,7 +11458,9 @@ export function resolveRoadPhase3Decisive(
       53,
     )
     const escapePaceKmh = clamp(
-      phase3EscapePaceKmh +
+      stepEscapePaceReferenceKmh *
+        phase3WindSpeedMultiplier *
+        phase3WindBreakawayMultiplier +
         phase11fPaceVariationKmh(
           input.engine.deterministicSeed,
           'phase3-escape',
@@ -11087,15 +11470,26 @@ export function resolveRoadPhase3Decisive(
       27,
       51,
     )
-    physicalCurrentGapSeconds = Math.max(
+    const calculatedNextGapSeconds = Math.max(
       0,
       physicalCurrentGapSeconds +
         (stepDistanceKm / Math.max(5, pelotonPaceKmh)) * 3600 -
         (stepDistanceKm / Math.max(5, escapePaceKmh)) * 3600,
     )
+    physicalCurrentGapSeconds = limitRoadChaseGapClosure(
+      physicalCurrentGapSeconds,
+      calculatedNextGapSeconds,
+      phase3PhysicalKm,
+      stepEndKm,
+      input.stage.distanceKm,
+      input.stage.terrainType,
+    )
     phase3PhysicalKm = stepEndKm
     if (physicalCurrentGapSeconds <= PHASE5_GROUP_MERGE_TOLERANCE_SECONDS) {
       physicalCurrentGapSeconds = 0
+      if (phase3PhysicalCatchKm === null) {
+        phase3PhysicalCatchKm = stepEndKm
+      }
       physicalEscapeRiderIds = []
     }
     physicalGapTrajectory.push({
@@ -11444,9 +11838,13 @@ export function resolveRoadPhase3Decisive(
       attackAttempts,
       successfulAttackRiderIds,
       pointBattles,
+      physicalEscapeRiderIdsAtStart: physicalEscapeRiderIdsAtLaunch,
       physicalEscapeRiderIdsAtEnd: physicalEscapeRiderIds,
       physicalStartGapSeconds: deterministicRound(phase3StartGapSeconds, 6),
       physicalEndGapSeconds,
+      physicalCatchKm: phase3PhysicalCatchKm === null
+        ? null
+        : deterministicRound(phase3PhysicalCatchKm, 6),
       physicalChasingTeamIds,
       physicalGapTrajectory,
       riderStates,
@@ -11668,22 +12066,6 @@ function calculateRoadPhase4ChaseStartFraction(
   return deterministicRound(clamp(startFraction, 0.65, 0.8), 6)
 }
 
-function getRoadPreferredCatchFraction(
-  terrainType: TerrainType,
-): number {
-  switch (terrainType) {
-    case 'mountain':
-      return 0.9
-    case 'hilly':
-      return 0.91
-    case 'cobbled':
-      return 0.9
-    case 'flat':
-    default:
-      return 0.92
-  }
-}
-
 function limitRoadChaseGapClosure(
   currentGapSeconds: number,
   calculatedNextGapSeconds: number,
@@ -11699,23 +12081,26 @@ function limitRoadChaseGapClosure(
   const stepDistanceKm = Math.max(0, stepEndKm - currentKm)
   if (stepDistanceKm <= 0) return currentGapSeconds
 
-  const preferredCatchKm =
-    stageDistanceKm * getRoadPreferredCatchFraction(terrainType)
-  const distanceToPreferredCatchKm = Math.max(
-    stepDistanceKm,
-    preferredCatchKm - currentKm,
-  )
-  const proportionalClosureLimit =
-    preferredCatchKm > currentKm
-      ? currentGapSeconds *
-        (stepDistanceKm / distanceToPreferredCatchKm)
-      : currentGapSeconds
-  const closurePerKmLimit =
-    3.5 + Math.min(2, (currentGapSeconds / 120) * 2) - 0.000001
+  /*
+   * A chase may close only as fast as the physical speed delta can plausibly
+   * support. There is intentionally no preferred catch kilometre and no
+   * proportional countdown to 90/91/92 percent of the stage.
+   */
+  const progress = clamp(stepEndKm / Math.max(0.1, stageDistanceKm), 0, 1)
+  const terrainClosurePerKm =
+    terrainType === 'mountain'
+      ? 4
+      : terrainType === 'hilly'
+        ? 4.6
+        : terrainType === 'cobbled'
+          ? 4.4
+          : 5.2
+  const latePhysicalIntensityBonus =
+    progress <= 0.7 ? 0 : Math.min(0.8, ((progress - 0.7) / 0.3) * 0.8)
+  const closurePerKmLimit = terrainClosurePerKm + latePhysicalIntensityBonus
   const distanceClosureLimit = stepDistanceKm * closurePerKmLimit
   const maximumClosureSeconds = Math.min(
     currentGapSeconds,
-    proportionalClosureLimit,
     distanceClosureLimit,
   )
 
@@ -12603,16 +12988,14 @@ export function resolveRoadPhase4Finish(
         !persistentOpeningState.droppedRiderIds.includes(riderId),
     )
     .sort()
-  const maximumBridgeSize = Math.min(
-    30,
-    Math.max(
-      1,
-      Math.floor(
-        (physicallyAvailableRiderIds.length - escapeRiderIdsAtStart.length) *
-          0.4,
-      ),
-    ),
-  )
+  /*
+   * Phase 11G physical-lineage rule:
+   * a rider who is already in a real F bridge/front group at the Phase 3
+   * boundary cannot disappear simply because Phase 4 previously imposed a
+   * synthetic maximum bridge size. Likewise, every rider whose explicit
+   * Phase 4 attack actually succeeds must remain represented. Group size is
+   * therefore an outcome of the successful moves, not a truncation quota.
+   */
   const bridgeRiderIds =
     persistentOpeningState.riderIds.length > 0
       ? Array.from(
@@ -12620,9 +13003,7 @@ export function resolveRoadPhase4Finish(
             ...preExistingBridgeRiderIds,
             ...phase4AttackCandidateRows.map((row) => row.riderId),
           ]),
-        )
-          .slice(0, maximumBridgeSize)
-          .sort()
+        ).sort()
       : []
   const bridgeRiderSet = new Set(bridgeRiderIds)
   const bridgeCandidateScore = average(
@@ -12719,10 +13100,16 @@ export function resolveRoadPhase4Finish(
   const chaseSteps: UniversalRoadLateChaseStep[] = []
 
   while (currentKm < phaseBoundary.endKm - 0.000001) {
-    const stepEndKm = Math.min(phaseBoundary.endKm, currentKm + 5)
+    const stepEndKm = Math.min(phaseBoundary.endKm, currentKm + 2)
     const stepDistanceKm = stepEndKm - currentKm
     const progress = stepEndKm / input.stage.distanceKm
     const remainingKm = input.stage.distanceKm - stepEndKm
+    const stepReferencePaceKmh = calculateRoadReferencePaceKmh(
+      input.stage,
+      (currentKm + stepEndKm) / 2,
+    )
+    const phase4TerrainScale = stepReferencePaceKmh / 42
+    const phase11gWeather = calculatePhase9WeatherModifiers(input.weather)
 
     const shouldLaunchPreExistingBridge =
       preExistingBridgeRiderIds.length > 0 &&
@@ -12813,8 +13200,30 @@ export function resolveRoadPhase4Finish(
       0,
       1,
     )
+    const chaseWorkloadFraction = clamp(
+      (currentKm - chaseStartKm) /
+        Math.max(1, phaseBoundary.endKm - chaseStartKm),
+      0,
+      1,
+    )
+    const workerEnergyFraction = clamp(
+      average(
+        effectiveAutomaticWorkerRows.map(
+          (row) => phase3EnergyByRiderId.get(row.riderId) ?? 0,
+        ),
+      ) / 70,
+      0.35,
+      1,
+    )
+    const finiteWorkerAvailability = clamp(
+      workerEnergyFraction * (1 - chaseWorkloadFraction * 0.38),
+      0.25,
+      1,
+    )
     const activeAutomaticWorkerCount = Math.ceil(
-      effectiveAutomaticWorkerRows.length * automaticActivityFactor,
+      effectiveAutomaticWorkerRows.length *
+        automaticActivityFactor *
+        finiteWorkerAvailability,
     )
     const activeAutomaticTeamCount = Math.ceil(
       effectiveAutomaticChasingTeamIds.length * automaticActivityFactor,
@@ -12854,13 +13263,13 @@ export function resolveRoadPhase4Finish(
             )
           }).length,
       ),
-      baselinePelotonPaceKmh,
-      currentEscapePaceKmh,
+      stepReferencePaceKmh,
+      currentEscapePaceKmh * phase4TerrainScale,
       input.points.some(
         (point) =>
           point.pointType !== 'FINISH' &&
           point.kmFromStart >= currentKm - 0.000001 &&
-          point.kmFromStart <= stepEndKm + 3,
+          point.kmFromStart <= stepEndKm + 2,
       ),
       remainingKm <= 5,
       true,
@@ -12888,18 +13297,66 @@ export function resolveRoadPhase4Finish(
           : input.stage.terrainType === 'cobbled'
             ? 1.025
             : 1
+    const phase4StepMidKm = (currentKm + stepEndKm) / 2
+    const phase4WindSpeedMultiplier = applyRoadWindExposureToMultiplier(
+      phase11gWeather.speedMultiplier,
+      input.stage,
+      phase4StepMidKm,
+    )
+    const phase4WindBreakawayMultiplier = applyRoadWindExposureToMultiplier(
+      phase11gWeather.breakawaySurvivalMultiplier,
+      input.stage,
+      phase4StepMidKm,
+    )
+    const phase4FrontLiveEnergyByRiderId = new Map(
+      currentFrontRiderIds.map((riderId) => {
+        const rider = ridersById.get(riderId)!
+        const readiness = readinessByRiderId.get(riderId)!
+        const startEnergy = phase3EnergyByRiderId.get(riderId) ?? 0
+        const spent = calculateRoadEnergyCostForRange(
+          input,
+          rider,
+          readiness,
+          1,
+          phaseBoundary.startKm,
+          phase4StepMidKm,
+        )
+        return [riderId, Math.max(0, startEnergy - spent)] as const
+      }),
+    )
+    const phase4CooperationMultiplier = calculateRoadEscapeCooperationMultiplier(
+      currentFrontRiderIds,
+      ridersById,
+      roadCommandResolution,
+      4,
+      phase4FrontLiveEnergyByRiderId,
+      phase4StepMidKm,
+      input.points,
+    )
     const effectivePelotonPaceKmh = deterministicRound(
-      baselinePelotonPaceKmh *
+      (stepReferencePaceKmh +
+        Math.min(4, averageChasingStrength * 0.03) +
+        chaseCoalitionPaceBonusKmh) *
         response.selectedResponseMultiplier *
         automaticLateMultiplier *
         explicitStrengthMultiplier *
-        terrainChaseEfficiencyMultiplier,
+        terrainChaseEfficiencyMultiplier *
+        phase4WindSpeedMultiplier,
       6,
     )
     const pelotonStepSeconds =
       (stepDistanceKm / Math.max(5, effectivePelotonPaceKmh)) * 3600
+    const stepEscapePaceKmh = clamp(
+      currentEscapePaceKmh *
+        phase4TerrainScale *
+        phase4CooperationMultiplier *
+        phase4WindSpeedMultiplier *
+        phase4WindBreakawayMultiplier,
+      20,
+      55,
+    )
     const escapeStepSeconds =
-      (stepDistanceKm / Math.max(5, currentEscapePaceKmh)) * 3600
+      (stepDistanceKm / Math.max(5, stepEscapePaceKmh)) * 3600
     const calculatedNextGapSeconds = escapeStillActive
       ? Math.max(
           0,
@@ -13165,7 +13622,7 @@ export function resolveRoadPhase4Finish(
       automaticActivityFactor: deterministicRound(automaticActivityFactor, 6),
       responseMode: response.responseMode,
       selectedResponseMultiplier: response.selectedResponseMultiplier,
-      escapePaceKmh: currentEscapePaceKmh,
+      escapePaceKmh: deterministicRound(stepEscapePaceKmh, 6),
       effectivePelotonPaceKmh,
       explicitChasingTeamCount: effectiveExplicitChasingTeamIds.length,
       automaticChasingTeamCount: activeAutomaticTeamCount,
@@ -15335,14 +15792,13 @@ export function assignPhase5PhysicalGroupIdentities(
 
 export function calculatePhase5OpeningBreakawayGapSeconds(
   breakawayRiderCount: number,
-  breakawayTeamCount: number,
+  _breakawayTeamCount: number,
   originalGapSeconds: number,
 ): number {
   if (breakawayRiderCount <= 0) return 0
-  const establishedGap =
-    90 + Math.min(120, breakawayRiderCount * 18) +
-    Math.min(75, breakawayTeamCount * 15)
-  return Math.max(originalGapSeconds, Math.min(300, establishedGap))
+  // Phase 11G never manufactures an established 90-300 second advantage.
+  // The handoff starts from the separation actually created by the attack.
+  return deterministicRound(Math.max(0, originalGapSeconds), 6)
 }
 
 export function calculatePhase5DevelopmentBreakawayGapSeconds(
@@ -15353,17 +15809,33 @@ export function calculatePhase5DevelopmentBreakawayGapSeconds(
   cooperationScore: number,
 ): number {
   if (openingGapSeconds <= 0) return 0
-  const cooperationGain = Math.round(Math.max(0, cooperationScore) * 1.2)
-  const controlReduction = controllingTeamCount * 35
-  const chaseReduction = chasingTeamCount * 70
-  const modeDelta =
-    responseMode === 'release_escape' ? 75 :
-    responseMode === 'control_gap' ? 10 :
-    responseMode === 'organized_chase' ? -80 :
-    responseMode === 'emergency_chase' ? -150 : 0
-  return Math.max(
-    0,
-    Math.min(600, openingGapSeconds + cooperationGain + modeDelta - controlReduction - chaseReduction),
+  /*
+   * Legacy diagnostic helper only; production physical handoff no longer calls
+   * this function. Keep its comparative semantics without manufacturing a
+   * progress-based target gap or preferred catch window.
+   */
+  const cooperationDelta = (clamp(cooperationScore, 0, 100) - 50) * 0.55
+  const controlPressure = Math.max(0, controllingTeamCount) * 9
+  const chasePressure = Math.max(0, chasingTeamCount) * 22
+  const modePressure =
+    responseMode === 'release_escape'
+      ? 12
+      : responseMode === 'organized_chase'
+        ? -16
+        : responseMode === 'emergency_chase'
+          ? -28
+          : 0
+  return deterministicRound(
+    clamp(
+      openingGapSeconds +
+        cooperationDelta +
+        modePressure -
+        controlPressure -
+        chasePressure,
+      0,
+      600,
+    ),
+    6,
   )
 }
 
@@ -15750,6 +16222,13 @@ function buildUniversalPhase5GroupingSummary(
     (riderId) => eligibleStarterIdSet.has(riderId),
   )
   const openingBreakawaySet = new Set(openingBreakawayRiderIds)
+  const openingBreakawayCarriesIntoPhase4ForGrouping =
+    openingBreakawayRiderIds.length > 0 &&
+    (p2?.breakawayRiderIdsAtEnd.length ?? 0) > 0 &&
+    (p3?.physicalEscapeRiderIdsAtEnd.length ?? 0) > 0 &&
+    openingBreakawayRiderIds.every((riderId) =>
+      p3?.physicalEscapeRiderIdsAtEnd.includes(riderId) ?? false,
+    )
   const pelotonStarterIds = starterIds.filter(
     (riderId) => !openingBreakawaySet.has(riderId),
   )
@@ -16175,15 +16654,29 @@ function buildUniversalPhase5GroupingSummary(
     }),
   ]
 
-  const finalMainBodyIndex = gapNormalizedFinalGroups.reduce(
-    (bestIndex, group, index) => {
-      const best = gapNormalizedFinalGroups[bestIndex]
-      return !best || group.riderIds.length > best.riderIds.length
-        ? index
-        : bestIndex
-    },
-    0,
+  const phase4PersistentFrontRiderSet = new Set(
+    p4.breakawaySurvived ? p4.frontRiderIdsAfterBridges : [],
   )
+  const eligibleMainBodyIndexes = gapNormalizedFinalGroups
+    .map((group, index) => ({ group, index }))
+    .filter(({ group }) =>
+      p4.breakawaySurvived
+        ? !group.riderIds.some((riderId) =>
+            phase4PersistentFrontRiderSet.has(riderId),
+          )
+        : true,
+    )
+  const finalMainBodyIndex = (
+    eligibleMainBodyIndexes.length > 0
+      ? eligibleMainBodyIndexes
+      : gapNormalizedFinalGroups.map((group, index) => ({ group, index }))
+  ).reduce(
+    (best, current) =>
+      !best || current.group.riderIds.length > best.group.riderIds.length
+        ? current
+        : best,
+    null as { group: UniversalPhase5GroupSnapshot; index: number } | null,
+  )?.index ?? 0
   let finalFrontNumber = 0
   let finalChaseNumber = 0
   const labelledFinalGroups: readonly UniversalPhase5GroupSnapshot[] =
@@ -16192,7 +16685,11 @@ function buildUniversalPhase5GroupingSummary(
         const containsOpeningBreakaway = group.riderIds.some((riderId) =>
           openingBreakawaySet.has(riderId),
         )
-        if (p4.breakawaySurvived && containsOpeningBreakaway) {
+        if (
+          p4.breakawaySurvived &&
+          openingBreakawayCarriesIntoPhase4ForGrouping &&
+          containsOpeningBreakaway
+        ) {
           return {
             ...group,
             groupCode: 'breakaway' as const,
@@ -19196,6 +19693,7 @@ export function buildUniversalRaceCalibrationSummary(
   const remainingEnergy = (phase4?.riderStates ?? []).map(
     (state) => state.energyAtFinish,
   )
+
   const finalGroups = groupAndTimeResolution.finalGroups
     .slice()
     .sort((left, right) => left.groupOrder - right.groupOrder)
@@ -20018,10 +20516,7 @@ function buildUniversalReplayTimeline(
         left.attemptKm - right.attemptKm ||
         left.riderId.localeCompare(right.riderId),
     )
-  const phase2FrontFormationKm =
-    successfulPhase2AttackAttempts.length > 0
-      ? successfulPhase2AttackAttempts[0].attemptKm
-      : null
+  const phase2FrontFormationKm = phase2.secondaryFrontLaunchKm
   const phase2SecondaryFrontRiderIdSet = new Set(
     phase2.secondaryFrontRiderIdsAtEnd,
   )
@@ -20045,6 +20540,62 @@ function buildUniversalReplayTimeline(
                 : group,
             ),
         )
+  const mergeFrontGroupsIntoPeloton = (
+    sourceGroups: readonly UniversalPhase5GroupSnapshot[],
+    phaseNumber: RoadRacePhaseNumber,
+  ): readonly UniversalPhase5GroupSnapshot[] => {
+    const normalized = normalizeReplayGroups(sourceGroups)
+    const frontRiderIds = normalized
+      .filter(
+        (group) =>
+          group.displayCode.startsWith('B') ||
+          group.displayCode.startsWith('F'),
+      )
+      .flatMap((group) => group.riderIds)
+    if (frontRiderIds.length === 0) return normalized
+    const peloton = normalized.find((group) => group.displayCode === 'P')
+    if (!peloton) return normalized
+    const frontSet = new Set(frontRiderIds)
+    const merged = normalized
+      .filter(
+        (group) =>
+          !group.displayCode.startsWith('B') &&
+          !group.displayCode.startsWith('F'),
+      )
+      .map((group) =>
+        group.displayCode === 'P'
+          ? {
+              ...group,
+              phaseNumber,
+              riderIds: Array.from(
+                new Set([...group.riderIds, ...frontRiderIds]),
+              ).sort(),
+              gapSeconds: 0,
+              officialTimeSeconds: null,
+              formationReason: 'breakaway_catch' as const,
+            }
+          : {
+              ...group,
+              phaseNumber,
+              riderIds: group.riderIds.filter((id) => !frontSet.has(id)),
+              gapSeconds: deterministicRound(
+                Math.max(0, group.gapSeconds - peloton.gapSeconds),
+                6,
+              ),
+              officialTimeSeconds: null,
+            },
+      )
+      .filter((group) => group.riderIds.length > 0)
+    return normalizeReplayGroups(merged)
+  }
+  const phase2PostCatchGroups = mergeFrontGroupsIntoPeloton(
+    phase1Groups,
+    2,
+  )
+  const phase3PostCatchGroups = mergeFrontGroupsIntoPeloton(
+    phase2Groups,
+    3,
+  )
   const finalGroups = groupAndTimeResolution.finalGroups
     .slice()
     .sort(
@@ -20240,6 +20791,13 @@ function buildUniversalReplayTimeline(
   const openingBreakawayActive =
     phase1.status === 'breakaway_formed' &&
     phase1.breakawayRiderIds.length > 0
+  const openingBreakawayCarriesIntoPhase4 =
+    openingBreakawayActive &&
+    phase2.breakawayRiderIdsAtEnd.length > 0 &&
+    phase3.physicalEscapeRiderIdsAtEnd.length > 0 &&
+    phase1.breakawayRiderIds.every((riderId) =>
+      phase3.physicalEscapeRiderIdsAtEnd.includes(riderId),
+    )
   const formationKm = openingBreakawayActive
     ? Math.max(
         0,
@@ -20252,7 +20810,10 @@ function buildUniversalReplayTimeline(
     phase3.phaseBoundary.endKm,
   )
   const chaseStartKm = deterministicRound(
-    stageDistanceKm * phase4.automaticActivityStartsAtFraction,
+    Math.max(
+      phase4.phaseBoundary.startKm,
+      stageDistanceKm * phase4.automaticActivityStartsAtFraction,
+    ),
     6,
   )
   const catchStep = phase4.chaseSteps.find(
@@ -20264,12 +20825,23 @@ function buildUniversalReplayTimeline(
     phase4.breakawayCaught && catchStep
       ? deterministicRound(catchStep.kmEnd, 6)
       : null
+  const phase2CatchKm = phase2.breakawayCatchKm
+  const phase3CatchKm = phase3.physicalCatchKm
   const phase4FrontActive =
     phase4.escapeRiderIdsAtStart.length > 0 &&
     phase4.startGapSeconds > 0
   const nonOpeningFrontFormationActive =
-    phase4FrontActive && !openingBreakawayActive
-  const nonOpeningFrontFormationKm = decisiveSplitKm
+    phase4FrontActive &&
+    !openingBreakawayCarriesIntoPhase4 &&
+    phase3.physicalEscapeRiderIdsAtEnd.length === 0
+  const nonOpeningFrontFormationKm = deterministicRound(
+    Math.min(
+      stageDistanceKm,
+      phase4.phaseBoundary.startKm +
+        Math.max(0.05, Math.min(0.15, stageDistanceKm * 0.0005)),
+    ),
+    6,
+  )
   const nonOpeningFrontFormationGapSeconds = deterministicRound(
     Math.min(
       phase4.startGapSeconds,
@@ -20321,6 +20893,21 @@ function buildUniversalReplayTimeline(
   const phase4ContactLossRiderSet = new Set(
     phase4ContactLossStates.map((row) => row.riderId),
   )
+  const preExistingChaseNumbers = [...phase3Groups, ...finalGroups]
+    .map((group) => /^C(\d+)$/.exec(group.displayCode)?.[1])
+    .filter((value): value is string => Boolean(value))
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value))
+  const phase4ContactLossChaseCodeBase =
+    preExistingChaseNumbers.length > 0
+      ? Math.max(...preExistingChaseNumbers)
+      : 0
+  const phase4StableContactLossCodeByRiderId = new Map(
+    phase4ContactLossStates.map((row, index) => [
+      row.riderId,
+      `C${phase4ContactLossChaseCodeBase + index + 1}`,
+    ] as const),
+  )
   const openingFrontDisplayCode = ['B', '1'].join('')
 
   type ReplayGapAnchor = {
@@ -20351,16 +20938,49 @@ function buildUniversalReplayTimeline(
     rawPelotonGap(rawPhase1Groups, phase1.initialGapSeconds),
     20,
   )
+  phase2.physicalGapTrajectory.forEach((sample) => {
+    if (
+      sample.kmFromStart <= phase2.phaseBoundary.startKm + 0.000001 ||
+      sample.kmFromStart >= phase2.phaseBoundary.endKm - 0.000001
+    ) {
+      return
+    }
+    addGapAnchor(sample.kmFromStart, sample.gapSeconds, 24)
+  })
+  if (phase2CatchKm !== null) {
+    addGapAnchor(phase2CatchKm, 0, 27)
+  }
+  if (phase2FrontFormationKm !== null) {
+    addGapAnchor(
+      phase2FrontFormationKm,
+      Math.min(
+        phase2.secondaryFrontGapToPelotonSeconds,
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+      ),
+      28,
+    )
+  }
   addGapAnchor(
     phase2.phaseBoundary.endKm,
-    rawPelotonGap(rawPhase2Groups, phase2.endGapSeconds),
+    phase2.secondaryFrontRiderIdsAtEnd.length > 0
+      ? phase2.secondaryFrontGapToPelotonSeconds
+      : rawPelotonGap(rawPhase2Groups, phase2.endGapSeconds),
     30,
   )
-  addGapAnchor(
-    decisiveSplitKm,
-    rawPelotonGap(rawPhase3Groups, phase4.startGapSeconds),
-    40,
-  )
+  if (phase3CatchKm !== null) {
+    addGapAnchor(phase3CatchKm, 0, 43)
+  }
+  const physicalPhase3EscapeActiveAtDecisiveSplit =
+    phase3.physicalEscapeRiderIdsAtStart.length > 0 &&
+    (phase3CatchKm === null ||
+      decisiveSplitKm < phase3CatchKm - 0.000001)
+  if (!physicalPhase3EscapeActiveAtDecisiveSplit) {
+    addGapAnchor(
+      decisiveSplitKm,
+      rawPelotonGap(rawPhase3Groups, phase4.startGapSeconds),
+      40,
+    )
+  }
   phase3.physicalGapTrajectory.forEach((sample) => {
     if (
       sample.kmFromStart <=
@@ -20378,7 +20998,9 @@ function buildUniversalReplayTimeline(
   })
   addGapAnchor(
     phase3.phaseBoundary.endKm,
-    rawPelotonGap(rawPhase3Groups, phase4.startGapSeconds),
+    phase3.physicalEscapeRiderIdsAtEnd.length > 0
+      ? phase3.physicalEndGapSeconds
+      : 0,
     45,
   )
   if (phase4FrontActive) {
@@ -20437,47 +21059,23 @@ function buildUniversalReplayTimeline(
       0,
       1,
     )
-    const easedFraction = fraction * fraction * (3 - 2 * fraction)
-    const baseGapSeconds =
-      previous.gapSeconds +
-      (next.gapSeconds - previous.gapSeconds) * easedFraction
 
     /*
-     * Phase 11F v2 replay-only gap breathing.
-     *
-     * Exact authoritative gap anchors remain untouched. Between anchors the
-     * replay adds a smooth deterministic +/- few-second oscillation so a
-     * physically stable race situation does not look frozen at exactly the
-     * same rounded value (for example 1:17 at several consecutive events).
-     * This is interpolation of one stored engine result, not a second race
-     * calculation, and it is forced to zero at both surrounding anchors.
+     * Phase 11G replays the authoritative physical gap trajectory directly.
+     * There is deliberately no replay-only oscillation or eased curve here:
+     * both could make two nearby replay events imply a faster closure than the
+     * physical engine actually calculated. Organic 1-2 km physics samples now
+     * provide the visible gap movement themselves.
      */
-    const anchorSpanKm = Math.max(0, next.km - previous.km)
-    const breathingEligible =
-      anchorSpanKm >= 1.5 &&
-      baseGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 5
-    const breathingEnvelope = Math.sin(Math.PI * fraction)
-    const breathingPhase =
-      calculateDeterministicUnitRoll(
-        `${input.engine.deterministicSeed}|${input.stage.stageId}|replay-gap-breathing|${previous.km}|${next.km}`,
-      ) *
-      Math.PI *
-      2
-    const breathingAmplitudeSeconds = breathingEligible
-      ? clamp(baseGapSeconds * 0.025, 1.25, 3.25)
-      : 0
-    const breathingSeconds =
-      breathingAmplitudeSeconds *
-      breathingEnvelope *
-      Math.sin(Math.PI * 4 * fraction + breathingPhase)
+    const baseGapSeconds =
+      previous.gapSeconds +
+      (next.gapSeconds - previous.gapSeconds) * fraction
 
-    return deterministicRound(
-      Math.max(0, baseGapSeconds + breathingSeconds),
-      6,
-    )
+    return deterministicRound(Math.max(0, baseGapSeconds), 6)
   }
 
   const authoritativeBridgeGroup = phase4.bridgeGroups[0] ?? null
+  const bridgeReplayDisplayCode = openingBreakawayCarriesIntoPhase4 ? 'F1' : 'F2'
 
   const bridgeStateAtKm = (
     kmFromStart: number,
@@ -20635,18 +21233,18 @@ function buildUniversalReplayTimeline(
         ...openingTemplate,
         phaseNumber: 4,
         groupOrder: 1,
-        groupCode: openingBreakawayActive
+        groupCode: openingBreakawayCarriesIntoPhase4
           ? 'breakaway'
           : 'front_favourites',
-        displayCode: openingBreakawayActive ? openingFrontDisplayCode : 'F1',
+        displayCode: openingBreakawayCarriesIntoPhase4 ? openingFrontDisplayCode : 'F1',
         physicalPosition: 'ahead_of_peloton',
-        colorKey: openingBreakawayActive
+        colorKey: openingBreakawayCarriesIntoPhase4
           ? 'breakaway_red'
           : 'front_yellow',
         riderIds: frontRiderIds,
         gapSeconds: 0,
         officialTimeSeconds: null,
-        formationReason: openingBreakawayActive
+        formationReason: openingBreakawayCarriesIntoPhase4
           ? bridgeState.merged
             ? 'chase_reformation'
             : 'opening_escape'
@@ -20663,7 +21261,7 @@ function buildUniversalReplayTimeline(
         phaseNumber: 4,
         groupOrder: groups.length + 1,
         groupCode: 'front_favourites',
-        displayCode: 'F1',
+        displayCode: bridgeReplayDisplayCode,
         physicalPosition: 'ahead_of_peloton',
         colorKey: 'front_yellow',
         riderIds: activeBridgeRiderIds,
@@ -20749,6 +21347,7 @@ function buildUniversalReplayTimeline(
     kmFromStart: number,
   ): readonly UniversalPhase5GroupSnapshot[] => {
     if (
+      kmFromStart < phase4.phaseBoundary.startKm - 0.000001 ||
       phase4ContactLossStates.length === 0 ||
       kmFromStart >= stageDistanceKm - 0.000001
     ) {
@@ -20784,10 +21383,7 @@ function buildUniversalReplayTimeline(
       Math.max(0, pelotonTemplate.gapSeconds),
       6,
     )
-    let nextChaseNumber =
-      retainedGroups.filter((group) => group.displayCode.startsWith('C')).length + 1
-
-    const riderCandidates: UniversalPhase5RoadGroupCandidate[] =
+    const selectedGroups: UniversalPhase5GroupSnapshot[] =
       activeContactLossStates
         .map((state, index) => {
           const contactLossKm = state.contactLossKm ?? kmFromStart
@@ -20817,51 +21413,36 @@ function buildUniversalReplayTimeline(
               ),
             6,
           )
-          const preferredGroupCode: UniversalPhase5GroupCode =
-            state.finalGroupCode === 'late_group'
-              ? 'dropped_group'
-              : 'chasing_group'
+          const displayCode =
+            phase4StableContactLossCodeByRiderId.get(state.riderId) ??
+            `C${phase4ContactLossChaseCodeBase + index + 1}`
           return {
-            sourceOrder: index + 1,
-            preferredGroupCode,
+            ...pelotonTemplate,
+            phaseNumber: 4 as const,
+            groupOrder: retainedGroups.length + index + 1,
+            groupCode:
+              state.finalGroupCode === 'late_group'
+                ? ('dropped_group' as const)
+                : ('chasing_group' as const),
+            displayCode,
+            physicalPosition: 'behind_peloton' as const,
+            colorKey: 'chasing_orange' as const,
             riderIds: [state.riderId],
             gapSeconds,
-            riderPerformanceScores: { [state.riderId]: -gapSeconds },
+            officialTimeSeconds: null,
             formationReason: 'decisive_selection' as const,
           }
         })
         .sort(
           (left, right) =>
             left.gapSeconds - right.gapSeconds ||
-            left.riderIds[0].localeCompare(right.riderIds[0]),
+            left.displayCode.localeCompare(right.displayCode),
         )
-        .map((candidate, index) => ({ ...candidate, sourceOrder: index + 1 }))
 
-    // Each already-cracked rider keeps an independently evolving physical gap.
-    // Only riders that are actually within the existing five-second merge
-    // tolerance are allowed to share one displayed chase group. A newly
-    // detached rider at +6s therefore cannot reset a much older group that has
-    // already drifted farther back.
-    const mergedContactLossGroups = mergeAdjacentPhase5RoadGroups(
-      riderCandidates,
-      riderById,
-      PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
-    )
-    const selectedGroups: UniversalPhase5GroupSnapshot[] =
-      mergedContactLossGroups.map((candidate, index) => ({
-        ...pelotonTemplate,
-        phaseNumber: 4,
-        groupOrder: retainedGroups.length + index + 1,
-        groupCode: candidate.preferredGroupCode,
-        displayCode: `C${nextChaseNumber++}`,
-        physicalPosition: 'behind_peloton',
-        colorKey: 'chasing_orange',
-        riderIds: [...candidate.riderIds],
-        gapSeconds: deterministicRound(candidate.gapSeconds, 6),
-        officialTimeSeconds: null,
-        formationReason: 'decisive_selection',
-      }))
-
+    // A rider who cracks in Phase 4 keeps the same physical chase identity for
+    // the remainder of the replay. Do not re-pack or renumber C groups merely
+    // because another rider loses contact later; a genuine merge/split must be
+    // represented by an explicit replay transition instead.
     return [...retainedGroups, ...selectedGroups]
       .sort(
         (left, right) =>
@@ -20929,8 +21510,15 @@ function buildUniversalReplayTimeline(
     finalGroups
       .slice()
       .sort((left, right) => left.groupOrder - right.groupOrder)
-      .forEach((group) => {
-        if (group.displayCode === 'P') {
+      .forEach((group, index) => {
+        /*
+         * Gaps are leader-relative, not peloton-relative. If a new F1 forms
+         * after the original escape is caught, F1 starts at zero and the
+         * peloton must open a small positive physical gap behind it. Resetting
+         * P to zero here used to collapse F1 and P into one group at the very
+         * checkpoint that was supposed to announce the split.
+         */
+        if (index === 0) {
           postCatchInitialGapByDisplayCode.set(group.displayCode, 0)
           previousInitialGap = 0
           return
@@ -21012,20 +21600,56 @@ function buildUniversalReplayTimeline(
       km >= nonOpeningFrontFormationKm - 0.000001
     ) {
       groups = buildPhase4ChaseGroups(km, nonOpeningFrontGapAtKm(km))
-    } else if (km >= decisiveSplitKm - 0.000001) {
-      groups = adjustGroupsToPelotonGap(
-        phase3Groups,
-        openingBreakawayActive
-          ? gapAtKm(km)
-          : rawPelotonGap(rawPhase3Groups, 0),
-      )
-    } else if (km >= phase1.phaseBoundary.endKm - 0.000001) {
-      const activePhase2Groups =
-        phase2FrontFormationKm !== null &&
-        km < phase2FrontFormationKm - 0.000001
-          ? phase2GroupsBeforeDynamicAttack
-          : phase2Groups
-      groups = adjustGroupsToPelotonGap(activePhase2Groups, gapAtKm(km))
+    } else if (km > phase2.phaseBoundary.endKm + 0.000001) {
+      /*
+       * Phase 3 keeps the actual leading escape lineage until its physical
+       * catch. Only after that catch may the decisive selection groups replace
+       * the front state. This prevents a B/F group from disappearing merely
+       * because an end-of-phase classification was consulted too early.
+       */
+      if (phase3CatchKm !== null && km < phase3CatchKm - 0.000001) {
+        groups = adjustGroupsToPelotonGap(phase2Groups, gapAtKm(km))
+      } else if (
+        phase3CatchKm !== null &&
+        (km < decisiveSplitKm - 0.000001 ||
+          (nonOpeningFrontFormationActive &&
+            km < nonOpeningFrontFormationKm - 0.000001))
+      ) {
+        /*
+         * If the leading escape is caught at the phase boundary, publish the
+         * caught peloton first. Any new late selection is emitted a short
+         * physical distance later as its own group_split checkpoint instead
+         * of changing B/P/C membership at the exact same kilometre.
+         */
+        groups = phase3PostCatchGroups
+      } else if (km >= decisiveSplitKm - 0.000001) {
+        groups = adjustGroupsToPelotonGap(
+          phase3Groups,
+          phase3.physicalEscapeRiderIdsAtEnd.length > 0
+            ? gapAtKm(km)
+            : rawPelotonGap(rawPhase3Groups, 0),
+        )
+      } else {
+        groups = adjustGroupsToPelotonGap(phase2Groups, gapAtKm(km))
+      }
+    } else if (km > phase1.phaseBoundary.endKm + 0.000001) {
+      /* Phase 2 publishes the B lineage until its real catch kilometre. */
+      if (phase2CatchKm !== null && km < phase2CatchKm - 0.000001) {
+        groups = adjustGroupsToPelotonGap(phase1Groups, gapAtKm(km))
+      } else if (
+        phase2CatchKm !== null &&
+        (phase2FrontFormationKm === null ||
+          km < phase2FrontFormationKm - 0.000001)
+      ) {
+        groups = phase2PostCatchGroups
+      } else {
+        const activePhase2Groups =
+          phase2FrontFormationKm !== null &&
+          km < phase2FrontFormationKm - 0.000001
+            ? phase2GroupsBeforeDynamicAttack
+            : phase2Groups
+        groups = adjustGroupsToPelotonGap(activePhase2Groups, gapAtKm(km))
+      }
     } else if (
       openingBreakawayActive &&
       Number.isFinite(formationKm) &&
@@ -21380,6 +22004,78 @@ function buildUniversalReplayTimeline(
       teamIds: [attempt.teamId],
     })
   })
+
+  if (phase2CatchKm !== null) {
+    eventDefinitions.push({
+      checkpointIdSuffix: 'phase-2-opening-breakaway-caught',
+      checkpointKind: 'event',
+      phase: 2,
+      kmFromStart: phase2CatchKm,
+      sortOrder: 340,
+      groups: phase2PostCatchGroups,
+      energyByRiderId: energyAtKm(2, phase2CatchKm),
+      eventType: 'catch',
+      title: 'The opening breakaway is caught',
+      description: `The peloton neutralizes the opening move at kilometre ${deterministicRound(phase2CatchKm, 1)}.`,
+      riderIds: [...phase1.breakawayRiderIds],
+      teamIds: Array.from(
+        new Set(
+          phase1.breakawayRiderIds
+            .map((riderId) => riderById.get(riderId)?.teamId)
+            .filter((teamId): teamId is string => Boolean(teamId)),
+        ),
+      ).sort(),
+    })
+  }
+
+  if (
+    phase2FrontFormationKm !== null &&
+    phase2.secondaryFrontRiderIdsAtEnd.length > 0
+  ) {
+    eventDefinitions.push({
+      checkpointIdSuffix: 'phase-2-replacement-front-formed',
+      checkpointKind: 'event',
+      phase: 2,
+      kmFromStart: phase2FrontFormationKm,
+      sortOrder: 360,
+      groups: groupsAtKm(phase2FrontFormationKm),
+      energyByRiderId: energyAtKm(2, phase2FrontFormationKm),
+      eventType: 'group_split',
+      title: 'A new front move forms',
+      description: `${phase2.secondaryFrontRiderIdsAtEnd.length} rider${phase2.secondaryFrontRiderIdsAtEnd.length === 1 ? '' : 's'} establish a new move after the earlier escape is neutralized.`,
+      riderIds: [...phase2.secondaryFrontRiderIdsAtEnd],
+      teamIds: Array.from(
+        new Set(
+          phase2.secondaryFrontRiderIdsAtEnd
+            .map((riderId) => riderById.get(riderId)?.teamId)
+            .filter((teamId): teamId is string => Boolean(teamId)),
+        ),
+      ).sort(),
+    })
+  }
+
+  if (phase3CatchKm !== null) {
+    eventDefinitions.push({
+      checkpointIdSuffix: 'phase-3-leading-escape-caught',
+      checkpointKind: 'event',
+      phase: 3,
+      kmFromStart: phase3CatchKm,
+      sortOrder: 470,
+      groups: phase3PostCatchGroups,
+      energyByRiderId: energyAtKm(3, phase3CatchKm),
+      eventType: 'catch',
+      title: 'The leaders are caught',
+      description: `The peloton closes the physical gap at kilometre ${deterministicRound(phase3CatchKm, 1)}.`,
+      riderIds: [...phase3.physicalEscapeRiderIdsAtStart],
+      teamIds: Array.from(
+        new Set(
+          phase3.physicalEscapeRiderIdsAtStart
+            .map((riderId) => riderById.get(riderId)?.teamId)
+            .filter((teamId): teamId is string => Boolean(teamId)),
+        ),
+      ).sort(),
+    })
+  }
 
   if (phase2.pelotonResponse.responseMode !== 'no_active_escape') {
     const controlKm = deterministicRound(
@@ -21857,7 +22553,7 @@ function buildUniversalReplayTimeline(
         energyByRiderId: energyAtKm(4, sample.km),
         eventType: 'bridge_progress',
         title: `The chasing group closes on ${openingFrontDisplayCode}`,
-        description: `F1 is ${formatReplaySeconds(sample.gapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(sample.gapToPelotonSeconds)} ahead of the peloton.`,
+        description: `${bridgeReplayDisplayCode} is ${formatReplaySeconds(sample.gapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(sample.gapToPelotonSeconds)} ahead of the peloton.`,
         riderIds: [...bridgeGroup.riderIds],
         teamIds,
       })
@@ -21877,7 +22573,7 @@ function buildUniversalReplayTimeline(
         energyByRiderId: energyAtKm(4, bridgeGroup.mergeKm),
         eventType: 'bridge_merge',
         title: 'The chasing group reaches the breakaway',
-        description: `F1 makes contact with ${openingFrontDisplayCode} inside the ${PHASE5_GROUP_MERGE_TOLERANCE_SECONDS}-second merge tolerance. A new ${phase4.frontRiderIdsAfterBridges.length}-rider ${openingFrontDisplayCode} forms, and its strength is recalculated from the riders and energy now in front.`,
+        description: `${bridgeReplayDisplayCode} makes contact with ${openingFrontDisplayCode} inside the ${PHASE5_GROUP_MERGE_TOLERANCE_SECONDS}-second merge tolerance. A new ${phase4.frontRiderIdsAfterBridges.length}-rider ${openingFrontDisplayCode} forms, and its strength is recalculated from the riders and energy now in front.`,
         riderIds: [...bridgeGroup.riderIds],
         teamIds,
       })
@@ -21887,7 +22583,7 @@ function buildUniversalReplayTimeline(
   if (
     phase4.breakawayCaught &&
     catchKm !== null &&
-    catchKm < stageDistanceKm - 0.000001
+    catchKm <= stageDistanceKm + 0.000001
   ) {
     eventDefinitions.push({
       checkpointIdSuffix: 'opening-breakaway-caught',
@@ -21963,6 +22659,52 @@ function buildUniversalReplayTimeline(
         sortOrder: 850,
       }),
     )
+  }
+
+  const displayCodeByRiderId = (
+    groups: readonly UniversalPhase5GroupSnapshot[],
+  ): ReadonlyMap<string, string> => {
+    const result = new Map<string, string>()
+    groups.forEach((group) => {
+      group.riderIds.forEach((riderId) => result.set(riderId, group.displayCode))
+    })
+    return result
+  }
+  const preFinishPublishedDefinition = [...baseDefinitions, ...eventDefinitions]
+    .filter((definition) => definition.kmFromStart < stageDistanceKm - 0.000001)
+    .sort(
+      (left, right) =>
+        right.kmFromStart - left.kmFromStart ||
+        right.sortOrder - left.sortOrder,
+    )[0]
+  if (preFinishPublishedDefinition) {
+    const beforeCodes = displayCodeByRiderId(preFinishPublishedDefinition.groups)
+    const finalCodes = displayCodeByRiderId(finalGroups)
+    const finalTransitionRiderIds = eligibleStarterIds
+      .filter((riderId) => beforeCodes.get(riderId) !== finalCodes.get(riderId))
+      .sort()
+    if (finalTransitionRiderIds.length > 0) {
+      eventDefinitions.push({
+        checkpointIdSuffix: 'finish-group-transition',
+        checkpointKind: 'event',
+        phase: 4,
+        kmFromStart: stageDistanceKm,
+        sortOrder: 990,
+        groups: finalGroups,
+        energyByRiderId: phase4EnergyByRiderId,
+        eventType: 'group_split',
+        title: 'Final gaps open on the line',
+        description: `${finalTransitionRiderIds.length} riders change physical finishing group as the final gaps are established.`,
+        riderIds: finalTransitionRiderIds,
+        teamIds: Array.from(
+          new Set(
+            finalTransitionRiderIds
+              .map((riderId) => riderById.get(riderId)?.teamId)
+              .filter((teamId): teamId is string => Boolean(teamId)),
+          ),
+        ).sort(),
+      })
+    }
   }
 
   const definitions = [...baseDefinitions, ...eventDefinitions].sort(
@@ -26000,22 +26742,22 @@ export function buildUniversalReplaySynchronizationSummary(
       const distanceDelta =
         checkpoint.raceProgress.kmFromStart -
         previousCheckpoint.raceProgress.kmFromStart
-      const previousPhysicalState = JSON.stringify({
-        groups: previousCheckpoint.groups,
-        gaps: previousCheckpoint.gaps.map((gap) => ({
-          groupCode: gap.groupCode,
-          displayCode: gap.displayCode,
-          gapSeconds: gap.gapSeconds,
-        })),
-      })
-      const currentPhysicalState = JSON.stringify({
-        groups: checkpoint.groups,
-        gaps: checkpoint.gaps.map((gap) => ({
-          groupCode: gap.groupCode,
-          displayCode: gap.displayCode,
-          gapSeconds: gap.gapSeconds,
-        })),
-      })
+      const replayPhysicalStateKey = (
+        candidate: UniversalReplayCheckpoint,
+      ): string =>
+        JSON.stringify({
+          groups: candidate.groups.map((group) => ({
+            displayCode: group.displayCode,
+            physicalPosition: group.physicalPosition,
+            riderIds: [...group.riderIds].sort(),
+          })),
+          gaps: candidate.gaps.map((gap) => ({
+            displayCode: gap.displayCode,
+            gapSeconds: gap.gapSeconds,
+          })),
+        })
+      const previousPhysicalState = replayPhysicalStateKey(previousCheckpoint)
+      const currentPhysicalState = replayPhysicalStateKey(checkpoint)
       if (
         Math.abs(distanceDelta) <= 0.000001 &&
         previousPhysicalState !== currentPhysicalState
@@ -26567,16 +27309,23 @@ export function buildUniversalReplaySynchronizationSummary(
           checkpoint.raceProgress.kmFromStart -
             previous.raceProgress.kmFromStart,
         )
-        const maximumBridgeClosure = distanceDelta * 14 + 2
+        const previousPelotonGap = previous.gaps.find(
+          (gap) => gap.displayCode === 'P',
+        )?.gapSeconds
+        const bridgeWasPhysicallyBetweenFrontAndPeloton =
+          previousBridgeGap !== undefined &&
+          previousBridgeGap >
+            previousBreakawayGap + PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
+          (previousPelotonGap === undefined ||
+            previousBridgeGap <
+              previousPelotonGap - PHASE5_GROUP_MERGE_TOLERANCE_SECONDS)
         if (
           previousBridgeRiderIds.length === 0 ||
           !sameStringArray(breakawayRiderIds, expectedMergedRiderIds) ||
           bridgeGroups.length > 0 ||
           previousBridgeGap === undefined ||
-          previousBridgeGap - previousBreakawayGap >
-            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS +
-              maximumBridgeClosure +
-              0.000001
+          distanceDelta <= 0.000001 ||
+          !bridgeWasPhysicallyBetweenFrontAndPeloton
         ) {
           openingBreakawayLineageStable = false
           allBridgeSequencesPhysicallyValid = false
@@ -26609,12 +27358,40 @@ export function buildUniversalReplaySynchronizationSummary(
     const currentStateByRiderId = new Map(
       checkpoint.riderStates.map((row) => [row.riderId, row] as const),
     )
-    const previousBridge = previous.groups.find((group) =>
-      group.displayCode.startsWith('F'),
+    const bridgeEventRiderIds = Array.from(
+      new Set(
+        replayTimeline.checkpoints
+          .filter(
+            (candidate) =>
+              Math.abs(
+                candidate.raceProgress.kmFromStart -
+                  checkpoint.raceProgress.kmFromStart,
+              ) <= 0.000001,
+          )
+          .flatMap((candidate) =>
+            candidate.commentary
+              .filter(
+                (entry) =>
+                  entry.eventType === 'bridge_attack' ||
+                  entry.eventType === 'bridge_progress' ||
+                  entry.eventType === 'bridge_merge',
+              )
+              .flatMap((entry) => entry.riderIds),
+          ),
+      ),
     )
-    const currentBridge = checkpoint.groups.find((group) =>
-      group.displayCode.startsWith('F'),
-    )
+    const groupContainsBridgeEventRider = (
+      group: UniversalReplayGroupState,
+    ): boolean =>
+      group.displayCode.startsWith('F') &&
+      bridgeEventRiderIds.length > 0 &&
+      bridgeEventRiderIds.every((riderId) => group.riderIds.includes(riderId))
+    const previousBridge =
+      previous.groups.find(groupContainsBridgeEventRider) ??
+      previous.groups.find((group) => group.displayCode.startsWith('F'))
+    const currentBridge =
+      checkpoint.groups.find(groupContainsBridgeEventRider) ??
+      checkpoint.groups.find((group) => group.displayCode.startsWith('F'))
     const previousPeloton = previous.groups.find(
       (group) => group.displayCode === 'P',
     )
@@ -26634,9 +27411,11 @@ export function buildUniversalReplaySynchronizationSummary(
             group.riderIds.includes(riderId),
         ),
       )
-      const currentBridgeGap = checkpoint.gaps.find((gap) =>
-        gap.displayCode.startsWith('F'),
-      )?.gapSeconds
+      const currentBridgeGap = currentBridge
+        ? checkpoint.gaps.find(
+            (gap) => gap.displayCode === currentBridge.displayCode,
+          )?.gapSeconds
+        : undefined
       const currentPelotonGap = checkpoint.gaps.find(
         (gap) => gap.displayCode === 'P',
       )?.gapSeconds
@@ -26758,9 +27537,33 @@ export function buildUniversalReplaySynchronizationSummary(
     }
   })
 
-  const catchCheckpointIndex = replayTimeline.checkpoints.findIndex(
-    (checkpoint) =>
+  const catchCheckpointIndices = replayTimeline.checkpoints
+    .map((checkpoint, index) => ({ checkpoint, index }))
+    .filter(({ checkpoint }) =>
       checkpoint.commentary.some((entry) => entry.eventType === 'catch'),
+    )
+    .map(({ index }) => index)
+  /*
+   * Phase 11G permits an early catch followed by a new front move. The strict
+   * post-catch invariant therefore begins only at a terminal catch: a catch
+   * after which no B/F front group is subsequently formed again.
+   */
+  const catchCheckpointIndex = catchCheckpointIndices.reduce(
+    (terminalIndex, candidateIndex) => {
+      const laterFrontExists = replayTimeline.checkpoints
+        .slice(candidateIndex + 1)
+        .some(
+          (checkpoint) =>
+            !checkpoint.finalResultsVisible &&
+            checkpoint.groups.some(
+              (group) =>
+                group.displayCode.startsWith('B') ||
+                group.displayCode.startsWith('F'),
+            ),
+        )
+      return laterFrontExists ? terminalIndex : candidateIndex
+    },
+    -1,
   )
   if (catchCheckpointIndex >= 0) {
     replayTimeline.checkpoints
@@ -27148,6 +27951,7 @@ export function buildUniversalPostStageUpdateSummary(
   const attackEnergyByRiderId = new Map<string, number>()
   const postStageAttackAttempts = [
     ...(phase1?.attackAttempts ?? []),
+    ...(phase2?.attackAttempts ?? []),
     ...(phase3?.attackAttempts ?? []),
   ]
   postStageAttackAttempts.forEach((attempt) => {
