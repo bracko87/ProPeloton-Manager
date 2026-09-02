@@ -34,14 +34,8 @@ jobs:
           assert text.count(old_maintenance) == 1, f'Expected one Medical Center maintenance fallback, found {text.count(old_maintenance)}'
           text = text.replace(old_maintenance, new_maintenance, 1)
 
-          old_zero = """  medical_center: {
-    unlock: 'Basic medical support only; advanced medical staff capacity remains limited.',
-    effect: 'Injury prevention, recovery and fatigue support use the Level 0 medical cap.',
-  },"""
-          new_zero = """  medical_center: {
-    unlock: 'Base medical facility; one Team Doctor and one Physio slot are available once staff operations are unlocked.',
-    effect: 'No Medical Center prevention, recovery-duration or rehabilitation fatigue-floor bonus is active.',
-  },"""
+          old_zero = "  medical_center: {\n    unlock: 'Basic medical support only; advanced medical staff capacity remains limited.',\n    effect: 'Injury prevention, recovery and fatigue support use the Level 0 medical cap.',\n  },"
+          new_zero = "  medical_center: {\n    unlock: 'Base medical facility; one Team Doctor and one Physio slot are available once staff operations are unlocked.',\n    effect: 'No Medical Center prevention, recovery-duration or rehabilitation fatigue-floor bonus is active.',\n  },"
           assert text.count(old_zero) == 1, f'Expected one Medical Center Level 0 block, found {text.count(old_zero)}'
           text = text.replace(old_zero, new_zero, 1)
 
