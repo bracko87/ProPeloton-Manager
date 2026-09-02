@@ -41,6 +41,9 @@ template_words = {str(k).lower() for k in en_notifications.get('templateWords', 
 def words(value: str):
     return [w.lower() for w in re.findall(r"[A-Za-z0-9]+", value)]
 
+def word_resolvable(word: str) -> bool:
+    return word.isdigit() or word in template_words or word in reverse_all_en
+
 # Static detail labels used by detailRow('...').
 detail_labels = sorted(set(re.findall(r"detailRow\(\s*['\"]([^'\"]+)['\"]", templates)))
 detail_map_block = re.search(r"const DETAIL_LABEL_KEYS:[\s\S]*?= \{([\s\S]*?)\n\}", localization)
@@ -67,16 +70,16 @@ cross_reverse_actions = [x for x in missing_actions if norm(x) in reverse_all_en
 unresolved_actions = [x for x in missing_actions if norm(x) not in reverse_all_en]
 
 remaining_phrases = unresolved_detail + unresolved_actions
-missing_words = sorted({w for phrase in remaining_phrases for w in words(phrase) if w not in template_words})
-fully_tokenizable_detail = [x for x in unresolved_detail if all(w in template_words for w in words(x))]
-fully_tokenizable_actions = [x for x in unresolved_actions if all(w in template_words for w in words(x))]
+missing_words = sorted({w for phrase in remaining_phrases for w in words(phrase) if not word_resolvable(w)})
+fully_tokenizable_detail = [x for x in unresolved_detail if all(word_resolvable(w) for w in words(x))]
+fully_tokenizable_actions = [x for x in unresolved_actions if all(word_resolvable(w) for w in words(x))]
 
 print(f'Static detail labels: {len(detail_labels)}')
 print(f'Manually mapped detail labels: {len(detail_labels)-len(missing_detail)}')
 print(f'Resolvable inside notifications namespace: {len(notif_reverse_detail)}')
 print(f'Resolvable across all game namespaces: {len(cross_reverse_detail)}')
-print(f'Additional fully tokenizable detail labels: {len(fully_tokenizable_detail)}')
-print(f'UNRESOLVED DETAIL LABELS AFTER CROSS-NS + TOKENS ({len(unresolved_detail)-len(fully_tokenizable_detail)}):')
+print(f'Additional fully tokenizable detail labels (global word reuse): {len(fully_tokenizable_detail)}')
+print(f'UNRESOLVED DETAIL LABELS AFTER ALL REUSE ({len(unresolved_detail)-len(fully_tokenizable_detail)}):')
 for value in unresolved_detail:
     if value not in fully_tokenizable_detail:
         print('  -', value)
@@ -84,13 +87,13 @@ for value in unresolved_detail:
 print(f'\nStatic action labels: {len(action_labels)}')
 print(f'Resolvable actions inside notifications namespace: {len(notif_reverse_actions)}')
 print(f'Resolvable actions across all game namespaces: {len(cross_reverse_actions)}')
-print(f'Additional fully tokenizable actions: {len(fully_tokenizable_actions)}')
-print(f'UNRESOLVED ACTION LABELS AFTER CROSS-NS + TOKENS ({len(unresolved_actions)-len(fully_tokenizable_actions)}):')
+print(f'Additional fully tokenizable actions (global word reuse): {len(fully_tokenizable_actions)}')
+print(f'UNRESOLVED ACTION LABELS AFTER ALL REUSE ({len(unresolved_actions)-len(fully_tokenizable_actions)}):')
 for value in unresolved_actions:
     if value not in fully_tokenizable_actions:
         print('  -', value)
 
-print(f'\nMISSING VOCABULARY WORDS ({len(missing_words)}):')
+print(f'\nTRULY MISSING VOCABULARY WORDS ({len(missing_words)}):')
 for value in missing_words:
     print('  -', value)
 
