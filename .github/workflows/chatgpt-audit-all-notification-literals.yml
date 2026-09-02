@@ -1,0 +1,20 @@
+name: Full notification literal coverage audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/audit_all_notification_literal_coverage_20260902.py'
+      - '.github/workflows/chatgpt-audit-all-notification-literals.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit all notification literals
+        run: python3 .github/scripts/audit_all_notification_literal_coverage_20260902.py
