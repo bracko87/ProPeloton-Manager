@@ -1,0 +1,70 @@
+name: Infrastructure facility level localization
+
+on:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-infrastructure-facility-level-localization.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-audit-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply infrastructure facility localization fixes
+        run: python3 .github/scripts/fix_infrastructure_facility_level_localization_20260902.py
+
+      - name: Run infrastructure facility localization audit
+        run: python3 .github/scripts/audit_infrastructure_facility_level_localization_20260902.py
+
+      - name: Validate infrastructure locale JSON
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for locale in ['en','sr-Latn','de','hr','es','it','fr','ru']:
+              path = Path('src/i18n/locales') / locale / 'infrastructure.json'
+              json.loads(path.read_text(encoding='utf-8'))
+              print('OK', path)
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit infrastructure localization fixes
+        run: |
+          git add src/pages/dashboard/infrastructure/FacilitiesSection.tsx
+          git add src/pages/dashboard/infrastructure/infrastructureHelpers.ts
+          git add src/i18n/locales/en/infrastructure.json
+          git add src/i18n/locales/sr-Latn/infrastructure.json
+          git add src/i18n/locales/de/infrastructure.json
+          git add src/i18n/locales/hr/infrastructure.json
+          git add src/i18n/locales/es/infrastructure.json
+          git add src/i18n/locales/it/infrastructure.json
+          git add src/i18n/locales/fr/infrastructure.json
+          git add src/i18n/locales/ru/infrastructure.json
+          if git diff --cached --quiet; then
+            echo 'No infrastructure localization changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Translate infrastructure facility level details'
+          git pull --rebase origin main
+          git push origin HEAD:main
