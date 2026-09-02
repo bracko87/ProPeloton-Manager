@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/chatgpt-race-preparation-runtime-localization.yml'
+      - '.github/scripts/fix_race_preparation_runtime_localization_20260902.py'
+      - '.github/scripts/fix_race_preparation_legacyui_gaps_20260902.py'
+      - '.github/scripts/audit_race_preparation_runtime_localization_v2_20260902.py'
+      - 'src/components/i18n/RacePreparationLegacyLocalizationBridge.tsx'
 
 permissions:
   contents: write
@@ -20,6 +24,9 @@ jobs:
 
       - name: Apply runtime localization fixes
         run: python3 .github/scripts/fix_race_preparation_runtime_localization_20260902.py
+
+      - name: Fill legacy UI locale gaps
+        run: python3 .github/scripts/fix_race_preparation_legacyui_gaps_20260902.py
 
       - name: Run existing all-language Race Preparation audit
         run: python3 .github/scripts/audit_race_preparation_localization_all_languages_20260901.py
