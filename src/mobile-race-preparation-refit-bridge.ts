@@ -1,3 +1,5 @@
+import './mobile-race-preparation-refit-v2.css'
+
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
 const RACE_PREPARATION_PAGE = '[data-ppm-dashboard-page="race-preparation"]'
 
