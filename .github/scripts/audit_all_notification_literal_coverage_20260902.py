@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+# Full one-time registry audit: every static notification detail/action literal.
 root = Path('.')
 templates = (root / 'src/features/notifications/notificationTemplates.tsx').read_text(encoding='utf-8')
 localization = (root / 'src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
