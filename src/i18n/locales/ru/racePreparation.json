@@ -8,15 +8,15 @@
   },
   "tabs": {
     "accepted": "Принятые гонки",
-    "racePlan": "Race Plan",
-    "stagePlans": "Stage Plans"
+    "racePlan": "План гонки",
+    "stagePlans": "Планы этапов"
   },
   "status": {
     "raceCanceled": "гонка отменена",
     "notParticipating": "Не участвует",
     "raceFinished": "гонка закончена",
     "raceActive": "Активная гонка",
-    "stagePlansOpen": "Stage Plans Открыто",
+    "stagePlansOpen": "Планы этапов открыты",
     "allSet": "Все смонтировано",
     "riderDeadlineReached": "Установленный срок",
     "racePlanOpen": "Race Plan Открыто",
@@ -26,15 +26,15 @@
     "oneDay": "Один день",
     "weatherCanceled": "Погода отменена",
     "partlyCanceled": "Отменено частично",
-    "racePlanSubmitted": "Race Plan Представлен"
+    "racePlanSubmitted": "План гонки отправлен"
   },
   "accepted": {
     "title": "Принятые гонки",
     "description": "Статус показывает, что можно сделать сейчас для Race Plan и Stage Plans.",
     "missedStartlist": "Ваша команда пропустила Startlist и не участвует",
-    "openRacePlan": "Открыто Race Plan",
-    "openStagePlans": "Открыто Stage Plans",
-    "stagePlansAfterSubmit": "Stage Plans открыт после Race Plan представляется",
+    "openRacePlan": "Открыть План гонки",
+    "openStagePlans": "Открыть Планы этапов",
+    "stagePlansAfterSubmit": "Планы этапов открываются после отправки Плана гонки",
     "routePending": "Подробности маршрута ожидаются",
     "routeStages": "{{route}} · {{count}} Этапы",
     "routeOneDay": "{{route}} · Один день гонки"
@@ -44,7 +44,7 @@
     "currentGameDate": "Текущая дата игры",
     "competingSquad": "Конкурирующий отряд",
     "competingSquadHelp": "гонщик выбирается из этого подразделения.",
-    "racePlanOpens": "Race Plan Открывается",
+    "racePlanOpens": "План гонки открывается",
     "riderDeadline": "Крайний срок для гонщиков",
     "stages": "Этапы",
     "route": "Путь:",
@@ -208,7 +208,7 @@
     "submittedU23GenerateFailed": "Race Plan отправлен, но главный тренер U23 не смог создать первый Stage Plan."
   },
   "stagePlans": {
-    "title": "Stage Plans",
+    "title": "Планы этапов",
     "stage": "Этап {{stage}}",
     "stageProfile": "Профиль этапы",
     "teamPlan": "План работы группы",
@@ -287,7 +287,20 @@
     "ttBalancedDesc": "Даже усилия на всей этапе.",
     "ttFastStartDesc": "Тяжелая первая половина, затем держите скорость.",
     "ttNegativeSplitDesc": "Контролируемая первая половина, сильнее вторая половина.",
-    "ttAllOutDesc": "С самого начала, самый быстрый вариант, но высокая усталость и риск взрыва."
+    "ttAllOutDesc": "С самого начала, самый быстрый вариант, но высокая усталость и риск взрыва.",
+    "protectLeader": "Защищать лидера",
+    "conserveEnergy": "Экономить силы",
+    "stayNearFront": "Держаться впереди",
+    "controlTempo": "Контролировать темп",
+    "chaseBreakaway": "Догонять отрыв",
+    "attack": "Атаковать",
+    "joinBreakaway": "Войти в отрыв",
+    "fightSprintPoints": "Бороться за спринтерские очки",
+    "fightKomPoints": "Бороться за горные очки",
+    "avoidRisks": "Избегать риска",
+    "sprintTrainRider": "Гонщик спринтерского поезда",
+    "leadOutRider": "Развозящий",
+    "finalSprint": "Финальный спринт"
   },
   "supplies": {
     "bidons": "Бидоны/Водные бутылки",
@@ -561,6 +574,24 @@
     "autoNeededSuffix": "требуется автоматически",
     "sourcesCount": "{{count}} источников",
     "teamCars": "Машины команды",
-    "bonusSource": "Источник бонуса"
+    "bonusSource": "Источник бонуса",
+    "allStagePlansSaved": "Все планы этапов сохранены",
+    "allStagePlansReady": "Все планы этапов сохранены и готовы.",
+    "equipmentDefaultFallbackHelp": "В списке также есть стандартная гоночная настройка со страницы обзора экипировки. Если выбранная настройка перестаёт быть доступна перед этапом из-за поломки, износа, назначения или другой недоступности элемента, Race Engine автоматически переключается на стандартную настройку. Если и она недоступна, настройка этапа блокируется с понятным предупреждением об экипировке.",
+    "stageSupplyEffects": "Эффекты запасов на этапе",
+    "stageSupplyEffectsDesc": "Предпросмотр в реальном времени на основе этого плана этапа и текущих запасов. Эти эффекты отделены от строк бонусов Плана гонки выше.",
+    "enginePreview": "Предпросмотр движка",
+    "energySaving": "Экономия энергии",
+    "fatigueReduction": "Снижение усталости",
+    "postStageRecovery": "Восстановление после этапа",
+    "powerGelsLabel": "Энергетические гели",
+    "powerGelsSummary": "{{count}} эффективных на гонщика для отдельного эффекта живой энергии · до +{{energy}} живой энергии.",
+    "weatherRiskLine": "Погода: {{reason}}. Отсутствие курток не блокирует старт, но повышает риск заболевания.",
+    "weatherRiskNoneReason": "существенного погодного риска не обнаружено",
+    "weatherRiskRain": "риск дождя",
+    "weatherRiskCold": "холод ниже 15°C",
+    "weatherRiskWind": "сильный ветер",
+    "weatherRiskCondition": "неблагоприятные погодные условия",
+    "leaderShort": "Лидер"
   }
 }

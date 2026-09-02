@@ -287,7 +287,20 @@
     "ttBalancedDesc": "Even effort across the whole stage. Safe default with low blow-up risk.",
     "ttFastStartDesc": "Hard first half, then hold the pace. Good for short prologues, risky for weaker TT riders.",
     "ttNegativeSplitDesc": "Controlled first half, stronger second half. Good for longer ITTs and riders with endurance.",
-    "ttAllOutDesc": "Maximum pace from the start. Fastest option but high fatigue and blow-up risk."
+    "ttAllOutDesc": "Maximum pace from the start. Fastest option but high fatigue and blow-up risk.",
+    "protectLeader": "Protect Leader",
+    "conserveEnergy": "Conserve Energy",
+    "stayNearFront": "Stay Near Front",
+    "controlTempo": "Control Tempo",
+    "chaseBreakaway": "Chase Breakaway",
+    "attack": "Attack",
+    "joinBreakaway": "Join Breakaway",
+    "fightSprintPoints": "Fight for Sprint Points",
+    "fightKomPoints": "Fight for KOM Points",
+    "avoidRisks": "Avoid Risks",
+    "sprintTrainRider": "Sprint Train Rider",
+    "leadOutRider": "Lead-out Rider",
+    "finalSprint": "Final Sprint"
   },
   "supplies": {
     "bidons": "Bidons / Water Bottles",
@@ -561,6 +574,24 @@
     "autoNeededSuffix": "auto-needed",
     "sourcesCount": "{{count}} sources",
     "teamCars": "Team Cars",
-    "bonusSource": "Bonus source"
+    "bonusSource": "Bonus source",
+    "allStagePlansSaved": "All Stage Plans Saved",
+    "allStagePlansReady": "All stage plans are saved and ready.",
+    "equipmentDefaultFallbackHelp": "The dropdown also includes the Default Race Setup from the Equipment Overview page. If a selected equipment setup is no longer available before a stage because one of its equipment items is broken, worn out, assigned, or otherwise unavailable, the Race Engine automatically falls back to Default. If Default also cannot be used, the stage setup is blocked with a clear equipment warning.",
+    "stageSupplyEffects": "Stage Supply Effects",
+    "stageSupplyEffectsDesc": "Live preview from this stage plan and currently available stock. These effects are separate from the Race Plan bonus rows above.",
+    "enginePreview": "Engine preview",
+    "energySaving": "Energy saving",
+    "fatigueReduction": "Fatigue reduction",
+    "postStageRecovery": "Post-stage recovery",
+    "powerGelsLabel": "Power gels",
+    "powerGelsSummary": "{{count}} effective per rider for the separate live-energy effect · up to +{{energy}} live energy.",
+    "weatherRiskLine": "Weather: {{reason}}. Missing jackets do not block the start, but increase illness exposure.",
+    "weatherRiskNoneReason": "no strong weather risk detected",
+    "weatherRiskRain": "rain risk",
+    "weatherRiskCold": "cold below 15°C",
+    "weatherRiskWind": "strong wind",
+    "weatherRiskCondition": "bad-weather condition",
+    "leaderShort": "Leader"
   }
 }

@@ -8,15 +8,15 @@
   },
   "tabs": {
     "accepted": "Courses acceptées",
-    "racePlan": "Race Plan",
-    "stagePlans": "Stage Plans"
+    "racePlan": "Plan de course",
+    "stagePlans": "Plans d’étape"
   },
   "status": {
     "raceCanceled": "Course annulée",
     "notParticipating": "Sans participation",
     "raceFinished": "Course terminée",
     "raceActive": "Course active",
-    "stagePlansOpen": "Stage Plans Ouvrir",
+    "stagePlansOpen": "Plans d’étape ouverts",
     "allSet": "Ensemble",
     "riderDeadlineReached": "Date limite de la participation des coureurs",
     "racePlanOpen": "Race Plan Ouvrir",
@@ -26,15 +26,15 @@
     "oneDay": "Un jour",
     "weatherCanceled": "Météo annulé",
     "partlyCanceled": "Partiellement annulé",
-    "racePlanSubmitted": "Race Plan Soumis"
+    "racePlanSubmitted": "Plan de course envoyé"
   },
   "accepted": {
     "title": "Courses acceptées",
     "description": "Participations confirmées. L'état montre ce qui peut être fait maintenant pour Race Plan et Stage Plans.",
     "missedStartlist": "Votre équipe a raté la Startlist et n'y participe pas",
-    "openRacePlan": "Ouvrir Race Plan",
-    "openStagePlans": "Ouvrir Stage Plans",
-    "stagePlansAfterSubmit": "Stage Plans ouvert après la soumission du Race Plan",
+    "openRacePlan": "Ouvrir le Plan de course",
+    "openStagePlans": "Ouvrir les Plans d’étape",
+    "stagePlansAfterSubmit": "Les Plans d’étape s’ouvrent après l’envoi du Plan de course",
     "routePending": "Détails de l'itinéraire en attente",
     "routeStages": "{{route}} · {{count}} étapes",
     "routeOneDay": "{{route}} · Course d'un jour"
@@ -44,7 +44,7 @@
     "currentGameDate": "Date du jeu actuel",
     "competingSquad": "Équipe concurrente",
     "competingSquadHelp": "Le choix des coureurs vient de cette équipe. Le personnel, les actifs, l'équipement, les fournitures et les finances restent partagés par le club.",
-    "racePlanOpens": "Race Plan ouvre",
+    "racePlanOpens": "Le Plan de course s’ouvre",
     "riderDeadline": "Délai de mise en route",
     "stages": "Étapes",
     "route": "Itinéraire:",
@@ -208,7 +208,7 @@
     "submittedU23GenerateFailed": "Le Race Plan a été envoyé, mais l'entraîneur principal U23 n'a pas pu générer le premier Stage Plan."
   },
   "stagePlans": {
-    "title": "Stage Plans",
+    "title": "Plans d’étape",
     "stage": "Étape {{stage}}",
     "stageProfile": "Profil de l'étape",
     "teamPlan": "Plan d'équipe",
@@ -287,7 +287,20 @@
     "ttBalancedDesc": "Même effort sur toute la étape. Par défaut sûr avec faible risque de sauter.",
     "ttFastStartDesc": "Dure première moitié, puis tenir le rythme. Bon pour les prologues courts, risqué pour les coureurs plus faibles TT.",
     "ttNegativeSplitDesc": "Contrôle de la première moitié, plus forte de la seconde moitié. Bon pour les ITT plus longs et les coureurs avec endurance.",
-    "ttAllOutDesc": "Vitesse maximale dès le départ. Option la plus rapide mais risque de fatigue et de souffle."
+    "ttAllOutDesc": "Vitesse maximale dès le départ. Option la plus rapide mais risque de fatigue et de souffle.",
+    "protectLeader": "Protéger le leader",
+    "conserveEnergy": "Économiser l’énergie",
+    "stayNearFront": "Rester à l’avant",
+    "controlTempo": "Contrôler le tempo",
+    "chaseBreakaway": "Chasser l’échappée",
+    "attack": "Attaquer",
+    "joinBreakaway": "Rejoindre l’échappée",
+    "fightSprintPoints": "Disputer les points de sprint",
+    "fightKomPoints": "Disputer les points de montagne",
+    "avoidRisks": "Éviter les risques",
+    "sprintTrainRider": "Coureur du train de sprint",
+    "leadOutRider": "Lanceur",
+    "finalSprint": "Sprint final"
   },
   "supplies": {
     "bidons": "Bidons / bouteilles d'eau",
@@ -561,6 +574,24 @@
     "autoNeededSuffix": "nécessaires automatiquement",
     "sourcesCount": "{{count}} sources",
     "teamCars": "Voitures d'équipe",
-    "bonusSource": "Source du bonus"
+    "bonusSource": "Source du bonus",
+    "allStagePlansSaved": "Tous les plans d’étape sont enregistrés",
+    "allStagePlansReady": "Tous les plans d’étape sont enregistrés et prêts.",
+    "equipmentDefaultFallbackHelp": "Le menu comprend également la configuration de course par défaut de la page Aperçu de l’équipement. Si une configuration sélectionnée n’est plus disponible avant une étape parce qu’un élément est cassé, usé, affecté ou indisponible, le Race Engine revient automatiquement à la configuration par défaut. Si celle-ci n’est pas utilisable non plus, la configuration de l’étape est bloquée avec un avertissement clair sur l’équipement.",
+    "stageSupplyEffects": "Effets des provisions d’étape",
+    "stageSupplyEffectsDesc": "Aperçu en direct basé sur ce plan d’étape et le stock actuellement disponible. Ces effets sont distincts des lignes de bonus du Plan de course affichées ci-dessus.",
+    "enginePreview": "Aperçu du moteur",
+    "energySaving": "Économie d’énergie",
+    "fatigueReduction": "Réduction de la fatigue",
+    "postStageRecovery": "Récupération après l’étape",
+    "powerGelsLabel": "Gels énergétiques",
+    "powerGelsSummary": "{{count}} efficaces par coureur pour l’effet séparé d’énergie en direct · jusqu’à +{{energy}} d’énergie en direct.",
+    "weatherRiskLine": "Météo : {{reason}}. L’absence de vestes ne bloque pas le départ, mais augmente l’exposition aux maladies.",
+    "weatherRiskNoneReason": "aucun risque météo important détecté",
+    "weatherRiskRain": "risque de pluie",
+    "weatherRiskCold": "froid sous 15°C",
+    "weatherRiskWind": "vent fort",
+    "weatherRiskCondition": "conditions météo défavorables",
+    "leaderShort": "Leader"
   }
 }

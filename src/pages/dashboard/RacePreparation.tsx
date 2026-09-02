@@ -325,10 +325,16 @@ function getRacePrepLocale(): string {
 
 function localizedGameMonth(month: number, style: "short" | "long" = "short"): string {
   const safeMonth = Math.min(12, Math.max(1, Number(month) || 1));
-  return new Intl.DateTimeFormat(getRacePrepLocale(), {
+  const locale = getRacePrepLocale();
+  const label = new Intl.DateTimeFormat(locale, {
     month: style,
     timeZone: "UTC",
   }).format(new Date(Date.UTC(2026, safeMonth - 1, 1)));
+
+  // CLDR/Intl correctly returns Serbian/Croatian month names in lowercase,
+  // but the Race Preparation UI presents month names as display labels.
+  // Title-case the first character for consistent visual treatment.
+  return label ? `${label.charAt(0).toLocaleUpperCase(locale)}${label.slice(1)}` : label;
 }
 
 function localizeRacePrepBackendText(value: unknown): string {
@@ -354,6 +360,32 @@ function localizeRacePrepBackendText(value: unknown): string {
     "No Sport Director selected. Tactics execution may be weaker.": "screen.validationNoSportDirector",
     "No Mechanic selected. Mechanical and equipment support may be weaker.": "screen.validationNoMechanic",
     "No race-level assets selected.": "screen.validationNoAssets",
+    "All Stage Plans Saved": "screen.allStagePlansSaved",
+    "All stage plans are saved and ready.": "screen.allStagePlansReady",
+    "Team Leader (GC)": "riderRoles.teamLeader",
+    "Helper / Domestique": "riderRoles.helper",
+    "Breakaway Chaser": "riderRoles.breakawayChaser",
+    "Time Trial Rider": "riderRoles.timeTrialRider",
+    "Team Time Trial Rider": "riderRoles.teamTimeTrialRider",
+    "Leader": "screen.leaderShort",
+    "Protect Leader": "tactics.protectLeader",
+    "Conserve Energy": "tactics.conserveEnergy",
+    "Stay Near Front": "tactics.stayNearFront",
+    "Control Tempo": "tactics.controlTempo",
+    "Chase Breakaway": "tactics.chaseBreakaway",
+    "Attack": "tactics.attack",
+    "Join Breakaway": "tactics.joinBreakaway",
+    "Fight for Sprint Points": "tactics.fightSprintPoints",
+    "Fight for KOM Points": "tactics.fightKomPoints",
+    "Avoid Risks": "tactics.avoidRisks",
+    "Sprint Train Rider": "tactics.sprintTrainRider",
+    "Lead-out Rider": "tactics.leadOutRider",
+    "Final Sprint": "tactics.finalSprint",
+    "rain risk": "screen.weatherRiskRain",
+    "cold below 15°C": "screen.weatherRiskCold",
+    "strong wind": "screen.weatherRiskWind",
+    "bad-weather condition text": "screen.weatherRiskCondition",
+    "no strong weather risk detected": "screen.weatherRiskNoneReason",
   };
   const exactKey = exact[raw];
   if (exactKey) return racePrepText(exactKey);
@@ -7876,12 +7908,10 @@ function StagePlansTab({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Stage Plans
+              {racePrepText("stagePlans.title")}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Select a stage below to review its profile, then configure
-              equipment, team tactics and optional individual tactics for that
-              stage.
+              {racePrepText("screen.stagePlansIntro")}
             </p>
           </div>
 
@@ -8653,7 +8683,7 @@ function StageWeatherMiniCard({
     <div className="mt-3 rounded-xl border border-slate-200 bg-white/80 px-3 py-3">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
         <span className="text-base">{getWeatherIcon(weather)}</span>
-        Stage weather
+        {racePrepText("screen.stageWeather")}
       </div>
 
       {isPreparationStageWeatherCanceled(stage) ? (
@@ -8749,21 +8779,21 @@ function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
       <div className="grid gap-5 xl:grid-cols-[0.58fr_1.42fr]">
         <div className="min-w-0">
           <div className="text-xs uppercase tracking-wide text-slate-500">
-            Selected stage profile
+            {racePrepText("screen.selectedStageProfile")}
           </div>
 
           <h3 className="mt-1 text-lg font-semibold text-slate-900">
-            Stage {stageNumber}: {getStageDisplayName(stage, stageNumber)}
+            {racePrepText("common.stage")} {stageNumber}: {getStageDisplayName(stage, stageNumber)}
           </h3>
 
           <div className="mt-4 grid gap-2">
             <CompactStageInfo
-              label="Date"
+              label={racePrepText("screen.date")}
               value={formatFullStageDateTime(stage)}
             />
-            <CompactStageInfo label="Route" value={getStageRoute(stage)} />
+            <CompactStageInfo label={racePrepText("screen.route")} value={getStageRoute(stage)} />
             <CompactStageInfo
-              label="Profile"
+              label={racePrepText("screen.profile")}
               value={
                 profileData?.profile_type
                   ? titleFromSnake(String(profileData.profile_type))
@@ -8771,7 +8801,7 @@ function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
               }
             />
             <CompactStageInfo
-              label="Distance"
+              label={racePrepText("screen.distance")}
               value={
                 profileData?.distance_km
                   ? `${Number(profileData.distance_km).toFixed(
@@ -10630,12 +10660,7 @@ function StageRiderEquipmentCard({
       </div>
 
       <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-800">
-        The dropdown also includes the Default Race Setup from the Equipment
-        Overview page. If a selected equipment setup is no longer available
-        before a stage because one of its equipment items is broken, worn out,
-        assigned, or otherwise unavailable, the race engine should automatically
-        fall back to Default. If Default also cannot be used, the stage setup
-        should be blocked with a clear equipment warning.
+        {racePrepText("screen.equipmentDefaultFallbackHelp")}
       </div>
     </section>
   );
@@ -11487,8 +11512,14 @@ function StageRaceSuppliesCard({
                   below 15°C.
                 </div>
                 <div className="mt-1 text-xs text-slate-400">
-                  Weather: {needs.weatherRisk.reason}. Missing jackets do not
-                  block the start, but increase illness exposure.
+                  {needs.weatherRisk.reason === "no strong weather risk detected"
+                    ? racePrepText("screen.weatherNoRisk")
+                    : racePrepText("screen.weatherRiskLine", {
+                        reason: String(needs.weatherRisk.reason)
+                          .split(",")
+                          .map((part) => localizeRacePrepBackendText(part.trim()))
+                          .join(", "),
+                      })}
                 </div>
               </div>
 
@@ -11570,8 +11601,7 @@ function StageRaceSuppliesCard({
       </div>
 
       <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
-        Stage Plan save only stores the plan. Consumables and durable item usage
-        are applied later by the race engine when the stage is processed.
+        {racePrepText("screen.stageSaveOnly")}
       </div>
     </section>
   );
@@ -11972,40 +12002,38 @@ function StageFinalCalculationCard({
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <div className="text-sm font-semibold text-emerald-900">
-                      Stage Supply Effects
+                      {racePrepText("screen.stageSupplyEffects")}
                     </div>
                     <p className="mt-1 text-xs leading-5 text-emerald-800/80">
-                      Live preview from this stage plan and currently available
-                      stock. These effects are separate from the Race Plan bonus
-                      rows above.
+                      {racePrepText("screen.stageSupplyEffectsDesc")}
                     </p>
                   </div>
                   <span className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-emerald-700 shadow-sm">
-                    Engine preview
+                    {racePrepText("screen.enginePreview")}
                   </span>
                 </div>
 
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm">
-                    <span className="text-slate-600">Energy saving</span>
+                    <span className="text-slate-600">{racePrepText("screen.energySaving")}</span>
                     <strong className="text-emerald-700">
                       +{formatStageSupplyEffectNumber(supplyEffects.energySavingPct)}%
                     </strong>
                   </div>
                   <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm">
-                    <span className="text-slate-600">Fatigue reduction</span>
+                    <span className="text-slate-600">{racePrepText("screen.fatigueReduction")}</span>
                     <strong className="text-emerald-700">
                       +{formatStageSupplyEffectNumber(supplyEffects.fatigueReductionPct)}%
                     </strong>
                   </div>
                   <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm">
-                    <span className="text-slate-600">Race support</span>
+                    <span className="text-slate-600">{racePrepText("screen.raceSupport")}</span>
                     <strong className="text-emerald-700">
                       +{formatStageSupplyEffectNumber(supplyEffects.supportPoints)} pts
                     </strong>
                   </div>
                   <div className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm">
-                    <span className="text-slate-600">Post-stage recovery</span>
+                    <span className="text-slate-600">{racePrepText("screen.postStageRecovery")}</span>
                     <strong className="text-emerald-700">
                       +{formatStageSupplyEffectNumber(supplyEffects.recoveryBonusPoints)} pts
                     </strong>
@@ -12013,11 +12041,11 @@ function StageFinalCalculationCard({
                 </div>
 
                 <div className="mt-2 rounded-lg bg-white/80 px-3 py-2 text-xs leading-5 text-slate-600">
-                  <span className="font-semibold text-slate-800">Power gels:</span>{" "}
-                  {supplyEffects.powerGelsEffectivePerRider} effective per rider
-                  for the separate live-energy effect · up to +
-                  {formatStageSupplyEffectNumber(supplyEffects.powerGelLiveEnergyMax)}{" "}
-                  live energy.
+                  <span className="font-semibold text-slate-800">{racePrepText("screen.powerGelsLabel")}:</span>{" "}
+                  {racePrepText("screen.powerGelsSummary", {
+                    count: supplyEffects.powerGelsEffectivePerRider,
+                    energy: formatStageSupplyEffectNumber(supplyEffects.powerGelLiveEnergyMax),
+                  })}
                 </div>
 
                 {supplyEffects.fatiguePenaltyPct > 0 ? (
@@ -12221,7 +12249,7 @@ function StageTeamTacticCard({
                       <RiderHoverCard rider={rider} />
                     </div>
                     <div className="mt-1 text-xs text-slate-500">
-                      Engine role: {engineRoleLabel}
+                      {racePrepText("screen.engineRole")}: {localizeRacePrepBackendText(engineRoleLabel)}
                     </div>
                   </div>
                 );
@@ -12240,7 +12268,7 @@ function StageTeamTacticCard({
                       <RiderHoverCard rider={rider} />
                     </div>
                     <div className="mt-1 text-xs text-slate-500">
-                      Engine role: {STAGE_RIDER_ROLE_LABELS[role] ?? role}
+                      {racePrepText("screen.engineRole")}: {localizeRacePrepBackendText(STAGE_RIDER_ROLE_LABELS[role] ?? role)}
                     </div>
                   </div>
 
@@ -12457,12 +12485,14 @@ function StageIndividualTacticsCard({
               : isTTStage
                 ? getTimeTrialStageRoleLabel(stage)
                 : getRiderRoleLabel(rider);
-            const riderBaseRoleLabel = getRiderRoleLabel(rider);
+            const riderBaseRoleLabel = localizeRacePrepBackendText(getRiderRoleLabel(rider));
+            const localizedSelectedStageRoleLabel =
+              localizeRacePrepBackendText(selectedStageRoleLabel);
             const individualTacticsRoleLine =
               riderBaseRoleLabel.toLowerCase() ===
-              selectedStageRoleLabel.toLowerCase()
+              localizedSelectedStageRoleLabel.toLowerCase()
                 ? riderBaseRoleLabel
-                : `${riderBaseRoleLabel} - ${selectedStageRoleLabel}`;
+                : `${riderBaseRoleLabel} - ${localizedSelectedStageRoleLabel}`;
 
             return (
               <div

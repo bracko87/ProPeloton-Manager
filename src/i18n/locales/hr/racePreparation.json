@@ -8,15 +8,15 @@
   },
   "tabs": {
     "accepted": "Prihvaćene utrke",
-    "racePlan": "Race Plan",
-    "stagePlans": "Stage Plans"
+    "racePlan": "Plan utrke",
+    "stagePlans": "Planovi etapa"
   },
   "status": {
     "raceCanceled": "Utrka je otkazana",
     "notParticipating": "Ne sudjeluje",
     "raceFinished": "Utrka završena",
     "raceActive": "Utrka aktivna",
-    "stagePlansOpen": "Stage Plans otvoreni",
+    "stagePlansOpen": "Planovi etapa otvoreni",
     "allSet": "Sve je spremno",
     "riderDeadlineReached": "Rok za vozače je istekao",
     "racePlanOpen": "Race Plan je otvoren",
@@ -26,15 +26,15 @@
     "oneDay": "Jednodnevna utrka",
     "weatherCanceled": "Otkazano zbog vremena",
     "partlyCanceled": "Delimično otkazano",
-    "racePlanSubmitted": "Race Plan je poslat"
+    "racePlanSubmitted": "Plan utrke je poslan"
   },
   "accepted": {
     "title": "Prihvaćene utrke",
     "description": "Potvrđena učešća. Status pokazuje šta trenutno možete uraditi u Race Plan i Stage Plans.",
     "missedStartlist": "Vaš tim je propustio Startlist i ne sudjeluje",
-    "openRacePlan": "Otvori Race Plan",
-    "openStagePlans": "Otvori Stage Plans",
-    "stagePlansAfterSubmit": "Stage Plans se otvaraju nakon slanja Race Plan-a",
+    "openRacePlan": "Otvori Plan utrke",
+    "openStagePlans": "Otvori Planove etapa",
+    "stagePlansAfterSubmit": "Planovi etapa otvaraju se nakon slanja Plana utrke",
     "routePending": "Detalji rute još nisu dostupni",
     "routeStages": "{{route}} · {{count}} etapa",
     "routeOneDay": "{{route}} · Jednodnevna utrka"
@@ -44,7 +44,7 @@
     "currentGameDate": "Trenutni datum igre",
     "competingSquad": "Tim koji nastupa",
     "competingSquadHelp": "Vozači se biraju iz ovog tima. Osoblje, vozila, oprema, zalihe i finansije ostaju zajednički za klub.",
-    "racePlanOpens": "Race Plan se otvara",
+    "racePlanOpens": "Plan utrke otvara se",
     "riderDeadline": "Rok za vozače",
     "stages": "Etape",
     "route": "Ruta:",
@@ -208,7 +208,7 @@
     "submittedU23GenerateFailed": "Race Plan je poslan, ali U23 glavni trener nije uspio generirati prvi Stage Plan."
   },
   "stagePlans": {
-    "title": "Stage Plans",
+    "title": "Planovi etapa",
     "stage": "Etapa {{stage}}",
     "stageProfile": "Profil etape",
     "teamPlan": "Timski plan",
@@ -287,7 +287,20 @@
     "ttBalancedDesc": "Ravnomeran napor kroz celu etapu. Sigurna osnovna opcija sa malim rizikom od pada tempa.",
     "ttFastStartDesc": "Jaka prva polovina, zatim održavanje tempa. Dobro za kratke prologe, rizično za slabije hronometraše.",
     "ttNegativeSplitDesc": "Kontrolisana prva polovina, jača druga. Dobro za duže ITT etape i vozače sa dobrom izdržljivošću.",
-    "ttAllOutDesc": "Maksimalan tempo od starta. Najbrža opcija, ali uz visok umor i rizik od pada tempa."
+    "ttAllOutDesc": "Maksimalan tempo od starta. Najbrža opcija, ali uz visok umor i rizik od pada tempa.",
+    "protectLeader": "Zaštiti vođu",
+    "conserveEnergy": "Štedi energiju",
+    "stayNearFront": "Drži se pri čelu",
+    "controlTempo": "Kontroliraj tempo",
+    "chaseBreakaway": "Lov na bijeg",
+    "attack": "Napad",
+    "joinBreakaway": "Priključi se bijegu",
+    "fightSprintPoints": "Bori se za sprint bodove",
+    "fightKomPoints": "Bori se za KOM bodove",
+    "avoidRisks": "Izbjegavaj rizik",
+    "sprintTrainRider": "Vozač sprint vlaka",
+    "leadOutRider": "Lead-out vozač",
+    "finalSprint": "Završni sprint"
   },
   "supplies": {
     "bidons": "Bidoni / flaše za vodu",
@@ -530,7 +543,25 @@
     "autoNeededSuffix": "automatski potrebno",
     "sourcesCount": "{{count}} izvora",
     "teamCars": "Timski automobili",
-    "bonusSource": "Izvor bonusa"
+    "bonusSource": "Izvor bonusa",
+    "allStagePlansSaved": "Svi planovi etapa su spremljeni",
+    "allStagePlansReady": "Svi planovi etapa su spremljeni i spremni.",
+    "equipmentDefaultFallbackHelp": "Padajući izbornik uključuje i zadanu postavku utrke sa stranice Pregled opreme. Ako odabrana postavka opreme više nije dostupna prije etape zato što je neki dio opreme pokvaren, istrošen, dodijeljen ili na drugi način nedostupan, Race Engine automatski prelazi na zadanu postavku. Ako ni ona nije dostupna, postavka etape bit će blokirana uz jasno upozorenje o opremi.",
+    "stageSupplyEffects": "Učinci zaliha za etapu",
+    "stageSupplyEffectsDesc": "Pregled uživo na temelju ovog plana etape i trenutačno dostupnih zaliha. Ovi učinci odvojeni su od bonusa Plana utrke prikazanih iznad.",
+    "enginePreview": "Pregled Race Engine-a",
+    "energySaving": "Ušteda energije",
+    "fatigueReduction": "Smanjenje umora",
+    "postStageRecovery": "Oporavak nakon etape",
+    "powerGelsLabel": "Energetski gelovi",
+    "powerGelsSummary": "{{count}} učinkovita po vozaču za zaseban učinak energije uživo · do +{{energy}} energije uživo.",
+    "weatherRiskLine": "Vrijeme: {{reason}}. Nedostatak jakni ne blokira start, ali povećava izloženost riziku od bolesti.",
+    "weatherRiskNoneReason": "nije otkriven izražen vremenski rizik",
+    "weatherRiskRain": "rizik od kiše",
+    "weatherRiskCold": "hladnoća ispod 15°C",
+    "weatherRiskWind": "jak vjetar",
+    "weatherRiskCondition": "nepovoljni vremenski uvjeti",
+    "leaderShort": "Vođa"
   },
   "legacyUi": {
     "stagePlanLock": "Zaključavanje Stage Plan-a",

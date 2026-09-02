@@ -8,15 +8,15 @@
   },
   "tabs": {
     "accepted": "Gare accettate",
-    "racePlan": "Race Plan",
-    "stagePlans": "Stage Plans"
+    "racePlan": "Piano gara",
+    "stagePlans": "Piani di tappa"
   },
   "status": {
     "raceCanceled": "Gara annullata",
     "notParticipating": "Non partecipante",
     "raceFinished": "Gara terminata",
     "raceActive": "Corsa attiva",
-    "stagePlansOpen": "Stage Plans Apri",
+    "stagePlansOpen": "Piani di tappa aperti",
     "allSet": "Tutti impostati",
     "riderDeadlineReached": "Termine del ciclista raggiunto",
     "racePlanOpen": "Race Plan Apri",
@@ -26,15 +26,15 @@
     "oneDay": "Un giorno",
     "weatherCanceled": "Cancellato il tempo",
     "partlyCanceled": "parzialmente annullato",
-    "racePlanSubmitted": "Race Plan inviato"
+    "racePlanSubmitted": "Piano gara inviato"
   },
   "accepted": {
     "title": "Gare accettate",
     "description": "Partecipazioni confermate. Lo stato mostra cosa può essere fatto ora per Race Plan e Stage Plans.",
     "missedStartlist": "La tua squadra ha perso la Startlist e non partecipa",
-    "openRacePlan": "Apri Race Plan",
-    "openStagePlans": "Apri Stage Plans",
-    "stagePlansAfterSubmit": "Stage Plans aperto dopo l'invio di Race Plan",
+    "openRacePlan": "Apri Piano gara",
+    "openStagePlans": "Apri Piani di tappa",
+    "stagePlansAfterSubmit": "I Piani di tappa si aprono dopo l'invio del Piano gara",
     "routePending": "Dettagli della rotta in corso",
     "routeStages": "{{route}} · Stadi {{count}}",
     "routeOneDay": "{{route}} · Gara di un giorno"
@@ -44,7 +44,7 @@
     "currentGameDate": "Data corrente della partita",
     "competingSquad": "Squadra di competizione",
     "competingSquadHelp": "La selezione del ciclista proviene da questa squadra. Il personale, i beni, le attrezzature, le forniture e i finanziamenti rimangono condivisi dal club.",
-    "racePlanOpens": "Race Plan apre",
+    "racePlanOpens": "Il Piano gara si apre",
     "riderDeadline": "Termine per il rider",
     "stages": "Tappe",
     "route": "Percorso:",
@@ -208,7 +208,7 @@
     "submittedU23GenerateFailed": "Il Race Plan è stato inviato, ma l'allenatore capo U23 non ha potuto generare il primo Stage Plan."
   },
   "stagePlans": {
-    "title": "Stage Plans",
+    "title": "Piani di tappa",
     "stage": "Stage {{stage}}",
     "stageProfile": "Profilo stadio",
     "teamPlan": "Piano di squadra",
@@ -287,7 +287,20 @@
     "ttBalancedDesc": "Persino lo sforzo in tutto lo stadio.",
     "ttFastStartDesc": "Prima metà dura, poi tiene il passo. Buono per i prologhi brevi, rischioso per i ciclisti più deboli TT.",
     "ttNegativeSplitDesc": "Controllato il primo tempo, più forte il secondo. Buono per ITT più lunghi e ciclisti con resistenza.",
-    "ttAllOutDesc": "Massimo ritmo dall'inizio. Opzione più veloce ma elevata fatica e rischio di scoppio."
+    "ttAllOutDesc": "Massimo ritmo dall'inizio. Opzione più veloce ma elevata fatica e rischio di scoppio.",
+    "protectLeader": "Proteggi il leader",
+    "conserveEnergy": "Risparmia energia",
+    "stayNearFront": "Resta davanti",
+    "controlTempo": "Controlla il ritmo",
+    "chaseBreakaway": "Insegui la fuga",
+    "attack": "Attacca",
+    "joinBreakaway": "Entra nella fuga",
+    "fightSprintPoints": "Lotta per i punti sprint",
+    "fightKomPoints": "Lotta per i punti GPM",
+    "avoidRisks": "Evita rischi",
+    "sprintTrainRider": "Corridore del treno sprint",
+    "leadOutRider": "Ultimo uomo",
+    "finalSprint": "Sprint finale"
   },
   "supplies": {
     "bidons": "Bidons / Bottiglie d'acqua",
@@ -561,6 +574,24 @@
     "autoNeededSuffix": "necessari automaticamente",
     "sourcesCount": "{{count}} fonti",
     "teamCars": "Auto della squadra",
-    "bonusSource": "Fonte bonus"
+    "bonusSource": "Fonte bonus",
+    "allStagePlansSaved": "Tutti i piani di tappa salvati",
+    "allStagePlansReady": "Tutti i piani di tappa sono salvati e pronti.",
+    "equipmentDefaultFallbackHelp": "Il menu include anche la configurazione gara predefinita della pagina Panoramica equipaggiamento. Se una configurazione selezionata non è più disponibile prima di una tappa perché un elemento è rotto, usurato, assegnato o altrimenti non disponibile, il Race Engine passa automaticamente alla configurazione predefinita. Se neppure questa può essere usata, la configurazione della tappa viene bloccata con un chiaro avviso sull'equipaggiamento.",
+    "stageSupplyEffects": "Effetti delle scorte di tappa",
+    "stageSupplyEffectsDesc": "Anteprima in tempo reale basata su questo piano di tappa e sulle scorte attualmente disponibili. Questi effetti sono separati dalle righe bonus del Piano gara mostrate sopra.",
+    "enginePreview": "Anteprima motore",
+    "energySaving": "Risparmio energetico",
+    "fatigueReduction": "Riduzione della fatica",
+    "postStageRecovery": "Recupero dopo la tappa",
+    "powerGelsLabel": "Gel energetici",
+    "powerGelsSummary": "{{count}} efficaci per corridore per l'effetto separato di energia live · fino a +{{energy}} energia live.",
+    "weatherRiskLine": "Meteo: {{reason}}. La mancanza di giacche non blocca la partenza, ma aumenta l'esposizione alle malattie.",
+    "weatherRiskNoneReason": "nessun forte rischio meteo rilevato",
+    "weatherRiskRain": "rischio pioggia",
+    "weatherRiskCold": "freddo sotto i 15°C",
+    "weatherRiskWind": "vento forte",
+    "weatherRiskCondition": "condizioni meteo avverse",
+    "leaderShort": "Leader"
   }
 }

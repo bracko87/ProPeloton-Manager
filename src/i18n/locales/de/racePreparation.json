@@ -8,15 +8,15 @@
   },
   "tabs": {
     "accepted": "Angenommene Rennen",
-    "racePlan": "Race Plan",
-    "stagePlans": "Stage Plans"
+    "racePlan": "Rennplan",
+    "stagePlans": "Etappenpläne"
   },
   "status": {
     "raceCanceled": "Rennen abgesagt",
     "notParticipating": "Nicht teilnehmend",
     "raceFinished": "Rennen beendet",
     "raceActive": "Rennen läuft",
-    "stagePlansOpen": "Stage Plans geöffnet",
+    "stagePlansOpen": "Etappenpläne geöffnet",
     "allSet": "Alles bereit",
     "riderDeadlineReached": "Fahrerfrist erreicht",
     "racePlanOpen": "Race Plan geöffnet",
@@ -26,15 +26,15 @@
     "oneDay": "Eintagesrennen",
     "weatherCanceled": "Wetterbedingt abgesagt",
     "partlyCanceled": "Teilweise abgesagt",
-    "racePlanSubmitted": "Race Plan eingereicht"
+    "racePlanSubmitted": "Rennplan eingereicht"
   },
   "accepted": {
     "title": "Angenommene Rennen",
     "description": "Bestätigte Teilnahmen. Der Status zeigt, was aktuell im Race Plan und in den Stage Plans möglich ist.",
     "missedStartlist": "Ihr Team hat die Startlist verpasst und nimmt nicht teil",
-    "openRacePlan": "Race Plan öffnen",
-    "openStagePlans": "Stage Plans öffnen",
-    "stagePlansAfterSubmit": "Stage Plans öffnen nach dem Einreichen des Race Plans",
+    "openRacePlan": "Rennplan öffnen",
+    "openStagePlans": "Etappenpläne öffnen",
+    "stagePlansAfterSubmit": "Etappenpläne öffnen sich nach dem Einreichen des Rennplans",
     "routePending": "Streckendetails ausstehend",
     "routeStages": "{{route}} · {{count}} Etappen",
     "routeOneDay": "{{route}} · Eintagesrennen"
@@ -44,7 +44,7 @@
     "currentGameDate": "Aktuelles Spieldatum",
     "competingSquad": "Teilnehmender Kader",
     "competingSquadHelp": "Die Fahrerauswahl erfolgt aus diesem Kader. Personal, Fahrzeuge, Ausrüstung, Vorräte und Finanzen werden weiterhin vom Club gemeinsam genutzt.",
-    "racePlanOpens": "Race Plan öffnet",
+    "racePlanOpens": "Rennplan öffnet",
     "riderDeadline": "Fahrerfrist",
     "stages": "Etappen",
     "route": "Strecke:",
@@ -208,7 +208,7 @@
     "submittedU23GenerateFailed": "Der Race Plan wurde eingereicht, aber der U23-Cheftrainer konnte den ersten Stage Plan nicht erstellen."
   },
   "stagePlans": {
-    "title": "Stage Plans",
+    "title": "Etappenpläne",
     "stage": "Etappe {{stage}}",
     "stageProfile": "Etappenprofil",
     "teamPlan": "Teamplan",
@@ -287,7 +287,20 @@
     "ttBalancedDesc": "Gleichmäßiger Einsatz über die gesamte Etappe. Sichere Standardoption mit geringem Einbruchsrisiko.",
     "ttFastStartDesc": "Harte erste Hälfte, danach Tempo halten. Gut für kurze Prologe, riskant für schwächere Zeitfahrer.",
     "ttNegativeSplitDesc": "Kontrollierte erste Hälfte, stärkere zweite Hälfte. Gut für längere Einzelzeitfahren und ausdauernde Fahrer.",
-    "ttAllOutDesc": "Maximales Tempo von Beginn an. Schnellste Option, aber mit hoher Ermüdung und hohem Einbruchsrisiko."
+    "ttAllOutDesc": "Maximales Tempo von Beginn an. Schnellste Option, aber mit hoher Ermüdung und hohem Einbruchsrisiko.",
+    "protectLeader": "Kapitän schützen",
+    "conserveEnergy": "Energie sparen",
+    "stayNearFront": "Vorne bleiben",
+    "controlTempo": "Tempo kontrollieren",
+    "chaseBreakaway": "Ausreißer verfolgen",
+    "attack": "Attackieren",
+    "joinBreakaway": "In die Fluchtgruppe gehen",
+    "fightSprintPoints": "Um Sprintpunkte kämpfen",
+    "fightKomPoints": "Um Bergpunkte kämpfen",
+    "avoidRisks": "Risiken vermeiden",
+    "sprintTrainRider": "Sprintzug-Fahrer",
+    "leadOutRider": "Anfahrer",
+    "finalSprint": "Finalsprint"
   },
   "supplies": {
     "bidons": "Bidons / Trinkflaschen",
@@ -530,7 +543,25 @@
     "autoNeededSuffix": "automatisch benötigt",
     "sourcesCount": "{{count}} Quellen",
     "teamCars": "Teamfahrzeuge",
-    "bonusSource": "Bonusquelle"
+    "bonusSource": "Bonusquelle",
+    "allStagePlansSaved": "Alle Etappenpläne gespeichert",
+    "allStagePlansReady": "Alle Etappenpläne sind gespeichert und bereit.",
+    "equipmentDefaultFallbackHelp": "Das Auswahlmenü enthält auch das Standard-Rennsetup aus der Ausrüstungsübersicht. Ist ein gewähltes Ausrüstungssetup vor einer Etappe nicht mehr verfügbar, weil ein Teil defekt, verschlissen, zugewiesen oder anderweitig nicht verfügbar ist, wechselt die Race Engine automatisch auf Standard. Ist auch Standard nicht verfügbar, wird das Etappensetup mit einer eindeutigen Ausrüstungswarnung blockiert.",
+    "stageSupplyEffects": "Effekte der Etappenversorgung",
+    "stageSupplyEffectsDesc": "Live-Vorschau aus diesem Etappenplan und dem aktuell verfügbaren Bestand. Diese Effekte sind von den Rennplan-Bonuszeilen oben getrennt.",
+    "enginePreview": "Engine-Vorschau",
+    "energySaving": "Energieeinsparung",
+    "fatigueReduction": "Ermüdungsreduktion",
+    "postStageRecovery": "Erholung nach der Etappe",
+    "powerGelsLabel": "Power-Gels",
+    "powerGelsSummary": "{{count}} wirksame pro Fahrer für den separaten Live-Energieeffekt · bis zu +{{energy}} Live-Energie.",
+    "weatherRiskLine": "Wetter: {{reason}}. Fehlende Jacken blockieren den Start nicht, erhöhen aber das Krankheitsrisiko.",
+    "weatherRiskNoneReason": "kein starkes Wetterrisiko erkannt",
+    "weatherRiskRain": "Regenrisiko",
+    "weatherRiskCold": "Kälte unter 15°C",
+    "weatherRiskWind": "starker Wind",
+    "weatherRiskCondition": "schlechte Wetterbedingungen",
+    "leaderShort": "Kapitän"
   },
   "legacyUi": {
     "stagePlanLock": "Stage-Plan-Sperre",
