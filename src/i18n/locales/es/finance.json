@@ -113,7 +113,11 @@
     "infrastructureJobRefund": "Reembolso de las obras de infraestructura",
     "teamPolicyHousingCost": "Team Policy Costo de vivienda",
     "racePrize": "Premio de la carrera",
-    "freeAgentSigningCostPaid": "Coste de fichaje de agente libre pagado"
+    "freeAgentSigningCostPaid": "Coste de fichaje de agente libre pagado",
+    "raceSuppliesPurchase": "Compra de suministros de carrera",
+    "racePreparationCost": "Coste de preparación de carrera",
+    "clubHouseStaffPayrollSaving": "Ahorro en nómina del personal – Sede del club",
+    "staffPayrollSaving": "Ahorro en nómina del personal"
   },
   "financeCategories": {
     "income": "Ingresos",

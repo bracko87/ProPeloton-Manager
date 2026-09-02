@@ -32,6 +32,7 @@ import {
   formatNotificationTime,
   getResolvedNotificationActionUrl,
 } from '@/features/notifications/notificationHelpers'
+import { localizeNotificationTypeCodeLabel } from '@/features/notifications/notificationLocalization'
 import {
   applyNotificationTemplates,
   getNotificationActionHref,
@@ -1825,7 +1826,7 @@ export default function NotificationsPage(): JSX.Element {
                               <>
                                 <span>{item.source === 'game' ? t('categories.game') : item.source === 'admin' ? t('categories.admin') : item.source === 'system' ? t('categories.system') : item.source}</span>
                                 <span>•</span>
-                                <span>{item.type_code}</span>
+                                <span>{localizeNotificationTypeCodeLabel(item.type_code)}</span>
                                 <span>•</span>
                                 <span>{getNotificationCategoryLabel(item, t)}</span>
                                 <span>•</span>

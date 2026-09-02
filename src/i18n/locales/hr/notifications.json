@@ -306,12 +306,22 @@
     "newRating": "Nova ocjena",
     "trainingCamp": "Trening kamp",
     "startDate": "Datum početka",
-    "endDate": "Datum završetka"
+    "endDate": "Datum završetka",
+    "supplyStatus": "Status zaliha",
+    "bidonsWaterBottles": "Bidoni / boce za vodu",
+    "nutritionPacks": "Paketi prehrane",
+    "energyGels": "Energetski gelovi",
+    "raceJerseyComplete": "Komplet trkaćeg dresa",
+    "rainJackets": "Kišne jakne",
+    "requiredJerseyKits": "Potrebni kompleti dresova",
+    "availableJerseyKits": "Dostupni kompleti dresova",
+    "missingJerseyKits": "Nedostajući kompleti dresova",
+    "eligibilityCheck": "Provjera uvjeta za nastup"
   },
   "templateLocalization": {
     "genericTitle": "Obavijest: {{topic}}",
-    "genericMessage": "Novo obavijest „{{topic}}“ je dostupno za vaš klub.",
-    "genericEntityMessage": "{{entity}}: dostupno je novo obavijest „{{topic}}“.",
+    "genericMessage": "Nova obavijest „{{topic}}“ dostupna je za vaš klub.",
+    "genericEntityMessage": "{{entity}}: dostupna je nova obavijest „{{topic}}“.",
     "moreDetails": "Otvorite detalje obavijesti za više informacija.",
     "perWeek": "tjedno",
     "staffHired": {
@@ -361,7 +371,22 @@
     "inactive": "Neaktivno",
     "ready": "Spremno",
     "open": "Otvoreno",
-    "closed": "Zatvoreno"
+    "closed": "Zatvoreno",
+    "restockRequired": "Potrebna nadopuna zaliha",
+    "lowStock": "Niske zalihe",
+    "inStock": "Na zalihi",
+    "outOfStock": "Nema na zalihi",
+    "inRepair": "Na popravku",
+    "sold": "Prodano",
+    "expired": "Isteklo",
+    "repaid": "Otplaćeno",
+    "finalWarning": "Posljednje upozorenje",
+    "countAvailable": "{{count}} dostupno",
+    "countLeft": "{{count}} preostalo",
+    "thresholdValue": "prag {{count}}",
+    "countWeeks": "{{count}} tjedana",
+    "countDays": "{{count}} dana",
+    "countSeasons": "{{count}} sezona"
   },
   "templateWords": {
     "ADVISOR": "Savjetnik",
@@ -534,5 +559,9 @@
     "medical_treatment": "Medicinski tretman",
     "equipment_workshop_review": "Pregled opreme i radionice",
     "recruitment_review": "Pregled regrutacije"
+  },
+  "notificationTypes": {
+    "suppliesLow": "Niske zalihe",
+    "planOpen": "Plan otvoren"
   }
 }

@@ -306,7 +306,17 @@
     "newRating": "Nuova valutazione",
     "trainingCamp": "Campo di addestramento",
     "startDate": "Data di inizio",
-    "endDate": "Data di fine"
+    "endDate": "Data di fine",
+    "supplyStatus": "Stato scorte",
+    "bidonsWaterBottles": "Borracce / bottiglie d’acqua",
+    "nutritionPacks": "Pacchetti nutrizione",
+    "energyGels": "Gel energetici",
+    "raceJerseyComplete": "Kit completo maglia gara",
+    "rainJackets": "Giacche antipioggia",
+    "requiredJerseyKits": "Kit maglia necessari",
+    "availableJerseyKits": "Kit maglia disponibili",
+    "missingJerseyKits": "Kit maglia mancanti",
+    "eligibilityCheck": "Controllo di idoneità"
   },
   "templateLocalization": {
     "genericTitle": "Notifica: {{topic}}",
@@ -361,7 +371,22 @@
     "inactive": "Inattivo",
     "ready": "Pronto",
     "open": "Apri",
-    "closed": "Chiuso"
+    "closed": "Chiuso",
+    "restockRequired": "Rifornimento necessario",
+    "lowStock": "Scorte basse",
+    "inStock": "Disponibile",
+    "outOfStock": "Esaurito",
+    "inRepair": "In riparazione",
+    "sold": "Venduto",
+    "expired": "Scaduto",
+    "repaid": "Rimborsato",
+    "finalWarning": "Avviso finale",
+    "countAvailable": "{{count}} disponibili",
+    "countLeft": "{{count}} rimanenti",
+    "thresholdValue": "soglia {{count}}",
+    "countWeeks": "{{count}} settimane",
+    "countDays": "{{count}} giorni",
+    "countSeasons": "{{count}} stagioni"
   },
   "templateWords": {
     "ADVISOR": "Consulente",
@@ -534,5 +559,9 @@
     "medical_treatment": "Trattamento medico",
     "equipment_workshop_review": "Revisione dell' attrezzatura e dell' officina",
     "recruitment_review": "Riesame delle assunzioni"
+  },
+  "notificationTypes": {
+    "suppliesLow": "Scorte basse",
+    "planOpen": "Piano aperto"
   }
 }

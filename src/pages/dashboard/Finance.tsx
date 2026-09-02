@@ -166,6 +166,10 @@ function formatTransactionFullLabel(raw: string, t: FinanceT): string {
   if (cleaned.includes('competition reward')) return t('transactionLabels.competitionReward')
   if (cleaned.includes('race reward cash')) return t('transactionLabels.raceReward')
   if (cleaned.includes('race reward')) return t('transactionLabels.raceReward')
+  if (cleaned.includes('race supplies purchase')) return t('transactionLabels.raceSuppliesPurchase')
+  if (cleaned.includes('race preparation cost')) return t('transactionLabels.racePreparationCost')
+  if (cleaned.includes('club house staff payroll saving') || cleaned.includes('clubhouse staff payroll saving')) return t('transactionLabels.clubHouseStaffPayrollSaving')
+  if (cleaned.includes('staff payroll saving')) return t('transactionLabels.staffPayrollSaving')
 
   if (cleaned.includes('sponsor contract payment')) return t('transactionLabels.sponsorContract')
   if (cleaned.includes('sponsor contract')) return t('transactionLabels.sponsorContract')

@@ -163,8 +163,28 @@ function localizeTypeCode(typeCode: string | null | undefined): string | null {
 
   if (tokens.length === 0) return null
 
+  // In non-English notification titles the leading RACE/RACES token is
+  // redundant (for example "Utrka Zalihe Niske"). Keep English untouched,
+  // but render the actual notification subject in translated locales.
+  const displayTokens =
+    tokens.length > 1 && (tokens[0] === 'RACE' || tokens[0] === 'RACES')
+      ? tokens.slice(1)
+      : tokens
+
+  const exactTypeKeyByCode: Record<string, string> = {
+    RACE_SUPPLIES_LOW: 'notificationTypes.suppliesLow',
+    RACE_SUPPLIES_LOW_STOCK: 'notificationTypes.suppliesLow',
+    RACE_PLAN_OPEN: 'notificationTypes.planOpen',
+    RACE_PLAN_OPENED: 'notificationTypes.planOpen',
+  }
+  const exactKey = exactTypeKeyByCode[String(typeCode).toUpperCase()]
+  if (exactKey) {
+    const exactValue = nt(exactKey, { defaultValue: '' })
+    if (exactValue && exactValue !== exactKey) return exactValue
+  }
+
   const translated: string[] = []
-  for (const token of tokens) {
+  for (const token of displayTokens) {
     const key = `templateWords.${token}`
     const value = nt(key, { defaultValue: '' })
     if (!value || value === key) return null
@@ -172,6 +192,14 @@ function localizeTypeCode(typeCode: string | null | undefined): string | null {
   }
 
   return translated.join(' ')
+}
+
+export function localizeNotificationTypeCodeLabel(
+  typeCode: string | null | undefined
+): string {
+  if (!typeCode) return ''
+  if (!shouldLocalizeNotifications()) return String(typeCode)
+  return localizeTypeCode(typeCode) || nt('categories.other')
 }
 
 function getTopic(item: NotificationItem): string {
@@ -441,6 +469,17 @@ const DETAIL_LABEL_KEYS: Record<string, string> = {
   'training camp': 'templateLabels.trainingCamp',
   'start date': 'templateLabels.startDate',
   'end date': 'templateLabels.endDate',
+  'critical items': 'mechanic.criticalItems',
+  'supply status': 'templateLabels.supplyStatus',
+  'bidons / water bottles': 'templateLabels.bidonsWaterBottles',
+  'nutrition packs': 'templateLabels.nutritionPacks',
+  'energy gels': 'templateLabels.energyGels',
+  'race jersey complete': 'templateLabels.raceJerseyComplete',
+  'rain jackets': 'templateLabels.rainJackets',
+  'required jersey kits': 'templateLabels.requiredJerseyKits',
+  'available jersey kits': 'templateLabels.availableJerseyKits',
+  'missing jersey kits': 'templateLabels.missingJerseyKits',
+  'eligibility check': 'templateLabels.eligibilityCheck',
 }
 
 export function localizeNotificationDetailLabel(label: string): string {
@@ -473,6 +512,66 @@ export function localizeNotificationValue(value: string): string {
 
   const key = valueKeyByNormalized[normalized]
   if (key) return nt(key)
+
+  const exactValueKeys: Record<string, string> = {
+    'restock required': 'templateValues.restockRequired',
+    'low stock': 'templateValues.lowStock',
+    'in stock': 'templateValues.inStock',
+    'out of stock': 'templateValues.outOfStock',
+    'in repair': 'templateValues.inRepair',
+    sold: 'templateValues.sold',
+    expired: 'templateValues.expired',
+    repaid: 'templateValues.repaid',
+    'final warning': 'templateValues.finalWarning',
+  }
+  const exactValueKey = exactValueKeys[normalized]
+  if (exactValueKey) return nt(exactValueKey)
+
+  const availableMatch = /^(\d+(?:[.,]\d+)?)\s+available$/i.exec(value.trim())
+  if (availableMatch) {
+    return nt('templateValues.countAvailable', { count: availableMatch[1] })
+  }
+
+  const leftMatch = /^(\d+(?:[.,]\d+)?)\s+left$/i.exec(value.trim())
+  if (leftMatch) {
+    return nt('templateValues.countLeft', { count: leftMatch[1] })
+  }
+
+  const thresholdMatch = /^threshold\s+(\d+(?:[.,]\d+)?)$/i.exec(value.trim())
+  if (thresholdMatch) {
+    return nt('templateValues.thresholdValue', { count: thresholdMatch[1] })
+  }
+
+  const unitPatterns: Array<[RegExp, string]> = [
+    [/^(\d+(?:[.,]\d+)?)\s+weeks?$/i, 'templateValues.countWeeks'],
+    [/^(\d+(?:[.,]\d+)?)\s+days?$/i, 'templateValues.countDays'],
+    [/^(\d+(?:[.,]\d+)?)\s+seasons?$/i, 'templateValues.countSeasons'],
+  ]
+  for (const [pattern, translationKey] of unitPatterns) {
+    const match = pattern.exec(value.trim())
+    if (match) return nt(translationKey, { count: match[1] })
+  }
+
+  // Composite race-supply summaries are generated in English by the template
+  // because the underlying values are dynamic. Translate the fixed prose while
+  // preserving quantities and thresholds.
+  let translatedValue = value
+  const supplyNameKeys: Array<[RegExp, string]> = [
+    [/Bidons\s*\/\s*Water Bottles/gi, 'templateLabels.bidonsWaterBottles'],
+    [/Nutrition Packs/gi, 'templateLabels.nutritionPacks'],
+    [/Energy Gels/gi, 'templateLabels.energyGels'],
+    [/Race Jersey Complete/gi, 'templateLabels.raceJerseyComplete'],
+    [/Rain Jackets/gi, 'templateLabels.rainJackets'],
+  ]
+  for (const [pattern, translationKey] of supplyNameKeys) {
+    translatedValue = translatedValue.replace(pattern, nt(translationKey))
+  }
+  translatedValue = translatedValue
+    .replace(/(\d+(?:[.,]\d+)?)\s+available\b/gi, (_all, count) => nt('templateValues.countAvailable', { count }))
+    .replace(/(\d+(?:[.,]\d+)?)\s+left\b/gi, (_all, count) => nt('templateValues.countLeft', { count }))
+    .replace(/threshold\s+(\d+(?:[.,]\d+)?)/gi, (_all, count) => nt('templateValues.thresholdValue', { count }))
+
+  if (translatedValue !== value) return translatedValue
 
   if (/\/week\b/i.test(value)) {
     return value.replace(/\/week\b/gi, `/${nt('templateLocalization.perWeek')}`)

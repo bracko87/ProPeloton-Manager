@@ -113,7 +113,11 @@
     "infrastructureJobRefund": "Infrastruktur-Arbeitsplatzrückerstattung",
     "teamPolicyHousingCost": "Team Policy Wohnkosten",
     "racePrize": "Preis für Rennen",
-    "freeAgentSigningCostPaid": "Kosten für die Verpflichtung eines vertragslosen Fahrers"
+    "freeAgentSigningCostPaid": "Kosten für die Verpflichtung eines vertragslosen Fahrers",
+    "raceSuppliesPurchase": "Kauf von Rennvorräten",
+    "racePreparationCost": "Kosten der Rennvorbereitung",
+    "clubHouseStaffPayrollSaving": "Einsparung bei Personalkosten – Clubhaus",
+    "staffPayrollSaving": "Einsparung bei Personalkosten"
   },
   "financeCategories": {
     "income": "Einkommen",

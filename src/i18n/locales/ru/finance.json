@@ -113,7 +113,11 @@
     "infrastructureJobRefund": "Возвращение средств на оплату работы",
     "teamPolicyHousingCost": "Team Policy Расходы на жилье",
     "racePrize": "Премия за гонку",
-    "freeAgentSigningCostPaid": "Плата за бесплатную подпись агента"
+    "freeAgentSigningCostPaid": "Плата за бесплатную подпись агента",
+    "raceSuppliesPurchase": "Покупка гоночных запасов",
+    "racePreparationCost": "Расходы на подготовку к гонке",
+    "clubHouseStaffPayrollSaving": "Экономия на зарплатах персонала — клубный дом",
+    "staffPayrollSaving": "Экономия на зарплатах персонала"
   },
   "financeCategories": {
     "income": "Поступления",

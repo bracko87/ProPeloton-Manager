@@ -306,7 +306,17 @@
     "newRating": "Новая оценка",
     "trainingCamp": "Учебный лагерь",
     "startDate": "Дата начала",
-    "endDate": "Дата окончания"
+    "endDate": "Дата окончания",
+    "supplyStatus": "Состояние запасов",
+    "bidonsWaterBottles": "Фляги / бутылки для воды",
+    "nutritionPacks": "Пакеты питания",
+    "energyGels": "Энергетические гели",
+    "raceJerseyComplete": "Комплект гоночной формы",
+    "rainJackets": "Дождевые куртки",
+    "requiredJerseyKits": "Необходимые комплекты формы",
+    "availableJerseyKits": "Доступные комплекты формы",
+    "missingJerseyKits": "Недостающие комплекты формы",
+    "eligibilityCheck": "Проверка допуска"
   },
   "templateLocalization": {
     "genericTitle": "Уведомление: {{topic}}",
@@ -361,7 +371,22 @@
     "inactive": "Неактивен",
     "ready": "Готов",
     "open": "Открыть",
-    "closed": "Закрыто"
+    "closed": "Закрыто",
+    "restockRequired": "Требуется пополнение запасов",
+    "lowStock": "Мало запасов",
+    "inStock": "В наличии",
+    "outOfStock": "Нет в наличии",
+    "inRepair": "В ремонте",
+    "sold": "Продано",
+    "expired": "Истекло",
+    "repaid": "Погашено",
+    "finalWarning": "Последнее предупреждение",
+    "countAvailable": "{{count}} доступно",
+    "countLeft": "{{count}} осталось",
+    "thresholdValue": "порог {{count}}",
+    "countWeeks": "{{count}} недель",
+    "countDays": "{{count}} дней",
+    "countSeasons": "{{count}} сезонов"
   },
   "templateWords": {
     "ADVISOR": "Советник",
@@ -534,5 +559,9 @@
     "medical_treatment": "Медицинская помощь",
     "equipment_workshop_review": "Обзор оборудования и мастерской",
     "recruitment_review": "Обзор набора персонала"
+  },
+  "notificationTypes": {
+    "suppliesLow": "Мало запасов",
+    "planOpen": "План открыт"
   }
 }

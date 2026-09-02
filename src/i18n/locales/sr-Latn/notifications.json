@@ -306,7 +306,17 @@
     "newRating": "Nova ocena",
     "trainingCamp": "Trening kamp",
     "startDate": "Datum početka",
-    "endDate": "Datum završetka"
+    "endDate": "Datum završetka",
+    "supplyStatus": "Status zaliha",
+    "bidonsWaterBottles": "Bidoni / flaše za vodu",
+    "nutritionPacks": "Paketi ishrane",
+    "energyGels": "Energetski gelovi",
+    "raceJerseyComplete": "Komplet trkačkog dresa",
+    "rainJackets": "Kišne jakne",
+    "requiredJerseyKits": "Potrebni kompleti dresova",
+    "availableJerseyKits": "Dostupni kompleti dresova",
+    "missingJerseyKits": "Nedostajući kompleti dresova",
+    "eligibilityCheck": "Provera uslova za nastup"
   },
   "templateLocalization": {
     "genericTitle": "Obaveštenje: {{topic}}",
@@ -361,7 +371,22 @@
     "inactive": "Neaktivno",
     "ready": "Spremno",
     "open": "Otvoreno",
-    "closed": "Zatvoreno"
+    "closed": "Zatvoreno",
+    "restockRequired": "Potrebna dopuna zaliha",
+    "lowStock": "Niske zalihe",
+    "inStock": "Na stanju",
+    "outOfStock": "Nema na stanju",
+    "inRepair": "Na popravci",
+    "sold": "Prodato",
+    "expired": "Isteklo",
+    "repaid": "Otplaćeno",
+    "finalWarning": "Poslednje upozorenje",
+    "countAvailable": "{{count}} dostupno",
+    "countLeft": "{{count}} preostalo",
+    "thresholdValue": "prag {{count}}",
+    "countWeeks": "{{count}} nedelja",
+    "countDays": "{{count}} dana",
+    "countSeasons": "{{count}} sezona"
   },
   "templateWords": {
     "ADVISOR": "Savetnik",
@@ -534,5 +559,9 @@
     "medical_treatment": "Medicinski tretman",
     "equipment_workshop_review": "Pregled opreme i radionice",
     "recruitment_review": "Pregled regrutacije"
+  },
+  "notificationTypes": {
+    "suppliesLow": "Niske zalihe",
+    "planOpen": "Plan otvoren"
   }
 }

@@ -113,7 +113,11 @@
     "infrastructureJobRefund": "Infrastruttura",
     "teamPolicyHousingCost": "Costo di alloggio Team Policy",
     "racePrize": "Premio gara",
-    "freeAgentSigningCostPaid": "svincolato firma costo pagato"
+    "freeAgentSigningCostPaid": "svincolato firma costo pagato",
+    "raceSuppliesPurchase": "Acquisto rifornimenti gara",
+    "racePreparationCost": "Costo di preparazione gara",
+    "clubHouseStaffPayrollSaving": "Risparmio stipendi staff – Sede del club",
+    "staffPayrollSaving": "Risparmio stipendi staff"
   },
   "financeCategories": {
     "income": "Reddito",

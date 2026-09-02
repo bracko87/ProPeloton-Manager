@@ -113,7 +113,11 @@
     "infrastructureJobRefund": "Infrastructure Job Refund",
     "teamPolicyHousingCost": "Team Policy Housing Cost",
     "racePrize": "Race Prize",
-    "freeAgentSigningCostPaid": "Free Agent Signing Cost Paid"
+    "freeAgentSigningCostPaid": "Free Agent Signing Cost Paid",
+    "raceSuppliesPurchase": "Race Supplies Purchase",
+    "racePreparationCost": "Race Preparation Cost",
+    "clubHouseStaffPayrollSaving": "Club House Staff Payroll Saving",
+    "staffPayrollSaving": "Staff Payroll Saving"
   },
   "financeCategories": {
     "income": "Income",

@@ -306,7 +306,17 @@
     "newRating": "New rating",
     "trainingCamp": "Training camp",
     "startDate": "Start date",
-    "endDate": "End date"
+    "endDate": "End date",
+    "supplyStatus": "Supply status",
+    "bidonsWaterBottles": "Bidons / Water Bottles",
+    "nutritionPacks": "Nutrition Packs",
+    "energyGels": "Energy Gels",
+    "raceJerseyComplete": "Race Jersey Complete",
+    "rainJackets": "Rain Jackets",
+    "requiredJerseyKits": "Required jersey kits",
+    "availableJerseyKits": "Available jersey kits",
+    "missingJerseyKits": "Missing jersey kits",
+    "eligibilityCheck": "Eligibility check"
   },
   "templateLocalization": {
     "genericTitle": "Notification: {{topic}}",
@@ -361,7 +371,22 @@
     "inactive": "Inactive",
     "ready": "Ready",
     "open": "Open",
-    "closed": "Closed"
+    "closed": "Closed",
+    "restockRequired": "Restock Required",
+    "lowStock": "Low stock",
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "inRepair": "In repair",
+    "sold": "Sold",
+    "expired": "Expired",
+    "repaid": "Repaid",
+    "finalWarning": "Final warning",
+    "countAvailable": "{{count}} available",
+    "countLeft": "{{count}} left",
+    "thresholdValue": "threshold {{count}}",
+    "countWeeks": "{{count}} weeks",
+    "countDays": "{{count}} days",
+    "countSeasons": "{{count}} seasons"
   },
   "templateWords": {
     "ADVISOR": "Advisor",
@@ -534,5 +559,9 @@
     "medical_treatment": "Medical treatment",
     "equipment_workshop_review": "Equipment & workshop review",
     "recruitment_review": "Recruitment review"
+  },
+  "notificationTypes": {
+    "suppliesLow": "Race supplies low",
+    "planOpen": "Race plan open"
   }
 }

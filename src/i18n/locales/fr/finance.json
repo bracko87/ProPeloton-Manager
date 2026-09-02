@@ -113,7 +113,11 @@
     "infrastructureJobRefund": "Remboursement d'emplois dans l'infrastructure",
     "teamPolicyHousingCost": "Team Policy Coût du logement",
     "racePrize": "Prix de course",
-    "freeAgentSigningCostPaid": "Frais de signature d'un coureur libre payés"
+    "freeAgentSigningCostPaid": "Frais de signature d'un coureur libre payés",
+    "raceSuppliesPurchase": "Achat de ravitaillement de course",
+    "racePreparationCost": "Coût de préparation de course",
+    "clubHouseStaffPayrollSaving": "Économie sur la masse salariale – Siège du club",
+    "staffPayrollSaving": "Économie sur la masse salariale"
   },
   "financeCategories": {
     "income": "Recettes",

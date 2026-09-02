@@ -306,7 +306,17 @@
     "newRating": "Nouvelle notation",
     "trainingCamp": "Camp d ' entraînement",
     "startDate": "Date de début",
-    "endDate": "Date de fin"
+    "endDate": "Date de fin",
+    "supplyStatus": "État des stocks",
+    "bidonsWaterBottles": "Bidons / bouteilles d’eau",
+    "nutritionPacks": "Packs nutritionnels",
+    "energyGels": "Gels énergétiques",
+    "raceJerseyComplete": "Kit complet de maillot",
+    "rainJackets": "Vestes de pluie",
+    "requiredJerseyKits": "Kits de maillot requis",
+    "availableJerseyKits": "Kits de maillot disponibles",
+    "missingJerseyKits": "Kits de maillot manquants",
+    "eligibilityCheck": "Contrôle d’éligibilité"
   },
   "templateLocalization": {
     "genericTitle": "Notification: {{topic}}",
@@ -361,7 +371,22 @@
     "inactive": "Inactif",
     "ready": "Prêt",
     "open": "Ouvrir",
-    "closed": "Fermé"
+    "closed": "Fermé",
+    "restockRequired": "Réapprovisionnement requis",
+    "lowStock": "Stocks faibles",
+    "inStock": "En stock",
+    "outOfStock": "Rupture de stock",
+    "inRepair": "En réparation",
+    "sold": "Vendu",
+    "expired": "Expiré",
+    "repaid": "Remboursé",
+    "finalWarning": "Avertissement final",
+    "countAvailable": "{{count}} disponibles",
+    "countLeft": "{{count}} restants",
+    "thresholdValue": "seuil {{count}}",
+    "countWeeks": "{{count}} semaines",
+    "countDays": "{{count}} jours",
+    "countSeasons": "{{count}} saisons"
   },
   "templateWords": {
     "ADVISOR": "Conseiller",
@@ -534,5 +559,9 @@
     "medical_treatment": "Traitement médical",
     "equipment_workshop_review": "Examen des équipements et des ateliers",
     "recruitment_review": "Examen du recrutement"
+  },
+  "notificationTypes": {
+    "suppliesLow": "Stocks faibles",
+    "planOpen": "Plan ouvert"
   }
 }

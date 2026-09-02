@@ -113,7 +113,11 @@
     "infrastructureJobRefund": "Povraćaj za infrastrukturni posao",
     "teamPolicyHousingCost": "Trošak smeštaja po politici tima",
     "racePrize": "Nagrada trke",
-    "freeAgentSigningCostPaid": "Plaćen trošak potpisa slobodnog vozača"
+    "freeAgentSigningCostPaid": "Plaćen trošak potpisa slobodnog vozača",
+    "raceSuppliesPurchase": "Kupovina zaliha za trku",
+    "racePreparationCost": "Trošak pripreme trke",
+    "clubHouseStaffPayrollSaving": "Ušteda na platama osoblja – Sedište kluba",
+    "staffPayrollSaving": "Ušteda na platama osoblja"
   },
   "financeCategories": {
     "income": "Prihod",
