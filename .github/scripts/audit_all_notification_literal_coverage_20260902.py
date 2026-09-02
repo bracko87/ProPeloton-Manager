@@ -27,6 +27,11 @@ reverse_en = {}
 for key, value in flatten(en_notifications):
     reverse_en.setdefault(norm(value), []).append(key)
 
+template_words = {str(k).lower() for k in en_notifications.get('templateWords', {}).keys()}
+
+def words(value: str):
+    return [w.lower() for w in re.findall(r"[A-Za-z0-9]+", value)]
+
 # Static detail labels used by detailRow('...').
 detail_labels = sorted(set(re.findall(r"detailRow\(\s*['\"]([^'\"]+)['\"]", templates)))
 # Translation-map normalized labels.
@@ -52,19 +57,30 @@ missing_actions = [x for x in action_labels if norm(x) not in action_map and not
 reverse_actions = [x for x in missing_actions if norm(x) in reverse_en]
 unresolved_actions = [x for x in missing_actions if norm(x) not in reverse_en]
 
+remaining_phrases = unresolved_detail + unresolved_actions
+missing_words = sorted({w for phrase in remaining_phrases for w in words(phrase) if w not in template_words})
+fully_tokenizable_detail = [x for x in unresolved_detail if all(w in template_words for w in words(x))]
+fully_tokenizable_actions = [x for x in unresolved_actions if all(w in template_words for w in words(x))]
+
 print(f'Static detail labels: {len(detail_labels)}')
 print(f'Manually mapped detail labels: {len(detail_labels)-len(missing_detail)}')
 print(f'Resolvable via English resource reverse lookup: {len(reverse_detail)}')
-print(f'UNRESOLVED DETAIL LABELS ({len(unresolved_detail)}):')
+print(f'Additional fully tokenizable detail labels: {len(fully_tokenizable_detail)}')
+print(f'UNRESOLVED DETAIL LABELS AFTER BOTH ({len(unresolved_detail)-len(fully_tokenizable_detail)}):')
 for value in unresolved_detail:
-    print('  -', value)
+    if value not in fully_tokenizable_detail:
+        print('  -', value)
 
 print(f'\nStatic action labels: {len(action_labels)}')
 print(f'Resolvable actions via English resource reverse lookup: {len(reverse_actions)}')
-print(f'UNRESOLVED ACTION LABELS ({len(unresolved_actions)}):')
+print(f'Additional fully tokenizable actions: {len(fully_tokenizable_actions)}')
+print(f'UNRESOLVED ACTION LABELS AFTER BOTH ({len(unresolved_actions)-len(fully_tokenizable_actions)}):')
 for value in unresolved_actions:
+    if value not in fully_tokenizable_actions:
+        print('  -', value)
+
+print(f'\nMISSING VOCABULARY WORDS ({len(missing_words)}):')
+for value in missing_words:
     print('  -', value)
 
-print(f'\nLiteral fallback values ({len(literal_fallbacks)}):')
-for value in literal_fallbacks:
-    print('  -', value)
+print(f'\nLiteral fallback values ({len(literal_fallbacks)}): {len(literal_fallbacks)} total')
