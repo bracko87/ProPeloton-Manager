@@ -1,0 +1,63 @@
+name: Clean Race Preparation duplicate role mapping
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-race-preparation-cleanup-duplicate-leader.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  clean-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove duplicate Leader mapping
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/pages/dashboard/RacePreparation.tsx')
+          src = path.read_text(encoding='utf-8')
+          old = '    Leader: "riderRoles.teamLeader",\n'
+          if old not in src:
+              raise SystemExit('Expected original Leader mapping not found')
+          src = src.replace(old, '', 1)
+          if src.count('"Leader": "screen.leaderShort"') != 1:
+              raise SystemExit('Expected exactly one localized Leader mapping')
+          path.write_text(src, encoding='utf-8')
+          print('Removed duplicate Leader mapping')
+          PY
+
+      - name: Run screenshot localization audit
+        run: python3 .github/scripts/audit_race_preparation_screenshot_gaps_20260902.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit cleanup
+        run: |
+          git add src/pages/dashboard/RacePreparation.tsx
+          if git diff --cached --quiet; then
+            echo 'No cleanup changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Clean Race Preparation role localization mapping'
+          git pull --rebase origin main
+          git push origin HEAD:main
