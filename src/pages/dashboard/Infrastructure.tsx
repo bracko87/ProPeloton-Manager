@@ -2359,13 +2359,14 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
 
       {staffContextError && (
         <div className="mb-5 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-          Infrastructure loaded, but staff impact context could not be loaded: {staffContextError}
+          {t('page.staffContextError')} {staffContextError}
         </div>
       )}
 
       {activeTab === 'facilities' && (
         <div data-tutorial-target="facilities-buildings">
           <FacilitiesSection
+          translate={t}
           activeJobs={activeJobs}
           nowMs={nowMs}
           facilityCapacity={facilityJobCapacity}

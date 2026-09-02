@@ -79,6 +79,14 @@ function maintenanceFor(
 
 type InfrastructureT = TFunction<'infrastructure'>
 
+const InfrastructureTranslationContext = React.createContext<InfrastructureT | null>(null)
+
+function useInfrastructureT(): InfrastructureT {
+  const contextualT = React.useContext(InfrastructureTranslationContext)
+  const translation = useTranslation('infrastructure')
+  return contextualT ?? translation.t
+}
+
 function levelDetail(
   item: InfrastructureItem,
   level: number,
@@ -124,7 +132,7 @@ function FacilityVisual({
   className: string
   eager?: boolean
 }): JSX.Element {
-  const { t } = useTranslation('infrastructure')
+  const t = useInfrastructureT()
   const level = facilityLevel(item)
   const maxLevel = facilityMaxLevel(item)
   const key = item.id as FacilityKey
@@ -148,7 +156,7 @@ function FacilityVisual({
 }
 
 function LevelBadge({ item, dark = false }: { item: InfrastructureItem; dark?: boolean }): JSX.Element {
-  const { t } = useTranslation('infrastructure')
+  const t = useInfrastructureT()
   const level = facilityLevel(item)
   const max = facilityMaxLevel(item)
 
@@ -174,7 +182,7 @@ function ActiveJobsPanel({
   processingKey: string | null
   onCancelJob: (jobId: string) => void
 }): JSX.Element {
-  const { t } = useTranslation('infrastructure')
+  const t = useInfrastructureT()
 
   if (jobs.length === 0) {
     return (
@@ -270,7 +278,7 @@ function LevelInfoPanel({
   active?: boolean
   showUpgradeMeta?: boolean
 }): JSX.Element {
-  const { t } = useTranslation('infrastructure')
+  const t = useInfrastructureT()
   const detail = levelDetail(item, level, configs, t)
   const isCurrent = tone === 'current'
 
@@ -330,7 +338,7 @@ function FacilityDetailsModal({
   onAction: (item: InfrastructureItem) => void
   nowMs: number
 }): JSX.Element {
-  const { t } = useTranslation('infrastructure')
+  const t = useInfrastructureT()
   const currentLevel = facilityLevel(item)
   const maxLevel = facilityMaxLevel(item)
   const levels = Array.from({ length: maxLevel + 1 }, (_, index) => index)
@@ -459,7 +467,7 @@ function InfrastructureCard({
   onDetails: (item: InfrastructureItem) => void
   nowMs: number
 }): JSX.Element {
-  const { t } = useTranslation('infrastructure')
+  const t = useInfrastructureT()
   const currentLevel = facilityLevel(item)
   const nextLevel = Math.min(currentLevel + 1, facilityMaxLevel(item))
   const badgeClasses = item.pendingJob
@@ -542,6 +550,7 @@ function InfrastructureCard({
 }
 
 export function FacilitiesSection({
+  translate,
   activeJobs,
   nowMs,
   facilityCapacity,
@@ -554,6 +563,7 @@ export function FacilitiesSection({
   onOpenDetails,
   onCloseDetails,
 }: {
+  translate: InfrastructureT
   activeJobs: ActiveJobView[]
   nowMs: number
   facilityCapacity: FacilityJobCapacityRow | null
@@ -591,7 +601,8 @@ export function FacilitiesSection({
   )
 
   return (
-    <>
+    <InfrastructureTranslationContext.Provider value={translate}>
+      <>
       <ActiveJobsPanel
         jobs={activeJobs}
         nowMs={nowMs}
@@ -625,6 +636,7 @@ export function FacilitiesSection({
           nowMs={nowMs}
         />
       )}
-    </>
+      </>
+    </InfrastructureTranslationContext.Provider>
   )
 }
