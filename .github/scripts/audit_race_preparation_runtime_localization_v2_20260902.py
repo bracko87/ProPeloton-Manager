@@ -12,6 +12,15 @@ BRIDGE = ROOT / "src/components/i18n/RacePreparationLegacyLocalizationBridge.tsx
 LOCALES = ["en", "sr-Latn", "de", "hr", "es", "it", "fr", "ru"]
 PLACEHOLDER_RE = re.compile(r"{{\s*([A-Za-z0-9_]+)\s*}}")
 
+# These are genuinely identical words in the target language; they should not
+# be treated as untranslated just because the spelling matches English.
+NATURALLY_IDENTICAL = {
+    ("fr", "screen.fatigue"),
+    ("de", "screen.fit"),
+    ("fr", "screen.distance"),
+    ("de", "screen.wind"),
+}
+
 # Long/meaningful visible copy that should never remain identical to English in
 # a non-English locale. Canonical protected terms and short international words
 # (Race Plan, Stage Plan(s), Race Sharpness, U23, UCI, KOM, Sprint, Bidons,
@@ -220,7 +229,7 @@ def main() -> None:
             value = resources[locale].get(key, "").strip()
             if not value:
                 errors.append(f"{locale}: missing/empty critical key {key}")
-            elif value == en[key].strip():
+            elif value == en[key].strip() and (locale, key) not in NATURALLY_IDENTICAL:
                 errors.append(f"{locale}: untranslated critical key {key}: {value!r}")
 
     for key in MUST_EXIST:
