@@ -1,0 +1,61 @@
+name: Infrastructure facility translator context
+
+on:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-infrastructure-facility-translator-context.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-audit-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply translator-context fix
+        run: python3 .github/scripts/fix_infrastructure_facility_translator_context_20260902.py
+
+      - name: Audit Infrastructure facility translations
+        run: python3 .github/scripts/audit_infrastructure_facility_translator_context_20260902.py
+
+      - name: Validate locale JSON
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for locale in ['en','sr-Latn','de','hr','es','it','fr','ru']:
+              path = Path('src/i18n/locales') / locale / 'infrastructure.json'
+              json.loads(path.read_text(encoding='utf-8'))
+              print('OK', path)
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit translator-context fix
+        run: |
+          git add src/pages/dashboard/Infrastructure.tsx src/pages/dashboard/infrastructure/FacilitiesSection.tsx
+          if git diff --cached --quiet; then
+            echo 'No translator-context changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Fix Infrastructure facility translation fallback'
+          git pull --rebase origin main
+          git push origin HEAD:main
