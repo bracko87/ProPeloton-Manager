@@ -2406,17 +2406,17 @@ export default function RacePreparationPage(): JSX.Element {
   const submitPlanWarnings = [
     !tacticalPlannerSelectionValid
       ? isDevelopingTeamSelected
-        ? "Choose either a Sport Director or a U23 Head Coach."
-        : "Select a Sport Director."
+        ? racePrepText("screen.choosePlannerDeveloping")
+        : racePrepText("screen.selectSportDirector")
       : null,
     maxRiders > 0 && selectedRiderCount < maxRiders
-      ? `Maximum riders allowed: ${maxRiders}. You selected: ${selectedRiderCount}.`
+      ? racePrepText("screen.maxRidersWarning", { max: maxRiders, selected: selectedRiderCount })
       : null,
     maxStaffSlots > 0 && selectedStaffCount < maxStaffSlots
-      ? `Maximum race staff slots: ${maxStaffSlots}. You selected: ${selectedStaffCount}.`
+      ? racePrepText("screen.maxStaffWarning", { max: maxStaffSlots, selected: selectedStaffCount })
       : null,
     maxAssetSlots > 0 && selectedAssetCount < maxAssetSlots
-      ? `Maximum race asset slots: ${maxAssetSlots}. You selected: ${selectedAssetCount}.`
+      ? racePrepText("screen.maxAssetsWarning", { max: maxAssetSlots, selected: selectedAssetCount })
       : null,
   ].filter(Boolean) as string[];
 
@@ -2651,7 +2651,7 @@ export default function RacePreparationPage(): JSX.Element {
       await applyContext(context, resolvedClubId);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to load page.",
+        error instanceof Error ? localizeRacePrepBackendText(error.message) : racePrepText("screen.loadPageFailed"),
       );
     } finally {
       setLoading(false);
@@ -2682,8 +2682,8 @@ export default function RacePreparationPage(): JSX.Element {
     } catch (error) {
       setErrorMessage(
         error instanceof Error
-          ? error.message
-          : "Failed to load selected race.",
+          ? localizeRacePrepBackendText(error.message)
+          : racePrepText("screen.loadSelectedRaceFailed"),
       );
     } finally {
       setActionLoading(false);
@@ -2825,8 +2825,8 @@ export default function RacePreparationPage(): JSX.Element {
 
       setMessage(
         nextOption
-          ? `Competing squad changed to ${nextOption.name}.`
-          : "Competing squad changed.",
+          ? racePrepText("racePlan.competingSquadChangedTo", { squad: nextOption.name })
+          : racePrepText("racePlan.competingSquadChanged"),
       );
     } catch (error) {
       /*
@@ -2850,8 +2850,8 @@ export default function RacePreparationPage(): JSX.Element {
 
       setErrorMessage(
         error instanceof Error
-          ? error.message
-          : "Failed to change competing squad.",
+          ? localizeRacePrepBackendText(error.message)
+          : racePrepText("errors.changeSquad"),
       );
     } finally {
       setActionLoading(false);
@@ -2909,7 +2909,7 @@ export default function RacePreparationPage(): JSX.Element {
 
     if (!selectedU23HeadCoachId) {
       throw new Error(
-        "Select a U23 Head Coach before saving this Developing Team Race Plan.",
+        racePrepText("errors.selectU23BeforeSave"),
       );
     }
 
@@ -2934,10 +2934,10 @@ export default function RacePreparationPage(): JSX.Element {
       console.log("Race quote result", result);
       console.log("Standardized bonus", asRecord(result).standardized_bonus);
       setQuote(result);
-      setMessage("Race Plan quote refreshed.");
+      setMessage(racePrepText("racePlan.quoteRefreshed"));
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to quote race plan.",
+        error instanceof Error ? localizeRacePrepBackendText(error.message) : racePrepText("errors.quote"),
       );
     } finally {
       setActionLoading(false);
@@ -2949,16 +2949,19 @@ export default function RacePreparationPage(): JSX.Element {
 
     if (riderSelectionTooMany) {
       setErrorMessage(
-        `Remove ${selectedRiderCount - maxRiders} rider${
-          selectedRiderCount - maxRiders === 1 ? "" : "s"
-        } before saving.`,
+        racePrepText(
+          selectedRiderCount - maxRiders === 1
+            ? "racePlan.removeOneBeforeSaving"
+            : "racePlan.removeBeforeSaving",
+          { count: selectedRiderCount - maxRiders },
+        ),
       );
       return;
     }
 
     if (u23PlannerChoiceIncomplete) {
       setErrorMessage(
-        "Select a U23 Head Coach or switch the tactical planner back to Sport Director before saving the Race Plan.",
+        racePrepText("errors.selectU23Save"),
       );
       return;
     }
@@ -2979,14 +2982,14 @@ export default function RacePreparationPage(): JSX.Element {
       setMessage(
         isDevelopingTeamSelected &&
           effectiveTacticalPlannerChoice === "u23_head_coach"
-          ? "Race Plan saved. The U23 Head Coach will take control when the Race Plan is submitted."
-          : "Race Plan saved.",
+          ? racePrepText("racePlan.savedU23")
+          : racePrepText("racePlan.saved"),
       );
 
       await refreshSelectedRace();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to save race plan.",
+        error instanceof Error ? localizeRacePrepBackendText(error.message) : racePrepText("errors.save"),
       );
     } finally {
       setActionLoading(false);
@@ -2996,14 +2999,14 @@ export default function RacePreparationPage(): JSX.Element {
   async function handleSubmit() {
     if (!riderSelectionValid) {
       setErrorMessage(
-        `Select ${minRiders}–${maxRiders} riders before submitting the Race Plan.`,
+        racePrepText("errors.selectRidersSubmit", { min: minRiders, max: maxRiders }),
       );
       return;
     }
 
     if (u23PlannerChoiceIncomplete) {
       setErrorMessage(
-        "Select a U23 Head Coach or switch the tactical planner back to Sport Director before submitting the Race Plan.",
+        racePrepText("errors.selectU23Submit"),
       );
       return;
     }
@@ -3047,7 +3050,7 @@ export default function RacePreparationPage(): JSX.Element {
       ) {
         if (!selectedU23HeadCoachId) {
           throw new Error(
-            "The Race Plan was submitted, but no U23 Head Coach was selected.",
+            racePrepText("errors.submittedNoU23"),
           );
         }
 
@@ -3069,20 +3072,20 @@ export default function RacePreparationPage(): JSX.Element {
           throw new Error(
             String(
               initialGeneration.message ??
-                "The Race Plan was submitted, but the U23 Head Coach could not generate the first Stage Plan.",
+                racePrepText("errors.submittedU23GenerateFailed"),
             ),
           );
         }
 
         setU23AutomationEnabled(Boolean(automationResult.is_enabled));
         u23ActivationMessage = Boolean(initialGeneration.applied)
-          ? " The U23 Head Coach generated the first eligible Stage Plan."
-          : " U23 automation is active.";
+          ? ` ${racePrepText("racePlan.u23GeneratedFirst")}`
+          : ` ${racePrepText("racePlan.u23ActiveShort")}`;
       }
 
       setMessage(
         `${String(
-          result.message ?? "Race Plan submitted successfully.",
+          localizeRacePrepBackendText(result.message ?? racePrepText("racePlan.submittedSuccess")),
         )}${u23ActivationMessage}`,
       );
 
@@ -3090,7 +3093,7 @@ export default function RacePreparationPage(): JSX.Element {
       setActiveTab("stagePlans");
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "Failed to submit race plan.",
+        error instanceof Error ? localizeRacePrepBackendText(error.message) : racePrepText("errors.submit"),
       );
     } finally {
       setActionLoading(false);
@@ -3100,14 +3103,14 @@ export default function RacePreparationPage(): JSX.Element {
   function requestSubmitRacePlan() {
     if (!riderSelectionValid) {
       setErrorMessage(
-        `Select ${minRiders}–${maxRiders} riders before submitting the Race Plan.`,
+        racePrepText("errors.selectRidersSubmit", { min: minRiders, max: maxRiders }),
       );
       return;
     }
 
     if (u23PlannerChoiceIncomplete) {
       setErrorMessage(
-        "Select a U23 Head Coach or switch the tactical planner back to Sport Director before submitting the Race Plan.",
+        racePrepText("errors.selectU23Submit"),
       );
       return;
     }
@@ -3206,7 +3209,7 @@ export default function RacePreparationPage(): JSX.Element {
 
     if (blockedRiderIds.has(riderId)) {
       setErrorMessage(
-        "This rider is already assigned to an overlapping submitted race.",
+        racePrepText("errors.blockedRider"),
       );
       return;
     }
@@ -3230,7 +3233,7 @@ export default function RacePreparationPage(): JSX.Element {
       }
 
       if (maxRiders > 0 && currentClean.length >= maxRiders) {
-        setErrorMessage(`You can select at most ${maxRiders} riders.`);
+        setErrorMessage(racePrepText("errors.maxRiders", { max: maxRiders }));
         return currentClean;
       }
 
@@ -3244,7 +3247,7 @@ export default function RacePreparationPage(): JSX.Element {
 
     if (staffId && blockedStaffIds.has(staffId)) {
       setErrorMessage(
-        "This staff member is already assigned to an overlapping submitted race.",
+        racePrepText("errors.blockedStaff"),
       );
       return;
     }
@@ -3292,7 +3295,7 @@ export default function RacePreparationPage(): JSX.Element {
 
     if (staffId && blockedStaffIds.has(staffId)) {
       setErrorMessage(
-        "This U23 Head Coach is already assigned to an overlapping submitted race.",
+        racePrepText("errors.blockedU23"),
       );
       return;
     }
@@ -3309,7 +3312,7 @@ export default function RacePreparationPage(): JSX.Element {
 
     if (assetId && blockedAssetIds.has(assetId)) {
       setErrorMessage(
-        "This asset is already assigned to an overlapping submitted race.",
+        racePrepText("errors.blockedAsset"),
       );
       return;
     }
@@ -3319,7 +3322,7 @@ export default function RacePreparationPage(): JSX.Element {
       isAssetSelectedInAnotherSlot(cleanSelectedAssets, assetKey, assetId)
     ) {
       setErrorMessage(
-        "This asset is already selected in another Race Plan slot.",
+        racePrepText("errors.duplicateAsset"),
       );
       return;
     }
@@ -5150,14 +5153,12 @@ function RacePlanBonusPreview({
   );
 
   return (
-    <RacePackageCard title="Race Plan Bonus Preview">
+    <RacePackageCard title={racePrepText("screen.bonusTitle")}>
       <div className="space-y-3" onMouseLeave={() => setActiveGroupKey(null)}>
         <div>
           <h4 className="text-sm font-semibold text-slate-900">{racePrepText("screen.bonusStandardized")}</h4>
           <p className="mt-1 text-xs text-slate-500">
-            Race staff, race assets, and team policies are converted into these
-            standardized race-engine percentage bonuses. Hover or click a card
-            to see the source breakdown.
+            {racePrepText("screen.bonusDescription")}
           </p>
         </div>
 
@@ -7104,13 +7105,13 @@ function StagePlansTab({
     !hasSportDirectorAssigned ||
     selectedStageLockedByWeather;
   const sportDirectorDisabledReason = targetRaceAllWeatherCanceled
-    ? "This race was canceled due to weather."
+    ? racePrepText("screen.raceCanceledWeather")
     : selectedStageWeatherCanceled
-      ? "This stage was canceled due to weather."
+      ? racePrepText("screen.stageCanceledWeather")
       : isU23ManagedRace
-        ? "This Developing Team race is managed by the U23 Head Coach."
+        ? racePrepText("screen.developingManagedByU23")
         : sportDirectorAutoFillDisabled
-          ? "Assign a Sport Director in the Race Plan first."
+          ? racePrepText("screen.assignSportDirectorFirst")
           : undefined;
   const selectedSavedStagePlan = findSavedStagePlan(stagePlans, selectedStage);
   const racePreparationIdForStageReadiness = String(
@@ -7162,7 +7163,7 @@ function StagePlansTab({
       (coach) =>
         String(coach.staff_id ?? coach.id ?? "") ===
         String(u23HeadCoachId ?? u23Setting.planner_staff_id ?? ""),
-    )?.staff_name ?? "U23 Head Coach",
+    )?.staff_name ?? racePrepText("screen.u23HeadCoach"),
   );
 
   const u23GeneratedStageCount = u23DashboardStages.filter((row) => {
@@ -7199,24 +7200,23 @@ function StagePlansTab({
 
   const selectedU23StageStatusLabel =
     selectedStageManagementMode === "manual"
-      ? "Existing manual plan · view only"
+      ? racePrepText("screen.existingManualViewOnly")
       : selectedStageManagementSource === "u23_head_coach" &&
           selectedU23StageHasSavedPlan
-        ? "Coach plan"
-        : "Scheduled";
+        ? racePrepText("screen.coachPlan")
+        : racePrepText("screen.scheduled");
 
   const selectedU23StageStatusHint =
     selectedStageManagementMode === "manual"
-      ? "This older manual plan remains visible, but it cannot be changed while U23 automation is active."
+      ? racePrepText("screen.manualPlanViewOnlyHint")
       : selectedStageManagementSource === "u23_head_coach" &&
           selectedU23StageHasSavedPlan
-        ? `${u23PlannerStaffName} generated and saved this Stage Plan automatically.`
+        ? racePrepText("screen.generatedSavedByCoach", { name: u23PlannerStaffName })
         : getNumber(selectedStage, "stage_number") > 1
-          ? `The U23 Head Coach will generate this plan after Stage ${Math.max(
-              getNumber(selectedStage, "stage_number") - 1,
-              1,
-            )} finishes.`
-          : "The U23 Head Coach will generate Stage 1 immediately after automation is activated.";
+          ? racePrepText("screen.coachWillGenerateAfterStage", {
+              stage: Math.max(getNumber(selectedStage, "stage_number") - 1, 1),
+            })
+          : racePrepText("screen.coachWillGenerateStage1");
 
   const stagePlanControlsReadOnly = packageSubmitted && isU23ManagedRace;
 
@@ -7603,7 +7603,7 @@ function StagePlansTab({
 
     if (stagePlanControlsReadOnly) {
       setStageSaveError(
-        "This Stage Plan is managed by the U23 Head Coach and is view-only. Switch the Tactical Planner to Sport Director in the Race Plan before making manual changes.",
+        racePrepText("screen.managedViewOnlySwitch"),
       );
       return;
     }
@@ -7940,31 +7940,31 @@ function StagePlansTab({
               <div>
                 <div className="text-sm font-bold">
                   {isU23ManagedRace
-                    ? "U23 Head Coach Stage Plan schedule"
+                    ? racePrepText("screen.u23Schedule")
                     : stagePlanReadinessLoading
-                      ? "Checking Stage Plans…"
-                      : (stagePlanReadinessSummary?.readiness_label ??
-                        "Stage Plan readiness")}
+                      ? racePrepText("screen.checkingStagePlans")
+                      : stagePlanReadinessSummary?.readiness_label
+                        ? localizeRacePrepBackendText(stagePlanReadinessSummary.readiness_label)
+                        : racePrepText("screen.stagePlanReadiness")}
                 </div>
 
                 <div className="mt-1 text-sm opacity-90">
                   {isU23ManagedRace
-                    ? "Stage 1 is generated immediately when automation is activated. Each later stage is generated after the previous stage finishes, using the latest results, fatigue, health, weather and race situation."
-                    : (stagePlanReadinessSummary?.recommended_action ??
-                      "Stage Plan readiness will appear after the Race Plan is submitted.")}
+                    ? racePrepText("screen.u23ReadinessIntro")
+                    : stagePlanReadinessSummary?.recommended_action
+                      ? localizeRacePrepBackendText(stagePlanReadinessSummary.recommended_action)
+                      : racePrepText("screen.stagePlanReadinessPending")}
                 </div>
               </div>
 
               {isU23ManagedRace ? (
                 <div className="text-right text-xs font-semibold opacity-90">
-                  <div>
-                    Generated {u23GeneratedStageCount}/{stages.length} stages
-                  </div>
+                  <div>{racePrepText("screen.generatedStages", { generated: u23GeneratedStageCount, total: stages.length })}</div>
                   {u23ScheduledStageCount > 0 ? (
-                    <div>Scheduled {u23ScheduledStageCount}</div>
+                    <div>{racePrepText("screen.scheduledCount", { count: u23ScheduledStageCount })}</div>
                   ) : null}
                   {u23ExistingManualStageCount > 0 ? (
-                    <div>Existing manual {u23ExistingManualStageCount}</div>
+                    <div>{racePrepText("screen.existingManualCount", { count: u23ExistingManualStageCount })}</div>
                   ) : null}
                 </div>
               ) : stagePlanReadinessSummary ? (
@@ -8003,21 +8003,21 @@ function StagePlansTab({
             <div>
               <div className="text-sm font-bold">
                 {u23AutomationDashboardLoading
-                  ? "Loading U23 Head Coach status…"
+                  ? racePrepText("screen.loadingU23Status")
                   : selectedStageManagementMode === "manual"
-                    ? "Existing manual plan"
+                    ? racePrepText("screen.existingManualPlan")
                     : selectedStageManagementSource === "u23_head_coach"
-                      ? "Managed by U23 Head Coach"
-                      : "U23 Head Coach automation active"}
+                      ? racePrepText("screen.managedByU23")
+                      : racePrepText("screen.u23AutomationActiveTitle")}
               </div>
 
               <div className="mt-1 text-sm leading-6 opacity-90">
                 {selectedStageManagementMode === "manual"
-                  ? "This older manual plan remains visible but is now view-only. The U23 Head Coach continues with the next eligible stage."
+                  ? racePrepText("screen.manualPlanViewOnlyBody")
                   : selectedStageManagementSource === "u23_head_coach"
-                    ? `${u23PlannerStaffName} generated this plan automatically.${
+                    ? `${racePrepText("screen.generatedThisPlan", { name: u23PlannerStaffName })}${
                         selectedStageBasedOnStageNumber > 0
-                          ? ` It was adapted after Stage ${selectedStageBasedOnStageNumber}.`
+                          ? ` ${racePrepText("screen.adaptedAfterStage", { stage: selectedStageBasedOnStageNumber })}`
                           : ""
                       }`
                     : "The coach will generate this stage when it becomes eligible."}
@@ -8724,8 +8724,8 @@ function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
           setProfile(null);
           setErrorMessage(
             error instanceof Error
-              ? error.message
-              : "Failed to load stage profile.",
+              ? localizeRacePrepBackendText(error.message)
+              : racePrepText("header.profileLoadFailed"),
           );
         }
       } finally {
@@ -9217,10 +9217,10 @@ function StageCardsScroller({
     const u23HasSavedPlan = Boolean(u23Stage?.last_saved_at);
     const u23BadgeLabel =
       u23ManagementMode === "manual"
-        ? "Manual plan"
+        ? racePrepText("screen.manualPlan")
         : u23ManagementSource === "u23_head_coach" && u23HasSavedPlan
-          ? "Coach plan"
-          : "Scheduled";
+          ? racePrepText("screen.coachPlan")
+          : racePrepText("screen.scheduled");
     const u23BadgeClasses =
       u23ManagementMode === "manual"
         ? "border-amber-200 bg-amber-50 text-amber-800"
@@ -9229,15 +9229,14 @@ function StageCardsScroller({
           : "border-slate-200 bg-slate-100 text-slate-700";
     const u23StageHint =
       u23ManagementMode === "manual"
-        ? "Existing manual plan · view only."
+        ? racePrepText("screen.manualViewOnlyPeriod")
         : u23ManagementSource === "u23_head_coach" && u23HasSavedPlan
-          ? "Generated automatically by the U23 Head Coach."
+          ? racePrepText("screen.generatedAutomatically")
           : Number(stage.stage_number ?? index + 1) > 1
-            ? `Generated after Stage ${Math.max(
-                Number(stage.stage_number ?? index + 1) - 1,
-                1,
-              )} finishes.`
-            : "Generated immediately when U23 automation is activated.";
+            ? racePrepText("screen.generatedAfterStage", {
+                stage: Math.max(Number(stage.stage_number ?? index + 1) - 1, 1),
+              })
+            : racePrepText("screen.generatedImmediately");
     const weatherCanceled = isPreparationStageWeatherCanceled(stage);
     const weatherRiskReason = getPreparationStageWeatherRiskReason(stage);
 
@@ -13198,8 +13197,7 @@ function RiderSelectionCard({
               {localizeRacePrepBackendText(availabilityLabel)}
             </div>
             <div className="mt-2 text-[11px] leading-relaxed text-slate-400">
-              Starting freshness combines fatigue and race sharpness. High
-              fatigue can lower the red bar even when sharpness is good.
+              {racePrepText("screen.startingFreshnessHelp")}
             </div>
           </>
         )}
