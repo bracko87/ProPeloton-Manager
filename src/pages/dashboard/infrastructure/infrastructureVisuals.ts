@@ -8,7 +8,13 @@ import type { FacilityKey } from './infrastructureTypes'
 export const facilityLevelImageUrls: Partial<
   Record<FacilityKey, Partial<Record<number, string>>>
 > = {
-  club_house: {},
+  club_house: {
+    0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Club%20House%20lvl%200.png',
+    1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Club%20House%20lvl%201.png',
+    2: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Club%20House%20lvl%202.png',
+    3: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Club%20House%20lvl%203.png',
+    4: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Club%20House%20lvl%204.png',
+  },
   training_center: {},
   medical_center: {},
   youth_academy: {},
