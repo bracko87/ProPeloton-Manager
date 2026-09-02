@@ -61,7 +61,8 @@
     "noValue": "N/A",
     "none": "Aucune",
     "gameDay": "{{count}} jour de jeu",
-    "gameDays": "{{count}} jours de jeu"
+    "gameDays": "{{count}} jours de jeu",
+    "tbd": "À définir"
   },
   "facilities": {
     "activeJobs": "Travaux en cours",
@@ -509,5 +510,167 @@
     "equipmentVanGarageDescription": "Équipement Vans support vélo transport, couverture des Coins de rechange, logistique de l'équipement de course, et plus large préparation à l'événement. Gérer le garage par emplacement, commencer de nouvelles livraisons, réparer des fourgonnettes usées, ou vendre des fourgonnettes disponibles.",
     "mobileWorkshopGarageDescription": "Les ateliers mobiles soutiennent les réparations techniques sur place, la réponse aux problèmes plus rapide, la couverture mécanique et la capacité de service d'équipement. Gérer le garage par emplacement, commencer de nouvelles livraisons, réparer des ateliers usés, ou vendre des ateliers disponibles.",
     "medicalVanGarageDescription": "Les fourgonnettes médicales soutiennent la réponse médicale de jour de course, l'accès au traitement des coureurs, le contrôle des blessures et la couverture médicale."
+  },
+  "facilityGuide": {
+    "title": "Guide des niveaux de l'installation",
+    "whatEveryLevelProvides": "Ce que chaque niveau apporte",
+    "currentPanelTitle": "Niveau actuel {{level}}",
+    "nextPanelTitle": "Niveau suivant {{level}}",
+    "activeNow": "Actif actuellement",
+    "unlocks": "Débloque :",
+    "effects": "Effets :",
+    "monthlyMaintenance": "Entretien mensuel :",
+    "perGameMonth": "/ mois de jeu",
+    "upgradeCost": "Coût de l'amélioration",
+    "constructionTime": "Temps de construction",
+    "estimatedCompletion": "Fin estimée",
+    "levelLabel": "Niveau {{level}}",
+    "currentLevel": "Niveau actuel",
+    "unlocked": "Débloqué",
+    "futureLevel": "Niveau futur",
+    "upgradeToThisLevel": "Améliorer vers ce niveau : {{cost}} · {{duration}}",
+    "maximumReached": "Niveau maximal de l'installation atteint.",
+    "levelBadge": "Niveau {{level}} / {{max}}",
+    "imageAlt": "{{name}} — niveau {{level}} sur {{max}}",
+    "noAdditionalUnlock": "Aucun déblocage supplémentaire à ce niveau.",
+    "noAdditionalEffect": "Aucun effet supplémentaire n'est configuré pour ce niveau."
+  },
+  "facilityLevelDetails": {
+    "club_house": {
+      "level0": {
+        "unlock": "Administration de base du club uniquement.",
+        "effect": "Aucun bonus financier du Club House n'est actif."
+      },
+      "level1": {
+        "unlock": "Aucun nouveau rôle de personnel.",
+        "effect": "Masse salariale du personnel -2 %. Les coûts d'exploitation récurrents éligibles bénéficient d'une remise d'optimisation des coûts de 1 %."
+      },
+      "level2": {
+        "unlock": "Débloque un poste de Directeur Sportif.",
+        "effect": "Masse salariale du personnel -4 %. Salaires des coureurs -1 %. Les coûts d'exploitation récurrents éligibles bénéficient d'une remise d'optimisation des coûts de 2 %. Remise fiscale mensuelle 2 %."
+      },
+      "level3": {
+        "unlock": "Aucun nouveau déblocage.",
+        "effect": "Masse salariale du personnel -6 %. Salaires des coureurs -2 %. Les coûts d'exploitation récurrents éligibles bénéficient d'une remise d'optimisation des coûts de 3 %. Remise fiscale mensuelle 4 %."
+      },
+      "level4": {
+        "unlock": "Aucun nouveau déblocage.",
+        "effect": "Masse salariale du personnel -8 %. Salaires des coureurs -3 %. Les coûts d'exploitation récurrents éligibles bénéficient d'une remise d'optimisation des coûts de 5 %. Remise fiscale mensuelle 6 %."
+      },
+      "level5": {
+        "unlock": "Aucun nouveau déblocage.",
+        "effect": "Masse salariale du personnel -10 %. Salaires des coureurs -4 %. Les coûts d'exploitation récurrents éligibles bénéficient d'une remise d'optimisation des coûts de 7 %. Remise fiscale mensuelle 10 %."
+      }
+    },
+    "training_center": {
+      "level0": {
+        "unlock": "Installations d'entraînement de base uniquement.",
+        "effect": "Aucun bonus du Centre d'entraînement pour le développement, l'efficacité de l'encadrement, la charge de fatigue ou le risque d'entraînement n'est actif."
+      },
+      "level1": {
+        "unlock": "Aucun nouveau déblocage.",
+        "effect": "Développement par entraînement régulier +3 % ; risque de surcharge et d'accident à l'entraînement -5 % ; s'applique à l'Équipe première et aux coureurs U23."
+      },
+      "level2": {
+        "unlock": "Aucun nouveau déblocage.",
+        "effect": "Développement par entraînement régulier +6 % ; bonus d'entraînement de l'Entraîneur principal et des Entraîneurs +5 % d'efficacité ; risque de surcharge et d'accident à l'entraînement -10 % ; s'applique à l'Équipe première et aux coureurs U23."
+      },
+      "level3": {
+        "unlock": "Débloque un deuxième poste d'Entraîneur.",
+        "effect": "Développement par entraînement régulier +9 % ; bonus d'entraînement de l'Entraîneur principal et des Entraîneurs +10 % d'efficacité ; charge de fatigue de l'entraînement régulier -1 point ; risque de surcharge et d'accident à l'entraînement -15 % ; s'applique à l'Équipe première et aux coureurs U23."
+      },
+      "level4": {
+        "unlock": "Aucun nouveau déblocage.",
+        "effect": "Développement par entraînement régulier +12 % ; bonus d'entraînement de l'Entraîneur principal et des Entraîneurs +15 % d'efficacité ; charge de fatigue de l'entraînement régulier -1 point ; risque de surcharge et d'accident à l'entraînement -20 % ; s'applique à l'Équipe première et aux coureurs U23."
+      },
+      "level5": {
+        "unlock": "Débloque un troisième poste d'Entraîneur.",
+        "effect": "Développement par entraînement régulier +15 % ; bonus d'entraînement de l'Entraîneur principal et des Entraîneurs +20 % d'efficacité ; charge de fatigue de l'entraînement régulier -2 points ; risque de surcharge et d'accident à l'entraînement -25 % ; s'applique à l'Équipe première et aux coureurs U23."
+      }
+    },
+    "medical_center": {
+      "level0": {
+        "unlock": "Installation médicale de base ; un poste de Médecin d'équipe et un de Kinésithérapeute sont disponibles une fois les opérations du personnel débloquées.",
+        "effect": "Aucun bonus du Centre médical pour la prévention, la durée de récupération ou le seuil minimal de fatigue en rééducation n'est actif."
+      },
+      "level1": {
+        "unlock": "Débloque un deuxième poste de Kinésithérapeute.",
+        "effect": "Risque évitable de blessure et de maladie -3 % ; durée de récupération des cas médicaux -4 % ; seuil minimal de fatigue en rééducation -1 point ; s'applique à l'Équipe première et aux coureurs U23."
+      },
+      "level2": {
+        "unlock": "Débloque un poste de Nutritionniste.",
+        "effect": "Risque évitable de blessure et de maladie -6 % ; durée de récupération des cas médicaux -8 % ; seuil minimal de fatigue en rééducation -2 points ; s'applique à l'Équipe première et aux coureurs U23."
+      },
+      "level3": {
+        "unlock": "Débloque un deuxième poste de Médecin d'équipe et un troisième poste de Kinésithérapeute.",
+        "effect": "Risque évitable de blessure et de maladie -9 % ; durée de récupération des cas médicaux -12 % ; seuil minimal de fatigue en rééducation -3 points ; s'applique à l'Équipe première et aux coureurs U23."
+      },
+      "level4": {
+        "unlock": "Débloque un quatrième poste de Kinésithérapeute.",
+        "effect": "Risque évitable de blessure et de maladie -12 % ; durée de récupération des cas médicaux -16 % ; seuil minimal de fatigue en rééducation -4 points ; s'applique à l'Équipe première et aux coureurs U23."
+      },
+      "level5": {
+        "unlock": "Débloque un cinquième poste de Kinésithérapeute.",
+        "effect": "Risque évitable de blessure et de maladie -15 % ; durée de récupération des cas médicaux -20 % ; seuil minimal de fatigue en rééducation -5 points ; s'applique à l'Équipe première et aux coureurs U23."
+      }
+    },
+    "youth_academy": {
+      "level0": {
+        "unlock": "Aucune infrastructure dédiée à l'académie U23 ni poste d'Entraîneur principal U23.",
+        "effect": "Aucun bonus spécifique à l'académie pour l'entraînement ou le développement U23 n'est actif."
+      },
+      "level1": {
+        "unlock": "Débloque un poste d'Entraîneur principal U23.",
+        "effect": "Développement par entraînement régulier U23 +6 % ; progression du développement en course U23 +5 % ; s'applique uniquement aux coureurs de l'Équipe de développement."
+      },
+      "level2": {
+        "unlock": "Programme de développement élite de l'académie ; aucun poste de personnel supplémentaire.",
+        "effect": "Développement par entraînement régulier U23 +12 % ; progression du développement en course U23 +10 % ; effet de développement de l'Entraîneur principal U23 +10 % d'efficacité ; déclin de l'entraînement U23 hors priorité -20 % ; s'applique uniquement aux coureurs de l'Équipe de développement."
+      }
+    },
+    "mechanics_workshop": {
+      "level0": {
+        "unlock": "Support technique de base uniquement ; la capacité supplémentaire de mécaniciens reste verrouillée.",
+        "effect": "Aucun bonus d'atelier sur la vitesse de réparation ou les coûts d'entretien n'est actif."
+      },
+      "level1": {
+        "unlock": "Débloque un deuxième poste de Mécanicien.",
+        "effect": "Capacité de mécaniciens 2 ; vitesse de réparation de l'équipement +5 % ; perte d'état de l'équipement -3 % ; risque mécanique -2 %"
+      },
+      "level2": {
+        "unlock": "Débloque un troisième poste de Mécanicien.",
+        "effect": "Capacité de mécaniciens 3 ; vitesse de réparation de l'équipement +12 % ; coût de réparation de l'équipement -8 % ; perte d'état de l'équipement -6 % ; risque mécanique -4 %"
+      },
+      "level3": {
+        "unlock": "Débloque un quatrième poste de Mécanicien.",
+        "effect": "Capacité de mécaniciens 4 ; vitesse de réparation de l'équipement +22 % ; coût de réparation de l'équipement -16 % ; perte d'état de l'équipement -10 % ; risque mécanique -7 %"
+      },
+      "level4": {
+        "unlock": "Débloque un cinquième poste de Mécanicien.",
+        "effect": "Capacité de mécaniciens 5 ; vitesse de réparation de l'équipement +35 % ; coût de réparation de l'équipement -25 % ; perte d'état de l'équipement -15 % ; risque mécanique -10 %"
+      }
+    },
+    "scouting_office": {
+      "level0": {
+        "unlock": "Scouting de base uniquement ; la capacité de scouts supplémentaire et les niveaux de rapport supérieurs restent verrouillés.",
+        "effect": "La qualité des rapports de scouting reste limitée au plafond de base de l'installation."
+      },
+      "level1": {
+        "unlock": "Débloque un deuxième poste de Scout / Analyste.",
+        "effect": "Capacité de scouts 2 ; plafond de qualité de rapport Basique ; les attributs sont affichés par plages d'environ 10 points"
+      },
+      "level2": {
+        "unlock": "Débloque un troisième poste de Scout / Analyste et une qualité de rapport Solide.",
+        "effect": "Capacité de scouts 3 ; plafond de qualité de rapport Solide ; les attributs sont affichés par plages d'environ 5 points"
+      },
+      "level3": {
+        "unlock": "Débloque un quatrième poste de Scout / Analyste et une qualité de rapport Forte.",
+        "effect": "Capacité de scouts 4 ; plafond de qualité de rapport Fort ; les attributs sont affichés par plages d'environ 3 points"
+      },
+      "level4": {
+        "unlock": "Débloque un cinquième poste de Scout / Analyste et une qualité de rapport Élite.",
+        "effect": "Capacité de scouts 5 ; plafond de qualité de rapport Élite ; les scouts de qualité élite peuvent révéler les valeurs exactes"
+      }
+    }
   }
 }

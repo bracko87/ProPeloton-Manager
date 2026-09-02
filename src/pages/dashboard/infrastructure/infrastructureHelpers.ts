@@ -126,20 +126,35 @@ export function formatCash(
 // Game date helpers
 //////////////////////////
 
-const infrastructureMonthLabels = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-]
+const infrastructureLocales: Record<string, string> = {
+  en: 'en-GB',
+  'sr-Latn': 'sr-Latn-RS',
+  de: 'de-DE',
+  hr: 'hr-HR',
+  es: 'es-ES',
+  it: 'it-IT',
+  fr: 'fr-FR',
+  ru: 'ru-RU',
+}
+
+function getInfrastructureLocale(): string {
+  const language = i18n.resolvedLanguage || i18n.language || 'en'
+  const normalized = language.startsWith('sr') ? 'sr-Latn' : language.split('-')[0]
+  return infrastructureLocales[normalized] || 'en-GB'
+}
+
+function localizedInfrastructureMonth(month: number): string {
+  const safeMonth = Math.min(12, Math.max(1, Number(month) || 1))
+  const locale = getInfrastructureLocale()
+  const label = new Intl.DateTimeFormat(locale, {
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(2026, safeMonth - 1, 1)))
+
+  return label
+    ? `${label.charAt(0).toLocaleUpperCase(locale)}${label.slice(1)}`
+    : label
+}
 
 function normalizeCanonicalGameDate(
   raw: string | null | undefined,
@@ -177,7 +192,7 @@ export function formatGameDate(
   raw: string | null | undefined,
 ): string {
   if (!raw) {
-    return 'TBD'
+    return String(i18n.t('common.tbd', { ns: 'infrastructure' }))
   }
 
   const canonical = normalizeCanonicalGameDate(raw)
@@ -196,7 +211,7 @@ export function formatGameDate(
   const month = Number(match[2])
   const day = Number(match[3])
   const season = year - 1999
-  const monthLabel = infrastructureMonthLabels[month - 1]
+  const monthLabel = localizedInfrastructureMonth(month)
 
   if (
     !Number.isFinite(season) ||

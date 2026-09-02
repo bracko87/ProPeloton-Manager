@@ -61,7 +61,8 @@
     "noValue": "N/A",
     "none": "Nema",
     "gameDay": "{{count}} dan igre",
-    "gameDays": "{{count}} dana igre"
+    "gameDays": "{{count}} dana igre",
+    "tbd": "Naknadno"
   },
   "facilities": {
     "activeJobs": "Aktivni projekti",
@@ -499,6 +500,168 @@
       "level2": {
         "unlock": "Bolja podrška razvoju mladih.",
         "effect": "U23 vozači dobijaju 10% bonusa na trening i razvoj kada U23 sistem primenjuje ovaj efekat."
+      }
+    }
+  },
+  "facilityGuide": {
+    "title": "Vodič kroz nivoe objekta",
+    "whatEveryLevelProvides": "Šta pruža svaki nivo",
+    "currentPanelTitle": "Trenutni nivo {{level}}",
+    "nextPanelTitle": "Sledeći nivo {{level}}",
+    "activeNow": "Trenutno aktivno",
+    "unlocks": "Otključava:",
+    "effects": "Efekti:",
+    "monthlyMaintenance": "Mesečno održavanje:",
+    "perGameMonth": "/ mesec igre",
+    "upgradeCost": "Cena nadogradnje",
+    "constructionTime": "Vreme izgradnje",
+    "estimatedCompletion": "Proc. završetak",
+    "levelLabel": "Nivo {{level}}",
+    "currentLevel": "Trenutni nivo",
+    "unlocked": "Otključano",
+    "futureLevel": "Budući nivo",
+    "upgradeToThisLevel": "Nadogradnja na ovaj nivo: {{cost}} · {{duration}}",
+    "maximumReached": "Dostignut je maksimalni nivo objekta.",
+    "levelBadge": "Nivo {{level}} / {{max}}",
+    "imageAlt": "{{name}} — nivo {{level}} od {{max}}",
+    "noAdditionalUnlock": "Na ovom nivou nema dodatnog otključavanja.",
+    "noAdditionalEffect": "Za ovaj nivo nije podešen dodatni efekat."
+  },
+  "facilityLevelDetails": {
+    "club_house": {
+      "level0": {
+        "unlock": "Samo osnovna administracija kluba.",
+        "effect": "Nijedan finansijski bonus klupske kuće nije aktivan."
+      },
+      "level1": {
+        "unlock": "Nema nove uloge osoblja.",
+        "effect": "Troškovi plata osoblja -2%. Prihvatljivi ponavljajući operativni troškovi dobijaju 1% popusta kroz optimizaciju troškova."
+      },
+      "level2": {
+        "unlock": "Otključava mesto za sportskog direktora.",
+        "effect": "Troškovi plata osoblja -4%. Plate vozača -1%. Prihvatljivi ponavljajući operativni troškovi dobijaju 2% popusta kroz optimizaciju troškova. Mesečni poreski povraćaj 2%."
+      },
+      "level3": {
+        "unlock": "Nema novog otključavanja.",
+        "effect": "Troškovi plata osoblja -6%. Plate vozača -2%. Prihvatljivi ponavljajući operativni troškovi dobijaju 3% popusta kroz optimizaciju troškova. Mesečni poreski povraćaj 4%."
+      },
+      "level4": {
+        "unlock": "Nema novog otključavanja.",
+        "effect": "Troškovi plata osoblja -8%. Plate vozača -3%. Prihvatljivi ponavljajući operativni troškovi dobijaju 5% popusta kroz optimizaciju troškova. Mesečni poreski povraćaj 6%."
+      },
+      "level5": {
+        "unlock": "Nema novog otključavanja.",
+        "effect": "Troškovi plata osoblja -10%. Plate vozača -4%. Prihvatljivi ponavljajući operativni troškovi dobijaju 7% popusta kroz optimizaciju troškova. Mesečni poreski povraćaj 10%."
+      }
+    },
+    "training_center": {
+      "level0": {
+        "unlock": "Samo osnovni objekti za trening.",
+        "effect": "Nije aktivan bonus Trening centra za razvoj, efikasnost trenera, opterećenje umorom ili rizik treninga."
+      },
+      "level1": {
+        "unlock": "Nema novog otključavanja.",
+        "effect": "Razvoj kroz redovan trening +3%; rizik od preopterećenja i nezgoda na treningu -5%; važi za Prvi tim i U23 vozače."
+      },
+      "level2": {
+        "unlock": "Nema novog otključavanja.",
+        "effect": "Razvoj kroz redovan trening +6%; bonus treninga glavnog trenera i trenera +5% efikasnosti; rizik od preopterećenja i nezgoda na treningu -10%; važi za Prvi tim i U23 vozače."
+      },
+      "level3": {
+        "unlock": "Otključava drugo mesto za trenera.",
+        "effect": "Razvoj kroz redovan trening +9%; bonus treninga glavnog trenera i trenera +10% efikasnosti; opterećenje umorom iz redovnog treninga -1 poen; rizik od preopterećenja i nezgoda na treningu -15%; važi za Prvi tim i U23 vozače."
+      },
+      "level4": {
+        "unlock": "Nema novog otključavanja.",
+        "effect": "Razvoj kroz redovan trening +12%; bonus treninga glavnog trenera i trenera +15% efikasnosti; opterećenje umorom iz redovnog treninga -1 poen; rizik od preopterećenja i nezgoda na treningu -20%; važi za Prvi tim i U23 vozače."
+      },
+      "level5": {
+        "unlock": "Otključava treće mesto za trenera.",
+        "effect": "Razvoj kroz redovan trening +15%; bonus treninga glavnog trenera i trenera +20% efikasnosti; opterećenje umorom iz redovnog treninga -2 poena; rizik od preopterećenja i nezgoda na treningu -25%; važi za Prvi tim i U23 vozače."
+      }
+    },
+    "medical_center": {
+      "level0": {
+        "unlock": "Osnovni medicinski objekat; jedno mesto za timskog doktora i jedno za fizioterapeuta dostupni su kada se otključaju operacije osoblja.",
+        "effect": "Nije aktivan bonus Medicinskog centra za prevenciju, trajanje oporavka ili donju granicu umora tokom rehabilitacije."
+      },
+      "level1": {
+        "unlock": "Otključava drugo mesto za fizioterapeuta.",
+        "effect": "Rizik od povreda i bolesti koje se mogu sprečiti -3%; trajanje oporavka zdravstvenog slučaja -4%; donja granica umora tokom rehabilitacije -1 poen; važi za Prvi tim i U23 vozače."
+      },
+      "level2": {
+        "unlock": "Otključava mesto za nutricionistu.",
+        "effect": "Rizik od povreda i bolesti koje se mogu sprečiti -6%; trajanje oporavka zdravstvenog slučaja -8%; donja granica umora tokom rehabilitacije -2 poena; važi za Prvi tim i U23 vozače."
+      },
+      "level3": {
+        "unlock": "Otključava drugo mesto za timskog doktora i treće mesto za fizioterapeuta.",
+        "effect": "Rizik od povreda i bolesti koje se mogu sprečiti -9%; trajanje oporavka zdravstvenog slučaja -12%; donja granica umora tokom rehabilitacije -3 poena; važi za Prvi tim i U23 vozače."
+      },
+      "level4": {
+        "unlock": "Otključava četvrto mesto za fizioterapeuta.",
+        "effect": "Rizik od povreda i bolesti koje se mogu sprečiti -12%; trajanje oporavka zdravstvenog slučaja -16%; donja granica umora tokom rehabilitacije -4 poena; važi za Prvi tim i U23 vozače."
+      },
+      "level5": {
+        "unlock": "Otključava peto mesto za fizioterapeuta.",
+        "effect": "Rizik od povreda i bolesti koje se mogu sprečiti -15%; trajanje oporavka zdravstvenog slučaja -20%; donja granica umora tokom rehabilitacije -5 poena; važi za Prvi tim i U23 vozače."
+      }
+    },
+    "youth_academy": {
+      "level0": {
+        "unlock": "Nema posebne U23 akademijske infrastrukture niti mesta za U23 glavnog trenera.",
+        "effect": "Nije aktivan poseban akademijski bonus za U23 trening ili razvoj."
+      },
+      "level1": {
+        "unlock": "Otključava mesto za U23 glavnog trenera.",
+        "effect": "Razvoj kroz redovan U23 trening +6%; napredak razvoja kroz U23 trke +5%; važi samo za vozače Razvojnog tima."
+      },
+      "level2": {
+        "unlock": "Elitni program razvoja akademije; nema dodatnog mesta za osoblje.",
+        "effect": "Razvoj kroz redovan U23 trening +12%; napredak razvoja kroz U23 trke +10%; razvojni efekat U23 glavnog trenera +10% efikasnosti; pad treninga van fokusa za U23 -20%; važi samo za vozače Razvojnog tima."
+      }
+    },
+    "mechanics_workshop": {
+      "level0": {
+        "unlock": "Samo osnovna tehnička podrška; dodatni kapacitet mehaničara ostaje zaključan.",
+        "effect": "Nije aktivan bonus radionice za brzinu popravke ili troškove održavanja."
+      },
+      "level1": {
+        "unlock": "Otključava drugo mesto za mehaničara.",
+        "effect": "Kapacitet mehaničara 2; brzina popravke opreme +5%; gubitak stanja opreme -3%; mehanički rizik -2%"
+      },
+      "level2": {
+        "unlock": "Otključava treće mesto za mehaničara.",
+        "effect": "Kapacitet mehaničara 3; brzina popravke opreme +12%; trošak popravke opreme -8%; gubitak stanja opreme -6%; mehanički rizik -4%"
+      },
+      "level3": {
+        "unlock": "Otključava četvrto mesto za mehaničara.",
+        "effect": "Kapacitet mehaničara 4; brzina popravke opreme +22%; trošak popravke opreme -16%; gubitak stanja opreme -10%; mehanički rizik -7%"
+      },
+      "level4": {
+        "unlock": "Otključava peto mesto za mehaničara.",
+        "effect": "Kapacitet mehaničara 5; brzina popravke opreme +35%; trošak popravke opreme -25%; gubitak stanja opreme -15%; mehanički rizik -10%"
+      }
+    },
+    "scouting_office": {
+      "level0": {
+        "unlock": "Samo osnovni skauting; dodatni kapacitet skauta i viši nivoi izveštaja ostaju zaključani.",
+        "effect": "Kvalitet skauting izveštaja ostaje na osnovnom limitu objekta."
+      },
+      "level1": {
+        "unlock": "Otključava drugo mesto za skauta / analitičara.",
+        "effect": "Kapacitet skauta 2; osnovni limit kvaliteta izveštaja; atributi se prikazuju u rasponima od približno 10 poena"
+      },
+      "level2": {
+        "unlock": "Otključava treće mesto za skauta / analitičara i solidan kvalitet izveštaja.",
+        "effect": "Kapacitet skauta 3; limit solidnog kvaliteta izveštaja; atributi se prikazuju u rasponima od približno 5 poena"
+      },
+      "level3": {
+        "unlock": "Otključava četvrto mesto za skauta / analitičara i jak kvalitet izveštaja.",
+        "effect": "Kapacitet skauta 4; limit jakog kvaliteta izveštaja; atributi se prikazuju u rasponima od približno 3 poena"
+      },
+      "level4": {
+        "unlock": "Otključava peto mesto za skauta / analitičara i elitni kvalitet izveštaja.",
+        "effect": "Kapacitet skauta 5; limit elitnog kvaliteta izveštaja; skauti elitnog kvaliteta mogu otkriti tačne vrednosti"
       }
     }
   }

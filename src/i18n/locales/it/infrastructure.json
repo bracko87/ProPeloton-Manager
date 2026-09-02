@@ -61,7 +61,8 @@
     "noValue": "N/A",
     "none": "Nessuno",
     "gameDay": "Giorno di gioco {{count}}",
-    "gameDays": "Giorni di gioco {{count}}"
+    "gameDays": "Giorni di gioco {{count}}",
+    "tbd": "Da definire"
   },
   "facilities": {
     "activeJobs": "Lavori attivi",
@@ -509,5 +510,167 @@
     "equipmentVanGarageDescription": "Attrezzature I furgoni supportano il trasporto di biciclette, la copertura dei pezzi di ricambio, la logistica delle attrezzature da corsa e la disponibilità di eventi più ampia. Gestire il garage con lo slot, avviare nuove consegne, riparare furgoni usurati o vendere furgoni disponibili.",
     "mobileWorkshopGarageDescription": "I laboratori mobili supportano le riparazioni tecniche in loco, la risposta più rapida al problema, la copertura meccanica e la capacità di servizio delle attrezzature. Gestire il garage tramite slot, avviare nuove consegne, riparare officine usurate o vendere officine disponibili.",
     "medicalVanGarageDescription": "I furgoni medici supportano la risposta sanitaria gara-giorno, l'accesso al trattamento del ciclista, il controllo delle lesioni, e la copertura medica. Gestire il garage da fessura, avviare nuove consegne, riparare furgoni usurati, o vendere furgoni disponibili."
+  },
+  "facilityGuide": {
+    "title": "Guida ai livelli della struttura",
+    "whatEveryLevelProvides": "Cosa offre ogni livello",
+    "currentPanelTitle": "Livello attuale {{level}}",
+    "nextPanelTitle": "Livello successivo {{level}}",
+    "activeNow": "Attivo ora",
+    "unlocks": "Sblocca:",
+    "effects": "Effetti:",
+    "monthlyMaintenance": "Manutenzione mensile:",
+    "perGameMonth": "/ mese di gioco",
+    "upgradeCost": "Costo miglioramento",
+    "constructionTime": "Tempo di costruzione",
+    "estimatedCompletion": "Completamento stim.",
+    "levelLabel": "Livello {{level}}",
+    "currentLevel": "Livello attuale",
+    "unlocked": "Sbloccato",
+    "futureLevel": "Livello futuro",
+    "upgradeToThisLevel": "Migliora a questo livello: {{cost}} · {{duration}}",
+    "maximumReached": "Raggiunto il livello massimo della struttura.",
+    "levelBadge": "Livello {{level}} / {{max}}",
+    "imageAlt": "{{name}} — livello {{level}} di {{max}}",
+    "noAdditionalUnlock": "Nessuno sblocco aggiuntivo a questo livello.",
+    "noAdditionalEffect": "Nessun effetto aggiuntivo configurato per questo livello."
+  },
+  "facilityLevelDetails": {
+    "club_house": {
+      "level0": {
+        "unlock": "Solo amministrazione di base del club.",
+        "effect": "Nessun bonus finanziario della Club House è attivo."
+      },
+      "level1": {
+        "unlock": "Nessun nuovo ruolo dello staff.",
+        "effect": "Costo stipendi staff -2%. I costi operativi ricorrenti idonei ricevono l'1% di sconto per ottimizzazione dei costi."
+      },
+      "level2": {
+        "unlock": "Sblocca uno slot per il Direttore Sportivo.",
+        "effect": "Costo stipendi staff -4%. Stipendi corridori -1%. I costi operativi ricorrenti idonei ricevono il 2% di sconto per ottimizzazione dei costi. Rimborso fiscale mensile 2%."
+      },
+      "level3": {
+        "unlock": "Nessun nuovo sblocco.",
+        "effect": "Costo stipendi staff -6%. Stipendi corridori -2%. I costi operativi ricorrenti idonei ricevono il 3% di sconto per ottimizzazione dei costi. Rimborso fiscale mensile 4%."
+      },
+      "level4": {
+        "unlock": "Nessun nuovo sblocco.",
+        "effect": "Costo stipendi staff -8%. Stipendi corridori -3%. I costi operativi ricorrenti idonei ricevono il 5% di sconto per ottimizzazione dei costi. Rimborso fiscale mensile 6%."
+      },
+      "level5": {
+        "unlock": "Nessun nuovo sblocco.",
+        "effect": "Costo stipendi staff -10%. Stipendi corridori -4%. I costi operativi ricorrenti idonei ricevono il 7% di sconto per ottimizzazione dei costi. Rimborso fiscale mensile 10%."
+      }
+    },
+    "training_center": {
+      "level0": {
+        "unlock": "Solo strutture di allenamento di base.",
+        "effect": "Nessun bonus del Centro di Allenamento per sviluppo, efficacia dello staff tecnico, carico di fatica o rischio di allenamento è attivo."
+      },
+      "level1": {
+        "unlock": "Nessun nuovo sblocco.",
+        "effect": "Sviluppo tramite allenamento regolare +3%; rischio di sovraccarico e incidenti in allenamento -5%; si applica alla Prima Squadra e ai corridori U23."
+      },
+      "level2": {
+        "unlock": "Nessun nuovo sblocco.",
+        "effect": "Sviluppo tramite allenamento regolare +6%; bonus allenamento di Capo Allenatore e Allenatore +5% efficacia; rischio di sovraccarico e incidenti in allenamento -10%; si applica alla Prima Squadra e ai corridori U23."
+      },
+      "level3": {
+        "unlock": "Sblocca un secondo slot Allenatore.",
+        "effect": "Sviluppo tramite allenamento regolare +9%; bonus allenamento di Capo Allenatore e Allenatore +10% efficacia; carico di fatica da allenamento regolare -1 punto; rischio di sovraccarico e incidenti in allenamento -15%; si applica alla Prima Squadra e ai corridori U23."
+      },
+      "level4": {
+        "unlock": "Nessun nuovo sblocco.",
+        "effect": "Sviluppo tramite allenamento regolare +12%; bonus allenamento di Capo Allenatore e Allenatore +15% efficacia; carico di fatica da allenamento regolare -1 punto; rischio di sovraccarico e incidenti in allenamento -20%; si applica alla Prima Squadra e ai corridori U23."
+      },
+      "level5": {
+        "unlock": "Sblocca un terzo slot Allenatore.",
+        "effect": "Sviluppo tramite allenamento regolare +15%; bonus allenamento di Capo Allenatore e Allenatore +20% efficacia; carico di fatica da allenamento regolare -2 punti; rischio di sovraccarico e incidenti in allenamento -25%; si applica alla Prima Squadra e ai corridori U23."
+      }
+    },
+    "medical_center": {
+      "level0": {
+        "unlock": "Struttura medica di base; uno slot Medico di Squadra e uno Fisioterapista sono disponibili quando vengono sbloccate le operazioni dello staff.",
+        "effect": "Nessun bonus del Centro Medico per prevenzione, durata del recupero o soglia minima di fatica riabilitativa è attivo."
+      },
+      "level1": {
+        "unlock": "Sblocca un secondo slot Fisioterapista.",
+        "effect": "Rischio prevenibile di infortuni e malattie -3%; durata del recupero dei casi sanitari -4%; soglia minima di fatica in riabilitazione -1 punto; si applica alla Prima Squadra e ai corridori U23."
+      },
+      "level2": {
+        "unlock": "Sblocca uno slot Nutrizionista.",
+        "effect": "Rischio prevenibile di infortuni e malattie -6%; durata del recupero dei casi sanitari -8%; soglia minima di fatica in riabilitazione -2 punti; si applica alla Prima Squadra e ai corridori U23."
+      },
+      "level3": {
+        "unlock": "Sblocca un secondo slot Medico di Squadra e un terzo slot Fisioterapista.",
+        "effect": "Rischio prevenibile di infortuni e malattie -9%; durata del recupero dei casi sanitari -12%; soglia minima di fatica in riabilitazione -3 punti; si applica alla Prima Squadra e ai corridori U23."
+      },
+      "level4": {
+        "unlock": "Sblocca un quarto slot Fisioterapista.",
+        "effect": "Rischio prevenibile di infortuni e malattie -12%; durata del recupero dei casi sanitari -16%; soglia minima di fatica in riabilitazione -4 punti; si applica alla Prima Squadra e ai corridori U23."
+      },
+      "level5": {
+        "unlock": "Sblocca un quinto slot Fisioterapista.",
+        "effect": "Rischio prevenibile di infortuni e malattie -15%; durata del recupero dei casi sanitari -20%; soglia minima di fatica in riabilitazione -5 punti; si applica alla Prima Squadra e ai corridori U23."
+      }
+    },
+    "youth_academy": {
+      "level0": {
+        "unlock": "Nessuna infrastruttura dedicata all'accademia U23 né slot per il Capo Allenatore U23.",
+        "effect": "Nessun bonus specifico dell'accademia per allenamento o sviluppo U23 è attivo."
+      },
+      "level1": {
+        "unlock": "Sblocca uno slot Capo Allenatore U23.",
+        "effect": "Sviluppo tramite allenamento regolare U23 +6%; progresso di sviluppo nelle gare U23 +5%; si applica solo ai corridori della Squadra di Sviluppo."
+      },
+      "level2": {
+        "unlock": "Programma élite di sviluppo dell'accademia; nessuno slot staff aggiuntivo.",
+        "effect": "Sviluppo tramite allenamento regolare U23 +12%; progresso di sviluppo nelle gare U23 +10%; effetto di sviluppo del Capo Allenatore U23 +10% efficacia; decadimento dell'allenamento U23 fuori focus -20%; si applica solo ai corridori della Squadra di Sviluppo."
+      }
+    },
+    "mechanics_workshop": {
+      "level0": {
+        "unlock": "Solo supporto tecnico di base; la capacità aggiuntiva dei meccanici resta bloccata.",
+        "effect": "Nessun bonus dell'officina per velocità di riparazione o costi di manutenzione è attivo."
+      },
+      "level1": {
+        "unlock": "Sblocca un secondo slot Meccanico.",
+        "effect": "Capacità meccanici 2; velocità riparazione attrezzatura +5%; perdita condizione attrezzatura -3%; rischio meccanico -2%"
+      },
+      "level2": {
+        "unlock": "Sblocca un terzo slot Meccanico.",
+        "effect": "Capacità meccanici 3; velocità riparazione attrezzatura +12%; costo riparazione attrezzatura -8%; perdita condizione attrezzatura -6%; rischio meccanico -4%"
+      },
+      "level3": {
+        "unlock": "Sblocca un quarto slot Meccanico.",
+        "effect": "Capacità meccanici 4; velocità riparazione attrezzatura +22%; costo riparazione attrezzatura -16%; perdita condizione attrezzatura -10%; rischio meccanico -7%"
+      },
+      "level4": {
+        "unlock": "Sblocca un quinto slot Meccanico.",
+        "effect": "Capacità meccanici 5; velocità riparazione attrezzatura +35%; costo riparazione attrezzatura -25%; perdita condizione attrezzatura -15%; rischio meccanico -10%"
+      }
+    },
+    "scouting_office": {
+      "level0": {
+        "unlock": "Solo scouting di base; capacità scout aggiuntiva e livelli di rapporto superiori restano bloccati.",
+        "effect": "La qualità dei rapporti di scouting resta al limite base della struttura."
+      },
+      "level1": {
+        "unlock": "Sblocca un secondo slot Scout / Analista.",
+        "effect": "Capacità scout 2; limite qualità rapporto Base; gli attributi sono mostrati in intervalli di circa 10 punti"
+      },
+      "level2": {
+        "unlock": "Sblocca un terzo slot Scout / Analista e qualità rapporto Solida.",
+        "effect": "Capacità scout 3; limite qualità rapporto Solida; gli attributi sono mostrati in intervalli di circa 5 punti"
+      },
+      "level3": {
+        "unlock": "Sblocca un quarto slot Scout / Analista e qualità rapporto Forte.",
+        "effect": "Capacità scout 4; limite qualità rapporto Forte; gli attributi sono mostrati in intervalli di circa 3 punti"
+      },
+      "level4": {
+        "unlock": "Sblocca un quinto slot Scout / Analista e qualità rapporto Élite.",
+        "effect": "Capacità scout 5; limite qualità rapporto Élite; gli scout di qualità élite possono rivelare valori esatti"
+      }
+    }
   }
 }

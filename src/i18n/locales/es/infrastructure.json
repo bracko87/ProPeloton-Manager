@@ -61,7 +61,8 @@
     "noValue": "N/A",
     "none": "Ninguno",
     "gameDay": "{{count}} día de juego",
-    "gameDays": "{{count}} días de juego"
+    "gameDays": "{{count}} días de juego",
+    "tbd": "Por determinar"
   },
   "facilities": {
     "activeJobs": "Empleos activos",
@@ -509,5 +510,167 @@
     "equipmentVanGarageDescription": "Las furgonetas de equipamiento facilitan el transporte de bicicletas, la cobertura de repuestos, la logística del material de carrera y la preparación general para los eventos. Gestiona el garaje por plazas: inicia nuevas entregas, repara furgonetas desgastadas o vende las disponibles.",
     "mobileWorkshopGarageDescription": "Los talleres móviles permiten realizar reparaciones técnicas in situ, responder más rápido a los problemas y mejorar la cobertura mecánica y la capacidad de mantenimiento del equipamiento. Gestiona el garaje por plazas: inicia nuevas entregas, repara talleres desgastados o vende los disponibles.",
     "medicalVanGarageDescription": "Las furgonetas médicas facilitan la respuesta sanitaria en carrera, el acceso al tratamiento de los ciclistas, el control de lesiones y la cobertura médica. Gestiona el garaje por plazas: inicia nuevas entregas, repara furgonetas desgastadas o vende las disponibles."
+  },
+  "facilityGuide": {
+    "title": "Guía de niveles de la instalación",
+    "whatEveryLevelProvides": "Qué ofrece cada nivel",
+    "currentPanelTitle": "Nivel actual {{level}}",
+    "nextPanelTitle": "Siguiente nivel {{level}}",
+    "activeNow": "Activo ahora",
+    "unlocks": "Desbloquea:",
+    "effects": "Efectos:",
+    "monthlyMaintenance": "Mantenimiento mensual:",
+    "perGameMonth": "/ mes de juego",
+    "upgradeCost": "Coste de mejora",
+    "constructionTime": "Tiempo de construcción",
+    "estimatedCompletion": "Finalización est.",
+    "levelLabel": "Nivel {{level}}",
+    "currentLevel": "Nivel actual",
+    "unlocked": "Desbloqueado",
+    "futureLevel": "Nivel futuro",
+    "upgradeToThisLevel": "Mejorar a este nivel: {{cost}} · {{duration}}",
+    "maximumReached": "Se ha alcanzado el nivel máximo de la instalación.",
+    "levelBadge": "Nivel {{level}} / {{max}}",
+    "imageAlt": "{{name}} — nivel {{level}} de {{max}}",
+    "noAdditionalUnlock": "No hay desbloqueos adicionales en este nivel.",
+    "noAdditionalEffect": "No hay ningún efecto adicional configurado para este nivel."
+  },
+  "facilityLevelDetails": {
+    "club_house": {
+      "level0": {
+        "unlock": "Solo administración básica del club.",
+        "effect": "No hay ningún bonus financiero del Club House activo."
+      },
+      "level1": {
+        "unlock": "No hay un nuevo rol de personal.",
+        "effect": "Costes salariales del personal -2%. Los costes operativos recurrentes elegibles reciben un 1% de descuento por optimización de costes."
+      },
+      "level2": {
+        "unlock": "Desbloquea una plaza de Director Deportivo.",
+        "effect": "Costes salariales del personal -4%. Salarios de ciclistas -1%. Los costes operativos recurrentes elegibles reciben un 2% de descuento por optimización de costes. Bonificación fiscal mensual 2%."
+      },
+      "level3": {
+        "unlock": "No hay un nuevo desbloqueo.",
+        "effect": "Costes salariales del personal -6%. Salarios de ciclistas -2%. Los costes operativos recurrentes elegibles reciben un 3% de descuento por optimización de costes. Bonificación fiscal mensual 4%."
+      },
+      "level4": {
+        "unlock": "No hay un nuevo desbloqueo.",
+        "effect": "Costes salariales del personal -8%. Salarios de ciclistas -3%. Los costes operativos recurrentes elegibles reciben un 5% de descuento por optimización de costes. Bonificación fiscal mensual 6%."
+      },
+      "level5": {
+        "unlock": "No hay un nuevo desbloqueo.",
+        "effect": "Costes salariales del personal -10%. Salarios de ciclistas -4%. Los costes operativos recurrentes elegibles reciben un 7% de descuento por optimización de costes. Bonificación fiscal mensual 10%."
+      }
+    },
+    "training_center": {
+      "level0": {
+        "unlock": "Solo instalaciones básicas de entrenamiento.",
+        "effect": "No hay ningún bonus activo del Centro de Entrenamiento para desarrollo, eficacia del cuerpo técnico, carga de fatiga o riesgo de entrenamiento."
+      },
+      "level1": {
+        "unlock": "No hay un nuevo desbloqueo.",
+        "effect": "Desarrollo mediante entrenamiento regular +3%; riesgo de sobrecarga y accidentes en entrenamiento -5%; se aplica al Primer Equipo y a ciclistas U23."
+      },
+      "level2": {
+        "unlock": "No hay un nuevo desbloqueo.",
+        "effect": "Desarrollo mediante entrenamiento regular +6%; bonus de entrenamiento del Entrenador Principal y entrenadores +5% de eficacia; riesgo de sobrecarga y accidentes en entrenamiento -10%; se aplica al Primer Equipo y a ciclistas U23."
+      },
+      "level3": {
+        "unlock": "Desbloquea una segunda plaza de entrenador.",
+        "effect": "Desarrollo mediante entrenamiento regular +9%; bonus de entrenamiento del Entrenador Principal y entrenadores +10% de eficacia; carga de fatiga del entrenamiento regular -1 punto; riesgo de sobrecarga y accidentes en entrenamiento -15%; se aplica al Primer Equipo y a ciclistas U23."
+      },
+      "level4": {
+        "unlock": "No hay un nuevo desbloqueo.",
+        "effect": "Desarrollo mediante entrenamiento regular +12%; bonus de entrenamiento del Entrenador Principal y entrenadores +15% de eficacia; carga de fatiga del entrenamiento regular -1 punto; riesgo de sobrecarga y accidentes en entrenamiento -20%; se aplica al Primer Equipo y a ciclistas U23."
+      },
+      "level5": {
+        "unlock": "Desbloquea una tercera plaza de entrenador.",
+        "effect": "Desarrollo mediante entrenamiento regular +15%; bonus de entrenamiento del Entrenador Principal y entrenadores +20% de eficacia; carga de fatiga del entrenamiento regular -2 puntos; riesgo de sobrecarga y accidentes en entrenamiento -25%; se aplica al Primer Equipo y a ciclistas U23."
+      }
+    },
+    "medical_center": {
+      "level0": {
+        "unlock": "Instalación médica básica; una plaza de Médico de Equipo y una de Fisioterapeuta están disponibles cuando se desbloquean las operaciones de personal.",
+        "effect": "No hay ningún bonus activo del Centro Médico para prevención, duración de recuperación o mínimo de fatiga de rehabilitación."
+      },
+      "level1": {
+        "unlock": "Desbloquea una segunda plaza de Fisioterapeuta.",
+        "effect": "Riesgo prevenible de lesiones y enfermedades -3%; duración de recuperación de casos médicos -4%; mínimo de fatiga de rehabilitación -1 punto; se aplica al Primer Equipo y a ciclistas U23."
+      },
+      "level2": {
+        "unlock": "Desbloquea una plaza de Nutricionista.",
+        "effect": "Riesgo prevenible de lesiones y enfermedades -6%; duración de recuperación de casos médicos -8%; mínimo de fatiga de rehabilitación -2 puntos; se aplica al Primer Equipo y a ciclistas U23."
+      },
+      "level3": {
+        "unlock": "Desbloquea una segunda plaza de Médico de Equipo y una tercera de Fisioterapeuta.",
+        "effect": "Riesgo prevenible de lesiones y enfermedades -9%; duración de recuperación de casos médicos -12%; mínimo de fatiga de rehabilitación -3 puntos; se aplica al Primer Equipo y a ciclistas U23."
+      },
+      "level4": {
+        "unlock": "Desbloquea una cuarta plaza de Fisioterapeuta.",
+        "effect": "Riesgo prevenible de lesiones y enfermedades -12%; duración de recuperación de casos médicos -16%; mínimo de fatiga de rehabilitación -4 puntos; se aplica al Primer Equipo y a ciclistas U23."
+      },
+      "level5": {
+        "unlock": "Desbloquea una quinta plaza de Fisioterapeuta.",
+        "effect": "Riesgo prevenible de lesiones y enfermedades -15%; duración de recuperación de casos médicos -20%; mínimo de fatiga de rehabilitación -5 puntos; se aplica al Primer Equipo y a ciclistas U23."
+      }
+    },
+    "youth_academy": {
+      "level0": {
+        "unlock": "No hay infraestructura específica de academia U23 ni plaza de Entrenador Principal U23.",
+        "effect": "No hay ningún bonus específico de academia para entrenamiento o desarrollo U23 activo."
+      },
+      "level1": {
+        "unlock": "Desbloquea una plaza de Entrenador Principal U23.",
+        "effect": "Desarrollo mediante entrenamiento regular U23 +6%; progreso de desarrollo en carreras U23 +5%; se aplica solo a ciclistas del Equipo de Desarrollo."
+      },
+      "level2": {
+        "unlock": "Programa élite de desarrollo de la academia; no añade otra plaza de personal.",
+        "effect": "Desarrollo mediante entrenamiento regular U23 +12%; progreso de desarrollo en carreras U23 +10%; efecto de desarrollo del Entrenador Principal U23 +10% de eficacia; pérdida por entrenamiento U23 fuera de foco -20%; se aplica solo a ciclistas del Equipo de Desarrollo."
+      }
+    },
+    "mechanics_workshop": {
+      "level0": {
+        "unlock": "Solo soporte técnico básico; la capacidad adicional de mecánicos permanece bloqueada.",
+        "effect": "No hay bonus activo del taller para velocidad de reparación o costes de mantenimiento."
+      },
+      "level1": {
+        "unlock": "Desbloquea una segunda plaza de Mecánico.",
+        "effect": "Capacidad de mecánicos 2; velocidad de reparación del equipo +5%; pérdida de condición del equipo -3%; riesgo mecánico -2%"
+      },
+      "level2": {
+        "unlock": "Desbloquea una tercera plaza de Mecánico.",
+        "effect": "Capacidad de mecánicos 3; velocidad de reparación del equipo +12%; coste de reparación del equipo -8%; pérdida de condición del equipo -6%; riesgo mecánico -4%"
+      },
+      "level3": {
+        "unlock": "Desbloquea una cuarta plaza de Mecánico.",
+        "effect": "Capacidad de mecánicos 4; velocidad de reparación del equipo +22%; coste de reparación del equipo -16%; pérdida de condición del equipo -10%; riesgo mecánico -7%"
+      },
+      "level4": {
+        "unlock": "Desbloquea una quinta plaza de Mecánico.",
+        "effect": "Capacidad de mecánicos 5; velocidad de reparación del equipo +35%; coste de reparación del equipo -25%; pérdida de condición del equipo -15%; riesgo mecánico -10%"
+      }
+    },
+    "scouting_office": {
+      "level0": {
+        "unlock": "Solo configuración básica de scouting; la capacidad adicional y los niveles superiores de informe permanecen bloqueados.",
+        "effect": "La calidad de los informes de scouting permanece en el límite básico de la instalación."
+      },
+      "level1": {
+        "unlock": "Desbloquea una segunda plaza de Ojeador / Analista.",
+        "effect": "Capacidad de ojeadores 2; límite Básico de calidad de informe; los atributos se muestran en rangos de aproximadamente 10 puntos"
+      },
+      "level2": {
+        "unlock": "Desbloquea una tercera plaza de Ojeador / Analista y calidad de informe Sólida.",
+        "effect": "Capacidad de ojeadores 3; límite Sólido de calidad de informe; los atributos se muestran en rangos de aproximadamente 5 puntos"
+      },
+      "level3": {
+        "unlock": "Desbloquea una cuarta plaza de Ojeador / Analista y calidad de informe Fuerte.",
+        "effect": "Capacidad de ojeadores 4; límite Fuerte de calidad de informe; los atributos se muestran en rangos de aproximadamente 3 puntos"
+      },
+      "level4": {
+        "unlock": "Desbloquea una quinta plaza de Ojeador / Analista y calidad de informe Élite.",
+        "effect": "Capacidad de ojeadores 5; límite Élite de calidad de informe; los ojeadores de calidad élite pueden revelar valores exactos"
+      }
+    }
   }
 }

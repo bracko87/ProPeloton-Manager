@@ -61,7 +61,8 @@
     "noValue": "k. A.",
     "none": "Keine",
     "gameDay": "{{count}} Spieltag",
-    "gameDays": "{{count}} Spieltage"
+    "gameDays": "{{count}} Spieltage",
+    "tbd": "Noch offen"
   },
   "facilities": {
     "activeJobs": "Aktive Bauprojekte",
@@ -499,6 +500,168 @@
       "level2": {
         "unlock": "Bessere Unterstützung der Nachwuchsentwicklung.",
         "effect": "U23-Fahrer erhalten 10 % Bonus auf Training und Entwicklung, sobald das U23-System diesen Effekt anwendet."
+      }
+    }
+  },
+  "facilityGuide": {
+    "title": "Übersicht der Einrichtungslevel",
+    "whatEveryLevelProvides": "Leistungen aller Level",
+    "currentPanelTitle": "Aktuelles Level {{level}}",
+    "nextPanelTitle": "Nächstes Level {{level}}",
+    "activeNow": "Aktuell aktiv",
+    "unlocks": "Freischaltungen:",
+    "effects": "Effekte:",
+    "monthlyMaintenance": "Monatliche Wartung:",
+    "perGameMonth": "/ Spielmonat",
+    "upgradeCost": "Ausbaukosten",
+    "constructionTime": "Bauzeit",
+    "estimatedCompletion": "Vorauss. Abschluss",
+    "levelLabel": "Level {{level}}",
+    "currentLevel": "Aktuelles Level",
+    "unlocked": "Freigeschaltet",
+    "futureLevel": "Zukünftiges Level",
+    "upgradeToThisLevel": "Ausbau auf dieses Level: {{cost}} · {{duration}}",
+    "maximumReached": "Maximales Einrichtungslevel erreicht.",
+    "levelBadge": "Level {{level}} / {{max}}",
+    "imageAlt": "{{name}} — Level {{level}} von {{max}}",
+    "noAdditionalUnlock": "Keine zusätzliche Freischaltung auf diesem Level.",
+    "noAdditionalEffect": "Für dieses Level ist kein zusätzlicher Effekt konfiguriert."
+  },
+  "facilityLevelDetails": {
+    "club_house": {
+      "level0": {
+        "unlock": "Nur grundlegende Clubverwaltung.",
+        "effect": "Kein finanzieller Bonus des Clubhauses ist aktiv."
+      },
+      "level1": {
+        "unlock": "Keine neue Personalrolle.",
+        "effect": "Personalkosten -2%. Berechtigte wiederkehrende Betriebskosten erhalten 1% Kostenoptimierungsrabatt."
+      },
+      "level2": {
+        "unlock": "Schaltet einen Platz für den Sportdirektor frei.",
+        "effect": "Personalkosten -4%. Fahrergehälter -1%. Berechtigte wiederkehrende Betriebskosten erhalten 2% Kostenoptimierungsrabatt. Monatlicher Steuerrabatt 2%."
+      },
+      "level3": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Personalkosten -6%. Fahrergehälter -2%. Berechtigte wiederkehrende Betriebskosten erhalten 3% Kostenoptimierungsrabatt. Monatlicher Steuerrabatt 4%."
+      },
+      "level4": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Personalkosten -8%. Fahrergehälter -3%. Berechtigte wiederkehrende Betriebskosten erhalten 5% Kostenoptimierungsrabatt. Monatlicher Steuerrabatt 6%."
+      },
+      "level5": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Personalkosten -10%. Fahrergehälter -4%. Berechtigte wiederkehrende Betriebskosten erhalten 7% Kostenoptimierungsrabatt. Monatlicher Steuerrabatt 10%."
+      }
+    },
+    "training_center": {
+      "level0": {
+        "unlock": "Nur grundlegende Trainingseinrichtungen.",
+        "effect": "Kein Bonus des Trainingszentrums für Entwicklung, Trainerwirksamkeit, Ermüdungsbelastung oder Trainingsrisiko ist aktiv."
+      },
+      "level1": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Reguläre Trainingsentwicklung +3%; Risiko von Trainingsüberlastung und Unfällen -5%; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level2": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Reguläre Trainingsentwicklung +6%; Trainingsbonus von Cheftrainer und Trainer +5% Wirksamkeit; Risiko von Trainingsüberlastung und Unfällen -10%; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level3": {
+        "unlock": "Schaltet einen zweiten Trainerplatz frei.",
+        "effect": "Reguläre Trainingsentwicklung +9%; Trainingsbonus von Cheftrainer und Trainer +10% Wirksamkeit; Ermüdungsbelastung durch reguläres Training -1 Punkt; Risiko von Trainingsüberlastung und Unfällen -15%; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level4": {
+        "unlock": "Keine neue Freischaltung.",
+        "effect": "Reguläre Trainingsentwicklung +12%; Trainingsbonus von Cheftrainer und Trainer +15% Wirksamkeit; Ermüdungsbelastung durch reguläres Training -1 Punkt; Risiko von Trainingsüberlastung und Unfällen -20%; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level5": {
+        "unlock": "Schaltet einen dritten Trainerplatz frei.",
+        "effect": "Reguläre Trainingsentwicklung +15%; Trainingsbonus von Cheftrainer und Trainer +20% Wirksamkeit; Ermüdungsbelastung durch reguläres Training -2 Punkte; Risiko von Trainingsüberlastung und Unfällen -25%; gilt für Erste Mannschaft und U23-Fahrer."
+      }
+    },
+    "medical_center": {
+      "level0": {
+        "unlock": "Medizinische Basiseinrichtung; ein Platz für Teamarzt und ein Platz für Physiotherapeut sind verfügbar, sobald der Personalbetrieb freigeschaltet ist.",
+        "effect": "Kein Bonus des Medizinzentrums für Prävention, Erholungsdauer oder Rehabilitations-Ermüdungsuntergrenze ist aktiv."
+      },
+      "level1": {
+        "unlock": "Schaltet einen zweiten Physiotherapeutenplatz frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -3%; Erholungsdauer bei Gesundheitsfällen -4%; Ermüdungsuntergrenze in der Rehabilitation -1 Punkt; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level2": {
+        "unlock": "Schaltet einen Platz für den Ernährungsberater frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -6%; Erholungsdauer bei Gesundheitsfällen -8%; Ermüdungsuntergrenze in der Rehabilitation -2 Punkte; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level3": {
+        "unlock": "Schaltet einen zweiten Teamarztplatz und einen dritten Physiotherapeutenplatz frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -9%; Erholungsdauer bei Gesundheitsfällen -12%; Ermüdungsuntergrenze in der Rehabilitation -3 Punkte; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level4": {
+        "unlock": "Schaltet einen vierten Physiotherapeutenplatz frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -12%; Erholungsdauer bei Gesundheitsfällen -16%; Ermüdungsuntergrenze in der Rehabilitation -4 Punkte; gilt für Erste Mannschaft und U23-Fahrer."
+      },
+      "level5": {
+        "unlock": "Schaltet einen fünften Physiotherapeutenplatz frei.",
+        "effect": "Vermeidbares Verletzungs- und Krankheitsrisiko -15%; Erholungsdauer bei Gesundheitsfällen -20%; Ermüdungsuntergrenze in der Rehabilitation -5 Punkte; gilt für Erste Mannschaft und U23-Fahrer."
+      }
+    },
+    "youth_academy": {
+      "level0": {
+        "unlock": "Keine eigene U23-Akademieinfrastruktur und kein Platz für einen U23-Cheftrainer.",
+        "effect": "Kein akademiespezifischer Bonus für U23-Training oder -Entwicklung ist aktiv."
+      },
+      "level1": {
+        "unlock": "Schaltet einen Platz für den U23-Cheftrainer frei.",
+        "effect": "Reguläre U23-Trainingsentwicklung +6%; U23-Rennentwicklungsfortschritt +5%; gilt nur für Fahrer des Entwicklungsteams."
+      },
+      "level2": {
+        "unlock": "Elite-Entwicklungsprogramm der Akademie; kein zusätzlicher Personalplatz.",
+        "effect": "Reguläre U23-Trainingsentwicklung +12%; U23-Rennentwicklungsfortschritt +10%; Entwicklungseffekt des U23-Cheftrainers +10% Wirksamkeit; Abbau bei U23-Training außerhalb des Fokus -20%; gilt nur für Fahrer des Entwicklungsteams."
+      }
+    },
+    "mechanics_workshop": {
+      "level0": {
+        "unlock": "Nur grundlegende technische Unterstützung; zusätzliche Mechanikerkapazität bleibt gesperrt.",
+        "effect": "Kein werkstattbasierter Bonus auf Reparaturgeschwindigkeit oder Wartungskosten ist aktiv."
+      },
+      "level1": {
+        "unlock": "Schaltet einen zweiten Mechanikerplatz frei.",
+        "effect": "Mechanikerkapazität 2; Reparaturgeschwindigkeit der Ausrüstung +5%; Zustandsverlust der Ausrüstung -3%; mechanisches Risiko -2%"
+      },
+      "level2": {
+        "unlock": "Schaltet einen dritten Mechanikerplatz frei.",
+        "effect": "Mechanikerkapazität 3; Reparaturgeschwindigkeit der Ausrüstung +12%; Reparaturkosten der Ausrüstung -8%; Zustandsverlust der Ausrüstung -6%; mechanisches Risiko -4%"
+      },
+      "level3": {
+        "unlock": "Schaltet einen vierten Mechanikerplatz frei.",
+        "effect": "Mechanikerkapazität 4; Reparaturgeschwindigkeit der Ausrüstung +22%; Reparaturkosten der Ausrüstung -16%; Zustandsverlust der Ausrüstung -10%; mechanisches Risiko -7%"
+      },
+      "level4": {
+        "unlock": "Schaltet einen fünften Mechanikerplatz frei.",
+        "effect": "Mechanikerkapazität 5; Reparaturgeschwindigkeit der Ausrüstung +35%; Reparaturkosten der Ausrüstung -25%; Zustandsverlust der Ausrüstung -15%; mechanisches Risiko -10%"
+      }
+    },
+    "scouting_office": {
+      "level0": {
+        "unlock": "Nur grundlegendes Scouting; zusätzliche Scout-Kapazität und höhere Berichtsstufen bleiben gesperrt.",
+        "effect": "Die Qualität von Scouting-Berichten bleibt auf die Basisgrenze der Einrichtung begrenzt."
+      },
+      "level1": {
+        "unlock": "Schaltet einen zweiten Scout-/Analystenplatz frei.",
+        "effect": "Scout-Kapazität 2; Basisgrenze für Berichtsqualität; Attribute werden in Bereichen von ungefähr 10 Punkten angezeigt"
+      },
+      "level2": {
+        "unlock": "Schaltet einen dritten Scout-/Analystenplatz sowie solide Berichtsqualität frei.",
+        "effect": "Scout-Kapazität 3; Obergrenze für solide Berichtsqualität; Attribute werden in Bereichen von ungefähr 5 Punkten angezeigt"
+      },
+      "level3": {
+        "unlock": "Schaltet einen vierten Scout-/Analystenplatz sowie starke Berichtsqualität frei.",
+        "effect": "Scout-Kapazität 4; Obergrenze für starke Berichtsqualität; Attribute werden in Bereichen von ungefähr 3 Punkten angezeigt"
+      },
+      "level4": {
+        "unlock": "Schaltet einen fünften Scout-/Analystenplatz sowie Elite-Berichtsqualität frei.",
+        "effect": "Scout-Kapazität 5; Obergrenze für Elite-Berichtsqualität; Scouts mit Elite-Qualität können exakte Werte anzeigen"
       }
     }
   }

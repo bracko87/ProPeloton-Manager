@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { supabase } from '@/lib/supabase'
 import type {
   ActiveJobView,
@@ -11,6 +12,7 @@ import type {
 } from './infrastructureTypes'
 import {
   formatCash,
+  formatGameDate,
   formatGameDays,
   formatTimeRemaining,
 } from './infrastructureHelpers'
@@ -40,32 +42,7 @@ function formatUsd(raw: unknown): string {
 }
 
 function formatSeasonDate(raw: string | null | undefined): string {
-  if (!raw) return 'TBD'
-
-  const trimmed = raw.trim()
-  const canonicalMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-  let year: number
-  let month: number
-  let day: number
-
-  if (canonicalMatch) {
-    year = Number(canonicalMatch[1])
-    month = Number(canonicalMatch[2])
-    day = Number(canonicalMatch[3])
-  } else {
-    const timestamp = Date.parse(trimmed)
-    if (Number.isNaN(timestamp)) return trimmed
-    const date = new Date(timestamp)
-    year = date.getUTCFullYear()
-    month = date.getUTCMonth() + 1
-    day = date.getUTCDate()
-  }
-
-  const season = year - 1999
-  if (season < 1 || month < 1 || month > 12 || day < 1 || day > 31) return trimmed
-
-  const monthLabel = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month - 1]
-  return `S${season} · ${monthLabel} ${day}`
+  return formatGameDate(raw)
 }
 
 const fallbackMonthlyMaintenance: Record<FacilityKey, number[]> = {
@@ -75,33 +52,6 @@ const fallbackMonthlyMaintenance: Record<FacilityKey, number[]> = {
   youth_academy: [0, 15000, 40000],
   mechanics_workshop: [0, 8000, 20000, 45000, 80000],
   scouting_office: [0, 6000, 15000, 35000, 65000],
-}
-
-const levelZeroDetails: Record<FacilityKey, { unlock: string; effect: string }> = {
-  club_house: {
-    unlock: 'Basic club administration only.',
-    effect: 'No Club House financial bonus is active.',
-  },
-  training_center: {
-    unlock: 'Basic training facilities only.',
-    effect: 'No Training Center development, coaching-effectiveness, fatigue-load or training-risk bonus is active.',
-  },
-  medical_center: {
-    unlock: 'Base medical facility; one Team Doctor and one Physio slot are available once staff operations are unlocked.',
-    effect: 'No Medical Center prevention, recovery-duration or rehabilitation fatigue-floor bonus is active.',
-  },
-  youth_academy: {
-    unlock: 'No dedicated U23 academy infrastructure or U23 Head Coach slot.',
-    effect: 'No academy-specific U23 training or development bonus is active.',
-  },
-  mechanics_workshop: {
-    unlock: 'Basic technical support only; additional mechanic capacity remains locked.',
-    effect: 'No workshop-based repair speed or maintenance-cost bonus is active.',
-  },
-  scouting_office: {
-    unlock: 'Basic scouting setup only; additional scout capacity and higher report tiers remain locked.',
-    effect: 'Scouting report quality remains at the basic facility cap.',
-  },
 }
 
 function configForLevel(
@@ -127,22 +77,23 @@ function maintenanceFor(
   return values[Math.min(Math.max(level, 0), values.length - 1)] ?? 0
 }
 
+type InfrastructureT = TFunction<'infrastructure'>
+
 function levelDetail(
   item: InfrastructureItem,
   level: number,
   configs: FacilityLevelConfig[],
+  t: InfrastructureT,
 ): { unlock: string; effect: string; maintenance: number } {
   const key = item.id as FacilityKey
   const config = configForLevel(configs, item, level)
-  const zero = levelZeroDetails[key]
+  const baseKey = `facilityLevelDetails.${key}.level${level}`
+  const fallbackUnlock = config?.unlock_summary || t('facilityGuide.noAdditionalUnlock')
+  const fallbackEffect = config?.effect_summary || t('facilityGuide.noAdditionalEffect')
 
   return {
-    unlock: level === 0
-      ? zero.unlock
-      : config?.unlock_summary || 'No additional unlock at this level.',
-    effect: level === 0
-      ? zero.effect
-      : config?.effect_summary || 'No additional effect is configured for this level.',
+    unlock: t(`${baseKey}.unlock`, { defaultValue: fallbackUnlock }),
+    effect: t(`${baseKey}.effect`, { defaultValue: fallbackEffect }),
     maintenance: level === 0 ? 0 : maintenanceFor(item, level, configs),
   }
 }
@@ -173,6 +124,7 @@ function FacilityVisual({
   className: string
   eager?: boolean
 }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
   const level = facilityLevel(item)
   const maxLevel = facilityMaxLevel(item)
   const key = item.id as FacilityKey
@@ -181,7 +133,7 @@ function FacilityVisual({
   return (
     <img
       src={getFacilityLevelImage(key, level, maxLevel)}
-      alt={`${item.name} — Level ${level} of ${maxLevel}`}
+      alt={t('facilityGuide.imageAlt', { name: item.name, level, max: maxLevel })}
       loading={eager ? 'eager' : 'lazy'}
       decoding="async"
       className={className}
@@ -196,9 +148,13 @@ function FacilityVisual({
 }
 
 function LevelBadge({ item, dark = false }: { item: InfrastructureItem; dark?: boolean }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
+  const level = facilityLevel(item)
+  const max = facilityMaxLevel(item)
+
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${dark ? 'bg-black/65 text-white backdrop-blur-sm' : 'bg-gray-100 text-gray-700'}`}>
-      Level {facilityLevel(item)} / {facilityMaxLevel(item)}
+      {t('facilityGuide.levelBadge', { level, max })}
     </span>
   )
 }
@@ -314,42 +270,43 @@ function LevelInfoPanel({
   active?: boolean
   showUpgradeMeta?: boolean
 }): JSX.Element {
-  const detail = levelDetail(item, level, configs)
+  const { t } = useTranslation('infrastructure')
+  const detail = levelDetail(item, level, configs, t)
   const isCurrent = tone === 'current'
 
   return (
     <div className={`flex h-[272px] flex-col overflow-y-auto rounded-lg border p-3 ${isCurrent ? 'border-blue-100 bg-blue-50' : 'border-gray-100 bg-gray-50'}`}>
       <div className="flex items-center justify-between gap-3">
         <div className={`text-sm font-semibold ${isCurrent ? 'text-blue-950' : 'text-gray-900'}`}>
-          {isCurrent ? 'Current' : 'Next'} Level {level}
+          {t(isCurrent ? 'facilityGuide.currentPanelTitle' : 'facilityGuide.nextPanelTitle', { level })}
         </div>
-        {active && <span className="text-xs font-medium text-blue-700">Active now</span>}
+        {active && <span className="text-xs font-medium text-blue-700">{t('facilityGuide.activeNow')}</span>}
       </div>
 
       <div className="mt-3 space-y-2 text-sm leading-5 text-gray-700">
-        <div><span className="font-semibold text-gray-900">Unlocks:</span> {detail.unlock}</div>
+        <div><span className="font-semibold text-gray-900">{t('facilityGuide.unlocks')}</span> {detail.unlock}</div>
         <div>
-          <span className="font-semibold text-gray-900">Effects:</span>{' '}
+          <span className="font-semibold text-gray-900">{t('facilityGuide.effects')}</span>{' '}
           <EffectList text={detail.effect} />
         </div>
         <div>
-          <span className="font-semibold text-gray-900">Monthly maintenance:</span>{' '}
-          {formatUsd(detail.maintenance)} / game month
+          <span className="font-semibold text-gray-900">{t('facilityGuide.monthlyMaintenance')}</span>{' '}
+          {formatUsd(detail.maintenance)} {t('facilityGuide.perGameMonth')}
         </div>
       </div>
 
       {showUpgradeMeta && (
         <div className="mt-auto grid grid-cols-1 gap-2 border-t border-gray-200 pt-3 text-xs text-gray-600 sm:grid-cols-3">
           <div>
-            <span className="block text-gray-400">Upgrade cost</span>
+            <span className="block text-gray-400">{t('facilityGuide.upgradeCost')}</span>
             <span className="font-medium text-gray-900">{formatUsd(item.previewCostCash)}</span>
           </div>
           <div>
-            <span className="block text-gray-400">Construction time</span>
+            <span className="block text-gray-400">{t('facilityGuide.constructionTime')}</span>
             <span className="font-medium text-gray-900">{formatGameDays(item.previewDurationGameDays)}</span>
           </div>
           <div>
-            <span className="block whitespace-nowrap text-gray-400">Est. completion</span>
+            <span className="block whitespace-nowrap text-gray-400">{t('facilityGuide.estimatedCompletion')}</span>
             <span className="whitespace-nowrap font-medium text-gray-900">{formatSeasonDate(item.previewCompleteGameDate)}</span>
           </div>
         </div>
@@ -386,7 +343,7 @@ function FacilityDetailsModal({
       <div className="relative z-10 max-h-[94vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-gray-100 bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-gray-100 p-4 sm:p-5">
           <div>
-            <div className="text-xs uppercase tracking-wide text-gray-400">Facility level guide</div>
+            <div className="text-xs uppercase tracking-wide text-gray-400">{t('facilityGuide.title')}</div>
             <h3 className="mt-1 text-xl font-semibold text-gray-900">{item.name}</h3>
             <p className="mt-1 text-sm text-gray-500">{item.description}</p>
           </div>
@@ -408,10 +365,10 @@ function FacilityDetailsModal({
             </div>
 
             <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <div className="text-sm text-gray-500">Current status</div>
+              <div className="text-sm text-gray-500">{t('facilities.currentStatus')}</div>
               <div className="mt-1 text-lg font-semibold text-gray-900">{item.valueLabel}</div>
               <div className="mt-2 text-xs text-gray-500">
-                Status: <span className="font-medium text-gray-700">{item.badgeLabel}</span>
+                {t('facilities.status')} <span className="font-medium text-gray-700">{item.badgeLabel}</span>
               </div>
             </div>
           </div>
@@ -423,10 +380,10 @@ function FacilityDetailsModal({
               </div>
             )}
 
-            <div className="text-sm font-semibold text-gray-900">What every level provides</div>
+            <div className="text-sm font-semibold text-gray-900">{t('facilityGuide.whatEveryLevelProvides')}</div>
 
             {levels.map(level => {
-              const detail = levelDetail(item, level, configs)
+              const detail = levelDetail(item, level, configs, t)
               const cfg = configForLevel(configs, item, level)
 
               return (
@@ -435,25 +392,25 @@ function FacilityDetailsModal({
                   className={`rounded-xl border p-4 ${level === currentLevel ? 'border-blue-200 bg-blue-50' : level < currentLevel ? 'border-green-100 bg-green-50/50' : 'border-gray-100 bg-white'}`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="font-semibold text-gray-900">Level {level}</div>
+                    <div className="font-semibold text-gray-900">{t('facilityGuide.levelLabel', { level })}</div>
                     <div className="text-xs text-gray-500">
-                      {level === currentLevel ? 'Current level' : level < currentLevel ? 'Unlocked' : 'Future level'}
+                      {level === currentLevel ? t('facilityGuide.currentLevel') : level < currentLevel ? t('facilityGuide.unlocked') : t('facilityGuide.futureLevel')}
                     </div>
                   </div>
 
                   <div className="mt-2 space-y-2 text-sm text-gray-700">
-                    <div><span className="font-semibold">Unlocks:</span> {detail.unlock}</div>
+                    <div><span className="font-semibold">{t('facilityGuide.unlocks')}</span> {detail.unlock}</div>
                     <div>
-                      <span className="font-semibold">Effects:</span>{' '}
+                      <span className="font-semibold">{t('facilityGuide.effects')}</span>{' '}
                       <EffectList text={detail.effect} />
                     </div>
                     <div>
-                      <span className="font-semibold">Monthly maintenance:</span>{' '}
-                      {formatUsd(detail.maintenance)} / game month
+                      <span className="font-semibold">{t('facilityGuide.monthlyMaintenance')}</span>{' '}
+                      {formatUsd(detail.maintenance)} {t('facilityGuide.perGameMonth')}
                     </div>
                     {cfg && (
                       <div className="mt-1 text-xs text-gray-500">
-                        Upgrade to this level: {formatUsd(cfg.cost_cash)} · {formatGameDays(cfg.duration_game_days)}
+                        {t('facilityGuide.upgradeToThisLevel', { cost: formatUsd(cfg.cost_cash), duration: formatGameDays(cfg.duration_game_days) })}
                       </div>
                     )}
                   </div>
@@ -543,7 +500,7 @@ function InfrastructureCard({
             <LevelInfoPanel item={item} level={nextLevel} configs={configs} tone="next" showUpgradeMeta />
           ) : (
             <div className="flex h-[272px] items-center justify-center rounded-lg border border-gray-100 bg-gray-50 p-4 text-center text-sm text-gray-500">
-              {item.pendingJob ? item.pendingSummary : 'Maximum facility level reached.'}
+              {item.pendingJob ? item.pendingSummary : t('facilityGuide.maximumReached')}
             </div>
           )}
         </div>

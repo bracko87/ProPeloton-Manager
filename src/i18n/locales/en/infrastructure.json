@@ -61,7 +61,8 @@
     "noValue": "N/A",
     "none": "None",
     "gameDay": "{{count}} game day",
-    "gameDays": "{{count}} game days"
+    "gameDays": "{{count}} game days",
+    "tbd": "TBD"
   },
   "facilities": {
     "activeJobs": "Active Jobs",
@@ -509,5 +510,167 @@
     "equipmentVanGarageDescription": "Equipment Vans support bike transport, spare parts coverage, race equipment logistics, and broader event readiness. Manage the garage by slot, start new deliveries, repair worn vans, or sell available vans.",
     "mobileWorkshopGarageDescription": "Mobile Workshops support on-site technical repairs, faster issue response, mechanic coverage, and equipment service capacity. Manage the garage by slot, start new deliveries, repair worn workshops, or sell available workshops.",
     "medicalVanGarageDescription": "Medical Vans support race-day health response, rider treatment access, injury control, and medical coverage. Manage the garage by slot, start new deliveries, repair worn vans, or sell available vans."
+  },
+  "facilityGuide": {
+    "title": "Facility level guide",
+    "whatEveryLevelProvides": "What every level provides",
+    "currentPanelTitle": "Current Level {{level}}",
+    "nextPanelTitle": "Next Level {{level}}",
+    "activeNow": "Active now",
+    "unlocks": "Unlocks:",
+    "effects": "Effects:",
+    "monthlyMaintenance": "Monthly maintenance:",
+    "perGameMonth": "/ game month",
+    "upgradeCost": "Upgrade cost",
+    "constructionTime": "Construction time",
+    "estimatedCompletion": "Est. completion",
+    "levelLabel": "Level {{level}}",
+    "currentLevel": "Current level",
+    "unlocked": "Unlocked",
+    "futureLevel": "Future level",
+    "upgradeToThisLevel": "Upgrade to this level: {{cost}} · {{duration}}",
+    "maximumReached": "Maximum facility level reached.",
+    "levelBadge": "Level {{level}} / {{max}}",
+    "imageAlt": "{{name}} — Level {{level}} of {{max}}",
+    "noAdditionalUnlock": "No additional unlock at this level.",
+    "noAdditionalEffect": "No additional effect is configured for this level."
+  },
+  "facilityLevelDetails": {
+    "club_house": {
+      "level0": {
+        "unlock": "Basic club administration only.",
+        "effect": "No Club House financial bonus is active."
+      },
+      "level1": {
+        "unlock": "No new staff role.",
+        "effect": "Staff payroll -2%. Eligible recurring operating costs receive 1% cost-optimization rebate."
+      },
+      "level2": {
+        "unlock": "Unlocks Sport Director slot.",
+        "effect": "Staff payroll -4%. Rider payroll -1%. Eligible recurring operating costs receive 2% cost-optimization rebate. Monthly tax rebate 2%."
+      },
+      "level3": {
+        "unlock": "No new unlock.",
+        "effect": "Staff payroll -6%. Rider payroll -2%. Eligible recurring operating costs receive 3% cost-optimization rebate. Monthly tax rebate 4%."
+      },
+      "level4": {
+        "unlock": "No new unlock.",
+        "effect": "Staff payroll -8%. Rider payroll -3%. Eligible recurring operating costs receive 5% cost-optimization rebate. Monthly tax rebate 6%."
+      },
+      "level5": {
+        "unlock": "No new unlock.",
+        "effect": "Staff payroll -10%. Rider payroll -4%. Eligible recurring operating costs receive 7% cost-optimization rebate. Monthly tax rebate 10%."
+      }
+    },
+    "training_center": {
+      "level0": {
+        "unlock": "Basic training facilities only.",
+        "effect": "No Training Center development, coaching-effectiveness, fatigue-load or training-risk bonus is active."
+      },
+      "level1": {
+        "unlock": "No new unlock.",
+        "effect": "Regular training development +3%; training overload and accident risk -5%; applies to First Team and U23 riders."
+      },
+      "level2": {
+        "unlock": "No new unlock.",
+        "effect": "Regular training development +6%; Head Coach and Trainer training bonus +5% effectiveness; training overload and accident risk -10%; applies to First Team and U23 riders."
+      },
+      "level3": {
+        "unlock": "Unlocks second Trainer slot.",
+        "effect": "Regular training development +9%; Head Coach and Trainer training bonus +10% effectiveness; regular-training fatigue load -1 point; training overload and accident risk -15%; applies to First Team and U23 riders."
+      },
+      "level4": {
+        "unlock": "No new unlock.",
+        "effect": "Regular training development +12%; Head Coach and Trainer training bonus +15% effectiveness; regular-training fatigue load -1 point; training overload and accident risk -20%; applies to First Team and U23 riders."
+      },
+      "level5": {
+        "unlock": "Unlocks third Trainer slot.",
+        "effect": "Regular training development +15%; Head Coach and Trainer training bonus +20% effectiveness; regular-training fatigue load -2 points; training overload and accident risk -25%; applies to First Team and U23 riders."
+      }
+    },
+    "medical_center": {
+      "level0": {
+        "unlock": "Base medical facility; one Team Doctor and one Physio slot are available once staff operations are unlocked.",
+        "effect": "No Medical Center prevention, recovery-duration or rehabilitation fatigue-floor bonus is active."
+      },
+      "level1": {
+        "unlock": "Unlocks second Physio slot.",
+        "effect": "Preventable injury and illness risk -3%; health-case recovery duration -4%; rehabilitation fatigue floor -1 point; applies to First Team and U23 riders."
+      },
+      "level2": {
+        "unlock": "Unlocks Nutritionist slot.",
+        "effect": "Preventable injury and illness risk -6%; health-case recovery duration -8%; rehabilitation fatigue floor -2 points; applies to First Team and U23 riders."
+      },
+      "level3": {
+        "unlock": "Unlocks second Team Doctor slot and third Physio slot.",
+        "effect": "Preventable injury and illness risk -9%; health-case recovery duration -12%; rehabilitation fatigue floor -3 points; applies to First Team and U23 riders."
+      },
+      "level4": {
+        "unlock": "Unlocks fourth Physio slot.",
+        "effect": "Preventable injury and illness risk -12%; health-case recovery duration -16%; rehabilitation fatigue floor -4 points; applies to First Team and U23 riders."
+      },
+      "level5": {
+        "unlock": "Unlocks fifth Physio slot.",
+        "effect": "Preventable injury and illness risk -15%; health-case recovery duration -20%; rehabilitation fatigue floor -5 points; applies to First Team and U23 riders."
+      }
+    },
+    "youth_academy": {
+      "level0": {
+        "unlock": "No dedicated U23 academy infrastructure or U23 Head Coach slot.",
+        "effect": "No academy-specific U23 training or development bonus is active."
+      },
+      "level1": {
+        "unlock": "Unlocks U23 Head Coach slot.",
+        "effect": "U23 regular-training development +6%; U23 race-development progress +5%; applies only to riders in the Developing Team."
+      },
+      "level2": {
+        "unlock": "Elite academy development program; no additional staff slot.",
+        "effect": "U23 regular-training development +12%; U23 race-development progress +10%; U23 Head Coach development effect +10% effectiveness; U23 off-focus training decay -20%; applies only to riders in the Developing Team."
+      }
+    },
+    "mechanics_workshop": {
+      "level0": {
+        "unlock": "Basic technical support only; additional mechanic capacity remains locked.",
+        "effect": "No workshop-based repair speed or maintenance-cost bonus is active."
+      },
+      "level1": {
+        "unlock": "Unlocks second Mechanic slot.",
+        "effect": "Mechanic capacity 2; equipment repair speed +5%; equipment condition loss -3%; mechanical risk -2%"
+      },
+      "level2": {
+        "unlock": "Unlocks third Mechanic slot.",
+        "effect": "Mechanic capacity 3; equipment repair speed +12%; equipment repair cost -8%; equipment condition loss -6%; mechanical risk -4%"
+      },
+      "level3": {
+        "unlock": "Unlocks fourth Mechanic slot.",
+        "effect": "Mechanic capacity 4; equipment repair speed +22%; equipment repair cost -16%; equipment condition loss -10%; mechanical risk -7%"
+      },
+      "level4": {
+        "unlock": "Unlocks fifth Mechanic slot.",
+        "effect": "Mechanic capacity 5; equipment repair speed +35%; equipment repair cost -25%; equipment condition loss -15%; mechanical risk -10%"
+      }
+    },
+    "scouting_office": {
+      "level0": {
+        "unlock": "Basic scouting setup only; additional scout capacity and higher report tiers remain locked.",
+        "effect": "Scouting report quality remains at the basic facility cap."
+      },
+      "level1": {
+        "unlock": "Unlocks second Scout / Analyst slot.",
+        "effect": "Scout capacity 2; Basic report-quality cap; attributes are shown in approximately 10-point ranges"
+      },
+      "level2": {
+        "unlock": "Unlocks third Scout / Analyst slot plus Solid report quality.",
+        "effect": "Scout capacity 3; Solid report-quality cap; attributes are shown in approximately 5-point ranges"
+      },
+      "level3": {
+        "unlock": "Unlocks fourth Scout / Analyst slot plus Strong report quality.",
+        "effect": "Scout capacity 4; Strong report-quality cap; attributes are shown in approximately 3-point ranges"
+      },
+      "level4": {
+        "unlock": "Unlocks fifth Scout / Analyst slot plus Elite report quality.",
+        "effect": "Scout capacity 5; Elite report-quality cap; elite-quality scouts can reveal exact values"
+      }
+    }
   }
 }
