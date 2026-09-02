@@ -743,12 +743,12 @@ function formatCompactStageDateTime(stage: JsonRecord, locale?: string) {
 
   const date = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
 
-  const weekday = date.toLocaleDateString(locale, {
+  const weekday = date.toLocaleDateString(locale || getRacePrepLocale(), {
     weekday: "short",
     timeZone: "UTC",
   });
 
-  const monthLabel = monthLabels[parts.month - 1] ?? `M${parts.month}`;
+  const monthLabel = localizedGameMonth(parts.month, "short");
 
   const label = `S${parts.season} · ${weekday} · ${monthLabel} ${String(
     parts.day,
@@ -769,16 +769,16 @@ function formatGameDateRange(start: unknown, end: unknown) {
     startParts!.season === endParts!.season &&
     startParts!.month === endParts!.month
   ) {
-    return `S${startParts!.season} · ${monthLabels[startParts!.month - 1]} ${String(
+    return `S${startParts!.season} · ${localizedGameMonth(startParts!.month, "short")} ${String(
       startParts!.day,
     ).padStart(2, "0")} – ${String(endParts!.day).padStart(2, "0")}`;
   }
 
   if (startParts!.season === endParts!.season) {
     return `S${startParts!.season} · ${
-      monthLabels[startParts!.month - 1]
+      localizedGameMonth(startParts!.month, "short")
     } ${String(startParts!.day).padStart(2, "0")} – ${
-      monthLabels[endParts!.month - 1]
+      localizedGameMonth(endParts!.month, "short")
     } ${String(endParts!.day).padStart(2, "0")}`;
   }
 
@@ -8422,7 +8422,7 @@ function formatTimestampLabel(value: string): string {
 
   if (!Number.isFinite(parsed.getTime())) return value;
 
-  return parsed.toLocaleString(undefined, {
+  return parsed.toLocaleString(getRacePrepLocale(), {
     month: "short",
     day: "2-digit",
     hour: "2-digit",
