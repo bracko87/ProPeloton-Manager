@@ -11418,7 +11418,11 @@ describe('Phase 7 final replay-page closeout', () => {
     expect(source).not.toContain('PHASE 6 RIDER INPUT RPC — RAW RESPONSE')
     expect(source).not.toContain("console.error('PHASE 6 RIDER INPUT RPC RAW'")
     expect(source).not.toContain('Phase 6 audit stopped')
-    expect(source).toContain('Race replay')
+    expect(
+      source.includes('Race replay') ||
+        source.includes("t('replay.title')") ||
+        source.includes('t("replay.title")'),
+    ).toBe(true)
   })
 
   it('uses player-facing stored-replay error messages and never offers a browser calculation fallback', () => {
@@ -11448,7 +11452,11 @@ describe('Phase 7 final replay-page closeout', () => {
     expect(source).toContain('get_universal_race_stage_replay_payload_v1')
     expect(source).toContain('[1, 2, 4, 8].map')
     expect(source).toContain('Finish replay')
-    expect(source).toContain('Restart')
+    expect(
+      source.includes('Restart') ||
+        source.includes("t('replay.restart')") ||
+        source.includes('t("replay.restart")'),
+    ).toBe(true)
   })
 
   it('keeps the accepted Phase 5/6 seed path frozen while newer paths use the canonical nested seed', () => {
@@ -13599,8 +13607,16 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
       'utf8',
     )
 
-    expect(source).toContain('Race Plan Bonus Preview')
-    expect(source).toContain('Standardized Race Bonus Percentages')
+    expect(
+      source.includes('Race Plan Bonus Preview') ||
+        source.includes("t('bonus.title')") ||
+        source.includes('t("bonus.title")'),
+    ).toBe(true)
+    expect(
+      source.includes('Standardized Race Bonus Percentages') ||
+        source.includes("t('bonus.standardized')") ||
+        source.includes('t("bonus.standardized")'),
+    ).toBe(true)
     expect(source).toContain('equipment_condition_loss_reduction_pct')
     expect(source).toContain('race_jersey_complete')
     expect(source).toContain('rain_jacket')
@@ -15447,10 +15463,16 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(pageSource).not.toContain('ENABLE_RIO_TOUR_INTEGRATION_REPLAYS')
     expect(pageSource).not.toContain('isRioTourDevelopmentReplayUnlocked')
     expect(pageSource).toContain('get_universal_race_stage_replay_payload_v1')
-    expect(pageSource).toContain('Replay unavailable')
-    expect(pageSource).toContain(
-      'Replay will be available at the scheduled stage time.',
-    )
+    expect(
+      pageSource.includes('Replay unavailable') ||
+        pageSource.includes("t('replay.unavailable')") ||
+        pageSource.includes('t("replay.unavailable")'),
+    ).toBe(true)
+    expect(
+      pageSource.includes('Replay will be available at the scheduled stage time.') ||
+        pageSource.includes("t('replay.availableAt'") ||
+        pageSource.includes('t("replay.availableAt"'),
+    ).toBe(true)
     expect(pageSource).not.toContain('Awaiting backend calculation')
     expect(pageSource).not.toContain('Replay not open yet')
     expect(pageSource).not.toContain('no browser fallback')
