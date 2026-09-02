@@ -343,7 +343,6 @@ function localizeRacePrepBackendText(value: unknown): string {
   const exact: Record<string, string> = {
     "Race Ready": "screen.raceReady",
     Fit: "screen.fit",
-    Leader: "riderRoles.teamLeader",
     Sprinter: "riderRoles.sprinter",
     Climber: "riderRoles.climber",
     Domestique: "riderRoles.helper",
