@@ -71,7 +71,7 @@ function formatSeasonDate(raw: string | null | undefined): string {
 const fallbackMonthlyMaintenance: Record<FacilityKey, number[]> = {
   club_house: [0, 1500, 3500, 6000, 10000, 15000],
   training_center: [0, 2000, 4000, 7000, 11000, 17000],
-  medical_center: [0, 10000, 25000, 55000, 100000, 170000],
+  medical_center: [0, 2500, 5000, 8000, 13000, 20000],
   youth_academy: [0, 15000, 40000],
   mechanics_workshop: [0, 8000, 20000, 45000, 80000],
   scouting_office: [0, 6000, 15000, 35000, 65000],
@@ -87,8 +87,8 @@ const levelZeroDetails: Record<FacilityKey, { unlock: string; effect: string }> 
     effect: 'No Training Center development, coaching-effectiveness, fatigue-load or training-risk bonus is active.',
   },
   medical_center: {
-    unlock: 'Basic medical support only; advanced medical staff capacity remains limited.',
-    effect: 'Injury prevention, recovery and fatigue support use the Level 0 medical cap.',
+    unlock: 'Base medical facility; one Team Doctor and one Physio slot are available once staff operations are unlocked.',
+    effect: 'No Medical Center prevention, recovery-duration or rehabilitation fatigue-floor bonus is active.',
   },
   youth_academy: {
     unlock: 'No dedicated U23 academy infrastructure or U23 Head Coach slot.',
