@@ -1,0 +1,218 @@
+/*
+ * Race Preparation mobile follow-up.
+ * Scoped below 768px so the validated desktop/tablet layout stays unchanged.
+ */
+
+.ppm-mobile-race-summary,
+.ppm-stage-profile-expand,
+.ppm-stage-profile-close {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* Accepted Races: keep every race card in one predictable mobile order:
+     1) flag + race name
+     2) city / route + stage count
+     3) class + race type/status badges
+     Actions remain below the information block. */
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-mobile-accepted-race-grid='true'] {
+    display: grid !important;
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+    column-gap: 0.75rem !important;
+    row-gap: 0.75rem !important;
+    align-items: center !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-mobile-accepted-race-date='true'] {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: stretch;
+    min-width: 0;
+    gap: 0.5rem !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-mobile-accepted-race-grid='true'] > button[data-ppm-mobile-race-summary-ready='true'] {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+    padding: 0 !important;
+    text-align: left;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-mobile-race-original='true'] {
+    display: none !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-mobile-race-summary {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    gap: 0.35rem;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-mobile-race-summary-title {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-mobile-race-summary-title > :first-child {
+    flex: 0 0 auto;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-mobile-race-summary-title > :nth-child(2) {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    font-size: 0.95rem !important;
+    line-height: 1.2rem !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-mobile-race-summary-route {
+    min-width: 0;
+    max-width: 100%;
+    margin-top: 0 !important;
+    overflow: hidden !important;
+    color: rgb(100 116 139) !important;
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-mobile-race-summary-badges {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-mobile-race-summary-badges > span {
+    padding: 0.25rem 0.65rem !important;
+    font-size: 0.7rem !important;
+    line-height: 0.9rem !important;
+    white-space: nowrap;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-mobile-accepted-race-actions='true'] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex !important;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.45rem !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-mobile-accepted-race-actions='true'] > button {
+    min-height: 36px;
+    min-width: 0;
+    flex: 1 1 120px;
+    padding-left: 0.65rem !important;
+    padding-right: 0.65rem !important;
+    white-space: nowrap;
+  }
+
+  /* Stage Plans: make the route profile materially larger than the card width.
+     The chart itself becomes a native touch scroller, so the user can swipe
+     from the start of the route to the finish without shrinking the graph. */
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-stage-profile-prepared='true'] {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    touch-action: pan-x pan-y;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] svg[data-ppm-stage-profile-chart='true'] {
+    display: block;
+    width: 760px !important;
+    min-width: 760px !important;
+    max-width: none !important;
+    height: 330px !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-stage-profile-expand,
+  [data-ppm-dashboard-page='race-preparation'] .ppm-stage-profile-close {
+    position: sticky;
+    top: 0.5rem;
+    left: calc(100% - 3rem);
+    z-index: 20;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgb(203 213 225);
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.95);
+    color: rgb(15 23 42);
+    box-shadow: 0 4px 14px rgb(15 23 42 / 0.16);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-stage-profile-expand {
+    display: flex;
+    margin: 0.5rem 0.5rem -3.125rem auto;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] .ppm-stage-profile-close {
+    display: none;
+  }
+
+  body[data-ppm-stage-profile-expanded='true'] {
+    overflow: hidden !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-stage-profile-expanded='true'] {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 10000 !important;
+    display: block !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    padding: 3.75rem 0.75rem 1rem !important;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: white !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-stage-profile-expanded='true'] .ppm-stage-profile-expand {
+    display: none !important;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-stage-profile-expanded='true'] .ppm-stage-profile-close {
+    position: fixed;
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: 0.75rem;
+    left: auto;
+    display: flex !important;
+    margin: 0;
+    font-size: 1.75rem;
+  }
+
+  [data-ppm-dashboard-page='race-preparation'] [data-ppm-stage-profile-expanded='true'] svg[data-ppm-stage-profile-chart='true'] {
+    width: 920px !important;
+    min-width: 920px !important;
+    max-width: none !important;
+    height: calc(100dvh - 5rem) !important;
+    min-height: 420px;
+  }
+}
