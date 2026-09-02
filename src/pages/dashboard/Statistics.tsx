@@ -40,6 +40,11 @@ type TeamCurrentRow = {
   is_active: boolean
 }
 
+type TeamInternationalPointsRow = {
+  team_id: string
+  international_points: number | string | null
+}
+
 type TeamWinnerRow = {
   id: string
   season_number: number
@@ -114,13 +119,6 @@ type CountryRow = {
   code: string
   name: string
 }
-
-
-
-
-
-
-
 
 const PAGE_SIZE = 20
 const RIDER_TOP_LIMIT = 50
@@ -310,7 +308,6 @@ function resolveNumberValue(raw: Record<string, unknown>, aliases: string[]) {
   }
   return null
 }
-
 
 function normalizeNumberLike(value: unknown, fallback = 0): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value
@@ -514,6 +511,7 @@ export default function StatisticsPage() {
   const [sharedLoading, setSharedLoading] = useState(true)
   const [currentSeasonNumber, setCurrentSeasonNumber] = useState<number>(1)
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
+  const [statisticsRefreshNonce, setStatisticsRefreshNonce] = useState(0)
 
   const [teamRows, setTeamRows] = useState<TeamCurrentRow[]>([])
   const [winnerRows, setWinnerRows] = useState<TeamWinnerRow[]>([])
@@ -521,9 +519,7 @@ export default function StatisticsPage() {
   const [riderRows, setRiderRows] = useState<RiderStatsRow[]>([])
   const [countries, setCountries] = useState<CountryRow[]>([])
 
-  const [teamCurrentLoaded, setTeamCurrentLoaded] = useState(false)
   const [teamHistoryLoaded, setTeamHistoryLoaded] = useState(false)
-  const [ridersLoaded, setRidersLoaded] = useState(false)
 
   const [teamCurrentLoading, setTeamCurrentLoading] = useState(false)
   const [teamHistoryLoading, setTeamHistoryLoading] = useState(false)
@@ -591,7 +587,6 @@ export default function StatisticsPage() {
     normalizeStoredPage(storedStatisticsState?.ridersPage, 1)
   )
 
-
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -654,6 +649,27 @@ export default function StatisticsPage() {
       })
     })
   }, [loading, mainTab, teamSubTab, riderSubTab])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const refreshLiveStatistics = () => {
+      setStatisticsRefreshNonce(value => value + 1)
+    }
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') refreshLiveStatistics()
+    }
+
+    window.addEventListener('focus', refreshLiveStatistics)
+    window.addEventListener('pageshow', refreshLiveStatistics)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+
+    return () => {
+      window.removeEventListener('focus', refreshLiveStatistics)
+      window.removeEventListener('pageshow', refreshLiveStatistics)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+    }
+  }, [])
 
   function saveStatisticsReturnState() {
     if (typeof window === 'undefined') return
@@ -952,7 +968,7 @@ export default function StatisticsPage() {
   }, [])
 
   useEffect(() => {
-    if (mainTab !== 'teams' || teamSubTab !== 'current' || teamCurrentLoaded) return
+    if (mainTab !== 'teams' || teamSubTab !== 'current' || sharedLoading) return
 
     let cancelled = false
 
@@ -961,13 +977,31 @@ export default function StatisticsPage() {
       setTeamCurrentError(null)
 
       try {
-        const { data, error: queryError } = await supabase
-          .from('team_rankings_view')
-          .select('*')
+        const targetSeasonYear =
+          currentGameDate !== null
+            ? getSeasonYearFromGameDate(currentGameDate)
+            : 1999 + currentSeasonNumber
 
-        if (queryError) throw queryError
+        const [teamsRes, internationalPointsRes] = await Promise.all([
+          supabase.from('team_rankings_view').select('*'),
+          supabase
+            .from('team_international_points_by_season_v1')
+            .select('team_id, international_points')
+            .eq('season_year', targetSeasonYear),
+        ])
 
-        const rawTeams = (data ?? []) as TeamCurrentRow[]
+        const firstError = teamsRes.error || internationalPointsRes.error
+        if (firstError) throw firstError
+
+        const rawTeams = (teamsRes.data ?? []) as TeamCurrentRow[]
+        const internationalPointsRows =
+          (internationalPointsRes.data ?? []) as TeamInternationalPointsRow[]
+        const internationalPointsByTeamId = new Map(
+          internationalPointsRows.map(row => [
+            row.team_id,
+            normalizeNumberLike(row.international_points, 0),
+          ])
+        )
         const displayNameByClubId = await loadClubDisplayNameMap(
           rawTeams.map(team => team.id)
         )
@@ -978,10 +1012,12 @@ export default function StatisticsPage() {
           rawTeams.map(team => ({
             ...team,
             name: getClubDisplayNameFromMap(displayNameByClubId, team.id, team.name),
-            season_points: normalizeNumberLike(team.season_points, 0),
+            // The Statistics page labels this column as UCI / international points.
+            // Keep normal division ranking points in team_rankings_view untouched and
+            // merge the dedicated international season total only for this page.
+            season_points: internationalPointsByTeamId.get(team.id) ?? 0,
           }))
         )
-        setTeamCurrentLoaded(true)
       } catch (err: any) {
         if (!cancelled) {
           setTeamCurrentError(err?.message ?? t('page.loadFailed'))
@@ -996,7 +1032,15 @@ export default function StatisticsPage() {
     return () => {
       cancelled = true
     }
-  }, [mainTab, teamSubTab, teamCurrentLoaded, t])
+  }, [
+    mainTab,
+    teamSubTab,
+    sharedLoading,
+    currentGameDate,
+    currentSeasonNumber,
+    statisticsRefreshNonce,
+    t,
+  ])
 
   useEffect(() => {
     if (mainTab !== 'teams' || teamSubTab !== 'history' || teamHistoryLoaded) return
@@ -1065,7 +1109,7 @@ export default function StatisticsPage() {
   }, [mainTab, teamSubTab, teamHistoryLoaded, t])
 
   useEffect(() => {
-    if (mainTab !== 'riders' || sharedLoading || ridersLoaded) return
+    if (mainTab !== 'riders' || sharedLoading) return
 
     let cancelled = false
 
@@ -1203,7 +1247,6 @@ export default function StatisticsPage() {
           .filter(row => row !== null) as RiderStatsRow[]
 
         setRiderRows(mergedRiders)
-        setRidersLoaded(true)
       } catch (err: any) {
         if (!cancelled) {
           setRidersError(err?.message ?? t('page.loadFailed'))
@@ -1221,12 +1264,11 @@ export default function StatisticsPage() {
   }, [
     mainTab,
     sharedLoading,
-    ridersLoaded,
     currentGameDate,
     currentSeasonNumber,
+    statisticsRefreshNonce,
     t,
   ])
-
 
   const countryNameByCode = useMemo(() => {
     return new Map(countries.map(country => [country.code, country.name]))
