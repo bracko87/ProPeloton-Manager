@@ -11,6 +11,7 @@ import {
   SUPPORTED_LANGUAGES,
   type SupportedLanguage,
 } from '@/i18n/languages'
+import { supabase } from '@/lib/supabase'
 
 type LanguageSelectorProps = {
   compact?: boolean
@@ -18,6 +19,9 @@ type LanguageSelectorProps = {
   labelClassName?: string
   selectClassName?: string
 }
+
+const LANGUAGE_STORAGE_KEY = 'ppm_language'
+const LANGUAGE_HANDOFF_KEY = 'ppm_language_handoff'
 
 const LANGUAGE_FLAG_CODES: Record<SupportedLanguage, string> = {
   en: 'gb',
@@ -76,6 +80,21 @@ export default function LanguageSelector({
 
   const handleChange = async (language: SupportedLanguage): Promise<void> => {
     setIsOpen(false)
+
+    /*
+     * An explicit language choice made before authentication belongs to the
+     * login that follows. Keep a short-lived session handoff marker so the
+     * AuthProvider can save that choice to the account instead of replacing
+     * it with the account's older preferred_language value during sign-in.
+     */
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language)
+
+      const { data } = await supabase.auth.getSession()
+      if (!data.session?.user) {
+        window.sessionStorage.setItem(LANGUAGE_HANDOFF_KEY, language)
+      }
+    }
 
     await changeApplicationLanguage(language)
   }
