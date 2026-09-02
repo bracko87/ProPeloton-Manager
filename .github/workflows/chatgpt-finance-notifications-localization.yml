@@ -1,0 +1,69 @@
+name: Finance and notifications localization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix_finance_notifications_localization_20260902.py'
+      - '.github/scripts/audit_finance_notifications_localization_20260902.py'
+      - '.github/workflows/chatgpt-finance-notifications-localization.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-audit-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply finance and notification localization fixes
+        run: python3 .github/scripts/fix_finance_notifications_localization_20260902.py
+
+      - name: Audit finance and notification localization
+        run: python3 .github/scripts/audit_finance_notifications_localization_20260902.py
+
+      - name: Validate locale JSON
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for locale in ['en','sr-Latn','de','hr','es','it','fr','ru']:
+              for name in ['finance.json', 'notifications.json']:
+                  path = Path('src/i18n/locales') / locale / name
+                  json.loads(path.read_text(encoding='utf-8'))
+                  print('OK', path)
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit localization fixes
+        run: |
+          git add src/pages/dashboard/Finance.tsx
+          git add src/pages/dashboard/NotificationsPage.tsx
+          git add src/features/notifications/notificationLocalization.ts
+          git add src/i18n/locales/*/finance.json
+          git add src/i18n/locales/*/notifications.json
+          if git diff --cached --quiet; then
+            echo 'No localization changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Fix finance and notification translations'
+          git pull --rebase origin main
+          git push origin HEAD:main
