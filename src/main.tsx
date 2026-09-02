@@ -62,6 +62,15 @@ Object.defineProperty(globalThis, 'locale', {
   get: () => i18n.resolvedLanguage || i18n.language || document.documentElement.lang || 'en',
 })
 
+// Race Detail has a few legacy result-table render paths that still call `t(...)`
+// without a local useTranslation hook. Expose the same raceDetail translation
+// function globally so published race results cannot crash the whole page.
+Object.defineProperty(globalThis, 't', {
+  configurable: true,
+  value: (key: string, options?: Record<string, unknown>) =>
+    i18n.t(key, { ns: 'raceDetail', ...(options ?? {}) }),
+})
+
 const root = createRoot(document.getElementById('app')!)
 
 root.render(
