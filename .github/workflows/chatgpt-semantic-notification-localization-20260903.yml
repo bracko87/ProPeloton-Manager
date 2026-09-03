@@ -1,0 +1,109 @@
+name: Semantic notification localization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix_semantic_notification_titles_20260903.py'
+      - '.github/scripts/fix_all_notification_literals_and_finance_dates_20260902.py'
+      - '.github/scripts/audit_all_notification_literal_coverage_20260902.py'
+      - '.github/workflows/chatgpt-semantic-notification-localization-20260903.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-audit-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply comprehensive notification body/detail localization
+        run: python3 .github/scripts/fix_all_notification_literals_and_finance_dates_20260902.py
+
+      - name: Apply semantic notification titles
+        run: python3 .github/scripts/fix_semantic_notification_titles_20260903.py
+
+      - name: Audit notification literal coverage
+        run: python3 .github/scripts/audit_all_notification_literal_coverage_20260902.py
+
+      - name: Audit semantic title coverage
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          locales = ['sr-Latn','de','hr','es','it','fr','ru']
+          required = None
+          for locale in locales:
+              path = Path('src/i18n/locales') / locale / 'notifications.json'
+              data = json.loads(path.read_text(encoding='utf-8'))
+              titles = data.get('semanticTypeTitles') or {}
+              entity_titles = data.get('semanticTypeEntityTitles') or {}
+              messages = data.get('semanticTypeMessages') or {}
+              assert len(titles) == 69, (locale, len(titles))
+              assert 'STAGE_PLAN_LOCK_REMINDER' in titles
+              assert 'STAGE_PLAN_LOCK_REMINDER' in entity_titles
+              assert 'STAGE_PLAN_LOCK_REMINDER' in messages
+              codes = set(titles)
+              required = codes if required is None else required
+              assert codes == required, f'{locale}: semantic notification code set differs'
+              print('OK', locale, len(titles), 'semantic notification titles')
+
+          hr = json.loads(Path('src/i18n/locales/hr/notifications.json').read_text(encoding='utf-8'))
+          sr = json.loads(Path('src/i18n/locales/sr-Latn/notifications.json').read_text(encoding='utf-8'))
+          assert hr['semanticTypeTitles']['STAGE_PLAN_LOCK_REMINDER'] == 'Planovi za etapu uskoro se zaključavaju'
+          assert hr['semanticTypeEntityTitles']['STAGE_PLAN_LOCK_REMINDER'] == 'Planovi za etapu uskoro se zaključavaju: {{entity}}'
+          assert sr['semanticTypeTitles']['STAGE_PLAN_LOCK_REMINDER'] == 'Planovi za etapu se uskoro zaključavaju'
+
+          source = Path('src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
+          assert 'localizeSemanticTypeCode' in source
+          assert 'localizeSemanticEntityTitle' in source
+          assert 'localizeSemanticMessage' in source
+          assert 'semanticEntityTitle || semanticType' in source
+          print('Semantic notification localization audit PASSED')
+          PY
+
+      - name: Validate locale JSON
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for locale in ['en','sr-Latn','de','hr','es','it','fr','ru']:
+              for name in ['notifications.json', 'finance.json']:
+                  path = Path('src/i18n/locales') / locale / name
+                  json.loads(path.read_text(encoding='utf-8'))
+                  print('OK', path)
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit semantic localization fixes
+        run: |
+          git add src/features/notifications/notificationLocalization.ts
+          git add src/pages/dashboard/finance/gameDate.ts
+          git add src/i18n/locales/*/notifications.json
+          git add src/i18n/locales/*/finance.json
+          if git diff --cached --quiet; then
+            echo 'No semantic localization changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Translate notification topics semantically'
+          git pull --rebase origin main
+          git push origin HEAD:main
