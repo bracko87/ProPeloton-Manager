@@ -216,11 +216,11 @@
     "riderRoles": "Роль гонщика",
     "equipment": "Снаряжение",
     "supplies": "Предметы снабжения",
-    "save": "Сохранить Stage Plan",
-    "saving": "Спасение...",
+    "save": "Сохранить план этапа",
+    "saving": "Сохранение…",
     "saved": "Stage Plan Спасён.",
     "locked": "Stage Plan заблокировано",
-    "viewOnly": "Только вид",
+    "viewOnly": "Только просмотр",
     "edit": "Правка Stage Plan",
     "readiness": "Stage Plan Готовность",
     "loading": "Загрузка Stage Plans…",
@@ -247,7 +247,8 @@
     "hilly": "Хили",
     "cobbles": "Кобблы",
     "sprint": "Спринт",
-    "flat": "Плоский"
+    "flat": "Плоский",
+    "saveShort": "Сохранить"
   },
   "riderRoles": {
     "teamLeader": "Руководитель группы (GC)",

@@ -247,7 +247,8 @@
     "hilly": "Hilly",
     "cobbles": "Cobbles",
     "sprint": "Sprint",
-    "flat": "Flat"
+    "flat": "Flat",
+    "saveShort": "Save"
   },
   "riderRoles": {
     "teamLeader": "Team Leader (GC)",

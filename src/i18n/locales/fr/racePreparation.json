@@ -216,11 +216,11 @@
     "riderRoles": "Rôles des coureurs",
     "equipment": "Équipement",
     "supplies": "Fournitures",
-    "save": "Enregistrer Stage Plan",
-    "saving": "Enregistrement...",
+    "save": "Enregistrer le plan d’étape",
+    "saving": "Enregistrement…",
     "saved": "Stage Plan enregistré.",
     "locked": "Stage Plan verrouillé",
-    "viewOnly": "Afficher uniquement",
+    "viewOnly": "Lecture seule",
     "edit": "Modifier Stage Plan",
     "readiness": "Stage Plan Préparation",
     "loading": "Chargement de Stage Plans...",
@@ -247,7 +247,8 @@
     "hilly": "Hilly",
     "cobbles": "Cobbles",
     "sprint": "Sprint",
-    "flat": "Plat"
+    "flat": "Plat",
+    "saveShort": "Enregistrer"
   },
   "riderRoles": {
     "teamLeader": "Chef d'équipe (GC)",

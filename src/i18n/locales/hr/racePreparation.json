@@ -216,7 +216,7 @@
     "riderRoles": "Uloge vozača",
     "equipment": "Oprema",
     "supplies": "Zalihe",
-    "save": "Spremi Stage Plan",
+    "save": "Spremi plan etape",
     "saving": "Spremanje…",
     "saved": "Stage Plan je spremljen.",
     "locked": "Stage Plan je zaključan",
@@ -247,7 +247,8 @@
     "hilly": "Brdovito",
     "cobbles": "Kocka",
     "sprint": "Sprint",
-    "flat": "Ravničarska"
+    "flat": "Ravničarska",
+    "saveShort": "Spremi"
   },
   "riderRoles": {
     "teamLeader": "Vođa tima (GC)",

@@ -216,7 +216,7 @@
     "riderRoles": "Fahrerrollen",
     "equipment": "Ausrüstung",
     "supplies": "Vorräte",
-    "save": "Stage Plan speichern",
+    "save": "Etappenplan speichern",
     "saving": "Wird gespeichert…",
     "saved": "Stage Plan gespeichert.",
     "locked": "Stage Plan gesperrt",
@@ -247,7 +247,8 @@
     "hilly": "Hügelig",
     "cobbles": "Kopfsteinpflaster",
     "sprint": "Sprint",
-    "flat": "Flach"
+    "flat": "Flach",
+    "saveShort": "Speichern"
   },
   "riderRoles": {
     "teamLeader": "Teamkapitän (GC)",

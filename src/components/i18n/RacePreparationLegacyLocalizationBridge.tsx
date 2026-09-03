@@ -89,6 +89,8 @@ const options: LegacyLocalizationBridgeOptions = {
     'Equipment': 'stagePlans.equipment',
     'Supplies': 'stagePlans.supplies',
     'Save Stage Plan': 'stagePlans.save',
+    'Save': 'stagePlans.saveShort',
+    'Saving…': 'stagePlans.saving',
     'Stage Plan locked': 'stagePlans.locked',
     'View only': 'stagePlans.viewOnly',
     'Edit Stage Plan': 'stagePlans.edit',

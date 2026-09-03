@@ -216,11 +216,11 @@
     "riderRoles": "Roles del ciclista",
     "equipment": "Equipamiento",
     "supplies": "Suministros",
-    "save": "Guardar Stage Plan",
-    "saving": "Guardando...",
+    "save": "Guardar plan de etapa",
+    "saving": "Guardando…",
     "saved": "Stage Plan guardado.",
     "locked": "Stage Plan bloqueado",
-    "viewOnly": "Ver sólo",
+    "viewOnly": "Solo lectura",
     "edit": "Editar Stage Plan",
     "readiness": "Stage Plan Preparación",
     "loading": "Cargando Stage Plans...",
@@ -247,7 +247,8 @@
     "hilly": "Ondulado",
     "cobbles": "Adoquines",
     "sprint": "Sprint",
-    "flat": "Plano"
+    "flat": "Plano",
+    "saveShort": "Guardar"
   },
   "riderRoles": {
     "teamLeader": "Jefe de equipo (GC)",

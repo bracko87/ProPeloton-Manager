@@ -216,11 +216,11 @@
     "riderRoles": "Ruoli di ciclista",
     "equipment": "Equipaggiamento",
     "supplies": "Forniture",
-    "save": "Salva Stage Plan",
-    "saving": "Salvataggio...",
+    "save": "Salva piano di tappa",
+    "saving": "Salvataggio…",
     "saved": "Stage Plan salvato.",
     "locked": "Stage Plan bloccato",
-    "viewOnly": "Solo vista",
+    "viewOnly": "Sola visualizzazione",
     "edit": "Modifica Stage Plan",
     "readiness": "Stage Plan Prontitá",
     "loading": "Caricamento di Stage Plans...",
@@ -247,7 +247,8 @@
     "hilly": "Hilly",
     "cobbles": "Ciottoli",
     "sprint": "Sprint",
-    "flat": "Piano"
+    "flat": "Piano",
+    "saveShort": "Salva"
   },
   "riderRoles": {
     "teamLeader": "Capo squadra (GC)",
