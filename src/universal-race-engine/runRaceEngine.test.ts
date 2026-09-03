@@ -681,6 +681,138 @@ function createSuccessfulOpeningEscapeInput(): UniversalRaceEngineInput {
   }
 
 
+function createPhase11hLeaderRescueInput({
+  seed,
+  steepClimb,
+  protectHelpers,
+}: {
+  readonly seed: string
+  readonly steepClimb: boolean
+  readonly protectHelpers: boolean
+}): UniversalRaceEngineInput {
+  const base = createExpandedFieldInput(48)
+  const protectedRider = base.riders[0]
+  const protectedTeamId = protectedRider.teamId
+  return {
+    ...base,
+    race: { ...base.race, raceType: 'stage_race', stageCount: 3 },
+    stage: steepClimb
+      ? {
+          ...base.stage,
+          stageNumber: 2,
+          terrainType: 'mountain',
+          profileType: 'climber',
+          finishType: 'summit_finish',
+          elevationGainM: 1200,
+          terrainPercentages: { flat: 20, hilly: 10, mountain: 70, cobbled: 0 },
+          profilePoints: [
+            { km: 0, elevationM: 0 },
+            { km: 60, elevationM: 0 },
+            { km: 80, elevationM: 1200 },
+            { km: 120, elevationM: 1200 },
+          ],
+        }
+      : { ...base.stage, stageNumber: 2 },
+    engine: { ...base.engine, deterministicSeed: seed },
+    incidentModel: { enabled: true },
+    preStageStandings: base.riders.map((rider, index) => ({
+      classificationType: 'general' as const,
+      riderId: rider.riderId,
+      teamId: rider.teamId,
+      rank: index + 1,
+      gapSeconds: index * 10,
+      points: null,
+    })),
+    weather: {
+      ...base.weather!,
+      condition: 'heavy_rain',
+      temperatureC: 5,
+      windKmh: 55,
+      precipitationMm: 20,
+      rainProbabilityPct: 100,
+      cancelled: false,
+      cancellationReason: null,
+      source: 'phase11h-rescue-regression',
+      snapshot: {},
+    },
+    riders: base.riders.map((rider, index) => ({
+      ...rider,
+      fatigueBeforeStage: 85,
+      resistance: 30,
+      raceIQ: 30,
+      preparationModifiers: {
+        inStageEnergyCostMultiplier: 1,
+        postStageFatigueMultiplier: 1,
+        postStageRecoveryBonusPoints: 0,
+        incidentRiskMultiplier: 1.4,
+        mechanicalIncidentRiskMultiplier: 1.5,
+        mechanicalTimeLossMultiplier: 1,
+        equipmentConditionPercent: index % 2 === 0 ? 10 : 35,
+      },
+    })),
+    stagePlans: base.stagePlans.map((plan) => ({
+      ...plan,
+      riders: plan.riders.map((riderPlan) => ({
+        ...riderPlan,
+        stageRole:
+          riderPlan.riderId === protectedRider.riderId
+            ? 'team_leader_gc'
+            : plan.teamId === protectedTeamId
+              ? 'free_role'
+              : riderPlan.stageRole,
+        commands:
+          protectHelpers &&
+          plan.teamId === protectedTeamId &&
+          riderPlan.riderId !== protectedRider.riderId
+            ? {
+                phase1: 'protect_leader',
+                phase2: 'protect_leader',
+                phase3: 'protect_leader',
+                phase4: 'protect_leader',
+              }
+            : riderPlan.commands,
+      })),
+    })),
+  }
+}
+
+function createPhase11hLateClimbEnergyInput(fatigueBeforeStage: number): UniversalRaceEngineInput {
+  const raw = createPhase11gMixedStressInput(2)
+  return {
+    ...raw,
+    engine: { ...raw.engine, deterministicSeed: 'phase11h-late-climb-energy' },
+    incidentModel: { enabled: false },
+    stage: {
+      ...raw.stage,
+      distanceKm: 120,
+      terrainType: 'mountain',
+      profileType: 'climber',
+      finishType: 'flat_finish',
+      elevationGainM: 1400,
+      terrainPercentages: { flat: 25, hilly: 10, mountain: 65, cobbled: 0 },
+      profilePoints: [
+        { km: 0, elevationM: 0 },
+        { km: 84, elevationM: 100 },
+        { km: 104, elevationM: 1300 },
+        { km: 120, elevationM: 1300 },
+      ],
+    },
+    points: raw.points.map((point) =>
+      point.pointType === 'FINISH'
+        ? { ...point, kmFromStart: 120 }
+        : point.pointType === 'KOM'
+          ? { ...point, kmFromStart: 104 }
+          : point,
+    ),
+    riders: raw.riders.map((rider) => ({
+      ...rider,
+      fatigueBeforeStage,
+      startStamina: 95,
+    })),
+  }
+}
+
+
 function createFlatBunchSprintInput(): UniversalRaceEngineInput {
   const base = createExpandedFieldInput(26)
   return {
@@ -15642,6 +15774,12 @@ describe('Phase 11B production lifecycle cutover', () => {
           km: point.km,
           elevation_m: point.elevationM,
         })),
+        intermediate_sprints: [
+          { name: 'Profile sprint', km: 52 },
+        ],
+        mountain_climbs: [
+          { name: 'Profile Cat 3', category: 'Cat 3', km: 70 },
+        ],
       },
       stagePoints: base.points.map((point) => ({
         id: point.pointId,
@@ -15752,6 +15890,35 @@ describe('Phase 11B production lifecycle cutover', () => {
     )
     expect(productionInput.incidentModel?.enabled).toBe(true)
     expect(productionInput.preparation).toBeDefined()
+    expect(
+      productionInput.points.find((point) =>
+        point.pointType === 'INTERMEDIATE_SPRINT',
+      )?.kmFromStart,
+    ).toBe(52)
+    expect(
+      productionInput.points.find((point) => point.pointType === 'KOM')
+        ?.kmFromStart,
+    ).toBe(70)
+    expect(
+      productionInput.points.find((point) => point.pointType === 'KOM')
+        ?.komCategory,
+    ).toBe('3')
+    expect(
+      productionInput.points.find((point) => point.pointType === 'KOM')
+        ?.metadata.reconciled_to_profile_marker,
+    ).toBe(true)
+    expect(() =>
+      buildProductionUniversalRaceEngineInput({
+        ...sources,
+        profile: {
+          ...sources.profile,
+          mountain_climbs: [
+            { name: 'Profile Cat 3', category: 'Cat 3', km: 70 },
+            { name: 'Unexpected extra climb', category: 'Cat 4', km: 95 },
+          ],
+        },
+      }),
+    ).toThrow(/stage point\/profile mismatch/)
     expect(() => runRaceEngine(productionInput)).not.toThrow()
   })
 
@@ -15933,7 +16100,7 @@ describe('Phase 11G organic race physics and replay continuity', () => {
   it('publishes the Phase 11G engine build marker', () => {
     const result = runRaceEngine(createValidInput())
     expect(result.phase78Acceptance.engineBuild).toBe(
-      'phase11g-continuous-road-physics-v3-2026-09-03',
+      'phase11g-continuous-road-physics-v4-2026-09-03',
     )
   })
 
@@ -16578,6 +16745,111 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(finishRows.map((row) => row.pointsAwarded)).toEqual(
       finishPoint.pointsScheme,
     )
+  })
+
+
+  it('publishes compact live-energy percentage and condition labels on every replay rider state', () => {
+    const result = runRaceEngine(createValidInput())
+    result.replayTimeline.checkpoints.forEach((checkpoint) => {
+      checkpoint.riderStates.forEach((state) => {
+        expect(state.liveEnergyPercent).toBeGreaterThanOrEqual(0)
+        expect(state.liveEnergyPercent).toBeLessThanOrEqual(100)
+        expect(state.condition).toBe(
+          state.liveEnergyPercent >= 70
+            ? 'fresh'
+            : state.liveEnergyPercent >= 40
+              ? 'stable'
+              : state.liveEnergyPercent >= 18
+                ? 'under_pressure'
+                : 'critical',
+        )
+      })
+    })
+  })
+
+  it('makes a long steep late climb materially harder to hold when riders arrive with less reserve', () => {
+    const fresh = runRaceEngine(createPhase11hLateClimbEnergyInput(5))
+    const tired = runRaceEngine(createPhase11hLateClimbEnergyInput(45))
+    const freshSelection = fresh.roadRaceResolution.phase4Finish!.lateTerrainSelection!
+    const tiredSelection = tired.roadRaceResolution.phase4Finish!.lateTerrainSelection!
+
+    expect(freshSelection.averageGradientPercent).toBeGreaterThan(4)
+    expect(freshSelection.minimumEnergyToHold).toBeGreaterThanOrEqual(8)
+    expect(tiredSelection.droppedRiderIds.length).toBeGreaterThan(
+      freshSelection.droppedRiderIds.length,
+    )
+    expect(fresh.replaySynchronization.synchronized).toBe(true)
+    expect(tired.replaySynchronization.synchronized).toBe(true)
+  })
+
+  it('keeps finish commentary locked to the authoritative post-incident winner', () => {
+    const result = runRaceEngine(createValidInput())
+    const winner = result.finishResolution.classification.find(
+      (row) => row.status === 'finished' && row.rank === 1,
+    )!
+    const finalCheckpoint = result.replayTimeline.checkpoints.at(-1)!
+    const finishEntries = finalCheckpoint.commentary.filter(
+      (entry) => entry.eventType === 'finish',
+    )
+
+    expect(finishEntries).toHaveLength(1)
+    expect(finishEntries[0].riderIds).toEqual([winner.riderId])
+    expect(finishEntries[0].teamIds).toEqual([winner.teamId])
+    expect(result.replaySynchronization.finishCommentaryMatchesClassification).toBe(true)
+    expect(result.replaySynchronization.issues).not.toContain(
+      'finish_commentary_winner_mismatch',
+    )
+  })
+
+  it('lets protect-leader helpers physically collect a classification leader and pay the chase energy cost', () => {
+    const result = runRaceEngine(
+      createPhase11hLeaderRescueInput({
+        seed: 'rescue-seed-17',
+        steepClimb: false,
+        protectHelpers: true,
+      }),
+    )
+    const helpers = result.phase10Incidents.autonomousChase.teamRescueHelpers
+
+    expect(helpers).toHaveLength(5)
+    expect(helpers.every((row) => row.protectedRiderId === 'expanded-rider-01')).toBe(true)
+    expect(helpers.every((row) => row.actualRejoinKm !== null)).toBe(true)
+    expect(helpers.every((row) => row.chaseEnergyCostPoints > 0)).toBe(true)
+    expect(
+      result.replayTimeline.checkpoints.some((checkpoint) =>
+        checkpoint.commentary.some(
+          (entry) => entry.title === 'Team drops back for its leader',
+        ),
+      ),
+    ).toBe(true)
+    expect(result.replaySynchronization.synchronized).toBe(true)
+  })
+
+  it('requires protect-leader on a steep climb and still allows the rescue attempt to fail physically', () => {
+    const withoutProtection = runRaceEngine(
+      createPhase11hLeaderRescueInput({
+        seed: 'steep2-rescue-seed-201',
+        steepClimb: true,
+        protectHelpers: false,
+      }),
+    )
+    const withProtection = runRaceEngine(
+      createPhase11hLeaderRescueInput({
+        seed: 'steep2-protect-rescue-seed-180',
+        steepClimb: true,
+        protectHelpers: true,
+      }),
+    )
+    const protectedHelpers =
+      withProtection.phase10Incidents.autonomousChase.teamRescueHelpers
+
+    expect(withoutProtection.phase10Incidents.autonomousChase.teamRescueHelperCount).toBe(0)
+    expect(protectedHelpers).toHaveLength(5)
+    expect(protectedHelpers.every((row) => row.actualRejoinKm === null)).toBe(true)
+    expect(protectedHelpers.every((row) => row.finalGapToTargetSeconds > 60)).toBe(true)
+    expect(protectedHelpers.every((row) => row.chaseEnergyCostPoints > 4)).toBe(true)
+    expect(withProtection.replaySynchronization.synchronized).toBe(true)
+    expect(withProtection.replaySynchronization.issues).toEqual([])
   })
 
 })
