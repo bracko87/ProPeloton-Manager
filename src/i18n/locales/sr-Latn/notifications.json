@@ -361,6 +361,48 @@
       }
     }
   },
+  "seasonStarted": {
+    "typeLabel": "Početak sezone",
+    "title": "Sezona {{season}}: rokovi za trke početkom januara",
+    "titleGeneric": "Rokovi za trke početkom januara",
+    "feedMessage": "Sezona {{season}} počinje sa sažetim januarskim kalendarom trka. Za trke koje počinju od 1. do {{earlyEndDay}}. januara, prijave se otvaraju 1. januara i zatvaraju {{earlyApplicationCloseDays}} {{earlyApplicationCloseUnit}} pre trke; spisak timova se objavljuje istog dana. Prijava vozača/startne liste ostaje otvorena do {{earlyStartlistHours}} {{earlyStartlistHourUnit}} pre 1. etape. Od {{lateStartDay}}. januara više ne važi posebno pravilo koje dopušta predaju startne liste do {{earlyStartlistHours}} {{earlyStartlistHourUnit}} pre etape; u januaru i dalje važe skraćeni rokovi, a od februara se primenjuje standardni raspored. Redovno proveravajte Kalendar i Detalje trke kako ne biste propustili rok.",
+    "feedMessageGeneric": "Sezona počinje sa sažetim januarskim kalendarom trka. Rokovi za prijavu, spisak timova i startnu listu početkom januara kraći su nego inače. Redovno proveravajte Kalendar i Detalje trke kako ne biste propustili rok.",
+    "intro": "Sezona {{season}} počinje sa sažetim januarskim kalendarom trka. Rokovi za prijavu i startnu listu na početku sezone namerno su kraći nego inače, zato pažljivo isplanirajte prvi blok trka.",
+    "introGeneric": "Sezona počinje sa sažetim januarskim kalendarom trka. Rokovi za prijavu i startnu listu na početku sezone namerno su kraći nego inače, zato pažljivo isplanirajte prvi blok trka.",
+    "warning": "Januarski raspored je namerno sažetiji od uobičajenog kalendara. Tokom prvog bloka trka često proveravajte Kalendar i Detalje trke kako ne biste propustili rok za prijavu, spisak timova ili startnu listu.",
+    "labels": {
+      "season": "Sezona",
+      "applicationsEarly": "Prijave · 1–{{earlyEndDay}}. januara",
+      "teamListEarly": "Spisak timova · 1–{{earlyEndDay}}. januara",
+      "startlistEarly": "Startna lista · 1–{{earlyEndDay}}. januara",
+      "lateJanuary": "{{lateStartDay}}–31. januara",
+      "fromFebruary": "Od februara"
+    },
+    "values": {
+      "season": "Sezona {{season}}",
+      "newSeason": "Nova sezona",
+      "applicationsEarly": "Otvaraju se 1. januara · zatvaraju se {{days}} {{dayUnit}} pre trke",
+      "teamListEarly": "Objavljuje se {{days}} {{dayUnit}} pre trke, kada se prijave zatvore",
+      "startlistEarly": "Otvorena do {{hours}} {{hourUnit}} pre 1. etape",
+      "lateJanuary": "Prijave se zatvaraju {{appDays}} {{appDayUnit}} pre trke · startna lista se zatvara {{startDays}} {{startDayUnit}} pre trke",
+      "standard": "Standardni raspored: prijave se otvaraju {{openDays}} {{openDayUnit}} pre trke, zatvaraju {{closeDays}} {{closeDayUnit}} pre trke · startna lista se zatvara {{startDays}} {{startDayUnit}} pre trke"
+    },
+    "actions": {
+      "calendar": "Kalendar sezone",
+      "overview": "Pregled sezone"
+    },
+    "units": {
+      "gameDay_one": "dan u igri",
+      "gameDay_few": "dana u igri",
+      "gameDay_other": "dana u igri",
+      "gameHour_one": "sat u igri",
+      "gameHour_few": "sata u igri",
+      "gameHour_other": "sati u igri",
+      "day_one": "dan",
+      "day_few": "dana",
+      "day_other": "dana"
+    }
+  },
   "templateValues": {
     "available": "Dostupno",
     "accepted": "Prihvaćeno",

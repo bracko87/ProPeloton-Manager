@@ -679,7 +679,7 @@ def audit() -> None:
         for key in ("title", "feedMessage", "intro", "warning"):
             if not block.get(key):
                 raise RuntimeError(f"{locale}: missing {key}")
-        if len(block["labels"]) != 6 or len(block["values"]) != 6:
+        if len(block["labels"]) != 6 or len(block["values"]) != 7:
             raise RuntimeError(f"{locale}: incomplete detail-row localization")
 
     print("SEASON_STARTED localization audit PASSED")

@@ -361,6 +361,48 @@
       }
     }
   },
+  "seasonStarted": {
+    "typeLabel": "Početak sezone",
+    "title": "Sezona {{season}}: rokovi za utrke početkom siječnja",
+    "titleGeneric": "Rokovi za utrke početkom siječnja",
+    "feedMessage": "Sezona {{season}} počinje sa sažetim siječanjskim kalendarom utrka. Za utrke koje počinju od 1. do {{earlyEndDay}}. siječnja, prijave se otvaraju 1. siječnja i zatvaraju {{earlyApplicationCloseDays}} {{earlyApplicationCloseUnit}} prije utrke; popis momčadi objavljuje se istog dana. Predaja vozača/startne liste ostaje otvorena do {{earlyStartlistHours}} {{earlyStartlistHourUnit}} prije 1. etape. Od {{lateStartDay}}. siječnja više ne vrijedi posebno pravilo koje dopušta predaju startne liste do {{earlyStartlistHours}} {{earlyStartlistHourUnit}} prije etape; u siječnju i dalje vrijede skraćeni rokovi, a od veljače vrijedi standardni raspored. Često provjeravajte Kalendar i Detalje utrke kako ne biste propustili rok.",
+    "feedMessageGeneric": "Sezona počinje sa sažetim siječanjskim kalendarom utrka. Rokovi za prijave, popis momčadi i startnu listu početkom siječnja kraći su nego inače. Često provjeravajte Kalendar i Detalje utrke kako ne biste propustili rok.",
+    "intro": "Sezona {{season}} počinje sa sažetim siječanjskim kalendarom utrka. Rokovi za prijave i startne liste na početku sezone namjerno su kraći nego inače, stoga pažljivo planirajte prvi blok utrka.",
+    "introGeneric": "Sezona počinje sa sažetim siječanjskim kalendarom utrka. Rokovi za prijave i startne liste na početku sezone namjerno su kraći nego inače, stoga pažljivo planirajte prvi blok utrka.",
+    "warning": "Siječanjski raspored namjerno je sažetiji od uobičajenog kalendara. Tijekom prvog bloka utrka često provjeravajte Kalendar i Detalje utrke kako ne biste propustili rok za prijavu, popis momčadi ili startnu listu.",
+    "labels": {
+      "season": "Sezona",
+      "applicationsEarly": "Prijave · 1–{{earlyEndDay}}. siječnja",
+      "teamListEarly": "Popis momčadi · 1–{{earlyEndDay}}. siječnja",
+      "startlistEarly": "Startna lista · 1–{{earlyEndDay}}. siječnja",
+      "lateJanuary": "{{lateStartDay}}–31. siječnja",
+      "fromFebruary": "Od veljače"
+    },
+    "values": {
+      "season": "Sezona {{season}}",
+      "newSeason": "Nova sezona",
+      "applicationsEarly": "Otvaraju se 1. siječnja · zatvaraju se {{days}} {{dayUnit}} prije utrke",
+      "teamListEarly": "Objavljuje se {{days}} {{dayUnit}} prije utrke, kada se prijave zatvore",
+      "startlistEarly": "Otvorena do {{hours}} {{hourUnit}} prije 1. etape",
+      "lateJanuary": "Prijave se zatvaraju {{appDays}} {{appDayUnit}} prije utrke · startna lista se zatvara {{startDays}} {{startDayUnit}} prije utrke",
+      "standard": "Standardni raspored: prijave se otvaraju {{openDays}} {{openDayUnit}} prije utrke, zatvaraju {{closeDays}} {{closeDayUnit}} prije utrke · startna lista se zatvara {{startDays}} {{startDayUnit}} prije utrke"
+    },
+    "actions": {
+      "calendar": "Kalendar sezone",
+      "overview": "Pregled sezone"
+    },
+    "units": {
+      "gameDay_one": "dan u igri",
+      "gameDay_few": "dana u igri",
+      "gameDay_other": "dana u igri",
+      "gameHour_one": "sat u igri",
+      "gameHour_few": "sata u igri",
+      "gameHour_other": "sati u igri",
+      "day_one": "dan",
+      "day_few": "dana",
+      "day_other": "dana"
+    }
+  },
   "templateValues": {
     "available": "Dostupno",
     "accepted": "Prihvaćeno",

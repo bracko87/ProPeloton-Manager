@@ -16303,8 +16303,8 @@ export function getNotificationDetailRows(
   const template = getNotificationTemplate(item.type_code)
   const rows = template?.getDetailRows?.(item) || []
   return rows.map(row => ({
-    label: localizeNotificationDetailLabel(row.label),
-    value: localizeNotificationValue(row.value),
+    label: localizeNotificationDetailLabel(row.label, item),
+    value: localizeNotificationValue(row.value, item),
   }))
 }
 

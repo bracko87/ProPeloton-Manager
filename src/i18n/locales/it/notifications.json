@@ -361,6 +361,45 @@
       }
     }
   },
+  "seasonStarted": {
+    "typeLabel": "Inizio stagione",
+    "title": "Stagione {{season}}: scadenze gare di inizio gennaio",
+    "titleGeneric": "Scadenze gare di inizio gennaio",
+    "feedMessage": "La stagione {{season}} inizia con un calendario gare di gennaio più compresso. Per le gare che iniziano dal 1° al {{earlyEndDay}} gennaio, le iscrizioni aprono il 1° gennaio e chiudono {{earlyApplicationCloseDays}} {{earlyApplicationCloseUnit}} prima della gara; l'elenco delle squadre viene annunciato lo stesso giorno. L'invio dei corridori/della lista di partenza resta aperto fino a {{earlyStartlistHours}} {{earlyStartlistHourUnit}} prima della Tappa 1. Dal {{lateStartDay}} gennaio non si applica più la regola speciale che permette di inviare la lista di partenza fino a {{earlyStartlistHours}} {{earlyStartlistHourUnit}} prima della tappa; gennaio mantiene comunque scadenze ridotte e da febbraio si applica il calendario standard. Controlla spesso Calendario e Dettagli gara per non perdere nessuna scadenza.",
+    "feedMessageGeneric": "La stagione inizia con un calendario gare di gennaio più compresso. Le scadenze per iscrizioni, elenco squadre e lista di partenza a inizio gennaio sono più brevi del normale. Controlla spesso Calendario e Dettagli gara per non perdere nessuna scadenza.",
+    "intro": "La stagione {{season}} inizia con un calendario gare di gennaio più compresso. Le scadenze per iscrizioni e lista di partenza a inizio stagione sono volutamente più brevi del normale, quindi pianifica con attenzione il primo blocco di gare.",
+    "introGeneric": "La stagione inizia con un calendario gare di gennaio più compresso. Le scadenze per iscrizioni e lista di partenza a inizio stagione sono volutamente più brevi del normale, quindi pianifica con attenzione il primo blocco di gare.",
+    "warning": "Gennaio è volutamente più compresso rispetto al calendario normale. Durante il primo blocco di gare controlla spesso Calendario e Dettagli gara per non perdere una scadenza di iscrizione, elenco squadre o lista di partenza.",
+    "labels": {
+      "season": "Stagione",
+      "applicationsEarly": "Iscrizioni · 1–{{earlyEndDay}} gennaio",
+      "teamListEarly": "Elenco squadre · 1–{{earlyEndDay}} gennaio",
+      "startlistEarly": "Lista di partenza · 1–{{earlyEndDay}} gennaio",
+      "lateJanuary": "{{lateStartDay}}–31 gennaio",
+      "fromFebruary": "Da febbraio"
+    },
+    "values": {
+      "season": "Stagione {{season}}",
+      "newSeason": "Nuova stagione",
+      "applicationsEarly": "Apertura 1° gennaio · chiusura {{days}} {{dayUnit}} prima della gara",
+      "teamListEarly": "Annunciato {{days}} {{dayUnit}} prima della gara, alla chiusura delle iscrizioni",
+      "startlistEarly": "Aperta fino a {{hours}} {{hourUnit}} prima della Tappa 1",
+      "lateJanuary": "Iscrizioni chiuse {{appDays}} {{appDayUnit}} prima · lista di partenza chiusa {{startDays}} {{startDayUnit}} prima",
+      "standard": "Calendario standard: iscrizioni aperte {{openDays}} {{openDayUnit}} prima, chiuse {{closeDays}} {{closeDayUnit}} prima · lista di partenza chiusa {{startDays}} {{startDayUnit}} prima"
+    },
+    "actions": {
+      "calendar": "Calendario stagione",
+      "overview": "Panoramica stagione"
+    },
+    "units": {
+      "gameDay_one": "giorno di gioco",
+      "gameDay_other": "giorni di gioco",
+      "gameHour_one": "ora di gioco",
+      "gameHour_other": "ore di gioco",
+      "day_one": "giorno",
+      "day_other": "giorni"
+    }
+  },
   "templateValues": {
     "available": "Disponibile",
     "accepted": "Accettato",

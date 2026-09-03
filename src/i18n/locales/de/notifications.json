@@ -361,6 +361,45 @@
       }
     }
   },
+  "seasonStarted": {
+    "typeLabel": "Saisonstart",
+    "title": "Saison {{season}}: Rennfristen Anfang Januar",
+    "titleGeneric": "Rennfristen Anfang Januar",
+    "feedMessage": "Saison {{season}} beginnt mit einem komprimierten Rennkalender im Januar. Für Rennen mit Start vom 1. bis {{earlyEndDay}}. Januar öffnen die Anmeldungen am 1. Januar und schließen {{earlyApplicationCloseDays}} {{earlyApplicationCloseUnit}} vor dem Rennen; die Teamliste wird am selben Tag bekannt gegeben. Die Fahrer-/Startlistenmeldung bleibt bis {{earlyStartlistHours}} {{earlyStartlistHourUnit}} vor Etappe 1 geöffnet. Ab dem {{lateStartDay}}. Januar entfällt diese Sonderregel mit {{earlyStartlistHours}} {{earlyStartlistHourUnit}} vor Etappe 1; im Januar gelten weiterhin verkürzte Fristen, ab Februar der Standardzeitplan. Prüfe Kalender und Renndetails regelmäßig, damit du keine Frist verpasst.",
+    "feedMessageGeneric": "Die Saison beginnt mit einem komprimierten Rennkalender im Januar. Die Fristen für Anmeldung, Teamliste und Startliste sind Anfang Januar kürzer als üblich. Prüfe Kalender und Renndetails regelmäßig, damit du keine Frist verpasst.",
+    "intro": "Saison {{season}} beginnt mit einem komprimierten Rennkalender im Januar. Die Anmelde- und Startlistenfristen zu Saisonbeginn sind bewusst kürzer als üblich. Plane daher den ersten Rennblock sorgfältig.",
+    "introGeneric": "Die Saison beginnt mit einem komprimierten Rennkalender im Januar. Die Anmelde- und Startlistenfristen zu Saisonbeginn sind bewusst kürzer als üblich. Plane daher den ersten Rennblock sorgfältig.",
+    "warning": "Der Januar ist bewusst stärker komprimiert als der normale Kalender. Prüfe während des ersten Rennblocks regelmäßig Kalender und Renndetails, damit du keine Anmelde-, Teamlisten- oder Startlistenfrist verpasst.",
+    "labels": {
+      "season": "Saison",
+      "applicationsEarly": "Anmeldungen · 1.–{{earlyEndDay}}. Januar",
+      "teamListEarly": "Teamliste · 1.–{{earlyEndDay}}. Januar",
+      "startlistEarly": "Startliste · 1.–{{earlyEndDay}}. Januar",
+      "lateJanuary": "{{lateStartDay}}.–31. Januar",
+      "fromFebruary": "Ab Februar"
+    },
+    "values": {
+      "season": "Saison {{season}}",
+      "newSeason": "Neue Saison",
+      "applicationsEarly": "Öffnen am 1. Januar · schließen {{days}} {{dayUnit}} vor dem Rennen",
+      "teamListEarly": "Wird {{days}} {{dayUnit}} vor dem Rennen bekannt gegeben, wenn die Anmeldung schließt",
+      "startlistEarly": "Geöffnet bis {{hours}} {{hourUnit}} vor Etappe 1",
+      "lateJanuary": "Anmeldeschluss {{appDays}} {{appDayUnit}} vorher · Startlistenschluss {{startDays}} {{startDayUnit}} vorher",
+      "standard": "Standardzeitplan: Anmeldung öffnet {{openDays}} {{openDayUnit}} vorher, schließt {{closeDays}} {{closeDayUnit}} vorher · Startlistenschluss {{startDays}} {{startDayUnit}} vorher"
+    },
+    "actions": {
+      "calendar": "Saisonkalender",
+      "overview": "Saisonübersicht"
+    },
+    "units": {
+      "gameDay_one": "Spieltag",
+      "gameDay_other": "Spieltage",
+      "gameHour_one": "Spielstunde",
+      "gameHour_other": "Spielstunden",
+      "day_one": "Tag",
+      "day_other": "Tage"
+    }
+  },
   "templateValues": {
     "available": "Verfügbar",
     "accepted": "Angenommen",

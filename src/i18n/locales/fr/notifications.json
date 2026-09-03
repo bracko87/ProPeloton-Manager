@@ -361,6 +361,45 @@
       }
     }
   },
+  "seasonStarted": {
+    "typeLabel": "Début de saison",
+    "title": "Saison {{season}} : échéances des courses de début janvier",
+    "titleGeneric": "Échéances des courses de début janvier",
+    "feedMessage": "La saison {{season}} commence avec un calendrier de courses de janvier plus resserré. Pour les courses débutant du 1er au {{earlyEndDay}} janvier, les inscriptions ouvrent le 1er janvier et ferment {{earlyApplicationCloseDays}} {{earlyApplicationCloseUnit}} avant la course ; la liste des équipes est annoncée le même jour. La soumission des coureurs/de la liste de départ reste ouverte jusqu’à {{earlyStartlistHours}} {{earlyStartlistHourUnit}} avant l’étape 1. À partir du {{lateStartDay}} janvier, la règle spéciale permettant de soumettre la liste de départ jusqu’à {{earlyStartlistHours}} {{earlyStartlistHourUnit}} avant l’étape ne s’applique plus ; janvier conserve des délais raccourcis et le calendrier standard s’applique à partir de février. Consulte régulièrement le Calendrier et les Détails de la course pour ne manquer aucune échéance.",
+    "feedMessageGeneric": "La saison commence avec un calendrier de courses de janvier plus resserré. Les délais d’inscription, de liste des équipes et de liste de départ de début janvier sont plus courts que d’habitude. Consulte régulièrement le Calendrier et les Détails de la course pour ne manquer aucune échéance.",
+    "intro": "La saison {{season}} commence avec un calendrier de courses de janvier plus resserré. Les délais d’inscription et de liste de départ en début de saison sont volontairement plus courts que d’habitude ; planifie donc soigneusement le premier bloc de courses.",
+    "introGeneric": "La saison commence avec un calendrier de courses de janvier plus resserré. Les délais d’inscription et de liste de départ en début de saison sont volontairement plus courts que d’habitude ; planifie donc soigneusement le premier bloc de courses.",
+    "warning": "Le calendrier de janvier est volontairement plus resserré que le calendrier normal. Pendant le premier bloc de courses, consulte régulièrement le Calendrier et les Détails de la course afin de ne manquer aucune échéance d’inscription, de liste des équipes ou de liste de départ.",
+    "labels": {
+      "season": "Saison",
+      "applicationsEarly": "Inscriptions · 1er–{{earlyEndDay}} janvier",
+      "teamListEarly": "Liste des équipes · 1er–{{earlyEndDay}} janvier",
+      "startlistEarly": "Liste de départ · 1er–{{earlyEndDay}} janvier",
+      "lateJanuary": "{{lateStartDay}}–31 janvier",
+      "fromFebruary": "À partir de février"
+    },
+    "values": {
+      "season": "Saison {{season}}",
+      "newSeason": "Nouvelle saison",
+      "applicationsEarly": "Ouverture le 1er janvier · fermeture {{days}} {{dayUnit}} avant la course",
+      "teamListEarly": "Annoncée {{days}} {{dayUnit}} avant la course, à la fermeture des inscriptions",
+      "startlistEarly": "Ouverte jusqu’à {{hours}} {{hourUnit}} avant l’étape 1",
+      "lateJanuary": "Inscriptions closes {{appDays}} {{appDayUnit}} avant · liste de départ close {{startDays}} {{startDayUnit}} avant",
+      "standard": "Calendrier standard : inscriptions ouvertes {{openDays}} {{openDayUnit}} avant, closes {{closeDays}} {{closeDayUnit}} avant · liste de départ close {{startDays}} {{startDayUnit}} avant"
+    },
+    "actions": {
+      "calendar": "Calendrier de la saison",
+      "overview": "Vue d’ensemble de la saison"
+    },
+    "units": {
+      "gameDay_one": "jour de jeu",
+      "gameDay_other": "jours de jeu",
+      "gameHour_one": "heure de jeu",
+      "gameHour_other": "heures de jeu",
+      "day_one": "jour",
+      "day_other": "jours"
+    }
+  },
   "templateValues": {
     "available": "Disponible",
     "accepted": "Acceptée",

@@ -85,6 +85,69 @@ function normalizePhrase(value: string): string {
     .toLowerCase()
 }
 
+type SeasonStartedContext = {
+  season: number | null
+  earlyEndDay: number
+  lateStartDay: number
+  earlyApplicationCloseDays: number
+  earlyTeamListDays: number
+  earlyStartlistHours: number
+  lateJanuaryApplicationCloseDays: number
+  lateJanuaryStartlistDays: number
+  standardApplicationOpenDays: number
+  standardApplicationCloseDays: number
+  standardStartlistDays: number
+}
+
+function getSeasonStartedContext(item: NotificationItem): SeasonStartedContext {
+  const payload = payloadOf(item)
+  const earlyEndDay = readNumber(payload, ['early_january_end_day']) ?? 15
+
+  return {
+    season: readNumber(payload, ['season_number', 'season', 'target_season', 'new_season_number', 'current_season']),
+    earlyEndDay,
+    lateStartDay: earlyEndDay + 1,
+    earlyApplicationCloseDays:
+      readNumber(payload, ['early_january_applications_close_days_before']) ?? 1,
+    earlyTeamListDays:
+      readNumber(payload, ['early_january_team_list_days_before']) ?? 1,
+    earlyStartlistHours:
+      readNumber(payload, ['early_january_startlist_hours_before_stage1']) ?? 3,
+    lateJanuaryApplicationCloseDays:
+      readNumber(payload, ['january_late_applications_close_days_before']) ?? 7,
+    lateJanuaryStartlistDays:
+      readNumber(payload, ['january_late_startlist_days_before']) ?? 3,
+    standardApplicationOpenDays:
+      readNumber(payload, ['standard_applications_open_days_before']) ?? 60,
+    standardApplicationCloseDays:
+      readNumber(payload, ['standard_applications_close_days_before']) ?? 30,
+    standardStartlistDays:
+      readNumber(payload, ['standard_startlist_days_before']) ?? 3,
+  }
+}
+
+function seasonStartedUnit(
+  unit: 'gameDay' | 'gameHour' | 'day',
+  count: number
+): string {
+  return nt(`seasonStarted.units.${unit}`, { count })
+}
+
+function getSeasonStartedTranslationParams(item: NotificationItem): Record<string, unknown> {
+  const context = getSeasonStartedContext(item)
+  return {
+    ...context,
+    earlyApplicationCloseUnit: seasonStartedUnit('gameDay', context.earlyApplicationCloseDays),
+    earlyTeamListUnit: seasonStartedUnit('gameDay', context.earlyTeamListDays),
+    earlyStartlistHourUnit: seasonStartedUnit('gameHour', context.earlyStartlistHours),
+    lateJanuaryApplicationCloseUnit: seasonStartedUnit('day', context.lateJanuaryApplicationCloseDays),
+    lateJanuaryStartlistUnit: seasonStartedUnit('day', context.lateJanuaryStartlistDays),
+    standardApplicationOpenUnit: seasonStartedUnit('day', context.standardApplicationOpenDays),
+    standardApplicationCloseUnit: seasonStartedUnit('day', context.standardApplicationCloseDays),
+    standardStartlistUnit: seasonStartedUnit('day', context.standardStartlistDays),
+  }
+}
+
 type EnglishResourceHit = { namespace: string; keyPath: string }
 let englishResourceIndex: Map<string, EnglishResourceHit[]> | null = null
 
@@ -254,6 +317,7 @@ function localizeCategory(value: string | null | undefined): string | null {
 function localizeSemanticTypeCode(typeCode: string | null | undefined): string | null {
   if (!typeCode || !shouldLocalizeNotifications()) return null
   const code = String(typeCode).toUpperCase()
+  if (code === 'SEASON_STARTED') return nt('seasonStarted.typeLabel')
   const key = `semanticTypeTitles.${code}`
   const value = nt(key, { defaultValue: '' })
   return value && value !== key ? value : null
@@ -432,6 +496,20 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
   const typeCode = String(item.type_code ?? '').toUpperCase()
   const entity = getPrimaryEntity(item)
 
+  if (typeCode === 'SEASON_STARTED') {
+    const context = getSeasonStartedContext(item)
+    const params = getSeasonStartedTranslationParams(item)
+    return {
+      ...item,
+      title: context.season !== null
+        ? nt('seasonStarted.title', params)
+        : nt('seasonStarted.titleGeneric', params),
+      message: context.season !== null
+        ? nt('seasonStarted.feedMessage', params)
+        : nt('seasonStarted.feedMessageGeneric', params),
+    }
+  }
+
   const feedCopy = localizeNotificationFeedCopy(item.title, item.message, { genericFallback: false })
   if (feedCopy.title !== String(item.title ?? '').trim() || feedCopy.message !== String(item.message ?? '').trim()) {
     return { ...item, title: feedCopy.title, message: feedCopy.message }
@@ -509,6 +587,27 @@ export function localizeNotificationNarrative(
   const value = text.trim()
   const payload = item ? payloadOf(item) : {}
   const typeCode = String(item?.type_code ?? '').toUpperCase()
+
+  if (typeCode === 'SEASON_STARTED' && item) {
+    const context = getSeasonStartedContext(item)
+    const params = getSeasonStartedTranslationParams(item)
+
+    if (/January is intentionally more compressed/i.test(value)) {
+      return nt('seasonStarted.warning', params)
+    }
+
+    if (/begins with a compressed January race calendar/i.test(value)) {
+      return context.season !== null
+        ? nt('seasonStarted.intro', params)
+        : nt('seasonStarted.introGeneric', params)
+    }
+
+    if (/starts with a compressed January race calendar/i.test(value)) {
+      return context.season !== null
+        ? nt('seasonStarted.feedMessage', params)
+        : nt('seasonStarted.feedMessageGeneric', params)
+    }
+  }
 
   if (typeCode === 'STAFF_HIRED') {
     const staffName =
@@ -609,8 +708,33 @@ const DETAIL_LABEL_KEYS: Record<string, string> = {
   'eligibility check': 'templateLabels.eligibilityCheck',
 }
 
-export function localizeNotificationDetailLabel(label: string): string {
+export function localizeNotificationDetailLabel(
+  label: string,
+  item?: NotificationItem
+): string {
   if (!shouldLocalizeNotifications()) return label
+
+  if (String(item?.type_code ?? '').toUpperCase() === 'SEASON_STARTED' && item) {
+    const context = getSeasonStartedContext(item)
+    const normalizedLabel = label.trim()
+
+    if (/^Season$/i.test(normalizedLabel)) return nt('seasonStarted.labels.season')
+    if (/^Applications\s*·\s*Jan\s+1[–-]\d+$/i.test(normalizedLabel)) {
+      return nt('seasonStarted.labels.applicationsEarly', context)
+    }
+    if (/^Team list\s*·\s*Jan\s+1[–-]\d+$/i.test(normalizedLabel)) {
+      return nt('seasonStarted.labels.teamListEarly', context)
+    }
+    if (/^Startlist\s*·\s*Jan\s+1[–-]\d+$/i.test(normalizedLabel)) {
+      return nt('seasonStarted.labels.startlistEarly', context)
+    }
+    if (/^Jan\s+\d+[–-]31$/i.test(normalizedLabel)) {
+      return nt('seasonStarted.labels.lateJanuary', context)
+    }
+    if (/^From February$/i.test(normalizedLabel)) {
+      return nt('seasonStarted.labels.fromFebruary', context)
+    }
+  }
   const key = DETAIL_LABEL_KEYS[normalizePhrase(label)]
   if (key) return nt(key)
 
@@ -624,8 +748,82 @@ export function localizeNotificationDetailLabel(label: string): string {
   return tokenized || nt('common.detail')
 }
 
-export function localizeNotificationValue(value: string): string {
+export function localizeNotificationValue(
+  value: string,
+  item?: NotificationItem
+): string {
   if (!shouldLocalizeNotifications()) return value
+
+  if (String(item?.type_code ?? '').toUpperCase() === 'SEASON_STARTED' && item) {
+    const cleanValue = value.trim()
+
+    const seasonMatch = /^Season\s+(\d+)$/i.exec(cleanValue)
+    if (seasonMatch) {
+      return nt('seasonStarted.values.season', { season: seasonMatch[1] })
+    }
+    if (/^New season$/i.test(cleanValue)) {
+      return nt('seasonStarted.values.newSeason')
+    }
+
+    let match = /^Open Jan 1\s*·\s*close\s+(\d+)\s+game days? before the race$/i.exec(cleanValue)
+    if (match) {
+      const days = Number(match[1])
+      return nt('seasonStarted.values.applicationsEarly', {
+        days,
+        dayUnit: seasonStartedUnit('gameDay', days),
+      })
+    }
+
+    match = /^Announced\s+(\d+)\s+game days? before the race, when applications close$/i.exec(cleanValue)
+    if (match) {
+      const days = Number(match[1])
+      return nt('seasonStarted.values.teamListEarly', {
+        days,
+        dayUnit: seasonStartedUnit('gameDay', days),
+      })
+    }
+
+    match = /^Open until\s+(\d+)\s+game hours? before Stage 1$/i.exec(cleanValue)
+    if (match) {
+      const hours = Number(match[1])
+      return nt('seasonStarted.values.startlistEarly', {
+        hours,
+        hourUnit: seasonStartedUnit('gameHour', hours),
+      })
+    }
+
+    match = /^Applications close\s+(\d+)\s+days? before\s*·\s*startlist closes\s+(\d+)\s+days? before$/i.exec(cleanValue)
+    if (match) {
+      const appDays = Number(match[1])
+      const startDays = Number(match[2])
+      return nt('seasonStarted.values.lateJanuary', {
+        appDays,
+        appDayUnit: seasonStartedUnit('day', appDays),
+        startDays,
+        startDayUnit: seasonStartedUnit('day', startDays),
+      })
+    }
+
+    match = /^Standard schedule:\s*applications open\s+(\d+)\s+days? before, close\s+(\d+)\s+days? before\s*·\s*startlist closes\s+(\d+)\s+days? before$/i.exec(cleanValue)
+    if (match) {
+      const openDays = Number(match[1])
+      const closeDays = Number(match[2])
+      const startDays = Number(match[3])
+      return nt('seasonStarted.values.standard', {
+        openDays,
+        openDayUnit: seasonStartedUnit('day', openDays),
+        closeDays,
+        closeDayUnit: seasonStartedUnit('day', closeDays),
+        startDays,
+        startDayUnit: seasonStartedUnit('day', startDays),
+      })
+    }
+
+    // This notification must never fall back to token-by-token translation.
+    // Preserve any future dynamic backend value until it receives a semantic rule.
+    return cleanValue
+  }
+
   const normalized = normalizePhrase(value)
 
   const role = localizeRole(value)
@@ -757,6 +955,8 @@ const ACTION_KEY_BY_LABEL: Record<string, string> = {
   'sponsors': 'details.sponsors',
   'team': 'details.team',
   'view results': 'details.viewResults',
+  'season calendar': 'seasonStarted.actions.calendar',
+  'season overview': 'seasonStarted.actions.overview',
 }
 
 export function localizeNotificationActionLabel(label: string): string {

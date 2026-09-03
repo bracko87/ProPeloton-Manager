@@ -361,6 +361,45 @@
       }
     }
   },
+  "seasonStarted": {
+    "typeLabel": "Season start",
+    "title": "Season {{season}}: early January race deadlines",
+    "titleGeneric": "Early January race deadlines",
+    "feedMessage": "Season {{season}} starts with a compressed January race calendar. For races starting Jan 1–{{earlyEndDay}}, applications open on Jan 1 and close {{earlyApplicationCloseDays}} {{earlyApplicationCloseUnit}} before the race; the team list is announced the same day. Rider/startlist submission stays open until {{earlyStartlistHours}} {{earlyStartlistHourUnit}} before Stage 1. From Jan {{lateStartDay}}, this special {{earlyStartlistHours}} {{earlyStartlistHourUnit}} startlist window no longer applies; January still uses compressed deadlines, and the standard schedule applies from February. Check Calendar and Race Detail frequently so you do not miss a deadline.",
+    "feedMessageGeneric": "The season starts with a compressed January race calendar. Early-January application, team-list and startlist deadlines are tighter than normal. Check Calendar and Race Detail frequently so you do not miss a deadline.",
+    "intro": "Season {{season}} begins with a compressed January race calendar. Early-season application and startlist deadlines are intentionally tighter than normal, so plan the first race block carefully.",
+    "introGeneric": "The season begins with a compressed January race calendar. Early-season application and startlist deadlines are intentionally tighter than normal, so plan the first race block carefully.",
+    "warning": "January is intentionally more compressed than the normal calendar. Check Calendar and Race Detail frequently during the opening race block so you do not miss an application, team-list or startlist deadline.",
+    "labels": {
+      "season": "Season",
+      "applicationsEarly": "Applications · Jan 1–{{earlyEndDay}}",
+      "teamListEarly": "Team list · Jan 1–{{earlyEndDay}}",
+      "startlistEarly": "Startlist · Jan 1–{{earlyEndDay}}",
+      "lateJanuary": "Jan {{lateStartDay}}–31",
+      "fromFebruary": "From February"
+    },
+    "values": {
+      "season": "Season {{season}}",
+      "newSeason": "New season",
+      "applicationsEarly": "Open Jan 1 · close {{days}} {{dayUnit}} before the race",
+      "teamListEarly": "Announced {{days}} {{dayUnit}} before the race, when applications close",
+      "startlistEarly": "Open until {{hours}} {{hourUnit}} before Stage 1",
+      "lateJanuary": "Applications close {{appDays}} {{appDayUnit}} before · startlist closes {{startDays}} {{startDayUnit}} before",
+      "standard": "Standard schedule: applications open {{openDays}} {{openDayUnit}} before, close {{closeDays}} {{closeDayUnit}} before · startlist closes {{startDays}} {{startDayUnit}} before"
+    },
+    "actions": {
+      "calendar": "Season calendar",
+      "overview": "Season overview"
+    },
+    "units": {
+      "gameDay_one": "game day",
+      "gameDay_other": "game days",
+      "gameHour_one": "game hour",
+      "gameHour_other": "game hours",
+      "day_one": "day",
+      "day_other": "days"
+    }
+  },
   "templateValues": {
     "available": "Available",
     "accepted": "Accepted",
