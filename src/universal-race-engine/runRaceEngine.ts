@@ -59,7 +59,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11g-continuous-road-physics-v3-2026-09-03' as const
+  'phase11g-continuous-road-physics-v4-2026-09-03' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -2523,9 +2523,20 @@ export interface UniversalPhase10TimeLimitContract {
   readonly source: 'universal_phase10_time_limit_v1'
 }
 
+export interface UniversalPhase10TeamRescueHelperRow {
+  readonly incidentId: string
+  readonly protectedRiderId: string
+  readonly helperRiderId: string
+  readonly teamId: string
+  readonly pickupKm: number
+  readonly actualRejoinKm: number | null
+  readonly finalGapToTargetSeconds: number
+  readonly chaseEnergyCostPoints: number
+}
+
 export interface UniversalPhase10AutonomousChaseSummary {
   readonly active: boolean
-  readonly modelVersion: 'autonomous_incident_chase_v1'
+  readonly modelVersion: 'autonomous_incident_team_rescue_v2'
   readonly simulationStepKm: number
   readonly mergeToleranceSeconds: number
   readonly riderEpisodeCount: number
@@ -2535,6 +2546,9 @@ export interface UniversalPhase10AutonomousChaseSummary {
   readonly groupMergeKms: readonly number[]
   readonly exactRejoinKms: readonly number[]
   readonly totalChaseEnergyCostPoints: number
+  readonly teamRescueEventCount: number
+  readonly teamRescueHelperCount: number
+  readonly teamRescueHelpers: readonly UniversalPhase10TeamRescueHelperRow[]
 }
 
 export interface UniversalPhase10IncidentSummary {
@@ -2734,6 +2748,12 @@ export type UniversalReplayRiderStatus =
   | 'racing'
   | UniversalOfficialFinishStatus
 
+export type UniversalReplayRiderCondition =
+  | 'fresh'
+  | 'stable'
+  | 'under_pressure'
+  | 'critical'
+
 export interface UniversalReplayRiderState {
   readonly riderId: string
   readonly teamId: string
@@ -2742,9 +2762,32 @@ export interface UniversalReplayRiderState {
   readonly displayCode: string | null
   readonly gapSeconds: number | null
   readonly energy: number
+  /** Compact replay-ready percentage relative to this rider's stage start reserve. */
+  readonly liveEnergyPercent: number
+  /** Compact condition label; UI may hide fresh/stable and surface only pressure/critical. */
+  readonly condition: UniversalReplayRiderCondition
   readonly readinessScore: number
   readonly finishRank: number | null
   readonly officialTimeSeconds: number | null
+}
+
+function buildUniversalReplayEnergyDisplay(
+  energy: number,
+  startEnergy: number,
+): { readonly liveEnergyPercent: number; readonly condition: UniversalReplayRiderCondition } {
+  const liveEnergyPercent = deterministicRound(
+    clamp((Math.max(0, energy) / Math.max(1, startEnergy)) * 100, 0, 100),
+    1,
+  )
+  const condition: UniversalReplayRiderCondition =
+    liveEnergyPercent >= 70
+      ? 'fresh'
+      : liveEnergyPercent >= 40
+        ? 'stable'
+        : liveEnergyPercent >= 18
+          ? 'under_pressure'
+          : 'critical'
+  return { liveEnergyPercent, condition }
 }
 
 export interface UniversalReplayTeamState {
@@ -2850,6 +2893,7 @@ export interface UniversalReplaySynchronizationSummary {
   readonly postCatchStateStable: boolean
   readonly allResultFieldsHiddenBeforeFinish: boolean
   readonly finalCheckpointMatchesClassification: boolean
+  readonly finishCommentaryMatchesClassification: boolean
   readonly incidentSynchronizationStatus:
     UniversalReplayIncidentSynchronizationStatus
   readonly incidentIntegrationComplete: boolean
@@ -3083,6 +3127,7 @@ export interface UniversalPhase78AcceptanceReport {
     readonly replaySynchronized: boolean
     readonly finalResultsVisibleCheckpointCount: number
     readonly finalCheckpointMatchesClassification: boolean
+    readonly finishCommentaryMatchesClassification: boolean
     readonly resultFieldsHiddenBeforeFinish: boolean
     readonly sameKilometreStatesConsistent: boolean
     readonly gapChangesDistanceBounded: boolean
@@ -13567,6 +13612,16 @@ export function resolveRoadPhase4Finish(
     0,
     1,
   )
+  const lateTerrainDistancePressure = clamp(
+    (lateTerrain.distanceKm - 2.5) / 12,
+    0,
+    1,
+  )
+  // v11g-v4: sustainable climbing now depends more strongly on live reserve.
+  // Longer/steeper climbs raise both the competitive pace reference and the
+  // minimum reserve required to hold the group. This is still rider-by-rider
+  // physical selection: there is no target group size or scripted number of
+  // dropped riders.
   // v10e4: the climb no longer compares the whole peloton only with the
   // single strongest rider.  The pace reference comes from the competitive
   // part of the field and low live energy is a separate contact constraint.
@@ -13574,23 +13629,25 @@ export function resolveRoadPhase4Finish(
   // drops at the summit" pattern while retaining deterministic selection.
   const lateTerrainHoldWindow = deterministicRound(
     clamp(
-      9 -
-        lateTerrain.selectionSeverity * 1.5 -
-        lateGradientPressure * 1.5 -
-        lateRacePressure,
-      5,
-      9,
+      8.2 -
+        lateTerrain.selectionSeverity * 2 -
+        lateGradientPressure * 1.8 -
+        lateTerrainDistancePressure * 1.2 -
+        lateRacePressure * 1.2,
+      4,
+      8.2,
     ),
     6,
   )
   const lateTerrainMinimumEnergy = deterministicRound(
     clamp(
-      3 +
-        lateTerrain.selectionSeverity * 2.5 +
-        lateGradientPressure * 2 +
-        lateRacePressure * 1.5,
-      3,
-      8,
+      4.5 +
+        lateTerrain.selectionSeverity * 4 +
+        lateGradientPressure * 3 +
+        lateTerrainDistancePressure * 2.5 +
+        lateRacePressure * 2,
+      4.5,
+      12,
     ),
     6,
   )
@@ -13639,10 +13696,10 @@ export function resolveRoadPhase4Finish(
       const suitability =
         suitabilityByRiderId.get(row.riderId)?.suitabilityScore ?? 0
       const holdScore = deterministicRound(
-        terrainAbility * 0.56 +
-          suitability * 0.12 +
-          readiness.readinessScore * 0.08 +
-          energyAtSelection * 0.24 +
+        terrainAbility * 0.58 +
+          suitability * 0.1 +
+          readiness.readinessScore * 0.06 +
+          energyAtSelection * 0.26 +
           phase.commandEffect.performanceModifier,
         6,
       )
@@ -13663,12 +13720,13 @@ export function resolveRoadPhase4Finish(
     .map((row) => row.holdScore)
     .sort((left, right) => left - right)
   const lateTerrainPaceReferenceQuantile = clamp(
-    0.5 +
-      lateTerrain.selectionSeverity * 0.08 +
-      lateGradientPressure * 0.08 +
+    0.52 +
+      lateTerrain.selectionSeverity * 0.1 +
+      lateGradientPressure * 0.09 +
+      lateTerrainDistancePressure * 0.06 +
       lateRacePressure * 0.06,
-    0.5,
-    0.72,
+    0.52,
+    0.76,
   )
   const lateTerrainReferenceIndex = Math.min(
     Math.max(0, lateTerrainHoldScoresAscending.length - 1),
@@ -21374,6 +21432,14 @@ function buildUniversalTimeTrialReplayTimeline(
               ? 'racing'
               : 'dns'
 
+          const energy = deterministicRound(
+            definition.energyByRiderId.get(rider.riderId) ?? 0,
+            6,
+          )
+          const energyDisplay = buildUniversalReplayEnergyDisplay(
+            energy,
+            readiness?.fatigueBalance.startEnergy ?? 100,
+          )
           return {
             riderId: rider.riderId,
             teamId: rider.teamId,
@@ -21381,10 +21447,8 @@ function buildUniversalTimeTrialReplayTimeline(
             groupCode: group?.groupCode ?? null,
             displayCode: group?.displayCode ?? null,
             gapSeconds: group?.gapSeconds ?? null,
-            energy: deterministicRound(
-              definition.energyByRiderId.get(rider.riderId) ?? 0,
-              6,
-            ),
+            energy,
+            ...energyDisplay,
             readinessScore: readiness?.readinessScore ?? 0,
             finishRank: finalResultsVisible ? finish?.rank ?? null : null,
             officialTimeSeconds: finalResultsVisible
@@ -24625,6 +24689,14 @@ function buildUniversalReplayTimeline(
               ? 'racing'
               : 'dns'
 
+          const energy = deterministicRound(
+            definition.energyByRiderId.get(rider.riderId) ?? 0,
+            6,
+          )
+          const energyDisplay = buildUniversalReplayEnergyDisplay(
+            energy,
+            readiness?.fatigueBalance.startEnergy ?? 100,
+          )
           return {
             riderId: rider.riderId,
             teamId: rider.teamId,
@@ -24632,10 +24704,8 @@ function buildUniversalReplayTimeline(
             groupCode: group?.groupCode ?? null,
             displayCode: group?.displayCode ?? null,
             gapSeconds: group?.gapSeconds ?? null,
-            energy: deterministicRound(
-              definition.energyByRiderId.get(rider.riderId) ?? 0,
-              6,
-            ),
+            energy,
+            ...energyDisplay,
             readinessScore: readiness?.readinessScore ?? 0,
             finishRank: finalResultsVisible ? finish?.rank ?? null : null,
             officialTimeSeconds: finalResultsVisible
@@ -24887,10 +24957,22 @@ type Phase10AutonomousChaseEpisode = {
   readonly riderId: string
   readonly teamId: string
   readonly incidentKm: number
+  readonly activationKm: number
+  readonly episodeKind: 'incident_rider' | 'team_rescue_helper'
+  readonly protectedRiderId: string | null
   readonly samples: Phase10AutonomousChaseEpisodeSample[]
   actualRejoinKm: number | null
   finalGapToTargetSeconds: number
   chaseEnergyCostPoints: number
+}
+
+type Phase10TeamRescueEvent = {
+  readonly eventId: string
+  readonly incidentId: string
+  readonly teamId: string
+  readonly protectedRiderId: string
+  readonly helperRiderIds: readonly string[]
+  readonly pickupKm: number
 }
 
 type Phase10AutonomousChaseMergeEvent = {
@@ -24907,6 +24989,7 @@ type Phase10AutonomousChaseSimulation = {
   readonly episodes: readonly Phase10AutonomousChaseEpisode[]
   readonly episodeByKey: ReadonlyMap<string, Phase10AutonomousChaseEpisode>
   readonly mergeEvents: readonly Phase10AutonomousChaseMergeEvent[]
+  readonly teamRescueEvents: readonly Phase10TeamRescueEvent[]
   readonly summary: UniversalPhase10AutonomousChaseSummary
 }
 
@@ -25179,6 +25262,40 @@ function phase10AppendAutonomousEpisodeSample(
   }
 }
 
+function phase10ReplayRiderStateAtKm(
+  timeline: UniversalReplayTimeline,
+  riderId: string,
+  kmFromStart: number,
+): UniversalReplayRiderState | null {
+  let selected: UniversalReplayRiderState | null = null
+  for (const checkpoint of timeline.checkpoints) {
+    if (checkpoint.raceProgress.kmFromStart > kmFromStart + 0.000001) break
+    selected =
+      checkpoint.riderStates.find((row) => row.riderId === riderId) ?? selected
+  }
+  return selected
+}
+
+function phase10TeamRescuePickupKm(
+  incident: UniversalPhase10IncidentRecord,
+  gradientPercent: number,
+  stageDistanceKm: number,
+): number {
+  const elapsedHours = Math.max(1 / 60, incident.raceSecond / 3600)
+  const averageRoadSpeedKmh = clamp(incident.kmFromStart / elapsedHours, 22, 58)
+  const waitingSpeedFraction = gradientPercent >= 4 ? 0.45 : 0.25
+  const helperWaitingSpeedKmh = averageRoadSpeedKmh * waitingSpeedFraction
+  const relativeSpeedKmh = Math.max(6, averageRoadSpeedKmh - helperWaitingSpeedKmh)
+  const separationDistanceKm =
+    (averageRoadSpeedKmh * Math.max(0, incident.timeLossSeconds)) / 3600
+  const pickupHours = separationDistanceKm / relativeSpeedKmh
+  const targetTravelKm = averageRoadSpeedKmh * pickupHours
+  return deterministicRound(
+    clamp(incident.kmFromStart + targetTravelKm, incident.kmFromStart + 0.05, stageDistanceKm),
+    6,
+  )
+}
+
 function phase10BuildAutonomousIncidentChase({
   input,
   riderReadiness,
@@ -25195,7 +25312,7 @@ function phase10BuildAutonomousIncidentChase({
   if (input.stage.stageFormat !== 'road_race' || incidents.length === 0) {
     const summary: UniversalPhase10AutonomousChaseSummary = {
       active: input.stage.stageFormat === 'road_race',
-      modelVersion: 'autonomous_incident_chase_v1',
+      modelVersion: 'autonomous_incident_team_rescue_v2',
       simulationStepKm: PHASE10_AUTONOMOUS_CHASE_STEP_KM,
       mergeToleranceSeconds: PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
       riderEpisodeCount: 0,
@@ -25205,12 +25322,16 @@ function phase10BuildAutonomousIncidentChase({
       groupMergeKms: [],
       exactRejoinKms: [],
       totalChaseEnergyCostPoints: 0,
+      teamRescueEventCount: 0,
+      teamRescueHelperCount: 0,
+      teamRescueHelpers: [],
     }
     return {
       active: summary.active,
       episodes: [],
       episodeByKey: new Map(),
       mergeEvents: [],
+      teamRescueEvents: [],
       summary,
     }
   }
@@ -25218,7 +25339,16 @@ function phase10BuildAutonomousIncidentChase({
   const episodeByKey = new Map<string, Phase10AutonomousChaseEpisode>()
   const activeGroups: Phase10MutableAutonomousGroup[] = []
   const mergeEvents: Phase10AutonomousChaseMergeEvent[] = []
+  const teamRescueEvents: Phase10TeamRescueEvent[] = []
   const riderById = new Map(input.riders.map((row) => [row.riderId, row] as const))
+  const planByRiderId = new Map(
+    input.stagePlans.flatMap((teamPlan) =>
+      teamPlan.riders.map((riderPlan) => [riderPlan.riderId, riderPlan] as const),
+    ),
+  )
+  const gcRankByRiderId = new Map(
+    getPreStageGeneralStandings(input).map((row) => [row.riderId, row.rank] as const),
+  )
   const incidentIndexById = new Map(
     incidents.map((incident, index) => [incident.incidentId, index] as const),
   )
@@ -25228,6 +25358,76 @@ function phase10BuildAutonomousIncidentChase({
     const bucket = incidentsByKm.get(key) ?? []
     bucket.push(incident)
     incidentsByKm.set(key, bucket)
+  })
+
+  const reservedRescueHelperIds = new Set<string>()
+  const plannedTeamRescues: Phase10TeamRescueEvent[] = []
+  incidents
+    .slice()
+    .sort((a, b) => a.kmFromStart - b.kmFromStart || a.incidentId.localeCompare(b.incidentId))
+    .forEach((incident) => {
+      if (incident.sourceDisplayCode === null || incident.sourceDisplayCode.startsWith('C')) return
+      const protectedRows = incident.riderConsequences.filter(
+        (row) => row.movedToLaterGroup && row.statusImpact === 'finished',
+      )
+      protectedRows.forEach((protectedRow) => {
+        const targetPlan = planByRiderId.get(protectedRow.riderId)
+        const gcRank = gcRankByRiderId.get(protectedRow.riderId) ?? null
+        const priority =
+          gcRank === 1
+            ? 'race_leader'
+            : gcRank !== null && gcRank <= 10 &&
+                (targetPlan?.stageRole === 'team_leader_gc' || targetPlan?.stageRole === 'protected_rider')
+              ? 'gc_top10'
+              : targetPlan?.stageRole === 'team_leader_gc'
+                ? 'team_leader'
+                : null
+        if (priority === null) return
+        const phase = phase10PhaseForFraction(incident.progressFraction)
+        const gradient = phase10GradientAtKm(input.stage, incident.kmFromStart)
+        const steepClimb = gradient >= 4
+        const sourceDisplayCode = incident.sourceDisplayCode ?? 'P'
+        const helperIds = input.riders
+          .filter((rider) => rider.teamId === protectedRow.teamId && rider.riderId !== protectedRow.riderId)
+          .filter((rider) => !reservedRescueHelperIds.has(rider.riderId))
+          .filter((rider) => {
+            const state = phase10ReplayRiderStateAtKm(baseReplayTimeline, rider.riderId, incident.kmFromStart)
+            if (!state || state.status !== 'racing' || state.displayCode !== sourceDisplayCode) return false
+            if (incidents.some((other) =>
+              other.kmFromStart <= incident.kmFromStart + 0.000001 &&
+              other.riderIds.includes(rider.riderId) &&
+              other.riderConsequences.some((row) => row.riderId === rider.riderId && row.statusImpact === 'dnf'),
+            )) return false
+            const plan = planByRiderId.get(rider.riderId)
+            if (!plan) return false
+            const command = plan.commands[`phase${phase}` as keyof UniversalRiderPhaseCommandsInput]
+            const explicitProtect = command === 'protect_leader'
+            if (steepClimb) return explicitProtect
+            if (priority === 'race_leader') {
+              return explicitProtect || plan.stageRole === 'free_role'
+            }
+            return explicitProtect
+          })
+          .map((rider) => rider.riderId)
+          .sort()
+        if (helperIds.length === 0) return
+        helperIds.forEach((id) => reservedRescueHelperIds.add(id))
+        const pickupKm = phase10TeamRescuePickupKm(incident, gradient, input.stage.distanceKm)
+        if (pickupKm >= input.stage.distanceKm - 0.000001) return
+        plannedTeamRescues.push({
+          eventId: `phase10-team-rescue:${plannedTeamRescues.length + 1}`,
+          incidentId: incident.incidentId,
+          teamId: protectedRow.teamId,
+          protectedRiderId: protectedRow.riderId,
+          helperRiderIds: helperIds,
+          pickupKm,
+        })
+      })
+    })
+  const plannedRescuesByKm = new Map<string, Phase10TeamRescueEvent[]>()
+  plannedTeamRescues.forEach((event) => {
+    const key = event.pickupKm.toFixed(6)
+    plannedRescuesByKm.set(key, [...(plannedRescuesByKm.get(key) ?? []), event])
   })
 
   const appendAllGroupSamples = (group: Phase10MutableAutonomousGroup, km: number): void => {
@@ -25355,6 +25555,9 @@ function phase10BuildAutonomousIncidentChase({
           riderId: row.riderId,
           teamId: row.teamId,
           incidentKm: incident.kmFromStart,
+          activationKm: incident.kmFromStart,
+          episodeKind: 'incident_rider',
+          protectedRiderId: null,
           samples: [],
           actualRejoinKm: null,
           finalGapToTargetSeconds: initialGap,
@@ -25368,7 +25571,46 @@ function phase10BuildAutonomousIncidentChase({
     })
   }
 
+  const processTeamRescuesAtCurrentKm = (): void => {
+    const events = plannedRescuesByKm.get(currentKm.toFixed(6)) ?? []
+    events.forEach((event) => {
+      const targetGroup = activeGroups.find((group) =>
+        group.members.some((member) => member.riderId === event.protectedRiderId),
+      )
+      if (!targetGroup) return
+      const activeRiderIds = new Set(
+        activeGroups.flatMap((group) => group.members.map((member) => member.riderId)),
+      )
+      const attachedHelpers = event.helperRiderIds.filter((helperRiderId) => !activeRiderIds.has(helperRiderId))
+      if (attachedHelpers.length === 0) return
+      attachedHelpers.forEach((helperRiderId) => {
+        const rider = riderById.get(helperRiderId)
+        if (!rider) return
+        const episodeKey = phase10EpisodeKey(event.incidentId, helperRiderId)
+        const episode: Phase10AutonomousChaseEpisode = {
+          episodeKey,
+          incidentId: event.incidentId,
+          riderId: helperRiderId,
+          teamId: rider.teamId,
+          incidentKm: event.pickupKm,
+          activationKm: event.pickupKm,
+          episodeKind: 'team_rescue_helper',
+          protectedRiderId: event.protectedRiderId,
+          samples: [],
+          actualRejoinKm: null,
+          finalGapToTargetSeconds: targetGroup.gapToTargetSeconds,
+          chaseEnergyCostPoints: 0,
+        }
+        episodeByKey.set(episodeKey, episode)
+        targetGroup.members.push({ episodeKey, riderId: helperRiderId })
+      })
+      appendAllGroupSamples(targetGroup, currentKm)
+      teamRescueEvents.push({ ...event, helperRiderIds: attachedHelpers })
+    })
+  }
+
   processIncidentsAtCurrentKm()
+  processTeamRescuesAtCurrentKm()
   mergeIncidentGroupsAtCurrentKm()
 
   const pointSet = new Set<number>()
@@ -25382,6 +25624,9 @@ function phase10BuildAutonomousIncidentChase({
   }
   incidents.forEach((incident) => {
     if (incident.kmFromStart > currentKm + 0.000001) pointSet.add(incident.kmFromStart)
+  })
+  plannedTeamRescues.forEach((event) => {
+    if (event.pickupKm > currentKm + 0.000001) pointSet.add(event.pickupKm)
   })
   pointSet.add(input.stage.distanceKm)
   const points = [...pointSet].sort((a, b) => a - b)
@@ -25487,6 +25732,7 @@ function phase10BuildAutonomousIncidentChase({
     mergeIncidentGroupsAtCurrentKm()
 
     processIncidentsAtCurrentKm()
+    processTeamRescuesAtCurrentKm()
     mergeIncidentGroupsAtCurrentKm()
   }
 
@@ -25510,9 +25756,22 @@ function phase10BuildAutonomousIncidentChase({
     .map((episode) => episode.actualRejoinKm)
     .filter((km): km is number => km !== null)
     .sort((a, b) => a - b)
+  const teamRescueHelpers: UniversalPhase10TeamRescueHelperRow[] = episodes
+    .filter((episode) => episode.episodeKind === 'team_rescue_helper' && episode.protectedRiderId !== null)
+    .map((episode) => ({
+      incidentId: episode.incidentId,
+      protectedRiderId: episode.protectedRiderId!,
+      helperRiderId: episode.riderId,
+      teamId: episode.teamId,
+      pickupKm: episode.activationKm,
+      actualRejoinKm: episode.actualRejoinKm,
+      finalGapToTargetSeconds: deterministicRound(Math.max(0, episode.finalGapToTargetSeconds), 6),
+      chaseEnergyCostPoints: deterministicRound(episode.chaseEnergyCostPoints, 6),
+    }))
+    .sort((a, b) => a.pickupKm - b.pickupKm || a.helperRiderId.localeCompare(b.helperRiderId))
   const summary: UniversalPhase10AutonomousChaseSummary = {
     active: true,
-    modelVersion: 'autonomous_incident_chase_v1',
+    modelVersion: 'autonomous_incident_team_rescue_v2',
     simulationStepKm: PHASE10_AUTONOMOUS_CHASE_STEP_KM,
     mergeToleranceSeconds: PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
     riderEpisodeCount: episodes.length,
@@ -25525,12 +25784,16 @@ function phase10BuildAutonomousIncidentChase({
       episodes.reduce((sum, episode) => sum + episode.chaseEnergyCostPoints, 0),
       6,
     ),
+    teamRescueEventCount: teamRescueEvents.length,
+    teamRescueHelperCount: teamRescueHelpers.length,
+    teamRescueHelpers,
   }
   return {
     active: true,
     episodes,
     episodeByKey,
     mergeEvents,
+    teamRescueEvents,
     summary,
   }
 }
@@ -25541,7 +25804,7 @@ function phase10AutonomousEpisodeSampleAtKm(
   kmFromStart: number,
 ): Phase10AutonomousChaseEpisodeSample | null {
   const episode = simulation.episodeByKey.get(episodeKey)
-  if (!episode || kmFromStart < episode.incidentKm - 0.000001) return null
+  if (!episode || kmFromStart < episode.activationKm - 0.000001) return null
   if (
     episode.actualRejoinKm !== null &&
     kmFromStart >= episode.actualRejoinKm - 0.000001
@@ -25601,7 +25864,7 @@ function phase10AutonomousChaseEnergyAtKm(
 ): number {
   return deterministicRound(
     simulation.episodes
-      .filter((episode) => episode.riderId === riderId && episode.incidentKm <= kmFromStart + 0.000001)
+      .filter((episode) => episode.riderId === riderId && episode.activationKm <= kmFromStart + 0.000001)
       .reduce((sum, episode) => {
         const activeSample = phase10AutonomousEpisodeSampleAtKm(
           simulation,
@@ -26277,6 +26540,9 @@ function phase10BuildExactEventReplayTimeline(
   autonomousChase?.mergeEvents.forEach((event, index) => {
     addPoint(event.kmFromStart, `incident-chase-merge-${index + 1}`)
   })
+  autonomousChase?.teamRescueEvents.forEach((event, index) => {
+    addPoint(event.pickupKm, `team-rescue-${index + 1}`)
+  })
 
   if (exactPoints.size === 0) return baseTimeline
 
@@ -26377,9 +26643,17 @@ function phase10BuildExactEventReplayTimeline(
           const groupGap = state.displayCode
             ? gapByDisplayCode.get(state.displayCode)?.gapSeconds
             : undefined
+          const inferredStartEnergy =
+            state.liveEnergyPercent > 0
+              ? (state.energy * 100) / state.liveEnergyPercent
+              : 100
           return {
             ...state,
             energy: interpolatedEnergy,
+            ...buildUniversalReplayEnergyDisplay(
+              interpolatedEnergy,
+              inferredStartEnergy,
+            ),
             gapSeconds:
               groupGap !== undefined ? groupGap : state.gapSeconds,
             finishRank: null,
@@ -26712,7 +26986,7 @@ function resolveUniversalPhase10Incidents({
       riderCooldownSeconds: PHASE10_RIDER_COOLDOWN_SECONDS,
       autonomousChase: {
         active: false,
-        modelVersion: 'autonomous_incident_chase_v1',
+        modelVersion: 'autonomous_incident_team_rescue_v2',
         simulationStepKm: PHASE10_AUTONOMOUS_CHASE_STEP_KM,
         mergeToleranceSeconds: PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
         riderEpisodeCount: 0,
@@ -26722,6 +26996,9 @@ function resolveUniversalPhase10Incidents({
         groupMergeKms: [],
         exactRejoinKms: [],
         totalChaseEnergyCostPoints: 0,
+        teamRescueEventCount: 0,
+        teamRescueHelperCount: 0,
+        teamRescueHelpers: [],
       },
       sprintZone: {
         configuredKm: phase10EffectiveSprintZoneKm(input.stage),
@@ -27611,6 +27888,28 @@ function resolveUniversalPhase10Incidents({
     })
   })
 
+  autonomousChase.summary.teamRescueHelpers.forEach((row) => {
+    const existing = consequenceByRiderId.get(row.helperRiderId) ?? {
+      energyLoss: 0,
+      timePenalty: 0,
+      dnf: false,
+      movedToLaterGroup: false,
+      finishPerformancePenalty: 0,
+      protectedOfficialTimeSeconds: null,
+      sprintProtected: false,
+    }
+    consequenceByRiderId.set(row.helperRiderId, {
+      ...existing,
+      energyLoss: deterministicRound(existing.energyLoss + row.chaseEnergyCostPoints, 6),
+      timePenalty:
+        row.actualRejoinKm !== null
+          ? existing.timePenalty
+          : existing.timePenalty + Math.max(0, Math.round(row.finalGapToTargetSeconds)),
+      movedToLaterGroup:
+        existing.movedToLaterGroup || row.finalGapToTargetSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+    })
+  })
+
   const physicalFinishTimeByRiderId = new Map<string, number>()
   const adjustedFinishScoreByRiderId = new Map<string, number>()
   const preliminary = baseFinishResolution.classification.map(
@@ -27797,6 +28096,8 @@ function resolveUniversalPhase10Incidents({
   )
   const firstCheckpointIndexByIncidentId = new Map<string, number>()
   const firstRejoinCheckpointIndexByIncidentId = new Map<string, number>()
+  const firstCheckpointIndexByAutonomousMergeId = new Map<string, number>()
+  const firstCheckpointIndexByTeamRescueId = new Map<string, number>()
   incidents.forEach((incident) => {
     const index = phase10SourceReplayTimeline.checkpoints.findIndex(
       (checkpoint) =>
@@ -27827,6 +28128,20 @@ function resolveUniversalPhase10Incidents({
         firstRejoinCheckpointIndexByIncidentId.set(incident.incidentId, rejoinIndex)
       }
     }
+  })
+  autonomousChase.mergeEvents.forEach((event) => {
+    const index = phase10SourceReplayTimeline.checkpoints.findIndex(
+      (checkpoint) =>
+        checkpoint.raceProgress.kmFromStart >= event.kmFromStart - 0.000001,
+    )
+    if (index >= 0) firstCheckpointIndexByAutonomousMergeId.set(event.eventId, index)
+  })
+  autonomousChase.teamRescueEvents.forEach((event) => {
+    const index = phase10SourceReplayTimeline.checkpoints.findIndex(
+      (checkpoint) =>
+        checkpoint.raceProgress.kmFromStart >= event.pickupKm - 0.000001,
+    )
+    if (index >= 0) firstCheckpointIndexByTeamRescueId.set(event.eventId, index)
   })
 
   const replayCheckpoints = phase10SourceReplayTimeline.checkpoints.map(
@@ -27861,22 +28176,25 @@ function resolveUniversalPhase10Incidents({
           : dnfReached
             ? 'dnf'
             : state.status
+        const adjustedEnergy = deterministicRound(
+          Math.max(
+            0,
+            state.energy -
+              (energyLossByRiderId.get(state.riderId) ?? 0) -
+              phase10AutonomousChaseEnergyAtKm(
+                autonomousChase,
+                state.riderId,
+                checkpoint.raceProgress.kmFromStart,
+              ),
+          ),
+          6,
+        )
+        const startEnergy = readinessByRiderId.get(state.riderId)?.fatigueBalance.startEnergy ?? 100
         return {
           ...state,
           status,
-          energy: deterministicRound(
-            Math.max(
-              0,
-              state.energy -
-                (energyLossByRiderId.get(state.riderId) ?? 0) -
-                phase10AutonomousChaseEnergyAtKm(
-                  autonomousChase,
-                  state.riderId,
-                  checkpoint.raceProgress.kmFromStart,
-                ),
-            ),
-            6,
-          ),
+          energy: adjustedEnergy,
+          ...buildUniversalReplayEnergyDisplay(adjustedEnergy, startEnergy),
           finishRank: checkpoint.finalResultsVisible ? official?.rank ?? null : null,
           officialTimeSeconds: checkpoint.finalResultsVisible
             ? official?.officialTimeSeconds ?? null
@@ -28002,79 +28320,12 @@ function resolveUniversalPhase10Incidents({
         })
 
 
-        // A newly detached incident rider can land directly on an already
-        // existing chasing/dropped road group. Reuse the authoritative five-
-        // second physical merge tolerance here as well: the rider joins that
-        // group instead of creating two display groups at the same road position.
-        let replayGroupsMerged = true
-        while (replayGroupsMerged) {
-          replayGroupsMerged = false
-          const ordered = groups
-            .map((group) => ({
-              group,
-              gap: gaps.find((row) => row.displayCode === group.displayCode),
-            }))
-            .filter((row) => Boolean(row.gap))
-            .map((row) => ({ group: row.group, gap: row.gap! }))
-            .sort(
-              (left, right) =>
-                left.gap.gapSeconds - right.gap.gapSeconds ||
-                left.group.displayCode.localeCompare(right.group.displayCode),
-            )
-          for (let index = 0; index < ordered.length - 1; index += 1) {
-            const left = ordered[index]
-            const right = ordered[index + 1]
-            if (
-              Math.abs(left.gap.gapSeconds - right.gap.gapSeconds) >
-              PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
-            ) {
-              continue
-            }
-            const leftIncident = left.group.displayCode.startsWith('I')
-            const rightIncident = right.group.displayCode.startsWith('I')
-            if (!leftIncident && !rightIncident) continue
-            const keep =
-              leftIncident !== rightIncident
-                ? leftIncident
-                  ? right
-                  : left
-                : left.group.displayCode.localeCompare(right.group.displayCode) <= 0
-                  ? left
-                  : right
-            const absorb = keep === left ? right : left
-            const mergedRiderIds = Array.from(
-              new Set([...keep.group.riderIds, ...absorb.group.riderIds]),
-            ).sort()
-            const keepGroupIndex = groups.findIndex(
-              (group) => group.displayCode === keep.group.displayCode,
-            )
-            if (keepGroupIndex >= 0) {
-              groups[keepGroupIndex] = {
-                ...groups[keepGroupIndex],
-                riderIds: mergedRiderIds,
-              }
-            }
-            groups = groups.filter(
-              (group) => group.displayCode !== absorb.group.displayCode,
-            )
-            gaps = gaps.filter(
-              (gap) => gap.displayCode !== absorb.group.displayCode,
-            )
-            absorb.group.riderIds.forEach((riderId) => {
-              const state = riderStates.find((row) => row.riderId === riderId)
-              if (!state) return
-              ;(state as {
-                groupCode: UniversalPhase5GroupCode | null
-              }).groupCode = keep.group.groupCode
-              ;(state as { displayCode: string | null }).displayCode =
-                keep.group.displayCode
-              ;(state as { gapSeconds: number | null }).gapSeconds =
-                keep.gap.gapSeconds
-            })
-            replayGroupsMerged = true
-            break
-          }
-        }
+        // Keep autonomous incident groups physically authoritative. Do not
+        // perform a replay-only proximity merge with a pre-existing road group:
+        // that could make riders appear joined at one checkpoint and separated
+        // again later even though no physical merge/split occurred in the chase
+        // simulation. Autonomous-to-autonomous joins are handled inside
+        // phase10BuildAutonomousIncidentChase and therefore persist.
 
         const paired = groups.map((group) => ({
           group,
@@ -28254,9 +28505,8 @@ function resolveUniversalPhase10Incidents({
       const autonomousMergeCommentary = autonomousChase.mergeEvents
         .filter(
           (event) =>
-            Math.abs(
-              checkpoint.raceProgress.kmFromStart - event.kmFromStart,
-            ) <= 0.000001,
+            firstCheckpointIndexByAutonomousMergeId.get(event.eventId) ===
+            checkpointIndex,
         )
         .map((event): UniversalReplayCommentaryEntry => ({
           commentaryId: `commentary:${event.eventId}`,
@@ -28294,8 +28544,47 @@ function resolveUniversalPhase10Incidents({
         const incident = dnfIncidentByRiderId.get(command.riderId)
         return !incident || checkpoint.raceProgress.kmFromStart < incident.kmFromStart - 0.000001
       })
+      const teamRescueCommentary: UniversalReplayCommentaryEntry[] =
+        autonomousChase.teamRescueEvents
+          .filter(
+            (event) =>
+              firstCheckpointIndexByTeamRescueId.get(event.eventId) ===
+              checkpointIndex,
+          )
+          .map((event, index) => {
+            const teamName = teamById.get(event.teamId)?.snapshot.teamName?.trim() ?? event.teamId
+            const helperNames = event.helperRiderIds.map((id) => riderDisplayName(id))
+            const protectedName = riderDisplayName(event.protectedRiderId)
+            return {
+              commentaryId: `${checkpoint.checkpointId}:team-rescue:${index + 1}`,
+              eventType: 'group_split',
+              title: 'Team drops back for its leader',
+              description: `${teamName} sends ${helperNames.join(', ')} back for ${protectedName}. They collect the leader and begin a high-effort chase.`,
+              riderIds: [event.protectedRiderId, ...event.helperRiderIds].sort(),
+              teamIds: [event.teamId],
+            }
+          })
       const correctedBaseCommentary = checkpoint.commentary
         .map((entry): UniversalReplayCommentaryEntry => {
+          if (entry.eventType === 'finish' && checkpoint.finalResultsVisible) {
+            const winnerRow = classification.find(
+              (row) => row.status === 'finished' && row.rank === 1,
+            )
+            if (!winnerRow) {
+              return {
+                ...entry,
+                riderIds: [],
+                teamIds: [],
+                description: 'The stage finishes without a classified winner.',
+              }
+            }
+            return {
+              ...entry,
+              riderIds: [winnerRow.riderId],
+              teamIds: [winnerRow.teamId],
+              description: `${riderDisplayName(winnerRow.riderId)} wins the stage.`,
+            }
+          }
           if (entry.eventType !== 'attack') return entry
           const unavailableRiderIds = entry.riderIds.filter((riderId) => {
             const incident = dnfIncidentByRiderId.get(riderId)
@@ -28369,6 +28658,7 @@ function resolveUniversalPhase10Incidents({
           ...incidentCommentary,
           ...incidentRejoinCommentary,
           ...autonomousMergeCommentary,
+          ...teamRescueCommentary,
         ],
       }
     },
@@ -28571,6 +28861,7 @@ export function buildUniversalReplaySynchronizationSummary(
   let postCatchStateStable = true
   let allResultFieldsHiddenBeforeFinish = true
   let finalCheckpointMatchesClassification = true
+  let finishCommentaryMatchesClassification = true
   let previousProgress = -1
   let previousCheckpoint: UniversalReplayCheckpoint | null = null
 
@@ -29033,6 +29324,22 @@ export function buildUniversalReplaySynchronizationSummary(
     if (!sameStringArray(groupedFinalRiderIds, finishedRiderIds)) {
       finalCheckpointMatchesClassification = false
       pushIssue('final_group_membership_mismatch')
+    }
+
+    const officialWinner = finishResolution.classification.find(
+      (row) => row.status === 'finished' && row.rank === 1,
+    )
+    const finishCommentary = finalCheckpoint.commentary.filter(
+      (entry) => entry.eventType === 'finish',
+    )
+    if (
+      !officialWinner ||
+      finishCommentary.length !== 1 ||
+      !sameStringArray(finishCommentary[0].riderIds, [officialWinner.riderId]) ||
+      !sameStringArray(finishCommentary[0].teamIds, [officialWinner.teamId])
+    ) {
+      finishCommentaryMatchesClassification = false
+      pushIssue('finish_commentary_winner_mismatch')
     }
 
     if (input.stage.stageFormat === 'road_race') {
@@ -29546,6 +29853,25 @@ export function buildUniversalReplaySynchronizationSummary(
           ) {
             return
           }
+          const previousGroup = previousCheckpoint.groups.find((group) =>
+            group.riderIds.includes(riderId),
+          )
+          const currentGroup = checkpoint.groups.find((group) =>
+            group.riderIds.includes(riderId),
+          )
+          const cFamilyPresentationRenumber =
+            previousDisplayCode.startsWith('C') &&
+            currentDisplayCode.startsWith('C') &&
+            previousGroup !== undefined &&
+            currentGroup !== undefined &&
+            sameStringArray(
+              [...previousGroup.riderIds].sort(),
+              [...currentGroup.riderIds].sort(),
+            )
+          // C1/C2/... are positional display labels. When the exact physical
+          // rider membership is unchanged, a C-number change only means another
+          // chase group moved ahead/behind it; it is not a rider transfer.
+          if (cFamilyPresentationRenumber) return
           if (!physicalTransitionPublished) {
             postCatchStateStable = false
             pushIssue(
@@ -29649,6 +29975,7 @@ export function buildUniversalReplaySynchronizationSummary(
     postCatchStateStable,
     allResultFieldsHiddenBeforeFinish,
     finalCheckpointMatchesClassification,
+    finishCommentaryMatchesClassification,
     incidentSynchronizationStatus,
     incidentIntegrationComplete: phase10Incidents.active,
     incidentCount: uniqueIncidentIds.size,
@@ -29866,6 +30193,16 @@ export function buildUniversalPostStageUpdateSummary(
         ),
       )
     })
+  })
+  phase10Incidents.autonomousChase.teamRescueHelpers.forEach((row) => {
+    phase10EnergyLossByRiderId.set(
+      row.helperRiderId,
+      deterministicRound(
+        (phase10EnergyLossByRiderId.get(row.helperRiderId) ?? 0) +
+          row.chaseEnergyCostPoints,
+        6,
+      ),
+    )
   })
   const officialByRiderId = new Map(
     finishResolution.classification.map((row) => [row.riderId, row] as const),
@@ -30579,6 +30916,12 @@ export function buildUniversalPhase78AcceptanceReport(
         allFinalRowsMatch,
     ),
     universalPhase78AcceptanceInvariant(
+      'phase7_finish_commentary_matches_classification',
+      replaySynchronization.finishCommentaryMatchesClassification,
+      true,
+      replaySynchronization.finishCommentaryMatchesClassification,
+    ),
+    universalPhase78AcceptanceInvariant(
       'phase7_result_fields_hidden_before_finish',
       replaySynchronization.allResultFieldsHiddenBeforeFinish,
       true,
@@ -30720,6 +31063,8 @@ export function buildUniversalPhase78AcceptanceReport(
         replaySynchronization.resultsVisibleCheckpointCount,
       finalCheckpointMatchesClassification:
         replaySynchronization.finalCheckpointMatchesClassification,
+      finishCommentaryMatchesClassification:
+        replaySynchronization.finishCommentaryMatchesClassification,
       resultFieldsHiddenBeforeFinish:
         replaySynchronization.allResultFieldsHiddenBeforeFinish,
       sameKilometreStatesConsistent:
