@@ -15956,7 +15956,7 @@ describe('Phase 11G organic race physics and replay continuity', () => {
   it('publishes the Phase 11G engine build marker', () => {
     const result = runRaceEngine(createValidInput())
     expect(result.phase78Acceptance.engineBuild).toBe(
-      'phase11g-organic-race-physics-v1-2026-09-02',
+      'phase11g-continuous-road-physics-v2-2026-09-03',
     )
   })
 
@@ -16477,6 +16477,60 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     ).toBe(true)
     expect(phase2Case.replaySynchronization.synchronized).toBe(true)
     expect(phase3Case.replaySynchronization.synchronized).toBe(true)
+  })
+
+  it('never freezes an established opening escape at its launch gap', () => {
+    const result = runRaceEngine(createPhase11gMixedStressInput(0))
+    const phase1 = result.roadRaceResolution.phase1Opening!
+    const roundedGaps = phase1.physicalGapTrajectory.map((sample) =>
+      Math.round(sample.gapSeconds),
+    )
+
+    expect(phase1.breakawayRiderIds.length).toBeGreaterThan(0)
+    expect(phase1.physicalGapTrajectory.length).toBeGreaterThan(2)
+    if (phase1.breakawayCatchKm === null && phase1.endGapSeconds > 0.5) {
+      expect(new Set(roundedGaps).size).toBeGreaterThan(1)
+    }
+  })
+
+  it('keeps every successful peloton attack in a physical F lifecycle', () => {
+    for (const index of [0, 5, 15, 34, 95, 105, 130, 191, 241, 325]) {
+      const result = runRaceEngine(createPhase11gMixedStressInput(index))
+      const phase2 = result.roadRaceResolution.phase2Development!
+      const phase3 = result.roadRaceResolution.phase3Decisive!
+      const phase2Successful = phase2.attackAttempts.filter(
+        (attempt) => attempt.attackSucceeded && attempt.sourceGroupCode === 'main_peloton',
+      )
+      const phase3Successful = phase3.attackAttempts.filter(
+        (attempt) => attempt.attackSucceeded && attempt.sourceGroupCode === 'main_peloton',
+      )
+
+      if (phase2Successful.length > 0) {
+        expect(phase2.secondaryFrontRiderIdsAtLaunch.length).toBeGreaterThan(0)
+        expect(
+          phase2.secondaryFrontGapTrajectory.length > 0 ||
+            phase2.secondaryFrontMergeKm !== null ||
+            phase2.secondaryFrontCatchKm !== null,
+        ).toBe(true)
+      }
+      if (phase3Successful.length > 0) {
+        expect(phase3.secondaryFrontRiderIdsAtLaunch.length).toBeGreaterThan(0)
+        expect(
+          phase3.secondaryFrontGapTrajectory.length > 0 ||
+            phase3.secondaryFrontMergeKm !== null ||
+            phase3.secondaryFrontCatchKm !== null,
+        ).toBe(true)
+      }
+      expect(result.replaySynchronization.issues).toEqual([])
+    }
+  })
+
+  it('keeps the deterministic bridge-lineage regression seeds fully synchronized', () => {
+    for (const index of [105, 130, 191, 241, 288, 292, 325, 329, 356]) {
+      const result = runRaceEngine(createPhase11gMixedStressInput(index))
+      expect(result.replaySynchronization.synchronized).toBe(true)
+      expect(result.replaySynchronization.issues).toEqual([])
+    }
   })
 
   it('keeps mixed flat, hilly, mountain and cobbled tactical races synchronized', () => {
