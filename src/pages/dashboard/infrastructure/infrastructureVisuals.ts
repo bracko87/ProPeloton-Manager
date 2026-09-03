@@ -23,10 +23,33 @@ export const facilityLevelImageUrls: Partial<
     4: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/training%20centre%20lvl%204.png',
     5: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/training%20centre%20lvl%205.png',
   },
-  medical_center: {},
-  youth_academy: {},
-  mechanics_workshop: {},
-  scouting_office: {},
+  medical_center: {
+    0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Medical%20center%20lvl%200.png',
+    1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Medical%20center%20lvl%201.png',
+    2: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Medical%20center%20lvl%202.png',
+    3: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Medical%20center%20lvl%203.png',
+    4: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Medical%20center%20lvl%204.png',
+    5: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Medical%20center%20lvl%205.png',
+  },
+  youth_academy: {
+    0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Youth%20Academy%20lvl%200.png',
+    1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Youth%20Academy%20lvl%201.png',
+    2: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Youth%20Academy%20lvl%202.png',
+  },
+  mechanics_workshop: {
+    0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Mechanics%20Workshop%20lvl%200.png',
+    1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Mechanics%20Workshop%20lvl%201.png',
+    2: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Mechanics%20Workshop%20lvl%202.png',
+    3: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Mechanics%20Workshop.png',
+    4: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Mechanics%20Workshop%20lvl%204.png',
+  },
+  scouting_office: {
+    0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Scouting%20Office%20lvl%200.png',
+    1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Scouting%20Office%20lvl%201.png',
+    2: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Scouting%20Office%20lvl2.png',
+    3: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Scouting%20Office%20lvl%203.png',
+    4: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Scouting%20Office%20lvl%204.png',
+  },
 }
 
 const themes: Record<FacilityKey, { name: string; wall: string; roof: string; accent: string }> = {
