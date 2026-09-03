@@ -7085,6 +7085,8 @@ function StagePlansTab({
   const stages = target?.stages ?? [];
   const stagePlans = target?.stage_plans ?? [];
   const [selectedStageIndex, setSelectedStageIndex] = useState(0);
+  const [stageSupplyOptions, setStageSupplyOptions] =
+    useState<RaceSupplyOption[]>(supplyOptions);
   const [stageDraftsByStageKey, setStageDraftsByStageKey] = useState<
     Record<string, StagePlanDraft>
   >({});
@@ -7110,6 +7112,14 @@ function StagePlansTab({
     useState(false);
 
   const selectedStage = stages[selectedStageIndex] ?? stages[0] ?? null;
+  const selectedStageSupplyId = String(asRecord(selectedStage).id ?? "");
+  const selectedStageSupplyTeamId = String(
+    asRecord(target?.preparation).participating_club_id ??
+      asRecord(target?.preparation).club_id ??
+      asRecord(target?.entry).participating_club_id ??
+      asRecord(target?.entry).club_id ??
+      "",
+  );
   const selectedStageWeatherCanceled =
     isPreparationStageWeatherCanceled(selectedStage);
   const selectedStageWeatherRiskReason =
@@ -7289,6 +7299,61 @@ function StagePlansTab({
     lockInfo.isLocked ||
     stagePlanControlsReadOnly ||
     savingStagePlan;
+
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStageSupplyAvailability() {
+      if (!selectedStageSupplyId || !selectedStageSupplyTeamId) {
+        if (!cancelled) setStageSupplyOptions(supplyOptions);
+        return;
+      }
+
+      const { data, error } = await supabase.rpc(
+        "get_race_stage_supply_availability_v1",
+        {
+          p_stage_id: selectedStageSupplyId,
+          p_team_id: selectedStageSupplyTeamId,
+        },
+      );
+
+      if (cancelled) return;
+
+      if (error) {
+        console.warn(
+          "Could not load reservation-aware stage supply availability:",
+          error.message,
+        );
+        setStageSupplyOptions(supplyOptions);
+        return;
+      }
+
+      const availabilityByKey = new Map<string, number>(
+        toArray<JsonRecord>(data).map((row) => [
+          String(row.supply_key ?? ""),
+          Math.max(0, Number(row.quantity_available ?? 0)),
+        ]),
+      );
+
+      setStageSupplyOptions(
+        supplyOptions.map((option) => {
+          const supplyKey = String(option.supply_key ?? "");
+          const available = availabilityByKey.get(supplyKey);
+
+          return available === undefined
+            ? option
+            : { ...option, quantity_available: available };
+        }),
+      );
+    }
+
+    void loadStageSupplyAvailability();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStageSupplyId, selectedStageSupplyTeamId, supplyOptions]);
 
   async function loadU23AutomationDashboardForCurrentTarget() {
     if (!racePreparationIdForStageReadiness || !packageSubmitted) {
@@ -8405,7 +8470,7 @@ function StagePlansTab({
         <StageRaceSuppliesCard
           stage={selectedStage}
           riders={selectedRiders}
-          supplyOptions={supplyOptions}
+          supplyOptions={stageSupplyOptions}
           suppliesByRider={selectedDraft.suppliesByRider}
           onApplyTeamPlan={(teamPlan) =>
             updateSelectedStageDraft((current) => ({
@@ -8434,7 +8499,7 @@ function StagePlansTab({
           riders={selectedRiders}
           draft={selectedDraft}
           equipmentPresetOptions={equipmentPresetOptions}
-          supplyOptions={supplyOptions}
+          supplyOptions={stageSupplyOptions}
           standardizedBonus={standardizedBonus}
           exactBonusPreview={exactBonusPreview}
           onSave={() => void handleSaveStagePlan()}
