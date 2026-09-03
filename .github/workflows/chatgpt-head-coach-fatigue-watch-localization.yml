@@ -1,0 +1,62 @@
+name: Head Coach Fatigue Watch localization
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-head-coach-fatigue-watch-localization.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  localize-audit-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply Fatigue Watch localization
+        run: python .github/scripts/fix_head_coach_fatigue_watch_localization_20260903.py
+
+      - name: Validate notification locale JSON
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          locales = ['en', 'sr-Latn', 'de', 'hr', 'es', 'it', 'fr', 'ru']
+          for locale in locales:
+              path = Path('src/i18n/locales') / locale / 'notifications.json'
+              json.loads(path.read_text(encoding='utf-8'))
+              print('OK', path)
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Check diff
+        run: git diff --check
+
+      - name: Commit localization
+        run: |
+          if git diff --quiet; then
+            echo 'No localization changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/dashboard/NotificationsPage.tsx src/i18n/locales/*/notifications.json
+          git commit -m 'Translate Head Coach Fatigue Watch notification'
+          git pull --rebase origin main
+          git push origin HEAD:main
