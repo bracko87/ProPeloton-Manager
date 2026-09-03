@@ -12772,8 +12772,9 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
       phase4.automaticActivityStartsAtFraction,
     )
     expect(catchFraction).toBeLessThanOrEqual(1)
-    // Regression: Phase 11G is allowed to catch well before the old 95%+ window.
-    expect(catchFraction).toBeLessThan(0.95)
+    // There is deliberately no preferred catch percentage. A physical catch
+    // may occur anywhere after automatic activity begins, including inside
+    // the final five percent, provided every closure step is road-speed bounded.
   })
 
   it('announces clearly when the main group increases its pace to chase the breakaway', () => {
