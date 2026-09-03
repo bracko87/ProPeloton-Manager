@@ -14894,6 +14894,135 @@ STAGE_PLAN_MISSING_AT_LOCK: {
     ],
   },
 
+  SEASON_STARTED: {
+    defaultTitle: 'Season started',
+    defaultMessage:
+      'The new season has started. Review the early-January race deadlines carefully.',
+
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/new%20season%20started.png',
+
+    getImageSrc: (item) =>
+      getImageSrcFromItem(item) ||
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/new%20season%20started.png',
+
+    getIntroText: (item) => {
+      const payload = getPayload(item)
+      const seasonNumber = pickFirstNumber(payload, [
+        'season_number',
+        'season',
+        'target_season',
+        'new_season_number',
+        'current_season',
+      ])
+
+      return seasonNumber !== null
+        ? `Season ${seasonNumber} begins with a compressed January race calendar. Early-season application and startlist deadlines are intentionally tighter than normal, so plan the first race block carefully.`
+        : 'The season begins with a compressed January race calendar. Early-season application and startlist deadlines are intentionally tighter than normal, so plan the first race block carefully.'
+    },
+
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const seasonNumber = pickFirstNumber(payload, [
+        'season_number',
+        'season',
+        'target_season',
+      ])
+      const earlyEndDay =
+        pickFirstNumber(payload, ['early_january_end_day']) ?? 15
+      const earlyApplicationCloseDays =
+        pickFirstNumber(payload, [
+          'early_january_applications_close_days_before',
+        ]) ?? 1
+      const earlyTeamListDays =
+        pickFirstNumber(payload, [
+          'early_january_team_list_days_before',
+        ]) ?? 1
+      const earlyStartlistHours =
+        pickFirstNumber(payload, [
+          'early_january_startlist_hours_before_stage1',
+        ]) ?? 3
+      const lateJanuaryApplicationCloseDays =
+        pickFirstNumber(payload, [
+          'january_late_applications_close_days_before',
+        ]) ?? 7
+      const lateJanuaryStartlistDays =
+        pickFirstNumber(payload, [
+          'january_late_startlist_days_before',
+        ]) ?? 3
+      const standardApplicationOpenDays =
+        pickFirstNumber(payload, [
+          'standard_applications_open_days_before',
+        ]) ?? 60
+      const standardApplicationCloseDays =
+        pickFirstNumber(payload, [
+          'standard_applications_close_days_before',
+        ]) ?? 30
+      const standardStartlistDays =
+        pickFirstNumber(payload, [
+          'standard_startlist_days_before',
+        ]) ?? 3
+
+      return compactRows([
+        detailRow(
+          'Season',
+          seasonNumber !== null ? `Season ${seasonNumber}` : 'New season'
+        ),
+        detailRow(
+          `Applications · Jan 1–${earlyEndDay}`,
+          `Open Jan 1 · close ${earlyApplicationCloseDays} game day${earlyApplicationCloseDays === 1 ? '' : 's'} before the race`
+        ),
+        detailRow(
+          `Team list · Jan 1–${earlyEndDay}`,
+          `Announced ${earlyTeamListDays} game day${earlyTeamListDays === 1 ? '' : 's'} before the race, when applications close`
+        ),
+        detailRow(
+          `Startlist · Jan 1–${earlyEndDay}`,
+          `Open until ${earlyStartlistHours} game hour${earlyStartlistHours === 1 ? '' : 's'} before Stage 1`
+        ),
+        detailRow(
+          `Jan ${earlyEndDay + 1}–31`,
+          `Applications close ${lateJanuaryApplicationCloseDays} days before · startlist closes ${lateJanuaryStartlistDays} days before`
+        ),
+        detailRow(
+          'From February',
+          `Standard schedule: applications open ${standardApplicationOpenDays} days before, close ${standardApplicationCloseDays} days before · startlist closes ${standardStartlistDays} days before`
+        ),
+      ])
+    },
+
+    getExtraText: () =>
+      'January is intentionally more compressed than the normal calendar. Check Calendar and Race Detail frequently during the opening race block so you do not miss an application, team-list or startlist deadline.',
+
+    actions: [
+      {
+        key: 'open-january-calendar',
+        label: 'Season calendar',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => getActionHrefFromItem(item) || '/dashboard/calendar',
+        show: () => true,
+      },
+      {
+        key: 'open-race-preparation',
+        label: 'Race preparation',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/race-preparation',
+        show: () => true,
+      },
+      {
+        key: 'open-season-overview',
+        label: 'Season overview',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/overview',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
   NEW_SEASON_STARTED: {
     defaultTitle: 'New season started',
     defaultMessage:

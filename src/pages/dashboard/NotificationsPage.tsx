@@ -1766,6 +1766,7 @@ export default function NotificationsPage(): JSX.Element {
                 {visibleItems.map(item => {
                   const isUnread = item.status === 'unread'
                   const isExpanded = expandedId === item.user_notification_id
+                  const isSeasonStartNotice = item.type_code === 'SEASON_STARTED'
                   const imageSrc = getNotificationImageSrc(item)
                   const introText = getNotificationIntroText(item)
                   const detailRows = getNotificationDetailRows(item)
@@ -3314,34 +3315,63 @@ export default function NotificationsPage(): JSX.Element {
                               >
                                 <div className="min-w-0">
                                   {introText ? (
-                                    <p className="text-sm leading-6 text-slate-700">
+                                    <p
+                                      className={
+                                        isSeasonStartNotice
+                                          ? 'rounded-xl border border-sky-200 bg-sky-50 px-3 py-3 text-sm leading-6 text-slate-700'
+                                          : 'text-sm leading-6 text-slate-700'
+                                      }
+                                    >
                                       {introText}
                                     </p>
                                   ) : null}
 
                                   {detailRows.length > 0 ? (
-                                    <div className="mt-4 space-y-2">
+                                    <div
+                                      className={
+                                        isSeasonStartNotice
+                                          ? 'mt-4 grid gap-3 sm:grid-cols-2'
+                                          : 'mt-4 space-y-2'
+                                      }
+                                    >
                                       {detailRows.map((row, index) => (
                                         <div
                                           key={`${item.user_notification_id}-${row.label}-${index}`}
-                                          className="text-sm leading-6 text-slate-700"
+                                          className={
+                                            isSeasonStartNotice
+                                              ? 'rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm'
+                                              : 'text-sm leading-6 text-slate-700'
+                                          }
                                         >
-                                          <span className="text-slate-600">{row.label}: </span>
-                                          {String(row.label).trim().toLowerCase() === 'rider' ? (
-                                            renderAdvisorRiderIdentity({
-                                              value: row.value,
-                                              source: getNotificationPayloadRecord(item),
-                                              navigate,
-                                              defaultScope:
-                                                getNotificationRiderDefaultScope(item),
-                                              showFlag: true,
-                                              textClassName:
-                                                'font-semibold text-slate-900',
-                                            })
+                                          {isSeasonStartNotice ? (
+                                            <>
+                                              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                                {row.label}
+                                              </div>
+                                              <div className="mt-1 text-sm font-semibold leading-5 text-slate-900">
+                                                {row.value}
+                                              </div>
+                                            </>
                                           ) : (
-                                            <strong className="font-semibold text-slate-900">
-                                              {row.value}
-                                            </strong>
+                                            <>
+                                              <span className="text-slate-600">{row.label}: </span>
+                                              {String(row.label).trim().toLowerCase() === 'rider' ? (
+                                                renderAdvisorRiderIdentity({
+                                                  value: row.value,
+                                                  source: getNotificationPayloadRecord(item),
+                                                  navigate,
+                                                  defaultScope:
+                                                    getNotificationRiderDefaultScope(item),
+                                                  showFlag: true,
+                                                  textClassName:
+                                                    'font-semibold text-slate-900',
+                                                })
+                                              ) : (
+                                                <strong className="font-semibold text-slate-900">
+                                                  {row.value}
+                                                </strong>
+                                              )}
+                                            </>
                                           )}
                                         </div>
                                       ))}
@@ -3349,7 +3379,13 @@ export default function NotificationsPage(): JSX.Element {
                                   ) : null}
 
                                   {extraText ? (
-                                    <p className="mt-4 text-sm leading-6 text-slate-600">
+                                    <p
+                                      className={
+                                        isSeasonStartNotice
+                                          ? 'mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-6 text-amber-900'
+                                          : 'mt-4 text-sm leading-6 text-slate-600'
+                                      }
+                                    >
                                       {extraText}
                                     </p>
                                   ) : null}
