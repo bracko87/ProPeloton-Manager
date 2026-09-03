@@ -1,3 +1,5 @@
+import i18n from '@/i18n'
+
 /**
  * @file Utility helpers for parsing, normalizing and formatting in-game dates
  * for the finance dashboard and any other views that work with game seasons.
@@ -288,7 +290,8 @@ export function resolveGameDate(
 export function formatGameDate(parts: GameDateParts | null, includeTime = false): string {
   if (!parts) return '—'
 
-  const base = `${pad2(parts.day)}/${pad2(parts.month)}, Season ${parts.season}`
+  const seasonLabel = String(i18n.t('common.season', { ns: 'finance', defaultValue: 'Season' }))
+  const base = `${pad2(parts.day)}/${pad2(parts.month)}, ${seasonLabel} ${parts.season}`
 
   if (
     includeTime &&
@@ -313,7 +316,8 @@ export function formatGameDateRange(start: unknown, end: unknown): string {
   if (!s || !e) return '—'
 
   if (s.season === e.season) {
-    return `${pad2(s.day)}/${pad2(s.month)} → ${pad2(e.day)}/${pad2(e.month)}, Season ${s.season}`
+    const seasonLabel = String(i18n.t('common.season', { ns: 'finance', defaultValue: 'Season' }))
+    return `${pad2(s.day)}/${pad2(s.month)} → ${pad2(e.day)}/${pad2(e.month)}, ${seasonLabel} ${s.season}`
   }
 
   return `${formatGameDate(s)} → ${formatGameDate(e)}`
@@ -353,9 +357,11 @@ export function getGameMonthKey(parts: GameDateParts | null): string {
 export function formatGameMonthLabel(monthKey: string): string {
   const match = monthKey.match(/^S(\d+)-M(\d+)$/)
 
-  if (!match) return 'Unknown game month'
+  if (!match) return String(i18n.t('common.unknownGameMonth', { ns: 'finance', defaultValue: 'Unknown game month' }))
 
-  return `Month ${Number(match[2])}, Season ${Number(match[1])}`
+  const monthLabel = String(i18n.t('common.month', { ns: 'finance', defaultValue: 'Month' }))
+  const seasonLabel = String(i18n.t('common.season', { ns: 'finance', defaultValue: 'Season' }))
+  return `${monthLabel} ${Number(match[2])}, ${seasonLabel} ${Number(match[1])}`
 }
 
 /**

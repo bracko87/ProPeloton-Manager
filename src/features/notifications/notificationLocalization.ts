@@ -85,6 +85,105 @@ function normalizePhrase(value: string): string {
     .toLowerCase()
 }
 
+type EnglishResourceHit = { namespace: string; keyPath: string }
+let englishResourceIndex: Map<string, EnglishResourceHit[]> | null = null
+
+function activeLanguageCode(): string {
+  return String(i18n.resolvedLanguage ?? i18n.language ?? 'en')
+}
+
+function readResourceString(bundle: unknown, keyPath: string): string | null {
+  if (!bundle || typeof bundle !== 'object') return null
+  let current: unknown = bundle
+  for (const segment of keyPath.split('.')) {
+    if (!current || typeof current !== 'object') return null
+    current = (current as Record<string, unknown>)[segment]
+  }
+  return typeof current === 'string' && current.trim() ? current.trim() : null
+}
+
+function indexEnglishBundle(
+  target: Map<string, EnglishResourceHit[]>,
+  namespace: string,
+  value: unknown,
+  keyPath = ''
+): void {
+  if (typeof value === 'string') {
+    if (!value.includes('{{') && value.trim()) {
+      const normalized = normalizePhrase(value)
+      const rows = target.get(normalized) ?? []
+      rows.push({ namespace, keyPath })
+      target.set(normalized, rows)
+    }
+    return
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return
+  Object.entries(value as Record<string, unknown>).forEach(([key, child]) => {
+    indexEnglishBundle(target, namespace, child, keyPath ? `${keyPath}.${key}` : key)
+  })
+}
+
+function getEnglishResourceIndex(): Map<string, EnglishResourceHit[]> {
+  if (englishResourceIndex) return englishResourceIndex
+  const next = new Map<string, EnglishResourceHit[]>()
+  const englishData = i18n.getDataByLanguage('en') as Record<string, unknown> | undefined
+  if (englishData) {
+    Object.entries(englishData).forEach(([namespace, bundle]) => {
+      indexEnglishBundle(next, namespace, bundle)
+    })
+  }
+  englishResourceIndex = next
+  return next
+}
+
+function localizeExistingGamePhrase(value: string): string | null {
+  if (!shouldLocalizeNotifications() || !value.trim()) return null
+  const hits = getEnglishResourceIndex().get(normalizePhrase(value)) ?? []
+  const languageData = i18n.getDataByLanguage(activeLanguageCode()) as Record<string, unknown> | undefined
+  if (!languageData) return null
+
+  for (const hit of hits) {
+    const localized = readResourceString(languageData[hit.namespace], hit.keyPath)
+    if (localized && !localized.includes('{{')) return localized
+  }
+  return null
+}
+
+function notificationLiteral(section: 'literalDetailLabels' | 'literalActionLabels', raw: string): string | null {
+  const languageData = i18n.getDataByLanguage(activeLanguageCode()) as Record<string, unknown> | undefined
+  const notifications = languageData?.notifications
+  if (!notifications || typeof notifications !== 'object') return null
+  const sectionValue = (notifications as Record<string, unknown>)[section]
+  if (!sectionValue || typeof sectionValue !== 'object') return null
+  const value = (sectionValue as Record<string, unknown>)[raw.trim()]
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function notificationTemplateWord(raw: string): string | null {
+  const languageData = i18n.getDataByLanguage(activeLanguageCode()) as Record<string, unknown> | undefined
+  const notifications = languageData?.notifications
+  if (!notifications || typeof notifications !== 'object') return null
+  const words = (notifications as Record<string, unknown>).templateWords
+  if (!words || typeof words !== 'object') return null
+  const value = (words as Record<string, unknown>)[raw.toUpperCase()]
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function localizeLabelByReusableTokens(raw: string): string | null {
+  let failed = false
+  let translatedCount = 0
+  const translated = raw.replace(/[A-Za-z][A-Za-z0-9'-]*/g, word => {
+    const localized = notificationTemplateWord(word) || localizeExistingGamePhrase(word)
+    if (!localized) {
+      failed = true
+      return word
+    }
+    translatedCount += 1
+    return localized
+  })
+  return !failed && translatedCount > 0 ? translated : null
+}
+
 function localizeRole(value: string | null): string | null {
   if (!value || !shouldLocalizeNotifications()) return value
   const normalized = normalizePhrase(value)
@@ -152,9 +251,34 @@ function localizeCategory(value: string | null | undefined): string | null {
   return key ? nt(key) : null
 }
 
+function localizeSemanticTypeCode(typeCode: string | null | undefined): string | null {
+  if (!typeCode || !shouldLocalizeNotifications()) return null
+  const code = String(typeCode).toUpperCase()
+  const key = `semanticTypeTitles.${code}`
+  const value = nt(key, { defaultValue: '' })
+  return value && value !== key ? value : null
+}
+
+function localizeSemanticEntityTitle(typeCode: string, entity: string | null): string | null {
+  if (!entity || !shouldLocalizeNotifications()) return null
+  const key = `semanticTypeEntityTitles.${typeCode}`
+  const value = nt(key, { entity, defaultValue: '' })
+  return value && value !== key ? value : null
+}
+
+function localizeSemanticMessage(typeCode: string, entity: string | null): string | null {
+  if (!entity || !shouldLocalizeNotifications()) return null
+  const key = `semanticTypeMessages.${typeCode}`
+  const value = nt(key, { entity, defaultValue: '' })
+  return value && value !== key ? value : null
+}
+
 function localizeTypeCode(typeCode: string | null | undefined): string | null {
   if (!typeCode) return null
   if (!shouldLocalizeNotifications()) return typeCode
+
+  const semantic = localizeSemanticTypeCode(typeCode)
+  if (semantic) return semantic
 
   const tokens = String(typeCode)
     .toUpperCase()
@@ -355,15 +479,18 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
   // not leak English template prose: show a localized, type-aware fallback.
   // Dynamic rider/team/race/sponsor/company names come from payload_json and
   // are interpolated verbatim; only the surrounding UI prose is translated.
-  const topic = localizedType || getTopic(item)
+  const semanticType = localizeSemanticTypeCode(typeCode)
+  const topic = semanticType || localizedType || getTopic(item)
+  const semanticEntityTitle = localizeSemanticEntityTitle(typeCode, entity)
+  const semanticMessage = localizeSemanticMessage(typeCode, entity)
   const localizedTitle = item.title && !looksEnglish(item.title)
     ? item.title
-    : nt('templateLocalization.genericTitle', { topic })
+    : semanticEntityTitle || semanticType || nt('templateLocalization.genericTitle', { topic })
   const localizedMessage = item.message && !looksEnglish(item.message)
     ? item.message
-    : entity
+    : semanticMessage || (entity
       ? nt('templateLocalization.genericEntityMessage', { topic, entity })
-      : nt('templateLocalization.genericMessage', { topic })
+      : nt('templateLocalization.genericMessage', { topic }))
 
   return {
     ...item,
@@ -485,7 +612,16 @@ const DETAIL_LABEL_KEYS: Record<string, string> = {
 export function localizeNotificationDetailLabel(label: string): string {
   if (!shouldLocalizeNotifications()) return label
   const key = DETAIL_LABEL_KEYS[normalizePhrase(label)]
-  return key ? nt(key) : nt('common.detail')
+  if (key) return nt(key)
+
+  const literal = notificationLiteral('literalDetailLabels', label)
+  if (literal) return literal
+
+  const existing = localizeExistingGamePhrase(label)
+  if (existing) return existing
+
+  const tokenized = localizeLabelByReusableTokens(label)
+  return tokenized || nt('common.detail')
 }
 
 export function localizeNotificationValue(value: string): string {
@@ -573,6 +709,17 @@ export function localizeNotificationValue(value: string): string {
 
   if (translatedValue !== value) return translatedValue
 
+  const existingGamePhrase = localizeExistingGamePhrase(value)
+  if (existingGamePhrase) return existingGamePhrase
+
+  // Short metadata values frequently reuse the same vocabulary as labels.
+  // Translate them token-by-token only when every English token has a known
+  // localized equivalent; otherwise preserve dynamic names/identifiers.
+  if (value.length <= 120) {
+    const tokenized = localizeLabelByReusableTokens(value)
+    if (tokenized) return tokenized
+  }
+
   if (/\/week\b/i.test(value)) {
     return value.replace(/\/week\b/gi, `/${nt('templateLocalization.perWeek')}`)
   }
@@ -617,6 +764,16 @@ export function localizeNotificationActionLabel(label: string): string {
   const normalized = normalizePhrase(label)
   const key = ACTION_KEY_BY_LABEL[normalized]
   if (key) return nt(key)
+
+  const literal = notificationLiteral('literalActionLabels', label)
+  if (literal) return literal
+
+  const existing = localizeExistingGamePhrase(label)
+  if (existing) return existing
+
+  const tokenized = localizeLabelByReusableTokens(label)
+  if (tokenized) return tokenized
+
   if (normalized.startsWith('open ')) return nt('details.open')
   if (normalized.startsWith('review ') || normalized.startsWith('check ')) {
     return nt('details.review')

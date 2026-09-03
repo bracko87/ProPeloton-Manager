@@ -42,7 +42,7 @@
     "transaction": "Transaktion",
     "archive": "Archiv",
     "page": "Seite",
-    "season": "Jahreszeit",
+    "season": "Saison",
     "gameMonth": "Spielmonat",
     "needed": "Erforderlich",
     "signed": "Unterzeichnet",
@@ -63,7 +63,9 @@
     "noData": "Keine Daten",
     "noItems": "Keine Gegenstände zu zeigen.",
     "showing": "Anzeigen",
-    "of": "von"
+    "of": "von",
+    "month": "Monat",
+    "unknownGameMonth": "Unbekannter Spielmonat"
   },
   "transactionLabels": {
     "competitionReward": "Wettbewerbsprämie",

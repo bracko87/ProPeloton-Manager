@@ -63,7 +63,9 @@
     "noData": "Нет данных",
     "noItems": "Не надо ничего показывать.",
     "showing": "Показать",
-    "of": "В процентах"
+    "of": "В процентах",
+    "month": "Месяц",
+    "unknownGameMonth": "Неизвестный игровой месяц"
   },
   "transactionLabels": {
     "competitionReward": "Награда за конкуренцию",

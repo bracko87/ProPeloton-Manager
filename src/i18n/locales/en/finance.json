@@ -63,7 +63,9 @@
     "noData": "No data",
     "noItems": "No items to show.",
     "showing": "Showing",
-    "of": "of"
+    "of": "of",
+    "month": "Month",
+    "unknownGameMonth": "Unknown game month"
   },
   "transactionLabels": {
     "competitionReward": "Competition Reward",

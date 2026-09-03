@@ -63,7 +63,9 @@
     "noData": "Nema podataka",
     "noItems": "Nema stavki za prikaz.",
     "showing": "Prikazano",
-    "of": "od"
+    "of": "od",
+    "month": "Mesec",
+    "unknownGameMonth": "Nepoznat mesec igre"
   },
   "transactionLabels": {
     "competitionReward": "Nagrada takmičenja",
