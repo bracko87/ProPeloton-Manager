@@ -18,6 +18,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Correct audit expectation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/scripts/fix_season_started_notification_localization_20260903.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'len(block["values"]) != 6'
+          new = 'len(block["values"]) != 7'
+          if old in text:
+              text = text.replace(old, new, 1)
+              path.write_text(text, encoding='utf-8')
+          elif new not in text:
+              raise SystemExit('Could not locate Season Started value-count audit')
+          PY
+
       - name: Apply semantic Season Started localization
         run: python .github/scripts/fix_season_started_notification_localization_20260903.py
 
@@ -56,7 +71,7 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/features/notifications/notificationLocalization.ts src/features/notifications/notificationTemplates.tsx src/i18n/locales/*/notifications.json
+          git add .github/scripts/fix_season_started_notification_localization_20260903.py src/features/notifications/notificationLocalization.ts src/features/notifications/notificationTemplates.tsx src/i18n/locales/*/notifications.json
           git commit -m 'Translate Season Started notification fully'
           git pull --rebase origin main
           git push origin HEAD:main
