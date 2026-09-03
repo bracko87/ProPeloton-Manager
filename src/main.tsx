@@ -16,6 +16,7 @@ import MobileDashboardSectionPreferences from './components/layout/MobileDashboa
 import MobilePolishBatch2Bridge from './components/layout/MobilePolishBatch2Bridge'
 import MobileFinalPolishBridge from './components/layout/MobileFinalPolishBridge'
 import MobileLastFixesBridge from './components/layout/MobileLastFixesBridge'
+import RaceReplayLiveWindowBridge from './components/race/RaceReplayLiveWindowBridge'
 import LanguagePreferenceSync from './components/i18n/LanguagePreferenceSync'
 import LanguageSelectorHost from './components/i18n/LanguageSelectorHost'
 import AppShellLegacyLocalizationBridge from './components/i18n/AppShellLegacyLocalizationBridge'
@@ -80,6 +81,7 @@ root.render(
     <MobilePolishBatch2Bridge />
     <MobileFinalPolishBridge />
     <MobileLastFixesBridge />
+    <RaceReplayLiveWindowBridge />
     <LanguagePreferenceSync />
     <LanguageSelectorHost />
     <AppShellLegacyLocalizationBridge />
