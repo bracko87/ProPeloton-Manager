@@ -29326,17 +29326,34 @@ export function buildUniversalReplaySynchronizationSummary(
       pushIssue('final_group_membership_mismatch')
     }
 
-    const officialWinner = finishResolution.classification.find(
-      (row) => row.status === 'finished' && row.rank === 1,
-    )
+    const teamTimeTrialFormat =
+      input.stage.stageFormat === 'team_time_trial' ||
+      input.stage.stageFormat === 'pair_time_trial'
+    const officialWinner = teamTimeTrialFormat
+      ? finishResolution.teamTimes[0]
+      : finishResolution.classification.find(
+          (row) => row.status === 'finished' && row.rank === 1,
+        )
     const finishCommentary = finalCheckpoint.commentary.filter(
       (entry) => entry.eventType === 'finish',
     )
+    const expectedFinishRiderId = teamTimeTrialFormat
+      ? finishResolution.winnerRiderId
+      : officialWinner && 'riderId' in officialWinner
+        ? officialWinner.riderId
+        : null
+    const expectedFinishTeamId = teamTimeTrialFormat
+      ? finishResolution.winnerTeamId
+      : officialWinner && 'teamId' in officialWinner
+        ? officialWinner.teamId
+        : null
     if (
       !officialWinner ||
+      !expectedFinishRiderId ||
+      !expectedFinishTeamId ||
       finishCommentary.length !== 1 ||
-      !sameStringArray(finishCommentary[0].riderIds, [officialWinner.riderId]) ||
-      !sameStringArray(finishCommentary[0].teamIds, [officialWinner.teamId])
+      !sameStringArray(finishCommentary[0].riderIds, [expectedFinishRiderId]) ||
+      !sameStringArray(finishCommentary[0].teamIds, [expectedFinishTeamId])
     ) {
       finishCommentaryMatchesClassification = false
       pushIssue('finish_commentary_winner_mismatch')
