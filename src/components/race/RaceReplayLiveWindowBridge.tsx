@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import i18n from '../../i18n'
 import { supabase } from '../../lib/supabase'
 
 type RaceStageLiveState = {
@@ -11,6 +12,10 @@ type RaceStageLiveState = {
 const LIVE_LOCK_TITLE =
   'Live race: replay is locked to x1 until the 15-minute live window ends.'
 
+function normalizeLabel(value: string): string {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
 function getReplayStageId(): string | null {
   if (typeof window === 'undefined') return null
 
@@ -19,7 +24,19 @@ function getReplayStageId(): string | null {
 }
 
 function getButtonLabel(button: HTMLButtonElement): string {
-  return (button.textContent ?? '').replace(/\s+/g, ' ').trim()
+  return normalizeLabel(button.textContent ?? '')
+}
+
+function translatedReplayLabel(
+  key: 'play' | 'pause' | 'finishReplay' | 'restart',
+  fallback: string
+): Set<string> {
+  const translated = String(i18n.t(`replay.${key}`, { ns: 'raceDetail' }) ?? '')
+  return new Set(
+    [fallback, translated]
+      .map(normalizeLabel)
+      .filter((value) => value.length > 0)
+  )
 }
 
 function replayButtons(): HTMLButtonElement[] {
@@ -68,63 +85,70 @@ export default function RaceReplayLiveWindowBridge() {
       const oneTimesButton = buttons.find(
         (button) => getButtonLabel(button) === '1x'
       )
-      const playPauseButton = buttons.find((button) => {
-        const label = getButtonLabel(button)
-        return label === 'Play' || label === 'Pause'
-      })
+
+      if (!oneTimesButton) return
+
+      // The speed buttons live in the same compact replay-control row. Using
+      // that row keeps the guard isolated from unrelated Play/Restart buttons.
+      const controlRow = oneTimesButton.parentElement
+      if (!controlRow) return
+
+      const controlButtons = Array.from(
+        controlRow.querySelectorAll<HTMLButtonElement>('button')
+      )
+      const playPauseButton = controlButtons[0] ?? null
+      const playLabels = translatedReplayLabel('play', 'Play')
+      const pauseLabels = translatedReplayLabel('pause', 'Pause')
 
       // The authoritative live window always runs at x1. If the viewer had a
-      // faster speed selected before the live lock was observed, force x1.
-      if (
-        oneTimesButton &&
-        !oneTimesButton.className.includes('bg-slate-950')
-      ) {
+      // faster speed selected before the lock was observed, force x1 first.
+      if (!oneTimesButton.className.includes('bg-slate-950')) {
         clickWithBypass(oneTimesButton)
       }
 
-      // A live race is not a user-started replay. As soon as the replay page is
-      // mounted during the live window, start it automatically at x1.
-      if (playPauseButton && getButtonLabel(playPauseButton) === 'Play') {
+      // A live race is not a user-started replay. When the replay page mounts
+      // during the live window, start it automatically at x1.
+      if (
+        playPauseButton &&
+        playLabels.has(getButtonLabel(playPauseButton))
+      ) {
         clickWithBypass(playPauseButton)
       }
 
-      for (const button of buttons) {
-        const label = getButtonLabel(button)
-        const hideDuringLive =
-          label === '2x' ||
-          label === '4x' ||
-          label === '8x' ||
-          label === 'Finish replay' ||
-          label === 'Restart'
-        const disableDuringLive =
-          label === 'Play' || label === 'Pause'
+      // During the real-time window only x1 is available. The first button is
+      // Play/Pause, then 1x/2x/4x/8x, followed by Finish and Restart. Keep x1
+      // visible, lock Play/Pause after autoplay, and hide every skip control.
+      for (const button of controlButtons) {
+        if (button === oneTimesButton) continue
 
-        if (!hideDuringLive && !disableDuringLive) continue
+        const label = getButtonLabel(button)
+        const isPlayPause =
+          button === playPauseButton ||
+          playLabels.has(label) ||
+          pauseLabels.has(label)
+        const isFasterSpeed = label === '2x' || label === '4x' || label === '8x'
 
         button.dataset.ppmLiveReplayManaged = 'true'
         button.setAttribute('aria-disabled', 'true')
         button.setAttribute('title', LIVE_LOCK_TITLE)
         button.disabled = true
 
-        if (hideDuringLive) button.hidden = true
+        if (!isPlayPause || isFasterSpeed) {
+          button.hidden = true
+        }
       }
 
-      if (oneTimesButton) {
-        oneTimesButton.setAttribute('title', LIVE_LOCK_TITLE)
+      oneTimesButton.dataset.ppmLiveReplayManaged = 'true'
+      oneTimesButton.setAttribute('title', LIVE_LOCK_TITLE)
 
-        const controlRow = oneTimesButton.parentElement
-        if (
-          controlRow &&
-          !document.getElementById('ppm-live-replay-lock-pill')
-        ) {
-          const pill = document.createElement('span')
-          pill.id = 'ppm-live-replay-lock-pill'
-          pill.textContent = 'LIVE · x1 locked'
-          pill.className =
-            'rounded-full border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-semibold text-red-700'
-          pill.setAttribute('title', LIVE_LOCK_TITLE)
-          controlRow.appendChild(pill)
-        }
+      if (!document.getElementById('ppm-live-replay-lock-pill')) {
+        const pill = document.createElement('span')
+        pill.id = 'ppm-live-replay-lock-pill'
+        pill.textContent = 'LIVE · x1 locked'
+        pill.className =
+          'rounded-full border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] font-semibold text-red-700'
+        pill.setAttribute('title', LIVE_LOCK_TITLE)
+        controlRow.appendChild(pill)
       }
     }
 
@@ -136,18 +160,10 @@ export default function RaceReplayLiveWindowBridge() {
 
       const button = target.closest('button')
       if (!(button instanceof HTMLButtonElement)) return
+      if (button.dataset.ppmLiveReplayManaged !== 'true') return
 
-      const label = getButtonLabel(button)
-      const blocked =
-        label === 'Play' ||
-        label === 'Pause' ||
-        label === '2x' ||
-        label === '4x' ||
-        label === '8x' ||
-        label === 'Finish replay' ||
-        label === 'Restart'
-
-      if (!blocked) return
+      // x1 remains selectable; all managed live controls are blocked.
+      if (getButtonLabel(button) === '1x') return
 
       event.preventDefault()
       event.stopPropagation()
@@ -205,8 +221,8 @@ export default function RaceReplayLiveWindowBridge() {
     // frequent enough for authoritative state while keeping RPC traffic small.
     const stateInterval = window.setInterval(refreshLiveState, 2000)
 
-    // Replay controls mount after the page data. Re-apply the UI guard quickly
-    // so React re-renders cannot briefly expose a forbidden live control.
+    // Replay controls mount after page data. Re-apply the UI guard quickly so
+    // React/localization re-renders cannot briefly expose a forbidden control.
     const controlInterval = window.setInterval(enforceLiveControls, 250)
 
     return () => {
