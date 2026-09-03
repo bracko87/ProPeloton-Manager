@@ -327,6 +327,182 @@ function buildStagePoints(stageId: string, distanceKm: number, rows: readonly Ro
     .map((row, index) => ({ ...row, sortOrder: index }))
 }
 
+type ProductionProfileCompetitionMarker = {
+  readonly family: 'sprint' | 'kom'
+  readonly kmFromStart: number
+  readonly name: string | null
+  readonly komCategory: 'HC' | '1' | '2' | '3' | '4' | null
+  readonly source: 'profile_intermediate_sprints' | 'profile_mountain_climbs' | 'profile_route_markers'
+  readonly sourceIndex: number
+}
+
+function markerKm(row: Row, distanceKm: number): number | null {
+  const raw = row.km ?? row.kilometer ?? row.km_from_start ?? row.distance_km
+  const parsed = optionalNumber(raw)
+  if (parsed === null) return null
+  return clamp(parsed, 0, distanceKm)
+}
+
+function markerName(row: Row): string | null {
+  return text(row.name ?? row.label ?? row.title)
+}
+
+function buildProfileCompetitionMarkers(
+  profile: Row,
+  distanceKm: number,
+): readonly ProductionProfileCompetitionMarker[] {
+  const sprintRows = array(profile.intermediate_sprints)
+  const climbRows = array(profile.mountain_climbs)
+  const explicitMarkers: ProductionProfileCompetitionMarker[] = [
+    ...sprintRows.flatMap((row, index) => {
+      const kmFromStart = markerKm(row, distanceKm)
+      if (kmFromStart === null) return []
+      return [{
+        family: 'sprint' as const,
+        kmFromStart,
+        name: markerName(row),
+        komCategory: null,
+        source: 'profile_intermediate_sprints' as const,
+        sourceIndex: index,
+      }]
+    }),
+    ...climbRows.flatMap((row, index) => {
+      const kmFromStart = markerKm(row, distanceKm)
+      if (kmFromStart === null) return []
+      return [{
+        family: 'kom' as const,
+        kmFromStart,
+        name: markerName(row),
+        komCategory: normalizeKomCategory(row.category ?? row.kom_category),
+        source: 'profile_mountain_climbs' as const,
+        sourceIndex: index,
+      }]
+    }),
+  ]
+
+  // The stage/profile UI uses intermediate_sprints + mountain_climbs for its
+  // competition cards. Only fall back to route_markers when neither explicit
+  // catalogue is present, so one physical marker source remains authoritative.
+  if (sprintRows.length > 0 || climbRows.length > 0) {
+    return explicitMarkers.sort(
+      (a, b) => a.kmFromStart - b.kmFromStart || a.sourceIndex - b.sourceIndex,
+    )
+  }
+
+  return array(profile.route_markers)
+    .flatMap((row, index): ProductionProfileCompetitionMarker[] => {
+      const rawType = String(row.type ?? row.point_type ?? '').trim().toLowerCase()
+      const family =
+        rawType.includes('kom') || rawType.includes('climb') || rawType.includes('mountain')
+          ? 'kom'
+          : rawType.includes('sprint')
+            ? 'sprint'
+            : null
+      if (family === null) return []
+      const kmFromStart = markerKm(row, distanceKm)
+      if (kmFromStart === null) return []
+      return [{
+        family,
+        kmFromStart,
+        name: markerName(row),
+        komCategory:
+          family === 'kom'
+            ? normalizeKomCategory(row.category ?? row.kom_category)
+            : null,
+        source: 'profile_route_markers',
+        sourceIndex: index,
+      }]
+    })
+    .sort((a, b) => a.kmFromStart - b.kmFromStart || a.sourceIndex - b.sourceIndex)
+}
+
+function buildReconciledStagePoints(
+  stageId: string,
+  distanceKm: number,
+  rows: readonly Row[],
+  profile: Row,
+): ReturnType<typeof buildStagePoints> {
+  const canonicalPoints = buildStagePoints(stageId, distanceKm, rows)
+  const profileMarkers = buildProfileCompetitionMarkers(profile, distanceKm)
+  if (profileMarkers.length === 0) return canonicalPoints
+
+  const canonicalSprintIndexes = canonicalPoints
+    .map((point, index) => ({ point, index }))
+    .filter(({ point }) =>
+      point.pointType === 'INTERMEDIATE_SPRINT' || point.pointType === 'BONUS_SPRINT',
+    )
+    .sort(
+      (a, b) =>
+        a.point.kmFromStart - b.point.kmFromStart ||
+        a.point.sortOrder - b.point.sortOrder ||
+        a.point.pointId.localeCompare(b.point.pointId),
+    )
+  const canonicalKomIndexes = canonicalPoints
+    .map((point, index) => ({ point, index }))
+    .filter(({ point }) => point.pointType === 'KOM')
+    .sort(
+      (a, b) =>
+        a.point.kmFromStart - b.point.kmFromStart ||
+        a.point.sortOrder - b.point.sortOrder ||
+        a.point.pointId.localeCompare(b.point.pointId),
+    )
+  const profileSprints = profileMarkers.filter((marker) => marker.family === 'sprint')
+  const profileKoms = profileMarkers.filter((marker) => marker.family === 'kom')
+
+  const assertCompatibleCount = (
+    family: 'sprint' | 'kom',
+    canonicalCount: number,
+    profileCount: number,
+  ): void => {
+    if (canonicalCount === profileCount) return
+    throw new Error(
+      `Production stage point/profile mismatch for ${stageId}: ${family} catalogue has ` +
+        `${canonicalCount} scoring row(s) but ${profileCount} profile marker(s). ` +
+        'Refusing to invent, drop, or silently relocate a competition point.',
+    )
+  }
+  assertCompatibleCount('sprint', canonicalSprintIndexes.length, profileSprints.length)
+  assertCompatibleCount('kom', canonicalKomIndexes.length, profileKoms.length)
+
+  const reconciled = canonicalPoints.map((point) => ({ ...point }))
+  const applyMarker = (
+    canonicalIndex: number,
+    marker: ProductionProfileCompetitionMarker,
+  ): void => {
+    const point = reconciled[canonicalIndex]
+    reconciled[canonicalIndex] = {
+      ...point,
+      kmFromStart: marker.kmFromStart,
+      name: marker.name ?? point.name,
+      komCategory:
+        point.pointType === 'KOM'
+          ? marker.komCategory ?? point.komCategory
+          : null,
+      metadata: {
+        ...point.metadata,
+        physical_marker_source: marker.source,
+        scoring_row_km_from_start: point.kmFromStart,
+        reconciled_to_profile_marker: true,
+      },
+    }
+  }
+  canonicalSprintIndexes.forEach(({ index }, markerIndex) =>
+    applyMarker(index, profileSprints[markerIndex]),
+  )
+  canonicalKomIndexes.forEach(({ index }, markerIndex) =>
+    applyMarker(index, profileKoms[markerIndex]),
+  )
+
+  return reconciled
+    .sort(
+      (a, b) =>
+        a.kmFromStart - b.kmFromStart ||
+        a.sortOrder - b.sortOrder ||
+        a.pointId.localeCompare(b.pointId),
+    )
+    .map((point, index) => ({ ...point, sortOrder: index }))
+}
+
 function normalizeAvailability(value: unknown): AvailabilityStatus {
   const raw = String(value ?? '').trim().toLowerCase()
   return availabilitySet.has(raw) ? raw as AvailabilityStatus : 'fit'
@@ -628,7 +804,12 @@ export function buildProductionUniversalRaceEngineInput(
       summitFinish: booleanValue(stage.is_summit_finish), terrainPercentages: buildTerrainPercentages(stage, profile, terrainType),
       profilePoints: buildProfilePoints(profile, distanceKm), timeTrialRules: null,
     },
-    points: buildStagePoints(stageId, distanceKm, sources.stagePoints), teams, riders, stagePlans,
+    points: buildReconciledStagePoints(
+      stageId,
+      distanceKm,
+      sources.stagePoints,
+      profile,
+    ), teams, riders, stagePlans,
     weather: {
       condition: text(weather.condition ?? weather.condition_label),
       temperatureC: optionalNumber(weather.avg_temp_c ?? weather.average_temp_c ?? weather.temperature_c ?? weather.temp_c),
