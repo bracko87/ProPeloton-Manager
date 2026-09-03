@@ -1,0 +1,94 @@
+name: Stage Plan save label localization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/fix_stage_plan_save_labels_20260903.py'
+      - '.github/workflows/chatgpt-stage-plan-save-labels.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-audit-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply explicit Stage Plan save translations
+        run: python3 .github/scripts/fix_stage_plan_save_labels_20260903.py
+
+      - name: Audit Stage Plan save translations
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          expected = {
+              'en': ('Save Stage Plan', 'Save', 'Saving…', 'View only'),
+              'sr-Latn': ('Sačuvaj plan etape', 'Sačuvaj', 'Čuvanje…', 'Samo pregled'),
+              'de': ('Etappenplan speichern', 'Speichern', 'Wird gespeichert…', 'Nur ansehen'),
+              'hr': ('Spremi plan etape', 'Spremi', 'Spremanje…', 'Samo pregled'),
+              'es': ('Guardar plan de etapa', 'Guardar', 'Guardando…', 'Solo lectura'),
+              'it': ('Salva piano di tappa', 'Salva', 'Salvataggio…', 'Sola visualizzazione'),
+              'fr': ('Enregistrer le plan d’étape', 'Enregistrer', 'Enregistrement…', 'Lecture seule'),
+              'ru': ('Сохранить план этапа', 'Сохранить', 'Сохранение…', 'Только просмотр'),
+          }
+          for locale, values in expected.items():
+              path = Path('src/i18n/locales') / locale / 'racePreparation.json'
+              data = json.loads(path.read_text(encoding='utf-8'))
+              stage = data['stagePlans']
+              actual = (stage['save'], stage['saveShort'], stage['saving'], stage['viewOnly'])
+              assert actual == values, (locale, actual, values)
+              assert 'Sezona ave' not in path.read_text(encoding='utf-8')
+              print('OK', locale, actual)
+
+          bridge = Path('src/components/i18n/RacePreparationLegacyLocalizationBridge.tsx').read_text(encoding='utf-8')
+          assert "'Save': 'stagePlans.saveShort'" in bridge
+          assert "'Save Stage Plan': 'stagePlans.save'" in bridge
+          assert "'Saving…': 'stagePlans.saving'" in bridge
+          assert "'Saving...': 'stagePlans.saving'" in bridge
+          print('Stage Plan save label audit PASSED')
+          PY
+
+      - name: Validate locale JSON
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for locale in ['en','sr-Latn','de','hr','es','it','fr','ru']:
+              path = Path('src/i18n/locales') / locale / 'racePreparation.json'
+              json.loads(path.read_text(encoding='utf-8'))
+              print('OK', path)
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit fix
+        run: |
+          git add src/components/i18n/RacePreparationLegacyLocalizationBridge.tsx
+          git add src/i18n/locales/*/racePreparation.json
+          if git diff --cached --quiet; then
+            echo 'No Stage Plan save label changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Fix Stage Plan save translations'
+          git pull --rebase origin main
+          git push origin HEAD:main
