@@ -179,7 +179,14 @@
     "improved": "{{rider}} improved {{skill}} from {{old}} to {{new}} ({{delta}}).",
     "decreased": "{{rider}} {{skill}} decreased from {{old}} to {{new}} ({{delta}}).",
     "ridersAttention": "Riders needing attention",
-    "fatigue": "Fatigue"
+    "fatigue": "Fatigue",
+    "fit": "Fit",
+    "fatigueWatch": {
+      "title": "Head Coach Advisory — Fatigue Watch",
+      "summaryOne": "1 rider is currently in the elevated fatigue band (50–69). Monitor the trend before workload increases further.",
+      "summaryMany": "{{count}} riders are currently in the elevated fatigue band (50–69). Monitor the trend before workload increases further.",
+      "recommendation": "Monitor the affected riders through the next training block."
+    }
   },
   "sportDirector": {
     "raceTiming": "Race timing",
@@ -597,7 +604,9 @@
     "priority_prospect": "Priority prospect",
     "medical_treatment": "Medical treatment",
     "equipment_workshop_review": "Equipment & workshop review",
-    "recruitment_review": "Recruitment review"
+    "recruitment_review": "Recruitment review",
+    "elevated_fatigue": "Elevated Fatigue",
+    "fatigue_watch": "Elevated Fatigue"
   },
   "notificationTypes": {
     "suppliesLow": "Race supplies low",

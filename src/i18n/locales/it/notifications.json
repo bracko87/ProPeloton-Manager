@@ -179,7 +179,14 @@
     "improved": "{{rider}} migliorato {{skill}} da {{old}} a {{new}} ({{delta}}).",
     "decreased": "{{rider}} {{skill}} è diminuito da {{old}} a {{new}} ({{delta}}).",
     "ridersAttention": "Ciclisti che necessitano di attenzione",
-    "fatigue": "Affaticamento"
+    "fatigue": "Affaticamento",
+    "fit": "In forma",
+    "fatigueWatch": {
+      "title": "Avviso dell'allenatore capo — Controllo della fatica",
+      "summaryOne": "1 corridore si trova attualmente nella fascia di fatica elevata (50–69). Monitora la tendenza prima di aumentare ulteriormente il carico.",
+      "summaryMany": "{{count}} corridori si trovano attualmente nella fascia di fatica elevata (50–69). Monitora la tendenza prima di aumentare ulteriormente il carico.",
+      "recommendation": "Monitora i corridori interessati durante il prossimo blocco di allenamento."
+    }
   },
   "sportDirector": {
     "raceTiming": "Tempismo di gara",
@@ -597,7 +604,9 @@
     "priority_prospect": "Prospettive prioritarie",
     "medical_treatment": "Trattamento medico",
     "equipment_workshop_review": "Revisione dell' attrezzatura e dell' officina",
-    "recruitment_review": "Riesame delle assunzioni"
+    "recruitment_review": "Riesame delle assunzioni",
+    "elevated_fatigue": "Fatica elevata",
+    "fatigue_watch": "Fatica elevata"
   },
   "notificationTypes": {
     "suppliesLow": "Scorte basse",

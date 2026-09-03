@@ -179,7 +179,14 @@
     "improved": "{{rider}} je poboljšao {{skill}} sa {{old}} na {{new}} ({{delta}}).",
     "decreased": "Kod vozača {{rider}} veština {{skill}} je smanjena sa {{old}} na {{new}} ({{delta}}).",
     "ridersAttention": "Vozači kojima je potrebna pažnja",
-    "fatigue": "Umor"
+    "fatigue": "Umor",
+    "fit": "Spreman",
+    "fatigueWatch": {
+      "title": "Savet glavnog trenera — praćenje umora",
+      "summaryOne": "1 vozač se trenutno nalazi u zoni povišenog umora (50–69). Pratite trend pre nego što dodatno povećate opterećenje.",
+      "summaryMany": "{{count}} vozača se trenutno nalaze u zoni povišenog umora (50–69). Pratite trend pre nego što dodatno povećate opterećenje.",
+      "recommendation": "Pratite pogođene vozače tokom sledećeg trening bloka."
+    }
   },
   "sportDirector": {
     "raceTiming": "Termin trke",
@@ -600,7 +607,9 @@
     "priority_prospect": "Prioritetni talenat",
     "medical_treatment": "Medicinski tretman",
     "equipment_workshop_review": "Pregled opreme i radionice",
-    "recruitment_review": "Pregled regrutacije"
+    "recruitment_review": "Pregled regrutacije",
+    "elevated_fatigue": "Povišen umor",
+    "fatigue_watch": "Povišen umor"
   },
   "notificationTypes": {
     "suppliesLow": "Niske zalihe",

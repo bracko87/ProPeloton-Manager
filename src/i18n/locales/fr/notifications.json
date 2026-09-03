@@ -179,7 +179,14 @@
     "improved": "{{rider}} amélioré {{skill}} de {{old}} à {{new}} ({{delta}}).",
     "decreased": "{{rider}} {{skill}} a diminué de {{old}} à {{new}} ({{delta}}).",
     "ridersAttention": "Les coureurs ont besoin d'attention",
-    "fatigue": "Fatigue"
+    "fatigue": "Fatigue",
+    "fit": "En forme",
+    "fatigueWatch": {
+      "title": "Conseil de l’entraîneur principal — Surveillance de la fatigue",
+      "summaryOne": "1 coureur se trouve actuellement dans la zone de fatigue élevée (50–69). Surveillez la tendance avant d’augmenter davantage la charge.",
+      "summaryMany": "{{count}} coureurs se trouvent actuellement dans la zone de fatigue élevée (50–69). Surveillez la tendance avant d’augmenter davantage la charge.",
+      "recommendation": "Surveillez les coureurs concernés pendant le prochain bloc d’entraînement."
+    }
   },
   "sportDirector": {
     "raceTiming": "Horaire des courses",
@@ -597,7 +604,9 @@
     "priority_prospect": "Prospective prioritaire",
     "medical_treatment": "Traitement médical",
     "equipment_workshop_review": "Examen des équipements et des ateliers",
-    "recruitment_review": "Examen du recrutement"
+    "recruitment_review": "Examen du recrutement",
+    "elevated_fatigue": "Fatigue élevée",
+    "fatigue_watch": "Fatigue élevée"
   },
   "notificationTypes": {
     "suppliesLow": "Stocks faibles",

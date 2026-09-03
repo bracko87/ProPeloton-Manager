@@ -179,7 +179,14 @@
     "improved": "{{rider}} verbesserte {{skill}} von {{old}} auf {{new}} ({{delta}}).",
     "decreased": "{{rider}}: {{skill}} sank von {{old}} auf {{new}} ({{delta}}).",
     "ridersAttention": "Fahrer, die Aufmerksamkeit brauchen",
-    "fatigue": "Müdigkeit"
+    "fatigue": "Müdigkeit",
+    "fit": "Einsatzbereit",
+    "fatigueWatch": {
+      "title": "Cheftrainer-Hinweis — Müdigkeit beobachten",
+      "summaryOne": "1 Fahrer befindet sich derzeit im Bereich erhöhter Ermüdung (50–69). Beobachte die Entwicklung, bevor die Belastung weiter steigt.",
+      "summaryMany": "{{count}} Fahrer befinden sich derzeit im Bereich erhöhter Ermüdung (50–69). Beobachte die Entwicklung, bevor die Belastung weiter steigt.",
+      "recommendation": "Beobachte die betroffenen Fahrer im nächsten Trainingsblock."
+    }
   },
   "sportDirector": {
     "raceTiming": "Zeitplanung für die Rennen",
@@ -597,7 +604,9 @@
     "priority_prospect": "Vorrangige Perspektive",
     "medical_treatment": "Medizinische Behandlung",
     "equipment_workshop_review": "Überprüfung der Ausrüstung und der Werkstatt",
-    "recruitment_review": "Überprüfung der Einstellung"
+    "recruitment_review": "Überprüfung der Einstellung",
+    "elevated_fatigue": "Erhöhte Ermüdung",
+    "fatigue_watch": "Erhöhte Ermüdung"
   },
   "notificationTypes": {
     "suppliesLow": "Vorräte knapp",

@@ -179,7 +179,14 @@
     "improved": "{{rider}} mejoró {{skill}} desde {{old}} a {{new}} ({{delta}}).",
     "decreased": "{{rider}} {{skill}} disminuyó de {{old}} a {{new}} ({{delta}}).",
     "ridersAttention": "los ciclistas necesitan atención",
-    "fatigue": "Fatiga"
+    "fatigue": "Fatiga",
+    "fit": "En forma",
+    "fatigueWatch": {
+      "title": "Aviso del entrenador jefe — Control de fatiga",
+      "summaryOne": "1 corredor se encuentra actualmente en el rango de fatiga elevada (50–69). Vigila la tendencia antes de aumentar más la carga.",
+      "summaryMany": "{{count}} corredores se encuentran actualmente en el rango de fatiga elevada (50–69). Vigila la tendencia antes de aumentar más la carga.",
+      "recommendation": "Supervisa a los corredores afectados durante el próximo bloque de entrenamiento."
+    }
   },
   "sportDirector": {
     "raceTiming": "carrera",
@@ -597,7 +604,9 @@
     "priority_prospect": "Perspectiva de prioridad",
     "medical_treatment": "Tratamiento médico",
     "equipment_workshop_review": "Revisión de equipamiento y taller",
-    "recruitment_review": "Revisión de contratación"
+    "recruitment_review": "Revisión de contratación",
+    "elevated_fatigue": "Fatiga elevada",
+    "fatigue_watch": "Fatiga elevada"
   },
   "notificationTypes": {
     "suppliesLow": "Suministros bajos",
