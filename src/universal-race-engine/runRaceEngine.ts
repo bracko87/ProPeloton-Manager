@@ -28567,6 +28567,30 @@ function resolveUniversalPhase10Incidents({
       const correctedBaseCommentary = checkpoint.commentary
         .map((entry): UniversalReplayCommentaryEntry => {
           if (entry.eventType === 'finish' && checkpoint.finalResultsVisible) {
+            const teamTimeTrialFormat =
+              input.stage.stageFormat === 'team_time_trial' ||
+              input.stage.stageFormat === 'pair_time_trial'
+            if (teamTimeTrialFormat) {
+              const winnerRiderId = finishResolution.winnerRiderId
+              const winnerTeamId = finishResolution.winnerTeamId
+              if (!winnerRiderId || !winnerTeamId) {
+                return {
+                  ...entry,
+                  riderIds: [],
+                  teamIds: [],
+                  description: 'The stage finishes without a classified winner.',
+                }
+              }
+              const teamName =
+                teamById.get(winnerTeamId)?.snapshot.teamName?.trim() ??
+                winnerTeamId
+              return {
+                ...entry,
+                riderIds: [winnerRiderId],
+                teamIds: [winnerTeamId],
+                description: `${teamName} wins the ${input.stage.stageFormat === 'pair_time_trial' ? 'pair time trial' : 'team time trial'}.`,
+              }
+            }
             const winnerRow = classification.find(
               (row) => row.status === 'finished' && row.rank === 1,
             )
