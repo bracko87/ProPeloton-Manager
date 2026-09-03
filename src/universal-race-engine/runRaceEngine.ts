@@ -1,4 +1,3 @@
-
 /**
  * runRaceEngine.ts
  *
@@ -60,7 +59,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11g-continuous-road-physics-v2-2026-09-03' as const
+  'phase11g-continuous-road-physics-v3-2026-09-03' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -1937,6 +1936,8 @@ export interface UniversalRoadPhase3DecisiveResult {
   readonly physicalGapTrajectory: readonly UniversalRoadPhysicalGapSample[]
   /** Secondary F lineage carried independently while a leading escape still exists. */
   readonly secondaryFrontRiderIdsAtStart: readonly string[]
+  /** All riders whose successful peloton attacks establish/join this Phase-3 F lifecycle. */
+  readonly secondaryFrontRiderIdsAtLaunch: readonly string[]
   readonly secondaryFrontRiderIdsAtEnd: readonly string[]
   readonly secondaryFrontLaunchKm: number | null
   readonly secondaryFrontMergeKm: number | null
@@ -12780,6 +12781,7 @@ export function resolveRoadPhase3Decisive(
       physicalChasingTeamIds,
       physicalGapTrajectory,
       secondaryFrontRiderIdsAtStart: phase3SecondaryRiderIdsAtStart,
+      secondaryFrontRiderIdsAtLaunch: phase3SecondaryRiderIdsAtStart,
       secondaryFrontRiderIdsAtEnd: phase3SecondaryRiderIdsAtEnd,
       secondaryFrontLaunchKm: phase3SecondaryLaunchKm,
       secondaryFrontMergeKm: phase3SecondaryMergeKm,
@@ -17036,7 +17038,13 @@ function buildPhase5RoadSnapshots(
   )
 
   return merged.map((candidate, index) => {
-    const gapSeconds = Math.min(gapCap, Math.max(0, candidate.gapSeconds))
+    // Phase 4 already owns the authoritative physical finish gaps. Never cap
+    // those gaps in Phase 5: doing so can collapse distinct P/C road groups
+    // onto the same published time and create a finish-line teleport.
+    const gapSeconds =
+      phaseNumber === 4
+        ? Math.max(0, candidate.gapSeconds)
+        : Math.min(gapCap, Math.max(0, candidate.gapSeconds))
     const scores = candidate.riderIds.map(
       (riderId) => candidate.riderPerformanceScores[riderId] ?? 0,
     )
@@ -17740,9 +17748,9 @@ function buildUniversalPhase5GroupingSummary(
       // Phase 4 has already produced the authoritative road gaps.  Phase 5
       // must preserve them rather than manufacturing an artificial +6 second
       // corridor between every pair of groups.
-      const normalizedGap = Math.min(
-        gapCap,
-        Math.max(previousGapSeconds, group.gapSeconds),
+      const normalizedGap = Math.max(
+        previousGapSeconds,
+        group.gapSeconds,
       )
       previousGapSeconds = normalizedGap
       return {
@@ -17753,6 +17761,58 @@ function buildUniversalPhase5GroupingSummary(
       }
     }),
   ]
+
+  // Gap caps are publication/time-safety bounds, not a reason to keep two
+  // physical groups at the exact same official road position. If two Phase-4
+  // lineages become adjacent only because both gaps hit the cap, canonicalize
+  // them into one final road group before B/F/P/C labels are assigned. This
+  // preserves the no-duplicate-gap invariant without manufacturing extra time.
+  const physicallyCanonicalFinalGroups = gapNormalizedFinalGroups.reduce<
+    UniversalPhase5GroupSnapshot[]
+  >((groups, group) => {
+    const previous = groups.at(-1)
+    if (
+      previous &&
+      group.gapSeconds - previous.gapSeconds <=
+        PHASE5_FINAL_PHYSICAL_SAME_GROUP_TOLERANCE_SECONDS + 0.000001
+    ) {
+      groups[groups.length - 1] = {
+        ...previous,
+        riderIds: Array.from(
+          new Set([...previous.riderIds, ...group.riderIds]),
+        ).sort(),
+        performanceBand: {
+          ...previous.performanceBand,
+          bestScore: Math.max(
+            previous.performanceBand.bestScore,
+            group.performanceBand.bestScore,
+          ),
+          worstScore: Math.min(
+            previous.performanceBand.worstScore,
+            group.performanceBand.worstScore,
+          ),
+          spread: deterministicRound(
+            Math.max(
+              previous.performanceBand.bestScore,
+              group.performanceBand.bestScore,
+            ) -
+              Math.min(
+                previous.performanceBand.worstScore,
+                group.performanceBand.worstScore,
+              ),
+            6,
+          ),
+        },
+        formationReason:
+          previous.formationReason === group.formationReason
+            ? previous.formationReason
+            : ('chase_reformation' as const),
+      }
+      return groups
+    }
+    groups.push({ ...group, groupOrder: groups.length + 1 })
+    return groups
+  }, [])
 
   const phase4PersistentFrontRiderSet = new Set(
     p4.breakawaySurvived ? p4.frontRiderIdsAfterBridges : [],
@@ -17780,7 +17840,7 @@ function buildUniversalPhase5GroupingSummary(
       )
       .map((state) => state.riderId),
   )
-  const physicalMainBodyCandidates = gapNormalizedFinalGroups
+  const physicalMainBodyCandidates = physicallyCanonicalFinalGroups
     .map((group, index) => ({
       group,
       index,
@@ -17789,7 +17849,7 @@ function buildUniversalPhase5GroupingSummary(
       ).length,
     }))
     .filter(({ pelotonLineageCount }) => pelotonLineageCount > 0)
-  const fallbackMainBodyCandidates = gapNormalizedFinalGroups
+  const fallbackMainBodyCandidates = physicallyCanonicalFinalGroups
     .map((group, index) => ({ group, index }))
     .filter(({ group }) =>
       !group.riderIds.some(
@@ -17820,7 +17880,7 @@ function buildUniversalPhase5GroupingSummary(
   let finalFrontNumber = 0
   let finalChaseNumber = 0
   const labelledFinalGroups: readonly UniversalPhase5GroupSnapshot[] =
-    gapNormalizedFinalGroups.map((group, index) => {
+    physicallyCanonicalFinalGroups.map((group, index) => {
       if (index < finalMainBodyIndex) {
         const containsPersistentOpeningFront = group.riderIds.some(
           (riderId) => phase4PersistentFrontRiderSet.has(riderId),
@@ -17861,9 +17921,9 @@ function buildUniversalPhase5GroupingSummary(
         }
       }
       finalChaseNumber += 1
-      const isLast = index === gapNormalizedFinalGroups.length - 1
+      const isLast = index === physicallyCanonicalFinalGroups.length - 1
       const groupCode: UniversalPhase5GroupCode =
-        isLast && gapNormalizedFinalGroups.length - finalMainBodyIndex > 2
+        isLast && physicallyCanonicalFinalGroups.length - finalMainBodyIndex > 2
           ? 'time_limit_group'
           : index - finalMainBodyIndex <= 2
             ? 'chasing_group'
@@ -17934,7 +17994,7 @@ function buildUniversalPhase5GroupingSummary(
       const normalizedGap =
         index === 0
           ? 0
-          : Math.min(gapCap, Math.max(previousFinalGap, group.gapSeconds))
+          : Math.max(previousFinalGap, group.gapSeconds)
       previousFinalGap = normalizedGap
       return {
         ...group,
@@ -28234,7 +28294,27 @@ function resolveUniversalPhase10Incidents({
         const incident = dnfIncidentByRiderId.get(command.riderId)
         return !incident || checkpoint.raceProgress.kmFromStart < incident.kmFromStart - 0.000001
       })
-      const correctedBaseCommentary = checkpoint.commentary.map((entry) => {
+      const correctedBaseCommentary = checkpoint.commentary
+        .map((entry): UniversalReplayCommentaryEntry => {
+          if (entry.eventType !== 'attack') return entry
+          const unavailableRiderIds = entry.riderIds.filter((riderId) => {
+            const incident = dnfIncidentByRiderId.get(riderId)
+            return Boolean(
+              incident &&
+                checkpoint.raceProgress.kmFromStart >=
+                  incident.kmFromStart - 0.000001,
+            )
+          })
+          if (unavailableRiderIds.length === 0) return entry
+          return {
+            ...entry,
+            eventType: 'race_status',
+            title: 'Saved attack is no longer possible',
+            description:
+              'The planned attack does not occur because the rider is no longer racing after an earlier incident.',
+          }
+        })
+        .map((entry) => {
         if (
           entry.title !== 'The race remains split' &&
           entry.title !== 'The field remains together'
@@ -29492,6 +29572,14 @@ export function buildUniversalReplaySynchronizationSummary(
           entry.title === 'An attack goes from the breakaway'
         if (!successfulAttack) return
         entry.riderIds.forEach((riderId) => {
+          const riderState = checkpoint.riderStates.find(
+            (state) => state.riderId === riderId,
+          )
+          // A saved command scheduled after a rider has become DNS/DNF/OTL is
+          // no longer an eligible physical attack. Phase 10 removes that
+          // impossible attack from commentary; keep this guard as a strict
+          // publication invariant for non-racing riders.
+          if (!riderState || riderState.status !== 'racing') return
           const displayCode = displayCodeByRiderId.get(riderId) ?? null
           if (displayCode === null || displayCode === 'P') {
             allFrontGroupTransfersPhysicallyValid = false
