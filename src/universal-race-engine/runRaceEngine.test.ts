@@ -16782,23 +16782,60 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(tired.replaySynchronization.synchronized).toBe(true)
   })
 
-  it('keeps finish commentary locked to the authoritative post-incident winner', () => {
-    const result = runRaceEngine(createValidInput())
-    const winner = result.finishResolution.classification.find(
+  it('keeps finish commentary locked to the authoritative winner in individual and team formats', () => {
+    const roadResult = runRaceEngine(createValidInput())
+    const roadWinner = roadResult.finishResolution.classification.find(
       (row) => row.status === 'finished' && row.rank === 1,
     )!
-    const finalCheckpoint = result.replayTimeline.checkpoints.at(-1)!
-    const finishEntries = finalCheckpoint.commentary.filter(
-      (entry) => entry.eventType === 'finish',
+    const roadFinishEntries = roadResult.replayTimeline.checkpoints
+      .at(-1)!
+      .commentary.filter((entry) => entry.eventType === 'finish')
+
+    expect(roadFinishEntries).toHaveLength(1)
+    expect(roadFinishEntries[0].riderIds).toEqual([roadWinner.riderId])
+    expect(roadFinishEntries[0].teamIds).toEqual([roadWinner.teamId])
+    expect(roadResult.replaySynchronization.finishCommentaryMatchesClassification).toBe(true)
+
+    const teamTimeTrialResult = runRaceEngine(
+      withTimeTrialRules(
+        withStageFormat(createExpandedFieldInput(12), {
+          stageFormat: 'team_time_trial',
+          terrainType: 'team_time_trial',
+          finishType: 'team_time_trial_finish',
+          profileType: 'time_trial',
+        }),
+        4,
+      ),
+    )
+    const pairTimeTrialResult = runRaceEngine(
+      withStageFormat(createValidInput(), {
+        stageFormat: 'pair_time_trial',
+        terrainType: 'team_time_trial',
+        finishType: 'team_time_trial_finish',
+        profileType: 'time_trial',
+      }),
     )
 
-    expect(finishEntries).toHaveLength(1)
-    expect(finishEntries[0].riderIds).toEqual([winner.riderId])
-    expect(finishEntries[0].teamIds).toEqual([winner.teamId])
-    expect(result.replaySynchronization.finishCommentaryMatchesClassification).toBe(true)
-    expect(result.replaySynchronization.issues).not.toContain(
-      'finish_commentary_winner_mismatch',
-    )
+    for (const result of [teamTimeTrialResult, pairTimeTrialResult]) {
+      const winningTeam = result.finishResolution.teamTimes[0]!
+      const finishEntries = result.replayTimeline.checkpoints
+        .at(-1)!
+        .commentary.filter((entry) => entry.eventType === 'finish')
+
+      expect(finishEntries).toHaveLength(1)
+      expect(winningTeam.teamId).toBe(result.finishResolution.winnerTeamId)
+      expect(winningTeam.countingRiderId).toBe(result.finishResolution.winnerRiderId)
+      expect(finishEntries[0].riderIds).toEqual([
+        result.finishResolution.winnerRiderId,
+      ])
+      expect(finishEntries[0].teamIds).toEqual([
+        result.finishResolution.winnerTeamId,
+      ])
+      expect(result.replaySynchronization.finishCommentaryMatchesClassification).toBe(true)
+      expect(result.replaySynchronization.issues).not.toContain(
+        'finish_commentary_winner_mismatch',
+      )
+    }
   })
 
   it('lets protect-leader helpers physically collect a classification leader and pay the chase energy cost', () => {
