@@ -1,7 +1,6 @@
 {
   "home": "Home",
   "overview": "Overview",
-  "guidedTutorials": "Guided Tutorials",
   "squad": "Squad",
   "staff": "Staff",
   "calendar": "Calendar",
@@ -29,7 +28,6 @@
   "subtitle": "Multiplayer cycling management",
   "descriptions": {
     "overview": "Club snapshot and updates",
-    "guidedTutorials": "Process lessons and help",
     "squad": "Manage riders and roster",
     "calendar": "Upcoming races and events",
     "racePreparation": "Startlist, logistics and stage plans",
