@@ -261,7 +261,7 @@ export default function TutorialOverlay({
     'shrink-0 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-normal text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-black disabled:cursor-not-allowed disabled:opacity-60'
 
   const primaryActionClass =
-    'shrink-0 whitespace-nowrap rounded-xl bg-yellow-400 px-4 py-2.5 text-sm font-normal text-black shadow-sm transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60'
+    'shrink-0 whitespace-nowrap rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-normal text-black shadow-sm transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60'
 
   return createPortal(
     <>
@@ -271,7 +271,7 @@ export default function TutorialOverlay({
         key={`tutorial-panel-${contentKey}`}
         data-tutorial-overlay-panel="true"
         className={`fixed right-4 top-24 z-[1000] flex max-h-[calc(100vh-112px)] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ${
-          compact ? 'w-[420px]' : 'w-[460px]'
+          compact ? 'w-[560px]' : 'w-[640px]'
         }`}
       >
         <div className="shrink-0 bg-black px-6 py-5 text-white">
@@ -313,8 +313,8 @@ export default function TutorialOverlay({
         </div>
 
         <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-4">
-          <div className="flex w-full items-center justify-between gap-3">
-            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pr-2">
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="flex shrink-0 items-center gap-2">
               {localizedSecondaryAction && onSecondary ? (
                 <button
                   type="button"
