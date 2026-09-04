@@ -2,6 +2,12 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import {
+  getTutorialNavigationState,
+  restorePreviousTutorial,
+  restorePreviousTutorialStep,
+  TUTORIAL_HISTORY_CHANGED_EVENT,
+} from '../../lib/tutorialProgress'
 
 type TutorialOverlayProps = {
   open: boolean
@@ -70,6 +76,10 @@ export default function TutorialOverlay({
 }: TutorialOverlayProps): JSX.Element | null {
   const { t, i18n } = useTranslation('tutorials')
   const bodyScrollRef = React.useRef<HTMLDivElement | null>(null)
+  const [previousBusy, setPreviousBusy] = React.useState(false)
+  const [navigationState, setNavigationState] = React.useState(() =>
+    getTutorialNavigationState(),
+  )
 
   const englishLiteralKeys = React.useMemo(() => {
     return buildTutorialLiteralKeyMap(
@@ -97,6 +107,13 @@ export default function TutorialOverlay({
   const localizedSecondaryAction =
     localizeTutorialLiteral(secondaryAction) ?? secondaryAction
 
+  const localizedPreviousAction = t('common.previous', {
+    defaultValue: 'Previous',
+  })
+  const localizedPreviousTutorialAction = t('common.previousTutorial', {
+    defaultValue: 'Previous tutorial',
+  })
+
   const contentKey = React.useMemo(
     () =>
       [
@@ -118,6 +135,70 @@ export default function TutorialOverlay({
     scrollElement.scrollTop = 0
     scrollElement.scrollLeft = 0
   }, [contentKey])
+
+  React.useEffect(() => {
+    if (!open || variant !== 'panel') return
+
+    function refreshNavigationState(): void {
+      setNavigationState(getTutorialNavigationState())
+    }
+
+    refreshNavigationState()
+
+    window.addEventListener(
+      TUTORIAL_HISTORY_CHANGED_EVENT,
+      refreshNavigationState,
+    )
+    window.addEventListener('storage', refreshNavigationState)
+    window.addEventListener('focus', refreshNavigationState)
+
+    return () => {
+      window.removeEventListener(
+        TUTORIAL_HISTORY_CHANGED_EVENT,
+        refreshNavigationState,
+      )
+      window.removeEventListener('storage', refreshNavigationState)
+      window.removeEventListener('focus', refreshNavigationState)
+    }
+  }, [open, variant, contentKey])
+
+  async function handlePreviousStep(): Promise<void> {
+    if (previousBusy) return
+
+    setPreviousBusy(true)
+
+    try {
+      const restored = await restorePreviousTutorialStep()
+
+      if (!restored) {
+        setNavigationState(getTutorialNavigationState())
+        setPreviousBusy(false)
+      }
+    } catch (error) {
+      console.warn('Could not restore previous tutorial step:', error)
+      setNavigationState(getTutorialNavigationState())
+      setPreviousBusy(false)
+    }
+  }
+
+  async function handlePreviousTutorial(): Promise<void> {
+    if (previousBusy) return
+
+    setPreviousBusy(true)
+
+    try {
+      const restored = await restorePreviousTutorial()
+
+      if (!restored) {
+        setNavigationState(getTutorialNavigationState())
+        setPreviousBusy(false)
+      }
+    } catch (error) {
+      console.warn('Could not restore previous tutorial:', error)
+      setNavigationState(getTutorialNavigationState())
+      setPreviousBusy(false)
+    }
+  }
 
   if (!open) return null
 
@@ -225,31 +306,56 @@ export default function TutorialOverlay({
           </div>
         </div>
 
-        <div
-          className={`shrink-0 border-t border-slate-100 bg-white px-6 py-4 ${
-            localizedSecondaryAction && onSecondary
-              ? 'flex items-center justify-between gap-3'
-              : 'flex items-center justify-end'
-          }`}
-        >
-          {localizedSecondaryAction && onSecondary ? (
+        <div className="shrink-0 border-t border-slate-100 bg-white px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {localizedSecondaryAction && onSecondary ? (
+                <button
+                  type="button"
+                  onClick={onSecondary}
+                  disabled={previousBusy}
+                  className="text-sm font-normal text-slate-500 hover:text-black hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {localizedSecondaryAction}
+                </button>
+              ) : null}
+
+              {navigationState.canGoPreviousTutorial ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handlePreviousTutorial()
+                  }}
+                  disabled={previousBusy}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-normal text-slate-600 shadow-sm transition hover:bg-slate-50 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {localizedPreviousTutorialAction}
+                </button>
+              ) : null}
+
+              {navigationState.canGoPrevious ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handlePreviousStep()
+                  }}
+                  disabled={previousBusy}
+                  className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-normal text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {localizedPreviousAction}
+                </button>
+              ) : null}
+            </div>
+
             <button
               type="button"
-              onClick={onSecondary}
-              className="text-sm font-normal text-slate-500 hover:text-black hover:underline"
+              onClick={onPrimary}
+              disabled={primaryDisabled || previousBusy}
+              className="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-normal text-black shadow-sm transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {localizedSecondaryAction}
+              {localizedPrimaryAction}
             </button>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={onPrimary}
-            disabled={primaryDisabled}
-            className="rounded-xl bg-yellow-400 px-5 py-3 text-sm font-normal text-black shadow-sm transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {localizedPrimaryAction}
-          </button>
+          </div>
         </div>
       </aside>
     </>,
