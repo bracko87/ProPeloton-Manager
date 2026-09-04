@@ -30,6 +30,12 @@ type SaveTutorialProgressOptions = {
   remember?: boolean
 }
 
+type PreviousTutorialRange = {
+  firstIndex: number
+  lastIndex: number
+  tutorialKey: TutorialKey
+}
+
 export type TutorialNavigationState = {
   canGoPrevious: boolean
   canGoPreviousTutorial: boolean
@@ -247,6 +253,43 @@ function findPreviousTutorialEntryIndex(history: TutorialHistoryEntry[]): number
   return -1
 }
 
+function findPreviousTutorialRange(
+  history: TutorialHistoryEntry[],
+): PreviousTutorialRange | null {
+  const lastIndex = findPreviousTutorialEntryIndex(history)
+  if (lastIndex < 0) return null
+
+  const previousEntry = history[lastIndex]
+  if (!previousEntry) return null
+
+  const tutorialKey = previousEntry.tutorialKey
+  let firstIndex = lastIndex
+
+  while (
+    firstIndex > 0 &&
+    history[firstIndex - 1]?.tutorialKey === tutorialKey
+  ) {
+    firstIndex -= 1
+  }
+
+  return {
+    firstIndex,
+    lastIndex,
+    tutorialKey,
+  }
+}
+
+function createRestartedTutorialEntry(
+  entry: TutorialHistoryEntry,
+): TutorialHistoryEntry {
+  return {
+    ...entry,
+    status: 'started',
+    lastStepKey: null,
+    savedAt: Date.now(),
+  }
+}
+
 function getSafeHashForHistoryEntry(entry: TutorialHistoryEntry): string {
   if (isDashboardHash(entry.locationHash)) {
     return entry.locationHash
@@ -311,7 +354,7 @@ export function getTutorialNavigationState(): TutorialNavigationState {
     canGoPrevious: history.length > 1,
     canGoPreviousTutorial:
       currentEntry?.tutorialKey !== 'overview' &&
-      findPreviousTutorialEntryIndex(history) >= 0,
+      findPreviousTutorialRange(history) !== null,
   }
 }
 
@@ -339,23 +382,29 @@ export async function restorePreviousTutorialStep(): Promise<boolean> {
 
 export async function restorePreviousTutorial(): Promise<boolean> {
   const history = readTutorialHistory()
-  const previousTutorialIndex = findPreviousTutorialEntryIndex(history)
+  const previousTutorialRange = findPreviousTutorialRange(history)
 
-  if (previousTutorialIndex < 0) return false
+  if (!previousTutorialRange) return false
 
-  const previousEntry = history[previousTutorialIndex]
-  const nextHistory = history.slice(0, previousTutorialIndex + 1)
+  const firstPreviousEntry = history[previousTutorialRange.firstIndex]
+  if (!firstPreviousEntry) return false
+
+  const restartEntry = createRestartedTutorialEntry(firstPreviousEntry)
+  const nextHistory = [
+    ...history.slice(0, previousTutorialRange.firstIndex),
+    restartEntry,
+  ]
 
   writeTutorialHistory(nextHistory)
 
   await saveTutorialProgress(
-    previousEntry.tutorialKey,
+    restartEntry.tutorialKey,
     'started',
-    previousEntry.lastStepKey,
+    null,
     { remember: false },
   )
 
-  navigateToHistoryEntry(previousEntry)
+  navigateToHistoryEntry(restartEntry)
   return true
 }
 
