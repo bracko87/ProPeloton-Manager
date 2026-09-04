@@ -215,7 +215,26 @@ function navigateToHistoryEntry(entry: TutorialHistoryEntry): void {
   const safeUrl = `${window.location.origin}${window.location.pathname}${window.location.search}${safeHash}`
 
   window.setTimeout(() => {
-    window.location.replace(safeUrl)
+    if (window.location.href !== safeUrl) {
+      window.location.href = safeUrl
+
+      /*
+       * HashRouter navigation may stay inside the same document instead of doing
+       * a hard page load. Reload shortly after changing the hash so the page
+       * reloads the saved tutorial step from Supabase and never leaves the
+       * overlay stuck in a busy/disabled state.
+       */
+      window.setTimeout(() => {
+        window.location.reload()
+      }, 120)
+      return
+    }
+
+    /*
+     * When the previous step is on the same route, the URL does not change.
+     * A reload is still required because the restored step was saved to the DB.
+     */
+    window.location.reload()
   }, 40)
 }
 
