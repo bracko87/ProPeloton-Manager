@@ -46,6 +46,21 @@ function isRestorableTutorialStatus(status: TutorialStatus): boolean {
   return status === 'started' || status === 'completed'
 }
 
+function isDashboardHash(hash: string): boolean {
+  return hash === '#/dashboard' || hash.startsWith('#/dashboard/')
+}
+
+function isDashboardPath(pathname: string): boolean {
+  return pathname === '/dashboard' || pathname.startsWith('/dashboard/')
+}
+
+function isSafeTutorialHistoryEntry(entry: TutorialHistoryEntry): boolean {
+  if (isDashboardHash(entry.locationHash)) return true
+  if (isDashboardPath(entry.pathname)) return true
+
+  return false
+}
+
 function readTutorialHistory(): TutorialHistoryEntry[] {
   if (!canUseWindow()) return []
 
@@ -61,7 +76,7 @@ function readTutorialHistory(): TutorialHistoryEntry[] {
 
       const candidate = entry as Partial<TutorialHistoryEntry>
 
-      return (
+      const safeEntry =
         typeof candidate.tutorialKey === 'string' &&
         typeof candidate.status === 'string' &&
         isRestorableTutorialStatus(candidate.status as TutorialStatus) &&
@@ -70,7 +85,10 @@ function readTutorialHistory(): TutorialHistoryEntry[] {
         typeof candidate.pathname === 'string' &&
         typeof candidate.search === 'string' &&
         typeof candidate.savedAt === 'number'
-      )
+
+      if (!safeEntry) return false
+
+      return isSafeTutorialHistoryEntry(candidate as TutorialHistoryEntry)
     })
   } catch {
     return []
@@ -107,8 +125,10 @@ function getCurrentTutorialLocation(): Pick<
     }
   }
 
+  const currentHash = window.location.hash
+
   return {
-    locationHash: window.location.hash,
+    locationHash: isDashboardHash(currentHash) ? currentHash : '#/dashboard/overview',
     pathname: window.location.pathname,
     search: window.location.search,
   }
@@ -143,6 +163,8 @@ function rememberTutorialProgress(
     savedAt: Date.now(),
   }
 
+  if (!isSafeTutorialHistoryEntry(entry)) return
+
   const history = readTutorialHistory()
   const lastEntry = history[history.length - 1]
 
@@ -161,6 +183,10 @@ function findPreviousTutorialEntryIndex(history: TutorialHistoryEntry[]): number
 
   const currentEntry = history[history.length - 1]
 
+  if (currentEntry.tutorialKey === 'overview') {
+    return -1
+  }
+
   for (let index = history.length - 2; index >= 0; index -= 1) {
     if (history[index].tutorialKey !== currentEntry.tutorialKey) {
       return index
@@ -170,32 +196,38 @@ function findPreviousTutorialEntryIndex(history: TutorialHistoryEntry[]): number
   return -1
 }
 
+function getSafeHashForHistoryEntry(entry: TutorialHistoryEntry): string {
+  if (isDashboardHash(entry.locationHash)) {
+    return entry.locationHash
+  }
+
+  if (isDashboardPath(entry.pathname)) {
+    return `#${entry.pathname}${entry.search || ''}`
+  }
+
+  return '#/dashboard/overview'
+}
+
 function navigateToHistoryEntry(entry: TutorialHistoryEntry): void {
   if (!canUseWindow()) return
 
-  const nextHash = entry.locationHash || ''
-  const nextPath = entry.pathname || window.location.pathname
-  const nextSearch = entry.search || ''
-  const currentPathAndSearch = `${window.location.pathname}${window.location.search}`
-  const nextPathAndSearch = `${nextPath}${nextSearch}`
-
-  if (nextHash) {
-    window.location.hash = nextHash
-  } else if (currentPathAndSearch !== nextPathAndSearch) {
-    window.history.pushState(null, '', nextPathAndSearch)
-  }
+  const safeHash = getSafeHashForHistoryEntry(entry)
+  const safeUrl = `${window.location.origin}${window.location.pathname}${window.location.search}${safeHash}`
 
   window.setTimeout(() => {
-    window.location.reload()
+    window.location.replace(safeUrl)
   }, 40)
 }
 
 export function getTutorialNavigationState(): TutorialNavigationState {
   const history = readTutorialHistory()
+  const currentEntry = history[history.length - 1]
 
   return {
     canGoPrevious: history.length > 1,
-    canGoPreviousTutorial: findPreviousTutorialEntryIndex(history) >= 0,
+    canGoPreviousTutorial:
+      currentEntry?.tutorialKey !== 'overview' &&
+      findPreviousTutorialEntryIndex(history) >= 0,
   }
 }
 
