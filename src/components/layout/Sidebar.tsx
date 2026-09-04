@@ -19,6 +19,7 @@ import {
   DollarSign,
   LogOut,
   ClipboardCheck,
+  BookOpenCheck,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -44,6 +45,12 @@ const navItems: NavItem[] = [
     labelKey: 'overview',
     descriptionKey: 'descriptions.overview',
     icon: Home,
+  },
+  {
+    to: '/dashboard/guided-tutorials',
+    labelKey: 'guidedTutorials',
+    descriptionKey: 'descriptions.guidedTutorials',
+    icon: BookOpenCheck,
   },
   {
     to: '/dashboard/squad',
