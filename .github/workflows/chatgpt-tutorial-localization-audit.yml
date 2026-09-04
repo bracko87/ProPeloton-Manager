@@ -1,0 +1,20 @@
+name: Full tutorial localization audit
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-tutorial-localization-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Audit tutorial localization structure
+        run: python .github/scripts/audit_tutorial_localization_20260904.py
