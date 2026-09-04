@@ -7,14 +7,50 @@ on:
       - '.github/workflows/chatgpt-tutorial-localization-audit.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
+  localize-audit-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Audit tutorial localization structure
+      - name: Add missing tutorial navigation translations
+        run: python .github/scripts/fix_tutorial_navigation_localization_20260904.py
+
+      - name: Audit tutorial resource parity
         run: python .github/scripts/audit_tutorial_localization_20260904.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit every tutorial runtime literal
+        run: node .github/scripts/audit_tutorial_runtime_literals_20260904.mjs
+
+      - name: Production build
+        run: npm run build
+
+      - name: Check diff
+        run: git diff --check
+
+      - name: Commit tutorial localization
+        run: |
+          if git diff --quiet; then
+            echo 'No tutorial localization changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/i18n/locales/*/tutorials.json
+          git commit -m 'Complete guided tutorial localization'
+          git pull --rebase origin main
+          git push origin HEAD:main
