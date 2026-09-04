@@ -7,6 +7,7 @@ import {
   restorePreviousTutorial,
   restorePreviousTutorialStep,
   TUTORIAL_HISTORY_CHANGED_EVENT,
+  TUTORIAL_RESTORE_NAVIGATION_EVENT,
 } from '../../lib/tutorialProgress'
 
 type TutorialOverlayProps = {
@@ -149,12 +150,20 @@ export default function TutorialOverlay({
       TUTORIAL_HISTORY_CHANGED_EVENT,
       refreshNavigationState,
     )
+    window.addEventListener(
+      TUTORIAL_RESTORE_NAVIGATION_EVENT,
+      refreshNavigationState,
+    )
     window.addEventListener('storage', refreshNavigationState)
     window.addEventListener('focus', refreshNavigationState)
 
     return () => {
       window.removeEventListener(
         TUTORIAL_HISTORY_CHANGED_EVENT,
+        refreshNavigationState,
+      )
+      window.removeEventListener(
+        TUTORIAL_RESTORE_NAVIGATION_EVENT,
         refreshNavigationState,
       )
       window.removeEventListener('storage', refreshNavigationState)
@@ -168,7 +177,7 @@ export default function TutorialOverlay({
     const timeoutId = window.setTimeout(() => {
       setPreviousBusy(false)
       setNavigationState(getTutorialNavigationState())
-    }, 2000)
+    }, 1200)
 
     return () => {
       window.clearTimeout(timeoutId)
@@ -181,18 +190,16 @@ export default function TutorialOverlay({
     setPreviousBusy(true)
 
     try {
-      const restored = await restorePreviousTutorialStep()
-
-      if (!restored) {
-        setNavigationState(getTutorialNavigationState())
-      }
+      await restorePreviousTutorialStep()
+      setNavigationState(getTutorialNavigationState())
     } catch (error) {
       console.warn('Could not restore previous tutorial step:', error)
       setNavigationState(getTutorialNavigationState())
     } finally {
       window.setTimeout(() => {
         setPreviousBusy(false)
-      }, 800)
+        setNavigationState(getTutorialNavigationState())
+      }, 250)
     }
   }
 
@@ -202,18 +209,16 @@ export default function TutorialOverlay({
     setPreviousBusy(true)
 
     try {
-      const restored = await restorePreviousTutorial()
-
-      if (!restored) {
-        setNavigationState(getTutorialNavigationState())
-      }
+      await restorePreviousTutorial()
+      setNavigationState(getTutorialNavigationState())
     } catch (error) {
       console.warn('Could not restore previous tutorial:', error)
       setNavigationState(getTutorialNavigationState())
     } finally {
       window.setTimeout(() => {
         setPreviousBusy(false)
-      }, 800)
+        setNavigationState(getTutorialNavigationState())
+      }, 250)
     }
   }
 
