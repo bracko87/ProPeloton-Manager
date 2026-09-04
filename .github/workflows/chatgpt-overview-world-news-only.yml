@@ -30,33 +30,43 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import json
+          import re
 
           overview_path = Path('src/pages/dashboard/Overview.tsx')
           text = overview_path.read_text(encoding='utf-8')
 
-          old_candidates = '''  const candidates: OverviewNewsSortableItem[] = [
-            ...teamItems,
-            ...worldItems,
-          ].map((item, sourceOrder) => ({'''
-          new_candidates = '''  // The Overview news board is intentionally world-only. Team alerts and
-          // club activity stay in Attention/Notifications and are not mixed into this feed.
-          void teamItems;
-          const candidates: OverviewNewsSortableItem[] = [
-            ...worldItems,
-          ].map((item, sourceOrder) => ({'''
+          pattern = re.compile(
+              r'(?m)^(?P<indent>\s*)const candidates: OverviewNewsSortableItem\[\] = \[\n'
+              r'(?P=item_indent>\s*)\.\.\.teamItems,\n'
+              r'(?P=item_indent2>\s*)\.\.\.worldItems,\n'
+              r'(?P=indent)\]\.map\(\(item, sourceOrder\) => \(\{'
+          )
+          match = pattern.search(text)
+          if match is None:
+              raise SystemExit('Could not find the mixed team/world news candidate block')
+          if match.group('item_indent') != match.group('item_indent2'):
+              raise SystemExit('Unexpected news candidate indentation')
 
-          if text.count(old_candidates) != 1:
-              raise SystemExit(f'Expected exactly one news candidate block, found {text.count(old_candidates)}')
-          text = text.replace(old_candidates, new_candidates, 1)
+          indent = match.group('indent')
+          item_indent = match.group('item_indent')
+          replacement = (
+              f'{indent}// The Overview news board is intentionally world-only. Team alerts and\n'
+              f'{indent}// club activity stay in Attention/Notifications and are not mixed into this feed.\n'
+              f'{indent}void teamItems;\n'
+              f'{indent}const candidates: OverviewNewsSortableItem[] = [\n'
+              f'{item_indent}...worldItems,\n'
+              f'{indent}].map((item, sourceOrder) => ({{'
+          )
+          text = pattern.sub(replacement, text, count=1)
 
           old_doc = '''/**
-           * NewsCommandCenter
-           * Newsletter-style panel. Team news combines alerts and activity feed; world news uses game/news data.
-           */'''
+ * NewsCommandCenter
+ * Newsletter-style panel. Team news combines alerts and activity feed; world news uses game/news data.
+ */'''
           new_doc = '''/**
-           * NewsCommandCenter
-           * World-peloton news panel. Team alerts/activity are deliberately excluded from this board.
-           */'''
+ * NewsCommandCenter
+ * World-peloton news panel. Team alerts/activity are deliberately excluded from this board.
+ */'''
           if old_doc in text:
               text = text.replace(old_doc, new_doc, 1)
 
@@ -112,14 +122,12 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           text = Path('src/pages/dashboard/Overview.tsx').read_text(encoding='utf-8')
-          marker = '''const candidates: OverviewNewsSortableItem[] = [
-            ...worldItems,
-          ].map'''
-          if marker not in text:
-              raise SystemExit('World-only news candidate marker missing')
-          if '...teamItems,\n    ...worldItems,' in text:
-              raise SystemExit('Team/world mixed candidate block still present')
+          if re.search(r'const candidates: OverviewNewsSortableItem\[\] = \[\s*\.\.\.teamItems,', text):
+              raise SystemExit('Team items are still included in the Overview news board')
+          if not re.search(r'const candidates: OverviewNewsSortableItem\[\] = \[\s*\.\.\.worldItems,', text):
+              raise SystemExit('World-only news candidate block missing')
           print('Overview news board is world-only.')
           PY
 
