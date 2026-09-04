@@ -50,7 +50,6 @@ import SupportPage from './pages/Support'
 import ClubDashboard from './pages/dashboard/ClubDashboard'
 import OverviewPage from './pages/dashboard/Overview'
 import ManualPage from './pages/dashboard/Manual'
-import GuidedTutorialsPage from './pages/dashboard/GuidedTutorials'
 import SquadPage from './pages/dashboard/Squad'
 import DevelopingTeamPage from './pages/dashboard/DevelopingTeam'
 import StaffPage from './pages/dashboard/Staff'
@@ -441,11 +440,6 @@ export default function App(): JSX.Element {
             <Route
               path="manual"
               element={<ManualPage />}
-            />
-
-            <Route
-              path="guided-tutorials"
-              element={<GuidedTutorialsPage />}
             />
 
             <Route
