@@ -1,5 +1,6 @@
 // src/components/tutorial/TutorialTargetFrame.tsx
 import React, { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 type TutorialTargetFrameProps = {
   target?: string | null
@@ -12,9 +13,9 @@ type FrameRect = {
   height: number
 }
 
-const FRAME_PADDING = 8
-const VIEWPORT_MARGIN = 6
-const MIN_FRAME_SIZE = 28
+const FRAME_PADDING = 4
+const VIEWPORT_MARGIN = 4
+const MIN_FRAME_SIZE = 20
 
 const TARGET_ALIASES: Record<string, string[]> = {
   'header-premium': ['header-membership'],
@@ -172,11 +173,11 @@ export default function TutorialTargetFrame({
     }
   }, [target])
 
-  if (!target || !frameRect) {
+  if (!target || !frameRect || typeof document === 'undefined') {
     return null
   }
 
-  return (
+  return createPortal(
     <div
       aria-hidden="true"
       className="pointer-events-none fixed"
@@ -187,11 +188,12 @@ export default function TutorialTargetFrame({
         height: frameRect.height,
         zIndex: 800,
         borderRadius: 0,
-        border: '4px solid rgba(239, 68, 68, 0.98)',
+        border: '3px solid rgba(239, 68, 68, 0.98)',
         boxShadow:
-          '0 0 0 2px rgba(255, 255, 255, 0.75), 0 0 22px rgba(239, 68, 68, 0.8)',
+          '0 0 0 2px rgba(255, 255, 255, 0.75), 0 0 18px rgba(239, 68, 68, 0.72)',
         background: 'transparent',
       }}
-    />
+    />,
+    document.body,
   )
 }
