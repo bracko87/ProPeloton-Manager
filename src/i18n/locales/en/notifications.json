@@ -205,6 +205,13 @@
       "trainingPage": "Training page",
       "teamSquad": "Team squad",
       "staffPage": "Staff page"
+    },
+    "highFatigueAlert": {
+      "title": "Head Coach Advisory — High Fatigue Alert",
+      "summaryOne": "1 rider is at high fatigue. Highest current fatigue: {{fatigue}}. Immediate workload review is recommended.",
+      "summaryMany": "{{count}} riders are at high fatigue. Highest current fatigue: {{fatigue}}. Immediate workload review is recommended.",
+      "reason": "High fatigue",
+      "recommendation": "Review the affected riders before the next demanding training session."
     }
   },
   "sportDirector": {
@@ -627,7 +634,9 @@
     "elevated_fatigue": "Elevated Fatigue",
     "fatigue_watch": "Fatigue Watch",
     "rider_availability": "Rider Availability",
-    "training_schedule_gap": "Training Schedule Gap"
+    "training_schedule_gap": "Training Schedule Gap",
+    "high_fatigue": "High Fatigue",
+    "high_fatigue_alert": "High Fatigue"
   },
   "notificationTypes": {
     "suppliesLow": "Race supplies low",

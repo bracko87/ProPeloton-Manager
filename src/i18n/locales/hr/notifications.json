@@ -205,6 +205,13 @@
       "trainingPage": "Stranica treninga",
       "teamSquad": "Momčad",
       "staffPage": "Stranica osoblja"
+    },
+    "highFatigueAlert": {
+      "title": "Savjet glavnog trenera — upozorenje na visok umor",
+      "summaryOne": "1 vozač ima visoku razinu umora. Najviša trenutačna vrijednost umora: {{fatigue}}. Preporučuje se odmah pregledati opterećenje.",
+      "summaryMany": "{{count}} vozača imaju visoku razinu umora. Najviša trenutačna vrijednost umora: {{fatigue}}. Preporučuje se odmah pregledati opterećenje.",
+      "reason": "Visok umor",
+      "recommendation": "Pregledajte pogođene vozače prije sljedećeg zahtjevnog treninga."
     }
   },
   "sportDirector": {
@@ -630,7 +637,9 @@
     "elevated_fatigue": "Povišen umor",
     "fatigue_watch": "Praćenje umora",
     "rider_availability": "Dostupnost vozača",
-    "training_schedule_gap": "Praznina u rasporedu treninga"
+    "training_schedule_gap": "Praznina u rasporedu treninga",
+    "high_fatigue": "Visok umor",
+    "high_fatigue_alert": "Visok umor"
   },
   "notificationTypes": {
     "suppliesLow": "Niske zalihe",

@@ -205,6 +205,13 @@
       "trainingPage": "Página de entrenamiento",
       "teamSquad": "Plantilla del equipo",
       "staffPage": "Página del personal"
+    },
+    "highFatigueAlert": {
+      "title": "Aviso del entrenador jefe — Alerta de fatiga alta",
+      "summaryOne": "1 corredor presenta fatiga alta. Fatiga máxima actual: {{fatigue}}. Se recomienda revisar de inmediato la carga de entrenamiento.",
+      "summaryMany": "{{count}} corredores presentan fatiga alta. Fatiga máxima actual: {{fatigue}}. Se recomienda revisar de inmediato la carga de entrenamiento.",
+      "reason": "Fatiga alta",
+      "recommendation": "Revisa a los corredores afectados antes de la próxima sesión de entrenamiento exigente."
     }
   },
   "sportDirector": {
@@ -627,7 +634,9 @@
     "elevated_fatigue": "Fatiga elevada",
     "fatigue_watch": "Control de fatiga",
     "rider_availability": "Disponibilidad de corredores",
-    "training_schedule_gap": "Hueco en el calendario de entrenamiento"
+    "training_schedule_gap": "Hueco en el calendario de entrenamiento",
+    "high_fatigue": "Fatiga alta",
+    "high_fatigue_alert": "Fatiga alta"
   },
   "notificationTypes": {
     "suppliesLow": "Suministros bajos",

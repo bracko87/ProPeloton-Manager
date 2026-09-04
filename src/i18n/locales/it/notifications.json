@@ -205,6 +205,13 @@
       "trainingPage": "Pagina allenamento",
       "teamSquad": "Rosa della squadra",
       "staffPage": "Pagina staff"
+    },
+    "highFatigueAlert": {
+      "title": "Avviso dell'allenatore capo — Allerta per fatica elevata",
+      "summaryOne": "1 corridore presenta una fatica elevata. Fatica massima attuale: {{fatigue}}. Si raccomanda una revisione immediata del carico di lavoro.",
+      "summaryMany": "{{count}} corridori presentano una fatica elevata. Fatica massima attuale: {{fatigue}}. Si raccomanda una revisione immediata del carico di lavoro.",
+      "reason": "Fatica elevata",
+      "recommendation": "Controlla i corridori interessati prima della prossima sessione di allenamento impegnativa."
     }
   },
   "sportDirector": {
@@ -627,7 +634,9 @@
     "elevated_fatigue": "Fatica elevata",
     "fatigue_watch": "Controllo della fatica",
     "rider_availability": "Disponibilità dei corridori",
-    "training_schedule_gap": "Vuoto nel programma di allenamento"
+    "training_schedule_gap": "Vuoto nel programma di allenamento",
+    "high_fatigue": "Fatica elevata",
+    "high_fatigue_alert": "Fatica elevata"
   },
   "notificationTypes": {
     "suppliesLow": "Scorte basse",

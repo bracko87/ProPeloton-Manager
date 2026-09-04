@@ -205,6 +205,13 @@
       "trainingPage": "Page d’entraînement",
       "teamSquad": "Effectif de l’équipe",
       "staffPage": "Page du staff"
+    },
+    "highFatigueAlert": {
+      "title": "Conseil de l’entraîneur principal — Alerte de fatigue élevée",
+      "summaryOne": "1 coureur présente une fatigue élevée. Fatigue maximale actuelle : {{fatigue}}. Un examen immédiat de la charge de travail est recommandé.",
+      "summaryMany": "{{count}} coureurs présentent une fatigue élevée. Fatigue maximale actuelle : {{fatigue}}. Un examen immédiat de la charge de travail est recommandé.",
+      "reason": "Fatigue élevée",
+      "recommendation": "Vérifiez les coureurs concernés avant la prochaine séance d’entraînement exigeante."
     }
   },
   "sportDirector": {
@@ -627,7 +634,9 @@
     "elevated_fatigue": "Fatigue élevée",
     "fatigue_watch": "Surveillance de la fatigue",
     "rider_availability": "Disponibilité des coureurs",
-    "training_schedule_gap": "Période sans entraînement planifié"
+    "training_schedule_gap": "Période sans entraînement planifié",
+    "high_fatigue": "Fatigue élevée",
+    "high_fatigue_alert": "Fatigue élevée"
   },
   "notificationTypes": {
     "suppliesLow": "Stocks faibles",

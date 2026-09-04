@@ -205,6 +205,13 @@
       "trainingPage": "Trainingsseite",
       "teamSquad": "Teamkader",
       "staffPage": "Mitarbeiterseite"
+    },
+    "highFatigueAlert": {
+      "title": "Hinweis des Cheftrainers — Warnung vor hoher Ermüdung",
+      "summaryOne": "1 Fahrer weist eine hohe Ermüdung auf. Höchste aktuelle Ermüdung: {{fatigue}}. Eine sofortige Überprüfung der Belastung wird empfohlen.",
+      "summaryMany": "{{count}} Fahrer weisen eine hohe Ermüdung auf. Höchste aktuelle Ermüdung: {{fatigue}}. Eine sofortige Überprüfung der Belastung wird empfohlen.",
+      "reason": "Hohe Ermüdung",
+      "recommendation": "Überprüfe die betroffenen Fahrer vor der nächsten anspruchsvollen Trainingseinheit."
     }
   },
   "sportDirector": {
@@ -627,7 +634,9 @@
     "elevated_fatigue": "Erhöhte Ermüdung",
     "fatigue_watch": "Ermüdung beobachten",
     "rider_availability": "Fahrerverfügbarkeit",
-    "training_schedule_gap": "Lücke im Trainingsplan"
+    "training_schedule_gap": "Lücke im Trainingsplan",
+    "high_fatigue": "Hohe Ermüdung",
+    "high_fatigue_alert": "Hohe Ermüdung"
   },
   "notificationTypes": {
     "suppliesLow": "Vorräte knapp",

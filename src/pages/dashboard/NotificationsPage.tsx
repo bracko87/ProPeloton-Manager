@@ -559,6 +559,9 @@ function localizeAdvisorNotificationRuntimeText(value: unknown, t: any): string 
   if (/^Head Coach Advisory\s*[—-]\s*Fatigue Watch$/i.test(text)) {
     return t('headCoach.fatigueWatch.title')
   }
+  if (/^Head Coach Advisory\s*[—-]\s*High Fatigue Alert$/i.test(text)) {
+    return t('headCoach.highFatigueAlert.title')
+  }
   if (/^Head Coach Advisory\s*[—-]\s*Rider Availability$/i.test(text)) {
     return t('headCoach.riderAvailability.title')
   }
@@ -570,6 +573,13 @@ function localizeAdvisorNotificationRuntimeText(value: unknown, t: any): string 
   if (match) {
     const count = Number(match[1])
     return t(count === 1 ? 'headCoach.fatigueWatch.summaryOne' : 'headCoach.fatigueWatch.summaryMany', { count })
+  }
+
+  match = /^(\d+)\s+rider\(s\)\s+are at high fatigue\. Highest current fatigue:\s*(\d+(?:\.\d+)?)\. Immediate workload review is recommended\.$/i.exec(text)
+  if (match) {
+    const count = Number(match[1])
+    const fatigue = match[2]
+    return t(count === 1 ? 'headCoach.highFatigueAlert.summaryOne' : 'headCoach.highFatigueAlert.summaryMany', { count, fatigue })
   }
 
   match = /^(\d+)\s+rider\(s\)\s+are not fully available for normal training load\. Review recovery status before the next intensive block\.$/i.exec(text)
@@ -588,6 +598,8 @@ function localizeAdvisorNotificationRuntimeText(value: unknown, t: any): string 
 
   const normalized = text.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
   if (normalized === 'elevated fatigue') return t('headCoach.elevatedFatigue')
+  if (normalized === 'high fatigue') return t('headCoach.highFatigueAlert.reason')
+  if (normalized === 'high fatigue alert') return t('reportVariants.high_fatigue_alert')
   if (normalized === 'fatigue watch') return t('reportVariants.fatigue_watch')
   if (normalized === 'fit') return t('headCoach.fit')
   if (normalized === 'not fully fit') return t('headCoach.notFullyFit')
@@ -597,6 +609,9 @@ function localizeAdvisorNotificationRuntimeText(value: unknown, t: any): string 
 
   if (normalized === 'monitor the affected riders through the next training block.') {
     return t('headCoach.fatigueWatch.recommendation')
+  }
+  if (normalized === 'review the affected riders before the next demanding training session.') {
+    return t('headCoach.highFatigueAlert.recommendation')
   }
   if (normalized === 'review the next three game days in the training calendar.') {
     return t('headCoach.trainingScheduleGap.recommendationReview')
