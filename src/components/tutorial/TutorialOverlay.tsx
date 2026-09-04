@@ -162,6 +162,19 @@ export default function TutorialOverlay({
     }
   }, [open, variant, contentKey])
 
+  React.useEffect(() => {
+    if (!previousBusy) return
+
+    const timeoutId = window.setTimeout(() => {
+      setPreviousBusy(false)
+      setNavigationState(getTutorialNavigationState())
+    }, 2000)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [previousBusy])
+
   async function handlePreviousStep(): Promise<void> {
     if (previousBusy) return
 
@@ -172,12 +185,14 @@ export default function TutorialOverlay({
 
       if (!restored) {
         setNavigationState(getTutorialNavigationState())
-        setPreviousBusy(false)
       }
     } catch (error) {
       console.warn('Could not restore previous tutorial step:', error)
       setNavigationState(getTutorialNavigationState())
-      setPreviousBusy(false)
+    } finally {
+      window.setTimeout(() => {
+        setPreviousBusy(false)
+      }, 800)
     }
   }
 
@@ -191,12 +206,14 @@ export default function TutorialOverlay({
 
       if (!restored) {
         setNavigationState(getTutorialNavigationState())
-        setPreviousBusy(false)
       }
     } catch (error) {
       console.warn('Could not restore previous tutorial:', error)
       setNavigationState(getTutorialNavigationState())
-      setPreviousBusy(false)
+    } finally {
+      window.setTimeout(() => {
+        setPreviousBusy(false)
+      }, 800)
     }
   }
 
@@ -319,7 +336,6 @@ export default function TutorialOverlay({
                 <button
                   type="button"
                   onClick={onSecondary}
-                  disabled={previousBusy}
                   className={footerActionClass}
                 >
                   {localizedSecondaryAction}
@@ -356,7 +372,7 @@ export default function TutorialOverlay({
             <button
               type="button"
               onClick={onPrimary}
-              disabled={primaryDisabled || previousBusy}
+              disabled={primaryDisabled}
               className={primaryActionClass}
             >
               {localizedPrimaryAction}
