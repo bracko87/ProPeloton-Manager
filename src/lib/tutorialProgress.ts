@@ -36,7 +36,30 @@ export type TutorialNavigationState = {
 }
 
 const TUTORIAL_HISTORY_STORAGE_KEY = 'ppm:tutorial-history-v1'
+const TUTORIAL_LAST_RESTORE_STORAGE_KEY = 'ppm:tutorial-last-restore-v1'
+
 export const TUTORIAL_HISTORY_CHANGED_EVENT = 'ppm:tutorial-history-changed'
+export const TUTORIAL_RESTORE_NAVIGATION_EVENT =
+  'ppm:tutorial-restore-navigation'
+
+const TUTORIAL_FALLBACK_HASH_BY_KEY: Partial<Record<TutorialKey, string>> = {
+  overview: '#/dashboard/overview',
+  squad: '#/dashboard/squad',
+  training: '#/dashboard/training',
+  equipment: '#/dashboard/equipment',
+  facilities: '#/dashboard/infrastructure',
+  calendar: '#/dashboard/calendar',
+  'race-detail': '#/dashboard/calendar',
+  'race-preparation': '#/dashboard/race-preparation',
+  'team-ranking': '#/dashboard/team-ranking',
+  statistics: '#/dashboard/statistics',
+  transfers: '#/dashboard/transfers',
+  finance: '#/dashboard/finance',
+  menu: '#/dashboard/overview',
+  sponsors: '#/dashboard/finance',
+  staff: '#/dashboard/staff',
+  settings: '#/dashboard/preferences',
+}
 
 function canUseWindow(): boolean {
   return typeof window !== 'undefined'
@@ -54,6 +77,14 @@ function isDashboardPath(pathname: string): boolean {
   return pathname === '/dashboard' || pathname.startsWith('/dashboard/')
 }
 
+/**
+ * Avoid restoring tutorial history from unsafe browser locations.
+ *
+ * Important:
+ * - The game uses HashRouter.
+ * - Safe tutorial restore should always stay inside #/dashboard...
+ * - Never restore to /login, /logout, /, or a public route.
+ */
 function isSafeTutorialHistoryEntry(entry: TutorialHistoryEntry): boolean {
   if (isDashboardHash(entry.locationHash)) return true
   if (isDashboardPath(entry.pathname)) return true
@@ -80,7 +111,8 @@ function readTutorialHistory(): TutorialHistoryEntry[] {
         typeof candidate.tutorialKey === 'string' &&
         typeof candidate.status === 'string' &&
         isRestorableTutorialStatus(candidate.status as TutorialStatus) &&
-        (typeof candidate.lastStepKey === 'string' || candidate.lastStepKey === null) &&
+        (typeof candidate.lastStepKey === 'string' ||
+          candidate.lastStepKey === null) &&
         typeof candidate.locationHash === 'string' &&
         typeof candidate.pathname === 'string' &&
         typeof candidate.search === 'string' &&
@@ -99,6 +131,23 @@ function dispatchTutorialHistoryChanged(): void {
   if (!canUseWindow()) return
 
   window.dispatchEvent(new CustomEvent(TUTORIAL_HISTORY_CHANGED_EVENT))
+}
+
+function dispatchTutorialRestoreNavigation(
+  entry: TutorialHistoryEntry,
+  safeHash: string,
+): void {
+  if (!canUseWindow()) return
+
+  window.dispatchEvent(
+    new CustomEvent(TUTORIAL_RESTORE_NAVIGATION_EVENT, {
+      detail: {
+        safeHash,
+        tutorialKey: entry.tutorialKey,
+        lastStepKey: entry.lastStepKey,
+      },
+    }),
+  )
 }
 
 function writeTutorialHistory(history: TutorialHistoryEntry[]): void {
@@ -128,7 +177,9 @@ function getCurrentTutorialLocation(): Pick<
   const currentHash = window.location.hash
 
   return {
-    locationHash: isDashboardHash(currentHash) ? currentHash : '#/dashboard/overview',
+    locationHash: isDashboardHash(currentHash)
+      ? currentHash
+      : '#/dashboard/overview',
     pathname: window.location.pathname,
     search: window.location.search,
   }
@@ -201,40 +252,54 @@ function getSafeHashForHistoryEntry(entry: TutorialHistoryEntry): string {
     return entry.locationHash
   }
 
+  const fallbackHash = TUTORIAL_FALLBACK_HASH_BY_KEY[entry.tutorialKey]
+  if (fallbackHash) {
+    return fallbackHash
+  }
+
   if (isDashboardPath(entry.pathname)) {
-    return `#${entry.pathname}${entry.search || ''}`
+    return `#${entry.pathname}`
   }
 
   return '#/dashboard/overview'
+}
+
+function rememberRestoreNavigation(
+  entry: TutorialHistoryEntry,
+  safeHash: string,
+): void {
+  if (!canUseWindow()) return
+
+  try {
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', entry.tutorialKey)
+    window.sessionStorage.setItem(
+      TUTORIAL_LAST_RESTORE_STORAGE_KEY,
+      JSON.stringify({
+        safeHash,
+        tutorialKey: entry.tutorialKey,
+        lastStepKey: entry.lastStepKey,
+        restoredAt: Date.now(),
+      }),
+    )
+  } catch {
+    // Ignore browser storage issues.
+  }
 }
 
 function navigateToHistoryEntry(entry: TutorialHistoryEntry): void {
   if (!canUseWindow()) return
 
   const safeHash = getSafeHashForHistoryEntry(entry)
-  const safeUrl = `${window.location.origin}${window.location.pathname}${window.location.search}${safeHash}`
+
+  rememberRestoreNavigation(entry, safeHash)
+
+  if (window.location.hash !== safeHash) {
+    window.location.hash = safeHash
+  }
 
   window.setTimeout(() => {
-    if (window.location.href !== safeUrl) {
-      window.location.href = safeUrl
-
-      /*
-       * HashRouter navigation may stay inside the same document instead of doing
-       * a hard page load. Reload shortly after changing the hash so the page
-       * reloads the saved tutorial step from Supabase and never leaves the
-       * overlay stuck in a busy/disabled state.
-       */
-      window.setTimeout(() => {
-        window.location.reload()
-      }, 120)
-      return
-    }
-
-    /*
-     * When the previous step is on the same route, the URL does not change.
-     * A reload is still required because the restored step was saved to the DB.
-     */
-    window.location.reload()
+    dispatchTutorialHistoryChanged()
+    dispatchTutorialRestoreNavigation(entry, safeHash)
   }, 40)
 }
 
