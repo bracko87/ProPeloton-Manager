@@ -169,7 +169,7 @@
     "squadRiders": "Fahrer der Kader",
     "highFatigue": "Hohe Ermüdung",
     "elevatedFatigue": "Erhöhte Ermüdung",
-    "notFullyFit": "Nicht voll fit",
+    "notFullyFit": "Nicht vollständig fit",
     "unavailable": "Nicht verfügbar",
     "plannedSessions": "Geplante Sitzungen · nächste 3 Spieltage",
     "manualOverrides": "Manuelle Überbrückungen · nächste 3 Spieltage",
@@ -182,10 +182,29 @@
     "fatigue": "Müdigkeit",
     "fit": "Einsatzbereit",
     "fatigueWatch": {
-      "title": "Cheftrainer-Hinweis — Müdigkeit beobachten",
+      "title": "Hinweis des Cheftrainers — Ermüdung beobachten",
       "summaryOne": "1 Fahrer befindet sich derzeit im Bereich erhöhter Ermüdung (50–69). Beobachte die Entwicklung, bevor die Belastung weiter steigt.",
       "summaryMany": "{{count}} Fahrer befinden sich derzeit im Bereich erhöhter Ermüdung (50–69). Beobachte die Entwicklung, bevor die Belastung weiter steigt.",
       "recommendation": "Beobachte die betroffenen Fahrer im nächsten Trainingsblock."
+    },
+    "notFullyAvailable": "Nicht vollständig einsatzbereit",
+    "riderAvailability": {
+      "title": "Hinweis des Cheftrainers — Fahrerverfügbarkeit",
+      "summaryOne": "1 Fahrer ist derzeit für die normale Trainingsbelastung nicht vollständig einsatzbereit. Prüfe den Erholungsstatus vor dem nächsten intensiven Block.",
+      "summaryMany": "{{count}} Fahrer sind derzeit für die normale Trainingsbelastung nicht vollständig einsatzbereit. Prüfe den Erholungsstatus vor dem nächsten intensiven Block.",
+      "reason": "Nicht vollständig einsatzbereit"
+    },
+    "trainingScheduleGap": {
+      "title": "Hinweis des Cheftrainers — Lücke im Trainingsplan",
+      "summary": "Vom {{start}} bis {{end}} sind keine regulären Trainingseinheiten geplant. Prüfe den Trainingskalender vor dem nächsten Rennblock.",
+      "recommendationReview": "Prüfe die nächsten drei Spieltage im Trainingskalender.",
+      "recommendationConfirm": "Bestätige, dass das leere Trainingsfenster beabsichtigt ist."
+    },
+    "actions": {
+      "staffBriefingCentre": "Mitarbeiter-Briefing-Center",
+      "trainingPage": "Trainingsseite",
+      "teamSquad": "Teamkader",
+      "staffPage": "Mitarbeiterseite"
     }
   },
   "sportDirector": {
@@ -606,7 +625,9 @@
     "equipment_workshop_review": "Überprüfung der Ausrüstung und der Werkstatt",
     "recruitment_review": "Überprüfung der Einstellung",
     "elevated_fatigue": "Erhöhte Ermüdung",
-    "fatigue_watch": "Erhöhte Ermüdung"
+    "fatigue_watch": "Ermüdung beobachten",
+    "rider_availability": "Fahrerverfügbarkeit",
+    "training_schedule_gap": "Lücke im Trainingsplan"
   },
   "notificationTypes": {
     "suppliesLow": "Vorräte knapp",

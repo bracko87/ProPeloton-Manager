@@ -169,7 +169,7 @@
     "squadRiders": "ciclista de escuadrón",
     "highFatigue": "Alta fatiga",
     "elevatedFatigue": "Aumento de la fatiga",
-    "notFullyFit": "No encajan completamente",
+    "notFullyFit": "No está completamente en forma",
     "unavailable": "No disponible",
     "plannedSessions": "Sesiones previstas · los próximos 3 días de juego",
     "manualOverrides": "Desactivación manual · los próximos 3 días de juego",
@@ -186,6 +186,25 @@
       "summaryOne": "1 corredor se encuentra actualmente en el rango de fatiga elevada (50–69). Vigila la tendencia antes de aumentar más la carga.",
       "summaryMany": "{{count}} corredores se encuentran actualmente en el rango de fatiga elevada (50–69). Vigila la tendencia antes de aumentar más la carga.",
       "recommendation": "Supervisa a los corredores afectados durante el próximo bloque de entrenamiento."
+    },
+    "notFullyAvailable": "No está completamente disponible",
+    "riderAvailability": {
+      "title": "Aviso del entrenador jefe — Disponibilidad de corredores",
+      "summaryOne": "1 corredor no está plenamente disponible para la carga normal de entrenamiento. Revisa su estado de recuperación antes del próximo bloque intensivo.",
+      "summaryMany": "{{count}} corredores no están plenamente disponibles para la carga normal de entrenamiento. Revisa su estado de recuperación antes del próximo bloque intensivo.",
+      "reason": "No está completamente disponible"
+    },
+    "trainingScheduleGap": {
+      "title": "Aviso del entrenador jefe — Hueco en el calendario de entrenamiento",
+      "summary": "No hay sesiones regulares de entrenamiento programadas del {{start}} al {{end}}. Revisa el calendario de entrenamiento antes del próximo bloque de carreras.",
+      "recommendationReview": "Revisa los próximos tres días de juego en el calendario de entrenamiento.",
+      "recommendationConfirm": "Confirma que el periodo sin entrenamiento es intencionado."
+    },
+    "actions": {
+      "staffBriefingCentre": "Centro de informes del personal",
+      "trainingPage": "Página de entrenamiento",
+      "teamSquad": "Plantilla del equipo",
+      "staffPage": "Página del personal"
     }
   },
   "sportDirector": {
@@ -606,7 +625,9 @@
     "equipment_workshop_review": "Revisión de equipamiento y taller",
     "recruitment_review": "Revisión de contratación",
     "elevated_fatigue": "Fatiga elevada",
-    "fatigue_watch": "Fatiga elevada"
+    "fatigue_watch": "Control de fatiga",
+    "rider_availability": "Disponibilidad de corredores",
+    "training_schedule_gap": "Hueco en el calendario de entrenamiento"
   },
   "notificationTypes": {
     "suppliesLow": "Suministros bajos",

@@ -169,7 +169,7 @@
     "squadRiders": "Squadra ciclisti",
     "highFatigue": "Alta fatica",
     "elevatedFatigue": "Sofferenza elevata",
-    "notFullyFit": "Non perfettamente in forma",
+    "notFullyFit": "Non completamente in forma",
     "unavailable": "Non disponibile",
     "plannedSessions": "Sezioni pianificate · prossimi 3 giorni di gioco",
     "manualOverrides": "Rivestimenti manuali · prossimi 3 giorni di gioco",
@@ -186,6 +186,25 @@
       "summaryOne": "1 corridore si trova attualmente nella fascia di fatica elevata (50–69). Monitora la tendenza prima di aumentare ulteriormente il carico.",
       "summaryMany": "{{count}} corridori si trovano attualmente nella fascia di fatica elevata (50–69). Monitora la tendenza prima di aumentare ulteriormente il carico.",
       "recommendation": "Monitora i corridori interessati durante il prossimo blocco di allenamento."
+    },
+    "notFullyAvailable": "Non pienamente disponibile",
+    "riderAvailability": {
+      "title": "Avviso dell'allenatore capo — Disponibilità dei corridori",
+      "summaryOne": "1 corridore non è attualmente pienamente disponibile per il normale carico di allenamento. Controlla lo stato di recupero prima del prossimo blocco intenso.",
+      "summaryMany": "{{count}} corridori non sono attualmente pienamente disponibili per il normale carico di allenamento. Controlla lo stato di recupero prima del prossimo blocco intenso.",
+      "reason": "Non pienamente disponibile"
+    },
+    "trainingScheduleGap": {
+      "title": "Avviso dell'allenatore capo — Vuoto nel programma di allenamento",
+      "summary": "Non sono previste sessioni regolari di allenamento dal {{start}} al {{end}}. Controlla il calendario degli allenamenti prima del prossimo blocco di gare.",
+      "recommendationReview": "Controlla i prossimi tre giorni di gioco nel calendario degli allenamenti.",
+      "recommendationConfirm": "Conferma che il periodo senza allenamenti sia intenzionale."
+    },
+    "actions": {
+      "staffBriefingCentre": "Centro briefing dello staff",
+      "trainingPage": "Pagina allenamento",
+      "teamSquad": "Rosa della squadra",
+      "staffPage": "Pagina staff"
     }
   },
   "sportDirector": {
@@ -606,7 +625,9 @@
     "equipment_workshop_review": "Revisione dell' attrezzatura e dell' officina",
     "recruitment_review": "Riesame delle assunzioni",
     "elevated_fatigue": "Fatica elevata",
-    "fatigue_watch": "Fatica elevata"
+    "fatigue_watch": "Controllo della fatica",
+    "rider_availability": "Disponibilità dei corridori",
+    "training_schedule_gap": "Vuoto nel programma di allenamento"
   },
   "notificationTypes": {
     "suppliesLow": "Scorte basse",

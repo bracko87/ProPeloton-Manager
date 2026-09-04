@@ -559,22 +559,56 @@ function localizeAdvisorNotificationRuntimeText(value: unknown, t: any): string 
   if (/^Head Coach Advisory\s*[—-]\s*Fatigue Watch$/i.test(text)) {
     return t('headCoach.fatigueWatch.title')
   }
+  if (/^Head Coach Advisory\s*[—-]\s*Rider Availability$/i.test(text)) {
+    return t('headCoach.riderAvailability.title')
+  }
+  if (/^Head Coach Advisory\s*[—-]\s*Training Schedule Gap$/i.test(text)) {
+    return t('headCoach.trainingScheduleGap.title')
+  }
 
-  const fatigueSummary = /^(\d+)\s+rider\(s\)\s+are currently in the elevated fatigue band \(50[–-]69\)\. Monitor the trend before workload increases further\.$/i.exec(text)
-  if (fatigueSummary) {
-    const count = Number(fatigueSummary[1])
-    return t(
-      count === 1 ? 'headCoach.fatigueWatch.summaryOne' : 'headCoach.fatigueWatch.summaryMany',
-      { count }
-    )
+  let match = /^(\d+)\s+rider\(s\)\s+are currently in the elevated fatigue band \(50[–-]69\)\. Monitor the trend before workload increases further\.$/i.exec(text)
+  if (match) {
+    const count = Number(match[1])
+    return t(count === 1 ? 'headCoach.fatigueWatch.summaryOne' : 'headCoach.fatigueWatch.summaryMany', { count })
+  }
+
+  match = /^(\d+)\s+rider\(s\)\s+are not fully available for normal training load\. Review recovery status before the next intensive block\.$/i.exec(text)
+  if (match) {
+    const count = Number(match[1])
+    return t(count === 1 ? 'headCoach.riderAvailability.summaryOne' : 'headCoach.riderAvailability.summaryMany', { count })
+  }
+
+  match = /^No regular training sessions are planned from (\d{4}-\d{2}-\d{2}) through (\d{4}-\d{2}-\d{2})\. Review the training calendar before the next race block\.$/i.exec(text)
+  if (match) {
+    return t('headCoach.trainingScheduleGap.summary', {
+      start: formatAdvisorCompactCalendarDate(match[1]),
+      end: formatAdvisorCompactCalendarDate(match[2]),
+    })
   }
 
   const normalized = text.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
   if (normalized === 'elevated fatigue') return t('headCoach.elevatedFatigue')
+  if (normalized === 'fatigue watch') return t('reportVariants.fatigue_watch')
   if (normalized === 'fit') return t('headCoach.fit')
+  if (normalized === 'not fully fit') return t('headCoach.notFullyFit')
+  if (normalized === 'not fully available') return t('headCoach.notFullyAvailable')
+  if (normalized === 'rider availability') return t('reportVariants.rider_availability')
+  if (normalized === 'training schedule gap') return t('reportVariants.training_schedule_gap')
+
   if (normalized === 'monitor the affected riders through the next training block.') {
     return t('headCoach.fatigueWatch.recommendation')
   }
+  if (normalized === 'review the next three game days in the training calendar.') {
+    return t('headCoach.trainingScheduleGap.recommendationReview')
+  }
+  if (normalized === 'confirm that the empty training window is intentional.') {
+    return t('headCoach.trainingScheduleGap.recommendationConfirm')
+  }
+
+  if (normalized === 'staff briefing centre') return t('headCoach.actions.staffBriefingCentre')
+  if (normalized === 'training page') return t('headCoach.actions.trainingPage')
+  if (normalized === 'team squad') return t('headCoach.actions.teamSquad')
+  if (normalized === 'staff page') return t('headCoach.actions.staffPage')
 
   return text
 }
@@ -623,7 +657,14 @@ function getAdvisorCountryFlagUrl(value: unknown): string | null {
   return `https://flagcdn.com/24x18/${code}.png`
 }
 
-function formatAdvisorGameDateTime(value: unknown): string {
+function formatAdvisorCompactCalendarDate(value: unknown): string {
+  const text = String(value ?? '').trim()
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return text
+  return `${Number(match[3])}.${String(Number(match[2])).padStart(2, '0')}.`
+}
+
+function formatAdvisorGameDateTime(value: unknown, t?: any): string {
   const text = String(value ?? '').trim()
   if (!text) return '—'
 
@@ -638,15 +679,15 @@ function formatAdvisorGameDateTime(value: unknown): string {
   }
 
   const seasonNumber = year >= 2000 ? year - 1999 : year
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const monthLabel = monthNames[month - 1] ?? String(month).padStart(2, '0')
-  const dateLabel = `${day}. ${monthLabel}`
-
+  const dateLabel = `${day}.${String(month).padStart(2, '0')}.`
   const hour = match[4]
   const minute = match[5]
-  const timeLabel = hour && minute ? ` - ${hour}:${minute}` : ''
+  const timeLabel = hour && minute ? ` ${hour}:${minute}` : ''
+  const localizedDate = `${dateLabel}${timeLabel}`
 
-  return `Season ${seasonNumber} - ${dateLabel}${timeLabel}`
+  return t
+    ? t('common.seasonDate', { season: seasonNumber, date: localizedDate })
+    : `Season ${seasonNumber} - ${localizedDate}`
 }
 
 function getAdvisorRiderDisplayName(
@@ -1963,8 +2004,8 @@ export default function NotificationsPage(): JSX.Element {
                                       snapshot.manual_overrides,
                                   ],
                                   [t('headCoach.highestFatigue'), snapshot.highest_fatigue],
-                                  [t('headCoach.windowStart'), formatAdvisorGameDateTime(snapshot.window_start)],
-                                  [t('headCoach.windowEnd'), formatAdvisorGameDateTime(snapshot.window_end)],
+                                  [t('headCoach.windowStart'), formatAdvisorGameDateTime(snapshot.window_start, t)],
+                                  [t('headCoach.windowEnd'), formatAdvisorGameDateTime(snapshot.window_end, t)],
                                 ]
                           ).filter(([, value]) => value !== undefined && value !== null && value !== '')
 
@@ -2124,7 +2165,7 @@ export default function NotificationsPage(): JSX.Element {
                                           : 'rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-900 hover:bg-slate-100'
                                       }
                                     >
-                                      {translateDetailActionLabel(action.label || t('details.open'))}
+                                      {localizeAdvisorNotificationRuntimeText(translateDetailActionLabel(action.label || t('details.open')), t)}
                                     </button>
                                   ))}
                                 </div>

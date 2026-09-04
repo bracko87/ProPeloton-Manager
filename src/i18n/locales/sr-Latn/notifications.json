@@ -186,6 +186,25 @@
       "summaryOne": "1 vozač se trenutno nalazi u zoni povišenog umora (50–69). Pratite trend pre nego što dodatno povećate opterećenje.",
       "summaryMany": "{{count}} vozača se trenutno nalaze u zoni povišenog umora (50–69). Pratite trend pre nego što dodatno povećate opterećenje.",
       "recommendation": "Pratite pogođene vozače tokom sledećeg trening bloka."
+    },
+    "notFullyAvailable": "Nije potpuno dostupan",
+    "riderAvailability": {
+      "title": "Savet glavnog trenera — dostupnost vozača",
+      "summaryOne": "1 vozač trenutno nije potpuno spreman za uobičajeno trenažno opterećenje. Proverite status oporavka pre sledećeg intenzivnog bloka.",
+      "summaryMany": "{{count}} vozača trenutno nisu potpuno spremna za uobičajeno trenažno opterećenje. Proverite status oporavka pre sledećeg intenzivnog bloka.",
+      "reason": "Nije potpuno dostupan"
+    },
+    "trainingScheduleGap": {
+      "title": "Savet glavnog trenera — praznina u rasporedu treninga",
+      "summary": "Nema planiranih redovnih treninga od {{start}} do {{end}}. Proverite kalendar treninga pre sledećeg bloka trka.",
+      "recommendationReview": "Pregledajte naredna tri dana u igri u kalendaru treninga.",
+      "recommendationConfirm": "Potvrdite da je prazan period za trening nameran."
+    },
+    "actions": {
+      "staffBriefingCentre": "Centar za brifinge osoblja",
+      "trainingPage": "Stranica treninga",
+      "teamSquad": "Tim",
+      "staffPage": "Stranica osoblja"
     }
   },
   "sportDirector": {
@@ -609,7 +628,9 @@
     "equipment_workshop_review": "Pregled opreme i radionice",
     "recruitment_review": "Pregled regrutacije",
     "elevated_fatigue": "Povišen umor",
-    "fatigue_watch": "Povišen umor"
+    "fatigue_watch": "Praćenje umora",
+    "rider_availability": "Dostupnost vozača",
+    "training_schedule_gap": "Praznina u rasporedu treninga"
   },
   "notificationTypes": {
     "suppliesLow": "Niske zalihe",

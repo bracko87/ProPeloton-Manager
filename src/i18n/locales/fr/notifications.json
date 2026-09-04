@@ -169,7 +169,7 @@
     "squadRiders": "Coureurs de l'escouade",
     "highFatigue": "Haute fatigue",
     "elevatedFatigue": "fatigue élevée",
-    "notFullyFit": "Pas complètement en forme",
+    "notFullyFit": "Pas totalement en forme",
     "unavailable": "Indisponible",
     "plannedSessions": "Séances prévues · 3 prochains jours de jeu",
     "manualOverrides": "Redéfinitions manuelles · les 3 prochains jours de jeu",
@@ -186,6 +186,25 @@
       "summaryOne": "1 coureur se trouve actuellement dans la zone de fatigue élevée (50–69). Surveillez la tendance avant d’augmenter davantage la charge.",
       "summaryMany": "{{count}} coureurs se trouvent actuellement dans la zone de fatigue élevée (50–69). Surveillez la tendance avant d’augmenter davantage la charge.",
       "recommendation": "Surveillez les coureurs concernés pendant le prochain bloc d’entraînement."
+    },
+    "notFullyAvailable": "Pas totalement disponible",
+    "riderAvailability": {
+      "title": "Conseil de l’entraîneur principal — Disponibilité des coureurs",
+      "summaryOne": "1 coureur n’est actuellement pas totalement disponible pour une charge d’entraînement normale. Vérifiez son état de récupération avant le prochain bloc intensif.",
+      "summaryMany": "{{count}} coureurs ne sont actuellement pas totalement disponibles pour une charge d’entraînement normale. Vérifiez leur état de récupération avant le prochain bloc intensif.",
+      "reason": "Pas totalement disponible"
+    },
+    "trainingScheduleGap": {
+      "title": "Conseil de l’entraîneur principal — Période sans entraînement planifié",
+      "summary": "Aucune séance d’entraînement régulière n’est prévue du {{start}} au {{end}}. Vérifiez le calendrier d’entraînement avant le prochain bloc de courses.",
+      "recommendationReview": "Vérifiez les trois prochains jours de jeu dans le calendrier d’entraînement.",
+      "recommendationConfirm": "Confirmez que cette période sans entraînement est volontaire."
+    },
+    "actions": {
+      "staffBriefingCentre": "Centre de briefing du staff",
+      "trainingPage": "Page d’entraînement",
+      "teamSquad": "Effectif de l’équipe",
+      "staffPage": "Page du staff"
     }
   },
   "sportDirector": {
@@ -606,7 +625,9 @@
     "equipment_workshop_review": "Examen des équipements et des ateliers",
     "recruitment_review": "Examen du recrutement",
     "elevated_fatigue": "Fatigue élevée",
-    "fatigue_watch": "Fatigue élevée"
+    "fatigue_watch": "Surveillance de la fatigue",
+    "rider_availability": "Disponibilité des coureurs",
+    "training_schedule_gap": "Période sans entraînement planifié"
   },
   "notificationTypes": {
     "suppliesLow": "Stocks faibles",

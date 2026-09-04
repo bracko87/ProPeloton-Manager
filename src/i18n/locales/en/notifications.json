@@ -186,6 +186,25 @@
       "summaryOne": "1 rider is currently in the elevated fatigue band (50–69). Monitor the trend before workload increases further.",
       "summaryMany": "{{count}} riders are currently in the elevated fatigue band (50–69). Monitor the trend before workload increases further.",
       "recommendation": "Monitor the affected riders through the next training block."
+    },
+    "notFullyAvailable": "Not fully available",
+    "riderAvailability": {
+      "title": "Head Coach Advisory — Rider Availability",
+      "summaryOne": "1 rider is not fully available for normal training load. Review recovery status before the next intensive block.",
+      "summaryMany": "{{count}} riders are not fully available for normal training load. Review recovery status before the next intensive block.",
+      "reason": "Not fully available"
+    },
+    "trainingScheduleGap": {
+      "title": "Head Coach Advisory — Training Schedule Gap",
+      "summary": "No regular training sessions are planned from {{start}} through {{end}}. Review the training calendar before the next race block.",
+      "recommendationReview": "Review the next three game days in the training calendar.",
+      "recommendationConfirm": "Confirm that the empty training window is intentional."
+    },
+    "actions": {
+      "staffBriefingCentre": "Staff Briefing Centre",
+      "trainingPage": "Training page",
+      "teamSquad": "Team squad",
+      "staffPage": "Staff page"
     }
   },
   "sportDirector": {
@@ -606,7 +625,9 @@
     "equipment_workshop_review": "Equipment & workshop review",
     "recruitment_review": "Recruitment review",
     "elevated_fatigue": "Elevated Fatigue",
-    "fatigue_watch": "Elevated Fatigue"
+    "fatigue_watch": "Fatigue Watch",
+    "rider_availability": "Rider Availability",
+    "training_schedule_gap": "Training Schedule Gap"
   },
   "notificationTypes": {
     "suppliesLow": "Race supplies low",
