@@ -18,9 +18,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Apply Head Coach advisory localization
-        run: python .github/scripts/fix_head_coach_advisories_localization_20260904.py
-
       - name: Apply High Fatigue advisory localization
         run: python .github/scripts/fix_head_coach_high_fatigue_localization_20260904.py
 
