@@ -5,7 +5,9 @@
     "next": "Nächste",
     "finishForNow": "Fertig für jetzt",
     "closeTutorial": "Tutorial schließen",
-    "continue": "Weiter"
+    "continue": "Weiter",
+    "previous": "Zurück",
+    "previousTutorial": "Vorheriges Tutorial"
   },
   "overview": {
     "welcome": {

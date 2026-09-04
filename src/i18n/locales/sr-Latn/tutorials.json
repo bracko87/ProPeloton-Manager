@@ -5,7 +5,9 @@
     "next": "Dalje",
     "finishForNow": "Završi za sada",
     "closeTutorial": "Zatvori vodič",
-    "continue": "Nastavi"
+    "continue": "Nastavi",
+    "previous": "Prethodno",
+    "previousTutorial": "Prethodni vodič"
   },
   "overview": {
     "welcome": {

@@ -5,7 +5,9 @@
     "next": "Next",
     "finishForNow": "Finish for now",
     "closeTutorial": "Close tutorial",
-    "continue": "Continue"
+    "continue": "Continue",
+    "previous": "Previous",
+    "previousTutorial": "Previous tutorial"
   },
   "overview": {
     "welcome": {

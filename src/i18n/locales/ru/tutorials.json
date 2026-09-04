@@ -5,7 +5,9 @@
     "next": "Следующий",
     "finishForNow": "Закончи пока.",
     "closeTutorial": "Скрыть занятия",
-    "continue": "Продолжить"
+    "continue": "Продолжить",
+    "previous": "Назад",
+    "previousTutorial": "Предыдущее обучение"
   },
   "overview": {
     "welcome": {
