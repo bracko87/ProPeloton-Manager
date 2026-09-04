@@ -14829,11 +14829,18 @@ function UniversalRaceReplayPage({
             terrainReplayTimingModel
           )
 
+        const authoritativeRaceSecond =
+          checkpoint.raceProgress.authoritativeRaceSecond
+
         return {
           id: entry.commentaryId,
           progress: checkpoint.raceProgress.fraction,
           kilometre: checkpoint.raceProgress.kmFromStart,
-          raceSecond: durationSeconds * elapsedFraction,
+          raceSecond:
+            typeof authoritativeRaceSecond === 'number' &&
+            Number.isFinite(authoritativeRaceSecond)
+              ? authoritativeRaceSecond
+              : durationSeconds * elapsedFraction,
           title: entry.title,
           description,
         }
