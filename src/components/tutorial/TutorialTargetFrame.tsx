@@ -16,6 +16,11 @@ const FRAME_PADDING = 8
 const VIEWPORT_MARGIN = 6
 const MIN_FRAME_SIZE = 28
 
+const TARGET_ALIASES: Record<string, string[]> = {
+  'header-premium': ['header-membership'],
+  'overview-staff-briefing': ['overview-attention'],
+}
+
 function getTutorialTargetSelector(target: string): string {
   const escapedTarget =
     typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
@@ -26,7 +31,17 @@ function getTutorialTargetSelector(target: string): string {
 }
 
 function findTargetElement(target: string): HTMLElement | null {
-  return document.querySelector<HTMLElement>(getTutorialTargetSelector(target))
+  const targetCandidates = [target, ...(TARGET_ALIASES[target] ?? [])]
+
+  for (const targetCandidate of targetCandidates) {
+    const element = document.querySelector<HTMLElement>(
+      getTutorialTargetSelector(targetCandidate),
+    )
+
+    if (element) return element
+  }
+
+  return null
 }
 
 function clamp(value: number, min: number, max: number): number {
