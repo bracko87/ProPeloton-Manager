@@ -1825,10 +1825,26 @@ export interface UniversalRoadDecisiveTerrainSelection {
   readonly modelVersion: 'universal_decisive_terrain_selection_v1'
 }
 
+export type UniversalRoadPhysicalGroupDisplayCode = 'B1' | 'F1' | 'F2' | 'P'
+
+export type UniversalRoadAttackPhysicalMoveOutcome =
+  | 'raw_failure'
+  | 'covered_no_stable_corridor'
+  | 'covered_front_slots_full'
+  | 'covered_source_not_supported'
+  | 'persistent_front'
+
 export interface UniversalRoadDecisiveAttackAttempt {
   readonly riderId: string
   readonly teamId: string
   readonly sourceGroupCode: UniversalRoadDevelopmentGroupCode
+  /** Actual physical group resolved at the attack kilometre. */
+  readonly sourcePhysicalGroupCode?: UniversalRoadPhysicalGroupDisplayCode
+  /** Physical result after front-slot/corridor validation. */
+  readonly physicalMoveOutcome?: UniversalRoadAttackPhysicalMoveOutcome
+  /** Stable lineage identity when the attack creates a persistent F group. */
+  readonly frontLineageId?: string | null
+  readonly frontDisplayCode?: 'F1' | 'F2' | null
   readonly attemptKm: number
   readonly effectiveTerrainType: UniversalRoadOpeningStepTerrain
   readonly energyBeforeAttempt: number
@@ -1917,6 +1933,26 @@ export interface UniversalRoadSecondaryFrontGapSample {
   readonly gapToPelotonSeconds: number
 }
 
+export interface UniversalRoadPhysicalFrontLineageResult {
+  readonly lineageId: string
+  readonly displayCode: 'F1' | 'F2'
+  readonly sourceDisplayCode: UniversalRoadPhysicalGroupDisplayCode
+  readonly carriedFromPreviousPhase: boolean
+  readonly riderIdsAtLaunch: readonly string[]
+  /** Membership immediately before this lineage resolves or reaches phase end. */
+  readonly riderIdsBeforeResolution: readonly string[]
+  readonly riderIdsAtEnd: readonly string[]
+  readonly launchKm: number
+  readonly launchGapToLeaderSeconds: number
+  readonly launchGapToPelotonSeconds: number
+  readonly mergeKm: number | null
+  readonly mergeTargetDisplayCode: 'B1' | 'F1' | 'F2' | null
+  readonly catchKm: number | null
+  readonly caughtByPeloton: boolean
+  readonly gapTrajectory: readonly UniversalRoadSecondaryFrontGapSample[]
+  readonly modelVersion: 'universal_road_front_lineage_v5'
+}
+
 export interface UniversalRoadPhase3DecisiveResult {
   readonly phaseNumber: 3
   readonly phaseBoundary: UniversalRoadPhaseBoundary
@@ -1934,7 +1970,9 @@ export interface UniversalRoadPhase3DecisiveResult {
   readonly physicalCatchKm: number | null
   readonly physicalChasingTeamIds: readonly string[]
   readonly physicalGapTrajectory: readonly UniversalRoadPhysicalGapSample[]
-  /** Secondary F lineage carried independently while a leading escape still exists. */
+  /** Stable physical F lineages. At most F1 + F2 may be active simultaneously. */
+  readonly frontLineages: readonly UniversalRoadPhysicalFrontLineageResult[]
+  /** Legacy F1 compatibility view. Physical validation must use frontLineages. */
   readonly secondaryFrontRiderIdsAtStart: readonly string[]
   /** All riders whose successful peloton attacks establish/join this Phase-3 F lifecycle. */
   readonly secondaryFrontRiderIdsAtLaunch: readonly string[]
@@ -1984,6 +2022,20 @@ export interface UniversalRoadChasingTeamStrength {
   readonly modelVersion: 'universal_chasing_team_strength_v1'
 }
 
+export interface UniversalRoadLateChaseBridgeStep {
+  readonly lineageId: string
+  readonly displayCode: 'F1' | 'F2'
+  readonly riderIds: readonly string[]
+  readonly active: boolean
+  readonly startGapToLeaderSeconds: number | null
+  readonly endGapToLeaderSeconds: number | null
+  readonly startGapToPelotonSeconds: number | null
+  readonly endGapToPelotonSeconds: number | null
+  readonly mergedThisStep: boolean
+  readonly caughtThisStep: boolean
+  readonly mergeTargetDisplayCode: 'B1' | 'F1' | 'F2' | null
+}
+
 export interface UniversalRoadLateChaseStep {
   readonly kmStart: number
   readonly kmEnd: number
@@ -2005,6 +2057,11 @@ export interface UniversalRoadLateChaseStep {
   readonly bridgeStartGapToPelotonSeconds: number | null
   readonly bridgeEndGapToPelotonSeconds: number | null
   readonly bridgeMergedIntoFront: boolean
+  /** V5 emergency-only numerical guard diagnostic for the authoritative B1/P gap. */
+  readonly emergencyRailApplied: boolean
+  readonly emergencyRailClosureLimitSeconds: number
+  /** V5 lineage-aware bridge state; legacy single-bridge fields above mirror the first entry. */
+  readonly bridgeGroups?: readonly UniversalRoadLateChaseBridgeStep[]
 }
 
 export interface UniversalRoadBridgeGapSample {
@@ -2014,13 +2071,17 @@ export interface UniversalRoadBridgeGapSample {
 }
 
 export interface UniversalRoadPhase4BridgeResult {
-  readonly displayCode: 'F1'
+  readonly lineageId?: string
+  readonly displayCode: 'F1' | 'F2'
+  readonly sourceDisplayCode?: UniversalRoadPhysicalGroupDisplayCode
+  readonly carriedFromPreviousPhase?: boolean
   readonly riderIds: readonly string[]
   readonly launchKm: number
   readonly launchGapToLeaderSeconds: number
   readonly launchGapToPelotonSeconds: number
   readonly mergeKm: number | null
   readonly mergedIntoOpeningBreakaway: boolean
+  readonly mergeTargetDisplayCode?: 'B1' | 'F1' | 'F2' | null
   readonly catchKm: number | null
   readonly caughtByPeloton: boolean
   readonly gapSamples: readonly UniversalRoadBridgeGapSample[]
@@ -2195,6 +2256,8 @@ export interface UniversalPhase5GroupSnapshot {
   readonly groupOrder: number
   readonly groupCode: UniversalPhase5GroupCode
   readonly displayCode: string
+  /** Stable physical front-lineage identity when this snapshot represents F1/F2. */
+  readonly physicalLineageId?: string | null
   readonly physicalPosition: UniversalPhase5PhysicalPosition
   readonly colorKey: UniversalPhase5ColorKey
   readonly riderIds: readonly string[]
@@ -2717,6 +2780,7 @@ export type UniversalReplayEventType =
   | 'group_merge'
   | 'bridge_attack'
   | 'bridge_progress'
+  | 'bridge_contact'
   | 'bridge_merge'
   | 'late_chase'
   | 'catch'
@@ -2727,11 +2791,18 @@ export interface UniversalReplayRaceProgress {
   readonly fraction: number
   readonly percent: number
   readonly kmFromStart: number
+  /**
+   * Authoritative race clock for checkpoints whose elapsed time is known from
+   * the finalized result rather than inferred from course distance. Road-race
+   * playback may fall back to its terrain timing model when this is null.
+   */
+  readonly authoritativeRaceSecond?: number | null
 }
 
 export interface UniversalReplayGroupState {
   readonly groupCode: UniversalPhase5GroupCode
   readonly displayCode: string
+  readonly physicalLineageId?: string | null
   readonly physicalPosition: UniversalPhase5PhysicalPosition
   readonly colorKey: UniversalPhase5ColorKey
   readonly riderIds: readonly string[]
@@ -2829,6 +2900,10 @@ export interface UniversalReplayCommentaryEntry {
   readonly description: string
   readonly riderIds: readonly string[]
   readonly teamIds: readonly string[]
+  readonly physicalLineageId?: string | null
+  readonly physicalSourceDisplayCode?: UniversalRoadPhysicalGroupDisplayCode | null
+  readonly physicalLaunchKm?: number | null
+  readonly physicalMergeTargetDisplayCode?: 'B1' | 'F1' | 'F2' | null
 }
 
 export interface UniversalReplayCheckpoint {
@@ -11806,7 +11881,7 @@ export function resolveRoadPhase3Decisive(
     )
   })
 
-  const successfulAttackRiderIds = attackAttempts
+  let successfulAttackRiderIds = attackAttempts
     .filter((attempt) => attempt.attackSucceeded)
     .map((attempt) => attempt.riderId)
     .sort()
@@ -11819,6 +11894,18 @@ export function resolveRoadPhase3Decisive(
     phase2.breakawayRiderIdsAtEnd.length > 0
       ? phase2.endGapSeconds
       : phase2.secondaryFrontGapToPelotonSeconds
+  /*
+   * V5 physical identity: when the Phase-2 secondary front is the only group
+   * still ahead of P, it enters Phase 3 as the leading F1 lineage. It is not
+   * a synthetic B1. Reserving that F1 slot prevents a later P attack from
+   * creating a second, unrelated F1 at the same time.
+   */
+  const phase3LeadingDisplayCodeAtStart: 'B1' | 'F1' | null =
+    phase2.breakawayRiderIdsAtEnd.length > 0
+      ? 'B1'
+      : phase2.secondaryFrontRiderIdsAtEnd.length > 0
+        ? 'F1'
+        : null
   // A successful Phase-3 attack from P must enter the road at its own
   // attempt kilometre.  Do not pre-load every rider who will eventually
   // succeed into a synthetic leading group at the first successful attack.
@@ -12134,351 +12221,765 @@ export function resolveRoadPhase3Decisive(
   }
 
   /*
-   * Preserve a second front lineage through Phase 3. This is deliberately
-   * independent from the leading escape loop above: a successful attack from
-   * P must remain on the road even when B1 already exists. The F wave can
-   * bridge, be caught, or become the leader after B1 is caught.
+   * V5 reduced front-lineage model.
+   *
+   * Keep at most two physical F groups active at the same time. A later
+   * successful attack never inherits an existing F road position: it gets its
+   * own launch gap, must have a stable >5s corridor to both neighbours, and
+   * remains independent until an explicit catch/merge.
    */
-  const phase3SecondaryStartRiderIds =
-    phase2.breakawayRiderIdsAtEnd.length > 0
-      ? [...phase2.secondaryFrontRiderIdsAtEnd]
-      : []
-  const phase3SecondaryNewAttackAttempts = attackAttempts
-    .filter(
-      (attempt) =>
-        attempt.attackSucceeded &&
-        attempt.sourceGroupCode === 'main_peloton',
+  type MutablePhase3FrontLineage = {
+    readonly lineageId: string
+    readonly displayCode: 'F1' | 'F2'
+    readonly sourceDisplayCode: UniversalRoadPhysicalGroupDisplayCode
+    readonly carriedFromPreviousPhase: boolean
+    readonly riderIdsAtLaunch: string[]
+    readonly riderIds: Set<string>
+    readonly launchKm: number
+    readonly launchGapToLeaderSeconds: number
+    readonly launchGapToPelotonSeconds: number
+    currentGapToPelotonSeconds: number
+    active: boolean
+    mergeKm: number | null
+    mergeTargetDisplayCode: 'B1' | 'F1' | 'F2' | null
+    catchKm: number | null
+    caughtByPeloton: boolean
+    readonly gapTrajectory: UniversalRoadSecondaryFrontGapSample[]
+  }
+
+  const phase3LineageHistory: MutablePhase3FrontLineage[] = []
+  const phase3MergedIntoB1RiderIds = new Set<string>()
+  const dynamicB1RiderIds = new Set(phase3StartEscapeRiderIds)
+  const phase3LineageSerialByCode = new Map<'F1' | 'F2', number>([
+    ['F1', 0],
+    ['F2', 0],
+  ])
+  const phase3LeaderGapAtKm = (kmFromStart: number): number => {
+    if (
+      phase3PhysicalCatchKm !== null &&
+      kmFromStart >= phase3PhysicalCatchKm - 0.000001
+    ) {
+      return 0
+    }
+    return physicalEscapeRiderIdsAtLaunch.length > 0
+      ? getRoadGapFromTrajectory(
+          physicalGapTrajectory,
+          kmFromStart,
+          physicalEndGapSeconds,
+        )
+      : 0
+  }
+  const phase3ActiveLineages = (): MutablePhase3FrontLineage[] =>
+    phase3LineageHistory
+      .filter((lineage) => lineage.active && lineage.riderIds.size > 0)
+      .sort(
+        (left, right) =>
+          right.currentGapToPelotonSeconds -
+            left.currentGapToPelotonSeconds ||
+          left.displayCode.localeCompare(right.displayCode) ||
+          left.lineageId.localeCompare(right.lineageId),
+      )
+  const phase3LineageGapToLeader = (
+    lineage: MutablePhase3FrontLineage,
+    kmFromStart: number,
+  ): number =>
+    deterministicRound(
+      Math.max(
+        0,
+        phase3LeaderGapAtKm(kmFromStart) -
+          lineage.currentGapToPelotonSeconds,
+      ),
+      6,
     )
+  const createPhase3LineageId = (
+    displayCode: 'F1' | 'F2',
+  ): string => {
+    const serial = (phase3LineageSerialByCode.get(displayCode) ?? 0) + 1
+    phase3LineageSerialByCode.set(displayCode, serial)
+    return `${input.stage.stageId}|phase3|${displayCode}|${serial}`
+  }
+  const addPhase3LineageSample = (
+    lineage: MutablePhase3FrontLineage,
+    kmFromStart: number,
+    gapToPelotonSeconds: number,
+    gapToLeaderSeconds = Math.max(
+      0,
+      phase3LeaderGapAtKm(kmFromStart) - gapToPelotonSeconds,
+    ),
+  ): void => {
+    const sample: UniversalRoadSecondaryFrontGapSample = {
+      kmFromStart: deterministicRound(kmFromStart, 6),
+      gapToLeaderSeconds: deterministicRound(
+        Math.max(0, gapToLeaderSeconds),
+        6,
+      ),
+      gapToPelotonSeconds: deterministicRound(
+        Math.max(0, gapToPelotonSeconds),
+        6,
+      ),
+    }
+    const previous = lineage.gapTrajectory.at(-1)
+    if (
+      previous &&
+      Math.abs(previous.kmFromStart - sample.kmFromStart) <= 0.000001
+    ) {
+      lineage.gapTrajectory[lineage.gapTrajectory.length - 1] = sample
+    } else {
+      lineage.gapTrajectory.push(sample)
+    }
+  }
+
+  const carriedPhase3F1RiderIds =
+    phase2.breakawayRiderIdsAtEnd.length > 0
+      ? phase2.secondaryFrontRiderIdsAtEnd.slice().sort()
+      : []
+  if (carriedPhase3F1RiderIds.length > 0) {
+    const launchKm = phaseBoundary.startKm
+    const leaderGapSeconds = phase3LeaderGapAtKm(launchKm)
+    const rawGapToPelotonSeconds = deterministicRound(
+      Math.max(0, phase2.secondaryFrontGapToPelotonSeconds),
+      6,
+    )
+    const lineage: MutablePhase3FrontLineage = {
+      lineageId: createPhase3LineageId('F1'),
+      displayCode: 'F1',
+      sourceDisplayCode: 'P',
+      carriedFromPreviousPhase: true,
+      riderIdsAtLaunch: [...carriedPhase3F1RiderIds],
+      riderIds: new Set(carriedPhase3F1RiderIds),
+      launchKm,
+      launchGapToLeaderSeconds: deterministicRound(
+        Math.max(0, leaderGapSeconds - rawGapToPelotonSeconds),
+        6,
+      ),
+      launchGapToPelotonSeconds: rawGapToPelotonSeconds,
+      currentGapToPelotonSeconds: rawGapToPelotonSeconds,
+      active: true,
+      mergeKm: null,
+      mergeTargetDisplayCode: null,
+      catchKm: null,
+      caughtByPeloton: false,
+      gapTrajectory: [],
+    }
+    if (
+      rawGapToPelotonSeconds <=
+      PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+    ) {
+      lineage.active = false
+      lineage.catchKm = deterministicRound(launchKm, 6)
+      lineage.caughtByPeloton = true
+      lineage.currentGapToPelotonSeconds = 0
+      addPhase3LineageSample(lineage, launchKm, 0, leaderGapSeconds)
+    } else if (
+      leaderGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
+      leaderGapSeconds - rawGapToPelotonSeconds <=
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+    ) {
+      lineage.active = false
+      lineage.mergeKm = deterministicRound(launchKm, 6)
+      lineage.mergeTargetDisplayCode = 'B1'
+      lineage.currentGapToPelotonSeconds = leaderGapSeconds
+      carriedPhase3F1RiderIds.forEach((riderId) => {
+        phase3MergedIntoB1RiderIds.add(riderId)
+        dynamicB1RiderIds.add(riderId)
+      })
+      addPhase3LineageSample(
+        lineage,
+        launchKm,
+        leaderGapSeconds,
+        Math.max(0, leaderGapSeconds - rawGapToPelotonSeconds),
+      )
+    } else {
+      addPhase3LineageSample(
+        lineage,
+        launchKm,
+        rawGapToPelotonSeconds,
+      )
+    }
+    phase3LineageHistory.push(lineage)
+  }
+
+  const phase3FrontPaceKmh = (
+    lineage: MutablePhase3FrontLineage,
+    stepMidKm: number,
+  ): number => {
+    const riderIds = [...lineage.riderIds].sort()
+    if (riderIds.length === 0) return 0
+    const liveEnergyByRiderId = new Map(
+      riderIds.map((riderId) => {
+        const rider = ridersById.get(riderId)!
+        const readiness = readinessByRiderId.get(riderId)!
+        const startEnergy =
+          phase2EnergyByRiderId.get(riderId)?.energyAfterPhase ?? 0
+        const spent = calculateRoadEnergyCostForRange(
+          input,
+          rider,
+          readiness,
+          1.42,
+          Math.max(phaseBoundary.startKm, lineage.launchKm),
+          stepMidKm,
+        )
+        return [riderId, Math.max(0, startEnergy - spent)] as const
+      }),
+    )
+    const cooperationMultiplier = calculateRoadEscapeCooperationMultiplier(
+      riderIds,
+      ridersById,
+      roadCommandResolution,
+      3,
+      liveEnergyByRiderId,
+      stepMidKm,
+      phase3Points,
+    )
+    const terrainType = getRoadOpeningSegmentAtKm(
+      input.stage,
+      stepMidKm,
+    ).terrainType
+    const averageAbility = average(
+      riderIds.map((riderId) => {
+        const rider = ridersById.get(riderId)!
+        const terrainSkill =
+          terrainType === 'steep_climb' || terrainType === 'climb'
+            ? rider.climbing
+            : terrainType === 'descent' ||
+                terrainType === 'technical_descent'
+              ? rider.raceIQ * 0.55 + rider.resistance * 0.45
+              : terrainType === 'cobbled' ||
+                  terrainType === 'cobble' ||
+                  terrainType === 'gravel'
+                ? rider.resistance * 0.6 + rider.flat * 0.4
+                : rider.flat
+        return (
+          terrainSkill * 0.44 +
+          rider.endurance * 0.23 +
+          rider.resistance * 0.14 +
+          rider.raceIQ * 0.12 +
+          rider.teamwork * 0.07
+        )
+      }),
+    )
+    const weather = calculatePhase9WeatherModifiers(input.weather)
+    const windSpeedMultiplier = applyRoadWindExposureToMultiplier(
+      weather.speedMultiplier,
+      input.stage,
+      stepMidKm,
+    )
+    const windBreakawayMultiplier = applyRoadWindExposureToMultiplier(
+      weather.breakawaySurvivalMultiplier,
+      input.stage,
+      stepMidKm,
+    )
+    return clamp(
+      calculateRoadReferencePaceKmh(input.stage, stepMidKm) *
+        (0.955 + averageAbility * 0.00068) *
+        cooperationMultiplier *
+        windSpeedMultiplier *
+        windBreakawayMultiplier +
+        phase11fPaceVariationKmh(
+          input.engine.deterministicSeed,
+          `phase3-${lineage.lineageId}`,
+          stepMidKm,
+          0.75,
+        ),
+      23,
+      53,
+    )
+  }
+
+  const phase3PelotonPaceForFrontKmh = (stepMidKm: number): number => {
+    const weather = calculatePhase9WeatherModifiers(input.weather)
+    const windSpeedMultiplier = applyRoadWindExposureToMultiplier(
+      weather.speedMultiplier,
+      input.stage,
+      stepMidKm,
+    )
+    return clamp(
+      calculateRoadReferencePaceKmh(input.stage, stepMidKm) *
+        (0.995 +
+          physicalChasingTeamIds.length * 0.004 +
+          phase3AvailableChaseAssets * 0.0008) *
+        windSpeedMultiplier +
+        phase11fPaceVariationKmh(
+          input.engine.deterministicSeed,
+          'phase3-front-lineage-peloton',
+          stepMidKm,
+          0.75,
+        ),
+      23,
+      55,
+    )
+  }
+
+  let phase3FrontSimulationKm = phaseBoundary.startKm
+  const advancePhase3FrontLineages = (targetKm: number): void => {
+    const target = clamp(targetKm, phase3FrontSimulationKm, phaseBoundary.endKm)
+    while (phase3FrontSimulationKm < target - 0.000001) {
+      const stepEndKm = Math.min(target, phase3FrontSimulationKm + 1.5)
+      const stepDistanceKm = Math.max(
+        0,
+        stepEndKm - phase3FrontSimulationKm,
+      )
+      const stepMidKm = (phase3FrontSimulationKm + stepEndKm) / 2
+      const pelotonPaceKmh = phase3PelotonPaceForFrontKmh(stepMidKm)
+
+      phase3ActiveLineages().forEach((lineage) => {
+        const frontPaceKmh = phase3FrontPaceKmh(lineage, stepMidKm)
+        const calculatedGapToPeloton = Math.max(
+          0,
+          lineage.currentGapToPelotonSeconds +
+            (stepDistanceKm / Math.max(5, pelotonPaceKmh)) * 3600 -
+            (stepDistanceKm / Math.max(5, frontPaceKmh)) * 3600,
+        )
+        lineage.currentGapToPelotonSeconds = limitRoadChaseGapClosure(
+          lineage.currentGapToPelotonSeconds,
+          calculatedGapToPeloton,
+          phase3FrontSimulationKm,
+          stepEndKm,
+          input.stage.distanceKm,
+          input.stage.terrainType,
+        )
+      })
+
+      /*
+       * Resolve P catches and B1 merges before any F-to-F contact. Membership
+       * is changed only after the exact sample for the physical transition is
+       * recorded, preserving checkpoint ordering.
+       */
+      phase3ActiveLineages().forEach((lineage) => {
+        const leaderGapSeconds = phase3LeaderGapAtKm(stepEndKm)
+        if (
+          lineage.currentGapToPelotonSeconds <=
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+        ) {
+          addPhase3LineageSample(
+            lineage,
+            stepEndKm,
+            0,
+            leaderGapSeconds,
+          )
+          lineage.catchKm = deterministicRound(stepEndKm, 6)
+          lineage.caughtByPeloton = true
+          lineage.active = false
+          lineage.currentGapToPelotonSeconds = 0
+          return
+        }
+        if (
+          leaderGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
+          leaderGapSeconds - lineage.currentGapToPelotonSeconds <=
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+        ) {
+          addPhase3LineageSample(
+            lineage,
+            stepEndKm,
+            leaderGapSeconds,
+            Math.max(
+              0,
+              leaderGapSeconds - lineage.currentGapToPelotonSeconds,
+            ),
+          )
+          lineage.mergeKm = deterministicRound(stepEndKm, 6)
+          lineage.mergeTargetDisplayCode =
+            phase3LeadingDisplayCodeAtStart ?? 'B1'
+          lineage.active = false
+          ;[...lineage.riderIds].forEach((riderId) => {
+            phase3MergedIntoB1RiderIds.add(riderId)
+            dynamicB1RiderIds.add(riderId)
+          })
+          lineage.currentGapToPelotonSeconds = leaderGapSeconds
+          return
+        }
+        addPhase3LineageSample(
+          lineage,
+          stepEndKm,
+          lineage.currentGapToPelotonSeconds,
+        )
+      })
+
+      const activeForFrontMerge = phase3ActiveLineages()
+      if (activeForFrontMerge.length >= 2) {
+        const primary =
+          activeForFrontMerge.find(
+            (lineage) => lineage.displayCode === 'F1',
+          ) ?? activeForFrontMerge[0]
+        const secondary = activeForFrontMerge.find(
+          (lineage) => lineage !== primary,
+        )
+        if (
+          secondary &&
+          Math.abs(
+            primary.currentGapToPelotonSeconds -
+              secondary.currentGapToPelotonSeconds,
+          ) <= PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+        ) {
+          const mergeGapToPeloton = deterministicRound(
+            Math.max(
+              primary.currentGapToPelotonSeconds,
+              secondary.currentGapToPelotonSeconds,
+            ),
+            6,
+          )
+          addPhase3LineageSample(
+            secondary,
+            stepEndKm,
+            mergeGapToPeloton,
+            phase3LineageGapToLeader(primary, stepEndKm),
+          )
+          secondary.mergeKm = deterministicRound(stepEndKm, 6)
+          secondary.mergeTargetDisplayCode = primary.displayCode
+          secondary.active = false
+          ;[...secondary.riderIds].forEach((riderId) => {
+            primary.riderIds.add(riderId)
+          })
+          primary.currentGapToPelotonSeconds = mergeGapToPeloton
+          addPhase3LineageSample(
+            primary,
+            stepEndKm,
+            mergeGapToPeloton,
+          )
+        }
+      }
+
+      phase3FrontSimulationKm = stepEndKm
+    }
+  }
+
+  const phase3AttemptsInRoadOrder = attackAttempts
+    .slice()
     .sort(
       (left, right) =>
         left.attemptKm - right.attemptKm ||
         left.riderId.localeCompare(right.riderId),
     )
-  const phase3SecondaryRiderIdsAtStart = Array.from(
-    new Set([
-      ...phase3SecondaryStartRiderIds,
-      ...phase3SecondaryNewAttackAttempts.map((attempt) => attempt.riderId),
-    ]),
-  ).sort()
-  const phase3SecondaryLaunchKm =
-    phase3SecondaryStartRiderIds.length > 0
-      ? phaseBoundary.startKm
-      : phase3SecondaryNewAttackAttempts[0]?.attemptKm ?? null
-  const phase3SecondaryLastAttemptKm =
-    phase3SecondaryNewAttackAttempts.length > 0
-      ? Math.max(
-          ...phase3SecondaryNewAttackAttempts.map(
-            (attempt) => attempt.attemptKm,
-          ),
-        )
-      : phase3SecondaryLaunchKm
-  let phase3SecondaryMergeKm: number | null = null
-  let phase3SecondaryCatchKm: number | null = null
-  let phase3SecondaryGapToPelotonSeconds =
-    phase3SecondaryStartRiderIds.length > 0
-      ? phase2.secondaryFrontGapToPelotonSeconds
-      : phase3SecondaryLaunchKm !== null
-        ? deterministicRound(
-            clamp(
-              8 +
-                average(
-                  phase3SecondaryNewAttackAttempts.map(
-                    (attempt) => attempt.attackExecutionSkillScore,
-                  ),
-                ) *
-                  0.12 +
-                calculateDeterministicUnitRoll(
-                  `${input.engine.deterministicSeed}|phase11g-v2|phase3-secondary-front-gap`,
-                ) *
-                  8,
-              PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-              30,
-            ),
-            6,
-          )
-        : 0
-  let phase3SecondaryGapToLeaderSeconds = 0
-  const phase3SecondaryGapTrajectory: UniversalRoadSecondaryFrontGapSample[] = []
+  const updatedPhase3AttemptByRiderId = new Map<
+    string,
+    UniversalRoadDecisiveAttackAttempt
+  >()
 
-  if (
-    phase3SecondaryLaunchKm !== null &&
-    phase3SecondaryRiderIdsAtStart.length > 0
-  ) {
-    const leaderGapAtLaunch =
-      physicalEscapeRiderIdsAtLaunch.length > 0
-        ? getRoadGapFromTrajectory(
-            physicalGapTrajectory,
-            phase3SecondaryLaunchKm,
-            phase3StartGapSeconds,
-          )
-        : 0
-    if (leaderGapAtLaunch > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS) {
-      phase3SecondaryGapToPelotonSeconds = deterministicRound(
-        Math.min(
-          phase3SecondaryGapToPelotonSeconds,
-          Math.max(
-            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-            leaderGapAtLaunch -
-              PHASE5_GROUP_MERGE_TOLERANCE_SECONDS -
-              1,
-          ),
-        ),
-        6,
-      )
-      phase3SecondaryGapToLeaderSeconds = deterministicRound(
-        Math.max(
-          0,
-          leaderGapAtLaunch - phase3SecondaryGapToPelotonSeconds,
-        ),
-        6,
-      )
+  phase3AttemptsInRoadOrder.forEach((rawAttempt) => {
+    advancePhase3FrontLineages(rawAttempt.attemptKm)
+
+    const activeSourceLineage = phase3ActiveLineages().find((lineage) =>
+      lineage.riderIds.has(rawAttempt.riderId),
+    )
+    const leaderGapAtAttack = phase3LeaderGapAtKm(rawAttempt.attemptKm)
+    const riderInLiveLeadingGroup =
+      !activeSourceLineage &&
+      phase3LeadingDisplayCodeAtStart !== null &&
+      leaderGapAtAttack > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
+      dynamicB1RiderIds.has(rawAttempt.riderId)
+    const sourcePhysicalGroupCode: UniversalRoadPhysicalGroupDisplayCode =
+      activeSourceLineage?.displayCode ??
+      (riderInLiveLeadingGroup
+        ? phase3LeadingDisplayCodeAtStart ?? 'B1'
+        : 'P')
+    const legacySourceGroupCode: UniversalRoadDevelopmentGroupCode =
+      sourcePhysicalGroupCode === 'B1'
+        ? 'breakaway'
+        : sourcePhysicalGroupCode === 'P'
+          ? 'main_peloton'
+          : 'front_group'
+
+    let updatedAttempt: UniversalRoadDecisiveAttackAttempt = {
+      ...rawAttempt,
+      sourceGroupCode: legacySourceGroupCode,
+      sourcePhysicalGroupCode,
+      physicalMoveOutcome: rawAttempt.attackSucceeded
+        ? 'covered_source_not_supported'
+        : 'raw_failure',
+      frontLineageId: null,
+      frontDisplayCode: null,
     }
-    phase3SecondaryGapTrajectory.push({
-      kmFromStart: deterministicRound(phase3SecondaryLaunchKm, 6),
-      gapToLeaderSeconds: phase3SecondaryGapToLeaderSeconds,
-      gapToPelotonSeconds: phase3SecondaryGapToPelotonSeconds,
-    })
 
-    let secondaryKm = phase3SecondaryLaunchKm
-    let secondaryActive =
-      phase3SecondaryGapToPelotonSeconds >
-      PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
-    while (
-      secondaryActive &&
-      secondaryKm < phaseBoundary.endKm - 0.000001
+    if (!rawAttempt.attackSucceeded) {
+      updatedPhase3AttemptByRiderId.set(rawAttempt.riderId, updatedAttempt)
+      return
+    }
+
+    if (
+      sourcePhysicalGroupCode === 'B1' ||
+      sourcePhysicalGroupCode === 'F2' ||
+      (sourcePhysicalGroupCode === 'F1' &&
+        activeSourceLineage === undefined &&
+        phase3LeadingDisplayCodeAtStart === 'F1')
     ) {
-      const stepEndKm = Math.min(phaseBoundary.endKm, secondaryKm + 1.5)
-      const stepDistanceKm = Math.max(0, stepEndKm - secondaryKm)
-      const stepMidKm = (secondaryKm + stepEndKm) / 2
-      const stepReferencePaceKmh = calculateRoadReferencePaceKmh(
-        input.stage,
-        stepMidKm,
-      )
-      const activePhase3SecondaryRiderIds = phase3SecondaryRiderIdsAtStart
-        .filter((riderId) => {
-          if (phase3SecondaryStartRiderIds.includes(riderId)) return true
-          const matchingAttempt = attackAttempts.find(
-            (attempt) => attempt.riderId === riderId && attempt.attackSucceeded,
-          )
-          return (matchingAttempt?.attemptKm ?? Number.POSITIVE_INFINITY) <=
-            stepMidKm + 0.000001
-        })
-        .sort()
-      const liveEnergyByRiderId = new Map(
-        activePhase3SecondaryRiderIds.map((riderId) => {
-          const rider = ridersById.get(riderId)!
-          const readiness = readinessByRiderId.get(riderId)!
-          const startEnergy =
-            phase2EnergyByRiderId.get(riderId)?.energyAfterPhase ?? 0
-          const matchingAttempt = attackAttempts.find(
-            (attempt) => attempt.riderId === riderId && attempt.attackSucceeded,
-          )
-          const launchKm = matchingAttempt?.attemptKm ?? phaseBoundary.startKm
-          const spent = calculateRoadEnergyCostForRange(
-            input,
-            rider,
-            readiness,
-            1.42,
-            Math.max(phaseBoundary.startKm, launchKm),
-            stepMidKm,
-          )
-          return [riderId, Math.max(0, startEnergy - spent)] as const
-        }),
-      )
-      const cooperationMultiplier = calculateRoadEscapeCooperationMultiplier(
-        activePhase3SecondaryRiderIds,
-        ridersById,
-        roadCommandResolution,
-        3,
-        liveEnergyByRiderId,
-        stepMidKm,
-        phase3Points,
-      )
-      const averageSecondaryAbility = average(
-        activePhase3SecondaryRiderIds.map((riderId) => {
-          const rider = ridersById.get(riderId)!
-          const terrainType = getRoadOpeningSegmentAtKm(
-            input.stage,
-            stepMidKm,
-          ).terrainType
-          const terrainSkill =
-            terrainType === 'steep_climb' || terrainType === 'climb'
-              ? rider.climbing
-              : terrainType === 'descent' ||
-                  terrainType === 'technical_descent'
-                ? rider.raceIQ * 0.55 + rider.resistance * 0.45
-                : terrainType === 'cobbled' ||
-                    terrainType === 'cobble' ||
-                    terrainType === 'gravel'
-                  ? rider.resistance * 0.6 + rider.flat * 0.4
-                  : rider.flat
-          return (
-            terrainSkill * 0.44 +
-            rider.endurance * 0.23 +
-            rider.resistance * 0.14 +
-            rider.raceIQ * 0.12 +
-            rider.teamwork * 0.07
-          )
-        }),
-      )
-      const phase11gWeather = calculatePhase9WeatherModifiers(input.weather)
-      const windSpeedMultiplier = applyRoadWindExposureToMultiplier(
-        phase11gWeather.speedMultiplier,
-        input.stage,
-        stepMidKm,
-      )
-      const windBreakawayMultiplier = applyRoadWindExposureToMultiplier(
-        phase11gWeather.breakawaySurvivalMultiplier,
-        input.stage,
-        stepMidKm,
-      )
-      const secondaryPaceKmh = clamp(
-        stepReferencePaceKmh *
-          (0.955 + averageSecondaryAbility * 0.00068) *
-          cooperationMultiplier *
-          windSpeedMultiplier *
-          windBreakawayMultiplier +
-          phase11fPaceVariationKmh(
-            input.engine.deterministicSeed,
-            'phase3-secondary-front',
-            stepEndKm,
-            0.75,
-          ),
-        23,
-        53,
-      )
-      const pelotonPaceKmh = clamp(
-        stepReferencePaceKmh *
-          (0.995 +
-            physicalChasingTeamIds.length * 0.004 +
-            phase3AvailableChaseAssets * 0.0008) *
-          windSpeedMultiplier +
-          phase11fPaceVariationKmh(
-            input.engine.deterministicSeed,
-            'phase3-secondary-peloton',
-            stepEndKm,
-            0.75,
-          ),
-        23,
-        55,
-      )
-      const calculatedGapToPeloton = Math.max(
-        0,
-        phase3SecondaryGapToPelotonSeconds +
-          (stepDistanceKm / Math.max(5, pelotonPaceKmh)) * 3600 -
-          (stepDistanceKm / Math.max(5, secondaryPaceKmh)) * 3600,
-      )
-      phase3SecondaryGapToPelotonSeconds = limitRoadChaseGapClosure(
-        phase3SecondaryGapToPelotonSeconds,
-        calculatedGapToPeloton,
-        secondaryKm,
-        stepEndKm,
-        input.stage.distanceKm,
-        input.stage.terrainType,
-      )
-      if (
-        phase3SecondaryLastAttemptKm !== null &&
-        stepEndKm < phase3SecondaryLastAttemptKm - 0.000001
-      ) {
-        phase3SecondaryGapToPelotonSeconds = Math.max(
-          phase3SecondaryGapToPelotonSeconds,
-          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-        )
+      updatedAttempt = {
+        ...updatedAttempt,
+        attackSucceeded: false,
+        positionScoreBonus: 0,
+        physicalMoveOutcome:
+          sourcePhysicalGroupCode === 'F2'
+            ? 'covered_front_slots_full'
+            : 'covered_source_not_supported',
       }
-      const leaderGapAtStep =
-        phase3PhysicalCatchKm !== null &&
-        stepEndKm >= phase3PhysicalCatchKm - 0.000001
-          ? 0
-          : physicalEscapeRiderIdsAtLaunch.length > 0
-            ? getRoadGapFromTrajectory(
-                physicalGapTrajectory,
-                stepEndKm,
-                physicalEndGapSeconds,
-              )
-            : 0
-      if (
-        (phase3SecondaryLastAttemptKm === null ||
-          stepEndKm >= phase3SecondaryLastAttemptKm - 0.000001) &&
-        leaderGapAtStep > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
-        phase3SecondaryGapToPelotonSeconds >=
-          leaderGapAtStep - PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
-      ) {
-        phase3SecondaryMergeKm = deterministicRound(stepEndKm, 6)
-        phase3SecondaryGapToLeaderSeconds = 0
-        phase3SecondaryGapToPelotonSeconds = deterministicRound(
-          leaderGapAtStep,
-          6,
-        )
-        secondaryActive = false
-      } else if (
-        (phase3SecondaryLastAttemptKm === null ||
-          stepEndKm >= phase3SecondaryLastAttemptKm - 0.000001) &&
-        phase3SecondaryGapToPelotonSeconds <=
-          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
-      ) {
-        phase3SecondaryCatchKm = deterministicRound(stepEndKm, 6)
-        phase3SecondaryGapToLeaderSeconds = deterministicRound(
-          Math.max(0, leaderGapAtStep),
-          6,
-        )
-        phase3SecondaryGapToPelotonSeconds = 0
-        secondaryActive = false
-      } else {
-        phase3SecondaryGapToLeaderSeconds = deterministicRound(
-          leaderGapAtStep > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
-            ? Math.max(
-                0,
-                leaderGapAtStep - phase3SecondaryGapToPelotonSeconds,
-              )
-            : 0,
-          6,
-        )
-      }
-      secondaryKm = stepEndKm
-      phase3SecondaryGapTrajectory.push({
-        kmFromStart: deterministicRound(stepEndKm, 6),
-        gapToLeaderSeconds: phase3SecondaryGapToLeaderSeconds,
-        gapToPelotonSeconds: deterministicRound(
-          phase3SecondaryGapToPelotonSeconds,
-          6,
-        ),
-      })
+      attackPositionBonusByRiderId.set(rawAttempt.riderId, 0)
+      updatedPhase3AttemptByRiderId.set(rawAttempt.riderId, updatedAttempt)
+      return
     }
-  }
+
+    const activeBeforeLaunch = phase3ActiveLineages()
+    const leadingF1SlotOccupied =
+      phase3LeadingDisplayCodeAtStart === 'F1' &&
+      leaderGapAtAttack > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
+    if (activeBeforeLaunch.length + (leadingF1SlotOccupied ? 1 : 0) >= 2) {
+      updatedAttempt = {
+        ...updatedAttempt,
+        attackSucceeded: false,
+        positionScoreBonus: 0,
+        physicalMoveOutcome: 'covered_front_slots_full',
+      }
+      attackPositionBonusByRiderId.set(rawAttempt.riderId, 0)
+      updatedPhase3AttemptByRiderId.set(rawAttempt.riderId, updatedAttempt)
+      return
+    }
+
+    const occupiedCodes = new Set<'F1' | 'F2'>(
+      activeBeforeLaunch.map((lineage) => lineage.displayCode),
+    )
+    if (leadingF1SlotOccupied) occupiedCodes.add('F1')
+    const displayCode: 'F1' | 'F2' = !occupiedCodes.has('F1')
+      ? 'F1'
+      : 'F2'
+    const sourceGapToPelotonSeconds =
+      activeSourceLineage?.currentGapToPelotonSeconds ?? 0
+    const nearestAheadGapToPeloton = [
+      ...(leaderGapAtAttack >
+      sourceGapToPelotonSeconds + PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
+        ? [leaderGapAtAttack]
+        : []),
+      ...activeBeforeLaunch
+        .filter((lineage) => lineage !== activeSourceLineage)
+        .map((lineage) => lineage.currentGapToPelotonSeconds)
+        .filter(
+          (gap) =>
+            gap >
+            sourceGapToPelotonSeconds +
+              PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+        ),
+    ].sort((left, right) => left - right)[0]
+
+    const launchSeparationSeconds = deterministicRound(
+      clamp(
+        6 +
+          rawAttempt.attackExecutionSkillScore * 0.05 +
+          calculateDeterministicUnitRoll(
+            `${input.engine.deterministicSeed}|${input.stage.stageId}|v5-front-launch|${rawAttempt.riderId}|${rawAttempt.attemptKm}`,
+          ) *
+            6,
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+        18,
+      ),
+      6,
+    )
+    const proposedGapToPelotonSeconds = deterministicRound(
+      sourceGapToPelotonSeconds + launchSeparationSeconds,
+      6,
+    )
+    const stableBehind =
+      proposedGapToPelotonSeconds -
+        sourceGapToPelotonSeconds >
+      PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+    const stableAhead =
+      nearestAheadGapToPeloton === undefined ||
+      nearestAheadGapToPeloton - proposedGapToPelotonSeconds >
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+
+    if (!stableBehind || !stableAhead) {
+      updatedAttempt = {
+        ...updatedAttempt,
+        attackSucceeded: false,
+        positionScoreBonus: 0,
+        physicalMoveOutcome: 'covered_no_stable_corridor',
+      }
+      attackPositionBonusByRiderId.set(rawAttempt.riderId, 0)
+      updatedPhase3AttemptByRiderId.set(rawAttempt.riderId, updatedAttempt)
+      return
+    }
+
+    const launchGapToLeaderSeconds = deterministicRound(
+      Math.max(0, leaderGapAtAttack - proposedGapToPelotonSeconds),
+      6,
+    )
+    const lineage: MutablePhase3FrontLineage = {
+      lineageId: createPhase3LineageId(displayCode),
+      displayCode,
+      sourceDisplayCode: sourcePhysicalGroupCode,
+      carriedFromPreviousPhase: false,
+      riderIdsAtLaunch: [rawAttempt.riderId],
+      riderIds: new Set([rawAttempt.riderId]),
+      launchKm: deterministicRound(rawAttempt.attemptKm, 6),
+      launchGapToLeaderSeconds,
+      launchGapToPelotonSeconds: proposedGapToPelotonSeconds,
+      currentGapToPelotonSeconds: proposedGapToPelotonSeconds,
+      active: true,
+      mergeKm: null,
+      mergeTargetDisplayCode: null,
+      catchKm: null,
+      caughtByPeloton: false,
+      gapTrajectory: [],
+    }
+    addPhase3LineageSample(
+      lineage,
+      rawAttempt.attemptKm,
+      proposedGapToPelotonSeconds,
+      launchGapToLeaderSeconds,
+    )
+    phase3LineageHistory.push(lineage)
+
+    if (activeSourceLineage) {
+      activeSourceLineage.riderIds.delete(rawAttempt.riderId)
+      if (activeSourceLineage.riderIds.size === 0) {
+        activeSourceLineage.active = false
+        activeSourceLineage.mergeKm = deterministicRound(
+          rawAttempt.attemptKm,
+          6,
+        )
+        activeSourceLineage.mergeTargetDisplayCode = displayCode
+      }
+    }
+
+    updatedAttempt = {
+      ...updatedAttempt,
+      attackSucceeded: true,
+      physicalMoveOutcome: 'persistent_front',
+      frontLineageId: lineage.lineageId,
+      frontDisplayCode: lineage.displayCode,
+    }
+    updatedPhase3AttemptByRiderId.set(rawAttempt.riderId, updatedAttempt)
+  })
+
+  advancePhase3FrontLineages(phaseBoundary.endKm)
+
+  attackAttempts = attackAttempts.map(
+    (attempt) =>
+      updatedPhase3AttemptByRiderId.get(attempt.riderId) ?? {
+        ...attempt,
+        sourcePhysicalGroupCode:
+          attempt.sourceGroupCode === 'breakaway'
+            ? ('B1' as const)
+            : attempt.sourceGroupCode === 'front_group'
+              ? ('F1' as const)
+              : ('P' as const),
+        physicalMoveOutcome: attempt.attackSucceeded
+          ? ('covered_source_not_supported' as const)
+          : ('raw_failure' as const),
+        frontLineageId: null,
+        frontDisplayCode: null,
+      },
+  )
+  successfulAttackRiderIds = attackAttempts
+    .filter((attempt) => attempt.attackSucceeded)
+    .map((attempt) => attempt.riderId)
+    .sort()
 
   if (
-    phase3SecondaryMergeKm !== null &&
-    physicalEscapeRiderIds.length > 0
+    phase3PhysicalCatchKm === null &&
+    physicalEscapeRiderIds.length > 0 &&
+    phase3MergedIntoB1RiderIds.size > 0
   ) {
     physicalEscapeRiderIds = Array.from(
       new Set([
         ...physicalEscapeRiderIds,
-        ...phase3SecondaryRiderIdsAtStart,
+        ...phase3MergedIntoB1RiderIds,
       ]),
     ).sort()
   }
 
-  let phase3SecondaryRiderIdsAtEnd =
-    phase3SecondaryLaunchKm !== null &&
-    phase3SecondaryMergeKm === null &&
-    phase3SecondaryCatchKm === null &&
-    phase3SecondaryGapToPelotonSeconds >
-      PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
-      ? [...phase3SecondaryRiderIdsAtStart]
-      : []
-
-  if (
-    physicalEscapeRiderIds.length === 0 &&
-    phase3SecondaryRiderIdsAtEnd.length > 0
-  ) {
-    physicalEscapeRiderIds = [...phase3SecondaryRiderIdsAtEnd]
-    physicalEndGapSeconds = deterministicRound(
-      phase3SecondaryGapToPelotonSeconds,
-      6,
-    )
-    phase3SecondaryRiderIdsAtEnd = []
-    phase3SecondaryGapToLeaderSeconds = 0
+  /*
+   * Defensive handoff: if the old B1 is gone but a physically independent F
+   * group survives, the front-most surviving lineage becomes the new leading
+   * escape at the phase boundary. This is an explicit merge/promotion sample,
+   * never an identity reset.
+   */
+  if (physicalEscapeRiderIds.length === 0) {
+    const surviving = phase3ActiveLineages()
+    const promoted = surviving[0]
+    if (promoted) {
+      const promotedGap = deterministicRound(
+        promoted.currentGapToPelotonSeconds,
+        6,
+      )
+      /*
+       * The old B1 is gone, so the front-most surviving F lineage is now the
+       * road leader. This is NOT a physical merge into a fabricated B1. Keep
+       * its lineage active and preserve its F display identity across the
+       * phase boundary; only the leader-relative gap becomes zero.
+       */
+      addPhase3LineageSample(
+        promoted,
+        phaseBoundary.endKm,
+        promotedGap,
+        0,
+      )
+      physicalEscapeRiderIds = [...promoted.riderIds].sort()
+      physicalEndGapSeconds = promotedGap
+      promoted.riderIds.forEach((riderId) =>
+        dynamicB1RiderIds.add(riderId),
+      )
+    }
   }
+
+  const phase3FrontLineages: UniversalRoadPhysicalFrontLineageResult[] =
+    phase3LineageHistory.map((lineage) => ({
+      lineageId: lineage.lineageId,
+      displayCode: lineage.displayCode,
+      sourceDisplayCode: lineage.sourceDisplayCode,
+      carriedFromPreviousPhase: lineage.carriedFromPreviousPhase,
+      riderIdsAtLaunch: [...lineage.riderIdsAtLaunch].sort(),
+      riderIdsBeforeResolution: [...lineage.riderIds].sort(),
+      riderIdsAtEnd:
+        lineage.active && lineage.riderIds.size > 0
+          ? [...lineage.riderIds].sort()
+          : [],
+      launchKm: deterministicRound(lineage.launchKm, 6),
+      launchGapToLeaderSeconds: deterministicRound(
+        lineage.launchGapToLeaderSeconds,
+        6,
+      ),
+      launchGapToPelotonSeconds: deterministicRound(
+        lineage.launchGapToPelotonSeconds,
+        6,
+      ),
+      mergeKm:
+        lineage.mergeKm === null
+          ? null
+          : deterministicRound(lineage.mergeKm, 6),
+      mergeTargetDisplayCode: lineage.mergeTargetDisplayCode,
+      catchKm:
+        lineage.catchKm === null
+          ? null
+          : deterministicRound(lineage.catchKm, 6),
+      caughtByPeloton: lineage.caughtByPeloton,
+      gapTrajectory: lineage.gapTrajectory.map((sample) => ({ ...sample })),
+      modelVersion: 'universal_road_front_lineage_v5' as const,
+    }))
+
+  const activePhase3FrontLineages = phase3FrontLineages.filter(
+    (lineage) => lineage.riderIdsAtEnd.length > 0,
+  )
+  const legacyPhase3Front =
+    activePhase3FrontLineages.find(
+      (lineage) => lineage.displayCode === 'F1',
+    ) ??
+    activePhase3FrontLineages[0] ??
+    phase3FrontLineages.find((lineage) => lineage.displayCode === 'F1') ??
+    null
+  const phase3SecondaryRiderIdsAtStart =
+    legacyPhase3Front?.riderIdsAtLaunch ?? []
+  const phase3SecondaryRiderIdsAtEnd =
+    legacyPhase3Front?.riderIdsAtEnd ?? []
+  const phase3SecondaryLaunchKm =
+    legacyPhase3Front?.launchKm ?? null
+  const phase3SecondaryMergeKm =
+    legacyPhase3Front?.mergeKm ?? null
+  const phase3SecondaryCatchKm =
+    legacyPhase3Front?.catchKm ?? null
+  const legacyLastSample = legacyPhase3Front?.gapTrajectory.at(-1)
+  const phase3SecondaryGapToLeaderSeconds =
+    legacyLastSample?.gapToLeaderSeconds ?? 0
+  const phase3SecondaryGapToPelotonSeconds =
+    legacyLastSample?.gapToPelotonSeconds ?? 0
+  const phase3SecondaryGapTrajectory =
+    legacyPhase3Front?.gapTrajectory ?? []
 
   const objectiveEnergyCostByRiderId = new Map<string, number>()
   const pointBattles: UniversalRoadPointBattleResult[] = phase3Points.map((point) => {
@@ -12825,6 +13326,7 @@ export function resolveRoadPhase3Decisive(
         : deterministicRound(phase3PhysicalCatchKm, 6),
       physicalChasingTeamIds,
       physicalGapTrajectory,
+      frontLineages: phase3FrontLineages,
       secondaryFrontRiderIdsAtStart: phase3SecondaryRiderIdsAtStart,
       secondaryFrontRiderIdsAtLaunch: phase3SecondaryRiderIdsAtStart,
       secondaryFrontRiderIdsAtEnd: phase3SecondaryRiderIdsAtEnd,
@@ -13059,6 +13561,10 @@ function calculateRoadPhase4ChaseStartFraction(
   return deterministicRound(clamp(startFraction, 0.65, 0.8), 6)
 }
 
+const PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_SECONDS_PER_KM = 120
+const PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_PROLONGED_MIN_STEPS = 3
+const PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_PROLONGED_MIN_KM = 6
+
 function limitRoadChaseGapClosure(
   currentGapSeconds: number,
   calculatedNextGapSeconds: number,
@@ -13079,20 +13585,16 @@ function limitRoadChaseGapClosure(
    * support. There is intentionally no preferred catch kilometre and no
    * proportional countdown to 90/91/92 percent of the stage.
    */
-  const progress = clamp(stepEndKm / Math.max(0.1, stageDistanceKm), 0, 1)
   /*
-   * This is only a numerical safety rail. The previous 4-6 s/km ceiling was
-   * hit on almost every late-chase tick and therefore became the race physics,
-   * producing near-linear gap countdowns. The real next gap is already derived
-   * from escape/peloton road speeds above, so keep the guard deliberately loose
-   * enough that ordinary physical deltas pass through untouched.
+   * Emergency numerical rail only. Normal closure is entirely the integrated
+   * road-time delta calculated upstream from escape pace and peloton pace.
+   * The old 8.25 s/km value was low enough to bind for entire late chases and
+   * therefore became the physics. 120 s/km sits above the maximum meaningful
+   * closure produced by the engine's bounded road speeds; touching it signals
+   * a numerical/pathological input rather than ordinary racing.
    */
-  // Sanity rail only: a normal chase can close because the peloton is faster,
-  // but a single 1-2 km tick must not erase tens of seconds. 8.25 s/km is
-  // deliberately above ordinary road-speed deltas while remaining inside the
-  // replay validator's physical bound. Terrain still changes the actual pace
-  // calculation upstream; this guard does not create a target gap or catch km.
-  const closurePerKmLimit = 8.25
+  const closurePerKmLimit =
+    PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_SECONDS_PER_KM
   const distanceClosureLimit = stepDistanceKm * closurePerKmLimit
   const maximumClosureSeconds = Math.min(
     currentGapSeconds,
@@ -13155,6 +13657,7 @@ type PersistentOpeningBreakawayPhysicalState = {
   readonly rawPhase3PelotonGapSeconds: number
   readonly phase3GapSeconds: number
   readonly lateFrontRiderIds: readonly string[]
+  readonly lateFrontLineages: readonly UniversalRoadPhysicalFrontLineageResult[]
   readonly droppedRiderIds: readonly string[]
   readonly physicalGapByRiderId: ReadonlyMap<string, number>
 }
@@ -13177,6 +13680,7 @@ function buildPersistentOpeningBreakawayPhysicalState(
       rawPhase3PelotonGapSeconds: 0,
       phase3GapSeconds: 0,
       lateFrontRiderIds: [],
+      lateFrontLineages: [],
       droppedRiderIds: [],
       physicalGapByRiderId: new Map(
         physicallyAvailableRiderIds.map((riderId) => [riderId, 0] as const),
@@ -13218,15 +13722,33 @@ function buildPersistentOpeningBreakawayPhysicalState(
   const phase3PhysicalSelectionActive =
     isSelectiveRoadTerrain(phase3.decisiveTerrain.terrainType) &&
     phase3.decisiveTerrain.selectionSeverity >= 0.2
-  const phase3SecondaryFrontEndSet = new Set(
-    phase3.secondaryFrontRiderIdsAtEnd,
+  const lateFrontLineages = phase3.frontLineages
+    .filter((lineage) => lineage.riderIdsAtEnd.length > 0)
+    .map((lineage) => ({
+      ...lineage,
+      riderIdsAtLaunch: [...lineage.riderIdsAtLaunch],
+      riderIdsBeforeResolution: [...lineage.riderIdsBeforeResolution],
+      riderIdsAtEnd: lineage.riderIdsAtEnd
+        .filter((riderId) => physicallyAvailableSet.has(riderId))
+        .slice()
+        .sort(),
+      gapTrajectory: lineage.gapTrajectory.map((sample) => ({ ...sample })),
+    }))
+    .filter((lineage) => lineage.riderIdsAtEnd.length > 0)
+    .sort(
+      (left, right) =>
+        left.displayCode.localeCompare(right.displayCode) ||
+        left.lineageId.localeCompare(right.lineageId),
+    )
+  const phase3FrontEndSet = new Set(
+    lateFrontLineages.flatMap((lineage) => lineage.riderIdsAtEnd),
   )
   const droppedRiderIds = phase3.riderStates
     .filter(
       (state) =>
         physicallyAvailableSet.has(state.riderId) &&
         !riderIdSet.has(state.riderId) &&
-        !phase3SecondaryFrontEndSet.has(state.riderId) &&
+        !phase3FrontEndSet.has(state.riderId) &&
         (state.energyAfterPhase <= 3 ||
           (phase3PhysicalSelectionActive &&
             state.finalGroupCode === 'dropped_group')),
@@ -13235,26 +13757,31 @@ function buildPersistentOpeningBreakawayPhysicalState(
     .sort()
   const droppedSet = new Set(droppedRiderIds)
 
-  const lateFrontRiderIds = phase3.secondaryFrontRiderIdsAtEnd
+  const lateFrontRiderIds = lateFrontLineages
+    .flatMap((lineage) => lineage.riderIdsAtEnd)
     .filter(
       (riderId) =>
         physicallyAvailableSet.has(riderId) &&
         !riderIdSet.has(riderId) &&
         !droppedSet.has(riderId),
     )
-    .slice()
+    .filter((riderId, index, rows) => rows.indexOf(riderId) === index)
     .sort()
+  const lateFrontGapBehindLeaderByRiderId = new Map<string, number>()
+  lateFrontLineages.forEach((lineage) => {
+    const terminal = lineage.gapTrajectory.at(-1)
+    const gapBehindLeader = deterministicRound(
+      Math.max(
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001,
+        terminal?.gapToLeaderSeconds ?? lineage.launchGapToLeaderSeconds,
+      ),
+      6,
+    )
+    lineage.riderIdsAtEnd.forEach((riderId) => {
+      lateFrontGapBehindLeaderByRiderId.set(riderId, gapBehindLeader)
+    })
+  })
   const lateFrontSet = new Set(lateFrontRiderIds)
-  const lateFrontGapBehindLeaderSeconds =
-    lateFrontRiderIds.length > 0
-      ? deterministicRound(
-          Math.max(
-            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001,
-            phase3.secondaryFrontGapToLeaderSeconds,
-          ),
-          6,
-        )
-      : 0
   const phase3StateByRiderId = new Map(
     phase3.riderStates.map((row) => [row.riderId, row] as const),
   )
@@ -13266,7 +13793,11 @@ function buildPersistentOpeningBreakawayPhysicalState(
       return
     }
     if (lateFrontSet.has(riderId)) {
-      physicalGapByRiderId.set(riderId, lateFrontGapBehindLeaderSeconds)
+      physicalGapByRiderId.set(
+        riderId,
+        lateFrontGapBehindLeaderByRiderId.get(riderId) ??
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001,
+      )
       return
     }
     if (droppedSet.has(riderId)) {
@@ -13292,6 +13823,7 @@ function buildPersistentOpeningBreakawayPhysicalState(
     rawPhase3PelotonGapSeconds,
     phase3GapSeconds,
     lateFrontRiderIds,
+    lateFrontLineages,
     droppedRiderIds,
     physicalGapByRiderId,
   }
@@ -14024,32 +14556,77 @@ export function resolveRoadPhase4Finish(
         left.riderId.localeCompare(right.riderId),
     )
 
-  const preExistingBridgeRiderIds = persistentOpeningState.lateFrontRiderIds
-    .filter(
-      (riderId) =>
-        physicallyAvailableSet.has(riderId) &&
-        !escapeSet.has(riderId) &&
-        !persistentOpeningState.droppedRiderIds.includes(riderId),
-    )
-    .sort()
+  const preExistingBridgeLineages =
+    persistentOpeningState.lateFrontLineages
+      .filter((lineage) => lineage.riderIdsAtEnd.length > 0)
+      .filter(
+        (lineage) =>
+          !lineage.riderIdsAtEnd.every((riderId) =>
+            escapeSetAtStart.has(riderId),
+          ),
+      )
+      .slice()
+      .sort(
+        (left, right) =>
+          left.displayCode.localeCompare(right.displayCode) ||
+          left.lineageId.localeCompare(right.lineageId),
+      )
+  const preExistingFrontRiderSet = new Set(
+    preExistingBridgeLineages.flatMap((lineage) => lineage.riderIdsAtEnd),
+  )
+  const primaryPreExistingBridgeLineage =
+    preExistingBridgeLineages.find(
+      (lineage) => lineage.displayCode === 'F1',
+    ) ??
+    preExistingBridgeLineages[0] ??
+    null
+  const secondaryPreExistingBridgeLineage =
+    preExistingBridgeLineages.find(
+      (lineage) =>
+        lineage.lineageId !== primaryPreExistingBridgeLineage?.lineageId,
+    ) ?? null
+
   /*
-   * Phase 11G physical-lineage rule:
-   * a rider who is already in a real F bridge/front group at the Phase 3
-   * boundary cannot disappear simply because Phase 4 previously imposed a
-   * synthetic maximum bridge size. Likewise, every rider whose explicit
-   * Phase 4 attack actually succeeds must remain represented. Group size is
-   * therefore an outcome of the successful moves, not a truncation quota.
+   * Phase-4 P attacks are a new physical wave. They never inherit the position
+   * of a carried Phase-3 F lineage. Riders already in F are not treated as P
+   * attackers here; their saved attack effort is still charged by the normal
+   * command/energy model, but a third front slot is not manufactured.
    */
+  const phase4PelotonBridgeCandidateRows = phase4AttackCandidateRows.filter(
+    (row) => !preExistingFrontRiderSet.has(row.riderId),
+  )
+  const newPhase4BridgeRiderIds = phase4PelotonBridgeCandidateRows
+    .map((row) => row.riderId)
+    .sort()
+
   const bridgeRiderIds =
-    persistentOpeningState.riderIds.length > 0
-      ? Array.from(
-          new Set([
-            ...preExistingBridgeRiderIds,
-            ...phase4AttackCandidateRows.map((row) => row.riderId),
-          ]),
-        ).sort()
-      : []
+    primaryPreExistingBridgeLineage !== null
+      ? [...primaryPreExistingBridgeLineage.riderIdsAtEnd].sort()
+      : [...newPhase4BridgeRiderIds]
   const bridgeRiderSet = new Set(bridgeRiderIds)
+  const leadingPhase3FrontLineage = phase3.frontLineages.find(
+    (lineage) =>
+      lineage.riderIdsAtEnd.length > 0 &&
+      lineage.riderIdsAtEnd.every((riderId) => escapeSetAtStart.has(riderId)),
+  )
+  const leadingPhase3FrontDisplayCode: 'F1' | 'F2' | null =
+    leadingPhase3FrontLineage?.displayCode ?? null
+  const phase4LeadingFrontDisplayCode: 'B1' | 'F1' | 'F2' =
+    leadingPhase3FrontDisplayCode ?? 'B1'
+  const primaryBridgeDisplayCode: 'F1' | 'F2' =
+    primaryPreExistingBridgeLineage?.displayCode ??
+    (leadingPhase3FrontDisplayCode === 'F1' ? 'F2' : 'F1')
+  const primaryBridgeLineageId =
+    primaryPreExistingBridgeLineage?.lineageId ??
+    `${input.stage.stageId}|phase4|${primaryBridgeDisplayCode}|1`
+  const primaryBridgeCarriedFromPhase3 =
+    primaryPreExistingBridgeLineage !== null
+  const reservedSecondaryPhase4AttackRiderIds =
+    primaryPreExistingBridgeLineage !== null &&
+    secondaryPreExistingBridgeLineage === null
+      ? [...newPhase4BridgeRiderIds]
+      : []
+
   const bridgeCandidateScore = average(
     bridgeRiderIds.map((riderId) => {
       const candidate = phase4AttackCandidateRows.find(
@@ -14161,13 +14738,15 @@ export function resolveRoadPhase4Finish(
     const phase11gWeather = calculatePhase9WeatherModifiers(input.weather)
 
     const shouldLaunchPreExistingBridge =
-      preExistingBridgeRiderIds.length > 0 &&
+      primaryPreExistingBridgeLineage !== null &&
+      bridgeRiderIds.length > 0 &&
       !bridgeLaunched &&
       currentKm <= chaseStartKm + 0.000001
     const shouldLaunchPhase4Bridge =
       bridgeRiderIds.length > 0 &&
       !bridgeLaunched &&
-      currentGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
+      currentGapSeconds >
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS * 2 + 1 &&
       currentGapSeconds <=
         (hasAnyOrganizedPhase4ChaseInterest
           ? bridgeLaunchMaximumGapSeconds
@@ -14178,7 +14757,7 @@ export function resolveRoadPhase4Finish(
       bridgeLaunched = true
       bridgeActive = true
       bridgeLaunchKm = deterministicRound(currentKm, 6)
-      const preExistingGapValues = preExistingBridgeRiderIds
+      const preExistingGapValues = bridgeRiderIds
         .map((riderId) =>
           persistentOpeningState.physicalGapByRiderId.get(riderId),
         )
@@ -14189,13 +14768,33 @@ export function resolveRoadPhase4Finish(
             PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
             Math.max(
               PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-              currentGapSeconds - 1,
+              currentGapSeconds -
+                PHASE5_GROUP_MERGE_TOLERANCE_SECONDS -
+                1,
             ),
           )
-        : Math.max(
-            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-            currentGapSeconds - 1,
-          )
+        : (() => {
+            const attackGapToPeloton = deterministicRound(
+              clamp(
+                8 +
+                  bridgeCandidateScore * 0.08 +
+                  calculateDeterministicUnitRoll(
+                    `${input.engine.deterministicSeed}|${input.stage.stageId}|v5-phase4-bridge-launch`,
+                  ) *
+                    8,
+                PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+                24,
+              ),
+              6,
+            )
+            return deterministicRound(
+              Math.max(
+                PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+                currentGapSeconds - attackGapToPeloton,
+              ),
+              6,
+            )
+          })()
       bridgeCurrentGapToLeaderSeconds = deterministicRound(
         initialGapToLeader,
         6,
@@ -14422,6 +15021,16 @@ export function resolveRoadPhase4Finish(
           input.stage.terrainType,
         )
       : 0
+    const emergencyRailClosureLimitSeconds = deterministicRound(
+      Math.min(
+        currentGapSeconds,
+        stepDistanceKm * PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_SECONDS_PER_KM,
+      ),
+      6,
+    )
+    const emergencyRailApplied =
+      escapeStillActive &&
+      calculatedNextGapSeconds < boundedNextGapSeconds - 0.000001
     let resolvedNextGapSeconds = boundedNextGapSeconds
 
     const bridgeStartGapToLeaderSeconds: number | null =
@@ -14788,6 +15397,8 @@ export function resolveRoadPhase4Finish(
       bridgeStartGapToPelotonSeconds,
       bridgeEndGapToPelotonSeconds,
       bridgeMergedIntoFront: bridgeMergedThisStep,
+      emergencyRailApplied,
+      emergencyRailClosureLimitSeconds,
     })
     currentGapSeconds = nextGapSeconds
     currentKm = stepEndKm
@@ -14796,6 +15407,419 @@ export function resolveRoadPhase4Finish(
       escapeStillActive = false
       bridgeActive = false
     }
+  }
+
+  /*
+   * V5 secondary F lineage. The primary V4 bridge loop above remains the
+   * authoritative B1/P chase integrator; a second carried/new bridge is
+   * evolved independently from the same recorded peloton road speeds. This
+   * preserves two physical front slots without allowing an F2 rider to inherit
+   * F1's road position.
+   */
+  const proposedSecondaryBridgeRiderIds =
+    secondaryPreExistingBridgeLineage !== null
+      ? [...secondaryPreExistingBridgeLineage.riderIdsAtEnd].sort()
+      : [...reservedSecondaryPhase4AttackRiderIds].sort()
+  const secondaryBridgeDisplayCode: 'F1' | 'F2' =
+    secondaryPreExistingBridgeLineage?.displayCode ??
+    (primaryBridgeDisplayCode === 'F1' ? 'F2' : 'F1')
+  const secondaryBridgeRiderIds =
+    leadingPhase3FrontDisplayCode === secondaryBridgeDisplayCode
+      ? []
+      : proposedSecondaryBridgeRiderIds
+  const secondaryBridgeLineageId =
+    secondaryPreExistingBridgeLineage?.lineageId ??
+    `${input.stage.stageId}|phase4|${secondaryBridgeDisplayCode}|1`
+  const secondaryBridgeCarriedFromPhase3 =
+    secondaryPreExistingBridgeLineage !== null
+  let secondaryBridgeLaunched = false
+  let secondaryBridgeActive = false
+  let secondaryBridgeLaunchKm: number | null = null
+  let secondaryBridgeMergeKm: number | null = null
+  let secondaryBridgeMergeTargetDisplayCode:
+    | 'B1'
+    | 'F1'
+    | 'F2'
+    | null = null
+  let secondaryBridgeCatchKm: number | null = null
+  let secondaryBridgeCaughtByPeloton = false
+  let secondaryBridgeCurrentGapToPelotonSeconds = 0
+  const secondaryBridgeGapSamples: UniversalRoadBridgeGapSample[] = []
+
+  const phase4PrimaryBridgeStateAtKm = (
+    kmFromStart: number,
+  ): {
+    readonly active: boolean
+    readonly gapToLeaderSeconds: number | null
+    readonly gapToPelotonSeconds: number | null
+  } => {
+    if (!bridgeLaunched || bridgeLaunchKm === null) {
+      return {
+        active: false,
+        gapToLeaderSeconds: null,
+        gapToPelotonSeconds: null,
+      }
+    }
+    if (
+      bridgeMergeKm !== null &&
+      kmFromStart >= bridgeMergeKm - 0.000001
+    ) {
+      return {
+        active: false,
+        gapToLeaderSeconds: 0,
+        gapToPelotonSeconds: null,
+      }
+    }
+    if (
+      bridgeCatchKm !== null &&
+      kmFromStart >= bridgeCatchKm - 0.000001
+    ) {
+      return {
+        active: false,
+        gapToLeaderSeconds: null,
+        gapToPelotonSeconds: 0,
+      }
+    }
+    if (kmFromStart < bridgeLaunchKm - 0.000001) {
+      return {
+        active: false,
+        gapToLeaderSeconds: null,
+        gapToPelotonSeconds: null,
+      }
+    }
+    if (bridgeGapSamples.length === 0) {
+      return {
+        active: false,
+        gapToLeaderSeconds: null,
+        gapToPelotonSeconds: null,
+      }
+    }
+    let previous = bridgeGapSamples[0]
+    let next = bridgeGapSamples[bridgeGapSamples.length - 1]
+    for (let sampleIndex = 0; sampleIndex < bridgeGapSamples.length; sampleIndex += 1) {
+      const sample = bridgeGapSamples[sampleIndex]
+      if (sample.km <= kmFromStart + 0.000001) previous = sample
+      if (sample.km >= kmFromStart - 0.000001) {
+        next = sample
+        break
+      }
+    }
+    const fraction =
+      Math.abs(next.km - previous.km) <= 0.000001
+        ? 0
+        : clamp((kmFromStart - previous.km) / (next.km - previous.km), 0, 1)
+    return {
+      active: true,
+      gapToLeaderSeconds: deterministicRound(
+        previous.gapToLeaderSeconds +
+          (next.gapToLeaderSeconds - previous.gapToLeaderSeconds) * fraction,
+        6,
+      ),
+      gapToPelotonSeconds: deterministicRound(
+        previous.gapToPelotonSeconds +
+          (next.gapToPelotonSeconds - previous.gapToPelotonSeconds) * fraction,
+        6,
+      ),
+    }
+  }
+
+  const phase4SecondaryPaceKmh = (
+    riderIds: readonly string[],
+    kmFromStart: number,
+  ): number => {
+    if (riderIds.length === 0) return 0
+    const liveEnergyByRiderId = new Map(
+      riderIds.map((riderId) => {
+        const rider = ridersById.get(riderId)!
+        const readiness = readinessByRiderId.get(riderId)!
+        const launchKm = secondaryBridgeLaunchKm ?? phaseBoundary.startKm
+        const spent = calculateRoadEnergyCostForRange(
+          input,
+          rider,
+          readiness,
+          1.75,
+          launchKm,
+          kmFromStart,
+        )
+        return [
+          riderId,
+          Math.max(
+            0,
+            (phase3EnergyByRiderId.get(riderId) ?? 0) - spent,
+          ),
+        ] as const
+      }),
+    )
+    const cooperationMultiplier = calculateRoadEscapeCooperationMultiplier(
+      riderIds,
+      ridersById,
+      roadCommandResolution,
+      4,
+      liveEnergyByRiderId,
+      kmFromStart,
+      input.points,
+    )
+    const weather = calculatePhase9WeatherModifiers(input.weather)
+    const windSpeedMultiplier = applyRoadWindExposureToMultiplier(
+      weather.speedMultiplier,
+      input.stage,
+      kmFromStart,
+    )
+    const windBreakawayMultiplier = applyRoadWindExposureToMultiplier(
+      weather.breakawaySurvivalMultiplier,
+      input.stage,
+      kmFromStart,
+    )
+    return clamp(
+      calculateFrontPaceKmh(riderIds, liveEnergyByRiderId, 0) *
+        (calculateRoadReferencePaceKmh(input.stage, kmFromStart) / 42) *
+        cooperationMultiplier *
+        windSpeedMultiplier *
+        windBreakawayMultiplier,
+      20,
+      55,
+    )
+  }
+
+  if (secondaryBridgeRiderIds.length > 0 && activeEscape) {
+    if (secondaryBridgeCarriedFromPhase3) {
+      secondaryBridgeLaunchKm = deterministicRound(
+        phaseBoundary.startKm,
+        6,
+      )
+      const gapBehindLeader = deterministicRound(
+        average(
+          secondaryBridgeRiderIds.map(
+            (riderId) =>
+              persistentOpeningState.physicalGapByRiderId.get(riderId) ??
+              startGapSeconds,
+          ),
+        ),
+        6,
+      )
+      secondaryBridgeCurrentGapToPelotonSeconds = deterministicRound(
+        Math.max(0, startGapSeconds - gapBehindLeader),
+        6,
+      )
+      secondaryBridgeLaunched = true
+      if (
+        secondaryBridgeCurrentGapToPelotonSeconds <=
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+      ) {
+        secondaryBridgeCatchKm = secondaryBridgeLaunchKm
+        secondaryBridgeCaughtByPeloton = true
+        secondaryBridgeGapSamples.push({
+          km: secondaryBridgeLaunchKm,
+          gapToLeaderSeconds: startGapSeconds,
+          gapToPelotonSeconds: 0,
+        })
+      } else if (
+        gapBehindLeader <=
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+      ) {
+        secondaryBridgeMergeKm = secondaryBridgeLaunchKm
+        secondaryBridgeMergeTargetDisplayCode = phase4LeadingFrontDisplayCode
+        secondaryBridgeGapSamples.push({
+          km: secondaryBridgeLaunchKm,
+          gapToLeaderSeconds: 0,
+          gapToPelotonSeconds: startGapSeconds,
+        })
+        secondaryBridgeRiderIds.forEach((riderId) => {
+          currentFrontRiderSet.add(riderId)
+          if (!currentFrontRiderIds.includes(riderId)) {
+            currentFrontRiderIds.push(riderId)
+          }
+        })
+        currentFrontRiderIds.sort()
+      } else {
+        secondaryBridgeActive = true
+        secondaryBridgeGapSamples.push({
+          km: secondaryBridgeLaunchKm,
+          gapToLeaderSeconds: gapBehindLeader,
+          gapToPelotonSeconds: secondaryBridgeCurrentGapToPelotonSeconds,
+        })
+      }
+    } else {
+      const launchStep = chaseSteps.find(
+        (step) =>
+          step.startGapSeconds >
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS * 2 + 1 &&
+          input.stage.distanceKm - step.kmStart >= 2,
+      )
+      if (launchStep) {
+        const launchGapToPelotonSeconds = deterministicRound(
+          clamp(
+            8 +
+              average(
+                secondaryBridgeRiderIds.map(
+                  (riderId) =>
+                    suitabilityByRiderId.get(riderId)?.suitabilityScore ?? 50,
+                ),
+              ) *
+                0.05 +
+              calculateDeterministicUnitRoll(
+                `${input.engine.deterministicSeed}|${input.stage.stageId}|v5-phase4-secondary-launch`,
+              ) *
+                8,
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+            24,
+          ),
+          6,
+        )
+        const launchGapToLeaderSeconds =
+          launchStep.startGapSeconds - launchGapToPelotonSeconds
+        if (
+          launchGapToLeaderSeconds >
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+        ) {
+          secondaryBridgeLaunchKm = deterministicRound(launchStep.kmStart, 6)
+          secondaryBridgeCurrentGapToPelotonSeconds =
+            launchGapToPelotonSeconds
+          secondaryBridgeLaunched = true
+          secondaryBridgeActive = true
+          secondaryBridgeGapSamples.push({
+            km: secondaryBridgeLaunchKm,
+            gapToLeaderSeconds: deterministicRound(
+              launchGapToLeaderSeconds,
+              6,
+            ),
+            gapToPelotonSeconds: launchGapToPelotonSeconds,
+          })
+        }
+      }
+    }
+  }
+
+  if (
+    secondaryBridgeActive &&
+    secondaryBridgeLaunchKm !== null
+  ) {
+    chaseSteps
+      .filter(
+        (step) =>
+          step.kmEnd > secondaryBridgeLaunchKm! + 0.000001,
+      )
+      .forEach((step) => {
+        if (!secondaryBridgeActive) return
+        const stepStartKm = Math.max(step.kmStart, secondaryBridgeLaunchKm!)
+        const stepDistanceKm = Math.max(0, step.kmEnd - stepStartKm)
+        if (stepDistanceKm <= 0) return
+        const stepMidKm = (stepStartKm + step.kmEnd) / 2
+        const bridgePaceKmh = phase4SecondaryPaceKmh(
+          secondaryBridgeRiderIds,
+          stepMidKm,
+        )
+        const pelotonStepSeconds =
+          (stepDistanceKm /
+            Math.max(5, step.effectivePelotonPaceKmh)) *
+          3600
+        const bridgeStepSeconds =
+          (stepDistanceKm / Math.max(5, bridgePaceKmh)) * 3600
+        const calculatedGapToPelotonSeconds = Math.max(
+          0,
+          secondaryBridgeCurrentGapToPelotonSeconds +
+            pelotonStepSeconds -
+            bridgeStepSeconds,
+        )
+        const nextGapToPelotonSeconds = limitRoadChaseGapClosure(
+          secondaryBridgeCurrentGapToPelotonSeconds,
+          calculatedGapToPelotonSeconds,
+          stepStartKm,
+          step.kmEnd,
+          input.stage.distanceKm,
+          input.stage.terrainType,
+        )
+        const leaderGapAtStepEnd = step.endGapSeconds
+
+        if (
+          nextGapToPelotonSeconds <=
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+        ) {
+          secondaryBridgeCurrentGapToPelotonSeconds = 0
+          secondaryBridgeCatchKm = deterministicRound(step.kmEnd, 6)
+          secondaryBridgeCaughtByPeloton = true
+          secondaryBridgeActive = false
+          secondaryBridgeGapSamples.push({
+            km: secondaryBridgeCatchKm,
+            gapToLeaderSeconds: leaderGapAtStepEnd,
+            gapToPelotonSeconds: 0,
+          })
+          return
+        }
+
+        const primaryState = phase4PrimaryBridgeStateAtKm(step.kmEnd)
+        if (
+          primaryState.active &&
+          primaryState.gapToPelotonSeconds !== null &&
+          Math.abs(
+            nextGapToPelotonSeconds -
+              primaryState.gapToPelotonSeconds,
+          ) <= PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+        ) {
+          secondaryBridgeCurrentGapToPelotonSeconds =
+            primaryState.gapToPelotonSeconds
+          secondaryBridgeMergeKm = deterministicRound(step.kmEnd, 6)
+          secondaryBridgeMergeTargetDisplayCode =
+            primaryBridgeDisplayCode
+          secondaryBridgeActive = false
+          secondaryBridgeGapSamples.push({
+            km: secondaryBridgeMergeKm,
+            gapToLeaderSeconds:
+              primaryState.gapToLeaderSeconds ?? Math.max(
+                0,
+                leaderGapAtStepEnd -
+                  secondaryBridgeCurrentGapToPelotonSeconds,
+              ),
+            gapToPelotonSeconds:
+              secondaryBridgeCurrentGapToPelotonSeconds,
+          })
+          return
+        }
+
+        if (
+          leaderGapAtStepEnd >
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
+          leaderGapAtStepEnd - nextGapToPelotonSeconds <=
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+        ) {
+          secondaryBridgeCurrentGapToPelotonSeconds =
+            leaderGapAtStepEnd
+          secondaryBridgeMergeKm = deterministicRound(step.kmEnd, 6)
+          secondaryBridgeMergeTargetDisplayCode = 'B1'
+          secondaryBridgeActive = false
+          secondaryBridgeGapSamples.push({
+            km: secondaryBridgeMergeKm,
+            gapToLeaderSeconds: 0,
+            gapToPelotonSeconds: leaderGapAtStepEnd,
+          })
+          secondaryBridgeRiderIds.forEach((riderId) => {
+            currentFrontRiderSet.add(riderId)
+            if (!currentFrontRiderIds.includes(riderId)) {
+              currentFrontRiderIds.push(riderId)
+            }
+          })
+          currentFrontRiderIds.sort()
+          return
+        }
+
+        secondaryBridgeCurrentGapToPelotonSeconds =
+          nextGapToPelotonSeconds
+        secondaryBridgeGapSamples.push({
+          km: deterministicRound(step.kmEnd, 6),
+          gapToLeaderSeconds: deterministicRound(
+            Math.max(
+              0,
+              leaderGapAtStepEnd -
+                secondaryBridgeCurrentGapToPelotonSeconds,
+            ),
+            6,
+          ),
+          gapToPelotonSeconds: deterministicRound(
+            secondaryBridgeCurrentGapToPelotonSeconds,
+            6,
+          ),
+        })
+      })
   }
 
   if (bridgeLaunched && !bridgeMergedIntoFront && bridgeLaunchKm !== null) {
@@ -14829,32 +15853,122 @@ export function resolveRoadPhase4Finish(
     })
   }
 
-  const bridgeGroups: readonly UniversalRoadPhase4BridgeResult[] =
+  if (
+    secondaryBridgeLaunched &&
+    secondaryBridgeLaunchKm !== null
+  ) {
+    const secondaryBridgeEndKm =
+      secondaryBridgeMergeKm ??
+      secondaryBridgeCatchKm ??
+      phaseBoundary.endKm
+    secondaryBridgeRiderIds.forEach((riderId) => {
+      const rider = ridersById.get(riderId)!
+      const readiness = readinessByRiderId.get(riderId)!
+      const energyCost = deterministicRound(
+        Math.max(
+          0,
+          calculateRoadEnergyCostForRange(
+            input,
+            rider,
+            readiness,
+            1.9,
+            secondaryBridgeLaunchKm!,
+            secondaryBridgeEndKm,
+          ) -
+            calculateRoadEnergyCostForRange(
+              input,
+              rider,
+              readiness,
+              1,
+              secondaryBridgeLaunchKm!,
+              secondaryBridgeEndKm,
+            ),
+        ),
+        6,
+      )
+      bridgeEnergyCostByRiderId.set(
+        riderId,
+        deterministicRound(
+          (bridgeEnergyCostByRiderId.get(riderId) ?? 0) + energyCost,
+          6,
+        ),
+      )
+    })
+  }
+
+  const primaryBridgeResult: UniversalRoadPhase4BridgeResult | null =
     bridgeLaunched &&
     bridgeLaunchKm !== null &&
     bridgeGapSamples.length > 0
-      ? [
-          {
-            displayCode: 'F1',
-            riderIds: [...bridgeRiderIds],
-            launchKm: bridgeLaunchKm,
-            launchGapToLeaderSeconds:
-              bridgeGapSamples[0].gapToLeaderSeconds,
-            launchGapToPelotonSeconds:
-              bridgeGapSamples[0].gapToPelotonSeconds,
-            mergeKm: bridgeMergeKm,
-            mergedIntoOpeningBreakaway: bridgeMergedIntoFront,
-            catchKm: bridgeCatchKm,
-            caughtByPeloton: bridgeCaughtByPeloton,
-            gapSamples: bridgeGapSamples,
-            energyCostByRider: bridgeRiderIds.map((riderId) => ({
-              riderId,
-              energyCost: bridgeEnergyCostByRiderId.get(riderId) ?? 0,
-            })),
-            modelVersion: 'universal_road_phase_4_bridge_v1',
-          },
-        ]
-      : []
+      ? {
+          lineageId: primaryBridgeLineageId,
+          displayCode: primaryBridgeDisplayCode,
+          sourceDisplayCode:
+            primaryPreExistingBridgeLineage?.sourceDisplayCode ?? 'P',
+          carriedFromPreviousPhase: primaryBridgeCarriedFromPhase3,
+          riderIds: [...bridgeRiderIds],
+          launchKm: bridgeLaunchKm,
+          launchGapToLeaderSeconds:
+            bridgeGapSamples[0].gapToLeaderSeconds,
+          launchGapToPelotonSeconds:
+            bridgeGapSamples[0].gapToPelotonSeconds,
+          mergeKm: bridgeMergeKm,
+          mergedIntoOpeningBreakaway: bridgeMergedIntoFront,
+          mergeTargetDisplayCode: bridgeMergedIntoFront
+            ? phase4LeadingFrontDisplayCode
+            : null,
+          catchKm: bridgeCatchKm,
+          caughtByPeloton: bridgeCaughtByPeloton,
+          gapSamples: bridgeGapSamples,
+          energyCostByRider: bridgeRiderIds.map((riderId) => ({
+            riderId,
+            energyCost: bridgeEnergyCostByRiderId.get(riderId) ?? 0,
+          })),
+          modelVersion: 'universal_road_phase_4_bridge_v1',
+        }
+      : null
+
+  const secondaryBridgeResult: UniversalRoadPhase4BridgeResult | null =
+    secondaryBridgeLaunched &&
+    secondaryBridgeLaunchKm !== null &&
+    secondaryBridgeGapSamples.length > 0
+      ? {
+          lineageId: secondaryBridgeLineageId,
+          displayCode: secondaryBridgeDisplayCode,
+          sourceDisplayCode:
+            secondaryPreExistingBridgeLineage?.sourceDisplayCode ?? 'P',
+          carriedFromPreviousPhase: secondaryBridgeCarriedFromPhase3,
+          riderIds: [...secondaryBridgeRiderIds],
+          launchKm: secondaryBridgeLaunchKm,
+          launchGapToLeaderSeconds:
+            secondaryBridgeGapSamples[0].gapToLeaderSeconds,
+          launchGapToPelotonSeconds:
+            secondaryBridgeGapSamples[0].gapToPelotonSeconds,
+          mergeKm: secondaryBridgeMergeKm,
+          mergedIntoOpeningBreakaway:
+            secondaryBridgeMergeTargetDisplayCode ===
+            phase4LeadingFrontDisplayCode,
+          mergeTargetDisplayCode:
+            secondaryBridgeMergeTargetDisplayCode,
+          catchKm: secondaryBridgeCatchKm,
+          caughtByPeloton: secondaryBridgeCaughtByPeloton,
+          gapSamples: secondaryBridgeGapSamples,
+          energyCostByRider: secondaryBridgeRiderIds.map((riderId) => ({
+            riderId,
+            energyCost: bridgeEnergyCostByRiderId.get(riderId) ?? 0,
+          })),
+          modelVersion: 'universal_road_phase_4_bridge_v1',
+        }
+      : null
+
+  const bridgeGroups: readonly UniversalRoadPhase4BridgeResult[] = [
+    ...(primaryBridgeResult ? [primaryBridgeResult] : []),
+    ...(secondaryBridgeResult ? [secondaryBridgeResult] : []),
+  ].sort(
+    (left, right) =>
+      left.displayCode.localeCompare(right.displayCode) ||
+      (left.lineageId ?? '').localeCompare(right.lineageId ?? ''),
+  )
 
   const endGapSeconds = deterministicRound(currentGapSeconds, 6)
   const breakawayCaught = activeEscape && !escapeStillActive
@@ -14863,6 +15977,50 @@ export function resolveRoadPhase4Finish(
     Math.max(0, startGapSeconds - endGapSeconds),
     6,
   )
+
+  const bridgeResultByDisplayCode = new Map(
+    bridgeGroups.map((bridge) => [bridge.displayCode, bridge] as const),
+  )
+  const resolveBridgeFinalGapBehindLeader = (
+    bridge: UniversalRoadPhase4BridgeResult,
+    seen = new Set<string>(),
+  ): number => {
+    const identity = bridge.lineageId ?? bridge.displayCode
+    if (seen.has(identity)) return endGapSeconds
+    seen.add(identity)
+    if (bridge.caughtByPeloton) return endGapSeconds
+    if (
+      bridge.mergeTargetDisplayCode === 'B1' ||
+      (leadingPhase3FrontDisplayCode !== null &&
+        bridge.mergeTargetDisplayCode === leadingPhase3FrontDisplayCode)
+    ) return 0
+    if (
+      bridge.mergeTargetDisplayCode === 'F1' ||
+      bridge.mergeTargetDisplayCode === 'F2'
+    ) {
+      const target = bridgeResultByDisplayCode.get(
+        bridge.mergeTargetDisplayCode,
+      )
+      if (target && target !== bridge) {
+        return resolveBridgeFinalGapBehindLeader(target, seen)
+      }
+    }
+    return deterministicRound(
+      Math.max(
+        0,
+        bridge.gapSamples.at(-1)?.gapToLeaderSeconds ??
+          endGapSeconds,
+      ),
+      6,
+    )
+  }
+  const phase4BridgeFinalGapByRiderId = new Map<string, number>()
+  bridgeGroups.forEach((bridge) => {
+    const finalGap = resolveBridgeFinalGapBehindLeader(bridge)
+    bridge.riderIds.forEach((riderId) => {
+      phase4BridgeFinalGapByRiderId.set(riderId, finalGap)
+    })
+  })
 
   const leadOutGivenByRiderId = new Map<string, number>()
   const leadOutReceivedByRiderId = new Map<string, number>()
@@ -15091,17 +16249,12 @@ export function resolveRoadPhase4Finish(
     }
 
     let finalGapSeconds: number
-    const finalBridgeGapSeconds =
-      bridgeGapSamples.at(-1)?.gapToLeaderSeconds ?? phase3Gap
+    const physicalBridgeFinalGap =
+      phase4BridgeFinalGapByRiderId.get(row.riderId)
     if (currentFrontRiderSet.has(row.riderId)) {
       finalGapSeconds = 0
-    } else if (
-      bridgeLaunched &&
-      !bridgeMergedIntoFront &&
-      bridgeRiderSet.has(row.riderId) &&
-      !breakawayCaught
-    ) {
-      finalGapSeconds = Math.max(0, finalBridgeGapSeconds)
+    } else if (physicalBridgeFinalGap !== undefined) {
+      finalGapSeconds = Math.max(0, physicalBridgeFinalGap)
     } else {
       finalGapSeconds = Math.max(0, phase3Gap - gapClosureSeconds)
     }
@@ -15293,7 +16446,9 @@ export function resolveRoadPhase4Finish(
       escapeRiderIdsAtStart: [...escapeRiderIdsAtStart].sort(),
       frontRiderIdsAfterBridges: [...currentFrontRiderIds].sort(),
       bridgeGroups,
-      frontStrengthRecalculatedAfterBridge: bridgeMergedIntoFront,
+      frontStrengthRecalculatedAfterBridge:
+        bridgeMergedIntoFront ||
+        secondaryBridgeMergeTargetDisplayCode === 'B1',
       breakawaySurvived,
       breakawayCaught,
       explicitChasingTeamIds,
@@ -17390,10 +18545,23 @@ function buildUniversalPhase5GroupingSummary(
     p1?.breakawayCatchKm === null &&
     p2?.breakawayCatchKm === null &&
     (p2?.breakawayRiderIdsAtEnd.length ?? 0) > 0
+  const phase3PromotedFrontAtEndForGrouping =
+    p3?.frontLineages.find((lineage) => {
+      const terminal = lineage.gapTrajectory.at(-1)
+      return (
+        lineage.riderIdsAtEnd.length > 0 &&
+        lineage.riderIdsAtEnd.every((riderId) =>
+          p3.physicalEscapeRiderIdsAtEnd.includes(riderId),
+        ) &&
+        (terminal?.gapToLeaderSeconds ?? Number.POSITIVE_INFINITY) <=
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+      )
+    }) ?? null
   const openingBreakawayCarriesIntoPhase4ForGrouping =
     openingBreakawayCarriesIntoPhase3ForGrouping &&
     p3?.physicalCatchKm === null &&
-    (p3?.physicalEscapeRiderIdsAtEnd.length ?? 0) > 0
+    (p3?.physicalEscapeRiderIdsAtEnd.length ?? 0) > 0 &&
+    phase3PromotedFrontAtEndForGrouping === null
   const pelotonStarterIds = starterIds.filter(
     (riderId) => !openingBreakawaySet.has(riderId),
   )
@@ -17935,8 +19103,39 @@ function buildUniversalPhase5GroupingSummary(
               left.index - right.index,
           )[0].index
       : 0)
+  const phase4LeadingFrontLineageForGrouping = p3?.frontLineages.find(
+    (lineage) =>
+      lineage.riderIdsAtEnd.length > 0 &&
+      lineage.riderIdsAtEnd.every((riderId) =>
+        p4.escapeRiderIdsAtStart.includes(riderId),
+      ),
+  ) ?? null
+  const phase4LeadingFrontDisplayCodeForGrouping: 'B1' | 'F1' | 'F2' =
+    openingBreakawayCarriesIntoPhase4ForGrouping
+      ? 'B1'
+      : phase4LeadingFrontLineageForGrouping?.displayCode ?? 'F1'
+  const phase4LeadingFrontLineageIdForGrouping =
+    openingBreakawayCarriesIntoPhase4ForGrouping
+      ? null
+      : phase4LeadingFrontLineageForGrouping?.lineageId ?? null
+  const activePhase4BridgeGroupsForGrouping = p4.bridgeGroups.filter(
+    (bridge) =>
+      !bridge.mergedIntoOpeningBreakaway &&
+      bridge.mergeTargetDisplayCode === null &&
+      !bridge.caughtByPeloton,
+  )
+  const reservedFinalFrontDisplayCodes = new Set<string>([
+    phase4LeadingFrontDisplayCodeForGrouping,
+    ...activePhase4BridgeGroupsForGrouping.map((bridge) => bridge.displayCode),
+  ])
   let finalFrontNumber = 0
   let finalChaseNumber = 0
+  const nextFallbackFrontDisplayCode = (): string => {
+    do {
+      finalFrontNumber += 1
+    } while (reservedFinalFrontDisplayCodes.has(`F${finalFrontNumber}`))
+    return `F${finalFrontNumber}`
+  }
   const labelledFinalGroups: readonly UniversalPhase5GroupSnapshot[] =
     physicallyCanonicalFinalGroups.map((group, index) => {
       if (index < finalMainBodyIndex) {
@@ -17956,11 +19155,26 @@ function buildUniversalPhase5GroupingSummary(
             colorKey: 'breakaway_red' as const,
           }
         }
-        finalFrontNumber += 1
+        const activeBridgeIdentity =
+          activePhase4BridgeGroupsForGrouping.find((bridge) =>
+            bridge.riderIds.some((riderId) => group.riderIds.includes(riderId)),
+          ) ?? null
+        const containsLeadingFront = group.riderIds.some((riderId) =>
+          phase4PersistentFrontRiderSet.has(riderId),
+        )
+        const preservedDisplayCode = activeBridgeIdentity?.displayCode ??
+          (containsLeadingFront
+            ? phase4LeadingFrontDisplayCodeForGrouping
+            : nextFallbackFrontDisplayCode())
+        const preservedLineageId = activeBridgeIdentity?.lineageId ??
+          (containsLeadingFront
+            ? phase4LeadingFrontLineageIdForGrouping
+            : null)
         return {
           ...group,
           groupCode: 'front_favourites' as const,
-          displayCode: `F${finalFrontNumber}`,
+          displayCode: preservedDisplayCode,
+          physicalLineageId: preservedLineageId,
           physicalPosition: 'ahead_of_peloton' as const,
           colorKey: 'front_yellow' as const,
           formationReason: 'late_front_attack' as const,
@@ -21260,6 +22474,10 @@ function buildUniversalTimeTrialReplayTimeline(
     readonly description: string
     readonly riderIds: readonly string[]
     readonly teamIds: readonly string[]
+    readonly physicalLineageId?: string | null
+    readonly physicalSourceDisplayCode?: UniversalRoadPhysicalGroupDisplayCode | null
+    readonly physicalLaunchKm?: number | null
+    readonly physicalMergeTargetDisplayCode?: 'B1' | 'F1' | 'F2' | null
     readonly finalResultsVisible?: boolean
   }
 
@@ -21507,6 +22725,7 @@ function buildUniversalTimeTrialReplayTimeline(
         groups: definition.groups.map((group) => ({
           groupCode: group.groupCode,
           displayCode: group.displayCode,
+          physicalLineageId: group.physicalLineageId ?? null,
           physicalPosition: group.physicalPosition,
           colorKey: group.colorKey,
           riderIds: [...group.riderIds],
@@ -21532,6 +22751,12 @@ function buildUniversalTimeTrialReplayTimeline(
             description: definition.description,
             riderIds: [...definition.riderIds],
             teamIds: [...definition.teamIds],
+            physicalLineageId: definition.physicalLineageId ?? null,
+            physicalSourceDisplayCode:
+              definition.physicalSourceDisplayCode ?? null,
+            physicalLaunchKm: definition.physicalLaunchKm ?? null,
+            physicalMergeTargetDisplayCode:
+              definition.physicalMergeTargetDisplayCode ?? null,
           },
         ],
         finalResultsVisible,
@@ -21942,70 +23167,76 @@ function buildUniversalReplayTimeline(
     }
   }
 
-  const phase3SecondaryFrontStateAtKm = (
+  const phase3FrontLineageStateAtKm = (
+    lineage: UniversalRoadPhysicalFrontLineageResult,
     kmFromStart: number,
   ): {
     readonly launched: boolean
     readonly active: boolean
     readonly merged: boolean
     readonly caught: boolean
+    readonly mergeTargetDisplayCode: 'B1' | 'F1' | 'F2' | null
     readonly gapToLeaderSeconds: number
     readonly gapToPelotonSeconds: number
   } => {
-    const launchKm = phase3.secondaryFrontLaunchKm
-    if (
-      launchKm === null ||
-      phase3.secondaryFrontRiderIdsAtStart.length === 0 ||
-      kmFromStart < launchKm - 0.000001
-    ) {
+    if (kmFromStart < lineage.launchKm - 0.000001) {
       return {
         launched: false,
         active: false,
         merged: false,
         caught: false,
+        mergeTargetDisplayCode: null,
         gapToLeaderSeconds: 0,
         gapToPelotonSeconds: 0,
       }
     }
     if (
-      phase3.secondaryFrontMergeKm !== null &&
-      kmFromStart >= phase3.secondaryFrontMergeKm - 0.000001
+      lineage.mergeKm !== null &&
+      kmFromStart >= lineage.mergeKm - 0.000001
     ) {
+      const terminal = lineage.gapTrajectory.at(-1)
       return {
         launched: true,
         active: false,
         merged: true,
         caught: false,
-        gapToLeaderSeconds: 0,
-        gapToPelotonSeconds: getRoadGapFromTrajectory(
-          phase3.physicalGapTrajectory,
-          kmFromStart,
-          phase3.physicalEndGapSeconds,
-        ),
+        mergeTargetDisplayCode: lineage.mergeTargetDisplayCode,
+        gapToLeaderSeconds: terminal?.gapToLeaderSeconds ?? 0,
+        gapToPelotonSeconds:
+          terminal?.gapToPelotonSeconds ??
+          getRoadGapFromTrajectory(
+            phase3.physicalGapTrajectory,
+            kmFromStart,
+            phase3.physicalEndGapSeconds,
+          ),
       }
     }
     if (
-      phase3.secondaryFrontCatchKm !== null &&
-      kmFromStart >= phase3.secondaryFrontCatchKm - 0.000001
+      lineage.caughtByPeloton &&
+      lineage.catchKm !== null &&
+      kmFromStart >= lineage.catchKm - 0.000001
     ) {
+      const terminal = lineage.gapTrajectory.at(-1)
       return {
         launched: true,
         active: false,
         merged: false,
         caught: true,
-        gapToLeaderSeconds: 0,
+        mergeTargetDisplayCode: null,
+        gapToLeaderSeconds: terminal?.gapToLeaderSeconds ?? 0,
         gapToPelotonSeconds: 0,
       }
     }
-    const samples = phase3.secondaryFrontGapTrajectory
+    const samples = lineage.gapTrajectory
     if (samples.length === 0) {
       return {
         launched: true,
-        active: true,
+        active: lineage.riderIdsAtEnd.length > 0,
         merged: false,
         caught: false,
-        gapToLeaderSeconds: phase3.secondaryFrontGapToLeaderSeconds,
-        gapToPelotonSeconds: phase3.secondaryFrontGapToPelotonSeconds,
+        mergeTargetDisplayCode: null,
+        gapToLeaderSeconds: lineage.launchGapToLeaderSeconds,
+        gapToPelotonSeconds: lineage.launchGapToPelotonSeconds,
       }
     }
     let previous = samples[0]
@@ -22032,6 +23263,7 @@ function buildUniversalReplayTimeline(
       active: true,
       merged: false,
       caught: false,
+      mergeTargetDisplayCode: null,
       gapToLeaderSeconds: deterministicRound(
         previous.gapToLeaderSeconds +
           (next.gapToLeaderSeconds - previous.gapToLeaderSeconds) *
@@ -22045,6 +23277,45 @@ function buildUniversalReplayTimeline(
         6,
       ),
     }
+  }
+
+  const phase3LineageRiderIdsAtKm = (
+    lineage: UniversalRoadPhysicalFrontLineageResult,
+    kmFromStart: number,
+    seen = new Set<string>(),
+  ): string[] => {
+    if (seen.has(lineage.lineageId)) return []
+    seen.add(lineage.lineageId)
+    const riderIds = new Set(lineage.riderIdsAtLaunch)
+
+    /*
+     * A rider who launches a later F split from this lineage leaves it at the
+     * attack kilometre. A lineage that physically merges into this one adds
+     * its riders only at the merge kilometre. This reconstructs membership
+     * from physical lineage events instead of generic F display codes.
+     */
+    phase3.frontLineages.forEach((candidate) => {
+      if (
+        candidate.sourceDisplayCode === lineage.displayCode &&
+        candidate.launchKm <= kmFromStart + 0.000001
+      ) {
+        candidate.riderIdsAtLaunch.forEach((riderId) => riderIds.delete(riderId))
+      }
+      if (
+        candidate.mergeTargetDisplayCode === lineage.displayCode &&
+        candidate.mergeKm !== null &&
+        // Display codes are reusable after a lineage resolves. A historical
+        // F2->F1 merge belongs only to the F1 instance that already existed at
+        // that kilometre; it must never be inherited by a later F1 serial.
+        candidate.mergeKm >= lineage.launchKm - 0.000001 &&
+        candidate.mergeKm <= kmFromStart + 0.000001
+      ) {
+        phase3LineageRiderIdsAtKm(candidate, candidate.mergeKm, new Set(seen))
+          .forEach((riderId) => riderIds.add(riderId))
+      }
+    })
+
+    return [...riderIds].sort()
   }
 
   const mergeFrontGroupsIntoPeloton = (
@@ -22307,10 +23578,22 @@ function buildUniversalReplayTimeline(
     phase1.breakawayCatchKm === null &&
     phase2.breakawayCatchKm === null &&
     phase2.breakawayRiderIdsAtEnd.length > 0
+  const phase3PromotedFrontAtEnd = phase3.frontLineages.find((lineage) => {
+    const terminal = lineage.gapTrajectory.at(-1)
+    return (
+      lineage.riderIdsAtEnd.length > 0 &&
+      lineage.riderIdsAtEnd.every((riderId) =>
+        phase3.physicalEscapeRiderIdsAtEnd.includes(riderId),
+      ) &&
+      (terminal?.gapToLeaderSeconds ?? Number.POSITIVE_INFINITY) <=
+        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001
+    )
+  }) ?? null
   const openingBreakawayCarriesIntoPhase4 =
     openingBreakawayCarriesIntoPhase3 &&
     phase3.physicalCatchKm === null &&
-    phase3.physicalEscapeRiderIdsAtEnd.length > 0
+    phase3.physicalEscapeRiderIdsAtEnd.length > 0 &&
+    phase3PromotedFrontAtEnd === null
   const formationKm = openingBreakawayActive
     ? Math.max(
         0,
@@ -22421,7 +23704,21 @@ function buildUniversalReplayTimeline(
       `C${phase4ContactLossChaseCodeBase + index + 1}`,
     ] as const),
   )
-  const openingFrontDisplayCode = ['B', '1'].join('')
+  const replayLeadingPhase3FrontLineage = phase3.frontLineages.find(
+    (lineage) =>
+      lineage.riderIdsAtEnd.length > 0 &&
+      lineage.riderIdsAtEnd.every((riderId) =>
+        phase4.escapeRiderIdsAtStart.includes(riderId),
+      ),
+  )
+  const openingFrontDisplayCode: 'B1' | 'F1' | 'F2' =
+    openingBreakawayCarriesIntoPhase4
+      ? 'B1'
+      : replayLeadingPhase3FrontLineage?.displayCode ?? 'F1'
+  const openingFrontPhysicalLineageId =
+    openingBreakawayCarriesIntoPhase4
+      ? null
+      : replayLeadingPhase3FrontLineage?.lineageId ?? null
 
   type ReplayGapAnchor = {
     readonly km: number
@@ -22722,55 +24019,35 @@ function buildUniversalReplayTimeline(
       km >= leadingLaunchKm - 0.000001 &&
       (phase3.physicalCatchKm === null ||
         km < phase3.physicalCatchKm - 0.000001)
-    const secondaryState = phase3SecondaryFrontStateAtKm(km)
-    const carriedSecondaryIds = new Set(
-      phase2.breakawayRiderIdsAtEnd.length > 0
-        ? phase2.secondaryFrontRiderIdsAtEnd
-        : [],
-    )
-    const newSecondaryIds = phase3.attackAttempts
+
+    const leadingCarriesOpeningB =
+      openingBreakawayCarriesIntoPhase3 &&
+      phase3.physicalEscapeRiderIdsAtStart.length > 0
+    const leadingDisplayCode: 'B1' | 'F1' =
+      leadingCarriesOpeningB ? 'B1' : 'F1'
+    const mergedIntoLeadingRiderIds = phase3.frontLineages
       .filter(
-        (attempt) =>
-          attempt.attackSucceeded &&
-          attempt.sourceGroupCode === 'main_peloton' &&
-          attempt.attemptKm <= km + 0.000001,
+        (lineage) =>
+          lineage.mergeTargetDisplayCode === leadingDisplayCode &&
+          lineage.mergeKm !== null &&
+          lineage.mergeKm <= km + 0.000001,
       )
-      .map((attempt) => attempt.riderId)
-    const activeSecondaryRiderIds = phase3.secondaryFrontRiderIdsAtStart
-      .filter(
-        (riderId) =>
-          carriedSecondaryIds.has(riderId) ||
-          newSecondaryIds.includes(riderId),
+      .flatMap((lineage) =>
+        phase3LineageRiderIdsAtKm(
+          lineage,
+          lineage.mergeKm ?? km,
+        ),
       )
-      .sort()
-    const mergedSecondaryIds = secondaryState.merged
-      ? phase3.secondaryFrontRiderIdsAtStart
-      : []
     const leadingRiderIds = leadingActive
       ? Array.from(
           new Set([
             ...phase3.physicalEscapeRiderIdsAtStart,
-            ...mergedSecondaryIds,
+            ...mergedIntoLeadingRiderIds,
           ]),
         ).sort()
       : []
     const leadingSet = new Set(leadingRiderIds)
-    const secondaryRiderIds =
-      secondaryState.active && activeSecondaryRiderIds.length > 0
-        ? activeSecondaryRiderIds.filter(
-            (riderId) => !leadingSet.has(riderId),
-          )
-        : []
-    const secondarySet = new Set(secondaryRiderIds)
-    const pelotonRiderIds = startGroup.riderIds.filter(
-      (riderId) =>
-        !leadingSet.has(riderId) && !secondarySet.has(riderId),
-    )
     const groups: UniversalPhase5GroupSnapshot[] = []
-    const leadingCarriesOpeningB =
-      openingBreakawayCarriesIntoPhase3 &&
-      phase3.physicalEscapeRiderIdsAtStart.length > 0
-    const leadingDisplayCode = leadingCarriesOpeningB ? 'B1' : 'F1'
 
     if (leadingRiderIds.length > 0) {
       groups.push({
@@ -22789,39 +24066,81 @@ function buildUniversalReplayTimeline(
           : 'late_front_attack',
       })
     }
-    if (secondaryRiderIds.length > 0) {
+
+    const activeLineageStates = phase3.frontLineages
+      .map((lineage) => ({
+        lineage,
+        state: phase3FrontLineageStateAtKm(lineage, km),
+      }))
+      .filter(({ state }) => state.active)
+      .map(({ lineage, state }) => ({
+        lineage,
+        state,
+        riderIds: phase3LineageRiderIdsAtKm(lineage, km).filter(
+          (riderId) => !leadingSet.has(riderId),
+        ),
+      }))
+      .filter(({ riderIds }) => riderIds.length > 0)
+      .sort(
+        (left, right) =>
+          left.state.gapToLeaderSeconds -
+            right.state.gapToLeaderSeconds ||
+          left.lineage.displayCode.localeCompare(right.lineage.displayCode) ||
+          left.lineage.lineageId.localeCompare(right.lineage.lineageId),
+      )
+
+    const activeFrontRiderSet = new Set<string>()
+    activeLineageStates.forEach(({ lineage, state, riderIds }) => {
+      riderIds.forEach((riderId) => activeFrontRiderSet.add(riderId))
       groups.push({
         ...startGroup,
         phaseNumber: 3,
         groupOrder: groups.length + 1,
         groupCode: 'front_favourites',
-        displayCode:
-          leadingRiderIds.length > 0
-            ? leadingDisplayCode === 'B1'
-              ? 'F1'
-              : 'F2'
-            : 'F1',
+        displayCode: lineage.displayCode,
+        physicalLineageId: lineage.lineageId,
         physicalPosition: 'ahead_of_peloton',
         colorKey: 'front_yellow',
-        riderIds: secondaryRiderIds,
+        riderIds,
         gapSeconds: leadingRiderIds.length > 0
           ? deterministicRound(
               Math.max(
                 PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001,
-                secondaryState.gapToLeaderSeconds,
+                state.gapToLeaderSeconds,
               ),
               6,
             )
-          : 0,
+          : deterministicRound(
+              Math.max(
+                0,
+                Math.max(
+                  ...activeLineageStates.map(
+                    (candidate) => candidate.state.gapToPelotonSeconds,
+                  ),
+                  0,
+                ) - state.gapToPelotonSeconds,
+              ),
+              6,
+            ),
         officialTimeSeconds: null,
         formationReason: 'late_front_attack',
       })
-    }
+    })
+
+    const pelotonRiderIds = startGroup.riderIds.filter(
+      (riderId) =>
+        !leadingSet.has(riderId) &&
+        !activeFrontRiderSet.has(riderId),
+    )
     if (pelotonRiderIds.length > 0) {
       const pelotonGapSeconds = leadingRiderIds.length > 0
         ? gapAtKm(km)
-        : secondaryRiderIds.length > 0
-          ? secondaryState.gapToPelotonSeconds
+        : activeLineageStates.length > 0
+          ? Math.max(
+              ...activeLineageStates.map(
+                ({ state }) => state.gapToPelotonSeconds,
+              ),
+            )
           : 0
       groups.push({
         ...startGroup,
@@ -22837,76 +24156,100 @@ function buildUniversalReplayTimeline(
         formationReason: 'peloton_cohesion',
       })
     }
+
     return groups
       .filter((group) => group.riderIds.length > 0)
+      .sort(
+        (left, right) =>
+          left.gapSeconds - right.gapSeconds ||
+          left.groupOrder - right.groupOrder ||
+          left.displayCode.localeCompare(right.displayCode),
+      )
       .map((group, index) => ({ ...group, groupOrder: index + 1 }))
   }
 
-  const authoritativeBridgeGroup = phase4.bridgeGroups[0] ?? null
-  const bridgeReplayDisplayCode = openingBreakawayCarriesIntoPhase4 ? 'F1' : 'F2'
+  const authoritativeBridgeGroups = phase4.bridgeGroups
+    .slice()
+    .sort(
+      (left, right) =>
+        left.displayCode.localeCompare(right.displayCode) ||
+        (left.lineageId ?? '').localeCompare(right.lineageId ?? ''),
+    )
 
-  const bridgeStateAtKm = (
+  const phase4BridgeStateAtKm = (
+    bridgeGroup: UniversalRoadPhase4BridgeResult,
     kmFromStart: number,
   ): {
     readonly launched: boolean
     readonly active: boolean
     readonly merged: boolean
     readonly caught: boolean
+    readonly mergeTargetDisplayCode: 'B1' | 'F1' | 'F2' | null
     readonly gapToLeaderSeconds: number | null
     readonly gapToPelotonSeconds: number | null
   } => {
-    if (!authoritativeBridgeGroup) {
-      return {
-        launched: false,
-        active: false,
-        merged: false,
-        caught: false,
-        gapToLeaderSeconds: null,
-        gapToPelotonSeconds: null,
-      }
-    }
     const km = clamp(kmFromStart, 0, stageDistanceKm)
-    if (km < authoritativeBridgeGroup.launchKm - 0.000001) {
+    if (km < bridgeGroup.launchKm - 0.000001) {
       return {
         launched: false,
         active: false,
         merged: false,
         caught: false,
+        mergeTargetDisplayCode: null,
         gapToLeaderSeconds: null,
         gapToPelotonSeconds: null,
       }
     }
     if (
-      authoritativeBridgeGroup.mergedIntoOpeningBreakaway &&
-      authoritativeBridgeGroup.mergeKm !== null &&
-      km >= authoritativeBridgeGroup.mergeKm - 0.000001
+      bridgeGroup.mergeKm !== null &&
+      km >= bridgeGroup.mergeKm - 0.000001
     ) {
+      const terminal = bridgeGroup.gapSamples.at(-1)
       return {
         launched: true,
         active: false,
         merged: true,
         caught: false,
-        gapToLeaderSeconds: 0,
-        gapToPelotonSeconds: gapAtKm(km),
+        mergeTargetDisplayCode:
+          bridgeGroup.mergeTargetDisplayCode ??
+          (bridgeGroup.mergedIntoOpeningBreakaway ? 'B1' : null),
+        gapToLeaderSeconds:
+          terminal?.gapToLeaderSeconds ??
+          (bridgeGroup.mergedIntoOpeningBreakaway ? 0 : null),
+        gapToPelotonSeconds:
+          terminal?.gapToPelotonSeconds ?? gapAtKm(km),
       }
     }
-
     if (
-      authoritativeBridgeGroup.caughtByPeloton &&
-      authoritativeBridgeGroup.catchKm !== null &&
-      km >= authoritativeBridgeGroup.catchKm - 0.000001
+      bridgeGroup.caughtByPeloton &&
+      bridgeGroup.catchKm !== null &&
+      km >= bridgeGroup.catchKm - 0.000001
     ) {
+      const terminal = bridgeGroup.gapSamples.at(-1)
       return {
         launched: true,
         active: false,
         merged: false,
         caught: true,
-        gapToLeaderSeconds: gapAtKm(km),
+        mergeTargetDisplayCode: null,
+        gapToLeaderSeconds:
+          terminal?.gapToLeaderSeconds ?? gapAtKm(km),
         gapToPelotonSeconds: 0,
       }
     }
 
-    const samples = authoritativeBridgeGroup.gapSamples
+    const samples = bridgeGroup.gapSamples
+    if (samples.length === 0) {
+      return {
+        launched: true,
+        active: true,
+        merged: false,
+        caught: false,
+        mergeTargetDisplayCode: null,
+        gapToLeaderSeconds: bridgeGroup.launchGapToLeaderSeconds,
+        gapToPelotonSeconds: bridgeGroup.launchGapToPelotonSeconds,
+      }
+    }
     let previous = samples[0]
     let next = samples[samples.length - 1]
     for (let index = 0; index < samples.length; index += 1) {
@@ -22921,27 +24264,51 @@ function buildUniversalReplayTimeline(
       Math.abs(next.km - previous.km) <= 0.000001
         ? 0
         : clamp((km - previous.km) / (next.km - previous.km), 0, 1)
-    const easedFraction = fraction * fraction * (3 - 2 * fraction)
-    const gapToLeaderSeconds = deterministicRound(
-      previous.gapToLeaderSeconds +
-        (next.gapToLeaderSeconds - previous.gapToLeaderSeconds) *
-          easedFraction,
-      6,
-    )
-    const gapToPelotonSeconds = deterministicRound(
-      previous.gapToPelotonSeconds +
-        (next.gapToPelotonSeconds - previous.gapToPelotonSeconds) *
-          easedFraction,
-      6,
-    )
     return {
       launched: true,
       active: true,
       merged: false,
       caught: false,
-      gapToLeaderSeconds,
-      gapToPelotonSeconds,
+      mergeTargetDisplayCode: null,
+      gapToLeaderSeconds: deterministicRound(
+        previous.gapToLeaderSeconds +
+          (next.gapToLeaderSeconds - previous.gapToLeaderSeconds) *
+            fraction,
+        6,
+      ),
+      gapToPelotonSeconds: deterministicRound(
+        previous.gapToPelotonSeconds +
+          (next.gapToPelotonSeconds - previous.gapToPelotonSeconds) *
+            fraction,
+        6,
+      ),
     }
+  }
+
+  const phase4BridgeRiderIdsAtKm = (
+    bridgeGroup: UniversalRoadPhase4BridgeResult,
+    kmFromStart: number,
+    seen = new Set<string>(),
+  ): string[] => {
+    const identity = bridgeGroup.lineageId ?? bridgeGroup.displayCode
+    if (seen.has(identity)) return []
+    seen.add(identity)
+    const riderIds = new Set(bridgeGroup.riderIds)
+
+    authoritativeBridgeGroups.forEach((candidate) => {
+      const candidateIdentity = candidate.lineageId ?? candidate.displayCode
+      if (candidateIdentity === identity) return
+      if (
+        candidate.mergeTargetDisplayCode === bridgeGroup.displayCode &&
+        candidate.mergeKm !== null &&
+        candidate.mergeKm <= kmFromStart + 0.000001
+      ) {
+        phase4BridgeRiderIdsAtKm(candidate, candidate.mergeKm, new Set(seen))
+          .forEach((riderId) => riderIds.add(riderId))
+      }
+    })
+
+    return [...riderIds].sort()
   }
 
   const findGapCrossingKm = (
@@ -22979,20 +24346,56 @@ function buildUniversalReplayTimeline(
       Math.max(0, pelotonGapSeconds),
       6,
     )
-    const bridgeState = bridgeStateAtKm(kmFromStart)
-    const bridgeRiderIds = authoritativeBridgeGroup?.riderIds ?? []
-    const bridgeRiderSet = new Set(bridgeRiderIds)
+    const bridgeStates = authoritativeBridgeGroups.map((bridgeGroup) => ({
+      bridgeGroup,
+      state: phase4BridgeStateAtKm(bridgeGroup, kmFromStart),
+    }))
+    const mergedIntoLeaderRiderIds = bridgeStates
+      .filter(
+        ({ state }) =>
+          state.merged &&
+          state.mergeTargetDisplayCode === openingFrontDisplayCode,
+      )
+      .flatMap(({ bridgeGroup }) =>
+        phase4BridgeRiderIdsAtKm(
+          bridgeGroup,
+          bridgeGroup.mergeKm ?? kmFromStart,
+        ),
+      )
     const frontRiderIds = Array.from(
       new Set([
         ...phase4.escapeRiderIdsAtStart,
-        ...(bridgeState.merged ? bridgeRiderIds : []),
+        ...mergedIntoLeaderRiderIds,
       ]),
     ).sort()
     const frontRiderSet = new Set(frontRiderIds)
-    const activeBridgeRiderIds = bridgeState.active
-      ? [...bridgeRiderIds].sort()
-      : []
-    const activeBridgeRiderSet = new Set(activeBridgeRiderIds)
+
+    const activeBridgeRows = bridgeStates
+      .filter(({ state }) => state.active)
+      .map(({ bridgeGroup, state }) => ({
+        bridgeGroup,
+        state,
+        riderIds: phase4BridgeRiderIdsAtKm(
+          bridgeGroup,
+          kmFromStart,
+        ).filter((riderId) => !frontRiderSet.has(riderId)),
+      }))
+      .filter(({ riderIds }) => riderIds.length > 0)
+      .sort(
+        (left, right) =>
+          (left.state.gapToLeaderSeconds ?? Number.MAX_SAFE_INTEGER) -
+            (right.state.gapToLeaderSeconds ?? Number.MAX_SAFE_INTEGER) ||
+          left.bridgeGroup.displayCode.localeCompare(
+            right.bridgeGroup.displayCode,
+          ) ||
+          (left.bridgeGroup.lineageId ?? '').localeCompare(
+            right.bridgeGroup.lineageId ?? '',
+          ),
+      )
+    const activeBridgeRiderSet = new Set(
+      activeBridgeRows.flatMap((row) => row.riderIds),
+    )
+
     const openingTemplate =
       phase3Groups.find((group) => group.displayCode.startsWith('B')) ??
       phase2Groups.find((group) => group.displayCode.startsWith('B')) ??
@@ -23024,7 +24427,8 @@ function buildUniversalReplayTimeline(
         groupCode: openingBreakawayCarriesIntoPhase4
           ? 'breakaway'
           : 'front_favourites',
-        displayCode: openingBreakawayCarriesIntoPhase4 ? openingFrontDisplayCode : 'F1',
+        displayCode: openingFrontDisplayCode,
+        physicalLineageId: openingFrontPhysicalLineageId,
         physicalPosition: 'ahead_of_peloton',
         colorKey: openingBreakawayCarriesIntoPhase4
           ? 'breakaway_red'
@@ -23033,40 +24437,48 @@ function buildUniversalReplayTimeline(
         gapSeconds: 0,
         officialTimeSeconds: null,
         formationReason: openingBreakawayCarriesIntoPhase4
-          ? bridgeState.merged
+          ? mergedIntoLeaderRiderIds.length > 0
             ? 'chase_reformation'
             : 'opening_escape'
           : 'late_front_attack',
       })
     }
 
-    if (
-      activeBridgeRiderIds.length > 0 &&
-      bridgeState.gapToLeaderSeconds !== null
-    ) {
+    activeBridgeRows.forEach(({ bridgeGroup, state, riderIds }) => {
+      if (state.gapToLeaderSeconds === null) return
+      const rawGapToLeader = deterministicRound(
+        Math.max(0, state.gapToLeaderSeconds),
+        6,
+      )
+      const groupGap =
+        frontRiderIds.length > 0
+          ? deterministicRound(
+              clamp(
+                rawGapToLeader,
+                PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001,
+                Math.max(
+                  PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001,
+                  targetPelotonGap - 0.000001,
+                ),
+              ),
+              6,
+            )
+          : rawGapToLeader
       groups.push({
         ...bridgeTemplate,
         phaseNumber: 4,
         groupOrder: groups.length + 1,
         groupCode: 'front_favourites',
-        displayCode: bridgeReplayDisplayCode,
+        displayCode: bridgeGroup.displayCode,
+        physicalLineageId: bridgeGroup.lineageId ?? null,
         physicalPosition: 'ahead_of_peloton',
         colorKey: 'front_yellow',
-        riderIds: activeBridgeRiderIds,
-        gapSeconds: deterministicRound(
-          Math.max(
-            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001,
-            Math.min(
-              targetPelotonGap - 0.000001,
-              bridgeState.gapToLeaderSeconds,
-            ),
-          ),
-          6,
-        ),
+        riderIds,
+        gapSeconds: groupGap,
         officialTimeSeconds: null,
         formationReason: 'late_front_attack',
       })
-    }
+    })
 
     const pelotonRiderIds = eligibleStarterIds.filter(
       (riderId) =>
@@ -23087,9 +24499,9 @@ function buildUniversalReplayTimeline(
         gapSeconds: targetPelotonGap,
         officialTimeSeconds: null,
         formationReason:
-          bridgeState.launched && !bridgeState.merged
+          activeBridgeRows.length > 0
             ? 'late_front_attack'
-            : bridgeState.merged
+            : mergedIntoLeaderRiderIds.length > 0
               ? 'chase_reformation'
               : pelotonTemplate.formationReason,
       })
@@ -23382,15 +24794,20 @@ function buildUniversalReplayTimeline(
         groups = caughtGroups
       }
     } else if (
-      phase4FrontActive &&
-      km >= phase4.phaseBoundary.startKm - 0.000001
-    ) {
-      groups = buildPhase4ChaseGroups(km, gapAtKm(km))
-    } else if (
       nonOpeningFrontFormationActive &&
       km >= nonOpeningFrontFormationKm - 0.000001
     ) {
+      // When Phase 3 has just caught the old leader, a new Phase-4 natural
+      // selection must not exist at the boundary before its explicit split
+      // kilometre. Publish the Phase-3 catch state first, then create the new
+      // F group at nonOpeningFrontFormationKm.
       groups = buildPhase4ChaseGroups(km, nonOpeningFrontGapAtKm(km))
+    } else if (
+      phase4FrontActive &&
+      !nonOpeningFrontFormationActive &&
+      km >= phase4.phaseBoundary.startKm - 0.000001
+    ) {
+      groups = buildPhase4ChaseGroups(km, gapAtKm(km))
     } else if (km > phase2.phaseBoundary.endKm + 0.000001) {
       groups = buildPhase3PhysicalGroupsAtKm(km)
     } else if (km > phase1.phaseBoundary.endKm + 0.000001) {
@@ -23548,6 +24965,113 @@ function buildUniversalReplayTimeline(
     }
   }
 
+  const applyReplayFrontMergeCommits = (
+    sourceGroups: readonly UniversalPhase5GroupSnapshot[],
+    commits: readonly {
+      readonly physicalLineageId: string | null
+      readonly riderIds: readonly string[]
+      readonly targetDisplayCode: 'B1' | 'F1' | 'F2'
+    }[],
+  ): readonly UniversalPhase5GroupSnapshot[] => {
+    let groups = sourceGroups.map((group) => ({
+      ...group,
+      riderIds: [...group.riderIds],
+    }))
+
+    commits.forEach((commit) => {
+      const riderIdSet = new Set(commit.riderIds)
+      const target = groups.find(
+        (group) => group.displayCode === commit.targetDisplayCode,
+      )
+      if (!target) return
+
+      groups = groups
+        .map((group) => {
+          if (group === target) {
+            return {
+              ...group,
+              riderIds: Array.from(
+                new Set([...group.riderIds, ...commit.riderIds]),
+              ).sort(),
+            }
+          }
+          // The live commit membership is authoritative. A rider absorbed
+          // into this lineage earlier at the same kilometre may still be
+          // present in another pre-commit snapshot, so remove committed
+          // riders from every non-target group before adding them to the
+          // target. This prevents duplicate physical membership while still
+          // preserving the source lineage metadata on the contact checkpoint.
+          return {
+            ...group,
+            riderIds: group.riderIds.filter(
+              (riderId) => !riderIdSet.has(riderId),
+            ),
+          }
+        })
+        .filter((group) => group.riderIds.length > 0)
+    })
+
+    return groups
+      .slice()
+      .sort(
+        (left, right) =>
+          left.gapSeconds - right.gapSeconds ||
+          left.groupOrder - right.groupOrder ||
+          left.displayCode.localeCompare(right.displayCode),
+      )
+      .map((group, index) => ({ ...group, groupOrder: index + 1 }))
+  }
+
+  const applyReplayFrontCatchCommits = (
+    sourceGroups: readonly UniversalPhase5GroupSnapshot[],
+    commits: readonly {
+      readonly physicalLineageId: string | null
+      readonly riderIds: readonly string[]
+    }[],
+  ): readonly UniversalPhase5GroupSnapshot[] => {
+    let groups = sourceGroups.map((group) => ({
+      ...group,
+      riderIds: [...group.riderIds],
+    }))
+
+    commits.forEach((commit) => {
+      const peloton = groups.find((group) => group.displayCode === 'P')
+      if (!peloton) return
+      const riderSet = new Set(commit.riderIds)
+      groups = groups
+        .map((group) => {
+          if (group === peloton) {
+            return {
+              ...group,
+              riderIds: Array.from(
+                new Set([...group.riderIds, ...commit.riderIds]),
+              ).sort(),
+            }
+          }
+          // Catch commits use the lineage's live membership at the catch
+          // kilometre. Remove those riders from every non-peloton group so
+          // an earlier same-km merge cannot leave a duplicate copy behind.
+          return {
+            ...group,
+            riderIds: group.riderIds.filter(
+              (riderId) => !riderSet.has(riderId),
+            ),
+          }
+        })
+        .filter((group) => group.riderIds.length > 0)
+    })
+
+    return groups
+      .slice()
+      .sort(
+        (left, right) =>
+          left.gapSeconds - right.gapSeconds ||
+          left.groupOrder - right.groupOrder ||
+          left.displayCode.localeCompare(right.displayCode),
+      )
+      .map((group, index) => ({ ...group, groupOrder: index + 1 }))
+  }
+
   type ReplayCheckpointDefinition = {
     readonly checkpointIdSuffix: string
     readonly checkpointKind: UniversalReplayCheckpointKind
@@ -23561,6 +25085,11 @@ function buildUniversalReplayTimeline(
     readonly description: string
     readonly riderIds: readonly string[]
     readonly teamIds: readonly string[]
+    readonly physicalLineageId?: string | null
+    readonly physicalSourceDisplayCode?: UniversalRoadPhysicalGroupDisplayCode | null
+    readonly physicalLaunchKm?: number | null
+    readonly physicalMergeTargetDisplayCode?: 'B1' | 'F1' | 'F2' | null
+    readonly authoritativeRaceSecond?: number | null
     readonly incidents?: readonly UniversalReplayIncident[]
     readonly finalResultsVisible?: boolean
   }
@@ -23594,6 +25123,24 @@ function buildUniversalReplayTimeline(
       teamIds: commentary.teamIds,
     }
   }
+
+  const authoritativeWinner = finishResolution.classification.find(
+    (row) => row.status === 'finished' && row.rank === 1,
+  )
+  const authoritativeWinnerTimeSeconds =
+    authoritativeWinner?.officialTimeSeconds ?? null
+  const authoritativeLastFinisherTimeSeconds =
+    finishResolution.classification
+      .filter(
+        (row) => row.status === 'finished' && row.officialTimeSeconds !== null,
+      )
+      .reduce<number | null>(
+        (maximum, row) =>
+          maximum === null
+            ? row.officialTimeSeconds
+            : Math.max(maximum, row.officialTimeSeconds ?? maximum),
+        null,
+      )
 
   const baseDefinitions: ReplayCheckpointDefinition[] = [
     {
@@ -23629,29 +25176,42 @@ function buildUniversalReplayTimeline(
       sortOrder: 900,
     }),
     {
-      checkpointIdSuffix: 'finish',
+      checkpointIdSuffix: 'final-results',
       checkpointKind: 'base',
       phase: 4,
       kmFromStart: stageDistanceKm,
       sortOrder: 1000,
       groups: finalGroups,
       energyByRiderId: phase4EnergyByRiderId,
-      eventType: 'finish',
-      title: 'Stage finished',
-      description: finishResolution.winnerRiderId
-        ? `${finishResolution.winnerRiderId} wins the stage.`
-        : 'The stage finishes without a classified winner.',
-      riderIds: finishResolution.winnerRiderId
-        ? [finishResolution.winnerRiderId]
-        : [],
-      teamIds: finishResolution.winnerTeamId
-        ? [finishResolution.winnerTeamId]
-        : [],
+      eventType: 'race_status',
+      title: 'Final classification confirmed',
+      description: 'All classified finish groups have now reached the finish and the final stage result is available.',
+      riderIds: [],
+      teamIds: [],
+      authoritativeRaceSecond: authoritativeLastFinisherTimeSeconds,
       finalResultsVisible: true,
     },
   ]
 
   const eventDefinitions: ReplayCheckpointDefinition[] = []
+
+  eventDefinitions.push({
+    checkpointIdSuffix: 'winner-finish',
+    checkpointKind: 'event',
+    phase: 4,
+    kmFromStart: stageDistanceKm,
+    sortOrder: 950,
+    groups: groupsAtKm(Math.max(0, stageDistanceKm - 0.01)),
+    energyByRiderId: phase4EnergyByRiderId,
+    eventType: 'finish',
+    title: 'Stage finished',
+    description: authoritativeWinner
+      ? `${authoritativeWinner.riderId} wins the stage.`
+      : 'The stage finishes without a classified winner.',
+    riderIds: authoritativeWinner ? [authoritativeWinner.riderId] : [],
+    teamIds: authoritativeWinner ? [authoritativeWinner.teamId] : [],
+    authoritativeRaceSecond: authoritativeWinnerTimeSeconds,
+  })
 
   const failedOpeningAttackAttempts = phase1.attackAttempts
     .filter(
@@ -23890,7 +25450,7 @@ function buildUniversalReplayTimeline(
       checkpointKind: 'event',
       phase: 3,
       kmFromStart: phase3CatchKm,
-      sortOrder: 470,
+      sortOrder: 280,
       groups: groupsAtKm(phase3CatchKm),
       energyByRiderId: energyAtKm(3, phase3CatchKm),
       eventType: 'catch',
@@ -23917,7 +25477,10 @@ function buildUniversalReplayTimeline(
       checkpointKind: 'event',
       phase: phaseForKm(controlKm) as RoadRacePhaseNumber,
       kmFromStart: controlKm,
-      sortOrder: 300,
+      // If the opening escape is caught exactly at controlKm, publish the
+      // physical catch first; the peloton-response commentary must not show the
+      // post-catch membership before the catch event exists in the timeline.
+      sortOrder: 350,
       groups: groupsAtKm(controlKm),
       energyByRiderId: energyAtKm(phaseForKm(controlKm), controlKm),
       eventType: 'peloton_control',
@@ -24005,7 +25568,7 @@ function buildUniversalReplayTimeline(
         checkpointKind: 'event',
         phase: 3,
         kmFromStart: attempt.attemptKm,
-        sortOrder: 480 + index,
+        sortOrder: 380 + index,
         groups: groupsAtKm(attempt.attemptKm),
         energyByRiderId: energyAtKm(
           3,
@@ -24034,7 +25597,7 @@ function buildUniversalReplayTimeline(
         checkpointKind: 'event',
         phase: 3,
         kmFromStart: attempt.attemptKm,
-        sortOrder: 500 + index,
+        sortOrder: 390 + index,
         groups: groupsAtKm(attempt.attemptKm),
         energyByRiderId: energyAtKm(
           3,
@@ -24047,88 +25610,154 @@ function buildUniversalReplayTimeline(
             ? 'An attack goes from the breakaway'
             : 'A decisive attack is launched',
         description:
-          attempt.sourceGroupCode === 'breakaway'
-            ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks from the leading group on ${attempt.effectiveTerrainType} terrain.`
-            : phase3.physicalEscapeRiderIdsAtStart.length > 0
-              ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and creates or joins a physical bridge group.`
-              : `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and opens a new front move.`,
+          attempt.sourcePhysicalGroupCode === 'F1' ||
+          attempt.sourcePhysicalGroupCode === 'F2'
+            ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks from ${attempt.sourcePhysicalGroupCode} on ${attempt.effectiveTerrainType} terrain and creates ${attempt.frontDisplayCode ?? 'a new bridge group'} at its own physical road position.`
+            : attempt.sourceGroupCode === 'breakaway'
+              ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks from the leading group on ${attempt.effectiveTerrainType} terrain.`
+              : phase3.physicalEscapeRiderIdsAtStart.length > 0
+                ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and creates ${attempt.frontDisplayCode ?? 'a physical bridge group'} without inheriting another front group's gap.`
+                : `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and opens a new front move.`,
         riderIds: [attempt.riderId],
         teamIds: [attempt.teamId],
       })
     })
 
-  if (
-    phase3.secondaryFrontLaunchKm !== null &&
-    phase3.secondaryFrontRiderIdsAtStart.length > 0 &&
-    phase2.secondaryFrontRiderIdsAtEnd.length === 0
-  ) {
-    eventDefinitions.push({
-      checkpointIdSuffix: 'phase-3-secondary-front-formed',
-      checkpointKind: 'event',
-      phase: 3,
-      kmFromStart: phase3.secondaryFrontLaunchKm,
-      sortOrder: 530,
-      groups: groupsAtKm(phase3.secondaryFrontLaunchKm),
-      energyByRiderId: energyAtKm(3, phase3.secondaryFrontLaunchKm),
-      eventType: 'group_split',
-      title: 'A bridge group forms',
-      description: `${phase3.secondaryFrontRiderIdsAtStart.length} rider${phase3.secondaryFrontRiderIdsAtStart.length === 1 ? '' : 's'} establish a physical secondary front instead of remaining in P after a successful attack.`,
-      riderIds: [...phase3.secondaryFrontRiderIdsAtStart],
-      teamIds: Array.from(
-        new Set(
-          phase3.secondaryFrontRiderIdsAtStart
-            .map((riderId) => riderById.get(riderId)?.teamId)
-            .filter((teamId): teamId is string => Boolean(teamId)),
-        ),
-      ).sort(),
-    })
-  }
+  phase3.frontLineages.forEach((lineage, lineageIndex) => {
+    const teamIds = Array.from(
+      new Set(
+        lineage.riderIdsBeforeResolution
+          .map((riderId) => riderById.get(riderId)?.teamId)
+          .filter((teamId): teamId is string => Boolean(teamId)),
+      ),
+    ).sort()
 
-  if (phase3.secondaryFrontMergeKm !== null) {
-    eventDefinitions.push({
-      checkpointIdSuffix: 'phase-3-secondary-front-merge',
-      checkpointKind: 'event',
-      phase: 3,
-      kmFromStart: phase3.secondaryFrontMergeKm,
-      sortOrder: 535,
-      groups: groupsAtKm(phase3.secondaryFrontMergeKm),
-      energyByRiderId: energyAtKm(3, phase3.secondaryFrontMergeKm),
-      eventType: 'bridge_merge',
-      title: 'The bridge reaches the leaders',
-      description: `The secondary front closes the physical gap at kilometre ${deterministicRound(phase3.secondaryFrontMergeKm, 1)}.`,
-      riderIds: [...phase3.secondaryFrontRiderIdsAtStart],
-      teamIds: Array.from(
+    const phase3PreTransitionGroupsAt = (km: number) =>
+      buildPhase3PhysicalGroupsAtKm(
+        Math.max(phase3.phaseBoundary.startKm, km - 0.00001),
+      )
+    const phase3CatchCommitsAt = (km: number, throughIndex: number) =>
+      phase3.frontLineages
+        .map((candidate, candidateIndex) => ({ candidate, candidateIndex }))
+        .filter(
+          ({ candidate, candidateIndex }) =>
+            candidateIndex <= throughIndex &&
+            candidate.caughtByPeloton &&
+            candidate.catchKm !== null &&
+            Math.abs(candidate.catchKm - km) <= 0.000001,
+        )
+        .map(({ candidate }) => ({
+          physicalLineageId: candidate.lineageId,
+          riderIds: phase3LineageRiderIdsAtKm(
+            candidate,
+            candidate.catchKm ?? km,
+          ),
+        }))
+    const phase3AllCatchCommitsAt = (km: number) =>
+      phase3CatchCommitsAt(km, phase3.frontLineages.length - 1)
+    const liveLineageRiderIdsAt = (km: number) =>
+      phase3LineageRiderIdsAtKm(lineage, km)
+    const liveLineageTeamIdsAt = (km: number) =>
+      Array.from(
         new Set(
-          phase3.secondaryFrontRiderIdsAtStart
+          liveLineageRiderIdsAt(km)
             .map((riderId) => riderById.get(riderId)?.teamId)
             .filter((teamId): teamId is string => Boolean(teamId)),
         ),
-      ).sort(),
-    })
-  }
+      ).sort()
 
-  if (phase3.secondaryFrontCatchKm !== null) {
-    eventDefinitions.push({
-      checkpointIdSuffix: 'phase-3-secondary-front-caught',
-      checkpointKind: 'event',
-      phase: 3,
-      kmFromStart: phase3.secondaryFrontCatchKm,
-      sortOrder: 536,
-      groups: groupsAtKm(phase3.secondaryFrontCatchKm),
-      energyByRiderId: energyAtKm(3, phase3.secondaryFrontCatchKm),
-      eventType: 'catch',
-      title: 'The bridge group is caught',
-      description: `The peloton neutralizes the secondary front at kilometre ${deterministicRound(phase3.secondaryFrontCatchKm, 1)}.`,
-      riderIds: [...phase3.secondaryFrontRiderIdsAtStart],
-      teamIds: Array.from(
-        new Set(
-          phase3.secondaryFrontRiderIdsAtStart
-            .map((riderId) => riderById.get(riderId)?.teamId)
-            .filter((teamId): teamId is string => Boolean(teamId)),
+    if (lineage.mergeKm !== null && lineage.mergeTargetDisplayCode !== null) {
+      const beforeMergeKm = Math.max(
+        lineage.launchKm,
+        lineage.mergeKm - 0.00001,
+      )
+      eventDefinitions.push({
+        checkpointIdSuffix: `phase-3-front-contact-${lineage.lineageId}`,
+        checkpointKind: 'event',
+        phase: 3,
+        kmFromStart: lineage.mergeKm,
+        sortOrder: 320 + lineageIndex,
+        groups: applyReplayFrontCatchCommits(
+          phase3PreTransitionGroupsAt(lineage.mergeKm),
+          phase3AllCatchCommitsAt(lineage.mergeKm),
         ),
-      ).sort(),
-    })
-  }
+        energyByRiderId: energyAtKm(3, lineage.mergeKm),
+        eventType: 'bridge_contact',
+        title: `${lineage.displayCode} reaches merge tolerance`,
+        description: `${lineage.displayCode} physically closes to ${lineage.mergeTargetDisplayCode} before membership changes.`,
+        riderIds: liveLineageRiderIdsAt(lineage.mergeKm),
+        teamIds: liveLineageTeamIdsAt(lineage.mergeKm),
+        physicalLineageId: lineage.lineageId,
+        physicalSourceDisplayCode: lineage.sourceDisplayCode,
+        physicalLaunchKm: lineage.launchKm,
+        physicalMergeTargetDisplayCode: lineage.mergeTargetDisplayCode,
+      })
+      eventDefinitions.push({
+        checkpointIdSuffix: `phase-3-front-merge-${lineage.lineageId}`,
+        checkpointKind: 'event',
+        phase: 3,
+        kmFromStart: lineage.mergeKm,
+        sortOrder: 340 + lineageIndex,
+        groups: applyReplayFrontMergeCommits(
+          applyReplayFrontCatchCommits(
+            phase3PreTransitionGroupsAt(lineage.mergeKm),
+            phase3AllCatchCommitsAt(lineage.mergeKm),
+          ),
+          phase3.frontLineages
+            .map((candidate, candidateIndex) => ({ candidate, candidateIndex }))
+            .filter(
+              ({ candidate, candidateIndex }) =>
+                candidateIndex <= lineageIndex &&
+                candidate.mergeKm !== null &&
+                Math.abs(candidate.mergeKm - lineage.mergeKm!) <= 0.000001 &&
+                candidate.mergeTargetDisplayCode !== null,
+            )
+            .map(({ candidate }) => ({
+              physicalLineageId: candidate.lineageId,
+              riderIds: phase3LineageRiderIdsAtKm(
+                candidate,
+                candidate.mergeKm ?? lineage.mergeKm!,
+              ),
+              targetDisplayCode: candidate.mergeTargetDisplayCode!,
+            })),
+        ),
+        energyByRiderId: energyAtKm(3, lineage.mergeKm),
+        eventType: 'bridge_merge',
+        title: `${lineage.displayCode} merges into ${lineage.mergeTargetDisplayCode}`,
+        description: `${lineage.displayCode} completes a physical catch at kilometre ${deterministicRound(lineage.mergeKm, 1)}; riders move only after the contact checkpoint.`,
+        riderIds: liveLineageRiderIdsAt(lineage.mergeKm),
+        teamIds: liveLineageTeamIdsAt(lineage.mergeKm),
+        physicalLineageId: lineage.lineageId,
+        physicalSourceDisplayCode: lineage.sourceDisplayCode,
+        physicalLaunchKm: lineage.launchKm,
+        physicalMergeTargetDisplayCode: lineage.mergeTargetDisplayCode,
+      })
+    }
+
+    if (lineage.caughtByPeloton && lineage.catchKm !== null) {
+      eventDefinitions.push({
+        checkpointIdSuffix: `phase-3-front-caught-${lineage.lineageId}`,
+        checkpointKind: 'event',
+        phase: 3,
+        kmFromStart: lineage.catchKm,
+        sortOrder: 300 + lineageIndex,
+        groups: applyReplayFrontCatchCommits(
+          phase3PreTransitionGroupsAt(lineage.catchKm),
+          phase3CatchCommitsAt(lineage.catchKm, lineageIndex),
+        ),
+        energyByRiderId: energyAtKm(3, lineage.catchKm),
+        eventType: 'catch',
+        title: `${lineage.displayCode} is caught`,
+        description: `The peloton physically reabsorbs ${lineage.displayCode} at kilometre ${deterministicRound(lineage.catchKm, 1)}.`,
+        riderIds: liveLineageRiderIdsAt(lineage.catchKm),
+        teamIds: liveLineageTeamIdsAt(lineage.catchKm),
+        physicalLineageId: lineage.lineageId,
+        physicalSourceDisplayCode: lineage.sourceDisplayCode,
+        physicalLaunchKm: lineage.launchKm,
+        physicalMergeTargetDisplayCode: null,
+      })
+    }
+  })
 
   const preDecisiveSplitKm = deterministicRound(
     Math.max(
@@ -24233,6 +25862,13 @@ function buildUniversalReplayTimeline(
         phase3BoundaryGroupByRiderId.get(riderId)?.startsWith('F'),
     )
     .sort()
+  const phase3BoundaryRearTransferRiderIds = eligibleStarterIds
+    .filter(
+      (riderId) =>
+        prePhase3BoundaryGroupByRiderId.get(riderId) === 'P' &&
+        phase3BoundaryGroupByRiderId.get(riderId)?.startsWith('C'),
+    )
+    .sort()
 
   const phase3BoundarySplitAlreadyCovered = eventDefinitions.some(
     (definition) =>
@@ -24249,7 +25885,7 @@ function buildUniversalReplayTimeline(
       checkpointKind: 'event',
       phase: 3,
       kmFromStart: phase3BoundaryKm,
-      sortOrder: 890,
+      sortOrder: 370,
       groups: groupsAtKm(phase3BoundaryKm),
       energyByRiderId: energyAtKm(3, phase3BoundaryKm),
       eventType: 'group_split',
@@ -24261,6 +25897,31 @@ function buildUniversalReplayTimeline(
       teamIds: Array.from(
         new Set(
           phase3BoundaryFrontTransferRiderIds
+            .map((riderId) => riderById.get(riderId)?.teamId)
+            .filter((teamId): teamId is string => Boolean(teamId)),
+        ),
+      ).sort(),
+    })
+  }
+
+  if (phase3BoundaryRearTransferRiderIds.length > 0) {
+    eventDefinitions.push({
+      checkpointIdSuffix: 'phase-3-boundary-rear-split',
+      checkpointKind: 'event',
+      phase: 3,
+      kmFromStart: phase3BoundaryKm,
+      sortOrder: 371,
+      groups: groupsAtKm(phase3BoundaryKm),
+      energyByRiderId: energyAtKm(3, phase3BoundaryKm),
+      eventType: 'group_split',
+      title: 'A rear group loses contact at the phase boundary',
+      description: `${phase3BoundaryRearTransferRiderIds.length} rider${
+        phase3BoundaryRearTransferRiderIds.length === 1 ? '' : 's'
+      } lose contact as the race enters the final phase.`,
+      riderIds: phase3BoundaryRearTransferRiderIds,
+      teamIds: Array.from(
+        new Set(
+          phase3BoundaryRearTransferRiderIds
             .map((riderId) => riderById.get(riderId)?.teamId)
             .filter((teamId): teamId is string => Boolean(teamId)),
         ),
@@ -24422,6 +26083,30 @@ function buildUniversalReplayTimeline(
     })
   }
 
+  const phase4PreTransitionGroupsAt = (km: number) =>
+    groupsAtKm(
+      Math.max(phase4.phaseBoundary.startKm, km - 0.00001),
+    )
+  const phase4CatchCommitsAt = (km: number, throughIndex: number) =>
+    authoritativeBridgeGroups
+      .map((candidate, candidateIndex) => ({ candidate, candidateIndex }))
+      .filter(
+        ({ candidate, candidateIndex }) =>
+          candidateIndex <= throughIndex &&
+          candidate.caughtByPeloton &&
+          candidate.catchKm !== null &&
+          Math.abs(candidate.catchKm - km) <= 0.000001,
+      )
+      .map(({ candidate }) => ({
+        physicalLineageId: candidate.lineageId ?? null,
+        riderIds: phase4BridgeRiderIdsAtKm(
+          candidate,
+          candidate.catchKm ?? km,
+        ),
+      }))
+  const phase4AllCatchCommitsAt = (km: number) =>
+    phase4CatchCommitsAt(km, authoritativeBridgeGroups.length - 1)
+
   phase4.bridgeGroups.forEach((bridgeGroup, bridgeIndex) => {
     const teamIds = Array.from(
       new Set(
@@ -24430,26 +26115,69 @@ function buildUniversalReplayTimeline(
           .filter((teamId): teamId is string => Boolean(teamId)),
       ),
     ).sort()
-    eventDefinitions.push({
-      checkpointIdSuffix: `bridge-attack-${bridgeIndex + 1}`,
-      checkpointKind: 'event',
-      phase: 4,
-      kmFromStart: bridgeGroup.launchKm,
-      sortOrder: 750 + bridgeIndex * 20,
-      groups: groupsAtKm(bridgeGroup.launchKm),
-      energyByRiderId: energyAtKm(4, bridgeGroup.launchKm),
-      eventType: 'bridge_attack',
-      title: 'A group attacks from the peloton',
-      description: `${bridgeGroup.riderIds.length} riders leave the main group and begin bridging across. They are ${formatReplaySeconds(bridgeGroup.launchGapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(bridgeGroup.launchGapToPelotonSeconds)} ahead of the peloton.`,
-      riderIds: [...bridgeGroup.riderIds],
-      teamIds,
-    })
+    const bridgeDisplayCode = bridgeGroup.displayCode
+    const rawMergeTargetDisplayCode =
+      bridgeGroup.mergeTargetDisplayCode ??
+      (bridgeGroup.mergedIntoOpeningBreakaway
+        ? openingFrontDisplayCode
+        : null)
+    const mergeTargetDisplayCode: 'B1' | 'F1' | 'F2' | null =
+      rawMergeTargetDisplayCode === 'B1' ||
+      rawMergeTargetDisplayCode === 'F1' ||
+      rawMergeTargetDisplayCode === 'F2'
+        ? rawMergeTargetDisplayCode
+        : null
+
+    if (bridgeGroup.carriedFromPreviousPhase) {
+      eventDefinitions.push({
+        checkpointIdSuffix: `bridge-carried-${bridgeIndex + 1}`,
+        checkpointKind: 'event',
+        phase: 4,
+        kmFromStart: bridgeGroup.launchKm,
+        sortOrder: 748 + bridgeIndex * 20,
+        groups: groupsAtKm(bridgeGroup.launchKm),
+        energyByRiderId: energyAtKm(4, bridgeGroup.launchKm),
+        eventType: 'bridge_progress',
+        title: `${bridgeDisplayCode} continues across the phase boundary`,
+        description: `${bridgeDisplayCode} keeps its physical road position: ${formatReplaySeconds(bridgeGroup.launchGapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(bridgeGroup.launchGapToPelotonSeconds)} ahead of the peloton.`,
+        riderIds: [...bridgeGroup.riderIds],
+        teamIds,
+        physicalLineageId: bridgeGroup.lineageId ?? null,
+        physicalSourceDisplayCode: bridgeGroup.sourceDisplayCode ?? null,
+        physicalLaunchKm: bridgeGroup.launchKm,
+        physicalMergeTargetDisplayCode: mergeTargetDisplayCode,
+      })
+    } else {
+      eventDefinitions.push({
+        checkpointIdSuffix: `bridge-attack-${bridgeIndex + 1}`,
+        checkpointKind: 'event',
+        phase: 4,
+        kmFromStart: bridgeGroup.launchKm,
+        sortOrder: 750 + bridgeIndex * 20,
+        groups: groupsAtKm(bridgeGroup.launchKm),
+        energyByRiderId: energyAtKm(4, bridgeGroup.launchKm),
+        eventType: 'bridge_attack',
+        title: 'A group attacks from the peloton',
+        description: `${bridgeGroup.riderIds.length} riders create ${bridgeDisplayCode} from the main group. They are ${formatReplaySeconds(bridgeGroup.launchGapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(bridgeGroup.launchGapToPelotonSeconds)} ahead of the peloton.`,
+        riderIds: [...bridgeGroup.riderIds],
+        teamIds,
+        physicalLineageId: bridgeGroup.lineageId ?? null,
+        physicalSourceDisplayCode: bridgeGroup.sourceDisplayCode ?? null,
+        physicalLaunchKm: bridgeGroup.launchKm,
+        physicalMergeTargetDisplayCode: mergeTargetDisplayCode,
+      })
+    }
 
     bridgeGroup.gapSamples.slice(1).forEach((sample, sampleIndex) => {
       if (
-        bridgeGroup.mergedIntoOpeningBreakaway &&
         bridgeGroup.mergeKm !== null &&
         sample.km >= bridgeGroup.mergeKm - 0.000001
+      ) {
+        return
+      }
+      if (
+        bridgeGroup.catchKm !== null &&
+        sample.km >= bridgeGroup.catchKm - 0.000001
       ) {
         return
       }
@@ -24465,9 +26193,13 @@ function buildUniversalReplayTimeline(
         energyByRiderId: energyAtKm(4, sample.km),
         eventType: 'bridge_progress',
         title: `The chasing group closes on ${openingFrontDisplayCode}`,
-        description: `${bridgeReplayDisplayCode} is ${formatReplaySeconds(sample.gapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(sample.gapToPelotonSeconds)} ahead of the peloton.`,
+        description: `${bridgeDisplayCode} is ${formatReplaySeconds(sample.gapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(sample.gapToPelotonSeconds)} ahead of the peloton.`,
         riderIds: [...bridgeGroup.riderIds],
         teamIds,
+        physicalLineageId: bridgeGroup.lineageId ?? null,
+        physicalSourceDisplayCode: bridgeGroup.sourceDisplayCode ?? null,
+        physicalLaunchKm: bridgeGroup.launchKm,
+        physicalMergeTargetDisplayCode: mergeTargetDisplayCode,
       })
     })
 
@@ -24475,39 +26207,123 @@ function buildUniversalReplayTimeline(
       bridgeGroup.caughtByPeloton &&
       bridgeGroup.catchKm !== null
     ) {
+      const caughtRiderIds = phase4BridgeRiderIdsAtKm(
+        bridgeGroup,
+        bridgeGroup.catchKm,
+      )
+      const caughtTeamIds = Array.from(
+        new Set(
+          caughtRiderIds
+            .map((riderId) => riderById.get(riderId)?.teamId)
+            .filter((teamId): teamId is string => Boolean(teamId)),
+        ),
+      ).sort()
       eventDefinitions.push({
         checkpointIdSuffix: `bridge-caught-${bridgeIndex + 1}`,
         checkpointKind: 'event',
         phase: 4,
         kmFromStart: bridgeGroup.catchKm,
-        sortOrder: 772 + bridgeIndex,
-        groups: groupsAtKm(bridgeGroup.catchKm),
+        sortOrder: 300 + bridgeIndex,
+        groups: applyReplayFrontCatchCommits(
+          phase4PreTransitionGroupsAt(bridgeGroup.catchKm),
+          phase4CatchCommitsAt(bridgeGroup.catchKm, bridgeIndex),
+        ),
         energyByRiderId: energyAtKm(4, bridgeGroup.catchKm),
         eventType: 'catch',
         title: 'The bridge group is caught',
-        description: `${bridgeReplayDisplayCode} is reabsorbed by the peloton at kilometre ${deterministicRound(bridgeGroup.catchKm, 1)} before it can reach ${openingFrontDisplayCode}.`,
+        description: `${bridgeDisplayCode} is reabsorbed by the peloton at kilometre ${deterministicRound(bridgeGroup.catchKm, 1)}.`,
         riderIds: [...bridgeGroup.riderIds],
         teamIds,
+        physicalLineageId: bridgeGroup.lineageId ?? null,
+        physicalSourceDisplayCode: bridgeGroup.sourceDisplayCode ?? null,
+        physicalLaunchKm: bridgeGroup.launchKm,
+        physicalMergeTargetDisplayCode: mergeTargetDisplayCode,
       })
     }
 
     if (
-      bridgeGroup.mergedIntoOpeningBreakaway &&
+      mergeTargetDisplayCode !== null &&
       bridgeGroup.mergeKm !== null
     ) {
+      const mergeRiderIds = phase4BridgeRiderIdsAtKm(
+        bridgeGroup,
+        bridgeGroup.mergeKm,
+      )
+      const mergeTeamIds = Array.from(
+        new Set(
+          mergeRiderIds
+            .map((riderId) => riderById.get(riderId)?.teamId)
+            .filter((teamId): teamId is string => Boolean(teamId)),
+        ),
+      ).sort()
+      const beforeBridgeMergeKm = Math.max(
+        bridgeGroup.launchKm,
+        bridgeGroup.mergeKm - 0.00001,
+      )
+      eventDefinitions.push({
+        checkpointIdSuffix: `bridge-contact-${bridgeIndex + 1}`,
+        checkpointKind: 'event',
+        phase: 4,
+        kmFromStart: bridgeGroup.mergeKm,
+        sortOrder: 320 + bridgeIndex,
+        groups: applyReplayFrontCatchCommits(
+          phase4PreTransitionGroupsAt(bridgeGroup.mergeKm),
+          phase4AllCatchCommitsAt(bridgeGroup.mergeKm),
+        ),
+        energyByRiderId: energyAtKm(4, bridgeGroup.mergeKm),
+        eventType: 'bridge_contact',
+        title: `${bridgeDisplayCode} reaches merge tolerance`,
+        description: `${bridgeDisplayCode} physically closes to ${mergeTargetDisplayCode} before membership changes.`,
+        riderIds: mergeRiderIds,
+        teamIds: mergeTeamIds,
+        physicalLineageId: bridgeGroup.lineageId ?? null,
+        physicalSourceDisplayCode: bridgeGroup.sourceDisplayCode ?? null,
+        physicalLaunchKm: bridgeGroup.launchKm,
+        physicalMergeTargetDisplayCode: mergeTargetDisplayCode,
+      })
       eventDefinitions.push({
         checkpointIdSuffix: `bridge-merge-${bridgeIndex + 1}`,
         checkpointKind: 'event',
         phase: 4,
         kmFromStart: bridgeGroup.mergeKm,
-        sortOrder: 775 + bridgeIndex,
-        groups: groupsAtKm(bridgeGroup.mergeKm),
+        sortOrder: 340 + bridgeIndex,
+        groups: applyReplayFrontMergeCommits(
+          applyReplayFrontCatchCommits(
+            phase4PreTransitionGroupsAt(bridgeGroup.mergeKm),
+            phase4AllCatchCommitsAt(bridgeGroup.mergeKm),
+          ),
+          authoritativeBridgeGroups
+            .map((candidate, candidateIndex) => ({ candidate, candidateIndex }))
+            .filter(
+              ({ candidate, candidateIndex }) =>
+                candidateIndex <= bridgeIndex &&
+                candidate.mergeKm !== null &&
+                Math.abs(candidate.mergeKm - bridgeGroup.mergeKm!) <= 0.000001 &&
+                candidate.mergeTargetDisplayCode !== null,
+            )
+            .map(({ candidate }) => ({
+              physicalLineageId: candidate.lineageId ?? null,
+              riderIds: phase4BridgeRiderIdsAtKm(
+                candidate,
+                candidate.mergeKm ?? bridgeGroup.mergeKm!,
+              ),
+              targetDisplayCode: candidate.mergeTargetDisplayCode!,
+            })),
+        ),
         energyByRiderId: energyAtKm(4, bridgeGroup.mergeKm),
         eventType: 'bridge_merge',
-        title: 'The chasing group reaches the breakaway',
-        description: `${bridgeReplayDisplayCode} makes contact with ${openingFrontDisplayCode} inside the ${PHASE5_GROUP_MERGE_TOLERANCE_SECONDS}-second merge tolerance. A new ${phase4.frontRiderIdsAfterBridges.length}-rider ${openingFrontDisplayCode} forms, and its strength is recalculated from the riders and energy now in front.`,
-        riderIds: [...bridgeGroup.riderIds],
-        teamIds,
+        title:
+          mergeTargetDisplayCode === openingFrontDisplayCode ||
+          mergeTargetDisplayCode === 'B1'
+            ? 'The chasing group reaches the breakaway'
+            : `${bridgeDisplayCode} reaches ${mergeTargetDisplayCode}`,
+        description: `${bridgeDisplayCode} makes physical contact with ${mergeTargetDisplayCode} inside the ${PHASE5_GROUP_MERGE_TOLERANCE_SECONDS}-second merge tolerance.`,
+        riderIds: mergeRiderIds,
+        teamIds: mergeTeamIds,
+        physicalLineageId: bridgeGroup.lineageId ?? null,
+        physicalSourceDisplayCode: bridgeGroup.sourceDisplayCode ?? null,
+        physicalLaunchKm: bridgeGroup.launchKm,
+        physicalMergeTargetDisplayCode: mergeTargetDisplayCode,
       })
     }
   })
@@ -24522,7 +26338,7 @@ function buildUniversalReplayTimeline(
       checkpointKind: 'event',
       phase: 4,
       kmFromStart: catchKm,
-      sortOrder: 800,
+      sortOrder: 360,
       groups: groupsAtKm(catchKm),
       energyByRiderId: energyAtKm(4, catchKm),
       eventType: 'catch',
@@ -24655,19 +26471,15 @@ function buildUniversalReplayTimeline(
       const finalResultsVisible = definition.finalResultsVisible === true
       const isAtFinishKm =
         Math.abs(progressKm - stageDistanceKm) <= 0.000001
+      const preserveExplicitFrontTransitionState =
+        definition.physicalLineageId !== undefined &&
+        definition.physicalLineageId !== null &&
+        (definition.eventType === 'bridge_contact' ||
+          definition.eventType === 'bridge_merge' ||
+          definition.eventType === 'catch')
       const normalizedGroups =
-        finalResultsVisible || isAtFinishKm
-          ? definition.groups
-              .slice()
-              .sort(
-                (left, right) =>
-                  left.groupOrder - right.groupOrder ||
-                  left.displayCode.localeCompare(right.displayCode),
-              )
-              .map((group) => ({
-                ...group,
-                riderIds: [...group.riderIds],
-              }))
+        finalResultsVisible || isAtFinishKm || preserveExplicitFrontTransitionState
+          ? cloneReplayGroups(definition.groups)
           : normalizeReplayGroups(definition.groups)
       const groupByRiderId = new Map<
         string,
@@ -24776,10 +26588,13 @@ function buildUniversalReplayTimeline(
             6,
           ),
           kmFromStart: progressKm,
+          authoritativeRaceSecond:
+            definition.authoritativeRaceSecond ?? null,
         },
         groups: normalizedGroups.map((group) => ({
           groupCode: group.groupCode,
           displayCode: group.displayCode,
+          physicalLineageId: group.physicalLineageId ?? null,
           physicalPosition: group.physicalPosition,
           colorKey: group.colorKey,
           riderIds: [...group.riderIds],
@@ -24805,6 +26620,12 @@ function buildUniversalReplayTimeline(
             description: sanitizeReplayText(definition.description),
             riderIds: [...definition.riderIds],
             teamIds: [...definition.teamIds],
+            physicalLineageId: definition.physicalLineageId ?? null,
+            physicalSourceDisplayCode:
+              definition.physicalSourceDisplayCode ?? null,
+            physicalLaunchKm: definition.physicalLaunchKm ?? null,
+            physicalMergeTargetDisplayCode:
+              definition.physicalMergeTargetDisplayCode ?? null,
           },
         ],
         finalResultsVisible,
@@ -26720,6 +28541,18 @@ function phase10BuildExactEventReplayTimeline(
         return leftIsFinal ? 1 : -1
       }
 
+      // Existing replay checkpoints already carry the authoritative same-km
+      // causal order from buildUniversalReplayTimeline (for example winner
+      // finish -> explicit final-gap transition -> final results). Preserve
+      // that order here instead of re-sorting event checkpoints by id, which
+      // can reverse a physical transition and make riders appear to jump
+      // between groups at the finish. Synthetic Phase-10 checkpoints are only
+      // inserted at kilometres not already occupied by the base timeline, so
+      // they do not need to displace an existing same-km checkpoint.
+      if (left.checkpointIndex >= 0 && right.checkpointIndex >= 0) {
+        return left.checkpointIndex - right.checkpointIndex
+      }
+
       const checkpointKindOrder =
         (left.checkpointKind === 'base' ? -1 : 1) -
         (right.checkpointKind === 'base' ? -1 : 1)
@@ -26852,6 +28685,7 @@ function phase10BuildFinalRoadGroups(
       const group: UniversalReplayGroupState = {
         groupCode,
         displayCode,
+        physicalLineageId: baseIdentity?.physicalLineageId ?? null,
         physicalPosition:
           baseIdentity?.physicalPosition ??
           (gapSeconds <= 0 ? 'peloton' : 'behind_peloton'),
@@ -28144,6 +29978,23 @@ function resolveUniversalPhase10Incidents({
     if (index >= 0) firstCheckpointIndexByTeamRescueId.set(event.eventId, index)
   })
 
+  const phase10AuthoritativeWinner = classification.find(
+    (row) => row.status === 'finished' && row.rank === 1,
+  )
+  const phase10WinnerTimeSeconds =
+    phase10AuthoritativeWinner?.officialTimeSeconds ?? null
+  const phase10LastFinisherTimeSeconds = classification
+    .filter(
+      (row) => row.status === 'finished' && row.officialTimeSeconds !== null,
+    )
+    .reduce<number | null>(
+      (maximum, row) =>
+        maximum === null
+          ? row.officialTimeSeconds
+          : Math.max(maximum, row.officialTimeSeconds ?? maximum),
+      null,
+    )
+
   const replayCheckpoints = phase10SourceReplayTimeline.checkpoints.map(
     (checkpoint, checkpointIndex): UniversalReplayCheckpoint => {
       const occurred = incidents.filter(
@@ -28319,6 +30170,55 @@ function resolveUniversalPhase10Incidents({
           })
         })
 
+        // Two separate behind-peloton groups cannot occupy the exact same
+        // longitudinal gap. High-risk autonomous chase episodes can reach the
+        // finish with stale per-episode display identities even after they have
+        // already converged physically; publishing those rows separately makes
+        // one real chase group appear to split into duplicate C groups. Merge
+        // only exact same-gap behind-peloton groups here. Near groups remain
+        // separate and all non-C/front identities are left untouched.
+        const consolidatedGroups: Array<(typeof groups)[number]> = []
+        const consolidatedGaps: Array<(typeof gaps)[number]> = []
+        groups.forEach((group) => {
+          const gap = gaps.find(
+            (candidate) => candidate.displayCode === group.displayCode,
+          )
+          if (!gap || group.physicalPosition !== 'behind_peloton') {
+            consolidatedGroups.push(group)
+            if (gap) consolidatedGaps.push(gap)
+            return
+          }
+
+          const existingIndex = consolidatedGroups.findIndex(
+            (candidate, index) =>
+              candidate.physicalPosition === 'behind_peloton' &&
+              Math.abs(
+                (consolidatedGaps[index]?.gapSeconds ?? Number.NaN) -
+                  gap.gapSeconds,
+              ) <= 0.000001,
+          )
+          if (existingIndex < 0) {
+            consolidatedGroups.push(group)
+            consolidatedGaps.push(gap)
+            return
+          }
+
+          const existing = consolidatedGroups[existingIndex]
+          consolidatedGroups[existingIndex] = {
+            ...existing,
+            physicalLineageId:
+              (existing.physicalLineageId ?? null) ===
+              (group.physicalLineageId ?? null)
+                ? existing.physicalLineageId ?? null
+                : null,
+            riderIds: Array.from(
+              new Set([...existing.riderIds, ...group.riderIds]),
+            ).sort(),
+          }
+        })
+        groups = consolidatedGroups
+        gaps = consolidatedGaps
+
 
         // Keep autonomous incident groups physically authoritative. Do not
         // perform a replay-only proximity merge with a pre-existing road group:
@@ -28353,7 +30253,14 @@ function resolveUniversalPhase10Incidents({
       // checkpoint at the finish remains result-hidden: only its groups and
       // physical gaps are synchronized here; ranks and official times remain
       // unavailable until the authoritative final checkpoint.
-      if (isRoadFinishKmCheckpoint && !checkpoint.finalResultsVisible) {
+      const isWinnerFinishCheckpoint = checkpoint.commentary.some(
+        (entry) => entry.eventType === 'finish',
+      )
+      if (
+        isRoadFinishKmCheckpoint &&
+        !checkpoint.finalResultsVisible &&
+        !isWinnerFinishCheckpoint
+      ) {
         groups = finalRoad.groups.map((group) => ({
           ...group,
           riderIds: [...group.riderIds],
@@ -28566,7 +30473,7 @@ function resolveUniversalPhase10Incidents({
           })
       const correctedBaseCommentary = checkpoint.commentary
         .map((entry): UniversalReplayCommentaryEntry => {
-          if (entry.eventType === 'finish' && checkpoint.finalResultsVisible) {
+          if (entry.eventType === 'finish') {
             const teamTimeTrialFormat =
               input.stage.stageFormat === 'team_time_trial' ||
               input.stage.stageFormat === 'pair_time_trial'
@@ -28669,8 +30576,21 @@ function resolveUniversalPhase10Incidents({
           description: `${first.group.displayCode} leads ${second.group.displayCode} by ${gapLabel} with ${orderedGroups.length} groups on the road.`,
         }
       })
+      const authoritativeRaceSecond =
+        input.stage.stageFormat === 'road_race'
+          ? correctedBaseCommentary.some((entry) => entry.eventType === 'finish')
+            ? phase10WinnerTimeSeconds
+            : checkpoint.finalResultsVisible
+              ? phase10LastFinisherTimeSeconds
+              : checkpoint.raceProgress.authoritativeRaceSecond ?? null
+          : checkpoint.raceProgress.authoritativeRaceSecond ?? null
+
       return {
         ...checkpoint,
+        raceProgress: {
+          ...checkpoint.raceProgress,
+          authoritativeRaceSecond,
+        },
         groups,
         gaps,
         riderStates,
@@ -28827,6 +30747,7 @@ export function buildUniversalReplaySynchronizationSummary(
   finishResolution: UniversalFinishResolution,
   phase10Incidents: UniversalPhase10IncidentSummary,
   replayTimeline: UniversalReplayTimeline,
+  roadRaceResolution?: UniversalRoadRaceResolutionSummary,
 ): UniversalReplaySynchronizationSummary {
   const issueList: string[] = []
   const pushIssue = (issue: string): void => {
@@ -28838,6 +30759,85 @@ export function buildUniversalReplaySynchronizationSummary(
   ): boolean =>
     left.length === right.length &&
     left.every((value, index) => value === right[index])
+  const authoritativeFrontLineageFor = (
+    phase: RoadRacePhaseNumber,
+    lineageId: string | null | undefined,
+  ): UniversalRoadPhysicalFrontLineageResult | UniversalRoadPhase4BridgeResult | null => {
+    if (!lineageId || !roadRaceResolution?.active) return null
+    if (phase === 3) {
+      return (
+        roadRaceResolution.phase3Decisive?.frontLineages.find(
+          (lineage) => lineage.lineageId === lineageId,
+        ) ?? null
+      )
+    }
+    if (phase === 4) {
+      return (
+        roadRaceResolution.phase4Finish?.bridgeGroups.find(
+          (lineage) => lineage.lineageId === lineageId,
+        ) ?? null
+      )
+    }
+    return null
+  }
+  const authoritativeFrontSampleAtKm = (
+    phase: RoadRacePhaseNumber | 0,
+    lineageId: string | null | undefined,
+    kmFromStart: number,
+  ): {
+    readonly gapToLeaderSeconds: number
+    readonly gapToPelotonSeconds: number
+  } | null => {
+    if (phase === 0) return null
+    const lineage = authoritativeFrontLineageFor(phase, lineageId)
+    if (!lineage) return null
+    if ('gapTrajectory' in lineage) {
+      const sample = lineage.gapTrajectory.find(
+        (row) => Math.abs(row.kmFromStart - kmFromStart) <= 0.00001,
+      )
+      return sample
+        ? {
+            gapToLeaderSeconds: sample.gapToLeaderSeconds,
+            gapToPelotonSeconds: sample.gapToPelotonSeconds,
+          }
+        : null
+    }
+    const sample = lineage.gapSamples.find(
+      (row) => Math.abs(row.km - kmFromStart) <= 0.00001,
+    )
+    return sample
+      ? {
+          gapToLeaderSeconds: sample.gapToLeaderSeconds,
+          gapToPelotonSeconds: sample.gapToPelotonSeconds,
+        }
+      : null
+  }
+
+  const phase4ChaseSteps = roadRaceResolution?.phase4Finish?.chaseSteps ?? []
+  let consecutiveEmergencyRailSteps = 0
+  let consecutiveEmergencyRailDistanceKm = 0
+  let prolongedEmergencyRailSaturation = false
+  phase4ChaseSteps.forEach((step) => {
+    if (step.emergencyRailApplied) {
+      consecutiveEmergencyRailSteps += 1
+      consecutiveEmergencyRailDistanceKm += Math.max(0, step.kmEnd - step.kmStart)
+      if (
+        consecutiveEmergencyRailSteps >=
+          PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_PROLONGED_MIN_STEPS &&
+        consecutiveEmergencyRailDistanceKm >=
+          PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_PROLONGED_MIN_KM
+      ) {
+        prolongedEmergencyRailSaturation = true
+      }
+    } else {
+      consecutiveEmergencyRailSteps = 0
+      consecutiveEmergencyRailDistanceKm = 0
+    }
+  })
+  if (prolongedEmergencyRailSaturation) {
+    pushIssue('chase_emergency_rail_prolonged_saturation')
+  }
+
   const inputRiderIds = input.riders
     .map((rider) => rider.riderId)
     .sort()
@@ -28948,22 +30948,61 @@ export function buildUniversalReplaySynchronizationSummary(
       const replayPhysicalStateKey = (
         candidate: UniversalReplayCheckpoint,
       ): string =>
-        JSON.stringify({
-          groups: candidate.groups.map((group) => ({
+        JSON.stringify(
+          candidate.groups.map((group) => ({
             displayCode: group.displayCode,
+            physicalLineageId: group.physicalLineageId ?? null,
             physicalPosition: group.physicalPosition,
             riderIds: [...group.riderIds].sort(),
           })),
-          gaps: candidate.gaps.map((gap) => ({
-            displayCode: gap.displayCode,
-            gapSeconds: gap.gapSeconds,
-          })),
-        })
+        )
       const previousPhysicalState = replayPhysicalStateKey(previousCheckpoint)
       const currentPhysicalState = replayPhysicalStateKey(checkpoint)
+      const currentBridgeMergeEntries = checkpoint.commentary.filter(
+        (entry) => entry.eventType === 'bridge_merge',
+      )
+      const earlierSameKilometreCommentary = replayTimeline.checkpoints
+        .slice(0, checkpointIndex)
+        .filter(
+          (candidate) =>
+            Math.abs(
+              candidate.raceProgress.kmFromStart -
+                checkpoint.raceProgress.kmFromStart,
+            ) <= 0.000001,
+        )
+        .flatMap((candidate) => candidate.commentary)
+      const currentHasBridgeContact = checkpoint.commentary.some(
+        (entry) => entry.eventType === 'bridge_contact',
+      )
+      const explicitSameKilometreBridgeCommit =
+        Math.abs(distanceDelta) <= 0.000001 &&
+        currentBridgeMergeEntries.some((mergeEntry) =>
+          earlierSameKilometreCommentary.some(
+            (contactEntry) =>
+              contactEntry.eventType === 'bridge_contact' &&
+              ((mergeEntry.physicalLineageId &&
+                contactEntry.physicalLineageId === mergeEntry.physicalLineageId) ||
+                (contactEntry.riderIds.length > 0 &&
+                  sameStringArray(
+                    [...contactEntry.riderIds].sort(),
+                    [...mergeEntry.riderIds].sort(),
+                  ))),
+          ),
+        )
+      const currentHasExplicitPhysicalTransition = checkpoint.commentary.some(
+        (entry) =>
+          entry.eventType === 'attack' ||
+          entry.eventType === 'group_split' ||
+          entry.eventType === 'catch' ||
+          entry.eventType === 'bridge_attack' ||
+          entry.eventType === 'bridge_merge',
+      )
       if (
         Math.abs(distanceDelta) <= 0.000001 &&
-        previousPhysicalState !== currentPhysicalState
+        previousPhysicalState !== currentPhysicalState &&
+        !explicitSameKilometreBridgeCommit &&
+        !currentHasBridgeContact &&
+        !currentHasExplicitPhysicalTransition
       ) {
         allSameKilometreStatesConsistent = false
         pushIssue(`same_kilometre_physical_state_mismatch:${previousCheckpoint.checkpointId}->${checkpointKey}`)
@@ -28995,8 +31034,13 @@ export function buildUniversalReplaySynchronizationSummary(
         currentPelotonGap < previousPelotonGap - 0.000001
       ) {
         const travelledKm = Math.max(0, distanceDelta)
+        // Global physical envelope from the engine's bounded road speeds.
+        // A 20 km/h front versus a 55 km/h peloton differs by ~114.5 s/km;
+        // 120 s/km is therefore a conservative numerical envelope, not a
+        // target chase rate. Ordinary late-chase validation is further
+        // protected by the authoritative chase-step/lineage checks above.
         const maximumPhysicalClosureSeconds =
-          travelledKm * 8.5 + 2
+          travelledKm * PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_SECONDS_PER_KM + 2
         if (
           !checkpoint.finalResultsVisible &&
           previousPelotonGap - currentPelotonGap >
@@ -29061,10 +31105,18 @@ export function buildUniversalReplaySynchronizationSummary(
     const distinctGapValues = new Set(
       checkpoint.gaps.map((gap) => deterministicRound(gap.gapSeconds, 6)),
     )
+    const explicitPhysicalContactOrCommit = checkpoint.commentary.some(
+      (entry) =>
+        entry.physicalLineageId !== null &&
+        (entry.eventType === 'bridge_contact' ||
+          entry.eventType === 'bridge_merge' ||
+          entry.eventType === 'catch'),
+    )
     if (
       input.stage.stageFormat === 'road_race' &&
       checkpoint.gaps.length > 1 &&
-      distinctGapValues.size !== checkpoint.gaps.length
+      distinctGapValues.size !== checkpoint.gaps.length &&
+      !explicitPhysicalContactOrCommit
     ) {
       allGapsMatchGroups = false
       pushIssue(`duplicate_physical_group_gap:${checkpointKey}`)
@@ -29358,8 +31410,13 @@ export function buildUniversalReplaySynchronizationSummary(
       : finishResolution.classification.find(
           (row) => row.status === 'finished' && row.rank === 1,
         )
-    const finishCommentary = finalCheckpoint.commentary.filter(
-      (entry) => entry.eventType === 'finish',
+    const finishCommentaryCheckpoints = replayTimeline.checkpoints.filter(
+      (checkpoint) =>
+        checkpoint.commentary.some((entry) => entry.eventType === 'finish'),
+    )
+    const finishCommentary = finishCommentaryCheckpoints.flatMap(
+      (checkpoint) =>
+        checkpoint.commentary.filter((entry) => entry.eventType === 'finish'),
     )
     const expectedFinishRiderId = teamTimeTrialFormat
       ? finishResolution.winnerRiderId
@@ -29384,10 +31441,52 @@ export function buildUniversalReplaySynchronizationSummary(
     }
 
     if (input.stage.stageFormat === 'road_race') {
+      const winnerRow = finishResolution.classification.find(
+        (row) => row.status === 'finished' && row.rank === 1,
+      )
+      const winnerFinishCheckpoint = finishCommentaryCheckpoints[0] ?? null
+      const lastFinisherTime = finishResolution.classification
+        .filter(
+          (row) =>
+            row.status === 'finished' && row.officialTimeSeconds !== null,
+        )
+        .reduce<number | null>(
+          (maximum, row) =>
+            maximum === null
+              ? row.officialTimeSeconds
+              : Math.max(maximum, row.officialTimeSeconds ?? maximum),
+          null,
+        )
+      if (
+        !winnerRow ||
+        winnerRow.officialTimeSeconds === null ||
+        !winnerFinishCheckpoint ||
+        Math.abs(
+          Number(
+            winnerFinishCheckpoint.raceProgress.authoritativeRaceSecond ??
+              Number.NaN,
+          ) - winnerRow.officialTimeSeconds,
+        ) > 0.000001
+      ) {
+        finishCommentaryMatchesClassification = false
+        pushIssue('finish_replay_timestamp_mismatch')
+      }
+      if (
+        lastFinisherTime !== null &&
+        Math.abs(
+          Number(
+            finalCheckpoint.raceProgress.authoritativeRaceSecond ?? Number.NaN,
+          ) - lastFinisherTime,
+        ) > 0.000001
+      ) {
+        finalCheckpointMatchesClassification = false
+        pushIssue('final_replay_timestamp_mismatch')
+      }
       const expectedGroups = phase10Incidents.finalRoadGroups.map(
         (group) => ({
           groupCode: group.groupCode,
           displayCode: group.displayCode,
+          physicalLineageId: group.physicalLineageId ?? null,
           physicalPosition: group.physicalPosition,
           colorKey: group.colorKey,
           riderIds: [...group.riderIds],
@@ -29464,22 +31563,34 @@ export function buildUniversalReplaySynchronizationSummary(
     const eventTypes = new Set(
       checkpoint.commentary.map((entry) => entry.eventType),
     )
+    const sameKilometreCheckpoints = replayTimeline.checkpoints
+      .slice(0, checkpointIndex + 1)
+      .filter(
+        (candidate) =>
+          Math.abs(
+            candidate.raceProgress.kmFromStart -
+              checkpoint.raceProgress.kmFromStart,
+          ) <= 0.000001,
+      )
+    const sameKilometreCommentary = sameKilometreCheckpoints.flatMap(
+      (candidate) => candidate.commentary,
+    )
     const sameKilometreEventTypes = new Set(
-      replayTimeline.checkpoints
-        .filter(
-          (candidate) =>
-            Math.abs(
-              candidate.raceProgress.kmFromStart -
-                checkpoint.raceProgress.kmFromStart,
-            ) <= 0.000001,
-        )
-        .flatMap((candidate) =>
-          candidate.commentary.map((entry) => entry.eventType),
-        ),
+      sameKilometreCommentary.map((entry) => entry.eventType),
+    )
+    const bridgeMergeEntriesAtKm = sameKilometreCommentary.filter(
+      (entry) => entry.eventType === 'bridge_merge',
+    )
+    const bridgeAttackEntriesAtKm = sameKilometreCommentary.filter(
+      (entry) => entry.eventType === 'bridge_attack',
+    )
+    const catchEntriesAtKm = sameKilometreCommentary.filter(
+      (entry) => entry.eventType === 'catch',
     )
     const hasCatch = sameKilometreEventTypes.has('catch')
     const catchRiderIdsAtKm = new Set(
       replayTimeline.checkpoints
+        .slice(0, checkpointIndex + 1)
         .filter(
           (candidate) =>
             Math.abs(
@@ -29539,54 +31650,154 @@ export function buildUniversalReplaySynchronizationSummary(
         )
       }
 
-      if (hasBridgeMerge && checkpointIndex > 0) {
+      if (checkpointIndex > 0) {
         const previous = replayTimeline.checkpoints[checkpointIndex - 1]
         const previousBreakawayRiderIds = previous.groups
           .filter((group) => group.displayCode.startsWith('B'))
           .flatMap((group) => group.riderIds)
           .sort()
-        const previousBridgeRiderIds = previous.groups
-          .filter((group) => group.displayCode.startsWith('F'))
-          .flatMap((group) => group.riderIds)
-          .sort()
-        const expectedMergedRiderIds = Array.from(
-          new Set([
-            ...previousBreakawayRiderIds,
-            ...previousBridgeRiderIds,
-          ]),
-        ).sort()
-        const previousBridgeGap = previous.gaps.find((gap) =>
-          gap.displayCode.startsWith('F'),
-        )?.gapSeconds
-        const previousBreakawayGap = previous.gaps.find((gap) =>
-          gap.displayCode.startsWith('B'),
-        )?.gapSeconds ?? 0
-        const distanceDelta = Math.max(
-          0,
-          checkpoint.raceProgress.kmFromStart -
-            previous.raceProgress.kmFromStart,
+        const addedBreakawayRiderIds = breakawayRiderIds.filter(
+          (riderId) => !previousBreakawayRiderIds.includes(riderId),
         )
-        const previousPelotonGap = previous.gaps.find(
-          (gap) => gap.displayCode === 'P',
-        )?.gapSeconds
-        const bridgeWasPhysicallyBetweenFrontAndPeloton =
-          previousBridgeGap !== undefined &&
-          previousBridgeGap > previousBreakawayGap + 0.000001 &&
-          (previousPelotonGap === undefined ||
-            previousBridgeGap < previousPelotonGap - 0.000001)
-        if (
-          previousBridgeRiderIds.length === 0 ||
-          !sameStringArray(breakawayRiderIds, expectedMergedRiderIds) ||
-          bridgeGroups.length > 0 ||
-          previousBridgeGap === undefined ||
-          distanceDelta <= 0.000001 ||
-          !bridgeWasPhysicallyBetweenFrontAndPeloton
+        const removedBreakawayRiderIds = previousBreakawayRiderIds.filter(
+          (riderId) => !breakawayRiderIds.includes(riderId),
+        )
+
+        if (addedBreakawayRiderIds.length > 0) {
+          const relevantMergeEntries = bridgeMergeEntriesAtKm.filter(
+            (entry) =>
+              entry.riderIds.some((riderId) =>
+                addedBreakawayRiderIds.includes(riderId),
+              ),
+          )
+          const explicitlyMergedRiderIds = Array.from(
+            new Set(relevantMergeEntries.flatMap((entry) => entry.riderIds)),
+          ).sort()
+          const mergeContactCheckpoint = (
+            entry: UniversalReplayCommentaryEntry,
+          ): UniversalReplayCheckpoint | undefined =>
+            replayTimeline.checkpoints
+              .slice(0, checkpointIndex)
+              .reverse()
+              .find(
+                (candidate) =>
+                  Math.abs(
+                    candidate.raceProgress.kmFromStart -
+                      checkpoint.raceProgress.kmFromStart,
+                  ) <= 0.000001 &&
+                  candidate.commentary.some(
+                    (contactEntry) =>
+                      contactEntry.eventType === 'bridge_contact' &&
+                      ((entry.physicalLineageId &&
+                        contactEntry.physicalLineageId ===
+                          entry.physicalLineageId) ||
+                        (entry.riderIds.length > 0 &&
+                          sameStringArray(
+                            [...contactEntry.riderIds].sort(),
+                            [...entry.riderIds].sort(),
+                          ))),
+                  ),
+              )
+          const everyMergeSourceWasPhysicalFront = relevantMergeEntries.every(
+            (entry) => {
+              const contactCheckpoint = mergeContactCheckpoint(entry)
+              if (contactCheckpoint) {
+                const sourceGroup = entry.physicalLineageId
+                  ? contactCheckpoint.groups.find(
+                      (group) =>
+                        group.physicalLineageId === entry.physicalLineageId,
+                    )
+                  : contactCheckpoint.groups.find(
+                      (group) =>
+                        group.displayCode.startsWith('F') &&
+                        entry.riderIds.length > 0 &&
+                        entry.riderIds.every((riderId) =>
+                          group.riderIds.includes(riderId),
+                        ),
+                    )
+                if (!sourceGroup) return false
+                const sourceGap = contactCheckpoint.gaps.find(
+                  (gap) => gap.displayCode === sourceGroup.displayCode,
+                )?.gapSeconds
+                const targetGap = contactCheckpoint.gaps.find(
+                  (gap) =>
+                    gap.displayCode ===
+                    (entry.physicalMergeTargetDisplayCode ?? 'B1'),
+                )?.gapSeconds
+                const pelotonGap = contactCheckpoint.gaps.find(
+                  (gap) => gap.displayCode === 'P',
+                )?.gapSeconds
+                return (
+                  sourceGap !== undefined &&
+                  targetGap !== undefined &&
+                  sourceGap >= targetGap - 0.000001 &&
+                  sourceGap - targetGap <=
+                    PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.00001 &&
+                  (pelotonGap === undefined ||
+                    sourceGap < pelotonGap - 0.000001)
+                )
+              }
+
+              // Phase-2 compatibility: the accepted V4 contract did not emit
+              // a separate bridge_contact checkpoint for its secondary front.
+              const legacySourceGroup = previous.groups.find(
+                (group) =>
+                  group.displayCode.startsWith('F') &&
+                  entry.riderIds.length > 0 &&
+                  entry.riderIds.every((riderId) =>
+                    group.riderIds.includes(riderId),
+                  ),
+              )
+              if (!legacySourceGroup) return false
+              const sourceGap = previous.gaps.find(
+                (gap) => gap.displayCode === legacySourceGroup.displayCode,
+              )?.gapSeconds
+              const targetGap =
+                previous.gaps.find((gap) => gap.displayCode.startsWith('B'))
+                  ?.gapSeconds ?? 0
+              const pelotonGap = previous.gaps.find(
+                (gap) => gap.displayCode === 'P',
+              )?.gapSeconds
+              return (
+                sourceGap !== undefined &&
+                sourceGap > targetGap + 0.000001 &&
+                (pelotonGap === undefined ||
+                  sourceGap < pelotonGap - 0.000001)
+              )
+            },
+          )
+          const expectedMergedRiderIds = Array.from(
+            new Set([
+              ...previousBreakawayRiderIds,
+              ...explicitlyMergedRiderIds,
+            ]),
+          ).sort()
+          const additionsExactlyExplained = sameStringArray(
+            [...addedBreakawayRiderIds].sort(),
+            explicitlyMergedRiderIds.filter((riderId) =>
+              addedBreakawayRiderIds.includes(riderId),
+            ),
+          )
+          if (
+            relevantMergeEntries.length === 0 ||
+            removedBreakawayRiderIds.length > 0 ||
+            !additionsExactlyExplained ||
+            !sameStringArray(breakawayRiderIds, expectedMergedRiderIds) ||
+            !everyMergeSourceWasPhysicalFront
+          ) {
+            openingBreakawayLineageStable = false
+            allBridgeSequencesPhysicallyValid = false
+            pushIssue(`bridge_merge_invalid:${checkpoint.checkpointId}`)
+          } else {
+            expectedBreakawayRiderIds = expectedMergedRiderIds
+          }
+        } else if (
+          !sameStringArray(breakawayRiderIds, expectedBreakawayRiderIds)
         ) {
           openingBreakawayLineageStable = false
-          allBridgeSequencesPhysicallyValid = false
-          pushIssue(`bridge_merge_invalid:${checkpoint.checkpointId}`)
-        } else {
-          expectedBreakawayRiderIds = expectedMergedRiderIds
+          pushIssue(
+            `opening_breakaway_lineage_changed_without_bridge_merge:${checkpoint.checkpointId}`,
+          )
         }
       } else if (
         !sameStringArray(breakawayRiderIds, expectedBreakawayRiderIds)
@@ -29613,59 +31824,54 @@ export function buildUniversalReplaySynchronizationSummary(
     const currentStateByRiderId = new Map(
       checkpoint.riderStates.map((row) => [row.riderId, row] as const),
     )
-    const bridgeEventRiderIds = Array.from(
-      new Set(
-        replayTimeline.checkpoints
-          .filter(
-            (candidate) =>
-              Math.abs(
-                candidate.raceProgress.kmFromStart -
-                  checkpoint.raceProgress.kmFromStart,
-              ) <= 0.000001,
-          )
-          .flatMap((candidate) =>
-            candidate.commentary
-              .filter(
-                (entry) =>
-                  entry.eventType === 'bridge_attack' ||
-                  entry.eventType === 'bridge_progress' ||
-                  entry.eventType === 'bridge_merge',
-              )
-              .flatMap((entry) => entry.riderIds),
-          ),
-      ),
-    )
-    const groupContainsBridgeEventRider = (
-      group: UniversalReplayGroupState,
-    ): boolean =>
-      group.displayCode.startsWith('F') &&
-      bridgeEventRiderIds.length > 0 &&
-      bridgeEventRiderIds.every((riderId) => group.riderIds.includes(riderId))
-    const previousBridge =
-      previous.groups.find(groupContainsBridgeEventRider) ??
-      previous.groups.find((group) => group.displayCode.startsWith('F'))
-    const currentBridge =
-      checkpoint.groups.find(groupContainsBridgeEventRider) ??
-      checkpoint.groups.find((group) => group.displayCode.startsWith('F'))
     const previousPeloton = previous.groups.find(
       (group) => group.displayCode === 'P',
     )
     const currentPeloton = checkpoint.groups.find(
       (group) => group.displayCode === 'P',
     )
+    const groupContainingAllRiders = (
+      groups: readonly UniversalReplayGroupState[],
+      riderIds: readonly string[],
+      requireFront = false,
+    ): UniversalReplayGroupState | undefined =>
+      groups.find(
+        (group) =>
+          (!requireFront || group.displayCode.startsWith('F')) &&
+          riderIds.length > 0 &&
+          riderIds.every((riderId) => group.riderIds.includes(riderId)),
+      )
 
-    if (hasBridgeAttack) {
-      const bridgeRiders = currentBridge?.riderIds ?? []
-      const cameFromPeloton = bridgeRiders.every((riderId) =>
-        previousPeloton?.riderIds.includes(riderId),
+    const groupForPhysicalLineage = (
+      groups: readonly UniversalReplayGroupState[],
+      physicalLineageId: string | null | undefined,
+      fallbackRiderIds: readonly string[],
+    ): UniversalReplayGroupState | undefined =>
+      physicalLineageId
+        ? groups.find(
+            (group) => group.physicalLineageId === physicalLineageId,
+          )
+        : groupContainingAllRiders(groups, fallbackRiderIds, true)
+
+    bridgeAttackEntriesAtKm.forEach((entry) => {
+      const bridgeRiders = [...entry.riderIds].sort()
+      const previousSourceGroup = entry.physicalSourceDisplayCode
+        ? previous.groups.find(
+            (group) =>
+              group.displayCode === entry.physicalSourceDisplayCode &&
+              bridgeRiders.every((riderId) =>
+                group.riderIds.includes(riderId),
+              ),
+          )
+        : groupContainingAllRiders(previous.groups, bridgeRiders)
+      const currentBridge = groupForPhysicalLineage(
+        checkpoint.groups,
+        entry.physicalLineageId,
+        bridgeRiders,
       )
-      const alreadySeparateFrontGroup = bridgeRiders.every((riderId) =>
-        previous.groups.some(
-          (group) =>
-            group.displayCode.startsWith('F') &&
-            group.riderIds.includes(riderId),
-        ),
-      )
+      const sourceWasPeloton = previousSourceGroup?.displayCode === 'P'
+      const sourceWasFront =
+        previousSourceGroup?.displayCode.startsWith('F') === true
       const currentBridgeGap = currentBridge
         ? checkpoint.gaps.find(
             (gap) => gap.displayCode === currentBridge.displayCode,
@@ -29676,72 +31882,104 @@ export function buildUniversalReplaySynchronizationSummary(
       )?.gapSeconds
       if (
         bridgeRiders.length === 0 ||
-        (!cameFromPeloton && !alreadySeparateFrontGroup) ||
+        (!sourceWasPeloton && !sourceWasFront) ||
+        currentBridge === undefined ||
         currentBridgeGap === undefined ||
         currentPelotonGap === undefined ||
         currentBridgeGap <= PHASE5_GROUP_MERGE_TOLERANCE_SECONDS ||
         currentBridgeGap >= currentPelotonGap
       ) {
         allBridgeSequencesPhysicallyValid = false
-        pushIssue(`bridge_attack_invalid:${checkpoint.checkpointId}`)
+        pushIssue(
+          `bridge_attack_invalid:${checkpoint.checkpointId}:${bridgeRiders.join('|')}`,
+        )
       }
-    }
+    })
 
-    if (hasBridgeProgress && previousBridge && currentBridge) {
-      const sameBridgeRiders = sameStringArray(
-        [...previousBridge.riderIds].sort(),
-        [...currentBridge.riderIds].sort(),
-      )
-      const previousBridgeGap = previous.gaps.find((gap) =>
-        gap.displayCode === previousBridge.displayCode,
-      )?.gapSeconds
-      const currentBridgeGap = checkpoint.gaps.find((gap) =>
-        gap.displayCode === currentBridge.displayCode,
-      )?.gapSeconds
-      const previousPelotonGap = previous.gaps.find(
-        (gap) => gap.displayCode === 'P',
-      )?.gapSeconds
-      const currentPelotonGap = checkpoint.gaps.find(
-        (gap) => gap.displayCode === 'P',
-      )?.gapSeconds
-      const distanceDeltaKm = Math.max(
-        0,
-        checkpoint.raceProgress.kmFromStart -
-          previous.raceProgress.kmFromStart,
-      )
-      const previousBridgeGapToPeloton =
-        previousPelotonGap !== undefined && previousBridgeGap !== undefined
-          ? previousPelotonGap - previousBridgeGap
+    checkpoint.commentary
+      .filter((entry) => entry.eventType === 'bridge_progress')
+      .forEach((entry) => {
+        const lineageRiderIds = [...entry.riderIds].sort()
+        const previousBridge = groupForPhysicalLineage(
+          previous.groups,
+          entry.physicalLineageId,
+          lineageRiderIds,
+        )
+        const currentBridge = groupForPhysicalLineage(
+          checkpoint.groups,
+          entry.physicalLineageId,
+          lineageRiderIds,
+        )
+        const previousBridgeGap = previousBridge
+          ? previous.gaps.find(
+              (gap) => gap.displayCode === previousBridge.displayCode,
+            )?.gapSeconds
           : undefined
-      const currentBridgeGapToPeloton =
-        currentPelotonGap !== undefined && currentBridgeGap !== undefined
-          ? currentPelotonGap - currentBridgeGap
+        const currentBridgeGap = currentBridge
+          ? checkpoint.gaps.find(
+              (gap) => gap.displayCode === currentBridge.displayCode,
+            )?.gapSeconds
           : undefined
-      const bridgePelotonClosureSeconds =
-        previousBridgeGapToPeloton !== undefined &&
-        currentBridgeGapToPeloton !== undefined
-          ? Math.max(
-              0,
-              previousBridgeGapToPeloton - currentBridgeGapToPeloton,
-            )
-          : Number.POSITIVE_INFINITY
-      const bridgePelotonClosureBoundSeconds =
-        distanceDeltaKm * 14 + 3
-      if (
-        !sameBridgeRiders ||
-        previousBridgeGap === undefined ||
-        currentBridgeGap === undefined ||
-        previousPelotonGap === undefined ||
-        currentPelotonGap === undefined ||
-        currentBridgeGap <= 0 ||
-        currentBridgeGap >= currentPelotonGap ||
-        bridgePelotonClosureSeconds >
-          bridgePelotonClosureBoundSeconds + 0.000001
-      ) {
-        allBridgeSequencesPhysicallyValid = false
-        pushIssue(`bridge_progress_invalid:${checkpoint.checkpointId}`)
-      }
-    }
+        const previousPelotonGap = previous.gaps.find(
+          (gap) => gap.displayCode === 'P',
+        )?.gapSeconds
+        const currentPelotonGap = checkpoint.gaps.find(
+          (gap) => gap.displayCode === 'P',
+        )?.gapSeconds
+        const currentBridgeGapToPeloton =
+          currentPelotonGap !== undefined && currentBridgeGap !== undefined
+            ? currentPelotonGap - currentBridgeGap
+            : undefined
+        const authoritativeSample = authoritativeFrontSampleAtKm(
+          checkpoint.phase,
+          entry.physicalLineageId,
+          checkpoint.raceProgress.kmFromStart,
+        )
+        const authoritativeSampleMatchesReplay =
+          authoritativeSample === null ||
+          (currentBridgeGap !== undefined &&
+            currentBridgeGapToPeloton !== undefined &&
+            Math.abs(
+              currentBridgeGap - authoritativeSample.gapToLeaderSeconds,
+            ) <= 0.00001 &&
+            Math.abs(
+              currentBridgeGapToPeloton -
+                authoritativeSample.gapToPelotonSeconds,
+            ) <= 0.00001)
+        const sameLineageDisplayCode =
+          previousBridge !== undefined &&
+          currentBridge !== undefined &&
+          previousBridge.displayCode === currentBridge.displayCode
+        const lineageRidersRemainInGroup =
+          previousBridge !== undefined &&
+          currentBridge !== undefined &&
+          lineageRiderIds.every((riderId) =>
+            currentBridge.riderIds.includes(riderId),
+          ) &&
+          (entry.physicalLineageId
+            ? previousBridge.physicalLineageId === entry.physicalLineageId &&
+              currentBridge.physicalLineageId === entry.physicalLineageId
+            : lineageRiderIds.every((riderId) =>
+                previousBridge.riderIds.includes(riderId),
+              ))
+        if (
+          lineageRiderIds.length === 0 ||
+          !sameLineageDisplayCode ||
+          !lineageRidersRemainInGroup ||
+          previousBridgeGap === undefined ||
+          currentBridgeGap === undefined ||
+          previousPelotonGap === undefined ||
+          currentPelotonGap === undefined ||
+          currentBridgeGap < 0 ||
+          currentBridgeGap > currentPelotonGap + 0.000001 ||
+          !authoritativeSampleMatchesReplay
+        ) {
+          allBridgeSequencesPhysicallyValid = false
+          pushIssue(
+            `bridge_progress_invalid:${checkpoint.checkpointId}:${lineageRiderIds.join('|')}`,
+          )
+        }
+      })
 
     inputRiderIds.forEach((riderId) => {
       const previousState = previousStateByRiderId.get(riderId)
@@ -29796,17 +32034,50 @@ export function buildUniversalReplaySynchronizationSummary(
       }
     })
 
+    previous.groups
+      .filter((group) => group.displayCode.startsWith('F'))
+      .forEach((previousFrontGroup) => {
+        const stillTrackedAsFront = checkpoint.groups.some((group) =>
+          previousFrontGroup.physicalLineageId
+            ? group.physicalLineageId === previousFrontGroup.physicalLineageId
+            : group.displayCode.startsWith('F') &&
+              previousFrontGroup.riderIds.every((riderId) =>
+                group.riderIds.includes(riderId),
+              ),
+        )
+        if (stillTrackedAsFront) return
+
+        const explicitlyMerged = bridgeMergeEntriesAtKm.some((entry) =>
+          previousFrontGroup.physicalLineageId
+            ? entry.physicalLineageId === previousFrontGroup.physicalLineageId
+            : previousFrontGroup.riderIds.every((riderId) =>
+                entry.riderIds.includes(riderId),
+              ),
+        )
+        const explicitlyCaught = catchEntriesAtKm.some((entry) =>
+          previousFrontGroup.physicalLineageId
+            ? entry.physicalLineageId === previousFrontGroup.physicalLineageId
+            : previousFrontGroup.riderIds.every((riderId) =>
+                entry.riderIds.includes(riderId),
+              ),
+        )
+        const fullyAccountedForByIncidents = previousFrontGroup.riderIds.every(
+          (riderId) =>
+            incidentRiderIdsAtKm.has(riderId) ||
+            checkpoint.groups.some((group) => group.riderIds.includes(riderId)),
+        )
+        if (!explicitlyMerged && !explicitlyCaught && !fullyAccountedForByIncidents) {
+          allBridgeSequencesPhysicallyValid = false
+          pushIssue(
+            `bridge_group_disappears_without_merge:${previousFrontGroup.displayCode}:${checkpoint.checkpointId}`,
+          )
+        }
+      })
+    const currentFrontGroups = checkpoint.groups.filter((group) =>
+      group.displayCode.startsWith('F'),
+    )
     if (
-      previousBridge &&
-      !currentBridge &&
-      !hasBridgeMerge &&
-      !hasCatch
-    ) {
-      allBridgeSequencesPhysicallyValid = false
-      pushIssue(`bridge_group_disappears_without_merge:${checkpoint.checkpointId}`)
-    }
-    if (
-      currentBridge &&
+      currentFrontGroups.length > 0 &&
       !currentPeloton &&
       !hasCatch
     ) {
@@ -31387,6 +33658,7 @@ export function runRaceEngine(
       finishResolution,
       phase10Incidents,
       replayTimeline,
+      roadRaceResolution,
     )
   const replayPublicationPolicy =
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
