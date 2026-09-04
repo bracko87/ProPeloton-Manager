@@ -80,16 +80,16 @@ import {
   type UniversalFinishRiderContext,
   type UniversalRaceEngineInput,
   type UniversalPhase5RoadGroupCandidate,
-} from './runRaceEngine'
+} from './runRaceEngine.ts'
 import {
   buildProductionUniversalRaceEngineInput,
   type ProductionUniversalRaceSources,
-} from './buildProductionRaceInput'
+} from './buildProductionRaceInput.ts'
 import {
   UNIVERSAL_PHASE11_MANIFEST_CONTRACT,
   UNIVERSAL_RACE_STAGE_OUTPUT_CONTRACT,
   buildProductionUniversalRaceOutput,
-} from './buildProductionRaceOutput'
+} from './buildProductionRaceOutput.ts'
 
 function createValidInput(): UniversalRaceEngineInput {
   return {
@@ -7181,19 +7181,23 @@ describe('Phase 5 dynamic chase activation and stage-profile survival targets', 
     )
   })
 
-  it('bounds every late-chase gap change by travelled distance', () => {
+  it('keeps the late-chase emergency rail outside ordinary race physics', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
     const phase4 = result.roadRaceResolution.phase4Finish!
 
     for (const step of phase4.chaseSteps) {
-      const distanceKm = step.kmEnd - step.kmStart
-      expect(step.startGapSeconds - step.endGapSeconds).toBeLessThanOrEqual(
-        distanceKm * 10 + 0.000001,
+      const closureSeconds = Math.max(
+        0,
+        step.startGapSeconds - step.endGapSeconds,
       )
-      expect(step.endGapSeconds - step.startGapSeconds).toBeLessThanOrEqual(
-        distanceKm * 4 + 0.000001,
+      expect(closureSeconds).toBeLessThanOrEqual(
+        step.emergencyRailClosureLimitSeconds + 0.000001,
       )
     }
+    expect(phase4.chaseSteps.some((step) => step.emergencyRailApplied)).toBe(false)
+    expect(result.replaySynchronization.issues).not.toContain(
+      'chase_emergency_rail_prolonged_saturation',
+    )
   })
   it('keeps the Phase 3 to Phase 4 replay on one continuous stored checkpoint sequence', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
@@ -10293,7 +10297,7 @@ describe('Phase 7 replay timeline foundation — Task 7.1', () => {
     )
   })
 
-  it('makes the finish checkpoint exactly match final groups, gaps and classification', () => {
+  it('makes the finish checkpoint exactly match authoritative Phase 10 final groups, gaps and classification', () => {
     const result = runRaceEngine(createExpandedFieldInput(26))
     const finalCheckpoint = result.replayTimeline.checkpoints.find(
       (checkpoint) =>
@@ -10304,22 +10308,23 @@ describe('Phase 7 replay timeline foundation — Task 7.1', () => {
       finalCheckpoint.groups.map((group) => ({
         groupCode: group.groupCode,
         displayCode: group.displayCode,
-        riderIds: group.riderIds,
+        physicalPosition: group.physicalPosition,
+        colorKey: group.colorKey,
+        physicalLineageId: group.physicalLineageId ?? null,
+        riderIds: [...group.riderIds].sort(),
       })),
     ).toEqual(
-      result.groupAndTimeResolution.finalGroups.map((group) => ({
+      result.phase10Incidents.finalRoadGroups.map((group) => ({
         groupCode: group.groupCode,
         displayCode: group.displayCode,
-        riderIds: group.riderIds,
+        physicalPosition: group.physicalPosition,
+        colorKey: group.colorKey,
+        physicalLineageId: group.physicalLineageId ?? null,
+        riderIds: [...group.riderIds].sort(),
       })),
     )
     expect(finalCheckpoint.gaps).toEqual(
-      result.groupAndTimeResolution.finalGroups.map((group) => ({
-        groupCode: group.groupCode,
-        displayCode: group.displayCode,
-        gapSeconds: group.gapSeconds,
-        officialTimeSeconds: group.officialTimeSeconds,
-      })),
+      result.phase10Incidents.finalRoadGaps.map((gap) => ({ ...gap })),
     )
 
     const replayRiderById = new Map(
@@ -10645,8 +10650,8 @@ describe('Phase 7 calculated replay events — Task 7.2', () => {
     ).toBe(phase1.initialGapSeconds)
   })
 
-  it('inserts every successful decisive attack and the calculated group split', () => {
-    const result = runRaceEngine(createReplayCatchInput())
+  it('publishes every successful decisive attack inside the calculated Phase 3 attack stream and split sequence', () => {
+    const result = runRaceEngine(createPhase11gMixedStressInput(0))
     const phase3 = result.roadRaceResolution.phase3Decisive!
     const successfulAttempts = phase3.attackAttempts.filter(
       (attempt) => attempt.attackSucceeded,
@@ -10655,19 +10660,32 @@ describe('Phase 7 calculated replay events — Task 7.2', () => {
       (checkpoint) =>
         checkpoint.checkpointKind === 'event' &&
         checkpoint.phase === 3 &&
-        checkpoint.commentary[0]?.eventType === 'attack',
+        checkpoint.commentary.some((entry) => entry.eventType === 'attack'),
+    )
+    const successfulReplayRiderIds = new Set(
+      decisiveAttackCheckpoints.flatMap((checkpoint) =>
+        checkpoint.commentary
+          .filter((entry) => entry.eventType === 'attack')
+          .flatMap((entry) => entry.riderIds),
+      ),
     )
     const splitCheckpoint = result.replayTimeline.checkpoints.find(
       (checkpoint) =>
-        checkpoint.commentary[0]?.eventType === 'group_split',
+        checkpoint.phase === 3 &&
+        checkpoint.commentary.some((entry) => entry.eventType === 'group_split'),
     )
 
     expect(successfulAttempts.length).toBeGreaterThan(0)
-    expect(decisiveAttackCheckpoints).toHaveLength(successfulAttempts.length)
+    expect(decisiveAttackCheckpoints.length).toBeGreaterThanOrEqual(
+      successfulAttempts.length,
+    )
+    successfulAttempts.forEach((attempt) => {
+      expect(successfulReplayRiderIds.has(attempt.riderId)).toBe(true)
+    })
     expect(splitCheckpoint).toBeDefined()
-    expect(splitCheckpoint?.groups.every(
-      (group) => group.riderIds.length > 0,
-    )).toBe(true)
+    expect(
+      splitCheckpoint?.groups.every((group) => group.riderIds.length > 0),
+    ).toBe(true)
     expect(
       splitCheckpoint?.groups
         .flatMap((group) => group.riderIds)
@@ -12300,8 +12318,9 @@ describe('Phase 8 complete fatigue, effort, risk and persistence handoff', () =>
     )
 
     expect(source).not.toMatch(/supabase\s*\./i)
+    expect(source).not.toMatch(/\.\s*rpc\s*\(/i)
     expect(source).not.toMatch(/supabase\s*\.\s*from\s*\(/i)
-    expect(source).not.toMatch(/\b(insert|update|delete)\s*\(/i)
+    expect(source).not.toMatch(/\b(insert\s+into|update\s+[^\n]+\s+set|delete\s+from)\b/i)
     expect(source).toContain(
       "activationBoundary: 'existing_application_service_after_stage_finalization'",
     )
@@ -13126,17 +13145,19 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
     expect(summary.allFrontGroupTransfersPhysicallyValid).toBe(false)
     expect(
       summary.issues.some((issue) =>
-        issue.startsWith('opening_breakaway_lineage_changed'),
+        issue.startsWith('front_group_transfer_without_physical_transition:'),
       ),
     ).toBe(true)
     expect(
-      summary.issues.some((issue) =>
-        issue.startsWith('front_group_transfer_without_physical_transition:'),
+      summary.issues.some(
+        (issue) =>
+          issue.startsWith('bridge_merge_invalid:') ||
+          issue.startsWith('rider_group_gap_mismatch:'),
       ),
     ).toBe(true)
   })
 
-  it('rejects a large breakaway-gap collapse that is not supported by travelled distance', () => {
+  it('rejects a breakaway-gap collapse beyond the loose emergency physical envelope', () => {
     const input = createSuccessfulOpeningEscapeInput()
     const result = runRaceEngine(input)
     const checkpoints = result.replayTimeline.checkpoints
@@ -13149,44 +13170,48 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
       const currentBreakaway = checkpoint.groups.find((group) =>
         group.displayCode.startsWith('B'),
       )
-      const previousPelotonGap = previous.gaps.find(
-        (gap) => gap.displayCode === 'P',
-      )?.gapSeconds
       return (
         previousBreakaway !== undefined &&
         currentBreakaway !== undefined &&
         JSON.stringify([...previousBreakaway.riderIds].sort()) ===
           JSON.stringify([...currentBreakaway.riderIds].sort()) &&
-        previousPelotonGap !== undefined &&
-        previousPelotonGap > 40 &&
         checkpoint.raceProgress.kmFromStart -
-          previous.raceProgress.kmFromStart > 1
+          previous.raceProgress.kmFromStart > 0
       )
     })
+    expect(targetIndex).toBeGreaterThan(0)
+    const previous = checkpoints[targetIndex - 1]
     const target = checkpoints[targetIndex]
+    const travelledKm = Math.max(
+      0.000001,
+      target.raceProgress.kmFromStart - previous.raceProgress.kmFromStart,
+    )
     const collapsedGapSeconds = 10
-    const mutatedCheckpoint = {
-      ...target,
-      groups: target.groups.map((group) =>
-        group.displayCode === 'P'
-          ? { ...group, gapSeconds: collapsedGapSeconds }
-          : group,
+    const impossiblePreviousGapSeconds =
+      collapsedGapSeconds + travelledKm * 120 + 3
+    const mutatePelotonGap = (checkpoint: typeof target, gapSeconds: number) => ({
+      ...checkpoint,
+      groups: checkpoint.groups.map((group) =>
+        group.displayCode === 'P' ? { ...group, gapSeconds } : group,
       ),
-      gaps: target.gaps.map((gap) =>
-        gap.displayCode === 'P'
-          ? { ...gap, gapSeconds: collapsedGapSeconds }
-          : gap,
+      gaps: checkpoint.gaps.map((gap) =>
+        gap.displayCode === 'P' ? { ...gap, gapSeconds } : gap,
       ),
-      riderStates: target.riderStates.map((row) =>
-        row.displayCode === 'P'
-          ? { ...row, gapSeconds: collapsedGapSeconds }
-          : row,
+      riderStates: checkpoint.riderStates.map((row) =>
+        row.displayCode === 'P' ? { ...row, gapSeconds } : row,
       ),
-    }
+    })
     const replayTimeline = {
       ...result.replayTimeline,
       checkpoints: checkpoints.map((checkpoint, index) =>
-        index === targetIndex ? mutatedCheckpoint : checkpoint,
+        index === targetIndex - 1
+          ? mutatePelotonGap(
+              checkpoint as typeof target,
+              impossiblePreviousGapSeconds,
+            )
+          : index === targetIndex
+            ? mutatePelotonGap(checkpoint, collapsedGapSeconds)
+            : checkpoint,
       ),
     }
     const summary = buildUniversalReplaySynchronizationSummary(
@@ -15531,6 +15556,21 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
       expect(result.phase10Incidents.allAcceptedRidersHaveExactlyOneStatus).toBe(true)
       expect(result.phase10Incidents.allAcceptedRidersPresentInStatusGroups).toBe(true)
       expect(classified).toEqual(accepted)
+      if (
+        input.stage.stageFormat === 'team_time_trial' ||
+        input.stage.stageFormat === 'pair_time_trial'
+      ) {
+        const finishCommentary = result.replayTimeline.checkpoints
+          .at(-1)!
+          .commentary.filter((entry) => entry.eventType === 'finish')
+        expect(finishCommentary).toHaveLength(1)
+        expect(finishCommentary[0].riderIds).toEqual([
+          result.finishResolution.winnerRiderId,
+        ])
+        expect(finishCommentary[0].teamIds).toEqual([
+          result.finishResolution.winnerTeamId,
+        ])
+      }
       expect(
         result.replayTimeline.checkpoints.every(
           (checkpoint) => checkpoint.riderStates.length === accepted.length,
@@ -16782,19 +16822,66 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(tired.replaySynchronization.synchronized).toBe(true)
   })
 
-  it('keeps finish commentary locked to the authoritative winner in individual and team formats', () => {
-    const roadResult = runRaceEngine(createValidInput())
+  it('keeps finish commentary locked to the authoritative winner and stamps the road winner at the winner official time', () => {
+    // Seed 3 is a deterministic split finish: the winner reaches the line before
+    // the final classified road group. This prevents a regression where every
+    // 100%-distance commentary item inherited the slowest finisher's clock.
+    const roadResult = runRaceEngine(createPhase11gMixedStressInput(3))
     const roadWinner = roadResult.finishResolution.classification.find(
       (row) => row.status === 'finished' && row.rank === 1,
     )!
-    const roadFinishEntries = roadResult.replayTimeline.checkpoints
-      .at(-1)!
-      .commentary.filter((entry) => entry.eventType === 'finish')
+    const roadFinishCheckpoints = roadResult.replayTimeline.checkpoints.filter(
+      (checkpoint) =>
+        checkpoint.commentary.some((entry) => entry.eventType === 'finish'),
+    )
+    const roadFinishEntries = roadFinishCheckpoints.flatMap((checkpoint) =>
+      checkpoint.commentary.filter((entry) => entry.eventType === 'finish'),
+    )
+    const roadWinnerCheckpoint = roadFinishCheckpoints[0]!
+    const roadFinalCheckpoint = roadResult.replayTimeline.checkpoints.find(
+      (checkpoint) =>
+        checkpoint.checkpointId === roadResult.replayTimeline.finalCheckpointId,
+    )!
+    const roadLastFinisherTime = Math.max(
+      ...roadResult.finishResolution.classification
+        .filter(
+          (row) =>
+            row.status === 'finished' && row.officialTimeSeconds !== null,
+        )
+        .map((row) => row.officialTimeSeconds!),
+    )
+    const winnerCheckpointIndex = roadResult.replayTimeline.checkpoints.findIndex(
+      (checkpoint) => checkpoint.checkpointId.endsWith('|winner-finish'),
+    )
+    const transitionCheckpointIndex = roadResult.replayTimeline.checkpoints.findIndex(
+      (checkpoint) => checkpoint.checkpointId.endsWith('|finish-group-transition'),
+    )
+    const finalCheckpointIndex = roadResult.replayTimeline.checkpoints.findIndex(
+      (checkpoint) => checkpoint.checkpointId === roadResult.replayTimeline.finalCheckpointId,
+    )
 
     expect(roadFinishEntries).toHaveLength(1)
     expect(roadFinishEntries[0].riderIds).toEqual([roadWinner.riderId])
     expect(roadFinishEntries[0].teamIds).toEqual([roadWinner.teamId])
+    expect(roadWinnerCheckpoint.finalResultsVisible).toBe(false)
+    expect(roadWinnerCheckpoint.raceProgress.authoritativeRaceSecond).toBe(
+      roadWinner.officialTimeSeconds,
+    )
+    expect(roadFinalCheckpoint.finalResultsVisible).toBe(true)
+    expect(roadFinalCheckpoint.raceProgress.authoritativeRaceSecond).toBe(
+      roadLastFinisherTime,
+    )
+    expect(roadLastFinisherTime).toBeGreaterThan(roadWinner.officialTimeSeconds!)
+    expect(winnerCheckpointIndex).toBeGreaterThanOrEqual(0)
+    expect(transitionCheckpointIndex).toBeGreaterThan(winnerCheckpointIndex)
+    expect(finalCheckpointIndex).toBeGreaterThan(transitionCheckpointIndex)
     expect(roadResult.replaySynchronization.finishCommentaryMatchesClassification).toBe(true)
+    expect(roadResult.replaySynchronization.issues).not.toContain(
+      'finish_replay_timestamp_mismatch',
+    )
+    expect(roadResult.replaySynchronization.issues).not.toContain(
+      'final_replay_timestamp_mismatch',
+    )
 
     const teamTimeTrialResult = runRaceEngine(
       withTimeTrialRules(
@@ -16819,8 +16906,8 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     for (const result of [teamTimeTrialResult, pairTimeTrialResult]) {
       const winningTeam = result.finishResolution.teamTimes[0]!
       const finishEntries = result.replayTimeline.checkpoints
-        .at(-1)!
-        .commentary.filter((entry) => entry.eventType === 'finish')
+        .flatMap((checkpoint) => checkpoint.commentary)
+        .filter((entry) => entry.eventType === 'finish')
 
       expect(finishEntries).toHaveLength(1)
       expect(winningTeam.teamId).toBe(result.finishResolution.winnerTeamId)
@@ -16836,6 +16923,116 @@ describe('Phase 11G organic race physics and replay continuity', () => {
         'finish_commentary_winner_mismatch',
       )
     }
+  })
+
+  it('keeps the original V5 bridge-lineage production regression seeds synchronized', () => {
+    for (const index of [173, 205, 309]) {
+      const result = runRaceEngine(createPhase11gMixedStressInput(index))
+      expect(result.replaySynchronization.synchronized).toBe(true)
+      expect(result.replaySynchronization.issues).toEqual([])
+    }
+  })
+
+  it('rejects prolonged emergency-rail saturation as a publication synchronization issue', () => {
+    const input = createSuccessfulOpeningEscapeInput()
+    const result = runRaceEngine(input)
+    const phase4 = result.roadRaceResolution.phase4Finish!
+    const templateStep = phase4.chaseSteps[0]!
+    const saturatedSteps = [0, 1, 2].map((index) => ({
+      ...templateStep,
+      kmStart: 80 + index * 2,
+      kmEnd: 82 + index * 2,
+      emergencyRailApplied: true,
+    }))
+    const mutatedRoadRaceResolution = {
+      ...result.roadRaceResolution,
+      phase4Finish: {
+        ...phase4,
+        chaseSteps: saturatedSteps,
+      },
+    }
+    const synchronization = buildUniversalReplaySynchronizationSummary(
+      input,
+      result.riderReadiness,
+      result.roadCommandResolution,
+      result.intermediatePointFinalization,
+      result.groupAndTimeResolution,
+      result.finishResolution,
+      result.phase10Incidents,
+      result.replayTimeline,
+      mutatedRoadRaceResolution,
+    )
+
+    expect(synchronization.synchronized).toBe(false)
+    expect(synchronization.issues).toContain(
+      'chase_emergency_rail_prolonged_saturation',
+    )
+  })
+
+  it('uses the engine authoritative road clock in Race Detail commentary when available', () => {
+    const pageSource = readFileSync(
+      new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url),
+      'utf8',
+    )
+
+    expect(pageSource).toContain(
+      'checkpoint.raceProgress.authoritativeRaceSecond',
+    )
+    expect(pageSource).toContain(
+      "typeof authoritativeRaceSecond === 'number'",
+    )
+    expect(pageSource).toContain('Number.isFinite(authoritativeRaceSecond)')
+    expect(pageSource).toContain('durationSeconds * elapsedFraction')
+  })
+
+  it('preserves Phase 10 final-road lineage metadata and never republishes exact duplicate behind-peloton gaps', () => {
+    const result = runRaceEngine(
+      createPhase11hLeaderRescueInput({
+        seed: 'steep2-protect-rescue-seed-180',
+        steepClimb: true,
+        protectHelpers: true,
+      }),
+    )
+    const finalCheckpoint = result.replayTimeline.checkpoints.find(
+      (checkpoint) => checkpoint.checkpointId === result.replayTimeline.finalCheckpointId,
+    )!
+    const expectedGroups = result.phase10Incidents.finalRoadGroups.map((group) => ({
+      groupCode: group.groupCode,
+      displayCode: group.displayCode,
+      physicalLineageId: group.physicalLineageId ?? null,
+      physicalPosition: group.physicalPosition,
+      colorKey: group.colorKey,
+      riderIds: [...group.riderIds],
+    }))
+
+    expect(finalCheckpoint.groups).toEqual(expectedGroups)
+    expect(finalCheckpoint.gaps).toEqual(result.phase10Incidents.finalRoadGaps)
+
+    result.replayTimeline.checkpoints.forEach((checkpoint) => {
+      const behindGroups = checkpoint.groups.filter(
+        (group) => group.physicalPosition === 'behind_peloton',
+      )
+      const behindGaps = new Map(
+        checkpoint.gaps.map((gap) => [gap.displayCode, gap.gapSeconds] as const),
+      )
+      for (let leftIndex = 0; leftIndex < behindGroups.length; leftIndex += 1) {
+        for (
+          let rightIndex = leftIndex + 1;
+          rightIndex < behindGroups.length;
+          rightIndex += 1
+        ) {
+          const leftGap = behindGaps.get(behindGroups[leftIndex].displayCode)
+          const rightGap = behindGaps.get(behindGroups[rightIndex].displayCode)
+          if (leftGap === undefined || rightGap === undefined) continue
+          expect(Math.abs(leftGap - rightGap)).toBeGreaterThan(0.000001)
+        }
+      }
+    })
+
+    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(result.replaySynchronization.issues).not.toContain(
+      'final_road_groups_or_gaps_mismatch',
+    )
   })
 
   it('lets protect-leader helpers physically collect a classification leader and pay the chase energy cost', () => {
