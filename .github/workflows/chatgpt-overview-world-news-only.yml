@@ -36,16 +36,14 @@ jobs:
           text = overview_path.read_text(encoding='utf-8')
 
           pattern = re.compile(
-              r'(?m)^(?P<indent>\s*)const candidates: OverviewNewsSortableItem\[\] = \[\n'
-              r'(?P=item_indent>\s*)\.\.\.teamItems,\n'
-              r'(?P=item_indent2>\s*)\.\.\.worldItems,\n'
+              r'(?m)^(?P<indent>[ \t]*)const candidates: OverviewNewsSortableItem\[\] = \[\n'
+              r'(?P<item_indent>[ \t]*)\.\.\.teamItems,\n'
+              r'(?P=item_indent)\.\.\.worldItems,\n'
               r'(?P=indent)\]\.map\(\(item, sourceOrder\) => \(\{'
           )
           match = pattern.search(text)
           if match is None:
               raise SystemExit('Could not find the mixed team/world news candidate block')
-          if match.group('item_indent') != match.group('item_indent2'):
-              raise SystemExit('Unexpected news candidate indentation')
 
           indent = match.group('indent')
           item_indent = match.group('item_indent')
@@ -58,18 +56,11 @@ jobs:
               f'{indent}].map((item, sourceOrder) => ({{'
           )
           text = pattern.sub(replacement, text, count=1)
-
-          old_doc = '''/**
- * NewsCommandCenter
- * Newsletter-style panel. Team news combines alerts and activity feed; world news uses game/news data.
- */'''
-          new_doc = '''/**
- * NewsCommandCenter
- * World-peloton news panel. Team alerts/activity are deliberately excluded from this board.
- */'''
-          if old_doc in text:
-              text = text.replace(old_doc, new_doc, 1)
-
+          text = text.replace(
+              ' * Newsletter-style panel. Team news combines alerts and activity feed; world news uses game/news data.',
+              ' * World-peloton news panel. Team alerts/activity are deliberately excluded from this board.',
+              1,
+          )
           overview_path.write_text(text, encoding='utf-8')
 
           translations = {
