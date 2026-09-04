@@ -6256,8 +6256,10 @@ function buildSortedDedupedNewsBoardItems(
   currentGameDateLabel: string,
   maxItems = 7,
 ) {
+  // The Overview news board is intentionally world-only. Team alerts and
+  // club activity stay in Attention/Notifications and are not mixed into this feed.
+  void teamItems;
   const candidates: OverviewNewsSortableItem[] = [
-    ...teamItems,
     ...worldItems,
   ].map((item, sourceOrder) => ({
     ...item,
@@ -6306,7 +6308,7 @@ function buildSortedDedupedNewsBoardItems(
 
 /**
  * NewsCommandCenter
- * Newsletter-style panel. Team news combines alerts and activity feed; world news uses game/news data.
+ * World-peloton news panel. Team alerts/activity are deliberately excluded from this board.
  */
 function NewsCommandCenter({
   alerts,
