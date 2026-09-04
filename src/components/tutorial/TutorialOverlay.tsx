@@ -69,6 +69,7 @@ export default function TutorialOverlay({
   compact = false,
 }: TutorialOverlayProps): JSX.Element | null {
   const { t, i18n } = useTranslation('tutorials')
+  const bodyScrollRef = React.useRef<HTMLDivElement | null>(null)
 
   const englishLiteralKeys = React.useMemo(() => {
     return buildTutorialLiteralKeyMap(
@@ -96,11 +97,34 @@ export default function TutorialOverlay({
   const localizedSecondaryAction =
     localizeTutorialLiteral(secondaryAction) ?? secondaryAction
 
+  const contentKey = React.useMemo(
+    () =>
+      [
+        variant,
+        stepLabel ?? '',
+        title,
+        body,
+        primaryAction,
+        secondaryAction ?? '',
+        compact ? 'compact' : 'regular',
+      ].join('|'),
+    [variant, stepLabel, title, body, primaryAction, secondaryAction, compact],
+  )
+
+  React.useEffect(() => {
+    const scrollElement = bodyScrollRef.current
+    if (!scrollElement) return
+
+    scrollElement.scrollTop = 0
+    scrollElement.scrollLeft = 0
+  }, [contentKey])
+
   if (!open) return null
 
   if (variant === 'invite') {
     return createPortal(
       <div
+        key={`tutorial-invite-${contentKey}`}
         data-tutorial-overlay-panel="true"
         className="fixed right-4 top-28 z-[1000] flex max-w-[calc(100vw-32px)] items-start gap-3"
       >
@@ -157,6 +181,7 @@ export default function TutorialOverlay({
       <div className="pointer-events-none fixed inset-0 z-[999] bg-black/10" />
 
       <aside
+        key={`tutorial-panel-${contentKey}`}
         data-tutorial-overlay-panel="true"
         className={`fixed right-4 top-24 z-[1000] flex max-h-[calc(100vh-112px)] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ${
           compact ? 'w-[360px]' : 'w-[390px]'
@@ -190,6 +215,7 @@ export default function TutorialOverlay({
         </div>
 
         <div
+          ref={bodyScrollRef}
           className={`min-h-0 flex-1 overflow-y-auto ${
             compact ? 'px-5 py-5' : 'px-6 py-6'
           }`}
