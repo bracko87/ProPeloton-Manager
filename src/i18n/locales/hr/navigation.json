@@ -1,6 +1,7 @@
 {
   "home": "Početna",
   "overview": "Pregled",
+  "guidedTutorials": "Vodiči",
   "squad": "Ekipa",
   "staff": "Osoblje",
   "calendar": "Kalendar",
@@ -28,6 +29,7 @@
   "subtitle": "Multiplayer biciklistički menadžment",
   "descriptions": {
     "overview": "Pregled kluba i ažuriranja",
+    "guidedTutorials": "Procesni vodiči i pomoć",
     "squad": "Upravljanje vozačima i sastavom",
     "calendar": "Predstojeće utrke i događaji",
     "racePreparation": "Startlist, logistika i Stage Plans",
