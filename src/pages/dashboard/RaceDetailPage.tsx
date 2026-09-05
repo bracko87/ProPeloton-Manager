@@ -13514,6 +13514,10 @@ function UniversalRaceReplayPage({
         result?.finishResolution.winnerRiderId ??
         '—'
       : 'Hidden until finish'
+  const winnerOfficialTimeSeconds =
+    result?.finishResolution.classification.find(
+      (row) => row.status === 'finished' && row.rank === 1
+    )?.officialTimeSeconds ?? null
 
   const teamInputById = useMemo(
     () =>
@@ -14013,6 +14017,15 @@ function UniversalRaceReplayPage({
     const catchStep = phase4Chase?.chaseSteps.find(
       (step) => step.startGapSeconds > 0 && step.endGapSeconds === 0
     ) ?? null
+    const chaseStartStep = phase4Chase?.chaseSteps.find(
+      (step) =>
+        step.startGapSeconds > 0 &&
+        step.endGapSeconds < step.startGapSeconds - 0.000001
+    ) ?? null
+    const automaticActivityStartKm =
+      phase4Chase && input.stage.distanceKm > 0
+        ? phase4Chase.automaticActivityStartsAtFraction * input.stage.distanceKm
+        : null
     const bridgeGroup = phase4Chase?.bridgeGroups[0] ?? null
     const bridgeExtraEnergySpent = bridgeGroup
       ? bridgeGroup.energyCostByRider.reduce(
@@ -14083,11 +14096,8 @@ function UniversalRaceReplayPage({
             },
         chasePacing: {
           active: Boolean(phase4Chase?.automaticActivityApplied),
-          startKm:
-            phase4Chase && input.stage.distanceKm > 0
-              ? phase4Chase.automaticActivityStartsAtFraction *
-                input.stage.distanceKm
-              : null,
+          startKm: chaseStartStep?.kmStart ?? automaticActivityStartKm,
+          automaticActivityStartKm,
           startGapSeconds: phase4Chase?.startGapSeconds ?? null,
           catchKm: catchStep?.kmEnd ?? null,
           endGapSeconds: phase4Chase?.endGapSeconds ?? null,
@@ -15885,7 +15895,9 @@ function UniversalRaceReplayPage({
                             : 'Stage standing · riders'}
                     </div>
                     <div className="text-xs font-semibold text-slate-500">
-                      {formatRaceClock(currentReplayDisplaySecond)}
+                      {resultsVisible && winnerOfficialTimeSeconds !== null
+                        ? `Winner ${formatRaceClock(winnerOfficialTimeSeconds)}`
+                        : formatRaceClock(currentReplayDisplaySecond)}
                     </div>
                   </div>
 
