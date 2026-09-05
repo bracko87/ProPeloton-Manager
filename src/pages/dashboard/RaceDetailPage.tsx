@@ -8587,6 +8587,73 @@ type StageRouteMarker = {
   category?: string | null
 }
 
+/*
+ * Experimental Tour-style stage profile renderer.
+ *
+ * IMPORTANT:
+ * - Limited to the three user-selected test races.
+ * - No database mutation is required.
+ * - The elevation curve still comes from the existing stage profile payload.
+ * - Visible sprint/KOM/finish gates come from race_stage_points whenever those
+ *   authoritative engine points are available, preventing hidden gate mismatches.
+ * - The default renderer remains untouched for every other race.
+ */
+const TOUR_STYLE_STAGE_PROFILE_RACE_IDS = new Set([
+  'a68f8c50-fe61-43ff-9ae5-6bd07a3ce4e1', // Cape Peninsula Pro Classic
+  '505db435-ecb9-463d-b946-1158c549a8c9', // Tour del Solis
+  'd02b6ef7-7e1e-4afc-a565-9ac2d601c2c4', // Nouméa West Coast Classic
+])
+
+type StageProfileVisualVariant = 'default' | 'tour'
+
+function getStageProfileVisualVariant(raceId?: string | null): StageProfileVisualVariant {
+  return raceId && TOUR_STYLE_STAGE_PROFILE_RACE_IDS.has(raceId) ? 'tour' : 'default'
+}
+
+function buildAuthoritativeStageProfileMarkers(
+  points: RaceStagePoint[]
+): StageRouteMarker[] {
+  return points
+    .map((point): StageRouteMarker | null => {
+      const km = Number(point.km_from_start)
+      if (!Number.isFinite(km)) return null
+
+      const pointType = point.point_type?.toUpperCase()
+      const type =
+        pointType === 'START'
+          ? 'start'
+          : pointType === 'FINISH'
+            ? 'finish'
+            : pointType === 'KOM'
+              ? 'kom'
+              : pointType === 'INTERMEDIATE_SPRINT' || pointType === 'BONUS_SPRINT'
+                ? 'sprint'
+                : null
+
+      if (!type) return null
+
+      const fallbackLabel =
+        type === 'start'
+          ? 'Start'
+          : type === 'finish'
+            ? 'Finish'
+            : type === 'kom'
+              ? point.kom_category
+                ? `Cat ${point.kom_category}`
+                : 'KOM'
+              : 'Sprint'
+
+      return {
+        type,
+        km,
+        label: point.name?.trim() || fallbackLabel,
+        category: point.kom_category ?? null,
+      }
+    })
+    .filter((marker): marker is StageRouteMarker => marker !== null)
+    .sort((left, right) => left.km - right.km)
+}
+
 type StageProfileDetailItem = Record<string, JsonValue>
 
 type StageProfileDetailPayload = {
@@ -9097,6 +9164,7 @@ function StageProfileChart({
   auxiliaryMarkers = [],
   compact = false,
   roadReplayCompactUi = false,
+  visualVariant = 'default',
 }: {
   points: BackendStageProfilePoint[]
   markers: StageRouteMarker[]
@@ -9109,9 +9177,11 @@ function StageProfileChart({
   auxiliaryMarkers?: StageProfileAuxiliaryMarker[]
   compact?: boolean
   roadReplayCompactUi?: boolean
+  visualVariant?: StageProfileVisualVariant
 }) {
   const { t } = useTranslation('raceDetail')
   const chartInstanceId = useId().replace(/:/g, '')
+  const isTourStyle = visualVariant === 'tour' && !roadReplayCompactUi
 
   if (!points.length || !distanceKm) {
     return (
@@ -9126,11 +9196,13 @@ function StageProfileChart({
     elevation_m: Number(point.elevation),
   }))
 
-  const width = compact ? 1000 : 920
-  const height = compact ? 242 : 320
+  const width = compact ? 1000 : isTourStyle ? 1080 : 920
+  const height = compact ? 242 : isTourStyle ? 380 : 320
   const padding = compact
     ? { top: 34, right: 18, bottom: 42, left: 64 }
-    : { top: 38, right: 18, bottom: 52, left: 70 }
+    : isTourStyle
+      ? { top: 82, right: 24, bottom: 60, left: 72 }
+      : { top: 38, right: 18, bottom: 52, left: 70 }
   const safeDistanceKm = Math.max(1, Number(distanceKm))
   const innerHeight = height - padding.top - padding.bottom
   const innerWidth = width - padding.left - padding.right
@@ -9426,8 +9498,18 @@ function StageProfileChart({
           />
         ) : null}
 
-        <path d={parsed.areaPath} fill="rgba(250, 204, 21, 0.55)" />
-        <path d={parsed.linePath} fill="none" stroke="#334155" strokeWidth="3" />
+        <path
+          d={parsed.areaPath}
+          fill={isTourStyle ? 'rgba(250, 204, 21, 0.92)' : 'rgba(250, 204, 21, 0.55)'}
+        />
+        <path
+          d={parsed.linePath}
+          fill="none"
+          stroke={isTourStyle ? '#111827' : '#334155'}
+          strokeWidth={isTourStyle ? 4 : 3}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
 
         {replayProgressX !== null && replayProgressY !== null ? (
           <g aria-label={`Replay progress ${Math.round(replayProgressPercent ?? 0)} percent`}>
@@ -16340,6 +16422,15 @@ function RaceStageProfilePanel({
   const stageFinishKm = Number(selectedStage?.distance_km ?? profile.distance_km)
   const finishKm = Number.isFinite(stageFinishKm) ? stageFinishKm : fallbackFinishKm
 
+  const profileVisualVariant = getStageProfileVisualVariant(race?.id)
+  const authoritativeProfileMarkers = buildAuthoritativeStageProfileMarkers(
+    selectedStage?.points ?? []
+  )
+  const profileChartMarkers =
+    profileVisualVariant === 'tour' && authoritativeProfileMarkers.length > 0
+      ? authoritativeProfileMarkers
+      : profile.route_markers ?? []
+
   const hasMountainFinish = mountainClimbs.some((climb) =>
     isSameKm(climb.km, finishKm)
   )
@@ -16478,10 +16569,11 @@ function RaceStageProfilePanel({
         <div className="mt-4">
           <StageProfileChart
             points={profile.profile_points ?? []}
-            markers={profile.route_markers ?? []}
+            markers={profileChartMarkers}
             distanceKm={Number(profile.distance_km ?? 0)}
             terrainType={profile.terrain_type}
             mountainClimbs={profile.mountain_climbs ?? []}
+            visualVariant={profileVisualVariant}
           />
         </div>
 
