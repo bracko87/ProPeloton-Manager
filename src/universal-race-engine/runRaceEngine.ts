@@ -59,7 +59,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11g-continuous-road-physics-v4-2026-09-03' as const
+  'phase11h-v5-1-targeted-tuning-2026-09-05' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -7890,6 +7890,12 @@ interface RoadStepEnergyComponents {
   readonly effectiveTerrainType: UniversalRoadOpeningStepTerrain
   readonly baseEnergyCostPerKm: number
   readonly slopeEnergyMultiplier: number
+  /**
+   * Terrain-specific skill efficiency. On climbs, climbing skill changes how
+   * much reserve is required to ride the same road section; other terrain
+   * types currently keep a neutral multiplier.
+   */
+  readonly terrainSkillEnergyMultiplier: number
   readonly riderEfficiencyMultiplier: number
   readonly commandEnergyMultiplier: number
   readonly weatherEnergyMultiplier: number
@@ -8273,6 +8279,10 @@ function calculateRoadStepEnergyComponents(
     1 + Math.max(slopePercent, 0) * slopeCoefficient
   const energyEfficiencyScore =
     endurance * 0.5 + resistance * 0.3 + recovery * 0.2
+  const terrainSkillEnergyMultiplier =
+    effectiveTerrainType === 'climb' || effectiveTerrainType === 'steep_climb'
+      ? clamp(1 + (50 - clamp(rider.climbing, 1, 100)) * 0.0015, 0.94, 1.06)
+      : 1
   const riderEfficiencyMultiplier = clamp(
     1 + (60 - energyEfficiencyScore) * 0.006,
     0.84,
@@ -8324,6 +8334,7 @@ function calculateRoadStepEnergyComponents(
     distanceKm *
     baseEnergyCostPerKm *
     slopeEnergyMultiplier *
+    terrainSkillEnergyMultiplier *
     riderEfficiencyMultiplier *
     commandEnergyMultiplier *
     weatherEnergyMultiplier *
@@ -8342,6 +8353,10 @@ function calculateRoadStepEnergyComponents(
     effectiveTerrainType,
     baseEnergyCostPerKm: deterministicRound(baseEnergyCostPerKm, 6),
     slopeEnergyMultiplier: deterministicRound(slopeEnergyMultiplier, 6),
+    terrainSkillEnergyMultiplier: deterministicRound(
+      terrainSkillEnergyMultiplier,
+      6,
+    ),
     riderEfficiencyMultiplier: deterministicRound(
       riderEfficiencyMultiplier,
       6,
@@ -14149,6 +14164,22 @@ export function resolveRoadPhase4Finish(
     0,
     1,
   )
+  const lateClimbSelectionHardness =
+    lateTerrain.terrainType === 'climb' || lateTerrain.terrainType === 'steep_climb'
+      ? clamp(
+          lateGradientPressure * 0.45 +
+            lateTerrainDistancePressure * 0.35 +
+            lateTerrain.selectionSeverity * 0.15 +
+            lateRacePressure * 0.05,
+          0,
+          1,
+        )
+      : 0
+  // v5.1: hard, long climbs must create a genuinely selective front group.
+  // Climbing remains a continuous skill rather than a hard eligibility cut,
+  // but riders below 60 climbing receive progressively more contact pressure
+  // as gradient and duration rise. Strong climbers receive only a small
+  // counter-bonus so the skill is not counted twice too aggressively.
   // v11g-v4: sustainable climbing now depends more strongly on live reserve.
   // Longer/steeper climbs raise both the competitive pace reference and the
   // minimum reserve required to hold the group. This is still rider-by-rider
@@ -14165,8 +14196,9 @@ export function resolveRoadPhase4Finish(
         lateTerrain.selectionSeverity * 2 -
         lateGradientPressure * 1.8 -
         lateTerrainDistancePressure * 1.2 -
-        lateRacePressure * 1.2,
-      4,
+        lateRacePressure * 1.2 -
+        lateClimbSelectionHardness * 0.8,
+      3.2,
       8.2,
     ),
     6,
@@ -14227,12 +14259,25 @@ export function resolveRoadPhase4Finish(
       )
       const suitability =
         suitabilityByRiderId.get(row.riderId)?.suitabilityScore ?? 0
+      const lowClimberContactPenalty =
+        lateClimbSelectionHardness *
+        Math.max(0, 60 - clamp(rider.climbing, 1, 100)) *
+        0.32
+      const strongClimberContactBonus =
+        lateClimbSelectionHardness *
+        Math.max(0, clamp(rider.climbing, 1, 100) - 60) *
+        0.05
+      const climbingContactAdjustment = deterministicRound(
+        strongClimberContactBonus - lowClimberContactPenalty,
+        6,
+      )
       const holdScore = deterministicRound(
         terrainAbility * 0.58 +
           suitability * 0.1 +
           readiness.readinessScore * 0.06 +
           energyAtSelection * 0.26 +
-          phase.commandEffect.performanceModifier,
+          phase.commandEffect.performanceModifier +
+          climbingContactAdjustment,
         6,
       )
       return {
@@ -28992,7 +29037,7 @@ function resolveUniversalPhase10Incidents({
   }): readonly string[] => {
     const causes: string[] = []
     if (wetWeather) causes.push('wet_road')
-    else if (weatherRelated) causes.push('severe_weather')
+    else if (phase9.weather.severe) causes.push('severe_weather')
     if (runtimeFatigue >= 50) causes.push('runtime_fatigue')
     if (gradient <= -2) causes.push('descending')
     if (speed >= 45) causes.push('high_speed')
