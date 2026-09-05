@@ -813,6 +813,137 @@ function createPhase11hLateClimbEnergyInput(fatigueBeforeStage: number): Univers
 }
 
 
+function createPhase11hClimbSkillEnergyInput(
+  climbingSkill: number,
+): UniversalRaceEngineInput {
+  const base = createExpandedFieldInput(12)
+  return {
+    ...base,
+    engine: {
+      ...base.engine,
+      deterministicSeed: 'phase11h-climb-skill-energy',
+    },
+    incidentModel: { enabled: false },
+    stage: {
+      ...base.stage,
+      distanceKm: 120,
+      terrainType: 'mountain',
+      profileType: 'climber',
+      finishType: 'uphill_finish',
+      elevationGainM: 1600,
+      terrainPercentages: { flat: 25, hilly: 10, mountain: 65, cobbled: 0 },
+      profilePoints: [
+        { km: 0, elevationM: 0 },
+        { km: 84, elevationM: 100 },
+        { km: 88, elevationM: 100 },
+        { km: 108, elevationM: 1700 },
+        { km: 120, elevationM: 1700 },
+      ],
+    },
+    points: base.points.map((point) =>
+      point.pointType === 'FINISH'
+        ? { ...point, kmFromStart: 120 }
+        : point.pointType === 'KOM'
+          ? { ...point, kmFromStart: 108 }
+          : point,
+    ),
+    riders: base.riders.map((rider, index) =>
+      index === 0
+        ? {
+            ...rider,
+            climbing: climbingSkill,
+            endurance: 70,
+            resistance: 70,
+            recovery: 70,
+            raceIQ: 70,
+            fatigueBeforeStage: 10,
+          }
+        : rider,
+    ),
+    stagePlans: base.stagePlans.map((plan) => ({
+      ...plan,
+      teamTactic: 'balanced',
+      riders: plan.riders.map((riderPlan) => ({
+        ...riderPlan,
+        stageRole: 'free_role',
+        commands: {
+          phase1: 'conserve_energy',
+          phase2: 'conserve_energy',
+          phase3: 'conserve_energy',
+          phase4: 'conserve_energy',
+        },
+      })),
+    })),
+  }
+}
+
+function createPhase11hHardClimbSelectionInput(): UniversalRaceEngineInput {
+  const base = createExpandedFieldInput(60)
+  return {
+    ...base,
+    engine: {
+      ...base.engine,
+      deterministicSeed: 'phase11h-hard-climb-selection',
+    },
+    incidentModel: { enabled: false },
+    stage: {
+      ...base.stage,
+      distanceKm: 120,
+      terrainType: 'mountain',
+      profileType: 'climber',
+      finishType: 'uphill_finish',
+      elevationGainM: 1600,
+      terrainPercentages: { flat: 25, hilly: 10, mountain: 65, cobbled: 0 },
+      profilePoints: [
+        { km: 0, elevationM: 0 },
+        { km: 84, elevationM: 100 },
+        { km: 88, elevationM: 100 },
+        { km: 108, elevationM: 1700 },
+        { km: 120, elevationM: 1700 },
+      ],
+    },
+    points: base.points.map((point) =>
+      point.pointType === 'FINISH'
+        ? { ...point, kmFromStart: 120 }
+        : point.pointType === 'KOM'
+          ? { ...point, kmFromStart: 108 }
+          : point,
+    ),
+    riders: base.riders.map((rider, index) => ({
+      ...rider,
+      climbing:
+        index < 30
+          ? [40, 45, 50, 55][index % 4]
+          : [65, 70, 75, 80][index % 4],
+      endurance: 70,
+      resistance: 70,
+      recovery: 70,
+      raceIQ: 70,
+      teamwork: 70,
+      flat: 70,
+      sprint: 70,
+      timeTrial: 70,
+      overall: 70,
+      fatigueBeforeStage: 10,
+    })),
+    stagePlans: base.stagePlans.map((plan) => ({
+      ...plan,
+      teamTactic: 'balanced',
+      riders: plan.riders.map((riderPlan) => ({
+        ...riderPlan,
+        stageRole: 'free_role',
+        commands: {
+          phase1: 'conserve_energy',
+          phase2: 'conserve_energy',
+          phase3: 'conserve_energy',
+          phase4: 'conserve_energy',
+        },
+      })),
+    })),
+  }
+}
+
+
 function createFlatBunchSprintInput(): UniversalRaceEngineInput {
   const base = createExpandedFieldInput(26)
   return {
@@ -14475,6 +14606,28 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     )
   })
 
+  it('does not label ordinary non-wet, non-severe weather as severe_weather just because it slightly changes incident risk', () => {
+    const base = createPhase10HighRiskInput('phase10-mild-weather-cause')
+    const result = runRaceEngine({
+      ...base,
+      weather: {
+        ...base.weather!,
+        condition: 'clear',
+        temperatureC: 18,
+        windKmh: 20,
+        precipitationMm: 0,
+        rainProbabilityPct: 0,
+      },
+    })
+
+    expect(result.phase9Acceptance.weather.severe).toBe(false)
+    expect(result.phase10Incidents.incidentCount).toBeGreaterThan(0)
+    result.phase10Incidents.incidents.forEach((incident) => {
+      expect(incident.causes).not.toContain('severe_weather')
+      expect(incident.causes).not.toContain('wet_road')
+    })
+  })
+
   it('uses equipment condition and mechanic support only for technical-incident probability', () => {
     const shared = {
       tickSeconds: 30,
@@ -16137,10 +16290,10 @@ describe('Phase 11G organic race physics and replay continuity', () => {
 
 
 
-  it('publishes the Phase 11G engine build marker', () => {
+  it('publishes the Phase 11H V5.1 targeted-tuning build marker', () => {
     const result = runRaceEngine(createValidInput())
     expect(result.phase78Acceptance.engineBuild).toBe(
-      'phase11g-continuous-road-physics-v4-2026-09-03',
+      'phase11h-v5-1-targeted-tuning-2026-09-05',
     )
   })
 
@@ -16807,6 +16960,45 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     })
   })
 
+  it('makes climbing skill reduce the energy cost of the same long climb without changing the route or commands', () => {
+    const weakInput = createPhase11hClimbSkillEnergyInput(30)
+    const strongInput = createPhase11hClimbSkillEnergyInput(90)
+    const weak = runRaceEngine(weakInput)
+    const strong = runRaceEngine(strongInput)
+    const riderId = weakInput.riders[0].riderId
+    const weakRow = weak.phase78Acceptance.riderRows.find(
+      (row) => row.riderId === riderId,
+    )!
+    const strongRow = strong.phase78Acceptance.riderRows.find(
+      (row) => row.riderId === riderId,
+    )!
+
+    expect(strongRow.energySpent).toBeLessThan(weakRow.energySpent)
+    expect(strongRow.finishEnergy).toBeGreaterThan(weakRow.finishEnergy)
+    expect(weak.replaySynchronization.synchronized).toBe(true)
+    expect(strong.replaySynchronization.synchronized).toBe(true)
+  })
+
+  it('makes a long 8-percent climb remove most sub-60 climbers from the front while strong climbers largely survive', () => {
+    const input = createPhase11hHardClimbSelectionInput()
+    const result = runRaceEngine(input)
+    const selection = result.roadRaceResolution.phase4Finish!.lateTerrainSelection!
+    const weakIds = new Set(input.riders.slice(0, 30).map((rider) => rider.riderId))
+    const strongIds = new Set(input.riders.slice(30).map((rider) => rider.riderId))
+    const weakRows = selection.riders.filter((row) => weakIds.has(row.riderId))
+    const strongRows = selection.riders.filter((row) => strongIds.has(row.riderId))
+    const weakDropped = weakRows.filter((row) => row.contactLossKm !== null)
+    const strongRetained = strongRows.filter((row) => row.contactLossKm === null)
+
+    expect(selection.averageGradientPercent).toBeCloseTo(8, 5)
+    expect(selection.kmEnd - selection.kmStart).toBeCloseTo(20, 5)
+    expect(weakRows.length).toBeGreaterThan(0)
+    expect(strongRows.length).toBeGreaterThan(0)
+    expect(weakDropped.length / weakRows.length).toBeGreaterThanOrEqual(0.8)
+    expect(strongRetained.length / strongRows.length).toBeGreaterThanOrEqual(0.7)
+    expect(result.replaySynchronization.synchronized).toBe(true)
+  })
+
   it('makes a long steep late climb materially harder to hold when riders arrive with less reserve', () => {
     const fresh = runRaceEngine(createPhase11hLateClimbEnergyInput(5))
     const tired = runRaceEngine(createPhase11hLateClimbEnergyInput(45))
@@ -16983,6 +17175,26 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     )
     expect(pageSource).toContain('Number.isFinite(authoritativeRaceSecond)')
     expect(pageSource).toContain('durationSeconds * elapsedFraction')
+  })
+
+  it('reports the actual observed chase start and labels the final result with the winner official time', () => {
+    const pageSource = readFileSync(
+      new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url),
+      'utf8',
+    )
+
+    expect(pageSource).toContain('const chaseStartStep =')
+    expect(pageSource).toContain(
+      'step.endGapSeconds < step.startGapSeconds - 0.000001',
+    )
+    expect(pageSource).toContain(
+      'startKm: chaseStartStep?.kmStart ?? automaticActivityStartKm',
+    )
+    expect(pageSource).toContain('automaticActivityStartKm,')
+    expect(pageSource).toContain('const winnerOfficialTimeSeconds =')
+    expect(pageSource).toContain(
+      '`Winner ${formatRaceClock(winnerOfficialTimeSeconds)}`',
+    )
   })
 
   it('preserves Phase 10 final-road lineage metadata and never republishes exact duplicate behind-peloton gaps', () => {
