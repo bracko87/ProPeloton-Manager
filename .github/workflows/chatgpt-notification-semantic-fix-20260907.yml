@@ -1,0 +1,154 @@
+name: Semantic notification regression fix 2026-09-07
+
+on:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-notification-semantic-fix-20260907.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-audit-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply semantic notification fix
+        run: python .github/scripts/fix_notification_semantic_regression_20260907.py
+
+      - name: Audit semantic notification translations
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          root = Path('.')
+          locales = ['en','sr-Latn','de','hr','es','it','fr','ru']
+
+          def flatten(value, prefix=''):
+              out = {}
+              if isinstance(value, dict):
+                  for key, child in value.items():
+                      out.update(flatten(child, f'{prefix}.{key}' if prefix else key))
+              else:
+                  out[prefix] = value
+              return out
+
+          def placeholders(value):
+              if not isinstance(value, str): return set()
+              return set(re.findall(r'{{\s*([A-Za-z0-9_]+)\s*}}', value))
+
+          flat = {}
+          for locale in locales:
+              data = json.loads((root / f'src/i18n/locales/{locale}/notifications.json').read_text(encoding='utf-8'))
+              flat[locale] = flatten(data)
+
+          en = flat['en']
+          problems = []
+
+          required = [
+              'templateLocalization.feed.raceApplicationResults.title',
+              'templateLocalization.feed.raceApplicationResults.message',
+              'templateLocalization.feed.scoutAdvisory.title',
+              'templateLocalization.feed.sportsDirector.titles.stagePlansMissing',
+              'headCoach.riderAvailability.title',
+              'headCoach.trainingScheduleGap.title',
+              'headCoach.fatigueWatch.title',
+              'headCoach.highFatigueAlert.title',
+          ]
+
+          for locale in locales:
+              missing = sorted(set(en) - set(flat[locale]))
+              if missing:
+                  problems.append(f'{locale}: missing {len(missing)} notification keys: {missing[:20]}')
+              for key in required:
+                  value = flat[locale].get(key)
+                  if not isinstance(value, str) or not value.strip():
+                      problems.append(f'{locale}: missing/empty {key}')
+              for key in set(en) & set(flat[locale]):
+                  if placeholders(en[key]) != placeholders(flat[locale][key]):
+                      problems.append(f'{locale}: placeholder mismatch {key}')
+
+          sr_expected = {
+              'templateLocalization.feed.scoutAdvisory.title': 'Savet skauta — pregled regrutovanja i skautinga',
+              'templateLocalization.feed.sportsDirector.titles.stagePlansMissing': 'Savet sportskog direktora — Nedostaju planovi etapa',
+              'headCoach.riderAvailability.title': 'Savet glavnog trenera — dostupnost vozača',
+              'headCoach.trainingScheduleGap.title': 'Savet glavnog trenera — praznina u rasporedu treninga',
+              'headCoach.fatigueWatch.title': 'Savet glavnog trenera — praćenje umora',
+              'templateLocalization.feed.raceApplicationResults.title': 'Rezultati prijava za trke',
+          }
+          for key, expected in sr_expected.items():
+              if flat['sr-Latn'].get(key) != expected:
+                  problems.append(f'sr-Latn semantic phrase mismatch {key}: {flat["sr-Latn"].get(key)!r}')
+
+          advisor_keys = [
+              'templateLocalization.feed.scoutAdvisory.title',
+              'templateLocalization.feed.sportsDirector.titles.raceProgramme',
+              'templateLocalization.feed.sportsDirector.titles.stagePlansMissing',
+              'headCoach.fatigueWatch.title',
+              'headCoach.riderAvailability.title',
+              'headCoach.trainingScheduleGap.title',
+              'headCoach.highFatigueAlert.title',
+          ]
+          for locale in locales[1:]:
+              for key in advisor_keys:
+                  value = str(flat[locale].get(key, ''))
+                  if re.search(r'\b(Advisory|Head Coach|Sports Director|Scout Advisory)\b', value, re.I):
+                      problems.append(f'{locale}: English advisor wording in {key}: {value}')
+                  if re.search(r'\.\s*(Savet|Savjet|Hinweis|Avis|Avviso|Conseil|Совет)\s*$', value, re.I):
+                      problems.append(f'{locale}: broken advisor suffix in {key}: {value}')
+
+          code = (root / 'src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
+          needed = [
+              'function localizeExistingNotificationPhrase',
+              'function localizeExistingNotificationTemplate',
+              'localizeExistingNotificationPhrase(cleanTitle) || localizeExistingNotificationTemplate(cleanTitle)',
+              "templateLocalization.feed.raceApplicationResults.title",
+          ]
+          for fragment in needed:
+              if fragment not in code:
+                  problems.append(f'notificationLocalization.ts missing {fragment}')
+          if 'if (resourceTitle && resourceMessage)' in code:
+              problems.append('semantic handlers are still bypassed by an early resource return')
+
+          if problems:
+              print('\n'.join('ERROR: ' + p for p in problems))
+              raise SystemExit(1)
+
+          print('Semantic notification audit PASSED')
+          print('All 8 locales checked')
+          print('Screenshot title expectations checked')
+          PY
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Diff check
+        run: git diff --check
+
+      - name: Commit fixed notification localization
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/features/notifications/notificationLocalization.ts src/i18n/locales/*/notifications.json
+          git commit -m 'Fix semantic notification translation regression'
+          git pull --rebase origin main
+          git push origin HEAD:main
