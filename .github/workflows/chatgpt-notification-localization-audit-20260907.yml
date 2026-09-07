@@ -22,6 +22,7 @@ jobs:
         run: |
           python .github/scripts/fix_notification_localization_20260907.py
           python .github/scripts/fix_notification_detail_localization_20260907.py
+          python .github/scripts/fix_notification_runtime_cases_20260907.py
 
       - name: Audit all notification locales and runtime coverage
         shell: bash
@@ -55,9 +56,9 @@ jobs:
           en = flat['en']
           problems = []
 
-          required_keys = [
-              'startlistMissedTitle',
-              'startlistMissedMessage',
+          required_all = [
+              'templateLocalization.feed.startlistMissed.title',
+              'templateLocalization.feed.startlistMissed.message',
               'templateLocalization.feed.sportsDirector.titles.raceProgramme',
               'templateLocalization.feed.sportsDirector.titles.stagePlansMissing',
               'templateLocalization.feed.sportsDirector.titles.stagePlansIncomplete',
@@ -68,6 +69,8 @@ jobs:
               'templateLocalization.feed.sportsDirector.genericMessage',
               'templateLocalization.feed.raceJerseysRemoval.title',
               'templateLocalization.feed.raceJerseysRemoval.message',
+          ]
+          required_non_english = [
               'semanticTypeTitles.RACE_PLAN_NEEDS_ATTENTION',
               'semanticTypeTitles.RACE_JERSEYS_MANDATORY_WARNING',
           ]
@@ -77,10 +80,16 @@ jobs:
               if missing:
                   problems.append(f'{locale}: {len(missing)} keys missing vs English: {missing[:20]}')
 
-              for key in required_keys:
+              for key in required_all:
                   value = flat[locale].get(key)
                   if not isinstance(value, str) or not value.strip():
                       problems.append(f'{locale}: missing/empty required key {key}')
+
+              if locale != 'en':
+                  for key in required_non_english:
+                      value = flat[locale].get(key)
+                      if not isinstance(value, str) or not value.strip():
+                          problems.append(f'{locale}: missing/empty semantic notification key {key}')
 
               for key in set(en) & set(flat[locale]):
                   if placeholders(en[key]) != placeholders(flat[locale][key]):
@@ -90,8 +99,6 @@ jobs:
                   if isinstance(value, str) and not value.strip():
                       problems.append(f'{locale}: empty translation at {key}')
 
-          # These locale values were visibly leaving English technical terms in
-          # non-English notification copy. They must now be natural translations.
           term_keys = [
               'reportVariants.stage_plans_missing',
               'reportVariants.stage_plans_incomplete',
@@ -114,7 +121,11 @@ jobs:
               'function localizeExistingGameTemplate',
               'getEnglishTemplateResourceIndex',
               "localizeExistingGamePhrase(cleanTitle) || localizeExistingGameTemplate(cleanTitle)",
-              "templateLocalization.feed.sportsDirector.raceProgrammeMessage",
+              'templateLocalization.feed.sportsDirector.raceProgrammeMessage',
+              'templateLocalization.feed.startlistMissed.title',
+              'templateLocalization.feed.raceJerseysRemoval.title',
+              'const teamRemovedMatch',
+              'const startlistMissedMatch',
           ]
           for fragment in required_source_fragments:
               if fragment not in localization:
@@ -128,6 +139,8 @@ jobs:
               'localizeNotificationRuntimeText(advisorPayload.summary || item.message, item, t)',
               'localizeNotificationNarrative',
               'localizeNotificationValue',
+              'localizeNotificationValue(formatAdvisorDisplayValue(priority.detail), item)',
+              'localizeNotificationValue(formatAdvisorAvailability(stage.urgency), item)',
           ]
           for fragment in page_fragments:
               if fragment not in page:
