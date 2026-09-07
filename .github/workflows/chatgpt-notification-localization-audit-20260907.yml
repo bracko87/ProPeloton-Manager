@@ -23,6 +23,7 @@ jobs:
           python .github/scripts/fix_notification_localization_20260907.py
           python .github/scripts/fix_notification_detail_localization_20260907.py
           python .github/scripts/fix_notification_runtime_cases_20260907.py
+          python .github/scripts/fix_notification_semantic_regression_20260907.py
 
       - name: Audit all notification locales and runtime coverage
         shell: bash
@@ -69,6 +70,13 @@ jobs:
               'templateLocalization.feed.sportsDirector.genericMessage',
               'templateLocalization.feed.raceJerseysRemoval.title',
               'templateLocalization.feed.raceJerseysRemoval.message',
+              'templateLocalization.feed.raceApplicationResults.title',
+              'templateLocalization.feed.raceApplicationResults.message',
+              'templateLocalization.feed.scoutAdvisory.title',
+              'headCoach.fatigueWatch.title',
+              'headCoach.riderAvailability.title',
+              'headCoach.trainingScheduleGap.title',
+              'headCoach.highFatigueAlert.title',
           ]
           required_non_english = [
               'semanticTypeTitles.RACE_PLAN_NEEDS_ATTENTION',
@@ -99,6 +107,21 @@ jobs:
                   if isinstance(value, str) and not value.strip():
                       problems.append(f'{locale}: empty translation at {key}')
 
+          # Exact Serbian screenshot phrases must be natural complete titles,
+          # never token-assembled fragments such as "... . Savet".
+          sr_expected = {
+              'templateLocalization.feed.scoutAdvisory.title': 'Savet skauta — pregled regrutovanja i skautinga',
+              'templateLocalization.feed.sportsDirector.titles.stagePlansMissing': 'Savet sportskog direktora — Nedostaju planovi etapa',
+              'headCoach.riderAvailability.title': 'Savet glavnog trenera — dostupnost vozača',
+              'headCoach.trainingScheduleGap.title': 'Savet glavnog trenera — praznina u rasporedu treninga',
+              'headCoach.fatigueWatch.title': 'Savet glavnog trenera — praćenje umora',
+              'templateLocalization.feed.raceApplicationResults.title': 'Rezultati prijava za trke',
+          }
+          for key, expected in sr_expected.items():
+              actual = flat['sr-Latn'].get(key)
+              if actual != expected:
+                  problems.append(f'sr-Latn: wrong semantic phrase {key}: {actual!r} != {expected!r}')
+
           term_keys = [
               'reportVariants.stage_plans_missing',
               'reportVariants.stage_plans_incomplete',
@@ -114,16 +137,36 @@ jobs:
                   if re.search(r'\bStage\s+Plans?\b|\bStartlist\b', value, re.I):
                       problems.append(f'{locale}: English technical term remains in {key}: {value}')
 
+          # Advisor titles in non-English locales must not retain English advisory
+          # wording or the broken suffix patterns produced by token translation.
+          advisor_title_keys = [
+              'templateLocalization.feed.scoutAdvisory.title',
+              'templateLocalization.feed.sportsDirector.titles.raceProgramme',
+              'templateLocalization.feed.sportsDirector.titles.stagePlansMissing',
+              'headCoach.fatigueWatch.title',
+              'headCoach.riderAvailability.title',
+              'headCoach.trainingScheduleGap.title',
+              'headCoach.highFatigueAlert.title',
+          ]
+          for locale in locales[1:]:
+              for key in advisor_title_keys:
+                  value = str(flat[locale].get(key, ''))
+                  if re.search(r'\b(Advisory|Head Coach|Sports Director|Scout Advisory)\b', value, re.I):
+                      problems.append(f'{locale}: English advisor wording remains in {key}: {value}')
+                  if re.search(r'\.\s*(Savet|Savjet|Hinweis|Avis|Avviso|Conseil|Совет)\s*$', value, re.I):
+                      problems.append(f'{locale}: broken advisor suffix in {key}: {value}')
+
           localization = (root / 'src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
           page = (root / 'src/pages/dashboard/NotificationsPage.tsx').read_text(encoding='utf-8')
 
           required_source_fragments = [
-              'function localizeExistingGameTemplate',
-              'getEnglishTemplateResourceIndex',
-              "localizeExistingGamePhrase(cleanTitle) || localizeExistingGameTemplate(cleanTitle)",
+              'function localizeExistingNotificationPhrase',
+              'function localizeExistingNotificationTemplate',
+              'localizeExistingNotificationPhrase(cleanTitle) || localizeExistingNotificationTemplate(cleanTitle)',
               'templateLocalization.feed.sportsDirector.raceProgrammeMessage',
               'templateLocalization.feed.startlistMissed.title',
               'templateLocalization.feed.raceJerseysRemoval.title',
+              'templateLocalization.feed.raceApplicationResults.title',
               'const teamRemovedMatch',
               'const startlistMissedMatch',
           ]
@@ -131,6 +174,8 @@ jobs:
               if fragment not in localization:
                   problems.append(f'notificationLocalization.ts missing runtime coverage: {fragment}')
 
+          if "if (resourceTitle && resourceMessage)" in localization:
+              problems.append('resource-title early return still bypasses semantic notification handlers')
           if 'if (typeCode && !localizedType) return item' in localization:
               problems.append('legacy unknown-type English passthrough still present')
 
@@ -150,10 +195,10 @@ jobs:
               print('\n'.join(f'ERROR: {problem}' for problem in problems))
               raise SystemExit(1)
 
-          print('Notification localization audit PASSED')
+          print('Semantic notification localization audit PASSED')
           print('Locales:', ', '.join(locales))
           print('English notification keys:', len(en))
-          print('Required screenshot/runtime coverage: PASSED')
+          print('Screenshot semantic phrases: PASSED')
           PY
 
       - name: Set up Node
@@ -184,6 +229,6 @@ jobs:
             src/features/notifications/notificationLocalization.ts \
             src/pages/dashboard/NotificationsPage.tsx \
             src/i18n/locales/*/notifications.json
-          git commit -m 'Complete notification localization across all languages'
+          git commit -m 'Fix semantic notification translations'
           git pull --rebase origin main
           git push origin HEAD:main
