@@ -132,6 +132,33 @@ const bonusOrder = [
   'fatigue_reduction_pct',
 ]
 
+const terrainRolePalette: Record<string, React.CSSProperties> = {
+  aero_flat: {
+    backgroundColor: '#dbeafe',
+    color: '#1e3a8a',
+  },
+  climbing: {
+    backgroundColor: '#fee2e2',
+    color: '#991b1b',
+  },
+  endurance_cobble: {
+    backgroundColor: '#fef3c7',
+    color: '#92400e',
+  },
+  time_trial: {
+    backgroundColor: '#ede9fe',
+    color: '#5b21b6',
+  },
+  all_round: {
+    backgroundColor: '#dcfce7',
+    color: '#166534',
+  },
+  general: {
+    backgroundColor: '#f3f4f6',
+    color: '#374151',
+  },
+}
+
 function emptySelectedCatalogItemIds(): SelectedCatalogItemIds {
   return {
     frame: null,
@@ -193,6 +220,31 @@ function formatOptionLabel(option: SetupOption): string {
     /\((\d+)\s+available\s+\/\s+(\d+)\s+owned\)/i,
     '($1/$2)'
   )
+}
+
+function getOptionTerrainRole(option: SetupOption | null): string | null {
+  if (!option) return null
+
+  const metadataRole =
+    option.metadata && typeof option.metadata.terrain_role === 'string'
+      ? option.metadata.terrain_role
+      : null
+
+  const rawRole = option.terrain_role || metadataRole
+  if (!rawRole) return null
+
+  return rawRole
+    .trim()
+    .toLowerCase()
+    .replace(/[\s/_-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+}
+
+function getOptionTerrainStyle(
+  option: SetupOption | null
+): React.CSSProperties | undefined {
+  const terrainRole = getOptionTerrainRole(option)
+  return terrainRole ? terrainRolePalette[terrainRole] : undefined
 }
 
 function getOptionsForCategory(
@@ -721,6 +773,10 @@ export default function EquipmentSetupPresetsBox({
                   const categoryOptions = getOptionsForCategory(options, category.key)
                   const selectedValue =
                     draft.selected_catalog_item_ids[category.key] ?? ''
+                  const selectedOption =
+                    categoryOptions.find(
+                      option => option.catalog_item_id === selectedValue,
+                    ) ?? null
 
                   return (
                     <label key={category.key} className="block">
@@ -732,11 +788,7 @@ export default function EquipmentSetupPresetsBox({
                         <EquipmentOptionPreviewPopover
                           clubId={clubId}
                           category={category.key}
-                          option={
-                            categoryOptions.find(
-                              option => option.catalog_item_id === selectedValue,
-                            ) ?? null
-                          }
+                          option={selectedOption}
                           disabled={categoryOptions.length === 0 || isSaving}
                         >
                           <select
@@ -749,9 +801,20 @@ export default function EquipmentSetupPresetsBox({
                               )
                             }
                             disabled={categoryOptions.length === 0 || isSaving}
+                            style={
+                              !isSaving
+                                ? getOptionTerrainStyle(selectedOption)
+                                : undefined
+                            }
                             className="w-full rounded border border-gray-200 bg-white px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400"
                           >
-                            <option value="">
+                            <option
+                              value=""
+                              style={{
+                                backgroundColor: '#ffffff',
+                                color: '#111827',
+                              }}
+                            >
                               {categoryOptions.length === 0
                                 ? t('presets.noOwned', {
                                     category: getCategoryLabel(category.key),
@@ -765,6 +828,10 @@ export default function EquipmentSetupPresetsBox({
                               <option
                                 key={option.catalog_item_id}
                                 value={option.catalog_item_id}
+                                data-terrain-role={
+                                  getOptionTerrainRole(option) ?? undefined
+                                }
+                                style={getOptionTerrainStyle(option)}
                               >
                                 {formatOptionLabel(option)}
                               </option>
