@@ -419,6 +419,10 @@
       "startlistMissed": {
         "title": "Scadenza della lista di partenza mancata: {{raceName}}",
         "message": "È stata mancata la scadenza per l'invio dei corridori/della lista di partenza per {{raceName}}. Controlla la preparazione gara e invia le future liste prima della scadenza."
+      },
+      "raceApplicationResults": {
+        "title": "Risultati delle richieste di partecipazione alle gare",
+        "message": "I risultati delle tue richieste di partecipazione alle gare sono disponibili. Apri la notifica per vedere i dettagli."
       }
     }
   },

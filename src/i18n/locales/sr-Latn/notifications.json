@@ -419,6 +419,10 @@
       "startlistMissed": {
         "title": "Propušten rok za startnu listu: {{raceName}}",
         "message": "Propušten je rok za prijavu vozača/startne liste za {{raceName}}. Pregledajte Pripremu trke i ubuduće pošaljite startnu listu pre isteka roka."
+      },
+      "raceApplicationResults": {
+        "title": "Rezultati prijava za trke",
+        "message": "Rezultati vaših prijava za trke su dostupni. Otvorite obaveštenje da pregledate detalje."
       }
     }
   },

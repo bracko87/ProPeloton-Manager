@@ -419,6 +419,10 @@
       "startlistMissed": {
         "title": "Échéance de la liste de départ manquée : {{raceName}}",
         "message": "L’échéance d’envoi des coureurs/de la liste de départ pour {{raceName}} a été manquée. Vérifiez la préparation de course et envoyez les prochaines listes avant l’échéance."
+      },
+      "raceApplicationResults": {
+        "title": "Résultats des candidatures aux courses",
+        "message": "Les résultats de vos candidatures aux courses sont disponibles. Ouvrez la notification pour consulter les détails."
       }
     }
   },

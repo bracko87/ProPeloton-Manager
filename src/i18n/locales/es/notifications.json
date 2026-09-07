@@ -419,6 +419,10 @@
       "startlistMissed": {
         "title": "Se perdió el plazo de la lista de salida: {{raceName}}",
         "message": "Se perdió el plazo para enviar corredores/la lista de salida de {{raceName}}. Revisa la preparación de carrera y envía las futuras listas antes del plazo."
+      },
+      "raceApplicationResults": {
+        "title": "Resultados de las solicitudes de carrera",
+        "message": "Los resultados de tus solicitudes de carrera están disponibles. Abre la notificación para revisar los detalles."
       }
     }
   },

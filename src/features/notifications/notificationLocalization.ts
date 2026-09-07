@@ -298,6 +298,48 @@ function localizeExistingGameTemplate(value: string): string | null {
   return null
 }
 
+function localizeExistingNotificationPhrase(value: string): string | null {
+  if (!shouldLocalizeNotifications() || !value.trim()) return null
+  const hits = (getEnglishResourceIndex().get(normalizePhrase(value)) ?? [])
+    .filter(hit => hit.namespace === 'notifications')
+  const languageData = i18n.getDataByLanguage(activeLanguageCode()) as Record<string, unknown> | undefined
+  if (!languageData) return null
+
+  for (const hit of hits) {
+    const localized = readResourceString(languageData.notifications, hit.keyPath)
+    if (localized && !localized.includes('{{')) return localized
+  }
+  return null
+}
+
+function localizeExistingNotificationTemplate(value: string): string | null {
+  if (!shouldLocalizeNotifications() || !value.trim()) return null
+  const languageData = i18n.getDataByLanguage(activeLanguageCode()) as Record<string, unknown> | undefined
+  if (!languageData) return null
+
+  for (const hit of getEnglishTemplateResourceIndex()) {
+    if (hit.namespace !== 'notifications') continue
+    const localizedTemplate = readResourceString(languageData.notifications, hit.keyPath)
+    if (!localizedTemplate) continue
+
+    const match = hit.pattern.exec(value.trim())
+    if (!match) continue
+
+    const params: Record<string, unknown> = {}
+    hit.parameterNames.forEach((name, index) => {
+      params[name] = match[index + 1]
+    })
+
+    const localized = String(i18n.t(hit.keyPath, {
+      ns: 'notifications',
+      ...params,
+      defaultValue: '',
+    }))
+    if (localized && localized !== hit.keyPath) return localized
+  }
+  return null
+}
+
 function notificationLiteral(section: 'literalDetailLabels' | 'literalActionLabels', raw: string): string | null {
   const languageData = i18n.getDataByLanguage(activeLanguageCode()) as Record<string, unknown> | undefined
   const notifications = languageData?.notifications
@@ -505,9 +547,9 @@ export function localizeNotificationFeedCopy(
   }
 
   const resourceTitle =
-    localizeExistingGamePhrase(cleanTitle) || localizeExistingGameTemplate(cleanTitle)
+    localizeExistingNotificationPhrase(cleanTitle) || localizeExistingNotificationTemplate(cleanTitle)
   let resourceMessage =
-    localizeExistingGamePhrase(cleanMessage) || localizeExistingGameTemplate(cleanMessage)
+    localizeExistingNotificationPhrase(cleanMessage) || localizeExistingNotificationTemplate(cleanMessage)
 
   const raceProgrammeMatch = /^Current race:\s*(.+?)\s*\((\d{4}-\d{2}-\d{2})[–—-](\d{4}-\d{2}-\d{2})\)\.\s*Next accepted future race:\s*(.+?)\.\s*(\d+) management priority item\(s\) require review\.?$/i.exec(cleanMessage)
   if (raceProgrammeMatch) {
@@ -559,8 +601,11 @@ export function localizeNotificationFeedCopy(
     }
   }
 
-  if (resourceTitle && resourceMessage) {
-    return { title: resourceTitle, message: resourceMessage }
+  if (/race application results?/i.test(cleanTitle)) {
+    return {
+      title: nt('templateLocalization.feed.raceApplicationResults.title'),
+      message: nt('templateLocalization.feed.raceApplicationResults.message'),
+    }
   }
 
   const staffHiredMatch = /^Staff hired:\s*(.+)$/i.exec(cleanTitle)

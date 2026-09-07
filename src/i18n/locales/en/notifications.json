@@ -419,6 +419,10 @@
       "startlistMissed": {
         "title": "Startlist missed: {{raceName}}",
         "message": "The rider/startlist deadline was missed for {{raceName}}. Review Race Preparation and make sure future startlists are submitted before the deadline."
+      },
+      "raceApplicationResults": {
+        "title": "Race application results",
+        "message": "Your race application results are available. Open the notification to review the details."
       }
     }
   },

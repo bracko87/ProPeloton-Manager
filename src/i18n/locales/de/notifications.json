@@ -419,6 +419,10 @@
       "startlistMissed": {
         "title": "Frist für die Startliste verpasst: {{raceName}}",
         "message": "Die Frist für Fahrer-/Startlisteneinreichung bei {{raceName}} wurde verpasst. Prüfen Sie die Rennvorbereitung und reichen Sie künftige Startlisten rechtzeitig ein."
+      },
+      "raceApplicationResults": {
+        "title": "Ergebnisse der Rennanmeldungen",
+        "message": "Die Ergebnisse Ihrer Rennanmeldungen sind verfügbar. Öffnen Sie die Benachrichtigung, um die Details zu prüfen."
       }
     }
   },
