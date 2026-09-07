@@ -11,8 +11,9 @@ import {
 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceInput.ts";
 import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
 
-const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v1";
+const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
 const SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
+const WORKER_BUILD = "supabase_time_trial_rules_v2";
 const MAX_CALCULATIONS_PER_TICK = 1;
 const MAX_PUBLICATIONS_PER_TICK = 4;
 const encoder = new TextEncoder();
@@ -80,6 +81,49 @@ function buildSources(payloadValue: unknown, simulationRunId: string, preStageSt
   };
 }
 
+async function loadTimeTrialRules(supabase: SupabaseClient, stageId: string): Promise<JsonObject | null> {
+  const { data, error } = await supabase
+    .from("race_stage_time_trial_rules")
+    .select("start_order_mode,start_interval_seconds,counting_rider_number,equipment_required,replay_duration_seconds,dropped_rider_time_mode,rules_json")
+    .eq("stage_id", stageId)
+    .maybeSingle();
+  if (error) throw new Error(`race_stage_time_trial_rules: ${error.message}`);
+  return data ? object(data) : null;
+}
+
+function buildProductionInputWithTimeTrialRules(
+  baseInput: ReturnType<typeof buildProductionUniversalRaceEngineInput>,
+  rule: JsonObject | null,
+) {
+  const stageFormat = baseInput.stage.stageFormat;
+  const requiresRules = ["individual_time_trial", "team_time_trial", "pair_time_trial", "prologue"].includes(stageFormat);
+  if (!requiresRules) return baseInput;
+  if (!rule) throw new Error(`Stage ${baseInput.stage.stageId} (${stageFormat}) is missing race_stage_time_trial_rules.`);
+
+  const countingRaw = rule.counting_rider_number;
+  const countingRiderNumber = countingRaw === null || countingRaw === undefined || countingRaw === ""
+    ? null
+    : Math.trunc(Number(countingRaw));
+  const startIntervalSeconds = Math.max(1, Math.trunc(Number(rule.start_interval_seconds ?? 60)));
+  const replayDurationSeconds = Math.max(1, Math.trunc(Number(rule.replay_duration_seconds ?? 900)));
+
+  return {
+    ...baseInput,
+    stage: {
+      ...baseInput.stage,
+      timeTrialRules: {
+        startOrderMode: String(rule.start_order_mode ?? "automatic"),
+        startIntervalSeconds,
+        countingRiderNumber: Number.isFinite(countingRiderNumber as number) ? countingRiderNumber : null,
+        equipmentRequired: rule.equipment_required === true,
+        replayDurationSeconds,
+        droppedRiderTimeMode: String(rule.dropped_rider_time_mode ?? "personal_time"),
+        metadata: object(rule.rules_json),
+      },
+    },
+  };
+}
+
 function buildProductionOutputWithReplayProgressGuarantee(input: ReturnType<typeof buildProductionUniversalRaceEngineInput>, result: UniversalRaceEngineResult) {
   const replayPolicy = classifyUniversalReplaySynchronizationForPublication(result.replaySynchronization);
   if (!replayPolicy.publishable) throw new Error(`Universal replay synchronization failed: ${replayPolicy.blockingIssues.join(", ")}`);
@@ -124,7 +168,9 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
   try {
     const preStageStandings = await rpc<unknown>(supabase, "get_race_stage_pre_stage_standings_v1", { p_stage_id: stageId });
     const sources = buildSources(claim.payload, simulationRunId, preStageStandings);
-    const input = buildProductionUniversalRaceEngineInput(sources);
+    const baseInput = buildProductionUniversalRaceEngineInput(sources);
+    const timeTrialRule = await loadTimeTrialRules(supabase, stageId);
+    const input = buildProductionInputWithTimeTrialRules(baseInput, timeTrialRule);
     const started = performance.now();
     const result = runRaceEngine(input);
     const output = buildProductionOutputWithReplayProgressGuarantee(input, result);
@@ -150,6 +196,8 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
       classification_rider_count: result.finishResolution.classification.length,
       phase11_manifest_ready: output.applicationManifest.readyForApplication,
       calculation_cpu_ms: calculationCpuMs,
+      time_trial_rules_loaded: timeTrialRule !== null,
+      worker_build: WORKER_BUILD,
       submit_result: submit,
     };
   } catch (error) {
@@ -162,7 +210,7 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
         p_error_details: serialized,
       });
     } catch {}
-    return { status: "failed", stage_id: stageId, simulation_run_id: simulationRunId, error: serialized };
+    return { status: "failed", stage_id: stageId, simulation_run_id: simulationRunId, worker_build: WORKER_BUILD, error: serialized };
   }
 }
 
@@ -170,12 +218,12 @@ async function runLifecycleTick(supabase: SupabaseClient): Promise<JsonObject> {
   const before = object(await rpc<unknown>(supabase, "universal_race_stage_process_lifecycle_v1", { p_max_publications: MAX_PUBLICATIONS_PER_TICK }));
   const calculations: JsonObject[] = [];
   for (let index = 0; index < MAX_CALCULATIONS_PER_TICK; index += 1) {
-    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v1", { p_worker_id: "supabase_edge_phase11b_v1" }));
+    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v1", { p_worker_id: "supabase_edge_phase11b_v2" }));
     if (claim.status !== "claimed") break;
     calculations.push(await calculateClaimedStage(supabase, claim));
   }
   const after = object(await rpc<unknown>(supabase, "universal_race_stage_process_lifecycle_v1", { p_max_publications: MAX_PUBLICATIONS_PER_TICK }));
-  return { status: "completed", contract: FUNCTION_CONTRACT, source_commit: SOURCE_COMMIT, before, calculations, after, processed_at_real: new Date().toISOString() };
+  return { status: "completed", contract: FUNCTION_CONTRACT, source_commit: SOURCE_COMMIT, worker_build: WORKER_BUILD, before, calculations, after, processed_at_real: new Date().toISOString() };
 }
 
 Deno.serve(async (request) => {
@@ -183,7 +231,7 @@ Deno.serve(async (request) => {
   const body = request.method === "POST" ? await request.json().catch(() => ({})) as JsonObject : {};
   const url = new URL(request.url);
   const action = String(body.action ?? url.searchParams.get("action") ?? "health").toLowerCase();
-  if (action === "health") return jsonResponse({ status: "ok", contract: FUNCTION_CONTRACT, source_commit: SOURCE_COMMIT, scheduler: "supabase_cron", max_calculations_per_tick: MAX_CALCULATIONS_PER_TICK, production_lifecycle: true, browser_calculation_required: false, legacy_execution_enabled: false });
+  if (action === "health") return jsonResponse({ status: "ok", contract: FUNCTION_CONTRACT, source_commit: SOURCE_COMMIT, worker_build: WORKER_BUILD, scheduler: "supabase_cron", max_calculations_per_tick: MAX_CALCULATIONS_PER_TICK, production_lifecycle: true, browser_calculation_required: false, legacy_execution_enabled: false });
   if (action !== "tick") return jsonResponse({ status: "invalid_action", contract: FUNCTION_CONTRACT }, 400);
 
   const supabase = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), {
