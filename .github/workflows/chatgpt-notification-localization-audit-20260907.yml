@@ -7,56 +7,170 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
+  localize-audit-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Audit notification localization
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply notification localization fixes
+        run: |
+          python .github/scripts/fix_notification_localization_20260907.py
+          python .github/scripts/fix_notification_detail_localization_20260907.py
+
+      - name: Audit all notification locales and runtime coverage
         shell: bash
         run: |
           python - <<'PY'
           import json, re
           from pathlib import Path
-          root=Path('.')
-          locales=['en','sr-Latn','de','hr','es','it','fr','ru']
-          def flat(o,p=''):
-              out={}
-              if isinstance(o,dict):
-                  for k,v in o.items(): out.update(flat(v,f'{p}.{k}' if p else k))
-              else: out[p]=o
+
+          root = Path('.')
+          locales = ['en','sr-Latn','de','hr','es','it','fr','ru']
+
+          def flatten(value, prefix=''):
+              out = {}
+              if isinstance(value, dict):
+                  for key, child in value.items():
+                      out.update(flatten(child, f'{prefix}.{key}' if prefix else key))
+              else:
+                  out[prefix] = value
               return out
-          fs={l:flat(json.loads((root/f'src/i18n/locales/{l}/notifications.json').read_text(encoding='utf-8'))) for l in locales}
-          en=fs['en']
-          print('=== PARITY ===')
-          for l in locales:
-              missing=sorted(set(en)-set(fs[l])); extra=sorted(set(fs[l])-set(en))
-              print(l,'keys',len(fs[l]),'missing',len(missing),'extra',len(extra))
-          print('\n=== NON-EN EXTRA KEYS (SR-LATN) ===')
-          for k in sorted(set(fs['sr-Latn'])-set(en)): print(k,'=',fs['sr-Latn'][k])
-          print('\n=== SCREENSHOT/ADVISORY KEYS BY LOCALE ===')
-          prefixes=('sportDirector.','reportVariants.','templateLocalization.feed.','semanticTypeTitles.','semanticTypeMessages.','semanticTypeEntityTitles.')
-          exact=('startlistMissedTitle','startlistMissedMessage','startlistIssueLinkLabel')
-          selected=[k for k in fs['sr-Latn'] if k.startswith(prefixes) or k in exact]
-          selected=[k for k in selected if any(n in k.lower() or n in str(fs['en'].get(k,'')).lower() for n in ['sportdirector','stage','plan','programme','program','startlist','jersey','removed','race','team'])]
-          for k in sorted(selected):
-              print('\nKEY',k)
-              for l in locales: print(' ',l,':',fs[l].get(k,'<MISSING>'))
-          print('\n=== SOURCE MATCHES ===')
-          needles=['management_priority','most urgent','urgent missing','missing_stage_plans','actionable_missing_stage_plans','next_future_race','missed_startlist','RACE_JERSEYS_MANDATORY','jersey_units','Team removed from','Startlist missed:','Sports Director Advisory']
-          allowed={'.ts','.tsx','.js','.mjs','.sql','.json'}
-          for p in root.rglob('*'):
-              if not p.is_file() or p.suffix.lower() not in allowed: continue
-              try: lines=p.read_text(encoding='utf-8').splitlines()
-              except: continue
-              for i,line in enumerate(lines,1):
-                  if any(n.lower() in line.lower() for n in needles): print(f'{p}:{i}: {line.strip()}')
-          print('\n=== NOTIFICATION LOCALIZATION CALL SITES ===')
-          for p in (root/'src').rglob('*.tsx'):
-              try: lines=p.read_text(encoding='utf-8').splitlines()
-              except: continue
-              for i,line in enumerate(lines,1):
-                  if 'localizeNotification' in line: print(f'{p}:{i}: {line.strip()}')
+
+          def placeholders(value):
+              if not isinstance(value, str):
+                  return set()
+              return set(re.findall(r'{{\s*([A-Za-z0-9_]+)\s*}}', value))
+
+          bundles = {
+              locale: json.loads((root / f'src/i18n/locales/{locale}/notifications.json').read_text(encoding='utf-8'))
+              for locale in locales
+          }
+          flat = {locale: flatten(bundle) for locale, bundle in bundles.items()}
+          en = flat['en']
+          problems = []
+
+          required_keys = [
+              'startlistMissedTitle',
+              'startlistMissedMessage',
+              'templateLocalization.feed.sportsDirector.titles.raceProgramme',
+              'templateLocalization.feed.sportsDirector.titles.stagePlansMissing',
+              'templateLocalization.feed.sportsDirector.titles.stagePlansIncomplete',
+              'templateLocalization.feed.sportsDirector.titles.startlistDeadlineAlert',
+              'templateLocalization.feed.sportsDirector.stagePlansMissingMessage',
+              'templateLocalization.feed.sportsDirector.raceProgrammeMessage',
+              'templateLocalization.feed.sportsDirector.noneScheduled',
+              'templateLocalization.feed.sportsDirector.genericMessage',
+              'templateLocalization.feed.raceJerseysRemoval.title',
+              'templateLocalization.feed.raceJerseysRemoval.message',
+              'semanticTypeTitles.RACE_PLAN_NEEDS_ATTENTION',
+              'semanticTypeTitles.RACE_JERSEYS_MANDATORY_WARNING',
+          ]
+
+          for locale in locales:
+              missing = sorted(set(en) - set(flat[locale]))
+              if missing:
+                  problems.append(f'{locale}: {len(missing)} keys missing vs English: {missing[:20]}')
+
+              for key in required_keys:
+                  value = flat[locale].get(key)
+                  if not isinstance(value, str) or not value.strip():
+                      problems.append(f'{locale}: missing/empty required key {key}')
+
+              for key in set(en) & set(flat[locale]):
+                  if placeholders(en[key]) != placeholders(flat[locale][key]):
+                      problems.append(f'{locale}: placeholder mismatch at {key}')
+
+              for key, value in flat[locale].items():
+                  if isinstance(value, str) and not value.strip():
+                      problems.append(f'{locale}: empty translation at {key}')
+
+          # These locale values were visibly leaving English technical terms in
+          # non-English notification copy. They must now be natural translations.
+          term_keys = [
+              'reportVariants.stage_plans_missing',
+              'reportVariants.stage_plans_incomplete',
+              'reportVariants.startlist_deadline_alert',
+              'sportDirector.startlist',
+              'sportDirector.missingStagePlans',
+              'sportDirector.incompleteStagePlans',
+              'sportDirector.missingPlans',
+          ]
+          for locale in ['de','es','it','fr','ru']:
+              for key in term_keys:
+                  value = str(flat[locale].get(key, ''))
+                  if re.search(r'\bStage\s+Plans?\b|\bStartlist\b', value, re.I):
+                      problems.append(f'{locale}: English technical term remains in {key}: {value}')
+
+          localization = (root / 'src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
+          page = (root / 'src/pages/dashboard/NotificationsPage.tsx').read_text(encoding='utf-8')
+
+          required_source_fragments = [
+              'function localizeExistingGameTemplate',
+              'getEnglishTemplateResourceIndex',
+              "localizeExistingGamePhrase(cleanTitle) || localizeExistingGameTemplate(cleanTitle)",
+              "templateLocalization.feed.sportsDirector.raceProgrammeMessage",
+          ]
+          for fragment in required_source_fragments:
+              if fragment not in localization:
+                  problems.append(f'notificationLocalization.ts missing runtime coverage: {fragment}')
+
+          if 'if (typeCode && !localizedType) return item' in localization:
+              problems.append('legacy unknown-type English passthrough still present')
+
+          page_fragments = [
+              "applyNotificationTemplates(activeTab === 'unread' ? unreadItems : readItems)",
+              'localizeNotificationRuntimeText(advisorPayload.summary || item.message, item, t)',
+              'localizeNotificationNarrative',
+              'localizeNotificationValue',
+          ]
+          for fragment in page_fragments:
+              if fragment not in page:
+                  problems.append(f'NotificationsPage.tsx missing localization coverage: {fragment}')
+
+          if problems:
+              print('\n'.join(f'ERROR: {problem}' for problem in problems))
+              raise SystemExit(1)
+
+          print('Notification localization audit PASSED')
+          print('Locales:', ', '.join(locales))
+          print('English notification keys:', len(en))
+          print('Required screenshot/runtime coverage: PASSED')
           PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Check diff
+        run: git diff --check
+
+      - name: Commit notification localization
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No notification localization changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            src/features/notifications/notificationLocalization.ts \
+            src/pages/dashboard/NotificationsPage.tsx \
+            src/i18n/locales/*/notifications.json
+          git commit -m 'Complete notification localization across all languages'
+          git pull --rebase origin main
+          git push origin HEAD:main
