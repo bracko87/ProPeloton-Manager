@@ -1,0 +1,73 @@
+name: Notification localization audit 2026-09-07
+
+on:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-notification-localization-audit-20260907.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit notification localization
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          root = Path('.')
+          locroot = root/'src/i18n/locales'
+          locales = ['en','sr-Latn','de','hr','es','it','fr','ru']
+          def flat(o,p=''):
+              out={}
+              if isinstance(o,dict):
+                  for k,v in o.items(): out.update(flat(v, f'{p}.{k}' if p else k))
+              else: out[p]=o
+              return out
+          bundles={l:json.loads((locroot/l/'notifications.json').read_text(encoding='utf-8')) for l in locales}
+          fs={l:flat(b) for l,b in bundles.items()}
+          en=fs['en']
+          print('=== LOCALE COUNTS / PARITY ===')
+          for l in locales:
+              missing=sorted(set(en)-set(fs[l])); extra=sorted(set(fs[l])-set(en))
+              print(l, 'keys=',len(fs[l]),'missing=',len(missing),'extra=',len(extra))
+              if missing: print(' MISSING', *missing[:100], sep='\n  ')
+          print('\n=== RELEVANT EN NOTIFICATION KEYS ===')
+          needles=('startlist','stage plan','stageplan','advisory','programme','program','jersey','removed','mandatory','supplies','race plan')
+          for k,v in en.items():
+              s=f'{k} {v}'.lower()
+              if any(n in s for n in needles): print(f'{k} = {v}')
+          print('\n=== EXACT SCREENSHOT PHRASE SOURCE MATCHES ===')
+          phrases=['Stage Plans Missing','stage plans are still missing','Race Programme','Current race:','Team removed from','mandatory Race Jersey Kits','Startlist missed:']
+          for path in root.rglob('*'):
+              if not path.is_file() or path.suffix.lower() not in {'.ts','.tsx','.js','.mjs','.sql','.json'}: continue
+              try: text=path.read_text(encoding='utf-8')
+              except Exception: continue
+              for ph in phrases:
+                  if ph.lower() in text.lower():
+                      for i,line in enumerate(text.splitlines(),1):
+                          if ph.lower() in line.lower(): print(f'{path}:{i}: {line.strip()}')
+          print('\n=== TYPE_CODE LITERALS IN NOTIFICATION RELATED SOURCE ===')
+          types=set()
+          for path in list((root/'src').rglob('*')) + list((root/'supabase').rglob('*')):
+              if not path.is_file() or path.suffix.lower() not in {'.ts','.tsx','.js','.mjs','.sql'}: continue
+              try: text=path.read_text(encoding='utf-8')
+              except Exception: continue
+              if 'notification' not in text.lower() and 'type_code' not in text.lower(): continue
+              for m in re.finditer(r"(?:type_code|typeCode|type)\s*[:=]\s*['\"]([A-Z][A-Z0-9_]{2,})['\"]", text): types.add(m.group(1))
+          print('TYPE COUNT',len(types))
+          for t in sorted(types): print(t)
+          print('\n=== LOCALIZATION TYPE TOKENS / SEMANTIC KEYS ===')
+          nl=(root/'src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
+          for t in sorted(types):
+              toks=[x for x in re.split(r'[^A-Z0-9]+',t) if x]
+              token_keys=[f'templateWords.{x}' for x in toks if x not in {'RACE','RACES'}]
+              missing_tokens=[k for k in token_keys if k not in en]
+              semantic=f'semanticTypeTitles.{t}'
+              print(t,'semantic=',semantic in en,'missingTokens=',','.join(missing_tokens) or '-')
+          PY
