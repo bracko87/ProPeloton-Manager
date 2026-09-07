@@ -1,30 +1,18 @@
-import universalRaceStageRunner from './universal-race-stage-runner'
-
 /**
- * Netlify scheduled-entry adapter for the Universal production race worker.
+ * RETIRED 2026-09-07.
  *
- * Netlify Scheduled Functions provide scheduling through the function config
- * and a JSON request body containing `next_run`; they do not provide the
- * x-nf-event/x-netlify-event headers that the original worker used to detect a
- * scheduled invocation. This adapter is itself schedule-only and forwards the
- * invocation to the existing production worker with an internal schedule
- * marker, so the worker executes its normal `tick` lifecycle.
+ * Production Universal race scheduling now runs in Supabase Cron and invokes
+ * the Supabase Edge Function `universal-race-stage-runner` once per minute.
  *
- * No race calculation logic lives here. The authoritative calculation remains
- * the existing Universal TypeScript worker and its database exact-once gates.
+ * There is deliberately no Netlify `config.schedule` export in this file.
  */
-export const config = {
-  schedule: '* * * * *',
-}
-
-export default async function handler(request: Request): Promise<Response> {
-  const headers = new Headers(request.headers)
-  headers.set('x-nf-event', 'schedule')
-
-  const forwardedRequest = new Request(request.url, {
-    method: 'GET',
-    headers,
+export default async function handler(): Promise<Response> {
+  return new Response(JSON.stringify({
+    status: 'retired',
+    contract: 'netlify_universal_race_scheduler_retired_v1',
+    authoritative_scheduler: 'supabase_cron',
+  }), {
+    status: 410,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
   })
-
-  return universalRaceStageRunner(forwardedRequest)
 }
