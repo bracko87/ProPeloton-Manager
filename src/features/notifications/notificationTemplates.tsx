@@ -36,6 +36,9 @@ const RICH_RACE_IMAGES: Record<string, string> = {
     'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20apploicaiton%20deadline.png',
 }
 
+const PRESTART_DISQUALIFICATION_IMAGE =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Plan%20needs%20Antention.png'
+
 function payloadOf(item: NotificationItem): Record<string, unknown> {
   const payload = item.payload_json
   return payload && typeof payload === 'object' && !Array.isArray(payload)
@@ -67,6 +70,15 @@ function isRichRaceNotification(item: NotificationItem): boolean {
   return RICH_RACE_NOTIFICATION_CODES.has(codeOf(item))
 }
 
+function isPrestartDisqualificationPenalty(item: NotificationItem): boolean {
+  if (codeOf(item) !== 'RACE_PLAN_NEEDS_ATTENTION') return false
+  const payload = payloadOf(item)
+  return (
+    readString(payload, 'event_type') === 'prestart_disqualification' &&
+    readString(payload, 'reason_code') === 'mandatory_race_jersey_shortage'
+  )
+}
+
 function raceNameFromTeamRemovalTitle(item: NotificationItem): string | null {
   const prefix = 'Team removed from '
   const title = String(item.title ?? '').trim()
@@ -76,6 +88,25 @@ function raceNameFromTeamRemovalTitle(item: NotificationItem): string | null {
 function richRaceImage(item: NotificationItem): string | null {
   const payload = payloadOf(item)
   return readString(payload, 'image_url', 'image_src') || RICH_RACE_IMAGES[codeOf(item)] || null
+}
+
+function prestartDisqualificationImage(item: NotificationItem): string {
+  return readString(payloadOf(item), 'image_url', 'image_src') || PRESTART_DISQUALIFICATION_IMAGE
+}
+
+function prestartDisqualificationIntro(item: NotificationItem): string {
+  const payload = payloadOf(item)
+  const race = readString(payload, 'race_name') || 'this race'
+  const team = readString(payload, 'club_name', 'team_name') || 'Your team'
+  const required = readNumber(payload, 'required_jersey_units')
+  const available = readNumber(payload, 'available_jersey_units', 'effective_available_jersey_units')
+  const missing = readNumber(payload, 'missing_jersey_units')
+  const stock =
+    required !== null && available !== null
+      ? ` The eligibility check recorded ${required} required, ${available} eligible${missing !== null ? `, and ${missing} missing` : ''}.`
+      : ''
+
+  return `${team} was removed from ${race} at the mandatory pre-start eligibility check because it did not have enough eligible Race Jersey Kits.${stock} This is a club-controllable race-preparation failure, so the normal missed-start/no-show consequences were applied.`
 }
 
 function richRaceIntro(item: NotificationItem): string | null {
@@ -132,6 +163,31 @@ function localizeRows(item: NotificationItem, rows: NotificationDetailRow[]): No
     label: localizeNotificationDetailLabel(row.label, item),
     value: localizeNotificationValue(row.value, item),
   }))
+}
+
+function prestartDisqualificationDetailRows(item: NotificationItem): NotificationDetailRow[] {
+  const payload = payloadOf(item)
+  const race = readString(payload, 'race_name') || 'Race'
+  const team = readString(payload, 'club_name', 'team_name') || 'Your team'
+  const problem = readString(payload, 'problem_label') || 'Not enough eligible Race Jersey Kits'
+  const required = readNumber(payload, 'required_jersey_units')
+  const available = readNumber(payload, 'available_jersey_units', 'effective_available_jersey_units')
+  const missing = readNumber(payload, 'missing_jersey_units')
+  const cash = readNumber(payload, 'cash_penalty')
+  const score = readNumber(payload, 'score_delta')
+
+  return localizeRows(item, [
+    { label: 'Race', value: race },
+    { label: 'Team', value: team },
+    { label: 'Problem', value: problem },
+    ...(required !== null ? [{ label: 'Required Race Jersey Kits', value: String(required) }] : []),
+    ...(available !== null ? [{ label: 'Eligible at start', value: String(available) }] : []),
+    ...(missing !== null ? [{ label: 'Missing Race Jersey Kits', value: String(missing) }] : []),
+    { label: 'Race entry fee', value: 'Retained (not refunded)' },
+    ...(cash !== null ? [{ label: 'Cash fine', value: cash.toLocaleString('en-US') }] : []),
+    ...(score !== null ? [{ label: 'Race Commitment Score', value: score >= 0 ? `+${score}` : String(score) }] : []),
+    { label: 'Outcome', value: 'Removed before/at race start' },
+  ])
 }
 
 function richRaceDetailRows(item: NotificationItem): NotificationDetailRow[] {
@@ -194,6 +250,10 @@ function richRaceDetailRows(item: NotificationItem): NotificationDetailRow[] {
   return []
 }
 
+function prestartDisqualificationExtraText(): string {
+  return 'The penalty has already been applied. Open the race for context, or go directly to Race Supplies to review your eligible race jerseys and avoid the same issue at a future start.'
+}
+
 function richRaceExtraText(item: NotificationItem): string | null {
   const code = codeOf(item)
   const payload = payloadOf(item)
@@ -254,27 +314,63 @@ function richRaceAction(item: NotificationItem): { label: string; href: string }
   return null
 }
 
+function prestartDisqualificationActions(item: NotificationItem): NotificationActionTemplate[] {
+  const payload = payloadOf(item)
+  const raceId = readString(payload, 'race_id')
+  const raceHref = readString(payload, 'race_page_path') || (raceId ? `/dashboard/races/${raceId}` : null)
+  const suppliesHref = readString(payload, 'race_supplies_path') || '/dashboard/equipment?tab=race-supplies'
+  const actions: NotificationActionTemplate[] = []
+
+  if (raceHref) {
+    actions.push({
+      key: 'open-race',
+      label: localizeNotificationActionLabel('Open Race'),
+      variant: 'primary',
+      kind: 'navigate',
+      getHref: () => raceHref,
+      show: () => true,
+    })
+  }
+
+  actions.push({
+    key: 'open-race-supplies',
+    label: localizeNotificationActionLabel('Open Race Supplies'),
+    variant: raceHref ? 'secondary' : 'primary',
+    kind: 'navigate',
+    getHref: () => suppliesHref,
+    show: () => true,
+  })
+
+  return actions
+}
+
 export function getNotificationImageSrc(item: NotificationItem): string | null {
+  if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationImage(item)
   if (isRichRaceNotification(item)) return richRaceImage(item)
   return getBaseNotificationImageSrc(item)
 }
 
 export function getNotificationIntroText(item: NotificationItem): string | null {
+  if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationIntro(item)
   if (isRichRaceNotification(item)) return richRaceIntro(item)
   return getBaseNotificationIntroText(item)
 }
 
 export function getNotificationDetailRows(item: NotificationItem): NotificationDetailRow[] {
+  if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationDetailRows(item)
   if (isRichRaceNotification(item)) return richRaceDetailRows(item)
   return getBaseNotificationDetailRows(item)
 }
 
 export function getNotificationExtraText(item: NotificationItem): string | null {
+  if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationExtraText()
   if (isRichRaceNotification(item)) return richRaceExtraText(item)
   return getBaseNotificationExtraText(item)
 }
 
 export function getNotificationActions(item: NotificationItem): NotificationActionTemplate[] {
+  if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationActions(item)
+
   const override = richRaceAction(item)
   if (!override) return getBaseNotificationActions(item)
 
