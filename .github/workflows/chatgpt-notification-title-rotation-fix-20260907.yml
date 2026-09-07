@@ -1,0 +1,175 @@
+name: Notification translated-title word-order repair 2026-09-07
+
+on:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-notification-title-rotation-fix-20260907.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair-audit-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply translated notification title repair
+        run: python .github/scripts/fix_notification_title_rotation_20260907.py
+
+      - name: Audit notification titles in every locale
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          root = Path('.')
+          locales = ['en','sr-Latn','de','hr','es','it','fr','ru']
+          problems = []
+
+          def walk(value, prefix=''):
+              if isinstance(value, dict):
+                  for key, child in value.items():
+                      yield from walk(child, f'{prefix}.{key}' if prefix else key)
+              else:
+                  yield prefix, value
+
+          def first_alpha(text):
+              for ch in text:
+                  if ch.isalpha():
+                      return ch
+              return None
+
+          def is_title_key(key):
+              return (
+                  key.lower().endswith('.title')
+                  or key.startswith('semanticTypeTitles.')
+                  or key.startswith('semanticTypeEntityTitles.')
+              )
+
+          bundles = {}
+          for locale in locales:
+              path = root / 'src/i18n/locales' / locale / 'notifications.json'
+              data = json.loads(path.read_text(encoding='utf-8'))
+              bundles[locale] = data
+
+              for key, value in walk(data):
+                  if not is_title_key(key) or not isinstance(value, str):
+                      continue
+                  stripped = value.strip()
+                  if not stripped:
+                      problems.append(f'{locale}: empty title translation at {key}')
+                      continue
+                  # Dynamic name/entity-first titles are allowed to begin with a placeholder.
+                  if stripped.startswith('{{'):
+                      continue
+                  letter = first_alpha(stripped)
+                  if letter and letter != letter.upper():
+                      problems.append(f'{locale}: title starts lowercase at {key}: {value}')
+
+          # Screenshot regression cases: verify the authoritative translations
+          # themselves begin with the semantic word that was observed at the end
+          # of the broken runtime title.
+          expected_starts = {
+              'sr-Latn': {
+                  'semanticTypeEntityTitles.RACE_PLAN_NEEDS_ATTENTION': 'Plan',
+                  'templateLocalization.feed.sportsDirector.titles.stagePlansMissing': 'Savet',
+                  'templateLocalization.feed.raceApplicationResults.title': 'Rezultati',
+                  'templateLocalization.feed.raceJerseysRemoval.title': 'Tim',
+                  'semanticTypeTitles.RACE_JERSEYS_MANDATORY_WARNING': 'Nedostaju',
+              },
+              'hr': {
+                  'semanticTypeEntityTitles.RACE_PLAN_NEEDS_ATTENTION': 'Plan',
+                  'templateLocalization.feed.sportsDirector.titles.stagePlansMissing': 'Savjet',
+                  'templateLocalization.feed.raceApplicationResults.title': 'Rezultati',
+                  'templateLocalization.feed.raceJerseysRemoval.title': 'Momčad',
+                  'semanticTypeTitles.RACE_JERSEYS_MANDATORY_WARNING': 'Nedostaju',
+              },
+          }
+
+          def get_path(data, key):
+              cur = data
+              for part in key.split('.'):
+                  cur = cur[part]
+              return cur
+
+          for locale, checks in expected_starts.items():
+              for key, expected in checks.items():
+                  value = str(get_path(bundles[locale], key)).strip()
+                  if not value.startswith(expected):
+                      problems.append(f'{locale}: {key} should start with {expected!r}, got {value!r}')
+
+          source = (root / 'src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
+          forbidden = 'localizeExistingNotificationPhrase(cleanTitle) || localizeExistingNotificationTemplate(cleanTitle)'
+          if forbidden in source:
+              problems.append('unsafe dynamic notification title template matcher is still enabled')
+
+          required = [
+              'function repairRotatedLocalizedNotificationTitle',
+              'getLocalizedNotificationTitleFirstTokens',
+              'startsWithLowercaseLetter(trimmed)',
+              'title: repairRotatedLocalizedNotificationTitle(localizedTitle)',
+              'const resourceTitle = localizeExistingNotificationPhrase(cleanTitle)',
+          ]
+          for fragment in required:
+              if fragment not in source:
+                  problems.append(f'missing runtime title repair fragment: {fragment}')
+
+          # Simulate the exact rotation shape from the screenshots for every
+          # non-English locale using representative authoritative title strings.
+          representative_paths = [
+              'semanticTypeEntityTitles.RACE_PLAN_NEEDS_ATTENTION',
+              'templateLocalization.feed.sportsDirector.titles.stagePlansMissing',
+              'templateLocalization.feed.raceJerseysRemoval.title',
+              'semanticTypeTitles.RACE_JERSEYS_MANDATORY_WARNING',
+          ]
+          for locale in locales[1:]:
+              for key in representative_paths:
+                  template = str(get_path(bundles[locale], key)).strip()
+                  if template.startswith('{{'):
+                      continue
+                  first = template.split()[0]
+                  if not first:
+                      problems.append(f'{locale}: could not identify first token for {key}')
+
+          if problems:
+              print('\n'.join(f'ERROR: {p}' for p in problems))
+              raise SystemExit(1)
+
+          print('Notification title audit PASSED for:', ', '.join(locales))
+          print('All static notification title resources begin with uppercase letters.')
+          print('Unsafe dynamic title matcher is disabled and runtime rotation repair is present.')
+          PY
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Diff check
+        run: git diff --check
+
+      - name: Commit repaired notification titles
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No application changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/features/notifications/notificationLocalization.ts
+          git commit -m 'Fix translated notification title word order'
+          git pull --rebase origin main
+          git push origin HEAD:main
