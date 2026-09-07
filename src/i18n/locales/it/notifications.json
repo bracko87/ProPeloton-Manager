@@ -220,19 +220,19 @@
     "raceEnd": "Fine gara",
     "raceLocation": "Posizione della gara",
     "preparation": "Preparazione",
-    "startlist": "Startlist",
+    "startlist": "Lista di partenza",
     "deadline": "Termine",
     "stageDate": "Data della tappa",
     "stageStart": "Inizio tappa",
     "programme": "Programma",
     "futureRaces": "Corse future · 30 giorni",
     "managementPriorities": "Priorità di gestione",
-    "missingStagePlans": "Stage Plans mancanti",
-    "incompleteStagePlans": "Stage Plans incompleti",
+    "missingStagePlans": "Piani di tappa mancanti",
+    "incompleteStagePlans": "Piani di tappa incompleti",
     "programmeGap": "Mancanza di programma",
     "nextAcceptedRace": "Corsa successiva accettata",
     "nextRaceDate": "Data della prossima gara",
-    "missingPlans": "Stage Plans mancanti o incompleti",
+    "missingPlans": "Piani di tappa mancanti o incompleti",
     "urgency": "Urgenza",
     "recommendations": "Raccomandazioni del Direttore dello Sport"
   },
@@ -391,6 +391,34 @@
       "sponsorOffersReady": {
         "title": "Offerte sponsor pronte per la stagione {{season}}",
         "message": "Sono disponibili nuove offerte sponsor per la tua squadra. Scegli gli sponsor per la stagione in corso."
+      },
+      "sportsDirector": {
+        "titles": {
+          "raceProgramme": "Avviso del direttore sportivo — Programma gare",
+          "raceProgrammeGap": "Avviso del direttore sportivo — Interruzione nel programma gare",
+          "programmeContinuity": "Avviso del direttore sportivo — Continuità del programma",
+          "longProgrammeBreak": "Avviso del direttore sportivo — Lunga pausa nel programma",
+          "programmeEmpty": "Avviso del direttore sportivo — Programma vuoto",
+          "startlistDeadlineAlert": "Avviso del direttore sportivo — Scadenza della lista di partenza",
+          "stagePlansMissing": "Avviso del direttore sportivo — Mancano i piani di tappa",
+          "stagePlansIncomplete": "Avviso del direttore sportivo — Piani di tappa incompleti",
+          "racePreparationMissing": "Avviso del direttore sportivo — Manca la preparazione gara",
+          "racePreparationReady": "Avviso del direttore sportivo — Preparazione gara pronta"
+        },
+        "stagePlansMissingMessage": "Mancano ancora {{count}} piani di tappa per {{raceName}}. La tappa {{stage}} è oggi alle {{time}} ({{date}}) ed è il piano mancante più urgente.",
+        "raceProgrammeMessage": "Gara attuale: {{raceName}} ({{start}}–{{end}}). Prossima gara futura accettata: {{nextRace}}. Ci sono {{count}} priorità gestionali da rivedere.",
+        "noneScheduled": "nessuna attualmente in programma",
+        "genericMessage": "Il tuo direttore sportivo ha preparato un nuovo avviso sul programma gare. Apri la notifica per esaminare tutti i dettagli.",
+        "reviewRecommendation": "Controlla il programma gare attuale, il pacchetto di preparazione, la lista di partenza e lo stato dei piani di tappa."
+      },
+      "raceJerseysRemoval": {
+        "title": "Squadra rimossa da {{raceName}}",
+        "message": "{{teamName}} non disponeva di abbastanza kit obbligatori di maglia da gara per la tappa {{stage}}. Necessari: {{required}}; disponibili: {{available}}. La squadra è stata rimossa dalla tappa {{stage}} e da tutte le tappe rimanenti di {{raceName}}. I corridori non possono più ottenere piazzamenti o punti in questa gara.",
+        "genericMessage": "La squadra è stata rimossa da {{raceName}} perché non disponeva di abbastanza kit obbligatori di maglia da gara."
+      },
+      "startlistMissed": {
+        "title": "Scadenza della lista di partenza mancata: {{raceName}}",
+        "message": "È stata mancata la scadenza per l'invio dei corridori/della lista di partenza per {{raceName}}. Controlla la preparazione gara e invia le future liste prima della scadenza."
       }
     }
   },
@@ -624,9 +652,9 @@
     "programme_empty": "Programma vuoto",
     "race_preparation_missing": "Manca la preparazione della gara",
     "race_preparation_ready": "Preparazione della gara pronta",
-    "startlist_deadline_alert": "Avviso scadenza Startlist",
-    "stage_plans_missing": "Mancano i Stage Plans",
-    "stage_plans_incomplete": "Stage Plans incompleti",
+    "startlist_deadline_alert": "Avviso scadenza lista di partenza",
+    "stage_plans_missing": "Mancano i piani di tappa",
+    "stage_plans_incomplete": "Piani di tappa incompleti",
     "priority_prospect": "Prospettive prioritarie",
     "medical_treatment": "Trattamento medico",
     "equipment_workshop_review": "Revisione dell' attrezzatura e dell' officina",

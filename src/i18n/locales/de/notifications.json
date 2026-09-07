@@ -220,14 +220,14 @@
     "raceEnd": "Rennende",
     "raceLocation": "Rennort",
     "preparation": "Vorbereitung",
-    "startlist": "Startlist",
+    "startlist": "Startliste",
     "deadline": "Frist",
     "stageDate": "Zeitpunkt der Aufnahme",
     "stageStart": "Beginn der Etappe",
     "programme": "Programm",
     "futureRaces": "Zukunftsrennen · 30 Tage",
     "managementPriorities": "Prioritäten der Verwaltung",
-    "missingStagePlans": "Fehlende Pläne für die Etappe",
+    "missingStagePlans": "Fehlende Etappenpläne",
     "incompleteStagePlans": "Unvollständige Etappenpläne",
     "programmeGap": "Programmlücke",
     "nextAcceptedRace": "Nächste angenommene Rennen",
@@ -391,6 +391,34 @@
       "sponsorOffersReady": {
         "title": "Sponsorenangebote für Saison {{season}} verfügbar",
         "message": "Neue Sponsorenangebote sind für dein Team verfügbar. Wähle deine Sponsoren für die aktuelle Saison."
+      },
+      "sportsDirector": {
+        "titles": {
+          "raceProgramme": "Hinweis des Sportdirektors — Rennprogramm",
+          "raceProgrammeGap": "Hinweis des Sportdirektors — Lücke im Rennprogramm",
+          "programmeContinuity": "Hinweis des Sportdirektors — Programmkontinuität",
+          "longProgrammeBreak": "Hinweis des Sportdirektors — Lange Programmpause",
+          "programmeEmpty": "Hinweis des Sportdirektors — Leeres Programm",
+          "startlistDeadlineAlert": "Hinweis des Sportdirektors — Fristwarnung für die Startliste",
+          "stagePlansMissing": "Hinweis des Sportdirektors — Fehlende Etappenpläne",
+          "stagePlansIncomplete": "Hinweis des Sportdirektors — Unvollständige Etappenpläne",
+          "racePreparationMissing": "Hinweis des Sportdirektors — Rennvorbereitung fehlt",
+          "racePreparationReady": "Hinweis des Sportdirektors — Rennvorbereitung bereit"
+        },
+        "stagePlansMissingMessage": "Für {{raceName}} fehlen noch {{count}} Etappenpläne. Etappe {{stage}} findet heute um {{time}} ({{date}}) statt und ist der dringendste fehlende Plan.",
+        "raceProgrammeMessage": "Aktuelles Rennen: {{raceName}} ({{start}}–{{end}}). Nächstes angenommenes zukünftiges Rennen: {{nextRace}}. Es müssen {{count}} Management-Prioritäten geprüft werden.",
+        "noneScheduled": "derzeit kein Rennen geplant",
+        "genericMessage": "Ihr Sportdirektor hat einen neuen Hinweis zum Rennprogramm erstellt. Öffnen Sie die Benachrichtigung, um alle Details zu prüfen.",
+        "reviewRecommendation": "Prüfen Sie das aktuelle Rennprogramm, das Vorbereitungspaket, die Startliste und den Status der Etappenpläne."
+      },
+      "raceJerseysRemoval": {
+        "title": "Team aus {{raceName}} entfernt",
+        "message": "{{teamName}} hatte für Etappe {{stage}} nicht genügend vorgeschriebene Renntrikot-Sets. Benötigt: {{required}}; verfügbar: {{available}}. Das Team wurde aus Etappe {{stage}} und allen verbleibenden Etappen von {{raceName}} entfernt. Die Fahrer können in diesem Rennen keine Platzierungen oder Punkte mehr erzielen.",
+        "genericMessage": "Das Team wurde aus {{raceName}} entfernt, weil nicht genügend vorgeschriebene Renntrikot-Sets verfügbar waren."
+      },
+      "startlistMissed": {
+        "title": "Frist für die Startliste verpasst: {{raceName}}",
+        "message": "Die Frist für Fahrer-/Startlisteneinreichung bei {{raceName}} wurde verpasst. Prüfen Sie die Rennvorbereitung und reichen Sie künftige Startlisten rechtzeitig ein."
       }
     }
   },
@@ -624,9 +652,9 @@
     "programme_empty": "Programm leer",
     "race_preparation_missing": "Vorbereitung der Rennen fehlt",
     "race_preparation_ready": "Vorbereitung der Rennen bereit",
-    "startlist_deadline_alert": "Startlist Fristausschreibung",
-    "stage_plans_missing": "Nicht zu verbuchende Stage Plans",
-    "stage_plans_incomplete": "Unvollständige Stage Plans",
+    "startlist_deadline_alert": "Fristwarnung für die Startliste",
+    "stage_plans_missing": "Etappenpläne fehlen",
+    "stage_plans_incomplete": "Etappenpläne unvollständig",
     "priority_prospect": "Vorrangige Perspektive",
     "medical_treatment": "Medizinische Behandlung",
     "equipment_workshop_review": "Überprüfung der Ausrüstung und der Werkstatt",

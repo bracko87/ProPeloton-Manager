@@ -149,7 +149,14 @@ function getSeasonStartedTranslationParams(item: NotificationItem): Record<strin
 }
 
 type EnglishResourceHit = { namespace: string; keyPath: string }
+type EnglishTemplateResourceHit = {
+  namespace: string
+  keyPath: string
+  parameterNames: string[]
+  pattern: RegExp
+}
 let englishResourceIndex: Map<string, EnglishResourceHit[]> | null = null
+let englishTemplateResourceIndex: EnglishTemplateResourceHit[] | null = null
 
 function activeLanguageCode(): string {
   return String(i18n.resolvedLanguage ?? i18n.language ?? 'en')
@@ -209,6 +216,85 @@ function localizeExistingGamePhrase(value: string): string | null {
     const localized = readResourceString(languageData[hit.namespace], hit.keyPath)
     if (localized && !localized.includes('{{')) return localized
   }
+  return null
+}
+
+function escapeTemplateLiteral(value: string): string {
+  return value
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\s+/g, '\\s+')
+    .replace(/[–—-]/g, '[–—-]')
+}
+
+function getEnglishTemplateResourceIndex(): EnglishTemplateResourceHit[] {
+  if (englishTemplateResourceIndex) return englishTemplateResourceIndex
+
+  const hits: EnglishTemplateResourceHit[] = []
+  const englishData = i18n.getDataByLanguage('en') as Record<string, unknown> | undefined
+
+  const visit = (namespace: string, value: unknown, keyPath = ''): void => {
+    if (typeof value === 'string') {
+      if (!value.includes('{{')) return
+
+      const placeholderPattern = /{{\s*([A-Za-z0-9_]+)\s*}}/g
+      const parameterNames: string[] = []
+      let cursor = 0
+      let regexSource = '^'
+      let match: RegExpExecArray | null
+
+      while ((match = placeholderPattern.exec(value)) !== null) {
+        regexSource += escapeTemplateLiteral(value.slice(cursor, match.index))
+        regexSource += '(.+?)'
+        parameterNames.push(match[1])
+        cursor = match.index + match[0].length
+      }
+
+      regexSource += escapeTemplateLiteral(value.slice(cursor)) + '$'
+      hits.push({ namespace, keyPath, parameterNames, pattern: new RegExp(regexSource, 'i') })
+      return
+    }
+
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return
+    Object.entries(value as Record<string, unknown>).forEach(([key, child]) => {
+      visit(namespace, child, keyPath ? `${keyPath}.${key}` : key)
+    })
+  }
+
+  if (englishData) {
+    Object.entries(englishData).forEach(([namespace, bundle]) => visit(namespace, bundle))
+  }
+
+  englishTemplateResourceIndex = hits
+  return hits
+}
+
+function localizeExistingGameTemplate(value: string): string | null {
+  if (!shouldLocalizeNotifications() || !value.trim()) return null
+
+  const languageData = i18n.getDataByLanguage(activeLanguageCode()) as Record<string, unknown> | undefined
+  if (!languageData) return null
+
+  for (const hit of getEnglishTemplateResourceIndex()) {
+    const localizedTemplate = readResourceString(languageData[hit.namespace], hit.keyPath)
+    if (!localizedTemplate) continue
+
+    const match = hit.pattern.exec(value.trim())
+    if (!match) continue
+
+    const params: Record<string, unknown> = {}
+    hit.parameterNames.forEach((name, index) => {
+      params[name] = match[index + 1]
+    })
+
+    const localized = String(i18n.t(hit.keyPath, {
+      ns: hit.namespace,
+      ...params,
+      defaultValue: '',
+    }))
+
+    if (localized && localized !== hit.keyPath) return localized
+  }
+
   return null
 }
 
@@ -402,7 +488,7 @@ function getTopic(item: NotificationItem): string {
 function looksEnglish(value: string | null | undefined): boolean {
   const text = String(value ?? '').toLowerCase()
   if (!text) return false
-  return /\b(the|your|you|has|have|is|are|was|were|will|can|could|should|joined|available|review|open|staff|rider|sponsor|race|stage|contract|offer|team|club|week|season|completed|required|selected|selection|transfer|warning|reward|results|report|new|for|from|with|without|this|that|as|to|of|and)\b/.test(text)
+  return /\b(the|your|you|has|have|is|are|was|were|will|can|could|should|joined|available|review|open|staff|rider|sponsor|race|stage|contract|offer|team|club|week|season|completed|required|selected|selection|transfer|warning|reward|results|report|new|for|from|with|without|this|that|as|to|of|and|startlist|missed|missing|advisory|sports|director|programme|program|plans|current|next|accepted|future|priority|priorities|items|require|removed|enough|mandatory|jersey|kits|remaining|riders|score|place)\b/.test(text)
 }
 
 
@@ -416,6 +502,65 @@ export function localizeNotificationFeedCopy(
 
   if (!shouldLocalizeNotifications()) {
     return { title: cleanTitle, message: cleanMessage }
+  }
+
+  const resourceTitle =
+    localizeExistingGamePhrase(cleanTitle) || localizeExistingGameTemplate(cleanTitle)
+  let resourceMessage =
+    localizeExistingGamePhrase(cleanMessage) || localizeExistingGameTemplate(cleanMessage)
+
+  const raceProgrammeMatch = /^Current race:\s*(.+?)\s*\((\d{4}-\d{2}-\d{2})[–—-](\d{4}-\d{2}-\d{2})\)\.\s*Next accepted future race:\s*(.+?)\.\s*(\d+) management priority item\(s\) require review\.?$/i.exec(cleanMessage)
+  if (raceProgrammeMatch) {
+    const nextRaceRaw = raceProgrammeMatch[4].trim()
+    const nextRace = /^none currently scheduled$/i.test(nextRaceRaw)
+      ? nt('templateLocalization.feed.sportsDirector.noneScheduled')
+      : nextRaceRaw
+    resourceMessage = nt('templateLocalization.feed.sportsDirector.raceProgrammeMessage', {
+      raceName: raceProgrammeMatch[1].trim(),
+      start: raceProgrammeMatch[2],
+      end: raceProgrammeMatch[3],
+      nextRace,
+      count: Number(raceProgrammeMatch[5]),
+    })
+  }
+
+  const startlistMissedMatch =
+    /^Startlist missed:\s*(.+)$/i.exec(cleanTitle) ||
+    /^Missed rider submission deadline:\s*(.+)$/i.exec(cleanTitle)
+  if (startlistMissedMatch) {
+    const raceName = startlistMissedMatch[1].trim()
+    return {
+      title: nt('templateLocalization.feed.startlistMissed.title', { raceName }),
+      message:
+        resourceMessage && resourceMessage !== cleanMessage
+          ? resourceMessage
+          : looksEnglish(cleanMessage)
+            ? nt('templateLocalization.feed.startlistMissed.message', { raceName })
+            : cleanMessage,
+    }
+  }
+
+  const teamRemovedMatch = /^Team removed from\s+(.+)$/i.exec(cleanTitle)
+  if (teamRemovedMatch) {
+    const raceName = teamRemovedMatch[1].trim()
+    const detailMatch = /^(.+?) did not have enough mandatory Race Jersey Kits for Stage (\d+)\. Required:\s*(\d+); available:\s*(\d+)\. The team has been removed from Stage \2 and every remaining stage of (.+?)\. Riders can no longer place or score in this race\.?$/i.exec(cleanMessage)
+
+    return {
+      title: nt('templateLocalization.feed.raceJerseysRemoval.title', { raceName }),
+      message: detailMatch
+        ? nt('templateLocalization.feed.raceJerseysRemoval.message', {
+            teamName: detailMatch[1].trim(),
+            stage: Number(detailMatch[2]),
+            required: Number(detailMatch[3]),
+            available: Number(detailMatch[4]),
+            raceName: detailMatch[5].trim(),
+          })
+        : nt('templateLocalization.feed.raceJerseysRemoval.genericMessage', { raceName }),
+    }
+  }
+
+  if (resourceTitle && resourceMessage) {
+    return { title: resourceTitle, message: resourceMessage }
   }
 
   const staffHiredMatch = /^Staff hired:\s*(.+)$/i.exec(cleanTitle)
@@ -481,12 +626,15 @@ export function localizeNotificationFeedCopy(
 
   if (options?.genericFallback !== false && (looksEnglish(cleanTitle) || looksEnglish(cleanMessage))) {
     return {
-      title: looksEnglish(cleanTitle) ? nt('templateLocalization.feed.teamUpdateTitle') : cleanTitle,
-      message: looksEnglish(cleanMessage) ? nt('templateLocalization.feed.teamUpdateMessage') : cleanMessage,
+      title: resourceTitle || (looksEnglish(cleanTitle) ? nt('templateLocalization.feed.teamUpdateTitle') : cleanTitle),
+      message: resourceMessage || (looksEnglish(cleanMessage) ? nt('templateLocalization.feed.teamUpdateMessage') : cleanMessage),
     }
   }
 
-  return { title: cleanTitle, message: cleanMessage }
+  return {
+    title: resourceTitle || cleanTitle,
+    message: resourceMessage || cleanMessage,
+  }
 }
 
 export function localizeNotificationItem(item: NotificationItem): NotificationItem {
@@ -511,9 +659,6 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
   }
 
   const feedCopy = localizeNotificationFeedCopy(item.title, item.message, { genericFallback: false })
-  if (feedCopy.title !== String(item.title ?? '').trim() || feedCopy.message !== String(item.message ?? '').trim()) {
-    return { ...item, title: feedCopy.title, message: feedCopy.message }
-  }
 
   if (typeCode === 'STAFF_HIRED') {
     const staffName =
@@ -547,11 +692,10 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
     }
   }
 
-  // Unknown/legacy notification types must remain readable. If the type code
-  // cannot be localized from our template-word dictionary, keep the persisted
-  // backend title/message unchanged instead of inventing a misleading label.
+  // Unknown/legacy notification types must never leak hardcoded English into
+  // translated locales. Prefer a localized semantic/type/category fallback while
+  // preserving dynamic entity names from payload_json.
   const localizedType = localizeTypeCode(item.type_code)
-  if (typeCode && !localizedType) return item
 
   // Preserve already-localized/non-English admin or backend copy. Otherwise do
   // not leak English template prose: show a localized, type-aware fallback.
@@ -561,11 +705,11 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
   const topic = semanticType || localizedType || getTopic(item)
   const semanticEntityTitle = localizeSemanticEntityTitle(typeCode, entity)
   const semanticMessage = localizeSemanticMessage(typeCode, entity)
-  const localizedTitle = item.title && !looksEnglish(item.title)
-    ? item.title
+  const localizedTitle = feedCopy.title && !looksEnglish(feedCopy.title)
+    ? feedCopy.title
     : semanticEntityTitle || semanticType || nt('templateLocalization.genericTitle', { topic })
-  const localizedMessage = item.message && !looksEnglish(item.message)
-    ? item.message
+  const localizedMessage = feedCopy.message && !looksEnglish(feedCopy.message)
+    ? feedCopy.message
     : semanticMessage || (entity
       ? nt('templateLocalization.genericEntityMessage', { topic, entity })
       : nt('templateLocalization.genericMessage', { topic }))
@@ -637,6 +781,17 @@ export function localizeNotificationNarrative(
     return season !== null
       ? nt('templateLocalization.sponsorSelectionRequired.messageSeason', { season })
       : nt('templateLocalization.sponsorSelectionRequired.message')
+  }
+
+  const resourceLocalized =
+    localizeExistingGamePhrase(value) || localizeExistingGameTemplate(value)
+  if (resourceLocalized) return resourceLocalized
+
+  if (item) {
+    const localizedFeed = localizeNotificationFeedCopy(item.title, value, { genericFallback: false })
+    if (localizedFeed.message && localizedFeed.message !== value) {
+      return localizedFeed.message
+    }
   }
 
   if (!looksEnglish(value)) return value
@@ -907,7 +1062,8 @@ export function localizeNotificationValue(
 
   if (translatedValue !== value) return translatedValue
 
-  const existingGamePhrase = localizeExistingGamePhrase(value)
+  const existingGamePhrase =
+    localizeExistingGamePhrase(value) || localizeExistingGameTemplate(value)
   if (existingGamePhrase) return existingGamePhrase
 
   // Short metadata values frequently reuse the same vocabulary as labels.

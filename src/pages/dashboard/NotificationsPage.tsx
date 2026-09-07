@@ -32,7 +32,11 @@ import {
   formatNotificationTime,
   getResolvedNotificationActionUrl,
 } from '@/features/notifications/notificationHelpers'
-import { localizeNotificationTypeCodeLabel } from '@/features/notifications/notificationLocalization'
+import {
+  localizeNotificationNarrative,
+  localizeNotificationTypeCodeLabel,
+  localizeNotificationValue,
+} from '@/features/notifications/notificationLocalization'
 import {
   applyNotificationTemplates,
   getNotificationActionHref,
@@ -626,6 +630,24 @@ function localizeAdvisorNotificationRuntimeText(value: unknown, t: any): string 
   if (normalized === 'staff page') return t('headCoach.actions.staffPage')
 
   return text
+}
+
+function localizeNotificationRuntimeText(
+  value: unknown,
+  item: NotificationItem,
+  t: any
+): string {
+  const text = String(value ?? '').trim()
+  if (!text) return text
+
+  const advisorSpecific = localizeAdvisorNotificationRuntimeText(text, t)
+  if (advisorSpecific !== text) return advisorSpecific
+
+  const narrative = localizeNotificationNarrative(text, item)
+  if (narrative && narrative !== text) return narrative
+
+  const localizedValue = localizeNotificationValue(text, item)
+  return localizedValue || text
 }
 
 
@@ -1581,7 +1603,10 @@ export default function NotificationsPage(): JSX.Element {
     }
   }, [activeTab, loadNotifications, loadUnreadCount])
 
-  const allActiveItems = activeTab === 'unread' ? unreadItems : readItems
+  const allActiveItems = useMemo(
+    () => applyNotificationTemplates(activeTab === 'unread' ? unreadItems : readItems),
+    [activeTab, unreadItems, readItems, i18n.language, i18n.resolvedLanguage]
+  )
 
   const advisorDisplay = useMemo(() => {
     if (!advisorFilter) return null
@@ -2138,11 +2163,11 @@ export default function NotificationsPage(): JSX.Element {
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
                                             <li
-                                              key={`${localizeAdvisorNotificationRuntimeText(recommendation, t)}-${index}`}
+                                              key={`${localizeNotificationRuntimeText(recommendation, item, t)}-${index}`}
                                               className="flex gap-2 text-sm leading-6 text-slate-700"
                                             >
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeAdvisorNotificationRuntimeText(recommendation, t)}</span>
+                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>
@@ -2341,7 +2366,7 @@ export default function NotificationsPage(): JSX.Element {
                                 >
                                   <div className="min-w-0">
                                     <p className="text-sm leading-6 text-slate-700">
-                                      {localizeAdvisorNotificationRuntimeText(advisorPayload.summary || item.message, t)}
+                                      {localizeNotificationRuntimeText(advisorPayload.summary || item.message, item, t)}
                                     </p>
 
                                     {sportSummaryEntries.length > 0 ? (
@@ -2360,7 +2385,7 @@ export default function NotificationsPage(): JSX.Element {
                                                 source: sportData as Record<string, unknown>,
                                                 navigate,
                                                 defaultScope: 'internal',
-                                              }) : formatAdvisorDisplayValue(value)}
+                                              }) : localizeNotificationValue(formatAdvisorDisplayValue(value), item)}
                                             </div>
                                           </div>
                                         ))}
@@ -2384,13 +2409,13 @@ export default function NotificationsPage(): JSX.Element {
                                               className="grid grid-cols-[minmax(0,180px)_minmax(0,1fr)_80px] gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0"
                                             >
                                               <span className="font-medium text-slate-900">
-                                                {formatAdvisorDisplayValue(priority.label ?? priority.code)}
+                                                {localizeNotificationValue(formatAdvisorDisplayValue(priority.label ?? priority.code), item)}
                                               </span>
                                               <span className="text-slate-700">
-                                                {formatAdvisorDisplayValue(priority.detail)}
+                                                {localizeNotificationValue(formatAdvisorDisplayValue(priority.detail), item)}
                                               </span>
                                               <span className="text-slate-700">
-                                                {formatAdvisorDisplayValue(priority.priority)}
+                                                {localizeNotificationValue(formatAdvisorDisplayValue(priority.priority), item)}
                                               </span>
                                             </div>
                                           ))}
@@ -2426,10 +2451,10 @@ export default function NotificationsPage(): JSX.Element {
                                                 {formatAdvisorValue(stage.stage_start_time_label)}
                                               </span>
                                               <span className="text-slate-700">
-                                                {formatAdvisorAvailability(stage.urgency)}
+                                                {localizeNotificationValue(formatAdvisorAvailability(stage.urgency), item)}
                                               </span>
                                               <span className="text-slate-700">
-                                                {formatAdvisorAvailability(stage.stage_plan_status)}
+                                                {localizeNotificationValue(formatAdvisorAvailability(stage.stage_plan_status), item)}
                                               </span>
                                             </div>
                                           ))}
@@ -2445,11 +2470,11 @@ export default function NotificationsPage(): JSX.Element {
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
                                             <li
-                                              key={`${localizeAdvisorNotificationRuntimeText(recommendation, t)}-${index}`}
+                                              key={`${localizeNotificationRuntimeText(recommendation, item, t)}-${index}`}
                                               className="flex gap-2 text-sm leading-6 text-slate-700"
                                             >
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeAdvisorNotificationRuntimeText(recommendation, t)}</span>
+                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>
@@ -2642,7 +2667,7 @@ export default function NotificationsPage(): JSX.Element {
                                                     navigate,
                                                     defaultScope: 'internal',
                                                   })
-                                                : formatAdvisorDisplayValue(value)}
+                                                : localizeNotificationValue(formatAdvisorDisplayValue(value), item)}
                                             </div>
                                           </div>
                                         ))}
@@ -2737,11 +2762,11 @@ export default function NotificationsPage(): JSX.Element {
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
                                             <li
-                                              key={`${localizeAdvisorNotificationRuntimeText(recommendation, t)}-${index}`}
+                                              key={`${localizeNotificationRuntimeText(recommendation, item, t)}-${index}`}
                                               className="flex gap-2 text-sm leading-6 text-slate-700"
                                             >
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeAdvisorNotificationRuntimeText(recommendation, t)}</span>
+                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>
@@ -2956,9 +2981,9 @@ export default function NotificationsPage(): JSX.Element {
                                         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('mechanic.recommendations')}</div>
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
-                                            <li key={`${localizeAdvisorNotificationRuntimeText(recommendation, t)}-${index}`} className="flex gap-2 text-sm leading-6 text-slate-700">
+                                            <li key={`${localizeNotificationRuntimeText(recommendation, item, t)}-${index}`} className="flex gap-2 text-sm leading-6 text-slate-700">
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeAdvisorNotificationRuntimeText(recommendation, t)}</span>
+                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>
@@ -3311,11 +3336,11 @@ export default function NotificationsPage(): JSX.Element {
                                         <ul className="mt-2 space-y-2">
                                           {recommendations.map((recommendation, index) => (
                                             <li
-                                              key={`${localizeAdvisorNotificationRuntimeText(recommendation, t)}-${index}`}
+                                              key={`${localizeNotificationRuntimeText(recommendation, item, t)}-${index}`}
                                               className="flex gap-2 text-sm leading-6 text-slate-700"
                                             >
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeAdvisorNotificationRuntimeText(recommendation, t)}</span>
+                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>

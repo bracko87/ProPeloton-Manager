@@ -220,19 +220,19 @@
     "raceEnd": "Fin de carrera",
     "raceLocation": "Lugar de la carrera",
     "preparation": "Preparación",
-    "startlist": "Startlist",
+    "startlist": "Lista de salida",
     "deadline": "Plazo",
     "stageDate": "Fecha de la etapa",
     "stageStart": "Inicio de la etapa",
     "programme": "Programa",
     "futureRaces": "Futuras carreras · 30 días",
     "managementPriorities": "Prioridades de gestión",
-    "missingStagePlans": "Faltan Stage Plans",
-    "incompleteStagePlans": "Stage Plans incompletos",
+    "missingStagePlans": "Planes de etapa pendientes",
+    "incompleteStagePlans": "Planes de etapa incompletos",
     "programmeGap": "Brecha entre los programas",
     "nextAcceptedRace": "Siguiente carrera aceptada",
     "nextRaceDate": "Próxima fecha de la carrera",
-    "missingPlans": "Stage Plans incompletos o ausentes",
+    "missingPlans": "Planes de etapa pendientes o incompletos",
     "urgency": "Urgencia",
     "recommendations": "Recomendaciones del Director de Deportes"
   },
@@ -391,6 +391,34 @@
       "sponsorOffersReady": {
         "title": "Ofertas de patrocinadores listas para la temporada {{season}}",
         "message": "Hay nuevas ofertas de patrocinadores disponibles para tu equipo. Elige tus patrocinadores para la temporada actual."
+      },
+      "sportsDirector": {
+        "titles": {
+          "raceProgramme": "Aviso del director deportivo — Programa de carreras",
+          "raceProgrammeGap": "Aviso del director deportivo — Hueco en el programa de carreras",
+          "programmeContinuity": "Aviso del director deportivo — Continuidad del programa",
+          "longProgrammeBreak": "Aviso del director deportivo — Pausa larga en el programa",
+          "programmeEmpty": "Aviso del director deportivo — Programa vacío",
+          "startlistDeadlineAlert": "Aviso del director deportivo — Alerta de plazo de la lista de salida",
+          "stagePlansMissing": "Aviso del director deportivo — Faltan planes de etapa",
+          "stagePlansIncomplete": "Aviso del director deportivo — Planes de etapa incompletos",
+          "racePreparationMissing": "Aviso del director deportivo — Falta la preparación de carrera",
+          "racePreparationReady": "Aviso del director deportivo — Preparación de carrera lista"
+        },
+        "stagePlansMissingMessage": "Todavía faltan {{count}} planes de etapa para {{raceName}}. La etapa {{stage}} es hoy a las {{time}} ({{date}}) y es el plan pendiente más urgente.",
+        "raceProgrammeMessage": "Carrera actual: {{raceName}} ({{start}}–{{end}}). Próxima carrera futura aceptada: {{nextRace}}. Hay {{count}} prioridades de gestión que requieren revisión.",
+        "noneScheduled": "no hay ninguna programada actualmente",
+        "genericMessage": "Tu director deportivo ha preparado un nuevo aviso sobre el programa de carreras. Abre la notificación para revisar todos los detalles.",
+        "reviewRecommendation": "Revisa el programa de carreras actual, el paquete de preparación, la lista de salida y el estado de los planes de etapa."
+      },
+      "raceJerseysRemoval": {
+        "title": "Equipo retirado de {{raceName}}",
+        "message": "{{teamName}} no tenía suficientes kits obligatorios de maillot de carrera para la etapa {{stage}}. Necesarios: {{required}}; disponibles: {{available}}. El equipo ha sido retirado de la etapa {{stage}} y de todas las etapas restantes de {{raceName}}. Los corredores ya no pueden clasificarse ni puntuar en esta carrera.",
+        "genericMessage": "El equipo fue retirado de {{raceName}} porque no tenía suficientes kits obligatorios de maillot de carrera."
+      },
+      "startlistMissed": {
+        "title": "Se perdió el plazo de la lista de salida: {{raceName}}",
+        "message": "Se perdió el plazo para enviar corredores/la lista de salida de {{raceName}}. Revisa la preparación de carrera y envía las futuras listas antes del plazo."
       }
     }
   },
@@ -624,9 +652,9 @@
     "programme_empty": "Programa vacío",
     "race_preparation_missing": "Falta preparación de la carrera",
     "race_preparation_ready": "Preparación de la carrera lista",
-    "startlist_deadline_alert": "Alerta de fecha límite Startlist",
-    "stage_plans_missing": "Faltan Stage Plans",
-    "stage_plans_incomplete": "Stage Plans incompletos",
+    "startlist_deadline_alert": "Alerta de plazo de la lista de salida",
+    "stage_plans_missing": "Faltan planes de etapa",
+    "stage_plans_incomplete": "Planes de etapa incompletos",
     "priority_prospect": "Perspectiva de prioridad",
     "medical_treatment": "Tratamiento médico",
     "equipment_workshop_review": "Revisión de equipamiento y taller",

@@ -391,6 +391,34 @@
       "sponsorOffersReady": {
         "title": "Sponsor offers ready for Season {{season}}",
         "message": "New sponsor offers are available for your team. Choose your sponsors for the current season."
+      },
+      "sportsDirector": {
+        "titles": {
+          "raceProgramme": "Sports Director Advisory — Race Programme",
+          "raceProgrammeGap": "Sports Director Advisory — Race Programme Gap",
+          "programmeContinuity": "Sports Director Advisory — Programme Continuity",
+          "longProgrammeBreak": "Sports Director Advisory — Long Programme Break",
+          "programmeEmpty": "Sports Director Advisory — Programme Empty",
+          "startlistDeadlineAlert": "Sports Director Advisory — Startlist Deadline Alert",
+          "stagePlansMissing": "Sports Director Advisory — Stage Plans Missing",
+          "stagePlansIncomplete": "Sports Director Advisory — Stage Plans Incomplete",
+          "racePreparationMissing": "Sports Director Advisory — Race Preparation Missing",
+          "racePreparationReady": "Sports Director Advisory — Race Preparation Ready"
+        },
+        "stagePlansMissingMessage": "{{count}} stage plans are still missing for {{raceName}}. Stage {{stage}} is today at {{time}} ({{date}}) and is the most urgent missing plan.",
+        "raceProgrammeMessage": "Current race: {{raceName}} ({{start}}–{{end}}). Next accepted future race: {{nextRace}}. {{count}} management priority item(s) require review.",
+        "noneScheduled": "none currently scheduled",
+        "genericMessage": "Your Sports Director has prepared a new race-programme advisory. Open the notification to review the full details.",
+        "reviewRecommendation": "Review the current race programme, preparation package, startlist and stage-plan status."
+      },
+      "raceJerseysRemoval": {
+        "title": "Team removed from {{raceName}}",
+        "message": "{{teamName}} did not have enough mandatory Race Jersey Kits for Stage {{stage}}. Required: {{required}}; available: {{available}}. The team has been removed from Stage {{stage}} and every remaining stage of {{raceName}}. Riders can no longer place or score in this race.",
+        "genericMessage": "The team was removed from {{raceName}} because it did not have enough mandatory Race Jersey Kits."
+      },
+      "startlistMissed": {
+        "title": "Startlist missed: {{raceName}}",
+        "message": "The rider/startlist deadline was missed for {{raceName}}. Review Race Preparation and make sure future startlists are submitted before the deadline."
       }
     }
   },

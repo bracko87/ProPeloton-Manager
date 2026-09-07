@@ -391,6 +391,34 @@
       "sponsorOffersReady": {
         "title": "Ponude sponzora spremne za sezonu {{season}}",
         "message": "Nove ponude sponzora dostupne su vašem timu. Odaberite sponzore za trenutačnu sezonu."
+      },
+      "sportsDirector": {
+        "titles": {
+          "raceProgramme": "Savjet sportskog direktora — Program utrka",
+          "raceProgrammeGap": "Savjet sportskog direktora — Praznina u programu utrka",
+          "programmeContinuity": "Savjet sportskog direktora — Kontinuitet programa",
+          "longProgrammeBreak": "Savjet sportskog direktora — Duga pauza u programu",
+          "programmeEmpty": "Savjet sportskog direktora — Program je prazan",
+          "startlistDeadlineAlert": "Savjet sportskog direktora — Upozorenje za rok startne liste",
+          "stagePlansMissing": "Savjet sportskog direktora — Nedostaju planovi etapa",
+          "stagePlansIncomplete": "Savjet sportskog direktora — Planovi etapa su nepotpuni",
+          "racePreparationMissing": "Savjet sportskog direktora — Nedostaje priprema utrke",
+          "racePreparationReady": "Savjet sportskog direktora — Priprema utrke je spremna"
+        },
+        "stagePlansMissingMessage": "Još nedostaje {{count}} planova etapa za {{raceName}}. Etapa {{stage}} je danas u {{time}} ({{date}}) i najhitniji je plan koji nedostaje.",
+        "raceProgrammeMessage": "Trenutna utrka: {{raceName}} ({{start}}–{{end}}). Sljedeća prihvaćena buduća utrka: {{nextRace}}. Potrebno je pregledati {{count}} stavki prioriteta upravljanja.",
+        "noneScheduled": "trenutačno nema zakazane utrke",
+        "genericMessage": "Vaš sportski direktor pripremio je novi savjet o programu utrka. Otvorite obavijest kako biste pregledali sve detalje.",
+        "reviewRecommendation": "Pregledajte trenutačni program utrka, paket pripreme, startnu listu i status planova etapa."
+      },
+      "raceJerseysRemoval": {
+        "title": "Momčad uklonjena iz utrke {{raceName}}",
+        "message": "{{teamName}} nije imao dovoljno obaveznih kompleta trkaćih dresova za etapu {{stage}}. Potrebno: {{required}}; dostupno: {{available}}. Momčad je uklonjena iz etape {{stage}} i svih preostalih etapa utrke {{raceName}}. Vozači više ne mogu ostvariti plasman ni osvajati bodove u ovoj utrci.",
+        "genericMessage": "Momčad je uklonjena iz utrke {{raceName}} jer nije imala dovoljno obaveznih kompleta trkaćih dresova."
+      },
+      "startlistMissed": {
+        "title": "Propušten rok za startnu listu: {{raceName}}",
+        "message": "Propušten je rok za prijavu vozača/startne liste za {{raceName}}. Pregledajte Pripremu utrke i ubuduće pošaljite startnu listu prije isteka roka."
       }
     }
   },
