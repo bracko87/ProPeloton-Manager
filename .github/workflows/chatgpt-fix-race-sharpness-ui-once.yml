@@ -2,9 +2,10 @@ name: One-off Race Sharpness UI fix
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
-      - '.github/workflows/chatgpt-fix-race-sharpness-ui-once.yml'
+      - .github/workflows/chatgpt-fix-race-sharpness-ui-once.yml
 
 permissions:
   contents: write
@@ -13,23 +14,32 @@ jobs:
   patch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           ref: main
 
       - name: Patch Race Preparation sharpness layout
-        shell: python
+        shell: bash
         run: |
+          python - <<'PY'
           from pathlib import Path
 
           path = Path('src/pages/dashboard/RacePreparation.tsx')
           text = path.read_text(encoding='utf-8')
 
           old_inline = '''    <span
+              className={`shrink-0 text-xs font-semibold ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
+            >
+              Race Sharpness: {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
+            </span>'''
+          if old_inline not in text:
+              old_inline = '''    <span
       className={`shrink-0 text-xs font-semibold ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
     >
       Race Sharpness: {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
     </span>'''
+
           new_inline = '''    <span
       className={`max-w-full text-right text-xs font-semibold leading-4 whitespace-normal break-words ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
       title={`Race Sharpness: ${percent}/100 · ${localizeRacePrepBackendText(sharpness.race_sharpness_label)}`}
@@ -54,6 +64,7 @@ jobs:
           text = text.replace(old_inline, new_inline, 1)
           text = text.replace(old_row, new_row, 1)
           path.write_text(text, encoding='utf-8')
+          PY
 
       - name: Install dependencies
         run: npm ci
@@ -63,8 +74,8 @@ jobs:
 
       - name: Commit UI fix
         run: |
-          git config user.name "ChatGPT"
-          git config user.email "actions@users.noreply.github.com"
+          git config user.name ChatGPT
+          git config user.email actions@users.noreply.github.com
           git add src/pages/dashboard/RacePreparation.tsx
           git diff --cached --check
           git commit -m "Fix Race Sharpness rider card layout"
