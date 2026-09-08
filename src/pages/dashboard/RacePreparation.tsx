@@ -13237,9 +13237,9 @@ function RaceSharpnessInlineText({
 
   return (
     <span
-      className={`shrink-0 text-xs font-semibold ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
+      className={`max-w-full text-right text-xs font-semibold leading-4 whitespace-normal break-words ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
     >
-      Race Sharpness: {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
+      {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
     </span>
   );
 }
@@ -13377,7 +13377,7 @@ function RiderSelectionCard({
         {medicallyUnavailable ? (
           <div className="mt-3 space-y-2">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span>{racePrepText("screen.role")}: {localizeRacePrepBackendText(option.assigned_role ?? "—")}</span>
+              <span className="min-w-0 flex-1 break-words">{racePrepText("screen.role")}: {localizeRacePrepBackendText(option.assigned_role ?? "—")}</span>
               <span>·</span>
               <span>{racePrepText("screen.availability")}: {localizeRacePrepBackendText(availabilityLabel)}</span>
             </div>
@@ -13397,8 +13397,8 @@ function RiderSelectionCard({
           </div>
         ) : (
           <>
-            <div className="mt-1 flex items-center justify-between gap-3 text-xs text-slate-500">
-              <span>{racePrepText("screen.role")}: {localizeRacePrepBackendText(option.assigned_role ?? "—")}</span>
+            <div className="mt-1 flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-1 text-xs text-slate-500">
+              <span className="min-w-0 flex-1 break-words">{racePrepText("screen.role")}: {localizeRacePrepBackendText(option.assigned_role ?? "—")}</span>
               <RaceSharpnessInlineText sharpness={raceSharpness} />
             </div>
 
