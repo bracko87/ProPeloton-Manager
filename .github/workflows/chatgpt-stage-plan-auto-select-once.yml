@@ -232,9 +232,9 @@ jobs:
               const node = stageSliderRef.current;
               if (!node || stages.length <= 5) return;
 
-              const selectedCard = node.querySelector<HTMLElement>(
-                `[data-stage-index="${selectedStageIndex}"]`,
-              );
+              const selectedCard = node.children.item(
+                selectedStageIndex,
+              ) as HTMLElement | null;
               if (!selectedCard) return;
 
               const left =
@@ -249,15 +249,6 @@ jobs:
 
             function scrollStages(direction: "left" | "right"): void {''',
           'stage scroller auto-centering',
-          )
-
-          replace_once(
-          '''        type="button"
-                onClick={() => onSelectStage(index)}''',
-          '''        type="button"
-                data-stage-index={index}
-                onClick={() => onSelectStage(index)}''',
-          'stage card data index',
           )
 
           path.write_text(text, encoding='utf-8')
