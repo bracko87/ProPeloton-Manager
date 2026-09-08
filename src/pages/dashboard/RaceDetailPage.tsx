@@ -13246,6 +13246,10 @@ function UniversalRaceReplayPage({
   const [replayProgress, setReplayProgress] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4 | 8>(1)
+  const replaySpeedLocked =
+    authoritativePayload?.lifecycle?.speed_locked === true
+  const officialLifecycleResultsVisible =
+    authoritativePayload?.lifecycle?.results_visible === true
   const [preStageStandingByRiderId, setPreStageStandingByRiderId] = useState<
     Record<string, ReplayPreStageStanding>
   >({})
@@ -13449,6 +13453,11 @@ function UniversalRaceReplayPage({
   }, [shadowBuild.result])
 
   useEffect(() => {
+    if (!replaySpeedLocked) return
+    setPlaybackSpeed(1)
+  }, [replaySpeedLocked])
+
+  useEffect(() => {
     if (!playing || replayFrames.length < 2) return
 
     const intervalMilliseconds = 100
@@ -13461,7 +13470,7 @@ function UniversalRaceReplayPage({
           current +
             (intervalMilliseconds /
               replayDurationAtOneTimesMilliseconds) *
-              playbackSpeed
+              (replaySpeedLocked ? 1 : playbackSpeed)
         )
 
         if (next >= 1) {
@@ -13478,6 +13487,7 @@ function UniversalRaceReplayPage({
     playing,
     playbackSpeed,
     replayFrames.length,
+    replaySpeedLocked,
   ])
 
   const input = shadowBuild.input
@@ -13504,7 +13514,9 @@ function UniversalRaceReplayPage({
   const nextFrame =
     framePair.next ??
     currentFrame
-  const resultsVisible = currentFrame?.finalResultsVisible === true
+  const resultsVisible =
+    officialLifecycleResultsVisible &&
+    currentFrame?.finalResultsVisible === true
   const replayWinnerName =
     resultsVisible
       ? input?.riders.find(
@@ -15044,6 +15056,7 @@ function UniversalRaceReplayPage({
   }
 
   function finishReplay() {
+    if (replaySpeedLocked) return
     setPlaying(false)
     setReplayProgress(1)
   }
@@ -15710,11 +15723,13 @@ function UniversalRaceReplayPage({
                       <button
                         key={value}
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
+                          if (replaySpeedLocked && value !== 1) return
                           setPlaybackSpeed(
                             value as 1 | 2 | 4 | 8
                           )
-                        }
+                        }}
+                        disabled={replaySpeedLocked && value !== 1}
                         className={`rounded-full border ${
                           isTimeTrialReplay
                             ? 'px-3 py-2 text-xs'
@@ -15732,6 +15747,7 @@ function UniversalRaceReplayPage({
                     <button
                       type="button"
                       onClick={finishReplay}
+                      disabled={replaySpeedLocked}
                       className={
                         isTimeTrialReplay
                           ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50'
