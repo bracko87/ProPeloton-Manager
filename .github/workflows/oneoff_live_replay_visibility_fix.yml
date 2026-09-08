@@ -1,0 +1,103 @@
+name: One-off live replay visibility fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/oneoff_live_replay_visibility_fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Patch RaceDetail live replay gates
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/dashboard/RaceDetailPage.tsx')
+          text = path.read_text(encoding='utf-8')
+          original = text
+
+          old = "  const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4 | 8>(1)\n"
+          new = old + "  const replaySpeedLocked =\n    authoritativePayload?.lifecycle?.speed_locked === true\n  const officialLifecycleResultsVisible =\n    authoritativePayload?.lifecycle?.results_visible === true\n"
+          if old not in text:
+              raise SystemExit('playback state anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "  const resultsVisible = currentFrame?.finalResultsVisible === true\n"
+          new = "  const resultsVisible =\n    officialLifecycleResultsVisible &&\n    currentFrame?.finalResultsVisible === true\n"
+          if old not in text:
+              raise SystemExit('resultsVisible anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "  useEffect(() => {\n    setReplayProgress(0)\n    setPlaying(false)\n  }, [shadowBuild.result])\n\n  useEffect(() => {\n    if (!playing || replayFrames.length < 2) return\n"
+          new = "  useEffect(() => {\n    setReplayProgress(0)\n    setPlaying(false)\n  }, [shadowBuild.result])\n\n  useEffect(() => {\n    if (!replaySpeedLocked) return\n    setPlaybackSpeed(1)\n  }, [replaySpeedLocked])\n\n  useEffect(() => {\n    if (!playing || replayFrames.length < 2) return\n"
+          if old not in text:
+              raise SystemExit('replay reset effect anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "            (intervalMilliseconds /\n              replayDurationAtOneTimesMilliseconds) *\n              playbackSpeed\n"
+          new = "            (intervalMilliseconds /\n              replayDurationAtOneTimesMilliseconds) *\n              (replaySpeedLocked ? 1 : playbackSpeed)\n"
+          if old not in text:
+              raise SystemExit('playback increment anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "    playing,\n    playbackSpeed,\n    replayFrames.length,\n  ])\n"
+          new = "    playing,\n    playbackSpeed,\n    replayFrames.length,\n    replaySpeedLocked,\n  ])\n"
+          if old not in text:
+              raise SystemExit('playback dependencies anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "  function finishReplay() {\n    setPlaying(false)\n    setReplayProgress(1)\n  }\n"
+          new = "  function finishReplay() {\n    if (replaySpeedLocked) return\n    setPlaying(false)\n    setReplayProgress(1)\n  }\n"
+          if old not in text:
+              raise SystemExit('finishReplay anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "                        onClick={() =>\n                          setPlaybackSpeed(\n                            value as 1 | 2 | 4 | 8\n                          )\n                        }\n                        className={`rounded-full border ${\n"
+          new = "                        onClick={() => {\n                          if (replaySpeedLocked && value !== 1) return\n                          setPlaybackSpeed(\n                            value as 1 | 2 | 4 | 8\n                          )\n                        }}\n                        disabled={replaySpeedLocked && value !== 1}\n                        className={`rounded-full border ${\n"
+          if old not in text:
+              raise SystemExit('speed buttons anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "                      type=\"button\"\n                      onClick={finishReplay}\n                      className={\n"
+          new = "                      type=\"button\"\n                      onClick={finishReplay}\n                      disabled={replaySpeedLocked}\n                      className={\n"
+          if old not in text:
+              raise SystemExit('finish replay button anchor not found')
+          text = text.replace(old, new, 1)
+
+          if text == original:
+              raise SystemExit('no changes made')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit live replay visibility fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/dashboard/RaceDetailPage.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Enforce live replay result visibility window"
+          git push origin main
