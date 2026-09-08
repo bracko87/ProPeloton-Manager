@@ -51,6 +51,9 @@ import {
   calculatePhase5DevelopmentBreakawayGapSeconds,
   calculateDeterministicUnitRoll,
   calculateUniversalFatigueIncidentRiskMultiplier,
+  calculateUniversalRoadPhysicalGapStep,
+  calculateUniversalRoadDetachedGapAtKm,
+  calculateUniversalRoadUphillAttackPhysics,
   calculateUniversalPhase10IncidentProbability,
   calculateUniversalPhase10TimeLimitPercentage,
   isUniversalPhase10OutsideTimeLimit,
@@ -16414,11 +16417,218 @@ describe('Phase 11G organic race physics and replay continuity', () => {
 
 
 
-  it('publishes the Phase 11I V5.2 profile-terrain build marker', () => {
+  it('publishes the Phase 11J V5.3 physical-gap-lineage build marker', () => {
     const result = runRaceEngine(createValidInput())
     expect(result.phase78Acceptance.engineBuild).toBe(
-      'phase11i-v5-2-profile-terrain-2026-09-07',
+      'phase11j-v5-3-physical-gap-lineage-2026-09-08',
     )
+  })
+
+  it('integrates road gaps only from distance and the two physical group speeds', () => {
+    const step = calculateUniversalRoadPhysicalGapStep(401, 2, 35, 38)
+    const expectedGap = 401 + (2 / 38) * 3600 - (2 / 35) * 3600
+
+    expect(step.previousGapSeconds).toBe(401)
+    expect(step.nextGapSeconds).toBeCloseTo(expectedGap, 5)
+    expect(step.closureSeconds).toBeCloseTo(401 - expectedGap, 5)
+    expect(step.modelVersion).toBe('universal_road_physical_gap_step_v1')
+  })
+
+  it('reconstructs detached C-gap progress from stored physical speeds instead of eased target interpolation', () => {
+    const samples = [
+      {
+        kmStart: 100,
+        kmEnd: 101,
+        startGapBehindPelotonSeconds: 6,
+        endGapBehindPelotonSeconds: calculateUniversalRoadPhysicalGapStep(
+          6,
+          1,
+          42,
+          40,
+        ).nextGapSeconds,
+        pelotonSpeedKmh: 42,
+        detachedSpeedKmh: 40,
+        terrainType: 'flat' as const,
+        modelVersion: 'universal_road_detached_gap_sample_v1' as const,
+      },
+    ]
+    const halfKmGap = calculateUniversalRoadDetachedGapAtKm(samples, 100.5, 6)
+    const expectedHalfKmGap = calculateUniversalRoadPhysicalGapStep(6, 0.5, 42, 40)
+      .nextGapSeconds
+
+    expect(halfKmGap).toBeCloseTo(expectedHalfKmGap, 5)
+    expect(halfKmGap).toBeGreaterThan(6)
+    expect(halfKmGap).toBeLessThan(samples[0].endGapBehindPelotonSeconds)
+  })
+
+  it('makes an ordinary 8 percent uphill attack materially harder and costlier for a weak climber than an elite climber', () => {
+    const weak = calculateUniversalRoadUphillAttackPhysics(
+      48,
+      70,
+      20,
+      8,
+      2,
+    )
+    const elite = calculateUniversalRoadUphillAttackPhysics(
+      90,
+      90,
+      5,
+      8,
+      2,
+    )
+
+    expect(weak.gradientPressure).toBeGreaterThan(0)
+    expect(weak.probabilityPenalty).toBeGreaterThan(elite.probabilityPenalty)
+    expect(weak.energyCostBonus).toBeGreaterThan(elite.energyCostBonus)
+    expect(weak.probabilityPenalty).toBeGreaterThan(0.15)
+  })
+
+  it('stores permanent C-gap history as mathematically continuous physical speed samples', () => {
+    const result = runRaceEngine(
+      createPhase11hLeaderRescueInput({
+        seed: 'phase11i-rescue-stress-1',
+        steepClimb: true,
+        protectHelpers: true,
+      }),
+    )
+    const detachedStates = result.roadRaceResolution.phase4Finish!.riderStates.filter(
+      (state) => state.contactLossKm !== null && state.contactLossGapSamples.length > 0,
+    )
+
+    expect(detachedStates.length).toBeGreaterThan(0)
+    detachedStates.forEach((state) => {
+      state.contactLossGapSamples.forEach((sample, sampleIndex) => {
+        const expected = calculateUniversalRoadPhysicalGapStep(
+          sample.startGapBehindPelotonSeconds,
+          sample.kmEnd - sample.kmStart,
+          sample.pelotonSpeedKmh,
+          sample.detachedSpeedKmh,
+        ).nextGapSeconds
+        expect(sample.endGapBehindPelotonSeconds).toBeCloseTo(expected, 5)
+        if (sampleIndex > 0) {
+          expect(sample.startGapBehindPelotonSeconds).toBeCloseTo(
+            state.contactLossGapSamples[sampleIndex - 1].endGapBehindPelotonSeconds,
+            5,
+          )
+          expect(sample.kmStart).toBeCloseTo(
+            state.contactLossGapSamples[sampleIndex - 1].kmEnd,
+            5,
+          )
+        }
+      })
+      if (state.contactLossRejoinKm === null) {
+        expect(state.contactLossGapPenaltySeconds).toBeCloseTo(
+          state.contactLossGapSamples.at(-1)!.endGapBehindPelotonSeconds,
+          5,
+        )
+      }
+    })
+    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(result.replaySynchronization.issues).toEqual([])
+  })
+
+  it('starts a fresh Phase-4 F lineage from its own low-seconds launch state when no physical Phase-3 front survives', () => {
+    const base = createExpandedFieldInput(24)
+    const breakawayRiderIds = new Set(
+      base.stagePlans.flatMap((plan) =>
+        plan.riders
+          .filter((rider) => rider.stageRole === 'breakaway_rider')
+          .map((rider) => rider.riderId),
+      ),
+    )
+    const lateAttackRiderIds = new Set(
+      base.stagePlans.flatMap((plan) =>
+        plan.riders
+          .filter((rider) => rider.stageRole === 'rouleur')
+          .map((rider) => rider.riderId),
+      ),
+    )
+    const input: UniversalRaceEngineInput = {
+      ...base,
+      engine: { ...base.engine, deterministicSeed: 'v53-stale-9' },
+      stage: {
+        ...base.stage,
+        distanceKm: 132.4,
+        terrainType: 'hilly',
+        profileType: 'puncheur',
+        finishType: 'uphill_finish',
+        elevationGainM: 2100,
+        terrainPercentages: { flat: 28, hilly: 42, mountain: 30, cobbled: 0 },
+        profilePoints: [
+          { km: 0, elevationM: 1100 },
+          { km: 10, elevationM: 1120 },
+          { km: 35, elevationM: 1180 },
+          { km: 58, elevationM: 1550 },
+          { km: 72, elevationM: 1250 },
+          { km: 88, elevationM: 1680 },
+          { km: 94, elevationM: 1300 },
+          { km: 110, elevationM: 1450 },
+          { km: 132.4, elevationM: 1200 },
+        ],
+      },
+      points: base.points.map((point) =>
+        point.pointType === 'FINISH'
+          ? { ...point, kmFromStart: 132.4 }
+          : point,
+      ),
+      riders: base.riders.map((rider) =>
+        breakawayRiderIds.has(rider.riderId)
+          ? {
+              ...rider,
+              flat: 72,
+              climbing: 66,
+              endurance: 72,
+              resistance: 70,
+              raceIQ: 72,
+              morale: 75,
+            }
+          : lateAttackRiderIds.has(rider.riderId)
+            ? {
+                ...rider,
+                flat: 88,
+                climbing: 82,
+                endurance: 90,
+                resistance: 90,
+                raceIQ: 88,
+                morale: 90,
+                fatigueBeforeStage: 0,
+                startStamina: 98,
+              }
+            : rider,
+      ),
+      stagePlans: base.stagePlans.map((plan) => ({
+        ...plan,
+        riders: plan.riders.map((riderPlan) => ({
+          ...riderPlan,
+          commands: {
+            ...riderPlan.commands,
+            phase1: breakawayRiderIds.has(riderPlan.riderId)
+              ? 'attack'
+              : 'follow_team_plan',
+            phase2: 'follow_team_plan',
+            phase3: 'follow_team_plan',
+            phase4: lateAttackRiderIds.has(riderPlan.riderId)
+              ? 'attack'
+              : riderPlan.commands.phase4,
+          },
+        })),
+      })),
+    }
+    const result = runRaceEngine(input)
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+    const phase4 = result.roadRaceResolution.phase4Finish!
+
+    expect(phase3.physicalEscapeRiderIdsAtEnd).toEqual([])
+    expect(phase3.physicalEndGapSeconds).toBe(0)
+    expect(phase4.freshFrontLineage).not.toBeNull()
+    expect(phase4.freshFrontLineage?.sourceDisplayCode).toBe('P')
+    expect(phase4.freshFrontLineage?.initialGapSeconds).toBeGreaterThan(5)
+    expect(phase4.freshFrontLineage?.initialGapSeconds).toBeLessThanOrEqual(15)
+    expect(phase4.startGapSeconds).toBe(
+      phase4.freshFrontLineage?.initialGapSeconds,
+    )
+    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(result.replaySynchronization.issues).toEqual([])
   })
 
   it('represents every explicit Attack command in large Phase 1, 2 and 3 waves and keeps replay synchronized', () => {
