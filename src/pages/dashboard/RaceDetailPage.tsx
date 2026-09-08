@@ -13246,7 +13246,12 @@ function UniversalRaceReplayPage({
   const [replayProgress, setReplayProgress] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4 | 8>(1)
+  const [liveReplayState, setLiveReplayState] =
+    useState<RaceStageLiveState | null>(null)
+  const liveReplayWasActiveRef = useRef(false)
+  const liveReplayActive = liveReplayState?.is_live === true
   const replaySpeedLocked =
+    liveReplayState?.speed_locked === true ||
     authoritativePayload?.lifecycle?.speed_locked === true
   const officialLifecycleResultsVisible =
     authoritativePayload?.lifecycle?.results_visible === true
@@ -13344,6 +13349,83 @@ function UniversalRaceReplayPage({
       cancelled = true
     }
   }, [race.id, stage.id])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function refreshPersistedLiveReplayState(): Promise<void> {
+      const { data, error } = await raceDetailReadRpc(
+        'get_race_stage_live_state_v1',
+        { p_stage_id: stage.id }
+      )
+
+      if (cancelled || error) return
+
+      const rawValue = Array.isArray(data) ? data[0] : data
+      const nextLiveState =
+        rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)
+          ? (rawValue as RaceStageLiveState)
+          : null
+
+      setLiveReplayState(nextLiveState)
+
+      if (nextLiveState?.is_live === true) {
+        liveReplayWasActiveRef.current = true
+        setPlaybackSpeed(1)
+        setPlaying(true)
+
+        const serverProgress = Math.max(
+          0,
+          Math.min(1, Number(nextLiveState.progress ?? 0))
+        )
+        setReplayProgress((current) => Math.max(current, serverProgress))
+        return
+      }
+
+      if (
+        liveReplayWasActiveRef.current &&
+        nextLiveState?.results_visible === true
+      ) {
+        setPlaying(false)
+        setReplayProgress(1)
+
+        const payloadResponse = await raceDetailReadRpc(
+          'get_universal_race_stage_replay_payload_v1',
+          { p_stage_id: stage.id }
+        )
+
+        if (cancelled || payloadResponse.error) return
+
+        const payloadValue = Array.isArray(payloadResponse.data)
+          ? payloadResponse.data[0]
+          : payloadResponse.data
+        const nextPayload =
+          payloadValue &&
+          typeof payloadValue === 'object' &&
+          !Array.isArray(payloadValue)
+            ? (payloadValue as UniversalAuthoritativeReplayPayload)
+            : null
+
+        if (nextPayload) {
+          setAuthoritativePayload(nextPayload)
+          if (nextPayload.status === 'available') {
+            setInputSource('production_authoritative_run')
+          }
+        }
+      }
+    }
+
+    void refreshPersistedLiveReplayState()
+    const intervalId = window.setInterval(
+      refreshPersistedLiveReplayState,
+      2000
+    )
+
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
+    }
+  }, [stage.id])
 
   const shadowBuild = useMemo<UniversalShadowBuild>(() => {
     if (inputSource === 'production_authoritative_run') {
@@ -13448,6 +13530,7 @@ function UniversalRaceReplayPage({
   )
 
   useEffect(() => {
+    if (liveReplayWasActiveRef.current) return
     setReplayProgress(0)
     setPlaying(false)
   }, [shadowBuild.result])
@@ -15048,6 +15131,8 @@ function UniversalRaceReplayPage({
   }, [effectiveStagePoints, profile, stage.distance_km])
 
   function togglePlayback() {
+    if (replaySpeedLocked) return
+
     if (replayProgress >= 1) {
       setReplayProgress(0)
     }
@@ -15062,6 +15147,7 @@ function UniversalRaceReplayPage({
   }
 
   function restartReplay() {
+    if (replaySpeedLocked) return
     setPlaying(false)
     setReplayProgress(0)
   }
@@ -15702,21 +15788,44 @@ function UniversalRaceReplayPage({
             <>
               <section className="shrink-0 rounded-3xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-slate-950">
-                    {t('replay.profile')}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-sm font-semibold text-slate-950">
+                      {t('replay.profile')}
+                    </div>
+                    {liveReplayActive ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-red-700">
+                        <span className="h-2 w-2 rounded-full bg-red-600" />
+                        LIVE · 1×
+                      </span>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={togglePlayback}
+                      disabled={replaySpeedLocked}
                       className={
                         isTimeTrialReplay
-                          ? 'rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white'
-                          : 'rounded-full bg-slate-950 px-3 py-1.5 text-[10px] font-semibold text-white'
+                          ? `rounded-full px-4 py-2 text-xs font-semibold text-white ${
+                              replaySpeedLocked
+                                ? 'cursor-not-allowed bg-red-600'
+                                : 'bg-slate-950'
+                            }`
+                          : `rounded-full px-3 py-1.5 text-[10px] font-semibold text-white ${
+                              replaySpeedLocked
+                                ? 'cursor-not-allowed bg-red-600'
+                                : 'bg-slate-950'
+                            }`
                       }
                     >
-                      {playing ? 'Pause' : 'Play'}
+                      {liveReplayActive
+                        ? 'LIVE · 1×'
+                        : replaySpeedLocked
+                          ? 'Finalizing'
+                          : playing
+                            ? 'Pause'
+                            : 'Play'}
                     </button>
 
                     {[1, 2, 4, 8].map((value) => (
@@ -15724,17 +15833,17 @@ function UniversalRaceReplayPage({
                         key={value}
                         type="button"
                         onClick={() => {
-                          if (replaySpeedLocked && value !== 1) return
+                          if (replaySpeedLocked) return
                           setPlaybackSpeed(
                             value as 1 | 2 | 4 | 8
                           )
                         }}
-                        disabled={replaySpeedLocked && value !== 1}
+                        disabled={replaySpeedLocked}
                         className={`rounded-full border ${
                           isTimeTrialReplay
                             ? 'px-3 py-2 text-xs'
                             : 'px-2.5 py-1.5 text-[10px]'
-                        } font-semibold ${
+                        } font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
                           playbackSpeed === value
                             ? 'border-slate-950 bg-slate-950 text-white'
                             : 'border-slate-200 bg-white text-slate-600'
@@ -15750,8 +15859,8 @@ function UniversalRaceReplayPage({
                       disabled={replaySpeedLocked}
                       className={
                         isTimeTrialReplay
-                          ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50'
-                          : 'rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50'
+                          ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'
+                          : 'rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'
                       }
                     >
                       Finish replay
@@ -15760,7 +15869,7 @@ function UniversalRaceReplayPage({
                     <button
                       type="button"
                       onClick={restartReplay}
-                      disabled={replayProgress <= 0}
+                      disabled={replaySpeedLocked || replayProgress <= 0}
                       className={
                         isTimeTrialReplay
                           ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'
@@ -15868,7 +15977,9 @@ function UniversalRaceReplayPage({
                   <div className="max-h-[430px] divide-y divide-slate-100 overflow-auto">
                     {visibleCommentary.length === 0 ? (
                       <div className="px-4 py-8 text-sm text-slate-500">
-                        Press Play to start live commentary.
+                        {liveReplayActive
+                          ? 'Live commentary is running automatically.'
+                          : 'Press Play to start replay commentary.'}
                       </div>
                     ) : (
                       visibleCommentary.map((event) => (
