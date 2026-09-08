@@ -252,13 +252,9 @@ jobs:
           )
 
           replace_once(
-          '''      <button
-                key={String(stage.id ?? stageNumber)}
-                type="button"
+          '''        type="button"
                 onClick={() => onSelectStage(index)}''',
-          '''      <button
-                key={String(stage.id ?? stageNumber)}
-                type="button"
+          '''        type="button"
                 data-stage-index={index}
                 onClick={() => onSelectStage(index)}''',
           'stage card data index',
