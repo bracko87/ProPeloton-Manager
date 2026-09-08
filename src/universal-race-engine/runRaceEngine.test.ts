@@ -11263,7 +11263,7 @@ describe('Phase 7 read-only replay page integration — Task 7.3', () => {
   it('runs the universal race calculation exactly once on the backend and never in the replay page', () => {
     const source = readReplayPageSource()
     const runnerSource = readFileSync(
-      new URL('../../netlify/functions/universal-race-stage-runner.ts', import.meta.url),
+      new URL('../../supabase/functions/universal-race-stage-runner/index.ts', import.meta.url),
       'utf8',
     )
 
@@ -11855,7 +11855,7 @@ describe('Phase 7 final replay-page closeout', () => {
   it('preserves backend-only calculation, synchronization rejection and all playback speeds', () => {
     const source = readReplayPageSource()
     const runnerSource = readFileSync(
-      new URL('../../netlify/functions/universal-race-stage-runner.ts', import.meta.url),
+      new URL('../../supabase/functions/universal-race-stage-runner/index.ts', import.meta.url),
       'utf8',
     )
 
@@ -14199,7 +14199,7 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
       'utf8',
     )
     const runnerSource = readFileSync(
-      new URL('../../netlify/functions/universal-race-stage-runner.ts', import.meta.url),
+      new URL('../../supabase/functions/universal-race-stage-runner/index.ts', import.meta.url),
       'utf8',
     )
     const migrationSource = readFileSync(
@@ -14224,7 +14224,7 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
       'utf8',
     )
     const runnerSource = readFileSync(
-      new URL('../../netlify/functions/universal-race-stage-runner.ts', import.meta.url),
+      new URL('../../supabase/functions/universal-race-stage-runner/index.ts', import.meta.url),
       'utf8',
     )
 
@@ -15866,7 +15866,7 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     )
     const runnerSource = readFileSync(
       new URL(
-        '../../netlify/functions/universal-race-stage-runner.ts',
+        '../../supabase/functions/universal-race-stage-runner/index.ts',
         import.meta.url,
       ),
       'utf8',
@@ -16256,6 +16256,20 @@ describe('Phase 11B production lifecycle cutover', () => {
     )
     const runnerSource = readFileSync(
       new URL(
+        '../../supabase/functions/universal-race-stage-runner/index.ts',
+        import.meta.url,
+      ),
+      'utf8',
+    )
+    const cutoverSource = readFileSync(
+      new URL(
+        '../../supabase/migrations/20260907193333_cutover_universal_race_worker_to_supabase_v1.sql',
+        import.meta.url,
+      ),
+      'utf8',
+    )
+    const retiredNetlifySource = readFileSync(
+      new URL(
         '../../netlify/functions/universal-race-stage-runner.ts',
         import.meta.url,
       ),
@@ -16268,12 +16282,22 @@ describe('Phase 11B production lifecycle cutover', () => {
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(pageSource).not.toContain('ENABLE_RIO_TOUR_INTEGRATION_REPLAYS')
 
-    expect(runnerSource).toContain("schedule: '* * * * *'")
     expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource).toContain('phase9Payload: firstObject(payload.phase9_inputs)')
     expect(runnerSource).toContain('universal_race_stage_claim_next_due_v1')
     expect(runnerSource).toContain('universal_race_stage_process_lifecycle_v1')
-    expect(runnerSource).toContain('UNIVERSAL_RACE_WORKER_SECRET')
+    expect(runnerSource).toContain('x-universal-race-worker-secret')
+    expect(runnerSource).toContain('verify_universal_race_worker_secret_v1')
     expect(runnerSource).not.toContain('workerSecret(request) === serviceRoleKey')
+
+    expect(cutoverSource).toContain('select cron.schedule(')
+    expect(cutoverSource).toContain("'universal-race-stage-runner-supabase-v1'")
+    expect(cutoverSource).toContain("'* * * * *'")
+    expect(cutoverSource).toContain('/functions/v1/universal-race-stage-runner')
+    expect(cutoverSource).toContain("'x-universal-race-worker-secret'")
+    expect(retiredNetlifySource).toContain("status: 'retired'")
+    expect(retiredNetlifySource).toContain("authoritative_scheduler: 'supabase_cron'")
+    expect(retiredNetlifySource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
 
     expect(migrationSource).toContain('typescript_lifecycle_enabled = false')
     expect(migrationSource).toContain(
