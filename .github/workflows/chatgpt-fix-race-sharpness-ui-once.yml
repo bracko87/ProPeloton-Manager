@@ -1,25 +1,29 @@
-name: One-off Race Sharpness UI fix
+name: Apply Race Sharpness rider-card layout fix
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
-      - .github/workflows/chatgpt-fix-race-sharpness-ui-once.yml
+      - '.github/workflows/chatgpt-fix-race-sharpness-ui-once.yml'
 
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
-  patch:
-    runs-on: ubuntu-latest
+  patch-race-sharpness-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - name: Checkout
+      - name: Check out repository
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
 
-      - name: Patch Race Preparation sharpness layout
+      - name: Apply targeted Race Preparation patch
         shell: bash
         run: |
           python - <<'PY'
@@ -28,55 +32,60 @@ jobs:
           path = Path('src/pages/dashboard/RacePreparation.tsx')
           text = path.read_text(encoding='utf-8')
 
-          old_inline = '''    <span
+          def replace_once(old: str, new: str, label: str) -> None:
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+          '''    <span
               className={`shrink-0 text-xs font-semibold ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
             >
               Race Sharpness: {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
-            </span>'''
-          if old_inline not in text:
-              old_inline = '''    <span
-      className={`shrink-0 text-xs font-semibold ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
-    >
-      Race Sharpness: {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
-    </span>'''
+            </span>''',
+          '''    <span
+              className={`max-w-full text-right text-xs font-semibold leading-4 whitespace-normal break-words ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
+              title={`Race Sharpness: ${percent}/100 · ${localizeRacePrepBackendText(sharpness.race_sharpness_label)}`}
+            >
+              {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
+            </span>''',
+          'compact sharpness text',
+          )
 
-          new_inline = '''    <span
-      className={`max-w-full text-right text-xs font-semibold leading-4 whitespace-normal break-words ${getRaceSharpnessInlineClass(sharpness.badge_tone)}`}
-      title={`Race Sharpness: ${percent}/100 · ${localizeRacePrepBackendText(sharpness.race_sharpness_label)}`}
-    >
-      {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
-    </span>'''
-
-          old_row = '''            <div className="mt-1 flex items-center justify-between gap-3 text-xs text-slate-500">
+          replace_once(
+          '''            <div className="mt-1 flex items-center justify-between gap-3 text-xs text-slate-500">
               <span>{racePrepText("screen.role")}: {localizeRacePrepBackendText(option.assigned_role ?? "—")}</span>
               <RaceSharpnessInlineText sharpness={raceSharpness} />
-            </div>'''
-          new_row = '''            <div className="mt-1 flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-1 text-xs text-slate-500">
+            </div>''',
+          '''            <div className="mt-1 flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-1 text-xs text-slate-500">
               <span className="min-w-0 flex-1 break-words">{racePrepText("screen.role")}: {localizeRacePrepBackendText(option.assigned_role ?? "—")}</span>
               <RaceSharpnessInlineText sharpness={raceSharpness} />
-            </div>'''
+            </div>''',
+          'wrapping role and sharpness row',
+          )
 
-          if text.count(old_inline) != 1:
-              raise SystemExit(f'Expected one RaceSharpnessInlineText block, found {text.count(old_inline)}')
-          if text.count(old_row) != 1:
-              raise SystemExit(f'Expected one rider role/sharpness row, found {text.count(old_row)}')
-
-          text = text.replace(old_inline, new_inline, 1)
-          text = text.replace(old_row, new_row, 1)
           path.write_text(text, encoding='utf-8')
           PY
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
+      - name: Production build
         run: npm run build
 
-      - name: Commit UI fix
+      - name: Commit and push implementation
+        shell: bash
         run: |
-          git config user.name ChatGPT
-          git config user.email actions@users.noreply.github.com
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add src/pages/dashboard/RacePreparation.tsx
           git diff --cached --check
-          git commit -m "Fix Race Sharpness rider card layout"
+          if git diff --cached --quiet; then
+            echo 'No Race Sharpness UI changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Fix Race Sharpness rider card layout'
+          git pull --rebase origin main
           git push origin main
