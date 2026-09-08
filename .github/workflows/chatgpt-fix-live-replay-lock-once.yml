@@ -1,0 +1,143 @@
+name: Apply live replay lock implementation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-fix-live-replay-lock-once.yml'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  patch-live-replay:
+    if: github.event.head_commit.message == 'Install one-off live replay lock implementation workflow'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply targeted live replay patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/dashboard/RaceDetailPage.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          def replace_once(old: str, new: str, label: str) -> None:
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 match, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              """  const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4 | 8>(1)\n  const replaySpeedLocked =\n    authoritativePayload?.lifecycle?.speed_locked === true\n  const officialLifecycleResultsVisible =\n    authoritativePayload?.lifecycle?.results_visible === true\n""",
+              """  const [playbackSpeed, setPlaybackSpeed] = useState<1 | 2 | 4 | 8>(1)\n  const [liveReplayState, setLiveReplayState] =\n    useState<RaceStageLiveState | null>(null)\n  const liveReplayWasActiveRef = useRef(false)\n  const liveReplayActive = liveReplayState?.is_live === true\n  const replaySpeedLocked =\n    liveReplayState?.speed_locked === true ||\n    authoritativePayload?.lifecycle?.speed_locked === true\n  const officialLifecycleResultsVisible =\n    authoritativePayload?.lifecycle?.results_visible === true\n""",
+              'live replay state declarations',
+          )
+
+          replace_once(
+              """  }, [race.id, stage.id])\n\n  const shadowBuild = useMemo<UniversalShadowBuild>(() => {\n""",
+              """  }, [race.id, stage.id])\n\n  useEffect(() => {\n    let cancelled = false\n\n    async function refreshPersistedLiveReplayState(): Promise<void> {\n      const { data, error } = await raceDetailReadRpc(\n        'get_race_stage_live_state_v1',\n        { p_stage_id: stage.id }\n      )\n\n      if (cancelled || error) return\n\n      const rawValue = Array.isArray(data) ? data[0] : data\n      const nextLiveState =\n        rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)\n          ? (rawValue as RaceStageLiveState)\n          : null\n\n      setLiveReplayState(nextLiveState)\n\n      if (nextLiveState?.is_live === true) {\n        liveReplayWasActiveRef.current = true\n        setPlaybackSpeed(1)\n        setPlaying(true)\n\n        const serverProgress = Math.max(\n          0,\n          Math.min(1, Number(nextLiveState.progress ?? 0))\n        )\n        setReplayProgress((current) => Math.max(current, serverProgress))\n        return\n      }\n\n      if (\n        liveReplayWasActiveRef.current &&\n        nextLiveState?.results_visible === true\n      ) {\n        setPlaying(false)\n        setReplayProgress(1)\n\n        const payloadResponse = await raceDetailReadRpc(\n          'get_universal_race_stage_replay_payload_v1',\n          { p_stage_id: stage.id }\n        )\n\n        if (cancelled || payloadResponse.error) return\n\n        const payloadValue = Array.isArray(payloadResponse.data)\n          ? payloadResponse.data[0]\n          : payloadResponse.data\n        const nextPayload =\n          payloadValue &&\n          typeof payloadValue === 'object' &&\n          !Array.isArray(payloadValue)\n            ? (payloadValue as UniversalAuthoritativeReplayPayload)\n            : null\n\n        if (nextPayload) {\n          setAuthoritativePayload(nextPayload)\n          if (nextPayload.status === 'available') {\n            setInputSource('production_authoritative_run')\n          }\n        }\n      }\n    }\n\n    void refreshPersistedLiveReplayState()\n    const intervalId = window.setInterval(\n      refreshPersistedLiveReplayState,\n      2000\n    )\n\n    return () => {\n      cancelled = true\n      window.clearInterval(intervalId)\n    }\n  }, [stage.id])\n\n  const shadowBuild = useMemo<UniversalShadowBuild>(() => {\n""",
+              'persisted live replay polling effect',
+          )
+
+          replace_once(
+              """  useEffect(() => {\n    setReplayProgress(0)\n    setPlaying(false)\n  }, [shadowBuild.result])\n""",
+              """  useEffect(() => {\n    if (liveReplayWasActiveRef.current) return\n    setReplayProgress(0)\n    setPlaying(false)\n  }, [shadowBuild.result])\n""",
+              'replay reset guard',
+          )
+
+          replace_once(
+              """  function togglePlayback() {\n    if (replayProgress >= 1) {\n""",
+              """  function togglePlayback() {\n    if (replaySpeedLocked) return\n\n    if (replayProgress >= 1) {\n""",
+              'live play pause lock',
+          )
+
+          replace_once(
+              """  function restartReplay() {\n    setPlaying(false)\n    setReplayProgress(0)\n  }\n""",
+              """  function restartReplay() {\n    if (replaySpeedLocked) return\n    setPlaying(false)\n    setReplayProgress(0)\n  }\n""",
+              'restart lock',
+          )
+
+          replace_once(
+              """                  <div className=\"text-sm font-semibold text-slate-950\">\n                    {t('replay.profile')}\n                  </div>\n\n                  <div className=\"flex flex-wrap items-center gap-2\">\n""",
+              """                  <div className=\"flex flex-wrap items-center gap-2\">\n                    <div className=\"text-sm font-semibold text-slate-950\">\n                      {t('replay.profile')}\n                    </div>\n                    {liveReplayActive ? (\n                      <span className=\"inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-red-700\">\n                        <span className=\"h-2 w-2 rounded-full bg-red-600\" />\n                        LIVE · 1×\n                      </span>\n                    ) : null}\n                  </div>\n\n                  <div className=\"flex flex-wrap items-center gap-2\">\n""",
+              'live badge',
+          )
+
+          replace_once(
+              """                    <button\n                      type=\"button\"\n                      onClick={togglePlayback}\n                      className={\n                        isTimeTrialReplay\n                          ? 'rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white'\n                          : 'rounded-full bg-slate-950 px-3 py-1.5 text-[10px] font-semibold text-white'\n                      }\n                    >\n                      {playing ? 'Pause' : 'Play'}\n                    </button>\n""",
+              """                    <button\n                      type=\"button\"\n                      onClick={togglePlayback}\n                      disabled={replaySpeedLocked}\n                      className={\n                        isTimeTrialReplay\n                          ? `rounded-full px-4 py-2 text-xs font-semibold text-white ${\n                              replaySpeedLocked\n                                ? 'cursor-not-allowed bg-red-600'\n                                : 'bg-slate-950'\n                            }`\n                          : `rounded-full px-3 py-1.5 text-[10px] font-semibold text-white ${\n                              replaySpeedLocked\n                                ? 'cursor-not-allowed bg-red-600'\n                                : 'bg-slate-950'\n                            }`\n                      }\n                    >\n                      {liveReplayActive\n                        ? 'LIVE · 1×'\n                        : replaySpeedLocked\n                          ? 'Finalizing'\n                          : playing\n                            ? 'Pause'\n                            : 'Play'}\n                    </button>\n""",
+              'live play button',
+          )
+
+          replace_once(
+              """                        onClick={() => {\n                          if (replaySpeedLocked && value !== 1) return\n                          setPlaybackSpeed(\n                            value as 1 | 2 | 4 | 8\n                          )\n                        }}\n                        disabled={replaySpeedLocked && value !== 1}\n                        className={`rounded-full border ${\n                          isTimeTrialReplay\n                            ? 'px-3 py-2 text-xs'\n                            : 'px-2.5 py-1.5 text-[10px]'\n                        } font-semibold ${\n                          playbackSpeed === value\n                            ? 'border-slate-950 bg-slate-950 text-white'\n                            : 'border-slate-200 bg-white text-slate-600'\n                        }`}\n""",
+              """                        onClick={() => {\n                          if (replaySpeedLocked) return\n                          setPlaybackSpeed(\n                            value as 1 | 2 | 4 | 8\n                          )\n                        }}\n                        disabled={replaySpeedLocked}\n                        className={`rounded-full border ${\n                          isTimeTrialReplay\n                            ? 'px-3 py-2 text-xs'\n                            : 'px-2.5 py-1.5 text-[10px]'\n                        } font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${\n                          playbackSpeed === value\n                            ? 'border-slate-950 bg-slate-950 text-white'\n                            : 'border-slate-200 bg-white text-slate-600'\n                        }`}\n""",
+              'speed controls lock',
+          )
+
+          replace_once(
+              """                      className={\n                        isTimeTrialReplay\n                          ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50'\n                          : 'rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50'\n                      }\n                    >\n                      Finish replay\n""",
+              """                      className={\n                        isTimeTrialReplay\n                          ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'\n                          : 'rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'\n                      }\n                    >\n                      Finish replay\n""",
+              'finish disabled styling',
+          )
+
+          replace_once(
+              """                      onClick={restartReplay}\n                      disabled={replayProgress <= 0}\n""",
+              """                      onClick={restartReplay}\n                      disabled={replaySpeedLocked || replayProgress <= 0}\n""",
+              'restart control lock',
+          )
+
+          replace_once(
+              """                        Press Play to start live commentary.\n""",
+              """                        {liveReplayActive\n                          ? 'Live commentary is running automatically.'\n                          : 'Press Play to start replay commentary.'}\n""",
+              'live commentary helper',
+          )
+
+          required = [
+              'useState<RaceStageLiveState | null>(null)',
+              "'get_race_stage_live_state_v1'",
+              'liveReplayWasActiveRef.current = true',
+              'LIVE · 1×',
+              'disabled={replaySpeedLocked || replayProgress <= 0}',
+              "? 'Live commentary is running automatically.'",
+          ]
+          missing = [token for token in required if token not in text]
+          if missing:
+              raise SystemExit(f'Expected live replay tokens missing: {missing}')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit and push implementation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/dashboard/RaceDetailPage.tsx
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No live replay changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Lock live replay to automatic 1x playback'
+          git pull --rebase origin main
+          git push origin main
