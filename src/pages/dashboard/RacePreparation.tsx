@@ -7051,6 +7051,24 @@ function getStagePlanLockInfo({
   };
 }
 
+function getAutomaticStagePlanIndex(
+  stages: JsonRecord[],
+  currentGameTimestamp?: string,
+): number {
+  if (stages.length === 0) return 0;
+
+  const firstEditableIndex = stages.findIndex((stage) => {
+    if (isPreparationStageWeatherCanceled(stage)) return false;
+
+    return !getStagePlanLockInfo({
+      stage,
+      currentGameTimestamp,
+    }).isLocked;
+  });
+
+  return firstEditableIndex >= 0 ? firstEditableIndex : stages.length - 1;
+}
+
 function StagePlansTab({
   target,
   packageSubmitted,
@@ -7085,6 +7103,14 @@ function StagePlansTab({
   const stages = target?.stages ?? [];
   const stagePlans = target?.stage_plans ?? [];
   const [selectedStageIndex, setSelectedStageIndex] = useState(0);
+  const automaticStageIndexRef = React.useRef<number | null>(null);
+  const manualStageSelectionRef = React.useRef(false);
+  const stageSelectionPreparationIdRef = React.useRef<string | null>(null);
+  const [stageSelectionGameTimestamp, setStageSelectionGameTimestamp] =
+    useState<string | undefined>(() => {
+      const value = target?.current_game_timestamp;
+      return value ? String(value) : undefined;
+    });
   const [stageSupplyOptions, setStageSupplyOptions] =
     useState<RaceSupplyOption[]>(supplyOptions);
   const [stageDraftsByStageKey, setStageDraftsByStageKey] = useState<
@@ -7288,7 +7314,7 @@ function StagePlansTab({
 
   const lockInfo = getStagePlanLockInfo({
     stage: selectedStage,
-    currentGameTimestamp: target?.current_game_timestamp,
+    currentGameTimestamp: stageSelectionGameTimestamp,
   });
 
   const stageSaveDisabled =
@@ -7527,16 +7553,85 @@ function StagePlansTab({
   }, [hasSportDirectorAssigned, isU23ManagedRace]);
 
   useEffect(() => {
-    if (!selectedStageIdFromUrl) return;
+    const value = target?.current_game_timestamp;
+    setStageSelectionGameTimestamp(value ? String(value) : undefined);
+  }, [target?.current_game_timestamp]);
 
-    const index = stages.findIndex(
-      (stage) => String(stage.id) === selectedStageIdFromUrl,
-    );
+  useEffect(() => {
+    if (!packageSubmitted) return;
 
-    if (index >= 0) {
-      setSelectedStageIndex(index);
+    let cancelled = false;
+
+    async function refreshStageSelectionGameTimestamp() {
+      const { data, error } = await supabase.rpc("get_current_game_timestamp");
+
+      if (!cancelled && !error && data) {
+        setStageSelectionGameTimestamp(String(data));
+      }
     }
-  }, [selectedStageIdFromUrl, stages]);
+
+    void refreshStageSelectionGameTimestamp();
+
+    const timer = window.setInterval(() => {
+      void refreshStageSelectionGameTimestamp();
+    }, 15_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [packageSubmitted]);
+
+  useEffect(() => {
+    const preparationId = String(target?.preparation?.id ?? "");
+    const preparationChanged =
+      stageSelectionPreparationIdRef.current !== preparationId;
+
+    if (preparationChanged) {
+      stageSelectionPreparationIdRef.current = preparationId;
+      manualStageSelectionRef.current = false;
+      automaticStageIndexRef.current = null;
+    }
+
+    if (stages.length === 0) return;
+
+    if (selectedStageIdFromUrl) {
+      const index = stages.findIndex(
+        (stage) => String(stage.id) === selectedStageIdFromUrl,
+      );
+
+      if (index >= 0) {
+        manualStageSelectionRef.current = true;
+        setSelectedStageIndex(index);
+        return;
+      }
+    }
+
+    const automaticIndex = getAutomaticStagePlanIndex(
+      stages,
+      stageSelectionGameTimestamp,
+    );
+    const automaticStageChanged =
+      automaticStageIndexRef.current !== automaticIndex;
+
+    automaticStageIndexRef.current = automaticIndex;
+
+    if (
+      preparationChanged ||
+      !manualStageSelectionRef.current ||
+      automaticStageChanged
+    ) {
+      manualStageSelectionRef.current = false;
+      setSelectedStageIndex((currentIndex) =>
+        currentIndex === automaticIndex ? currentIndex : automaticIndex,
+      );
+    }
+  }, [
+    selectedStageIdFromUrl,
+    stages,
+    target?.preparation?.id,
+    stageSelectionGameTimestamp,
+  ]);
 
   useEffect(() => {
     const preparationId = String(target?.preparation?.id ?? "");
@@ -8208,6 +8303,7 @@ function StagePlansTab({
         isU23ManagedRace={isU23ManagedRace}
         u23DashboardStages={u23DashboardStages}
         onSelectStage={(index) => {
+          manualStageSelectionRef.current = true;
           setSelectedStageIndex(index);
           setStageSaveMessage(null);
           setStageSaveError(null);
@@ -9269,6 +9365,26 @@ function StageCardsScroller({
   onSelectStage: (index: number) => void;
 }) {
   const stageSliderRef = React.useRef<HTMLDivElement | null>(null);
+  const locale = getRacePrepLocale();
+
+  useEffect(() => {
+    const node = stageSliderRef.current;
+    if (!node || stages.length <= 5) return;
+
+    const selectedCard = node.children.item(
+      selectedStageIndex,
+    ) as HTMLElement | null;
+    if (!selectedCard) return;
+
+    const left =
+      selectedCard.offsetLeft -
+      (node.clientWidth - selectedCard.offsetWidth) / 2;
+
+    node.scrollTo({
+      left: Math.max(0, left),
+      behavior: "smooth",
+    });
+  }, [selectedStageIndex, stages.length]);
 
   function scrollStages(direction: "left" | "right"): void {
     const node = stageSliderRef.current;
