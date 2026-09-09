@@ -25,6 +25,13 @@ const RICH_RACE_NOTIFICATION_CODES = new Set([
   'RACE_TEAM_DISQUALIFIED_JERSEYS',
 ])
 
+const RICH_DAILY_NOTIFICATION_CODES = new Set([
+  'RACE_APPLICATION_DAILY_UPDATE',
+  'RACE_PREPARATION_DAILY_REPORT',
+  'STAGE_PLANNING_DAILY_REPORT',
+  'RIDER_HEALTH_DAILY_REPORT',
+])
+
 const RICH_RACE_IMAGES: Record<string, string> = {
   RACE_TEAM_DISQUALIFIED_JERSEYS:
     'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Team%20removed%20from%20race.png',
@@ -34,6 +41,15 @@ const RICH_RACE_IMAGES: Record<string, string> = {
     'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Application%20are%20open.png',
   RACE_APPLICATION_RULE_CHANGE:
     'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20apploicaiton%20deadline.png',
+}
+
+const RICH_DAILY_IMAGES: Record<string, string> = {
+  RACE_APPLICATION_DAILY_UPDATE:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Application%20are%20open.png',
+  RACE_PREPARATION_DAILY_REPORT:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20Plan%20needs%20Antention.png',
+  STAGE_PLANNING_DAILY_REPORT:
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Stage%20plan%20open.png',
 }
 
 const PRESTART_DISQUALIFICATION_IMAGE =
@@ -62,12 +78,31 @@ function readNumber(payload: Record<string, unknown>, ...keys: string[]): number
   return null
 }
 
+function readObjectArray(
+  payload: Record<string, unknown>,
+  ...keys: string[]
+): Record<string, unknown>[] {
+  for (const key of keys) {
+    const value = payload[key]
+    if (!Array.isArray(value)) continue
+    return value.filter(
+      (entry): entry is Record<string, unknown> =>
+        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+    )
+  }
+  return []
+}
+
 function codeOf(item: NotificationItem): string {
   return String(item.type_code ?? '').trim().toUpperCase()
 }
 
 function isRichRaceNotification(item: NotificationItem): boolean {
   return RICH_RACE_NOTIFICATION_CODES.has(codeOf(item))
+}
+
+function isRichDailyNotification(item: NotificationItem): boolean {
+  return RICH_DAILY_NOTIFICATION_CODES.has(codeOf(item))
 }
 
 function isPrestartDisqualificationPenalty(item: NotificationItem): boolean {
@@ -90,8 +125,78 @@ function richRaceImage(item: NotificationItem): string | null {
   return readString(payload, 'image_url', 'image_src') || RICH_RACE_IMAGES[codeOf(item)] || null
 }
 
+function richDailyImage(item: NotificationItem): string | null {
+  const payload = payloadOf(item)
+  return readString(payload, 'image_url', 'image_src') || RICH_DAILY_IMAGES[codeOf(item)] || null
+}
+
 function prestartDisqualificationImage(item: NotificationItem): string {
   return readString(payloadOf(item), 'image_url', 'image_src') || PRESTART_DISQUALIFICATION_IMAGE
+}
+
+function formatCount(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`
+}
+
+function listWithRemainder(values: string[], max = 6): string {
+  const cleaned = values.map(value => value.trim()).filter(Boolean)
+  if (cleaned.length === 0) return 'None'
+  if (cleaned.length <= max) return cleaned.join(', ')
+  return `${cleaned.slice(0, max).join(', ')} + ${cleaned.length - max} more`
+}
+
+function formatShortGameDate(value: unknown): string | null {
+  const text = String(value ?? '').trim()
+  const match = text.match(/^\d{4}-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/)
+  if (!match) return text || null
+  const month = Number(match[1])
+  const day = Number(match[2])
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const date = `${monthNames[month - 1] ?? String(month)} ${day}`
+  return match[3] && match[4] ? `${date}, ${match[3]}:${match[4]}` : date
+}
+
+function raceLabel(row: Record<string, unknown>, options?: { deadline?: boolean }): string {
+  const name = String(row.race_name ?? row.name ?? 'Race').trim()
+  if (!options?.deadline) return name
+  const days = Number(row.days_until_close)
+  if (Number.isFinite(days)) {
+    if (days <= 0) return `${name} (closes today)`
+    return `${name} (${days}d)`
+  }
+  const close = formatShortGameDate(row.applications_close)
+  return close ? `${name} (${close})` : name
+}
+
+function prepRaceLabel(row: Record<string, unknown>): string {
+  const name = String(row.race_name ?? 'Race').trim()
+  const deadline = formatShortGameDate(row.rider_deadline)
+  return deadline ? `${name} — rider deadline ${deadline}` : name
+}
+
+function stageLabel(row: Record<string, unknown>): string {
+  const race = String(row.race_name ?? 'Race').trim()
+  const stageNumber = Number(row.stage_number)
+  const stageName = String(row.stage_name ?? '').trim()
+  const stage =
+    Number.isFinite(stageNumber)
+      ? `Stage ${stageNumber}${stageName && !/^stage\s+\d+$/i.test(stageName) ? `: ${stageName}` : ''}`
+      : stageName || 'Stage'
+  const lockAt = formatShortGameDate(row.lock_at)
+  return `${race} — ${stage}${lockAt ? ` (lock ${lockAt})` : ''}`
+}
+
+function healthRiderLabel(row: Record<string, unknown>): string {
+  const name = String(row.rider_name ?? row.rider_full_name ?? 'Rider').trim()
+  const status = String(row.status ?? row.event ?? '').replace(/[_-]+/g, ' ').trim()
+  const fatigue = Number(row.fatigue)
+  const reason = String(row.unavailable_reason ?? '').trim()
+  const extras = [
+    status ? status.replace(/\b\w/g, char => char.toUpperCase()) : null,
+    Number.isFinite(fatigue) ? `fatigue ${fatigue}` : null,
+    reason || null,
+  ].filter(Boolean)
+  return extras.length > 0 ? `${name} — ${extras.join(', ')}` : name
 }
 
 function prestartDisqualificationIntro(item: NotificationItem): string {
@@ -120,13 +225,13 @@ function richRaceIntro(item: NotificationItem): string | null {
     const stage = readNumber(payload, 'stage_number', 'disqualified_from_stage_number')
     const required = readNumber(payload, 'required_jersey_units')
     const available = readNumber(payload, 'available_jersey_units')
-    const stageLabel = stage !== null ? ` before Stage ${stage}` : ''
+    const stageLabelText = stage !== null ? ` before Stage ${stage}` : ''
     const stockLabel =
       required !== null && available !== null
         ? ` Required: ${required}; available: ${available}.`
         : ''
 
-    return `${team} was automatically removed from ${race} because the mandatory Race Jersey Kit requirement was not met${stageLabel}.${stockLabel} The removal applies to the affected stage and every remaining stage, so the team and its riders can no longer place or score points in this race.`
+    return `${team} was automatically removed from ${race} because the mandatory Race Jersey Kit requirement was not met${stageLabelText}.${stockLabel} The removal applies to the affected stage and every remaining stage, so the team and its riders can no longer place or score points in this race.`
   }
 
   if (code === 'RACE_APPLICATION_WINDOW_OPEN') {
@@ -153,6 +258,69 @@ function richRaceIntro(item: NotificationItem): string | null {
     const standardDays = readNumber(payload, 'february_onward_close_days') ?? 7
 
     return `Application timing rules have been updated. Current late-January races use a ${lateJanuaryDays}-day closing window, while February and later races use a ${standardDays}-day application deadline. Review your planning now so you do not miss future race entries.`
+  }
+
+  return null
+}
+
+function richDailyIntro(item: NotificationItem): string | null {
+  const code = codeOf(item)
+  const payload = payloadOf(item)
+
+  if (code === 'RACE_APPLICATION_DAILY_UPDATE') {
+    const open = readNumber(payload, 'opened_or_open_count', 'open_count') ?? 0
+    const closing = readNumber(payload, 'closing_soon_count') ?? 0
+    const pending = readNumber(payload, 'pending_count') ?? 0
+    const closingRows = readObjectArray(payload, 'closing_soon_races')
+    const closingNames = listWithRemainder(closingRows.map(row => raceLabel(row)), 5)
+    const closingVerb = closing === 1 ? 'closes' : 'close'
+
+    return `Today's race-application overview shows ${formatCount(open, 'open application window')}. ${formatCount(closing, 'window')} ${closingVerb} within the next 3 days${closing > 0 ? `: ${closingNames}` : ''}. ${pending === 0 ? 'You have no applications awaiting a decision.' : `${formatCount(pending, 'application')} are awaiting a decision.`}`
+  }
+
+  if (code === 'RACE_PREPARATION_DAILY_REPORT') {
+    const attention = readNumber(payload, 'attention_count') ?? 0
+    const open = readNumber(payload, 'open_count') ?? 0
+    const finalised = readNumber(payload, 'finalised_count') ?? 0
+    const races = readObjectArray(payload, 'races')
+    const attentionNames = races
+      .filter(row => String(row.report_state ?? '') === 'attention')
+      .map(row => String(row.race_name ?? 'Race'))
+    const priority = attentionNames.length > 0
+      ? ` Immediate attention: ${listWithRemainder(attentionNames, 4)}.`
+      : ''
+
+    return `Your daily race-preparation review has ${formatCount(attention, 'race')} needing attention, ${formatCount(open, 'race')} open or in progress, and ${formatCount(finalised, 'race')} finalised.${priority}`
+  }
+
+  if (code === 'STAGE_PLANNING_DAILY_REPORT') {
+    const missing = readNumber(payload, 'missing_at_lock_count') ?? 0
+    const soon = readNumber(payload, 'lock_soon_count') ?? 0
+    const open = readNumber(payload, 'open_count') ?? 0
+    const locked = readNumber(payload, 'locked_count') ?? 0
+    const stages = readObjectArray(payload, 'stages')
+    const priorities = stages
+      .filter(row => ['missing_at_lock', 'lock_soon'].includes(String(row.report_state ?? '')))
+      .map(row => stageLabel(row))
+    const priority = priorities.length > 0
+      ? ` Priority: ${listWithRemainder(priorities, 3)}.`
+      : ''
+
+    return `Today's stage-plan review shows ${missing} missing at lock, ${soon} locking soon, ${open} open, and ${locked} locked recently.${priority}`
+  }
+
+  if (code === 'RIDER_HEALTH_DAILY_REPORT') {
+    const injured = readNumber(payload, 'injured_today') ?? 0
+    const sick = readNumber(payload, 'sick_today') ?? 0
+    const notFullyFit = readNumber(payload, 'not_fully_fit_today') ?? 0
+    const recovered = readNumber(payload, 'recovered_today') ?? 0
+    const issues = readNumber(payload, 'current_issue_count') ?? 0
+
+    if (injured + sick + notFullyFit + recovered + issues === 0) {
+      return 'No new injuries, illnesses, fitness concerns, or recoveries were recorded today. All riders are currently clear of medical and fitness attention.'
+    }
+
+    return `Today's team medical review recorded ${injured} injured, ${sick} sick, ${notFullyFit} not fully fit, and ${recovered} recovered. ${formatCount(issues, 'rider')} currently require medical or fitness attention.`
   }
 
   return null
@@ -250,6 +418,96 @@ function richRaceDetailRows(item: NotificationItem): NotificationDetailRow[] {
   return []
 }
 
+function richDailyDetailRows(item: NotificationItem): NotificationDetailRow[] {
+  const code = codeOf(item)
+  const payload = payloadOf(item)
+
+  if (code === 'RACE_APPLICATION_DAILY_UPDATE') {
+    const open = readNumber(payload, 'opened_or_open_count', 'open_count') ?? 0
+    const closing = readNumber(payload, 'closing_soon_count') ?? 0
+    const pending = readNumber(payload, 'pending_count') ?? 0
+    const openRows = readObjectArray(payload, 'open_races')
+    const closingRows = readObjectArray(payload, 'closing_soon_races')
+    const pendingRows = readObjectArray(payload, 'pending_applications')
+
+    return localizeRows(item, [
+      { label: 'Application windows open', value: String(open) },
+      {
+        label: 'Closing within 3 days',
+        value: closing > 0
+          ? `${closing} — ${listWithRemainder(closingRows.map(row => raceLabel(row, { deadline: true })), 8)}`
+          : 'None',
+      },
+      {
+        label: 'Next application deadlines',
+        value: listWithRemainder(openRows.slice(0, 8).map(row => raceLabel(row, { deadline: true })), 8),
+      },
+      {
+        label: 'Awaiting a decision',
+        value: pending > 0
+          ? `${pending} — ${listWithRemainder(pendingRows.map(row => String(row.race_name ?? 'Race')), 6)}`
+          : 'None',
+      },
+    ])
+  }
+
+  if (code === 'RACE_PREPARATION_DAILY_REPORT') {
+    const races = readObjectArray(payload, 'races')
+    const attention = races.filter(row => String(row.report_state ?? '') === 'attention')
+    const open = races.filter(row => String(row.report_state ?? '') === 'open')
+    const finalised = races.filter(row => String(row.report_state ?? '') === 'finalised')
+
+    return localizeRows(item, [
+      {
+        label: 'Needs attention',
+        value: listWithRemainder(attention.map(prepRaceLabel), 6),
+      },
+      {
+        label: 'Open / in progress',
+        value: listWithRemainder(open.map(prepRaceLabel), 6),
+      },
+      {
+        label: 'Finalised',
+        value: listWithRemainder(finalised.map(row => String(row.race_name ?? 'Race')), 6),
+      },
+    ])
+  }
+
+  if (code === 'STAGE_PLANNING_DAILY_REPORT') {
+    const stages = readObjectArray(payload, 'stages')
+    const missing = stages.filter(row => String(row.report_state ?? '') === 'missing_at_lock')
+    const soon = stages.filter(row => String(row.report_state ?? '') === 'lock_soon')
+    const open = stages.filter(row => String(row.report_state ?? '') === 'open')
+    const locked = stages.filter(row => String(row.report_state ?? '') === 'locked')
+
+    return localizeRows(item, [
+      { label: 'Missing at lock', value: listWithRemainder(missing.map(stageLabel), 5) },
+      { label: 'Locking soon', value: listWithRemainder(soon.map(stageLabel), 5) },
+      { label: 'Open stage plans', value: listWithRemainder(open.map(stageLabel), 6) },
+      { label: 'Locked recently', value: listWithRemainder(locked.map(stageLabel), 5) },
+    ])
+  }
+
+  if (code === 'RIDER_HEALTH_DAILY_REPORT') {
+    const changes = readObjectArray(payload, 'changes_today')
+    const current = readObjectArray(payload, 'current_health_issues')
+    const injuries = changes.filter(row => String(row.event ?? '') === 'rider_injured')
+    const sickness = changes.filter(row => String(row.event ?? '') === 'rider_sick')
+    const notFullyFit = changes.filter(row => String(row.event ?? '') === 'rider_not_fully_fit')
+    const recovered = changes.filter(row => String(row.event ?? '') === 'rider_fit_again')
+
+    return localizeRows(item, [
+      { label: 'New injuries', value: listWithRemainder(injuries.map(healthRiderLabel), 6) },
+      { label: 'Sick today', value: listWithRemainder(sickness.map(healthRiderLabel), 6) },
+      { label: 'Not fully fit today', value: listWithRemainder(notFullyFit.map(healthRiderLabel), 6) },
+      { label: 'Recovered today', value: listWithRemainder(recovered.map(healthRiderLabel), 6) },
+      { label: 'Current medical / fitness attention', value: listWithRemainder(current.map(healthRiderLabel), 8) },
+    ])
+  }
+
+  return []
+}
+
 function prestartDisqualificationExtraText(): string {
   return 'The penalty has already been applied. Open the race for context, or go directly to Race Supplies to review your eligible race jerseys and avoid the same issue at a future start.'
 }
@@ -275,6 +533,28 @@ function richRaceExtraText(item: NotificationItem): string | null {
 
   if (code === 'RACE_APPLICATION_RULE_CHANGE') {
     return 'Open the Calendar to review February races and adapt your application plan early.'
+  }
+
+  return null
+}
+
+function richDailyExtraText(item: NotificationItem): string | null {
+  const code = codeOf(item)
+
+  if (code === 'RACE_APPLICATION_DAILY_UPDATE') {
+    return 'Open the Calendar to compare the races that are available to you and submit priority applications before their deadlines.'
+  }
+
+  if (code === 'RACE_PREPARATION_DAILY_REPORT') {
+    return 'Open Race Preparation to resolve anything requiring attention before the rider-submission deadline.'
+  }
+
+  if (code === 'STAGE_PLANNING_DAILY_REPORT') {
+    return 'Open Stage Plans to complete the nearest deadlines first. Missing plans at lock can directly affect race execution.'
+  }
+
+  if (code === 'RIDER_HEALTH_DAILY_REPORT') {
+    return 'Open the Squad to review rider availability, recovery status, and any medical or fitness restrictions.'
   }
 
   return null
@@ -314,6 +594,34 @@ function richRaceAction(item: NotificationItem): { label: string; href: string }
   return null
 }
 
+function richDailyAction(item: NotificationItem): { label: string; href: string } | null {
+  const code = codeOf(item)
+
+  if (code === 'RACE_APPLICATION_DAILY_UPDATE') {
+    return { label: 'Open Calendar', href: '/dashboard/calendar' }
+  }
+
+  if (code === 'RACE_PREPARATION_DAILY_REPORT') {
+    return {
+      label: 'Open Race Preparation',
+      href: '/dashboard/race-preparation?tab=acceptedRaces',
+    }
+  }
+
+  if (code === 'STAGE_PLANNING_DAILY_REPORT') {
+    return {
+      label: 'Open Stage Plans',
+      href: '/dashboard/race-preparation?tab=stagePlans',
+    }
+  }
+
+  if (code === 'RIDER_HEALTH_DAILY_REPORT') {
+    return { label: 'Open Squad', href: '/dashboard/squad' }
+  }
+
+  return null
+}
+
 function prestartDisqualificationActions(item: NotificationItem): NotificationActionTemplate[] {
   const payload = payloadOf(item)
   const raceId = readString(payload, 'race_id')
@@ -344,26 +652,45 @@ function prestartDisqualificationActions(item: NotificationItem): NotificationAc
   return actions
 }
 
+function singleNavigateAction(
+  key: string,
+  label: string,
+  href: string
+): NotificationActionTemplate[] {
+  return [{
+    key,
+    label: localizeNotificationActionLabel(label),
+    variant: 'primary',
+    kind: 'navigate',
+    getHref: () => href,
+    show: () => true,
+  }]
+}
+
 export function getNotificationImageSrc(item: NotificationItem): string | null {
   if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationImage(item)
+  if (isRichDailyNotification(item)) return richDailyImage(item)
   if (isRichRaceNotification(item)) return richRaceImage(item)
   return getBaseNotificationImageSrc(item)
 }
 
 export function getNotificationIntroText(item: NotificationItem): string | null {
   if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationIntro(item)
+  if (isRichDailyNotification(item)) return richDailyIntro(item)
   if (isRichRaceNotification(item)) return richRaceIntro(item)
   return getBaseNotificationIntroText(item)
 }
 
 export function getNotificationDetailRows(item: NotificationItem): NotificationDetailRow[] {
   if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationDetailRows(item)
+  if (isRichDailyNotification(item)) return richDailyDetailRows(item)
   if (isRichRaceNotification(item)) return richRaceDetailRows(item)
   return getBaseNotificationDetailRows(item)
 }
 
 export function getNotificationExtraText(item: NotificationItem): string | null {
   if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationExtraText()
+  if (isRichDailyNotification(item)) return richDailyExtraText(item)
   if (isRichRaceNotification(item)) return richRaceExtraText(item)
   return getBaseNotificationExtraText(item)
 }
@@ -371,10 +698,28 @@ export function getNotificationExtraText(item: NotificationItem): string | null 
 export function getNotificationActions(item: NotificationItem): NotificationActionTemplate[] {
   if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationActions(item)
 
+  const daily = richDailyAction(item)
+  if (daily) {
+    return singleNavigateAction(
+      `open-${codeOf(item).toLowerCase()}`,
+      daily.label,
+      daily.href
+    )
+  }
+
   const override = richRaceAction(item)
   if (!override) return getBaseNotificationActions(item)
 
-  return getBaseNotificationActions(item).map(action => {
+  const baseActions = getBaseNotificationActions(item)
+  if (baseActions.length === 0) {
+    return singleNavigateAction(
+      `open-${codeOf(item).toLowerCase()}`,
+      override.label,
+      override.href
+    )
+  }
+
+  return baseActions.map(action => {
     if (action.kind !== 'navigate') return action
 
     return {
