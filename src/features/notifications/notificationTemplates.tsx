@@ -159,6 +159,10 @@ function formatShortGameDate(value: unknown): string | null {
 function raceLabel(row: Record<string, unknown>, options?: { deadline?: boolean }): string {
   const name = String(row.race_name ?? row.name ?? 'Race').trim()
   if (!options?.deadline) return name
+
+  const category = String(row.category ?? row.race_category ?? '').trim()
+  if (category) return `${name} (${category})`
+
   const days = Number(row.days_until_close)
   if (Number.isFinite(days)) {
     if (days <= 0) return `${name} (closes today)`
@@ -542,7 +546,7 @@ function richDailyExtraText(item: NotificationItem): string | null {
   const code = codeOf(item)
 
   if (code === 'RACE_APPLICATION_DAILY_UPDATE') {
-    return 'Open the Calendar to compare the races that are available to you and submit priority applications before their deadlines.'
+    return 'Use the race links below to open any listed race directly, or open the Calendar to compare all available applications.'
   }
 
   if (code === 'RACE_PREPARATION_DAILY_REPORT') {
@@ -622,6 +626,43 @@ function richDailyAction(item: NotificationItem): { label: string; href: string 
   return null
 }
 
+function raceApplicationDailyActions(item: NotificationItem): NotificationActionTemplate[] {
+  const payload = payloadOf(item)
+  const rows = [
+    ...readObjectArray(payload, 'closing_soon_races'),
+    ...readObjectArray(payload, 'open_races').slice(0, 8),
+    ...readObjectArray(payload, 'pending_applications'),
+  ]
+  const seenRaceIds = new Set<string>()
+  const actions: NotificationActionTemplate[] = []
+
+  rows.forEach(row => {
+    const raceId = String(row.race_id ?? row.id ?? '').trim()
+    if (!raceId || seenRaceIds.has(raceId)) return
+    seenRaceIds.add(raceId)
+
+    actions.push({
+      key: `open-race-application-${raceId}`,
+      label: raceLabel(row, { deadline: true }),
+      variant: 'secondary',
+      kind: 'navigate',
+      getHref: () => `/dashboard/races/${raceId}`,
+      show: () => true,
+    })
+  })
+
+  actions.push({
+    key: 'open-race-application-calendar',
+    label: localizeNotificationActionLabel('Open Calendar'),
+    variant: 'primary',
+    kind: 'navigate',
+    getHref: () => '/dashboard/calendar',
+    show: () => true,
+  })
+
+  return actions
+}
+
 function prestartDisqualificationActions(item: NotificationItem): NotificationActionTemplate[] {
   const payload = payloadOf(item)
   const raceId = readString(payload, 'race_id')
@@ -697,6 +738,10 @@ export function getNotificationExtraText(item: NotificationItem): string | null 
 
 export function getNotificationActions(item: NotificationItem): NotificationActionTemplate[] {
   if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationActions(item)
+
+  if (codeOf(item) === 'RACE_APPLICATION_DAILY_UPDATE') {
+    return raceApplicationDailyActions(item)
+  }
 
   const daily = richDailyAction(item)
   if (daily) {
