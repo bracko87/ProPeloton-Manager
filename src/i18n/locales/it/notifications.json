@@ -104,9 +104,9 @@
     "scouting": "Scouting",
     "other": "Altri",
     "raceInvitations": "Inviti alla gara",
-    "raceApplicationResults": "Risultati dell'applicazione Race",
+    "raceApplicationResults": "Esiti delle iscrizioni alle gare",
     "racePreparation": "Preparazione della gara",
-    "stagePlanReminders": "Promemoria del Stage Plan",
+    "stagePlanReminders": "Promemoria per i piani di tappa",
     "raceWeather": "Tempo di gara",
     "raceResults": "Risultati della gara",
     "teamUpdates": "Aggiornamenti della squadra",
@@ -353,7 +353,7 @@
   },
   "templateLocalization": {
     "genericTitle": "Notifica: {{topic}}",
-    "genericMessage": "Una nuova notifica {{topic}} è disponibile per il vostro club.",
+    "genericMessage": "È disponibile una nuova notifica su «{{topic}}» per il tuo club.",
     "genericEntityMessage": "{{entity}}: è disponibile una nuova notifica {{topic}}.",
     "moreDetails": "Aprire i dettagli della notifica per ulteriori informazioni.",
     "perWeek": "settimana",
@@ -863,7 +863,17 @@
     "STAFF_CONTRACT_EXPIRED": "Contratto di un membro dello staff scaduto",
     "RIDER_CONTRACT_EXPIRED": "Contratto di un corridore scaduto",
     "NEW_SEASON_STARTED": "È iniziata una nuova stagione",
-    "COMPETITION_REWARD_GRANTED": "Ricompensa della competizione assegnata"
+    "COMPETITION_REWARD_GRANTED": "Ricompensa della competizione assegnata",
+    "RACE_APPLICATION_DAILY_UPDATE": "Riepilogo giornaliero delle iscrizioni alle gare",
+    "RACE_PREPARATION_DAILY_REPORT": "Rapporto giornaliero sulla preparazione gara",
+    "STAGE_PLANNING_DAILY_REPORT": "Rapporto giornaliero sulla pianificazione delle tappe",
+    "RIDER_HEALTH_DAILY_REPORT": "Rapporto giornaliero sulla salute dei corridori",
+    "RACE_APPLICATION_WINDOW_OPEN": "Iscrizioni alle gare aperte",
+    "RACE_APPLICATION_CLOSING_SOON": "Le iscrizioni alle gare chiudono presto",
+    "RACE_APPLICATION_RULE_CHANGE": "Modifica delle scadenze di iscrizione",
+    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Squadra rimossa dalla gara",
+    "RACE_PLAN_FINALISED": "Piano gara finalizzato",
+    "STAGE_PLAN_MISSING_REMINDER": "Promemoria: manca il piano di tappa"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Il piano di gara richiede attenzione: {{entity}}",
@@ -885,5 +895,88 @@
     "RACE_PLAN_OPEN": "Il piano di gara per {{entity}} è ora aperto e puoi preparare la selezione dei corridori e la logistica.",
     "RACE_PLAN_DEADLINE_REMINDER": "Si avvicina la scadenza del piano di gara di {{entity}}. Controlla la selezione e invia il piano in tempo.",
     "RACE_PLAN_NEEDS_ATTENTION": "Il piano di gara di {{entity}} richiede la tua attenzione. Controlla la preparazione e risolvi gli elementi ancora aperti."
+  },
+  "richReports": {
+    "common": {
+      "none": "Nessuno",
+      "more": "+ altri {{count}}",
+      "stageNumber": "Tappa {{number}}",
+      "stage": "Tappa",
+      "lockDate": "blocco {{date}}",
+      "riderDeadlineDate": "scadenza corridori {{date}}",
+      "closesToday": "chiude oggi",
+      "fatigueValue": "fatica {{value}}",
+      "statusInjured": "Infortunato",
+      "statusSick": "Malato",
+      "statusNotFullyFit": "Non completamente in forma",
+      "statusRecovered": "Recuperato",
+      "raceFallback": "Gara",
+      "riderFallback": "Corridore",
+      "teamFallback": "La tua squadra",
+      "thisRace": "questa gara"
+    },
+    "daily": {
+      "application": {
+        "intro": "Riepilogo iscrizioni di oggi — finestre aperte: {{open}}; chiudono entro 3 giorni: {{closing}}{{closingNames}}; in attesa di decisione: {{pending}}.",
+        "open": "Finestre di iscrizione aperte",
+        "closing": "Chiudono entro 3 giorni",
+        "next": "Prossime scadenze di iscrizione",
+        "pending": "In attesa di decisione",
+        "extra": "Fai clic sul nome di una gara per aprirne i dettagli oppure apri il Calendario per confrontare tutte le iscrizioni disponibili."
+      },
+      "preparation": {
+        "intro": "Riepilogo preparazione gare di oggi — richiedono attenzione: {{attention}}; aperte o in corso: {{open}}; finalizzate: {{finalised}}.{{priority}}",
+        "priority": " Attenzione immediata: {{items}}.",
+        "attention": "Richiedono attenzione",
+        "open": "Aperte / in corso",
+        "finalised": "Finalizzate",
+        "extra": "Apri Preparazione gara e risolvi tutto ciò che richiede attenzione prima della scadenza di invio dei corridori."
+      },
+      "stage": {
+        "intro": "Riepilogo pianificazione tappe di oggi — mancanti al blocco: {{missing}}; in blocco a breve: {{soon}}; aperti: {{open}}; bloccati di recente: {{locked}}.{{priority}}",
+        "priority": " Priorità: {{items}}.",
+        "missing": "Mancanti al blocco",
+        "soon": "In blocco a breve",
+        "open": "Piani di tappa aperti",
+        "locked": "Bloccati di recente",
+        "extra": "Apri i Piani di tappa e completa prima le scadenze più vicine. Un piano mancante al momento del blocco può influire direttamente sull’esecuzione della gara."
+      },
+      "health": {
+        "noIssues": "Oggi non sono stati registrati nuovi infortuni, malattie, problemi di forma o recuperi. Nessun corridore richiede attualmente attenzione medica o di forma fisica.",
+        "intro": "Riepilogo medico di oggi — infortunati: {{injured}}; malati: {{sick}}; non completamente in forma: {{notFullyFit}}; recuperati: {{recovered}}; richiedono attenzione: {{issues}}.",
+        "injuries": "Nuovi infortuni",
+        "sick": "Malati oggi",
+        "notFullyFit": "Non completamente in forma oggi",
+        "recovered": "Recuperati oggi",
+        "current": "Attenzione medica / di forma attuale",
+        "extra": "Apri la Squadra per controllare disponibilità, recupero e qualsiasi limitazione medica o di forma dei corridori."
+      }
+    },
+    "race": {
+      "windowOpenOne": "{{raceName}} ora accetta iscrizioni. Controlla la pagina gara, le regole di partecipazione, il percorso, la scadenza e la prontezza della squadra prima di inviare l’iscrizione.",
+      "windowOpenMany": "Sono aperte {{count}} finestre di iscrizione{{races}}. Controlla il Calendario, le regole, le scadenze e la prontezza della squadra prima di iscriverti.",
+      "closingSoonOne": "Una finestra di iscrizione chiude tra 3 giorni{{races}}. Controlla la gara, la disponibilità della squadra e l’equipaggiamento e invia l’iscrizione entro la scadenza.",
+      "closingSoonMany": "{{count}} finestre di iscrizione chiudono tra 3 giorni{{races}}. Controlla le gare, la disponibilità della squadra e l’equipaggiamento e invia le iscrizioni entro le scadenze.",
+      "ruleChange": "Le regole delle scadenze di iscrizione sono state aggiornate. Le gare di fine gennaio usano una finestra di {{lateDays}} giorni; da febbraio le iscrizioni chiudono {{standardDays}} giorni prima della gara. Controlla la pianificazione per non perdere future iscrizioni.",
+      "teamRemoved": "{{team}} è stata rimossa automaticamente da {{race}} perché non soddisfaceva il requisito obbligatorio dei kit maglia gara{{stagePart}}.{{stockPart}} La rimozione vale per la tappa interessata e tutte quelle successive, quindi squadra e corridori non possono più ottenere piazzamenti o punti in questa gara.",
+      "stagePart": " prima della tappa {{stage}}",
+      "stockPart": " Necessari: {{required}}; disponibili: {{available}}.",
+      "prestart": "{{team}} è stata rimossa da {{race}} al controllo obbligatorio pre-partenza perché non disponeva di abbastanza kit maglia gara idonei.{{stockPart}} È un errore di preparazione controllabile dal club, quindi sono state applicate le normali conseguenze della mancata partenza.",
+      "prestartStock": " Il controllo ha registrato: {{required}} necessari, {{available}} idonei{{missingPart}}.",
+      "prestartMissing": ", {{missing}} mancanti",
+      "extraRemoved": "Apri Equipaggiamento per controllare l’inventario ed evitare lo stesso problema nelle gare future.",
+      "extraOpenOne": "Apri la pagina gara, controlla i requisiti e iscriviti in anticipo.",
+      "extraOpenMany": "Apri il Calendario, controlla tutte le gare appena aperte e iscriviti in anticipo.",
+      "extraClosing": "Apri il Calendario, confronta le gare e iscriviti prima della chiusura delle finestre.",
+      "extraRule": "Apri il Calendario, controlla le gare da febbraio e adatta in anticipo il piano iscrizioni.",
+      "extraPrestart": "La penalità è già stata applicata. Apri la gara per il contesto oppure vai direttamente alle Scorte gara per controllare le maglie idonee ed evitare lo stesso problema in futuro.",
+      "removedRemaining": "Rimossa per il resto della gara",
+      "closesInDays": "Chiude tra {{days}} giorni",
+      "lateJanuaryRule": "Le iscrizioni chiudono {{days}} giorni prima della partenza",
+      "februaryRule": "Le iscrizioni chiudono {{days}} giorni prima della partenza",
+      "entryFeeRetained": "Trattenuta (non rimborsata)",
+      "outcomeRemoved": "Rimossa prima/alla partenza",
+      "problemJerseys": "Kit maglia gara idonei insufficienti"
+    }
   }
 }

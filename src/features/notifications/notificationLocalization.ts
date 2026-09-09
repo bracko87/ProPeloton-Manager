@@ -16,6 +16,13 @@ function nt(key: string, options?: Record<string, unknown>): string {
   return String(i18n.t(key, { ns: 'notifications', ...(options ?? {}) }))
 }
 
+export function translateNotificationKey(
+  key: string,
+  options?: Record<string, unknown>
+): string {
+  return nt(key, options)
+}
+
 function payloadOf(item: NotificationItem): Record<string, unknown> {
   const payload = item.payload_json
   return payload && typeof payload === 'object' && !Array.isArray(payload)

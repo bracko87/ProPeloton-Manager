@@ -15,6 +15,7 @@ import {
   localizeNotificationActionLabel,
   localizeNotificationDetailLabel,
   localizeNotificationValue,
+  translateNotificationKey,
 } from './notificationLocalization'
 
 export * from './notificationTemplatesBase'
@@ -141,24 +142,21 @@ function formatCount(count: number, singular: string, plural = `${singular}s`): 
 
 function listWithRemainder(values: string[], max = 6): string {
   const cleaned = values.map(value => value.trim()).filter(Boolean)
-  if (cleaned.length === 0) return 'None'
+  if (cleaned.length === 0) return translateNotificationKey('richReports.common.none')
   if (cleaned.length <= max) return cleaned.join(', ')
-  return `${cleaned.slice(0, max).join(', ')} + ${cleaned.length - max} more`
+  return `${cleaned.slice(0, max).join(', ')} ${translateNotificationKey('richReports.common.more', { count: cleaned.length - max })}`
 }
 
 function formatShortGameDate(value: unknown): string | null {
   const text = String(value ?? '').trim()
   const match = text.match(/^\d{4}-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/)
   if (!match) return text || null
-  const month = Number(match[1])
-  const day = Number(match[2])
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const date = `${monthNames[month - 1] ?? String(month)} ${day}`
-  return match[3] && match[4] ? `${date}, ${match[3]}:${match[4]}` : date
+  const date = `${match[2]}.${match[1]}.`
+  return match[3] && match[4] ? `${date} ${match[3]}:${match[4]}` : date
 }
 
 function raceLabel(row: Record<string, unknown>, options?: { deadline?: boolean }): string {
-  const name = String(row.race_name ?? row.name ?? 'Race').trim()
+  const name = String(row.race_name ?? row.name ?? translateNotificationKey('richReports.common.raceFallback')).trim()
   if (!options?.deadline) return name
 
   const category = String(row.category ?? row.race_category ?? '').trim()
@@ -166,7 +164,7 @@ function raceLabel(row: Record<string, unknown>, options?: { deadline?: boolean 
 
   const days = Number(row.days_until_close)
   if (Number.isFinite(days)) {
-    if (days <= 0) return `${name} (closes today)`
+    if (days <= 0) return `${name} (${translateNotificationKey('richReports.common.closesToday')})`
     return `${name} (${days}d)`
   }
   const close = formatShortGameDate(row.applications_close)
@@ -179,7 +177,7 @@ function raceInlineLinks(
   prefix = ''
 ): string {
   const visible = rows.slice(0, max)
-  if (visible.length === 0) return 'None'
+  if (visible.length === 0) return translateNotificationKey('richReports.common.none')
 
   return (
     <>
@@ -204,37 +202,47 @@ function raceInlineLinks(
           </span>
         )
       })}
-      {rows.length > max ? ` + ${rows.length - max} more` : null}
+      {rows.length > max ? ` ${translateNotificationKey('richReports.common.more', { count: rows.length - max })}` : null}
     </>
   ) as unknown as string
 }
 
 function prepRaceLabel(row: Record<string, unknown>): string {
-  const name = String(row.race_name ?? 'Race').trim()
+  const name = String(row.race_name ?? translateNotificationKey('richReports.common.raceFallback')).trim()
   const deadline = formatShortGameDate(row.rider_deadline)
-  return deadline ? `${name} — rider deadline ${deadline}` : name
+  return deadline
+    ? `${name} — ${translateNotificationKey('richReports.common.riderDeadlineDate', { date: deadline })}`
+    : name
 }
 
 function stageLabel(row: Record<string, unknown>): string {
-  const race = String(row.race_name ?? 'Race').trim()
+  const race = String(row.race_name ?? translateNotificationKey('richReports.common.raceFallback')).trim()
   const stageNumber = Number(row.stage_number)
   const stageName = String(row.stage_name ?? '').trim()
-  const stage =
-    Number.isFinite(stageNumber)
-      ? `Stage ${stageNumber}${stageName && !/^stage\s+\d+$/i.test(stageName) ? `: ${stageName}` : ''}`
-      : stageName || 'Stage'
+  const stage = Number.isFinite(stageNumber)
+    ? `${translateNotificationKey('richReports.common.stageNumber', { number: stageNumber })}${stageName && !/^stage\s+\d+$/i.test(stageName) ? `: ${stageName}` : ''}`
+    : stageName || translateNotificationKey('richReports.common.stage')
   const lockAt = formatShortGameDate(row.lock_at)
-  return `${race} — ${stage}${lockAt ? ` (lock ${lockAt})` : ''}`
+  return `${race} — ${stage}${lockAt ? ` (${translateNotificationKey('richReports.common.lockDate', { date: lockAt })})` : ''}`
 }
 
 function healthRiderLabel(row: Record<string, unknown>): string {
-  const name = String(row.rider_name ?? row.rider_full_name ?? 'Rider').trim()
-  const status = String(row.status ?? row.event ?? '').replace(/[_-]+/g, ' ').trim()
+  const name = String(row.rider_name ?? row.rider_full_name ?? translateNotificationKey('richReports.common.riderFallback')).trim()
+  const normalizedStatus = String(row.status ?? row.event ?? '').toLowerCase().replace(/[-\s]+/g, '_').trim()
+  const statusKeyByCode: Record<string, string> = {
+    rider_injured: 'richReports.common.statusInjured', injured: 'richReports.common.statusInjured',
+    rider_sick: 'richReports.common.statusSick', sick: 'richReports.common.statusSick',
+    rider_not_fully_fit: 'richReports.common.statusNotFullyFit', not_fully_fit: 'richReports.common.statusNotFullyFit',
+    rider_fit_again: 'richReports.common.statusRecovered', recovered: 'richReports.common.statusRecovered',
+  }
+  const statusKey = statusKeyByCode[normalizedStatus]
+  const status = statusKey ? translateNotificationKey(statusKey) : ''
   const fatigue = Number(row.fatigue)
-  const reason = String(row.unavailable_reason ?? '').trim()
+  const reasonRaw = String(row.unavailable_reason ?? '').trim()
+  const reason = reasonRaw ? localizeNotificationValue(reasonRaw) : ''
   const extras = [
-    status ? status.replace(/\b\w/g, char => char.toUpperCase()) : null,
-    Number.isFinite(fatigue) ? `fatigue ${fatigue}` : null,
+    status || null,
+    Number.isFinite(fatigue) ? translateNotificationKey('richReports.common.fatigueValue', { value: fatigue }) : null,
     reason || null,
   ].filter(Boolean)
   return extras.length > 0 ? `${name} — ${extras.join(', ')}` : name
@@ -242,17 +250,19 @@ function healthRiderLabel(row: Record<string, unknown>): string {
 
 function prestartDisqualificationIntro(item: NotificationItem): string {
   const payload = payloadOf(item)
-  const race = readString(payload, 'race_name') || 'this race'
-  const team = readString(payload, 'club_name', 'team_name') || 'Your team'
+  const race = readString(payload, 'race_name') || translateNotificationKey('richReports.common.thisRace')
+  const team = readString(payload, 'club_name', 'team_name') || translateNotificationKey('richReports.common.teamFallback')
   const required = readNumber(payload, 'required_jersey_units')
   const available = readNumber(payload, 'available_jersey_units', 'effective_available_jersey_units')
   const missing = readNumber(payload, 'missing_jersey_units')
-  const stock =
-    required !== null && available !== null
-      ? ` The eligibility check recorded ${required} required, ${available} eligible${missing !== null ? `, and ${missing} missing` : ''}.`
-      : ''
+  const missingPart = missing !== null
+    ? translateNotificationKey('richReports.race.prestartMissing', { missing })
+    : ''
+  const stockPart = required !== null && available !== null
+    ? translateNotificationKey('richReports.race.prestartStock', { required, available, missingPart })
+    : ''
 
-  return `${team} was removed from ${race} at the mandatory pre-start eligibility check because it did not have enough eligible Race Jersey Kits.${stock} This is a club-controllable race-preparation failure, so the normal missed-start/no-show consequences were applied.`
+  return translateNotificationKey('richReports.race.prestart', { team, race, stockPart })
 }
 
 function richRaceIntro(item: NotificationItem): string | null {
@@ -260,45 +270,43 @@ function richRaceIntro(item: NotificationItem): string | null {
   const payload = payloadOf(item)
 
   if (code === 'RACE_TEAM_DISQUALIFIED_JERSEYS') {
-    const race =
-      readString(payload, 'race_name') || raceNameFromTeamRemovalTitle(item) || 'this race'
-    const team = readString(payload, 'team_name') || 'Your team'
+    const race = readString(payload, 'race_name') || raceNameFromTeamRemovalTitle(item) || translateNotificationKey('richReports.common.thisRace')
+    const team = readString(payload, 'team_name') || translateNotificationKey('richReports.common.teamFallback')
     const stage = readNumber(payload, 'stage_number', 'disqualified_from_stage_number')
     const required = readNumber(payload, 'required_jersey_units')
     const available = readNumber(payload, 'available_jersey_units')
-    const stageLabelText = stage !== null ? ` before Stage ${stage}` : ''
-    const stockLabel =
-      required !== null && available !== null
-        ? ` Required: ${required}; available: ${available}.`
-        : ''
-
-    return `${team} was automatically removed from ${race} because the mandatory Race Jersey Kit requirement was not met${stageLabelText}.${stockLabel} The removal applies to the affected stage and every remaining stage, so the team and its riders can no longer place or score points in this race.`
+    const stagePart = stage !== null ? translateNotificationKey('richReports.race.stagePart', { stage }) : ''
+    const stockPart = required !== null && available !== null
+      ? translateNotificationKey('richReports.race.stockPart', { required, available })
+      : ''
+    return translateNotificationKey('richReports.race.teamRemoved', { team, race, stagePart, stockPart })
   }
 
   if (code === 'RACE_APPLICATION_WINDOW_OPEN') {
     const count = readNumber(payload, 'opened_count') ?? 0
     const races = readString(payload, 'race_name', 'sample_races')
-
     if (count === 1 && races) {
-      return `${races} is now accepting applications. Check the race page for entry rules, route overview, application deadline, and squad readiness before submitting your team.`
+      return translateNotificationKey('richReports.race.windowOpenOne', { raceName: races })
     }
-
-    return `${count > 0 ? count : 'New'} race application windows are now open${races ? `: ${races}` : ''}. Review the Calendar for entry rules, deadlines, and squad readiness before applying.`
+    return translateNotificationKey('richReports.race.windowOpenMany', {
+      count,
+      races: races ? `: ${races}` : '',
+    })
   }
 
   if (code === 'RACE_APPLICATION_CLOSING_SOON') {
     const count = readNumber(payload, 'closing_count') ?? 0
     const races = readString(payload, 'sample_races')
-    const subject = count === 1 ? 'One race application window is' : `${count || 'Several'} race application windows are`
-
-    return `${subject} about to close in 3 days${races ? `: ${races}` : ''}. Review each race page, confirm your squad availability, check equipment readiness, and submit your entries before the deadline expires.`
+    return translateNotificationKey(
+      count === 1 ? 'richReports.race.closingSoonOne' : 'richReports.race.closingSoonMany',
+      { count, races: races ? `: ${races}` : '' }
+    )
   }
 
   if (code === 'RACE_APPLICATION_RULE_CHANGE') {
-    const lateJanuaryDays = readNumber(payload, 'late_january_close_days') ?? 3
+    const lateDays = readNumber(payload, 'late_january_close_days') ?? 3
     const standardDays = readNumber(payload, 'february_onward_close_days') ?? 7
-
-    return `Application timing rules have been updated. Current late-January races use a ${lateJanuaryDays}-day closing window, while February and later races use a ${standardDays}-day application deadline. Review your planning now so you do not miss future race entries.`
+    return translateNotificationKey('richReports.race.ruleChange', { lateDays, standardDays })
   }
 
   return null
@@ -313,10 +321,8 @@ function richDailyIntro(item: NotificationItem): string | null {
     const closing = readNumber(payload, 'closing_soon_count') ?? 0
     const pending = readNumber(payload, 'pending_count') ?? 0
     const closingRows = readObjectArray(payload, 'closing_soon_races')
-    const closingNames = listWithRemainder(closingRows.map(row => raceLabel(row)), 5)
-    const closingVerb = closing === 1 ? 'closes' : 'close'
-
-    return `Today's race-application overview shows ${formatCount(open, 'open application window')}. ${formatCount(closing, 'window')} ${closingVerb} within the next 3 days${closing > 0 ? `: ${closingNames}` : ''}. ${pending === 0 ? 'You have no applications awaiting a decision.' : `${formatCount(pending, 'application')} are awaiting a decision.`}`
+    const closingNames = closing > 0 ? `: ${listWithRemainder(closingRows.map(row => raceLabel(row)), 5)}` : ''
+    return translateNotificationKey('richReports.daily.application.intro', { open, closing, closingNames, pending })
   }
 
   if (code === 'RACE_PREPARATION_DAILY_REPORT') {
@@ -326,12 +332,11 @@ function richDailyIntro(item: NotificationItem): string | null {
     const races = readObjectArray(payload, 'races')
     const attentionNames = races
       .filter(row => String(row.report_state ?? '') === 'attention')
-      .map(row => String(row.race_name ?? 'Race'))
+      .map(row => String(row.race_name ?? translateNotificationKey('richReports.common.raceFallback')))
     const priority = attentionNames.length > 0
-      ? ` Immediate attention: ${listWithRemainder(attentionNames, 4)}.`
+      ? translateNotificationKey('richReports.daily.preparation.priority', { items: listWithRemainder(attentionNames, 4) })
       : ''
-
-    return `Your daily race-preparation review has ${formatCount(attention, 'race')} needing attention, ${formatCount(open, 'race')} open or in progress, and ${formatCount(finalised, 'race')} finalised.${priority}`
+    return translateNotificationKey('richReports.daily.preparation.intro', { attention, open, finalised, priority })
   }
 
   if (code === 'STAGE_PLANNING_DAILY_REPORT') {
@@ -344,10 +349,9 @@ function richDailyIntro(item: NotificationItem): string | null {
       .filter(row => ['missing_at_lock', 'lock_soon'].includes(String(row.report_state ?? '')))
       .map(row => stageLabel(row))
     const priority = priorities.length > 0
-      ? ` Priority: ${listWithRemainder(priorities, 3)}.`
+      ? translateNotificationKey('richReports.daily.stage.priority', { items: listWithRemainder(priorities, 3) })
       : ''
-
-    return `Today's stage-plan review shows ${missing} missing at lock, ${soon} locking soon, ${open} open, and ${locked} locked recently.${priority}`
+    return translateNotificationKey('richReports.daily.stage.intro', { missing, soon, open, locked, priority })
   }
 
   if (code === 'RIDER_HEALTH_DAILY_REPORT') {
@@ -356,12 +360,12 @@ function richDailyIntro(item: NotificationItem): string | null {
     const notFullyFit = readNumber(payload, 'not_fully_fit_today') ?? 0
     const recovered = readNumber(payload, 'recovered_today') ?? 0
     const issues = readNumber(payload, 'current_issue_count') ?? 0
-
     if (injured + sick + notFullyFit + recovered + issues === 0) {
-      return 'No new injuries, illnesses, fitness concerns, or recoveries were recorded today. All riders are currently clear of medical and fitness attention.'
+      return translateNotificationKey('richReports.daily.health.noIssues')
     }
-
-    return `Today's team medical review recorded ${injured} injured, ${sick} sick, ${notFullyFit} not fully fit, and ${recovered} recovered. ${formatCount(issues, 'rider')} currently require medical or fitness attention.`
+    return translateNotificationKey('richReports.daily.health.intro', {
+      injured, sick, notFullyFit, recovered, issues,
+    })
   }
 
   return null
@@ -378,7 +382,7 @@ function prestartDisqualificationDetailRows(item: NotificationItem): Notificatio
   const payload = payloadOf(item)
   const race = readString(payload, 'race_name') || 'Race'
   const team = readString(payload, 'club_name', 'team_name') || 'Your team'
-  const problem = readString(payload, 'problem_label') || 'Not enough eligible Race Jersey Kits'
+  const problem = readString(payload, 'problem_label') ? localizeNotificationValue(readString(payload, 'problem_label') || '') : translateNotificationKey('richReports.race.problemJerseys')
   const required = readNumber(payload, 'required_jersey_units')
   const available = readNumber(payload, 'available_jersey_units', 'effective_available_jersey_units')
   const missing = readNumber(payload, 'missing_jersey_units')
@@ -392,10 +396,10 @@ function prestartDisqualificationDetailRows(item: NotificationItem): Notificatio
     ...(required !== null ? [{ label: 'Required Race Jersey Kits', value: String(required) }] : []),
     ...(available !== null ? [{ label: 'Eligible at start', value: String(available) }] : []),
     ...(missing !== null ? [{ label: 'Missing Race Jersey Kits', value: String(missing) }] : []),
-    { label: 'Race entry fee', value: 'Retained (not refunded)' },
+    { label: 'Race entry fee', value: translateNotificationKey('richReports.race.entryFeeRetained') },
     ...(cash !== null ? [{ label: 'Cash fine', value: cash.toLocaleString('en-US') }] : []),
     ...(score !== null ? [{ label: 'Race Commitment Score', value: score >= 0 ? `+${score}` : String(score) }] : []),
-    { label: 'Outcome', value: 'Removed before/at race start' },
+    { label: 'Outcome', value: translateNotificationKey('richReports.race.outcomeRemoved') },
   ])
 }
 
@@ -415,11 +419,11 @@ function richRaceDetailRows(item: NotificationItem): NotificationDetailRow[] {
     return localizeRows(item, [
       { label: 'Race', value: race },
       { label: 'Team', value: team },
-      ...(stage !== null ? [{ label: 'Removed from', value: `Stage ${stage}` }] : []),
+      ...(stage !== null ? [{ label: 'Removed from', value: translateNotificationKey('richReports.common.stageNumber', { number: stage }) }] : []),
       ...(required !== null ? [{ label: 'Required Race Jersey Kits', value: String(required) }] : []),
       ...(available !== null ? [{ label: 'Available Race Jersey Kits', value: String(available) }] : []),
       ...(missing !== null ? [{ label: 'Missing Race Jersey Kits', value: String(missing) }] : []),
-      { label: 'Race status', value: 'Removed for the remaining race' },
+      { label: 'Race status', value: translateNotificationKey('richReports.race.removedRemaining') },
     ])
   }
 
@@ -442,7 +446,7 @@ function richRaceDetailRows(item: NotificationItem): NotificationDetailRow[] {
     return localizeRows(item, [
       ...(races ? [{ label: 'Races affected', value: races }] : []),
       ...(count !== null ? [{ label: 'Application windows affected', value: String(count) }] : []),
-      { label: 'Deadline', value: `Closes in ${days} days` },
+      { label: 'Deadline', value: translateNotificationKey('richReports.race.closesInDays', { days }) },
     ])
   }
 
@@ -451,8 +455,8 @@ function richRaceDetailRows(item: NotificationItem): NotificationDetailRow[] {
     const standardDays = readNumber(payload, 'february_onward_close_days') ?? 7
 
     return localizeRows(item, [
-      { label: 'Late-January races', value: `Applications close ${lateJanuaryDays} days before the start` },
-      { label: 'February onward', value: `Applications close ${standardDays} days before the start` },
+      { label: 'Late-January races', value: translateNotificationKey('richReports.race.lateJanuaryRule', { days: lateJanuaryDays }) },
+      { label: 'February onward', value: translateNotificationKey('richReports.race.februaryRule', { days: standardDays }) },
     ])
   }
 
@@ -470,31 +474,11 @@ function richDailyDetailRows(item: NotificationItem): NotificationDetailRow[] {
     const openRows = readObjectArray(payload, 'open_races')
     const closingRows = readObjectArray(payload, 'closing_soon_races')
     const pendingRows = readObjectArray(payload, 'pending_applications')
-
     return [
-      {
-        label: localizeNotificationDetailLabel('Application windows open', item),
-        value: localizeNotificationValue(String(open), item),
-      },
-      {
-        label: localizeNotificationDetailLabel('Closing within 3 days', item),
-        value: closing > 0
-          ? raceInlineLinks(closingRows, 8, `${closing} — `)
-          : localizeNotificationValue('None', item),
-      },
-      {
-        label: localizeNotificationDetailLabel('Next application deadlines', item),
-        value: raceInlineLinks(openRows.slice(0, 8), 8),
-      },
-      {
-        label: localizeNotificationDetailLabel('Awaiting a decision', item),
-        value: pending > 0
-          ? localizeNotificationValue(
-              `${pending} — ${listWithRemainder(pendingRows.map(row => String(row.race_name ?? 'Race')), 6)}`,
-              item
-            )
-          : localizeNotificationValue('None', item),
-      },
+      { label: translateNotificationKey('richReports.daily.application.open'), value: String(open) },
+      { label: translateNotificationKey('richReports.daily.application.closing'), value: closing > 0 ? raceInlineLinks(closingRows, 8, `${closing} — `) : translateNotificationKey('richReports.common.none') },
+      { label: translateNotificationKey('richReports.daily.application.next'), value: raceInlineLinks(openRows.slice(0, 8), 8) },
+      { label: translateNotificationKey('richReports.daily.application.pending'), value: pending > 0 ? `${pending} — ${listWithRemainder(pendingRows.map(row => String(row.race_name ?? translateNotificationKey('richReports.common.raceFallback'))), 6)}` : translateNotificationKey('richReports.common.none') },
     ]
   }
 
@@ -503,21 +487,11 @@ function richDailyDetailRows(item: NotificationItem): NotificationDetailRow[] {
     const attention = races.filter(row => String(row.report_state ?? '') === 'attention')
     const open = races.filter(row => String(row.report_state ?? '') === 'open')
     const finalised = races.filter(row => String(row.report_state ?? '') === 'finalised')
-
-    return localizeRows(item, [
-      {
-        label: 'Needs attention',
-        value: listWithRemainder(attention.map(prepRaceLabel), 6),
-      },
-      {
-        label: 'Open / in progress',
-        value: listWithRemainder(open.map(prepRaceLabel), 6),
-      },
-      {
-        label: 'Finalised',
-        value: listWithRemainder(finalised.map(row => String(row.race_name ?? 'Race')), 6),
-      },
-    ])
+    return [
+      { label: translateNotificationKey('richReports.daily.preparation.attention'), value: listWithRemainder(attention.map(prepRaceLabel), 6) },
+      { label: translateNotificationKey('richReports.daily.preparation.open'), value: listWithRemainder(open.map(prepRaceLabel), 6) },
+      { label: translateNotificationKey('richReports.daily.preparation.finalised'), value: listWithRemainder(finalised.map(row => String(row.race_name ?? translateNotificationKey('richReports.common.raceFallback'))), 6) },
+    ]
   }
 
   if (code === 'STAGE_PLANNING_DAILY_REPORT') {
@@ -526,13 +500,12 @@ function richDailyDetailRows(item: NotificationItem): NotificationDetailRow[] {
     const soon = stages.filter(row => String(row.report_state ?? '') === 'lock_soon')
     const open = stages.filter(row => String(row.report_state ?? '') === 'open')
     const locked = stages.filter(row => String(row.report_state ?? '') === 'locked')
-
-    return localizeRows(item, [
-      { label: 'Missing at lock', value: listWithRemainder(missing.map(stageLabel), 5) },
-      { label: 'Locking soon', value: listWithRemainder(soon.map(stageLabel), 5) },
-      { label: 'Open stage plans', value: listWithRemainder(open.map(stageLabel), 6) },
-      { label: 'Locked recently', value: listWithRemainder(locked.map(stageLabel), 5) },
-    ])
+    return [
+      { label: translateNotificationKey('richReports.daily.stage.missing'), value: listWithRemainder(missing.map(stageLabel), 5) },
+      { label: translateNotificationKey('richReports.daily.stage.soon'), value: listWithRemainder(soon.map(stageLabel), 5) },
+      { label: translateNotificationKey('richReports.daily.stage.open'), value: listWithRemainder(open.map(stageLabel), 6) },
+      { label: translateNotificationKey('richReports.daily.stage.locked'), value: listWithRemainder(locked.map(stageLabel), 5) },
+    ]
   }
 
   if (code === 'RIDER_HEALTH_DAILY_REPORT') {
@@ -542,21 +515,20 @@ function richDailyDetailRows(item: NotificationItem): NotificationDetailRow[] {
     const sickness = changes.filter(row => String(row.event ?? '') === 'rider_sick')
     const notFullyFit = changes.filter(row => String(row.event ?? '') === 'rider_not_fully_fit')
     const recovered = changes.filter(row => String(row.event ?? '') === 'rider_fit_again')
-
-    return localizeRows(item, [
-      { label: 'New injuries', value: listWithRemainder(injuries.map(healthRiderLabel), 6) },
-      { label: 'Sick today', value: listWithRemainder(sickness.map(healthRiderLabel), 6) },
-      { label: 'Not fully fit today', value: listWithRemainder(notFullyFit.map(healthRiderLabel), 6) },
-      { label: 'Recovered today', value: listWithRemainder(recovered.map(healthRiderLabel), 6) },
-      { label: 'Current medical / fitness attention', value: listWithRemainder(current.map(healthRiderLabel), 8) },
-    ])
+    return [
+      { label: translateNotificationKey('richReports.daily.health.injuries'), value: listWithRemainder(injuries.map(healthRiderLabel), 6) },
+      { label: translateNotificationKey('richReports.daily.health.sick'), value: listWithRemainder(sickness.map(healthRiderLabel), 6) },
+      { label: translateNotificationKey('richReports.daily.health.notFullyFit'), value: listWithRemainder(notFullyFit.map(healthRiderLabel), 6) },
+      { label: translateNotificationKey('richReports.daily.health.recovered'), value: listWithRemainder(recovered.map(healthRiderLabel), 6) },
+      { label: translateNotificationKey('richReports.daily.health.current'), value: listWithRemainder(current.map(healthRiderLabel), 8) },
+    ]
   }
 
   return []
 }
 
 function prestartDisqualificationExtraText(): string {
-  return 'The penalty has already been applied. Open the race for context, or go directly to Race Supplies to review your eligible race jerseys and avoid the same issue at a future start.'
+  return translateNotificationKey('richReports.race.extraPrestart')
 }
 
 function richRaceExtraText(item: NotificationItem): string | null {
@@ -564,46 +536,23 @@ function richRaceExtraText(item: NotificationItem): string | null {
   const payload = payloadOf(item)
 
   if (code === 'RACE_TEAM_DISQUALIFIED_JERSEYS') {
-    return 'Open Equipment to review inventory and prevent the same issue in future races.'
+    return translateNotificationKey('richReports.race.extraRemoved')
   }
-
   if (code === 'RACE_APPLICATION_WINDOW_OPEN') {
     const count = readNumber(payload, 'opened_count') ?? 0
-    return count === 1
-      ? 'Open the race page now to review requirements and apply early.'
-      : 'Open the Calendar now to review all newly opened races and apply early.'
+    return translateNotificationKey(count === 1 ? 'richReports.race.extraOpenOne' : 'richReports.race.extraOpenMany')
   }
-
-  if (code === 'RACE_APPLICATION_CLOSING_SOON') {
-    return 'Open the Calendar now to compare races and apply before the application windows close.'
-  }
-
-  if (code === 'RACE_APPLICATION_RULE_CHANGE') {
-    return 'Open the Calendar to review February races and adapt your application plan early.'
-  }
-
+  if (code === 'RACE_APPLICATION_CLOSING_SOON') return translateNotificationKey('richReports.race.extraClosing')
+  if (code === 'RACE_APPLICATION_RULE_CHANGE') return translateNotificationKey('richReports.race.extraRule')
   return null
 }
 
 function richDailyExtraText(item: NotificationItem): string | null {
   const code = codeOf(item)
-
-  if (code === 'RACE_APPLICATION_DAILY_UPDATE') {
-    return 'Click a race name above to open its race detail page, or open the Calendar to compare all available applications.'
-  }
-
-  if (code === 'RACE_PREPARATION_DAILY_REPORT') {
-    return 'Open Race Preparation to resolve anything requiring attention before the rider-submission deadline.'
-  }
-
-  if (code === 'STAGE_PLANNING_DAILY_REPORT') {
-    return 'Open Stage Plans to complete the nearest deadlines first. Missing plans at lock can directly affect race execution.'
-  }
-
-  if (code === 'RIDER_HEALTH_DAILY_REPORT') {
-    return 'Open the Squad to review rider availability, recovery status, and any medical or fitness restrictions.'
-  }
-
+  if (code === 'RACE_APPLICATION_DAILY_UPDATE') return translateNotificationKey('richReports.daily.application.extra')
+  if (code === 'RACE_PREPARATION_DAILY_REPORT') return translateNotificationKey('richReports.daily.preparation.extra')
+  if (code === 'STAGE_PLANNING_DAILY_REPORT') return translateNotificationKey('richReports.daily.stage.extra')
+  if (code === 'RIDER_HEALTH_DAILY_REPORT') return translateNotificationKey('richReports.daily.health.extra')
   return null
 }
 

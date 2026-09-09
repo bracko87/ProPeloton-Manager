@@ -104,9 +104,9 @@
     "scouting": "Scouting",
     "other": "Sonstige",
     "raceInvitations": "Einladungen zum Rennen",
-    "raceApplicationResults": "Ergebnisse der Race-Anwendung",
+    "raceApplicationResults": "Ergebnisse der Rennanmeldungen",
     "racePreparation": "Vorbereitung der Rennen",
-    "stagePlanReminders": "Erinnerungen an den Etappenplan",
+    "stagePlanReminders": "Erinnerungen an Etappenpläne",
     "raceWeather": "Rennwetter",
     "raceResults": "Ergebnisse der Rennen",
     "teamUpdates": "Aktualisierungen des Teams",
@@ -353,7 +353,7 @@
   },
   "templateLocalization": {
     "genericTitle": "Meldung: {{topic}}",
-    "genericMessage": "Eine neue {{topic}} Benachrichtigung ist für Ihren Club verfügbar.",
+    "genericMessage": "Eine neue Benachrichtigung zu „{{topic}}“ ist für Ihren Club verfügbar.",
     "genericEntityMessage": "{{entity}}: eine neue {{topic}} Benachrichtigung ist verfügbar.",
     "moreDetails": "Öffnen Sie die Benachrichtigungsdetails für weitere Informationen.",
     "perWeek": "Woche",
@@ -863,7 +863,17 @@
     "STAFF_CONTRACT_EXPIRED": "Personalvertrag abgelaufen",
     "RIDER_CONTRACT_EXPIRED": "Fahrervertrag abgelaufen",
     "NEW_SEASON_STARTED": "Neue Saison hat begonnen",
-    "COMPETITION_REWARD_GRANTED": "Wettbewerbsprämie gutgeschrieben"
+    "COMPETITION_REWARD_GRANTED": "Wettbewerbsprämie gutgeschrieben",
+    "RACE_APPLICATION_DAILY_UPDATE": "Tägliche Übersicht der Rennanmeldungen",
+    "RACE_PREPARATION_DAILY_REPORT": "Täglicher Bericht zur Rennvorbereitung",
+    "STAGE_PLANNING_DAILY_REPORT": "Täglicher Bericht zur Etappenplanung",
+    "RIDER_HEALTH_DAILY_REPORT": "Täglicher Bericht zur Fahrergesundheit",
+    "RACE_APPLICATION_WINDOW_OPEN": "Rennanmeldungen geöffnet",
+    "RACE_APPLICATION_CLOSING_SOON": "Rennanmeldungen schließen bald",
+    "RACE_APPLICATION_RULE_CHANGE": "Änderung der Anmeldefristen",
+    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Team aus dem Rennen entfernt",
+    "RACE_PLAN_FINALISED": "Rennplan abgeschlossen",
+    "STAGE_PLAN_MISSING_REMINDER": "Erinnerung: Etappenplan fehlt"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Rennplan erfordert Aufmerksamkeit: {{entity}}",
@@ -885,5 +895,88 @@
     "RACE_PLAN_OPEN": "Der Rennplan für {{entity}} ist jetzt geöffnet. Sie können Fahrerauswahl und Logistik vorbereiten.",
     "RACE_PLAN_DEADLINE_REMINDER": "Die Frist für den Rennplan von {{entity}} rückt näher. Prüfen Sie Ihre Auswahl und reichen Sie den Plan rechtzeitig ein.",
     "RACE_PLAN_NEEDS_ATTENTION": "Der Rennplan für {{entity}} erfordert Ihre Aufmerksamkeit. Prüfen Sie die Vorbereitung und erledigen Sie offene Punkte."
+  },
+  "richReports": {
+    "common": {
+      "none": "Keine",
+      "more": "+ {{count}} weitere",
+      "stageNumber": "Etappe {{number}}",
+      "stage": "Etappe",
+      "lockDate": "Sperre {{date}}",
+      "riderDeadlineDate": "Fahrerfrist {{date}}",
+      "closesToday": "schließt heute",
+      "fatigueValue": "Müdigkeit {{value}}",
+      "statusInjured": "Verletzt",
+      "statusSick": "Krank",
+      "statusNotFullyFit": "Nicht vollständig fit",
+      "statusRecovered": "Erholt",
+      "raceFallback": "Rennen",
+      "riderFallback": "Fahrer",
+      "teamFallback": "Ihr Team",
+      "thisRace": "diesem Rennen"
+    },
+    "daily": {
+      "application": {
+        "intro": "Heutige Übersicht der Rennanmeldungen — offene Anmeldefenster: {{open}}; schließen innerhalb von 3 Tagen: {{closing}}{{closingNames}}; warten auf Entscheidung: {{pending}}.",
+        "open": "Offene Anmeldefenster",
+        "closing": "Schließen innerhalb von 3 Tagen",
+        "next": "Nächste Anmeldefristen",
+        "pending": "Warten auf Entscheidung",
+        "extra": "Klicken Sie oben auf einen Rennnamen, um die Renndetails zu öffnen, oder öffnen Sie den Kalender, um alle verfügbaren Anmeldungen zu vergleichen."
+      },
+      "preparation": {
+        "intro": "Heutiger Überblick zur Rennvorbereitung — Handlungsbedarf: {{attention}}; offen oder in Bearbeitung: {{open}}; abgeschlossen: {{finalised}}.{{priority}}",
+        "priority": " Sofort prüfen: {{items}}.",
+        "attention": "Handlungsbedarf",
+        "open": "Offen / in Bearbeitung",
+        "finalised": "Abgeschlossen",
+        "extra": "Öffnen Sie die Rennvorbereitung und klären Sie alle Punkte mit Handlungsbedarf vor der Fahrer-Meldefrist."
+      },
+      "stage": {
+        "intro": "Heutiger Überblick zur Etappenplanung — beim Sperren fehlend: {{missing}}; bald gesperrt: {{soon}}; offen: {{open}}; kürzlich gesperrt: {{locked}}.{{priority}}",
+        "priority": " Priorität: {{items}}.",
+        "missing": "Beim Sperren fehlend",
+        "soon": "Bald gesperrt",
+        "open": "Offene Etappenpläne",
+        "locked": "Kürzlich gesperrt",
+        "extra": "Öffnen Sie die Etappenpläne und bearbeiten Sie zuerst die nächsten Fristen. Ein beim Sperren fehlender Plan kann die Rennausführung direkt beeinflussen."
+      },
+      "health": {
+        "noIssues": "Heute wurden keine neuen Verletzungen, Erkrankungen, Fitnessprobleme oder Genesungen registriert. Derzeit benötigt kein Fahrer medizinische oder Fitness-Aufmerksamkeit.",
+        "intro": "Heutiger medizinischer Überblick — verletzt: {{injured}}; krank: {{sick}}; nicht vollständig fit: {{notFullyFit}}; erholt: {{recovered}}; aktuell mit Handlungsbedarf: {{issues}}.",
+        "injuries": "Neue Verletzungen",
+        "sick": "Heute krank",
+        "notFullyFit": "Heute nicht vollständig fit",
+        "recovered": "Heute erholt",
+        "current": "Aktueller medizinischer / Fitness-Handlungsbedarf",
+        "extra": "Öffnen Sie den Kader, um Verfügbarkeit, Genesungsstatus sowie medizinische oder Fitness-Einschränkungen der Fahrer zu prüfen."
+      }
+    },
+    "race": {
+      "windowOpenOne": "{{raceName}} nimmt jetzt Anmeldungen an. Prüfen Sie auf der Rennseite Teilnahmebedingungen, Strecke, Anmeldefrist und Kaderbereitschaft, bevor Sie Ihr Team anmelden.",
+      "windowOpenMany": "{{count}} Rennanmeldefenster sind jetzt geöffnet{{races}}. Prüfen Sie im Kalender Teilnahmebedingungen, Fristen und Kaderbereitschaft.",
+      "closingSoonOne": "Ein Rennanmeldefenster schließt in 3 Tagen{{races}}. Prüfen Sie das Rennen, Kaderverfügbarkeit und Ausrüstungsbereitschaft und melden Sie rechtzeitig an.",
+      "closingSoonMany": "{{count}} Rennanmeldefenster schließen in 3 Tagen{{races}}. Prüfen Sie die Rennen, Kaderverfügbarkeit und Ausrüstungsbereitschaft und melden Sie rechtzeitig an.",
+      "ruleChange": "Die Regeln für Anmeldefristen wurden aktualisiert. Rennen Ende Januar verwenden ein {{lateDays}}-Tage-Fenster; ab Februar schließen Anmeldungen {{standardDays}} Tage vor dem Rennen. Prüfen Sie Ihre Planung, damit Sie keine zukünftige Anmeldung verpassen.",
+      "teamRemoved": "{{team}} wurde automatisch aus {{race}} entfernt, weil die vorgeschriebene Renntrikot-Anforderung{{stagePart}} nicht erfüllt war.{{stockPart}} Die Entfernung gilt für die betroffene und alle verbleibenden Etappen; Team und Fahrer können in diesem Rennen keine Platzierungen oder Punkte mehr erzielen.",
+      "stagePart": " vor Etappe {{stage}}",
+      "stockPart": " Benötigt: {{required}}; verfügbar: {{available}}.",
+      "prestart": "{{team}} wurde bei der vorgeschriebenen Prüfung vor dem Start aus {{race}} entfernt, weil nicht genügend zulässige Renntrikot-Sets verfügbar waren.{{stockPart}} Dies ist ein vom Club beeinflussbarer Fehler der Rennvorbereitung; daher wurden die üblichen Folgen eines verpassten Starts angewendet.",
+      "prestartStock": " Die Prüfung ergab: {{required}} benötigt, {{available}} zulässig{{missingPart}}.",
+      "prestartMissing": ", {{missing}} fehlend",
+      "extraRemoved": "Öffnen Sie die Ausrüstung, um den Bestand zu prüfen und dasselbe Problem bei künftigen Rennen zu vermeiden.",
+      "extraOpenOne": "Öffnen Sie jetzt die Rennseite, prüfen Sie die Anforderungen und melden Sie frühzeitig an.",
+      "extraOpenMany": "Öffnen Sie jetzt den Kalender, prüfen Sie alle neu geöffneten Rennen und melden Sie frühzeitig an.",
+      "extraClosing": "Öffnen Sie den Kalender, vergleichen Sie die Rennen und melden Sie an, bevor die Anmeldefenster schließen.",
+      "extraRule": "Öffnen Sie den Kalender, prüfen Sie die Rennen ab Februar und passen Sie Ihre Anmeldeplanung frühzeitig an.",
+      "extraPrestart": "Die Strafe wurde bereits angewendet. Öffnen Sie das Rennen für den Kontext oder direkt die Rennvorräte, um zulässige Renntrikots zu prüfen und dasselbe Problem künftig zu vermeiden.",
+      "removedRemaining": "Für den Rest des Rennens entfernt",
+      "closesInDays": "Schließt in {{days}} Tagen",
+      "lateJanuaryRule": "Anmeldungen schließen {{days}} Tage vor dem Start",
+      "februaryRule": "Anmeldungen schließen {{days}} Tage vor dem Start",
+      "entryFeeRetained": "Einbehalten (nicht erstattet)",
+      "outcomeRemoved": "Vor/bei Rennstart entfernt",
+      "problemJerseys": "Nicht genügend zulässige Renntrikot-Sets"
+    }
   }
 }

@@ -793,5 +793,100 @@
     "Maintenance": "Maintenance",
     "Release options": "Release options",
     "Resupply Now": "Resupply Now"
+  },
+  "semanticTypeTitles": {
+    "RACE_APPLICATION_DAILY_UPDATE": "Race application daily update",
+    "RACE_PREPARATION_DAILY_REPORT": "Race preparation daily report",
+    "STAGE_PLANNING_DAILY_REPORT": "Stage planning daily report",
+    "RIDER_HEALTH_DAILY_REPORT": "Rider health daily report",
+    "RACE_APPLICATION_WINDOW_OPEN": "Race applications open",
+    "RACE_APPLICATION_CLOSING_SOON": "Race applications closing soon",
+    "RACE_APPLICATION_RULE_CHANGE": "Race application deadline update",
+    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Team removed from race",
+    "RACE_PLAN_FINALISED": "Race plan finalised",
+    "STAGE_PLAN_MISSING_REMINDER": "Stage plan missing reminder"
+  },
+  "richReports": {
+    "common": {
+      "none": "None",
+      "more": "+ {{count}} more",
+      "stageNumber": "Stage {{number}}",
+      "stage": "Stage",
+      "lockDate": "lock {{date}}",
+      "riderDeadlineDate": "rider deadline {{date}}",
+      "closesToday": "closes today",
+      "fatigueValue": "fatigue {{value}}",
+      "statusInjured": "Injured",
+      "statusSick": "Sick",
+      "statusNotFullyFit": "Not fully fit",
+      "statusRecovered": "Recovered",
+      "raceFallback": "Race",
+      "riderFallback": "Rider",
+      "teamFallback": "Your team",
+      "thisRace": "this race"
+    },
+    "daily": {
+      "application": {
+        "intro": "Today's race-application overview — open windows: {{open}}; closing within 3 days: {{closing}}{{closingNames}}; awaiting a decision: {{pending}}.",
+        "open": "Application windows open",
+        "closing": "Closing within 3 days",
+        "next": "Next application deadlines",
+        "pending": "Awaiting a decision",
+        "extra": "Click a race name above to open its race detail page, or open the Calendar to compare all available applications."
+      },
+      "preparation": {
+        "intro": "Today's race-preparation review — needs attention: {{attention}}; open or in progress: {{open}}; finalised: {{finalised}}.{{priority}}",
+        "priority": " Immediate attention: {{items}}.",
+        "attention": "Needs attention",
+        "open": "Open / in progress",
+        "finalised": "Finalised",
+        "extra": "Open Race Preparation to resolve anything requiring attention before the rider-submission deadline."
+      },
+      "stage": {
+        "intro": "Today's stage-planning review — missing at lock: {{missing}}; locking soon: {{soon}}; open: {{open}}; recently locked: {{locked}}.{{priority}}",
+        "priority": " Priority: {{items}}.",
+        "missing": "Missing at lock",
+        "soon": "Locking soon",
+        "open": "Open stage plans",
+        "locked": "Locked recently",
+        "extra": "Open Stage Plans and complete the nearest deadlines first. A plan that is missing when the stage locks can directly affect race execution."
+      },
+      "health": {
+        "noIssues": "No new injuries, illnesses, fitness concerns, or recoveries were recorded today. No rider currently requires medical or fitness attention.",
+        "intro": "Today's medical review — injured: {{injured}}; sick: {{sick}}; not fully fit: {{notFullyFit}}; recovered: {{recovered}}; currently needing attention: {{issues}}.",
+        "injuries": "New injuries",
+        "sick": "Sick today",
+        "notFullyFit": "Not fully fit today",
+        "recovered": "Recovered today",
+        "current": "Current medical / fitness attention",
+        "extra": "Open the Squad to review rider availability, recovery status, and any medical or fitness restrictions."
+      }
+    },
+    "race": {
+      "windowOpenOne": "{{raceName}} is now accepting applications. Check the race page for entry rules, route overview, application deadline, and squad readiness before submitting your team.",
+      "windowOpenMany": "{{count}} race application windows are now open{{races}}. Review the Calendar for entry rules, deadlines, and squad readiness before applying.",
+      "closingSoonOne": "One race application window closes in 3 days{{races}}. Review the race page, confirm squad availability and equipment readiness, and submit before the deadline.",
+      "closingSoonMany": "{{count}} race application windows close in 3 days{{races}}. Review each race page, confirm squad availability and equipment readiness, and submit before the deadlines.",
+      "ruleChange": "Application timing rules have been updated. Late-January races use a {{lateDays}}-day closing window, while February and later races use a {{standardDays}}-day application deadline. Review your planning now so you do not miss future entries.",
+      "teamRemoved": "{{team}} was automatically removed from {{race}} because the mandatory Race Jersey Kit requirement was not met{{stagePart}}.{{stockPart}} The removal applies to the affected stage and every remaining stage, so the team and its riders can no longer place or score points in this race.",
+      "stagePart": " before Stage {{stage}}",
+      "stockPart": " Required: {{required}}; available: {{available}}.",
+      "prestart": "{{team}} was removed from {{race}} at the mandatory pre-start eligibility check because it did not have enough eligible Race Jersey Kits.{{stockPart}} This is a club-controllable race-preparation failure, so the normal missed-start/no-show consequences were applied.",
+      "prestartStock": " The eligibility check recorded {{required}} required, {{available}} eligible{{missingPart}}.",
+      "prestartMissing": ", and {{missing}} missing",
+      "extraRemoved": "Open Equipment to review inventory and prevent the same issue in future races.",
+      "extraOpenOne": "Open the race page now to review requirements and apply early.",
+      "extraOpenMany": "Open the Calendar now to review all newly opened races and apply early.",
+      "extraClosing": "Open the Calendar now to compare races and apply before the application windows close.",
+      "extraRule": "Open the Calendar to review February races and adapt your application plan early.",
+      "extraPrestart": "The penalty has already been applied. Open the race for context, or go directly to Race Supplies to review eligible race jerseys and avoid the same issue at a future start.",
+      "removedRemaining": "Removed for the remaining race",
+      "closesInDays": "Closes in {{days}} days",
+      "lateJanuaryRule": "Applications close {{days}} days before the start",
+      "februaryRule": "Applications close {{days}} days before the start",
+      "entryFeeRetained": "Retained (not refunded)",
+      "outcomeRemoved": "Removed before/at race start",
+      "problemJerseys": "Not enough eligible Race Jersey Kits"
+    }
   }
 }

@@ -106,7 +106,7 @@
     "raceInvitations": "Pozivi za trke",
     "raceApplicationResults": "Rezultati prijava za trke",
     "racePreparation": "Priprema trke",
-    "stagePlanReminders": "Podsetnici za plan etape",
+    "stagePlanReminders": "Podsetnici za planove etapa",
     "raceWeather": "Vreme na trci",
     "raceResults": "Rezultati trke",
     "teamUpdates": "Ažuriranja tima",
@@ -353,7 +353,7 @@
   },
   "templateLocalization": {
     "genericTitle": "Obaveštenje: {{topic}}",
-    "genericMessage": "Novo obaveštenje „{{topic}}“ je dostupno za vaš klub.",
+    "genericMessage": "Novo obaveštenje „{{topic}}“ dostupno je za vaš klub.",
     "genericEntityMessage": "{{entity}}: dostupno je novo obaveštenje „{{topic}}“.",
     "moreDetails": "Otvorite detalje obaveštenja za više informacija.",
     "perWeek": "nedeljno",
@@ -866,7 +866,17 @@
     "STAFF_CONTRACT_EXPIRED": "Ugovor člana osoblja je istekao",
     "RIDER_CONTRACT_EXPIRED": "Ugovor vozača je istekao",
     "NEW_SEASON_STARTED": "Nova sezona je počela",
-    "COMPETITION_REWARD_GRANTED": "Dodeljena je nagrada za takmičenje"
+    "COMPETITION_REWARD_GRANTED": "Dodeljena je nagrada za takmičenje",
+    "RACE_APPLICATION_DAILY_UPDATE": "Dnevni pregled prijava za trke",
+    "RACE_PREPARATION_DAILY_REPORT": "Dnevni izveštaj o pripremi trka",
+    "STAGE_PLANNING_DAILY_REPORT": "Dnevni izveštaj o planiranju etapa",
+    "RIDER_HEALTH_DAILY_REPORT": "Dnevni izveštaj o zdravlju vozača",
+    "RACE_APPLICATION_WINDOW_OPEN": "Prijave za trke su otvorene",
+    "RACE_APPLICATION_CLOSING_SOON": "Prijave za trke se uskoro zatvaraju",
+    "RACE_APPLICATION_RULE_CHANGE": "Izmena rokova za prijavu na trke",
+    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Tim je uklonjen sa trke",
+    "RACE_PLAN_FINALISED": "Plan trke je završen",
+    "STAGE_PLAN_MISSING_REMINDER": "Podsetnik: nedostaje plan etape"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Plan trke zahteva pažnju: {{entity}}",
@@ -888,5 +898,88 @@
     "RACE_PLAN_OPEN": "Plan trke za {{entity}} sada je otvoren i možete da pripremite izbor vozača i logistiku.",
     "RACE_PLAN_DEADLINE_REMINDER": "Rok za plan trke {{entity}} se približava. Pregledajte izbor i pošaljite plan na vreme.",
     "RACE_PLAN_NEEDS_ATTENTION": "Plan trke {{entity}} zahteva vašu pažnju. Pregledajte pripremu i rešite preostale stavke."
+  },
+  "richReports": {
+    "common": {
+      "none": "Nema",
+      "more": "+ još {{count}}",
+      "stageNumber": "Etapa {{number}}",
+      "stage": "Etapa",
+      "lockDate": "zaključavanje {{date}}",
+      "riderDeadlineDate": "rok za vozače {{date}}",
+      "closesToday": "zatvara se danas",
+      "fatigueValue": "umor {{value}}",
+      "statusInjured": "Povređen",
+      "statusSick": "Bolestan",
+      "statusNotFullyFit": "Nije potpuno spreman",
+      "statusRecovered": "Oporavljen",
+      "raceFallback": "Trka",
+      "riderFallback": "Vozač",
+      "teamFallback": "Vaš tim",
+      "thisRace": "ova trka"
+    },
+    "daily": {
+      "application": {
+        "intro": "Današnji pregled prijava za trke — otvoreni rokovi: {{open}}; zatvaraju se u naredna 3 dana: {{closing}}{{closingNames}}; čekaju odluku: {{pending}}.",
+        "open": "Otvoreni rokovi za prijavu",
+        "closing": "Zatvaraju se u naredna 3 dana",
+        "next": "Sledeći rokovi za prijavu",
+        "pending": "Čekaju odluku",
+        "extra": "Kliknite na naziv trke iznad da otvorite detalje trke ili otvorite Kalendar da uporedite sve dostupne prijave."
+      },
+      "preparation": {
+        "intro": "Današnji pregled pripreme trka — zahteva pažnju: {{attention}}; otvoreno ili u toku: {{open}}; završeno: {{finalised}}.{{priority}}",
+        "priority": " Hitno pregledati: {{items}}.",
+        "attention": "Zahteva pažnju",
+        "open": "Otvoreno / u toku",
+        "finalised": "Završeno",
+        "extra": "Otvorite Pripremu trke i rešite sve stavke koje zahtevaju pažnju pre roka za prijavu vozača."
+      },
+      "stage": {
+        "intro": "Današnji pregled planiranja etapa — nedostaje pri zaključavanju: {{missing}}; uskoro se zaključava: {{soon}}; otvoreno: {{open}}; nedavno zaključano: {{locked}}.{{priority}}",
+        "priority": " Prioritet: {{items}}.",
+        "missing": "Nedostaje pri zaključavanju",
+        "soon": "Uskoro se zaključava",
+        "open": "Otvoreni planovi etapa",
+        "locked": "Nedavno zaključano",
+        "extra": "Otvorite Planove etapa i prvo završite etape sa najbližim rokovima. Plan koji nedostaje u trenutku zaključavanja može direktno uticati na izvršenje trke."
+      },
+      "health": {
+        "noIssues": "Danas nisu zabeležene nove povrede, bolesti, problemi sa spremnošću ni oporavci. Nijedan vozač trenutno ne zahteva medicinsku ili kondicionu pažnju.",
+        "intro": "Današnji medicinski pregled — povređeni: {{injured}}; bolesni: {{sick}}; nisu potpuno spremni: {{notFullyFit}}; oporavljeni: {{recovered}}; trenutno zahtevaju pažnju: {{issues}}.",
+        "injuries": "Nove povrede",
+        "sick": "Bolesni danas",
+        "notFullyFit": "Danas nisu potpuno spremni",
+        "recovered": "Oporavljeni danas",
+        "current": "Trenutna medicinska / kondiciona pažnja",
+        "extra": "Otvorite Tim da pregledate dostupnost vozača, status oporavka i sva medicinska ili kondiciona ograničenja."
+      }
+    },
+    "race": {
+      "windowOpenOne": "{{raceName}} sada prima prijave. Proverite stranicu trke za pravila prijave, pregled trase, rok i spremnost ekipe pre slanja prijave.",
+      "windowOpenMany": "Otvoreno je {{count}} rokova za prijavu na trke{{races}}. Pregledajte Kalendar, pravila prijave, rokove i spremnost ekipe pre prijave.",
+      "closingSoonOne": "Jedan rok za prijavu na trku ističe za 3 dana{{races}}. Proverite stranicu trke, dostupnost ekipe i spremnost opreme i pošaljite prijavu pre roka.",
+      "closingSoonMany": "{{count}} rokova za prijavu na trke ističe za 3 dana{{races}}. Proverite trke, dostupnost ekipe i spremnost opreme i pošaljite prijave pre rokova.",
+      "ruleChange": "Pravila rokova za prijavu su izmenjena. Trke krajem januara koriste rok od {{lateDays}} dana, dok se od februara prijave zatvaraju {{standardDays}} dana pre trke. Pregledajte planiranje da ne propustite buduće prijave.",
+      "teamRemoved": "{{team}} je automatski uklonjen sa trke {{race}} jer nije ispunjen obavezni uslov za komplet trkačkog dresa{{stagePart}}.{{stockPart}} Uklanjanje važi za tu etapu i sve preostale etape, pa tim i njegovi vozači više ne mogu ostvariti plasman ni bodove u ovoj trci.",
+      "stagePart": " pre etape {{stage}}",
+      "stockPart": " Potrebno: {{required}}; dostupno: {{available}}.",
+      "prestart": "{{team}} je uklonjen sa trke {{race}} pri obaveznoj proveri uslova pre starta jer nije imao dovoljno dostupnih kompleta trkačkih dresova.{{stockPart}} Ovo je propust u pripremi trke koji klub može da kontroliše, pa su primenjene uobičajene posledice za propušten start.",
+      "prestartStock": " Provera je pokazala: potrebno {{required}}, dostupno {{available}}{{missingPart}}.",
+      "prestartMissing": ", nedostaje {{missing}}",
+      "extraRemoved": "Otvorite Opremu da pregledate zalihe i sprečite isti problem na budućim trkama.",
+      "extraOpenOne": "Otvorite stranicu trke, pregledajte uslove i prijavite se na vreme.",
+      "extraOpenMany": "Otvorite Kalendar, pregledajte sve novo otvorene trke i prijavite se na vreme.",
+      "extraClosing": "Otvorite Kalendar, uporedite trke i prijavite se pre zatvaranja rokova.",
+      "extraRule": "Otvorite Kalendar, pregledajte trke od februara i na vreme prilagodite plan prijava.",
+      "extraPrestart": "Kazna je već primenjena. Otvorite trku za kontekst ili direktno otvorite Zalihe za trku da proverite dostupne dresove i izbegnete isti problem pri budućem startu.",
+      "removedRemaining": "Uklonjen do kraja trke",
+      "closesInDays": "Zatvara se za {{days}} dana",
+      "lateJanuaryRule": "Prijave se zatvaraju {{days}} dana pre starta",
+      "februaryRule": "Prijave se zatvaraju {{days}} dana pre starta",
+      "entryFeeRetained": "Zadržana (nije vraćena)",
+      "outcomeRemoved": "Uklonjen pre/na startu trke",
+      "problemJerseys": "Nema dovoljno dostupnih kompleta trkačkih dresova"
+    }
   }
 }
