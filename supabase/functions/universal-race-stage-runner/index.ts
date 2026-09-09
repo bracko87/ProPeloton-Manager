@@ -13,7 +13,7 @@ import { buildProductionUniversalRaceOutput } from "https://raw.githubuserconten
 
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
 const SOURCE_COMMIT = "f6c585110c4b70ce7ec6290645b3948116033946";
-const WORKER_BUILD = "supabase_time_trial_rules_v2";
+const WORKER_BUILD = "supabase_atomic_intermediate_points_v3";
 const MAX_CALCULATIONS_PER_TICK = 1;
 const MAX_PUBLICATIONS_PER_TICK = 4;
 const encoder = new TextEncoder();
@@ -28,6 +28,10 @@ function rows(value: unknown): JsonObject[] {
 }
 function firstObject(value: unknown): JsonObject {
   return Array.isArray(value) ? object(value[0]) : object(value);
+}
+function finiteNumber(value: unknown, fallback = 0): number {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
 }
 function env(name: string): string {
   const value = Deno.env.get(name)?.trim();
@@ -124,6 +128,84 @@ function buildProductionInputWithTimeTrialRules(
   };
 }
 
+/**
+ * Replay-only publication guard for intermediate sprint/KOM/bonus gates.
+ *
+ * The engine calculates the final gate order up front. During replay, however,
+ * the full award set must not become visible merely because the first group has
+ * reached the gate. An event is kept in a checkpoint only once every rider who
+ * receives a non-zero points or time-bonus award is estimated to have crossed
+ * that gate.
+ *
+ * We derive each scorer's physical position from the checkpoint's authoritative
+ * gap seconds and the stage's average winner speed. This leaves all official
+ * scoring, classifications and persisted award rows unchanged; it only controls
+ * when the already-calculated gate result becomes visible in replay.
+ */
+function applyAtomicIntermediatePointReplayPublication(
+  input: ReturnType<typeof buildProductionUniversalRaceEngineInput>,
+  result: UniversalRaceEngineResult,
+): UniversalRaceEngineResult {
+  const checkpoints = result.replayTimeline?.checkpoints ?? [];
+  if (!Array.isArray(checkpoints) || checkpoints.length === 0) return result;
+
+  const distanceKm = Math.max(0, finiteNumber(input.stage.distanceKm));
+  const winnerTimeSeconds = finiteNumber(result.finishResolution?.classification?.[0]?.officialTimeSeconds);
+  if (!(distanceKm > 0) || !(winnerTimeSeconds > 0)) return result;
+
+  const averageWinnerSpeedKmPerSecond = distanceKm / winnerTimeSeconds;
+  const guardedCheckpoints = checkpoints.map((checkpoint) => {
+    const checkpointRecord = checkpoint as unknown as JsonObject;
+    const progress = object(checkpointRecord.raceProgress);
+    const leaderKm = finiteNumber(progress.kmFromStart, -1);
+    const riderStates = rows(checkpointRecord.riderStates);
+    const intermediateResults = rows(checkpointRecord.intermediateResults);
+
+    if (leaderKm < 0 || intermediateResults.length === 0) return checkpoint;
+
+    const riderGapSeconds = new Map<string, number>();
+    riderStates.forEach((state) => {
+      const riderId = typeof state.riderId === "string" ? state.riderId : "";
+      if (!riderId) return;
+      riderGapSeconds.set(riderId, Math.max(0, finiteNumber(state.gapSeconds)));
+    });
+
+    const visibleIntermediateResults = intermediateResults.filter((event) => {
+      const pointKm = finiteNumber(event.kmFromStart, -1);
+      if (pointKm < 0) return true;
+
+      const awardScorers = rows(event.rankings).filter((ranking) =>
+        finiteNumber(ranking.pointsAwarded) > 0 || finiteNumber(ranking.bonusSecondsAwarded) > 0
+      );
+      if (awardScorers.length === 0) return true;
+
+      return awardScorers.every((ranking) => {
+        const riderId = typeof ranking.riderId === "string" ? ranking.riderId : "";
+        const gapSeconds = riderGapSeconds.get(riderId);
+        if (!riderId || gapSeconds === undefined) return false;
+
+        const estimatedRiderKm = leaderKm - gapSeconds * averageWinnerSpeedKmPerSecond;
+        return estimatedRiderKm + 0.000001 >= pointKm;
+      });
+    });
+
+    if (visibleIntermediateResults.length === intermediateResults.length) return checkpoint;
+
+    return {
+      ...checkpoint,
+      intermediateResults: visibleIntermediateResults,
+    } as typeof checkpoint;
+  });
+
+  return {
+    ...result,
+    replayTimeline: {
+      ...result.replayTimeline,
+      checkpoints: guardedCheckpoints,
+    },
+  };
+}
+
 function buildProductionOutputWithReplayProgressGuarantee(input: ReturnType<typeof buildProductionUniversalRaceEngineInput>, result: UniversalRaceEngineResult) {
   const replayPolicy = classifyUniversalReplaySynchronizationForPublication(result.replaySynchronization);
   if (!replayPolicy.publishable) throw new Error(`Universal replay synchronization failed: ${replayPolicy.blockingIssues.join(", ")}`);
@@ -172,7 +254,8 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
     const timeTrialRule = await loadTimeTrialRules(supabase, stageId);
     const input = buildProductionInputWithTimeTrialRules(baseInput, timeTrialRule);
     const started = performance.now();
-    const result = runRaceEngine(input);
+    const rawResult = runRaceEngine(input);
+    const result = applyAtomicIntermediatePointReplayPublication(input, rawResult);
     const output = buildProductionOutputWithReplayProgressGuarantee(input, result);
     const inputHash = await sha256(input);
     const outputHash = await sha256(output);
