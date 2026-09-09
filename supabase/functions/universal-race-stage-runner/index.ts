@@ -13,7 +13,7 @@ import { buildProductionUniversalRaceOutput } from "https://raw.githubuserconten
 
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
 const SOURCE_COMMIT = "f6c585110c4b70ce7ec6290645b3948116033946";
-const WORKER_BUILD = "supabase_atomic_intermediate_points_v3";
+const WORKER_BUILD = "supabase_atomic_points_finish_rank_v4";
 const MAX_CALCULATIONS_PER_TICK = 1;
 const MAX_PUBLICATIONS_PER_TICK = 4;
 const encoder = new TextEncoder();
@@ -206,6 +206,38 @@ function applyAtomicIntermediatePointReplayPublication(
   };
 }
 
+/**
+ * RaceDetailPage currently reads finish-point awards through `finishRank`, while
+ * the production engine serializes finishResolution.classification rows with
+ * `rank`. Keep both names in the output until every client has migrated to the
+ * canonical `rank` field. This changes no rank or sporting result; it only adds
+ * a compatibility alias used by replay presentation.
+ */
+function addFinishRankCompatibilityAlias<T>(output: T): T {
+  const outputRecord = object(output);
+  const universalResult = object(outputRecord.universalResult);
+  const finishResolution = object(universalResult.finishResolution);
+  const classification = rows(finishResolution.classification);
+  if (classification.length === 0) return output;
+
+  const normalizedClassification = classification.map((row) => {
+    if (row.finishRank !== undefined && row.finishRank !== null) return row;
+    const rank = Number(row.rank);
+    return Number.isFinite(rank) ? { ...row, finishRank: rank } : row;
+  });
+
+  return {
+    ...outputRecord,
+    universalResult: {
+      ...universalResult,
+      finishResolution: {
+        ...finishResolution,
+        classification: normalizedClassification,
+      },
+    },
+  } as T;
+}
+
 function buildProductionOutputWithReplayProgressGuarantee(input: ReturnType<typeof buildProductionUniversalRaceEngineInput>, result: UniversalRaceEngineResult) {
   const replayPolicy = classifyUniversalReplaySynchronizationForPublication(result.replaySynchronization);
   if (!replayPolicy.publishable) throw new Error(`Universal replay synchronization failed: ${replayPolicy.blockingIssues.join(", ")}`);
@@ -256,7 +288,9 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
     const started = performance.now();
     const rawResult = runRaceEngine(input);
     const result = applyAtomicIntermediatePointReplayPublication(input, rawResult);
-    const output = buildProductionOutputWithReplayProgressGuarantee(input, result);
+    const output = addFinishRankCompatibilityAlias(
+      buildProductionOutputWithReplayProgressGuarantee(input, result),
+    );
     const inputHash = await sha256(input);
     const outputHash = await sha256(output);
     const calculationCpuMs = performance.now() - started;
