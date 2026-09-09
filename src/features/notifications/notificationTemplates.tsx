@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import type { NotificationItem } from './notificationHelpers'
 import type {
   NotificationActionTemplate,
@@ -170,6 +171,42 @@ function raceLabel(row: Record<string, unknown>, options?: { deadline?: boolean 
   }
   const close = formatShortGameDate(row.applications_close)
   return close ? `${name} (${close})` : name
+}
+
+function raceInlineLinks(
+  rows: Record<string, unknown>[],
+  max = 8,
+  prefix = ''
+): string {
+  const visible = rows.slice(0, max)
+  if (visible.length === 0) return 'None'
+
+  return (
+    <>
+      {prefix}
+      {visible.map((row, index) => {
+        const raceId = String(row.race_id ?? row.id ?? '').trim()
+        const label = raceLabel(row, { deadline: true })
+
+        return (
+          <span key={`${raceId || label}-${index}`}>
+            {index > 0 ? ', ' : null}
+            {raceId ? (
+              <Link
+                to={`/dashboard/races/${raceId}`}
+                className="underline decoration-slate-400 underline-offset-2 hover:text-sky-700"
+              >
+                {label}
+              </Link>
+            ) : (
+              label
+            )}
+          </span>
+        )
+      })}
+      {rows.length > max ? ` + ${rows.length - max} more` : null}
+    </>
+  ) as unknown as string
 }
 
 function prepRaceLabel(row: Record<string, unknown>): string {
@@ -434,25 +471,31 @@ function richDailyDetailRows(item: NotificationItem): NotificationDetailRow[] {
     const closingRows = readObjectArray(payload, 'closing_soon_races')
     const pendingRows = readObjectArray(payload, 'pending_applications')
 
-    return localizeRows(item, [
-      { label: 'Application windows open', value: String(open) },
+    return [
       {
-        label: 'Closing within 3 days',
+        label: localizeNotificationDetailLabel('Application windows open', item),
+        value: localizeNotificationValue(String(open), item),
+      },
+      {
+        label: localizeNotificationDetailLabel('Closing within 3 days', item),
         value: closing > 0
-          ? `${closing} — ${listWithRemainder(closingRows.map(row => raceLabel(row, { deadline: true })), 8)}`
-          : 'None',
+          ? raceInlineLinks(closingRows, 8, `${closing} — `)
+          : localizeNotificationValue('None', item),
       },
       {
-        label: 'Next application deadlines',
-        value: listWithRemainder(openRows.slice(0, 8).map(row => raceLabel(row, { deadline: true })), 8),
+        label: localizeNotificationDetailLabel('Next application deadlines', item),
+        value: raceInlineLinks(openRows.slice(0, 8), 8),
       },
       {
-        label: 'Awaiting a decision',
+        label: localizeNotificationDetailLabel('Awaiting a decision', item),
         value: pending > 0
-          ? `${pending} — ${listWithRemainder(pendingRows.map(row => String(row.race_name ?? 'Race')), 6)}`
-          : 'None',
+          ? localizeNotificationValue(
+              `${pending} — ${listWithRemainder(pendingRows.map(row => String(row.race_name ?? 'Race')), 6)}`,
+              item
+            )
+          : localizeNotificationValue('None', item),
       },
-    ])
+    ]
   }
 
   if (code === 'RACE_PREPARATION_DAILY_REPORT') {
@@ -546,7 +589,7 @@ function richDailyExtraText(item: NotificationItem): string | null {
   const code = codeOf(item)
 
   if (code === 'RACE_APPLICATION_DAILY_UPDATE') {
-    return 'Use the race links below to open any listed race directly, or open the Calendar to compare all available applications.'
+    return 'Click a race name above to open its race detail page, or open the Calendar to compare all available applications.'
   }
 
   if (code === 'RACE_PREPARATION_DAILY_REPORT') {
@@ -626,43 +669,6 @@ function richDailyAction(item: NotificationItem): { label: string; href: string 
   return null
 }
 
-function raceApplicationDailyActions(item: NotificationItem): NotificationActionTemplate[] {
-  const payload = payloadOf(item)
-  const rows = [
-    ...readObjectArray(payload, 'closing_soon_races'),
-    ...readObjectArray(payload, 'open_races').slice(0, 8),
-    ...readObjectArray(payload, 'pending_applications'),
-  ]
-  const seenRaceIds = new Set<string>()
-  const actions: NotificationActionTemplate[] = []
-
-  rows.forEach(row => {
-    const raceId = String(row.race_id ?? row.id ?? '').trim()
-    if (!raceId || seenRaceIds.has(raceId)) return
-    seenRaceIds.add(raceId)
-
-    actions.push({
-      key: `open-race-application-${raceId}`,
-      label: raceLabel(row, { deadline: true }),
-      variant: 'secondary',
-      kind: 'navigate',
-      getHref: () => `/dashboard/races/${raceId}`,
-      show: () => true,
-    })
-  })
-
-  actions.push({
-    key: 'open-race-application-calendar',
-    label: localizeNotificationActionLabel('Open Calendar'),
-    variant: 'primary',
-    kind: 'navigate',
-    getHref: () => '/dashboard/calendar',
-    show: () => true,
-  })
-
-  return actions
-}
-
 function prestartDisqualificationActions(item: NotificationItem): NotificationActionTemplate[] {
   const payload = payloadOf(item)
   const raceId = readString(payload, 'race_id')
@@ -738,10 +744,6 @@ export function getNotificationExtraText(item: NotificationItem): string | null 
 
 export function getNotificationActions(item: NotificationItem): NotificationActionTemplate[] {
   if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationActions(item)
-
-  if (codeOf(item) === 'RACE_APPLICATION_DAILY_UPDATE') {
-    return raceApplicationDailyActions(item)
-  }
 
   const daily = richDailyAction(item)
   if (daily) {
