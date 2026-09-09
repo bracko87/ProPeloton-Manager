@@ -1,0 +1,105 @@
+name: Rich notification localization fix v2 2026-09-09
+
+on:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-rich-notification-localization-fix-20260909-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  localize-audit-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply rich notification localization
+        run: |
+          python .github/scripts/fix_rich_notification_localization_20260909.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('src/i18n/locales/fr/notifications.json')
+          d=json.loads(p.read_text(encoding='utf-8'))
+          d['richReports']['common']['fatigueValue']='niveau de fatigue {{value}}'
+          p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Audit all rich notification types and locales
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json,re
+          from pathlib import Path
+          root=Path('.')
+          locales=['en','sr-Latn','de','hr','es','it','fr','ru']
+          def flat(o,p=''):
+            out={}
+            if isinstance(o,dict):
+              for k,v in o.items(): out.update(flat(v,f'{p}.{k}' if p else k))
+            else: out[p]=o
+            return out
+          def ph(v): return set(re.findall(r'{{\s*([A-Za-z0-9_]+)\s*}}',v)) if isinstance(v,str) else set()
+          b={l:flat(json.loads((root/f'src/i18n/locales/{l}/notifications.json').read_text(encoding='utf-8'))) for l in locales}
+          en=b['en']; problems=[]
+          rich=[k for k in en if k.startswith('richReports.')]
+          if len(rich)<50: problems.append(f'Only {len(rich)} richReports keys found')
+          types=['RACE_APPLICATION_DAILY_UPDATE','RACE_PREPARATION_DAILY_REPORT','STAGE_PLANNING_DAILY_REPORT','RIDER_HEALTH_DAILY_REPORT','RACE_APPLICATION_WINDOW_OPEN','RACE_APPLICATION_CLOSING_SOON','RACE_APPLICATION_RULE_CHANGE','RACE_TEAM_DISQUALIFIED_JERSEYS','RACE_PLAN_FINALISED','STAGE_PLAN_MISSING_REMINDER']
+          for l in locales:
+            for k in rich:
+              if k not in b[l]: problems.append(f'{l}: missing {k}')
+              elif ph(en[k])!=ph(b[l][k]): problems.append(f'{l}: placeholders differ for {k}')
+            for code in types:
+              k=f'semanticTypeTitles.{code}'
+              if not str(b[l].get(k,'')).strip(): problems.append(f'{l}: missing {k}')
+          required={
+            'sr-Latn':('Podsetnici za planove etapa','Rezultati prijava za trke'),
+            'hr':('Podsjetnici za planove etapa','Rezultati prijava za utrke'),
+            'de':('Erinnerungen an Etappenpläne','Ergebnisse der Rennanmeldungen'),
+            'es':('Recordatorios de planes de etapa','Resultados de las inscripciones a carreras'),
+            'it':('Promemoria per i piani di tappa','Esiti delle iscrizioni alle gare'),
+            'fr':('Rappels des plans d’étape','Résultats des inscriptions aux courses'),
+            'ru':('Напоминания о планах этапов','Результаты заявок на гонки'),
+          }
+          for l,(a,c) in required.items():
+            if b[l].get('categories.stagePlanReminders')!=a: problems.append(f'{l}: bad stage plan category')
+            if b[l].get('categories.raceApplicationResults')!=c: problems.append(f'{l}: bad race application category')
+          src=(root/'src/features/notifications/notificationTemplates.tsx').read_text(encoding='utf-8')
+          loc=(root/'src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
+          for phrase in ["Today's stage-plan review shows",'Open Stage Plans to complete the nearest deadlines first','You have no applications awaiting a decision.','No new injuries, illnesses, fitness concerns, or recoveries were recorded today.',"Your daily race-preparation review has","Today's race-application overview shows"]:
+            if phrase in src: problems.append('raw English remains in rich path: '+phrase)
+          for phrase in ["const monthNames = ['Jan', 'Feb'","? `Stage ${stageNumber}","` (lock ${lockAt})`","`${name} — rider deadline ${deadline}`"]:
+            if phrase in src: problems.append('hardcoded rich helper remains: '+phrase)
+          if 'translateNotificationKey' not in src or 'export function translateNotificationKey' not in loc: problems.append('translation-key bridge missing')
+          for l in locales[1:]:
+            for k in rich:
+              v=str(b[l].get(k,'')); ev=str(en.get(k,''))
+              if v==ev and re.search(r'\b(Stage|Race|Open|Missing|Lock|Rider|Team|Application|Deadline|Today|Current|Required|Available|Removed)\b',v,re.I):
+                problems.append(f'{l}: suspicious English rich value at {k}: {v}')
+          if problems:
+            print('\n'.join('ERROR: '+x for x in problems[:100]))
+            raise SystemExit(1)
+          print(f'PASSED: {len(rich)} rich-report keys x {len(locales)} locales; {len(types)} semantic types')
+          PY
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: git diff --check
+
+      - name: Commit application localization changes
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/features/notifications/notificationLocalization.ts src/features/notifications/notificationTemplates.tsx src/i18n/locales/*/notifications.json
+          git commit -m 'Localize rich notification reports across all languages'
+          git pull --rebase origin main
+          git push origin HEAD:main
