@@ -10848,82 +10848,61 @@ function SimpleReplayStagePointsPanel({
     (point) => point.id === selectedPointId
   )
 
-  const rows = selectedPoint?.reached
+  const selectedStagePoint =
+    stagePoints.find((point) => point.id === selectedPointId) ?? null
+  const pointsScheme = Array.isArray(selectedStagePoint?.points_scheme)
+    ? selectedStagePoint.points_scheme
+    : []
+  const bonusScheme = Array.isArray(selectedStagePoint?.time_bonus_seconds)
+    ? selectedStagePoint.time_bonus_seconds
+    : []
+  const expectedAwardRanks = new Set<number>()
+  const expectedAwardPositionCount = Math.max(
+    pointsScheme.length,
+    bonusScheme.length
+  )
+
+  for (let index = 0; index < expectedAwardPositionCount; index += 1) {
+    const points = Number(pointsScheme[index] ?? 0)
+    const bonusSeconds = Number(bonusScheme[index] ?? 0)
+
+    if (
+      (Number.isFinite(points) && points > 0) ||
+      (Number.isFinite(bonusSeconds) && bonusSeconds > 0)
+    ) {
+      expectedAwardRanks.add(index + 1)
+    }
+  }
+
+  const selectedAwardRows = selectedPoint?.reached
     ? pointResults
-        .filter(
-          (row) =>
+        .filter((row) => {
+          const rank = Number(row.rank ?? 0)
+          const hasAward =
+            Number(row.points_awarded ?? 0) > 0 ||
+            Number(row.bonus_seconds_awarded ?? 0) > 0
+
+          return (
             row.point_id === selectedPointId &&
-            row.rank !== null &&
-            (Number(row.points_awarded ?? 0) > 0 ||
-              Number(row.bonus_seconds_awarded ?? 0) > 0)
-        )
+            Number.isInteger(rank) &&
+            rank > 0 &&
+            hasAward &&
+            (expectedAwardRanks.size === 0 || expectedAwardRanks.has(rank))
+          )
+        })
         .sort((left, right) => Number(left.rank ?? 999) - Number(right.rank ?? 999))
     : []
 
-  const cumulativeRows = useMemo(() => {
-    const pointById = new Map(
-      stagePoints.map((point) => [point.id, point] as const)
-    )
-    const totals = new Map<
-      string,
-      {
-        riderId: string
-        teamId: string
-        riderName: string
-        teamName: string
-        sprintPoints: number
-        mountainPoints: number
-        bonusSeconds: number
-      }
-    >()
-
-    pointResults.forEach((row) => {
-      const pointId = row.point_id
-      if (!pointId || !row.rider_id) return
-
-      const point = pointById.get(pointId)
-      const pointKm = Number(point?.km_from_start ?? row.km_from_start ?? 0)
-      if (currentKm + 0.000001 < pointKm) return
-
-      const key = `${row.rider_id}|${row.team_id ?? ''}`
-      const existing = totals.get(key) ?? {
-        riderId: row.rider_id,
-        teamId: row.team_id ?? '',
-        riderName: row.rider_name_snapshot ?? row.rider_id,
-        teamName: row.team_name_snapshot ?? row.team_id ?? '—',
-        sprintPoints: 0,
-        mountainPoints: 0,
-        bonusSeconds: 0,
-      }
-      const awardedPoints = Number(row.points_awarded ?? 0)
-      const pointType = String(row.point_type ?? point?.point_type ?? '').toUpperCase()
-
-      if (pointType === 'KOM') {
-        existing.mountainPoints += awardedPoints
-      } else {
-        existing.sprintPoints += awardedPoints
-      }
-
-      existing.bonusSeconds += Number(row.bonus_seconds_awarded ?? 0)
-      totals.set(key, existing)
-    })
-
-    return [...totals.values()]
-      .filter(
-        (row) =>
-          row.sprintPoints > 0 ||
-          row.mountainPoints > 0 ||
-          row.bonusSeconds > 0
-      )
-      .sort(
-        (left, right) =>
-          right.sprintPoints +
-            right.mountainPoints -
-            (left.sprintPoints + left.mountainPoints) ||
-          right.bonusSeconds - left.bonusSeconds ||
-          left.riderName.localeCompare(right.riderName)
-      )
-  }, [currentKm, pointResults, stagePoints])
+  const receivedAwardRanks = new Set(
+    selectedAwardRows
+      .map((row) => Number(row.rank ?? 0))
+      .filter((rank) => Number.isInteger(rank) && rank > 0)
+  )
+  const pointAwardPending =
+    Boolean(selectedPoint?.reached) &&
+    expectedAwardRanks.size > 0 &&
+    [...expectedAwardRanks].some((rank) => !receivedAwardRanks.has(rank))
+  const rows = pointAwardPending ? [] : selectedAwardRows
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-4">
@@ -10933,7 +10912,7 @@ function SimpleReplayStagePointsPanel({
             {t('replay.stagePoints')}
           </div>
           <div className="mt-1 text-sm text-slate-500">
-            {t('replay.stagePointsDescription')}
+            {t('replay.stagePointAwardDescription', { defaultValue: 'Awards for the selected point appear once all scoring positions are finalized.' })}
           </div>
         </div>
 
@@ -10969,7 +10948,12 @@ function SimpleReplayStagePointsPanel({
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl bg-amber-50 px-4 py-4 text-sm text-amber-800">
-          {t('replay.pointNoAward')}
+          {pointAwardPending
+            ? t('replay.pointAwardsPending', {
+                defaultValue:
+                  'Waiting for all scoring positions to reach this point. Awards will be published together once the full scoring set is known.',
+              })
+            : t('replay.pointNoAward')}
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-slate-200">
@@ -11001,59 +10985,6 @@ function SimpleReplayStagePointsPanel({
         </div>
       )}
 
-      <div className="mt-4 border-t border-slate-100 pt-4">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-          {t('replay.currentStageTotals')}
-        </div>
-
-        {cumulativeRows.length === 0 ? (
-          <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
-            {t('replay.noAwards')}
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-2xl border border-slate-200">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-3 py-2 text-left">{t('results.rider')}</th>
-                  <th className="px-3 py-2 text-left">{t('results.team')}</th>
-                  <th className="px-3 py-2 text-right">{t('report.sprint')}</th>
-                  <th className="px-3 py-2 text-right">{t('report.kom')}</th>
-                  <th className="px-3 py-2 text-right">{t('results.bonus')}</th>
-                  <th className="px-3 py-2 text-right">{t('replay.total')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cumulativeRows.slice(0, 12).map((row) => (
-                  <tr
-                    key={`${row.riderId}-${row.teamId}`}
-                    className="border-t border-slate-100"
-                  >
-                    <td className="px-3 py-2 font-semibold text-slate-900">
-                      {row.riderName}
-                    </td>
-                    <td className="px-3 py-2 text-slate-600">
-                      {row.teamName}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {row.sprintPoints}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {row.mountainPoints}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {row.bonusSeconds > 0 ? `${row.bonusSeconds}s` : '—'}
-                    </td>
-                    <td className="px-3 py-2 text-right font-semibold">
-                      {row.sprintPoints + row.mountainPoints}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
     </div>
   )
 }
