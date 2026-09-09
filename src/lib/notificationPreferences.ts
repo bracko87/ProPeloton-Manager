@@ -10,7 +10,6 @@
 
 export const PREFERENCES_STORAGE_KEY = 'pro-peloton-preferences'
 
-
 export const ADVISOR_NOTIFICATION_PREFERENCES_STORAGE_KEY =
   'ppm:staff-advisor-notification-category-preferences-v3'
 
@@ -25,31 +24,31 @@ export const ADVISOR_NOTIFICATION_CATEGORY_DEFINITIONS = {
   trainingReadiness: {
     label: 'Training & Rider Readiness',
     description:
-      'Training load, fatigue, rider availability, training gaps, squad readiness and rider development advisories.',
+      'Head Coach analysis of training load, fatigue, rider availability, training gaps, squad readiness and rider development.',
     requiredRole: 'head_coach',
   },
   raceProgrammePreparation: {
     label: 'Race Programme & Preparation',
     description:
-      'Race programme reviews and gaps, missing race preparation and preparation-ready advisories.',
+      'Sports Director analysis and recommendations beyond the Core daily Race Preparation report, including programme gaps and preparation readiness.',
     requiredRole: 'sport_director',
   },
   startlistStagePlans: {
     label: 'Startlist & Stage Plans',
     description:
-      'Startlist deadline alerts plus missing or incomplete stage-plan advisories.',
+      'Sports Director analysis beyond the Core daily Stage Planning report, including startlist deadlines and missing or incomplete stage plans.',
     requiredRole: 'sport_director',
   },
   medicalRecovery: {
     label: 'Medical & Recovery',
     description:
-      'Medical reports, injury and illness treatment plans, recovery changes and medical-clearance advisories.',
+      'Team Doctor treatment and recovery guidance beyond the Core daily Team Medical report, including injuries, illness, setbacks and medical clearance.',
     requiredRole: 'team_doctor',
   },
   equipmentWorkshopSupplies: {
     label: 'Equipment, Workshop & Race Supplies',
     description:
-      'Equipment condition, workshop readiness and analytical race-supply review advisories.',
+      'Chief Mechanic analysis beyond Core grouped race-supply alerts, including equipment condition, workshop readiness and supply eligibility.',
     requiredRole: 'mechanic',
   },
   scoutingRecruitment: {
@@ -166,9 +165,11 @@ export function resolveAdvisorNotificationCategory(
     reportCode === 'sd_startlist_deadline_alert' ||
     reportCode === 'sd_stage_plans_missing' ||
     reportCode === 'sd_stage_plans_incomplete' ||
+    reportCode === 'sd_race_eligibility_critical' ||
     variant === 'startlist_deadline_alert' ||
     variant === 'stage_plans_missing' ||
-    variant === 'stage_plans_incomplete'
+    variant === 'stage_plans_incomplete' ||
+    variant === 'race_eligibility_critical'
   ) {
     return 'startlistStagePlans'
   }
@@ -179,6 +180,7 @@ export function resolveAdvisorNotificationCategory(
     reportCode === 'sd_race_programme_gap' ||
     reportCode === 'sd_race_programme_continuity_gap' ||
     reportCode === 'sd_race_preparation_missing' ||
+    reportCode === 'sd_race_preparation_ready' ||
     variant === 'race_programme_gap' ||
     variant === 'programme_continuity' ||
     variant === 'long_programme_break' ||
@@ -192,6 +194,7 @@ export function resolveAdvisorNotificationCategory(
   if (
     typeCode === 'ADVISOR_TEAM_DOCTOR_REPORT' ||
     reportCode === 'weekly_medical_treatment' ||
+    reportCode === 'daily_health_recovery' ||
     reportCode.startsWith('td_')
   ) {
     return 'medicalRecovery'
@@ -200,6 +203,7 @@ export function resolveAdvisorNotificationCategory(
   if (
     typeCode === 'ADVISOR_CHIEF_MECHANIC_REPORT' ||
     reportCode === 'weekly_equipment_workshop_review' ||
+    reportCode === 'weekly_equipment_review' ||
     reportCode.startsWith('mechanic_')
   ) {
     return 'equipmentWorkshopSupplies'
@@ -220,13 +224,14 @@ export function canReceiveAdvisorNotification(
   item: unknown,
   _settings: AdvisorNotificationSettings = readAdvisorNotificationPreferences()
 ): boolean {
-  // Advisor category preferences now control FUTURE delivery server-side by
+  // Advisor category preferences control FUTURE delivery server-side by
   // bulk-writing exact report-code mute states. Existing notifications remain
   // visible by design, including cards used to selectively unmute one subtype
   // while its broader Preferences category remains OFF.
   //
   // Therefore the frontend must not hide already-delivered advisor
   // notifications merely because the grouped category checkbox is OFF.
+  void item
   return true
 }
 
@@ -238,6 +243,7 @@ export const NOTIFICATION_PREFERENCE_GROUP_ORDER = [
   'stagePlanReminders',
   'raceWeather',
   'raceResults',
+  'riderHealth',
   'teamUpdates',
   'staffContracts',
   'staffCourses',
@@ -276,8 +282,9 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
     section: 'race',
   },
   raceApplicationResults: {
-    label: 'Race application results',
-    description: 'Show notifications when your team is accepted or declined for a race.',
+    label: 'Race application updates',
+    description:
+      'Show one daily race-application overview plus accepted/declined decisions and important application-rule changes.',
     section: 'race',
   },
   races: {
@@ -286,15 +293,15 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
     section: 'race',
   },
   racePreparation: {
-    label: 'Race preparation status',
+    label: 'Race preparation daily report',
     description:
-      'Show Core status and consequence notifications for race preparation. Proactive rider-deadline advice belongs to Sports Director Advisory.',
+      'Show one daily Core status report for open, attention-required and finalised race preparations. Sports Director Advisory remains separate analytical advice.',
     section: 'race',
   },
   stagePlanReminders: {
-    label: 'Stage plan status',
+    label: 'Stage planning daily report',
     description:
-      'Show Core stage-plan opening and lock-state notifications. Missing-plan advice belongs to Sports Director Advisory.',
+      'Show one daily Core report for open stage plans, upcoming locks, locked plans and missing plans. Sports Director Advisory remains separate analytical advice.',
     section: 'race',
   },
   raceWeather: {
@@ -309,10 +316,16 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
       'Show notifications for finished races, stage results, classifications, and race summaries.',
     section: 'race',
   },
+  riderHealth: {
+    label: 'Team medical report',
+    description:
+      'Show one daily Core medical summary covering injuries, sickness, reduced fitness and recoveries. Team Doctor Advisory remains separate treatment and recovery guidance.',
+    section: 'team',
+  },
   teamUpdates: {
     label: 'Team updates',
     description:
-      'Show notifications related to riders, morale, health, contracts, staff, and internal team changes.',
+      'Show rider morale, rider contracts, staff and other internal team changes. Rider health is controlled separately by Team medical report.',
     section: 'team',
   },
   staffContracts: {
@@ -350,7 +363,7 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
   financeAlerts: {
     label: 'Finance alerts',
     description:
-      'Show important finance warnings, sponsor objectives, emergency loans, tax alerts, payroll issues, and insolvency notices.',
+      'Show important finance warnings, sponsor objectives, emergency loans, tax alerts, payroll issues, the final insolvency warning and one canonical club-liquidation notice.',
     section: 'club',
   },
   walletRewards: {
@@ -372,7 +385,7 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
   raceSupplies: {
     label: 'Race supplies',
     description:
-      'Show notifications when race supplies are low, missing, or need restocking before events.',
+      'Show one grouped low-stock warning for race supplies that need restocking before events. Chief Mechanic Advisory remains separate analysis.',
     section: 'club',
   },
   equipmentUpdates: {
@@ -398,12 +411,14 @@ export const NOTIFICATION_PREFERENCE_SECTIONS = [
   {
     code: 'race' as const,
     title: 'Race notifications',
-    description: 'Invitations, preparation, weather, stage plans, race-day issues, and results.',
+    description:
+      'Invitations, daily application/preparation/stage-planning reports, weather, race-day issues, and results.',
   },
   {
     code: 'team' as const,
     title: 'Team & rider notifications',
-    description: 'Riders, staff, transfers, training camps, scouting, and retirements.',
+    description:
+      'Daily medical status, rider/team updates, staff, transfers, training camps, scouting, and retirements.',
   },
   {
     code: 'club' as const,
@@ -433,21 +448,23 @@ const RETIRED_CORE_ADVISORY_OVERLAP_TYPES = new Set([
 ])
 
 const EXACT_TYPE_GROUPS: Record<string, NotificationPreferenceGroup> = {
+  // New consolidated Core notifications.
+  RACE_APPLICATION_DAILY_UPDATE: 'raceApplicationResults',
+  RACE_PREPARATION_DAILY_REPORT: 'racePreparation',
+  STAGE_PLANNING_DAILY_REPORT: 'stagePlanReminders',
+  RIDER_HEALTH_DAILY_REPORT: 'riderHealth',
+
+  // Existing decision/high-priority types that remain active.
   RACE_APPLICATION_ACCEPTED: 'raceApplicationResults',
   RACE_APPLICATION_DECLINED: 'raceApplicationResults',
-  RACE_PLAN_FINALISED: 'racePreparation',
-  RACE_PLAN_NEEDS_ATTENTION: 'racePreparation',
-  RACE_PLAN_OPEN: 'racePreparation',
-  STAGE_PLAN_LOCK_REMINDER: 'stagePlanReminders',
-  STAGE_PLAN_LOCKED: 'stagePlanReminders',
-  STAGE_PLAN_MISSING_AT_LOCK: 'stagePlanReminders',
-  STAGE_PLANS_OPEN: 'stagePlanReminders',
+  RACE_APPLICATION_RULE_CHANGE: 'raceApplicationResults',
   RACE_STAGE_WEATHER_CANCELLED: 'raceWeather',
   RACE_WEATHER_CANCELLED: 'raceWeather',
   RACE_RESULTS_SUMMARY: 'raceResults',
   race_missed_startlist: 'races',
+  RACE_TEAM_DISQUALIFIED_JERSEYS: 'races',
   RACE_SUPPLIES_LOW: 'raceSupplies',
-  RACE_SUPPLIES_LOW_STOCK: 'raceSupplies',
+  RACE_JERSEYS_MANDATORY_WARNING: 'raceSupplies',
   STAFF_CONTRACT_EXPIRING: 'staffContracts',
   STAFF_COURSE_COMPLETED: 'staffCourses',
   SCOUT_REPORT_COMPLETED: 'scoutingReports',
@@ -461,6 +478,24 @@ const EXACT_TYPE_GROUPS: Record<string, NotificationPreferenceGroup> = {
   REFERRAL_REWARD_GRANTED: 'walletRewards',
   ADMIN_MESSAGE: 'systemMessages',
   WELCOME_MESSAGE: 'systemMessages',
+
+  // Historical/legacy rows remain classifiable under the old preference area.
+  RACE_APPLICATION_WINDOW_OPEN: 'raceApplicationResults',
+  RACE_APPLICATION_CLOSING_SOON: 'raceApplicationResults',
+  RACE_PLAN_FINALISED: 'racePreparation',
+  RACE_PLAN_NEEDS_ATTENTION: 'racePreparation',
+  RACE_PLAN_OPEN: 'racePreparation',
+  STAGE_PLAN_LOCK_REMINDER: 'stagePlanReminders',
+  STAGE_PLAN_LOCKED: 'stagePlanReminders',
+  STAGE_PLAN_MISSING_AT_LOCK: 'stagePlanReminders',
+  STAGE_PLANS_OPEN: 'stagePlanReminders',
+  RACE_SUPPLIES_LOW_STOCK: 'raceSupplies',
+  RIDER_INJURED: 'teamUpdates',
+  RIDER_SICK: 'teamUpdates',
+  RIDER_NOT_FULLY_FIT: 'teamUpdates',
+  RIDER_FIT_AGAIN: 'teamUpdates',
+  CLUB_LIQUIDATED_INSOLVENCY: 'financeAlerts',
+  FINANCE_CLUB_LIQUIDATED: 'financeAlerts',
 }
 
 export function isNotificationPreferenceGroup(
@@ -582,10 +617,15 @@ export function resolveNotificationPreferenceGroup(
   return getNotificationTypeFromEvent(typeCode, source)
 }
 
-
 export function canReceiveNotificationItem(
   preferences: NotificationSettings,
-  item: { preference_group?: string | null; type_code?: string | null; source?: string | null; payload_json?: unknown; metadata?: unknown }
+  item: {
+    preference_group?: string | null
+    type_code?: string | null
+    source?: string | null
+    payload_json?: unknown
+    metadata?: unknown
+  }
 ): boolean {
   const group = String(item.preference_group ?? '')
   const typeCode = String(item.type_code ?? '').toUpperCase()
