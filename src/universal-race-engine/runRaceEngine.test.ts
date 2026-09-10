@@ -16822,6 +16822,104 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     )
   })
 
+  it('does not promote a Phase 3 race-control team into the physical chase', () => {
+    const base = createSuccessfulOpeningEscapeInput()
+    const input: UniversalRaceEngineInput = {
+      ...base,
+      stagePlans: base.stagePlans.map((plan) =>
+        plan.teamId === 'team-a'
+          ? {
+              ...plan,
+              riders: plan.riders.map((riderPlan) =>
+                riderPlan.riderId === 'rider-2'
+                  ? {
+                      ...riderPlan,
+                      commands: {
+                        ...riderPlan.commands,
+                        phase3: 'control_race',
+                      },
+                    }
+                  : riderPlan,
+              ),
+            }
+          : plan,
+      ),
+    }
+
+    const result = runRaceEngine(input)
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+
+    expect(phase3.physicalEscapeRiderIdsAtStart.length).toBeGreaterThan(0)
+    expect(phase3.physicalChasingTeamIds).not.toContain('team-a')
+  })
+
+
+  it('does not let Phase 3 race-control teams amplify a four-team physical chase', () => {
+    const createInput = (controlTeamCount: number): UniversalRaceEngineInput => {
+      const base = createExpandedFieldInput(90)
+      const openingAttackerId = 'expanded-rider-05'
+      const chaseTeamIds = new Set(
+        base.teams.slice(1, 5).map((team) => team.teamId),
+      )
+      const controlTeamIds = new Set(
+        base.teams.slice(5, 5 + controlTeamCount).map((team) => team.teamId),
+      )
+
+      return {
+        ...base,
+        stagePlans: base.stagePlans.map((plan) => ({
+          ...plan,
+          teamTactic: 'balanced',
+          riders: plan.riders.map((riderPlan) => ({
+            ...riderPlan,
+            stageRole:
+              riderPlan.riderId === openingAttackerId
+                ? 'breakaway_rider'
+                : 'free_role',
+            commands: {
+              phase1:
+                riderPlan.riderId === openingAttackerId ? 'attack' : 'avoid_risks',
+              phase2: 'follow_team_plan',
+              phase3: chaseTeamIds.has(plan.teamId)
+                ? 'chase_breakaway'
+                : controlTeamIds.has(plan.teamId)
+                  ? 'control_race'
+                  : 'avoid_risks',
+              phase4: 'avoid_risks',
+            },
+          })),
+        })),
+        riders: base.riders.map((rider) =>
+          rider.riderId === openingAttackerId
+            ? {
+                ...rider,
+                flat: 95,
+                endurance: 95,
+                resistance: 95,
+                raceIQ: 95,
+                teamwork: 95,
+                morale: 100,
+                raceSharpness: 100,
+                fatigueBeforeStage: 0,
+              }
+            : rider,
+        ),
+      }
+    }
+
+    const chaseOnly = runRaceEngine(createInput(0)).roadRaceResolution.phase3Decisive!
+    const chaseWithNineControlTeams = runRaceEngine(createInput(9)).roadRaceResolution.phase3Decisive!
+
+    expect(chaseOnly.physicalChasingTeamIds).toHaveLength(4)
+    expect(chaseWithNineControlTeams.physicalChasingTeamIds).toEqual(
+      chaseOnly.physicalChasingTeamIds,
+    )
+    expect(chaseWithNineControlTeams.physicalGapTrajectory).toEqual(
+      chaseOnly.physicalGapTrajectory,
+    )
+  })
+
+
   it('keeps the automatic late chase at or after the 70 percent boundary', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
     const phase4 = result.roadRaceResolution.phase4Finish!
@@ -17611,6 +17709,44 @@ describe('Phase 11G organic race physics and replay continuity', () => {
       expect(result.replaySynchronization.issues).toEqual([])
     }
   })
+
+  it('flags sustained unrealistic gap closure as a non-failing V5.3.1 diagnostic', () => {
+    const input = createSuccessfulOpeningEscapeInput()
+    const result = runRaceEngine(input)
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+    const mutatedRoadRaceResolution = {
+      ...result.roadRaceResolution,
+      phase3Decisive: {
+        ...phase3,
+        physicalGapTrajectory: [
+          { kmFromStart: 82, gapSeconds: 440 },
+          { kmFromStart: 84, gapSeconds: 370 },
+          { kmFromStart: 86, gapSeconds: 300 },
+          { kmFromStart: 88, gapSeconds: 230 },
+          { kmFromStart: 90, gapSeconds: 160 },
+        ],
+      },
+    }
+    const synchronization = buildUniversalReplaySynchronizationSummary(
+      input,
+      result.riderReadiness,
+      result.roadCommandResolution,
+      result.intermediatePointFinalization,
+      result.groupAndTimeResolution,
+      result.finishResolution,
+      result.phase10Incidents,
+      result.replayTimeline,
+      mutatedRoadRaceResolution,
+    )
+
+    expect(synchronization.gapClosureRealism.suspiciousSustainedClosure).toBe(true)
+    expect(synchronization.gapClosureRealism.phaseNumber).toBe(3)
+    expect(synchronization.gapClosureRealism.sustainedClosureDistanceKm).toBe(8)
+    expect(synchronization.gapClosureRealism.sustainedClosureSecondsPerKm).toBe(35)
+    expect(synchronization.synchronized).toBe(true)
+    expect(synchronization.issues).toEqual([])
+  })
+
 
   it('rejects prolonged emergency-rail saturation as a publication synchronization issue', () => {
     const input = createSuccessfulOpeningEscapeInput()

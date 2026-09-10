@@ -3038,6 +3038,16 @@ export interface UniversalReplaySynchronizationSummary {
     UniversalReplayIncidentSynchronizationStatus
   readonly incidentIntegrationComplete: boolean
   readonly incidentCount: number
+  readonly gapClosureRealism: {
+    readonly suspiciousSustainedClosure: boolean
+    readonly maximumObservedClosureSecondsPerKm: number
+    readonly sustainedClosureSecondsPerKm: number
+    readonly sustainedClosureDistanceKm: number
+    readonly phaseNumber: 1 | 2 | 3 | 4 | null
+    readonly thresholdSecondsPerKm: number
+    readonly minimumDistanceKm: number
+    readonly modelVersion: 'universal_road_gap_closure_realism_diagnostic_v1'
+  }
   readonly issues: readonly string[]
   readonly deterministic: true
   readonly modelVersion: 'universal_replay_synchronization_v1'
@@ -12541,7 +12551,7 @@ export function resolveRoadPhase3Decisive(
       phase3Rows
         .filter(({ row, phase }) =>
           !physicalEscapeTeamIds.has(row.teamId) &&
-          (phase.behaviour === 'chase' || phase.behaviour === 'race_control'),
+          phase.behaviour === 'chase',
         )
         .map(({ row }) => row.teamId),
     ),
@@ -14153,6 +14163,8 @@ function calculateRoadPhase4ChaseStartFraction(
 const PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_SECONDS_PER_KM = 120
 const PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_PROLONGED_MIN_STEPS = 3
 const PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_PROLONGED_MIN_KM = 6
+const V5_3_1_GAP_CLOSURE_REALISM_SECONDS_PER_KM = 30
+const V5_3_1_GAP_CLOSURE_REALISM_MIN_KM = 6
 
 function limitRoadChaseGapClosure(
   currentGapSeconds: number,
@@ -32580,7 +32592,126 @@ export function buildUniversalReplaySynchronizationSummary(
       : null
   }
 
+  const gapClosureRealismSteps: Array<{
+    phaseNumber: 1 | 2 | 3 | 4
+    kmStart: number
+    kmEnd: number
+    startGapSeconds: number
+    endGapSeconds: number
+  }> = []
+  const appendPhysicalGapTrajectory = (
+    phaseNumber: 1 | 2 | 3,
+    trajectory: readonly UniversalRoadPhysicalGapSample[],
+  ): void => {
+    trajectory.forEach((sample, index) => {
+      const previous = trajectory[index - 1]
+      if (!previous) return
+      gapClosureRealismSteps.push({
+        phaseNumber,
+        kmStart: previous.kmFromStart,
+        kmEnd: sample.kmFromStart,
+        startGapSeconds: previous.gapSeconds,
+        endGapSeconds: sample.gapSeconds,
+      })
+    })
+  }
+  appendPhysicalGapTrajectory(
+    1,
+    roadRaceResolution?.phase1Opening?.physicalGapTrajectory ?? [],
+  )
+  appendPhysicalGapTrajectory(
+    2,
+    roadRaceResolution?.phase2Development?.physicalGapTrajectory ?? [],
+  )
+  appendPhysicalGapTrajectory(
+    3,
+    roadRaceResolution?.phase3Decisive?.physicalGapTrajectory ?? [],
+  )
+
   const phase4ChaseSteps = roadRaceResolution?.phase4Finish?.chaseSteps ?? []
+  phase4ChaseSteps.forEach((step) => {
+    gapClosureRealismSteps.push({
+      phaseNumber: 4,
+      kmStart: step.kmStart,
+      kmEnd: step.kmEnd,
+      startGapSeconds: step.startGapSeconds,
+      endGapSeconds: step.endGapSeconds,
+    })
+  })
+
+  let maximumObservedClosureSecondsPerKm = 0
+  let sustainedClosureSeconds = 0
+  let sustainedClosureDistanceKm = 0
+  let sustainedClosurePhaseNumber: 1 | 2 | 3 | 4 | null = null
+  let bestSustainedClosureSecondsPerKm = 0
+  let bestSustainedClosureDistanceKm = 0
+  let bestSustainedClosurePhaseNumber: 1 | 2 | 3 | 4 | null = null
+
+  gapClosureRealismSteps.forEach((step, index) => {
+    const distanceKm = Math.max(0, step.kmEnd - step.kmStart)
+    const closureSeconds = Math.max(0, step.startGapSeconds - step.endGapSeconds)
+    const closureSecondsPerKm =
+      distanceKm > 0 ? closureSeconds / distanceKm : 0
+    maximumObservedClosureSecondsPerKm = Math.max(
+      maximumObservedClosureSecondsPerKm,
+      closureSecondsPerKm,
+    )
+
+    const previousStep = gapClosureRealismSteps[index - 1]
+    const sameContinuousPhase =
+      previousStep !== undefined &&
+      previousStep.phaseNumber === step.phaseNumber &&
+      Math.abs(previousStep.kmEnd - step.kmStart) <= 0.00001
+
+    if (
+      distanceKm > 0 &&
+      closureSecondsPerKm >= V5_3_1_GAP_CLOSURE_REALISM_SECONDS_PER_KM
+    ) {
+      if (!sameContinuousPhase || sustainedClosurePhaseNumber !== step.phaseNumber) {
+        sustainedClosureSeconds = 0
+        sustainedClosureDistanceKm = 0
+      }
+      sustainedClosurePhaseNumber = step.phaseNumber
+      sustainedClosureSeconds += closureSeconds
+      sustainedClosureDistanceKm += distanceKm
+
+      if (sustainedClosureDistanceKm >= V5_3_1_GAP_CLOSURE_REALISM_MIN_KM) {
+        const sustainedRate =
+          sustainedClosureSeconds / sustainedClosureDistanceKm
+        if (sustainedRate >= bestSustainedClosureSecondsPerKm) {
+          bestSustainedClosureSecondsPerKm = sustainedRate
+          bestSustainedClosureDistanceKm = sustainedClosureDistanceKm
+          bestSustainedClosurePhaseNumber = step.phaseNumber
+        }
+      }
+    } else {
+      sustainedClosureSeconds = 0
+      sustainedClosureDistanceKm = 0
+      sustainedClosurePhaseNumber = null
+    }
+  })
+
+  const gapClosureRealism = {
+    suspiciousSustainedClosure:
+      bestSustainedClosureDistanceKm >= V5_3_1_GAP_CLOSURE_REALISM_MIN_KM,
+    maximumObservedClosureSecondsPerKm: deterministicRound(
+      maximumObservedClosureSecondsPerKm,
+      6,
+    ),
+    sustainedClosureSecondsPerKm: deterministicRound(
+      bestSustainedClosureSecondsPerKm,
+      6,
+    ),
+    sustainedClosureDistanceKm: deterministicRound(
+      bestSustainedClosureDistanceKm,
+      6,
+    ),
+    phaseNumber: bestSustainedClosurePhaseNumber,
+    thresholdSecondsPerKm: V5_3_1_GAP_CLOSURE_REALISM_SECONDS_PER_KM,
+    minimumDistanceKm: V5_3_1_GAP_CLOSURE_REALISM_MIN_KM,
+    modelVersion: 'universal_road_gap_closure_realism_diagnostic_v1' as const,
+  }
+
   let consecutiveEmergencyRailSteps = 0
   let consecutiveEmergencyRailDistanceKm = 0
   let prolongedEmergencyRailSaturation = false
@@ -34058,6 +34189,7 @@ export function buildUniversalReplaySynchronizationSummary(
     incidentSynchronizationStatus,
     incidentIntegrationComplete: phase10Incidents.active,
     incidentCount: uniqueIncidentIds.size,
+    gapClosureRealism,
     issues,
     deterministic: true,
     modelVersion: 'universal_replay_synchronization_v1',
