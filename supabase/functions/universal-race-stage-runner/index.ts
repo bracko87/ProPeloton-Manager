@@ -4,15 +4,15 @@ import {
   isUniversalPhase78IssueNonBlocking,
   runRaceEngine,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/f6c585110c4b70ce7ec6290645b3948116033946/src/universal-race-engine/runRaceEngine.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/667a2197775281d7431fac96687daec2a32f8bba/src/universal-race-engine/runRaceEngine.ts";
 import {
   buildProductionUniversalRaceEngineInput,
   type ProductionUniversalRaceSources,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/f6c585110c4b70ce7ec6290645b3948116033946/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/f6c585110c4b70ce7ec6290645b3948116033946/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/667a2197775281d7431fac96687daec2a32f8bba/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/667a2197775281d7431fac96687daec2a32f8bba/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
-const SOURCE_COMMIT = "f6c585110c4b70ce7ec6290645b3948116033946";
+const SOURCE_COMMIT = "667a2197775281d7431fac96687daec2a32f8bba";
 const WORKER_BUILD = "supabase_atomic_points_finish_rank_v4";
 const MAX_CALCULATIONS_PER_TICK = 1;
 const MAX_PUBLICATIONS_PER_TICK = 4;
