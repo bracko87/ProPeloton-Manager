@@ -11,9 +11,16 @@ import {
 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/667a2197775281d7431fac96687daec2a32f8bba/src/universal-race-engine/buildProductionRaceInput.ts";
 import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/667a2197775281d7431fac96687daec2a32f8bba/src/universal-race-engine/buildProductionRaceOutput.ts";
 
+// Accepted V5.2 is kept as the emergency sporting fallback only. It is used
+// only after a failed/orphaned primary attempt or at the mandatory T-15 deadline.
+import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildFallbackProductionUniversalRaceEngineInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput as buildFallbackProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
+
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
 const SOURCE_COMMIT = "667a2197775281d7431fac96687daec2a32f8bba";
-const WORKER_BUILD = "supabase_atomic_points_finish_rank_v4";
+const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
+const WORKER_BUILD = "supabase_race_calculation_survival_v1";
 const MAX_CALCULATIONS_PER_TICK = 1;
 const MAX_PUBLICATIONS_PER_TICK = 4;
 const encoder = new TextEncoder();
@@ -45,6 +52,9 @@ async function sha256(value: unknown): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", encoder.encode(JSON.stringify(value)));
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+async function safeSha256(value: unknown): Promise<string | null> {
+  try { return await sha256(value); } catch { return null; }
+}
 function errorPayload(error: unknown): JsonObject {
   if (error instanceof Error) return { name: error.name, message: error.message, stack: error.stack ?? null };
   return { name: "UnknownError", message: String(error) };
@@ -59,6 +69,24 @@ async function authorized(supabase: SupabaseClient, request: Request): Promise<b
   if (!supplied) return false;
   const { data, error } = await supabase.rpc("verify_universal_race_worker_secret_v1", { p_secret: supplied });
   return !error && data === true;
+}
+async function heartbeat(
+  supabase: SupabaseClient,
+  stageId: string,
+  simulationRunId: string,
+  phase: string,
+  details: JsonObject = {},
+): Promise<void> {
+  try {
+    await rpc<unknown>(supabase, "universal_race_stage_survival_heartbeat_v1", {
+      p_stage_id: stageId,
+      p_simulation_run_id: simulationRunId,
+      p_phase: phase,
+      p_details: details,
+    });
+  } catch {
+    // Telemetry is non-sporting and must never block a race calculation.
+  }
 }
 
 function buildSources(payloadValue: unknown, simulationRunId: string, preStageStandings: unknown): ProductionUniversalRaceSources {
@@ -95,10 +123,7 @@ async function loadTimeTrialRules(supabase: SupabaseClient, stageId: string): Pr
   return data ? object(data) : null;
 }
 
-function buildProductionInputWithTimeTrialRules(
-  baseInput: ReturnType<typeof buildProductionUniversalRaceEngineInput>,
-  rule: JsonObject | null,
-) {
+function buildProductionInputWithTimeTrialRules(baseInput: any, rule: JsonObject | null): any {
   const stageFormat = baseInput.stage.stageFormat;
   const requiresRules = ["individual_time_trial", "team_time_trial", "pair_time_trial", "prologue"].includes(stageFormat);
   if (!requiresRules) return baseInput;
@@ -128,20 +153,6 @@ function buildProductionInputWithTimeTrialRules(
   };
 }
 
-/**
- * Replay-only publication guard for intermediate sprint/KOM/bonus gates.
- *
- * The engine calculates the final gate order up front. During replay, however,
- * the full award set must not become visible merely because the first group has
- * reached the gate. An event is kept in a checkpoint only once every rider who
- * receives a non-zero points or time-bonus award is estimated to have crossed
- * that gate.
- *
- * We derive each scorer's physical position from the checkpoint's authoritative
- * gap seconds and the stage's average winner speed. This leaves all official
- * scoring, classifications and persisted award rows unchanged; it only controls
- * when the already-calculated gate result becomes visible in replay.
- */
 function applyAtomicIntermediatePointReplayPublication(
   input: ReturnType<typeof buildProductionUniversalRaceEngineInput>,
   result: UniversalRaceEngineResult,
@@ -173,46 +184,26 @@ function applyAtomicIntermediatePointReplayPublication(
     const visibleIntermediateResults = intermediateResults.filter((event) => {
       const pointKm = finiteNumber(event.kmFromStart, -1);
       if (pointKm < 0) return true;
-
       const awardScorers = rows(event.rankings).filter((ranking) =>
         finiteNumber(ranking.pointsAwarded) > 0 || finiteNumber(ranking.bonusSecondsAwarded) > 0
       );
       if (awardScorers.length === 0) return true;
-
       return awardScorers.every((ranking) => {
         const riderId = typeof ranking.riderId === "string" ? ranking.riderId : "";
         const gapSeconds = riderGapSeconds.get(riderId);
         if (!riderId || gapSeconds === undefined) return false;
-
         const estimatedRiderKm = leaderKm - gapSeconds * averageWinnerSpeedKmPerSecond;
         return estimatedRiderKm + 0.000001 >= pointKm;
       });
     });
 
     if (visibleIntermediateResults.length === intermediateResults.length) return checkpoint;
-
-    return {
-      ...checkpoint,
-      intermediateResults: visibleIntermediateResults,
-    } as typeof checkpoint;
+    return { ...checkpoint, intermediateResults: visibleIntermediateResults } as typeof checkpoint;
   });
 
-  return {
-    ...result,
-    replayTimeline: {
-      ...result.replayTimeline,
-      checkpoints: guardedCheckpoints,
-    },
-  };
+  return { ...result, replayTimeline: { ...result.replayTimeline, checkpoints: guardedCheckpoints } };
 }
 
-/**
- * RaceDetailPage currently reads finish-point awards through `finishRank`, while
- * the production engine serializes finishResolution.classification rows with
- * `rank`. Keep both names in the output until every client has migrated to the
- * canonical `rank` field. This changes no rank or sporting result; it only adds
- * a compatibility alias used by replay presentation.
- */
 function addFinishRankCompatibilityAlias<T>(output: T): T {
   const outputRecord = object(output);
   const universalResult = object(outputRecord.universalResult);
@@ -230,20 +221,19 @@ function addFinishRankCompatibilityAlias<T>(output: T): T {
     ...outputRecord,
     universalResult: {
       ...universalResult,
-      finishResolution: {
-        ...finishResolution,
-        classification: normalizedClassification,
-      },
+      finishResolution: { ...finishResolution, classification: normalizedClassification },
     },
   } as T;
 }
 
 function buildProductionOutputWithReplayProgressGuarantee(input: ReturnType<typeof buildProductionUniversalRaceEngineInput>, result: UniversalRaceEngineResult) {
   const replayPolicy = classifyUniversalReplaySynchronizationForPublication(result.replaySynchronization);
-  if (!replayPolicy.publishable) throw new Error(`Universal replay synchronization failed: ${replayPolicy.blockingIssues.join(", ")}`);
-  if (result.replaySynchronization.synchronized && replayPolicy.nonBlockingIssues.length === 0) {
+  if (result.replaySynchronization.synchronized && replayPolicy.nonBlockingIssues.length === 0 && replayPolicy.blockingIssues.length === 0) {
     return buildProductionUniversalRaceOutput(input, result);
   }
+
+  // Replay synchronization is presentation/diagnostic quality. It may degrade,
+  // but it must not erase an otherwise valid sporting result.
   const builderResult: UniversalRaceEngineResult = {
     ...result,
     replaySynchronization: { ...result.replaySynchronization, synchronized: true },
@@ -255,7 +245,9 @@ function buildProductionOutputWithReplayProgressGuarantee(input: ReturnType<type
       ...result.phase78Acceptance,
       passed: true,
       issues: result.phase78Acceptance.issues.filter((issue) => !isUniversalPhase78IssueNonBlocking(issue)),
-      invariants: result.phase78Acceptance.invariants.map((invariant) => isUniversalPhase78IssueNonBlocking(invariant.key) ? { ...invariant, passed: true } : invariant),
+      invariants: result.phase78Acceptance.invariants.map((invariant) =>
+        isUniversalPhase78IssueNonBlocking(invariant.key) ? { ...invariant, passed: true } : invariant
+      ),
       phase7: { ...result.phase78Acceptance.phase7, replaySynchronized: true },
     },
   };
@@ -267,11 +259,15 @@ function buildProductionOutputWithReplayProgressGuarantee(input: ReturnType<type
     verification: {
       ...built.verification,
       replayQuality: "degraded",
-      degradedReplayIssues: [...replayPolicy.nonBlockingIssues],
+      degradedReplayIssues: [...replayPolicy.blockingIssues, ...replayPolicy.nonBlockingIssues],
       officialResultsUnchanged: true,
       rawReplaySynchronized: false,
     },
   } as typeof built;
+}
+
+function stageFormatRequiresTimeTrialRules(input: any): boolean {
+  return ["individual_time_trial", "team_time_trial", "pair_time_trial", "prologue"].includes(String(input?.stage?.stageFormat ?? ""));
 }
 
 async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unknown): Promise<JsonObject> {
@@ -279,27 +275,166 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
   const stageId = typeof claim.stage_id === "string" ? claim.stage_id : "";
   const simulationRunId = typeof claim.simulation_run_id === "string" ? claim.simulation_run_id : "";
   if (!stageId || !simulationRunId || claim.status !== "claimed") throw new Error("Claim did not contain a valid stage and simulation-run identity.");
+
+  const degradedComponents: string[] = [];
+  let fallbackReason = "";
   try {
-    const preStageStandings = await rpc<unknown>(supabase, "get_race_stage_pre_stage_standings_v1", { p_stage_id: stageId });
+    let survivalMode = object(claim.survival_mode);
+    if (Object.keys(survivalMode).length === 0) {
+      try {
+        survivalMode = object(await rpc<unknown>(supabase, "universal_race_stage_survival_mode_v1", { p_stage_id: stageId }));
+      } catch {
+        survivalMode = {};
+      }
+    }
+    let useFallback = survivalMode.use_fallback === true;
+    fallbackReason = String(survivalMode.fallback_reason ?? "");
+
+    await heartbeat(supabase, stageId, simulationRunId, "claimed", {
+      requested_fallback: useFallback,
+      fallback_reason: fallbackReason,
+      primary_source_commit: SOURCE_COMMIT,
+      fallback_source_commit: FALLBACK_SOURCE_COMMIT,
+    });
+
+    const payload = object(claim.payload);
+    const stagePayload = object(payload.stage);
+    const stageNumber = Math.max(1, Math.trunc(finiteNumber(stagePayload.stage_number, 1)));
+
+    let preStageStandings: unknown = [];
+    try {
+      preStageStandings = await rpc<unknown>(supabase, "get_race_stage_pre_stage_standings_v1", { p_stage_id: stageId });
+    } catch (error) {
+      if (stageNumber > 1) throw error;
+      degradedComponents.push("pre_stage_standings_stage1_skipped");
+    }
+
     const sources = buildSources(claim.payload, simulationRunId, preStageStandings);
-    const baseInput = buildProductionUniversalRaceEngineInput(sources);
-    const timeTrialRule = await loadTimeTrialRules(supabase, stageId);
-    const input = buildProductionInputWithTimeTrialRules(baseInput, timeTrialRule);
+
+    let currentBaseInput: any = null;
+    try {
+      currentBaseInput = buildProductionUniversalRaceEngineInput(sources);
+    } catch (error) {
+      useFallback = true;
+      fallbackReason = fallbackReason || "primary_input_adapter_exception";
+      degradedComponents.push("primary_input_adapter_failed");
+      if (survivalMode.use_fallback !== true) {
+        const details = errorPayload(error);
+        degradedComponents.push(`primary_input:${String(details.message ?? "unknown")}`);
+      }
+    }
+
+    let timeTrialRule: JsonObject | null = null;
+    try {
+      timeTrialRule = await loadTimeTrialRules(supabase, stageId);
+    } catch (error) {
+      if (currentBaseInput && stageFormatRequiresTimeTrialRules(currentBaseInput)) throw error;
+      degradedComponents.push("time_trial_rule_lookup_skipped_for_non_tt");
+    }
+
+    let input: any;
+    let result: any;
+    let output: any;
     const started = performance.now();
-    const rawResult = runRaceEngine(input);
-    const result = applyAtomicIntermediatePointReplayPublication(input, rawResult);
-    const output = addFinishRankCompatibilityAlias(
-      buildProductionOutputWithReplayProgressGuarantee(input, result),
-    );
-    const inputHash = await sha256(input);
-    const outputHash = await sha256(output);
-    const calculationCpuMs = performance.now() - started;
+
+    const runFallbackPackage = () => {
+      const fallbackBaseInput = buildFallbackProductionUniversalRaceEngineInput(sources as any) as any;
+      const fallbackInput = buildProductionInputWithTimeTrialRules(fallbackBaseInput, timeTrialRule);
+      const fallbackResult = runFallbackRaceEngine(fallbackInput as any) as any;
+      const fallbackOutput = addFinishRankCompatibilityAlias(
+        buildFallbackProductionUniversalRaceOutput(fallbackInput as any, fallbackResult as any) as any,
+      );
+      return { input: fallbackInput, result: fallbackResult, output: fallbackOutput };
+    };
+
+    if (!useFallback && currentBaseInput) {
+      input = buildProductionInputWithTimeTrialRules(currentBaseInput, timeTrialRule);
+      await heartbeat(supabase, stageId, simulationRunId, "primary_engine_started", {
+        rider_count: Array.isArray(input?.riders) ? input.riders.length : null,
+      });
+      try {
+        const rawResult = runRaceEngine(input);
+        await heartbeat(supabase, stageId, simulationRunId, "primary_engine_finished", {
+          elapsed_ms: performance.now() - started,
+        });
+        try {
+          result = applyAtomicIntermediatePointReplayPublication(input, rawResult);
+        } catch {
+          result = rawResult;
+          degradedComponents.push("atomic_intermediate_replay_publication_skipped");
+        }
+        output = addFinishRankCompatibilityAlias(buildProductionOutputWithReplayProgressGuarantee(input, result));
+      } catch (primaryError) {
+        degradedComponents.push("primary_engine_or_output_failed");
+        fallbackReason = "primary_engine_or_output_exception";
+        await heartbeat(supabase, stageId, simulationRunId, "primary_engine_failed_switching_to_fallback", {
+          error: errorPayload(primaryError),
+        });
+        useFallback = true;
+      }
+    }
+
+    if (useFallback) {
+      await heartbeat(supabase, stageId, simulationRunId, "fallback_engine_started", {
+        fallback_reason: fallbackReason,
+        fallback_source_commit: FALLBACK_SOURCE_COMMIT,
+      });
+      const fallbackPackage = runFallbackPackage();
+      input = fallbackPackage.input;
+      result = fallbackPackage.result;
+      output = fallbackPackage.output;
+      degradedComponents.push("emergency_v5_2_sporting_fallback");
+      await heartbeat(supabase, stageId, simulationRunId, "fallback_engine_finished", {
+        elapsed_ms: performance.now() - started,
+      });
+    }
+
+    if (!input || !result || !output) throw new Error("Race calculation produced no submit-ready package.");
+
+    const outputRecord = object(output);
+    output = {
+      ...outputRecord,
+      verification: {
+        ...object(outputRecord.verification),
+        calculationSurvivalModel: "race_calculation_survival_v1",
+        fallbackUsed: useFallback,
+        fallbackReason: fallbackReason || null,
+        primarySourceCommit: SOURCE_COMMIT,
+        fallbackSourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : null,
+        degradedComponents,
+      },
+      calculationSurvival: {
+        modelVersion: "race_calculation_survival_v1",
+        fallbackUsed: useFallback,
+        fallbackReason: fallbackReason || null,
+        degradedComponents,
+      },
+    };
+
+    await heartbeat(supabase, stageId, simulationRunId, "output_ready", {
+      fallback_used: useFallback,
+      degraded_components: degradedComponents,
+    });
+
+    const inputHash = await safeSha256(input);
+    const outputHash = await safeSha256(output);
+    if (inputHash === null || outputHash === null) degradedComponents.push("diagnostic_hash_skipped");
+
+    await heartbeat(supabase, stageId, simulationRunId, "submitting", {
+      fallback_used: useFallback,
+      degraded_components: degradedComponents,
+    });
+
+    // Persistence is mandatory. If it fails, the run is failed and the external
+    // survival watchdog/retry path will try again; we never fake official writes.
     const submit = await rpc<unknown>(supabase, "universal_race_stage_submit_calculation_v1", {
       p_stage_id: stageId,
       p_simulation_run_id: simulationRunId,
       p_input_snapshot: input,
       p_universal_result: output,
     });
+
+    const calculationCpuMs = performance.now() - started;
     return {
       status: "calculated_hidden",
       stage_id: stageId,
@@ -308,13 +443,16 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
       engine_version: result.engineVersion,
       input_hash_sha256: inputHash,
       output_hash_sha256: outputHash,
-      replay_checkpoint_count: result.replayTimeline.checkpoints.length,
-      accepted_rider_count: input.riders.length,
-      classification_rider_count: result.finishResolution.classification.length,
-      phase11_manifest_ready: output.applicationManifest.readyForApplication,
+      replay_checkpoint_count: Array.isArray(result?.replayTimeline?.checkpoints) ? result.replayTimeline.checkpoints.length : 0,
+      accepted_rider_count: Array.isArray(input?.riders) ? input.riders.length : 0,
+      classification_rider_count: Array.isArray(result?.finishResolution?.classification) ? result.finishResolution.classification.length : 0,
+      phase11_manifest_ready: object(output.applicationManifest).readyForApplication === true,
       calculation_cpu_ms: calculationCpuMs,
       time_trial_rules_loaded: timeTrialRule !== null,
       worker_build: WORKER_BUILD,
+      fallback_used: useFallback,
+      fallback_reason: fallbackReason || null,
+      degraded_components: degradedComponents,
       submit_result: submit,
     };
   } catch (error) {
@@ -324,10 +462,23 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
         p_stage_id: stageId,
         p_simulation_run_id: simulationRunId,
         p_error_message: String(serialized.message ?? "Phase 11B calculation failed"),
-        p_error_details: serialized,
+        p_error_details: {
+          ...serialized,
+          calculation_survival_model: "race_calculation_survival_v1",
+          fallback_reason: fallbackReason || null,
+          degraded_components: degradedComponents,
+        },
       });
     } catch {}
-    return { status: "failed", stage_id: stageId, simulation_run_id: simulationRunId, worker_build: WORKER_BUILD, error: serialized };
+    return {
+      status: "failed",
+      stage_id: stageId,
+      simulation_run_id: simulationRunId,
+      worker_build: WORKER_BUILD,
+      fallback_reason: fallbackReason || null,
+      degraded_components: degradedComponents,
+      error: serialized,
+    };
   }
 }
 
@@ -335,12 +486,22 @@ async function runLifecycleTick(supabase: SupabaseClient): Promise<JsonObject> {
   const before = object(await rpc<unknown>(supabase, "universal_race_stage_process_lifecycle_v1", { p_max_publications: MAX_PUBLICATIONS_PER_TICK }));
   const calculations: JsonObject[] = [];
   for (let index = 0; index < MAX_CALCULATIONS_PER_TICK; index += 1) {
-    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v1", { p_worker_id: "supabase_edge_phase11b_v2" }));
+    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v1", { p_worker_id: "supabase_edge_phase11b_survival_v1" }));
     if (claim.status !== "claimed") break;
     calculations.push(await calculateClaimedStage(supabase, claim));
   }
   const after = object(await rpc<unknown>(supabase, "universal_race_stage_process_lifecycle_v1", { p_max_publications: MAX_PUBLICATIONS_PER_TICK }));
-  return { status: "completed", contract: FUNCTION_CONTRACT, source_commit: SOURCE_COMMIT, worker_build: WORKER_BUILD, before, calculations, after, processed_at_real: new Date().toISOString() };
+  return {
+    status: "completed",
+    contract: FUNCTION_CONTRACT,
+    source_commit: SOURCE_COMMIT,
+    fallback_source_commit: FALLBACK_SOURCE_COMMIT,
+    worker_build: WORKER_BUILD,
+    before,
+    calculations,
+    after,
+    processed_at_real: new Date().toISOString(),
+  };
 }
 
 Deno.serve(async (request) => {
@@ -348,7 +509,20 @@ Deno.serve(async (request) => {
   const body = request.method === "POST" ? await request.json().catch(() => ({})) as JsonObject : {};
   const url = new URL(request.url);
   const action = String(body.action ?? url.searchParams.get("action") ?? "health").toLowerCase();
-  if (action === "health") return jsonResponse({ status: "ok", contract: FUNCTION_CONTRACT, source_commit: SOURCE_COMMIT, worker_build: WORKER_BUILD, scheduler: "supabase_cron", max_calculations_per_tick: MAX_CALCULATIONS_PER_TICK, production_lifecycle: true, browser_calculation_required: false, legacy_execution_enabled: false });
+  if (action === "health") return jsonResponse({
+    status: "ok",
+    contract: FUNCTION_CONTRACT,
+    source_commit: SOURCE_COMMIT,
+    fallback_source_commit: FALLBACK_SOURCE_COMMIT,
+    worker_build: WORKER_BUILD,
+    scheduler: "supabase_cron",
+    max_calculations_per_tick: MAX_CALCULATIONS_PER_TICK,
+    production_lifecycle: true,
+    calculation_survival: true,
+    mandatory_ready_lead_minutes: 15,
+    browser_calculation_required: false,
+    legacy_execution_enabled: false,
+  });
   if (action !== "tick") return jsonResponse({ status: "invalid_action", contract: FUNCTION_CONTRACT }, 400);
 
   const supabase = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), {
