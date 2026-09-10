@@ -2,7 +2,7 @@ alter table public.infrastructure_asset_config
   add column if not exists image_url text;
 
 comment on column public.infrastructure_asset_config.image_url is
-  'Public image URL for the purchasable infrastructure asset tier. Frontend must fall back safely when null or unavailable.';
+  'Public image URL for the purchasable infrastructure asset tier. Frontend currently maps artwork directly in code and falls back safely when an image is unavailable.';
 
 update public.infrastructure_asset_config
 set image_url = case asset_level
