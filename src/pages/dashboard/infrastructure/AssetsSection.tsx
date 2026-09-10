@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { AssetsSection as AssetsSectionCore } from './AssetsSectionCore'
 import { AssetAcquireCatalogModal } from './AssetAcquireCatalogModal'
+import { TeamCarSupportPanel } from './TeamCarSupportPanel'
 import type {
   InfrastructureAssetConfigRow,
   InfrastructureJobRow,
@@ -37,9 +38,9 @@ function normalizeButtonLabel(value: string | null | undefined): string {
  * Infrastructure assets compatibility shell.
  *
  * The garage/slot UI remains in AssetsSectionCore unchanged. This shell intercepts
- * only the existing "Acquire" actions and replaces the old compact acquire modal
- * with the image-first catalogue/detail modal. That keeps repair, sell, rename,
- * slot unlock, delivery and assignment behavior untouched.
+ * the existing "Acquire" actions with the visual catalogue and adds the Team Car
+ * production race-support profile surface without changing repair, sell, rename,
+ * slot unlock, delivery or assignment behavior.
  */
 export function AssetsSection(props: AssetsSectionProps): JSX.Element {
   const { t } = useTranslation('infrastructure')
@@ -213,6 +214,13 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
       <div onClickCapture={handleAcquireClickCapture}>
         <AssetsSectionCore {...props} />
       </div>
+
+      {props.activeAssetSubTab === 'team_cars' && (
+        <TeamCarSupportPanel
+          configRows={props.teamCarConfigRows ?? []}
+          rosterRows={props.teamCarRosterRows ?? []}
+        />
+      )}
 
       {isCatalogOpen && (
         <AssetAcquireCatalogModal
