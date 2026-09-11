@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { AssetsSection as AssetsSectionCore } from './AssetsSectionCore'
 import { AssetAcquireCatalogModal } from './AssetAcquireCatalogModal'
+import { TeamBusAcquireCatalogModal } from './TeamBusAcquireCatalogModal'
 import { TeamBusSupportPanel } from './TeamBusSupportPanel'
 import { TeamCarSupportPanel } from './TeamCarSupportPanel'
 import type {
@@ -230,7 +231,19 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
         />
       )}
 
-      {isCatalogOpen && (
+      {isCatalogOpen && catalog.assetKey === 'team_bus' && (
+        <TeamBusAcquireCatalogModal
+          configRows={props.teamBusConfigRows ?? []}
+          ownedByLevel={ownedByLevel}
+          pendingJobsByLevel={props.pendingTeamBusJobsByLevel ?? new Map<number, InfrastructureJobRow[]>()}
+          processingKey={props.processingKey}
+          isFull={isFull}
+          onAcquire={props.onTeamBusAcquire}
+          onClose={() => setIsCatalogOpen(false)}
+        />
+      )}
+
+      {isCatalogOpen && catalog.assetKey !== 'team_bus' && (
         <AssetAcquireCatalogModal
           assetKey={catalog.assetKey}
           title={catalog.title}
