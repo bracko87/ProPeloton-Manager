@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { AssetsSection as AssetsSectionCore } from './AssetsSectionCore'
 import { AssetAcquireCatalogModal } from './AssetAcquireCatalogModal'
+import { AssetProductionValuesAccordion } from './AssetProductionValuesAccordion'
 import { EquipmentVanAcquireCatalogModal } from './EquipmentVanAcquireCatalogModal'
 import { EquipmentVanSupportPanel } from './EquipmentVanSupportPanel'
 import { MedicalVanAcquireCatalogModal } from './MedicalVanAcquireCatalogModal'
@@ -186,6 +187,31 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
 
   return (
     <>
+      <style>{`
+        .asset-owned-only-team-bus > section > div:nth-child(1),
+        .asset-owned-only-team-bus > section > div:nth-child(2) {
+          display: none !important;
+        }
+        .asset-owned-only-team-bus > section > div:nth-child(3) {
+          margin-top: 0 !important;
+          border-top: 0 !important;
+          padding-top: 0 !important;
+        }
+        .asset-owned-only-equipment > div > div:nth-child(1),
+        .asset-owned-only-equipment > div > div:nth-child(2),
+        .asset-owned-only-mobile > div > div:nth-child(1),
+        .asset-owned-only-mobile > div > div:nth-child(2) {
+          display: none !important;
+        }
+        .asset-owned-only-equipment > div > div:nth-child(3),
+        .asset-owned-only-mobile > div > div:nth-child(3) {
+          margin-top: 0 !important;
+        }
+        .asset-owned-only-medical > section:first-child {
+          display: none !important;
+        }
+      `}</style>
+
       <div onClickCapture={handleAcquireClickCapture}>
         <AssetsSectionCore {...props} />
       </div>
@@ -200,16 +226,63 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
       )}
 
       {props.activeAssetSubTab === 'team_bus' && (
-        <TeamBusSupportPanel configRows={props.teamBusConfigRows ?? []} rosterRows={props.teamBusRosterRows ?? []} />
+        <>
+          <div className="asset-owned-only-team-bus">
+            <TeamBusSupportPanel
+              configRows={props.teamBusConfigRows ?? []}
+              rosterRows={props.teamBusRosterRows ?? []}
+            />
+          </div>
+          <AssetProductionValuesAccordion
+            assetKey="team_bus"
+            configRows={props.teamBusConfigRows ?? []}
+          />
+        </>
       )}
+
       {props.activeAssetSubTab === 'equipment_van' && (
-        <EquipmentVanSupportPanel configRows={props.equipmentVanConfigRows ?? []} rosterRows={props.equipmentVanRosterRows ?? []} />
+        <>
+          <div className="asset-owned-only-equipment">
+            <EquipmentVanSupportPanel
+              configRows={props.equipmentVanConfigRows ?? []}
+              rosterRows={props.equipmentVanRosterRows ?? []}
+            />
+          </div>
+          <AssetProductionValuesAccordion
+            assetKey="equipment_van"
+            configRows={props.equipmentVanConfigRows ?? []}
+          />
+        </>
       )}
+
       {props.activeAssetSubTab === 'mobile_workshop' && (
-        <MobileWorkshopSupportPanel configRows={props.mobileWorkshopConfigRows ?? []} rosterRows={props.mobileWorkshopRosterRows ?? []} />
+        <>
+          <div className="asset-owned-only-mobile">
+            <MobileWorkshopSupportPanel
+              configRows={props.mobileWorkshopConfigRows ?? []}
+              rosterRows={props.mobileWorkshopRosterRows ?? []}
+            />
+          </div>
+          <AssetProductionValuesAccordion
+            assetKey="mobile_workshop"
+            configRows={props.mobileWorkshopConfigRows ?? []}
+          />
+        </>
       )}
+
       {props.activeAssetSubTab === 'medical_van' && (
-        <MedicalVanSupportPanel configRows={props.medicalVanConfigRows ?? []} rosterRows={props.medicalVanRosterRows ?? []} />
+        <>
+          <div className="asset-owned-only-medical">
+            <MedicalVanSupportPanel
+              configRows={props.medicalVanConfigRows ?? []}
+              rosterRows={props.medicalVanRosterRows ?? []}
+            />
+          </div>
+          <AssetProductionValuesAccordion
+            assetKey="medical_van"
+            configRows={props.medicalVanConfigRows ?? []}
+          />
+        </>
       )}
 
       {isCatalogOpen && catalog.assetKey === 'team_car' && (
@@ -235,6 +308,7 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           onClose={() => setIsCatalogOpen(false)}
         />
       )}
+
       {isCatalogOpen && catalog.assetKey === 'equipment_van' && (
         <EquipmentVanAcquireCatalogModal
           configRows={props.equipmentVanConfigRows ?? []}
@@ -246,6 +320,7 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           onClose={() => setIsCatalogOpen(false)}
         />
       )}
+
       {isCatalogOpen && catalog.assetKey === 'mobile_workshop' && (
         <MobileWorkshopAcquireCatalogModal
           configRows={props.mobileWorkshopConfigRows ?? []}
@@ -257,6 +332,7 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           onClose={() => setIsCatalogOpen(false)}
         />
       )}
+
       {isCatalogOpen && catalog.assetKey === 'medical_van' && (
         <MedicalVanAcquireCatalogModal
           configRows={props.medicalVanConfigRows ?? []}
