@@ -11,6 +11,7 @@ import { MobileWorkshopAcquireCatalogModal } from './MobileWorkshopAcquireCatalo
 import { MobileWorkshopSupportPanel } from './MobileWorkshopSupportPanel'
 import { TeamBusAcquireCatalogModal } from './TeamBusAcquireCatalogModal'
 import { TeamBusSupportPanel } from './TeamBusSupportPanel'
+import { TeamCarAcquireCatalogModal } from './TeamCarAcquireCatalogModal'
 import { TeamCarSupportPanel } from './TeamCarSupportPanel'
 import type {
   InfrastructureAssetConfigRow,
@@ -42,14 +43,6 @@ function normalizeButtonLabel(value: string | null | undefined): string {
   return String(value ?? '').replace(/\s+/g, ' ').trim()
 }
 
-/**
- * Infrastructure assets compatibility shell.
- *
- * The garage/slot UI remains in AssetsSectionCore unchanged. This shell intercepts
- * the existing "Acquire" actions with visual catalogues and adds production
- * race-support detail surfaces without changing repair, sell, rename, slot unlock,
- * delivery or assignment behavior.
- */
 export function AssetsSection(props: AssetsSectionProps): JSX.Element {
   const { t } = useTranslation('infrastructure')
   const [isCatalogOpen, setIsCatalogOpen] = useState(false)
@@ -65,13 +58,11 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           acquireLabel: t('assets.acquireTeamBus'),
           configRows: props.teamBusConfigRows ?? [],
           rosterRows: (props.teamBusRosterRows ?? []) as CatalogRosterRow[],
-          pendingJobsByLevel:
-            props.pendingTeamBusJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
+          pendingJobsByLevel: props.pendingTeamBusJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
           pendingQuantity: props.pendingTeamBusQuantity ?? 0,
           processingKeyPrefix: 'asset:team_bus',
           onAcquire: props.onTeamBusAcquire,
         }
-
       case 'equipment_van':
         return {
           assetKey: 'equipment_van',
@@ -81,13 +72,11 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           acquireLabel: t('assets.acquireEquipmentVan'),
           configRows: props.equipmentVanConfigRows ?? [],
           rosterRows: (props.equipmentVanRosterRows ?? []) as CatalogRosterRow[],
-          pendingJobsByLevel:
-            props.pendingEquipmentVanJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
+          pendingJobsByLevel: props.pendingEquipmentVanJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
           pendingQuantity: props.pendingEquipmentVanQuantity ?? 0,
           processingKeyPrefix: 'asset:equipment_van',
           onAcquire: props.onEquipmentVanAcquire,
         }
-
       case 'mobile_workshop':
         return {
           assetKey: 'mobile_workshop',
@@ -97,13 +86,11 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           acquireLabel: t('assets.acquireMobileWorkshop'),
           configRows: props.mobileWorkshopConfigRows ?? [],
           rosterRows: (props.mobileWorkshopRosterRows ?? []) as CatalogRosterRow[],
-          pendingJobsByLevel:
-            props.pendingMobileWorkshopJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
+          pendingJobsByLevel: props.pendingMobileWorkshopJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
           pendingQuantity: props.pendingMobileWorkshopQuantity ?? 0,
           processingKeyPrefix: 'asset:mobile_workshop',
           onAcquire: props.onMobileWorkshopAcquire,
         }
-
       case 'medical_van':
         return {
           assetKey: 'medical_van',
@@ -113,13 +100,11 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           acquireLabel: t('assets.acquireMedicalVan'),
           configRows: props.medicalVanConfigRows ?? [],
           rosterRows: (props.medicalVanRosterRows ?? []) as CatalogRosterRow[],
-          pendingJobsByLevel:
-            props.pendingMedicalVanJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
+          pendingJobsByLevel: props.pendingMedicalVanJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
           pendingQuantity: props.pendingMedicalVanQuantity ?? 0,
           processingKeyPrefix: 'asset:medical_van',
           onAcquire: props.onMedicalVanAcquire,
         }
-
       case 'team_cars':
       default:
         return {
@@ -130,8 +115,7 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           acquireLabel: t('assets.acquireTeamCar'),
           configRows: props.teamCarConfigRows ?? [],
           rosterRows: (props.teamCarRosterRows ?? []) as CatalogRosterRow[],
-          pendingJobsByLevel:
-            props.pendingTeamCarJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
+          pendingJobsByLevel: props.pendingTeamCarJobsByLevel ?? new Map<number, InfrastructureJobRow[]>(),
           pendingQuantity: props.pendingTeamCarQuantity ?? 0,
           processingKeyPrefix: 'asset:team_car',
           onAcquire: props.onTeamCarAcquire,
@@ -169,47 +153,30 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
 
   const ownedByLevel = useMemo(() => {
     const counts = new Map<number, number>()
-
-    catalog.rosterRows.forEach(row => {
-      counts.set(row.asset_level, (counts.get(row.asset_level) ?? 0) + 1)
-    })
-
+    catalog.rosterRows.forEach(row => counts.set(row.asset_level, (counts.get(row.asset_level) ?? 0) + 1))
     return counts
   }, [catalog.rosterRows])
 
   const effectiveSlots = useMemo(() => {
     const access = props.assetSlotAccessByKey?.[catalog.assetKey]
-
-    if (access && Number(access.effective_slots) > 0) {
-      return Number(access.effective_slots)
-    }
-
-    return catalog.configRows.reduce(
-      (maximum, row) => Math.max(maximum, Number(row.max_total_quantity ?? 0)),
-      0,
-    )
+    if (access && Number(access.effective_slots) > 0) return Number(access.effective_slots)
+    return catalog.configRows.reduce((maximum, row) => Math.max(maximum, Number(row.max_total_quantity ?? 0)), 0)
   }, [catalog.assetKey, catalog.configRows, props.assetSlotAccessByKey])
 
-  const isFull =
-    effectiveSlots > 0 &&
-    catalog.rosterRows.length + catalog.pendingQuantity >= effectiveSlots
+  const isFull = effectiveSlots > 0 && catalog.rosterRows.length + catalog.pendingQuantity >= effectiveSlots
 
   useEffect(() => {
     setIsCatalogOpen(false)
   }, [props.activeAssetSubTab])
 
-  const handleAcquireClickCapture = (
-    event: React.MouseEvent<HTMLDivElement>,
-  ): void => {
+  const handleAcquireClickCapture = (event: React.MouseEvent<HTMLDivElement>): void => {
     const element = event.target as HTMLElement | null
     const button = element?.closest('button')
-
     if (!button || button.disabled) return
 
     const label = normalizeButtonLabel(button.textContent)
     const expectedAcquireLabel = normalizeButtonLabel(catalog.acquireLabel)
     const genericAcquireLabel = normalizeButtonLabel(t('common.acquire'))
-
     if (label !== expectedAcquireLabel && label !== genericAcquireLabel) return
 
     event.preventDefault()
@@ -227,34 +194,33 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
         <TeamCarSupportPanel
           configRows={props.teamCarConfigRows ?? []}
           rosterRows={props.teamCarRosterRows ?? []}
+          onOpenAssetRepair={props.onOpenAssetRepair}
+          onOpenAssetSell={props.onOpenAssetSell}
         />
       )}
 
       {props.activeAssetSubTab === 'team_bus' && (
-        <TeamBusSupportPanel
-          configRows={props.teamBusConfigRows ?? []}
-          rosterRows={props.teamBusRosterRows ?? []}
-        />
+        <TeamBusSupportPanel configRows={props.teamBusConfigRows ?? []} rosterRows={props.teamBusRosterRows ?? []} />
       )}
-
       {props.activeAssetSubTab === 'equipment_van' && (
-        <EquipmentVanSupportPanel
-          configRows={props.equipmentVanConfigRows ?? []}
-          rosterRows={props.equipmentVanRosterRows ?? []}
-        />
+        <EquipmentVanSupportPanel configRows={props.equipmentVanConfigRows ?? []} rosterRows={props.equipmentVanRosterRows ?? []} />
       )}
-
       {props.activeAssetSubTab === 'mobile_workshop' && (
-        <MobileWorkshopSupportPanel
-          configRows={props.mobileWorkshopConfigRows ?? []}
-          rosterRows={props.mobileWorkshopRosterRows ?? []}
-        />
+        <MobileWorkshopSupportPanel configRows={props.mobileWorkshopConfigRows ?? []} rosterRows={props.mobileWorkshopRosterRows ?? []} />
+      )}
+      {props.activeAssetSubTab === 'medical_van' && (
+        <MedicalVanSupportPanel configRows={props.medicalVanConfigRows ?? []} rosterRows={props.medicalVanRosterRows ?? []} />
       )}
 
-      {props.activeAssetSubTab === 'medical_van' && (
-        <MedicalVanSupportPanel
-          configRows={props.medicalVanConfigRows ?? []}
-          rosterRows={props.medicalVanRosterRows ?? []}
+      {isCatalogOpen && catalog.assetKey === 'team_car' && (
+        <TeamCarAcquireCatalogModal
+          configRows={props.teamCarConfigRows ?? []}
+          ownedByLevel={ownedByLevel}
+          pendingJobsByLevel={props.pendingTeamCarJobsByLevel ?? new Map<number, InfrastructureJobRow[]>()}
+          processingKey={props.processingKey}
+          isFull={isFull}
+          onAcquire={props.onTeamCarAcquire}
+          onClose={() => setIsCatalogOpen(false)}
         />
       )}
 
@@ -269,7 +235,6 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           onClose={() => setIsCatalogOpen(false)}
         />
       )}
-
       {isCatalogOpen && catalog.assetKey === 'equipment_van' && (
         <EquipmentVanAcquireCatalogModal
           configRows={props.equipmentVanConfigRows ?? []}
@@ -281,7 +246,6 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           onClose={() => setIsCatalogOpen(false)}
         />
       )}
-
       {isCatalogOpen && catalog.assetKey === 'mobile_workshop' && (
         <MobileWorkshopAcquireCatalogModal
           configRows={props.mobileWorkshopConfigRows ?? []}
@@ -293,7 +257,6 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           onClose={() => setIsCatalogOpen(false)}
         />
       )}
-
       {isCatalogOpen && catalog.assetKey === 'medical_van' && (
         <MedicalVanAcquireCatalogModal
           configRows={props.medicalVanConfigRows ?? []}
@@ -307,6 +270,7 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
       )}
 
       {isCatalogOpen &&
+        catalog.assetKey !== 'team_car' &&
         catalog.assetKey !== 'team_bus' &&
         catalog.assetKey !== 'equipment_van' &&
         catalog.assetKey !== 'mobile_workshop' &&
