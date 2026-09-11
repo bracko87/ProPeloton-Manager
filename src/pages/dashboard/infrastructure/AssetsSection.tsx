@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { AssetsSection as AssetsSectionCore } from './AssetsSectionCore'
 import { AssetAcquireCatalogModal } from './AssetAcquireCatalogModal'
+import { TeamBusSupportPanel } from './TeamBusSupportPanel'
 import { TeamCarSupportPanel } from './TeamCarSupportPanel'
 import type {
   InfrastructureAssetConfigRow,
@@ -38,9 +39,9 @@ function normalizeButtonLabel(value: string | null | undefined): string {
  * Infrastructure assets compatibility shell.
  *
  * The garage/slot UI remains in AssetsSectionCore unchanged. This shell intercepts
- * the existing "Acquire" actions with the visual catalogue and adds the Team Car
- * production race-support profile surface without changing repair, sell, rename,
- * slot unlock, delivery or assignment behavior.
+ * the existing "Acquire" actions with the visual catalogue and adds production
+ * race-support detail surfaces for Team Cars and Team Buses without changing repair,
+ * sell, rename, slot unlock, delivery or assignment behavior.
  */
 export function AssetsSection(props: AssetsSectionProps): JSX.Element {
   const { t } = useTranslation('infrastructure')
@@ -219,6 +220,13 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
         <TeamCarSupportPanel
           configRows={props.teamCarConfigRows ?? []}
           rosterRows={props.teamCarRosterRows ?? []}
+        />
+      )}
+
+      {props.activeAssetSubTab === 'team_bus' && (
+        <TeamBusSupportPanel
+          configRows={props.teamBusConfigRows ?? []}
+          rosterRows={props.teamBusRosterRows ?? []}
         />
       )}
 
