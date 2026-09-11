@@ -5,6 +5,8 @@ import { AssetsSection as AssetsSectionCore } from './AssetsSectionCore'
 import { AssetAcquireCatalogModal } from './AssetAcquireCatalogModal'
 import { EquipmentVanAcquireCatalogModal } from './EquipmentVanAcquireCatalogModal'
 import { EquipmentVanSupportPanel } from './EquipmentVanSupportPanel'
+import { MobileWorkshopAcquireCatalogModal } from './MobileWorkshopAcquireCatalogModal'
+import { MobileWorkshopSupportPanel } from './MobileWorkshopSupportPanel'
 import { TeamBusAcquireCatalogModal } from './TeamBusAcquireCatalogModal'
 import { TeamBusSupportPanel } from './TeamBusSupportPanel'
 import { TeamCarSupportPanel } from './TeamCarSupportPanel'
@@ -240,6 +242,13 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
         />
       )}
 
+      {props.activeAssetSubTab === 'mobile_workshop' && (
+        <MobileWorkshopSupportPanel
+          configRows={props.mobileWorkshopConfigRows ?? []}
+          rosterRows={props.mobileWorkshopRosterRows ?? []}
+        />
+      )}
+
       {isCatalogOpen && catalog.assetKey === 'team_bus' && (
         <TeamBusAcquireCatalogModal
           configRows={props.teamBusConfigRows ?? []}
@@ -264,7 +273,19 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
         />
       )}
 
-      {isCatalogOpen && catalog.assetKey !== 'team_bus' && catalog.assetKey !== 'equipment_van' && (
+      {isCatalogOpen && catalog.assetKey === 'mobile_workshop' && (
+        <MobileWorkshopAcquireCatalogModal
+          configRows={props.mobileWorkshopConfigRows ?? []}
+          ownedByLevel={ownedByLevel}
+          pendingJobsByLevel={props.pendingMobileWorkshopJobsByLevel ?? new Map<number, InfrastructureJobRow[]>()}
+          processingKey={props.processingKey}
+          isFull={isFull}
+          onAcquire={props.onMobileWorkshopAcquire}
+          onClose={() => setIsCatalogOpen(false)}
+        />
+      )}
+
+      {isCatalogOpen && catalog.assetKey !== 'team_bus' && catalog.assetKey !== 'equipment_van' && catalog.assetKey !== 'mobile_workshop' && (
         <AssetAcquireCatalogModal
           assetKey={catalog.assetKey}
           title={catalog.title}
