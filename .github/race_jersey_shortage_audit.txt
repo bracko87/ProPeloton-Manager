@@ -1,0 +1,1131 @@
+# Race jersey shortage source audit
+
+src/components/i18n/ClubLegacyLocalizationBridge.tsx:50: 'Team jersey': 'teamProfile.jersey',
+src/components/i18n/ClubLegacyLocalizationBridge.tsx:51: 'Public kit preview for this team.': 'teamProfile.jerseyDescription',
+src/components/i18n/OverviewLegacyLocalizationBridge.tsx:271: 'Unlock current-season race volume, international points, wins, podiums, Top 10 results, jerseys, and best general-classification performance.',
+src/components/i18n/OverviewLegacyLocalizationBridge.tsx:274: ['Current season results, points, podiums, jerseys, and race volume.', 'seasonSnapshot.subtitle'],
+src/components/i18n/OverviewLegacyLocalizationBridge.tsx:281: ['Jerseys', 'seasonSnapshot.jerseys'],
+src/components/i18n/PreferencesLegacyLocalizationBridge.tsx:104: 'Restart this club back to a fresh starter state while keeping the same club name, logo, jersey, country, and competition slot.',
+src/components/i18n/RaceDetailLegacyLocalizationBridge.tsx:559: ['Team jersey', 'raceDetail:participants.teamJersey'],
+src/components/i18n/RiderProfileLegacyLocalizationBridge.tsx:99: 'Jerseys': 'common.jerseys',
+src/components/team/RestartTeamModal.tsx:193: <li>{t('restartModal.keepJersey')}</li>
+src/components/ui/JerseyPreview.tsx:2: * JerseyPreview.tsx
+src/components/ui/JerseyPreview.tsx:4: * High‑quality SVG jersey renderer with curved sleeves/panels, shading,
+src/components/ui/JerseyPreview.tsx:8: * - Render a stylised football jersey using SVG.
+src/components/ui/JerseyPreview.tsx:18: * JerseyPattern
+src/components/ui/JerseyPreview.tsx:19: * Available jersey fabric patterns.
+src/components/ui/JerseyPreview.tsx:21: export type JerseyPattern = 'solid' | 'stripes' | 'hoops' | 'sash'
+src/components/ui/JerseyPreview.tsx:24: * JerseyConfig
+src/components/ui/JerseyPreview.tsx:25: * Configuration object describing how the jersey should look.
+src/components/ui/JerseyPreview.tsx:27: export interface JerseyConfig {
+src/components/ui/JerseyPreview.tsx:28: /** Main body color of the jersey. */
+src/components/ui/JerseyPreview.tsx:39: pattern: JerseyPattern
+src/components/ui/JerseyPreview.tsx:49: * JerseyPreviewProps
+src/components/ui/JerseyPreview.tsx:50: * Props for the JerseyPreview component.
+src/components/ui/JerseyPreview.tsx:52: export interface JerseyPreviewProps {
+src/components/ui/JerseyPreview.tsx:53: /** Visual configuration of the jersey. */
+src/components/ui/JerseyPreview.tsx:54: config: JerseyConfig
+src/components/ui/JerseyPreview.tsx:64: /** Chosen jersey pattern. */
+src/components/ui/JerseyPreview.tsx:65: pattern: JerseyPattern
+src/components/ui/JerseyPreview.tsx:76: * Renders the torso fabric pattern inside the jersey torso clip path.
+src/components/ui/JerseyPreview.tsx:152: * JerseyPreview
+src/components/ui/JerseyPreview.tsx:153: * High‑fidelity visual preview of a team jersey using SVG.
+src/components/ui/JerseyPreview.tsx:155: export function JerseyPreview({ config, className = '' }: JerseyPreviewProps): JSX.Element {
+src/components/ui/JerseyPreview.tsx:289: {/* Outer jersey outline */}
+src/components/ui/JerseyPreview.tsx:305: export default JerseyPreview
+src/components/ui/KitDesigner.tsx:5: * UI for designing and persisting team kits (jerseys).
+src/components/ui/KitDesigner.tsx:8: * - Provide controls to edit jersey pattern, colors, sponsor text and number.
+src/components/ui/KitDesigner.tsx:9: * - Preview changes live using JerseyPreview.
+src/components/ui/KitDesigner.tsx:28: import JerseyPreview, { JerseyConfig, JerseyPattern } from './JerseyPreview'
+src/components/ui/KitDesigner.tsx:32: * Create sensible jersey defaults using the team's identity colors.
+src/components/ui/KitDesigner.tsx:34: const makeDefaultConfig = (primary: string, secondary: string, sponsorText: string): JerseyConfig => ({
+src/components/ui/KitDesigner.tsx:63: const [config, setConfig] = useState<JerseyConfig>(
+src/components/ui/KitDesigner.tsx:71: * keep jersey defaults in sync with team identity when those props change
+src/components/ui/KitDesigner.tsx:81: function update<K extends keyof JerseyConfig>(key: K, value: JerseyConfig[K]): void {
+src/components/ui/KitDesigner.tsx:106: .maybeSingle<{ name: string; config: JerseyConfig }>()
+src/components/ui/KitDesigner.tsx:183: onChange={e => update('pattern', e.target.value as JerseyPattern)}
+src/components/ui/KitDesigner.tsx:297: <JerseyPreview config={config} />
+src/features/notifications/notificationLocalization.ts:540: return /\b(the|your|you|has|have|is|are|was|were|will|can|could|should|joined|available|review|open|staff|rider|sponsor|race|stage|contract|offer|team|club|week|season|completed|required|selected|selection|transfer|warning|reward|results|report|new|for|from|with|without|this|that|as|to|of|and|startlist|missed|missing|advisory|sports|director|programme|program|plans|current|next|accepted|future|priority|priorities|items|require|removed|enough|mandatory|jersey|kits|remaining|riders|score|place)\b/.test(text)
+src/features/notifications/notificationLocalization.ts:723: const detailMatch = /^(.+?) did not have enough mandatory Race Jersey Kits for Stage (\d+)\. Required:\s*(\d+); available:\s*(\d+)\. The team has been removed from Stage \2 and every remaining stage of (.+?)\. Riders can no longer place or score in this race\.?$/i.exec(cleanMessage)
+src/features/notifications/notificationLocalization.ts:726: title: nt('templateLocalization.feed.raceJerseysRemoval.title', { raceName }),
+src/features/notifications/notificationLocalization.ts:728: ? nt('templateLocalization.feed.raceJerseysRemoval.message', {
+src/features/notifications/notificationLocalization.ts:735: : nt('templateLocalization.feed.raceJerseysRemoval.genericMessage', { raceName }),
+src/features/notifications/notificationLocalization.ts:1040: 'race jersey complete': 'templateLabels.raceJerseyComplete',
+src/features/notifications/notificationLocalization.ts:1042: 'required jersey kits': 'templateLabels.requiredJerseyKits',
+src/features/notifications/notificationLocalization.ts:1043: 'available jersey kits': 'templateLabels.availableJerseyKits',
+src/features/notifications/notificationLocalization.ts:1044: 'missing jersey kits': 'templateLabels.missingJerseyKits',
+src/features/notifications/notificationLocalization.ts:1234: [/Race Jersey Complete/gi, 'templateLabels.raceJerseyComplete'],
+src/features/notifications/notificationTemplatesBase.tsx:1743: RACE_JERSEYS_MANDATORY_WARNING: {
+src/features/notifications/notificationTemplatesBase.tsx:1744: defaultTitle: 'Mandatory Race Jersey Kits missing',
+src/features/notifications/notificationTemplatesBase.tsx:1746: 'Your team does not have enough usable Race Jersey Kits for an upcoming stage. Resupply before the stage eligibility check to avoid race removal.',
+src/features/notifications/notificationTemplatesBase.tsx:1749: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/mandatory%20race%20jersey.png',
+src/features/notifications/notificationTemplatesBase.tsx:1751: // This dedicated image is used only for the mandatory jersey-shortage event.
+src/features/notifications/notificationTemplatesBase.tsx:1753: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/mandatory%20race%20jersey.png',
+src/features/notifications/notificationTemplatesBase.tsx:1760: const missing = pickFirstNumber(payload, ['missing_jersey_units'])
+src/features/notifications/notificationTemplatesBase.tsx:1761: const available = pickFirstNumber(payload, ['available_jersey_units'])
+src/features/notifications/notificationTemplatesBase.tsx:1762: const required = pickFirstNumber(payload, ['required_jersey_units'])
+src/features/notifications/notificationTemplatesBase.tsx:1768: return `Critical supply shortage for ${raceName} — ${stageLabel}. You currently have ${available} usable Race Jersey Kit${available === 1 ? '' : 's'}, but ${required} are required. Buy ${missing} additional kit${missing === 1 ? '' : 's'} before the eligibility check.`
+src/features/notifications/notificationTemplatesBase.tsx:1773: 'Your team does not have enough usable Race Jersey Kits for the upcoming stage. Resupply before the eligibility check.'
+src/features/notifications/notificationTemplatesBase.tsx:1783: const required = pickFirstNumber(payload, ['required_jersey_units'])
+src/features/notifications/notificationTemplatesBase.tsx:1784: const available = pickFirstNumber(payload, ['available_jersey_units'])
+src/features/notifications/notificationTemplatesBase.tsx:1785: const missing = pickFirstNumber(payload, ['missing_jersey_units'])
+src/features/notifications/notificationTemplatesBase.tsx:1819: const missing = pickFirstNumber(payload, ['missing_jersey_units'])
+src/features/notifications/notificationTemplatesBase.tsx:1822: return `Immediate action required: purchase at least ${missing} additional usable Race Jersey Kit${missing === 1 ? '' : 's'}. The eligibility guard checks usable supply, so worn-out or unavailable kits do not satisfy the requirement.`
+src/features/notifications/notificationTemplatesBase.tsx:1825: return 'Open Race Supplies to verify your usable Race Jersey Kit stock before the stage eligibility check.'
+src/features/notifications/notificationTemplatesBase.tsx:1830: key: 'resupply-race-jerseys',
+src/features/notifications/notificationTemplatesBase.tsx:13917: 'Race Jersey Complete',
+src/features/notifications/notificationTemplatesBase.tsx:13920: 'race_jersey_complete_available',
+src/features/notifications/notificationTemplatesBase.tsx:13921: 'race_jersey_available',
+src/features/notifications/notificationTemplatesBase.tsx:13922: 'jersey_available',
+src/features/notifications/notificationTemplatesBase.tsx:13923: 'race_jersey_complete_stock',
+src/features/notifications/notificationTemplatesBase.tsx:13924: 'race_jersey_stock',
+src/features/notifications/notificationTemplatesBase.tsx:13925: 'jersey_stock',
+src/features/notifications/notificationTemplatesBase.tsx:13929: 'race_jersey_complete_required',
+src/features/notifications/notificationTemplatesBase.tsx:13930: 'race_jersey_required',
+src/features/notifications/notificationTemplatesBase.tsx:13931: 'jersey_required',
+src/features/notifications/notificationTemplatesBase.tsx:13974: 'Consumables are used once. Race Jersey Complete and Rain Jackets are durable reusable supplies with stage-use limits. Restock before race preparation to avoid missing supplies.',
+src/features/notifications/notificationTemplatesLegacy.tsx:27: 'RACE_TEAM_DISQUALIFIED_JERSEYS',
+src/features/notifications/notificationTemplatesLegacy.tsx:38: RACE_TEAM_DISQUALIFIED_JERSEYS:
+src/features/notifications/notificationTemplatesLegacy.tsx:115: readString(payload, 'reason_code') === 'mandatory_race_jersey_shortage'
+src/features/notifications/notificationTemplatesLegacy.tsx:255: const required = readNumber(payload, 'required_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:256: const available = readNumber(payload, 'available_jersey_units', 'effective_available_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:257: const missing = readNumber(payload, 'missing_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:272: if (code === 'RACE_TEAM_DISQUALIFIED_JERSEYS') {
+src/features/notifications/notificationTemplatesLegacy.tsx:276: const required = readNumber(payload, 'required_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:277: const available = readNumber(payload, 'available_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:385: const problem = readString(payload, 'problem_label') ? localizeNotificationValue(readString(payload, 'problem_label') || '') : translateNotificationKey('richReports.race.problemJerseys')
+src/features/notifications/notificationTemplatesLegacy.tsx:386: const required = readNumber(payload, 'required_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:387: const available = readNumber(payload, 'available_jersey_units', 'effective_available_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:388: const missing = readNumber(payload, 'missing_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:396: ...(required !== null ? [{ label: 'Required Race Jersey Kits', value: String(required) }] : []),
+src/features/notifications/notificationTemplatesLegacy.tsx:398: ...(missing !== null ? [{ label: 'Missing Race Jersey Kits', value: String(missing) }] : []),
+src/features/notifications/notificationTemplatesLegacy.tsx:410: if (code === 'RACE_TEAM_DISQUALIFIED_JERSEYS') {
+src/features/notifications/notificationTemplatesLegacy.tsx:415: const required = readNumber(payload, 'required_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:416: const available = readNumber(payload, 'available_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:417: const missing = readNumber(payload, 'missing_jersey_units')
+src/features/notifications/notificationTemplatesLegacy.tsx:423: ...(required !== null ? [{ label: 'Required Race Jersey Kits', value: String(required) }] : []),
+src/features/notifications/notificationTemplatesLegacy.tsx:424: ...(available !== null ? [{ label: 'Available Race Jersey Kits', value: String(available) }] : []),
+src/features/notifications/notificationTemplatesLegacy.tsx:425: ...(missing !== null ? [{ label: 'Missing Race Jersey Kits', value: String(missing) }] : []),
+src/features/notifications/notificationTemplatesLegacy.tsx:538: if (code === 'RACE_TEAM_DISQUALIFIED_JERSEYS') {
+src/features/notifications/notificationTemplatesLegacy.tsx:563: if (code === 'RACE_TEAM_DISQUALIFIED_JERSEYS') {
+src/features/squad/components/ExternalRiderProfilePage.tsx:75: jerseys: number;
+src/features/squad/components/ExternalRiderProfilePage.tsx:844: jerseys: normalizeNumber(
+src/features/squad/components/ExternalRiderProfilePage.tsx:845: row.jerseys ?? row.jersey_count ?? row.special_jerseys,
+src/features/squad/components/ExternalRiderProfilePage.tsx:854: "international_points, season_points_overall, podiums, jerseys",
+src/features/squad/components/ExternalRiderProfilePage.tsx:900: return { points: 0, podiums: 0, jerseys: 0 };
+src/features/squad/components/ExternalRiderProfilePage.tsx:1686: const [seasonOverview, setSeasonOverview] = useState<RiderSeasonOverview>({ points: 0, podiums: 0, jerseys: 0 });
+src/features/squad/components/ExternalRiderProfilePage.tsx:1827: setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 });
+src/features/squad/components/ExternalRiderProfilePage.tsx:1953: setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 });
+src/features/squad/components/ExternalRiderProfilePage.tsx:2872: { label: t("common.jerseys"), value: seasonOverview.jerseys },
+src/features/squad/components/ExternalRiderProfilePage.tsx:3059: <DetailRow label={t("common.jerseys")} value={seasonOverview.jerseys} />
+src/features/squad/components/RiderProfilePage.tsx:248: jerseys: number
+src/features/squad/components/RiderProfilePage.tsx:3649: jerseys: normalizeNumber(row.jerseys ?? row.jersey_count ?? row.special_jerseys, 0),
+src/features/squad/components/RiderProfilePage.tsx:3655: .select('international_points, season_points_overall, podiums, jerseys')
+src/features/squad/components/RiderProfilePage.tsx:3706: return { points: 0, podiums: 0, jerseys: 0 }
+src/features/squad/components/RiderProfilePage.tsx:3872: row.sprint_points ?? row.points_sprint ?? row.sprint_classification_points ?? row.green_jersey_points,
+src/features/squad/components/RiderProfilePage.tsx:4507: const [seasonOverview, setSeasonOverview] = useState<RiderSeasonOverview>({ points: 0, podiums: 0, jerseys: 0 })
+src/features/squad/components/RiderProfilePage.tsx:4826: setSeasonOverview({ points: 0, podiums: 0, jerseys: 0 })
+src/features/squad/components/RiderProfilePage.tsx:5476: { label: t('common.jerseys'), value: seasonOverview.jerseys },
+src/features/squad/components/RiderProfilePage.tsx:5600: <DetailRow label={t('common.jerseys')} value={seasonOverview.jerseys} />
+src/features/squad/components/RiderStatisticsSection.tsx:343: topJerseysRider?: RiderStatsRow
+src/features/squad/components/RiderStatisticsSection.tsx:388: topJerseysRider,
+src/features/squad/components/RiderStatisticsSection.tsx:553: label={t('riders.mostJerseys')}
+src/features/squad/components/RiderStatisticsSection.tsx:555: topJerseysRider ? (
+src/features/squad/components/RiderStatisticsSection.tsx:556: <RiderNameButton onClick={() => openRiderProfile(topJerseysRider)}>
+src/features/squad/components/RiderStatisticsSection.tsx:557: {topJerseysRider.display_name} ({topJerseysRider.jerseys ?? 0})
+src/i18n/locales/de/appShell.json:53: "keepJersey": "Jersey",
+src/i18n/locales/de/club.json:67: "jersey": "Mannschaftstrikot",
+src/i18n/locales/de/club.json:68: "jerseyDescription": "Öffentliche Kit-Vorschau für dieses Team.",
+src/i18n/locales/de/club.json:69: "jerseyAlt": "{{club}} Trikot",
+src/i18n/locales/de/club.json:72: "jerseyUnavailable": "Jersey-Vorschau nicht verfügbar",
+src/i18n/locales/de/club.json:73: "jerseyUnavailableDescription": "Das Kit existiert, aber noch ist kein öffentliches Vorschaubild verfügbar.",
+src/i18n/locales/de/createClub.json:18: "chooseJerseyFirst": "Wählen Sie zuerst ein Teamtrikot aus",
+src/i18n/locales/de/createClub.json:21: "jersey": {
+src/i18n/locales/de/createClub.json:79: "jerseyRequired": "Wählen Sie ein Teamtrikot aus, bevor Sie Ihr Team erstellen.",
+src/i18n/locales/de/customizeTeam.json:96: "jersey": {
+src/i18n/locales/de/customizeTeam.json:98: "title": "Verwaltung von Jersey",
+src/i18n/locales/de/customizeTeam.json:100: "costTitle": "Kosten für Jersey-Veränderung",
+src/i18n/locales/de/customizeTeam.json:104: "urlPlaceholder": "Neue Jersey Image URL einfügen und Enter drücken",
+src/i18n/locales/de/customizeTeam.json:114: "tooLarge": "Jersey-Bild darf nicht größer als 2 MB sein.",
+src/i18n/locales/de/customizeTeam.json:120: "ready": "Neues Jersey Bild ist fertig. Klicken Sie auf Trikot anwenden, um es zu speichern.",
+src/i18n/locales/de/customizeTeam.json:122: "urlProtocol": "Jersey Image URL muss mit http beginnen:// oder https://",
+src/i18n/locales/de/customizeTeam.json:123: "urlAccepted": "Jersey URL akzeptiert. Klicken Sie auf Trikot anwenden, um es zu speichern.",
+src/i18n/locales/de/customizeTeam.json:124: "urlInvalid": "Bitte geben Sie eine gültige Jersey Image URL an.",
+src/i18n/locales/de/customizeTeam.json:129: "savedPaid": "Jersey beantragt und gespeichert für {{cost}} Coins.",
+src/i18n/locales/de/customizeTeam.json:130: "savedFree": "Jersey bewarb sich und gespeichert. In dieser Saison wurde das freie Trikotwechsel verwendet."
+src/i18n/locales/de/equipment.json:369: "jersey": "Komplettes Renntrikot",
+src/i18n/locales/de/equipment.json:389: "jerseyStage": "In Stage Plans verpflichtend. Pro ausgewähltem Fahrer ist ein Renntrikot-Set erforderlich.",
+src/i18n/locales/de/equipment.json:390: "jerseyDurability": "Langlebiges wiederverwendbares Set. Jedes Set kann 10 Etappen lang verwendet werden, bevor es verschlissen ist.",
+src/i18n/locales/de/equipment.json:391: "jerseyPositive1": "Rennbereitschaft: +0,5 % Setup-Bereitschaft",
+src/i18n/locales/de/equipment.json:392: "jerseyPositive2": "Komfortunterstützung: +0,25 % Ermüdungskontrolle",
+src/i18n/locales/de/equipment.json:393: "jerseyNegative1": "Fehlendes Trikot-Set: blockiert Etappen-Setup",
+src/i18n/locales/de/equipment.json:394: "jerseyNegative2": "Verschlissene Sets sind nicht mehr nutzbar",
+src/i18n/locales/de/manual.json:93: "durableSupplies": "Langlebige Rennbedarfe werden anders als Einmalverbraucher verfolgt. Ihre verbleibende Einsatzkapazität ist wichtig. Obligatorische Jersey-Verknappungen können die Bereitschaft blockieren; Regenjackenknappheit reduziert vor allem die Wetterflexibilität. Ersetzen Sie abgenutzte Einheiten vor einem wichtigen Rennblock.",
+src/i18n/locales/de/manual.json:212: "title": "Club Branding, Logo und Jersey",
+src/i18n/locales/de/manual.json:219: "Das Jersey-System speichert ein Heimset in team_kits. Es kann generische Pool Trikots, generische Fallback, Bild-URLs oder hochgeladene Bilder je nach dem ausgewählten Modus verwenden.",
+src/i18n/locales/de/manual.json:232: "label": "Jersey Formate",
+src/i18n/locales/de/manual.json:236: "label": "Höchstgröße von Jersey",
+src/i18n/locales/de/manual.json:554: "Race Jersey Complete ist in den Stage Plans verpflichtend. Fehlende Trikot-Sets können das Etappen-Setup blockieren.",
+src/i18n/locales/de/manual.json:565: "value": "Race Jersey komplett, Regenjacken"
+src/i18n/locales/de/manual.json:568: "label": "Rennen Jersey abgeschlossen",
+src/i18n/locales/de/manual.json:1240: "overview": "Personalisieren Team verwaltet Clubname, primär/secondary Farben, Logo und Home Jersey Konfiguration.",
+src/i18n/locales/de/manual.json:1245: "Jersey config wird in team_kits mit Namen nach Hause.",
+src/i18n/locales/de/manual.json:1258: "label": "Höchstens in Jersey",
+src/i18n/locales/de/manual.json:1986: "Race Jersey Complete ist Pflicht. Ein Team ohne genügend nutzbare Trikot-Stage-Uses kann von einem kompletten Bühnenaufbau blockiert werden.",
+src/i18n/locales/de/manual.json:2004: "label": "Rennen Jersey abgeschlossen",
+src/i18n/locales/de/manualCore.json:137: "title": "Club Branding, Logo und Jersey",
+src/i18n/locales/de/manualCore.json:145: "Jersey Formate",
+src/i18n/locales/de/manualCore.json:147: "Höchstgröße von Jersey",
+src/i18n/locales/de/manualCore.json:156: "Das Jersey-System speichert ein Heimset in team_kits. Es kann generische Pool Trikots, generische Fallback, Bild-URLs oder hochgeladene Bilder je nach dem ausgewählten Modus verwenden.",
+src/i18n/locales/de/manualCore.json:406: "Race Jersey komplett, Regenjacken",
+src/i18n/locales/de/manualCore.json:407: "Rennen Jersey abgeschlossen",
+src/i18n/locales/de/manualCore.json:416: "Race Jersey Complete ist in den Stage Plans verpflichtend. Fehlende Trikot-Sets können das Etappen-Setup blockieren.",
+src/i18n/locales/de/manualDeepA.json:196: "overview": "Personalisieren Team verwaltet Clubname, primär/secondary Farben, Logo und Home Jersey Konfiguration.",
+src/i18n/locales/de/manualDeepA.json:202: "Höchstens in Jersey",
+src/i18n/locales/de/manualDeepA.json:211: "Jersey config wird in team_kits mit Namen nach Hause.",
+src/i18n/locales/de/manualDeepB1.json:72: "Race Jersey Komplett, Regenjacken"
+src/i18n/locales/de/notifications.json:347: "raceJerseyComplete": "Kompletter Renntrikotsatz",
+src/i18n/locales/de/notifications.json:349: "requiredJerseyKits": "Benötigte Trikotsätze",
+src/i18n/locales/de/notifications.json:350: "availableJerseyKits": "Verfügbare Trikotsätze",
+src/i18n/locales/de/notifications.json:351: "missingJerseyKits": "Fehlende Trikotsätze",
+src/i18n/locales/de/notifications.json:414: "raceJerseysRemoval": {
+src/i18n/locales/de/notifications.json:629: "JERSEYS": "Trikots",
+src/i18n/locales/de/notifications.json:799: "RACE_JERSEYS_MANDATORY_WARNING": "Pflicht-Renntrikots fehlen",
+src/i18n/locales/de/notifications.json:874: "RACE_TEAM_DISQUALIFIED_JERSEYS": "Team aus dem Rennen entfernt",
+src/i18n/locales/de/notifications.json:979: "problemJerseys": "Nicht genügend zulässige Renntrikot-Sets"
+src/i18n/locales/de/overview.json:271: "jerseys": "Trikots",
+src/i18n/locales/de/raceDetail.json:199: "teamJersey": "Teamtrikot",
+src/i18n/locales/de/racePreparation.json:310: "raceJersey": "Komplettes Renntrikot",
+src/i18n/locales/de/racePreparation.json:421: "stageSupplyDesc": "Teamweite Versorgung für diese Etappe. Verbrauchsartikel gelten pro Fahrer; das Race Jersey Kit ist Pflicht, Regenjacken sind eine teamweite Ja/Nein-Auswahl.",
+src/i18n/locales/de/racePreparation.json:428: "raceJerseyKit": "Race Jersey Kit",
+src/i18n/locales/de/racePreparation.json:431: "mandatoryJersey": "Pflicht für alle ausgewählten Fahrer. Fehlende Race Jersey Kits blockieren die Etappenvorbereitung.",
+src/i18n/locales/de/racePreparation.json:440: "stageUsesPerJersey": "{{count}} Etappeneinsätze pro Trikot",
+src/i18n/locales/de/racePreparation.json:455: "raceJerseysNeeded": "Benötigte Renntrikots",
+src/i18n/locales/de/racePreparation.json:574: "raceJerseysNeeded": "Benötigte Renndressen",
+src/i18n/locales/de/racePreparation.json:585: "raceJerseyKit": "Renntrikot-Set",
+src/i18n/locales/de/riderProfile.json:24: "jerseys": "Trikots",
+src/i18n/locales/de/statistics.json:134: "mostJerseys": "Die meisten Trikots",
+src/i18n/locales/en/appShell.json:22: "body2": "Your club name, logo, jersey, country, and competition slot have been preserved. The old riders were released as free agents, and the club is ready for a new beginning.",
+src/i18n/locales/en/appShell.json:36: "identityBody": "Your club ID, owner account, team name, logo, jersey, country, and tier/division slot stay the same. Current riders are released to the free-agent market, all season points are reset to 0, and the club receives a new starter squad based on its current competition tier.",
+src/i18n/locales/en/appShell.json:53: "keepJersey": "Jersey",
+src/i18n/locales/en/club.json:67: "jersey": "Team jersey",
+src/i18n/locales/en/club.json:68: "jerseyDescription": "Public kit preview for this team.",
+src/i18n/locales/en/club.json:69: "jerseyAlt": "{{club}} jersey",
+src/i18n/locales/en/club.json:72: "jerseyUnavailable": "Jersey preview unavailable",
+src/i18n/locales/en/club.json:73: "jerseyUnavailableDescription": "The kit exists, but no public preview image is available yet.",
+src/i18n/locales/en/club.json:121: "welcomeBodyTwo": "Your club name, logo, jersey, country, and competition slot have been preserved. The old riders were released as free agents, and the club is ready for a new beginning.",
+src/i18n/locales/en/club.json:133: "restartKeepsIdentityDescription": "Your club ID, owner account, team name, logo, jersey, country, and tier/division slot stay the same. Current riders are released to the free-agent market, all season points are reset to 0, and the club receives a new starter squad based on its current competition tier.",
+src/i18n/locales/en/club.json:212: "jerseyPreviewUnavailable": "Jersey preview unavailable",
+src/i18n/locales/en/createClub.json:18: "chooseJerseyFirst": "Choose one team jersey first",
+src/i18n/locales/en/createClub.json:21: "jersey": {
+src/i18n/locales/en/createClub.json:22: "title": "Team Jersey",
+src/i18n/locales/en/createClub.json:23: "description": "Choose one jersey to unlock team creation. You can change it later in Customize Team.",
+src/i18n/locales/en/createClub.json:28: "required": "Jersey selection is required before you can create your team."
+src/i18n/locales/en/createClub.json:79: "jerseyRequired": "Please choose a team jersey before creating your team.",
+src/i18n/locales/en/customizeTeam.json:96: "jersey": {
+src/i18n/locales/en/customizeTeam.json:97: "eyebrow": "Team jersey",
+src/i18n/locales/en/customizeTeam.json:98: "title": "Jersey management",
+src/i18n/locales/en/customizeTeam.json:99: "description": "Upload or link a new jersey. One change per season is free; each later change costs 10 coins.",
+src/i18n/locales/en/customizeTeam.json:100: "costTitle": "Jersey change cost",
+src/i18n/locales/en/customizeTeam.json:101: "costHelp": "One jersey change per season is free. Further changes in the same season cost 10 coins each.",
+src/i18n/locales/en/customizeTeam.json:103: "upload": "Upload new jersey",
+src/i18n/locales/en/customizeTeam.json:104: "urlPlaceholder": "Paste new jersey image URL and press Enter",
+src/i18n/locales/en/customizeTeam.json:106: "applyFree": "Apply jersey · Free",
+src/i18n/locales/en/customizeTeam.json:107: "applyPaid": "Apply jersey · {{cost}} coins",
+src/i18n/locales/en/customizeTeam.json:108: "previewTitle": "Current jersey preview",
+src/i18n/locales/en/customizeTeam.json:109: "previewText": "This is the jersey that will appear on team profile and race screens.",
+src/i18n/locales/en/customizeTeam.json:111: "alt": "Current jersey",
+src/i18n/locales/en/customizeTeam.json:113: "invalidType": "Only JPG, PNG, or WEBP images are allowed for jerseys.",
+src/i18n/locales/en/customizeTeam.json:114: "tooLarge": "Jersey image must be no larger than 2 MB.",
+src/i18n/locales/en/customizeTeam.json:115: "dimensions": "Uploaded jersey image must be 512 × 512 px or smaller.",
+src/i18n/locales/en/customizeTeam.json:116: "readFailed": "Failed to read jersey image.",
+src/i18n/locales/en/customizeTeam.json:117: "remoteFailed": "Could not load jersey image from URL.",
+src/i18n/locales/en/customizeTeam.json:118: "loadSavedFailed": "Failed to load saved jersey.",
+src/i18n/locales/en/customizeTeam.json:119: "loadSavedWithError": "Failed to load saved jersey: {{error}}",
+src/i18n/locales/en/customizeTeam.json:120: "ready": "New jersey image is ready. Click Apply jersey to save it.",
+src/i18n/locales/en/customizeTeam.json:121: "previewFailed": "Failed to preview jersey image.",
+src/i18n/locales/en/customizeTeam.json:122: "urlProtocol": "Jersey image URL must start with http:// or https://",
+src/i18n/locales/en/customizeTeam.json:123: "urlAccepted": "Jersey URL accepted. Click Apply jersey to save it.",
+src/i18n/locales/en/customizeTeam.json:124: "urlInvalid": "Please provide a valid jersey image URL.",
+src/i18n/locales/en/customizeTeam.json:125: "originalRestored": "Original team jersey restored in preview. Click Apply jersey to save it.",
+src/i18n/locales/en/customizeTeam.json:126: "defaultRestored": "Default color-based jersey restored in preview. Click Apply jersey to save it.",
+src/i18n/locales/en/customizeTeam.json:127: "saveFailed": "Failed to save jersey.",
+src/i18n/locales/en/customizeTeam.json:128: "saveFailedWithError": "Failed to save jersey: {{error}}",
+src/i18n/locales/en/customizeTeam.json:129: "savedPaid": "Jersey applied and saved for {{cost}} coins.",
+src/i18n/locales/en/customizeTeam.json:130: "savedFree": "Jersey applied and saved. This season’s free jersey change was used."
+src/i18n/locales/en/customizeTeam.json:162: "previewAria": "Team jersey preview"
+src/i18n/locales/en/equipment.json:312: "description": "Race supplies used by Race Preparation and Stage Plans. Consumables are used once; Race Jersey Complete and Rain Jackets are durable reusable supplies with stage-use limits.",
+src/i18n/locales/en/equipment.json:332: "noneFound": "No race supplies found. Expected supplies are Bidons / Water Bottles, Energy Gels, Nutrition Packs, Race Jersey Complete and Rain Jackets.",
+src/i18n/locales/en/equipment.json:339: "durablePanelDescription": "Race Jersey Complete and Rain Jackets are reusable units. This panel keeps their counts and remaining stage-use durability visible in one place.",
+src/i18n/locales/en/equipment.json:369: "jersey": "Race Jersey Complete",
+src/i18n/locales/en/equipment.json:389: "jerseyStage": "Mandatory in Stage Plans. One race jersey kit is required per selected rider.",
+src/i18n/locales/en/equipment.json:390: "jerseyDurability": "Durable reusable kit. Each kit has 10 stage uses before it becomes worn out.",
+src/i18n/locales/en/equipment.json:391: "jerseyPositive1": "Race readiness: +0.5% setup readiness",
+src/i18n/locales/en/equipment.json:392: "jerseyPositive2": "Comfort support: +0.25% fatigue control",
+src/i18n/locales/en/equipment.json:393: "jerseyNegative1": "Missing jersey kit: blocks stage setup",
+src/i18n/locales/en/equipment.json:394: "jerseyNegative2": "Worn-out kits are no longer usable",
+src/i18n/locales/en/finance.json:258: "classificationVisibility": "Points or mountain jersey visibility",
+src/i18n/locales/en/help.json:81: "statisticsText": "Compare teams and riders by international points, wins, podiums, jerseys, history, and current-season performance.",
+src/i18n/locales/en/help.json:115: "a11": "Statistics helps you compare teams and riders. You can follow current-season points, historical results, rider rankings, podiums, jerseys, and dominant teams or riders.",
+src/i18n/locales/en/manual.json:93: "durableSupplies": "Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Mandatory jersey shortages can block readiness; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.",
+src/i18n/locales/en/manual.json:212: "title": "Club Branding, Logo and Jersey",
+src/i18n/locales/en/manual.json:213: "subtitle": "Team name, colors, logo, jersey and sponsor naming-rights locks.",
+src/i18n/locales/en/manual.json:214: "overview": "Your club identity includes name, colors, logo and jersey. It is managed through Customize Team, but sponsor naming-rights deals can temporarily lock or change parts of the public display.",
+src/i18n/locales/en/manual.json:219: "The jersey system stores a home kit in team_kits. It can use generic pool jerseys, generic fallback, image URLs or uploaded images depending on the selected mode.",
+src/i18n/locales/en/manual.json:232: "label": "Jersey formats",
+src/i18n/locales/en/manual.json:236: "label": "Jersey max size",
+src/i18n/locales/en/manual.json:549: "overview": "Race Supplies are used by Race Preparation and Stage Plans. Some supplies are consumed every stage, while jerseys and rain jackets are durable reusable items with stage-use limits.",
+src/i18n/locales/en/manual.json:554: "Race Jersey Complete is mandatory in Stage Plans. Missing jersey kits can block stage setup.",
+src/i18n/locales/en/manual.json:565: "value": "Race Jersey Complete, Rain Jackets"
+src/i18n/locales/en/manual.json:568: "label": "Race Jersey Complete",
+src/i18n/locales/en/manual.json:1050: "overview": "My Profile edits the user account profile. It is separate from the team name, team logo and jersey.",
+src/i18n/locales/en/manual.json:1239: "subtitle": "Branding, team colors, logo, base logo and jersey.",
+src/i18n/locales/en/manual.json:1240: "overview": "Customize Team manages club name, primary/secondary colors, logo and home jersey configuration.",
+src/i18n/locales/en/manual.json:1245: "Jersey config is stored in team_kits with name home.",
+src/i18n/locales/en/manual.json:1246: "A jersey can be generic, from a generic pool, a remote image URL or an uploaded image."
+src/i18n/locales/en/manual.json:1258: "label": "Jersey max",
+src/i18n/locales/en/manual.json:1986: "Race Jersey Complete is mandatory. A team without enough usable jersey stage-uses can be blocked from having a complete stage setup.",
+src/i18n/locales/en/manual.json:2004: "label": "Race Jersey Complete",
+src/i18n/locales/en/manualCore.json:80: "title": "Club Branding, Logo and Jersey",
+src/i18n/locales/en/manualCore.json:81: "subtitle": "Team name, colors, logo, jersey and sponsor naming-rights locks.",
+src/i18n/locales/en/manualCore.json:82: "overview": "Your club identity includes name, colors, logo and jersey. It is managed through Customize Team, but sponsor naming-rights deals can temporarily lock or change parts of the public display.",
+src/i18n/locales/en/manualCore.json:83: "facts": ["Logo formats", "JPG, PNG, WEBP", "Logo max size", "0.5 MB", "Jersey formats", "JPG, PNG, WEBP", "Jersey max size", "1 MB and 512 × 512 px or smaller", "Logo storage", "Uploaded logos are converted to PNG and stored in club-logos"],
+src/i18n/locales/en/manualCore.json:84: "details": ["Customize Team persists branding through backend functions, not only local UI state. This is important because sponsor naming-rights can lock the name or affect the display name.", "Logo uploads are validated for type and file size, converted to PNG in-browser and stored in the club-logos bucket.", "Removing a logo restores a generated base logo instead of leaving the club without a logo. The base logo uses the team colors.", "The jersey system stores a home kit in team_kits. It can use generic pool jerseys, generic fallback, image URLs or uploaded images depending on the selected mode.", "A naming-rights sponsor usually pays more, but temporarily changes the displayed team name during the season. The original name returns at the beginning of the next season."],
+src/i18n/locales/en/manualCore.json:162: "overview": "Race Supplies are used by Race Preparation and Stage Plans. Some supplies are consumed every stage, while jerseys and rain jackets are durable reusable items with stage-use limits.",
+src/i18n/locales/en/manualCore.json:163: "facts": ["Consumables", "Bidons / Water Bottles, Energy Gels, Nutrition Packs", "Durable supplies", "Race Jersey Complete, Rain Jackets", "Race Jersey Complete", "Mandatory; 10 stage uses per unit", "Rain Jackets", "Optional weather item; 25 stage uses per unit"],
+src/i18n/locales/en/manualCore.json:164: "details": ["Bidons use 1–4 per rider in stage setup. They are one-use consumables and support hydration and fatigue control. Below minimum can increase fatigue risk.", "Energy Gels use 0–4 per rider. They support stamina and final effort efficiency. There is no extra benefit after four gels per rider.", "Nutrition Packs use 0–2 per rider. They support stamina stability and post-stage recovery. Long stages without nutrition can increase fatigue pressure.", "Race Jersey Complete is mandatory in Stage Plans. Missing jersey kits can block stage setup.", "Rain Jackets are optional but valuable in wet/cold weather. Worn-out durable supplies are no longer usable.", "Stage races consume supplies quickly because quantities are used per rider per stage."],
+src/i18n/locales/en/manualDeepA.json:22: "overview": "My Profile edits the user account profile. It is separate from the team name, team logo and jersey.",
+src/i18n/locales/en/manualDeepA.json:74: "subtitle": "Branding, team colors, logo, base logo and jersey.",
+src/i18n/locales/en/manualDeepA.json:75: "overview": "Customize Team manages club name, primary/secondary colors, logo and home jersey configuration.",
+src/i18n/locales/en/manualDeepA.json:76: "facts": ["Logo types", "JPG, PNG, WEBP", "Logo max", "0.5 MB", "Jersey max", "1 MB and 512 × 512 px", "Logo bucket", "club-logos"],
+src/i18n/locales/en/manualDeepA.json:77: "details": ["Uploaded logos are converted to PNG in-browser before storage.", "Removing a logo restores a generated shield-style base logo instead of leaving no logo.", "Team colors are validated as hex colors.", "Jersey config is stored in team_kits with name home.", "A jersey can be generic, from a generic pool, a remote image URL or an uploaded image."],
+src/i18n/locales/en/manualDeepB1.json:29: "subtitle": "Bidons, gels, nutrition, jerseys and rain jackets.",
+src/i18n/locales/en/manualDeepB1.json:31: "facts": ["Consumables", "Bidons, energy gels, nutrition packs", "Durables", "Race Jersey Complete, rain jackets"],
+src/i18n/locales/en/manualDeepB1.json:32: "details": ["Bidons: 1–4 per rider; hydration and fatigue control.", "Gels: 0–4 per rider; stamina and final effort support.", "Nutrition: 0–2 per rider; endurance and recovery support.", "Race jerseys: mandatory durable kit; 10 stage uses per unit.", "Rain jackets: optional durable weather item; 25 stage uses per unit."],
+src/i18n/locales/en/manualDynamic.json:6: "clubIdentity": "Club identity pages control what other managers see: team name, colors, logo, jersey, public profile and sponsor display name. Upload buttons validate image type and size before anything is saved. Save buttons persist the new identity through backend functions, so users should wait for the success state before leaving. If naming rights are active, some fields can be locked because the sponsor contract has temporary control over the public display name.",
+src/i18n/locales/en/manualLegacyDynamic.json:43: "durable": "Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Mandatory jersey shortages can block readiness; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.",
+src/i18n/locales/en/notifications.json:347: "raceJerseyComplete": "Race Jersey Complete",
+src/i18n/locales/en/notifications.json:349: "requiredJerseyKits": "Required jersey kits",
+src/i18n/locales/en/notifications.json:350: "availableJerseyKits": "Available jersey kits",
+src/i18n/locales/en/notifications.json:351: "missingJerseyKits": "Missing jersey kits",
+src/i18n/locales/en/notifications.json:414: "raceJerseysRemoval": {
+src/i18n/locales/en/notifications.json:416: "message": "{{teamName}} did not have enough mandatory Race Jersey Kits for Stage {{stage}}. Required: {{required}}; available: {{available}}. The team has been removed from Stage {{stage}} and every remaining stage of {{raceName}}. Riders can no longer place or score in this race.",
+src/i18n/locales/en/notifications.json:417: "genericMessage": "The team was removed from {{raceName}} because it did not have enough mandatory Race Jersey Kits."
+src/i18n/locales/en/notifications.json:629: "JERSEYS": "Jerseys",
+src/i18n/locales/en/notifications.json:805: "RACE_TEAM_DISQUALIFIED_JERSEYS": "Team removed from race",
+src/i18n/locales/en/notifications.json:871: "teamRemoved": "{{team}} was automatically removed from {{race}} because the mandatory Race Jersey Kit requirement was not met{{stagePart}}.{{stockPart}} The removal applies to the affected stage and every remaining stage, so the team and its riders can no longer place or score points in this race.",
+src/i18n/locales/en/notifications.json:874: "prestart": "{{team}} was removed from {{race}} at the mandatory pre-start eligibility check because it did not have enough eligible Race Jersey Kits.{{stockPart}} This is a club-controllable race-preparation failure, so the normal missed-start/no-show consequences were applied.",
+src/i18n/locales/en/notifications.json:882: "extraPrestart": "The penalty has already been applied. Open the race for context, or go directly to Race Supplies to review eligible race jerseys and avoid the same issue at a future start.",
+src/i18n/locales/en/notifications.json:889: "problemJerseys": "Not enough eligible Race Jersey Kits"
+src/i18n/locales/en/overview.json:263: "premiumDescription": "Unlock current-season race volume, international points, wins, podiums, Top 10 results, jerseys, and best general-classification performance.",
+src/i18n/locales/en/overview.json:264: "subtitle": "Current season results, points, podiums, jerseys, and race volume.",
+src/i18n/locales/en/overview.json:271: "jerseys": "Jerseys",
+src/i18n/locales/en/preferences.json:190: "restartDescription": "Restart this club back to a fresh starter state while keeping the same club name, logo, jersey, country, and competition slot.",
+src/i18n/locales/en/raceDetail.json:199: "teamJersey": "Team jersey",
+src/i18n/locales/en/racePreparation.json:310: "raceJersey": "Race Jersey Complete",
+src/i18n/locales/en/racePreparation.json:374: "raceJerseysNeeded": "Race jerseys needed",
+src/i18n/locales/en/racePreparation.json:385: "raceJerseyKit": "Race Jersey Kit",
+src/i18n/locales/en/racePreparation.json:452: "stageSupplyDesc": "Team-level supply setup for this stage. Consumables are applied per rider; Race Jersey Kit is mandatory and Rain Jackets are a team-wide yes/no choice.",
+src/i18n/locales/en/racePreparation.json:459: "raceJerseyKit": "Race Jersey Kit",
+src/i18n/locales/en/racePreparation.json:462: "mandatoryJersey": "Mandatory for all selected riders. Missing jersey kits block the stage setup.",
+src/i18n/locales/en/racePreparation.json:471: "stageUsesPerJersey": "{{count}} stage uses per jersey",
+src/i18n/locales/en/racePreparation.json:486: "raceJerseysNeeded": "Race jerseys needed",
+src/i18n/locales/en/racePreparation.json:488: "durabilityNote": "Jerseys: 10 stage uses each. Rain jackets: 25 stage uses each. Jackets reduce bad-weather sickness risk by 50%, but add -1% rider efficiency whenever used.",
+src/i18n/locales/en/riderProfile.json:24: "jerseys": "Jerseys",
+src/i18n/locales/en/statistics.json:134: "mostJerseys": "Most jerseys",
+src/i18n/locales/en/statistics.json:179: "welcomeBody": "We can show you how team and rider statistics work, including current season rankings, historical results, rider points, podiums, and jerseys.",
+src/i18n/locales/en/statistics.json:187: "ridersBody": "The Riders section shows the best riders in the cycling world.\n\nYou can compare riders by international points, stage finish points, general classification and one-day race points. You can also see riders with the most podiums and most jerseys.\n\nThis page helps you understand which riders are dominating the season and which riders may be interesting to follow, scout, or sign.\n\nAfter Statistics, the next recommended page is Transfers.",
+src/i18n/locales/en/tutorials.json:270: "body": "We can show you how team and rider statistics work, including current season rankings, historical results, rider points, podiums, and jerseys.",
+src/i18n/locales/en/tutorials.json:286: "body": "The Riders section shows the best riders in the cycling world.\n\nYou can compare riders by international points, stage finish points, general classification and one-day race points. You can also see riders with the most podiums and most jerseys.\n\nThis page helps you understand which riders are dominating the season and which riders may be interesting to follow, scout, or sign.\n\nAfter Statistics, the next recommended page is Transfers.",
+src/i18n/locales/es/appShell.json:53: "keepJersey": "Maillot",
+src/i18n/locales/es/club.json:67: "jersey": "maillot del equipo",
+src/i18n/locales/es/club.json:68: "jerseyDescription": "Previsualización pública del equipo.",
+src/i18n/locales/es/club.json:69: "jerseyAlt": "maillot {{club}}",
+src/i18n/locales/es/club.json:72: "jerseyUnavailable": "Vista previa de maillot no disponible",
+src/i18n/locales/es/club.json:73: "jerseyUnavailableDescription": "El kit existe, pero no hay imagen de vista previa pública disponible todavía.",
+src/i18n/locales/es/club.json:212: "jerseyPreviewUnavailable": "Vista previa del maillot no disponible",
+src/i18n/locales/es/createClub.json:18: "chooseJerseyFirst": "Elige primero un maillot de equipo",
+src/i18n/locales/es/createClub.json:21: "jersey": {
+src/i18n/locales/es/createClub.json:79: "jerseyRequired": "Elige un maillot antes de crear el equipo.",
+src/i18n/locales/es/customizeTeam.json:96: "jersey": {
+src/i18n/locales/es/equipment.json:369: "jersey": "Kit completo de carrera",
+src/i18n/locales/es/equipment.json:389: "jerseyStage": "Obligatorio en Stage Plans. Se necesita un kit completo de carrera por cada ciclista seleccionado.",
+src/i18n/locales/es/equipment.json:390: "jerseyDurability": "Kit reutilizable duradero. Cada kit tiene 10 usos de etapa antes de que se desgaste.",
+src/i18n/locales/es/equipment.json:391: "jerseyPositive1": "Preparación de la carrera: +0.5% preparación de la configuración",
+src/i18n/locales/es/equipment.json:392: "jerseyPositive2": "Soporte de confort: +0,25% de control de fatiga",
+src/i18n/locales/es/equipment.json:393: "jerseyNegative1": "Falta el kit de carrera: se bloquea la configuración de la etapa",
+src/i18n/locales/es/equipment.json:394: "jerseyNegative2": "Los kits de desgaste ya no son utilizables",
+src/i18n/locales/es/notifications.json:347: "raceJerseyComplete": "Kit completo de maillot",
+src/i18n/locales/es/notifications.json:349: "requiredJerseyKits": "Kits de maillot necesarios",
+src/i18n/locales/es/notifications.json:350: "availableJerseyKits": "Kits de maillot disponibles",
+src/i18n/locales/es/notifications.json:351: "missingJerseyKits": "Kits de maillot faltantes",
+src/i18n/locales/es/notifications.json:414: "raceJerseysRemoval": {
+src/i18n/locales/es/notifications.json:629: "JERSEYS": "Maillots",
+src/i18n/locales/es/notifications.json:799: "RACE_JERSEYS_MANDATORY_WARNING": "Faltan los maillots obligatorios de carrera",
+src/i18n/locales/es/notifications.json:874: "RACE_TEAM_DISQUALIFIED_JERSEYS": "Equipo retirado de la carrera",
+src/i18n/locales/es/notifications.json:979: "problemJerseys": "No hay suficientes kits de maillot elegibles"
+src/i18n/locales/es/overview.json:271: "jerseys": "Maillots",
+src/i18n/locales/es/raceDetail.json:199: "teamJersey": "maillot del equipo",
+src/i18n/locales/es/racePreparation.json:310: "raceJersey": "Carrera maillot completa",
+src/i18n/locales/es/racePreparation.json:374: "raceJerseysNeeded": "Se necesitan kits de carrera",
+src/i18n/locales/es/racePreparation.json:385: "raceJerseyKit": "Kit completo de carrera",
+src/i18n/locales/es/racePreparation.json:452: "stageSupplyDesc": "Configuración de suministros del equipo para esta etapa. Los consumibles se aplican por corredor; Race Jersey Kit es obligatorio y los chubasqueros son una opción sí/no para todo el equipo.",
+src/i18n/locales/es/racePreparation.json:459: "raceJerseyKit": "Race Jersey Kit",
+src/i18n/locales/es/racePreparation.json:462: "mandatoryJersey": "Obligatorio para todos los corredores seleccionados. La falta de Race Jersey Kit bloquea la preparación de etapa.",
+src/i18n/locales/es/racePreparation.json:471: "stageUsesPerJersey": "{{count}} usos de etapa por maillot",
+src/i18n/locales/es/racePreparation.json:486: "raceJerseysNeeded": "Maillots necesarios",
+src/i18n/locales/es/riderProfile.json:24: "jerseys": "Maillots",
+src/i18n/locales/es/statistics.json:134: "mostJerseys": "La mayoría de camisetas",
+src/i18n/locales/fr/appShell.json:53: "keepJersey": "Maillot",
+src/i18n/locales/fr/club.json:67: "jersey": "Maillot d'équipe",
+src/i18n/locales/fr/club.json:68: "jerseyDescription": "Aperçu du kit public pour cette équipe.",
+src/i18n/locales/fr/club.json:69: "jerseyAlt": "{{club}} jersey",
+src/i18n/locales/fr/club.json:72: "jerseyUnavailable": "Aperçu Jersey non disponible",
+src/i18n/locales/fr/club.json:73: "jerseyUnavailableDescription": "Le kit existe, mais aucune image de prévisualisation publique n'est encore disponible.",
+src/i18n/locales/fr/club.json:212: "jerseyPreviewUnavailable": "Aperçu Jersey non disponible",
+src/i18n/locales/fr/createClub.json:18: "chooseJerseyFirst": "Choisissez d'abord un maillot d'équipe",
+src/i18n/locales/fr/createClub.json:21: "jersey": {
+src/i18n/locales/fr/createClub.json:22: "title": "Équipe Jersey",
+src/i18n/locales/fr/createClub.json:28: "required": "La sélection Jersey est nécessaire avant de pouvoir créer votre équipe."
+src/i18n/locales/fr/createClub.json:79: "jerseyRequired": "Veuillez choisir un maillot d'équipe avant de créer votre équipe.",
+src/i18n/locales/fr/customizeTeam.json:96: "jersey": {
+src/i18n/locales/fr/customizeTeam.json:98: "title": "Gestion du Jersey",
+src/i18n/locales/fr/customizeTeam.json:100: "costTitle": "Coût du changement de Jersey",
+src/i18n/locales/fr/customizeTeam.json:111: "alt": "Jersey actuel",
+src/i18n/locales/fr/customizeTeam.json:114: "tooLarge": "L'image de Jersey ne doit pas dépasser 2 Mo.",
+src/i18n/locales/fr/customizeTeam.json:122: "urlProtocol": "L'URL de l'image de Jersey doit commencer par http:// ou https://",
+src/i18n/locales/fr/customizeTeam.json:123: "urlAccepted": "URL Jersey acceptée. Cliquez sur Appliquer maillot pour l'enregistrer.",
+src/i18n/locales/fr/customizeTeam.json:124: "urlInvalid": "Veuillez fournir une URL d'image en jersey valide.",
+src/i18n/locales/fr/customizeTeam.json:125: "originalRestored": "Jersey d'équipe original restauré en avant-première. Cliquez sur Appliquer jersey pour l'enregistrer.",
+src/i18n/locales/fr/customizeTeam.json:126: "defaultRestored": "Jersey par défaut basé sur la couleur restauré dans l'aperçu. Cliquez sur Appliquer jersey pour l'enregistrer.",
+src/i18n/locales/fr/customizeTeam.json:129: "savedPaid": "Jersey a appliqué et enregistré pour {{cost}} Coins.",
+src/i18n/locales/fr/customizeTeam.json:130: "savedFree": "Jersey appliqué et sauvé. Cette saison, le changement de jersey libre a été utilisé."
+src/i18n/locales/fr/equipment.json:312: "description": "Les fournitures de course utilisées par Course Preparation et Stage Plans. Consommables sont utilisés une fois; Course Jersey Complete et Rain Jackets sont des fournitures réutilisables durables avec des limites d'utilisation de étape.",
+src/i18n/locales/fr/equipment.json:339: "durablePanelDescription": "Les vestes Course Jersey Complete et Rain sont réutilisables. Ce panneau garde leurs comptes et leur durabilité d'utilisation de étape restant visible en un seul endroit.",
+src/i18n/locales/fr/equipment.json:369: "jersey": "Course Jersey Complet",
+src/i18n/locales/fr/equipment.json:389: "jerseyStage": "Obligatoire en Stage Plans. Un kit de maillot de course est requis par coureur sélectionné.",
+src/i18n/locales/fr/equipment.json:390: "jerseyDurability": "Kit réutilisable durable. Chaque kit a 10 étapes d'utilisation avant qu'il ne s'épuise.",
+src/i18n/locales/fr/equipment.json:391: "jerseyPositive1": "Préparation à la course: +0,5 % de préparation à la configuration",
+src/i18n/locales/fr/equipment.json:392: "jerseyPositive2": "Confort: +0,25% de contrôle de fatigue",
+src/i18n/locales/fr/equipment.json:393: "jerseyNegative1": "Tenue de course manquante: bloque la configuration de l’étape",
+src/i18n/locales/fr/equipment.json:394: "jerseyNegative2": "Les kits worn-out ne sont plus utilisables",
+src/i18n/locales/fr/manual.json:212: "title": "Club Branding, Logo et Jersey",
+src/i18n/locales/fr/manual.json:213: "subtitle": "Nom de l'équipe, couleurs, logo, jersey et sponsor noms-droits serrures.",
+src/i18n/locales/fr/manual.json:219: "Le système de jersey stocke un kit de maison dans team_kits. Il peut utiliser des maillots de piscine génériques, des retours génériques, des URL d'image ou des images téléchargées selon le mode sélectionné.",
+src/i18n/locales/fr/manual.json:232: "label": "Formats Jersey",
+src/i18n/locales/fr/manual.json:236: "label": "Taille max du Jersey",
+src/i18n/locales/fr/manual.json:554: "Course Jersey Complete est obligatoire en Stage Plans. Les kits de jersey manquants peuvent bloquer la configuration de l'étape.",
+src/i18n/locales/fr/manual.json:565: "value": "Course Jersey Complete, Vestes Rain"
+src/i18n/locales/fr/manual.json:568: "label": "Course Jersey Complet",
+src/i18n/locales/fr/manual.json:1239: "subtitle": "Marque, couleurs de l'équipe, logo, base logo et jersey.",
+src/i18n/locales/fr/manual.json:1245: "La configuration de Jersey est stockée dans team_kits avec le nom de la maison.",
+src/i18n/locales/fr/manual.json:1258: "label": "Jersey max",
+src/i18n/locales/fr/manual.json:1986: "Course Jersey Complete est obligatoire. Une équipe sans suffisamment d'utilisations de maillots peut être bloquée d'avoir une configuration complète de l'étape.",
+src/i18n/locales/fr/manual.json:2004: "label": "Course Jersey Complet",
+src/i18n/locales/fr/manualCore.json:137: "title": "Club Branding, Logo et Jersey",
+src/i18n/locales/fr/manualCore.json:138: "subtitle": "Nom de l'équipe, couleurs, logo, jersey et sponsor noms-droits serrures.",
+src/i18n/locales/fr/manualCore.json:145: "Formats Jersey",
+src/i18n/locales/fr/manualCore.json:147: "Taille max du Jersey",
+src/i18n/locales/fr/manualCore.json:156: "Le système de jersey stocke un kit de maison dans team_kits. Il peut utiliser des maillots de piscine génériques, des retours génériques, des URL d'image ou des images téléchargées selon le mode sélectionné.",
+src/i18n/locales/fr/manualCore.json:406: "Course Jersey Complete, Vestes Rain",
+src/i18n/locales/fr/manualCore.json:407: "Course Jersey Complet",
+src/i18n/locales/fr/manualCore.json:416: "Course Jersey Complete est obligatoire en Stage Plans. Les kits de jersey manquants peuvent bloquer la configuration de l'étape.",
+src/i18n/locales/fr/manualDeepA.json:195: "subtitle": "Marque, couleurs de l'équipe, logo, base logo et jersey.",
+src/i18n/locales/fr/manualDeepA.json:202: "Jersey max",
+src/i18n/locales/fr/manualDeepA.json:211: "La configuration de Jersey est stockée dans team_kits avec le nom de la maison.",
+src/i18n/locales/fr/manualDeepB1.json:72: "Course Jersey Complete, vestes de pluie"
+src/i18n/locales/fr/manualDynamic.json:6: "clubIdentity": "Les pages d'identité du club contrôlent ce que les autres managers voient: nom de l'équipe, couleurs, logo, jersey, profil public et nom d'affichage du sponsor. Télécharger les boutons valider le type d'image et la taille avant que tout soit sauvegardé. Enregistrer les boutons persistent la nouvelle identité par les fonctions backend, de sorte que les utilisateurs devraient attendre l'état de succès avant de partir.",
+src/i18n/locales/fr/notifications.json:347: "raceJerseyComplete": "Kit complet de maillot",
+src/i18n/locales/fr/notifications.json:349: "requiredJerseyKits": "Kits de maillot requis",
+src/i18n/locales/fr/notifications.json:350: "availableJerseyKits": "Kits de maillot disponibles",
+src/i18n/locales/fr/notifications.json:351: "missingJerseyKits": "Kits de maillot manquants",
+src/i18n/locales/fr/notifications.json:414: "raceJerseysRemoval": {
+src/i18n/locales/fr/notifications.json:629: "JERSEYS": "Maillots",
+src/i18n/locales/fr/notifications.json:799: "RACE_JERSEYS_MANDATORY_WARNING": "Des maillots de course obligatoires manquent",
+src/i18n/locales/fr/notifications.json:874: "RACE_TEAM_DISQUALIFIED_JERSEYS": "Équipe retirée de la course",
+src/i18n/locales/fr/notifications.json:979: "problemJerseys": "Nombre insuffisant de kits de maillot admissibles"
+src/i18n/locales/fr/overview.json:271: "jerseys": "Maillots",
+src/i18n/locales/fr/raceDetail.json:199: "teamJersey": "Maillot d'équipe",
+src/i18n/locales/fr/racePreparation.json:310: "raceJersey": "Course Jersey Complet",
+src/i18n/locales/fr/racePreparation.json:374: "raceJerseysNeeded": "Des maillots de course nécessaires",
+src/i18n/locales/fr/racePreparation.json:385: "raceJerseyKit": "Kit de maillot de course",
+src/i18n/locales/fr/racePreparation.json:452: "stageSupplyDesc": "Configuration du ravitaillement de l’équipe pour cette étape. Les consommables s’appliquent par coureur ; Race Jersey Kit est obligatoire et les vestes de pluie sont un choix oui/non pour toute l’équipe.",
+src/i18n/locales/fr/racePreparation.json:459: "raceJerseyKit": "Race Jersey Kit",
+src/i18n/locales/fr/racePreparation.json:462: "mandatoryJersey": "Obligatoire pour tous les coureurs sélectionnés. Un Race Jersey Kit manquant bloque la préparation de l’étape.",
+src/i18n/locales/fr/racePreparation.json:471: "stageUsesPerJersey": "{{count}} utilisations d’étape par maillot",
+src/i18n/locales/fr/racePreparation.json:486: "raceJerseysNeeded": "Maillots nécessaires",
+src/i18n/locales/fr/riderProfile.json:24: "jerseys": "Maillots",
+src/i18n/locales/fr/statistics.json:134: "mostJerseys": "La plupart des maillots",
+src/i18n/locales/hr/appShell.json:53: "keepJersey": "Dres",
+src/i18n/locales/hr/club.json:67: "jersey": "Dres tima",
+src/i18n/locales/hr/club.json:68: "jerseyDescription": "Javni pregled dresa ovog tima.",
+src/i18n/locales/hr/club.json:69: "jerseyAlt": "Dres tima {{club}}",
+src/i18n/locales/hr/club.json:72: "jerseyUnavailable": "Pregled dresa nije dostupan",
+src/i18n/locales/hr/club.json:73: "jerseyUnavailableDescription": "Dres postoji, ali javna slika za pregled još nije dostupna.",
+src/i18n/locales/hr/createClub.json:18: "chooseJerseyFirst": "Prvo odaberite dres tima",
+src/i18n/locales/hr/createClub.json:21: "jersey": {
+src/i18n/locales/hr/createClub.json:79: "jerseyRequired": "Odaberite dres tima pre kreiranja tima.",
+src/i18n/locales/hr/customizeTeam.json:96: "jersey": {
+src/i18n/locales/hr/equipment.json:369: "jersey": "Komplet natjecateljskog dresa",
+src/i18n/locales/hr/equipment.json:389: "jerseyStage": "Obavezno u Stage Plans. Potreban je jedan komplet natjecateljskog dresa po izabranom vozaču.",
+src/i18n/locales/hr/equipment.json:390: "jerseyDurability": "Višekratni komplet. Svaki komplet ima 10 korišćenja na etapama pre nego što se istroši.",
+src/i18n/locales/hr/equipment.json:391: "jerseyPositive1": "Spremnost za utrku: +0.5% spremnosti setup-a",
+src/i18n/locales/hr/equipment.json:392: "jerseyPositive2": "Podrška udobnosti: +0.25% kontrole umora",
+src/i18n/locales/hr/equipment.json:393: "jerseyNegative1": "Nedostaje komplet dresa: blokira setup etape",
+src/i18n/locales/hr/equipment.json:394: "jerseyNegative2": "Istrošeni kompleti više se ne mogu koristiti",
+src/i18n/locales/hr/notifications.json:347: "raceJerseyComplete": "Komplet trkaćeg dresa",
+src/i18n/locales/hr/notifications.json:349: "requiredJerseyKits": "Potrebni kompleti dresova",
+src/i18n/locales/hr/notifications.json:350: "availableJerseyKits": "Dostupni kompleti dresova",
+src/i18n/locales/hr/notifications.json:351: "missingJerseyKits": "Nedostajući kompleti dresova",
+src/i18n/locales/hr/notifications.json:414: "raceJerseysRemoval": {
+src/i18n/locales/hr/notifications.json:632: "JERSEYS": "Majice",
+src/i18n/locales/hr/notifications.json:802: "RACE_JERSEYS_MANDATORY_WARNING": "Nedostaju obavezni dresovi za utrku",
+src/i18n/locales/hr/notifications.json:877: "RACE_TEAM_DISQUALIFIED_JERSEYS": "Momčad je uklonjena iz utrke",
+src/i18n/locales/hr/notifications.json:982: "problemJerseys": "Nema dovoljno dostupnih kompleta trkaćih dresova"
+src/i18n/locales/hr/overview.json:271: "jerseys": "Majice",
+src/i18n/locales/hr/raceDetail.json:199: "teamJersey": "Dres tima",
+src/i18n/locales/hr/racePreparation.json:310: "raceJersey": "Komplet natjecateljskog dresa",
+src/i18n/locales/hr/racePreparation.json:421: "stageSupplyDesc": "Timsko podešavanje zaliha za ovu etapu. Potrošni materijal primjenjuje se po vozaču; Race Jersey Kit je obvezan, a kišne jakne su timski da/ne izbor.",
+src/i18n/locales/hr/racePreparation.json:428: "raceJerseyKit": "Race Jersey Kit",
+src/i18n/locales/hr/racePreparation.json:431: "mandatoryJersey": "Obvezno za sve odabrane vozače. Nedostatak Race Jersey Kit-a blokira pripremu etape.",
+src/i18n/locales/hr/racePreparation.json:440: "stageUsesPerJersey": "{{count}} korištenja po etapama za svaki dres",
+src/i18n/locales/hr/racePreparation.json:455: "raceJerseysNeeded": "Potrebno trkaćih dresova",
+src/i18n/locales/hr/racePreparation.json:574: "raceJerseysNeeded": "Potrebni trkaći dresovi",
+src/i18n/locales/hr/racePreparation.json:585: "raceJerseyKit": "Komplet trkaćeg dresa",
+src/i18n/locales/hr/riderProfile.json:24: "jerseys": "Dresovi",
+src/i18n/locales/hr/statistics.json:134: "mostJerseys": "Najviše majica",
+src/i18n/locales/it/appShell.json:53: "keepJersey": "Jersey",
+src/i18n/locales/it/club.json:67: "jersey": "Maglia di squadra",
+src/i18n/locales/it/club.json:68: "jerseyDescription": "Anteprima dei kit pubblici per questa squadra.",
+src/i18n/locales/it/club.json:69: "jerseyAlt": "Maglia {{club}}",
+src/i18n/locales/it/club.json:72: "jerseyUnavailable": "Anteprima Jersey non disponibile",
+src/i18n/locales/it/club.json:73: "jerseyUnavailableDescription": "Il kit esiste, ma non è ancora disponibile alcuna immagine di anteprima pubblica.",
+src/i18n/locales/it/club.json:212: "jerseyPreviewUnavailable": "Anteprima Jersey non disponibile",
+src/i18n/locales/it/createClub.json:18: "chooseJerseyFirst": "Scegli prima una maglia della squadra",
+src/i18n/locales/it/createClub.json:21: "jersey": {
+src/i18n/locales/it/createClub.json:79: "jerseyRequired": "Scegli una maglia della squadra prima di creare la squadra.",
+src/i18n/locales/it/customizeTeam.json:96: "jersey": {
+src/i18n/locales/it/customizeTeam.json:98: "title": "Gestione del Jersey",
+src/i18n/locales/it/customizeTeam.json:100: "costTitle": "Costo del cambio Jersey",
+src/i18n/locales/it/customizeTeam.json:107: "applyPaid": "Applicare jersey · {{cost}} Coins",
+src/i18n/locales/it/customizeTeam.json:114: "tooLarge": "L'immagine del Jersey non deve essere superiore a 2 MB.",
+src/i18n/locales/it/customizeTeam.json:117: "remoteFailed": "Impossibile caricare l'immagine jersey dall'URL.",
+src/i18n/locales/it/customizeTeam.json:120: "ready": "Nuova immagine jersey è pronta. Fare clic su Applica jersey per salvarlo.",
+src/i18n/locales/it/customizeTeam.json:121: "previewFailed": "Impossibile visualizzare l'immagine di jersey in anteprima.",
+src/i18n/locales/it/customizeTeam.json:122: "urlProtocol": "L'URL dell'immagine del Jersey deve iniziare con http:// o https://",
+src/i18n/locales/it/customizeTeam.json:123: "urlAccepted": "URL Jersey accettato. Fare clic su Applica maglia per salvarlo.",
+src/i18n/locales/it/customizeTeam.json:124: "urlInvalid": "Fornire un URL immagine jersey valido.",
+src/i18n/locales/it/customizeTeam.json:129: "savedPaid": "Jersey applicato e salvato per le Coins {{cost}}.",
+src/i18n/locales/it/customizeTeam.json:130: "savedFree": "Jersey applicato e salvato. Questa stagione è stato utilizzato il cambio di maglia gratis di jersey."
+src/i18n/locales/it/equipment.json:312: "description": "Forniture Race utilizzate da Race Preparation e Stage Plans. I consumabili sono utilizzati una volta; Race Jersey Complete e Rain Jackets sono forniture riutilizzabili durevoli con limiti di utilizzo del tappa.",
+src/i18n/locales/it/equipment.json:339: "durablePanelDescription": "Race Jersey Complete e Rain Jackets sono unità riutilizzabili. Questo pannello mantiene i loro conti e la durata di utilizzo dello stadio rimanente visibile in un unico posto.",
+src/i18n/locales/it/equipment.json:369: "jersey": "Gara Jersey Completa",
+src/i18n/locales/it/equipment.json:389: "jerseyStage": "Obbligatoria in Stage Plans. Per ogni ciclista selezionato è richiesto un kit di maglia da corsa.",
+src/i18n/locales/it/equipment.json:390: "jerseyDurability": "Kit riutilizzabile durevole. Ogni kit ha 10 stage prima che diventi consumato.",
+src/i18n/locales/it/equipment.json:391: "jerseyPositive1": "Prontità gara: +0,5% di preparazione setup",
+src/i18n/locales/it/equipment.json:392: "jerseyPositive2": "Supporto comfort: +0,25% controllo fatica",
+src/i18n/locales/it/equipment.json:393: "jerseyNegative1": "Kit maglia mancante: blocca la configurazione della tappa",
+src/i18n/locales/it/equipment.json:394: "jerseyNegative2": "I kit indossati non sono più utilizzabili",
+src/i18n/locales/it/manual.json:212: "title": "Club Branding, Logo e Jersey",
+src/i18n/locales/it/manual.json:214: "overview": "La tua identità del club include nome, colori, logo e jersey. È gestito tramite Personalizza Team, ma sponsorizzare le offerte di nomi-diritti può temporaneamente bloccare o cambiare parti del pubblico display.",
+src/i18n/locales/it/manual.json:219: "Il sistema jersey memorizza un kit domestico in team_kits. Può utilizzare maglie da piscina generiche, ripiego generico, URL di immagine o immagini caricate a seconda della modalità selezionata.",
+src/i18n/locales/it/manual.json:232: "label": "Formati Jersey",
+src/i18n/locales/it/manual.json:554: "Race Jersey Complete è obbligatorio in Stage Plans. I kit di jersey mancanti possono bloccare l'installazione del tappa.",
+src/i18n/locales/it/manual.json:565: "value": "Gara Jersey Completo, Giacche Rain"
+src/i18n/locales/it/manual.json:568: "label": "Gara Jersey Completa",
+src/i18n/locales/it/manual.json:1239: "subtitle": "Branding, colori della squadra, logo, logo base e jersey.",
+src/i18n/locales/it/manual.json:1245: "Jersey config è memorizzato in team_kits con nome home.",
+src/i18n/locales/it/manual.json:1258: "label": "Jersey max",
+src/i18n/locales/it/manual.json:1986: "Gara Jersey Complete è obbligatorio. Un team senza abbastanza jersey usa il tappa può essere bloccato da una configurazione completa del tappa.",
+src/i18n/locales/it/manual.json:2004: "label": "Gara Jersey Completa",
+src/i18n/locales/it/manualCore.json:137: "title": "Club Branding, Logo e Jersey",
+src/i18n/locales/it/manualCore.json:139: "overview": "La tua identità del club include nome, colori, logo e jersey. È gestito tramite Personalizza Team, ma sponsorizzare le offerte di nomi-diritti può temporaneamente bloccare o cambiare parti del pubblico display.",
+src/i18n/locales/it/manualCore.json:145: "Formati Jersey",
+src/i18n/locales/it/manualCore.json:156: "Il sistema jersey memorizza un kit domestico in team_kits. Può utilizzare maglie da piscina generiche, ripiego generico, URL di immagine o immagini caricate a seconda della modalità selezionata.",
+src/i18n/locales/it/manualCore.json:406: "Gara Jersey Completo, Giacche Rain",
+src/i18n/locales/it/manualCore.json:407: "Gara Jersey Completa",
+src/i18n/locales/it/manualCore.json:416: "Race Jersey Complete è obbligatorio in Stage Plans. I kit di jersey mancanti possono bloccare l'installazione del tappa.",
+src/i18n/locales/it/manualDeepA.json:195: "subtitle": "Branding, colori della squadra, logo, logo base e jersey.",
+src/i18n/locales/it/manualDeepA.json:202: "Jersey max",
+src/i18n/locales/it/manualDeepA.json:211: "Jersey config è memorizzato in team_kits con nome home.",
+src/i18n/locales/it/manualDeepB1.json:72: "Race Jersey Completo, giacche antipioggia"
+src/i18n/locales/it/manualDynamic.json:6: "clubIdentity": "Le pagine di identità del club controllano ciò che gli altri manager vedono: nome del team, colori, logo, jersey, profilo pubblico e nome dello schermo sponsor. I pulsanti di caricamento convalidano il tipo e la dimensione dell'immagine prima che venga salvato qualcosa. I pulsanti di salvataggio persistono nella nuova identità attraverso le funzioni di backend, quindi gli utenti dovrebbero aspettare lo stato di successo prima di partire. Se i diritti di denominazione sono attivi, alcuni campi possono essere bloccati perché il contratto dello sponsor ha un controllo temporaneo sul nome dello schermo pubblico.",
+src/i18n/locales/it/notifications.json:347: "raceJerseyComplete": "Kit completo maglia gara",
+src/i18n/locales/it/notifications.json:349: "requiredJerseyKits": "Kit maglia necessari",
+src/i18n/locales/it/notifications.json:350: "availableJerseyKits": "Kit maglia disponibili",
+src/i18n/locales/it/notifications.json:351: "missingJerseyKits": "Kit maglia mancanti",
+src/i18n/locales/it/notifications.json:414: "raceJerseysRemoval": {
+src/i18n/locales/it/notifications.json:629: "JERSEYS": "Maglie",
+src/i18n/locales/it/notifications.json:799: "RACE_JERSEYS_MANDATORY_WARNING": "Mancano le maglie da gara obbligatorie",
+src/i18n/locales/it/notifications.json:874: "RACE_TEAM_DISQUALIFIED_JERSEYS": "Squadra rimossa dalla gara",
+src/i18n/locales/it/notifications.json:979: "problemJerseys": "Kit maglia gara idonei insufficienti"
+src/i18n/locales/it/overview.json:271: "jerseys": "Maglie",
+src/i18n/locales/it/raceDetail.json:199: "teamJersey": "Maglia di squadra",
+src/i18n/locales/it/racePreparation.json:310: "raceJersey": "Gara Jersey Completa",
+src/i18n/locales/it/racePreparation.json:374: "raceJerseysNeeded": "Maglia da corsa necessaria",
+src/i18n/locales/it/racePreparation.json:385: "raceJerseyKit": "Kit di corse Jersey",
+src/i18n/locales/it/racePreparation.json:452: "stageSupplyDesc": "Configurazione dei rifornimenti di squadra per questa tappa. I consumabili si applicano per ciclista; Race Jersey Kit è obbligatorio e le giacche antipioggia sono una scelta sì/no per tutta la squadra.",
+src/i18n/locales/it/racePreparation.json:459: "raceJerseyKit": "Race Jersey Kit",
+src/i18n/locales/it/racePreparation.json:462: "mandatoryJersey": "Obbligatorio per tutti i ciclisti selezionati. La mancanza del Race Jersey Kit blocca la preparazione della tappa.",
+src/i18n/locales/it/racePreparation.json:471: "stageUsesPerJersey": "{{count}} utilizzi di tappa per maglia",
+src/i18n/locales/it/racePreparation.json:486: "raceJerseysNeeded": "Maglie necessarie",
+src/i18n/locales/it/riderProfile.json:24: "jerseys": "Maglie",
+src/i18n/locales/it/sharedRiderModal.json:52: "rouleur": "RouleurCity in New Jersey USA",
+src/i18n/locales/it/statistics.json:134: "mostJerseys": "La maggior parte delle maglie",
+src/i18n/locales/it/statistics.json:171: "rouleur": "RouleurCity in New Jersey USA",
+src/i18n/locales/ru/appShell.json:53: "keepJersey": "Джерси",
+src/i18n/locales/ru/club.json:67: "jersey": "Командная футболка",
+src/i18n/locales/ru/club.json:68: "jerseyDescription": "Просмотр комплекта для этой команды.",
+src/i18n/locales/ru/club.json:69: "jerseyAlt": "{{club}} Брюки",
+src/i18n/locales/ru/club.json:72: "jerseyUnavailable": "Просмотр в Джерси не доступен",
+src/i18n/locales/ru/club.json:73: "jerseyUnavailableDescription": "Комплект уже существует, но пока нет публичного просмотра.",
+src/i18n/locales/ru/club.json:212: "jerseyPreviewUnavailable": "Просмотр в Джерси не доступен",
+src/i18n/locales/ru/createClub.json:18: "chooseJerseyFirst": "Сначала выбери одну команду, футболку.",
+src/i18n/locales/ru/createClub.json:21: "jersey": {
+src/i18n/locales/ru/createClub.json:79: "jerseyRequired": "Пожалуйста, выбери футболку для команды перед тем, как создать команду.",
+src/i18n/locales/ru/customizeTeam.json:96: "jersey": {
+src/i18n/locales/ru/equipment.json:369: "jersey": "Скачки в Джерси завершены",
+src/i18n/locales/ru/equipment.json:389: "jerseyStage": "Обязательно в Stage Plans. Для каждого выбранного гонщика требуется один комплект гоночной формы.",
+src/i18n/locales/ru/equipment.json:390: "jerseyDurability": "Каждый комплект имеет 10 стадий, прежде чем он износится.",
+src/i18n/locales/ru/equipment.json:391: "jerseyPositive1": "Готовность к гоночному движению: +0,5% готовности к установке",
+src/i18n/locales/ru/equipment.json:392: "jerseyPositive2": "Удобство: +0,25%",
+src/i18n/locales/ru/equipment.json:393: "jerseyNegative1": "Нет гоночной формы: настройка этапа заблокирована",
+src/i18n/locales/ru/equipment.json:394: "jerseyNegative2": "Недопущенные наборы больше не используются",
+src/i18n/locales/ru/notifications.json:347: "raceJerseyComplete": "Комплект гоночной формы",
+src/i18n/locales/ru/notifications.json:349: "requiredJerseyKits": "Необходимые комплекты формы",
+src/i18n/locales/ru/notifications.json:350: "availableJerseyKits": "Доступные комплекты формы",
+src/i18n/locales/ru/notifications.json:351: "missingJerseyKits": "Недостающие комплекты формы",
+src/i18n/locales/ru/notifications.json:414: "raceJerseysRemoval": {
+src/i18n/locales/ru/notifications.json:635: "JERSEYS": "Майки",
+src/i18n/locales/ru/notifications.json:805: "RACE_JERSEYS_MANDATORY_WARNING": "Не хватает обязательных гоночных комплектов",
+src/i18n/locales/ru/notifications.json:880: "RACE_TEAM_DISQUALIFIED_JERSEYS": "Команда снята с гонки",
+src/i18n/locales/ru/notifications.json:985: "problemJerseys": "Недостаточно доступных комплектов гоночной формы"
+src/i18n/locales/ru/overview.json:271: "jerseys": "Джерси",
+src/i18n/locales/ru/raceDetail.json:199: "teamJersey": "Командная футболка",
+src/i18n/locales/ru/racePreparation.json:310: "raceJersey": "Скачки в Джерси завершены",
+src/i18n/locales/ru/racePreparation.json:374: "raceJerseysNeeded": "Тревожные шутки",
+src/i18n/locales/ru/racePreparation.json:385: "raceJerseyKit": "Гоночный набор",
+src/i18n/locales/ru/racePreparation.json:452: "stageSupplyDesc": "Командная настройка запасов на этот этап. Расходники применяются на каждого гонщика; Race Jersey Kit обязателен, дождевые куртки выбираются для всей команды.",
+src/i18n/locales/ru/racePreparation.json:459: "raceJerseyKit": "Race Jersey Kit",
+src/i18n/locales/ru/racePreparation.json:462: "mandatoryJersey": "Обязательно для всех выбранных гонщиков. Отсутствующий Race Jersey Kit блокирует подготовку этапа.",
+src/i18n/locales/ru/racePreparation.json:471: "stageUsesPerJersey": "{{count}} использований этапа на форму",
+src/i18n/locales/ru/racePreparation.json:486: "raceJerseysNeeded": "Нужно гоночных форм",
+src/i18n/locales/ru/riderProfile.json:24: "jerseys": "Джерси",
+src/i18n/locales/ru/statistics.json:134: "mostJerseys": "Большинство футболок",
+src/i18n/locales/sr-Latn/appShell.json:53: "keepJersey": "Dres",
+src/i18n/locales/sr-Latn/club.json:67: "jersey": "Dres tima",
+src/i18n/locales/sr-Latn/club.json:68: "jerseyDescription": "Javni pregled dresa ovog tima.",
+src/i18n/locales/sr-Latn/club.json:69: "jerseyAlt": "Dres tima {{club}}",
+src/i18n/locales/sr-Latn/club.json:72: "jerseyUnavailable": "Pregled dresa nije dostupan",
+src/i18n/locales/sr-Latn/club.json:73: "jerseyUnavailableDescription": "Dres postoji, ali javna slika za pregled još nije dostupna.",
+src/i18n/locales/sr-Latn/createClub.json:18: "chooseJerseyFirst": "Prvo izaberite dres tima",
+src/i18n/locales/sr-Latn/createClub.json:21: "jersey": {
+src/i18n/locales/sr-Latn/createClub.json:79: "jerseyRequired": "Izaberite dres tima pre kreiranja tima.",
+src/i18n/locales/sr-Latn/customizeTeam.json:96: "jersey": {
+src/i18n/locales/sr-Latn/equipment.json:369: "jersey": "Komplet trkačkog dresa",
+src/i18n/locales/sr-Latn/equipment.json:389: "jerseyStage": "Obavezno u Stage Plans. Potreban je jedan komplet trkačkog dresa po izabranom vozaču.",
+src/i18n/locales/sr-Latn/equipment.json:390: "jerseyDurability": "Višekratni komplet. Svaki komplet ima 10 korišćenja na etapama pre nego što se istroši.",
+src/i18n/locales/sr-Latn/equipment.json:391: "jerseyPositive1": "Spremnost za trku: +0.5% spremnosti setup-a",
+src/i18n/locales/sr-Latn/equipment.json:392: "jerseyPositive2": "Podrška udobnosti: +0.25% kontrole umora",
+src/i18n/locales/sr-Latn/equipment.json:393: "jerseyNegative1": "Nedostaje komplet dresa: blokira setup etape",
+src/i18n/locales/sr-Latn/equipment.json:394: "jerseyNegative2": "Istrošeni kompleti više se ne mogu koristiti",
+src/i18n/locales/sr-Latn/notifications.json:347: "raceJerseyComplete": "Komplet trkačkog dresa",
+src/i18n/locales/sr-Latn/notifications.json:349: "requiredJerseyKits": "Potrebni kompleti dresova",
+src/i18n/locales/sr-Latn/notifications.json:350: "availableJerseyKits": "Dostupni kompleti dresova",
+src/i18n/locales/sr-Latn/notifications.json:351: "missingJerseyKits": "Nedostajući kompleti dresova",
+src/i18n/locales/sr-Latn/notifications.json:414: "raceJerseysRemoval": {
+src/i18n/locales/sr-Latn/notifications.json:632: "JERSEYS": "Majice",
+src/i18n/locales/sr-Latn/notifications.json:802: "RACE_JERSEYS_MANDATORY_WARNING": "Nedostaju obavezni trkački dresovi",
+src/i18n/locales/sr-Latn/notifications.json:877: "RACE_TEAM_DISQUALIFIED_JERSEYS": "Tim je uklonjen sa trke",
+src/i18n/locales/sr-Latn/notifications.json:982: "problemJerseys": "Nema dovoljno dostupnih kompleta trkačkih dresova"
+src/i18n/locales/sr-Latn/overview.json:271: "jerseys": "Majice",
+src/i18n/locales/sr-Latn/raceDetail.json:201: "teamJersey": "Dres tima",
+src/i18n/locales/sr-Latn/racePreparation.json:310: "raceJersey": "Komplet trkačkog dresa",
+src/i18n/locales/sr-Latn/racePreparation.json:421: "stageSupplyDesc": "Timsko podešavanje zaliha za ovu etapu. Potrošni materijal se računa po vozaču; Race Jersey Kit je obavezan, a kišne jakne su timski izbor da/ne.",
+src/i18n/locales/sr-Latn/racePreparation.json:428: "raceJerseyKit": "Race Jersey Kit",
+src/i18n/locales/sr-Latn/racePreparation.json:431: "mandatoryJersey": "Obavezno za sve izabrane vozače. Nedostatak Race Jersey Kit-a blokira podešavanje etape.",
+src/i18n/locales/sr-Latn/racePreparation.json:440: "stageUsesPerJersey": "{{count}} korišćenja po etapama za svaki dres",
+src/i18n/locales/sr-Latn/racePreparation.json:455: "raceJerseysNeeded": "Potrebno trkačkih dresova",
+src/i18n/locales/sr-Latn/racePreparation.json:574: "raceJerseysNeeded": "Potrebni trkački dresovi",
+src/i18n/locales/sr-Latn/racePreparation.json:585: "raceJerseyKit": "Komplet trkačkog dresa",
+src/i18n/locales/sr-Latn/riderProfile.json:24: "jerseys": "Majice",
+src/i18n/locales/sr-Latn/statistics.json:134: "mostJerseys": "Najviše majica",
+src/lib/notificationPreferences.ts:465: RACE_TEAM_DISQUALIFIED_JERSEYS: 'races',
+src/lib/notificationPreferences.ts:467: RACE_JERSEYS_MANDATORY_WARNING: 'raceSupplies',
+src/lib/tutorials.ts:482: 'We can show you how team and rider statistics work, including current season rankings, historical results, rider points, podiums, and jerseys.',
+src/lib/tutorials.ts:511: 'You can compare riders by international points, stage finish points, general classification and one-day race points. You can also see riders with the most podiums and most jerseys.\n\n' +
+src/pages/CreateClub.tsx:705: * Lets the user choose one starter jersey from the predefined generic kit pool.
+src/pages/CreateClub.tsx:720: <label className="block text-sm font-medium text-gray-700">{t('jersey.title')}</label>
+src/pages/CreateClub.tsx:722: {t('jersey.description')}
+src/pages/CreateClub.tsx:732: aria-label={t('jersey.scrollLeft')}
+src/pages/CreateClub.tsx:757: aria-label={t('jersey.select', { index: index + 1 })}
+src/pages/CreateClub.tsx:762: alt={t('jersey.alt', { index: index + 1 })}
+src/pages/CreateClub.tsx:776: aria-label={t('jersey.scrollRight')}
+src/pages/CreateClub.tsx:784: {t('jersey.required')}
+src/pages/CreateClub.tsx:1034: setError(t('errors.jerseyRequired'))
+src/pages/CreateClub.tsx:1549: title={!selectedKitUrl ? t('page.chooseJerseyFirst') : undefined}
+src/pages/CustomizeTeam.tsx:4: * update_club_branding_v1 and jersey persistence to public.team_kits.
+src/pages/CustomizeTeam.tsx:10: * - Jersey config persists to public.team_kits using the `config` jsonb column.
+src/pages/CustomizeTeam.tsx:83: jersey_change_cost: number
+src/pages/CustomizeTeam.tsx:84: jersey_free_change_used: boolean
+src/pages/CustomizeTeam.tsx:104: * Preserves the jersey selected during team creation, so "restore original"
+src/pages/CustomizeTeam.tsx:122: const MAX_JERSEY_FILE_SIZE = 2 * 1024 * 1024 // 2 MB
+src/pages/CustomizeTeam.tsx:123: const MAX_JERSEY_DIMENSION = 512
+src/pages/CustomizeTeam.tsx:202: function validateJerseyUploadFile(file: File): Promise<string | null> {
+src/pages/CustomizeTeam.tsx:206: return Promise.resolve(appI18n.t('jersey.invalidType', { ns: 'customizeTeam' }))
+src/pages/CustomizeTeam.tsx:209: if (file.size > MAX_JERSEY_FILE_SIZE) {
+src/pages/CustomizeTeam.tsx:210: return Promise.resolve(appI18n.t('jersey.tooLarge', { ns: 'customizeTeam' }))
+src/pages/CustomizeTeam.tsx:219: image.naturalWidth > MAX_JERSEY_DIMENSION ||
+src/pages/CustomizeTeam.tsx:220: image.naturalHeight > MAX_JERSEY_DIMENSION
+src/pages/CustomizeTeam.tsx:225: resolve(appI18n.t('jersey.dimensions', { ns: 'customizeTeam' }))
+src/pages/CustomizeTeam.tsx:234: resolve(appI18n.t('jersey.readFailed', { ns: 'customizeTeam' }))
+src/pages/CustomizeTeam.tsx:242: * For remote jersey URLs, we only verify that the image can load.
+src/pages/CustomizeTeam.tsx:244: function validateRemoteJerseyImage(url: string): Promise<string | null> {
+src/pages/CustomizeTeam.tsx:253: resolve(appI18n.t('jersey.remoteFailed', { ns: 'customizeTeam' }))
+src/pages/CustomizeTeam.tsx:345: /** ---------------- Jersey / Kits ---------------- */
+src/pages/CustomizeTeam.tsx:436: function GenericJerseySvg({
+src/pages/CustomizeTeam.tsx:542: const [jerseyUrlInput, setJerseyUrlInput] = useState('')
+src/pages/CustomizeTeam.tsx:567: setJerseyUrlInput('')
+src/pages/CustomizeTeam.tsx:568: setKitNotice(t('jersey.loadSavedWithError', { error: error.message }))
+src/pages/CustomizeTeam.tsx:580: setJerseyUrlInput('')
+src/pages/CustomizeTeam.tsx:591: setJerseyUrlInput(normalized.mode === 'image_url' ? normalized.image_url ?? '' : '')
+src/pages/CustomizeTeam.tsx:600: setJerseyUrlInput('')
+src/pages/CustomizeTeam.tsx:601: setKitNotice(t('jersey.loadSavedFailed'))
+src/pages/CustomizeTeam.tsx:613: async function handleJerseyUpload(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+src/pages/CustomizeTeam.tsx:617: const validationError = await validateJerseyUploadFile(file)
+src/pages/CustomizeTeam.tsx:637: setJerseyUrlInput('')
+src/pages/CustomizeTeam.tsx:638: setKitNotice(t('jersey.ready'))
+src/pages/CustomizeTeam.tsx:640: setKitNotice(t('jersey.previewFailed'))
+src/pages/CustomizeTeam.tsx:646: async function handleJerseyUrlCommit(): Promise<boolean> {
+src/pages/CustomizeTeam.tsx:647: const trimmedUrl = jerseyUrlInput.trim()
+src/pages/CustomizeTeam.tsx:657: setKitNotice(t('jersey.urlProtocol'))
+src/pages/CustomizeTeam.tsx:661: const validationError = await validateRemoteJerseyImage(trimmedUrl)
+src/pages/CustomizeTeam.tsx:677: setKitNotice(t('jersey.urlAccepted'))
+src/pages/CustomizeTeam.tsx:680: setKitNotice(t('jersey.urlInvalid'))
+src/pages/CustomizeTeam.tsx:685: function handleRestoreOriginalJersey(): void {
+src/pages/CustomizeTeam.tsx:688: setJerseyUrlInput('')
+src/pages/CustomizeTeam.tsx:691: ? t('jersey.originalRestored')
+src/pages/CustomizeTeam.tsx:692: : t('jersey.defaultRestored'),
+src/pages/CustomizeTeam.tsx:696: async function handleApplyJersey(): Promise<void> {
+src/pages/CustomizeTeam.tsx:699: const typedUrl = jerseyUrlInput.trim()
+src/pages/CustomizeTeam.tsx:702: const committed = await handleJerseyUrlCommit()
+src/pages/CustomizeTeam.tsx:741: setKitNotice(t('jersey.saveFailedWithError', { error: error.message }))
+src/pages/CustomizeTeam.tsx:752: setJerseyUrlInput(normalized.mode === 'image_url' ? normalized.image_url ?? '' : '')
+src/pages/CustomizeTeam.tsx:755: customizationAccess?.jersey_change_cost
+src/pages/CustomizeTeam.tsx:756: ? t('jersey.savedPaid', { cost: customizationAccess.jersey_change_cost })
+src/pages/CustomizeTeam.tsx:757: : t('jersey.savedFree'),
+src/pages/CustomizeTeam.tsx:761: setKitNotice(err instanceof Error ? err.message : t('jersey.saveFailed'))
+src/pages/CustomizeTeam.tsx:773: <div className="font-semibold text-slate-900">{t('jersey.costTitle')}</div>
+src/pages/CustomizeTeam.tsx:775: {t('jersey.costHelp')}
+src/pages/CustomizeTeam.tsx:778: {t('jersey.currentCost', { cost: customizationAccess?.jersey_change_cost ?? 0 })}
+src/pages/CustomizeTeam.tsx:785: <span>{t('jersey.upload')}</span>
+src/pages/CustomizeTeam.tsx:790: onChange={handleJerseyUpload}
+src/pages/CustomizeTeam.tsx:795: value={jerseyUrlInput}
+src/pages/CustomizeTeam.tsx:796: onChange={event => setJerseyUrlInput(event.target.value)}
+src/pages/CustomizeTeam.tsx:798: void handleJerseyUrlCommit()
+src/pages/CustomizeTeam.tsx:803: void handleJerseyUrlCommit()
+src/pages/CustomizeTeam.tsx:806: placeholder={t('jersey.urlPlaceholder')}
+src/pages/CustomizeTeam.tsx:813: void handleApplyJersey()
+src/pages/CustomizeTeam.tsx:819: ? t('jersey.applying')
+src/pages/CustomizeTeam.tsx:820: : customizationAccess?.jersey_change_cost
+src/pages/CustomizeTeam.tsx:821: ? t('jersey.applyPaid', { cost: customizationAccess.jersey_change_cost })
+src/pages/CustomizeTeam.tsx:822: : t('jersey.applyFree')}
+src/pages/CustomizeTeam.tsx:829: <div className="text-sm font-semibold text-slate-900">{t('jersey.previewTitle')}</div>
+src/pages/CustomizeTeam.tsx:831: {t('jersey.previewText')}
+src/pages/CustomizeTeam.tsx:836: {t('jersey.unsaved')}
+src/pages/CustomizeTeam.tsx:845: alt={t('jersey.alt')}
+src/pages/CustomizeTeam.tsx:855: <GenericJerseySvg
+src/pages/CustomizeTeam.tsx:865: {t('jersey.fileRules')}
+src/pages/CustomizeTeam.tsx:1849: <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{t('jersey.eyebrow')}</div>
+src/pages/CustomizeTeam.tsx:1850: <h3 className="mt-1 text-lg font-bold text-slate-950">{t('jersey.title')}</h3>
+src/pages/CustomizeTeam.tsx:1851: <p className="mt-1 text-sm text-slate-500">{t('jersey.description')}</p>
+src/pages/dashboard/Manual.tsx:123: title: 'Club Branding, Logo and Jersey',
+src/pages/dashboard/Manual.tsx:124: subtitle: 'Team name, colors, logo, jersey and sponsor naming-rights locks.',
+src/pages/dashboard/Manual.tsx:126: 'Your club identity includes name, colors, logo and jersey. It is managed through Customize Team, but sponsor naming-rights deals can temporarily lock or change parts of the public display.',
+src/pages/dashboard/Manual.tsx:130: { label: 'Jersey formats', value: 'JPG, PNG, WEBP' },
+src/pages/dashboard/Manual.tsx:131: { label: 'Jersey max size', value: '1 MB and 512 × 512 px or smaller' },
+src/pages/dashboard/Manual.tsx:138: 'The jersey system stores a home kit in team_kits. It can use generic pool jerseys, generic fallback, image URLs or uploaded images depending on the selected mode.',
+src/pages/dashboard/Manual.tsx:342: 'Race Supplies are used by Race Preparation and Stage Plans. Some supplies are consumed every stage, while jerseys and rain jackets are durable reusable items with stage-use limits.',
+src/pages/dashboard/Manual.tsx:345: { label: 'Durable supplies', value: 'Race Jersey Complete, Rain Jackets' },
+src/pages/dashboard/Manual.tsx:346: { label: 'Race Jersey Complete', value: 'Mandatory; 10 stage uses per unit' },
+src/pages/dashboard/Manual.tsx:353: 'Race Jersey Complete is mandatory in Stage Plans. Missing jersey kits can block stage setup.',
+src/pages/dashboard/Manual.tsx:676: "overview": "My Profile edits the user account profile. It is separate from the team name, team logo and jersey.",
+src/pages/dashboard/Manual.tsx:889: "subtitle": "Branding, team colors, logo, base logo and jersey.",
+src/pages/dashboard/Manual.tsx:890: "overview": "Customize Team manages club name, primary/secondary colors, logo and home jersey configuration.",
+src/pages/dashboard/Manual.tsx:901: "label": "Jersey max",
+src/pages/dashboard/Manual.tsx:913: "Jersey config is stored in team_kits with name home.",
+src/pages/dashboard/Manual.tsx:914: "A jersey can be generic, from a generic pool, a remote image URL or an uploaded image."
+src/pages/dashboard/Manual.tsx:1650: { "label": "Race Jersey Complete", "value": "Mandatory durable item; 10 stage uses per unit" },
+src/pages/dashboard/Manual.tsx:1657: "Race Jersey Complete is mandatory. A team without enough usable jersey stage-uses can be blocked from having a complete stage setup.",
+src/pages/dashboard/Manual.tsx:2670: else if (d.includes('jersey') || d.includes('rain jackets') || d.includes('rain jacket')) key = 'durableSupplies'
+src/pages/dashboard/Manual.tsx:2786: if (d.includes('jersey') || d.includes('rain jackets') || d.includes('rain jacket')) {
+src/pages/dashboard/Manual.tsx:2787: return 'Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Mandatory jersey shortages can block readiness; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.'
+src/pages/dashboard/Overview.tsx:220: jerseys: number;
+src/pages/dashboard/Overview.tsx:231: jerseys: 0,
+src/pages/dashboard/Overview.tsx:3237: jerseys: asNumber(safe.jerseys, 0),
+src/pages/dashboard/Overview.tsx:7065: label: t("seasonSnapshot.jerseys"),
+src/pages/dashboard/Overview.tsx:7066: value: stats.jerseys,
+src/pages/dashboard/Overview.tsx:8443: description="Unlock current-season race volume, international points, wins, podiums, Top 10 results, jerseys, and best general-classification performance."
+src/pages/dashboard/RaceDetailPage.tsx:361: jersey_url_snapshot?: string | null
+src/pages/dashboard/RaceDetailPage.tsx:586: const DEFAULT_TEAM_JERSEY_URL =
+src/pages/dashboard/RaceDetailPage.tsx:981: function TeamJerseyImage({
+src/pages/dashboard/RaceDetailPage.tsx:989: const preferredJerseyUrl =
+src/pages/dashboard/RaceDetailPage.tsx:990: team.jersey_url_snapshot?.trim() || DEFAULT_TEAM_JERSEY_URL
+src/pages/dashboard/RaceDetailPage.tsx:991: const [jerseyUrl, setJerseyUrl] = useState(preferredJerseyUrl)
+src/pages/dashboard/RaceDetailPage.tsx:994: setJerseyUrl(preferredJerseyUrl)
+src/pages/dashboard/RaceDetailPage.tsx:995: }, [preferredJerseyUrl])
+src/pages/dashboard/RaceDetailPage.tsx:1001: {jerseyUrl ? (
+src/pages/dashboard/RaceDetailPage.tsx:1003: src={jerseyUrl}
+src/pages/dashboard/RaceDetailPage.tsx:1004: alt={`${teamName} jersey`}
+src/pages/dashboard/RaceDetailPage.tsx:1009: setJerseyUrl((current) =>
+src/pages/dashboard/RaceDetailPage.tsx:1010: current !== DEFAULT_TEAM_JERSEY_URL
+src/pages/dashboard/RaceDetailPage.tsx:1011: ? DEFAULT_TEAM_JERSEY_URL
+src/pages/dashboard/RaceDetailPage.tsx:1027: const ORPHAN_RESULT_TEAM_GENERIC_JERSEY_URL = DEFAULT_TEAM_JERSEY_URL
+src/pages/dashboard/RaceDetailPage.tsx:1072: function ResultTeamJerseyCell({
+src/pages/dashboard/RaceDetailPage.tsx:1112: * Such a row gets the neutral generic jersey and deliberately receives no
+src/pages/dashboard/RaceDetailPage.tsx:1115: const preferredJerseyUrl =
+src/pages/dashboard/RaceDetailPage.tsx:1116: participantTeam?.jersey_url_snapshot?.trim() ||
+src/pages/dashboard/RaceDetailPage.tsx:1118: ? ORPHAN_RESULT_TEAM_GENERIC_JERSEY_URL
+src/pages/dashboard/RaceDetailPage.tsx:1123: const [jerseyUrl, setJerseyUrl] = useState<string | null>(
+src/pages/dashboard/RaceDetailPage.tsx:1124: preferredJerseyUrl
+src/pages/dashboard/RaceDetailPage.tsx:1128: setJerseyUrl(preferredJerseyUrl)
+src/pages/dashboard/RaceDetailPage.tsx:1129: }, [preferredJerseyUrl])
+src/pages/dashboard/RaceDetailPage.tsx:1131: if (!jerseyUrl) {
+src/pages/dashboard/RaceDetailPage.tsx:1152: const jerseyPreview = (
+src/pages/dashboard/RaceDetailPage.tsx:1155: src={jerseyUrl}
+src/pages/dashboard/RaceDetailPage.tsx:1166: setJerseyUrl((current) =>
+src/pages/dashboard/RaceDetailPage.tsx:1167: current && current !== ORPHAN_RESULT_TEAM_GENERIC_JERSEY_URL
+src/pages/dashboard/RaceDetailPage.tsx:1168: ? ORPHAN_RESULT_TEAM_GENERIC_JERSEY_URL
+src/pages/dashboard/RaceDetailPage.tsx:1192: {jerseyPreview}
+src/pages/dashboard/RaceDetailPage.tsx:1205: {jerseyPreview}
+src/pages/dashboard/RaceDetailPage.tsx:3652: return 'Leader jersey day'
+src/pages/dashboard/RaceDetailPage.tsx:4448: jersey_url_snapshot?: string | null
+src/pages/dashboard/RaceDetailPage.tsx:4449: jersey_url?: string | null
+src/pages/dashboard/RaceDetailPage.tsx:4452: team_jersey_url?: string | null
+src/pages/dashboard/RaceDetailPage.tsx:4583: const TEAM_JERSEY_FIELD_KEYS = [
+src/pages/dashboard/RaceDetailPage.tsx:4584: 'custom_jersey_url',
+src/pages/dashboard/RaceDetailPage.tsx:4585: 'customJerseyUrl',
+src/pages/dashboard/RaceDetailPage.tsx:4586: 'custom_jersey_image_url',
+src/pages/dashboard/RaceDetailPage.tsx:4587: 'customJerseyImageUrl',
+src/pages/dashboard/RaceDetailPage.tsx:4588: 'jersey_image_url',
+src/pages/dashboard/RaceDetailPage.tsx:4589: 'jerseyImageUrl',
+src/pages/dashboard/RaceDetailPage.tsx:4590: 'jersey_url',
+src/pages/dashboard/RaceDetailPage.tsx:4591: 'jerseyUrl',
+src/pages/dashboard/RaceDetailPage.tsx:4592: 'jersey_url_snapshot',
+src/pages/dashboard/RaceDetailPage.tsx:4597: 'team_jersey_url',
+src/pages/dashboard/RaceDetailPage.tsx:4598: 'teamJerseyUrl',
+src/pages/dashboard/RaceDetailPage.tsx:4621: const TEAM_JERSEY_NESTED_RECORD_KEYS = [
+src/pages/dashboard/RaceDetailPage.tsx:4625: 'jersey_config',
+src/pages/dashboard/RaceDetailPage.tsx:4626: 'jerseyConfig',
+src/pages/dashboard/RaceDetailPage.tsx:4628: 'jersey',
+src/pages/dashboard/RaceDetailPage.tsx:4641: 'team-jerseys',
+src/pages/dashboard/RaceDetailPage.tsx:4642: 'team_jerseys',
+src/pages/dashboard/RaceDetailPage.tsx:4643: 'jerseys',
+src/pages/dashboard/RaceDetailPage.tsx:4791: function normalizeTeamJerseyColor(
+src/pages/dashboard/RaceDetailPage.tsx:4800: function getGenericTeamJerseyDataUrl(
+src/pages/dashboard/RaceDetailPage.tsx:4811: const primaryColor = normalizeTeamJerseyColor(
+src/pages/dashboard/RaceDetailPage.tsx:4818: const secondaryColor = normalizeTeamJerseyColor(
+src/pages/dashboard/RaceDetailPage.tsx:4825: const accentColor = normalizeTeamJerseyColor(
+src/pages/dashboard/RaceDetailPage.tsx:4859: function getTeamJerseyUrlFromRecord(record: Record<string, unknown>): string | null {
+src/pages/dashboard/RaceDetailPage.tsx:4860: const nestedRecords = TEAM_JERSEY_NESTED_RECORD_KEYS
+src/pages/dashboard/RaceDetailPage.tsx:4865: for (const key of TEAM_JERSEY_FIELD_KEYS) {
+src/pages/dashboard/RaceDetailPage.tsx:4866: const rawJerseyValue = getLogoStringFromUnknown(candidateRecord[key])
+src/pages/dashboard/RaceDetailPage.tsx:4867: const jerseyUrl = normalizeTeamLogoUrl(rawJerseyValue)
+src/pages/dashboard/RaceDetailPage.tsx:4869: if (jerseyUrl) return jerseyUrl
+src/pages/dashboard/RaceDetailPage.tsx:4879: return getGenericTeamJerseyDataUrl(record, nestedRecords)
+src/pages/dashboard/RaceDetailPage.tsx:5148: jersey_url_snapshot:
+src/pages/dashboard/RaceDetailPage.tsx:5149: getTeamJerseyUrlFromRecord(row as unknown as Record<string, unknown>) ??
+src/pages/dashboard/RaceDetailPage.tsx:5150: getTeamJerseyUrlFromRecord(club),
+src/pages/dashboard/RaceDetailPage.tsx:5270: const name = getStringField(record, ['name', 'kit_name', 'jersey_name'])
+src/pages/dashboard/RaceDetailPage.tsx:5330: * Resolve logo and jersey independently. A clubs row can contain a logo
+src/pages/dashboard/RaceDetailPage.tsx:5331: * while the actual jersey lives in team_kits.config or an AI preview row.
+src/pages/dashboard/RaceDetailPage.tsx:5333: * parent jersey even though that jersey had been loaded.
+src/pages/dashboard/RaceDetailPage.tsx:5340: const liveJerseyUrl =
+src/pages/dashboard/RaceDetailPage.tsx:5342: .map((record) => getTeamJerseyUrlFromRecord(record))
+src/pages/dashboard/RaceDetailPage.tsx:5347: (!liveJerseyUrl || liveJerseyUrl === team.jersey_url_snapshot)
+src/pages/dashboard/RaceDetailPage.tsx:5355: jersey_url_snapshot: liveJerseyUrl || team.jersey_url_snapshot,
+src/pages/dashboard/RaceDetailPage.tsx:5555: console.warn('Could not load participant AI jersey previews:', aiKitError.message)
+src/pages/dashboard/RaceDetailPage.tsx:5561: * User-created and later customized jerseys are stored in team_kits.config,
+src/pages/dashboard/RaceDetailPage.tsx:5562: * not necessarily as a direct clubs.jersey_url column. Load every matching
+src/pages/dashboard/RaceDetailPage.tsx:6053: jersey_url_snapshot: null,
+src/pages/dashboard/RaceDetailPage.tsx:6348: {t('participants.teamJersey')}
+src/pages/dashboard/RaceDetailPage.tsx:6350: <TeamJerseyImage team={team} className="h-48 w-40" />
+src/pages/dashboard/RaceDetailPage.tsx:7984: <ResultTeamJerseyCell
+src/pages/dashboard/RaceDetailPage.tsx:8186: <ResultTeamJerseyCell
+src/pages/dashboard/RaceDetailPage.tsx:8331: <ResultTeamJerseyCell
+src/pages/dashboard/RaceDetailPage.tsx:12179: jerseyUrl: participantTeam?.jersey_url_snapshot ?? null,
+src/pages/dashboard/RacePreparation.tsx:5638: race_jersey_complete: boolean;
+src/pages/dashboard/RacePreparation.tsx:6718: race_jersey_complete: Boolean(
+src/pages/dashboard/RacePreparation.tsx:6719: record.race_jersey_complete ?? record.race_jersey ?? true,
+src/pages/dashboard/RacePreparation.tsx:10921: race_jersey_complete: {
+src/pages/dashboard/RacePreparation.tsx:10922: label: "Race Jersey Kit",
+src/pages/dashboard/RacePreparation.tsx:10923: shortLabel: "Jersey Kit",
+src/pages/dashboard/RacePreparation.tsx:10930: "Mandatory durable kit. One jersey kit is needed per rider and each kit has 10 stage uses.",
+src/pages/dashboard/RacePreparation.tsx:10932: "Race support: +1.5 points when a usable jersey kit is available per rider",
+src/pages/dashboard/RacePreparation.tsx:10933: "Fatigue reduction: +0.75% when a usable jersey kit is available per rider",
+src/pages/dashboard/RacePreparation.tsx:10935: negativeEffects: ["Missing jersey kit: blocks stage setup"],
+src/pages/dashboard/RacePreparation.tsx:11125: race_jersey_complete: riderCount,
+src/pages/dashboard/RacePreparation.tsx:11208: const jerseys = usable(
+src/pages/dashboard/RacePreparation.tsx:11209: "Race jerseys",
+src/pages/dashboard/RacePreparation.tsx:11210: "race_jersey_complete",
+src/pages/dashboard/RacePreparation.tsx:11211: needs.race_jersey_complete,
+src/pages/dashboard/RacePreparation.tsx:11216: (1.5 * jerseys.usable) / riderCount;
+src/pages/dashboard/RacePreparation.tsx:11223: (0.75 * jerseys.usable) / riderCount;
+src/pages/dashboard/RacePreparation.tsx:11261: race_jersey_complete: true,
+src/pages/dashboard/RacePreparation.tsx:11416: const jerseyAvailable = getSupplyAvailableQuantity(
+src/pages/dashboard/RacePreparation.tsx:11418: "race_jersey_complete",
+src/pages/dashboard/RacePreparation.tsx:11428: const jerseyMissing =
+src/pages/dashboard/RacePreparation.tsx:11429: !suppliesDisabledForTT && needs.race_jersey_complete > jerseyAvailable;
+src/pages/dashboard/RacePreparation.tsx:11436: race_jersey_complete: 0,
+src/pages/dashboard/RacePreparation.tsx:11465: rider; Race Jersey Kit is mandatory and Rain Jackets are a team-wide
+src/pages/dashboard/RacePreparation.tsx:11474: disabled={saveDisabled || jerseyMissing || suppliesDisabledForTT}
+src/pages/dashboard/RacePreparation.tsx:11584: {jerseyMissing ? (
+src/pages/dashboard/RacePreparation.tsx:11586: Race Jersey Kit is mandatory. You need{" "}
+src/pages/dashboard/RacePreparation.tsx:11587: {displayNeeds.race_jersey_complete}, but only {jerseyAvailable} are
+src/pages/dashboard/RacePreparation.tsx:11649: jerseyMissing ? "border-red-200" : "border-slate-200",
+src/pages/dashboard/RacePreparation.tsx:11655: Race Jersey Kit
+src/pages/dashboard/RacePreparation.tsx:11658: Mandatory for all selected riders. Missing jersey kits block
+src/pages/dashboard/RacePreparation.tsx:11669: jerseyMissing
+src/pages/dashboard/RacePreparation.tsx:11674: {displayNeeds.race_jersey_complete} needed
+src/pages/dashboard/RacePreparation.tsx:11767: label="Race Jersey Kit"
+src/pages/dashboard/RacePreparation.tsx:11768: needed={displayNeeds.race_jersey_complete}
+src/pages/dashboard/RacePreparation.tsx:11769: available={jerseyAvailable}
+src/pages/dashboard/RacePreparation.tsx:11771: durabilityText="10 stage uses per jersey"
+src/pages/dashboard/RacePreparation.tsx:11961: const jerseyAvailable = getSupplyAvailableQuantity(
+src/pages/dashboard/RacePreparation.tsx:11963: "race_jersey_complete",
+src/pages/dashboard/RacePreparation.tsx:11965: const missingJerseys = isTTStage
+src/pages/dashboard/RacePreparation.tsx:11967: : Math.max(needs.race_jersey_complete - jerseyAvailable, 0);
+src/pages/dashboard/RacePreparation.tsx:11998: disabled={saveDisabled || missingJerseys > 0}
+src/pages/dashboard/RacePreparation.tsx:12135: {missingJerseys > 0 ? (
+src/pages/dashboard/RacePreparation.tsx:12137: Missing mandatory Race Jersey Kit units: {missingJerseys}. This
+src/pages/dashboard/RacePreparation.tsx:12148: jerseys have no effect.
+src/pages/dashboard/RacePreparation.tsx:12262: <span>{racePrepText("screen.raceJerseysNeeded")}</span>
+src/pages/dashboard/RacePreparation.tsx:12263: <strong>{needs.race_jersey_complete}</strong>
+src/pages/dashboard/RacePreparation.tsx:12271: Jerseys: 10 stage uses each. Rain jackets: 25 stage uses each.
+src/pages/dashboard/Statistics.tsx:113: jerseys?: number
+src/pages/dashboard/Statistics.tsx:115: final_jerseys?: number
+src/pages/dashboard/Statistics.tsx:1190: const finalJerseys = normalizeNumberLike(
+src/pages/dashboard/Statistics.tsx:1191: resolveNumberValue(riderRaw, ['final_jerseys', 'jerseys']),
+src/pages/dashboard/Statistics.tsx:1242: jerseys: finalJerseys,
+src/pages/dashboard/Statistics.tsx:1244: final_jerseys: finalJerseys,
+src/pages/dashboard/Statistics.tsx:1557: const topJerseysRider = [...filteredRiders].sort((a, b) => {
+src/pages/dashboard/Statistics.tsx:1558: const jerseyDiff = (b.jerseys ?? 0) - (a.jerseys ?? 0)
+src/pages/dashboard/Statistics.tsx:1559: if (jerseyDiff !== 0) return jerseyDiff
+src/pages/dashboard/Statistics.tsx:1658: topJerseysRider={topJerseysRider}
+src/pages/dashboard/TeamProfilePage.tsx:89: jersey_url: string | null
+src/pages/dashboard/TeamProfilePage.tsx:756: * TeamJerseyPreview
+src/pages/dashboard/TeamProfilePage.tsx:757: * Shows either the generated jersey image or a color-based placeholder.
+src/pages/dashboard/TeamProfilePage.tsx:759: function TeamJerseyPreview({
+src/pages/dashboard/TeamProfilePage.tsx:797: <h3 className="text-base font-semibold text-slate-900">{t('teamProfile.jersey')}</h3>
+src/pages/dashboard/TeamProfilePage.tsx:798: <p className="mt-1 text-sm text-slate-500">{t('teamProfile.jerseyDescription')}</p>
+src/pages/dashboard/TeamProfilePage.tsx:813: alt={`${clubName} jersey`}
+src/pages/dashboard/TeamProfilePage.tsx:834: <div className="text-sm font-semibold text-slate-900">Jersey preview unavailable</div>
+src/pages/dashboard/TeamProfilePage.tsx:1226: .select('club_id, jersey_url')
+src/pages/dashboard/TeamProfilePage.tsx:1232: console.warn('Failed to load AI team jersey preview:', aiKitError)
+src/pages/dashboard/TeamProfilePage.tsx:1235: setAiKitPreviewUrl((aiKitData as AiTeamKitPreviewRow | null)?.jersey_url ?? null)
+src/pages/dashboard/TeamProfilePage.tsx:1424: const teamJerseyPanel = profile ? (
+src/pages/dashboard/TeamProfilePage.tsx:1425: <TeamJerseyPreview
+src/pages/dashboard/TeamProfilePage.tsx:1604: {teamJerseyPanel}
+src/pages/dashboard/TeamProfilePage.tsx:1610: {teamJerseyPanel}
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:10: * - Race Jersey Complete = mandatory durable kit, 10 stage uses per unit.
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:47: | 'race_jersey_complete'
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:138: race_jersey_complete: {
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:139: key: 'race_jersey_complete',
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:140: displayNameKey: 'supplies.jersey',
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:146: stageRuleKey: 'supplies.jerseyStage',
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:147: durabilityRuleKey: 'supplies.jerseyDurability',
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:149: 'supplies.jerseyPositive1',
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:150: 'supplies.jerseyPositive2',
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:153: 'supplies.jerseyNegative1',
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:154: 'supplies.jerseyNegative2',
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:310: item.supply_key === 'race_jersey_complete' ? 10 : 25
+src/pages/dashboard/equipment/components/EquipmentRaceSuppliesTab.tsx:1174: {rule.key === 'race_jersey_complete' ? (
+src/pages/dashboard/equipment/equipmentFormatters.ts:21: race_jersey_complete: 'Race Jersey Complete',
+src/pages/dashboard/equipment/types.ts:37: | 'race_jersey_complete'
+src/pages/dashboard/race-preparation/racePreparationApi.ts:62: "race_jersey_complete",
+src/pages/dashboard/race-preparation/racePreparationTypes.ts:40: | "race_jersey_complete"
+src/pages/dashboard/riders/RiderProfilePublicPage.tsx:53: jerseys?: number
+src/pages/dashboard/riders/RiderProfilePublicPage.tsx:55: final_jerseys?: number
+src/pages/dashboard/riders/RiderProfilePublicPage.tsx:165: jerseys: normalizeNumber(row.jerseys),
+src/pages/dashboard/riders/RiderProfilePublicPage.tsx:167: final_jerseys: normalizeNumber(row.final_jerseys),
+src/universal-race-engine/buildProductionRaceInput.ts:704: jerseyUrl: text(participant.jersey_url_snapshot ?? participant.jersey_url),
+src/universal-race-engine/runRaceEngine.test.ts:3676: behaviours.find((row) => row.command === 'protect_jersey'),
+src/universal-race-engine/runRaceEngine.test.ts:3678: behaviour: 'jersey_protection',
+src/universal-race-engine/runRaceEngine.test.ts:4391: it('uses the immutable pre-stage leader snapshot for protect-jersey', () => {
+src/universal-race-engine/runRaceEngine.test.ts:4397: 'protect_jersey',
+src/universal-race-engine/runRaceEngine.test.ts:4419: it('does not invent a jersey-protection target when no jersey owner exists', () => {
+src/universal-race-engine/runRaceEngine.test.ts:4425: 'protect_jersey',
+src/universal-race-engine/runRaceEngine.test.ts:5915: 'protect_jersey',
+src/universal-race-engine/runRaceEngine.test.ts:13869: it('calculates one Race Jersey durable use without consuming the reusable unit as quantity', () => {
+src/universal-race-engine/runRaceEngine.test.ts:13876: 'durable:jersey-1': {
+src/universal-race-engine/runRaceEngine.test.ts:13880: supplyKey: 'race_jersey_complete',
+src/universal-race-engine/runRaceEngine.test.ts:13889: (row) => row.resourceId === 'durable:jersey-1',
+src/universal-race-engine/runRaceEngine.test.ts:14009: expect(source).toContain('race_jersey_complete')
+src/universal-race-engine/runRaceEngine.ts:177: 'protect_jersey',
+src/universal-race-engine/runRaceEngine.ts:388: readonly jerseyUrl?: string | null
+src/universal-race-engine/runRaceEngine.ts:743: /** Immutable jersey-owner snapshot captured before the stage. */
+src/universal-race-engine/runRaceEngine.ts:1137: | 'jersey_protection'
+src/universal-race-engine/runRaceEngine.ts:1434: | 'protect_jersey'
+src/universal-race-engine/runRaceEngine.ts:7246: case 'protect_jersey':
+src/universal-race-engine/runRaceEngine.ts:7247: return 'jersey_protection'
+src/universal-race-engine/runRaceEngine.ts:7291: case 'protect_jersey':
+src/universal-race-engine/runRaceEngine.ts:9131: case 'jersey_protection':
+src/universal-race-engine/runRaceEngine.ts:10675: if (command === 'protect_jersey') {
+src/universal-race-engine/runRaceEngine.ts:10732: phase.behaviour !== 'jersey_protection' &&
+supabase/migrations/20260811_phase9_supply_usable_quantity_guard_v3(1) (2).sql:383: when lower(coalesce(rider_entry.value ->> 'race_jersey_complete', 'false')) in ('true', '1', 'yes') then 1
+supabase/migrations/20260811_phase9_supply_usable_quantity_guard_v3(1) (2).sql:384: when coalesce(rider_entry.value ->> 'race_jersey_complete', '0') ~ '^[0-9]+$'
+supabase/migrations/20260811_phase9_supply_usable_quantity_guard_v3(1) (2).sql:385: then least(1, coalesce(rider_entry.value ->> 'race_jersey_complete', '0')::integer)
+supabase/migrations/20260811_phase9_supply_usable_quantity_guard_v3(1) (2).sql:387: end as race_jersey_complete,
+supabase/migrations/20260811_phase9_supply_usable_quantity_guard_v3(1) (2).sql:409: ('race_jersey_complete'::text, rider.race_jersey_complete),
+supabase/migrations/20260811_phase9_supply_usable_quantity_guard_v3(1) (2).sql:474: when 'race_jersey_complete' then 1.5 * supply.usable_quantity / greatest(1::numeric, coalesce(team_count.rider_count, 1))
+supabase/migrations/20260811_phase9_supply_usable_quantity_guard_v3(1) (2).sql:500: when 'race_jersey_complete' then 0.75 * supply.usable_quantity / greatest(1::numeric, coalesce(team_count.rider_count, 1))
+supabase/migrations/20260818_phase11b_universal_production_cutover.sql:1754: coalesce(sum(durable_used) filter (where supply_key = 'race_jersey_complete'), 0)::integer as jerseys,
+supabase/migrations/20260818_phase11b_universal_production_cutover.sql:1764: 'race_jersey_complete', v_team.jerseys,
+supabase/migrations/20260831131400_starter_race_supplies_for_user_teams_v1.sql:48: ('race_jersey_complete'::text,10::integer),
+supabase/migrations/20260831131400_starter_race_supplies_for_user_teams_v1.sql:170: ('race_jersey_complete'::text,3::integer),
+supabase/migrations/20260831131400_starter_race_supplies_for_user_teams_v1.sql:197: 'Your new team has not stocked enough race supplies yet. Open Race Supplies and prepare bidons, gels, nutrition packs, jerseys and weather gear before the first race.',
+supabase/migrations/20260903082111_equipment_race_supplies_include_durable_unit_summary_v1.sql:18: ('race_jersey_complete', 'Race Jersey Complete', 4),
+supabase/migrations/20260903082111_equipment_race_supplies_include_durable_unit_summary_v1.sql:60: case when sd.supply_key in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903082111_equipment_race_supplies_include_durable_unit_summary_v1.sql:62: case when sd.supply_key in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903082111_equipment_race_supplies_include_durable_unit_summary_v1.sql:64: case when sd.supply_key in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903082111_equipment_race_supplies_include_durable_unit_summary_v1.sql:66: case when sd.supply_key in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903082111_equipment_race_supplies_include_durable_unit_summary_v1.sql:68: case when sd.supply_key in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903082111_equipment_race_supplies_include_durable_unit_summary_v1.sql:70: case when sd.supply_key in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903082111_equipment_race_supplies_include_durable_unit_summary_v1.sql:72: case when sd.supply_key in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903082111_equipment_race_supplies_include_durable_unit_summary_v1.sql:74: case when sd.supply_key in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903082500_guarantee_season_start_race_deadline_notice_v1.sql:132: v_jersey_result jsonb:=null; v_morale_result jsonb:=null; v_contract_result jsonb:=null;
+supabase/migrations/20260903082500_guarantee_season_start_race_deadline_notice_v1.sql:135: v_jersey_error text:=null; v_morale_error text:=null; v_contract_error text:=null;
+supabase/migrations/20260903082500_guarantee_season_start_race_deadline_notice_v1.sql:160: begin v_jersey_result:=public.process_due_mandatory_race_jersey_notifications_v1();
+supabase/migrations/20260903082500_guarantee_season_start_race_deadline_notice_v1.sql:161: exception when others then v_jersey_error:=sqlerrm; end;
+supabase/migrations/20260903082500_guarantee_season_start_race_deadline_notice_v1.sql:177: and v_supplies_error is null and v_jersey_error is null and v_morale_error is null
+supabase/migrations/20260903082500_guarantee_season_start_race_deadline_notice_v1.sql:184: 'mandatory_race_jersey_result',v_jersey_result,'mandatory_race_jersey_error',v_jersey_error,
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:84: 'race_jersey_complete'::text,
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:86: when lower(coalesce(rider_entry.value ->> 'race_jersey_complete', 'false'))
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:89: when coalesce(rider_entry.value ->> 'race_jersey_complete', '0') ~ '^[0-9]+$'
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:90: then least(1, coalesce(rider_entry.value ->> 'race_jersey_complete', '0')::integer)
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:195: p_supply_key not in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:243: if p_supply_key in ('race_jersey_complete', 'rain_jackets') then
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:297: ('race_jersey_complete'::text),
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:310: when k.supply_key in ('race_jersey_complete', 'rain_jackets') then (
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:376: 'race_jersey_complete',
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:391: when 'race_jersey_complete' then
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:393: when lower(coalesce(e.value->>'race_jersey_complete', e.value->>'race_jersey', 'false')) in ('true','t','1','yes','y','all') then 1
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:394: when coalesce(e.value->>'race_jersey_complete', e.value->>'race_jersey', '0') ~ '^[0-9]+$'
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:395: then least(coalesce(e.value->>'race_jersey_complete', e.value->>'race_jersey', '0')::integer, 1)
+supabase/migrations/20260903084150_reserve_race_supplies_across_saved_stage_plans_v1.sql:427: when 'race_jersey_complete' then 'Race Jersey Complete'
+supabase/migrations/20260903084220_prioritize_earlier_stage_supply_reservations_v1.sql:78: p_supply_key not in ('race_jersey_complete', 'rain_jackets')
+supabase/migrations/20260903190600_fix_uci_statistics_stage_scope_and_rank_order_v2.sql:223: coalesce(v.jerseys,0) as jerseys,
+supabase/migrations/20260903190600_fix_uci_statistics_stage_scope_and_rank_order_v2.sql:225: coalesce(v.final_jerseys,0) as final_jerseys,
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:3: when 'RACE_TEAM_DISQUALIFIED_JERSEYS' then 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Team%20removed%20from%20race.png'
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:10: 'RACE_TEAM_DISQUALIFIED_JERSEYS',
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:16: create or replace function public.enrich_race_application_and_jersey_notification_v1()
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:40: 'RACE_TEAM_DISQUALIFIED_JERSEYS',
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:48: if v_code = 'RACE_TEAM_DISQUALIFIED_JERSEYS' then
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:73: v_required := greatest(0, coalesce(nullif(v_payload->>'required_jersey_units', '')::integer, 0));
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:74: v_available := greatest(0, coalesce(nullif(v_payload->>'available_jersey_units', '')::integer, 0));
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:83: 'missing_jersey_units', v_missing,
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:84: 'required_jersey_units', v_required,
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:85: 'available_jersey_units', v_available
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:148: drop trigger if exists trg_enrich_race_application_and_jersey_notification_v1 on public.notifications;
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:149: create trigger trg_enrich_race_application_and_jersey_notification_v1
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:153: execute function public.enrich_race_application_and_jersey_notification_v1();
+supabase/migrations/20260907133420_rich_race_application_and_team_removal_notifications_v1.sql:160: 'RACE_TEAM_DISQUALIFIED_JERSEYS',
+supabase/migrations/20260907142000_resolve_security_definer_views.sql:38: 'race_team_mandatory_jersey_status_v1',
+supabase/migrations/20260907143000_restore_security_definer_views_for_public_ui.sql:35: 'race_team_mandatory_jersey_status_v1',
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:100: v_required := public.universal_race_team_required_jerseys_v1(v_stage.race_id,p_team_id);
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:101: v_effective := public.universal_race_stage_effective_supply_available_v1(p_stage_id,p_team_id,'race_jersey_complete');
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:102: v_reserved := public.universal_race_stage_other_supply_reservations_v1(p_stage_id,p_team_id,'race_jersey_complete');
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:109: and u.supply_key='race_jersey_complete'
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:117: and u.supply_key='race_jersey_complete'
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:146: format('%s Race Jersey Kits are required, but only %s are effectively available for this stage. %s additional kit%s must become usable before the stage eligibility check.',v_required,v_effective,v_missing,case when v_missing=1 then '' else 's' end)
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:147: else format('Race eligibility is currently satisfied: %s required and %s effectively available Race Jersey Kits.',v_required,v_effective)
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:166: 'required_jersey_units',v_required,
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:167: 'effective_available_jersey_units',v_effective,
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:168: 'missing_jersey_units',v_missing,
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:229: create or replace function public.create_mandatory_race_jersey_escalation_v1(
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:248: v_required integer := coalesce((p_eligibility->>'required_jersey_units')::integer,0);
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:249: v_available integer := coalesce((p_eligibility->>'effective_available_jersey_units')::integer,0);
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:250: v_missing integer := coalesce((p_eligibility->>'missing_jersey_units')::integer,0);
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:256: return public.create_mandatory_race_jersey_warning_v1(p_user_id,v_race_id,v_stage_id,v_team_id,v_required,v_available);
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:259: v_message := format('%s still has only %s usable Race Jersey Kits but needs %s for %s. %s additional kit%s must be available before the stage eligibility check. If this remains unresolved, your team will be removed from the race and the normal missed-start/no-show penalty will apply.',coalesce(p_eligibility->>'team_name','Your team'),v_available,v_required,v_race_name,v_missing,case when v_missing=1 then '' else 's' end);
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:262: v_message := format('%s is at risk of removal from %s: %s Race Jersey Kits required, only %s effectively available. Resolve the shortage%s.',coalesce(p_eligibility->>'team_name','Your team'),v_race_name,v_required,v_available,case when v_hours is not null then format(' before the stage start in about %s game hours',greatest(round(v_hours,1),0)) else ' before the stage eligibility check' end);
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:265: v_event_key := 'mandatory_jersey_'||p_level||':'||v_race_id::text||':'||v_stage_id::text||':'||v_team_id::text;
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:269: 'RACE_JERSEYS_MANDATORY_WARNING',
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:280: 'image_url','https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/mandatory%20race%20jersey.png'
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:344: v_signature := md5(concat_ws('|',e->>'required_jersey_units',e->>'effective_available_jersey_units',e->>'same_day_used_units',e->>'other_race_reserved_units'));
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:350: perform public.create_mandatory_race_jersey_escalation_v1(x.owner_user_id,e,'initial');
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:354: perform public.create_mandatory_race_jersey_escalation_v1(x.owner_user_id,e,'urgent');
+supabase/migrations/20260907151329_critical_race_eligibility_alerts_v1.sql:358: perform public.create_mandatory_race_jersey_escalation_v1(x.owner_user_id,e,'final');
+supabase/migrations/20260907151543_prestart_disqualification_penalties_v1.sql:141: if d.reason_code not in ('mandatory_race_jersey_shortage') then
+supabase/migrations/20260907151543_prestart_disqualification_penalties_v1.sql:236: if new.reason_code in ('mandatory_race_jersey_shortage') then
+supabase/migrations/20260907151543_prestart_disqualification_penalties_v1.sql:268: where d.reason_code in ('mandatory_race_jersey_shortage')
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:41: v_required:=public.universal_race_team_required_jerseys_v1(v_stage.race_id,p_team_id);
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:42: v_current_effective:=public.universal_race_stage_effective_supply_available_v1(p_stage_id,p_team_id,'race_jersey_complete');
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:44: v_reserved:=public.universal_race_stage_other_supply_reservations_v1(p_stage_id,p_team_id,'race_jersey_complete');
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:48: where u.club_id=v_owner and u.supply_key='race_jersey_complete' and u.status in ('ready','assigned') and u.stage_uses_remaining>0;
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:52: where u.club_id=v_owner and u.supply_key='race_jersey_complete' and u.status in ('ready','assigned') and u.stage_uses_remaining>0 and u.last_used_game_date=v_stage.stage_date;
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:54: select true,d.reason_code,d.required_jersey_units,d.available_jersey_units,d.missing_jersey_units
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:74: when v_blocked then format('The team was blocked after failing the mandatory pre-start jersey check: %s required, %s available, %s missing.',v_required,v_effective,v_missing)
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:75: when v_required>0 and v_effective<v_required then format('%s Race Jersey Kits are required, but only %s are effectively available for this stage. %s additional kit%s must become usable before the stage eligibility check.',v_required,v_effective,v_missing,case when v_missing=1 then '' else 's' end)
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:76: else format('Race eligibility is currently satisfied: %s required and %s effectively available Race Jersey Kits.',v_required,v_effective)
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:85: 'required_jersey_units',v_required,'effective_available_jersey_units',v_effective,'current_effective_available_jersey_units',v_current_effective,
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:86: 'missing_jersey_units',v_missing,'total_usable_owned_units_before_same_day_rule',v_total_owned,'same_day_used_units',v_same_day_used,
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:143: v_signature:=md5(concat_ws('|',e->>'race_id',e->>'stage_id',e->>'team_id',e->>'required_jersey_units',e->>'effective_available_jersey_units',e->>'same_day_used_units',e->>'other_race_reserved_units'));
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:154: format('%s is at risk of removal from %s. %s Race Jersey Kits are required for Stage %s, but only %s are effectively available. %s kit%s missing.',coalesce(e->>'team_name','Your team'),coalesce(e->>'race_name','the race'),e->>'required_jersey_units',e->>'stage_number',e->>'effective_available_jersey_units',e->>'missing_jersey_units',case when e->>'missing_jersey_units'='1' then '' else 's' end),
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:220: v_signature:=md5(concat_ws('|',e->>'race_id',e->>'stage_id',e->>'team_id',e->>'required_jersey_units',e->>'effective_available_jersey_units',e->>'same_day_used_units',e->>'other_race_reserved_units'));
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:221: v_detail:=format('%s usable jersey unit%s are owned before same-day restrictions; %s were already used on the stage date and %s are reserved for another race. Effective availability is %s, while %s are required.',e->>'total_usable_owned_units_before_same_day_rule',case when e->>'total_usable_owned_units_before_same_day_rule'='1' then '' else 's' end,e->>'same_day_used_units',e->>'other_race_reserved_units',e->>'effective_available_jersey_units',e->>'required_jersey_units');
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:231: a.access_id,'mechanic_race_supply_eligibility_critical','Chief Mechanic Advisory — Race Jersey Eligibility',
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:232: format('%s is short of mandatory Race Jersey Kits for %s — Stage %s. %s',coalesce(e->>'team_name','Your team'),coalesce(e->>'race_name','the race'),e->>'stage_number',v_detail),
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:234: jsonb_build_array('Restock or free enough usable Race Jersey Kits before the stage eligibility check.','The effective availability figure uses the same race-specific calculation as the race engine, including same-day use and other race reservations.'),
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:304: v_jersey_result jsonb:=null; v_critical_eligibility_result jsonb:=null; v_penalty_recovery_result jsonb:=null;
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:306: v_game_error text:=null; v_safety_error text:=null; v_supplies_error text:=null; v_jersey_error text:=null;
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:323: begin v_jersey_result:=public.process_due_mandatory_race_jersey_notifications_v1(); exception when others then v_jersey_error:=sqlerrm; end;
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:335: 'status',case when v_season_start_error is null and v_game_error is null and v_safety_error is null and v_supplies_error is null and v_jersey_error is null and v_critical_eligibility_error is null and v_penalty_recovery_error is null and v_morale_error is null and v_contract_error is null then 'completed' else 'completed_with_errors' end,
+supabase/migrations/20260907151755_race_eligibility_advisors_and_scheduler_v1.sql:340: 'mandatory_race_jersey_result',v_jersey_result,'mandatory_race_jersey_error',v_jersey_error,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:24: if d.reason_code not in ('mandatory_race_jersey_shortage') then
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:100: format('%s could not start %s because the mandatory Race Jersey Kit requirement was still unresolved at the pre-start eligibility check. %s kit%s required, %s eligible, %s missing. The race entry fee remains charged. A cash fine of %s has been applied and the Race Commitment Score changed by %s. Open the race to review what happened, or open Race Supplies to prevent the same problem in future races.',
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:103: coalesce(d.required_jersey_units,0),
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:104: case when coalesce(d.required_jersey_units,0)=1 then ' was' else 's were' end,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:105: coalesce(d.available_jersey_units,0),
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:106: coalesce(d.missing_jersey_units,greatest(coalesce(d.required_jersey_units,0)-coalesce(d.available_jersey_units,0),0)),
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:118: 'required_jersey_units',d.required_jersey_units,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:119: 'available_jersey_units',d.available_jersey_units,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:120: 'missing_jersey_units',d.missing_jersey_units,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:121: 'problem_label','Not enough eligible Race Jersey Kits',
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:146: d.required_jersey_units,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:147: d.available_jersey_units,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:148: d.missing_jersey_units
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:152: select dq.required_jersey_units,dq.available_jersey_units,dq.missing_jersey_units
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:159: and n.payload_json->>'reason_code'='mandatory_race_jersey_shortage'
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:164: message=format('%s could not start %s because the mandatory Race Jersey Kit requirement was still unresolved at the pre-start eligibility check. %s kits were required, %s eligible, %s missing. The race entry fee remains charged. A cash fine of %s has been applied and the Race Commitment Score changed by %s. Open the race to review what happened, or open Race Supplies to prevent the same problem in future races.',
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:167: coalesce(t.required_jersey_units,(t.payload_json->>'required_jersey_units')::integer,0),
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:168: coalesce(t.available_jersey_units,(t.payload_json->>'available_jersey_units')::integer,0),
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:169: coalesce(t.missing_jersey_units,(t.payload_json->>'missing_jersey_units')::integer,0),
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:175: 'required_jersey_units',t.required_jersey_units,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:176: 'available_jersey_units',t.available_jersey_units,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:177: 'missing_jersey_units',t.missing_jersey_units,
+supabase/migrations/20260907155147_rich_prestart_disqualification_notifications_v1.sql:178: 'problem_label','Not enough eligible Race Jersey Kits',
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:269: if to_regprocedure('public.universal_race_stage_enforce_mandatory_jerseys_precanonical_v1(uuid)') is null then
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:270: if to_regprocedure('public.universal_race_stage_enforce_mandatory_jerseys_v1(uuid)') is null then
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:271: raise exception 'universal_race_stage_enforce_mandatory_jerseys_v1(uuid) is missing';
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:273: execute 'alter function public.universal_race_stage_enforce_mandatory_jerseys_v1(uuid) rename to universal_race_stage_enforce_mandatory_jerseys_precanonical_v1';
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:278: create or replace function public.universal_race_stage_enforce_mandatory_jerseys_v1(
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:331: v_req := public.universal_race_team_required_jerseys_v1(v_race,x.team_id);
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:348: v_avail := coalesce(nullif(v_elig->>'effective_available_jersey_units','')::integer,0);
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:353: perform public.universal_race_team_ensure_ai_jerseys_v1(
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:357: v_avail := coalesce(nullif(v_elig->>'effective_available_jersey_units','')::integer,0);
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:366: required_jersey_units,available_jersey_units,missing_jersey_units,
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:369: v_race,x.team_id,p_stage_id,v_no,'mandatory_race_jersey_shortage',
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:389: perform public.create_race_team_jersey_disqualification_notification_v1(
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:397: 'status','disqualified','required_jerseys',v_req,
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:398: 'owner_usable_jerseys',v_owner_total,'other_race_reserved_jerseys',v_reserved,
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:399: 'available_jerseys_after_reservations',v_avail,'missing_jerseys',v_missing,
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:405: 'status','eligible','required_jerseys',v_req,'owner_usable_jerseys',v_owner_total,
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:406: 'other_race_reserved_jerseys',v_reserved,'available_jerseys_after_reservations',v_avail,
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:422: revoke all on function public.universal_race_stage_enforce_mandatory_jerseys_precanonical_v1(uuid) from public;
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:423: revoke all on function public.universal_race_stage_enforce_mandatory_jerseys_precanonical_v1(uuid) from anon;
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:424: revoke all on function public.universal_race_stage_enforce_mandatory_jerseys_precanonical_v1(uuid) from authenticated;
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:425: revoke all on function public.universal_race_stage_enforce_mandatory_jerseys_v1(uuid) from public;
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:426: revoke all on function public.universal_race_stage_enforce_mandatory_jerseys_v1(uuid) from anon;
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:427: revoke all on function public.universal_race_stage_enforce_mandatory_jerseys_v1(uuid) from authenticated;
+supabase/migrations/20260907204646_guarantee_due_race_processing_v1.sql:428: grant execute on function public.universal_race_stage_enforce_mandatory_jerseys_v1(uuid) to service_role;
