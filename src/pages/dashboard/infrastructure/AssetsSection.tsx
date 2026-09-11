@@ -5,6 +5,8 @@ import { AssetsSection as AssetsSectionCore } from './AssetsSectionCore'
 import { AssetAcquireCatalogModal } from './AssetAcquireCatalogModal'
 import { EquipmentVanAcquireCatalogModal } from './EquipmentVanAcquireCatalogModal'
 import { EquipmentVanSupportPanel } from './EquipmentVanSupportPanel'
+import { MedicalVanAcquireCatalogModal } from './MedicalVanAcquireCatalogModal'
+import { MedicalVanSupportPanel } from './MedicalVanSupportPanel'
 import { MobileWorkshopAcquireCatalogModal } from './MobileWorkshopAcquireCatalogModal'
 import { MobileWorkshopSupportPanel } from './MobileWorkshopSupportPanel'
 import { TeamBusAcquireCatalogModal } from './TeamBusAcquireCatalogModal'
@@ -249,6 +251,13 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
         />
       )}
 
+      {props.activeAssetSubTab === 'medical_van' && (
+        <MedicalVanSupportPanel
+          configRows={props.medicalVanConfigRows ?? []}
+          rosterRows={props.medicalVanRosterRows ?? []}
+        />
+      )}
+
       {isCatalogOpen && catalog.assetKey === 'team_bus' && (
         <TeamBusAcquireCatalogModal
           configRows={props.teamBusConfigRows ?? []}
@@ -285,22 +294,38 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
         />
       )}
 
-      {isCatalogOpen && catalog.assetKey !== 'team_bus' && catalog.assetKey !== 'equipment_van' && catalog.assetKey !== 'mobile_workshop' && (
-        <AssetAcquireCatalogModal
-          assetKey={catalog.assetKey}
-          title={catalog.title}
-          description={catalog.description}
-          assetLabel={catalog.assetLabel}
-          configRows={catalog.configRows}
+      {isCatalogOpen && catalog.assetKey === 'medical_van' && (
+        <MedicalVanAcquireCatalogModal
+          configRows={props.medicalVanConfigRows ?? []}
           ownedByLevel={ownedByLevel}
-          pendingJobsByLevel={catalog.pendingJobsByLevel}
+          pendingJobsByLevel={props.pendingMedicalVanJobsByLevel ?? new Map<number, InfrastructureJobRow[]>()}
           processingKey={props.processingKey}
-          processingKeyPrefix={catalog.processingKeyPrefix}
           isFull={isFull}
-          onAcquire={catalog.onAcquire}
+          onAcquire={props.onMedicalVanAcquire}
           onClose={() => setIsCatalogOpen(false)}
         />
       )}
+
+      {isCatalogOpen &&
+        catalog.assetKey !== 'team_bus' &&
+        catalog.assetKey !== 'equipment_van' &&
+        catalog.assetKey !== 'mobile_workshop' &&
+        catalog.assetKey !== 'medical_van' && (
+          <AssetAcquireCatalogModal
+            assetKey={catalog.assetKey}
+            title={catalog.title}
+            description={catalog.description}
+            assetLabel={catalog.assetLabel}
+            configRows={catalog.configRows}
+            ownedByLevel={ownedByLevel}
+            pendingJobsByLevel={catalog.pendingJobsByLevel}
+            processingKey={props.processingKey}
+            processingKeyPrefix={catalog.processingKeyPrefix}
+            isFull={isFull}
+            onAcquire={catalog.onAcquire}
+            onClose={() => setIsCatalogOpen(false)}
+          />
+        )}
     </>
   )
 }
