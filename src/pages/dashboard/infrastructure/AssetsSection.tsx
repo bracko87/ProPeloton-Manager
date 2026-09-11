@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 
 import { AssetsSection as AssetsSectionCore } from './AssetsSectionCore'
 import { AssetAcquireCatalogModal } from './AssetAcquireCatalogModal'
+import { EquipmentVanAcquireCatalogModal } from './EquipmentVanAcquireCatalogModal'
+import { EquipmentVanSupportPanel } from './EquipmentVanSupportPanel'
 import { TeamBusAcquireCatalogModal } from './TeamBusAcquireCatalogModal'
 import { TeamBusSupportPanel } from './TeamBusSupportPanel'
 import { TeamCarSupportPanel } from './TeamCarSupportPanel'
@@ -40,9 +42,9 @@ function normalizeButtonLabel(value: string | null | undefined): string {
  * Infrastructure assets compatibility shell.
  *
  * The garage/slot UI remains in AssetsSectionCore unchanged. This shell intercepts
- * the existing "Acquire" actions with the visual catalogue and adds production
- * race-support detail surfaces for Team Cars and Team Buses without changing repair,
- * sell, rename, slot unlock, delivery or assignment behavior.
+ * the existing "Acquire" actions with visual catalogues and adds production
+ * race-support detail surfaces without changing repair, sell, rename, slot unlock,
+ * delivery or assignment behavior.
  */
 export function AssetsSection(props: AssetsSectionProps): JSX.Element {
   const { t } = useTranslation('infrastructure')
@@ -231,6 +233,13 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
         />
       )}
 
+      {props.activeAssetSubTab === 'equipment_van' && (
+        <EquipmentVanSupportPanel
+          configRows={props.equipmentVanConfigRows ?? []}
+          rosterRows={props.equipmentVanRosterRows ?? []}
+        />
+      )}
+
       {isCatalogOpen && catalog.assetKey === 'team_bus' && (
         <TeamBusAcquireCatalogModal
           configRows={props.teamBusConfigRows ?? []}
@@ -243,7 +252,19 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
         />
       )}
 
-      {isCatalogOpen && catalog.assetKey !== 'team_bus' && (
+      {isCatalogOpen && catalog.assetKey === 'equipment_van' && (
+        <EquipmentVanAcquireCatalogModal
+          configRows={props.equipmentVanConfigRows ?? []}
+          ownedByLevel={ownedByLevel}
+          pendingJobsByLevel={props.pendingEquipmentVanJobsByLevel ?? new Map<number, InfrastructureJobRow[]>()}
+          processingKey={props.processingKey}
+          isFull={isFull}
+          onAcquire={props.onEquipmentVanAcquire}
+          onClose={() => setIsCatalogOpen(false)}
+        />
+      )}
+
+      {isCatalogOpen && catalog.assetKey !== 'team_bus' && catalog.assetKey !== 'equipment_van' && (
         <AssetAcquireCatalogModal
           assetKey={catalog.assetKey}
           title={catalog.title}
