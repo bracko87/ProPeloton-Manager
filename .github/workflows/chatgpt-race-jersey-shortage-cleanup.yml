@@ -21,7 +21,7 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Audit jersey shortage rules and copy
+      - name: Audit stale jersey-shortage participation rules
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -30,7 +30,8 @@ jobs:
           root = Path('.')
           include_roots = [root/'src', root/'public', root/'supabase']
           suffixes = {'.ts','.tsx','.js','.jsx','.json','.sql','.md','.txt'}
-          rx = re.compile(r'(jersey|jerseys|race_jersey|mandatory_race_jersey_shortage)', re.I)
+          jersey = re.compile(r'(jersey|jerseys|race_jersey|mandatory_race_jersey_shortage)', re.I)
+          stale = re.compile(r'(mandatory|block|removed|removal|disqual|eligib|no[- ]?show|missed[- ]?start|cannot\s+(?:start|participate|race|save)|will\s+not\s+(?:start|participate|race)|prevent.{0,30}(?:start|participat|race|save)|required)', re.I)
           rows=[]
           for base in include_roots:
               if not base.exists():
@@ -43,11 +44,11 @@ jobs:
                   except UnicodeDecodeError:
                       continue
                   for idx,line in enumerate(lines,1):
-                      if rx.search(line):
+                      if jersey.search(line) and stale.search(line):
                           rows.append(f'{path}:{idx}: {line.strip()}')
-          report = '# Race jersey shortage source audit\n\n' + '\n'.join(rows) + '\n'
+          report = '# Stale race jersey shortage participation-rule audit\n\n' + '\n'.join(rows) + '\n'
           Path('.github/race_jersey_shortage_audit.txt').write_text(report, encoding='utf-8')
-          print(f'Found {len(rows)} matching source lines.')
+          print(f'Found {len(rows)} potentially stale source lines.')
           PY
 
       - name: Commit audit report
@@ -59,6 +60,6 @@ jobs:
             echo 'No audit report change.'
             exit 0
           fi
-          git commit -m 'Audit race jersey shortage source references'
+          git commit -m 'Refine race jersey shortage source audit'
           git pull --rebase origin main
           git push origin main
