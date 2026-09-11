@@ -33,14 +33,6 @@ type TeamCarRecentRaceRow = {
   condition_loss: string | number
 }
 
-type TeamCarProfileModalProps = {
-  car: TeamCarRosterRow
-  config: InfrastructureAssetConfigRow
-  onOpenAssetRepair: (target: InfrastructureAssetActionTarget) => void
-  onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
-  onClose: () => void
-}
-
 function splitBenefits(summary: string | null | undefined): string[] {
   return String(summary ?? '')
     .split(';')
@@ -64,11 +56,10 @@ function scaleBenefitLine(line: string, factor: number): string {
     /([+-])(\d+(?:\.\d+)?)%/g,
     (_match, sign: string, raw: string) => {
       const scaled = Number(raw) * factor
-      const number = scaled.toLocaleString('en-US', {
+      return `${sign}${scaled.toLocaleString('en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
-      })
-      return `${sign}${number}%`
+      })}%`
     },
   )
 }
@@ -97,6 +88,27 @@ function estimatedReferenceStagesBeforeService(
 ): number {
   if (baseWear <= 0 || condition <= minimumCondition) return 0
   return Math.max(0, Math.floor((condition - minimumCondition) / baseWear))
+}
+
+function countryFlag(countryCode: string | null): string {
+  const code = String(countryCode ?? '').trim().toUpperCase()
+  if (!/^[A-Z]{2}$/.test(code)) return '🏁'
+  return String.fromCodePoint(...[...code].map(char => 127397 + char.charCodeAt(0)))
+}
+
+function formatRaceDateRange(first: string | null, last: string | null): string {
+  const firstDate = first ? new Date(`${first}T00:00:00Z`) : null
+  const lastDate = last ? new Date(`${last}T00:00:00Z`) : firstDate
+  if (!firstDate || Number.isNaN(firstDate.getTime())) return '—'
+
+  const firstMonth = firstDate.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })
+  const firstDay = firstDate.getUTCDate()
+  if (!lastDate || Number.isNaN(lastDate.getTime()) || first === last) return `${firstMonth} ${String(firstDay).padStart(2, '0')}`
+
+  const lastMonth = lastDate.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })
+  const lastDay = lastDate.getUTCDate()
+  if (firstMonth === lastMonth) return `${firstMonth} ${String(firstDay).padStart(2, '0')}–${String(lastDay).padStart(2, '0')}`
+  return `${firstMonth} ${String(firstDay).padStart(2, '0')}–${lastMonth} ${String(lastDay).padStart(2, '0')}`
 }
 
 function TeamCarImage({
@@ -156,63 +168,91 @@ function buildActionTarget(
   }
 }
 
+function currentStatusCopy(car: TeamCarRosterRow): {
+  label: string
+  detail: string
+  tone: string
+} {
+  if (car.status === 'in_repair') {
+    return {
+      label: 'In repair',
+      detail: car.repair_complete_game_date
+        ? `Repair scheduled to finish ${formatGameDate(car.repair_complete_game_date)}.`
+        : 'This car is currently being repaired and cannot be assigned.',
+      tone: 'border-amber-200 bg-amber-50 text-amber-900',
+    }
+  }
+
+  if (car.status === 'assigned' || car.assignment_locked) {
+    const assignment = car.current_assignment_label || 'current race assignment'
+    const until = car.assignment_end_game_date
+      ? ` until ${formatGameDate(car.assignment_end_game_date)}`
+      : ''
+    return {
+      label: 'Assigned to race',
+      detail: `${assignment}${until}. Repair and sale are locked while this assignment is active.`,
+      tone: 'border-blue-200 bg-blue-50 text-blue-900',
+    }
+  }
+
+  if (car.status === 'available') {
+    return {
+      label: 'In garage · Available',
+      detail: 'This car is currently free in the garage and can be assigned, repaired or sold when eligible.',
+      tone: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+    }
+  }
+
+  return {
+    label: String(car.status).replaceAll('_', ' '),
+    detail: 'Current asset status from the Team Car garage.',
+    tone: 'border-slate-200 bg-slate-50 text-slate-800',
+  }
+}
+
 function TeamCarProfileModal({
   car,
   config,
   onOpenAssetRepair,
   onOpenAssetSell,
   onClose,
-}: TeamCarProfileModalProps): JSX.Element {
+}: {
+  car: TeamCarRosterRow
+  config: InfrastructureAssetConfigRow
+  onOpenAssetRepair: (target: InfrastructureAssetActionTarget) => void
+  onOpenAssetSell: (target: InfrastructureAssetActionTarget) => void
+  onClose: () => void
+}): JSX.Element {
   const [recentRaces, setRecentRaces] = useState<TeamCarRecentRaceRow[]>([])
   const [recentRacesLoading, setRecentRacesLoading] = useState(true)
   const [recentRacesError, setRecentRacesError] = useState<string | null>(null)
 
   const condition = toNumber(car.condition_percent, 0)
   const factor = toNumber(car.condition_factor, 0)
-  const baseWear = toNumber(
-    car.condition_loss_per_race_day ?? config.condition_loss_per_race_day,
-    0,
-  )
-  const minimumCondition = toNumber(
-    car.min_assign_condition_percent ?? config.min_assign_condition_percent,
-    30,
-  )
-  const repairCostPerPoint = toNumber(
-    car.repair_cost_per_condition_point ?? config.repair_cost_per_condition_point,
-    0,
-  )
-  const repairPointsPerDay = toNumber(
-    car.repair_points_per_game_day ?? config.repair_points_per_game_day,
-    0,
-  )
+  const baseWear = toNumber(car.condition_loss_per_race_day ?? config.condition_loss_per_race_day, 0)
+  const minimumCondition = toNumber(car.min_assign_condition_percent ?? config.min_assign_condition_percent, 30)
+  const repairCostPerPoint = toNumber(car.repair_cost_per_condition_point ?? config.repair_cost_per_condition_point, 0)
+  const repairPointsPerDay = toNumber(car.repair_points_per_game_day ?? config.repair_points_per_game_day, 0)
   const missingCondition = Math.max(0, 100 - condition)
   const currentRepairCost = Math.ceil(missingCondition * repairCostPerPoint)
   const currentRepairDays =
     missingCondition <= 0 || repairPointsPerDay <= 0
       ? 0
       : Math.max(1, Math.ceil(missingCondition / repairPointsPerDay))
-  const referenceStages = estimatedReferenceStagesBeforeService(
-    condition,
-    baseWear,
-    minimumCondition,
-  )
+  const referenceStages = estimatedReferenceStagesBeforeService(condition, baseWear, minimumCondition)
   const shortStageWear = wearForDistance(baseWear, 0.6)
   const longStageWear = wearForDistance(baseWear, 1.6)
   const benefits = splitBenefits(config.effect_summary)
   const name = config.asset_name || car.asset_name || `Team Car Level ${car.asset_level}`
-  const canRepair =
-    condition < 100 &&
-    car.status !== 'assigned' &&
-    car.status !== 'in_repair' &&
-    !car.assignment_locked
+  const canRepair = condition < 100 && car.status !== 'assigned' && car.status !== 'in_repair' && !car.assignment_locked
   const canSell = car.status !== 'assigned' && !car.assignment_locked
   const actionTarget = buildActionTarget(car, name)
+  const statusCopy = currentStatusCopy(car)
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
     }
-
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
@@ -223,12 +263,10 @@ function TeamCarProfileModal({
     async function loadRecentRaces(): Promise<void> {
       setRecentRacesLoading(true)
       setRecentRacesError(null)
-
       const { data, error } = await supabase.rpc('get_team_car_recent_races_v1', {
         p_team_car_id: car.car_id,
         p_limit: 5,
       })
-
       if (cancelled) return
 
       if (error) {
@@ -260,15 +298,12 @@ function TeamCarProfileModal({
       >
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-gray-100 bg-white px-4 py-4 sm:px-6">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Team Car · Level {car.asset_level}
-            </div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">Team Car · Level {car.asset_level}</div>
             <h3 className="mt-1 text-xl font-semibold text-gray-900">{name}</h3>
             {car.display_name && car.display_name !== name && (
               <div className="mt-1 text-sm text-gray-500">{car.display_name}</div>
             )}
           </div>
-
           <button
             type="button"
             onClick={onClose}
@@ -285,45 +320,29 @@ function TeamCarProfileModal({
             <div className="grid grid-cols-2 gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm">
               <div>
                 <div className="text-xs text-gray-400">Purchase value</div>
-                <div className="mt-1 font-semibold text-gray-900">
-                  {formatCash(car.purchase_cost_cash || config.cost_cash)}
-                </div>
+                <div className="mt-1 font-semibold text-gray-900">{formatCash(car.purchase_cost_cash || config.cost_cash)}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-400">Status</div>
-                <div className="mt-1 font-semibold capitalize text-gray-900">
-                  {String(car.status).replaceAll('_', ' ')}
-                </div>
+                <div className="mt-1 font-semibold capitalize text-gray-900">{String(car.status).replaceAll('_', ' ')}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-400">Race days used</div>
-                <div className="mt-1 font-semibold text-gray-900">
-                  {toNumber(car.total_race_days, 0).toLocaleString('en-US')}
-                </div>
+                <div className="mt-1 font-semibold text-gray-900">{toNumber(car.total_race_days, 0).toLocaleString('en-US')}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-400">Distance covered</div>
-                <div className="mt-1 font-semibold text-gray-900">
-                  {toNumber(car.total_distance_km, 0).toLocaleString('en-US', {
-                    maximumFractionDigits: 0,
-                  })} km
-                </div>
+                <div className="mt-1 font-semibold text-gray-900">{toNumber(car.total_distance_km, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} km</div>
               </div>
               <div className="col-span-2">
                 <div className="text-xs text-gray-400">Last used</div>
-                <div className="mt-1 font-semibold text-gray-900">
-                  {car.last_used_game_date ? formatGameDate(car.last_used_game_date) : 'Not used yet'}
-                </div>
+                <div className="mt-1 font-semibold text-gray-900">{car.last_used_game_date ? formatGameDate(car.last_used_game_date) : 'Not used yet'}</div>
               </div>
             </div>
 
             <section className="rounded-2xl border border-gray-100 bg-white p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-900">Last 5 races used</h4>
-                  <p className="mt-0.5 text-xs text-gray-500">Recent race history for this exact car.</p>
-                </div>
-              </div>
+              <h4 className="text-sm font-semibold text-gray-900">Last 5 races used</h4>
+              <p className="mt-0.5 text-xs text-gray-500">Finished race usage for this exact car.</p>
 
               {recentRacesLoading ? (
                 <div className="mt-3 rounded-xl bg-gray-50 px-3 py-4 text-xs text-gray-500">Loading race history…</div>
@@ -332,24 +351,36 @@ function TeamCarProfileModal({
               ) : recentRaces.length === 0 ? (
                 <div className="mt-3 rounded-xl bg-gray-50 px-3 py-4 text-xs text-gray-500">No race usage recorded yet.</div>
               ) : (
-                <div className="mt-3 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100">
+                <div className="mt-3 space-y-1.5">
                   {recentRaces.map(race => (
-                    <div key={race.race_id} className="flex items-center justify-between gap-3 bg-white px-3 py-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-gray-900">{race.race_name}</div>
-                        <div className="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-gray-500">
-                          {race.last_used_game_date && <span>{formatGameDate(race.last_used_game_date)}</span>}
-                          {race.category && <span>· {race.category}</span>}
-                          <span>· {race.stages_used} stage{race.stages_used === 1 ? '' : 's'}</span>
+                    <div
+                      key={race.race_id}
+                      className="flex min-h-[42px] items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm"
+                    >
+                      <div className="w-[82px] shrink-0 text-center text-[11px] font-semibold text-gray-800">
+                        {formatRaceDateRange(race.first_used_game_date, race.last_used_game_date)}
+                      </div>
+                      <div className="h-7 w-px shrink-0 bg-emerald-400" />
+                      <div className="w-6 shrink-0 text-center text-lg" title={race.country_code ?? undefined}>
+                        {countryFlag(race.country_code)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="truncate text-sm font-semibold text-gray-900">{race.race_name}</div>
+                          {race.category && (
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                              {race.category}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-gray-400">
+                          <span>{race.stages_used} stage{race.stages_used === 1 ? '' : 's'}</span>
+                          <span>· {toNumber(race.distance_km, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} km</span>
+                          {race.race_type && <span>· {race.race_type.replaceAll('_', ' ')}</span>}
                         </div>
                       </div>
-                      <div className="shrink-0 text-right">
-                        <div className="text-xs font-semibold text-gray-700">
-                          {toNumber(race.distance_km, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} km
-                        </div>
-                        <div className="mt-0.5 text-[11px] text-gray-400">
-                          -{formatPercent(toNumber(race.condition_loss, 0))} condition
-                        </div>
+                      <div className="shrink-0 text-right text-[11px] text-gray-400">
+                        -{formatPercent(toNumber(race.condition_loss, 0))}
                       </div>
                     </div>
                   ))}
@@ -389,6 +420,12 @@ function TeamCarProfileModal({
                 Sell
               </button>
             </div>
+
+            <div className={`rounded-2xl border p-4 ${statusCopy.tone}`}>
+              <div className="text-[11px] font-semibold uppercase tracking-wide opacity-70">Current car status</div>
+              <div className="mt-1 text-sm font-semibold">{statusCopy.label}</div>
+              <div className="mt-1 text-xs leading-5 opacity-80">{statusCopy.detail}</div>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -396,9 +433,7 @@ function TeamCarProfileModal({
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900">Race Benefits</h4>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Current values below are the values that feed the race-plan bonus pipeline.
-                  </p>
+                  <p className="mt-1 text-xs text-gray-500">Current values below are the values that feed the race-plan bonus pipeline.</p>
                 </div>
                 <div className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-semibold text-blue-800">
                   {formatEffectiveness(factor)} effectiveness
@@ -409,7 +444,6 @@ function TeamCarProfileModal({
                 {benefits.map(benefit => {
                   const currentBenefit = scaleBenefitLine(benefit, factor)
                   const reduced = currentBenefit !== benefit
-
                   return (
                     <div
                       key={benefit}
@@ -428,20 +462,10 @@ function TeamCarProfileModal({
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
               <h4 className="text-sm font-semibold text-gray-900">Condition</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Current condition</div>
-                  <div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(condition)}</div>
-                </div>
-                <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Current effectiveness</div>
-                  <div className="mt-1 text-lg font-semibold text-gray-900">{formatEffectiveness(factor)}</div>
-                </div>
-                <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Race-ready minimum</div>
-                  <div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(minimumCondition, 0)}</div>
-                </div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Current condition</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(condition)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Current effectiveness</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatEffectiveness(factor)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Race-ready minimum</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(minimumCondition, 0)}</div></div>
               </div>
-
               <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-xs leading-5 text-gray-600">
                 {conditionBand(condition)}. Effectiveness bands: 80–100% = 100%; 60–79% = 90%; 40–59% = 75%; 30–39% = 60%; below 30% cannot be assigned.
               </div>
@@ -450,20 +474,10 @@ function TeamCarProfileModal({
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
               <h4 className="text-sm font-semibold text-gray-900">Wear per stage</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Short stage floor</div>
-                  <div className="mt-1 font-semibold text-gray-900">{formatPercent(shortStageWear)}</div>
-                </div>
-                <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">120 km reference</div>
-                  <div className="mt-1 font-semibold text-gray-900">{formatPercent(baseWear)}</div>
-                </div>
-                <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Long stage ceiling</div>
-                  <div className="mt-1 font-semibold text-gray-900">{formatPercent(longStageWear)}</div>
-                </div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Short stage floor</div><div className="mt-1 font-semibold text-gray-900">{formatPercent(shortStageWear)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">120 km reference</div><div className="mt-1 font-semibold text-gray-900">{formatPercent(baseWear)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Long stage ceiling</div><div className="mt-1 font-semibold text-gray-900">{formatPercent(longStageWear)}</div></div>
               </div>
-
               <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-xs leading-5 text-gray-600">
                 The race engine applies wear after every stage. The configured level value is the 120 km reference; distance scales it from 60% to 160%. At the current condition this car supports about {referenceStages} reference stages before reaching the {formatPercent(minimumCondition, 0)} service threshold.
               </div>
@@ -472,20 +486,9 @@ function TeamCarProfileModal({
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
               <h4 className="text-sm font-semibold text-gray-900">Maintenance</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Repair / condition point</div>
-                  <div className="mt-1 font-semibold text-gray-900">{formatCash(repairCostPerPoint)}</div>
-                </div>
-                <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Current full repair estimate</div>
-                  <div className="mt-1 font-semibold text-gray-900">{formatCash(currentRepairCost)}</div>
-                </div>
-                <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Current repair time</div>
-                  <div className="mt-1 font-semibold text-gray-900">
-                    {currentRepairDays === 0 ? 'No repair needed' : `${currentRepairDays} game day${currentRepairDays === 1 ? '' : 's'}`}
-                  </div>
-                </div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Repair / condition point</div><div className="mt-1 font-semibold text-gray-900">{formatCash(repairCostPerPoint)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Current full repair estimate</div><div className="mt-1 font-semibold text-gray-900">{formatCash(currentRepairCost)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Current repair time</div><div className="mt-1 font-semibold text-gray-900">{currentRepairDays === 0 ? 'No repair needed' : `${currentRepairDays} game day${currentRepairDays === 1 ? '' : 's'}`}</div></div>
               </div>
               <p className="mt-3 text-xs leading-5 text-gray-500">
                 A completed repair restores the car to 100% condition. Repairs use {formatPercent(repairPointsPerDay, 0)} condition points per game day and can only start while the car is available and not locked to a race.
@@ -534,32 +537,22 @@ export function TeamCarSupportPanel({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-gray-900">Your Team Cars</h3>
-            <p className="mt-0.5 text-xs text-gray-500">
-              Open Details to see current benefits, race history and asset actions.
-            </p>
+            <p className="mt-0.5 text-xs text-gray-500">Open Details to see current benefits, race history and asset actions.</p>
           </div>
           <div className="text-xs font-semibold text-gray-500">{rosterRows.length} owned</div>
         </div>
 
         {rosterRows.length === 0 ? (
-          <div className="mt-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-sm text-gray-500">
-            No Team Cars owned yet.
-          </div>
+          <div className="mt-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-sm text-gray-500">No Team Cars owned yet.</div>
         ) : (
           <div className="mt-3 grid gap-3 lg:grid-cols-2">
             {rosterRows.map(car => {
               const config = configRows.find(row => row.asset_level === car.asset_level)
               const name = config?.asset_name || car.asset_name || `Team Car Level ${car.asset_level}`
-              const baseWear = toNumber(
-                car.condition_loss_per_race_day ?? config?.condition_loss_per_race_day,
-                0,
-              )
+              const baseWear = toNumber(car.condition_loss_per_race_day ?? config?.condition_loss_per_race_day, 0)
 
               return (
-                <div
-                  key={car.car_id}
-                  className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-3 shadow-sm sm:flex-row sm:items-center"
-                >
+                <div key={car.car_id} className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-3 shadow-sm sm:flex-row sm:items-center">
                   <TeamCarImage level={car.asset_level} name={name} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -610,7 +603,6 @@ export function TeamCarSupportPanel({
               {sortedConfig.map(config => {
                 const benefits = splitBenefits(config.effect_summary)
                 const baseWear = toNumber(config.condition_loss_per_race_day, 0)
-
                 return (
                   <div key={`team_car_engine_level_${config.asset_level}`} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                     <div className="flex items-start justify-between gap-2">
