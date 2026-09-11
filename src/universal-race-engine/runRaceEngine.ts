@@ -59,7 +59,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11j-v5-3-physical-gap-lineage-2026-09-08' as const
+  'phase11k-v5-4-selective-finish-fallback-2026-09-11' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -19699,11 +19699,16 @@ function buildPhase5RoadSnapshots(
   const splitCandidates = sourceGroups
     .filter((sourceGroup) => sourceGroup.riderIds.length > 0)
     .flatMap((sourceGroup) => {
-      // Phase 4 final groups are already the authoritative physical road state.
-      // Performance scores may order riders inside a group, but they must not
-      // manufacture an additional physical split after the race engine has
-      // resolved the chase, catch, terrain selection, and finish gaps.
-      if (phaseNumber === 4) {
+      // Preserve an already-resolved Phase 4 physical split exactly. If a
+      // selective road stage still reaches Phase 5 as one unsplit bunch,
+      // however, allow the existing deterministic Phase 5 performance-band
+      // model to provide the missing finish separation. Flat stages keep their
+      // single bunch unless Phase 4 itself physically split them.
+      const preservePhase4PhysicalGroup =
+        phaseNumber === 4 &&
+        (sourceGroups.length > 1 || profile === 'flat_large_groups')
+
+      if (preservePhase4PhysicalGroup) {
         return [
           {
             sourceOrder: sourceGroup.sourceOrder * 100,
