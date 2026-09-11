@@ -1,0 +1,112 @@
+name: ChatGPT Phase 4 validate
+on:
+  push:
+    branches: [chatgpt-phase4-finalizing-state-20260911]
+permissions:
+  contents: write
+jobs:
+  patch-build-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Sync branch
+        run: git pull --ff-only origin chatgpt-phase4-finalizing-state-20260911
+      - name: Apply Phase 4 frontend patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/pages/dashboard/RaceDetailPage.tsx')
+          text = path.read_text()
+
+          replacements = []
+
+          old = """  results_visible: boolean\n  speed_locked: boolean\n  progress: number\n}"""
+          new = """  results_visible: boolean\n  speed_locked: boolean\n  publication_pending: boolean\n  publication_error: string | null\n  progress: number\n}"""
+          assert text.count(old) == 1, f'live-state type match count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = """  const liveReplayWasActiveRef = useRef(false)\n  const liveReplayActive = liveReplayState?.is_live === true\n  const replaySpeedLocked =\n    liveReplayState?.speed_locked === true ||\n    authoritativePayload?.lifecycle?.speed_locked === true\n  const officialLifecycleResultsVisible =\n    authoritativePayload?.lifecycle?.results_visible === true"""
+          new = """  const liveReplayWasActiveRef = useRef(false)\n  const liveReplayServerStateInitializedRef = useRef(false)\n  const visibleResultsPayloadSyncedRef = useRef(false)\n  const liveReplayActive = liveReplayState?.is_live === true\n  const replayResultsVisible =\n    liveReplayState?.results_visible === true ||\n    authoritativePayload?.lifecycle?.results_visible === true\n  const replayPublicationPending =\n    liveReplayState?.publication_pending === true\n  const replayPublicationError =\n    !replayResultsVisible &&\n    typeof liveReplayState?.publication_error === 'string' &&\n    liveReplayState.publication_error.trim().length > 0\n      ? liveReplayState.publication_error.trim()\n      : null\n  const replayFinalizing =\n    replayPublicationPending && !replayPublicationError\n  const replayPublicationRetrying =\n    replayPublicationPending && Boolean(replayPublicationError)\n  const replaySpeedLocked = liveReplayState\n    ? liveReplayState.speed_locked === true\n    : authoritativePayload?.lifecycle?.speed_locked === true\n  const replayControlsLocked =\n    replaySpeedLocked ||\n    replayPublicationPending ||\n    (Boolean(replayPublicationError) && !replayResultsVisible)\n  const officialLifecycleResultsVisible =\n    authoritativePayload?.lifecycle?.results_visible === true"""
+          assert text.count(old) == 1, f'state derivation match count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = """  useEffect(() => {\n    let cancelled = false\n\n    async function refreshPersistedLiveReplayState(): Promise<void> {"""
+          new = """  useEffect(() => {\n    liveReplayWasActiveRef.current = false\n    liveReplayServerStateInitializedRef.current = false\n    visibleResultsPayloadSyncedRef.current = false\n    setLiveReplayState(null)\n  }, [stage.id])\n\n  useEffect(() => {\n    let cancelled = false\n\n    async function refreshPersistedLiveReplayState(): Promise<void> {"""
+          assert text.count(old) == 1, f'polling effect opener count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = """      setLiveReplayState(nextLiveState)\n\n      if (nextLiveState?.is_live === true) {\n        liveReplayWasActiveRef.current = true\n        setPlaybackSpeed(1)\n        setPlaying(true)\n\n        const serverProgress = Math.max(\n          0,\n          Math.min(1, Number(nextLiveState.progress ?? 0))\n        )\n        setReplayProgress((current) => Math.max(current, serverProgress))\n        return\n      }\n\n      if (\n        liveReplayWasActiveRef.current &&\n        nextLiveState?.results_visible === true\n      ) {\n        setPlaying(false)\n        setReplayProgress(1)\n\n        const payloadResponse = await raceDetailReadRpc("""
+          new = """      setLiveReplayState(nextLiveState)\n\n      const serverProgress = Math.max(\n        0,\n        Math.min(1, Number(nextLiveState?.progress ?? 0))\n      )\n      if (\n        !liveReplayServerStateInitializedRef.current ||\n        nextLiveState?.is_live === true ||\n        nextLiveState?.publication_pending === true\n      ) {\n        setReplayProgress((current) => Math.max(current, serverProgress))\n      }\n      liveReplayServerStateInitializedRef.current = true\n\n      if (nextLiveState?.is_live === true) {\n        liveReplayWasActiveRef.current = true\n        visibleResultsPayloadSyncedRef.current = false\n        setPlaybackSpeed(1)\n        setPlaying(true)\n        return\n      }\n\n      if (\n        nextLiveState?.results_visible === true &&\n        !visibleResultsPayloadSyncedRef.current\n      ) {\n        visibleResultsPayloadSyncedRef.current = true\n        if (liveReplayWasActiveRef.current) {\n          setPlaying(false)\n          setReplayProgress(1)\n        }\n\n        const payloadResponse = await raceDetailReadRpc("""
+          assert text.count(old) == 1, f'polling body match count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = """  useEffect(() => {\n    if (liveReplayWasActiveRef.current) return\n    setReplayProgress(0)\n    setPlaying(false)\n  }, [shadowBuild.result])"""
+          new = """  useEffect(() => {\n    if (\n      liveReplayWasActiveRef.current ||\n      liveReplayState?.has_simulation === true\n    ) {\n      return\n    }\n    setReplayProgress(0)\n    setPlaying(false)\n  }, [shadowBuild.result, liveReplayState?.has_simulation])"""
+          assert text.count(old) == 1, f'shadow reset match count={text.count(old)}'
+          text = text.replace(old, new)
+
+          text = text.replace('if (replaySpeedLocked) return', 'if (replayControlsLocked) return')
+          text = text.replace('disabled={replaySpeedLocked}', 'disabled={replayControlsLocked}')
+          text = text.replace('disabled={replaySpeedLocked || replayProgress <= 0}', 'disabled={replayControlsLocked || replayProgress <= 0}')
+
+          old = """                      {liveReplayActive\n                        ? 'LIVE · 1×'\n                        : replaySpeedLocked\n                          ? 'Finalizing'\n                          : playing\n                            ? 'Pause'\n                            : 'Play'}"""
+          new = """                      {liveReplayActive\n                        ? 'LIVE · 1×'\n                        : replayPublicationRetrying\n                          ? 'Publication retrying'\n                          : replayFinalizing\n                            ? 'Finalizing'\n                            : replayPublicationError && !replayResultsVisible\n                              ? 'Publication error'\n                              : playing\n                                ? 'Pause'\n                                : 'Play'}"""
+          assert text.count(old) == 1, f'button label match count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = """                    <div\n                      className={\n                        isTimeTrialReplay\n                          ? 'w-10 text-right text-xs font-semibold text-slate-500'\n                          : 'w-9 text-right text-[10px] font-semibold text-slate-500'\n                      }\n                    >\n                      {Math.round((isTimeTrialReplay ? replayProgress : distanceReplayProgress) * 100)}%\n                    </div>\n                  </div>\n                </div>\n\n                <StageProfileChart"""
+          new = """                    <div\n                      className={\n                        isTimeTrialReplay\n                          ? 'w-10 text-right text-xs font-semibold text-slate-500'\n                          : 'w-9 text-right text-[10px] font-semibold text-slate-500'\n                      }\n                    >\n                      {Math.round((isTimeTrialReplay ? replayProgress : distanceReplayProgress) * 100)}%\n                    </div>\n                  </div>\n                </div>\n\n                {replayPublicationRetrying ? (\n                  <div className=\"mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900\">\n                    <div className=\"font-semibold\">Official results publication was delayed. Automatic server retry is active.</div>\n                    <div className=\"mt-1 break-words font-mono text-[11px] text-amber-800\">\n                      {replayPublicationError}\n                    </div>\n                  </div>\n                ) : replayFinalizing ? (\n                  <div className=\"mb-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-600\">\n                    Finalizing official results…\n                  </div>\n                ) : replayPublicationError && !replayResultsVisible ? (\n                  <div className=\"mb-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800\">\n                    <div className=\"font-semibold\">Official results publication needs server retry.</div>\n                    <div className=\"mt-1 break-words font-mono text-[11px]\">\n                      {replayPublicationError}\n                    </div>\n                  </div>\n                ) : null}\n\n                <StageProfileChart"""
+          assert text.count(old) == 1, f'publication status insertion count={text.count(old)}'
+          text = text.replace(old, new)
+
+          path.write_text(text)
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Production build
+        run: npm run build
+      - name: Validate Phase 4 structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE=src/pages/dashboard/RaceDetailPage.tsx
+          grep -F "publication_pending: boolean" "$FILE"
+          grep -F "publication_error: string | null" "$FILE"
+          grep -F "const replayFinalizing" "$FILE"
+          grep -F "replayPublicationPending && !replayPublicationError" "$FILE"
+          grep -F "Publication retrying" "$FILE"
+          grep -F "Automatic server retry is active" "$FILE"
+          grep -F "liveReplayState.speed_locked === true" "$FILE"
+          grep -F "liveReplayState?.has_simulation === true" "$FILE"
+          if grep -Fq "liveReplayState?.speed_locked === true ||" "$FILE"; then
+            echo "stale lifecycle OR speed lock still present" >&2
+            exit 1
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('src/pages/dashboard/RaceDetailPage.tsx').read_text()
+          assert text.count("? 'Finalizing'") == 1
+          assert "replayFinalizing\n                            ? 'Finalizing'" in text
+          assert "nextLiveState?.publication_pending === true" in text
+          assert "!visibleResultsPayloadSyncedRef.current" in text
+          assert "replayControlsLocked" in text
+          PY
+      - name: Remove temporary workflows
+        run: git rm .github/workflows/chatgpt-phase4-inspect-20260911.yml .github/workflows/chatgpt-phase4-validate-20260911.yml
+      - name: Commit validated Phase 4 frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/dashboard/RaceDetailPage.tsx
+          git commit -m "Use authoritative replay publication state"
+          git push origin HEAD:chatgpt-phase4-finalizing-state-20260911
