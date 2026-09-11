@@ -1,0 +1,68 @@
+/* ProPeloton Manager — Create Team mobile refit v2.
+ * Two visual follow-ups only:
+ * 1) language selector sits outside the Create Team card
+ * 2) Team Preview badge/logo gets a larger, unclipped canvas
+ */
+@media (max-width: 767px) {
+  /* Make the outer shell transparent so the language picker is not visually
+     part of the white Create Team window. Reserve a small top strip for it. */
+  body:has(#create-club-form) .relative.z-10.max-w-7xl.w-full {
+    position: relative !important;
+    padding: 3.7rem 0 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  body:has(#create-club-form) .relative.z-10.max-w-7xl.w-full > .flex.justify-end {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    z-index: 40 !important;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* The actual Create Team window remains the bordered white card. */
+  body:has(#create-club-form) .relative.z-10.max-w-7xl.w-full > .rounded-xl.border-2 {
+    width: 100% !important;
+    min-width: 0 !important;
+    background: rgba(255, 255, 255, 0.97) !important;
+    box-shadow: 0 16px 36px rgba(8, 18, 36, 0.24) !important;
+  }
+
+  /* Give the Team Preview a proper phone-sized canvas. The existing preview
+     component remains unchanged; only its available box is enlarged. */
+  body:has(#create-club-form) div:has(> #create-club-form) + div .mt-6.flex.h-56.w-56 {
+    width: min(100%, 15.5rem) !important;
+    height: 15.5rem !important;
+    min-height: 15.5rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding: 0.5rem !important;
+    overflow: visible !important;
+  }
+
+  body:has(#create-club-form) div:has(> #create-club-form) + div .mt-6.flex.h-56.w-56 > * {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    flex-shrink: 0 !important;
+  }
+
+  body:has(#create-club-form) div:has(> #create-club-form) + div .mt-6.flex.h-56.w-56 svg,
+  body:has(#create-club-form) div:has(> #create-club-form) + div .mt-6.flex.h-56.w-56 img {
+    display: block !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+  }
+}
+
+@media (max-width: 359px) {
+  body:has(#create-club-form) div:has(> #create-club-form) + div .mt-6.flex.h-56.w-56 {
+    width: min(100%, 14rem) !important;
+    height: 14rem !important;
+    min-height: 14rem !important;
+  }
+}
