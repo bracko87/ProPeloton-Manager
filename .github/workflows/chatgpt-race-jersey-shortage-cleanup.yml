@@ -1,0 +1,64 @@
+name: Race jersey shortage cleanup
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-race-jersey-shortage-cleanup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Audit jersey shortage rules and copy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          include_roots = [root/'src', root/'public', root/'supabase']
+          suffixes = {'.ts','.tsx','.js','.jsx','.json','.sql','.md','.txt'}
+          rx = re.compile(r'(jersey|jerseys|race_jersey|mandatory_race_jersey_shortage)', re.I)
+          rows=[]
+          for base in include_roots:
+              if not base.exists():
+                  continue
+              for path in sorted(base.rglob('*')):
+                  if not path.is_file() or path.suffix.lower() not in suffixes:
+                      continue
+                  try:
+                      lines=path.read_text(encoding='utf-8').splitlines()
+                  except UnicodeDecodeError:
+                      continue
+                  for idx,line in enumerate(lines,1):
+                      if rx.search(line):
+                          rows.append(f'{path}:{idx}: {line.strip()}')
+          report = '# Race jersey shortage source audit\n\n' + '\n'.join(rows) + '\n'
+          Path('.github/race_jersey_shortage_audit.txt').write_text(report, encoding='utf-8')
+          print(f'Found {len(rows)} matching source lines.')
+          PY
+
+      - name: Commit audit report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/race_jersey_shortage_audit.txt
+          if git diff --cached --quiet; then
+            echo 'No audit report change.'
+            exit 0
+          fi
+          git commit -m 'Audit race jersey shortage source references'
+          git pull --rebase origin main
+          git push origin main
