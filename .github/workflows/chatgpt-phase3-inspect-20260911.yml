@@ -1,0 +1,38 @@
+name: ChatGPT Phase 3 inspect
+
+on:
+  push:
+    branches:
+      - chatgpt-phase3-full-standings-20260911
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect Race Detail standings sections
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE=src/pages/dashboard/RaceDetailPage.tsx
+          for TERM in "type RaceResultsViewPayload" "function normalizeRaceResultsPayload" "const classificationRows" "fullStandingModal === 'race'" "function RaceClassificationTable" "assignedRiderTotal"; do
+            echo "===== $TERM ====="
+            grep -n -F "$TERM" "$FILE" || true
+          done
+          echo "===== TYPE/NORMALIZE CONTEXT ====="
+          LINE=$(grep -n -F "type RaceResultsViewPayload" "$FILE" | head -1 | cut -d: -f1)
+          sed -n "$((LINE-25)),$((LINE+45))p" "$FILE"
+          LINE=$(grep -n -F "function normalizeRaceResultsPayload" "$FILE" | head -1 | cut -d: -f1)
+          sed -n "$((LINE-10)),$((LINE+30))p" "$FILE"
+          echo "===== CLASSIFICATION STATE CONTEXT ====="
+          LINE=$(grep -n -F "const classificationRows" "$FILE" | head -1 | cut -d: -f1)
+          sed -n "$((LINE-45)),$((LINE+70))p" "$FILE"
+          echo "===== FULL MODAL CONTEXT ====="
+          LINE=$(grep -n -F "{fullStandingModal ? (" "$FILE" | head -1 | cut -d: -f1)
+          sed -n "$((LINE-25)),$((LINE+230))p" "$FILE"
+          echo "===== PARTICIPANT COUNT CONTEXT ====="
+          LINE=$(grep -n -F "const assignedRiderTotal" "$FILE" | head -1 | cut -d: -f1)
+          sed -n "$((LINE-30)),$((LINE+55))p" "$FILE"
