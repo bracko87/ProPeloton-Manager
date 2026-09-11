@@ -681,7 +681,24 @@ export function getNotificationDetailRows(item: NotificationItem): NotificationD
   if (isPrestartDisqualificationPenalty(item)) return prestartDisqualificationDetailRows(item)
   if (isRichDailyNotification(item)) return richDailyDetailRows(item)
   if (isRichRaceNotification(item)) return richRaceDetailRows(item)
-  return getBaseNotificationDetailRows(item)
+
+  const rows = getBaseNotificationDetailRows(item)
+  if (codeOf(item) !== 'RACE_RESULTS_SUMMARY') return rows
+
+  // The base race-results template intentionally stores Top 3 and club rider results
+  // in compact bullet-separated strings. On the full notification page that becomes
+  // hard to scan, especially when six or more riders are listed. Expand only those
+  // multi-entry values into independent detail rows so every rider appears on a line
+  // of their own while keeping the localized row label and the underlying payload.
+  return rows.flatMap(row => {
+    const entries = String(row.value ?? '')
+      .split(/\s*•\s*/)
+      .map(value => value.trim())
+      .filter(Boolean)
+
+    if (entries.length <= 1) return [row]
+    return entries.map(value => ({ ...row, value }))
+  })
 }
 
 export function getNotificationExtraText(item: NotificationItem): string | null {
