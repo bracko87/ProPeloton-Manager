@@ -1,0 +1,85 @@
+name: Fix jersey cleanup audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-fix-jersey-cleanup-audit.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Make audit check exact instead of matching truthful 'does not block' copy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/chatgpt-race-jersey-shortage-cleanup.yml')
+          s=p.read_text(encoding='utf-8')
+          start=s.index('      - name: Audit active source for obsolete jersey participation blockers\n')
+          end=s.index('      - name: Install dependencies\n', start)
+          replacement='''      - name: Audit active source for obsolete jersey participation blockers
+        run: |
+          python - <<'PY_AUDIT'
+          from pathlib import Path
+
+          forbidden = [
+              'Missing jersey kit: blocks stage setup',
+              'Missing jersey kits block the stage setup',
+              'This blocks saving/starting the stage',
+              'should block the final stage setup',
+              'Race Jersey Kit is mandatory',
+              'Race Jersey Complete is mandatory',
+              'Mandatory Race Jersey Kits missing',
+              'Resupply before the stage eligibility check to avoid race removal',
+              'Team removed from this stage and all remaining stages',
+              'Immediate action required: purchase at least',
+          ]
+          allowed = {
+              'src/features/notifications/notificationLocalization.ts',
+              'src/features/notifications/notificationTemplatesLegacy.tsx',
+          }
+          hits=[]
+          for path in Path('src').rglob('*'):
+              if not path.is_file() or path.suffix.lower() not in {'.ts','.tsx','.js','.jsx','.json','.md','.txt'}:
+                  continue
+              rel=str(path)
+              if rel in allowed:
+                  continue
+              text=path.read_text(encoding='utf-8')
+              for needle in forbidden:
+                  if needle.lower() in text.lower():
+                      hits.append(f'{rel}: {needle}')
+          Path('.github/race_jersey_shortage_audit.txt').write_text(
+              '# Active race jersey rule audit\\n\\n' + ('\\n'.join(hits) if hits else 'PASS — no obsolete active player-facing jersey-shortage blockers found.') + '\\n',
+              encoding='utf-8',
+          )
+          if hits:
+              print('\\n'.join(hits))
+              raise SystemExit(f'Found {len(hits)} obsolete active jersey-rule strings')
+          print('PASS — no obsolete active player-facing jersey-shortage blockers found.')
+          PY_AUDIT
+
+'''
+          p.write_text(s[:start]+replacement+s[end:], encoding='utf-8')
+          PY
+
+      - name: Commit audit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/chatgpt-race-jersey-shortage-cleanup.yml
+          git commit -m 'Fix race jersey cleanup audit matcher'
+          git pull --rebase origin main
+          git push origin main
