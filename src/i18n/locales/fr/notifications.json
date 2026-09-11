@@ -799,7 +799,7 @@
   },
   "semanticTypeTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Le plan de course nécessite votre attention",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Manque de maillots de course — pénalité de performance",
     "RIDER_UNHAPPY": "Un coureur est mécontent",
     "RIDER_CONTRACT_EXPIRING": "Le contrat d’un coureur arrive bientôt à expiration",
     "RACE_WEATHER_CANCELLED": "Course annulée en raison de la météo",
@@ -897,7 +897,8 @@
     "STAGE_PLAN_MISSING_AT_LOCK": "Un plan d’étape manquait pour {{entity}} au moment du verrouillage. Ouvrez la préparation de course et vérifiez les détails.",
     "RACE_PLAN_OPEN": "Le plan de course pour {{entity}} est désormais ouvert et vous pouvez préparer la sélection des coureurs et la logistique.",
     "RACE_PLAN_DEADLINE_REMINDER": "L’échéance du plan de course de {{entity}} approche. Vérifiez votre sélection et envoyez le plan à temps.",
-    "RACE_PLAN_NEEDS_ATTENTION": "Le plan de course de {{entity}} nécessite votre attention. Vérifiez la préparation et réglez les éléments en attente."
+    "RACE_PLAN_NEEDS_ATTENTION": "Le plan de course de {{entity}} nécessite votre attention. Vérifiez la préparation et réglez les éléments en attente.",
+    "RACE_JERSEYS_MANDATORY_WARNING": "{{entity}} : votre équipe dispose de moins de kits de maillot utilisables que de coureurs sélectionnés. L’équipe reste éligible, mais le manque entraîne une pénalité de performance proportionnelle."
   },
   "richReports": {
     "common": {
@@ -979,7 +980,7 @@
       "februaryRule": "Les inscriptions ferment {{days}} jours avant le départ",
       "entryFeeRetained": "Conservée (non remboursée)",
       "outcomeRemoved": "Legacy event — current rule applies performance penalty",
-      "problemJerseys": "Race Jersey shortage — performance penalty"
+      "problemJerseys": "Manque de maillots de course — pénalité de performance"
     }
   },
   "advisorRuntime": {
@@ -1068,5 +1069,19 @@
       "mechanic": "Vérifiez l’état de l’équipement, la maintenance et les fournitures avant la prochaine course.",
       "scout": "Vérifiez les informations de scouting et décidez de la prochaine action de recrutement ou de suivi."
     }
+  },
+  "raceJerseyShortage": {
+    "title": "Manque de maillots de course — pénalité de performance",
+    "feedMessage": "{{entity}} : votre équipe dispose de moins de kits de maillot utilisables que de coureurs sélectionnés. L’équipe reste éligible, mais le manque entraîne une pénalité de performance proportionnelle.",
+    "raceFallback": "la prochaine course",
+    "stageWithNumber": "Étape {{stage}}",
+    "upcomingStage": "la prochaine étape",
+    "introDetailed": "Manque de kits de maillot pour {{raceName}} — {{stageLabel}}. Disponibles : {{available}} ; nécessaires : {{required}} ; manquants : {{missing}}. L’équipe reste éligible et reçoit une pénalité de performance proportionnelle.",
+    "introGeneric": "Votre équipe manque de kits de maillot de course utilisables pour la prochaine étape. L’équipe reste éligible ; le manque entraîne une pénalité de performance proportionnelle.",
+    "shortagePenaltyActive": "Manque — pénalité active",
+    "raceEffectLabel": "Effet en course",
+    "raceEffect": "L’équipe reste éligible ; la pénalité augmente selon le nombre de kits manquants",
+    "extraWithMissing": "Kits de maillot de course utilisables encore nécessaires : {{missing}}. Ajoutez-les pour réduire ou supprimer la pénalité. Un manque total entraîne -30% sur les bonus positifs de préparation, +8% de consommation d’énergie pendant l’étape et +15% de fatigue après l’étape.",
+    "extraGeneric": "Ouvrez les Fournitures de course et vérifiez les kits de maillot utilisables. Un manque n’empêche pas la participation."
   }
 }

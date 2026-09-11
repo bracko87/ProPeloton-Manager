@@ -807,7 +807,8 @@
     "RACE_APPLICATION_RULE_CHANGE": "Race application deadline update",
     "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Race plan finalised",
-    "STAGE_PLAN_MISSING_REMINDER": "Stage plan missing reminder"
+    "STAGE_PLAN_MISSING_REMINDER": "Stage plan missing reminder",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty"
   },
   "richReports": {
     "common": {
@@ -889,7 +890,7 @@
       "februaryRule": "Applications close {{days}} days before the start",
       "entryFeeRetained": "Retained (not refunded)",
       "outcomeRemoved": "Legacy event — current rule applies performance penalty",
-      "problemJerseys": "Race Jersey shortage — performance penalty"
+      "problemJerseys": "Race jersey shortage — performance penalty"
     }
   },
   "advisorRuntime": {
@@ -978,5 +979,22 @@
       "mechanic": "Review equipment condition, maintenance and race supplies before the next race.",
       "scout": "Review the scouting information and decide the next recruitment or scouting action."
     }
+  },
+  "raceJerseyShortage": {
+    "title": "Race jersey shortage — performance penalty",
+    "feedMessage": "{{entity}}: your team has fewer usable Race Jersey Kits than selected riders. The team remains eligible, but the shortage applies a proportional performance penalty.",
+    "raceFallback": "the upcoming race",
+    "stageWithNumber": "Stage {{stage}}",
+    "upcomingStage": "the upcoming stage",
+    "introDetailed": "Race jersey shortage for {{raceName}} — {{stageLabel}}. Available kits: {{available}}; required kits: {{required}}; missing kits: {{missing}}. The team remains eligible and receives a proportional performance penalty.",
+    "introGeneric": "Your team has a Race Jersey Kit shortage for the upcoming stage. The team remains eligible; the shortage applies a proportional performance penalty.",
+    "shortagePenaltyActive": "Shortage — penalty active",
+    "raceEffectLabel": "Race effect",
+    "raceEffect": "Team remains eligible; performance penalty scales with missing kits",
+    "extraWithMissing": "Usable Race Jersey Kits still needed: {{missing}}. Add them to reduce or remove the performance penalty. A full shortage means -30% positive preparation bonuses, +8% in-stage energy use and +15% post-stage fatigue.",
+    "extraGeneric": "Open Race Supplies to review usable Race Jersey Kit stock. A shortage does not block participation."
+  },
+  "semanticTypeMessages": {
+    "RACE_JERSEYS_MANDATORY_WARNING": "{{entity}}: your team has fewer usable Race Jersey Kits than selected riders. The team remains eligible, but the shortage applies a proportional performance penalty."
   }
 }

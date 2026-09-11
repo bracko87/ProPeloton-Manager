@@ -799,7 +799,7 @@
   },
   "semanticTypeTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Rennplan erfordert Aufmerksamkeit",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Renntrikot-Mangel — Leistungsmalus",
     "RIDER_UNHAPPY": "Fahrer ist unzufrieden",
     "RIDER_CONTRACT_EXPIRING": "Fahrervertrag läuft bald aus",
     "RACE_WEATHER_CANCELLED": "Rennen wegen des Wetters abgesagt",
@@ -897,7 +897,8 @@
     "STAGE_PLAN_MISSING_AT_LOCK": "Für {{entity}} fehlte beim Sperren ein Etappenplan. Öffnen Sie die Rennvorbereitung und prüfen Sie die Details.",
     "RACE_PLAN_OPEN": "Der Rennplan für {{entity}} ist jetzt geöffnet. Sie können Fahrerauswahl und Logistik vorbereiten.",
     "RACE_PLAN_DEADLINE_REMINDER": "Die Frist für den Rennplan von {{entity}} rückt näher. Prüfen Sie Ihre Auswahl und reichen Sie den Plan rechtzeitig ein.",
-    "RACE_PLAN_NEEDS_ATTENTION": "Der Rennplan für {{entity}} erfordert Ihre Aufmerksamkeit. Prüfen Sie die Vorbereitung und erledigen Sie offene Punkte."
+    "RACE_PLAN_NEEDS_ATTENTION": "Der Rennplan für {{entity}} erfordert Ihre Aufmerksamkeit. Prüfen Sie die Vorbereitung und erledigen Sie offene Punkte.",
+    "RACE_JERSEYS_MANDATORY_WARNING": "{{entity}}: Ihr Team hat weniger einsatzbereite Renntrikot-Sets als ausgewählte Fahrer. Das Team bleibt startberechtigt, erhält aber einen proportionalen Leistungsmalus."
   },
   "richReports": {
     "common": {
@@ -979,7 +980,7 @@
       "februaryRule": "Anmeldungen schließen {{days}} Tage vor dem Start",
       "entryFeeRetained": "Einbehalten (nicht erstattet)",
       "outcomeRemoved": "Legacy event — current rule applies performance penalty",
-      "problemJerseys": "Race Jersey shortage — performance penalty"
+      "problemJerseys": "Renntrikot-Mangel — Leistungsmalus"
     }
   },
   "advisorRuntime": {
@@ -1068,5 +1069,19 @@
       "mechanic": "Prüfe Ausrüstungszustand, Wartung und Rennvorräte vor dem nächsten Rennen.",
       "scout": "Prüfe die Scouting-Informationen und lege die nächste Rekrutierungs- oder Scouting-Aktion fest."
     }
+  },
+  "raceJerseyShortage": {
+    "title": "Renntrikot-Mangel — Leistungsmalus",
+    "feedMessage": "{{entity}}: Ihr Team hat weniger einsatzbereite Renntrikot-Sets als ausgewählte Fahrer. Das Team bleibt startberechtigt, erhält aber einen proportionalen Leistungsmalus.",
+    "raceFallback": "das kommende Rennen",
+    "stageWithNumber": "Etappe {{stage}}",
+    "upcomingStage": "die kommende Etappe",
+    "introDetailed": "Renntrikot-Mangel für {{raceName}} — {{stageLabel}}. Verfügbar: {{available}}; benötigt: {{required}}; fehlend: {{missing}}. Das Team bleibt startberechtigt und erhält einen proportionalen Leistungsmalus.",
+    "introGeneric": "Ihr Team hat für die kommende Etappe zu wenige einsatzbereite Renntrikot-Sets. Das Team bleibt startberechtigt; der Mangel führt zu einem proportionalen Leistungsmalus.",
+    "shortagePenaltyActive": "Mangel — Leistungsmalus aktiv",
+    "raceEffectLabel": "Auswirkung im Rennen",
+    "raceEffect": "Das Team bleibt startberechtigt; der Leistungsmalus steigt mit der Zahl fehlender Trikot-Sets",
+    "extraWithMissing": "Noch benötigte einsatzbereite Renntrikot-Sets: {{missing}}. Ergänzen Sie den Bestand, um den Leistungsmalus zu verringern oder zu beseitigen. Ein vollständiger Mangel bedeutet -30% auf positive Vorbereitungsboni, +8% Energieverbrauch während der Etappe und +15% Ermüdung nach der Etappe.",
+    "extraGeneric": "Öffnen Sie den Rennbedarf und prüfen Sie den Bestand einsatzbereiter Renntrikot-Sets. Ein Mangel verhindert die Teilnahme nicht."
   }
 }

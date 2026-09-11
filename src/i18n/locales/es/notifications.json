@@ -799,7 +799,7 @@
   },
   "semanticTypeTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "El plan de carrera requiere atención",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Faltan maillots de carrera — penalización de rendimiento",
     "RIDER_UNHAPPY": "Un corredor está descontento",
     "RIDER_CONTRACT_EXPIRING": "El contrato de un corredor vence pronto",
     "RACE_WEATHER_CANCELLED": "Carrera cancelada por el tiempo",
@@ -897,7 +897,8 @@
     "STAGE_PLAN_MISSING_AT_LOCK": "Faltaba un plan de etapa para {{entity}} cuando se produjo el bloqueo. Abre la preparación de carrera y revisa los detalles.",
     "RACE_PLAN_OPEN": "El plan de carrera para {{entity}} ya está abierto y puedes preparar la selección de corredores y la logística.",
     "RACE_PLAN_DEADLINE_REMINDER": "Se acerca el plazo del plan de carrera de {{entity}}. Revisa la selección y envía el plan a tiempo.",
-    "RACE_PLAN_NEEDS_ATTENTION": "El plan de carrera de {{entity}} requiere tu atención. Revisa la preparación y resuelve los puntos pendientes."
+    "RACE_PLAN_NEEDS_ATTENTION": "El plan de carrera de {{entity}} requiere tu atención. Revisa la preparación y resuelve los puntos pendientes.",
+    "RACE_JERSEYS_MANDATORY_WARNING": "{{entity}}: tu equipo tiene menos kits de maillot utilizables que ciclistas seleccionados. El equipo sigue siendo elegible, pero la falta aplica una penalización proporcional de rendimiento."
   },
   "richReports": {
     "common": {
@@ -979,7 +980,7 @@
       "februaryRule": "Las inscripciones cierran {{days}} días antes de la salida",
       "entryFeeRetained": "Retenida (no reembolsada)",
       "outcomeRemoved": "Legacy event — current rule applies performance penalty",
-      "problemJerseys": "Race Jersey shortage — performance penalty"
+      "problemJerseys": "Faltan maillots de carrera — penalización de rendimiento"
     }
   },
   "advisorRuntime": {
@@ -1068,5 +1069,19 @@
       "mechanic": "Revisa el estado del equipamiento, el mantenimiento y los suministros antes de la siguiente carrera.",
       "scout": "Revisa la información de scouting y decide la siguiente acción de fichaje o seguimiento."
     }
+  },
+  "raceJerseyShortage": {
+    "title": "Faltan maillots de carrera — penalización de rendimiento",
+    "feedMessage": "{{entity}}: tu equipo tiene menos kits de maillot utilizables que ciclistas seleccionados. El equipo sigue siendo elegible, pero la falta aplica una penalización proporcional de rendimiento.",
+    "raceFallback": "la próxima carrera",
+    "stageWithNumber": "Etapa {{stage}}",
+    "upcomingStage": "la próxima etapa",
+    "introDetailed": "Faltan kits de maillot para {{raceName}} — {{stageLabel}}. Disponibles: {{available}}; necesarios: {{required}}; faltan: {{missing}}. El equipo sigue siendo elegible y recibe una penalización proporcional de rendimiento.",
+    "introGeneric": "A tu equipo le faltan kits de maillot utilizables para la próxima etapa. El equipo sigue siendo elegible; la falta aplica una penalización proporcional de rendimiento.",
+    "shortagePenaltyActive": "Faltan kits — penalización activa",
+    "raceEffectLabel": "Efecto en la carrera",
+    "raceEffect": "El equipo sigue siendo elegible; la penalización aumenta según los kits que falten",
+    "extraWithMissing": "Kits de maillot utilizables que aún faltan: {{missing}}. Añádelos para reducir o eliminar la penalización. Una falta total implica -30% a los bonos positivos de preparación, +8% de consumo de energía durante la etapa y +15% de fatiga después de la etapa.",
+    "extraGeneric": "Abre Suministros de carrera y revisa los kits de maillot utilizables. La falta no impide la participación."
   }
 }

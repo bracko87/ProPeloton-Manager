@@ -799,7 +799,7 @@
   },
   "semanticTypeTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Il piano di gara richiede attenzione",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Carenza di maglie da gara — penalità di rendimento",
     "RIDER_UNHAPPY": "Un corridore è scontento",
     "RIDER_CONTRACT_EXPIRING": "Il contratto di un corridore sta per scadere",
     "RACE_WEATHER_CANCELLED": "Gara annullata per il maltempo",
@@ -897,7 +897,8 @@
     "STAGE_PLAN_MISSING_AT_LOCK": "Al momento del blocco mancava un piano di tappa per {{entity}}. Apri la preparazione gara e controlla i dettagli.",
     "RACE_PLAN_OPEN": "Il piano di gara per {{entity}} è ora aperto e puoi preparare la selezione dei corridori e la logistica.",
     "RACE_PLAN_DEADLINE_REMINDER": "Si avvicina la scadenza del piano di gara di {{entity}}. Controlla la selezione e invia il piano in tempo.",
-    "RACE_PLAN_NEEDS_ATTENTION": "Il piano di gara di {{entity}} richiede la tua attenzione. Controlla la preparazione e risolvi gli elementi ancora aperti."
+    "RACE_PLAN_NEEDS_ATTENTION": "Il piano di gara di {{entity}} richiede la tua attenzione. Controlla la preparazione e risolvi gli elementi ancora aperti.",
+    "RACE_JERSEYS_MANDATORY_WARNING": "{{entity}}: la tua squadra ha meno kit di maglie da gara utilizzabili rispetto ai corridori selezionati. La squadra resta idonea, ma la carenza applica una penalità proporzionale al rendimento."
   },
   "richReports": {
     "common": {
@@ -979,7 +980,7 @@
       "februaryRule": "Le iscrizioni chiudono {{days}} giorni prima della partenza",
       "entryFeeRetained": "Trattenuta (non rimborsata)",
       "outcomeRemoved": "Legacy event — current rule applies performance penalty",
-      "problemJerseys": "Race Jersey shortage — performance penalty"
+      "problemJerseys": "Carenza di maglie da gara — penalità di rendimento"
     }
   },
   "advisorRuntime": {
@@ -1068,5 +1069,19 @@
       "mechanic": "Controlla condizioni dell’equipaggiamento, manutenzione e scorte prima della prossima gara.",
       "scout": "Controlla le informazioni di scouting e decidi la prossima azione di reclutamento o scouting."
     }
+  },
+  "raceJerseyShortage": {
+    "title": "Carenza di maglie da gara — penalità di rendimento",
+    "feedMessage": "{{entity}}: la tua squadra ha meno kit di maglie da gara utilizzabili rispetto ai corridori selezionati. La squadra resta idonea, ma la carenza applica una penalità proporzionale al rendimento.",
+    "raceFallback": "la prossima gara",
+    "stageWithNumber": "Tappa {{stage}}",
+    "upcomingStage": "la prossima tappa",
+    "introDetailed": "Carenza di kit di maglie per {{raceName}} — {{stageLabel}}. Disponibili: {{available}}; necessari: {{required}}; mancanti: {{missing}}. La squadra resta idonea e riceve una penalità proporzionale al rendimento.",
+    "introGeneric": "Alla tua squadra mancano kit di maglie da gara utilizzabili per la prossima tappa. La squadra resta idonea; la carenza applica una penalità proporzionale al rendimento.",
+    "shortagePenaltyActive": "Carenza — penalità attiva",
+    "raceEffectLabel": "Effetto in gara",
+    "raceEffect": "La squadra resta idonea; la penalità aumenta in base ai kit mancanti",
+    "extraWithMissing": "Kit di maglie da gara utilizzabili ancora necessari: {{missing}}. Aggiungili per ridurre o eliminare la penalità. Una carenza totale comporta -30% ai bonus positivi di preparazione, +8% di consumo energetico durante la tappa e +15% di fatica dopo la tappa.",
+    "extraGeneric": "Apri le Scorte gara e controlla i kit di maglie da gara utilizzabili. La carenza non impedisce la partecipazione."
   }
 }

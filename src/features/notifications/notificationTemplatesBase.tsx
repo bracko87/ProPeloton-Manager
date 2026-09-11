@@ -26,6 +26,7 @@ import {
   localizeNotificationItem,
   localizeNotificationNarrative,
   localizeNotificationValue,
+  translateNotificationKey,
 } from './notificationLocalization'
 
 export type NotificationActionTemplate = {
@@ -1755,23 +1756,29 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     getIntroText: (item) => {
       const payload = getPayload(item) ?? {}
       const raceName =
-        pickFirstString(payload, ['race_name']) || 'the upcoming race'
+        pickFirstString(payload, ['race_name']) ||
+        translateNotificationKey('raceJerseyShortage.raceFallback')
       const stageNumber = pickFirstNumber(payload, ['stage_number'])
       const missing = pickFirstNumber(payload, ['missing_jersey_units'])
       const available = pickFirstNumber(payload, ['available_jersey_units'])
       const required = pickFirstNumber(payload, ['required_jersey_units'])
 
       const stageLabel =
-        stageNumber !== null ? `Stage ${stageNumber}` : 'the upcoming stage'
+        stageNumber !== null
+          ? translateNotificationKey('raceJerseyShortage.stageWithNumber', { stage: stageNumber })
+          : translateNotificationKey('raceJerseyShortage.upcomingStage')
 
       if (missing !== null && available !== null && required !== null) {
-        return `Race jersey shortage for ${raceName} — ${stageLabel}. You have ${available} usable Race Jersey Kit${available === 1 ? '' : 's'} for ${required} selected rider${required === 1 ? '' : 's'}, so ${missing} rider${missing === 1 ? '' : 's'} will race without a kit. The team remains eligible and receives a proportional performance penalty.`
+        return translateNotificationKey('raceJerseyShortage.introDetailed', {
+          raceName,
+          stageLabel,
+          available,
+          required,
+          missing,
+        })
       }
 
-      return (
-        item.message ||
-        'Your team has a Race Jersey Kit shortage for the upcoming stage. The team still races; the shortage applies a proportional performance penalty.'
-      )
+      return translateNotificationKey('raceJerseyShortage.introGeneric')
     },
 
     getDetailRows: (item) => {
@@ -1789,7 +1796,9 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
         detailRow('Race', raceName),
         detailRow(
           'Stage',
-          stageNumber !== null ? `Stage ${stageNumber}` : null
+          stageNumber !== null
+            ? translateNotificationKey('raceJerseyShortage.stageWithNumber', { stage: stageNumber })
+            : null
         ),
         detailRow(
           'Required kits',
@@ -1805,11 +1814,13 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
         ),
         detailRow(
           'Supply status',
-          missing !== null && missing > 0 ? 'Shortage — penalty active' : 'Ready'
+          missing !== null && missing > 0
+            ? translateNotificationKey('raceJerseyShortage.shortagePenaltyActive')
+            : translateNotificationKey('templateValues.ready')
         ),
         detailRow(
-          'Race effect',
-          'Team remains eligible; performance penalty scales with missing kits'
+          translateNotificationKey('raceJerseyShortage.raceEffectLabel'),
+          translateNotificationKey('raceJerseyShortage.raceEffect')
         ),
       ])
     },
@@ -1819,10 +1830,10 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
       const missing = pickFirstNumber(payload, ['missing_jersey_units'])
 
       if (missing !== null && missing > 0) {
-        return `You can reduce or remove the performance penalty by adding ${missing} usable Race Jersey Kit${missing === 1 ? '' : 's'}. A full shortage means -30% positive preparation bonuses, +8% in-stage energy use and +15% post-stage fatigue.`
+        return translateNotificationKey('raceJerseyShortage.extraWithMissing', { missing })
       }
 
-      return 'Open Race Supplies to review usable Race Jersey Kit stock. A shortage does not block participation.'
+      return translateNotificationKey('raceJerseyShortage.extraGeneric')
     },
 
     actions: [

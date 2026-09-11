@@ -802,7 +802,7 @@
   },
   "semanticTypeTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Plan utrke zahtijeva pažnju",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Nedostatak trkaćih dresova — smanjenje učinka",
     "RIDER_UNHAPPY": "Vozač je nezadovoljan",
     "RIDER_CONTRACT_EXPIRING": "Ugovor vozača uskoro istječe",
     "RACE_WEATHER_CANCELLED": "Utrka je otkazana zbog vremenskih uvjeta",
@@ -900,7 +900,8 @@
     "STAGE_PLAN_MISSING_AT_LOCK": "Za {{entity}} je pri zaključavanju nedostajao plan etape. Otvorite Pripremu utrke i provjerite detalje.",
     "RACE_PLAN_OPEN": "Plan utrke za {{entity}} sada je otvoren i možete pripremiti odabir vozača i logistiku.",
     "RACE_PLAN_DEADLINE_REMINDER": "Rok za plan utrke {{entity}} se približava. Pregledajte odabir i pošaljite plan na vrijeme.",
-    "RACE_PLAN_NEEDS_ATTENTION": "Plan utrke {{entity}} zahtijeva vašu pažnju. Pregledajte pripremu i riješite preostale stavke."
+    "RACE_PLAN_NEEDS_ATTENTION": "Plan utrke {{entity}} zahtijeva vašu pažnju. Pregledajte pripremu i riješite preostale stavke.",
+    "RACE_JERSEYS_MANDATORY_WARNING": "{{entity}}: vaša momčad nema dovoljno upotrebljivih kompleta trkaćih dresova za odabrane vozače. Momčad i dalje može nastupiti, ali nedostatak uzrokuje razmjerno smanjenje učinka."
   },
   "richReports": {
     "common": {
@@ -982,7 +983,7 @@
       "februaryRule": "Prijave se zatvaraju {{days}} dana prije starta",
       "entryFeeRetained": "Zadržana (nije vraćena)",
       "outcomeRemoved": "Legacy event — current rule applies performance penalty",
-      "problemJerseys": "Race Jersey shortage — performance penalty"
+      "problemJerseys": "Nedostatak trkaćih dresova — smanjenje učinka"
     }
   },
   "advisorRuntime": {
@@ -1071,5 +1072,19 @@
       "mechanic": "Pregledajte stanje opreme, održavanje i zalihe za utrku prije sljedeće utrke.",
       "scout": "Pregledajte skautske podatke i odlučite o sljedećoj aktivnosti regrutacije ili skautinga."
     }
+  },
+  "raceJerseyShortage": {
+    "title": "Nedostatak trkaćih dresova — smanjenje učinka",
+    "feedMessage": "{{entity}}: vaša momčad nema dovoljno upotrebljivih kompleta trkaćih dresova za odabrane vozače. Momčad i dalje može nastupiti, ali nedostatak uzrokuje razmjerno smanjenje učinka.",
+    "raceFallback": "predstojeća utrka",
+    "stageWithNumber": "Etapa {{stage}}",
+    "upcomingStage": "predstojeća etapa",
+    "introDetailed": "Nedostaju kompleti trkaćih dresova za {{raceName}} — {{stageLabel}}. Dostupno: {{available}}; potrebno: {{required}}; nedostaje: {{missing}}. Momčad i dalje može nastupiti, ali dobiva razmjerno smanjenje učinka.",
+    "introGeneric": "Vašoj momčadi nedostaju upotrebljivi kompleti trkaćih dresova za predstojeću etapu. Momčad i dalje može nastupiti, ali nedostatak uzrokuje razmjerno smanjenje učinka.",
+    "shortagePenaltyActive": "Nedostatak — smanjenje učinka aktivno",
+    "raceEffectLabel": "Učinak na utrku",
+    "raceEffect": "Momčad i dalje može nastupiti; smanjenje učinka raste s brojem nedostajućih kompleta",
+    "extraWithMissing": "Još potrebnih upotrebljivih kompleta trkaćih dresova: {{missing}}. Dodajte ih kako biste smanjili ili uklonili kaznu. Potpuni nedostatak znači -30% pozitivnih bonusa pripreme, +8% potrošnje energije tijekom etape i +15% umora nakon etape.",
+    "extraGeneric": "Otvorite Zalihe za utrku i provjerite upotrebljive komplete trkaćih dresova. Nedostatak ne sprječava nastup."
   }
 }
