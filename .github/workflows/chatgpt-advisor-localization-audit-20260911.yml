@@ -1,0 +1,77 @@
+name: Advisor notification localization audit 2026-09-11
+
+on:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-advisor-localization-audit-20260911.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit advisor notification sources and locales
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re
+          root=Path('.')
+          page=(root/'src/pages/dashboard/NotificationsPage.tsx').read_text(encoding='utf-8')
+          loc=(root/'src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
+          print('=== FORMAT ADVISOR GAME DATE CALLS WITHOUT t ===')
+          for i,line in enumerate(page.splitlines(),1):
+              if 'formatAdvisorGameDateTime(' in line and ', t)' not in line and 'function formatAdvisorGameDateTime' not in line:
+                  print(f'{i}: {line.strip()}')
+          print('\n=== ADVISOR SUMMARY / RECOMMENDATION RENDER PATHS ===')
+          for i,line in enumerate(page.splitlines(),1):
+              if any(x in line for x in ['advisorPayload.summary','recommendations.map','formatAdvisorAvailability(','localizeNotificationValue(formatAdvisorDisplayValue']):
+                  print(f'{i}: {line.strip()}')
+          print('\n=== ADVISOR SOURCE LITERALS IN SUPABASE ===')
+          patterns=('advisor_report','report_variant','report_code','Sports Director Advisory','Head Coach Advisory','Team Doctor Advisory','Chief Mechanic Advisory','Scout Advisory','stage plans are still missing','None scheduled','Not scheduled','none currently scheduled')
+          count=0
+          for p in (root/'supabase').rglob('*.sql'):
+              try: lines=p.read_text(encoding='utf-8').splitlines()
+              except: continue
+              for i,line in enumerate(lines,1):
+                  if any(s.lower() in line.lower() for s in patterns):
+                      print(f'{p}:{i}: {line.strip()}')
+                      count+=1
+          print('SOURCE MATCHES',count)
+          print('\n=== REPORT VARIANTS BY LOCALE ===')
+          locales=['en','sr-Latn','de','hr','es','it','fr','ru']
+          data={l:json.loads((root/f'src/i18n/locales/{l}/notifications.json').read_text(encoding='utf-8')) for l in locales}
+          en=data['en']
+          for l in locales:
+              print('\nLOCALE',l)
+              print('common.seasonDate =',data[l].get('common',{}).get('seasonDate'))
+              for section in ['headCoach','sportDirector','doctor','mechanic','scout','reportVariants']:
+                  print(section, json.dumps(data[l].get(section,{}),ensure_ascii=False))
+          print('\n=== LOCALE ADVISOR KEY PARITY / PLACEHOLDERS ===')
+          def flatten(o,p=''):
+              out={}
+              if isinstance(o,dict):
+                  for k,v in o.items(): out.update(flatten(v,f'{p}.{k}' if p else k))
+              else: out[p]=o
+              return out
+          flats={l:flatten(data[l]) for l in locales}
+          prefixes=('headCoach.','sportDirector.','doctor.','mechanic.','scout.','reportVariants.','templateLocalization.feed.sportsDirector.','templateLocalization.feed.scoutAdvisory.')
+          keys=[k for k in flats['en'] if k.startswith(prefixes)]
+          ph=lambda s:set(re.findall(r'{{\s*([A-Za-z0-9_]+)\s*}}',s)) if isinstance(s,str) else set()
+          for l in locales[1:]:
+              missing=[k for k in keys if k not in flats[l]]
+              mismatch=[k for k in keys if k in flats[l] and ph(flats['en'][k])!=ph(flats[l][k])]
+              identical=[k for k in keys if isinstance(flats['en'].get(k),str) and flats[l].get(k)==flats['en'][k] and re.search(r'[A-Za-z]{4,}',flats['en'][k])]
+              print(l,'missing',len(missing),'placeholder_mismatch',len(mismatch),'identical_en',len(identical))
+              if missing: print(' MISSING',missing)
+              if mismatch: print(' PLACEHOLDERS',mismatch)
+              if identical: print(' IDENTICAL',identical[:100])
+          print('\n=== LOCALIZATION TOKEN FALLBACK ===')
+          for i,line in enumerate(loc.splitlines(),1):
+              if 'localizeLabelByReusableTokens' in line or 'localizeExistingGameTemplate' in line or 'repairRotatedLocalizedNotificationTitle' in line:
+                  print(f'{i}: {line.strip()}')
+          PY
