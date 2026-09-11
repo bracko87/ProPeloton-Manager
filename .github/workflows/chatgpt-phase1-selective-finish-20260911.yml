@@ -1,0 +1,68 @@
+name: ChatGPT Phase 1 selective finish fallback
+
+on:
+  push:
+    branches:
+      - chatgpt-phase1-selective-finish-20260911
+    paths:
+      - .github/workflows/chatgpt-phase1-selective-finish-20260911.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt-phase1-selective-finish-20260911
+          fetch-depth: 0
+
+      - name: Sync branch
+        run: git pull --rebase origin chatgpt-phase1-selective-finish-20260911
+
+      - name: Apply selective finish fallback
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('src/universal-race-engine/runRaceEngine.ts')
+          text = path.read_text()
+
+          old_build = "phase11j-v5-3-physical-gap-lineage-2026-09-08"
+          new_build = "phase11k-v5-4-selective-finish-fallback-2026-09-11"
+          if text.count(old_build) != 1:
+              raise SystemExit(f'Expected exactly one old build marker, found {text.count(old_build)}')
+          text = text.replace(old_build, new_build, 1)
+
+          old = """      // Phase 4 final groups are already the authoritative physical road state.\n      // Performance scores may order riders inside a group, but they must not\n      // manufacture an additional physical split after the race engine has\n      // resolved the chase, catch, terrain selection, and finish gaps.\n      if (phaseNumber === 4) {"""
+          new = """      // Preserve an already-resolved Phase 4 physical split exactly. If a\n      // selective road stage still reaches Phase 5 as one unsplit bunch,\n      // however, allow the existing deterministic Phase 5 performance-band\n      // model to provide the missing finish separation. Flat stages keep their\n      // single bunch unless Phase 4 itself physically split them.\n      const preservePhase4PhysicalGroup =\n        phaseNumber === 4 &&\n        (sourceGroups.length > 1 || profile === 'flat_large_groups')\n\n      if (preservePhase4PhysicalGroup) {"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one Phase 4 preservation block, found {text.count(old)}')
+          text = text.replace(old, new, 1)
+
+          if text.count('const preservePhase4PhysicalGroup =') != 1:
+              raise SystemExit('Selective finish fallback guard was not installed exactly once')
+          path.write_text(text)
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit validated engine change and remove helper workflow
+        run: |
+          rm .github/workflows/chatgpt-phase1-selective-finish-20260911.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/universal-race-engine/runRaceEngine.ts .github/workflows/chatgpt-phase1-selective-finish-20260911.yml
+          git commit -m "Fix selective finish group fallback"
+          git pull --rebase origin chatgpt-phase1-selective-finish-20260911
+          git push origin HEAD:chatgpt-phase1-selective-finish-20260911
