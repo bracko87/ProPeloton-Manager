@@ -59,7 +59,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11k-v5-4-selective-finish-fallback-2026-09-11' as const
+  'phase11l-v5-5-late-chase-eligibility-2026-09-11' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -12278,6 +12278,111 @@ function calculateDecisiveGapSeconds(
   return deterministicRound(base + Math.max(0, delta) * severity, 6)
 }
 
+/**
+ * Resolve the small set of teams with a genuine automatic reason to
+ * contribute to the late chase. Role fallbacks provide workers, but they do
+ * not by themselves make every team a chasing team.
+ */
+function getAutomaticLateFinishInterestTeamIds(
+  input: UniversalRaceEngineInput,
+  riderSuitability: readonly UniversalRiderSuitabilityResult[],
+  roadCommandResolution: UniversalRoadCommandResolutionSummary,
+  escapeRiderIds: readonly string[],
+): readonly string[] {
+  const escapeRiderSet = new Set(escapeRiderIds)
+  const escapeTeamIds = new Set(
+    roadCommandResolution.riders
+      .filter((row) => escapeRiderSet.has(row.riderId))
+      .map((row) => row.teamId),
+  )
+  const eligibleRows = roadCommandResolution.riders.filter(
+    (row) => row.eligibleToStart && !escapeTeamIds.has(row.teamId),
+  )
+  const eligibleByRiderId = new Map(
+    eligibleRows.map((row) => [row.riderId, row] as const),
+  )
+  const eligibleTeamIds = Array.from(
+    new Set(eligibleRows.map((row) => row.teamId)),
+  ).sort()
+  if (eligibleTeamIds.length === 0) return []
+
+  const stageResultLimit = Math.min(
+    eligibleTeamIds.length,
+    Math.max(2, Math.min(5, Math.round(Math.sqrt(eligibleTeamIds.length)))),
+  )
+  const sprintInterestLimit = Math.min(3, stageResultLimit)
+  const rankedSuitability = [...riderSuitability].sort(
+    (left, right) =>
+      left.rank - right.rank || left.riderId.localeCompare(right.riderId),
+  )
+  const selectBestTeams = (
+    limit: number,
+    accepts: (row: UniversalRoadRiderCommandResolution) => boolean,
+  ): string[] => {
+    const selected: string[] = []
+    const seen = new Set<string>()
+    for (const suitability of rankedSuitability) {
+      const row = eligibleByRiderId.get(suitability.riderId)
+      if (!row || !accepts(row) || seen.has(row.teamId)) continue
+      seen.add(row.teamId)
+      selected.push(row.teamId)
+      if (selected.length >= limit) break
+    }
+    return selected
+  }
+
+  const stageResultTeamIds = selectBestTeams(
+    stageResultLimit,
+    (row) =>
+      row.stageRole === 'sprinter' ||
+      row.stageRole === 'team_leader_gc' ||
+      row.stageRole === 'protected_rider' ||
+      row.stageRole === 'climber' ||
+      row.stageRole === 'rouleur',
+  )
+  const sprintOrientedStage =
+    input.stage.terrainType === 'flat' ||
+    input.stage.finishType === 'flat_finish' ||
+    (input.stage.profileType ?? '').toLowerCase().includes('sprinter')
+  const sprintInterestTeamIds = sprintOrientedStage
+    ? selectBestTeams(
+        sprintInterestLimit,
+        (row) => row.stageRole === 'sprinter',
+      )
+    : []
+  const gcThreatTeamIds = getGcThreatChasingTeamIds(
+    input,
+    escapeRiderIds,
+  ).filter((teamId) => !escapeTeamIds.has(teamId))
+  const explicitFinishObjectiveTeamIds = eligibleRows
+    .filter((row) => {
+      const phase = row.phases.find((entry) => entry.phaseNumber === 4)!
+      return (
+        phase.resolvedSource === 'explicit_individual_command' &&
+        (
+          phase.behaviour === 'stage_result' ||
+          phase.behaviour === 'time_gc_result' ||
+          phase.behaviour === 'sprint_preparation' ||
+          phase.behaviour === 'lead_out'
+        )
+      )
+    })
+    .map((row) => row.teamId)
+  const declaredChaserTeamIds = eligibleRows
+    .filter((row) => row.stageRole === 'breakaway_chaser')
+    .map((row) => row.teamId)
+
+  return Array.from(
+    new Set([
+      ...stageResultTeamIds,
+      ...sprintInterestTeamIds,
+      ...gcThreatTeamIds,
+      ...explicitFinishObjectiveTeamIds,
+      ...declaredChaserTeamIds,
+    ]),
+  ).sort()
+}
+
 export function resolveRoadPhase3Decisive(
   input: UniversalRaceEngineInput,
   riderReadiness: readonly UniversalRiderReadinessResult[],
@@ -12551,17 +12656,49 @@ export function resolveRoadPhase3Decisive(
       phase3Rows
         .filter(({ row, phase }) =>
           !physicalEscapeTeamIds.has(row.teamId) &&
+          phase.resolvedSource === 'explicit_individual_command' &&
           phase.behaviour === 'chase',
         )
         .map(({ row }) => row.teamId),
     ),
   ).sort()
+  const phase3ExplicitNonChasingTeamIds = new Set(
+    phase3Rows
+      .filter(
+        ({ row, phase }) =>
+          !physicalEscapeTeamIds.has(row.teamId) &&
+          phase.resolvedSource === 'explicit_individual_command' &&
+          phase.behaviour !== 'chase',
+      )
+      .map(({ row }) => row.teamId),
+  )
   const phase3GcThreatTeamIds = getGcThreatChasingTeamIds(
     input,
     physicalEscapeRiderIds,
-  ).filter((teamId) => !physicalEscapeTeamIds.has(teamId))
+  ).filter(
+    (teamId) =>
+      !physicalEscapeTeamIds.has(teamId) &&
+      !phase3ExplicitNonChasingTeamIds.has(teamId),
+  )
+  const phase3AutomaticFinishInterestTeamIds =
+    explicitPhase3ChasingTeamIds.length > 0
+      ? []
+      : getAutomaticLateFinishInterestTeamIds(
+          input,
+          riderSuitability,
+          roadCommandResolution,
+          physicalEscapeRiderIds,
+        ).filter(
+          (teamId) =>
+            !physicalEscapeTeamIds.has(teamId) &&
+            !phase3ExplicitNonChasingTeamIds.has(teamId),
+        )
   const physicalChasingTeamIds = Array.from(
-    new Set([...explicitPhase3ChasingTeamIds, ...phase3GcThreatTeamIds]),
+    new Set([
+      ...explicitPhase3ChasingTeamIds,
+      ...phase3AutomaticFinishInterestTeamIds,
+      ...phase3GcThreatTeamIds,
+    ]),
   ).sort()
   const physicalChasingTeamSet = new Set(physicalChasingTeamIds)
   const phase3ChaseWorkerRows = phase3Rows.filter(({ row, phase }) =>
@@ -14584,20 +14721,12 @@ export function resolveRoadPhase4Finish(
       )
     })
   const teamsWithFinishInterest = new Set(
-    roadCommandResolution.riders
-      .filter((row) => row.eligibleToStart && !escapeSet.has(row.riderId))
-      .filter((row) => {
-        const phase = row.phases.find((entry) => entry.phaseNumber === 4)!
-        return (
-          row.stageRole === 'sprinter' ||
-          row.stageRole === 'team_leader_gc' ||
-          row.stageRole === 'protected_rider' ||
-          phase.behaviour === 'stage_result' ||
-          phase.behaviour === 'time_gc_result' ||
-          phase.behaviour === 'sprint_preparation'
-        )
-      })
-      .map((row) => row.teamId),
+    getAutomaticLateFinishInterestTeamIds(
+      input,
+      riderSuitability,
+      roadCommandResolution,
+      escapeRiderIdsAtStart,
+    ),
   )
   const automaticChasingTeamIds = Array.from(
     new Set(

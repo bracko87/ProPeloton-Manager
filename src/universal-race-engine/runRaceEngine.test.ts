@@ -16441,10 +16441,10 @@ describe('Phase 11G organic race physics and replay continuity', () => {
 
 
 
-  it('publishes the Phase 11J V5.3 physical-gap-lineage build marker', () => {
+  it('publishes the Phase 11L V5.5 late-chase-eligibility build marker', () => {
     const result = runRaceEngine(createValidInput())
     expect(result.phase78Acceptance.engineBuild).toBe(
-      'phase11j-v5-3-physical-gap-lineage-2026-09-08',
+      'phase11l-v5-5-late-chase-eligibility-2026-09-11',
     )
   })
 
@@ -16821,6 +16821,123 @@ describe('Phase 11G organic race physics and replay continuity', () => {
       phase3.physicalStartGapSeconds,
     )
   })
+
+  it('limits role-default late chasing to a small automatic finish-interest cohort', () => {
+    const base = createExpandedFieldInput(90)
+    const openingAttackerId = 'expanded-rider-05'
+    const input: UniversalRaceEngineInput = {
+      ...base,
+      engine: {
+        ...base.engine,
+        deterministicSeed: 'phase11l-role-default-chase-cohort',
+      },
+      stagePlans: base.stagePlans.map((plan) => ({
+        ...plan,
+        teamTactic: 'balanced',
+        riders: plan.riders.map((riderPlan) => ({
+          ...riderPlan,
+          stageRole:
+            riderPlan.riderId === openingAttackerId
+              ? 'breakaway_rider'
+              : riderPlan.stageRole === 'sprinter'
+                ? 'sprinter'
+                : 'helper_domestique',
+          commands: {
+            phase1:
+              riderPlan.riderId === openingAttackerId
+                ? 'attack'
+                : 'follow_team_plan',
+            phase2: 'follow_team_plan',
+            phase3: 'follow_team_plan',
+            phase4: 'follow_team_plan',
+          },
+        })),
+      })),
+      riders: base.riders.map((rider) =>
+        rider.riderId === openingAttackerId
+          ? {
+              ...rider,
+              flat: 96,
+              endurance: 96,
+              resistance: 96,
+              raceIQ: 96,
+              teamwork: 96,
+              morale: 100,
+              raceSharpness: 100,
+              fatigueBeforeStage: 0,
+            }
+          : rider,
+      ),
+    }
+
+    const result = runRaceEngine(input)
+    const phase3 = result.roadRaceResolution.phase3Decisive!
+    const phase4 = result.roadRaceResolution.phase4Finish!
+
+    expect(phase3.physicalEscapeRiderIdsAtStart.length).toBeGreaterThan(0)
+    expect(phase3.physicalChasingTeamIds.length).toBeGreaterThan(0)
+    expect(phase3.physicalChasingTeamIds.length).toBeLessThan(input.teams.length)
+    expect(phase4.automaticChasingTeamIds.length).toBeLessThan(input.teams.length)
+    expect(result.replaySynchronization.synchronized).toBe(true)
+  })
+
+  it('keeps an explicit Phase 3 chase command authoritative outside the automatic interest cohort', () => {
+    const base = createExpandedFieldInput(90)
+    const openingAttackerId = 'expanded-rider-05'
+    const explicitTeamId = base.teams.at(-1)!.teamId
+    const input: UniversalRaceEngineInput = {
+      ...base,
+      engine: {
+        ...base.engine,
+        deterministicSeed: 'phase11l-explicit-chase-authoritative',
+      },
+      stagePlans: base.stagePlans.map((plan) => ({
+        ...plan,
+        teamTactic: 'balanced',
+        riders: plan.riders.map((riderPlan, riderIndex) => ({
+          ...riderPlan,
+          stageRole:
+            riderPlan.riderId === openingAttackerId
+              ? 'breakaway_rider'
+              : 'helper_domestique',
+          commands: {
+            phase1:
+              riderPlan.riderId === openingAttackerId
+                ? 'attack'
+                : 'follow_team_plan',
+            phase2: 'follow_team_plan',
+            phase3:
+              plan.teamId === explicitTeamId && riderIndex === 0
+                ? 'chase_breakaway'
+                : 'follow_team_plan',
+            phase4: 'follow_team_plan',
+          },
+        })),
+      })),
+      riders: base.riders.map((rider) =>
+        rider.riderId === openingAttackerId
+          ? {
+              ...rider,
+              flat: 96,
+              endurance: 96,
+              resistance: 96,
+              raceIQ: 96,
+              teamwork: 96,
+              morale: 100,
+              raceSharpness: 100,
+              fatigueBeforeStage: 0,
+            }
+          : rider,
+      ),
+    }
+
+    const result = runRaceEngine(input)
+    expect(
+      result.roadRaceResolution.phase3Decisive!.physicalChasingTeamIds,
+    ).toContain(explicitTeamId)
+    expect(result.replaySynchronization.synchronized).toBe(true)
+  })
+
 
   it('does not promote a Phase 3 race-control team into the physical chase', () => {
     const base = createSuccessfulOpeningEscapeInput()
