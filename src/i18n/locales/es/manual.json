@@ -90,7 +90,7 @@
       "quote": "Una cotización es la vista previa del juego sobre la consecuencia real antes de confirmar una acción. Revisa siempre el coste total o reembolso, la duración, la elegibilidad y las advertencias. El valor mostrado es más fiable que un ejemplo antiguo del manual porque el equilibrio o la configuración del motor pueden cambiar con el tiempo.",
       "condition": "La condición es una señal de durabilidad. La condición inferior aumenta la necesidad de mantenimiento y puede reducir la seguridad de confiar en el artículo/activo para planes importantes. No espere hasta que cada elemento clave se use al mismo tiempo; gire las reparaciones para que el club mantenga suficiente profundidad utilizable.",
       "nutrition": "Los consumibles se multiplican por ciclista y por etapa. Calcula el stock necesario según el número real de ciclistas seleccionados y todas las etapas, y deja una pequeña reserva cuando sea posible. Una estimación para un solo día no basta para una carrera por etapas.",
-      "durableSupplies": "Los suministros de carrera duraderos se rastrean de manera diferente a los consumibles de un solo uso. Su capacidad de uso de etapa restante importa. La escasez obligatoria de camisetas puede bloquear la preparación; la escasez de camisas de lluvia reduce principalmente la flexibilidad del tiempo.",
+      "durableSupplies": "Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Jersey shortages reduce race performance instead of blocking participation; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.",
       "sponsor": "La información del patrocinador debe leerse antes de firmar o de apuntar carreras. El dinero garantizado es sólo una parte del trato. Objetivos, grupos de bonificación, descuentos técnicos, bloqueos de nombres y plazos pueden cambiar lo que el club debe hacer durante la temporada. Un buen trato de patrocinador se ajusta al calendario del equipo y la fuerza del equipo.",
       "tax": "El impuesto no es un texto opcional de fondo. Es parte del sistema financiero y puede cambiar el valor real de los ingresos. Cuando los ingresos se elevan de patrocinadores, premios o bonos, el mánager debe esperar retención de impuestos o filas de ajuste mensual y debe utilizar la pestaña Impuestos para entender la posición de efectivo final.",
       "deadline": "Las ventanas y los plazos son estrictos porque Race Engine y los sistemas de temporada necesitan datos estables antes de la simulación. Si vence un plazo, puedes perder la posibilidad de editar un plan, solicitar una carrera, mover a un ciclista o enviar una lista. Compara siempre la fecha de la página con la hora de juego del pie de página.",
@@ -551,7 +551,7 @@
         "Los bidónes utilizan 1-4 por ciclista en la configuración de la etapa. Son consumibles de un solo uso y soportan el control de la hidratación y la fatiga.",
         "Los Gels de energía utilizan 0-4 por ciclista. Soportan resistencia y eficiencia de esfuerzo final. No hay beneficio adicional después de cuatro geles por ciclista.",
         "Los paquetes de nutrición utilizan 0-2 por ciclista. Soportan estabilidad de resistencia y recuperación post-etapa. Las etapas largas sin nutrición pueden aumentar la presión de fatiga.",
-        "El kit completo de carrera es obligatorio en Stage Plans. Si falta parte del kit, puede bloquearse la configuración de la etapa.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Las chaquetas de lluvia son opcionales, pero resultan útiles con tiempo húmedo o frío. Los suministros duraderos que ya no tengan usos disponibles no pueden utilizarse.",
         "Las carreras de etapa consumen rápidamente suministros porque se utilizan cantidades por ciclista por etapa."
       ],
@@ -566,7 +566,7 @@
         },
         {
           "label": "Carrera maillot completa",
-          "value": "Obligatorio; 10 usos en etapas por unidad"
+          "value": "Recommended; 10 stage uses per unit"
         },
         {
           "label": "Chaquetas para lluvia",
@@ -1983,7 +1983,7 @@
         "Los bidónes soportan el control de la hidratación y la fatiga. Un Stage Plan por debajo del mínimo requerido de hidratación puede aumentar la presión de fatiga.",
         "Energy Gels soporta la resistencia y la eficiencia del esfuerzo final. Más que la tapa útil no crea beneficios extra.",
         "Los paquetes nutricionales apoyan la estabilidad y recuperación de la resistencia, especialmente en etapas largas y carreras de etapas.",
-        "Carrera maillot Complete es obligatorio. Un equipo sin suficientes usos de maillot de etapa utilizable puede ser bloqueado de tener una configuración completa de la etapa.",
+        "Race Jersey Complete is strongly recommended. A shortage does not block a stage or remove the team from the race; riders without a kit compete in normal team clothing and the team receives the proportional jersey-shortage performance penalty.",
         "Las chaquetas de lluvia no son obligatorias en todas las etapas, pero se vuelven valiosas en clima frío/húmedo. El juego debe tratar las unidades de suministro duradero desgastadas como inutilizables.",
         "Las carreras de etapa multiplican el consumo porque los suministros se calculan por ciclista por etapa. Una población que parece grande para una carrera de un día puede ser demasiado pequeña para una carrera de siete etapas."
       ],

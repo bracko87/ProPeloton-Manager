@@ -90,7 +90,7 @@
       "quote": "A quote is the game’s preview of the real consequence before confirmation. Always review total cost/refund, duration, eligibility and warnings. The quoted value is more reliable than an old manual example because backend balance/configuration can change over time.",
       "condition": "Condition is a durability signal. Lower condition increases the need for maintenance and can reduce how safe it is to rely on the item/asset for important plans. Do not wait until every key item is worn at the same time; rotate repairs so the club keeps enough usable depth.",
       "nutrition": "Consumables are multiplied by riders and stages. The manager should calculate required stock using the actual number of selected riders and the whole stage count, then leave a small reserve when possible. A one-day stock estimate is not enough for a multi-stage race.",
-      "durableSupplies": "Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Mandatory jersey shortages can block readiness; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.",
+      "durableSupplies": "Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Jersey shortages reduce race performance instead of blocking participation; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.",
       "sponsor": "Sponsor information should be read before signing or targeting races. Guaranteed money is only one part of the deal. Objectives, bonus pools, technical discounts, naming-rights locks and deadlines can change what the club should do during the season. A good sponsor deal fits the team calendar and squad strength.",
       "tax": "Tax is not optional background text. It is part of the finance system and can change the real value of income. When income rises from sponsors, prizes or bonuses, the manager should expect tax withholding or monthly adjustment rows and should use the Tax tab to understand the final cash position.",
       "deadline": "Windows and deadlines are strict because the race engine and season systems need stable data before simulation. If a deadline passes, the user may lose the chance to edit a plan, apply for a race, move a rider or submit a roster. Always compare the page date with the footer game time.",
@@ -551,7 +551,7 @@
         "Bidons use 1–4 per rider in stage setup. They are one-use consumables and support hydration and fatigue control. Below minimum can increase fatigue risk.",
         "Energy Gels use 0–4 per rider. They support stamina and final effort efficiency. There is no extra benefit after four gels per rider.",
         "Nutrition Packs use 0–2 per rider. They support stamina stability and post-stage recovery. Long stages without nutrition can increase fatigue pressure.",
-        "Race Jersey Complete is mandatory in Stage Plans. Missing jersey kits can block stage setup.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Rain Jackets are optional but valuable in wet/cold weather. Worn-out durable supplies are no longer usable.",
         "Stage races consume supplies quickly because quantities are used per rider per stage."
       ],
@@ -566,7 +566,7 @@
         },
         {
           "label": "Race Jersey Complete",
-          "value": "Mandatory; 10 stage uses per unit"
+          "value": "Recommended; 10 stage uses per unit"
         },
         {
           "label": "Rain Jackets",
@@ -1983,7 +1983,7 @@
         "Bidons support hydration and fatigue control. A stage plan below the required hydration minimum can increase fatigue pressure.",
         "Energy Gels support stamina and final-effort efficiency. More than the useful cap does not create extra benefit.",
         "Nutrition Packs support stamina stability and recovery, especially on long stages and stage races.",
-        "Race Jersey Complete is mandatory. A team without enough usable jersey stage-uses can be blocked from having a complete stage setup.",
+        "Race Jersey Complete is strongly recommended. A shortage does not block a stage or remove the team from the race; riders without a kit compete in normal team clothing and the team receives the proportional jersey-shortage performance penalty.",
         "Rain Jackets are not mandatory on every stage but become valuable in cold/wet weather. The game should treat worn-out durable supply units as unusable.",
         "Stage races multiply consumption because supplies are calculated per rider per stage. A stock that looks large for a one-day race may be too small for a seven-stage race."
       ],

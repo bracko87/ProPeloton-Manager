@@ -290,6 +290,7 @@ export const equipmentTutorialSteps: TutorialStep[] = [
       'The Race Supplies tab shows consumable supplies your team can use for races.\n\n' +
       'Some supplies can be used only once, while others may be used multiple times. Supplies can help protect riders from difficult race conditions.\n\n' +
       'Without the right race supplies, riders may receive negative effects in very hot, cold, or demanding weather conditions.\n\n' +
+      'Race Jersey Kits are strongly recommended, but a shortage does not remove your team or block a Stage Plan. Riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty. A complete shortage means -30% positive preparation bonuses, +8% in-stage energy use and +15% post-stage fatigue.\n\n' +
       'After Equipment, the next recommended page is Infrastructure.',
     primaryAction: 'Continue to Infrastructure',
     secondaryAction: 'Finish for now',
@@ -437,7 +438,7 @@ export const racePreparationTutorialSteps: TutorialStep[] = [
     title: 'Stage Plans',
     body:
       'The Stage Plans tab opens after the Race Plan has been submitted.\n\n' +
-      'Here you prepare the tactics for each stage. You can define rider roles, equipment, supplies, team tactics, and individual tactics for every stage.\n\n' +
+      'Here you prepare the tactics for each stage. You can define rider roles, equipment, supplies, team tactics, and individual tactics for every stage. A Race Jersey Kit shortage is a performance warning, not a participation blocker: the plan can still be saved and the team still races.\n\n' +
       'Stage Plans are important because different stages need different plans. A flat sprint stage, mountain stage, time trial, or hilly stage may all require different riders, tactics, and support.\n\n' +
       'After Race Preparation, the next recommended page is Team Ranking.',
     primaryAction: 'Continue to Team Ranking',

@@ -405,7 +405,7 @@
         "Suministros duraderos",
         "Carrera maillot completa, chaquetas de lluvia",
         "Carrera maillot completa",
-        "Obligatorio; 10 usos en etapas por unidad",
+        "Recommended; 10 stage uses per unit",
         "Chaquetas para lluvia",
         "Elemento de tiempo opcional; 25 usos de la etapa por unidad"
       ],
@@ -413,7 +413,7 @@
         "Los bidónes utilizan 1-4 por ciclista en la configuración de la etapa. Son consumibles de un solo uso y soportan el control de la hidratación y la fatiga.",
         "Los Gels de energía utilizan 0-4 por ciclista. Soportan resistencia y eficiencia de esfuerzo final. No hay beneficio adicional después de cuatro geles por ciclista.",
         "Los paquetes de nutrición utilizan 0-2 por ciclista. Soportan estabilidad de resistencia y recuperación post-etapa. Las etapas largas sin nutrición pueden aumentar la presión de fatiga.",
-        "El kit completo de carrera es obligatorio en Stage Plans. Si falta parte del kit, puede bloquearse la configuración de la etapa.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Las chaquetas de lluvia son opcionales, pero resultan útiles con tiempo húmedo o frío. Los suministros duraderos que ya no tengan usos disponibles no pueden utilizarse.",
         "Las carreras de etapa consumen rápidamente suministros porque se utilizan cantidades por ciclista por etapa."
       ],

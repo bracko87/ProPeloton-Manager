@@ -1741,9 +1741,9 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   },
 
   RACE_JERSEYS_MANDATORY_WARNING: {
-    defaultTitle: 'Mandatory Race Jersey Kits missing',
+    defaultTitle: 'Race jersey shortage — performance penalty',
     defaultMessage:
-      'Your team does not have enough usable Race Jersey Kits for an upcoming stage. Resupply before the stage eligibility check to avoid race removal.',
+      'Your team has fewer usable Race Jersey Kits than selected riders for an upcoming stage. The team will still race; riders without a kit use normal team clothing and the shortage applies a proportional performance penalty.',
 
     imageSrc:
       'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/mandatory%20race%20jersey.png',
@@ -1765,12 +1765,12 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
         stageNumber !== null ? `Stage ${stageNumber}` : 'the upcoming stage'
 
       if (missing !== null && available !== null && required !== null) {
-        return `Critical supply shortage for ${raceName} — ${stageLabel}. You currently have ${available} usable Race Jersey Kit${available === 1 ? '' : 's'}, but ${required} are required. Buy ${missing} additional kit${missing === 1 ? '' : 's'} before the eligibility check.`
+        return `Race jersey shortage for ${raceName} — ${stageLabel}. You have ${available} usable Race Jersey Kit${available === 1 ? '' : 's'} for ${required} selected rider${required === 1 ? '' : 's'}, so ${missing} rider${missing === 1 ? '' : 's'} will race without a kit. The team remains eligible and receives a proportional performance penalty.`
       }
 
       return (
         item.message ||
-        'Your team does not have enough usable Race Jersey Kits for the upcoming stage. Resupply before the eligibility check.'
+        'Your team has a Race Jersey Kit shortage for the upcoming stage. The team still races; the shortage applies a proportional performance penalty.'
       )
     },
 
@@ -1805,11 +1805,11 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
         ),
         detailRow(
           'Supply status',
-          missing !== null && missing > 0 ? 'Critical shortage' : 'Ready'
+          missing !== null && missing > 0 ? 'Shortage — penalty active' : 'Ready'
         ),
         detailRow(
-          'If unresolved',
-          'Team removed from this stage and all remaining stages'
+          'Race effect',
+          'Team remains eligible; performance penalty scales with missing kits'
         ),
       ])
     },
@@ -1819,10 +1819,10 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
       const missing = pickFirstNumber(payload, ['missing_jersey_units'])
 
       if (missing !== null && missing > 0) {
-        return `Immediate action required: purchase at least ${missing} additional usable Race Jersey Kit${missing === 1 ? '' : 's'}. The eligibility guard checks usable supply, so worn-out or unavailable kits do not satisfy the requirement.`
+        return `You can reduce or remove the performance penalty by adding ${missing} usable Race Jersey Kit${missing === 1 ? '' : 's'}. A full shortage means -30% positive preparation bonuses, +8% in-stage energy use and +15% post-stage fatigue.`
       }
 
-      return 'Open Race Supplies to verify your usable Race Jersey Kit stock before the stage eligibility check.'
+      return 'Open Race Supplies to review usable Race Jersey Kit stock. A shortage does not block participation.'
     },
 
     actions: [

@@ -90,7 +90,7 @@
       "quote": "Un devis est l'aperçu du jeu de la conséquence réelle avant confirmation. Toujours examiner le coût total/remboursement, la durée, l'éligibilité et les avertissements. La valeur citée est plus fiable qu'un ancien exemple manuel car le solde/configuration du moteur peut changer au fil du temps.",
       "condition": "L'état est un signal de durabilité. L'état inférieur augmente le besoin d'entretien et peut réduire la sécurité de se fier à l'élément / l'actif pour des plans importants. N'attendez pas que chaque élément clé soit porté en même temps; faites pivoter les réparations afin que le club garde suffisamment de profondeur utilisable.",
       "nutrition": "Les consommables sont multipliés par les coureurs et les étapes. Le gestionnaire doit calculer le stock requis en utilisant le nombre réel de coureurs sélectionnés et le nombre d'étapes, puis laisser une petite réserve lorsque possible. Une estimation d'une journée de stock ne suffit pas pour une course multi-étapes.",
-      "durableSupplies": "Les réserves de carburant pour les courses sont suivies différemment des consommables à usage unique. Leur capacité d'utilisation des étapes reste importante. Les pénuries obligatoires de maillots peuvent bloquer la préparation; les pénuries de gilets de pluie réduisent principalement la flexibilité du temps.",
+      "durableSupplies": "Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Jersey shortages reduce race performance instead of blocking participation; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.",
       "sponsor": "Les informations sur les sponsors doivent être lues avant de signer ou de cibler les courses. L'argent garanti n'est qu'une partie de l'offre. Objectifs, bonus, rabais techniques, écluses de droits de noms et délais peuvent changer ce que le club devrait faire pendant la saison.",
       "tax": "L'impôt n'est pas un texte de base facultatif. Il fait partie du système financier et peut changer la valeur réelle du revenu. Lorsque le revenu augmente de sponsors, de prix ou de primes, le gestionnaire doit s'attendre à une retenue d'impôt ou à des lignes de rajustement mensuel et doit utiliser l'onglet Impôt pour comprendre la situation de trésorerie finale.",
       "deadline": "Windows et les délais sont stricts parce que le Race Engine et les systèmes de saison ont besoin de données stables avant la simulation. Si une date limite passe, l'utilisateur peut perdre la chance de modifier un plan, de demander pour une course, déplacer un coureur ou soumettre une liste.",
@@ -551,7 +551,7 @@
         "Les bidons sont utilisés à raison de 1 à 4 par coureur dans la configuration de l’étape. Ils sont à usage unique et améliorent l’hydratation ainsi que la gestion de la fatigue. Passer sous le minimum peut augmenter le risque de fatigue.",
         "Les gels énergétiques sont utilisés à raison de 0 à 4 par coureur. Ils soutiennent l’endurance et l’efficacité de l’effort final. Au-delà de quatre gels par coureur, il n’y a aucun bénéfice supplémentaire.",
         "Les packs nutritionnels sont utilisés à raison de 0 à 2 par coureur. Ils stabilisent l’endurance et favorisent la récupération après l’étape. Les longues étapes sans nutrition peuvent augmenter la fatigue.",
-        "Course Jersey Complete est obligatoire en Stage Plans. Les kits de jersey manquants peuvent bloquer la configuration de l'étape.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Les vestes de pluie sont optionnelles mais précieuses par temps humide/froid. Les fournitures durables ne sont plus utilisables.",
         "Les courses de étape consomment rapidement des fournitures parce que les quantités sont utilisées par coureur par étape."
       ],
@@ -566,7 +566,7 @@
         },
         {
           "label": "Course Jersey Complet",
-          "value": "Obligatoire; 10 utilisations par unité"
+          "value": "Recommended; 10 stage uses per unit"
         },
         {
           "label": "Vestes de pluie",
@@ -1983,7 +1983,7 @@
         "Un Stage Plan inférieur au minimum d'hydratation requis peut augmenter la pression de fatigue.",
         "Les gels énergétiques soutiennent l'endurance et l'efficacité finale de l'effort. Plus que le bouchon utile ne crée pas d'avantage supplémentaire.",
         "Nutrition Packs soutient la stabilité et la récupération de l'endurance, en particulier sur les longues étapes et les courses d'étape.",
-        "Course Jersey Complete est obligatoire. Une équipe sans suffisamment d'utilisations de maillots peut être bloquée d'avoir une configuration complète de l'étape.",
+        "Race Jersey Complete is strongly recommended. A shortage does not block a stage or remove the team from the race; riders without a kit compete in normal team clothing and the team receives the proportional jersey-shortage performance penalty.",
         "Les vestes de pluie ne sont pas obligatoires sur chaque étape mais deviennent utiles par temps froid/humide. Le jeu devrait traiter les unités d'approvisionnement durables usées comme inutilisables.",
         "Les courses d'étape multiplient la consommation parce que les provisions sont calculées par coureur par étape. Un stock qui semble important pour une course d'une journée peut être trop petit pour une course de sept étapes."
       ],

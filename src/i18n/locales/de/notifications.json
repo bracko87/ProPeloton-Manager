@@ -412,9 +412,9 @@
         "reviewRecommendation": "Prüfen Sie das aktuelle Rennprogramm, das Vorbereitungspaket, die Startliste und den Status der Etappenpläne."
       },
       "raceJerseysRemoval": {
-        "title": "Team aus {{raceName}} entfernt",
-        "message": "{{teamName}} hatte für Etappe {{stage}} nicht genügend vorgeschriebene Renntrikot-Sets. Benötigt: {{required}}; verfügbar: {{available}}. Das Team wurde aus Etappe {{stage}} und allen verbleibenden Etappen von {{raceName}} entfernt. Die Fahrer können in diesem Rennen keine Platzierungen oder Punkte mehr erzielen.",
-        "genericMessage": "Das Team wurde aus {{raceName}} entfernt, weil nicht genügend vorgeschriebene Renntrikot-Sets verfügbar waren."
+        "title": "Legacy jersey-shortage event — {{raceName}}",
+        "message": "{{teamName}} had a Race Jersey Kit shortage for Stage {{stage}} under the previous rule. This historical notification is kept for the record. Under the current rule, the team remains in {{raceName}} and receives a proportional performance penalty instead of removal.",
+        "genericMessage": "This is a historical jersey-shortage notification from the previous rule. Current jersey shortages do not remove a team from {{raceName}}; they apply a proportional performance penalty."
       },
       "startlistMissed": {
         "title": "Frist für die Startliste verpasst: {{raceName}}",
@@ -796,7 +796,7 @@
   },
   "semanticTypeTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Rennplan erfordert Aufmerksamkeit",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Pflicht-Renntrikots fehlen",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
     "RIDER_UNHAPPY": "Fahrer ist unzufrieden",
     "RIDER_CONTRACT_EXPIRING": "Fahrervertrag läuft bald aus",
     "RACE_WEATHER_CANCELLED": "Rennen wegen des Wetters abgesagt",
@@ -871,7 +871,7 @@
     "RACE_APPLICATION_WINDOW_OPEN": "Rennanmeldungen geöffnet",
     "RACE_APPLICATION_CLOSING_SOON": "Rennanmeldungen schließen bald",
     "RACE_APPLICATION_RULE_CHANGE": "Änderung der Anmeldefristen",
-    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Team aus dem Rennen entfernt",
+    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Rennplan abgeschlossen",
     "STAGE_PLAN_MISSING_REMINDER": "Erinnerung: Etappenplan fehlt"
   },
@@ -958,25 +958,25 @@
       "closingSoonOne": "Ein Rennanmeldefenster schließt in 3 Tagen{{races}}. Prüfen Sie das Rennen, Kaderverfügbarkeit und Ausrüstungsbereitschaft und melden Sie rechtzeitig an.",
       "closingSoonMany": "{{count}} Rennanmeldefenster schließen in 3 Tagen{{races}}. Prüfen Sie die Rennen, Kaderverfügbarkeit und Ausrüstungsbereitschaft und melden Sie rechtzeitig an.",
       "ruleChange": "Die Regeln für Anmeldefristen wurden aktualisiert. Rennen Ende Januar verwenden ein {{lateDays}}-Tage-Fenster; ab Februar schließen Anmeldungen {{standardDays}} Tage vor dem Rennen. Prüfen Sie Ihre Planung, damit Sie keine zukünftige Anmeldung verpassen.",
-      "teamRemoved": "{{team}} wurde automatisch aus {{race}} entfernt, weil die vorgeschriebene Renntrikot-Anforderung{{stagePart}} nicht erfüllt war.{{stockPart}} Die Entfernung gilt für die betroffene und alle verbleibenden Etappen; Team und Fahrer können in diesem Rennen keine Platzierungen oder Punkte mehr erzielen.",
+      "teamRemoved": "{{team}} had a Race Jersey Kit shortage in {{race}} under the previous rule{{stagePart}}.{{stockPart}} This notification is historical. Under the current rule, a shortage does not remove the team; riders without kits race in normal team clothing and a proportional performance penalty applies.",
       "stagePart": " vor Etappe {{stage}}",
       "stockPart": " Benötigt: {{required}}; verfügbar: {{available}}.",
-      "prestart": "{{team}} wurde bei der vorgeschriebenen Prüfung vor dem Start aus {{race}} entfernt, weil nicht genügend zulässige Renntrikot-Sets verfügbar waren.{{stockPart}} Dies ist ein vom Club beeinflussbarer Fehler der Rennvorbereitung; daher wurden die üblichen Folgen eines verpassten Starts angewendet.",
+      "prestart": "{{team}} had a Race Jersey Kit shortage before {{race}} under the previous rule.{{stockPart}} This historical notification no longer describes current eligibility: the team now remains in the race and receives a proportional performance penalty.",
       "prestartStock": " Die Prüfung ergab: {{required}} benötigt, {{available}} zulässig{{missingPart}}.",
       "prestartMissing": ", {{missing}} fehlend",
-      "extraRemoved": "Öffnen Sie die Ausrüstung, um den Bestand zu prüfen und dasselbe Problem bei künftigen Rennen zu vermeiden.",
+      "extraRemoved": "Open Race Supplies to review usable Race Jersey Kits. Under the current rule, a shortage reduces performance but does not remove the team.",
       "extraOpenOne": "Öffnen Sie jetzt die Rennseite, prüfen Sie die Anforderungen und melden Sie frühzeitig an.",
       "extraOpenMany": "Öffnen Sie jetzt den Kalender, prüfen Sie alle neu geöffneten Rennen und melden Sie frühzeitig an.",
       "extraClosing": "Öffnen Sie den Kalender, vergleichen Sie die Rennen und melden Sie an, bevor die Anmeldefenster schließen.",
       "extraRule": "Öffnen Sie den Kalender, prüfen Sie die Rennen ab Februar und passen Sie Ihre Anmeldeplanung frühzeitig an.",
-      "extraPrestart": "Die Strafe wurde bereits angewendet. Öffnen Sie das Rennen für den Kontext oder direkt die Rennvorräte, um zulässige Renntrikots zu prüfen und dasselbe Problem künftig zu vermeiden.",
-      "removedRemaining": "Für den Rest des Rennens entfernt",
+      "extraPrestart": "Open Race Supplies to review usable Race Jersey Kits. Current jersey shortages do not cause missed-start/no-show consequences; they apply the proportional performance penalty.",
+      "removedRemaining": "Legacy event — current rule keeps the team in the race",
       "closesInDays": "Schließt in {{days}} Tagen",
       "lateJanuaryRule": "Anmeldungen schließen {{days}} Tage vor dem Start",
       "februaryRule": "Anmeldungen schließen {{days}} Tage vor dem Start",
       "entryFeeRetained": "Einbehalten (nicht erstattet)",
-      "outcomeRemoved": "Vor/bei Rennstart entfernt",
-      "problemJerseys": "Nicht genügend zulässige Renntrikot-Sets"
+      "outcomeRemoved": "Legacy event — current rule applies performance penalty",
+      "problemJerseys": "Race Jersey shortage — performance penalty"
     }
   }
 }

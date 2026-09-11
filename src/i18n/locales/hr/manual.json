@@ -90,7 +90,7 @@
       "quote": "Ponuda je pregled stvarne posledice u igri pre potvrde. Uvek provjerite ukupan trošak ili povraćaj, trajanje, uslove i upozorenja. Prikazana ponuda je pouzdanija od starog primera iz priručnika jer se backend balans i konfiguracija mogu menjati tokom vremena.",
       "condition": "Stanje je signal izdržljivosti. Niže stanje povećava potrebu za održavanjem i može smanjiti pouzdanost predmeta ili resursa u važnim planovima. Ne čekajte da svi ključni predmeti budu istrošeni istovremeno; rotirajte popravke kako bi klub zadržao dovoljnu upotrebljivu dubinu.",
       "nutrition": "Potrošne zalihe se množe brojem vozača i etapa. Potrebnu količinu računajte prema stvarnom broju izabranih vozača i ukupnom broju etapa, a kada je moguće ostavite malu rezervu. Procena za jedan dan nije dovoljna za višednevnu utrku.",
-      "durableSupplies": "Trajne zalihe za utrku prate se drugačije od potrošnog materijala za jednokratnu upotrebu. Važan je njihov preostali kapacitet korišćenja po etapama. Nedostatak obaveznih dresova može blokirati spremnost; nedostatak jakni za kišu uglavnom smanjuje fleksibilnost po lošem vremenu. Zamenite istrošene jedinice pre važnog bloka utrka.",
+      "durableSupplies": "Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Jersey shortages reduce race performance instead of blocking participation; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.",
       "sponsor": "Informacije o sponzoru treba pročitati pre potpisivanja ili ciljanja utrka. Garantovani novac je samo jedan deo ugovora. Ciljevi, bonus fondovi, tehnički popusti, zaključavanje prava na naziv i rokovi mogu promeniti šta klub treba da radi tokom sezone. Dobar sponzorski ugovor odgovara kalendaru tima i snazi ekipe.",
       "tax": "Porez nije opciona pozadinska informacija. On je deo finansijskog sistema i može promeniti stvarnu vrijednost prihoda. Kada prihodi porastu zbog sponzora, nagrada ili bonusa, očekujte poresko zadržavanje ili mjesečne korekcije i koristite karticu Porez da razumete konačnu poziciju gotovine.",
       "deadline": "Periodi i rokovi su strogi jer Race Engine i sezonski sistemi moraju imati stabilne podatke pre simulacije. Ako rok prođe, možete izgubiti mogućnost da izmenite plan, prijavite utrku, premestite vozača ili predate roster. Uvek uporedite datum na stranici sa vremenom igre u podnožju.",
@@ -551,7 +551,7 @@
         "Bidoni koriste 1–4 po vozaču u setup-u etape. Jednokratni su i podržavaju hidrataciju i kontrolu umora. Ispod minimuma može povećati rizik od umora.",
         "Energetski gelovi koriste 0–4 po vozaču. Podržavaju izdržljivost i efikasnost završnog napora. Nema dodatnog efekta nakon četiri gela po vozaču.",
         "Paketi ishrane koriste 0–2 po vozaču. Podržavaju stabilnost izdržljivosti i oporavak nakon etape. Duge etape bez ishrane mogu povećati pritisak umora.",
-        "Komplet natjecateljskog dresa je obavezan u Stage Plans. Nedostatak kompleta može blokirati setup etape.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Kišne jakne su opcione, ali vredne po mokrom/hladnom vremenu. Istrošene trajne zalihe više se ne mogu koristiti.",
         "Etapne utrke brzo troše zalihe jer se količine koriste po vozaču po etapi."
       ],
@@ -566,7 +566,7 @@
         },
         {
           "label": "Komplet natjecateljskog dresa",
-          "value": "Obavezno; 10 korišćenja na etapama po jedinici"
+          "value": "Recommended; 10 stage uses per unit"
         },
         {
           "label": "Kišne jakne",
@@ -1983,7 +1983,7 @@
         "Bidonsi podržavaju hidraciju i kontrolu zamora, a plan ispod potrebne hidracije može da poveća pritisak umora.",
         "Energetski gelovi podržavaju izdržljivost i efikasnost konačne efikasnosti. Više od korisne kape ne stvara ekstra korist.",
         "Hranenje paketi podržavaju stabilnost i oporavak, posebno na dugim fazama i utrkama.",
-        "Tim bez dovoljno korišćenih drolja-korisa može biti blokiran od kompletnog postavljanja scene.",
+        "Race Jersey Complete is strongly recommended. A shortage does not block a stage or remove the team from the race; riders without a kit compete in normal team clothing and the team receives the proportional jersey-shortage performance penalty.",
         "Kišne jakne nisu obavezne na svakoj sceni, već postaju vredne u hladnom/mokrom vremenu. Igra bi trebalo da tretira istrošene trajne jedinice snabdevanja kao neupotrebljive.",
         "Utrke na fazi množe potrošnju jer se zalihe izračunavaju po vozaču po fazi."
       ],

@@ -90,7 +90,7 @@
       "quote": "Una citazione è l'anteprima delle conseguenze reali prima della conferma. Rivedi sempre il costo totale/rimborso, la durata, l'idoneità e gli avvertimenti. Il valore citato è più affidabile di un vecchio esempio manuale perché il bilanciamento/configurazione del backend può cambiare nel tempo.",
       "condition": "Condizione è un segnale di durata. La condizione inferiore aumenta la necessità di manutenzione e può ridurre la sicurezza di contare sull'elemento / asset per i piani importanti. Non aspettare fino a quando ogni elemento chiave viene indossato allo stesso tempo; ruotare le riparazioni in modo che il club mantiene abbastanza profondità utilizzabile.",
       "nutrition": "I consumi sono moltiplicati per ciclisti e tappe. Il manager dovrebbe calcolare lo stock richiesto utilizzando il numero effettivo di ciclisti selezionati e l'intero conteggio dello stadio, quindi lasciare una piccola riserva quando possibile. Una stima dello stock di un giorno non è sufficiente per una gara multi-stadio.",
-      "durableSupplies": "Le forniture da gara durabili sono tracciate in modo diverso dai consumabili monouso. La loro capacità di utilizzo del tappa è importante. La carenza di maglia obbligatoria può bloccare la prontezza; la carenza di giacca antipioggia riduce principalmente la flessibilità meteo. Sostituire le unità usurate prima di un importante blocco gara.",
+      "durableSupplies": "Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Jersey shortages reduce race performance instead of blocking participation; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.",
       "sponsor": "Le informazioni dello sponsor devono essere lette prima di firmare o di puntare le gare. Soldi garantiti è solo una parte dell'affare. Obiettivi, pool bonus, sconti tecnici, serrature nomi-diritti e scadenze possono cambiare ciò che il club dovrebbe fare durante la stagione. Un buon accordo sponsor si adatta al calendario della squadra e forza della squadra.",
       "tax": "L'imposta non è un testo di sfondo facoltativo. Fa parte del sistema finanziario e può cambiare il valore reale del reddito. Quando il reddito aumenta da sponsor, premi o bonus, il gestore dovrebbe aspettarsi ritenute fiscali o righe di aggiustamento mensile e dovrebbe utilizzare la scheda fiscale per capire la posizione finale in contanti.",
       "deadline": "Le finestre e le scadenze sono rigide perché i Race Engine e sistemi stagionali hanno bisogno di dati stabili prima della simulazione. Se una scadenza passa, l'utente potrebbe perdere la possibilità di modificare un piano, richiedere una gara, spostare un ciclista o inviare un roster. Confrontare sempre la data della pagina con l'ora di gioco del piè di pagina.",
@@ -551,7 +551,7 @@
         "Le borracce si usano in quantità da 1 a 4 per ciclista nella configurazione della tappa. Sono consumabili monouso e aiutano idratazione e controllo della fatica. Restare sotto il minimo può aumentare il rischio di fatica.",
         "I gel energetici si usano in quantità da 0 a 4 per ciclista. Supportano la resistenza e l’efficacia dello sforzo finale. Oltre quattro gel per ciclista non ci sono benefici aggiuntivi.",
         "I pacchetti nutrizionali si usano in quantità da 0 a 2 per ciclista. Aiutano la stabilità della resistenza e il recupero dopo la tappa. Le tappe lunghe senza nutrizione possono aumentare la pressione della fatica.",
-        "Race Jersey Complete è obbligatorio in Stage Plans. I kit di jersey mancanti possono bloccare l'installazione del tappa.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Giacca pioggia sono opzionali, ma preziosi in tempo umido / freddo. Forniture durevoli indossate non sono più utilizzabili.",
         "Le gare di tappa consumano rapidamente le forniture perché le quantità sono utilizzate per ciclista per tappa."
       ],
@@ -566,7 +566,7 @@
         },
         {
           "label": "Gara Jersey Completa",
-          "value": "Obbligatoria; 10 impieghi per unità"
+          "value": "Recommended; 10 stage uses per unit"
         },
         {
           "label": "Giacche a pioggia",
@@ -1983,7 +1983,7 @@
         "I bidoni supportano l'idratazione e il controllo della fatica. Un Stage Plan inferiore al minimo di idratazione richiesto può aumentare la pressione di fatica.",
         "Energy Gel supportano la resistenza e l'efficienza finale-effrazione. Più che il tappo utile non crea vantaggi aggiuntivi.",
         "Nutrizione I pacchetti supportano stabilità e recupero della resistenza, soprattutto su tappe lunghe e gare di tappa.",
-        "Gara Jersey Complete è obbligatorio. Un team senza abbastanza jersey usa il tappa può essere bloccato da una configurazione completa del tappa.",
+        "Race Jersey Complete is strongly recommended. A shortage does not block a stage or remove the team from the race; riders without a kit compete in normal team clothing and the team receives the proportional jersey-shortage performance penalty.",
         "Giacca pioggia non sono obbligatori su ogni tappa, ma diventano preziosi in tempo freddo / umido. Il gioco dovrebbe trattare le unità di alimentazione durevole logoro come inutilizzabile.",
         "Le gare di tappa moltiplicano i consumi perché le forniture sono calcolate per ciclista per tappa. Un titolo che sembra grande per una gara di un giorno può essere troppo piccolo per una gara di sette tappe."
       ],

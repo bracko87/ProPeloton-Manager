@@ -405,7 +405,7 @@
         "Trajne zalihe",
         "Komplet natjecateljskog dresa, Kišne jakne",
         "Komplet natjecateljskog dresa",
-        "Obavezno; 10 korišćenja na etapama po jedinici",
+        "Recommended; 10 stage uses per unit",
         "Kišne jakne",
         "Opciono za loše vrijeme; 25 korišćenja po jedinici"
       ],
@@ -413,7 +413,7 @@
         "Bidoni koriste 1–4 po vozaču u setup-u etape. Jednokratni su i podržavaju hidrataciju i kontrolu umora. Ispod minimuma može povećati rizik od umora.",
         "Energetski gelovi koriste 0–4 po vozaču. Podržavaju izdržljivost i efikasnost završnog napora. Nema dodatnog efekta nakon četiri gela po vozaču.",
         "Paketi ishrane koriste 0–2 po vozaču. Podržavaju stabilnost izdržljivosti i oporavak nakon etape. Duge etape bez ishrane mogu povećati pritisak umora.",
-        "Komplet natjecateljskog dresa je obavezan u Stage Plans. Nedostatak kompleta može blokirati setup etape.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Kišne jakne su opcione, ali vredne po mokrom/hladnom vremenu. Istrošene trajne zalihe više se ne mogu koristiti.",
         "Etapne utrke brzo troše zalihe jer se količine koriste po vozaču po etapi."
       ],

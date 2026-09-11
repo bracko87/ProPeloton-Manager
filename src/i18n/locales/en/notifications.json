@@ -412,9 +412,9 @@
         "reviewRecommendation": "Review the current race programme, preparation package, startlist and stage-plan status."
       },
       "raceJerseysRemoval": {
-        "title": "Team removed from {{raceName}}",
-        "message": "{{teamName}} did not have enough mandatory Race Jersey Kits for Stage {{stage}}. Required: {{required}}; available: {{available}}. The team has been removed from Stage {{stage}} and every remaining stage of {{raceName}}. Riders can no longer place or score in this race.",
-        "genericMessage": "The team was removed from {{raceName}} because it did not have enough mandatory Race Jersey Kits."
+        "title": "Legacy jersey-shortage event — {{raceName}}",
+        "message": "{{teamName}} had a Race Jersey Kit shortage for Stage {{stage}} under the previous rule. This historical notification is kept for the record. Under the current rule, the team remains in {{raceName}} and receives a proportional performance penalty instead of removal.",
+        "genericMessage": "This is a historical jersey-shortage notification from the previous rule. Current jersey shortages do not remove a team from {{raceName}}; they apply a proportional performance penalty."
       },
       "startlistMissed": {
         "title": "Startlist missed: {{raceName}}",
@@ -802,7 +802,7 @@
     "RACE_APPLICATION_WINDOW_OPEN": "Race applications open",
     "RACE_APPLICATION_CLOSING_SOON": "Race applications closing soon",
     "RACE_APPLICATION_RULE_CHANGE": "Race application deadline update",
-    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Team removed from race",
+    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Race plan finalised",
     "STAGE_PLAN_MISSING_REMINDER": "Stage plan missing reminder"
   },
@@ -868,25 +868,25 @@
       "closingSoonOne": "One race application window closes in 3 days{{races}}. Review the race page, confirm squad availability and equipment readiness, and submit before the deadline.",
       "closingSoonMany": "{{count}} race application windows close in 3 days{{races}}. Review each race page, confirm squad availability and equipment readiness, and submit before the deadlines.",
       "ruleChange": "Application timing rules have been updated. Late-January races use a {{lateDays}}-day closing window, while February and later races use a {{standardDays}}-day application deadline. Review your planning now so you do not miss future entries.",
-      "teamRemoved": "{{team}} was automatically removed from {{race}} because the mandatory Race Jersey Kit requirement was not met{{stagePart}}.{{stockPart}} The removal applies to the affected stage and every remaining stage, so the team and its riders can no longer place or score points in this race.",
+      "teamRemoved": "{{team}} had a Race Jersey Kit shortage in {{race}} under the previous rule{{stagePart}}.{{stockPart}} This notification is historical. Under the current rule, a shortage does not remove the team; riders without kits race in normal team clothing and a proportional performance penalty applies.",
       "stagePart": " before Stage {{stage}}",
       "stockPart": " Required: {{required}}; available: {{available}}.",
-      "prestart": "{{team}} was removed from {{race}} at the mandatory pre-start eligibility check because it did not have enough eligible Race Jersey Kits.{{stockPart}} This is a club-controllable race-preparation failure, so the normal missed-start/no-show consequences were applied.",
+      "prestart": "{{team}} had a Race Jersey Kit shortage before {{race}} under the previous rule.{{stockPart}} This historical notification no longer describes current eligibility: the team now remains in the race and receives a proportional performance penalty.",
       "prestartStock": " The eligibility check recorded {{required}} required, {{available}} eligible{{missingPart}}.",
       "prestartMissing": ", and {{missing}} missing",
-      "extraRemoved": "Open Equipment to review inventory and prevent the same issue in future races.",
+      "extraRemoved": "Open Race Supplies to review usable Race Jersey Kits. Under the current rule, a shortage reduces performance but does not remove the team.",
       "extraOpenOne": "Open the race page now to review requirements and apply early.",
       "extraOpenMany": "Open the Calendar now to review all newly opened races and apply early.",
       "extraClosing": "Open the Calendar now to compare races and apply before the application windows close.",
       "extraRule": "Open the Calendar to review February races and adapt your application plan early.",
-      "extraPrestart": "The penalty has already been applied. Open the race for context, or go directly to Race Supplies to review eligible race jerseys and avoid the same issue at a future start.",
-      "removedRemaining": "Removed for the remaining race",
+      "extraPrestart": "Open Race Supplies to review usable Race Jersey Kits. Current jersey shortages do not cause missed-start/no-show consequences; they apply the proportional performance penalty.",
+      "removedRemaining": "Legacy event — current rule keeps the team in the race",
       "closesInDays": "Closes in {{days}} days",
       "lateJanuaryRule": "Applications close {{days}} days before the start",
       "februaryRule": "Applications close {{days}} days before the start",
       "entryFeeRetained": "Retained (not refunded)",
-      "outcomeRemoved": "Removed before/at race start",
-      "problemJerseys": "Not enough eligible Race Jersey Kits"
+      "outcomeRemoved": "Legacy event — current rule applies performance penalty",
+      "problemJerseys": "Race Jersey shortage — performance penalty"
     }
   }
 }

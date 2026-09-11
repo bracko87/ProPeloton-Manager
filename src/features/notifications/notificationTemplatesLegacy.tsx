@@ -36,7 +36,7 @@ const RICH_DAILY_NOTIFICATION_CODES = new Set([
 
 const RICH_RACE_IMAGES: Record<string, string> = {
   RACE_TEAM_DISQUALIFIED_JERSEYS:
-    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Team%20removed%20from%20race.png',
+    'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/mandatory%20race%20jersey.png',
   RACE_APPLICATION_CLOSING_SOON:
     'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Race%20aplication%20close%20in%203%20days.png',
   RACE_APPLICATION_WINDOW_OPEN:

@@ -412,9 +412,9 @@
         "reviewRecommendation": "Проверьте текущую гоночную программу, пакет подготовки, стартовый список и состояние планов этапов."
       },
       "raceJerseysRemoval": {
-        "title": "Команда снята с {{raceName}}",
-        "message": "У {{teamName}} не было достаточного количества обязательных комплектов гоночной формы для этапа {{stage}}. Требуется: {{required}}; доступно: {{available}}. Команда снята с этапа {{stage}} и всех оставшихся этапов {{raceName}}. Гонщики больше не могут занимать места или получать очки в этой гонке.",
-        "genericMessage": "Команда снята с {{raceName}}, потому что обязательных комплектов гоночной формы было недостаточно."
+        "title": "Legacy jersey-shortage event — {{raceName}}",
+        "message": "{{teamName}} had a Race Jersey Kit shortage for Stage {{stage}} under the previous rule. This historical notification is kept for the record. Under the current rule, the team remains in {{raceName}} and receives a proportional performance penalty instead of removal.",
+        "genericMessage": "This is a historical jersey-shortage notification from the previous rule. Current jersey shortages do not remove a team from {{raceName}}; they apply a proportional performance penalty."
       },
       "startlistMissed": {
         "title": "Пропущен срок стартового списка: {{raceName}}",
@@ -802,7 +802,7 @@
   },
   "semanticTypeTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "План гонки требует внимания",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Не хватает обязательных гоночных комплектов",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
     "RIDER_UNHAPPY": "Гонщик недоволен",
     "RIDER_CONTRACT_EXPIRING": "Контракт гонщика скоро истекает",
     "RACE_WEATHER_CANCELLED": "Гонка отменена из-за погоды",
@@ -877,7 +877,7 @@
     "RACE_APPLICATION_WINDOW_OPEN": "Приём заявок на гонки открыт",
     "RACE_APPLICATION_CLOSING_SOON": "Приём заявок скоро закрывается",
     "RACE_APPLICATION_RULE_CHANGE": "Изменение сроков подачи заявок",
-    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Команда снята с гонки",
+    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "План гонки завершён",
     "STAGE_PLAN_MISSING_REMINDER": "Напоминание: отсутствует план этапа"
   },
@@ -964,25 +964,25 @@
       "closingSoonOne": "Одно окно подачи заявки закроется через 3 дня{{races}}. Проверьте гонку, доступность состава и готовность экипировки и подайте заявку до срока.",
       "closingSoonMany": "Окон подачи заявок, закрывающихся через 3 дня: {{count}}{{races}}. Проверьте гонки, доступность состава и готовность экипировки и подайте заявки до сроков.",
       "ruleChange": "Правила сроков подачи заявок обновлены. Для гонок конца января действует окно {{lateDays}} дня; с февраля заявки закрываются за {{standardDays}} дней до гонки. Проверьте планирование, чтобы не пропустить будущие заявки.",
-      "teamRemoved": "{{team}} автоматически снята с {{race}}, поскольку обязательное требование по комплектам гоночной формы{{stagePart}} не было выполнено.{{stockPart}} Снятие действует на затронутый этап и все оставшиеся этапы, поэтому команда и её гонщики больше не могут занимать места или получать очки в этой гонке.",
+      "teamRemoved": "{{team}} had a Race Jersey Kit shortage in {{race}} under the previous rule{{stagePart}}.{{stockPart}} This notification is historical. Under the current rule, a shortage does not remove the team; riders without kits race in normal team clothing and a proportional performance penalty applies.",
       "stagePart": " перед этапом {{stage}}",
       "stockPart": " Требуется: {{required}}; доступно: {{available}}.",
-      "prestart": "{{team}} снята с {{race}} при обязательной проверке перед стартом из-за недостаточного количества доступных комплектов гоночной формы.{{stockPart}} Это контролируемая клубом ошибка подготовки, поэтому применены обычные последствия пропуска старта.",
+      "prestart": "{{team}} had a Race Jersey Kit shortage before {{race}} under the previous rule.{{stockPart}} This historical notification no longer describes current eligibility: the team now remains in the race and receives a proportional performance penalty.",
       "prestartStock": " Проверка показала: требуется {{required}}, доступно {{available}}{{missingPart}}.",
       "prestartMissing": ", не хватает {{missing}}",
-      "extraRemoved": "Откройте Экипировку, чтобы проверить запасы и избежать той же проблемы в будущих гонках.",
+      "extraRemoved": "Open Race Supplies to review usable Race Jersey Kits. Under the current rule, a shortage reduces performance but does not remove the team.",
       "extraOpenOne": "Откройте страницу гонки, проверьте требования и подайте заявку заранее.",
       "extraOpenMany": "Откройте Календарь, проверьте все недавно открытые гонки и подайте заявки заранее.",
       "extraClosing": "Откройте Календарь, сравните гонки и подайте заявки до закрытия окон.",
       "extraRule": "Откройте Календарь, проверьте гонки с февраля и заранее скорректируйте план заявок.",
-      "extraPrestart": "Штраф уже применён. Откройте гонку для контекста или сразу перейдите к Запасам для гонок, чтобы проверить доступную форму и избежать той же проблемы в будущем.",
-      "removedRemaining": "Снята до конца гонки",
+      "extraPrestart": "Open Race Supplies to review usable Race Jersey Kits. Current jersey shortages do not cause missed-start/no-show consequences; they apply the proportional performance penalty.",
+      "removedRemaining": "Legacy event — current rule keeps the team in the race",
       "closesInDays": "Закрывается через {{days}} дн.",
       "lateJanuaryRule": "Заявки закрываются за {{days}} дн. до старта",
       "februaryRule": "Заявки закрываются за {{days}} дн. до старта",
       "entryFeeRetained": "Удержан (не возвращён)",
-      "outcomeRemoved": "Снята до/на старте гонки",
-      "problemJerseys": "Недостаточно доступных комплектов гоночной формы"
+      "outcomeRemoved": "Legacy event — current rule applies performance penalty",
+      "problemJerseys": "Race Jersey shortage — performance penalty"
     }
   }
 }

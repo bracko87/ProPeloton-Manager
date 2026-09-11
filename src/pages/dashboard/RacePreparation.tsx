@@ -10925,14 +10925,17 @@ const STAGE_SUPPLY_RULES: Record<
     maxPerRider: 1,
     defaultPerRider: 1,
     useType: "durable",
-    mandatory: true,
+    mandatory: false,
     durabilityText:
-      "Mandatory durable kit. One jersey kit is needed per rider and each kit has 10 stage uses.",
+      "Recommended durable kit. Ideally one usable jersey kit is available per rider; each kit has 10 stage uses.",
     positiveEffects: [
       "Race support: +1.5 points when a usable jersey kit is available per rider",
       "Fatigue reduction: +0.75% when a usable jersey kit is available per rider",
     ],
-    negativeEffects: ["Missing jersey kit: blocks stage setup"],
+    negativeEffects: [
+      "Missing jersey kits do not block participation; the team races with a proportional performance penalty",
+      "At a full jersey shortage: -30% positive preparation bonuses, +8% in-stage energy use and +15% post-stage fatigue",
+    ],
   },
   rain_jackets: {
     label: "Rain Jackets",
@@ -11462,8 +11465,8 @@ function StageRaceSuppliesCard({
           <h2 className="text-lg font-semibold text-slate-900">{racePrepText("screen.stageRaceSupplies")}</h2>
           <p className="mt-1 text-sm text-slate-600">
             Team-level supply setup for this stage. Consumables are applied per
-            rider; Race Jersey Kit is mandatory and Rain Jackets are a team-wide
-            yes/no choice.
+            rider; Race Jersey Kits are strongly recommended but a shortage does
+            not block participation. Rain Jackets are a team-wide yes/no choice.
           </p>
         </div>
 
@@ -11471,7 +11474,7 @@ function StageRaceSuppliesCard({
           <button
             type="button"
             onClick={onSave}
-            disabled={saveDisabled || jerseyMissing || suppliesDisabledForTT}
+            disabled={saveDisabled || suppliesDisabledForTT}
             className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
           >
             {saving ? "Saving…" : "Save"}
@@ -11582,10 +11585,14 @@ function StageRaceSuppliesCard({
       ) : null}
 
       {jerseyMissing ? (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
-          Race Jersey Kit is mandatory. You need{" "}
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+          Race Jersey shortage: you need{" "}
           {displayNeeds.race_jersey_complete}, but only {jerseyAvailable} are
-          available. This blocks saving/starting the stage.
+          available. The team can still save the plan and race. Riders without a
+          usable kit compete in normal team clothing. The performance penalty
+          scales with the shortage; a full shortage means -30% positive
+          preparation bonuses, +8% in-stage energy use and +15% post-stage
+          fatigue.
         </div>
       ) : null}
 
@@ -11646,7 +11653,7 @@ function StageRaceSuppliesCard({
           <div
             className={[
               "rounded-xl border bg-white p-3",
-              jerseyMissing ? "border-red-200" : "border-slate-200",
+              jerseyMissing ? "border-amber-200" : "border-slate-200",
             ].join(" ")}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -11655,8 +11662,8 @@ function StageRaceSuppliesCard({
                   Race Jersey Kit
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  Mandatory for all selected riders. Missing jersey kits block
-                  the stage setup.
+                  Strongly recommended for all selected riders. A shortage does not
+                  block the stage; riders without a kit race with the team penalty.
                 </div>
                 <div className="mt-1 text-xs text-slate-400">
                   10 stage uses per kit.
@@ -11667,7 +11674,7 @@ function StageRaceSuppliesCard({
                 className={[
                   "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
                   jerseyMissing
-                    ? "bg-red-100 text-red-700"
+                    ? "bg-amber-100 text-amber-800"
                     : "bg-emerald-100 text-emerald-700",
                 ].join(" ")}
               >
@@ -12133,9 +12140,10 @@ function StageFinalCalculationCard({
           </div>
 
           {missingJerseys > 0 ? (
-            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
-              Missing mandatory Race Jersey Kit units: {missingJerseys}. This
-              should block the final stage setup.
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800">
+              Race Jersey shortage: {missingJerseys} rider{missingJerseys === 1 ? "" : "s"} will race without a usable kit.
+              The stage remains playable; the engine applies the proportional
+              preparation, energy-use and post-stage fatigue penalty.
             </div>
           ) : null}
 

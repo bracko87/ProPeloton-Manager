@@ -412,9 +412,9 @@
         "reviewRecommendation": "Pregledajte trenutni program trka, paket pripreme, startnu listu i status planova etapa."
       },
       "raceJerseysRemoval": {
-        "title": "Tim uklonjen sa trke {{raceName}}",
-        "message": "{{teamName}} nije imao dovoljno obaveznih kompleta trkačkih dresova za etapu {{stage}}. Potrebno: {{required}}; dostupno: {{available}}. Tim je uklonjen sa etape {{stage}} i svih preostalih etapa trke {{raceName}}. Vozači više ne mogu da ostvare plasman niti osvoje bodove u ovoj trci.",
-        "genericMessage": "Tim je uklonjen sa trke {{raceName}} jer nije imao dovoljno obaveznih kompleta trkačkih dresova."
+        "title": "Legacy jersey-shortage event — {{raceName}}",
+        "message": "{{teamName}} had a Race Jersey Kit shortage for Stage {{stage}} under the previous rule. This historical notification is kept for the record. Under the current rule, the team remains in {{raceName}} and receives a proportional performance penalty instead of removal.",
+        "genericMessage": "This is a historical jersey-shortage notification from the previous rule. Current jersey shortages do not remove a team from {{raceName}}; they apply a proportional performance penalty."
       },
       "startlistMissed": {
         "title": "Propušten rok za startnu listu: {{raceName}}",
@@ -799,7 +799,7 @@
   },
   "semanticTypeTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Plan trke zahteva pažnju",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Nedostaju obavezni trkački dresovi",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
     "RIDER_UNHAPPY": "Vozač je nezadovoljan",
     "RIDER_CONTRACT_EXPIRING": "Ugovor vozača uskoro ističe",
     "RACE_WEATHER_CANCELLED": "Trka je otkazana zbog vremena",
@@ -874,7 +874,7 @@
     "RACE_APPLICATION_WINDOW_OPEN": "Prijave za trke su otvorene",
     "RACE_APPLICATION_CLOSING_SOON": "Prijave za trke se uskoro zatvaraju",
     "RACE_APPLICATION_RULE_CHANGE": "Izmena rokova za prijavu na trke",
-    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Tim je uklonjen sa trke",
+    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Plan trke je završen",
     "STAGE_PLAN_MISSING_REMINDER": "Podsetnik: nedostaje plan etape"
   },
@@ -961,25 +961,25 @@
       "closingSoonOne": "Jedan rok za prijavu na trku ističe za 3 dana{{races}}. Proverite stranicu trke, dostupnost ekipe i spremnost opreme i pošaljite prijavu pre roka.",
       "closingSoonMany": "{{count}} rokova za prijavu na trke ističe za 3 dana{{races}}. Proverite trke, dostupnost ekipe i spremnost opreme i pošaljite prijave pre rokova.",
       "ruleChange": "Pravila rokova za prijavu su izmenjena. Trke krajem januara koriste rok od {{lateDays}} dana, dok se od februara prijave zatvaraju {{standardDays}} dana pre trke. Pregledajte planiranje da ne propustite buduće prijave.",
-      "teamRemoved": "{{team}} je automatski uklonjen sa trke {{race}} jer nije ispunjen obavezni uslov za komplet trkačkog dresa{{stagePart}}.{{stockPart}} Uklanjanje važi za tu etapu i sve preostale etape, pa tim i njegovi vozači više ne mogu ostvariti plasman ni bodove u ovoj trci.",
+      "teamRemoved": "{{team}} had a Race Jersey Kit shortage in {{race}} under the previous rule{{stagePart}}.{{stockPart}} This notification is historical. Under the current rule, a shortage does not remove the team; riders without kits race in normal team clothing and a proportional performance penalty applies.",
       "stagePart": " pre etape {{stage}}",
       "stockPart": " Potrebno: {{required}}; dostupno: {{available}}.",
-      "prestart": "{{team}} je uklonjen sa trke {{race}} pri obaveznoj proveri uslova pre starta jer nije imao dovoljno dostupnih kompleta trkačkih dresova.{{stockPart}} Ovo je propust u pripremi trke koji klub može da kontroliše, pa su primenjene uobičajene posledice za propušten start.",
+      "prestart": "{{team}} had a Race Jersey Kit shortage before {{race}} under the previous rule.{{stockPart}} This historical notification no longer describes current eligibility: the team now remains in the race and receives a proportional performance penalty.",
       "prestartStock": " Provera je pokazala: potrebno {{required}}, dostupno {{available}}{{missingPart}}.",
       "prestartMissing": ", nedostaje {{missing}}",
-      "extraRemoved": "Otvorite Opremu da pregledate zalihe i sprečite isti problem na budućim trkama.",
+      "extraRemoved": "Open Race Supplies to review usable Race Jersey Kits. Under the current rule, a shortage reduces performance but does not remove the team.",
       "extraOpenOne": "Otvorite stranicu trke, pregledajte uslove i prijavite se na vreme.",
       "extraOpenMany": "Otvorite Kalendar, pregledajte sve novo otvorene trke i prijavite se na vreme.",
       "extraClosing": "Otvorite Kalendar, uporedite trke i prijavite se pre zatvaranja rokova.",
       "extraRule": "Otvorite Kalendar, pregledajte trke od februara i na vreme prilagodite plan prijava.",
-      "extraPrestart": "Kazna je već primenjena. Otvorite trku za kontekst ili direktno otvorite Zalihe za trku da proverite dostupne dresove i izbegnete isti problem pri budućem startu.",
-      "removedRemaining": "Uklonjen do kraja trke",
+      "extraPrestart": "Open Race Supplies to review usable Race Jersey Kits. Current jersey shortages do not cause missed-start/no-show consequences; they apply the proportional performance penalty.",
+      "removedRemaining": "Legacy event — current rule keeps the team in the race",
       "closesInDays": "Zatvara se za {{days}} dana",
       "lateJanuaryRule": "Prijave se zatvaraju {{days}} dana pre starta",
       "februaryRule": "Prijave se zatvaraju {{days}} dana pre starta",
       "entryFeeRetained": "Zadržana (nije vraćena)",
-      "outcomeRemoved": "Uklonjen pre/na startu trke",
-      "problemJerseys": "Nema dovoljno dostupnih kompleta trkačkih dresova"
+      "outcomeRemoved": "Legacy event — current rule applies performance penalty",
+      "problemJerseys": "Race Jersey shortage — performance penalty"
     }
   }
 }

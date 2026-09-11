@@ -405,7 +405,7 @@
         "Forniture durevoli",
         "Gara Jersey Completo, Giacche Rain",
         "Gara Jersey Completa",
-        "Obbligatoria; 10 impieghi per unità",
+        "Recommended; 10 stage uses per unit",
         "Giacche a pioggia",
         "Elemento meteo opzionale; 25 impieghi per unità"
       ],
@@ -413,7 +413,7 @@
         "Le borracce si usano in quantità da 1 a 4 per ciclista nella configurazione della tappa. Sono consumabili monouso e aiutano idratazione e controllo della fatica. Restare sotto il minimo può aumentare il rischio di fatica.",
         "I gel energetici si usano in quantità da 0 a 4 per ciclista. Supportano la resistenza e l’efficacia dello sforzo finale. Oltre quattro gel per ciclista non ci sono benefici aggiuntivi.",
         "I pacchetti nutrizionali si usano in quantità da 0 a 2 per ciclista. Aiutano la stabilità della resistenza e il recupero dopo la tappa. Le tappe lunghe senza nutrizione possono aumentare la pressione della fatica.",
-        "Race Jersey Complete è obbligatorio in Stage Plans. I kit di jersey mancanti possono bloccare l'installazione del tappa.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Giacca pioggia sono opzionali, ma preziosi in tempo umido / freddo. Forniture durevoli indossate non sono più utilizzabili.",
         "Le gare di tappa consumano rapidamente le forniture perché le quantità sono utilizzate per ciclista per tappa."
       ],

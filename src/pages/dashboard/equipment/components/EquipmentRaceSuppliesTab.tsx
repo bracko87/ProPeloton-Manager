@@ -7,7 +7,7 @@
  *
  * Updated for durable reusable supplies:
  * - Bidons / Water Bottles, Energy Gels, Nutrition Packs = consumables.
- * - Race Jersey Complete = mandatory durable kit, 10 stage uses per unit.
+ * - Race Jersey Complete = recommended durable kit; shortages apply a proportional performance penalty, 10 stage uses per unit.
  * - Rain Jackets = optional durable weather item, 25 stage uses per unit.
  *
  * Backend note:

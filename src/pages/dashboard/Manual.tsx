@@ -343,14 +343,14 @@ const manualSections: ManualSection[] = [
     facts: [
       { label: 'Consumables', value: 'Bidons / Water Bottles, Energy Gels, Nutrition Packs' },
       { label: 'Durable supplies', value: 'Race Jersey Complete, Rain Jackets' },
-      { label: 'Race Jersey Complete', value: 'Mandatory; 10 stage uses per unit' },
+      { label: 'Race Jersey Complete', value: 'Recommended; 10 stage uses per unit' },
       { label: 'Rain Jackets', value: 'Optional weather item; 25 stage uses per unit' },
     ],
     details: [
       'Bidons use 1–4 per rider in stage setup. They are one-use consumables and support hydration and fatigue control. Below minimum can increase fatigue risk.',
       'Energy Gels use 0–4 per rider. They support stamina and final effort efficiency. There is no extra benefit after four gels per rider.',
       'Nutrition Packs use 0–2 per rider. They support stamina stability and post-stage recovery. Long stages without nutrition can increase fatigue pressure.',
-      'Race Jersey Complete is mandatory in Stage Plans. Missing jersey kits can block stage setup.',
+      'Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty (up to -30% positive preparation bonuses, +8% energy use and +15% post-stage fatigue at a full shortage).',
       'Rain Jackets are optional but valuable in wet/cold weather. Worn-out durable supplies are no longer usable.',
       'Stage races consume supplies quickly because quantities are used per rider per stage.',
     ],
@@ -1647,14 +1647,14 @@ const manualSections: ManualSection[] = [
       { "label": "Bidons / Water Bottles", "value": "1–4 per rider; one-use consumable" },
       { "label": "Energy Gels", "value": "0–4 per rider; one-use consumable" },
       { "label": "Nutrition Packs", "value": "0–2 per rider; one-use consumable" },
-      { "label": "Race Jersey Complete", "value": "Mandatory durable item; 10 stage uses per unit" },
+      { "label": "Race Jersey Complete", "value": "Recommended durable item; 10 stage uses per unit" },
       { "label": "Rain Jackets", "value": "Optional weather item; 25 stage uses per unit" }
     ],
     "details": [
       "Bidons support hydration and fatigue control. A stage plan below the required hydration minimum can increase fatigue pressure.",
       "Energy Gels support stamina and final-effort efficiency. More than the useful cap does not create extra benefit.",
       "Nutrition Packs support stamina stability and recovery, especially on long stages and stage races.",
-      "Race Jersey Complete is mandatory. A team without enough usable jersey stage-uses can be blocked from having a complete stage setup.",
+      "Race Jersey Complete is strongly recommended. A shortage does not block a stage or remove the team from the race; riders without a kit compete in normal team clothing and the team receives the proportional jersey-shortage performance penalty.",
       "Rain Jackets are not mandatory on every stage but become valuable in cold/wet weather. The game should treat worn-out durable supply units as unusable.",
       "Stage races multiply consumption because supplies are calculated per rider per stage. A stock that looks large for a one-day race may be too small for a seven-stage race."
     ],
@@ -2784,7 +2784,7 @@ function getExpandedDetailExplanation(section: ManualSection, detail: string): s
   }
 
   if (d.includes('jersey') || d.includes('rain jackets') || d.includes('rain jacket')) {
-    return 'Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Mandatory jersey shortages can block readiness; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.'
+    return 'Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Jersey shortages reduce race performance instead of blocking participation; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.'
   }
 
   if (d.includes('sponsor') || d.includes('objectives')) {

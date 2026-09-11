@@ -412,9 +412,9 @@
         "reviewRecommendation": "Examinez le programme de courses actuel, le dossier de préparation, la liste de départ et l’état des plans d’étape."
       },
       "raceJerseysRemoval": {
-        "title": "Équipe retirée de {{raceName}}",
-        "message": "{{teamName}} ne disposait pas d’assez de kits obligatoires de maillot de course pour l’étape {{stage}}. Requis : {{required}} ; disponibles : {{available}}. L’équipe a été retirée de l’étape {{stage}} et de toutes les étapes restantes de {{raceName}}. Les coureurs ne peuvent plus obtenir de classement ni marquer de points dans cette course.",
-        "genericMessage": "L’équipe a été retirée de {{raceName}} faute d’un nombre suffisant de kits obligatoires de maillot de course."
+        "title": "Legacy jersey-shortage event — {{raceName}}",
+        "message": "{{teamName}} had a Race Jersey Kit shortage for Stage {{stage}} under the previous rule. This historical notification is kept for the record. Under the current rule, the team remains in {{raceName}} and receives a proportional performance penalty instead of removal.",
+        "genericMessage": "This is a historical jersey-shortage notification from the previous rule. Current jersey shortages do not remove a team from {{raceName}}; they apply a proportional performance penalty."
       },
       "startlistMissed": {
         "title": "Échéance de la liste de départ manquée : {{raceName}}",
@@ -796,7 +796,7 @@
   },
   "semanticTypeTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Le plan de course nécessite votre attention",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Des maillots de course obligatoires manquent",
+    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
     "RIDER_UNHAPPY": "Un coureur est mécontent",
     "RIDER_CONTRACT_EXPIRING": "Le contrat d’un coureur arrive bientôt à expiration",
     "RACE_WEATHER_CANCELLED": "Course annulée en raison de la météo",
@@ -871,7 +871,7 @@
     "RACE_APPLICATION_WINDOW_OPEN": "Inscriptions aux courses ouvertes",
     "RACE_APPLICATION_CLOSING_SOON": "Les inscriptions aux courses ferment bientôt",
     "RACE_APPLICATION_RULE_CHANGE": "Modification des échéances d’inscription",
-    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Équipe retirée de la course",
+    "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Plan de course finalisé",
     "STAGE_PLAN_MISSING_REMINDER": "Rappel : plan d’étape manquant"
   },
@@ -958,25 +958,25 @@
       "closingSoonOne": "Une fenêtre d’inscription ferme dans 3 jours{{races}}. Vérifiez la course, la disponibilité de l’équipe et l’équipement et inscrivez-vous avant l’échéance.",
       "closingSoonMany": "{{count}} fenêtres d’inscription ferment dans 3 jours{{races}}. Vérifiez les courses, la disponibilité de l’équipe et l’équipement et inscrivez-vous avant les échéances.",
       "ruleChange": "Les règles d’échéance des inscriptions ont été mises à jour. Les courses de fin janvier utilisent une fenêtre de {{lateDays}} jours ; à partir de février, les inscriptions ferment {{standardDays}} jours avant la course. Vérifiez votre planification pour ne manquer aucune inscription.",
-      "teamRemoved": "{{team}} a été automatiquement retirée de {{race}} car l’exigence obligatoire de maillots de course{{stagePart}} n’était pas satisfaite.{{stockPart}} Le retrait s’applique à l’étape concernée et à toutes les suivantes ; l’équipe et ses coureurs ne peuvent plus obtenir de classement ni marquer de points dans cette course.",
+      "teamRemoved": "{{team}} had a Race Jersey Kit shortage in {{race}} under the previous rule{{stagePart}}.{{stockPart}} This notification is historical. Under the current rule, a shortage does not remove the team; riders without kits race in normal team clothing and a proportional performance penalty applies.",
       "stagePart": " avant l’étape {{stage}}",
       "stockPart": " Requis : {{required}} ; disponibles : {{available}}.",
-      "prestart": "{{team}} a été retirée de {{race}} lors du contrôle obligatoire avant le départ, faute d’un nombre suffisant de kits de maillot admissibles.{{stockPart}} Il s’agit d’un défaut de préparation contrôlable par le club ; les conséquences habituelles d’un départ manqué ont donc été appliquées.",
+      "prestart": "{{team}} had a Race Jersey Kit shortage before {{race}} under the previous rule.{{stockPart}} This historical notification no longer describes current eligibility: the team now remains in the race and receives a proportional performance penalty.",
       "prestartStock": " Le contrôle a relevé : {{required}} requis, {{available}} admissibles{{missingPart}}.",
       "prestartMissing": ", {{missing}} manquants",
-      "extraRemoved": "Ouvrez Équipement pour vérifier l’inventaire et éviter le même problème lors des prochaines courses.",
+      "extraRemoved": "Open Race Supplies to review usable Race Jersey Kits. Under the current rule, a shortage reduces performance but does not remove the team.",
       "extraOpenOne": "Ouvrez la page de la course, vérifiez les conditions et inscrivez-vous suffisamment tôt.",
       "extraOpenMany": "Ouvrez le Calendrier, vérifiez toutes les courses nouvellement ouvertes et inscrivez-vous suffisamment tôt.",
       "extraClosing": "Ouvrez le Calendrier, comparez les courses et inscrivez-vous avant la fermeture des fenêtres.",
       "extraRule": "Ouvrez le Calendrier, vérifiez les courses à partir de février et adaptez votre plan d’inscription suffisamment tôt.",
-      "extraPrestart": "La pénalité a déjà été appliquée. Ouvrez la course pour le contexte ou allez directement aux Fournitures de course afin de vérifier les maillots admissibles et d’éviter le même problème à l’avenir.",
-      "removedRemaining": "Retirée pour le reste de la course",
+      "extraPrestart": "Open Race Supplies to review usable Race Jersey Kits. Current jersey shortages do not cause missed-start/no-show consequences; they apply the proportional performance penalty.",
+      "removedRemaining": "Legacy event — current rule keeps the team in the race",
       "closesInDays": "Ferme dans {{days}} jours",
       "lateJanuaryRule": "Les inscriptions ferment {{days}} jours avant le départ",
       "februaryRule": "Les inscriptions ferment {{days}} jours avant le départ",
       "entryFeeRetained": "Conservée (non remboursée)",
-      "outcomeRemoved": "Retirée avant/au départ",
-      "problemJerseys": "Nombre insuffisant de kits de maillot admissibles"
+      "outcomeRemoved": "Legacy event — current rule applies performance penalty",
+      "problemJerseys": "Race Jersey shortage — performance penalty"
     }
   }
 }

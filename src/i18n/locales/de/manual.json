@@ -90,7 +90,7 @@
       "quote": "Ein Zitat ist die Spiel-Vorschau der realen Folge vor Bestätigung. Immer überprüfen Gesamtkosten/refund, Dauer, Förderfähigkeit und Warnungen. Der angegebene Wert ist zuverlässiger als ein altes manuelles Beispiel, weil Backend-Balance/configuration kann sich im Laufe der Zeit ändern.",
       "condition": "Zustand ist ein Dauerhaltbarkeitssignal. Niedrigere Bedingung erhöht die Notwendigkeit für Wartung und kann reduzieren, wie sicher es ist, auf das Produkt zu verlassen/asset für wichtige Pläne. Warten Sie nicht, bis jedes Schlüsselstück gleichzeitig getragen wird; drehen Sie Reparaturen, so dass der Verein genug nutzbare Tiefe hält.",
       "nutrition": "Die Verbrauchsgüter werden durch Fahrer und Etappen multipliziert. Der Manager sollte die erforderliche Bestandsaufnahme mit der tatsächlichen Anzahl der ausgewählten Fahrer und der gesamten Etappenzahl berechnen und dann nach Möglichkeit eine kleine Reserve hinterlassen. Eine Einstagsbestandschätzung reicht für ein mehrstufiges Rennen nicht aus.",
-      "durableSupplies": "Langlebige Rennbedarfe werden anders als Einmalverbraucher verfolgt. Ihre verbleibende Einsatzkapazität ist wichtig. Obligatorische Jersey-Verknappungen können die Bereitschaft blockieren; Regenjackenknappheit reduziert vor allem die Wetterflexibilität. Ersetzen Sie abgenutzte Einheiten vor einem wichtigen Rennblock.",
+      "durableSupplies": "Durable race supplies are tracked differently from one-use consumables. Their remaining stage-use capacity matters. Jersey shortages reduce race performance instead of blocking participation; rain-jacket shortages mainly reduce weather flexibility. Replace worn-out units before an important race block.",
       "sponsor": "Die Sponsoreninformationen sollten vor der Unterzeichnung oder dem Zielrennen gelesen werden. Garantiertes Geld ist nur ein Teil des Deals. Ziele, Bonuspools, technische Rabatte, Namensrechte und Fristen können ändern, was der Verein während der Saison tun sollte. Ein guter Sponsor Deal passt zum Teamkalender und der Teamstärke.",
       "tax": "Steuer ist kein optionaler Hintergrundtext. Sie ist Teil des Finanzsystems und kann den realen Wert des Einkommens ändern. Wenn die Einnahmen von Sponsoren, Preisen oder Boni steigen, sollte der Manager Steuerermäßigung oder monatliche Anpassung Zeilen erwarten und sollte die Steuer Registerkarte verwenden, um die endgültige Bargeldposition zu verstehen.",
       "deadline": "Windows und Fristen sind streng, weil die Rennmaschine und Saisonsysteme stabile Daten benötigen, bevor Simulation. Wenn eine Frist vergeht, kann der Benutzer die Chance verlieren, einen Plan zu bearbeiten, für ein Rennen zu beantragen, einen Fahrer zu bewegen oder einen Dienstplan einzureichen.",
@@ -551,7 +551,7 @@
         "Bidons verwenden 1–4 pro Fahrer im Bühnenaufbau. Sie sind Verbrauchsmaterialien für den einmaligen Gebrauch und unterstützen Hydratation und Ermüdungskontrolle. Unterhalb des Minimums kann das Ermüdungsrisiko erhöhen.",
         "Energie Gele verwenden 0–4 pro Fahrer. Sie unterstützen Ausdauer und Endaufwand Effizienz. Es gibt keinen zusätzlichen Vorteil nach vier Gele pro Fahrer.",
         "Die Nutrition Packs verwenden 02 pro Fahrer. Sie unterstützen die Ausdauerstabilität und die Erholung nach der Etappe. Lange Etappen ohne Ernährung können den Müdigkeitsdruck erhöhen.",
-        "Race Jersey Complete ist in den Stage Plans verpflichtend. Fehlende Trikot-Sets können das Etappen-Setup blockieren.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Regenjacken sind optional aber wertvoll in nass/cold Wetter. Ausgerollte langlebige Vorräte sind nicht mehr nutzbar.",
         "Die Etappenrennen verbrauchen schnell Vorräte, weil die Menge pro Fahrer pro Etappe verwendet wird."
       ],
@@ -566,7 +566,7 @@
         },
         {
           "label": "Rennen Jersey abgeschlossen",
-          "value": "Zwangsläufig; 10 Etappenverwendungen pro Einheit"
+          "value": "Recommended; 10 stage uses per unit"
         },
         {
           "label": "Regenjacken",
@@ -1983,7 +1983,7 @@
         "Ein Etappenplan unter dem erforderlichen Hydratationsminimum kann den Müdigkeitspannung erhöhen.",
         "Energy Gels unterstützen Ausdauer und Endeffekteffizienz. Mehr als die nützliche Kappe schafft keinen zusätzlichen Nutzen.",
         "Nutrition Packs unterstützen Ausdauerstabilität und Erholung, vor allem auf langen Etappen und Etappenrennen.",
-        "Race Jersey Complete ist Pflicht. Ein Team ohne genügend nutzbare Trikot-Stage-Uses kann von einem kompletten Bühnenaufbau blockiert werden.",
+        "Race Jersey Complete is strongly recommended. A shortage does not block a stage or remove the team from the race; riders without a kit compete in normal team clothing and the team receives the proportional jersey-shortage performance penalty.",
         "Regenjacken sind nicht auf jeder Etappe obligatorisch, aber werden wertvoll in der Kälte/wet Wetter. Das Spiel sollte abgenutzte langlebige Versorgungseinheiten als unbrauchbar behandeln.",
         "Die Verbrauchszahl bei den Etappenrennen wird vervielfacht, weil die Versorgung pro Fahrer pro Etappen berechnet wird."
       ],

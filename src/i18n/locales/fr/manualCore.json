@@ -405,7 +405,7 @@
         "Fournitures durables",
         "Course Jersey Complete, Vestes Rain",
         "Course Jersey Complet",
-        "Obligatoire; 10 utilisations par unité",
+        "Recommended; 10 stage uses per unit",
         "Vestes de pluie",
         "Article météorologique en option; 25 utilisations par unité"
       ],
@@ -413,7 +413,7 @@
         "Les bidons sont utilisés à raison de 1 à 4 par coureur dans la configuration de l’étape. Ils sont à usage unique et améliorent l’hydratation ainsi que la gestion de la fatigue. Passer sous le minimum peut augmenter le risque de fatigue.",
         "Les gels énergétiques sont utilisés à raison de 0 à 4 par coureur. Ils soutiennent l’endurance et l’efficacité de l’effort final. Au-delà de quatre gels par coureur, il n’y a aucun bénéfice supplémentaire.",
         "Les packs nutritionnels sont utilisés à raison de 0 à 2 par coureur. Ils stabilisent l’endurance et favorisent la récupération après l’étape. Les longues étapes sans nutrition peuvent augmenter la fatigue.",
-        "Course Jersey Complete est obligatoire en Stage Plans. Les kits de jersey manquants peuvent bloquer la configuration de l'étape.",
+        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
         "Les vestes de pluie sont optionnelles mais précieuses par temps humide/froid. Les fournitures durables ne sont plus utilisables.",
         "Les courses de étape consomment rapidement des fournitures parce que les quantités sont utilisées par coureur par étape."
       ],
