@@ -1,0 +1,310 @@
+name: Fix race jersey shortage notification localization 2026-09-11
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chatgpt-fix-race-jersey-shortage-localization-20260911.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-build-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply complete localization for race jersey shortage notification
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          translations = {
+            'en': {
+              'title': 'Race jersey shortage — performance penalty',
+              'feedMessage': '{{entity}}: your team has fewer usable Race Jersey Kits than selected riders. The team remains eligible, but the shortage applies a proportional performance penalty.',
+              'raceFallback': 'the upcoming race',
+              'stageWithNumber': 'Stage {{stage}}',
+              'upcomingStage': 'the upcoming stage',
+              'introDetailed': 'Race jersey shortage for {{raceName}} — {{stageLabel}}. Available kits: {{available}}; required kits: {{required}}; missing kits: {{missing}}. The team remains eligible and receives a proportional performance penalty.',
+              'introGeneric': 'Your team has a Race Jersey Kit shortage for the upcoming stage. The team remains eligible; the shortage applies a proportional performance penalty.',
+              'shortagePenaltyActive': 'Shortage — penalty active',
+              'raceEffectLabel': 'Race effect',
+              'raceEffect': 'Team remains eligible; performance penalty scales with missing kits',
+              'extraWithMissing': 'Usable Race Jersey Kits still needed: {{missing}}. Add them to reduce or remove the performance penalty. A full shortage means -30% positive preparation bonuses, +8% in-stage energy use and +15% post-stage fatigue.',
+              'extraGeneric': 'Open Race Supplies to review usable Race Jersey Kit stock. A shortage does not block participation.'
+            },
+            'sr-Latn': {
+              'title': 'Nedostatak trkačkih dresova — smanjenje učinka',
+              'feedMessage': '{{entity}}: vaš tim nema dovoljno upotrebljivih kompleta trkačkih dresova za izabrane vozače. Tim i dalje može da nastupi, ali nedostatak donosi srazmerno smanjenje učinka.',
+              'raceFallback': 'predstojeća trka',
+              'stageWithNumber': 'Etapa {{stage}}',
+              'upcomingStage': 'predstojeća etapa',
+              'introDetailed': 'Nedostaju kompleti trkačkih dresova za {{raceName}} — {{stageLabel}}. Dostupno: {{available}}; potrebno: {{required}}; nedostaje: {{missing}}. Tim i dalje može da nastupi, ali dobija srazmerno smanjenje učinka.',
+              'introGeneric': 'Vašem timu nedostaju upotrebljivi kompleti trkačkih dresova za predstojeću etapu. Tim i dalje može da nastupi, ali nedostatak donosi srazmerno smanjenje učinka.',
+              'shortagePenaltyActive': 'Nedostatak — smanjenje učinka aktivno',
+              'raceEffectLabel': 'Uticaj na trku',
+              'raceEffect': 'Tim i dalje može da nastupi; smanjenje učinka raste sa brojem nedostajućih kompleta',
+              'extraWithMissing': 'Još potrebnih upotrebljivih kompleta trkačkih dresova: {{missing}}. Dodajte ih da biste smanjili ili uklonili kaznu. Potpuni nedostatak znači -30% pozitivnih bonusa pripreme, +8% potrošnje energije tokom etape i +15% umora posle etape.',
+              'extraGeneric': 'Otvorite Zalihe za trku i proverite upotrebljive komplete trkačkih dresova. Nedostatak ne sprečava nastup.'
+            },
+            'hr': {
+              'title': 'Nedostatak trkaćih dresova — smanjenje učinka',
+              'feedMessage': '{{entity}}: vaša momčad nema dovoljno upotrebljivih kompleta trkaćih dresova za odabrane vozače. Momčad i dalje može nastupiti, ali nedostatak uzrokuje razmjerno smanjenje učinka.',
+              'raceFallback': 'predstojeća utrka',
+              'stageWithNumber': 'Etapa {{stage}}',
+              'upcomingStage': 'predstojeća etapa',
+              'introDetailed': 'Nedostaju kompleti trkaćih dresova za {{raceName}} — {{stageLabel}}. Dostupno: {{available}}; potrebno: {{required}}; nedostaje: {{missing}}. Momčad i dalje može nastupiti, ali dobiva razmjerno smanjenje učinka.',
+              'introGeneric': 'Vašoj momčadi nedostaju upotrebljivi kompleti trkaćih dresova za predstojeću etapu. Momčad i dalje može nastupiti, ali nedostatak uzrokuje razmjerno smanjenje učinka.',
+              'shortagePenaltyActive': 'Nedostatak — smanjenje učinka aktivno',
+              'raceEffectLabel': 'Učinak na utrku',
+              'raceEffect': 'Momčad i dalje može nastupiti; smanjenje učinka raste s brojem nedostajućih kompleta',
+              'extraWithMissing': 'Još potrebnih upotrebljivih kompleta trkaćih dresova: {{missing}}. Dodajte ih kako biste smanjili ili uklonili kaznu. Potpuni nedostatak znači -30% pozitivnih bonusa pripreme, +8% potrošnje energije tijekom etape i +15% umora nakon etape.',
+              'extraGeneric': 'Otvorite Zalihe za utrku i provjerite upotrebljive komplete trkaćih dresova. Nedostatak ne sprječava nastup.'
+            },
+            'de': {
+              'title': 'Renntrikot-Mangel — Leistungsmalus',
+              'feedMessage': '{{entity}}: Ihr Team hat weniger einsatzbereite Renntrikot-Sets als ausgewählte Fahrer. Das Team bleibt startberechtigt, erhält aber einen proportionalen Leistungsmalus.',
+              'raceFallback': 'das kommende Rennen',
+              'stageWithNumber': 'Etappe {{stage}}',
+              'upcomingStage': 'die kommende Etappe',
+              'introDetailed': 'Renntrikot-Mangel für {{raceName}} — {{stageLabel}}. Verfügbar: {{available}}; benötigt: {{required}}; fehlend: {{missing}}. Das Team bleibt startberechtigt und erhält einen proportionalen Leistungsmalus.',
+              'introGeneric': 'Ihr Team hat für die kommende Etappe zu wenige einsatzbereite Renntrikot-Sets. Das Team bleibt startberechtigt; der Mangel führt zu einem proportionalen Leistungsmalus.',
+              'shortagePenaltyActive': 'Mangel — Leistungsmalus aktiv',
+              'raceEffectLabel': 'Auswirkung im Rennen',
+              'raceEffect': 'Das Team bleibt startberechtigt; der Leistungsmalus steigt mit der Zahl fehlender Trikot-Sets',
+              'extraWithMissing': 'Noch benötigte einsatzbereite Renntrikot-Sets: {{missing}}. Ergänzen Sie den Bestand, um den Leistungsmalus zu verringern oder zu beseitigen. Ein vollständiger Mangel bedeutet -30% auf positive Vorbereitungsboni, +8% Energieverbrauch während der Etappe und +15% Ermüdung nach der Etappe.',
+              'extraGeneric': 'Öffnen Sie den Rennbedarf und prüfen Sie den Bestand einsatzbereiter Renntrikot-Sets. Ein Mangel verhindert die Teilnahme nicht.'
+            },
+            'es': {
+              'title': 'Faltan maillots de carrera — penalización de rendimiento',
+              'feedMessage': '{{entity}}: tu equipo tiene menos kits de maillot utilizables que ciclistas seleccionados. El equipo sigue siendo elegible, pero la falta aplica una penalización proporcional de rendimiento.',
+              'raceFallback': 'la próxima carrera',
+              'stageWithNumber': 'Etapa {{stage}}',
+              'upcomingStage': 'la próxima etapa',
+              'introDetailed': 'Faltan kits de maillot para {{raceName}} — {{stageLabel}}. Disponibles: {{available}}; necesarios: {{required}}; faltan: {{missing}}. El equipo sigue siendo elegible y recibe una penalización proporcional de rendimiento.',
+              'introGeneric': 'A tu equipo le faltan kits de maillot utilizables para la próxima etapa. El equipo sigue siendo elegible; la falta aplica una penalización proporcional de rendimiento.',
+              'shortagePenaltyActive': 'Faltan kits — penalización activa',
+              'raceEffectLabel': 'Efecto en la carrera',
+              'raceEffect': 'El equipo sigue siendo elegible; la penalización aumenta según los kits que falten',
+              'extraWithMissing': 'Kits de maillot utilizables que aún faltan: {{missing}}. Añádelos para reducir o eliminar la penalización. Una falta total implica -30% a los bonos positivos de preparación, +8% de consumo de energía durante la etapa y +15% de fatiga después de la etapa.',
+              'extraGeneric': 'Abre Suministros de carrera y revisa los kits de maillot utilizables. La falta no impide la participación.'
+            },
+            'it': {
+              'title': 'Carenza di maglie da gara — penalità di rendimento',
+              'feedMessage': '{{entity}}: la tua squadra ha meno kit di maglie da gara utilizzabili rispetto ai corridori selezionati. La squadra resta idonea, ma la carenza applica una penalità proporzionale al rendimento.',
+              'raceFallback': 'la prossima gara',
+              'stageWithNumber': 'Tappa {{stage}}',
+              'upcomingStage': 'la prossima tappa',
+              'introDetailed': 'Carenza di kit di maglie per {{raceName}} — {{stageLabel}}. Disponibili: {{available}}; necessari: {{required}}; mancanti: {{missing}}. La squadra resta idonea e riceve una penalità proporzionale al rendimento.',
+              'introGeneric': 'Alla tua squadra mancano kit di maglie da gara utilizzabili per la prossima tappa. La squadra resta idonea; la carenza applica una penalità proporzionale al rendimento.',
+              'shortagePenaltyActive': 'Carenza — penalità attiva',
+              'raceEffectLabel': 'Effetto in gara',
+              'raceEffect': 'La squadra resta idonea; la penalità aumenta in base ai kit mancanti',
+              'extraWithMissing': 'Kit di maglie da gara utilizzabili ancora necessari: {{missing}}. Aggiungili per ridurre o eliminare la penalità. Una carenza totale comporta -30% ai bonus positivi di preparazione, +8% di consumo energetico durante la tappa e +15% di fatica dopo la tappa.',
+              'extraGeneric': 'Apri le Scorte gara e controlla i kit di maglie da gara utilizzabili. La carenza non impedisce la partecipazione.'
+            },
+            'fr': {
+              'title': 'Manque de maillots de course — pénalité de performance',
+              'feedMessage': '{{entity}} : votre équipe dispose de moins de kits de maillot utilisables que de coureurs sélectionnés. L’équipe reste éligible, mais le manque entraîne une pénalité de performance proportionnelle.',
+              'raceFallback': 'la prochaine course',
+              'stageWithNumber': 'Étape {{stage}}',
+              'upcomingStage': 'la prochaine étape',
+              'introDetailed': 'Manque de kits de maillot pour {{raceName}} — {{stageLabel}}. Disponibles : {{available}} ; nécessaires : {{required}} ; manquants : {{missing}}. L’équipe reste éligible et reçoit une pénalité de performance proportionnelle.',
+              'introGeneric': 'Votre équipe manque de kits de maillot de course utilisables pour la prochaine étape. L’équipe reste éligible ; le manque entraîne une pénalité de performance proportionnelle.',
+              'shortagePenaltyActive': 'Manque — pénalité active',
+              'raceEffectLabel': 'Effet en course',
+              'raceEffect': 'L’équipe reste éligible ; la pénalité augmente selon le nombre de kits manquants',
+              'extraWithMissing': 'Kits de maillot de course utilisables encore nécessaires : {{missing}}. Ajoutez-les pour réduire ou supprimer la pénalité. Un manque total entraîne -30% sur les bonus positifs de préparation, +8% de consommation d’énergie pendant l’étape et +15% de fatigue après l’étape.',
+              'extraGeneric': 'Ouvrez les Fournitures de course et vérifiez les kits de maillot utilisables. Un manque n’empêche pas la participation.'
+            },
+            'ru': {
+              'title': 'Нехватка гоночных маек — снижение эффективности',
+              'feedMessage': '{{entity}}: у вашей команды меньше пригодных комплектов гоночной формы, чем выбранных гонщиков. Команда сохраняет право на старт, но нехватка пропорционально снижает эффективность.',
+              'raceFallback': 'предстоящая гонка',
+              'stageWithNumber': 'Этап {{stage}}',
+              'upcomingStage': 'предстоящий этап',
+              'introDetailed': 'Нехватка комплектов гоночной формы для {{raceName}} — {{stageLabel}}. Доступно: {{available}}; требуется: {{required}}; не хватает: {{missing}}. Команда сохраняет право на старт, но получает пропорциональное снижение эффективности.',
+              'introGeneric': 'Вашей команде не хватает пригодных комплектов гоночной формы для предстоящего этапа. Команда сохраняет право на старт, но нехватка пропорционально снижает эффективность.',
+              'shortagePenaltyActive': 'Нехватка — снижение эффективности активно',
+              'raceEffectLabel': 'Влияние на гонку',
+              'raceEffect': 'Команда сохраняет право на старт; снижение эффективности растёт с числом недостающих комплектов',
+              'extraWithMissing': 'Ещё требуется пригодных комплектов гоночной формы: {{missing}}. Добавьте их, чтобы уменьшить или убрать штраф. Полная нехватка означает -30% к положительным бонусам подготовки, +8% расхода энергии на этапе и +15% усталости после этапа.',
+              'extraGeneric': 'Откройте раздел гоночных запасов и проверьте пригодные комплекты формы. Нехватка не лишает команду права на участие.'
+            },
+          }
+
+          for locale, tx in translations.items():
+            path = Path(f'src/i18n/locales/{locale}/notifications.json')
+            data = json.loads(path.read_text(encoding='utf-8'))
+            data['raceJerseyShortage'] = tx
+            data.setdefault('semanticTypeTitles', {})['RACE_JERSEYS_MANDATORY_WARNING'] = tx['title']
+            data.setdefault('semanticTypeMessages', {})['RACE_JERSEYS_MANDATORY_WARNING'] = tx['feedMessage']
+            race = data.get('richReports', {}).get('race', {})
+            if isinstance(race, dict) and 'problemJerseys' in race:
+              race['problemJerseys'] = tx['title']
+            path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          path = Path('src/features/notifications/notificationTemplatesBase.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          if '  translateNotificationKey,\n' not in text:
+            needle = '  localizeNotificationValue,\n'
+            if needle not in text:
+              raise SystemExit('Could not locate localization import insertion point')
+            text = text.replace(needle, needle + '  translateNotificationKey,\n', 1)
+
+          pattern = re.compile(
+            r'(  RACE_JERSEYS_MANDATORY_WARNING: \{\n)(.*?)(?=\n  [A-Z][A-Z0-9_]+: \{|\n\};)',
+            re.S,
+          )
+          matches = list(pattern.finditer(text))
+          if not matches:
+            raise SystemExit('RACE_JERSEYS_MANDATORY_WARNING template block not found')
+
+          def patch_body(body: str) -> str:
+            replacements = [
+              (
+                "pickFirstString(payload, ['race_name']) || 'the upcoming race'",
+                "pickFirstString(payload, ['race_name']) ||\n        translateNotificationKey('raceJerseyShortage.raceFallback')",
+              ),
+              (
+                "const stageLabel =\n        stageNumber !== null ? `Stage ${stageNumber}` : 'the upcoming stage'",
+                "const stageLabel =\n        stageNumber !== null\n          ? translateNotificationKey('raceJerseyShortage.stageWithNumber', { stage: stageNumber })\n          : translateNotificationKey('raceJerseyShortage.upcomingStage')",
+              ),
+              (
+                "return `Race jersey shortage for ${raceName} — ${stageLabel}. You have ${available} usable Race Jersey Kit${available === 1 ? '' : 's'} for ${required} selected rider${required === 1 ? '' : 's'}, so ${missing} rider${missing === 1 ? '' : 's'} will race without a kit. The team remains eligible and receives a proportional performance penalty.`",
+                "return translateNotificationKey('raceJerseyShortage.introDetailed', {\n          raceName,\n          stageLabel,\n          available,\n          required,\n          missing,\n        })",
+              ),
+              (
+                "return (\n        item.message ||\n        'Your team has a Race Jersey Kit shortage for the upcoming stage. The team still races; the shortage applies a proportional performance penalty.'\n      )",
+                "return translateNotificationKey('raceJerseyShortage.introGeneric')",
+              ),
+              (
+                "stageNumber !== null ? `Stage ${stageNumber}` : null",
+                "stageNumber !== null\n            ? translateNotificationKey('raceJerseyShortage.stageWithNumber', { stage: stageNumber })\n            : null",
+              ),
+              (
+                "missing !== null && missing > 0 ? 'Shortage — penalty active' : 'Ready'",
+                "missing !== null && missing > 0\n            ? translateNotificationKey('raceJerseyShortage.shortagePenaltyActive')\n            : translateNotificationKey('templateValues.ready')",
+              ),
+              (
+                "detailRow(\n          'Race effect',\n          'Team remains eligible; performance penalty scales with missing kits'\n        )",
+                "detailRow(\n          translateNotificationKey('raceJerseyShortage.raceEffectLabel'),\n          translateNotificationKey('raceJerseyShortage.raceEffect')\n        )",
+              ),
+              (
+                "return `You can reduce or remove the performance penalty by adding ${missing} usable Race Jersey Kit${missing === 1 ? '' : 's'}. A full shortage means -30% positive preparation bonuses, +8% in-stage energy use and +15% post-stage fatigue.`",
+                "return translateNotificationKey('raceJerseyShortage.extraWithMissing', { missing })",
+              ),
+              (
+                "return 'Open Race Supplies to review usable Race Jersey Kit stock. A shortage does not block participation.'",
+                "return translateNotificationKey('raceJerseyShortage.extraGeneric')",
+              ),
+            ]
+            patched = body
+            for old, new in replacements:
+              if old not in patched:
+                raise RuntimeError(f'Expected jersey template fragment not found: {old[:100]}')
+              patched = patched.replace(old, new, 1)
+            return patched
+
+          parts = []
+          cursor = 0
+          patched_count = 0
+          for match in matches:
+            parts.append(text[cursor:match.start()])
+            parts.append(match.group(1) + patch_body(match.group(2)))
+            cursor = match.end()
+            patched_count += 1
+          parts.append(text[cursor:])
+          text = ''.join(parts)
+          path.write_text(text, encoding='utf-8')
+          print(f'Patched {patched_count} race jersey shortage template block(s) and {len(translations)} locales.')
+          PY
+
+      - name: Audit localized notification coverage
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          locales = ['en','sr-Latn','de','hr','es','it','fr','ru']
+          required = {
+            'title','feedMessage','raceFallback','stageWithNumber','upcomingStage',
+            'introDetailed','introGeneric','shortagePenaltyActive','raceEffectLabel',
+            'raceEffect','extraWithMissing','extraGeneric'
+          }
+          en_title = None
+          for locale in locales:
+            p = Path(f'src/i18n/locales/{locale}/notifications.json')
+            data = json.loads(p.read_text(encoding='utf-8'))
+            block = data.get('raceJerseyShortage', {})
+            missing = required - set(block)
+            if missing:
+              raise SystemExit(f'{locale}: missing raceJerseyShortage keys: {sorted(missing)}')
+            title = data.get('semanticTypeTitles', {}).get('RACE_JERSEYS_MANDATORY_WARNING')
+            message = data.get('semanticTypeMessages', {}).get('RACE_JERSEYS_MANDATORY_WARNING')
+            if title != block['title'] or message != block['feedMessage']:
+              raise SystemExit(f'{locale}: semantic title/message is not wired to the dedicated translation')
+            if locale == 'en':
+              en_title = title
+            elif title == en_title:
+              raise SystemExit(f'{locale}: title still English: {title}')
+
+          source = Path('src/features/notifications/notificationTemplatesBase.tsx').read_text(encoding='utf-8')
+          for key in [
+            'raceJerseyShortage.raceFallback',
+            'raceJerseyShortage.stageWithNumber',
+            'raceJerseyShortage.introDetailed',
+            'raceJerseyShortage.introGeneric',
+            'raceJerseyShortage.shortagePenaltyActive',
+            'raceJerseyShortage.raceEffectLabel',
+            'raceJerseyShortage.raceEffect',
+            'raceJerseyShortage.extraWithMissing',
+            'raceJerseyShortage.extraGeneric',
+          ]:
+            if key not in source:
+              raise SystemExit(f'Missing runtime translation wiring: {key}')
+
+          hr = json.loads(Path('src/i18n/locales/hr/notifications.json').read_text(encoding='utf-8'))
+          print('Croatian title:', hr['raceJerseyShortage']['title'])
+          print('Croatian stage sample:', hr['raceJerseyShortage']['stageWithNumber'].replace('{{stage}}','2'))
+          print('Croatian status:', hr['raceJerseyShortage']['shortagePenaltyActive'])
+          print('Croatian race effect:', hr['raceJerseyShortage']['raceEffect'])
+          print('Race jersey shortage localization audit PASSED for 8 locales')
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Diff check
+        run: git diff --check
+
+      - name: Commit application changes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No application changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/features/notifications/notificationTemplatesBase.tsx src/i18n/locales/*/notifications.json
+          git commit -m 'Translate race jersey shortage notification across all languages'
+          git push origin HEAD:main
