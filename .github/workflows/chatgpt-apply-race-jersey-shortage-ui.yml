@@ -42,3 +42,5 @@ jobs:
           git commit -m 'Make race jersey shortages non-blocking in UI and help'
           git pull --rebase origin main
           git push origin main
+
+# Triggered after the cleanup script was added to main.
