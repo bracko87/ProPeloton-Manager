@@ -1,0 +1,65 @@
+name: ChatGPT Phase 3 full standings
+
+on:
+  push:
+    branches:
+      - chatgpt-phase3-full-standings-20260911
+
+permissions:
+  contents: write
+
+jobs:
+  patch-build-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt-phase3-full-standings-20260911
+          fetch-depth: 0
+      - name: Sync branch
+        run: git pull --rebase origin chatgpt-phase3-full-standings-20260911
+      - name: Apply Phase 3 UI patch
+        run: python .github/scripts/chatgpt_phase3_full_standings_patch.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Production build
+        run: npm run build
+      - name: Validate Phase 3 structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          UI=src/pages/dashboard/RaceDetailPage.tsx
+          MIG=supabase/migrations/20260911213500_full_race_standings_roster_continuity_v1.sql
+          grep -Fq "get_full_race_standings_v1" "$UI"
+          grep -Fq "fullRaceStandingRows.map" "$UI"
+          grep -Fq "Started {fullRaceFieldSummary.started}" "$UI"
+          grep -Fq "Last result:" "$UI"
+          grep -Fq "race_participant_riders_v1" "$MIG"
+          grep -Fq "left join current_general" "$MIG"
+          grep -Fq "race_team_stage_disqualifications" "$MIG"
+          grep -Fq "last_stage_results" "$MIG"
+          if grep -Fq "fullRaceStandingExtraRows" "$UI"; then
+            echo "Legacy selected-stage-only standings workaround still present" >&2
+            exit 1
+          fi
+          if grep -Fq "Austral Coast Tour" "$UI" || grep -Fq "HNS Hrvatska" "$UI"; then
+            echo "Race-specific UI logic detected" >&2
+            exit 1
+          fi
+      - name: Commit validated Phase 3 frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/chatgpt-phase3-inspect-20260911.yml
+          rm -f .github/workflows/chatgpt-phase3-full-standings-20260911.yml
+          rm -f .github/scripts/chatgpt_phase3_full_standings_patch.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Keep eliminated riders in full race standings"
+          git pull --rebase origin chatgpt-phase3-full-standings-20260911
+          git push origin HEAD:chatgpt-phase3-full-standings-20260911
