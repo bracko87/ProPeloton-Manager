@@ -31,73 +31,71 @@ jobs:
           engine_path = Path('src/universal-race-engine/runRaceEngine.ts')
           text = engine_path.read_text()
 
-          old_build = "phase11k-v5-4-selective-finish-fallback-2026-09-11"
-          new_build = "phase11l-v5-5-late-chase-eligibility-2026-09-11"
+          old_build = 'phase11k-v5-4-selective-finish-fallback-2026-09-11'
+          new_build = 'phase11l-v5-5-late-chase-eligibility-2026-09-11'
           if text.count(old_build) != 1:
               raise SystemExit(f'Expected one Phase 1 build marker, found {text.count(old_build)}')
           text = text.replace(old_build, new_build, 1)
 
-          phase3_old = """  const explicitPhase3ChasingTeamIds = Array.from(
-            new Set(
-              phase3Rows
-                .filter(({ row, phase }) =>
-                  !physicalEscapeTeamIds.has(row.teamId) &&
-                  phase.behaviour === 'chase',
-                )
-                .map(({ row }) => row.teamId),
-            ),
-          ).sort()
-          const phase3GcThreatTeamIds = getGcThreatChasingTeamIds(
+          phase3_explicit_pattern = re.compile(
+              r"(const explicitPhase3ChasingTeamIds = Array\.from\(\s*"
+              r"new Set\(\s*phase3Rows\s*\.filter\(\(\{ row, phase \}\) =>\s*"
+              r"!physicalEscapeTeamIds\.has\(row\.teamId\) &&\s*)"
+              r"(phase\.behaviour === 'chase',)",
+              re.S,
+          )
+          text, count = phase3_explicit_pattern.subn(
+              r"\1phase.resolvedSource === 'explicit_individual_command' &&\n          \2",
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit(f'Expected one Phase 3 explicit-chase candidate block, replaced {count}')
+
+          phase3_union_pattern = re.compile(
+              r"  const phase3GcThreatTeamIds = getGcThreatChasingTeamIds\(\s*"
+              r"input,\s*physicalEscapeRiderIds,\s*\)\.filter\("
+              r"\(teamId\) => !physicalEscapeTeamIds\.has\(teamId\)\)\s*"
+              r"  const physicalChasingTeamIds = Array\.from\(\s*"
+              r"new Set\(\[\.\.\.explicitPhase3ChasingTeamIds, \.\.\.phase3GcThreatTeamIds\]\),\s*"
+              r"\)\.sort\(\)",
+              re.S,
+          )
+          phase3_union_replacement = '''  const phase3GcThreatTeamIds = getGcThreatChasingTeamIds(
             input,
             physicalEscapeRiderIds,
           ).filter((teamId) => !physicalEscapeTeamIds.has(teamId))
-          const physicalChasingTeamIds = Array.from(
-            new Set([...explicitPhase3ChasingTeamIds, ...phase3GcThreatTeamIds]),
-          ).sort()
-          """
-          if phase3_old not in text:
-              raise SystemExit('Phase 3 chasing-team block did not match current source')
-          phase3_new = """  const explicitPhase3ChasingTeamIds = Array.from(
-            new Set(
-              phase3Rows
-                .filter(({ row, phase }) =>
-                  !physicalEscapeTeamIds.has(row.teamId) &&
-                  phase.resolvedSource === 'explicit_individual_command' &&
-                  phase.behaviour === 'chase',
-                )
-                .map(({ row }) => row.teamId),
-            ),
-          ).sort()
           const phase3AutomaticFinishInterestTeamIds =
-            getAutomaticLateFinishInterestTeamIds(
-              input,
-              riderSuitability,
-              roadCommandResolution,
-              physicalEscapeRiderIds,
-            ).filter((teamId) => !physicalEscapeTeamIds.has(teamId))
+            explicitPhase3ChasingTeamIds.length > 0
+              ? []
+              : getAutomaticLateFinishInterestTeamIds(
+                  input,
+                  riderSuitability,
+                  roadCommandResolution,
+                  physicalEscapeRiderIds,
+                ).filter((teamId) => !physicalEscapeTeamIds.has(teamId))
           const physicalChasingTeamIds = Array.from(
             new Set([
               ...explicitPhase3ChasingTeamIds,
               ...phase3AutomaticFinishInterestTeamIds,
+              ...phase3GcThreatTeamIds,
             ]),
-          ).sort()
-          """
-          text = text.replace(phase3_old, phase3_new, 1)
+          ).sort()'''
+          text, count = phase3_union_pattern.subn(
+              phase3_union_replacement,
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit(f'Expected one Phase 3 chase union block, replaced {count}')
 
-          helper_anchor = "export function resolveRoadPhase3Decisive(\n"
+          helper_anchor = 'export function resolveRoadPhase3Decisive(\n'
           if text.count(helper_anchor) != 1:
               raise SystemExit(f'Expected one Phase 3 resolver anchor, found {text.count(helper_anchor)}')
           helper = r'''/**
-           * Automatic late chase eligibility is intentionally team-selective.
-           *
-           * A saved role fallback such as helper_domestique -> chase_breakaway
-           * is an available worker instruction, not proof that every team has a
-           * sporting reason to drive the peloton. Automatic participation is
-           * therefore restricted to a small deterministic stage-result cohort,
-           * a small sprint-interest cohort on sprint-oriented stages, genuine GC
-           * threat teams, explicit Phase-4 finish objectives, and teams that
-           * deliberately assigned a breakaway_chaser role. Explicit chase
-           * commands are handled separately and always remain authoritative.
+           * Resolve the small set of teams with a genuine automatic reason to
+           * contribute to the late chase. Role fallbacks provide workers, but
+           * they do not by themselves make every team a chasing team.
            */
           function getAutomaticLateFinishInterestTeamIds(
             input: UniversalRaceEngineInput,
@@ -117,20 +115,22 @@ jobs:
             const eligibleByRiderId = new Map(
               eligibleRows.map((row) => [row.riderId, row] as const),
             )
-            const eligibleTeamIds = deduplicateSorted(
-              eligibleRows.map((row) => row.teamId),
-            )
+            const eligibleTeamIds = Array.from(
+              new Set(eligibleRows.map((row) => row.teamId)),
+            ).sort()
             if (eligibleTeamIds.length === 0) return []
 
-            const automaticInterestLimit = Math.min(
+            const stageResultLimit = Math.min(
               eligibleTeamIds.length,
               Math.max(2, Math.min(5, Math.round(Math.sqrt(eligibleTeamIds.length)))),
             )
+            const sprintInterestLimit = Math.min(3, stageResultLimit)
             const rankedSuitability = [...riderSuitability].sort(
               (left, right) =>
                 left.rank - right.rank || left.riderId.localeCompare(right.riderId),
             )
             const selectBestTeams = (
+              limit: number,
               accepts: (row: UniversalRoadRiderCommandResolution) => boolean,
             ): string[] => {
               const selected: string[] = []
@@ -140,18 +140,29 @@ jobs:
                 if (!row || !accepts(row) || seen.has(row.teamId)) continue
                 seen.add(row.teamId)
                 selected.push(row.teamId)
-                if (selected.length >= automaticInterestLimit) break
+                if (selected.length >= limit) break
               }
               return selected
             }
 
-            const stageResultTeamIds = selectBestTeams(() => true)
+            const stageResultTeamIds = selectBestTeams(
+              stageResultLimit,
+              (row) =>
+                row.stageRole === 'sprinter' ||
+                row.stageRole === 'team_leader_gc' ||
+                row.stageRole === 'protected_rider' ||
+                row.stageRole === 'climber' ||
+                row.stageRole === 'rouleur',
+            )
             const sprintOrientedStage =
               input.stage.terrainType === 'flat' ||
               input.stage.finishType === 'flat_finish' ||
               (input.stage.profileType ?? '').toLowerCase().includes('sprinter')
             const sprintInterestTeamIds = sprintOrientedStage
-              ? selectBestTeams((row) => row.stageRole === 'sprinter')
+              ? selectBestTeams(
+                  sprintInterestLimit,
+                  (row) => row.stageRole === 'sprinter',
+                )
               : []
             const gcThreatTeamIds = getGcThreatChasingTeamIds(
               input,
@@ -175,70 +186,72 @@ jobs:
               .filter((row) => row.stageRole === 'breakaway_chaser')
               .map((row) => row.teamId)
 
-            return deduplicateSorted([
-              ...stageResultTeamIds,
-              ...sprintInterestTeamIds,
-              ...gcThreatTeamIds,
-              ...explicitFinishObjectiveTeamIds,
-              ...declaredChaserTeamIds,
-            ])
+            return Array.from(
+              new Set([
+                ...stageResultTeamIds,
+                ...sprintInterestTeamIds,
+                ...gcThreatTeamIds,
+                ...explicitFinishObjectiveTeamIds,
+                ...declaredChaserTeamIds,
+              ]),
+            ).sort()
           }
 
           '''
           text = text.replace(helper_anchor, helper + helper_anchor, 1)
 
           phase4_pattern = re.compile(
-              r"  const teamsWithFinishInterest = new Set\(\n"
-              r"    roadCommandResolution\.riders\n"
-              r"      \.filter\(\(row\) => row\.eligibleToStart && !escapeSet\.has\(row\.riderId\)\)\n"
-              r"      \.filter\(\(row\) => \{\n"
-              r"        const phase = row\.phases\.find\(\(entry\) => entry\.phaseNumber === 4\)!\n"
-              r"        return \(\n"
-              r"          row\.stageRole === 'sprinter' \|\|\n"
-              r"          row\.stageRole === 'team_leader_gc' \|\|\n"
-              r"          row\.stageRole === 'protected_rider' \|\|\n"
-              r"          phase\.behaviour === 'stage_result' \|\|\n"
-              r"          phase\.behaviour === 'time_gc_result' \|\|\n"
-              r"          phase\.behaviour === 'sprint_preparation'\n"
-              r"        \)\n"
-              r"      \}\)\n"
-              r"      \.map\(\(row\) => row\.teamId\),\n"
-              r"  \)"
+              r"  const teamsWithFinishInterest = new Set\(\s*"
+              r"roadCommandResolution\.riders.*?"
+              r"\.map\(\(row\) => row\.teamId\),\s*\)\s*"
+              r"  const automaticChasingTeamIds",
+              re.S,
           )
-          replacement = """  const teamsWithFinishInterest = new Set(
+          phase4_replacement = '''  const teamsWithFinishInterest = new Set(
             getAutomaticLateFinishInterestTeamIds(
               input,
               riderSuitability,
               roadCommandResolution,
               physicalFrontRiderIdsAtStart,
             ),
-          )"""
-          text, count = phase4_pattern.subn(replacement, text, count=1)
+          )
+          const automaticChasingTeamIds'''
+          text, count = phase4_pattern.subn(
+              phase4_replacement,
+              text,
+              count=1,
+          )
           if count != 1:
-              raise SystemExit(f'Expected exactly one broad Phase 4 finish-interest block, replaced {count}')
+              raise SystemExit(f'Expected one broad Phase 4 finish-interest block, replaced {count}')
 
-          if text.count("phase.resolvedSource === 'explicit_individual_command' &&\n                  phase.behaviour === 'chase'") != 1:
-              raise SystemExit('Phase 3 explicit chase source guard was not installed exactly once')
           if text.count('getAutomaticLateFinishInterestTeamIds(') != 3:
               raise SystemExit('Expected helper definition plus Phase 3 and Phase 4 calls')
+          if "phase.resolvedSource === 'explicit_individual_command'" not in text:
+              raise SystemExit('Explicit chase source guard missing')
           engine_path.write_text(text)
 
           test_path = Path('src/universal-race-engine/runRaceEngine.test.ts')
           tests = test_path.read_text()
+          old_marker_title = "it('publishes the Phase 11J V5.3 physical-gap-lineage build marker', () => {"
+          if tests.count(old_marker_title) != 1:
+              raise SystemExit('Expected one old build-marker test title')
           tests = tests.replace(
-              "it('publishes the Phase 11J V5.3 physical-gap-lineage build marker', () => {",
+              old_marker_title,
               "it('publishes the Phase 11L V5.5 late-chase-eligibility build marker', () => {",
               1,
           )
+          old_test_marker = "'phase11j-v5-3-physical-gap-lineage-2026-09-08',"
+          if tests.count(old_test_marker) != 1:
+              raise SystemExit('Expected one old build-marker assertion')
           tests = tests.replace(
-              "'phase11j-v5-3-physical-gap-lineage-2026-09-08',",
+              old_test_marker,
               "'phase11l-v5-5-late-chase-eligibility-2026-09-11',",
               1,
           )
 
           test_anchor = "  it('does not promote a Phase 3 race-control team into the physical chase', () => {\n"
           if tests.count(test_anchor) != 1:
-              raise SystemExit(f'Expected one chase regression test anchor, found {tests.count(test_anchor)}')
+              raise SystemExit(f'Expected one chase regression anchor, found {tests.count(test_anchor)}')
           new_tests = r'''  it('limits role-default late chasing to a small automatic finish-interest cohort', () => {
             const base = createExpandedFieldInput(90)
             const openingAttackerId = 'expanded-rider-05'
