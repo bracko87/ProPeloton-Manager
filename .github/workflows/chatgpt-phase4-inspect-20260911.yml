@@ -1,0 +1,32 @@
+name: ChatGPT Phase 4 inspect
+on:
+  push:
+    branches: [chatgpt-phase4-finalizing-state-20260911]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect replay lifecycle frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE=src/pages/dashboard/RaceDetailPage.tsx
+          for TERM in "type RaceStageLiveState" "const replaySpeedLocked" "refreshPersistedLiveReplayState" "liveReplayWasActiveRef.current" "replaySpeedLocked" "Finalizing"; do
+            echo "===== $TERM ====="
+            grep -n -F "$TERM" "$FILE" || true
+          done
+          echo "===== LIVE STATE TYPE ====="
+          LINE=$(grep -n -F "type RaceStageLiveState" "$FILE" | head -1 | cut -d: -f1)
+          sed -n "$((LINE-5)),$((LINE+30))p" "$FILE"
+          echo "===== STATE DERIVATION ====="
+          LINE=$(grep -n -F "const replaySpeedLocked" "$FILE" | head -1 | cut -d: -f1)
+          sed -n "$((LINE-20)),$((LINE+35))p" "$FILE"
+          echo "===== POLLING EFFECT ====="
+          LINE=$(grep -n -F "async function refreshPersistedLiveReplayState" "$FILE" | head -1 | cut -d: -f1)
+          sed -n "$((LINE-10)),$((LINE+120))p" "$FILE"
+          echo "===== CONTROL BUTTON ====="
+          LINE=$(grep -n -F "? 'Finalizing'" "$FILE" | head -1 | cut -d: -f1)
+          sed -n "$((LINE-45)),$((LINE+70))p" "$FILE"
