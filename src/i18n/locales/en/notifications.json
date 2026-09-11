@@ -144,7 +144,7 @@
     "start": "Start",
     "stage": "Stage",
     "stageValue": "Stage {{stage}}",
-    "seasonDate": "Season {{season}} - {{date}}",
+    "seasonDate": "Season {{season}} — {{date}}",
     "availability": "Availability",
     "reason": "Reason",
     "priority": "Priority",
@@ -275,7 +275,7 @@
     "owned": "Owned",
     "ready": "Ready",
     "attention": "Attention",
-    "avgCondition": "Avg condition",
+    "avgCondition": "Average condition",
     "raceSupplies": "Race supplies",
     "supply": "Supply",
     "available": "Available",
@@ -663,12 +663,15 @@
     "medical_treatment": "Medical treatment",
     "equipment_workshop_review": "Equipment & workshop review",
     "recruitment_review": "Recruitment review",
-    "elevated_fatigue": "Elevated Fatigue",
-    "fatigue_watch": "Fatigue Watch",
-    "rider_availability": "Rider Availability",
-    "training_schedule_gap": "Training Schedule Gap",
-    "high_fatigue": "High Fatigue",
-    "high_fatigue_alert": "High Fatigue"
+    "elevated_fatigue": "Elevated fatigue",
+    "fatigue_watch": "Fatigue watch",
+    "rider_availability": "Rider availability",
+    "training_schedule_gap": "Training schedule gap",
+    "high_fatigue": "High fatigue",
+    "high_fatigue_alert": "High fatigue alert",
+    "race_eligibility_critical": "Critical race eligibility",
+    "training_schedule_covered": "Training schedule covered",
+    "race_jersey_eligibility": "Race jersey eligibility"
   },
   "notificationTypes": {
     "suppliesLow": "Race supplies low",
@@ -887,6 +890,93 @@
       "entryFeeRetained": "Retained (not refunded)",
       "outcomeRemoved": "Legacy event — current rule applies performance penalty",
       "problemJerseys": "Race Jersey shortage — performance penalty"
+    }
+  },
+  "advisorRuntime": {
+    "values": {
+      "noneScheduled": "None scheduled",
+      "notScheduled": "Not scheduled",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "inDays": "In {{count}} days",
+      "active": "Active",
+      "completed": "Completed",
+      "ready": "Ready",
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "missing": "Missing",
+      "incomplete": "Incomplete",
+      "locked": "Locked",
+      "open": "Open",
+      "inProgress": "In progress",
+      "finalised": "Finalised",
+      "notReady": "Not ready",
+      "needsAttention": "Needs attention",
+      "critical": "Critical",
+      "urgent": "Urgent",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "mild": "Mild",
+      "moderate": "Moderate",
+      "severe": "Severe",
+      "scheduled": "Scheduled",
+      "raceFallback": "the selected race"
+    },
+    "bodyParts": {
+      "knee": "Knee",
+      "back": "Back",
+      "shoulder": "Shoulder",
+      "wrist": "Wrist",
+      "ankle": "Ankle",
+      "hip": "Hip",
+      "leg": "Leg",
+      "arm": "Arm",
+      "hand": "Hand",
+      "foot": "Foot",
+      "chest": "Chest",
+      "head": "Head",
+      "neck": "Neck"
+    },
+    "headCoach": {
+      "generic": "Your Head Coach has prepared an advisory based on the current squad and training data.",
+      "trainingReadiness": "The Head Coach has reviewed current training readiness and squad availability.",
+      "weeklyTrainingReadiness": "The Head Coach has completed the weekly review of training readiness and squad availability.",
+      "trainingScheduleCovered": "The current training schedule is covered; no unplanned training gap requires action."
+    },
+    "sportDirector": {
+      "generic": "Your Sports Director has reviewed the current race programme and preparation status.",
+      "stagePlansMissing": "Missing stage plans for {{raceName}}: {{count}}. Stage {{stage}} is {{timing}} at {{time}} ({{date}}) and should be prepared next.",
+      "stagePlansIncomplete": "{{count}} stage plans for {{raceName}} are incomplete and should be reviewed before they lock.",
+      "startlistDeadline": "The rider/startlist deadline for {{raceName}} is {{deadline}}. Review the selection before the deadline.",
+      "preparationMissing": "Race preparation for {{raceName}} still requires action. Review the preparation package before the deadline.",
+      "preparationReady": "Race preparation for {{raceName}} is ready. Review the final setup before the race.",
+      "programmeEmpty": "No accepted race is currently scheduled. Review the race calendar and plan the next race block.",
+      "programmeGap": "The race programme has a gap of {{days}} days. Next accepted race: {{nextRace}}.",
+      "programmeContinuity": "The Sports Director has reviewed programme continuity. Next accepted race: {{nextRace}}.",
+      "longProgrammeBreak": "There is a long {{days}}-day break in the race programme. Next accepted race: {{nextRace}}.",
+      "eligibilityCritical": "A critical eligibility issue may affect participation in {{raceName}}. Review race preparation immediately."
+    },
+    "doctor": {
+      "generic": "Your Team Doctor has reviewed the current medical and recovery situation.",
+      "medicalTreatment": "Medical review: {{activeCases}} active cases, {{injured}} injured riders and {{sick}} sick riders. Review treatment and expected recovery before changing workload."
+    },
+    "mechanic": {
+      "generic": "Your Chief Mechanic has reviewed equipment, maintenance and race-supply readiness.",
+      "workshopReview": "Workshop review: {{total}} equipment items, {{attention}} needing attention, {{critical}} critical and {{lowSupplies}} low-stock supply types.",
+      "jerseyEligibility": "Race-jersey availability may affect race eligibility. Review race supplies before the next eligibility check."
+    },
+    "scout": {
+      "generic": "Your Scout has reviewed current scouting intelligence and recruitment priorities.",
+      "recruitmentReview": "Scouting review: {{reports}} completed reports, {{recent}} in the last seven real days, {{highElite}} high/elite prospects and {{active}} active assignments.",
+      "priorityProspect": "{{rider}} has been flagged as a priority prospect. Review the scouting report before deciding the next step."
+    },
+    "recommendations": {
+      "headCoach": "Review the affected riders and adjust training workload where necessary.",
+      "sportDirector": "Review the race programme, preparation, startlist and stage-plan status.",
+      "doctor": "Review treatment, recovery and rider availability before assigning training or races.",
+      "mechanic": "Review equipment condition, maintenance and race supplies before the next race.",
+      "scout": "Review the scouting information and decide the next recruitment or scouting action."
     }
   }
 }

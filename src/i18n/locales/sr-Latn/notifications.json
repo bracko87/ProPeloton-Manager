@@ -144,7 +144,7 @@
     "start": "Start",
     "stage": "Etapa",
     "stageValue": "Etapa {{stage}}",
-    "seasonDate": "Sezona {{season}} - {{date}}",
+    "seasonDate": "Sezona {{season}} — {{date}}",
     "availability": "Dostupnost",
     "reason": "Razlog",
     "priority": "Prioritet",
@@ -172,7 +172,7 @@
     "notFullyFit": "Nije potpuno spreman",
     "unavailable": "Nedostupan",
     "plannedSessions": "Planirani treninzi · naredna 3 dana u igri",
-    "manualOverrides": "Ručne izmene · naredna 3 dana u igri",
+    "manualOverrides": "Ručna podešavanja · naredna 3 dana u igri",
     "highestFatigue": "Najveći umor",
     "windowStart": "Početak perioda",
     "windowEnd": "Kraj perioda",
@@ -224,7 +224,7 @@
     "deadline": "Rok",
     "stageDate": "Datum etape",
     "stageStart": "Start etape",
-    "programme": "Program",
+    "programme": "Program trka",
     "futureRaces": "Buduće trke · 30 dana",
     "managementPriorities": "Prioriteti upravljanja",
     "missingStagePlans": "Nedostajući planovi etapa",
@@ -291,7 +291,7 @@
     "reviewStatus": "Status pregleda",
     "completedReports": "Završeni izveštaji",
     "reports7Days": "Izveštaji · poslednjih 7 stvarnih dana",
-    "highElite": "Visoki / Elite potencijali",
+    "highElite": "Visoki / elitni potencijali",
     "activeAssignments": "Aktivni zadaci",
     "reportedStrengths": "Prijavljene prednosti",
     "notes": "Beleške skauta",
@@ -665,13 +665,16 @@
     "priority_prospect": "Prioritetni talenat",
     "medical_treatment": "Medicinski tretman",
     "equipment_workshop_review": "Pregled opreme i radionice",
-    "recruitment_review": "Pregled regrutacije",
+    "recruitment_review": "Pregled skautinga i regrutacije",
     "elevated_fatigue": "Povišen umor",
     "fatigue_watch": "Praćenje umora",
     "rider_availability": "Dostupnost vozača",
     "training_schedule_gap": "Praznina u rasporedu treninga",
     "high_fatigue": "Visok umor",
-    "high_fatigue_alert": "Visok umor"
+    "high_fatigue_alert": "Upozorenje na visok umor",
+    "race_eligibility_critical": "Kritičan uslov za nastup",
+    "training_schedule_covered": "Raspored treninga je pokriven",
+    "race_jersey_eligibility": "Uslov za trkačke dresove"
   },
   "notificationTypes": {
     "suppliesLow": "Niske zalihe",
@@ -980,6 +983,93 @@
       "entryFeeRetained": "Zadržana (nije vraćena)",
       "outcomeRemoved": "Legacy event — current rule applies performance penalty",
       "problemJerseys": "Race Jersey shortage — performance penalty"
+    }
+  },
+  "advisorRuntime": {
+    "values": {
+      "noneScheduled": "Nema zakazane trke",
+      "notScheduled": "Nije zakazano",
+      "today": "Danas",
+      "tomorrow": "Sutra",
+      "inDays": "Za {{count}} dana",
+      "active": "Aktivno",
+      "completed": "Završeno",
+      "ready": "Spremno",
+      "draft": "Nacrt",
+      "submitted": "Poslato",
+      "missing": "Nedostaje",
+      "incomplete": "Nepotpuno",
+      "locked": "Zaključano",
+      "open": "Otvoreno",
+      "inProgress": "U toku",
+      "finalised": "Završeno",
+      "notReady": "Nije spremno",
+      "needsAttention": "Zahteva pažnju",
+      "critical": "Kritično",
+      "urgent": "Hitno",
+      "high": "Visoko",
+      "medium": "Srednje",
+      "low": "Nisko",
+      "mild": "Blago",
+      "moderate": "Umereno",
+      "severe": "Teško",
+      "scheduled": "Zakazano",
+      "raceFallback": "izabranu trku"
+    },
+    "bodyParts": {
+      "knee": "Koleno",
+      "back": "Leđa",
+      "shoulder": "Rame",
+      "wrist": "Ručni zglob",
+      "ankle": "Skočni zglob",
+      "hip": "Kuk",
+      "leg": "Noga",
+      "arm": "Ruka",
+      "hand": "Šaka",
+      "foot": "Stopalo",
+      "chest": "Grudi",
+      "head": "Glava",
+      "neck": "Vrat"
+    },
+    "headCoach": {
+      "generic": "Glavni trener je pripremio savet na osnovu trenutnog stanja ekipe i podataka o treningu.",
+      "trainingReadiness": "Glavni trener je pregledao trenutnu spremnost za trening i dostupnost vozača.",
+      "weeklyTrainingReadiness": "Glavni trener je završio nedeljni pregled spremnosti za trening i dostupnosti vozača.",
+      "trainingScheduleCovered": "Trenutni raspored treninga je pokriven; nema neplanirane praznine koja zahteva reakciju."
+    },
+    "sportDirector": {
+      "generic": "Sportski direktor je pregledao trenutni program trka i status pripreme.",
+      "stagePlansMissing": "Za {{raceName}} nedostaje {{count}} planova etapa. Sledeće treba pripremiti plan za etapu {{stage}}, koja je {{timing}} u {{time}} ({{date}}).",
+      "stagePlansIncomplete": "Za {{raceName}} ima {{count}} nepotpunih planova etapa. Pregledajte ih pre zaključavanja.",
+      "startlistDeadline": "Rok za vozače/startnu listu za {{raceName}} je {{deadline}}. Pregledajte izbor pre isteka roka.",
+      "preparationMissing": "Priprema trke {{raceName}} još zahteva pažnju. Pregledajte pripremu pre isteka roka.",
+      "preparationReady": "Priprema trke {{raceName}} je spremna. Pregledajte završna podešavanja pre trke.",
+      "programmeEmpty": "Trenutno nema zakazane prihvaćene trke. Pregledajte kalendar i isplanirajte sledeći blok trka.",
+      "programmeGap": "U programu trka postoji praznina od {{days}} dana. Sledeća prihvaćena trka: {{nextRace}}.",
+      "programmeContinuity": "Sportski direktor je pregledao kontinuitet programa. Sledeća prihvaćena trka: {{nextRace}}.",
+      "longProgrammeBreak": "U programu trka postoji duga pauza od {{days}} dana. Sledeća prihvaćena trka: {{nextRace}}.",
+      "eligibilityCritical": "Kritičan uslov za nastup može uticati na učešće u trci {{raceName}}. Odmah pregledajte pripremu trke."
+    },
+    "doctor": {
+      "generic": "Lekar tima je pregledao trenutnu medicinsku situaciju i oporavak vozača.",
+      "medicalTreatment": "Medicinski pregled: {{activeCases}} aktivnih slučajeva, {{injured}} povređenih i {{sick}} bolesnih vozača. Pregledajte tretman i očekivani oporavak pre promene opterećenja."
+    },
+    "mechanic": {
+      "generic": "Glavni mehaničar je pregledao opremu, održavanje i spremnost zaliha za trku.",
+      "workshopReview": "Pregled radionice: {{total}} komada opreme, {{attention}} zahteva pažnju, {{critical}} je kritično, a {{lowSupplies}} vrsta zaliha je pri kraju.",
+      "jerseyEligibility": "Dostupnost trkačkih dresova može uticati na uslov za nastup. Pregledajte zalihe za trku pre sledeće provere."
+    },
+    "scout": {
+      "generic": "Skaut je pregledao najnovije podatke o skautingu i prioritete za regrutaciju.",
+      "recruitmentReview": "Pregled skautinga: {{reports}} završenih izveštaja, {{recent}} u poslednjih sedam stvarnih dana, {{highElite}} talenata visokog/elitnog potencijala i {{active}} aktivnih zadataka.",
+      "priorityProspect": "{{rider}} je označen kao prioritetni talenat. Pregledajte skautski izveštaj pre odluke o sledećem koraku."
+    },
+    "recommendations": {
+      "headCoach": "Pregledajte pogođene vozače i po potrebi prilagodite opterećenje na treningu.",
+      "sportDirector": "Pregledajte program trka, pripremu, startnu listu i status planova etapa.",
+      "doctor": "Pregledajte tretman, oporavak i dostupnost vozača pre dodeljivanja treninga ili trka.",
+      "mechanic": "Pregledajte stanje opreme, održavanje i zalihe za trku pre sledeće trke.",
+      "scout": "Pregledajte skautske podatke i odlučite o sledećoj aktivnosti regrutacije ili skautinga."
     }
   }
 }

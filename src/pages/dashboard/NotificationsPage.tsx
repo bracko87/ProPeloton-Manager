@@ -36,6 +36,7 @@ import {
   localizeNotificationNarrative,
   localizeNotificationTypeCodeLabel,
   localizeNotificationValue,
+  translateNotificationKey,
 } from '@/features/notifications/notificationLocalization'
 import {
   applyNotificationTemplates,
@@ -549,12 +550,122 @@ function formatAdvisorValue(value: unknown): string {
   return String(value)
 }
 
+function normalizeAdvisorRuntimeValue(value: unknown): string {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+}
+
+const ADVISOR_RUNTIME_VALUE_KEY_BY_NORMALIZED: Record<string, string> = {
+  'none scheduled': 'advisorRuntime.values.noneScheduled',
+  'not scheduled': 'advisorRuntime.values.notScheduled',
+  'today': 'advisorRuntime.values.today',
+  'tomorrow': 'advisorRuntime.values.tomorrow',
+  'active': 'advisorRuntime.values.active',
+  'completed': 'advisorRuntime.values.completed',
+  'complete': 'advisorRuntime.values.completed',
+  'ready': 'advisorRuntime.values.ready',
+  'draft': 'advisorRuntime.values.draft',
+  'submitted': 'advisorRuntime.values.submitted',
+  'missing': 'advisorRuntime.values.missing',
+  'incomplete': 'advisorRuntime.values.incomplete',
+  'locked': 'advisorRuntime.values.locked',
+  'open': 'advisorRuntime.values.open',
+  'in progress': 'advisorRuntime.values.inProgress',
+  'finalised': 'advisorRuntime.values.finalised',
+  'finalized': 'advisorRuntime.values.finalised',
+  'not ready': 'advisorRuntime.values.notReady',
+  'needs attention': 'advisorRuntime.values.needsAttention',
+  'attention': 'advisorRuntime.values.needsAttention',
+  'critical': 'advisorRuntime.values.critical',
+  'urgent': 'advisorRuntime.values.urgent',
+  'high': 'advisorRuntime.values.high',
+  'medium': 'advisorRuntime.values.medium',
+  'normal': 'advisorRuntime.values.medium',
+  'low': 'advisorRuntime.values.low',
+  'mild': 'advisorRuntime.values.mild',
+  'moderate': 'advisorRuntime.values.moderate',
+  'severe': 'advisorRuntime.values.severe',
+  'scheduled': 'advisorRuntime.values.scheduled',
+  'pending': 'templateValues.pending',
+  'available': 'templateValues.available',
+  'unavailable': 'headCoach.unavailable',
+  'fit': 'headCoach.fit',
+  'not fully fit': 'headCoach.notFullyFit',
+  'not fully available': 'headCoach.notFullyAvailable',
+  'in repair': 'templateValues.inRepair',
+  'low stock': 'templateValues.lowStock',
+  'in stock': 'templateValues.inStock',
+  'out of stock': 'templateValues.outOfStock',
+  'restock required': 'templateValues.restockRequired',
+  'knee': 'advisorRuntime.bodyParts.knee',
+  'back': 'advisorRuntime.bodyParts.back',
+  'shoulder': 'advisorRuntime.bodyParts.shoulder',
+  'wrist': 'advisorRuntime.bodyParts.wrist',
+  'ankle': 'advisorRuntime.bodyParts.ankle',
+  'hip': 'advisorRuntime.bodyParts.hip',
+  'leg': 'advisorRuntime.bodyParts.leg',
+  'arm': 'advisorRuntime.bodyParts.arm',
+  'hand': 'advisorRuntime.bodyParts.hand',
+  'foot': 'advisorRuntime.bodyParts.foot',
+  'chest': 'advisorRuntime.bodyParts.chest',
+  'head': 'advisorRuntime.bodyParts.head',
+  'neck': 'advisorRuntime.bodyParts.neck',
+}
+
+function localizeAdvisorRuntimeValue(value: unknown): string {
+  const text = String(value ?? '').trim()
+  if (!text) return text
+
+  const normalized = normalizeAdvisorRuntimeValue(text)
+  const key = ADVISOR_RUNTIME_VALUE_KEY_BY_NORMALIZED[normalized]
+  if (key) return translateNotificationKey(key)
+
+  const inDays = /^in\s+(\d+)\s+days?$/i.exec(text)
+  if (inDays) {
+    return translateNotificationKey('advisorRuntime.values.inDays', {
+      count: Number(inDays[1]),
+    })
+  }
+
+  const seasonDate = /^season\s+(\d+)\s*[-–—,:]\s*(.+)$/i.exec(text)
+  if (seasonDate) {
+    return translateNotificationKey('common.seasonDate', {
+      season: Number(seasonDate[1]),
+      date: seasonDate[2].trim(),
+    })
+  }
+
+  // Defensive repair for values that may already have passed through an old
+  // word-by-word translator before reaching this component.
+  if (/^scheduled[.\s]+none$/i.test(text)) {
+    return translateNotificationKey('advisorRuntime.values.noneScheduled')
+  }
+  if (/^scheduled[.\s]+not$/i.test(text)) {
+    return translateNotificationKey('advisorRuntime.values.notScheduled')
+  }
+
+  return text
+}
+
 function formatAdvisorAvailability(value: unknown): string {
-  const normalized = String(value ?? '').trim().replace(/_/g, ' ')
-  if (!normalized) return '—'
+  const text = String(value ?? '').trim()
+  if (!text) return '—'
+
+  const localized = localizeAdvisorRuntimeValue(text)
+  if (localized !== text) return localized
+
+  const normalized = text.replace(/_/g, ' ')
   return normalized.replace(/\b\w/g, letter => letter.toUpperCase())
 }
 
+function looksLikeEnglishAdvisorProse(value: unknown): boolean {
+  const text = String(value ?? '').trim().toLowerCase()
+  if (!text) return false
+  return /\b(the|your|you|is|are|was|were|has|have|will|should|review|stage|stages|plan|plans|race|races|rider|riders|training|equipment|scouting|report|reports|missing|incomplete|current|next|today|tomorrow|available|scheduled|deadline|priority|programme|program|preparation|startlist|medical|workshop|recruitment|attention)\b/.test(text)
+}
 
 function localizeAdvisorNotificationRuntimeText(value: unknown, t: any): string {
   const text = String(value ?? '').trim()
@@ -650,6 +761,275 @@ function localizeNotificationRuntimeText(
   return localizedValue || text
 }
 
+function advisorPayloadData(payload: StaffAdvisoryPayload): Record<string, unknown> {
+  return (payload.data ?? payload.snapshot ?? {}) as Record<string, unknown>
+}
+
+function advisorString(record: Record<string, unknown>, ...keys: string[]): string {
+  for (const key of keys) {
+    const value = record[key]
+    if (value !== null && value !== undefined && String(value).trim()) {
+      return String(value).trim()
+    }
+  }
+  return ''
+}
+
+function advisorNumber(record: Record<string, unknown>, ...keys: string[]): number | null {
+  for (const key of keys) {
+    const value = Number(record[key])
+    if (Number.isFinite(value)) return value
+  }
+  return null
+}
+
+function normalizeAdvisorVariant(payload: StaffAdvisoryPayload): string {
+  return String(payload.report_variant ?? payload.report_code ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/^sd_/, '')
+    .replace(/^hc_/, '')
+    .replace(/^mechanic_/, '')
+    .replace(/^doctor_/, '')
+    .replace(/^scout_/, '')
+}
+
+function buildLocalizedAdvisorSummary(
+  payload: StaffAdvisoryPayload,
+  item: NotificationItem,
+  t: any
+): string {
+  const raw = String(payload.summary || item.message || '').trim()
+  const role = String(payload.advisor_role ?? '').trim().toLowerCase()
+  const variant = normalizeAdvisorVariant(payload)
+  const data = advisorPayloadData(payload)
+
+  // Exact runtime translations (especially Head Coach dynamic summaries) get
+  // first priority when they can preserve the original detail.
+  const exact = localizeNotificationRuntimeText(raw, item, t)
+  if (exact && exact !== raw && exact !== translateNotificationKey('templateLocalization.moreDetails')) {
+    return exact
+  }
+
+  if (role === 'sport_director') {
+    const raceName = advisorString(
+      data,
+      'current_focus_race_name',
+      'current_focus_race',
+      'active_race_name',
+      'race_name',
+      'next_race_name'
+    ) || translateNotificationKey('advisorRuntime.values.raceFallback')
+    const stage = advisorNumber(data, 'stage_number')
+    const stageTime = advisorString(data, 'stage_start_time_label', 'start_time_label')
+    const stageDateRaw = advisorString(data, 'stage_date')
+    const raceTimingRaw = advisorString(data, 'current_focus_race_timing', 'race_urgency', 'urgency')
+    const timing = raceTimingRaw
+      ? localizeAdvisorRuntimeValue(raceTimingRaw)
+      : translateNotificationKey('advisorRuntime.values.notScheduled')
+    const stageDate = stageDateRaw
+      ? formatAdvisorGameDateTime(stageDateRaw, t)
+      : translateNotificationKey('advisorRuntime.values.notScheduled')
+    const missing =
+      advisorNumber(data, 'actionable_missing_stage_plans', 'missing_stage_plans') ??
+      (Array.isArray(payload.missing_stage_analysis?.missing_stages)
+        ? payload.missing_stage_analysis!.missing_stages.length
+        : 0)
+    const incomplete = advisorNumber(
+      data,
+      'actionable_problem_stage_plans',
+      'problem_stage_plans'
+    ) ?? 0
+    const deadlineRaw = advisorString(
+      data,
+      'rider_submission_deadline_on',
+      'submission_deadline',
+      'deadline'
+    )
+    const deadline = deadlineRaw
+      ? formatAdvisorGameDateTime(deadlineRaw, t)
+      : translateNotificationKey('advisorRuntime.values.notScheduled')
+    const gapDays = advisorNumber(data, 'programme_gap_days') ?? 0
+    const nextRaceRaw = advisorString(data, 'next_future_race', 'next_future_race_name')
+    const nextRace = nextRaceRaw
+      ? localizeAdvisorRuntimeValue(nextRaceRaw)
+      : translateNotificationKey('advisorRuntime.values.noneScheduled')
+
+    if (variant.includes('stage_plans_missing')) {
+      return translateNotificationKey('advisorRuntime.sportDirector.stagePlansMissing', {
+        count: missing,
+        raceName,
+        stage: stage ?? '—',
+        timing,
+        time: stageTime || '—',
+        date: stageDate,
+      })
+    }
+    if (variant.includes('stage_plans_incomplete')) {
+      return translateNotificationKey('advisorRuntime.sportDirector.stagePlansIncomplete', {
+        count: incomplete,
+        raceName,
+      })
+    }
+    if (variant.includes('startlist_deadline_alert')) {
+      return translateNotificationKey('advisorRuntime.sportDirector.startlistDeadline', {
+        raceName,
+        deadline,
+      })
+    }
+    if (variant.includes('race_preparation_missing')) {
+      return translateNotificationKey('advisorRuntime.sportDirector.preparationMissing', {
+        raceName,
+      })
+    }
+    if (variant.includes('race_preparation_ready')) {
+      return translateNotificationKey('advisorRuntime.sportDirector.preparationReady', {
+        raceName,
+      })
+    }
+    if (variant.includes('programme_empty')) {
+      return translateNotificationKey('advisorRuntime.sportDirector.programmeEmpty')
+    }
+    if (variant.includes('race_programme_gap') || variant === 'programme_gap') {
+      return translateNotificationKey('advisorRuntime.sportDirector.programmeGap', {
+        days: gapDays,
+        nextRace,
+      })
+    }
+    if (variant.includes('programme_continuity')) {
+      return translateNotificationKey('advisorRuntime.sportDirector.programmeContinuity', {
+        nextRace,
+      })
+    }
+    if (variant.includes('long_programme_break')) {
+      return translateNotificationKey('advisorRuntime.sportDirector.longProgrammeBreak', {
+        days: gapDays,
+        nextRace,
+      })
+    }
+    if (variant.includes('race_eligibility_critical')) {
+      return translateNotificationKey('advisorRuntime.sportDirector.eligibilityCritical', {
+        raceName,
+      })
+    }
+    return translateNotificationKey('advisorRuntime.sportDirector.generic')
+  }
+
+  if (role === 'head_coach') {
+    if (variant.includes('weekly_training_readiness')) {
+      return translateNotificationKey('advisorRuntime.headCoach.weeklyTrainingReadiness')
+    }
+    if (variant.includes('training_readiness')) {
+      return translateNotificationKey('advisorRuntime.headCoach.trainingReadiness')
+    }
+    if (variant.includes('training_schedule_covered')) {
+      return translateNotificationKey('advisorRuntime.headCoach.trainingScheduleCovered')
+    }
+    if (exact && exact !== raw) return exact
+    return looksLikeEnglishAdvisorProse(raw)
+      ? translateNotificationKey('advisorRuntime.headCoach.generic')
+      : raw
+  }
+
+  if (role === 'team_doctor') {
+    const activeCases = advisorNumber(
+      data,
+      'active_health_cases',
+      'active_or_recovering_health_cases'
+    ) ?? 0
+    const injured = advisorNumber(data, 'injured_riders') ?? 0
+    const sick = advisorNumber(data, 'sick_riders') ?? 0
+    if (variant.includes('medical_treatment')) {
+      return translateNotificationKey('advisorRuntime.doctor.medicalTreatment', {
+        activeCases,
+        injured,
+        sick,
+      })
+    }
+    return looksLikeEnglishAdvisorProse(raw)
+      ? translateNotificationKey('advisorRuntime.doctor.generic')
+      : (exact || raw)
+  }
+
+  if (role === 'mechanic' || role === 'chief_mechanic') {
+    const total = advisorNumber(data, 'total_items') ?? 0
+    const attention = advisorNumber(
+      data,
+      'maintenance_needed',
+      'equipment_needing_attention_count'
+    ) ?? 0
+    const critical = advisorNumber(data, 'critical_items') ?? 0
+    const lowSupplies = advisorNumber(data, 'low_supply_types') ?? 0
+    if (variant.includes('race_supply_eligibility_critical') || variant.includes('race_jersey_eligibility')) {
+      return translateNotificationKey('advisorRuntime.mechanic.jerseyEligibility')
+    }
+    if (variant.includes('equipment_workshop_review')) {
+      return translateNotificationKey('advisorRuntime.mechanic.workshopReview', {
+        total,
+        attention,
+        critical,
+        lowSupplies,
+      })
+    }
+    return looksLikeEnglishAdvisorProse(raw)
+      ? translateNotificationKey('advisorRuntime.mechanic.generic')
+      : (exact || raw)
+  }
+
+  if (role === 'scout_analyst' || role === 'scout') {
+    const reports = advisorNumber(data, 'completed_reports') ?? 0
+    const recent = advisorNumber(data, 'reports_last_7_real_days') ?? 0
+    const highElite = advisorNumber(data, 'high_or_elite_potential_reports') ?? 0
+    const active = advisorNumber(data, 'active_scouting_tasks') ?? 0
+    const rider = advisorString(data, 'rider_name', 'rider_full_name') || translateNotificationKey('common.rider')
+    if (variant.includes('priority_prospect')) {
+      return translateNotificationKey('advisorRuntime.scout.priorityProspect', { rider })
+    }
+    if (variant.includes('recruitment_review')) {
+      return translateNotificationKey('advisorRuntime.scout.recruitmentReview', {
+        reports,
+        recent,
+        highElite,
+        active,
+      })
+    }
+    return looksLikeEnglishAdvisorProse(raw)
+      ? translateNotificationKey('advisorRuntime.scout.generic')
+      : (exact || raw)
+  }
+
+  return exact || raw
+}
+
+function localizeAdvisorRecommendation(
+  value: unknown,
+  payload: StaffAdvisoryPayload,
+  item: NotificationItem,
+  t: any
+): string {
+  const text = String(value ?? '').trim()
+  if (!text) return text
+
+  const localized = localizeNotificationRuntimeText(text, item, t)
+  if (localized && localized !== text && localized !== translateNotificationKey('templateLocalization.moreDetails')) {
+    return localized
+  }
+  if (!looksLikeEnglishAdvisorProse(text)) return localized || text
+
+  const role = String(payload.advisor_role ?? '').trim().toLowerCase()
+  const keyByRole: Record<string, string> = {
+    head_coach: 'advisorRuntime.recommendations.headCoach',
+    sport_director: 'advisorRuntime.recommendations.sportDirector',
+    team_doctor: 'advisorRuntime.recommendations.doctor',
+    mechanic: 'advisorRuntime.recommendations.mechanic',
+    chief_mechanic: 'advisorRuntime.recommendations.mechanic',
+    scout_analyst: 'advisorRuntime.recommendations.scout',
+    scout: 'advisorRuntime.recommendations.scout',
+  }
+  const key = keyByRole[role]
+  return key ? translateNotificationKey(key) : translateNotificationKey('templateLocalization.moreDetails')
+}
+
 
 function formatAdvisorDisplayValue(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—'
@@ -661,16 +1041,18 @@ function formatAdvisorDisplayValue(value: unknown): string {
   const text = String(value).trim()
   if (!text) return '—'
 
+  const semantic = localizeAdvisorRuntimeValue(text)
+  if (semantic !== text) return semantic
+
   // Keep dates, times, UUIDs, URLs and already-formatted text unchanged.
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text
   if (/^\d{1,2}:\d{2}(?::\d{2})?$/.test(text)) return text
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text)) return text
   if (/^https?:\/\//i.test(text)) return text
 
-  // Backend enum/code values should never be exposed as raw snake_case.
+  // Backend enum/code values should never be exposed as raw snake_case. Only
+  // normalize the visual form here; semantic translation is handled above.
   const normalized = text.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
-
-  // Title-case short enum/status/code-style values, but do not alter full sentences.
   const looksLikeUiValue =
     text.includes('_') ||
     text.includes('-') ||
@@ -705,6 +1087,9 @@ function formatAdvisorGameDateTime(value: unknown, t?: any): string {
   const text = String(value ?? '').trim()
   if (!text) return '—'
 
+  const semantic = localizeAdvisorRuntimeValue(text)
+  if (semantic !== text) return semantic
+
   const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?)?/)
   if (!match) return formatAdvisorDisplayText(value)
 
@@ -722,9 +1107,15 @@ function formatAdvisorGameDateTime(value: unknown, t?: any): string {
   const timeLabel = hour && minute ? ` ${hour}:${minute}` : ''
   const localizedDate = `${dateLabel}${timeLabel}`
 
+  // Never fall back to the English word "Season". Some advisor render paths do
+  // not have a component-level t() available, so use the global notification
+  // namespace helper in that case. This keeps word order native to each locale.
   return t
     ? t('common.seasonDate', { season: seasonNumber, date: localizedDate })
-    : `Season ${seasonNumber} - ${localizedDate}`
+    : translateNotificationKey('common.seasonDate', {
+        season: seasonNumber,
+        date: localizedDate,
+      })
 }
 
 function getAdvisorRiderDisplayName(
@@ -2087,7 +2478,7 @@ export default function NotificationsPage(): JSX.Element {
                                 >
                                   <div className="min-w-0">
                                     <p className="text-sm leading-6 text-slate-700">
-                                      {skillChangeSummary || localizeAdvisorNotificationRuntimeText(advisorPayload.summary || item.message, t)}
+                                      {skillChangeSummary || buildLocalizedAdvisorSummary(advisorPayload, item, t)}
                                     </p>
 
                                     {snapshotEntries.length > 0 ? (
@@ -2167,7 +2558,7 @@ export default function NotificationsPage(): JSX.Element {
                                               className="flex gap-2 text-sm leading-6 text-slate-700"
                                             >
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
+                                              <span>{localizeAdvisorRecommendation(recommendation, advisorPayload, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>
@@ -2366,7 +2757,7 @@ export default function NotificationsPage(): JSX.Element {
                                 >
                                   <div className="min-w-0">
                                     <p className="text-sm leading-6 text-slate-700">
-                                      {localizeNotificationRuntimeText(advisorPayload.summary || item.message, item, t)}
+                                      {buildLocalizedAdvisorSummary(advisorPayload, item, t)}
                                     </p>
 
                                     {sportSummaryEntries.length > 0 ? (
@@ -2385,7 +2776,7 @@ export default function NotificationsPage(): JSX.Element {
                                                 source: sportData as Record<string, unknown>,
                                                 navigate,
                                                 defaultScope: 'internal',
-                                              }) : localizeNotificationValue(formatAdvisorDisplayValue(value), item)}
+                                              }) : formatAdvisorDisplayValue(value)}
                                             </div>
                                           </div>
                                         ))}
@@ -2451,10 +2842,10 @@ export default function NotificationsPage(): JSX.Element {
                                                 {formatAdvisorValue(stage.stage_start_time_label)}
                                               </span>
                                               <span className="text-slate-700">
-                                                {localizeNotificationValue(formatAdvisorAvailability(stage.urgency), item)}
+                                                {formatAdvisorAvailability(stage.urgency)}
                                               </span>
                                               <span className="text-slate-700">
-                                                {localizeNotificationValue(formatAdvisorAvailability(stage.stage_plan_status), item)}
+                                                {formatAdvisorAvailability(stage.stage_plan_status)}
                                               </span>
                                             </div>
                                           ))}
@@ -2474,7 +2865,7 @@ export default function NotificationsPage(): JSX.Element {
                                               className="flex gap-2 text-sm leading-6 text-slate-700"
                                             >
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
+                                              <span>{localizeAdvisorRecommendation(recommendation, advisorPayload, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>
@@ -2646,7 +3037,7 @@ export default function NotificationsPage(): JSX.Element {
                                 >
                                   <div className="min-w-0">
                                     <p className="text-sm leading-6 text-slate-700">
-                                      {localizeAdvisorNotificationRuntimeText(advisorPayload.summary || item.message, t)}
+                                      {buildLocalizedAdvisorSummary(advisorPayload, item, t)}
                                     </p>
 
                                     {doctorSummaryEntries.length > 0 ? (
@@ -2667,7 +3058,7 @@ export default function NotificationsPage(): JSX.Element {
                                                     navigate,
                                                     defaultScope: 'internal',
                                                   })
-                                                : localizeNotificationValue(formatAdvisorDisplayValue(value), item)}
+                                                : formatAdvisorDisplayValue(value)}
                                             </div>
                                           </div>
                                         ))}
@@ -2705,7 +3096,7 @@ export default function NotificationsPage(): JSX.Element {
                                                 })}
                                               </span>
                                               <span className="text-slate-700">
-                                                {formatAdvisorDisplayValue(healthCase.case_label ?? healthCase.case_code ?? healthCase.case_type)}
+                                                {localizeNotificationValue(formatAdvisorDisplayValue(healthCase.case_label ?? healthCase.case_code ?? healthCase.case_type), item)}
                                               </span>
                                               <span className="text-slate-700">
                                                 {formatAdvisorAvailability(healthCase.severity)}
@@ -2766,7 +3157,7 @@ export default function NotificationsPage(): JSX.Element {
                                               className="flex gap-2 text-sm leading-6 text-slate-700"
                                             >
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
+                                              <span>{localizeAdvisorRecommendation(recommendation, advisorPayload, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>
@@ -2897,7 +3288,7 @@ export default function NotificationsPage(): JSX.Element {
                                 <div className={`grid gap-6 ${imageSrc ? 'lg:grid-cols-[minmax(0,1fr)_340px]' : 'grid-cols-1'}`}>
                                   <div className="min-w-0">
                                     <p className="text-sm leading-6 text-slate-700">
-                                      {localizeAdvisorNotificationRuntimeText(advisorPayload.summary || item.message, t)}
+                                      {buildLocalizedAdvisorSummary(advisorPayload, item, t)}
                                     </p>
 
                                     {mechanicSummaryEntries.length > 0 ? (
@@ -2924,10 +3315,10 @@ export default function NotificationsPage(): JSX.Element {
                                             {equipmentNeedingAttention.map((equipment, index) => (
                                               <div key={`${String(equipment.equipment_id ?? index)}-${index}`} className="grid grid-cols-[minmax(180px,1fr)_130px_110px_120px_110px_120px] gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0">
                                                 <span className="font-medium text-slate-900">{formatAdvisorDisplayText(equipment.display_name)}</span>
-                                                <span className="text-slate-700">{formatAdvisorDisplayText(equipment.category_label ?? equipment.equipment_category)}</span>
+                                                <span className="text-slate-700">{localizeNotificationValue(formatAdvisorDisplayValue(equipment.category_label ?? equipment.equipment_category), item)}</span>
                                                 <span className="text-slate-700">{formatAdvisorValue(equipment.condition_percent)}%</span>
-                                                <span className="text-slate-700">{formatAdvisorDisplayText(equipment.status_label ?? equipment.status)}</span>
-                                                <span className="text-slate-700">{formatAdvisorDisplayText(equipment.priority)}</span>
+                                                <span className="text-slate-700">{formatAdvisorDisplayValue(equipment.status_label ?? equipment.status)}</span>
+                                                <span className="text-slate-700">{formatAdvisorDisplayValue(equipment.priority)}</span>
                                                 <span className="text-slate-700">{formatAdvisorGameDateTime(equipment.last_used_game_date)}</span>
                                               </div>
                                             ))}
@@ -2945,7 +3336,7 @@ export default function NotificationsPage(): JSX.Element {
                                           </div>
                                           {equipmentCategories.map((category, index) => (
                                             <div key={`${String(category.equipment_category ?? index)}-${index}`} className="grid grid-cols-[minmax(0,1fr)_100px_100px_110px_120px] gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0">
-                                              <span className="font-medium text-slate-900">{formatAdvisorDisplayText(category.display_name ?? category.equipment_category)}</span>
+                                              <span className="font-medium text-slate-900">{localizeNotificationValue(formatAdvisorDisplayValue(category.display_name ?? category.equipment_category), item)}</span>
                                               <span>{formatAdvisorValue(category.owned_count)}</span>
                                               <span>{formatAdvisorValue(category.ready_count)}</span>
                                               <span>{formatAdvisorValue(category.attention_count)}</span>
@@ -2965,10 +3356,10 @@ export default function NotificationsPage(): JSX.Element {
                                           </div>
                                           {raceSupplies.map((supply, index) => (
                                             <div key={`${String(supply.supply_key ?? index)}-${index}`} className="grid grid-cols-[minmax(0,1fr)_100px_100px_100px_120px] gap-3 border-b border-slate-100 px-3 py-2.5 text-sm last:border-b-0">
-                                              <span className="font-medium text-slate-900">{formatAdvisorDisplayText(supply.display_name ?? supply.supply_key)}</span>
+                                              <span className="font-medium text-slate-900">{localizeNotificationValue(formatAdvisorDisplayValue(supply.display_name ?? supply.supply_key), item)}</span>
                                               <span>{formatAdvisorValue(supply.quantity_available)}</span>
                                               <span>{formatAdvisorValue(supply.warning_threshold)}</span>
-                                              <span>{formatAdvisorDisplayText(supply.stock_status_label ?? supply.stock_status)}</span>
+                                              <span>{formatAdvisorDisplayValue(supply.stock_status_label ?? supply.stock_status)}</span>
                                               <span>{formatAdvisorGameDateTime(supply.last_used_game_date)}</span>
                                             </div>
                                           ))}
@@ -2983,7 +3374,7 @@ export default function NotificationsPage(): JSX.Element {
                                           {recommendations.map((recommendation, index) => (
                                             <li key={`${localizeNotificationRuntimeText(recommendation, item, t)}-${index}`} className="flex gap-2 text-sm leading-6 text-slate-700">
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
+                                              <span>{localizeAdvisorRecommendation(recommendation, advisorPayload, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>
@@ -3102,7 +3493,7 @@ export default function NotificationsPage(): JSX.Element {
                                 >
                                   <div className="min-w-0">
                                     <p className="text-sm leading-6 text-slate-700">
-                                      {localizeAdvisorNotificationRuntimeText(advisorPayload.summary || item.message, t)}
+                                      {buildLocalizedAdvisorSummary(advisorPayload, item, t)}
                                     </p>
 
                                     {scoutSummaryEntries.length > 0 ? (
@@ -3245,7 +3636,7 @@ export default function NotificationsPage(): JSX.Element {
                                                     {formatAdvisorValue(report.precision_score)}
                                                   </span>
                                                   <span className="text-slate-700">
-                                                    {formatAdvisorDisplayText(report.review_status)}
+                                                    {formatAdvisorDisplayValue(report.review_status)}
                                                   </span>
                                                   <span className="text-slate-700">
                                                     {formatAdvisorGameDateTime(
@@ -3313,7 +3704,7 @@ export default function NotificationsPage(): JSX.Element {
                                                     '—'
                                                   )}
                                                 </span>
-                                                <span>{formatAdvisorDisplayText(task.status)}</span>
+                                                <span>{formatAdvisorDisplayValue(task.status)}</span>
                                                 <span>{formatAdvisorValue(task.precision_score)}</span>
                                                 <span>{formatAdvisorGameDateTime(task.completes_at_game_ts)}</span>
                                                 <span>
@@ -3340,7 +3731,7 @@ export default function NotificationsPage(): JSX.Element {
                                               className="flex gap-2 text-sm leading-6 text-slate-700"
                                             >
                                               <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                                              <span>{localizeNotificationRuntimeText(recommendation, item, t)}</span>
+                                              <span>{localizeAdvisorRecommendation(recommendation, advisorPayload, item, t)}</span>
                                             </li>
                                           ))}
                                         </ul>

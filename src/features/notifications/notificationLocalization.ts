@@ -1091,8 +1091,55 @@ export function localizeNotificationValue(
 ): string {
   if (!shouldLocalizeNotifications()) return value
 
+  const cleanValue = value.trim()
+
+  // Advisor/runtime composite values must use phrase templates so the target
+  // language controls word order. Never translate these token by token.
+  const advisorRuntimeValueKeys: Record<string, string> = {
+    'none scheduled': 'advisorRuntime.values.noneScheduled',
+    'not scheduled': 'advisorRuntime.values.notScheduled',
+    'today': 'advisorRuntime.values.today',
+    'tomorrow': 'advisorRuntime.values.tomorrow',
+    'active': 'advisorRuntime.values.active',
+    'completed': 'advisorRuntime.values.completed',
+    'ready': 'advisorRuntime.values.ready',
+    'draft': 'advisorRuntime.values.draft',
+    'submitted': 'advisorRuntime.values.submitted',
+    'missing': 'advisorRuntime.values.missing',
+    'incomplete': 'advisorRuntime.values.incomplete',
+    'locked': 'advisorRuntime.values.locked',
+    'open': 'advisorRuntime.values.open',
+    'in progress': 'advisorRuntime.values.inProgress',
+    'finalised': 'advisorRuntime.values.finalised',
+    'finalized': 'advisorRuntime.values.finalised',
+    'not ready': 'advisorRuntime.values.notReady',
+    'needs attention': 'advisorRuntime.values.needsAttention',
+    'critical': 'advisorRuntime.values.critical',
+    'urgent': 'advisorRuntime.values.urgent',
+    'high': 'advisorRuntime.values.high',
+    'medium': 'advisorRuntime.values.medium',
+    'low': 'advisorRuntime.values.low',
+    'mild': 'advisorRuntime.values.mild',
+    'moderate': 'advisorRuntime.values.moderate',
+    'severe': 'advisorRuntime.values.severe',
+  }
+  const advisorRuntimeKey = advisorRuntimeValueKeys[normalizePhrase(cleanValue)]
+  if (advisorRuntimeKey) return nt(advisorRuntimeKey)
+
+  let advisorMatch = /^in\s+(\d+)\s+days?$/i.exec(cleanValue)
+  if (advisorMatch) {
+    return nt('advisorRuntime.values.inDays', { count: Number(advisorMatch[1]) })
+  }
+
+  advisorMatch = /^Season\s+(\d+)\s*[-–—,:]\s*(.+)$/i.exec(cleanValue)
+  if (advisorMatch) {
+    return nt('common.seasonDate', {
+      season: Number(advisorMatch[1]),
+      date: advisorMatch[2].trim(),
+    })
+  }
+
   if (String(item?.type_code ?? '').toUpperCase() === 'SEASON_STARTED' && item) {
-    const cleanValue = value.trim()
 
     const seasonMatch = /^Season\s+(\d+)$/i.exec(cleanValue)
     if (seasonMatch) {
@@ -1248,13 +1295,10 @@ export function localizeNotificationValue(
     localizeExistingGamePhrase(value) || localizeExistingGameTemplate(value)
   if (existingGamePhrase) return existingGamePhrase
 
-  // Short metadata values frequently reuse the same vocabulary as labels.
-  // Translate them token-by-token only when every English token has a known
-  // localized equivalent; otherwise preserve dynamic names/identifiers.
-  if (value.length <= 120) {
-    const tokenized = localizeLabelByReusableTokens(value)
-    if (tokenized) return tokenized
-  }
+  // Do not token-translate composite runtime values here. Translating words
+  // independently preserves English syntax and can rotate semantic words in
+  // languages with different word order. Exact phrases/templates above are the
+  // authoritative path; unknown dynamic values are preserved verbatim.
 
   if (/\/week\b/i.test(value)) {
     return value.replace(/\/week\b/gi, `/${nt('templateLocalization.perWeek')}`)
