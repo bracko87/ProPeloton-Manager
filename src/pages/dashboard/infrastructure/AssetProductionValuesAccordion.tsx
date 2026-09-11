@@ -12,6 +12,7 @@ type SupportedAssetKey =
 type Props = {
   assetKey: SupportedAssetKey
   configRows: InfrastructureAssetConfigRow[]
+  embedded?: boolean
 }
 
 type Copy = {
@@ -93,7 +94,11 @@ function canonicalLines(assetKey: SupportedAssetKey, level: number): string[] {
   }
 }
 
-export function AssetProductionValuesAccordion({ assetKey, configRows }: Props): JSX.Element | null {
+export function AssetProductionValuesAccordion({
+  assetKey,
+  configRows,
+  embedded = false,
+}: Props): JSX.Element | null {
   const [isOpen, setIsOpen] = useState(false)
   const sortedConfig = useMemo(
     () => [...configRows].sort((a, b) => a.asset_level - b.asset_level),
@@ -104,7 +109,13 @@ export function AssetProductionValuesAccordion({ assetKey, configRows }: Props):
   if (sortedConfig.length === 0) return null
 
   return (
-    <section className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+    <section
+      className={
+        embedded
+          ? 'mt-5 border-t border-gray-100 pt-4'
+          : 'mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5'
+      }
+    >
       <button
         type="button"
         onClick={() => setIsOpen(value => !value)}
@@ -158,9 +169,7 @@ export function AssetProductionValuesAccordion({ assetKey, configRows }: Props):
                 {canonical.length > 0 && (
                   <div className="mt-3 space-y-1.5">
                     {canonical.map(line => (
-                      <div key={line} className="text-xs font-medium leading-4 text-gray-700">
-                        {line}
-                      </div>
+                      <div key={line} className="text-xs font-medium leading-4 text-gray-700">{line}</div>
                     ))}
                   </div>
                 )}
