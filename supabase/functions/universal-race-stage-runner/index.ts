@@ -4,12 +4,12 @@ import {
   isUniversalPhase78IssueNonBlocking,
   runRaceEngine,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/ee143a20cd74b7fe371ede346aca2b1583dc3306/src/universal-race-engine/runRaceEngine.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/79dd5f231c0677441eeaf7a4b3830c82fa461904/src/universal-race-engine/runRaceEngine.ts";
 import {
   buildProductionUniversalRaceEngineInput,
   type ProductionUniversalRaceSources,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/ee143a20cd74b7fe371ede346aca2b1583dc3306/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/ee143a20cd74b7fe371ede346aca2b1583dc3306/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/79dd5f231c0677441eeaf7a4b3830c82fa461904/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/79dd5f231c0677441eeaf7a4b3830c82fa461904/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 // Accepted V5.2 is kept as the emergency sporting fallback only. It is used
 // only after a failed/orphaned primary attempt or at the mandatory T-15 deadline.
@@ -18,7 +18,7 @@ import { buildProductionUniversalRaceEngineInput as buildFallbackProductionUnive
 import { buildProductionUniversalRaceOutput as buildFallbackProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
-const SOURCE_COMMIT = "ee143a20cd74b7fe371ede346aca2b1583dc3306";
+const SOURCE_COMMIT = "79dd5f231c0677441eeaf7a4b3830c82fa461904";
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
 const WORKER_BUILD = "supabase_race_calculation_survival_v1";
 const MAX_CALCULATIONS_PER_TICK = 1;
