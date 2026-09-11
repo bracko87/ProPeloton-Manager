@@ -1,0 +1,138 @@
+name: Fix all advisor notification localization v2 2026-09-11
+
+on:
+  push:
+    paths:
+      - '.github/workflows/chatgpt-fix-all-advisor-localization-20260911-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix-audit-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Repair patch utility and apply advisor localization fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/scripts/fix_all_advisor_notification_localization_20260911.py')
+          s=p.read_text(encoding='utf-8')
+          old='next_text, count = re.subn(pattern, replacement, text, count=1, flags=re.S)'
+          new='next_text, count = re.subn(pattern, lambda _match: replacement, text, count=1, flags=re.S)'
+          if old not in s:
+              raise SystemExit('Expected regex helper line not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+          python .github/scripts/fix_all_advisor_notification_localization_20260911.py
+
+      - name: Audit advisor localization semantics
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re
+          root=Path('.')
+          locales=['en','sr-Latn','de','hr','es','it','fr','ru']
+          page=(root/'src/pages/dashboard/NotificationsPage.tsx').read_text(encoding='utf-8')
+          loc=(root/'src/features/notifications/notificationLocalization.ts').read_text(encoding='utf-8')
+          problems=[]
+          if '`Season ${seasonNumber} - ${localizedDate}`' in page:
+              problems.append('Hardcoded English Season fallback remains')
+          unsafe='if (value.length <= 120) {\n    const tokenized = localizeLabelByReusableTokens(value)'
+          if unsafe in loc:
+              problems.append('Unsafe token-by-token value translation remains')
+          for required in ['buildLocalizedAdvisorSummary','localizeAdvisorRecommendation','localizeAdvisorRuntimeValue',"translateNotificationKey('common.seasonDate'"]:
+              if required not in page: problems.append(f'Missing runtime localization wiring: {required}')
+
+          bundles={l:json.loads((root/f'src/i18n/locales/{l}/notifications.json').read_text(encoding='utf-8')) for l in locales}
+          def flat(o,p=''):
+              out={}
+              if isinstance(o,dict):
+                  for k,v in o.items(): out.update(flat(v,f'{p}.{k}' if p else k))
+              else: out[p]=o
+              return out
+          flats={l:flat(bundles[l]) for l in locales}
+          en=flats['en']
+          runtime_keys=[k for k in en if k.startswith('advisorRuntime.')]
+          advisor_prefixes=('headCoach.','sportDirector.','doctor.','mechanic.','scout.','reportVariants.','advisorRuntime.')
+          advisor_keys=[k for k in en if k.startswith(advisor_prefixes)]
+          ph=lambda v:set(re.findall(r'{{\s*([A-Za-z0-9_]+)\s*}}',v)) if isinstance(v,str) else set()
+          for l in locales:
+              missing=[k for k in runtime_keys if k not in flats[l]]
+              if missing: problems.append(f'{l}: missing advisorRuntime keys {missing[:20]}')
+              missing_advisor=[k for k in advisor_keys if k not in flats[l]]
+              if missing_advisor: problems.append(f'{l}: missing advisor keys {missing_advisor[:20]}')
+              for k in runtime_keys:
+                  if k in flats[l] and ph(en[k]) != ph(flats[l][k]):
+                      problems.append(f'{l}: placeholder mismatch {k}: en={ph(en[k])} locale={ph(flats[l][k])}')
+
+          expected={'en':'Season ','sr-Latn':'Sezona ','de':'Saison ','hr':'Sezona ','es':'Temporada ','it':'Stagione ','fr':'Saison ','ru':'Сезон '}
+          for l,prefix in expected.items():
+              value=flats[l].get('common.seasonDate','')
+              if not str(value).startswith(prefix): problems.append(f'{l}: bad seasonDate order/value: {value}')
+
+          for l in locales[1:]:
+              none=flats[l].get('advisorRuntime.values.noneScheduled','')
+              nots=flats[l].get('advisorRuntime.values.notScheduled','')
+              if not none or not nots: problems.append(f'{l}: missing not/none scheduled semantic values')
+              if none == 'None scheduled' or nots == 'Not scheduled': problems.append(f'{l}: scheduled fallbacks still English')
+
+          forbidden={
+              'de':['Jahreszeit {{season}} - {{date}}','Erwartete Rendite','Hauptmechanische Empfehlungen'],
+              'hr':['Premategorija','Deo tela','Beleške skauta'],
+              'es':['Rendimiento previsto','Recomendaciones del Jefe de Mecánico'],
+              'it':['Infermieri','Raccomandazioni meccaniche principali'],
+              'fr':['Programme des','Effet de la facilité'],
+              'ru':['Сроки проведения выборов','Ожидаемая доходность','Неожиданное техническое обслуживание'],
+          }
+          for l,values in forbidden.items():
+              dump=json.dumps(bundles[l],ensure_ascii=False)
+              for value in values:
+                  if value in dump: problems.append(f'{l}: poor advisor translation remains: {value}')
+
+          print('=== SCREENSHOT REGRESSION SAMPLES ===')
+          for l in locales:
+              season=flats[l]['common.seasonDate'].replace('{{season}}','1').replace('{{date}}','21.01.')
+              print(l,'|',season,'|',flats[l]['advisorRuntime.values.noneScheduled'],'|',flats[l]['advisorRuntime.values.notScheduled'],'|',flats[l]['advisorRuntime.values.tomorrow'])
+          if problems:
+              print('\n'.join('ERROR: '+p for p in problems)); raise SystemExit(1)
+          print(f'Advisor localization semantic audit PASSED: {len(advisor_keys)} advisor keys, {len(runtime_keys)} runtime keys, {len(locales)} locales')
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Diff check
+        run: git diff --check
+
+      - name: Commit application changes
+        shell: bash
+        run: |
+          git restore .github/scripts/fix_all_advisor_notification_localization_20260911.py
+          if git diff --quiet; then
+            echo 'No advisor localization changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/dashboard/NotificationsPage.tsx src/features/notifications/notificationLocalization.ts src/i18n/locales/*/notifications.json
+          git commit -m 'Fix advisor notification localization across all languages'
+          git pull --rebase origin main
+          git push origin HEAD:main
