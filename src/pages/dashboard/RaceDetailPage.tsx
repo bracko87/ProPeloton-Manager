@@ -518,6 +518,8 @@ type RaceStageLiveState = {
   is_live: boolean
   results_visible: boolean
   speed_locked: boolean
+  publication_pending: boolean
+  publication_error: string | null
   progress: number
 }
 
@@ -13345,10 +13347,31 @@ function UniversalRaceReplayPage({
   const [liveReplayState, setLiveReplayState] =
     useState<RaceStageLiveState | null>(null)
   const liveReplayWasActiveRef = useRef(false)
+  const liveReplayServerStateInitializedRef = useRef(false)
+  const visibleResultsPayloadSyncedRef = useRef(false)
   const liveReplayActive = liveReplayState?.is_live === true
-  const replaySpeedLocked =
-    liveReplayState?.speed_locked === true ||
-    authoritativePayload?.lifecycle?.speed_locked === true
+  const replayResultsVisible =
+    liveReplayState?.results_visible === true ||
+    authoritativePayload?.lifecycle?.results_visible === true
+  const replayPublicationPending =
+    liveReplayState?.publication_pending === true
+  const replayPublicationError =
+    !replayResultsVisible &&
+    typeof liveReplayState?.publication_error === 'string' &&
+    liveReplayState.publication_error.trim().length > 0
+      ? liveReplayState.publication_error.trim()
+      : null
+  const replayFinalizing =
+    replayPublicationPending && !replayPublicationError
+  const replayPublicationRetrying =
+    replayPublicationPending && Boolean(replayPublicationError)
+  const replaySpeedLocked = liveReplayState
+    ? liveReplayState.speed_locked === true
+    : authoritativePayload?.lifecycle?.speed_locked === true
+  const replayControlsLocked =
+    replaySpeedLocked ||
+    replayPublicationPending ||
+    (Boolean(replayPublicationError) && !replayResultsVisible)
   const officialLifecycleResultsVisible =
     authoritativePayload?.lifecycle?.results_visible === true
   const [preStageStandingByRiderId, setPreStageStandingByRiderId] = useState<
@@ -13447,6 +13470,13 @@ function UniversalRaceReplayPage({
   }, [race.id, stage.id])
 
   useEffect(() => {
+    liveReplayWasActiveRef.current = false
+    liveReplayServerStateInitializedRef.current = false
+    visibleResultsPayloadSyncedRef.current = false
+    setLiveReplayState(null)
+  }, [stage.id])
+
+  useEffect(() => {
     let cancelled = false
 
     async function refreshPersistedLiveReplayState(): Promise<void> {
@@ -13465,25 +13495,36 @@ function UniversalRaceReplayPage({
 
       setLiveReplayState(nextLiveState)
 
+      const serverProgress = Math.max(
+        0,
+        Math.min(1, Number(nextLiveState?.progress ?? 0))
+      )
+      if (
+        !liveReplayServerStateInitializedRef.current ||
+        nextLiveState?.is_live === true ||
+        nextLiveState?.publication_pending === true
+      ) {
+        setReplayProgress((current) => Math.max(current, serverProgress))
+      }
+      liveReplayServerStateInitializedRef.current = true
+
       if (nextLiveState?.is_live === true) {
         liveReplayWasActiveRef.current = true
+        visibleResultsPayloadSyncedRef.current = false
         setPlaybackSpeed(1)
         setPlaying(true)
-
-        const serverProgress = Math.max(
-          0,
-          Math.min(1, Number(nextLiveState.progress ?? 0))
-        )
-        setReplayProgress((current) => Math.max(current, serverProgress))
         return
       }
 
       if (
-        liveReplayWasActiveRef.current &&
-        nextLiveState?.results_visible === true
+        nextLiveState?.results_visible === true &&
+        !visibleResultsPayloadSyncedRef.current
       ) {
-        setPlaying(false)
-        setReplayProgress(1)
+        visibleResultsPayloadSyncedRef.current = true
+        if (liveReplayWasActiveRef.current) {
+          setPlaying(false)
+          setReplayProgress(1)
+        }
 
         const payloadResponse = await raceDetailReadRpc(
           'get_universal_race_stage_replay_payload_v1',
@@ -13626,10 +13667,15 @@ function UniversalRaceReplayPage({
   )
 
   useEffect(() => {
-    if (liveReplayWasActiveRef.current) return
+    if (
+      liveReplayWasActiveRef.current ||
+      liveReplayState?.has_simulation === true
+    ) {
+      return
+    }
     setReplayProgress(0)
     setPlaying(false)
-  }, [shadowBuild.result])
+  }, [shadowBuild.result, liveReplayState?.has_simulation])
 
   useEffect(() => {
     if (!replaySpeedLocked) return
@@ -15227,7 +15273,7 @@ function UniversalRaceReplayPage({
   }, [effectiveStagePoints, profile, stage.distance_km])
 
   function togglePlayback() {
-    if (replaySpeedLocked) return
+    if (replayControlsLocked) return
 
     if (replayProgress >= 1) {
       setReplayProgress(0)
@@ -15237,13 +15283,13 @@ function UniversalRaceReplayPage({
   }
 
   function finishReplay() {
-    if (replaySpeedLocked) return
+    if (replayControlsLocked) return
     setPlaying(false)
     setReplayProgress(1)
   }
 
   function restartReplay() {
-    if (replaySpeedLocked) return
+    if (replayControlsLocked) return
     setPlaying(false)
     setReplayProgress(0)
   }
@@ -15900,7 +15946,7 @@ function UniversalRaceReplayPage({
                     <button
                       type="button"
                       onClick={togglePlayback}
-                      disabled={replaySpeedLocked}
+                      disabled={replayControlsLocked}
                       className={
                         isTimeTrialReplay
                           ? `rounded-full px-4 py-2 text-xs font-semibold text-white ${
@@ -15917,11 +15963,15 @@ function UniversalRaceReplayPage({
                     >
                       {liveReplayActive
                         ? 'LIVE · 1×'
-                        : replaySpeedLocked
-                          ? 'Finalizing'
-                          : playing
-                            ? 'Pause'
-                            : 'Play'}
+                        : replayPublicationRetrying
+                          ? 'Publication retrying'
+                          : replayFinalizing
+                            ? 'Finalizing'
+                            : replayPublicationError && !replayResultsVisible
+                              ? 'Publication error'
+                              : playing
+                                ? 'Pause'
+                                : 'Play'}
                     </button>
 
                     {[1, 2, 4, 8].map((value) => (
@@ -15929,12 +15979,12 @@ function UniversalRaceReplayPage({
                         key={value}
                         type="button"
                         onClick={() => {
-                          if (replaySpeedLocked) return
+                          if (replayControlsLocked) return
                           setPlaybackSpeed(
                             value as 1 | 2 | 4 | 8
                           )
                         }}
-                        disabled={replaySpeedLocked}
+                        disabled={replayControlsLocked}
                         className={`rounded-full border ${
                           isTimeTrialReplay
                             ? 'px-3 py-2 text-xs'
@@ -15952,7 +16002,7 @@ function UniversalRaceReplayPage({
                     <button
                       type="button"
                       onClick={finishReplay}
-                      disabled={replaySpeedLocked}
+                      disabled={replayControlsLocked}
                       className={
                         isTimeTrialReplay
                           ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'
@@ -15965,7 +16015,7 @@ function UniversalRaceReplayPage({
                     <button
                       type="button"
                       onClick={restartReplay}
-                      disabled={replaySpeedLocked || replayProgress <= 0}
+                      disabled={replayControlsLocked || replayProgress <= 0}
                       className={
                         isTimeTrialReplay
                           ? 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40'
@@ -15986,6 +16036,26 @@ function UniversalRaceReplayPage({
                     </div>
                   </div>
                 </div>
+
+                {replayPublicationRetrying ? (
+                  <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+                    <div className="font-semibold">Official results publication was delayed. Automatic server retry is active.</div>
+                    <div className="mt-1 break-words font-mono text-[11px] text-amber-800">
+                      {replayPublicationError}
+                    </div>
+                  </div>
+                ) : replayFinalizing ? (
+                  <div className="mb-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-600">
+                    Finalizing official results…
+                  </div>
+                ) : replayPublicationError && !replayResultsVisible ? (
+                  <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
+                    <div className="font-semibold">Official results publication needs server retry.</div>
+                    <div className="mt-1 break-words font-mono text-[11px]">
+                      {replayPublicationError}
+                    </div>
+                  </div>
+                ) : null}
 
                 <StageProfileChart
                   points={chartPoints}
