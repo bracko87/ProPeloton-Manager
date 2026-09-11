@@ -188,27 +188,38 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
   return (
     <>
       <style>{`
+        .asset-owned-only-team-bus > section,
+        .asset-owned-only-equipment > div,
+        .asset-owned-only-mobile > div,
+        .asset-owned-only-medical > section {
+          margin: 0 !important;
+          border: 0 !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+          background: transparent !important;
+        }
         .asset-owned-only-team-bus > section > div:nth-child(1),
-        .asset-owned-only-team-bus > section > div:nth-child(2) {
+        .asset-owned-only-team-bus > section > div:nth-child(2),
+        .asset-owned-only-equipment > div > div:nth-child(1),
+        .asset-owned-only-equipment > div > div:nth-child(2),
+        .asset-owned-only-mobile > div > div:nth-child(1),
+        .asset-owned-only-mobile > div > div:nth-child(2),
+        .asset-owned-only-medical > section:first-child {
           display: none !important;
         }
-        .asset-owned-only-team-bus > section > div:nth-child(3) {
+        .asset-owned-only-team-bus > section > div:nth-child(3),
+        .asset-owned-only-equipment > div > div:nth-child(3),
+        .asset-owned-only-mobile > div > div:nth-child(3) {
           margin-top: 0 !important;
           border-top: 0 !important;
           padding-top: 0 !important;
         }
-        .asset-owned-only-equipment > div > div:nth-child(1),
-        .asset-owned-only-equipment > div > div:nth-child(2),
-        .asset-owned-only-mobile > div > div:nth-child(1),
-        .asset-owned-only-mobile > div > div:nth-child(2) {
+        .asset-owned-only-equipment > div > .rounded-xl.border-slate-200,
+        .asset-owned-only-mobile > div > .rounded-xl.border-slate-200 {
           display: none !important;
         }
-        .asset-owned-only-equipment > div > div:nth-child(3),
-        .asset-owned-only-mobile > div > div:nth-child(3) {
-          margin-top: 0 !important;
-        }
-        .asset-owned-only-medical > section:first-child {
-          display: none !important;
+        .asset-owned-only-medical > section:nth-of-type(2) {
+          margin-bottom: 0 !important;
         }
       `}</style>
 
@@ -226,7 +237,7 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
       )}
 
       {props.activeAssetSubTab === 'team_bus' && (
-        <>
+        <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="asset-owned-only-team-bus">
             <TeamBusSupportPanel
               configRows={props.teamBusConfigRows ?? []}
@@ -236,12 +247,13 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           <AssetProductionValuesAccordion
             assetKey="team_bus"
             configRows={props.teamBusConfigRows ?? []}
+            embedded
           />
-        </>
+        </section>
       )}
 
       {props.activeAssetSubTab === 'equipment_van' && (
-        <>
+        <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="asset-owned-only-equipment">
             <EquipmentVanSupportPanel
               configRows={props.equipmentVanConfigRows ?? []}
@@ -251,12 +263,13 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           <AssetProductionValuesAccordion
             assetKey="equipment_van"
             configRows={props.equipmentVanConfigRows ?? []}
+            embedded
           />
-        </>
+        </section>
       )}
 
       {props.activeAssetSubTab === 'mobile_workshop' && (
-        <>
+        <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="asset-owned-only-mobile">
             <MobileWorkshopSupportPanel
               configRows={props.mobileWorkshopConfigRows ?? []}
@@ -266,12 +279,13 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           <AssetProductionValuesAccordion
             assetKey="mobile_workshop"
             configRows={props.mobileWorkshopConfigRows ?? []}
+            embedded
           />
-        </>
+        </section>
       )}
 
       {props.activeAssetSubTab === 'medical_van' && (
-        <>
+        <section className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="asset-owned-only-medical">
             <MedicalVanSupportPanel
               configRows={props.medicalVanConfigRows ?? []}
@@ -281,8 +295,9 @@ export function AssetsSection(props: AssetsSectionProps): JSX.Element {
           <AssetProductionValuesAccordion
             assetKey="medical_van"
             configRows={props.medicalVanConfigRows ?? []}
+            embedded
           />
-        </>
+        </section>
       )}
 
       {isCatalogOpen && catalog.assetKey === 'team_car' && (
