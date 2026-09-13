@@ -7,7 +7,6 @@ permissions:
   contents: write
 jobs:
   patch-build-commit:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +20,10 @@ jobs:
 
           path = Path('src/universal-race-engine/runRaceEngine.ts')
           text = path.read_text()
+          new_marker = "phase11l-v6-scenario-director-flat-hilly-2026-09-13"
+          if new_marker in text:
+              print('physical director already integrated')
+              raise SystemExit(0)
 
           import_block = """import {
   applyRoadScenarioFinishFragmentationV1,
@@ -28,7 +31,6 @@ jobs:
 } from './roadScenarioPhysicalDirectorV1.ts'
 
 """
-          assert not text.startswith('import {'), 'unexpected pre-existing import block'
           text = import_block + text
 
           old_build = """export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
@@ -142,6 +144,10 @@ jobs:
       - name: Commit physical director integration
         shell: bash
         run: |
+          if git diff --quiet -- src/universal-race-engine/runRaceEngine.ts; then
+            echo "No engine patch to commit"
+            exit 0
+          fi
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add src/universal-race-engine/runRaceEngine.ts
