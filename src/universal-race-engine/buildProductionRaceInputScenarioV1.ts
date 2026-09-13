@@ -12,11 +12,29 @@ import {
   getHillyScenarioAuditV1,
   type HillyScenarioHistoryEntryV1,
 } from './hillyScenarioV1.ts'
+import {
+  applyMountainScenarioV1,
+  getMountainScenarioAuditV1,
+  type MountainScenarioHistoryEntryV1,
+} from './mountainScenarioV1.ts'
+import {
+  applyCobbledScenarioV1,
+  getCobbledScenarioAuditV1,
+  type CobbledScenarioHistoryEntryV1,
+} from './cobbledScenarioV1.ts'
 import type { UniversalRaceEngineInput } from './runRaceEngine.ts'
 
 type Row = Record<string, unknown>
 type JsonRecord = Record<string, unknown>
-type ScenarioHistoryEntryV1 = FlatScenarioHistoryEntryV1 | HillyScenarioHistoryEntryV1
+
+export interface ScenarioHistoryEntryV1 {
+  readonly raceId: string
+  readonly stageId: string
+  readonly gameDate: string
+  readonly templateId: string
+  readonly family: string
+  readonly status?: string | null
+}
 
 export type ScenarioProductionUniversalRaceSources = Omit<
   BaseProductionUniversalRaceSources,
@@ -136,14 +154,7 @@ function parseScenarioHistory(value: unknown): ScenarioHistoryEntryV1[] {
     const templateId = text(row.templateId ?? row.template_id)
     const family = text(row.family ?? row.template_family)
     if (!raceId || !stageId || !gameDate || !templateId || !family) return []
-    return [{
-      raceId,
-      stageId,
-      gameDate,
-      templateId,
-      family: family as FlatScenarioHistoryEntryV1['family'],
-      status: text(row.status) ?? `history_${index}`,
-    }]
+    return [{ raceId, stageId, gameDate, templateId, family, status: text(row.status) ?? `history_${index}` }]
   })
 }
 
@@ -161,17 +172,16 @@ function scenarioSelectionHistory(
   const raceId = text((sources.race as Row).id)
   if (!raceId || !gameDate) return history
 
-  // Same-day exact-template avoidance is intentionally upgraded to the same
-  // hard guard used for an already-used template in this stage race. Guards are
-  // placed before true race history and use a sentinel family so they do not
-  // pretend that a different race's scenario family was used in this race.
+  // Same-day exact-template avoidance is upgraded to the same hard guard used
+  // inside a stage race. A sentinel family prevents another race's family from
+  // being mistaken for this race's family history.
   const sameDayGuards = history
     .filter((entry) => entry.gameDate === gameDate && entry.raceId !== raceId)
     .map((entry, index) => ({
       ...entry,
       raceId,
       stageId: `same-day-guard:${index}:${entry.stageId}`,
-      family: '__same_day_exact_guard__' as FlatScenarioHistoryEntryV1['family'],
+      family: '__same_day_exact_guard__',
     }))
 
   return [...sameDayGuards, ...history]
@@ -217,6 +227,22 @@ export function buildScenarioProductionUniversalRaceEngineInput(
     }).input
   }
 
+  if (normalized.stage.terrainType === 'mountain') {
+    return applyMountainScenarioV1(normalized, {
+      gameDate,
+      phaseCommandRows: humanRows,
+      history: history.filter((entry) => entry.templateId.startsWith('mountain_')) as readonly MountainScenarioHistoryEntryV1[],
+    }).input
+  }
+
+  if (normalized.stage.terrainType === 'cobbled') {
+    return applyCobbledScenarioV1(normalized, {
+      gameDate,
+      phaseCommandRows: humanRows,
+      history: history.filter((entry) => entry.templateId.startsWith('cobbled_')) as readonly CobbledScenarioHistoryEntryV1[],
+    }).input
+  }
+
   return normalized
 }
 
@@ -225,7 +251,11 @@ export const buildProductionUniversalRaceEngineInput = buildScenarioProductionUn
 export function getRoadScenarioAuditV1(
   input: UniversalRaceEngineInput,
 ): JsonRecord | null {
-  const audit = getFlatScenarioAuditV1(input) ?? getHillyScenarioAuditV1(input)
+  const audit =
+    getFlatScenarioAuditV1(input) ??
+    getHillyScenarioAuditV1(input) ??
+    getMountainScenarioAuditV1(input) ??
+    getCobbledScenarioAuditV1(input)
   if (!audit) return null
   return object(audit)
 }
