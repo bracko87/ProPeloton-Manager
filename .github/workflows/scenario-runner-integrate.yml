@@ -1,0 +1,308 @@
+name: Scenario runner integration
+on:
+  push:
+    branches:
+      - chatgpt-scenario-core-v1-20260913
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: ${{ !contains(github.event.head_commit.message, 'Wire scenario lifecycle into race runner') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch authoritative race runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('supabase/functions/universal-race-stage-runner/index.ts')
+          text = path.read_text()
+          frozen = 'c0069963ccd0ba7f896e2566249647ae7d3879ed'
+
+          old = '''} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/79dd5f231c0677441eeaf7a4b3830c82fa461904/src/universal-race-engine/runRaceEngine.ts";
+import {
+  buildProductionUniversalRaceEngineInput,
+  type ProductionUniversalRaceSources,
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/79dd5f231c0677441eeaf7a4b3830c82fa461904/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/79dd5f231c0677441eeaf7a4b3830c82fa461904/src/universal-race-engine/buildProductionRaceOutput.ts";'''
+          new = f'''}} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/{frozen}/src/universal-race-engine/runRaceEngine.ts";
+import {{
+  buildScenarioProductionUniversalRaceEngineInput as buildProductionUniversalRaceEngineInput,
+  getRoadScenarioAuditV1,
+  type ScenarioProductionUniversalRaceSources as ProductionUniversalRaceSources,
+}} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/{frozen}/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
+import {{ buildProductionUniversalRaceOutput }} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/{frozen}/src/universal-race-engine/buildProductionRaceOutput.ts";'''
+          assert text.count(old) == 1, f'primary imports anchor count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = '''const SOURCE_COMMIT = "79dd5f231c0677441eeaf7a4b3830c82fa461904";
+const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
+const WORKER_BUILD = "supabase_race_calculation_survival_v1";'''
+          new = f'''const SOURCE_COMMIT = "{frozen}";
+const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
+const WORKER_BUILD = "road_scenario_v1_flat_hilly_2026_09_13";'''
+          assert text.count(old) == 1, f'build constants anchor count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = '''function buildSources(payloadValue: unknown, simulationRunId: string, preStageStandings: unknown): ProductionUniversalRaceSources {'''
+          new = '''function buildSources(
+  payloadValue: unknown,
+  simulationRunId: string,
+  preStageStandings: unknown,
+  scenarioHistory: readonly JsonObject[] = [],
+): ProductionUniversalRaceSources {'''
+          assert text.count(old) == 1, f'buildSources signature count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = '''    preStageStandings,
+    phase9Payload: firstObject(payload.phase9_inputs) as ProductionUniversalRaceSources["phase9Payload"],
+    deterministicSeed: `universal-production:${raceId}:${stageId}:${simulationRunId}`,
+  };'''
+          new = '''    preStageStandings,
+    phase9Payload: firstObject(payload.phase9_inputs) as ProductionUniversalRaceSources["phase9Payload"],
+    scenarioHistory: scenarioHistory as ProductionUniversalRaceSources["scenarioHistory"],
+    deterministicSeed: `universal-production:${raceId}:${stageId}:${simulationRunId}`,
+  };'''
+          assert text.count(old) == 1, f'buildSources body count={text.count(old)}'
+          text = text.replace(old, new)
+
+          anchor = '''function stageFormatRequiresTimeTrialRules(input: any): boolean {
+  return ["individual_time_trial", "team_time_trial", "pair_time_trial", "prologue"].includes(String(input?.stage?.stageFormat ?? ""));
+}
+
+'''
+          assert text.count(anchor) == 1, f'helper insertion anchor count={text.count(anchor)}'
+          helpers = anchor + '''function sourceRaceId(sources: ProductionUniversalRaceSources): string {
+  return String((sources.race as unknown as JsonObject)?.id ?? "");
+}
+
+function sourceGameDate(sources: ProductionUniversalRaceSources): string {
+  const stage = sources.stage as unknown as JsonObject;
+  const race = sources.race as unknown as JsonObject;
+  return String(stage.stage_date ?? race.start_date ?? "").slice(0, 10);
+}
+
+async function loadRoadScenarioHistory(
+  supabase: SupabaseClient,
+  sources: ProductionUniversalRaceSources,
+): Promise<JsonObject[]> {
+  const raceId = sourceRaceId(sources);
+  const gameDate = sourceGameDate(sources);
+  if (!raceId || !gameDate) return [];
+  return rows(await rpc<unknown>(supabase, "universal_race_stage_scenario_history_v1", {
+    p_race_id: raceId,
+    p_game_date: gameDate,
+  }));
+}
+
+async function prepareScenarioPrimaryInput(
+  supabase: SupabaseClient,
+  sources: ProductionUniversalRaceSources,
+  stageId: string,
+  simulationRunId: string,
+): Promise<{ input: any; audit: JsonObject | null; reserved: boolean; reservation: JsonObject | null }> {
+  let history = await loadRoadScenarioHistory(supabase, sources);
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const attemptSources = { ...sources, scenarioHistory: history } as ProductionUniversalRaceSources;
+    const input = buildProductionUniversalRaceEngineInput(attemptSources);
+    const audit = getRoadScenarioAuditV1(input);
+    if (!audit) return { input, audit: null, reserved: false, reservation: null };
+
+    const reservation = object(await rpc<unknown>(supabase, "universal_race_stage_reserve_scenario_v1", {
+      p_stage_id: stageId,
+      p_simulation_run_id: simulationRunId,
+      p_audit: audit,
+    }));
+    const status = String(reservation.status ?? "");
+    const reservedTemplateId = String(reservation.template_id ?? "");
+    const selectedTemplateId = String(audit.templateId ?? "");
+
+    if ((status === "reserved" || status === "existing") &&
+        (!reservedTemplateId || reservedTemplateId === selectedTemplateId)) {
+      return { input, audit, reserved: true, reservation };
+    }
+
+    if (status === "existing" || status === "collision") {
+      history = await loadRoadScenarioHistory(supabase, sources);
+      continue;
+    }
+
+    throw new Error(`Scenario reservation failed with status ${status || "unknown"}.`);
+  }
+  throw new Error("Scenario reservation did not converge after history refreshes.");
+}
+
+async function abandonScenarioReservation(
+  supabase: SupabaseClient,
+  stageId: string,
+  simulationRunId: string,
+  reason: string,
+): Promise<void> {
+  try {
+    await rpc<unknown>(supabase, "universal_race_stage_abandon_scenario_v1", {
+      p_stage_id: stageId,
+      p_simulation_run_id: simulationRunId,
+      p_reason: reason,
+    });
+  } catch {
+    // Scenario audit cleanup is non-sporting and must never block fallback.
+  }
+}
+
+function scenarioOutcomeSummary(result: any): JsonObject {
+  const classification = rows(result?.finishResolution?.classification);
+  const gaps = classification.map((row) => Math.max(0, finiteNumber(row.gapSeconds ?? row.officialGapSeconds, 0)));
+  const winner = classification[0] ?? {};
+  return {
+    winner_rider_id: winner.riderId ?? null,
+    classification_rider_count: classification.length,
+    same_time_rider_count: gaps.filter((gap) => gap <= 0.5).length,
+    max_gap_seconds: gaps.length > 0 ? Math.max(...gaps) : 0,
+    replay_checkpoint_count: Array.isArray(result?.replayTimeline?.checkpoints) ? result.replayTimeline.checkpoints.length : 0,
+  };
+}
+
+'''
+          text = text.replace(anchor, helpers)
+
+          old = '''    const sources = buildSources(claim.payload, simulationRunId, preStageStandings);
+
+    let currentBaseInput: any = null;
+    try {
+      currentBaseInput = buildProductionUniversalRaceEngineInput(sources);
+    } catch (error) {
+      useFallback = true;
+      fallbackReason = fallbackReason || "primary_input_adapter_exception";
+      degradedComponents.push("primary_input_adapter_failed");
+      if (survivalMode.use_fallback !== true) {
+        const details = errorPayload(error);
+        degradedComponents.push(`primary_input:${String(details.message ?? "unknown")}`);
+      }
+    }'''
+          new = '''    const sources = buildSources(claim.payload, simulationRunId, preStageStandings);
+
+    let currentBaseInput: any = null;
+    let scenarioAudit: JsonObject | null = null;
+    let scenarioReserved = false;
+    try {
+      if (!useFallback) {
+        const prepared = await prepareScenarioPrimaryInput(supabase, sources, stageId, simulationRunId);
+        currentBaseInput = prepared.input;
+        scenarioAudit = prepared.audit;
+        scenarioReserved = prepared.reserved;
+        if (scenarioAudit) {
+          await heartbeat(supabase, stageId, simulationRunId, "scenario_reserved", {
+            scenario_type: scenarioAudit.scenarioType ?? null,
+            template_id: scenarioAudit.templateId ?? null,
+            template_family: scenarioAudit.templateFamily ?? null,
+          });
+        }
+      } else {
+        currentBaseInput = buildProductionUniversalRaceEngineInput(sources);
+      }
+    } catch (error) {
+      useFallback = true;
+      fallbackReason = fallbackReason || "primary_input_adapter_exception";
+      degradedComponents.push("primary_input_adapter_failed");
+      if (survivalMode.use_fallback !== true) {
+        const details = errorPayload(error);
+        degradedComponents.push(`primary_input:${String(details.message ?? "unknown")}`);
+      }
+    }'''
+          assert text.count(old) == 1, f'primary adapter block count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = '''    if (useFallback) {
+      await heartbeat(supabase, stageId, simulationRunId, "fallback_engine_started", {'''
+          new = '''    if (useFallback) {
+      if (scenarioReserved) {
+        await abandonScenarioReservation(
+          supabase,
+          stageId,
+          simulationRunId,
+          fallbackReason || "primary_not_official",
+        );
+        scenarioReserved = false;
+      }
+      await heartbeat(supabase, stageId, simulationRunId, "fallback_engine_started", {'''
+          assert text.count(old) == 1, f'fallback block anchor count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = '''    const submit = await rpc<unknown>(supabase, "universal_race_stage_submit_calculation_v1", {
+      p_stage_id: stageId,
+      p_simulation_run_id: simulationRunId,
+      p_input_snapshot: input,
+      p_universal_result: output,
+    });
+
+    const calculationCpuMs = performance.now() - started;'''
+          new = '''    const submit = await rpc<unknown>(supabase, "universal_race_stage_submit_calculation_v1", {
+      p_stage_id: stageId,
+      p_simulation_run_id: simulationRunId,
+      p_input_snapshot: input,
+      p_universal_result: output,
+    });
+
+    if (!useFallback && scenarioReserved) {
+      try {
+        await rpc<unknown>(supabase, "universal_race_stage_finalize_scenario_v1", {
+          p_stage_id: stageId,
+          p_simulation_run_id: simulationRunId,
+          p_actual_outcome: scenarioOutcomeSummary(result),
+          p_deviations: [],
+        });
+      } catch (scenarioFinalizeError) {
+        degradedComponents.push(`scenario_finalize:${String(errorPayload(scenarioFinalizeError).message ?? "unknown")}`);
+      }
+    }
+
+    const calculationCpuMs = performance.now() - started;'''
+          assert text.count(old) == 1, f'submit block count={text.count(old)}'
+          text = text.replace(old, new)
+
+          old = '''  } catch (error) {
+    const serialized = errorPayload(error);
+    try {
+      await rpc<unknown>(supabase, "universal_race_stage_fail_calculation_v1", {'''
+          new = '''  } catch (error) {
+    const serialized = errorPayload(error);
+    try {
+      await abandonScenarioReservation(
+        supabase,
+        stageId,
+        simulationRunId,
+        String(serialized.message ?? "calculation_failed"),
+      );
+    } catch {}
+    try {
+      await rpc<unknown>(supabase, "universal_race_stage_fail_calculation_v1", {'''
+          assert text.count(old) == 1, f'outer catch anchor count={text.count(old)}'
+          text = text.replace(old, new)
+
+          path.write_text(text)
+          PY
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Deno check runner
+        run: deno check supabase/functions/universal-race-stage-runner/index.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Commit runner integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add supabase/functions/universal-race-stage-runner/index.ts
+          git commit -m "Wire scenario lifecycle into race runner"
+          git push origin HEAD:chatgpt-scenario-core-v1-20260913
