@@ -26,10 +26,6 @@ import {
   type UniversalPreStageStandingInput,
   type UniversalRaceEngineInput,
 } from './runRaceEngine.ts'
-import {
-  applyFlatScenarioV1,
-  type FlatScenarioHistoryEntryV1,
-} from './flatScenarioV1.ts'
 
 type Row = Record<string, unknown>
 
@@ -92,7 +88,6 @@ export interface ProductionUniversalRaceSources {
   readonly preStageLeaders?: unknown
   readonly preStageStandings?: unknown
   readonly phase9Payload?: ProductionPhase9Payload | null
-  readonly scenarioHistory?: readonly FlatScenarioHistoryEntryV1[]
   readonly deterministicSeed: string
 }
 
@@ -798,7 +793,7 @@ export function buildProductionUniversalRaceEngineInput(
   const finishType = normalizeFinishType(stage, profile, stageFormat, terrainType)
   const weather = object(profile.stage_weather ?? profile.weather_snapshot ?? stage.weather_snapshot)
 
-  const baseInput: UniversalRaceEngineInput = {
+  return {
     engine: { engineKey: PPM_UNIVERSAL_RACE_ENGINE_KEY, engineVersion: PPM_UNIVERSAL_RACE_ENGINE_VERSION, deterministicSeed: sources.deterministicSeed },
     race: { raceId, raceType: booleanValue(race.is_stage_race) || text(race.race_type)?.toLowerCase() === 'stage_race' ? 'stage_race' : 'one_day', stageCount: Math.max(1, integerValue(race.stage_count, 1)) },
     stage: {
@@ -833,10 +828,4 @@ export function buildProductionUniversalRaceEngineInput(
       acceptedTeamIds,
     ),
   }
-
-  return applyFlatScenarioV1(baseInput, {
-    gameDate: text(stage.stage_date ?? race.start_date),
-    phaseCommandRows: sources.phaseCommandRows as readonly Row[],
-    history: sources.scenarioHistory ?? [],
-  }).input
 }
