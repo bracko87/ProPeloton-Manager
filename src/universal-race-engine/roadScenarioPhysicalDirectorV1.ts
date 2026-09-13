@@ -245,7 +245,10 @@ export function applyRoadScenarioGapGuidanceV1(
   const target = scenarioGapTargetSeconds(input, progress)
   if (target === null) return current
 
-  const stepKm = Math.max(0.25, finite(stepDistanceKm, 0.25))
+  // Coarse Phase 3 checkpoints can span a large part of the stage. Cap the
+  // physical correction distance so scenario guidance remains gradual rather
+  // than effectively teleporting a gap toward its target in one engine step.
+  const stepKm = clamp(finite(stepDistanceKm, 0.25), 0.25, 2.5)
   const difference = target - current
   if (Math.abs(difference) <= 0.000001) return round(current, 6)
 
