@@ -1,0 +1,61 @@
+name: Scenario runner integration v2
+on:
+  push:
+    branches:
+      - chatgpt-scenario-core-v1-20260913
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply validated runner patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUNNER=supabase/functions/universal-race-stage-runner/index.ts
+          if grep -q 'road_scenario_v1_flat_hilly_2026_09_13' "$RUNNER"; then
+            echo 'Runner already integrated.'
+            exit 0
+          fi
+          git show 36ab370433180e9cb646f19cb345e56369d50016:.github/workflows/scenario-runner-integrate.yml > /tmp/original-integration.yml
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('/tmp/original-integration.yml').read_text()
+          marker = "          python - <<'PY'\n"
+          start = text.index(marker) + len(marker)
+          end = text.index("\n          PY", start)
+          block = text[start:end]
+          lines = []
+          for line in block.splitlines():
+              lines.append(line[10:] if line.startswith('          ') else line)
+          Path('/tmp/integrate_runner.py').write_text('\n'.join(lines) + '\n')
+          PY
+          python /tmp/integrate_runner.py
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Deno check runner
+        run: deno check supabase/functions/universal-race-stage-runner/index.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Commit runner integration if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- supabase/functions/universal-race-stage-runner/index.ts; then
+            echo 'No runner changes to commit.'
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add supabase/functions/universal-race-stage-runner/index.ts
+          git commit -m 'Wire scenario lifecycle into race runner'
+          git push origin HEAD:chatgpt-scenario-core-v1-20260913
