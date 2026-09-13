@@ -1,0 +1,11 @@
+name: Scenario CI smoke
+on:
+  push:
+    branches:
+      - chatgpt-scenario-core-v1-20260913
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo scenario-ci-ok
