@@ -1,0 +1,121 @@
+name: ChatGPT scenario core fix
+on:
+  push:
+    branches:
+      - chatgpt-scenario-core-v1-20260913
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch flat scenario AI command handling
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/universal-race-engine/buildProductionRaceInput.ts')
+          s = p.read_text()
+          old = "metadata: { source: 'accepted_production_participant_team' },"
+          new = "metadata: { source: 'accepted_production_participant_team', scenarioAiControlled: booleanValue(participant.scenario_ai_controlled ?? participant.is_ai_filler) },"
+          assert s.count(old) == 1
+          p.write_text(s.replace(old, new))
+
+          p = Path('src/universal-race-engine/flatScenarioV1.ts')
+          s = p.read_text()
+          old = '''function commandRowsExplicitSet(rows: readonly Record<string, unknown>[]): ReadonlySet<string> {
+  const set = new Set<string>()
+  rows.forEach((row) => {
+    const riderId = text(row.rider_id)
+    if (!riderId) return
+    ;([1,2,3,4] as const).forEach((phase) => {
+      if (text(row[`phase_${phase}_command`])) set.add(`${riderId}:${phase}`)
+    })
+  })
+  return set
+}'''
+          new = '''function scenarioAiControlledTeamIds(input: UniversalRaceEngineInput): ReadonlySet<string> {
+  return new Set(
+    input.teams
+      .filter((team) => team.snapshot.metadata?.scenarioAiControlled === true)
+      .map((team) => team.teamId),
+  )
+}
+
+function commandRowsExplicitSet(
+  rows: readonly Record<string, unknown>[],
+  aiControlledTeamIds: ReadonlySet<string>,
+): ReadonlySet<string> {
+  const set = new Set<string>()
+  rows.forEach((row) => {
+    const riderId = text(row.rider_id)
+    const teamId = text(row.team_id)
+    if (!riderId || (teamId && aiControlledTeamIds.has(teamId))) return
+    ;([1,2,3,4] as const).forEach((phase) => {
+      const command = text(row[`phase_${phase}_command`])
+      if (command && command !== 'follow_team_plan') set.add(`${riderId}:${phase}`)
+    })
+  })
+  return set
+}'''
+          assert s.count(old) == 1
+          s = s.replace(old, new)
+          old = '''function applyDirector(
+  input: UniversalRaceEngineInput,
+  template: FlatScenarioTemplateV1,
+  seed: string,
+  explicit: ReadonlySet<string>,
+): { input: UniversalRaceEngineInput; assignments: FlatScenarioAuditV1['appliedDirectives']['commandAssignments']; syntheticTeamTactics:number } {'''
+          new = '''function applyDirector(
+  input: UniversalRaceEngineInput,
+  template: FlatScenarioTemplateV1,
+  seed: string,
+  explicit: ReadonlySet<string>,
+  aiControlledTeamIds: ReadonlySet<string>,
+): { input: UniversalRaceEngineInput; assignments: FlatScenarioAuditV1['appliedDirectives']['commandAssignments']; syntheticTeamTactics:number } {'''
+          assert s.count(old) == 1
+          s = s.replace(old, new)
+          old = '''    const current=commandForPhase(row.rider.commands,phase)
+    if (current!=='follow_team_plan') return false
+    plans=plans.map((plan)=>plan.teamId!==row.plan.teamId?plan:{...plan,riders:plan.riders.map((rider)=>rider.riderId!==riderId?rider:{...rider,commands:setCommandForPhase(rider.commands,phase,command)})})'''
+          new = '''    const current=commandForPhase(row.rider.commands,phase)
+    const aiControlled=aiControlledTeamIds.has(row.plan.teamId)
+    if (!aiControlled && current!=='follow_team_plan') return false
+    plans=plans.map((plan)=>plan.teamId!==row.plan.teamId?plan:{...plan,riders:plan.riders.map((rider)=>rider.riderId!==riderId?rider:{...rider,commands:setCommandForPhase(rider.commands,phase,command)})})'''
+          assert s.count(old) == 1
+          s = s.replace(old, new)
+          old = "if(!desired || !plan.defaulted || plan.teamTactic===desired) return plan"
+          new = "if(!desired || (!plan.defaulted && !aiControlledTeamIds.has(plan.teamId)) || plan.teamTactic===desired) return plan"
+          assert s.count(old) == 1
+          s = s.replace(old, new)
+          old = '''  const parameters=instantiateTemplate(selected.template,selectionSeed)
+  const explicit=commandRowsExplicitSet(options.phaseCommandRows ?? [])
+  const directed=applyDirector(input,selected.template,selectionSeed,explicit)'''
+          new = '''  const parameters=instantiateTemplate(selected.template,selectionSeed)
+  const aiControlledTeamIds=scenarioAiControlledTeamIds(input)
+  const explicit=commandRowsExplicitSet(options.phaseCommandRows ?? [],aiControlledTeamIds)
+  const directed=applyDirector(input,selected.template,selectionSeed,explicit,aiControlledTeamIds)'''
+          assert s.count(old) == 1
+          s = s.replace(old, new)
+          old = "const stagePlans=directed.input.stagePlans.map((plan)=>({...plan,metadata:{...plan.metadata,flatScenarioV1:audit as unknown as Record<string,unknown>}}))"
+          new = "const stagePlans=directed.input.stagePlans.map((plan,index)=>index===0?({...plan,metadata:{...plan.metadata,flatScenarioV1:audit as unknown as Record<string,unknown>}}):plan)"
+          assert s.count(old) == 1
+          p.write_text(s.replace(old, new))
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - name: Commit validated correction
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/universal-race-engine/buildProductionRaceInput.ts src/universal-race-engine/flatScenarioV1.ts
+          git commit -m "Direct flat scenarios through AI tactics"
+          git push origin HEAD:chatgpt-scenario-core-v1-20260913
