@@ -1,0 +1,149 @@
+name: Apply scenario physical director
+on:
+  push:
+    branches:
+      - chatgpt-scenario-core-v1-20260913
+permissions:
+  contents: write
+jobs:
+  patch-build-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch universal race engine
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/universal-race-engine/runRaceEngine.ts')
+          text = path.read_text()
+
+          import_block = """import {
+  applyRoadScenarioFinishFragmentationV1,
+  applyRoadScenarioGapGuidanceV1,
+} from './roadScenarioPhysicalDirectorV1.ts'
+
+"""
+          assert not text.startswith('import {'), 'unexpected pre-existing import block'
+          text = import_block + text
+
+          old_build = """export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
+  'phase11l-v5-5-late-chase-eligibility-2026-09-11' as const"""
+          new_build = """export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
+  'phase11l-v6-scenario-director-flat-hilly-2026-09-13' as const"""
+          assert text.count(old_build) == 1, f'debug build anchor count={text.count(old_build)}'
+          text = text.replace(old_build, new_build)
+
+          phase1_anchor = """    phase1PhysicalKm = stepEndKm
+    if (
+      phase1PhysicalGapSeconds <= PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS
+    ) {"""
+          phase1_replacement = """    phase1PhysicalGapSeconds = applyRoadScenarioGapGuidanceV1(
+      input,
+      phase1PhysicalGapSeconds,
+      stepEndKm,
+      stepDistanceKm,
+    )
+    phase1PhysicalKm = stepEndKm
+    if (
+      phase1PhysicalGapSeconds <= PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS
+    ) {"""
+          assert text.count(phase1_anchor) == 1, f'phase1 anchor count={text.count(phase1_anchor)}'
+          text = text.replace(phase1_anchor, phase1_replacement)
+
+          phase2_anchor = """    currentKm = stepEndKm
+    if (
+      phase2CatchKm === null &&
+      currentGapSeconds <= PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS
+    ) {"""
+          phase2_replacement = """    currentGapSeconds = applyRoadScenarioGapGuidanceV1(
+      input,
+      currentGapSeconds,
+      stepEndKm,
+      stepDistanceKm,
+    )
+    currentKm = stepEndKm
+    if (
+      phase2CatchKm === null &&
+      currentGapSeconds <= PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS
+    ) {"""
+          assert text.count(phase2_anchor) == 1, f'phase2 anchor count={text.count(phase2_anchor)}'
+          text = text.replace(phase2_anchor, phase2_replacement)
+
+          phase3_anchor = """  const persistentPhysicalBreakawayGapSeconds =
+    persistentBreakawayRiderSet.size > 0
+      ? phase2.endGapSeconds
+      : 0"""
+          phase3_replacement = """  const persistentPhysicalBreakawayGapSeconds =
+    persistentBreakawayRiderSet.size > 0
+      ? applyRoadScenarioGapGuidanceV1(
+          input,
+          phase2.endGapSeconds,
+          input.stage.distanceKm * 0.7,
+          input.stage.distanceKm * 0.2,
+        )
+      : 0"""
+          assert text.count(phase3_anchor) == 1, f'phase3 anchor count={text.count(phase3_anchor)}'
+          text = text.replace(phase3_anchor, phase3_replacement)
+
+          phase4_anchor = """    const caughtThisStep =
+      escapeStillActive &&
+      currentGapSeconds > PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS &&
+      resolvedNextGapSeconds <= PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS"""
+          phase4_replacement = """    resolvedNextGapSeconds = applyRoadScenarioGapGuidanceV1(
+      input,
+      resolvedNextGapSeconds,
+      stepEndKm,
+      stepDistanceKm,
+    )
+
+    const caughtThisStep =
+      escapeStillActive &&
+      currentGapSeconds > PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS &&
+      resolvedNextGapSeconds <= PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS"""
+          assert text.count(phase4_anchor) == 1, f'phase4 anchor count={text.count(phase4_anchor)}'
+          text = text.replace(phase4_anchor, phase4_replacement)
+
+          declaration_anchor = "  const provisionalRiderStates = provisionalRiderStatesBeforePhysicalContact.map("
+          assert text.count(declaration_anchor) == 1, f'provisional declaration count={text.count(declaration_anchor)}'
+          text = text.replace(declaration_anchor, "  let provisionalRiderStates = provisionalRiderStatesBeforePhysicalContact.map(")
+
+          fragmentation_anchor = """  const winnerBaseTimeSeconds = Math.round(
+    (input.stage.distanceKm / getPhase4BaseFinishPaceKmh(input.stage)) * 3600,
+  )"""
+          fragmentation_replacement = """  provisionalRiderStates = applyRoadScenarioFinishFragmentationV1(
+    input,
+    provisionalRiderStates,
+  )
+
+  const winnerBaseTimeSeconds = Math.round(
+    (input.stage.distanceKm / getPhase4BaseFinishPaceKmh(input.stage)) * 3600,
+  )"""
+          assert text.count(fragmentation_anchor) == 1, f'fragmentation anchor count={text.count(fragmentation_anchor)}'
+          text = text.replace(fragmentation_anchor, fragmentation_replacement)
+
+          path.write_text(text)
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Compile physical director and engine
+        run: |
+          npx esbuild src/universal-race-engine/roadScenarioPhysicalDirectorV1.ts --bundle --platform=node --format=esm --outfile=/tmp/roadScenarioPhysicalDirectorV1.mjs
+          npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
+      - name: Production build
+        run: npm run build
+      - name: Commit physical director integration
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/universal-race-engine/runRaceEngine.ts
+          git commit -m "Integrate road scenario physical director"
+          git push origin HEAD:chatgpt-scenario-core-v1-20260913
