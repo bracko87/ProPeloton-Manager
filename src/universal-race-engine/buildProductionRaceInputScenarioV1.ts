@@ -1,6 +1,6 @@
 import {
   buildProductionUniversalRaceEngineInput as buildBaseProductionUniversalRaceEngineInput,
-  type ProductionUniversalRaceSources,
+  type ProductionUniversalRaceSources as BaseProductionUniversalRaceSources,
 } from './buildProductionRaceInput.ts'
 import {
   applyFlatScenarioV1,
@@ -19,11 +19,15 @@ type JsonRecord = Record<string, unknown>
 type ScenarioHistoryEntryV1 = FlatScenarioHistoryEntryV1 | HillyScenarioHistoryEntryV1
 
 export type ScenarioProductionUniversalRaceSources = Omit<
-  ProductionUniversalRaceSources,
+  BaseProductionUniversalRaceSources,
   'scenarioHistory'
 > & {
   readonly scenarioHistory?: readonly ScenarioHistoryEntryV1[]
 }
+
+// Compatibility aliases let the existing authoritative Edge runner swap this
+// adapter in without changing its buildSources() contract.
+export type ProductionUniversalRaceSources = ScenarioProductionUniversalRaceSources
 
 function text(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
@@ -122,6 +126,57 @@ function gameDateFromSources(sources: ScenarioProductionUniversalRaceSources): s
   return text(stage.stage_date ?? race.start_date)
 }
 
+function parseScenarioHistory(value: unknown): ScenarioHistoryEntryV1[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((entry, index) => {
+    const row = object(entry)
+    const raceId = text(row.raceId ?? row.race_id)
+    const stageId = text(row.stageId ?? row.stage_id)
+    const gameDate = text(row.gameDate ?? row.game_date)
+    const templateId = text(row.templateId ?? row.template_id)
+    const family = text(row.family ?? row.template_family)
+    if (!raceId || !stageId || !gameDate || !templateId || !family) return []
+    return [{
+      raceId,
+      stageId,
+      gameDate,
+      templateId,
+      family: family as FlatScenarioHistoryEntryV1['family'],
+      status: text(row.status) ?? `history_${index}`,
+    }]
+  })
+}
+
+function rawScenarioHistory(sources: ScenarioProductionUniversalRaceSources): ScenarioHistoryEntryV1[] {
+  if (sources.scenarioHistory) return [...sources.scenarioHistory]
+  const phase9 = object(sources.phase9Payload)
+  return parseScenarioHistory(phase9.scenario_history ?? phase9.scenarioHistory)
+}
+
+function scenarioSelectionHistory(
+  sources: ScenarioProductionUniversalRaceSources,
+  gameDate: string | null,
+): ScenarioHistoryEntryV1[] {
+  const history = rawScenarioHistory(sources)
+  const raceId = text((sources.race as Row).id)
+  if (!raceId || !gameDate) return history
+
+  // Same-day exact-template avoidance is intentionally upgraded to the same
+  // hard guard used for an already-used template in this stage race. Guards are
+  // placed before true race history and use a sentinel family so they do not
+  // pretend that a different race's scenario family was used in this race.
+  const sameDayGuards = history
+    .filter((entry) => entry.gameDate === gameDate && entry.raceId !== raceId)
+    .map((entry, index) => ({
+      ...entry,
+      raceId,
+      stageId: `same-day-guard:${index}:${entry.stageId}`,
+      family: '__same_day_exact_guard__' as FlatScenarioHistoryEntryV1['family'],
+    }))
+
+  return [...sameDayGuards, ...history]
+}
+
 /**
  * Scenario-aware production adapter.
  *
@@ -135,14 +190,14 @@ export function buildScenarioProductionUniversalRaceEngineInput(
   sources: ScenarioProductionUniversalRaceSources,
 ): UniversalRaceEngineInput {
   const base = buildBaseProductionUniversalRaceEngineInput(
-    sources as ProductionUniversalRaceSources,
+    sources as BaseProductionUniversalRaceSources,
   )
   const aiTeamIds = scenarioAiControlledTeamIds(sources)
   const marked = withScenarioAiMetadata(base, aiTeamIds)
   const normalized = resetGeneratedAiCommands(marked, aiTeamIds)
   const humanRows = humanPhaseCommandRows(sources.phaseCommandRows as readonly Row[], aiTeamIds)
   const gameDate = gameDateFromSources(sources)
-  const history = sources.scenarioHistory ?? []
+  const history = scenarioSelectionHistory(sources, gameDate)
 
   if (normalized.stage.stageFormat !== 'road_race') return normalized
 
@@ -164,6 +219,8 @@ export function buildScenarioProductionUniversalRaceEngineInput(
 
   return normalized
 }
+
+export const buildProductionUniversalRaceEngineInput = buildScenarioProductionUniversalRaceEngineInput
 
 export function getRoadScenarioAuditV1(
   input: UniversalRaceEngineInput,
