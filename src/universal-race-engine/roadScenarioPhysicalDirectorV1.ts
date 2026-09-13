@@ -77,14 +77,18 @@ export function getRoadScenarioPhysicalAuditV1(
 ): RoadScenarioPhysicalAuditV1 | null {
   for (const plan of input.stagePlans) {
     const metadata = object(plan.metadata)
-    const candidate = metadata.flatScenarioV1 ?? metadata.hillyScenarioV1
+    const candidate =
+      metadata.flatScenarioV1 ??
+      metadata.hillyScenarioV1 ??
+      metadata.mountainScenarioV1 ??
+      metadata.cobbledScenarioV1
     const audit = object(candidate)
     const scenarioType = text(audit.scenarioType)
     const templateId = text(audit.templateId)
     const templateFamily = text(audit.templateFamily)
     const selectionSeed = text(audit.selectionSeed)
     if (
-      (scenarioType === 'flat' || scenarioType === 'hilly') &&
+      ['flat', 'hilly', 'mountain', 'cobbled'].includes(scenarioType) &&
       templateId &&
       templateFamily &&
       selectionSeed
