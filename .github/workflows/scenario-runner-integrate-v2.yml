@@ -7,6 +7,7 @@ permissions:
   contents: write
 jobs:
   integrate:
+    if: ${{ !contains(github.event.head_commit.message, 'Wire scenario lifecycle into race runner') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +36,30 @@ jobs:
           Path('/tmp/integrate_runner.py').write_text('\n'.join(lines) + '\n')
           PY
           python /tmp/integrate_runner.py
+      - name: Correct runner scenario typing for Deno
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('supabase/functions/universal-race-stage-runner/index.ts')
+          text = path.read_text()
+          if not text.startswith('/// <reference lib="deno.ns" />'):
+              text = '/// <reference lib="deno.ns" />\n' + text
+          text = text.replace(
+              'scenarioHistory: scenarioHistory as ProductionUniversalRaceSources["scenarioHistory"],',
+              'scenarioHistory: scenarioHistory as unknown as ProductionUniversalRaceSources["scenarioHistory"],',
+          )
+          text = text.replace(
+              'const attemptSources = { ...sources, scenarioHistory: history } as ProductionUniversalRaceSources;',
+              'const attemptSources = { ...sources, scenarioHistory: history } as unknown as ProductionUniversalRaceSources;',
+          )
+          text = text.replace(
+              'Deno.serve(async (request) => {',
+              'Deno.serve(async (request: Request) => {',
+          )
+          path.write_text(text)
+          PY
       - uses: actions/setup-node@v4
         with:
           node-version: 20
