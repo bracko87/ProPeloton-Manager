@@ -35,16 +35,16 @@ jobs:
           Path('/tmp/integrate_runner.py').write_text('\n'.join(lines) + '\n')
           PY
           python /tmp/integrate_runner.py
-      - uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-      - name: Deno check runner
-        run: deno check supabase/functions/universal-race-stage-runner/index.ts
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
       - run: npm ci
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Deno check runner
+        run: deno check supabase/functions/universal-race-stage-runner/index.ts
       - run: npm run build
       - name: Commit runner integration if changed
         shell: bash
