@@ -1,1 +1,0 @@
-Trigger the one-shot Scenario Runner Integration workflow after validating source commit c0069963ccd0ba7f896e2566249647ae7d3879ed.
