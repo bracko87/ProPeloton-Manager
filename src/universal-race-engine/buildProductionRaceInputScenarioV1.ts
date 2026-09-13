@@ -16,7 +16,10 @@ type Row = Record<string, unknown>
 
 type ScenarioHistoryEntryV1 = FlatScenarioHistoryEntryV1 | HillyScenarioHistoryEntryV1
 
-export interface ScenarioProductionUniversalRaceSources extends ProductionUniversalRaceSources {
+export type ScenarioProductionUniversalRaceSources = Omit<
+  ProductionUniversalRaceSources,
+  'scenarioHistory'
+> & {
   readonly scenarioHistory?: readonly ScenarioHistoryEntryV1[]
 }
 
@@ -123,7 +126,9 @@ function gameDateFromSources(sources: ScenarioProductionUniversalRaceSources): s
 export function buildScenarioProductionUniversalRaceEngineInput(
   sources: ScenarioProductionUniversalRaceSources,
 ): UniversalRaceEngineInput {
-  const base = buildBaseProductionUniversalRaceEngineInput(sources)
+  const base = buildBaseProductionUniversalRaceEngineInput(
+    sources as ProductionUniversalRaceSources,
+  )
   const aiTeamIds = scenarioAiControlledTeamIds(sources)
   const marked = withScenarioAiMetadata(base, aiTeamIds)
   const normalized = resetGeneratedAiCommands(marked, aiTeamIds)
