@@ -1,15 +1,17 @@
+/// <reference lib="deno.ns" />
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import {
   classifyUniversalReplaySynchronizationForPublication,
   isUniversalPhase78IssueNonBlocking,
   runRaceEngine,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/79dd5f231c0677441eeaf7a4b3830c82fa461904/src/universal-race-engine/runRaceEngine.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c0069963ccd0ba7f896e2566249647ae7d3879ed/src/universal-race-engine/runRaceEngine.ts";
 import {
-  buildProductionUniversalRaceEngineInput,
-  type ProductionUniversalRaceSources,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/79dd5f231c0677441eeaf7a4b3830c82fa461904/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/79dd5f231c0677441eeaf7a4b3830c82fa461904/src/universal-race-engine/buildProductionRaceOutput.ts";
+  buildScenarioProductionUniversalRaceEngineInput as buildProductionUniversalRaceEngineInput,
+  getRoadScenarioAuditV1,
+  type ScenarioProductionUniversalRaceSources as ProductionUniversalRaceSources,
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c0069963ccd0ba7f896e2566249647ae7d3879ed/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c0069963ccd0ba7f896e2566249647ae7d3879ed/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 // Accepted V5.2 is kept as the emergency sporting fallback only. It is used
 // only after a failed/orphaned primary attempt or at the mandatory T-15 deadline.
@@ -18,9 +20,9 @@ import { buildProductionUniversalRaceEngineInput as buildFallbackProductionUnive
 import { buildProductionUniversalRaceOutput as buildFallbackProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
-const SOURCE_COMMIT = "79dd5f231c0677441eeaf7a4b3830c82fa461904";
+const SOURCE_COMMIT = "c0069963ccd0ba7f896e2566249647ae7d3879ed";
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
-const WORKER_BUILD = "supabase_race_calculation_survival_v1";
+const WORKER_BUILD = "road_scenario_v1_flat_hilly_2026_09_13";
 const MAX_CALCULATIONS_PER_TICK = 1;
 const MAX_PUBLICATIONS_PER_TICK = 4;
 const encoder = new TextEncoder();
@@ -89,7 +91,12 @@ async function heartbeat(
   }
 }
 
-function buildSources(payloadValue: unknown, simulationRunId: string, preStageStandings: unknown): ProductionUniversalRaceSources {
+function buildSources(
+  payloadValue: unknown,
+  simulationRunId: string,
+  preStageStandings: unknown,
+  scenarioHistory: readonly JsonObject[] = [],
+): ProductionUniversalRaceSources {
   const payload = object(payloadValue);
   const race = object(payload.race);
   const stage = object(payload.stage);
@@ -109,6 +116,7 @@ function buildSources(payloadValue: unknown, simulationRunId: string, preStageSt
     preStageLeaders: payload.pre_stage_leaders,
     preStageStandings,
     phase9Payload: firstObject(payload.phase9_inputs) as ProductionUniversalRaceSources["phase9Payload"],
+    scenarioHistory: scenarioHistory as unknown as ProductionUniversalRaceSources["scenarioHistory"],
     deterministicSeed: `universal-production:${raceId}:${stageId}:${simulationRunId}`,
   };
 }
@@ -270,6 +278,96 @@ function stageFormatRequiresTimeTrialRules(input: any): boolean {
   return ["individual_time_trial", "team_time_trial", "pair_time_trial", "prologue"].includes(String(input?.stage?.stageFormat ?? ""));
 }
 
+function sourceRaceId(sources: ProductionUniversalRaceSources): string {
+  return String((sources.race as unknown as JsonObject)?.id ?? "");
+}
+
+function sourceGameDate(sources: ProductionUniversalRaceSources): string {
+  const stage = sources.stage as unknown as JsonObject;
+  const race = sources.race as unknown as JsonObject;
+  return String(stage.stage_date ?? race.start_date ?? "").slice(0, 10);
+}
+
+async function loadRoadScenarioHistory(
+  supabase: SupabaseClient,
+  sources: ProductionUniversalRaceSources,
+): Promise<JsonObject[]> {
+  const raceId = sourceRaceId(sources);
+  const gameDate = sourceGameDate(sources);
+  if (!raceId || !gameDate) return [];
+  return rows(await rpc<unknown>(supabase, "universal_race_stage_scenario_history_v1", {
+    p_race_id: raceId,
+    p_game_date: gameDate,
+  }));
+}
+
+async function prepareScenarioPrimaryInput(
+  supabase: SupabaseClient,
+  sources: ProductionUniversalRaceSources,
+  stageId: string,
+  simulationRunId: string,
+): Promise<{ input: any; audit: JsonObject | null; reserved: boolean; reservation: JsonObject | null }> {
+  let history = await loadRoadScenarioHistory(supabase, sources);
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const attemptSources = { ...sources, scenarioHistory: history } as unknown as ProductionUniversalRaceSources;
+    const input = buildProductionUniversalRaceEngineInput(attemptSources);
+    const audit = getRoadScenarioAuditV1(input);
+    if (!audit) return { input, audit: null, reserved: false, reservation: null };
+
+    const reservation = object(await rpc<unknown>(supabase, "universal_race_stage_reserve_scenario_v1", {
+      p_stage_id: stageId,
+      p_simulation_run_id: simulationRunId,
+      p_audit: audit,
+    }));
+    const status = String(reservation.status ?? "");
+    const reservedTemplateId = String(reservation.template_id ?? "");
+    const selectedTemplateId = String(audit.templateId ?? "");
+
+    if ((status === "reserved" || status === "existing") &&
+        (!reservedTemplateId || reservedTemplateId === selectedTemplateId)) {
+      return { input, audit, reserved: true, reservation };
+    }
+
+    if (status === "existing" || status === "collision") {
+      history = await loadRoadScenarioHistory(supabase, sources);
+      continue;
+    }
+
+    throw new Error(`Scenario reservation failed with status ${status || "unknown"}.`);
+  }
+  throw new Error("Scenario reservation did not converge after history refreshes.");
+}
+
+async function abandonScenarioReservation(
+  supabase: SupabaseClient,
+  stageId: string,
+  simulationRunId: string,
+  reason: string,
+): Promise<void> {
+  try {
+    await rpc<unknown>(supabase, "universal_race_stage_abandon_scenario_v1", {
+      p_stage_id: stageId,
+      p_simulation_run_id: simulationRunId,
+      p_reason: reason,
+    });
+  } catch {
+    // Scenario audit cleanup is non-sporting and must never block fallback.
+  }
+}
+
+function scenarioOutcomeSummary(result: any): JsonObject {
+  const classification = rows(result?.finishResolution?.classification);
+  const gaps = classification.map((row) => Math.max(0, finiteNumber(row.gapSeconds ?? row.officialGapSeconds, 0)));
+  const winner = classification[0] ?? {};
+  return {
+    winner_rider_id: winner.riderId ?? null,
+    classification_rider_count: classification.length,
+    same_time_rider_count: gaps.filter((gap) => gap <= 0.5).length,
+    max_gap_seconds: gaps.length > 0 ? Math.max(...gaps) : 0,
+    replay_checkpoint_count: Array.isArray(result?.replayTimeline?.checkpoints) ? result.replayTimeline.checkpoints.length : 0,
+  };
+}
+
 async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unknown): Promise<JsonObject> {
   const claim = object(claimValue);
   const stageId = typeof claim.stage_id === "string" ? claim.stage_id : "";
@@ -312,8 +410,24 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
     const sources = buildSources(claim.payload, simulationRunId, preStageStandings);
 
     let currentBaseInput: any = null;
+    let scenarioAudit: JsonObject | null = null;
+    let scenarioReserved = false;
     try {
-      currentBaseInput = buildProductionUniversalRaceEngineInput(sources);
+      if (!useFallback) {
+        const prepared = await prepareScenarioPrimaryInput(supabase, sources, stageId, simulationRunId);
+        currentBaseInput = prepared.input;
+        scenarioAudit = prepared.audit;
+        scenarioReserved = prepared.reserved;
+        if (scenarioAudit) {
+await heartbeat(supabase, stageId, simulationRunId, "scenario_reserved", {
+  scenario_type: scenarioAudit.scenarioType ?? null,
+  template_id: scenarioAudit.templateId ?? null,
+  template_family: scenarioAudit.templateFamily ?? null,
+});
+        }
+      } else {
+        currentBaseInput = buildProductionUniversalRaceEngineInput(sources);
+      }
     } catch (error) {
       useFallback = true;
       fallbackReason = fallbackReason || "primary_input_adapter_exception";
@@ -375,6 +489,15 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
     }
 
     if (useFallback) {
+      if (scenarioReserved) {
+        await abandonScenarioReservation(
+supabase,
+stageId,
+simulationRunId,
+fallbackReason || "primary_not_official",
+        );
+        scenarioReserved = false;
+      }
       await heartbeat(supabase, stageId, simulationRunId, "fallback_engine_started", {
         fallback_reason: fallbackReason,
         fallback_source_commit: FALLBACK_SOURCE_COMMIT,
@@ -434,6 +557,19 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
       p_universal_result: output,
     });
 
+    if (!useFallback && scenarioReserved) {
+      try {
+        await rpc<unknown>(supabase, "universal_race_stage_finalize_scenario_v1", {
+p_stage_id: stageId,
+p_simulation_run_id: simulationRunId,
+p_actual_outcome: scenarioOutcomeSummary(result),
+p_deviations: [],
+        });
+      } catch (scenarioFinalizeError) {
+        degradedComponents.push(`scenario_finalize:${String(errorPayload(scenarioFinalizeError).message ?? "unknown")}`);
+      }
+    }
+
     const calculationCpuMs = performance.now() - started;
     return {
       status: "calculated_hidden",
@@ -457,6 +593,14 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
     };
   } catch (error) {
     const serialized = errorPayload(error);
+    try {
+      await abandonScenarioReservation(
+        supabase,
+        stageId,
+        simulationRunId,
+        String(serialized.message ?? "calculation_failed"),
+      );
+    } catch {}
     try {
       await rpc<unknown>(supabase, "universal_race_stage_fail_calculation_v1", {
         p_stage_id: stageId,
@@ -504,7 +648,7 @@ async function runLifecycleTick(supabase: SupabaseClient): Promise<JsonObject> {
   };
 }
 
-Deno.serve(async (request) => {
+Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") return new Response(null, { status: 204 });
   const body = request.method === "POST" ? await request.json().catch(() => ({})) as JsonObject : {};
   const url = new URL(request.url);
