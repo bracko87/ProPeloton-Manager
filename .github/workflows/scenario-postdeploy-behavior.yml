@@ -1,0 +1,78 @@
+name: Scenario postdeploy behavior validation
+on:
+  push:
+    branches:
+      - chatgpt-scenario-core-v1-20260913
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Bundle scenario modules
+        run: |
+          npx esbuild src/universal-race-engine/roadScenarioPhysicalDirectorV1.ts --bundle --platform=node --format=esm --outfile=/tmp/roadScenarioPhysicalDirectorV1.mjs
+          npx esbuild src/universal-race-engine/flatScenarioV1.ts --bundle --platform=node --format=esm --outfile=/tmp/flatScenarioV1.mjs
+          npx esbuild src/universal-race-engine/hillyScenarioV1.ts --bundle --platform=node --format=esm --outfile=/tmp/hillyScenarioV1.mjs
+      - name: Validate template counts and physical behavior
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { FLAT_SCENARIO_TEMPLATES_V1 } from '/tmp/flatScenarioV1.mjs'
+          import { HILLY_SCENARIO_TEMPLATES_V1 } from '/tmp/hillyScenarioV1.mjs'
+          import { applyRoadScenarioGapGuidanceV1, applyRoadScenarioFinishFragmentationV1 } from '/tmp/roadScenarioPhysicalDirectorV1.mjs'
+
+          if (FLAT_SCENARIO_TEMPLATES_V1.length !== 20) throw new Error(`flat template count ${FLAT_SCENARIO_TEMPLATES_V1.length}`)
+          if (HILLY_SCENARIO_TEMPLATES_V1.length !== 20) throw new Error(`hilly template count ${HILLY_SCENARIO_TEMPLATES_V1.length}`)
+
+          const flatInput = {
+            stage: { distanceKm: 160, terrainType: 'flat' },
+            stagePlans: [{ metadata: { flatScenarioV1: {
+              scenarioType: 'flat',
+              templateId: 'flat_validation',
+              templateFamily: 'controlled_sprint',
+              selectionSeed: 'flat-validation-seed',
+              generatedParameters: {
+                breakaways: [{ generation: 1, formationPct: .05, peakPct: .30, chaseStartPct: .60, targetPeakGapSec: 360, catchKmRemaining: 10, survivalTargetSec: null }],
+                fragmentationPressure: .25,
+                targetFrontGroup: 80,
+                secondaryGapSec: 25,
+              },
+            } } }],
+          }
+          const guided = applyRoadScenarioGapGuidanceV1(flatInput, 120, 50, 2)
+          if (!(guided > 120 && guided < 360)) throw new Error(`flat guidance invalid: ${guided}`)
+
+          const hillyInput = {
+            stage: { distanceKm: 175, terrainType: 'hilly' },
+            stagePlans: [{ metadata: { hillyScenarioV1: {
+              scenarioType: 'hilly',
+              templateId: 'hilly_validation',
+              templateFamily: 'puncheur',
+              selectionSeed: 'hilly-validation-seed',
+              generatedParameters: {
+                breakaways: [],
+                fragmentationPressure: .80,
+                targetFrontGroup: 20,
+                secondaryGapSec: 60,
+              },
+            } } }],
+          }
+          const states = Array.from({ length: 100 }, (_, index) => ({
+            riderId: `r${index + 1}`,
+            finalGapSeconds: 0,
+            finalGroupCode: 'winning_group',
+            energyAtFinish: 100 - index * .5,
+          }))
+          const fragmented = applyRoadScenarioFinishFragmentationV1(hillyInput, states)
+          const sameTime = fragmented.filter((row) => row.finalGapSeconds <= .5).length
+          const detached = fragmented.filter((row) => row.finalGapSeconds > .5).length
+          if (sameTime !== 20) throw new Error(`hilly same-time group expected 20, got ${sameTime}`)
+          if (detached !== 80) throw new Error(`hilly detached expected 80, got ${detached}`)
+
+          console.log(JSON.stringify({ flatTemplates: 20, hillyTemplates: 20, guidedGap: guided, hillyFrontGroup: sameTime, hillyDetached: detached }))
+          NODE
