@@ -1,3 +1,8 @@
+import {
+  applyRoadScenarioFinishFragmentationV1,
+  applyRoadScenarioGapGuidanceV1,
+} from './roadScenarioPhysicalDirectorV1.ts'
+
 /**
  * runRaceEngine.ts
  *
@@ -59,7 +64,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11l-v5-5-late-chase-eligibility-2026-09-11' as const
+  'phase11l-v6-scenario-director-flat-hilly-2026-09-13' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -10119,6 +10124,12 @@ export function resolveRoadPhase1Opening(
       input.stage.distanceKm,
       input.stage.terrainType,
     )
+    phase1PhysicalGapSeconds = applyRoadScenarioGapGuidanceV1(
+      input,
+      phase1PhysicalGapSeconds,
+      stepEndKm,
+      stepDistanceKm,
+    )
     phase1PhysicalKm = stepEndKm
     if (
       phase1PhysicalGapSeconds <= PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS
@@ -11364,6 +11375,12 @@ export function resolveRoadPhase2Development(
       stepEndKm,
       input.stage.distanceKm,
       input.stage.terrainType,
+    )
+    currentGapSeconds = applyRoadScenarioGapGuidanceV1(
+      input,
+      currentGapSeconds,
+      stepEndKm,
+      stepDistanceKm,
     )
     currentKm = stepEndKm
     if (
@@ -13977,7 +13994,12 @@ export function resolveRoadPhase3Decisive(
   )
   const persistentPhysicalBreakawayGapSeconds =
     persistentBreakawayRiderSet.size > 0
-      ? phase2.endGapSeconds
+      ? applyRoadScenarioGapGuidanceV1(
+          input,
+          phase2.endGapSeconds,
+          input.stage.distanceKm * 0.7,
+          input.stage.distanceKm * 0.2,
+        )
       : 0
 
   const authoritativePelotonGroupIndex = groupMembers
@@ -16889,6 +16911,13 @@ export function resolveRoadPhase4Finish(
       }
     }
 
+    resolvedNextGapSeconds = applyRoadScenarioGapGuidanceV1(
+      input,
+      resolvedNextGapSeconds,
+      stepEndKm,
+      stepDistanceKm,
+    )
+
     const caughtThisStep =
       escapeStillActive &&
       currentGapSeconds > PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS &&
@@ -17878,7 +17907,7 @@ export function resolveRoadPhase4Finish(
     6,
   )
 
-  const provisionalRiderStates = provisionalRiderStatesBeforePhysicalContact.map(
+  let provisionalRiderStates = provisionalRiderStatesBeforePhysicalContact.map(
     (state) => {
       if (state.contactLossKm === null) return state
       const targetPelotonRiderIds = physicalContactLossSourceRiderIds.filter(
@@ -17924,6 +17953,11 @@ export function resolveRoadPhase4Finish(
         finalGroupCode,
       }
     },
+  )
+
+  provisionalRiderStates = applyRoadScenarioFinishFragmentationV1(
+    input,
+    provisionalRiderStates,
   )
 
   const winnerBaseTimeSeconds = Math.round(
