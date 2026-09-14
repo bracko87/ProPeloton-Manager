@@ -1,0 +1,77 @@
+name: ChatGPT completed replay revisit reset
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/chatgpt-replay-revisit-reset-20260914.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-build-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch completed replay revisit initialization
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/dashboard/RaceDetailPage.tsx')
+          text = path.read_text()
+
+          old_reset = """  useEffect(() => {\n    liveReplayWasActiveRef.current = false\n    liveReplayServerStateInitializedRef.current = false\n    visibleResultsPayloadSyncedRef.current = false\n    setLiveReplayState(null)\n  }, [stage.id])\n"""
+          new_reset = """  useEffect(() => {\n    liveReplayWasActiveRef.current = false\n    liveReplayServerStateInitializedRef.current = false\n    visibleResultsPayloadSyncedRef.current = false\n    setLiveReplayState(null)\n    // Every newly opened stage replay starts as a fresh local playback.\n    // A genuinely live replay will immediately resync from the authoritative\n    // server state below and remain locked to 1x.\n    setReplayProgress(0)\n    setPlaying(false)\n    setPlaybackSpeed(1)\n  }, [stage.id])\n"""
+          assert text.count(old_reset) == 1, f'replay reset block match count={text.count(old_reset)}'
+          text = text.replace(old_reset, new_reset)
+
+          old_progress = """      if (\n        !liveReplayServerStateInitializedRef.current ||\n        nextLiveState?.is_live === true ||\n        nextLiveState?.publication_pending === true\n      ) {\n        setReplayProgress((current) => Math.max(current, serverProgress))\n      }\n      liveReplayServerStateInitializedRef.current = true\n"""
+          new_progress = """      const shouldFollowAuthoritativeReplayProgress =\n        nextLiveState?.is_live === true ||\n        nextLiveState?.publication_pending === true ||\n        (\n          !liveReplayServerStateInitializedRef.current &&\n          nextLiveState?.results_visible !== true\n        )\n\n      if (shouldFollowAuthoritativeReplayProgress) {\n        setReplayProgress((current) => Math.max(current, serverProgress))\n      }\n      liveReplayServerStateInitializedRef.current = true\n"""
+          assert text.count(old_progress) == 1, f'authoritative progress block match count={text.count(old_progress)}'
+          text = text.replace(old_progress, new_progress)
+
+          path.write_text(text)
+          PY
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Validate replay revisit behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('src/pages/dashboard/RaceDetailPage.tsx').read_text()
+          assert "setReplayProgress(0)\n    setPlaying(false)\n    setPlaybackSpeed(1)" in text
+          assert "const shouldFollowAuthoritativeReplayProgress" in text
+          assert "nextLiveState?.results_visible !== true" in text
+          assert "nextLiveState?.is_live === true" in text
+          assert "nextLiveState?.publication_pending === true" in text
+          PY
+
+      - name: Commit implementation and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/dashboard/RaceDetailPage.tsx
+          git rm .github/workflows/chatgpt-replay-revisit-reset-20260914.yml
+          git commit -m "Reset completed race replay on revisit"
+          git push origin HEAD:main
