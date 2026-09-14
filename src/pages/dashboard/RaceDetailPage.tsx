@@ -13474,6 +13474,12 @@ function UniversalRaceReplayPage({
     liveReplayServerStateInitializedRef.current = false
     visibleResultsPayloadSyncedRef.current = false
     setLiveReplayState(null)
+    // Every newly opened stage replay starts as a fresh local playback.
+    // A genuinely live replay will immediately resync from the authoritative
+    // server state below and remain locked to 1x.
+    setReplayProgress(0)
+    setPlaying(false)
+    setPlaybackSpeed(1)
   }, [stage.id])
 
   useEffect(() => {
@@ -13499,11 +13505,15 @@ function UniversalRaceReplayPage({
         0,
         Math.min(1, Number(nextLiveState?.progress ?? 0))
       )
-      if (
-        !liveReplayServerStateInitializedRef.current ||
+      const shouldFollowAuthoritativeReplayProgress =
         nextLiveState?.is_live === true ||
-        nextLiveState?.publication_pending === true
-      ) {
+        nextLiveState?.publication_pending === true ||
+        (
+          !liveReplayServerStateInitializedRef.current &&
+          nextLiveState?.results_visible !== true
+        )
+
+      if (shouldFollowAuthoritativeReplayProgress) {
         setReplayProgress((current) => Math.max(current, serverProgress))
       }
       liveReplayServerStateInitializedRef.current = true
