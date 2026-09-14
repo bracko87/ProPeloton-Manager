@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c0069963ccd0ba7f896e2566249647ae7d3879ed/src/universal-race-engine/runRaceEngine.ts": "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/d7567a0224df426dca3f71345655d7a1d40a687e/src/universal-race-engine/runRaceEngine.ts",
+    "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c0069963ccd0ba7f896e2566249647ae7d3879ed/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts": "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/d7567a0224df426dca3f71345655d7a1d40a687e/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts",
+    "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c0069963ccd0ba7f896e2566249647ae7d3879ed/src/universal-race-engine/buildProductionRaceOutput.ts": "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/d7567a0224df426dca3f71345655d7a1d40a687e/src/universal-race-engine/buildProductionRaceOutput.ts"
+  }
+}
