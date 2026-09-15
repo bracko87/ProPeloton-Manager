@@ -1,4 +1,5 @@
 import * as esbuild from 'esbuild'
+import { copyFile } from 'node:fs/promises'
 import { rimraf } from 'rimraf'
 import stylePlugin from 'esbuild-style-plugin'
 import autoprefixer from 'autoprefixer'
@@ -6,6 +7,7 @@ import tailwindcss from 'tailwindcss'
 
 const args = process.argv.slice(2)
 const isProd = args[0] === '--production'
+const indexNowKey = '2b44bc2a682f02d72a345de371fa2f83'
 
 await rimraf('dist')
 
@@ -39,6 +41,10 @@ const esbuildOpts = {
 
 if (isProd) {
   await esbuild.build(esbuildOpts)
+  await copyFile(
+    `public/${indexNowKey}.txt`,
+    `dist/${indexNowKey}.txt`,
+  )
 } else {
   const ctx = await esbuild.context(esbuildOpts)
   await ctx.watch()
