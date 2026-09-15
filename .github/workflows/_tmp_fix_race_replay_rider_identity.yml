@@ -1,0 +1,99 @@
+name: Temporary replay rider identity patch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/_tmp_fix_race_replay_rider_identity.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-race-replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Patch replay rider names and flags
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/dashboard/RaceDetailPage.tsx')
+          text = path.read_text()
+
+          def replace_once(old: str, new: str, label: str) -> None:
+              global text
+              count = text.count(old)
+              if count < 1:
+                  raise SystemExit(f'{label}: expected snippet not found')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              """type RiderNameLookupRow = {\n  id: string\n  first_name?: string | null\n  last_name?: string | null\n  display_name?: string | null\n}\n""",
+              """type RiderNameLookupRow = {\n  id: string\n  first_name?: string | null\n  last_name?: string | null\n  display_name?: string | null\n  country_code?: string | null\n}\n""",
+              'RiderNameLookupRow country_code',
+          )
+
+          replace_once(
+              """    team_name_snapshot: row.team_name_snapshot ?? fallbackTeamName ?? null,\n    country_code_snapshot:\n      row.country_code_snapshot ?? row.country_code ?? fallbackCountryCode ?? null,\n""",
+              """    team_name_snapshot: row.team_name_snapshot ?? fallbackTeamName ?? null,\n    country_code: row.country_code ?? null,\n    country_code_snapshot:\n      row.country_code_snapshot ?? row.country_code ?? fallbackCountryCode ?? null,\n""",
+              'participant rider country normalization',
+          )
+
+          marker = "async function hydrateParticipantRiderFullNames("
+          marker_index = text.find(marker)
+          if marker_index < 0:
+              raise SystemExit('hydrateParticipantRiderFullNames: function not found')
+          before = text[:marker_index]
+          hydrate = text[marker_index:]
+          old_select = ".select('id, first_name, last_name, display_name')"
+          if old_select not in hydrate:
+              raise SystemExit('hydrateParticipantRiderFullNames: riders select not found')
+          hydrate = hydrate.replace(
+              old_select,
+              ".select('id, first_name, last_name, display_name, country_code')",
+              1,
+          )
+          text = before + hydrate
+
+          replace_once(
+              """      rider_name_snapshot: fullName ?? rider.rider_name_snapshot,\n      rider_full_name: fullName ?? rider.rider_full_name ?? null,\n""",
+              """      rider_name_snapshot: fullName ?? rider.rider_name_snapshot,\n      rider_full_name: fullName ?? rider.rider_full_name ?? null,\n      country_code: lookup?.country_code?.trim() || rider.country_code || null,\n""",
+              'participant rider master country hydration',
+          )
+
+          replace_once(
+              """      const team = teamInputById.get(rider.teamId)\n      const activeCommand = commandByRiderId.get(rider.riderId)\n\n      return {\n        riderId: rider.riderId,\n        riderName: rider.snapshot.displayName ?? rider.riderId,\n        teamName: team?.snapshot.teamName ?? rider.teamId,\n        countryCode: rider.snapshot.countryCode,\n""",
+              """      const team = teamInputById.get(rider.teamId)\n      const participantRider =\n        participantRiderLookup.get(rider.riderId)?.rider ?? null\n      const activeCommand = commandByRiderId.get(rider.riderId)\n\n      return {\n        riderId: rider.riderId,\n        riderName: participantRider\n          ? getRaceParticipantRiderDisplayName(participantRider)\n          : rider.snapshot.displayName ?? rider.riderId,\n        teamName: team?.snapshot.teamName ?? rider.teamId,\n        countryCode:\n          participantRider?.country_code ??\n          participantRider?.country_code_snapshot ??\n          rider.snapshot.countryCode,\n""",
+              'road replay rider identity',
+          )
+
+          replace_once(
+              """    nextFrame,\n    readinessByRiderId,\n    resultsVisible,\n""",
+              """    nextFrame,\n    participantRiderLookup,\n    readinessByRiderId,\n    resultsVisible,\n""",
+              'road replay participant lookup dependency',
+          )
+
+          replace_once(
+              """              id: rider.riderId,\n              label: rider.snapshot.displayName?.trim() || rider.riderId,\n              secondaryLabel:\n""",
+              """              id: rider.riderId,\n              label: participant\n                ? getRaceParticipantRiderDisplayName(participant)\n                : rider.snapshot.displayName?.trim() || rider.riderId,\n              secondaryLabel:\n""",
+              'time trial replay full rider name',
+          )
+
+          path.write_text(text)
+          PY
+
+      - name: Validate and commit
+        shell: bash
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/dashboard/RaceDetailPage.tsx
+          git commit -m "Fix race replay rider names and flags"
+          git push origin HEAD:main
