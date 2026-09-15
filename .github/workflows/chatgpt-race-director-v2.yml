@@ -30,7 +30,7 @@ jobs:
         run: npm ci
 
       - name: Run Race Director V2 focused tests
-        run: npx --yes vitest@2.1.9 run src/universal-race-engine/roadRaceDirectorV2.test.ts --reporter=verbose
+        run: npx --yes vitest@2.1.9 run src/universal-race-engine/roadRaceDirectorV2.test.ts src/universal-race-engine/roadRaceDirectorRuntimeV2.test.ts --reporter=verbose
 
       - name: Run V16 replay regression tests
         run: npx --yes vitest@2.1.9 run src/universal-race-engine/replayPhysicalStateV16.test.ts
