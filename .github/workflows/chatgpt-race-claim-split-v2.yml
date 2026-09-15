@@ -1,0 +1,90 @@
+name: ChatGPT Race Claim Split V2
+
+on:
+  push:
+    branches:
+      - chatgpt-race-claim-split-v2-20260915
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  split-claim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt-race-claim-split-v2-20260915
+          fetch-depth: 0
+
+      - name: Patch production race runner
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('supabase/functions/universal-race-stage-runner/index.ts')
+          source = path.read_text()
+
+          old_claim = '''    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v1", { p_worker_id: "supabase_edge_phase11b_survival_v1" }));'''
+          new_claim = '''    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v2", { p_worker_id: "supabase_edge_phase11b_split_payload_v2" }));'''
+          if old_claim not in source and new_claim not in source:
+              raise SystemExit('claim RPC anchor not found')
+          source = source.replace(old_claim, new_claim, 1)
+
+          old_payload = '''    const payload = object(claim.payload);'''
+          new_payload = '''    const payload = Object.keys(object(claim.payload)).length > 0
+      ? object(claim.payload)
+      : object(await rpc<unknown>(supabase, "universal_race_stage_get_calculation_payload_v1", {
+          p_stage_id: stageId,
+        }));'''
+          if old_payload not in source and new_payload not in source:
+              raise SystemExit('payload anchor not found')
+          source = source.replace(old_payload, new_payload, 1)
+
+          old_sources = '''    const sources = buildSources(claim.payload, simulationRunId, preStageStandings);'''
+          new_sources = '''    const sources = buildSources(payload, simulationRunId, preStageStandings);'''
+          if old_sources not in source and new_sources not in source:
+              raise SystemExit('buildSources anchor not found')
+          source = source.replace(old_sources, new_sources, 1)
+
+          source = source.replace(
+              'const WORKER_BUILD = "road_scenario_v1_flat_hilly_2026_09_13";',
+              'const WORKER_BUILD = "race_director_v2_split_claim_payload_2026_09_15";',
+              1,
+          )
+
+          path.write_text(source)
+
+      - name: Verify split claim contract
+        run: |
+          grep -q 'universal_race_stage_claim_next_due_v2' supabase/functions/universal-race-stage-runner/index.ts
+          grep -q 'universal_race_stage_get_calculation_payload_v1' supabase/functions/universal-race-stage-runner/index.ts
+          grep -q 'buildSources(payload, simulationRunId, preStageStandings)' supabase/functions/universal-race-stage-runner/index.ts
+          ! grep -q 'universal_race_stage_claim_next_due_v1", { p_worker_id' supabase/functions/universal-race-stage-runner/index.ts
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit verified runner patch
+        run: |
+          if git diff --quiet -- supabase/functions/universal-race-stage-runner/index.ts; then
+            echo 'Split-claim runner patch already committed.'
+            exit 0
+          fi
+          git config user.name 'chatgpt-race-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add supabase/functions/universal-race-stage-runner/index.ts
+          git commit -m 'Split race claim from payload construction'
+          git push origin HEAD:chatgpt-race-claim-split-v2-20260915
