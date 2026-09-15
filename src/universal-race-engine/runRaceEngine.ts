@@ -2,6 +2,7 @@ import {
   applyRoadScenarioFinishFragmentationV1,
   applyRoadScenarioGapGuidanceV1,
 } from './roadScenarioPhysicalDirectorV1.ts'
+import { shouldCommitPhase10FinalRoadStateV16 } from './replayPhysicalStateV16.ts'
 
 /**
  * runRaceEngine.ts
@@ -32200,13 +32201,11 @@ function resolveUniversalPhase10Incidents({
       // checkpoint at the finish remains result-hidden: only its groups and
       // physical gaps are synchronized here; ranks and official times remain
       // unavailable until the authoritative final checkpoint.
-      const isWinnerFinishCheckpoint = checkpoint.commentary.some(
-        (entry) => entry.eventType === 'finish',
-      )
+      const commitsFinalRoadPhysicalState =
+        shouldCommitPhase10FinalRoadStateV16(checkpoint)
       if (
         isRoadFinishKmCheckpoint &&
-        !checkpoint.finalResultsVisible &&
-        !isWinnerFinishCheckpoint
+        commitsFinalRoadPhysicalState
       ) {
         groups = finalRoad.groups.map((group) => ({
           ...group,

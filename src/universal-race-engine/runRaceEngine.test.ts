@@ -11286,8 +11286,9 @@ describe('Phase 7 read-only replay page integration — Task 7.3', () => {
     const source = readReplayPageSource()
 
     expect(source).toContain(
-      'const resultsVisible = currentFrame?.finalResultsVisible === true',
+      'currentFrame?.finalResultsVisible === true',
     )
+    expect(source).toContain('officialLifecycleResultsVisible &&')
     expect(source).toContain('{result && resultsVisible ? (')
     // Keep this source-contract check semantic rather than indentation-sensitive.
     // RaceDetailPage was reformatted/localized without changing the authoritative
@@ -16441,10 +16442,10 @@ describe('Phase 11G organic race physics and replay continuity', () => {
 
 
 
-  it('publishes the Phase 11L V5.5 late-chase-eligibility build marker', () => {
+  it('publishes the active Phase 11L V6 scenario-director build marker', () => {
     const result = runRaceEngine(createValidInput())
     expect(result.phase78Acceptance.engineBuild).toBe(
-      'phase11l-v5-5-late-chase-eligibility-2026-09-11',
+      'phase11l-v6-scenario-director-flat-hilly-2026-09-13',
     )
   })
 
