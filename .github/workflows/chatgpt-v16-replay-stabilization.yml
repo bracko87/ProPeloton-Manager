@@ -34,22 +34,23 @@ jobs:
           path = Path('src/universal-race-engine/runRaceEngine.ts')
           lines = path.read_text().splitlines()
           needles = [
-              'physicalTransitionPublished',
-              'post_catch_group_transfer_without_physical_transition',
-              'pointPhysicalStateKm',
-              'checkpointIdSuffix',
-              'group_split',
-              'bridge_attack',
-              'escapeStillActive = false',
-              'phase10BuildExactEventReplayTimeline',
+              'const groupsAtKm',
+              'groupsAtKm =',
+              'function groupsAtKm',
+              'physicalLineageId',
+              'escapeStillActive',
+              'secondaryBridgeActive',
+              'frontCatchKm',
+              'secondaryBridgeCatchKm',
+              'UNIVERSAL_NON_BLOCKING_REPLAY_ISSUE_PREFIXES',
           ]
           emitted = set()
           for needle in needles:
               matches = [i for i, line in enumerate(lines) if needle in line]
               print(f'=== {needle}: {len(matches)} matches ===')
-              for i in matches[:8]:
-                  start = max(0, i - 28)
-                  end = min(len(lines), i + 45)
+              for i in matches[:12]:
+                  start = max(0, i - 55)
+                  end = min(len(lines), i + 95)
                   key = (start, end)
                   if key in emitted:
                       continue
