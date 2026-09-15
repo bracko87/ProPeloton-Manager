@@ -28,24 +28,26 @@ jobs:
           path = Path('supabase/functions/universal-race-stage-runner/index.ts')
           source = path.read_text()
 
-          old_claim = '''    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v1", { p_worker_id: "supabase_edge_phase11b_survival_v1" }));'''
-          new_claim = '''    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v2", { p_worker_id: "supabase_edge_phase11b_split_payload_v2" }));'''
+          old_claim = '    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v1", { p_worker_id: "supabase_edge_phase11b_survival_v1" }));'
+          new_claim = '    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v2", { p_worker_id: "supabase_edge_phase11b_split_payload_v2" }));'
           if old_claim not in source and new_claim not in source:
               raise SystemExit('claim RPC anchor not found')
           source = source.replace(old_claim, new_claim, 1)
 
-          old_payload = '''    const payload = object(claim.payload);'''
-          new_payload = '''    const payload = Object.keys(object(claim.payload)).length > 0
-      ? object(claim.payload)
-      : object(await rpc<unknown>(supabase, "universal_race_stage_get_calculation_payload_v1", {
-          p_stage_id: stageId,
-        }));'''
+          old_payload = '    const payload = object(claim.payload);'
+          new_payload = (
+              '    const payload = Object.keys(object(claim.payload)).length > 0\n'
+              '      ? object(claim.payload)\n'
+              '      : object(await rpc<unknown>(supabase, "universal_race_stage_get_calculation_payload_v1", {\n'
+              '          p_stage_id: stageId,\n'
+              '        }));'
+          )
           if old_payload not in source and new_payload not in source:
               raise SystemExit('payload anchor not found')
           source = source.replace(old_payload, new_payload, 1)
 
-          old_sources = '''    const sources = buildSources(claim.payload, simulationRunId, preStageStandings);'''
-          new_sources = '''    const sources = buildSources(payload, simulationRunId, preStageStandings);'''
+          old_sources = '    const sources = buildSources(claim.payload, simulationRunId, preStageStandings);'
+          new_sources = '    const sources = buildSources(payload, simulationRunId, preStageStandings);'
           if old_sources not in source and new_sources not in source:
               raise SystemExit('buildSources anchor not found')
           source = source.replace(old_sources, new_sources, 1)
