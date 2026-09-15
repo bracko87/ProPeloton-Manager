@@ -395,7 +395,11 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
       fallback_source_commit: FALLBACK_SOURCE_COMMIT,
     });
 
-    const payload = Object.keys(object(claim.payload)).length > 0\n      ? object(claim.payload)\n      : object(await rpc<unknown>(supabase, "universal_race_stage_get_calculation_payload_v1", {\n          p_stage_id: stageId,\n        }));
+    const payload = Object.keys(object(claim.payload)).length > 0
+      ? object(claim.payload)
+      : object(await rpc<unknown>(supabase, "universal_race_stage_get_calculation_payload_v1", {
+          p_stage_id: stageId,
+        }));
     const stagePayload = object(payload.stage);
     const stageNumber = Math.max(1, Math.trunc(finiteNumber(stagePayload.stage_number, 1)));
 
