@@ -1,5 +1,5 @@
 export const ROAD_SCENARIO_PHYSICAL_DIRECTOR_VERSION =
-  'road_scenario_physical_director_v1' as const
+  'road_scenario_physical_director_v2' as const
 
 type JsonRecord = Record<string, unknown>
 
@@ -10,6 +10,9 @@ export interface RoadScenarioPhysicalInputV1 {
   }
   readonly stagePlans: readonly {
     readonly metadata?: Readonly<Record<string, unknown>>
+    readonly riders?: readonly {
+      readonly commands?: Readonly<Record<string, unknown>>
+    }[]
   }[]
 }
 
@@ -72,38 +75,80 @@ function groupCodeForGap(gapSeconds: number): string {
   return 'late_group'
 }
 
-export function getRoadScenarioPhysicalAuditV1(
-  input: RoadScenarioPhysicalInputV1,
-): RoadScenarioPhysicalAuditV1 | null {
+const ROAD_SCENARIO_METADATA_KEYS = [
+  'flatScenarioV1',
+  'hillyScenarioV1',
+  'mountainScenarioV1',
+  'cobbledScenarioV1',
+] as const
+
+function actualScenarioAudit(input: RoadScenarioPhysicalInputV1): JsonRecord | null {
   for (const plan of input.stagePlans) {
     const metadata = object(plan.metadata)
-    const candidate =
-      metadata.flatScenarioV1 ??
-      metadata.hillyScenarioV1 ??
-      metadata.mountainScenarioV1 ??
-      metadata.cobbledScenarioV1
-    const audit = object(candidate)
-    const scenarioType = text(audit.scenarioType)
-    const templateId = text(audit.templateId)
-    const templateFamily = text(audit.templateFamily)
-    const selectionSeed = text(audit.selectionSeed)
-    if (
-      ['flat', 'hilly', 'mountain', 'cobbled'].includes(scenarioType) &&
-      templateId &&
-      templateFamily &&
-      selectionSeed
-    ) {
-      return {
-        ...audit,
-        scenarioType,
-        templateId,
-        templateFamily,
-        selectionSeed,
-        generatedParameters: object(audit.generatedParameters),
+    for (const key of ROAD_SCENARIO_METADATA_KEYS) {
+      const audit = object(metadata[key])
+      if (text(audit.templateId) && text(audit.templateFamily) && text(audit.scenarioType)) {
+        return audit
       }
     }
   }
   return null
+}
+
+function recordRuntimeApplication(
+  input: RoadScenarioPhysicalInputV1,
+  event: 'gap_guidance' | 'fragmentation',
+  details: { adjusted: boolean; kmFromStart?: number } = { adjusted: false },
+): void {
+  const audit = actualScenarioAudit(input)
+  if (!audit) return
+  const existing = object(audit.runtimeApplicationProof)
+  const next: JsonRecord = {
+    ...existing,
+    contract: 'road_scenario_runtime_application_v2',
+    finalEngineSawTemplate: true,
+    physicalDirectorVersion: ROAD_SCENARIO_PHYSICAL_DIRECTOR_VERSION,
+  }
+  if (event === 'gap_guidance') {
+    next.gapGuidanceCalls = Math.max(0, Math.trunc(finite(existing.gapGuidanceCalls, 0))) + 1
+    if (details.adjusted) {
+      next.gapAdjustments = Math.max(0, Math.trunc(finite(existing.gapAdjustments, 0))) + 1
+    }
+    if (details.kmFromStart !== undefined) next.lastGuidedKm = round(details.kmFromStart, 3)
+  } else {
+    next.fragmentationCalls = Math.max(0, Math.trunc(finite(existing.fragmentationCalls, 0))) + 1
+    if (details.adjusted) {
+      next.fragmentationAdjustments = Math.max(0, Math.trunc(finite(existing.fragmentationAdjustments, 0))) + 1
+    }
+  }
+  audit.runtimeApplicationProof = next
+}
+
+export function getRoadScenarioPhysicalAuditV1(
+  input: RoadScenarioPhysicalInputV1,
+): RoadScenarioPhysicalAuditV1 | null {
+  const audit = actualScenarioAudit(input)
+  if (!audit) return null
+  const scenarioType = text(audit.scenarioType)
+  const templateId = text(audit.templateId)
+  const templateFamily = text(audit.templateFamily)
+  const selectionSeed = text(audit.selectionSeed)
+  if (
+    !['flat', 'hilly', 'mountain', 'cobbled'].includes(scenarioType) ||
+    !templateId ||
+    !templateFamily ||
+    !selectionSeed
+  ) {
+    return null
+  }
+  return {
+    ...audit,
+    scenarioType,
+    templateId,
+    templateFamily,
+    selectionSeed,
+    generatedParameters: object(audit.generatedParameters),
+  }
 }
 
 interface InstantiatedBreakDirectiveV1 {
@@ -117,7 +162,6 @@ interface InstantiatedBreakDirectiveV1 {
 }
 
 function instantiatedBreaks(
-  input: RoadScenarioPhysicalInputV1,
   audit: RoadScenarioPhysicalAuditV1,
 ): readonly InstantiatedBreakDirectiveV1[] {
   return array(audit.generatedParameters.breakaways)
@@ -162,22 +206,26 @@ function directiveEndProgress(
   )
 }
 
-function scenarioGapTargetSeconds(
+interface GapEnvelopeV2 {
+  readonly lower: number
+  readonly upper: number
+  readonly center: number
+  readonly chaseActive: boolean
+}
+
+function scenarioGapEnvelopeV2(
   input: RoadScenarioPhysicalInputV1,
   progressFraction: number,
-): number | null {
+): GapEnvelopeV2 | null {
   const audit = getRoadScenarioPhysicalAuditV1(input)
   if (!audit) return null
-  const directives = instantiatedBreaks(input, audit)
+  const directives = instantiatedBreaks(audit)
   if (directives.length === 0) return null
 
   const progress = clamp(progressFraction, 0, 1)
-  let latestPastDirectiveIndex = -1
-
   for (let index = 0; index < directives.length; index += 1) {
     const directive = directives[index]
     if (progress < directive.formationPct) break
-    latestPastDirectiveIndex = index
     const endProgress = directiveEndProgress(input, directives, index)
     if (progress > endProgress + 0.000001) continue
 
@@ -191,7 +239,9 @@ function scenarioGapTargetSeconds(
       peakProgress,
       endProgress,
     )
-    const startingGap = Math.min(60, Math.max(18, directive.targetPeakGapSec * 0.12))
+    const startingGap = Math.min(55, Math.max(10, directive.targetPeakGapSec * 0.08))
+    let center = directive.targetPeakGapSec
+    let chaseActive = false
 
     if (progress <= peakProgress) {
       const fraction = clamp(
@@ -200,40 +250,82 @@ function scenarioGapTargetSeconds(
         0,
         1,
       )
-      return round(
-        startingGap + (directive.targetPeakGapSec - startingGap) * fraction,
-        6,
+      center = startingGap + (directive.targetPeakGapSec - startingGap) * fraction
+    } else if (progress > chaseStart) {
+      chaseActive = true
+      const endTarget =
+        endProgress >= 0.999 && directive.survivalTargetSec !== null
+          ? directive.survivalTargetSec
+          : 0
+      const closureFraction = clamp(
+        (progress - chaseStart) / Math.max(0.000001, endProgress - chaseStart),
+        0,
+        1,
       )
+      const eased = closureFraction * closureFraction * (3 - 2 * closureFraction)
+      center = directive.targetPeakGapSec + (endTarget - directive.targetPeakGapSec) * eased
     }
 
-    if (progress <= chaseStart) return round(directive.targetPeakGapSec, 6)
-
-    const endTarget =
-      endProgress >= 0.999 && directive.survivalTargetSec !== null
-        ? directive.survivalTargetSec
-        : 0
-    const closureFraction = clamp(
-      (progress - chaseStart) / Math.max(0.000001, endProgress - chaseStart),
-      0,
-      1,
-    )
-    const easedClosure = closureFraction * closureFraction * (3 - 2 * closureFraction)
-    return round(
-      directive.targetPeakGapSec +
-        (endTarget - directive.targetPeakGapSec) * easedClosure,
-      6,
-    )
+    const family = audit.templateFamily
+    const lowerFactor = family === 'breakaway' ? 0.48 : family === 'controlled_sprint' ? 0.22 : 0.32
+    const upperFactor = family === 'breakaway' ? 1.62 : family === 'controlled_sprint' ? 1.32 : 1.46
+    const minimumLower = chaseActive ? 0 : Math.min(12, center * 0.2)
+    return {
+      center: round(Math.max(0, center), 6),
+      lower: round(Math.max(minimumLower, center * lowerFactor), 6),
+      upper: round(Math.max(18, center * upperFactor), 6),
+      chaseActive,
+    }
   }
-
-  if (latestPastDirectiveIndex >= 0) return 0
   return null
 }
 
+function currentPhaseNumber(input: RoadScenarioPhysicalInputV1, kmFromStart: number): 1 | 2 | 3 | 4 {
+  const distance = Math.max(1, finite(input.stage.distanceKm, 1))
+  const progress = clamp(kmFromStart / distance, 0, 1)
+  if (progress < 0.25) return 1
+  if (progress < 0.5) return 2
+  if (progress < 0.75) return 3
+  return 4
+}
+
+function commandForPhase(commands: JsonRecord, phase: 1 | 2 | 3 | 4): string {
+  return text(commands[`phase${phase}`])
+}
+
+function commandChasePressure(
+  input: RoadScenarioPhysicalInputV1,
+  kmFromStart: number,
+): number {
+  const phase = currentPhaseNumber(input, kmFromStart)
+  const chaseCommands = new Set([
+    'chase',
+    'chase_breakaway',
+    'control_race',
+    'control_tempo',
+  ])
+  let total = 0
+  let chase = 0
+  input.stagePlans.forEach((plan) => {
+    ;(plan.riders ?? []).forEach((rider) => {
+      const command = commandForPhase(object(rider.commands), phase)
+      if (!command) return
+      total += 1
+      if (chaseCommands.has(command)) chase += 1
+    })
+  })
+  if (total === 0) return 0
+  return clamp((chase / total) * 3.25, 0, 1)
+}
+
 /**
- * Soft physical director: the template supplies a target trajectory, while the
- * existing pace/energy/chase model still supplies the actual physical step.
- * The bounded correction cannot create an escape from zero and cannot teleport
- * the gap to the target in a single step.
+ * Flexible peloton director.
+ *
+ * The engine still creates attacks, bridges and breakaway membership from the
+ * real rider commands and rider physics. The template only supplies a broad gap
+ * envelope. If the engine is already inside that envelope, nothing is changed.
+ * Strong chase/control commands weaken template protection and therefore remain
+ * capable of overriding the scenario story.
  */
 export function applyRoadScenarioGapGuidanceV1(
   input: RoadScenarioPhysicalInputV1,
@@ -242,39 +334,46 @@ export function applyRoadScenarioGapGuidanceV1(
   stepDistanceKm: number,
 ): number {
   const current = Math.max(0, finite(currentGapSeconds, 0))
+  const audit = getRoadScenarioPhysicalAuditV1(input)
+  if (!audit) return current
+  recordRuntimeApplication(input, 'gap_guidance', { adjusted: false, kmFromStart })
   if (current <= 0.5) return current
 
   const distanceKm = Math.max(1, finite(input.stage.distanceKm, 1))
   const progress = clamp(finite(kmFromStart, 0) / distanceKm, 0, 1)
-  const target = scenarioGapTargetSeconds(input, progress)
-  if (target === null) return current
+  const envelope = scenarioGapEnvelopeV2(input, progress)
+  if (!envelope) return current
 
-  // Coarse Phase 3 checkpoints can span a large part of the stage. Cap the
-  // physical correction distance so scenario guidance remains gradual rather
-  // than effectively teleporting a gap toward its target in one engine step.
   const stepKm = clamp(finite(stepDistanceKm, 0.25), 0.25, 2.5)
-  const difference = target - current
-  if (Math.abs(difference) <= 0.000001) return round(current, 6)
+  const chasePressure = commandChasePressure(input, kmFromStart)
+  let adjusted = current
 
-  const audit = getRoadScenarioPhysicalAuditV1(input)
-  const family = audit?.templateFamily ?? ''
-  const survivalFamily = family === 'breakaway'
-  const responsiveness = survivalFamily ? 0.46 : 0.36
-  const maximumGrowth = stepKm * (survivalFamily ? 11 : 9)
-  const maximumClosure = stepKm * 16
-  const requestedAdjustment = difference * responsiveness
-  const boundedAdjustment = requestedAdjustment >= 0
-    ? Math.min(requestedAdjustment, maximumGrowth)
-    : Math.max(requestedAdjustment, -maximumClosure)
+  if (current < envelope.lower) {
+    const difference = envelope.lower - current
+    const familyBoost = audit.templateFamily === 'breakaway' ? 1.18 : 1
+    const commandResistance = 1 - chasePressure * 0.72
+    const maximumGrowth = stepKm * 9.5 * familyBoost * Math.max(0.2, commandResistance)
+    const requested = difference * 0.34 * familyBoost * Math.max(0.25, commandResistance)
+    adjusted = current + Math.min(requested, maximumGrowth)
+  } else if (current > envelope.upper) {
+    const difference = current - envelope.upper
+    const chaseBoost = 1 + chasePressure * 0.9 + (envelope.chaseActive ? 0.3 : 0)
+    const maximumClosure = stepKm * 14 * chaseBoost
+    const requested = difference * 0.32 * chaseBoost
+    adjusted = current - Math.min(requested, maximumClosure)
+  }
 
-  return round(Math.max(0, current + boundedAdjustment), 6)
+  adjusted = round(Math.max(0, adjusted), 6)
+  if (Math.abs(adjusted - current) > 0.000001) {
+    recordRuntimeApplication(input, 'gap_guidance', { adjusted: true, kmFromStart })
+  }
+  return adjusted
 }
 
 /**
- * Scenario fragmentation acts on the largest existing physical finish group,
- * not necessarily the race-leading group. That preserves a surviving breakaway
- * while still allowing the peloton behind it to split. Selection is driven by
- * already-calculated finish energy; the template changes macro pressure only.
+ * Flexible finish fragmentation. The template biases the size of an already
+ * existing physical group but no longer forces an exact target group size.
+ * Finish energy continues to decide who remains in the stronger group.
  */
 export function applyRoadScenarioFinishFragmentationV1<
   T extends RoadScenarioFragmentationStateV1,
@@ -283,14 +382,16 @@ export function applyRoadScenarioFinishFragmentationV1<
   states: readonly T[],
 ): T[] {
   const audit = getRoadScenarioPhysicalAuditV1(input)
-  if (!audit || states.length < 3 || audit.templateFamily === 'breakaway') {
-    return [...states]
-  }
+  if (!audit || states.length < 3) return [...states]
+  recordRuntimeApplication(input, 'fragmentation', { adjusted: false })
 
   const parameters = object(audit.generatedParameters)
-  const pressure = clamp(finite(parameters.fragmentationPressure, 0), 0, 1)
+  let pressure = clamp(finite(parameters.fragmentationPressure, 0), 0, 1)
   const requestedTarget = Math.trunc(finite(parameters.targetFrontGroup, 0))
-  if (pressure < 0.18 || requestedTarget < 2) return [...states]
+  const allowRegroup = parameters.allowRegroup === true
+  if (allowRegroup) pressure *= 0.72
+  if (audit.templateFamily === 'breakaway') pressure *= 0.78
+  if (pressure < 0.28 || requestedTarget < 2) return [...states]
 
   const groups = new Map<string, T[]>()
   states.forEach((state) => {
@@ -301,11 +402,13 @@ export function applyRoadScenarioFinishFragmentationV1<
   })
   const largest = [...groups.values()]
     .sort((left, right) => right.length - left.length)[0] ?? []
-  if (largest.length <= requestedTarget || largest.length < 8) return [...states]
+  if (largest.length < 8 || largest.length <= requestedTarget) return [...states]
 
-  const pressureRetention = Math.ceil(largest.length * Math.max(0.08, 1 - pressure))
+  const blend = clamp(0.20 + pressure * 0.46, 0.20, 0.68)
+  const softTarget = Math.round(largest.length * (1 - blend) + requestedTarget * blend)
+  const naturalRetention = Math.ceil(largest.length * Math.max(0.30, 1 - pressure * 0.58))
   const keepCount = clamp(
-    Math.max(requestedTarget, pressureRetention),
+    Math.max(softTarget, naturalRetention),
     2,
     largest.length,
   )
@@ -319,22 +422,20 @@ export function applyRoadScenarioFinishFragmentationV1<
   const retainedIds = new Set(selected.slice(0, keepCount).map((state) => state.riderId))
   const detached = selected.slice(keepCount)
   const detachedRank = new Map(detached.map((state, index) => [state.riderId, index] as const))
-  const secondaryGap = Math.max(
-    8,
-    finite(parameters.secondaryGapSec, 12 + pressure * 70),
-  )
+  const configuredGap = finite(parameters.secondaryGapSec, 12 + pressure * 70)
+  const secondaryGap = Math.max(6, configuredGap * (0.58 + pressure * 0.30))
   const baseGap = Math.min(...largest.map((state) => Math.max(0, state.finalGapSeconds)))
   const firstBandSize = Math.max(1, Math.ceil(detached.length * 0.62))
 
-  return states.map((state) => {
+  const result = states.map((state) => {
     if (!largest.some((candidate) => candidate.riderId === state.riderId)) return state
     if (retainedIds.has(state.riderId)) return state
     const rank = detachedRank.get(state.riderId) ?? 0
-    const bandMultiplier = rank < firstBandSize ? 0.65 : 1
+    const bandMultiplier = rank < firstBandSize ? 0.62 : 1
     const gap = round(baseGap + secondaryGap * bandMultiplier, 6)
     const energyPenalty = rank < firstBandSize
-      ? 0.5 + pressure * 1.2
-      : 1 + pressure * 2
+      ? 0.35 + pressure * 0.9
+      : 0.7 + pressure * 1.5
     return {
       ...state,
       finalGapSeconds: gap,
@@ -342,4 +443,6 @@ export function applyRoadScenarioFinishFragmentationV1<
       energyAtFinish: round(Math.max(0, state.energyAtFinish - energyPenalty), 6),
     }
   })
+  recordRuntimeApplication(input, 'fragmentation', { adjusted: true })
+  return result
 }
