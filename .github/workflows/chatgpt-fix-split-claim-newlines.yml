@@ -48,12 +48,19 @@ jobs:
           p.write_text(s)
           PY
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
       - name: Check Edge Function syntax
-        run: deno check supabase/functions/universal-race-stage-runner/index.ts
+        run: deno check --node-modules-dir=auto supabase/functions/universal-race-stage-runner/index.ts
 
       - name: Commit corrected runner
         run: |
