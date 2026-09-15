@@ -164,7 +164,23 @@
     </script>
 
     <style>
-      .seo-fallback {
+      html,
+      body,
+      #app {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: #081224;
+      }
+
+      #app {
+        min-height: 100vh;
+        background: #081224;
+      }
+
+      .seo-noscript {
         min-height: 100vh;
         box-sizing: border-box;
         padding: 48px 24px;
@@ -173,31 +189,31 @@
         font-family: Arial, Helvetica, sans-serif;
       }
 
-      .seo-fallback-inner {
+      .seo-noscript-inner {
         max-width: 960px;
         margin: 0 auto;
       }
 
-      .seo-fallback h1 {
+      .seo-noscript h1 {
         margin: 0 0 16px;
         font-size: 42px;
         line-height: 1.1;
       }
 
-      .seo-fallback p {
+      .seo-noscript p {
         max-width: 760px;
         color: #dbe4f0;
         line-height: 1.7;
       }
 
-      .seo-fallback nav {
+      .seo-noscript nav {
         display: flex;
         flex-wrap: wrap;
         gap: 12px 20px;
         margin-top: 28px;
       }
 
-      .seo-fallback a {
+      .seo-noscript a {
         color: #facc15;
         font-weight: 700;
       }
@@ -240,9 +256,11 @@
   </head>
 
   <body>
-    <div id="app">
-      <div class="seo-fallback">
-        <div class="seo-fallback-inner">
+    <div id="app"></div>
+
+    <noscript>
+      <div class="seo-noscript">
+        <div class="seo-noscript-inner">
           <h1>ProPeloton Manager</h1>
           <p>
             ProPeloton Manager is an online cycling management game where you create
@@ -259,7 +277,7 @@
           </nav>
         </div>
       </div>
-    </div>
+    </noscript>
 
     <script>
       new EventSource('/esbuild').addEventListener(
