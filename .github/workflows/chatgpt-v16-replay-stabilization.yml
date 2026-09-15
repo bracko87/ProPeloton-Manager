@@ -1,0 +1,94 @@
+name: ChatGPT V16 Replay Stabilization
+
+on:
+  push:
+    branches:
+      - chatgpt-v16-replay-stabilization-20260915
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  replay-stabilization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt-v16-replay-stabilization-20260915
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Apply V16 replay-state engine patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('src/universal-race-engine/runRaceEngine.ts')
+          source = path.read_text()
+
+          import_anchor = """import {
+            applyRoadScenarioFinishFragmentationV1,
+            applyRoadScenarioGapGuidanceV1,
+          } from './roadScenarioPhysicalDirectorV1.ts'
+          """
+          helper_import = """import { shouldCommitPhase10FinalRoadStateV16 } from './replayPhysicalStateV16.ts'
+          """
+          if helper_import not in source:
+              if import_anchor not in source:
+                  raise SystemExit('V16 import anchor not found')
+              source = source.replace(import_anchor, import_anchor + helper_import, 1)
+
+          old = """      const isWinnerFinishCheckpoint = checkpoint.commentary.some(
+                (entry) => entry.eventType === 'finish',
+              )
+              if (
+                isRoadFinishKmCheckpoint &&
+                !checkpoint.finalResultsVisible &&
+                !isWinnerFinishCheckpoint
+              ) {
+          """
+          new = """      const commitsFinalRoadPhysicalState =
+                shouldCommitPhase10FinalRoadStateV16(checkpoint)
+              if (
+                isRoadFinishKmCheckpoint &&
+                commitsFinalRoadPhysicalState
+              ) {
+          """
+          if old in source:
+              source = source.replace(old, new, 1)
+          elif 'shouldCommitPhase10FinalRoadStateV16(checkpoint)' not in source:
+              raise SystemExit('V16 finish-state patch anchor not found')
+
+          path.write_text(source)
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run V16 focused regression tests
+        run: npx --yes vitest@2.1.9 run src/universal-race-engine/replayPhysicalStateV16.test.ts
+
+      - name: Run full universal race-engine tests
+        run: npx --yes vitest@2.1.9 run src/universal-race-engine/runRaceEngine.test.ts
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit verified engine patch
+        run: |
+          if git diff --quiet -- src/universal-race-engine/runRaceEngine.ts; then
+            echo 'Engine patch already committed.'
+            exit 0
+          fi
+          git config user.name 'chatgpt-v16-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add src/universal-race-engine/runRaceEngine.ts
+          git commit -m 'Stabilize V16 replay physical finish state'
+          git push origin HEAD:chatgpt-v16-replay-stabilization-20260915
