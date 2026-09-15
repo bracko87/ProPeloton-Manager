@@ -26,6 +26,38 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Inspect physical transition anchors
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('src/universal-race-engine/runRaceEngine.ts')
+          lines = path.read_text().splitlines()
+          needles = [
+              'physicalTransitionPublished',
+              'post_catch_group_transfer_without_physical_transition',
+              'pointPhysicalStateKm',
+              'checkpointIdSuffix',
+              'group_split',
+              'bridge_attack',
+              'escapeStillActive = false',
+              'phase10BuildExactEventReplayTimeline',
+          ]
+          emitted = set()
+          for needle in needles:
+              matches = [i for i, line in enumerate(lines) if needle in line]
+              print(f'=== {needle}: {len(matches)} matches ===')
+              for i in matches[:8]:
+                  start = max(0, i - 28)
+                  end = min(len(lines), i + 45)
+                  key = (start, end)
+                  if key in emitted:
+                      continue
+                  emitted.add(key)
+                  print(f'--- lines {start+1}-{end} ---')
+                  for n in range(start, end):
+                      print(f'{n+1:06d}: {lines[n]}')
+
       - name: Apply V16 replay-state engine patch
         shell: python
         run: |
