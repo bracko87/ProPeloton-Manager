@@ -30,6 +30,7 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
 
           path = Path('src/universal-race-engine/runRaceEngine.ts')
           source = path.read_text()
@@ -46,26 +47,28 @@ jobs:
                   raise SystemExit('V16 import anchor not found')
               source = source.replace(import_anchor, import_anchor + helper_import, 1)
 
-          old = """      const isWinnerFinishCheckpoint = checkpoint.commentary.some(
-                (entry) => entry.eventType === 'finish',
+          if 'shouldCommitPhase10FinalRoadStateV16(checkpoint)' not in source:
+              pattern = re.compile(
+                  r"(?P<i>[ \t]+)const isWinnerFinishCheckpoint = checkpoint\.commentary\.some\(\s*"
+                  r"\(entry\) => entry\.eventType === 'finish',\s*"
+                  r"\)\s*"
+                  r"if \(\s*"
+                  r"isRoadFinishKmCheckpoint &&\s*"
+                  r"!checkpoint\.finalResultsVisible &&\s*"
+                  r"!isWinnerFinishCheckpoint\s*"
+                  r"\) \{"
               )
-              if (
-                isRoadFinishKmCheckpoint &&
-                !checkpoint.finalResultsVisible &&
-                !isWinnerFinishCheckpoint
-              ) {
-          """
-          new = """      const commitsFinalRoadPhysicalState =
-                shouldCommitPhase10FinalRoadStateV16(checkpoint)
-              if (
-                isRoadFinishKmCheckpoint &&
-                commitsFinalRoadPhysicalState
-              ) {
-          """
-          if old in source:
-              source = source.replace(old, new, 1)
-          elif 'shouldCommitPhase10FinalRoadStateV16(checkpoint)' not in source:
-              raise SystemExit('V16 finish-state patch anchor not found')
+              replacement = (
+                  "      const commitsFinalRoadPhysicalState =\n"
+                  "        shouldCommitPhase10FinalRoadStateV16(checkpoint)\n"
+                  "      if (\n"
+                  "        isRoadFinishKmCheckpoint &&\n"
+                  "        commitsFinalRoadPhysicalState\n"
+                  "      ) {"
+              )
+              source, count = pattern.subn(replacement, source, count=1)
+              if count != 1:
+                  raise SystemExit(f'V16 finish-state patch anchor count was {count}, expected 1')
 
           path.write_text(source)
 
