@@ -95,13 +95,55 @@
               },
               {
                 "@type": "WebPage",
-                "name": "View Demo",
+                "name": "Demo",
                 "url": "https://propelotonmanager.com/demo/"
               },
               {
                 "@type": "WebPage",
-                "name": "About ProPeloton Manager",
+                "name": "About",
                 "url": "https://propelotonmanager.com/about/"
+              },
+              {
+                "@type": "WebPage",
+                "name": "Support",
+                "url": "https://propelotonmanager.com/support/"
+              }
+            ]
+          },
+          {
+            "@type": "ItemList",
+            "@id": "https://propelotonmanager.com/#primary-navigation",
+            "name": "ProPeloton Manager primary navigation",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "How to Play",
+                "url": "https://propelotonmanager.com/how-to-play/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Game Guide",
+                "url": "https://propelotonmanager.com/game-guide/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Demo",
+                "url": "https://propelotonmanager.com/demo/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 4,
+                "name": "About",
+                "url": "https://propelotonmanager.com/about/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 5,
+                "name": "Support",
+                "url": "https://propelotonmanager.com/support/"
               }
             ]
           },
@@ -159,6 +201,33 @@
         color: #facc15;
         font-weight: 700;
       }
+
+      .seo-primary-nav {
+        display: none;
+        align-items: center;
+        gap: 18px;
+        margin-left: auto;
+        margin-right: 24px;
+        white-space: nowrap;
+      }
+
+      .seo-primary-nav a {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .seo-primary-nav a:hover,
+      .seo-primary-nav a:focus-visible {
+        color: #facc15;
+      }
+
+      @media (min-width: 1024px) {
+        .seo-primary-nav {
+          display: flex;
+        }
+      }
     </style>
 
     <script
@@ -178,13 +247,12 @@
             your club, develop riders, plan race calendars, prepare stage tactics,
             manage finances and compete against other managers.
           </p>
-          <nav aria-label="Public site navigation">
+          <nav aria-label="Primary site navigation">
             <a href="/how-to-play/">How to Play</a>
             <a href="/game-guide/">Game Guide</a>
-            <a href="/demo/">View Demo</a>
+            <a href="/demo/">Demo</a>
             <a href="/about/">About</a>
             <a href="/support/">Support</a>
-            <a href="/contact/">Contact</a>
             <a href="/#/login">Sign In</a>
           </nav>
         </div>
@@ -199,6 +267,58 @@
     </script>
 
     <script src="/main.js"></script>
+
+    <script>
+      (() => {
+        const primaryLinks = [
+          ['How to Play', '/how-to-play/'],
+          ['Game Guide', '/game-guide/'],
+          ['Demo', '/demo/'],
+          ['About', '/about/'],
+          ['Support', '/support/'],
+        ]
+
+        const installPrimaryNavigation = () => {
+          const homepage = document.getElementById('public-homepage')
+          if (!homepage) return
+
+          const header = homepage.querySelector('header')
+          if (!header || header.querySelector('[data-seo-primary-nav="true"]')) return
+
+          const headerInner = header.firstElementChild
+          if (!headerInner) return
+
+          const authNavigation = headerInner.querySelector('nav')
+          if (!authNavigation) return
+
+          const navigation = document.createElement('nav')
+          navigation.className = 'seo-primary-nav'
+          navigation.setAttribute('aria-label', 'Primary site navigation')
+          navigation.setAttribute('data-seo-primary-nav', 'true')
+
+          primaryLinks.forEach(([label, href]) => {
+            const link = document.createElement('a')
+            link.href = href
+            link.textContent = label
+            navigation.appendChild(link)
+          })
+
+          headerInner.insertBefore(navigation, authNavigation)
+        }
+
+        installPrimaryNavigation()
+
+        const observer = new MutationObserver(installPrimaryNavigation)
+        observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+        })
+
+        window.setTimeout(installPrimaryNavigation, 0)
+        window.setTimeout(installPrimaryNavigation, 250)
+      })()
+    </script>
+
     <!-- deploy-probe: ppm-race-worker-20260903 -->
   </body>
 </html>
