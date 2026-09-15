@@ -13380,6 +13380,9 @@ function UniversalRaceReplayPage({
   const [preStageStandingByRiderId, setPreStageStandingByRiderId] = useState<
     Record<string, ReplayPreStageStanding>
   >({})
+  const [replayRiderIdentityById, setReplayRiderIdentityById] = useState<
+    Map<string, RiderNameLookupRow>
+  >(new Map())
 
   useEffect(() => {
     let cancelled = false
@@ -13730,6 +13733,57 @@ function UniversalRaceReplayPage({
 
   const input = shadowBuild.input
   const result = shadowBuild.result
+
+  useEffect(() => {
+    let cancelled = false
+
+    const riderIds = Array.from(
+      new Set(
+        (input?.riders ?? [])
+          .map((rider) => rider.riderId?.trim())
+          .filter((riderId): riderId is string => Boolean(riderId))
+      )
+    )
+
+    if (riderIds.length === 0) {
+      setReplayRiderIdentityById(new Map())
+      return () => {
+        cancelled = true
+      }
+    }
+
+    async function loadReplayRiderIdentities(): Promise<void> {
+      const { data, error } = await supabase
+        .from('riders')
+        .select('id, first_name, last_name, display_name, country_code')
+        .in('id', riderIds)
+
+      if (cancelled) return
+
+      if (error) {
+        console.warn(
+          'Could not load current rider identities for race replay:',
+          error.message
+        )
+        setReplayRiderIdentityById(new Map())
+        return
+      }
+
+      const nextIdentityById = new Map<string, RiderNameLookupRow>()
+
+      for (const row of (data ?? []) as RiderNameLookupRow[]) {
+        if (row.id) nextIdentityById.set(row.id, row)
+      }
+
+      setReplayRiderIdentityById(nextIdentityById)
+    }
+
+    void loadReplayRiderIdentities()
+
+    return () => {
+      cancelled = true
+    }
+  }, [input])
   const durationSeconds = result
     ? getUniversalReplayDurationSeconds(result)
     : 0
@@ -14002,6 +14056,8 @@ function UniversalRaceReplayPage({
       ? eligibleRiders
           .map((rider) => {
             const participant = participantRiderLookup.get(rider.riderId)?.rider
+            const currentIdentity =
+              replayRiderIdentityById.get(rider.riderId) ?? null
             const explicitStartOrder =
               participant?.display_start_number ??
               participant?.start_number ??
@@ -14010,9 +14066,11 @@ function UniversalRaceReplayPage({
 
             return {
               id: rider.riderId,
-              label: participant
-                ? getRaceParticipantRiderDisplayName(participant)
-                : rider.snapshot.displayName?.trim() || rider.riderId,
+              label:
+                getFullRiderNameFromLookup(currentIdentity) ??
+                (participant
+                  ? getRaceParticipantRiderDisplayName(participant)
+                  : rider.snapshot.displayName?.trim() || rider.riderId),
               secondaryLabel:
                 teamInputById.get(rider.teamId)?.snapshot.teamName?.trim() ||
                 rider.teamId,
@@ -14186,6 +14244,7 @@ function UniversalRaceReplayPage({
     participantRiderLookup,
     participantTeams,
     replayProgress,
+    replayRiderIdentityById,
     result,
     stage.stage_number,
     teamInputById,
@@ -14574,15 +14633,22 @@ function UniversalRaceReplayPage({
       const team = teamInputById.get(rider.teamId)
       const participantRider =
         participantRiderLookup.get(rider.riderId)?.rider ?? null
+      const currentIdentity =
+        replayRiderIdentityById.get(rider.riderId) ?? null
       const activeCommand = commandByRiderId.get(rider.riderId)
 
       return {
         riderId: rider.riderId,
-        riderName: participantRider
-          ? getRaceParticipantRiderDisplayName(participantRider)
-          : rider.snapshot.displayName ?? rider.riderId,
+        riderName:
+          getFullRiderNameFromLookup(currentIdentity) ??
+          (participantRider
+            ? getRaceParticipantRiderDisplayName(participantRider)
+            : rider.snapshot.displayName ?? rider.riderId),
         teamName: team?.snapshot.teamName ?? rider.teamId,
-        countryCode: participantRider?.country_code ?? null,
+        countryCode:
+          currentIdentity?.country_code?.trim() ||
+          participantRider?.country_code ||
+          null,
         startNumber: rider.snapshot.startNumber,
         groupCode,
         displayCode,
@@ -14634,6 +14700,7 @@ function UniversalRaceReplayPage({
     nextFrame,
     participantRiderLookup,
     readinessByRiderId,
+    replayRiderIdentityById,
     resultsVisible,
     teamInputById,
   ])
