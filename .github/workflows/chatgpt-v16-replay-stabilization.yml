@@ -49,21 +49,21 @@ jobs:
 
           if 'shouldCommitPhase10FinalRoadStateV16(checkpoint)' not in source:
               pattern = re.compile(
-                  r"(?P<i>[ \t]+)const isWinnerFinishCheckpoint = checkpoint\.commentary\.some\(\s*"
-                  r"\(entry\) => entry\.eventType === 'finish',\s*"
-                  r"\)\s*"
-                  r"if \(\s*"
-                  r"isRoadFinishKmCheckpoint &&\s*"
-                  r"!checkpoint\.finalResultsVisible &&\s*"
-                  r"!isWinnerFinishCheckpoint\s*"
-                  r"\) \{"
+                  r"(?P<i>[ \\t]+)const isWinnerFinishCheckpoint = checkpoint\\.commentary\\.some\\(\\s*"
+                  r"\\(entry\\) => entry\\.eventType === 'finish',\\s*"
+                  r"\\)\\s*"
+                  r"if \\(\\s*"
+                  r"isRoadFinishKmCheckpoint &&\\s*"
+                  r"!checkpoint\\.finalResultsVisible &&\\s*"
+                  r"!isWinnerFinishCheckpoint\\s*"
+                  r"\\) \\{"
               )
               replacement = (
-                  "      const commitsFinalRoadPhysicalState =\n"
-                  "        shouldCommitPhase10FinalRoadStateV16(checkpoint)\n"
-                  "      if (\n"
-                  "        isRoadFinishKmCheckpoint &&\n"
-                  "        commitsFinalRoadPhysicalState\n"
+                  "      const commitsFinalRoadPhysicalState =\\n"
+                  "        shouldCommitPhase10FinalRoadStateV16(checkpoint)\\n"
+                  "      if (\\n"
+                  "        isRoadFinishKmCheckpoint &&\\n"
+                  "        commitsFinalRoadPhysicalState\\n"
                   "      ) {"
               )
               source, count = pattern.subn(replacement, source, count=1)
@@ -79,7 +79,20 @@ jobs:
         run: npx --yes vitest@2.1.9 run src/universal-race-engine/replayPhysicalStateV16.test.ts
 
       - name: Run full universal race-engine tests
-        run: npx --yes vitest@2.1.9 run src/universal-race-engine/runRaceEngine.test.ts
+        shell: bash
+        run: |
+          set +e
+          npx --yes vitest@2.1.9 run src/universal-race-engine/runRaceEngine.test.ts --reporter=verbose > /tmp/v16-full-test.log 2>&1
+          code=$?
+          if [ "$code" -ne 0 ]; then
+            echo '--- V16 concise full-suite failure report ---'
+            grep -n -E 'FAIL|AssertionError|expected|received|Expected|Received|Test Files|Tests|Error:' /tmp/v16-full-test.log | tail -n 240 || true
+            echo '--- final 180 log lines ---'
+            tail -n 180 /tmp/v16-full-test.log
+          else
+            tail -n 80 /tmp/v16-full-test.log
+          fi
+          exit "$code"
 
       - name: Production build
         run: npm run build
