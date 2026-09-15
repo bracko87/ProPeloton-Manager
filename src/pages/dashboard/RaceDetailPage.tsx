@@ -14582,10 +14582,7 @@ function UniversalRaceReplayPage({
           ? getRaceParticipantRiderDisplayName(participantRider)
           : rider.snapshot.displayName ?? rider.riderId,
         teamName: team?.snapshot.teamName ?? rider.teamId,
-        countryCode:
-          participantRider?.country_code ??
-          participantRider?.country_code_snapshot ??
-          rider.snapshot.countryCode,
+        countryCode: participantRider?.country_code ?? null,
         startNumber: rider.snapshot.startNumber,
         groupCode,
         displayCode,
@@ -14759,7 +14756,7 @@ function UniversalRaceReplayPage({
         secondaryLabel: unit.secondaryLabel,
         countryCode:
           firstMemberRow?.countryCode ??
-          participantRecord?.rider.country_code_snapshot ??
+          participantRecord?.rider.country_code ??
           null,
         startOrder: unit.startOrder,
         state: unit.state,
