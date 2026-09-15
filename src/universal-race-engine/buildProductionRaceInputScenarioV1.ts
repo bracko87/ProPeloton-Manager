@@ -64,6 +64,10 @@ function object(value: unknown): JsonRecord {
     : {}
 }
 
+function array(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : []
+}
+
 function participantTeamId(row: Row): string | null {
   return text(row.participating_club_id ?? row.club_id ?? row.team_id)
 }
@@ -125,6 +129,125 @@ function resetGeneratedAiCommands(
         })),
       }
     }),
+  }
+}
+
+const ROAD_SCENARIO_METADATA_KEYS = [
+  'flatScenarioV1',
+  'hillyScenarioV1',
+  'mountainScenarioV1',
+  'cobbledScenarioV1',
+] as const
+
+/**
+ * Phase 1 intentionally blocks a group made only from `join_breakaway`
+ * commands: somebody has to launch the move before other riders can join it.
+ * Scenario templates historically generated an entire preferred break as
+ * joiners, which meant a perfectly valid template could never physically form.
+ *
+ * Convert one already-selected synthetic joiner into the launch attacker. The
+ * rider count does not increase, human commands are untouched, and the normal
+ * Phase 1 strength/chase/energy model still decides whether the move succeeds.
+ */
+function ensureScenarioOpeningBreakInitiator(
+  input: UniversalRaceEngineInput,
+): UniversalRaceEngineInput {
+  const metadataPlanIndex = input.stagePlans.findIndex((plan) => {
+    const metadata = object(plan.metadata)
+    return ROAD_SCENARIO_METADATA_KEYS.some((key) => Object.keys(object(metadata[key])).length > 0)
+  })
+  if (metadataPlanIndex < 0) return input
+
+  const metadata = object(input.stagePlans[metadataPlanIndex].metadata)
+  const scenarioKey = ROAD_SCENARIO_METADATA_KEYS.find(
+    (key) => Object.keys(object(metadata[key])).length > 0,
+  )
+  if (!scenarioKey) return input
+
+  const audit = object(metadata[scenarioKey])
+  const appliedDirectives = object(audit.appliedDirectives)
+  const assignments = array(appliedDirectives.commandAssignments).map((value) => object(value))
+  const phaseOneAssignments = assignments.filter((assignment) => Number(assignment.phase) === 1)
+
+  if (phaseOneAssignments.some((assignment) => text(assignment.command) === 'attack')) {
+    return input
+  }
+
+  const joiners = phaseOneAssignments.filter(
+    (assignment) => text(assignment.command) === 'join_breakaway' && text(assignment.riderId),
+  )
+  if (joiners.length === 0) return input
+
+  const riderById = new Map(
+    input.stagePlans.flatMap((plan) => plan.riders.map((rider) => [rider.riderId, rider] as const)),
+  )
+  const rolePriority = (riderId: string): number => {
+    const role = text(riderById.get(riderId)?.stageRole)?.toLowerCase() ?? ''
+    if (role === 'breakaway_rider') return 0
+    if (role === 'free_role') return 1
+    if (role.includes('domestique')) return 2
+    return 3
+  }
+
+  const initiatorAssignment = [...joiners]
+    .sort((left, right) => {
+      const leftId = text(left.riderId) ?? ''
+      const rightId = text(right.riderId) ?? ''
+      return rolePriority(leftId) - rolePriority(rightId) || leftId.localeCompare(rightId)
+    })
+    .find((assignment) => {
+      const riderId = text(assignment.riderId)
+      if (!riderId) return false
+      const rider = riderById.get(riderId)
+      return rider?.commands.phase1 === 'join_breakaway'
+    })
+
+  const initiatorId = text(initiatorAssignment?.riderId)
+  if (!initiatorId) return input
+
+  const updatedAssignments = assignments.map((assignment) => {
+    if (
+      Number(assignment.phase) !== 1 ||
+      text(assignment.riderId) !== initiatorId ||
+      text(assignment.command) !== 'join_breakaway'
+    ) {
+      return assignment
+    }
+    return {
+      ...assignment,
+      command: 'attack',
+      reason: `${text(assignment.reason) ?? 'road_scenario'}:breakaway_initiator`,
+    }
+  })
+
+  const updatedAudit = {
+    ...audit,
+    appliedDirectives: {
+      ...appliedDirectives,
+      commandAssignments: updatedAssignments,
+    },
+  }
+
+  return {
+    ...input,
+    stagePlans: input.stagePlans.map((plan, planIndex) => ({
+      ...plan,
+      riders: plan.riders.map((rider) => rider.riderId !== initiatorId
+        ? rider
+        : {
+            ...rider,
+            commands: {
+              ...rider.commands,
+              phase1: 'attack',
+            },
+          }),
+      metadata: planIndex !== metadataPlanIndex
+        ? plan.metadata
+        : {
+            ...plan.metadata,
+            [scenarioKey]: updatedAudit,
+          },
+    })),
   }
 }
 
@@ -212,35 +335,35 @@ export function buildScenarioProductionUniversalRaceEngineInput(
   if (normalized.stage.stageFormat !== 'road_race') return normalized
 
   if (normalized.stage.terrainType === 'flat') {
-    return applyFlatScenarioV1(normalized, {
+    return ensureScenarioOpeningBreakInitiator(applyFlatScenarioV1(normalized, {
       gameDate,
       phaseCommandRows: humanRows,
       history: history.filter((entry) => entry.templateId.startsWith('flat_')) as readonly FlatScenarioHistoryEntryV1[],
-    }).input
+    }).input)
   }
 
   if (normalized.stage.terrainType === 'hilly') {
-    return applyHillyScenarioV1(normalized, {
+    return ensureScenarioOpeningBreakInitiator(applyHillyScenarioV1(normalized, {
       gameDate,
       phaseCommandRows: humanRows,
       history: history.filter((entry) => entry.templateId.startsWith('hilly_')) as readonly HillyScenarioHistoryEntryV1[],
-    }).input
+    }).input)
   }
 
   if (normalized.stage.terrainType === 'mountain') {
-    return applyMountainScenarioV1(normalized, {
+    return ensureScenarioOpeningBreakInitiator(applyMountainScenarioV1(normalized, {
       gameDate,
       phaseCommandRows: humanRows,
       history: history.filter((entry) => entry.templateId.startsWith('mountain_')) as readonly MountainScenarioHistoryEntryV1[],
-    }).input
+    }).input)
   }
 
   if (normalized.stage.terrainType === 'cobbled') {
-    return applyCobbledScenarioV1(normalized, {
+    return ensureScenarioOpeningBreakInitiator(applyCobbledScenarioV1(normalized, {
       gameDate,
       phaseCommandRows: humanRows,
       history: history.filter((entry) => entry.templateId.startsWith('cobbled_')) as readonly CobbledScenarioHistoryEntryV1[],
-    }).input
+    }).input)
   }
 
   return normalized
