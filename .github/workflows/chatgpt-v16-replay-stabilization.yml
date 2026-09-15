@@ -49,21 +49,21 @@ jobs:
 
           if 'shouldCommitPhase10FinalRoadStateV16(checkpoint)' not in source:
               pattern = re.compile(
-                  r"(?P<i>[ \\t]+)const isWinnerFinishCheckpoint = checkpoint\\.commentary\\.some\\(\\s*"
-                  r"\\(entry\\) => entry\\.eventType === 'finish',\\s*"
-                  r"\\)\\s*"
-                  r"if \\(\\s*"
-                  r"isRoadFinishKmCheckpoint &&\\s*"
-                  r"!checkpoint\\.finalResultsVisible &&\\s*"
-                  r"!isWinnerFinishCheckpoint\\s*"
-                  r"\\) \\{"
+                  r"(?P<i>[ \t]+)const isWinnerFinishCheckpoint = checkpoint\.commentary\.some\(\s*"
+                  r"\(entry\) => entry\.eventType === 'finish',\s*"
+                  r"\)\s*"
+                  r"if \(\s*"
+                  r"isRoadFinishKmCheckpoint &&\s*"
+                  r"!checkpoint\.finalResultsVisible &&\s*"
+                  r"!isWinnerFinishCheckpoint\s*"
+                  r"\) \{"
               )
               replacement = (
-                  "      const commitsFinalRoadPhysicalState =\\n"
-                  "        shouldCommitPhase10FinalRoadStateV16(checkpoint)\\n"
-                  "      if (\\n"
-                  "        isRoadFinishKmCheckpoint &&\\n"
-                  "        commitsFinalRoadPhysicalState\\n"
+                  "      const commitsFinalRoadPhysicalState =\n"
+                  "        shouldCommitPhase10FinalRoadStateV16(checkpoint)\n"
+                  "      if (\n"
+                  "        isRoadFinishKmCheckpoint &&\n"
+                  "        commitsFinalRoadPhysicalState\n"
                   "      ) {"
               )
               source, count = pattern.subn(replacement, source, count=1)
