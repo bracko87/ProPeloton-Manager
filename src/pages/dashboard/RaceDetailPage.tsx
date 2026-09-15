@@ -5017,6 +5017,7 @@ function normalizeRaceParticipantRiderRow(
     last_name: row.last_name ?? null,
     display_name: row.display_name ?? row.rider_name ?? row.full_name ?? row.name ?? null,
     team_name_snapshot: row.team_name_snapshot ?? fallbackTeamName ?? null,
+    country_code: row.country_code ?? null,
     country_code_snapshot:
       row.country_code_snapshot ?? row.country_code ?? fallbackCountryCode ?? null,
     age_snapshot: asNumber(row.age_snapshot) ?? asNumber(row.age),
@@ -5891,6 +5892,7 @@ type RiderNameLookupRow = {
   first_name?: string | null
   last_name?: string | null
   display_name?: string | null
+  country_code?: string | null
 }
 
 function getFullRiderNameFromLookup(row?: RiderNameLookupRow | null): string | null {
@@ -5934,7 +5936,7 @@ async function hydrateParticipantRiderFullNames(
 
   const { data, error } = await supabase
     .from('riders')
-    .select('id, first_name, last_name, display_name')
+    .select('id, first_name, last_name, display_name, country_code')
     .in('id', riderIds)
 
   if (error) {
@@ -5968,6 +5970,7 @@ async function hydrateParticipantRiderFullNames(
       display_name: fullName ?? rider.display_name ?? null,
       rider_name_snapshot: fullName ?? rider.rider_name_snapshot,
       rider_full_name: fullName ?? rider.rider_full_name ?? null,
+      country_code: lookup?.country_code?.trim() || rider.country_code || null,
     }
   })
 }
@@ -14007,7 +14010,9 @@ function UniversalRaceReplayPage({
 
             return {
               id: rider.riderId,
-              label: rider.snapshot.displayName?.trim() || rider.riderId,
+              label: participant
+                ? getRaceParticipantRiderDisplayName(participant)
+                : rider.snapshot.displayName?.trim() || rider.riderId,
               secondaryLabel:
                 teamInputById.get(rider.teamId)?.snapshot.teamName?.trim() ||
                 rider.teamId,
@@ -14567,13 +14572,20 @@ function UniversalRaceReplayPage({
         )
       )
       const team = teamInputById.get(rider.teamId)
+      const participantRider =
+        participantRiderLookup.get(rider.riderId)?.rider ?? null
       const activeCommand = commandByRiderId.get(rider.riderId)
 
       return {
         riderId: rider.riderId,
-        riderName: rider.snapshot.displayName ?? rider.riderId,
+        riderName: participantRider
+          ? getRaceParticipantRiderDisplayName(participantRider)
+          : rider.snapshot.displayName ?? rider.riderId,
         teamName: team?.snapshot.teamName ?? rider.teamId,
-        countryCode: rider.snapshot.countryCode,
+        countryCode:
+          participantRider?.country_code ??
+          participantRider?.country_code_snapshot ??
+          rider.snapshot.countryCode,
         startNumber: rider.snapshot.startNumber,
         groupCode,
         displayCode,
@@ -14623,6 +14635,7 @@ function UniversalRaceReplayPage({
     framePair.fraction,
     input,
     nextFrame,
+    participantRiderLookup,
     readinessByRiderId,
     resultsVisible,
     teamInputById,
