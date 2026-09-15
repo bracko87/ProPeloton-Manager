@@ -22,7 +22,7 @@ import { buildProductionUniversalRaceOutput as buildFallbackProductionUniversalR
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
 const SOURCE_COMMIT = "c0069963ccd0ba7f896e2566249647ae7d3879ed";
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
-const WORKER_BUILD = "road_scenario_v1_flat_hilly_2026_09_13";
+const WORKER_BUILD = "race_director_v2_split_claim_payload_2026_09_15";
 const MAX_CALCULATIONS_PER_TICK = 1;
 const MAX_PUBLICATIONS_PER_TICK = 4;
 const encoder = new TextEncoder();
@@ -395,7 +395,7 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
       fallback_source_commit: FALLBACK_SOURCE_COMMIT,
     });
 
-    const payload = object(claim.payload);
+    const payload = Object.keys(object(claim.payload)).length > 0\n      ? object(claim.payload)\n      : object(await rpc<unknown>(supabase, "universal_race_stage_get_calculation_payload_v1", {\n          p_stage_id: stageId,\n        }));
     const stagePayload = object(payload.stage);
     const stageNumber = Math.max(1, Math.trunc(finiteNumber(stagePayload.stage_number, 1)));
 
@@ -407,7 +407,7 @@ async function calculateClaimedStage(supabase: SupabaseClient, claimValue: unkno
       degradedComponents.push("pre_stage_standings_stage1_skipped");
     }
 
-    const sources = buildSources(claim.payload, simulationRunId, preStageStandings);
+    const sources = buildSources(payload, simulationRunId, preStageStandings);
 
     let currentBaseInput: any = null;
     let scenarioAudit: JsonObject | null = null;
@@ -630,7 +630,7 @@ async function runLifecycleTick(supabase: SupabaseClient): Promise<JsonObject> {
   const before = object(await rpc<unknown>(supabase, "universal_race_stage_process_lifecycle_v1", { p_max_publications: MAX_PUBLICATIONS_PER_TICK }));
   const calculations: JsonObject[] = [];
   for (let index = 0; index < MAX_CALCULATIONS_PER_TICK; index += 1) {
-    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v1", { p_worker_id: "supabase_edge_phase11b_survival_v1" }));
+    const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v2", { p_worker_id: "supabase_edge_phase11b_split_payload_v2" }));
     if (claim.status !== "claimed") break;
     calculations.push(await calculateClaimedStage(supabase, claim));
   }
