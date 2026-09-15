@@ -1,0 +1,64 @@
+name: ChatGPT Fix Split Claim Newlines
+
+on:
+  push:
+    branches:
+      - chatgpt-fix-split-claim-newlines-20260915
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt-fix-split-claim-newlines-20260915
+          fetch-depth: 0
+
+      - name: Fix literal newline escapes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('supabase/functions/universal-race-stage-runner/index.ts')
+          s = p.read_text()
+          bad = (
+              '    const payload = Object.keys(object(claim.payload)).length > 0\\n'
+              '      ? object(claim.payload)\\n'
+              '      : object(await rpc<unknown>(supabase, "universal_race_stage_get_calculation_payload_v1", {\\n'
+              '          p_stage_id: stageId,\\n'
+              '        }));'
+          )
+          good = (
+              '    const payload = Object.keys(object(claim.payload)).length > 0\n'
+              '      ? object(claim.payload)\n'
+              '      : object(await rpc<unknown>(supabase, "universal_race_stage_get_calculation_payload_v1", {\n'
+              '          p_stage_id: stageId,\n'
+              '        }));'
+          )
+          if bad not in s:
+              raise SystemExit('malformed payload block not found')
+          s = s.replace(bad, good, 1)
+          if 'length > 0\\n      ? object(claim.payload)' in s:
+              raise SystemExit('literal newline escape still present')
+          p.write_text(s)
+          PY
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Check Edge Function syntax
+        run: deno check supabase/functions/universal-race-stage-runner/index.ts
+
+      - name: Commit corrected runner
+        run: |
+          git config user.name chatgpt-race-bot
+          git config user.email actions@users.noreply.github.com
+          git add supabase/functions/universal-race-stage-runner/index.ts
+          git commit -m 'Fix split claim payload syntax'
+          git push origin HEAD:chatgpt-fix-split-claim-newlines-20260915
