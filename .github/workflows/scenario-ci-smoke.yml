@@ -4,6 +4,7 @@ on:
     branches:
       - chatgpt-scenario-core-v1-20260913
       - chatgpt-mountain-cobble-scenarios-v1-20260913
+      - chatgpt-precalc-template-director-v2-20260915
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -20,6 +21,7 @@ jobs:
           npx esbuild src/universal-race-engine/hillyScenarioV1.ts --bundle --platform=node --format=esm --outfile=/tmp/hillyScenarioV1.mjs
           npx esbuild src/universal-race-engine/mountainScenarioV1.ts --bundle --platform=node --format=esm --outfile=/tmp/mountainScenarioV1.mjs
           npx esbuild src/universal-race-engine/cobbledScenarioV1.ts --bundle --platform=node --format=esm --outfile=/tmp/cobbledScenarioV1.mjs
+          npx esbuild src/universal-race-engine/roadScenarioPrecalculationV2.ts --bundle --platform=node --format=esm --outfile=/tmp/roadScenarioPrecalculationV2.mjs
           npx esbuild src/universal-race-engine/roadScenarioPhysicalDirectorV1.ts --bundle --platform=node --format=esm --outfile=/tmp/roadScenarioPhysicalDirectorV1.mjs
           npx esbuild src/universal-race-engine/buildProductionRaceInputScenarioV1.ts --bundle --platform=node --format=esm --outfile=/tmp/buildProductionRaceInputScenarioV1.mjs
       - name: Production build
