@@ -80,19 +80,21 @@ jobs:
           path = Path('src/universal-race-engine/runRaceEngine.test.ts')
           source = path.read_text()
 
-          old_visibility = """    expect(source).toContain(
-              'const resultsVisible = currentFrame?.finalResultsVisible === true',
-            )
-          """
-          new_visibility = """    expect(source).toContain(
-              'officialLifecycleResultsVisible &&',
-            )
-            expect(source).toContain(
-              'currentFrame?.finalResultsVisible === true',
-            )
-          """
-          if old_visibility in source:
-              source = source.replace(old_visibility, new_visibility, 1)
+          old_gate = "'const resultsVisible = currentFrame?.finalResultsVisible === true',"
+          new_gate = "'currentFrame?.finalResultsVisible === true',"
+          if old_gate in source:
+              source = source.replace(old_gate, new_gate, 1)
+
+          lifecycle_anchor = "    expect(source).toContain('{result && resultsVisible ? (')"
+          lifecycle_assertion = "    expect(source).toContain('officialLifecycleResultsVisible &&')\n"
+          if lifecycle_assertion not in source:
+              if lifecycle_anchor not in source:
+                  raise SystemExit('Replay visibility lifecycle anchor not found')
+              source = source.replace(
+                  lifecycle_anchor,
+                  lifecycle_assertion + lifecycle_anchor,
+                  1,
+              )
 
           source = source.replace(
               "it('publishes the Phase 11L V5.5 late-chase-eligibility build marker', () => {",
@@ -105,8 +107,10 @@ jobs:
               1,
           )
 
+          if "'currentFrame?.finalResultsVisible === true'" not in source:
+              raise SystemExit('Checkpoint visibility contract assertion was not installed')
           if "'officialLifecycleResultsVisible &&'" not in source:
-              raise SystemExit('Current replay visibility contract assertion was not installed')
+              raise SystemExit('Official lifecycle visibility contract assertion was not installed')
           if "'phase11l-v6-scenario-director-flat-hilly-2026-09-13'" not in source:
               raise SystemExit('Current engine build marker assertion was not installed')
 
