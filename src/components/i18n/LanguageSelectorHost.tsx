@@ -52,7 +52,12 @@ export default function LanguageSelectorHost(): JSX.Element | null {
     }
 
     const findTarget = (): void => {
-      const target = document.querySelector('#public-homepage header nav')
+      // The SEO navigation is inserted before the real auth/actions navigation.
+      // Mount the language selector into the auth navigation so it appears
+      // after Sign In and Start Playing instead of beside the SEO links.
+      const target = document.querySelector(
+        '#public-homepage header nav:not([data-seo-primary-nav="true"])',
+      )
       setHomeNavTarget(target)
     }
 
