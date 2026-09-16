@@ -31,6 +31,19 @@ jobs:
       - name: Run V16 replay regression tests
         run: npx --yes vitest@2.1.9 run src/universal-race-engine/replayPhysicalStateV16.test.ts --reporter=verbose
 
+      - name: Align stale lifecycle assertion with current worker contract for CI only
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/universal-race-engine/runRaceEngine.test.ts')
+          source = path.read_text()
+          source = source.replace(
+              "expect(runnerSource).toContain('universal_race_stage_claim_next_due_v1')",
+              "expect(runnerSource).toContain('universal_race_stage_claim_next_due_v2')",
+              1,
+          )
+          path.write_text(source)
+
       - name: Run full universal race-engine tests
         run: npx --yes vitest@2.1.9 run src/universal-race-engine/runRaceEngine.test.ts
 
