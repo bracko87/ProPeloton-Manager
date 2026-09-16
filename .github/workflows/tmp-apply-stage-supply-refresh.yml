@@ -1,0 +1,353 @@
+name: Apply stage supply refresh patch
+
+on:
+  push:
+    branches:
+      - fix/stage-supply-stock-refresh
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/stage-supply-stock-refresh
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Patch RacePreparation stock refresh
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/dashboard/RacePreparation.tsx')
+          text = path.read_text()
+
+          def replace_once(old: str, new: str, label: str) -> None:
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+          '''  const [stageSupplyOptions, setStageSupplyOptions] =
+            useState<RaceSupplyOption[]>(supplyOptions);
+          ''',
+          '''  const [stageSupplyOptions, setStageSupplyOptions] =
+            useState<RaceSupplyOption[]>(supplyOptions);
+          const [stageSupplyRefreshing, setStageSupplyRefreshing] = useState(false);
+          const [stageSupplyRefreshError, setStageSupplyRefreshError] =
+            useState<string | null>(null);
+          const [stageSupplyLastRefreshedAt, setStageSupplyLastRefreshedAt] =
+            useState<number | null>(null);
+          const stageSupplyRequestIdRef = React.useRef(0);
+          const stageSupplyAutoRefreshAtRef = React.useRef(0);
+          ''',
+          'stage supply state',
+          )
+
+          old_effect = '''
+
+          useEffect(() => {
+            let cancelled = false;
+
+            async function loadStageSupplyAvailability() {
+              if (!selectedStageSupplyId || !selectedStageSupplyTeamId) {
+                if (!cancelled) setStageSupplyOptions(supplyOptions);
+                return;
+              }
+
+              const { data, error } = await supabase.rpc(
+                "get_race_stage_supply_availability_v1",
+                {
+                  p_stage_id: selectedStageSupplyId,
+                  p_team_id: selectedStageSupplyTeamId,
+                },
+              );
+
+              if (cancelled) return;
+
+              if (error) {
+                console.warn(
+                  "Could not load reservation-aware stage supply availability:",
+                  error.message,
+                );
+                setStageSupplyOptions(supplyOptions);
+                return;
+              }
+
+              const availabilityByKey = new Map<string, number>(
+                toArray<JsonRecord>(data).map((row) => [
+                  String(row.supply_key ?? ""),
+                  Math.max(0, Number(row.quantity_available ?? 0)),
+                ]),
+              );
+
+              setStageSupplyOptions(
+                supplyOptions.map((option) => {
+                  const supplyKey = String(option.supply_key ?? "");
+                  const available = availabilityByKey.get(supplyKey);
+
+                  return available === undefined
+                    ? option
+                    : { ...option, quantity_available: available };
+                }),
+              );
+            }
+
+            void loadStageSupplyAvailability();
+
+            return () => {
+              cancelled = true;
+            };
+          }, [selectedStageSupplyId, selectedStageSupplyTeamId, supplyOptions]);
+          '''
+
+          new_effect = '''
+
+          const refreshStageSupplyAvailability = React.useCallback(
+            async (
+              { showStatus = false }: { showStatus?: boolean } = {},
+            ): Promise<void> => {
+              const requestId = ++stageSupplyRequestIdRef.current;
+
+              if (showStatus) {
+                setStageSupplyRefreshing(true);
+              }
+              setStageSupplyRefreshError(null);
+
+              try {
+                if (!selectedStageSupplyId || !selectedStageSupplyTeamId) {
+                  if (requestId === stageSupplyRequestIdRef.current) {
+                    setStageSupplyOptions(supplyOptions);
+                    setStageSupplyLastRefreshedAt(Date.now());
+                  }
+                  return;
+                }
+
+                const { data, error } = await supabase.rpc(
+                  "get_race_stage_supply_availability_v1",
+                  {
+                    p_stage_id: selectedStageSupplyId,
+                    p_team_id: selectedStageSupplyTeamId,
+                  },
+                );
+
+                if (requestId !== stageSupplyRequestIdRef.current) return;
+                if (error) throw error;
+
+                const availabilityByKey = new Map<string, number>(
+                  toArray<JsonRecord>(data).map((row) => [
+                    String(row.supply_key ?? ""),
+                    Math.max(0, Number(row.quantity_available ?? 0)),
+                  ]),
+                );
+
+                setStageSupplyOptions(
+                  supplyOptions.map((option) => {
+                    const supplyKey = String(option.supply_key ?? "");
+                    const available = availabilityByKey.get(supplyKey);
+
+                    return available === undefined
+                      ? option
+                      : { ...option, quantity_available: available };
+                  }),
+                );
+                setStageSupplyLastRefreshedAt(Date.now());
+              } catch (error) {
+                if (requestId !== stageSupplyRequestIdRef.current) return;
+
+                console.warn(
+                  "Could not load reservation-aware stage supply availability:",
+                  error,
+                );
+                setStageSupplyRefreshError(
+                  "Could not refresh live stock. Please try again.",
+                );
+              } finally {
+                if (requestId === stageSupplyRequestIdRef.current) {
+                  setStageSupplyRefreshing(false);
+                }
+              }
+            },
+            [selectedStageSupplyId, selectedStageSupplyTeamId, supplyOptions],
+          );
+
+          useEffect(() => {
+            void refreshStageSupplyAvailability();
+          }, [refreshStageSupplyAvailability]);
+
+          useEffect(() => {
+            function refreshWhenPageBecomesActive() {
+              if (document.visibilityState !== "visible") return;
+
+              const now = Date.now();
+              if (now - stageSupplyAutoRefreshAtRef.current < 1000) return;
+
+              stageSupplyAutoRefreshAtRef.current = now;
+              void refreshStageSupplyAvailability();
+            }
+
+            window.addEventListener("focus", refreshWhenPageBecomesActive);
+            document.addEventListener(
+              "visibilitychange",
+              refreshWhenPageBecomesActive,
+            );
+
+            return () => {
+              window.removeEventListener("focus", refreshWhenPageBecomesActive);
+              document.removeEventListener(
+                "visibilitychange",
+                refreshWhenPageBecomesActive,
+              );
+            };
+          }, [refreshStageSupplyAvailability]);
+          '''
+          replace_once(old_effect, new_effect, 'availability effect')
+
+          replace_once(
+          '''      await Promise.all([
+                loadStagePlanReadinessForCurrentTarget(),
+                loadU23AutomationDashboardForCurrentTarget(),
+              ]);
+          ''',
+          '''      await Promise.all([
+                loadStagePlanReadinessForCurrentTarget(),
+                loadU23AutomationDashboardForCurrentTarget(),
+                refreshStageSupplyAvailability(),
+              ]);
+          ''',
+          'post-save refresh',
+          )
+
+          replace_once(
+          '''  onSave,
+            saveDisabled,
+            saving,
+            disabled,
+          }: {
+          ''',
+          '''  onSave,
+            saveDisabled,
+            saving,
+            disabled,
+            onRefreshStock,
+            stockRefreshing,
+            stockRefreshError,
+            stockLastRefreshedAt,
+          }: {
+          ''',
+          'card destructuring',
+          )
+
+          replace_once(
+          '''  saveDisabled: boolean;
+            saving: boolean;
+            disabled: boolean;
+          }) {
+          ''',
+          '''  saveDisabled: boolean;
+            saving: boolean;
+            disabled: boolean;
+            onRefreshStock: () => void;
+            stockRefreshing: boolean;
+            stockRefreshError: string | null;
+            stockLastRefreshedAt: number | null;
+          }) {
+          ''',
+          'card prop types',
+          )
+
+          replace_once(
+          '''          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">{racePrepText("screen.planOnly")}</span>
+                </div>
+
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+          ''',
+          '''          <div className="flex flex-wrap items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={onRefreshStock}
+                      disabled={stockRefreshing}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {stockRefreshing ? "Refreshing…" : "Refresh stock"}
+                    </button>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                      {racePrepText("screen.planOnly")}
+                    </span>
+                  </div>
+                </div>
+
+                {stockRefreshError ? (
+                  <div className="mt-2 text-xs font-semibold text-red-600">
+                    {stockRefreshError}
+                  </div>
+                ) : stockLastRefreshedAt ? (
+                  <div className="mt-2 text-xs text-slate-400">
+                    Live stock updated {formatTimestampLabel(new Date(stockLastRefreshedAt).toISOString())}
+                  </div>
+                ) : null}
+
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+          ''',
+          'stock header button',
+          )
+
+          replace_once(
+          '''          saving={savingStagePlan}
+                  disabled={
+                    !packageSubmitted ||
+                    lockInfo.isLocked ||
+                    selectedStageLockedByWeather ||
+                    suppliesDisabledForTT ||
+                    stagePlanControlsReadOnly
+                  }
+                />
+          ''',
+          '''          saving={savingStagePlan}
+                  disabled={
+                    !packageSubmitted ||
+                    lockInfo.isLocked ||
+                    selectedStageLockedByWeather ||
+                    suppliesDisabledForTT ||
+                    stagePlanControlsReadOnly
+                  }
+                  onRefreshStock={() =>
+                    void refreshStageSupplyAvailability({ showStatus: true })
+                  }
+                  stockRefreshing={stageSupplyRefreshing}
+                  stockRefreshError={stageSupplyRefreshError}
+                  stockLastRefreshedAt={stageSupplyLastRefreshedAt}
+                />
+          ''',
+          'card invocation',
+          )
+
+          path.write_text(text)
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit patched source and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/dashboard/RacePreparation.tsx
+          git rm .github/workflows/tmp-apply-stage-supply-refresh.yml
+          git commit -m "Refresh stage supply stock on demand"
+          git push origin HEAD:fix/stage-supply-stock-refresh
