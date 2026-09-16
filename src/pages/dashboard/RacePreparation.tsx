@@ -7113,6 +7113,11 @@ function StagePlansTab({
     });
   const [stageSupplyOptions, setStageSupplyOptions] =
     useState<RaceSupplyOption[]>(supplyOptions);
+  const [stageSupplyRefreshing, setStageSupplyRefreshing] = useState(false);
+  const [stageSupplyRefreshError, setStageSupplyRefreshError] =
+    useState<string | null>(null);
+  const stageSupplyRequestIdRef = React.useRef(0);
+  const stageSupplyAutoRefreshAtRef = React.useRef(0);
   const [stageDraftsByStageKey, setStageDraftsByStageKey] = useState<
     Record<string, StagePlanDraft>
   >({});
@@ -7326,13 +7331,22 @@ function StagePlansTab({
     stagePlanControlsReadOnly ||
     savingStagePlan;
 
+const refreshStageSupplyAvailability = React.useCallback(
+  async (
+    { showStatus = false }: { showStatus?: boolean } = {},
+  ): Promise<void> => {
+    const requestId = ++stageSupplyRequestIdRef.current;
 
-  useEffect(() => {
-    let cancelled = false;
+    if (showStatus) {
+      setStageSupplyRefreshing(true);
+    }
+    setStageSupplyRefreshError(null);
 
-    async function loadStageSupplyAvailability() {
+    try {
       if (!selectedStageSupplyId || !selectedStageSupplyTeamId) {
-        if (!cancelled) setStageSupplyOptions(supplyOptions);
+        if (requestId === stageSupplyRequestIdRef.current) {
+          setStageSupplyOptions(supplyOptions);
+        }
         return;
       }
 
@@ -7344,16 +7358,8 @@ function StagePlansTab({
         },
       );
 
-      if (cancelled) return;
-
-      if (error) {
-        console.warn(
-          "Could not load reservation-aware stage supply availability:",
-          error.message,
-        );
-        setStageSupplyOptions(supplyOptions);
-        return;
-      }
+      if (requestId !== stageSupplyRequestIdRef.current) return;
+      if (error) throw error;
 
       const availabilityByKey = new Map<string, number>(
         toArray<JsonRecord>(data).map((row) => [
@@ -7372,14 +7378,55 @@ function StagePlansTab({
             : { ...option, quantity_available: available };
         }),
       );
+    } catch (error) {
+      if (requestId !== stageSupplyRequestIdRef.current) return;
+
+      console.warn(
+        "Could not load reservation-aware stage supply availability:",
+        error,
+      );
+      setStageSupplyRefreshError(
+        "Could not refresh live stock. Please try again.",
+      );
+    } finally {
+      if (requestId === stageSupplyRequestIdRef.current) {
+        setStageSupplyRefreshing(false);
+      }
     }
+  },
+  [selectedStageSupplyId, selectedStageSupplyTeamId, supplyOptions],
+);
 
-    void loadStageSupplyAvailability();
+useEffect(() => {
+  void refreshStageSupplyAvailability();
+}, [refreshStageSupplyAvailability]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedStageSupplyId, selectedStageSupplyTeamId, supplyOptions]);
+useEffect(() => {
+  function refreshWhenPageBecomesActive() {
+    if (document.visibilityState !== "visible") return;
+
+    const now = Date.now();
+    if (now - stageSupplyAutoRefreshAtRef.current < 1000) return;
+
+    stageSupplyAutoRefreshAtRef.current = now;
+    void refreshStageSupplyAvailability();
+  }
+
+  window.addEventListener("focus", refreshWhenPageBecomesActive);
+  document.addEventListener(
+    "visibilitychange",
+    refreshWhenPageBecomesActive,
+  );
+
+  return () => {
+    window.removeEventListener("focus", refreshWhenPageBecomesActive);
+    document.removeEventListener(
+      "visibilitychange",
+      refreshWhenPageBecomesActive,
+    );
+  };
+}, [refreshStageSupplyAvailability]);
+
 
   async function loadU23AutomationDashboardForCurrentTarget() {
     if (!racePreparationIdForStageReadiness || !packageSubmitted) {
@@ -7856,6 +7903,7 @@ function StagePlansTab({
       await Promise.all([
         loadStagePlanReadinessForCurrentTarget(),
         loadU23AutomationDashboardForCurrentTarget(),
+        refreshStageSupplyAvailability(),
       ]);
     } catch (error) {
       setStageSaveError(
@@ -8588,6 +8636,11 @@ function StagePlansTab({
             suppliesDisabledForTT ||
             stagePlanControlsReadOnly
           }
+          onRefreshStock={() =>
+            void refreshStageSupplyAvailability({ showStatus: true })
+          }
+          stockRefreshing={stageSupplyRefreshing}
+          stockRefreshError={stageSupplyRefreshError}
         />
 
         <StageFinalCalculationCard
@@ -11403,6 +11456,9 @@ function StageRaceSuppliesCard({
   saveDisabled,
   saving,
   disabled,
+  onRefreshStock,
+  stockRefreshing,
+  stockRefreshError,
 }: {
   stage: JsonRecord | null;
   riders: JsonRecord[];
@@ -11413,6 +11469,9 @@ function StageRaceSuppliesCard({
   saveDisabled: boolean;
   saving: boolean;
   disabled: boolean;
+  onRefreshStock: () => void;
+  stockRefreshing: boolean;
+  stockRefreshError: string | null;
 }) {
   const teamPlan = getStageTeamSupplyPlan({ riders, suppliesByRider, stage });
   const needs = getStageSupplyNeeds(riders, teamPlan, stage);
@@ -11739,7 +11798,27 @@ function StageRaceSuppliesCard({
             </p>
           </div>
 
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">{racePrepText("screen.planOnly")}</span>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+  {stockRefreshError ? (
+    <span
+      className="text-xs font-semibold text-red-600"
+      title={stockRefreshError}
+    >
+      Refresh failed
+    </span>
+  ) : null}
+  <button
+    type="button"
+    onClick={onRefreshStock}
+    disabled={stockRefreshing}
+    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
+  >
+    {stockRefreshing ? "Refreshing…" : "Refresh stock"}
+  </button>
+  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+    {racePrepText("screen.planOnly")}
+  </span>
+</div>
         </div>
 
         <div className="mt-3 grid gap-3 md:grid-cols-2">
