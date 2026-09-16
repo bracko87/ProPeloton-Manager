@@ -1,7 +1,7 @@
 export const ROAD_SCENARIO_PHYSICAL_DIRECTOR_VERSION =
-  'road_scenario_physical_director_v2_1' as const
+  'road_scenario_physical_director_v2_1_1' as const
 export const ROAD_RACE_DIRECTOR_RUNTIME_VERSION =
-  'road_race_director_v2_1_runtime' as const
+  'road_race_director_v2_1_1_runtime' as const
 
 type JsonRecord = Record<string, unknown>
 type NumericRange = readonly [number, number]
@@ -14,6 +14,8 @@ type GenerationLifecycle =
   | 'caught'
   | 'survived'
   | 'closed'
+
+const PHYSICAL_CATCH_RELEASE_THRESHOLD_SECONDS = 3
 
 export interface RoadScenarioPhysicalInputV1 {
   readonly stage: {
@@ -615,6 +617,26 @@ export function applyRoadScenarioGapGuidanceV1(
     return current
   }
 
+  // Once normal physics has compressed the gap into imminent-catch territory,
+  // the Director releases control completely. It must never hold a break at
+  // 0.51s (or reopen a 1-3s gap) while the core engine is trying to merge the
+  // groups. The template can protect an established break, but the physical
+  // engine owns the final catch transition.
+  if (current <= PHYSICAL_CATCH_RELEASE_THRESHOLD_SECONDS) {
+    const releaseEnvelope = scenarioGapEnvelopeV2(input, progress)
+    if (releaseEnvelope) {
+      recordGenerationRuntime(
+        input,
+        releaseEnvelope,
+        current,
+        current,
+        kmFromStart,
+        'physical_catch_release',
+      )
+    }
+    return current
+  }
+
   const envelope = scenarioGapEnvelopeV2(input, progress)
   if (!envelope) return current
 
@@ -658,9 +680,9 @@ export function applyRoadScenarioGapGuidanceV1(
   }
 
   if (envelope.catchExpected && envelope.chaseActive) {
-    // Catch pressure is physical and progressive. Positive gaps are never snapped
-    // to zero by the Director; the underlying engine still completes the catch.
-    adjusted = Math.max(0.51, adjusted)
+    // The Director may encourage closure, but it must hand the last few seconds
+    // back to physical race logic rather than parking the gap at 0.51s forever.
+    adjusted = Math.max(PHYSICAL_CATCH_RELEASE_THRESHOLD_SECONDS, adjusted)
   }
 
   adjusted = round(Math.max(0, adjusted), 6)
