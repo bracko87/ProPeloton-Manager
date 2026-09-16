@@ -174,10 +174,13 @@ jobs:
 
           # Scope both prop edits strictly to StageRaceSuppliesCard.
           card_start = text.index('function StageRaceSuppliesCard({')
-          card_body_start = text.index('}) {', card_start)
+          card_body_start = text.index(
+              '  const teamPlan = getStageTeamSupplyPlan',
+              card_start,
+          )
           prefix = text[:card_start]
-          card_head = text[card_start:card_body_start + 4]
-          suffix = text[card_body_start + 4:]
+          card_head = text[card_start:card_body_start]
+          suffix = text[card_body_start:]
 
           count = card_head.count(old_destructure)
           if count != 1:
