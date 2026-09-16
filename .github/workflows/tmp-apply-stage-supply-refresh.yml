@@ -27,6 +27,8 @@ jobs:
         run: |
           python <<'PY'
           from pathlib import Path
+          import re
+          import textwrap
 
           path = Path('src/pages/dashboard/RacePreparation.tsx')
           text = path.read_text()
@@ -38,300 +40,188 @@ jobs:
                   raise SystemExit(f'{label}: expected 1 match, found {count}')
               text = text.replace(old, new, 1)
 
-          replace_once(
-          '''  const [stageSupplyOptions, setStageSupplyOptions] =
-            useState<RaceSupplyOption[]>(supplyOptions);
-          ''',
-          '''  const [stageSupplyOptions, setStageSupplyOptions] =
-            useState<RaceSupplyOption[]>(supplyOptions);
-          const [stageSupplyRefreshing, setStageSupplyRefreshing] = useState(false);
-          const [stageSupplyRefreshError, setStageSupplyRefreshError] =
-            useState<string | null>(null);
-          const [stageSupplyLastRefreshedAt, setStageSupplyLastRefreshedAt] =
-            useState<number | null>(null);
-          const stageSupplyRequestIdRef = React.useRef(0);
-          const stageSupplyAutoRefreshAtRef = React.useRef(0);
-          ''',
-          'stage supply state',
-          )
+          def regex_once(pattern: str, replacement: str, label: str) -> None:
+              global text
+              text, count = re.subn(pattern, replacement, text, count=1, flags=re.S)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 regex match, found {count}')
 
-          old_effect = '''
+          old_state = "  const [stageSupplyOptions, setStageSupplyOptions] =\n    useState<RaceSupplyOption[]>(supplyOptions);\n"
+          new_state = old_state + textwrap.dedent('''\
+            const [stageSupplyRefreshing, setStageSupplyRefreshing] = useState(false);
+            const [stageSupplyRefreshError, setStageSupplyRefreshError] =
+              useState<string | null>(null);
+            const stageSupplyRequestIdRef = React.useRef(0);
+            const stageSupplyAutoRefreshAtRef = React.useRef(0);
+          ''')
+          # Re-indent the added hook lines to component scope.
+          new_state = old_state + '\n'.join(
+              ('  ' + line if line else line)
+              for line in textwrap.dedent('''\
+                const [stageSupplyRefreshing, setStageSupplyRefreshing] = useState(false);
+                const [stageSupplyRefreshError, setStageSupplyRefreshError] =
+                  useState<string | null>(null);
+                const stageSupplyRequestIdRef = React.useRef(0);
+                const stageSupplyAutoRefreshAtRef = React.useRef(0);
+              ''').splitlines()
+          ) + '\n'
+          replace_once(old_state, new_state, 'stage supply state')
 
-          useEffect(() => {
-            let cancelled = false;
+          refresh_block = textwrap.dedent('''\
 
-            async function loadStageSupplyAvailability() {
-              if (!selectedStageSupplyId || !selectedStageSupplyTeamId) {
-                if (!cancelled) setStageSupplyOptions(supplyOptions);
-                return;
-              }
+            const refreshStageSupplyAvailability = React.useCallback(
+              async (
+                { showStatus = false }: { showStatus?: boolean } = {},
+              ): Promise<void> => {
+                const requestId = ++stageSupplyRequestIdRef.current;
 
-              const { data, error } = await supabase.rpc(
-                "get_race_stage_supply_availability_v1",
-                {
-                  p_stage_id: selectedStageSupplyId,
-                  p_team_id: selectedStageSupplyTeamId,
-                },
-              );
+                if (showStatus) {
+                  setStageSupplyRefreshing(true);
+                }
+                setStageSupplyRefreshError(null);
 
-              if (cancelled) return;
-
-              if (error) {
-                console.warn(
-                  "Could not load reservation-aware stage supply availability:",
-                  error.message,
-                );
-                setStageSupplyOptions(supplyOptions);
-                return;
-              }
-
-              const availabilityByKey = new Map<string, number>(
-                toArray<JsonRecord>(data).map((row) => [
-                  String(row.supply_key ?? ""),
-                  Math.max(0, Number(row.quantity_available ?? 0)),
-                ]),
-              );
-
-              setStageSupplyOptions(
-                supplyOptions.map((option) => {
-                  const supplyKey = String(option.supply_key ?? "");
-                  const available = availabilityByKey.get(supplyKey);
-
-                  return available === undefined
-                    ? option
-                    : { ...option, quantity_available: available };
-                }),
-              );
-            }
-
-            void loadStageSupplyAvailability();
-
-            return () => {
-              cancelled = true;
-            };
-          }, [selectedStageSupplyId, selectedStageSupplyTeamId, supplyOptions]);
-          '''
-
-          new_effect = '''
-
-          const refreshStageSupplyAvailability = React.useCallback(
-            async (
-              { showStatus = false }: { showStatus?: boolean } = {},
-            ): Promise<void> => {
-              const requestId = ++stageSupplyRequestIdRef.current;
-
-              if (showStatus) {
-                setStageSupplyRefreshing(true);
-              }
-              setStageSupplyRefreshError(null);
-
-              try {
-                if (!selectedStageSupplyId || !selectedStageSupplyTeamId) {
-                  if (requestId === stageSupplyRequestIdRef.current) {
-                    setStageSupplyOptions(supplyOptions);
-                    setStageSupplyLastRefreshedAt(Date.now());
+                try {
+                  if (!selectedStageSupplyId || !selectedStageSupplyTeamId) {
+                    if (requestId === stageSupplyRequestIdRef.current) {
+                      setStageSupplyOptions(supplyOptions);
+                    }
+                    return;
                   }
-                  return;
+
+                  const { data, error } = await supabase.rpc(
+                    "get_race_stage_supply_availability_v1",
+                    {
+                      p_stage_id: selectedStageSupplyId,
+                      p_team_id: selectedStageSupplyTeamId,
+                    },
+                  );
+
+                  if (requestId !== stageSupplyRequestIdRef.current) return;
+                  if (error) throw error;
+
+                  const availabilityByKey = new Map<string, number>(
+                    toArray<JsonRecord>(data).map((row) => [
+                      String(row.supply_key ?? ""),
+                      Math.max(0, Number(row.quantity_available ?? 0)),
+                    ]),
+                  );
+
+                  setStageSupplyOptions(
+                    supplyOptions.map((option) => {
+                      const supplyKey = String(option.supply_key ?? "");
+                      const available = availabilityByKey.get(supplyKey);
+
+                      return available === undefined
+                        ? option
+                        : { ...option, quantity_available: available };
+                    }),
+                  );
+                } catch (error) {
+                  if (requestId !== stageSupplyRequestIdRef.current) return;
+
+                  console.warn(
+                    "Could not load reservation-aware stage supply availability:",
+                    error,
+                  );
+                  setStageSupplyRefreshError(
+                    "Could not refresh live stock. Please try again.",
+                  );
+                } finally {
+                  if (requestId === stageSupplyRequestIdRef.current) {
+                    setStageSupplyRefreshing(false);
+                  }
                 }
-
-                const { data, error } = await supabase.rpc(
-                  "get_race_stage_supply_availability_v1",
-                  {
-                    p_stage_id: selectedStageSupplyId,
-                    p_team_id: selectedStageSupplyTeamId,
-                  },
-                );
-
-                if (requestId !== stageSupplyRequestIdRef.current) return;
-                if (error) throw error;
-
-                const availabilityByKey = new Map<string, number>(
-                  toArray<JsonRecord>(data).map((row) => [
-                    String(row.supply_key ?? ""),
-                    Math.max(0, Number(row.quantity_available ?? 0)),
-                  ]),
-                );
-
-                setStageSupplyOptions(
-                  supplyOptions.map((option) => {
-                    const supplyKey = String(option.supply_key ?? "");
-                    const available = availabilityByKey.get(supplyKey);
-
-                    return available === undefined
-                      ? option
-                      : { ...option, quantity_available: available };
-                  }),
-                );
-                setStageSupplyLastRefreshedAt(Date.now());
-              } catch (error) {
-                if (requestId !== stageSupplyRequestIdRef.current) return;
-
-                console.warn(
-                  "Could not load reservation-aware stage supply availability:",
-                  error,
-                );
-                setStageSupplyRefreshError(
-                  "Could not refresh live stock. Please try again.",
-                );
-              } finally {
-                if (requestId === stageSupplyRequestIdRef.current) {
-                  setStageSupplyRefreshing(false);
-                }
-              }
-            },
-            [selectedStageSupplyId, selectedStageSupplyTeamId, supplyOptions],
-          );
-
-          useEffect(() => {
-            void refreshStageSupplyAvailability();
-          }, [refreshStageSupplyAvailability]);
-
-          useEffect(() => {
-            function refreshWhenPageBecomesActive() {
-              if (document.visibilityState !== "visible") return;
-
-              const now = Date.now();
-              if (now - stageSupplyAutoRefreshAtRef.current < 1000) return;
-
-              stageSupplyAutoRefreshAtRef.current = now;
-              void refreshStageSupplyAvailability();
-            }
-
-            window.addEventListener("focus", refreshWhenPageBecomesActive);
-            document.addEventListener(
-              "visibilitychange",
-              refreshWhenPageBecomesActive,
+              },
+              [selectedStageSupplyId, selectedStageSupplyTeamId, supplyOptions],
             );
 
-            return () => {
-              window.removeEventListener("focus", refreshWhenPageBecomesActive);
-              document.removeEventListener(
+            useEffect(() => {
+              void refreshStageSupplyAvailability();
+            }, [refreshStageSupplyAvailability]);
+
+            useEffect(() => {
+              function refreshWhenPageBecomesActive() {
+                if (document.visibilityState !== "visible") return;
+
+                const now = Date.now();
+                if (now - stageSupplyAutoRefreshAtRef.current < 1000) return;
+
+                stageSupplyAutoRefreshAtRef.current = now;
+                void refreshStageSupplyAvailability();
+              }
+
+              window.addEventListener("focus", refreshWhenPageBecomesActive);
+              document.addEventListener(
                 "visibilitychange",
                 refreshWhenPageBecomesActive,
               );
-            };
-          }, [refreshStageSupplyAvailability]);
-          '''
-          replace_once(old_effect, new_effect, 'availability effect')
 
-          replace_once(
-          '''      await Promise.all([
-                loadStagePlanReadinessForCurrentTarget(),
-                loadU23AutomationDashboardForCurrentTarget(),
-              ]);
-          ''',
-          '''      await Promise.all([
-                loadStagePlanReadinessForCurrentTarget(),
-                loadU23AutomationDashboardForCurrentTarget(),
-                refreshStageSupplyAvailability(),
-              ]);
-          ''',
-          'post-save refresh',
+              return () => {
+                window.removeEventListener("focus", refreshWhenPageBecomesActive);
+                document.removeEventListener(
+                  "visibilitychange",
+                  refreshWhenPageBecomesActive,
+                );
+              };
+            }, [refreshStageSupplyAvailability]);
+          ''')
+          regex_once(
+              r'\n\n  useEffect\(\(\) => \{\n    let cancelled = false;\n\n    async function loadStageSupplyAvailability\(\) \{.*?\n  \}, \[selectedStageSupplyId, selectedStageSupplyTeamId, supplyOptions\]\);',
+              refresh_block,
+              'availability effect',
           )
 
-          replace_once(
-          '''  onSave,
-            saveDisabled,
-            saving,
-            disabled,
-          }: {
-          ''',
-          '''  onSave,
-            saveDisabled,
-            saving,
-            disabled,
-            onRefreshStock,
-            stockRefreshing,
-            stockRefreshError,
-            stockLastRefreshedAt,
-          }: {
-          ''',
-          'card destructuring',
-          )
+          old_save_refresh = "      await Promise.all([\n        loadStagePlanReadinessForCurrentTarget(),\n        loadU23AutomationDashboardForCurrentTarget(),\n      ]);\n"
+          new_save_refresh = "      await Promise.all([\n        loadStagePlanReadinessForCurrentTarget(),\n        loadU23AutomationDashboardForCurrentTarget(),\n        refreshStageSupplyAvailability(),\n      ]);\n"
+          replace_once(old_save_refresh, new_save_refresh, 'post-save stock refresh')
 
-          replace_once(
-          '''  saveDisabled: boolean;
-            saving: boolean;
-            disabled: boolean;
-          }) {
-          ''',
-          '''  saveDisabled: boolean;
-            saving: boolean;
-            disabled: boolean;
-            onRefreshStock: () => void;
-            stockRefreshing: boolean;
-            stockRefreshError: string | null;
-            stockLastRefreshedAt: number | null;
-          }) {
-          ''',
-          'card prop types',
-          )
+          old_destructure = "  onSave,\n  saveDisabled,\n  saving,\n  disabled,\n}: {\n"
+          new_destructure = "  onSave,\n  saveDisabled,\n  saving,\n  disabled,\n  onRefreshStock,\n  stockRefreshing,\n  stockRefreshError,\n}: {\n"
+          replace_once(old_destructure, new_destructure, 'supplies card destructuring')
 
-          replace_once(
-          '''          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">{racePrepText("screen.planOnly")}</span>
-                </div>
+          old_types = "  saveDisabled: boolean;\n  saving: boolean;\n  disabled: boolean;\n}) {\n"
+          new_types = "  saveDisabled: boolean;\n  saving: boolean;\n  disabled: boolean;\n  onRefreshStock: () => void;\n  stockRefreshing: boolean;\n  stockRefreshError: string | null;\n}) {\n"
+          # Scope this replacement to StageRaceSuppliesCard so similarly-shaped cards stay untouched.
+          card_start = text.index('function StageRaceSuppliesCard({')
+          card_body_start = text.index('}) {', card_start)
+          prefix = text[:card_start]
+          card_head = text[card_start:card_body_start + 4]
+          suffix = text[card_body_start + 4:]
+          count = card_head.count(old_types)
+          if count != 1:
+              raise SystemExit(f'supplies card prop types: expected 1 match, found {count}')
+          card_head = card_head.replace(old_types, new_types, 1)
+          text = prefix + card_head + suffix
 
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-          ''',
-          '''          <div className="flex flex-wrap items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={onRefreshStock}
-                      disabled={stockRefreshing}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
-                    >
-                      {stockRefreshing ? "Refreshing…" : "Refresh stock"}
-                    </button>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
-                      {racePrepText("screen.planOnly")}
-                    </span>
-                  </div>
-                </div>
+          old_plan_only = '<span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">{racePrepText("screen.planOnly")}</span>'
+          new_plan_only = textwrap.dedent('''\
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {stockRefreshError ? (
+                <span
+                  className="text-xs font-semibold text-red-600"
+                  title={stockRefreshError}
+                >
+                  Refresh failed
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={onRefreshStock}
+                disabled={stockRefreshing}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
+              >
+                {stockRefreshing ? "Refreshing…" : "Refresh stock"}
+              </button>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                {racePrepText("screen.planOnly")}
+              </span>
+            </div>
+          ''').strip()
+          replace_once(old_plan_only, new_plan_only, 'stock refresh button')
 
-                {stockRefreshError ? (
-                  <div className="mt-2 text-xs font-semibold text-red-600">
-                    {stockRefreshError}
-                  </div>
-                ) : stockLastRefreshedAt ? (
-                  <div className="mt-2 text-xs text-slate-400">
-                    Live stock updated {formatTimestampLabel(new Date(stockLastRefreshedAt).toISOString())}
-                  </div>
-                ) : null}
-
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-          ''',
-          'stock header button',
-          )
-
-          replace_once(
-          '''          saving={savingStagePlan}
-                  disabled={
-                    !packageSubmitted ||
-                    lockInfo.isLocked ||
-                    selectedStageLockedByWeather ||
-                    suppliesDisabledForTT ||
-                    stagePlanControlsReadOnly
-                  }
-                />
-          ''',
-          '''          saving={savingStagePlan}
-                  disabled={
-                    !packageSubmitted ||
-                    lockInfo.isLocked ||
-                    selectedStageLockedByWeather ||
-                    suppliesDisabledForTT ||
-                    stagePlanControlsReadOnly
-                  }
-                  onRefreshStock={() =>
-                    void refreshStageSupplyAvailability({ showStatus: true })
-                  }
-                  stockRefreshing={stageSupplyRefreshing}
-                  stockRefreshError={stageSupplyRefreshError}
-                  stockLastRefreshedAt={stageSupplyLastRefreshedAt}
-                />
-          ''',
-          'card invocation',
-          )
+          old_invocation = "          saving={savingStagePlan}\n          disabled={\n            !packageSubmitted ||\n            lockInfo.isLocked ||\n            selectedStageLockedByWeather ||\n            suppliesDisabledForTT ||\n            stagePlanControlsReadOnly\n          }\n        />\n"
+          new_invocation = "          saving={savingStagePlan}\n          disabled={\n            !packageSubmitted ||\n            lockInfo.isLocked ||\n            selectedStageLockedByWeather ||\n            suppliesDisabledForTT ||\n            stagePlanControlsReadOnly\n          }\n          onRefreshStock={() =>\n            void refreshStageSupplyAvailability({ showStatus: true })\n          }\n          stockRefreshing={stageSupplyRefreshing}\n          stockRefreshError={stageSupplyRefreshError}\n        />\n"
+          replace_once(old_invocation, new_invocation, 'supplies card invocation')
 
           path.write_text(text)
           PY
