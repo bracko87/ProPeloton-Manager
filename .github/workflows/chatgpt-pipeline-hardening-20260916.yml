@@ -18,11 +18,11 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install temporary test tooling
-        run: npm install --no-save --no-package-lock tsx vitest
+        run: npm install --no-save --no-package-lock vitest
       - name: Full universal race engine tests
-        run: npx tsx --test src/universal-race-engine/runRaceEngine.test.ts
+        run: npx vitest run src/universal-race-engine/runRaceEngine.test.ts
       - name: V16 replay regression tests
-        run: npx tsx --test src/universal-race-engine/replayPhysicalStateV16.test.ts
+        run: npx vitest run src/universal-race-engine/replayPhysicalStateV16.test.ts
       - name: Production build
         run: npm run build
       - uses: denoland/setup-deno@v2
