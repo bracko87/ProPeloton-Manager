@@ -5,6 +5,8 @@ import {
   getRoadScenarioAuditV1,
 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/dae877bebc866a4cbd431e8ebce173885913f219/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
 
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
+
 type JsonObject = Record<string, unknown>;
 const SOURCE_COMMIT = "dae877bebc866a4cbd431e8ebce173885913f219";
 const CONTRACT = "universal_race_pass1_resume_v1";
@@ -114,7 +116,7 @@ async function executePass1(supabase: SupabaseClient, claim: JsonObject): Promis
   if (!stageId || !runId) throw new Error("Pass 1 claim is missing stage/run identity.");
 
   await heartbeat(supabase, stageId, runId, "pass1_payload_loading", { source_commit: SOURCE_COMMIT });
-  const payload = object(await rpc(supabase, "universal_race_stage_get_calculation_payload_v1", {
+  const payload = object(await rpc(supabase, "universal_race_stage_get_calculation_payload_v2", {
     p_stage_id: stageId,
   }));
   const stageNumber = Math.max(1, Math.trunc(finite(object(payload.stage).stage_number, 1)));
@@ -198,12 +200,19 @@ Deno.serve(async (request: Request) => {
 
   const stageId = text(claim.stage_id);
   const runId = text(claim.simulation_run_id);
-  try {
-    const result = await executePass1(supabase, claim);
-    return jsonResponse({ ...result, contract: CONTRACT });
-  } catch (error) {
-    const serialized = errorPayload(error);
-    await heartbeat(supabase, stageId, runId, "pass1_resume_failed", { error: serialized, source_commit: SOURCE_COMMIT });
-    return jsonResponse({ status: "failed", contract: CONTRACT, stage_id: stageId, simulation_run_id: runId, error: serialized }, 500);
-  }
+  const task = executePass1(supabase, claim)
+    .then((result) => console.log(JSON.stringify({ ...result, contract: CONTRACT })))
+    .catch(async (error) => {
+      const serialized = errorPayload(error);
+      await heartbeat(supabase, stageId, runId, "pass1_resume_failed", { error: serialized, source_commit: SOURCE_COMMIT });
+      console.error(JSON.stringify({ status: "failed", contract: CONTRACT, stage_id: stageId, simulation_run_id: runId, error: serialized }));
+    });
+  EdgeRuntime.waitUntil(task);
+  return jsonResponse({
+    status: "accepted",
+    contract: CONTRACT,
+    background_execution: true,
+    stage_id: stageId,
+    simulation_run_id: runId,
+  }, 202);
 });
