@@ -1,0 +1,38 @@
+name: ChatGPT Race Director V2.1 Validation
+
+on:
+  push:
+    branches:
+      - chatgpt-race-director-v21-20260916
+  workflow_dispatch:
+
+jobs:
+  race-director-v21:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt-race-director-v21-20260916
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Race Director V2.1 focused tests
+        run: npx --yes vitest@2.1.9 run src/universal-race-engine/roadRaceDirectorRuntimeV2.test.ts --reporter=verbose
+
+      - name: Run V16 replay regression tests
+        run: npx --yes vitest@2.1.9 run src/universal-race-engine/replayPhysicalStateV16.test.ts --reporter=verbose
+
+      - name: Run full universal race-engine tests
+        run: npx --yes vitest@2.1.9 run src/universal-race-engine/runRaceEngine.test.ts
+
+      - name: Production build
+        run: npm run build
