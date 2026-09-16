@@ -1,10 +1,19 @@
 export const ROAD_SCENARIO_PHYSICAL_DIRECTOR_VERSION =
-  'road_scenario_physical_director_v2' as const
+  'road_scenario_physical_director_v2_1' as const
 export const ROAD_RACE_DIRECTOR_RUNTIME_VERSION =
-  'road_race_director_v2_runtime' as const
+  'road_race_director_v2_1_runtime' as const
 
 type JsonRecord = Record<string, unknown>
 type NumericRange = readonly [number, number]
+type GenerationLifecycle =
+  | 'waiting'
+  | 'forming'
+  | 'established'
+  | 'free'
+  | 'chase'
+  | 'caught'
+  | 'survived'
+  | 'closed'
 
 export interface RoadScenarioPhysicalInputV1 {
   readonly stage: {
@@ -51,6 +60,14 @@ interface InstantiatedBreakDirectiveV2 {
 }
 
 interface GapEnvelopeV2 {
+  readonly generation: number
+  readonly formationStartProgress: number
+  readonly formationProgress: number
+  readonly peakProgress: number
+  readonly chaseStartProgress: number
+  readonly endProgress: number
+  readonly catchWindowProgress: NumericRange | null
+  readonly targetPeakGapRangeSec: NumericRange | null
   readonly lower: number
   readonly upper: number
   readonly center: number
@@ -110,7 +127,7 @@ function numericRange(value: unknown): NumericRange | null {
   const first = Number(value[0])
   const second = Number(value[1])
   if (!Number.isFinite(first) || !Number.isFinite(second)) return null
-  return [first, second]
+  return [Math.min(first, second), Math.max(first, second)]
 }
 
 function midpoint(range: NumericRange | null, fallback: number): number {
@@ -239,6 +256,28 @@ function directorSettings(audit: RoadScenarioPhysicalAuditV1): {
   }
 }
 
+function formationStartProgress(directive: InstantiatedBreakDirectiveV2): number {
+  const windowStart = directive.formationWindowPct?.[0] ?? directive.formationPct
+  return clamp(Math.min(windowStart, directive.formationPct), 0, directive.formationPct)
+}
+
+function catchWindowProgress(
+  input: RoadScenarioPhysicalInputV1,
+  directive: InstantiatedBreakDirectiveV2,
+): NumericRange | null {
+  const distanceKm = Math.max(1, finite(input.stage.distanceKm, 1))
+  const remainingRange = directive.catchKmRemainingRange
+  if (remainingRange) {
+    return [
+      clamp(1 - remainingRange[1] / distanceKm, 0, 1),
+      clamp(1 - remainingRange[0] / distanceKm, 0, 1),
+    ]
+  }
+  if (directive.catchKmRemaining === null) return null
+  const center = clamp(1 - directive.catchKmRemaining / distanceKm, 0, 1)
+  return [Math.max(0, center - 0.035), Math.min(1, center + 0.035)]
+}
+
 function directiveEndProgress(
   input: RoadScenarioPhysicalInputV1,
   directives: readonly InstantiatedBreakDirectiveV2[],
@@ -246,12 +285,10 @@ function directiveEndProgress(
 ): number {
   const directive = directives[index]
   const next = directives[index + 1] ?? null
-  const distanceKm = Math.max(1, finite(input.stage.distanceKm, 1))
-  const catchProgress = directive.catchKmRemaining === null
-    ? 1
-    : clamp(1 - directive.catchKmRemaining / distanceKm, 0, 1)
+  const catchWindow = catchWindowProgress(input, directive)
+  const catchProgress = catchWindow?.[1] ?? 1
   const nextFormationLimit = next
-    ? clamp(next.formationPct - 0.02, directive.formationPct + 0.02, 1)
+    ? clamp(formationStartProgress(next) - 0.01, directive.formationPct + 0.02, 1)
     : 1
   return clamp(
     Math.min(catchProgress, nextFormationLimit),
@@ -317,23 +354,111 @@ function commandChasePressure(
     'control_race',
     'control_tempo',
   ])
-  let total = 0
-  let chase = 0
+  let activeRiders = 0
+  let chaseRiders = 0
+  let chaseTeams = 0
+
   input.stagePlans.forEach((plan) => {
+    let teamChaseRiders = 0
     ;(plan.riders ?? []).forEach((rider) => {
       const command = commandForPhase(object(rider.commands), phase)
       if (!command) return
-      total += 1
-      if (chaseCommands.has(command)) chase += 1
+      activeRiders += 1
+      if (chaseCommands.has(command)) {
+        chaseRiders += 1
+        teamChaseRiders += 1
+      }
     })
+    if (teamChaseRiders > 0) chaseTeams += 1
   })
-  if (total === 0) return 0
-  return clamp((chase / total) * 3.25, 0, 1)
+
+  if (activeRiders === 0 || chaseTeams === 0) return 0
+  const teamShare = chaseTeams / Math.max(1, input.stagePlans.length)
+  const riderShare = chaseRiders / activeRiders
+  return clamp(teamShare * 2.35 + riderShare * 0.45, 0, 1)
+}
+
+function runtimeGenerationStates(audit: JsonRecord): JsonRecord {
+  const proof = object(audit.runtimeApplicationProof)
+  return object(proof.generationStates)
+}
+
+function generationIsClosed(input: RoadScenarioPhysicalInputV1, generation: number): boolean {
+  const audit = actualScenarioAudit(input)
+  if (!audit) return false
+  const state = object(runtimeGenerationStates(audit)[String(generation)])
+  return ['caught', 'closed'].includes(text(state.state))
+}
+
+function lifecycleForEnvelope(
+  envelope: GapEnvelopeV2,
+  progress: number,
+): GenerationLifecycle {
+  if (progress < envelope.formationProgress) return 'forming'
+  if (progress < envelope.peakProgress) return 'established'
+  if (progress < envelope.chaseStartProgress) return 'free'
+  return 'chase'
+}
+
+function recordGenerationRuntime(
+  input: RoadScenarioPhysicalInputV1,
+  envelope: GapEnvelopeV2,
+  currentGapSeconds: number,
+  adjustedGapSeconds: number,
+  kmFromStart: number,
+  reason: string,
+): void {
+  const audit = actualScenarioAudit(input)
+  if (!audit) return
+  const proof = object(audit.runtimeApplicationProof)
+  const generationStates = runtimeGenerationStates(audit)
+  const key = String(envelope.generation)
+  const existing = object(generationStates[key])
+  const previousState = text(existing.state) as GenerationLifecycle
+  const progress = clamp(kmFromStart / Math.max(1, finite(input.stage.distanceKm, 1)), 0, 1)
+  const observedGap = Math.max(currentGapSeconds, adjustedGapSeconds)
+  const hadLiveBreak = existing.firstSeenKm !== undefined || finite(existing.peakGapSeconds, 0) > 0.5
+  let state: GenerationLifecycle = lifecycleForEnvelope(envelope, progress)
+
+  if (['caught', 'closed'].includes(previousState)) {
+    state = 'closed'
+  } else if (observedGap <= 0.5 && hadLiveBreak) {
+    state = 'caught'
+  } else if (progress > envelope.endProgress && observedGap > 0.5) {
+    state = 'survived'
+  }
+
+  const next: JsonRecord = {
+    ...existing,
+    generation: envelope.generation,
+    state,
+    calls: Math.max(0, Math.trunc(finite(existing.calls, 0))) + 1,
+    lastSeenKm: round(kmFromStart, 3),
+    lastGapSeconds: round(adjustedGapSeconds, 3),
+    peakGapSeconds: round(Math.max(finite(existing.peakGapSeconds, 0), observedGap), 3),
+    plannedFormationWindowPct: [envelope.formationStartProgress, envelope.formationProgress],
+    plannedPeakGapRangeSec: envelope.targetPeakGapRangeSec,
+    plannedCatchWindowProgress: envelope.catchWindowProgress,
+    lastDirectorReason: reason,
+  }
+  if (observedGap > 0.5 && existing.firstSeenKm === undefined) {
+    next.firstSeenKm = round(kmFromStart, 3)
+  }
+  if (state === 'caught' && existing.catchKm === undefined) {
+    next.catchKm = round(kmFromStart, 3)
+    next.prematureCatch = envelope.catchWindowProgress
+      ? progress < envelope.catchWindowProgress[0]
+      : false
+  }
+  generationStates[key] = next
+  proof.generationStates = generationStates
+  audit.runtimeApplicationProof = proof
 }
 
 function scenarioGapEnvelopeV2(
   input: RoadScenarioPhysicalInputV1,
   progressFraction: number,
+  includeClosed = false,
 ): GapEnvelopeV2 | null {
   const audit = getRoadScenarioPhysicalAuditV1(input)
   if (!audit) return null
@@ -345,7 +470,9 @@ function scenarioGapEnvelopeV2(
 
   for (let index = 0; index < directives.length; index += 1) {
     const directive = directives[index]
-    if (progress < directive.formationPct) break
+    const formationStart = formationStartProgress(directive)
+    if (progress < formationStart) break
+    if (!includeClosed && generationIsClosed(input, directive.generation)) continue
     const endProgress = directiveEndProgress(input, directives, index)
     if (progress > endProgress + 0.000001) continue
 
@@ -367,11 +494,21 @@ function scenarioGapEnvelopeV2(
     )
     const targetRange = directive.targetPeakGapRangeSec
     const targetGap = Math.max(18, directive.targetPeakGapSec * settings.variationFactor)
-    const startingGap = Math.min(55, Math.max(8, targetGap * 0.07))
+    const startingGap = Math.min(24, Math.max(5, targetGap * 0.035))
+    const formationTarget = Math.min(70, Math.max(12, targetGap * 0.20))
     let center = targetGap
     let chaseActive = false
 
-    if (progress <= peakProgress) {
+    if (progress < directive.formationPct) {
+      const fraction = clamp(
+        (progress - formationStart) /
+          Math.max(0.000001, directive.formationPct - formationStart),
+        0,
+        1,
+      )
+      const eased = fraction * fraction * (3 - 2 * fraction)
+      center = startingGap + (formationTarget - startingGap) * eased
+    } else if (progress <= peakProgress) {
       const fraction = clamp(
         (progress - directive.formationPct) /
           Math.max(0.000001, peakProgress - directive.formationPct),
@@ -379,7 +516,7 @@ function scenarioGapEnvelopeV2(
         1,
       )
       const eased = fraction * fraction * (3 - 2 * fraction)
-      center = startingGap + (targetGap - startingGap) * eased
+      center = formationTarget + (targetGap - formationTarget) * eased
     } else if (progress > chaseStart) {
       chaseActive = true
       const endTarget = survivalExpected
@@ -394,21 +531,20 @@ function scenarioGapEnvelopeV2(
       center = targetGap + (endTarget - targetGap) * eased
     }
 
-    const rangeLow = targetRange ? Math.min(targetRange[0], targetRange[1]) : targetGap * 0.62
-    const rangeHigh = targetRange ? Math.max(targetRange[0], targetRange[1]) : targetGap * 1.42
+    const rangeLow = targetRange ? targetRange[0] : targetGap * 0.62
+    const rangeHigh = targetRange ? targetRange[1] : targetGap * 1.42
     const widthScale = chaseActive ? 0.24 : 0.34
-    const naturalHalfWidth = Math.max(18, center * widthScale)
+    const naturalHalfWidth = Math.max(12, center * widthScale)
     let lower = Math.max(0, center - naturalHalfWidth)
-    let upper = Math.max(18, center + naturalHalfWidth)
+    let upper = Math.max(10, center + naturalHalfWidth)
 
     if (!chaseActive && progress >= peakProgress) {
       lower = Math.max(lower, rangeLow * 0.72)
       upper = Math.min(Math.max(upper, center + 18), rangeHigh * 1.18)
     }
     if (catchExpected && progress > chaseStart) {
-      const catchProgress = endProgress
       const nearCatch = clamp(
-        (progress - chaseStart) / Math.max(0.000001, catchProgress - chaseStart),
+        (progress - chaseStart) / Math.max(0.000001, endProgress - chaseStart),
         0,
         1,
       )
@@ -417,6 +553,14 @@ function scenarioGapEnvelopeV2(
     }
 
     return {
+      generation: directive.generation,
+      formationStartProgress: formationStart,
+      formationProgress: directive.formationPct,
+      peakProgress,
+      chaseStartProgress: chaseStart,
+      endProgress,
+      catchWindowProgress: catchWindowProgress(input, directive),
+      targetPeakGapRangeSec: targetRange,
       center: round(Math.max(0, center), 6),
       lower: round(Math.max(0, lower), 6),
       upper: round(Math.max(Math.max(0, lower) + 4, upper), 6),
@@ -431,7 +575,7 @@ function scenarioGapEnvelopeV2(
 }
 
 /**
- * Race Director V2 macro guidance.
+ * Race Director V2.1 macro guidance.
  *
  * The core engine still decides who attacks, who belongs to the break, rider
  * speeds, energy, terrain response and the sporting result. The selected
@@ -450,12 +594,27 @@ export function applyRoadScenarioGapGuidanceV1(
   if (!audit) return current
   recordRuntimeApplication(input, 'gap_guidance', { adjusted: false, kmFromStart })
 
-  // A physically completed catch stays completed. Director V2 never resurrects
-  // an already closed break just because the template preferred a larger gap.
-  if (current <= 0.5) return current
-
   const distanceKm = Math.max(1, finite(input.stage.distanceKm, 1))
   const progress = clamp(finite(kmFromStart, 0) / distanceKm, 0, 1)
+
+  // A physically completed catch stays completed. V2.1 records whether it was
+  // premature against the selected story, then closes that template generation.
+  // It still never resurrects a caught physical break.
+  if (current <= 0.5) {
+    const caughtEnvelope = scenarioGapEnvelopeV2(input, progress, true)
+    if (caughtEnvelope) {
+      recordGenerationRuntime(
+        input,
+        caughtEnvelope,
+        current,
+        current,
+        kmFromStart,
+        'physical_catch_observed',
+      )
+    }
+    return current
+  }
+
   const envelope = scenarioGapEnvelopeV2(input, progress)
   if (!envelope) return current
 
@@ -468,12 +627,17 @@ export function applyRoadScenarioGapGuidanceV1(
 
   if (current < envelope.lower) {
     const difference = envelope.lower - current
-    const commandResistance = 1 - userChase * 0.82
+    const commandResistance = 1 - userChase * 0.76
     const templateResistance = envelope.chaseActive ? 0.52 : 1
-    const maximumGrowth = stepKm * (8 + 8 * envelope.storyStrength) * Math.max(0.10, commandResistance)
-    const requested = difference * (0.24 + envelope.storyStrength * 0.28) * commandResistance * templateResistance
+    const earlyFormationBoost = progress < envelope.formationProgress ? 1.28 : 1
+    const maximumGrowth =
+      stepKm * (9 + 10 * envelope.storyStrength) * Math.max(0.12, commandResistance) * earlyFormationBoost
+    const requested =
+      difference * (0.30 + envelope.storyStrength * 0.34) * commandResistance * templateResistance
     adjusted = current + Math.min(requested, maximumGrowth)
-    reason = 'protect_break_story'
+    reason = progress < envelope.formationProgress
+      ? 'protect_formation_window'
+      : 'protect_break_story'
   } else if (current > envelope.upper) {
     const difference = current - envelope.upper
     const chaseBoost = 1 + combinedChase * 1.05 + (envelope.chaseActive ? 0.55 : 0)
@@ -482,41 +646,100 @@ export function applyRoadScenarioGapGuidanceV1(
     adjusted = current - Math.min(requested, maximumClosure)
     reason = 'rein_in_excess_gap'
   } else {
-    // Inside the allowed range the director applies only a gentle center pull.
-    // This makes the selected template visible in the race flow without turning
-    // the target into a fixed script.
     const difference = envelope.center - current
-    const userOverride = difference > 0 ? 1 - userChase * 0.78 : 1
+    const userOverride = difference > 0 ? 1 - userChase * 0.72 : 1
     const chaseMultiplier = difference < 0
       ? 1 + combinedChase * 0.55 + (envelope.chaseActive ? 0.30 : 0)
-      : Math.max(0.16, userOverride)
+      : Math.max(0.20, userOverride)
     const requested = difference * envelope.centerPullStrength * envelope.storyStrength * chaseMultiplier
-    const cap = stepKm * (difference < 0 ? 7.5 : 5.5)
+    const cap = stepKm * (difference < 0 ? 7.5 : 6.5)
     adjusted = current + clamp(requested, -cap, cap)
     reason = Math.abs(adjusted - current) > 0.000001 ? 'gentle_story_center_pull' : reason
   }
 
   if (envelope.catchExpected && envelope.chaseActive) {
-    // The template may make a catch increasingly likely, but the state still has
-    // to close physically. We never snap a positive gap directly to zero.
+    // Catch pressure is physical and progressive. Positive gaps are never snapped
+    // to zero by the Director; the underlying engine still completes the catch.
     adjusted = Math.max(0.51, adjusted)
   }
 
   adjusted = round(Math.max(0, adjusted), 6)
-  if (Math.abs(adjusted - current) > 0.000001) {
+  const changed = Math.abs(adjusted - current) > 0.000001
+  if (changed) {
     recordRuntimeApplication(input, 'gap_guidance', {
       adjusted: true,
       kmFromStart,
       reason,
     })
   }
+  recordGenerationRuntime(input, envelope, current, adjusted, kmFromStart, reason)
   return adjusted
 }
 
+function finalizeGenerationAdherence(input: RoadScenarioPhysicalInputV1): void {
+  const audit = actualScenarioAudit(input)
+  if (!audit) return
+  const typedAudit = getRoadScenarioPhysicalAuditV1(input)
+  if (!typedAudit) return
+  const proof = object(audit.runtimeApplicationProof)
+  const states = runtimeGenerationStates(audit)
+  const distanceKm = Math.max(1, finite(input.stage.distanceKm, 1))
+  let deviations = 0
+
+  const adherence = instantiatedBreaks(typedAudit).map((directive) => {
+    const state = object(states[String(directive.generation)])
+    const peakGap = finite(state.peakGapSeconds, 0)
+    const targetRange = directive.targetPeakGapRangeSec
+    let peakStatus = 'not_observed'
+    if (peakGap > 0.5) {
+      if (!targetRange) peakStatus = 'observed'
+      else if (peakGap < targetRange[0]) peakStatus = 'undershot'
+      else if (peakGap > targetRange[1]) peakStatus = 'overshot'
+      else peakStatus = 'inside_range'
+    }
+    if (peakStatus === 'not_observed' || peakStatus === 'undershot' || peakStatus === 'overshot') {
+      deviations += 1
+    }
+
+    const catchKm = state.catchKm === undefined ? null : finite(state.catchKm, 0)
+    const actualCatchKmRemaining = catchKm === null ? null : Math.max(0, distanceKm - catchKm)
+    const catchRange = directive.catchKmRemainingRange
+    let catchStatus = directive.catchKmRemaining === null ? 'not_required' : 'not_observed'
+    if (actualCatchKmRemaining !== null && directive.catchKmRemaining !== null) {
+      if (!catchRange) catchStatus = 'observed'
+      else if (actualCatchKmRemaining > catchRange[1]) catchStatus = 'too_early'
+      else if (actualCatchKmRemaining < catchRange[0]) catchStatus = 'too_late'
+      else catchStatus = 'inside_range'
+    }
+    if (['not_observed', 'too_early', 'too_late'].includes(catchStatus) && directive.catchKmRemaining !== null) {
+      deviations += 1
+    }
+
+    return {
+      generation: directive.generation,
+      state: text(state.state) || 'waiting',
+      firstSeenKm: state.firstSeenKm ?? null,
+      peakGapSeconds: round(peakGap, 3),
+      plannedPeakGapRangeSec: targetRange,
+      peakStatus,
+      catchKm,
+      actualCatchKmRemaining: actualCatchKmRemaining === null ? null : round(actualCatchKmRemaining, 3),
+      plannedCatchKmRemainingRange: catchRange,
+      catchStatus,
+      prematureCatch: state.prematureCatch === true,
+    }
+  })
+
+  proof.generationAdherence = adherence
+  proof.generationDeviationCount = deviations
+  audit.runtimeApplicationProof = proof
+}
+
 /**
- * Finale shaping remains deliberately secondary to the main race story. The
- * template supplies only fragmentation pressure; rider finish energy determines
- * which riders hold the stronger group. No exact survivor count is forced.
+ * Finale shaping remains secondary to the physical race, but V2.1 now treats
+ * targetFrontGroupRange as a real soft story boundary instead of recording it
+ * without materially influencing the final topology. The range is never an
+ * exact survivor count: finish energy still determines which riders hold on.
  */
 export function applyRoadScenarioFinishFragmentationV1<
   T extends RoadScenarioFragmentationStateV1,
@@ -527,6 +750,7 @@ export function applyRoadScenarioFinishFragmentationV1<
   const audit = getRoadScenarioPhysicalAuditV1(input)
   if (!audit || states.length < 3) return [...states]
   recordRuntimeApplication(input, 'fragmentation', { adjusted: false })
+  finalizeGenerationAdherence(input)
 
   const parameters = object(audit.generatedParameters)
   let pressure = clamp(finite(parameters.fragmentationPressure, 0), 0, 1)
@@ -551,7 +775,23 @@ export function applyRoadScenarioFinishFragmentationV1<
 
   const seedBias = (stableHash(`${audit.selectionSeed}:fragmentation-retention`) / 0xffffffff - 0.5) * 0.12
   const retentionFraction = clamp(0.91 - pressure * 0.48 + seedBias, 0.34, 0.94)
-  const keepCount = Math.max(2, Math.min(largest.length, Math.ceil(largest.length * retentionFraction)))
+  let keepCount = Math.max(2, Math.min(largest.length, Math.ceil(largest.length * retentionFraction)))
+
+  const targetRange = numericRange(parameters.targetFrontGroupRange)
+  if (targetRange) {
+    const low = clamp(Math.floor(targetRange[0]), 2, largest.length)
+    const high = clamp(Math.ceil(targetRange[1]), low, largest.length)
+    if (keepCount > high) {
+      const excess = keepCount - high
+      const storySlack = Math.ceil(excess * (1 - settings.storyStrength) * 0.35)
+      keepCount = Math.min(largest.length, high + storySlack)
+    } else if (keepCount < low) {
+      const shortage = low - keepCount
+      const storySlack = Math.ceil(shortage * (1 - settings.storyStrength) * 0.35)
+      keepCount = Math.max(2, low - storySlack)
+    }
+  }
+
   if (keepCount >= largest.length) return [...states]
 
   const selected = [...largest].sort((left, right) =>
@@ -565,17 +805,17 @@ export function applyRoadScenarioFinishFragmentationV1<
   const configuredGap = finite(parameters.secondaryGapSec, 12 + pressure * 70)
   const secondaryGap = Math.max(6, configuredGap * (0.52 + pressure * 0.34))
   const baseGap = Math.min(...largest.map((state) => Math.max(0, state.finalGapSeconds)))
-  const firstBandSize = Math.max(1, Math.ceil(detached.length * 0.62))
+  const topologyBands = pressure >= 0.78 ? 3 : pressure >= 0.48 ? 2 : 1
 
   const result = states.map((state) => {
     if (!largest.some((candidate) => candidate.riderId === state.riderId)) return state
     if (retainedIds.has(state.riderId)) return state
     const rank = detachedRank.get(state.riderId) ?? 0
-    const bandMultiplier = rank < firstBandSize ? 0.62 : 1
+    const normalizedRank = detached.length <= 1 ? 0 : rank / (detached.length - 1)
+    const band = Math.min(topologyBands - 1, Math.floor(normalizedRank * topologyBands))
+    const bandMultiplier = topologyBands === 1 ? 0.72 : 0.52 + band * (0.48 / Math.max(1, topologyBands - 1))
     const gap = round(baseGap + secondaryGap * bandMultiplier, 6)
-    const energyPenalty = rank < firstBandSize
-      ? 0.30 + pressure * 0.82
-      : 0.62 + pressure * 1.35
+    const energyPenalty = 0.30 + pressure * 0.82 + band * (0.20 + pressure * 0.18)
     return {
       ...state,
       finalGapSeconds: gap,
@@ -583,6 +823,20 @@ export function applyRoadScenarioFinishFragmentationV1<
       energyAtFinish: round(Math.max(0, state.energyAtFinish - energyPenalty), 6),
     }
   })
+
+  const rawAudit = actualScenarioAudit(input)
+  if (rawAudit) {
+    const proof = object(rawAudit.runtimeApplicationProof)
+    proof.fragmentationTopology = {
+      pressure: round(pressure, 4),
+      topologyBands,
+      largestGroupBefore: largest.length,
+      frontGroupAfter: keepCount,
+      targetFrontGroupRange: targetRange,
+      allowRegroup,
+    }
+    rawAudit.runtimeApplicationProof = proof
+  }
   recordRuntimeApplication(input, 'fragmentation', { adjusted: true })
   return result
 }
