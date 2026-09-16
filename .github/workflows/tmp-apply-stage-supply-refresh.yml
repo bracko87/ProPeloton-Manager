@@ -47,14 +47,6 @@ jobs:
                   raise SystemExit(f'{label}: expected 1 regex match, found {count}')
 
           old_state = "  const [stageSupplyOptions, setStageSupplyOptions] =\n    useState<RaceSupplyOption[]>(supplyOptions);\n"
-          new_state = old_state + textwrap.dedent('''\
-            const [stageSupplyRefreshing, setStageSupplyRefreshing] = useState(false);
-            const [stageSupplyRefreshError, setStageSupplyRefreshError] =
-              useState<string | null>(null);
-            const stageSupplyRequestIdRef = React.useRef(0);
-            const stageSupplyAutoRefreshAtRef = React.useRef(0);
-          ''')
-          # Re-indent the added hook lines to component scope.
           new_state = old_state + '\n'.join(
               ('  ' + line if line else line)
               for line in textwrap.dedent('''\
@@ -177,16 +169,21 @@ jobs:
 
           old_destructure = "  onSave,\n  saveDisabled,\n  saving,\n  disabled,\n}: {\n"
           new_destructure = "  onSave,\n  saveDisabled,\n  saving,\n  disabled,\n  onRefreshStock,\n  stockRefreshing,\n  stockRefreshError,\n}: {\n"
-          replace_once(old_destructure, new_destructure, 'supplies card destructuring')
-
           old_types = "  saveDisabled: boolean;\n  saving: boolean;\n  disabled: boolean;\n}) {\n"
           new_types = "  saveDisabled: boolean;\n  saving: boolean;\n  disabled: boolean;\n  onRefreshStock: () => void;\n  stockRefreshing: boolean;\n  stockRefreshError: string | null;\n}) {\n"
-          # Scope this replacement to StageRaceSuppliesCard so similarly-shaped cards stay untouched.
+
+          # Scope both prop edits strictly to StageRaceSuppliesCard.
           card_start = text.index('function StageRaceSuppliesCard({')
           card_body_start = text.index('}) {', card_start)
           prefix = text[:card_start]
           card_head = text[card_start:card_body_start + 4]
           suffix = text[card_body_start + 4:]
+
+          count = card_head.count(old_destructure)
+          if count != 1:
+              raise SystemExit(f'supplies card destructuring: expected 1 match, found {count}')
+          card_head = card_head.replace(old_destructure, new_destructure, 1)
+
           count = card_head.count(old_types)
           if count != 1:
               raise SystemExit(f'supplies card prop types: expected 1 match, found {count}')
