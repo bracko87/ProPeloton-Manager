@@ -19,7 +19,7 @@ function directorInput(withUserChase = false) {
             scenarioType: 'flat',
             templateId: 'flat_test_controlled_story',
             templateFamily: 'controlled_sprint',
-            selectionSeed: 'runtime-v2-seed',
+            selectionSeed: 'runtime-v21-seed',
             generatedParameters: {
               breakaways: [
                 {
@@ -48,6 +48,8 @@ function directorInput(withUserChase = false) {
               ],
               fragmentationPressure: 0.68,
               secondaryGapSec: 18,
+              targetFrontGroup: 8,
+              targetFrontGroupRange: [6, 10],
               allowRegroup: false,
               finaleType: 'large_bunch_sprint',
               directorV2: {
@@ -57,7 +59,7 @@ function directorInput(withUserChase = false) {
               },
             },
             runtimeApplicationProof: {
-              contract: 'road_race_director_v2_runtime',
+              contract: 'road_race_director_v2_1_runtime',
               finalEngineSawTemplate: false,
               gapGuidanceCalls: 0,
               gapAdjustments: 0,
@@ -72,13 +74,51 @@ function directorInput(withUserChase = false) {
   }
 }
 
-describe('Race Director V2 runtime story guidance', () => {
-  it('protects an underdeveloped early break without creating a fixed gap', () => {
+function multiTeamDirectorInput(chasingTeams: number) {
+  const input = directorInput(false)
+  const basePlan = input.stagePlans[0]
+  return {
+    ...input,
+    stagePlans: Array.from({ length: 8 }, (_, teamIndex) => ({
+      ...basePlan,
+      metadata: teamIndex === 0 ? basePlan.metadata : {},
+      riders: Array.from({ length: 6 }, () => ({
+        commands: teamIndex < chasingTeams
+          ? { phase1: 'chase_breakaway', phase2: 'chase_breakaway', phase3: 'control_race', phase4: 'control_tempo' }
+          : { phase1: 'hold_position', phase2: 'conserve', phase3: 'protect_leader', phase4: 'sprint' },
+      })),
+    })),
+  }
+}
+
+describe('Race Director V2.1 runtime story guidance', () => {
+  it('protects a real break as soon as it enters the template formation window', () => {
+    const input = directorInput(false)
+    const adjusted = applyRoadScenarioGapGuidanceV1(input, 6, 6, 1)
+
+    expect(adjusted).toBeGreaterThan(6)
+    const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const states = proof.generationStates as Record<string, Record<string, unknown>>
+    expect(states['1'].state).toBe('forming')
+    expect(states['1'].firstSeenKm).toBe(6)
+  })
+
+  it('protects an underdeveloped established break without creating a fixed gap', () => {
     const input = directorInput(false)
     const adjusted = applyRoadScenarioGapGuidanceV1(input, 55, 38, 1)
 
     expect(adjusted).toBeGreaterThan(55)
     expect(adjusted).toBeLessThan(100)
+  })
+
+  it('a single chasing team weakens protection less than a coordinated multi-team chase', () => {
+    const oneTeam = multiTeamDirectorInput(1)
+    const fourTeams = multiTeamDirectorInput(4)
+    const oneTeamAdjusted = applyRoadScenarioGapGuidanceV1(oneTeam, 55, 38, 1)
+    const fourTeamAdjusted = applyRoadScenarioGapGuidanceV1(fourTeams, 55, 38, 1)
+
+    expect(fourTeamAdjusted).toBeLessThan(oneTeamAdjusted)
+    expect(oneTeamAdjusted).toBeGreaterThan(55)
   })
 
   it('real chase commands remain able to override template protection', () => {
@@ -105,6 +145,22 @@ describe('Race Director V2 runtime story guidance', () => {
     expect(adjusted).toBeGreaterThan(0.5)
   })
 
+  it('closes a prematurely caught template generation and never reuses it to resurrect a later move', () => {
+    const input = directorInput(false)
+    applyRoadScenarioGapGuidanceV1(input, 12, 6, 1)
+    expect(applyRoadScenarioGapGuidanceV1(input, 0.3, 8, 1)).toBe(0.3)
+
+    const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const states = proof.generationStates as Record<string, Record<string, unknown>>
+    expect(states['1'].state).toBe('caught')
+    expect(states['1'].prematureCatch).toBe(true)
+
+    expect(applyRoadScenarioGapGuidanceV1(input, 15, 9, 1)).toBe(15)
+    const updatedProof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const updatedStates = updatedProof.generationStates as Record<string, Record<string, unknown>>
+    expect(updatedStates['1'].state).toBe('caught')
+  })
+
   it('never resurrects a break that the physical engine has already caught', () => {
     const input = directorInput(false)
 
@@ -112,19 +168,19 @@ describe('Race Director V2 runtime story guidance', () => {
     expect(applyRoadScenarioGapGuidanceV1(input, 0, 80, 1)).toBe(0)
   })
 
-  it('records proof that the final engine actually consumed the selected template', () => {
+  it('records proof that the final engine consumed the selected V2.1 template', () => {
     const input = directorInput(false)
     applyRoadScenarioGapGuidanceV1(input, 520, 132, 1)
     const audit = getRoadScenarioPhysicalAuditV1(input)
     const proof = audit?.runtimeApplicationProof as Record<string, unknown>
 
-    expect(proof.contract).toBe('road_race_director_v2_runtime')
+    expect(proof.contract).toBe('road_race_director_v2_1_runtime')
     expect(proof.finalEngineSawTemplate).toBe(true)
     expect(Number(proof.gapGuidanceCalls)).toBeGreaterThan(0)
     expect(Number(proof.gapAdjustments)).toBeGreaterThan(0)
   })
 
-  it('uses finish energy for broad fragmentation pressure instead of forcing a fixed survivor count', () => {
+  it('uses the template front-group range as a soft finale boundary without forcing an exact survivor count', () => {
     const input = directorInput(false)
     const states = Array.from({ length: 20 }, (_, index) => ({
       riderId: `r${index + 1}`,
@@ -135,9 +191,37 @@ describe('Race Director V2 runtime story guidance', () => {
     const adjusted = applyRoadScenarioFinishFragmentationV1(input, states)
     const front = adjusted.filter((state) => state.finalGapSeconds <= 0.5)
 
-    expect(front.length).toBeGreaterThan(2)
-    expect(front.length).toBeLessThan(20)
+    expect(front.length).toBeGreaterThanOrEqual(6)
+    expect(front.length).toBeLessThanOrEqual(11)
     expect(front.some((state) => state.riderId === 'r1')).toBe(true)
     expect(adjusted.some((state) => state.finalGapSeconds > 0.5)).toBe(true)
+
+    const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const topology = proof.fragmentationTopology as Record<string, unknown>
+    expect(Number(topology.frontGroupAfter)).toBe(front.length)
+    expect(topology.targetFrontGroupRange).toEqual([6, 10])
+  })
+
+  it('produces a per-generation adherence audit at finale time', () => {
+    const input = directorInput(false)
+    applyRoadScenarioGapGuidanceV1(input, 18, 6, 1)
+    applyRoadScenarioGapGuidanceV1(input, 290, 45, 1)
+    applyRoadScenarioGapGuidanceV1(input, 0.3, 158, 1)
+
+    const states = Array.from({ length: 20 }, (_, index) => ({
+      riderId: `a${index + 1}`,
+      finalGapSeconds: 0,
+      finalGroupCode: 'winning_group',
+      energyAtFinish: 100 - index,
+    }))
+    applyRoadScenarioFinishFragmentationV1(input, states)
+
+    const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const adherence = proof.generationAdherence as Array<Record<string, unknown>>
+    expect(adherence).toHaveLength(1)
+    expect(adherence[0].generation).toBe(1)
+    expect(adherence[0].firstSeenKm).toBe(6)
+    expect(adherence[0].peakStatus).not.toBe('not_observed')
+    expect(Number(proof.generationDeviationCount)).toBeGreaterThanOrEqual(0)
   })
 })
