@@ -1,0 +1,30 @@
+name: ChatGPT pipeline hardening validation
+
+on:
+  push:
+    branches:
+      - chatgpt-pipeline-hardening-20260916
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Full universal race engine tests
+        run: npx --yes tsx --test src/universal-race-engine/runRaceEngine.test.ts
+      - name: V16 replay regression tests
+        run: npx --yes tsx --test src/universal-race-engine/replayPhysicalStateV16.test.ts
+      - name: Production build
+        run: npm run build
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check Pass 2 resume Edge worker
+        run: deno check supabase/functions/universal-race-stage-pass2-resume/index.ts
