@@ -739,7 +739,7 @@ async function loadStaffMarketCandidates(clubId: string): Promise<StaffCandidate
   const { data, error } = await supabase.rpc('get_staff_market_candidates_for_club', {
     p_club_id: clubId,
     p_page: 1,
-    p_page_size: 500,
+    p_page_size: 1000,
   })
 
   if (error) {
