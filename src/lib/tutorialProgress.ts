@@ -41,6 +41,7 @@ export type TutorialNavigationState = {
   canGoPreviousTutorial: boolean
 }
 
+const TUTORIAL_AUTO_START_STORAGE_KEY = 'ppm:auto-start-tutorial'
 const TUTORIAL_HISTORY_STORAGE_KEY = 'ppm:tutorial-history-v1'
 const TUTORIAL_LAST_RESTORE_STORAGE_KEY = 'ppm:tutorial-last-restore-v1'
 
@@ -166,6 +167,85 @@ function writeTutorialHistory(history: TutorialHistoryEntry[]): void {
   )
 
   dispatchTutorialHistoryChanged()
+}
+
+function getStoredRestoreTutorialKey(): TutorialKey | null {
+  if (!canUseWindow()) return null
+
+  try {
+    const rawValue = window.sessionStorage.getItem(
+      TUTORIAL_LAST_RESTORE_STORAGE_KEY,
+    )
+    if (!rawValue) return null
+
+    const parsedValue = JSON.parse(rawValue) as {
+      tutorialKey?: unknown
+    } | null
+
+    return typeof parsedValue?.tutorialKey === 'string'
+      ? (parsedValue.tutorialKey as TutorialKey)
+      : null
+  } catch {
+    return null
+  }
+}
+
+function clearStoredRestoreNavigation(tutorialKey?: TutorialKey): void {
+  if (!canUseWindow()) return
+
+  try {
+    if (!tutorialKey || getStoredRestoreTutorialKey() === tutorialKey) {
+      window.sessionStorage.removeItem(TUTORIAL_LAST_RESTORE_STORAGE_KEY)
+    }
+  } catch {
+    // Ignore browser storage issues.
+  }
+}
+
+function clearPendingTutorialAutoStart(tutorialKey?: TutorialKey): void {
+  if (!canUseWindow()) return
+
+  try {
+    const pendingTutorialKey = window.sessionStorage.getItem(
+      TUTORIAL_AUTO_START_STORAGE_KEY,
+    )
+
+    if (!tutorialKey || pendingTutorialKey === tutorialKey) {
+      window.sessionStorage.removeItem(TUTORIAL_AUTO_START_STORAGE_KEY)
+    }
+  } catch {
+    // Ignore browser storage issues.
+  }
+}
+
+function removeTutorialFromHistory(tutorialKey: TutorialKey): void {
+  const history = readTutorialHistory()
+  if (history.length === 0) return
+
+  const filteredHistory = history.filter(
+    (entry) => entry.tutorialKey !== tutorialKey,
+  )
+
+  if (filteredHistory.length !== history.length) {
+    writeTutorialHistory(filteredHistory)
+  }
+}
+
+function clearFinishedTutorialSessionState(
+  tutorialKey: TutorialKey,
+  status: TutorialStatus,
+): void {
+  if (status === 'skipped') {
+    clearPendingTutorialAutoStart()
+    clearStoredRestoreNavigation()
+    removeTutorialFromHistory(tutorialKey)
+    return
+  }
+
+  if (status === 'completed') {
+    clearPendingTutorialAutoStart(tutorialKey)
+    clearStoredRestoreNavigation(tutorialKey)
+  }
 }
 
 function getCurrentTutorialLocation(): Pick<
@@ -314,7 +394,10 @@ function rememberRestoreNavigation(
   if (!canUseWindow()) return
 
   try {
-    window.sessionStorage.setItem('ppm:auto-start-tutorial', entry.tutorialKey)
+    window.sessionStorage.setItem(
+      TUTORIAL_AUTO_START_STORAGE_KEY,
+      entry.tutorialKey,
+    )
     window.sessionStorage.setItem(
       TUTORIAL_LAST_RESTORE_STORAGE_KEY,
       JSON.stringify({
@@ -421,7 +504,13 @@ export async function getTutorialProgress(
   }
 
   const rows = Array.isArray(data) ? data : []
-  return (rows[0] as TutorialProgress | undefined) ?? null
+  const progress = (rows[0] as TutorialProgress | undefined) ?? null
+
+  if (progress) {
+    clearFinishedTutorialSessionState(tutorialKey, progress.status)
+  }
+
+  return progress
 }
 
 export async function saveTutorialProgress(
@@ -441,9 +530,13 @@ export async function saveTutorialProgress(
     return null
   }
 
-  if (options.remember !== false) {
+  const savedProgress = data as TutorialProgress
+
+  clearFinishedTutorialSessionState(tutorialKey, status)
+
+  if (options.remember !== false && status !== 'skipped') {
     rememberTutorialProgress(tutorialKey, status, lastStepKey ?? null)
   }
 
-  return data as TutorialProgress
+  return savedProgress
 }
