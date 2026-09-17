@@ -1,0 +1,62 @@
+name: Apply staff role status badge cleanup
+
+on:
+  push:
+    branches:
+      - fix/staff-role-status-badges
+      - fix/hide-staff-role-status-badges
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/hide-staff-role-status-badges
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Remove implementation status badges
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/dashboard/Staff.tsx')
+          lines = path.read_text().splitlines(keepends=True)
+          anchor_indexes = [i for i, line in enumerate(lines) if 'information.statusClassName' in line]
+          if len(anchor_indexes) != 1:
+              raise SystemExit(f'Expected exactly one status badge anchor, found {len(anchor_indexes)}')
+
+          anchor = anchor_indexes[0]
+          start = anchor
+          while start >= 0 and lines[start].strip() != '<span':
+              start -= 1
+          if start < 0:
+              raise SystemExit('Could not find opening <span for status badge')
+
+          end = anchor
+          while end < len(lines) and lines[end].strip() != '</span>':
+              end += 1
+          if end >= len(lines):
+              raise SystemExit('Could not find closing </span> for status badge')
+
+          del lines[start:end + 1]
+          path.write_text(''.join(lines))
+          PY
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit source and remove temporary workflow
+        run: |
+          rm .github/workflows/tmp-hide-staff-role-status-badges.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/dashboard/Staff.tsx .github/workflows/tmp-hide-staff-role-status-badges.yml
+          git commit -m 'Hide staff role implementation status badges'
+          git push origin HEAD:fix/hide-staff-role-status-badges
