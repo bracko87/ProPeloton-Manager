@@ -5128,7 +5128,7 @@ export default function RiderProfilePage({
       const savedImageUrl = String(result?.image_url ?? nextImageUrl)
       setSelectedRider({ ...selectedRider, image_url: savedImageUrl })
       setImageUrlInput(savedImageUrl)
-      setImageSaveMessage(t('ownedProfile.imageUpdated', { coins: Number(result?.coins_charged ?? 5) }))
+      setImageSaveMessage(t('ownedProfile.imageUpdated', { coins: Number(result?.coins_charged ?? 2) }))
       window.dispatchEvent(new CustomEvent('coin-balance-changed'))
     } catch (e: any) {
       setImageSaveMessage(e?.message ?? t('ownedProfile.imageUpdateFailed'))

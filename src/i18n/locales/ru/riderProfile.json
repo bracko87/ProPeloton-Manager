@@ -395,7 +395,7 @@
     "imageUrl": "Адрес изображения",
     "imagePlaceholder": "Вставить адрес изображения гонщика",
     "savingImage": "Сохранить изображение...",
-    "saveImage": "Сохранить URL изображения · 5 Coins",
+    "saveImage": "Сохранить URL изображения · 2 Coins",
     "imageInvalid": "Введите действительный адрес изображения http или https.",
     "imageUpdated": "Картина успешно обновляется. {{coins}} Coins Заряжено.",
     "imageUpdateFailed": "Не удалось обновить изображение гонщика.",
