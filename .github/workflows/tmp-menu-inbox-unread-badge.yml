@@ -1,0 +1,71 @@
+name: Apply inbox unread badge to menu button
+
+on:
+  push:
+    branches:
+      - fix/menu-inbox-unread-badge
+    paths:
+      - .github/workflows/tmp-menu-inbox-unread-badge.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/menu-inbox-unread-badge
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Add unread inbox badge to Menu button
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/components/layout/Header.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          old_class = 'className="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-black/10"'
+          new_class = 'className="relative flex items-center gap-2 rounded-md px-3 py-2 hover:bg-black/10"'
+          if text.count(old_class) != 1:
+              raise SystemExit(f'Expected exactly one Menu button class, found {text.count(old_class)}')
+          text = text.replace(old_class, new_class, 1)
+
+          old_menu = '''            <span className="text-sm font-medium text-black">\n              {t('header.menu')}\n            </span>\n          </button>'''
+          new_menu = '''            <span className="text-sm font-medium text-black">\n              {t('header.menu')}\n            </span>\n\n            {inboxUnreadCount > 0 ? (\n              <span\n                className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none"\n                aria-label={`${inboxUnreadCount} unread inbox messages`}\n              >\n                {inboxUnreadCount > 99 ? '99+' : inboxUnreadCount}\n              </span>\n            ) : null}\n          </button>'''
+          if text.count(old_menu) != 1:
+              raise SystemExit(f'Expected exactly one Menu label block, found {text.count(old_menu)}')
+          text = text.replace(old_menu, new_menu, 1)
+
+          if text.count("{inboxUnreadCount > 99 ? '99+' : inboxUnreadCount}") < 1:
+              raise SystemExit('Menu inbox unread badge count was not inserted')
+          if 'className="relative flex items-center gap-2 rounded-md px-3 py-2 hover:bg-black/10"' not in text:
+              raise SystemExit('Menu button is not positioned relative for badge overlay')
+
+          path.write_text(text, encoding='utf-8')
+          print('Added Menu inbox unread badge.')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit change and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/tmp-menu-inbox-unread-badge.yml
+          git add src/components/layout/Header.tsx
+          git commit -m "Show unread inbox count on Menu button"
+          git push origin HEAD:fix/menu-inbox-unread-badge
