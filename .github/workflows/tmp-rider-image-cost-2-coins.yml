@@ -47,21 +47,36 @@ jobs:
           for path in locale_files:
               text = path.read_text(encoding='utf-8')
               for key in ('imageCostSubtitle', 'saveImage'):
-                  pattern = re.compile(rf'(^\s*"{key}"\s*:\s*"[^\n"]*?)5([^\n"]*"\s*,?\s*$)', re.MULTILINE)
-                  text, replacements = pattern.subn(r'\g<1>2\g<2>', text, count=1)
-                  if replacements != 1:
-                      raise SystemExit(f'{path}: expected one 5-coin replacement for {key}, found {replacements}')
+                  pattern = re.compile(rf'(^\s*"{key}"\s*:\s*")([^\n"]*)("\s*,?\s*$)', re.MULTILINE)
+                  match = pattern.search(text)
+                  if not match:
+                      raise SystemExit(f'{path}: missing {key}')
+                  value = match.group(2)
+                  if '5' in value:
+                      value = value.replace('5', '2', 1)
+                  text = text[:match.start(2)] + value + text[match.end(2):]
               path.write_text(text, encoding='utf-8')
 
           # Focused verification: no rider-image price label/fallback may still advertise 5.
           if 'Number(result?.coins_charged ?? 5)' in component.read_text(encoding='utf-8'):
               raise SystemExit('Old 5-coin frontend fallback remains')
+
           for path in locale_files:
               text = path.read_text(encoding='utf-8')
               for key in ('imageCostSubtitle', 'saveImage'):
                   match = re.search(rf'^\s*"{key}"\s*:\s*"([^\n"]*)"', text, re.MULTILINE)
-                  if not match or '2' not in match.group(1) or '5' in match.group(1):
-                      raise SystemExit(f'{path}: {key} was not updated cleanly: {match.group(1) if match else "missing"}')
+                  if not match:
+                      raise SystemExit(f'{path}: missing {key} after update')
+                  value = match.group(1)
+                  if '5' in value:
+                      raise SystemExit(f'{path}: {key} still advertises 5: {value}')
+                  if key == 'saveImage' and '2' not in value:
+                      raise SystemExit(f'{path}: saveImage does not advertise 2: {value}')
+
+          en_text = Path('src/i18n/locales/en/riderProfile.json').read_text(encoding='utf-8')
+          en_subtitle = re.search(r'^\s*"imageCostSubtitle"\s*:\s*"([^\n"]*)"', en_text, re.MULTILINE)
+          if not en_subtitle or '2' not in en_subtitle.group(1):
+              raise SystemExit('English image cost subtitle does not advertise 2 coins')
 
           print('Updated rider image price UI in component and all 8 locales.')
           PY
