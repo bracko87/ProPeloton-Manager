@@ -1,0 +1,56 @@
+name: Apply staff market fetch limit fix
+
+on:
+  push:
+    branches:
+      - fix/staff-market-fetch-all-candidates
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/staff-market-fetch-all-candidates
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Increase staff candidate market fetch size
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          path = Path('src/pages/dashboard/Transfers.tsx')
+          text = path.read_text()
+          old = "    p_page_size: 500,\n"
+          new = "    p_page_size: 1000,\n"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one staff market page-size match, found {count}')
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit source and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/dashboard/Transfers.tsx
+          git rm .github/workflows/tmp-staff-market-fetch-all.yml
+          git commit -m "Fetch complete staff candidate market"
+          git push origin HEAD:fix/staff-market-fetch-all-candidates
