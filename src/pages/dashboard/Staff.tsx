@@ -4114,19 +4114,6 @@ function StaffRolesInformationModal({
                   </div>
 
                   <div className="flex flex-col items-end gap-2">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${information.statusClassName}`}
-                    >
-                      {information.statusLabel === 'Live'
-                        ? t('information.live')
-                        : information.statusLabel === 'Core live'
-                          ? t('information.coreLive')
-                          : information.statusLabel === 'Training live'
-                            ? t('information.trainingLive')
-                            : information.statusLabel === 'Planned connection'
-                              ? t('information.plannedConnection')
-                              : information.statusLabel}
-                    </span>
                     <span className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-600">
                       {t('rolesSection.assignedCompact', { count: assigned, limit })}
                     </span>
