@@ -1,0 +1,83 @@
+name: Apply rider image 2-coin UI cost
+
+on:
+  push:
+    branches:
+      - fix/rider-image-cost-2-coins
+    paths:
+      - .github/workflows/tmp-rider-image-cost-2-coins.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/rider-image-cost-2-coins
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Change rider image UI price to 2 coins
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          component = Path('src/features/squad/components/RiderProfilePage.tsx')
+          text = component.read_text(encoding='utf-8')
+          old = 'Number(result?.coins_charged ?? 5)'
+          new = 'Number(result?.coins_charged ?? 2)'
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one frontend coin fallback, found {count}')
+          component.write_text(text.replace(old, new), encoding='utf-8')
+
+          locale_files = sorted(Path('src/i18n/locales').glob('*/riderProfile.json'))
+          if len(locale_files) != 8:
+              raise SystemExit(f'Expected 8 riderProfile locale files, found {len(locale_files)}')
+
+          for path in locale_files:
+              text = path.read_text(encoding='utf-8')
+              for key in ('imageCostSubtitle', 'saveImage'):
+                  pattern = re.compile(rf'(^\s*"{key}"\s*:\s*"[^\n"]*?)5([^\n"]*"\s*,?\s*$)', re.MULTILINE)
+                  text, replacements = pattern.subn(r'\g<1>2\g<2>', text, count=1)
+                  if replacements != 1:
+                      raise SystemExit(f'{path}: expected one 5-coin replacement for {key}, found {replacements}')
+              path.write_text(text, encoding='utf-8')
+
+          # Focused verification: no rider-image price label/fallback may still advertise 5.
+          if 'Number(result?.coins_charged ?? 5)' in component.read_text(encoding='utf-8'):
+              raise SystemExit('Old 5-coin frontend fallback remains')
+          for path in locale_files:
+              text = path.read_text(encoding='utf-8')
+              for key in ('imageCostSubtitle', 'saveImage'):
+                  match = re.search(rf'^\s*"{key}"\s*:\s*"([^\n"]*)"', text, re.MULTILINE)
+                  if not match or '2' not in match.group(1) or '5' in match.group(1):
+                      raise SystemExit(f'{path}: {key} was not updated cleanly: {match.group(1) if match else "missing"}')
+
+          print('Updated rider image price UI in component and all 8 locales.')
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit UI changes and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/tmp-rider-image-cost-2-coins.yml
+          git add src/features/squad/components/RiderProfilePage.tsx src/i18n/locales/*/riderProfile.json
+          git commit -m "Show 2-coin rider image change cost"
+          git push origin HEAD:fix/rider-image-cost-2-coins
