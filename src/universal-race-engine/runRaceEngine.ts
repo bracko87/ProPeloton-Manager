@@ -35533,6 +35533,7 @@ const UNIVERSAL_NON_BLOCKING_REPLAY_ISSUE_PREFIXES = [
   'post_catch_group_transfer_without_physical_transition:',
   'opening_breakaway_lineage_changed:',
   'opening_breakaway_lineage_changed_without_bridge_merge:',
+  'successful_attack_without_physical_group:',
   'opening_breakaway_formation_missing_physical_group',
   'opening_breakaway_reappears:',
   'bridge_attack_invalid:',
