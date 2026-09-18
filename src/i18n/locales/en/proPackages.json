@@ -55,7 +55,15 @@
     "cancelSubscription": "Cancel Premium",
     "openingCancel": "Opening cancellation…",
     "cancelHelp": "Cancel at the end of your current paid period. Premium stays active until then.",
-    "cancelPortalFailed": "Could not open the Premium cancellation page."
+    "cancelPortalFailed": "Could not open the Premium cancellation page.",
+    "accessOverride": "Premium access",
+    "accessOverrideActive": "Premium access is active.",
+    "accessOverrideUntil": "Your complimentary/test Premium access is available until {{date}}.",
+    "noActiveRecurringSubscription": "There is no active recurring Stripe subscription on this account.",
+    "manualAccessHelp": "Your Premium access is currently provided by a complimentary/test entitlement. There is no recurring subscription to cancel.",
+    "canceledBillingHelp": "The previous Stripe subscription is canceled. You can still open billing details or start a new paid subscription.",
+    "statusCanceled": "Canceled",
+    "startPaidSubscription": "Start paid Premium subscription"
   },
   "advantages": {
     "a1": "50 coins after every successful monthly Premium payment.",
@@ -162,7 +170,7 @@
     "title": "Billing and purchase history",
     "description": "Premium invoices, coin-package purchases and wallet activity are kept separate.",
     "premiumInvoices": "Premium invoices",
-    "premiumInvoicesSubtitle": "Successful Premium payments and monthly coin grants",
+    "premiumInvoicesSubtitle": "Stripe Premium invoices, refunds and monthly coin grants",
     "noPremiumInvoices": "No Premium invoices found.",
     "coinPurchases": "Coin-package purchases",
     "coinPurchasesSubtitle": "One-time purchases of optional coin packages",
@@ -193,7 +201,11 @@
     "billingSubscriptionCycle": "Subscription cycle",
     "billingSubscriptionCreate": "Subscription created",
     "billingSubscriptionUpdate": "Subscription updated",
-    "billingManual": "Manual invoice"
+    "billingManual": "Manual invoice",
+    "status": "Status",
+    "refunded": "Refunded",
+    "invoicePaid": "Paid",
+    "viewInvoice": "View Stripe invoice"
   },
   "transactions": {
     "purchase": "Coin package purchase: {{code}}",
