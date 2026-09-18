@@ -283,19 +283,6 @@ Deno.serve(async request => {
     Deno.env.get('CONTACT_FROM_EMAIL') ??
     'ProPeloton Manager <no-reply@propelotonmanager.com>'
 
-  if (!resendApiKey) {
-    console.error('Missing RESEND_API_KEY secret')
-
-    return jsonResponse(
-      request,
-      {
-        ok: false,
-        error: 'Contact service is not configured yet.',
-      },
-      500,
-    )
-  }
-
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
@@ -355,6 +342,38 @@ Deno.serve(async request => {
     )
   }
 
+  if (!resendApiKey) {
+    console.error('Missing RESEND_API_KEY secret')
+
+    if (serviceClient && contactMessageId) {
+      const { error: updateError } = await serviceClient
+        .from('contact_messages')
+        .update({
+          email_status: 'failed',
+          delivery_error: 'Missing RESEND_API_KEY secret',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', contactMessageId)
+
+      if (updateError) {
+        console.error(
+          'Could not mark contact email as failed after configuration error',
+          updateError,
+        )
+      }
+    }
+
+    return jsonResponse(
+      request,
+      {
+        ok: false,
+        error: 'Contact service is not configured yet.',
+        savedForSupport: adminCopySaved,
+      },
+      500,
+    )
+  }
+
   const emailInput = {
     name,
     email,
@@ -363,27 +382,64 @@ Deno.serve(async request => {
     contactMessageId,
   }
 
-  const resendResponse = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: contactFromEmail,
-      to: [contactToEmail],
-      reply_to: [email],
-      subject: `ProPeloton Manager support request from ${name}`,
-      text: buildTextEmail(emailInput),
-      html: buildHtmlEmail(emailInput),
-      tags: [
-        {
-          name: 'category',
-          value: 'support',
-        },
-      ],
-    }),
-  })
+  let resendResponse: Response
+
+  try {
+    resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: contactFromEmail,
+        to: [contactToEmail],
+        reply_to: [email],
+        subject: `ProPeloton Manager support request from ${name}`,
+        text: buildTextEmail(emailInput),
+        html: buildHtmlEmail(emailInput),
+        tags: [
+          {
+            name: 'category',
+            value: 'support',
+          },
+        ],
+      }),
+    })
+  } catch (sendError) {
+    console.error('Resend request failed before receiving a response', sendError)
+
+    if (serviceClient && contactMessageId) {
+      const errorText =
+        sendError instanceof Error
+          ? sendError.message.slice(0, 2000)
+          : 'Unknown network error while contacting Resend'
+
+      const { error: updateError } = await serviceClient
+        .from('contact_messages')
+        .update({
+          email_status: 'failed',
+          delivery_error: errorText,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', contactMessageId)
+
+      if (updateError) {
+        console.error('Could not mark contact email network failure', updateError)
+      }
+    }
+
+    return jsonResponse(
+      request,
+      {
+        ok: false,
+        error:
+          'Could not send your message right now. Please try again later.',
+        savedForSupport: adminCopySaved,
+      },
+      502,
+    )
+  }
 
   const resendData = await resendResponse.json().catch(() => null)
   const resendEmailId =
