@@ -7549,9 +7549,6 @@ function RaceResultsHub({
     selectedStageIsTeamTimeTrialLike,
   ])
 
-  const raceAwaitingSimulation =
-    normalizedRaceStatus === 'active'
-
   function renderResultsState(
     loading: boolean,
     error: string | null,
@@ -7636,12 +7633,6 @@ function RaceResultsHub({
               {t('participants.results')}
             </button>
           </div>
-
-          {raceAwaitingSimulation ? (
-        <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {t('participants.activeLocked')}
-        </div>
-      ) : null}
 
       {raceHasWeatherCancellation ? (
         <div className="mt-5">
@@ -7733,18 +7724,6 @@ function RaceResultsHub({
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
-              {engineTestModeLabel ? (
-                <div className="mb-4 rounded-2xl border border-sky-300 bg-sky-50 px-4 py-3 text-sm text-sky-950">
-                  <div className="font-semibold">
-                    {engineTestModeLabel}
-                  </div>
-
-                  <div className="mt-1 text-xs text-sky-800">
-                    Classification and replay are generated in browser memory. Persisted official results have not been changed.
-                  </div>
-                </div>
-              ) : null}
-
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="font-semibold text-slate-950">
                   {selectedStage
