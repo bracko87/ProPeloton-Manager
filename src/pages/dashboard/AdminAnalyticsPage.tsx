@@ -7,7 +7,6 @@ import {
   MousePointerClick,
   RefreshCw,
   Route,
-  Sessions,
   UserPlus,
   Users,
 } from 'lucide-react'
