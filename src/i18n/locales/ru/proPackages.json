@@ -51,7 +51,11 @@
     "statusPastDue": "Срок представления",
     "statusUnpaid": "Невыплаченные",
     "statusIncomplete": "Неполный",
-    "statusPaused": "Приостановлено"
+    "statusPaused": "Приостановлено",
+    "cancelSubscription": "Отменить Premium",
+    "openingCancel": "Открытие отмены…",
+    "cancelHelp": "Отмена произойдет в конце текущего оплаченного периода. Premium останется активным до этого момента.",
+    "cancelPortalFailed": "Не удалось открыть страницу отмены Premium."
   },
   "advantages": {
     "a1": "50 Coins после каждого успешного месяца Premium Платеж.",
