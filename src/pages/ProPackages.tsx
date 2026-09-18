@@ -598,12 +598,13 @@ export default function ProPackagesPage(): JSX.Element {
     'past_due',
   ].includes(billingStatus)
 
-  const manualAccessFlag =
+  const manualAccessValue =
     premiumBilling?.manual_access ??
-    premiumDetails?.metadata?.manual_test_access === true ||
-    String(
-      premiumDetails?.metadata?.manual_test_access ?? '',
-    ).toLowerCase() === 'true'
+    premiumDetails?.metadata?.manual_test_access
+
+  const manualAccessFlag =
+    manualAccessValue === true ||
+    String(manualAccessValue ?? '').toLowerCase() === 'true'
 
   const hasManualPremiumAccess = Boolean(
     premiumStatus?.is_premium &&
@@ -804,7 +805,19 @@ export default function ProPackagesPage(): JSX.Element {
     setPremiumError(null)
 
     try {
-      const [planResult, statusResult, detailsResult] =
+      const billingPromise =
+        callAuthenticatedEdgeFunction<PremiumBillingSummaryResponse>(
+          'get-premium-billing-summary',
+          { include_invoices: false },
+        ).catch((billingError) => {
+          console.warn(
+            'Failed to load live Stripe Premium billing state:',
+            billingError,
+          )
+          return null
+        })
+
+      const [planResult, statusResult, detailsResult, billingResult] =
         await Promise.all([
           supabase
             .from('premium_plans')
@@ -818,9 +831,10 @@ export default function ProPackagesPage(): JSX.Element {
           supabase
             .from('user_premium_subscriptions')
             .select(
-              'plan_code, stripe_customer_id, stripe_subscription_id, stripe_status, cancel_at_period_end, current_period_start, current_period_end, access_until, created_at',
+              'plan_code, stripe_customer_id, stripe_subscription_id, stripe_status, cancel_at_period_end, current_period_start, current_period_end, access_until, created_at, metadata',
             )
             .maybeSingle(),
+          billingPromise,
         ])
 
       if (planResult.error) throw planResult.error
@@ -839,6 +853,7 @@ export default function ProPackagesPage(): JSX.Element {
         (detailsResult.data as PremiumSubscriptionDetailRow | null) ??
           null,
       )
+      setPremiumBilling(billingResult)
 
       return statusRows[0] ?? null
     } catch (loadError: any) {
@@ -846,6 +861,7 @@ export default function ProPackagesPage(): JSX.Element {
       setPremiumPlan(null)
       setPremiumStatus(null)
       setPremiumDetails(null)
+      setPremiumBilling(null)
       setPremiumError(
         loadError?.message ??
           t('premium.detailsFailed'),
