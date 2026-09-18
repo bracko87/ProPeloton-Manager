@@ -54,6 +54,7 @@ type PremiumSubscriptionDetailRow = {
   current_period_end: string | null
   access_until: string | null
   created_at: string
+  metadata: Record<string, unknown> | null
 }
 
 type PremiumInvoiceRow = {
@@ -63,9 +64,13 @@ type PremiumInvoiceRow = {
   amount_paid_cents: number | null
   currency: string | null
   coins_granted: number
-  period_start: string
-  period_end: string
-  processed_at: string
+  period_start: string | null
+  period_end: string | null
+  processed_at: string | null
+  status: string | null
+  credited_cents: number
+  refunded: boolean
+  hosted_invoice_url: string | null
 }
 
 type DevelopingTeamServiceStatus = {
@@ -141,6 +146,24 @@ type EdgeResponse = {
   url?: string
   error?: string
   code?: string
+}
+
+type PremiumBillingSubscription = {
+  id: string
+  status: string
+  cancel_at_period_end: boolean
+  cancel_at: string | null
+  canceled_at: string | null
+  ended_at: string | null
+  current_period_start: string | null
+  current_period_end: string | null
+}
+
+type PremiumBillingSummaryResponse = EdgeResponse & {
+  subscription?: PremiumBillingSubscription | null
+  invoices?: PremiumInvoiceRow[]
+  has_billing_profile?: boolean
+  manual_access?: boolean
 }
 
 const COIN_HISTORY_PAGE_SIZE = 20
@@ -425,10 +448,12 @@ function getSupabaseConfig(): { url: string; anonKey: string } {
   return { url, anonKey }
 }
 
-async function callAuthenticatedEdgeFunction(
+async function callAuthenticatedEdgeFunction<
+  T extends EdgeResponse = EdgeResponse,
+>(
   functionName: string,
   body: Record<string, unknown>,
-): Promise<EdgeResponse> {
+): Promise<T> {
   const { url: supabaseUrl, anonKey } = getSupabaseConfig()
 
   const { data: sessionData, error: sessionError } =
@@ -455,11 +480,11 @@ async function callAuthenticatedEdgeFunction(
   )
 
   const responseText = await response.text().catch(() => '')
-  let responseJson: EdgeResponse = {}
+  let responseJson = {} as T
 
   if (responseText) {
     try {
-      responseJson = JSON.parse(responseText) as EdgeResponse
+      responseJson = JSON.parse(responseText) as T
     } catch {
       responseJson = {}
     }
@@ -488,6 +513,8 @@ export default function ProPackagesPage(): JSX.Element {
     useState<PremiumStatusRow | null>(null)
   const [premiumDetails, setPremiumDetails] =
     useState<PremiumSubscriptionDetailRow | null>(null)
+  const [premiumBilling, setPremiumBilling] =
+    useState<PremiumBillingSummaryResponse | null>(null)
   const [loadingPremium, setLoadingPremium] = useState(true)
   const [startingPremiumCheckout, setStartingPremiumCheckout] =
     useState(false)
