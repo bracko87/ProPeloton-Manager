@@ -985,12 +985,18 @@ export default function ProPackagesPage(): JSX.Element {
     setLoadingPremiumInvoices(true)
 
     try {
-      const { data, error: invoiceError } =
-        await supabase.rpc('get_my_premium_invoice_history')
+      const billingResult =
+        await callAuthenticatedEdgeFunction<PremiumBillingSummaryResponse>(
+          'get-premium-billing-summary',
+          { include_invoices: true },
+        )
 
-      if (invoiceError) throw invoiceError
-
-      setPremiumInvoices((data ?? []) as PremiumInvoiceRow[])
+      setPremiumBilling((current) => ({
+        ...(current ?? {}),
+        ...billingResult,
+        invoices: undefined,
+      }))
+      setPremiumInvoices(billingResult.invoices ?? [])
     } catch (loadError: any) {
       console.error(
         'Failed to load Premium invoice history:',
