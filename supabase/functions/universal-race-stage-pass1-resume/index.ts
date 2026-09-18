@@ -3,13 +3,13 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.5
 import {
   buildScenarioProductionUniversalRaceEngineInput,
   getRoadScenarioAuditV1,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/506481c11776a73a9afafd3111084bc2f26d69ef/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/f4a4bd815c6ea1c0c1a121debff28569a5a7c5bb/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
-const SOURCE_COMMIT = "506481c11776a73a9afafd3111084bc2f26d69ef";
-const CONTRACT = "universal_race_pass1_resume_v1";
+const SOURCE_COMMIT = "f4a4bd815c6ea1c0c1a121debff28569a5a7c5bb";
+const CONTRACT = "universal_race_pass1_resume_v2";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
