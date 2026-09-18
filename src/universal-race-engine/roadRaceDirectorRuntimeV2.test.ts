@@ -92,15 +92,26 @@ function multiTeamDirectorInput(chasingTeams: number) {
 }
 
 describe('Race Director V2.1 runtime story guidance', () => {
-  it('protects a real break as soon as it enters the template formation window', () => {
+  it('protects a real opening move even when it forms just before the preferred template window', () => {
     const input = directorInput(false)
-    const adjusted = applyRoadScenarioGapGuidanceV1(input, 6, 6, 1)
+    const adjusted = applyRoadScenarioGapGuidanceV1(input, 6, 4, 1)
 
     expect(adjusted).toBeGreaterThan(6)
     const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
     const states = proof.generationStates as Record<string, Record<string, unknown>>
     expect(states['1'].state).toBe('forming')
-    expect(states['1'].firstSeenKm).toBe(6)
+    expect(states['1'].firstSeenKm).toBe(4)
+  })
+
+  it('prevents a low-pressure early formation step from collapsing below catch tolerance', () => {
+    const input = directorInput(false)
+    const adjusted = applyRoadScenarioGapGuidanceV1(input, 0.3, 8, 1)
+
+    expect(adjusted).toBeGreaterThan(0.75)
+    const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const states = proof.generationStates as Record<string, Record<string, unknown>>
+    expect(states['1'].state).toBe('forming')
+    expect(states['1'].prematureCatch).not.toBe(true)
   })
 
   it('protects an underdeveloped established break without creating a fixed gap', () => {
@@ -145,17 +156,17 @@ describe('Race Director V2.1 runtime story guidance', () => {
     expect(adjusted).toBeGreaterThan(0.5)
   })
 
-  it('closes a prematurely caught template generation and never reuses it to resurrect a later move', () => {
+  it('accepts a physical catch after formation and never reuses the closed generation', () => {
     const input = directorInput(false)
     applyRoadScenarioGapGuidanceV1(input, 12, 6, 1)
-    expect(applyRoadScenarioGapGuidanceV1(input, 0.3, 8, 1)).toBe(0.3)
+    expect(applyRoadScenarioGapGuidanceV1(input, 0.3, 12, 1)).toBe(0.3)
 
     const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
     const states = proof.generationStates as Record<string, Record<string, unknown>>
     expect(states['1'].state).toBe('caught')
     expect(states['1'].prematureCatch).toBe(true)
 
-    expect(applyRoadScenarioGapGuidanceV1(input, 15, 9, 1)).toBe(15)
+    expect(applyRoadScenarioGapGuidanceV1(input, 15, 14, 1)).toBe(15)
     const updatedProof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
     const updatedStates = updatedProof.generationStates as Record<string, Record<string, unknown>>
     expect(updatedStates['1'].state).toBe('caught')
