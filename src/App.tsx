@@ -63,6 +63,7 @@ import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
 import AdminAnalyticsPage from './pages/dashboard/AdminAnalyticsPage'
 import AdminBugReportsPage from './pages/dashboard/AdminBugReportsPage'
 import AdminPlayerReviewsPage from './pages/dashboard/AdminPlayerReviewsPage'
+import AdminContactMessagesPage from './pages/dashboard/AdminContactMessagesPage'
 import TrainingPage from './pages/dashboard/Training'
 import CurrentTrainingCampPage from './pages/dashboard/training/CurrentTrainingCampPage'
 import EquipmentPage from './pages/dashboard/Equipment'
@@ -557,6 +558,15 @@ export default function App(): JSX.Element {
               element={
                 <RequireAppAdmin>
                   <AdminPlayerReviewsPage />
+                </RequireAppAdmin>
+              }
+            />
+
+            <Route
+              path="admin/contact-messages"
+              element={
+                <RequireAppAdmin>
+                  <AdminContactMessagesPage />
                 </RequireAppAdmin>
               }
             />
