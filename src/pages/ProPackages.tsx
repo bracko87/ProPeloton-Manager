@@ -1595,6 +1595,21 @@ export default function ProPackagesPage(): JSX.Element {
                       ? t('premium.openingCancel')
                       : t('premium.cancelSubscription')}
                   </button>
+                ) : !premiumCheckoutBlocked ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleStartPremiumCheckout()}
+                    disabled={
+                      loadingPremium ||
+                      startingPremiumCheckout ||
+                      !premiumPlan
+                    }
+                    className="mt-3 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {startingPremiumCheckout
+                      ? t('premium.redirecting')
+                      : t('premium.startPaidSubscription')}
+                  </button>
                 ) : null}
               </>
             ) : (
