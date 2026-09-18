@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   ShieldCheck,
   Bug,
+  Star,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -124,6 +125,7 @@ export default function Sidebar({
   const location = useLocation()
   const { isAdmin } = useAppAdmin()
   const [unreadBugReports, setUnreadBugReports] = useState(0)
+  const [pendingPlayerReviews, setPendingPlayerReviews] = useState(0)
 
   useEffect(() => {
     let alive = true
@@ -184,6 +186,74 @@ export default function Sidebar({
       window.removeEventListener('focus', handleRefresh)
       window.removeEventListener(
         'admin-bug-report-count-refresh',
+        handleRefresh,
+      )
+      void supabase.removeChannel(channel)
+    }
+  }, [isAdmin])
+
+  useEffect(() => {
+    let alive = true
+
+    if (!isAdmin) {
+      setPendingPlayerReviews(0)
+      return () => {
+        alive = false
+      }
+    }
+
+    const refreshPendingReviews = async (): Promise<void> => {
+      const { data, error } = await supabase.rpc(
+        'get_admin_homepage_review_pending_count_v1',
+      )
+
+      if (!alive) return
+
+      if (error) {
+        console.warn('Could not load pending player review count:', error)
+        return
+      }
+
+      setPendingPlayerReviews(Number(data ?? 0))
+    }
+
+    void refreshPendingReviews()
+
+    const channel = supabase
+      .channel('admin-player-review-sidebar')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'homepage_player_reviews',
+        },
+        () => {
+          void refreshPendingReviews()
+        },
+      )
+      .subscribe()
+
+    const intervalId = window.setInterval(() => {
+      void refreshPendingReviews()
+    }, 45_000)
+
+    const handleRefresh = (): void => {
+      void refreshPendingReviews()
+    }
+
+    window.addEventListener('focus', handleRefresh)
+    window.addEventListener(
+      'admin-player-review-count-refresh',
+      handleRefresh,
+    )
+
+    return () => {
+      alive = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', handleRefresh)
+      window.removeEventListener(
+        'admin-player-review-count-refresh',
         handleRefresh,
       )
       void supabase.removeChannel(channel)
@@ -342,6 +412,48 @@ export default function Sidebar({
 
                     <div className="mt-1 text-xs leading-tight text-white/55">
                       Player bug reports and issue tracking
+                    </div>
+                  </div>
+                )}
+              </NavLink>
+
+              <NavLink
+                to="/dashboard/admin/player-reviews"
+                className={`${linkClass(
+                  location.pathname === '/dashboard/admin/player-reviews' ||
+                    location.pathname.startsWith(
+                      '/dashboard/admin/player-reviews/',
+                    ),
+                )} relative`}
+              >
+                <div className="relative mt-0.5 flex-shrink-0">
+                  <Star size={18} />
+
+                  {collapsed && pendingPlayerReviews > 0 ? (
+                    <span className="absolute -right-2 -top-2 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold leading-[18px] text-white shadow-sm">
+                      {pendingPlayerReviews > 99 ? '99+' : pendingPlayerReviews}
+                    </span>
+                  ) : null}
+                </div>
+
+                {!collapsed && (
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-base font-semibold leading-tight">
+                        Player Reviews
+                      </div>
+
+                      {pendingPlayerReviews > 0 ? (
+                        <span className="inline-flex min-w-[22px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-extrabold text-white shadow-sm">
+                          {pendingPlayerReviews > 99
+                            ? '99+'
+                            : pendingPlayerReviews}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-1 text-xs leading-tight text-white/55">
+                      Approve reviews for the homepage
                     </div>
                   </div>
                 )}
