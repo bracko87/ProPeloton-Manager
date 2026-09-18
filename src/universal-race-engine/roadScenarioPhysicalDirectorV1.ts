@@ -752,6 +752,11 @@ export function applyRoadScenarioFinishFragmentationV1<
   recordRuntimeApplication(input, 'fragmentation', { adjusted: false })
   finalizeGenerationAdherence(input)
 
+  // Flat road stages should keep the physical engine's peloton topology.
+  // A scenario template may shape breakaway/chase behaviour, but it must not
+  // manufacture extra finish-line fragmentation on an otherwise flat race.
+  if (input.stage.terrainType === 'flat') return [...states]
+
   const parameters = object(audit.generatedParameters)
   let pressure = clamp(finite(parameters.fragmentationPressure, 0), 0, 1)
   const allowRegroup = parameters.allowRegroup === true
