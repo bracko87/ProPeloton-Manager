@@ -6954,6 +6954,48 @@ describe('Phase 5 deterministic groups, selection, gaps, and official times', ()
     expect(merged[0].gapSeconds).toBe(10)
   })
 
+  it('merges a continuous chase line transitively instead of creating one-rider micro-groups', () => {
+    const merged = mergeAdjacentPhase5RoadGroups([
+      {
+        sourceOrder: 1,
+        preferredGroupCode: 'chasing_group',
+        riderIds: ['rider-a'],
+        gapSeconds: 10,
+        riderPerformanceScores: { 'rider-a': 90 },
+        formationReason: 'finish_group',
+      },
+      {
+        sourceOrder: 2,
+        preferredGroupCode: 'chasing_group',
+        riderIds: ['rider-b'],
+        gapSeconds: 14,
+        riderPerformanceScores: { 'rider-b': 88 },
+        formationReason: 'finish_group',
+      },
+      {
+        sourceOrder: 3,
+        preferredGroupCode: 'chasing_group',
+        riderIds: ['rider-c'],
+        gapSeconds: 18,
+        riderPerformanceScores: { 'rider-c': 86 },
+        formationReason: 'finish_group',
+      },
+      {
+        sourceOrder: 4,
+        preferredGroupCode: 'chasing_group',
+        riderIds: ['rider-d'],
+        gapSeconds: 24,
+        riderPerformanceScores: { 'rider-d': 84 },
+        formationReason: 'finish_group',
+      },
+    ])
+
+    expect(merged).toHaveLength(2)
+    expect(merged[0].riderIds).toEqual(['rider-a', 'rider-b', 'rider-c'])
+    expect(merged[0].gapSeconds).toBe(10)
+    expect(merged[1].riderIds).toEqual(['rider-d'])
+  })
+
   it('uses one authoritative group gap and official time for every road rider', () => {
     const result = runRaceEngine(createExpandedFieldInput(26)).groupAndTimeResolution
     const winnerTime = result.officialResults[0].officialTimeSeconds
