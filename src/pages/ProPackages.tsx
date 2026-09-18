@@ -493,6 +493,8 @@ export default function ProPackagesPage(): JSX.Element {
     useState(false)
   const [openingPremiumPortal, setOpeningPremiumPortal] =
     useState(false)
+  const [openingPremiumCancelPortal, setOpeningPremiumCancelPortal] =
+    useState(false)
   const [premiumError, setPremiumError] = useState<string | null>(null)
   const [premiumNotice, setPremiumNotice] = useState<string | null>(null)
 
@@ -569,6 +571,14 @@ export default function ProPackagesPage(): JSX.Element {
       (premiumStatus?.is_premium ||
         premiumCheckoutBlocked ||
         premiumStatus?.cancel_at_period_end),
+  )
+
+  const canCancelPremiumSubscription = Boolean(
+    premiumDetails?.stripe_subscription_id?.startsWith('sub_') &&
+      ['trialing', 'active', 'past_due'].includes(
+        premiumStatus?.stripe_status ?? '',
+      ) &&
+      !premiumStatus?.cancel_at_period_end,
   )
 
   const premiumPrice = premiumPlan
@@ -1198,6 +1208,31 @@ export default function ProPackagesPage(): JSX.Element {
     }
   }
 
+  async function handleCancelPremiumSubscription() {
+    setPremiumError(null)
+    setPremiumNotice(null)
+    setOpeningPremiumCancelPortal(true)
+
+    try {
+      const response = await callAuthenticatedEdgeFunction(
+        'create-premium-portal',
+        { flow: 'cancel' },
+      )
+
+      if (!response.url) {
+        throw new Error(t('premium.portalUrlMissing'))
+      }
+
+      window.location.href = response.url
+    } catch (portalError: any) {
+      setPremiumError(
+        portalError?.message ??
+          t('premium.cancelPortalFailed'),
+      )
+      setOpeningPremiumCancelPortal(false)
+    }
+  }
+
   async function handleBuy(code: string) {
     setError(null)
     setBuyingCode(code)
@@ -1404,16 +1439,39 @@ export default function ProPackagesPage(): JSX.Element {
             </div>
 
             {showManageSubscription ? (
-              <button
-                type="button"
-                onClick={() => void handleManageSubscription()}
-                disabled={openingPremiumPortal || loadingPremium}
-                className="mt-6 w-full rounded-xl bg-black px-4 py-3 text-sm font-extrabold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {openingPremiumPortal
-                  ? t('premium.openingPortal')
-                  : t('premium.manage')}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => void handleManageSubscription()}
+                  disabled={
+                    openingPremiumPortal ||
+                    openingPremiumCancelPortal ||
+                    loadingPremium
+                  }
+                  className="mt-6 w-full rounded-xl bg-black px-4 py-3 text-sm font-extrabold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {openingPremiumPortal
+                    ? t('premium.openingPortal')
+                    : t('premium.manage')}
+                </button>
+
+                {canCancelPremiumSubscription ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleCancelPremiumSubscription()}
+                    disabled={
+                      openingPremiumPortal ||
+                      openingPremiumCancelPortal ||
+                      loadingPremium
+                    }
+                    className="mt-3 w-full rounded-xl border border-red-300 bg-white px-4 py-3 text-sm font-extrabold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {openingPremiumCancelPortal
+                      ? t('premium.openingCancel')
+                      : t('premium.cancelSubscription')}
+                  </button>
+                ) : null}
+              </>
             ) : (
               <button
                 type="button"
@@ -1437,9 +1495,11 @@ export default function ProPackagesPage(): JSX.Element {
             )}
 
             <div className="mt-3 text-xs text-gray-500">
-              {showManageSubscription
-                ? t('premium.manageHelp')
-                : t('premium.checkoutHelp')}
+              {canCancelPremiumSubscription
+                ? t('premium.cancelHelp')
+                : showManageSubscription
+                  ? t('premium.manageHelp')
+                  : t('premium.checkoutHelp')}
             </div>
           </div>
         </div>

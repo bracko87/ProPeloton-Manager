@@ -51,7 +51,11 @@
     "statusPastDue": "Vorhergehende Fälligkeit",
     "statusUnpaid": "Nicht bezahlt",
     "statusIncomplete": "Unvollständig",
-    "statusPaused": "Anhalten"
+    "statusPaused": "Anhalten",
+    "cancelSubscription": "Premium kündigen",
+    "openingCancel": "Kündigung wird geöffnet…",
+    "cancelHelp": "Kündigung zum Ende des aktuellen bezahlten Zeitraums. Premium bleibt bis dahin aktiv.",
+    "cancelPortalFailed": "Die Premium-Kündigungsseite konnte nicht geöffnet werden."
   },
   "advantages": {
     "a1": "50 Coins nach jedem erfolgreichen Monat Premium Zahlung.",

@@ -51,7 +51,11 @@
     "statusPastDue": "Past due",
     "statusUnpaid": "Unpaid",
     "statusIncomplete": "Incomplete",
-    "statusPaused": "Paused"
+    "statusPaused": "Paused",
+    "cancelSubscription": "Cancel Premium",
+    "openingCancel": "Opening cancellation…",
+    "cancelHelp": "Cancel at the end of your current paid period. Premium stays active until then.",
+    "cancelPortalFailed": "Could not open the Premium cancellation page."
   },
   "advantages": {
     "a1": "50 coins after every successful monthly Premium payment.",

@@ -51,7 +51,11 @@
     "statusPastDue": "Dospelo plaćanje",
     "statusUnpaid": "Neplaćeno",
     "statusIncomplete": "Nedovršeno",
-    "statusPaused": "Pauzirano"
+    "statusPaused": "Pauzirano",
+    "cancelSubscription": "Otkaži Premium",
+    "openingCancel": "Otvaranje otkazivanja…",
+    "cancelHelp": "Otkazivanje na kraju trenutačno plaćenog razdoblja. Premium ostaje aktivan do tada.",
+    "cancelPortalFailed": "Nije moguće otvoriti stranicu za otkazivanje Premiuma."
   },
   "advantages": {
     "a1": "50 Coins nakon svake uspešne mjesečne Premium uplate.",

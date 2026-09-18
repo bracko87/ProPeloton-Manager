@@ -51,7 +51,11 @@
     "statusPastDue": "Dospelo plaćanje",
     "statusUnpaid": "Neplaćeno",
     "statusIncomplete": "Nedovršeno",
-    "statusPaused": "Pauzirano"
+    "statusPaused": "Pauzirano",
+    "cancelSubscription": "Otkaži Premium",
+    "openingCancel": "Otvaranje otkazivanja…",
+    "cancelHelp": "Otkazivanje važi od kraja trenutnog plaćenog perioda. Premium ostaje aktivan do tada.",
+    "cancelPortalFailed": "Nije moguće otvoriti stranicu za otkazivanje Premiuma."
   },
   "advantages": {
     "a1": "50 novčića nakon svake uspešne mesečne Premium uplate.",
