@@ -1,0 +1,23 @@
+name: Verify replay audit panel removal
+
+on:
+  push:
+    branches:
+      - fix/remove-replay-audit-panels
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/remove-replay-audit-panels
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
