@@ -14881,28 +14881,49 @@ export function resolveRoadPhase4Finish(
   // This prevents the old binary "small group survives / everybody else
   // drops at the summit" pattern while retaining deterministic selection.
   const lateTerrainHoldWindow = deterministicRound(
-    clamp(
-      8.2 -
-        lateTerrain.selectionSeverity * 2 -
-        lateGradientPressure * 1.8 -
-        lateTerrainDistancePressure * 1.2 -
-        lateRacePressure * 1.2 -
-        lateClimbSelectionHardness * 0.8,
-      3.2,
-      8.2,
-    ),
+    input.stage.terrainType === 'hilly'
+      ? clamp(
+          10.5 -
+            lateTerrain.selectionSeverity * 1.2 -
+            lateGradientPressure * 1.0 -
+            lateTerrainDistancePressure * 0.8 -
+            lateRacePressure * 0.7 -
+            lateClimbSelectionHardness * 0.4,
+          5.5,
+          10.5,
+        )
+      : clamp(
+          8.2 -
+            lateTerrain.selectionSeverity * 2 -
+            lateGradientPressure * 1.8 -
+            lateTerrainDistancePressure * 1.2 -
+            lateRacePressure * 1.2 -
+            lateClimbSelectionHardness * 0.8,
+          3.2,
+          8.2,
+        ),
     6,
   )
   const lateTerrainMinimumEnergy = deterministicRound(
-    clamp(
-      4.5 +
-        lateTerrain.selectionSeverity * 4 +
-        lateGradientPressure * 3 +
-        lateTerrainDistancePressure * 2.5 +
-        lateRacePressure * 2,
-      4.5,
-      12,
-    ),
+    input.stage.terrainType === 'hilly'
+      ? clamp(
+          3 +
+            lateTerrain.selectionSeverity * 2.5 +
+            lateGradientPressure * 1.5 +
+            lateTerrainDistancePressure * 1.5 +
+            lateRacePressure,
+          3,
+          8.5,
+        )
+      : clamp(
+          4.5 +
+            lateTerrain.selectionSeverity * 4 +
+            lateGradientPressure * 3 +
+            lateTerrainDistancePressure * 2.5 +
+            lateRacePressure * 2,
+          4.5,
+          12,
+        ),
     6,
   )
   const lateTerrainPelotonCandidateRows = roadCommandResolution.riders
@@ -15511,13 +15532,20 @@ export function resolveRoadPhase4Finish(
       // closes the measured gap. Descent receives the clearest easing effect;
       // flat recovery remains more draft-efficient and therefore harder for a
       // solo rider to close.
+      const hillyRecoveryCorridor = input.stage.terrainType === 'hilly'
       const postClimbPelotonCooperationMultiplier =
         segment.terrainType === 'descent' ||
         segment.terrainType === 'technical_descent'
-          ? 0.88
+          ? hillyRecoveryCorridor
+            ? 0.82
+            : 0.88
           : segment.terrainType === 'false_flat'
-            ? 0.9
-            : 0.92
+            ? hillyRecoveryCorridor
+              ? 0.86
+              : 0.9
+            : hillyRecoveryCorridor
+              ? 0.88
+              : 0.92
       const pelotonWorkIntensity = isPostClimbRecovery
         ? 0
         : phaseNumber === 4
@@ -15544,7 +15572,9 @@ export function resolveRoadPhase4Finish(
         1,
         segment.terrainType === 'climb' || segment.terrainType === 'steep_climb'
           ? 0.3
-          : 0.9,
+          : isPostClimbRecovery && hillyRecoveryCorridor
+            ? 1
+            : 0.9,
         windMultiplier,
       )
       const physicalStep = calculateUniversalRoadPhysicalGapStep(
@@ -15655,7 +15685,7 @@ export function resolveRoadPhase4Finish(
         const lowClimberPressure =
           Math.max(0, 60 - clamp(rider.climbing, 1, 100)) *
           effort.hardness *
-          0.24
+          (input.stage.terrainType === 'hilly' ? 0.16 : 0.24)
         const strongClimberSupport =
           Math.max(0, clamp(rider.climbing, 1, 100) - 60) *
           effort.hardness *
@@ -15690,19 +15720,26 @@ export function resolveRoadPhase4Finish(
     const holdScoresAscending = candidateRows
       .map((row) => row.holdScore)
       .sort((left, right) => left - right)
-    const paceQuantile = clamp(0.48 + effort.hardness * 0.28, 0.48, 0.76)
+    const hillyAttrition = input.stage.terrainType === 'hilly'
+    const paceQuantile = hillyAttrition
+      ? clamp(0.46 + effort.hardness * 0.18, 0.46, 0.66)
+      : clamp(0.48 + effort.hardness * 0.28, 0.48, 0.76)
     const referenceIndex = Math.min(
       holdScoresAscending.length - 1,
       Math.floor((holdScoresAscending.length - 1) * paceQuantile),
     )
     const referenceHoldScore = holdScoresAscending[referenceIndex] ?? 0
-    const holdWindow = clamp(10.5 - effort.hardness * 7, 3.5, 10.5)
+    const holdWindow = hillyAttrition
+      ? clamp(12 - effort.hardness * 5, 6, 12)
+      : clamp(10.5 - effort.hardness * 7, 3.5, 10.5)
     const requiredHoldScore = deterministicRound(
       referenceHoldScore - holdWindow,
       6,
     )
     const minimumEnergyToHold = deterministicRound(
-      clamp(3.5 + effort.hardness * 10.5, 3.5, 14),
+      hillyAttrition
+        ? clamp(2.5 + effort.hardness * 7, 2.5, 9.5)
+        : clamp(3.5 + effort.hardness * 10.5, 3.5, 14),
       6,
     )
 
@@ -19446,7 +19483,7 @@ function phase5GapCapSeconds(
 
 export const PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS = 0.75 as const
 export const PHASE5_GROUP_MERGE_TOLERANCE_SECONDS = 5 as const
-export const PHASE5_FINAL_PHYSICAL_SAME_GROUP_TOLERANCE_SECONDS = 0.5 as const
+export const PHASE5_FINAL_PHYSICAL_SAME_GROUP_TOLERANCE_SECONDS = 5 as const
 const PHASE5_BREAKAWAY_DISPLAY_PREFIX = 'B' as const
 
 export interface UniversalPhase5RoadGroupCandidate {
@@ -19556,12 +19593,18 @@ export function mergeAdjacentPhase5RoadGroups(
     )
 
   const merged: UniversalPhase5RoadGroupCandidate[] = []
+  const mergedTailGapSeconds: number[] = []
 
   for (const candidate of ordered) {
-    const previous = merged[merged.length - 1]
+    const previousIndex = merged.length - 1
+    const previous = merged[previousIndex]
+    const previousTailGapSeconds =
+      previousIndex >= 0
+        ? mergedTailGapSeconds[previousIndex] ?? previous?.gapSeconds ?? 0
+        : 0
     if (
       previous &&
-      candidate.gapSeconds - previous.gapSeconds <= toleranceSeconds
+      candidate.gapSeconds - previousTailGapSeconds <= toleranceSeconds
     ) {
       const combinedScores = {
         ...previous.riderPerformanceScores,
@@ -19573,7 +19616,7 @@ export function mergeAdjacentPhase5RoadGroups(
         comparePhase5Riders(left, right, combinedScores, riderById),
       )
 
-      merged[merged.length - 1] = {
+      merged[previousIndex] = {
         sourceOrder: Math.min(previous.sourceOrder, candidate.sourceOrder),
         preferredGroupCode:
           previous.preferredGroupCode === 'breakaway' ||
@@ -19581,10 +19624,17 @@ export function mergeAdjacentPhase5RoadGroups(
             ? 'breakaway'
             : previous.preferredGroupCode,
         riderIds: combinedRiders,
+        // The front rider's gap remains the official group gap. The separate
+        // tail gap below preserves transitive physical adjacency so a stretched
+        // but continuous chase group is not fragmented into one-rider C groups.
         gapSeconds: previous.gapSeconds,
         riderPerformanceScores: combinedScores,
         formationReason: 'chase_reformation',
       }
+      mergedTailGapSeconds[previousIndex] = Math.max(
+        previousTailGapSeconds,
+        candidate.gapSeconds,
+      )
       continue
     }
 
@@ -19599,6 +19649,7 @@ export function mergeAdjacentPhase5RoadGroups(
         ),
       ),
     })
+    mergedTailGapSeconds.push(candidate.gapSeconds)
   }
 
   return merged
