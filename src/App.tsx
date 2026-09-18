@@ -60,6 +60,7 @@ import TeamRankingPage from './pages/dashboard/TeamRanking'
 import TeamProfilePage from './pages/dashboard/TeamProfilePage'
 import ClubIdentityPage from './pages/dashboard/ClubIdentityPage'
 import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
+import AdminAnalyticsPage from './pages/dashboard/AdminAnalyticsPage'
 import TrainingPage from './pages/dashboard/Training'
 import CurrentTrainingCampPage from './pages/dashboard/training/CurrentTrainingCampPage'
 import EquipmentPage from './pages/dashboard/Equipment'
@@ -93,6 +94,8 @@ import {
   AuthProvider,
   useAuth,
 } from './context/AuthProvider'
+import SiteAnalyticsTracker from './components/analytics/SiteAnalyticsTracker'
+import { useAppAdmin } from './hooks/useAppAdmin'
 import {
   validateTeamRankingConfig,
 } from './constants/teamRanking.validation'
@@ -206,6 +209,34 @@ function RequireAuth({
     return (
       <Navigate
         to="/login"
+        replace
+      />
+    )
+  }
+
+  return children
+}
+
+/**
+ * RequireAppAdmin
+ * Client-side route guard backed by the server-side is_app_admin_v1() RPC.
+ * The analytics RPC also verifies admin status independently.
+ */
+function RequireAppAdmin({
+  children,
+}: GuardProps): JSX.Element | null {
+  const { isAdmin, loading } = useAppAdmin()
+
+  if (loading) {
+    return (
+      <LoadingScreen label="Checking administrator access..." />
+    )
+  }
+
+  if (!isAdmin) {
+    return (
+      <Navigate
+        to="/dashboard/overview"
         replace
       />
     )
@@ -336,6 +367,7 @@ export default function App(): JSX.Element {
   return (
     <AuthProvider>
       <HashRouter>
+        <SiteAnalyticsTracker />
         <Routes>
           {/* Public / account routes */}
           <Route
@@ -498,6 +530,15 @@ export default function App(): JSX.Element {
             <Route
               path="season-reset-preview"
               element={<SeasonResetPreviewPage />}
+            />
+
+            <Route
+              path="admin/analytics"
+              element={
+                <RequireAppAdmin>
+                  <AdminAnalyticsPage />
+                </RequireAppAdmin>
+              }
             />
 
             <Route
