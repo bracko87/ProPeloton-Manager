@@ -55,7 +55,15 @@
     "cancelSubscription": "Premium kündigen",
     "openingCancel": "Kündigung wird geöffnet…",
     "cancelHelp": "Kündigung zum Ende des aktuellen bezahlten Zeitraums. Premium bleibt bis dahin aktiv.",
-    "cancelPortalFailed": "Die Premium-Kündigungsseite konnte nicht geöffnet werden."
+    "cancelPortalFailed": "Die Premium-Kündigungsseite konnte nicht geöffnet werden.",
+    "accessOverride": "Premium-Zugang",
+    "accessOverrideActive": "Premium-Zugang ist aktiv.",
+    "accessOverrideUntil": "Dein kostenloser/Test-Premium-Zugang ist bis {{date}} verfügbar.",
+    "noActiveRecurringSubscription": "Für dieses Konto gibt es kein aktives wiederkehrendes Stripe-Abonnement.",
+    "manualAccessHelp": "Dein Premium-Zugang stammt derzeit aus einer kostenlosen/Test-Freischaltung. Es gibt kein wiederkehrendes Abonnement zum Kündigen.",
+    "canceledBillingHelp": "Das vorherige Stripe-Abonnement ist gekündigt. Du kannst weiterhin Rechnungsdaten öffnen oder ein neues kostenpflichtiges Abonnement starten.",
+    "statusCanceled": "Gekündigt",
+    "startPaidSubscription": "Kostenpflichtiges Premium starten"
   },
   "advantages": {
     "a1": "50 Coins nach jedem erfolgreichen Monat Premium Zahlung.",
@@ -162,7 +170,7 @@
     "title": "Rechnungs- und Kaufgeschichte",
     "description": "Premium Rechnungen, Münzpaketkäufe und Geldbörsenaktivitäten werden getrennt gehalten.",
     "premiumInvoices": "Premium Rechnungen",
-    "premiumInvoicesSubtitle": "Erfolgreich Premium Zahlungen und monatliche Münzzuschüsse",
+    "premiumInvoicesSubtitle": "Stripe-Premium-Rechnungen, Erstattungen und monatliche Coin-Gutschriften",
     "noPremiumInvoices": "Nein Premium Rechnungen gefunden.",
     "coinPurchases": "Kauf von Coins",
     "coinPurchasesSubtitle": "Einmalige Anschaffung von optionalen Münzpaketen",
@@ -193,7 +201,11 @@
     "billingSubscriptionCycle": "Abonnementzyklus",
     "billingSubscriptionCreate": "Abonnement erstellt",
     "billingSubscriptionUpdate": "Abonnement aktualisiert",
-    "billingManual": "Manuelle Rechnung"
+    "billingManual": "Manuelle Rechnung",
+    "status": "Status",
+    "refunded": "Erstattet",
+    "invoicePaid": "Bezahlt",
+    "viewInvoice": "Stripe-Rechnung anzeigen"
   },
   "transactions": {
     "purchase": "Kauf von Münzpaketen: {{code}}",
