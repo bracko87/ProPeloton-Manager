@@ -1,0 +1,23 @@
+name: Verify private admin analytics
+
+on:
+  push:
+    branches:
+      - feature/private-admin-analytics
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/private-admin-analytics
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
