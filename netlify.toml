@@ -6,6 +6,10 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[[edge_functions]]
+  path = "/api/analytics-geo"
+  function = "analytics-geo"
+
 [[headers]]
   for = "/ads.txt"
   [headers.values]
