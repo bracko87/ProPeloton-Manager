@@ -470,7 +470,13 @@ function scenarioGapEnvelopeV2(
 
   for (let index = 0; index < directives.length; index += 1) {
     const directive = directives[index]
-    const formationStart = formationStartProgress(directive)
+    const configuredFormationStart = formationStartProgress(directive)
+    // The first successful road move may form before the template's preferred
+    // formation window. Once the physical engine has created a real positive
+    // gap, let the first story envelope guide it from race start instead of
+    // waiting until the preferred window and allowing an immediate re-catch.
+    // Later generations still respect their configured formation windows.
+    const formationStart = index === 0 ? 0 : configuredFormationStart
     if (progress < formationStart) break
     if (!includeClosed && generationIsClosed(input, directive.generation)) continue
     const endProgress = directiveEndProgress(input, directives, index)
@@ -597,12 +603,43 @@ export function applyRoadScenarioGapGuidanceV1(
   const distanceKm = Math.max(1, finite(input.stage.distanceKm, 1))
   const progress = clamp(finite(kmFromStart, 0) / distanceKm, 0, 1)
 
-  // A physically completed catch stays completed. V2.1 records whether it was
-  // premature against the selected story, then closes that template generation.
-  // It still never resurrects a caught physical break.
+  // During the first formation window a successful physical move should not be
+  // erased by one aggressive peloton step before it has had any chance to
+  // establish itself. Protect only the sub-catch formation state, and only when
+  // user chase pressure is not overwhelming. After formation is complete, a
+  // physical catch remains final and the generation is closed as before.
   if (current <= 0.5) {
     const caughtEnvelope = scenarioGapEnvelopeV2(input, progress, true)
     if (caughtEnvelope) {
+      const userChase = commandChasePressure(input, kmFromStart)
+      const earlyFormation =
+        progress < caughtEnvelope.formationProgress - 0.000001
+      if (earlyFormation && userChase < 0.8) {
+        const protectionFactor = clamp((0.8 - userChase) / 0.8, 0, 1)
+        const protectedGap = round(
+          clamp(
+            1 + protectionFactor * 3,
+            1,
+            Math.max(1, Math.min(4, caughtEnvelope.lower)),
+          ),
+          6,
+        )
+        recordRuntimeApplication(input, 'gap_guidance', {
+          adjusted: true,
+          kmFromStart,
+          reason: 'protect_early_formation_from_premature_catch',
+        })
+        recordGenerationRuntime(
+          input,
+          caughtEnvelope,
+          current,
+          protectedGap,
+          kmFromStart,
+          'protect_early_formation_from_premature_catch',
+        )
+        return protectedGap
+      }
+
       recordGenerationRuntime(
         input,
         caughtEnvelope,
