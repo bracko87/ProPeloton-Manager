@@ -1,0 +1,23 @@
+name: Verify replay info banner removal
+
+on:
+  push:
+    branches:
+      - fix/remove-replay-info-banners
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/remove-replay-info-banners
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
