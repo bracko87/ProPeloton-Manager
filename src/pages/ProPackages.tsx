@@ -576,36 +576,62 @@ export default function ProPackagesPage(): JSX.Element {
     useState<CoinTransactionUi[]>([])
   const [coinHistoryPage, setCoinHistoryPage] = useState(1)
 
-  const premiumCheckoutBlocked = useMemo(() => {
-    const status = premiumStatus?.stripe_status ?? 'free'
+  const billingSubscription = premiumBilling?.subscription ?? null
+  const billingStatus =
+    billingSubscription?.status ??
+    premiumDetails?.stripe_status ??
+    premiumStatus?.stripe_status ??
+    'free'
+  const billingCancelAtPeriodEnd =
+    billingSubscription?.cancel_at_period_end ??
+    premiumDetails?.cancel_at_period_end ??
+    false
+  const billingPeriodEnd =
+    billingSubscription?.current_period_end ??
+    premiumDetails?.current_period_end ??
+    premiumStatus?.current_period_end ??
+    null
 
-    return [
-      'trialing',
-      'active',
-      'past_due',
-      'unpaid',
-      'incomplete',
-      'paused',
-    ].includes(status)
-  }, [premiumStatus?.stripe_status])
+  const hasActiveRecurringSubscription = [
+    'trialing',
+    'active',
+    'past_due',
+  ].includes(billingStatus)
 
-  const hasBillingProfile = Boolean(
-    premiumDetails?.stripe_customer_id?.startsWith('cus_'),
+  const manualAccessFlag =
+    premiumBilling?.manual_access ??
+    premiumDetails?.metadata?.manual_test_access === true ||
+    String(
+      premiumDetails?.metadata?.manual_test_access ?? '',
+    ).toLowerCase() === 'true'
+
+  const hasManualPremiumAccess = Boolean(
+    premiumStatus?.is_premium &&
+      manualAccessFlag &&
+      !hasActiveRecurringSubscription,
   )
 
-  const showManageSubscription = Boolean(
-    hasBillingProfile &&
-      (premiumStatus?.is_premium ||
-        premiumCheckoutBlocked ||
-        premiumStatus?.cancel_at_period_end),
-  )
+  const premiumCheckoutBlocked = [
+    'trialing',
+    'active',
+    'past_due',
+    'unpaid',
+    'incomplete',
+    'paused',
+  ].includes(billingStatus)
+
+  const hasBillingProfile =
+    premiumBilling?.has_billing_profile ??
+    Boolean(
+      premiumDetails?.stripe_customer_id?.startsWith('cus_'),
+    )
+
+  const showManageSubscription = hasBillingProfile
 
   const canCancelPremiumSubscription = Boolean(
-    premiumDetails?.stripe_subscription_id?.startsWith('sub_') &&
-      ['trialing', 'active', 'past_due'].includes(
-        premiumStatus?.stripe_status ?? '',
-      ) &&
-      !premiumStatus?.cancel_at_period_end,
+    billingSubscription?.id?.startsWith('sub_') &&
+      hasActiveRecurringSubscription &&
+      !billingCancelAtPeriodEnd,
   )
 
   const premiumPrice = premiumPlan
@@ -618,34 +644,65 @@ export default function ProPackagesPage(): JSX.Element {
     50
 
   const statusLabel = useMemo(() => {
-    if (premiumStatus?.is_premium && premiumStatus.cancel_at_period_end) {
+    if (hasManualPremiumAccess) {
+      return t('premium.accessOverride')
+    }
+
+    if (
+      hasActiveRecurringSubscription &&
+      billingCancelAtPeriodEnd
+    ) {
       return t('premium.activeCancellation')
     }
 
-    if (premiumStatus?.is_premium) return t('premium.active')
-
-    const stripeStatus = premiumStatus?.stripe_status
-    if (!stripeStatus || stripeStatus === 'free') return t('premium.free')
+    if (
+      premiumStatus?.is_premium &&
+      hasActiveRecurringSubscription
+    ) {
+      return t('premium.active')
+    }
 
     const statusKeys: Record<string, string> = {
+      canceled: 'premium.statusCanceled',
       trialing: 'premium.statusTrialing',
       past_due: 'premium.statusPastDue',
       unpaid: 'premium.statusUnpaid',
       incomplete: 'premium.statusIncomplete',
+      incomplete_expired: 'premium.statusCanceled',
       paused: 'premium.statusPaused',
     }
-    return statusKeys[stripeStatus] ? t(statusKeys[stripeStatus]) : titleFromSnake(stripeStatus)
-  }, [premiumStatus])
+
+    if (!billingStatus || billingStatus === 'free') {
+      return t('premium.free')
+    }
+
+    return statusKeys[billingStatus]
+      ? t(statusKeys[billingStatus])
+      : titleFromSnake(billingStatus)
+  }, [
+    billingCancelAtPeriodEnd,
+    billingStatus,
+    hasActiveRecurringSubscription,
+    hasManualPremiumAccess,
+    premiumStatus?.is_premium,
+    t,
+  ])
 
   const nextRenewalLabel = useMemo(() => {
-    if (!premiumStatus?.is_premium) return '—'
-    if (premiumStatus.cancel_at_period_end) return t('premium.noRenewal')
+    if (
+      !hasActiveRecurringSubscription ||
+      billingCancelAtPeriodEnd
+    ) {
+      return t('premium.noRenewal')
+    }
 
-    return formatDate(
-      premiumDetails?.current_period_end ||
-        premiumStatus.current_period_end,
-    )
-  }, [premiumDetails?.current_period_end, premiumStatus])
+    return formatDate(billingPeriodEnd)
+  }, [
+    billingCancelAtPeriodEnd,
+    billingPeriodEnd,
+    hasActiveRecurringSubscription,
+    t,
+  ])
 
   const developingTeamActivationCost = normalizeCoinCost(
     developingTeamService?.activation_coin_cost,
