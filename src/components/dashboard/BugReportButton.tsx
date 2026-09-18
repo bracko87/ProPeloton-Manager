@@ -28,7 +28,33 @@ function createReportId(): string {
     return crypto.randomUUID()
   }
 
-  return `bug-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+  // bug_reports.id is a Postgres uuid, so every fallback must also produce
+  // a syntactically valid UUID. Some browsers/webviews do not expose
+  // crypto.randomUUID(), which previously produced a "bug-..." string and
+  // caused inserts to fail with "invalid input syntax for type uuid".
+  const bytes = new Uint8Array(16)
+
+  if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
+    crypto.getRandomValues(bytes)
+  } else {
+    for (let index = 0; index < bytes.length; index += 1) {
+      bytes[index] = Math.floor(Math.random() * 256)
+    }
+  }
+
+  // RFC 4122 version 4 / variant 1 bits.
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0'))
+
+  return [
+    hex.slice(0, 4).join(''),
+    hex.slice(4, 6).join(''),
+    hex.slice(6, 8).join(''),
+    hex.slice(8, 10).join(''),
+    hex.slice(10, 16).join(''),
+  ].join('-')
 }
 
 function sanitizeFileName(fileName: string): string {
