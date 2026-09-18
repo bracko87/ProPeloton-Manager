@@ -51,7 +51,11 @@
     "statusPastDue": "Vencidas",
     "statusUnpaid": "No pagado",
     "statusIncomplete": "Incompleta",
-    "statusPaused": "Pausa"
+    "statusPaused": "Pausa",
+    "cancelSubscription": "Cancelar Premium",
+    "openingCancel": "Abriendo cancelación…",
+    "cancelHelp": "Cancela al final del período pagado actual. Premium seguirá activo hasta entonces.",
+    "cancelPortalFailed": "No se pudo abrir la página de cancelación de Premium."
   },
   "advantages": {
     "a1": "50 Coins después de cada pago mensual Premium.",
