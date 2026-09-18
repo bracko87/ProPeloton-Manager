@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Bug,
   Star,
+  Mail,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -126,6 +127,7 @@ export default function Sidebar({
   const { isAdmin } = useAppAdmin()
   const [unreadBugReports, setUnreadBugReports] = useState(0)
   const [pendingPlayerReviews, setPendingPlayerReviews] = useState(0)
+  const [unreadContactMessages, setUnreadContactMessages] = useState(0)
 
   useEffect(() => {
     let alive = true
@@ -254,6 +256,74 @@ export default function Sidebar({
       window.removeEventListener('focus', handleRefresh)
       window.removeEventListener(
         'admin-player-review-count-refresh',
+        handleRefresh,
+      )
+      void supabase.removeChannel(channel)
+    }
+  }, [isAdmin])
+
+  useEffect(() => {
+    let alive = true
+
+    if (!isAdmin) {
+      setUnreadContactMessages(0)
+      return () => {
+        alive = false
+      }
+    }
+
+    const refreshUnreadContactMessages = async (): Promise<void> => {
+      const { data, error } = await supabase.rpc(
+        'get_admin_contact_message_unread_count_v1',
+      )
+
+      if (!alive) return
+
+      if (error) {
+        console.warn('Could not load unread contact message count:', error)
+        return
+      }
+
+      setUnreadContactMessages(Number(data ?? 0))
+    }
+
+    void refreshUnreadContactMessages()
+
+    const channel = supabase
+      .channel('admin-contact-message-sidebar')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'contact_messages',
+        },
+        () => {
+          void refreshUnreadContactMessages()
+        },
+      )
+      .subscribe()
+
+    const intervalId = window.setInterval(() => {
+      void refreshUnreadContactMessages()
+    }, 45_000)
+
+    const handleRefresh = (): void => {
+      void refreshUnreadContactMessages()
+    }
+
+    window.addEventListener('focus', handleRefresh)
+    window.addEventListener(
+      'admin-contact-message-count-refresh',
+      handleRefresh,
+    )
+
+    return () => {
+      alive = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', handleRefresh)
+      window.removeEventListener(
+        'admin-contact-message-count-refresh',
         handleRefresh,
       )
       void supabase.removeChannel(channel)
@@ -454,6 +524,50 @@ export default function Sidebar({
 
                     <div className="mt-1 text-xs leading-tight text-white/55">
                       Approve reviews for the homepage
+                    </div>
+                  </div>
+                )}
+              </NavLink>
+
+              <NavLink
+                to="/dashboard/admin/contact-messages"
+                className={`${linkClass(
+                  location.pathname === '/dashboard/admin/contact-messages' ||
+                    location.pathname.startsWith(
+                      '/dashboard/admin/contact-messages/',
+                    ),
+                )} relative`}
+              >
+                <div className="relative mt-0.5 flex-shrink-0">
+                  <Mail size={18} />
+
+                  {collapsed && unreadContactMessages > 0 ? (
+                    <span className="absolute -right-2 -top-2 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold leading-[18px] text-white shadow-sm">
+                      {unreadContactMessages > 99
+                        ? '99+'
+                        : unreadContactMessages}
+                    </span>
+                  ) : null}
+                </div>
+
+                {!collapsed && (
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-base font-semibold leading-tight">
+                        Contact Messages
+                      </div>
+
+                      {unreadContactMessages > 0 ? (
+                        <span className="inline-flex min-w-[22px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-extrabold text-white shadow-sm">
+                          {unreadContactMessages > 99
+                            ? '99+'
+                            : unreadContactMessages}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-1 text-xs leading-tight text-white/55">
+                      Contact Us submissions
                     </div>
                   </div>
                 )}
