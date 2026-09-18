@@ -55,7 +55,15 @@
     "cancelSubscription": "Otkaži Premium",
     "openingCancel": "Otvaranje otkazivanja…",
     "cancelHelp": "Otkazivanje na kraju trenutačno plaćenog razdoblja. Premium ostaje aktivan do tada.",
-    "cancelPortalFailed": "Nije moguće otvoriti stranicu za otkazivanje Premiuma."
+    "cancelPortalFailed": "Nije moguće otvoriti stranicu za otkazivanje Premiuma.",
+    "accessOverride": "Premium pristup",
+    "accessOverrideActive": "Premium pristup je aktivan.",
+    "accessOverrideUntil": "Vaš besplatni/testni Premium pristup dostupan je do {{date}}.",
+    "noActiveRecurringSubscription": "Na ovom računu nema aktivne ponavljajuće Stripe pretplate.",
+    "manualAccessHelp": "Vaš Premium pristup trenutačno dolazi iz besplatne/testne pogodnosti. Nema ponavljajuće pretplate za otkazivanje.",
+    "canceledBillingHelp": "Prethodna Stripe pretplata je otkazana. I dalje možete otvoriti podatke naplate ili pokrenuti novu plaćenu pretplatu.",
+    "statusCanceled": "Otkazano",
+    "startPaidSubscription": "Pokreni plaćenu Premium pretplatu"
   },
   "advantages": {
     "a1": "50 Coins nakon svake uspešne mjesečne Premium uplate.",
@@ -162,7 +170,7 @@
     "title": "Povijest naplate i kupovina",
     "description": "Premium fakture, kupovine paketa Coins i aktivnosti novčanika vode se odvojeno.",
     "premiumInvoices": "Premium fakture",
-    "premiumInvoicesSubtitle": "Uspješne Premium uplate i mjesečne dodjele Coins",
+    "premiumInvoicesSubtitle": "Stripe Premium računi, refundacije i mjesečne dodjele novčića",
     "noPremiumInvoices": "Nema Premium faktura.",
     "coinPurchases": "Kupovine paketa Coins",
     "coinPurchasesSubtitle": "Jednokratne kupovine opcionih paketa Coins",
@@ -193,7 +201,11 @@
     "billingSubscriptionCycle": "Ciklus pretplate",
     "billingSubscriptionCreate": "Kreirana pretplata",
     "billingSubscriptionUpdate": "Ažurirana pretplata",
-    "billingManual": "Ručna faktura"
+    "billingManual": "Ručna faktura",
+    "status": "Status",
+    "refunded": "Refundirano",
+    "invoicePaid": "Plaćeno",
+    "viewInvoice": "Prikaži Stripe račun"
   },
   "transactions": {
     "purchase": "Kupovina paketa Coins: {{code}}",
