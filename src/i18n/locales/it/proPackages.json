@@ -55,7 +55,15 @@
     "cancelSubscription": "Annulla Premium",
     "openingCancel": "Apertura annullamento…",
     "cancelHelp": "Annulla alla fine del periodo pagato corrente. Premium resta attivo fino ad allora.",
-    "cancelPortalFailed": "Impossibile aprire la pagina di annullamento Premium."
+    "cancelPortalFailed": "Impossibile aprire la pagina di annullamento Premium.",
+    "accessOverride": "Accesso Premium",
+    "accessOverrideActive": "L’accesso Premium è attivo.",
+    "accessOverrideUntil": "Il tuo accesso Premium gratuito/di test è disponibile fino al {{date}}.",
+    "noActiveRecurringSubscription": "Non esiste un abbonamento Stripe ricorrente attivo su questo account.",
+    "manualAccessHelp": "Il tuo accesso Premium è attualmente fornito da un accesso gratuito/di test. Non c’è un abbonamento ricorrente da annullare.",
+    "canceledBillingHelp": "Il precedente abbonamento Stripe è stato annullato. Puoi ancora aprire i dati di fatturazione o avviare un nuovo abbonamento a pagamento.",
+    "statusCanceled": "Annullato",
+    "startPaidSubscription": "Avvia abbonamento Premium a pagamento"
   },
   "advantages": {
     "a1": "50 Coins dopo ogni pagamento mensile Premium di successo.",
@@ -162,7 +170,7 @@
     "title": "Storia della fatturazione e dell'acquisto",
     "description": "Le fatture Premium, gli acquisti di pacchetti di Coins e l'attività del portafoglio sono tenuti separati.",
     "premiumInvoices": "Fatture Premium",
-    "premiumInvoicesSubtitle": "Pagamenti Premium di successo e sovvenzioni mensili per Coins",
+    "premiumInvoicesSubtitle": "Fatture Premium Stripe, rimborsi e accrediti mensili di monete",
     "noPremiumInvoices": "Nessuna fattura Premium trovata.",
     "coinPurchases": "Acquisti di pacchetti di Coins",
     "coinPurchasesSubtitle": "Acquisti una tantum di pacchetti di Coins opzionali",
@@ -193,7 +201,11 @@
     "billingSubscriptionCycle": "Ciclo di abbonamento",
     "billingSubscriptionCreate": "Abbonamento creato",
     "billingSubscriptionUpdate": "Aggiornato abbonamento",
-    "billingManual": "Fattura manuale"
+    "billingManual": "Fattura manuale",
+    "status": "Stato",
+    "refunded": "Rimborsato",
+    "invoicePaid": "Pagato",
+    "viewInvoice": "Visualizza fattura Stripe"
   },
   "transactions": {
     "purchase": "Acquisto pacchetto Coins: {{code}}",

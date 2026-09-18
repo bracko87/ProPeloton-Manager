@@ -55,7 +55,15 @@
     "cancelSubscription": "Otkaži Premium",
     "openingCancel": "Otvaranje otkazivanja…",
     "cancelHelp": "Otkazivanje važi od kraja trenutnog plaćenog perioda. Premium ostaje aktivan do tada.",
-    "cancelPortalFailed": "Nije moguće otvoriti stranicu za otkazivanje Premiuma."
+    "cancelPortalFailed": "Nije moguće otvoriti stranicu za otkazivanje Premiuma.",
+    "accessOverride": "Premium pristup",
+    "accessOverrideActive": "Premium pristup je aktivan.",
+    "accessOverrideUntil": "Tvoj besplatni/testni Premium pristup dostupan je do {{date}}.",
+    "noActiveRecurringSubscription": "Na ovom nalogu nema aktivne ponavljajuće Stripe pretplate.",
+    "manualAccessHelp": "Tvoj Premium pristup trenutno dolazi iz besplatne/testne pogodnosti. Nema ponavljajuće pretplate za otkazivanje.",
+    "canceledBillingHelp": "Prethodna Stripe pretplata je otkazana. I dalje možeš otvoriti podatke naplate ili pokrenuti novu plaćenu pretplatu.",
+    "statusCanceled": "Otkazano",
+    "startPaidSubscription": "Pokreni plaćenu Premium pretplatu"
   },
   "advantages": {
     "a1": "50 novčića nakon svake uspešne mesečne Premium uplate.",
@@ -162,7 +170,7 @@
     "title": "Istorija naplate i kupovina",
     "description": "Premium fakture, kupovine paketa novčića i aktivnosti novčanika vode se odvojeno.",
     "premiumInvoices": "Premium fakture",
-    "premiumInvoicesSubtitle": "Uspešne Premium uplate i mesečne dodele novčića",
+    "premiumInvoicesSubtitle": "Stripe Premium računi, refundacije i mesečne dodele novčića",
     "noPremiumInvoices": "Nema Premium faktura.",
     "coinPurchases": "Kupovine paketa novčića",
     "coinPurchasesSubtitle": "Jednokratne kupovine opcionih paketa novčića",
@@ -193,7 +201,11 @@
     "billingSubscriptionCycle": "Ciklus pretplate",
     "billingSubscriptionCreate": "Kreirana pretplata",
     "billingSubscriptionUpdate": "Ažurirana pretplata",
-    "billingManual": "Ručna faktura"
+    "billingManual": "Ručna faktura",
+    "status": "Status",
+    "refunded": "Refundirano",
+    "invoicePaid": "Plaćeno",
+    "viewInvoice": "Prikaži Stripe račun"
   },
   "transactions": {
     "purchase": "Kupovina paketa novčića: {{code}}",

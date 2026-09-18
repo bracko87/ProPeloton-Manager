@@ -55,7 +55,15 @@
     "cancelSubscription": "Cancelar Premium",
     "openingCancel": "Abriendo cancelación…",
     "cancelHelp": "Cancela al final del período pagado actual. Premium seguirá activo hasta entonces.",
-    "cancelPortalFailed": "No se pudo abrir la página de cancelación de Premium."
+    "cancelPortalFailed": "No se pudo abrir la página de cancelación de Premium.",
+    "accessOverride": "Acceso Premium",
+    "accessOverrideActive": "El acceso Premium está activo.",
+    "accessOverrideUntil": "Tu acceso Premium gratuito/de prueba está disponible hasta {{date}}.",
+    "noActiveRecurringSubscription": "No hay una suscripción recurrente activa de Stripe en esta cuenta.",
+    "manualAccessHelp": "Tu acceso Premium proviene actualmente de una concesión gratuita/de prueba. No hay una suscripción recurrente que cancelar.",
+    "canceledBillingHelp": "La suscripción anterior de Stripe está cancelada. Aún puedes abrir los datos de facturación o iniciar una nueva suscripción de pago.",
+    "statusCanceled": "Cancelada",
+    "startPaidSubscription": "Iniciar suscripción Premium de pago"
   },
   "advantages": {
     "a1": "50 Coins después de cada pago mensual Premium.",
@@ -162,7 +170,7 @@
     "title": "Historial de facturación y compra",
     "description": "Las facturas Premium, las compras de paquetes de Coins y la actividad de cartera se mantienen separadas.",
     "premiumInvoices": "Premium facturas",
-    "premiumInvoicesSubtitle": "Pagos exitosos Premium y subvenciones mensuales por Coins",
+    "premiumInvoicesSubtitle": "Facturas Premium de Stripe, reembolsos y concesiones mensuales de monedas",
     "noPremiumInvoices": "No se encontraron facturas Premium.",
     "coinPurchases": "Compras de paquetes de Coins",
     "coinPurchasesSubtitle": "Compras únicas de paquetes de Coins opcionales",
@@ -193,7 +201,11 @@
     "billingSubscriptionCycle": "Ciclo de suscripción",
     "billingSubscriptionCreate": "Suscripción creada",
     "billingSubscriptionUpdate": "Suscripción actualizada",
-    "billingManual": "Factura manual"
+    "billingManual": "Factura manual",
+    "status": "Estado",
+    "refunded": "Reembolsado",
+    "invoicePaid": "Pagado",
+    "viewInvoice": "Ver factura de Stripe"
   },
   "transactions": {
     "purchase": "Compra de paquete de Coins: {{code}}",

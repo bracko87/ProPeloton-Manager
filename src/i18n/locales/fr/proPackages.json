@@ -55,7 +55,15 @@
     "cancelSubscription": "Annuler Premium",
     "openingCancel": "Ouverture de l’annulation…",
     "cancelHelp": "Annulation à la fin de la période payée en cours. Premium reste actif jusque-là.",
-    "cancelPortalFailed": "Impossible d’ouvrir la page d’annulation Premium."
+    "cancelPortalFailed": "Impossible d’ouvrir la page d’annulation Premium.",
+    "accessOverride": "Accès Premium",
+    "accessOverrideActive": "L’accès Premium est actif.",
+    "accessOverrideUntil": "Votre accès Premium gratuit/de test est disponible jusqu’au {{date}}.",
+    "noActiveRecurringSubscription": "Aucun abonnement Stripe récurrent actif n’existe sur ce compte.",
+    "manualAccessHelp": "Votre accès Premium provient actuellement d’un accès gratuit/de test. Il n’y a aucun abonnement récurrent à annuler.",
+    "canceledBillingHelp": "L’ancien abonnement Stripe est annulé. Vous pouvez toujours consulter la facturation ou démarrer un nouvel abonnement payant.",
+    "statusCanceled": "Annulé",
+    "startPaidSubscription": "Démarrer un abonnement Premium payant"
   },
   "advantages": {
     "a1": "50 Coins après chaque paiement mensuel réussi Premium.",
@@ -162,7 +170,7 @@
     "title": "Historique de facturation et d'achat",
     "description": "Les factures Premium, les achats de Coins de monnaie et l'activité portefeuille sont séparés.",
     "premiumInvoices": "Factures Premium",
-    "premiumInvoicesSubtitle": "Paiements réussis Premium et subventions mensuelles de Coins",
+    "premiumInvoicesSubtitle": "Factures Premium Stripe, remboursements et crédits mensuels de pièces",
     "noPremiumInvoices": "Aucune facture Premium trouvée.",
     "coinPurchases": "Achats de Coins de monnaie",
     "coinPurchasesSubtitle": "Achats ponctuels de Coins de monnaie optionnelles",
@@ -193,7 +201,11 @@
     "billingSubscriptionCycle": "Cycle d'abonnement",
     "billingSubscriptionCreate": "Abonnement créé",
     "billingSubscriptionUpdate": "Abonnement actualisé",
-    "billingManual": "Facture manuelle"
+    "billingManual": "Facture manuelle",
+    "status": "Statut",
+    "refunded": "Remboursé",
+    "invoicePaid": "Payé",
+    "viewInvoice": "Voir la facture Stripe"
   },
   "transactions": {
     "purchase": "Achat de Coins de monnaie: {{code}}",

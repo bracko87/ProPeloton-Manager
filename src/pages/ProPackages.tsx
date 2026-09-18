@@ -54,6 +54,7 @@ type PremiumSubscriptionDetailRow = {
   current_period_end: string | null
   access_until: string | null
   created_at: string
+  metadata: Record<string, unknown> | null
 }
 
 type PremiumInvoiceRow = {
@@ -63,9 +64,13 @@ type PremiumInvoiceRow = {
   amount_paid_cents: number | null
   currency: string | null
   coins_granted: number
-  period_start: string
-  period_end: string
-  processed_at: string
+  period_start: string | null
+  period_end: string | null
+  processed_at: string | null
+  status: string | null
+  credited_cents: number
+  refunded: boolean
+  hosted_invoice_url: string | null
 }
 
 type DevelopingTeamServiceStatus = {
@@ -141,6 +146,24 @@ type EdgeResponse = {
   url?: string
   error?: string
   code?: string
+}
+
+type PremiumBillingSubscription = {
+  id: string
+  status: string
+  cancel_at_period_end: boolean
+  cancel_at: string | null
+  canceled_at: string | null
+  ended_at: string | null
+  current_period_start: string | null
+  current_period_end: string | null
+}
+
+type PremiumBillingSummaryResponse = EdgeResponse & {
+  subscription?: PremiumBillingSubscription | null
+  invoices?: PremiumInvoiceRow[]
+  has_billing_profile?: boolean
+  manual_access?: boolean
 }
 
 const COIN_HISTORY_PAGE_SIZE = 20
@@ -425,10 +448,12 @@ function getSupabaseConfig(): { url: string; anonKey: string } {
   return { url, anonKey }
 }
 
-async function callAuthenticatedEdgeFunction(
+async function callAuthenticatedEdgeFunction<
+  T extends EdgeResponse = EdgeResponse,
+>(
   functionName: string,
   body: Record<string, unknown>,
-): Promise<EdgeResponse> {
+): Promise<T> {
   const { url: supabaseUrl, anonKey } = getSupabaseConfig()
 
   const { data: sessionData, error: sessionError } =
@@ -455,11 +480,11 @@ async function callAuthenticatedEdgeFunction(
   )
 
   const responseText = await response.text().catch(() => '')
-  let responseJson: EdgeResponse = {}
+  let responseJson = {} as T
 
   if (responseText) {
     try {
-      responseJson = JSON.parse(responseText) as EdgeResponse
+      responseJson = JSON.parse(responseText) as T
     } catch {
       responseJson = {}
     }
@@ -488,6 +513,8 @@ export default function ProPackagesPage(): JSX.Element {
     useState<PremiumStatusRow | null>(null)
   const [premiumDetails, setPremiumDetails] =
     useState<PremiumSubscriptionDetailRow | null>(null)
+  const [premiumBilling, setPremiumBilling] =
+    useState<PremiumBillingSummaryResponse | null>(null)
   const [loadingPremium, setLoadingPremium] = useState(true)
   const [startingPremiumCheckout, setStartingPremiumCheckout] =
     useState(false)
@@ -549,36 +576,63 @@ export default function ProPackagesPage(): JSX.Element {
     useState<CoinTransactionUi[]>([])
   const [coinHistoryPage, setCoinHistoryPage] = useState(1)
 
-  const premiumCheckoutBlocked = useMemo(() => {
-    const status = premiumStatus?.stripe_status ?? 'free'
+  const billingSubscription = premiumBilling?.subscription ?? null
+  const billingStatus =
+    billingSubscription?.status ??
+    premiumDetails?.stripe_status ??
+    premiumStatus?.stripe_status ??
+    'free'
+  const billingCancelAtPeriodEnd =
+    billingSubscription?.cancel_at_period_end ??
+    premiumDetails?.cancel_at_period_end ??
+    false
+  const billingPeriodEnd =
+    billingSubscription?.current_period_end ??
+    premiumDetails?.current_period_end ??
+    premiumStatus?.current_period_end ??
+    null
 
-    return [
-      'trialing',
-      'active',
-      'past_due',
-      'unpaid',
-      'incomplete',
-      'paused',
-    ].includes(status)
-  }, [premiumStatus?.stripe_status])
+  const hasActiveRecurringSubscription = [
+    'trialing',
+    'active',
+    'past_due',
+  ].includes(billingStatus)
 
-  const hasBillingProfile = Boolean(
-    premiumDetails?.stripe_customer_id?.startsWith('cus_'),
+  const manualAccessValue =
+    premiumBilling?.manual_access ??
+    premiumDetails?.metadata?.manual_test_access
+
+  const manualAccessFlag =
+    manualAccessValue === true ||
+    String(manualAccessValue ?? '').toLowerCase() === 'true'
+
+  const hasManualPremiumAccess = Boolean(
+    premiumStatus?.is_premium &&
+      manualAccessFlag &&
+      !hasActiveRecurringSubscription,
   )
 
-  const showManageSubscription = Boolean(
-    hasBillingProfile &&
-      (premiumStatus?.is_premium ||
-        premiumCheckoutBlocked ||
-        premiumStatus?.cancel_at_period_end),
-  )
+  const premiumCheckoutBlocked = [
+    'trialing',
+    'active',
+    'past_due',
+    'unpaid',
+    'incomplete',
+    'paused',
+  ].includes(billingStatus)
+
+  const hasBillingProfile =
+    premiumBilling?.has_billing_profile ??
+    Boolean(
+      premiumDetails?.stripe_customer_id?.startsWith('cus_'),
+    )
+
+  const showManageSubscription = hasBillingProfile
 
   const canCancelPremiumSubscription = Boolean(
-    premiumDetails?.stripe_subscription_id?.startsWith('sub_') &&
-      ['trialing', 'active', 'past_due'].includes(
-        premiumStatus?.stripe_status ?? '',
-      ) &&
-      !premiumStatus?.cancel_at_period_end,
+    billingSubscription?.id?.startsWith('sub_') &&
+      hasActiveRecurringSubscription &&
+      !billingCancelAtPeriodEnd,
   )
 
   const premiumPrice = premiumPlan
@@ -591,34 +645,65 @@ export default function ProPackagesPage(): JSX.Element {
     50
 
   const statusLabel = useMemo(() => {
-    if (premiumStatus?.is_premium && premiumStatus.cancel_at_period_end) {
+    if (hasManualPremiumAccess) {
+      return t('premium.accessOverride')
+    }
+
+    if (
+      hasActiveRecurringSubscription &&
+      billingCancelAtPeriodEnd
+    ) {
       return t('premium.activeCancellation')
     }
 
-    if (premiumStatus?.is_premium) return t('premium.active')
-
-    const stripeStatus = premiumStatus?.stripe_status
-    if (!stripeStatus || stripeStatus === 'free') return t('premium.free')
+    if (
+      premiumStatus?.is_premium &&
+      hasActiveRecurringSubscription
+    ) {
+      return t('premium.active')
+    }
 
     const statusKeys: Record<string, string> = {
+      canceled: 'premium.statusCanceled',
       trialing: 'premium.statusTrialing',
       past_due: 'premium.statusPastDue',
       unpaid: 'premium.statusUnpaid',
       incomplete: 'premium.statusIncomplete',
+      incomplete_expired: 'premium.statusCanceled',
       paused: 'premium.statusPaused',
     }
-    return statusKeys[stripeStatus] ? t(statusKeys[stripeStatus]) : titleFromSnake(stripeStatus)
-  }, [premiumStatus])
+
+    if (!billingStatus || billingStatus === 'free') {
+      return t('premium.free')
+    }
+
+    return statusKeys[billingStatus]
+      ? t(statusKeys[billingStatus])
+      : titleFromSnake(billingStatus)
+  }, [
+    billingCancelAtPeriodEnd,
+    billingStatus,
+    hasActiveRecurringSubscription,
+    hasManualPremiumAccess,
+    premiumStatus?.is_premium,
+    t,
+  ])
 
   const nextRenewalLabel = useMemo(() => {
-    if (!premiumStatus?.is_premium) return '—'
-    if (premiumStatus.cancel_at_period_end) return t('premium.noRenewal')
+    if (
+      !hasActiveRecurringSubscription ||
+      billingCancelAtPeriodEnd
+    ) {
+      return t('premium.noRenewal')
+    }
 
-    return formatDate(
-      premiumDetails?.current_period_end ||
-        premiumStatus.current_period_end,
-    )
-  }, [premiumDetails?.current_period_end, premiumStatus])
+    return formatDate(billingPeriodEnd)
+  }, [
+    billingCancelAtPeriodEnd,
+    billingPeriodEnd,
+    hasActiveRecurringSubscription,
+    t,
+  ])
 
   const developingTeamActivationCost = normalizeCoinCost(
     developingTeamService?.activation_coin_cost,
@@ -720,7 +805,19 @@ export default function ProPackagesPage(): JSX.Element {
     setPremiumError(null)
 
     try {
-      const [planResult, statusResult, detailsResult] =
+      const billingPromise =
+        callAuthenticatedEdgeFunction<PremiumBillingSummaryResponse>(
+          'get-premium-billing-summary',
+          { include_invoices: false },
+        ).catch((billingError) => {
+          console.warn(
+            'Failed to load live Stripe Premium billing state:',
+            billingError,
+          )
+          return null
+        })
+
+      const [planResult, statusResult, detailsResult, billingResult] =
         await Promise.all([
           supabase
             .from('premium_plans')
@@ -734,9 +831,10 @@ export default function ProPackagesPage(): JSX.Element {
           supabase
             .from('user_premium_subscriptions')
             .select(
-              'plan_code, stripe_customer_id, stripe_subscription_id, stripe_status, cancel_at_period_end, current_period_start, current_period_end, access_until, created_at',
+              'plan_code, stripe_customer_id, stripe_subscription_id, stripe_status, cancel_at_period_end, current_period_start, current_period_end, access_until, created_at, metadata',
             )
             .maybeSingle(),
+          billingPromise,
         ])
 
       if (planResult.error) throw planResult.error
@@ -755,6 +853,7 @@ export default function ProPackagesPage(): JSX.Element {
         (detailsResult.data as PremiumSubscriptionDetailRow | null) ??
           null,
       )
+      setPremiumBilling(billingResult)
 
       return statusRows[0] ?? null
     } catch (loadError: any) {
@@ -762,6 +861,7 @@ export default function ProPackagesPage(): JSX.Element {
       setPremiumPlan(null)
       setPremiumStatus(null)
       setPremiumDetails(null)
+      setPremiumBilling(null)
       setPremiumError(
         loadError?.message ??
           t('premium.detailsFailed'),
@@ -885,12 +985,18 @@ export default function ProPackagesPage(): JSX.Element {
     setLoadingPremiumInvoices(true)
 
     try {
-      const { data, error: invoiceError } =
-        await supabase.rpc('get_my_premium_invoice_history')
+      const billingResult =
+        await callAuthenticatedEdgeFunction<PremiumBillingSummaryResponse>(
+          'get-premium-billing-summary',
+          { include_invoices: true },
+        )
 
-      if (invoiceError) throw invoiceError
-
-      setPremiumInvoices((data ?? []) as PremiumInvoiceRow[])
+      setPremiumBilling((current) => ({
+        ...(current ?? {}),
+        ...billingResult,
+        invoices: undefined,
+      }))
+      setPremiumInvoices(billingResult.invoices ?? [])
     } catch (loadError: any) {
       console.error(
         'Failed to load Premium invoice history:',
@@ -1352,9 +1458,11 @@ export default function ProPackagesPage(): JSX.Element {
 
               {!loadingPremium && premiumStatus?.is_premium ? (
                 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
-                  {premiumStatus.cancel_at_period_end
-                    ? t('premium.activeEnding')
-                    : t('premium.active')}
+                  {hasManualPremiumAccess
+                    ? t('premium.accessOverride')
+                    : billingCancelAtPeriodEnd
+                      ? t('premium.activeEnding')
+                      : t('premium.active')}
                 </span>
               ) : (
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
@@ -1407,20 +1515,37 @@ export default function ProPackagesPage(): JSX.Element {
               </li>
             </ul>
 
-            {premiumStatus?.is_premium ? (
+            {hasManualPremiumAccess ? (
+              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div className="font-bold">
+                  {t('premium.accessOverrideActive')}
+                </div>
+                <div className="mt-1">
+                  {t('premium.accessOverrideUntil', {
+                    date: formatDate(premiumStatus?.access_until),
+                  })}
+                </div>
+                <div className="mt-1">
+                  {t('premium.noActiveRecurringSubscription')}
+                </div>
+              </div>
+            ) : premiumStatus?.is_premium ? (
               <div className="mt-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
                 <div className="font-bold">
-                  {premiumStatus.cancel_at_period_end
+                  {billingCancelAtPeriodEnd
                     ? t('premium.activeUntilEnd')
                     : t('premium.activeNow')}
                 </div>
                 <div className="mt-1">
-                  {premiumStatus.cancel_at_period_end
+                  {billingCancelAtPeriodEnd
                     ? t('premium.futureCanceled', {
-                        date: formatDate(premiumStatus.access_until || premiumStatus.current_period_end),
+                        date: formatDate(
+                          billingPeriodEnd ||
+                            premiumStatus.access_until,
+                        ),
                       })
                     : t('premium.periodEnds', {
-                        date: formatDate(premiumStatus.current_period_end),
+                        date: formatDate(billingPeriodEnd),
                       })}
                 </div>
               </div>
@@ -1470,6 +1595,21 @@ export default function ProPackagesPage(): JSX.Element {
                       ? t('premium.openingCancel')
                       : t('premium.cancelSubscription')}
                   </button>
+                ) : !premiumCheckoutBlocked ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleStartPremiumCheckout()}
+                    disabled={
+                      loadingPremium ||
+                      startingPremiumCheckout ||
+                      !premiumPlan
+                    }
+                    className="mt-3 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {startingPremiumCheckout
+                      ? t('premium.redirecting')
+                      : t('premium.startPaidSubscription')}
+                  </button>
                 ) : null}
               </>
             ) : (
@@ -1495,11 +1635,15 @@ export default function ProPackagesPage(): JSX.Element {
             )}
 
             <div className="mt-3 text-xs text-gray-500">
-              {canCancelPremiumSubscription
-                ? t('premium.cancelHelp')
-                : showManageSubscription
-                  ? t('premium.manageHelp')
-                  : t('premium.checkoutHelp')}
+              {hasManualPremiumAccess
+                ? t('premium.manualAccessHelp')
+                : canCancelPremiumSubscription
+                  ? t('premium.cancelHelp')
+                  : billingStatus === 'canceled'
+                    ? t('premium.canceledBillingHelp')
+                    : showManageSubscription
+                      ? t('premium.manageHelp')
+                      : t('premium.checkoutHelp')}
             </div>
           </div>
         </div>
@@ -1672,13 +1816,17 @@ export default function ProPackagesPage(): JSX.Element {
           <MembershipItem label={t('membership.status')} value={statusLabel} />
           <MembershipItem
             label={t('membership.started')}
-            value={formatDate(premiumDetails?.created_at)}
+            value={formatDate(
+              billingSubscription?.current_period_start ||
+                premiumDetails?.created_at,
+            )}
           />
           <MembershipItem
             label={t('membership.periodEnds')}
             value={formatDate(
-              premiumDetails?.current_period_end ||
-                premiumStatus?.current_period_end,
+              hasManualPremiumAccess
+                ? premiumStatus?.access_until
+                : billingPeriodEnd,
             )}
           />
           <MembershipItem label={t('membership.nextRenewal')} value={nextRenewalLabel} />
@@ -1689,7 +1837,7 @@ export default function ProPackagesPage(): JSX.Element {
           />
           <MembershipItem
             label={t('membership.cancelAtEnd')}
-            value={premiumStatus?.cancel_at_period_end ? t('membership.yes') : t('membership.no')}
+            value={billingCancelAtPeriodEnd ? t('membership.yes') : t('membership.no')}
           />
         </div>
 
@@ -1916,12 +2064,13 @@ export default function ProPackagesPage(): JSX.Element {
               <HistoryEmpty message={t('history.noPremiumInvoices')} />
             ) : (
               <div className="overflow-x-auto rounded-xl border border-black/10">
-                <table className="w-full min-w-[760px] text-sm">
+                <table className="w-full min-w-[900px] text-sm">
                   <thead className="bg-gray-50 text-left text-gray-600">
                     <tr>
                       <th className="px-4 py-3 font-semibold">{t('history.paid')}</th>
                       <th className="px-4 py-3 font-semibold">{t('history.servicePeriod')}</th>
                       <th className="px-4 py-3 font-semibold">{t('history.amount')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.status')}</th>
                       <th className="px-4 py-3 font-semibold">{t('history.coinsGranted')}</th>
                       <th className="px-4 py-3 font-semibold">{t('history.type')}</th>
                     </tr>
@@ -1944,6 +2093,35 @@ export default function ProPackagesPage(): JSX.Element {
                             invoice.amount_paid_cents,
                             invoice.currency,
                           )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div
+                            className={
+                              invoice.refunded
+                                ? 'font-semibold text-amber-700'
+                                : invoice.status === 'paid'
+                                  ? 'font-semibold text-green-700'
+                                  : 'font-semibold text-gray-700'
+                            }
+                          >
+                            {invoice.refunded
+                              ? t('history.refunded')
+                              : invoice.status === 'paid'
+                                ? t('history.invoicePaid')
+                                : titleFromSnake(
+                                    invoice.status ?? 'unknown',
+                                  )}
+                          </div>
+                          {invoice.hosted_invoice_url ? (
+                            <a
+                              href={invoice.hosted_invoice_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1 inline-block text-xs font-semibold text-blue-700 hover:underline"
+                            >
+                              {t('history.viewInvoice')}
+                            </a>
+                          ) : null}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-green-700">
                           +{Number(invoice.coins_granted).toLocaleString()}

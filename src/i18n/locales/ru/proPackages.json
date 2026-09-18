@@ -55,7 +55,15 @@
     "cancelSubscription": "Отменить Premium",
     "openingCancel": "Открытие отмены…",
     "cancelHelp": "Отмена произойдет в конце текущего оплаченного периода. Premium останется активным до этого момента.",
-    "cancelPortalFailed": "Не удалось открыть страницу отмены Premium."
+    "cancelPortalFailed": "Не удалось открыть страницу отмены Premium.",
+    "accessOverride": "Доступ Premium",
+    "accessOverrideActive": "Доступ Premium активен.",
+    "accessOverrideUntil": "Ваш бесплатный/тестовый доступ Premium действует до {{date}}.",
+    "noActiveRecurringSubscription": "Для этой учетной записи нет активной регулярной подписки Stripe.",
+    "manualAccessHelp": "Сейчас доступ Premium предоставлен бесплатно/для тестирования. Регулярной подписки для отмены нет.",
+    "canceledBillingHelp": "Предыдущая подписка Stripe отменена. Вы по-прежнему можете открыть платежные данные или оформить новую платную подписку.",
+    "statusCanceled": "Отменена",
+    "startPaidSubscription": "Оформить платную подписку Premium"
   },
   "advantages": {
     "a1": "50 Coins после каждого успешного месяца Premium Платеж.",
@@ -162,7 +170,7 @@
     "title": "Производственная деятельность по выставлению счетов и покупке",
     "description": "Premium Счета-фактуры, закупки Coins и бумажник хранятся отдельно.",
     "premiumInvoices": "Premium счета-фактуры",
-    "premiumInvoicesSubtitle": "Успешно Premium и ежемесячных Coinsных субсидий",
+    "premiumInvoicesSubtitle": "Счета Premium Stripe, возвраты и ежемесячные начисления монет",
     "noPremiumInvoices": "Нет Premium Нашли счета.",
     "coinPurchases": "Покупки комплектов",
     "coinPurchasesSubtitle": "Единовременные закупки факультативных пакетов Coins",
@@ -193,7 +201,11 @@
     "billingSubscriptionCycle": "Цикл подписки",
     "billingSubscriptionCreate": "Создана подписка",
     "billingSubscriptionUpdate": "Обновленная подписка",
-    "billingManual": "Ручной счет-фактура"
+    "billingManual": "Ручной счет-фактура",
+    "status": "Статус",
+    "refunded": "Возвращено",
+    "invoicePaid": "Оплачено",
+    "viewInvoice": "Открыть счет Stripe"
   },
   "transactions": {
     "purchase": "Покупка комплекта для покрытий: {{code}}",
