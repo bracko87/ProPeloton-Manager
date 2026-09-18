@@ -2297,6 +2297,22 @@ function getStageDateTimeLabel(
   return timeLabel ? `${dateLabel} · ${timeLabel}` : dateLabel
 }
 
+function formatReplayGameDateTimeLabel(value?: string | null): string | null {
+  const normalized = value?.trim()
+  if (!normalized) return null
+
+  const match = normalized.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/
+  )
+  if (!match) return null
+
+  const [, year, month, day, hour, minute] = match
+  const parts = getGameDatePartsFromStoredRaceDate(`${year}-${month}-${day}`)
+  if (!parts) return null
+
+  return `Season ${parts.seasonNumber} · ${getGameMonthShortName(parts.monthNumber)} ${parts.dayNumber} · ${hour}:${minute}`
+}
+
 function formatStageRoute(stage: RaceStage): string {
   const routeLabel = stage.route_label?.trim()
 
@@ -9959,9 +9975,12 @@ function StageReplayAccessCard({
     }
 
     let cancelled = false
+    let intervalId: number | null = null
 
-    async function loadReplayAvailability(): Promise<void> {
-      setReplayAvailability((current) => ({ ...current, status: 'loading' }))
+    async function loadReplayAvailability(showLoading = false): Promise<void> {
+      if (showLoading) {
+        setReplayAvailability((current) => ({ ...current, status: 'loading' }))
+      }
 
       const { data, error } = await supabase.rpc(
         'get_universal_race_stage_replay_payload_v1',
@@ -9970,15 +9989,27 @@ function StageReplayAccessCard({
 
       if (cancelled) return
 
-      setReplayAvailability(
-        normalizeStageReplayAvailability(data, error?.message ?? null)
+      const nextAvailability = normalizeStageReplayAvailability(
+        data,
+        error?.message ?? null
       )
+      setReplayAvailability(nextAvailability)
+
+      if (nextAvailability.status === 'available' && intervalId !== null) {
+        window.clearInterval(intervalId)
+        intervalId = null
+      }
     }
 
-    void loadReplayAvailability()
+    intervalId = window.setInterval(
+      () => void loadReplayAvailability(false),
+      5000
+    )
+    void loadReplayAvailability(true)
 
     return () => {
       cancelled = true
+      if (intervalId !== null) window.clearInterval(intervalId)
     }
   }, [stage?.id, stageWeatherCanceled])
 
@@ -10080,6 +10111,10 @@ function StageReplayAccessCard({
               ? t('replay.availableForRace', { race: race?.name ?? '—' })
               : t('replay.unlockDescription', { coins: coinAccess?.coin_cost ?? 2 })
 
+  const replayOpensGameAtLabel = formatReplayGameDateTimeLabel(
+    replayAvailability.replayOpensGameAt
+  )
+
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -10101,7 +10136,7 @@ function StageReplayAccessCard({
       {replayAvailability.replayOpensGameAt &&
       replayAvailability.status !== 'available' ? (
         <div className="mt-3 text-xs font-medium text-slate-500">
-          {t('replay.availableAt', { date: replayAvailability.replayOpensGameAt })}
+          {t('replay.availableAt', { date: replayOpensGameAtLabel ?? '—' })}
         </div>
       ) : null}
 
