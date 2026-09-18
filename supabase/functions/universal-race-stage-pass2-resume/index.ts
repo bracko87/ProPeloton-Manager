@@ -8,12 +8,16 @@ import {
 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/506481c11776a73a9afafd3111084bc2f26d69ef/src/universal-race-engine/runRaceEngine.ts";
 import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/506481c11776a73a9afafd3111084bc2f26d69ef/src/universal-race-engine/buildProductionRaceInput.ts";
 import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/506481c11776a73a9afafd3111084bc2f26d69ef/src/universal-race-engine/buildProductionRaceOutput.ts";
+import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
 const SOURCE_COMMIT = "506481c11776a73a9afafd3111084bc2f26d69ef";
-const CONTRACT = "universal_race_pass2_resume_v2";
+const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
+const CONTRACT = "universal_race_pass2_resume_v3";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -322,6 +326,9 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
   const stageId = text(claim.stage_id);
   const runId = text(claim.simulation_run_id);
   if (!stageId || !runId) throw new Error("Pass 2 claim is missing stage/run identity.");
+  const scenarioMode = text(claim.scenario_mode) || "none";
+  const useFallback = scenarioMode === "emergency_fallback";
+  const fallbackReason = useFallback ? "pass1_worker_timeout" : null;
 
   try {
     await heartbeat(supabase, stageId, runId, "pass2_payload_loading", { source_commit: SOURCE_COMMIT });
@@ -343,46 +350,87 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
     if (scenarioError) throw new Error(`scenario lookup: ${scenarioError.message}`);
 
     const sources = buildSources(payload, runId, standings);
-    let input = buildBaseInput(sources as any) as any;
-    input = withScenarioAiMetadata(input, sources.participantTeams);
-    if (scenarioData) input = attachStoredScenario(input, object(scenarioData));
-    input = buildInputWithTimeTrialRules(input, await loadTimeTrialRules(supabase, stageId));
+    const timeTrialRules = await loadTimeTrialRules(supabase, stageId);
 
-    await heartbeat(supabase, stageId, runId, "primary_engine_started", {
-      resumed_pass2: true,
-      rider_count: Array.isArray(input.riders) ? input.riders.length : null,
-      template_id: scenarioData?.template_id ?? null,
-      source_commit: SOURCE_COMMIT,
-    });
-
+    let input: any;
+    let result: UniversalRaceEngineResult;
+    let output: any;
     const started = performance.now();
-    const rawResult = runRaceEngine(input as any) as UniversalRaceEngineResult;
-    await heartbeat(supabase, stageId, runId, "primary_engine_finished", {
-      resumed_pass2: true,
-      elapsed_ms: performance.now() - started,
-    });
 
-    let result = rawResult;
-    try { result = applyAtomicIntermediatePointReplayPublication(input, rawResult); } catch {}
-    let output = buildOutputWithReplayProgressGuarantee(input, result);
-    output = addFinishRankAlias(output);
+    if (useFallback) {
+      input = buildInputWithTimeTrialRules(
+        buildFallbackInput(sources as any) as any,
+        timeTrialRules,
+      );
+      await heartbeat(supabase, stageId, runId, "fallback_engine_started", {
+        resumed_pass2: true,
+        rider_count: Array.isArray(input.riders) ? input.riders.length : null,
+        fallback_reason: fallbackReason,
+        fallback_source_commit: FALLBACK_SOURCE_COMMIT,
+      });
+
+      const fallbackResult = runFallbackRaceEngine(input as any) as any;
+      result = fallbackResult as UniversalRaceEngineResult;
+      output = addFinishRankAlias(
+        buildFallbackOutput(input as any, fallbackResult as any) as any
+      );
+
+      await heartbeat(supabase, stageId, runId, "fallback_engine_finished", {
+        resumed_pass2: true,
+        elapsed_ms: performance.now() - started,
+        fallback_reason: fallbackReason,
+        fallback_source_commit: FALLBACK_SOURCE_COMMIT,
+      });
+    } else {
+      input = buildBaseInput(sources as any) as any;
+      input = withScenarioAiMetadata(input, sources.participantTeams);
+      if (scenarioData) input = attachStoredScenario(input, object(scenarioData));
+      input = buildInputWithTimeTrialRules(input, timeTrialRules);
+
+      await heartbeat(supabase, stageId, runId, "primary_engine_started", {
+        resumed_pass2: true,
+        rider_count: Array.isArray(input.riders) ? input.riders.length : null,
+        template_id: scenarioData?.template_id ?? null,
+        source_commit: SOURCE_COMMIT,
+      });
+
+      const rawResult = runRaceEngine(input as any) as UniversalRaceEngineResult;
+      await heartbeat(supabase, stageId, runId, "primary_engine_finished", {
+        resumed_pass2: true,
+        elapsed_ms: performance.now() - started,
+      });
+
+      result = rawResult;
+      try { result = applyAtomicIntermediatePointReplayPublication(input, rawResult); } catch {}
+      output = buildOutputWithReplayProgressGuarantee(input, result);
+      output = addFinishRankAlias(output);
+    }
     output = {
       ...output,
       verification: {
         ...object(output.verification),
         resumedPass2: true,
         primarySourceCommit: SOURCE_COMMIT,
-        calculationSurvivalModel: "split_pass_v2",
+        fallbackUsed: useFallback,
+        fallbackReason,
+        fallbackSourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : null,
+        calculationSurvivalModel: "split_pass_v3",
       },
       calculationSurvival: {
-        modelVersion: "split_pass_v2",
+        modelVersion: "split_pass_v3",
         resumedPass2: true,
-        sourceCommit: SOURCE_COMMIT,
+        sourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : SOURCE_COMMIT,
+        primarySourceCommit: SOURCE_COMMIT,
+        fallbackUsed: useFallback,
+        fallbackReason,
+        fallbackSourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : null,
       },
     };
 
     await heartbeat(supabase, stageId, runId, "submitting", {
       resumed_pass2: true,
+      fallback_used: useFallback,
+      fallback_reason: fallbackReason,
       output_bytes_estimate: JSON.stringify(output).length,
     });
     const submit = await rpc(supabase, "universal_race_stage_submit_calculation_v1", {
@@ -392,7 +440,7 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
       p_universal_result: output,
     });
 
-    if (scenarioData) {
+    if (scenarioData && !useFallback) {
       try {
         await rpc(supabase, "universal_race_stage_finalize_scenario_v1", {
           p_stage_id: stageId,
@@ -402,7 +450,11 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
         });
       } catch {}
     }
-    await heartbeat(supabase, stageId, runId, "calculated_hidden", { resumed_pass2: true });
+    await heartbeat(supabase, stageId, runId, "calculated_hidden", {
+      resumed_pass2: true,
+      fallback_used: useFallback,
+      fallback_reason: fallbackReason,
+    });
     return { status: "completed", contract: CONTRACT, stage_id: stageId, simulation_run_id: runId, submit };
   } catch (error) {
     const serialized = errorPayload(error);
