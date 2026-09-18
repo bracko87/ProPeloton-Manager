@@ -51,7 +51,11 @@
     "statusPastDue": "Montants dus",
     "statusUnpaid": "Non payé",
     "statusIncomplete": "Incomplète",
-    "statusPaused": "Paus"
+    "statusPaused": "Paus",
+    "cancelSubscription": "Annuler Premium",
+    "openingCancel": "Ouverture de l’annulation…",
+    "cancelHelp": "Annulation à la fin de la période payée en cours. Premium reste actif jusque-là.",
+    "cancelPortalFailed": "Impossible d’ouvrir la page d’annulation Premium."
   },
   "advantages": {
     "a1": "50 Coins après chaque paiement mensuel réussi Premium.",
