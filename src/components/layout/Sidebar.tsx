@@ -19,9 +19,11 @@ import {
   DollarSign,
   LogOut,
   ClipboardCheck,
+  ShieldCheck,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
+import { useAppAdmin } from '../../hooks/useAppAdmin'
 
 interface SidebarProps {
   collapsed?: boolean
@@ -119,6 +121,7 @@ export default function Sidebar({
   const { t } = useTranslation('navigation')
   const navigate = useNavigate()
   const location = useLocation()
+  const { isAdmin } = useAppAdmin()
 
   const currentNavItem = navItems.find(item =>
     isPathActive(location.pathname, item),
@@ -204,6 +207,40 @@ export default function Sidebar({
               </NavLink>
             )
           })}
+
+          {isAdmin ? (
+            <div className="mt-5 border-t border-white/10 pt-5">
+              {!collapsed ? (
+                <div className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">
+                  Administration
+                </div>
+              ) : null}
+
+              <NavLink
+                to="/dashboard/admin/analytics"
+                className={linkClass(
+                  location.pathname === '/dashboard/admin/analytics' ||
+                    location.pathname.startsWith('/dashboard/admin/analytics/'),
+                )}
+              >
+                <ShieldCheck
+                  size={18}
+                  className="mt-0.5 flex-shrink-0"
+                />
+
+                {!collapsed && (
+                  <div className="min-w-0">
+                    <div className="text-base font-semibold leading-tight">
+                      Analytics
+                    </div>
+                    <div className="mt-1 text-xs leading-tight text-white/55">
+                      Private website and game statistics
+                    </div>
+                  </div>
+                )}
+              </NavLink>
+            </div>
+          ) : null}
         </nav>
 
         <div className="mt-auto p-4 border-t border-white/5 space-y-3">
