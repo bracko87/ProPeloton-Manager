@@ -257,6 +257,40 @@ export default function HomePage(): JSX.Element {
 
   useEffect(() => {
     void loadHomepageReviews()
+
+    const channel = supabase
+      .channel('public-homepage-reviews')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'homepage_player_reviews',
+        },
+        () => {
+          void loadHomepageReviews()
+        },
+      )
+      .subscribe()
+
+    // Realtime is the fast path. The interval is a small fallback so an
+    // already-open homepage also picks up newly approved reviews even if a
+    // browser temporarily loses its realtime connection.
+    const intervalId = window.setInterval(() => {
+      void loadHomepageReviews()
+    }, 60_000)
+
+    const handleFocus = (): void => {
+      void loadHomepageReviews()
+    }
+
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', handleFocus)
+      void supabase.removeChannel(channel)
+    }
   }, [loadHomepageReviews])
 
   useEffect(() => {
