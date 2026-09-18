@@ -2049,12 +2049,13 @@ export default function ProPackagesPage(): JSX.Element {
               <HistoryEmpty message={t('history.noPremiumInvoices')} />
             ) : (
               <div className="overflow-x-auto rounded-xl border border-black/10">
-                <table className="w-full min-w-[760px] text-sm">
+                <table className="w-full min-w-[900px] text-sm">
                   <thead className="bg-gray-50 text-left text-gray-600">
                     <tr>
                       <th className="px-4 py-3 font-semibold">{t('history.paid')}</th>
                       <th className="px-4 py-3 font-semibold">{t('history.servicePeriod')}</th>
                       <th className="px-4 py-3 font-semibold">{t('history.amount')}</th>
+                      <th className="px-4 py-3 font-semibold">{t('history.status')}</th>
                       <th className="px-4 py-3 font-semibold">{t('history.coinsGranted')}</th>
                       <th className="px-4 py-3 font-semibold">{t('history.type')}</th>
                     </tr>
@@ -2077,6 +2078,35 @@ export default function ProPackagesPage(): JSX.Element {
                             invoice.amount_paid_cents,
                             invoice.currency,
                           )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div
+                            className={
+                              invoice.refunded
+                                ? 'font-semibold text-amber-700'
+                                : invoice.status === 'paid'
+                                  ? 'font-semibold text-green-700'
+                                  : 'font-semibold text-gray-700'
+                            }
+                          >
+                            {invoice.refunded
+                              ? t('history.refunded')
+                              : invoice.status === 'paid'
+                                ? t('history.invoicePaid')
+                                : titleFromSnake(
+                                    invoice.status ?? 'unknown',
+                                  )}
+                          </div>
+                          {invoice.hosted_invoice_url ? (
+                            <a
+                              href={invoice.hosted_invoice_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1 inline-block text-xs font-semibold text-blue-700 hover:underline"
+                            >
+                              {t('history.viewInvoice')}
+                            </a>
+                          ) : null}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-green-700">
                           +{Number(invoice.coins_granted).toLocaleString()}
