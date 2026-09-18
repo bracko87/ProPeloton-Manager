@@ -114,7 +114,7 @@ function buildSources(payloadValue: unknown, runId: string, preStageStandings: u
   return {
     race,
     stage,
-    profile: rows(payload.profile)[0] ?? {},
+    profile: object(payload.profile),
     stagePoints: rows(payload.stage_points),
     participantTeams: rows(payload.participant_teams),
     participantRiders: rows(payload.participant_riders),
