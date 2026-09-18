@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11l-v6-scenario-director-flat-hilly-2026-09-13' as const
+  'phase11l-v7-road-realism-2026-09-18' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -9831,7 +9831,7 @@ export function resolveRoadPhase1Opening(
     )
     const rawInitialGapSeconds = attackSucceeded
       ? Math.max(
-          0.5,
+          6,
           outcome.projectedBurstDurationSeconds *
             Math.max(0, outcome.projectedBurstSpeedMultiplier - 1),
         )
@@ -17658,8 +17658,7 @@ export function resolveRoadPhase4Finish(
   const automaticWorkerSet = new Set(automaticWorkerRows.map((row) => row.riderId))
   const phase4MeaningfulContactPressure =
     input.stage.terrainType !== 'flat' ||
-    input.stage.finishType !== 'flat_finish' ||
-    hasAnyOrganizedPhase4ChaseInterest
+    input.stage.finishType !== 'flat_finish'
   const phase4DepletionContactFloor = deterministicRound(
     clamp(
       3 +
