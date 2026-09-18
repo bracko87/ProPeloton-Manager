@@ -97,13 +97,11 @@ export default function BugReportButton({
       throw new Error(uploadError.message)
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from(SCREENSHOT_BUCKET)
-      .getPublicUrl(filePath)
-
+    // The bug screenshot bucket is private. Admins receive a short-lived
+    // signed URL when they open a report, so never persist a public URL here.
     return {
       screenshotPath: filePath,
-      screenshotUrl: publicUrlData.publicUrl ?? null,
+      screenshotUrl: null,
     }
   }
 
