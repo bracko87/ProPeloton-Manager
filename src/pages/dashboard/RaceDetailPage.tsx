@@ -15464,19 +15464,6 @@ function UniversalRaceReplayPage({
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4 sm:p-5">
-          <div className="rounded-2xl border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm text-violet-950">
-            <span className="font-semibold">
-              {t('replay.title')}
-            </span>
-            <span className="ml-2 text-xs text-violet-800">
-              {isIndividualTimeTrialReplay
-                ? 'Riders start one by one, from the lowest-ranked favourite to the strongest favourite'
-                : isTeamTimeTrialReplay
-                  ? 'Teams start one by one, from the lowest-ranked team to the strongest team'
-                  : 'Follow the groups, gaps, attacks and points as the stage unfolds'}
-            </span>
-          </div>
-
           {result && resultsVisible ? (
             <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
               <div className="font-semibold">
@@ -15488,15 +15475,6 @@ function UniversalRaceReplayPage({
             </div>
           ) : null}
 
-
-          {shadowBuild.warnings.map((warning) => (
-            <div
-              key={warning}
-              className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800"
-            >
-              {warning}
-            </div>
-          ))}
 
           {result &&
           !result.intermediatePointFinalization.synchronization.synchronized ? (
