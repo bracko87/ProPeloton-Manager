@@ -1458,9 +1458,11 @@ export default function ProPackagesPage(): JSX.Element {
 
               {!loadingPremium && premiumStatus?.is_premium ? (
                 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
-                  {premiumStatus.cancel_at_period_end
-                    ? t('premium.activeEnding')
-                    : t('premium.active')}
+                  {hasManualPremiumAccess
+                    ? t('premium.accessOverride')
+                    : billingCancelAtPeriodEnd
+                      ? t('premium.activeEnding')
+                      : t('premium.active')}
                 </span>
               ) : (
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700">
@@ -1513,20 +1515,37 @@ export default function ProPackagesPage(): JSX.Element {
               </li>
             </ul>
 
-            {premiumStatus?.is_premium ? (
+            {hasManualPremiumAccess ? (
+              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div className="font-bold">
+                  {t('premium.accessOverrideActive')}
+                </div>
+                <div className="mt-1">
+                  {t('premium.accessOverrideUntil', {
+                    date: formatDate(premiumStatus?.access_until),
+                  })}
+                </div>
+                <div className="mt-1">
+                  {t('premium.noActiveRecurringSubscription')}
+                </div>
+              </div>
+            ) : premiumStatus?.is_premium ? (
               <div className="mt-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
                 <div className="font-bold">
-                  {premiumStatus.cancel_at_period_end
+                  {billingCancelAtPeriodEnd
                     ? t('premium.activeUntilEnd')
                     : t('premium.activeNow')}
                 </div>
                 <div className="mt-1">
-                  {premiumStatus.cancel_at_period_end
+                  {billingCancelAtPeriodEnd
                     ? t('premium.futureCanceled', {
-                        date: formatDate(premiumStatus.access_until || premiumStatus.current_period_end),
+                        date: formatDate(
+                          billingPeriodEnd ||
+                            premiumStatus.access_until,
+                        ),
                       })
                     : t('premium.periodEnds', {
-                        date: formatDate(premiumStatus.current_period_end),
+                        date: formatDate(billingPeriodEnd),
                       })}
                 </div>
               </div>
@@ -1601,11 +1620,15 @@ export default function ProPackagesPage(): JSX.Element {
             )}
 
             <div className="mt-3 text-xs text-gray-500">
-              {canCancelPremiumSubscription
-                ? t('premium.cancelHelp')
-                : showManageSubscription
-                  ? t('premium.manageHelp')
-                  : t('premium.checkoutHelp')}
+              {hasManualPremiumAccess
+                ? t('premium.manualAccessHelp')
+                : canCancelPremiumSubscription
+                  ? t('premium.cancelHelp')
+                  : billingStatus === 'canceled'
+                    ? t('premium.canceledBillingHelp')
+                    : showManageSubscription
+                      ? t('premium.manageHelp')
+                      : t('premium.checkoutHelp')}
             </div>
           </div>
         </div>
@@ -1778,13 +1801,17 @@ export default function ProPackagesPage(): JSX.Element {
           <MembershipItem label={t('membership.status')} value={statusLabel} />
           <MembershipItem
             label={t('membership.started')}
-            value={formatDate(premiumDetails?.created_at)}
+            value={formatDate(
+              billingSubscription?.current_period_start ||
+                premiumDetails?.created_at,
+            )}
           />
           <MembershipItem
             label={t('membership.periodEnds')}
             value={formatDate(
-              premiumDetails?.current_period_end ||
-                premiumStatus?.current_period_end,
+              hasManualPremiumAccess
+                ? premiumStatus?.access_until
+                : billingPeriodEnd,
             )}
           />
           <MembershipItem label={t('membership.nextRenewal')} value={nextRenewalLabel} />
@@ -1795,7 +1822,7 @@ export default function ProPackagesPage(): JSX.Element {
           />
           <MembershipItem
             label={t('membership.cancelAtEnd')}
-            value={premiumStatus?.cancel_at_period_end ? t('membership.yes') : t('membership.no')}
+            value={billingCancelAtPeriodEnd ? t('membership.yes') : t('membership.no')}
           />
         </div>
 
