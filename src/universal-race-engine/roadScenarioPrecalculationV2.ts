@@ -617,12 +617,34 @@ export function applyRoadScenarioFromPrecalculationV2(
     .filter((entry) => entry.raceId === input.race.raceId)
     .at(-1)?.family ?? null
   const seed = `race-director-v2:${input.race.raceId}:${input.stage.stageId}:${catalog.catalogVersion}`
+  const outcomeVariationChance =
+    input.stage.terrainType === 'flat' ? 0.18 :
+    input.stage.terrainType === 'hilly' ? 0.16 :
+    input.stage.terrainType === 'mountain' ? 0.12 :
+    input.stage.terrainType === 'cobbled' ? 0.14 :
+    0
+  const outcomeVariationRoll = unit(seed, 'breakaway-outcome-variation')
+  const breakawayOutcomeVariationEligible =
+    summary.breakawayPresent &&
+    summary.caught &&
+    summary.openingBreakSize >= 3 &&
+    summary.maximumPhysicalGapSeconds >= 75 &&
+    summary.breakDurationPct >= 0.32
+  const breakawayOutcomeVariationActive =
+    breakawayOutcomeVariationEligible &&
+    outcomeVariationRoll < outcomeVariationChance
 
   const candidates = catalog.templates.map((template) => {
     const similarity = templateSimilarity(template, summary)
     const exactUsed = usedSameRace.has(template.id) || usedSameDay.has(template.id)
     const familyPenalty = latestRaceFamily === template.family ? 0.045 : 0
     const varietyJitter = (unit(seed, `candidate:${template.id}`) - 0.5) * 0.04
+    const outcomeVariationBoost =
+      breakawayOutcomeVariationActive && template.family === 'breakaway'
+        ? template.finale.type === 'breakaway_finish'
+          ? 0.10
+          : 0.06
+        : 0
     return {
       template,
       similarity: similarity.score,
@@ -630,7 +652,11 @@ export function applyRoadScenarioFromPrecalculationV2(
       exactUsed,
       familyPenalty,
       varietyJitter,
-      score: round(similarity.score - familyPenalty + varietyJitter, 6),
+      outcomeVariationBoost,
+      score: round(
+        similarity.score - familyPenalty + varietyJitter + outcomeVariationBoost,
+        6,
+      ),
     }
   })
 
@@ -644,12 +670,31 @@ export function applyRoadScenarioFromPrecalculationV2(
   const best = ranked[0]
   if (!best) return { input, audit: null, summary }
 
-  const plausiblePool = ranked
+  const standardPlausiblePool = ranked
     .filter((candidate) =>
       candidate.score >= best.score - 0.10 &&
       candidate.similarity >= best.similarity - 0.14,
     )
     .slice(0, 5)
+
+  // The hidden pre-calculation is evidence, not destiny. If it produced a
+  // credible, established break but eventually caught it, allow a minority of
+  // deterministic race seeds to explore a still-plausible breakaway story.
+  // This changes only the scenario envelope; it never scripts the winner and
+  // remains fully subject to rider strength, commands, chase pressure and the
+  // physical engine in the official pass.
+  const breakawayVariationPool = breakawayOutcomeVariationActive
+    ? ranked
+        .filter((candidate) =>
+          candidate.template.family === 'breakaway' &&
+          candidate.similarity >= best.similarity - 0.28,
+        )
+        .slice(0, 4)
+    : []
+  const plausiblePool =
+    breakawayVariationPool.length > 0
+      ? breakawayVariationPool
+      : standardPlausiblePool
   const selected = weightedChoice(plausiblePool, seed) ?? best
 
   const generatedParameters = instantiateTemplate(selected.template, seed)
@@ -661,6 +706,7 @@ export function applyRoadScenarioFromPrecalculationV2(
       precalculationSimilarity: round(candidate.similarity * 100, 4),
       repetitionPenalty: candidate.familyPenalty === 0 ? 0 : round(-candidate.familyPenalty * 100, 4),
       varietyJitter: round(candidate.varietyJitter * 100, 4),
+      outcomeVariationBoost: round(candidate.outcomeVariationBoost * 100, 4),
       finalScore: round(candidate.score * 100, 4),
       excluded: unused.length > 0 && candidate.exactUsed,
       plausible: plausiblePool.some((entry) => entry.template.id === candidate.template.id),
@@ -683,6 +729,15 @@ export function applyRoadScenarioFromPrecalculationV2(
     selectionSeed: seed,
     compatibilityScore: round(selected.similarity * 100, 4),
     weightedSelectionPoolSize: plausiblePool.length,
+    outcomeVariation: {
+      contract: 'breakaway_outcome_variation_v1',
+      eligible: breakawayOutcomeVariationEligible,
+      active: breakawayOutcomeVariationActive,
+      chance: outcomeVariationChance,
+      roll: round(outcomeVariationRoll, 6),
+      expandedPoolSize: breakawayVariationPool.length,
+      physicalResultStillAuthoritative: true,
+    },
     gameDate,
     selectionModel: ROAD_RACE_DIRECTOR_V2_VERSION,
     preCalculationSummary: summary,
