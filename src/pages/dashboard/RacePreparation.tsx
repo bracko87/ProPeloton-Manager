@@ -3422,7 +3422,7 @@ export default function RacePreparationPage(): JSX.Element {
           }}
           className="rounded-xl border border-yellow-300 bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-900 hover:bg-yellow-100"
         >
-          Premium Race Strategy Lab
+          {t('premiumCenter:integrations.racePreparation.strategyLab')}
         </button>
       </header>
 
