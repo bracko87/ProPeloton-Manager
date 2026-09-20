@@ -164,7 +164,11 @@
     "safetyTitle": "Norme prioritarie e di sicurezza",
     "safetyText": "Le corse, i campi attivi, le attività quotidiane esistenti, le lesioni, le malattie e i casi di blocco della formazione medica hanno la priorità. Un allenatore su un corso o un altro incarico può avere disponibilità ridotta o zero.",
     "disabledTitle": "Quando l'automazione è disabilitata",
-    "disabledText": "Gli attuali Team Default e Rider persistente Sovrascrive controllare l'allenamento regolare esattamente come prima."
+    "disabledText": "Gli attuali Team Default e Rider persistente Sovrascrive controllare l'allenamento regolare esattamente come prima.",
+    "unassignAll": "Rimuovi allenatore e usa i predefiniti squadra",
+    "returningToDefaults": "Ripristino dei predefiniti squadra…",
+    "returnToDefaultsSuccess": "La gestione dell’allenatore è stata rimossa. Le impostazioni individuali sono state eliminate e i predefiniti squadra sono di nuovo attivi.",
+    "returnToDefaultsFailed": "Impossibile ripristinare i predefiniti squadra per l’allenamento."
   },
   "camps": {
     "currentTitle": "Campo di formazione attuale / programmato",
