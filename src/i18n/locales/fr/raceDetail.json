@@ -352,7 +352,8 @@
     "pointNoAward": "Ce point a été atteint sans résultat.",
     "currentStageTotals": "Total des étapes actuelles",
     "noAwards": "Aucun sprint, KOM, ni bonus n'ont encore été révélés.",
-    "total": "Total général"
+    "total": "Total général",
+    "premiumIncluded": "Premium inclut l'accès au replay de cette course mondiale."
   },
   "leaders": {
     "general": "Chef général",
