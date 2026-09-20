@@ -1,0 +1,19 @@
+{
+  "title": "Centre de Commandement Premium",
+  "subtitle": "Outils avancés de planification, simulation, organisation et automatisation construits à partir des informations déjà détenues par votre club.",
+  "premiumOnly": "Espace de gestion Premium",
+  "premiumOnlyBody": "Les managers Free conservent le jeu complet et le contrôle manuel. Premium ajoute des analyses approfondies, des simulations, des workflows enregistrés et le Smart Prefill sans augmenter la puissance en course.",
+  "upgrade": "Débloquer Premium",
+  "scopeTitle": "Séparé du Staff Briefing Centre",
+  "scopeBody": "Le Staff Briefing Centre reste le système séparé de conseillers payé en pièces : les employés sélectionnés interprètent de manière proactive l'entraînement, la santé, le programme de courses, l'équipement ou le scouting. Premium Command Center ne remplace pas ces conseillers. Il fournit des tableaux de bord déterministes, des simulations, des scénarios, des modèles et une automatisation contrôlée par l'utilisateur, sans dépendre des compétences du staff et sans produire de rapports advisor.",
+  "tabs": {
+    "summary": "Résumé de commandement",
+    "strategy": "Race Strategy Lab",
+    "season": "Planificateur de saison",
+    "transfers": "Transfer Command",
+    "finance": "Simulateur financier",
+    "sponsors": "Sponsor Intelligence",
+    "development": "Rider Development Lab",
+    "templates": "Modèles et automatisation"
+  }
+}
