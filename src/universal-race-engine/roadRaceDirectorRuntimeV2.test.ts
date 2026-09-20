@@ -59,7 +59,7 @@ function directorInput(withUserChase = false) {
               },
             },
             runtimeApplicationProof: {
-              contract: 'road_race_director_v2_1_runtime',
+              contract: 'road_race_director_v2_2_runtime',
               finalEngineSawTemplate: false,
               gapGuidanceCalls: 0,
               gapAdjustments: 0,
@@ -156,7 +156,7 @@ describe('Race Director V2.1 runtime story guidance', () => {
     expect(adjusted).toBeGreaterThan(0.5)
   })
 
-  it('accepts a physical catch after formation and never reuses the closed generation', () => {
+  it('accepts a weak physical catch after formation and never reuses the closed generation', () => {
     const input = directorInput(false)
     applyRoadScenarioGapGuidanceV1(input, 12, 6, 1)
     expect(applyRoadScenarioGapGuidanceV1(input, 0.3, 12, 1)).toBe(0.3)
@@ -172,6 +172,30 @@ describe('Race Director V2.1 runtime story guidance', () => {
     expect(updatedStates['1'].state).toBe('caught')
   })
 
+  it('prevents a credible established break from disappearing in one step far before a late catch window', () => {
+    const input = directorInput(false)
+    applyRoadScenarioGapGuidanceV1(input, 180, 45, 1)
+
+    const adjusted = applyRoadScenarioGapGuidanceV1(input, 0.3, 90, 1)
+    expect(adjusted).toBeGreaterThan(0.5)
+    expect(adjusted).toBeLessThanOrEqual(8)
+
+    const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const states = proof.generationStates as Record<string, Record<string, unknown>>
+    expect(states['1'].state).not.toBe('caught')
+    expect(proof.lastGapAdjustmentReason).toBe('prevent_one_step_premature_catch')
+  })
+
+  it('lets a coordinated real chase override premature-catch protection', () => {
+    const input = multiTeamDirectorInput(8)
+    applyRoadScenarioGapGuidanceV1(input, 180, 45, 1)
+
+    expect(applyRoadScenarioGapGuidanceV1(input, 0.3, 90, 1)).toBe(0.3)
+    const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const states = proof.generationStates as Record<string, Record<string, unknown>>
+    expect(states['1'].state).toBe('caught')
+  })
+
   it('never resurrects a break that the physical engine has already caught', () => {
     const input = directorInput(false)
 
@@ -185,13 +209,13 @@ describe('Race Director V2.1 runtime story guidance', () => {
     const audit = getRoadScenarioPhysicalAuditV1(input)
     const proof = audit?.runtimeApplicationProof as Record<string, unknown>
 
-    expect(proof.contract).toBe('road_race_director_v2_1_runtime')
+    expect(proof.contract).toBe('road_race_director_v2_2_runtime')
     expect(proof.finalEngineSawTemplate).toBe(true)
     expect(Number(proof.gapGuidanceCalls)).toBeGreaterThan(0)
     expect(Number(proof.gapAdjustments)).toBeGreaterThan(0)
   })
 
-  it('uses the template front-group range as a soft finale boundary without forcing an exact survivor count', () => {
+  it('never manufactures finish fragmentation on a flat road stage', () => {
     const input = directorInput(false)
     const states = Array.from({ length: 20 }, (_, index) => ({
       riderId: `r${index + 1}`,
@@ -200,12 +224,25 @@ describe('Race Director V2.1 runtime story guidance', () => {
       energyAtFinish: 100 - index * 2,
     }))
     const adjusted = applyRoadScenarioFinishFragmentationV1(input, states)
+
+    expect(adjusted.every((state) => state.finalGapSeconds === 0)).toBe(true)
+  })
+
+  it('keeps front-group targets as audit expectations instead of forcing hilly survivor counts', () => {
+    const input = directorInput(false)
+    input.stage.terrainType = 'hilly'
+    const states = Array.from({ length: 20 }, (_, index) => ({
+      riderId: `h${index + 1}`,
+      finalGapSeconds: 0,
+      finalGroupCode: 'winning_group',
+      energyAtFinish: 100 - index * 2,
+    }))
+    const adjusted = applyRoadScenarioFinishFragmentationV1(input, states)
     const front = adjusted.filter((state) => state.finalGapSeconds <= 0.5)
 
-    expect(front.length).toBeGreaterThanOrEqual(6)
-    expect(front.length).toBeLessThanOrEqual(11)
-    expect(front.some((state) => state.riderId === 'r1')).toBe(true)
-    expect(adjusted.some((state) => state.finalGapSeconds > 0.5)).toBe(true)
+    expect(front.length).toBeGreaterThan(10)
+    expect(front.length).toBeLessThan(20)
+    expect(front.some((state) => state.riderId === 'h1')).toBe(true)
 
     const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
     const topology = proof.fragmentationTopology as Record<string, unknown>
