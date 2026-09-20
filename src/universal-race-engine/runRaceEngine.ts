@@ -18794,6 +18794,15 @@ export function buildUniversalIntermediatePointBattles(
       const komCategoryDifficultyFactor = getKomCategoryDifficultyFactor(
         pointPlan.komCategory,
       )
+      const finishRankByRiderId = new Map(
+        (roadRaceResolution.phase4Finish?.finish.rankings ?? []).map(
+          (ranking) => [ranking.riderId, ranking.rank] as const,
+        ),
+      )
+      const pointSharesFinishLine =
+        pointPlan.pointType === 'KOM' &&
+        Math.abs(pointPlan.kmFromStart - input.stage.distanceKm) <= 0.25
+
       const scoredContestants = pointPlan.candidates
         .filter((candidate) => candidate.canCrossPoint)
         .map((candidate) => {
@@ -18891,15 +18900,26 @@ export function buildUniversalIntermediatePointBattles(
             },
           }
         })
-        .sort(
-          (left, right) =>
+        .sort((left, right) => {
+          if (pointSharesFinishLine) {
+            const leftFinishRank =
+              finishRankByRiderId.get(left.riderId) ?? Number.MAX_SAFE_INTEGER
+            const rightFinishRank =
+              finishRankByRiderId.get(right.riderId) ?? Number.MAX_SAFE_INTEGER
+            if (leftFinishRank !== rightFinishRank) {
+              return leftFinishRank - rightFinishRank
+            }
+          }
+
+          return (
             getIntermediatePointRacePositionOrder(left.racePosition) -
               getIntermediatePointRacePositionOrder(right.racePosition) ||
             right.score - left.score ||
             right.liveEnergyBeforeBattle - left.liveEnergyBeforeBattle ||
             right.readinessScore - left.readinessScore ||
-            left.riderId.localeCompare(right.riderId),
-        )
+            left.riderId.localeCompare(right.riderId)
+          )
+        })
 
       const rankings: UniversalIntermediatePointBattleRanking[] =
         scoredContestants.map((contestant, index) => ({
