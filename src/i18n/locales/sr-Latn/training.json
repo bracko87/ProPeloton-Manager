@@ -164,7 +164,11 @@
     "safetyTitle": "Prioriteti i bezbednosna pravila",
     "safetyText": "Trke, aktivni kampovi, postojeće dnevne aktivnosti, povrede, bolesti i medicinski slučajevi koji blokiraju trening imaju prioritet. Trener koji je na kursu ili drugom zadatku može imati smanjenu ili nikakvu dostupnost.",
     "disabledTitle": "Kada je automatizacija isključena",
-    "disabledText": "Postojeća Podrazumevana podešavanja tima i trajna Individualna podešavanja vozača kontrolišu redovni trening kao i ranije."
+    "disabledText": "Postojeća Podrazumevana podešavanja tima i trajna Individualna podešavanja vozača kontrolišu redovni trening kao i ranije.",
+    "unassignAll": "Poništi dodelu trenera i koristi podešavanja tima",
+    "returningToDefaults": "Vraćanje na podešavanja tima…",
+    "returnToDefaultsSuccess": "Upravljanje Glavnog trenera je isključeno. Individualna podešavanja vozača su uklonjena i ponovo važe podešavanja tima.",
+    "returnToDefaultsFailed": "Trening nije moguće vratiti na podešavanja tima."
   },
   "camps": {
     "currentTitle": "Trenutni / planirani trening kamp",
