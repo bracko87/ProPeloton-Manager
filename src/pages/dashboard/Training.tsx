@@ -3133,7 +3133,7 @@ export default function TrainingPage(): JSX.Element {
       {t('camps.noneCurrent')}
     </p>
   </div>
-)}
+)
       ) : null}
 
       {activeTab === 'regular' ? (
