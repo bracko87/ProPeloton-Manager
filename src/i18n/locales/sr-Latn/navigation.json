@@ -37,7 +37,8 @@
     "infrastructure": "Objekti i razvoj",
     "finance": "Budžet, prihodi i troškovi",
     "transfers": "Kupovina, prodaja i pregovori",
-    "statistics": "Učinak i analitika"
+    "statistics": "Učinak i analitika",
+    "premiumCenter": "Napredno planiranje, simulacije i automatizacija"
   },
   "header": {
     "toggleSidebar": "Prikaži ili sakrij bočnu navigaciju",
@@ -151,5 +152,6 @@
   },
   "premiumFeature": {
     "unlock": "Otključaj uz Premium"
-  }
+  },
+  "premiumCenter": "Premium centar"
 }
