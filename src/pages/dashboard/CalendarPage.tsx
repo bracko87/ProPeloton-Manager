@@ -1712,15 +1712,13 @@ export default function CalendarPage(): JSX.Element {
   }, [seasonRaceEntries])
 
   const activePremiumFilterCount = useMemo(() => {
-    if (!isPremium) return 0
-
     return [
       premiumRaceFilters.countryCode !== 'all',
       premiumRaceFilters.category !== 'all',
       premiumRaceFilters.raceType !== 'all',
       premiumRaceFilters.myRaceStatus !== 'all',
       premiumRaceFilters.applicationStatus !== 'all',
-      premiumRaceFilters.sponsorTargetsOnly,
+      isPremium && premiumRaceFilters.sponsorTargetsOnly,
     ].filter(Boolean).length
   }, [isPremium, premiumRaceFilters])
 
@@ -1764,8 +1762,6 @@ export default function CalendarPage(): JSX.Element {
   }, [sponsorObjectiveTargets])
 
   const filteredActiveMonthRaces = useMemo(() => {
-    if (!isPremium) return activeMonthRaces
-
     return activeMonthRaces.filter(race => {
       if (
         premiumRaceFilters.countryCode !== 'all' &&
@@ -1805,6 +1801,7 @@ export default function CalendarPage(): JSX.Element {
       }
 
       if (
+        isPremium &&
         premiumRaceFilters.sponsorTargetsOnly &&
         !(sponsorObjectiveTargetsByRaceId[race.id]?.length > 0)
       ) {
@@ -2398,10 +2395,10 @@ export default function CalendarPage(): JSX.Element {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold text-gray-900">{t('filters.title')}</span>
-                    <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
-                      {t('filters.premium')}
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">
+                      {t('filters.free', { defaultValue: 'Free filters' })}
                     </span>
-                    {isPremium && activePremiumFilterCount > 0 ? (
+                    {activePremiumFilterCount > 0 ? (
                       <span className="text-xs text-gray-500">
                         {t('filters.activeCount', { count: activePremiumFilterCount })}
                       </span>
@@ -2413,7 +2410,7 @@ export default function CalendarPage(): JSX.Element {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {isPremium && activePremiumFilterCount > 0 ? (
+                  {activePremiumFilterCount > 0 ? (
                     <button
                       type="button"
                       onClick={clearPremiumRaceFilters}
@@ -2430,20 +2427,13 @@ export default function CalendarPage(): JSX.Element {
                     className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 transition hover:border-yellow-400 hover:bg-yellow-50 disabled:cursor-wait disabled:text-gray-400"
                     aria-expanded={premiumFiltersOpen}
                   >
-                    {premiumStatusLoading
-                      ? t('filters.checkingPremium')
-                      : isPremium
-                        ? premiumFiltersOpen
-                          ? t('filters.hide')
-                          : t('filters.open')
-                        : t('filters.premiumFilters')}
+                    {premiumFiltersOpen ? t('filters.hide') : t('filters.open')}
                   </button>
                 </div>
               </div>
 
               {premiumFiltersOpen ? (
-                isPremium ? (
-                  <div className="mt-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="mt-2 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                       <div
                         ref={countryFilterMenuRef}
@@ -2595,16 +2585,20 @@ export default function CalendarPage(): JSX.Element {
                     </div>
 
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3">
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                      <label className={`flex items-center gap-2 text-sm ${isPremium ? 'cursor-pointer text-gray-700' : 'cursor-not-allowed text-gray-400'}`}>
                         <input
                           type="checkbox"
-                          checked={premiumRaceFilters.sponsorTargetsOnly}
+                          checked={isPremium && premiumRaceFilters.sponsorTargetsOnly}
+                          disabled={!isPremium}
                           onChange={event =>
                             updatePremiumRaceFilter('sponsorTargetsOnly', event.target.checked)
                           }
-                          className="h-4 w-4 rounded border-gray-300 text-yellow-400 focus:ring-yellow-400"
+                          className="h-4 w-4 rounded border-gray-300 text-yellow-400 focus:ring-yellow-400 disabled:opacity-50"
                         />
-                        {t('filters.sponsorOnly')}
+                        <span>{t('filters.sponsorOnly')}</span>
+                        <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                          {t('filters.premium')}
+                        </span>
                       </label>
 
                       <div className="text-xs text-gray-500">
@@ -2616,28 +2610,6 @@ export default function CalendarPage(): JSX.Element {
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="mt-2 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span aria-hidden="true">🔒</span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {t('filters.premiumTitle')}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-gray-500">
-                        {t('filters.premiumDescription')}
-                      </p>
-                    </div>
-
-                    <Link
-                      to="/dashboard/premium"
-                      className="shrink-0 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 transition hover:border-yellow-400 hover:bg-yellow-50"
-                    >
-                      {t('filters.unlockPremium')}
-                    </Link>
-                  </div>
-                )
               ) : null}
             </div>
 
