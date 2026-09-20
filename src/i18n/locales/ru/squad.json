@@ -27,9 +27,9 @@
     "skillsView": "Вид навыков",
     "formDevelopment": "Форма и разработка",
     "checkingPremium": "Проверка Premium доступ...",
-    "advancedPremium": "Требуется углубленный обзор Premium.",
+    "advancedPremium": "Режимы Financial и Skills требуют Premium. General, Form и базовая информация о здоровье доступны Free.",
     "viewPremium": "Вид Premium",
-    "onlyPremium": "Только для Premium пользователей",
+    "onlyPremium": "Режимы Financial и Skills доступны в Premium",
     "premiumOnly": "Premium только"
   },
   "columns": {
