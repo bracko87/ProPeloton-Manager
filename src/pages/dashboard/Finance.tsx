@@ -32,6 +32,10 @@ import { SponsorsTab } from './finance/SponsorsTab'
 import { TransactionsTab } from './finance/TransactionsTab'
 import { TaxTab } from './finance/TaxTab'
 import { TeamPoliciesOperationsTab } from './finance/TeamPoliciesOperationsTab'
+import {
+  PremiumFinancialSimulator,
+  PremiumSponsorIntelligence,
+} from './finance/PremiumFinanceTools'
 
 type TabKey =
   | 'overview'
@@ -610,21 +614,6 @@ export default function FinancePage(): JSX.Element {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() =>
-              navigate(
-                tab === 'sponsors'
-                  ? '/dashboard/premium-center?tab=sponsors'
-                  : '/dashboard/premium-center?tab=finance',
-              )
-            }
-            className="rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-semibold text-yellow-900 hover:bg-yellow-100"
-          >
-            {tab === 'sponsors'
-              ? t('premiumCenter:integrations.finance.sponsorIntelligence')
-              : t('premiumCenter:integrations.finance.simulator')}
-          </button>
-          <button
-            type="button"
             onClick={() => void loadBase()}
             className="px-3 py-2 rounded bg-white shadow text-sm hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={loading}
@@ -678,13 +667,26 @@ export default function FinancePage(): JSX.Element {
                 currency={currency}
                 transactions={overviewTransactions}
               />
+              {clubId && summary ? (
+                <PremiumFinancialSimulator
+                  clubId={clubId}
+                  snapshot={{
+                    balance: summary.current_balance,
+                    weeklyIncome: summary.weekly_income,
+                    weeklyExpenses: summary.weekly_expenses,
+                  }}
+                />
+              ) : null}
             </ErrorBoundary>
           )}
 
           {tab === 'sponsors' && (
             <ErrorBoundary title={t('page.sponsorsTabError')}>
               {clubId ? (
-                <SponsorsTab clubId={clubId} />
+                <>
+                  <SponsorsTab clubId={clubId} />
+                  <PremiumSponsorIntelligence clubId={clubId} />
+                </>
               ) : (
                 <div className="bg-white p-4 rounded shadow text-sm text-gray-600">
                   {t('page.noSponsorClub')}
