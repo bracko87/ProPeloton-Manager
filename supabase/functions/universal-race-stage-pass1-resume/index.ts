@@ -3,13 +3,13 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.5
 import {
   buildScenarioProductionUniversalRaceEngineInput,
   getRoadScenarioAuditV1,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/f4a4bd815c6ea1c0c1a121debff28569a5a7c5bb/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/26a383bc2bc94db064fb8826a806594e37895885/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
-const SOURCE_COMMIT = "f4a4bd815c6ea1c0c1a121debff28569a5a7c5bb";
-const CONTRACT = "universal_race_pass1_resume_v2";
+const SOURCE_COMMIT = "26a383bc2bc94db064fb8826a806594e37895885";
+const CONTRACT = "universal_race_pass1_resume_v5";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -204,7 +204,31 @@ Deno.serve(async (request: Request) => {
     .then((result) => console.log(JSON.stringify({ ...result, contract: CONTRACT })))
     .catch(async (error) => {
       const serialized = errorPayload(error);
-      await heartbeat(supabase, stageId, runId, "pass1_resume_failed", { error: serialized, source_commit: SOURCE_COMMIT });
+      await heartbeat(supabase, stageId, runId, "pass1_resume_failed", {
+        error: serialized,
+        source_commit: SOURCE_COMMIT,
+      });
+      try {
+        await rpc(supabase, "universal_race_stage_fail_calculation_v1", {
+          p_stage_id: stageId,
+          p_simulation_run_id: runId,
+          p_error_message: serialized.message ?? "Pass 1 calculation failed.",
+          p_error_details: {
+            reason: "pass1_engine_exception",
+            source_commit: SOURCE_COMMIT,
+            error: serialized,
+            immediate_failure_release: true,
+          },
+        });
+      } catch (failureError) {
+        console.error(JSON.stringify({
+          status: "failure_release_failed",
+          contract: CONTRACT,
+          stage_id: stageId,
+          simulation_run_id: runId,
+          error: errorPayload(failureError),
+        }));
+      }
       console.error(JSON.stringify({ status: "failed", contract: CONTRACT, stage_id: stageId, simulation_run_id: runId, error: serialized }));
     });
   EdgeRuntime.waitUntil(task);
