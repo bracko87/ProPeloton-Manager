@@ -333,7 +333,11 @@
       "open": "Kommandozentrale öffnen",
       "strategy": "Race Strategy Lab",
       "season": "Saisonplaner",
-      "finance": "Finanzsimulator"
+      "finance": "Finanzsimulator",
+      "attentionItems_one": "{{count}} Hinweis",
+      "attentionItems_other": "{{count}} Hinweise",
+      "openItem": "Öffnen",
+      "noUrgent": "Derzeit warten keine dringenden Managementpunkte auf deine Aufmerksamkeit."
     },
     "riderProfile": {
       "title": "Premium Fahrerentwicklungs-Lab",
