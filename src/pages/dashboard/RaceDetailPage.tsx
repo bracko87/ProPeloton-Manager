@@ -15555,7 +15555,7 @@ function UniversalRaceReplayPage({
           {result && resultsVisible ? (
             <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
               <div className="font-semibold">
-                Replay complete · {humanizeCode(result.finishResolution.finishMode)}
+                Replay complete · {input?.stage.terrainType ? `${humanizeCode(input.stage.terrainType)} · ` : ''}{humanizeCode(result.finishResolution.finishMode)} finish
               </div>
               <div className="mt-1 text-xs leading-5 text-emerald-800">
                 Winner: {replayWinnerName} · Model: {result.finishResolution.modelVersion} · Classification rows: {result.finishResolution.classification.length}
