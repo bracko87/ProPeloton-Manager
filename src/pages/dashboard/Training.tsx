@@ -18,7 +18,7 @@ import {
   saveTutorialProgress
 } from '../../lib/tutorialProgress'
 
-type TabKey = 'regular' | 'camps'
+type TabKey = 'regular' | 'camps' | 'development'
 type CampType = 'general' | 'sprint' | 'climbing' | 'flat' | 'time_trial'
 type AvailabilityStatus = 'fit' | 'not_fully_fit' | 'injured' | 'sick'
 type RegularTrainingIntensity = 'recovery' | 'light' | 'normal' | 'hard'
@@ -1169,6 +1169,7 @@ export default function TrainingPage(): JSX.Element {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const focusedRiderId = searchParams.get('riderId')
+  const requestedTrainingTab = searchParams.get('tab')
 
   const [activeTab, setActiveTab] = useState<TabKey>('regular')
   const [loading, setLoading] = useState(true)
@@ -1957,6 +1958,19 @@ export default function TrainingPage(): JSX.Element {
       setActiveTab('regular')
     }
   }, [focusedRiderId])
+
+  useEffect(() => {
+    if (premiumStatusLoading) return
+
+    if (requestedTrainingTab === 'development' && isPremium && !focusedRiderId) {
+      setActiveTab('development')
+      return
+    }
+
+    if (!isPremium) {
+      setActiveTab(current => (current === 'development' ? 'regular' : current))
+    }
+  }, [focusedRiderId, isPremium, premiumStatusLoading, requestedTrainingTab])
 
   useEffect(() => {
     setCurrentPage(1)
@@ -2958,6 +2972,20 @@ export default function TrainingPage(): JSX.Element {
             >
               {t('page.campsTab')}
             </button>
+
+            {!premiumStatusLoading && isPremium ? (
+              <button
+                type="button"
+                onClick={() => setActiveTab('development')}
+                className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
+                  activeTab === 'development'
+                    ? 'bg-yellow-400 text-black shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {t('premiumCenter:tabs.development')}
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -2995,116 +3023,118 @@ export default function TrainingPage(): JSX.Element {
         </div>
       ) : null}
 
-      {currentCampBooking ? (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {t('camps.currentTitle')}
-                </h3>
-
-                <p className="mt-1 text-sm text-gray-700">
-                  {currentCampBooking.city_snapshot ?? 'Training Camp'} ·{' '}
-                  {titleCaseFromSnake(currentCampBooking.camp_type_snapshot)}
-                </p>
-
-                <p className="mt-2 text-sm text-gray-600">
-                  {formatGameDateLabel(currentCampBooking.start_date)} →{' '}
-                  {formatGameDateLabel(currentCampBooking.end_date)}
-                </p>
-
-                {currentGameDateParts?.season_number != null ? (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Season {currentGameDateParts.season_number}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate(`/dashboard/training/current-camp/${currentCampBooking.id}`)
-                  }
-                  className={openCurrentCampButtonClass}
-                >
-                  {t('camps.openCurrent')}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={openCancelCampModal}
-                  disabled={isCancellingCamp}
-                  className={cancelCampButtonClass}
-                >
-                  {isCancellingCamp ? 'Cancelling…' : t('camps.cancelCamp')}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 md:justify-end">
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  currentCampBooking.status === 'active'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-blue-100 text-blue-700'
-                }`}
-              >
-                {currentCampBooking.status}
-              </span>
-
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!currentCampBooking) return
-                  await loadCurrentCampParticipants(currentCampBooking.id)
-                  setShowAssignedRidersModal(true)
-                }}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700 hover:bg-gray-50"
-              >
-                Riders: {currentCampBooking.participants_count ?? 0}
-              </button>
-
-              <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
-                Staff: {currentCampBooking.staff_count ?? 0}
-              </span>
-
-              <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
-                Charged:{' '}
-                {currentCampBooking.charged_participants_count ??
-                  currentCampBooking.participants_count ??
-                  0}
-              </span>
-
-              <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
-                {formatCurrency(currentCampBooking.total_cost ?? 0)}
-              </span>
-            </div>
-          </div>
-
-          {cancelCampError ? (
-            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {cancelCampError}
-            </div>
-          ) : null}
-
-          <div className="mt-4 text-sm text-gray-600">
-            Existing camp dates are outlined in blue in the date picker. Overlap is enforced per
-            rider during validation and booking, so another camp in the same period can still be
-            planned if riders do not conflict.
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      {activeTab !== 'development' ? (
+        currentCampBooking ? (
+  <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
           <h3 className="text-lg font-semibold text-gray-900">
             {t('camps.currentTitle')}
           </h3>
-          <p className="mt-2 text-sm text-gray-600">
-            {t('camps.noneCurrent')}
+
+          <p className="mt-1 text-sm text-gray-700">
+            {currentCampBooking.city_snapshot ?? 'Training Camp'} ·{' '}
+            {titleCaseFromSnake(currentCampBooking.camp_type_snapshot)}
           </p>
+
+          <p className="mt-2 text-sm text-gray-600">
+            {formatGameDateLabel(currentCampBooking.start_date)} →{' '}
+            {formatGameDateLabel(currentCampBooking.end_date)}
+          </p>
+
+          {currentGameDateParts?.season_number != null ? (
+            <p className="mt-1 text-xs text-gray-500">
+              Season {currentGameDateParts.season_number}
+            </p>
+          ) : null}
         </div>
-      )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/dashboard/training/current-camp/${currentCampBooking.id}`)
+            }
+            className={openCurrentCampButtonClass}
+          >
+            {t('camps.openCurrent')}
+          </button>
+
+          <button
+            type="button"
+            onClick={openCancelCampModal}
+            disabled={isCancellingCamp}
+            className={cancelCampButtonClass}
+          >
+            {isCancellingCamp ? 'Cancelling…' : t('camps.cancelCamp')}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 md:justify-end">
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            currentCampBooking.status === 'active'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-blue-100 text-blue-700'
+          }`}
+        >
+          {currentCampBooking.status}
+        </span>
+
+        <button
+          type="button"
+          onClick={async () => {
+            if (!currentCampBooking) return
+            await loadCurrentCampParticipants(currentCampBooking.id)
+            setShowAssignedRidersModal(true)
+          }}
+          className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700 hover:bg-gray-50"
+        >
+          Riders: {currentCampBooking.participants_count ?? 0}
+        </button>
+
+        <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
+          Staff: {currentCampBooking.staff_count ?? 0}
+        </span>
+
+        <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
+          Charged:{' '}
+          {currentCampBooking.charged_participants_count ??
+            currentCampBooking.participants_count ??
+            0}
+        </span>
+
+        <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-700">
+          {formatCurrency(currentCampBooking.total_cost ?? 0)}
+        </span>
+      </div>
+    </div>
+
+    {cancelCampError ? (
+      <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {cancelCampError}
+      </div>
+    ) : null}
+
+    <div className="mt-4 text-sm text-gray-600">
+      Existing camp dates are outlined in blue in the date picker. Overlap is enforced per
+      rider during validation and booking, so another camp in the same period can still be
+      planned if riders do not conflict.
+    </div>
+  </div>
+) : (
+  <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <h3 className="text-lg font-semibold text-gray-900">
+      {t('camps.currentTitle')}
+    </h3>
+    <p className="mt-2 text-sm text-gray-600">
+      {t('camps.noneCurrent')}
+    </p>
+  </div>
+)
+      ) : null}
 
       {activeTab === 'regular' ? (
         <div className="space-y-6">
@@ -3120,6 +3150,9 @@ export default function TrainingPage(): JSX.Element {
               onMessage={setRegularMessage}
               onError={setError}
               onAutomationStateChange={setHeadCoachAutomation}
+              onReturnToDefaults={() =>
+                loadRegularTrainingConfig(familyClubs.map(team => team.club_id))
+              }
             />
           ) : (
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -3251,10 +3284,6 @@ export default function TrainingPage(): JSX.Element {
                 </div>
               ) : null}
             </div>
-          ) : null}
-
-          {isPremium && clubId ? (
-            <PremiumRiderDevelopmentPanel clubId={clubId} />
           ) : null}
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -3662,6 +3691,10 @@ export default function TrainingPage(): JSX.Element {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {activeTab === 'development' && isPremium && clubId ? (
+        <PremiumRiderDevelopmentPanel clubId={clubId} />
       ) : null}
 
       {activeTab === 'camps' ? (

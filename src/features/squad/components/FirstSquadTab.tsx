@@ -1546,7 +1546,7 @@ export default function FirstSquadTab({
                   stageLabel={visibleLastTeamRace?.stageLabel}
                   routeLabel={visibleLastTeamRace?.routeLabel}
                   stageCount={visibleLastTeamRace?.stageCount}
-                  emptyLabel={t('races.noFinishedClassification')}
+                  emptyLabel={t('races.noFinished')}
                 />
               </div>
 
@@ -1577,11 +1577,11 @@ export default function FirstSquadTab({
                     </tbody>
                   </table>
                 </div>
-              ) : (
+              ) : visibleLastTeamRace?.raceName ? (
                 <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-                  {t('races.noFinishedClassification')}
+                  {t('races.noFinished')}
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div className="rounded-lg bg-white p-4 shadow">

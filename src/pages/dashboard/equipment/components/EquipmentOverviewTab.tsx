@@ -8,6 +8,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { supabase } from '../../../../lib/supabase'
 import EquipmentSetupPresetsBox from './EquipmentSetupPresetsBox'
 import EquipmentOptionPreviewPopover from './EquipmentOptionPreviewPopover'
 import {
@@ -556,97 +557,6 @@ export default function EquipmentOverviewTab({
             </p>
           </div>
 
-          {equipmentAccess?.is_premium ? (
-            <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50/60 p-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-sm font-semibold text-gray-900">
-                      {t('premiumCenter:integrations.equipment.title')}
-                    </div>
-                    <span className="rounded-full border border-yellow-300 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
-                      Premium
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs leading-5 text-gray-600">
-                    {t('premiumCenter:integrations.equipment.description')}
-                  </p>
-                </div>
-                <a
-                  href="#/dashboard/premium-center?tab=templates"
-                  className="shrink-0 rounded-lg border border-yellow-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-yellow-50"
-                >
-                  {t('premiumCenter:integrations.equipment.manage')}
-                </a>
-              </div>
-
-              {premiumTemplates.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {premiumTemplates.map(template => (
-                    <button
-                      type="button"
-                      key={template.id}
-                      onClick={() =>
-                        applyPremiumEquipmentPayload(
-                          template.payload_json ?? {},
-                          template.name,
-                        )
-                      }
-                      className="rounded-lg border border-yellow-200 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:border-yellow-400"
-                    >
-                      {template.name}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-3 text-xs text-gray-600">
-                  {t('premiumCenter:integrations.equipment.none')}
-                </div>
-              )}
-
-              <div className="mt-3 grid gap-2 lg:grid-cols-[1fr_auto]">
-                <div className="flex gap-2">
-                  <input
-                    value={premiumTemplateName}
-                    onChange={event => setPremiumTemplateName(event.target.value)}
-                    placeholder={t('premiumCenter:integrations.equipment.namePlaceholder')}
-                    className="min-w-0 flex-1 rounded-lg border border-yellow-200 bg-white px-3 py-2 text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void savePremiumEquipmentTemplate()}
-                    disabled={premiumTemplateBusy || !premiumTemplateName.trim()}
-                    className="rounded-lg bg-gray-950 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
-                  >
-                    {t('premiumCenter:integrations.equipment.saveDraft')}
-                  </button>
-                </div>
-
-                <div className="flex gap-2">
-                  <select
-                    value={premiumPrefillTerrain}
-                    onChange={event => setPremiumPrefillTerrain(event.target.value)}
-                    className="rounded-lg border border-yellow-200 bg-white px-3 py-2 text-xs"
-                  >
-                    <option value="flat">{t('premiumCenter:values.flat')}</option>
-                    <option value="hilly">{t('premiumCenter:values.hilly')}</option>
-                    <option value="mountain">{t('premiumCenter:values.mountain')}</option>
-                    <option value="cobbles">{t('premiumCenter:values.cobbles')}</option>
-                    <option value="time_trial">{t('premiumCenter:values.time_trial')}</option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => void applyEquipmentSmartPrefill()}
-                    disabled={premiumTemplateBusy}
-                    className="rounded-lg border border-yellow-300 bg-white px-3 py-2 text-xs font-semibold text-yellow-900 hover:bg-yellow-100 disabled:opacity-40"
-                  >
-                    {t('premiumCenter:integrations.equipment.smartPrefill')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
           {setupMessage ? (
             <div className="mt-3 rounded border border-green-200 bg-green-50 p-2 text-xs text-green-700">
               {setupMessage}
@@ -1005,6 +915,101 @@ export default function EquipmentOverviewTab({
           </div>
         </div>
       )}
+
+      {equipmentAccess?.is_premium ? (
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div className="max-w-4xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {t('premiumCenter:integrations.equipment.title')}
+                </h3>
+                <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                  {t('common.premium')}
+                </span>
+              </div>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                {t('premiumCenter:integrations.equipment.description')}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                {t('premiumCenter:integrations.equipment.difference')}
+              </p>
+            </div>
+
+            <a
+              href="#/dashboard/premium-center?tab=templates"
+              className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {t('premiumCenter:integrations.equipment.manage')}
+            </a>
+          </div>
+
+          {premiumTemplates.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {premiumTemplates.map(template => (
+                <button
+                  type="button"
+                  key={template.id}
+                  onClick={() =>
+                    applyPremiumEquipmentPayload(
+                      template.payload_json ?? {},
+                      template.name,
+                    )
+                  }
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
+                >
+                  {template.name}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+              {t('premiumCenter:integrations.equipment.none')}
+            </div>
+          )}
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                value={premiumTemplateName}
+                onChange={event => setPremiumTemplateName(event.target.value)}
+                placeholder={t('premiumCenter:integrations.equipment.namePlaceholder')}
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => void savePremiumEquipmentTemplate()}
+                disabled={premiumTemplateBusy || !premiumTemplateName.trim()}
+                className="rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-medium text-white hover:bg-black disabled:opacity-40"
+              >
+                {t('premiumCenter:integrations.equipment.saveDraft')}
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <select
+                value={premiumPrefillTerrain}
+                onChange={event => setPremiumPrefillTerrain(event.target.value)}
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
+              >
+                <option value="flat">{t('premiumCenter:values.flat')}</option>
+                <option value="hilly">{t('premiumCenter:values.hilly')}</option>
+                <option value="mountain">{t('premiumCenter:values.mountain')}</option>
+                <option value="cobbles">{t('premiumCenter:values.cobbles')}</option>
+                <option value="time_trial">{t('premiumCenter:values.time_trial')}</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => void applyEquipmentSmartPrefill()}
+                disabled={premiumTemplateBusy}
+                className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2.5 text-sm font-medium text-yellow-900 hover:bg-yellow-100 disabled:opacity-40"
+              >
+                {t('premiumCenter:integrations.equipment.smartPrefill')}
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <EquipmentSetupPresetsBox
         clubId={clubId}

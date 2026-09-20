@@ -164,7 +164,11 @@
     "safetyTitle": "Prioridades y normas de seguridad",
     "safetyText": "Las carreras, los campamentos activos, la actividad diaria existente, las lesiones, las enfermedades y los casos médicos de bloqueo de entrenamiento tienen prioridad. Un entrenador en un curso u otra asignación puede tener disponibilidad reducida o cero.",
     "disabledTitle": "Cuando la automatización está desactivada",
-    "disabledText": "Los Defaults de Equipo existentes y los Sobrecargados de Rider persistentes controlan el entrenamiento regular exactamente como antes."
+    "disabledText": "Los Defaults de Equipo existentes y los Sobrecargados de Rider persistentes controlan el entrenamiento regular exactamente como antes.",
+    "unassignAll": "Desasignar entrenador y usar valores del equipo",
+    "returningToDefaults": "Restaurando los valores del equipo…",
+    "returnToDefaultsSuccess": "Se desasignó la gestión del entrenador. Se eliminaron los ajustes individuales y vuelven a estar activos los valores del equipo.",
+    "returnToDefaultsFailed": "No se pudo devolver el entrenamiento a los valores predeterminados del equipo."
   },
   "camps": {
     "currentTitle": "Campamento de entrenamiento actual / planificado",

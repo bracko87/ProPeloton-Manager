@@ -164,7 +164,11 @@
     "safetyTitle": "Règles de priorité et de sécurité",
     "safetyText": "Les courses, les camps actifs, les activités quotidiennes existantes, les blessures, les maladies et les cas médicaux de blocage de l'entraînement sont prioritaires.",
     "disabledTitle": "Lorsque l'automatisation est désactivée",
-    "disabledText": "L'équipe existante par défaut et les surpasseurs de Rider persistants contrôlent l'entraînement régulier exactement comme auparavant."
+    "disabledText": "L'équipe existante par défaut et les surpasseurs de Rider persistants contrôlent l'entraînement régulier exactement comme auparavant.",
+    "unassignAll": "Désaffecter l’entraîneur et utiliser les réglages d’équipe",
+    "returningToDefaults": "Restauration des réglages d’équipe…",
+    "returnToDefaultsSuccess": "La gestion par l’entraîneur a été désaffectée. Les réglages individuels ont été supprimés et les réglages d’équipe sont de nouveau actifs.",
+    "returnToDefaultsFailed": "Impossible de rétablir les réglages d’équipe pour l’entraînement."
   },
   "camps": {
     "currentTitle": "Camp d'entraînement actuel / prévu",
