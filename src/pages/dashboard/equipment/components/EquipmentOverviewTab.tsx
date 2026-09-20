@@ -40,6 +40,14 @@ type DefaultSetupSelection = {
   shoes: string
 }
 
+type PremiumEquipmentTemplate = {
+  id: string
+  name: string
+  payload_json: Partial<DefaultSetupSelection> & {
+    setup_label?: string
+  }
+}
+
 type StatCardProps = {
   label: string
   value: string | number
@@ -177,6 +185,10 @@ export default function EquipmentOverviewTab({
   const [loading, setLoading] = useState(true)
   const [savingSetup, setSavingSetup] = useState(false)
   const [setupMessage, setSetupMessage] = useState<string | null>(null)
+  const [premiumTemplates, setPremiumTemplates] = useState<PremiumEquipmentTemplate[]>([])
+  const [premiumTemplateName, setPremiumTemplateName] = useState('')
+  const [premiumTemplateBusy, setPremiumTemplateBusy] = useState(false)
+  const [premiumPrefillTerrain, setPremiumPrefillTerrain] = useState('hilly')
   const [error, setError] = useState<string | null>(null)
 
   function formatEquipmentCategoryLabel(category: string, fallback?: string): string {
@@ -257,6 +269,132 @@ export default function EquipmentOverviewTab({
     }
   }
 
+  async function loadPremiumEquipmentTemplates(): Promise<void> {
+    if (!equipmentAccess?.is_premium) {
+      setPremiumTemplates([])
+      return
+    }
+
+    const { data, error: templateError } = await supabase.rpc(
+      'premium_list_templates_v1',
+      {
+        p_club_id: clubId,
+        p_template_type: 'equipment',
+      },
+    )
+
+    if (templateError) {
+      console.warn('Could not load Premium equipment templates:', templateError)
+      return
+    }
+
+    setPremiumTemplates((data ?? []) as PremiumEquipmentTemplate[])
+  }
+
+  function applyPremiumEquipmentPayload(
+    payload: PremiumEquipmentTemplate['payload_json'],
+    label: string,
+  ): void {
+    const nextSelection = { ...selection }
+
+    setupCategories.forEach(category => {
+      const requested = payload[category.equipment_category]
+      if (
+        typeof requested === 'string' &&
+        requested &&
+        category.options.some(option => option.catalog_item_id === requested)
+      ) {
+        nextSelection[category.equipment_category] = requested
+      }
+    })
+
+    setSelection(nextSelection)
+    setSetupMessage(
+      `Premium template “${label}” prefilled the default setup draft. Review it and press Save Default Setup to apply it.`,
+    )
+  }
+
+  async function savePremiumEquipmentTemplate(): Promise<void> {
+    if (!equipmentAccess?.is_premium || !premiumTemplateName.trim()) return
+
+    setPremiumTemplateBusy(true)
+    setError(null)
+
+    try {
+      const { error: saveError } = await supabase.rpc(
+        'premium_save_template_v1',
+        {
+          p_club_id: clubId,
+          p_template_id: null,
+          p_template_type: 'equipment',
+          p_name: premiumTemplateName.trim(),
+          p_payload_json: {
+            ...selection,
+            setup_label: premiumTemplateName.trim(),
+          },
+          p_is_default: false,
+        },
+      )
+
+      if (saveError) throw saveError
+
+      setPremiumTemplateName('')
+      await loadPremiumEquipmentTemplates()
+      setSetupMessage('Premium equipment template saved.')
+    } catch (templateError) {
+      setError(
+        templateError instanceof Error
+          ? templateError.message
+          : 'Could not save Premium equipment template.',
+      )
+    } finally {
+      setPremiumTemplateBusy(false)
+    }
+  }
+
+  async function applyEquipmentSmartPrefill(): Promise<void> {
+    if (!equipmentAccess?.is_premium) return
+
+    setPremiumTemplateBusy(true)
+    setError(null)
+
+    try {
+      const { data, error: matchError } = await supabase.rpc(
+        'premium_match_automation_template_v1',
+        {
+          p_club_id: clubId,
+          p_rule_type: 'equipment_prefill',
+          p_context: {
+            terrain_type: premiumPrefillTerrain,
+          },
+        },
+      )
+
+      if (matchError) throw matchError
+
+      const match = (data ?? {}) as Record<string, any>
+      if (match.matched !== true) {
+        setSetupMessage(
+          `No enabled Equipment Smart Prefill rule matches terrain_type = ${premiumPrefillTerrain}.`,
+        )
+        return
+      }
+
+      applyPremiumEquipmentPayload(
+        (match.payload_json ?? {}) as PremiumEquipmentTemplate['payload_json'],
+        String(match.template_name ?? 'Equipment template'),
+      )
+    } catch (prefillError) {
+      setError(
+        prefillError instanceof Error
+          ? prefillError.message
+          : 'Could not run Equipment Smart Prefill.',
+      )
+    } finally {
+      setPremiumTemplateBusy(false)
+    }
+  }
+
   async function handleSaveDefaultSetup(): Promise<void> {
     setSavingSetup(true)
     setError(null)
@@ -287,6 +425,10 @@ export default function EquipmentOverviewTab({
   useEffect(() => {
     void loadDashboard()
   }, [clubId])
+
+  useEffect(() => {
+    void loadPremiumEquipmentTemplates()
+  }, [clubId, equipmentAccess?.is_premium])
 
   const setupCategories = useMemo(
     () => setupOptions?.categories ?? [],
