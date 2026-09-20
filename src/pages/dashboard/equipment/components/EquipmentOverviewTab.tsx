@@ -8,6 +8,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { supabase } from '../../../../lib/supabase'
 import EquipmentSetupPresetsBox from './EquipmentSetupPresetsBox'
 import EquipmentOptionPreviewPopover from './EquipmentOptionPreviewPopover'
 import {
