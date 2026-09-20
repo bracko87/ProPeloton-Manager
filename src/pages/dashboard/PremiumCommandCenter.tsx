@@ -3,13 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   Activity,
-  AlertTriangle,
   Calculator,
   CalendarRange,
-  CheckCircle2,
   ChevronRight,
   Crown,
-  FileStack,
   Gauge,
   LockKeyhole,
   RefreshCw,
@@ -21,7 +18,6 @@ import {
   Trash2,
   TrendingUp,
   Users,
-  WalletCards,
   WandSparkles,
   Zap,
 } from 'lucide-react'
@@ -1961,7 +1957,8 @@ export default function PremiumCommandCenter(): JSX.Element {
                       <label>
                         <span className="text-xs font-bold text-slate-500">Intensity</span>
                         <select value={trainingIntensity} onChange={event => setTrainingIntensity(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="easy">Easy</option>
+                          <option value="recovery">Recovery</option>
+                          <option value="light">Light</option>
                           <option value="normal">Normal</option>
                           <option value="hard">Hard</option>
                         </select>
