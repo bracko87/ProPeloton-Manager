@@ -86,7 +86,7 @@
     "holidays": "Vacanze",
     "title": "Filtri per corse",
     "premium": "Premium",
-    "description": "Filtra questo mese per paese, categoria, formato, stato e obiettivi sponsor.",
+    "description": "Filtra questo mese per paese, categoria, formato e stato. Premium aggiunge informazioni sugli obiettivi sponsor.",
     "clear": "Pulisci",
     "checkingPremium": "Controllo Premium...",
     "hide": "Nascondi filtri",
@@ -110,7 +110,7 @@
     "unlockPremium": "Sblocca con Premium",
     "activeCount": "{{count}} attivo",
     "showing": "Mostrando {{shown}} delle gare {{total}} in {{month}}",
-    "noMatch": "Nessuna gara corrisponde ai filtri Premium selezionati per {{month}}.",
+    "noMatch": "Nessuna gara corrisponde ai filtri selezionati per {{month}}.",
     "noScheduled": "Nessuna gara programmata per {{month}}."
   },
   "route": {
