@@ -1492,7 +1492,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                                 </>
                               ) : (
                                 <div className="text-slate-600">
-                                  No enabled Smart Prefill rule matches this stage yet.
+                                  {t('strategy.noRule')}
                                 </div>
                               )}
                             </div>
@@ -1582,7 +1582,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                           }}
                           className="font-bold text-yellow-700 hover:text-yellow-800"
                         >
-                          Open Strategy Lab
+                          {t('season.openStrategy')}
                         </button>
                         <Link
                           to={`/dashboard/race-preparation?raceId=${row.race_id}`}
@@ -1688,7 +1688,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                       {workspace.transfer_command.saved_searches.length}
                     </div>
                     <div className="mt-1 text-xs text-slate-500">
-                      Premium searches with optional market alerts
+                      {t('transfers.savedSearchesHint')}
                     </div>
                   </Card>
 
