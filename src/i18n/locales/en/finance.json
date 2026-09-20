@@ -414,8 +414,8 @@
     "saved": "Team policies applied.",
     "activePolicies": "Active policies:",
     "applying": "Applying…",
-    "advancedLevels": "Advanced policy levels",
-    "premiumDescription": "Free players can use the first option in every dropdown. All later options are available with Premium and remain visible below with a lock label.",
+    "advancedLevels": "Team policy access",
+    "premiumDescription": "All gameplay-effecting policy levels are available to Free and Premium managers. Premium adds analysis and convenience elsewhere, not stronger recovery, morale or performance options.",
     "typicalTripBase": "Typical Trip Base",
     "tripBaseDescription": "Base policy rates used later in race and training camp trip calculations.",
     "estimatedWeekly": "Estimated Weekly",
@@ -470,9 +470,9 @@
     "staffBonusPlan": "Staff Bonus Plan",
     "staffBonusDescription": "Seasonal bonus pool for employed staff.",
     "selectedOption": "Selected Option",
-    "premiumLock": "— Premium 🔒",
+    "premiumLock": "",
     "freeOption": "— Free",
-    "firstOptionOnly": "Only the first option is available without Premium.",
+    "firstOptionOnly": "All policy levels are available to every manager; normal in-game cash costs still apply.",
     "effect": "Effect",
     "costType": "Cost Type",
     "basePolicyCost": "Base Policy Cost",
@@ -490,7 +490,7 @@
     "applyChanges": "Apply Changes",
     "noChanges": "No Changes to Apply",
     "noChangesToApply": "No Changes to Apply",
-    "requiresPremium": "{{item}}: this option requires Premium."
+    "requiresPremium": "{{item}} is available to all managers."
   },
   "tutorial": {
     "welcomeTitle": "Need help with Finance?",
