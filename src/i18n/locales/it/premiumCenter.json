@@ -333,7 +333,11 @@
       "open": "Apri Command Center",
       "strategy": "Race Strategy Lab",
       "season": "Pianificatore stagione",
-      "finance": "Simulatore finanziario"
+      "finance": "Simulatore finanziario",
+      "attentionItems_one": "{{count}} elemento da controllare",
+      "attentionItems_other": "{{count}} elementi da controllare",
+      "openItem": "Apri",
+      "noUrgent": "Al momento non ci sono elementi urgenti di gestione che richiedono attenzione."
     },
     "riderProfile": {
       "title": "Premium Rider Development Lab",
