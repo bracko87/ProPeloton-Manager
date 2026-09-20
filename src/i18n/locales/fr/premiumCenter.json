@@ -335,19 +335,20 @@
       "templateFallback": "Modèle d'entraînement"
     },
     "equipment": {
-      "title": "Modèles Premium d'équipement",
-      "description": "Enregistrez le brouillon actuel comme configuration réutilisable ou utilisez Smart Prefill pour choisir votre propre modèle selon le terrain. Rien n'est appliqué tant que vous n'utilisez pas le bouton normal d'enregistrement de la configuration par défaut.",
-      "manage": "Gérer l'automatisation",
-      "none": "Aucun modèle d'équipement enregistré.",
-      "namePlaceholder": "Nom du modèle",
-      "saveDraft": "Enregistrer le brouillon actuel",
-      "smartPrefill": "Smart Prefill",
-      "applied": "Le modèle Premium « {{name}} » a prérempli le brouillon de la configuration par défaut. Vérifiez-le puis enregistrez la configuration pour l'appliquer.",
-      "saved": "Modèle Premium d'équipement enregistré.",
-      "saveFailed": "Impossible d'enregistrer le modèle Premium d'équipement.",
-      "noRule": "Aucune règle Equipment Smart Prefill activée ne correspond à terrain_type = {{terrain}}.",
-      "templateFallback": "Modèle d'équipement",
-      "prefillFailed": "Impossible d'exécuter Equipment Smart Prefill."
+      "title": "Automatisation Premium des configurations",
+      "description": "Enregistrez le brouillon actuel de la configuration de course par défaut comme profil d’automatisation, puis réutilisez-le manuellement ou via une règle de terrain. Le préremplissage ne modifie que le brouillon et n’enregistre jamais automatiquement l’équipement.",
+      "manage": "Gérer les règles",
+      "none": "Aucun profil d’automatisation Premium enregistré.",
+      "namePlaceholder": "Nom du profil d’automatisation",
+      "saveDraft": "Enregistrer le profil",
+      "smartPrefill": "Préremplir selon le terrain",
+      "applied": "Le profil d’automatisation « {{name}} » a rempli le brouillon de la configuration de course par défaut. Vérifiez-le puis enregistrez la configuration par défaut pour l’appliquer.",
+      "saved": "Profil Premium d’automatisation de l’équipement enregistré.",
+      "saveFailed": "Impossible d’enregistrer le profil Premium d’automatisation de l’équipement.",
+      "noRule": "Aucune règle active de préremplissage de l’équipement ne correspond à terrain_type = {{terrain}}.",
+      "templateFallback": "Profil d’automatisation de l’équipement",
+      "prefillFailed": "Impossible d’exécuter le préremplissage de l’équipement selon le terrain.",
+      "difference": "Les configurations prédéfinies ci-dessous sont vos équipements de course réutilisables classiques. L’automatisation Premium est distincte et ajoute des règles de préremplissage selon le terrain."
     },
     "finance": {
       "simulator": "Simulateur financier Premium",
