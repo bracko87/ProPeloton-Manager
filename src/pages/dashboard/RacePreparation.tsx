@@ -3405,9 +3405,25 @@ export default function RacePreparationPage(): JSX.Element {
 
   return (
     <div className="space-y-6 p-6">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-bold text-slate-900">{t("page.title")}</h1>
-        <p className="text-sm text-slate-600">{t("page.subtitle")}</p>
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{t("page.title")}</h1>
+          <p className="mt-1 text-sm text-slate-600">{t("page.subtitle")}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const params = new URLSearchParams()
+            params.set('tab', 'strategy')
+            if (target?.race_preparation_id) {
+              params.set('racePreparationId', String(target.race_preparation_id))
+            }
+            navigate(`/dashboard/premium-center?${params.toString()}`)
+          }}
+          className="rounded-xl border border-yellow-300 bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-900 hover:bg-yellow-100"
+        >
+          Premium Race Strategy Lab
+        </button>
       </header>
 
       <div className="inline-flex rounded-xl border bg-white p-1 shadow-sm">
