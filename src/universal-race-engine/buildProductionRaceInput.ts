@@ -206,11 +206,44 @@ function normalizeTerrainType(
   return 'flat'
 }
 
+function inferSummitFinish(
+  stage: Row,
+  profile: Row,
+  terrainType: TerrainType,
+): boolean {
+  if (booleanValue(stage.is_summit_finish)) return true
+  if (terrainType !== 'mountain') return false
+
+  const distanceKm = Math.max(
+    1,
+    numberValue(profile.distance_km ?? stage.distance_km, 1),
+  )
+  const climbs = [
+    ...array(profile.mountain_climbs),
+    ...array(stage.mountain_climbs_json),
+  ]
+
+  return climbs.some((climb) => {
+    const km = optionalNumber(
+      climb.km ?? climb.kilometer ?? climb.km_from_start ?? climb.distance_km,
+    )
+    if (km === null || Math.abs(km - distanceKm) > 0.25) return false
+    const category = String(
+      climb.category ?? climb.kom_category ?? '',
+    )
+      .trim()
+      .toUpperCase()
+      .replace(/^CAT(?:EGORY)?\s*/i, '')
+    return ['HC', '1', '2'].includes(category)
+  })
+}
+
 function normalizeFinishType(
   stage: Row,
   profile: Row,
   stageFormat: StageFormat,
   terrainType: TerrainType,
+  summitFinish: boolean,
 ): FinishType {
   if (stageFormat === 'individual_time_trial') return 'time_trial_finish'
   if (stageFormat === 'team_time_trial' || stageFormat === 'pair_time_trial') {
@@ -218,7 +251,7 @@ function normalizeFinishType(
   }
   if (stageFormat === 'prologue') return 'prologue_finish'
   const hint = `${text(stage.finish_type) ?? ''} ${text(profile.profile_type) ?? text(stage.profile_type) ?? ''}`.toLowerCase()
-  if (booleanValue(stage.is_summit_finish) || hint.includes('summit')) return 'summit_finish'
+  if (summitFinish || hint.includes('summit')) return 'summit_finish'
   if (hint.includes('uphill')) return 'uphill_finish'
   if (terrainType === 'cobbled' || hint.includes('cobbl')) return 'cobbled_finish'
   return 'flat_finish'
@@ -790,7 +823,14 @@ export function buildProductionUniversalRaceEngineInput(
   const distanceKm = Math.max(1, numberValue(profile.distance_km ?? stage.distance_km, 1))
   const stageFormat = normalizeStageFormat(stage)
   const terrainType = normalizeTerrainType(stage, profile, stageFormat)
-  const finishType = normalizeFinishType(stage, profile, stageFormat, terrainType)
+  const summitFinish = inferSummitFinish(stage, profile, terrainType)
+  const finishType = normalizeFinishType(
+    stage,
+    profile,
+    stageFormat,
+    terrainType,
+    summitFinish,
+  )
   const weather = object(profile.stage_weather ?? profile.weather_snapshot ?? stage.weather_snapshot)
 
   return {
@@ -801,7 +841,7 @@ export function buildProductionUniversalRaceEngineInput(
       profileType: text(profile.profile_type) ?? text(stage.profile_type), finishType,
       sprintZoneKm: normalizeSprintZoneKm(stage, stageFormat, finishType),
       distanceKm, elevationGainM: Math.max(0, numberValue(profile.elevation_gain_m ?? stage.elevation_gain_m, 0)),
-      summitFinish: booleanValue(stage.is_summit_finish), terrainPercentages: buildTerrainPercentages(stage, profile, terrainType),
+      summitFinish, terrainPercentages: buildTerrainPercentages(stage, profile, terrainType),
       profilePoints: buildProfilePoints(profile, distanceKm), timeTrialRules: null,
     },
     points: buildReconciledStagePoints(
