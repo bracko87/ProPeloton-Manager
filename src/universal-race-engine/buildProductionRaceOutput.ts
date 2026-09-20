@@ -207,41 +207,48 @@ function buildPointRows(
   input: UniversalRaceEngineInput,
   result: UniversalRaceEngineResult,
 ): ProductionPointResultOutputRow[] {
-  const rows: ProductionPointResultOutputRow[] = result.intermediatePointFinalization.pointLedger.map((entry) => ({
-    pointId: entry.pointId,
-    riderId: entry.riderId,
-    teamId: entry.teamId,
-    rank: entry.rank,
-    pointsAwarded: entry.pointsAwarded,
-    bonusSecondsAwarded: entry.bonusSecondsAwarded,
-    riderNameSnapshot: riderName(input, entry.riderId),
-    teamNameSnapshot: teamName(input, entry.teamId),
-  }))
-
-  const finishPoint = input.points.find(
-    (point) => point.pointType === 'FINISH' || point.isFinishPoint,
+  const finishLinePoints = input.points.filter(
+    (point) =>
+      point.pointType === 'FINISH' ||
+      point.isFinishPoint ||
+      Math.abs(point.kmFromStart - input.stage.distanceKm) <= 0.25,
   )
-  if (finishPoint) {
-    /*
-     * Phase 11F v2 publication rule:
-     *
-     * Finish-point awards must come from the exact authoritative final
-     * classification. Do not publish from the Phase-4 sprint-contender ranking,
-     * because that ranking is only an internal finish-model input and can differ
-     * from the finalized official order after physical groups, incidents and
-     * official timing are applied.
-     */
+  const finishLinePointIds = new Set(
+    finishLinePoints.map((point) => point.pointId),
+  )
+
+  const rows: ProductionPointResultOutputRow[] =
+    result.intermediatePointFinalization.pointLedger
+      .filter((entry) => !finishLinePointIds.has(entry.pointId))
+      .map((entry) => ({
+        pointId: entry.pointId,
+        riderId: entry.riderId,
+        teamId: entry.teamId,
+        rank: entry.rank,
+        pointsAwarded: entry.pointsAwarded,
+        bonusSecondsAwarded: entry.bonusSecondsAwarded,
+        riderNameSnapshot: riderName(input, entry.riderId),
+        teamNameSnapshot: teamName(input, entry.teamId),
+      }))
+
+  /*
+   * Any sporting point physically located on the finish line must use the exact
+   * authoritative finish classification. This includes the normal FINISH point
+   * and summit KOM/sprint points at the same kilometre. A rider cannot be second
+   * across a summit line but first across the stage finish at that same line.
+   */
+  finishLinePoints.forEach((finishLinePoint) => {
     result.finishResolution.classification
       .filter((entry) => entry.status === 'finished')
       .forEach((entry) => {
         const pointsAwarded =
-          finishPoint.pointsScheme[entry.rank - 1] ?? 0
+          finishLinePoint.pointsScheme[entry.rank - 1] ?? 0
         const bonusSecondsAwarded =
-          finishPoint.timeBonusSeconds[entry.rank - 1] ?? 0
+          finishLinePoint.timeBonusSeconds[entry.rank - 1] ?? 0
         if (pointsAwarded <= 0 && bonusSecondsAwarded <= 0) return
 
         rows.push({
-          pointId: finishPoint.pointId,
+          pointId: finishLinePoint.pointId,
           riderId: entry.riderId,
           teamId: entry.teamId,
           rank: entry.rank,
@@ -251,7 +258,7 @@ function buildPointRows(
           teamNameSnapshot: teamName(input, entry.teamId),
         })
       })
-  }
+  })
 
   return rows.sort((a, b) => {
     const leftPoint = input.points.find((point) => point.pointId === a.pointId)
@@ -327,12 +334,83 @@ function buildReportRows(
           checkpointIndex: checkpoint.checkpointIndex,
           phase: checkpoint.phase,
           commentaryId: commentary.commentaryId,
+          riderCount: commentary.riderIds.length,
         },
       })
     })
   })
 
-  return rows
+  const compacted: ProductionReportEventOutputRow[] = []
+  let crackCluster: ProductionReportEventOutputRow[] = []
+
+  const flushCrackCluster = () => {
+    if (crackCluster.length === 0) return
+    if (crackCluster.length === 1) {
+      compacted.push(crackCluster[0])
+      crackCluster = []
+      return
+    }
+
+    const first = crackCluster[0]
+    const last = crackCluster[crackCluster.length - 1]
+    const riderCount = crackCluster.reduce(
+      (sum, event) =>
+        sum + Math.max(1, Number(event.metadata.riderCount ?? 1)),
+      0,
+    )
+    const gradientMatch = last.description.match(
+      /on the ([0-9.]+)% climb/i,
+    )
+    const gradientText = gradientMatch
+      ? ` on the ${gradientMatch[1]}% climb`
+      : ' on this climb section'
+
+    compacted.push({
+      ...last,
+      riderId: null,
+      teamId: null,
+      riderNameSnapshot: null,
+      teamNameSnapshot: null,
+      title: 'Riders crack on the climb',
+      description:
+        `${riderCount} riders can no longer hold the main group${gradientText} ` +
+        `between ${first.kmMarker.toFixed(1)} km and ${last.kmMarker.toFixed(1)} km.`,
+      metadata: {
+        ...last.metadata,
+        aggregatedReplayCommentary: true,
+        aggregateKind: 'climb_contact_loss_section',
+        aggregatedEventCount: crackCluster.length,
+        riderCount,
+        startKm: first.kmMarker,
+        endKm: last.kmMarker,
+        sourceEventOrders: crackCluster.map((event) => event.eventOrder),
+      },
+    })
+    crackCluster = []
+  }
+
+  rows.forEach((event) => {
+    if (event.title !== 'Riders crack on the climb') {
+      flushCrackCluster()
+      compacted.push(event)
+      return
+    }
+
+    const clusterStartKm = crackCluster[0]?.kmMarker
+    if (
+      clusterStartKm !== undefined &&
+      event.kmMarker - clusterStartKm > 1.5
+    ) {
+      flushCrackCluster()
+    }
+    crackCluster.push(event)
+  })
+  flushCrackCluster()
+
+  return compacted.map((event, index) => ({
+    ...event,
+    eventOrder: index + 1,
+  }))
 }
 
 function buildHealthCandidates(
