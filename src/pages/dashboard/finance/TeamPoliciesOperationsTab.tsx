@@ -818,28 +818,6 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
   async function savePolicies(): Promise<void> {
     if (!clubId) return
 
-    if (!isPremium) {
-      const premiumSelections = sections
-        .flatMap(section => section.items)
-        .filter(item => {
-          const selectedValue = policyState[item.key]
-          const selectedIndex = item.options.findIndex(
-            option => option.value === selectedValue
-          )
-          return selectedIndex > 0
-        })
-        .map(item => t(item.titleKey))
-
-      if (premiumSelections.length > 0) {
-        setError(
-          `Premium is required for the selected options in: ${premiumSelections.join(
-            ', '
-          )}. Free players can use the first option in each dropdown.`
-        )
-        return
-      }
-    }
-
     setSaving(true)
     setError(null)
     setSaveMessage(null)
@@ -935,31 +913,19 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-            Premium
+          <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+            Fair play
           </span>
-          <span className="text-sm font-medium text-slate-800">
-            {t('policies.advancedLevels')}
+          <span className="text-sm font-medium text-emerald-950">
+            All team-policy levels are available to Free and Premium managers
           </span>
         </div>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          {t('policies.premiumDescription')}
+        <p className="mt-2 text-sm leading-6 text-emerald-900">
+          Policy effects such as recovery, fatigue, morale, logistics and staff efficiency are never locked behind Premium. Choose any level your club can afford with normal in-game cash.
+          {isPremium ? ' Premium remains active for your analysis, automation and convenience tools.' : ''}
         </p>
-        {!isPremium ? (
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.location.hash = '#/dashboard/pro'
-              }
-            }}
-            className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-          >
-            Unlock with Premium
-          </button>
-        ) : null}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
@@ -1193,48 +1159,18 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                         id={item.key}
                         className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
                         value={selectedValue}
-                        onChange={event => {
-                          const nextValue = event.target.value
-                          const nextIndex = item.options.findIndex(
-                            option => option.value === nextValue
-                          )
-
-                          if (!isPremium && nextIndex > 0) {
-                            setSaveMessage(null)
-                            setError(
-                              `${t(item.titleKey)}: this option requires Premium.`
-                            )
-                            return
-                          }
-
-                          updatePolicy(item.key, nextValue)
-                        }}
+                        onChange={event => updatePolicy(item.key, event.target.value)}
                       >
-                        {item.options.map((option, optionIndex) => {
-                          const isPremiumOption = optionIndex > 0
-
-                          return (
-                            <option
-                              key={option.value}
-                              value={option.value}
-                              disabled={!isPremium && isPremiumOption}
-                            >
-                              {option.label}
-                              {!isPremium
-                                ? isPremiumOption
-                                  ? t('policies.premiumLock')
-                                  : t('policies.freeOption')
-                                : ''}
-                            </option>
-                          )
-                        })}
+                        {item.options.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
 
-                      {!isPremium ? (
-                        <div className="mt-1 text-xs text-slate-500">
-                          {t('policies.firstOptionOnly')}
-                        </div>
-                      ) : null}
+                      <div className="mt-1 text-xs text-slate-500">
+                        Every level is available to all managers; normal club cash costs still apply.
+                      </div>
                     </div>
                   </div>
 
