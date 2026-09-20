@@ -221,7 +221,10 @@
     "searchRiders": "Search riders",
     "allRoles": "All roles",
     "allStatuses": "All statuses",
-    "latestWeek": "Latest week"
+    "latestWeek": "Latest week",
+    "editChartRiders": "Edit riders",
+    "doneEditingRiders": "Done",
+    "editChartRidersHint": "Replace any plotted rider with another squad rider who is not already in the chart."
   },
   "templates": {
     "title": "Templates & Smart Prefill",
@@ -336,9 +339,9 @@
       "defaultsRestoreFailed": "Could not restore team-default training for all riders."
     },
     "equipment": {
-      "title": "Premium Equipment Templates",
-      "description": "Save the current draft as a reusable setup, or use Smart Prefill to select one of your own templates for a terrain context. Nothing is applied until you press the normal Save Default Setup button.",
-      "manage": "Manage automation",
+      "title": "Saved Equipment Setups",
+      "description": "Without Premium you still have one normal Default Race Setup. Premium adds multiple reusable setups and one-click terrain Smart Prefill.",
+      "manage": "Automation rules",
       "none": "No equipment templates saved yet.",
       "namePlaceholder": "Template name",
       "saveDraft": "Save current draft",
@@ -348,7 +351,11 @@
       "saveFailed": "Could not save Premium equipment template.",
       "noRule": "No enabled Equipment Smart Prefill rule matches terrain_type = {{terrain}}.",
       "templateFallback": "Equipment template",
-      "prefillFailed": "Could not run Equipment Smart Prefill."
+      "prefillFailed": "Could not run Equipment Smart Prefill.",
+      "savedCount": "{{count}} saved",
+      "openTools": "Open setups",
+      "hideTools": "Hide setups",
+      "savedSetups": "Saved setups"
     },
     "finance": {
       "simulator": "Premium Financial Simulator",
