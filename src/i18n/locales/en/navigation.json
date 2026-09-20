@@ -37,7 +37,8 @@
     "infrastructure": "Facilities and development",
     "finance": "Budget, income and costs",
     "transfers": "Buy, sell and negotiate",
-    "statistics": "Performance and analytics"
+    "statistics": "Performance and analytics",
+    "premiumCenter": "Advanced planning, simulation and automation"
   },
   "header": {
     "toggleSidebar": "Toggle sidebar",
@@ -151,5 +152,6 @@
   },
   "premiumFeature": {
     "unlock": "Unlock with Premium"
-  }
+  },
+  "premiumCenter": "Premium Center"
 }
