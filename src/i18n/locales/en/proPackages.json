@@ -16,8 +16,8 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "per real-life month",
     "membership": "Premium membership",
-    "advancedTools": "Advanced training, transfer, scouting and management tools.",
-    "marketTools": "Saved searches, market alerts, rider shortlist and deeper analysis.",
+    "advancedTools": "Advanced analysis, automation, forecasting and management convenience tools.",
+    "marketTools": "Saved searches, market alerts, unlimited coin-free shortlist additions and deeper transfer analysis.",
     "capacity": "Extra equipment and infrastructure convenience capacity.",
     "receive": "Receive",
     "monthlyCoinsSuffix": "coins after every successful monthly payment.",
@@ -68,11 +68,11 @@
   "advantages": {
     "a1": "50 coins after every successful monthly Premium payment.",
     "a2": "Advanced training automation and rider-development analysis.",
-    "a3": "Premium transfer tools: saved searches, automatic alerts, shortlist and negotiation analysis.",
+    "a3": "Premium transfer tools: saved searches, automatic alerts, unlimited coin-free shortlist additions and deeper negotiation analysis.",
     "a4": "Additional equipment setup slots and expanded included garage capacity.",
-    "a5": "Access to advanced team-policy options and selected calendar filters.",
-    "a6": "Additional external-rider history, recent results and career-honours views.",
-    "a7": "Premium convenience features never improve race results, transfer acceptance or hidden rider skills."
+    "a5": "Manager Briefing, advanced calendar intelligence, finance forecasts and management convenience tools.",
+    "a6": "Advanced rider-performance analytics, development trends and unlimited world-race replays.",
+    "a7": "Premium improves information, automation and convenience — never race-engine strength, transfer acceptance or hidden rider skills."
   },
   "comparison": {
     "title": "Free vs Premium",
