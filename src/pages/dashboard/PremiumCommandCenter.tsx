@@ -68,6 +68,7 @@ type ShortlistRow = {
   overall_label: string | null
   potential_label: string | null
   current_club_name: string | null
+  availability_type?: string | null
   availability_label: string | null
   transfer_price: number | null
   expected_salary_weekly: number | null
@@ -362,6 +363,25 @@ function humanize(value: string | null | undefined): string {
     .replaceAll('_', ' ')
     .replace(/\b\w/g, letter => letter.toUpperCase())
   return appI18n.t(`premiumCenter:values.${value}`, { defaultValue: fallback })
+}
+
+function formatPremiumValue(value: unknown): string {
+  if (value === null || value === undefined) return '—'
+  if (typeof value !== 'string') return String(value)
+
+  const key = `premiumCenter:values.${value}`
+  return appI18n.exists(key) ? appI18n.t(key) : value
+}
+
+function getTransferAlertMessage(
+  alert: Pick<TransferAlert, 'alert_type' | 'message'>,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  if (alert.alert_type === 'new_match') {
+    return t('transfers.alertNewMatch')
+  }
+
+  return alert.message
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -1341,7 +1361,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                                       {candidate.display_name}
                                     </button>
                                   </td>
-                                  <td className="py-3 pr-3 text-slate-600">{candidate.role ?? '—'}</td>
+                                  <td className="py-3 pr-3 text-slate-600">{humanize(candidate.role)}</td>
                                   <td className="py-3 pr-3">{candidate.overall ?? '—'}</td>
                                   <td className="py-3 pr-3">{candidate.fatigue ?? 0}</td>
                                   <td className="py-3 pr-3">{candidate.morale ?? '—'}</td>
@@ -1490,9 +1510,18 @@ export default function PremiumCommandCenter(): JSX.Element {
                                   <div className="font-bold text-emerald-700">
                                     {t('strategy.matched', { name: String(prefillMatch.template_name ?? t('common.template')) })}
                                   </div>
-                                  <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
-                                    {JSON.stringify(prefillMatch.payload_json ?? {}, null, 2)}
-                                  </pre>
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {Object.entries(
+                                      (prefillMatch.payload_json ?? {}) as Record<string, unknown>,
+                                    ).map(([key, value]) => (
+                                      <span
+                                        key={key}
+                                        className="rounded-full bg-white px-2 py-1 text-xs text-slate-600"
+                                      >
+                                        {humanize(key)}: {formatPremiumValue(value)}
+                                      </span>
+                                    ))}
+                                  </div>
                                 </>
                               ) : (
                                 <div className="text-slate-600">
@@ -1665,9 +1694,11 @@ export default function PremiumCommandCenter(): JSX.Element {
                           workspace.transfer_command.shortlist.map(row => (
                             <tr key={row.shortlist_id} className="border-t border-slate-100">
                               <td className="px-4 py-3 font-bold text-slate-950">{row.rider_name}</td>
-                              <td className="px-4 py-3 text-slate-600">{row.role ?? '—'}</td>
+                              <td className="px-4 py-3 text-slate-600">{humanize(row.role)}</td>
                               <td className="px-4 py-3 text-slate-600">{row.current_club_name ?? '—'}</td>
-                              <td className="px-4 py-3 text-slate-600">{row.availability_label ?? '—'}</td>
+                              <td className="px-4 py-3 text-slate-600">
+                                {humanize(row.availability_type ?? row.availability_label)}
+                              </td>
                               <td className="px-4 py-3">
                                 {row.is_scouted ? (
                                   <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">
@@ -1705,7 +1736,9 @@ export default function PremiumCommandCenter(): JSX.Element {
                         workspace.transfer_command.alerts.slice(0, 6).map(alert => (
                           <div key={alert.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                             <div className="text-sm font-bold text-slate-900">{alert.target_name}</div>
-                            <div className="mt-1 text-xs leading-5 text-slate-600">{alert.message}</div>
+                            <div className="mt-1 text-xs leading-5 text-slate-600">
+                              {getTransferAlertMessage(alert, t)}
+                            </div>
                           </div>
                         ))
                       )}
@@ -1929,7 +1962,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                               {rider.display_name}
                             </Link>
                           </td>
-                          <td className="px-4 py-3 text-slate-600">{rider.role ?? '—'}</td>
+                          <td className="px-4 py-3 text-slate-600">{humanize(rider.role)}</td>
                           <td className="px-4 py-3 font-bold text-slate-900">{rider.overall ?? '—'}</td>
                           <td className="px-4 py-3 text-slate-700">{rider.potential ?? '—'}</td>
                           <td className="px-4 py-3">
@@ -2128,7 +2161,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                                   key={key}
                                   className="rounded-full bg-white px-2 py-1 text-[11px] text-slate-600"
                                 >
-                                  {humanize(key)}: {String(value)}
+                                  {humanize(key)}: {formatPremiumValue(value)}
                                 </span>
                               ))}
                             </div>
@@ -2239,7 +2272,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                             </div>
                             <div className="mt-2 text-xs text-slate-600">
                               {Object.entries(rule.match_json ?? {})
-                                .map(([key, value]) => `${humanize(key)} = ${value}`)
+                                .map(([key, value]) => `${humanize(key)} = ${formatPremiumValue(value)}`)
                                 .join(' · ')}
                             </div>
                             {rule.last_matched_at ? (
