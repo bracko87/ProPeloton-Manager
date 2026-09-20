@@ -3,8 +3,18 @@ import path from 'node:path'
 import process from 'node:process'
 
 const root = process.cwd()
-const languages = ['en', 'sr-Latn', 'de', 'hr', 'es', 'it', 'fr', 'ru']
 const localeRoot = path.join(root, 'src', 'i18n', 'locales')
+const languagesSource = fs.readFileSync(
+  path.join(root, 'src', 'i18n', 'languages.ts'),
+  'utf8',
+)
+const languages = [...languagesSource.matchAll(/\bcode:\s*['"]([^'"]+)['"]/g)].map(
+  match => match[1],
+)
+
+if (languages.length === 0 || !languages.includes('en')) {
+  throw new Error('Could not resolve supported languages from src/i18n/languages.ts')
+}
 
 const strictNamespaces = ['premiumCenter']
 const requiredNavigationKeys = ['premiumCenter', 'descriptions.premiumCenter']
@@ -34,6 +44,12 @@ const forbiddenVisibleEnglish = [
   'See Premium season analytics',
   'No training templates saved yet. Create one in Premium Command Center.',
   'No equipment templates saved yet.',
+  'Flat</option>',
+  'Hilly</option>',
+  'Mountain</option>',
+  'Cobbles</option>',
+  'Time trial</option>',
+  'Free core view',
 ]
 
 function readJson(filePath) {
