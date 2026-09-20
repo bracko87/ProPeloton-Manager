@@ -200,7 +200,28 @@
     "eightWeekDevelopment": "Развитие за 8 недель",
     "overallChange": "Изменение общего рейтинга",
     "fatigue": "Усталость",
-    "availability": "Доступность"
+    "availability": "Доступность",
+    "coverage": "Покрытие истории",
+    "avgOverall": "Средний общий рейтинг",
+    "avgPotential": "Средний потенциал",
+    "totalEightWeek": "Общее развитие за 8 недель",
+    "improvingRiders": "Прогрессирующие гонщики",
+    "ofRiders": "из {{count}} гонщиков",
+    "avgFatigue": "Средняя усталость",
+    "leaders": "Лидеры развития",
+    "leadersHint": "Наибольший зафиксированный прогресс за последние восемь недель.",
+    "potentialVsOverall": "Потенциал и текущий уровень",
+    "potentialVsOverallHint": "Гонщики с наибольшим запасом для развития.",
+    "prospectWatch": "Перспективные гонщики",
+    "noWatchItems": "Сейчас ни один гонщик не соответствует порогу перспективности.",
+    "fatigueWatch": "Контроль усталости",
+    "noFatigueRisk": "Сейчас ни один гонщик не превышает порог усталости.",
+    "riderDetail": "Детали развития гонщиков",
+    "riderDetailHint": "Фильтруйте состав и сравнивайте текущий уровень, потенциал и зафиксированное развитие.",
+    "searchRiders": "Поиск гонщиков",
+    "allRoles": "Все роли",
+    "allStatuses": "Все статусы",
+    "latestWeek": "Последняя неделя"
   },
   "templates": {
     "title": "Шаблоны и Smart Prefill",
@@ -309,7 +330,10 @@
       "failed": "Не удалось проверить Premium Smart Prefill.",
       "checking": "Проверка Smart Prefill…",
       "smartPrefill": "Smart Prefill",
-      "templateFallback": "Шаблон тренировки"
+      "templateFallback": "Шаблон тренировки",
+      "useDefaultsForAll": "Использовать настройки по умолчанию для всех",
+      "defaultsRestored": "Все индивидуальные настройки и автоматизация Head Coach удалены. Теперь все гонщики используют сохранённую командную тренировку по умолчанию.",
+      "defaultsRestoreFailed": "Не удалось восстановить командную тренировку по умолчанию для всех гонщиков."
     },
     "equipment": {
       "title": "Premium-шаблоны экипировки",

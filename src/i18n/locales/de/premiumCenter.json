@@ -200,7 +200,28 @@
     "eightWeekDevelopment": "8-Wochen-Entwicklung",
     "overallChange": "Gesamtwert-Änderung",
     "fatigue": "Müdigkeit",
-    "availability": "Verfügbarkeit"
+    "availability": "Verfügbarkeit",
+    "coverage": "Historienabdeckung",
+    "avgOverall": "Ø Gesamt",
+    "avgPotential": "Ø Potenzial",
+    "totalEightWeek": "Gesamtentwicklung (8 Wochen)",
+    "improvingRiders": "Fahrer mit Fortschritt",
+    "ofRiders": "von {{count}} Fahrern",
+    "avgFatigue": "Ø Müdigkeit",
+    "leaders": "Entwicklungsführer",
+    "leadersHint": "Größte aufgezeichnete Fortschritte der letzten acht Wochen.",
+    "potentialVsOverall": "Potenzial vs. aktuelles Niveau",
+    "potentialVsOverallHint": "Fahrer mit dem größten Entwicklungsspielraum.",
+    "prospectWatch": "Talentbeobachtung",
+    "noWatchItems": "Aktuell erfüllt kein Fahrer die Kriterien der Talentbeobachtung.",
+    "fatigueWatch": "Müdigkeitsbeobachtung",
+    "noFatigueRisk": "Aktuell liegt kein Fahrer über der Müdigkeitsschwelle.",
+    "riderDetail": "Fahrerentwicklung im Detail",
+    "riderDetailHint": "Kader filtern und aktuelles Niveau, Potenzial und Entwicklung prüfen.",
+    "searchRiders": "Fahrer suchen",
+    "allRoles": "Alle Rollen",
+    "allStatuses": "Alle Status",
+    "latestWeek": "Letzte Woche"
   },
   "templates": {
     "title": "Vorlagen & Smart Prefill",
@@ -309,7 +330,10 @@
       "failed": "Premium Smart Prefill konnte nicht geprüft werden.",
       "checking": "Smart Prefill wird geprüft…",
       "smartPrefill": "Smart Prefill",
-      "templateFallback": "Trainingsvorlage"
+      "templateFallback": "Trainingsvorlage",
+      "useDefaultsForAll": "Für alle Team-Standard verwenden",
+      "defaultsRestored": "Alle Fahrer-Overrides und die Head-Coach-Automatisierung wurden entfernt. Alle Fahrer nutzen jetzt das gespeicherte Team-Standardtraining.",
+      "defaultsRestoreFailed": "Das Team-Standardtraining konnte nicht für alle Fahrer wiederhergestellt werden."
     },
     "equipment": {
       "title": "Premium-Ausrüstungsvorlagen",

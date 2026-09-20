@@ -200,7 +200,28 @@
     "eightWeekDevelopment": "Développement sur 8 semaines",
     "overallChange": "Évolution globale",
     "fatigue": "Fatigue",
-    "availability": "Disponibilité"
+    "availability": "Disponibilité",
+    "coverage": "Couverture de l’historique",
+    "avgOverall": "Moyenne globale",
+    "avgPotential": "Potentiel moyen",
+    "totalEightWeek": "Développement total sur 8 semaines",
+    "improvingRiders": "Coureurs en progression",
+    "ofRiders": "sur {{count}} coureurs",
+    "avgFatigue": "Fatigue moyenne",
+    "leaders": "Leaders de progression",
+    "leadersHint": "Plus fortes progressions enregistrées sur les huit dernières semaines.",
+    "potentialVsOverall": "Potentiel vs niveau actuel",
+    "potentialVsOverallHint": "Coureurs disposant de la plus grande marge de progression.",
+    "prospectWatch": "Suivi des espoirs",
+    "noWatchItems": "Aucun coureur ne remplit actuellement le seuil de suivi des espoirs.",
+    "fatigueWatch": "Suivi de la fatigue",
+    "noFatigueRisk": "Aucun coureur ne dépasse actuellement le seuil de fatigue.",
+    "riderDetail": "Détail du développement",
+    "riderDetailHint": "Filtrez l’effectif et examinez le niveau actuel, le potentiel et le développement enregistré.",
+    "searchRiders": "Rechercher un coureur",
+    "allRoles": "Tous les rôles",
+    "allStatuses": "Tous les statuts",
+    "latestWeek": "Dernière semaine"
   },
   "templates": {
     "title": "Modèles et Smart Prefill",
@@ -309,7 +330,10 @@
       "failed": "Impossible de vérifier Premium Smart Prefill.",
       "checking": "Vérification de Smart Prefill…",
       "smartPrefill": "Smart Prefill",
-      "templateFallback": "Modèle d'entraînement"
+      "templateFallback": "Modèle d'entraînement",
+      "useDefaultsForAll": "Utiliser les valeurs par défaut pour tous",
+      "defaultsRestored": "Toutes les dérogations individuelles et l’automatisation du Head Coach ont été supprimées. Tous les coureurs utilisent maintenant l’entraînement par défaut de l’équipe.",
+      "defaultsRestoreFailed": "Impossible de restaurer l’entraînement par défaut de l’équipe pour tous les coureurs."
     },
     "equipment": {
       "title": "Modèles Premium d'équipement",

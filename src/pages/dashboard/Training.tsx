@@ -18,7 +18,7 @@ import {
   saveTutorialProgress
 } from '../../lib/tutorialProgress'
 
-type TabKey = 'regular' | 'camps'
+type TabKey = 'regular' | 'development' | 'camps'
 type CampType = 'general' | 'sprint' | 'climbing' | 'flat' | 'time_trial'
 type AvailabilityStatus = 'fit' | 'not_fully_fit' | 'injured' | 'sick'
 type RegularTrainingIntensity = 'recovery' | 'light' | 'normal' | 'hard'
@@ -1222,6 +1222,7 @@ export default function TrainingPage(): JSX.Element {
   const [regularPlans, setRegularPlans] = useState<RiderRegularTrainingPlanRow[]>([])
   const [regularSavingDefaultClubId, setRegularSavingDefaultClubId] = useState<string | null>(null)
   const [regularSavingRiderId, setRegularSavingRiderId] = useState<string | null>(null)
+  const [regularResettingAll, setRegularResettingAll] = useState(false)
   const [regularMessage, setRegularMessage] = useState<string | null>(null)
   const [isTeamDefaultsExpanded, setIsTeamDefaultsExpanded] = useState(false)
   const [headCoachAutomation, setHeadCoachAutomation] =
@@ -2611,6 +2612,58 @@ export default function TrainingPage(): JSX.Element {
     }
   }
 
+  async function resetAllRidersToTeamDefaults(): Promise<void> {
+    if (familyClubs.length === 0) return
+
+    setRegularResettingAll(true)
+    setRegularMessage(null)
+    setError(null)
+
+    try {
+      const familyClubIds = familyClubs.map(team => team.club_id)
+
+      const { error: deleteError } = await supabase
+        .from('rider_regular_training_plans')
+        .delete()
+        .in('club_id', familyClubIds)
+
+      if (deleteError) throw deleteError
+
+      await Promise.all(
+        familyClubs.map(async team => {
+          if (!headCoachAutomation.enabledByClubId[team.club_id]) return
+
+          const { error: automationError } = await supabase.rpc(
+            'set_regular_training_coach_automation_v1',
+            {
+              p_club_id: team.club_id,
+              p_enabled: false,
+              p_manager_staff_id: null
+            }
+          )
+
+          if (automationError) throw automationError
+        })
+      )
+
+      setRegularDirtyRiderIds([])
+      await loadRegularTrainingConfig(familyClubIds)
+      window.dispatchEvent(new CustomEvent('ppm:head-coach-training-refresh'))
+
+      setRegularMessage(
+        t('premiumCenter:integrations.training.defaultsRestored')
+      )
+    } catch (resetError) {
+      setError(
+        resetError instanceof Error
+          ? resetError.message
+          : t('premiumCenter:integrations.training.defaultsRestoreFailed')
+      )
+    } finally {
+      setRegularResettingAll(false)
+    }
+  }
+
   async function handleDebugBooking(): Promise<void> {
     if (!clubId || !selectedCampId || !startDate) return
 
@@ -2919,6 +2972,12 @@ export default function TrainingPage(): JSX.Element {
     setTutorialMode('closed')
   }
 
+  useEffect(() => {
+    if (!premiumStatusLoading && !isPremium && activeTab === 'development') {
+      setActiveTab('regular')
+    }
+  }, [activeTab, isPremium, premiumStatusLoading])
+
   if (loading) {
     return <div className="w-full text-sm text-gray-600">{t('page.loading')}</div>
   }
@@ -2946,6 +3005,20 @@ export default function TrainingPage(): JSX.Element {
             >
               {t('page.regularTab')}
             </button>
+
+            {isPremium ? (
+              <button
+                type="button"
+                onClick={() => setActiveTab('development')}
+                className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
+                  activeTab === 'development'
+                    ? 'bg-yellow-400 text-black shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {t('premiumCenter:tabs.development')}
+              </button>
+            ) : null}
 
             <button
               type="button"
@@ -3212,12 +3285,24 @@ export default function TrainingPage(): JSX.Element {
                     {t('premiumCenter:integrations.training.description')}
                   </p>
                 </div>
-                <Link
-                  to="/dashboard/premium-center?tab=templates"
-                  className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
-                >
-                  {t('premiumCenter:integrations.training.manage')}
-                </Link>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void resetAllRidersToTeamDefaults()}
+                    disabled={regularResettingAll}
+                    className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {regularResettingAll
+                      ? t('common.saving')
+                      : t('premiumCenter:integrations.training.useDefaultsForAll')}
+                  </button>
+                  <Link
+                    to="/dashboard/premium-center?tab=templates"
+                    className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+                  >
+                    {t('premiumCenter:integrations.training.manage')}
+                  </Link>
+                </div>
               </div>
 
               {premiumTrainingTemplates.length > 0 ? (
@@ -3251,10 +3336,6 @@ export default function TrainingPage(): JSX.Element {
                 </div>
               ) : null}
             </div>
-          ) : null}
-
-          {isPremium && clubId ? (
-            <PremiumRiderDevelopmentPanel clubId={clubId} />
           ) : null}
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -3662,6 +3743,10 @@ export default function TrainingPage(): JSX.Element {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {activeTab === 'development' && isPremium && clubId ? (
+        <PremiumRiderDevelopmentPanel clubId={clubId} />
       ) : null}
 
       {activeTab === 'camps' ? (

@@ -200,7 +200,28 @@
     "eightWeekDevelopment": "8-week development",
     "overallChange": "Overall change",
     "fatigue": "Fatigue",
-    "availability": "Availability"
+    "availability": "Availability",
+    "coverage": "History coverage",
+    "avgOverall": "Average overall",
+    "avgPotential": "Average potential",
+    "totalEightWeek": "Total 8-week development",
+    "improvingRiders": "Improving riders",
+    "ofRiders": "of {{count}} riders",
+    "avgFatigue": "Average fatigue",
+    "leaders": "Development leaders",
+    "leadersHint": "Largest recorded gains across the latest eight-week window.",
+    "potentialVsOverall": "Potential vs current level",
+    "potentialVsOverallHint": "Riders with the largest development runway.",
+    "prospectWatch": "Prospect watch",
+    "noWatchItems": "No riders currently meet the prospect-watch threshold.",
+    "fatigueWatch": "Fatigue watch",
+    "noFatigueRisk": "No riders are currently above the fatigue-watch threshold.",
+    "riderDetail": "Rider development detail",
+    "riderDetailHint": "Filter the squad and inspect current level, potential and recorded development.",
+    "searchRiders": "Search riders",
+    "allRoles": "All roles",
+    "allStatuses": "All statuses",
+    "latestWeek": "Latest week"
   },
   "templates": {
     "title": "Templates & Smart Prefill",
@@ -309,7 +330,10 @@
       "failed": "Premium Smart Prefill could not be checked.",
       "checking": "Checking Smart Prefill…",
       "smartPrefill": "Smart Prefill",
-      "templateFallback": "Training template"
+      "templateFallback": "Training template",
+      "useDefaultsForAll": "Use defaults for all",
+      "defaultsRestored": "All rider overrides and Head Coach automation were removed. Every rider now uses the saved team default training.",
+      "defaultsRestoreFailed": "Could not restore team-default training for all riders."
     },
     "equipment": {
       "title": "Premium Equipment Templates",

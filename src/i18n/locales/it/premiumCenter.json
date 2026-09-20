@@ -200,7 +200,28 @@
     "eightWeekDevelopment": "Sviluppo 8 settimane",
     "overallChange": "Variazione generale",
     "fatigue": "Fatica",
-    "availability": "Disponibilità"
+    "availability": "Disponibilità",
+    "coverage": "Copertura storico",
+    "avgOverall": "Media generale",
+    "avgPotential": "Potenziale medio",
+    "totalEightWeek": "Sviluppo totale in 8 settimane",
+    "improvingRiders": "Corridori in crescita",
+    "ofRiders": "su {{count}} corridori",
+    "avgFatigue": "Fatica media",
+    "leaders": "Leader dello sviluppo",
+    "leadersHint": "Maggiori progressi registrati nelle ultime otto settimane.",
+    "potentialVsOverall": "Potenziale vs livello attuale",
+    "potentialVsOverallHint": "Corridori con il maggiore margine di sviluppo.",
+    "prospectWatch": "Osservazione talenti",
+    "noWatchItems": "Nessun corridore supera attualmente la soglia per l’osservazione talenti.",
+    "fatigueWatch": "Monitoraggio fatica",
+    "noFatigueRisk": "Nessun corridore supera attualmente la soglia di fatica.",
+    "riderDetail": "Dettaglio sviluppo corridori",
+    "riderDetailHint": "Filtra la squadra e controlla livello attuale, potenziale e sviluppo registrato.",
+    "searchRiders": "Cerca corridori",
+    "allRoles": "Tutti i ruoli",
+    "allStatuses": "Tutti gli stati",
+    "latestWeek": "Ultima settimana"
   },
   "templates": {
     "title": "Modelli e Smart Prefill",
@@ -309,7 +330,10 @@
       "failed": "Impossibile verificare Premium Smart Prefill.",
       "checking": "Verifica Smart Prefill…",
       "smartPrefill": "Smart Prefill",
-      "templateFallback": "Modello allenamento"
+      "templateFallback": "Modello allenamento",
+      "useDefaultsForAll": "Usa valori predefiniti per tutti",
+      "defaultsRestored": "Sono state rimosse tutte le eccezioni dei corridori e l’automazione del Head Coach. Tutti i corridori usano ora l’allenamento predefinito della squadra.",
+      "defaultsRestoreFailed": "Impossibile ripristinare l’allenamento predefinito della squadra per tutti i corridori."
     },
     "equipment": {
       "title": "Modelli Premium di equipaggiamento",
