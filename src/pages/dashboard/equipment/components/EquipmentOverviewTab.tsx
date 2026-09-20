@@ -310,7 +310,7 @@ export default function EquipmentOverviewTab({
 
     setSelection(nextSelection)
     setSetupMessage(
-      `Premium template “${label}” prefilled the default setup draft. Review it and press Save Default Setup to apply it.`,
+      t('premiumCenter:integrations.equipment.applied', { name: label }),
     )
   }
 
@@ -340,12 +340,12 @@ export default function EquipmentOverviewTab({
 
       setPremiumTemplateName('')
       await loadPremiumEquipmentTemplates()
-      setSetupMessage('Premium equipment template saved.')
+      setSetupMessage(t('premiumCenter:integrations.equipment.saved'))
     } catch (templateError) {
       setError(
         templateError instanceof Error
           ? templateError.message
-          : 'Could not save Premium equipment template.',
+          : t('premiumCenter:integrations.equipment.saveFailed'),
       )
     } finally {
       setPremiumTemplateBusy(false)
@@ -375,20 +375,20 @@ export default function EquipmentOverviewTab({
       const match = (data ?? {}) as Record<string, any>
       if (match.matched !== true) {
         setSetupMessage(
-          `No enabled Equipment Smart Prefill rule matches terrain_type = ${premiumPrefillTerrain}.`,
+          t('premiumCenter:integrations.equipment.noRule', { terrain: premiumPrefillTerrain }),
         )
         return
       }
 
       applyPremiumEquipmentPayload(
         (match.payload_json ?? {}) as PremiumEquipmentTemplate['payload_json'],
-        String(match.template_name ?? 'Equipment template'),
+        String(match.template_name ?? t('premiumCenter:integrations.equipment.templateFallback')),
       )
     } catch (prefillError) {
       setError(
         prefillError instanceof Error
           ? prefillError.message
-          : 'Could not run Equipment Smart Prefill.',
+          : t('premiumCenter:integrations.equipment.prefillFailed'),
       )
     } finally {
       setPremiumTemplateBusy(false)
@@ -562,21 +562,21 @@ export default function EquipmentOverviewTab({
                 <div>
                   <div className="flex items-center gap-2">
                     <div className="text-sm font-semibold text-gray-900">
-                      Premium Equipment Templates
+                      {t('premiumCenter:integrations.equipment.title')}
                     </div>
                     <span className="rounded-full border border-yellow-300 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
                       Premium
                     </span>
                   </div>
                   <p className="mt-1 text-xs leading-5 text-gray-600">
-                    Save the current draft as a reusable setup, or use Smart Prefill to select one of your own templates for a terrain context. Nothing is applied until you press the normal Save Default Setup button.
+                    {t('premiumCenter:integrations.equipment.description')}
                   </p>
                 </div>
                 <a
                   href="#/dashboard/premium-center?tab=templates"
                   className="shrink-0 rounded-lg border border-yellow-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-yellow-50"
                 >
-                  Manage automation
+                  {t('premiumCenter:integrations.equipment.manage')}
                 </a>
               </div>
 
@@ -600,7 +600,7 @@ export default function EquipmentOverviewTab({
                 </div>
               ) : (
                 <div className="mt-3 text-xs text-gray-600">
-                  No equipment templates saved yet.
+                  {t('premiumCenter:integrations.equipment.none')}
                 </div>
               )}
 
@@ -609,7 +609,7 @@ export default function EquipmentOverviewTab({
                   <input
                     value={premiumTemplateName}
                     onChange={event => setPremiumTemplateName(event.target.value)}
-                    placeholder="Template name"
+                    placeholder={t('premiumCenter:integrations.equipment.namePlaceholder')}
                     className="min-w-0 flex-1 rounded-lg border border-yellow-200 bg-white px-3 py-2 text-xs"
                   />
                   <button
@@ -618,7 +618,7 @@ export default function EquipmentOverviewTab({
                     disabled={premiumTemplateBusy || !premiumTemplateName.trim()}
                     className="rounded-lg bg-gray-950 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
                   >
-                    Save current draft
+                    {t('premiumCenter:integrations.equipment.saveDraft')}
                   </button>
                 </div>
 
@@ -640,7 +640,7 @@ export default function EquipmentOverviewTab({
                     disabled={premiumTemplateBusy}
                     className="rounded-lg border border-yellow-300 bg-white px-3 py-2 text-xs font-semibold text-yellow-900 hover:bg-yellow-100 disabled:opacity-40"
                   >
-                    Smart Prefill
+                    {t('premiumCenter:integrations.equipment.smartPrefill')}
                   </button>
                 </div>
               </div>
