@@ -337,7 +337,17 @@
       "attentionItems_one": "{{count}} attention item",
       "attentionItems_other": "{{count}} attention items",
       "openItem": "Open",
-      "noUrgent": "No urgent management items are currently waiting for attention."
+      "noUrgent": "No urgent management items are currently waiting for attention.",
+      "freeCoreView": "Free core view",
+      "squadIntelligenceTitle": "Premium squad intelligence",
+      "squadIntelligenceBody": "Fitness, morale, readiness, form and contract-pressure summaries are grouped here for Premium managers.",
+      "unlockTools": "Unlock Premium tools",
+      "financeLockedBody": "Premium adds sponsor-income detail, recurring policy pressure, trip forecasts, transaction intelligence and full cash-flow charts.",
+      "incomeExpensesGateDesc": "Unlock weekly, monthly, and season operating charts with a clear income, expense, and net-balance summary.",
+      "operationsGateDesc": "Unlock a live overview of current jobs, running processes, operational statuses, and active club workflows.",
+      "honoursGateDesc": "Unlock a convenient historical summary of the five greatest results achieved in club history.",
+      "seasonCoreBody": "Core season results are Free. Premium adds race volume, international points, jerseys and deeper season context.",
+      "seasonAnalytics": "See Premium season analytics"
     },
     "riderProfile": {
       "title": "Premium Rider Development Lab",
