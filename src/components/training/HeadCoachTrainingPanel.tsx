@@ -125,6 +125,7 @@ type HeadCoachTrainingPanelProps = {
   onAutomationStateChange?: (
     snapshot: HeadCoachAutomationSnapshot
   ) => void
+  onReturnToDefaults?: () => void | Promise<void>
 }
 
 function normalizeDashboard(value: unknown): CoachDashboard | null {
@@ -344,7 +345,8 @@ export default function HeadCoachTrainingPanel({
   currentGameDate,
   onMessage,
   onError,
-  onAutomationStateChange
+  onAutomationStateChange,
+  onReturnToDefaults
 }: HeadCoachTrainingPanelProps): JSX.Element {
   const { t } = useTranslation('training')
   const [dashboards, setDashboards] = useState<
@@ -361,6 +363,14 @@ export default function HeadCoachTrainingPanel({
   const familyClubIds = useMemo(
     () => familyClubs.map(team => team.club_id),
     [familyClubs]
+  )
+
+  const hasEnabledAutomation = useMemo(
+    () =>
+      familyClubs.some(team =>
+        Boolean(dashboards[team.club_id]?.setting?.is_enabled)
+      ),
+    [dashboards, familyClubs]
   )
 
   async function loadHeadCoachData(): Promise<void> {
@@ -566,6 +576,59 @@ export default function HeadCoachTrainingPanel({
     }
   }
 
+  async function returnAllToTeamDefaults(): Promise<void> {
+    const enabledTeams = familyClubs.filter(team =>
+      Boolean(dashboards[team.club_id]?.setting?.is_enabled)
+    )
+
+    if (enabledTeams.length === 0) return
+
+    setBusyClubId('__all__')
+    onError?.(null)
+    onMessage?.(null)
+
+    try {
+      for (const team of enabledTeams) {
+        const dashboard = dashboards[team.club_id] ?? null
+        const managerStaffId =
+          dashboard?.setting?.manager_staff_id ??
+          selectedCoachByClub[team.club_id] ??
+          null
+
+        const { error } = await supabase.rpc(
+          'set_regular_training_coach_automation_v1',
+          {
+            p_club_id: team.club_id,
+            p_enabled: false,
+            p_manager_staff_id: managerStaffId
+          }
+        )
+
+        if (error) throw error
+      }
+
+      const { error: clearOverridesError } = await supabase
+        .from('rider_regular_training_plans')
+        .delete()
+        .in('club_id', familyClubIds)
+
+      if (clearOverridesError) throw clearOverridesError
+
+      await loadHeadCoachData()
+      await onReturnToDefaults?.()
+
+      onMessage?.(t('coach.returnToDefaultsSuccess'))
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : t('coach.returnToDefaultsFailed')
+      onError?.(message)
+    } finally {
+      setBusyClubId(null)
+    }
+  }
+
   if (familyClubs.length === 0) {
     return <></>
   }
@@ -602,7 +665,20 @@ export default function HeadCoachTrainingPanel({
             ) : null}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {hasEnabledAutomation ? (
+              <button
+                type="button"
+                onClick={() => void returnAllToTeamDefaults()}
+                disabled={busyClubId != null}
+                className="rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {busyClubId === '__all__'
+                  ? t('coach.returningToDefaults')
+                  : t('coach.unassignAll')}
+              </button>
+            ) : null}
+
             <button
               type="button"
               onClick={() =>
