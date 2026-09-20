@@ -337,7 +337,17 @@
       "attentionItems_one": "{{count}} Hinweis",
       "attentionItems_other": "{{count}} Hinweise",
       "openItem": "Öffnen",
-      "noUrgent": "Derzeit warten keine dringenden Managementpunkte auf deine Aufmerksamkeit."
+      "noUrgent": "Derzeit warten keine dringenden Managementpunkte auf deine Aufmerksamkeit.",
+      "freeCoreView": "Free-Basisansicht",
+      "squadIntelligenceTitle": "Premium-Kaderanalyse",
+      "squadIntelligenceBody": "Fitness, Moral, Bereitschaft, Form und Vertragsdruck werden hier für Premium-Manager zusammengefasst.",
+      "unlockTools": "Premium-Werkzeuge freischalten",
+      "financeLockedBody": "Premium ergänzt Sponsoreneinnahmen, laufende Richtlinienkosten, Reiseprognosen, Transaktionsanalyse und vollständige Cashflow-Charts.",
+      "incomeExpensesGateDesc": "Schalte Wochen-, Monats- und Saison-Charts mit klarer Übersicht über Einnahmen, Ausgaben und Nettosaldo frei.",
+      "operationsGateDesc": "Schalte eine Live-Übersicht über aktuelle Aufgaben, laufende Prozesse, Betriebsstatus und aktive Club-Workflows frei.",
+      "honoursGateDesc": "Schalte eine praktische historische Übersicht der fünf größten Ergebnisse der Clubgeschichte frei.",
+      "seasonCoreBody": "Die wichtigsten Saisonergebnisse sind Free. Premium ergänzt Rennvolumen, internationale Punkte, Trikots und tieferen Saisonkontext.",
+      "seasonAnalytics": "Premium-Saisonanalyse ansehen"
     },
     "riderProfile": {
       "title": "Premium Fahrerentwicklungs-Lab",
