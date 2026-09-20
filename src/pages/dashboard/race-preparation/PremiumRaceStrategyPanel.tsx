@@ -57,6 +57,7 @@ export default function PremiumRaceStrategyPanel({
 }): JSX.Element {
   const { t } = useTranslation('premiumCenter')
   const [isPremium, setIsPremium] = useState(false)
+  const [clubId, setClubId] = useState<string | null>(null)
   const [checking, setChecking] = useState(true)
   const [loading, setLoading] = useState(false)
   const [payload, setPayload] = useState<StrategyPayload | null>(null)
@@ -71,10 +72,14 @@ export default function PremiumRaceStrategyPanel({
     let alive = true
 
     async function load(): Promise<void> {
-      const status = await supabase.rpc('get_my_premium_status')
+      const [status, club] = await Promise.all([
+        supabase.rpc('get_my_premium_status'),
+        supabase.rpc('get_my_primary_club_id'),
+      ])
       if (!alive) return
 
       const premium = resolvePremiumStatus(status.data)
+      setClubId(typeof club.data === 'string' ? club.data : null)
       setIsPremium(premium)
       setChecking(false)
 
@@ -113,7 +118,7 @@ export default function PremiumRaceStrategyPanel({
   )
 
   useEffect(() => {
-    if (!selectedStage) return
+    if (!selectedStage || !clubId) return
 
     setLeaderByStage(current => ({
       ...current,
@@ -154,7 +159,7 @@ export default function PremiumRaceStrategyPanel({
     setPrefillMessage(null)
 
     const { data, error } = await supabase.rpc('premium_match_automation_template_v1', {
-      p_club_id: null,
+      p_club_id: clubId,
       p_rule_type: 'strategy_prefill',
       p_context: {
         terrain_type: selectedStage.terrain_type,
