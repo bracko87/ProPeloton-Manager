@@ -132,25 +132,21 @@ function formatRealDate(value: string | null | undefined): string {
   })
 }
 
-function statusLabel(status: CheckStatus): string {
-  switch (status) {
-    case 'done':
-      return 'Calculated'
-    case 'ready':
-      return 'Ready'
-    case 'running':
-      return 'Running'
-    case 'overdue':
-      return 'Overdue'
-    case 'failed':
-      return 'Failed'
-    case 'blocked':
-      return 'Blocked'
-    case 'cancelled':
-      return 'Cancelled'
-    default:
-      return 'Waiting'
+function statusLabel(
+  status: CheckStatus,
+  phase: 'calculation' | 'replay' | 'completion',
+): string {
+  if (status === 'done') {
+    return phase === 'completion' ? 'Completed' : 'Calculated'
   }
+
+  if (status === 'ready') return 'Ready'
+  if (status === 'running') return 'Running'
+  if (status === 'overdue') return 'Overdue'
+  if (status === 'failed') return 'Failed'
+  if (status === 'blocked') return 'Blocked'
+  if (status === 'cancelled') return 'Cancelled'
+  return 'Waiting'
 }
 
 function statusClasses(status: CheckStatus): string {
@@ -196,10 +192,12 @@ function CheckCard({
   title,
   status,
   detail,
+  phase,
 }: {
   title: string
   status: CheckStatus
   detail: string
+  phase: 'calculation' | 'replay' | 'completion'
 }): JSX.Element {
   return (
     <div className={`rounded-xl border px-3 py-3 ${statusClasses(status)}`}>
@@ -209,7 +207,7 @@ function CheckCard({
           {title}
         </div>
       </div>
-      <div className="mt-1 text-sm font-bold">{statusLabel(status)}</div>
+      <div className="mt-1 text-sm font-bold">{statusLabel(status, phase)}</div>
       <div className="mt-1 text-xs opacity-80">{detail}</div>
     </div>
   )
@@ -543,7 +541,7 @@ export default function AdminRaceOperationsPage(): JSX.Element {
                           )}`}
                         >
                           <StatusIcon status={row.calculation_status} />
-                          {statusLabel(row.calculation_status)}
+                          {statusLabel(row.calculation_status, 'calculation')}
                         </div>
                       </td>
 
@@ -554,7 +552,7 @@ export default function AdminRaceOperationsPage(): JSX.Element {
                           )}`}
                         >
                           <StatusIcon status={row.replay_status} />
-                          {statusLabel(row.replay_status)}
+                          {statusLabel(row.replay_status, 'replay')}
                         </div>
                       </td>
 
@@ -565,7 +563,7 @@ export default function AdminRaceOperationsPage(): JSX.Element {
                           )}`}
                         >
                           <StatusIcon status={row.completion_status} />
-                          {statusLabel(row.completion_status)}
+                          {statusLabel(row.completion_status, 'completion')}
                         </div>
                       </td>
 
@@ -645,6 +643,7 @@ export default function AdminRaceOperationsPage(): JSX.Element {
               title="1 · Calculation"
               status={selected.calculation_status}
               detail={`Due ${formatGameDate(selected.calculation_due_game_at)}`}
+              phase="calculation"
             />
             <CheckCard
               title="2 · Replay"
@@ -654,11 +653,13 @@ export default function AdminRaceOperationsPage(): JSX.Element {
                   ? 'Replay manifest prepared'
                   : `Expected by ${formatGameDate(selected.stage_start_game_at)}`
               }
+              phase="replay"
             />
             <CheckCard
               title="3 · Completion"
               status={selected.completion_status}
               detail={`Results due ${formatGameDate(selected.results_due_game_at)}`}
+              phase="completion"
             />
           </div>
 
