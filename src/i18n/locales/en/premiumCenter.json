@@ -335,19 +335,20 @@
       "templateFallback": "Training template"
     },
     "equipment": {
-      "title": "Premium Equipment Templates",
-      "description": "Save the current draft as a reusable setup, or use Smart Prefill to select one of your own templates for a terrain context. Nothing is applied until you press the normal Save Default Setup button.",
-      "manage": "Manage automation",
-      "none": "No equipment templates saved yet.",
-      "namePlaceholder": "Template name",
-      "saveDraft": "Save current draft",
-      "smartPrefill": "Smart Prefill",
-      "applied": "Premium template “{{name}}” prefilled the default setup draft. Review it and press Save Default Setup to apply it.",
-      "saved": "Premium equipment template saved.",
-      "saveFailed": "Could not save Premium equipment template.",
-      "noRule": "No enabled Equipment Smart Prefill rule matches terrain_type = {{terrain}}.",
-      "templateFallback": "Equipment template",
-      "prefillFailed": "Could not run Equipment Smart Prefill."
+      "title": "Premium Setup Automation",
+      "description": "Save the current Default Race Setup draft as an automation profile, then reuse it manually or prefill it for a terrain rule. Prefill only changes the draft; it never saves equipment automatically.",
+      "manage": "Manage rules",
+      "none": "No Premium automation profiles saved yet.",
+      "namePlaceholder": "Automation profile name",
+      "saveDraft": "Save automation profile",
+      "smartPrefill": "Prefill for terrain",
+      "applied": "Automation profile “{{name}}” filled the Default Race Setup draft. Review it and press Save Default Setup to apply it.",
+      "saved": "Premium equipment automation profile saved.",
+      "saveFailed": "Could not save the Premium equipment automation profile.",
+      "noRule": "No enabled equipment prefill rule matches terrain_type = {{terrain}}.",
+      "templateFallback": "Equipment automation profile",
+      "prefillFailed": "Could not run equipment terrain prefill.",
+      "difference": "Setup Presets below are your normal reusable race loadouts. Premium Setup Automation is separate: it adds terrain-based prefill rules on top of those manual setups."
     },
     "finance": {
       "simulator": "Premium Financial Simulator",
