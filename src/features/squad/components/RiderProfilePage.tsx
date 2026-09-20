@@ -5091,7 +5091,7 @@ export default function RiderProfilePage({
   useEffect(() => {
     let mounted = true
     async function loadHistory() {
-      if (activeTab !== 'history' || !selectedRider?.id || !isPremium) return
+      if (activeTab !== 'history' || !selectedRider?.id) return
       setHistoryLoading(true)
       setHistoryError(null)
       try {
@@ -5110,7 +5110,7 @@ export default function RiderProfilePage({
     return () => {
       mounted = false
     }
-  }, [activeTab, selectedRider?.id, isPremium, t])
+  }, [activeTab, selectedRider?.id, t])
 
   async function applyImageChange() {
     if (!selectedRider) return
@@ -5515,10 +5515,10 @@ export default function RiderProfilePage({
             {t('ownedProfile.performanceTab')} {!premiumStatusLoading && !isPremium ? '🔒' : ''}
           </button>
           <button type="button" onClick={() => setActiveTab('compare')} className={tabButtonClass('compare')}>
-            {t('tabs.compare')} {!premiumStatusLoading && !isPremium ? '🔒' : ''}
+            {t('tabs.compare')}
           </button>
           <button type="button" onClick={() => setActiveTab('history')} className={tabButtonClass('history')}>
-            {t('tabs.history')} {!premiumStatusLoading && !isPremium ? '🔒' : ''}
+            {t('tabs.history')}
           </button>
         </div>
       </div>
@@ -5696,50 +5696,44 @@ export default function RiderProfilePage({
                   )}
                 </SectionCard>
 
-                {isPremium ? (
-                  <SectionCard title={t('ownedProfile.lastFiveRaces')} subtitle={t('ownedProfile.lastFiveSubtitle')}>
-                    {overviewLoading ? <div className="text-sm text-slate-500">{t('ownedProfile.loadingRecentRaces')}</div> : recentRaces.length === 0 ? <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{t('ownedProfile.noRecentRaces')}</div> : (
-                      <div className="space-y-1.5">
-                        {recentRaces.map((race, index) => {
-                          const dateLabel = formatRecentRaceDateRange(race)
-                          return (
-                            <div key={`${race.race_id ?? race.race_name}-${race.race_date ?? index}`} className="flex min-h-[38px] min-w-0 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
-                              <div className="w-16 shrink-0 whitespace-nowrap text-center text-xs font-semibold leading-none text-slate-900" title={dateLabel}>{dateLabel}</div>
-                              <div className="h-6 w-px shrink-0 bg-emerald-400" />
-                              <CountryFlag countryCode={race.race_country_code} />
-                              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden whitespace-nowrap">
-                                {race.race_id ? (
-                                  <Link
-                                    to={`/dashboard/races/${race.race_id}`}
-                                    state={getRaceDetailReturnState()}
-                                    onClick={(event) => {
-                                      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) return
-                                      event.preventDefault()
-                                      navigate(`/dashboard/races/${race.race_id}`, { state: getRaceDetailReturnState() })
-                                    }}
-                                    className="truncate text-sm font-semibold text-slate-900 hover:text-yellow-700 hover:underline"
-                                    title={race.race_name}
-                                  >{race.race_name}</Link>
-                                ) : <span className="truncate text-sm font-semibold text-slate-900" title={race.race_name}>{race.race_name}</span>}
-                                {race.race_category ? <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">{race.race_category}</span> : null}
-                                {race.stage_count && race.stage_count > 1 ? <span className="shrink-0 text-xs text-slate-400">· {t('ownedProfile.stages', { count: race.stage_count })}</span> : null}
-                                {race.route_label ? <span className="min-w-0 truncate text-xs text-slate-400">· {race.route_label}</span> : null}
-                              </div>
-                              <div className="ml-auto flex shrink-0 items-center text-[10px] leading-none text-slate-500">
-                                <div className="border-l border-slate-300 px-3 text-right"><span className="uppercase tracking-[0.12em] text-slate-400">{t('ownedProfile.position')}</span>{' '}<span className="font-normal text-slate-900">{formatGcPosition(race.finish_position)}</span></div>
-                                <div className="border-l border-slate-300 pl-3 text-right"><span className="uppercase tracking-[0.12em] text-slate-400">{t('ownedProfile.uciPoints')}</span>{' '}<span className="font-normal text-slate-900">{formatGcPosition(race.ci_points)}</span></div>
-                              </div>
+                <SectionCard title={t('ownedProfile.lastFiveRaces')} subtitle={t('ownedProfile.lastFiveSubtitle')}>
+                  {overviewLoading ? <div className="text-sm text-slate-500">{t('ownedProfile.loadingRecentRaces')}</div> : recentRaces.length === 0 ? <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{t('ownedProfile.noRecentRaces')}</div> : (
+                    <div className="space-y-1.5">
+                      {recentRaces.map((race, index) => {
+                        const dateLabel = formatRecentRaceDateRange(race)
+                        return (
+                          <div key={`${race.race_id ?? race.race_name}-${race.race_date ?? index}`} className="flex min-h-[38px] min-w-0 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+                            <div className="w-16 shrink-0 whitespace-nowrap text-center text-xs font-semibold leading-none text-slate-900" title={dateLabel}>{dateLabel}</div>
+                            <div className="h-6 w-px shrink-0 bg-emerald-400" />
+                            <CountryFlag countryCode={race.race_country_code} />
+                            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden whitespace-nowrap">
+                              {race.race_id ? (
+                                <Link
+                                  to={`/dashboard/races/${race.race_id}`}
+                                  state={getRaceDetailReturnState()}
+                                  onClick={(event) => {
+                                    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) return
+                                    event.preventDefault()
+                                    navigate(`/dashboard/races/${race.race_id}`, { state: getRaceDetailReturnState() })
+                                  }}
+                                  className="truncate text-sm font-semibold text-slate-900 hover:text-yellow-700 hover:underline"
+                                  title={race.race_name}
+                                >{race.race_name}</Link>
+                              ) : <span className="truncate text-sm font-semibold text-slate-900" title={race.race_name}>{race.race_name}</span>}
+                              {race.race_category ? <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">{race.race_category}</span> : null}
+                              {race.stage_count && race.stage_count > 1 ? <span className="shrink-0 text-xs text-slate-400">· {t('ownedProfile.stages', { count: race.stage_count })}</span> : null}
+                              {race.route_label ? <span className="min-w-0 truncate text-xs text-slate-400">· {race.route_label}</span> : null}
                             </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </SectionCard>
-                ) : (
-                  <SectionCard title={t('ownedProfile.lastFiveRaces')} subtitle={t('ownedProfile.recentPremiumSubtitle')}>
-                    <PremiumLockedPanel title={t('ownedProfile.premiumRaceHistory')} description={t('ownedProfile.premiumRaceHistoryDescription')} />
-                  </SectionCard>
-                )}
+                            <div className="ml-auto flex shrink-0 items-center text-[10px] leading-none text-slate-500">
+                              <div className="border-l border-slate-300 px-3 text-right"><span className="uppercase tracking-[0.12em] text-slate-400">{t('ownedProfile.position')}</span>{' '}<span className="font-normal text-slate-900">{formatGcPosition(race.finish_position)}</span></div>
+                              <div className="border-l border-slate-300 pl-3 text-right"><span className="uppercase tracking-[0.12em] text-slate-400">{t('ownedProfile.uciPoints')}</span>{' '}<span className="font-normal text-slate-900">{formatGcPosition(race.ci_points)}</span></div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </SectionCard>
               </div>
             </div>
           )}
@@ -5853,9 +5847,7 @@ export default function RiderProfilePage({
 
           {activeTab === 'compare' && (
             <div className="space-y-4">
-              {!isPremium ? (
-                <SectionCard title={t('tabs.compare')} subtitle={t('ownedAnalysis.compareSubtitle')}><PremiumLockedPanel title={t('ownedAnalysis.compareLockTitle')} description={t('ownedAnalysis.compareLockDescription')} /></SectionCard>
-              ) : !compareClubId ? (
+              {!compareClubId ? (
                 <SectionCard title={t('tabs.compare')} subtitle={t('ownedAnalysis.compareLoadingSubtitle')}><div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{t('ownedAnalysis.loadingCompare')}</div></SectionCard>
               ) : <RiderComparePanel leftRiderId={riderId} clubId={compareClubId} />}
             </div>
@@ -5863,11 +5855,8 @@ export default function RiderProfilePage({
 
           {activeTab === 'history' && (
             <div className="space-y-4">
-              {!isPremium ? (
-                <SectionCard title={t('tabs.history')} subtitle={t('ownedAnalysis.historySubtitle')}><PremiumLockedPanel title={t('external.premiumHistory')} description={t('ownedAnalysis.historyLockDescription')} /></SectionCard>
-              ) : (
-                <>
-                  <SectionCard title={t('tabs.history')} subtitle={t('external.historySubtitle')}>
+              <>
+                <SectionCard title={t('tabs.history')} subtitle={t('external.historySubtitle')}>
                     {historyLoading ? <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{t('external.loadingCareer')}</div> : historyError ? <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{historyError}</div> : displayHistoryRows.length === 0 ? <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">{t('external.noCareer')}</div> : (
                       <div className="overflow-x-auto">
                         <table className="w-full min-w-[520px] text-sm">
@@ -5877,9 +5866,8 @@ export default function RiderProfilePage({
                       </div>
                     )}
                   </SectionCard>
-                  <RiderCareerHonoursCard rows={careerHonours} loading={overviewLoading} raceLinkState={getRaceDetailReturnState()} />
-                </>
-              )}
+                <RiderCareerHonoursCard rows={careerHonours} loading={overviewLoading} raceLinkState={getRaceDetailReturnState()} />
+              </>
             </div>
           )}
         </>
