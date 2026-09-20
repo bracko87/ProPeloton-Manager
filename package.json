@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "node scripts/build.mjs",
-    "build": "node scripts/build.mjs --production"
+    "build": "node scripts/check-i18n.mjs && node scripts/build.mjs --production",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
