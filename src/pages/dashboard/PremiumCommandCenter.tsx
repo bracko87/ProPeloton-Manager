@@ -1606,15 +1606,15 @@ export default function PremiumCommandCenter(): JSX.Element {
             <div className="space-y-5">
               <div className="grid gap-3 md:grid-cols-3">
                 <StatCard
-                  label="Open offers"
+                  label={t('transfers.openOffers')}
                   value={workspace.transfer_command.pipeline.open_transfer_offers}
                 />
                 <StatCard
-                  label="Transfer negotiations"
+                  label={t('transfers.transferNegotiations')}
                   value={workspace.transfer_command.pipeline.open_transfer_negotiations}
                 />
                 <StatCard
-                  label="Free-agent negotiations"
+                  label={t('transfers.freeAgentNegotiations')}
                   value={workspace.transfer_command.pipeline.open_free_agent_negotiations}
                 />
               </div>
@@ -1778,14 +1778,14 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                 <Card className="p-5">
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <StatCard label="Current balance" value={formatCurrency(workspace.finance.balance)} />
-                    <StatCard label="Baseline weekly net" value={formatCurrency(workspace.finance.weekly_net)} />
+                    <StatCard label={t('finance.currentBalance')} value={formatCurrency(workspace.finance.balance)} />
+                    <StatCard label={t('finance.baselineWeeklyNet')} value={formatCurrency(workspace.finance.weekly_net)} />
                     <StatCard
                       label={t('finance.projectedBalance', { days: simHorizon })}
                       value={formatCurrency(financeProjection?.projected)}
                     />
                     <StatCard
-                      label="Scenario change"
+                      label={t('finance.scenarioChange')}
                       value={formatCurrency(financeProjection?.delta)}
                     />
                   </div>
