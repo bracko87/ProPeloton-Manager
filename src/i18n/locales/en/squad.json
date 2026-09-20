@@ -27,9 +27,9 @@
     "skillsView": "Skills View",
     "formDevelopment": "Form & Development",
     "checkingPremium": "Checking Premium access…",
-    "advancedPremium": "Advanced squad views require Premium.",
+    "advancedPremium": "Financial and Skills views require Premium. General, Form and core health information are Free.",
     "viewPremium": "View Premium",
-    "onlyPremium": "Only for Premium users",
+    "onlyPremium": "Financial and Skills views are Premium",
     "premiumOnly": "Premium only"
   },
   "columns": {
