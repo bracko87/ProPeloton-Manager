@@ -72,7 +72,21 @@ function arraysEqual(left, right) {
 }
 
 function hasTranslationKey(obj, key) {
-  return readPath(obj, key) !== undefined
+  if (readPath(obj, key) !== undefined) return true
+
+  // i18next plural calls use the base key while locale JSON stores
+  // suffixed variants such as key_one / key_other.
+  const parts = key.split('.')
+  const leaf = parts.pop()
+  const parent = parts.length > 0 ? readPath(obj, parts.join('.')) : obj
+
+  return Boolean(
+    parent &&
+      typeof parent === 'object' &&
+      leaf &&
+      (Object.prototype.hasOwnProperty.call(parent, `${leaf}_one`) ||
+        Object.prototype.hasOwnProperty.call(parent, `${leaf}_other`)),
+  )
 }
 
 const errors = []
@@ -183,7 +197,9 @@ for (const relativePath of premiumSourceFiles) {
   }
 
   if (relativePath.endsWith('/PremiumCommandCenter.tsx')) {
-    const localKeyRegex = /t\(\s*['"]([^:'"]+)['"]/g
+    // Require a standalone translation function call. This avoids false
+    // positives from method names ending in "t", e.g. params.get('tab').
+    const localKeyRegex = /(?:^|[^A-Za-z0-9_.$])t\(\s*['"]([^:'"]+)['"]/gm
     for (const match of source.matchAll(localKeyRegex)) {
       if (!hasTranslationKey(englishPremium, match[1])) {
         errors.push(
