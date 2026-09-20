@@ -1,0 +1,42 @@
+name: Premium localization build gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/pages/dashboard/PremiumCommandCenter.tsx'
+      - 'src/pages/dashboard/Training.tsx'
+      - 'src/pages/dashboard/equipment/components/EquipmentOverviewTab.tsx'
+      - 'src/pages/dashboard/Finance.tsx'
+      - 'src/pages/dashboard/Transfers.tsx'
+      - 'src/pages/dashboard/RacePreparation.tsx'
+      - 'src/pages/dashboard/Overview.tsx'
+      - 'src/features/squad/components/RiderProfilePage.tsx'
+      - 'src/components/layout/Sidebar.tsx'
+      - 'src/i18n/index.ts'
+      - 'src/i18n/locales/**/premiumCenter.json'
+      - 'src/i18n/locales/**/navigation.json'
+      - 'scripts/check-i18n.mjs'
+      - 'package.json'
+      - '.github/workflows/premium-localization-build-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate translations
+        run: npm run check:i18n
+
+      - name: Production build
+        run: npm run build
