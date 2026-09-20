@@ -15195,6 +15195,61 @@ function UniversalRaceReplayPage({
       })
     )
   }, [durationSeconds, input, result, terrainReplayTimingModel])
+  const roadCommentaryForDisplay = useMemo(() => {
+    const compacted: typeof commentary = []
+    let crackCluster: typeof commentary = []
+
+    const flushCrackCluster = () => {
+      if (crackCluster.length === 0) return
+      if (crackCluster.length === 1) {
+        compacted.push(crackCluster[0])
+        crackCluster = []
+        return
+      }
+
+      const first = crackCluster[0]
+      const last = crackCluster[crackCluster.length - 1]
+      const riderCount = crackCluster.reduce((sum, event) => {
+        const match = event.description.match(/^(\d+)\s+riders?/i)
+        return sum + (match ? Number(match[1]) : 1)
+      }, 0)
+      const gradientMatch = last.description.match(/on the ([0-9.]+)% climb/i)
+      const gradientText = gradientMatch
+        ? ` on the ${gradientMatch[1]}% climb`
+        : ' on this climb section'
+
+      compacted.push({
+        ...last,
+        id: `${first.id}|cluster|${last.id}`,
+        title: 'Riders crack on the climb',
+        description: `${riderCount} riders can no longer hold the main group${gradientText} between ${formatKm(
+          first.kilometre
+        )} and ${formatKm(last.kilometre)}.`,
+      })
+      crackCluster = []
+    }
+
+    commentary.forEach((event) => {
+      if (event.title !== 'Riders crack on the climb') {
+        flushCrackCluster()
+        compacted.push(event)
+        return
+      }
+
+      const clusterStartKm = crackCluster[0]?.kilometre
+      if (
+        clusterStartKm !== undefined &&
+        event.kilometre - clusterStartKm > 1.5
+      ) {
+        flushCrackCluster()
+      }
+      crackCluster.push(event)
+    })
+    flushCrackCluster()
+
+    return compacted
+  }, [commentary])
+
   const visibleCommentary =
     replayProgress <= 0
       ? []
@@ -15210,7 +15265,7 @@ function UniversalRaceReplayPage({
                 right.kilometre - left.kilometre ||
                 right.id.localeCompare(left.id)
             )
-        : commentary
+        : roadCommentaryForDisplay
             .filter(
               (event) =>
                 event.progress <= distanceReplayProgress + 0.000001
