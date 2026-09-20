@@ -352,7 +352,8 @@
     "pointNoAward": "Dieser Punkt wurde erreicht, ohne dass ein Ergebnis vergeben wurde.",
     "currentStageTotals": "Aktuelle Etappensummen",
     "noAwards": "Noch wurden keine Sprint-, KOM- oder Bonuswertungen eingeblendet.",
-    "total": "Gesamt"
+    "total": "Gesamt",
+    "premiumIncluded": "Premium beinhaltet den Zugriff auf das Replay dieses Weltrennens."
   },
   "leaders": {
     "general": "Führender Gesamtwertung",
