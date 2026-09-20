@@ -27,9 +27,9 @@
     "skillsView": "Prikaz veština",
     "formDevelopment": "Forma i razvoj",
     "checkingPremium": "Provera Premium pristupa…",
-    "advancedPremium": "Napredni prikazi tima zahtevaju Premium.",
+    "advancedPremium": "Financial i Skills prikazi zahtevaju Premium. General, Form i osnovne zdravstvene informacije su Free.",
     "viewPremium": "Prikaži Premium",
-    "onlyPremium": "Samo za Premium korisnike",
+    "onlyPremium": "Financial i Skills prikazi su Premium",
     "premiumOnly": "Samo Premium"
   },
   "columns": {
