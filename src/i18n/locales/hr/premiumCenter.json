@@ -1,0 +1,19 @@
+{
+  "title": "Premium komandni centar",
+  "subtitle": "Napredni alati za planiranje, simulaciju, organizaciju i automatizaciju temeljeni na informacijama koje vaš klub već posjeduje.",
+  "premiumOnly": "Premium upravljački prostor",
+  "premiumOnlyBody": "Free menadžeri zadržavaju cijelu igru i ručnu kontrolu. Premium dodaje dublju analizu, simulacije, spremljene procese i pametno popunjavanje bez jačanja race enginea.",
+  "upgrade": "Otključaj Premium",
+  "scopeTitle": "Odvojeno od Staff Briefing Centre",
+  "scopeBody": "Staff Briefing Centre ostaje zaseban sustav savjetnika koji se plaća coinima: odabrani zaposlenici proaktivno tumače trening, zdravlje, program utrka, opremu ili scouting. Premium Command Center ne zamjenjuje te savjetnike. Pruža determinističke nadzorne ploče, simulacije, scenarije, predloške i automatizaciju pod kontrolom korisnika, bez ovisnosti o staff skillovima i bez advisor izvještaja.",
+  "tabs": {
+    "summary": "Komandni pregled",
+    "strategy": "Race Strategy Lab",
+    "season": "Planer sezone",
+    "transfers": "Transfer Command",
+    "finance": "Financijski simulator",
+    "sponsors": "Sponsor Intelligence",
+    "development": "Rider Development Lab",
+    "templates": "Predlošci i automatizacija"
+  }
+}
