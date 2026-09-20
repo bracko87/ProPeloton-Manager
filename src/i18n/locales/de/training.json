@@ -164,7 +164,11 @@
     "safetyTitle": "Prioritäts- und Sicherheitsregeln",
     "safetyText": "Rennen, aktive Trainingslager, bestehende Tagesaktivitäten, Verletzungen, Krankheiten und medizinische Fälle, die Training verhindern, haben Vorrang. Ein Trainer in einem Kurs oder mit einer anderen Zuweisung kann nur eingeschränkt oder gar nicht verfügbar sein.",
     "disabledTitle": "Wenn die Automatik deaktiviert ist",
-    "disabledText": "Die bestehenden Team-Standards und dauerhaften Fahrerüberschreibungen steuern das reguläre Training genau wie zuvor."
+    "disabledText": "Die bestehenden Team-Standards und dauerhaften Fahrerüberschreibungen steuern das reguläre Training genau wie zuvor.",
+    "unassignAll": "Trainerzuweisung aufheben & Team-Standards verwenden",
+    "returningToDefaults": "Team-Standards werden wiederhergestellt…",
+    "returnToDefaultsSuccess": "Die Cheftrainer-Steuerung wurde aufgehoben. Fahrerüberschreibungen wurden gelöscht und die Team-Standards sind wieder aktiv.",
+    "returnToDefaultsFailed": "Das Training konnte nicht auf die Team-Standards zurückgesetzt werden."
   },
   "camps": {
     "currentTitle": "Aktuelles / geplantes Trainingslager",
