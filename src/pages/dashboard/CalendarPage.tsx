@@ -2423,8 +2423,7 @@ export default function CalendarPage(): JSX.Element {
                   <button
                     type="button"
                     onClick={() => setPremiumFiltersOpen(current => !current)}
-                    disabled={premiumStatusLoading}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 transition hover:border-yellow-400 hover:bg-yellow-50 disabled:cursor-wait disabled:text-gray-400"
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-800 transition hover:border-yellow-400 hover:bg-yellow-50"
                     aria-expanded={premiumFiltersOpen}
                   >
                     {premiumFiltersOpen ? t('filters.hide') : t('filters.open')}
@@ -2621,7 +2620,7 @@ export default function CalendarPage(): JSX.Element {
 
             {filteredActiveMonthRaces.length === 0 ? (
               <div className="rounded-md border border-gray-200 p-4 text-sm text-gray-500">
-                {isPremium && activePremiumFilterCount > 0
+                {activePremiumFilterCount > 0
                   ? t('filters.noMatch', {
                       month: getGameMonthName(resolvedActiveRaceMonth, t),
                     })
