@@ -333,7 +333,11 @@
       "open": "Otvori Command Center",
       "strategy": "Race Strategy Lab",
       "season": "Planer sezone",
-      "finance": "Financijski simulator"
+      "finance": "Financijski simulator",
+      "attentionItems_one": "{{count}} stavka za pažnju",
+      "attentionItems_other": "{{count}} stavke za pažnju",
+      "openItem": "Otvori",
+      "noUrgent": "Trenutno nema hitnih upravljačkih stavki koje čekaju pažnju."
     },
     "riderProfile": {
       "title": "Premium Rider Development Lab",
