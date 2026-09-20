@@ -17,7 +17,7 @@
     "perMonth": "per real-life month",
     "membership": "Premium membership",
     "advancedTools": "Advanced analysis, automation, forecasting and management convenience tools.",
-    "marketTools": "Saved searches, market alerts, unlimited coin-free shortlist additions and deeper transfer analysis.",
+    "marketTools": "Saved searches, market alerts, unlimited coin-free daily shortlist additions (within the active-list limit) and deeper transfer analysis.",
     "capacity": "Extra equipment and infrastructure convenience capacity.",
     "receive": "Receive",
     "monthlyCoinsSuffix": "coins after every successful monthly payment.",
@@ -68,7 +68,7 @@
   "advantages": {
     "a1": "50 coins after every successful monthly Premium payment.",
     "a2": "Advanced training automation and rider-development analysis.",
-    "a3": "Premium transfer tools: saved searches, automatic alerts, unlimited coin-free shortlist additions and deeper negotiation analysis.",
+    "a3": "Premium transfer tools: saved searches, automatic alerts, unlimited coin-free daily shortlist additions (within the active-list limit) and deeper negotiation analysis.",
     "a4": "Additional equipment setup slots and expanded included garage capacity.",
     "a5": "Manager Briefing, advanced calendar intelligence, finance forecasts and management convenience tools.",
     "a6": "Advanced rider-performance analytics, development trends and unlimited world-race replays.",
