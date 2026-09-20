@@ -16,8 +16,8 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "por mes de la vida real",
     "membership": "Miembro Premium",
-    "advancedTools": "Herramientas avanzadas de entrenamiento, transferencia, exploración y gestión.",
-    "marketTools": "Búsquedas guardadas, alertas de mercado, lista de preguntas y análisis más profundos.",
+    "advancedTools": "Análisis avanzado, automatización, previsiones y herramientas de comodidad para la gestión.",
+    "marketTools": "Búsquedas guardadas, alertas de mercado, altas diarias ilimitadas en la lista sin coste de monedas (dentro del límite activo) y análisis de fichajes más profundo.",
     "capacity": "Capacidad adicional de equipamiento y de infraestructura.",
     "receive": "Recibir",
     "monthlyCoinsSuffix": "Coins después de cada pago mensual exitoso.",
@@ -68,11 +68,11 @@
   "advantages": {
     "a1": "50 Coins después de cada pago mensual Premium.",
     "a2": "Automatización de entrenamiento avanzado y análisis de desarrollo de ciclista.",
-    "a3": "Herramientas de transferencia Premium: búsquedas guardadas, alertas automáticas, lista de preselecciones y análisis de negociación.",
+    "a3": "Herramientas Premium de fichajes: búsquedas guardadas, alertas automáticas, altas diarias ilimitadas en la lista sin coste de monedas (dentro del límite activo) y análisis de negociación más profundo.",
     "a4": "Equipamiento adicional ranuras de configuración y ampliado incluye la capacidad de garaje.",
-    "a5": "Acceso a opciones avanzadas de Team Policy y filtros de calendario seleccionados.",
-    "a6": "Historia adicional de los riders externos, resultados recientes y perspectivas de honor profesional.",
-    "a7": "Las características de conveniencia de Premium nunca mejoran los resultados de la carrera, la aceptación de la transferencia o las habilidades ocultas del ciclista."
+    "a5": "Manager Briefing, inteligencia avanzada del calendario, previsiones financieras y herramientas de comodidad.",
+    "a6": "Análisis avanzado del rendimiento de ciclistas, tendencias de desarrollo y repeticiones ilimitadas de carreras mundiales.",
+    "a7": "Premium mejora la información, la automatización y la comodidad; nunca la fuerza en carrera, la aceptación de fichajes ni atributos ocultos."
   },
   "comparison": {
     "title": "gratis vs Premium",
