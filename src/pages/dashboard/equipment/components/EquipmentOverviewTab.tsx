@@ -556,6 +556,97 @@ export default function EquipmentOverviewTab({
             </p>
           </div>
 
+          {equipmentAccess?.is_premium ? (
+            <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50/60 p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-semibold text-gray-900">
+                      Premium Equipment Templates
+                    </div>
+                    <span className="rounded-full border border-yellow-300 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                      Premium
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-gray-600">
+                    Save the current draft as a reusable setup, or use Smart Prefill to select one of your own templates for a terrain context. Nothing is applied until you press the normal Save Default Setup button.
+                  </p>
+                </div>
+                <a
+                  href="#/dashboard/premium-center?tab=templates"
+                  className="shrink-0 rounded-lg border border-yellow-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-yellow-50"
+                >
+                  Manage automation
+                </a>
+              </div>
+
+              {premiumTemplates.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {premiumTemplates.map(template => (
+                    <button
+                      type="button"
+                      key={template.id}
+                      onClick={() =>
+                        applyPremiumEquipmentPayload(
+                          template.payload_json ?? {},
+                          template.name,
+                        )
+                      }
+                      className="rounded-lg border border-yellow-200 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:border-yellow-400"
+                    >
+                      {template.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 text-xs text-gray-600">
+                  No equipment templates saved yet.
+                </div>
+              )}
+
+              <div className="mt-3 grid gap-2 lg:grid-cols-[1fr_auto]">
+                <div className="flex gap-2">
+                  <input
+                    value={premiumTemplateName}
+                    onChange={event => setPremiumTemplateName(event.target.value)}
+                    placeholder="Template name"
+                    className="min-w-0 flex-1 rounded-lg border border-yellow-200 bg-white px-3 py-2 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void savePremiumEquipmentTemplate()}
+                    disabled={premiumTemplateBusy || !premiumTemplateName.trim()}
+                    className="rounded-lg bg-gray-950 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
+                  >
+                    Save current draft
+                  </button>
+                </div>
+
+                <div className="flex gap-2">
+                  <select
+                    value={premiumPrefillTerrain}
+                    onChange={event => setPremiumPrefillTerrain(event.target.value)}
+                    className="rounded-lg border border-yellow-200 bg-white px-3 py-2 text-xs"
+                  >
+                    <option value="flat">Flat</option>
+                    <option value="hilly">Hilly</option>
+                    <option value="mountain">Mountain</option>
+                    <option value="cobbles">Cobbles</option>
+                    <option value="time_trial">Time trial</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => void applyEquipmentSmartPrefill()}
+                    disabled={premiumTemplateBusy}
+                    className="rounded-lg border border-yellow-300 bg-white px-3 py-2 text-xs font-semibold text-yellow-900 hover:bg-yellow-100 disabled:opacity-40"
+                  >
+                    Smart Prefill
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {setupMessage ? (
             <div className="mt-3 rounded border border-green-200 bg-green-50 p-2 text-xs text-green-700">
               {setupMessage}
