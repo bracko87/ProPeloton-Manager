@@ -18,7 +18,7 @@ import {
   saveTutorialProgress
 } from '../../lib/tutorialProgress'
 
-type TabKey = 'regular' | 'camps'
+type TabKey = 'regular' | 'camps' | 'development'
 type CampType = 'general' | 'sprint' | 'climbing' | 'flat' | 'time_trial'
 type AvailabilityStatus = 'fit' | 'not_fully_fit' | 'injured' | 'sick'
 type RegularTrainingIntensity = 'recovery' | 'light' | 'normal' | 'hard'
@@ -1169,6 +1169,7 @@ export default function TrainingPage(): JSX.Element {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const focusedRiderId = searchParams.get('riderId')
+  const requestedTrainingTab = searchParams.get('tab')
 
   const [activeTab, setActiveTab] = useState<TabKey>('regular')
   const [loading, setLoading] = useState(true)
@@ -1957,6 +1958,19 @@ export default function TrainingPage(): JSX.Element {
       setActiveTab('regular')
     }
   }, [focusedRiderId])
+
+  useEffect(() => {
+    if (premiumStatusLoading) return
+
+    if (requestedTrainingTab === 'development' && isPremium && !focusedRiderId) {
+      setActiveTab('development')
+      return
+    }
+
+    if (!isPremium && activeTab === 'development') {
+      setActiveTab('regular')
+    }
+  }, [activeTab, focusedRiderId, isPremium, premiumStatusLoading, requestedTrainingTab])
 
   useEffect(() => {
     setCurrentPage(1)
@@ -2958,6 +2972,20 @@ export default function TrainingPage(): JSX.Element {
             >
               {t('page.campsTab')}
             </button>
+
+            {!premiumStatusLoading && isPremium ? (
+              <button
+                type="button"
+                onClick={() => setActiveTab('development')}
+                className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
+                  activeTab === 'development'
+                    ? 'bg-yellow-400 text-black shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {t('premiumCenter:tabs.development')}
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -3254,10 +3282,6 @@ export default function TrainingPage(): JSX.Element {
                 </div>
               ) : null}
             </div>
-          ) : null}
-
-          {isPremium && clubId ? (
-            <PremiumRiderDevelopmentPanel clubId={clubId} />
           ) : null}
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -3665,6 +3689,10 @@ export default function TrainingPage(): JSX.Element {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {activeTab === 'development' && isPremium && clubId ? (
+        <PremiumRiderDevelopmentPanel clubId={clubId} />
       ) : null}
 
       {activeTab === 'camps' ? (
