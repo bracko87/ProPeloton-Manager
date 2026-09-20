@@ -1643,6 +1643,102 @@ export default function TrainingPage(): JSX.Element {
     )
   }
 
+  function getTrainingTemplateValues(template: PremiumTrainingTemplate): {
+    focusCode: string
+    intensity: RegularTrainingIntensity
+  } {
+    const focusCode = String(template.payload_json?.focus_code ?? 'general')
+    const rawIntensity = String(template.payload_json?.intensity ?? 'normal')
+    const intensity: RegularTrainingIntensity =
+      rawIntensity === 'recovery' ||
+      rawIntensity === 'light' ||
+      rawIntensity === 'hard'
+        ? rawIntensity
+        : 'normal'
+
+    return {
+      focusCode,
+      intensity: normalizeTrainingIntensityForSave(focusCode, intensity)
+    }
+  }
+
+  function applyTrainingTemplateToTeamDefaults(
+    template: PremiumTrainingTemplate
+  ): void {
+    const values = getTrainingTemplateValues(template)
+
+    familyClubs.forEach(team => {
+      updateRegularDefaultDraft(team.club_id, {
+        focus_code: values.focusCode,
+        intensity: values.intensity
+      })
+    })
+
+    setIsTeamDefaultsExpanded(true)
+    setPremiumPrefillMessage(
+      `Premium template “${template.name}” prefilled the team-default drafts. Review and save each team when ready.`
+    )
+  }
+
+  async function applyMatchingTrainingPrefill(
+    rider: RosterRider
+  ): Promise<void> {
+    if (!clubId || !isPremium) return
+
+    setPremiumPrefillRiderId(rider.rider_id)
+    setPremiumPrefillMessage(null)
+
+    try {
+      const { data, error: matchError } = await supabase.rpc(
+        'premium_match_automation_template_v1',
+        {
+          p_club_id: clubId,
+          p_rule_type: 'training_prefill',
+          p_context: {
+            availability_status: rider.availability_status,
+            role: rider.assigned_role ?? ''
+          }
+        }
+      )
+
+      if (matchError) throw matchError
+
+      const match = (data ?? {}) as Record<string, any>
+
+      if (match.matched !== true) {
+        setPremiumPrefillMessage(
+          `No enabled Premium Smart Prefill rule matches ${getFullRiderName(rider)}.`
+        )
+        return
+      }
+
+      const template: PremiumTrainingTemplate = {
+        id: String(match.template_id ?? ''),
+        name: String(match.template_name ?? 'Training template'),
+        payload_json: (match.payload_json ?? {}) as PremiumTrainingTemplate['payload_json']
+      }
+      const values = getTrainingTemplateValues(template)
+
+      updateRegularPlanDraft(rider, {
+        focus_code: values.focusCode,
+        intensity: values.intensity,
+        is_active: true
+      })
+
+      setPremiumPrefillMessage(
+        `Smart Prefill matched “${template.name}” for ${getFullRiderName(rider)}. The draft was updated only; save it if you want to apply it.`
+      )
+    } catch (prefillError) {
+      setPremiumPrefillMessage(
+        prefillError instanceof Error
+          ? prefillError.message
+          : 'Premium Smart Prefill could not be checked.'
+      )
+    } finally {
+      setPremiumPrefillRiderId(null)
+    }
+  }
+
   async function loadRegularTrainingConfig(familyClubIds: string[]): Promise<void> {
     if (familyClubIds.length === 0) {
       setRegularDefaults([])
