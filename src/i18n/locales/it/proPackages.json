@@ -16,8 +16,8 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "per mese di vita reale",
     "membership": "Membership Premium",
-    "advancedTools": "Strumenti di formazione, trasferimento, scouting e gestione avanzati.",
-    "marketTools": "Ricerca salvata, avvisi di mercato, elenco breve rider e analisi più approfondita.",
+    "advancedTools": "Analisi avanzate, automazione, previsioni e strumenti di comodità per la gestione.",
+    "marketTools": "Ricerche salvate, avvisi di mercato, aggiunte giornaliere illimitate alla shortlist senza costo in monete (entro il limite attivo) e analisi trasferimenti più approfondite.",
     "capacity": "Attrezzature supplementari e capacità di convenienza dell'infrastruttura.",
     "receive": "Ricevi",
     "monthlyCoinsSuffix": "Coins dopo ogni pagamento mensile riuscito.",
@@ -68,11 +68,11 @@
   "advantages": {
     "a1": "50 Coins dopo ogni pagamento mensile Premium di successo.",
     "a2": "Automazione avanzata di formazione e analisi di sviluppo del ciclista.",
-    "a3": "Premium: ricerca salvata, avvisi automatici, analisi di breve elenco e negoziazione.",
+    "a3": "Strumenti Premium per i trasferimenti: ricerche salvate, avvisi automatici, aggiunte giornaliere illimitate alla shortlist senza costo in monete (entro il limite attivo) e analisi delle trattative più approfondite.",
     "a4": "Attrezzatura supplementare di installazione e ampliato incluso capacità del garage.",
-    "a5": "Accesso alle opzioni avanzate di politica del team e ai filtri di calendario selezionati.",
-    "a6": "Storia aggiuntiva del ciclista esterno, risultati recenti e opinioni di carriera-onore.",
-    "a7": "Le funzionalità di convenienza Premium non migliorano mai i risultati della gara, l'accettazione del trasferimento o le abilità del ciclista nascosto."
+    "a5": "Manager Briefing, intelligenza avanzata del calendario, previsioni finanziarie e strumenti di comodità.",
+    "a6": "Analisi avanzate delle prestazioni dei corridori, trend di sviluppo e replay illimitati delle gare mondiali.",
+    "a7": "Premium migliora informazioni, automazione e comodità — mai la forza nel motore di gara, l'accettazione dei trasferimenti o le abilità nascoste."
   },
   "comparison": {
     "title": "Free vs Premium",
