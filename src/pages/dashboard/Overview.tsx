@@ -8547,7 +8547,7 @@ export default function OverviewPage() {
                 </p>
               </div>
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-                Free core view
+                {t("premiumCenter:integrations.overview.freeCoreView")}
               </span>
             </div>
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
