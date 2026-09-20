@@ -354,7 +354,8 @@
     "pointNoAward": "Bodovni punkt je dostignut bez dodeljenog rezultata.",
     "currentStageTotals": "Trenutni zbir na etapi",
     "noAwards": "Još nisu prikazani Sprint, KOM ili bonus bodovi.",
-    "total": "Ukupno"
+    "total": "Ukupno",
+    "premiumIncluded": "Premium uključuje pristup replay-u ove svetske trke."
   },
   "leaders": {
     "general": "Lider generalnog plasmana",
