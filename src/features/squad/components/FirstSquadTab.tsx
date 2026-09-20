@@ -1536,18 +1536,19 @@ export default function FirstSquadTab({
 
           <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
             <div className="rounded-lg bg-white p-4 shadow">
-              <div className="mb-4">
+              <div className={visibleLastTeamRace ? 'mb-4' : ''}>
                 <div className="text-base font-semibold text-gray-800">{t('races.lastTeamRace')}</div>
-                <RacePreviewStrip
-                  raceName={visibleLastTeamRace?.raceName}
-                  raceCountryCode={visibleLastTeamRace?.raceCountryCode}
-                  raceCategory={visibleLastTeamRace?.raceCategory}
-                  stageDate={visibleLastTeamRace?.stageDate}
-                  stageLabel={visibleLastTeamRace?.stageLabel}
-                  routeLabel={visibleLastTeamRace?.routeLabel}
-                  stageCount={visibleLastTeamRace?.stageCount}
-                  emptyLabel={t('races.noFinishedClassification')}
-                />
+                {visibleLastTeamRace ? (
+                  <RacePreviewStrip
+                    raceName={visibleLastTeamRace.raceName}
+                    raceCountryCode={visibleLastTeamRace.raceCountryCode}
+                    raceCategory={visibleLastTeamRace.raceCategory}
+                    stageDate={visibleLastTeamRace.stageDate}
+                    stageLabel={visibleLastTeamRace.stageLabel}
+                    routeLabel={visibleLastTeamRace.routeLabel}
+                    stageCount={visibleLastTeamRace.stageCount}
+                  />
+                ) : null}
               </div>
 
               {visibleLastTeamRace?.rows?.length ? (
@@ -1577,11 +1578,7 @@ export default function FirstSquadTab({
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-                  {t('races.noFinishedClassification')}
-                </div>
-              )}
+              ) : null}
             </div>
 
             <div className="rounded-lg bg-white p-4 shadow">
