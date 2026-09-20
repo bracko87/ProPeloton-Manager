@@ -440,13 +440,13 @@ function PremiumPreview(): JSX.Element {
 
   return (
     <div className="space-y-6">
-      <Card className="overflow-hidden border-yellow-200">
-        <div className="bg-gradient-to-r from-yellow-50 via-white to-amber-50 p-7">
-          <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-yellow-800">
-            <Crown size={18} />
+      <Card className="overflow-hidden">
+        <div className="bg-white p-5">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+            <Crown size={16} />
             {t('preview.workspace')}
           </div>
-          <h2 className="mt-3 max-w-4xl text-3xl font-semibold text-slate-950">
+          <h2 className="mt-2 max-w-4xl text-xl font-semibold text-slate-900">
             {t('preview.headline')}
           </h2>
           <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
@@ -454,7 +454,7 @@ function PremiumPreview(): JSX.Element {
           </p>
           <Link
             to="/dashboard/pro"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-black"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black"
           >
             <Crown size={16} />
             {t('upgrade')}
@@ -474,7 +474,7 @@ function PremiumPreview(): JSX.Element {
         ))}
       </div>
 
-      <Card className="border-blue-200 bg-blue-50 p-5">
+      <Card className="p-5">
         <div className="font-semibold text-slate-900">{t('preview.whyTitle')}</div>
         <p className="mt-2 text-sm leading-6 text-slate-600">
           {t('preview.whyBody')}
@@ -1028,15 +1028,13 @@ export default function PremiumCommandCenter(): JSX.Element {
     <div className="w-full space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-yellow-700">
-            <Crown size={15} />
-            {t('premiumOnly')}
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-slate-900">{t('title')}</h1>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+              Premium
+            </span>
           </div>
-          <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold text-slate-950">
-            <Sparkles size={30} className="text-yellow-600" />
-            {t('title')}
-          </h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">
             {t('subtitle')}
           </p>
         </div>
