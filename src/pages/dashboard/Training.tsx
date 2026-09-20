@@ -1912,6 +1912,37 @@ export default function TrainingPage(): JSX.Element {
   }, [])
 
   useEffect(() => {
+    let active = true
+
+    if (!clubId || !isPremium || premiumStatusLoading) {
+      setPremiumTrainingTemplates([])
+      return () => {
+        active = false
+      }
+    }
+
+    void supabase
+      .rpc('premium_list_templates_v1', {
+        p_club_id: clubId,
+        p_template_type: 'training'
+      })
+      .then(({ data, error: templateError }) => {
+        if (!active) return
+
+        if (templateError) {
+          console.warn('Could not load Premium training templates:', templateError)
+          return
+        }
+
+        setPremiumTrainingTemplates((data ?? []) as PremiumTrainingTemplate[])
+      })
+
+    return () => {
+      active = false
+    }
+  }, [clubId, isPremium, premiumStatusLoading])
+
+  useEffect(() => {
     if (!isPremium && !premiumStatusLoading) {
       setHeadCoachAutomation({
         enabledByClubId: {},
