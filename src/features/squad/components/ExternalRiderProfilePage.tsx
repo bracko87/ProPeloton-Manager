@@ -787,6 +787,18 @@ async function fetchRiderCareerHistoryById(
   }
 
   try {
+    const { data, error } = await supabase.rpc("get_rider_career_history", {
+      p_rider_id: riderId,
+    });
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return await hydrateRiderCareerHistoryTeamNames(normalizeRows(data));
+    }
+  } catch {
+    // fallback below
+  }
+
+  try {
     const { data, error } = await supabase.rpc("get_external_rider_career_history_premium_v1", {
       p_rider_id: riderId,
     });
@@ -2043,7 +2055,7 @@ export default function ExternalRiderProfilePage({
     let mounted = true;
 
     async function loadHistory() {
-      if (activeTab !== "history" || !selectedRider?.id || premiumStatusLoading || !isPremium) {
+      if (activeTab !== "history" || !selectedRider?.id || premiumStatusLoading) {
         setHistoryRows([]);
         setHistoryError(null);
         setHistoryLoading(false);
@@ -2072,7 +2084,7 @@ export default function ExternalRiderProfilePage({
     return () => {
       mounted = false;
     };
-  }, [activeTab, isPremium, premiumStatusLoading, selectedRider?.id, t]);
+  }, [activeTab, premiumStatusLoading, selectedRider?.id, t]);
 
   const statsAge =
     typeof (selectedRider as { age_years?: unknown } | null)?.age_years === "number"
@@ -2989,9 +3001,6 @@ export default function ExternalRiderProfilePage({
 
           <button type="button" onClick={() => setActiveTab("history")} className={tabButtonClass("history")}>
             <span>{t("tabs.history")}</span>
-            {!premiumStatusLoading && !isPremium ? (
-              <span aria-hidden="true" className="ml-1 text-xs text-slate-400">🔒</span>
-            ) : null}
           </button>
         </div>
       </div>
@@ -3275,14 +3284,14 @@ export default function ExternalRiderProfilePage({
               <div className="rounded-lg border border-slate-200 bg-white px-5 py-5 text-sm text-slate-500 shadow">
                 {t("common.checkingPremium")}
               </div>
-            ) : !isPremium ? (
-              <PremiumLockedPanel
-                title={t("external.premiumHistory")}
-                description={t("external.premiumHistoryDescription")}
-              />
             ) : (
               <div className="space-y-4">
                 <SectionCard title={t("tabs.history")} subtitle={t("external.historySubtitle")}>
+                  {!isPremium ? (
+                    <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                      Basic career history is available to every manager. Premium keeps the deeper recent-results and career-honours analysis.
+                    </div>
+                  ) : null}
                   {historyLoading ? (
                     <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                       {t("external.loadingCareer")}
@@ -3346,19 +3355,27 @@ export default function ExternalRiderProfilePage({
                   )}
                 </SectionCard>
 
-                <RiderCareerHonoursCard
-                  rows={careerHonours}
-                  loading={overviewLoading}
-                  raceLinkState={{
-                    returnTo: `${location.pathname}${location.search}${location.hash}`,
-                    returnScrollY: typeof window !== "undefined" ? window.scrollY : 0,
-                    returnScrollX: typeof window !== "undefined" ? window.scrollX : 0,
-                    returnLabel: t("external.backToProfile"),
-                  }}
-                />
+                {isPremium ? (
+                  <RiderCareerHonoursCard
+                    rows={careerHonours}
+                    loading={overviewLoading}
+                    raceLinkState={{
+                      returnTo: `${location.pathname}${location.search}${location.hash}`,
+                      returnScrollY: typeof window !== "undefined" ? window.scrollY : 0,
+                      returnScrollX: typeof window !== "undefined" ? window.scrollX : 0,
+                      returnLabel: t("external.backToProfile"),
+                    }}
+                  />
+                ) : (
+                  <PremiumLockedPanel
+                    title={t("history.careerHonours")}
+                    description="Premium adds career honours, recent-results history and deeper external-rider analysis."
+                  />
+                )}
               </div>
             )
           )}
+
         </>
       )}
 
