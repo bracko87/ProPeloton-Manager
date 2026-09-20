@@ -164,7 +164,11 @@
     "safetyTitle": "Priority and safety rules",
     "safetyText": "Races, active camps, existing daily activity, injuries, sickness and training-blocking medical cases take priority. A coach on a course or another assignment may have reduced or zero availability.",
     "disabledTitle": "When automation is disabled",
-    "disabledText": "The existing Team Defaults and persistent Rider Overrides control regular training exactly as before."
+    "disabledText": "The existing Team Defaults and persistent Rider Overrides control regular training exactly as before.",
+    "unassignAll": "Unassign coach & use Team Defaults",
+    "returningToDefaults": "Returning to Team Defaults…",
+    "returnToDefaultsSuccess": "Head Coach management was unassigned. Rider overrides were cleared and Team Defaults are active again.",
+    "returnToDefaultsFailed": "Could not return training to Team Defaults."
   },
   "camps": {
     "currentTitle": "Current / Planned Training Camp",
