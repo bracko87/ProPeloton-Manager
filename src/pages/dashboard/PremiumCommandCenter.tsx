@@ -500,6 +500,9 @@ export default function PremiumCommandCenter(): JSX.Element {
   const [selectedStageId, setSelectedStageId] = useState<string>('')
   const [selectedLeaderByStage, setSelectedLeaderByStage] = useState<Record<string, string>>({})
   const [aggressionByStage, setAggressionByStage] = useState<Record<string, number>>({})
+  const [objectiveByStage, setObjectiveByStage] = useState<Record<string, string>>({})
+  const [strategyByStage, setStrategyByStage] = useState<Record<string, string>>({})
+  const [riskByStage, setRiskByStage] = useState<Record<string, string>>({})
   const [prefillMatch, setPrefillMatch] = useState<Record<string, any> | null>(null)
 
   const [simOneTimeCost, setSimOneTimeCost] = useState(0)
@@ -516,7 +519,6 @@ export default function PremiumCommandCenter(): JSX.Element {
   const [raceRisk, setRaceRisk] = useState('normal')
   const [trainingFocus, setTrainingFocus] = useState('general')
   const [trainingIntensity, setTrainingIntensity] = useState('normal')
-  const [equipmentLabel, setEquipmentLabel] = useState('Race setup')
 
   const [automationName, setAutomationName] = useState('')
   const [automationTemplateId, setAutomationTemplateId] = useState('')
@@ -705,6 +707,30 @@ export default function PremiumCommandCenter(): JSX.Element {
       if (typeof current[selectedStage.stage_id] === 'number') return current
       return { ...current, [selectedStage.stage_id]: 50 }
     })
+
+    setObjectiveByStage(current => ({
+      ...current,
+      [selectedStage.stage_id]:
+        current[selectedStage.stage_id] ??
+        selectedStage.current_plan?.stage_objective ??
+        'balanced',
+    }))
+
+    setStrategyByStage(current => ({
+      ...current,
+      [selectedStage.stage_id]:
+        current[selectedStage.stage_id] ??
+        selectedStage.current_plan?.team_strategy ??
+        'balanced',
+    }))
+
+    setRiskByStage(current => ({
+      ...current,
+      [selectedStage.stage_id]:
+        current[selectedStage.stage_id] ??
+        selectedStage.current_plan?.risk_level ??
+        'normal',
+    }))
   }, [selectedStage])
 
   const commandItems = useMemo(() => {
@@ -918,7 +944,33 @@ export default function PremiumCommandCenter(): JSX.Element {
       return
     }
 
-    setPrefillMatch((data ?? null) as Record<string, any> | null)
+    const match = (data ?? null) as Record<string, any> | null
+    setPrefillMatch(match)
+
+    if (match?.matched === true && selectedStage) {
+      const payload = (match.payload_json ?? {}) as Record<string, unknown>
+
+      if (typeof payload.stage_objective === 'string') {
+        setObjectiveByStage(current => ({
+          ...current,
+          [selectedStage.stage_id]: String(payload.stage_objective),
+        }))
+      }
+
+      if (typeof payload.team_strategy === 'string') {
+        setStrategyByStage(current => ({
+          ...current,
+          [selectedStage.stage_id]: String(payload.team_strategy),
+        }))
+      }
+
+      if (typeof payload.risk_level === 'string') {
+        setRiskByStage(current => ({
+          ...current,
+          [selectedStage.stage_id]: String(payload.risk_level),
+        }))
+      }
+    }
   }, [clubId, selectedStage])
 
   const deleteAutomationRule = useCallback(
@@ -1328,6 +1380,70 @@ export default function PremiumCommandCenter(): JSX.Element {
                               </option>
                             ))}
                           </select>
+
+                          <div className="mt-4 grid gap-3">
+                            <label>
+                              <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+                                Stage objective
+                              </span>
+                              <select
+                                value={objectiveByStage[selectedStage.stage_id] ?? 'balanced'}
+                                onChange={event =>
+                                  setObjectiveByStage(current => ({
+                                    ...current,
+                                    [selectedStage.stage_id]: event.target.value,
+                                  }))
+                                }
+                                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+                              >
+                                <option value="balanced">Balanced</option>
+                                <option value="stage_win">Stage win</option>
+                                <option value="protect_gc">Protect GC</option>
+                                <option value="breakaway">Breakaway</option>
+                              </select>
+                            </label>
+
+                            <label>
+                              <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+                                Team strategy
+                              </span>
+                              <select
+                                value={strategyByStage[selectedStage.stage_id] ?? 'balanced'}
+                                onChange={event =>
+                                  setStrategyByStage(current => ({
+                                    ...current,
+                                    [selectedStage.stage_id]: event.target.value,
+                                  }))
+                                }
+                                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+                              >
+                                <option value="balanced">Balanced</option>
+                                <option value="sprint_control">Sprint control</option>
+                                <option value="climber_support">Climber support</option>
+                                <option value="breakaway_focus">Breakaway focus</option>
+                              </select>
+                            </label>
+
+                            <label>
+                              <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+                                Risk profile
+                              </span>
+                              <select
+                                value={riskByStage[selectedStage.stage_id] ?? 'normal'}
+                                onChange={event =>
+                                  setRiskByStage(current => ({
+                                    ...current,
+                                    [selectedStage.stage_id]: event.target.value,
+                                  }))
+                                }
+                                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+                              >
+                                <option value="conservative">Conservative</option>
+                                <option value="normal">Normal</option>
+                                <option value="aggressive">Aggressive</option>
+                              </select>
+                            </label>
+                          </div>
 
                           <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
                             Aggression · {aggressionByStage[selectedStage.stage_id] ?? 50}/100
@@ -1887,7 +2003,6 @@ export default function PremiumCommandCenter(): JSX.Element {
                   >
                     <option value="race_strategy">Race strategy</option>
                     <option value="training">Training</option>
-                    <option value="equipment">Equipment</option>
                   </select>
 
                   <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
@@ -1966,16 +2081,10 @@ export default function PremiumCommandCenter(): JSX.Element {
                     </div>
                   ) : null}
 
-                  {templateType === 'equipment' ? (
-                    <label className="mt-4 block">
-                      <span className="text-xs font-bold text-slate-500">Preset label</span>
-                      <input
-                        value={equipmentLabel}
-                        onChange={event => setEquipmentLabel(event.target.value)}
-                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
-                      />
-                    </label>
-                  ) : null}
+                  <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
+                    Equipment templates are created directly from your current owned setup on the Equipment page, so they always store real equipment IDs rather than placeholder selections.
+                    <a href="#/dashboard/equipment" className="ml-1 font-bold underline">Open Equipment</a>
+                  </div>
 
                   <button
                     type="button"
@@ -1989,14 +2098,10 @@ export default function PremiumCommandCenter(): JSX.Element {
                               team_strategy: raceStrategy,
                               risk_level: raceRisk,
                             }
-                          : templateType === 'training'
-                            ? {
-                                focus_code: trainingFocus,
-                                intensity: trainingIntensity,
-                              }
-                            : {
-                                setup_label: equipmentLabel,
-                              }
+                          : {
+                              focus_code: trainingFocus,
+                              intensity: trainingIntensity,
+                            }
 
                       void saveTemplate(templateType, templateName, payload)
                       setTemplateName('')
