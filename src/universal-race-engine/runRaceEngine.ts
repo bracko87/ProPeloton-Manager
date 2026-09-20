@@ -19476,6 +19476,179 @@ export function buildUniversalIntermediatePointFinalization(
 }
 
 
+
+function reconcileFinishLineIntermediatePointBattlesV1(
+  input: UniversalRaceEngineInput,
+  summary: UniversalIntermediatePointBattleSummary,
+  finishResolution: UniversalFinishResolution,
+): UniversalIntermediatePointBattleSummary {
+  if (!summary.active || input.stage.stageFormat !== 'road_race') return summary
+
+  const finishRankByRiderId = new Map(
+    finishResolution.classification
+      .filter((row) => row.status === 'finished' && row.rank !== null)
+      .map((row) => [row.riderId, row.rank!] as const),
+  )
+
+  let changed = false
+  const battles = summary.battles.map((battle) => {
+    const sharesFinishLine =
+      battle.pointType === 'KOM' &&
+      Math.abs(battle.kmFromStart - input.stage.distanceKm) <= 0.25
+    if (!sharesFinishLine || battle.rankings.length === 0) return battle
+
+    const ordered = [...battle.rankings].sort((left, right) => {
+      const leftRank =
+        finishRankByRiderId.get(left.riderId) ?? Number.MAX_SAFE_INTEGER
+      const rightRank =
+        finishRankByRiderId.get(right.riderId) ?? Number.MAX_SAFE_INTEGER
+      return (
+        leftRank - rightRank ||
+        left.rank - right.rank ||
+        left.riderId.localeCompare(right.riderId)
+      )
+    })
+
+    const rankings = ordered.map((ranking, index) => ({
+      ...ranking,
+      rank: index + 1,
+      pointsAwarded: Math.max(
+        0,
+        battle.configuredPointsScheme[index] ?? 0,
+      ),
+      bonusSecondsAwarded: Math.max(
+        0,
+        battle.configuredTimeBonusSeconds[index] ?? 0,
+      ),
+    }))
+    const winnerRiderId = rankings[0]?.riderId ?? null
+
+    if (
+      winnerRiderId !== battle.winnerRiderId ||
+      rankings.some(
+        (ranking, index) =>
+          ranking.riderId !== battle.rankings[index]?.riderId ||
+          ranking.rank !== battle.rankings[index]?.rank ||
+          ranking.pointsAwarded !== battle.rankings[index]?.pointsAwarded ||
+          ranking.bonusSecondsAwarded !==
+            battle.rankings[index]?.bonusSecondsAwarded,
+      )
+    ) {
+      changed = true
+    }
+
+    return {
+      ...battle,
+      winnerRiderId,
+      rankings,
+      totalPointsAwarded: rankings.reduce(
+        (sum, ranking) => sum + ranking.pointsAwarded,
+        0,
+      ),
+      totalBonusSecondsAwarded: rankings.reduce(
+        (sum, ranking) => sum + ranking.bonusSecondsAwarded,
+        0,
+      ),
+    }
+  })
+
+  if (!changed) return summary
+
+  return {
+    ...summary,
+    battles,
+    totalPointsAwarded: battles.reduce(
+      (sum, battle) => sum + battle.totalPointsAwarded,
+      0,
+    ),
+    totalBonusSecondsAwarded: battles.reduce(
+      (sum, battle) => sum + battle.totalBonusSecondsAwarded,
+      0,
+    ),
+  }
+}
+
+function reconcileReplayTimelineIntermediatePointsV1(
+  timeline: UniversalReplayTimeline,
+  finalization: UniversalIntermediatePointFinalizationSummary,
+): UniversalReplayTimeline {
+  if (!timeline.active || !finalization.active) return timeline
+
+  const commentaryByPointId = new Map(
+    finalization.commentaryEntries.map(
+      (entry) => [entry.pointId, entry] as const,
+    ),
+  )
+  const eventByCheckpointId = new Map(
+    finalization.replayEvents.map(
+      (event) => [
+        `${event.eventId.split('|point-event|')[0]}|replay|point-${event.pointId}`,
+        event,
+      ] as const,
+    ),
+  )
+
+  return {
+    ...timeline,
+    checkpoints: timeline.checkpoints.map((checkpoint) => {
+      const intermediateResults = finalization.replayEvents
+        .filter(
+          (event) =>
+            event.kmFromStart <=
+            checkpoint.raceProgress.kmFromStart + 0.000001,
+        )
+        .slice()
+        .sort(
+          (left, right) =>
+            left.kmFromStart - right.kmFromStart ||
+            left.eventOrder - right.eventOrder ||
+            left.eventId.localeCompare(right.eventId),
+        )
+        .map((event) => ({
+          ...event,
+          rankings: event.rankings.map((ranking) => ({ ...ranking })),
+        }))
+
+      const pointEvent = eventByCheckpointId.get(checkpoint.checkpointId)
+      if (!pointEvent) {
+        return {
+          ...checkpoint,
+          intermediateResults,
+        }
+      }
+
+      const pointCommentary = commentaryByPointId.get(pointEvent.pointId)
+      const eventType: UniversalReplayEventType =
+        pointEvent.pointType === 'KOM'
+          ? 'kom'
+          : pointEvent.pointType === 'BONUS_SPRINT'
+            ? 'bonus_sprint'
+            : 'intermediate_sprint'
+      const riderIds = pointEvent.rankings.map((ranking) => ranking.riderId)
+      const teamIds = Array.from(
+        new Set(pointEvent.rankings.map((ranking) => ranking.teamId)),
+      ).sort()
+
+      return {
+        ...checkpoint,
+        intermediateResults,
+        commentary: checkpoint.commentary.map((entry) =>
+          entry.eventType === eventType
+            ? {
+                ...entry,
+                title: pointEvent.title,
+                description:
+                  pointCommentary?.description ?? entry.description,
+                riderIds,
+                teamIds,
+              }
+            : entry,
+        ),
+      }
+    }),
+  }
+}
+
 function phase5SelectionProfile(
   input: UniversalRaceEngineInput,
   difficulty: UniversalDifficultySummary,
@@ -35758,19 +35931,20 @@ export function runRaceEngine(
     roadCommandResolution,
     roadRaceResolution,
   )
-  const intermediatePointBattles = buildUniversalIntermediatePointBattles(
-    calculationInput,
-    riderReadiness,
-    roadRaceResolution,
-    intermediatePointPlan,
-  )
-  const intermediatePointFinalization =
+  const provisionalIntermediatePointBattles =
+    buildUniversalIntermediatePointBattles(
+      calculationInput,
+      riderReadiness,
+      roadRaceResolution,
+      intermediatePointPlan,
+    )
+  const provisionalIntermediatePointFinalization =
     buildUniversalIntermediatePointFinalization(
       calculationInput,
       riderReadiness,
       roadCommandResolution,
       intermediatePointPlan,
-      intermediatePointBattles,
+      provisionalIntermediatePointBattles,
     )
   const groupAndTimeResolution = buildUniversalPhase5GroupingSummary(
     calculationInput,
@@ -35793,8 +35967,8 @@ export function runRaceEngine(
     riderReadiness,
     roadCommandResolution,
     roadRaceResolution,
-    intermediatePointBattles,
-    intermediatePointFinalization,
+    provisionalIntermediatePointBattles,
+    provisionalIntermediatePointFinalization,
     groupAndTimeResolution,
     baseFinishResolution,
   )
@@ -35809,7 +35983,29 @@ export function runRaceEngine(
   })
   const phase10Incidents = phase10Resolution.summary
   const finishResolution = phase10Resolution.finishResolution
-  const replayTimeline = phase10Resolution.replayTimeline
+  const intermediatePointBattles =
+    reconcileFinishLineIntermediatePointBattlesV1(
+      calculationInput,
+      provisionalIntermediatePointBattles,
+      finishResolution,
+    )
+  const intermediatePointFinalization =
+    intermediatePointBattles === provisionalIntermediatePointBattles
+      ? provisionalIntermediatePointFinalization
+      : buildUniversalIntermediatePointFinalization(
+          calculationInput,
+          riderReadiness,
+          roadCommandResolution,
+          intermediatePointPlan,
+          intermediatePointBattles,
+        )
+  const replayTimeline =
+    intermediatePointFinalization === provisionalIntermediatePointFinalization
+      ? phase10Resolution.replayTimeline
+      : reconcileReplayTimelineIntermediatePointsV1(
+          phase10Resolution.replayTimeline,
+          intermediatePointFinalization,
+        )
   const replaySynchronization =
     buildUniversalReplaySynchronizationSummary(
       calculationInput,
