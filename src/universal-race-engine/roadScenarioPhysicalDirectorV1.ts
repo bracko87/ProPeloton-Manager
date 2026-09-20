@@ -1,7 +1,7 @@
 export const ROAD_SCENARIO_PHYSICAL_DIRECTOR_VERSION =
-  'road_scenario_physical_director_v2_1' as const
+  'road_scenario_physical_director_v2_2' as const
 export const ROAD_RACE_DIRECTOR_RUNTIME_VERSION =
-  'road_race_director_v2_1_runtime' as const
+  'road_race_director_v2_2_runtime' as const
 
 type JsonRecord = Record<string, unknown>
 type NumericRange = readonly [number, number]
@@ -251,7 +251,10 @@ function directorSettings(audit: RoadScenarioPhysicalAuditV1): {
   const settings = object(audit.generatedParameters.directorV2)
   return {
     storyStrength: clamp(finite(settings.storyStrength, 0.78), 0.45, 0.95),
-    centerPullStrength: clamp(finite(settings.centerPullStrength, 0.25), 0.08, 0.42),
+    // V2.2 treats the scenario as tactical guidance rather than an outcome
+    // blueprint. Keep enough pull to create a recognizable race shape, but do
+    // not drag a physically valid gap toward one generated target too strongly.
+    centerPullStrength: clamp(finite(settings.centerPullStrength, 0.25) * 0.68, 0.06, 0.26),
     variationFactor: clamp(finite(settings.variationFactor, 1), 0.82, 1.18),
   }
 }
@@ -581,7 +584,7 @@ function scenarioGapEnvelopeV2(
 }
 
 /**
- * Race Director V2.1 macro guidance.
+ * Race Director V2.2 tactical-envelope guidance.
  *
  * The core engine still decides who attacks, who belongs to the break, rider
  * speeds, energy, terrain response and the sporting result. The selected
@@ -636,6 +639,55 @@ export function applyRoadScenarioGapGuidanceV1(
           protectedGap,
           kmFromStart,
           'protect_early_formation_from_premature_catch',
+        )
+        return protectedGap
+      }
+
+      // A credible, already-established break can otherwise disappear in one
+      // physical step long before a late-catch story has even reached its
+      // tactical closing window. Treat that as a numerical/tactical overshoot,
+      // not as a scripted result: preserve only a tiny residual gap, and only
+      // when the observed break previously earned a material advantage. Strong
+      // real rider/team chase commands always override this protection.
+      const rawAudit = actualScenarioAudit(input)
+      const generationState = rawAudit
+        ? object(runtimeGenerationStates(rawAudit)[String(caughtEnvelope.generation)])
+        : {}
+      const previousPeakGap = Math.max(0, finite(generationState.peakGapSeconds, 0))
+      const previousLiveGap = Math.max(0, finite(generationState.lastGapSeconds, 0))
+      const targetFloor = caughtEnvelope.targetPeakGapRangeSec?.[0] ?? caughtEnvelope.center
+      const credibleEstablishedBreak =
+        generationState.firstSeenKm !== undefined &&
+        previousPeakGap >= Math.max(45, targetFloor * 0.25)
+      const catchWindowStart = caughtEnvelope.catchWindowProgress?.[0] ?? null
+      const tacticalProtectionDeadline = catchWindowStart !== null
+        ? Math.max(caughtEnvelope.chaseStartProgress, catchWindowStart - 0.08)
+        : caughtEnvelope.survivalExpected
+          ? Math.max(0.72, caughtEnvelope.chaseStartProgress)
+          : 0
+      const materiallyPrematureCatch =
+        credibleEstablishedBreak &&
+        progress < tacticalProtectionDeadline - 0.000001
+
+      if (materiallyPrematureCatch && userChase < 0.75) {
+        const protectionFactor = clamp((0.75 - userChase) / 0.75, 0, 1)
+        const residualBase = clamp(previousLiveGap * 0.18, 0.75, 8)
+        const protectedGap = round(
+          clamp(residualBase * (0.68 + protectionFactor * 0.32), 0.75, 8),
+          6,
+        )
+        recordRuntimeApplication(input, 'gap_guidance', {
+          adjusted: true,
+          kmFromStart,
+          reason: 'prevent_one_step_premature_catch',
+        })
+        recordGenerationRuntime(
+          input,
+          caughtEnvelope,
+          current,
+          protectedGap,
+          kmFromStart,
+          'prevent_one_step_premature_catch',
         )
         return protectedGap
       }
@@ -773,10 +825,11 @@ function finalizeGenerationAdherence(input: RoadScenarioPhysicalInputV1): void {
 }
 
 /**
- * Finale shaping remains secondary to the physical race, but V2.1 now treats
- * targetFrontGroupRange as a real soft story boundary instead of recording it
- * without materially influencing the final topology. The range is never an
- * exact survivor count: finish energy still determines which riders hold on.
+ * Finale shaping remains secondary to the physical race. V2.2 deliberately
+ * keeps targetFrontGroupRange as an audit expectation instead of steering the
+ * survivor count toward it. Template fragmentation pressure can influence the
+ * character of a hilly/mountain/cobbled finale, while physical topology and
+ * rider energy remain authoritative.
  */
 export function applyRoadScenarioFinishFragmentationV1<
   T extends RoadScenarioFragmentationStateV1,
@@ -819,20 +872,11 @@ export function applyRoadScenarioFinishFragmentationV1<
   const retentionFraction = clamp(0.91 - pressure * 0.48 + seedBias, 0.34, 0.94)
   let keepCount = Math.max(2, Math.min(largest.length, Math.ceil(largest.length * retentionFraction)))
 
+  // Keep the generated front-group range for audit/comparison only. The old
+  // V2.1 code nudged keepCount back inside that range, which made the template
+  // too close to an outcome blueprint. V2.2 lets terrain pressure, rider energy
+  // and the physical topology decide the actual survivor count.
   const targetRange = numericRange(parameters.targetFrontGroupRange)
-  if (targetRange) {
-    const low = clamp(Math.floor(targetRange[0]), 2, largest.length)
-    const high = clamp(Math.ceil(targetRange[1]), low, largest.length)
-    if (keepCount > high) {
-      const excess = keepCount - high
-      const storySlack = Math.ceil(excess * (1 - settings.storyStrength) * 0.35)
-      keepCount = Math.min(largest.length, high + storySlack)
-    } else if (keepCount < low) {
-      const shortage = low - keepCount
-      const storySlack = Math.ceil(shortage * (1 - settings.storyStrength) * 0.35)
-      keepCount = Math.max(2, low - storySlack)
-    }
-  }
 
   if (keepCount >= largest.length) return [...states]
 
@@ -844,8 +888,12 @@ export function applyRoadScenarioFinishFragmentationV1<
   const retainedIds = new Set(selected.slice(0, keepCount).map((state) => state.riderId))
   const detached = selected.slice(keepCount)
   const detachedRank = new Map(detached.map((state, index) => [state.riderId, index] as const))
-  const configuredGap = finite(parameters.secondaryGapSec, 12 + pressure * 70)
-  const secondaryGap = Math.max(6, configuredGap * (0.52 + pressure * 0.34))
+  const naturalGap = 12 + pressure * 70
+  const configuredGap = finite(parameters.secondaryGapSec, naturalGap)
+  // Scenario secondary-gap values are now only a minority influence. This
+  // preserves tactical character without prescribing a finish-line time gap.
+  const tacticalGap = naturalGap * 0.70 + configuredGap * 0.30
+  const secondaryGap = Math.max(6, tacticalGap * (0.52 + pressure * 0.34))
   const baseGap = Math.min(...largest.map((state) => Math.max(0, state.finalGapSeconds)))
   const topologyBands = pressure >= 0.78 ? 3 : pressure >= 0.48 ? 2 : 1
 
