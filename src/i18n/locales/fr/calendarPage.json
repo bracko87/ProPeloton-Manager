@@ -86,7 +86,7 @@
     "holidays": "Vacances",
     "title": "Filtres de course",
     "premium": "Premium",
-    "description": "Filtrer ce mois par pays, catégorie, format, statut et objectifs de sponsor.",
+    "description": "Filtrez ce mois par pays, catégorie, format et statut. Premium ajoute des informations sur les objectifs sponsors.",
     "clear": "Effacer",
     "checkingPremium": "Vérification de Premium...",
     "hide": "Masquer les filtres",
@@ -110,7 +110,7 @@
     "unlockPremium": "Déverrouiller avec Premium",
     "activeCount": "{{count}} actif",
     "showing": "Affichage de {{shown}} des courses {{total}} dans {{month}}",
-    "noMatch": "Aucune course ne correspond aux filtres Premium sélectionnés pour {{month}}.",
+    "noMatch": "Aucune course ne correspond aux filtres sélectionnés pour {{month}}.",
     "noScheduled": "Aucune course prévue pour {{month}}."
   },
   "route": {
