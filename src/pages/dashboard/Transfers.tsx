@@ -3209,7 +3209,16 @@ export default function TransfersPage() {
           ) : null}
         </div>
 
-        <div className="inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/premium-center?tab=transfers')}
+            className="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-semibold text-yellow-900 hover:bg-yellow-100"
+          >
+            Premium Transfer Command
+          </button>
+
+          <div className="inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
           <SegmentedTabButton
             active={activeTab === 'riders'}
             label={t('page.riders')}
@@ -3220,6 +3229,7 @@ export default function TransfersPage() {
             label={t('page.staff')}
             onClick={() => setActiveTab('staff')}
           />
+          </div>
         </div>
       </div>
 
