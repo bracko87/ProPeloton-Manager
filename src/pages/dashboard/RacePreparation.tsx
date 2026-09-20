@@ -28,6 +28,7 @@ import {
 } from "../../lib/tutorialProgress";
 import { supabase } from "../../lib/supabase";
 import RaceDetailPage from "./RaceDetailPage";
+import PremiumRaceStrategyPanel from "./race-preparation/PremiumRaceStrategyPanel";
 import {
   askSportDirectorForStagePlan,
   getRiderName,
@@ -3410,20 +3411,6 @@ export default function RacePreparationPage(): JSX.Element {
           <h1 className="text-2xl font-bold text-slate-900">{t("page.title")}</h1>
           <p className="mt-1 text-sm text-slate-600">{t("page.subtitle")}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            const params = new URLSearchParams()
-            params.set('tab', 'strategy')
-            if (target?.race_preparation_id) {
-              params.set('racePreparationId', String(target.race_preparation_id))
-            }
-            navigate(`/dashboard/premium-center?${params.toString()}`)
-          }}
-          className="rounded-xl border border-yellow-300 bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-900 hover:bg-yellow-100"
-        >
-          {t('premiumCenter:integrations.racePreparation.strategyLab')}
-        </button>
       </header>
 
       <div className="inline-flex rounded-xl border bg-white p-1 shadow-sm">
@@ -3456,6 +3443,12 @@ export default function RacePreparationPage(): JSX.Element {
           {errorMessage}
         </div>
       )}
+
+      {target?.has_target && target.race_preparation_id && activeTab !== "acceptedRaces" ? (
+        <PremiumRaceStrategyPanel
+          racePreparationId={String(target.race_preparation_id)}
+        />
+      ) : null}
 
       {activeTab === "acceptedRaces" && (
         <AcceptedRacesTab
