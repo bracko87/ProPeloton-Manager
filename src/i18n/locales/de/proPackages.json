@@ -16,8 +16,8 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "pro realer Lebensmonat",
     "membership": "Premium Mitgliedschaft",
-    "advancedTools": "Weiterbildung, Transfer, Scouting und Management-Tools.",
-    "marketTools": "Gespeicherte Suchanfragen, Marktwarnungen, Fahrer-Kurzliste und tiefere Analyse.",
+    "advancedTools": "Erweiterte Analysen, Automatisierung, Prognosen und Komfortfunktionen für das Management.",
+    "marketTools": "Gespeicherte Suchen, Marktalarme, unbegrenzte tägliche Shortlist-Zugänge ohne Coin-Kosten (innerhalb des aktiven Listenlimits) und tiefere Transferanalysen.",
     "capacity": "Zusätzliche Ausrüstung und Infrastruktur-Komfortkapazität.",
     "receive": "Empfangen",
     "monthlyCoinsSuffix": "Coins nach jeder erfolgreichen monatlichen Zahlung.",
@@ -68,11 +68,11 @@
   "advantages": {
     "a1": "50 Coins nach jedem erfolgreichen Monat Premium Zahlung.",
     "a2": "Erweiterte Automatisierung der Ausbildung und Analyse der Fahrerentwicklung.",
-    "a3": "Premium-Transferwerkzeuge: gespeicherte Suchen, automatische Benachrichtigungen, Shortlist und Verhandlungsanalyse.",
+    "a3": "Premium-Transfertools: gespeicherte Suchen, automatische Alarme, unbegrenzte tägliche Shortlist-Zugänge ohne Coin-Kosten (innerhalb des aktiven Listenlimits) und tiefere Verhandlungsanalysen.",
     "a4": "Zusätzliche Ausrüstung Setup-Slots und erweitert enthalten Garage Kapazität.",
-    "a5": "Zugriff auf erweiterte Team-Politik-Optionen und ausgewählte Kalenderfilter.",
-    "a6": "Zusätzliche externe Fahrer Geschichte, aktuelle Ergebnisse und Karriere-Ehrungen Ansichten.",
-    "a7": "Premium Komfort-Funktionen nie verbessern Rennergebnisse, Übertragung Akzeptanz oder versteckte Fahrer Fähigkeiten."
+    "a5": "Manager-Briefing, erweiterte Kalenderintelligenz, Finanzprognosen und Komfortfunktionen.",
+    "a6": "Erweiterte Fahrerleistungsanalysen, Entwicklungstrends und unbegrenzte Replays von Weltrennen.",
+    "a7": "Premium verbessert Informationen, Automatisierung und Komfort — niemals Rennstärke, Transferannahme oder verborgene Fahrerwerte."
   },
   "comparison": {
     "title": "Frei vs. Premium",
