@@ -695,22 +695,18 @@ export default function SquadPage() {
           setSquadSeasonDashboardData(createEmptySquadSeasonDashboardData())
         })
 
-      if (hasPremiumAccess) {
-        void supabase
-          .rpc('get_club_health_overview', {
-            p_club_id: club.id,
-          })
-          .then(({ data: healthData, error: healthErr }) => {
-            if (healthErr) {
-              console.warn('Failed to load club health overview:', healthErr)
-              return
-            }
+      void supabase
+        .rpc('get_club_health_overview', {
+          p_club_id: club.id,
+        })
+        .then(({ data: healthData, error: healthErr }) => {
+          if (healthErr) {
+            console.warn('Failed to load club health overview:', healthErr)
+            return
+          }
 
-            setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
-          })
-      } else {
-        setHealthOverviewRows([])
-      }
+          setHealthOverviewRows((healthData ?? []) as ClubHealthOverviewRow[])
+        })
 
       if (riderIds.length === 0) {
         setTransferListedRiderIds(new Set())
@@ -864,7 +860,7 @@ export default function SquadPage() {
   }, [loadSquadPageData])
 
   useEffect(() => {
-    if (!isPremium && listView !== 'general') {
+    if (!isPremium && listView !== 'general' && listView !== 'form') {
       setListView('general')
     }
   }, [isPremium, listView])
