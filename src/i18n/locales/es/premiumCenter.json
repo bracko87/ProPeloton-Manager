@@ -160,7 +160,8 @@
     "savedSearches": "Búsquedas guardadas",
     "savedSearchesHint": "Búsquedas Premium con alertas de mercado opcionales",
     "latestAlerts": "Últimas alertas de mercado",
-    "noAlerts": "Todavía no hay alertas de mercado."
+    "noAlerts": "Todavía no hay alertas de mercado.",
+    "alertNewMatch": "Hay disponible un anuncio de fichaje que coincide con tu búsqueda guardada."
   },
   "finance": {
     "title": "Simulador financiero",
@@ -285,7 +286,16 @@
     "fit": "En forma",
     "injured": "Lesionado",
     "sick": "Enfermo",
-    "not_fully_fit": "No totalmente en forma"
+    "not_fully_fit": "No totalmente en forma",
+    "transfer_list": "En la lista de transferibles",
+    "free_agent": "Agente libre",
+    "not_available": "No disponible actualmente",
+    "domestique": "Gregario",
+    "all-rounder": "Todoterreno",
+    "climber": "Escalador",
+    "sprinter": "Sprinter",
+    "leader": "Líder",
+    "tt": "Contrarrelojista"
   },
   "integrations": {
     "training": {
