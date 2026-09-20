@@ -22,6 +22,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import appI18n from '../../i18n'
 
 type TabKey =
   | 'summary'
@@ -280,7 +281,7 @@ function parseStoredMainClubId(): string | null {
 
 function formatCurrency(value: number | null | undefined): string {
   const amount = Number(value ?? 0)
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(appI18n.resolvedLanguage || appI18n.language || undefined, {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
@@ -288,7 +289,7 @@ function formatCurrency(value: number | null | undefined): string {
 }
 
 function formatNumber(value: number | null | undefined): string {
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(appI18n.resolvedLanguage || appI18n.language || undefined, {
     maximumFractionDigits: 1,
   }).format(Number(value ?? 0))
 }
@@ -299,12 +300,12 @@ function formatGameDate(value: string | null | undefined): string {
   if (Number.isNaN(date.getTime())) return value
 
   const season = Math.max(1, date.getUTCFullYear() - 1999)
-  const month = date.toLocaleString(undefined, {
+  const month = date.toLocaleString(appI18n.resolvedLanguage || appI18n.language || undefined, {
     month: 'short',
     timeZone: 'UTC',
   })
 
-  return `Season ${season} · ${String(date.getUTCDate()).padStart(2, '0')} ${month}`
+  return appI18n.t('premiumCenter:common.seasonDate', { season, day: String(date.getUTCDate()).padStart(2, '0'), month })
 }
 
 function formatGameDateTime(value: string | null | undefined): string {
@@ -321,7 +322,7 @@ function formatRealDate(value: string | null | undefined): string {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
+  return date.toLocaleString(appI18n.resolvedLanguage || appI18n.language || undefined)
 }
 
 function statusClasses(value: string): string {
@@ -357,9 +358,10 @@ function statusClasses(value: string): string {
 
 function humanize(value: string | null | undefined): string {
   if (!value) return '—'
-  return value
+  const fallback = value
     .replaceAll('_', ' ')
     .replace(/\b\w/g, letter => letter.toUpperCase())
+  return appI18n.t(`premiumCenter:values.${value}`, { defaultValue: fallback })
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -405,14 +407,15 @@ function StatCard({
 }
 
 function PremiumPreview(): JSX.Element {
+  const { t } = useTranslation('premiumCenter')
   const featureCards = [
-    ['Race Strategy Lab', 'Compare visible rider suitability and race-profile scenarios before you commit your official plan.'],
-    ['Season Planner', 'See races, deadlines, sponsor targets and preparation gaps across the next part of your season.'],
-    ['Transfer Command', 'Put shortlist, saved searches, market alerts and live negotiations into one transfer pipeline.'],
-    ['Financial Simulator', 'Test transfers, wages and planned spending without changing your club balance.'],
-    ['Sponsor Intelligence', 'Track objective progress, deadlines, remaining targets and risk bands in one place.'],
-    ['Rider Development Lab', 'Follow development trends and recent progression instead of seeing only the current rating.'],
-    ['Templates & Smart Prefill', 'Save your own management presets and automatically match them to known contexts.'],
+    [t('preview.features.strategyTitle'), t('preview.features.strategyDesc')],
+    [t('preview.features.seasonTitle'), t('preview.features.seasonDesc')],
+    [t('preview.features.transfersTitle'), t('preview.features.transfersDesc')],
+    [t('preview.features.financeTitle'), t('preview.features.financeDesc')],
+    [t('preview.features.sponsorsTitle'), t('preview.features.sponsorsDesc')],
+    [t('preview.features.developmentTitle'), t('preview.features.developmentDesc')],
+    [t('preview.features.templatesTitle'), t('preview.features.templatesDesc')],
   ]
 
   return (
@@ -421,22 +424,20 @@ function PremiumPreview(): JSX.Element {
         <div className="bg-gradient-to-r from-yellow-50 via-white to-amber-50 p-7">
           <div className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.14em] text-yellow-800">
             <Crown size={18} />
-            Premium management workspace
+            {t('preview.workspace')}
           </div>
           <h2 className="mt-3 max-w-4xl text-3xl font-extrabold text-slate-950">
-            Run the same club with much better information, planning and organisation.
+            {t('preview.headline')}
           </h2>
           <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
-            Free managers keep the complete game and manual control. Premium adds scenario tools,
-            simulations, saved workflows and smart prefills. It never boosts race-engine strength,
-            rider development or transfer acceptance.
+            {t('preview.body')}
           </p>
           <Link
             to="/dashboard/pro"
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-black"
           >
             <Crown size={16} />
-            Unlock Premium
+            {t('upgrade')}
           </Link>
         </div>
       </Card>
@@ -454,13 +455,9 @@ function PremiumPreview(): JSX.Element {
       </div>
 
       <Card className="border-blue-200 bg-blue-50 p-5">
-        <div className="font-bold text-blue-950">Why this does not replace Staff Briefing Centre</div>
+        <div className="font-bold text-blue-950">{t('preview.whyTitle')}</div>
         <p className="mt-2 text-sm leading-6 text-blue-900">
-          Staff Briefing Centre remains the separate coin-based staff advisory product. Your selected
-          Head Coach, Sports Director, Doctor, Mechanic or Scout proactively interprets their own area
-          and generates role-specific reports. Premium Command Center is a deterministic workspace:
-          dashboards, simulations, scenario tools, templates and user-controlled prefills that do not
-          depend on advisor skills.
+          {t('preview.whyBody')}
         </p>
       </Card>
     </div>
@@ -598,7 +595,7 @@ export default function PremiumCommandCenter(): JSX.Element {
         })
       } catch (loadError: any) {
         console.error('Failed to load Premium Command Center:', loadError)
-        setError(loadError?.message ?? 'Premium Command Center could not be loaded.')
+        setError(loadError?.message ?? t('errors.workspaceLoad'))
       } finally {
         setLoading(false)
       }
@@ -634,7 +631,7 @@ export default function PremiumCommandCenter(): JSX.Element {
       } catch (bootError: any) {
         console.error('Failed to initialize Premium Command Center:', bootError)
         if (active) {
-          setError(bootError?.message ?? 'Could not check Premium access.')
+          setError(bootError?.message ?? t('errors.premiumCheck'))
         }
       } finally {
         if (active) setPremiumLoading(false)
@@ -675,7 +672,7 @@ export default function PremiumCommandCenter(): JSX.Element {
       )
     } catch (strategyError: any) {
       console.error('Failed to load Race Strategy Lab:', strategyError)
-      setError(strategyError?.message ?? 'Race Strategy Lab could not be loaded.')
+      setError(strategyError?.message ?? t('errors.strategyLoad'))
     } finally {
       setStrategyLoading(false)
     }
@@ -746,8 +743,8 @@ export default function PremiumCommandCenter(): JSX.Element {
           title: row.race_name,
           body:
             row.planning_state === 'deadline_close'
-              ? `Start-list or preparation deadline is close. ${row.saved_stage_plans}/${row.total_stages} stage plans saved.`
-              : `${row.saved_stage_plans}/${row.total_stages} stage plans currently saved.`,
+              ? t('summary.deadlineClose', { saved: row.saved_stage_plans, total: row.total_stages })
+              : t('summary.plansSaved', { saved: row.saved_stage_plans, total: row.total_stages }),
           href: `/dashboard/race-preparation?raceId=${row.race_id}`,
           tone: row.planning_state === 'deadline_close' ? 'red' : 'amber',
         })
@@ -759,7 +756,7 @@ export default function PremiumCommandCenter(): JSX.Element {
       .forEach(objective => {
         items.push({
           title: objective.objective_title,
-          body: `${objective.progress_pct}% complete · ${objective.remaining_value} remaining.`,
+          body: t('summary.sponsorProgress', { percent: objective.progress_pct, remaining: objective.remaining_value }),
           href: '/dashboard/finance',
           tone: objective.risk_band === 'failed' ? 'red' : 'amber',
         })
@@ -767,8 +764,8 @@ export default function PremiumCommandCenter(): JSX.Element {
 
     if (workspace.summary.unread_transfer_alerts > 0) {
       items.push({
-        title: 'Transfer market alerts',
-        body: `${workspace.summary.unread_transfer_alerts} unread Premium market alert${workspace.summary.unread_transfer_alerts === 1 ? '' : 's'}.`,
+        title: t('summary.marketAlertsTitle'),
+        body: t('summary.marketAlertsBody', { count: workspace.summary.unread_transfer_alerts }),
         href: '/dashboard/transfers',
         tone: 'blue',
       })
@@ -776,15 +773,15 @@ export default function PremiumCommandCenter(): JSX.Element {
 
     if (workspace.finance.weekly_net < 0) {
       items.push({
-        title: 'Negative weekly cash flow',
-        body: `Current weekly net is ${formatCurrency(workspace.finance.weekly_net)}.`,
+        title: t('summary.negativeCashFlow'),
+        body: t('summary.currentWeeklyNet', { value: formatCurrency(workspace.finance.weekly_net) }),
         href: '/dashboard/finance',
         tone: 'red',
       })
     }
 
     return items.slice(0, 7)
-  }, [workspace])
+  }, [t, workspace])
 
   const financeProjection = useMemo(() => {
     if (!workspace) return null
@@ -1028,7 +1025,7 @@ export default function PremiumCommandCenter(): JSX.Element {
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50 disabled:opacity-50"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            Refresh
+            {t('common.refresh')}
           </button>
         ) : null}
       </div>
@@ -1037,7 +1034,7 @@ export default function PremiumCommandCenter(): JSX.Element {
         <PremiumPreview />
       ) : !clubId ? (
         <Card className="p-6 text-sm text-red-700">
-          Your main club could not be resolved.
+          {t('common.mainClubMissing')}
         </Card>
       ) : (
         <>
@@ -1095,27 +1092,27 @@ export default function PremiumCommandCenter(): JSX.Element {
             <div className="space-y-5">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 <StatCard
-                  label="Cash balance"
+                  label={t('summary.cashBalance')}
                   value={formatCurrency(workspace.finance.balance)}
                 />
                 <StatCard
-                  label="Weekly net"
+                  label={t('summary.weeklyNet')}
                   value={formatCurrency(workspace.finance.weekly_net)}
                 />
                 <StatCard
-                  label="Upcoming races"
+                  label={t('summary.upcomingRaces')}
                   value={workspace.summary.upcoming_races_60d}
-                  hint="Next 60 game days"
+                  hint={t('summary.next60Days')}
                 />
                 <StatCard
-                  label="Transfer alerts"
+                  label={t('summary.transferAlerts')}
                   value={workspace.summary.unread_transfer_alerts}
-                  hint="Unread Premium market alerts"
+                  hint={t('summary.unreadMarketAlerts')}
                 />
                 <StatCard
-                  label="Sponsor objectives"
+                  label={t('summary.sponsorObjectives')}
                   value={workspace.summary.active_sponsor_objectives}
-                  hint="Currently active"
+                  hint={t('summary.currentlyActive')}
                 />
               </div>
 
@@ -1123,10 +1120,10 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="text-lg font-extrabold text-slate-950">
-                      Premium Command Summary
+                      {t('summary.title')}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                      Operational signals from your existing club data. This is not a staff advisor report.
+                      {t('summary.subtitle')}
                     </p>
                   </div>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
@@ -1137,7 +1134,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <div className="mt-5 grid gap-3 lg:grid-cols-2">
                   {commandItems.length === 0 ? (
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 lg:col-span-2">
-                      No high-priority operational signals are currently detected.
+                      {t('summary.noPriority')}
                     </div>
                   ) : (
                     commandItems.map((item, index) => (
@@ -1172,55 +1169,55 @@ export default function PremiumCommandCenter(): JSX.Element {
 
               <div className="grid gap-4 xl:grid-cols-3">
                 <Card className="p-5">
-                  <div className="text-sm font-bold text-slate-950">Season preparation</div>
+                  <div className="text-sm font-bold text-slate-950">{t('summary.seasonPreparation')}</div>
                   <div className="mt-3 text-3xl font-extrabold text-slate-950">
                     {workspace.season_planner.filter(row => row.planning_state !== 'on_track').length}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    races currently showing a deadline or preparation gap
+                    {t('summary.seasonPreparationHint')}
                   </div>
                   <button
                     type="button"
                     onClick={() => changeTab('season')}
                     className="mt-4 text-sm font-bold text-yellow-700 hover:text-yellow-800"
                   >
-                    Open Season Planner →
+                    {t('summary.openSeasonPlanner')}
                   </button>
                 </Card>
 
                 <Card className="p-5">
-                  <div className="text-sm font-bold text-slate-950">Transfer pipeline</div>
+                  <div className="text-sm font-bold text-slate-950">{t('summary.transferPipeline')}</div>
                   <div className="mt-3 text-3xl font-extrabold text-slate-950">
                     {workspace.transfer_command.pipeline.open_transfer_offers +
                       workspace.transfer_command.pipeline.open_transfer_negotiations +
                       workspace.transfer_command.pipeline.open_free_agent_negotiations}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    active offers and negotiations
+                    {t('summary.transferPipelineHint')}
                   </div>
                   <button
                     type="button"
                     onClick={() => changeTab('transfers')}
                     className="mt-4 text-sm font-bold text-yellow-700 hover:text-yellow-800"
                   >
-                    Open Transfer Command →
+                    {t('summary.openTransferCommand')}
                   </button>
                 </Card>
 
                 <Card className="p-5">
-                  <div className="text-sm font-bold text-slate-950">Saved workflows</div>
+                  <div className="text-sm font-bold text-slate-950">{t('summary.savedWorkflows')}</div>
                   <div className="mt-3 text-3xl font-extrabold text-slate-950">
                     {templates.length}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    templates · {automationRules.filter(rule => rule.is_enabled).length} smart-prefill rules active
+                    {t('summary.savedWorkflowsHint', { templates: templates.length, rules: automationRules.filter(rule => rule.is_enabled).length })}
                   </div>
                   <button
                     type="button"
                     onClick={() => changeTab('templates')}
                     className="mt-4 text-sm font-bold text-yellow-700 hover:text-yellow-800"
                   >
-                    Manage templates →
+                    {t('summary.manageTemplates')}
                   </button>
                 </Card>
               </div>
@@ -1232,10 +1229,9 @@ export default function PremiumCommandCenter(): JSX.Element {
               <Card className="p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                   <div>
-                    <h2 className="text-xl font-extrabold text-slate-950">Race Strategy Lab</h2>
+                    <h2 className="text-xl font-extrabold text-slate-950">{t('strategy.title')}</h2>
                     <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-600">
-                      Compare rider suitability against the known stage profile before changing the official race plan.
-                      This is an on-demand simulation workspace, not the coin-based Sports Director advisory.
+                      {t('strategy.description')}
                     </p>
                   </div>
 
@@ -1273,7 +1269,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                             : 'border-black/10 bg-white text-slate-700',
                         ].join(' ')}
                       >
-                        Stage {stage.stage_number} · {humanize(stage.terrain_type ?? stage.profile_type)}
+                        {t('strategy.stageLabel', { number: stage.stage_number })} · {humanize(stage.terrain_type ?? stage.profile_type)}
                       </button>
                     ))}
                   </div>
@@ -1284,15 +1280,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <div className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                              Stage {selectedStage.stage_number}
+                              {t('strategy.stageLabel', { number: selectedStage.stage_number })}
                             </div>
                             <h3 className="mt-1 text-xl font-extrabold text-slate-950">
                               {selectedStage.stage_name ?? strategyLab.race.race_name}
                             </h3>
                             <div className="mt-1 text-sm text-slate-500">
                               {humanize(selectedStage.terrain_type ?? selectedStage.profile_type)}
-                              {selectedStage.distance_km ? ` · ${selectedStage.distance_km} km` : ''}
-                              {selectedStage.elevation_gain_m ? ` · ${selectedStage.elevation_gain_m} m climbing` : ''}
+                              {selectedStage.distance_km ? ` · ${t('strategy.distance', { distance: selectedStage.distance_km })}` : ''}
+                              {selectedStage.elevation_gain_m ? ` · ${t('strategy.climbing', { value: selectedStage.elevation_gain_m })}` : ''}
                             </div>
                           </div>
 
@@ -1300,7 +1296,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                             to={`/dashboard/race-preparation?raceId=${strategyLab.race.race_id}`}
                             className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
                           >
-                            Open official preparation
+                            {t('strategy.officialPreparation')}
                           </Link>
                         </div>
 
@@ -1308,10 +1304,10 @@ export default function PremiumCommandCenter(): JSX.Element {
                           <table className="w-full min-w-[720px] text-sm">
                             <thead>
                               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
-                                <th className="py-3 pr-3">Rider</th>
-                                <th className="py-3 pr-3">Role</th>
+                                <th className="py-3 pr-3">{t('transfers.rider')}</th>
+                                <th className="py-3 pr-3">{t('transfers.role')}</th>
                                 <th className="py-3 pr-3">Overall</th>
-                                <th className="py-3 pr-3">Fatigue</th>
+                                <th className="py-3 pr-3">{t('development.fatigue')}</th>
                                 <th className="py-3 pr-3">Morale</th>
                                 <th className="py-3 text-right">Suitability</th>
                               </tr>
@@ -1359,10 +1355,10 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                       <div className="space-y-4">
                         <Card className="p-5">
-                          <div className="text-sm font-bold text-slate-950">Scenario controls</div>
+                          <div className="text-sm font-bold text-slate-950">{t('strategy.controls')}</div>
 
                           <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                            Leader candidate
+                            {t('strategy.leaderCandidate')}
                           </label>
                           <select
                             value={selectedLeaderByStage[selectedStage.stage_id] ?? ''}
@@ -1396,10 +1392,10 @@ export default function PremiumCommandCenter(): JSX.Element {
                                 }
                                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
                               >
-                                <option value="balanced">Balanced</option>
-                                <option value="stage_win">Stage win</option>
-                                <option value="protect_gc">Protect GC</option>
-                                <option value="breakaway">Breakaway</option>
+                                <option value="balanced">{t('values.balanced')}</option>
+                                <option value="stage_win">{t('values.stage_win')}</option>
+                                <option value="protect_gc">{t('values.protect_gc')}</option>
+                                <option value="breakaway">{t('values.breakaway')}</option>
                               </select>
                             </label>
 
@@ -1417,10 +1413,10 @@ export default function PremiumCommandCenter(): JSX.Element {
                                 }
                                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
                               >
-                                <option value="balanced">Balanced</option>
-                                <option value="sprint_control">Sprint control</option>
-                                <option value="climber_support">Climber support</option>
-                                <option value="breakaway_focus">Breakaway focus</option>
+                                <option value="balanced">{t('values.balanced')}</option>
+                                <option value="sprint_control">{t('values.sprint_control')}</option>
+                                <option value="climber_support">{t('values.climber_support')}</option>
+                                <option value="breakaway_focus">{t('values.breakaway_focus')}</option>
                               </select>
                             </label>
 
@@ -1438,15 +1434,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                                 }
                                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
                               >
-                                <option value="conservative">Conservative</option>
-                                <option value="normal">Normal</option>
-                                <option value="aggressive">Aggressive</option>
+                                <option value="conservative">{t('values.conservative')}</option>
+                                <option value="normal">{t('values.normal')}</option>
+                                <option value="aggressive">{t('values.aggressive')}</option>
                               </select>
                             </label>
                           </div>
 
                           <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                            Aggression · {aggressionByStage[selectedStage.stage_id] ?? 50}/100
+                            {t('strategy.aggression', { value: aggressionByStage[selectedStage.stage_id] ?? 50 })}
                           </label>
                           <input
                             type="range"
@@ -1463,25 +1459,24 @@ export default function PremiumCommandCenter(): JSX.Element {
                           />
 
                           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                            The suitability score uses visible skills, stage profile, fatigue and morale.
-                            Aggression is kept as a scenario note and does not change the official race plan.
+                            {t('strategy.scoreNote')}
                           </div>
                         </Card>
 
                         <Card className="p-5">
                           <div className="flex items-center gap-2 font-bold text-slate-950">
                             <Zap size={16} className="text-yellow-600" />
-                            Smart Prefill
+                            {t('strategy.smartPrefill')}
                           </div>
                           <p className="mt-1 text-sm leading-6 text-slate-600">
-                            Match one of your own saved race-strategy templates to this stage profile.
+                            {t('strategy.smartPrefillDesc')}
                           </p>
                           <button
                             type="button"
                             onClick={() => void checkStrategyPrefill()}
                             className="mt-3 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white"
                           >
-                            Check matching rule
+                            {t('strategy.checkRule')}
                           </button>
 
                           {prefillMatch ? (
@@ -1489,7 +1484,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                               {prefillMatch.matched ? (
                                 <>
                                   <div className="font-bold text-emerald-700">
-                                    Matched: {String(prefillMatch.template_name ?? 'Template')}
+                                    {t('strategy.matched', { name: String(prefillMatch.template_name ?? t('common.template')) })}
                                   </div>
                                   <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-xs text-slate-600">
                                     {JSON.stringify(prefillMatch.payload_json ?? {}, null, 2)}
@@ -1509,7 +1504,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                 </>
               ) : (
                 <Card className="p-6 text-sm text-slate-500">
-                  Select an upcoming race preparation to open Strategy Lab.
+                  {t('strategy.selectPreparation')}
                 </Card>
               )}
             </div>
@@ -1518,18 +1513,16 @@ export default function PremiumCommandCenter(): JSX.Element {
           {workspace && tab === 'season' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <h2 className="text-xl font-extrabold text-slate-950">Season Planner</h2>
+                <h2 className="text-xl font-extrabold text-slate-950">{t('season.title')}</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  One planning timeline for the next 60 game days. It combines existing race preparation,
-                  deadlines, sponsor-target links and saved stage-plan coverage. It does not replace the
-                  Sports Director advisor's proactive race-program reports.
+                  {t('season.description')}
                 </p>
               </Card>
 
               <div className="space-y-3">
                 {workspace.season_planner.length === 0 ? (
                   <Card className="p-6 text-sm text-slate-500">
-                    No upcoming race preparations are currently scheduled.
+                    {t('season.noUpcoming')}
                   </Card>
                 ) : (
                   workspace.season_planner.map(row => (
@@ -1561,17 +1554,17 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                         <div className="grid min-w-[440px] grid-cols-3 gap-2 text-center">
                           <div className="rounded-xl bg-slate-50 p-3">
-                            <div className="text-[10px] uppercase tracking-wide text-slate-400">Stage plans</div>
+                            <div className="text-[10px] uppercase tracking-wide text-slate-400">{t('season.stagePlans')}</div>
                             <div className="mt-1 font-extrabold text-slate-950">
                               {row.saved_stage_plans}/{row.total_stages}
                             </div>
                           </div>
                           <div className="rounded-xl bg-slate-50 p-3">
-                            <div className="text-[10px] uppercase tracking-wide text-slate-400">Sponsor targets</div>
+                            <div className="text-[10px] uppercase tracking-wide text-slate-400">{t('season.sponsorTargets')}</div>
                             <div className="mt-1 font-extrabold text-slate-950">{row.sponsor_target_count}</div>
                           </div>
                           <div className="rounded-xl bg-slate-50 p-3">
-                            <div className="text-[10px] uppercase tracking-wide text-slate-400">Start list</div>
+                            <div className="text-[10px] uppercase tracking-wide text-slate-400">{t('season.startList')}</div>
                             <div className="mt-1 truncate text-xs font-bold text-slate-950">
                               {humanize(row.startlist_status)}
                             </div>
@@ -1580,7 +1573,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                       </div>
 
                       <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                        <span>Deadline: {formatGameDate(row.rider_submission_deadline_on)}</span>
+                        <span>{t('season.deadline', { date: formatGameDate(row.rider_submission_deadline_on) })}</span>
                         <button
                           type="button"
                           onClick={() => {
@@ -1625,17 +1618,16 @@ export default function PremiumCommandCenter(): JSX.Element {
               <Card className="p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-xl font-extrabold text-slate-950">Transfer Command Center</h2>
+                    <h2 className="text-xl font-extrabold text-slate-950">{t('transfers.title')}</h2>
                     <p className="mt-1 text-sm text-slate-600">
-                      Organise the transfer workflow in one place. The Scout Advisor remains a separate
-                      coin-based source of proactive scouting interpretation.
+                      {t('transfers.description')}
                     </p>
                   </div>
                   <Link
                     to="/dashboard/transfers"
                     className="rounded-xl border border-black/10 px-3 py-2 text-sm font-bold text-slate-700"
                   >
-                    Open Transfers
+                    {t('transfers.openTransfers')}
                   </Link>
                 </div>
               </Card>
@@ -1644,18 +1636,18 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <Card className="overflow-hidden">
                   <div className="border-b border-slate-100 px-5 py-4">
                     <div className="font-bold text-slate-950">
-                      Rider shortlist · {workspace.transfer_command.shortlist.length}
+                      {t('transfers.shortlist', { count: workspace.transfer_command.shortlist.length })}
                     </div>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[760px] text-sm">
                       <thead>
                         <tr className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
-                          <th className="px-4 py-3">Rider</th>
-                          <th className="px-4 py-3">Role</th>
-                          <th className="px-4 py-3">Club</th>
-                          <th className="px-4 py-3">Availability</th>
-                          <th className="px-4 py-3">Scout</th>
+                          <th className="px-4 py-3">{t('transfers.rider')}</th>
+                          <th className="px-4 py-3">{t('transfers.role')}</th>
+                          <th className="px-4 py-3">{t('transfers.club')}</th>
+                          <th className="px-4 py-3">{t('transfers.availability')}</th>
+                          <th className="px-4 py-3">{t('transfers.scout')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1678,7 +1670,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                                     Scouted
                                   </span>
                                 ) : (
-                                  <span className="text-xs text-slate-400">Not scouted</span>
+                                  <span className="text-xs text-slate-400">{t('transfers.notScouted')}</span>
                                 )}
                               </td>
                             </tr>
@@ -1691,7 +1683,7 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                 <div className="space-y-4">
                   <Card className="p-5">
-                    <div className="font-bold text-slate-950">Saved searches</div>
+                    <div className="font-bold text-slate-950">{t('transfers.savedSearches')}</div>
                     <div className="mt-2 text-3xl font-extrabold text-slate-950">
                       {workspace.transfer_command.saved_searches.length}
                     </div>
@@ -1701,10 +1693,10 @@ export default function PremiumCommandCenter(): JSX.Element {
                   </Card>
 
                   <Card className="p-5">
-                    <div className="font-bold text-slate-950">Latest market alerts</div>
+                    <div className="font-bold text-slate-950">{t('transfers.latestAlerts')}</div>
                     <div className="mt-3 space-y-2">
                       {workspace.transfer_command.alerts.length === 0 ? (
-                        <div className="text-sm text-slate-500">No market alerts yet.</div>
+                        <div className="text-sm text-slate-500">{t('transfers.noAlerts')}</div>
                       ) : (
                         workspace.transfer_command.alerts.slice(0, 6).map(alert => (
                           <div key={alert.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -1723,9 +1715,9 @@ export default function PremiumCommandCenter(): JSX.Element {
           {workspace && tab === 'finance' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <h2 className="text-xl font-extrabold text-slate-950">Financial Simulator</h2>
+                <h2 className="text-xl font-extrabold text-slate-950">{t('finance.title')}</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Run a non-destructive what-if scenario. Nothing entered here posts a transaction or changes your club.
+                  {t('finance.description')}
                 </p>
               </Card>
 
@@ -1733,7 +1725,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <Card className="p-5">
                   <div className="grid gap-4">
                     <label>
-                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">One-time cost</span>
+                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('finance.oneTimeCost')}</span>
                       <input
                         type="number"
                         min={0}
@@ -1744,7 +1736,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                     </label>
 
                     <label>
-                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Additional weekly cost</span>
+                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('finance.weeklyCost')}</span>
                       <input
                         type="number"
                         min={0}
@@ -1755,7 +1747,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                     </label>
 
                     <label>
-                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Additional monthly income</span>
+                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('finance.monthlyIncome')}</span>
                       <input
                         type="number"
                         min={0}
@@ -1766,15 +1758,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                     </label>
 
                     <label>
-                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Horizon</span>
+                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('finance.horizon')}</span>
                       <select
                         value={simHorizon}
                         onChange={event => setSimHorizon(Number(event.target.value))}
                         className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
                       >
-                        <option value={30}>30 game days</option>
-                        <option value={60}>60 game days</option>
-                        <option value={90}>90 game days</option>
+                        <option value={30}>{t('finance.days30')}</option>
+                        <option value={60}>{t('finance.days60')}</option>
+                        <option value={90}>{t('finance.days90')}</option>
                       </select>
                     </label>
                   </div>
@@ -1785,7 +1777,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                     <StatCard label="Current balance" value={formatCurrency(workspace.finance.balance)} />
                     <StatCard label="Baseline weekly net" value={formatCurrency(workspace.finance.weekly_net)} />
                     <StatCard
-                      label={`Projected balance · ${simHorizon}d`}
+                      label={t('finance.projectedBalance', { days: simHorizon })}
                       value={formatCurrency(financeProjection?.projected)}
                     />
                     <StatCard
@@ -1795,7 +1787,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                   </div>
 
                   <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="text-sm font-bold text-slate-950">Save this scenario</div>
+                    <div className="text-sm font-bold text-slate-950">{t('finance.saveTitle')}</div>
                     <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                       <input
                         value={simName}
@@ -1827,16 +1819,15 @@ export default function PremiumCommandCenter(): JSX.Element {
           {workspace && tab === 'sponsors' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <h2 className="text-xl font-extrabold text-slate-950">Sponsor Intelligence Center</h2>
+                <h2 className="text-xl font-extrabold text-slate-950">{t('sponsors.title')}</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Progress, remaining target and deadline risk are calculated from your existing sponsor-objective data.
-                  No advisor role or Staff Advisory purchase is used.
+                  {t('sponsors.description')}
                 </p>
               </Card>
 
               {workspace.sponsor_intelligence.length === 0 ? (
                 <Card className="p-6 text-sm text-slate-500">
-                  No active sponsor objectives are available right now.
+                  {t('sponsors.none')}
                 </Card>
               ) : (
                 <div className="grid gap-4 lg:grid-cols-2">
@@ -1875,22 +1866,22 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                         <div className="rounded-xl bg-slate-50 p-3">
-                          <div className="text-xs text-slate-400">Remaining</div>
+                          <div className="text-xs text-slate-400">{t('sponsors.remaining')}</div>
                           <div className="mt-1 font-bold text-slate-950">{objective.remaining_value}</div>
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3">
-                          <div className="text-xs text-slate-400">Reward</div>
+                          <div className="text-xs text-slate-400">{t('sponsors.reward')}</div>
                           <div className="mt-1 font-bold text-slate-950">{formatCurrency(objective.reward_amount)}</div>
                         </div>
                       </div>
 
                       {objective.target_race_name ? (
                         <div className="mt-3 text-sm text-slate-600">
-                          Target race: <strong>{objective.target_race_name}</strong>
+                          {t('sponsors.targetRace', { race: objective.target_race_name })}
                         </div>
                       ) : null}
                       <div className="mt-1 text-xs text-slate-500">
-                        Deadline: {formatGameDate(objective.target_check_game_date ?? objective.eligible_to_game_date)}
+                        {t('sponsors.deadline', { date: formatGameDate(objective.target_check_game_date ?? objective.eligible_to_game_date) })}
                       </div>
                     </Card>
                   ))}
@@ -1902,10 +1893,9 @@ export default function PremiumCommandCenter(): JSX.Element {
           {workspace && tab === 'development' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <h2 className="text-xl font-extrabold text-slate-950">Rider Development Lab</h2>
+                <h2 className="text-xl font-extrabold text-slate-950">{t('development.title')}</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Follow recorded development over the latest eight-week window while keeping current rider skills available to every manager.
-                  This is historical analysis, not a Head Coach advisory report.
+                  {t('development.description')}
                 </p>
               </Card>
 
@@ -1914,14 +1904,14 @@ export default function PremiumCommandCenter(): JSX.Element {
                   <table className="w-full min-w-[920px] text-sm">
                     <thead>
                       <tr className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
-                        <th className="px-4 py-3">Rider</th>
-                        <th className="px-4 py-3">Role</th>
+                        <th className="px-4 py-3">{t('transfers.rider')}</th>
+                        <th className="px-4 py-3">{t('transfers.role')}</th>
                         <th className="px-4 py-3">Overall</th>
-                        <th className="px-4 py-3">Potential</th>
-                        <th className="px-4 py-3">8-week development</th>
-                        <th className="px-4 py-3">Overall change</th>
-                        <th className="px-4 py-3">Fatigue</th>
-                        <th className="px-4 py-3">Availability</th>
+                        <th className="px-4 py-3">{t('development.potential')}</th>
+                        <th className="px-4 py-3">{t('development.eightWeekDevelopment')}</th>
+                        <th className="px-4 py-3">{t('development.overallChange')}</th>
+                        <th className="px-4 py-3">{t('development.fatigue')}</th>
+                        <th className="px-4 py-3">{t('transfers.availability')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1978,10 +1968,9 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <div className="flex items-start gap-3">
                   <Settings2 size={20} className="mt-0.5 text-yellow-600" />
                   <div>
-                    <h2 className="text-xl font-extrabold text-slate-950">Templates & Smart Prefill</h2>
+                    <h2 className="text-xl font-extrabold text-slate-950">{t('templates.title')}</h2>
                     <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-600">
-                      Save your own management choices and let Premium match them to a context. Smart Prefill never silently changes an official race plan,
-                      training plan or equipment setup. It selects your preset for you; you remain in control of applying the final gameplay action.
+                      {t('templates.description')}
                     </p>
                   </div>
                 </div>
@@ -1989,10 +1978,10 @@ export default function PremiumCommandCenter(): JSX.Element {
 
               <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
                 <Card className="p-5">
-                  <div className="font-bold text-slate-950">Create template</div>
+                  <div className="font-bold text-slate-950">{t('templates.create')}</div>
 
                   <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Template type
+                    {t('templates.type')}
                   </label>
                   <select
                     value={templateType}
@@ -2001,56 +1990,56 @@ export default function PremiumCommandCenter(): JSX.Element {
                     }
                     className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
                   >
-                    <option value="race_strategy">Race strategy</option>
-                    <option value="training">Training</option>
+                    <option value="race_strategy">{t('templates.raceStrategy')}</option>
+                    <option value="training">{t('templates.training')}</option>
                   </select>
 
                   <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Name
+                    {t('templates.name')}
                   </label>
                   <input
                     value={templateName}
                     onChange={event => setTemplateName(event.target.value)}
-                    placeholder="e.g. Hilly Classic"
+                    placeholder={t('templates.namePlaceholder')}
                     className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
                   />
 
                   {templateType === 'race_strategy' ? (
                     <div className="mt-4 grid gap-3">
                       <label>
-                        <span className="text-xs font-bold text-slate-500">Terrain match</span>
+                        <span className="text-xs font-bold text-slate-500">{t('templates.terrainMatch')}</span>
                         <select value={raceTerrain} onChange={event => setRaceTerrain(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="all">All</option>
-                          <option value="flat">Flat</option>
-                          <option value="hilly">Hilly</option>
-                          <option value="mountain">Mountain</option>
-                          <option value="cobbles">Cobbles</option>
+                          <option value="all">{t('values.all')}</option>
+                          <option value="flat">{t('values.flat')}</option>
+                          <option value="hilly">{t('values.hilly')}</option>
+                          <option value="mountain">{t('values.mountain')}</option>
+                          <option value="cobbles">{t('values.cobbles')}</option>
                         </select>
                       </label>
                       <label>
-                        <span className="text-xs font-bold text-slate-500">Objective</span>
+                        <span className="text-xs font-bold text-slate-500">{t('templates.objective')}</span>
                         <select value={raceObjective} onChange={event => setRaceObjective(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="balanced">Balanced</option>
-                          <option value="stage_win">Stage win</option>
-                          <option value="protect_gc">Protect GC</option>
-                          <option value="breakaway">Breakaway</option>
+                          <option value="balanced">{t('values.balanced')}</option>
+                          <option value="stage_win">{t('values.stage_win')}</option>
+                          <option value="protect_gc">{t('values.protect_gc')}</option>
+                          <option value="breakaway">{t('values.breakaway')}</option>
                         </select>
                       </label>
                       <label>
-                        <span className="text-xs font-bold text-slate-500">Team strategy</span>
+                        <span className="text-xs font-bold text-slate-500">{t('strategy.teamStrategy')}</span>
                         <select value={raceStrategy} onChange={event => setRaceStrategy(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="balanced">Balanced</option>
-                          <option value="sprint_control">Sprint control</option>
-                          <option value="climber_support">Climber support</option>
-                          <option value="breakaway_focus">Breakaway focus</option>
+                          <option value="balanced">{t('values.balanced')}</option>
+                          <option value="sprint_control">{t('values.sprint_control')}</option>
+                          <option value="climber_support">{t('values.climber_support')}</option>
+                          <option value="breakaway_focus">{t('values.breakaway_focus')}</option>
                         </select>
                       </label>
                       <label>
-                        <span className="text-xs font-bold text-slate-500">Risk</span>
+                        <span className="text-xs font-bold text-slate-500">{t('templates.risk')}</span>
                         <select value={raceRisk} onChange={event => setRaceRisk(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="conservative">Conservative</option>
-                          <option value="normal">Normal</option>
-                          <option value="aggressive">Aggressive</option>
+                          <option value="conservative">{t('values.conservative')}</option>
+                          <option value="normal">{t('values.normal')}</option>
+                          <option value="aggressive">{t('values.aggressive')}</option>
                         </select>
                       </label>
                     </div>
@@ -2059,31 +2048,31 @@ export default function PremiumCommandCenter(): JSX.Element {
                   {templateType === 'training' ? (
                     <div className="mt-4 grid gap-3">
                       <label>
-                        <span className="text-xs font-bold text-slate-500">Focus</span>
+                        <span className="text-xs font-bold text-slate-500">{t('templates.focus')}</span>
                         <select value={trainingFocus} onChange={event => setTrainingFocus(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="general">General</option>
-                          <option value="sprint">Sprint</option>
-                          <option value="climbing">Climbing</option>
-                          <option value="endurance">Endurance</option>
-                          <option value="recovery">Recovery</option>
-                          <option value="day_off">Day off</option>
+                          <option value="general">{t('values.general')}</option>
+                          <option value="sprint">{t('values.sprint')}</option>
+                          <option value="climbing">{t('values.climbing')}</option>
+                          <option value="endurance">{t('values.endurance')}</option>
+                          <option value="recovery">{t('values.recovery')}</option>
+                          <option value="day_off">{t('values.day_off')}</option>
                         </select>
                       </label>
                       <label>
-                        <span className="text-xs font-bold text-slate-500">Intensity</span>
+                        <span className="text-xs font-bold text-slate-500">{t('templates.intensity')}</span>
                         <select value={trainingIntensity} onChange={event => setTrainingIntensity(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="recovery">Recovery</option>
-                          <option value="light">Light</option>
-                          <option value="normal">Normal</option>
-                          <option value="hard">Hard</option>
+                          <option value="recovery">{t('values.recovery')}</option>
+                          <option value="light">{t('values.light')}</option>
+                          <option value="normal">{t('values.normal')}</option>
+                          <option value="hard">{t('values.hard')}</option>
                         </select>
                       </label>
                     </div>
                   ) : null}
 
                   <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
-                    Equipment templates are created directly from your current owned setup on the Equipment page, so they always store real equipment IDs rather than placeholder selections.
-                    <a href="#/dashboard/equipment" className="ml-1 font-bold underline">Open Equipment</a>
+                    {t('templates.equipmentNote')}
+                    <a href="#/dashboard/equipment" className="ml-1 font-bold underline">{t('templates.openEquipment')}</a>
                   </div>
 
                   <button
@@ -2109,15 +2098,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                     className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40"
                   >
                     <Save size={15} />
-                    Save template
+                    {t('templates.save')}
                   </button>
                 </Card>
 
                 <Card className="p-5">
-                  <div className="font-bold text-slate-950">Saved templates</div>
+                  <div className="font-bold text-slate-950">{t('templates.saved')}</div>
                   <div className="mt-4 space-y-2">
                     {templates.length === 0 ? (
-                      <div className="text-sm text-slate-500">No saved templates yet.</div>
+                      <div className="text-sm text-slate-500">{t('templates.noneSaved')}</div>
                     ) : (
                       templates.map(template => (
                         <div
@@ -2158,27 +2147,27 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <Card className="p-5">
                   <div className="flex items-center gap-2 font-bold text-slate-950">
                     <Zap size={16} className="text-yellow-600" />
-                    Create Smart Prefill rule
+                    {t('templates.createRule')}
                   </div>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
-                    Example: when terrain_type = hilly, preselect your “Hilly Classic” race template in Strategy Lab.
+                    {t('templates.ruleExample')}
                   </p>
 
-                  <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">Rule name</label>
+                  <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">{t('templates.ruleName')}</label>
                   <input
                     value={automationName}
                     onChange={event => setAutomationName(event.target.value)}
                     className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
-                    placeholder="Hilly race prefill"
+                    placeholder={t('templates.rulePlaceholder')}
                   />
 
-                  <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">Template</label>
+                  <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">{t('templates.template')}</label>
                   <select
                     value={automationTemplateId}
                     onChange={event => setAutomationTemplateId(event.target.value)}
                     className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
                   >
-                    <option value="">Choose template</option>
+                    <option value="">{t('templates.chooseTemplate')}</option>
                     {templates
                       .filter(template => ['race_strategy', 'training', 'equipment'].includes(template.template_type))
                       .map(template => (
@@ -2190,20 +2179,20 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <label>
-                      <span className="text-xs font-bold text-slate-500">Match field</span>
+                      <span className="text-xs font-bold text-slate-500">{t('templates.matchField')}</span>
                       <select
                         value={automationMatchKey}
                         onChange={event => setAutomationMatchKey(event.target.value)}
                         className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
                       >
-                        <option value="terrain_type">Terrain type</option>
-                        <option value="stage_format">Stage format</option>
-                        <option value="profile_type">Profile type</option>
-                        <option value="availability_status">Availability status</option>
+                        <option value="terrain_type">{t('values.terrain_type')}</option>
+                        <option value="stage_format">{t('values.stage_format')}</option>
+                        <option value="profile_type">{t('values.profile_type')}</option>
+                        <option value="availability_status">{t('values.availability_status')}</option>
                       </select>
                     </label>
                     <label>
-                      <span className="text-xs font-bold text-slate-500">Equals</span>
+                      <span className="text-xs font-bold text-slate-500">{t('templates.equals')}</span>
                       <input
                         value={automationMatchValue}
                         onChange={event => setAutomationMatchValue(event.target.value)}
@@ -2219,15 +2208,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                     className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40"
                   >
                     <Zap size={15} />
-                    Save Smart Prefill
+                    {t('templates.saveRule')}
                   </button>
                 </Card>
 
                 <Card className="p-5">
-                  <div className="font-bold text-slate-950">Automation rules</div>
+                  <div className="font-bold text-slate-950">{t('templates.rules')}</div>
                   <div className="mt-4 space-y-2">
                     {automationRules.length === 0 ? (
-                      <div className="text-sm text-slate-500">No Smart Prefill rules yet.</div>
+                      <div className="text-sm text-slate-500">{t('templates.noRules')}</div>
                     ) : (
                       automationRules.map(rule => (
                         <div
@@ -2251,7 +2240,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                             </div>
                             {rule.last_matched_at ? (
                               <div className="mt-1 text-[11px] text-slate-400">
-                                Last matched: {formatRealDate(rule.last_matched_at)}
+                                {t('templates.lastMatched', { date: formatRealDate(rule.last_matched_at) })}
                               </div>
                             ) : null}
                           </div>
