@@ -16,8 +16,8 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "mesečno u stvarnom vremenu",
     "membership": "Premium članstvo",
-    "advancedTools": "Napredni alati za trening, transfere, skauting i upravljanje.",
-    "marketTools": "Sačuvane pretrage, upozorenja sa tržišta, uži izbor vozača i dublje analize.",
+    "advancedTools": "Napredna analiza, automatizacija, prognoze i alati za lakše upravljanje.",
+    "marketTools": "Sačuvane pretrage, tržišna upozorenja, neograničena dnevna dodavanja na listu bez coin troška (do limita aktivne liste) i dublja analiza transfera.",
     "capacity": "Dodatni kapaciteti za opremu i infrastrukturu radi lakšeg upravljanja.",
     "receive": "Dobijte",
     "monthlyCoinsSuffix": "novčića nakon svake uspešne mesečne uplate.",
@@ -68,11 +68,11 @@
   "advantages": {
     "a1": "50 novčića nakon svake uspešne mesečne Premium uplate.",
     "a2": "Napredna automatizacija treninga i analiza razvoja vozača.",
-    "a3": "Premium alati za transfere: sačuvane pretrage, automatska upozorenja, uži izbor i analiza pregovora.",
+    "a3": "Premium transfer alati: sačuvane pretrage, automatska upozorenja, neograničena dnevna dodavanja na listu bez coin troška (do limita aktivne liste) i dublja analiza pregovora.",
     "a4": "Dodatni slotovi za podešavanje opreme i prošireni uključeni kapacitet garaže.",
-    "a5": "Pristup naprednim opcijama timskih politika i izabranim filterima kalendara.",
-    "a6": "Dodatna istorija eksternih vozača, skorašnji rezultati i pregled priznanja u karijeri.",
-    "a7": "Premium funkcije za lakše upravljanje nikada ne poboljšavaju rezultate trke, prihvatanje transfera niti skrivene veštine vozača."
+    "a5": "Manager Briefing, napredna analiza kalendara, finansijske prognoze i alati za lakše upravljanje.",
+    "a6": "Napredna analiza učinka vozača, trendovi razvoja i neograničeni replay-i svih svetskih trka.",
+    "a7": "Premium poboljšava informacije, automatizaciju i praktičnost — nikada snagu u race engine-u, prihvatanje transfera ili skrivene atribute vozača."
   },
   "comparison": {
     "title": "Besplatno i Premium",
