@@ -23,6 +23,7 @@ import enOverview from './locales/en/overview.json'
 import enPreferences from './locales/en/preferences.json'
 import enPreferencesDynamic from './locales/en/preferencesDynamic.json'
 import enProPackages from './locales/en/proPackages.json'
+import enPremiumCenter from './locales/en/premiumCenter.json'
 import enProfile from './locales/en/profile.json'
 import enPublicInfo from './locales/en/publicInfo.json'
 import enRaceDetail from './locales/en/raceDetail.json'
@@ -339,6 +340,7 @@ const resources = {
     preferences: enPreferences,
     preferencesDynamic: enPreferencesDynamic,
     proPackages: enProPackages,
+    premiumCenter: enPremiumCenter,
     profile: enProfile,
     publicInfo: enPublicInfo,
     raceDetail: enRaceDetail,
@@ -663,6 +665,7 @@ void i18n
       'preferences',
       'preferencesDynamic',
       'proPackages',
+      'premiumCenter',
       'profile',
       'publicInfo',
       'raceDetail',
