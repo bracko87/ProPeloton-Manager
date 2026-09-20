@@ -86,7 +86,7 @@
     "holidays": "Vacaciones",
     "title": "Filtros de carrera",
     "premium": "Premium",
-    "description": "Filtra este mes por país, categoría, formato, estatus y metas de patrocinador.",
+    "description": "Filtra este mes por país, categoría, formato y estado. Premium añade inteligencia sobre objetivos de patrocinadores.",
     "clear": "Limpiar",
     "checkingPremium": "Comprobando Premium...",
     "hide": "Ocultar filtros",
@@ -110,7 +110,7 @@
     "unlockPremium": "Desbloquear con Premium",
     "activeCount": "{{count}} activo",
     "showing": "Mostrando {{shown}} de {{total}} carreras en {{month}}",
-    "noMatch": "No hay carreras que coincidan con los filtros Premium seleccionados para {{month}}.",
+    "noMatch": "Ninguna carrera coincide con los filtros seleccionados para {{month}}.",
     "noScheduled": "No hay carreras programadas para {{month}}."
   },
   "route": {
