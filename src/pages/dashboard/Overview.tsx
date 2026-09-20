@@ -8298,19 +8298,19 @@ export default function OverviewPage() {
 
                 <div className="mt-4 grid gap-2 sm:grid-cols-3">
                   <a
-                    href="#/dashboard/premium-center?tab=strategy"
+                    href="#/dashboard/race-preparation"
                     className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
                   >
                     {t('premiumCenter:integrations.overview.strategy')}
                   </a>
                   <a
-                    href="#/dashboard/premium-center?tab=season"
+                    href="#/dashboard/calendar"
                     className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
                   >
                     {t('premiumCenter:integrations.overview.season')}
                   </a>
                   <a
-                    href="#/dashboard/premium-center?tab=finance"
+                    href="#/dashboard/finance"
                     className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
                   >
                     {t('premiumCenter:integrations.overview.finance')}
