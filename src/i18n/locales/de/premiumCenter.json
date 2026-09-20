@@ -160,7 +160,8 @@
     "savedSearches": "Gespeicherte Suchen",
     "savedSearchesHint": "Premium-Suchen mit optionalen Marktalarmen",
     "latestAlerts": "Neueste Marktalarme",
-    "noAlerts": "Noch keine Marktalarme."
+    "noAlerts": "Noch keine Marktalarme.",
+    "alertNewMatch": "Ein passender Transferlisteneintrag ist verfügbar."
   },
   "finance": {
     "title": "Finanzsimulator",
@@ -285,7 +286,16 @@
     "fit": "Fit",
     "injured": "Verletzt",
     "sick": "Krank",
-    "not_fully_fit": "Nicht vollständig fit"
+    "not_fully_fit": "Nicht vollständig fit",
+    "transfer_list": "Auf der Transferliste",
+    "free_agent": "Free Agent",
+    "not_available": "Derzeit nicht verfügbar",
+    "domestique": "Helfer",
+    "all-rounder": "Allrounder",
+    "climber": "Kletterer",
+    "sprinter": "Sprinter",
+    "leader": "Kapitän",
+    "tt": "Zeitfahrer"
   },
   "integrations": {
     "training": {
