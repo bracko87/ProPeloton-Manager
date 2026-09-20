@@ -4733,29 +4733,54 @@ function normalizeTerrainShares(
   rollingDistanceKm: number,
   climbingDistanceKm: number,
   descentDistanceKm: number,
-  totalDistanceKm: number,
+  _totalDistanceKm: number,
 ): readonly [number, number, number, number] {
-  const rawShares = [
-    flatDistanceKm / totalDistanceKm,
-    rollingDistanceKm / totalDistanceKm,
-    climbingDistanceKm / totalDistanceKm,
-    descentDistanceKm / totalDistanceKm,
-  ] as const
+  const distances = [
+    flatDistanceKm,
+    rollingDistanceKm,
+    climbingDistanceKm,
+    descentDistanceKm,
+  ].map((value) =>
+    Number.isFinite(value) ? Math.max(0, value) : 0,
+  )
 
-  const flatMicros = Math.round(rawShares[0] * 1_000_000)
-  const rollingMicros = Math.round(rawShares[1] * 1_000_000)
-  const climbingMicros = Math.round(rawShares[2] * 1_000_000)
-  const descentMicros =
-    1_000_000 - flatMicros - rollingMicros - climbingMicros
+  // Profile segments are the authoritative physical geometry. Their summed
+  // distance can differ from the catalogue stage distance by tiny floating-point
+  // amounts, so normalize against the observed segment total instead of rounding
+  // three independent shares and forcing the fourth to absorb the error.
+  const observedTotalDistanceKm = distances.reduce(
+    (sum, value) => sum + value,
+    0,
+  )
+  if (!(observedTotalDistanceKm > 0)) {
+    return [1, 0, 0, 0]
+  }
 
-  const micros = [
-    flatMicros,
-    rollingMicros,
-    climbingMicros,
-    descentMicros,
-  ] as const
+  const rawMicros = distances.map(
+    (value) => (value / observedTotalDistanceKm) * 1_000_000,
+  )
+  const micros = rawMicros.map((value) => Math.floor(value))
+  let remainder = 1_000_000 - micros.reduce((sum, value) => sum + value, 0)
 
-  if (micros.some((value) => value < 0 || value > 1_000_000)) {
+  const remainderOrder = rawMicros
+    .map((value, index) => ({
+      index,
+      fraction: value - Math.floor(value),
+    }))
+    .sort(
+      (left, right) =>
+        right.fraction - left.fraction || left.index - right.index,
+    )
+
+  for (let index = 0; index < remainder; index += 1) {
+    micros[remainderOrder[index % remainderOrder.length].index] += 1
+  }
+
+  if (
+    remainder < 0 ||
+    micros.some((value) => value < 0 || value > 1_000_000) ||
+    micros.reduce((sum, value) => sum + value, 0) !== 1_000_000
+  ) {
     throw new Error('Unable to normalize terrain shares')
   }
 
