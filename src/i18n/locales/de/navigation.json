@@ -37,7 +37,8 @@
     "infrastructure": "Einrichtungen und Entwicklung",
     "finance": "Budget, Einnahmen und Kosten",
     "transfers": "Kaufen, verkaufen und verhandeln",
-    "statistics": "Leistung und Analysen"
+    "statistics": "Leistung und Analysen",
+    "premiumCenter": "Erweiterte Planung, Simulation und Automatisierung"
   },
   "header": {
     "toggleSidebar": "Seitenleiste ein-/ausblenden",
@@ -151,5 +152,6 @@
   },
   "premiumFeature": {
     "unlock": "Mit Premium freischalten"
-  }
+  },
+  "premiumCenter": "Premium-Zentrale"
 }
