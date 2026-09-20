@@ -91,6 +91,7 @@ import PreferencesPage from './pages/Preferences'
 import HelpPage from './pages/Help'
 import ContactUsPage from './pages/ContactUs'
 import ProPackagesPage from './pages/ProPackages'
+import PremiumCommandCenter from './pages/dashboard/PremiumCommandCenter'
 import InviteFriendsPage from './pages/InviteFriends'
 import ReferralCapturePage from './pages/ReferralCapture'
 
@@ -704,6 +705,11 @@ export default function App(): JSX.Element {
             <Route
               path="contact-us"
               element={<ContactUsPage />}
+            />
+
+            <Route
+              path="premium-center"
+              element={<PremiumCommandCenter />}
             />
 
             <Route
