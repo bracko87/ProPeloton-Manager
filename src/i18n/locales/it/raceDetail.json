@@ -352,7 +352,8 @@
     "pointNoAward": "Questo punto è stato raggiunto senza un risultato assegnato.",
     "currentStageTotals": "Totale della tappa attuale",
     "noAwards": "Non sono stati ancora rivelati sprint, KOM o bonus award.",
-    "total": "Totale"
+    "total": "Totale",
+    "premiumIncluded": "Premium include l'accesso al replay di questa gara mondiale."
   },
   "leaders": {
     "general": "Leader generale",
