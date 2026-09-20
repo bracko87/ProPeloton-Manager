@@ -16,8 +16,8 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "par mois réel",
     "membership": "Membre de Premium",
-    "advancedTools": "Formation avancée, transfert, scoutisme et outils de gestion.",
-    "marketTools": "Recherches sauvegardées, alertes du marché, liste de sélection des coureurs et analyse plus approfondie.",
+    "advancedTools": "Analyses avancées, automatisation, prévisions et outils de confort de gestion.",
+    "marketTools": "Recherches enregistrées, alertes de marché, ajouts quotidiens illimités à la shortlist sans coût en pièces (dans la limite active) et analyses de transfert plus poussées.",
     "capacity": "Capacité supplémentaire d'équipement et d'infrastructure.",
     "receive": "Recevez",
     "monthlyCoinsSuffix": "Coins après chaque paiement mensuel réussi.",
@@ -68,11 +68,11 @@
   "advantages": {
     "a1": "50 Coins après chaque paiement mensuel réussi Premium.",
     "a2": "Automatisation de la formation avancée et analyse du développement des coureurs.",
-    "a3": "Outils de transfert Premium: recherches sauvegardées, alertes automatiques, liste restreinte et analyse de négociation.",
+    "a3": "Outils Premium de transfert : recherches enregistrées, alertes automatiques, ajouts quotidiens illimités à la shortlist sans coût en pièces (dans la limite active) et analyses de négociation plus poussées.",
     "a4": "L'équipement supplémentaire de configuration des emplacements et élargi comprend la capacité de garage.",
-    "a5": "Accès aux options avancées de politique d'équipe et aux filtres de calendrier sélectionnés.",
-    "a6": "Autres antécédents externes, résultats récents et points de vue sur l'honneur de carrière.",
-    "a7": "Premium fonctions de commodité jamais améliorer les résultats de course, transfert d'acceptation ou les compétences de coureur cachées."
+    "a5": "Manager Briefing, intelligence avancée du calendrier, prévisions financières et outils de confort.",
+    "a6": "Analyses avancées des performances des coureurs, tendances de développement et replays illimités des courses mondiales.",
+    "a7": "Premium améliore l'information, l'automatisation et le confort — jamais la force en course, l'acceptation des transferts ni les attributs cachés."
   },
   "comparison": {
     "title": "Gratuit vs Premium",
