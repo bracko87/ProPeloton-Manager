@@ -221,7 +221,10 @@
     "searchRiders": "Fahrer suchen",
     "allRoles": "Alle Rollen",
     "allStatuses": "Alle Status",
-    "latestWeek": "Letzte Woche"
+    "latestWeek": "Letzte Woche",
+    "editChartRiders": "Fahrer bearbeiten",
+    "doneEditingRiders": "Fertig",
+    "editChartRidersHint": "Ersetze jeden angezeigten Fahrer durch einen anderen Kaderfahrer, der noch nicht im Diagramm ist."
   },
   "templates": {
     "title": "Vorlagen & Smart Prefill",
@@ -336,9 +339,9 @@
       "defaultsRestoreFailed": "Das Team-Standardtraining konnte nicht für alle Fahrer wiederhergestellt werden."
     },
     "equipment": {
-      "title": "Premium-Ausrüstungsvorlagen",
-      "description": "Speichere den aktuellen Entwurf als wiederverwendbares Setup oder nutze Smart Prefill, um eine eigene Vorlage nach Gelände auszuwählen. Nichts wird angewendet, bis du die normale Schaltfläche „Standard-Setup speichern“ drückst.",
-      "manage": "Automatisierung verwalten",
+      "title": "Gespeicherte Ausrüstungs-Setups",
+      "description": "Ohne Premium hast du weiterhin ein normales Standard-Rennsetup. Premium ergänzt mehrere wiederverwendbare Setups und terrainbasiertes Smart Prefill mit einem Klick.",
+      "manage": "Automationsregeln",
       "none": "Noch keine Ausrüstungsvorlagen gespeichert.",
       "namePlaceholder": "Vorlagenname",
       "saveDraft": "Aktuellen Entwurf speichern",
@@ -348,7 +351,11 @@
       "saveFailed": "Premium-Ausrüstungsvorlage konnte nicht gespeichert werden.",
       "noRule": "Keine aktivierte Equipment-Smart-Prefill-Regel passt zu terrain_type = {{terrain}}.",
       "templateFallback": "Ausrüstungsvorlage",
-      "prefillFailed": "Equipment Smart Prefill konnte nicht ausgeführt werden."
+      "prefillFailed": "Equipment Smart Prefill konnte nicht ausgeführt werden.",
+      "savedCount": "{{count}} gespeichert",
+      "openTools": "Setups öffnen",
+      "hideTools": "Setups ausblenden",
+      "savedSetups": "Gespeicherte Setups"
     },
     "finance": {
       "simulator": "Premium-Finanzsimulator",
