@@ -91,6 +91,15 @@ type RiderRegularTrainingPlanRow = {
   created_at?: string
 }
 
+type PremiumTrainingTemplate = {
+  id: string
+  name: string
+  payload_json: {
+    focus_code?: string
+    intensity?: string
+  } | null
+}
+
 type Camp = {
   id: string
   name: string
@@ -1164,6 +1173,9 @@ export default function TrainingPage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [isPremium, setIsPremium] = useState(false)
   const [premiumStatusLoading, setPremiumStatusLoading] = useState(true)
+  const [premiumTrainingTemplates, setPremiumTrainingTemplates] = useState<PremiumTrainingTemplate[]>([])
+  const [premiumPrefillMessage, setPremiumPrefillMessage] = useState<string | null>(null)
+  const [premiumPrefillRiderId, setPremiumPrefillRiderId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [clubId, setClubId] = useState<string | null>(null)
