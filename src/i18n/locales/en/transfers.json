@@ -201,7 +201,7 @@
   },
   "shortlist": {
     "title": "Rider Shortlist",
-    "premiumDescription": "Every manager can track riders from transfer listings, free agents, scouting and external profiles. Free managers get two new additions per real-life day, then additions cost 1 coin each. Premium additions are unlimited and coin-free.",
+    "premiumDescription": "Every manager can track riders from transfer listings, free agents, scouting and external profiles. Free managers get two new additions per real-life day, then additions cost 1 coin each. Premium gets unlimited daily additions without coin charges, within the active-list limit.",
     "description": "All tracked riders in one place, including riders who are no longer available on the market.",
     "active": "Active:",
     "freeLeft": "Free additions left today:",
