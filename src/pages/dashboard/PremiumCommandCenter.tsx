@@ -601,9 +601,9 @@ export default function PremiumCommandCenter(): JSX.Element {
         if (automationResult.error) throw automationResult.error
 
         const nextWorkspace = workspaceResult.data as Workspace
-        const visibleTemplates = ((templateResult.data ?? []) as Array<PremiumTemplate & { template_type: string }>)
+        const visibleTemplates = ((templateResult.data ?? []) as Array<Record<string, any>>)
           .filter(row => row.template_type !== 'equipment') as PremiumTemplate[]
-        const visibleAutomationRules = ((automationResult.data ?? []) as Array<AutomationRule & { rule_type: string }>)
+        const visibleAutomationRules = ((automationResult.data ?? []) as Array<Record<string, any>>)
           .filter(row => row.rule_type !== 'equipment_prefill') as AutomationRule[]
 
         setWorkspace(nextWorkspace)
@@ -868,7 +868,7 @@ export default function PremiumCommandCenter(): JSX.Element {
 
       if (!listError) {
         setTemplates(
-          ((data ?? []) as Array<PremiumTemplate & { template_type: string }>)
+          ((data ?? []) as Array<Record<string, any>>)
             .filter(row => row.template_type !== 'equipment') as PremiumTemplate[],
         )
       }
@@ -938,7 +938,7 @@ export default function PremiumCommandCenter(): JSX.Element {
 
     if (!listError) {
       setAutomationRules(
-        ((data ?? []) as Array<AutomationRule & { rule_type: string }>)
+        ((data ?? []) as Array<Record<string, any>>)
           .filter(row => row.rule_type !== 'equipment_prefill') as AutomationRule[],
       )
       setAutomationName('')
