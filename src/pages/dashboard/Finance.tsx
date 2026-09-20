@@ -620,8 +620,8 @@ export default function FinancePage(): JSX.Element {
             className="rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-semibold text-yellow-900 hover:bg-yellow-100"
           >
             {tab === 'sponsors'
-              ? 'Premium Sponsor Intelligence'
-              : 'Premium Financial Simulator'}
+              ? t('premiumCenter:integrations.finance.sponsorIntelligence')
+              : t('premiumCenter:integrations.finance.simulator')}
           </button>
           <button
             type="button"
