@@ -62,6 +62,7 @@ import srOverview from './locales/sr-Latn/overview.json'
 import srPreferences from './locales/sr-Latn/preferences.json'
 import srPreferencesDynamic from './locales/sr-Latn/preferencesDynamic.json'
 import srProPackages from './locales/sr-Latn/proPackages.json'
+import srPremiumCenter from './locales/sr-Latn/premiumCenter.json'
 import srProfile from './locales/sr-Latn/profile.json'
 import srPublicInfo from './locales/sr-Latn/publicInfo.json'
 import srRaceDetail from './locales/sr-Latn/raceDetail.json'
@@ -100,6 +101,7 @@ import deOverview from './locales/de/overview.json'
 import dePreferences from './locales/de/preferences.json'
 import dePreferencesDynamic from './locales/de/preferencesDynamic.json'
 import deProPackages from './locales/de/proPackages.json'
+import dePremiumCenter from './locales/de/premiumCenter.json'
 import deProfile from './locales/de/profile.json'
 import dePublicInfo from './locales/de/publicInfo.json'
 import deRaceDetail from './locales/de/raceDetail.json'
@@ -138,6 +140,7 @@ import hrOverview from './locales/hr/overview.json'
 import hrPreferences from './locales/hr/preferences.json'
 import hrPreferencesDynamic from './locales/hr/preferencesDynamic.json'
 import hrProPackages from './locales/hr/proPackages.json'
+import hrPremiumCenter from './locales/hr/premiumCenter.json'
 import hrProfile from './locales/hr/profile.json'
 import hrPublicInfo from './locales/hr/publicInfo.json'
 import hrRaceDetail from './locales/hr/raceDetail.json'
@@ -176,6 +179,7 @@ import esOverview from './locales/es/overview.json'
 import esPreferences from './locales/es/preferences.json'
 import esPreferencesDynamic from './locales/es/preferencesDynamic.json'
 import esProPackages from './locales/es/proPackages.json'
+import esPremiumCenter from './locales/es/premiumCenter.json'
 import esProfile from './locales/es/profile.json'
 import esPublicInfo from './locales/es/publicInfo.json'
 import esRaceDetail from './locales/es/raceDetail.json'
@@ -216,6 +220,7 @@ import itOverview from './locales/it/overview.json'
 import itPreferences from './locales/it/preferences.json'
 import itPreferencesDynamic from './locales/it/preferencesDynamic.json'
 import itProPackages from './locales/it/proPackages.json'
+import itPremiumCenter from './locales/it/premiumCenter.json'
 import itPublicInfo from './locales/it/publicInfo.json'
 import itRaceDetail from './locales/it/raceDetail.json'
 import itRacePreparation from './locales/it/racePreparation.json'
@@ -253,6 +258,7 @@ import frOverview from './locales/fr/overview.json'
 import frPreferences from './locales/fr/preferences.json'
 import frPreferencesDynamic from './locales/fr/preferencesDynamic.json'
 import frProPackages from './locales/fr/proPackages.json'
+import frPremiumCenter from './locales/fr/premiumCenter.json'
 import frProfile from './locales/fr/profile.json'
 import frPublicInfo from './locales/fr/publicInfo.json'
 import frRaceDetail from './locales/fr/raceDetail.json'
@@ -291,6 +297,7 @@ import ruOverview from './locales/ru/overview.json'
 import ruPreferences from './locales/ru/preferences.json'
 import ruPreferencesDynamic from './locales/ru/preferencesDynamic.json'
 import ruProPackages from './locales/ru/proPackages.json'
+import ruPremiumCenter from './locales/ru/premiumCenter.json'
 import ruProfile from './locales/ru/profile.json'
 import ruPublicInfo from './locales/ru/publicInfo.json'
 import ruRaceDetail from './locales/ru/raceDetail.json'
@@ -380,6 +387,7 @@ const resources = {
     preferences: srPreferences,
     preferencesDynamic: srPreferencesDynamic,
     proPackages: srProPackages,
+    premiumCenter: srPremiumCenter,
     profile: srProfile,
     publicInfo: srPublicInfo,
     raceDetail: srRaceDetail,
@@ -419,6 +427,7 @@ const resources = {
     preferences: dePreferences,
     preferencesDynamic: dePreferencesDynamic,
     proPackages: deProPackages,
+    premiumCenter: dePremiumCenter,
     profile: deProfile,
     publicInfo: dePublicInfo,
     raceDetail: deRaceDetail,
@@ -458,6 +467,7 @@ const resources = {
     preferences: hrPreferences,
     preferencesDynamic: hrPreferencesDynamic,
     proPackages: hrProPackages,
+    premiumCenter: hrPremiumCenter,
     profile: hrProfile,
     publicInfo: hrPublicInfo,
     raceDetail: hrRaceDetail,
@@ -497,6 +507,7 @@ const resources = {
     preferences: esPreferences,
     preferencesDynamic: esPreferencesDynamic,
     proPackages: esProPackages,
+    premiumCenter: esPremiumCenter,
     profile: esProfile,
     publicInfo: esPublicInfo,
     raceDetail: esRaceDetail,
@@ -536,6 +547,7 @@ const resources = {
     preferences: itPreferences,
     preferencesDynamic: itPreferencesDynamic,
     proPackages: itProPackages,
+    premiumCenter: itPremiumCenter,
     profile: itProfile,
     publicInfo: itPublicInfo,
     raceDetail: itRaceDetail,
@@ -575,6 +587,7 @@ const resources = {
     preferences: frPreferences,
     preferencesDynamic: frPreferencesDynamic,
     proPackages: frProPackages,
+    premiumCenter: frPremiumCenter,
     profile: frProfile,
     publicInfo: frPublicInfo,
     raceDetail: frRaceDetail,
@@ -614,6 +627,7 @@ const resources = {
     preferences: ruPreferences,
     preferencesDynamic: ruPreferencesDynamic,
     proPackages: ruProPackages,
+    premiumCenter: ruPremiumCenter,
     profile: ruProfile,
     publicInfo: ruPublicInfo,
     raceDetail: ruRaceDetail,
