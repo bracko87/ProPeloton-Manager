@@ -231,7 +231,6 @@ type PremiumTemplate = {
   template_type:
     | 'race_strategy'
     | 'training'
-    | 'equipment'
     | 'financial_scenario'
     | 'season_plan'
   name: string
@@ -243,7 +242,7 @@ type PremiumTemplate = {
 
 type AutomationRule = {
   id: string
-  rule_type: 'strategy_prefill' | 'training_prefill' | 'equipment_prefill'
+  rule_type: 'strategy_prefill' | 'training_prefill'
   name: string
   template_id: string
   template_name: string
@@ -602,9 +601,14 @@ export default function PremiumCommandCenter(): JSX.Element {
         if (automationResult.error) throw automationResult.error
 
         const nextWorkspace = workspaceResult.data as Workspace
+        const visibleTemplates = ((templateResult.data ?? []) as Array<PremiumTemplate & { template_type: string }>)
+          .filter(row => row.template_type !== 'equipment') as PremiumTemplate[]
+        const visibleAutomationRules = ((automationResult.data ?? []) as Array<AutomationRule & { rule_type: string }>)
+          .filter(row => row.rule_type !== 'equipment_prefill') as AutomationRule[]
+
         setWorkspace(nextWorkspace)
-        setTemplates((templateResult.data ?? []) as PremiumTemplate[])
-        setAutomationRules((automationResult.data ?? []) as AutomationRule[])
+        setTemplates(visibleTemplates)
+        setAutomationRules(visibleAutomationRules)
 
         setSelectedPreparationId(current => {
           if (
@@ -863,7 +867,10 @@ export default function PremiumCommandCenter(): JSX.Element {
       )
 
       if (!listError) {
-        setTemplates((data ?? []) as PremiumTemplate[])
+        setTemplates(
+          ((data ?? []) as Array<PremiumTemplate & { template_type: string }>)
+            .filter(row => row.template_type !== 'equipment') as PremiumTemplate[],
+        )
       }
     },
     [clubId],
@@ -902,9 +909,7 @@ export default function PremiumCommandCenter(): JSX.Element {
     const ruleType =
       selectedTemplate.template_type === 'training'
         ? 'training_prefill'
-        : selectedTemplate.template_type === 'equipment'
-          ? 'equipment_prefill'
-          : 'strategy_prefill'
+        : 'strategy_prefill'
 
     const { error: saveError } = await supabase.rpc(
       'premium_save_automation_rule_v1',
@@ -932,7 +937,10 @@ export default function PremiumCommandCenter(): JSX.Element {
     )
 
     if (!listError) {
-      setAutomationRules((data ?? []) as AutomationRule[])
+      setAutomationRules(
+        ((data ?? []) as Array<AutomationRule & { rule_type: string }>)
+          .filter(row => row.rule_type !== 'equipment_prefill') as AutomationRule[],
+      )
       setAutomationName('')
     }
   }, [
@@ -1678,11 +1686,6 @@ export default function PremiumCommandCenter(): JSX.Element {
                       </label>
                     </div>
                   ) : null}
-
-                  <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
-                    {t('templates.equipmentNote')}
-                    <a href="#/dashboard/equipment" className="ml-1 font-semibold underline">{t('templates.openEquipment')}</a>
-                  </div>
 
                   <button
                     type="button"
