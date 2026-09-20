@@ -200,7 +200,28 @@
     "eightWeekDevelopment": "Razvoj u 8 tjedana",
     "overallChange": "Promjena ukupne ocjene",
     "fatigue": "Umor",
-    "availability": "Dostupnost"
+    "availability": "Dostupnost",
+    "coverage": "Pokrivenost povijesti",
+    "avgOverall": "Prosječna ukupna ocjena",
+    "avgPotential": "Prosječni potencijal",
+    "totalEightWeek": "Ukupan razvoj u 8 tjedana",
+    "improvingRiders": "Vozači u napretku",
+    "ofRiders": "od {{count}} vozača",
+    "avgFatigue": "Prosječni umor",
+    "leaders": "Lideri razvoja",
+    "leadersHint": "Najveći zabilježeni napredak tijekom posljednjih osam tjedana.",
+    "potentialVsOverall": "Potencijal i trenutna razina",
+    "potentialVsOverallHint": "Vozači s najvećim prostorom za razvoj.",
+    "prospectWatch": "Praćenje talenata",
+    "noWatchItems": "Nijedan vozač trenutačno ne prelazi prag za praćenje talenata.",
+    "fatigueWatch": "Praćenje umora",
+    "noFatigueRisk": "Nijedan vozač trenutačno ne prelazi prag umora.",
+    "riderDetail": "Detalji razvoja vozača",
+    "riderDetailHint": "Filtrirajte momčad i pregledajte trenutnu razinu, potencijal i zabilježeni razvoj.",
+    "searchRiders": "Pretraži vozače",
+    "allRoles": "Sve uloge",
+    "allStatuses": "Svi statusi",
+    "latestWeek": "Posljednji tjedan"
   },
   "templates": {
     "title": "Predlošci i Smart Prefill",
@@ -309,7 +330,10 @@
       "failed": "Premium Smart Prefill nije moguće provjeriti.",
       "checking": "Provjera Smart Prefilla…",
       "smartPrefill": "Smart Prefill",
-      "templateFallback": "Predložak treninga"
+      "templateFallback": "Predložak treninga",
+      "useDefaultsForAll": "Koristi zadane postavke za sve",
+      "defaultsRestored": "Uklonjene su sve individualne postavke i automatizacija Head Coacha. Svi vozači sada koriste spremljeni zadani trening momčadi.",
+      "defaultsRestoreFailed": "Nije bilo moguće vratiti zadani trening momčadi za sve vozače."
     },
     "equipment": {
       "title": "Premium predlošci opreme",
