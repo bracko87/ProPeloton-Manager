@@ -757,6 +757,19 @@ export function applyRoadScenarioFromPrecalculationV2(
       modelVersion: ROAD_RACE_DIRECTOR_V2_VERSION,
       terrainType: input.stage.terrainType,
       preCalculationSummary: summary,
+      // The reservation RPC persists contextSnapshot rather than every
+      // top-level audit field. Keep the outcome-variation decision here too so
+      // production audits can prove whether the survival opportunity was
+      // eligible/active without inferring it from the final result.
+      outcomeVariation: {
+        contract: 'breakaway_outcome_variation_v1',
+        eligible: breakawayOutcomeVariationEligible,
+        active: breakawayOutcomeVariationActive,
+        chance: outcomeVariationChance,
+        roll: round(outcomeVariationRoll, 6),
+        expandedPoolSize: breakawayVariationPool.length,
+        physicalResultStillAuthoritative: true,
+      },
       commandsPreservedForFinalPass: true,
     },
     candidateScores,
