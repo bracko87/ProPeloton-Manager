@@ -86,7 +86,7 @@
     "holidays": "Praznici",
     "title": "Filteri utrka",
     "premium": "Premium",
-    "description": "Filtrirajte utrke ovog mjeseca prema zemlji, kategoriji, formatu, statusu i ciljevima sponzora.",
+    "description": "Filtriraj ovaj mjesec po zemlji, kategoriji, formatu i statusu. Premium dodatno pruža informacije o ciljevima sponzora.",
     "clear": "Očisti",
     "checkingPremium": "Provjera Premium statusa…",
     "hide": "Sakrij filtere",
@@ -110,7 +110,7 @@
     "unlockPremium": "Otključaj uz Premium",
     "activeCount": "{{count}} aktivnih",
     "showing": "Prikazano {{shown}} od {{total}} utrka u mjesecu {{month}}",
-    "noMatch": "Nijedna utrka ne odgovara izabranim Premium filterima za {{month}}.",
+    "noMatch": "Nijedna utrka ne odgovara odabranim filtrima za {{month}}.",
     "noScheduled": "Nema zakazanih utrka za {{month}}."
   },
   "route": {
