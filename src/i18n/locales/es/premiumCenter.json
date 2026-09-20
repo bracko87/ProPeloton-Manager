@@ -337,7 +337,17 @@
       "attentionItems_one": "{{count}} elemento de atención",
       "attentionItems_other": "{{count}} elementos de atención",
       "openItem": "Abrir",
-      "noUrgent": "Actualmente no hay elementos urgentes de gestión que requieran atención."
+      "noUrgent": "Actualmente no hay elementos urgentes de gestión que requieran atención.",
+      "freeCoreView": "Vista básica Free",
+      "squadIntelligenceTitle": "Inteligencia Premium de plantilla",
+      "squadIntelligenceBody": "Fitness, moral, preparación, forma y presión contractual se agrupan aquí para managers Premium.",
+      "unlockTools": "Desbloquear herramientas Premium",
+      "financeLockedBody": "Premium añade detalle de ingresos de patrocinio, presión de costes recurrentes, previsiones de viajes, inteligencia de transacciones y gráficos completos de flujo de caja.",
+      "incomeExpensesGateDesc": "Desbloquea gráficos operativos semanales, mensuales y de temporada con un resumen claro de ingresos, gastos y saldo neto.",
+      "operationsGateDesc": "Desbloquea una vista en vivo de tareas actuales, procesos en curso, estados operativos y flujos activos del club.",
+      "honoursGateDesc": "Desbloquea un resumen histórico práctico de los cinco mejores resultados de la historia del club.",
+      "seasonCoreBody": "Los resultados básicos de temporada son Free. Premium añade volumen de carreras, puntos internacionales, maillots y más contexto de temporada.",
+      "seasonAnalytics": "Ver análisis Premium de temporada"
     },
     "riderProfile": {
       "title": "Premium Rider Development Lab",
