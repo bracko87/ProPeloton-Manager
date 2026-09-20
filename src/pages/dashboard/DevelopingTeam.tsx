@@ -1260,27 +1260,23 @@ export default function DevelopingTeamPage() {
           )
         })
 
-      if (hasPremiumAccess) {
-        void supabase
-          .rpc('get_club_health_overview', {
-            p_club_id: developingClubId,
-          })
-          .then(({ data: healthData, error: healthErr }) => {
-            if (healthErr) {
-              console.warn(
-                'Failed to load Developing Team health overview:',
-                healthErr
-              )
-              return
-            }
-
-            setHealthOverviewRows(
-              (healthData ?? []) as ClubHealthOverviewRow[]
+      void supabase
+        .rpc('get_club_health_overview', {
+          p_club_id: developingClubId,
+        })
+        .then(({ data: healthData, error: healthErr }) => {
+          if (healthErr) {
+            console.warn(
+              'Failed to load Developing Team health overview:',
+              healthErr
             )
-          })
-      } else {
-        setHealthOverviewRows([])
-      }
+            return
+          }
+
+          setHealthOverviewRows(
+            (healthData ?? []) as ClubHealthOverviewRow[]
+          )
+        })
 
       // Still load the First Squad count for movement capacity, but do not show
       // a separate First Squad summary line in the page header.
@@ -1455,7 +1451,7 @@ export default function DevelopingTeamPage() {
   }, [loadDevelopingTeamPageData])
 
   useEffect(() => {
-    if (!isPremium && listView !== 'general') {
+    if (!isPremium && listView !== 'general' && listView !== 'form') {
       setListView('general')
     }
   }, [isPremium, listView])
