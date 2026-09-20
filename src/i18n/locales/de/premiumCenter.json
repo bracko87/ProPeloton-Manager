@@ -1,0 +1,19 @@
+{
+  "title": "Premium-Kommandozentrale",
+  "subtitle": "Erweiterte Werkzeuge für Planung, Simulation, Organisation und Automatisierung auf Basis der Informationen, die dein Club bereits besitzt.",
+  "premiumOnly": "Premium-Managementbereich",
+  "premiumOnlyBody": "Free-Manager behalten das vollständige Spiel und die manuelle Kontrolle. Premium ergänzt tiefere Analysen, Simulationen, gespeicherte Abläufe und Smart Prefill, ohne die Rennstärke zu erhöhen.",
+  "upgrade": "Premium freischalten",
+  "scopeTitle": "Getrennt vom Staff Briefing Centre",
+  "scopeBody": "Das Staff Briefing Centre bleibt das separate, coinbasierte Mitarbeitersystem: ausgewählte Mitarbeiter interpretieren Training, Gesundheit, Rennprogramm, Ausrüstung oder Scouting proaktiv. Das Premium Command Center ersetzt diese Berater nicht. Es bietet deterministische Dashboards, Simulationen, Szenarien, Vorlagen und benutzergesteuerte Automatisierung, unabhängig von Mitarbeiterwerten und ohne Advisor-Berichte.",
+  "tabs": {
+    "summary": "Kommandoübersicht",
+    "strategy": "Race Strategy Lab",
+    "season": "Saisonplaner",
+    "transfers": "Transferzentrale",
+    "finance": "Finanzsimulator",
+    "sponsors": "Sponsor-Intelligence",
+    "development": "Fahrerentwicklung",
+    "templates": "Vorlagen & Automatisierung"
+  }
+}
