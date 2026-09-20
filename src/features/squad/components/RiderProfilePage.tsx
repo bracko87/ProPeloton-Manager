@@ -5840,7 +5840,25 @@ export default function RiderProfilePage({
                   <PremiumLockedPanel title={t('ownedAnalysis.premiumCentreLockTitle')} description={t('ownedAnalysis.premiumCentreLockDescription')} />
                 </SectionCard>
               ) : (
-                <RichRiderPerformanceAnalysisPage rider={selectedRider} analysis={performanceAnalysis} analysisLoading={performanceAnalysisLoading} analysisError={performanceAnalysisError} skillRows={skillRows} seasonOverview={seasonOverview} seasonStats={seasonStats} recentRaces={recentRaces} monthlyPointsHistory={monthlyPointsHistory} recentTrainingSessions={recentTrainingSessions} skillProgressHistory={skillProgressHistory} careerHistory={displayHistoryRows} raceSharpness={raceSharpness} profileAge={profileAge} gameDate={gameDate} />
+                <>
+                  <SectionCard
+                    title="Premium Rider Development Lab"
+                    subtitle="See this rider inside the club-wide development view without replacing the Head Coach's coin-based advisory reports."
+                  >
+                    <div className="flex flex-col gap-3 rounded-xl border border-yellow-200 bg-yellow-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="text-sm leading-6 text-slate-700">
+                        The Development Lab compares recorded progression across your whole squad. It is historical analysis, not a staff-advisor recommendation.
+                      </div>
+                      <Link
+                        to="/dashboard/premium-center?tab=development"
+                        className="shrink-0 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
+                      >
+                        Open Development Lab
+                      </Link>
+                    </div>
+                  </SectionCard>
+                  <RichRiderPerformanceAnalysisPage rider={selectedRider} analysis={performanceAnalysis} analysisLoading={performanceAnalysisLoading} analysisError={performanceAnalysisError} skillRows={skillRows} seasonOverview={seasonOverview} seasonStats={seasonStats} recentRaces={recentRaces} monthlyPointsHistory={monthlyPointsHistory} recentTrainingSessions={recentTrainingSessions} skillProgressHistory={skillProgressHistory} careerHistory={displayHistoryRows} raceSharpness={raceSharpness} profileAge={profileAge} gameDate={gameDate} />
+                </>
               )}
             </div>
           )}
