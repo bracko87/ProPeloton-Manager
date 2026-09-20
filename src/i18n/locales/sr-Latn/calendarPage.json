@@ -86,7 +86,7 @@
     "holidays": "Praznici",
     "title": "Filteri trka",
     "premium": "Premium",
-    "description": "Filtrirajte trke ovog meseca prema zemlji, kategoriji, formatu, statusu i ciljevima sponzora.",
+    "description": "Filtriraj ovaj mesec po zemlji, kategoriji, formatu i statusu. Premium dodatno daje informacije o ciljevima sponzora.",
     "clear": "Očisti",
     "checkingPremium": "Provera Premium statusa…",
     "hide": "Sakrij filtere",
@@ -110,7 +110,7 @@
     "unlockPremium": "Otključaj uz Premium",
     "activeCount": "{{count}} aktivnih",
     "showing": "Prikazano {{shown}} od {{total}} trka u mesecu {{month}}",
-    "noMatch": "Nijedna trka ne odgovara izabranim Premium filterima za {{month}}.",
+    "noMatch": "Nijedna trka ne odgovara izabranim filterima za {{month}}.",
     "noScheduled": "Nema zakazanih trka za {{month}}."
   },
   "route": {
