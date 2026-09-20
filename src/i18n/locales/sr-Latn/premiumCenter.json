@@ -160,7 +160,8 @@
     "savedSearches": "Sačuvane pretrage",
     "savedSearchesHint": "Premium pretrage sa opcionim tržišnim alarmima",
     "latestAlerts": "Najnoviji tržišni alarmi",
-    "noAlerts": "Još nema tržišnih alarma."
+    "noAlerts": "Još nema tržišnih alarma.",
+    "alertNewMatch": "Dostupan je transferni oglas koji odgovara tvojoj sačuvanoj pretrazi."
   },
   "finance": {
     "title": "Finansijski simulator",
@@ -285,7 +286,16 @@
     "fit": "Spreman",
     "injured": "Povređen",
     "sick": "Bolestan",
-    "not_fully_fit": "Nije potpuno spreman"
+    "not_fully_fit": "Nije potpuno spreman",
+    "transfer_list": "Na transfer listi",
+    "free_agent": "Slobodan vozač",
+    "not_available": "Trenutno nije dostupan",
+    "domestique": "Pomoćni vozač",
+    "all-rounder": "Svestrani vozač",
+    "climber": "Brdaš",
+    "sprinter": "Sprinter",
+    "leader": "Lider",
+    "tt": "Hronometraš"
   },
   "integrations": {
     "training": {
