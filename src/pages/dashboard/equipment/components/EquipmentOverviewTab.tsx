@@ -628,11 +628,11 @@ export default function EquipmentOverviewTab({
                     onChange={event => setPremiumPrefillTerrain(event.target.value)}
                     className="rounded-lg border border-yellow-200 bg-white px-3 py-2 text-xs"
                   >
-                    <option value="flat">Flat</option>
-                    <option value="hilly">Hilly</option>
-                    <option value="mountain">Mountain</option>
-                    <option value="cobbles">Cobbles</option>
-                    <option value="time_trial">Time trial</option>
+                    <option value="flat">{t('premiumCenter:values.flat')}</option>
+                    <option value="hilly">{t('premiumCenter:values.hilly')}</option>
+                    <option value="mountain">{t('premiumCenter:values.mountain')}</option>
+                    <option value="cobbles">{t('premiumCenter:values.cobbles')}</option>
+                    <option value="time_trial">{t('premiumCenter:values.time_trial')}</option>
                   </select>
                   <button
                     type="button"
