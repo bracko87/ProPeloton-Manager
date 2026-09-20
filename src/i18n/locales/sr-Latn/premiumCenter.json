@@ -221,7 +221,10 @@
     "searchRiders": "Pretraži vozače",
     "allRoles": "Sve uloge",
     "allStatuses": "Svi statusi",
-    "latestWeek": "Poslednja nedelja"
+    "latestWeek": "Poslednja nedelja",
+    "editChartRiders": "Izmeni vozače",
+    "doneEditingRiders": "Gotovo",
+    "editChartRidersHint": "Zameni bilo kog prikazanog vozača drugim vozačem iz tima koji još nije na grafikonu."
   },
   "templates": {
     "title": "Šabloni i Smart Prefill",
@@ -336,9 +339,9 @@
       "defaultsRestoreFailed": "Nije moguće vratiti podrazumevani timski trening za sve vozače."
     },
     "equipment": {
-      "title": "Premium šabloni opreme",
-      "description": "Sačuvaj trenutni nacrt kao ponovljivu postavku ili koristi Smart Prefill da izabereš svoj šablon prema terenu. Ništa se ne primenjuje dok ne pritisneš postojeće Save Default Setup dugme.",
-      "manage": "Upravljaj automatizacijom",
+      "title": "Sačuvane postavke opreme",
+      "description": "Bez Premiuma i dalje imaš jednu standardnu postavku za trku. Premium dodaje više sačuvanih postavki i Smart Prefill prema terenu jednim klikom.",
+      "manage": "Pravila automatizacije",
       "none": "Još nema sačuvanih šablona opreme.",
       "namePlaceholder": "Naziv šablona",
       "saveDraft": "Sačuvaj trenutni nacrt",
@@ -348,7 +351,11 @@
       "saveFailed": "Premium šablon opreme nije mogao da se sačuva.",
       "noRule": "Nijedno uključeno Equipment Smart Prefill pravilo ne odgovara za terrain_type = {{terrain}}.",
       "templateFallback": "Šablon opreme",
-      "prefillFailed": "Equipment Smart Prefill nije mogao da se pokrene."
+      "prefillFailed": "Equipment Smart Prefill nije mogao da se pokrene.",
+      "savedCount": "{{count}} sačuvano",
+      "openTools": "Otvori postavke",
+      "hideTools": "Sakrij postavke",
+      "savedSetups": "Sačuvane postavke"
     },
     "finance": {
       "simulator": "Premium finansijski simulator",

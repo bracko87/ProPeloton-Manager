@@ -221,7 +221,10 @@
     "searchRiders": "Cerca corridori",
     "allRoles": "Tutti i ruoli",
     "allStatuses": "Tutti gli stati",
-    "latestWeek": "Ultima settimana"
+    "latestWeek": "Ultima settimana",
+    "editChartRiders": "Modifica corridori",
+    "doneEditingRiders": "Fatto",
+    "editChartRidersHint": "Sostituisci qualsiasi corridore mostrato con un altro corridore della squadra non già presente nel grafico."
   },
   "templates": {
     "title": "Modelli e Smart Prefill",
@@ -336,9 +339,9 @@
       "defaultsRestoreFailed": "Impossibile ripristinare l’allenamento predefinito della squadra per tutti i corridori."
     },
     "equipment": {
-      "title": "Modelli Premium di equipaggiamento",
-      "description": "Salva la bozza attuale come configurazione riutilizzabile oppure usa Smart Prefill per scegliere un tuo modello in base al terreno. Nulla viene applicato finché non usi il normale pulsante per salvare la configurazione predefinita.",
-      "manage": "Gestisci automazione",
+      "title": "Setup equipaggiamento salvati",
+      "description": "Senza Premium mantieni comunque un normale setup gara predefinito. Premium aggiunge più setup riutilizzabili e Smart Prefill per terreno con un clic.",
+      "manage": "Regole di automazione",
       "none": "Nessun modello di equipaggiamento salvato.",
       "namePlaceholder": "Nome modello",
       "saveDraft": "Salva bozza attuale",
@@ -348,7 +351,11 @@
       "saveFailed": "Impossibile salvare il modello Premium di equipaggiamento.",
       "noRule": "Nessuna regola Equipment Smart Prefill attiva corrisponde a terrain_type = {{terrain}}.",
       "templateFallback": "Modello equipaggiamento",
-      "prefillFailed": "Impossibile eseguire Equipment Smart Prefill."
+      "prefillFailed": "Impossibile eseguire Equipment Smart Prefill.",
+      "savedCount": "{{count}} salvati",
+      "openTools": "Apri setup",
+      "hideTools": "Nascondi setup",
+      "savedSetups": "Setup salvati"
     },
     "finance": {
       "simulator": "Simulatore finanziario Premium",

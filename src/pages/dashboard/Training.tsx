@@ -3543,7 +3543,7 @@ export default function TrainingPage(): JSX.Element {
                         : 'border-gray-200'
                     }`}
                   >
-                    <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr_auto]">
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,1fr)]">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <Link
@@ -3625,6 +3625,60 @@ export default function TrainingPage(): JSX.Element {
                                   : 'Manual only.'}
                           </div>
                         </div>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => void saveRegularTrainingPlan(rider)}
+                            disabled={regularSavingRiderId === rider.rider_id}
+                            className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                          >
+                            {regularSavingRiderId === rider.rider_id
+                              ? t('common.saving')
+                              : coachEnabled
+                                ? hasTodayOverride
+                                  ? 'Save Today Override'
+                                  : t('regular.overrideToday')
+                                : hasPersistentOverride
+                                  ? 'Save Override'
+                                  : 'Create Override'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => void clearRegularTrainingPlan(rider)}
+                            disabled={
+                              !hasClearableOverride ||
+                              regularSavingRiderId === rider.rider_id
+                            }
+                            className="rounded-md border border-red-300 bg-white px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {coachEnabled
+                              ? t('regular.clearTodayOverride')
+                              : 'Clear Override'}
+                          </button>
+
+                          {isPremium ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => void applyMatchingTrainingPrefill(rider)}
+                                disabled={premiumPrefillRiderId === rider.rider_id}
+                                className="inline-flex items-center justify-center rounded-md border border-yellow-300 bg-yellow-50 px-2.5 py-1.5 text-xs font-medium text-yellow-900 transition hover:bg-yellow-100 disabled:opacity-50"
+                              >
+                                {premiumPrefillRiderId === rider.rider_id
+                                  ? t('premiumCenter:integrations.training.checking')
+                                  : t('premiumCenter:integrations.training.smartPrefill')}
+                              </button>
+                              <Link
+                                to={`/dashboard/my-riders/${rider.rider_id}?tab=analysis#training-and-skill-development`}
+                                className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-yellow-400 hover:bg-yellow-50"
+                              >
+                                {t('regular.trainingDevelopment')}
+                              </Link>
+                            </>
+                          ) : null}
+                        </div>
                       </div>
 
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
@@ -3683,59 +3737,7 @@ export default function TrainingPage(): JSX.Element {
 
                       </div>
 
-                      <div className="flex flex-col gap-2 xl:items-end">
-                        <button
-                          type="button"
-                          onClick={() => void saveRegularTrainingPlan(rider)}
-                          disabled={regularSavingRiderId === rider.rider_id}
-                          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-                        >
-                          {regularSavingRiderId === rider.rider_id
-                            ? t('common.saving')
-                            : coachEnabled
-                              ? hasTodayOverride
-                                ? 'Save Today Override'
-                                : t('regular.overrideToday')
-                              : hasPersistentOverride
-                                ? 'Save Override'
-                                : 'Create Override'}
-                        </button>
 
-                        <button
-                          type="button"
-                          onClick={() => void clearRegularTrainingPlan(rider)}
-                          disabled={
-                            !hasClearableOverride ||
-                            regularSavingRiderId === rider.rider_id
-                          }
-                          className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {coachEnabled
-                            ? t('regular.clearTodayOverride')
-                            : 'Clear Override'}
-                        </button>
-
-                        {isPremium ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => void applyMatchingTrainingPrefill(rider)}
-                              disabled={premiumPrefillRiderId === rider.rider_id}
-                              className="inline-flex items-center justify-center rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-center text-sm font-semibold text-yellow-900 transition hover:bg-yellow-100 disabled:opacity-50"
-                            >
-                              {premiumPrefillRiderId === rider.rider_id
-                                ? t('premiumCenter:integrations.training.checking')
-                                : t('premiumCenter:integrations.training.smartPrefill')}
-                            </button>
-                            <Link
-                              to={`/dashboard/my-riders/${rider.rider_id}?tab=analysis#training-and-skill-development`}
-                              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-center text-sm font-semibold text-slate-800 transition hover:border-yellow-400 hover:bg-yellow-50"
-                            >
-                              {t('regular.trainingDevelopment')}
-                            </Link>
-                          </>
-                        ) : null}
-                      </div>
                     </div>
                   </div>
                 )

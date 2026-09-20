@@ -101,6 +101,8 @@ export default function PremiumRiderDevelopmentPanel({
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [potentialRiderIds, setPotentialRiderIds] = useState<string[]>([])
+  const [showPotentialRiderEditor, setShowPotentialRiderEditor] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -161,6 +163,37 @@ export default function PremiumRiderDevelopmentPanel({
     })
   }, [roleFilter, rows, search, statusFilter])
 
+  useEffect(() => {
+    if (rows.length === 0) {
+      setPotentialRiderIds([])
+      return
+    }
+
+    const defaultIds = rows
+      .slice()
+      .sort(
+        (a, b) =>
+          Number(b.potential ?? 0) -
+          Number(b.overall ?? 0) -
+          (Number(a.potential ?? 0) - Number(a.overall ?? 0)),
+      )
+      .slice(0, Math.min(8, rows.length))
+      .map(row => row.rider_id)
+
+    setPotentialRiderIds(current => {
+      const validCurrent = current.filter(id => rows.some(row => row.rider_id === id))
+      const next = [...validCurrent]
+
+      defaultIds.forEach(id => {
+        if (next.length < Math.min(8, rows.length) && !next.includes(id)) {
+          next.push(id)
+        }
+      })
+
+      return next.slice(0, Math.min(8, rows.length))
+    })
+  }, [rows])
+
   const metrics = useMemo(() => {
     const overall = rows.map(row => Number(row.overall ?? 0)).filter(value => value > 0)
     const potential = rows.map(row => Number(row.potential ?? 0)).filter(value => value > 0)
@@ -197,22 +230,27 @@ export default function PremiumRiderDevelopmentPanel({
 
   const potentialComparison = useMemo(
     () =>
-      rows
-        .slice()
-        .sort(
-          (a, b) =>
-            Number(b.potential ?? 0) -
-            Number(b.overall ?? 0) -
-            (Number(a.potential ?? 0) - Number(a.overall ?? 0)),
-        )
-        .slice(0, 8)
+      potentialRiderIds
+        .map(id => rows.find(row => row.rider_id === id))
+        .filter((row): row is RiderDevelopment => Boolean(row))
         .map(row => ({
+          riderId: row.rider_id,
           name: row.display_name,
           overall: Number(row.overall ?? 0),
           potential: Number(row.potential ?? 0),
         })),
-    [rows],
+    [potentialRiderIds, rows],
   )
+
+  function replacePotentialChartRider(slotIndex: number, riderId: string): void {
+    setPotentialRiderIds(current => {
+      if (current.some((id, index) => id === riderId && index !== slotIndex)) {
+        return current
+      }
+
+      return current.map((id, index) => (index === slotIndex ? riderId : id))
+    })
+  }
 
   const prospects = useMemo(
     () =>
@@ -299,8 +337,60 @@ export default function PremiumRiderDevelopmentPanel({
             </section>
 
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-base font-semibold text-slate-900">{t('development.potentialVsOverall')}</div>
-              <div className="mt-1 text-sm text-slate-500">{t('development.potentialVsOverallHint')}</div>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-base font-semibold text-slate-900">{t('development.potentialVsOverall')}</div>
+                  <div className="mt-1 text-sm text-slate-500">{t('development.potentialVsOverallHint')}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPotentialRiderEditor(current => !current)}
+                  className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  {showPotentialRiderEditor
+                    ? t('development.doneEditingRiders')
+                    : t('development.editChartRiders')}
+                </button>
+              </div>
+
+              {showPotentialRiderEditor ? (
+                <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div className="mb-2 text-xs text-slate-500">
+                    {t('development.editChartRidersHint')}
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {potentialRiderIds.map((riderId, slotIndex) => (
+                      <label key={`${slotIndex}:${riderId}`} className="flex items-center gap-2">
+                        <span className="w-5 shrink-0 text-[11px] text-slate-400">
+                          {slotIndex + 1}
+                        </span>
+                        <select
+                          value={riderId}
+                          onChange={event =>
+                            replacePotentialChartRider(slotIndex, event.target.value)
+                          }
+                          className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+                        >
+                          {rows
+                            .slice()
+                            .sort((a, b) => a.display_name.localeCompare(b.display_name))
+                            .filter(
+                              rider =>
+                                rider.rider_id === riderId ||
+                                !potentialRiderIds.includes(rider.rider_id),
+                            )
+                            .map(rider => (
+                              <option key={rider.rider_id} value={rider.rider_id}>
+                                {rider.display_name}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               <div className="mt-4 h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={potentialComparison} margin={{ left: 4, right: 10 }}>
