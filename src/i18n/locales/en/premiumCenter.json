@@ -160,7 +160,8 @@
     "savedSearches": "Saved searches",
     "savedSearchesHint": "Premium searches with optional market alerts",
     "latestAlerts": "Latest market alerts",
-    "noAlerts": "No market alerts yet."
+    "noAlerts": "No market alerts yet.",
+    "alertNewMatch": "A matching transfer listing is available."
   },
   "finance": {
     "title": "Financial Simulator",
@@ -285,7 +286,16 @@
     "fit": "Fit",
     "injured": "Injured",
     "sick": "Sick",
-    "not_fully_fit": "Not fully fit"
+    "not_fully_fit": "Not fully fit",
+    "transfer_list": "Transfer listed",
+    "free_agent": "Free Agent",
+    "not_available": "Not currently available",
+    "domestique": "Domestique",
+    "all-rounder": "All-rounder",
+    "climber": "Climber",
+    "sprinter": "Sprinter",
+    "leader": "Leader",
+    "tt": "Time trialist"
   },
   "integrations": {
     "training": {
