@@ -8230,25 +8230,33 @@ export default function OverviewPage() {
             <PremiumFeatureGate
               isPremium={isPremium}
               loading={premiumStatusLoading}
-              title="Manager Briefing"
-              description="Premium collects the most important club-management signals into one compact briefing so you spend less time checking every page manually."
+              title="Premium Command Summary"
+              description="Premium turns existing club data into a deterministic management workspace with planning, simulations and saved workflows. Staff Briefing Centre remains the separate coin-based staff-advisor system."
             >
               <Card className="p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-semibold text-slate-900">Manager Briefing</h3>
+                      <h3 className="text-base font-semibold text-slate-900">Premium Command Summary</h3>
                       <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
                         Premium
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-slate-500">
-                      A quick management summary built from your live club alerts and current squad/finance state.
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+                      A deterministic management snapshot built from information your club already owns. It does not create staff-advisor reports and does not replace the coin-based Staff Briefing Centre.
                     </p>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                    {attentionItems.length} attention item{attentionItems.length === 1 ? "" : "s"}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                      {attentionItems.length} attention item{attentionItems.length === 1 ? "" : "s"}
+                    </span>
+                    <a
+                      href="#/dashboard/premium-center?tab=summary"
+                      className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white hover:bg-black"
+                    >
+                      Open Command Center
+                    </a>
+                  </div>
                 </div>
 
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -8286,6 +8294,27 @@ export default function OverviewPage() {
                       No urgent management items are currently waiting for attention.
                     </div>
                   )}
+                </div>
+
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <a
+                    href="#/dashboard/premium-center?tab=strategy"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
+                  >
+                    Race Strategy Lab
+                  </a>
+                  <a
+                    href="#/dashboard/premium-center?tab=season"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
+                  >
+                    Season Planner
+                  </a>
+                  <a
+                    href="#/dashboard/premium-center?tab=finance"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
+                  >
+                    Financial Simulator
+                  </a>
                 </div>
               </Card>
             </PremiumFeatureGate>
