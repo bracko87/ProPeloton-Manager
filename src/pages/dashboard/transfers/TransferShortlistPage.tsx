@@ -7,6 +7,7 @@ import RiderShortlistButton from './RiderShortlistButton'
 type ShortlistAccess = {
   is_premium: boolean
   free_additions_per_day: number
+  premium_unlimited_additions?: boolean
   additions_used_today: number
   free_additions_left_today: number
   next_addition_coin_cost: number
@@ -143,35 +144,6 @@ export default function TransferShortlistPage({
     })
   }, [rows, search, availabilityFilter])
 
-  if (!access?.is_premium && !loading) {
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="max-w-2xl">
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-            {t('common.premium')}
-          </span>
-          <h2 className="mt-3 text-xl font-semibold text-slate-900">
-            {t('shortlist.title')}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            {t('shortlist.premiumDescription')}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.location.hash = '#/dashboard/pro'
-              }
-            }}
-            className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-          >
-            {t('common.unlockPremium')}
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -190,14 +162,31 @@ export default function TransferShortlistPage({
             <strong>{access?.active_shortlist_count ?? rows.length}</strong>/
             {access?.active_shortlist_limit ?? 50}
           </div>
-          <div className="mt-1">
-            {t('shortlist.freeLeft')}{' '}
-            <strong>{access?.free_additions_left_today ?? 0}</strong>/2
-          </div>
-          <div className="mt-1">
-            {t('shortlist.later')}{' '}
-            <strong>{t('shortlist.oneCoinEach')}</strong>
-          </div>
+          {access?.is_premium ? (
+            <>
+              <div className="mt-1 font-semibold text-emerald-700">
+                {t('shortlist.premiumUnlimited', {
+                  defaultValue: 'Premium: shortlist additions are unlimited and coin-free.',
+                })}
+              </div>
+              <div className="mt-1 text-slate-500">
+                {t('shortlist.freeFairPlay', {
+                  defaultValue: 'Free managers can also use the shortlist: 2 additions per day, then 1 coin each.',
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mt-1">
+                {t('shortlist.freeLeft')}{' '}
+                <strong>{access?.free_additions_left_today ?? 0}</strong>/2
+              </div>
+              <div className="mt-1">
+                {t('shortlist.later')}{' '}
+                <strong>{t('shortlist.oneCoinEach')}</strong>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
