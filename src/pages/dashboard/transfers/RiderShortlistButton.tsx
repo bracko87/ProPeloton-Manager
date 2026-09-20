@@ -6,6 +6,7 @@ type ShortlistStatus = {
   is_premium: boolean
   is_shortlisted: boolean
   free_additions_per_day: number
+  premium_unlimited_additions?: boolean
   additions_used_today: number
   free_additions_left_today: number
   next_addition_coin_cost: number
@@ -91,13 +92,6 @@ export default function RiderShortlistButton({
   async function toggleShortlist(): Promise<void> {
     if (actionLoading) return
 
-    if (!status?.is_premium) {
-      if (typeof window !== 'undefined') {
-        window.location.hash = '#/dashboard/pro'
-      }
-      return
-    }
-
     setActionLoading(true)
     setError(null)
 
@@ -153,18 +147,17 @@ export default function RiderShortlistButton({
     }
   }
 
-  const nextCost =
-    Number(status?.free_additions_left_today ?? 0) > 0
+  const nextCost = status?.is_premium
+    ? 0
+    : Number(status?.free_additions_left_today ?? 0) > 0
       ? 0
       : Number(status?.next_addition_coin_cost ?? 1)
 
-  const label = !status?.is_premium
-    ? t('shortlist.lockedLabel')
-    : status.is_shortlisted
-      ? t('shortlist.shortlistedLabel')
-      : nextCost > 0
-        ? t('shortlist.shortlistCoin', { coins: nextCost })
-        : t('shortlist.shortlistLabel')
+  const label = status?.is_shortlisted
+    ? t('shortlist.shortlistedLabel')
+    : nextCost > 0
+      ? t('shortlist.shortlistCoin', { coins: nextCost })
+      : t('shortlist.shortlistLabel')
 
   return (
     <div className={compact ? 'relative inline-flex' : 'relative flex'}>
@@ -176,14 +169,16 @@ export default function RiderShortlistButton({
         }}
         disabled={loading || actionLoading}
         title={
-          !status?.is_premium
-            ? t('shortlist.availablePremium')
-            : status.is_shortlisted
-              ? t('shortlist.remove')
+          status?.is_shortlisted
+            ? t('shortlist.remove')
+            : status?.is_premium
+              ? t('shortlist.premiumDescription', {
+                  defaultValue: 'Premium includes unlimited shortlist additions without coin charges.',
+                })
               : nextCost > 0
                 ? t('shortlist.coinCostHelp', { coins: nextCost })
                 : t('shortlist.freeHelp', {
-                    count: status.free_additions_left_today,
+                    count: status?.free_additions_left_today ?? 0,
                   })
         }
         className={[
