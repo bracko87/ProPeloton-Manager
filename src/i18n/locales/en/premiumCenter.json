@@ -1,0 +1,19 @@
+{
+  "title": "Premium Command Center",
+  "subtitle": "Advanced planning, simulation, organisation and automation tools built from information your club already owns.",
+  "premiumOnly": "Premium management workspace",
+  "premiumOnlyBody": "Free managers keep the complete game and manual control. Premium adds deeper analysis, simulations, saved workflows and smart prefills without improving race-engine strength.",
+  "upgrade": "Unlock Premium",
+  "scopeTitle": "Separate from Staff Briefing Centre",
+  "scopeBody": "Staff Briefing Centre is the coin-based, staff-role advisory system: selected employees proactively interpret training, health, race programme, equipment or scouting. Premium Command Center does not replace those advisors. It provides deterministic dashboards, simulations, scenario tools, templates and user-controlled automation that do not depend on staff skills and do not send advisor reports.",
+  "tabs": {
+    "summary": "Command Summary",
+    "strategy": "Race Strategy Lab",
+    "season": "Season Planner",
+    "transfers": "Transfer Command",
+    "finance": "Financial Simulator",
+    "sponsors": "Sponsor Intelligence",
+    "development": "Rider Development",
+    "templates": "Templates & Automation"
+  }
+}
