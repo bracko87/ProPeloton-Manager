@@ -27,9 +27,9 @@
     "skillsView": "Fähigkeiten",
     "formDevelopment": "Form & Entwicklung",
     "checkingPremium": "Premium-Zugang wird geprüft…",
-    "advancedPremium": "Erweiterte Kaderansichten erfordern Premium.",
+    "advancedPremium": "Finanz- und Skill-Ansichten benötigen Premium. Allgemein, Form und grundlegende Gesundheitsinfos sind Free.",
     "viewPremium": "Premium ansehen",
-    "onlyPremium": "Nur für Premium-Benutzer",
+    "onlyPremium": "Finanz- und Skill-Ansichten sind Premium",
     "premiumOnly": "Nur Premium"
   },
   "columns": {
