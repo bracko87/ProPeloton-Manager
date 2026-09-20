@@ -4201,12 +4201,16 @@ export default function StaffPage() {
   const [courseError, setCourseError] = useState<string | null>(null)
 
   async function reloadStaffPage(targetClubId: string, hasPremiumAccess: boolean) {
+    const recentCourseResultsPromise = supabase.rpc(
+      'get_club_recent_staff_course_results',
+      {
+        p_club_id: targetClubId,
+        p_limit: 6,
+      },
+    )
+
     const premiumAnalyticsPromise = hasPremiumAccess
       ? Promise.all([
-          supabase.rpc('get_club_recent_staff_course_results', {
-            p_club_id: targetClubId,
-            p_limit: 6,
-          }),
           supabase.rpc('get_head_coach_effects', {
             p_club_id: targetClubId,
           }),
@@ -4214,7 +4218,7 @@ export default function StaffPage() {
             p_club_id: targetClubId,
           }),
         ])
-      : Promise.resolve([null, null, null] as const)
+      : Promise.resolve([null, null] as const)
 
     const [
       staffResult,
@@ -4222,6 +4226,7 @@ export default function StaffPage() {
       gameDateResult,
       activeCoursesResult,
       roleLimitsResult,
+      recentCourseResultsResult,
       premiumAnalyticsResults,
     ] = await Promise.all([
       supabase.rpc('get_club_staff_with_current_assignments', {
@@ -4247,11 +4252,11 @@ export default function StaffPage() {
       supabase.rpc('get_staff_role_capacity_overview_for_club', {
         p_club_id: targetClubId,
       }),
+      recentCourseResultsPromise,
       premiumAnalyticsPromise,
     ])
 
     const [
-      recentCourseResultsResult,
       headCoachEffectsResult,
       medicalEffectsResult,
     ] = premiumAnalyticsResults
@@ -4272,7 +4277,7 @@ export default function StaffPage() {
       ? (activeCoursesResult.data as ActiveStaffCourseRow[])
       : []
     const nextRecentCourseResults =
-      hasPremiumAccess && Array.isArray(recentCourseResultsResult?.data)
+      Array.isArray(recentCourseResultsResult?.data)
         ? (recentCourseResultsResult.data as RecentStaffCourseResultRow[])
         : []
     const nextRoleLimits = Array.isArray(roleLimitsResult.data)
@@ -4955,57 +4960,48 @@ export default function StaffPage() {
         </div>
 
         <div className="mt-8">
-          {isPremiumLoading ? (
-            <PremiumFeatureLoading />
-          ) : isPremium ? (
-            recentCourseResultsToShow.length > 0 ? (
-              <>
-                <SectionTitle
-                  title={t('analysis.recentCourseResults')}
-                  subtitle={t('analysis.recentCourseResultsSubtitle')}
-                />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {recentCourseResultsToShow.map((result) => {
-                    const gains = formatCourseGains(result)
+          {recentCourseResultsToShow.length > 0 ? (
+            <>
+              <SectionTitle
+                title={t('analysis.recentCourseResults')}
+                subtitle={t('analysis.recentCourseResultsSubtitle')}
+              />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {recentCourseResultsToShow.map((result) => {
+                  const gains = formatCourseGains(result)
 
-                    return (
-                      <div
-                        key={result.course_id}
-                        className="rounded-xl border border-green-100 bg-green-50 p-4"
-                      >
-                        <div className="text-sm font-semibold text-green-900">
-                          {result.course_title}
-                        </div>
-                        <div className="mt-1 text-sm text-green-800">{result.staff_name}</div>
-                        <div className="mt-1 text-xs text-green-700">
-                          {t('common.focus', { value: result.focus_label })}
-                        </div>
-                        <div className="mt-1 text-xs text-green-700">
-                          {t('common.completed', { date: formatGameDateShort(result.completed_game_date) })}
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {gains.map((gain) => (
-                            <span
-                              key={gain}
-                              className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-green-800"
-                            >
-                              {gain}
-                            </span>
-                          ))}
-                        </div>
+                  return (
+                    <div
+                      key={result.course_id}
+                      className="rounded-xl border border-green-100 bg-green-50 p-4"
+                    >
+                      <div className="text-sm font-semibold text-green-900">
+                        {result.course_title}
                       </div>
-                    )
-                  })}
-                </div>
-              </>
-            ) : null
-          ) : (
-            <PremiumFeatureLock
-              title={t('analysis.recentCourseResults')}
-              description={t('analysis.recentCourseResultsSubtitle')}
-            />
-          )}
+                      <div className="mt-1 text-sm text-green-800">{result.staff_name}</div>
+                      <div className="mt-1 text-xs text-green-700">
+                        {t('common.focus', { value: result.focus_label })}
+                      </div>
+                      <div className="mt-1 text-xs text-green-700">
+                        {t('common.completed', { date: formatGameDateShort(result.completed_game_date) })}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {gains.map((gain) => (
+                          <span
+                            key={gain}
+                            className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-green-800"
+                          >
+                            {gain}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          ) : null}
         </div>
       </div>
 
