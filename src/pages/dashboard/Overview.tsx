@@ -8230,40 +8230,81 @@ export default function OverviewPage() {
             <PremiumFeatureGate
               isPremium={isPremium}
               loading={premiumStatusLoading}
-              title={t("squad.title")}
-              description="See squad readiness, fitness, morale, health, availability, and contract pressure in one place."
+              title="Manager Briefing"
+              description="Premium collects the most important club-management signals into one compact briefing so you spend less time checking every page manually."
             >
-            <Card className="p-5">
-              <SectionTitle
-                title={t("squad.title")}
-                subtitle={t("squad.subtitle")}
-              />
+              <Card className="p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-semibold text-slate-900">Manager Briefing</h3>
+                      <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                        Premium
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      A quick management summary built from your live club alerts and current squad/finance state.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                    {attentionItems.length} attention item{attentionItems.length === 1 ? "" : "s"}
+                  </span>
+                </div>
 
-              <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div className="space-y-5">
-                  <ProgressMetric
-                    label={t("squad.fitness")}
-                    value={visibleSquadPulse.fitness}
-                    colorClass="bg-blue-500"
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  <SmallStat
+                    label={t("squad.notFullyFit")}
+                    value={visibleSquadPulse.notFullyFit}
+                    valueClassName={visibleSquadPulse.notFullyFit > 0 ? "text-yellow-600" : "text-emerald-600"}
                   />
-                  <ProgressMetric
-                    label={t("squad.morale")}
-                    value={visibleSquadPulse.morale}
-                    colorClass="bg-emerald-500"
+                  <SmallStat
+                    label={t("squad.expiringContracts")}
+                    value={visibleSquadPulse.expiringContracts}
+                    valueClassName={visibleSquadPulse.expiringContracts > 0 ? "text-yellow-600" : "text-emerald-600"}
                   />
-                  <ProgressMetric
-                    label={t("squad.readiness")}
-                    value={visibleSquadPulse.readiness}
-                    colorClass="bg-violet-500"
+                  <SmallStat
+                    label={t("finance.weeklyNet")}
+                    value={formatSignedCurrency(data.finance.weeklyNet)}
+                    valueClassName={data.finance.weeklyNet >= 0 ? "text-emerald-600" : "text-red-600"}
                   />
                 </div>
 
+                <div className="mt-4 space-y-2">
+                  {attentionItems.length > 0 ? (
+                    attentionItems.slice(0, 3).map((item) => (
+                      <div key={item.id} className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <span className="text-sm text-slate-700">{item.label}</span>
+                        {item.href ? (
+                          <a href={item.href} className="shrink-0 text-xs font-semibold text-slate-900 hover:text-yellow-600">
+                            Open
+                          </a>
+                        ) : null}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
+                      No urgent management items are currently waiting for attention.
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </PremiumFeatureGate>
+
+            <Card className="p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <SectionTitle
+                  title={t("squad.title")}
+                  subtitle={t("squad.subtitle")}
+                />
+                {!premiumStatusLoading && !isPremium ? (
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                    Free core view
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <SmallStat
-                    label={t("squad.form")}
-                    value={visibleSquadPulse.form}
-                    valueClassName="text-emerald-600"
-                  />
                   <SmallStat
                     label={t("squad.availableRiders")}
                     value={visibleSquadPulse.availableRiders}
@@ -8271,37 +8312,65 @@ export default function OverviewPage() {
                   <SmallStat
                     label={t("squad.injured")}
                     value={visibleSquadPulse.injured}
-                    valueClassName={
-                      visibleSquadPulse.injured > 0 ? "text-red-600" : ""
-                    }
+                    valueClassName={visibleSquadPulse.injured > 0 ? "text-red-600" : ""}
                   />
                   <SmallStat
                     label={t("squad.sick")}
                     value={visibleSquadPulse.sick}
-                    valueClassName={
-                      visibleSquadPulse.sick > 0 ? "text-red-600" : ""
-                    }
+                    valueClassName={visibleSquadPulse.sick > 0 ? "text-red-600" : ""}
                   />
                   <SmallStat
                     label={t("squad.notFullyFit")}
                     value={visibleSquadPulse.notFullyFit}
-                    valueClassName={
-                      visibleSquadPulse.notFullyFit > 0 ? "text-yellow-600" : ""
-                    }
-                  />
-                  <SmallStat
-                    label={t("squad.expiringContracts")}
-                    value={visibleSquadPulse.expiringContracts}
-                    valueClassName={
-                      visibleSquadPulse.expiringContracts > 0
-                        ? "text-yellow-600"
-                        : ""
-                    }
+                    valueClassName={visibleSquadPulse.notFullyFit > 0 ? "text-yellow-600" : ""}
                   />
                 </div>
+
+                {premiumStatusLoading ? (
+                  <div className="min-h-[120px] animate-pulse rounded-xl bg-slate-50" />
+                ) : isPremium ? (
+                  <div className="space-y-4">
+                    <ProgressMetric
+                      label={t("squad.fitness")}
+                      value={visibleSquadPulse.fitness}
+                      colorClass="bg-blue-500"
+                    />
+                    <ProgressMetric
+                      label={t("squad.morale")}
+                      value={visibleSquadPulse.morale}
+                      colorClass="bg-emerald-500"
+                    />
+                    <ProgressMetric
+                      label={t("squad.readiness")}
+                      value={visibleSquadPulse.readiness}
+                      colorClass="bg-violet-500"
+                    />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <SmallStat
+                        label={t("squad.form")}
+                        value={visibleSquadPulse.form}
+                        valueClassName="text-emerald-600"
+                      />
+                      <SmallStat
+                        label={t("squad.expiringContracts")}
+                        value={visibleSquadPulse.expiringContracts}
+                        valueClassName={visibleSquadPulse.expiringContracts > 0 ? "text-yellow-600" : ""}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex min-h-[120px] flex-col justify-center rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-4">
+                    <div className="text-sm font-semibold text-amber-900">Premium squad intelligence</div>
+                    <div className="mt-1 text-sm text-amber-800">
+                      Fitness, morale, readiness, form and contract-pressure summaries are grouped here for Premium managers.
+                    </div>
+                    <button type="button" onClick={openPremiumPage} className="mt-3 w-fit rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-900">
+                      Unlock Premium tools
+                    </button>
+                  </div>
+                )}
               </div>
             </Card>
-            </PremiumFeatureGate>
 
             <UpcomingRaceScheduleCard schedule={raceWorld.upcomingSchedule} />
 
@@ -8343,66 +8412,65 @@ export default function OverviewPage() {
               </Card>
             </div>
 
-            <PremiumFeatureGate
-              isPremium={isPremium}
-              loading={premiumStatusLoading}
-              title={t("finance.healthTitle")}
-              description="Unlock cash position, recurring cost pressure, weekly net performance, sponsor income, and forecasted spending insights."
-            >
-              <Card className="p-5">
+            <Card className="p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <SectionTitle
                   title={t("finance.healthTitle")}
                   subtitle={t("finance.healthSubtitle")}
                 />
+                {!premiumStatusLoading && !isPremium ? (
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                    Free core view
+                  </span>
+                ) : null}
+              </div>
 
-                <div className="mt-5 space-y-3">
-                  <SmallStat
-                    label={t("finance.balance")}
-                    value={formatCurrency(data.finance.balance)}
-                  />
-                  <SmallStat
-                    label={t("finance.weeklyNet")}
-                    value={formatSignedCurrency(data.finance.weeklyNet)}
-                    valueClassName={
-                      data.finance.weeklyNet >= 0
-                        ? "text-emerald-600"
-                        : "text-red-600"
-                    }
-                  />
-                  <SmallStat
-                    label={t("finance.sponsorIncome")}
-                    value={formatCurrency(data.finance.sponsorIncome)}
-                  />
-                  <SmallStat
-                    label={t("finance.recurringPolicyCost")}
-                    value={formatCurrency(data.finance.recurringPolicyCost)}
-                  />
-                  <SmallStat
-                    label={t("finance.nextTripForecast")}
-                    value={formatCurrency(data.finance.nextTripForecast)}
-                  />
-                </div>
+              <div className="mt-5 space-y-3">
+                <SmallStat
+                  label={t("finance.balance")}
+                  value={formatCurrency(data.finance.balance)}
+                />
+                <SmallStat
+                  label={t("finance.weeklyNet")}
+                  value={formatSignedCurrency(data.finance.weeklyNet)}
+                  valueClassName={data.finance.weeklyNet >= 0 ? "text-emerald-600" : "text-red-600"}
+                />
 
-                <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-xs uppercase tracking-wide text-slate-500">
-                    {t("finance.latestMajorTransaction")}
+                {premiumStatusLoading ? (
+                  <div className="h-20 animate-pulse rounded-xl bg-slate-50" />
+                ) : isPremium ? (
+                  <>
+                    <SmallStat
+                      label={t("finance.sponsorIncome")}
+                      value={formatCurrency(data.finance.sponsorIncome)}
+                    />
+                    <SmallStat
+                      label={t("finance.recurringPolicyCost")}
+                      value={formatCurrency(data.finance.recurringPolicyCost)}
+                    />
+                    <SmallStat
+                      label={t("finance.nextTripForecast")}
+                      value={formatCurrency(data.finance.nextTripForecast)}
+                    />
+                    <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="text-xs uppercase tracking-wide text-slate-500">
+                        {t("finance.latestMajorTransaction")}
+                      </div>
+                      <div className="mt-2 text-sm font-semibold text-slate-900">
+                        {data.finance.latestTransactionLabel}
+                      </div>
+                      <div className={cn("mt-1 text-sm font-bold", data.finance.latestTransactionAmount >= 0 ? "text-emerald-600" : "text-red-600")}>
+                        {formatSignedCurrency(data.finance.latestTransactionAmount)}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Premium adds sponsor-income detail, recurring policy pressure, trip forecasts, transaction intelligence and full cash-flow charts.
                   </div>
-                  <div className="mt-2 text-sm font-semibold text-slate-900">
-                    {data.finance.latestTransactionLabel}
-                  </div>
-                  <div
-                    className={cn(
-                      "mt-1 text-sm font-bold",
-                      data.finance.latestTransactionAmount >= 0
-                        ? "text-emerald-600"
-                        : "text-red-600",
-                    )}
-                  >
-                    {formatSignedCurrency(data.finance.latestTransactionAmount)}
-                  </div>
-                </div>
-              </Card>
-            </PremiumFeatureGate>
+                )}
+              </div>
+            </Card>
 
             <PremiumFeatureGate
               isPremium={isPremium}
@@ -8436,14 +8504,33 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <PremiumFeatureGate
-          isPremium={isPremium}
-          loading={premiumStatusLoading}
-          title={t("seasonSnapshot.title")}
-          description="Unlock current-season race volume, international points, wins, podiums, Top 10 results, jerseys, and best general-classification performance."
-        >
+        {premiumStatusLoading ? (
+          <div className="h-32 animate-pulse rounded-2xl border border-slate-200 bg-white shadow-sm" />
+        ) : isPremium ? (
           <SeasonSnapshotCard stats={seasonSnapshot} />
-        </PremiumFeatureGate>
+        ) : (
+          <Card className="p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">{t("seasonSnapshot.title")}</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Core season results are Free. Premium adds race volume, international points, jerseys and deeper season context.
+                </p>
+              </div>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                Free core view
+              </span>
+            </div>
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <SmallStat label={t("seasonSnapshot.wins")} value={seasonSnapshot.wins} />
+              <SmallStat label={t("seasonSnapshot.podiums")} value={seasonSnapshot.podiums} />
+              <SmallStat label={t("seasonSnapshot.top10")} value={seasonSnapshot.top10s} />
+            </div>
+            <button type="button" onClick={openPremiumPage} className="mt-4 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+              See Premium season analytics
+            </button>
+          </Card>
+        )}
       </div>
 
       {!tutorialLoading && tutorialMode === "invite" ? (
