@@ -295,6 +295,7 @@
     "notAvailable": "Replay is not available yet.",
     "temporaryUnavailable": "Replay is temporarily unavailable.",
     "availableForRace": "Replay is available for {{race}}.",
+    "premiumIncluded": "Premium includes access to this world-race replay.",
     "unlockDescription": "Replay is available. Teams that did not participate can unlock it for {{coins}} coins.",
     "availableAt": "Replay available at the scheduled stage time: {{date}}",
     "unlocking": "Unlocking replay…",
