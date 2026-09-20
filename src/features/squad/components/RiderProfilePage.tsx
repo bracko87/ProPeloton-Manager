@@ -5842,18 +5842,18 @@ export default function RiderProfilePage({
               ) : (
                 <>
                   <SectionCard
-                    title="Premium Rider Development Lab"
-                    subtitle="See this rider inside the club-wide development view without replacing the Head Coach's coin-based advisory reports."
+                    title={t('premiumCenter:integrations.riderProfile.title')}
+                    subtitle={t('premiumCenter:integrations.riderProfile.subtitle')}
                   >
                     <div className="flex flex-col gap-3 rounded-xl border border-yellow-200 bg-yellow-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-sm leading-6 text-slate-700">
-                        The Development Lab compares recorded progression across your whole squad. It is historical analysis, not a staff-advisor recommendation.
+                        {t('premiumCenter:integrations.riderProfile.body')}
                       </div>
                       <Link
                         to="/dashboard/premium-center?tab=development"
                         className="shrink-0 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-black"
                       >
-                        Open Development Lab
+                        {t('premiumCenter:integrations.riderProfile.open')}
                       </Link>
                     </div>
                   </SectionCard>
