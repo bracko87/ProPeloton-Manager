@@ -160,7 +160,8 @@
     "savedSearches": "Recherches enregistrées",
     "savedSearchesHint": "Recherches Premium avec alertes de marché facultatives",
     "latestAlerts": "Dernières alertes de marché",
-    "noAlerts": "Aucune alerte de marché pour le moment."
+    "noAlerts": "Aucune alerte de marché pour le moment.",
+    "alertNewMatch": "Une annonce de transfert correspondant à votre recherche enregistrée est disponible."
   },
   "finance": {
     "title": "Simulateur financier",
@@ -285,7 +286,16 @@
     "fit": "En forme",
     "injured": "Blessé",
     "sick": "Malade",
-    "not_fully_fit": "Pas totalement en forme"
+    "not_fully_fit": "Pas totalement en forme",
+    "transfer_list": "Sur la liste des transferts",
+    "free_agent": "Agent libre",
+    "not_available": "Indisponible actuellement",
+    "domestique": "Équipier",
+    "all-rounder": "Polyvalent",
+    "climber": "Grimpeur",
+    "sprinter": "Sprinteur",
+    "leader": "Leader",
+    "tt": "Rouleur"
   },
   "integrations": {
     "training": {
