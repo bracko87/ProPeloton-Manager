@@ -1676,7 +1676,7 @@ export default function TrainingPage(): JSX.Element {
 
     setIsTeamDefaultsExpanded(true)
     setPremiumPrefillMessage(
-      `Premium template “${template.name}” prefilled the team-default drafts. Review and save each team when ready.`
+      t('premiumCenter:integrations.training.appliedTeam', { name: template.name })
     )
   }
 
@@ -1707,14 +1707,14 @@ export default function TrainingPage(): JSX.Element {
 
       if (match.matched !== true) {
         setPremiumPrefillMessage(
-          `No enabled Premium Smart Prefill rule matches ${getFullRiderName(rider)}.`
+          t('premiumCenter:integrations.training.noRule', { rider: getFullRiderName(rider) })
         )
         return
       }
 
       const template: PremiumTrainingTemplate = {
         id: String(match.template_id ?? ''),
-        name: String(match.template_name ?? 'Training template'),
+        name: String(match.template_name ?? t('premiumCenter:integrations.training.templateFallback')),
         payload_json: (match.payload_json ?? {}) as PremiumTrainingTemplate['payload_json']
       }
       const values = getTrainingTemplateValues(template)
@@ -1726,13 +1726,13 @@ export default function TrainingPage(): JSX.Element {
       })
 
       setPremiumPrefillMessage(
-        `Smart Prefill matched “${template.name}” for ${getFullRiderName(rider)}. The draft was updated only; save it if you want to apply it.`
+        t('premiumCenter:integrations.training.matched', { name: template.name, rider: getFullRiderName(rider) })
       )
     } catch (prefillError) {
       setPremiumPrefillMessage(
         prefillError instanceof Error
           ? prefillError.message
-          : 'Premium Smart Prefill could not be checked.'
+          : t('premiumCenter:integrations.training.failed')
       )
     } finally {
       setPremiumPrefillRiderId(null)
@@ -3202,20 +3202,20 @@ export default function TrainingPage(): JSX.Element {
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold text-gray-900">Premium Training Templates</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{t('premiumCenter:integrations.training.title')}</h3>
                     <span className="rounded-full border border-yellow-300 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
                       Premium
                     </span>
                   </div>
                   <p className="mt-1 text-sm text-gray-600">
-                    Prefill your saved training choices without changing anything automatically. Review the draft and use the normal Save buttons.
+                    {t('premiumCenter:integrations.training.description')}
                   </p>
                 </div>
                 <Link
                   to="/dashboard/premium-center?tab=templates"
                   className="shrink-0 rounded-lg border border-yellow-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-yellow-50"
                 >
-                  Manage templates
+                  {t('premiumCenter:integrations.training.manage')}
                 </Link>
               </div>
 
@@ -3240,7 +3240,7 @@ export default function TrainingPage(): JSX.Element {
                 </div>
               ) : (
                 <div className="mt-3 text-sm text-gray-600">
-                  No training templates saved yet. Create one in Premium Command Center.
+                  {t('premiumCenter:integrations.training.none')}
                 </div>
               )}
 
@@ -3638,8 +3638,8 @@ export default function TrainingPage(): JSX.Element {
                               className="inline-flex items-center justify-center rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-center text-sm font-semibold text-yellow-900 transition hover:bg-yellow-100 disabled:opacity-50"
                             >
                               {premiumPrefillRiderId === rider.rider_id
-                                ? 'Checking Smart Prefill…'
-                                : 'Smart Prefill'}
+                                ? t('premiumCenter:integrations.training.checking')
+                                : t('premiumCenter:integrations.training.smartPrefill')}
                             </button>
                             <Link
                               to={`/dashboard/my-riders/${rider.rider_id}?tab=analysis#training-and-skill-development`}
