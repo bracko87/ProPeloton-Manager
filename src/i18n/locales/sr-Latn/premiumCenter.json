@@ -335,19 +335,20 @@
       "templateFallback": "Trening šablon"
     },
     "equipment": {
-      "title": "Premium šabloni opreme",
-      "description": "Sačuvaj trenutni nacrt kao ponovljivu postavku ili koristi Smart Prefill da izabereš svoj šablon prema terenu. Ništa se ne primenjuje dok ne pritisneš postojeće Save Default Setup dugme.",
-      "manage": "Upravljaj automatizacijom",
-      "none": "Još nema sačuvanih šablona opreme.",
-      "namePlaceholder": "Naziv šablona",
-      "saveDraft": "Sačuvaj trenutni nacrt",
-      "smartPrefill": "Smart Prefill",
-      "applied": "Premium šablon „{{name}}“ je popunio nacrt podrazumevane opreme. Pregledaj ga i pritisni Save Default Setup za primenu.",
-      "saved": "Premium šablon opreme je sačuvan.",
-      "saveFailed": "Premium šablon opreme nije mogao da se sačuva.",
-      "noRule": "Nijedno uključeno Equipment Smart Prefill pravilo ne odgovara za terrain_type = {{terrain}}.",
-      "templateFallback": "Šablon opreme",
-      "prefillFailed": "Equipment Smart Prefill nije mogao da se pokrene."
+      "title": "Premium automatizacija postavki",
+      "description": "Sačuvaj trenutni nacrt podrazumevane postavke za trku kao profil automatizacije, pa ga ponovo koristi ručno ili preko pravila za teren. Predispuna menja samo nacrt i nikada automatski ne čuva opremu.",
+      "manage": "Upravljaj pravilima",
+      "none": "Još nema sačuvanih Premium profila automatizacije.",
+      "namePlaceholder": "Naziv profila automatizacije",
+      "saveDraft": "Sačuvaj profil automatizacije",
+      "smartPrefill": "Predispuni prema terenu",
+      "applied": "Profil automatizacije „{{name}}“ je popunio nacrt podrazumevane postavke za trku. Pregledaj ga i pritisni Save Default Setup za primenu.",
+      "saved": "Premium profil automatizacije opreme je sačuvan.",
+      "saveFailed": "Premium profil automatizacije opreme nije mogao da se sačuva.",
+      "noRule": "Nijedno uključeno pravilo predispunjavanja opreme ne odgovara za terrain_type = {{terrain}}.",
+      "templateFallback": "Profil automatizacije opreme",
+      "prefillFailed": "Predispunjavanje opreme prema terenu nije moglo da se pokrene.",
+      "difference": "Predlošci postavki ispod su tvoje standardne višekratne postavke za trku. Premium automatizacija je odvojena i dodaje pravila predispunjavanja prema terenu."
     },
     "finance": {
       "simulator": "Premium finansijski simulator",
