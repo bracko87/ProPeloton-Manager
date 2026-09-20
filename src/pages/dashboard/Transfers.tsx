@@ -3210,14 +3210,6 @@ export default function TransfersPage() {
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard/premium-center?tab=transfers')}
-            className="rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-semibold text-yellow-900 hover:bg-yellow-100"
-          >
-            {t('premiumCenter:integrations.transfers.command')}
-          </button>
-
           <div className="inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
           <SegmentedTabButton
             active={activeTab === 'riders'}
