@@ -261,7 +261,8 @@ function DevelopingSquadListViewPicker({
           className="absolute right-0 z-30 mt-2 w-[260px] overflow-visible rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
         >
           {SQUAD_LIST_VIEW_OPTIONS.map((option) => {
-            const isLocked = !isPremium && option.value !== 'general'
+            const isLocked =
+              !isPremium && option.value !== 'general' && option.value !== 'form'
             const isSelected = option.value === value
 
             return (
@@ -951,7 +952,9 @@ export default function DevelopingSquadTab({
 }: DevelopingSquadTabProps) {
   const { t } = useTranslation(['squad', 'developingTeam'])
   const activeListView: SquadListView =
-    isPremium && !isPremiumLoading ? listView : 'general'
+    !isPremiumLoading && (isPremium || listView === 'general' || listView === 'form')
+      ? listView
+      : 'general'
 
   const {
     activitiesByRiderId: currentActivityByRiderId,
@@ -1347,87 +1350,77 @@ export default function DevelopingSquadTab({
 
       {isPremiumLoading ? (
         <PremiumFeatureLoading className="mt-6" />
-      ) : isPremium ? (
-      <div className="mt-6 rounded-lg bg-white p-4 shadow">
-        <div className="mb-4">
-          <div className="text-base font-semibold text-gray-800">{t('healthReport.title', { ns: 'squad' })}</div>
-          <div className="mt-1 text-sm text-gray-500">
-            {t('healthReport.subtitle', { ns: 'developingTeam' })}
-          </div>
-        </div>
-
-        {healthOverviewDisplayRows.length === 0 ? (
-          <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-            {t('healthReport.none', { ns: 'squad' })}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 text-left text-gray-500">
-                  <th className="py-2 pr-4">{t('columns.rider', { ns: 'squad' })}</th>
-                  <th className="py-2 pr-4">{t('columns.status', { ns: 'squad' })}</th>
-                  <th className="py-2 pr-4">{t('columns.case', { ns: 'squad' })}</th>
-                  <th className="py-2 pr-4">{t('columns.stage', { ns: 'squad' })}</th>
-                  <th className="py-2 pr-4">{t('columns.severity', { ns: 'squad' })}</th>
-                  <th className="py-2 pr-4">{t('columns.fatigue', { ns: 'squad' })}</th>
-                  <th className="py-2">{t('columns.expectedRecovery', { ns: 'squad' })}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {healthOverviewDisplayRows.map((row) => (
-                  <tr key={row.rider_id} className="border-b border-gray-100 last:border-0">
-                    <td className="py-3 pr-4">
-                      <div className="flex items-center gap-2">
-                        <CountryFlag countryCode={row.country_code} />
-                        <span className="font-medium text-gray-800">{row.full_name}</span>
-                      </div>
-                    </td>
-
-                    <td className="py-3 pr-4">
-                      <RiderStatusBadge
-                        status={row.availability_status ?? getDefaultRiderAvailabilityStatus()}
-                        compact
-                      />
-                    </td>
-
-                    <td className="py-3 pr-4 text-gray-700">
-                      {formatHealthCaseCode(row.case_code) ?? 'Fatigue'}
-                    </td>
-
-                    <td className="py-3 pr-4 text-gray-700">
-                      {formatCaseStageLabel(row.case_status) ?? '—'}
-                    </td>
-
-                    <td className="py-3 pr-4 text-gray-700">
-                      {formatSeverityLabel(row.severity) ?? '—'}
-                    </td>
-
-                    <td className="py-3 pr-4 text-gray-700">{row.fatigue}/100</td>
-
-                    <td className="py-3 text-gray-700">
-                      {row.expected_full_recovery_on
-                        ? `${formatShortGameDate(row.expected_full_recovery_on)}${
-                            getDaysRemaining(row.expected_full_recovery_on, gameDate ?? null) !==
-                            null
-                              ? ` (${getDaysRemaining(row.expected_full_recovery_on, gameDate ?? null)}d)`
-                              : ''
-                          }`
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
       ) : (
-        <PremiumFeatureLock
-          className="mt-6"
-          title={t('healthReport.lockedTitle', { ns: 'developingTeam' })}
-          description={t('healthReport.lockedDescription', { ns: 'developingTeam' })}
-        />
+        <div className="mt-6 rounded-lg bg-white p-4 shadow">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="text-base font-semibold text-gray-800">{t('healthReport.title', { ns: 'squad' })}</div>
+              <div className="mt-1 text-sm text-gray-500">
+                {t('healthReport.subtitle', { ns: 'developingTeam' })}
+              </div>
+            </div>
+            {!isPremium ? (
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                Free core health
+              </span>
+            ) : null}
+          </div>
+
+          {healthOverviewDisplayRows.length === 0 ? (
+            <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+              {t('healthReport.none', { ns: 'squad' })}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 text-left text-gray-500">
+                    <th className="py-2 pr-4">{t('columns.rider', { ns: 'squad' })}</th>
+                    <th className="py-2 pr-4">{t('columns.status', { ns: 'squad' })}</th>
+                    <th className="py-2 pr-4">{t('columns.case', { ns: 'squad' })}</th>
+                    <th className="py-2 pr-4">{t('columns.stage', { ns: 'squad' })}</th>
+                    <th className="py-2 pr-4">{t('columns.severity', { ns: 'squad' })}</th>
+                    <th className="py-2 pr-4">{t('columns.fatigue', { ns: 'squad' })}</th>
+                    <th className="py-2">{t('columns.expectedRecovery', { ns: 'squad' })}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {healthOverviewDisplayRows.map((row) => (
+                    <tr key={row.rider_id} className="border-b border-gray-100 last:border-0">
+                      <td className="py-3 pr-4">
+                        <div className="flex items-center gap-2">
+                          <CountryFlag countryCode={row.country_code} />
+                          <span className="font-medium text-gray-800">{row.full_name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <RiderStatusBadge
+                          status={row.availability_status ?? getDefaultRiderAvailabilityStatus()}
+                          compact
+                        />
+                      </td>
+                      <td className="py-3 pr-4 text-gray-700">
+                        {formatHealthCaseCode(row.case_code) ?? 'Fatigue'}
+                      </td>
+                      <td className="py-3 pr-4 text-gray-700">
+                        {formatCaseStageLabel(row.case_status) ?? '—'}
+                      </td>
+                      <td className="py-3 pr-4 text-gray-700">
+                        {formatSeverityLabel(row.severity) ?? '—'}
+                      </td>
+                      <td className="py-3 pr-4 text-gray-700">{row.fatigue}/100</td>
+                      <td className="py-3 text-gray-700">
+                        {row.expected_full_recovery_on
+                          ? `${formatShortGameDate(row.expected_full_recovery_on)}${getDaysRemaining(row.expected_full_recovery_on, gameDate ?? null) !== null ? ` (${getDaysRemaining(row.expected_full_recovery_on, gameDate ?? null)}d)` : ''}`
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
 
           {isPremiumLoading ? (
