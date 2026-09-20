@@ -37,7 +37,8 @@
     "infrastructure": "Instalaciones y desarrollo",
     "finance": "Presupuesto, ingresos y gastos",
     "transfers": "Comprar, vender y negociar",
-    "statistics": "Rendimiento y análisis"
+    "statistics": "Rendimiento y análisis",
+    "premiumCenter": "Planificación, simulación y automatización avanzadas"
   },
   "header": {
     "toggleSidebar": "Mostrar u ocultar la barra lateral",
@@ -151,5 +152,6 @@
   },
   "premiumFeature": {
     "unlock": "Desbloquear con Premium"
-  }
+  },
+  "premiumCenter": "Centro Premium"
 }
