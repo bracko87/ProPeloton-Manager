@@ -506,7 +506,7 @@ export default function PremiumCommandCenter(): JSX.Element {
   const [simWeeklyCost, setSimWeeklyCost] = useState(0)
   const [simMonthlyIncome, setSimMonthlyIncome] = useState(0)
   const [simHorizon, setSimHorizon] = useState(60)
-  const [simName, setSimName] = useState('My financial scenario')
+  const [simName, setSimName] = useState('')
 
   const [templateType, setTemplateType] = useState<PremiumTemplate['template_type']>('race_strategy')
   const [templateName, setTemplateName] = useState('')
@@ -525,6 +525,10 @@ export default function PremiumCommandCenter(): JSX.Element {
   useEffect(() => {
     setTab(initialTab)
   }, [initialTab])
+
+  useEffect(() => {
+    setSimName(current => current || t('finance.defaultName'))
+  }, [t])
 
   const changeTab = useCallback(
     (nextTab: TabKey) => {
@@ -600,7 +604,7 @@ export default function PremiumCommandCenter(): JSX.Element {
         setLoading(false)
       }
     },
-    [],
+    [t],
   )
 
   useEffect(() => {
@@ -643,7 +647,7 @@ export default function PremiumCommandCenter(): JSX.Element {
     return () => {
       active = false
     }
-  }, [loadWorkspace, resolveClub])
+  }, [loadWorkspace, resolveClub, t])
 
   const loadStrategy = useCallback(async (): Promise<void> => {
     if (!selectedPreparationId || !isPremium) {
@@ -676,7 +680,7 @@ export default function PremiumCommandCenter(): JSX.Element {
     } finally {
       setStrategyLoading(false)
     }
-  }, [isPremium, selectedPreparationId])
+  }, [isPremium, selectedPreparationId, t])
 
   useEffect(() => {
     if (tab === 'strategy') {
@@ -1306,10 +1310,10 @@ export default function PremiumCommandCenter(): JSX.Element {
                               <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
                                 <th className="py-3 pr-3">{t('transfers.rider')}</th>
                                 <th className="py-3 pr-3">{t('transfers.role')}</th>
-                                <th className="py-3 pr-3">Overall</th>
+                                <th className="py-3 pr-3">{t('strategy.tableOverall')}</th>
                                 <th className="py-3 pr-3">{t('development.fatigue')}</th>
-                                <th className="py-3 pr-3">Morale</th>
-                                <th className="py-3 text-right">Suitability</th>
+                                <th className="py-3 pr-3">{t('strategy.tableMorale')}</th>
+                                <th className="py-3 text-right">{t('strategy.tableSuitability')}</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1380,7 +1384,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                           <div className="mt-4 grid gap-3">
                             <label>
                               <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
-                                Stage objective
+                                {t('strategy.stageObjective')}
                               </span>
                               <select
                                 value={objectiveByStage[selectedStage.stage_id] ?? 'balanced'}
@@ -1401,7 +1405,7 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                             <label>
                               <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
-                                Team strategy
+                                {t('strategy.teamStrategy')}
                               </span>
                               <select
                                 value={strategyByStage[selectedStage.stage_id] ?? 'balanced'}
@@ -1422,7 +1426,7 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                             <label>
                               <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
-                                Risk profile
+                                {t('strategy.riskProfile')}
                               </span>
                               <select
                                 value={riskByStage[selectedStage.stage_id] ?? 'normal'}
@@ -1588,7 +1592,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                           to={`/dashboard/race-preparation?raceId=${row.race_id}`}
                           className="font-bold text-slate-700 hover:text-slate-950"
                         >
-                          Official preparation
+                          {t('season.officialPreparation')}
                         </Link>
                       </div>
                     </Card>
@@ -1654,7 +1658,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                         {workspace.transfer_command.shortlist.length === 0 ? (
                           <tr>
                             <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                              Your shortlist is empty.
+                              {t('transfers.emptyShortlist')}
                             </td>
                           </tr>
                         ) : (
@@ -1667,7 +1671,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                               <td className="px-4 py-3">
                                 {row.is_scouted ? (
                                   <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">
-                                    Scouted
+                                    {t('transfers.scouted')}
                                   </span>
                                 ) : (
                                   <span className="text-xs text-slate-400">{t('transfers.notScouted')}</span>
@@ -1807,7 +1811,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                         className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white"
                       >
                         <Save size={15} />
-                        Save scenario
+                        {t('finance.saveScenario')}
                       </button>
                     </div>
                   </div>
@@ -1906,7 +1910,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                       <tr className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
                         <th className="px-4 py-3">{t('transfers.rider')}</th>
                         <th className="px-4 py-3">{t('transfers.role')}</th>
-                        <th className="px-4 py-3">Overall</th>
+                        <th className="px-4 py-3">{t('development.overall')}</th>
                         <th className="px-4 py-3">{t('development.potential')}</th>
                         <th className="px-4 py-3">{t('development.eightWeekDevelopment')}</th>
                         <th className="px-4 py-3">{t('development.overallChange')}</th>
@@ -2227,7 +2231,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                             <div className="flex flex-wrap items-center gap-2">
                               <div className="font-bold text-slate-900">{rule.name}</div>
                               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
-                                {rule.is_enabled ? 'Enabled' : 'Disabled'}
+                                {rule.is_enabled ? t('templates.enabled') : t('templates.disabled')}
                               </span>
                             </div>
                             <div className="mt-1 text-xs text-slate-500">
