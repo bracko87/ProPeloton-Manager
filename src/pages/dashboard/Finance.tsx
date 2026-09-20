@@ -610,6 +610,13 @@ export default function FinancePage(): JSX.Element {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => navigate('/dashboard/premium-center?tab=finance')}
+            className="rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-semibold text-yellow-900 hover:bg-yellow-100"
+          >
+            Premium Financial Simulator
+          </button>
+          <button
+            type="button"
             onClick={() => void loadBase()}
             className="px-3 py-2 rounded bg-white shadow text-sm hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={loading}
