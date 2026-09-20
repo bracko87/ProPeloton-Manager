@@ -86,7 +86,7 @@
     "holidays": "Feiertage",
     "title": "Rennfilter",
     "premium": "Premium",
-    "description": "Filtern Sie diesen Monat nach Land, Kategorie, Format, Status und Sponsorenzielen.",
+    "description": "Filtere diesen Monat nach Land, Kategorie, Format und Status. Premium bietet zusätzlich Sponsor-Ziel-Intelligenz.",
     "clear": "Filter zurücksetzen",
     "checkingPremium": "Premium wird geprüft…",
     "hide": "Filter ausblenden",
@@ -110,7 +110,7 @@
     "unlockPremium": "Mit Premium freischalten",
     "activeCount": "{{count}} aktiv",
     "showing": "{{shown}} von {{total}} Rennen im {{month}} angezeigt",
-    "noMatch": "Für {{month}} entsprechen keine Rennen den ausgewählten Premium-Filtern.",
+    "noMatch": "Keine Rennen entsprechen den ausgewählten Filtern für {{month}}.",
     "noScheduled": "Für {{month}} sind keine Rennen angesetzt."
   },
   "route": {
