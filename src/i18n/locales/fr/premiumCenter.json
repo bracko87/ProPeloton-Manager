@@ -221,7 +221,10 @@
     "searchRiders": "Rechercher un coureur",
     "allRoles": "Tous les rôles",
     "allStatuses": "Tous les statuts",
-    "latestWeek": "Dernière semaine"
+    "latestWeek": "Dernière semaine",
+    "editChartRiders": "Modifier les coureurs",
+    "doneEditingRiders": "Terminé",
+    "editChartRidersHint": "Remplacez n’importe quel coureur affiché par un autre coureur de l’effectif qui n’est pas déjà dans le graphique."
   },
   "templates": {
     "title": "Modèles et Smart Prefill",
@@ -336,9 +339,9 @@
       "defaultsRestoreFailed": "Impossible de restaurer l’entraînement par défaut de l’équipe pour tous les coureurs."
     },
     "equipment": {
-      "title": "Modèles Premium d'équipement",
-      "description": "Enregistrez le brouillon actuel comme configuration réutilisable ou utilisez Smart Prefill pour choisir votre propre modèle selon le terrain. Rien n'est appliqué tant que vous n'utilisez pas le bouton normal d'enregistrement de la configuration par défaut.",
-      "manage": "Gérer l'automatisation",
+      "title": "Configurations d’équipement enregistrées",
+      "description": "Sans Premium, vous gardez une configuration de course par défaut. Premium ajoute plusieurs configurations réutilisables et le Smart Prefill selon le terrain.",
+      "manage": "Règles d’automatisation",
       "none": "Aucun modèle d'équipement enregistré.",
       "namePlaceholder": "Nom du modèle",
       "saveDraft": "Enregistrer le brouillon actuel",
@@ -348,7 +351,11 @@
       "saveFailed": "Impossible d'enregistrer le modèle Premium d'équipement.",
       "noRule": "Aucune règle Equipment Smart Prefill activée ne correspond à terrain_type = {{terrain}}.",
       "templateFallback": "Modèle d'équipement",
-      "prefillFailed": "Impossible d'exécuter Equipment Smart Prefill."
+      "prefillFailed": "Impossible d'exécuter Equipment Smart Prefill.",
+      "savedCount": "{{count}} enregistrées",
+      "openTools": "Ouvrir les configurations",
+      "hideTools": "Masquer les configurations",
+      "savedSetups": "Configurations enregistrées"
     },
     "finance": {
       "simulator": "Simulateur financier Premium",
