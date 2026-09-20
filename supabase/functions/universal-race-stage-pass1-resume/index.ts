@@ -9,7 +9,7 @@ declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
 const SOURCE_COMMIT = "26a383bc2bc94db064fb8826a806594e37895885";
-const CONTRACT = "universal_race_pass1_resume_v5";
+const CONTRACT = "universal_race_pass1_resume_v6";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -212,7 +212,7 @@ Deno.serve(async (request: Request) => {
         await rpc(supabase, "universal_race_stage_fail_calculation_v1", {
           p_stage_id: stageId,
           p_simulation_run_id: runId,
-          p_error_message: serialized.message ?? "Pass 1 calculation failed.",
+          p_error_message: text(serialized.message) || "Pass 1 calculation failed.",
           p_error_details: {
             reason: "pass1_engine_exception",
             source_commit: SOURCE_COMMIT,
