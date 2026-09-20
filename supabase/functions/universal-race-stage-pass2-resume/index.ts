@@ -5,9 +5,9 @@ import {
   isUniversalPhase78IssueNonBlocking,
   runRaceEngine,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/26a383bc2bc94db064fb8826a806594e37895885/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/26a383bc2bc94db064fb8826a806594e37895885/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/26a383bc2bc94db064fb8826a806594e37895885/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/a4377fb9e1cc956dfc96d11721e67eb5bdeffe8d/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/a4377fb9e1cc956dfc96d11721e67eb5bdeffe8d/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/a4377fb9e1cc956dfc96d11721e67eb5bdeffe8d/src/universal-race-engine/buildProductionRaceOutput.ts";
 import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/runRaceEngine.ts";
 import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceInput.ts";
 import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
@@ -15,9 +15,9 @@ import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
-const SOURCE_COMMIT = "26a383bc2bc94db064fb8826a806594e37895885";
+const SOURCE_COMMIT = "a4377fb9e1cc956dfc96d11721e67eb5bdeffe8d";
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
-const CONTRACT = "universal_race_pass2_resume_v7";
+const CONTRACT = "universal_race_pass2_resume_v8";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
