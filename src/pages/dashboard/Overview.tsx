@@ -8296,24 +8296,36 @@ export default function OverviewPage() {
                   )}
                 </div>
 
-                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
                   <a
-                    href="#/dashboard/premium-center?tab=strategy"
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
+                    href="#/dashboard/race-preparation"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
                   >
                     {t('premiumCenter:integrations.overview.strategy')}
                   </a>
                   <a
-                    href="#/dashboard/premium-center?tab=season"
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
+                    href="#/dashboard/calendar"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
                   >
                     {t('premiumCenter:integrations.overview.season')}
                   </a>
                   <a
-                    href="#/dashboard/premium-center?tab=finance"
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800 hover:border-yellow-300 hover:bg-yellow-50"
+                    href="#/dashboard/transfers"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
+                  >
+                    {t('premiumCenter:tabs.transfers')}
+                  </a>
+                  <a
+                    href="#/dashboard/finance"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
                   >
                     {t('premiumCenter:integrations.overview.finance')}
+                  </a>
+                  <a
+                    href="#/dashboard/training#premium-development"
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
+                  >
+                    {t('premiumCenter:tabs.development')}
                   </a>
                 </div>
               </Card>

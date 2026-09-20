@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import PremiumRiderDevelopmentPanel from './training/PremiumRiderDevelopmentPanel'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import HeadCoachTrainingPanel, {
   type HeadCoachAutomationSnapshot
@@ -3198,12 +3199,12 @@ export default function TrainingPage(): JSX.Element {
           </div>
 
           {isPremium ? (
-            <div className="rounded-xl border border-yellow-200 bg-yellow-50/60 p-5 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-semibold text-gray-900">{t('premiumCenter:integrations.training.title')}</h3>
-                    <span className="rounded-full border border-yellow-300 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
+                    <span className="rounded-full border border-gray-300 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
                       Premium
                     </span>
                   </div>
@@ -3213,7 +3214,7 @@ export default function TrainingPage(): JSX.Element {
                 </div>
                 <Link
                   to="/dashboard/premium-center?tab=templates"
-                  className="shrink-0 rounded-lg border border-yellow-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-yellow-50"
+                  className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
                 >
                   {t('premiumCenter:integrations.training.manage')}
                 </Link>
@@ -3228,7 +3229,7 @@ export default function TrainingPage(): JSX.Element {
                         type="button"
                         key={template.id}
                         onClick={() => applyTrainingTemplateToTeamDefaults(template)}
-                        className="rounded-lg border border-yellow-200 bg-white px-3 py-2 text-left text-sm text-gray-800 hover:border-yellow-400"
+                        className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm text-gray-800 hover:border-gray-400"
                       >
                         <span className="font-semibold">{template.name}</span>
                         <span className="ml-2 text-xs text-gray-500">
@@ -3245,11 +3246,15 @@ export default function TrainingPage(): JSX.Element {
               )}
 
               {premiumPrefillMessage ? (
-                <div className="mt-3 rounded-lg border border-yellow-200 bg-white px-3 py-2 text-sm text-gray-700">
+                <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
                   {premiumPrefillMessage}
                 </div>
               ) : null}
             </div>
+          ) : null}
+
+          {isPremium && clubId ? (
+            <PremiumRiderDevelopmentPanel clubId={clubId} />
           ) : null}
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import PremiumSeasonPlannerPanel from './calendar/PremiumSeasonPlannerPanel'
 import { calendarTutorialSteps } from '../../lib/tutorials'
 import {
   getTutorialProgress,
@@ -1006,7 +1007,7 @@ export default function CalendarPage(): JSX.Element {
   const hasAppliedInitialCalendarMonthRef = useRef(false)
   const userSelectedRaceMonthRef = useRef(false)
 
-  const [, setClubId] = useState<string | null>(null)
+  const [clubId, setClubId] = useState<string | null>(null)
 
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
   const [gameDateParts, setGameDateParts] = useState<GameDateParts | null>(null)
@@ -2129,6 +2130,10 @@ export default function CalendarPage(): JSX.Element {
         ) : null}
       </div>
 
+      {!premiumStatusLoading && isPremium && clubId && activeView === 'season' ? (
+        <PremiumSeasonPlannerPanel clubId={clubId} />
+      ) : null}
+
       <div className="w-full rounded-lg border border-gray-100 bg-white p-6 shadow">
         {activeView === 'season' ? (
           <>
@@ -2642,89 +2647,6 @@ export default function CalendarPage(): JSX.Element {
                   </div>
               ) : null}
             </div>
-
-            {premiumStatusLoading ? null : isPremium ? (
-              <div className="mb-4 rounded-xl border border-yellow-200 bg-yellow-50/60 p-4 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold text-slate-900">Calendar Intelligence</h3>
-                      <span className="rounded-full border border-yellow-300 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
-                        Premium
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-slate-600">
-                      A quick monthly view of sponsor priorities, accepted races and races still open for applications.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                  <div className="rounded-lg border border-yellow-100 bg-white px-3 py-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Sponsor targets</div>
-                    <div className="mt-1 text-xl font-semibold text-slate-900">{premiumCalendarInsights.sponsorTargetCount}</div>
-                  </div>
-                  <div className="rounded-lg border border-yellow-100 bg-white px-3 py-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Accepted races</div>
-                    <div className="mt-1 text-xl font-semibold text-slate-900">{premiumCalendarInsights.acceptedCount}</div>
-                  </div>
-                  <div className="rounded-lg border border-yellow-100 bg-white px-3 py-2">
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Applications open</div>
-                    <div className="mt-1 text-xl font-semibold text-slate-900">{premiumCalendarInsights.openApplicationCount}</div>
-                  </div>
-                </div>
-
-                {premiumCalendarInsights.priorityRaces.length > 0 ? (
-                  <div className="mt-3 space-y-2">
-                    {premiumCalendarInsights.priorityRaces.map(race => {
-                      const dateBadge = formatCalendarDateBadge(race, t)
-                      const sponsorCount = sponsorObjectiveTargetsByRaceId[race.id]?.length ?? 0
-                      return (
-                        <div key={race.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-yellow-100 bg-white px-3 py-2">
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-semibold text-slate-900">{race.name}</div>
-                            <div className="mt-0.5 text-xs text-slate-500">
-                              {dateBadge.end ? `${dateBadge.start} – ${dateBadge.end}` : dateBadge.start}
-                              {race.category ? ` · ${race.category}` : ''}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px]">
-                            {sponsorCount > 0 ? (
-                              <span className="rounded-full bg-yellow-100 px-2 py-1 font-semibold text-yellow-800">
-                                {sponsorCount} sponsor target{sponsorCount === 1 ? '' : 's'}
-                              </span>
-                            ) : race.existing_application_status?.toLowerCase() === 'accepted' ? (
-                              <span className="rounded-full bg-emerald-100 px-2 py-1 font-semibold text-emerald-700">
-                                Accepted
-                              </span>
-                            ) : (
-                              <span className="rounded-full bg-blue-100 px-2 py-1 font-semibold text-blue-700">
-                                Applications open
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <div className="mb-4 flex flex-col gap-3 rounded-xl border border-dashed border-yellow-200 bg-yellow-50/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">Premium Calendar Intelligence</div>
-                  <div className="mt-1 text-xs text-slate-600">
-                    Basic race filters are Free. Premium groups sponsor targets, accepted races and application opportunities into a quick monthly briefing.
-                  </div>
-                </div>
-                <Link
-                  to="/dashboard/premium"
-                  className="shrink-0 rounded-lg border border-yellow-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-yellow-50"
-                >
-                  View Premium
-                </Link>
-              </div>
-            )}
 
             {raceCalendarNotice ? (
               <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

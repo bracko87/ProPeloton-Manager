@@ -397,7 +397,7 @@ function Card({
 }): JSX.Element {
   return (
     <div
-      className={`rounded-2xl border border-black/10 bg-white shadow-sm ${className}`}
+      className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}
     >
       {children}
     </div>
@@ -415,10 +415,10 @@ function StatCard({
 }): JSX.Element {
   return (
     <Card className="p-4">
-      <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
         {label}
       </div>
-      <div className="mt-2 text-2xl font-extrabold text-slate-950">
+      <div className="mt-2 text-2xl font-semibold text-slate-950">
         {value}
       </div>
       {hint ? <div className="mt-1 text-xs text-slate-500">{hint}</div> : null}
@@ -440,13 +440,13 @@ function PremiumPreview(): JSX.Element {
 
   return (
     <div className="space-y-6">
-      <Card className="overflow-hidden border-yellow-200">
-        <div className="bg-gradient-to-r from-yellow-50 via-white to-amber-50 p-7">
-          <div className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.14em] text-yellow-800">
-            <Crown size={18} />
+      <Card className="overflow-hidden">
+        <div className="bg-white p-5">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+            <Crown size={16} />
             {t('preview.workspace')}
           </div>
-          <h2 className="mt-3 max-w-4xl text-3xl font-extrabold text-slate-950">
+          <h2 className="mt-2 max-w-4xl text-xl font-semibold text-slate-900">
             {t('preview.headline')}
           </h2>
           <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
@@ -454,7 +454,7 @@ function PremiumPreview(): JSX.Element {
           </p>
           <Link
             to="/dashboard/pro"
-            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-black"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black"
           >
             <Crown size={16} />
             {t('upgrade')}
@@ -466,7 +466,7 @@ function PremiumPreview(): JSX.Element {
         {featureCards.map(([title, description]) => (
           <Card key={title} className="p-5">
             <div className="flex items-start justify-between gap-3">
-              <div className="text-base font-bold text-slate-950">{title}</div>
+              <div className="text-base font-semibold text-slate-950">{title}</div>
               <LockKeyhole size={17} className="shrink-0 text-yellow-600" />
             </div>
             <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
@@ -474,9 +474,9 @@ function PremiumPreview(): JSX.Element {
         ))}
       </div>
 
-      <Card className="border-blue-200 bg-blue-50 p-5">
-        <div className="font-bold text-blue-950">{t('preview.whyTitle')}</div>
-        <p className="mt-2 text-sm leading-6 text-blue-900">
+      <Card className="p-5">
+        <div className="font-semibold text-slate-900">{t('preview.whyTitle')}</div>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
           {t('preview.whyBody')}
         </p>
       </Card>
@@ -1025,18 +1025,16 @@ export default function PremiumCommandCenter(): JSX.Element {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1750px] space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.16em] text-yellow-700">
-            <Crown size={15} />
-            {t('premiumOnly')}
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-slate-900">{t('title')}</h1>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+              Premium
+            </span>
           </div>
-          <h1 className="mt-1 flex items-center gap-3 text-3xl font-extrabold text-slate-950">
-            <Sparkles size={30} className="text-yellow-600" />
-            {t('title')}
-          </h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">
             {t('subtitle')}
           </p>
         </div>
@@ -1046,7 +1044,7 @@ export default function PremiumCommandCenter(): JSX.Element {
             type="button"
             onClick={() => void loadWorkspace(clubId)}
             disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50 disabled:opacity-50"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             {t('common.refresh')}
@@ -1062,12 +1060,12 @@ export default function PremiumCommandCenter(): JSX.Element {
         </Card>
       ) : (
         <>
-          <Card className="border-blue-200 bg-blue-50 p-4">
+          <Card className="p-4">
             <div className="flex items-start gap-3">
               <Users size={18} className="mt-0.5 shrink-0 text-blue-700" />
               <div>
-                <div className="font-bold text-blue-950">{t('scopeTitle')}</div>
-                <p className="mt-1 text-sm leading-6 text-blue-900">
+                <div className="font-semibold text-slate-900">{t('scopeTitle')}</div>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
                   {t('scopeBody')}
                 </p>
               </div>
@@ -1080,9 +1078,8 @@ export default function PremiumCommandCenter(): JSX.Element {
             </Card>
           ) : null}
 
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-2 border-b border-slate-200">
             {TABS.map(item => {
-              const Icon = item.icon
               const active = tab === item.key
 
               return (
@@ -1091,13 +1088,12 @@ export default function PremiumCommandCenter(): JSX.Element {
                   type="button"
                   onClick={() => changeTab(item.key)}
                   className={[
-                    'inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors',
+                    'border-b-2 px-0 pb-3 text-sm font-medium transition-colors',
                     active
-                      ? 'bg-slate-950 text-white'
-                      : 'border border-black/10 bg-white text-slate-700 hover:bg-slate-50',
+                      ? 'border-yellow-400 text-slate-900'
+                      : 'border-transparent text-slate-500 hover:text-slate-700',
                   ].join(' ')}
                 >
-                  <Icon size={16} />
                   {t(`tabs.${item.key}`)}
                 </button>
               )
@@ -1143,14 +1139,14 @@ export default function PremiumCommandCenter(): JSX.Element {
               <Card className="p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-extrabold text-slate-950">
+                    <h2 className="text-lg font-semibold text-slate-950">
                       {t('summary.title')}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
                       {t('summary.subtitle')}
                     </p>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                     {formatGameDateTime(workspace.game_now)}
                   </span>
                 </div>
@@ -1175,7 +1171,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="font-bold text-slate-950">{item.title}</div>
+                            <div className="font-semibold text-slate-950">{item.title}</div>
                             <div className="mt-1 text-sm leading-6 text-slate-600">
                               {item.body}
                             </div>
@@ -1193,8 +1189,8 @@ export default function PremiumCommandCenter(): JSX.Element {
 
               <div className="grid gap-4 xl:grid-cols-3">
                 <Card className="p-5">
-                  <div className="text-sm font-bold text-slate-950">{t('summary.seasonPreparation')}</div>
-                  <div className="mt-3 text-3xl font-extrabold text-slate-950">
+                  <div className="text-sm font-semibold text-slate-950">{t('summary.seasonPreparation')}</div>
+                  <div className="mt-3 text-3xl font-semibold text-slate-950">
                     {workspace.season_planner.filter(row => row.planning_state !== 'on_track').length}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
@@ -1203,15 +1199,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                   <button
                     type="button"
                     onClick={() => changeTab('season')}
-                    className="mt-4 text-sm font-bold text-yellow-700 hover:text-yellow-800"
+                    className="mt-4 text-sm font-semibold text-yellow-700 hover:text-yellow-800"
                   >
                     {t('summary.openSeasonPlanner')}
                   </button>
                 </Card>
 
                 <Card className="p-5">
-                  <div className="text-sm font-bold text-slate-950">{t('summary.transferPipeline')}</div>
-                  <div className="mt-3 text-3xl font-extrabold text-slate-950">
+                  <div className="text-sm font-semibold text-slate-950">{t('summary.transferPipeline')}</div>
+                  <div className="mt-3 text-3xl font-semibold text-slate-950">
                     {workspace.transfer_command.pipeline.open_transfer_offers +
                       workspace.transfer_command.pipeline.open_transfer_negotiations +
                       workspace.transfer_command.pipeline.open_free_agent_negotiations}
@@ -1222,15 +1218,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                   <button
                     type="button"
                     onClick={() => changeTab('transfers')}
-                    className="mt-4 text-sm font-bold text-yellow-700 hover:text-yellow-800"
+                    className="mt-4 text-sm font-semibold text-yellow-700 hover:text-yellow-800"
                   >
                     {t('summary.openTransferCommand')}
                   </button>
                 </Card>
 
                 <Card className="p-5">
-                  <div className="text-sm font-bold text-slate-950">{t('summary.savedWorkflows')}</div>
-                  <div className="mt-3 text-3xl font-extrabold text-slate-950">
+                  <div className="text-sm font-semibold text-slate-950">{t('summary.savedWorkflows')}</div>
+                  <div className="mt-3 text-3xl font-semibold text-slate-950">
                     {templates.length}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
@@ -1239,7 +1235,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                   <button
                     type="button"
                     onClick={() => changeTab('templates')}
-                    className="mt-4 text-sm font-bold text-yellow-700 hover:text-yellow-800"
+                    className="mt-4 text-sm font-semibold text-yellow-700 hover:text-yellow-800"
                   >
                     {t('summary.manageTemplates')}
                   </button>
@@ -1251,747 +1247,323 @@ export default function PremiumCommandCenter(): JSX.Element {
           {workspace && tab === 'strategy' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-extrabold text-slate-950">{t('strategy.title')}</h2>
-                    <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-600">
+                    <h2 className="text-lg font-semibold text-slate-900">{t('strategy.title')}</h2>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
                       {t('strategy.description')}
                     </p>
                   </div>
-
-                  <select
-                    value={selectedPreparationId}
-                    onChange={event => setSelectedPreparationId(event.target.value)}
-                    className="min-w-[300px] rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900"
+                  <Link
+                    to="/dashboard/race-preparation"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    {workspace.season_planner.map(row => (
-                      <option key={row.race_preparation_id} value={row.race_preparation_id}>
-                        {row.race_name} · {formatGameDate(row.start_date)}
-                      </option>
-                    ))}
-                  </select>
+                    {t('integrations.overview.openItem')}
+                    <ChevronRight size={15} />
+                  </Link>
                 </div>
               </Card>
 
-              {strategyLoading ? (
-                <div className="h-48 animate-pulse rounded-2xl bg-slate-100" />
-              ) : strategyLab ? (
-                <>
-                  <div className="flex gap-2 overflow-x-auto">
-                    {strategyLab.stages.map(stage => (
-                      <button
-                        type="button"
-                        key={stage.stage_id}
-                        onClick={() => {
-                          setSelectedStageId(stage.stage_id)
-                          setPrefillMatch(null)
-                        }}
-                        className={[
-                          'shrink-0 rounded-xl border px-4 py-2.5 text-sm font-bold',
-                          selectedStageId === stage.stage_id
-                            ? 'border-yellow-400 bg-yellow-50 text-slate-950'
-                            : 'border-black/10 bg-white text-slate-700',
-                        ].join(' ')}
-                      >
-                        {t('strategy.stageLabel', { number: stage.stage_number })} · {humanize(stage.terrain_type ?? stage.profile_type)}
-                      </button>
-                    ))}
-                  </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <StatCard
+                  label={t('summary.upcomingRaces')}
+                  value={workspace.summary.upcoming_races_60d}
+                  hint={t('summary.next60Days')}
+                />
+                <StatCard
+                  label={t('season.stagePlans')}
+                  value={workspace.season_planner.reduce((sum, row) => sum + row.saved_stage_plans, 0)}
+                />
+                <StatCard
+                  label={t('season.sponsorTargets')}
+                  value={workspace.season_planner.reduce((sum, row) => sum + row.sponsor_target_count, 0)}
+                />
+              </div>
 
-                  {selectedStage ? (
-                    <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-                      <Card className="p-5">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <div className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                              {t('strategy.stageLabel', { number: selectedStage.stage_number })}
-                            </div>
-                            <h3 className="mt-1 text-xl font-extrabold text-slate-950">
-                              {selectedStage.stage_name ?? strategyLab.race.race_name}
-                            </h3>
-                            <div className="mt-1 text-sm text-slate-500">
-                              {humanize(selectedStage.terrain_type ?? selectedStage.profile_type)}
-                              {selectedStage.distance_km ? ` · ${t('strategy.distance', { distance: selectedStage.distance_km })}` : ''}
-                              {selectedStage.elevation_gain_m ? ` · ${t('strategy.climbing', { value: selectedStage.elevation_gain_m })}` : ''}
-                            </div>
-                          </div>
-
-                          <Link
-                            to={`/dashboard/race-preparation?raceId=${strategyLab.race.race_id}`}
-                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
-                          >
-                            {t('strategy.officialPreparation')}
-                          </Link>
+              <Card className="overflow-hidden">
+                <div className="border-b border-slate-100 px-5 py-4 text-sm font-semibold text-slate-900">
+                  {t('summary.upcomingRaces')}
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {workspace.season_planner.slice(0, 5).map(row => (
+                    <Link
+                      key={row.race_preparation_id}
+                      to={`/dashboard/race-preparation?raceId=${row.race_id}`}
+                      className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-slate-50"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium text-slate-900">{row.race_name}</div>
+                        <div className="mt-0.5 text-xs text-slate-500">
+                          {formatGameDate(row.start_date)} · {row.saved_stage_plans}/{row.total_stages}
                         </div>
-
-                        <div className="mt-5 overflow-x-auto">
-                          <table className="w-full min-w-[720px] text-sm">
-                            <thead>
-                              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
-                                <th className="py-3 pr-3">{t('transfers.rider')}</th>
-                                <th className="py-3 pr-3">{t('transfers.role')}</th>
-                                <th className="py-3 pr-3">{t('strategy.tableOverall')}</th>
-                                <th className="py-3 pr-3">{t('development.fatigue')}</th>
-                                <th className="py-3 pr-3">{t('strategy.tableMorale')}</th>
-                                <th className="py-3 text-right">{t('strategy.tableSuitability')}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedStage.top_candidates.map(candidate => (
-                                <tr
-                                  key={candidate.rider_id}
-                                  className={[
-                                    'border-b border-slate-100 last:border-0',
-                                    selectedLeaderByStage[selectedStage.stage_id] === candidate.rider_id
-                                      ? 'bg-yellow-50'
-                                      : '',
-                                  ].join(' ')}
-                                >
-                                  <td className="py-3 pr-3">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setSelectedLeaderByStage(current => ({
-                                          ...current,
-                                          [selectedStage.stage_id]: candidate.rider_id,
-                                        }))
-                                      }
-                                      className="font-bold text-slate-900 hover:text-yellow-700"
-                                    >
-                                      {candidate.display_name}
-                                    </button>
-                                  </td>
-                                  <td className="py-3 pr-3 text-slate-600">{humanize(candidate.role)}</td>
-                                  <td className="py-3 pr-3">{candidate.overall ?? '—'}</td>
-                                  <td className="py-3 pr-3">{candidate.fatigue ?? 0}</td>
-                                  <td className="py-3 pr-3">{candidate.morale ?? '—'}</td>
-                                  <td className="py-3 text-right">
-                                    <span className="rounded-full bg-slate-950 px-2.5 py-1 text-xs font-extrabold text-white">
-                                      {candidate.suitability_score}/100
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </Card>
-
-                      <div className="space-y-4">
-                        <Card className="p-5">
-                          <div className="text-sm font-bold text-slate-950">{t('strategy.controls')}</div>
-
-                          <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                            {t('strategy.leaderCandidate')}
-                          </label>
-                          <select
-                            value={selectedLeaderByStage[selectedStage.stage_id] ?? ''}
-                            onChange={event =>
-                              setSelectedLeaderByStage(current => ({
-                                ...current,
-                                [selectedStage.stage_id]: event.target.value,
-                              }))
-                            }
-                            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                          >
-                            {selectedStage.top_candidates.map(candidate => (
-                              <option key={candidate.rider_id} value={candidate.rider_id}>
-                                {candidate.display_name} · {candidate.suitability_score}/100
-                              </option>
-                            ))}
-                          </select>
-
-                          <div className="mt-4 grid gap-3">
-                            <label>
-                              <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
-                                {t('strategy.stageObjective')}
-                              </span>
-                              <select
-                                value={objectiveByStage[selectedStage.stage_id] ?? 'balanced'}
-                                onChange={event =>
-                                  setObjectiveByStage(current => ({
-                                    ...current,
-                                    [selectedStage.stage_id]: event.target.value,
-                                  }))
-                                }
-                                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                              >
-                                <option value="balanced">{t('values.balanced')}</option>
-                                <option value="stage_win">{t('values.stage_win')}</option>
-                                <option value="protect_gc">{t('values.protect_gc')}</option>
-                                <option value="breakaway">{t('values.breakaway')}</option>
-                              </select>
-                            </label>
-
-                            <label>
-                              <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
-                                {t('strategy.teamStrategy')}
-                              </span>
-                              <select
-                                value={strategyByStage[selectedStage.stage_id] ?? 'balanced'}
-                                onChange={event =>
-                                  setStrategyByStage(current => ({
-                                    ...current,
-                                    [selectedStage.stage_id]: event.target.value,
-                                  }))
-                                }
-                                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                              >
-                                <option value="balanced">{t('values.balanced')}</option>
-                                <option value="sprint_control">{t('values.sprint_control')}</option>
-                                <option value="climber_support">{t('values.climber_support')}</option>
-                                <option value="breakaway_focus">{t('values.breakaway_focus')}</option>
-                              </select>
-                            </label>
-
-                            <label>
-                              <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
-                                {t('strategy.riskProfile')}
-                              </span>
-                              <select
-                                value={riskByStage[selectedStage.stage_id] ?? 'normal'}
-                                onChange={event =>
-                                  setRiskByStage(current => ({
-                                    ...current,
-                                    [selectedStage.stage_id]: event.target.value,
-                                  }))
-                                }
-                                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                              >
-                                <option value="conservative">{t('values.conservative')}</option>
-                                <option value="normal">{t('values.normal')}</option>
-                                <option value="aggressive">{t('values.aggressive')}</option>
-                              </select>
-                            </label>
-                          </div>
-
-                          <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                            {t('strategy.aggression', { value: aggressionByStage[selectedStage.stage_id] ?? 50 })}
-                          </label>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={aggressionByStage[selectedStage.stage_id] ?? 50}
-                            onChange={event =>
-                              setAggressionByStage(current => ({
-                                ...current,
-                                [selectedStage.stage_id]: Number(event.target.value),
-                              }))
-                            }
-                            className="mt-2 w-full"
-                          />
-
-                          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                            {t('strategy.scoreNote')}
-                          </div>
-                        </Card>
-
-                        <Card className="p-5">
-                          <div className="flex items-center gap-2 font-bold text-slate-950">
-                            <Zap size={16} className="text-yellow-600" />
-                            {t('strategy.smartPrefill')}
-                          </div>
-                          <p className="mt-1 text-sm leading-6 text-slate-600">
-                            {t('strategy.smartPrefillDesc')}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => void checkStrategyPrefill()}
-                            className="mt-3 rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white"
-                          >
-                            {t('strategy.checkRule')}
-                          </button>
-
-                          {prefillMatch ? (
-                            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
-                              {prefillMatch.matched ? (
-                                <>
-                                  <div className="font-bold text-emerald-700">
-                                    {t('strategy.matched', { name: String(prefillMatch.template_name ?? t('common.template')) })}
-                                  </div>
-                                  <div className="mt-2 flex flex-wrap gap-1.5">
-                                    {Object.entries(
-                                      (prefillMatch.payload_json ?? {}) as Record<string, unknown>,
-                                    ).map(([key, value]) => (
-                                      <span
-                                        key={key}
-                                        className="rounded-full bg-white px-2 py-1 text-xs text-slate-600"
-                                      >
-                                        {humanize(key)}: {formatPremiumValue(value)}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="text-slate-600">
-                                  {t('strategy.noRule')}
-                                </div>
-                              )}
-                            </div>
-                          ) : null}
-                        </Card>
                       </div>
-                    </div>
-                  ) : null}
-                </>
-              ) : (
-                <Card className="p-6 text-sm text-slate-500">
-                  {t('strategy.selectPreparation')}
-                </Card>
-              )}
+                      <ChevronRight size={16} className="shrink-0 text-slate-400" />
+                    </Link>
+                  ))}
+                </div>
+              </Card>
             </div>
           ) : null}
 
           {workspace && tab === 'season' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <h2 className="text-xl font-extrabold text-slate-950">{t('season.title')}</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  {t('season.description')}
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">{t('season.title')}</h2>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+                      {t('season.description')}
+                    </p>
+                  </div>
+                  <Link
+                    to="/dashboard/calendar"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {t('integrations.overview.openItem')}
+                    <ChevronRight size={15} />
+                  </Link>
+                </div>
               </Card>
 
-              <div className="space-y-3">
-                {workspace.season_planner.length === 0 ? (
-                  <Card className="p-6 text-sm text-slate-500">
-                    {t('season.noUpcoming')}
-                  </Card>
-                ) : (
-                  workspace.season_planner.map(row => (
-                    <Card key={row.race_preparation_id} className="p-5">
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="truncate text-lg font-extrabold text-slate-950">
-                              {row.race_name}
-                            </h3>
-                            {row.category ? (
-                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
-                                {row.category}
-                              </span>
-                            ) : null}
-                            <span
-                              className={`rounded-full border px-2 py-0.5 text-xs font-bold ${statusClasses(
-                                row.planning_state,
-                              )}`}
-                            >
-                              {humanize(row.planning_state)}
-                            </span>
-                          </div>
-                          <div className="mt-1 text-sm text-slate-500">
-                            {formatGameDate(row.start_date)}
-                            {row.end_date !== row.start_date ? ` – ${formatGameDate(row.end_date)}` : ''}
-                          </div>
-                        </div>
-
-                        <div className="grid min-w-[440px] grid-cols-3 gap-2 text-center">
-                          <div className="rounded-xl bg-slate-50 p-3">
-                            <div className="text-[10px] uppercase tracking-wide text-slate-400">{t('season.stagePlans')}</div>
-                            <div className="mt-1 font-extrabold text-slate-950">
-                              {row.saved_stage_plans}/{row.total_stages}
-                            </div>
-                          </div>
-                          <div className="rounded-xl bg-slate-50 p-3">
-                            <div className="text-[10px] uppercase tracking-wide text-slate-400">{t('season.sponsorTargets')}</div>
-                            <div className="mt-1 font-extrabold text-slate-950">{row.sponsor_target_count}</div>
-                          </div>
-                          <div className="rounded-xl bg-slate-50 p-3">
-                            <div className="text-[10px] uppercase tracking-wide text-slate-400">{t('season.startList')}</div>
-                            <div className="mt-1 truncate text-xs font-bold text-slate-950">
-                              {humanize(row.startlist_status)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                        <span>{t('season.deadline', { date: formatGameDate(row.rider_submission_deadline_on) })}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPreparationId(row.race_preparation_id)
-                            changeTab('strategy')
-                          }}
-                          className="font-bold text-yellow-700 hover:text-yellow-800"
-                        >
-                          {t('season.openStrategy')}
-                        </button>
-                        <Link
-                          to={`/dashboard/race-preparation?raceId=${row.race_id}`}
-                          className="font-bold text-slate-700 hover:text-slate-950"
-                        >
-                          {t('season.officialPreparation')}
-                        </Link>
-                      </div>
-                    </Card>
-                  ))
-                )}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <StatCard label={t('summary.upcomingRaces')} value={workspace.summary.upcoming_races_60d} />
+                <StatCard
+                  label={t('summary.sponsorObjectives')}
+                  value={workspace.summary.active_sponsor_objectives}
+                />
+                <StatCard
+                  label={t('season.stagePlans')}
+                  value={workspace.season_planner.reduce((sum, row) => sum + row.saved_stage_plans, 0)}
+                />
               </div>
+
+              <Card className="overflow-hidden">
+                <div className="divide-y divide-slate-100">
+                  {workspace.season_planner.slice(0, 6).map(row => (
+                    <div key={row.race_preparation_id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium text-slate-900">{row.race_name}</span>
+                          <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusClasses(row.planning_state)}`}>
+                            {humanize(row.planning_state)}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {formatGameDate(row.start_date)} · {row.saved_stage_plans}/{row.total_stages}
+                        </div>
+                      </div>
+                      <Link
+                        to={`/dashboard/race-preparation?raceId=${row.race_id}`}
+                        className="text-xs font-medium text-slate-700 hover:text-yellow-700"
+                      >
+                        {t('season.officialPreparation')}
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </Card>
             </div>
           ) : null}
 
           {workspace && tab === 'transfers' ? (
             <div className="space-y-5">
-              <div className="grid gap-3 md:grid-cols-3">
-                <StatCard
-                  label={t('transfers.openOffers')}
-                  value={workspace.transfer_command.pipeline.open_transfer_offers}
-                />
-                <StatCard
-                  label={t('transfers.transferNegotiations')}
-                  value={workspace.transfer_command.pipeline.open_transfer_negotiations}
-                />
-                <StatCard
-                  label={t('transfers.freeAgentNegotiations')}
-                  value={workspace.transfer_command.pipeline.open_free_agent_negotiations}
-                />
-              </div>
-
               <Card className="p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-xl font-extrabold text-slate-950">{t('transfers.title')}</h2>
-                    <p className="mt-1 text-sm text-slate-600">
+                    <h2 className="text-lg font-semibold text-slate-900">{t('transfers.title')}</h2>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
                       {t('transfers.description')}
                     </p>
                   </div>
                   <Link
                     to="/dashboard/transfers"
-                    className="rounded-xl border border-black/10 px-3 py-2 text-sm font-bold text-slate-700"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     {t('transfers.openTransfers')}
+                    <ChevronRight size={15} />
                   </Link>
                 </div>
               </Card>
 
-              <div className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-                <Card className="overflow-hidden">
-                  <div className="border-b border-slate-100 px-5 py-4">
-                    <div className="font-bold text-slate-950">
-                      {t('transfers.shortlist', { count: workspace.transfer_command.shortlist.length })}
-                    </div>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[760px] text-sm">
-                      <thead>
-                        <tr className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
-                          <th className="px-4 py-3">{t('transfers.rider')}</th>
-                          <th className="px-4 py-3">{t('transfers.role')}</th>
-                          <th className="px-4 py-3">{t('transfers.club')}</th>
-                          <th className="px-4 py-3">{t('transfers.availability')}</th>
-                          <th className="px-4 py-3">{t('transfers.scout')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {workspace.transfer_command.shortlist.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                              {t('transfers.emptyShortlist')}
-                            </td>
-                          </tr>
-                        ) : (
-                          workspace.transfer_command.shortlist.map(row => (
-                            <tr key={row.shortlist_id} className="border-t border-slate-100">
-                              <td className="px-4 py-3 font-bold text-slate-950">{row.rider_name}</td>
-                              <td className="px-4 py-3 text-slate-600">{humanize(row.role)}</td>
-                              <td className="px-4 py-3 text-slate-600">{row.current_club_name ?? '—'}</td>
-                              <td className="px-4 py-3 text-slate-600">
-                                {humanize(row.availability_type ?? row.availability_label)}
-                              </td>
-                              <td className="px-4 py-3">
-                                {row.is_scouted ? (
-                                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-700">
-                                    {t('transfers.scouted')}
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-slate-400">{t('transfers.notScouted')}</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </Card>
-
-                <div className="space-y-4">
-                  <Card className="p-5">
-                    <div className="font-bold text-slate-950">{t('transfers.savedSearches')}</div>
-                    <div className="mt-2 text-3xl font-extrabold text-slate-950">
-                      {workspace.transfer_command.saved_searches.length}
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      {t('transfers.savedSearchesHint')}
-                    </div>
-                  </Card>
-
-                  <Card className="p-5">
-                    <div className="font-bold text-slate-950">{t('transfers.latestAlerts')}</div>
-                    <div className="mt-3 space-y-2">
-                      {workspace.transfer_command.alerts.length === 0 ? (
-                        <div className="text-sm text-slate-500">{t('transfers.noAlerts')}</div>
-                      ) : (
-                        workspace.transfer_command.alerts.slice(0, 6).map(alert => (
-                          <div key={alert.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                            <div className="text-sm font-bold text-slate-900">{alert.target_name}</div>
-                            <div className="mt-1 text-xs leading-5 text-slate-600">
-                              {getTransferAlertMessage(alert, t)}
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </Card>
-                </div>
+              <div className="grid gap-3 sm:grid-cols-4">
+                <StatCard label={t('transfers.openOffers')} value={workspace.transfer_command.pipeline.open_transfer_offers} />
+                <StatCard label={t('transfers.transferNegotiations')} value={workspace.transfer_command.pipeline.open_transfer_negotiations} />
+                <StatCard label={t('transfers.freeAgentNegotiations')} value={workspace.transfer_command.pipeline.open_free_agent_negotiations} />
+                <StatCard label={t('summary.transferAlerts')} value={workspace.summary.unread_transfer_alerts} />
               </div>
+
+              <Card className="overflow-hidden">
+                <div className="border-b border-slate-100 px-5 py-4 text-sm font-semibold text-slate-900">
+                  {t('transfers.shortlist', { count: workspace.transfer_command.shortlist.length })}
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {workspace.transfer_command.shortlist.slice(0, 6).map(rider => (
+                    <Link
+                      key={rider.shortlist_id}
+                      to={`/dashboard/external-riders/${rider.rider_id}`}
+                      className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-slate-50"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium text-slate-900">{rider.rider_name}</div>
+                        <div className="mt-0.5 text-xs text-slate-500">
+                          {[humanize(rider.role), rider.current_club_name, rider.transfer_price != null ? formatCurrency(rider.transfer_price) : null].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="shrink-0 text-slate-400" />
+                    </Link>
+                  ))}
+                  {workspace.transfer_command.shortlist.length === 0 ? (
+                    <div className="px-5 py-5 text-sm text-slate-500">{t('transfers.emptyShortlist')}</div>
+                  ) : null}
+                </div>
+              </Card>
             </div>
           ) : null}
 
           {workspace && tab === 'finance' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <h2 className="text-xl font-extrabold text-slate-950">{t('finance.title')}</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  {t('finance.description')}
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">{t('finance.title')}</h2>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+                      {t('finance.description')}
+                    </p>
+                  </div>
+                  <Link
+                    to="/dashboard/finance"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {t('integrations.overview.openItem')}
+                    <ChevronRight size={15} />
+                  </Link>
+                </div>
               </Card>
 
-              <div className="grid gap-5 xl:grid-cols-[0.75fr_1.25fr]">
-                <Card className="p-5">
-                  <div className="grid gap-4">
-                    <label>
-                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('finance.oneTimeCost')}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={simOneTimeCost}
-                        onChange={event => setSimOneTimeCost(Number(event.target.value || 0))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
-                      />
-                    </label>
-
-                    <label>
-                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('finance.weeklyCost')}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={simWeeklyCost}
-                        onChange={event => setSimWeeklyCost(Number(event.target.value || 0))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
-                      />
-                    </label>
-
-                    <label>
-                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('finance.monthlyIncome')}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={simMonthlyIncome}
-                        onChange={event => setSimMonthlyIncome(Number(event.target.value || 0))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
-                      />
-                    </label>
-
-                    <label>
-                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{t('finance.horizon')}</span>
-                      <select
-                        value={simHorizon}
-                        onChange={event => setSimHorizon(Number(event.target.value))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
-                      >
-                        <option value={30}>{t('finance.days30')}</option>
-                        <option value={60}>{t('finance.days60')}</option>
-                        <option value={90}>{t('finance.days90')}</option>
-                      </select>
-                    </label>
-                  </div>
-                </Card>
-
-                <Card className="p-5">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <StatCard label={t('finance.currentBalance')} value={formatCurrency(workspace.finance.balance)} />
-                    <StatCard label={t('finance.baselineWeeklyNet')} value={formatCurrency(workspace.finance.weekly_net)} />
-                    <StatCard
-                      label={t('finance.projectedBalance', { days: simHorizon })}
-                      value={formatCurrency(financeProjection?.projected)}
-                    />
-                    <StatCard
-                      label={t('finance.scenarioChange')}
-                      value={formatCurrency(financeProjection?.delta)}
-                    />
-                  </div>
-
-                  <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="text-sm font-bold text-slate-950">{t('finance.saveTitle')}</div>
-                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                      <input
-                        value={simName}
-                        onChange={event => setSimName(event.target.value)}
-                        className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void saveTemplate('financial_scenario', simName, {
-                            one_time_cost: simOneTimeCost,
-                            weekly_cost_delta: simWeeklyCost,
-                            monthly_income_delta: simMonthlyIncome,
-                            horizon_days: simHorizon,
-                          })
-                        }
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white"
-                      >
-                        <Save size={15} />
-                        {t('finance.saveScenario')}
-                      </button>
-                    </div>
-                  </div>
-                </Card>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <StatCard label={t('summary.cashBalance')} value={formatCurrency(workspace.finance.balance)} />
+                <StatCard label={t('summary.weeklyNet')} value={formatCurrency(workspace.finance.weekly_net)} />
               </div>
+
+              <Card className="p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-medium text-slate-900">{t('finance.saveTitle')}</div>
+                    <div className="mt-1 text-sm text-slate-500">{t('finance.description')}</div>
+                  </div>
+                  <Link
+                    to="/dashboard/finance"
+                    className="text-sm font-medium text-slate-700 hover:text-yellow-700"
+                  >
+                    {t('finance.title')}
+                  </Link>
+                </div>
+              </Card>
             </div>
           ) : null}
 
           {workspace && tab === 'sponsors' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <h2 className="text-xl font-extrabold text-slate-950">{t('sponsors.title')}</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  {t('sponsors.description')}
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">{t('sponsors.title')}</h2>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+                      {t('sponsors.description')}
+                    </p>
+                  </div>
+                  <Link
+                    to="/dashboard/finance?tab=sponsors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {t('integrations.overview.openItem')}
+                    <ChevronRight size={15} />
+                  </Link>
+                </div>
               </Card>
 
-              {workspace.sponsor_intelligence.length === 0 ? (
-                <Card className="p-6 text-sm text-slate-500">
-                  {t('sponsors.none')}
-                </Card>
-              ) : (
-                <div className="grid gap-4 lg:grid-cols-2">
-                  {workspace.sponsor_intelligence.map(objective => (
-                    <Card key={objective.objective_id} className="p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                            {objective.sponsor_name}
-                          </div>
-                          <h3 className="mt-1 text-base font-extrabold text-slate-950">
-                            {objective.objective_title}
-                          </h3>
-                        </div>
-                        <span
-                          className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusClasses(
-                            objective.risk_band,
-                          )}`}
-                        >
-                          {humanize(objective.risk_band)}
-                        </span>
+              <div className="grid gap-4 lg:grid-cols-2">
+                {workspace.sponsor_intelligence.slice(0, 6).map(objective => (
+                  <Card key={objective.objective_id} className="p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-xs text-slate-500">{objective.sponsor_name}</div>
+                        <div className="mt-1 text-sm font-medium text-slate-900">{objective.objective_title}</div>
                       </div>
-
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between text-xs text-slate-500">
-                          <span>{objective.current_value}/{objective.target_value}</span>
-                          <span>{objective.progress_pct}%</span>
-                        </div>
-                        <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className="h-full rounded-full bg-yellow-500"
-                            style={{ width: `${clamp(objective.progress_pct, 0, 100)}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                        <div className="rounded-xl bg-slate-50 p-3">
-                          <div className="text-xs text-slate-400">{t('sponsors.remaining')}</div>
-                          <div className="mt-1 font-bold text-slate-950">{objective.remaining_value}</div>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3">
-                          <div className="text-xs text-slate-400">{t('sponsors.reward')}</div>
-                          <div className="mt-1 font-bold text-slate-950">{formatCurrency(objective.reward_amount)}</div>
-                        </div>
-                      </div>
-
-                      {objective.target_race_name ? (
-                        <div className="mt-3 text-sm text-slate-600">
-                          {t('sponsors.targetRace', { race: objective.target_race_name })}
-                        </div>
-                      ) : null}
-                      <div className="mt-1 text-xs text-slate-500">
-                        {t('sponsors.deadline', { date: formatGameDate(objective.target_check_game_date ?? objective.eligible_to_game_date) })}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
+                      <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusClasses(objective.risk_band)}`}>
+                        {humanize(objective.risk_band)}
+                      </span>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+                      <span>{objective.current_value}/{objective.target_value}</span>
+                      <span>{objective.progress_pct}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-yellow-400" style={{ width: `${clamp(objective.progress_pct, 0, 100)}%` }} />
+                    </div>
+                  </Card>
+                ))}
+                {workspace.sponsor_intelligence.length === 0 ? (
+                  <Card className="p-5 text-sm text-slate-500">{t('sponsors.none')}</Card>
+                ) : null}
+              </div>
             </div>
           ) : null}
 
           {workspace && tab === 'development' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <h2 className="text-xl font-extrabold text-slate-950">{t('development.title')}</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  {t('development.description')}
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">{t('development.title')}</h2>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+                      {t('development.description')}
+                    </p>
+                  </div>
+                  <Link
+                    to="/dashboard/training#premium-development"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {t('integrations.overview.openItem')}
+                    <ChevronRight size={15} />
+                  </Link>
+                </div>
               </Card>
 
               <Card className="overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[920px] text-sm">
+                  <table className="w-full min-w-[760px] text-sm">
                     <thead>
-                      <tr className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-400">
+                      <tr className="bg-slate-50 text-left text-xs font-medium text-slate-500">
                         <th className="px-4 py-3">{t('transfers.rider')}</th>
                         <th className="px-4 py-3">{t('transfers.role')}</th>
                         <th className="px-4 py-3">{t('development.overall')}</th>
                         <th className="px-4 py-3">{t('development.potential')}</th>
                         <th className="px-4 py-3">{t('development.eightWeekDevelopment')}</th>
-                        <th className="px-4 py-3">{t('development.overallChange')}</th>
                         <th className="px-4 py-3">{t('development.fatigue')}</th>
-                        <th className="px-4 py-3">{t('transfers.availability')}</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {workspace.rider_development.map(rider => (
-                        <tr key={rider.rider_id} className="border-t border-slate-100">
-                          <td className="px-4 py-3">
-                            <Link
-                              to={`/dashboard/my-riders/${rider.rider_id}`}
-                              className="font-bold text-slate-950 hover:text-yellow-700"
-                            >
-                              {rider.display_name}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-3 text-slate-600">{humanize(rider.role)}</td>
-                          <td className="px-4 py-3 font-bold text-slate-900">{rider.overall ?? '—'}</td>
-                          <td className="px-4 py-3 text-slate-700">{rider.potential ?? '—'}</td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={[
-                                'font-bold',
-                                rider.development_8w > 0
-                                  ? 'text-emerald-700'
-                                  : rider.development_8w < 0
-                                    ? 'text-red-700'
-                                    : 'text-slate-500',
-                              ].join(' ')}
-                            >
-                              {rider.development_8w > 0 ? '+' : ''}
-                              {formatNumber(rider.development_8w)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            {rider.overall_delta_8w > 0 ? '+' : ''}
-                            {formatNumber(rider.overall_delta_8w)}
-                          </td>
-                          <td className="px-4 py-3">{rider.fatigue ?? 0}</td>
-                          <td className="px-4 py-3">
-                            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">
-                              {humanize(rider.availability_status)}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {workspace.rider_development
+                        .slice()
+                        .sort((a, b) => b.development_8w - a.development_8w)
+                        .slice(0, 8)
+                        .map(rider => (
+                          <tr key={rider.rider_id} className="border-t border-slate-100">
+                            <td className="px-4 py-3">
+                              <Link to={`/dashboard/my-riders/${rider.rider_id}`} className="font-medium text-slate-900 hover:text-yellow-700">
+                                {rider.display_name}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-3 text-slate-600">{humanize(rider.role)}</td>
+                            <td className="px-4 py-3 text-slate-900">{rider.overall ?? '—'}</td>
+                            <td className="px-4 py-3 text-slate-700">{rider.potential ?? '—'}</td>
+                            <td className="px-4 py-3 text-slate-700">
+                              {rider.development_8w > 0 ? '+' : ''}{formatNumber(rider.development_8w)}
+                            </td>
+                            <td className="px-4 py-3 text-slate-700">{rider.fatigue ?? 0}</td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
@@ -2005,7 +1577,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <div className="flex items-start gap-3">
                   <Settings2 size={20} className="mt-0.5 text-yellow-600" />
                   <div>
-                    <h2 className="text-xl font-extrabold text-slate-950">{t('templates.title')}</h2>
+                    <h2 className="text-xl font-semibold text-slate-950">{t('templates.title')}</h2>
                     <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-600">
                       {t('templates.description')}
                     </p>
@@ -2015,9 +1587,9 @@ export default function PremiumCommandCenter(): JSX.Element {
 
               <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
                 <Card className="p-5">
-                  <div className="font-bold text-slate-950">{t('templates.create')}</div>
+                  <div className="font-semibold text-slate-950">{t('templates.create')}</div>
 
-                  <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                  <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                     {t('templates.type')}
                   </label>
                   <select
@@ -2031,7 +1603,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                     <option value="training">{t('templates.training')}</option>
                   </select>
 
-                  <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">
+                  <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                     {t('templates.name')}
                   </label>
                   <input
@@ -2044,7 +1616,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                   {templateType === 'race_strategy' ? (
                     <div className="mt-4 grid gap-3">
                       <label>
-                        <span className="text-xs font-bold text-slate-500">{t('templates.terrainMatch')}</span>
+                        <span className="text-xs font-semibold text-slate-500">{t('templates.terrainMatch')}</span>
                         <select value={raceTerrain} onChange={event => setRaceTerrain(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
                           <option value="all">{t('values.all')}</option>
                           <option value="flat">{t('values.flat')}</option>
@@ -2054,7 +1626,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                         </select>
                       </label>
                       <label>
-                        <span className="text-xs font-bold text-slate-500">{t('templates.objective')}</span>
+                        <span className="text-xs font-semibold text-slate-500">{t('templates.objective')}</span>
                         <select value={raceObjective} onChange={event => setRaceObjective(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
                           <option value="balanced">{t('values.balanced')}</option>
                           <option value="stage_win">{t('values.stage_win')}</option>
@@ -2063,7 +1635,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                         </select>
                       </label>
                       <label>
-                        <span className="text-xs font-bold text-slate-500">{t('strategy.teamStrategy')}</span>
+                        <span className="text-xs font-semibold text-slate-500">{t('strategy.teamStrategy')}</span>
                         <select value={raceStrategy} onChange={event => setRaceStrategy(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
                           <option value="balanced">{t('values.balanced')}</option>
                           <option value="sprint_control">{t('values.sprint_control')}</option>
@@ -2072,7 +1644,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                         </select>
                       </label>
                       <label>
-                        <span className="text-xs font-bold text-slate-500">{t('templates.risk')}</span>
+                        <span className="text-xs font-semibold text-slate-500">{t('templates.risk')}</span>
                         <select value={raceRisk} onChange={event => setRaceRisk(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
                           <option value="conservative">{t('values.conservative')}</option>
                           <option value="normal">{t('values.normal')}</option>
@@ -2085,7 +1657,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                   {templateType === 'training' ? (
                     <div className="mt-4 grid gap-3">
                       <label>
-                        <span className="text-xs font-bold text-slate-500">{t('templates.focus')}</span>
+                        <span className="text-xs font-semibold text-slate-500">{t('templates.focus')}</span>
                         <select value={trainingFocus} onChange={event => setTrainingFocus(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
                           <option value="general">{t('values.general')}</option>
                           <option value="sprint">{t('values.sprint')}</option>
@@ -2096,7 +1668,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                         </select>
                       </label>
                       <label>
-                        <span className="text-xs font-bold text-slate-500">{t('templates.intensity')}</span>
+                        <span className="text-xs font-semibold text-slate-500">{t('templates.intensity')}</span>
                         <select value={trainingIntensity} onChange={event => setTrainingIntensity(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
                           <option value="recovery">{t('values.recovery')}</option>
                           <option value="light">{t('values.light')}</option>
@@ -2109,7 +1681,7 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                   <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
                     {t('templates.equipmentNote')}
-                    <a href="#/dashboard/equipment" className="ml-1 font-bold underline">{t('templates.openEquipment')}</a>
+                    <a href="#/dashboard/equipment" className="ml-1 font-semibold underline">{t('templates.openEquipment')}</a>
                   </div>
 
                   <button
@@ -2132,7 +1704,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                       void saveTemplate(templateType, templateName, payload)
                       setTemplateName('')
                     }}
-                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40"
+                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                   >
                     <Save size={15} />
                     {t('templates.save')}
@@ -2140,7 +1712,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                 </Card>
 
                 <Card className="p-5">
-                  <div className="font-bold text-slate-950">{t('templates.saved')}</div>
+                  <div className="font-semibold text-slate-950">{t('templates.saved')}</div>
                   <div className="mt-4 space-y-2">
                     {templates.length === 0 ? (
                       <div className="text-sm text-slate-500">{t('templates.noneSaved')}</div>
@@ -2151,7 +1723,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                           className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
                         >
                           <div className="min-w-0">
-                            <div className="font-bold text-slate-900">{template.name}</div>
+                            <div className="font-semibold text-slate-900">{template.name}</div>
                             <div className="mt-1 text-xs text-slate-500">
                               {humanize(template.template_type)}
                             </div>
@@ -2182,7 +1754,7 @@ export default function PremiumCommandCenter(): JSX.Element {
 
               <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
                 <Card className="p-5">
-                  <div className="flex items-center gap-2 font-bold text-slate-950">
+                  <div className="flex items-center gap-2 font-semibold text-slate-950">
                     <Zap size={16} className="text-yellow-600" />
                     {t('templates.createRule')}
                   </div>
@@ -2190,7 +1762,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                     {t('templates.ruleExample')}
                   </p>
 
-                  <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">{t('templates.ruleName')}</label>
+                  <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">{t('templates.ruleName')}</label>
                   <input
                     value={automationName}
                     onChange={event => setAutomationName(event.target.value)}
@@ -2198,7 +1770,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                     placeholder={t('templates.rulePlaceholder')}
                   />
 
-                  <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-slate-500">{t('templates.template')}</label>
+                  <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">{t('templates.template')}</label>
                   <select
                     value={automationTemplateId}
                     onChange={event => setAutomationTemplateId(event.target.value)}
@@ -2216,7 +1788,7 @@ export default function PremiumCommandCenter(): JSX.Element {
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <label>
-                      <span className="text-xs font-bold text-slate-500">{t('templates.matchField')}</span>
+                      <span className="text-xs font-semibold text-slate-500">{t('templates.matchField')}</span>
                       <select
                         value={automationMatchKey}
                         onChange={event => setAutomationMatchKey(event.target.value)}
@@ -2229,7 +1801,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                       </select>
                     </label>
                     <label>
-                      <span className="text-xs font-bold text-slate-500">{t('templates.equals')}</span>
+                      <span className="text-xs font-semibold text-slate-500">{t('templates.equals')}</span>
                       <input
                         value={automationMatchValue}
                         onChange={event => setAutomationMatchValue(event.target.value)}
@@ -2242,7 +1814,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                     type="button"
                     disabled={!automationName.trim() || !automationTemplateId}
                     onClick={() => void saveAutomationRule()}
-                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40"
+                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
                   >
                     <Zap size={15} />
                     {t('templates.saveRule')}
@@ -2250,7 +1822,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                 </Card>
 
                 <Card className="p-5">
-                  <div className="font-bold text-slate-950">{t('templates.rules')}</div>
+                  <div className="font-semibold text-slate-950">{t('templates.rules')}</div>
                   <div className="mt-4 space-y-2">
                     {automationRules.length === 0 ? (
                       <div className="text-sm text-slate-500">{t('templates.noRules')}</div>
@@ -2262,8 +1834,8 @@ export default function PremiumCommandCenter(): JSX.Element {
                         >
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <div className="font-bold text-slate-900">{rule.name}</div>
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                              <div className="font-semibold text-slate-900">{rule.name}</div>
+                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
                                 {rule.is_enabled ? t('templates.enabled') : t('templates.disabled')}
                               </span>
                             </div>
