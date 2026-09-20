@@ -200,7 +200,28 @@
     "eightWeekDevelopment": "Desarrollo de 8 semanas",
     "overallChange": "Cambio de valoración general",
     "fatigue": "Fatiga",
-    "availability": "Disponibilidad"
+    "availability": "Disponibilidad",
+    "coverage": "Cobertura del historial",
+    "avgOverall": "Media general",
+    "avgPotential": "Potencial medio",
+    "totalEightWeek": "Desarrollo total en 8 semanas",
+    "improvingRiders": "Corredores en progreso",
+    "ofRiders": "de {{count}} corredores",
+    "avgFatigue": "Fatiga media",
+    "leaders": "Líderes de desarrollo",
+    "leadersHint": "Mayores mejoras registradas durante las últimas ocho semanas.",
+    "potentialVsOverall": "Potencial vs nivel actual",
+    "potentialVsOverallHint": "Corredores con mayor margen de desarrollo.",
+    "prospectWatch": "Seguimiento de promesas",
+    "noWatchItems": "Ningún corredor cumple ahora el umbral de seguimiento de promesas.",
+    "fatigueWatch": "Seguimiento de fatiga",
+    "noFatigueRisk": "Ningún corredor supera ahora el umbral de fatiga.",
+    "riderDetail": "Detalle de desarrollo",
+    "riderDetailHint": "Filtra la plantilla y revisa nivel actual, potencial y desarrollo registrado.",
+    "searchRiders": "Buscar corredores",
+    "allRoles": "Todos los roles",
+    "allStatuses": "Todos los estados",
+    "latestWeek": "Última semana"
   },
   "templates": {
     "title": "Plantillas y Smart Prefill",
@@ -309,7 +330,10 @@
       "failed": "No se pudo comprobar Premium Smart Prefill.",
       "checking": "Comprobando Smart Prefill…",
       "smartPrefill": "Smart Prefill",
-      "templateFallback": "Plantilla de entrenamiento"
+      "templateFallback": "Plantilla de entrenamiento",
+      "useDefaultsForAll": "Usar valores por defecto para todos",
+      "defaultsRestored": "Se eliminaron las excepciones de corredor y la automatización del Head Coach. Todos los corredores usan ahora el entrenamiento predeterminado del equipo.",
+      "defaultsRestoreFailed": "No se pudo restaurar el entrenamiento predeterminado del equipo para todos los corredores."
     },
     "equipment": {
       "title": "Plantillas Premium de equipamiento",
