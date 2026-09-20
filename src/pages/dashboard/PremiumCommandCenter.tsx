@@ -1277,8 +1277,8 @@ export default function PremiumCommandCenter(): JSX.Element {
                   value={workspace.season_planner.reduce((sum, row) => sum + row.saved_stage_plans, 0)}
                 />
                 <StatCard
-                  label={t('season.stages')}
-                  value={workspace.season_planner.reduce((sum, row) => sum + row.total_stages, 0)}
+                  label={t('season.sponsorTargets')}
+                  value={workspace.season_planner.reduce((sum, row) => sum + row.sponsor_target_count, 0)}
                 />
               </div>
 
@@ -1415,7 +1415,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                     </Link>
                   ))}
                   {workspace.transfer_command.shortlist.length === 0 ? (
-                    <div className="px-5 py-5 text-sm text-slate-500">{t('transfers.noShortlist')}</div>
+                    <div className="px-5 py-5 text-sm text-slate-500">{t('transfers.emptyShortlist')}</div>
                   ) : null}
                 </div>
               </Card>
@@ -1442,27 +1442,23 @@ export default function PremiumCommandCenter(): JSX.Element {
                 </div>
               </Card>
 
-              <div className="grid gap-3 sm:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <StatCard label={t('summary.cashBalance')} value={formatCurrency(workspace.finance.balance)} />
                 <StatCard label={t('summary.weeklyNet')} value={formatCurrency(workspace.finance.weekly_net)} />
-                <StatCard label={t('finance.weeklyIncome')} value={formatCurrency(workspace.finance.weekly_income)} />
-                <StatCard label={t('finance.weeklyExpenses')} value={formatCurrency(workspace.finance.weekly_expenses)} />
               </div>
 
               <Card className="p-5">
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <div className="text-xs font-medium text-slate-500">{t('finance.riderWages')}</div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(workspace.finance.rider_wages_weekly)}</div>
+                    <div className="text-sm font-medium text-slate-900">{t('finance.saveTitle')}</div>
+                    <div className="mt-1 text-sm text-slate-500">{t('finance.description')}</div>
                   </div>
-                  <div>
-                    <div className="text-xs font-medium text-slate-500">{t('finance.staffWages')}</div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(workspace.finance.staff_wages_weekly)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs font-medium text-slate-500">{t('finance.sponsorIncome')}</div>
-                    <div className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(workspace.finance.active_sponsor_monthly_income)}</div>
-                  </div>
+                  <Link
+                    to="/dashboard/finance"
+                    className="text-sm font-medium text-slate-700 hover:text-yellow-700"
+                  >
+                    {t('finance.title')}
+                  </Link>
                 </div>
               </Card>
             </div>
