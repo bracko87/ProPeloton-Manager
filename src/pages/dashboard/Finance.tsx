@@ -610,10 +610,18 @@ export default function FinancePage(): JSX.Element {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate('/dashboard/premium-center?tab=finance')}
+            onClick={() =>
+              navigate(
+                tab === 'sponsors'
+                  ? '/dashboard/premium-center?tab=sponsors'
+                  : '/dashboard/premium-center?tab=finance',
+              )
+            }
             className="rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm font-semibold text-yellow-900 hover:bg-yellow-100"
           >
-            Premium Financial Simulator
+            {tab === 'sponsors'
+              ? 'Premium Sponsor Intelligence'
+              : 'Premium Financial Simulator'}
           </button>
           <button
             type="button"
