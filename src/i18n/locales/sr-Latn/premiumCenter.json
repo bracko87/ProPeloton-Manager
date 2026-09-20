@@ -337,7 +337,17 @@
       "attentionItems_one": "{{count}} stavka za pažnju",
       "attentionItems_other": "{{count}} stavke za pažnju",
       "openItem": "Otvori",
-      "noUrgent": "Trenutno nema hitnih upravljačkih stavki koje čekaju pažnju."
+      "noUrgent": "Trenutno nema hitnih upravljačkih stavki koje čekaju pažnju.",
+      "freeCoreView": "Free osnovni prikaz",
+      "squadIntelligenceTitle": "Premium analiza tima",
+      "squadIntelligenceBody": "Fitness, moral, spremnost, forma i pritisak ugovora grupisani su ovde za Premium menadžere.",
+      "unlockTools": "Otključaj Premium alate",
+      "financeLockedBody": "Premium dodaje detalje prihoda od sponzora, ponavljajuće troškove politika, prognoze putovanja, inteligenciju transakcija i pune grafikone novčanog toka.",
+      "incomeExpensesGateDesc": "Otključaj nedeljne, mesečne i sezonske operativne grafikone sa jasnim pregledom prihoda, rashoda i neto salda.",
+      "operationsGateDesc": "Otključaj pregled trenutnih poslova, procesa u toku, operativnih statusa i aktivnih klupskih tokova rada.",
+      "honoursGateDesc": "Otključaj praktičan istorijski pregled pet najvećih rezultata u istoriji kluba.",
+      "seasonCoreBody": "Osnovni sezonski rezultati su Free. Premium dodaje broj trka, međunarodne poene, dresove i dublji sezonski kontekst.",
+      "seasonAnalytics": "Pogledaj Premium sezonsku analitiku"
     },
     "riderProfile": {
       "title": "Premium Rider Development Lab",
