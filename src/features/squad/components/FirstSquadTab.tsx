@@ -892,7 +892,8 @@ function SquadListViewPicker({
           className="absolute right-0 z-30 mt-2 w-[260px] overflow-visible rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
         >
           {SQUAD_LIST_VIEW_OPTIONS.map((option) => {
-            const isLocked = !isPremium && option.value !== 'general'
+            const isLocked =
+              !isPremium && option.value !== 'general' && option.value !== 'form'
             const isSelected = option.value === value
 
             return (
@@ -990,7 +991,9 @@ export default function FirstSquadTab({
 }: FirstSquadTabProps) {
   const { t } = useTranslation('squad')
   const activeListView: SquadListView =
-    isPremium && !isPremiumLoading ? listView : 'general'
+    !isPremiumLoading && (isPremium || listView === 'general' || listView === 'form')
+      ? listView
+      : 'general'
 
   const {
     activitiesByRiderId: currentActivityByRiderId,
@@ -1432,13 +1435,20 @@ export default function FirstSquadTab({
 
           {isPremiumLoading ? (
             <PremiumSectionLoading className="mt-6" />
-          ) : isPremium ? (
+          ) : (
             <div className="mt-6 rounded-lg bg-white p-4 shadow">
-              <div className="mb-4">
-                <div className="text-base font-semibold text-gray-800">{t('healthReport.title')}</div>
-                <div className="mt-1 text-sm text-gray-500">
-                  {t('healthReport.subtitle')}
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-base font-semibold text-gray-800">{t('healthReport.title')}</div>
+                  <div className="mt-1 text-sm text-gray-500">
+                    {t('healthReport.subtitle')}
+                  </div>
                 </div>
+                {!isPremium ? (
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                    Free core health
+                  </span>
+                ) : null}
               </div>
 
               {healthOverviewDisplayRows.length === 0 ? (
@@ -1468,43 +1478,25 @@ export default function FirstSquadTab({
                               <span className="font-medium text-gray-800">{row.full_name}</span>
                             </div>
                           </td>
-
                           <td className="py-3 pr-4">
                             <RiderStatusBadge
-                              status={
-                                row.availability_status ?? getDefaultRiderAvailabilityStatus()
-                              }
+                              status={row.availability_status ?? getDefaultRiderAvailabilityStatus()}
                               compact
                             />
                           </td>
-
                           <td className="py-3 pr-4 text-gray-700">
                             {formatHealthCaseCode(row.case_code) ?? 'Fatigue'}
                           </td>
-
                           <td className="py-3 pr-4 text-gray-700">
                             {formatCaseStageLabel(row.case_status) ?? '—'}
                           </td>
-
                           <td className="py-3 pr-4 text-gray-700">
                             {formatSeverityLabel(row.severity) ?? '—'}
                           </td>
-
                           <td className="py-3 pr-4 text-gray-700">{row.fatigue}/100</td>
-
                           <td className="py-3 text-gray-700">
                             {row.expected_full_recovery_on
-                              ? `${formatShortGameDate(row.expected_full_recovery_on)}${
-                                  getDaysRemaining(
-                                    row.expected_full_recovery_on,
-                                    gameDate ?? null
-                                  ) !== null
-                                    ? ` (${getDaysRemaining(
-                                        row.expected_full_recovery_on,
-                                        gameDate ?? null
-                                      )}d)`
-                                    : ''
-                                }`
+                              ? `${formatShortGameDate(row.expected_full_recovery_on)}${getDaysRemaining(row.expected_full_recovery_on, gameDate ?? null) !== null ? ` (${getDaysRemaining(row.expected_full_recovery_on, gameDate ?? null)}d)` : ''}`
                               : '—'}
                           </td>
                         </tr>
@@ -1514,12 +1506,6 @@ export default function FirstSquadTab({
                 </div>
               )}
             </div>
-          ) : (
-            <PremiumLock
-              className="mt-6"
-              title={t('healthReport.lockedTitle')}
-              description={t('healthReport.lockedDescription')}
-            />
           )}
 
           {isPremiumLoading ? (
