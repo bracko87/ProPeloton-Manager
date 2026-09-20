@@ -9829,6 +9829,8 @@ type RaceReplayCoinAccess = {
   coin_cost: number
   coin_balance: number
   has_coin_unlock: boolean
+  has_premium_access: boolean
+  has_replay_access: boolean
 }
 
 function normalizeRaceReplayCoinAccess(data: unknown): RaceReplayCoinAccess | null {
@@ -9848,6 +9850,14 @@ function normalizeRaceReplayCoinAccess(data: unknown): RaceReplayCoinAccess | nu
       row.has_coin_unlock === true ||
       row.has_coin_unlock === 'true' ||
       row.has_coin_unlock === 1,
+    has_premium_access:
+      row.has_premium_access === true ||
+      row.has_premium_access === 'true' ||
+      row.has_premium_access === 1,
+    has_replay_access:
+      row.has_replay_access === true ||
+      row.has_replay_access === 'true' ||
+      row.has_replay_access === 1,
   }
 }
 
@@ -9938,7 +9948,12 @@ function StageReplayAccessCard({
   )
   const userParticipated = canViewRaceReplay === true || localParticipationAccess
   const hasCoinReplayUnlock = coinAccess?.has_coin_unlock === true
-  const hasReplayAccess = userParticipated || hasCoinReplayUnlock
+  const hasPremiumReplayAccess = coinAccess?.has_premium_access === true
+  const hasReplayAccess =
+    userParticipated ||
+    hasCoinReplayUnlock ||
+    hasPremiumReplayAccess ||
+    coinAccess?.has_replay_access === true
   const replayAvailable = replayAvailability.status === 'available'
   const stageWeatherCanceled = isStageWeatherCanceled(stage)
 
@@ -10086,9 +10101,13 @@ function StageReplayAccessCard({
           ? t('replay.temporaryUnavailable')
           : userParticipated
             ? t('replay.availableForRace', { race: race?.name ?? '—' })
-            : hasCoinReplayUnlock
-              ? t('replay.availableForRace', { race: race?.name ?? '—' })
-              : t('replay.unlockDescription', { coins: coinAccess?.coin_cost ?? 2 })
+            : hasPremiumReplayAccess
+              ? t('replay.premiumIncluded', {
+                  defaultValue: 'Premium includes access to this world-race replay.',
+                })
+              : hasCoinReplayUnlock
+                ? t('replay.availableForRace', { race: race?.name ?? '—' })
+                : t('replay.unlockDescription', { coins: coinAccess?.coin_cost ?? 2 })
 
   const replayOpensGameAtLabel = formatReplayGameDateTimeLabel(
     replayAvailability.replayOpensGameAt
@@ -10128,7 +10147,7 @@ function StageReplayAccessCard({
       {!stageWeatherCanceled &&
       replayAvailable &&
       !userParticipated &&
-      !hasCoinReplayUnlock ? (
+      !hasReplayAccess ? (
         <div className="mt-5 space-y-3">
           <button
             type="button"
@@ -10188,7 +10207,7 @@ function StageReplayAccessCard({
                 ? t('replay.watch')
                 : !hasReplayAccess
                   ? t('replay.unlockFor', { coins: coinAccess?.coin_cost ?? 2 })
-                  : t('replay.unavailable')}
+                  : t('replay.watch')}
       </button>
     </div>
   )
