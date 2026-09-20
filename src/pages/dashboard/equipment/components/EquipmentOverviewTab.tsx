@@ -8,7 +8,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '../../../../lib/supabase'
 import EquipmentSetupPresetsBox from './EquipmentSetupPresetsBox'
 import EquipmentOptionPreviewPopover from './EquipmentOptionPreviewPopover'
 import {
@@ -39,14 +38,6 @@ type DefaultSetupSelection = {
   groupset: string
   helmet: string
   shoes: string
-}
-
-type PremiumEquipmentTemplate = {
-  id: string
-  name: string
-  payload_json: Partial<DefaultSetupSelection> & {
-    setup_label?: string
-  }
 }
 
 type StatCardProps = {
@@ -186,11 +177,6 @@ export default function EquipmentOverviewTab({
   const [loading, setLoading] = useState(true)
   const [savingSetup, setSavingSetup] = useState(false)
   const [setupMessage, setSetupMessage] = useState<string | null>(null)
-  const [premiumTemplates, setPremiumTemplates] = useState<PremiumEquipmentTemplate[]>([])
-  const [premiumTemplateName, setPremiumTemplateName] = useState('')
-  const [premiumTemplateBusy, setPremiumTemplateBusy] = useState(false)
-  const [showPremiumEquipmentTools, setShowPremiumEquipmentTools] = useState(false)
-  const [premiumPrefillTerrain, setPremiumPrefillTerrain] = useState('hilly')
   const [error, setError] = useState<string | null>(null)
 
   function formatEquipmentCategoryLabel(category: string, fallback?: string): string {
@@ -271,132 +257,6 @@ export default function EquipmentOverviewTab({
     }
   }
 
-  async function loadPremiumEquipmentTemplates(): Promise<void> {
-    if (!equipmentAccess?.is_premium) {
-      setPremiumTemplates([])
-      return
-    }
-
-    const { data, error: templateError } = await supabase.rpc(
-      'premium_list_templates_v1',
-      {
-        p_club_id: clubId,
-        p_template_type: 'equipment',
-      },
-    )
-
-    if (templateError) {
-      console.warn('Could not load Premium equipment templates:', templateError)
-      return
-    }
-
-    setPremiumTemplates((data ?? []) as PremiumEquipmentTemplate[])
-  }
-
-  function applyPremiumEquipmentPayload(
-    payload: PremiumEquipmentTemplate['payload_json'],
-    label: string,
-  ): void {
-    const nextSelection = { ...selection }
-
-    setupCategories.forEach(category => {
-      const requested = payload[category.equipment_category]
-      if (
-        typeof requested === 'string' &&
-        requested &&
-        category.options.some(option => option.catalog_item_id === requested)
-      ) {
-        nextSelection[category.equipment_category] = requested
-      }
-    })
-
-    setSelection(nextSelection)
-    setSetupMessage(
-      t('premiumCenter:integrations.equipment.applied', { name: label }),
-    )
-  }
-
-  async function savePremiumEquipmentTemplate(): Promise<void> {
-    if (!equipmentAccess?.is_premium || !premiumTemplateName.trim()) return
-
-    setPremiumTemplateBusy(true)
-    setError(null)
-
-    try {
-      const { error: saveError } = await supabase.rpc(
-        'premium_save_template_v1',
-        {
-          p_club_id: clubId,
-          p_template_id: null,
-          p_template_type: 'equipment',
-          p_name: premiumTemplateName.trim(),
-          p_payload_json: {
-            ...selection,
-            setup_label: premiumTemplateName.trim(),
-          },
-          p_is_default: false,
-        },
-      )
-
-      if (saveError) throw saveError
-
-      setPremiumTemplateName('')
-      await loadPremiumEquipmentTemplates()
-      setSetupMessage(t('premiumCenter:integrations.equipment.saved'))
-    } catch (templateError) {
-      setError(
-        templateError instanceof Error
-          ? templateError.message
-          : t('premiumCenter:integrations.equipment.saveFailed'),
-      )
-    } finally {
-      setPremiumTemplateBusy(false)
-    }
-  }
-
-  async function applyEquipmentSmartPrefill(): Promise<void> {
-    if (!equipmentAccess?.is_premium) return
-
-    setPremiumTemplateBusy(true)
-    setError(null)
-
-    try {
-      const { data, error: matchError } = await supabase.rpc(
-        'premium_match_automation_template_v1',
-        {
-          p_club_id: clubId,
-          p_rule_type: 'equipment_prefill',
-          p_context: {
-            terrain_type: premiumPrefillTerrain,
-          },
-        },
-      )
-
-      if (matchError) throw matchError
-
-      const match = (data ?? {}) as Record<string, any>
-      if (match.matched !== true) {
-        setSetupMessage(
-          t('premiumCenter:integrations.equipment.noRule', { terrain: premiumPrefillTerrain }),
-        )
-        return
-      }
-
-      applyPremiumEquipmentPayload(
-        (match.payload_json ?? {}) as PremiumEquipmentTemplate['payload_json'],
-        String(match.template_name ?? t('premiumCenter:integrations.equipment.templateFallback')),
-      )
-    } catch (prefillError) {
-      setError(
-        prefillError instanceof Error
-          ? prefillError.message
-          : t('premiumCenter:integrations.equipment.prefillFailed'),
-      )
-    } finally {
-      setPremiumTemplateBusy(false)
-    }
-  }
-
   async function handleSaveDefaultSetup(): Promise<void> {
     setSavingSetup(true)
     setError(null)
@@ -427,10 +287,6 @@ export default function EquipmentOverviewTab({
   useEffect(() => {
     void loadDashboard()
   }, [clubId])
-
-  useEffect(() => {
-    void loadPremiumEquipmentTemplates()
-  }, [clubId, equipmentAccess?.is_premium])
 
   const setupCategories = useMemo(
     () => setupOptions?.categories ?? [],
@@ -557,122 +413,6 @@ export default function EquipmentOverviewTab({
               {t('overview.defaultSetupDescription')}
             </p>
           </div>
-
-          {equipmentAccess?.is_premium ? (
-            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium text-slate-800">
-                      {t('premiumCenter:integrations.equipment.title')}
-                    </span>
-                    <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-yellow-800">
-                      Premium
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      {t('premiumCenter:integrations.equipment.savedCount', {
-                        count: premiumTemplates.length,
-                      })}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                    {t('premiumCenter:integrations.equipment.description')}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowPremiumEquipmentTools(current => !current)}
-                  className="shrink-0 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
-                >
-                  {showPremiumEquipmentTools
-                    ? t('premiumCenter:integrations.equipment.hideTools')
-                    : t('premiumCenter:integrations.equipment.openTools')}
-                </button>
-              </div>
-
-              {showPremiumEquipmentTools ? (
-                <div className="mt-3 border-t border-slate-200 pt-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-xs font-medium text-slate-700">
-                      {t('premiumCenter:integrations.equipment.savedSetups')}
-                    </div>
-                    <a
-                      href="#/dashboard/premium-center?tab=templates"
-                      className="text-xs font-medium text-slate-600 hover:text-slate-900 hover:underline"
-                    >
-                      {t('premiumCenter:integrations.equipment.manage')}
-                    </a>
-                  </div>
-
-                  {premiumTemplates.length > 0 ? (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {premiumTemplates.map(template => (
-                        <button
-                          type="button"
-                          key={template.id}
-                          onClick={() =>
-                            applyPremiumEquipmentPayload(
-                              template.payload_json ?? {},
-                              template.name,
-                            )
-                          }
-                          className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-400"
-                        >
-                          {template.name}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="mt-2 text-xs text-slate-500">
-                      {t('premiumCenter:integrations.equipment.none')}
-                    </div>
-                  )}
-
-                  <div className="mt-3 grid gap-2 xl:grid-cols-[minmax(0,1fr)_auto]">
-                    <div className="flex min-w-0 gap-2">
-                      <input
-                        value={premiumTemplateName}
-                        onChange={event => setPremiumTemplateName(event.target.value)}
-                        placeholder={t('premiumCenter:integrations.equipment.namePlaceholder')}
-                        className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => void savePremiumEquipmentTemplate()}
-                        disabled={premiumTemplateBusy || !premiumTemplateName.trim()}
-                        className="rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white disabled:opacity-40"
-                      >
-                        {t('premiumCenter:integrations.equipment.saveDraft')}
-                      </button>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <select
-                        value={premiumPrefillTerrain}
-                        onChange={event => setPremiumPrefillTerrain(event.target.value)}
-                        className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs"
-                      >
-                        <option value="flat">{t('premiumCenter:values.flat')}</option>
-                        <option value="hilly">{t('premiumCenter:values.hilly')}</option>
-                        <option value="mountain">{t('premiumCenter:values.mountain')}</option>
-                        <option value="cobbles">{t('premiumCenter:values.cobbles')}</option>
-                        <option value="time_trial">{t('premiumCenter:values.time_trial')}</option>
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => void applyEquipmentSmartPrefill()}
-                        disabled={premiumTemplateBusy}
-                        className="rounded-md border border-yellow-300 bg-yellow-50 px-2.5 py-1.5 text-xs font-medium text-yellow-900 hover:bg-yellow-100 disabled:opacity-40"
-                      >
-                        {t('premiumCenter:integrations.equipment.smartPrefill')}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
 
           {setupMessage ? (
             <div className="mt-3 rounded border border-green-200 bg-green-50 p-2 text-xs text-green-700">
