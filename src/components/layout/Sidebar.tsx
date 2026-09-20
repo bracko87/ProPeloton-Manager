@@ -20,6 +20,7 @@ import {
   LogOut,
   ClipboardCheck,
   ShieldCheck,
+  Activity,
   Bug,
   Star,
   Mail,
@@ -125,9 +126,78 @@ export default function Sidebar({
   const navigate = useNavigate()
   const location = useLocation()
   const { isAdmin } = useAppAdmin()
+  const [raceOperationsProblems, setRaceOperationsProblems] = useState(0)
   const [unreadBugReports, setUnreadBugReports] = useState(0)
   const [pendingPlayerReviews, setPendingPlayerReviews] = useState(0)
   const [unreadContactMessages, setUnreadContactMessages] = useState(0)
+
+  useEffect(() => {
+    let alive = true
+
+    if (!isAdmin) {
+      setRaceOperationsProblems(0)
+      return () => {
+        alive = false
+      }
+    }
+
+    const refreshRaceOperationsProblems = async (): Promise<void> => {
+      const { data, error } = await supabase.rpc(
+        'get_admin_race_operations_problem_count_v1',
+      )
+
+      if (!alive) return
+
+      if (error) {
+        console.warn('Could not load Race Operations problem count:', error)
+        return
+      }
+
+      setRaceOperationsProblems(Number(data ?? 0))
+    }
+
+    void refreshRaceOperationsProblems()
+
+    const channel = supabase
+      .channel('admin-race-operations-sidebar')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'race_operations_stage_status_v1',
+        },
+        () => {
+          void refreshRaceOperationsProblems()
+        },
+      )
+      .subscribe()
+
+    const intervalId = window.setInterval(() => {
+      void refreshRaceOperationsProblems()
+    }, 60_000)
+
+    const handleRefresh = (): void => {
+      void refreshRaceOperationsProblems()
+    }
+
+    window.addEventListener('focus', handleRefresh)
+    window.addEventListener(
+      'admin-race-operations-count-refresh',
+      handleRefresh,
+    )
+
+    return () => {
+      alive = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', handleRefresh)
+      window.removeEventListener(
+        'admin-race-operations-count-refresh',
+        handleRefresh,
+      )
+      void supabase.removeChannel(channel)
+    }
+  }, [isAdmin])
 
   useEffect(() => {
     let alive = true
@@ -442,6 +512,50 @@ export default function Sidebar({
                     </div>
                     <div className="mt-1 text-xs leading-tight text-white/55">
                       Private website and game statistics
+                    </div>
+                  </div>
+                )}
+              </NavLink>
+
+              <NavLink
+                to="/dashboard/admin/race-operations"
+                className={`${linkClass(
+                  location.pathname === '/dashboard/admin/race-operations' ||
+                    location.pathname.startsWith(
+                      '/dashboard/admin/race-operations/',
+                    ),
+                )} relative`}
+              >
+                <div className="relative mt-0.5 flex-shrink-0">
+                  <Activity size={18} />
+
+                  {collapsed && raceOperationsProblems > 0 ? (
+                    <span className="absolute -right-2 -top-2 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold leading-[18px] text-white shadow-sm">
+                      {raceOperationsProblems > 99
+                        ? '99+'
+                        : raceOperationsProblems}
+                    </span>
+                  ) : null}
+                </div>
+
+                {!collapsed && (
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-base font-semibold leading-tight">
+                        Race Operations
+                      </div>
+
+                      {raceOperationsProblems > 0 ? (
+                        <span className="inline-flex min-w-[22px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-extrabold text-white shadow-sm">
+                          {raceOperationsProblems > 99
+                            ? '99+'
+                            : raceOperationsProblems}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-1 text-xs leading-tight text-white/55">
+                      Race calculation and replay monitor
                     </div>
                   </div>
                 )}
