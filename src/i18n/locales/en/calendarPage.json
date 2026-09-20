@@ -86,7 +86,7 @@
     "holidays": "Holidays",
     "title": "Race filters",
     "premium": "Premium intelligence",
-    "description": "Filter this month by country, category, format, status, and sponsor goals.",
+    "description": "Filter this month by country, category, format and status. Premium additionally provides sponsor-goal intelligence.",
     "clear": "Clear",
     "checkingPremium": "Checking Premium…",
     "hide": "Hide filters",
