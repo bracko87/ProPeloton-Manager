@@ -24,6 +24,7 @@ import {
   Bug,
   Star,
   Mail,
+  Sparkles,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -50,6 +51,12 @@ const navItems: NavItem[] = [
     labelKey: 'overview',
     descriptionKey: 'descriptions.overview',
     icon: Home,
+  },
+  {
+    to: '/dashboard/premium-center',
+    labelKey: 'premiumCenter',
+    descriptionKey: 'descriptions.premiumCenter',
+    icon: Sparkles,
   },
   {
     to: '/dashboard/squad',
