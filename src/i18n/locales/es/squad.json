@@ -27,9 +27,9 @@
     "skillsView": "Vista de habilidades",
     "formDevelopment": "Forma y desarrollo",
     "checkingPremium": "Comprobando el acceso Premium...",
-    "advancedPremium": "Las vistas avanzadas de los equipos requieren Premium.",
+    "advancedPremium": "Las vistas Financial y Skills requieren Premium. General, Form y la información básica de salud son Free.",
     "viewPremium": "Ver Premium",
-    "onlyPremium": "Sólo para usuarios de Premium",
+    "onlyPremium": "Las vistas Financial y Skills son Premium",
     "premiumOnly": "Sólo Premium"
   },
   "columns": {
