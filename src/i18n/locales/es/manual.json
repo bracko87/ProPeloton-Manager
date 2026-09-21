@@ -1590,7 +1590,12 @@
         "Los ciclistas heridos o enfermos requieren recuperación médica en lugar de una selección normal de carreras.",
         "No está totalmente en forma significa que el ciclista puede correr pero no está en la disposición ideal.",
         "Los calendarios de entrenamiento duro y carrera pesada aumentan el riesgo de sobrecarga.",
-        "El personal médico y los sistemas de recuperación pueden mejorar la gestión de los problemas de salud."
+        "El personal médico y los sistemas de recuperación pueden mejorar la gestión de los problemas de salud.",
+        "Una caída en carrera puede terminar sin lesión duradera, con una lesión leve, moderada o grave.",
+        "Las lesiones leves de carrera permanecen durante un periodo corto como caso médico. El corredor sigue siendo seleccionable, pero no está totalmente en forma y puede perder ritmo competitivo mientras se recupera.",
+        "Las lesiones moderadas también permiten seleccionar al corredor, pero sus efectos médicos y de recuperación son mayores y pueden afectar a las siguientes etapas o días de carrera.",
+        "Las lesiones graves provocan una indisponibilidad real. El corredor puede abandonar la etapa actual y quedar bloqueado para etapas o carreras posteriores hasta recuperarse.",
+        "Las consecuencias médicas de la carrera se guardan en el estado real de la plantilla después de la etapa; no son solo parte de la repetición."
       ],
       "facts": [
         {
@@ -1792,7 +1797,8 @@
         "Los planes individuales anulan el valor predeterminado del equipo cuando un ciclista necesita trabajar como especialista.",
         "La intensidad dura aumenta el estrés de entrenamiento y el riesgo de fatiga.",
         "La intensidad de recuperación es útil alrededor de bloques de carreras duras.",
-        "La formación debe seguir el papel del ciclista y los objetivos del calendario."
+        "La formación debe seguir el papel del ciclista y los objetivos del calendario.",
+        "La salud y la carga de carrera también importan: un corredor lesionado o no totalmente en forma puede perder ritmo competitivo o necesitar trabajo más suave aunque el plan normal de entrenamiento fuese adecuado."
       ],
       "facts": [
         {
@@ -1953,7 +1959,8 @@
         "El desgaste significa condición ha caído lo suficiente como para que el artículo necesite atención. Los artículos usados pueden reducir la fiabilidad y no deben ser ignorados antes de las carreras importantes.",
         "Las cotizaciones de reparación deben mostrar el coste antes de confirmar. El mánager debe comparar el coste de reparación con el valor del artículo y el coste de sustitución.",
         "La venta convierte un artículo de propiedad en efectivo cuando se permite la venta. El artículo deja inventario activo.",
-        "El descarte elimina un artículo sin una venta normal. Esto debe ser usado solamente para el engranaje que el club ya no necesita o no puede justificar el mantenimiento."
+        "El descarte elimina un artículo sin una venta normal. Esto debe ser usado solamente para el engranaje que el club ya no necesita o no puede justificar el mantenimiento.",
+        "El equipamiento que tus corredores usan realmente en una etapa pierde condición después de esa etapa. El desgaste está ligado al uso y a la distancia, por lo que competir repetidamente genera necesidades de reparación y sustitución."
       ],
       "facts": [
         {
@@ -2140,7 +2147,8 @@
         "Mobile Workshop proporciona soporte técnico durante carreras/viajes.",
         "La furgoneta médica proporciona apoyo médico adicional.",
         "Los activos asignados o bloqueados no deben ser reparados o vendidos hasta que sean liberados de la carrera/trabajo que los utiliza.",
-        "La condición debe ser verificada antes de las carreras importantes porque un activo disponible técnicamente puede estar todavía en mal estado."
+        "La condición debe ser verificada antes de las carreras importantes porque un activo disponible técnicamente puede estar todavía en mal estado.",
+        "Los activos de apoyo que se usan realmente en una carrera pueden perder condición después de la etapa. El uso repetido aumenta la necesidad de reparaciones y planificación de reemplazos."
       ],
       "facts": [
         {
@@ -2306,7 +2314,9 @@
         "El comentario describe ataques importantes, escisiones, persecuciones, subidas, sprints y eventos de finalización.",
         "El resultado de la etapa es sólo una parte de una carrera. GC, puntos, montaña, jóvenes y clasificación de equipos pueden cambiar después de cada etapa.",
         "Un ciclista puede tener una mala posición en la etapa, pero aún así lograr un objetivo táctico como puntos, puntos KOM o proteger a un líder.",
-        "Usa la reproducción/resultados como retroalimentación para tácticas futuras en lugar de cambiar la etapa ya finalizada."
+        "Usa la reproducción/resultados como retroalimentación para tácticas futuras en lugar de cambiar la etapa ya finalizada.",
+        "Las caídas, la fatiga y las consecuencias médicas mostradas en la repetición oficial forman parte del mismo cálculo de etapa. Al finalizar la etapa, las consecuencias persistentes pasan al estado real de la plantilla.",
+        "La repetición no crea un segundo resultado; explica la carrera que ya fue calculada."
       ],
       "facts": [
         {
@@ -3264,6 +3274,48 @@
       "relatedLinks": [
         "Mercado de personal",
         "Infraestructura"
+      ]
+    },
+    "race-engine-basics": {
+      "category": "Calendario y carreras",
+      "title": "Cómo se deciden los resultados de carrera",
+      "subtitle": "Qué tiene en cuenta el motor de carrera sin revelar fórmulas internas.",
+      "overview": "No existe un único valor que garantice la victoria. El cálculo oficial combina calidad del corredor, adecuación al recorrido, estado actual, preparación, táctica y lo que sucede dinámicamente durante la etapa.",
+      "facts": [
+        {
+          "label": "Factores del corredor",
+          "value": "Habilidades, rol, fatiga, ritmo competitivo, salud, moral y energía restante"
+        },
+        {
+          "label": "Factores de preparación",
+          "value": "Táctica de etapa, equipamiento, suministros, personal y activos de apoyo"
+        },
+        {
+          "label": "Factores de carrera",
+          "value": "Terreno, clima, grupos, ataques, persecución, escapadas, incidentes y tipo de llegada"
+        }
+      ],
+      "details": [
+        "El corredor con mayor valoración general no gana automáticamente. Las habilidades específicas importan de forma diferente en etapas llanas, quebradas, de montaña, adoquinadas y contrarreloj.",
+        "Fatiga, salud, ritmo competitivo y energía pueden hacer que dos corredores de nivel parecido rindan de forma muy distinta ese día.",
+        "Tu Plan de Etapa influye en cómo gastan energía los corredores y cómo reaccionan a la carrera. Los roles y tácticas pueden proteger a un líder, preparar un sprint, perseguir, atacar o buscar una escapada.",
+        "Equipamiento, suministros, personal y activos seleccionados pueden mejorar preparación, fiabilidad, recuperación o eficiencia cuando están disponibles y se usan.",
+        "La carrera sigue siendo dinámica. Las escapadas pueden triunfar o ser neutralizadas, los recursos de persecución pueden agotarse, los grupos pueden romperse y caídas o averías pueden cambiar el resultado.",
+        "La repetición y el resultado oficial proceden del mismo cálculo; la repetición explica el resultado guardado y no genera uno nuevo."
+      ],
+      "tips": [
+        "Elige corredores para el recorrido, no solo por su valoración general.",
+        "Llega a las carreras importantes con fatiga controlada y Planes de Etapa completos."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Preparación de carrera",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Calendario",
+          "to": "/dashboard/calendar"
+        }
       ]
     }
   }
