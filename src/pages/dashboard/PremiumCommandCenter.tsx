@@ -578,7 +578,7 @@ export default function PremiumCommandCenter(): JSX.Element {
   const [simHorizon, setSimHorizon] = useState(60)
   const [simName, setSimName] = useState('')
   const [sponsorLogoById, setSponsorLogoById] = useState<Record<string, string | null>>({})
-  const [templateSection, setTemplateSection] = useState<'race' | 'training' | 'automation'>('race')
+  const [templateSection, setTemplateSection] = useState<'race' | 'training' | 'finance' | 'automation'>('race')
 
   const [templateType, setTemplateType] = useState<PremiumTemplate['template_type']>('race_strategy')
   const [templateName, setTemplateName] = useState('')
@@ -2068,289 +2068,344 @@ export default function PremiumCommandCenter(): JSX.Element {
                   <Settings2 size={20} className="mt-0.5 text-yellow-600" />
                   <div>
                     <h2 className="text-xl font-semibold text-slate-950">{t('templates.title')}</h2>
-                    <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-600">
-                      {t('templates.description')}
-                    </p>
+                    <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-600">{t('templates.description')}</p>
                   </div>
                 </div>
               </Card>
 
-              <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
-                <Card className="p-5">
-                  <div className="font-semibold text-slate-950">{t('templates.create')}</div>
-
-                  <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {t('templates.type')}
-                  </label>
-                  <select
-                    value={templateType}
-                    onChange={event =>
-                      setTemplateType(event.target.value as PremiumTemplate['template_type'])
-                    }
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                  >
-                    <option value="race_strategy">{t('templates.raceStrategy')}</option>
-                    <option value="training">{t('templates.training')}</option>
-                  </select>
-
-                  <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {t('templates.name')}
-                  </label>
-                  <input
-                    value={templateName}
-                    onChange={event => setTemplateName(event.target.value)}
-                    placeholder={t('templates.namePlaceholder')}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                  />
-
-                  {templateType === 'race_strategy' ? (
-                    <div className="mt-4 grid gap-3">
-                      <label>
-                        <span className="text-xs font-semibold text-slate-500">{t('templates.terrainMatch')}</span>
-                        <select value={raceTerrain} onChange={event => setRaceTerrain(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="all">{t('values.all')}</option>
-                          <option value="flat">{t('values.flat')}</option>
-                          <option value="hilly">{t('values.hilly')}</option>
-                          <option value="mountain">{t('values.mountain')}</option>
-                          <option value="cobbles">{t('values.cobbles')}</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span className="text-xs font-semibold text-slate-500">{t('templates.objective')}</span>
-                        <select value={raceObjective} onChange={event => setRaceObjective(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="balanced">{t('values.balanced')}</option>
-                          <option value="stage_win">{t('values.stage_win')}</option>
-                          <option value="protect_gc">{t('values.protect_gc')}</option>
-                          <option value="breakaway">{t('values.breakaway')}</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span className="text-xs font-semibold text-slate-500">{t('strategy.teamStrategy')}</span>
-                        <select value={raceStrategy} onChange={event => setRaceStrategy(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="balanced">{t('values.balanced')}</option>
-                          <option value="sprint_control">{t('values.sprint_control')}</option>
-                          <option value="climber_support">{t('values.climber_support')}</option>
-                          <option value="breakaway_focus">{t('values.breakaway_focus')}</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span className="text-xs font-semibold text-slate-500">{t('templates.risk')}</span>
-                        <select value={raceRisk} onChange={event => setRaceRisk(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="conservative">{t('values.conservative')}</option>
-                          <option value="normal">{t('values.normal')}</option>
-                          <option value="aggressive">{t('values.aggressive')}</option>
-                        </select>
-                      </label>
-                    </div>
-                  ) : null}
-
-                  {templateType === 'training' ? (
-                    <div className="mt-4 grid gap-3">
-                      <label>
-                        <span className="text-xs font-semibold text-slate-500">{t('templates.focus')}</span>
-                        <select value={trainingFocus} onChange={event => setTrainingFocus(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="general">{t('values.general')}</option>
-                          <option value="sprint">{t('values.sprint')}</option>
-                          <option value="climbing">{t('values.climbing')}</option>
-                          <option value="endurance">{t('values.endurance')}</option>
-                          <option value="recovery">{t('values.recovery')}</option>
-                          <option value="day_off">{t('values.day_off')}</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span className="text-xs font-semibold text-slate-500">{t('templates.intensity')}</span>
-                        <select value={trainingIntensity} onChange={event => setTrainingIntensity(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
-                          <option value="recovery">{t('values.recovery')}</option>
-                          <option value="light">{t('values.light')}</option>
-                          <option value="normal">{t('values.normal')}</option>
-                          <option value="hard">{t('values.hard')}</option>
-                        </select>
-                      </label>
-                    </div>
-                  ) : null}
-
+              <div className="flex flex-wrap gap-2 border-b border-slate-200">
+                {[
+                  ['race', t('templates.raceTemplates')],
+                  ['training', t('templates.trainingTemplates')],
+                  ['finance', t('templates.financeScenarios')],
+                  ['automation', t('templates.automationRules')],
+                ].map(([key, label]) => (
                   <button
+                    key={key}
                     type="button"
-                    disabled={!templateName.trim()}
                     onClick={() => {
-                      const payload =
-                        templateType === 'race_strategy'
-                          ? {
-                              terrain_type: raceTerrain,
-                              stage_objective: raceObjective,
-                              team_strategy: raceStrategy,
-                              risk_level: raceRisk,
-                            }
-                          : {
-                              focus_code: trainingFocus,
-                              intensity: trainingIntensity,
-                            }
-
-                      void saveTemplate(templateType, templateName, payload)
-                      setTemplateName('')
+                      const section = key as 'race' | 'training' | 'finance' | 'automation'
+                      setTemplateSection(section)
+                      if (section === 'race') setTemplateType('race_strategy')
+                      if (section === 'training') setTemplateType('training')
                     }}
-                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                    className={`border-b-2 px-3 pb-3 pt-1 text-sm font-medium ${
+                      templateSection === key
+                        ? 'border-yellow-400 text-slate-900'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
+                    }`}
                   >
-                    <Save size={15} />
-                    {t('templates.save')}
+                    {label}
                   </button>
-                </Card>
+                ))}
+              </div>
 
+              {templateSection === 'race' || templateSection === 'training' ? (
+                <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+                  <Card className="p-5">
+                    <div className="font-semibold text-slate-950">
+                      {templateSection === 'race' ? t('templates.createRaceTemplate') : t('templates.createTrainingTemplate')}
+                    </div>
+
+                    <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t('templates.name')}
+                    </label>
+                    <input
+                      value={templateName}
+                      onChange={event => setTemplateName(event.target.value)}
+                      placeholder={t('templates.namePlaceholder')}
+                      className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+                    />
+
+                    {templateSection === 'race' ? (
+                      <div className="mt-4 grid gap-3">
+                        <label>
+                          <span className="text-xs font-semibold text-slate-500">{t('templates.terrainMatch')}</span>
+                          <select value={raceTerrain} onChange={event => setRaceTerrain(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
+                            <option value="all">{t('values.all')}</option>
+                            <option value="flat">{t('values.flat')}</option>
+                            <option value="hilly">{t('values.hilly')}</option>
+                            <option value="mountain">{t('values.mountain')}</option>
+                            <option value="cobbles">{t('values.cobbles')}</option>
+                          </select>
+                        </label>
+                        <label>
+                          <span className="text-xs font-semibold text-slate-500">{t('templates.objective')}</span>
+                          <select value={raceObjective} onChange={event => setRaceObjective(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
+                            <option value="balanced">{t('values.balanced')}</option>
+                            <option value="stage_win">{t('values.stage_win')}</option>
+                            <option value="protect_gc">{t('values.protect_gc')}</option>
+                            <option value="breakaway">{t('values.breakaway')}</option>
+                          </select>
+                        </label>
+                        <label>
+                          <span className="text-xs font-semibold text-slate-500">{t('strategy.teamStrategy')}</span>
+                          <select value={raceStrategy} onChange={event => setRaceStrategy(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
+                            <option value="balanced">{t('values.balanced')}</option>
+                            <option value="sprint_control">{t('values.sprint_control')}</option>
+                            <option value="climber_support">{t('values.climber_support')}</option>
+                            <option value="breakaway_focus">{t('values.breakaway_focus')}</option>
+                          </select>
+                        </label>
+                        <label>
+                          <span className="text-xs font-semibold text-slate-500">{t('templates.risk')}</span>
+                          <select value={raceRisk} onChange={event => setRaceRisk(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
+                            <option value="conservative">{t('values.conservative')}</option>
+                            <option value="normal">{t('values.normal')}</option>
+                            <option value="aggressive">{t('values.aggressive')}</option>
+                          </select>
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="mt-4 grid gap-3">
+                        <label>
+                          <span className="text-xs font-semibold text-slate-500">{t('templates.focus')}</span>
+                          <select value={trainingFocus} onChange={event => setTrainingFocus(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
+                            <option value="general">{t('values.general')}</option>
+                            <option value="sprint">{t('values.sprint')}</option>
+                            <option value="climbing">{t('values.climbing')}</option>
+                            <option value="endurance">{t('values.endurance')}</option>
+                            <option value="recovery">{t('values.recovery')}</option>
+                            <option value="day_off">{t('values.day_off')}</option>
+                          </select>
+                        </label>
+                        <label>
+                          <span className="text-xs font-semibold text-slate-500">{t('templates.intensity')}</span>
+                          <select value={trainingIntensity} onChange={event => setTrainingIntensity(event.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2">
+                            <option value="recovery">{t('values.recovery')}</option>
+                            <option value="light">{t('values.light')}</option>
+                            <option value="normal">{t('values.normal')}</option>
+                            <option value="hard">{t('values.hard')}</option>
+                          </select>
+                        </label>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={!templateName.trim()}
+                      onClick={() => {
+                        const type = templateSection === 'race' ? 'race_strategy' : 'training'
+                        const payload =
+                          type === 'race_strategy'
+                            ? {
+                                terrain_type: raceTerrain,
+                                stage_objective: raceObjective,
+                                team_strategy: raceStrategy,
+                                risk_level: raceRisk,
+                              }
+                            : {
+                                focus_code: trainingFocus,
+                                intensity: trainingIntensity,
+                              }
+
+                        void saveTemplate(type, templateName, payload)
+                        setTemplateName('')
+                      }}
+                      className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                    >
+                      <Save size={15} />
+                      {t('templates.save')}
+                    </button>
+                  </Card>
+
+                  <Card className="p-5">
+                    <div className="font-semibold text-slate-950">
+                      {templateSection === 'race' ? t('templates.savedRaceTemplates') : t('templates.savedTrainingTemplates')}
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {templates.filter(template =>
+                        template.template_type === (templateSection === 'race' ? 'race_strategy' : 'training')
+                      ).length === 0 ? (
+                        <div className="text-sm text-slate-500">{t('templates.noneSaved')}</div>
+                      ) : (
+                        templates
+                          .filter(template =>
+                            template.template_type === (templateSection === 'race' ? 'race_strategy' : 'training')
+                          )
+                          .map(template => (
+                            <div key={template.id} className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                              <div className="min-w-0">
+                                <div className="font-semibold text-slate-900">{template.name}</div>
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {Object.entries(template.payload_json ?? {}).map(([key, value]) => (
+                                    <span key={key} className="rounded-full bg-white px-2 py-1 text-[11px] text-slate-600">
+                                      {humanize(key)}: {formatPremiumValue(value)}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => void deleteTemplate(template.id)}
+                                className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          ))
+                      )}
+                    </div>
+                  </Card>
+                </div>
+              ) : null}
+
+              {templateSection === 'finance' ? (
                 <Card className="p-5">
-                  <div className="font-semibold text-slate-950">{t('templates.saved')}</div>
-                  <div className="mt-4 space-y-2">
-                    {templates.length === 0 ? (
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold text-slate-950">{t('templates.financeScenarios')}</div>
+                      <p className="mt-1 text-sm text-slate-500">{t('templates.financeScenariosHint')}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => changeTab('finance')}
+                      className="text-sm font-medium text-yellow-700 hover:text-yellow-800"
+                    >
+                      {t('templates.openSimulator')}
+                    </button>
+                  </div>
+                  <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                    {templates.filter(template => template.template_type === 'financial_scenario').length === 0 ? (
                       <div className="text-sm text-slate-500">{t('templates.noneSaved')}</div>
                     ) : (
-                      templates.map(template => (
-                        <div
-                          key={template.id}
-                          className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
-                        >
-                          <div className="min-w-0">
-                            <div className="font-semibold text-slate-900">{template.name}</div>
-                            <div className="mt-1 text-xs text-slate-500">
-                              {humanize(template.template_type)}
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-1.5">
-                              {Object.entries(template.payload_json ?? {}).map(([key, value]) => (
-                                <span
-                                  key={key}
-                                  className="rounded-full bg-white px-2 py-1 text-[11px] text-slate-600"
-                                >
-                                  {humanize(key)}: {formatPremiumValue(value)}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => void deleteTemplate(template.id)}
-                            className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </Card>
-              </div>
-
-              <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
-                <Card className="p-5">
-                  <div className="flex items-center gap-2 font-semibold text-slate-950">
-                    <Zap size={16} className="text-yellow-600" />
-                    {t('templates.createRule')}
-                  </div>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    {t('templates.ruleExample')}
-                  </p>
-
-                  <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">{t('templates.ruleName')}</label>
-                  <input
-                    value={automationName}
-                    onChange={event => setAutomationName(event.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
-                    placeholder={t('templates.rulePlaceholder')}
-                  />
-
-                  <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">{t('templates.template')}</label>
-                  <select
-                    value={automationTemplateId}
-                    onChange={event => setAutomationTemplateId(event.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
-                  >
-                    <option value="">{t('templates.chooseTemplate')}</option>
-                    {templates
-                      .filter(template => ['race_strategy', 'training', 'equipment'].includes(template.template_type))
-                      .map(template => (
-                        <option key={template.id} value={template.id}>
-                          {template.name} · {humanize(template.template_type)}
-                        </option>
-                      ))}
-                  </select>
-
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <label>
-                      <span className="text-xs font-semibold text-slate-500">{t('templates.matchField')}</span>
-                      <select
-                        value={automationMatchKey}
-                        onChange={event => setAutomationMatchKey(event.target.value)}
-                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                      >
-                        <option value="terrain_type">{t('values.terrain_type')}</option>
-                        <option value="stage_format">{t('values.stage_format')}</option>
-                        <option value="profile_type">{t('values.profile_type')}</option>
-                        <option value="availability_status">{t('values.availability_status')}</option>
-                      </select>
-                    </label>
-                    <label>
-                      <span className="text-xs font-semibold text-slate-500">{t('templates.equals')}</span>
-                      <input
-                        value={automationMatchValue}
-                        onChange={event => setAutomationMatchValue(event.target.value)}
-                        className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
-                      />
-                    </label>
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={!automationName.trim() || !automationTemplateId}
-                    onClick={() => void saveAutomationRule()}
-                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
-                  >
-                    <Zap size={15} />
-                    {t('templates.saveRule')}
-                  </button>
-                </Card>
-
-                <Card className="p-5">
-                  <div className="font-semibold text-slate-950">{t('templates.rules')}</div>
-                  <div className="mt-4 space-y-2">
-                    {automationRules.length === 0 ? (
-                      <div className="text-sm text-slate-500">{t('templates.noRules')}</div>
-                    ) : (
-                      automationRules.map(rule => (
-                        <div
-                          key={rule.id}
-                          className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
-                        >
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <div className="font-semibold text-slate-900">{rule.name}</div>
-                              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                                {rule.is_enabled ? t('templates.enabled') : t('templates.disabled')}
-                              </span>
-                            </div>
-                            <div className="mt-1 text-xs text-slate-500">
-                              {rule.template_name} · {humanize(rule.rule_type)}
-                            </div>
-                            <div className="mt-2 text-xs text-slate-600">
-                              {Object.entries(rule.match_json ?? {})
-                                .map(([key, value]) => `${humanize(key)} = ${formatPremiumValue(value)}`)
-                                .join(' · ')}
-                            </div>
-                            {rule.last_matched_at ? (
-                              <div className="mt-1 text-[11px] text-slate-400">
-                                {t('templates.lastMatched', { date: formatRealDate(rule.last_matched_at) })}
+                      templates
+                        .filter(template => template.template_type === 'financial_scenario')
+                        .map(template => (
+                          <div key={template.id} className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <div>
+                              <div className="font-semibold text-slate-900">{template.name}</div>
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {Object.entries(template.payload_json ?? {}).slice(0, 6).map(([key, value]) => (
+                                  <span key={key} className="rounded-full bg-white px-2 py-1 text-[11px] text-slate-600">
+                                    {humanize(key)}: {formatPremiumValue(value)}
+                                  </span>
+                                ))}
                               </div>
-                            ) : null}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void deleteTemplate(template.id)}
+                              className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 size={15} />
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => void deleteAutomationRule(rule.id)}
-                            className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      ))
+                        ))
                     )}
                   </div>
                 </Card>
-              </div>
+              ) : null}
+
+              {templateSection === 'automation' ? (
+                <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 font-semibold text-slate-950">
+                      <Zap size={16} className="text-yellow-600" />
+                      {t('templates.createRule')}
+                    </div>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">{t('templates.ruleExample')}</p>
+
+                    <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">{t('templates.ruleName')}</label>
+                    <input
+                      value={automationName}
+                      onChange={event => setAutomationName(event.target.value)}
+                      className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
+                      placeholder={t('templates.rulePlaceholder')}
+                    />
+
+                    <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">{t('templates.template')}</label>
+                    <select
+                      value={automationTemplateId}
+                      onChange={event => setAutomationTemplateId(event.target.value)}
+                      className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5"
+                    >
+                      <option value="">{t('templates.chooseTemplate')}</option>
+                      {templates
+                        .filter(template => ['race_strategy', 'training'].includes(template.template_type))
+                        .map(template => (
+                          <option key={template.id} value={template.id}>
+                            {template.name} · {humanize(template.template_type)}
+                          </option>
+                        ))}
+                    </select>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <label>
+                        <span className="text-xs font-semibold text-slate-500">{t('templates.matchField')}</span>
+                        <select
+                          value={automationMatchKey}
+                          onChange={event => setAutomationMatchKey(event.target.value)}
+                          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        >
+                          <option value="terrain_type">{t('values.terrain_type')}</option>
+                          <option value="stage_format">{t('values.stage_format')}</option>
+                          <option value="profile_type">{t('values.profile_type')}</option>
+                          <option value="availability_status">{t('values.availability_status')}</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span className="text-xs font-semibold text-slate-500">{t('templates.equals')}</span>
+                        <input
+                          value={automationMatchValue}
+                          onChange={event => setAutomationMatchValue(event.target.value)}
+                          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2"
+                        />
+                      </label>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={!automationName.trim() || !automationTemplateId}
+                      onClick={() => void saveAutomationRule()}
+                      className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+                    >
+                      <Zap size={15} />
+                      {t('templates.saveRule')}
+                    </button>
+                  </Card>
+
+                  <Card className="p-5">
+                    <div className="font-semibold text-slate-950">{t('templates.rules')}</div>
+                    <div className="mt-4 space-y-2">
+                      {automationRules.length === 0 ? (
+                        <div className="text-sm text-slate-500">{t('templates.noRules')}</div>
+                      ) : (
+                        automationRules.map(rule => (
+                          <div key={rule.id} className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="font-semibold text-slate-900">{rule.name}</div>
+                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                                  {rule.is_enabled ? t('templates.enabled') : t('templates.disabled')}
+                                </span>
+                              </div>
+                              <div className="mt-1 text-xs text-slate-500">{rule.template_name} · {humanize(rule.rule_type)}</div>
+                              <div className="mt-2 text-xs text-slate-600">
+                                {Object.entries(rule.match_json ?? {})
+                                  .map(([key, value]) => `${humanize(key)} = ${formatPremiumValue(value)}`)
+                                  .join(' · ')}
+                              </div>
+                              {rule.last_matched_at ? (
+                                <div className="mt-1 text-[11px] text-slate-400">
+                                  {t('templates.lastMatched', { date: formatRealDate(rule.last_matched_at) })}
+                                </div>
+                              ) : null}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void deleteAutomationRule(rule.id)}
+                              className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </Card>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </>
