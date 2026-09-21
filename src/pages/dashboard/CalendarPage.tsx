@@ -2138,7 +2138,7 @@ export default function CalendarPage(): JSX.Element {
         premiumStatusLoading ? (
           <PremiumFeatureLoading className="mb-5" />
         ) : isPremium && clubId ? (
-          <PremiumSeasonPlannerPanel clubId={clubId} />
+          <PremiumSeasonPlannerPanel clubId={clubId} showScheduleMap={false} />
         ) : (
           <PremiumFeatureLock
             className="mb-5"
