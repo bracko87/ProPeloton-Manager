@@ -44,6 +44,9 @@ type SeasonPlannerRow = {
   race_preparation_id: string
   race_id: string
   race_name: string
+  country_code?: string | null
+  start_city?: string | null
+  finish_city?: string | null
   category: string | null
   race_type: string | null
   start_date: string
@@ -87,8 +90,22 @@ type TransferAlert = {
 
 type SponsorObjective = {
   objective_id: string
+  club_sponsor_id?: string | null
   sponsor_name: string
+  sponsor_kind?: string | null
   objective_title: string
+  objective_code?: string | null
+  required_result?: string | null
+  target_race_id?: string | null
+  target_race_country?: string | null
+  target_race_category?: string | null
+  target_race_type?: string | null
+  target_race_start_date?: string | null
+  target_race_end_date?: string | null
+  user_visible_deadline_label?: string | null
+  display_status_label?: string | null
+  progress_text?: string | null
+  target_text?: string | null
   reward_amount: number
   target_value: number
   current_value: number
@@ -325,6 +342,36 @@ function formatRealDate(value: string | null | undefined): string {
   return date.toLocaleString(appI18n.resolvedLanguage || appI18n.language || undefined)
 }
 
+function getFlagImageUrl(code?: string | null): string | null {
+  if (!code) return null
+  const normalized = code.trim().toUpperCase() === 'UK' ? 'GB' : code.trim().toUpperCase()
+  return /^[A-Z]{2}$/.test(normalized)
+    ? `https://flagcdn.com/w40/${normalized.toLowerCase()}.png`
+    : null
+}
+
+function getInitials(value: string): string {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join('')
+}
+
+function daysBetweenGameDates(from: string | null | undefined, to: string | null | undefined): number | null {
+  if (!from || !to) return null
+  const start = new Date(from)
+  const end = new Date(to)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null
+  return Math.round((end.getTime() - start.getTime()) / 86400000)
+}
+
+function raceDurationDays(row: SeasonPlannerRow): number {
+  const difference = daysBetweenGameDates(row.start_date, row.end_date)
+  return difference === null ? 1 : Math.max(1, difference + 1)
+}
+
 function statusClasses(value: string): string {
   const normalized = value.toLowerCase()
 
@@ -522,10 +569,16 @@ export default function PremiumCommandCenter(): JSX.Element {
   const [prefillMatch, setPrefillMatch] = useState<Record<string, any> | null>(null)
 
   const [simOneTimeCost, setSimOneTimeCost] = useState(0)
+  const [simOneTimeIncome, setSimOneTimeIncome] = useState(0)
   const [simWeeklyCost, setSimWeeklyCost] = useState(0)
+  const [simWeeklyIncome, setSimWeeklyIncome] = useState(0)
   const [simMonthlyIncome, setSimMonthlyIncome] = useState(0)
+  const [simMonthlyCost, setSimMonthlyCost] = useState(0)
+  const [simTargetReserve, setSimTargetReserve] = useState(0)
   const [simHorizon, setSimHorizon] = useState(60)
   const [simName, setSimName] = useState('')
+  const [sponsorLogoById, setSponsorLogoById] = useState<Record<string, string | null>>({})
+  const [templateSection, setTemplateSection] = useState<'race' | 'training' | 'automation'>('race')
 
   const [templateType, setTemplateType] = useState<PremiumTemplate['template_type']>('race_strategy')
   const [templateName, setTemplateName] = useState('')
@@ -600,11 +653,51 @@ export default function PremiumCommandCenter(): JSX.Element {
         if (templateResult.error) throw templateResult.error
         if (automationResult.error) throw automationResult.error
 
-        const nextWorkspace = workspaceResult.data as Workspace
+        let nextWorkspace = workspaceResult.data as Workspace
         const visibleTemplates = ((templateResult.data ?? []) as Array<Record<string, any>>)
           .filter(row => row.template_type !== 'equipment') as PremiumTemplate[]
         const visibleAutomationRules = ((automationResult.data ?? []) as Array<Record<string, any>>)
           .filter(row => row.rule_type !== 'equipment_prefill') as AutomationRule[]
+
+        const raceIds = nextWorkspace.season_planner.map(row => row.race_id).filter(Boolean)
+        if (raceIds.length > 0) {
+          const raceMetaResult = await supabase
+            .from('races')
+            .select('id,country_code,start_city,finish_city')
+            .in('id', raceIds)
+
+          if (!raceMetaResult.error) {
+            const raceMeta = new Map(
+              (raceMetaResult.data ?? []).map(row => [String(row.id), row as Record<string, any>]),
+            )
+            nextWorkspace = {
+              ...nextWorkspace,
+              season_planner: nextWorkspace.season_planner.map(row => ({
+                ...row,
+                ...(raceMeta.get(row.race_id) ?? {}),
+              })),
+            }
+          }
+        }
+
+        const sponsorDashboardResult = await supabase.rpc('sponsor_get_dashboard', {
+          p_club_id: targetClubId,
+        })
+        if (!sponsorDashboardResult.error) {
+          const signedSponsors = (
+            (sponsorDashboardResult.data as Record<string, any> | null)?.signed_sponsors ?? []
+          ) as Array<Record<string, any>>
+          setSponsorLogoById(
+            Object.fromEntries(
+              signedSponsors.map(sponsor => [
+                String(sponsor.id ?? ''),
+                typeof sponsor.logo_url === 'string' ? sponsor.logo_url : null,
+              ]),
+            ),
+          )
+        } else {
+          setSponsorLogoById({})
+        }
 
         setWorkspace(nextWorkspace)
         setTemplates(visibleTemplates)
@@ -816,25 +909,69 @@ export default function PremiumCommandCenter(): JSX.Element {
 
     const weeks = simHorizon / 7
     const months = simHorizon / 30
-    const projected =
-      workspace.finance.balance -
+    const baseline = workspace.finance.balance + workspace.finance.weekly_net * weeks
+    const scenarioImpact =
+      Number(simOneTimeIncome || 0) -
       Number(simOneTimeCost || 0) +
-      workspace.finance.weekly_net * weeks -
-      Number(simWeeklyCost || 0) * weeks +
-      Number(simMonthlyIncome || 0) * months
+      (Number(simWeeklyIncome || 0) - Number(simWeeklyCost || 0)) * weeks +
+      (Number(simMonthlyIncome || 0) - Number(simMonthlyCost || 0)) * months
+    const projected = baseline + scenarioImpact
 
     return {
+      baseline,
       projected,
+      scenarioImpact,
       delta: projected - workspace.finance.balance,
       weeks,
+      months,
+      reserveGap: projected - Number(simTargetReserve || 0),
     }
   }, [
     simHorizon,
+    simMonthlyCost,
     simMonthlyIncome,
     simOneTimeCost,
+    simOneTimeIncome,
+    simTargetReserve,
     simWeeklyCost,
+    simWeeklyIncome,
     workspace,
   ])
+
+  const seasonPlanningInsights = useMemo(() => {
+    if (!workspace) return { raceDays: 0, freeDays: 60, overlapCount: 0, largestGap: 60, rows: [] as Array<SeasonPlannerRow & { gapBefore: number | null; overlapsPrevious: boolean }> }
+
+    const rows = workspace.season_planner
+      .slice()
+      .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+
+    let raceDays = 0
+    let overlapCount = 0
+    let largestGap = 0
+    let previousEnd: string | null = null
+
+    const enriched = rows.map(row => {
+      raceDays += raceDurationDays(row)
+      const gapBefore = previousEnd ? daysBetweenGameDates(previousEnd, row.start_date) : null
+      const overlapsPrevious = gapBefore !== null && gapBefore <= 0
+      if (overlapsPrevious) overlapCount += 1
+      if (gapBefore !== null && gapBefore > 1) largestGap = Math.max(largestGap, gapBefore - 1)
+
+      if (!previousEnd || new Date(row.end_date).getTime() > new Date(previousEnd).getTime()) {
+        previousEnd = row.end_date
+      }
+
+      return { ...row, gapBefore, overlapsPrevious }
+    })
+
+    return {
+      raceDays,
+      freeDays: Math.max(0, 60 - raceDays),
+      overlapCount,
+      largestGap,
+      rows: enriched,
+    }
+  }, [workspace])
 
   const saveTemplate = useCallback(
     async (
@@ -1068,18 +1205,6 @@ export default function PremiumCommandCenter(): JSX.Element {
         </Card>
       ) : (
         <>
-          <Card className="p-4">
-            <div className="flex items-start gap-3">
-              <Users size={18} className="mt-0.5 shrink-0 text-blue-700" />
-              <div>
-                <div className="font-semibold text-slate-900">{t('scopeTitle')}</div>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  {t('scopeBody')}
-                </p>
-              </div>
-            </div>
-          </Card>
-
           {error ? (
             <Card className="border-red-200 bg-red-50 p-4 text-sm text-red-800">
               {error}
@@ -1529,7 +1654,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                     </p>
                   </div>
                   <Link
-                    to="/dashboard/training#premium-development"
+                    to="/dashboard/training?tab=development"
                     className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     {t('integrations.overview.openItem')}
