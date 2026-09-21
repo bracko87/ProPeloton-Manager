@@ -3317,6 +3317,69 @@
           "to": "/dashboard/calendar"
         }
       ]
+    },
+    "race-preparation-bonuses-deep": {
+      "category": "Priprema utrke",
+      "title": "Bonusi pripreme: što stvarno ulazi u utrku",
+      "subtitle": "Odakle dolaze bodovi, na što utječu i kako čitati zajednički učinak.",
+      "overview": "Priprema utrke ne daje jedan ukupni postotak. Različiti izbori djeluju na različite kanale: izvedbu, energiju, umor, oporavak, zdravlje, mehaničku pouzdanost, taktiku i trošenje.",
+      "facts": [
+        {
+          "label": "Pet grupa",
+          "value": "Race Support, Fatigue Control, Recovery Support, Health Protection, Mechanical Reliability"
+        },
+        {
+          "label": "Maksimum po grupi",
+          "value": "30 bodova"
+        },
+        {
+          "label": "Odvojeni kanali",
+          "value": "Oprema i race supplies računaju se zasebno"
+        },
+        {
+          "label": "Pasivni staff u utrci",
+          "value": "Team Doctor i Mechanic"
+        },
+        {
+          "label": "Bez ravnog pasivnog bonusa",
+          "value": "Sport Director, Head Coach i Scout Analyst"
+        }
+      ],
+      "details": [
+        "Točni efekti odabranih izvora mapiraju se u pet grupa. Primjer: +2% medical response daje 2 Health Protection boda; +1% post-stage recovery daje 1 Recovery Support bod.",
+        "Race Support dolazi ponajviše od hranjenja, team carova, logistike, komunikacije i incident supporta te može poboljšati energetsku učinkovitost, taktiku i dio zdravstvene/mehaničke zaštite.",
+        "Fatigue Control smanjuje opterećenje utrke i putovanja. Zajedno s Recovery Supportom smanjuje post-stage fatigue i poboljšava oporavak.",
+        "Health Protection smanjuje zdravstveni rizik. Mechanical Reliability smanjuje rizik mehaničkog problema i gubitak vremena.",
+        "Odabrana vozila djeluju automatski: team carovi daju race support/feeding/communication/mechanical response; bus fatigue/recovery; medical van health/recovery; equipment van i workshop mehaničku i equipment zaštitu.",
+        "Team policies također mogu doprinositi: putovanje može pomoći moralu, smještaj oporavku, a logistika Race Supportu. Osnovne opcije mogu dati 0 dodatnih bodova.",
+        "Odabrani Team Doctor automatski daje postojeće medicinske bonuse: manji rizik ozljede/bolesti, kraći oporavak, dnevni recovery bonus i niži fatigue floor.",
+        "Odabrani Mechanic automatski daje postojeće tehničke bonuse: setup quality, manji mechanical risk i manji gubitak conditiona opreme. Maintenance speed/cost vrijede i izvan utrke.",
+        "Sport Director pomaže taktikom, savjetima i automatizacijom, ali nema ravni pasivni race-performance bonus. Head Coach je prvenstveno trening/razvoj, Scout Analyst scouting.",
+        "Oprema je zaseban rider-level kanal. Konačni postotak ovisi o setupu, terenu i conditionu. Primjer: +5% equipment na stage-skill 76 daje oko +3,8 suitability boda.",
+        "Race supplies su također odvojeni. Bidoni, gelovi, nutrition packs i weather supplies mogu smanjiti energy use/fatigue ili dodati recovery/protection ako su odabrani i dostupni.",
+        "Ne zbrajajte različite postotke u jedan. 10% manje energije, 6% manje fatiguea i 15% manje mechanical time loss nisu +31% speeda.",
+        "Primjer: Race Support 9, Fatigue 2, Recovery 2, Health 4 i Mechanical 7 daju oko 1,95% manji in-stage energy cost, 3% manji post-stage fatigue, +0,6 recovery, 6,6% manji health risk, 19,3% manji mechanical risk i 15,35% manji mechanical time loss prije equipmenta, suppliesa i vremena.",
+        "Dobra priprema poboljšava učinkovitost i pouzdanost, ali ne jamči pobjedu; skillovi, profil, fatigue, sharpness, taktika i dinamika utrke i dalje odlučuju."
+      ],
+      "tips": [
+        "Čitajte svaki bonus po njegovu kanalu umjesto kao jedan ukupni postotak.",
+        "Prilagodite opremu terenu, nosite dovoljno suppliesa i birajte staff/assets prema rizicima.",
+        "U etapnim utrkama recovery i fatigue control mogu vrijediti koliko i izravna izvedba."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Priprema utrke",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Oprema",
+          "to": "/dashboard/equipment"
+        },
+        {
+          "label": "Staff",
+          "to": "/dashboard/staff"
+        }
+      ]
     }
   }
 }
