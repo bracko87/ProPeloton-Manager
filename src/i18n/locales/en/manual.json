@@ -1590,7 +1590,12 @@
         "Injured or sick riders require medical recovery rather than normal race selection.",
         "Not fully fit means the rider may race but is not at ideal readiness.",
         "Hard training and heavy race calendars both increase overload risk.",
-        "Medical staff and recovery systems can improve handling of health problems."
+        "Medical staff and recovery systems can improve handling of health problems.",
+        "A race crash can end with no lasting injury, a minor injury, a moderate injury or a major injury.",
+        "Minor race injuries are short persistent health cases. The rider can still be selected, but remains not fully fit and can lose race sharpness while recovering.",
+        "Moderate race injuries also leave the rider selectable, but the medical case and recovery effects are stronger and can affect the following stages or race days.",
+        "Major race injuries create genuine unavailability. The rider can abandon the current stage and can be blocked from later stages or races until recovery.",
+        "Race health outcomes are written into the real squad state after the stage; they are not replay-only events."
       ],
       "facts": [
         {
@@ -1792,7 +1797,8 @@
         "Individual plans override the team default when a rider needs specialist work.",
         "Hard intensity increases training stress and fatigue risk.",
         "Recovery intensity is useful around hard race blocks.",
-        "Training should follow rider role and calendar targets."
+        "Training should follow rider role and calendar targets.",
+        "Health and race load matter too: a rider who is injured or not fully fit may lose sharpness or need lighter work even when the normal training plan would otherwise be suitable."
       ],
       "facts": [
         {
@@ -1953,7 +1959,8 @@
         "Worn means condition has dropped enough that the item needs attention. Worn items can reduce reliability and should not be ignored before important races.",
         "Repair quotes should show the cost before confirmation. The manager should compare repair cost with item value and replacement cost.",
         "Selling converts an owned item into cash when sale is allowed. The item then leaves active inventory.",
-        "Discarding removes an item without a normal sale. This should be used only for gear the club no longer needs or cannot justify keeping."
+        "Discarding removes an item without a normal sale. This should be used only for gear the club no longer needs or cannot justify keeping.",
+        "Equipment that is actually used by your riders in a stage loses condition after that stage. Wear is linked to race use and distance, so repeated racing gradually creates maintenance and replacement decisions."
       ],
       "facts": [
         {
@@ -2140,7 +2147,8 @@
         "Mobile Workshop provides technical support during racing/travel.",
         "Medical Van provides extra medical support.",
         "Assigned or locked assets should not be repaired or sold until they are released from the race/job that uses them.",
-        "Condition should be checked before important races because a technically available asset can still be in poor shape."
+        "Condition should be checked before important races because a technically available asset can still be in poor shape.",
+        "Support assets that are actually used for a race can lose condition after the stage. Repeated race use therefore increases the need for repairs and replacement planning."
       ],
       "facts": [
         {
@@ -2306,7 +2314,9 @@
         "Commentary describes important attacks, breakaways, chases, climbs, sprints and finish events.",
         "Stage result is only one part of a stage race. GC, points, mountain, young and team classifications can change after every stage.",
         "A rider can have a poor stage position but still achieve a tactical objective such as points, KOM points or protecting a leader.",
-        "Use replay/results as feedback for future tactics rather than changing the already finalized stage."
+        "Use replay/results as feedback for future tactics rather than changing the already finalized stage.",
+        "Crashes, fatigue and health outcomes shown by the official replay are part of the same stage calculation. When the stage is finalized, persistent consequences such as injuries, not-fully-fit status and post-stage fatigue carry into the real squad state.",
+        "A replay does not create a second result after the fact; it explains the race that was already calculated."
       ],
       "facts": [
         {
@@ -3264,6 +3274,48 @@
       "relatedLinks": [
         "Staff Market",
         "Infrastructure"
+      ]
+    },
+    "race-engine-basics": {
+      "category": "Calendar and Races",
+      "title": "How Race Results Are Decided",
+      "subtitle": "What the race engine considers without exposing internal formulas.",
+      "overview": "There is no single number that guarantees victory. The official race calculation combines rider quality, route fit, current condition, preparation, tactics and what happens dynamically during the stage.",
+      "facts": [
+        {
+          "label": "Rider factors",
+          "value": "Skills, role, fatigue, race sharpness, health, morale and remaining energy"
+        },
+        {
+          "label": "Preparation factors",
+          "value": "Stage tactics, equipment, supplies, staff and race-support assets"
+        },
+        {
+          "label": "Race factors",
+          "value": "Terrain, weather, groups, attacks, chasing, breakaways, incidents and finish type"
+        }
+      ],
+      "details": [
+        "The strongest overall rider is not automatically the winner. Specialist skills matter differently on flat, hilly, mountain, cobbled and time-trial stages.",
+        "Fatigue, health, race sharpness and energy can make two riders with similar skills perform very differently on the day.",
+        "Your Stage Plan influences how riders spend energy and react to the race. Roles and tactics can protect a leader, support a sprint, chase, attack or target a breakaway.",
+        "Equipment, supplies, staff and selected support assets can improve preparation, reliability, recovery or efficiency when they are available and used.",
+        "The race itself remains dynamic. Breakaways can succeed or be caught, chase resources can be spent, groups can split, and crashes or mechanical incidents can change the outcome.",
+        "The replay and official result come from the same calculation, so what you see in the replay explains the stored result rather than generating a new one."
+      ],
+      "tips": [
+        "Choose riders for the route, not only by overall rating.",
+        "Arrive at important races with manageable fatigue and complete Stage Plans."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Race Preparation",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Calendar",
+          "to": "/dashboard/calendar"
+        }
       ]
     }
   }
