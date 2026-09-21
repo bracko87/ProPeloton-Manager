@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11m-v1-chase-fatigue-climb-realism-2026-09-21' as const
+  'phase11m-v2-post-catch-late-attack-2026-09-21' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -10995,6 +10995,118 @@ export function resolveRoadPhase2Development(
   // Phase 11G: every explicit Phase 2 Attack command receives an attempt.
   const selectedPhase2AttackRows = [...explicitPhase2AttackRows]
 
+  /*
+   * Phase 11M v2: later attacks must face the peloton that actually did the
+   * chasing, not a fresh abstract bunch. Measure the real Phase-2 chase
+   * coalition and its remaining worker energy at the attack kilometre. This
+   * does not script an attack success: it only reduces the peloton's ability
+   * to cover a move after its chase resources have already been spent.
+   */
+  const phase2BreakawayTeamIdsForAttack = new Set(
+    phase1.breakawayRiderIds
+      .map((riderId) => ridersById.get(riderId)?.teamId)
+      .filter((teamId): teamId is string => Boolean(teamId)),
+  )
+  const phase2ExplicitControllingTeamIdsForAttack = Array.from(
+    new Set(
+      phase2Rows
+        .filter(
+          ({ row, phase }) =>
+            !phase2BreakawayTeamIdsForAttack.has(row.teamId) &&
+            phase.behaviour === 'race_control',
+        )
+        .map(({ row }) => row.teamId),
+    ),
+  ).sort()
+  const phase2ExplicitChasingTeamIdsForAttack = Array.from(
+    new Set(
+      phase2Rows
+        .filter(
+          ({ row, phase }) =>
+            !phase2BreakawayTeamIdsForAttack.has(row.teamId) &&
+            phase.behaviour === 'chase',
+        )
+        .map(({ row }) => row.teamId),
+    ),
+  ).sort()
+  const phase2GcThreatChasingTeamIdsForAttack = getGcThreatChasingTeamIds(
+    input,
+    phase1.breakawayRiderIds,
+  ).filter((teamId) => !phase2BreakawayTeamIdsForAttack.has(teamId))
+  const phase2InterestedTeamIdsForAttack = new Set([
+    ...phase2ExplicitControllingTeamIdsForAttack,
+    ...phase2ExplicitChasingTeamIdsForAttack,
+    ...phase2GcThreatChasingTeamIdsForAttack,
+  ])
+  const phase2ChaseWorkerRowsForAttack = phase2Rows.filter(
+    ({ row, phase }) =>
+      phase2InterestedTeamIdsForAttack.has(row.teamId) &&
+      (
+        phase.behaviour === 'chase' ||
+        phase.behaviour === 'race_control' ||
+        phase.behaviour === 'team_work' ||
+        row.stageRole === 'helper_domestique' ||
+        row.stageRole === 'rouleur' ||
+        row.stageRole === 'breakaway_chaser'
+      ),
+  )
+  const calculatePhase2ChaseResourceDepletionAtKm = (
+    attemptKm: number,
+  ): number => {
+    if (
+      phase2ChaseWorkerRowsForAttack.length === 0 ||
+      attemptKm <= phaseBoundary.startKm
+    ) {
+      return 0
+    }
+    const workloadFraction = clamp(
+      (attemptKm - phaseBoundary.startKm) /
+        Math.max(1, phaseBoundary.endKm - phaseBoundary.startKm),
+      0,
+      1,
+    )
+    const startEnergyAverage = average(
+      phase2ChaseWorkerRowsForAttack.map(
+        ({ row }) => phase1EnergyByRiderId.get(row.riderId) ?? 0,
+      ),
+    )
+    const liveEnergyAverage = average(
+      phase2ChaseWorkerRowsForAttack.map(({ row }) => {
+        const rider = ridersById.get(row.riderId)!
+        const readiness = readinessByRiderId.get(row.riderId)!
+        const startEnergy = phase1EnergyByRiderId.get(row.riderId) ?? 0
+        const spent = calculateRoadEnergyCostForRange(
+          input,
+          rider,
+          readiness,
+          1.18,
+          phaseBoundary.startKm,
+          attemptKm,
+        )
+        return Math.max(0, startEnergy - spent)
+      }),
+    )
+    const energyRetentionFraction =
+      startEnergyAverage > 0
+        ? clamp(liveEnergyAverage / startEnergyAverage, 0, 1)
+        : 1
+    const finiteAssetRetentionFraction = clamp(
+      clamp(liveEnergyAverage / 70, 0.3, 1) *
+        (1 - workloadFraction * 0.28),
+      0.25,
+      1,
+    )
+    return deterministicRound(
+      clamp(
+        (1 - energyRetentionFraction) * 0.55 +
+          (1 - finiteAssetRetentionFraction) * 0.45,
+        0,
+        0.75,
+      ),
+      6,
+    )
+  }
+
   const phase2AttackEnergyCostByRiderId = new Map<string, number>()
   const rawPhase2AttackAttempts: UniversalRoadDecisiveAttackAttempt[] =
     selectedPhase2AttackRows.map(({ row }, index) => {
@@ -11067,10 +11179,27 @@ export function resolveRoadPhase2Development(
       const deterministicOutcomeRoll = calculateDeterministicUnitRoll(
         `${input.engine.deterministicSeed}|${input.stage.stageId}|phase_2_dynamic_attack|${row.riderId}`,
       )
+      const sourceGroupCode: UniversalRoadDevelopmentGroupCode =
+        breakawayActive && phase1.breakawayRiderIds.includes(row.riderId)
+          ? 'breakaway'
+          : 'main_peloton'
+      const chaseResourceDepletion =
+        sourceGroupCode === 'main_peloton'
+          ? calculatePhase2ChaseResourceDepletionAtKm(attemptKm)
+          : 0
+      const effectiveAttackSuccessProbability = deterministicRound(
+        clamp(
+          outcome.attackSuccessProbability +
+            chaseResourceDepletion * 0.16,
+          0,
+          0.96,
+        ),
+        6,
+      )
       const physicallyValid = intent.eligible && energyBeforeAttempt >= 20
       const attackSucceeded =
         physicallyValid &&
-        deterministicOutcomeRoll <= outcome.attackSuccessProbability
+        deterministicOutcomeRoll <= effectiveAttackSuccessProbability
       const attackEnergyCost = physicallyValid
         ? Math.min(energyBeforeAttempt, outcome.projectedAttackEnergyCostPct)
         : 0
@@ -11079,16 +11208,13 @@ export function resolveRoadPhase2Development(
       return {
         riderId: row.riderId,
         teamId: row.teamId,
-        sourceGroupCode:
-          breakawayActive && phase1.breakawayRiderIds.includes(row.riderId)
-            ? 'breakaway'
-            : 'main_peloton',
+        sourceGroupCode,
         attemptKm,
         effectiveTerrainType: phase2AttackTerrain.terrainType,
         energyBeforeAttempt,
         attackIntentScore: intent.attackIntentScore,
         attackExecutionSkillScore: outcome.attackExecutionSkillScore,
-        attackSuccessProbability: outcome.attackSuccessProbability,
+        attackSuccessProbability: effectiveAttackSuccessProbability,
         deterministicOutcomeRoll,
         attackSucceeded,
         attackEnergyCost: deterministicRound(attackEnergyCost, 6),
@@ -11133,6 +11259,11 @@ export function resolveRoadPhase2Development(
     ),
     6,
   )
+  const successfulPhase2PelotonAttackChaseDepletion = average(
+    successfulPhase2PelotonAttackAttempts.map((attempt) =>
+      calculatePhase2ChaseResourceDepletionAtKm(attempt.attemptKm),
+    ),
+  )
   const rawSecondaryFrontGapToPelotonSeconds =
     successfulPhase2PelotonAttackAttempts.length > 0
       ? deterministicRound(
@@ -11144,12 +11275,13 @@ export function resolveRoadPhase2Development(
                 ),
               ) *
                 0.12 +
+              successfulPhase2PelotonAttackChaseDepletion * 10 +
               calculateDeterministicUnitRoll(
                 `${input.engine.deterministicSeed}|phase11g|phase2-secondary-front-gap`,
               ) *
                 8,
             8,
-            30,
+            36,
           ),
           6,
         )
@@ -16642,7 +16774,7 @@ export function resolveRoadPhase4Finish(
         const rider = ridersById.get(riderId)!
         const readiness = readinessByRiderId.get(riderId)!
         const startEnergy = phase3EnergyByRiderId.get(riderId) ?? 0
-        const spent = calculateRoadEnergyCostForRange(
+        const baselineSpent = calculateRoadEnergyCostForRange(
           input,
           rider,
           readiness,
@@ -16650,7 +16782,17 @@ export function resolveRoadPhase4Finish(
           phaseBoundary.startKm,
           phase4StepMidKm,
         )
-        return [riderId, Math.max(0, startEnergy - spent)] as const
+        const exposureSpent = calculateBreakawayExposureEnergyCost(
+          input,
+          baselineSpent,
+          Math.max(1, currentFrontRiderIds.length),
+          phaseBoundary.startKm,
+          phase4StepMidKm,
+        )
+        return [
+          riderId,
+          Math.max(0, startEnergy - baselineSpent - exposureSpent),
+        ] as const
       }),
     )
     const phase4CooperationMultiplier = calculateRoadEscapeCooperationMultiplier(
@@ -17857,6 +17999,33 @@ export function resolveRoadPhase4Finish(
     6,
   )
 
+  /*
+   * Phase 11M v2: when a front group is caught, its riders do not receive a
+   * synthetic energy reset from joining P. Record the exact catch kilometre
+   * for every caught B/F rider so the rider state can immediately test whether
+   * the remaining reserve is sufficient to hold the peloton wheel.
+   */
+  const caughtFrontCatchKmByRiderId = new Map<string, number>()
+  if (frontCatchKm !== null) {
+    escapeRiderIdsAtStart.forEach((riderId) => {
+      caughtFrontCatchKmByRiderId.set(riderId, frontCatchKm!)
+    })
+  }
+  bridgeGroups
+    .filter(
+      (bridge) =>
+        bridge.caughtByPeloton &&
+        bridge.catchKm !== null,
+    )
+    .forEach((bridge) => {
+      bridge.riderIds.forEach((riderId) => {
+        const existing = caughtFrontCatchKmByRiderId.get(riderId)
+        if (existing === undefined || bridge.catchKm! < existing) {
+          caughtFrontCatchKmByRiderId.set(riderId, bridge.catchKm!)
+        }
+      })
+    })
+
   const provisionalRiderStatesBeforePhysicalContact = roadCommandResolution.riders.map((row) => {
     const rider = ridersById.get(row.riderId)!
     const readiness = readinessByRiderId.get(row.riderId)!
@@ -17870,6 +18039,35 @@ export function resolveRoadPhase4Finish(
       phaseBoundary.startKm,
       phaseBoundary.endKm,
     )
+    const frontExposureEndKm =
+      escapeSet.has(row.riderId)
+        ? Math.min(
+            phaseBoundary.endKm,
+            caughtFrontCatchKmByRiderId.get(row.riderId) ??
+              phaseBoundary.endKm,
+          )
+        : phaseBoundary.startKm
+    const frontExposureBaselineEnergyCost =
+      frontExposureEndKm > phaseBoundary.startKm
+        ? calculateRoadEnergyCostForRange(
+            input,
+            rider,
+            readiness,
+            getGeneralPhaseEffortMultiplier(phase),
+            phaseBoundary.startKm,
+            frontExposureEndKm,
+          )
+        : 0
+    const breakawayExposureEnergyCost =
+      frontExposureEndKm > phaseBoundary.startKm
+        ? calculateBreakawayExposureEnergyCost(
+            input,
+            frontExposureBaselineEnergyCost,
+            Math.max(1, escapeRiderIdsAtStart.length),
+            phaseBoundary.startKm,
+            frontExposureEndKm,
+          )
+        : 0
     const isAutomaticWorker = automaticWorkerSet.has(row.riderId)
     const automaticChaseEnergyCost = isAutomaticWorker
       ? deterministicRound(
@@ -17930,7 +18128,8 @@ export function resolveRoadPhase4Finish(
       baselinePhaseEnergyCost +
         automaticChaseEnergyCost +
         bridgeEnergyCost +
-        finishEffortEnergyCost,
+        finishEffortEnergyCost +
+        breakawayExposureEnergyCost,
       6,
     )
     const energyAtFinish = deterministicRound(
@@ -17952,6 +18151,124 @@ export function resolveRoadPhase4Finish(
       contactLossKm === null ? null : 'terrain_pressure'
     let contactLossGapPenaltySeconds =
       terrainGapPenaltyByRiderId.get(row.riderId) ?? 0
+
+    const caughtFrontCatchKm =
+      caughtFrontCatchKmByRiderId.get(row.riderId) ?? null
+    if (
+      caughtFrontCatchKm !== null &&
+      caughtFrontCatchKm < phaseBoundary.endKm - 0.000001
+    ) {
+      const caughtBridge = bridgeGroups.find(
+        (bridge) =>
+          bridge.caughtByPeloton &&
+          bridge.catchKm !== null &&
+          bridge.riderIds.includes(row.riderId) &&
+          Math.abs(bridge.catchKm - caughtFrontCatchKm) <= 0.000001,
+      )
+      const energyAtCatch = (() => {
+        if (caughtBridge) {
+          const baselineBeforeBridge = calculateRoadEnergyCostForRange(
+            input,
+            rider,
+            readiness,
+            getGeneralPhaseEffortMultiplier(phase),
+            phaseBoundary.startKm,
+            caughtBridge.launchKm,
+          )
+          const bridgeWorkToCatch = calculateRoadEnergyCostForRange(
+            input,
+            rider,
+            readiness,
+            1.9,
+            caughtBridge.launchKm,
+            caughtFrontCatchKm,
+          )
+          return deterministicRound(
+            Math.max(
+              0,
+              startEnergy - baselineBeforeBridge - bridgeWorkToCatch,
+            ),
+            6,
+          )
+        }
+        const baselineToCatch = calculateRoadEnergyCostForRange(
+          input,
+          rider,
+          readiness,
+          getGeneralPhaseEffortMultiplier(phase),
+          phaseBoundary.startKm,
+          caughtFrontCatchKm,
+        )
+        const exposureToCatch = calculateBreakawayExposureEnergyCost(
+          input,
+          baselineToCatch,
+          Math.max(1, escapeRiderIdsAtStart.length),
+          phaseBoundary.startKm,
+          caughtFrontCatchKm,
+        )
+        return deterministicRound(
+          Math.max(0, startEnergy - baselineToCatch - exposureToCatch),
+          6,
+        )
+      })()
+      const catchTerrain = getRoadOpeningSegmentAtKm(
+        input.stage,
+        caughtFrontCatchKm,
+      )
+      const catchTerrainPressure =
+        catchTerrain.terrainType === 'steep_climb'
+          ? 2
+          : catchTerrain.terrainType === 'climb'
+            ? 1.25
+            : catchTerrain.terrainType === 'cobbled' ||
+                catchTerrain.terrainType === 'gravel'
+              ? 0.75
+              : 0
+      const postCatchHoldFloor = deterministicRound(
+        clamp(
+          phase4DepletionContactFloor +
+            catchTerrainPressure +
+            averageWorkIntensity * 1.25,
+          3.5,
+          9.5,
+        ),
+        6,
+      )
+      if (energyAtCatch < postCatchHoldFloor - 0.000001) {
+        const immediateDropKm = deterministicRound(
+          Math.min(
+            phaseBoundary.endKm - 0.000001,
+            caughtFrontCatchKm + 0.01,
+          ),
+          6,
+        )
+        const remainingKm = Math.max(
+          0,
+          phaseBoundary.endKm - immediateDropKm,
+        )
+        const immediateDropPenaltySeconds = deterministicRound(
+          clamp(
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS +
+              1 +
+              remainingKm *
+                (input.stage.terrainType === 'mountain' ? 0.95 : 0.7) +
+              Math.max(0, postCatchHoldFloor - energyAtCatch) * 2.5,
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+            180,
+          ),
+          6,
+        )
+        if (contactLossKm === null || immediateDropKm < contactLossKm) {
+          contactLossKm = immediateDropKm
+          contactLossReason = 'energy_depleted'
+          contactLossGapPenaltySeconds = immediateDropPenaltySeconds
+        } else if (
+          immediateDropPenaltySeconds > contactLossGapPenaltySeconds
+        ) {
+          contactLossGapPenaltySeconds = immediateDropPenaltySeconds
+        }
+      }
+    }
 
     if (
       phase4MeaningfulContactPressure &&
