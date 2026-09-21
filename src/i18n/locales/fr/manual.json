@@ -1590,7 +1590,12 @@
         "Les coureurs blessés ou malades ont besoin d'un rétablissement médical plutôt que d'une sélection de course normale.",
         "Non parfaitement adapté signifie que le coureur peut courir mais n'est pas à la disposition idéale.",
         "L'entraînement dur et les calendriers de course lourds augmentent le risque de surcharge.",
-        "Le personnel médical et les systèmes de récupération peuvent améliorer la gestion des problèmes de santé."
+        "Le personnel médical et les systèmes de récupération peuvent améliorer la gestion des problèmes de santé.",
+        "Une chute en course peut se terminer sans blessure durable, par une blessure légère, modérée ou grave.",
+        "Les blessures légères de course persistent brièvement comme cas médical. Le coureur reste sélectionnable, mais il n'est pas totalement apte et peut perdre de l'affûtage pendant sa récupération.",
+        "Les blessures modérées laissent aussi le coureur sélectionnable, mais les effets médicaux et de récupération sont plus importants et peuvent toucher les étapes ou jours de course suivants.",
+        "Les blessures graves créent une véritable indisponibilité. Le coureur peut abandonner l'étape en cours et être bloqué pour les étapes ou courses suivantes jusqu'à sa récupération.",
+        "Les conséquences médicales d'une course sont enregistrées dans l'état réel de l'effectif après l'étape ; elles ne sont pas seulement visuelles dans le replay."
       ],
       "facts": [
         {
@@ -1792,7 +1797,8 @@
         "Les plans individuels remplacent la tâche par défaut de l'équipe lorsqu'un coureur a besoin de travail spécialisé.",
         "La dureté augmente le stress d'entraînement et le risque de fatigue.",
         "L'intensité de récupération est utile autour des blocs de course dures.",
-        "La formation devrait suivre les objectifs du rôle et du calendrier."
+        "La formation devrait suivre les objectifs du rôle et du calendrier.",
+        "La santé et la charge de course comptent aussi : un coureur blessé ou pas totalement apte peut perdre de l'affûtage ou nécessiter un travail plus léger même si le plan d'entraînement normal semblait adapté."
       ],
       "facts": [
         {
@@ -1953,7 +1959,8 @@
         "Les objets tissés peuvent réduire la fiabilité et ne doivent pas être ignorés avant les courses importantes.",
         "Les devis de réparation doivent indiquer le coût avant la confirmation. Le gestionnaire doit comparer le coût de réparation avec la valeur de l'article et le coût de remplacement.",
         "La vente convertit un article en espèces lorsque la vente est autorisée. L'article quitte alors l'inventaire actif.",
-        "Le rejet enlève un article sans vente normale. Ceci ne doit être utilisé que pour l'équipement dont le club n'a plus besoin ou ne peut pas justifier la conservation."
+        "Le rejet enlève un article sans vente normale. Ceci ne doit être utilisé que pour l'équipement dont le club n'a plus besoin ou ne peut pas justifier la conservation.",
+        "L'équipement réellement utilisé par vos coureurs pendant une étape perd de l'état après cette étape. L'usure dépend de l'utilisation en course et de la distance, ce qui crée progressivement des besoins de réparation et de remplacement."
       ],
       "facts": [
         {
@@ -2140,7 +2147,8 @@
         "Mobile Workshop fournit un soutien technique pendant les courses/voyages.",
         "Medical Van fournit un soutien médical supplémentaire.",
         "Les biens assignés ou immobilisés ne devraient pas être réparés ou vendus avant d'être libérés de la course ou de l'emploi qui les utilise.",
-        "L'état doit être vérifié avant les courses importantes car un atout techniquement disponible peut encore être en mauvais état."
+        "L'état doit être vérifié avant les courses importantes car un atout techniquement disponible peut encore être en mauvais état.",
+        "Les actifs de soutien réellement utilisés en course peuvent perdre de l'état après l'étape. Les utilisations répétées augmentent donc les besoins de réparation et de remplacement."
       ],
       "facts": [
         {
@@ -2306,7 +2314,9 @@
         "Commentaire décrit les attaques importantes, les échappées, les chasses, les montées, les sprints et les événements d'arrivée.",
         "Le résultat de l'étape n'est qu'une partie d'une course d'étape. GC, points, montagne, jeunes et classements d'équipe peuvent changer après chaque étape.",
         "Un coureur peut avoir une mauvaise position sur étape mais atteindre un objectif tactique tel que des points, des points KOM ou protéger un leader.",
-        "Utiliser les replays/résultats comme rétroaction pour les tactiques futures plutôt que de changer l'étape déjà finalisée."
+        "Utiliser les replays/résultats comme rétroaction pour les tactiques futures plutôt que de changer l'étape déjà finalisée.",
+        "Les chutes, la fatigue et les conséquences médicales visibles dans le replay officiel font partie du même calcul d'étape. Une fois l'étape finalisée, les conséquences persistantes sont transférées dans l'état réel de l'effectif.",
+        "Le replay ne crée pas un second résultat ; il explique la course déjà calculée."
       ],
       "facts": [
         {
@@ -3264,6 +3274,48 @@
       "relatedLinks": [
         "Marché du personnel",
         "Infrastructure"
+      ]
+    },
+    "race-engine-basics": {
+      "category": "Calendrier et courses",
+      "title": "Comment les résultats de course sont décidés",
+      "subtitle": "Ce que le moteur de course prend en compte sans révéler ses formules internes.",
+      "overview": "Aucune valeur unique ne garantit la victoire. Le calcul officiel combine la qualité du coureur, l'adaptation au parcours, l'état du jour, la préparation, la tactique et les événements dynamiques de l'étape.",
+      "facts": [
+        {
+          "label": "Facteurs du coureur",
+          "value": "Compétences, rôle, fatigue, affûtage, santé, moral et énergie restante"
+        },
+        {
+          "label": "Facteurs de préparation",
+          "value": "Tactique d'étape, équipement, ravitaillement, staff et actifs de soutien"
+        },
+        {
+          "label": "Facteurs de course",
+          "value": "Terrain, météo, groupes, attaques, poursuite, échappées, incidents et type d'arrivée"
+        }
+      ],
+      "details": [
+        "Le coureur avec la meilleure note générale ne gagne pas automatiquement. Les compétences spécialisées comptent différemment selon le type d'étape.",
+        "Fatigue, santé, affûtage et énergie peuvent faire évoluer fortement les performances de deux coureurs pourtant proches en niveau.",
+        "Votre Plan d'Étape influence la dépense d'énergie et les réactions des coureurs. Les rôles et tactiques peuvent protéger un leader, préparer un sprint, chasser, attaquer ou viser une échappée.",
+        "Équipement, ravitaillement, staff et actifs sélectionnés peuvent améliorer préparation, fiabilité, récupération ou efficacité lorsqu'ils sont disponibles et utilisés.",
+        "La course reste dynamique : une échappée peut réussir ou être reprise, les ressources de poursuite peuvent s'épuiser, les groupes peuvent éclater et les chutes ou problèmes mécaniques peuvent modifier le résultat.",
+        "Le replay et le résultat officiel proviennent du même calcul ; le replay explique le résultat enregistré au lieu d'en créer un nouveau."
+      ],
+      "tips": [
+        "Choisissez les coureurs pour le parcours, pas seulement selon la note générale.",
+        "Abordez les courses importantes avec une fatigue maîtrisée et des Plans d'Étape complets."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Préparation de course",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Calendrier",
+          "to": "/dashboard/calendar"
+        }
       ]
     }
   }
