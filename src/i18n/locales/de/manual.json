@@ -3317,6 +3317,69 @@
           "to": "/dashboard/calendar"
         }
       ]
+    },
+    "race-preparation-bonuses-deep": {
+      "category": "Rennvorbereitung",
+      "title": "Boni der Rennvorbereitung: Was wirklich ins Rennen einfließt",
+      "subtitle": "Wo Unterstützungspunkte entstehen, was sie beeinflussen und wie der Gesamtnutzen zu lesen ist.",
+      "overview": "Rennvorbereitung erzeugt keinen einzigen Gesamt-Prozentbonus. Verschiedene Entscheidungen wirken auf unterschiedliche Kanäle: Fahrerleistung, Energieverbrauch, Ermüdung, Erholung, Verletzungsschutz, mechanische Zuverlässigkeit, taktische Unterstützung und Verschleiß.",
+      "facts": [
+        {
+          "label": "Fünf Unterstützungsgruppen",
+          "value": "Rennsupport, Ermüdungskontrolle, Erholung, Gesundheitsschutz, mechanische Zuverlässigkeit"
+        },
+        {
+          "label": "Maximum pro Gruppe",
+          "value": "30 Punkte"
+        },
+        {
+          "label": "Separate Kanäle",
+          "value": "Ausrüstungsleistung und Rennverpflegung werden separat berechnet"
+        },
+        {
+          "label": "Passives Rennpersonal",
+          "value": "Teamarzt und Mechaniker"
+        },
+        {
+          "label": "Kein pauschaler Rennbonus",
+          "value": "Sportdirektor, Cheftrainer und Scout Analyst"
+        }
+      ],
+      "details": [
+        "Exakte Effekte ausgewählter Quellen werden einer von fünf Gruppen zugeordnet. Beispiel: +2% medizinische Reaktion ergeben 2 Gesundheitsschutz-Punkte; +1% Erholung nach der Etappe ergibt 1 Erholungs-Punkt.",
+        "Rennsupport kommt vor allem aus Verpflegung, Teamfahrzeugen, Logistik, Kommunikation und Incident-Support. Er kann Energieeffizienz, taktische Möglichkeiten und Teile des Gesundheits-/Mechanikschutzes verbessern.",
+        "Ermüdungskontrolle reduziert Renn- und Reisebelastung. Zusammen mit Erholung senkt sie die Ermüdung nach der Etappe und verbessert die Regeneration.",
+        "Gesundheitsschutz reduziert Gesundheits-/Verletzungsrisiken. Mechanische Zuverlässigkeit reduziert Defektrisiko und Zeitverlust.",
+        "Ausgewählte Fahrzeuge wirken automatisch: Teamautos liefern Rennsupport/Verpflegung/Kommunikation/Mechanikhilfe; Busse Ermüdung/Erholung; Medical Vans Gesundheit/Erholung; Equipment Vans und Workshops Mechanik-/Ausrüstungsschutz.",
+        "Teampolitiken können ebenfalls beitragen: bessere Reise kann Moral unterstützen, Unterkunft die Erholung und Logistik den Rennsupport. Basiseinstellungen können 0 Zusatzpunkte liefern.",
+        "Ein ausgewählter Teamarzt aktiviert automatisch vorhandene medizinische Boni: geringeres Verletzungs-/Krankheitsrisiko, kürzere Erholungsdauer, täglicher Erholungsbonus und niedrigerer Ermüdungsboden.",
+        "Ein ausgewählter Mechaniker aktiviert automatisch vorhandene technische Boni: Setup-Qualität, geringeres Defektrisiko und weniger Zustandsverlust der Ausrüstung. Wartungsgeschwindigkeit/-kosten wirken zusätzlich außerhalb des Rennens.",
+        "Der Sportdirektor unterstützt Taktik, Vorschläge und Automatisierung, hat aber derzeit keinen separaten pauschalen passiven Leistungsbonus. Cheftrainer wirkt vor allem auf Training/Entwicklung, Scout Analyst auf Scouting.",
+        "Ausrüstung ist ein separater Fahrerkanal. Der finale etappenspezifische Prozentsatz hängt von Setup, Terrain-Passung und Zustand ab. Beispiel: +5% Ausrüstung bei Etappen-Skill 76 ergeben etwa +3,8 Suitability-Punkte.",
+        "Rennverpflegung ist ebenfalls separat. Bidons, Gels, Nutrition Packs und Wetterschutz können Energie sparen, Ermüdung senken, Erholung verbessern oder Wetterschutz geben, wenn sie ausgewählt und verfügbar sind.",
+        "Unterschiedliche Prozentwerte dürfen nicht einfach addiert werden. 10% Energieersparnis, 6% weniger Ermüdung und 15% weniger mechanischer Zeitverlust sind kein 31%-Geschwindigkeitsbonus.",
+        "Beispiel: Rennsupport 9, Ermüdung 2, Erholung 2, Gesundheit 4 und Mechanik 7 ergeben ungefähr 1,95% weniger Energieverbrauch im Rennen, 3% weniger Ermüdung nach der Etappe, +0,6 Erholung, 6,6% weniger Gesundheitsrisiko, 19,3% weniger Defektrisiko und 15,35% weniger mechanischen Zeitverlust, bevor Ausrüstung, Verpflegung und Wetter hinzukommen.",
+        "Gute Vorbereitung verbessert Effizienz und Zuverlässigkeit, garantiert aber keinen Sieg; Fahrerwerte, Strecke, Ermüdung, Rennschärfe, Taktik und Rennverlauf bleiben entscheidend."
+      ],
+      "tips": [
+        "Jeden Bonus nach seinem Kanal lesen statt nach einer einzigen Gesamtsumme zu suchen.",
+        "Ausrüstung an das Terrain anpassen, genug Verpflegung mitnehmen und Staff/Assets passend zu den Risiken wählen.",
+        "Bei Etappenrennen können Erholung und Ermüdungskontrolle so wichtig sein wie direkte Leistung."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Rennvorbereitung",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Ausrüstung",
+          "to": "/dashboard/equipment"
+        },
+        {
+          "label": "Personal",
+          "to": "/dashboard/staff"
+        }
+      ]
     }
   }
 }
