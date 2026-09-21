@@ -328,7 +328,7 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
   if (!stageId || !runId) throw new Error("Pass 2 claim is missing stage/run identity.");
   const scenarioMode = text(claim.scenario_mode) || "none";
   const useFallback = scenarioMode === "emergency_fallback";
-  const fallbackReason = useFallback ? "pass1_worker_timeout" : null;
+  const fallbackReason = useFallback ? "emergency_recovery" : null;
 
   try {
     await heartbeat(supabase, stageId, runId, "pass2_payload_loading", { source_commit: SOURCE_COMMIT });
