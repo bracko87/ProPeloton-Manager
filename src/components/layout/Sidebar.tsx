@@ -137,6 +137,39 @@ export default function Sidebar({
   const [unreadBugReports, setUnreadBugReports] = useState(0)
   const [pendingPlayerReviews, setPendingPlayerReviews] = useState(0)
   const [unreadContactMessages, setUnreadContactMessages] = useState(0)
+  const [isPremium, setIsPremium] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let alive = true
+
+    const loadPremiumStatus = async (): Promise<void> => {
+      const { data, error } = await supabase.rpc('get_my_premium_status')
+
+      if (!alive) return
+
+      if (error) {
+        console.warn('Could not load Premium status for sidebar:', error)
+        setIsPremium(false)
+        return
+      }
+
+      const rows = Array.isArray(data) ? data : data ? [data] : []
+      setIsPremium(rows[0]?.is_premium === true)
+    }
+
+    void loadPremiumStatus()
+
+    const handlePremiumStatusChanged = (): void => {
+      void loadPremiumStatus()
+    }
+
+    window.addEventListener('premium-status-changed', handlePremiumStatusChanged)
+
+    return () => {
+      alive = false
+      window.removeEventListener('premium-status-changed', handlePremiumStatusChanged)
+    }
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -469,6 +502,36 @@ export default function Sidebar({
           {navItems.map(item => {
             const Icon = item.icon
             const active = isPathActive(location.pathname, item)
+            const premiumLocked =
+              item.to === '/dashboard/premium-center' && isPremium !== true
+
+            if (premiumLocked) {
+              return (
+                <div
+                  key={item.to}
+                  aria-disabled="true"
+                  className={[
+                    'w-full cursor-not-allowed rounded-md text-white/35 opacity-60',
+                    collapsed
+                      ? 'flex items-center justify-center px-2 py-3'
+                      : 'flex items-start gap-3 px-3 py-3',
+                  ].join(' ')}
+                >
+                  <Icon size={18} className="mt-0.5 flex-shrink-0" />
+
+                  {!collapsed && (
+                    <div className="min-w-0">
+                      <div className="text-base font-semibold leading-tight">
+                        {t(item.labelKey)}
+                      </div>
+                      <div className="mt-1 text-xs leading-tight text-white/30">
+                        {t(item.descriptionKey)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            }
 
             return (
               <NavLink
