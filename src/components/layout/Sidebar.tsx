@@ -198,24 +198,11 @@ export default function Sidebar({
 
     void refreshRaceOperationsProblems()
 
-    const channel = supabase
-      .channel('admin-race-operations-sidebar')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'race_operations_stage_status_v1',
-        },
-        () => {
-          void refreshRaceOperationsProblems()
-        },
-      )
-      .subscribe()
-
+    // The admin problem badge does not need a permanent Realtime channel.
+    // Refresh every 15 real minutes, plus explicit page/focus refreshes.
     const intervalId = window.setInterval(() => {
       void refreshRaceOperationsProblems()
-    }, 60_000)
+    }, 15 * 60_000)
 
     const handleRefresh = (): void => {
       void refreshRaceOperationsProblems()
@@ -235,7 +222,6 @@ export default function Sidebar({
         'admin-race-operations-count-refresh',
         handleRefresh,
       )
-      void supabase.removeChannel(channel)
     }
   }, [isAdmin])
 
