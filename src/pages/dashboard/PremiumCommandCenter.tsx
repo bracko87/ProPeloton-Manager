@@ -13,11 +13,9 @@ import {
   Save,
   Settings2,
   ShoppingCart,
-  Sparkles,
   Target,
   Trash2,
   TrendingUp,
-  Users,
   WandSparkles,
   Zap,
 } from 'lucide-react'
@@ -580,7 +578,6 @@ export default function PremiumCommandCenter(): JSX.Element {
   const [sponsorLogoById, setSponsorLogoById] = useState<Record<string, string | null>>({})
   const [templateSection, setTemplateSection] = useState<'race' | 'training' | 'finance' | 'automation'>('race')
 
-  const [templateType, setTemplateType] = useState<PremiumTemplate['template_type']>('race_strategy')
   const [templateName, setTemplateName] = useState('')
   const [raceTerrain, setRaceTerrain] = useState('all')
   const [raceObjective, setRaceObjective] = useState('balanced')
@@ -2086,8 +2083,6 @@ export default function PremiumCommandCenter(): JSX.Element {
                     onClick={() => {
                       const section = key as 'race' | 'training' | 'finance' | 'automation'
                       setTemplateSection(section)
-                      if (section === 'race') setTemplateType('race_strategy')
-                      if (section === 'training') setTemplateType('training')
                     }}
                     className={`border-b-2 px-3 pb-3 pt-1 text-sm font-medium ${
                       templateSection === key
