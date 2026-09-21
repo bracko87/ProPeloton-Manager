@@ -9241,6 +9241,8 @@ type StageProfileReplayEntityMarker = {
   highlighted?: boolean
   topLabel?: string | null
   topLabelColor?: string
+  tooltipTitle?: string
+  tooltipLines?: string[]
 }
 
 type StageProfileAuxiliaryMarker = {
@@ -9277,6 +9279,7 @@ function StageProfileChart({
 }) {
   const { t } = useTranslation('raceDetail')
   const chartInstanceId = useId().replace(/:/g, '')
+  const [hoveredReplayEntityId, setHoveredReplayEntityId] = useState<string | null>(null)
 
   if (!points.length || !distanceKm) {
     return (
@@ -9623,10 +9626,32 @@ function StageProfileChart({
           const highlighted = marker.highlighted === true
 
           if (replayEntityMarkerStyle === 'line') {
+            const tooltipLines = marker.tooltipLines ?? []
+            const tooltipWidth = compact ? 176 : 196
+            const tooltipHeight = 34 + Math.max(1, tooltipLines.length) * 17
+            const tooltipX = Math.max(
+              4,
+              Math.min(width - tooltipWidth - 4, marker.x + 10)
+            )
+            const tooltipY = Math.max(
+              4,
+              Math.min(height - tooltipHeight - 4, padding.top + 8)
+            )
+            const tooltipVisible =
+              hoveredReplayEntityId === marker.id &&
+              Boolean(marker.tooltipTitle || tooltipLines.length > 0)
+
             return (
               <g
                 key={`replay-entity-${marker.id}`}
                 aria-label={`${marker.label}, start order ${marker.startOrder}, ${marker.km.toFixed(1)} kilometres`}
+                tabIndex={0}
+                role="button"
+                style={{ cursor: 'help' }}
+                onMouseEnter={() => setHoveredReplayEntityId(marker.id)}
+                onMouseLeave={() => setHoveredReplayEntityId((current) => current === marker.id ? null : current)}
+                onFocus={() => setHoveredReplayEntityId(marker.id)}
+                onBlur={() => setHoveredReplayEntityId((current) => current === marker.id ? null : current)}
               >
                 <g mask={`url(#${profileAboveMaskId})`}>
                   {highlighted ? (
@@ -9644,35 +9669,61 @@ function StageProfileChart({
                     y1={padding.top}
                     x2={marker.x}
                     y2={height - padding.bottom}
+                    stroke="transparent"
+                    strokeWidth={compact ? 12 : 14}
+                    pointerEvents="stroke"
+                  />
+                  <line
+                    x1={marker.x}
+                    y1={padding.top}
+                    x2={marker.x}
+                    y2={height - padding.bottom}
                     stroke={highlighted ? '#2563eb' : '#60a5fa'}
                     strokeWidth={highlighted ? (compact ? 2.8 : 3.2) : (compact ? 1.4 : 1.8)}
                     strokeLinecap="round"
+                    pointerEvents="none"
                   />
                 </g>
+
                 {marker.topLabel ? (
-                  <g>
-                    <rect
-                      x={marker.x - (compact ? 18 : 22)}
-                      y={Math.max(padding.top + 2, marker.y - (compact ? 22 : 26))}
-                      width={compact ? 36 : 44}
-                      height={compact ? 16 : 18}
-                      rx={compact ? 8 : 9}
-                      fill="white"
-                      stroke={marker.topLabelColor ?? '#cbd5e1'}
-                      strokeWidth="1"
-                      opacity="0.98"
-                    />
-                    <text
-                      x={marker.x}
-                      y={Math.max(padding.top + 13, marker.y - (compact ? 11 : 13))}
-                      textAnchor="middle"
-                      fontSize={compact ? '8' : '9'}
-                      fontWeight="800"
-                      fill={marker.topLabelColor ?? '#0f172a'}
-                    >
-                      {marker.topLabel}
-                    </text>
-                  </g>
+                  <text
+                    x={marker.x}
+                    y={padding.top + (compact ? 11 : 13)}
+                    textAnchor="middle"
+                    fontSize={compact ? '8' : '9'}
+                    fontWeight="800"
+                    fill={marker.topLabelColor ?? '#0f172a'}
+                    pointerEvents="none"
+                    style={{
+                      paintOrder: 'stroke',
+                      stroke: 'white',
+                      strokeWidth: compact ? 2.5 : 3,
+                      strokeLinejoin: 'round',
+                    }}
+                  >
+                    {marker.topLabel}
+                  </text>
+                ) : null}
+
+                {tooltipVisible ? (
+                  <foreignObject
+                    x={tooltipX}
+                    y={tooltipY}
+                    width={tooltipWidth}
+                    height={tooltipHeight}
+                    pointerEvents="none"
+                  >
+                    <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-[10px] leading-4 text-slate-600 shadow-xl">
+                      <div className="truncate font-bold text-slate-950">
+                        {marker.tooltipTitle ?? marker.label}
+                      </div>
+                      {tooltipLines.map((line, index) => (
+                        <div key={`${marker.id}-tooltip-${index}`} className="truncate">
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                  </foreignObject>
                 ) : null}
               </g>
             )
@@ -12826,6 +12877,48 @@ type UniversalShadowCommentaryItem = {
   raceSecond: number
   title: string
   description: string
+  hoverInfo?: {
+    title: string
+    lines: string[]
+  }
+}
+
+function ReplayCommentaryDescription({
+  event,
+}: {
+  event: UniversalShadowCommentaryItem
+}) {
+  const hoverInfo = event.hoverInfo
+  if (!hoverInfo?.title) return <>{event.description}</>
+
+  const labelIndex = event.description.indexOf(hoverInfo.title)
+  if (labelIndex < 0) return <>{event.description}</>
+
+  const before = event.description.slice(0, labelIndex)
+  const after = event.description.slice(labelIndex + hoverInfo.title.length)
+
+  return (
+    <>
+      {before}
+      <span
+        className="group relative inline-flex cursor-help font-semibold text-slate-800 underline decoration-dotted underline-offset-2"
+        tabIndex={0}
+      >
+        {hoverInfo.title}
+        <span className="pointer-events-none absolute bottom-full left-0 z-40 mb-2 hidden w-60 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-[11px] font-normal leading-4 text-slate-600 shadow-xl group-hover:block group-focus:block">
+          <span className="block font-bold text-slate-950">
+            {hoverInfo.title}
+          </span>
+          {hoverInfo.lines.map((line, index) => (
+            <span key={`${event.id}-hover-${index}`} className="block">
+              {line}
+            </span>
+          ))}
+        </span>
+      </span>
+      {after}
+    </>
+  )
 }
 
 function getUniversalReplayDurationSeconds(
@@ -13413,6 +13506,9 @@ function UniversalRaceReplayPage({
   const [preStageStandingByRiderId, setPreStageStandingByRiderId] = useState<
     Record<string, ReplayPreStageStanding>
   >({})
+  const [preStageStandingByTeamId, setPreStageStandingByTeamId] = useState<
+    Record<string, ReplayPreStageStanding>
+  >({})
   const [replayRiderIdentityById, setReplayRiderIdentityById] = useState<
     Map<string, RiderNameLookupRow>
   >(new Map())
@@ -13890,11 +13986,11 @@ function UniversalRaceReplayPage({
 
     async function loadPreStageStandings(): Promise<void> {
       setPreStageStandingByRiderId({})
+      setPreStageStandingByTeamId({})
 
       const currentStageNumber = Number(stage.stage_number ?? 1)
 
       if (
-        isTimeTrialReplay ||
         !Number.isFinite(currentStageNumber) ||
         currentStageNumber <= 1
       ) {
@@ -13938,10 +14034,10 @@ function UniversalRaceReplayPage({
       const { data: standings, error: standingsError } = await supabase
         .from('race_classification_standings')
         .select(
-          'after_stage_id, classification_type, entity_type, rider_id, rank, gap_seconds, points'
+          'after_stage_id, classification_type, entity_type, rider_id, team_id, rank, gap_seconds, points'
         )
         .eq('race_id', race.id)
-        .eq('entity_type', 'rider')
+        .in('entity_type', ['rider', 'team'])
         .in('after_stage_id', previousStageIds)
         .in('classification_type', ['general', 'points', 'mountain'])
 
@@ -13958,7 +14054,9 @@ function UniversalRaceReplayPage({
       const standingRows = (standings ?? []) as Array<{
         after_stage_id?: string | null
         classification_type?: string | null
+        entity_type?: string | null
         rider_id?: string | null
+        team_id?: string | null
         rank?: number | null
         gap_seconds?: number | null
         points?: number | null
@@ -13970,24 +14068,27 @@ function UniversalRaceReplayPage({
             (row) =>
               row.after_stage_id === previousStage.id &&
               row.classification_type === 'general' &&
-              Boolean(row.rider_id)
+              Boolean(row.rider_id || row.team_id)
           )
         )?.id ?? null
 
       if (!latestClassificationStageId) return
 
       const nextByRiderId: Record<string, ReplayPreStageStanding> = {}
+      const nextByTeamId: Record<string, ReplayPreStageStanding> = {}
 
       for (const row of standingRows) {
-        if (
-          row.after_stage_id !== latestClassificationStageId ||
-          !row.rider_id
-        ) {
+        if (row.after_stage_id !== latestClassificationStageId) {
           continue
         }
 
+        const isTeamRow = row.entity_type === 'team'
+        const entityId = isTeamRow ? row.team_id : row.rider_id
+        if (!entityId) continue
+
+        const target = isTeamRow ? nextByTeamId : nextByRiderId
         const current: ReplayPreStageStanding =
-          nextByRiderId[row.rider_id] ?? {
+          target[entityId] ?? {
             generalRank: null,
             generalGapSeconds: null,
             mountainPoints: 0,
@@ -14003,17 +14104,18 @@ function UniversalRaceReplayPage({
             row.gap_seconds === null || row.gap_seconds === undefined
               ? null
               : Number(row.gap_seconds)
-        } else if (row.classification_type === 'mountain') {
+        } else if (!isTeamRow && row.classification_type === 'mountain') {
           current.mountainPoints = Math.max(0, Number(row.points ?? 0))
-        } else if (row.classification_type === 'points') {
+        } else if (!isTeamRow && row.classification_type === 'points') {
           current.sprintPoints = Math.max(0, Number(row.points ?? 0))
         }
 
-        nextByRiderId[row.rider_id] = current
+        target[entityId] = current
       }
 
       if (!cancelled) {
         setPreStageStandingByRiderId(nextByRiderId)
+        setPreStageStandingByTeamId(nextByTeamId)
       }
     }
 
@@ -14023,7 +14125,6 @@ function UniversalRaceReplayPage({
       cancelled = true
     }
   }, [
-    isTimeTrialReplay,
     race.id,
     stage.id,
     stage.stage_number,
@@ -14043,6 +14144,7 @@ function UniversalRaceReplayPage({
           riderIds: string[]
           startOrder: number
           startOffsetSeconds: number
+          rideWindowSeconds: number
           state: 'waiting' | 'on_course' | 'finished'
           courseProgressFraction: number
           elapsedFraction: number
@@ -14083,6 +14185,18 @@ function UniversalRaceReplayPage({
     const eligibleRiders = input.riders.filter(
       (rider) => !dnsRiderIds.has(rider.riderId)
     )
+    const officialTimeByRiderId = new Map(
+      result.finishResolution.classification
+        .filter(
+          (row) =>
+            row.officialTimeSeconds !== null &&
+            row.officialTimeSeconds !== undefined
+        )
+        .map(
+          (row) =>
+            [row.riderId, Number(row.officialTimeSeconds)] as const
+        )
+    )
     const stageNumber = Math.max(1, Number(stage.stage_number ?? 1))
 
     const rawUnits = isIndividualTimeTrialReplay
@@ -14119,14 +14233,42 @@ function UniversalRaceReplayPage({
               overall: Number.isFinite(Number(overall))
                 ? Number(overall)
                 : null,
+              generalRank:
+                preStageStandingByRiderId[rider.riderId]?.generalRank ?? null,
+              officialTimeSeconds:
+                officialTimeByRiderId.get(rider.riderId) ?? null,
             }
           })
           .sort((left, right) => {
             if (stageNumber > 1) {
-              const explicitOrderDiff =
-                left.explicitStartOrder - right.explicitStartOrder
-              if (Number.isFinite(explicitOrderDiff) && explicitOrderDiff !== 0) {
-                return explicitOrderDiff
+              const leftHasGeneralRank = left.generalRank !== null
+              const rightHasGeneralRank = right.generalRank !== null
+
+              if (leftHasGeneralRank !== rightHasGeneralRank) {
+                return leftHasGeneralRank ? 1 : -1
+              }
+
+              if (
+                left.generalRank !== null &&
+                right.generalRank !== null &&
+                left.generalRank !== right.generalRank
+              ) {
+                return right.generalRank - left.generalRank
+              }
+            } else {
+              const leftFavourite = left.favouriteRank !== null
+              const rightFavourite = right.favouriteRank !== null
+
+              if (leftFavourite !== rightFavourite) {
+                return leftFavourite ? 1 : -1
+              }
+
+              if (
+                left.favouriteRank !== null &&
+                right.favouriteRank !== null &&
+                left.favouriteRank !== right.favouriteRank
+              ) {
+                return right.favouriteRank - left.favouriteRank
               }
             }
 
@@ -14138,23 +14280,9 @@ function UniversalRaceReplayPage({
               return left.overall - right.overall
             }
 
-            const leftFavourite = left.favouriteRank !== null
-            const rightFavourite = right.favouriteRank !== null
-
-            if (leftFavourite !== rightFavourite) {
-              return leftFavourite ? 1 : -1
-            }
-
-            if (
-              left.favouriteRank !== null &&
-              right.favouriteRank !== null &&
-              left.favouriteRank !== right.favouriteRank
-            ) {
-              return right.favouriteRank - left.favouriteRank
-            }
-
             return (
               left.strength - right.strength ||
+              left.explicitStartOrder - right.explicitStartOrder ||
               left.tieBreak - right.tieBreak ||
               left.id.localeCompare(right.id)
             )
@@ -14171,6 +14299,15 @@ function UniversalRaceReplayPage({
             const participantTeam = participantTeams.find(
               (team) => team.team_id === teamId || team.id === teamId
             )
+            const officialTimes = riders
+              .map((rider) => officialTimeByRiderId.get(rider.riderId))
+              .filter(
+                (value): value is number =>
+                  value !== null &&
+                  value !== undefined &&
+                  Number.isFinite(value)
+              )
+
             return {
               id: teamId,
               label:
@@ -14182,9 +14319,30 @@ function UniversalRaceReplayPage({
               tieBreak: Number.MAX_SAFE_INTEGER,
               competitionRank:
                 participantTeam?.competition_rank ?? participantTeam?.ranking_snapshot ?? null,
+              generalRank:
+                preStageStandingByTeamId[teamId]?.generalRank ?? null,
+              officialTimeSeconds:
+                officialTimes.length > 0 ? Math.max(...officialTimes) : null,
             }
           })
           .sort((left, right) => {
+            if (stageNumber > 1) {
+              const leftHasGeneralRank = left.generalRank !== null
+              const rightHasGeneralRank = right.generalRank !== null
+
+              if (leftHasGeneralRank !== rightHasGeneralRank) {
+                return leftHasGeneralRank ? 1 : -1
+              }
+
+              if (
+                left.generalRank !== null &&
+                right.generalRank !== null &&
+                left.generalRank !== right.generalRank
+              ) {
+                return right.generalRank - left.generalRank
+              }
+            }
+
             if (
               left.competitionRank !== null &&
               right.competitionRank !== null &&
@@ -14206,9 +14364,42 @@ function UniversalRaceReplayPage({
       6 * 60,
       input.stage.distanceKm <= 30 ? 6 * 60 : 8 * 60
     )
+    const validOfficialTimes = rawUnits
+      .map((unit) => unit.officialTimeSeconds)
+      .filter(
+        (value): value is number =>
+          value !== null &&
+          value !== undefined &&
+          Number.isFinite(value) &&
+          value > 0
+      )
+    const fastestOfficialTimeSeconds =
+      validOfficialTimes.length > 0 ? Math.min(...validOfficialTimes) : null
+    const visualRideWindowSecondsByUnitId = new Map(
+      rawUnits.map((unit) => {
+        const officialTimeSeconds = unit.officialTimeSeconds
+        const relativeDuration =
+          fastestOfficialTimeSeconds !== null &&
+          officialTimeSeconds !== null &&
+          officialTimeSeconds !== undefined &&
+          Number.isFinite(officialTimeSeconds) &&
+          officialTimeSeconds > 0
+            ? officialTimeSeconds / fastestOfficialTimeSeconds
+            : 1
+
+        return [
+          unit.id,
+          Math.max(1, rideWindowSeconds * relativeDuration),
+        ] as const
+      })
+    )
+    const maxVisualRideWindowSeconds = Math.max(
+      rideWindowSeconds,
+      ...Array.from(visualRideWindowSecondsByUnitId.values())
+    )
     const presentationDurationSeconds = Math.max(
       15 * 60,
-      lastStartOffsetSeconds + rideWindowSeconds
+      lastStartOffsetSeconds + maxVisualRideWindowSeconds
     )
     const presentationSecond = replayProgress * presentationDurationSeconds
     const splitDistanceFraction = 0.5
@@ -14219,15 +14410,17 @@ function UniversalRaceReplayPage({
 
     const units = rawUnits.map((unit, index) => {
       const startOffsetSeconds = index * visualStartIntervalSeconds
+      const rideWindowSecondsForUnit =
+        visualRideWindowSecondsByUnitId.get(unit.id) ?? rideWindowSeconds
       const localElapsedSeconds = presentationSecond - startOffsetSeconds
       const state: 'waiting' | 'on_course' | 'finished' =
         localElapsedSeconds < 0
           ? 'waiting'
-          : localElapsedSeconds >= rideWindowSeconds
+          : localElapsedSeconds >= rideWindowSecondsForUnit
             ? 'finished'
             : 'on_course'
       const elapsedFraction = universalClamp(
-        localElapsedSeconds / rideWindowSeconds,
+        localElapsedSeconds / rideWindowSecondsForUnit,
         0,
         1
       )
@@ -14244,6 +14437,7 @@ function UniversalRaceReplayPage({
         riderIds: unit.riderIds,
         startOrder: index + 1,
         startOffsetSeconds,
+        rideWindowSeconds: rideWindowSecondsForUnit,
         state,
         courseProgressFraction,
         elapsedFraction,
@@ -14276,6 +14470,8 @@ function UniversalRaceReplayPage({
     isTimeTrialReplay,
     participantRiderLookup,
     participantTeams,
+    preStageStandingByRiderId,
+    preStageStandingByTeamId,
     replayProgress,
     replayRiderIdentityById,
     result,
@@ -14761,7 +14957,9 @@ function UniversalRaceReplayPage({
           label: string
           secondaryLabel: string
           countryCode: string | null
+          classificationRank: number | null
           startOrder: number
+          rideWindowSeconds: number
           state: 'waiting' | 'on_course' | 'finished'
           courseProgressFraction: number
           countdownSeconds: number
@@ -14847,7 +15045,7 @@ function UniversalRaceReplayPage({
           ? null
           : finalTimeSeconds !== null
             ? finalTimeSeconds * unit.elapsedFraction
-            : timeTrialReplayPresentation.rideWindowSeconds * unit.elapsedFraction
+            : unit.rideWindowSeconds * unit.elapsedFraction
 
       return {
         id: unit.id,
@@ -14858,7 +15056,11 @@ function UniversalRaceReplayPage({
           firstMemberRow?.countryCode ??
           participantRecord?.rider.country_code ??
           null,
+        classificationRank: isIndividualTimeTrialReplay
+          ? preStageStandingByRiderId[unit.riderIds[0] ?? '']?.generalRank ?? null
+          : preStageStandingByTeamId[unit.id]?.generalRank ?? null,
         startOrder: unit.startOrder,
+        rideWindowSeconds: unit.rideWindowSeconds,
         state: unit.state,
         courseProgressFraction: unit.courseProgressFraction,
         countdownSeconds: unit.countdownSeconds,
@@ -14953,6 +15155,23 @@ function UniversalRaceReplayPage({
           description: isTeamTimeTrialReplay
             ? `${unit.label} starts its time trial run as starter #${unit.startOrder}.`
             : `${unit.label} leaves the start ramp as starter #${unit.startOrder}.`,
+          hoverInfo: {
+            title: unit.label,
+            lines: isTeamTimeTrialReplay
+              ? [
+                  unit.secondaryLabel,
+                  `Current team classification: ${unit.classificationRank === null ? '—' : `#${unit.classificationRank}`}`,
+                  `Start order: #${unit.startOrder}`,
+                ]
+              : [
+                  ...(unit.countryCode
+                    ? [`Country: ${unit.countryCode.toUpperCase()}`]
+                    : []),
+                  `Team: ${unit.secondaryLabel}`,
+                  `Current GC: ${unit.classificationRank === null ? '—' : `#${unit.classificationRank}`}`,
+                  `Start order: #${unit.startOrder}`,
+                ],
+          },
         })
       })
 
@@ -14964,7 +15183,7 @@ function UniversalRaceReplayPage({
       .sort(
         (left, right) =>
           ((left.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
-            timeTrialReplayPresentation.rideWindowSeconds *
+            unit.rideWindowSeconds *
               timeTrialReplayPresentation.splitElapsedFraction) -
             ((right.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
               timeTrialReplayPresentation.rideWindowSeconds *
@@ -15065,7 +15284,7 @@ function UniversalRaceReplayPage({
           raceSecond:
             (unit.startOrder - 1) *
               timeTrialReplayPresentation.visualStartIntervalSeconds +
-            timeTrialReplayPresentation.rideWindowSeconds,
+            unit.rideWindowSeconds,
           title: isNewLeader
             ? 'New leader at the finish'
             : 'Rider finishes',
@@ -15121,6 +15340,8 @@ function UniversalRaceReplayPage({
     isTeamTimeTrialReplay,
     isTimeTrialReplay,
     participantRiderLookup,
+    preStageStandingByRiderId,
+    preStageStandingByTeamId,
     result,
     timeTrialReplayPresentation,
     visibleRiderRows,
@@ -15150,8 +15371,25 @@ function UniversalRaceReplayPage({
                 ? '#15803d'
                 : '#dc2626'
               : undefined,
+          tooltipTitle: unit.label,
+          tooltipLines: isTeamTimeTrialReplay
+            ? [
+                unit.secondaryLabel,
+                `Current team classification: ${unit.classificationRank === null ? '—' : `#${unit.classificationRank}`}`,
+                `Start order: #${unit.startOrder}`,
+                `Distance: ${formatKm(input?.stage.distanceKm ? input.stage.distanceKm * unit.courseProgressFraction : 0)}`,
+              ]
+            : [
+                ...(unit.countryCode
+                  ? [`Country: ${unit.countryCode.toUpperCase()}`]
+                  : []),
+                `Team: ${unit.secondaryLabel}`,
+                `Current GC: ${unit.classificationRank === null ? '—' : `#${unit.classificationRank}`}`,
+                `Start order: #${unit.startOrder}`,
+                `Distance: ${formatKm(input?.stage.distanceKm ? input.stage.distanceKm * unit.courseProgressFraction : 0)}`,
+              ],
         })),
-    [timeTrialReplayContext.units]
+    [input?.stage.distanceKm, isTeamTimeTrialReplay, timeTrialReplayContext.units]
   )
 
   const commentary = useMemo((): UniversalShadowCommentaryItem[] => {
@@ -15814,7 +16052,7 @@ function UniversalRaceReplayPage({
                               {event.title}
                             </div>
                             <p className="mt-1 leading-5 text-slate-600">
-                              {event.description}
+                              <ReplayCommentaryDescription event={event} />
                             </p>
                           </div>
                         </article>
