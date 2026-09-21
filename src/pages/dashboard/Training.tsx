@@ -1170,7 +1170,10 @@ export default function TrainingPage(): JSX.Element {
   const [searchParams] = useSearchParams()
   const focusedRiderId = searchParams.get('riderId')
 
-  const [activeTab, setActiveTab] = useState<TabKey>('regular')
+  const requestedTab = searchParams.get('tab')
+  const initialTrainingTab: TabKey =
+    requestedTab === 'development' || requestedTab === 'camps' ? requestedTab : 'regular'
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTrainingTab)
   const [loading, setLoading] = useState(true)
   const [isPremium, setIsPremium] = useState(false)
   const [premiumStatusLoading, setPremiumStatusLoading] = useState(true)
@@ -2971,6 +2974,13 @@ export default function TrainingPage(): JSX.Element {
 
     setTutorialMode('closed')
   }
+
+  useEffect(() => {
+    const nextTab = searchParams.get('tab')
+    if (nextTab === 'regular' || nextTab === 'development' || nextTab === 'camps') {
+      setActiveTab(nextTab)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (!premiumStatusLoading && !isPremium && activeTab === 'development') {
