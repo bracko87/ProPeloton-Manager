@@ -1584,28 +1584,68 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <div className="mt-4 grid gap-3 lg:grid-cols-3">
                   {workspace.season_planner.slice(0, 2).map(row => {
                     const flagUrl = getFlagImageUrl(row.country_code)
-                    const dateParts = formatGameDateParts(row.start_date)
+                    const route = [row.start_city, row.finish_city].filter(Boolean).join(' → ')
+                    const startDate = formatGameDate(row.start_date)
+                    const endDate =
+                      row.end_date !== row.start_date
+                        ? formatGameDate(row.end_date)
+                        : null
 
                     return (
                       <Link
                         key={row.race_preparation_id}
                         to={`/dashboard/race-preparation?raceId=${row.race_id}`}
-                        className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
+                        className={`rounded-xl border p-4 text-left transition hover:border-slate-300 hover:bg-white ${
+                          row.planning_state === 'deadline_close'
+                            ? 'border-amber-200 bg-amber-50/40'
+                            : 'border-slate-200 bg-slate-50'
+                        }`}
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-9 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <div className="flex h-4 w-6 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-slate-200 bg-white">
                             {flagUrl ? (
-                              <img src={flagUrl} alt="" className="h-full w-full object-cover" />
+                              <img
+                                src={flagUrl}
+                                alt={row.country_code ?? ''}
+                                className="h-full w-full object-cover"
+                              />
                             ) : (
-                              <span aria-hidden="true" className="text-base">🏁</span>
+                              <span aria-hidden="true" className="text-[9px]">🏁</span>
                             )}
                           </div>
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium text-slate-900">{row.race_name}</div>
-                            <div className="mt-1 text-xs text-slate-500">
-                              {dateParts.dateLabel} · {humanize(row.planning_state)}
-                            </div>
+
+                          <span className="min-w-0 truncate text-sm font-semibold text-slate-900">
+                            {row.race_name}
+                          </span>
+
+                          {row.category ? (
+                            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">
+                              {row.category}
+                            </span>
+                          ) : null}
+
+                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${statusClasses(row.planning_state)}`}>
+                            {humanize(row.planning_state)}
+                          </span>
+                        </div>
+
+                        <div className="mt-2 text-xs leading-5 text-slate-500">
+                          <div>
+                            {startDate}
+                            {endDate ? ` → ${endDate}` : ''}
+                            {' · '}
+                            {t('season.durationDays', {
+                              count: Math.max(
+                                1,
+                                Math.round(
+                                  (new Date(row.end_date).getTime() -
+                                    new Date(row.start_date).getTime()) /
+                                    86400000,
+                                ) + 1,
+                              ),
+                            })}
                           </div>
+                          {route ? <div className="truncate">{route}</div> : null}
                         </div>
                       </Link>
                     )
