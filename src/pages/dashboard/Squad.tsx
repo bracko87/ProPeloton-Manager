@@ -679,16 +679,11 @@ export default function SquadPage() {
       setRows(rosterRows)
       setLoading(false)
 
-      // This shared RPC currently includes both operational Last/Next Team Race data
-      // and Premium analytics. Keep loading it for all users until the backend payload
-      // is separated, but remove every Premium analytical field for Free users.
+      // The RPC now enforces Premium analytics server-side while always returning
+      // operational Last/Next Team Race data to club members.
       void fetchSquadSeasonDashboardData(club.id, seasonYear)
         .then((dashboardData) => {
-          setSquadSeasonDashboardData(
-            hasPremiumAccess
-              ? dashboardData
-              : createOperationalSquadSeasonDashboardData(dashboardData)
-          )
+          setSquadSeasonDashboardData(dashboardData)
         })
         .catch((dashboardErr) => {
           console.warn('Failed to load squad season dashboard data:', dashboardErr)
