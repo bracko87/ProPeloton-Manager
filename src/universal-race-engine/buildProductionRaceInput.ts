@@ -699,6 +699,21 @@ export function buildProductionUniversalRaceEngineInput(
   const acceptedTeamIds = new Set(acceptedTeams.map(teamIdFromParticipant).filter((id): id is string => Boolean(id)))
   const participantRiders = sources.participantRiders.filter((row) => acceptedTeamIds.size === 0 || acceptedTeamIds.has(text(row.team_id) ?? ''))
   const participantByRiderId = new Map(participantRiders.map((row) => [row.rider_id, row] as const))
+  const stageFormat = normalizeStageFormat(stage)
+  const aiTeamIds = new Set(
+    acceptedTeams
+      .filter((row) => {
+        const entrySource = text(row.entry_source)?.toLowerCase() ?? ''
+        return (
+          booleanValue(row.is_ai_filler) ||
+          entrySource === 'ai' ||
+          entrySource === 'ai_fill' ||
+          entrySource === 'ai_filler'
+        )
+      })
+      .map((row) => teamIdFromParticipant(row))
+      .filter((teamId): teamId is string => Boolean(teamId))
+  )
   const riderRows = sources.riderInputRows.filter((row) => text(row.rider_id) && text(row.team_id) && (acceptedTeamIds.size === 0 || acceptedTeamIds.has(row.team_id)))
   if (riderRows.length < 2) throw new Error(`Stage ${stageId} has fewer than two accepted production rider inputs.`)
 
@@ -775,7 +790,35 @@ export function buildProductionUniversalRaceEngineInput(
         postStageFatigueMultiplier: clamp((preparationApplied ? numberValue(modifier.post_stage_fatigue_multiplier, 1) : 1) * (1 - clamp(numberValue(modifier.equipment_fatigue_reduction_pct, 0), 0, 10) / 100), 0.7, 1.4),
         postStageRecoveryBonusPoints: clamp(preparationApplied ? numberValue(modifier.post_stage_recovery_bonus_points, 0) : 0, 0, 4),
         performanceBonusPoints: 0,
-        equipmentStagePerformancePct: clamp(numberValue(modifier.equipment_engine_stage_bonus_pct ?? modifier.equipment_performance_bonus_points, 0), -20, 20),
+        equipmentStagePerformancePct: (() => {
+          const equipmentPct = clamp(
+            numberValue(
+              modifier.equipment_engine_stage_bonus_pct ??
+                modifier.equipment_performance_bonus_points,
+              0
+            ),
+            -20,
+            20
+          )
+          const isTimeTrialStage =
+            stageFormat === 'individual_time_trial' ||
+            stageFormat === 'team_time_trial' ||
+            stageFormat === 'pair_time_trial' ||
+            stageFormat === 'prologue'
+
+          // AI teams do not own/manage user-facing TT equipment. They may keep
+          // positive equipment effects, but a missing/mismatched TT setup must
+          // never create a negative sporting penalty for them.
+          if (
+            isTimeTrialStage &&
+            aiTeamIds.has(row.team_id) &&
+            equipmentPct < 0
+          ) {
+            return 0
+          }
+
+          return equipmentPct
+        })(),
         supplyStagePerformancePct: clamp(numberValue(modifier.supply_stage_performance_pct, 0), -20, 20),
         incidentRiskMultiplier: clamp(preparationApplied ? numberValue(modifier.health_incident_risk_multiplier, 1) : 1, 0.7, 1.4),
         healthIncidentRiskMultiplier: clamp(preparationApplied ? numberValue(modifier.health_incident_risk_multiplier, 1) : 1, 0.25, 1.5),
@@ -821,7 +864,6 @@ export function buildProductionUniversalRaceEngineInput(
   })
 
   const distanceKm = Math.max(1, numberValue(profile.distance_km ?? stage.distance_km, 1))
-  const stageFormat = normalizeStageFormat(stage)
   const terrainType = normalizeTerrainType(stage, profile, stageFormat)
   const summitFinish = inferSummitFinish(stage, profile, terrainType)
   const finishType = normalizeFinishType(
