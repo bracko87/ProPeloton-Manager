@@ -102,8 +102,6 @@ type SponsorObjective = {
   target_race_end_date?: string | null
   user_visible_deadline_label?: string | null
   display_status_label?: string | null
-  progress_text?: string | null
-  target_text?: string | null
   reward_amount: number
   target_value: number
   current_value: number
