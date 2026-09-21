@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11l-v7-road-realism-2026-09-18' as const
+  'phase11m-v1-chase-fatigue-climb-realism-2026-09-21' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -8690,6 +8690,52 @@ function calculateRoadEnergyCostForRange(
   return deterministicRound(total, 6)
 }
 
+/**
+ * Extra live-energy cost for riding exposed in a small front group.
+ *
+ * The normal road-energy calculation already pays for terrain and command
+ * effort. This only models the shelter/workload difference between sitting in
+ * the peloton and spending a long phase in the wind. It deliberately grows
+ * with wind and with smaller groups, preventing a leader from using repeated
+ * all-day breakaways as a free tactical exploit.
+ */
+function calculateBreakawayExposureEnergyCost(
+  input: UniversalRaceEngineInput,
+  baselineEnergyCost: number,
+  groupSize: number,
+  startKm: number,
+  endKm: number,
+): number {
+  if (baselineEnergyCost <= 0 || endKm <= startKm || groupSize <= 0) return 0
+  const distanceShare = clamp(
+    (endKm - startKm) / Math.max(1, input.stage.distanceKm),
+    0,
+    1,
+  )
+  const windKmh = Math.max(0, input.weather.windKmh ?? 0)
+  const windPressure = clamp((windKmh - 8) / 24, 0, 1)
+  const smallGroupPressure = clamp((6 - Math.min(6, groupSize)) / 5, 0, 1)
+  const terrainPressure =
+    input.stage.terrainType === 'mountain'
+      ? 0.16
+      : input.stage.terrainType === 'hilly'
+        ? 0.1
+        : input.stage.terrainType === 'cobbled'
+          ? 0.12
+          : 0.04
+  const exposureMultiplier =
+    0.16 +
+    windPressure * 0.22 +
+    smallGroupPressure * 0.16 +
+    terrainPressure +
+    distanceShare * 0.18
+
+  return deterministicRound(
+    Math.min(12, baselineEnergyCost * exposureMultiplier),
+    6,
+  )
+}
+
 function getRoadOpeningSegmentAtKm(
   stage: UniversalStageInput,
   km: number,
@@ -11924,8 +11970,21 @@ export function resolveRoadPhase2Development(
           objectiveEnergyCostByRiderId.get(row.riderId) ?? 0
         const attackEnergyCost =
           phase2AttackEnergyCostByRiderId.get(row.riderId) ?? 0
+        const breakawayExposureEnergyCost =
+          phase1.breakawayRiderIds.includes(row.riderId)
+            ? calculateBreakawayExposureEnergyCost(
+                input,
+                baselinePhaseEnergyCost,
+                Math.max(1, phase1.breakawayRiderIds.length),
+                phaseBoundary.startKm,
+                phaseBoundary.endKm,
+              )
+            : 0
         const totalPhaseEnergyCost = deterministicRound(
-          baselinePhaseEnergyCost + objectiveEnergyCost + attackEnergyCost,
+          baselinePhaseEnergyCost +
+            objectiveEnergyCost +
+            attackEnergyCost +
+            breakawayExposureEnergyCost,
           6,
         )
         return {
@@ -12491,13 +12550,34 @@ export function resolveRoadPhase3Decisive(
     const readiness = readinessByRiderId.get(row.riderId)!
     const phase = row.phases.find((entry) => entry.phaseNumber === 3)!
     const startEnergy = phase2EnergyByRiderId.get(row.riderId)?.energyAfterPhase ?? 0
-    const phaseEnergyCost = calculateRoadEnergyCostForRange(
+    const baselinePhaseEnergyCost = calculateRoadEnergyCostForRange(
       input,
       rider,
       readiness,
       getGeneralPhaseEffortMultiplier(phase),
       phaseBoundary.startKm,
       phaseBoundary.endKm,
+    )
+    const startGroupCode = getStartDevelopmentGroupCode(phase2, row.riderId)
+    const frontGroupSize =
+      startGroupCode === 'breakaway'
+        ? phase2.breakawayRiderIdsAtEnd.length
+        : startGroupCode === 'front_group'
+          ? phase2.secondaryFrontRiderIdsAtEnd.length
+          : 0
+    const breakawayExposureEnergyCost =
+      frontGroupSize > 0
+        ? calculateBreakawayExposureEnergyCost(
+            input,
+            baselinePhaseEnergyCost,
+            frontGroupSize,
+            phaseBoundary.startKm,
+            phaseBoundary.endKm,
+          )
+        : 0
+    const phaseEnergyCost = deterministicRound(
+      baselinePhaseEnergyCost + breakawayExposureEnergyCost,
+      6,
     )
     phaseEnergyCostByRiderId.set(row.riderId, phaseEnergyCost)
     baselineEnergyAfterPhaseByRiderId.set(
@@ -12781,11 +12861,20 @@ export function resolveRoadPhase3Decisive(
           physicalEscapeRiderIds.map((riderId) => {
             const rider = ridersById.get(riderId)!
             const suitability = suitabilityByRiderId.get(riderId)?.suitabilityScore ?? 50
+            const isClimb =
+              decisiveTerrain.terrainType === 'climb' ||
+              decisiveTerrain.terrainType === 'steep_climb'
+            const terrainPaceMultiplier = isClimb
+              ? 0.93 +
+                rider.climbing * 0.0007 +
+                rider.endurance * 0.00018 +
+                rider.resistance * 0.00012 +
+                rider.raceIQ * 0.00008
+              : 0.97 + rider.endurance * 0.00022 + rider.raceIQ * 0.00012
             return clamp(
-              phase3BaselinePelotonPaceKmh *
-                (0.97 + rider.endurance * 0.00022 + rider.raceIQ * 0.00012) +
-                (suitability - 50) * 0.005,
-              28,
+              phase3BaselinePelotonPaceKmh * terrainPaceMultiplier +
+                (suitability - 50) * (isClimb ? 0.003 : 0.005),
+              decisiveTerrain.terrainType === 'steep_climb' ? 22 : 26,
               50,
             )
           }),
@@ -13897,11 +13986,14 @@ export function resolveRoadPhase3Decisive(
       6,
     )
     const attackPositionBonus = attackPositionBonusByRiderId.get(row.riderId) ?? 0
+    const selectiveClimb =
+      decisiveTerrain.terrainType === 'climb' ||
+      decisiveTerrain.terrainType === 'steep_climb'
     const decisiveScore = deterministicRound(
-      terrainAbilityScore * 0.5 +
-        suitability.suitabilityScore * 0.22 +
-        readiness.readinessScore * 0.1 +
-        energyAfterPhase * 0.18 +
+      terrainAbilityScore * (selectiveClimb ? 0.62 : 0.5) +
+        suitability.suitabilityScore * (selectiveClimb ? 0.14 : 0.22) +
+        readiness.readinessScore * (selectiveClimb ? 0.08 : 0.1) +
+        energyAfterPhase * (selectiveClimb ? 0.16 : 0.18) +
         phase.commandEffect.performanceModifier +
         protectionBonus -
         depletionPenalty,
@@ -14372,15 +14464,34 @@ function limitRoadChaseGapClosure(
    * proportional countdown to 90/91/92 percent of the stage.
    */
   /*
-   * Emergency numerical rail only. Normal closure is entirely the integrated
-   * road-time delta calculated upstream from escape pace and peloton pace.
-   * The old 8.25 s/km value was low enough to bind for entire late chases and
-   * therefore became the physics. 120 s/km sits above the maximum meaningful
-   * closure produced by the engine's bounded road speeds; touching it signals
-   * a numerical/pathological input rather than ordinary racing.
+   * V5.4 chase-realism rail. The speed integration remains authoritative, but
+   * road groups cannot erase minutes at an implausible rate simply because a
+   * short step produced a large instantaneous speed delta. This is not a
+   * target catch kilometre: it only limits how much real time can be removed
+   * per kilometre of sustained chase.
+   *
+   * Mountain races deliberately close more slowly because drafting matters
+   * less and a competent climbing break can continue at a high absolute pace.
    */
-  const closurePerKmLimit =
-    PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_SECONDS_PER_KM
+  const raceProgress = clamp(stepEndKm / Math.max(1, stageDistanceKm), 0, 1)
+  const terrainClosurePerKm =
+    terrainType === 'mountain'
+      ? 10
+      : terrainType === 'hilly'
+        ? 13
+        : terrainType === 'cobbled'
+          ? 15
+          : 17
+  const lateRaceUrgencyBonus =
+    raceProgress >= 0.9 ? 5 : raceProgress >= 0.78 ? 3 : 0
+  const largeGapResistance =
+    currentGapSeconds >= 300 ? 2 :
+    currentGapSeconds >= 180 ? 1 : 0
+  const closurePerKmLimit = clamp(
+    terrainClosurePerKm + lateRaceUrgencyBonus - largeGapResistance,
+    8,
+    22,
+  )
   const distanceClosureLimit = stepDistanceKm * closurePerKmLimit
   const maximumClosureSeconds = Math.min(
     currentGapSeconds,
