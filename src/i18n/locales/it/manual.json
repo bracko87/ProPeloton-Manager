@@ -1590,7 +1590,12 @@
         "I ciclisti feriti o malati richiedono un recupero medico piuttosto che una normale selezione di corse.",
         "Non completamente in forma significa che il ciclista può correre ma non è in perfetta disponibilità.",
         "Allenamento duro e calendari di gara pesanti aumentano entrambi il rischio di sovraccarico.",
-        "Il personale medico e i sistemi di recupero possono migliorare la gestione dei problemi sanitari."
+        "Il personale medico e i sistemi di recupero possono migliorare la gestione dei problemi sanitari.",
+        "Una caduta in gara può concludersi senza conseguenze durature, con un infortunio lieve, moderato o grave.",
+        "Gli infortuni lievi di gara restano per un breve periodo come veri casi medici. Il corridore rimane selezionabile, ma non è completamente in forma e può perdere brillantezza durante il recupero.",
+        "Gli infortuni moderati lasciano anch'essi il corridore selezionabile, ma gli effetti medici e di recupero sono più forti e possono influire sulle tappe o sui giorni di gara successivi.",
+        "Gli infortuni gravi creano una vera indisponibilità. Il corridore può ritirarsi dalla tappa in corso ed essere bloccato dalle tappe o gare successive fino al recupero.",
+        "Le conseguenze mediche della gara vengono salvate nello stato reale della squadra dopo la tappa; non sono soltanto eventi del replay."
       ],
       "facts": [
         {
@@ -1792,7 +1797,8 @@
         "Piani individuali sovrascrivere il team predefinito quando un ciclista ha bisogno di lavoro specializzato.",
         "La forte intensità aumenta lo stress da allenamento e il rischio di affaticamento.",
         "L'intensità di recupero è utile intorno a blocchi di gara duri.",
-        "L'addestramento dovrebbe seguire il ruolo del ciclista e gli obiettivi del calendario."
+        "L'addestramento dovrebbe seguire il ruolo del ciclista e gli obiettivi del calendario.",
+        "Contano anche salute e carico di gara: un corridore infortunato o non completamente in forma può perdere brillantezza o aver bisogno di lavoro più leggero anche quando il normale piano di allenamento sarebbe adatto."
       ],
       "facts": [
         {
@@ -1953,7 +1959,8 @@
         "La condizione di Worn significa che è calato abbastanza che l'articolo ha bisogno di attenzione. Gli articoli Worn possono ridurre l'affidabilità e non dovrebbe essere ignorato prima di gare importanti.",
         "Le quotazioni di riparazione devono mostrare il costo prima della conferma. Il gestore dovrebbe confrontare il costo di riparazione con il valore dell'articolo e il costo di sostituzione.",
         "La vendita converte un oggetto di proprietà in contanti quando la vendita è consentita. L'articolo lascia quindi l'inventario attivo.",
-        "Lo scarto rimuove un oggetto senza una vendita normale. Questo deve essere utilizzato solo per l'attrezzatura che il club non ha più bisogno o non può giustificare la conservazione."
+        "Lo scarto rimuove un oggetto senza una vendita normale. Questo deve essere utilizzato solo per l'attrezzatura che il club non ha più bisogno o non può giustificare la conservazione.",
+        "L'attrezzatura realmente usata dai tuoi corridori in una tappa perde condizione dopo la tappa. L'usura dipende dall'utilizzo e dalla distanza, quindi le gare ripetute creano gradualmente necessità di riparazione e sostituzione."
       ],
       "facts": [
         {
@@ -2140,7 +2147,8 @@
         "Mobile Workshop fornisce supporto tecnico durante le corse / viaggi.",
         "Il furgone medico fornisce supporto medico extra.",
         "Le attività assegnate o bloccate non dovrebbero essere riparate o vendute fino a quando non vengono liberate dalla gara/lavoro che le utilizza.",
-        "Le condizioni devono essere controllate prima di gare importanti perché un bene tecnicamente disponibile può ancora essere in pessima forma."
+        "Le condizioni devono essere controllate prima di gare importanti perché un bene tecnicamente disponibile può ancora essere in pessima forma.",
+        "Gli asset di supporto realmente utilizzati in gara possono perdere condizione dopo la tappa. L'uso ripetuto aumenta quindi la necessità di riparazioni e pianificazione delle sostituzioni."
       ],
       "facts": [
         {
@@ -2306,7 +2314,9 @@
         "Il commento descrive attacchi importanti, fughe, inseguimenti, salite, sprint ed eventi di finitura.",
         "Il risultato di tappa è solo una parte di una corsa a tappe. GC, punti, montagna, giovani e classificazioni di squadra possono cambiare dopo ogni tappa.",
         "Un ciclista può avere una posizione di tappa scadente ma comunque raggiungere un obiettivo tattico come punti, punti KOM o proteggere un leader.",
-        "Usare replay/risultati come feedback per le tattiche future piuttosto che cambiare la tappa già finalizzata."
+        "Usare replay/risultati come feedback per le tattiche future piuttosto che cambiare la tappa già finalizzata.",
+        "Cadute, fatica e conseguenze mediche mostrate nel replay ufficiale fanno parte dello stesso calcolo della tappa. Quando la tappa è finalizzata, le conseguenze persistenti passano allo stato reale della squadra.",
+        "Il replay non crea un secondo risultato; spiega la gara già calcolata."
       ],
       "facts": [
         {
@@ -3264,6 +3274,48 @@
       "relatedLinks": [
         "Mercato del personale",
         "Infrastrutture"
+      ]
+    },
+    "race-engine-basics": {
+      "category": "Calendario e gare",
+      "title": "Come vengono decisi i risultati di gara",
+      "subtitle": "Cosa considera il motore di gara senza esporre le formule interne.",
+      "overview": "Non esiste un singolo valore che garantisca la vittoria. Il calcolo ufficiale combina qualità del corridore, adattamento al percorso, condizione attuale, preparazione, tattica ed eventi dinamici della tappa.",
+      "facts": [
+        {
+          "label": "Fattori del corridore",
+          "value": "Abilità, ruolo, fatica, brillantezza, salute, morale ed energia residua"
+        },
+        {
+          "label": "Fattori di preparazione",
+          "value": "Tattica di tappa, attrezzatura, rifornimenti, staff e asset di supporto"
+        },
+        {
+          "label": "Fattori di gara",
+          "value": "Terreno, meteo, gruppi, attacchi, inseguimento, fughe, incidenti e tipo di arrivo"
+        }
+      ],
+      "details": [
+        "Il corridore con il valore generale più alto non vince automaticamente. Le abilità specialistiche contano in modo diverso nelle tappe pianeggianti, collinari, di montagna, sul pavé e a cronometro.",
+        "Fatica, salute, brillantezza ed energia possono far rendere in modo molto diverso due corridori con capacità simili.",
+        "Il tuo Piano Tappa influenza come i corridori spendono energia e reagiscono alla gara. Ruoli e tattiche possono proteggere un leader, preparare uno sprint, inseguire, attaccare o puntare a una fuga.",
+        "Attrezzatura, rifornimenti, staff e asset selezionati possono migliorare preparazione, affidabilità, recupero o efficienza quando sono disponibili e utilizzati.",
+        "La gara resta dinamica. Le fughe possono riuscire o essere riprese, le risorse di inseguimento possono esaurirsi, i gruppi possono spezzarsi e cadute o problemi meccanici possono cambiare il risultato.",
+        "Replay e risultato ufficiale derivano dallo stesso calcolo; il replay spiega il risultato salvato invece di crearne uno nuovo."
+      ],
+      "tips": [
+        "Scegli i corridori in base al percorso, non solo al valore generale.",
+        "Arriva alle gare importanti con fatica gestibile e Piani Tappa completi."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Preparazione gara",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Calendario",
+          "to": "/dashboard/calendar"
+        }
       ]
     }
   }
