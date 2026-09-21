@@ -3317,6 +3317,69 @@
           "to": "/dashboard/calendar"
         }
       ]
+    },
+    "race-preparation-bonuses-deep": {
+      "category": "Preparazione gara",
+      "title": "Bonus di preparazione: cosa entra davvero nella gara",
+      "subtitle": "Da dove arrivano i punti, cosa modificano e come leggere il beneficio complessivo.",
+      "overview": "La preparazione non crea una singola percentuale totale. Le scelte alimentano canali diversi: prestazione, energia, fatica, recupero, salute, affidabilità meccanica, supporto tattico e usura.",
+      "facts": [
+        {
+          "label": "Cinque gruppi",
+          "value": "Race Support, Fatigue Control, Recovery Support, Health Protection, Mechanical Reliability"
+        },
+        {
+          "label": "Limite per gruppo",
+          "value": "30 punti"
+        },
+        {
+          "label": "Canali separati",
+          "value": "Prestazione dell'equipaggiamento e race supplies si applicano separatamente"
+        },
+        {
+          "label": "Staff passivo con effetti gara",
+          "value": "Team Doctor e Mechanic"
+        },
+        {
+          "label": "Nessun bonus piatto passivo",
+          "value": "Sport Director, Head Coach e Scout Analyst"
+        }
+      ],
+      "details": [
+        "Gli effetti esatti delle fonti selezionate vengono mappati in cinque gruppi. Esempio: +2% medical response = 2 Health Protection; +1% post-stage recovery = 1 Recovery Support.",
+        "Race Support deriva soprattutto da feeding, team car, logistica, comunicazione e incident support. Può migliorare efficienza energetica, capacità tattica e parte della protezione medica/meccanica.",
+        "Fatigue Control riduce la pressione di gara e viaggio. Insieme a Recovery Support riduce la fatica post-tappa e migliora il recupero.",
+        "Health Protection riduce il rischio medico. Mechanical Reliability riduce rischio meccanico e tempo perso.",
+        "I veicoli selezionati contribuiscono automaticamente: team car = supporto/feeding/comunicazione/meccanica; bus = fatica/recupero; medical van = salute/recupero; equipment van/workshop = protezione tecnica/equipaggiamento.",
+        "Le team policies possono contribuire: viaggio al morale, alloggio al recupero, logistica al Race Support. Le opzioni base possono dare zero bonus extra.",
+        "Un Team Doctor selezionato applica automaticamente i bonus medici esistenti: minor rischio di infortunio/malattia, recupero più breve, bonus recovery giornaliero e fatigue floor più basso.",
+        "Un Mechanic selezionato applica automaticamente i bonus tecnici: setup quality, minor rischio meccanico e minor perdita di condition dell'equipaggiamento. Maintenance speed/cost continuano fuori gara.",
+        "Sport Director offre tattica, suggerimenti e automazione ma non ha un bonus passivo piatto di performance. Head Coach agisce soprattutto su training/development; Scout Analyst sullo scouting.",
+        "L'equipaggiamento è un canale separato per corridore. La percentuale finale dipende da setup, terreno e condition. Esempio: +5% equipment su stage-skill 76 aggiunge circa +3,8 suitability.",
+        "I race supplies sono separati: bidons, gels, nutrition packs e protezione meteo possono ridurre energia/fatica, aggiungere recovery o protezione se selezionati e disponibili.",
+        "Non sommare percentuali di sistemi diversi. 10% risparmio energia, 6% meno fatica e 15% meno mechanical time loss non sono +31% velocità.",
+        "Esempio: Race Support 9, Fatigue 2, Recovery 2, Health 4 e Mechanical 7 danno circa 1,95% meno costo energetico, 3% meno fatica post-tappa, +0,6 recovery, 6,6% meno rischio salute, 19,3% meno rischio meccanico e 15,35% meno tempo perso meccanico, prima di equipment, supplies e meteo.",
+        "Una buona preparazione migliora efficienza e affidabilità ma non garantisce la vittoria: skill, percorso, fatigue, sharpness, tattica e dinamica restano decisivi."
+      ],
+      "tips": [
+        "Leggi ogni bonus per il suo canale invece di cercare una percentuale totale.",
+        "Adatta l'equipaggiamento al terreno, porta abbastanza supplies e scegli staff/assets per i rischi dell'evento.",
+        "Nelle corse a tappe recovery e fatigue control possono valere quanto la performance diretta."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Preparazione gara",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Equipaggiamento",
+          "to": "/dashboard/equipment"
+        },
+        {
+          "label": "Staff",
+          "to": "/dashboard/staff"
+        }
+      ]
     }
   }
 }
