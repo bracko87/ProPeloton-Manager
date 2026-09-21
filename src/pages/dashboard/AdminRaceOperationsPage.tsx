@@ -326,28 +326,15 @@ export default function AdminRaceOperationsPage(): JSX.Element {
   useEffect(() => {
     void loadOperations(view)
 
-    const channel = supabase
-      .channel('admin-race-operations-page')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'race_operations_stage_status_v1',
-        },
-        () => {
-          void loadOperations(view, false)
-        },
-      )
-      .subscribe()
-
+    // Race Operations is an administrative health dashboard, not live
+    // telemetry. A 15-minute poll keeps the page current without paying for a
+    // permanent Realtime subscription or minute-by-minute reads.
     const intervalId = window.setInterval(() => {
       void loadOperations(view, false)
-    }, 60_000)
+    }, 15 * 60_000)
 
     return () => {
       window.clearInterval(intervalId)
-      void supabase.removeChannel(channel)
     }
   }, [loadOperations, view])
 
