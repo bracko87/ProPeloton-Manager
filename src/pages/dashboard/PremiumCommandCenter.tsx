@@ -1650,37 +1650,188 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900">{t('finance.title')}</h2>
-                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-                      {t('finance.description')}
-                    </p>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{t('finance.description')}</p>
                   </div>
                   <Link
                     to="/dashboard/finance"
                     className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    {t('integrations.overview.openItem')}
+                    {t('finance.openFinance')}
                     <ChevronRight size={15} />
                   </Link>
                 </div>
               </Card>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard label={t('summary.cashBalance')} value={formatCurrency(workspace.finance.balance)} />
+                <StatCard label={t('finance.weeklyIncome')} value={formatCurrency(workspace.finance.weekly_income)} />
+                <StatCard label={t('finance.weeklyExpenses')} value={formatCurrency(workspace.finance.weekly_expenses)} />
                 <StatCard label={t('summary.weeklyNet')} value={formatCurrency(workspace.finance.weekly_net)} />
               </div>
 
               <Card className="p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <div className="text-sm font-medium text-slate-900">{t('finance.saveTitle')}</div>
-                    <div className="mt-1 text-sm text-slate-500">{t('finance.description')}</div>
+                    <div className="text-base font-semibold text-slate-900">{t('finance.scenarioBuilder')}</div>
+                    <p className="mt-1 max-w-3xl text-sm text-slate-500">{t('finance.scenarioBuilderHint')}</p>
                   </div>
-                  <Link
-                    to="/dashboard/finance"
-                    className="text-sm font-medium text-slate-700 hover:text-yellow-700"
+                  <div className="text-right">
+                    <div className="text-xs uppercase tracking-wide text-slate-400">{t('finance.projectedBalance')}</div>
+                    <div className="mt-1 text-2xl font-semibold text-slate-950">
+                      {financeProjection ? formatCurrency(financeProjection.projected) : '—'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-4 lg:grid-cols-3">
+                  <label className="block">
+                    <span className="text-xs font-medium text-slate-500">{t('finance.oneTimeIncome')}</span>
+                    <input
+                      type="number"
+                      value={simOneTimeIncome}
+                      onChange={event => setSimOneTimeIncome(Number(event.target.value) || 0)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-slate-500">{t('finance.oneTimeCost')}</span>
+                    <input
+                      type="number"
+                      value={simOneTimeCost}
+                      onChange={event => setSimOneTimeCost(Number(event.target.value) || 0)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-slate-500">{t('finance.targetReserve')}</span>
+                    <input
+                      type="number"
+                      value={simTargetReserve}
+                      onChange={event => setSimTargetReserve(Number(event.target.value) || 0)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-slate-500">{t('finance.weeklyExtraIncome')}</span>
+                    <input
+                      type="number"
+                      value={simWeeklyIncome}
+                      onChange={event => setSimWeeklyIncome(Number(event.target.value) || 0)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-slate-500">{t('finance.weeklyExtraCost')}</span>
+                    <input
+                      type="number"
+                      value={simWeeklyCost}
+                      onChange={event => setSimWeeklyCost(Number(event.target.value) || 0)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="block">
+                      <span className="text-xs font-medium text-slate-500">{t('finance.monthlyExtraIncome')}</span>
+                      <input
+                        type="number"
+                        value={simMonthlyIncome}
+                        onChange={event => setSimMonthlyIncome(Number(event.target.value) || 0)}
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-medium text-slate-500">{t('finance.monthlyExtraCost')}</span>
+                      <input
+                        type="number"
+                        value={simMonthlyCost}
+                        onChange={event => setSimMonthlyCost(Number(event.target.value) || 0)}
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-slate-700">{t('finance.horizon')}</span>
+                    <span className="font-semibold text-slate-950">{t('finance.daysValue', { count: simHorizon })}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={30}
+                    max={365}
+                    step={5}
+                    value={simHorizon}
+                    onChange={event => setSimHorizon(Number(event.target.value))}
+                    className="mt-3 w-full"
+                  />
+                  <div className="mt-1 flex justify-between text-[11px] text-slate-400">
+                    <span>30</span>
+                    <span>90</span>
+                    <span>180</span>
+                    <span>365</span>
+                  </div>
+                </div>
+
+                {financeProjection ? (
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-xl border border-slate-200 p-4">
+                      <div className="text-xs text-slate-400">{t('finance.baselineProjection')}</div>
+                      <div className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(financeProjection.baseline)}</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 p-4">
+                      <div className="text-xs text-slate-400">{t('finance.scenarioImpact')}</div>
+                      <div className={`mt-1 text-lg font-semibold ${
+                        financeProjection.scenarioImpact >= 0 ? 'text-emerald-700' : 'text-red-700'
+                      }`}>
+                        {financeProjection.scenarioImpact > 0 ? '+' : ''}{formatCurrency(financeProjection.scenarioImpact)}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 p-4">
+                      <div className="text-xs text-slate-400">{t('finance.projectedBalance')}</div>
+                      <div className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(financeProjection.projected)}</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 p-4">
+                      <div className="text-xs text-slate-400">{t('finance.reserveGap')}</div>
+                      <div className={`mt-1 text-lg font-semibold ${
+                        financeProjection.reserveGap >= 0 ? 'text-emerald-700' : 'text-red-700'
+                      }`}>
+                        {financeProjection.reserveGap > 0 ? '+' : ''}{formatCurrency(financeProjection.reserveGap)}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="mt-5 flex flex-wrap items-end gap-3">
+                  <label className="min-w-[260px] flex-1">
+                    <span className="text-xs font-medium text-slate-500">{t('finance.scenarioName')}</span>
+                    <input
+                      value={simName}
+                      onChange={event => setSimName(event.target.value)}
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                      placeholder={t('finance.scenarioNamePlaceholder')}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={!simName.trim()}
+                    onClick={() => {
+                      void saveTemplate('financial_scenario', simName, {
+                        horizon_days: simHorizon,
+                        one_time_income: simOneTimeIncome,
+                        one_time_cost: simOneTimeCost,
+                        weekly_income: simWeeklyIncome,
+                        weekly_cost: simWeeklyCost,
+                        monthly_income: simMonthlyIncome,
+                        monthly_cost: simMonthlyCost,
+                        target_reserve: simTargetReserve,
+                      })
+                    }}
+                    className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
                   >
-                    {t('finance.title')}
-                  </Link>
+                    <Save size={15} />
+                    {t('finance.saveScenario')}
+                  </button>
                 </div>
               </Card>
             </div>
