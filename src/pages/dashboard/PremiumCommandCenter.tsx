@@ -1374,120 +1374,203 @@ export default function PremiumCommandCenter(): JSX.Element {
           {workspace && tab === 'summary' ? (
             <div className="space-y-5">
               <Card className="p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <h2 className="text-lg font-semibold text-slate-950">{t('summary.title')}</h2>
-                    <p className="mt-1 text-sm text-slate-500">{t('commandOverview.description')}</p>
+                    <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">
+                      {t('commandOverview.description')}
+                    </p>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                    {formatGameDateTime(workspace.game_now)}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                      {formatGameDateTime(workspace.game_now)}
+                    </span>
+                    <span className="rounded-full bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-800">
+                      {workspace.summary.upcoming_races_60d} {t('summary.upcomingRaces').toLowerCase()}
+                    </span>
+                  </div>
                 </div>
               </Card>
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {[
-                  {
-                    key: 'strategy' as TabKey,
-                    title: t('tabs.strategy'),
-                    metric: t('commandOverview.racesValue', { count: workspace.summary.upcoming_races_60d }),
-                    body: workspace.season_planner.some(row => row.planning_state === 'deadline_close')
+                <CommandSummaryCard
+                  title={t('tabs.strategy')}
+                  metric={t('commandOverview.racesValue', {
+                    count: commandSummaryStats?.upcomingRaces ?? 0,
+                  })}
+                  body={
+                    (commandSummaryStats?.attentionRaces ?? 0) > 0
                       ? t('commandOverview.strategyDeadline')
-                      : workspace.season_planner.some(row => row.planning_state !== 'on_track')
-                        ? t('commandOverview.strategyPlanning')
-                        : t('commandOverview.strategyClear'),
-                    tone: workspace.season_planner.some(row => row.planning_state === 'deadline_close') ? 'red' : 'blue',
-                  },
-                  {
-                    key: 'season' as TabKey,
-                    title: t('tabs.season'),
-                    metric: t('commandOverview.freeDaysValue', { count: seasonPlanningInsights.freeDays }),
-                    body: seasonPlanningInsights.overlapCount > 0
-                      ? t('commandOverview.seasonOverlap', { count: seasonPlanningInsights.overlapCount })
-                      : t('commandOverview.seasonGap', { count: seasonPlanningInsights.largestGap }),
-                    tone: seasonPlanningInsights.overlapCount > 0 ? 'red' : 'blue',
-                  },
-                  {
-                    key: 'transfers' as TabKey,
-                    title: t('tabs.transfers'),
-                    metric: t('commandOverview.pipelineValue', {
-                      count:
-                        workspace.transfer_command.pipeline.open_transfer_offers +
-                        workspace.transfer_command.pipeline.open_transfer_negotiations +
-                        workspace.transfer_command.pipeline.open_free_agent_negotiations,
-                    }),
-                    body: workspace.summary.unread_transfer_alerts > 0
-                      ? t('commandOverview.transferAlerts', { count: workspace.summary.unread_transfer_alerts })
-                      : t('commandOverview.transferQuiet'),
-                    tone: workspace.summary.unread_transfer_alerts > 0 ? 'amber' : 'blue',
-                  },
-                  {
-                    key: 'finance' as TabKey,
-                    title: t('tabs.finance'),
-                    metric: formatCurrency(workspace.finance.weekly_net),
-                    body: workspace.finance.weekly_net < 0
-                      ? t('commandOverview.financeNegative')
-                      : t('commandOverview.financePositive', { balance: formatCurrency(workspace.finance.balance) }),
-                    tone: workspace.finance.weekly_net < 0 ? 'red' : 'blue',
-                  },
-                  {
-                    key: 'sponsors' as TabKey,
-                    title: t('tabs.sponsors'),
-                    metric: t('commandOverview.objectivesValue', { count: workspace.summary.active_sponsor_objectives }),
-                    body: workspace.sponsor_intelligence.some(row => ['high', 'failed'].includes(row.risk_band))
-                      ? t('commandOverview.sponsorRisk', {
-                          count: workspace.sponsor_intelligence.filter(row => ['high', 'failed'].includes(row.risk_band)).length,
+                      : t('commandOverview.strategyClear')
+                  }
+                  detailLeft={`${t('strategy.readyPlans')}: ${commandSummaryStats?.readyRaces ?? 0}`}
+                  detailRight={`${t('strategy.attentionNeeded')}: ${commandSummaryStats?.attentionRaces ?? 0}`}
+                  visual={
+                    <SegmentedBar
+                      segments={[
+                        {
+                          value: commandSummaryStats?.readyRaces ?? 0,
+                          className: 'bg-emerald-400',
+                        },
+                        {
+                          value: Math.max(
+                            0,
+                            (commandSummaryStats?.upcomingRaces ?? 0) -
+                              (commandSummaryStats?.readyRaces ?? 0),
+                          ),
+                          className: 'bg-amber-300',
+                        },
+                      ]}
+                    />
+                  }
+                  tone={(commandSummaryStats?.attentionRaces ?? 0) > 0 ? 'warning' : 'positive'}
+                  onClick={() => changeTab('strategy')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+
+                <CommandSummaryCard
+                  title={t('tabs.season')}
+                  metric={t('commandOverview.freeDaysValue', {
+                    count: seasonPlanningInsights.freeDays,
+                  })}
+                  body={
+                    seasonPlanningInsights.overlapCount > 0
+                      ? t('commandOverview.seasonOverlap', {
+                          count: seasonPlanningInsights.overlapCount,
                         })
-                      : t('commandOverview.sponsorClear'),
-                    tone: workspace.sponsor_intelligence.some(row => ['high', 'failed'].includes(row.risk_band)) ? 'amber' : 'blue',
-                  },
-                  {
-                    key: 'development' as TabKey,
-                    title: t('tabs.development'),
-                    metric: t('commandOverview.improvingValue', {
-                      count: workspace.rider_development.filter(row => row.development_8w > 0).length,
-                    }),
-                    body: t('commandOverview.developmentCoverage', {
-                      count: workspace.rider_development.filter(row => row.weeks_recorded > 0).length,
-                      total: workspace.rider_development.length,
-                    }),
-                    tone: 'blue',
-                  },
-                  {
-                    key: 'templates' as TabKey,
-                    title: t('tabs.templates'),
-                    metric: t('commandOverview.workflowsValue', { count: templates.length }),
-                    body: t('commandOverview.automationStatus', {
-                      count: automationRules.filter(rule => rule.is_enabled).length,
-                    }),
-                    tone: 'blue',
-                  },
-                ].map(item => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => changeTab(item.key)}
-                    className={`group rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                      item.tone === 'red'
-                        ? 'border-red-200'
-                        : item.tone === 'amber'
-                          ? 'border-amber-200'
-                          : 'border-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-slate-950">{item.title}</div>
-                        <div className="mt-3 text-2xl font-semibold text-slate-950">{item.metric}</div>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
-                      </div>
-                      <ChevronRight size={17} className="mt-0.5 shrink-0 text-slate-400 transition group-hover:translate-x-0.5" />
-                    </div>
-                    <div className="mt-4 text-xs font-medium text-yellow-700">
-                      {t('commandOverview.openDetail')}
-                    </div>
-                  </button>
-                ))}
+                      : t('commandOverview.seasonGap', {
+                          count: seasonPlanningInsights.largestGap,
+                        })
+                  }
+                  detailLeft={`${t('season.raceDays')}: ${seasonPlanningInsights.raceDays}`}
+                  detailRight={`${t('season.overlaps')}: ${seasonPlanningInsights.overlapCount}`}
+                  visual={
+                    <SegmentedBar
+                      segments={[
+                        {
+                          value: seasonPlanningInsights.raceDays,
+                          className: 'bg-slate-500',
+                        },
+                        {
+                          value: seasonPlanningInsights.freeDays,
+                          className: 'bg-emerald-300',
+                        },
+                      ]}
+                    />
+                  }
+                  tone={seasonPlanningInsights.overlapCount > 0 ? 'danger' : 'positive'}
+                  onClick={() => changeTab('season')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+
+                <CommandSummaryCard
+                  title={t('tabs.transfers')}
+                  metric={t('commandOverview.pipelineValue', {
+                    count: commandSummaryStats?.activeDeals ?? 0,
+                  })}
+                  body={
+                    workspace.summary.unread_transfer_alerts > 0
+                      ? t('commandOverview.transferAlerts', {
+                          count: workspace.summary.unread_transfer_alerts,
+                        })
+                      : t('commandOverview.transferQuiet')
+                  }
+                  detailLeft={`${t('transfers.openOffers')}: ${workspace.transfer_command.pipeline.open_transfer_offers}`}
+                  detailRight={`${t('summary.transferAlerts')}: ${workspace.summary.unread_transfer_alerts}`}
+                  visual={<MiniBars values={commandSummaryStats?.transferPipeline ?? [0, 0, 0]} />}
+                  tone={workspace.summary.unread_transfer_alerts > 0 ? 'warning' : 'default'}
+                  onClick={() => changeTab('transfers')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+
+                <CommandSummaryCard
+                  title={t('tabs.finance')}
+                  metric={formatCurrency(workspace.finance.weekly_net)}
+                  body={
+                    workspace.finance.weekly_net < 0
+                      ? t('commandOverview.financeNegative')
+                      : t('commandOverview.financePositive', {
+                          balance: formatCurrency(workspace.finance.balance),
+                        })
+                  }
+                  detailLeft={`${t('finance.currentBalance')}: ${formatCurrency(workspace.finance.balance)}`}
+                  detailRight={t('summary.weeklyNet')}
+                  visual={<MiniSparkline values={commandSummaryStats?.financeTrend ?? [0, 0]} />}
+                  tone={workspace.finance.weekly_net < 0 ? 'danger' : 'positive'}
+                  onClick={() => changeTab('finance')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+
+                <CommandSummaryCard
+                  title={t('tabs.sponsors')}
+                  metric={t('commandOverview.objectivesValue', {
+                    count: workspace.summary.active_sponsor_objectives,
+                  })}
+                  body={
+                    (commandSummaryStats?.sponsorAtRisk ?? 0) > 0
+                      ? t('commandOverview.sponsorRisk', {
+                          count: commandSummaryStats?.sponsorAtRisk ?? 0,
+                        })
+                      : t('commandOverview.sponsorClear')
+                  }
+                  detailLeft={`${t('sponsors.atRisk')}: ${commandSummaryStats?.sponsorAtRisk ?? 0}`}
+                  detailRight={`${commandSummaryStats?.sponsorAverageProgress ?? 0}%`}
+                  visual={
+                    <SegmentedBar
+                      segments={[
+                        {
+                          value: commandSummaryStats?.sponsorAverageProgress ?? 0,
+                          className: 'bg-yellow-400',
+                        },
+                        {
+                          value: 100 - (commandSummaryStats?.sponsorAverageProgress ?? 0),
+                          className: 'bg-slate-200',
+                        },
+                      ]}
+                    />
+                  }
+                  tone={(commandSummaryStats?.sponsorAtRisk ?? 0) > 0 ? 'warning' : 'positive'}
+                  onClick={() => changeTab('sponsors')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+
+                <CommandSummaryCard
+                  title={t('tabs.development')}
+                  metric={t('commandOverview.improvingValue', {
+                    count: commandSummaryStats?.improvingRiders ?? 0,
+                  })}
+                  body={t('commandOverview.developmentCoverage', {
+                    count: workspace.rider_development.filter(row => row.weeks_recorded > 0).length,
+                    total: workspace.rider_development.length,
+                  })}
+                  detailLeft={`${t('development.coverage')}: ${commandSummaryStats?.developmentCoverage ?? 0}%`}
+                  detailRight={`${t('development.fatigueWatch')}: ${commandSummaryStats?.fatigueWatch ?? 0}`}
+                  visual={<MiniBars values={commandSummaryStats?.developmentBars ?? [0, 0, 0, 0, 0, 0]} />}
+                  tone="default"
+                  onClick={() => changeTab('development')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+
+                <CommandSummaryCard
+                  title={t('tabs.templates')}
+                  metric={t('commandOverview.workflowsValue', { count: templates.length })}
+                  body={t('commandOverview.automationStatus', {
+                    count: commandSummaryStats?.enabledRules ?? 0,
+                  })}
+                  detailLeft={`${t('templates.saved')}: ${templates.length}`}
+                  detailRight={`${t('templates.rules')}: ${commandSummaryStats?.enabledRules ?? 0}`}
+                  visual={
+                    <MiniBars
+                      values={[
+                        templates.length,
+                        commandSummaryStats?.enabledRules ?? 0,
+                      ]}
+                    />
+                  }
+                  tone="default"
+                  onClick={() => changeTab('templates')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
               </div>
 
               <Card className="p-5">
@@ -1497,29 +1580,54 @@ export default function PremiumCommandCenter(): JSX.Element {
                     <div className="mt-1 text-sm text-slate-500">{t('commandOverview.nextActionsHint')}</div>
                   </div>
                 </div>
+
                 <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                  {workspace.season_planner.slice(0, 2).map(row => (
-                    <Link
-                      key={row.race_preparation_id}
-                      to={`/dashboard/race-preparation?raceId=${row.race_id}`}
-                      className="rounded-xl border border-slate-200 bg-slate-50 p-4 hover:bg-white"
-                    >
-                      <div className="text-sm font-medium text-slate-900">{row.race_name}</div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        {formatGameDate(row.start_date)} · {humanize(row.planning_state)}
-                      </div>
-                    </Link>
-                  ))}
+                  {workspace.season_planner.slice(0, 2).map(row => {
+                    const flagUrl = getFlagImageUrl(row.country_code)
+                    const dateParts = formatGameDateParts(row.start_date)
+
+                    return (
+                      <Link
+                        key={row.race_preparation_id}
+                        to={`/dashboard/race-preparation?raceId=${row.race_id}`}
+                        className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white">
+                            {flagUrl ? (
+                              <img src={flagUrl} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <span aria-hidden="true" className="text-base">🏁</span>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-medium text-slate-900">{row.race_name}</div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {dateParts.dateLabel} · {humanize(row.planning_state)}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })}
+
                   {workspace.sponsor_intelligence.slice(0, 1).map(objective => (
                     <button
                       key={objective.objective_id}
                       type="button"
                       onClick={() => changeTab('sponsors')}
-                      className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-left hover:bg-white"
+                      className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-slate-300 hover:bg-white"
                     >
                       <div className="text-sm font-medium text-slate-900">{objective.objective_title}</div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        {objective.sponsor_name} · {objective.progress_pct}%
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className="h-full rounded-full bg-yellow-400"
+                          style={{ width: `${Math.max(0, Math.min(100, objective.progress_pct))}%` }}
+                        />
+                      </div>
+                      <div className="mt-2 flex justify-between gap-3 text-xs text-slate-500">
+                        <span>{objective.sponsor_name}</span>
+                        <span>{objective.progress_pct}%</span>
                       </div>
                     </button>
                   ))}
