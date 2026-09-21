@@ -3317,6 +3317,69 @@
           "to": "/dashboard/calendar"
         }
       ]
+    },
+    "race-preparation-bonuses-deep": {
+      "category": "Preparación de carrera",
+      "title": "Bonificaciones de preparación: qué llega realmente a la carrera",
+      "subtitle": "De dónde salen los puntos, qué afectan y cómo interpretar el beneficio combinado.",
+      "overview": "La preparación no crea un único porcentaje total. Distintas elecciones afectan canales distintos: rendimiento, energía, fatiga, recuperación, salud, fiabilidad mecánica, apoyo táctico y desgaste.",
+      "facts": [
+        {
+          "label": "Cinco grupos",
+          "value": "Apoyo de carrera, Control de fatiga, Recuperación, Protección de salud, Fiabilidad mecánica"
+        },
+        {
+          "label": "Límite por grupo",
+          "value": "30 puntos"
+        },
+        {
+          "label": "Canales separados",
+          "value": "Equipamiento y suministros de carrera se aplican aparte"
+        },
+        {
+          "label": "Staff pasivo con efecto en carrera",
+          "value": "Médico de equipo y Mecánico"
+        },
+        {
+          "label": "Sin bonus pasivo plano",
+          "value": "Director deportivo, Entrenador jefe y Scout Analyst"
+        }
+      ],
+      "details": [
+        "Los efectos exactos de las fuentes seleccionadas se asignan a cinco grupos. Ejemplo: +2% de respuesta médica = 2 puntos de Protección de salud; +1% de recuperación post-etapa = 1 punto de Recuperación.",
+        "Apoyo de carrera proviene sobre todo de alimentación, coches, logística, comunicación y respuesta a incidentes; puede mejorar eficiencia energética, capacidad táctica y parte de la protección médica/mecánica.",
+        "Control de fatiga reduce la carga de carrera y viaje. Junto con Recuperación reduce la fatiga post-etapa y mejora la recuperación.",
+        "Protección de salud reduce el riesgo médico. Fiabilidad mecánica reduce el riesgo de avería y el tiempo perdido.",
+        "Los vehículos seleccionados aportan automáticamente: coches = apoyo/alimentación/comunicación/mecánica; bus = fatiga/recuperación; furgón médico = salud/recuperación; furgón de equipo/taller = protección mecánica y del equipamiento.",
+        "Las políticas del equipo también pueden aportar: viaje a moral, alojamiento a recuperación y logística a Apoyo de carrera. Las opciones básicas pueden no dar bonus adicional.",
+        "Un Médico seleccionado aplica automáticamente sus efectos existentes: menor riesgo de lesión/enfermedad, menor duración de recuperación, recuperación diaria extra y menor suelo de fatiga.",
+        "Un Mecánico seleccionado aplica automáticamente sus efectos técnicos: calidad de setup, menor riesgo mecánico y menor pérdida de condición del equipamiento. Velocidad/coste de mantenimiento siguen actuando fuera de carrera.",
+        "El Director deportivo ayuda con táctica, sugerencias y automatización, pero no tiene un bonus pasivo plano de rendimiento. El Entrenador jefe actúa principalmente en entrenamiento/desarrollo y el Scout en scouting.",
+        "El equipamiento es un canal separado por corredor. El porcentaje final depende del setup, la adaptación al terreno y la condición. Ejemplo: +5% sobre un skill de etapa 76 aporta unos +3,8 puntos de suitability.",
+        "Los suministros también son separados. Bidones, geles, nutrition packs y protección meteorológica pueden ahorrar energía, reducir fatiga, añadir recuperación o protección si se seleccionan y están disponibles.",
+        "No sumes porcentajes de canales diferentes. 10% de ahorro de energía, 6% menos fatiga y 15% menos pérdida de tiempo mecánica no equivalen a +31% de velocidad.",
+        "Ejemplo: Apoyo 9, Fatiga 2, Recuperación 2, Salud 4 y Mecánica 7 producen aproximadamente 1,95% menos coste energético, 3% menos fatiga post-etapa, +0,6 recuperación, 6,6% menos riesgo médico, 19,3% menos riesgo mecánico y 15,35% menos pérdida de tiempo mecánica, antes de equipamiento, suministros y clima.",
+        "Una buena preparación mejora eficiencia y fiabilidad, pero no garantiza ganar: siguen importando habilidades, recorrido, fatiga, sharpness, táctica y dinámica de carrera."
+      ],
+      "tips": [
+        "Lee cada bonus por su canal, no como un único porcentaje total.",
+        "Ajusta el equipamiento al terreno, lleva suficientes suministros y elige staff/assets para los riesgos del evento.",
+        "En vueltas por etapas, recuperación y control de fatiga pueden valer tanto como el rendimiento directo."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Preparación de carrera",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Equipamiento",
+          "to": "/dashboard/equipment"
+        },
+        {
+          "label": "Staff",
+          "to": "/dashboard/staff"
+        }
+      ]
     }
   }
 }
