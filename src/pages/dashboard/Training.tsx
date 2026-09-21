@@ -3301,16 +3301,6 @@ export default function TrainingPage(): JSX.Element {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void resetAllRidersToTeamDefaults()}
-                    disabled={regularResettingAll}
-                    className="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {regularResettingAll
-                      ? t('common.saving')
-                      : t('premiumCenter:integrations.training.useDefaultsForAll')}
-                  </button>
                   <Link
                     to="/dashboard/premium-center?tab=templates"
                     className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
@@ -3374,7 +3364,18 @@ export default function TrainingPage(): JSX.Element {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsTeamDefaultsExpanded(current => !current)}
+                  onClick={() => void resetAllRidersToTeamDefaults()}
+                  disabled={regularResettingAll}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {regularResettingAll
+                    ? t('common.saving')
+                    : t('premiumCenter:integrations.training.useDefaultsForAll')}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsTeamDefaultsExpanded(current => !current)
                   className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                   aria-expanded={isTeamDefaultsExpanded}
                   aria-controls="team-defaults-content"
