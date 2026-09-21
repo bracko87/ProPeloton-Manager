@@ -351,15 +351,6 @@ function getFlagImageUrl(code?: string | null): string | null {
     : null
 }
 
-function getInitials(value: string): string {
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(part => part.charAt(0).toUpperCase())
-    .join('')
-}
-
 function daysBetweenGameDates(from: string | null | undefined, to: string | null | undefined): number | null {
   if (!from || !to) return null
   const start = new Date(from)
@@ -429,10 +420,6 @@ function getTransferAlertMessage(
   }
 
   return alert.message
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value))
 }
 
 function Card({
