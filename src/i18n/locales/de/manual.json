@@ -1590,7 +1590,12 @@
         "Verletzte oder kranke Fahrer benötigen medizinische Erholung und nicht normale Rennen Auswahl.",
         "Nicht voll fit bedeutet, dass der Fahrer zwar Rennen fahren kann, aber nicht in idealer Bereitschaft ist.",
         "Hartes Training und schwere Rennkalender erhöhen beide das Überlastrisiko.",
-        "Medizinisches Personal und Systeme zur Wiederherstellung können die Behandlung von Gesundheitsproblemen verbessern."
+        "Medizinisches Personal und Systeme zur Wiederherstellung können die Behandlung von Gesundheitsproblemen verbessern.",
+        "Ein Sturz im Rennen kann ohne bleibende Verletzung, mit einer leichten, mittleren oder schweren Verletzung enden.",
+        "Leichte Rennverletzungen bleiben für kurze Zeit als Gesundheitsfall bestehen. Der Fahrer bleibt auswählbar, ist aber nicht vollständig fit und kann während der Erholung Rennschärfe verlieren.",
+        "Mittlere Rennverletzungen lassen den Fahrer ebenfalls auswählbar, haben aber stärkere medizinische und Erholungseffekte und können die nächsten Etappen oder Renntage beeinflussen.",
+        "Schwere Rennverletzungen machen den Fahrer tatsächlich nicht verfügbar. Er kann die aktuelle Etappe aufgeben und bis zur Genesung für spätere Etappen oder Rennen gesperrt sein.",
+        "Gesundheitsfolgen aus Rennen werden nach der Etappe in den echten Kaderzustand übernommen; sie sind nicht nur Teil der Wiederholung."
       ],
       "facts": [
         {
@@ -1792,7 +1797,8 @@
         "Individuelle Pläne überschreiben die Team-Standard, wenn ein Fahrer braucht spezialisierte Arbeit.",
         "Harte Intensität erhöht Trainingsstress und Ermüdungsrisiko.",
         "Erholung Intensität ist nützlich um harte Rennen Blöcke.",
-        "Die Training sollte die Rolle des Fahrers und die Ziele des Kalenders folgen."
+        "Die Training sollte die Rolle des Fahrers und die Ziele des Kalenders folgen.",
+        "Auch Gesundheit und Rennbelastung zählen: Ein verletzter oder nicht vollständig fitter Fahrer kann Rennschärfe verlieren oder leichteres Training brauchen, obwohl der normale Trainingsplan sonst passend wäre."
       ],
       "facts": [
         {
@@ -1953,7 +1959,8 @@
         "Geschädigt bedeutet, dass der Zustand genug gefallen ist, dass das Element Aufmerksamkeit braucht. Geschädigte Gegenstände können die Zuverlässigkeit reduzieren und sollten nicht vor wichtigen Rennen ignoriert werden.",
         "Reparatur-Notierungen sollten die Kosten vor der Bestätigung zeigen. Der Manager sollte Reparaturkosten mit Artikelwert und Ersatzkosten vergleichen.",
         "Der Verkauf wandelt ein Eigentumteil in Bargeld um, wenn der Verkauf erlaubt ist.",
-        "Das Verwerfen entfernt einen Gegenstand ohne normalen Verkauf. Dieser sollte nur für Ausrüstung verwendet werden, die der Verein nicht mehr benötigt oder nicht rechtfertigen kann."
+        "Das Verwerfen entfernt einen Gegenstand ohne normalen Verkauf. Dieser sollte nur für Ausrüstung verwendet werden, die der Verein nicht mehr benötigt oder nicht rechtfertigen kann.",
+        "Ausrüstung, die deine Fahrer in einer Etappe tatsächlich verwenden, verliert nach dieser Etappe Zustand. Der Verschleiß hängt von Renneinsatz und Distanz ab, sodass wiederholte Einsätze Reparatur- und Ersatzentscheidungen nötig machen."
       ],
       "facts": [
         {
@@ -2140,7 +2147,8 @@
         "Mobile Workshop bietet technische Unterstützung während des Rennsports/travel.",
         "Medical Van bietet zusätzliche medizinische Unterstützung.",
         "Zugelassene oder gesperrte Vermögenswerte sollten nicht repariert oder verkauft werden, bis sie aus dem Rennen freigegeben sind/job Das benutzt sie.",
-        "Der Zustand sollte vor wichtigen Rennen überprüft werden, da ein technisch verfügbarer Vermögenswert noch in schlechter Form sein kann."
+        "Der Zustand sollte vor wichtigen Rennen überprüft werden, da ein technisch verfügbarer Vermögenswert noch in schlechter Form sein kann.",
+        "Unterstützungsfahrzeuge und andere Renn-Assets, die tatsächlich eingesetzt werden, können nach der Etappe Zustand verlieren. Wiederholter Einsatz erhöht daher den Bedarf an Reparaturen und Ersatzplanung."
       ],
       "facts": [
         {
@@ -2306,7 +2314,9 @@
         "Kommentar beschreibt wichtige Angriffe, Ausbrüche, Verfolgungen, Besteigungen, Sprints und Endereignisse.",
         "Das Etappenergebnis ist nur ein Teil eines Etappenrennens. GC sowie Punkte-, Berg-, Nachwuchs- und Teamwertungen können sich nach jeder Etappe ändern.",
         "Ein Fahrer kann eine schlechte Etappenposition haben, aber trotzdem ein taktisches Ziel wie Punkte erreichen, KOM Punkte oder Schutz eines Führers.",
-        "Nutzen Sie Replay und Ergebnisse als Rückmeldung für künftige Taktiken, statt eine bereits abgeschlossene Etappe nachträglich ändern zu wollen."
+        "Nutzen Sie Replay und Ergebnisse als Rückmeldung für künftige Taktiken, statt eine bereits abgeschlossene Etappe nachträglich ändern zu wollen.",
+        "Stürze, Ermüdung und Gesundheitsfolgen in der offiziellen Wiederholung stammen aus derselben Etappenberechnung. Nach Abschluss der Etappe werden dauerhafte Folgen wie Verletzungen, nicht vollständig fit und Nach-Etappen-Ermüdung in den echten Kader übernommen.",
+        "Die Wiederholung erzeugt kein zweites Ergebnis; sie erklärt das bereits berechnete Rennen."
       ],
       "facts": [
         {
@@ -3264,6 +3274,48 @@
       "relatedLinks": [
         "Personalmarkt",
         "Infrastruktur"
+      ]
+    },
+    "race-engine-basics": {
+      "category": "Kalender und Rennen",
+      "title": "Wie Rennergebnisse entschieden werden",
+      "subtitle": "Welche Faktoren die Rennberechnung berücksichtigt, ohne interne Formeln offenzulegen.",
+      "overview": "Es gibt keinen einzelnen Wert, der einen Sieg garantiert. Die offizielle Rennberechnung kombiniert Fahrerqualität, Streckenpassung, aktuellen Zustand, Vorbereitung, Taktik und die dynamischen Ereignisse der Etappe.",
+      "facts": [
+        {
+          "label": "Fahrerfaktoren",
+          "value": "Fähigkeiten, Rolle, Ermüdung, Rennschärfe, Gesundheit, Moral und verbleibende Energie"
+        },
+        {
+          "label": "Vorbereitungsfaktoren",
+          "value": "Etappentaktik, Ausrüstung, Verpflegung, Personal und Renn-Assets"
+        },
+        {
+          "label": "Rennfaktoren",
+          "value": "Terrain, Wetter, Gruppen, Angriffe, Nachführarbeit, Ausreißer, Zwischenfälle und Zieltyp"
+        }
+      ],
+      "details": [
+        "Der Fahrer mit dem höchsten Gesamtwert gewinnt nicht automatisch. Spezialfähigkeiten zählen auf flachen, hügeligen, bergigen, Kopfsteinpflaster- und Zeitfahr-Etappen unterschiedlich.",
+        "Ermüdung, Gesundheit, Rennschärfe und Energie können dazu führen, dass ähnlich starke Fahrer am Renntag sehr unterschiedlich abschneiden.",
+        "Dein Etappenplan beeinflusst, wie Fahrer Energie einsetzen und auf das Rennen reagieren. Rollen und Taktiken können einen Kapitän schützen, einen Sprint unterstützen, nachführen, angreifen oder eine Fluchtgruppe anvisieren.",
+        "Ausrüstung, Verpflegung, Personal und ausgewählte Renn-Assets können Vorbereitung, Zuverlässigkeit, Erholung oder Effizienz verbessern, wenn sie verfügbar und eingesetzt sind.",
+        "Das Rennen bleibt dynamisch. Ausreißer können durchkommen oder gestellt werden, Nachführressourcen können verbraucht werden, Gruppen können zerfallen und Stürze oder Defekte können das Ergebnis verändern.",
+        "Wiederholung und offizielles Ergebnis stammen aus derselben Berechnung; die Wiederholung erklärt das gespeicherte Ergebnis und erzeugt kein neues."
+      ],
+      "tips": [
+        "Wähle Fahrer passend zur Strecke und nicht nur nach Gesamtwert.",
+        "Gehe mit kontrollierter Ermüdung und vollständigen Etappenplänen in wichtige Rennen."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Rennvorbereitung",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Kalender",
+          "to": "/dashboard/calendar"
+        }
       ]
     }
   }
