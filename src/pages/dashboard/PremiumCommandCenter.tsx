@@ -1861,7 +1861,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                       </div>
                     )
                   })}
-                </div>                </div>
+                </div>
               </Card>
             </div>
           ) : null}
