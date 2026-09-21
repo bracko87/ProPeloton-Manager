@@ -1351,9 +1351,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900">{t('strategy.title')}</h2>
-                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-                      {t('strategy.description')}
-                    </p>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{t('strategy.description')}</p>
                   </div>
                   <Link
                     to="/dashboard/race-preparation"
@@ -1366,41 +1364,91 @@ export default function PremiumCommandCenter(): JSX.Element {
               </Card>
 
               <div className="grid gap-3 sm:grid-cols-3">
+                <StatCard label={t('summary.upcomingRaces')} value={workspace.summary.upcoming_races_60d} hint={t('summary.next60Days')} />
                 <StatCard
-                  label={t('summary.upcomingRaces')}
-                  value={workspace.summary.upcoming_races_60d}
-                  hint={t('summary.next60Days')}
+                  label={t('strategy.readyPlans')}
+                  value={workspace.season_planner.filter(row => row.saved_stage_plans >= row.total_stages && row.total_stages > 0).length}
+                  hint={t('strategy.readyPlansHint')}
                 />
                 <StatCard
-                  label={t('season.stagePlans')}
-                  value={workspace.season_planner.reduce((sum, row) => sum + row.saved_stage_plans, 0)}
-                />
-                <StatCard
-                  label={t('season.sponsorTargets')}
-                  value={workspace.season_planner.reduce((sum, row) => sum + row.sponsor_target_count, 0)}
+                  label={t('strategy.attentionNeeded')}
+                  value={workspace.season_planner.filter(row => row.planning_state !== 'on_track').length}
+                  hint={t('strategy.attentionNeededHint')}
                 />
               </div>
 
               <Card className="overflow-hidden">
-                <div className="border-b border-slate-100 px-5 py-4 text-sm font-semibold text-slate-900">
-                  {t('summary.upcomingRaces')}
+                <div className="border-b border-slate-100 px-5 py-4">
+                  <div className="text-sm font-semibold text-slate-900">{t('summary.upcomingRaces')}</div>
+                  <div className="mt-1 text-xs text-slate-500">{t('strategy.raceListHint')}</div>
                 </div>
                 <div className="divide-y divide-slate-100">
-                  {workspace.season_planner.slice(0, 5).map(row => (
-                    <Link
-                      key={row.race_preparation_id}
-                      to={`/dashboard/race-preparation?raceId=${row.race_id}`}
-                      className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-slate-50"
-                    >
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-slate-900">{row.race_name}</div>
-                        <div className="mt-0.5 text-xs text-slate-500">
-                          {formatGameDate(row.start_date)} · {row.saved_stage_plans}/{row.total_stages}
+                  {workspace.season_planner.slice(0, 8).map(row => {
+                    const flagUrl = getFlagImageUrl(row.country_code)
+                    const route = [row.start_city, row.finish_city].filter(Boolean).join(' → ')
+                    const isStageRace = row.total_stages > 1
+
+                    return (
+                      <Link
+                        key={row.race_preparation_id}
+                        to={`/dashboard/race-preparation?raceId=${row.race_id}`}
+                        className="grid gap-4 px-5 py-4 transition hover:bg-slate-50 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="min-w-[92px] text-sm font-semibold leading-5 text-slate-900">
+                            {formatGameDate(row.start_date)}
+                            {row.end_date !== row.start_date ? (
+                              <div className="mt-0.5 text-xs font-normal text-slate-500">
+                                {t('strategy.until')} {formatGameDate(row.end_date)}
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="hidden h-12 w-px bg-emerald-400 md:block" />
                         </div>
-                      </div>
-                      <ChevronRight size={16} className="shrink-0 text-slate-400" />
-                    </Link>
-                  ))}
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {flagUrl ? (
+                              <img src={flagUrl} alt="" className="h-4 w-6 rounded-sm border border-slate-200 object-cover" />
+                            ) : (
+                              <span className="h-4 w-6 rounded-sm border border-slate-200 bg-slate-100" />
+                            )}
+                            <span className="truncate text-base font-semibold text-slate-900">{row.race_name}</span>
+                            {row.category ? (
+                              <span className="rounded-full bg-purple-100 px-2.5 py-1 text-[11px] font-semibold text-purple-700">
+                                {row.category}
+                              </span>
+                            ) : null}
+                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                              isStageRace ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                            }`}>
+                              {isStageRace
+                                ? t('strategy.stageRace', { count: row.total_stages })
+                                : t('strategy.oneDayRace')}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            {route || humanize(row.race_type)}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-start gap-2 md:justify-end">
+                          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusClasses(row.planning_state)}`}>
+                            {humanize(row.planning_state)}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                            {t('strategy.plansProgress', { saved: row.saved_stage_plans, total: row.total_stages })}
+                          </span>
+                          {row.startlist_status ? (
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                              {humanize(row.startlist_status)}
+                            </span>
+                          ) : null}
+                          <ChevronRight size={16} className="text-slate-400" />
+                        </div>
+                      </Link>
+                    )
+                  })}
                 </div>
               </Card>
             </div>
