@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11m-v2-post-catch-late-attack-2026-09-21' as const
+  'phase11n-v1-physical-finish-exhaustion-2026-09-21' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -1360,7 +1360,7 @@ export interface UniversalRoadPhase1OpeningResult {
   readonly phaseNumber: 1
   readonly phaseBoundary: UniversalRoadPhaseBoundary
   readonly neutralizedDistanceKm: number
-  readonly opportunityWindowKm: 5
+  readonly opportunityWindowKm: number
   readonly firstWaveAttemptKm: number | null
   readonly secondWaveAttemptKm: number | null
   readonly baseWaveCap: number
@@ -3182,6 +3182,8 @@ export interface UniversalPostStageRiderUpdate {
   readonly weatherSeverity: UniversalDifficultyComponentLevel
   readonly incidentCount: number
   readonly incidentFatigueLoad: number
+  /** Extra next-stage debt when the rider finishes below the sustainable reserve. */
+  readonly exhaustionDebtLoad: number
   readonly incidentRiskMultiplierBefore: number
   readonly incidentRiskMultiplierAfter: number
   readonly incidentRiskIncrease: number
@@ -9647,10 +9649,32 @@ export function resolveRoadPhase1Opening(
   const openingTimingRoll = calculateDeterministicUnitRoll(
     `${getFrozenPhase56LegacySeed(input)}:opening-timing`,
   )
+  const openingWindowRoll = calculateDeterministicUnitRoll(
+    `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11n-opening-window`,
+  )
+  const firstWaveTimingRoll = calculateDeterministicUnitRoll(
+    `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11n-first-wave`,
+  )
+  const secondWaveTimingRoll = calculateDeterministicUnitRoll(
+    `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11n-second-wave`,
+  )
+  /*
+   * Phase 11N: opening attacks now have a stage-specific opportunity corridor
+   * instead of repeatedly forming around kilometre four. Commands still
+   * decide who tries and attack physics still decide who succeeds.
+   */
+  const opportunityWindowKm = deterministicRound(
+    clamp(
+      6 + openingWindowRoll * 10,
+      6,
+      Math.min(16, Math.max(6, phaseBoundary.endKm * 0.55)),
+    ),
+    6,
+  )
   const neutralizedDistanceKm = deterministicRound(
     Math.min(
       phaseBoundary.endKm,
-      1.5 + openingTimingRoll * 1.5,
+      1.5 + openingTimingRoll * 3,
     ),
     6,
   )
@@ -9658,17 +9682,30 @@ export function resolveRoadPhase1Opening(
     0,
     phaseBoundary.endKm - neutralizedDistanceKm,
   )
+  const openingWindowEndKm = Math.min(
+    phaseBoundary.endKm,
+    neutralizedDistanceKm + opportunityWindowKm,
+  )
   const firstWaveAttemptKm =
     openingDistanceAfterNeutral > 0
       ? deterministicRound(
-          Math.min(phaseBoundary.endKm, neutralizedDistanceKm + 0.75),
+          Math.min(
+            openingWindowEndKm,
+            neutralizedDistanceKm + 0.75 + firstWaveTimingRoll * 3.25,
+          ),
           6,
         )
       : null
   const secondWaveAttemptKm =
     openingDistanceAfterNeutral > 0
       ? deterministicRound(
-          Math.min(phaseBoundary.endKm, neutralizedDistanceKm + 1.75),
+          Math.min(
+            openingWindowEndKm,
+            Math.max(
+              firstWaveAttemptKm ?? neutralizedDistanceKm,
+              neutralizedDistanceKm + 2.5 + secondWaveTimingRoll * 6,
+            ),
+          ),
           6,
         )
       : null
@@ -10362,7 +10399,7 @@ export function resolveRoadPhase1Opening(
       phaseNumber: 1,
       phaseBoundary,
       neutralizedDistanceKm,
-      opportunityWindowKm: 5,
+      opportunityWindowKm,
       firstWaveAttemptKm,
       secondWaveAttemptKm:
         selectedCandidates.length > firstWaveSize
@@ -12490,7 +12527,7 @@ function getDecisiveGroupForPositionDelta(
   delta: number,
   energyAfterPhase: number,
 ): UniversalRoadDecisiveGroupCode {
-  if (energyAfterPhase <= 3 || delta > 28) return 'dropped_group'
+  if (energyAfterPhase < 5 || delta > 28) return 'dropped_group'
   if (delta <= 6) return 'front_group'
   if (delta <= 16) return 'main_group'
   return 'chasing_group'
@@ -14182,7 +14219,7 @@ export function resolveRoadPhase3Decisive(
       if (!state.row.eligibleToStart) {
         finishContestEligible = false
         finishEligibilityReason = 'rider_unavailable'
-      } else if (state.energyAfterPhase <= 3) {
+      } else if (state.energyAfterPhase < 5) {
         finishContestEligible = false
         finishEligibilityReason = 'energy_depleted'
       } else if (finalGroupCode === 'dropped_group') {
@@ -14309,7 +14346,7 @@ export function resolveRoadPhase3Decisive(
     .map((state) => state.riderId)
     .sort()
   const status: UniversalRoadDecisiveStatus =
-    riderStates.every((state) => state.energyAfterPhase <= 3)
+    riderStates.every((state) => state.energyAfterPhase < 5)
       ? 'all_riders_depleted'
       : groups.some((group) => group.groupCode === 'front_group' && group.riderIds.length < riderStates.length)
         ? 'front_selection_formed'
@@ -14778,7 +14815,7 @@ function buildPersistentOpeningBreakawayPhysicalState(
         physicallyAvailableSet.has(state.riderId) &&
         !riderIdSet.has(state.riderId) &&
         !phase3FrontEndSet.has(state.riderId) &&
-        (state.energyAfterPhase <= 3 ||
+        (state.energyAfterPhase < 5 ||
           (phase3PhysicalSelectionActive &&
             state.finalGroupCode === 'dropped_group')),
     )
@@ -14946,7 +14983,7 @@ export function resolveRoadPhase4Finish(
     }
     if (activeEscape) {
       const physicallyDropped =
-        state.energyAfterPhase <= 3 ||
+        state.energyAfterPhase < 5 ||
         (phase3NaturalSelectionPhysical &&
           state.finalGroupCode === 'dropped_group')
       phase3PhysicalGapByRiderId.set(
@@ -14958,7 +14995,7 @@ export function resolveRoadPhase4Finish(
       return
     }
     const physicallyDropped =
-      state.energyAfterPhase <= 3 ||
+      state.energyAfterPhase < 5 ||
       (phase3NaturalSelectionPhysical &&
         state.finalGroupCode === 'dropped_group')
     phase3PhysicalGapByRiderId.set(
@@ -15989,25 +16026,48 @@ export function resolveRoadPhase4Finish(
       .map((row) => row.holdScore)
       .sort((left, right) => left - right)
     const hillyAttrition = input.stage.terrainType === 'hilly'
-    const paceQuantile = hillyAttrition
-      ? clamp(0.46 + effort.hardness * 0.18, 0.46, 0.66)
-      : clamp(0.48 + effort.hardness * 0.28, 0.48, 0.76)
+    const majorHighMountainSelection =
+      effort.elevationGainM >= 800 &&
+      (input.stage.summitFinish ||
+        input.stage.finishType === 'summit_finish' ||
+        effort.kmEnd >= input.stage.distanceKm - 5)
+    const majorMountainTargetFrontCount = Math.min(
+      8,
+      Math.max(5, Math.round(candidateRows.length * 0.06)),
+    )
+    const majorMountainQuantile =
+      candidateRows.length > 0
+        ? clamp(
+            1 - majorMountainTargetFrontCount / candidateRows.length,
+            0.82,
+            0.96,
+          )
+        : 0.9
+    const paceQuantile = majorHighMountainSelection
+      ? majorMountainQuantile
+      : hillyAttrition
+        ? clamp(0.46 + effort.hardness * 0.18, 0.46, 0.66)
+        : clamp(0.48 + effort.hardness * 0.28, 0.48, 0.76)
     const referenceIndex = Math.min(
       holdScoresAscending.length - 1,
       Math.floor((holdScoresAscending.length - 1) * paceQuantile),
     )
     const referenceHoldScore = holdScoresAscending[referenceIndex] ?? 0
-    const holdWindow = hillyAttrition
-      ? clamp(12 - effort.hardness * 5, 6, 12)
-      : clamp(10.5 - effort.hardness * 7, 3.5, 10.5)
+    const holdWindow = majorHighMountainSelection
+      ? clamp(3.25 - effort.hardness * 0.75, 1.75, 3.25)
+      : hillyAttrition
+        ? clamp(12 - effort.hardness * 5, 6, 12)
+        : clamp(10.5 - effort.hardness * 7, 3.5, 10.5)
     const requiredHoldScore = deterministicRound(
       referenceHoldScore - holdWindow,
       6,
     )
     const minimumEnergyToHold = deterministicRound(
-      hillyAttrition
-        ? clamp(2.5 + effort.hardness * 7, 2.5, 9.5)
-        : clamp(3.5 + effort.hardness * 10.5, 3.5, 14),
+      majorHighMountainSelection
+        ? clamp(7 + effort.hardness * 9, 8, 18)
+        : hillyAttrition
+          ? clamp(2.5 + effort.hardness * 7, 2.5, 9.5)
+          : clamp(3.5 + effort.hardness * 10.5, 3.5, 14),
       6,
     )
 
@@ -17976,25 +18036,25 @@ export function resolveRoadPhase4Finish(
   )
   const explicitChaserSet = new Set(explicitChasers.map((row) => row.riderId))
   const automaticWorkerSet = new Set(automaticWorkerRows.map((row) => row.riderId))
-  const phase4MeaningfulContactPressure =
-    input.stage.terrainType !== 'flat' ||
-    input.stage.finishType !== 'flat_finish'
+  // Phase 11N: below 5% live reserve is universally unsustainable in a road
+  // group. Terrain and chase pressure may raise the practical hold floor.
+  const phase4MeaningfulContactPressure = true
   const phase4DepletionContactFloor = deterministicRound(
     clamp(
-      3 +
+      5 +
         (input.stage.terrainType === 'mountain'
           ? 1.5
           : input.stage.terrainType === 'hilly' ||
               input.stage.terrainType === 'cobbled'
             ? 0.75
             : 0) +
-        (hasAnyOrganizedPhase4ChaseInterest ? 0.75 : 0) +
+        (hasAnyOrganizedPhase4ChaseInterest ? 0.5 : 0) +
         (input.stage.finishType === 'summit_finish' ||
         input.stage.finishType === 'uphill_finish'
           ? 0.5
           : 0),
-      3,
-      6,
+      5,
+      7.5,
     ),
     6,
   )
@@ -20564,14 +20624,10 @@ function buildPhase5RoadSnapshots(
   const splitCandidates = sourceGroups
     .filter((sourceGroup) => sourceGroup.riderIds.length > 0)
     .flatMap((sourceGroup) => {
-      // Preserve an already-resolved Phase 4 physical split exactly. If a
-      // selective road stage still reaches Phase 5 as one unsplit bunch,
-      // however, allow the existing deterministic Phase 5 performance-band
-      // model to provide the missing finish separation. Flat stages keep their
-      // single bunch unless Phase 4 itself physically split them.
-      const preservePhase4PhysicalGroup =
-        phaseNumber === 4 &&
-        (sourceGroups.length > 1 || profile === 'flat_large_groups')
+      // Phase 11N physical-time invariant: Phase 4 owns the road. Phase 5 may
+      // rank riders inside an existing group, but it cannot invent official
+      // time gaps for riders who were still physically together.
+      const preservePhase4PhysicalGroup = phaseNumber === 4
 
       if (preservePhase4PhysicalGroup) {
         return [
@@ -22141,6 +22197,7 @@ export function buildUniversalOfficialRoadClassification(
   const finishers = riderContexts.filter(
     (context) =>
       context.eligibleToStart &&
+      (context.remainingEnergy ?? 0) > 0.000001 &&
       context.phase5OfficialTimeSeconds != null &&
       context.physicalGroupOrder != null,
   )
@@ -22194,6 +22251,28 @@ export function buildUniversalOfficialRoadClassification(
       }
     },
   )
+  const dnfRows: UniversalOfficialFinishRow[] = riderContexts
+    .filter(
+      (context) =>
+        context.eligibleToStart &&
+        (context.remainingEnergy ?? 0) <= 0.000001 &&
+        context.phase5OfficialTimeSeconds != null,
+    )
+    .slice()
+    .sort((left, right) => left.riderId.localeCompare(right.riderId))
+    .map((context) => ({
+      rank: null,
+      riderId: context.riderId,
+      teamId: context.teamId,
+      status: 'dnf',
+      physicalGroupCode: null,
+      physicalGroupOrder: null,
+      officialTimeSeconds: null,
+      gapSeconds: null,
+      sameTimeAsPrevious: false,
+      finishScore: null,
+      components: null,
+    }))
   const dnsRows: UniversalOfficialFinishRow[] = riderContexts
     .filter((context) => !context.eligibleToStart)
     .slice()
@@ -22212,7 +22291,7 @@ export function buildUniversalOfficialRoadClassification(
       components: null,
     }))
 
-  return [...rankedRows, ...dnsRows]
+  return [...rankedRows, ...dnfRows, ...dnsRows]
 }
 
 export function resolveUniversalSoloFinish(
@@ -35579,13 +35658,23 @@ export function buildUniversalPostStageUpdateSummary(
             6,
           )
         : 0
+      const exhaustionDebtLoad = eligibleToStart
+        ? deterministicRound(
+            finishEnergy < 5
+              ? (5 - finishEnergy) * 1.4 +
+                  Math.max(0, energySpentPctOfStart - 92) * 0.08
+              : 0,
+            6,
+          )
+        : 0
       const grossFatigueGain = eligibleToStart
         ? deterministicRound(
             totalEnergySpent * 0.16 +
               distanceLoad +
               difficultyLoad +
               finishStatusLoad +
-              incidentFatigueLoad,
+              incidentFatigueLoad +
+              exhaustionDebtLoad,
             6,
           )
         : 0
@@ -35683,6 +35772,7 @@ export function buildUniversalPostStageUpdateSummary(
         weatherSeverity: difficulty.components.weatherSeverity,
         incidentCount,
         incidentFatigueLoad,
+        exhaustionDebtLoad,
         incidentRiskMultiplierBefore,
         incidentRiskMultiplierAfter,
         incidentRiskIncrease,
