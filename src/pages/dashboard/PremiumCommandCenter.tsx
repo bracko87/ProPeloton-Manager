@@ -326,6 +326,19 @@ function formatGameDate(value: string | null | undefined): string {
   return appI18n.t('premiumCenter:common.seasonDate', { season, day: String(date.getUTCDate()).padStart(2, '0'), month })
 }
 
+function formatGameDateShort(value: string | null | undefined): string {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  const month = date.toLocaleString(appI18n.resolvedLanguage || appI18n.language || undefined, {
+    month: 'short',
+    timeZone: 'UTC',
+  })
+
+  return `${String(date.getUTCDate()).padStart(2, '0')} ${month}`
+}
+
 function formatGameDateParts(value: string | null | undefined): {
   seasonLabel: string
   dateLabel: string
@@ -1720,133 +1733,135 @@ export default function PremiumCommandCenter(): JSX.Element {
                   <div className="mt-1 text-xs text-slate-500">{t('strategy.raceListHint')}</div>
                 </div>
 
-                <div className="divide-y divide-slate-100">
+                <div className="space-y-3 p-5">
                   {workspace.season_planner.slice(0, 8).map(row => {
                     const flagUrl = getFlagImageUrl(row.country_code)
-                    const dateParts = formatGameDateParts(row.start_date)
-                    const endDateParts =
-                      row.end_date !== row.start_date
-                        ? formatGameDateParts(row.end_date)
-                        : null
                     const route = [row.start_city, row.finish_city].filter(Boolean).join(' → ')
                     const isStageRace = row.total_stages > 1
+                    const startDay = formatGameDateShort(row.start_date)
+                    const endDay =
+                      row.end_date !== row.start_date
+                        ? formatGameDateShort(row.end_date)
+                        : null
+                    const missedStartlist = row.startlist_status === 'missed_startlist'
+                    const submitted =
+                      row.startlist_status === 'submitted' ||
+                      row.preparation_status === 'submitted'
 
                     return (
-                      <Link
+                      <div
                         key={row.race_preparation_id}
-                        to={`/dashboard/race-preparation?raceId=${row.race_id}`}
-                        className="grid gap-4 px-5 py-5 transition hover:bg-slate-50 lg:grid-cols-[150px_minmax(0,1fr)_430px_20px] lg:items-center"
+                        className={`rounded-2xl border p-4 transition ${
+                          missedStartlist
+                            ? 'border-red-200 bg-red-50'
+                            : row.planning_state === 'deadline_close'
+                              ? 'border-yellow-300 bg-yellow-50'
+                              : 'border-slate-200 bg-white hover:bg-slate-50'
+                        }`}
                       >
-                        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                          <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">
-                            {dateParts.seasonLabel}
-                          </div>
-                          <div className="mt-1 text-base font-semibold text-slate-900">
-                            {dateParts.dateLabel}
-                          </div>
-                          {endDateParts ? (
-                            <div className="mt-1 text-xs text-slate-500">
-                              {t('strategy.until')} {endDateParts.dateLabel}
-                            </div>
-                          ) : null}
-                        </div>
-
-                        <div className="min-w-0">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
-                              {flagUrl ? (
-                                <img
-                                  src={flagUrl}
-                                  alt={row.country_code ?? ''}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <span aria-hidden="true" className="text-lg">🏁</span>
-                              )}
+                        <div className="grid gap-4 md:grid-cols-[80px_minmax(0,1fr)_auto] md:items-center">
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 text-right text-sm font-semibold leading-tight text-slate-950">
+                              <div>{startDay}</div>
+                              {endDay ? <div>{endDay}</div> : null}
                             </div>
 
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="truncate text-base font-semibold text-slate-900">
-                                  {row.race_name}
+                            <div className="h-14 w-px bg-emerald-400" />
+                          </div>
+
+                          <Link
+                            to={`/dashboard/race-preparation?raceId=${row.race_id}`}
+                            className="min-w-0 text-left"
+                          >
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
+                              <div className="flex h-4 w-6 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-slate-200 bg-white">
+                                {flagUrl ? (
+                                  <img
+                                    src={flagUrl}
+                                    alt={row.country_code ?? ''}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <span aria-hidden="true" className="text-[9px]">🏁</span>
+                                )}
+                              </div>
+
+                              <div className="truncate text-base font-semibold text-slate-900">
+                                {row.race_name}
+                              </div>
+
+                              {row.category ? (
+                                <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
+                                  {row.category}
                                 </span>
-                                {row.category ? (
-                                  <span className="rounded-full bg-purple-100 px-2.5 py-1 text-[11px] font-semibold text-purple-700">
-                                    {row.category}
-                                  </span>
-                                ) : null}
-                                <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                              ) : null}
+
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
                                   isStageRace
                                     ? 'bg-blue-100 text-blue-700'
                                     : 'bg-emerald-100 text-emerald-700'
-                                }`}>
-                                  {isStageRace
-                                    ? t('strategy.stageRace', { count: row.total_stages })
-                                    : t('strategy.oneDayRace')}
+                                }`}
+                              >
+                                {isStageRace ? humanize('stage_race') : humanize('one_day')}
+                              </span>
+                            </div>
+
+                            <div className="mt-1 truncate text-xs text-slate-500">
+                              {route || humanize(row.race_type)}
+                              {row.saved_stage_plans > 0 || row.total_stages > 0
+                                ? ` · ${t('strategy.plansProgress', {
+                                    saved: row.saved_stage_plans,
+                                    total: row.total_stages,
+                                  })}`
+                                : ''}
+                            </div>
+                          </Link>
+
+                          <div className="flex flex-nowrap items-center justify-start gap-2 md:justify-end">
+                            {missedStartlist ? (
+                              <span className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800">
+                                <span>{humanize(row.startlist_status)}</span>
+                                <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5">
+                                  {humanize('not_participating')}
                                 </span>
-                              </div>
+                              </span>
+                            ) : (
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                  submitted
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : row.planning_state === 'deadline_close'
+                                      ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200'
+                                      : 'bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                {submitted
+                                  ? humanize('stage_plans_open')
+                                  : humanize(row.planning_state)}
+                              </span>
+                            )}
 
-                              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                                <span>{route || humanize(row.race_type)}</span>
-                                {row.preparation_status ? (
-                                  <>
-                                    <span className="text-slate-300">•</span>
-                                    <span>{humanize(row.preparation_status)}</span>
-                                  </>
-                                ) : null}
-                              </div>
-                            </div>
+                            <Link
+                              to={`/dashboard/race-preparation?raceId=${row.race_id}`}
+                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                missedStartlist
+                                  ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                                  : 'bg-yellow-400 text-slate-950 hover:bg-yellow-300'
+                              }`}
+                              aria-disabled={missedStartlist}
+                              onClick={event => {
+                                if (missedStartlist) event.preventDefault()
+                              }}
+                            >
+                              {submitted ? humanize('stage_plans') : t('integrations.overview.openItem')}
+                            </Link>
                           </div>
                         </div>
-
-                        <div className="grid gap-2 sm:grid-cols-3">
-                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                            <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                              {t('common.current')}
-                            </div>
-                            <div className={`mt-1 inline-flex rounded-full border px-2 py-1 text-[11px] font-medium ${statusClasses(row.planning_state)}`}>
-                              {humanize(row.planning_state)}
-                            </div>
-                          </div>
-
-                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                            <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                              {t('season.stagePlans')}
-                            </div>
-                            <div className="mt-1 text-sm font-semibold text-slate-900">
-                              {row.saved_stage_plans}/{row.total_stages}
-                            </div>
-                            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                              <div
-                                className="h-full rounded-full bg-yellow-400"
-                                style={{
-                                  width: `${row.total_stages > 0
-                                    ? Math.min(100, (row.saved_stage_plans / row.total_stages) * 100)
-                                    : 0}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                            <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                              {t('season.startList')}
-                            </div>
-                            <div className={`mt-1 inline-flex rounded-full border px-2 py-1 text-[11px] font-medium ${
-                              row.startlist_status
-                                ? statusClasses(row.startlist_status)
-                                : 'border-slate-200 bg-slate-50 text-slate-600'
-                            }`}>
-                              {humanize(row.startlist_status)}
-                            </div>
-                          </div>
-                        </div>
-
-                        <ChevronRight size={18} className="hidden text-slate-400 lg:block" />
-                      </Link>
+                      </div>
                     )
                   })}
-                </div>
+                </div>                </div>
               </Card>
             </div>
           ) : null}
