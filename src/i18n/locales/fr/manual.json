@@ -3317,6 +3317,69 @@
           "to": "/dashboard/calendar"
         }
       ]
+    },
+    "race-preparation-bonuses-deep": {
+      "category": "Préparation de course",
+      "title": "Bonus de préparation : ce qui influence réellement la course",
+      "subtitle": "D'où viennent les points, ce qu'ils modifient et comment lire leur effet combiné.",
+      "overview": "La préparation ne crée pas un seul pourcentage global. Les choix alimentent plusieurs canaux : performance, énergie, fatigue, récupération, santé, fiabilité mécanique, soutien tactique et usure.",
+      "facts": [
+        {
+          "label": "Cinq groupes",
+          "value": "Soutien de course, Contrôle de fatigue, Récupération, Protection santé, Fiabilité mécanique"
+        },
+        {
+          "label": "Plafond par groupe",
+          "value": "30 points"
+        },
+        {
+          "label": "Canaux séparés",
+          "value": "Équipement et ravitaillement sont appliqués séparément"
+        },
+        {
+          "label": "Staff passif en course",
+          "value": "Médecin d'équipe et Mécanicien"
+        },
+        {
+          "label": "Pas de bonus plat passif",
+          "value": "Directeur sportif, Entraîneur principal et Scout Analyst"
+        }
+      ],
+      "details": [
+        "Les effets exacts des sources choisies sont classés dans cinq groupes. Exemple : +2% de réponse médicale = 2 points de Protection santé ; +1% de récupération post-étape = 1 point de Récupération.",
+        "Le Soutien de course vient surtout du ravitaillement, des voitures, de la logistique, de la communication et de la réponse aux incidents. Il peut améliorer l'efficacité énergétique, la capacité tactique et une partie de la protection santé/mécanique.",
+        "Le Contrôle de fatigue réduit la pression de course et de voyage. Avec la Récupération, il baisse la fatigue post-étape et améliore la récupération.",
+        "La Protection santé réduit le risque médical. La Fiabilité mécanique réduit le risque de panne et le temps perdu.",
+        "Les véhicules sélectionnés contribuent automatiquement : voitures = soutien/ravitaillement/communication/mécanique ; bus = fatigue/récupération ; van médical = santé/récupération ; van d'équipement/atelier = protection mécanique et équipement.",
+        "Les politiques d'équipe peuvent aussi contribuer : voyage pour le moral, hébergement pour la récupération, logistique pour le Soutien de course. Les options de base peuvent ne donner aucun bonus.",
+        "Un Médecin sélectionné applique automatiquement ses bonus existants : risque blessure/maladie réduit, durée de récupération raccourcie, bonus de récupération quotidienne et plancher de fatigue réduit.",
+        "Un Mécanicien sélectionné applique automatiquement ses bonus techniques : qualité de réglage, risque mécanique réduit et usure d'équipement réduite. Vitesse/coût de maintenance continuent hors course.",
+        "Le Directeur sportif apporte tactique, conseils et automatisation, mais pas de bonus passif plat de performance. L'Entraîneur agit surtout sur entraînement/développement, le Scout sur le scouting.",
+        "L'équipement est un canal séparé par coureur. Le pourcentage final dépend du setup, du terrain et de l'état. Exemple : +5% sur un score de compétence d'étape de 76 apporte environ +3,8 points de suitability.",
+        "Le ravitaillement est également séparé. Bidons, gels, nutrition packs et protections météo peuvent économiser de l'énergie, réduire la fatigue, ajouter de la récupération ou de la protection s'ils sont sélectionnés et disponibles.",
+        "Ne cumulez pas des pourcentages de systèmes différents. 10% d'économie d'énergie, 6% de fatigue en moins et 15% de temps mécanique en moins ne font pas +31% de vitesse.",
+        "Exemple : Soutien 9, Fatigue 2, Récupération 2, Santé 4 et Mécanique 7 donnent environ 1,95% de coût énergétique en moins, 3% de fatigue post-étape en moins, +0,6 récupération, 6,6% de risque santé en moins, 19,3% de risque mécanique en moins et 15,35% de temps mécanique en moins, avant équipement, ravitaillement et météo.",
+        "Une bonne préparation améliore efficacité et fiabilité sans garantir la victoire : compétences, parcours, fatigue, affûtage, tactique et dynamique de course restent décisifs."
+      ],
+      "tips": [
+        "Lisez chaque bonus selon son canal plutôt que de chercher un pourcentage total.",
+        "Adaptez l'équipement au terrain, prenez assez de ravitaillement et choisissez staff/assets selon les risques.",
+        "Sur les courses par étapes, récupération et contrôle de fatigue peuvent être aussi importants que la performance directe."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Préparation de course",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Équipement",
+          "to": "/dashboard/equipment"
+        },
+        {
+          "label": "Staff",
+          "to": "/dashboard/staff"
+        }
+      ]
     }
   }
 }
