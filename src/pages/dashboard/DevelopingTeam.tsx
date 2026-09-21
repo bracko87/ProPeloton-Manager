@@ -1241,14 +1241,11 @@ export default function DevelopingTeamPage() {
           })
       }
 
-      // Last/Next Team Race remain Free. Premium analytics are sanitized for Free users.
+      // Last/Next Team Race remain Free. Premium analytics are now sanitized by
+      // the database RPC before the payload reaches the browser.
       void fetchSquadSeasonDashboardData(developingClubId, seasonYear)
         .then((dashboardData) => {
-          setDevelopingTeamSeasonDashboardData(
-            hasPremiumAccess
-              ? dashboardData
-              : createOperationalSquadSeasonDashboardData(dashboardData)
-          )
+          setDevelopingTeamSeasonDashboardData(dashboardData)
         })
         .catch((dashboardError) => {
           console.warn(
