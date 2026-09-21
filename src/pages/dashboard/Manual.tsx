@@ -1934,6 +1934,48 @@ const manualSections: ManualSection[] = [
     ]
   },
   {
+    "id": "race-preparation-bonuses-deep",
+    "category": "Race Preparation",
+    "title": "Race Preparation Bonuses: What Connects to the Race",
+    "subtitle": "Where support points come from, what they affect and how to read the combined benefit.",
+    "overview": "Race Preparation does not create one single percentage bonus. Different choices feed different race-engine channels: direct rider performance, energy use, fatigue, recovery, injury protection, mechanical reliability, tactical support and resource wear. The same preparation can therefore help in several different ways without guaranteeing victory.",
+    "facts": [
+      { "label": "Five support groups", "value": "Race Support, Fatigue Control, Recovery Support, Health Protection, Mechanical Reliability" },
+      { "label": "Support-group cap", "value": "30 points in each group" },
+      { "label": "Separate channels", "value": "Equipment performance and race-supply effects are applied separately from the five support groups" },
+      { "label": "Passive staff with race effects", "value": "Team Doctor and Mechanic" },
+      { "label": "No passive race-speed bonus", "value": "Sport Director, Head Coach and Scout Analyst do not receive an invented flat performance bonus" }
+    ],
+    "details": [
+      "The Race Preparation preview first collects exact effects from selected support sources. Each mapped effect is placed into one of five support groups. For example, a +2% medical-response effect contributes 2 Health Protection points, while a +1% post-stage recovery effect contributes 1 Recovery Support point.",
+      "Race Support mainly represents feeding, team-car coverage, logistics, communication and incident support. It can reduce in-stage energy cost, improve non-neutral tactical capability and slightly strengthen health/mechanical protection.",
+      "Fatigue Control reduces race and travel fatigue pressure. Together with Recovery Support it lowers post-stage fatigue and improves recovery after the stage.",
+      "Recovery Support improves post-stage recovery. It is especially valuable during stage races where the next stage follows quickly.",
+      "Health Protection lowers the chance that a health incident becomes a meaningful injury or illness problem.",
+      "Mechanical Reliability lowers mechanical-problem probability and reduces time lost when a mechanical incident does happen.",
+      "Support vehicles feed these groups automatically when selected. Team cars can add race support, feeding, communication, mechanical response and incident response. Team buses can add fatigue and recovery support. Medical vans can add health protection and recovery. Equipment vans and mobile workshops can add mechanical reliability and equipment protection.",
+      "Team policies can also contribute. Better travel can improve morale-related support, better accommodation can improve recovery, and better logistics can add Race Support. Baseline policies may provide no extra points.",
+      "Team Doctor passive bonuses are automatic when the doctor is selected for Race Preparation. Existing doctor skills can lower injury/illness risk, shorten recovery duration, add daily recovery and lower the fatigue floor. These are real medical effects, not advice or automation.",
+      "Mechanic passive bonuses are automatic when the mechanic is selected. Existing mechanic skills can improve setup quality, reduce mechanical risk and reduce equipment condition loss. Maintenance-speed and maintenance-cost bonuses continue to matter outside the race as well.",
+      "Sport Director staff can provide tactical suggestions, advisory support and automation features, but there is currently no separate passive flat race-performance bonus just for having a Sport Director assigned. Head Coach bonuses belong primarily to training/development, and Scout Analyst bonuses belong to scouting.",
+      "Equipment is a separate rider-level performance channel. The engine calculates a stage-specific equipment percentage from the selected setup, terrain fit and equipment condition. A +5% equipment effect means a rider with a stage-specific skill score of 76 gains about 3.8 suitability points from equipment before other readiness adjustments.",
+      "Race supplies are also separate. Bidons, gels, nutrition packs and other usable supplies can reduce energy use, reduce fatigue, add recovery or provide weather-specific protection. Supply effects depend on what was actually selected and available in stock.",
+      "Do not add every displayed percentage together and call it total performance. A 10% energy saving, 6% fatigue reduction and 15% lower mechanical time loss affect different systems and are not a 31% speed bonus.",
+      "Example: a preparation with Race Support 9, Fatigue Control 2, Recovery Support 2, Health Protection 4 and Mechanical Reliability 7 gives about 1.95% lower in-stage energy cost, 3% lower post-stage fatigue, +0.6 recovery points, 6.6% lower health-incident risk, 19.3% lower mechanical-incident risk and 15.35% lower mechanical time loss before separate equipment, supply and weather effects are added.",
+      "A well-prepared team therefore gains better efficiency and reliability, but rider skills, terrain fit, fatigue, sharpness, tactics, race dynamics and incidents still decide the final result."
+    ],
+    "tips": [
+      "Read each bonus by its channel instead of looking for one total percentage.",
+      "Match equipment to the stage profile, carry enough supplies and select support assets/staff that solve the risks of the event.",
+      "For stage races, recovery and fatigue control can be as valuable as direct stage-performance bonuses."
+    ],
+    "relatedLinks": [
+      { "label": "Race Preparation", "to": "/dashboard/race-preparation" },
+      { "label": "Equipment", "to": "/dashboard/equipment" },
+      { "label": "Staff", "to": "/dashboard/staff" }
+    ]
+  },
+  {
     "id": "race-plan-deep",
     "category": "Race Preparation",
     "title": "Race Plan Deep Guide",
@@ -1948,7 +1990,7 @@ const manualSections: ManualSection[] = [
     "details": [
       "The Race Plan should be created soon after acceptance because overlapping events can block riders or assets later.",
       "Riders already committed to overlapping races/camps can be blocked from selection.",
-      "Staff assignments provide support bonuses and can also be blocked by conflicts.",
+      "Staff assignments can be blocked by conflicts. Passive race bonuses only apply where a real staff-effect formula exists: Team Doctor medical effects and Mechanic technical effects are connected automatically; Sport Director, Head Coach and Scout Analyst do not receive an invented flat passive race-performance bonus."
       "Assets create travel/logistics support and may affect costs or readiness.",
       "Equipment setup determines which durable gear the team plans to use.",
       "Race supplies must be sufficient for the whole event, especially multi-stage races.",
