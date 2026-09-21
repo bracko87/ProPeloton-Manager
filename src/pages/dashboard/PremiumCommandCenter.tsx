@@ -21,6 +21,11 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import appI18n from '../../i18n'
+import PremiumSeasonPlannerPanel from './calendar/PremiumSeasonPlannerPanel'
+import {
+  PremiumFinancialSimulator,
+  PremiumSponsorIntelligence,
+} from './finance/PremiumFinanceTools'
 
 type TabKey =
   | 'summary'
@@ -564,16 +569,6 @@ export default function PremiumCommandCenter(): JSX.Element {
   const [riskByStage, setRiskByStage] = useState<Record<string, string>>({})
   const [prefillMatch, setPrefillMatch] = useState<Record<string, any> | null>(null)
 
-  const [simOneTimeCost, setSimOneTimeCost] = useState(0)
-  const [simOneTimeIncome, setSimOneTimeIncome] = useState(0)
-  const [simWeeklyCost, setSimWeeklyCost] = useState(0)
-  const [simWeeklyIncome, setSimWeeklyIncome] = useState(0)
-  const [simMonthlyIncome, setSimMonthlyIncome] = useState(0)
-  const [simMonthlyCost, setSimMonthlyCost] = useState(0)
-  const [simTargetReserve, setSimTargetReserve] = useState(0)
-  const [simHorizon, setSimHorizon] = useState(60)
-  const [simName, setSimName] = useState('')
-  const [sponsorLogoById, setSponsorLogoById] = useState<Record<string, string | null>>({})
   const [templateSection, setTemplateSection] = useState<'race' | 'training' | 'finance' | 'automation'>('race')
 
   const [templateName, setTemplateName] = useState('')
@@ -592,10 +587,6 @@ export default function PremiumCommandCenter(): JSX.Element {
   useEffect(() => {
     setTab(initialTab)
   }, [initialTab])
-
-  useEffect(() => {
-    setSimName(current => current || t('finance.defaultName'))
-  }, [t])
 
   const changeTab = useCallback(
     (nextTab: TabKey) => {
@@ -673,25 +664,6 @@ export default function PremiumCommandCenter(): JSX.Element {
               })),
             }
           }
-        }
-
-        const sponsorDashboardResult = await supabase.rpc('sponsor_get_dashboard', {
-          p_club_id: targetClubId,
-        })
-        if (!sponsorDashboardResult.error) {
-          const signedSponsors = (
-            (sponsorDashboardResult.data as Record<string, any> | null)?.signed_sponsors ?? []
-          ) as Array<Record<string, any>>
-          setSponsorLogoById(
-            Object.fromEntries(
-              signedSponsors.map(sponsor => [
-                String(sponsor.id ?? ''),
-                typeof sponsor.logo_url === 'string' ? sponsor.logo_url : null,
-              ]),
-            ),
-          )
-        } else {
-          setSponsorLogoById({})
         }
 
         setWorkspace(nextWorkspace)
@@ -845,40 +817,6 @@ export default function PremiumCommandCenter(): JSX.Element {
         'normal',
     }))
   }, [selectedStage])
-
-  const financeProjection = useMemo(() => {
-    if (!workspace) return null
-
-    const weeks = simHorizon / 7
-    const months = simHorizon / 30
-    const baseline = workspace.finance.balance + workspace.finance.weekly_net * weeks
-    const scenarioImpact =
-      Number(simOneTimeIncome || 0) -
-      Number(simOneTimeCost || 0) +
-      (Number(simWeeklyIncome || 0) - Number(simWeeklyCost || 0)) * weeks +
-      (Number(simMonthlyIncome || 0) - Number(simMonthlyCost || 0)) * months
-    const projected = baseline + scenarioImpact
-
-    return {
-      baseline,
-      projected,
-      scenarioImpact,
-      delta: projected - workspace.finance.balance,
-      weeks,
-      months,
-      reserveGap: projected - Number(simTargetReserve || 0),
-    }
-  }, [
-    simHorizon,
-    simMonthlyCost,
-    simMonthlyIncome,
-    simOneTimeCost,
-    simOneTimeIncome,
-    simTargetReserve,
-    simWeeklyCost,
-    simWeeklyIncome,
-    workspace,
-  ])
 
   const seasonPlanningInsights = useMemo(() => {
     if (!workspace) return { raceDays: 0, freeDays: 60, overlapCount: 0, largestGap: 60, rows: [] as Array<SeasonPlannerRow & { gapBefore: number | null; overlapsPrevious: boolean }> }
