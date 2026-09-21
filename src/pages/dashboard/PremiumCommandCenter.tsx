@@ -1843,41 +1843,156 @@ export default function PremiumCommandCenter(): JSX.Element {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900">{t('sponsors.title')}</h2>
-                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-                      {t('sponsors.description')}
-                    </p>
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{t('sponsors.description')}</p>
                   </div>
                   <Link
                     to="/dashboard/finance?tab=sponsors"
                     className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
-                    {t('integrations.overview.openItem')}
+                    {t('sponsors.openSponsors')}
                     <ChevronRight size={15} />
                   </Link>
                 </div>
               </Card>
 
-              <div className="grid gap-4 lg:grid-cols-2">
-                {workspace.sponsor_intelligence.slice(0, 6).map(objective => (
-                  <Card key={objective.objective_id} className="p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-xs text-slate-500">{objective.sponsor_name}</div>
-                        <div className="mt-1 text-sm font-medium text-slate-900">{objective.objective_title}</div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <StatCard label={t('sponsors.activeObjectives')} value={workspace.sponsor_intelligence.length} />
+                <StatCard
+                  label={t('sponsors.atRisk')}
+                  value={workspace.sponsor_intelligence.filter(row => ['high', 'failed'].includes(row.risk_band)).length}
+                />
+                <StatCard
+                  label={t('sponsors.totalRewards')}
+                  value={formatCurrency(workspace.sponsor_intelligence.reduce((sum, row) => sum + Number(row.reward_amount || 0), 0))}
+                />
+                <StatCard
+                  label={t('sponsors.raceLinked')}
+                  value={workspace.sponsor_intelligence.filter(row => Boolean(row.target_race_id)).length}
+                />
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                {workspace.sponsor_intelligence.map(objective => {
+                  const logoUrl = objective.club_sponsor_id
+                    ? sponsorLogoById[objective.club_sponsor_id] ?? null
+                    : null
+                  const raceFlag = getFlagImageUrl(objective.target_race_country)
+                  const raceDate = objective.target_race_start_date ?? objective.target_check_game_date
+                  const targetSummary = objective.target_text || objective.progress_text
+
+                  return (
+                    <Card key={objective.objective_id} className="overflow-hidden">
+                      <div className="p-5">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                              {logoUrl ? (
+                                <img src={logoUrl} alt={objective.sponsor_name} className="h-full w-full object-contain p-1.5" />
+                              ) : (
+                                <span className="text-sm font-semibold text-slate-500">{getInitials(objective.sponsor_name)}</span>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-semibold text-slate-950">{objective.sponsor_name}</span>
+                                {objective.sponsor_kind ? (
+                                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                                    {humanize(objective.sponsor_kind)}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div className="mt-1 text-base font-semibold text-slate-900">{objective.objective_title}</div>
+                              {targetSummary ? (
+                                <div className="mt-1 text-sm leading-5 text-slate-600">{targetSummary}</div>
+                              ) : null}
+                            </div>
+                          </div>
+                          <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusClasses(objective.risk_band)}`}>
+                            {objective.display_status_label || humanize(objective.risk_band)}
+                          </span>
+                        </div>
+
+                        {objective.target_race_name ? (
+                          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              {raceFlag ? (
+                                <img src={raceFlag} alt="" className="h-4 w-6 rounded-sm border border-slate-200 object-cover" />
+                              ) : null}
+                              <span className="text-sm font-medium text-slate-900">{objective.target_race_name}</span>
+                              {objective.target_race_category ? (
+                                <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">
+                                  {objective.target_race_category}
+                                </span>
+                              ) : null}
+                              {objective.target_race_type ? (
+                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                                  {humanize(objective.target_race_type)}
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {raceDate ? formatGameDate(raceDate) : '—'}
+                              {objective.target_race_end_date && objective.target_race_end_date !== objective.target_race_start_date
+                                ? ` → ${formatGameDate(objective.target_race_end_date)}`
+                                : ''}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="mt-4 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
+                          <div>
+                            <div className="text-slate-400">{t('sponsors.goal')}</div>
+                            <div className="mt-1 font-medium text-slate-700">
+                              {objective.required_result ? humanize(objective.required_result) : objective.target_text || '—'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-slate-400">{t('sponsors.reward')}</div>
+                            <div className="mt-1 font-medium text-slate-700">{formatCurrency(objective.reward_amount)}</div>
+                          </div>
+                          <div>
+                            <div className="text-slate-400">{t('sponsors.deadline')}</div>
+                            <div className="mt-1 font-medium text-slate-700">
+                              {objective.target_check_game_date
+                                ? formatGameDate(objective.target_check_game_date)
+                                : objective.user_visible_deadline_label || '—'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-slate-400">{t('sponsors.remaining')}</div>
+                            <div className="mt-1 font-medium text-slate-700">{formatNumber(objective.remaining_value)}</div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+                          <span>{objective.current_value}/{objective.target_value}</span>
+                          <span>{objective.progress_pct}%</span>
+                        </div>
+                        <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+                          <div className="h-full rounded-full bg-yellow-400" style={{ width: `${clamp(objective.progress_pct, 0, 100)}%` }} />
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap justify-end gap-3">
+                          {objective.target_race_id ? (
+                            <Link
+                              to={`/dashboard/race-preparation?raceId=${objective.target_race_id}`}
+                              className="text-xs font-medium text-slate-700 hover:text-yellow-700"
+                            >
+                              {t('sponsors.openRace')}
+                            </Link>
+                          ) : null}
+                          <Link
+                            to="/dashboard/finance?tab=sponsors"
+                            className="text-xs font-medium text-yellow-700 hover:text-yellow-800"
+                          >
+                            {t('sponsors.openSponsorDetail')}
+                          </Link>
+                        </div>
                       </div>
-                      <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusClasses(objective.risk_band)}`}>
-                        {humanize(objective.risk_band)}
-                      </span>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-                      <span>{objective.current_value}/{objective.target_value}</span>
-                      <span>{objective.progress_pct}%</span>
-                    </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-yellow-400" style={{ width: `${clamp(objective.progress_pct, 0, 100)}%` }} />
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  )
+                })}
+
                 {workspace.sponsor_intelligence.length === 0 ? (
                   <Card className="p-5 text-sm text-slate-500">{t('sponsors.none')}</Card>
                 ) : null}
