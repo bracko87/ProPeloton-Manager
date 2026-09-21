@@ -3375,7 +3375,7 @@ export default function TrainingPage(): JSX.Element {
 
                 <button
                   type="button"
-                  onClick={() => setIsTeamDefaultsExpanded(current => !current)
+                  onClick={() => setIsTeamDefaultsExpanded(current => !current)}
                   className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                   aria-expanded={isTeamDefaultsExpanded}
                   aria-controls="team-defaults-content"
