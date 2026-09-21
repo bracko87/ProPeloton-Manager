@@ -127,12 +127,21 @@ export default function PremiumSeasonPlannerPanel({
       if (raceIds.length > 0) {
         const raceMetaResult = await supabase
           .from('races')
-          .select('id,country_code,start_city,finish_city')
+          .select('id,country_code,host_city,category,race_type,is_stage_race,stage_count')
           .in('id', raceIds)
 
         if (active && !raceMetaResult.error) {
           const raceMeta = new Map(
-            (raceMetaResult.data ?? []).map(row => [String(row.id), row as Record<string, unknown>]),
+            (raceMetaResult.data ?? []).map(row => [
+              String(row.id),
+              {
+                country_code: row.country_code,
+                start_city: row.host_city,
+                category: row.category,
+                race_type: row.race_type,
+                total_stages: row.stage_count,
+              },
+            ]),
           )
           nextRows = nextRows.map(row => ({
             ...row,
