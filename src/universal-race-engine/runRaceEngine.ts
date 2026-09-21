@@ -16765,9 +16765,14 @@ export function resolveRoadPhase4Finish(
       ),
       6,
     )
+    // Keep the emergency-rail diagnostic tied to the original numerical
+    // pathology guard (120 s/km), not to the normal V5.4 realism limiter.
+    // The realism limiter is expected to bind for sustained chase sections and
+    // must not be treated as replay corruption.
     const emergencyRailApplied =
       escapeStillActive &&
-      calculatedNextGapSeconds < boundedNextGapSeconds - 0.000001
+      calculatedNextGapSeconds <
+        currentGapSeconds - emergencyRailClosureLimitSeconds - 0.000001
     let resolvedNextGapSeconds = boundedNextGapSeconds
 
     const bridgeStartGapToLeaderSeconds: number | null =
