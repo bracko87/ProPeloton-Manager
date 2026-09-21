@@ -3361,6 +3361,69 @@
           "to": "/dashboard/calendar"
         }
       ]
+    },
+    "race-preparation-bonuses-deep": {
+      "category": "Priprema trke",
+      "title": "Bonusi pripreme: šta stvarno ulazi u obračun trke",
+      "subtitle": "Odakle dolaze poeni, na šta utiču i kako da se čita zajednički efekat.",
+      "overview": "Priprema trke ne daje jedan ukupni procenat. Različiti izbori utiču na različite kanale: performanse, energiju, fatigue, recovery, zdravlje, mehaničku pouzdanost, taktiku i trošenje.",
+      "facts": [
+        {
+          "label": "Pet grupa",
+          "value": "Race Support, Fatigue Control, Recovery Support, Health Protection, Mechanical Reliability"
+        },
+        {
+          "label": "Maksimum po grupi",
+          "value": "30 poena"
+        },
+        {
+          "label": "Odvojeni kanali",
+          "value": "Equipment performance i race supplies se računaju posebno"
+        },
+        {
+          "label": "Pasivni staff efekti u trci",
+          "value": "Team Doctor i Mechanic"
+        },
+        {
+          "label": "Bez ravnog pasivnog bonusa",
+          "value": "Sport Director, Head Coach i Scout Analyst"
+        }
+      ],
+      "details": [
+        "Tačni efekti izabranih izvora mapiraju se u pet grupa. Primer: +2% medical response daje 2 Health Protection poena; +1% post-stage recovery daje 1 Recovery Support poen.",
+        "Race Support dolazi uglavnom iz feeding-a, team carova, logistike, komunikacije i incident supporta. Može da poboljša energetsku efikasnost, taktičke mogućnosti i deo health/mechanical zaštite.",
+        "Fatigue Control smanjuje opterećenje trke i putovanja. Zajedno sa Recovery Supportom smanjuje post-stage fatigue i poboljšava oporavak.",
+        "Health Protection smanjuje zdravstveni rizik. Mechanical Reliability smanjuje rizik mehaničkog problema i izgubljeno vreme.",
+        "Izabrani asseti rade automatski: team carovi daju race support/feeding/communication/mechanical response; bus fatigue/recovery; medical van health/recovery; equipment van i workshop mechanical/equipment zaštitu.",
+        "Team policies takođe mogu da doprinose: putovanje moralu, smeštaj recovery-ju, a logistika Race Supportu. Osnovne opcije mogu da daju 0 dodatnih poena.",
+        "Izabrani Team Doctor automatski daje postojeće medicinske bonuse: manji rizik povrede/bolesti, kraći recovery, daily recovery bonus i niži fatigue floor.",
+        "Izabrani Mechanic automatski daje postojeće tehničke bonuse: setup quality, manji mechanical risk i manji gubitak equipment conditiona. Maintenance speed/cost važe i van trke.",
+        "Sport Director pomaže taktikom, savetima i automatizacijom, ali nema poseban ravni pasivni race-performance bonus. Head Coach je pre svega training/development, Scout Analyst scouting.",
+        "Equipment je poseban rider-level kanal. Finalni stage procenat zavisi od setupa, profila i conditiona. Primer: +5% equipment na stage-skill 76 daje oko +3,8 suitability poena.",
+        "Race supplies su takođe odvojeni. Bidons, gels, nutrition packs i weather supplies mogu da smanje energy use/fatigue, dodaju recovery ili zaštitu ako su izabrani i dostupni.",
+        "Ne sabiraj procente različitih sistema u jedan broj. 10% manje energije, 6% manje fatigue-a i 15% manje mechanical time loss nisu +31% speed.",
+        "Primer: Race Support 9, Fatigue 2, Recovery 2, Health 4 i Mechanical 7 daju oko 1,95% manji in-stage energy cost, 3% manji post-stage fatigue, +0,6 recovery, 6,6% manji health risk, 19,3% manji mechanical risk i 15,35% manji mechanical time loss pre equipmenta, suppliesa i vremena.",
+        "Dobra priprema poboljšava efikasnost i pouzdanost, ali ne garantuje pobedu; skills, profil, fatigue, sharpness, taktika i dinamika trke i dalje odlučuju."
+      ],
+      "tips": [
+        "Čitaj svaki bonus po njegovom kanalu umesto kao jedan ukupni procenat.",
+        "Prilagodi equipment terenu, nosi dovoljno suppliesa i biraj staff/assets prema rizicima.",
+        "Na etapnim trkama recovery i fatigue control mogu da vrede koliko i direktne performanse."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Priprema trke",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Equipment",
+          "to": "/dashboard/equipment"
+        },
+        {
+          "label": "Staff",
+          "to": "/dashboard/staff"
+        }
+      ]
     }
   }
 }
