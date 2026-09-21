@@ -851,59 +851,6 @@ export default function PremiumCommandCenter(): JSX.Element {
     }))
   }, [selectedStage])
 
-  const commandItems = useMemo(() => {
-    if (!workspace) return [] as Array<{ title: string; body: string; href: string; tone: string }>
-
-    const items: Array<{ title: string; body: string; href: string; tone: string }> = []
-
-    workspace.season_planner
-      .filter(row => row.planning_state !== 'on_track')
-      .slice(0, 3)
-      .forEach(row => {
-        items.push({
-          title: row.race_name,
-          body:
-            row.planning_state === 'deadline_close'
-              ? t('summary.deadlineClose', { saved: row.saved_stage_plans, total: row.total_stages })
-              : t('summary.plansSaved', { saved: row.saved_stage_plans, total: row.total_stages }),
-          href: `/dashboard/race-preparation?raceId=${row.race_id}`,
-          tone: row.planning_state === 'deadline_close' ? 'red' : 'amber',
-        })
-      })
-
-    workspace.sponsor_intelligence
-      .filter(objective => ['high', 'failed'].includes(objective.risk_band))
-      .slice(0, 2)
-      .forEach(objective => {
-        items.push({
-          title: objective.objective_title,
-          body: t('summary.sponsorProgress', { percent: objective.progress_pct, remaining: objective.remaining_value }),
-          href: '/dashboard/finance',
-          tone: objective.risk_band === 'failed' ? 'red' : 'amber',
-        })
-      })
-
-    if (workspace.summary.unread_transfer_alerts > 0) {
-      items.push({
-        title: t('summary.marketAlertsTitle'),
-        body: t('summary.marketAlertsBody', { count: workspace.summary.unread_transfer_alerts }),
-        href: '/dashboard/transfers',
-        tone: 'blue',
-      })
-    }
-
-    if (workspace.finance.weekly_net < 0) {
-      items.push({
-        title: t('summary.negativeCashFlow'),
-        body: t('summary.currentWeeklyNet', { value: formatCurrency(workspace.finance.weekly_net) }),
-        href: '/dashboard/finance',
-        tone: 'red',
-      })
-    }
-
-    return items.slice(0, 7)
-  }, [t, workspace])
-
   const financeProjection = useMemo(() => {
     if (!workspace) return null
 
@@ -1243,137 +1190,158 @@ export default function PremiumCommandCenter(): JSX.Element {
 
           {workspace && tab === 'summary' ? (
             <div className="space-y-5">
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                <StatCard
-                  label={t('summary.cashBalance')}
-                  value={formatCurrency(workspace.finance.balance)}
-                />
-                <StatCard
-                  label={t('summary.weeklyNet')}
-                  value={formatCurrency(workspace.finance.weekly_net)}
-                />
-                <StatCard
-                  label={t('summary.upcomingRaces')}
-                  value={workspace.summary.upcoming_races_60d}
-                  hint={t('summary.next60Days')}
-                />
-                <StatCard
-                  label={t('summary.transferAlerts')}
-                  value={workspace.summary.unread_transfer_alerts}
-                  hint={t('summary.unreadMarketAlerts')}
-                />
-                <StatCard
-                  label={t('summary.sponsorObjectives')}
-                  value={workspace.summary.active_sponsor_objectives}
-                  hint={t('summary.currentlyActive')}
-                />
-              </div>
-
               <Card className="p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-950">
-                      {t('summary.title')}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {t('summary.subtitle')}
-                    </p>
+                    <h2 className="text-lg font-semibold text-slate-950">{t('summary.title')}</h2>
+                    <p className="mt-1 text-sm text-slate-500">{t('commandOverview.description')}</p>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
                     {formatGameDateTime(workspace.game_now)}
                   </span>
                 </div>
-
-                <div className="mt-5 grid gap-3 lg:grid-cols-2">
-                  {commandItems.length === 0 ? (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 lg:col-span-2">
-                      {t('summary.noPriority')}
-                    </div>
-                  ) : (
-                    commandItems.map((item, index) => (
-                      <Link
-                        key={`${item.title}-${index}`}
-                        to={item.href}
-                        className={`group rounded-xl border p-4 transition hover:-translate-y-0.5 hover:shadow-sm ${
-                          item.tone === 'red'
-                            ? 'border-red-200 bg-red-50'
-                            : item.tone === 'amber'
-                              ? 'border-amber-200 bg-amber-50'
-                              : 'border-blue-200 bg-blue-50'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="font-semibold text-slate-950">{item.title}</div>
-                            <div className="mt-1 text-sm leading-6 text-slate-600">
-                              {item.body}
-                            </div>
-                          </div>
-                          <ChevronRight
-                            size={17}
-                            className="mt-1 shrink-0 text-slate-400 transition group-hover:translate-x-0.5"
-                          />
-                        </div>
-                      </Link>
-                    ))
-                  )}
-                </div>
               </Card>
 
-              <div className="grid gap-4 xl:grid-cols-3">
-                <Card className="p-5">
-                  <div className="text-sm font-semibold text-slate-950">{t('summary.seasonPreparation')}</div>
-                  <div className="mt-3 text-3xl font-semibold text-slate-950">
-                    {workspace.season_planner.filter(row => row.planning_state !== 'on_track').length}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {t('summary.seasonPreparationHint')}
-                  </div>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {[
+                  {
+                    key: 'strategy' as TabKey,
+                    title: t('tabs.strategy'),
+                    metric: t('commandOverview.racesValue', { count: workspace.summary.upcoming_races_60d }),
+                    body: workspace.season_planner.some(row => row.planning_state === 'deadline_close')
+                      ? t('commandOverview.strategyDeadline')
+                      : workspace.season_planner.some(row => row.planning_state !== 'on_track')
+                        ? t('commandOverview.strategyPlanning')
+                        : t('commandOverview.strategyClear'),
+                    tone: workspace.season_planner.some(row => row.planning_state === 'deadline_close') ? 'red' : 'blue',
+                  },
+                  {
+                    key: 'season' as TabKey,
+                    title: t('tabs.season'),
+                    metric: t('commandOverview.freeDaysValue', { count: seasonPlanningInsights.freeDays }),
+                    body: seasonPlanningInsights.overlapCount > 0
+                      ? t('commandOverview.seasonOverlap', { count: seasonPlanningInsights.overlapCount })
+                      : t('commandOverview.seasonGap', { count: seasonPlanningInsights.largestGap }),
+                    tone: seasonPlanningInsights.overlapCount > 0 ? 'red' : 'blue',
+                  },
+                  {
+                    key: 'transfers' as TabKey,
+                    title: t('tabs.transfers'),
+                    metric: t('commandOverview.pipelineValue', {
+                      count:
+                        workspace.transfer_command.pipeline.open_transfer_offers +
+                        workspace.transfer_command.pipeline.open_transfer_negotiations +
+                        workspace.transfer_command.pipeline.open_free_agent_negotiations,
+                    }),
+                    body: workspace.summary.unread_transfer_alerts > 0
+                      ? t('commandOverview.transferAlerts', { count: workspace.summary.unread_transfer_alerts })
+                      : t('commandOverview.transferQuiet'),
+                    tone: workspace.summary.unread_transfer_alerts > 0 ? 'amber' : 'blue',
+                  },
+                  {
+                    key: 'finance' as TabKey,
+                    title: t('tabs.finance'),
+                    metric: formatCurrency(workspace.finance.weekly_net),
+                    body: workspace.finance.weekly_net < 0
+                      ? t('commandOverview.financeNegative')
+                      : t('commandOverview.financePositive', { balance: formatCurrency(workspace.finance.balance) }),
+                    tone: workspace.finance.weekly_net < 0 ? 'red' : 'blue',
+                  },
+                  {
+                    key: 'sponsors' as TabKey,
+                    title: t('tabs.sponsors'),
+                    metric: t('commandOverview.objectivesValue', { count: workspace.summary.active_sponsor_objectives }),
+                    body: workspace.sponsor_intelligence.some(row => ['high', 'failed'].includes(row.risk_band))
+                      ? t('commandOverview.sponsorRisk', {
+                          count: workspace.sponsor_intelligence.filter(row => ['high', 'failed'].includes(row.risk_band)).length,
+                        })
+                      : t('commandOverview.sponsorClear'),
+                    tone: workspace.sponsor_intelligence.some(row => ['high', 'failed'].includes(row.risk_band)) ? 'amber' : 'blue',
+                  },
+                  {
+                    key: 'development' as TabKey,
+                    title: t('tabs.development'),
+                    metric: t('commandOverview.improvingValue', {
+                      count: workspace.rider_development.filter(row => row.development_8w > 0).length,
+                    }),
+                    body: t('commandOverview.developmentCoverage', {
+                      count: workspace.rider_development.filter(row => row.weeks_recorded > 0).length,
+                      total: workspace.rider_development.length,
+                    }),
+                    tone: 'blue',
+                  },
+                  {
+                    key: 'templates' as TabKey,
+                    title: t('tabs.templates'),
+                    metric: t('commandOverview.workflowsValue', { count: templates.length }),
+                    body: t('commandOverview.automationStatus', {
+                      count: automationRules.filter(rule => rule.is_enabled).length,
+                    }),
+                    tone: 'blue',
+                  },
+                ].map(item => (
                   <button
+                    key={item.key}
                     type="button"
-                    onClick={() => changeTab('season')}
-                    className="mt-4 text-sm font-semibold text-yellow-700 hover:text-yellow-800"
+                    onClick={() => changeTab(item.key)}
+                    className={`group rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                      item.tone === 'red'
+                        ? 'border-red-200'
+                        : item.tone === 'amber'
+                          ? 'border-amber-200'
+                          : 'border-slate-200'
+                    }`}
                   >
-                    {t('summary.openSeasonPlanner')}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-slate-950">{item.title}</div>
+                        <div className="mt-3 text-2xl font-semibold text-slate-950">{item.metric}</div>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+                      </div>
+                      <ChevronRight size={17} className="mt-0.5 shrink-0 text-slate-400 transition group-hover:translate-x-0.5" />
+                    </div>
+                    <div className="mt-4 text-xs font-medium text-yellow-700">
+                      {t('commandOverview.openDetail')}
+                    </div>
                   </button>
-                </Card>
-
-                <Card className="p-5">
-                  <div className="text-sm font-semibold text-slate-950">{t('summary.transferPipeline')}</div>
-                  <div className="mt-3 text-3xl font-semibold text-slate-950">
-                    {workspace.transfer_command.pipeline.open_transfer_offers +
-                      workspace.transfer_command.pipeline.open_transfer_negotiations +
-                      workspace.transfer_command.pipeline.open_free_agent_negotiations}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {t('summary.transferPipelineHint')}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => changeTab('transfers')}
-                    className="mt-4 text-sm font-semibold text-yellow-700 hover:text-yellow-800"
-                  >
-                    {t('summary.openTransferCommand')}
-                  </button>
-                </Card>
-
-                <Card className="p-5">
-                  <div className="text-sm font-semibold text-slate-950">{t('summary.savedWorkflows')}</div>
-                  <div className="mt-3 text-3xl font-semibold text-slate-950">
-                    {templates.length}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {t('summary.savedWorkflowsHint', { templates: templates.length, rules: automationRules.filter(rule => rule.is_enabled).length })}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => changeTab('templates')}
-                    className="mt-4 text-sm font-semibold text-yellow-700 hover:text-yellow-800"
-                  >
-                    {t('summary.manageTemplates')}
-                  </button>
-                </Card>
+                ))}
               </div>
+
+              <Card className="p-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-950">{t('commandOverview.nextActions')}</div>
+                    <div className="mt-1 text-sm text-slate-500">{t('commandOverview.nextActionsHint')}</div>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                  {workspace.season_planner.slice(0, 2).map(row => (
+                    <Link
+                      key={row.race_preparation_id}
+                      to={`/dashboard/race-preparation?raceId=${row.race_id}`}
+                      className="rounded-xl border border-slate-200 bg-slate-50 p-4 hover:bg-white"
+                    >
+                      <div className="text-sm font-medium text-slate-900">{row.race_name}</div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {formatGameDate(row.start_date)} · {humanize(row.planning_state)}
+                      </div>
+                    </Link>
+                  ))}
+                  {workspace.sponsor_intelligence.slice(0, 1).map(objective => (
+                    <button
+                      key={objective.objective_id}
+                      type="button"
+                      onClick={() => changeTab('sponsors')}
+                      className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-left hover:bg-white"
+                    >
+                      <div className="text-sm font-medium text-slate-900">{objective.objective_title}</div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {objective.sponsor_name} · {objective.progress_pct}%
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </Card>
             </div>
           ) : null}
 
