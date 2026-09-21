@@ -1990,7 +1990,7 @@ const manualSections: ManualSection[] = [
     "details": [
       "The Race Plan should be created soon after acceptance because overlapping events can block riders or assets later.",
       "Riders already committed to overlapping races/camps can be blocked from selection.",
-      "Staff assignments can be blocked by conflicts. Passive race bonuses only apply where a real staff-effect formula exists: Team Doctor medical effects and Mechanic technical effects are connected automatically; Sport Director, Head Coach and Scout Analyst do not receive an invented flat passive race-performance bonus."
+      "Staff assignments can be blocked by conflicts. Passive race bonuses only apply where a real staff-effect formula exists: Team Doctor medical effects and Mechanic technical effects are connected automatically; Sport Director, Head Coach and Scout Analyst do not receive an invented flat passive race-performance bonus.",
       "Assets create travel/logistics support and may affect costs or readiness.",
       "Equipment setup determines which durable gear the team plans to use.",
       "Race supplies must be sufficient for the whole event, especially multi-stage races.",
