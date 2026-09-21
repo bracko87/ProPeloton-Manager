@@ -1655,10 +1655,16 @@ export default function PremiumCommandCenter(): JSX.Element {
               </Card>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <StatCard label={t('summary.upcomingRaces')} value={workspace.summary.upcoming_races_60d} hint={t('summary.next60Days')} />
+                <StatCard
+                  label={t('summary.upcomingRaces')}
+                  value={workspace.summary.upcoming_races_60d}
+                  hint={t('summary.next60Days')}
+                />
                 <StatCard
                   label={t('strategy.readyPlans')}
-                  value={workspace.season_planner.filter(row => row.saved_stage_plans >= row.total_stages && row.total_stages > 0).length}
+                  value={workspace.season_planner.filter(
+                    row => row.saved_stage_plans >= row.total_stages && row.total_stages > 0,
+                  ).length}
                   hint={t('strategy.readyPlansHint')}
                 />
                 <StatCard
@@ -1673,9 +1679,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                   <div className="text-sm font-semibold text-slate-900">{t('summary.upcomingRaces')}</div>
                   <div className="mt-1 text-xs text-slate-500">{t('strategy.raceListHint')}</div>
                 </div>
+
                 <div className="divide-y divide-slate-100">
                   {workspace.season_planner.slice(0, 8).map(row => {
                     const flagUrl = getFlagImageUrl(row.country_code)
+                    const dateParts = formatGameDateParts(row.start_date)
+                    const endDateParts =
+                      row.end_date !== row.start_date
+                        ? formatGameDateParts(row.end_date)
+                        : null
                     const route = [row.start_city, row.finish_city].filter(Boolean).join(' → ')
                     const isStageRace = row.total_stages > 1
 
@@ -1683,60 +1695,114 @@ export default function PremiumCommandCenter(): JSX.Element {
                       <Link
                         key={row.race_preparation_id}
                         to={`/dashboard/race-preparation?raceId=${row.race_id}`}
-                        className="grid gap-4 px-5 py-4 transition hover:bg-slate-50 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center"
+                        className="grid gap-4 px-5 py-5 transition hover:bg-slate-50 lg:grid-cols-[150px_minmax(0,1fr)_430px_20px] lg:items-center"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="min-w-[92px] text-sm font-semibold leading-5 text-slate-900">
-                            {formatGameDate(row.start_date)}
-                            {row.end_date !== row.start_date ? (
-                              <div className="mt-0.5 text-xs font-normal text-slate-500">
-                                {t('strategy.until')} {formatGameDate(row.end_date)}
-                              </div>
-                            ) : null}
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                          <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-400">
+                            {dateParts.seasonLabel}
                           </div>
-                          <div className="hidden h-12 w-px bg-emerald-400 md:block" />
+                          <div className="mt-1 text-base font-semibold text-slate-900">
+                            {dateParts.dateLabel}
+                          </div>
+                          {endDateParts ? (
+                            <div className="mt-1 text-xs text-slate-500">
+                              {t('strategy.until')} {endDateParts.dateLabel}
+                            </div>
+                          ) : null}
                         </div>
 
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {flagUrl ? (
-                              <img src={flagUrl} alt="" className="h-4 w-6 rounded-sm border border-slate-200 object-cover" />
-                            ) : (
-                              <span className="h-4 w-6 rounded-sm border border-slate-200 bg-slate-100" />
-                            )}
-                            <span className="truncate text-base font-semibold text-slate-900">{row.race_name}</span>
-                            {row.category ? (
-                              <span className="rounded-full bg-purple-100 px-2.5 py-1 text-[11px] font-semibold text-purple-700">
-                                {row.category}
-                              </span>
-                            ) : null}
-                            <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                              isStageRace ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
-                            }`}>
-                              {isStageRace
-                                ? t('strategy.stageRace', { count: row.total_stages })
-                                : t('strategy.oneDayRace')}
-                            </span>
-                          </div>
-                          <div className="mt-1 text-xs text-slate-500">
-                            {route || humanize(row.race_type)}
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+                              {flagUrl ? (
+                                <img
+                                  src={flagUrl}
+                                  alt={row.country_code ?? ''}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <span aria-hidden="true" className="text-lg">🏁</span>
+                              )}
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="truncate text-base font-semibold text-slate-900">
+                                  {row.race_name}
+                                </span>
+                                {row.category ? (
+                                  <span className="rounded-full bg-purple-100 px-2.5 py-1 text-[11px] font-semibold text-purple-700">
+                                    {row.category}
+                                  </span>
+                                ) : null}
+                                <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                                  isStageRace
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-emerald-100 text-emerald-700'
+                                }`}>
+                                  {isStageRace
+                                    ? t('strategy.stageRace', { count: row.total_stages })
+                                    : t('strategy.oneDayRace')}
+                                </span>
+                              </div>
+
+                              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                                <span>{route || humanize(row.race_type)}</span>
+                                {row.preparation_status ? (
+                                  <>
+                                    <span className="text-slate-300">•</span>
+                                    <span>{humanize(row.preparation_status)}</span>
+                                  </>
+                                ) : null}
+                              </div>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-start gap-2 md:justify-end">
-                          <span className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusClasses(row.planning_state)}`}>
-                            {humanize(row.planning_state)}
-                          </span>
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">
-                            {t('strategy.plansProgress', { saved: row.saved_stage_plans, total: row.total_stages })}
-                          </span>
-                          {row.startlist_status ? (
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                        <div className="grid gap-2 sm:grid-cols-3">
+                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                            <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                              {t('common.current')}
+                            </div>
+                            <div className={`mt-1 inline-flex rounded-full border px-2 py-1 text-[11px] font-medium ${statusClasses(row.planning_state)}`}>
+                              {humanize(row.planning_state)}
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                            <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                              {t('season.stagePlans')}
+                            </div>
+                            <div className="mt-1 text-sm font-semibold text-slate-900">
+                              {row.saved_stage_plans}/{row.total_stages}
+                            </div>
+                            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-yellow-400"
+                                style={{
+                                  width: `${row.total_stages > 0
+                                    ? Math.min(100, (row.saved_stage_plans / row.total_stages) * 100)
+                                    : 0}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                            <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                              {t('season.startList')}
+                            </div>
+                            <div className={`mt-1 inline-flex rounded-full border px-2 py-1 text-[11px] font-medium ${
+                              row.startlist_status
+                                ? statusClasses(row.startlist_status)
+                                : 'border-slate-200 bg-slate-50 text-slate-600'
+                            }`}>
                               {humanize(row.startlist_status)}
-                            </span>
-                          ) : null}
-                          <ChevronRight size={16} className="text-slate-400" />
+                            </div>
+                          </div>
                         </div>
+
+                        <ChevronRight size={18} className="hidden text-slate-400 lg:block" />
                       </Link>
                     )
                   })}
