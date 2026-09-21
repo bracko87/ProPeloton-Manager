@@ -15183,10 +15183,10 @@ function UniversalRaceReplayPage({
       .sort(
         (left, right) =>
           ((left.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
-            unit.rideWindowSeconds *
+            left.rideWindowSeconds *
               timeTrialReplayPresentation.splitElapsedFraction) -
             ((right.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
-              timeTrialReplayPresentation.rideWindowSeconds *
+              right.rideWindowSeconds *
                 timeTrialReplayPresentation.splitElapsedFraction) ||
           left.startOrder - right.startOrder
       )
@@ -15222,7 +15222,7 @@ function UniversalRaceReplayPage({
           raceSecond:
             (unit.startOrder - 1) *
               timeTrialReplayPresentation.visualStartIntervalSeconds +
-            timeTrialReplayPresentation.rideWindowSeconds *
+            unit.rideWindowSeconds *
               timeTrialReplayPresentation.splitElapsedFraction,
           title: isNewBest
             ? 'New leader at the time check'
@@ -15241,9 +15241,9 @@ function UniversalRaceReplayPage({
       .sort(
         (left, right) =>
           ((left.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
-            timeTrialReplayPresentation.rideWindowSeconds) -
+            left.rideWindowSeconds) -
             ((right.startOrder - 1) * timeTrialReplayPresentation.visualStartIntervalSeconds +
-              timeTrialReplayPresentation.rideWindowSeconds) ||
+              right.rideWindowSeconds) ||
           left.startOrder - right.startOrder
       )
       .forEach((unit) => {
