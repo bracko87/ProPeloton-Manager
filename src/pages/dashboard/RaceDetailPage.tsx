@@ -595,6 +595,7 @@ type FullRaceStandingsPayload = {
 type ReplayPreStageStanding = {
   generalRank: number | null
   generalGapSeconds: number | null
+  generalTotalTimeSeconds: number | null
   mountainPoints: number
   sprintPoints: number
 }
@@ -14101,7 +14102,7 @@ function UniversalRaceReplayPage({
       const { data: standings, error: standingsError } = await supabase
         .from('race_classification_standings')
         .select(
-          'after_stage_id, classification_type, entity_type, rider_id, team_id, rank, gap_seconds, points'
+          'after_stage_id, classification_type, entity_type, rider_id, team_id, rank, total_time_seconds, gap_seconds, points'
         )
         .eq('race_id', race.id)
         .in('entity_type', ['rider', 'team'])
@@ -14125,6 +14126,7 @@ function UniversalRaceReplayPage({
         rider_id?: string | null
         team_id?: string | null
         rank?: number | null
+        total_time_seconds?: number | null
         gap_seconds?: number | null
         points?: number | null
       }>
@@ -14158,6 +14160,7 @@ function UniversalRaceReplayPage({
           target[entityId] ?? {
             generalRank: null,
             generalGapSeconds: null,
+            generalTotalTimeSeconds: null,
             mountainPoints: 0,
             sprintPoints: 0,
           }
@@ -14171,6 +14174,10 @@ function UniversalRaceReplayPage({
             row.gap_seconds === null || row.gap_seconds === undefined
               ? null
               : Number(row.gap_seconds)
+          current.generalTotalTimeSeconds =
+            row.total_time_seconds === null || row.total_time_seconds === undefined
+              ? null
+              : Number(row.total_time_seconds)
         } else if (!isTeamRow && row.classification_type === 'mountain') {
           current.mountainPoints = Math.max(0, Number(row.points ?? 0))
         } else if (!isTeamRow && row.classification_type === 'points') {
@@ -15025,6 +15032,7 @@ function UniversalRaceReplayPage({
           secondaryLabel: string
           countryCode: string | null
           classificationRank: number | null
+          classificationTimeSeconds: number | null
           startOrder: number
           rideWindowSeconds: number
           state: 'waiting' | 'on_course' | 'finished'
@@ -15126,6 +15134,9 @@ function UniversalRaceReplayPage({
         classificationRank: isIndividualTimeTrialReplay
           ? preStageStandingByRiderId[unit.riderIds[0] ?? '']?.generalRank ?? null
           : preStageStandingByTeamId[unit.id]?.generalRank ?? null,
+        classificationTimeSeconds: isIndividualTimeTrialReplay
+          ? preStageStandingByRiderId[unit.riderIds[0] ?? '']?.generalTotalTimeSeconds ?? null
+          : preStageStandingByTeamId[unit.id]?.generalTotalTimeSeconds ?? null,
         startOrder: unit.startOrder,
         rideWindowSeconds: unit.rideWindowSeconds,
         state: unit.state,
@@ -16146,11 +16157,13 @@ function UniversalRaceReplayPage({
 
                   <div className="max-h-[430px] overflow-auto">
                     {isTimeTrialReplay && !resultsVisible ? (
-                      <div className="min-w-[670px]">
-                        <div className="grid grid-cols-[52px_68px_190px_150px_100px_82px] gap-1.5 border-b border-slate-200 bg-slate-100 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.10em] text-slate-500">
+                      <div className="min-w-[850px]">
+                        <div className="grid grid-cols-[52px_68px_190px_58px_100px_150px_100px_82px] gap-1.5 border-b border-slate-200 bg-slate-100 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.10em] text-slate-500">
                           <div className="text-center">Start</div>
                           <div className="text-center">Status</div>
                           <div>Rider / team</div>
+                          <div className="text-center">GC Pos.</div>
+                          <div className="text-right">GC Time</div>
                           <div>Energy</div>
                           <div className="text-right">Time</div>
                           <div className="text-right">Gap</div>
@@ -16195,7 +16208,7 @@ function UniversalRaceReplayPage({
                           return (
                             <div
                               key={unit.id}
-                              className="grid grid-cols-[52px_68px_190px_150px_100px_82px] items-center gap-1.5 border-b border-slate-100 bg-white px-2.5 py-2.5 text-xs"
+                              className="grid grid-cols-[52px_68px_190px_58px_100px_150px_100px_82px] items-center gap-1.5 border-b border-slate-100 bg-white px-2.5 py-2.5 text-xs"
                             >
                               <div className="text-center">
                                 <div className="font-semibold text-slate-700">#{unit.startOrder}</div>
@@ -16224,6 +16237,18 @@ function UniversalRaceReplayPage({
                                 <div className="mt-0.5 truncate text-[11px] text-slate-500">
                                   {unit.secondaryLabel}
                                 </div>
+                              </div>
+
+                              <div className="text-center font-semibold text-slate-700">
+                                {unit.classificationRank === null
+                                  ? '—'
+                                  : `#${unit.classificationRank}`}
+                              </div>
+
+                              <div className="text-right font-semibold text-slate-700">
+                                {unit.classificationTimeSeconds === null
+                                  ? '—'
+                                  : formatRaceClock(unit.classificationTimeSeconds)}
                               </div>
 
                               <div className="space-y-1">
