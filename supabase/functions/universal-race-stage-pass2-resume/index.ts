@@ -17,7 +17,7 @@ declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 type JsonObject = Record<string, unknown>;
 const SOURCE_COMMIT = "3f55341e10ef385a8602ffae7a3d88b784708eea";
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
-const CONTRACT = "universal_race_pass2_resume_v11";
+const CONTRACT = "universal_race_pass2_resume_v12";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -52,6 +52,26 @@ async function rpc<T>(supabase: SupabaseClient, name: string, args: JsonObject =
   const { data, error } = await supabase.rpc(name, args);
   if (error) throw new Error(`${name}: ${error.message}`);
   return data as T;
+}
+function isTransientSubmitError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /\b(500|502|503|504|520|522|524)\b|failed to fetch|connection|timeout|temporar/i.test(message);
+}
+async function submitWithRetry<T>(
+  supabase: SupabaseClient,
+  args: JsonObject,
+): Promise<T> {
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      return await rpc<T>(supabase, "universal_race_stage_submit_calculation_v1", args);
+    } catch (error) {
+      lastError = error;
+      if (!isTransientSubmitError(error) || attempt >= 3) throw error;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1200));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 async function authorized(supabase: SupabaseClient, request: Request): Promise<boolean> {
   const supplied = request.headers.get("x-universal-race-worker-secret")?.trim() ?? "";
@@ -433,7 +453,7 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
       fallback_reason: fallbackReason,
       output_bytes_estimate: JSON.stringify(output).length,
     });
-    const submit = await rpc(supabase, "universal_race_stage_submit_calculation_v1", {
+    const submit = await submitWithRetry(supabase, {
       p_stage_id: stageId,
       p_simulation_run_id: runId,
       p_input_snapshot: input,
@@ -459,6 +479,27 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
   } catch (error) {
     const serialized = errorPayload(error);
     await heartbeat(supabase, stageId, runId, "pass2_resume_failed", { error: serialized, source_commit: SOURCE_COMMIT });
+    try {
+      await rpc(supabase, "universal_race_stage_fail_calculation_v1", {
+        p_stage_id: stageId,
+        p_simulation_run_id: runId,
+        p_error_message: text(serialized.message) || "Pass 2 calculation failed.",
+        p_error_details: {
+          reason: "pass2_engine_or_submit_exception",
+          source_commit: SOURCE_COMMIT,
+          error: serialized,
+          immediate_failure_release: true,
+        },
+      });
+    } catch (failureError) {
+      console.error(JSON.stringify({
+        status: "pass2_failure_release_failed",
+        contract: CONTRACT,
+        stage_id: stageId,
+        simulation_run_id: runId,
+        error: errorPayload(failureError),
+      }));
+    }
     return { status: "failed", contract: CONTRACT, stage_id: stageId, simulation_run_id: runId, error: serialized };
   }
 }
