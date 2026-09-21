@@ -8322,7 +8322,7 @@ export default function OverviewPage() {
                     {t('premiumCenter:integrations.overview.finance')}
                   </a>
                   <a
-                    href="#/dashboard/training#premium-development"
+                    href="#/dashboard/training?tab=development"
                     className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
                   >
                     {t('premiumCenter:tabs.development')}
