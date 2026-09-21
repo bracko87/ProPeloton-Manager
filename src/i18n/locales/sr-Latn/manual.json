@@ -1606,7 +1606,12 @@
         "Povređeni ili bolesni vozači zahtevaju medicinsku oporavak, a ne normalan izbor trke.",
         "Ne u potpunosti odgovara znači da se vozač može trkati, ali nije idealno spreman.",
         "Teška obuka i teška trka kalendari i povećavaju rizik preopterećenja.",
-        "Medicinsko osoblje i sistemi za oporavak mogu da poboljšaju rešavanje zdravstvenih problema."
+        "Medicinsko osoblje i sistemi za oporavak mogu da poboljšaju rešavanje zdravstvenih problema.",
+        "Pad u trci može da se završi bez trajne povrede, lakšom, umerenom ili teškom povredom.",
+        "Lakše povrede sa trke ostaju kratko kao stvaran zdravstveni slučaj. Vozač i dalje može da bude izabran, ali nije potpuno spreman i tokom oporavka može da izgubi trkačku oštrinu.",
+        "Umerene povrede takođe dozvoljavaju izbor vozača, ali su medicinski i oporavak efekti jači i mogu da utiču na naredne etape ili dane trke.",
+        "Teške povrede stvaraju stvarnu nedostupnost. Vozač može da odustane u trenutnoj etapi i da bude blokiran za naredne etape ili trke do oporavka.",
+        "Zdravstvene posledice trke se posle etape upisuju u stvarno stanje ekipe; nisu samo događaji u replay-u."
       ],
       "facts": [
         {
@@ -1814,7 +1819,8 @@
         "Pojedinačni planovi prevazilaze timski podrazumevani kada vozaču treba specijalni rad.",
         "Težak intenzitet povećava stres i rizik od umora.",
         "Intenzitet oporavka je korisna oko teških trka blokova.",
-        "Trening treba pratiti ulogu vozača i kalendarske mete."
+        "Trening treba pratiti ulogu vozača i kalendarske mete.",
+        "Važni su i zdravlje i opterećenje trkama: povređen ili nepotpuno spreman vozač može da izgubi trkačku oštrinu ili da zahteva lakši rad čak i kada bi standardni trening plan inače odgovarao."
       ],
       "facts": [
         {
@@ -1979,7 +1985,8 @@
         "Uslov je pao dovoljno da je stavka potrebna pažnja. Stavke mogu da smanji pouzdanost i ne treba da se ignorišu pre važan trka.",
         "Popravke citatata treba da prikazuju troškove pre potvrde. Menadžer treba da uporedi troškove popravke sa vrednosti stavke i troškovima za zam› jenu.",
         "Prodaja pretvara posedovanu stavku u gotovinu kada je dozvoljena. Stavka ostavlja aktivan inventar.",
-        "Odbacivanje uklanja stavku bez običnog prodaje. Ovo treba da se koristi samo za opremu koju klub više ne treba ili ne može da opravda održavanje."
+        "Odbacivanje uklanja stavku bez običnog prodaje. Ovo treba da se koristi samo za opremu koju klub više ne treba ili ne može da opravda održavanje.",
+        "Oprema koju tvoji vozači stvarno koriste u etapi gubi condition posle te etape. Trošenje zavisi od korišćenja i dužine trke, pa ponovljeni nastupi postepeno stvaraju potrebu za popravkom ili zamenom."
       ],
       "facts": [
         {
@@ -2169,7 +2176,8 @@
         "Mobilna radionica obezbeđuje tehničku podršku tokom trka/puteva.",
         "Medicinski kombi obezbeđuje ekstra medicinsku podršku.",
         "Dodeljena ili zaključana imovina ne treba da se popravlja ili prodaje dok se ne pušteni iz trke/posao koji ih koristi.",
-        "Uslov treba proveriti pre važnih trka jer tehnički dostupni sredstva još uvek mogu biti u lošem stanju."
+        "Uslov treba proveriti pre važnih trka jer tehnički dostupni sredstva još uvek mogu biti u lošem stanju.",
+        "Pomoćna sredstva i vozila koja su stvarno korišćena u trci mogu da izgube condition posle etape. Ponovljeno korišćenje zato povećava potrebu za popravkama i planiranjem zamene."
       ],
       "facts": [
         {
@@ -2338,7 +2346,9 @@
         "Komentar opisuje važne napade, skidanje, potera, pope, sprintove i završava događaje.",
         "Rezultat faze je samo jedan deo trke. GC, poena, planina, mladi i tim klasifikacija može da se promeni posle svake faze.",
         "Vozač može imati loš položaj, ali i dalje postići taktički cilj kao što su tačke, KOM ukazuje ili štiti vođu.",
-        "Koristi regroj/rezultate kao povratnu reakciju za buduću taktiku, umesto da menja već završenu fazu."
+        "Koristi regroj/rezultate kao povratnu reakciju za buduću taktiku, umesto da menja već završenu fazu.",
+        "Padovi, fatigue i zdravstvene posledice prikazane u zvaničnom replay-u deo su istog obračuna etape. Kada se etapa završi, trajne posledice prelaze u stvarno stanje ekipe.",
+        "Replay ne pravi drugi rezultat; on objašnjava trku koja je već izračunata."
       ],
       "facts": [
         {
@@ -3308,6 +3318,48 @@
       "relatedLinks": [
         "Tržište osoblja",
         "Infrastruktura"
+      ]
+    },
+    "race-engine-basics": {
+      "category": "Kalendar i trke",
+      "title": "Kako se određuje rezultat trke",
+      "subtitle": "Šta race engine uzima u obzir bez otkrivanja internih formula.",
+      "overview": "Ne postoji jedna brojka koja garantuje pobedu. Zvanični obračun kombinuje kvalitet vozača, uklapanje u stazu, trenutno stanje, pripremu, taktiku i dinamične događaje tokom etape.",
+      "facts": [
+        {
+          "label": "Faktori vozača",
+          "value": "Veštine, uloga, fatigue, trkačka oštrina, zdravlje, moral i preostala energija"
+        },
+        {
+          "label": "Faktori pripreme",
+          "value": "Taktika etape, oprema, zalihe, osoblje i pomoćna sredstva za trku"
+        },
+        {
+          "label": "Faktori trke",
+          "value": "Teren, vreme, grupe, napadi, potera, begovi, incidenti i tip cilja"
+        }
+      ],
+      "details": [
+        "Vozač sa najvećim overall-om ne pobeđuje automatski. Specijalističke veštine različito vrede na ravnim, brdovitim, planinskim, kaldrmisanim i hronometarskim etapama.",
+        "Fatigue, zdravlje, trkačka oštrina i energija mogu da naprave veliku razliku između dva vozača sličnog kvaliteta.",
+        "Stage Plan utiče na to kako vozači troše energiju i reaguju na trku. Uloge i taktike mogu da štite lidera, pripreme sprint, jure, napadaju ili ciljaju beg.",
+        "Oprema, zalihe, osoblje i izabrana pomoćna sredstva mogu da poboljšaju pripremu, pouzdanost, oporavak ili efikasnost kada su dostupni i korišćeni.",
+        "Trka ostaje dinamična. Beg može da uspe ili bude uhvaćen, resursi potere mogu da se potroše, grupe mogu da se raspadnu, a padovi ili mehanički problemi mogu da promene rezultat.",
+        "Replay i zvanični rezultat dolaze iz istog obračuna; replay objašnjava sačuvani rezultat umesto da pravi novi."
+      ],
+      "tips": [
+        "Biraj vozače prema stazi, ne samo prema overall-u.",
+        "Na važne trke dođi sa kontrolisanim fatigue-om i kompletiranim Stage Plan-ovima."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Priprema trke",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Kalendar",
+          "to": "/dashboard/calendar"
+        }
       ]
     }
   }
