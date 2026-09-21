@@ -1031,6 +1031,78 @@ export default function PremiumCommandCenter(): JSX.Element {
     }
   }, [workspace])
 
+  const commandSummaryStats = useMemo(() => {
+    if (!workspace) return null
+
+    const upcomingRaces = workspace.summary.upcoming_races_60d
+    const readyRaces = workspace.season_planner.filter(
+      row => row.total_stages > 0 && row.saved_stage_plans >= row.total_stages,
+    ).length
+    const attentionRaces = workspace.season_planner.filter(
+      row => row.planning_state !== 'on_track',
+    ).length
+
+    const transferPipeline = [
+      workspace.transfer_command.pipeline.open_transfer_offers,
+      workspace.transfer_command.pipeline.open_transfer_negotiations,
+      workspace.transfer_command.pipeline.open_free_agent_negotiations,
+    ]
+    const activeDeals = transferPipeline.reduce((sum, value) => sum + value, 0)
+
+    const financeTrend = [0, 1, 2, 3, 4].map(
+      week => workspace.finance.balance + workspace.finance.weekly_net * week,
+    )
+
+    const sponsorAverageProgress = workspace.sponsor_intelligence.length
+      ? Math.round(
+          workspace.sponsor_intelligence.reduce(
+            (sum, row) => sum + Number(row.progress_pct || 0),
+            0,
+          ) / workspace.sponsor_intelligence.length,
+        )
+      : 0
+    const sponsorAtRisk = workspace.sponsor_intelligence.filter(row =>
+      ['high', 'failed'].includes(row.risk_band),
+    ).length
+
+    const improvingRiders = workspace.rider_development.filter(
+      row => row.development_8w > 0,
+    ).length
+    const developmentCoverage = workspace.rider_development.length
+      ? Math.round(
+          (workspace.rider_development.filter(row => row.weeks_recorded > 0).length /
+            workspace.rider_development.length) *
+            100,
+        )
+      : 0
+    const fatigueWatch = workspace.rider_development.filter(
+      row => Number(row.fatigue ?? 0) >= 60,
+    ).length
+    const developmentBars = workspace.rider_development
+      .slice()
+      .sort((a, b) => Number(b.development_8w) - Number(a.development_8w))
+      .slice(0, 6)
+      .map(row => Number(row.development_8w || 0))
+
+    const enabledRules = automationRules.filter(rule => rule.is_enabled).length
+
+    return {
+      upcomingRaces,
+      readyRaces,
+      attentionRaces,
+      transferPipeline,
+      activeDeals,
+      financeTrend,
+      sponsorAverageProgress,
+      sponsorAtRisk,
+      improvingRiders,
+      developmentCoverage,
+      fatigueWatch,
+      developmentBars,
+      enabledRules,
+    }
+  }, [automationRules, workspace])
+
   const saveTemplate = useCallback(
     async (
       type: PremiumTemplate['template_type'],
