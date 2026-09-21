@@ -13,6 +13,7 @@
 // Phase 9 remains engine-owned: this page consumes the completed deterministic
 // result, exposes its verification report, and never recalculates modifiers.
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Link,
@@ -9243,6 +9244,7 @@ type StageProfileReplayEntityMarker = {
   topLabelColor?: string
   tooltipTitle?: string
   tooltipLines?: string[]
+  tooltipCountryCode?: string | null
 }
 
 type StageProfileAuxiliaryMarker = {
@@ -9714,14 +9716,21 @@ function StageProfileChart({
                     pointerEvents="none"
                   >
                     <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2 text-[10px] leading-4 text-slate-600 shadow-xl">
-                      <div className="truncate font-bold text-slate-950">
-                        {marker.tooltipTitle ?? marker.label}
-                      </div>
-                      {tooltipLines.map((line, index) => (
-                        <div key={`${marker.id}-tooltip-${index}`} className="truncate">
-                          {line}
+                      <div className="flex min-w-0 items-center gap-2">
+                        {marker.tooltipCountryCode ? (
+                          <CountryFlag code={marker.tooltipCountryCode} />
+                        ) : null}
+                        <div className="truncate font-bold text-slate-950">
+                          {marker.tooltipTitle ?? marker.label}
                         </div>
-                      ))}
+                      </div>
+                      <div className="mt-1">
+                        {tooltipLines.map((line, index) => (
+                          <div key={`${marker.id}-tooltip-${index}`} className="truncate">
+                            {line}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </foreignObject>
                 ) : null}
@@ -12880,6 +12889,7 @@ type UniversalShadowCommentaryItem = {
   hoverInfo?: {
     title: string
     lines: string[]
+    countryCode?: string | null
   }
 }
 
@@ -12889,6 +12899,12 @@ function ReplayCommentaryDescription({
   event: UniversalShadowCommentaryItem
 }) {
   const hoverInfo = event.hoverInfo
+  const [tooltipPosition, setTooltipPosition] = useState<{
+    left: number
+    top: number
+    placement: 'above' | 'below'
+  } | null>(null)
+
   if (!hoverInfo?.title) return <>{event.description}</>
 
   const labelIndex = event.description.indexOf(hoverInfo.title)
@@ -12897,25 +12913,76 @@ function ReplayCommentaryDescription({
   const before = event.description.slice(0, labelIndex)
   const after = event.description.slice(labelIndex + hoverInfo.title.length)
 
+  const showTooltip = (target: HTMLElement) => {
+    const rect = target.getBoundingClientRect()
+    const tooltipWidth = 256
+    const viewportPadding = 10
+    const left = Math.max(
+      viewportPadding,
+      Math.min(
+        window.innerWidth - tooltipWidth - viewportPadding,
+        rect.left
+      )
+    )
+    const placement: 'above' | 'below' =
+      rect.top >= 150 ? 'above' : 'below'
+
+    setTooltipPosition({
+      left,
+      top: placement === 'above' ? rect.top - 8 : rect.bottom + 8,
+      placement,
+    })
+  }
+
+  const tooltip =
+    tooltipPosition && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            className="pointer-events-none fixed z-[9999] w-64 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-[11px] font-normal leading-4 text-slate-600 shadow-2xl"
+            style={{
+              left: tooltipPosition.left,
+              top: tooltipPosition.top,
+              transform:
+                tooltipPosition.placement === 'above'
+                  ? 'translateY(-100%)'
+                  : undefined,
+            }}
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              {hoverInfo.countryCode ? (
+                <CountryFlag code={hoverInfo.countryCode} />
+              ) : null}
+              <div className="truncate font-bold text-slate-950">
+                {hoverInfo.title}
+              </div>
+            </div>
+            <div className="mt-1">
+              {hoverInfo.lines.map((line, index) => (
+                <div key={`${event.id}-hover-${index}`} className="truncate">
+                  {line}
+                </div>
+              ))}
+            </div>
+          </div>,
+          document.body
+        )
+      : null
+
   return (
     <>
       {before}
       <span
-        className="group relative inline-flex cursor-help font-semibold text-slate-800 underline decoration-dotted underline-offset-2"
+        className="inline-flex cursor-help font-semibold text-slate-800 underline decoration-dotted underline-offset-2"
         tabIndex={0}
+        onMouseEnter={(event) => showTooltip(event.currentTarget)}
+        onMouseMove={(event) => showTooltip(event.currentTarget)}
+        onMouseLeave={() => setTooltipPosition(null)}
+        onFocus={(event) => showTooltip(event.currentTarget)}
+        onBlur={() => setTooltipPosition(null)}
       >
         {hoverInfo.title}
-        <span className="pointer-events-none absolute bottom-full left-0 z-40 mb-2 hidden w-60 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-[11px] font-normal leading-4 text-slate-600 shadow-xl group-hover:block group-focus:block">
-          <span className="block font-bold text-slate-950">
-            {hoverInfo.title}
-          </span>
-          {hoverInfo.lines.map((line, index) => (
-            <span key={`${event.id}-hover-${index}`} className="block">
-              {line}
-            </span>
-          ))}
-        </span>
       </span>
+      {tooltip}
       {after}
     </>
   )
@@ -15157,6 +15224,8 @@ function UniversalRaceReplayPage({
             : `${unit.label} leaves the start ramp as starter #${unit.startOrder}.`,
           hoverInfo: {
             title: unit.label,
+            countryCode:
+              isTeamTimeTrialReplay ? null : unit.countryCode,
             lines: isTeamTimeTrialReplay
               ? [
                   unit.secondaryLabel,
@@ -15164,9 +15233,6 @@ function UniversalRaceReplayPage({
                   `Start order: #${unit.startOrder}`,
                 ]
               : [
-                  ...(unit.countryCode
-                    ? [`Country: ${unit.countryCode.toUpperCase()}`]
-                    : []),
                   `Team: ${unit.secondaryLabel}`,
                   `Current GC: ${unit.classificationRank === null ? '—' : `#${unit.classificationRank}`}`,
                   `Start order: #${unit.startOrder}`,
@@ -15372,6 +15438,8 @@ function UniversalRaceReplayPage({
                 : '#dc2626'
               : undefined,
           tooltipTitle: unit.label,
+          tooltipCountryCode:
+            isTeamTimeTrialReplay ? null : unit.countryCode,
           tooltipLines: isTeamTimeTrialReplay
             ? [
                 unit.secondaryLabel,
@@ -15380,9 +15448,6 @@ function UniversalRaceReplayPage({
                 `Distance: ${formatKm(input?.stage.distanceKm ? input.stage.distanceKm * unit.courseProgressFraction : 0)}`,
               ]
             : [
-                ...(unit.countryCode
-                  ? [`Country: ${unit.countryCode.toUpperCase()}`]
-                  : []),
                 `Team: ${unit.secondaryLabel}`,
                 `Current GC: ${unit.classificationRank === null ? '—' : `#${unit.classificationRank}`}`,
                 `Start order: #${unit.startOrder}`,
