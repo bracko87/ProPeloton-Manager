@@ -3317,6 +3317,69 @@
           "to": "/dashboard/calendar"
         }
       ]
+    },
+    "race-preparation-bonuses-deep": {
+      "category": "Подготовка к гонке",
+      "title": "Бонусы подготовки: что реально влияет на гонку",
+      "subtitle": "Откуда берутся очки, на что они влияют и как читать суммарный эффект.",
+      "overview": "Подготовка не создаёт один общий процент. Разные решения влияют на разные каналы: результативность, расход энергии, усталость, восстановление, здоровье, механическую надёжность, тактическую поддержку и износ.",
+      "facts": [
+        {
+          "label": "Пять групп",
+          "value": "Race Support, Fatigue Control, Recovery Support, Health Protection, Mechanical Reliability"
+        },
+        {
+          "label": "Лимит группы",
+          "value": "30 очков"
+        },
+        {
+          "label": "Отдельные каналы",
+          "value": "Экипировка и race supplies применяются отдельно"
+        },
+        {
+          "label": "Пассивный staff в гонке",
+          "value": "Team Doctor и Mechanic"
+        },
+        {
+          "label": "Без плоского пассивного бонуса",
+          "value": "Sport Director, Head Coach и Scout Analyst"
+        }
+      ],
+      "details": [
+        "Точные эффекты выбранных источников распределяются по пяти группам. Например, +2% medical response дают 2 Health Protection, а +1% post-stage recovery — 1 Recovery Support.",
+        "Race Support приходит в основном от питания, team car, логистики, коммуникации и реакции на инциденты. Он может улучшать энергоэффективность, тактические возможности и часть медицинской/механической защиты.",
+        "Fatigue Control уменьшает нагрузку гонки и поездок. Вместе с Recovery Support снижает усталость после этапа и улучшает восстановление.",
+        "Health Protection снижает медицинский риск. Mechanical Reliability снижает риск механических проблем и потерю времени.",
+        "Выбранные машины работают автоматически: team car дают support/feeding/communication/mechanical response; bus — fatigue/recovery; medical van — health/recovery; equipment van/workshop — механическую защиту и защиту экипировки.",
+        "Team policies также могут давать эффект: путешествие влияет на мораль, жильё на восстановление, логистика на Race Support. Базовые варианты могут не давать дополнительных очков.",
+        "Выбранный Team Doctor автоматически применяет существующие медицинские бонусы: меньший риск травмы/болезни, более короткое восстановление, ежедневный recovery bonus и более низкий fatigue floor.",
+        "Выбранный Mechanic автоматически применяет существующие технические бонусы: setup quality, меньший mechanical risk и меньшая потеря condition экипировки. Maintenance speed/cost действуют и вне гонки.",
+        "Sport Director помогает тактикой, советами и автоматизацией, но не имеет отдельного плоского пассивного бонуса к скорости. Head Coach в основном влияет на training/development, Scout Analyst — на scouting.",
+        "Экипировка — отдельный канал на уровне гонщика. Итоговый процент зависит от setup, профиля этапа и condition. Пример: +5% equipment при stage-skill 76 дают примерно +3,8 suitability.",
+        "Race supplies тоже считаются отдельно. Bidons, gels, nutrition packs и погодная защита могут уменьшать расход энергии/усталость, добавлять recovery или защиту, если они выбраны и доступны.",
+        "Нельзя складывать проценты разных систем. 10% экономии энергии, 6% меньше усталости и 15% меньше mechanical time loss — не +31% скорости.",
+        "Пример: Race Support 9, Fatigue 2, Recovery 2, Health 4 и Mechanical 7 дают примерно 1,95% меньше расхода энергии, 3% меньше усталости после этапа, +0,6 recovery, 6,6% меньше health risk, 19,3% меньше mechanical risk и 15,35% меньше mechanical time loss до добавления equipment, supplies и погоды.",
+        "Хорошая подготовка повышает эффективность и надёжность, но не гарантирует победу: навыки, профиль, fatigue, sharpness, тактика и динамика гонки остаются важными."
+      ],
+      "tips": [
+        "Читайте каждый бонус по его каналу, а не как один общий процент.",
+        "Подбирайте экипировку под рельеф, берите достаточно supplies и выбирайте staff/assets под риски гонки.",
+        "В многодневках recovery и fatigue control могут быть так же важны, как прямой performance."
+      ],
+      "relatedLinks": [
+        {
+          "label": "Подготовка к гонке",
+          "to": "/dashboard/race-preparation"
+        },
+        {
+          "label": "Экипировка",
+          "to": "/dashboard/equipment"
+        },
+        {
+          "label": "Staff",
+          "to": "/dashboard/staff"
+        }
+      ]
     }
   }
 }
