@@ -326,6 +326,41 @@ function formatGameDate(value: string | null | undefined): string {
   return appI18n.t('premiumCenter:common.seasonDate', { season, day: String(date.getUTCDate()).padStart(2, '0'), month })
 }
 
+function formatGameDateParts(value: string | null | undefined): {
+  seasonLabel: string
+  dateLabel: string
+} {
+  if (!value) return { seasonLabel: '—', dateLabel: '—' }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return { seasonLabel: value, dateLabel: '' }
+  }
+
+  const season = Math.max(1, date.getUTCFullYear() - 1999)
+  const month = date.toLocaleString(appI18n.resolvedLanguage || appI18n.language || undefined, {
+    month: 'long',
+    timeZone: 'UTC',
+  })
+  const full = appI18n.t('premiumCenter:common.seasonDate', {
+    season,
+    day: String(date.getUTCDate()).padStart(2, '0'),
+    month,
+  })
+  const separatorIndex = full.indexOf('·')
+
+  if (separatorIndex >= 0) {
+    return {
+      seasonLabel: full.slice(0, separatorIndex).trim(),
+      dateLabel: full.slice(separatorIndex + 1).trim(),
+    }
+  }
+
+  return {
+    seasonLabel: `Season ${season}`,
+    dateLabel: `${String(date.getUTCDate()).padStart(2, '0')} ${month}`,
+  }
+}
+
 function formatGameDateTime(value: string | null | undefined): string {
   if (!value) return '—'
   const date = new Date(value)
@@ -457,6 +492,153 @@ function StatCard({
       </div>
       {hint ? <div className="mt-1 text-xs text-slate-500">{hint}</div> : null}
     </Card>
+  )
+}
+
+function MiniSparkline({
+  values,
+}: {
+  values: number[]
+}): JSX.Element {
+  const width = 220
+  const height = 58
+  const safeValues = values.length > 1 ? values : [0, 0]
+  const min = Math.min(...safeValues)
+  const max = Math.max(...safeValues)
+  const range = max - min || 1
+  const points = safeValues
+    .map((value, index) => {
+      const x = (index / Math.max(1, safeValues.length - 1)) * width
+      const y = height - 6 - ((value - min) / range) * (height - 12)
+      return `${x},${y}`
+    })
+    .join(' ')
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-14 w-full overflow-visible" aria-hidden="true">
+      <line x1="0" y1={height - 6} x2={width} y2={height - 6} stroke="currentColor" className="text-slate-200" strokeWidth="1" />
+      <polyline
+        points={points}
+        fill="none"
+        stroke="currentColor"
+        className="text-yellow-500"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {safeValues.map((value, index) => {
+        const x = (index / Math.max(1, safeValues.length - 1)) * width
+        const y = height - 6 - ((value - min) / range) * (height - 12)
+        return <circle key={`${index}:${value}`} cx={x} cy={y} r="3" fill="currentColor" className="text-yellow-500" />
+      })}
+    </svg>
+  )
+}
+
+function MiniBars({
+  values,
+}: {
+  values: number[]
+}): JSX.Element {
+  const max = Math.max(1, ...values.map(value => Math.abs(Number(value) || 0)))
+
+  return (
+    <div className="flex h-14 items-end gap-2" aria-hidden="true">
+      {values.map((value, index) => {
+        const magnitude = Math.abs(Number(value) || 0)
+        const height = magnitude === 0 ? 8 : Math.max(12, Math.round((magnitude / max) * 54))
+
+        return (
+          <div
+            key={`${index}:${value}`}
+            className="min-w-0 flex-1 rounded-t-md bg-slate-300"
+            style={{ height: `${height}px` }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+function SegmentedBar({
+  segments,
+}: {
+  segments: Array<{ value: number; className: string }>
+}): JSX.Element {
+  const total = Math.max(1, segments.reduce((sum, segment) => sum + Math.max(0, segment.value), 0))
+
+  return (
+    <div className="flex h-2.5 overflow-hidden rounded-full bg-slate-100" aria-hidden="true">
+      {segments.map((segment, index) => {
+        const width = (Math.max(0, segment.value) / total) * 100
+        return (
+          <div
+            key={index}
+            className={segment.className}
+            style={{ width: `${width}%` }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+function CommandSummaryCard({
+  title,
+  metric,
+  body,
+  detailLeft,
+  detailRight,
+  visual,
+  tone = 'default',
+  onClick,
+  actionLabel,
+}: {
+  title: string
+  metric: React.ReactNode
+  body: string
+  detailLeft: React.ReactNode
+  detailRight: React.ReactNode
+  visual: React.ReactNode
+  tone?: 'default' | 'warning' | 'danger' | 'positive'
+  onClick: () => void
+  actionLabel: string
+}): JSX.Element {
+  const toneClass =
+    tone === 'danger'
+      ? 'border-red-200'
+      : tone === 'warning'
+        ? 'border-amber-200'
+        : tone === 'positive'
+          ? 'border-emerald-200'
+          : 'border-slate-200'
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group flex min-h-[245px] w-full flex-col rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${toneClass}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="text-sm font-medium text-slate-700">{title}</div>
+        <ChevronRight size={17} className="shrink-0 text-slate-400 transition group-hover:translate-x-0.5" />
+      </div>
+
+      <div className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{metric}</div>
+      <p className="mt-2 min-h-[44px] text-sm leading-5 text-slate-600">{body}</p>
+
+      <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/80 p-3">
+        {visual}
+        <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-slate-500">
+          <span className="min-w-0 truncate">{detailLeft}</span>
+          <span className="shrink-0 font-medium text-slate-700">{detailRight}</span>
+        </div>
+      </div>
+
+      <div className="mt-auto pt-4 text-xs font-medium text-yellow-700">
+        {actionLabel}
+      </div>
+    </button>
   )
 }
 
@@ -636,12 +818,21 @@ export default function PremiumCommandCenter(): JSX.Element {
         if (raceIds.length > 0) {
           const raceMetaResult = await supabase
             .from('races')
-            .select('id,country_code,start_city,finish_city')
+            .select('id,country_code,host_city,category,race_type,is_stage_race,stage_count')
             .in('id', raceIds)
 
           if (!raceMetaResult.error) {
             const raceMeta = new Map(
-              (raceMetaResult.data ?? []).map(row => [String(row.id), row as Record<string, any>]),
+              (raceMetaResult.data ?? []).map(row => [
+                String(row.id),
+                {
+                  country_code: row.country_code,
+                  start_city: row.host_city,
+                  category: row.category,
+                  race_type: row.race_type,
+                  total_stages: row.stage_count,
+                },
+              ]),
             )
             nextWorkspace = {
               ...nextWorkspace,
