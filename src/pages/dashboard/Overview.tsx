@@ -8322,7 +8322,7 @@ export default function OverviewPage() {
                     {t('premiumCenter:integrations.overview.finance')}
                   </a>
                   <a
-                    href="#/dashboard/training#premium-development"
+                    href="#/dashboard/training?tab=development"
                     className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
                   >
                     {t('premiumCenter:tabs.development')}
@@ -8513,35 +8513,14 @@ export default function OverviewPage() {
               </div>
             </Card>
 
-            <PremiumFeatureGate
-              isPremium={isPremium}
-              loading={premiumStatusLoading}
-              title={t("finance.incomeExpensesTitle")}
-              description={t("premiumCenter:integrations.overview.incomeExpensesGateDesc")}
-            >
-              <IncomeExpenseCard finance={data.finance} />
-            </PremiumFeatureGate>
+            <IncomeExpenseCard finance={data.finance} />
 
-            <PremiumFeatureGate
-              isPremium={isPremium}
-              loading={premiumStatusLoading}
-              title={t("operations.title")}
-              description={t("premiumCenter:integrations.overview.operationsGateDesc")}
-            >
-              <CompactOperationsCard operations={data.operations} />
-            </PremiumFeatureGate>
+            <CompactOperationsCard operations={data.operations} />
 
-            <PremiumFeatureGate
-              isPremium={isPremium}
-              loading={premiumStatusLoading}
-              title={t("honours.title")}
-              description={t("premiumCenter:integrations.overview.honoursGateDesc")}
-            >
-              <ClubHonoursCard
-                items={clubHonours}
-                loading={clubHonoursLoading}
-              />
-            </PremiumFeatureGate>
+            <ClubHonoursCard
+              items={clubHonours}
+              loading={clubHonoursLoading}
+            />
           </div>
         </div>
 
