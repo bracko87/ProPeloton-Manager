@@ -46,7 +46,13 @@ function formatCurrency(value: number): string {
   }).format(Number.isFinite(value) ? value : 0)
 }
 
-function PremiumLockedCard({ title }: { title: string }): JSX.Element {
+function PremiumLockedCard({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}): JSX.Element {
   const { t } = useTranslation('premiumCenter')
 
   return (
@@ -60,7 +66,7 @@ function PremiumLockedCard({ title }: { title: string }): JSX.Element {
             </span>
           </div>
           <p className="mt-1 max-w-3xl text-sm text-slate-500">
-            {t('premiumOnlyBody')}
+            {description}
           </p>
         </div>
         <Link
@@ -167,7 +173,12 @@ export function PremiumFinancialSimulator({
 
   if (checking) return <></>
   if (!isPremium) {
-    return <PremiumLockedCard title={t('finance.title')} />
+    return (
+      <PremiumLockedCard
+        title={t('finance.title')}
+        description={t('finance.description')}
+      />
+    )
   }
 
   return (
@@ -348,7 +359,12 @@ export function PremiumSponsorIntelligence({
 
   if (checking) return <></>
   if (!isPremium) {
-    return <PremiumLockedCard title={t('sponsors.title')} />
+    return (
+      <PremiumLockedCard
+        title={t('sponsors.title')}
+        description={t('sponsors.description')}
+      />
+    )
   }
 
   return (

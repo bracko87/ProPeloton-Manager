@@ -7,6 +7,10 @@ import type { TFunction } from 'i18next'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import PremiumSeasonPlannerPanel from './calendar/PremiumSeasonPlannerPanel'
+import {
+  PremiumFeatureLock,
+  PremiumFeatureLoading,
+} from '../../components/premium/PremiumFeatureLock'
 import { calendarTutorialSteps } from '../../lib/tutorials'
 import {
   getTutorialProgress,
@@ -2130,8 +2134,18 @@ export default function CalendarPage(): JSX.Element {
         ) : null}
       </div>
 
-      {!premiumStatusLoading && isPremium && clubId && activeView === 'season' ? (
-        <PremiumSeasonPlannerPanel clubId={clubId} />
+      {activeView === 'season' ? (
+        premiumStatusLoading ? (
+          <PremiumFeatureLoading className="mb-5" />
+        ) : isPremium && clubId ? (
+          <PremiumSeasonPlannerPanel clubId={clubId} />
+        ) : (
+          <PremiumFeatureLock
+            className="mb-5"
+            title={t('premiumCenter:season.title')}
+            description={t('premiumCenter:season.description')}
+          />
+        )
       ) : null}
 
       <div className="w-full rounded-lg border border-gray-100 bg-white p-6 shadow">

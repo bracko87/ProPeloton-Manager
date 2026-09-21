@@ -5,6 +5,10 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import PremiumRiderDevelopmentPanel from './training/PremiumRiderDevelopmentPanel'
+import {
+  PremiumFeatureLock,
+  PremiumFeatureLoading,
+} from '../../components/premium/PremiumFeatureLock'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import HeadCoachTrainingPanel, {
   type HeadCoachAutomationSnapshot
@@ -2982,12 +2986,6 @@ export default function TrainingPage(): JSX.Element {
     }
   }, [searchParams])
 
-  useEffect(() => {
-    if (!premiumStatusLoading && !isPremium && activeTab === 'development') {
-      setActiveTab('regular')
-    }
-  }, [activeTab, isPremium, premiumStatusLoading])
-
   if (loading) {
     return <div className="w-full text-sm text-gray-600">{t('page.loading')}</div>
   }
@@ -3016,19 +3014,24 @@ export default function TrainingPage(): JSX.Element {
               {t('page.regularTab')}
             </button>
 
-            {isPremium ? (
-              <button
-                type="button"
-                onClick={() => setActiveTab('development')}
-                className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
-                  activeTab === 'development'
-                    ? 'bg-yellow-400 text-black shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
+            <button
+              type="button"
+              onClick={() => setActiveTab('development')}
+              className={`rounded-xl px-5 py-2.5 text-sm font-medium transition ${
+                activeTab === 'development'
+                  ? 'bg-yellow-400 text-black shadow-sm'
+                  : isPremium
+                    ? 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5">
                 {t('premiumCenter:tabs.development')}
-              </button>
-            ) : null}
+                {!premiumStatusLoading && !isPremium ? (
+                  <span aria-hidden="true" className="text-[11px]">🔒</span>
+                ) : null}
+              </span>
+            </button>
 
             <button
               type="button"
@@ -3281,7 +3284,9 @@ export default function TrainingPage(): JSX.Element {
             </div>
           </div>
 
-          {isPremium ? (
+          {premiumStatusLoading ? (
+            <PremiumFeatureLoading />
+          ) : isPremium ? (
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
@@ -3346,7 +3351,12 @@ export default function TrainingPage(): JSX.Element {
                 </div>
               ) : null}
             </div>
-          ) : null}
+          ) : (
+            <PremiumFeatureLock
+              title={t('premiumCenter:integrations.training.title')}
+              description={t('premiumCenter:integrations.training.description')}
+            />
+          )}
 
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div
@@ -3757,8 +3767,17 @@ export default function TrainingPage(): JSX.Element {
         </div>
       ) : null}
 
-      {activeTab === 'development' && isPremium && clubId ? (
-        <PremiumRiderDevelopmentPanel clubId={clubId} />
+      {activeTab === 'development' ? (
+        premiumStatusLoading ? (
+          <PremiumFeatureLoading />
+        ) : isPremium && clubId ? (
+          <PremiumRiderDevelopmentPanel clubId={clubId} />
+        ) : (
+          <PremiumFeatureLock
+            title={t('premiumCenter:development.title')}
+            description={t('premiumCenter:development.description')}
+          />
+        )
       ) : null}
 
       {activeTab === 'camps' ? (
