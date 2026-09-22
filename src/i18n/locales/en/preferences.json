@@ -151,7 +151,7 @@
   },
   "developingTeam": {
     "title": "Developing Team",
-    "description": "Build and manage a U23 development squad with seasonal coin access.",
+    "description": "Premium members can build and manage a U23 development squad with seasonal coin access.",
     "loading": "Loading Developing Team status...",
     "realLifeProgress": "Real-life progress",
     "realLifeMinimum": "Minimum 30 days required",
@@ -180,7 +180,10 @@
     "rosterRule": "Maximum roster size: 8 riders.",
     "ageRule": "Only riders aged 23 or younger are eligible.",
     "movementRule": "Riders move between squads only during movement windows.",
-    "teamLabel": "Team"
+    "teamLabel": "Team",
+    "premiumOnly": "Premium only",
+    "premiumRequiredTitle": "Premium membership required",
+    "viewPremium": "View Premium"
   },
   "dangerZone": {
     "title": "Danger Zone",
