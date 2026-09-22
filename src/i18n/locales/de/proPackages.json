@@ -132,7 +132,7 @@
   },
   "services": {
     "title": "Dienstleistungen von aktiven Münzdiensten",
-    "description": "Verwalten Sie optionale Club-Dienste, die mit Coins gekauft werden. Diese Dienste stehen Free- und Premium-Spielern zur Verfügung.",
+    "description": "Verwalten Sie optionale Club-Dienste und mit Coins finanzierte Erweiterungen. Das Entwicklungsteam und der U23-Cheftrainer erfordern zusätzlich eine aktive Premium-Mitgliedschaft.",
     "loading": "Münzdienste werden geladen...",
     "unavailable": "Die Entwicklung von Team-Service-Informationen ist derzeit nicht verfügbar.",
     "unavailableHelp": "Der übrige Premium-, Abrechnungs- und Coin-Verwaltungsbereich bleibt verfügbar.",
@@ -140,7 +140,7 @@
     "active": "Aktiv",
     "expired": "Abgelaufen",
     "notActivated": "Nicht aktiviert",
-    "descriptionDeveloping": "Bauen und verwalten Sie eine U23 Entwicklung.",
+    "descriptionDeveloping": "Bauen und verwalten Sie als Premium-Mitglied ein U23-Entwicklungsteam.",
     "readOnly": "Das Team und alle gespeicherten Daten stehen weiterhin im Nur-Lese-Modus zur Verfügung.",
     "reactivationPrice": "Reaktivierungspreis: {{cost}} Coins.",
     "firstActivationPrice": "Erster Aktivierungspreis: {{cost}} Coins.",
