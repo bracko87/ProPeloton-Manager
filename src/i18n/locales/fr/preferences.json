@@ -151,7 +151,7 @@
   },
   "developingTeam": {
     "title": "Équipe en développement",
-    "description": "Construisez et gérez une équipe de développement U23 avec accès saisonnier aux Coins.",
+    "description": "Équipe de développement U23 réservée à Premium, avec activation à 100 Coins et renouvellement saisonnier à 100 Coins.",
     "loading": "Chargement du statut d'équipe en développement...",
     "realLifeProgress": "Progrès réels",
     "realLifeMinimum": "Au moins 30 jours requis",
@@ -180,7 +180,12 @@
     "rosterRule": "Taille maximale de l'alignement: 8 coureurs.",
     "ageRule": "Seuls les coureurs âgés de 23 ans ou plus sont éligibles.",
     "movementRule": "Les coureurs ne se déplacent entre les équipes que pendant les fenêtres de mouvement.",
-    "teamLabel": "Équipe"
+    "teamLabel": "Équipe",
+    "premiumOnlyTitle": "Fonction réservée à Premium",
+    "premiumOnlyDescription": "L'Équipe de Développement et l'Entraîneur Principal U23 sont disponibles uniquement avec Premium actif. L'activation coûte {{activation}} Coins et le renouvellement chaque saison {{renewal}} Coins.",
+    "premiumInactiveDescription": "Les données de votre Équipe de Développement existante restent conservées, mais l'accès est suspendu lorsque Premium est inactif.",
+    "unlockPremium": "Débloquer Premium",
+    "premiumModalRequirement": "Un abonnement Premium actif est requis pour utiliser l'Équipe de Développement et l'Entraîneur Principal U23."
   },
   "dangerZone": {
     "title": "Zone de danger",
