@@ -845,7 +845,7 @@ export default function PreferencesPage(): JSX.Element {
                   {t('service.eligibilityCosts', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}
                 </div>
 
-                {developingTeamIsActive ? (
+                {!isPremium ? null : developingTeamIsActive ? (
                   <div className="mt-4 rounded-xl border border-green-200 bg-green-50/60 p-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
