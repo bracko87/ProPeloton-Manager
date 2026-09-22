@@ -386,7 +386,9 @@ function commandChasePressure(
   if (activeRiders === 0 || chaseTeams === 0 || includedTeams === 0) return 0
   const teamShare = chaseTeams / includedTeams
   const riderShare = chaseRiders / activeRiders
-  return clamp(teamShare * 2.35 + riderShare * 0.45, 0, 1)
+  return humanOnly
+    ? clamp(teamShare * 0.25 + riderShare * 0.9, 0, 1)
+    : clamp(teamShare * 2.35 + riderShare * 0.45, 0, 1)
 }
 
 function runtimeGenerationStates(audit: JsonRecord): JsonRecord {
