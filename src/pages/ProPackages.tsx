@@ -168,7 +168,7 @@ type PremiumBillingSummaryResponse = EdgeResponse & {
 
 const COIN_HISTORY_PAGE_SIZE = 20
 // Display fallbacks only. get_developing_team_status() is the authoritative source.
-const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 200
+const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 100
 const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 100
 const STRIPE_RETURN_RETRY_DELAYS_MS = [0, 1500, 3000, 5000, 8000, 12000]
 
@@ -247,6 +247,7 @@ const COMPARISON_ROWS = [
   ['comparison.r6', '—', '50'],
   ['comparison.r7', '✓', '✓'],
   ['comparison.r8', '✓', '✓'],
+  ['comparison.r9', '—', '✓'],
 ] as const
 
 const PREMIUM_ADVANTAGES = [
@@ -257,6 +258,7 @@ const PREMIUM_ADVANTAGES = [
   'advantages.a5',
   'advantages.a6',
   'advantages.a7',
+  'advantages.a8',
 ] as const
 
 function eur(value: number) {
