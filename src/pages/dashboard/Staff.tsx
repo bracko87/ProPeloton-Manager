@@ -4374,7 +4374,8 @@ export default function StaffPage() {
             : developingStatusData
 
           setHasDevelopingTeam(
-            ((normalizedDevStatus ?? null) as DevelopingTeamStatusRow | null)?.is_purchased === true
+            hasPremiumAccess &&
+              ((normalizedDevStatus ?? null) as DevelopingTeamStatusRow | null)?.is_purchased === true
           )
           setDevelopingTeamStatusResolved(true)
         }
@@ -4505,7 +4506,10 @@ export default function StaffPage() {
   const selectedRoleMeta = getRoleMeta(selectedRole)
   const selectedRoleMembers = membersByRole[selectedRole]
   const selectedRoleLimit = getRoleLimit(selectedRole, roleLimitMap)
-  const selectedRoleWarning = getRoleInfrastructureWarning(selectedRole, infrastructure)
+  const selectedRoleWarning =
+    selectedRole === 'u23_head_coach' && !isPremiumLoading && !isPremium
+      ? t('u23Premium.required')
+      : getRoleInfrastructureWarning(selectedRole, infrastructure)
 
   const selectedImpactMembers = getImpactMembers(selectedRole, membersByRole)
   const selectedImpactLimit = getImpactRoleLimit(selectedRole, roleLimitMap)
