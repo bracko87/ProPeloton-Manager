@@ -25618,6 +25618,35 @@ function buildUniversalReplayTimeline(
   const riderById = new Map(
     input.riders.map((rider) => [rider.riderId, rider] as const),
   )
+  const teamById = new Map(
+    input.teams.map((team) => [team.teamId, team] as const),
+  )
+  const replayRiderDisplayName = (riderId: string): string => {
+    const rider = riderById.get(riderId)
+    if (!rider) return riderId
+    const explicit = rider.snapshot.displayName?.trim()
+    if (explicit) return explicit
+    const joined = [rider.snapshot.firstName, rider.snapshot.lastName]
+      .filter((value): value is string => Boolean(value?.trim()))
+      .join(' ')
+      .trim()
+    return joined || riderId
+  }
+  const replayRiderTeamLabel = (riderId: string): string => {
+    const rider = riderById.get(riderId)
+    if (!rider) return riderId
+    const riderName = replayRiderDisplayName(riderId)
+    const teamName = teamById.get(rider.teamId)?.snapshot.teamName?.trim()
+    return teamName ? `${riderName} (${teamName})` : riderName
+  }
+  const replayRiderSubject = (
+    riderIds: readonly string[],
+    pluralLabel = 'riders',
+  ): string =>
+    riderIds.length === 1
+      ? replayRiderTeamLabel(riderIds[0])
+      : `${riderIds.length} ${pluralLabel}`
+
   const commentaryByPointId = new Map(
     intermediatePointFinalization.commentaryEntries.map(
       (entry) => [entry.pointId, entry] as const,
@@ -28059,7 +28088,7 @@ function buildUniversalReplayTimeline(
     eventType: 'finish',
     title: 'Stage finished',
     description: authoritativeWinner
-      ? `${authoritativeWinner.riderId} wins the stage.`
+      ? `${replayRiderTeamLabel(authoritativeWinner.riderId)} wins the stage.`
       : 'The stage finishes without a classified winner.',
     riderIds: authoritativeWinner ? [authoritativeWinner.riderId] : [],
     teamIds: authoritativeWinner ? [authoritativeWinner.teamId] : [],
@@ -28099,8 +28128,8 @@ function buildUniversalReplayTimeline(
         ? 'Reactive counterattack is covered'
         : 'Attack is covered',
       description: attempt.reactiveCounterattack
-        ? `${attempt.riderId} reacts to the established first wave, but the counterattack is covered.`
-        : `${attempt.riderId} attacks, but the move is immediately neutralized.`,
+        ? `${replayRiderTeamLabel(attempt.riderId)} reacts to the established first wave, but the counterattack is covered.`
+        : `${replayRiderTeamLabel(attempt.riderId)} attacks, but the move is immediately neutralized.`,
       riderIds: [attempt.riderId],
       teamIds: [attempt.teamId],
     })
@@ -28126,8 +28155,8 @@ function buildUniversalReplayTimeline(
         ? 'Reactive counterattack succeeds'
         : 'Attack succeeds',
       description: attempt.reactiveCounterattack
-        ? `${attempt.riderId} reacts to the established first wave and opens ${formatReplaySeconds(attempt.initialGapSeconds)} in the counterattack.`
-        : `${attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and opens ${formatReplaySeconds(attempt.initialGapSeconds)}.`,
+        ? `${replayRiderTeamLabel(attempt.riderId)} reacts to the established first wave and opens ${formatReplaySeconds(attempt.initialGapSeconds)} in the counterattack.`
+        : `${replayRiderTeamLabel(attempt.riderId)} attacks on ${attempt.effectiveTerrainType} terrain and opens ${formatReplaySeconds(attempt.initialGapSeconds)}.`,
       riderIds: [attempt.riderId],
       teamIds: [attempt.teamId],
     })
@@ -28150,7 +28179,7 @@ function buildUniversalReplayTimeline(
       energyByRiderId: energyAtKm(1, formationKm, formationOverrides),
       eventType: 'breakaway_formation',
       title: 'An opening move gets clear',
-      description: `${phase1.breakawayRiderIds.length} rider${phase1.breakawayRiderIds.length === 1 ? '' : 's'} create the opening move with ${formatReplaySeconds(gapAtKm(formationKm))} of initial separation; the gap now evolves from road speed.`,
+      description: `${replayRiderSubject(phase1.breakawayRiderIds)} ${phase1.breakawayRiderIds.length === 1 ? 'creates' : 'create'} the opening move with ${formatReplaySeconds(gapAtKm(formationKm))} of initial separation; the gap now evolves from road speed.`,
       riderIds: [...phase1.breakawayRiderIds],
       teamIds: Array.from(
         new Set(
@@ -28187,7 +28216,7 @@ function buildUniversalReplayTimeline(
 
   phase2.attackAttempts.forEach((attempt, index) => {
     const riderName =
-      riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId
+      replayRiderTeamLabel(attempt.riderId)
     eventDefinitions.push({
       checkpointIdSuffix: `phase-2-attack-${attempt.riderId}-${index + 1}`,
       checkpointKind: 'event',
@@ -28247,7 +28276,7 @@ function buildUniversalReplayTimeline(
       energyByRiderId: energyAtKm(2, phase2FrontFormationKm),
       eventType: 'group_split',
       title: 'A counterattack group forms',
-      description: `${phase2.secondaryFrontRiderIdsAtLaunch.length} successful attacker${phase2.secondaryFrontRiderIdsAtLaunch.length === 1 ? '' : 's'} establish a physical F group between the road leader and the peloton.`,
+      description: `${replayRiderSubject(phase2.secondaryFrontRiderIdsAtLaunch, 'successful attackers')} ${phase2.secondaryFrontRiderIdsAtLaunch.length === 1 ? 'establishes' : 'establish'} a physical F group between the road leader and the peloton.`,
       riderIds: [...phase2.secondaryFrontRiderIdsAtLaunch],
       teamIds: Array.from(
         new Set(
@@ -28449,8 +28478,8 @@ function buildUniversalReplayTimeline(
           ? 'Reactive counterattack is covered'
           : 'Attack is covered',
         description: attempt.reactiveCounterattack
-          ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} tries to bridge in response to the earlier move, but the counterattack is covered.`
-          : `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain, but cannot create a lasting gap.`,
+          ? `${replayRiderTeamLabel(attempt.riderId)} tries to bridge in response to the earlier move, but the counterattack is covered.`
+          : `${replayRiderTeamLabel(attempt.riderId)} attacks on ${attempt.effectiveTerrainType} terrain, but cannot create a lasting gap.`,
         riderIds: [attempt.riderId],
         teamIds: [attempt.teamId],
       })
@@ -28486,15 +28515,15 @@ function buildUniversalReplayTimeline(
               : 'A decisive attack is launched',
         description:
           attempt.reactiveCounterattack
-            ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} reacts to the earlier successful move and launches a bridge attempt on ${attempt.effectiveTerrainType} terrain.`
+            ? `${replayRiderTeamLabel(attempt.riderId)} reacts to the earlier successful move and launches a bridge attempt on ${attempt.effectiveTerrainType} terrain.`
             : attempt.sourcePhysicalGroupCode === 'F1' ||
           attempt.sourcePhysicalGroupCode === 'F2'
-            ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks from ${attempt.sourcePhysicalGroupCode} on ${attempt.effectiveTerrainType} terrain and creates ${attempt.frontDisplayCode ?? 'a new bridge group'} at its own physical road position.`
+            ? `${replayRiderTeamLabel(attempt.riderId)} attacks from ${attempt.sourcePhysicalGroupCode} on ${attempt.effectiveTerrainType} terrain and creates ${attempt.frontDisplayCode ?? 'a new bridge group'} at its own physical road position.`
             : attempt.sourceGroupCode === 'breakaway'
-              ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks from the leading group on ${attempt.effectiveTerrainType} terrain.`
+              ? `${replayRiderTeamLabel(attempt.riderId)} attacks from the leading group on ${attempt.effectiveTerrainType} terrain.`
               : phase3.physicalEscapeRiderIdsAtStart.length > 0
-                ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and creates ${attempt.frontDisplayCode ?? 'a physical bridge group'} without inheriting another front group's gap.`
-                : `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and opens a new front move.`,
+                ? `${replayRiderTeamLabel(attempt.riderId)} attacks on ${attempt.effectiveTerrainType} terrain and creates ${attempt.frontDisplayCode ?? 'a physical bridge group'} without inheriting another front group's gap.`
+                : `${replayRiderTeamLabel(attempt.riderId)} attacks on ${attempt.effectiveTerrainType} terrain and opens a new front move.`,
         riderIds: [attempt.riderId],
         teamIds: [attempt.teamId],
       })
@@ -28678,7 +28707,7 @@ function buildUniversalReplayTimeline(
       energyByRiderId: energyAtKm(3, nonOpeningFrontFormationKm),
       eventType: 'group_split',
       title: 'A front group forms under pressure',
-      description: `${phase4.escapeRiderIdsAtStart.length} riders split from the main group and open ${formatReplaySeconds(nonOpeningFrontFormationGapSeconds)}.`,
+      description: `${replayRiderSubject(phase4.escapeRiderIdsAtStart)} ${phase4.escapeRiderIdsAtStart.length === 1 ? 'splits' : 'split'} from the main group and ${phase4.escapeRiderIdsAtStart.length === 1 ? 'opens' : 'open'} ${formatReplaySeconds(nonOpeningFrontFormationGapSeconds)}.`,
       riderIds: [...phase4.escapeRiderIdsAtStart].sort(),
       teamIds: Array.from(
         new Set(
@@ -28770,9 +28799,7 @@ function buildUniversalReplayTimeline(
       energyByRiderId: energyAtKm(3, phase3BoundaryKm),
       eventType: 'group_split',
       title: 'A front group separates from the peloton',
-      description: `${phase3BoundaryFrontTransferRiderIds.length} rider${
-        phase3BoundaryFrontTransferRiderIds.length === 1 ? '' : 's'
-      } move clear of the peloton.`,
+      description: `${replayRiderSubject(phase3BoundaryFrontTransferRiderIds)} ${phase3BoundaryFrontTransferRiderIds.length === 1 ? 'moves' : 'move'} clear of the peloton.`,
       riderIds: phase3BoundaryFrontTransferRiderIds,
       teamIds: Array.from(
         new Set(
@@ -28795,9 +28822,7 @@ function buildUniversalReplayTimeline(
       energyByRiderId: energyAtKm(3, phase3BoundaryKm),
       eventType: 'group_split',
       title: 'A rear group loses contact at the phase boundary',
-      description: `${phase3BoundaryRearTransferRiderIds.length} rider${
-        phase3BoundaryRearTransferRiderIds.length === 1 ? '' : 's'
-      } lose contact as the race enters the final phase.`,
+      description: `${replayRiderSubject(phase3BoundaryRearTransferRiderIds)} ${phase3BoundaryRearTransferRiderIds.length === 1 ? 'loses' : 'lose'} contact as the race enters the final phase.`,
       riderIds: phase3BoundaryRearTransferRiderIds,
       teamIds: Array.from(
         new Set(
@@ -28877,7 +28902,7 @@ function buildUniversalReplayTimeline(
       energyByRiderId: energyAtKm(4, cluster.kmFromStart),
       eventType: 'group_split',
       title: 'Riders crack on the climb',
-      description: `${cluster.riderIds.length} rider${cluster.riderIds.length === 1 ? '' : 's'} can no longer hold the main group on the ${gradient.toFixed(1)}% climb.`,
+      description: `${replayRiderSubject(cluster.riderIds)} can no longer hold the main group on the ${gradient.toFixed(1)}% climb.`,
       riderIds: [...cluster.riderIds],
       teamIds: Array.from(
         new Set(
@@ -28928,7 +28953,7 @@ function buildUniversalReplayTimeline(
         energyByRiderId: energyAtKm(4, cluster.kmFromStart),
         eventType: 'group_split',
         title: 'The climb splits the peloton',
-        description: `${cluster.riderIds.length} rider${cluster.riderIds.length === 1 ? '' : 's'} lose contact on the ${selection.distanceKm.toFixed(1)} km climb averaging ${selection.averageGradientPercent.toFixed(1)}%.`,
+        description: `${replayRiderSubject(cluster.riderIds)} ${cluster.riderIds.length === 1 ? 'loses' : 'lose'} contact on the ${selection.distanceKm.toFixed(1)} km climb averaging ${selection.averageGradientPercent.toFixed(1)}%.`,
         riderIds: cluster.riderIds.sort(),
         teamIds: Array.from(
           new Set(
@@ -28977,7 +29002,7 @@ function buildUniversalReplayTimeline(
         energyByRiderId: energyAtKm(4, cluster.kmFromStart),
         eventType: 'group_merge',
         title: 'Riders chase back after the climb',
-        description: `${cluster.riderIds.length} rider${cluster.riderIds.length === 1 ? '' : 's'} regain the peloton before the next decisive effort.`,
+        description: `${replayRiderSubject(cluster.riderIds)} ${cluster.riderIds.length === 1 ? 'regains' : 'regain'} the peloton before the next decisive effort.`,
         riderIds: cluster.riderIds.sort(),
         teamIds: Array.from(
           new Set(
@@ -29002,7 +29027,7 @@ function buildUniversalReplayTimeline(
       energyByRiderId: energyAtKm(4, cluster.kmFromStart),
       eventType: 'group_split',
       title: 'Exhausted riders lose contact',
-      description: `${cluster.riderIds.length} rider${cluster.riderIds.length === 1 ? '' : 's'} can no longer hold the group as their live energy reserve is exhausted.`,
+      description: `${replayRiderSubject(cluster.riderIds)} can no longer hold the group as ${cluster.riderIds.length === 1 ? "the rider's" : 'their'} live energy reserve is exhausted.`,
       riderIds: [...cluster.riderIds],
       teamIds: Array.from(
         new Set(
@@ -29152,7 +29177,7 @@ function buildUniversalReplayTimeline(
         energyByRiderId: energyAtKm(4, bridgeGroup.launchKm),
         eventType: 'bridge_attack',
         title: 'A group attacks from the peloton',
-        description: `${bridgeGroup.riderIds.length} riders create ${bridgeDisplayCode} from the main group. They are ${formatReplaySeconds(bridgeGroup.launchGapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(bridgeGroup.launchGapToPelotonSeconds)} ahead of the peloton.`,
+        description: `${replayRiderSubject(bridgeGroup.riderIds)} ${bridgeGroup.riderIds.length === 1 ? 'creates' : 'create'} ${bridgeDisplayCode} from the main group. ${bridgeGroup.riderIds.length === 1 ? 'The rider is' : 'They are'} ${formatReplaySeconds(bridgeGroup.launchGapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(bridgeGroup.launchGapToPelotonSeconds)} ahead of the peloton.`,
         riderIds: [...bridgeGroup.riderIds],
         teamIds,
         physicalLineageId: bridgeGroup.lineageId ?? null,
@@ -29362,7 +29387,7 @@ function buildUniversalReplayTimeline(
       energyByRiderId: energyAtKm(4, postCatchSplitKm),
       eventType: 'group_split',
       title: 'The peloton splits under late pressure',
-      description: `${postCatchSplitRiderIds.length} riders lose contact with the main finishing group as the pace rises.`,
+      description: `${replayRiderSubject(postCatchSplitRiderIds)} ${postCatchSplitRiderIds.length === 1 ? 'loses' : 'lose'} contact with the main finishing group as the pace rises.`,
       riderIds: [...postCatchSplitRiderIds],
       teamIds: Array.from(
         new Set(
@@ -29497,7 +29522,7 @@ function buildUniversalReplayTimeline(
         energyByRiderId: phase4EnergyByRiderId,
         eventType: 'group_split',
         title: 'Final gaps open on the line',
-        description: `${finalTransitionRiderIds.length} riders change physical finishing group as the final gaps are established.`,
+        description: `${replayRiderSubject(finalTransitionRiderIds)} ${finalTransitionRiderIds.length === 1 ? 'changes' : 'change'} physical finishing group as the final gaps are established.`,
         riderIds: finalTransitionRiderIds,
         teamIds: Array.from(
           new Set(
