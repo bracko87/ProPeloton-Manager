@@ -12,7 +12,8 @@
     "developingTeam": "Entwicklungsteam",
     "staff": "Personal",
     "developingUnavailable": "Das Entwicklungsteam ist derzeit nicht verfügbar.",
-    "unlockDeveloping": "Schalten Sie das Entwicklungsteam zuerst in den Einstellungen frei."
+    "unlockDeveloping": "Schalten Sie das Entwicklungsteam zuerst in den Einstellungen frei.",
+    "developingPremiumOnly": "Für das Developing Team ist eine aktive Premium-Mitgliedschaft erforderlich."
   },
   "roster": {
     "firstSquad": "Erste Mannschaft",
