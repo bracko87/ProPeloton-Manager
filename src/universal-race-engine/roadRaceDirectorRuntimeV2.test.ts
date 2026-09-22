@@ -196,17 +196,21 @@ describe('Race Director V2.4 runtime story guidance', () => {
   })
 
   it('does not let scenario-AI chase commands force a routine Phase 2 catch', () => {
-    const input = multiTeamDirectorInput(8)
-    input.stagePlans = input.stagePlans.map((plan, index) => ({
+    const base = multiTeamDirectorInput(8)
+    const stagePlans = base.stagePlans.map((plan, index) => ({
       ...plan,
       teamId: `team-${index + 1}`,
     }))
-    input.teams = input.stagePlans.map((plan) => ({
-      teamId: plan.teamId,
-      snapshot: {
-        metadata: { scenarioAiControlled: true },
-      },
-    }))
+    const input = {
+      ...base,
+      stagePlans,
+      teams: stagePlans.map((plan) => ({
+        teamId: plan.teamId,
+        snapshot: {
+          metadata: { scenarioAiControlled: true },
+        },
+      })),
+    }
 
     applyRoadScenarioGapGuidanceV1(input, 180, 45, 1)
     const adjusted = applyRoadScenarioGapGuidanceV1(input, 0.3, 80, 1)
@@ -218,17 +222,21 @@ describe('Race Director V2.4 runtime story guidance', () => {
   })
 
   it('keeps a real user chase able to advance the physical catch window', () => {
-    const input = multiTeamDirectorInput(8)
-    input.stagePlans = input.stagePlans.map((plan, index) => ({
+    const base = multiTeamDirectorInput(8)
+    const stagePlans = base.stagePlans.map((plan, index) => ({
       ...plan,
       teamId: `team-${index + 1}`,
     }))
-    input.teams = input.stagePlans.map((plan, index) => ({
-      teamId: plan.teamId,
-      snapshot: {
-        metadata: { scenarioAiControlled: index > 0 },
-      },
-    }))
+    const input = {
+      ...base,
+      stagePlans,
+      teams: stagePlans.map((plan, index) => ({
+        teamId: plan.teamId,
+        snapshot: {
+          metadata: { scenarioAiControlled: index > 0 },
+        },
+      })),
+    }
 
     applyRoadScenarioGapGuidanceV1(input, 180, 45, 1)
     const adjusted = applyRoadScenarioGapGuidanceV1(input, 0.3, 80, 1)
