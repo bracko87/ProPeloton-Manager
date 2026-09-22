@@ -72,11 +72,12 @@
     "a4": "Attrezzatura supplementare di installazione e ampliato incluso capacità del garage.",
     "a5": "Manager Briefing, intelligenza avanzata del calendario, previsioni finanziarie e strumenti di comodità.",
     "a6": "Analisi avanzate delle prestazioni dei corridori, trend di sviluppo e replay illimitati delle gare mondiali.",
-    "a7": "Premium migliora informazioni, automazione e comodità — mai la forza nel motore di gara, l'accettazione dei trasferimenti o le abilità nascoste."
+    "a7": "Premium migliora informazioni, automazione e comodità — mai la forza nel motore di gara, l'accettazione dei trasferimenti o le abilità nascoste.",
+    "a8": "Accesso esclusivo alla Squadra di Sviluppo, incluso l'Allenatore Capo U23: 100 Coins per attivare e 100 Coins per stagione per rinnovare."
   },
   "comparison": {
     "title": "Free vs Premium",
-    "description": "Premium aggiunge analisi e strumenti opzionali senza rimuovere l'accesso da giocatori liberi.",
+    "description": "Premium aggiunge strumenti avanzati e accesso esclusivo alla Squadra di Sviluppo e all'Allenatore Capo U23.",
     "benefit": "Prestazioni",
     "free": "Libero",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Usare le caratteristiche opzionali della Coins",
     "developing": "Servizio di sviluppo del team",
     "activationRenewal": "Attivazione {{activation}} / Rinnovo {{renewal}}",
-    "note": "L'analisi e gli strumenti Premium saranno ampliati durante la revisione delle funzionalità pagina per pagina."
+    "note": "Squadra di Sviluppo e Allenatore Capo U23 richiedono Premium attivo. Attivazione e rinnovo stagionale continuano a usare Coins.",
+    "premiumOnly": "Solo Premium"
   },
   "packages": {
     "title": "Hai bisogno di Coins aggiuntive?",
