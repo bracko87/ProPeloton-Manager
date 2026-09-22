@@ -251,7 +251,7 @@ function directorSettings(audit: RoadScenarioPhysicalAuditV1): {
   const settings = object(audit.generatedParameters.directorV2)
   return {
     storyStrength: clamp(finite(settings.storyStrength, 0.78), 0.45, 0.95),
-    // V2.2 treats the scenario as tactical guidance rather than an outcome
+    // V2.3 treats the scenario as tactical guidance rather than an outcome
     // blueprint. Keep enough pull to create a recognizable race shape, but do
     // not drag a physically valid gap toward one generated target too strongly.
     centerPullStrength: clamp(finite(settings.centerPullStrength, 0.25) * 0.68, 0.06, 0.26),
@@ -307,39 +307,6 @@ function phaseNumber(input: RoadScenarioPhysicalInputV1, kmFromStart: number): 1
   if (progress < 0.5) return 2
   if (progress < 0.75) return 3
   return 4
-}
-
-function phaseBehavior(
-  audit: RoadScenarioPhysicalAuditV1,
-  phase: 1 | 2 | 3 | 4,
-): JsonRecord {
-  return array(audit.generatedParameters.phaseBehavior)
-    .map((entry) => object(entry))
-    .find((entry) => Math.trunc(finite(entry.phase, 0)) === phase) ?? {}
-}
-
-function pressureWord(value: unknown): number {
-  const normalized = text(value).toLowerCase()
-  if (['very_high', 'very high', 'extreme', 'maximum'].includes(normalized)) return 1
-  if (['high', 'strong', 'hard'].includes(normalized)) return 0.82
-  if (['medium', 'normal', 'moderate'].includes(normalized)) return 0.54
-  if (['low', 'light', 'soft'].includes(normalized)) return 0.28
-  if (['very_low', 'very low', 'minimal'].includes(normalized)) return 0.12
-  return 0.5
-}
-
-function templateChasePressure(
-  audit: RoadScenarioPhysicalAuditV1,
-  input: RoadScenarioPhysicalInputV1,
-  kmFromStart: number,
-): number {
-  const phase = phaseNumber(input, kmFromStart)
-  const behavior = phaseBehavior(audit, phase)
-  const chaseTeams = Math.max(0, finite(behavior.chaseTeams, 0))
-  const controlTeams = Math.max(0, finite(behavior.controlTeams, 0))
-  const declaredPressure = pressureWord(behavior.pressure)
-  const teamPressure = clamp((chaseTeams * 0.18 + controlTeams * 0.08), 0, 1)
-  return clamp(declaredPressure * 0.55 + teamPressure * 0.45, 0, 1)
 }
 
 function commandForPhase(commands: JsonRecord, phase: 1 | 2 | 3 | 4): string {
