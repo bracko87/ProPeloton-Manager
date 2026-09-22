@@ -72,11 +72,12 @@
     "a4": "Additional equipment setup slots and expanded included garage capacity.",
     "a5": "Manager Briefing, advanced calendar intelligence, finance forecasts and management convenience tools.",
     "a6": "Advanced rider-performance analytics, development trends and unlimited world-race replays.",
-    "a7": "Premium improves information, automation and convenience — never race-engine strength, transfer acceptance or hidden rider skills."
+    "a7": "Premium improves information, automation and convenience — never race-engine strength, transfer acceptance or hidden rider skills.",
+    "a8": "Exclusive Developing Team access, including the U23 Head Coach: 100 coins to activate and 100 coins per season to renew."
   },
   "comparison": {
     "title": "Free vs Premium",
-    "description": "Premium adds optional analysis and tools without removing access from Free players.",
+    "description": "Premium adds advanced tools plus exclusive Developing Team and U23 Head Coach access.",
     "benefit": "Benefit",
     "free": "Free",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Use optional coin features",
     "developing": "Developing Team service",
     "activationRenewal": "{{activation}} activation / {{renewal}} renewal",
-    "note": "Premium-only analysis and tools will be expanded during the page-by-page feature review."
+    "note": "Developing Team and U23 Head Coach require an active Premium membership. Developing Team activation and seasonal renewal still use coins.",
+    "premiumOnly": "Premium only"
   },
   "packages": {
     "title": "Need additional coins?",
