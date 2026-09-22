@@ -391,30 +391,45 @@
     "developing-team": {
       "category": "Coureurs",
       "title": "Équipe en développement",
-      "subtitle": "U23/structure de développement, fenêtres d'achat et de mouvement.",
-      "overview": "L'équipe en développement est une deuxième équipe liée au club principal. Elle est utilisée pour les jeunes et les coureurs secondaires et a sa propre limite de l'alignement et des règles de guichet de mouvement.",
+      "subtitle": "Structure U23 réservée à Premium, activation, renouvellement et fenêtres de mouvement.",
+      "overview": "L'Équipe de Développement est une deuxième équipe réservée à Premium liée au club principal. Premium doit rester actif pour l'utiliser ou utiliser l'Entraîneur Principal U23 ; les données restent conservées si Premium expire.",
       "details": [
-        "Préférences charge le statut de l'équipe en développement à partir du backend. Il montre les jours réels joués, les jours de jeu joués, le solde des Coins, le coût des Coins, le statut requis, l'état mouvement-fenêtre et si l'achat est autorisé.",
-        "Après l'achat, l'application épingle le club actif de retour au club principal afin que le tableau de bord ne passe pas accidentellement au club en développement.",
-        "Les coureurs de l'équipe en développement ne peuvent être déplacés dans la première escouade que si la fenêtre de mouvement est ouverte et que la première escouade a de l'espace.",
-        "Si un coureur de l'équipe en développement a 24 ans ou plus, l'interface utilisateur peut afficher un avertissement d'action. Si la fenêtre de mouvement est ouverte, une action est nécessaire maintenant; sinon, le coureur doit se déplacer la fenêtre suivante."
+        "Un Premium actif est requis pour créer, réactiver, renouveler ou utiliser l'Équipe de Développement. L'Entraîneur Principal U23 est également réservé à Premium.",
+        "La première activation coûte 100 Coins et chaque renouvellement saisonnier 100 Coins. La condition de temps normale reste nécessaire avant la première activation.",
+        "Si Premium expire, l'accès est suspendu et les fonctions U23 sont désactivées ; équipe, coureurs, contrats, résultats et historique restent conservés.",
+        "Les Préférences affichent l'accès Premium, les jours joués, le solde, les coûts, les conditions et la fenêtre de mouvement.",
+        "Après activation, le club principal reste le club actif.",
+        "Les coureurs ne peuvent rejoindre l'équipe première qu'avec une fenêtre ouverte et une place libre.",
+        "Les coureurs de 24 ans et plus doivent être déplacés lorsque le jeu l'autorise."
       ],
       "facts": [
         {
-          "label": "Développement de l'équipe max en UI",
+          "label": "Disponibilité",
+          "value": "Membres Premium uniquement"
+        },
+        {
+          "label": "Coût d'activation",
+          "value": "100 Coins"
+        },
+        {
+          "label": "Renouvellement saisonnier",
+          "value": "100 Coins par saison"
+        },
+        {
+          "label": "Effectif maximum",
           "value": "8 coureurs"
         },
         {
-          "label": "Lieu d'achat",
-          "value": "Page des préférences"
+          "label": "Activation",
+          "value": "Préférences"
         },
         {
-          "label": "Règle des mouvements",
-          "value": "Les riders peuvent se déplacer seulement lorsque la fenêtre de mouvement est ouverte"
+          "label": "Mouvement",
+          "value": "Uniquement pendant une fenêtre ouverte"
         },
         {
-          "label": "Avertissement concernant l'âge",
-          "value": "Les coureurs âgés de 24 ans et plus ont besoin d'attention"
+          "label": "Avertissement d'âge",
+          "value": "24 ans et plus"
         }
       ],
       "tips": [
@@ -1665,18 +1680,33 @@
     "developing-team-deep": {
       "category": "Coureurs",
       "title": "Guide détaillé de l'équipe en développement",
-      "subtitle": "Règles d'achat, de statut, de liste et de guichet de mouvement.",
-      "overview": "L'équipe de développement est gérée séparément mais reste connectée au club principal et au compte.",
+      "subtitle": "Accès Premium, activation, renouvellement, effectif et règles de mouvement.",
+      "overview": "L'équipe de développement est une deuxième équipe réservée à Premium. Ses données restent conservées lorsque Premium expire.",
       "details": [
-        "L'état d'achat est chargé à partir du moteur et dépend des exigences et du solde des Coins.",
-        "Le contexte principal du club est restauré après avoir acheté l'équipe de développement.",
-        "Promouvoir un coureur nécessite à la fois une fenêtre ouverte et une capacité libre de First Squad.",
-        "Les coureurs âgés de 24 ans et plus devraient être déplacés lorsque le jeu le permet.",
-        "Si une fenêtre est fermée, l'interface utilisateur peut avertir les utilisateurs d'agir dans la fenêtre suivante."
+        "Premium est requis en plus des conditions normales de temps et de Coins.",
+        "La première activation coûte 100 Coins et chaque renouvellement saisonnier 100 Coins.",
+        "Si Premium expire, l'accès est désactivé sans supprimer les données de l'équipe.",
+        "L'Entraîneur Principal U23, l'automatisation d'entraînement U23 et l'accès au coach U23 en course exigent Premium actif.",
+        "Le contexte du club principal est restauré après l'activation.",
+        "La promotion d'un coureur exige une fenêtre ouverte et une place libre en équipe première.",
+        "Les coureurs de 24 ans et plus doivent être déplacés dès que possible.",
+        "Si une fenêtre est fermée, l'interface indique la prochaine."
       ],
       "facts": [
         {
-          "label": "Liste max",
+          "label": "Disponibilité",
+          "value": "Premium uniquement"
+        },
+        {
+          "label": "Activation / renouvellement",
+          "value": "100 Coins / 100 Coins par saison"
+        },
+        {
+          "label": "Entraîneur Principal U23",
+          "value": "Premium uniquement"
+        },
+        {
+          "label": "Effectif max.",
           "value": "8"
         },
         {
@@ -1684,8 +1714,8 @@
           "value": "Seulement pendant les fenêtres ouvertes"
         },
         {
-          "label": "Avertissement du coureur âgé",
-          "value": "Âge 24 ans et plus"
+          "label": "Avertissement d'âge",
+          "value": "24+"
         }
       ],
       "tips": [
@@ -1708,7 +1738,7 @@
         "Nutritionniste soutient les systèmes de nutrition et de récupération.",
         "Le mécanicien soutient les réparations et les systèmes techniques.",
         "Scout / Analyste prend en charge l'information externe sur les coureurs.",
-        "U23 Head Coach prend en charge les coureurs en développement d'équipe."
+        "L'Entraîneur Principal U23 soutient les coureurs de l'Équipe de Développement et n'est disponible que pour les membres Premium disposant d'une Équipe de Développement active."
       ],
       "facts": [
         {
@@ -2487,7 +2517,7 @@
         "Les suggestions des conseillers devraient utiliser le profil d'étape actuel, la météo, certains coureurs et les ressources disponibles.",
         "Le gestionnaire doit comparer les suggestions avec les objectifs de l'équipe. Un directeur du sport peut suggérer un plan générique sûr lorsque l'utilisateur veut une cible agressive de rupture.",
         "Les suggestions sont les plus utiles pour les nouveaux joueurs qui ne comprennent pas encore tous les contrôles de plan d'étape.",
-        "Les fonctionnalités de commodité Premium ne devraient pas améliorer secrètement les calculs de course. L'avantage est l'analyse/convenance, pas la puissance de performance cachée.",
+        "Les outils Premium d'analyse et de confort ne modifient pas secrètement la puissance dans le moteur de course. L'Équipe de Développement et l'Entraîneur Principal U23 sont, séparément, des fonctions de jeu explicitement réservées à Premium.",
         "Gardez toujours le plan final après avoir examiné les conseils."
       ],
       "facts": [
