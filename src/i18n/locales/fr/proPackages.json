@@ -132,7 +132,7 @@
   },
   "services": {
     "title": "Services de Coins actives",
-    "description": "Gérer les services optionnels de club achetés avec des Coins de monnaie. Ces services sont disponibles pour les joueurs Free et Premium.",
+    "description": "Gérez les services optionnels du club et les extensions financées par des Coins. L'Équipe de Développement et l'Entraîneur Principal U23 exigent également un abonnement Premium actif.",
     "loading": "Chargement des services de Coins...",
     "unavailable": "Les renseignements sur le service de l'équipe en développement sont actuellement indisponibles.",
     "unavailableHelp": "Le reste de Premium, la facturation et la gestion des Coins restent disponibles.",
@@ -140,7 +140,7 @@
     "active": "Actif",
     "expired": "Expiré",
     "notActivated": "Non activé",
-    "descriptionDeveloping": "Construisez et gérez une équipe de développement U23.",
+    "descriptionDeveloping": "Créez et gérez une équipe de développement U23 en tant que membre Premium.",
     "readOnly": "L'équipe et toutes les données stockées restent disponibles en mode lecture seule.",
     "reactivationPrice": "Prix de réactivation: {{cost}} Coins.",
     "firstActivationPrice": "Premier prix d'activation: {{cost}} coins.",
