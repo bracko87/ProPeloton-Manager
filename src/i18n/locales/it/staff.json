@@ -60,7 +60,7 @@
     },
     "u23HeadCoach": {
       "label": "Coach di testa U23",
-      "subtitle": "Formazione programmata per lo sviluppo del team e supporto tattico per la gara U23."
+      "subtitle": "Allenatore riservato a Premium per lo sviluppo del Developing Team e il supporto tattico U23."
     }
   },
   "impactAreas": {
@@ -458,5 +458,8 @@
   },
   "legacyUi": {
     "unlockDevelopingTeam": "Sblocca il team di sviluppo nelle preferenze."
+  },
+  "u23Premium": {
+    "required": "È richiesto un abbonamento Premium per l’U23 Head Coach."
   }
 }
