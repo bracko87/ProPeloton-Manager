@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import RiderProfilePage from '../../features/squad/components/RiderProfilePage'
 import DevelopingSquadTab from '../../features/squad/components/DevelopingSquadTab'
+import { PremiumFeatureLock } from '../../components/premium/PremiumFeatureLock'
 
 import type {
   ClubHealthOverviewRow,
@@ -1050,6 +1051,20 @@ export default function DevelopingTeamPage() {
       const seasonYear = getSeasonYearFromGameDate(normalizedGameDate)
       setGameDate(normalizedGameDate)
 
+      // Developing Team is a Premium-only gameplay entitlement. Do not hydrate
+      // the U23 club, roster, competition or movement data for Free accounts.
+      if (!hasPremiumAccess) {
+        setDevelopingTeamStatus(null)
+        setRows([])
+        setHealthOverviewRows([])
+        setCompetitionSummary(null)
+        setCompetitionLoading(false)
+        setDevelopingTeamSeasonDashboardData(
+          createEmptySquadSeasonDashboardData()
+        )
+        return
+      }
+
       /*
        * Access and first paint use the real Developing Team club row directly.
        * Reporting RPCs are optional background hydration and can never block
@@ -1544,6 +1559,22 @@ export default function DevelopingTeamPage() {
       : competitionLoading
         ? t('page.loadingCompetition')
         : t('page.competitionUnavailable')
+
+  if (!loading && !error && !isPremiumLoading && !isPremium) {
+    return (
+      <div className="w-full">
+        <TopNav
+          isDevelopingTeamUnlocked={false}
+          isDevelopingTeamStatusResolved={true}
+        />
+        <PremiumFeatureLock
+          className="mt-4"
+          title={t('premiumGate.title')}
+          description={t('premiumGate.description')}
+        />
+      </div>
+    )
+  }
 
   if (!loading && !error && developingTeamStatus && !hasDevelopingTeam) {
     return null
