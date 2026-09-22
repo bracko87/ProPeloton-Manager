@@ -72,11 +72,12 @@
     "a4": "Dodatni slotovi za podešavanje opreme i prošireni uključeni kapacitet garaže.",
     "a5": "Manager Briefing, napredna analiza kalendara, finansijske prognoze i alati za lakše upravljanje.",
     "a6": "Napredna analiza učinka vozača, trendovi razvoja i neograničeni replay-i svih svetskih trka.",
-    "a7": "Premium poboljšava informacije, automatizaciju i praktičnost — nikada snagu u race engine-u, prihvatanje transfera ili skrivene atribute vozača."
+    "a7": "Premium poboljšava informacije, automatizaciju i praktičnost — nikada snagu u race engine-u, prihvatanje transfera ili skrivene atribute vozača.",
+    "a8": "Ekskluzivan pristup Razvojnom timu i U23 glavnom treneru: 100 Coins za aktivaciju i 100 Coins po sezoni za obnovu."
   },
   "comparison": {
     "title": "Besplatno i Premium",
-    "description": "Premium dodaje opcione analize i alate bez ukidanja pristupa besplatnim igračima.",
+    "description": "Premium donosi napredne alate i ekskluzivan pristup Razvojnom timu i U23 glavnom treneru.",
     "benefit": "Pogodnost",
     "free": "Besplatno",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Korišćenje opcionih funkcija za novčiće",
     "developing": "Usluga Razvojnog tima",
     "activationRenewal": "{{activation}} aktivacija / {{renewal}} obnova",
-    "note": "Premium analize i alati biće proširivani tokom pregleda funkcija stranicu po stranicu."
+    "note": "Razvojni tim i U23 glavni trener zahtevaju aktivan Premium. Aktivacija i sezonska obnova Razvojnog tima i dalje se plaćaju Coins-ima.",
+    "premiumOnly": "Samo Premium"
   },
   "packages": {
     "title": "Potrebni su vam dodatni novčići?",
