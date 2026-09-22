@@ -102,7 +102,7 @@
     },
     "developing": {
       "title": "Développement de l'équipe et fenêtre de mouvement",
-      "body": "Your Developing Team is your second team. It can be used for young riders who are not yet ready for the first squad but can still course in assigned competitions.\n\nThe Developing Team must be unlocked first. You can find more about this in Preferences.\n\nRiders can only be moved between the First Squad and Developing Team during movement windows. These windows open four times per year, and the Squad page shows when the next movement window is available.\n\nSome extra management tools, extended views, or convenience features related to this area may require a Premium account or coin purchase.",
+      "body": "Votre Équipe de Développement est une deuxième équipe réservée à Premium pour les jeunes coureurs qui ne sont pas encore prêts pour l'équipe première mais peuvent participer aux compétitions assignées.\n\nUn abonnement Premium actif est nécessaire pour créer et utiliser l'Équipe de Développement. La première activation coûte 100 Coins et chaque renouvellement saisonnier coûte 100 Coins. L'Entraîneur Principal U23 est également réservé à Premium.\n\nSi Premium expire, l'accès est suspendu, mais l'équipe, les coureurs, les contrats, les résultats et l'historique restent conservés. Les transferts entre l'équipe première et l'Équipe de Développement restent limités aux fenêtres de mouvement normales.",
       "primary": "Suivant"
     },
     "staff": {
