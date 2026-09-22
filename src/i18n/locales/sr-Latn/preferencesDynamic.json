@@ -26,21 +26,22 @@
   "errors": {
     "loadStatus": "Nije moguće učitati status Razvojnog tima.",
     "activate": "Nije moguće aktivirati Razvojni tim.",
-    "renewal": "Nije moguće ažurirati automatsku obnovu."
+    "renewal": "Nije moguće ažurirati automatsku obnovu.",
+    "premiumRequired": "Premium članstvo je obavezno za pristup Razvojnom timu."
   },
   "service": {
-    "summary": "Dostupno igračima sa besplatnim i Premium nalogom. Prva aktivacija košta {{activation}} Coins. Svaka naredna sezonska obnova ili reaktivacija košta {{renewal}} Coins. Premium članstvo ne ukida ove troškove usluge.",
-    "eligibilityCosts": "Uslov: 30 dana u stvarnom vremenu ili 60 dana u igri. Prva aktivacija: {{activation}} Coins. Obnova i reaktivacija: {{renewal}} Coins po sezoni.",
+    "summary": "Samo za Premium članove. Prva aktivacija košta {{activation}} Coins. Svaka naredna sezonska obnova ili reaktivacija košta {{renewal}} Coins. Premium članstvo mora ostati aktivno.",
+    "eligibilityCosts": "Uslovi: aktivno Premium članstvo i najmanje 30 dana u stvarnom vremenu ili 60 dana u igri. Prva aktivacija: {{activation}} Coins. Obnova ili reaktivacija: {{renewal}} Coins po sezoni.",
     "accessUntilSeason": "Pristup ostaje dostupan do kraja sezone {{season}}.",
     "season": "Sezona {{season}}",
     "endSeason": "Kraj sezone {{season}}",
     "startSeason": "Početak sezone {{season}}",
     "coins": "{{count}} Coins",
-    "autoRenewHelp": "Kada je uključeno, {{cost}} Coins biće oduzeto na početku sledeće sezone. Ako je stanje prenisko, obnova neće uspeti i Razvojni tim će preći u režim samo za čitanje.",
+    "autoRenewHelp": "Kada je uključeno, {{cost}} Coins biće oduzeto na početku sledeće sezone samo dok je Premium aktivan. Ako Premium istekne ili je stanje Coins-a prenisko, pristup Razvojnom timu biće onemogućen.",
     "activateSeason": "Aktiviraj za sezonu {{season}}",
     "existingTeam": "Vaš postojeći Razvojni tim biće aktiviran za ovu sezonu.",
     "newTeam": "Biće kreiran i aktiviran Razvojni tim za ovu sezonu.",
-    "activationAccess": "Pristup traje do kraja trenutne sezone u igri. Automatska obnova je podrazumevano uključena i možete je isključiti u bilo kom trenutku.",
+    "activationAccess": "Pristup traje do kraja trenutne sezone u igri dok je Premium aktivan. Automatska obnova je podrazumevano uključena i možete je isključiti u bilo kom trenutku.",
     "needCoins": "Potrebno vam je {{cost}} Coins za aktivaciju Razvojnog tima. Trenutno stanje: {{balance}} Coins.",
     "team": "Tim: {{name}}",
     "closeActivation": "Zatvori potvrdu aktivacije Razvojnog tima",
@@ -48,8 +49,9 @@
     "confirmReactivate": "Ponovo aktivirati Razvojni tim za sezonu {{season}}?",
     "deductCoins": "{{cost}} Coins biće oduzeto iz vašeg novčanika.",
     "accessThisSeason": "Pristup traje do kraja ove sezone u igri.",
-    "autoRenewModal": "Automatska obnova biće podrazumevano uključena. Možete je isključiti u bilo kom trenutku u Podešavanjima ili na stranici Premium i naplata.",
+    "autoRenewModal": "Automatska obnova biće podrazumevano uključena. Može se obnoviti samo dok je Premium aktivan, a možete je isključiti u bilo kom trenutku u Podešavanjima ili na stranici Premium i naplata.",
     "actionActivate": "Aktiviraj za {{cost}} Coins",
-    "actionReactivate": "Ponovo aktiviraj za {{cost}} Coins"
+    "actionReactivate": "Ponovo aktiviraj za {{cost}} Coins",
+    "premiumRequired": "Razvojni tim je Premium-only gameplay opcija. Prvo aktivirajte Premium; kada ispunite ostale uslove, prva aktivacija košta {{activation}} Coins, a svaka kasnija obnova ili reaktivacija {{renewal}} Coins po sezoni. Postojeći U23 podaci ostaju sačuvani ako Premium istekne."
   }
 }
