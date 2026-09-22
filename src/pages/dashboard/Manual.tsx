@@ -238,17 +238,19 @@ const manualSections: ManualSection[] = [
     id: 'developing-team',
     category: 'Riders',
     title: 'Developing Team',
-    subtitle: 'U23/development structure, purchase and movement windows.',
+    subtitle: 'Premium-only U23/development structure, activation and movement windows.',
     overview:
-      'The Developing Team is a second team connected to the main club. It is used for young or secondary riders and has its own roster limit and movement-window rules.',
+      'The Developing Team is a Premium-only second team connected to the main club. An active Premium membership is required to create or use it, in addition to the normal eligibility and coin-service requirements.',
     facts: [
+      { label: 'Premium access', value: 'Active Premium membership required' },
+      { label: 'Activation / renewal', value: '100 coins / 100 coins per season' },
       { label: 'Developing Team max in UI', value: '8 riders' },
-      { label: 'Purchase location', value: 'Preferences page' },
+      { label: 'Activation location', value: 'Preferences page' },
       { label: 'Movement rule', value: 'Riders can move only when the movement window is open' },
       { label: 'Age warning', value: 'Riders aged 24+ require attention' },
     ],
     details: [
-      'Preferences loads Developing Team status from the backend. It shows real days played, game days played, coin balance, coin cost, requirement status, movement-window state and whether purchase is allowed.',
+      'Preferences loads Developing Team status from the backend. Active Premium membership is mandatory; eligible Premium members can activate it for 100 coins and renew or reactivate it for 100 coins per season. The existing 30 real-life days or 60 in-game days eligibility requirement still applies.',
       'After purchase, the app pins the active club back to the main club so the dashboard does not accidentally switch to the developing club.',
       'Developing Team riders can be moved to the First Squad only if the movement window is open and the First Squad has space.',
       'If a Developing Team rider is 24 or older, the UI can show an action warning. If the movement window is open, action is required now; otherwise the rider must move next window.',
@@ -277,6 +279,7 @@ const manualSections: ManualSection[] = [
       'Mechanic supports equipment maintenance and technical systems.',
       'Sport Director supports race preparation, tactics and stage-plan suggestions.',
       'Scout / Analyst supports scouting reports and market knowledge.',
+      'The U23 Head Coach is a Premium-only staff role and is usable only while the club has active Premium access and an available Developing Team.',
       'Staff courses can be active or recently completed, with duration days, cost and attribute gains.',
       'Staff contract extensions can include current salary, requested salary, minimum acceptable salary, interest score, willingness and decision reasons.',
     ],
@@ -706,7 +709,7 @@ const manualSections: ManualSection[] = [
     "category": "Coins and Account",
     "title": "Preferences and Notification Settings",
     "subtitle": "Where players control notifications and special team/account options.",
-    "overview": "Preferences stores notification controls, Developing Team purchase/status and danger zone actions.",
+    "overview": "Preferences stores notification controls, Premium-only Developing Team activation/status and danger zone actions.",
     "facts": [
       {
         "label": "Notification storage",
@@ -723,7 +726,7 @@ const manualSections: ManualSection[] = [
     ],
     "details": [
       "Notification toggles decide which notification groups the player wants to receive.",
-      "Developing Team status shows requirements, coin cost, balance and movement-window information.",
+      "Developing Team is available only to active Premium members. Eligible Premium members pay 100 coins for first activation and 100 coins for each later season renewal or reactivation.",
       "After Developing Team purchase, the active club context is pinned back to the main club.",
       "Shutdown Team uses a backend Edge Function and requires the active session token.",
       "Restart Team is currently a placeholder/action notice and should not be described as fully active."
@@ -1345,9 +1348,17 @@ const manualSections: ManualSection[] = [
     "id": "developing-team-deep",
     "category": "Riders",
     "title": "Developing Team Deep Guide",
-    "subtitle": "Purchase, status, roster and movement-window rules.",
-    "overview": "The development squad is managed separately but stays connected to the main club and account.",
+    "subtitle": "Premium-only access, status, roster and movement-window rules.",
+    "overview": "The development squad is a Premium-only gameplay feature. It is managed separately but stays connected to the main club and account.",
     "facts": [
+      {
+        "label": "Premium access",
+        "value": "Active Premium membership required"
+      },
+      {
+        "label": "Activation / renewal",
+        "value": "100 coins / 100 coins per season"
+      },
       {
         "label": "Roster max",
         "value": "8"
@@ -1362,7 +1373,7 @@ const manualSections: ManualSection[] = [
       }
     ],
     "details": [
-      "Purchase status is loaded from the backend and depends on requirements and coin balance.",
+      "Developing Team status is loaded from the backend and requires active Premium membership, the normal time eligibility requirement and sufficient coins.",
       "The main club context is restored after buying the development team.",
       "Promoting a rider requires both an open movement window and free First Squad capacity.",
       "Age 24+ riders should be moved when the game allows it.",
@@ -1406,7 +1417,7 @@ const manualSections: ManualSection[] = [
       "Nutritionist supports nutrition/recovery systems.",
       "Mechanic supports repairs and technical systems.",
       "Scout / Analyst supports external rider information.",
-      "U23 Head Coach supports developing-team riders."
+      "U23 Head Coach supports developing-team riders and is available only to active Premium members."
     ],
     "tips": [
       "Hire the staff role that solves the current club bottleneck."
