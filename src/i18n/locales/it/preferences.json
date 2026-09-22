@@ -151,7 +151,7 @@
   },
   "developingTeam": {
     "title": "Gruppo di sviluppo",
-    "description": "Costruisci e gestisci una squadra di sviluppo U23 con accesso stagionale alle Coins.",
+    "description": "Squadra di sviluppo U23 esclusiva Premium con attivazione da 100 Coins e rinnovo stagionale da 100 Coins.",
     "loading": "Caricamento dello stato del team di sviluppo...",
     "realLifeProgress": "Progressi nella vita reale",
     "realLifeMinimum": "Minimo 30 giorni richiesti",
@@ -180,7 +180,12 @@
     "rosterRule": "Dimensione massima del roster: 8 ciclisti.",
     "ageRule": "Solo i ciclisti di età pari o inferiore a 23 anni sono ammissibili.",
     "movementRule": "I ciclisti si muovono tra le squadre solo durante le finestre di movimento.",
-    "teamLabel": "Squadra"
+    "teamLabel": "Squadra",
+    "premiumOnlyTitle": "Funzione solo Premium",
+    "premiumOnlyDescription": "La Squadra di Sviluppo e l'Allenatore Capo U23 sono disponibili solo con Premium attivo. L'attivazione costa {{activation}} Coins e il rinnovo di ogni stagione {{renewal}} Coins.",
+    "premiumInactiveDescription": "I dati della Squadra di Sviluppo esistente restano salvati, ma l'accesso viene sospeso quando Premium non è attivo.",
+    "unlockPremium": "Sblocca Premium",
+    "premiumModalRequirement": "È richiesto un abbonamento Premium attivo per usare la Squadra di Sviluppo e l'Allenatore Capo U23."
   },
   "dangerZone": {
     "title": "Zona pericolosa",
