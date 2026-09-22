@@ -1,7 +1,7 @@
 export const ROAD_SCENARIO_PHYSICAL_DIRECTOR_VERSION =
-  'road_scenario_physical_director_v2_2' as const
+  'road_scenario_physical_director_v2_3' as const
 export const ROAD_RACE_DIRECTOR_RUNTIME_VERSION =
-  'road_race_director_v2_2_runtime' as const
+  'road_race_director_v2_3_runtime' as const
 
 type JsonRecord = Record<string, unknown>
 type NumericRange = readonly [number, number]
@@ -584,7 +584,7 @@ function scenarioGapEnvelopeV2(
 }
 
 /**
- * Race Director V2.2 tactical-envelope guidance.
+ * Race Director V2.3 tactical-envelope guidance.
  *
  * The core engine still decides who attacks, who belongs to the break, rider
  * speeds, energy, terrain response and the sporting result. The selected
@@ -728,22 +728,38 @@ export function applyRoadScenarioGapGuidanceV1(
       ? 'protect_formation_window'
       : 'protect_break_story'
   } else if (current > envelope.upper) {
-    const difference = current - envelope.upper
-    const chaseBoost = 1 + combinedChase * 1.05 + (envelope.chaseActive ? 0.55 : 0)
-    const maximumClosure = stepKm * (11 + 11 * envelope.storyStrength) * chaseBoost
-    const requested = difference * (0.27 + envelope.storyStrength * 0.25) * chaseBoost
-    adjusted = current - Math.min(requested, maximumClosure)
-    reason = 'rein_in_excess_gap'
+    /*
+     * V2.3: the scenario template must never manufacture gap closure.
+     * The physical speed integrator already knows local terrain, weather,
+     * live energy, drafting and chase resources. Pulling a large gap down
+     * toward the story envelope here used to stack an additional synthetic
+     * closure on top of the real peloton speed difference, which is exactly
+     * how minutes could disappear far too quickly.
+     */
+    adjusted = current
+    reason = 'physical_chase_owns_gap_closure'
   } else {
     const difference = envelope.center - current
-    const userOverride = difference > 0 ? 1 - userChase * 0.72 : 1
-    const chaseMultiplier = difference < 0
-      ? 1 + combinedChase * 0.55 + (envelope.chaseActive ? 0.30 : 0)
-      : Math.max(0.20, userOverride)
-    const requested = difference * envelope.centerPullStrength * envelope.storyStrength * chaseMultiplier
-    const cap = stepKm * (difference < 0 ? 7.5 : 6.5)
-    adjusted = current + clamp(requested, -cap, cap)
-    reason = Math.abs(adjusted - current) > 0.000001 ? 'gentle_story_center_pull' : reason
+    if (difference > 0) {
+      const userOverride = 1 - userChase * 0.72
+      const growthMultiplier = Math.max(0.20, userOverride)
+      const requested =
+        difference *
+        envelope.centerPullStrength *
+        envelope.storyStrength *
+        growthMultiplier
+      const cap = stepKm * 6.5
+      adjusted = current + clamp(requested, 0, cap)
+      reason =
+        Math.abs(adjusted - current) > 0.000001
+          ? 'gentle_story_center_pull'
+          : reason
+    } else {
+      // A story envelope may protect/encourage an escape, but only physical
+      // road speed may reduce an established positive gap.
+      adjusted = current
+      reason = 'physical_chase_owns_gap_closure'
+    }
   }
 
   if (envelope.catchExpected && envelope.chaseActive) {
