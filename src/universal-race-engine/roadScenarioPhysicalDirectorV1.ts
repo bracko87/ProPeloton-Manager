@@ -1,7 +1,7 @@
 export const ROAD_SCENARIO_PHYSICAL_DIRECTOR_VERSION =
-  'road_scenario_physical_director_v2_3' as const
+  'road_scenario_physical_director_v2_4' as const
 export const ROAD_RACE_DIRECTOR_RUNTIME_VERSION =
-  'road_race_director_v2_3_runtime' as const
+  'road_race_director_v2_4_runtime' as const
 
 type JsonRecord = Record<string, unknown>
 type NumericRange = readonly [number, number]
@@ -20,7 +20,14 @@ export interface RoadScenarioPhysicalInputV1 {
     readonly distanceKm: number
     readonly terrainType: string
   }
+  readonly teams?: readonly {
+    readonly teamId: string
+    readonly snapshot?: {
+      readonly metadata?: Readonly<Record<string, unknown>>
+    }
+  }[]
   readonly stagePlans: readonly {
+    readonly teamId?: string
     readonly metadata?: Readonly<Record<string, unknown>>
     readonly riders?: readonly {
       readonly commands?: Readonly<Record<string, unknown>>
@@ -97,6 +104,15 @@ function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function booleanValue(value: unknown): boolean {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') return value !== 0
+  if (typeof value === 'string') {
+    return ['true', 't', '1', 'yes', 'y'].includes(value.trim().toLowerCase())
+  }
+  return false
+}
+
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(maximum, Math.max(minimum, value))
 }
@@ -113,6 +129,23 @@ function stableHash(value: string): number {
     hash = Math.imul(hash, 16777619)
   }
   return hash >>> 0
+}
+
+function deterministicUnitRoll(value: string): number {
+  return (stableHash(value) % 1_000_000) / 1_000_000
+}
+
+function scenarioAiControlledTeamIds(
+  input: RoadScenarioPhysicalInputV1,
+): Set<string> {
+  return new Set(
+    (input.teams ?? [])
+      .filter((team) =>
+        booleanValue(object(team.snapshot?.metadata).scenarioAiControlled),
+      )
+      .map((team) => text(team.teamId))
+      .filter(Boolean),
+  )
 }
 
 function groupCodeForGap(gapSeconds: number): string {
@@ -316,6 +349,7 @@ function commandForPhase(commands: JsonRecord, phase: 1 | 2 | 3 | 4): string {
 function commandChasePressure(
   input: RoadScenarioPhysicalInputV1,
   kmFromStart: number,
+  humanOnly = false,
 ): number {
   const phase = phaseNumber(input, kmFromStart)
   const chaseCommands = new Set([
@@ -324,11 +358,18 @@ function commandChasePressure(
     'control_race',
     'control_tempo',
   ])
+  const aiTeamIds = humanOnly
+    ? scenarioAiControlledTeamIds(input)
+    : new Set<string>()
   let activeRiders = 0
   let chaseRiders = 0
   let chaseTeams = 0
+  let includedTeams = 0
 
   input.stagePlans.forEach((plan) => {
+    const teamId = text(plan.teamId)
+    if (humanOnly && teamId && aiTeamIds.has(teamId)) return
+    includedTeams += 1
     let teamChaseRiders = 0
     ;(plan.riders ?? []).forEach((rider) => {
       const command = commandForPhase(object(rider.commands), phase)
@@ -342,8 +383,8 @@ function commandChasePressure(
     if (teamChaseRiders > 0) chaseTeams += 1
   })
 
-  if (activeRiders === 0 || chaseTeams === 0) return 0
-  const teamShare = chaseTeams / Math.max(1, input.stagePlans.length)
+  if (activeRiders === 0 || chaseTeams === 0 || includedTeams === 0) return 0
+  const teamShare = chaseTeams / includedTeams
   const riderShare = chaseRiders / activeRiders
   return clamp(teamShare * 2.35 + riderShare * 0.45, 0, 1)
 }
@@ -551,7 +592,7 @@ function scenarioGapEnvelopeV2(
 }
 
 /**
- * Race Director V2.3 tactical-envelope guidance.
+ * Race Director V2.4 tactical-envelope guidance.
  *
  * The core engine still decides who attacks, who belongs to the break, rider
  * speeds, energy, terrain response and the sporting result. The selected
@@ -573,24 +614,34 @@ export function applyRoadScenarioGapGuidanceV1(
   const distanceKm = Math.max(1, finite(input.stage.distanceKm, 1))
   const progress = clamp(finite(kmFromStart, 0) / distanceKm, 0, 1)
 
-  // During the first formation window a successful physical move should not be
-  // erased by one aggressive peloton step before it has had any chance to
-  // establish itself. Protect only the sub-catch formation state, and only when
-  // user chase pressure is not overwhelming. After formation is complete, a
-  // physical catch remains final and the generation is closed as before.
+  /*
+   * V2.4 catch timing: templates define the broad race story, physical road
+   * speed still decides the actual catch, and real user commands may move that
+   * catch earlier. Scenario-AI chase commands are deliberately NOT allowed to
+   * cancel the protection by themselves; otherwise a full AI peloton almost
+   * always erased the opening break in Phase 2.
+   *
+   * A credible break may still be caught in Phase 2, but with no real-user
+   * chase this is an uncommon deterministic outcome. Most catches are released
+   * to physical racing in Phase 3 / early Phase 4, while survival templates can
+   * remain alive substantially longer.
+   */
   if (current <= 0.5) {
     const caughtEnvelope = scenarioGapEnvelopeV2(input, progress, true)
     if (caughtEnvelope) {
-      const userChase = commandChasePressure(input, kmFromStart)
+      const allChase = commandChasePressure(input, kmFromStart)
+      const humanChase = commandChasePressure(input, kmFromStart, true)
+      const currentPhase = phaseNumber(input, kmFromStart)
+
       const earlyFormation =
         progress < caughtEnvelope.formationProgress - 0.000001
-      if (earlyFormation && userChase < 0.8) {
-        const protectionFactor = clamp((0.8 - userChase) / 0.8, 0, 1)
+      if (earlyFormation && humanChase < 0.9) {
+        const protectionFactor = clamp((0.9 - humanChase) / 0.9, 0, 1)
         const protectedGap = round(
           clamp(
-            1 + protectionFactor * 3,
-            1,
-            Math.max(1, Math.min(4, caughtEnvelope.lower)),
+            1.5 + protectionFactor * 3.5,
+            1.5,
+            Math.max(1.5, Math.min(5, caughtEnvelope.lower)),
           ),
           6,
         )
@@ -610,43 +661,97 @@ export function applyRoadScenarioGapGuidanceV1(
         return protectedGap
       }
 
-      // A credible, already-established break can otherwise disappear in one
-      // physical step long before a late-catch story has even reached its
-      // tactical closing window. Treat that as a numerical/tactical overshoot,
-      // not as a scripted result: preserve only a tiny residual gap, and only
-      // when the observed break previously earned a material advantage. Strong
-      // real rider/team chase commands always override this protection.
       const rawAudit = actualScenarioAudit(input)
       const generationState = rawAudit
         ? object(runtimeGenerationStates(rawAudit)[String(caughtEnvelope.generation)])
         : {}
-      const previousPeakGap = Math.max(0, finite(generationState.peakGapSeconds, 0))
-      const previousLiveGap = Math.max(0, finite(generationState.lastGapSeconds, 0))
-      const targetFloor = caughtEnvelope.targetPeakGapRangeSec?.[0] ?? caughtEnvelope.center
+      const previousPeakGap = Math.max(
+        0,
+        finite(generationState.peakGapSeconds, 0),
+      )
+      const previousLiveGap = Math.max(
+        0,
+        finite(generationState.lastGapSeconds, 0),
+      )
+      const targetFloor =
+        caughtEnvelope.targetPeakGapRangeSec?.[0] ?? caughtEnvelope.center
       const credibleEstablishedBreak =
         generationState.firstSeenKm !== undefined &&
-        previousPeakGap >= Math.max(45, targetFloor * 0.25)
-      const catchWindowStart = caughtEnvelope.catchWindowProgress?.[0] ?? null
-      const tacticalProtectionDeadline = catchWindowStart !== null
-        ? Math.max(caughtEnvelope.chaseStartProgress, catchWindowStart - 0.08)
-        : caughtEnvelope.survivalExpected
-          ? Math.max(0.72, caughtEnvelope.chaseStartProgress)
-          : 0
-      const materiallyPrematureCatch =
-        credibleEstablishedBreak &&
-        progress < tacticalProtectionDeadline - 0.000001
+        previousPeakGap >= Math.max(35, targetFloor * 0.20)
 
-      if (materiallyPrematureCatch && userChase < 0.75) {
-        const protectionFactor = clamp((0.75 - userChase) / 0.75, 0, 1)
-        const residualBase = clamp(previousLiveGap * 0.18, 0.75, 8)
+      const rawAuditSeed =
+        text(rawAudit?.selectionSeed) ||
+        `${text(rawAudit?.templateId)}|${caughtEnvelope.generation}`
+      const catchWindowStart =
+        caughtEnvelope.catchWindowProgress?.[0] ?? null
+      const releaseRoll = deterministicUnitRoll(
+        `${rawAuditSeed}|generation:${caughtEnvelope.generation}|physical-catch-release-v24`,
+      )
+      const naturalProtectionRelease =
+        caughtEnvelope.survivalExpected
+          ? clamp(0.84 + releaseRoll * 0.12, 0.82, 0.97)
+          : catchWindowStart !== null
+            ? clamp(
+                catchWindowStart - (0.08 + releaseRoll * 0.22),
+                0.52,
+                0.78,
+              )
+            : clamp(0.60 + releaseRoll * 0.14, 0.52, 0.76)
+      const commandAdjustedRelease = clamp(
+        naturalProtectionRelease - humanChase * 0.14,
+        0.50,
+        0.97,
+      )
+
+      const basePhase2EarlyCatchChance =
+        caughtEnvelope.survivalExpected ? 0.04 : 0.12
+      const phase2EarlyCatchChance = clamp(
+        basePhase2EarlyCatchChance +
+          humanChase * 0.55 +
+          Math.max(0, allChase - 0.92) * 0.08,
+        0.03,
+        0.72,
+      )
+      const phase2EarlyCatchRoll = deterministicUnitRoll(
+        `${rawAuditSeed}|generation:${caughtEnvelope.generation}|phase2-early-catch-v24`,
+      )
+      const phase2EarlyCatchAllowed =
+        humanChase >= 0.9 ||
+        phase2EarlyCatchRoll <= phase2EarlyCatchChance
+
+      const catchStillProtected =
+        credibleEstablishedBreak &&
+        (
+          (currentPhase === 1 && humanChase < 0.9) ||
+          (currentPhase === 2 && !phase2EarlyCatchAllowed) ||
+          (
+            currentPhase >= 3 &&
+            progress < commandAdjustedRelease - 0.000001
+          )
+        )
+
+      if (catchStillProtected) {
+        const commandRetention = clamp(1 - humanChase * 0.45, 0.45, 1)
+        const residualBase = clamp(
+          Math.max(
+            4,
+            previousLiveGap * 0.28,
+            Math.min(16, targetFloor * 0.08),
+          ),
+          4,
+          18,
+        )
         const protectedGap = round(
-          clamp(residualBase * (0.68 + protectionFactor * 0.32), 0.75, 8),
+          clamp(residualBase * commandRetention, 2.5, 18),
           6,
         )
         recordRuntimeApplication(input, 'gap_guidance', {
           adjusted: true,
           kmFromStart,
-          reason: 'prevent_one_step_premature_catch',
+          reason:
+            currentPhase === 2
+              ? 'protect_opening_break_from_routine_phase2_catch'
+              : 'protect_opening_break_until_physical_catch_window',
         })
         recordGenerationRuntime(
           input,
@@ -654,7 +759,9 @@ export function applyRoadScenarioGapGuidanceV1(
           current,
           protectedGap,
           kmFromStart,
-          'prevent_one_step_premature_catch',
+          currentPhase === 2
+            ? 'protect_opening_break_from_routine_phase2_catch'
+            : 'protect_opening_break_until_physical_catch_window',
         )
         return protectedGap
       }
@@ -675,13 +782,13 @@ export function applyRoadScenarioGapGuidanceV1(
   if (!envelope) return current
 
   const stepKm = clamp(finite(stepDistanceKm, 0.25), 0.25, 2.5)
-  const userChase = commandChasePressure(input, kmFromStart)
+  const humanChase = commandChasePressure(input, kmFromStart, true)
   let adjusted = current
   let reason = 'inside_story_envelope'
 
   if (current < envelope.lower) {
     const difference = envelope.lower - current
-    const commandResistance = 1 - userChase * 0.76
+    const commandResistance = 1 - humanChase * 0.76
     const templateResistance = envelope.chaseActive ? 0.52 : 1
     const earlyFormationBoost = progress < envelope.formationProgress ? 1.28 : 1
     const maximumGrowth =
@@ -706,7 +813,7 @@ export function applyRoadScenarioGapGuidanceV1(
   } else {
     const difference = envelope.center - current
     if (difference > 0) {
-      const userOverride = 1 - userChase * 0.72
+      const userOverride = 1 - humanChase * 0.72
       const growthMultiplier = Math.max(0.20, userOverride)
       const requested =
         difference *
