@@ -16,12 +16,12 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "mjesečno u stvarnom vremenu",
     "membership": "Premium članstvo",
-    "advancedTools": "Napredna analiza, automatizacija, prognoze i alati za jednostavnije upravljanje.",
+    "advancedTools": "Premium Razvojna momčad i U23 Head Coach, uz naprednu analitiku, automatizaciju, prognoze i alate za upravljanje.",
     "marketTools": "Spremljene pretrage, tržišna upozorenja, neograničena dnevna dodavanja na listu bez troška coina (do limita aktivne liste) i dublja analiza transfera.",
     "capacity": "Dodatni kapaciteti za opremu i infrastrukturu radi lakšeg upravljanja.",
     "receive": "Dobijte",
     "monthlyCoinsSuffix": "Coins nakon svake uspešne mjesečne uplate.",
-    "cancelAnytime": "Otkažite u bilo kom trenutku; osnovno igranje ostaje besplatno.",
+    "cancelAnytime": "Otkaži u bilo kojem trenutku; osnovno igranje ostaje besplatno. Razvojna momčad i U23 Head Coach zahtijevaju aktivan Premium.",
     "activeUntilEnd": "Premium ostaje aktivan do kraja plaćenog perioda.",
     "activeNow": "Premium je aktivan.",
     "futureCanceled": "Buduća obnova je otkazana. Pristup ostaje dostupan do {{date}}.",
@@ -72,11 +72,12 @@
     "a4": "Dodatni slotovi za postavka opreme i prošireni uključeni kapacitet garaže.",
     "a5": "Manager Briefing, napredna analiza kalendara, financijske prognoze i alati za jednostavnije upravljanje.",
     "a6": "Napredna analiza učinka vozača, trendovi razvoja i neograničene snimke svih svjetskih utrka.",
-    "a7": "Premium poboljšava informacije, automatizaciju i praktičnost — nikada snagu u race engineu, prihvaćanje transfera ili skrivene atribute vozača."
+    "a7": "Premium poboljšava informacije, automatizaciju i praktičnost — nikada snagu u race engineu, prihvaćanje transfera ili skrivene atribute vozača.",
+    "a8": "Premium-only pristup Razvojnoj momčadi i U23 Head Coachu. Aktivacija i obnova Razvojne momčadi i dalje koštaju novčiće."
   },
   "comparison": {
     "title": "Besplatno i Premium",
-    "description": "Premium dodaje opcione analize i alate bez ukidanja pristupa besplatnim igračima.",
+    "description": "Premium dodaje napredne alate i ekskluzivne funkcije igre, uključujući Razvojnu momčad i U23 Head Coach.",
     "benefit": "Pogodnost",
     "free": "Besplatno",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Korišćenje opcionih funkcija za Coins",
     "developing": "Usluga Razvojnog tima",
     "activationRenewal": "{{activation}} aktivacija / {{renewal}} obnova",
-    "note": "Premium analize i alati biće proširivani tokom pregleda funkcija stranicu po stranicu."
+    "note": "Premium uključuje ekskluzivan pristup funkcijama igre uz analitiku, automatizaciju i praktične alate.",
+    "r9": "Razvojna momčad + U23 Head Coach"
   },
   "packages": {
     "title": "Potrebni su vam dodatni Coins?",
@@ -130,7 +132,7 @@
   },
   "services": {
     "title": "Aktivne usluge za Coins",
-    "description": "Upravljajte opcionim uslugama kluba kupljenim Coins. Ove usluge su dostupne i besplatnim i Premium igračima.",
+    "description": "Razvojna momčad je Premium-only usluga za novčiće. Uz novčiće za aktivaciju ili obnovu potrebno je aktivno Premium članstvo.",
     "loading": "Učitavanje usluga za Coins...",
     "unavailable": "Podaci o usluzi Razvojnog tima trenutno nisu dostupni.",
     "unavailableHelp": "Ostale funkcije za Premium, naplatu i upravljanje Coins i dalje su dostupne.",
@@ -138,7 +140,7 @@
     "active": "Aktivno",
     "expired": "Isteklo",
     "notActivated": "Nije aktivirano",
-    "descriptionDeveloping": "Izgradite i upravljajte U23 razvojnim timom.",
+    "descriptionDeveloping": "Premium U23 razvojna momčad s prozorima za premještanje, utrkama i podrškom U23 Head Coacha.",
     "readOnly": "Tim i svi spremljeni podaci ostaju dostupni u načinu samo za čitanje.",
     "reactivationPrice": "Cena reaktivacije: {{cost}} Coins.",
     "firstActivationPrice": "Cena prve aktivacije: {{cost}} Coins.",
