@@ -992,6 +992,11 @@ export default function SquadPage() {
   async function handleMoveToDevelopingTeam(riderId: string) {
     if (movingRiderId) return
 
+    if (!isPremium) {
+      setMoveActionMessage(t('nav.developingPremiumOnly'))
+      return
+    }
+
     if (!developingTeamStatus?.is_purchased || !developingTeamStatus.developing_club_id) {
       setMoveActionMessage(t('nav.unlockDeveloping'))
       return
@@ -1040,9 +1045,12 @@ export default function SquadPage() {
     developingTeamStatus !== null || developingTeamStatusError !== null
 
   const hasDevelopingTeam =
-    developingTeamExistsFallback ||
-    developingTeamStatus?.is_purchased === true ||
-    Boolean((developingTeamStatus as unknown as { team_exists?: boolean } | null)?.team_exists)
+    isPremium &&
+    (
+      developingTeamExistsFallback ||
+      developingTeamStatus?.is_purchased === true ||
+      Boolean((developingTeamStatus as unknown as { team_exists?: boolean } | null)?.team_exists)
+    )
   const showDevelopingTeamLockedState =
     developingTeamStatusResolved && !hasDevelopingTeam
   const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
@@ -1105,9 +1113,11 @@ export default function SquadPage() {
             <span
               className="inline-flex cursor-not-allowed select-none items-center gap-2 rounded-md bg-gray-50 px-4 py-2 text-sm font-medium text-gray-400 opacity-80"
               title={
-                developingTeamStatusError
-                  ? t('nav.developingUnavailable')
-                  : t('nav.unlockDeveloping')
+                !isPremium
+                  ? t('nav.developingPremiumOnly')
+                  : developingTeamStatusError
+                    ? t('nav.developingUnavailable')
+                    : t('nav.unlockDeveloping')
               }
               aria-disabled="true"
               role="link"
