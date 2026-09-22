@@ -72,11 +72,12 @@
     "a4": "Equipamiento adicional ranuras de configuración y ampliado incluye la capacidad de garaje.",
     "a5": "Manager Briefing, inteligencia avanzada del calendario, previsiones financieras y herramientas de comodidad.",
     "a6": "Análisis avanzado del rendimiento de ciclistas, tendencias de desarrollo y repeticiones ilimitadas de carreras mundiales.",
-    "a7": "Premium mejora la información, la automatización y la comodidad; nunca la fuerza en carrera, la aceptación de fichajes ni atributos ocultos."
+    "a7": "Premium mejora la información, la automatización y la comodidad; nunca la fuerza en carrera, la aceptación de fichajes ni atributos ocultos.",
+    "a8": "Acceso exclusivo al Equipo de Desarrollo, incluido el Entrenador Principal U23: 100 Coins para activar y 100 Coins por temporada para renovar."
   },
   "comparison": {
     "title": "gratis vs Premium",
-    "description": "Premium añade análisis y herramientas opcionales sin quitar el acceso de los jugadores Free.",
+    "description": "Premium añade herramientas avanzadas y acceso exclusivo al Equipo de Desarrollo y al Entrenador Principal U23.",
     "benefit": "Prestaciones",
     "free": "gratis",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Usar características opcionales de Coins",
     "developing": "Desarrollo del servicio de equipo",
     "activationRenewal": "Activación {{activation}} / renovación {{renewal}}",
-    "note": "Las herramientas y análisis de sólo Premium se ampliarán durante la revisión de las características página por página."
+    "note": "El Equipo de Desarrollo y el Entrenador Principal U23 requieren Premium activo. La activación y renovación estacional del Equipo de Desarrollo siguen usando Coins.",
+    "premiumOnly": "Solo Premium"
   },
   "packages": {
     "title": "¿Necesitas Coins adicionales?",
