@@ -12,7 +12,8 @@
     "developingTeam": "Razvojni tim",
     "staff": "Osoblje",
     "developingUnavailable": "Razvojni tim trenutno nije dostupan.",
-    "unlockDeveloping": "Najprije otključajte Razvojni tim u Postavkama."
+    "unlockDeveloping": "Najprije otključajte Razvojni tim u Postavkama.",
+    "developingPremiumOnly": "Za Razvojnu momčad potrebno je aktivno Premium članstvo."
   },
   "roster": {
     "firstSquad": "Prvi tim",
