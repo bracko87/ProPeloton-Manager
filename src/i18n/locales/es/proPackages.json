@@ -131,7 +131,7 @@
     "manageNoteSuffix": "arriba para cancelar la renovación futura, actualizar los detalles de facturación o ver las facturas alojadas por Stripe."
   },
   "services": {
-    "title": "Servicios de Coins activas",
+    "title": "Servicios Premium y de Coins",
     "description": "Gestiona servicios opcionales del club y ampliaciones financiadas con Coins. El Equipo de Desarrollo y el Entrenador Principal U23 requieren además una membresía Premium activa.",
     "loading": "Cargando servicios de Coins...",
     "unavailable": "Actualmente no se dispone de información sobre el servicio de desarrollo del Equipo.",
@@ -141,7 +141,7 @@
     "expired": "Expirado",
     "notActivated": "No activado",
     "descriptionDeveloping": "Crea y gestiona un equipo de desarrollo U23 como miembro Premium.",
-    "readOnly": "El equipo y todos los datos almacenados permanecen disponibles en modo de sólo lectura.",
+    "readOnly": "Los datos de tu Equipo de Desarrollo permanecen guardados, pero el acceso queda pausado hasta que Premium vuelva a estar activo.",
     "reactivationPrice": "Precio de reactivación: {{cost}} Coins.",
     "firstActivationPrice": "Primer precio de activación: {{cost}} Coins.",
     "laterPrice": "Renovación o reactivación posterior: {{cost}} Coins por temporada.",
@@ -158,12 +158,12 @@
     "startSeason": "Inicio de la temporada {{season}}",
     "autoRenew": "Renovar automáticamente cada temporada",
     "autoRenewPrefix": "Cuando esté habilitado,",
-    "autoRenewSuffix": "el coste en Coins se descontará al comienzo de la próxima temporada. Si el saldo es demasiado bajo, la renovación fallará y el equipo de desarrollo pasará a modo de solo lectura.",
+    "autoRenewSuffix": "Coins se descontarán al inicio de la próxima temporada solo mientras Premium esté activo. Si Premium termina o el saldo es insuficiente, la renovación fallará y el acceso quedará pausado.",
     "reactivation": "Precio de reactivación",
     "firstActivation": "Primera activación",
     "laterRenewals": "Renovaciones posteriores",
     "coinsPerSeason": "{{cost}} Coins por temporada",
-    "autoEnabled": "Renovación automática activada. Se cobrarán {{cost}} Coins al comienzo de la próxima temporada.",
+    "autoEnabled": "Renovación automática activada. Se cobrarán {{cost}} Coins al inicio de la próxima temporada si Premium está activo.",
     "autoDisabled": "Renovación automática deshabilitada. No se realizará automáticamente ningún cargo por renovación del equipo de desarrollo.",
     "autoFailed": "No se pudo actualizar la renovación automática del Equipo de desarrollo.",
     "loadFailed": "No se pudo cargar el servicio Developing Team."
