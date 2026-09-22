@@ -38,5 +38,9 @@
     "podiumsLockedDescription": "Analizirajte pobede, podijume i raspodelu završnih plasmana Razvojnog tima.",
     "raceTypeLockedTitle": "Pregled tipova utrka Razvojnog tima",
     "raceTypeLockedDescription": "Uporedite rezultate Razvojnog tima na klasicima, brdskim etapama, završnicama etapa i hronometrima."
+  },
+  "premiumGate": {
+    "title": "Razvojna momčad dostupna je samo uz Premium",
+    "description": "Za izradu ili korištenje Razvojne momčadi potrebno je aktivno Premium članstvo. Premium članovi koji ispunjavaju uvjete aktiviraju je za 100 novčića, a obnova ili ponovna aktivacija košta 100 novčića po sezoni. Postojeći U23 podaci ostaju sačuvani ako Premium istekne."
   }
 }
