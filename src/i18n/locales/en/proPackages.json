@@ -131,7 +131,7 @@
     "manageNoteSuffix": "above to cancel future renewal, update billing details or view Stripe-hosted invoices."
   },
   "services": {
-    "title": "Active coin services",
+    "title": "Premium & coin services",
     "description": "Manage optional club services and coin-funded expansions. Developing Team and U23 Head Coach additionally require an active Premium membership.",
     "loading": "Loading coin services...",
     "unavailable": "Developing Team service information is currently unavailable.",
@@ -141,7 +141,7 @@
     "expired": "Expired",
     "notActivated": "Not activated",
     "descriptionDeveloping": "Build and manage a U23 development squad as a Premium member.",
-    "readOnly": "The team and all stored data remain available in read-only mode.",
+    "readOnly": "Your Developing Team data remains stored, but access is paused until Premium is active again.",
     "reactivationPrice": "Reactivation price: {{cost}} coins.",
     "firstActivationPrice": "First activation price: {{cost}} coins.",
     "laterPrice": "Later renewal or reactivation: {{cost}} coins per season.",
@@ -158,12 +158,12 @@
     "startSeason": "Start of Season {{season}}",
     "autoRenew": "Automatically renew each season",
     "autoRenewPrefix": "When enabled,",
-    "autoRenewSuffix": "coins will be deducted at the beginning of the next season. If the wallet balance is too low, renewal will fail and the Developing Team will become read-only.",
+    "autoRenewSuffix": "coins will be deducted at the beginning of the next season only while Premium is active. If Premium ends or the wallet balance is too low, renewal will fail and access will be paused.",
     "reactivation": "Reactivation price",
     "firstActivation": "First activation",
     "laterRenewals": "Later renewals",
     "coinsPerSeason": "{{cost}} coins per season",
-    "autoEnabled": "Automatic renewal enabled. {{cost}} coins will be charged at the beginning of the next season.",
+    "autoEnabled": "Automatic renewal enabled. {{cost}} coins will be charged at the beginning of the next season if Premium is active.",
     "autoDisabled": "Automatic renewal disabled. No Developing Team renewal charge will be made automatically.",
     "autoFailed": "Failed to update Developing Team automatic renewal.",
     "loadFailed": "Failed to load Developing Team service."
