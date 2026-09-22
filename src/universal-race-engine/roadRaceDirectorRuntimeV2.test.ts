@@ -59,7 +59,7 @@ function directorInput(withUserChase = false) {
               },
             },
             runtimeApplicationProof: {
-              contract: 'road_race_director_v2_2_runtime',
+              contract: 'road_race_director_v2_3_runtime',
               finalEngineSawTemplate: false,
               gapGuidanceCalls: 0,
               gapAdjustments: 0,
@@ -141,19 +141,18 @@ describe('Race Director V2.1 runtime story guidance', () => {
     expect(chasedAdjusted).toBeLessThan(freelyAdjusted)
   })
 
-  it('increases closure pressure when an oversized gap conflicts with the selected story', () => {
+  it('never manufactures closure when an oversized gap conflicts with the selected story', () => {
     const input = directorInput(false)
     const adjusted = applyRoadScenarioGapGuidanceV1(input, 520, 132, 1)
 
-    expect(adjusted).toBeLessThan(520)
+    expect(adjusted).toBe(520)
   })
 
-  it('makes a late catch progressively likely but never snaps a live break directly to zero', () => {
+  it('leaves late catch pressure to the physical speed integrator', () => {
     const input = directorInput(false)
     const adjusted = applyRoadScenarioGapGuidanceV1(input, 48, 150, 1)
 
-    expect(adjusted).toBeLessThan(48)
-    expect(adjusted).toBeGreaterThan(0.5)
+    expect(adjusted).toBe(48)
   })
 
   it('accepts a weak physical catch after formation and never reuses the closed generation', () => {
@@ -203,16 +202,17 @@ describe('Race Director V2.1 runtime story guidance', () => {
     expect(applyRoadScenarioGapGuidanceV1(input, 0, 80, 1)).toBe(0)
   })
 
-  it('records proof that the final engine consumed the selected V2.1 template', () => {
+  it('records proof that the final engine consumed the selected V2.3 template', () => {
     const input = directorInput(false)
     applyRoadScenarioGapGuidanceV1(input, 520, 132, 1)
     const audit = getRoadScenarioPhysicalAuditV1(input)
     const proof = audit?.runtimeApplicationProof as Record<string, unknown>
 
-    expect(proof.contract).toBe('road_race_director_v2_2_runtime')
+    expect(proof.contract).toBe('road_race_director_v2_3_runtime')
     expect(proof.finalEngineSawTemplate).toBe(true)
     expect(Number(proof.gapGuidanceCalls)).toBeGreaterThan(0)
-    expect(Number(proof.gapAdjustments)).toBeGreaterThan(0)
+    expect(Number(proof.gapAdjustments)).toBe(0)
+    expect(proof.lastGapAdjustmentReason).toBeUndefined()
   })
 
   it('never manufactures finish fragmentation on a flat road stage', () => {
