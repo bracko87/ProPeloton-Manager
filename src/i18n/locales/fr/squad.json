@@ -12,7 +12,8 @@
     "developingTeam": "Équipe en développement",
     "staff": "Staff",
     "developingUnavailable": "L'équipe de développement n'est pas actuellement disponible.",
-    "unlockDeveloping": "Débloquer l'équipe de développement dans Préférences d'abord."
+    "unlockDeveloping": "Débloquer l'équipe de développement dans Préférences d'abord.",
+    "developingPremiumOnly": "La Developing Team nécessite un abonnement Premium actif."
   },
   "roster": {
     "firstSquad": "Première équipe",
