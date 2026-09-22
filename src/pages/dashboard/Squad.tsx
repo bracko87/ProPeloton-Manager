@@ -1108,13 +1108,17 @@ export default function SquadPage() {
             >
               {t('nav.developingTeam')}
             </button>
-          ) : isPremium ? (
+          ) : (
             <span
               className="inline-flex cursor-not-allowed select-none items-center gap-2 rounded-md bg-gray-50 px-4 py-2 text-sm font-medium text-gray-400 opacity-80"
               title={
-                developingTeamStatusError
-                  ? t('nav.developingUnavailable')
-                  : t('nav.unlockDeveloping')
+                isPremiumLoading
+                  ? t('roster.checkingPremium')
+                  : !isPremium
+                    ? t('premium.unlock')
+                    : developingTeamStatusError
+                      ? t('nav.developingUnavailable')
+                      : t('nav.unlockDeveloping')
               }
               aria-disabled="true"
               role="link"
@@ -1123,7 +1127,7 @@ export default function SquadPage() {
               <span>{t('nav.developingTeam')}</span>
               <span aria-hidden="true">🔒</span>
             </span>
-          ) : null}
+          )}
 
           <button
             type="button"
