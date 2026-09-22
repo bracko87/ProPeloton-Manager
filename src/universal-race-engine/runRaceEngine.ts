@@ -12906,7 +12906,132 @@ export function resolveRoadPhase3Decisive(
       }
     },
   )
-  let attackAttempts = [...rawAttackAttempts]
+
+  /*
+   * V5.5 reactive counterattack window.
+   *
+   * When a real peloton attack has just succeeded (either late in Phase 2 or
+   * earlier in Phase 3), another already-commanded attack may be retimed into
+   * a 5–10 km bridge attempt in most races. It still uses its deterministic
+   * attack roll and can fail; no rider is auto-selected against his locked
+   * command and no bridge is teleported to the front.
+   */
+  const phase2CounterattackAnchor = phase2.attackAttempts
+    .filter(
+      (attempt) =>
+        attempt.attackSucceeded &&
+        attempt.sourceGroupCode === 'main_peloton',
+    )
+    .slice()
+    .sort(
+      (left, right) =>
+        right.attemptKm - left.attemptKm ||
+        left.riderId.localeCompare(right.riderId),
+    )[0] ?? null
+  const phase3CounterattackAnchor = rawAttackAttempts
+    .filter(
+      (attempt) =>
+        attempt.attackSucceeded &&
+        attempt.sourceGroupCode === 'main_peloton',
+    )
+    .slice()
+    .sort(
+      (left, right) =>
+        left.attemptKm - right.attemptKm ||
+        left.riderId.localeCompare(right.riderId),
+    )[0] ?? null
+  const reactiveCounterattackAnchor =
+    phase3CounterattackAnchor ?? phase2CounterattackAnchor
+  const reactiveCounterattackCandidate = rawAttackAttempts
+    .filter(
+      (attempt) =>
+        attempt.sourceGroupCode === 'main_peloton' &&
+        attempt.riderId !== reactiveCounterattackAnchor?.riderId &&
+        attempt.attackEnergyCost > 0 &&
+        attempt.energyBeforeAttempt >= 20,
+    )
+    .slice()
+    .sort(
+      (left, right) =>
+        right.attackSuccessProbability - left.attackSuccessProbability ||
+        right.attackExecutionSkillScore - left.attackExecutionSkillScore ||
+        left.riderId.localeCompare(right.riderId),
+    )[0] ?? null
+  const reactiveCounterattackDelayKm =
+    5 +
+    calculateDeterministicUnitRoll(
+      `${input.engine.deterministicSeed}|${input.stage.stageId}|phase3-reactive-counterattack-delay`,
+    ) *
+      5
+  const rawReactiveCounterattackKm =
+    reactiveCounterattackAnchor === null
+      ? null
+      : Math.max(
+          phaseBoundary.startKm + 0.25,
+          reactiveCounterattackAnchor.attemptKm +
+            reactiveCounterattackDelayKm,
+        )
+  const reactiveCounterattackKm =
+    rawReactiveCounterattackKm === null
+      ? null
+      : deterministicRound(
+          Math.min(
+            rawReactiveCounterattackKm,
+            phaseBoundary.endKm - 0.25,
+          ),
+          6,
+        )
+  const reactiveCounterattackTriggered =
+    reactiveCounterattackAnchor !== null &&
+    reactiveCounterattackCandidate !== null &&
+    reactiveCounterattackKm !== null &&
+    reactiveCounterattackKm >=
+      reactiveCounterattackAnchor.attemptKm + 4.5 &&
+    reactiveCounterattackKm <= phaseBoundary.endKm - 0.25 &&
+    calculateDeterministicUnitRoll(
+      `${input.engine.deterministicSeed}|${input.stage.stageId}|phase3-reactive-counterattack-trigger`,
+    ) <= 0.82
+
+  const phase3AttemptsWithReactiveCounterattack =
+    reactiveCounterattackTriggered &&
+    reactiveCounterattackCandidate !== null &&
+    reactiveCounterattackKm !== null
+      ? rawAttackAttempts.map((attempt) => {
+          if (attempt.riderId !== reactiveCounterattackCandidate.riderId) {
+            return attempt
+          }
+          const effectiveProbability = deterministicRound(
+            clamp(attempt.attackSuccessProbability + 0.08, 0, 0.82),
+            6,
+          )
+          const counterattackSucceeded =
+            attempt.deterministicOutcomeRoll <= effectiveProbability
+          const counterattackSegment = getRoadOpeningSegmentAtKm(
+            input.stage,
+            reactiveCounterattackKm,
+          )
+          return {
+            ...attempt,
+            attemptKm: reactiveCounterattackKm,
+            effectiveTerrainType: counterattackSegment.terrainType,
+            attackSuccessProbability: effectiveProbability,
+            attackSucceeded: counterattackSucceeded,
+            positionScoreBonus: counterattackSucceeded
+              ? deterministicRound(
+                  Math.max(
+                    attempt.positionScoreBonus,
+                    6 +
+                      attempt.attackExecutionSkillScore * 0.04 +
+                      decisiveTerrain.selectionSeverity * 4,
+                  ),
+                  6,
+                )
+              : 0,
+          }
+        })
+      : rawAttackAttempts
+
+  let attackAttempts = [...phase3AttemptsWithReactiveCounterattack]
   attackAttempts.forEach((attempt) => {
     attackPositionBonusByRiderId.set(
       attempt.riderId,
