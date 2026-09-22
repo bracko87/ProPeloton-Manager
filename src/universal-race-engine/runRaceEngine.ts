@@ -11170,7 +11170,7 @@ export function resolveRoadPhase2Development(
   const phase2AttackEnergyCostByRiderId = new Map<string, number>()
   const phase2TeamAttackAttemptCounts = new Map<string, number>()
   const rawPhase2AttackAttempts: UniversalRoadDecisiveAttackAttempt[] =
-    selectedPhase2AttackRows.map(({ row }, index) => {
+    selectedPhase2AttackRows.map(({ row }) => {
       const rider = ridersById.get(row.riderId)!
       const readiness = readinessByRiderId.get(row.riderId)!
       const startEnergy = phase1EnergyByRiderId.get(row.riderId) ?? 0
@@ -12806,7 +12806,7 @@ export function resolveRoadPhase3Decisive(
   const attackPositionBonusByRiderId = new Map<string, number>()
   const phase3TeamAttackAttemptCounts = new Map<string, number>()
   const rawAttackAttempts: UniversalRoadDecisiveAttackAttempt[] = selectedAttackRows.map(
-    (row, index) => {
+    (row) => {
       const rider = ridersById.get(row.riderId)!
       const phase = row.phases.find((entry) => entry.phaseNumber === 3)!
       const energyBeforeAttempt = baselineEnergyAfterPhaseByRiderId.get(row.riderId) ?? 0
