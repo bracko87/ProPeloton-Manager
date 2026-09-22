@@ -82,6 +82,7 @@ import {
   type TerrainType,
   type UniversalFinishRiderContext,
   type UniversalRaceEngineInput,
+  type UniversalRoadOpeningAttackAttempt,
   type UniversalPhase5RoadGroupCandidate,
 } from './runRaceEngine.ts'
 import {
