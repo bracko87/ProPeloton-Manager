@@ -132,7 +132,7 @@
   },
   "services": {
     "title": "Aktivne usluge za Coins",
-    "description": "Upravljajte opcionim uslugama kluba kupljenim Coins. Ove usluge su dostupne i besplatnim i Premium igračima.",
+    "description": "Upravljajte opcionalnim klupskim uslugama i proširenjima koja se plaćaju Coins-ima. Razvojni tim i U23 glavni trener dodatno zahtijevaju aktivno Premium članstvo.",
     "loading": "Učitavanje usluga za Coins...",
     "unavailable": "Podaci o usluzi Razvojnog tima trenutno nisu dostupni.",
     "unavailableHelp": "Ostale funkcije za Premium, naplatu i upravljanje Coins i dalje su dostupne.",
@@ -140,7 +140,7 @@
     "active": "Aktivno",
     "expired": "Isteklo",
     "notActivated": "Nije aktivirano",
-    "descriptionDeveloping": "Izgradite i upravljajte U23 razvojnim timom.",
+    "descriptionDeveloping": "Kao Premium član izgradite i upravljajte U23 razvojnim timom.",
     "readOnly": "Tim i svi spremljeni podaci ostaju dostupni u načinu samo za čitanje.",
     "reactivationPrice": "Cena reaktivacije: {{cost}} Coins.",
     "firstActivationPrice": "Cena prve aktivacije: {{cost}} Coins.",
