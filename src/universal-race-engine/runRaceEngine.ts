@@ -9696,6 +9696,7 @@ export function resolveRoadPhase1Opening(
           6,
         )
       : null
+  const secondWavePreferredDelayKm = 5 + secondWaveTimingRoll * 5
   const secondWaveAttemptKm =
     openingDistanceAfterNeutral > 0
       ? deterministicRound(
@@ -9703,7 +9704,8 @@ export function resolveRoadPhase1Opening(
             openingWindowEndKm,
             Math.max(
               firstWaveAttemptKm ?? neutralizedDistanceKm,
-              neutralizedDistanceKm + 2.5 + secondWaveTimingRoll * 6,
+              (firstWaveAttemptKm ?? neutralizedDistanceKm) +
+                secondWavePreferredDelayKm,
             ),
           ),
           6,
@@ -9926,10 +9928,31 @@ export function resolveRoadPhase1Opening(
     const deterministicOutcomeRoll = calculateDeterministicUnitRoll(
       `${input.engine.deterministicSeed}|${input.stage.stageId}|${candidate.riderId}|${waveCode}|phase_1_attack_outcome_v2`,
     )
+    const firstWaveEstablished =
+      waveCode === 'second_wave' &&
+      pendingAttempts.some(
+        (attempt) =>
+          attempt.waveCode === 'first_wave' &&
+          attempt.attackSucceeded,
+      )
+    const reactiveCounterattackTriggered =
+      firstWaveEstablished &&
+      calculateDeterministicUnitRoll(
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|${candidate.riderId}|phase1-reactive-counterattack`,
+      ) <= 0.82
+    const effectiveAttackSuccessProbability = deterministicRound(
+      clamp(
+        outcome.attackSuccessProbability +
+          (reactiveCounterattackTriggered ? 0.07 : 0),
+        0,
+        0.79,
+      ),
+      6,
+    )
     const physicallyValidAttempt = intent.eligible
     const attackSucceeded =
       physicallyValidAttempt &&
-      deterministicOutcomeRoll <= outcome.attackSuccessProbability
+      deterministicOutcomeRoll <= effectiveAttackSuccessProbability
     const attackEnergyCost = physicallyValidAttempt
       ? outcome.projectedAttackEnergyCostPct
       : 0
@@ -9960,7 +9983,7 @@ export function resolveRoadPhase1Opening(
       baselineEnergyCostAfterAttempt,
       attackIntentScore: intent.attackIntentScore,
       attackExecutionSkillScore: outcome.attackExecutionSkillScore,
-      attackSuccessProbability: outcome.attackSuccessProbability,
+      attackSuccessProbability: effectiveAttackSuccessProbability,
       deterministicOutcomeRoll,
       physicallyValidAttempt,
       attackSucceeded,
@@ -10231,7 +10254,7 @@ export function resolveRoadPhase1Opening(
       phase1PhysicalKm,
       stepEndKm,
       input.stage.distanceKm,
-      input.stage.terrainType,
+      input.stage,
     )
     phase1PhysicalGapSeconds = applyRoadScenarioGapGuidanceV1(
       input,
@@ -11145,8 +11168,9 @@ export function resolveRoadPhase2Development(
   }
 
   const phase2AttackEnergyCostByRiderId = new Map<string, number>()
+  const phase2TeamAttackAttemptCounts = new Map<string, number>()
   const rawPhase2AttackAttempts: UniversalRoadDecisiveAttackAttempt[] =
-    selectedPhase2AttackRows.map(({ row }, index) => {
+    selectedPhase2AttackRows.map(({ row }) => {
       const rider = ridersById.get(row.riderId)!
       const readiness = readinessByRiderId.get(row.riderId)!
       const startEnergy = phase1EnergyByRiderId.get(row.riderId) ?? 0
@@ -11202,6 +11226,12 @@ export function resolveRoadPhase2Development(
         energyBeforeAttempt,
         pointGateCount,
       )
+      const phase2TeamAttemptSequence =
+        (phase2TeamAttackAttemptCounts.get(row.teamId) ?? 0) + 1
+      phase2TeamAttackAttemptCounts.set(
+        row.teamId,
+        phase2TeamAttemptSequence,
+      )
       const outcome = calculateOpeningAttackOutcome(
         rider,
         row.stageRole,
@@ -11211,7 +11241,7 @@ export function resolveRoadPhase2Development(
         energyBeforeAttempt,
         Math.max(1, selectedPhase2AttackRows.length),
         1,
-        index + 1,
+        phase2TeamAttemptSequence,
       )
       const deterministicOutcomeRoll = calculateDeterministicUnitRoll(
         `${input.engine.deterministicSeed}|${input.stage.stageId}|phase_2_dynamic_attack|${row.riderId}`,
@@ -11305,20 +11335,20 @@ export function resolveRoadPhase2Development(
     successfulPhase2PelotonAttackAttempts.length > 0
       ? deterministicRound(
           clamp(
-            8 +
+            10 +
               average(
                 successfulPhase2PelotonAttackAttempts.map(
                   (attempt) => attempt.attackExecutionSkillScore,
                 ),
               ) *
-                0.12 +
-              successfulPhase2PelotonAttackChaseDepletion * 10 +
+                0.15 +
+              successfulPhase2PelotonAttackChaseDepletion * 12 +
               calculateDeterministicUnitRoll(
                 `${input.engine.deterministicSeed}|phase11g|phase2-secondary-front-gap`,
               ) *
-                8,
-            8,
-            36,
+                10,
+            10,
+            44,
           ),
           6,
         )
@@ -11615,7 +11645,7 @@ export function resolveRoadPhase2Development(
       currentKm,
       stepEndKm,
       input.stage.distanceKm,
-      input.stage.terrainType,
+      input.stage,
     )
     currentGapSeconds = applyRoadScenarioGapGuidanceV1(
       input,
@@ -11842,7 +11872,7 @@ export function resolveRoadPhase2Development(
         secondaryKm,
         stepEndKm,
         input.stage.distanceKm,
-        input.stage.terrainType,
+        input.stage,
       )
       if (
         secondaryFrontLastAttemptKm !== null &&
@@ -12774,8 +12804,9 @@ export function resolveRoadPhase3Decisive(
 
   const attackEnergyCostByRiderId = new Map<string, number>()
   const attackPositionBonusByRiderId = new Map<string, number>()
+  const phase3TeamAttackAttemptCounts = new Map<string, number>()
   const rawAttackAttempts: UniversalRoadDecisiveAttackAttempt[] = selectedAttackRows.map(
-    (row, index) => {
+    (row) => {
       const rider = ridersById.get(row.riderId)!
       const phase = row.phases.find((entry) => entry.phaseNumber === 3)!
       const energyBeforeAttempt = baselineEnergyAfterPhaseByRiderId.get(row.riderId) ?? 0
@@ -12816,6 +12847,12 @@ export function resolveRoadPhase3Decisive(
         energyBeforeAttempt,
         pointGateCount,
       )
+      const phase3TeamAttemptSequence =
+        (phase3TeamAttackAttemptCounts.get(row.teamId) ?? 0) + 1
+      phase3TeamAttackAttemptCounts.set(
+        row.teamId,
+        phase3TeamAttemptSequence,
+      )
       const outcome = calculateOpeningAttackOutcome(
         rider,
         row.stageRole,
@@ -12825,7 +12862,7 @@ export function resolveRoadPhase3Decisive(
         energyBeforeAttempt,
         Math.max(1, selectedAttackRows.length),
         1,
-        index + 1,
+        phase3TeamAttemptSequence,
       )
       const deterministicOutcomeRoll = calculateDeterministicUnitRoll(
         `${input.engine.deterministicSeed}|${input.stage.stageId}|phase_3_decisive_attack|${row.riderId}`,
@@ -12869,7 +12906,132 @@ export function resolveRoadPhase3Decisive(
       }
     },
   )
-  let attackAttempts = [...rawAttackAttempts]
+
+  /*
+   * V5.5 reactive counterattack window.
+   *
+   * When a real peloton attack has just succeeded (either late in Phase 2 or
+   * earlier in Phase 3), another already-commanded attack may be retimed into
+   * a 5–10 km bridge attempt in most races. It still uses its deterministic
+   * attack roll and can fail; no rider is auto-selected against his locked
+   * command and no bridge is teleported to the front.
+   */
+  const phase2CounterattackAnchor = phase2.attackAttempts
+    .filter(
+      (attempt) =>
+        attempt.attackSucceeded &&
+        attempt.sourceGroupCode === 'main_peloton',
+    )
+    .slice()
+    .sort(
+      (left, right) =>
+        right.attemptKm - left.attemptKm ||
+        left.riderId.localeCompare(right.riderId),
+    )[0] ?? null
+  const phase3CounterattackAnchor = rawAttackAttempts
+    .filter(
+      (attempt) =>
+        attempt.attackSucceeded &&
+        attempt.sourceGroupCode === 'main_peloton',
+    )
+    .slice()
+    .sort(
+      (left, right) =>
+        left.attemptKm - right.attemptKm ||
+        left.riderId.localeCompare(right.riderId),
+    )[0] ?? null
+  const reactiveCounterattackAnchor =
+    phase3CounterattackAnchor ?? phase2CounterattackAnchor
+  const reactiveCounterattackCandidate = rawAttackAttempts
+    .filter(
+      (attempt) =>
+        attempt.sourceGroupCode === 'main_peloton' &&
+        attempt.riderId !== reactiveCounterattackAnchor?.riderId &&
+        attempt.attackEnergyCost > 0 &&
+        attempt.energyBeforeAttempt >= 20,
+    )
+    .slice()
+    .sort(
+      (left, right) =>
+        right.attackSuccessProbability - left.attackSuccessProbability ||
+        right.attackExecutionSkillScore - left.attackExecutionSkillScore ||
+        left.riderId.localeCompare(right.riderId),
+    )[0] ?? null
+  const reactiveCounterattackDelayKm =
+    5 +
+    calculateDeterministicUnitRoll(
+      `${input.engine.deterministicSeed}|${input.stage.stageId}|phase3-reactive-counterattack-delay`,
+    ) *
+      5
+  const rawReactiveCounterattackKm =
+    reactiveCounterattackAnchor === null
+      ? null
+      : Math.max(
+          phaseBoundary.startKm + 0.25,
+          reactiveCounterattackAnchor.attemptKm +
+            reactiveCounterattackDelayKm,
+        )
+  const reactiveCounterattackKm =
+    rawReactiveCounterattackKm === null
+      ? null
+      : deterministicRound(
+          Math.min(
+            rawReactiveCounterattackKm,
+            phaseBoundary.endKm - 0.25,
+          ),
+          6,
+        )
+  const reactiveCounterattackTriggered =
+    reactiveCounterattackAnchor !== null &&
+    reactiveCounterattackCandidate !== null &&
+    reactiveCounterattackKm !== null &&
+    reactiveCounterattackKm >=
+      reactiveCounterattackAnchor.attemptKm + 4.5 &&
+    reactiveCounterattackKm <= phaseBoundary.endKm - 0.25 &&
+    calculateDeterministicUnitRoll(
+      `${input.engine.deterministicSeed}|${input.stage.stageId}|phase3-reactive-counterattack-trigger`,
+    ) <= 0.82
+
+  const phase3AttemptsWithReactiveCounterattack =
+    reactiveCounterattackTriggered &&
+    reactiveCounterattackCandidate !== null &&
+    reactiveCounterattackKm !== null
+      ? rawAttackAttempts.map((attempt) => {
+          if (attempt.riderId !== reactiveCounterattackCandidate.riderId) {
+            return attempt
+          }
+          const effectiveProbability = deterministicRound(
+            clamp(attempt.attackSuccessProbability + 0.08, 0, 0.82),
+            6,
+          )
+          const counterattackSucceeded =
+            attempt.deterministicOutcomeRoll <= effectiveProbability
+          const counterattackSegment = getRoadOpeningSegmentAtKm(
+            input.stage,
+            reactiveCounterattackKm,
+          )
+          return {
+            ...attempt,
+            attemptKm: reactiveCounterattackKm,
+            effectiveTerrainType: counterattackSegment.terrainType,
+            attackSuccessProbability: effectiveProbability,
+            attackSucceeded: counterattackSucceeded,
+            positionScoreBonus: counterattackSucceeded
+              ? deterministicRound(
+                  Math.max(
+                    attempt.positionScoreBonus,
+                    6 +
+                      attempt.attackExecutionSkillScore * 0.04 +
+                      decisiveTerrain.selectionSeverity * 4,
+                  ),
+                  6,
+                )
+              : 0,
+          }
+        })
+      : rawAttackAttempts
+
+  let attackAttempts = [...phase3AttemptsWithReactiveCounterattack]
   attackAttempts.forEach((attempt) => {
     attackPositionBonusByRiderId.set(
       attempt.riderId,
@@ -13209,7 +13371,7 @@ export function resolveRoadPhase3Decisive(
       phase3PhysicalKm,
       stepEndKm,
       input.stage.distanceKm,
-      input.stage.terrainType,
+      input.stage,
     )
     if (
       phase3LeadingWaveLastAttemptKm !== null &&
@@ -13573,7 +13735,7 @@ export function resolveRoadPhase3Decisive(
           phase3FrontSimulationKm,
           stepEndKm,
           input.stage.distanceKm,
-          input.stage.terrainType,
+          input.stage,
         )
       })
 
@@ -13796,14 +13958,14 @@ export function resolveRoadPhase3Decisive(
 
     const launchSeparationSeconds = deterministicRound(
       clamp(
-        6 +
-          rawAttempt.attackExecutionSkillScore * 0.05 +
+        8 +
+          rawAttempt.attackExecutionSkillScore * 0.07 +
           calculateDeterministicUnitRoll(
-            `${input.engine.deterministicSeed}|${input.stage.stageId}|v5-front-launch|${rawAttempt.riderId}|${rawAttempt.attemptKm}`,
+            `${input.engine.deterministicSeed}|${input.stage.stageId}|v55-front-launch|${rawAttempt.riderId}|${rawAttempt.attemptKm}`,
           ) *
-            6,
+            8,
         PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-        18,
+        24,
       ),
       6,
     )
@@ -14618,7 +14780,7 @@ function limitRoadChaseGapClosure(
   currentKm: number,
   stepEndKm: number,
   stageDistanceKm: number,
-  terrainType: TerrainType,
+  stage: UniversalStageInput,
 ): number {
   if (calculatedNextGapSeconds >= currentGapSeconds) {
     return calculatedNextGapSeconds
@@ -14633,33 +14795,54 @@ function limitRoadChaseGapClosure(
    * proportional countdown to 90/91/92 percent of the stage.
    */
   /*
-   * V5.4 chase-realism rail. The speed integration remains authoritative, but
-   * road groups cannot erase minutes at an implausible rate simply because a
-   * short step produced a large instantaneous speed delta. This is not a
-   * target catch kilometre: it only limits how much real time can be removed
-   * per kilometre of sustained chase.
+   * V5.5 chase-realism rail. The exact speed integration remains
+   * authoritative, including weather, live energy, drafting and cooperation.
+   * This rail only prevents a short numerical step from deleting an
+   * implausible amount of an established gap.
    *
-   * Mountain races deliberately close more slowly because drafting matters
-   * less and a competent climbing break can continue at a high absolute pace.
+   * Crucially, it now reads the exact local profile segment instead of the
+   * stage-wide terrain label. A steep climb therefore cannot close at the
+   * same seconds-per-kilometre ceiling as an exposed flat road.
    */
   const raceProgress = clamp(stepEndKm / Math.max(1, stageDistanceKm), 0, 1)
+  const localSegment = getRoadOpeningSegmentAtKm(
+    stage,
+    (currentKm + stepEndKm) / 2,
+  )
   const terrainClosurePerKm =
-    terrainType === 'mountain'
-      ? 10
-      : terrainType === 'hilly'
-        ? 13
-        : terrainType === 'cobbled'
-          ? 15
-          : 17
+    localSegment.terrainType === 'steep_climb'
+      ? 5.5
+      : localSegment.terrainType === 'climb'
+        ? 7
+        : localSegment.terrainType === 'false_flat'
+          ? 9
+          : localSegment.terrainType === 'cobbled' ||
+              localSegment.terrainType === 'cobble' ||
+              localSegment.terrainType === 'gravel'
+            ? 10
+            : localSegment.terrainType === 'technical_descent'
+              ? 10
+              : localSegment.terrainType === 'descent'
+                ? 12
+                : 12
+  const uphillGradientResistance =
+    localSegment.slopePercent >= 8
+      ? 1.5
+      : localSegment.slopePercent >= 5
+        ? 0.75
+        : 0
   const lateRaceUrgencyBonus =
-    raceProgress >= 0.9 ? 5 : raceProgress >= 0.78 ? 3 : 0
+    raceProgress >= 0.9 ? 3 : raceProgress >= 0.78 ? 2 : 0
   const largeGapResistance =
     currentGapSeconds >= 300 ? 2 :
     currentGapSeconds >= 180 ? 1 : 0
   const closurePerKmLimit = clamp(
-    terrainClosurePerKm + lateRaceUrgencyBonus - largeGapResistance,
-    8,
-    22,
+    terrainClosurePerKm +
+      lateRaceUrgencyBonus -
+      largeGapResistance -
+      uphillGradientResistance,
+    4.5,
+    15,
   )
   const distanceClosureLimit = stepDistanceKm * closurePerKmLimit
   const maximumClosureSeconds = Math.min(
@@ -16439,14 +16622,14 @@ export function resolveRoadPhase4Finish(
     freshPhase4FrontRiderIds.length > 0
       ? deterministicRound(
           clamp(
-            5 +
-              freshPhase4FrontCandidateScore * 0.055 +
+            7 +
+              freshPhase4FrontCandidateScore * 0.07 +
               calculateDeterministicUnitRoll(
-                `${input.engine.deterministicSeed}|${input.stage.stageId}|v53-fresh-phase4-front-gap`,
+                `${input.engine.deterministicSeed}|${input.stage.stageId}|v55-fresh-phase4-front-gap`,
               ) *
-                4,
+                6,
             PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS + 1,
-            15,
+            20,
           ),
           6,
         )
@@ -16499,6 +16682,34 @@ export function resolveRoadPhase4Finish(
     secondaryPreExistingBridgeLineage === null
       ? [...newPhase4BridgeRiderIds]
       : []
+
+  const reactiveCounterattackAnchorKm =
+    freshPhase4FrontCreationKm ??
+    leadingPhase3FrontLineage?.launchKm ??
+    (activeEscape ? phaseBoundary.startKm : null)
+  const reactiveCounterattackDelayKm =
+    5 +
+    calculateDeterministicUnitRoll(
+      `${input.engine.deterministicSeed}|${input.stage.stageId}|phase4-reactive-counterattack-delay`,
+    ) *
+      5
+  const reactiveCounterattackTargetKm =
+    reactiveCounterattackAnchorKm === null
+      ? null
+      : deterministicRound(
+          Math.max(
+            phaseBoundary.startKm,
+            reactiveCounterattackAnchorKm + reactiveCounterattackDelayKm,
+          ),
+          6,
+        )
+  const reactiveCounterattackPlanned =
+    bridgeRiderIds.length > 0 &&
+    reactiveCounterattackTargetKm !== null &&
+    reactiveCounterattackTargetKm <= phaseBoundary.endKm - 2 &&
+    calculateDeterministicUnitRoll(
+      `${input.engine.deterministicSeed}|${input.stage.stageId}|phase4-reactive-counterattack-trigger`,
+    ) <= 0.82
 
   const bridgeCandidateScore = average(
     bridgeRiderIds.map((riderId) => {
@@ -16615,15 +16826,28 @@ export function resolveRoadPhase4Finish(
       bridgeRiderIds.length > 0 &&
       !bridgeLaunched &&
       currentKm <= chaseStartKm + 0.000001
+    const reactiveCounterattackReady =
+      !reactiveCounterattackPlanned ||
+      (reactiveCounterattackTargetKm !== null &&
+        currentKm >= reactiveCounterattackTargetKm - 0.000001)
+    const bridgeLaunchGapLimitSeconds =
+      reactiveCounterattackPlanned
+        ? Math.max(
+            90,
+            hasAnyOrganizedPhase4ChaseInterest
+              ? bridgeLaunchMaximumGapSeconds
+              : independentBridgeLaunchMaximumGapSeconds,
+          )
+        : hasAnyOrganizedPhase4ChaseInterest
+          ? bridgeLaunchMaximumGapSeconds
+          : independentBridgeLaunchMaximumGapSeconds
     const shouldLaunchPhase4Bridge =
       bridgeRiderIds.length > 0 &&
       !bridgeLaunched &&
+      reactiveCounterattackReady &&
       currentGapSeconds >
         PHASE5_GROUP_MERGE_TOLERANCE_SECONDS * 2 + 1 &&
-      currentGapSeconds <=
-        (hasAnyOrganizedPhase4ChaseInterest
-          ? bridgeLaunchMaximumGapSeconds
-          : independentBridgeLaunchMaximumGapSeconds) + 0.000001 &&
+      currentGapSeconds <= bridgeLaunchGapLimitSeconds + 0.000001 &&
       remainingKm >= 2
 
     if (shouldLaunchPreExistingBridge || shouldLaunchPhase4Bridge) {
@@ -16957,7 +17181,7 @@ export function resolveRoadPhase4Finish(
           currentKm,
           stepEndKm,
           input.stage.distanceKm,
-          input.stage.terrainType,
+          input.stage,
         )
       : 0
     const emergencyRailClosureLimitSeconds = deterministicRound(
@@ -17206,7 +17430,7 @@ export function resolveRoadPhase4Finish(
               mergeKmRaw,
               stepEndKm,
               input.stage.distanceKm,
-              input.stage.terrainType,
+              input.stage,
             )
           } else {
             resolvedNextGapSeconds = pelotonGapAtMerge
@@ -17678,7 +17902,7 @@ export function resolveRoadPhase4Finish(
           stepStartKm,
           step.kmEnd,
           input.stage.distanceKm,
-          input.stage.terrainType,
+          input.stage,
         )
         const leaderGapAtStepEnd = step.endGapSeconds
 

@@ -1,7 +1,7 @@
 export const ROAD_SCENARIO_PHYSICAL_DIRECTOR_VERSION =
-  'road_scenario_physical_director_v2_2' as const
+  'road_scenario_physical_director_v2_3' as const
 export const ROAD_RACE_DIRECTOR_RUNTIME_VERSION =
-  'road_race_director_v2_2_runtime' as const
+  'road_race_director_v2_3_runtime' as const
 
 type JsonRecord = Record<string, unknown>
 type NumericRange = readonly [number, number]
@@ -251,7 +251,7 @@ function directorSettings(audit: RoadScenarioPhysicalAuditV1): {
   const settings = object(audit.generatedParameters.directorV2)
   return {
     storyStrength: clamp(finite(settings.storyStrength, 0.78), 0.45, 0.95),
-    // V2.2 treats the scenario as tactical guidance rather than an outcome
+    // V2.3 treats the scenario as tactical guidance rather than an outcome
     // blueprint. Keep enough pull to create a recognizable race shape, but do
     // not drag a physically valid gap toward one generated target too strongly.
     centerPullStrength: clamp(finite(settings.centerPullStrength, 0.25) * 0.68, 0.06, 0.26),
@@ -307,39 +307,6 @@ function phaseNumber(input: RoadScenarioPhysicalInputV1, kmFromStart: number): 1
   if (progress < 0.5) return 2
   if (progress < 0.75) return 3
   return 4
-}
-
-function phaseBehavior(
-  audit: RoadScenarioPhysicalAuditV1,
-  phase: 1 | 2 | 3 | 4,
-): JsonRecord {
-  return array(audit.generatedParameters.phaseBehavior)
-    .map((entry) => object(entry))
-    .find((entry) => Math.trunc(finite(entry.phase, 0)) === phase) ?? {}
-}
-
-function pressureWord(value: unknown): number {
-  const normalized = text(value).toLowerCase()
-  if (['very_high', 'very high', 'extreme', 'maximum'].includes(normalized)) return 1
-  if (['high', 'strong', 'hard'].includes(normalized)) return 0.82
-  if (['medium', 'normal', 'moderate'].includes(normalized)) return 0.54
-  if (['low', 'light', 'soft'].includes(normalized)) return 0.28
-  if (['very_low', 'very low', 'minimal'].includes(normalized)) return 0.12
-  return 0.5
-}
-
-function templateChasePressure(
-  audit: RoadScenarioPhysicalAuditV1,
-  input: RoadScenarioPhysicalInputV1,
-  kmFromStart: number,
-): number {
-  const phase = phaseNumber(input, kmFromStart)
-  const behavior = phaseBehavior(audit, phase)
-  const chaseTeams = Math.max(0, finite(behavior.chaseTeams, 0))
-  const controlTeams = Math.max(0, finite(behavior.controlTeams, 0))
-  const declaredPressure = pressureWord(behavior.pressure)
-  const teamPressure = clamp((chaseTeams * 0.18 + controlTeams * 0.08), 0, 1)
-  return clamp(declaredPressure * 0.55 + teamPressure * 0.45, 0, 1)
 }
 
 function commandForPhase(commands: JsonRecord, phase: 1 | 2 | 3 | 4): string {
@@ -584,7 +551,7 @@ function scenarioGapEnvelopeV2(
 }
 
 /**
- * Race Director V2.2 tactical-envelope guidance.
+ * Race Director V2.3 tactical-envelope guidance.
  *
  * The core engine still decides who attacks, who belongs to the break, rider
  * speeds, energy, terrain response and the sporting result. The selected
@@ -709,8 +676,6 @@ export function applyRoadScenarioGapGuidanceV1(
 
   const stepKm = clamp(finite(stepDistanceKm, 0.25), 0.25, 2.5)
   const userChase = commandChasePressure(input, kmFromStart)
-  const templateChase = templateChasePressure(audit, input, kmFromStart)
-  const combinedChase = clamp(userChase * 0.72 + templateChase * 0.46, 0, 1)
   let adjusted = current
   let reason = 'inside_story_envelope'
 
@@ -728,22 +693,38 @@ export function applyRoadScenarioGapGuidanceV1(
       ? 'protect_formation_window'
       : 'protect_break_story'
   } else if (current > envelope.upper) {
-    const difference = current - envelope.upper
-    const chaseBoost = 1 + combinedChase * 1.05 + (envelope.chaseActive ? 0.55 : 0)
-    const maximumClosure = stepKm * (11 + 11 * envelope.storyStrength) * chaseBoost
-    const requested = difference * (0.27 + envelope.storyStrength * 0.25) * chaseBoost
-    adjusted = current - Math.min(requested, maximumClosure)
-    reason = 'rein_in_excess_gap'
+    /*
+     * V2.3: the scenario template must never manufacture gap closure.
+     * The physical speed integrator already knows local terrain, weather,
+     * live energy, drafting and chase resources. Pulling a large gap down
+     * toward the story envelope here used to stack an additional synthetic
+     * closure on top of the real peloton speed difference, which is exactly
+     * how minutes could disappear far too quickly.
+     */
+    adjusted = current
+    reason = 'physical_chase_owns_gap_closure'
   } else {
     const difference = envelope.center - current
-    const userOverride = difference > 0 ? 1 - userChase * 0.72 : 1
-    const chaseMultiplier = difference < 0
-      ? 1 + combinedChase * 0.55 + (envelope.chaseActive ? 0.30 : 0)
-      : Math.max(0.20, userOverride)
-    const requested = difference * envelope.centerPullStrength * envelope.storyStrength * chaseMultiplier
-    const cap = stepKm * (difference < 0 ? 7.5 : 6.5)
-    adjusted = current + clamp(requested, -cap, cap)
-    reason = Math.abs(adjusted - current) > 0.000001 ? 'gentle_story_center_pull' : reason
+    if (difference > 0) {
+      const userOverride = 1 - userChase * 0.72
+      const growthMultiplier = Math.max(0.20, userOverride)
+      const requested =
+        difference *
+        envelope.centerPullStrength *
+        envelope.storyStrength *
+        growthMultiplier
+      const cap = stepKm * 6.5
+      adjusted = current + clamp(requested, 0, cap)
+      reason =
+        Math.abs(adjusted - current) > 0.000001
+          ? 'gentle_story_center_pull'
+          : reason
+    } else {
+      // A story envelope may protect/encourage an escape, but only physical
+      // road speed may reduce an established positive gap.
+      adjusted = current
+      reason = 'physical_chase_owns_gap_closure'
+    }
   }
 
   if (envelope.catchExpected && envelope.chaseActive) {
