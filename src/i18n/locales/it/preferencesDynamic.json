@@ -26,21 +26,22 @@
   "errors": {
     "loadStatus": "Caricamento dello stato del team di sviluppo non riuscito.",
     "activate": "Attivazione del team di sviluppo non riuscita.",
-    "renewal": "Aggiornamento automatico del rinnovo non riuscito."
+    "renewal": "Aggiornamento automatico del rinnovo non riuscito.",
+    "premiumRequired": "È richiesto un abbonamento Premium per accedere al Developing Team."
   },
   "service": {
-    "summary": "Disponibile per i giocatori Gratis e Premium. Prima attivazione costa Coins {{activation}}. Ogni successiva stagione di rinnovo o riattivazione costa Coins {{renewal}}. I membri Premium non rinuncia a questi costi di servizio.",
-    "eligibilityCosts": "Eleggibilità: 30 giorni di vita reale o 60 giorni di gioco. Prima attivazione: Coins {{activation}}. Rinnovo e riattivazione: Coins {{renewal}} per stagione.",
+    "summary": "Solo per membri Premium. La prima attivazione costa {{activation}} monete. Ogni rinnovo stagionale o riattivazione successiva costa {{renewal}} monete. L’abbonamento Premium deve rimanere attivo.",
+    "eligibilityCosts": "Requisiti: abbonamento Premium attivo più 30 giorni reali o 60 giorni di gioco. Prima attivazione: {{activation}} monete. Rinnovo o riattivazione: {{renewal}} monete a stagione.",
     "accessUntilSeason": "L'accesso rimane disponibile fino alla fine della stagione {{season}}.",
     "season": "Stagione {{season}}",
     "endSeason": "Fine della stagione {{season}}",
     "startSeason": "Inizio della stagione {{season}}",
     "coins": "Coins {{count}}",
-    "autoRenewHelp": "Quando abilitata, le Coins {{cost}} saranno detratte all'inizio della prossima stagione. Se il tuo saldo è troppo basso, il rinnovo fallirà e il Team Sviluppo diventerà in sola lettura.",
+    "autoRenewHelp": "Se attivato, all’inizio della stagione successiva verranno detratte {{cost}} monete solo mentre Premium è attivo. Se Premium termina o il saldo è insufficiente, l’accesso al Developing Team non sarà disponibile.",
     "activateSeason": "Attiva per la stagione {{season}}",
     "existingTeam": "Il tuo team di sviluppo esistente sarà attivato per questa stagione.",
     "newTeam": "Un team di sviluppo sarà creato e attivato per questa stagione.",
-    "activationAccess": "L'accesso dura fino alla fine della stagione corrente del gioco. Il rinnovo automatico è abilitato per impostazione predefinita e può essere disattivato in qualsiasi momento.",
+    "activationAccess": "L’accesso dura fino alla fine della stagione di gioco corrente finché Premium rimane attivo. Il rinnovo automatico è attivo per impostazione predefinita e può essere disattivato in qualsiasi momento.",
     "needCoins": "Ti servono {{cost}} Coins per attivare l'accesso a Developing Team. Saldo attuale: {{balance}} Coins.",
     "team": "Squadra: {{name}}",
     "closeActivation": "Chiudi Conferma di attivazione del team di sviluppo",
@@ -48,8 +49,9 @@
     "confirmReactivate": "Riattivare il team di sviluppo per la stagione {{season}}?",
     "deductCoins": "Le Coins {{cost}} saranno detratte dal tuo portafoglio.",
     "accessThisSeason": "L'accesso dura fino alla fine della stagione di gioco.",
-    "autoRenewModal": "Il rinnovo automatico sarà abilitato per impostazione predefinita. Puoi disattivarlo in qualsiasi momento in Preferenze o Premium & Fatturazione.",
+    "autoRenewModal": "Il rinnovo automatico sarà attivato per impostazione predefinita. Può rinnovare solo mentre Premium è attivo e può essere disattivato in qualsiasi momento in Preferenze o Premium e fatturazione.",
     "actionActivate": "Attiva per {{cost}} Coins",
-    "actionReactivate": "Riattivare per {{cost}} Coins"
+    "actionReactivate": "Riattivare per {{cost}} Coins",
+    "premiumRequired": "Il Developing Team è una funzione di gioco riservata a Premium. Attiva prima Premium; una volta idoneo, la prima attivazione costa {{activation}} monete e ogni rinnovo o riattivazione successiva costa {{renewal}} monete a stagione. I dati U23 esistenti vengono conservati se Premium termina."
   }
 }
