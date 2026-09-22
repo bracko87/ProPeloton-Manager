@@ -86,7 +86,7 @@
   "squad": {
     "welcome": {
       "title": "Treba vam pomoć sa Ekipom?",
-      "body": "Možemo vam pokazati kratak uvod u stranicu Ekipe, gde upravljate vozačima, Razvojnim timom, periodima za premeštanje i osobljem.",
+      "body": "Možemo ti pokazati kratak uvod u stranicu Momčad, gdje upravljaš vozačima, Premium Razvojnom momčadi, prozorima za premještanje i osobljem.",
       "primary": "Pokreni vodič",
       "secondary": "Ne, hvala"
     },
@@ -102,7 +102,7 @@
     },
     "developing": {
       "title": "Razvojni tim i period za premeštanje",
-      "body": "Razvojni tim vaš je drugi tim. Može se koristiti za mlade vozače koji još nisu spremni za Prvi tim, ali se i dalje mogu natjecati u dodijeljenim natjecanjima.\n\nRazvojni tim prvo mora biti otključan. Više informacija možete pronaći u Postavkama.\n\nVozači se između Prvog i Razvojnog tima mogu premještati samo tijekom razdoblja za premještanje. Ta se razdoblja otvaraju četiri puta godišnje, a stranica Momčad pokazuje kada je dostupno sljedeće razdoblje.\n\nNeki dodatni alati za upravljanje, prošireni prikazi ili praktične funkcije povezane s ovim dijelom mogu zahtijevati Premium račun ili kupnju Coins.",
+      "body": "Razvojna momčad je tvoja druga momčad dostupna samo uz Premium, namijenjena mladim vozačima koji još nisu spremni za prvu momčad, ali mogu nastupati u dodijeljenim natjecanjima.\n\nZa izradu ili korištenje Razvojne momčadi potrebno je aktivno Premium članstvo. Prva aktivacija košta 100 novčića, a svaka kasnija sezonska obnova ili ponovna aktivacija 100 novčića. U23 Head Coach također je dostupan samo Premium članovima.\n\nVozači se mogu premještati između Prve momčadi i Razvojne momčadi samo tijekom prozora za premještanje. Ti se prozori otvaraju četiri puta godišnje, a stranica Momčad pokazuje kada je dostupan sljedeći.",
       "primary": "Dalje"
     },
     "staff": {
@@ -370,7 +370,7 @@
     },
     "premium": {
       "title": "Premium račun",
-      "body": "Ovo je deo za vaš Premium pristup.\n\nPremium račun može učiniti igru lakšom i udobnijom tako što daje pristup dodatnim funkcijama, naprednijim prikazima i korisnim alatima.\n\nPremium takođe može pomoći da otključate više mogućnosti kompletnog menadžerskog iskustva.\n\nKupovinom Premium-a ili Pro paketa direktno podržavate naš tim i pomažete nam da nastavimo da razvijamo ProPeloton Manager brže i kvalitetnije.",
+      "body": "Ovo je tvoje Premium područje.\n\nPremium račun čini igru ugodnijom uz dodatne funkcije, napredne prikaze i korisne alate.\n\nPremium također otključava Razvojnu momčad i ulogu U23 Head Coacha. Aktivacija i sezonska obnova Razvojne momčadi i dalje koriste novčiće.\n\nKupnjom Premiuma ili Pro paketa izravno podržavaš naš tim i pomažeš nam nastaviti razvijati ProPeloton Manager.",
       "primary": "Dalje"
     },
     "finished": {
