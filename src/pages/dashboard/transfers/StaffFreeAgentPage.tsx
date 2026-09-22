@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
+import { supabase } from '../../../lib/supabase'
 
 type StaffRole =
   | 'head_coach'
@@ -774,9 +775,53 @@ export default function StaffFreeAgentPage({
   currentGameDate,
 }: StaffFreeAgentPageProps) {
   const { t, i18n } = useTranslation('transfers')
+  const [isPremium, setIsPremium] = useState(false)
+
+  useEffect(() => {
+    let active = true
+
+    void supabase.rpc('get_my_premium_status').then(({ data, error }) => {
+      if (!active) return
+      if (error) {
+        console.warn('Could not load Premium status for Staff Market:', error)
+        setIsPremium(false)
+        return
+      }
+
+      const rows = Array.isArray(data) ? data : data ? [data] : []
+      setIsPremium(rows[0]?.is_premium === true)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isPremium && roleFilter === 'u23_head_coach') {
+      setRoleFilter('all')
+    }
+  }, [isPremium, roleFilter, setRoleFilter])
+
+  const visibleStaffRoleFilters = useMemo(
+    () =>
+      isPremium
+        ? STAFF_ROLE_FILTERS
+        : STAFF_ROLE_FILTERS.filter((role) => role.value !== 'u23_head_coach'),
+    [isPremium]
+  )
+
+  const visibleStaffRoles = useMemo(
+    () =>
+      isPremium
+        ? STAFF_ROLES
+        : STAFF_ROLES.filter((role) => role.value !== 'u23_head_coach'),
+    [isPremium]
+  )
+
   const roleLimitMap = new Map(roleLimits.map((row) => [row.role_type, row] as const))
 
-  const staffRoleCapacity = STAFF_ROLES.map((role) => {
+  const staffRoleCapacity = visibleStaffRoles.map((role) => {
     const limitRow = roleLimitMap.get(role.value)
     const assignedRows = activeStaffByRole.get(role.value) ?? []
 
@@ -850,7 +895,7 @@ export default function StaffFreeAgentPage({
                 onChange={(e) => setRoleFilter(e.target.value as 'all' | StaffRole)}
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
               >
-                {STAFF_ROLE_FILTERS.map((role) => (
+                {visibleStaffRoleFilters.map((role) => (
                   <option key={role.value} value={role.value}>
                     {t(role.labelKey)}
                   </option>
