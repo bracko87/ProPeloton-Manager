@@ -12,7 +12,8 @@
     "developingTeam": "Группа по разработке",
     "staff": "Персонал",
     "developingUnavailable": "В настоящее время не имеется никакой группы по разработке.",
-    "unlockDeveloping": "Сначала отключите развивающуюся группу по преференциям."
+    "unlockDeveloping": "Сначала отключите развивающуюся группу по преференциям.",
+    "developingPremiumOnly": "Для Developing Team требуется активная подписка Premium."
   },
   "roster": {
     "firstSquad": "Первый отряд",
