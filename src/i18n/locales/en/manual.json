@@ -391,21 +391,36 @@
     "developing-team": {
       "category": "Riders",
       "title": "Developing Team",
-      "subtitle": "U23/development structure, purchase and movement windows.",
-      "overview": "The Developing Team is a second team connected to the main club. It is used for young or secondary riders and has its own roster limit and movement-window rules.",
+      "subtitle": "Premium-only U23 structure, activation, renewal and movement windows.",
+      "overview": "The Developing Team is a Premium-only second team connected to the main club. Premium must remain active to use it or the U23 Head Coach; stored team data is preserved if Premium expires.",
       "details": [
-        "Preferences loads Developing Team status from the backend. It shows real days played, game days played, coin balance, coin cost, requirement status, movement-window state and whether purchase is allowed.",
-        "After purchase, the app pins the active club back to the main club so the dashboard does not accidentally switch to the developing club.",
+        "An active Premium membership is required before the Developing Team can be created, reactivated, renewed or used. The U23 Head Coach is also Premium-only.",
+        "First activation costs 100 coins and seasonal renewal costs 100 coins. The normal time requirement still applies before first activation.",
+        "If Premium expires, Developing Team access is paused and U23 Head Coach functions are disabled; the team, riders, contracts, results and history remain stored.",
+        "Preferences loads Developing Team status from the backend and shows Premium access, days played, coin balance, costs, requirement status and movement-window state.",
+        "After activation, the app pins the active club back to the main club so the dashboard does not accidentally switch to the developing club.",
         "Developing Team riders can be moved to the First Squad only if the movement window is open and the First Squad has space.",
         "If a Developing Team rider is 24 or older, the UI can show an action warning. If the movement window is open, action is required now; otherwise the rider must move next window."
       ],
       "facts": [
         {
+          "label": "Availability",
+          "value": "Premium members only"
+        },
+        {
+          "label": "Activation cost",
+          "value": "100 coins"
+        },
+        {
+          "label": "Season renewal",
+          "value": "100 coins per season"
+        },
+        {
           "label": "Developing Team max in UI",
           "value": "8 riders"
         },
         {
-          "label": "Purchase location",
+          "label": "Activation location",
           "value": "Preferences page"
         },
         {
@@ -1665,16 +1680,31 @@
     "developing-team-deep": {
       "category": "Riders",
       "title": "Developing Team Deep Guide",
-      "subtitle": "Purchase, status, roster and movement-window rules.",
-      "overview": "The development squad is managed separately but stays connected to the main club and account.",
+      "subtitle": "Premium access, activation, renewal, roster and movement-window rules.",
+      "overview": "The development squad is a Premium-only second team. It stays connected to the main club and its data remains stored if Premium access expires.",
       "details": [
-        "Purchase status is loaded from the backend and depends on requirements and coin balance.",
-        "The main club context is restored after buying the development team.",
+        "Premium membership is required in addition to the normal time and coin requirements.",
+        "The first activation costs 100 coins and each seasonal renewal costs 100 coins.",
+        "If Premium expires, access is disabled without deleting the Developing Team, riders, contracts, results or history.",
+        "The U23 Head Coach, U23 training automation and U23 race-coach access require active Premium.",
+        "The main club context is restored after activating the development team.",
         "Promoting a rider requires both an open movement window and free First Squad capacity.",
         "Age 24+ riders should be moved when the game allows it.",
         "If a window is closed, the UI can warn users to act in the next window."
       ],
       "facts": [
+        {
+          "label": "Availability",
+          "value": "Premium only"
+        },
+        {
+          "label": "Activation / renewal",
+          "value": "100 coins / 100 coins each season"
+        },
+        {
+          "label": "U23 Head Coach",
+          "value": "Premium only"
+        },
         {
           "label": "Roster max",
           "value": "8"
@@ -1708,7 +1738,7 @@
         "Nutritionist supports nutrition/recovery systems.",
         "Mechanic supports repairs and technical systems.",
         "Scout / Analyst supports external rider information.",
-        "U23 Head Coach supports developing-team riders."
+        "U23 Head Coach supports developing-team riders and is available only to Premium members with an active Developing Team."
       ],
       "facts": [
         {
@@ -2487,7 +2517,7 @@
         "Advisor suggestions should use the current stage profile, weather, selected riders and available resources.",
         "The manager should compare suggestions with team objectives. A Sport Director may suggest a safe generic plan when the user wants an aggressive breakaway target.",
         "Suggestions are most valuable for new players who do not yet understand all stage-plan controls.",
-        "Premium convenience features should not secretly improve race calculations. The advantage is analysis/convenience, not hidden performance power.",
+        "Premium analysis and convenience features do not secretly alter race-engine strength. Separately, the Developing Team and U23 Head Coach are explicit Premium-only gameplay features.",
         "Always save the final plan after reviewing advice."
       ],
       "facts": [
