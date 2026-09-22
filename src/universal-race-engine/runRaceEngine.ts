@@ -1860,6 +1860,8 @@ export interface UniversalRoadDecisiveAttackAttempt {
   readonly attackSuccessProbability: number
   readonly deterministicOutcomeRoll: number
   readonly attackSucceeded: boolean
+  /** True when an already-commanded attack was retimed as a response/bridge to a prior successful move. */
+  readonly reactiveCounterattack?: boolean
   readonly attackEnergyCost: number
   readonly energyAfterAttempt: number
   readonly positionScoreBonus: number
@@ -13055,6 +13057,7 @@ export function resolveRoadPhase3Decisive(
             effectiveTerrainType: counterattackSegment.terrainType,
             attackSuccessProbability: effectiveProbability,
             attackSucceeded: counterattackSucceeded,
+            reactiveCounterattack: true,
             positionScoreBonus: counterattackSucceeded
               ? deterministicRound(
                   Math.max(
@@ -14050,14 +14053,14 @@ export function resolveRoadPhase3Decisive(
 
     const launchSeparationSeconds = deterministicRound(
       clamp(
-        8 +
-          rawAttempt.attackExecutionSkillScore * 0.07 +
+        10 +
+          rawAttempt.attackExecutionSkillScore * 0.08 +
           calculateDeterministicUnitRoll(
-            `${input.engine.deterministicSeed}|${input.stage.stageId}|v55-front-launch|${rawAttempt.riderId}|${rawAttempt.attemptKm}`,
+            `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11o-front-launch|${rawAttempt.riderId}|${rawAttempt.attemptKm}`,
           ) *
-            8,
-        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-        24,
+            10,
+        Math.max(PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1, 12),
+        28,
       ),
       6,
     )
@@ -28442,8 +28445,12 @@ function buildUniversalReplayTimeline(
           new Map([[attempt.riderId, attempt.energyAfterAttempt]]),
         ),
         eventType: 'attack',
-        title: 'Attack is covered',
-        description: `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain, but cannot create a lasting gap.`,
+        title: attempt.reactiveCounterattack
+          ? 'Reactive counterattack is covered'
+          : 'Attack is covered',
+        description: attempt.reactiveCounterattack
+          ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} tries to bridge in response to the earlier move, but the counterattack is covered.`
+          : `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain, but cannot create a lasting gap.`,
         riderIds: [attempt.riderId],
         teamIds: [attempt.teamId],
       })
@@ -28472,11 +28479,15 @@ function buildUniversalReplayTimeline(
         ),
         eventType: 'attack',
         title:
-          attempt.sourceGroupCode === 'breakaway'
-            ? 'An attack goes from the breakaway'
-            : 'A decisive attack is launched',
+          attempt.reactiveCounterattack
+            ? 'A reactive counterattack is launched'
+            : attempt.sourceGroupCode === 'breakaway'
+              ? 'An attack goes from the breakaway'
+              : 'A decisive attack is launched',
         description:
-          attempt.sourcePhysicalGroupCode === 'F1' ||
+          attempt.reactiveCounterattack
+            ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} reacts to the earlier successful move and launches a bridge attempt on ${attempt.effectiveTerrainType} terrain.`
+            : attempt.sourcePhysicalGroupCode === 'F1' ||
           attempt.sourcePhysicalGroupCode === 'F2'
             ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks from ${attempt.sourcePhysicalGroupCode} on ${attempt.effectiveTerrainType} terrain and creates ${attempt.frontDisplayCode ?? 'a new bridge group'} at its own physical road position.`
             : attempt.sourceGroupCode === 'breakaway'
