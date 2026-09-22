@@ -131,7 +131,7 @@
     "manageNoteSuffix": "sopra per annullare il rinnovo futuro, aggiornare i dettagli di fatturazione o visualizzare Stripe-hosted fatture."
   },
   "services": {
-    "title": "Servizi di Coins attiva",
+    "title": "Servizi Premium e Coins",
     "description": "Gestisci servizi opzionali del club ed espansioni finanziate con Coins. Squadra di Sviluppo e Allenatore Capo U23 richiedono inoltre un abbonamento Premium attivo.",
     "loading": "Caricamento servizi Coins...",
     "unavailable": "Attualmente non sono disponibili informazioni sul servizio del Team di sviluppo.",
@@ -141,7 +141,7 @@
     "expired": "Scaduto",
     "notActivated": "Non attivato",
     "descriptionDeveloping": "Crea e gestisci una squadra di sviluppo U23 come membro Premium.",
-    "readOnly": "Il team e tutti i dati memorizzati rimangono disponibili in modalità di sola lettura.",
+    "readOnly": "I dati della Squadra di Sviluppo restano salvati, ma l'accesso è sospeso finché Premium non torna attivo.",
     "reactivationPrice": "Prezzo di riattivazione: Coins {{cost}}.",
     "firstActivationPrice": "Primo prezzo di attivazione: Coins {{cost}}.",
     "laterPrice": "Rinnovo successivo o riattivazione: Coins {{cost}} per stagione.",
@@ -158,12 +158,12 @@
     "startSeason": "Inizio della stagione {{season}}",
     "autoRenew": "Rinnovare automaticamente ogni stagione",
     "autoRenewPrefix": "Se abilitata,",
-    "autoRenewSuffix": "Le Coins saranno detratte all'inizio della prossima stagione. Se il saldo del portafoglio è troppo basso, il rinnovo fallirà e il team di sviluppo diventerà in sola lettura.",
+    "autoRenewSuffix": "Coins verranno detratti all'inizio della prossima stagione solo mentre Premium è attivo. Se Premium termina o il saldo è insufficiente, il rinnovo fallirà e l'accesso verrà sospeso.",
     "reactivation": "Prezzo di riattivazione",
     "firstActivation": "Prima attivazione",
     "laterRenewals": "Rinnovamenti successivi",
     "coinsPerSeason": "Coins {{cost}} per stagione",
-    "autoEnabled": "Ripristino automatico abilitato. Le Coins {{cost}} saranno addebitate all'inizio della prossima stagione.",
+    "autoEnabled": "Rinnovo automatico attivato. All'inizio della prossima stagione verranno addebitati {{cost}} Coins se Premium è attivo.",
     "autoDisabled": "Ripristino automatico disabilitato. Nessuna carica di rinnovo del team di sviluppo verrà effettuata automaticamente.",
     "autoFailed": "Aggiornamento del rinnovo automatico del team di sviluppo non riuscito.",
     "loadFailed": "Caricamento del servizio Sviluppo Team non riuscito."
