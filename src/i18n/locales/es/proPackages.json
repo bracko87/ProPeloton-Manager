@@ -16,12 +16,12 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "por mes de la vida real",
     "membership": "Miembro Premium",
-    "advancedTools": "Análisis avanzado, automatización, previsiones y herramientas de comodidad para la gestión.",
+    "advancedTools": "Developing Team y U23 Head Coach exclusivos de Premium, además de análisis avanzados, automatización, previsiones y herramientas de gestión.",
     "marketTools": "Búsquedas guardadas, alertas de mercado, altas diarias ilimitadas en la lista sin coste de monedas (dentro del límite activo) y análisis de fichajes más profundo.",
     "capacity": "Capacidad adicional de equipamiento y de infraestructura.",
     "receive": "Recibir",
     "monthlyCoinsSuffix": "Coins después de cada pago mensual exitoso.",
-    "cancelAnytime": "Cancele en cualquier momento; el juego normal permanece gratis.",
+    "cancelAnytime": "Cancela en cualquier momento; el juego principal sigue siendo gratuito. Developing Team y U23 Head Coach requieren Premium activo.",
     "activeUntilEnd": "Premium permanece activo hasta que finaliza el período de pago.",
     "activeNow": "Premium está activo.",
     "futureCanceled": "La renovación futura se cancela. El acceso permanece disponible hasta {{date}}.",
@@ -72,11 +72,12 @@
     "a4": "Equipamiento adicional ranuras de configuración y ampliado incluye la capacidad de garaje.",
     "a5": "Manager Briefing, inteligencia avanzada del calendario, previsiones financieras y herramientas de comodidad.",
     "a6": "Análisis avanzado del rendimiento de ciclistas, tendencias de desarrollo y repeticiones ilimitadas de carreras mundiales.",
-    "a7": "Premium mejora la información, la automatización y la comodidad; nunca la fuerza en carrera, la aceptación de fichajes ni atributos ocultos."
+    "a7": "Premium mejora la información, la automatización y la comodidad; nunca la fuerza en carrera, la aceptación de fichajes ni atributos ocultos.",
+    "a8": "Acceso exclusivo de Premium al Developing Team y al U23 Head Coach. La activación y renovación del Developing Team siguen costando monedas."
   },
   "comparison": {
     "title": "gratis vs Premium",
-    "description": "Premium añade análisis y herramientas opcionales sin quitar el acceso de los jugadores Free.",
+    "description": "Premium añade herramientas avanzadas y funciones de juego exclusivas, incluido el Developing Team y el U23 Head Coach.",
     "benefit": "Prestaciones",
     "free": "gratis",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Usar características opcionales de Coins",
     "developing": "Desarrollo del servicio de equipo",
     "activationRenewal": "Activación {{activation}} / renovación {{renewal}}",
-    "note": "Las herramientas y análisis de sólo Premium se ampliarán durante la revisión de las características página por página."
+    "note": "Premium incluye acceso exclusivo a funciones de juego, además de análisis, automatización y herramientas de comodidad.",
+    "r9": "Developing Team + U23 Head Coach"
   },
   "packages": {
     "title": "¿Necesitas Coins adicionales?",
@@ -130,7 +132,7 @@
   },
   "services": {
     "title": "Servicios de Coins activas",
-    "description": "Administrar los servicios de club opcionales comprados con Coins. Estos servicios están disponibles para los jugadores de Free y Premium.",
+    "description": "El Developing Team es un servicio de monedas exclusivo de Premium. Se requiere una membresía Premium activa además de las monedas de activación o renovación.",
     "loading": "Cargando servicios de Coins...",
     "unavailable": "Actualmente no se dispone de información sobre el servicio de desarrollo del Equipo.",
     "unavailableHelp": "El resto de Premium, facturación y gestión de Coins sigue disponible.",
@@ -138,7 +140,7 @@
     "active": "Activa",
     "expired": "Expirado",
     "notActivated": "No activado",
-    "descriptionDeveloping": "Construye y administra un equipo de desarrollo U23.",
+    "descriptionDeveloping": "Plantilla U23 exclusiva de Premium con ventanas de movimiento, carreras y apoyo del U23 Head Coach.",
     "readOnly": "El equipo y todos los datos almacenados permanecen disponibles en modo de sólo lectura.",
     "reactivationPrice": "Precio de reactivación: {{cost}} Coins.",
     "firstActivationPrice": "Primer precio de activación: {{cost}} Coins.",
