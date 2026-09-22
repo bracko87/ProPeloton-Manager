@@ -38,5 +38,9 @@
     "podiumsLockedDescription": "Analyse wins, podiums and finishing-position distribution for your development squad.",
     "raceTypeLockedTitle": "Developing Team Race Type Snapshot",
     "raceTypeLockedDescription": "Compare development-team results across classics, mountain days, stage finishes and time trials."
+  },
+  "premiumGate": {
+    "title": "Developing Team is Premium only",
+    "description": "An active Premium membership is required to create or use the Developing Team. Eligible Premium members activate it for 100 coins and renew or reactivate it for 100 coins per season. Existing U23 data is preserved if Premium ends."
   }
 }
