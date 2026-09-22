@@ -38,5 +38,9 @@
     "podiumsLockedDescription": "Analysieren Sie Siege, Podiumsplätze und die Verteilung der Zielplatzierungen Ihres Entwicklungskaders.",
     "raceTypeLockedTitle": "Überblick des Entwicklungsteams nach Renntyp",
     "raceTypeLockedDescription": "Vergleichen Sie die Ergebnisse des Entwicklungsteams bei Klassikern, Bergetappen, Etappenankünften und Zeitfahren."
+  },
+  "premiumGate": {
+    "title": "Developing Team ist nur mit Premium verfügbar",
+    "description": "Eine aktive Premium-Mitgliedschaft ist erforderlich, um das Developing Team zu erstellen oder zu nutzen. Berechtigte Premium-Mitglieder aktivieren es für 100 Coins und verlängern oder reaktivieren es für 100 Coins pro Saison. Bestehende U23-Daten bleiben erhalten, wenn Premium endet."
   }
 }
