@@ -151,7 +151,7 @@
   },
   "developingTeam": {
     "title": "Équipe en développement",
-    "description": "Construisez et gérez une équipe de développement U23 avec accès saisonnier aux Coins.",
+    "description": "Les membres Premium peuvent créer et gérer une équipe de développement U23 avec un accès saisonnier en pièces.",
     "loading": "Chargement du statut d'équipe en développement...",
     "realLifeProgress": "Progrès réels",
     "realLifeMinimum": "Au moins 30 jours requis",
@@ -180,7 +180,10 @@
     "rosterRule": "Taille maximale de l'alignement: 8 coureurs.",
     "ageRule": "Seuls les coureurs âgés de 23 ans ou plus sont éligibles.",
     "movementRule": "Les coureurs ne se déplacent entre les équipes que pendant les fenêtres de mouvement.",
-    "teamLabel": "Équipe"
+    "teamLabel": "Équipe",
+    "premiumOnly": "Premium uniquement",
+    "premiumRequiredTitle": "Abonnement Premium requis",
+    "viewPremium": "Voir Premium"
   },
   "dangerZone": {
     "title": "Zone de danger",
