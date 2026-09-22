@@ -16,12 +16,12 @@
     "defaultName": "ProPeloton Premium",
     "perMonth": "per mese di vita reale",
     "membership": "Membership Premium",
-    "advancedTools": "Analisi avanzate, automazione, previsioni e strumenti di comodità per la gestione.",
+    "advancedTools": "Developing Team e U23 Head Coach riservati a Premium, più analisi avanzate, automazione, previsioni e strumenti di gestione.",
     "marketTools": "Ricerche salvate, avvisi di mercato, aggiunte giornaliere illimitate alla shortlist senza costo in monete (entro il limite attivo) e analisi trasferimenti più approfondite.",
     "capacity": "Attrezzature supplementari e capacità di convenienza dell'infrastruttura.",
     "receive": "Ricevi",
     "monthlyCoinsSuffix": "Coins dopo ogni pagamento mensile riuscito.",
-    "cancelAnytime": "Annulla in qualsiasi momento; il normale gameplay rimane libero.",
+    "cancelAnytime": "Annulla in qualsiasi momento; il gioco principale resta gratuito. Developing Team e U23 Head Coach richiedono Premium attivo.",
     "activeUntilEnd": "Premium rimane attivo fino alla fine del periodo pagato.",
     "activeNow": "Premium è attivo.",
     "futureCanceled": "Il rinnovo futuro viene annullato. L'accesso rimane disponibile fino a quando {{date}}.",
@@ -72,11 +72,12 @@
     "a4": "Attrezzatura supplementare di installazione e ampliato incluso capacità del garage.",
     "a5": "Manager Briefing, intelligenza avanzata del calendario, previsioni finanziarie e strumenti di comodità.",
     "a6": "Analisi avanzate delle prestazioni dei corridori, trend di sviluppo e replay illimitati delle gare mondiali.",
-    "a7": "Premium migliora informazioni, automazione e comodità — mai la forza nel motore di gara, l'accettazione dei trasferimenti o le abilità nascoste."
+    "a7": "Premium migliora informazioni, automazione e comodità — mai la forza nel motore di gara, l'accettazione dei trasferimenti o le abilità nascoste.",
+    "a8": "Accesso riservato a Premium a Developing Team e U23 Head Coach. Attivazione e rinnovo del Developing Team continuano a costare monete."
   },
   "comparison": {
     "title": "Free vs Premium",
-    "description": "Premium aggiunge analisi e strumenti opzionali senza rimuovere l'accesso da giocatori liberi.",
+    "description": "Premium aggiunge strumenti avanzati e funzioni di gioco esclusive, tra cui Developing Team e U23 Head Coach.",
     "benefit": "Prestazioni",
     "free": "Libero",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Usare le caratteristiche opzionali della Coins",
     "developing": "Servizio di sviluppo del team",
     "activationRenewal": "Attivazione {{activation}} / Rinnovo {{renewal}}",
-    "note": "L'analisi e gli strumenti Premium saranno ampliati durante la revisione delle funzionalità pagina per pagina."
+    "note": "Premium include accesso esclusivo a funzioni di gioco oltre ad analisi, automazione e strumenti di comodità.",
+    "r9": "Developing Team + U23 Head Coach"
   },
   "packages": {
     "title": "Hai bisogno di Coins aggiuntive?",
@@ -130,7 +132,7 @@
   },
   "services": {
     "title": "Servizi di Coins attiva",
-    "description": "Gestisci i servizi di club opzionali acquistati con Coins. Questi servizi sono disponibili per i giocatori Free e Premium.",
+    "description": "Il Developing Team è un servizio a monete riservato a Premium. È richiesto un abbonamento Premium attivo oltre alle monete di attivazione o rinnovo.",
     "loading": "Caricamento servizi Coins...",
     "unavailable": "Attualmente non sono disponibili informazioni sul servizio del Team di sviluppo.",
     "unavailableHelp": "Il resto di Premium, gestione fatturazione e Coins rimane disponibile.",
@@ -138,7 +140,7 @@
     "active": "Attivo",
     "expired": "Scaduto",
     "notActivated": "Non attivato",
-    "descriptionDeveloping": "Costruisci e gestisci una squadra di sviluppo U23.",
+    "descriptionDeveloping": "Squadra di sviluppo U23 riservata a Premium con finestre di movimento, gare e supporto U23 Head Coach.",
     "readOnly": "Il team e tutti i dati memorizzati rimangono disponibili in modalità di sola lettura.",
     "reactivationPrice": "Prezzo di riattivazione: Coins {{cost}}.",
     "firstActivationPrice": "Primo prezzo di attivazione: Coins {{cost}}.",
