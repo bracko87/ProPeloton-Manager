@@ -119,7 +119,7 @@ type ActiveClubPayload = {
 }
 
 // Display fallbacks only. get_developing_team_status() is the authoritative source.
-const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 200
+const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 100
 const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 100
 
 function normalizeCoinCost(value: unknown, fallback: number): number {
@@ -163,6 +163,7 @@ export default function PreferencesPage(): JSX.Element {
     useState<string | null>(null)
 
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(null)
+  const [isPremium, setIsPremium] = useState(false)
   const [isLoadingDevelopingTeamStatus, setIsLoadingDevelopingTeamStatus] = useState(true)
   const [developingTeamError, setDevelopingTeamError] = useState<string | null>(null)
   const [isActivatingDevelopingTeam, setIsActivatingDevelopingTeam] = useState(false)
@@ -187,13 +188,32 @@ export default function PreferencesPage(): JSX.Element {
     setDevelopingTeamError(null)
 
     try {
-      const { data, error } = await supabase.rpc('get_developing_team_status')
+      const [statusResult, premiumResult] = await Promise.all([
+        supabase.rpc('get_developing_team_status'),
+        supabase.rpc('get_my_premium_status'),
+      ])
 
-      if (error) {
-        throw error
+      if (statusResult.error) {
+        throw statusResult.error
       }
 
-      const normalized = Array.isArray(data) ? data[0] : data
+      if (premiumResult.error) {
+        console.warn('get_my_premium_status failed:', premiumResult.error)
+      }
+
+      const normalized = Array.isArray(statusResult.data)
+        ? statusResult.data[0]
+        : statusResult.data
+      const normalizedPremium = Array.isArray(premiumResult.data)
+        ? premiumResult.data[0]
+        : premiumResult.data
+
+      setIsPremium(
+        !premiumResult.error &&
+          normalizedPremium != null &&
+          typeof normalizedPremium === 'object' &&
+          (normalizedPremium as Record<string, unknown>).is_premium === true
+      )
       setDevelopingTeamStatus((normalized ?? null) as DevelopingTeamStatus | null)
     } catch (e: any) {
       console.error('loadDevelopingTeamStatus failed:', e)
@@ -422,6 +442,10 @@ export default function PreferencesPage(): JSX.Element {
 
   const handleActivateDevelopingTeam = async (): Promise<void> => {
     if (isActivatingDevelopingTeam) return
+    if (!isPremium) {
+      setDevelopingTeamError(t('errors.premiumRequired', { ns: 'preferencesDynamic' }))
+      return
+    }
 
     setDevelopingTeamError(null)
     setDevelopingTeamSuccessMessage(null)
@@ -494,6 +518,10 @@ export default function PreferencesPage(): JSX.Element {
     enabled: boolean
   ): Promise<void> => {
     if (isUpdatingDevelopingTeamAutoRenew) return
+    if (!isPremium) {
+      setDevelopingTeamError(t('errors.premiumRequired', { ns: 'preferencesDynamic' }))
+      return
+    }
 
     setDevelopingTeamError(null)
     setDevelopingTeamSuccessMessage(null)
@@ -646,6 +674,7 @@ export default function PreferencesPage(): JSX.Element {
 
   const developingTeamCanSubmitActivation = Boolean(
     developingTeamStatus &&
+      isPremium &&
       developingTeamIsEligible &&
       developingTeamHasEnoughCoins &&
       !developingTeamIsActive &&
@@ -763,6 +792,26 @@ export default function PreferencesPage(): JSX.Element {
 
             {isLoadingDevelopingTeamStatus ? (
               <div className="mt-4 text-sm text-gray-500">{t('developingTeam.loading', { ns: 'preferences' })}</div>
+            ) : !isPremium ? (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-amber-800">
+                    {t('developingTeam.premiumOnly', { ns: 'preferences' })}
+                  </span>
+                  <span className="text-sm font-semibold text-amber-950">
+                    {t('developingTeam.premiumRequiredTitle', { ns: 'preferences' })}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-amber-900">
+                  {t('service.premiumRequired', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}
+                </p>
+                <a
+                  href="#/dashboard/pro"
+                  className="mt-4 inline-flex rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-yellow-500"
+                >
+                  {t('developingTeam.viewPremium', { ns: 'preferences' })}
+                </a>
+              </div>
             ) : (
               <>
                 <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
