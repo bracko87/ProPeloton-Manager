@@ -709,8 +709,6 @@ export function applyRoadScenarioGapGuidanceV1(
 
   const stepKm = clamp(finite(stepDistanceKm, 0.25), 0.25, 2.5)
   const userChase = commandChasePressure(input, kmFromStart)
-  const templateChase = templateChasePressure(audit, input, kmFromStart)
-  const combinedChase = clamp(userChase * 0.72 + templateChase * 0.46, 0, 1)
   let adjusted = current
   let reason = 'inside_story_envelope'
 
