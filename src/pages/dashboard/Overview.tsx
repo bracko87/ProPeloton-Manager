@@ -2337,10 +2337,57 @@ function normalizeOverviewRaceWorldData(value: unknown): OverviewRaceWorldData {
 }
 
 /**
+ * loadOverviewRaceScheduleData
+ * Lightweight first-paint loader for Upcoming Schedule + Today's Races.
+ *
+ * This intentionally does NOT calculate world news/rankings/results. Those are
+ * loaded separately in the background so the simple race cards are not blocked
+ * by heavier world-peloton aggregation.
+ */
+async function loadOverviewRaceScheduleData(
+  mainClubId: string | null,
+): Promise<Pick<OverviewRaceWorldData, "upcomingSchedule" | "todayRaces">> {
+  if (!mainClubId) {
+    return {
+      upcomingSchedule: [],
+      todayRaces: [],
+    };
+  }
+
+  try {
+    const { data, error } = await supabase.rpc("get_overview_race_schedule_v1", {
+      p_club_id: mainClubId,
+    });
+
+    if (error) {
+      console.warn("Could not load fast overview race schedule:", error.message);
+      return {
+        upcomingSchedule: [],
+        todayRaces: [],
+      };
+    }
+
+    const normalized = normalizeOverviewRaceWorldData(data);
+
+    return {
+      upcomingSchedule: normalized.upcomingSchedule,
+      todayRaces: normalized.todayRaces,
+    };
+  } catch (err) {
+    console.warn("Fast overview race schedule lookup failed:", err);
+    return {
+      upcomingSchedule: [],
+      todayRaces: [],
+    };
+  }
+}
+
+/**
  * loadOverviewRaceWorldData
  * Loads real accepted upcoming races, current-day races, and generated world news.
  *
- * This removes the old mock-like schedule fallback from the overview.
+ * World news is deliberately background work. Upcoming/today race cards use the
+ * lightweight get_overview_race_schedule_v1 RPC for first paint.
  */
 async function loadOverviewRaceWorldData(
   mainClubId: string | null,
@@ -7545,9 +7592,26 @@ export default function OverviewPage() {
     let alive = true;
     let inFlight = false;
     let lastFastWidgetKey: string | null = null;
+    let lastFastScheduleClubId: string | null = null;
 
     async function loadBootstrapMainClubId(): Promise<string | null> {
       try {
+        const cachedRaw = window.localStorage.getItem("ppm-main-club");
+
+        if (cachedRaw) {
+          try {
+            const cached = JSON.parse(cachedRaw) as Record<string, unknown>;
+            const cachedClubId = asString(cached.id, "");
+            const cachedClubType = asString(cached.club_type, "main").toLowerCase();
+
+            if (cachedClubId && cachedClubType === "main") {
+              return cachedClubId;
+            }
+          } catch (cacheError) {
+            console.warn("Overview cached main-club lookup failed:", cacheError);
+          }
+        }
+
         const { data: authData, error: authError } = await supabase.auth.getUser();
 
         if (authError) {
@@ -7580,11 +7644,32 @@ export default function OverviewPage() {
       }
     }
 
+    function startFastRaceSchedule(mainClubId: string | null): void {
+      if (!mainClubId || lastFastScheduleClubId === mainClubId) return;
+      lastFastScheduleClubId = mainClubId;
+
+      void loadOverviewRaceScheduleData(mainClubId)
+        .then((loadedSchedule) => {
+          if (!alive) return;
+
+          setRaceWorld((current) => ({
+            ...current,
+            upcomingSchedule: loadedSchedule.upcomingSchedule,
+            todayRaces: loadedSchedule.todayRaces,
+          }));
+        })
+        .catch((err) => {
+          console.warn("Fast overview schedule load failed:", err);
+        });
+    }
+
     function startFastOverviewWidgets(
       mainClubId: string | null,
       seasonYear: number,
     ): void {
       if (!mainClubId) return;
+
+      startFastRaceSchedule(mainClubId);
 
       const key = `${mainClubId}:${seasonYear}`;
       if (lastFastWidgetKey === key) return;
@@ -7613,10 +7698,20 @@ export default function OverviewPage() {
 
       void loadOverviewRaceWorldData(mainClubId, seasonYear).then((loadedRaceWorld) => {
         if (alive) {
-          setRaceWorld(loadedRaceWorld);
+          setRaceWorld((current) => ({
+            upcomingSchedule:
+              current.upcomingSchedule.length > 0
+                ? current.upcomingSchedule
+                : loadedRaceWorld.upcomingSchedule,
+            todayRaces:
+              current.todayRaces.length > 0
+                ? current.todayRaces
+                : loadedRaceWorld.todayRaces,
+            worldNews: loadedRaceWorld.worldNews,
+          }));
         }
       }).catch((err) => {
-        console.warn("Fast overview race world load failed:", err);
+        console.warn("Background overview race world load failed:", err);
       });
 
       void loadOverviewSquadPulse(mainClubId).then((loadedSquadPulse) => {
@@ -7819,18 +7914,25 @@ export default function OverviewPage() {
 
         const dashboardOverviewPromise = supabase.rpc("get_dashboard_overview");
         const bootstrapClubIdPromise = loadBootstrapMainClubId();
+        const dashboardHeaderPromise =
+          !silent && !hasVisibleData
+            ? supabase.rpc("get_dashboard_header")
+            : null;
 
         let fastClubId: string | null = null;
 
         if (!silent && !hasVisibleData) {
           try {
-            const [{ data: headerData, error: headerError }, bootstrapClubId] =
-              await Promise.all([
-                supabase.rpc("get_dashboard_header"),
-                bootstrapClubIdPromise,
-              ]);
+            fastClubId = await bootstrapClubIdPromise;
 
-            fastClubId = bootstrapClubId;
+            if (fastClubId) {
+              startFastRaceSchedule(fastClubId);
+            }
+
+            const { data: headerData, error: headerError } =
+              await dashboardHeaderPromise!;
+
+            const bootstrapClubId = fastClubId;
 
             if (!headerError && headerData && alive) {
               const shellData = normalizeDashboardPayload({
@@ -8226,110 +8328,6 @@ export default function OverviewPage() {
                 currentGameDateLabel={data.club.dateLabel}
               />
             </div>
-
-            <PremiumFeatureGate
-              isPremium={isPremium}
-              loading={premiumStatusLoading}
-              title={t('premiumCenter:integrations.overview.title')}
-              description={t('premiumCenter:integrations.overview.gateDescription')}
-            >
-              <Card className="p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base font-semibold text-slate-900">{t('premiumCenter:integrations.overview.title')}</h3>
-                      <span className="rounded-full border border-yellow-300 bg-yellow-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-yellow-800">
-                        Premium
-                      </span>
-                    </div>
-                    <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-                      {t('premiumCenter:integrations.overview.subtitle')}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                      {t('premiumCenter:integrations.overview.attentionItems', { count: attentionItems.length })}
-                    </span>
-                    <a
-                      href="#/dashboard/premium-center?tab=summary"
-                      className="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white hover:bg-black"
-                    >
-                      {t('premiumCenter:integrations.overview.open')}
-                    </a>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  <SmallStat
-                    label={t("squad.notFullyFit")}
-                    value={visibleSquadPulse.notFullyFit}
-                    valueClassName={visibleSquadPulse.notFullyFit > 0 ? "text-yellow-600" : "text-emerald-600"}
-                  />
-                  <SmallStat
-                    label={t("squad.expiringContracts")}
-                    value={visibleSquadPulse.expiringContracts}
-                    valueClassName={visibleSquadPulse.expiringContracts > 0 ? "text-yellow-600" : "text-emerald-600"}
-                  />
-                  <SmallStat
-                    label={t("finance.weeklyNet")}
-                    value={formatSignedCurrency(data.finance.weeklyNet)}
-                    valueClassName={data.finance.weeklyNet >= 0 ? "text-emerald-600" : "text-red-600"}
-                  />
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  {attentionItems.length > 0 ? (
-                    attentionItems.slice(0, 3).map((item) => (
-                      <div key={item.id} className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                        <span className="text-sm text-slate-700">{item.label}</span>
-                        {item.href ? (
-                          <a href={item.href} className="shrink-0 text-xs font-semibold text-slate-900 hover:text-yellow-600">
-                            {t('premiumCenter:integrations.overview.openItem')}
-                          </a>
-                        ) : null}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
-                      {t('premiumCenter:integrations.overview.noUrgent')}
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-                  <a
-                    href="#/dashboard/race-preparation"
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
-                  >
-                    {t('premiumCenter:integrations.overview.strategy')}
-                  </a>
-                  <a
-                    href="#/dashboard/calendar"
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
-                  >
-                    {t('premiumCenter:integrations.overview.season')}
-                  </a>
-                  <a
-                    href="#/dashboard/transfers"
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
-                  >
-                    {t('premiumCenter:tabs.transfers')}
-                  </a>
-                  <a
-                    href="#/dashboard/finance"
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
-                  >
-                    {t('premiumCenter:integrations.overview.finance')}
-                  </a>
-                  <a
-                    href="#/dashboard/training?tab=development"
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800 hover:border-slate-300 hover:bg-white"
-                  >
-                    {t('premiumCenter:tabs.development')}
-                  </a>
-                </div>
-              </Card>
-            </PremiumFeatureGate>
 
             <Card className="p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
