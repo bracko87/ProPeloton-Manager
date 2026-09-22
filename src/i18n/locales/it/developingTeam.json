@@ -38,5 +38,9 @@
     "podiumsLockedDescription": "Analizzare vittorie, podi e distribuzione di posizioni finali per la vostra squadra di sviluppo.",
     "raceTypeLockedTitle": "Istantanea di tipo corsa del team di sviluppo",
     "raceTypeLockedDescription": "Confronta i risultati della squadra di sviluppo con i classici, le giornate di montagna, le finiture e le prove temporali."
+  },
+  "premiumGate": {
+    "title": "Il Developing Team è riservato a Premium",
+    "description": "È richiesto un abbonamento Premium attivo per creare o utilizzare il Developing Team. I membri Premium idonei lo attivano per 100 monete e lo rinnovano o riattivano per 100 monete a stagione. I dati U23 esistenti vengono conservati se Premium termina."
   }
 }
