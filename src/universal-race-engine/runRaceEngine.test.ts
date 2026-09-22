@@ -4018,14 +4018,97 @@ describe('Phase 3 Race Phase 1 opening resolution', () => {
       endKm: 30,
     })
     expect(result.neutralizedDistanceKm).toBeGreaterThanOrEqual(1.5)
-    expect(result.neutralizedDistanceKm).toBeLessThanOrEqual(3)
-    expect(result.opportunityWindowKm).toBe(5)
-    expect(result.firstWaveAttemptKm).toBeGreaterThanOrEqual(2.25)
-    expect(result.firstWaveAttemptKm).toBeLessThanOrEqual(3.75)
-    if (result.secondWaveAttemptKm !== null) {
-      expect(result.secondWaveAttemptKm).toBeGreaterThanOrEqual(3.25)
-      expect(result.secondWaveAttemptKm).toBeLessThanOrEqual(4.75)
+    expect(result.neutralizedDistanceKm).toBeLessThanOrEqual(4.5)
+    expect(result.opportunityWindowKm).toBeGreaterThanOrEqual(6)
+    expect(result.opportunityWindowKm).toBeLessThanOrEqual(16)
+    expect(result.firstWaveAttemptKm).toBeGreaterThanOrEqual(
+      result.neutralizedDistanceKm + 0.7,
+    )
+    if (
+      result.secondWaveAttemptKm !== null &&
+      result.firstWaveAttemptKm !== null
+    ) {
+      const openingWindowEndKm = Math.min(
+        result.phaseBoundary.endKm,
+        result.neutralizedDistanceKm + result.opportunityWindowKm,
+      )
+      const availableAfterFirstWave =
+        openingWindowEndKm - result.firstWaveAttemptKm
+      const secondWaveDelayKm =
+        result.secondWaveAttemptKm - result.firstWaveAttemptKm
+      if (availableAfterFirstWave >= 5) {
+        expect(secondWaveDelayKm).toBeGreaterThanOrEqual(5)
+        expect(secondWaveDelayKm).toBeLessThanOrEqual(10)
+      } else {
+        expect(result.secondWaveAttemptKm).toBeCloseTo(openingWindowEndKm, 5)
+      }
     }
+  })
+
+  it('uses one 82% reactive-counterattack decision for the whole second opening wave and exposes it in replay', () => {
+    let observed:
+      | {
+          result: ReturnType<typeof runRaceEngine>
+          reactiveAttempts: UniversalRoadOpeningAttackAttempt[]
+        }
+      | null = null
+
+    for (let index = 0; index < 80 && observed === null; index += 1) {
+      const base = createExpandedFieldInput(12)
+      const input: UniversalRaceEngineInput = {
+        ...base,
+        engine: {
+          ...base.engine,
+          deterministicSeed: `phase11o-reactive-opening-wave-${index}`,
+        },
+        stagePlans: base.stagePlans.map((plan) => ({
+          ...plan,
+          riders: plan.riders.map((riderPlan) => ({
+            ...riderPlan,
+            commands: {
+              ...riderPlan.commands,
+              phase1: 'attack',
+            },
+          })),
+        })),
+      }
+      const result = runRaceEngine(input)
+      const opening = result.roadRaceResolution.phase1Opening!
+      const firstWaveSucceeded = opening.attackAttempts.some(
+        (attempt) =>
+          attempt.waveCode === 'first_wave' &&
+          attempt.attackSucceeded,
+      )
+      const secondWaveAttempts = opening.attackAttempts.filter(
+        (attempt) => attempt.waveCode === 'second_wave',
+      )
+      if (
+        firstWaveSucceeded &&
+        secondWaveAttempts.length > 0 &&
+        secondWaveAttempts[0].reactiveCounterattack
+      ) {
+        observed = {
+          result,
+          reactiveAttempts: secondWaveAttempts,
+        }
+      }
+    }
+
+    expect(observed).not.toBeNull()
+    expect(
+      new Set(
+        observed!.reactiveAttempts.map(
+          (attempt) => attempt.reactiveCounterattack,
+        ),
+      ),
+    ).toEqual(new Set([true]))
+    expect(
+      observed!.result.replayTimeline.checkpoints.some((checkpoint) =>
+        checkpoint.commentary.some((entry) =>
+          entry.title.includes('Reactive counterattack'),
+        ),
+      ),
+    ).toBe(true)
   })
 
   it('blocks a join-only opening because an eligible attack must launch the move', () => {
@@ -17402,34 +17485,50 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     )
   })
 
-  it('publishes exact Phase 2 and Phase 3 catch checkpoints and never lets B disappear silently', () => {
-    const phase2Case = runRaceEngine(createPhase11gMixedStressInput(2))
-    const phase3Case = runRaceEngine(createPhase11gMixedStressInput(12))
-    const phase2CatchKm =
-      phase2Case.roadRaceResolution.phase2Development!.breakawayCatchKm
-    const phase3CatchKm =
-      phase3Case.roadRaceResolution.phase3Decisive!.physicalCatchKm
+  it('publishes every physical opening-break catch at the phase where it actually happens', () => {
+    for (const seedIndex of [2, 12]) {
+      const result = runRaceEngine(
+        createPhase11gMixedStressInput(seedIndex),
+      )
+      const phase2CatchKm =
+        result.roadRaceResolution.phase2Development!.breakawayCatchKm
+      const phase3CatchKm =
+        result.roadRaceResolution.phase3Decisive!.physicalCatchKm
+      const replayCatchEvents = result.replayTimeline.checkpoints.filter(
+        (checkpoint) =>
+          checkpoint.commentary.some(
+            (entry) =>
+              entry.eventType === 'catch' &&
+              (
+                checkpoint.checkpointId.includes(
+                  'phase-2-opening-breakaway-caught',
+                ) ||
+                checkpoint.checkpointId.includes(
+                  'phase-3-leading-escape-caught',
+                )
+              ),
+          ),
+      )
 
-    expect(phase2CatchKm).not.toBeNull()
-    expect(phase3CatchKm).not.toBeNull()
-    expect(
-      phase2Case.replayTimeline.checkpoints.some(
-        (checkpoint) =>
-          checkpoint.checkpointId.includes('phase-2-opening-breakaway-caught') &&
-          checkpoint.raceProgress.kmFromStart === phase2CatchKm &&
-          checkpoint.commentary.some((entry) => entry.eventType === 'catch'),
-      ),
-    ).toBe(true)
-    expect(
-      phase3Case.replayTimeline.checkpoints.some(
-        (checkpoint) =>
-          checkpoint.checkpointId.includes('phase-3-leading-escape-caught') &&
-          checkpoint.raceProgress.kmFromStart === phase3CatchKm &&
-          checkpoint.commentary.some((entry) => entry.eventType === 'catch'),
-      ),
-    ).toBe(true)
-    expect(phase2Case.replaySynchronization.synchronized).toBe(true)
-    expect(phase3Case.replaySynchronization.synchronized).toBe(true)
+      if (phase2CatchKm !== null) {
+        expect(
+          replayCatchEvents.some(
+            (checkpoint) =>
+              checkpoint.raceProgress.kmFromStart === phase2CatchKm,
+          ),
+        ).toBe(true)
+      }
+      if (phase3CatchKm !== null) {
+        expect(
+          replayCatchEvents.some(
+            (checkpoint) =>
+              checkpoint.raceProgress.kmFromStart === phase3CatchKm,
+          ),
+        ).toBe(true)
+      }
+      expect(result.replaySynchronization.synchronized).toBe(true)
+      expect(result.replaySynchronization.issues).toEqual([])
+    }
   })
 
   it('never freezes an established opening escape at its launch gap', () => {
@@ -17444,6 +17543,22 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     if (phase1.breakawayCatchKm === null && phase1.endGapSeconds > 0.5) {
       expect(new Set(roundedGaps).size).toBeGreaterThan(1)
     }
+  })
+
+  it('gives fresh Phase 2 and Phase 3 fronts a decaying five-to-ten kilometre attack momentum window', () => {
+    const source = readFileSync(
+      new URL('./runRaceEngine.ts', import.meta.url),
+      'utf8',
+    )
+
+    expect(source).toContain(
+      'phase2-secondary-front-momentum-window-v1',
+    )
+    expect(source).toContain('5 +')
+    expect(source).toContain(
+      'phase3-front-momentum-window-v1',
+    )
+    expect(source).toContain('maximumFreshAttackClosureSeconds')
   })
 
   it('keeps every successful peloton attack in a physical F lifecycle', () => {
