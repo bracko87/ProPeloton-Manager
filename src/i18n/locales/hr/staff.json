@@ -60,7 +60,7 @@
     },
     "u23HeadCoach": {
       "label": "Glavni trener U23",
-      "subtitle": "Planirani trening Razvojnog tima i taktička podrška na U23 utrkama."
+      "subtitle": "Premium trener za razvoj Razvojne momčadi i U23 taktičku podršku."
     }
   },
   "impactAreas": {
@@ -455,5 +455,8 @@
       "description": "Poboljšava analitički pregled vozača i izvještaja za pripremu utrke.",
       "focus": "Preciznost + analiza"
     }
+  },
+  "u23Premium": {
+    "required": "Za U23 Head Coach potrebno je Premium članstvo."
   }
 }
