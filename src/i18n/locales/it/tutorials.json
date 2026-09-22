@@ -86,7 +86,7 @@
   "squad": {
     "welcome": {
       "title": "Hai bisogno di aiuto con la tua squadra?",
-      "body": "Possiamo mostrarvi una breve introduzione alla pagina della Squad, dove gestisci i tuoi ciclisti, sviluppando team, finestre di movimento e personale.",
+      "body": "Possiamo mostrarti una breve introduzione alla pagina Squadra, dove gestisci corridori, Developing Team riservato a Premium, finestre di movimento e staff.",
       "primary": "Avvia tutorial",
       "secondary": "No grazie."
     },
@@ -102,7 +102,7 @@
     },
     "developing": {
       "title": "Sviluppo della finestra di squadra e movimento",
-      "body": "Il tuo team di sviluppo è il tuo secondo team. Può essere utilizzato per i giovani ciclisti che non sono ancora pronti per la prima squadra ma possono ancora correre in gare assegnate. Il team di sviluppo deve essere sbloccato per primo. Puoi trovare di più su questo in Preferenze. I ciclisti possono essere spostati solo tra la prima squadra e il team di sviluppo durante le finestre dei movimenti. Queste finestre si aprono quattro volte all'anno, e la pagina della squadra mostra quando la finestra di movimento successiva è disponibile. Alcuni strumenti di gestione aggiuntivi, viste estese o funzionalità di convenienza relative a questa area possono richiedere un account Premium o l'acquisto di Coins.",
+      "body": "Il Developing Team è la tua seconda squadra riservata a Premium per i giovani corridori non ancora pronti per la prima squadra ma che possono gareggiare nelle competizioni assegnate.\n\nÈ richiesto un abbonamento Premium attivo per creare o utilizzare il Developing Team. La prima attivazione costa 100 monete e ogni rinnovo stagionale o riattivazione successiva costa 100 monete. Anche l’U23 Head Coach è disponibile solo per i membri Premium.\n\nI corridori possono spostarsi tra Prima Squadra e Developing Team solo durante le finestre di movimento. Queste finestre si aprono quattro volte l’anno e la pagina Squadra mostra quando sarà disponibile la prossima.",
       "primary": "Successivo"
     },
     "staff": {
@@ -370,7 +370,7 @@
     },
     "premium": {
       "title": "Account Premium",
-      "body": "Questa è la tua area di accesso Premium. Un account Premium può rendere il gioco più facile e confortevole dando accesso a funzionalità aggiuntive, viste più avanzate e utili strumenti di convenienza. Premium può anche aiutarti a sbloccare più dell'esperienza di gestione completa del gioco. Acquistando Premium o Pacchetti Pro, supporti direttamente il nostro team e ci aiuti a continuare a sviluppare ProPeloton Manager più velocemente e meglio.",
+      "body": "Questa è la tua area Premium.\n\nUn account Premium rende il gioco più comodo offrendo funzioni extra, viste avanzate e strumenti utili.\n\nPremium sblocca anche il Developing Team e il ruolo U23 Head Coach. L’attivazione e il rinnovo stagionale del Developing Team continuano a usare monete.\n\nAcquistando Premium o pacchetti Pro sostieni direttamente il nostro team e ci aiuti a continuare lo sviluppo di ProPeloton Manager.",
       "primary": "Successivo"
     },
     "finished": {
