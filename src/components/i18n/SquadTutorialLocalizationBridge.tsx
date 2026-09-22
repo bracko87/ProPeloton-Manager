@@ -28,7 +28,7 @@ register(
 )
 register('Developing Team and Movement Window', 'squad.developing.title')
 register(
-  'Your Developing Team is your second team. It can be used for young riders who are not yet ready for the first squad but can still race in assigned competitions. The Developing Team must be unlocked first. You can find more about this in Preferences. Riders can only be moved between the First Squad and Developing Team during movement windows. These windows open four times per year, and the Squad page shows when the next movement window is available. Some extra management tools, extended views, or convenience features related to this area may require a Premium account or coin purchase.',
+  'Your Developing Team is your Premium-only second team for young riders who are not yet ready for the first squad but can still race in assigned competitions. An active Premium membership is required to create or use the Developing Team. First activation costs 100 coins and each later season renewal or reactivation costs 100 coins. The U23 Head Coach is also available only to Premium members. Riders can only be moved between the First Squad and Developing Team during movement windows. These windows open four times per year, and the Squad page shows when the next movement window is available.',
   'squad.developing.body',
 )
 register('Staff and Next Page', 'squad.staff.title')
