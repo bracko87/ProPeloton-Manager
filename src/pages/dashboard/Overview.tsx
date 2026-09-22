@@ -2395,22 +2395,51 @@ async function loadOverviewRaceWorldData(
 ): Promise<OverviewRaceWorldData> {
   if (!mainClubId) return EMPTY_RACE_WORLD_DATA;
 
-  try {
-    const { data, error } = await supabase.rpc("get_overview_race_world_v1", {
-      p_club_id: mainClubId,
-      p_season_year: seasonYear,
-    });
+  const retryDelaysMs = [0, 700, 1800];
 
-    if (error) {
-      console.warn("Could not load overview race world data:", error.message);
-      return EMPTY_RACE_WORLD_DATA;
+  for (let attempt = 0; attempt < retryDelaysMs.length; attempt += 1) {
+    const delayMs = retryDelaysMs[attempt] ?? 0;
+
+    if (delayMs > 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, delayMs));
     }
 
-    return normalizeOverviewRaceWorldData(data);
-  } catch (err) {
-    console.warn("Overview race world lookup failed:", err);
-    return EMPTY_RACE_WORLD_DATA;
+    try {
+      const { data, error } = await supabase.rpc("get_overview_race_world_v1", {
+        p_club_id: mainClubId,
+        p_season_year: seasonYear,
+      });
+
+      if (error) {
+        console.warn(
+          `Could not load overview race world data (attempt ${attempt + 1}/${retryDelaysMs.length}):`,
+          error.message,
+        );
+        continue;
+      }
+
+      const normalized = normalizeOverviewRaceWorldData(data);
+
+      // A race-world response normally contains world headlines even when the
+      // user's own club has no accepted upcoming race. An empty headline array
+      // can be a transient backend/aggregation result, so retry before accepting it.
+      if (
+        normalized.worldNews.length === 0 &&
+        attempt < retryDelaysMs.length - 1
+      ) {
+        continue;
+      }
+
+      return normalized;
+    } catch (err) {
+      console.warn(
+        `Overview race world lookup failed (attempt ${attempt + 1}/${retryDelaysMs.length}):`,
+        err,
+      );
+    }
   }
+
+  return EMPTY_RACE_WORLD_DATA;
 }
 
 function normalizeOverviewActiveOperations(value: unknown): OperationItem[] {
@@ -6362,11 +6391,13 @@ function NewsCommandCenter({
   feed,
   news,
   currentGameDateLabel,
+  loading = false,
 }: {
   alerts: AlertItem[];
   feed: FeedItem[];
   news: NewsItem[];
   currentGameDateLabel: string;
+  loading?: boolean;
 }) {
   const { t } = useTranslation("overview");
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
@@ -6506,6 +6537,19 @@ function NewsCommandCenter({
                 </button>
               );
             })}
+          </div>
+        ) : loading ? (
+          <div className="space-y-3 py-1">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3"
+              >
+                <div className="h-3.5 w-2/5 animate-pulse rounded bg-slate-200" />
+                <div className="mt-2 h-3 w-4/5 animate-pulse rounded bg-slate-100" />
+                <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-slate-100" />
+              </div>
+            ))}
           </div>
         ) : (
           <EmptyState
@@ -7209,25 +7253,25 @@ function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
   const net = income - expenses;
 
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+    <Card className="overflow-hidden">
+      <div className="border-b border-slate-100 bg-gradient-to-br from-white via-white to-slate-50 px-5 py-5">
+        <div>
           <h3 className="text-lg font-semibold text-slate-950">
             {t("finance.incomeExpensesTitle")}
           </h3>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
+          <p className="mt-1 max-w-sm text-sm leading-5 text-slate-500">
             {t("finance.operatingBalance", { period: periodConfig.label })}
           </p>
         </div>
 
-        <div className="shrink-0 rounded-full bg-slate-100 p-1">
+        <div className="mt-4 grid grid-cols-3 rounded-xl bg-slate-100 p-1">
           {(["weekly", "monthly", "season"] as const).map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => setPeriod(option)}
               className={cn(
-                "rounded-full px-2.5 py-1.5 text-[11px] font-bold transition",
+                "rounded-lg px-2 py-2 text-[11px] font-bold transition",
                 period === option
                   ? "bg-white text-slate-950 shadow-sm"
                   : "text-slate-500 hover:text-slate-800",
@@ -7243,48 +7287,78 @@ function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-4">
-        <div
-          className="h-36 w-36 shrink-0 rounded-full"
-          style={{
-            background: `conic-gradient(#10b981 0 ${incomePct}%, #ef4444 ${incomePct}% 100%)`,
-          }}
-        >
-          <div className="flex h-full w-full items-center justify-center rounded-full p-4">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center shadow-inner">
-              <div>
-                <div className="text-[10px] font-medium uppercase text-slate-500">
-                  {t("finance.net")}
-                </div>
-                <div
-                  className={cn(
-                    "text-sm font-normal",
-                    net >= 0 ? "text-emerald-600" : "text-red-600",
-                  )}
-                >
-                  {formatSignedCurrency(net)}
+      <div className="p-5">
+        <div className="grid items-center gap-5 sm:grid-cols-[132px_minmax(0,1fr)]">
+          <div className="flex justify-center">
+            <div
+              className="relative h-32 w-32 rounded-full shadow-sm"
+              style={{
+                background: `conic-gradient(#10b981 0 ${incomePct}%, #ef4444 ${incomePct}% 100%)`,
+              }}
+            >
+              <div className="absolute inset-[12px] flex items-center justify-center rounded-full bg-white shadow-inner">
+                <div className="px-2 text-center">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                    {t("finance.net")}
+                  </div>
+                  <div
+                    className={cn(
+                      "mt-1 text-base font-bold tabular-nums",
+                      net >= 0 ? "text-emerald-600" : "text-red-600",
+                    )}
+                  >
+                    {formatSignedCurrency(net)}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="min-w-0 flex-1 space-y-2">
-          <SmallStat
-            label={t("finance.incomePercent", { percent: incomePct })}
-            value={formatCurrency(income)}
-            valueClassName="text-emerald-600"
-          />
-          <SmallStat
-            label={t("finance.expensesPercent", { percent: expensePct })}
-            value={formatCurrency(expenses)}
-            valueClassName="text-red-600"
-          />
-          <SmallStat
-            label={t("finance.finalBalance")}
-            value={formatSignedCurrency(net)}
-            valueClassName={net >= 0 ? "text-emerald-600" : "text-red-600"}
-          />
+          <div className="space-y-2.5">
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3.5 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
+                  <span className="truncate text-sm font-medium text-slate-700">
+                    {t("finance.incomePercent", { percent: incomePct })}
+                  </span>
+                </div>
+                <span className="shrink-0 text-sm font-bold tabular-nums text-emerald-700">
+                  {formatCurrency(income)}
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-red-100 bg-red-50/60 px-3.5 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
+                  <span className="truncate text-sm font-medium text-slate-700">
+                    {t("finance.expensesPercent", { percent: expensePct })}
+                  </span>
+                </div>
+                <span className="shrink-0 text-sm font-bold tabular-nums text-red-700">
+                  {formatCurrency(expenses)}
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold text-slate-700">
+                  {t("finance.finalBalance")}
+                </span>
+                <span
+                  className={cn(
+                    "shrink-0 text-sm font-bold tabular-nums",
+                    net >= 0 ? "text-emerald-700" : "text-red-700",
+                  )}
+                >
+                  {formatSignedCurrency(net)}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Card>
@@ -7365,6 +7439,7 @@ export default function OverviewPage() {
   const [raceWorld, setRaceWorld] = React.useState<OverviewRaceWorldData>(
     EMPTY_RACE_WORLD_DATA,
   );
+  const [raceWorldLoading, setRaceWorldLoading] = React.useState(true);
   const [attentionAlerts, setAttentionAlerts] = React.useState<AlertItem[]>([]);
   const [openedAttentionKeys, setOpenedAttentionKeys] = React.useState<Set<string>>(
     () => readOpenedAttentionKeys(),
@@ -7696,8 +7771,11 @@ export default function OverviewPage() {
         }
       });
 
-      void loadOverviewRaceWorldData(mainClubId, seasonYear).then((loadedRaceWorld) => {
-        if (alive) {
+      setRaceWorldLoading(true);
+      void loadOverviewRaceWorldData(mainClubId, seasonYear)
+        .then((loadedRaceWorld) => {
+          if (!alive) return;
+
           setRaceWorld((current) => ({
             upcomingSchedule:
               current.upcomingSchedule.length > 0
@@ -7707,12 +7785,18 @@ export default function OverviewPage() {
               current.todayRaces.length > 0
                 ? current.todayRaces
                 : loadedRaceWorld.todayRaces,
-            worldNews: loadedRaceWorld.worldNews,
+            worldNews:
+              loadedRaceWorld.worldNews.length > 0
+                ? loadedRaceWorld.worldNews
+                : current.worldNews,
           }));
-        }
-      }).catch((err) => {
-        console.warn("Background overview race world load failed:", err);
-      });
+        })
+        .catch((err) => {
+          console.warn("Background overview race world load failed:", err);
+        })
+        .finally(() => {
+          if (alive) setRaceWorldLoading(false);
+        });
 
       void loadOverviewSquadPulse(mainClubId).then((loadedSquadPulse) => {
         if (alive) {
@@ -8326,6 +8410,11 @@ export default function OverviewPage() {
                   raceWorld.worldNews.length > 0 ? raceWorld.worldNews : data.news
                 }
                 currentGameDateLabel={data.club.dateLabel}
+                loading={
+                  raceWorldLoading &&
+                  raceWorld.worldNews.length === 0 &&
+                  data.news.length === 0
+                }
               />
             </div>
 
