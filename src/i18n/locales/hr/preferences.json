@@ -151,7 +151,7 @@
   },
   "developingTeam": {
     "title": "Razvojni tim",
-    "description": "Izgradite i upravljajte U23 razvojnom ekipom uz sezonski pristup koji se plaća Coins-ima.",
+    "description": "Premium-only U23 razvojni tim s aktivacijom od 100 Coins i sezonskom obnovom od 100 Coins.",
     "loading": "Učitavanje statusa Razvojnog tima...",
     "realLifeProgress": "Napredak u realnom vremenu",
     "realLifeMinimum": "Potrebno najmanje 30 dana",
@@ -180,7 +180,12 @@
     "rosterRule": "Maksimalna veličina kadra: 8 vozača.",
     "ageRule": "Mogu sudjelovati samo vozači od 23 godine ili mlađi.",
     "movementRule": "Vozači prelaze između ekipa samo tijekom razdoblja za premještanje.",
-    "teamLabel": "Tim"
+    "teamLabel": "Tim",
+    "premiumOnlyTitle": "Samo za Premium",
+    "premiumOnlyDescription": "Razvojni tim i U23 glavni trener dostupni su samo dok je Premium aktivan. Aktivacija košta {{activation}} Coins, a obnova svake sezone {{renewal}} Coins.",
+    "premiumInactiveDescription": "Podaci postojećeg Razvojnog tima ostaju spremljeni, ali pristup je pauziran dok Premium nije aktivan.",
+    "unlockPremium": "Otključaj Premium",
+    "premiumModalRequirement": "Aktivno Premium članstvo potrebno je za Razvojni tim i U23 glavnog trenera."
   },
   "dangerZone": {
     "title": "Opasna zona",

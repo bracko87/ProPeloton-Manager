@@ -72,11 +72,12 @@
     "a4": "L'équipement supplémentaire de configuration des emplacements et élargi comprend la capacité de garage.",
     "a5": "Manager Briefing, intelligence avancée du calendrier, prévisions financières et outils de confort.",
     "a6": "Analyses avancées des performances des coureurs, tendances de développement et replays illimités des courses mondiales.",
-    "a7": "Premium améliore l'information, l'automatisation et le confort — jamais la force en course, l'acceptation des transferts ni les attributs cachés."
+    "a7": "Premium améliore l'information, l'automatisation et le confort — jamais la force en course, l'acceptation des transferts ni les attributs cachés.",
+    "a8": "Accès exclusif à l'Équipe de Développement, y compris l'Entraîneur Principal U23 : 100 Coins à l'activation et 100 Coins par saison au renouvellement."
   },
   "comparison": {
     "title": "Gratuit vs Premium",
-    "description": "Premium ajoute des outils et des analyses optionnelles sans supprimer l'accès des lecteurs libres.",
+    "description": "Premium ajoute des outils avancés ainsi qu'un accès exclusif à l'Équipe de Développement et à l'Entraîneur Principal U23.",
     "benefit": "Avantages",
     "free": "Gratuit",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Utiliser des fonctionnalités de pièce en option",
     "developing": "Développement du service d'équipe",
     "activationRenewal": "Activation {{activation}} / Renouvellement {{renewal}}",
-    "note": "L'analyse et les outils Premium seront développés lors de l'examen page par page."
+    "note": "L'Équipe de Développement et l'Entraîneur Principal U23 exigent un Premium actif. L'activation et le renouvellement saisonnier utilisent toujours des Coins.",
+    "premiumOnly": "Premium uniquement"
   },
   "packages": {
     "title": "Besoin de Coins supplémentaires?",
@@ -129,8 +131,8 @@
     "manageNoteSuffix": "ci-dessus pour annuler le renouvellement futur, mettre à jour les détails de facturation ou afficher les factures hébergées par Stripe."
   },
   "services": {
-    "title": "Services de Coins actives",
-    "description": "Gérer les services optionnels de club achetés avec des Coins de monnaie. Ces services sont disponibles pour les joueurs Free et Premium.",
+    "title": "Services Premium et Coins",
+    "description": "Gérez les services optionnels du club et les extensions financées par des Coins. L'Équipe de Développement et l'Entraîneur Principal U23 exigent également un abonnement Premium actif.",
     "loading": "Chargement des services de Coins...",
     "unavailable": "Les renseignements sur le service de l'équipe en développement sont actuellement indisponibles.",
     "unavailableHelp": "Le reste de Premium, la facturation et la gestion des Coins restent disponibles.",
@@ -138,8 +140,8 @@
     "active": "Actif",
     "expired": "Expiré",
     "notActivated": "Non activé",
-    "descriptionDeveloping": "Construisez et gérez une équipe de développement U23.",
-    "readOnly": "L'équipe et toutes les données stockées restent disponibles en mode lecture seule.",
+    "descriptionDeveloping": "Créez et gérez une équipe de développement U23 en tant que membre Premium.",
+    "readOnly": "Les données de votre Équipe de Développement restent enregistrées, mais l'accès est suspendu jusqu'à ce que Premium soit de nouveau actif.",
     "reactivationPrice": "Prix de réactivation: {{cost}} Coins.",
     "firstActivationPrice": "Premier prix d'activation: {{cost}} coins.",
     "laterPrice": "Renouvellement ou réactivation ultérieur: {{cost}} Coins par saison.",
@@ -156,12 +158,12 @@
     "startSeason": "Début de la saison {{season}}",
     "autoRenew": "Renouveler automatiquement chaque saison",
     "autoRenewPrefix": "Lorsque activé,",
-    "autoRenewSuffix": "les Coins seront déduites au début de la saison prochaine. Si le solde du portefeuille est trop bas, le renouvellement échouera et l'équipe en développement deviendra en lecture seule.",
+    "autoRenewSuffix": "Coins seront débités au début de la saison suivante uniquement si Premium est actif. Si Premium expire ou si le solde est insuffisant, le renouvellement échouera et l'accès sera suspendu.",
     "reactivation": "Prix de réactivation",
     "firstActivation": "Première activation",
     "laterRenewals": "Renouvellements ultérieurs",
     "coinsPerSeason": "Coins de monnaie {{cost}} par saison",
-    "autoEnabled": "Renouvellement automatique activé. Les Coins {{cost}} seront facturées au début de la saison prochaine.",
+    "autoEnabled": "Renouvellement automatique activé. {{cost}} Coins seront débités au début de la saison suivante si Premium est actif.",
     "autoDisabled": "Renouvellement automatique désactivé. Aucun frais de renouvellement de l'équipe en développement ne sera effectué automatiquement.",
     "autoFailed": "Impossible de mettre à jour le renouvellement automatique de l'équipe en développement.",
     "loadFailed": "Échec du chargement du service de l'équipe en développement."

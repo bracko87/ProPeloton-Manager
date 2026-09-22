@@ -72,11 +72,12 @@
     "a4": "Dodatni slotovi za postavka opreme i prošireni uključeni kapacitet garaže.",
     "a5": "Manager Briefing, napredna analiza kalendara, financijske prognoze i alati za jednostavnije upravljanje.",
     "a6": "Napredna analiza učinka vozača, trendovi razvoja i neograničene snimke svih svjetskih utrka.",
-    "a7": "Premium poboljšava informacije, automatizaciju i praktičnost — nikada snagu u race engineu, prihvaćanje transfera ili skrivene atribute vozača."
+    "a7": "Premium poboljšava informacije, automatizaciju i praktičnost — nikada snagu u race engineu, prihvaćanje transfera ili skrivene atribute vozača.",
+    "a8": "Ekskluzivan pristup Razvojnom timu i U23 glavnom treneru: 100 Coins za aktivaciju i 100 Coins po sezoni za obnovu."
   },
   "comparison": {
     "title": "Besplatno i Premium",
-    "description": "Premium dodaje opcione analize i alate bez ukidanja pristupa besplatnim igračima.",
+    "description": "Premium donosi napredne alate te ekskluzivan pristup Razvojnom timu i U23 glavnom treneru.",
     "benefit": "Pogodnost",
     "free": "Besplatno",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Korišćenje opcionih funkcija za Coins",
     "developing": "Usluga Razvojnog tima",
     "activationRenewal": "{{activation}} aktivacija / {{renewal}} obnova",
-    "note": "Premium analize i alati biće proširivani tokom pregleda funkcija stranicu po stranicu."
+    "note": "Razvojni tim i U23 glavni trener zahtijevaju aktivan Premium. Aktivacija i sezonska obnova Razvojnog tima i dalje se plaćaju Coins-ima.",
+    "premiumOnly": "Samo Premium"
   },
   "packages": {
     "title": "Potrebni su vam dodatni Coins?",
@@ -129,8 +131,8 @@
     "manageNoteSuffix": "iznad da biste otkazali buduću obnovu, izmenili podatke za naplatu ili pogledali fakture na Stripe-u."
   },
   "services": {
-    "title": "Aktivne usluge za Coins",
-    "description": "Upravljajte opcionim uslugama kluba kupljenim Coins. Ove usluge su dostupne i besplatnim i Premium igračima.",
+    "title": "Premium i Coins usluge",
+    "description": "Upravljajte opcionalnim klupskim uslugama i proširenjima koja se plaćaju Coins-ima. Razvojni tim i U23 glavni trener dodatno zahtijevaju aktivno Premium članstvo.",
     "loading": "Učitavanje usluga za Coins...",
     "unavailable": "Podaci o usluzi Razvojnog tima trenutno nisu dostupni.",
     "unavailableHelp": "Ostale funkcije za Premium, naplatu i upravljanje Coins i dalje su dostupne.",
@@ -138,8 +140,8 @@
     "active": "Aktivno",
     "expired": "Isteklo",
     "notActivated": "Nije aktivirano",
-    "descriptionDeveloping": "Izgradite i upravljajte U23 razvojnim timom.",
-    "readOnly": "Tim i svi spremljeni podaci ostaju dostupni u načinu samo za čitanje.",
+    "descriptionDeveloping": "Kao Premium član izgradite i upravljajte U23 razvojnim timom.",
+    "readOnly": "Podaci vašeg Razvojnog tima ostaju sačuvani, ali je pristup pauziran dok Premium ponovno ne bude aktivan.",
     "reactivationPrice": "Cena reaktivacije: {{cost}} Coins.",
     "firstActivationPrice": "Cena prve aktivacije: {{cost}} Coins.",
     "laterPrice": "Kasnija obnova ili reaktivacija: {{cost}} Coins po sezoni.",
@@ -156,12 +158,12 @@
     "startSeason": "Početak sezone {{season}}",
     "autoRenew": "Automatski obnovi svake sezone",
     "autoRenewPrefix": "Kada je uključeno,",
-    "autoRenewSuffix": "Coins će biti oduzeto na početku sljedeće sezone. Ako nema dovoljno Coins u novčaniku, obnova neće uspeti i Razvojni tim će preći u režim samo za čitanje.",
+    "autoRenewSuffix": "Coins će se oduzeti na početku sljedeće sezone samo dok je Premium aktivan. Ako Premium istekne ili nema dovoljno Coins-a, obnova neće uspjeti i pristup će biti pauziran.",
     "reactivation": "Cena reaktivacije",
     "firstActivation": "Prva aktivacija",
     "laterRenewals": "Kasnije obnove",
     "coinsPerSeason": "{{cost}} Coins po sezoni",
-    "autoEnabled": "Automatska obnova je uključena. {{cost}} Coins biće naplaćeno na početku sljedeće sezone.",
+    "autoEnabled": "Automatska obnova je uključena. {{cost}} Coins bit će naplaćeno na početku sljedeće sezone ako je Premium aktivan.",
     "autoDisabled": "Automatska obnova je isključena. Obnova Razvojnog tima neće biti automatski naplaćena.",
     "autoFailed": "Automatska obnova Razvojnog tima nije mogla da se izmeni.",
     "loadFailed": "Usluga Razvojnog tima nije mogla da se učita."

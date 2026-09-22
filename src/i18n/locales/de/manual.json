@@ -391,30 +391,45 @@
     "developing-team": {
       "category": "Fahrer",
       "title": "Entwicklung des Teams",
-      "subtitle": "U23/development Struktur, Kauf und Bewegung Fenster.",
-      "overview": "Das Developing Team ist ein zweites Team, das mit dem Hauptclub verbunden ist. Es wird für junge oder sekundäre Fahrer eingesetzt und hat eigene Richtlinien für die Begrenzung der Reise- und Bewegungsfreiheit.",
+      "subtitle": "Premium-exklusive U23-Struktur, Aktivierung, Verlängerung und Wechselzeiträume.",
+      "overview": "Das Entwicklungsteam ist ein Premium-exklusives zweites Team des Hauptclubs. Premium muss aktiv bleiben, um das Team und den U23-Cheftrainer zu nutzen; bei Ablauf bleiben alle Daten gespeichert.",
       "details": [
-        "Voreinstellungen laden Entwicklung des Teamstatus vom Backend. Es zeigt Echtzeit-, Spieltage, Münzausgleich, Münzkosten, Anforderungsstatus, Bewegungs-Fensterzustand und ob der Kauf erlaubt ist.",
-        "Nach dem Kauf pinnt die App den aktiven Club zurück zum Hauptclub, so dass das Dashboard nicht versehentlich in den Entwicklungsclub wechselt.",
-        "Die Entwicklung der Teamfahrer kann nur dann in die Erste Mannschaft verschoben werden, wenn das Bewegungsfenster geöffnet ist und die Erste Mannschaft Platz hat.",
-        "Wenn ein Entwicklerteamfahrer 24 oder älter ist, kann die Benutzeroberfläche eine Actionwarnung anzeigen. Wenn das Bewegungsfenster geöffnet ist, ist jetzt Aktion erforderlich; ansonsten muss der Fahrer nächstes Fenster bewegen."
+        "Eine aktive Premium-Mitgliedschaft ist erforderlich, um das Entwicklungsteam zu erstellen, zu reaktivieren, zu verlängern oder zu nutzen. Auch der U23-Cheftrainer ist Premium-exklusiv.",
+        "Die erste Aktivierung kostet 100 Coins, jede Saisonverlängerung 100 Coins. Vor der ersten Aktivierung gilt weiterhin die normale Zeitvoraussetzung.",
+        "Läuft Premium ab, wird der Zugriff pausiert und U23-Cheftrainer-Funktionen werden deaktiviert; Team, Fahrer, Verträge, Ergebnisse und Historie bleiben gespeichert.",
+        "Die Einstellungen zeigen Premium-Zugriff, Spieltage, Coin-Guthaben, Kosten, Voraussetzungen und Wechselzeitraum.",
+        "Nach der Aktivierung bleibt der Hauptclub der aktive Club.",
+        "Fahrer können nur bei offenem Wechselzeitraum und freiem Platz in die erste Mannschaft wechseln.",
+        "Fahrer ab 24 sollten im erlaubten Wechselzeitraum verschoben werden."
       ],
       "facts": [
         {
-          "label": "Team max in UI entwickeln",
+          "label": "Verfügbarkeit",
+          "value": "Nur Premium-Mitglieder"
+        },
+        {
+          "label": "Aktivierung",
+          "value": "100 Coins"
+        },
+        {
+          "label": "Saisonverlängerung",
+          "value": "100 Coins pro Saison"
+        },
+        {
+          "label": "Maximale Kadergröße",
           "value": "8 Fahrer"
         },
         {
-          "label": "Einkaufsort",
-          "value": "Präferenzen"
+          "label": "Aktivierung",
+          "value": "Einstellungen"
         },
         {
-          "label": "Bewegungsregeln",
-          "value": "Fahrer können sich nur bewegen, wenn das Bewegungsfenster geöffnet ist"
+          "label": "Wechselregel",
+          "value": "Fahrerwechsel nur bei offenem Wechselzeitraum"
         },
         {
           "label": "Alterswarnung",
-          "value": "Fahrer ab 24 Jahren benötigen Aufmerksamkeit"
+          "value": "Fahrer ab 24 benötigen Aufmerksamkeit"
         }
       ],
       "tips": [
@@ -1665,27 +1680,42 @@
     "developing-team-deep": {
       "category": "Fahrer",
       "title": "Team-Tiefführer entwickeln",
-      "subtitle": "Kauf, Status, Dienstplan und Bewegungsfensterregeln.",
-      "overview": "Die Entwicklungsmannschaft wird separat verwaltet, bleibt aber mit dem Hauptklub und dem Konto verbunden.",
+      "subtitle": "Premium-Zugriff, Aktivierung, Verlängerung, Kader und Wechselregeln.",
+      "overview": "Das Entwicklungsteam ist ein Premium-exklusives zweites Team. Die Daten bleiben gespeichert, wenn Premium ausläuft.",
       "details": [
-        "Der Kaufstatus wird vom Backend geladen und hängt von den Anforderungen und dem Coin-Kontostand ab.",
-        "Der Haupt-Club-Kontext wird nach dem Kauf des Entwicklungsteams wiederhergestellt.",
-        "Die Förderung eines Fahrers erfordert sowohl ein offenes Bewegungsfenster als auch freie First Squad-Kapazität.",
-        "Alter 24+ Fahrer sollten bewegt werden, wenn das Spiel es erlaubt.",
-        "Wenn ein Fenster geschlossen ist, kann die Benutzeroberfläche die Benutzer warnen, im nächsten Fenster zu handeln."
+        "Premium ist zusätzlich zu den normalen Zeit- und Coin-Voraussetzungen erforderlich.",
+        "Die erste Aktivierung kostet 100 Coins, jede Saisonverlängerung 100 Coins.",
+        "Bei Ablauf von Premium wird der Zugriff deaktiviert, ohne Teamdaten zu löschen.",
+        "U23-Cheftrainer, U23-Trainingsautomatisierung und U23-Renncoach-Zugriff benötigen aktives Premium.",
+        "Nach Aktivierung bleibt der Hauptclub-Kontext aktiv.",
+        "Eine Beförderung benötigt einen offenen Wechselzeitraum und freien Platz im ersten Kader.",
+        "Fahrer ab 24 sollten verschoben werden, sobald es möglich ist.",
+        "Bei geschlossenem Fenster weist die Oberfläche auf den nächsten Zeitraum hin."
       ],
       "facts": [
         {
-          "label": "Liste max.",
+          "label": "Verfügbarkeit",
+          "value": "Nur Premium"
+        },
+        {
+          "label": "Aktivierung / Verlängerung",
+          "value": "100 Coins / 100 Coins je Saison"
+        },
+        {
+          "label": "U23-Cheftrainer",
+          "value": "Nur Premium"
+        },
+        {
+          "label": "Kader max.",
           "value": "8"
         },
         {
-          "label": "Bewegung",
-          "value": "Nur bei offenen Bewegungsfenstern"
+          "label": "Wechsel",
+          "value": "Nur in offenen Wechselzeiträumen"
         },
         {
-          "label": "Warnung für ältere Fahrer",
-          "value": "Alter 24+"
+          "label": "Alterswarnung",
+          "value": "Ab 24"
         }
       ],
       "tips": [
@@ -1708,7 +1738,7 @@
         "Ernährungswissenschaftler unterstützt Ernährung/recovery systeme.",
         "Mechanik unterstützt Reparaturen und technische Systeme.",
         "Scout / Analyst unterstützt externe Fahrerinformationen.",
-        "U23 Head Coach unterstützt Entwicklungs-Team Fahrer."
+        "Der U23-Cheftrainer unterstützt Fahrer des Entwicklungsteams und ist nur für Premium-Mitglieder mit aktivem Entwicklungsteam verfügbar."
       ],
       "facts": [
         {
@@ -2487,7 +2517,7 @@
         "Die Beratungsvorschläge sollten das aktuelle Etappenprofil, das Wetter, ausgewählte Fahrer und die verfügbaren Ressourcen verwenden.",
         "Der Manager sollte Vorschläge mit Teamzielen vergleichen. Ein Sportdirektor kann einen sicheren generischen Plan vorschlagen, wenn der Benutzer ein aggressives Breakaway-Ziel will.",
         "Die Vorschläge sind für neue Spieler von größter Bedeutung, die noch nicht alle Etappenplansteuerungen verstehen.",
-        "Premium Komfort-Funktionen sollten nicht heimlich verbessern Race-Berechnungen. Der Vorteil ist die Analyse/convenience, nicht versteckte Leistungsfähigkeit.",
+        "Premium-Analyse und Komfortfunktionen verändern die Rennstärke nicht versteckt. Entwicklungsteam und U23-Cheftrainer sind dagegen ausdrücklich Premium-exklusive Gameplay-Funktionen.",
         "Speichern Sie immer den endgültigen Plan nach Überprüfung der Beratung."
       ],
       "facts": [

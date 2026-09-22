@@ -102,7 +102,7 @@
     },
     "developing": {
       "title": "Desarrollo de la ventana de equipo y movimiento",
-      "body": "Tu equipo de desarrollo es tu segundo equipo. Está pensado para ciclistas jóvenes que todavía no están preparados para la primera plantilla, pero pueden competir en las competiciones asignadas. Primero debes desbloquear el equipo de desarrollo; encontrarás más información en Preferencias. Los ciclistas solo pueden moverse entre la primera plantilla y el equipo de desarrollo durante las ventanas de movimiento. Estas ventanas se abren cuatro veces al año y la página Plantilla muestra cuándo estará disponible la siguiente. Algunas herramientas de gestión, vistas ampliadas o funciones de comodidad relacionadas con esta área pueden requerir Premium o Coins.",
+      "body": "Tu Equipo de Desarrollo es un segundo equipo exclusivo de Premium para ciclistas jóvenes que aún no están preparados para la Primera Plantilla, pero pueden competir en carreras asignadas.\n\nSe necesita una membresía Premium activa para crear y usar el Equipo de Desarrollo. La primera activación cuesta 100 Coins y cada renovación de temporada cuesta 100 Coins. El Entrenador Principal U23 también es exclusivo de Premium.\n\nSi Premium caduca, el acceso queda pausado, pero el equipo, los ciclistas, los contratos, los resultados y el historial permanecen guardados. Los ciclistas solo pueden moverse entre la Primera Plantilla y el Equipo de Desarrollo durante las ventanas normales de movimiento.",
       "primary": "Siguiente"
     },
     "staff": {

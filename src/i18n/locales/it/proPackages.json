@@ -72,11 +72,12 @@
     "a4": "Attrezzatura supplementare di installazione e ampliato incluso capacità del garage.",
     "a5": "Manager Briefing, intelligenza avanzata del calendario, previsioni finanziarie e strumenti di comodità.",
     "a6": "Analisi avanzate delle prestazioni dei corridori, trend di sviluppo e replay illimitati delle gare mondiali.",
-    "a7": "Premium migliora informazioni, automazione e comodità — mai la forza nel motore di gara, l'accettazione dei trasferimenti o le abilità nascoste."
+    "a7": "Premium migliora informazioni, automazione e comodità — mai la forza nel motore di gara, l'accettazione dei trasferimenti o le abilità nascoste.",
+    "a8": "Accesso esclusivo alla Squadra di Sviluppo, incluso l'Allenatore Capo U23: 100 Coins per attivare e 100 Coins per stagione per rinnovare."
   },
   "comparison": {
     "title": "Free vs Premium",
-    "description": "Premium aggiunge analisi e strumenti opzionali senza rimuovere l'accesso da giocatori liberi.",
+    "description": "Premium aggiunge strumenti avanzati e accesso esclusivo alla Squadra di Sviluppo e all'Allenatore Capo U23.",
     "benefit": "Prestazioni",
     "free": "Libero",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Usare le caratteristiche opzionali della Coins",
     "developing": "Servizio di sviluppo del team",
     "activationRenewal": "Attivazione {{activation}} / Rinnovo {{renewal}}",
-    "note": "L'analisi e gli strumenti Premium saranno ampliati durante la revisione delle funzionalità pagina per pagina."
+    "note": "Squadra di Sviluppo e Allenatore Capo U23 richiedono Premium attivo. Attivazione e rinnovo stagionale continuano a usare Coins.",
+    "premiumOnly": "Solo Premium"
   },
   "packages": {
     "title": "Hai bisogno di Coins aggiuntive?",
@@ -129,8 +131,8 @@
     "manageNoteSuffix": "sopra per annullare il rinnovo futuro, aggiornare i dettagli di fatturazione o visualizzare Stripe-hosted fatture."
   },
   "services": {
-    "title": "Servizi di Coins attiva",
-    "description": "Gestisci i servizi di club opzionali acquistati con Coins. Questi servizi sono disponibili per i giocatori Free e Premium.",
+    "title": "Servizi Premium e Coins",
+    "description": "Gestisci servizi opzionali del club ed espansioni finanziate con Coins. Squadra di Sviluppo e Allenatore Capo U23 richiedono inoltre un abbonamento Premium attivo.",
     "loading": "Caricamento servizi Coins...",
     "unavailable": "Attualmente non sono disponibili informazioni sul servizio del Team di sviluppo.",
     "unavailableHelp": "Il resto di Premium, gestione fatturazione e Coins rimane disponibile.",
@@ -138,8 +140,8 @@
     "active": "Attivo",
     "expired": "Scaduto",
     "notActivated": "Non attivato",
-    "descriptionDeveloping": "Costruisci e gestisci una squadra di sviluppo U23.",
-    "readOnly": "Il team e tutti i dati memorizzati rimangono disponibili in modalità di sola lettura.",
+    "descriptionDeveloping": "Crea e gestisci una squadra di sviluppo U23 come membro Premium.",
+    "readOnly": "I dati della Squadra di Sviluppo restano salvati, ma l'accesso è sospeso finché Premium non torna attivo.",
     "reactivationPrice": "Prezzo di riattivazione: Coins {{cost}}.",
     "firstActivationPrice": "Primo prezzo di attivazione: Coins {{cost}}.",
     "laterPrice": "Rinnovo successivo o riattivazione: Coins {{cost}} per stagione.",
@@ -156,12 +158,12 @@
     "startSeason": "Inizio della stagione {{season}}",
     "autoRenew": "Rinnovare automaticamente ogni stagione",
     "autoRenewPrefix": "Se abilitata,",
-    "autoRenewSuffix": "Le Coins saranno detratte all'inizio della prossima stagione. Se il saldo del portafoglio è troppo basso, il rinnovo fallirà e il team di sviluppo diventerà in sola lettura.",
+    "autoRenewSuffix": "Coins verranno detratti all'inizio della prossima stagione solo mentre Premium è attivo. Se Premium termina o il saldo è insufficiente, il rinnovo fallirà e l'accesso verrà sospeso.",
     "reactivation": "Prezzo di riattivazione",
     "firstActivation": "Prima attivazione",
     "laterRenewals": "Rinnovamenti successivi",
     "coinsPerSeason": "Coins {{cost}} per stagione",
-    "autoEnabled": "Ripristino automatico abilitato. Le Coins {{cost}} saranno addebitate all'inizio della prossima stagione.",
+    "autoEnabled": "Rinnovo automatico attivato. All'inizio della prossima stagione verranno addebitati {{cost}} Coins se Premium è attivo.",
     "autoDisabled": "Ripristino automatico disabilitato. Nessuna carica di rinnovo del team di sviluppo verrà effettuata automaticamente.",
     "autoFailed": "Aggiornamento del rinnovo automatico del team di sviluppo non riuscito.",
     "loadFailed": "Caricamento del servizio Sviluppo Team non riuscito."

@@ -194,10 +194,9 @@ export const squadTutorialSteps: TutorialStep[] = [
     key: 'squad-developing-team',
     title: 'Developing Team and Movement Window',
     body:
-      'Your Developing Team is your second team. It can be used for young riders who are not yet ready for the first squad but can still race in assigned competitions.\n\n' +
-      'The Developing Team must be unlocked first. You can find more about this in Preferences.\n\n' +
-      'Riders can only be moved between the First Squad and Developing Team during movement windows. These windows open four times per year, and the Squad page shows when the next movement window is available.\n\n' +
-      'Some extra management tools, extended views, or convenience features related to this area may require a Premium account or coin purchase.',
+      'Your Developing Team is a Premium-only second team for young riders who are not yet ready for the First Squad but can still race in assigned competitions.\n\n' +
+      'An active Premium membership is required to create and use the Developing Team. First activation costs 100 coins and each seasonal renewal costs 100 coins. The U23 Head Coach is also Premium-only.\n\n' +
+      'If Premium expires, Developing Team access is paused but the team, riders, contracts, results and history remain stored. Riders can only move between the First Squad and Developing Team during the normal movement windows.',
     primaryAction: 'Next',
     target: 'squad-developing-team',
   },

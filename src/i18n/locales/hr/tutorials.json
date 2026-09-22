@@ -102,7 +102,7 @@
     },
     "developing": {
       "title": "Razvojni tim i period za premeštanje",
-      "body": "Razvojni tim vaš je drugi tim. Može se koristiti za mlade vozače koji još nisu spremni za Prvi tim, ali se i dalje mogu natjecati u dodijeljenim natjecanjima.\n\nRazvojni tim prvo mora biti otključan. Više informacija možete pronaći u Postavkama.\n\nVozači se između Prvog i Razvojnog tima mogu premještati samo tijekom razdoblja za premještanje. Ta se razdoblja otvaraju četiri puta godišnje, a stranica Momčad pokazuje kada je dostupno sljedeće razdoblje.\n\nNeki dodatni alati za upravljanje, prošireni prikazi ili praktične funkcije povezane s ovim dijelom mogu zahtijevati Premium račun ili kupnju Coins.",
+      "body": "Razvojni tim je Premium-only drugi tim za mlade vozače koji još nisu spremni za Prvi tim, ali mogu nastupati u dodijeljenim utrkama.\n\nZa stvaranje i korištenje Razvojnog tima potrebno je aktivno Premium članstvo. Prva aktivacija košta 100 Coins, a svaka sezonska obnova 100 Coins. U23 glavni trener također je dostupan samo uz Premium.\n\nAko Premium istekne, pristup Razvojnom timu se pauzira, ali tim, vozači, ugovori, rezultati i povijest ostaju spremljeni. Vozači se između Prvog i Razvojnog tima mogu premještati samo tijekom uobičajenih razdoblja za premještanje.",
       "primary": "Dalje"
     },
     "staff": {

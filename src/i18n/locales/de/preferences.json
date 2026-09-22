@@ -151,7 +151,7 @@
   },
   "developingTeam": {
     "title": "Entwicklung des Teams",
-    "description": "Bauen und verwalten Sie eine U23 Entwicklungsteam mit saisonalem Münzzugang.",
+    "description": "Premium-exklusives U23-Entwicklungsteam mit 100 Coins Aktivierung und 100 Coins Verlängerung pro Saison.",
     "loading": "Status des Entwicklungsteams wird geladen...",
     "realLifeProgress": "Fortschritt in der Praxis",
     "realLifeMinimum": "Mindestens 30 Tage erforderlich",
@@ -180,7 +180,12 @@
     "rosterRule": "Maximale Dienstplangröße: 8 Fahrer.",
     "ageRule": "Nur Fahrer im Alter von 23 oder jünger sind berechtigt.",
     "movementRule": "Die Fahrer bewegen sich nur während der Bewegungsfenster zwischen den Kader.",
-    "teamLabel": "Team"
+    "teamLabel": "Team",
+    "premiumOnlyTitle": "Nur mit Premium",
+    "premiumOnlyDescription": "Entwicklungsteam und U23-Cheftrainer sind nur mit aktivem Premium verfügbar. Die Aktivierung kostet {{activation}} Coins, die Verlängerung pro Saison {{renewal}} Coins.",
+    "premiumInactiveDescription": "Die Daten deines bestehenden Entwicklungsteams bleiben gespeichert, aber der Zugriff ist ohne aktives Premium pausiert.",
+    "unlockPremium": "Premium freischalten",
+    "premiumModalRequirement": "Eine aktive Premium-Mitgliedschaft ist für das Entwicklungsteam und den U23-Cheftrainer erforderlich."
   },
   "dangerZone": {
     "title": "Gefahrenzone",

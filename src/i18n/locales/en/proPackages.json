@@ -72,11 +72,12 @@
     "a4": "Additional equipment setup slots and expanded included garage capacity.",
     "a5": "Manager Briefing, advanced calendar intelligence, finance forecasts and management convenience tools.",
     "a6": "Advanced rider-performance analytics, development trends and unlimited world-race replays.",
-    "a7": "Premium improves information, automation and convenience — never race-engine strength, transfer acceptance or hidden rider skills."
+    "a7": "Premium improves information, automation and convenience — never race-engine strength, transfer acceptance or hidden rider skills.",
+    "a8": "Exclusive Developing Team access, including the U23 Head Coach: 100 coins to activate and 100 coins per season to renew."
   },
   "comparison": {
     "title": "Free vs Premium",
-    "description": "Premium adds optional analysis and tools without removing access from Free players.",
+    "description": "Premium adds advanced tools plus exclusive Developing Team and U23 Head Coach access.",
     "benefit": "Benefit",
     "free": "Free",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Use optional coin features",
     "developing": "Developing Team service",
     "activationRenewal": "{{activation}} activation / {{renewal}} renewal",
-    "note": "Premium-only analysis and tools will be expanded during the page-by-page feature review."
+    "note": "Developing Team and U23 Head Coach require an active Premium membership. Developing Team activation and seasonal renewal still use coins.",
+    "premiumOnly": "Premium only"
   },
   "packages": {
     "title": "Need additional coins?",
@@ -129,8 +131,8 @@
     "manageNoteSuffix": "above to cancel future renewal, update billing details or view Stripe-hosted invoices."
   },
   "services": {
-    "title": "Active coin services",
-    "description": "Manage optional club services purchased with coins. These services are available to Free and Premium players.",
+    "title": "Premium & coin services",
+    "description": "Manage optional club services and coin-funded expansions. Developing Team and U23 Head Coach additionally require an active Premium membership.",
     "loading": "Loading coin services...",
     "unavailable": "Developing Team service information is currently unavailable.",
     "unavailableHelp": "The rest of Premium, billing and coin management remains available.",
@@ -138,8 +140,8 @@
     "active": "Active",
     "expired": "Expired",
     "notActivated": "Not activated",
-    "descriptionDeveloping": "Build and manage a U23 development squad.",
-    "readOnly": "The team and all stored data remain available in read-only mode.",
+    "descriptionDeveloping": "Build and manage a U23 development squad as a Premium member.",
+    "readOnly": "Your Developing Team data remains stored, but access is paused until Premium is active again.",
     "reactivationPrice": "Reactivation price: {{cost}} coins.",
     "firstActivationPrice": "First activation price: {{cost}} coins.",
     "laterPrice": "Later renewal or reactivation: {{cost}} coins per season.",
@@ -156,12 +158,12 @@
     "startSeason": "Start of Season {{season}}",
     "autoRenew": "Automatically renew each season",
     "autoRenewPrefix": "When enabled,",
-    "autoRenewSuffix": "coins will be deducted at the beginning of the next season. If the wallet balance is too low, renewal will fail and the Developing Team will become read-only.",
+    "autoRenewSuffix": "coins will be deducted at the beginning of the next season only while Premium is active. If Premium ends or the wallet balance is too low, renewal will fail and access will be paused.",
     "reactivation": "Reactivation price",
     "firstActivation": "First activation",
     "laterRenewals": "Later renewals",
     "coinsPerSeason": "{{cost}} coins per season",
-    "autoEnabled": "Automatic renewal enabled. {{cost}} coins will be charged at the beginning of the next season.",
+    "autoEnabled": "Automatic renewal enabled. {{cost}} coins will be charged at the beginning of the next season if Premium is active.",
     "autoDisabled": "Automatic renewal disabled. No Developing Team renewal charge will be made automatically.",
     "autoFailed": "Failed to update Developing Team automatic renewal.",
     "loadFailed": "Failed to load Developing Team service."

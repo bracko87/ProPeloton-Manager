@@ -581,15 +581,17 @@ export default function SquadPage() {
 
       setGameDate(normalizedGameDate)
 
-      const developingClubFallbackPromise = supabase
-        .from('clubs')
-        .select('id')
-        .eq('owner_user_id', userId)
-        .eq('club_type', 'developing')
-        .is('deleted_at', null)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle()
+      const developingClubFallbackPromise = hasPremiumAccess
+        ? supabase
+            .from('clubs')
+            .select('id')
+            .eq('owner_user_id', userId)
+            .eq('club_type', 'developing')
+            .is('deleted_at', null)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null })
 
       const clubPromise = supabase
         .from('clubs')
@@ -992,7 +994,12 @@ export default function SquadPage() {
   async function handleMoveToDevelopingTeam(riderId: string) {
     if (movingRiderId) return
 
-    if (!developingTeamStatus?.is_purchased || !developingTeamStatus.developing_club_id) {
+    if (!isPremium) {
+      setMoveActionMessage(t('nav.unlockDeveloping'))
+      return
+    }
+
+    if (!developingTeamStatus?.is_purchased || !developingTeamStatus?.is_active || !developingTeamStatus.developing_club_id) {
       setMoveActionMessage(t('nav.unlockDeveloping'))
       return
     }
@@ -1040,11 +1047,11 @@ export default function SquadPage() {
     developingTeamStatus !== null || developingTeamStatusError !== null
 
   const hasDevelopingTeam =
-    developingTeamExistsFallback ||
-    developingTeamStatus?.is_purchased === true ||
-    Boolean((developingTeamStatus as unknown as { team_exists?: boolean } | null)?.team_exists)
+    isPremium &&
+    developingTeamStatus?.is_purchased === true &&
+    developingTeamStatus?.is_active === true
   const showDevelopingTeamLockedState =
-    developingTeamStatusResolved && !hasDevelopingTeam
+    isPremium && developingTeamStatusResolved && !hasDevelopingTeam
   const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
 
   const movementWindowSummary = developingTeamStatus
@@ -1101,7 +1108,7 @@ export default function SquadPage() {
             >
               {t('nav.developingTeam')}
             </button>
-          ) : (
+          ) : isPremium ? (
             <span
               className="inline-flex cursor-not-allowed select-none items-center gap-2 rounded-md bg-gray-50 px-4 py-2 text-sm font-medium text-gray-400 opacity-80"
               title={
@@ -1116,7 +1123,7 @@ export default function SquadPage() {
               <span>{t('nav.developingTeam')}</span>
               <span aria-hidden="true">🔒</span>
             </span>
-          )}
+          ) : null}
 
           <button
             type="button"

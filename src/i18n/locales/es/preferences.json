@@ -151,7 +151,7 @@
   },
   "developingTeam": {
     "title": "Equipo de desarrollo",
-    "description": "Construye y administra un equipo de desarrollo U23 con acceso a Coins de temporada.",
+    "description": "Equipo de desarrollo U23 exclusivo de Premium con activación de 100 Coins y renovación estacional de 100 Coins.",
     "loading": "Cargando el estado del equipo en desarrollo...",
     "realLifeProgress": "Progresos en la vida real",
     "realLifeMinimum": "Mínimo 30 días requeridos",
@@ -180,7 +180,12 @@
     "rosterRule": "Tamaño máximo de la plantilla: 8 ciclistas.",
     "ageRule": "Sólo los ciclistas de 23 años o menos son elegibles.",
     "movementRule": "los ciclistas se mueven entre escuadrones sólo durante las ventanas de movimiento.",
-    "teamLabel": "Equipo"
+    "teamLabel": "Equipo",
+    "premiumOnlyTitle": "Función exclusiva de Premium",
+    "premiumOnlyDescription": "El Equipo de Desarrollo y el Entrenador Principal U23 solo están disponibles con Premium activo. La activación cuesta {{activation}} Coins y cada renovación de temporada {{renewal}} Coins.",
+    "premiumInactiveDescription": "Los datos de tu Equipo de Desarrollo existente permanecen guardados, pero el acceso se pausa mientras Premium esté inactivo.",
+    "unlockPremium": "Desbloquear Premium",
+    "premiumModalRequirement": "Se requiere una membresía Premium activa para usar el Equipo de Desarrollo y el Entrenador Principal U23."
   },
   "dangerZone": {
     "title": "Zona de peligro",

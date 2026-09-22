@@ -168,7 +168,7 @@ type PremiumBillingSummaryResponse = EdgeResponse & {
 
 const COIN_HISTORY_PAGE_SIZE = 20
 // Display fallbacks only. get_developing_team_status() is the authoritative source.
-const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 200
+const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 100
 const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 100
 const STRIPE_RETURN_RETRY_DELAYS_MS = [0, 1500, 3000, 5000, 8000, 12000]
 
@@ -257,6 +257,7 @@ const PREMIUM_ADVANTAGES = [
   'advantages.a5',
   'advantages.a6',
   'advantages.a7',
+  'advantages.a8',
 ] as const
 
 function eur(value: number) {
@@ -1688,8 +1689,8 @@ export default function ProPackagesPage(): JSX.Element {
                 <td className="px-5 py-4 font-medium text-gray-900">
                   {t('comparison.developing')}
                 </td>
-                <td className="px-5 py-4 text-center text-gray-700">
-                  {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}
+                <td className="px-5 py-4 text-center font-semibold text-gray-500">
+                  {t('comparison.premiumOnly')}
                 </td>
                 <td className="px-5 py-4 text-center font-bold text-gray-900">
                   {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}

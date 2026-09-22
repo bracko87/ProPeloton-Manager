@@ -78,7 +78,7 @@ type DevelopingTeamPageStatus = DevelopingTeamStatus & {
 }
 
 function hasDevelopingTeamAccess(status: DevelopingTeamPageStatus | null): boolean {
-  return status?.is_purchased === true || status?.team_exists === true
+  return status?.is_purchased === true && status?.is_active === true
 }
 
 type DevelopingCompetitionSummary = {
@@ -1037,10 +1037,20 @@ export default function DevelopingTeamPage() {
       setIsPremiumLoading(false)
 
       if (!hasPremiumAccess) {
+        setRows([])
         setHealthOverviewRows([])
-        setDevelopingTeamSeasonDashboardData((currentData) =>
-          createOperationalSquadSeasonDashboardData(currentData)
-        )
+        setCompetitionSummary(null)
+        setCompetitionLoading(false)
+        setDevelopingTeamStatus({
+          team_exists: false,
+          is_purchased: false,
+          is_active: false,
+          is_read_only: true,
+        } as unknown as DevelopingTeamPageStatus)
+        setDevelopingTeamSeasonDashboardData(createEmptySquadSeasonDashboardData())
+        setLoading(false)
+        navigate('/dashboard/squad', { replace: true })
+        return
       }
 
       const userId = authData.user?.id
@@ -1241,8 +1251,8 @@ export default function DevelopingTeamPage() {
           })
       }
 
-      // Last/Next Team Race remain Free. Premium analytics are now sanitized by
-      // the database RPC before the payload reaches the browser.
+      // Developing Team is Premium-only. Operational race data is loaded only
+      // after Premium access has been confirmed for this page.
       void fetchSquadSeasonDashboardData(developingClubId, seasonYear)
         .then((dashboardData) => {
           setDevelopingTeamSeasonDashboardData(dashboardData)

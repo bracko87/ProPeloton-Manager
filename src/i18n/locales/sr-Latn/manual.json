@@ -396,30 +396,45 @@
     "developing-team": {
       "category": "Vozači",
       "title": "Razvojni tim",
-      "subtitle": "U23/razvojna struktura, kupovina i periodi za premeštanje.",
-      "overview": "Razvojni tim je drugi tim povezan sa glavnim klubom. Koristi se za mlade ili sekundarne vozače i ima sopstveno ograničenje sastava i pravila perioda za premeštanje.",
+      "subtitle": "Premium-only U23 struktura, aktivacija, obnova i periodi za premeštanje.",
+      "overview": "Razvojni tim je Premium-only drugi tim povezan sa glavnim klubom. Premium mora ostati aktivan za korišćenje tima i U23 glavnog trenera; podaci ostaju sačuvani ako Premium istekne.",
       "details": [
-        "Podešavanja učitavaju status Razvojnog tima iz backenda. Prikazuju stvarne dane igranja, dane igre, stanje novčića, cenu u novčićima, status uslova, stanje perioda za premeštanje i da li je kupovina dozvoljena.",
-        "Nakon kupovine, aplikacija zadržava aktivni klub na glavnom klubu kako kontrolna tabla ne bi slučajno prešla na razvojni klub.",
-        "Vozači Razvojnog tima mogu biti prebačeni u Prvi tim samo ako je period za premeštanje otvoren i Prvi tim ima slobodno mesto.",
-        "Ako vozač Razvojnog tima ima 24 godine ili više, UI može prikazati upozorenje za akciju. Ako je period otvoren, akcija je potrebna odmah; u suprotnom vozač mora biti premešten u sledećem periodu."
+        "Aktivan Premium je potreban za kreiranje, reaktivaciju, obnovu ili korišćenje Razvojnog tima. U23 glavni trener je takođe Premium-only.",
+        "Prva aktivacija košta 100 Coins, a svaka sezonska obnova 100 Coins. Normalan vremenski uslov i dalje važi pre prve aktivacije.",
+        "Ako Premium istekne, pristup se pauzira i U23 funkcije se isključuju; tim, vozači, ugovori, rezultati i istorija ostaju sačuvani.",
+        "Podešavanja prikazuju Premium pristup, dane igranja, saldo, troškove, uslove i period za premeštanje.",
+        "Nakon aktivacije glavni klub ostaje aktivni klub.",
+        "Vozači se mogu prebaciti u Prvi tim samo tokom otvorenog perioda i uz slobodno mesto.",
+        "Vozače od 24+ treba premestiti kada igra to dozvoli."
       ],
       "facts": [
         {
-          "label": "Maksimum Razvojnog tima u UI",
+          "label": "Dostupnost",
+          "value": "Samo Premium članovi"
+        },
+        {
+          "label": "Aktivacija",
+          "value": "100 Coins"
+        },
+        {
+          "label": "Sezonska obnova",
+          "value": "100 Coins po sezoni"
+        },
+        {
+          "label": "Maksimalni roster",
           "value": "8 vozača"
         },
         {
-          "label": "Mesto kupovine",
-          "value": "Stranica Podešavanja"
+          "label": "Aktivacija",
+          "value": "Podešavanja"
         },
         {
-          "label": "Pravilo premeštanja",
-          "value": "Vozači se mogu premeštati samo kada je period za premeštanje otvoren"
+          "label": "Premeštanje",
+          "value": "Samo tokom otvorenog perioda"
         },
         {
           "label": "Upozorenje za godine",
-          "value": "Vozači od 24+ godine zahtevaju pažnju"
+          "value": "24+"
         }
       ],
       "tips": [
@@ -1684,27 +1699,42 @@
     "developing-team-deep": {
       "category": "Vozači",
       "title": "Vodič za razvoj dubokog tima",
-      "subtitle": "Kupovanje, status, spisak i pravila za pokret.",
-      "overview": "Razvijački odred se upravlja odvojeno, ali ostaje povezan sa glavnim klubom i računom.",
+      "subtitle": "Premium pristup, aktivacija, obnova, roster i pravila premeštanja.",
+      "overview": "Razvojni tim je Premium-only drugi tim. Podaci ostaju sačuvani ako Premium istekne.",
       "details": [
-        "Stanje kupovine je učitano iz pozadine i zavisi od zahteva i balansa novčića.",
-        "Glavni kontekst kluba je obnovljen nakon kupovine razvojnog tima.",
-        "Promocija vozača zahteva otvoren prozor i slobodan prvi kapacitet.",
-        "Vozači bi trebalo da se pomere kada igra to dozvoli.",
-        "Ako je prozor zatvoren, sučelje može upozoriti korisnike da glume u sledećem prozoru."
+        "Premium je potreban uz normalne vremenske i Coin uslove.",
+        "Prva aktivacija košta 100 Coins, a svaka sezonska obnova 100 Coins.",
+        "Ako Premium istekne, pristup se deaktivira bez brisanja podataka.",
+        "U23 glavni trener, U23 automatizacija treninga i U23 trener za trke zahtevaju aktivan Premium.",
+        "Nakon aktivacije vraća se kontekst glavnog kluba.",
+        "Promocija zahteva otvoren period i slobodno mesto u Prvom timu.",
+        "Vozače od 24+ treba premestiti kada je moguće.",
+        "Ako je period zatvoren, UI prikazuje sledeći."
       ],
       "facts": [
         {
-          "label": "maks. registra",
+          "label": "Dostupnost",
+          "value": "Samo Premium"
+        },
+        {
+          "label": "Aktivacija / obnova",
+          "value": "100 Coins / 100 Coins po sezoni"
+        },
+        {
+          "label": "U23 glavni trener",
+          "value": "Samo Premium"
+        },
+        {
+          "label": "Roster max",
           "value": "8"
         },
         {
           "label": "Premeštanje",
-          "value": "Samo tokom otvorenih prozora"
+          "value": "Samo tokom otvorenih perioda"
         },
         {
-          "label": "Stariji vozač upozorava",
-          "value": "24 godine"
+          "label": "Godine",
+          "value": "24+"
         }
       ],
       "tips": [
@@ -1727,7 +1757,7 @@
         "Hranioc podržava sistem ishrane i oporavivanja.",
         "Mehanika podržava popravke i tehnički sistem.",
         "Izviđač / Analitičar podržava spoljašnje podatke o vozaču.",
-        "U23 Glavni trener podržava razvoj-team vozača."
+        "U23 glavni trener podržava vozače Razvojnog tima i dostupan je samo Premium članovima sa aktivnim Razvojnim timom."
       ],
       "facts": [
         {
@@ -2523,7 +2553,7 @@
         "Predlogi savetnika treba da koriste trenutni bini profil, vreme, izabrane vozače i raspoložive resurse.",
         "Menadžer treba da uporedi sugestije sa ciljevima tima. Direktor sporta može predložiti bezbedan generički plan kada korisnik želi agresivnu metu za otpuštanje.",
         "Predlogi su najvredniji za nove igrače koji još uvek ne razumeju sve kontrole pozorničkog plana.",
-        "Premium udobnosti ne bi trebalo tajno da poboljšavaju rasne proračune. Prednost je analiza/konvencija, a ne skrivena moć performansi.",
+        "Premium analitika i praktični alati ne menjaju skriveno snagu u race engine-u. Razvojni tim i U23 glavni trener su odvojene, izričito Premium-only gameplay funkcije.",
         "Uvek sačuvaj konačni plan nakon pregleda saveta."
       ],
       "facts": [

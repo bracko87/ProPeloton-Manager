@@ -26,21 +26,22 @@
   "errors": {
     "loadStatus": "Es ist fehlgeschlagen, den Status des Entwicklungsteams zu laden.",
     "activate": "Es ist fehlgeschlagen, das Developing Team zu aktivieren.",
-    "renewal": "Automatische Erneuerung konnte nicht aktualisiert werden."
+    "renewal": "Automatische Erneuerung konnte nicht aktualisiert werden.",
+    "premiumRequired": "Für den Zugriff auf das Developing Team ist eine Premium-Mitgliedschaft erforderlich."
   },
   "service": {
-    "summary": "Verfügbar für Freie und Premium Spieler. Erste Aktivierungskosten {{activation}} Coins. Jede spätere Saison Erneuerung oder Reaktivierung Kosten {{renewal}} Coins. Premium Die Mitgliedschaft verzichtet nicht auf diese Servicekosten.",
-    "eligibilityCosts": "Förderfähigkeit: 30 Real-Life-Tage oder 60 In-Game-Tage. Erste Aktivierung: {{activation}} Coins. Erneuerung und Reaktivierung: {{renewal}} Coins pro Saison.",
+    "summary": "Nur für Premium-Mitglieder. Die erste Aktivierung kostet {{activation}} Coins. Jede spätere Saisonverlängerung oder Reaktivierung kostet {{renewal}} Coins. Die Premium-Mitgliedschaft muss aktiv bleiben.",
+    "eligibilityCosts": "Voraussetzungen: aktive Premium-Mitgliedschaft sowie 30 Tage in Echtzeit oder 60 Tage im Spiel. Erste Aktivierung: {{activation}} Coins. Verlängerung oder Reaktivierung: {{renewal}} Coins pro Saison.",
     "accessUntilSeason": "Zugang bleibt bis zum Ende der Saison verfügbar {{season}}.",
     "season": "Jahreszeit {{season}}",
     "endSeason": "Ende der Saison {{season}}",
     "startSeason": "Beginn der Saison {{season}}",
     "coins": "{{count}} Coins",
-    "autoRenewHelp": "Wenn aktiviert, {{cost}} Coins werden zu Beginn der nächsten Saison abgezogen. Wenn Ihr Guthaben zu niedrig ist, wird die Erneuerung fehlschlagen und das Developing Team wird schreibgeschützt.",
+    "autoRenewHelp": "Wenn aktiviert, werden zu Beginn der nächsten Saison {{cost}} Coins abgezogen – jedoch nur bei aktivem Premium. Endet Premium oder reicht dein Guthaben nicht aus, ist der Zugriff auf das Developing Team nicht verfügbar.",
     "activateSeason": "Für Saison aktivieren {{season}}",
     "existingTeam": "Ihr bestehendes Entwicklungsteam wird für diese Saison aktiviert.",
     "newTeam": "Für diese Saison wird ein Entwicklungsteam erstellt und aktiviert.",
-    "activationAccess": "Der Zugriff dauert bis zum Ende der aktuellen Spielsaison. Die automatische Verlängerung ist standardmäßig aktiviert und kann jederzeit ausgeschaltet werden.",
+    "activationAccess": "Der Zugang gilt bis zum Ende der aktuellen Spielsaison, solange Premium aktiv bleibt. Die automatische Verlängerung ist standardmäßig aktiviert und kann jederzeit ausgeschaltet werden.",
     "needCoins": "Sie benötigen {{cost}} Coins, um den Zugang zum Entwicklungsteam zu aktivieren. Aktueller Kontostand: {{balance}} Coins.",
     "team": "Team: {{name}}",
     "closeActivation": "Schließen Team-Aktivierungsbestätigung entwickeln",
@@ -48,8 +49,9 @@
     "confirmReactivate": "Entwicklerteam für Saison reaktivieren {{season}}?",
     "deductCoins": "{{cost}} Coins werden von Ihrer Brieftasche abgezogen.",
     "accessThisSeason": "Der Zugang dauert bis zum Ende dieser Spielzeit.",
-    "autoRenewModal": "Die automatische Verlängerung wird standardmäßig aktiviert. Sie können sie jederzeit in Einstellungen oder Premium & Abrechnung.",
+    "autoRenewModal": "Die automatische Verlängerung wird standardmäßig aktiviert. Sie kann nur bei aktivem Premium verlängern und jederzeit in Einstellungen oder Premium & Abrechnung ausgeschaltet werden.",
     "actionActivate": "Aktivieren für {{cost}} Coins",
-    "actionReactivate": "Reaktivieren für {{cost}} Coins"
+    "actionReactivate": "Reaktivieren für {{cost}} Coins",
+    "premiumRequired": "Das Developing Team ist eine Premium-exklusive Spielfunktion. Aktiviere zuerst Premium; sobald du berechtigt bist, kostet die erste Aktivierung {{activation}} Coins und jede spätere Verlängerung oder Reaktivierung {{renewal}} Coins pro Saison. Bestehende U23-Daten bleiben erhalten, wenn Premium endet."
   }
 }

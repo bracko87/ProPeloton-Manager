@@ -151,7 +151,7 @@
   },
   "developingTeam": {
     "title": "Developing Team",
-    "description": "Build and manage a U23 development squad with seasonal coin access.",
+    "description": "Premium-only U23 development squad with 100-coin activation and 100-coin seasonal renewal.",
     "loading": "Loading Developing Team status...",
     "realLifeProgress": "Real-life progress",
     "realLifeMinimum": "Minimum 30 days required",
@@ -180,7 +180,12 @@
     "rosterRule": "Maximum roster size: 8 riders.",
     "ageRule": "Only riders aged 23 or younger are eligible.",
     "movementRule": "Riders move between squads only during movement windows.",
-    "teamLabel": "Team"
+    "teamLabel": "Team",
+    "premiumOnlyTitle": "Premium-only feature",
+    "premiumOnlyDescription": "Developing Team and U23 Head Coach are available only while Premium is active. Activation costs {{activation}} coins and renewal costs {{renewal}} coins each season.",
+    "premiumInactiveDescription": "Your existing Developing Team data remains stored, but access is paused while Premium is inactive.",
+    "unlockPremium": "Unlock Premium",
+    "premiumModalRequirement": "An active Premium membership is required to use the Developing Team and U23 Head Coach."
   },
   "dangerZone": {
     "title": "Danger Zone",

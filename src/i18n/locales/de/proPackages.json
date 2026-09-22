@@ -72,11 +72,12 @@
     "a4": "Zusätzliche Ausrüstung Setup-Slots und erweitert enthalten Garage Kapazität.",
     "a5": "Manager-Briefing, erweiterte Kalenderintelligenz, Finanzprognosen und Komfortfunktionen.",
     "a6": "Erweiterte Fahrerleistungsanalysen, Entwicklungstrends und unbegrenzte Replays von Weltrennen.",
-    "a7": "Premium verbessert Informationen, Automatisierung und Komfort — niemals Rennstärke, Transferannahme oder verborgene Fahrerwerte."
+    "a7": "Premium verbessert Informationen, Automatisierung und Komfort — niemals Rennstärke, Transferannahme oder verborgene Fahrerwerte.",
+    "a8": "Exklusiver Zugriff auf das Entwicklungsteam inklusive U23-Cheftrainer: 100 Coins Aktivierung und 100 Coins Verlängerung pro Saison."
   },
   "comparison": {
     "title": "Frei vs. Premium",
-    "description": "Premium fügt optionale Analyse und Tools hinzu, ohne den Zugriff von Free Playern zu entfernen.",
+    "description": "Premium bietet erweiterte Werkzeuge sowie exklusiven Zugriff auf Entwicklungsteam und U23-Cheftrainer.",
     "benefit": "Nutzen",
     "free": "Frei",
     "premium": "Premium",
@@ -90,7 +91,8 @@
     "r8": "Optionale Münzmerkmale verwenden",
     "developing": "Team-Service entwickeln",
     "activationRenewal": "{{activation}} Aktivierung / {{renewal}} Verlängerung",
-    "note": "Premium-Nur Analyse und Tools werden während der Seiten-für-Seite-Funktion Überprüfung erweitert."
+    "note": "Entwicklungsteam und U23-Cheftrainer erfordern aktives Premium. Aktivierung und Saisonverlängerung des Entwicklungsteams kosten zusätzlich Coins.",
+    "premiumOnly": "Nur Premium"
   },
   "packages": {
     "title": "Brauchen Sie weitere Coins?",
@@ -129,8 +131,8 @@
     "manageNoteSuffix": "oben, um zukünftige Verlängerung zu stornieren, Rechnungsdetails zu aktualisieren oder anzeigen Stripe- Ich habe Rechnungen."
   },
   "services": {
-    "title": "Dienstleistungen von aktiven Münzdiensten",
-    "description": "Verwalten Sie optionale Club-Dienste, die mit Coins gekauft werden. Diese Dienste stehen Free- und Premium-Spielern zur Verfügung.",
+    "title": "Premium- & Coin-Dienste",
+    "description": "Verwalten Sie optionale Club-Dienste und mit Coins finanzierte Erweiterungen. Das Entwicklungsteam und der U23-Cheftrainer erfordern zusätzlich eine aktive Premium-Mitgliedschaft.",
     "loading": "Münzdienste werden geladen...",
     "unavailable": "Die Entwicklung von Team-Service-Informationen ist derzeit nicht verfügbar.",
     "unavailableHelp": "Der übrige Premium-, Abrechnungs- und Coin-Verwaltungsbereich bleibt verfügbar.",
@@ -138,8 +140,8 @@
     "active": "Aktiv",
     "expired": "Abgelaufen",
     "notActivated": "Nicht aktiviert",
-    "descriptionDeveloping": "Bauen und verwalten Sie eine U23 Entwicklung.",
-    "readOnly": "Das Team und alle gespeicherten Daten stehen weiterhin im Nur-Lese-Modus zur Verfügung.",
+    "descriptionDeveloping": "Bauen und verwalten Sie als Premium-Mitglied ein U23-Entwicklungsteam.",
+    "readOnly": "Ihre Daten zum Entwicklungsteam bleiben gespeichert, der Zugriff ist jedoch pausiert, bis Premium wieder aktiv ist.",
     "reactivationPrice": "Reaktivierungspreis: {{cost}} Coins.",
     "firstActivationPrice": "Erster Aktivierungspreis: {{cost}} Coins.",
     "laterPrice": "Spätere Verlängerung oder Reaktivierung: {{cost}} Coins pro Saison.",
@@ -156,12 +158,12 @@
     "startSeason": "Beginn der Saison {{season}}",
     "autoRenew": "Jede Saison automatisch erneuern",
     "autoRenewPrefix": "Wenn aktiviert,",
-    "autoRenewSuffix": "Coins werden zu Beginn der nächsten Saison abgezogen. Wenn die Geldbörsenbilanz zu niedrig ist, wird die Erneuerung fehlschlagen und das Developing Team wird schreibgeschützt.",
+    "autoRenewSuffix": "Coins werden zu Beginn der nächsten Saison nur abgezogen, solange Premium aktiv ist. Wenn Premium endet oder das Coin-Guthaben zu niedrig ist, schlägt die Verlängerung fehl und der Zugriff wird pausiert.",
     "reactivation": "Reaktivierungspreis",
     "firstActivation": "Erste Aktivierung",
     "laterRenewals": "Spätere Erneuerungen",
     "coinsPerSeason": "{{cost}} Coins pro Saison",
-    "autoEnabled": "Automatische Erneuerung aktiviert. {{cost}} Coins werden zu Beginn der nächsten Saison in Rechnung gestellt.",
+    "autoEnabled": "Automatische Verlängerung aktiviert. Zu Beginn der nächsten Saison werden {{cost}} Coins berechnet, sofern Premium aktiv ist.",
     "autoDisabled": "Automatische Erneuerung deaktiviert. Keine Entwicklung Team Erneuerung Gebühr wird automatisch gemacht.",
     "autoFailed": "Die automatische Verlängerung des Entwicklungsteam-Dienstes konnte nicht aktualisiert werden.",
     "loadFailed": "Der Dienst für das Entwicklungsteam konnte nicht geladen werden."
