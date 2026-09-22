@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11n-v1-physical-finish-exhaustion-2026-09-21' as const
+  'phase11o-v1-counterattack-survival-catch-timing-2026-09-22' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -1325,6 +1325,7 @@ export interface UniversalRoadOpeningAttackAttempt {
   readonly deterministicOutcomeRoll: number
   readonly physicallyValidAttempt: boolean
   readonly attackSucceeded: boolean
+  readonly reactiveCounterattack: boolean
   readonly acceptedEscapeLaunch: boolean
   readonly projectedBurstSpeedMultiplier: number
   readonly projectedBurstDurationSeconds: number
@@ -1859,6 +1860,8 @@ export interface UniversalRoadDecisiveAttackAttempt {
   readonly attackSuccessProbability: number
   readonly deterministicOutcomeRoll: number
   readonly attackSucceeded: boolean
+  /** True when an already-commanded attack was retimed as a response/bridge to a prior successful move. */
+  readonly reactiveCounterattack?: boolean
   readonly attackEnergyCost: number
   readonly energyAfterAttempt: number
   readonly positionScoreBonus: number
@@ -8070,6 +8073,7 @@ interface PendingRoadOpeningAttempt {
   readonly deterministicOutcomeRoll: number
   readonly physicallyValidAttempt: boolean
   readonly attackSucceeded: boolean
+  readonly reactiveCounterattack: boolean
   readonly projectedBurstSpeedMultiplier: number
   readonly projectedBurstDurationSeconds: number
   readonly attackEnergyCost: number
@@ -9938,7 +9942,7 @@ export function resolveRoadPhase1Opening(
     const reactiveCounterattackTriggered =
       firstWaveEstablished &&
       calculateDeterministicUnitRoll(
-        `${input.engine.deterministicSeed}|${input.stage.stageId}|${candidate.riderId}|phase1-reactive-counterattack`,
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|phase1-reactive-counterattack-wave-v2`,
       ) <= 0.82
     const effectiveAttackSuccessProbability = deterministicRound(
       clamp(
@@ -9987,6 +9991,7 @@ export function resolveRoadPhase1Opening(
       deterministicOutcomeRoll,
       physicallyValidAttempt,
       attackSucceeded,
+      reactiveCounterattack: reactiveCounterattackTriggered,
       projectedBurstSpeedMultiplier: outcome.projectedBurstSpeedMultiplier,
       projectedBurstDurationSeconds: outcome.projectedBurstDurationSeconds,
       attackEnergyCost,
@@ -10302,6 +10307,7 @@ export function resolveRoadPhase1Opening(
         deterministicOutcomeRoll: attempt.deterministicOutcomeRoll,
         physicallyValidAttempt: attempt.physicallyValidAttempt,
         attackSucceeded: attempt.attackSucceeded,
+        reactiveCounterattack: attempt.reactiveCounterattack,
         acceptedEscapeLaunch,
         projectedBurstSpeedMultiplier:
           attempt.projectedBurstSpeedMultiplier,
@@ -11822,6 +11828,30 @@ export function resolveRoadPhase2Development(
           )
         }),
       )
+      const latestSecondaryAttackKm =
+        activeSecondaryAttempts.length > 0
+          ? Math.max(
+              ...activeSecondaryAttempts.map((attempt) => attempt.attemptKm),
+            )
+          : secondaryFrontLaunchKm
+      const secondaryMomentumWindowKm =
+        5 +
+        calculateDeterministicUnitRoll(
+          `${input.engine.deterministicSeed}|${input.stage.stageId}|phase2-secondary-front-momentum-window-v1`,
+        ) *
+          5
+      const secondaryMomentumAgeKm = Math.max(
+        0,
+        stepMidKm - latestSecondaryAttackKm,
+      )
+      const secondaryMomentumFraction = clamp(
+        1 - secondaryMomentumAgeKm / Math.max(0.1, secondaryMomentumWindowKm),
+        0,
+        1,
+      )
+      const secondaryMomentumBoostKmh =
+        secondaryMomentumFraction *
+        clamp(1.25 + averageSecondaryAbility * 0.022, 1.8, 3.4)
       const windSpeedMultiplier = applyRoadWindExposureToMultiplier(
         phase11gWeather.speedMultiplier,
         input.stage,
@@ -11843,9 +11873,10 @@ export function resolveRoadPhase2Development(
             'phase2-secondary-front',
             stepEndKm,
             0.7,
-          ),
+          ) +
+          secondaryMomentumBoostKmh,
         24,
-        53,
+        54,
       )
       const pelotonPaceKmh = clamp(
         stepReferencePaceKmh *
@@ -11860,6 +11891,7 @@ export function resolveRoadPhase2Development(
         24,
         55,
       )
+      const secondaryGapBeforeStep = secondaryFrontGapToPelotonSeconds
       const calculatedGapToPeloton = Math.max(
         0,
         secondaryFrontGapToPelotonSeconds +
@@ -11874,6 +11906,15 @@ export function resolveRoadPhase2Development(
         input.stage.distanceKm,
         input.stage,
       )
+      if (secondaryMomentumFraction > 0.000001) {
+        const maximumFreshAttackClosureSeconds =
+          stepDistanceKm *
+          (4.5 + (1 - secondaryMomentumFraction) * 2.5)
+        secondaryFrontGapToPelotonSeconds = Math.max(
+          secondaryFrontGapToPelotonSeconds,
+          secondaryGapBeforeStep - maximumFreshAttackClosureSeconds,
+        )
+      }
       if (
         secondaryFrontLastAttemptKm !== null &&
         stepEndKm < secondaryFrontLastAttemptKm - 0.000001
@@ -13016,6 +13057,7 @@ export function resolveRoadPhase3Decisive(
             effectiveTerrainType: counterattackSegment.terrainType,
             attackSuccessProbability: effectiveProbability,
             attackSucceeded: counterattackSucceeded,
+            reactiveCounterattack: true,
             positionScoreBonus: counterattackSucceeded
               ? deterministicRound(
                   Math.max(
@@ -13373,6 +13415,12 @@ export function resolveRoadPhase3Decisive(
       input.stage.distanceKm,
       input.stage,
     )
+    physicalCurrentGapSeconds = applyRoadScenarioGapGuidanceV1(
+      input,
+      physicalCurrentGapSeconds,
+      stepEndKm,
+      stepDistanceKm,
+    )
     if (
       phase3LeadingWaveLastAttemptKm !== null &&
       stepEndKm < phase3LeadingWaveLastAttemptKm - 0.000001
@@ -13598,6 +13646,40 @@ export function resolveRoadPhase3Decisive(
     phase3LineageHistory.push(lineage)
   }
 
+  const phase3FrontMomentum = (
+    lineage: MutablePhase3FrontLineage,
+    stepMidKm: number,
+  ): { fraction: number; boostKmh: number } => {
+    if (lineage.carriedFromPreviousPhase) {
+      return { fraction: 0, boostKmh: 0 }
+    }
+    const launchAttemptSkills = lineage.riderIdsAtLaunch
+      .map(
+        (riderId) =>
+          attackAttempts.find((attempt) => attempt.riderId === riderId)
+            ?.attackExecutionSkillScore ?? 60,
+      )
+    const averageLaunchSkill = average(launchAttemptSkills)
+    const momentumWindowKm =
+      5 +
+      calculateDeterministicUnitRoll(
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|${lineage.lineageId}|phase3-front-momentum-window-v1`,
+      ) *
+        5
+    const ageKm = Math.max(0, stepMidKm - lineage.launchKm)
+    const fraction = clamp(
+      1 - ageKm / Math.max(0.1, momentumWindowKm),
+      0,
+      1,
+    )
+    return {
+      fraction,
+      boostKmh:
+        fraction *
+        clamp(1.3 + averageLaunchSkill * 0.022, 1.9, 3.5),
+    }
+  }
+
   const phase3FrontPaceKmh = (
     lineage: MutablePhase3FrontLineage,
     stepMidKm: number,
@@ -13668,6 +13750,7 @@ export function resolveRoadPhase3Decisive(
       input.stage,
       stepMidKm,
     )
+    const momentum = phase3FrontMomentum(lineage, stepMidKm)
     return clamp(
       calculateRoadReferencePaceKmh(input.stage, stepMidKm) *
         (0.955 + averageAbility * 0.00068) *
@@ -13679,9 +13762,10 @@ export function resolveRoadPhase3Decisive(
           `phase3-${lineage.lineageId}`,
           stepMidKm,
           0.75,
-        ),
+        ) +
+        momentum.boostKmh,
       23,
-      53,
+      54,
     )
   }
 
@@ -13723,6 +13807,8 @@ export function resolveRoadPhase3Decisive(
 
       phase3ActiveLineages().forEach((lineage) => {
         const frontPaceKmh = phase3FrontPaceKmh(lineage, stepMidKm)
+        const momentum = phase3FrontMomentum(lineage, stepMidKm)
+        const gapBeforeStep = lineage.currentGapToPelotonSeconds
         const calculatedGapToPeloton = Math.max(
           0,
           lineage.currentGapToPelotonSeconds +
@@ -13737,6 +13823,15 @@ export function resolveRoadPhase3Decisive(
           input.stage.distanceKm,
           input.stage,
         )
+        if (momentum.fraction > 0.000001) {
+          const maximumFreshAttackClosureSeconds =
+            stepDistanceKm *
+            (4.2 + (1 - momentum.fraction) * 2.8)
+          lineage.currentGapToPelotonSeconds = Math.max(
+            lineage.currentGapToPelotonSeconds,
+            gapBeforeStep - maximumFreshAttackClosureSeconds,
+          )
+        }
       })
 
       /*
@@ -13958,14 +14053,14 @@ export function resolveRoadPhase3Decisive(
 
     const launchSeparationSeconds = deterministicRound(
       clamp(
-        8 +
-          rawAttempt.attackExecutionSkillScore * 0.07 +
+        10 +
+          rawAttempt.attackExecutionSkillScore * 0.08 +
           calculateDeterministicUnitRoll(
-            `${input.engine.deterministicSeed}|${input.stage.stageId}|v55-front-launch|${rawAttempt.riderId}|${rawAttempt.attemptKm}`,
+            `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11o-front-launch|${rawAttempt.riderId}|${rawAttempt.attemptKm}`,
           ) *
-            8,
-        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-        24,
+            10,
+        Math.max(PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1, 12),
+        28,
       ),
       6,
     )
@@ -28000,8 +28095,12 @@ function buildUniversalReplayTimeline(
         new Map([[attempt.riderId, attempt.energyAfterAttackAttempt]]),
       ),
       eventType: 'attack',
-      title: 'Attack is covered',
-      description: `${attempt.riderId} attacks, but the move is immediately neutralized.`,
+      title: attempt.reactiveCounterattack
+        ? 'Reactive counterattack is covered'
+        : 'Attack is covered',
+      description: attempt.reactiveCounterattack
+        ? `${attempt.riderId} reacts to the established first wave, but the counterattack is covered.`
+        : `${attempt.riderId} attacks, but the move is immediately neutralized.`,
       riderIds: [attempt.riderId],
       teamIds: [attempt.teamId],
     })
@@ -28023,8 +28122,12 @@ function buildUniversalReplayTimeline(
         ]),
       ),
       eventType: 'attack',
-      title: 'Attack succeeds',
-      description: `${attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and opens ${formatReplaySeconds(attempt.initialGapSeconds)}.`,
+      title: attempt.reactiveCounterattack
+        ? 'Reactive counterattack succeeds'
+        : 'Attack succeeds',
+      description: attempt.reactiveCounterattack
+        ? `${attempt.riderId} reacts to the established first wave and opens ${formatReplaySeconds(attempt.initialGapSeconds)} in the counterattack.`
+        : `${attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain and opens ${formatReplaySeconds(attempt.initialGapSeconds)}.`,
       riderIds: [attempt.riderId],
       teamIds: [attempt.teamId],
     })
@@ -28342,8 +28445,12 @@ function buildUniversalReplayTimeline(
           new Map([[attempt.riderId, attempt.energyAfterAttempt]]),
         ),
         eventType: 'attack',
-        title: 'Attack is covered',
-        description: `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain, but cannot create a lasting gap.`,
+        title: attempt.reactiveCounterattack
+          ? 'Reactive counterattack is covered'
+          : 'Attack is covered',
+        description: attempt.reactiveCounterattack
+          ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} tries to bridge in response to the earlier move, but the counterattack is covered.`
+          : `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks on ${attempt.effectiveTerrainType} terrain, but cannot create a lasting gap.`,
         riderIds: [attempt.riderId],
         teamIds: [attempt.teamId],
       })
@@ -28372,11 +28479,15 @@ function buildUniversalReplayTimeline(
         ),
         eventType: 'attack',
         title:
-          attempt.sourceGroupCode === 'breakaway'
-            ? 'An attack goes from the breakaway'
-            : 'A decisive attack is launched',
+          attempt.reactiveCounterattack
+            ? 'A reactive counterattack is launched'
+            : attempt.sourceGroupCode === 'breakaway'
+              ? 'An attack goes from the breakaway'
+              : 'A decisive attack is launched',
         description:
-          attempt.sourcePhysicalGroupCode === 'F1' ||
+          attempt.reactiveCounterattack
+            ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} reacts to the earlier successful move and launches a bridge attempt on ${attempt.effectiveTerrainType} terrain.`
+            : attempt.sourcePhysicalGroupCode === 'F1' ||
           attempt.sourcePhysicalGroupCode === 'F2'
             ? `${riderById.get(attempt.riderId)?.snapshot.displayName ?? attempt.riderId} attacks from ${attempt.sourcePhysicalGroupCode} on ${attempt.effectiveTerrainType} terrain and creates ${attempt.frontDisplayCode ?? 'a new bridge group'} at its own physical road position.`
             : attempt.sourceGroupCode === 'breakaway'
