@@ -4502,6 +4502,17 @@ export default function StaffPage() {
     return grouped
   }, [staffMembers])
 
+  const visibleRoleTabs = useMemo(
+    () => isPremium ? ROLE_TABS : ROLE_TABS.filter((roleMeta) => roleMeta.role !== 'u23_head_coach'),
+    [isPremium]
+  )
+
+  useEffect(() => {
+    if (!isPremiumLoading && !isPremium && selectedRole === 'u23_head_coach') {
+      setSelectedRole('head_coach')
+    }
+  }, [isPremium, isPremiumLoading, selectedRole])
+
   const selectedRoleMeta = getRoleMeta(selectedRole)
   const selectedRoleMembers = membersByRole[selectedRole]
   const selectedRoleLimit = getRoleLimit(selectedRole, roleLimitMap)
@@ -4532,8 +4543,8 @@ export default function StaffPage() {
   )
 
   const totalStaffLimit = useMemo(
-    () => ROLE_TABS.reduce((sum, roleMeta) => sum + getRoleLimit(roleMeta.role, roleLimitMap), 0),
-    [roleLimitMap]
+    () => visibleRoleTabs.reduce((sum, roleMeta) => sum + getRoleLimit(roleMeta.role, roleLimitMap), 0),
+    [roleLimitMap, visibleRoleTabs]
   )
 
   const openStaffSlots = Math.max(totalStaffLimit - staffMembers.length, 0)
@@ -4891,7 +4902,7 @@ export default function StaffPage() {
             subtitle={t('rolesSection.subtitle')}
           />
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-5">
-            {ROLE_TABS.map((roleMeta) => (
+            {visibleRoleTabs.map((roleMeta) => (
               <RoleTabButton
                 key={roleMeta.role}
                 role={roleMeta.role}
