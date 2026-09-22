@@ -132,7 +132,7 @@
   },
   "services": {
     "title": "Active coin services",
-    "description": "Manage optional club services purchased with coins. These services are available to Free and Premium players.",
+    "description": "Manage optional club services and coin-funded expansions. Developing Team and U23 Head Coach additionally require an active Premium membership.",
     "loading": "Loading coin services...",
     "unavailable": "Developing Team service information is currently unavailable.",
     "unavailableHelp": "The rest of Premium, billing and coin management remains available.",
@@ -140,7 +140,7 @@
     "active": "Active",
     "expired": "Expired",
     "notActivated": "Not activated",
-    "descriptionDeveloping": "Build and manage a U23 development squad.",
+    "descriptionDeveloping": "Build and manage a U23 development squad as a Premium member.",
     "readOnly": "The team and all stored data remain available in read-only mode.",
     "reactivationPrice": "Reactivation price: {{cost}} coins.",
     "firstActivationPrice": "First activation price: {{cost}} coins.",
