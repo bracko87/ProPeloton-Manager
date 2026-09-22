@@ -105,7 +105,7 @@ register(
 )
 register('Premium Account', 'menu.premium.title')
 register(
-  'This is your Premium access area. A Premium account can make the game easier and more comfortable by giving access to extra features, more advanced views, and useful convenience tools. Premium can also help you unlock more of the game’s full management experience. By purchasing Premium or Pro Packages, you also directly support our team and help us continue developing ProPeloton Manager faster and better.',
+  'This is your Premium access area. A Premium account can make the game easier and more comfortable by giving access to extra features, more advanced views, and useful convenience tools. Premium also unlocks the Developing Team gameplay feature and the U23 Head Coach role. Developing Team activation and seasonal renewal still use coins. By purchasing Premium or Pro Packages, you also directly support our team and help us continue developing ProPeloton Manager faster and better.',
   'menu.premium.body',
 )
 register('Tutorial Completed', 'menu.finished.title')
