@@ -59,7 +59,7 @@ function directorInput(withUserChase = false) {
               },
             },
             runtimeApplicationProof: {
-              contract: 'road_race_director_v2_3_runtime',
+              contract: 'road_race_director_v2_4_runtime',
               finalEngineSawTemplate: false,
               gapGuidanceCalls: 0,
               gapAdjustments: 0,
@@ -91,7 +91,7 @@ function multiTeamDirectorInput(chasingTeams: number) {
   }
 }
 
-describe('Race Director V2.3 runtime story guidance', () => {
+describe('Race Director V2.4 runtime story guidance', () => {
   it('protects a real opening move even when it forms just before the preferred template window', () => {
     const input = directorInput(false)
     const adjusted = applyRoadScenarioGapGuidanceV1(input, 6, 4, 1)
@@ -177,7 +177,7 @@ describe('Race Director V2.3 runtime story guidance', () => {
 
     const adjusted = applyRoadScenarioGapGuidanceV1(input, 0.3, 90, 1)
     expect(adjusted).toBeGreaterThan(0.5)
-    expect(adjusted).toBeLessThanOrEqual(8)
+    expect(adjusted).toBeLessThanOrEqual(18)
 
     const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
     const states = proof.generationStates as Record<string, Record<string, unknown>>
@@ -195,6 +195,50 @@ describe('Race Director V2.3 runtime story guidance', () => {
     expect(states['1'].state).toBe('caught')
   })
 
+  it('does not let scenario-AI chase commands force a routine Phase 2 catch', () => {
+    const input = multiTeamDirectorInput(8)
+    input.stagePlans = input.stagePlans.map((plan, index) => ({
+      ...plan,
+      teamId: `team-${index + 1}`,
+    }))
+    input.teams = input.stagePlans.map((plan) => ({
+      teamId: plan.teamId,
+      snapshot: {
+        metadata: { scenarioAiControlled: true },
+      },
+    }))
+
+    applyRoadScenarioGapGuidanceV1(input, 180, 45, 1)
+    const adjusted = applyRoadScenarioGapGuidanceV1(input, 0.3, 80, 1)
+
+    expect(adjusted).toBeGreaterThan(0.5)
+    const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const states = proof.generationStates as Record<string, Record<string, unknown>>
+    expect(states['1'].state).not.toBe('caught')
+  })
+
+  it('keeps a real user chase able to advance the physical catch window', () => {
+    const input = multiTeamDirectorInput(8)
+    input.stagePlans = input.stagePlans.map((plan, index) => ({
+      ...plan,
+      teamId: `team-${index + 1}`,
+    }))
+    input.teams = input.stagePlans.map((plan, index) => ({
+      teamId: plan.teamId,
+      snapshot: {
+        metadata: { scenarioAiControlled: index > 0 },
+      },
+    }))
+
+    applyRoadScenarioGapGuidanceV1(input, 180, 45, 1)
+    const adjusted = applyRoadScenarioGapGuidanceV1(input, 0.3, 80, 1)
+
+    expect(adjusted).toBe(0.3)
+    const proof = getRoadScenarioPhysicalAuditV1(input)?.runtimeApplicationProof as Record<string, unknown>
+    const states = proof.generationStates as Record<string, Record<string, unknown>>
+    expect(states['1'].state).toBe('caught')
+  })
+
   it('never resurrects a break that the physical engine has already caught', () => {
     const input = directorInput(false)
 
@@ -202,13 +246,13 @@ describe('Race Director V2.3 runtime story guidance', () => {
     expect(applyRoadScenarioGapGuidanceV1(input, 0, 80, 1)).toBe(0)
   })
 
-  it('records proof that the final engine consumed the selected V2.3 template', () => {
+  it('records proof that the final engine consumed the selected V2.4 template', () => {
     const input = directorInput(false)
     applyRoadScenarioGapGuidanceV1(input, 520, 132, 1)
     const audit = getRoadScenarioPhysicalAuditV1(input)
     const proof = audit?.runtimeApplicationProof as Record<string, unknown>
 
-    expect(proof.contract).toBe('road_race_director_v2_3_runtime')
+    expect(proof.contract).toBe('road_race_director_v2_4_runtime')
     expect(proof.finalEngineSawTemplate).toBe(true)
     expect(Number(proof.gapGuidanceCalls)).toBeGreaterThan(0)
     expect(Number(proof.gapAdjustments)).toBe(0)
