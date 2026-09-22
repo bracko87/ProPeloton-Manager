@@ -391,30 +391,45 @@
     "developing-team": {
       "category": "Ciclisti",
       "title": "Gruppo di sviluppo",
-      "subtitle": "U23/struttura di sviluppo, finestre di acquisto e movimento.",
-      "overview": "Il Team Sviluppo è un secondo team collegato al club principale. Viene utilizzato per i ciclisti giovani o secondari e ha il proprio limite di rotazione e le regole di movimento-finestra.",
+      "subtitle": "Struttura U23 esclusiva Premium, attivazione, rinnovo e finestre di movimento.",
+      "overview": "La Squadra di Sviluppo è una seconda squadra esclusiva Premium collegata al club principale. Premium deve restare attivo per usarla o usare l'Allenatore Capo U23; i dati restano salvati se Premium scade.",
       "details": [
-        "Preferenze carichi Sviluppo dello stato del Team dal backend. Mostra giorni reali giocati, giorni di gioco giocati, saldo delle Coins, costo della Coins, stato dei requisiti, stato di movimento-finestra e se l'acquisto è consentito.",
-        "Dopo l'acquisto, l'app per il club attivo torna al club principale in modo che il cruscotto non accidentalmente passare al club in via di sviluppo.",
-        "I ciclisti del Team di sviluppo possono essere spostati nella Prima Squadra solo se la finestra di movimento è aperta e la Prima Squadra ha spazio.",
-        "Se un ciclista del team di sviluppo ha 24 o più anni, l'interfaccia utente può mostrare un avviso di azione. Se la finestra di movimento è aperta, è necessaria l'azione ora; altrimenti il ciclista deve spostare la finestra successiva."
+        "Premium attivo è richiesto per creare, riattivare, rinnovare o usare la Squadra di Sviluppo. Anche l'Allenatore Capo U23 è esclusivo Premium.",
+        "La prima attivazione costa 100 Coins e ogni rinnovo stagionale 100 Coins. Rimane il normale requisito temporale prima della prima attivazione.",
+        "Se Premium scade, l'accesso viene sospeso e le funzioni U23 disattivate; squadra, ciclisti, contratti, risultati e cronologia restano salvati.",
+        "Preferenze mostra accesso Premium, giorni giocati, saldo, costi, requisiti e finestra di movimento.",
+        "Dopo l'attivazione il club principale resta il club attivo.",
+        "I ciclisti possono salire in Prima Squadra solo con finestra aperta e spazio disponibile.",
+        "I ciclisti di 24+ devono essere spostati quando consentito."
       ],
       "facts": [
         {
-          "label": "Gruppo di sviluppo max in UI",
+          "label": "Disponibilità",
+          "value": "Solo membri Premium"
+        },
+        {
+          "label": "Attivazione",
+          "value": "100 Coins"
+        },
+        {
+          "label": "Rinnovo stagionale",
+          "value": "100 Coins per stagione"
+        },
+        {
+          "label": "Rosa massima",
           "value": "8 ciclisti"
         },
         {
-          "label": "Luogo dell'acquisto",
-          "value": "Pagina delle preferenze"
+          "label": "Attivazione",
+          "value": "Preferenze"
         },
         {
-          "label": "Regola del movimento",
-          "value": "I ciclisti possono muoversi solo quando la finestra di movimento è aperta"
+          "label": "Movimento",
+          "value": "Solo con finestra aperta"
         },
         {
-          "label": "Attenzione all'età",
-          "value": "I ciclisti di età superiore ai 24 anni richiedono attenzione"
+          "label": "Avviso età",
+          "value": "24+"
         }
       ],
       "tips": [
@@ -1665,27 +1680,42 @@
     "developing-team-deep": {
       "category": "Ciclisti",
       "title": "Guida profonda del team di sviluppo",
-      "subtitle": "Regole di acquisto, stato, roster e movimento-finestra.",
-      "overview": "La squadra di sviluppo è gestita separatamente, ma rimane collegato al club principale e conto.",
+      "subtitle": "Accesso Premium, attivazione, rinnovo, rosa e regole di movimento.",
+      "overview": "La squadra di sviluppo è una seconda squadra esclusiva Premium. I dati restano salvati se Premium scade.",
       "details": [
-        "Lo stato di acquisto viene caricato dal backend e dipende dai requisiti e dal saldo delle Coins.",
-        "Il contesto principale del club viene ripristinato dopo aver acquistato il team di sviluppo.",
-        "Promuovere un ciclista richiede sia una finestra di movimento aperto e la capacità di First Squad gratuita.",
-        "Età 24+ ciclisti dovrebbero essere spostati quando il gioco lo permette.",
-        "Se una finestra è chiusa, l'interfaccia utente può avvertire gli utenti di agire nella finestra successiva."
+        "Premium è richiesto oltre ai normali requisiti di tempo e Coins.",
+        "La prima attivazione costa 100 Coins e ogni rinnovo stagionale 100 Coins.",
+        "Se Premium scade, l'accesso viene disabilitato senza cancellare i dati della squadra.",
+        "Allenatore Capo U23, automazione U23 e accesso del coach U23 in gara richiedono Premium attivo.",
+        "Il contesto del club principale viene ripristinato dopo l'attivazione.",
+        "Promuovere un ciclista richiede finestra aperta e spazio in Prima Squadra.",
+        "I ciclisti di 24+ devono essere spostati quando possibile.",
+        "Con finestra chiusa, l'interfaccia indica la successiva."
       ],
       "facts": [
         {
-          "label": "Roster max",
+          "label": "Disponibilità",
+          "value": "Solo Premium"
+        },
+        {
+          "label": "Attivazione / rinnovo",
+          "value": "100 Coins / 100 Coins per stagione"
+        },
+        {
+          "label": "Allenatore Capo U23",
+          "value": "Solo Premium"
+        },
+        {
+          "label": "Rosa max",
           "value": "8"
         },
         {
           "label": "Movimento",
-          "value": "Solo durante le finestre di movimento aperto"
+          "value": "Solo durante finestre aperte"
         },
         {
-          "label": "Avviso per il ciclista più anziano",
-          "value": "Età 24+"
+          "label": "Avviso età",
+          "value": "24+"
         }
       ],
       "tips": [
@@ -1708,7 +1738,7 @@
         "Nutrizionista sostiene sistemi di nutrizione / recupero.",
         "Meccanica supporta le riparazioni e i sistemi tecnici.",
         "Scout / Analyst supporta informazioni esterne del ciclista.",
-        "U23 Head Coach supporta lo sviluppo di ciclisti di team."
+        "L'Allenatore Capo U23 supporta i ciclisti della Squadra di Sviluppo ed è disponibile solo ai membri Premium con una Squadra di Sviluppo attiva."
       ],
       "facts": [
         {
@@ -2487,7 +2517,7 @@
         "I suggerimenti dei consulenti dovrebbero utilizzare il profilo attuale della tappa, il meteo, i ciclisti selezionati e le risorse disponibili.",
         "Il manager dovrebbe confrontare i suggerimenti con gli obiettivi del team. Un direttore sportivo può suggerire un piano generico sicuro quando l'utente vuole un obiettivo di fuga aggressivo.",
         "Le proposte sono più preziose per i nuovi giocatori che non capiscono ancora tutti i controlli di stage-plan.",
-        "Le funzionalità di convenienza Premium non dovrebbero migliorare segretamente i calcoli di gara. Il vantaggio è l'analisi/convenienza, non la potenza di prestazione nascosta.",
+        "Analisi e strumenti Premium non modificano segretamente la forza nel motore di gara. Squadra di Sviluppo e Allenatore Capo U23 sono invece funzioni gameplay esplicitamente esclusive Premium.",
         "Salvare sempre il piano finale dopo aver rivisto i consigli."
       ],
       "facts": [
