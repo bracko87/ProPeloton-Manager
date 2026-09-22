@@ -38,5 +38,9 @@
     "podiumsLockedDescription": "Analysez les victoires, les podiums et la distribution des positions finales pour votre équipe de développement.",
     "raceTypeLockedTitle": "Développement de l'équipe Type de course Snapshot",
     "raceTypeLockedDescription": "Comparer les résultats de l'équipe de développement à travers les classiques, les journées de montagne, les finitions de étape et les essais temporels."
+  },
+  "premiumGate": {
+    "title": "La Developing Team est réservée à Premium",
+    "description": "Un abonnement Premium actif est requis pour créer ou utiliser la Developing Team. Les membres Premium éligibles l’activent pour 100 pièces et la renouvellent ou la réactivent pour 100 pièces par saison. Les données U23 existantes sont conservées si Premium prend fin."
   }
 }
