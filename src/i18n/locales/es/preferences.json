@@ -151,7 +151,7 @@
   },
   "developingTeam": {
     "title": "Equipo de desarrollo",
-    "description": "Construye y administra un equipo de desarrollo U23 con acceso a Coins de temporada.",
+    "description": "Los miembros Premium pueden crear y gestionar una plantilla U23 de desarrollo con acceso estacional mediante monedas.",
     "loading": "Cargando el estado del equipo en desarrollo...",
     "realLifeProgress": "Progresos en la vida real",
     "realLifeMinimum": "Mínimo 30 días requeridos",
@@ -180,7 +180,10 @@
     "rosterRule": "Tamaño máximo de la plantilla: 8 ciclistas.",
     "ageRule": "Sólo los ciclistas de 23 años o menos son elegibles.",
     "movementRule": "los ciclistas se mueven entre escuadrones sólo durante las ventanas de movimiento.",
-    "teamLabel": "Equipo"
+    "teamLabel": "Equipo",
+    "premiumOnly": "Solo Premium",
+    "premiumRequiredTitle": "Se requiere membresía Premium",
+    "viewPremium": "Ver Premium"
   },
   "dangerZone": {
     "title": "Zona de peligro",
