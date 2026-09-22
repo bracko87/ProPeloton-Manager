@@ -91,7 +91,7 @@ function multiTeamDirectorInput(chasingTeams: number) {
   }
 }
 
-describe('Race Director V2.1 runtime story guidance', () => {
+describe('Race Director V2.3 runtime story guidance', () => {
   it('protects a real opening move even when it forms just before the preferred template window', () => {
     const input = directorInput(false)
     const adjusted = applyRoadScenarioGapGuidanceV1(input, 6, 4, 1)
