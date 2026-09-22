@@ -34,9 +34,9 @@ begin
   end if;
 
   with club_scope as (
-    select p_club_id as club_id
+    select p_club_id::text as club_id
     union all
-    select c.id
+    select c.id::text
     from public.clubs c
     where c.parent_club_id = p_club_id
       and c.club_type = 'developing'
@@ -70,16 +70,16 @@ begin
     join public.races r
       on r.id = rp.race_id
     where (
-      nullif(to_jsonb(rp)->>'participating_club_id', '')::uuid in (
+      nullif(to_jsonb(rp)->>'participating_club_id', '') in (
         select club_id from club_scope
       )
-      or nullif(to_jsonb(rp)->>'owner_club_id', '')::uuid in (
+      or nullif(to_jsonb(rp)->>'owner_club_id', '') in (
         select club_id from club_scope
       )
-      or nullif(to_jsonb(rp)->>'club_id', '')::uuid in (
+      or nullif(to_jsonb(rp)->>'club_id', '') in (
         select club_id from club_scope
       )
-      or nullif(to_jsonb(rp)->>'team_id', '')::uuid in (
+      or nullif(to_jsonb(rp)->>'team_id', '') in (
         select club_id from club_scope
       )
     )
