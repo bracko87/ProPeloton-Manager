@@ -8620,9 +8620,20 @@ function calculateRoadStepEnergyComponents(
     precipitationMultiplier *
       (1 + Math.min(0.08, Math.max(windKmh - 5, 0) * 0.002)),
   )
+  /*
+   * Phase 11P endurance calibration.
+   *
+   * The original road curve treated the baseline cost as if every kilometre
+   * were ridden without enough bunch shelter. Over long cobbled/mountain
+   * stages that pushed a large share of a normal field to literal 0 reserve.
+   * Keep hard commands, attacks and terrain expensive, but give ordinary race
+   * distance the drafting/endurance economy expected from a road peloton.
+   */
+  const pelotonDistanceEnergyScale = 0.9
   const grossEnergyCost =
     distanceKm *
     baseEnergyCostPerKm *
+    pelotonDistanceEnergyScale *
     slopeEnergyMultiplier *
     terrainSkillEnergyMultiplier *
     riderEfficiencyMultiplier *
@@ -8723,21 +8734,21 @@ function calculateBreakawayExposureEnergyCost(
   const smallGroupPressure = clamp((6 - Math.min(6, groupSize)) / 5, 0, 1)
   const terrainPressure =
     input.stage.terrainType === 'mountain'
-      ? 0.16
+      ? 0.12
       : input.stage.terrainType === 'hilly'
-        ? 0.1
+        ? 0.075
         : input.stage.terrainType === 'cobbled'
-          ? 0.12
-          : 0.04
+          ? 0.09
+          : 0.03
   const exposureMultiplier =
-    0.16 +
-    windPressure * 0.22 +
-    smallGroupPressure * 0.16 +
+    0.12 +
+    windPressure * 0.17 +
+    smallGroupPressure * 0.12 +
     terrainPressure +
-    distanceShare * 0.18
+    distanceShare * 0.12
 
   return deterministicRound(
-    Math.min(12, baselineEnergyCost * exposureMultiplier),
+    Math.min(8.5, baselineEnergyCost * exposureMultiplier),
     6,
   )
 }
@@ -18391,28 +18402,14 @@ export function resolveRoadPhase4Finish(
   )
   const explicitChaserSet = new Set(explicitChasers.map((row) => row.riderId))
   const automaticWorkerSet = new Set(automaticWorkerRows.map((row) => row.riderId))
-  // Phase 11N: below 5% live reserve is universally unsustainable in a road
-  // group. Terrain and chase pressure may raise the practical hold floor.
+  /*
+   * Phase 11P attachment rule: <5% usable reserve means the rider can no
+   * longer hold a road group. Terrain selection remains a separate physical
+   * mechanism; it must not silently turn a 6-7% rider into an "energy
+   * depleted" rider merely because the stage is mountainous.
+   */
   const phase4MeaningfulContactPressure = true
-  const phase4DepletionContactFloor = deterministicRound(
-    clamp(
-      5 +
-        (input.stage.terrainType === 'mountain'
-          ? 1.5
-          : input.stage.terrainType === 'hilly' ||
-              input.stage.terrainType === 'cobbled'
-            ? 0.75
-            : 0) +
-        (hasAnyOrganizedPhase4ChaseInterest ? 0.5 : 0) +
-        (input.stage.finishType === 'summit_finish' ||
-        input.stage.finishType === 'uphill_finish'
-          ? 0.5
-          : 0),
-      5,
-      7.5,
-    ),
-    6,
-  )
+  const phase4DepletionContactFloor = 5
 
   /*
    * Phase 11M v2: when a front group is caught, its riders do not receive a
@@ -18755,7 +18752,32 @@ export function resolveRoadPhase4Finish(
     let finalGapSeconds: number
     const physicalBridgeFinalGap =
       phase4BridgeFinalGapByRiderId.get(row.riderId)
-    if (escapeStillActive && currentFrontRiderSet.has(row.riderId)) {
+    const frontLowReserveDetached =
+      escapeStillActive &&
+      currentFrontRiderSet.has(row.riderId) &&
+      energyAtFinish < 5 - 0.000001
+    if (frontLowReserveDetached) {
+      /*
+       * A B/F rider below the attachment floor cannot remain glued to the
+       * leaders. Keep the rider physically between the front and P when there
+       * is enough road-time corridor; otherwise the peloton has already
+       * reached the rider and the rider continues behind P.
+       */
+      finalGapSeconds =
+        endGapSeconds > 2 * (PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1)
+          ? deterministicRound(
+              clamp(
+                endGapSeconds * 0.55,
+                PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+                endGapSeconds - PHASE5_GROUP_MERGE_TOLERANCE_SECONDS - 1,
+              ),
+              6,
+            )
+          : deterministicRound(
+              endGapSeconds + PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+              6,
+            )
+    } else if (escapeStillActive && currentFrontRiderSet.has(row.riderId)) {
       finalGapSeconds = 0
     } else if (physicalBridgeFinalGap !== undefined) {
       finalGapSeconds = Math.max(0, physicalBridgeFinalGap)
@@ -27715,6 +27737,228 @@ function buildUniversalReplayTimeline(
       })
   }
 
+
+  /*
+   * Phase 11P live attachment overlay.
+   *
+   * Energy shown in replay is already interpolated continuously between the
+   * authoritative phase endpoints. Once a racing rider crosses below 5%, the
+   * standing must stop showing that rider inside B/F/P. Riders coming off the
+   * front first occupy the road between the leaders and the peloton whenever
+   * a stable corridor exists; riders cracking from P move behind P. Nearby
+   * detached riders are clustered into the same C group so mountain stages
+   * form realistic chase/gruppetto groups instead of one group per rider.
+   *
+   * True 0 reserve is NOT inferred as DNF here. Official DNF remains owned by
+   * the authoritative finish-energy/status path, avoiding the historical bug
+   * where a display checkpoint with an unpopulated zero could abandon a rider.
+   */
+  const applyLiveReserveAttachmentToGroups = (
+    sourceGroups: readonly UniversalPhase5GroupSnapshot[],
+    kmFromStart: number,
+  ): readonly UniversalPhase5GroupSnapshot[] => {
+    if (
+      sourceGroups.length === 0 ||
+      kmFromStart <= 0.000001 ||
+      kmFromStart >= stageDistanceKm - 0.000001
+    ) {
+      return sourceGroups
+    }
+
+    const phaseNumber = phaseForKm(kmFromStart)
+    if (phaseNumber === 0) return sourceGroups
+    const endpoints = phaseEnergyEndpoints.get(phaseNumber)
+    if (!endpoints) return sourceGroups
+
+    const liveEnergy = energyAtKm(phaseNumber, kmFromStart)
+    const peloton =
+      sourceGroups.find((group) => group.displayCode === 'P') ?? null
+    const pelotonGapSeconds = peloton?.gapSeconds ?? 0
+    const alreadyDetached = new Set(
+      sourceGroups
+        .filter(
+          (group) =>
+            group.displayCode.startsWith('C') ||
+            group.physicalPosition === 'behind_peloton',
+        )
+        .flatMap((group) => group.riderIds),
+    )
+
+    type LowReserveDetach = {
+      riderId: string
+      gapSeconds: number
+      crossingKm: number
+      sourceWasFront: boolean
+    }
+    const detachments: LowReserveDetach[] = []
+
+    const crossingKmFor = (riderId: string): number | null => {
+      const startEnergy = endpoints.start.get(riderId)
+      const endEnergy = endpoints.end.get(riderId)
+      if (startEnergy === undefined || endEnergy === undefined) return null
+      if (startEnergy < 5 - 0.000001) return endpoints.startKm
+      if (endEnergy >= 5 - 0.000001 || startEnergy <= endEnergy + 0.000001) {
+        return null
+      }
+      const fraction = clamp(
+        (startEnergy - 5) / Math.max(0.000001, startEnergy - endEnergy),
+        0,
+        1,
+      )
+      return deterministicRound(
+        endpoints.startKm +
+          (endpoints.endKm - endpoints.startKm) * fraction,
+        6,
+      )
+    }
+
+    sourceGroups.forEach((group) => {
+      const eligibleSource =
+        group.displayCode === 'P' ||
+        group.displayCode.startsWith('B') ||
+        group.displayCode.startsWith('F')
+      if (!eligibleSource) return
+      const sourceWasFront =
+        group.displayCode.startsWith('B') ||
+        group.displayCode.startsWith('F')
+      group.riderIds.forEach((riderId) => {
+        if (alreadyDetached.has(riderId)) return
+        const reserve = liveEnergy.get(riderId)
+        if (
+          reserve === undefined ||
+          reserve <= 0.000001 ||
+          reserve >= 5 - 0.000001
+        ) {
+          return
+        }
+        const crossingKm = crossingKmFor(riderId)
+        if (
+          crossingKm === null ||
+          kmFromStart < crossingKm - 0.000001
+        ) {
+          return
+        }
+
+        const distanceSinceCrossingKm = Math.max(0, kmFromStart - crossingKm)
+        const separationSeconds =
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS +
+          1 +
+          Math.min(150, distanceSinceCrossingKm * 1.8)
+        let gapSeconds: number
+
+        if (sourceWasFront && peloton) {
+          const stableCorridorSeconds =
+            pelotonGapSeconds - group.gapSeconds
+          if (
+            stableCorridorSeconds >
+            2 * (PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1)
+          ) {
+            gapSeconds = Math.min(
+              pelotonGapSeconds - PHASE5_GROUP_MERGE_TOLERANCE_SECONDS - 1,
+              group.gapSeconds + separationSeconds,
+            )
+          } else {
+            gapSeconds = pelotonGapSeconds + separationSeconds
+          }
+        } else {
+          gapSeconds =
+            Math.max(group.gapSeconds, pelotonGapSeconds) +
+            separationSeconds
+        }
+
+        detachments.push({
+          riderId,
+          gapSeconds: deterministicRound(Math.max(0, gapSeconds), 6),
+          crossingKm,
+          sourceWasFront,
+        })
+      })
+    })
+
+    if (detachments.length === 0) return sourceGroups
+
+    const detachedRiderIds = new Set(detachments.map((row) => row.riderId))
+    const retainedGroups = sourceGroups
+      .map((group) => ({
+        ...group,
+        riderIds: group.riderIds.filter(
+          (riderId) => !detachedRiderIds.has(riderId),
+        ),
+      }))
+      .filter((group) => group.riderIds.length > 0)
+
+    const sortedDetachments = detachments
+      .slice()
+      .sort(
+        (left, right) =>
+          left.gapSeconds - right.gapSeconds ||
+          left.crossingKm - right.crossingKm ||
+          left.riderId.localeCompare(right.riderId),
+      )
+    const clusters: LowReserveDetach[][] = []
+    sortedDetachments.forEach((row) => {
+      const cluster = clusters.at(-1)
+      const clusterGap =
+        cluster && cluster.length > 0
+          ? average(cluster.map((entry) => entry.gapSeconds))
+          : null
+      if (
+        cluster &&
+        clusterGap !== null &&
+        Math.abs(row.gapSeconds - clusterGap) <=
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
+      ) {
+        cluster.push(row)
+      } else {
+        clusters.push([row])
+      }
+    })
+
+    const existingChaseNumbers = retainedGroups
+      .map((group) => /^C(\d+)$/.exec(group.displayCode)?.[1])
+      .filter((value): value is string => Boolean(value))
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value))
+    const chaseCodeBase =
+      existingChaseNumbers.length > 0 ? Math.max(...existingChaseNumbers) : 0
+    const template = peloton ?? sourceGroups[0]
+    if (!template) return retainedGroups
+
+    const detachedGroups: UniversalPhase5GroupSnapshot[] = clusters.map(
+      (cluster, index) => {
+        const gapSeconds = deterministicRound(
+          average(cluster.map((row) => row.gapSeconds)),
+          6,
+        )
+        return {
+          ...template,
+          phaseNumber,
+          groupOrder: retainedGroups.length + index + 1,
+          groupCode: 'chasing_group',
+          displayCode: `C${chaseCodeBase + index + 1}`,
+          physicalPosition:
+            peloton && gapSeconds < pelotonGapSeconds - 0.000001
+              ? 'ahead_of_peloton'
+              : 'behind_peloton',
+          colorKey: 'chasing_orange',
+          riderIds: cluster.map((row) => row.riderId).sort(),
+          gapSeconds,
+          officialTimeSeconds: null,
+          formationReason: 'decisive_selection',
+        }
+      },
+    )
+
+    return [...retainedGroups, ...detachedGroups]
+      .sort(
+        (left, right) =>
+          left.gapSeconds - right.gapSeconds ||
+          left.groupOrder - right.groupOrder ||
+          left.displayCode.localeCompare(right.displayCode),
+      )
+      .map((group, index) => ({ ...group, groupOrder: index + 1 }))
+  }
+
   const groupsAtKm = (
     kmFromStart: number,
   ): readonly UniversalPhase5GroupSnapshot[] => {
@@ -27803,7 +28047,10 @@ function buildUniversalReplayTimeline(
     } else {
       groups = [startGroup]
     }
-    return applyPhase4ContactLossToGroups(groups, km)
+    return applyLiveReserveAttachmentToGroups(
+      applyPhase4ContactLossToGroups(groups, km),
+      km,
+    )
   }
 
   const getActiveCommands = (
