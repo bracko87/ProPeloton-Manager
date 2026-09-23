@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../lib/supabase'
+import { PremiumFeatureLock } from '../../../components/premium/PremiumFeatureLock'
 
 type Candidate = {
   rider_id: string
@@ -218,27 +218,10 @@ export default function PremiumRaceStrategyPanel({
 
   if (!isPremium) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-slate-900">
-                {t('strategy.title')}
-              </h3>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-                Premium
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-slate-500">{t('strategy.description')}</p>
-          </div>
-          <Link
-            to="/dashboard/pro"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            {t('upgrade')}
-          </Link>
-        </div>
-      </div>
+      <PremiumFeatureLock
+        title={t('strategy.title')}
+        description={t('strategy.description')}
+      />
     )
   }
 

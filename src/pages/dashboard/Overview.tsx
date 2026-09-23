@@ -15,6 +15,10 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
 import TutorialTargetFrame from "../../components/tutorial/TutorialTargetFrame";
+import {
+  PremiumFeatureLoading,
+  PremiumFeatureLock,
+} from "../../components/premium/PremiumFeatureLock";
 import { supabase } from "../../lib/supabase";
 import { localizeNotificationFeedCopy } from "../../features/notifications/notificationLocalization";
 import {
@@ -6958,7 +6962,7 @@ function CyclingWorldNewsCard({
 
       {loading ? (
         <div className="mt-4 space-y-2">
-          {Array.from({ length: 5 }).map((_, index) => (
+          {Array.from({ length: 3 }).map((_, index) => (
             <div
               key={index}
               className="h-14 animate-pulse rounded-xl border border-slate-200 bg-slate-50"
@@ -6967,7 +6971,7 @@ function CyclingWorldNewsCard({
         </div>
       ) : items.length > 0 ? (
         <div className="mt-4 space-y-2">
-          {items.map((item) => (
+          {items.slice(0, 3).map((item) => (
             <a
               key={item.id}
               href={item.articleUrl}
@@ -7215,43 +7219,15 @@ function SquadPulseOverviewCard({
   const { t } = useTranslation("overview");
 
   if (premiumStatusLoading) {
-    return (
-      <Card className="p-5">
-        <SectionTitle
-          title={t("squad.title")}
-          subtitle={t("squad.subtitle")}
-        />
-        <div className="mt-5 h-48 animate-pulse rounded-2xl bg-slate-50" />
-      </Card>
-    );
+    return <PremiumFeatureLoading />;
   }
 
   if (!isPremium) {
     return (
-      <Card className="p-5">
-        <SectionTitle
-          title={t("squad.title")}
-          subtitle={t("squad.subtitle")}
-        />
-        <div className="mt-5 flex min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-amber-200 bg-amber-50/70 px-6 text-center">
-          <div className="rounded-full border border-amber-200 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-800">
-            {t("premium.label")}
-          </div>
-          <div className="mt-3 text-base font-semibold text-slate-950">
-            {t("premiumCenter:integrations.overview.squadIntelligenceTitle")}
-          </div>
-          <div className="mt-1 max-w-lg text-sm leading-6 text-slate-600">
-            {t("premiumCenter:integrations.overview.squadIntelligenceBody")}
-          </div>
-          <button
-            type="button"
-            onClick={onUnlock}
-            className="mt-4 rounded-lg bg-slate-950 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
-          >
-            {t("premiumCenter:integrations.overview.unlockTools")}
-          </button>
-        </div>
-      </Card>
+      <PremiumFeatureLock
+        title={t("squad.title")}
+        description={t("premiumCenter:integrations.overview.squadIntelligenceBody")}
+      />
     );
   }
 
@@ -7638,15 +7614,15 @@ function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
             </div>
           </div>
 
-          <div className="mt-4 grid items-center gap-4 sm:grid-cols-[112px_minmax(0,1fr)]">
+          <div className="mt-4 grid items-center gap-4 sm:grid-cols-[128px_minmax(0,1fr)]">
             <div className="flex justify-center">
               <div
-                className="relative h-24 w-24 rounded-full"
+                className="relative h-32 w-32 rounded-full"
                 style={{
                   background: `conic-gradient(#10b981 0 ${incomePct}%, #ef4444 ${incomePct}% 100%)`,
                 }}
               >
-                <div className="absolute inset-[18px] flex items-center justify-center rounded-full bg-white">
+                <div className="absolute inset-[12px] flex items-center justify-center rounded-full bg-white">
                   <div className="px-1 text-center">
                     <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                       {t("finance.net")}
@@ -7664,8 +7640,8 @@ function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2.5">
+            <div className="w-full space-y-2 sm:max-w-[190px] sm:justify-self-end">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50/60 px-2.5 py-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                   <span className="truncate text-xs font-medium text-slate-700">
@@ -7677,7 +7653,7 @@ function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-red-100 bg-red-50/60 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-red-100 bg-red-50/60 px-2.5 py-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
                   <span className="truncate text-xs font-medium text-slate-700">
@@ -7689,7 +7665,7 @@ function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
                 <span className="text-xs font-semibold text-slate-700">
                   {t("finance.finalBalance")}
                 </span>
@@ -7710,7 +7686,7 @@ function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
           {compactMetrics.map((metric) => (
             <div
               key={metric.label}
-              className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5"
+              className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2"
             >
               <div className="truncate text-[11px] text-slate-500">{metric.label}</div>
               <div className={cn("mt-0.5 truncate text-sm font-bold tabular-nums", metric.valueClass)}>
@@ -8816,8 +8792,6 @@ export default function OverviewPage() {
               races={raceWorld.todayRaces}
             />
 
-            <CompactOperationsCard operations={data.operations} />
-
             <CyclingWorldNewsCard
               items={externalCyclingNews}
               loading={externalCyclingNewsLoading}
@@ -8866,6 +8840,8 @@ export default function OverviewPage() {
             </div>
 
             <FinanceOverviewCard finance={data.finance} />
+
+            <CompactOperationsCard operations={data.operations} />
 
             <ClubHonoursCard
               items={clubHonours}

@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import appI18n from '../../../i18n'
 import { supabase } from '../../../lib/supabase'
+import { PremiumFeatureLock } from '../../../components/premium/PremiumFeatureLock'
 
 type FinanceSnapshot = {
   balance: number
@@ -142,29 +143,12 @@ function PremiumLockedCard({
   description: string
   className?: string
 }): JSX.Element {
-  const { t } = useTranslation('premiumCenter')
-
   return (
-    <div className={`mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-              Premium
-            </span>
-            <span aria-hidden="true" className="text-slate-400">🔒</span>
-          </div>
-          <p className="mt-1 max-w-3xl text-sm text-slate-500">{description}</p>
-        </div>
-        <Link
-          to="/dashboard/pro"
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-        >
-          {t('upgrade')}
-        </Link>
-      </div>
-    </div>
+    <PremiumFeatureLock
+      title={title}
+      description={description}
+      className={['mt-5', className].filter(Boolean).join(' ')}
+    />
   )
 }
 

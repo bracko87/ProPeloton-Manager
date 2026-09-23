@@ -55,7 +55,7 @@ type EquipmentEffectEntry = {
   value: number
 }
 
-const PAGE_SIZE = 200
+const PAGE_SIZE = 20
 
 const terrainRoleOptions: Array<{
   value: EquipmentTerrainRole

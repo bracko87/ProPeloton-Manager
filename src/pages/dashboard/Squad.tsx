@@ -221,6 +221,7 @@ function createOperationalSquadSeasonDashboardData(
 
   return {
     ...fallback,
+    summary: dashboardData.summary,
     lastTeamRace: dashboardData.lastTeamRace,
     nextRaceSelection: dashboardData.nextRaceSelection,
   }
@@ -681,8 +682,8 @@ export default function SquadPage() {
       setRows(rosterRows)
       setLoading(false)
 
-      // The RPC now enforces Premium analytics server-side while always returning
-      // operational Last/Next Team Race data to club members.
+      // The RPC exposes the core season summary plus operational Last/Next Team Race
+      // data to all club members, while detailed charts remain Premium-only.
       void fetchSquadSeasonDashboardData(club.id, seasonYear)
         .then((dashboardData) => {
           setSquadSeasonDashboardData(dashboardData)
