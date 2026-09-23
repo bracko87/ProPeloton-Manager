@@ -33189,6 +33189,13 @@ function resolveUniversalPhase10Incidents({
         riderIds: [...group.riderIds],
       }))
       let gaps = checkpoint.gaps.map((gap) => ({ ...gap }))
+      const officialInactiveRiderIds = new Set(
+        checkpoint.finalResultsVisible
+          ? classification
+              .filter((row) => row.status !== 'finished')
+              .map((row) => row.riderId)
+          : [],
+      )
       const riderStates = checkpoint.riderStates.map((state): UniversalReplayRiderState => {
         const official = classification.find((row) => row.riderId === state.riderId)
         const dnfIncident = dnfIncidentByRiderId.get(state.riderId)
@@ -33218,17 +33225,45 @@ function resolveUniversalPhase10Incidents({
         return {
           ...state,
           status,
+          groupCode:
+            checkpoint.finalResultsVisible &&
+            officialInactiveRiderIds.has(state.riderId)
+              ? null
+              : state.groupCode,
+          displayCode:
+            checkpoint.finalResultsVisible &&
+            officialInactiveRiderIds.has(state.riderId)
+              ? null
+              : state.displayCode,
           energy: adjustedEnergy,
           ...buildUniversalReplayEnergyDisplay(adjustedEnergy, startEnergy),
           finishRank: checkpoint.finalResultsVisible ? official?.rank ?? null : null,
           officialTimeSeconds: checkpoint.finalResultsVisible
             ? official?.officialTimeSeconds ?? null
             : null,
-          gapSeconds: checkpoint.finalResultsVisible
-            ? official?.gapSeconds ?? null
-            : state.gapSeconds,
+          gapSeconds:
+            checkpoint.finalResultsVisible &&
+            officialInactiveRiderIds.has(state.riderId)
+              ? null
+              : checkpoint.finalResultsVisible
+                ? official?.gapSeconds ?? null
+                : state.gapSeconds,
         }
       })
+
+      if (checkpoint.finalResultsVisible && officialInactiveRiderIds.size > 0) {
+        groups = groups
+          .map((group) => ({
+            ...group,
+            riderIds: group.riderIds.filter(
+              (riderId) => !officialInactiveRiderIds.has(riderId),
+            ),
+          }))
+          .filter((group) => group.riderIds.length > 0)
+        gaps = gaps.filter((gap) =>
+          groups.some((group) => group.displayCode === gap.displayCode),
+        )
+      }
 
       if (input.stage.stageFormat === 'road_race' && !checkpoint.finalResultsVisible) {
         const checkpointKm = checkpoint.raceProgress.kmFromStart
