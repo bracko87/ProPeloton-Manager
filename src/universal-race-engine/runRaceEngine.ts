@@ -37030,6 +37030,57 @@ export function runRaceEngine(
   const replayPublicationPolicy =
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
+  if (
+    !replayPublicationPolicy.publishable &&
+    calculationInput.engine.deterministicSeed === 'phase11g-mixed-stress-34'
+  ) {
+    const debugFinalCheckpoint = replayTimeline.checkpoints.at(-1)
+    console.error(
+      '[race-engine-seed34]',
+      JSON.stringify(
+        {
+          blockingIssues: replayPublicationPolicy.blockingIssues,
+          baseClassification: baseFinishResolution.classification.map((row) => ({
+            riderId: row.riderId,
+            status: row.status,
+            rank: row.rank,
+            gapSeconds: row.gapSeconds,
+            officialTimeSeconds: row.officialTimeSeconds,
+          })),
+          phase10Classification: finishResolution.classification.map((row) => ({
+            riderId: row.riderId,
+            status: row.status,
+            rank: row.rank,
+            gapSeconds: row.gapSeconds,
+            officialTimeSeconds: row.officialTimeSeconds,
+          })),
+          phase4Energy: roadRaceResolution.phase4Finish?.riderStates.map((row) => ({
+            riderId: row.riderId,
+            energyAtFinish: row.energyAtFinish,
+            contactLossReason: row.contactLossReason,
+            finalGroupCode: row.finalGroupCode,
+            finalGapSeconds: row.finalGapSeconds,
+          })),
+          phase10FinalGroups: phase10Incidents.finalRoadGroups,
+          phase10FinalGaps: phase10Incidents.finalRoadGaps,
+          replayFinalGroups: debugFinalCheckpoint?.groups,
+          replayFinalGaps: debugFinalCheckpoint?.gaps,
+          replayFinalRiders: debugFinalCheckpoint?.riderStates.map((row) => ({
+            riderId: row.riderId,
+            status: row.status,
+            finishRank: row.finishRank,
+            officialTimeSeconds: row.officialTimeSeconds,
+            gapSeconds: row.gapSeconds,
+            displayCode: row.displayCode,
+            energy: row.energy,
+          })),
+        },
+        null,
+        2,
+      ),
+    )
+  }
+
   if (!replayPublicationPolicy.publishable) {
     throw new Error(
       `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,
