@@ -8375,6 +8375,33 @@ export default function OverviewPage() {
 
             if (fastClubId) {
               startFastRaceSchedule(fastClubId);
+
+              // Do not keep the entire Overview behind the header RPC. A cached
+              // main-club id is enough to render the dashboard shell immediately
+              // while schedule/day-race and other lightweight widgets load.
+              if (alive && !dataRef.current) {
+                const instantShellData = normalizeDashboardPayload({
+                  club: { id: fastClubId },
+                  alerts: [],
+                  kpis: [],
+                  operations: [],
+                  schedule: [],
+                  dayRaces: [],
+                  news: [],
+                  feed: [],
+                  quickActions: [],
+                });
+
+                setData(instantShellData);
+                setLoading(false);
+                setError(null);
+                bootstrappedVisibleData = true;
+
+                startFastOverviewWidgets(
+                  fastClubId,
+                  getSeasonYearFromOverview(instantShellData),
+                );
+              }
             }
 
             const { data: headerData, error: headerError } =
