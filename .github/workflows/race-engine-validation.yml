@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - fix/race-engine-replay-sync-gap-exhaustion
+      - validation/race-engine-main-baseline-20260923b
     paths:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
