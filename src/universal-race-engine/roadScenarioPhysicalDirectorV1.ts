@@ -639,12 +639,21 @@ export function applyRoadScenarioGapGuidanceV1(
         progress < caughtEnvelope.formationProgress - 0.000001
       if (earlyFormation && humanChase < 0.9) {
         const protectionFactor = clamp((0.9 - humanChase) / 0.9, 0, 1)
-        const protectedGap = round(
-          clamp(
-            1.5 + protectionFactor * 3.5,
-            1.5,
-            Math.max(1.5, Math.min(5, caughtEnvelope.lower)),
+        const formationFraction = clamp(
+          progress / Math.max(0.000001, caughtEnvelope.formationProgress),
+          0,
+          1,
+        )
+        const protectedTargetGap = clamp(
+          Math.max(
+            6,
+            caughtEnvelope.lower * (0.18 + formationFraction * 0.42),
           ),
+          6,
+          Math.max(8, Math.min(28, caughtEnvelope.center * 0.55)),
+        )
+        const protectedGap = round(
+          protectedTargetGap * (0.78 + protectionFactor * 0.22),
           6,
         )
         recordRuntimeApplication(input, 'gap_guidance', {
@@ -734,17 +743,19 @@ export function applyRoadScenarioGapGuidanceV1(
 
       if (catchStillProtected) {
         const commandRetention = clamp(1 - humanChase * 0.45, 0.45, 1)
-        const residualBase = clamp(
-          Math.max(
-            4,
-            previousLiveGap * 0.28,
-            Math.min(16, targetFloor * 0.08),
-          ),
-          4,
-          18,
+        /*
+         * Never pin a physically closing break to a tiny fixed residual gap.
+         * If the story envelope still protects the move, retain only a decaying
+         * fraction of the previous live separation. Repeated physical closure
+         * therefore ends in a real catch instead of a 3-5 second plateau.
+         */
+        const decayFactor = clamp(
+          0.55 + commandRetention * 0.15,
+          0.55,
+          0.7,
         )
         const protectedGap = round(
-          clamp(residualBase * commandRetention, 2.5, 18),
+          Math.max(current, previousLiveGap * decayFactor),
           6,
         )
         recordRuntimeApplication(input, 'gap_guidance', {
