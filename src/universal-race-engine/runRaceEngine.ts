@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11s-v1-strict-physical-replay-integrity-2026-09-23' as const
+  'phase11t-v1-incident-aware-front-lineage-2026-09-23' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -35357,6 +35357,45 @@ export function buildUniversalReplaySynchronizationSummary(
         )
         .flatMap((incident) => incident.riderIds),
     )
+    /*
+     * A rider may temporarily leave B1/F because of a crash/mechanical and
+     * later chase back. That is a real physical separation, not a broken
+     * breakaway lineage. Track the incident window so the lineage invariant
+     * compares the riders who are physically available to the front group at
+     * this exact kilometre.
+     */
+    const activeIncidentSeparatedRiderIds = new Set(
+      phase10Incidents.incidents.flatMap((incident) =>
+        incident.riderConsequences
+          .filter((row) => {
+            if (
+              !row.movedToLaterGroup &&
+              row.statusImpact === 'finished'
+            ) {
+              return false
+            }
+            if (
+              checkpoint.raceProgress.kmFromStart <
+              incident.kmFromStart - 0.000001
+            ) {
+              return false
+            }
+            const rejoinKm =
+              row.actualRejoinKm ?? row.expectedRejoinKm ?? null
+            return (
+              rejoinKm === null ||
+              checkpoint.raceProgress.kmFromStart <
+                rejoinKm - 0.000001
+            )
+          })
+          .map((row) => row.riderId),
+      ),
+    )
+    const incidentRejoinRiderIdsAtKm = new Set(
+      checkpoint.commentary
+        .filter((entry) => entry.eventType === 'group_merge')
+        .flatMap((entry) => entry.riderIds),
+    )
     const hasBridgeAttack = sameKilometreEventTypes.has('bridge_attack')
     const hasBridgeProgress = eventTypes.has('bridge_progress')
     const hasBridgeMerge = eventTypes.has('bridge_merge')
@@ -35378,8 +35417,14 @@ export function buildUniversalReplaySynchronizationSummary(
       openingFormationCheckpointIndex >= 0
     ) {
       const originalRidersStillPresent = openingBreakawayRiderIds.every(
-        (riderId) => breakawayRiderIds.includes(riderId),
+        (riderId) =>
+          breakawayRiderIds.includes(riderId) ||
+          activeIncidentSeparatedRiderIds.has(riderId),
       )
+      const expectedBreakawayRiderIdsPresent =
+        expectedBreakawayRiderIds.filter(
+          (riderId) => !activeIncidentSeparatedRiderIds.has(riderId),
+        )
       if (breakawayGroups.length !== 1 || !originalRidersStillPresent) {
         openingBreakawayLineageStable = false
         pushIssue(
@@ -35401,6 +35446,23 @@ export function buildUniversalReplaySynchronizationSummary(
         )
 
         if (addedBreakawayRiderIds.length > 0) {
+          const incidentRejoinAdditions = addedBreakawayRiderIds
+            .filter(
+              (riderId) =>
+                expectedBreakawayRiderIds.includes(riderId) &&
+                incidentRejoinRiderIdsAtKm.has(riderId),
+            )
+            .sort()
+          const allAdditionsAreIncidentRejoins =
+            removedBreakawayRiderIds.length === 0 &&
+            sameStringArray(
+              [...addedBreakawayRiderIds].sort(),
+              incidentRejoinAdditions,
+            )
+          if (allAdditionsAreIncidentRejoins) {
+            // The expected lineage already contains these riders; the
+            // group_merge checkpoint merely restores them after the incident.
+          } else {
           const directOpeningAttackAdditions = addedBreakawayRiderIds
             .filter((riderId) =>
               successfulOpeningAttackRiderIdsAtKm.has(riderId),
@@ -35549,8 +35611,12 @@ export function buildUniversalReplaySynchronizationSummary(
               expectedBreakawayRiderIds = expectedMergedRiderIds
             }
           }
+          }
         } else if (
-          !sameStringArray(breakawayRiderIds, expectedBreakawayRiderIds)
+          !sameStringArray(
+            breakawayRiderIds,
+            expectedBreakawayRiderIdsPresent,
+          )
         ) {
           openingBreakawayLineageStable = false
           pushIssue(
@@ -35558,7 +35624,10 @@ export function buildUniversalReplaySynchronizationSummary(
           )
         }
       } else if (
-        !sameStringArray(breakawayRiderIds, expectedBreakawayRiderIds)
+        !sameStringArray(
+          breakawayRiderIds,
+          expectedBreakawayRiderIdsPresent,
+        )
       ) {
         openingBreakawayLineageStable = false
         pushIssue(
@@ -35771,8 +35840,12 @@ export function buildUniversalReplaySynchronizationSummary(
               successfulOpeningAttackRiderIdsAtKm.has(riderId)))
         const bridgeMergeTransition =
           previousIsLateFront && hasBridgeMerge
+        const incidentRejoinTransition =
+          incidentRejoinRiderIdsAtKm.has(riderId)
         transitionValid =
-          openingFormationTransition || bridgeMergeTransition
+          openingFormationTransition ||
+          bridgeMergeTransition ||
+          incidentRejoinTransition
       } else if (previousIsOpeningBreakaway) {
         transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId)
       } else if (previousIsLateFront && currentIsPeloton) {
