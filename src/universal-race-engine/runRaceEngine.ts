@@ -25452,19 +25452,16 @@ function buildUniversalTimeTrialReplayTimeline(
           const readiness = readinessByRiderId.get(rider.riderId)
           const finish = finishByRiderId.get(rider.riderId)
           const group = groupByRiderId.get(rider.riderId)
-          const energy = deterministicRound(
-            definition.energyByRiderId.get(rider.riderId) ?? 0,
-            6,
-          )
-          const resolvedStatus: UniversalReplayRiderStatus = finalResultsVisible
+          const status: UniversalReplayRiderStatus = finalResultsVisible
             ? finish?.status ?? (readiness?.eligibleToStart ? 'dnf' : 'dns')
             : readiness?.eligibleToStart
               ? 'racing'
               : 'dns'
-          const status: UniversalReplayRiderStatus =
-            resolvedStatus === 'racing' && energy <= 0.000001
-              ? 'dnf'
-              : resolvedStatus
+
+          const energy = deterministicRound(
+            definition.energyByRiderId.get(rider.riderId) ?? 0,
+            6,
+          )
           const energyDisplay = buildUniversalReplayEnergyDisplay(
             energy,
             readiness?.fatigueBalance.startEnergy ?? 100,
@@ -25473,9 +25470,9 @@ function buildUniversalTimeTrialReplayTimeline(
             riderId: rider.riderId,
             teamId: rider.teamId,
             status,
-            groupCode: status === 'dnf' ? null : group?.groupCode ?? null,
-            displayCode: status === 'dnf' ? null : group?.displayCode ?? null,
-            gapSeconds: status === 'dnf' ? null : group?.gapSeconds ?? null,
+            groupCode: group?.groupCode ?? null,
+            displayCode: group?.displayCode ?? null,
+            gapSeconds: group?.gapSeconds ?? null,
             energy,
             ...energyDisplay,
             readinessScore: readiness?.readinessScore ?? 0,
@@ -25486,20 +25483,6 @@ function buildUniversalTimeTrialReplayTimeline(
           }
         })
         .sort((left, right) => left.riderId.localeCompare(right.riderId))
-
-      const dnfRiderIdSet = new Set(
-        riderStates
-          .filter((state) => state.status === 'dnf')
-          .map((state) => state.riderId),
-      )
-      const publishedGroups = definition.groups
-        .map((group) => ({
-          ...group,
-          riderIds: group.riderIds.filter(
-            (riderId) => !dnfRiderIdSet.has(riderId),
-          ),
-        }))
-        .filter((group) => group.riderIds.length > 0)
 
       const teamStates = input.teams
         .map((team): UniversalReplayTeamState => {
@@ -25547,7 +25530,7 @@ function buildUniversalTimeTrialReplayTimeline(
           percent: deterministicRound(progressFraction * 100, 6),
           kmFromStart: progressKm,
         },
-        groups: publishedGroups.map((group) => ({
+        groups: definition.groups.map((group) => ({
           groupCode: group.groupCode,
           displayCode: group.displayCode,
           physicalLineageId: group.physicalLineageId ?? null,
@@ -25555,7 +25538,7 @@ function buildUniversalTimeTrialReplayTimeline(
           colorKey: group.colorKey,
           riderIds: [...group.riderIds],
         })),
-        gaps: publishedGroups.map((group) => ({
+        gaps: definition.groups.map((group) => ({
           groupCode: group.groupCode,
           displayCode: group.displayCode,
           gapSeconds: group.gapSeconds,
@@ -29678,19 +29661,16 @@ function buildUniversalReplayTimeline(
           const readiness = readinessByRiderId.get(rider.riderId)
           const finish = finishByRiderId.get(rider.riderId)
           const group = groupByRiderId.get(rider.riderId)
-          const energy = deterministicRound(
-            definition.energyByRiderId.get(rider.riderId) ?? 0,
-            6,
-          )
-          const resolvedStatus: UniversalReplayRiderStatus = finalResultsVisible
+          const status: UniversalReplayRiderStatus = finalResultsVisible
             ? finish?.status ?? (readiness?.eligibleToStart ? 'dnf' : 'dns')
             : readiness?.eligibleToStart
               ? 'racing'
               : 'dns'
-          const status: UniversalReplayRiderStatus =
-            resolvedStatus === 'racing' && energy <= 0.000001
-              ? 'dnf'
-              : resolvedStatus
+
+          const energy = deterministicRound(
+            definition.energyByRiderId.get(rider.riderId) ?? 0,
+            6,
+          )
           const energyDisplay = buildUniversalReplayEnergyDisplay(
             energy,
             readiness?.fatigueBalance.startEnergy ?? 100,
@@ -29699,9 +29679,9 @@ function buildUniversalReplayTimeline(
             riderId: rider.riderId,
             teamId: rider.teamId,
             status,
-            groupCode: status === 'dnf' ? null : group?.groupCode ?? null,
-            displayCode: status === 'dnf' ? null : group?.displayCode ?? null,
-            gapSeconds: status === 'dnf' ? null : group?.gapSeconds ?? null,
+            groupCode: group?.groupCode ?? null,
+            displayCode: group?.displayCode ?? null,
+            gapSeconds: group?.gapSeconds ?? null,
             energy,
             ...energyDisplay,
             readinessScore: readiness?.readinessScore ?? 0,
@@ -29712,20 +29692,6 @@ function buildUniversalReplayTimeline(
           }
         })
         .sort((left, right) => left.riderId.localeCompare(right.riderId))
-
-      const dnfRiderIdSet = new Set(
-        riderStates
-          .filter((state) => state.status === 'dnf')
-          .map((state) => state.riderId),
-      )
-      const publishedGroups = normalizedGroups
-        .map((group) => ({
-          ...group,
-          riderIds: group.riderIds.filter(
-            (riderId) => !dnfRiderIdSet.has(riderId),
-          ),
-        }))
-        .filter((group) => group.riderIds.length > 0)
 
       const teamStates = input.teams
         .map((team): UniversalReplayTeamState => {
@@ -29791,7 +29757,7 @@ function buildUniversalReplayTimeline(
           authoritativeRaceSecond:
             definition.authoritativeRaceSecond ?? null,
         },
-        groups: publishedGroups.map((group) => ({
+        groups: normalizedGroups.map((group) => ({
           groupCode: group.groupCode,
           displayCode: group.displayCode,
           physicalLineageId: group.physicalLineageId ?? null,
@@ -29799,7 +29765,7 @@ function buildUniversalReplayTimeline(
           colorKey: group.colorKey,
           riderIds: [...group.riderIds],
         })),
-        gaps: publishedGroups.map((group) => ({
+        gaps: normalizedGroups.map((group) => ({
           groupCode: group.groupCode,
           displayCode: group.displayCode,
           gapSeconds: group.gapSeconds,
@@ -33252,6 +33218,11 @@ function resolveUniversalPhase10Incidents({
           dnfIncident &&
             checkpoint.raceProgress.kmFromStart >= dnfIncident.kmFromStart - 0.000001,
         )
+        const status: UniversalReplayRiderStatus = checkpoint.finalResultsVisible
+          ? official?.status ?? state.status
+          : dnfReached
+            ? 'dnf'
+            : state.status
         const adjustedEnergy = deterministicRound(
           Math.max(
             0,
@@ -33265,13 +33236,6 @@ function resolveUniversalPhase10Incidents({
           ),
           6,
         )
-        const energyExhausted =
-          state.status === 'racing' && adjustedEnergy <= 0.000001
-        const status: UniversalReplayRiderStatus = checkpoint.finalResultsVisible
-          ? official?.status ?? state.status
-          : dnfReached || energyExhausted
-            ? 'dnf'
-            : state.status
         const startEnergy = readinessByRiderId.get(state.riderId)?.fatigueBalance.startEnergy ?? 100
         return {
           ...state,
@@ -33308,19 +33272,13 @@ function resolveUniversalPhase10Incidents({
         const autonomousRiderIds = new Set(
           autonomousSamples.map((row) => row.episode.riderId),
         )
-        const reachedDnfRiderIds = new Set([
-          ...occurred.flatMap((incident) =>
+        const reachedDnfRiderIds = new Set(
+          occurred.flatMap((incident) =>
             incident.riderConsequences
               .filter((row) => row.statusImpact === 'dnf')
               .map((row) => row.riderId),
           ),
-          ...riderStates
-            .filter(
-              (state) =>
-                state.status === 'dnf' && state.energy <= 0.000001,
-            )
-            .map((state) => state.riderId),
-        ])
+        )
         const detachedRiderIds = new Set([
           ...autonomousRiderIds,
           ...reachedDnfRiderIds,
@@ -33353,7 +33311,6 @@ function resolveUniversalPhase10Incidents({
           }
         >()
         autonomousSamples.forEach(({ episode, sample }) => {
-          if (reachedDnfRiderIds.has(episode.riderId)) return
           const existing = autonomousGroupByDisplayCode.get(sample.displayCode)
           if (existing) {
             existing.riderIds.add(episode.riderId)
