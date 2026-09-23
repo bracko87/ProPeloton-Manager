@@ -7967,8 +7967,8 @@ function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
             </div>
           </div>
 
-          <div className="mt-4 grid items-center gap-3 sm:grid-cols-[128px_190px] sm:justify-center">
-            <div className="flex justify-center">
+          <div className="mt-4 grid items-center gap-3 sm:grid-cols-2">
+            <div className="flex min-w-0 items-center justify-center">
               <div
                 className="relative h-32 w-32 rounded-full"
                 style={{
@@ -7993,43 +7993,45 @@ function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
               </div>
             </div>
 
-            <div className="w-full space-y-2">
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50/60 px-2.5 py-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                  <span className="truncate text-xs font-medium text-slate-700">
-                    {t("finance.incomePercent", { percent: incomePct })}
+            <div className="flex min-w-0 items-center justify-center">
+              <div className="w-full max-w-[190px] space-y-2">
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50/60 px-2.5 py-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                    <span className="truncate text-xs font-medium text-slate-700">
+                      {t("finance.incomePercent", { percent: incomePct })}
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-xs font-bold tabular-nums text-emerald-700">
+                    {formatCurrency(income)}
                   </span>
                 </div>
-                <span className="shrink-0 text-xs font-bold tabular-nums text-emerald-700">
-                  {formatCurrency(income)}
-                </span>
-              </div>
 
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-red-100 bg-red-50/60 px-2.5 py-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
-                  <span className="truncate text-xs font-medium text-slate-700">
-                    {t("finance.expensesPercent", { percent: expensePct })}
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-red-100 bg-red-50/60 px-2.5 py-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                    <span className="truncate text-xs font-medium text-slate-700">
+                      {t("finance.expensesPercent", { percent: expensePct })}
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-xs font-bold tabular-nums text-red-700">
+                    {formatCurrency(expenses)}
                   </span>
                 </div>
-                <span className="shrink-0 text-xs font-bold tabular-nums text-red-700">
-                  {formatCurrency(expenses)}
-                </span>
-              </div>
 
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
-                <span className="text-xs font-semibold text-slate-700">
-                  {t("finance.finalBalance")}
-                </span>
-                <span
-                  className={cn(
-                    "shrink-0 text-xs font-bold tabular-nums",
-                    net >= 0 ? "text-emerald-700" : "text-red-700",
-                  )}
-                >
-                  {formatSignedCurrency(net)}
-                </span>
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
+                  <span className="text-xs font-semibold text-slate-700">
+                    {t("finance.finalBalance")}
+                  </span>
+                  <span
+                    className={cn(
+                      "shrink-0 text-xs font-bold tabular-nums",
+                      net >= 0 ? "text-emerald-700" : "text-red-700",
+                    )}
+                  >
+                    {formatSignedCurrency(net)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
