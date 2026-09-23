@@ -16883,14 +16883,14 @@ export function resolveRoadPhase4Finish(
     freshPhase4FrontRiderIds.length > 0
       ? deterministicRound(
           clamp(
-            9 +
-              freshPhase4FrontCandidateScore * 0.08 +
+            7 +
+              freshPhase4FrontCandidateScore * 0.07 +
               calculateDeterministicUnitRoll(
-                `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11q-fresh-phase4-front-gap`,
+                `${input.engine.deterministicSeed}|${input.stage.stageId}|v55-fresh-phase4-front-gap`,
               ) *
-                8,
-            Math.max(PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS + 1, 10),
-            26,
+                6,
+            PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS + 1,
+            20,
           ),
           6,
         )
