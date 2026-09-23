@@ -26416,6 +26416,63 @@ function buildUniversalReplayTimeline(
     return values
   }
 
+  /*
+   * A literal road-energy zero is authoritative only when the canonical
+   * finish resolution also classifies the rider DNF with zero Phase-4 reserve.
+   * This prevents historical/unpopulated replay zeros from being interpreted
+   * as abandonments. The rider leaves the race at the first authoritative
+   * phase boundary where usable reserve reaches zero.
+   */
+  const roadEnergyExhaustionEvents = input.riders
+    .map((rider) => {
+      const finish = finishByRiderId.get(rider.riderId)
+      const finalEnergy = phase4EnergyByRiderId.get(rider.riderId)
+      if (
+        finish?.status !== 'dnf' ||
+        finalEnergy === undefined ||
+        finalEnergy > 0.000001
+      ) {
+        return null
+      }
+
+      for (const phaseNumber of [1, 2, 3, 4] as const) {
+        const endpoints = phaseEnergyEndpoints.get(phaseNumber)
+        if (!endpoints) continue
+        const startEnergy = endpoints.start.get(rider.riderId)
+        const endEnergy = endpoints.end.get(rider.riderId)
+        if (startEnergy === undefined || endEnergy === undefined) continue
+        if (startEnergy <= 0.000001) {
+          return {
+            riderId: rider.riderId,
+            phaseNumber,
+            kmFromStart: deterministicRound(endpoints.startKm, 6),
+          }
+        }
+        if (endEnergy <= 0.000001) {
+          return {
+            riderId: rider.riderId,
+            phaseNumber,
+            kmFromStart: deterministicRound(endpoints.endKm, 6),
+          }
+        }
+      }
+      return null
+    })
+    .filter(
+      (
+        row,
+      ): row is {
+        riderId: string
+        phaseNumber: RoadRacePhaseNumber
+        kmFromStart: number
+      } => row !== null,
+    )
+    .sort(
+      (left, right) =>
+        left.kmFromStart - right.kmFromStart ||
+        left.riderId.localeCompare(right.riderId),
+    )
+
   const acceptedOpeningAttempts = phase1.attackAttempts
     .filter((attempt) => attempt.acceptedEscapeLaunch)
     .slice()
@@ -29372,6 +29429,60 @@ function buildUniversalReplayTimeline(
     })
   })
 
+
+  const zeroEnergyClusters = roadEnergyExhaustionEvents.reduce<
+    Array<{
+      phaseNumber: RoadRacePhaseNumber
+      kmFromStart: number
+      riderIds: string[]
+    }>
+  >((clusters, row) => {
+    const current = clusters.at(-1)
+    if (
+      current &&
+      current.phaseNumber === row.phaseNumber &&
+      Math.abs(current.kmFromStart - row.kmFromStart) <= 0.000001
+    ) {
+      current.riderIds.push(row.riderId)
+    } else {
+      clusters.push({
+        phaseNumber: row.phaseNumber,
+        kmFromStart: row.kmFromStart,
+        riderIds: [row.riderId],
+      })
+    }
+    return clusters
+  }, [])
+
+  zeroEnergyClusters.forEach((cluster, index) => {
+    eventDefinitions.push({
+      checkpointIdSuffix: `energy-exhaustion-dnf-${index + 1}`,
+      checkpointKind: 'event',
+      phase: cluster.phaseNumber,
+      kmFromStart: cluster.kmFromStart,
+      sortOrder: 690 + index,
+      groups: groupsAtKm(cluster.kmFromStart),
+      energyByRiderId: energyAtKm(
+        cluster.phaseNumber,
+        cluster.kmFromStart,
+      ),
+      eventType: 'race_status',
+      title:
+        cluster.riderIds.length === 1
+          ? 'Rider abandons from exhaustion'
+          : 'Exhausted riders abandon',
+      description: `${replayRiderSubject(cluster.riderIds)} ${cluster.riderIds.length === 1 ? 'has' : 'have'} reached zero usable energy reserve and can no longer continue the stage.`,
+      riderIds: [...cluster.riderIds].sort(),
+      teamIds: Array.from(
+        new Set(
+          cluster.riderIds
+            .map((riderId) => riderById.get(riderId)?.teamId)
+            .filter((teamId): teamId is string => Boolean(teamId)),
+        ),
+      ).sort(),
+    })
+  })
+
   if (
     phase4FrontActive &&
     chaseStartKm < stageDistanceKm - 0.000001 &&
@@ -29894,6 +30005,14 @@ function buildUniversalReplayTimeline(
         finalResultsVisible || isAtFinishKm || preserveExplicitFrontTransitionState
           ? cloneReplayGroups(definition.groups)
           : normalizeReplayGroups(definition.groups)
+      const exhaustedEnergyRiderIds = new Set(
+        roadEnergyExhaustionEvents
+          .filter(
+            (event) =>
+              event.kmFromStart <= progressKm + 0.000001,
+          )
+          .map((event) => event.riderId),
+      )
       const publishedGroups =
         finalResultsVisible || isAtFinishKm
           ? normalizedGroups
@@ -29906,6 +30025,13 @@ function buildUniversalReplayTimeline(
               }))
               .filter((group) => group.riderIds.length > 0)
           : normalizedGroups
+              .map((group) => ({
+                ...group,
+                riderIds: group.riderIds.filter(
+                  (riderId) => !exhaustedEnergyRiderIds.has(riderId),
+                ),
+              }))
+              .filter((group) => group.riderIds.length > 0)
       const groupByRiderId = new Map<
         string,
         UniversalPhase5GroupSnapshot
@@ -29920,16 +30046,17 @@ function buildUniversalReplayTimeline(
           const readiness = readinessByRiderId.get(rider.riderId)
           const finish = finishByRiderId.get(rider.riderId)
           const group = groupByRiderId.get(rider.riderId)
-          const status: UniversalReplayRiderStatus = finalResultsVisible
-            ? finish?.status ?? (readiness?.eligibleToStart ? 'dnf' : 'dns')
-            : readiness?.eligibleToStart
-              ? 'racing'
-              : 'dns'
-
           const energy = deterministicRound(
             definition.energyByRiderId.get(rider.riderId) ?? 0,
             6,
           )
+          const status: UniversalReplayRiderStatus = finalResultsVisible
+            ? finish?.status ?? (readiness?.eligibleToStart ? 'dnf' : 'dns')
+            : !readiness?.eligibleToStart
+              ? 'dns'
+              : exhaustedEnergyRiderIds.has(rider.riderId)
+                ? 'dnf'
+                : 'racing'
           const energyDisplay = buildUniversalReplayEnergyDisplay(
             energy,
             readiness?.fatigueBalance.startEnergy ?? 100,
@@ -33177,13 +33304,41 @@ function resolveUniversalPhase10Incidents({
     })
   })
 
+  const baseFinalReplayCheckpoint = baseReplayTimeline.checkpoints.at(-1)
+  const baseFinalEnergyByRiderId = new Map(
+    (baseFinalReplayCheckpoint?.riderStates ?? []).map(
+      (state) => [state.riderId, state.energy] as const,
+    ),
+  )
   const physicalFinishTimeByRiderId = new Map<string, number>()
   const adjustedFinishScoreByRiderId = new Map<string, number>()
   const preliminary = baseFinishResolution.classification.map(
     (row): UniversalOfficialFinishRow => {
       const consequence = consequenceByRiderId.get(row.riderId)
       if (row.status === 'dns') return row
-      if (consequence?.dnf) {
+      const baseFinalEnergy = baseFinalEnergyByRiderId.get(row.riderId)
+      const postIncidentEnergy =
+        input.stage.stageFormat === 'road_race' &&
+        baseFinalEnergy !== undefined
+          ? deterministicRound(
+              Math.max(
+                0,
+                baseFinalEnergy -
+                  (consequence?.energyLoss ?? 0) -
+                  phase10AutonomousChaseEnergyAtKm(
+                    autonomousChase,
+                    row.riderId,
+                    input.stage.distanceKm,
+                  ),
+              ),
+              6,
+            )
+          : null
+      const energyExhaustedDnf =
+        row.status === 'finished' &&
+        postIncidentEnergy !== null &&
+        postIncidentEnergy <= 0.000001
+      if (consequence?.dnf || energyExhaustedDnf) {
         return {
           ...row,
           rank: null,
@@ -33455,11 +33610,6 @@ function resolveUniversalPhase10Incidents({
           dnfIncident &&
             checkpoint.raceProgress.kmFromStart >= dnfIncident.kmFromStart - 0.000001,
         )
-        const status: UniversalReplayRiderStatus = checkpoint.finalResultsVisible
-          ? official?.status ?? state.status
-          : dnfReached
-            ? 'dnf'
-            : state.status
         const adjustedEnergy = deterministicRound(
           Math.max(
             0,
@@ -33473,6 +33623,15 @@ function resolveUniversalPhase10Incidents({
           ),
           6,
         )
+        const energyDnfReached =
+          input.stage.stageFormat === 'road_race' &&
+          official?.status === 'dnf' &&
+          adjustedEnergy <= 0.000001
+        const status: UniversalReplayRiderStatus = checkpoint.finalResultsVisible
+          ? official?.status ?? state.status
+          : dnfReached || energyDnfReached
+            ? 'dnf'
+            : state.status
         const startEnergy = readinessByRiderId.get(state.riderId)?.fatigueBalance.startEnergy ?? 100
         return {
           ...state,
@@ -33516,9 +33675,19 @@ function resolveUniversalPhase10Incidents({
               .map((row) => row.riderId),
           ),
         )
+        const zeroEnergyDnfRiderIds = new Set(
+          riderStates
+            .filter(
+              (row) =>
+                row.status === 'dnf' &&
+                row.energy <= 0.000001,
+            )
+            .map((row) => row.riderId),
+        )
         const detachedRiderIds = new Set([
           ...autonomousRiderIds,
           ...reachedDnfRiderIds,
+          ...zeroEnergyDnfRiderIds,
         ])
         groups = groups
           .map((group) => ({
@@ -33530,7 +33699,10 @@ function resolveUniversalPhase10Incidents({
           groups.some((group) => group.displayCode === gap.displayCode),
         )
 
-        reachedDnfRiderIds.forEach((riderId) => {
+        new Set([
+          ...reachedDnfRiderIds,
+          ...zeroEnergyDnfRiderIds,
+        ]).forEach((riderId) => {
           const state = riderStates.find((row) => row.riderId === riderId)
           if (!state) return
           ;(state as { groupCode: UniversalPhase5GroupCode | null }).groupCode = null
@@ -34871,10 +35043,17 @@ export function buildUniversalReplaySynchronizationSummary(
                 consequence.statusImpact === 'dnf',
             ),
         )
+        const official = finishResolution.classification.find(
+          (entry) => entry.riderId === row.riderId,
+        )
+        const energyDnf =
+          input.stage.stageFormat === 'road_race' &&
+          official?.status === 'dnf' &&
+          row.energy <= 0.000001
         const expectedStatus: UniversalReplayRiderStatus =
           !readiness?.eligibleToStart
             ? 'dns'
-            : dnfIncident
+            : dnfIncident || energyDnf
               ? 'dnf'
               : 'racing'
         if (row.status !== expectedStatus) {
