@@ -35009,6 +35009,7 @@ export function buildUniversalReplaySynchronizationSummary(
               ]),
             ).sort()
           } else {
+            const relevantMergeEntries = bridgeMergeEntriesAtKm.filter(
               (entry) =>
                 entry.riderIds.some((riderId) =>
                   addedBreakawayRiderIds.includes(riderId),
@@ -35081,7 +35082,7 @@ export function buildUniversalReplaySynchronizationSummary(
                       sourceGap < pelotonGap - 0.000001)
                   )
                 }
-  
+
                 // Phase-2 compatibility: the accepted V4 contract did not emit
                 // a separate bridge_contact checkpoint for its secondary front.
                 const legacySourceGroup = previous.groups.find(
@@ -35135,9 +35136,7 @@ export function buildUniversalReplaySynchronizationSummary(
             } else {
               expectedBreakawayRiderIds = expectedMergedRiderIds
             }
-  
           }
-        }
         } else if (
           !sameStringArray(breakawayRiderIds, expectedBreakawayRiderIds)
         ) {
