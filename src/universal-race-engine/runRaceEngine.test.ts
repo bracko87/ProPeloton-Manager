@@ -11168,6 +11168,54 @@ describe('Phase 7 calculated replay events — Task 7.2', () => {
     )
   })
 
+  it('lets some successful decisive attacks establish a meaningful physical move before the chase fully organizes', () => {
+    let freshLineageCount = 0
+    let establishedLineageCount = 0
+    let immediateCatchCount = 0
+
+    for (let index = 0; index < 32; index += 1) {
+      const result = runRaceEngine(createPhase11gMixedStressInput(index))
+      const phase3 = result.roadRaceResolution.phase3Decisive!
+
+      phase3.frontLineages
+        .filter((lineage) => !lineage.carriedFromPreviousPhase)
+        .forEach((lineage) => {
+          freshLineageCount += 1
+          const resolutionKm =
+            lineage.catchKm ??
+            lineage.mergeKm ??
+            phase3.phaseBoundary.endKm
+          const lifetimeKm = Math.max(0, resolutionKm - lineage.launchKm)
+          const peakGapToPelotonSeconds = Math.max(
+            lineage.launchGapToPelotonSeconds,
+            ...lineage.gapTrajectory.map(
+              (sample) => sample.gapToPelotonSeconds,
+            ),
+          )
+
+          if (
+            lifetimeKm >= 6 - 0.000001 &&
+            peakGapToPelotonSeconds >= 15 - 0.000001
+          ) {
+            establishedLineageCount += 1
+          }
+          if (
+            lineage.catchKm !== null &&
+            lifetimeKm < 4.5 - 0.000001
+          ) {
+            immediateCatchCount += 1
+          }
+        })
+    }
+
+    expect(freshLineageCount).toBeGreaterThan(3)
+    expect(establishedLineageCount).toBeGreaterThan(0)
+    expect(establishedLineageCount / freshLineageCount).toBeGreaterThanOrEqual(
+      0.15,
+    )
+    expect(immediateCatchCount).toBeLessThan(freshLineageCount)
+  })
+
   it('reveals the calculated late chase and performs one atomic catch checkpoint', () => {
     const result = runRaceEngine(createPhase11gMixedStressInput(0))
     const phase4 = result.roadRaceResolution.phase4Finish!
