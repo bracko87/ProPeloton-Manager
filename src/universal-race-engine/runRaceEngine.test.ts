@@ -17694,7 +17694,6 @@ describe('Phase 11G organic race physics and replay continuity', () => {
 
   it('keeps every successful peloton attack in a physical F lifecycle', () => {
     for (const index of [0, 5, 15, 34, 95, 105, 130, 191, 241, 325]) {
-      console.info('[race-engine-debug] physical-F-lifecycle seed', index)
       const result = runRaceEngine(createPhase11gMixedStressInput(index))
       const phase2 = result.roadRaceResolution.phase2Development!
       const phase3 = result.roadRaceResolution.phase3Decisive!
