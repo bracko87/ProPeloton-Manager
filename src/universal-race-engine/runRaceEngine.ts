@@ -34891,6 +34891,18 @@ export function buildUniversalReplaySynchronizationSummary(
     const sameKilometreEventTypes = new Set(
       sameKilometreCommentary.map((entry) => entry.eventType),
     )
+    const successfulOpeningAttackRiderIdsAtKm = new Set(
+      checkpoint.phase === 1
+        ? sameKilometreCommentary
+            .filter(
+              (entry) =>
+                entry.eventType === 'attack' &&
+                (entry.title === 'Attack succeeds' ||
+                  entry.title === 'Reactive counterattack succeeds'),
+            )
+            .flatMap((entry) => entry.riderIds)
+        : [],
+    )
     const bridgeMergeEntriesAtKm = sameKilometreCommentary.filter(
       (entry) => entry.eventType === 'bridge_merge',
     )
@@ -34977,133 +34989,155 @@ export function buildUniversalReplaySynchronizationSummary(
         )
 
         if (addedBreakawayRiderIds.length > 0) {
-          const relevantMergeEntries = bridgeMergeEntriesAtKm.filter(
-            (entry) =>
-              entry.riderIds.some((riderId) =>
-                addedBreakawayRiderIds.includes(riderId),
-              ),
-          )
-          const explicitlyMergedRiderIds = Array.from(
-            new Set(relevantMergeEntries.flatMap((entry) => entry.riderIds)),
-          ).sort()
-          const mergeContactCheckpoint = (
-            entry: UniversalReplayCommentaryEntry,
-          ): UniversalReplayCheckpoint | undefined =>
-            replayTimeline.checkpoints
-              .slice(0, checkpointIndex)
-              .reverse()
-              .find(
-                (candidate) =>
-                  Math.abs(
-                    candidate.raceProgress.kmFromStart -
-                      checkpoint.raceProgress.kmFromStart,
-                  ) <= 0.000001 &&
-                  candidate.commentary.some(
-                    (contactEntry) =>
-                      contactEntry.eventType === 'bridge_contact' &&
-                      ((entry.physicalLineageId &&
-                        contactEntry.physicalLineageId ===
-                          entry.physicalLineageId) ||
-                        (entry.riderIds.length > 0 &&
-                          sameStringArray(
-                            [...contactEntry.riderIds].sort(),
-                            [...entry.riderIds].sort(),
-                          ))),
-                  ),
-              )
-          const everyMergeSourceWasPhysicalFront = relevantMergeEntries.every(
-            (entry) => {
-              const contactCheckpoint = mergeContactCheckpoint(entry)
-              if (contactCheckpoint) {
-                const sourceGroup = entry.physicalLineageId
-                  ? contactCheckpoint.groups.find(
-                      (group) =>
-                        group.physicalLineageId === entry.physicalLineageId,
-                    )
-                  : contactCheckpoint.groups.find(
-                      (group) =>
-                        group.displayCode.startsWith('F') &&
-                        entry.riderIds.length > 0 &&
-                        entry.riderIds.every((riderId) =>
-                          group.riderIds.includes(riderId),
-                        ),
-                    )
-                if (!sourceGroup) return false
-                const sourceGap = contactCheckpoint.gaps.find(
-                  (gap) => gap.displayCode === sourceGroup.displayCode,
+          const directOpeningAttackAdditions = addedBreakawayRiderIds
+            .filter((riderId) =>
+              successfulOpeningAttackRiderIdsAtKm.has(riderId),
+            )
+            .sort()
+          const allAdditionsAreSuccessfulOpeningAttacks =
+            removedBreakawayRiderIds.length === 0 &&
+            sameStringArray(
+              [...addedBreakawayRiderIds].sort(),
+              directOpeningAttackAdditions,
+            )
+
+          if (allAdditionsAreSuccessfulOpeningAttacks) {
+            expectedBreakawayRiderIds = Array.from(
+              new Set([
+                ...previousBreakawayRiderIds,
+                ...directOpeningAttackAdditions,
+              ]),
+            ).sort()
+          } else {
+              (entry) =>
+                entry.riderIds.some((riderId) =>
+                  addedBreakawayRiderIds.includes(riderId),
+                ),
+            )
+            const explicitlyMergedRiderIds = Array.from(
+              new Set(relevantMergeEntries.flatMap((entry) => entry.riderIds)),
+            ).sort()
+            const mergeContactCheckpoint = (
+              entry: UniversalReplayCommentaryEntry,
+            ): UniversalReplayCheckpoint | undefined =>
+              replayTimeline.checkpoints
+                .slice(0, checkpointIndex)
+                .reverse()
+                .find(
+                  (candidate) =>
+                    Math.abs(
+                      candidate.raceProgress.kmFromStart -
+                        checkpoint.raceProgress.kmFromStart,
+                    ) <= 0.000001 &&
+                    candidate.commentary.some(
+                      (contactEntry) =>
+                        contactEntry.eventType === 'bridge_contact' &&
+                        ((entry.physicalLineageId &&
+                          contactEntry.physicalLineageId ===
+                            entry.physicalLineageId) ||
+                          (entry.riderIds.length > 0 &&
+                            sameStringArray(
+                              [...contactEntry.riderIds].sort(),
+                              [...entry.riderIds].sort(),
+                            ))),
+                    ),
+                )
+            const everyMergeSourceWasPhysicalFront = relevantMergeEntries.every(
+              (entry) => {
+                const contactCheckpoint = mergeContactCheckpoint(entry)
+                if (contactCheckpoint) {
+                  const sourceGroup = entry.physicalLineageId
+                    ? contactCheckpoint.groups.find(
+                        (group) =>
+                          group.physicalLineageId === entry.physicalLineageId,
+                      )
+                    : contactCheckpoint.groups.find(
+                        (group) =>
+                          group.displayCode.startsWith('F') &&
+                          entry.riderIds.length > 0 &&
+                          entry.riderIds.every((riderId) =>
+                            group.riderIds.includes(riderId),
+                          ),
+                      )
+                  if (!sourceGroup) return false
+                  const sourceGap = contactCheckpoint.gaps.find(
+                    (gap) => gap.displayCode === sourceGroup.displayCode,
+                  )?.gapSeconds
+                  const targetGap = contactCheckpoint.gaps.find(
+                    (gap) =>
+                      gap.displayCode ===
+                      (entry.physicalMergeTargetDisplayCode ?? 'B1'),
+                  )?.gapSeconds
+                  const pelotonGap = contactCheckpoint.gaps.find(
+                    (gap) => gap.displayCode === 'P',
+                  )?.gapSeconds
+                  return (
+                    sourceGap !== undefined &&
+                    targetGap !== undefined &&
+                    sourceGap >= targetGap - 0.000001 &&
+                    sourceGap - targetGap <=
+                      PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.00001 &&
+                    (pelotonGap === undefined ||
+                      sourceGap < pelotonGap - 0.000001)
+                  )
+                }
+  
+                // Phase-2 compatibility: the accepted V4 contract did not emit
+                // a separate bridge_contact checkpoint for its secondary front.
+                const legacySourceGroup = previous.groups.find(
+                  (group) =>
+                    group.displayCode.startsWith('F') &&
+                    entry.riderIds.length > 0 &&
+                    entry.riderIds.every((riderId) =>
+                      group.riderIds.includes(riderId),
+                    ),
+                )
+                if (!legacySourceGroup) return false
+                const sourceGap = previous.gaps.find(
+                  (gap) => gap.displayCode === legacySourceGroup.displayCode,
                 )?.gapSeconds
-                const targetGap = contactCheckpoint.gaps.find(
-                  (gap) =>
-                    gap.displayCode ===
-                    (entry.physicalMergeTargetDisplayCode ?? 'B1'),
-                )?.gapSeconds
-                const pelotonGap = contactCheckpoint.gaps.find(
+                const targetGap =
+                  previous.gaps.find((gap) => gap.displayCode.startsWith('B'))
+                    ?.gapSeconds ?? 0
+                const pelotonGap = previous.gaps.find(
                   (gap) => gap.displayCode === 'P',
                 )?.gapSeconds
                 return (
                   sourceGap !== undefined &&
-                  targetGap !== undefined &&
-                  sourceGap >= targetGap - 0.000001 &&
-                  sourceGap - targetGap <=
-                    PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.00001 &&
+                  sourceGap > targetGap + 0.000001 &&
                   (pelotonGap === undefined ||
                     sourceGap < pelotonGap - 0.000001)
                 )
-              }
-
-              // Phase-2 compatibility: the accepted V4 contract did not emit
-              // a separate bridge_contact checkpoint for its secondary front.
-              const legacySourceGroup = previous.groups.find(
-                (group) =>
-                  group.displayCode.startsWith('F') &&
-                  entry.riderIds.length > 0 &&
-                  entry.riderIds.every((riderId) =>
-                    group.riderIds.includes(riderId),
-                  ),
-              )
-              if (!legacySourceGroup) return false
-              const sourceGap = previous.gaps.find(
-                (gap) => gap.displayCode === legacySourceGroup.displayCode,
-              )?.gapSeconds
-              const targetGap =
-                previous.gaps.find((gap) => gap.displayCode.startsWith('B'))
-                  ?.gapSeconds ?? 0
-              const pelotonGap = previous.gaps.find(
-                (gap) => gap.displayCode === 'P',
-              )?.gapSeconds
-              return (
-                sourceGap !== undefined &&
-                sourceGap > targetGap + 0.000001 &&
-                (pelotonGap === undefined ||
-                  sourceGap < pelotonGap - 0.000001)
-              )
-            },
-          )
-          const expectedMergedRiderIds = Array.from(
-            new Set([
-              ...previousBreakawayRiderIds,
-              ...explicitlyMergedRiderIds,
-            ]),
-          ).sort()
-          const additionsExactlyExplained = sameStringArray(
-            [...addedBreakawayRiderIds].sort(),
-            explicitlyMergedRiderIds.filter((riderId) =>
-              addedBreakawayRiderIds.includes(riderId),
-            ),
-          )
-          if (
-            relevantMergeEntries.length === 0 ||
-            removedBreakawayRiderIds.length > 0 ||
-            !additionsExactlyExplained ||
-            !sameStringArray(breakawayRiderIds, expectedMergedRiderIds) ||
-            !everyMergeSourceWasPhysicalFront
-          ) {
-            openingBreakawayLineageStable = false
-            allBridgeSequencesPhysicallyValid = false
-            pushIssue(`bridge_merge_invalid:${checkpoint.checkpointId}`)
-          } else {
-            expectedBreakawayRiderIds = expectedMergedRiderIds
+              },
+            )
+            const expectedMergedRiderIds = Array.from(
+              new Set([
+                ...previousBreakawayRiderIds,
+                ...explicitlyMergedRiderIds,
+              ]),
+            ).sort()
+            const additionsExactlyExplained = sameStringArray(
+              [...addedBreakawayRiderIds].sort(),
+              explicitlyMergedRiderIds.filter((riderId) =>
+                addedBreakawayRiderIds.includes(riderId),
+              ),
+            )
+            if (
+              relevantMergeEntries.length === 0 ||
+              removedBreakawayRiderIds.length > 0 ||
+              !additionsExactlyExplained ||
+              !sameStringArray(breakawayRiderIds, expectedMergedRiderIds) ||
+              !everyMergeSourceWasPhysicalFront
+            ) {
+              openingBreakawayLineageStable = false
+              allBridgeSequencesPhysicallyValid = false
+              pushIssue(`bridge_merge_invalid:${checkpoint.checkpointId}`)
+            } else {
+              expectedBreakawayRiderIds = expectedMergedRiderIds
+            }
+  
           }
+        }
         } else if (
           !sameStringArray(breakawayRiderIds, expectedBreakawayRiderIds)
         ) {
@@ -35318,10 +35352,12 @@ export function buildUniversalReplaySynchronizationSummary(
 
       if (currentIsOpeningBreakaway) {
         const openingFormationTransition =
-          (eventTypes.has('attack') ||
-            eventTypes.has('breakaway_formation')) &&
-          openingBreakawayRiderIdSet.has(riderId) &&
-          checkpointIndex <= openingFormationCheckpointIndex
+          (((eventTypes.has('attack') ||
+              eventTypes.has('breakaway_formation')) &&
+            openingBreakawayRiderIdSet.has(riderId) &&
+            checkpointIndex <= openingFormationCheckpointIndex) ||
+            (checkpoint.phase === 1 &&
+              successfulOpeningAttackRiderIdsAtKm.has(riderId)))
         const bridgeMergeTransition =
           previousIsLateFront && hasBridgeMerge
         transitionValid =
