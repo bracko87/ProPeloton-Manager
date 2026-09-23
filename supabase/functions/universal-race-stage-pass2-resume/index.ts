@@ -8,16 +8,16 @@ import {
 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7a1537ee287a2cc802e14ff67c17c65a5ccb6e15/src/universal-race-engine/runRaceEngine.ts";
 import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7a1537ee287a2cc802e14ff67c17c65a5ccb6e15/src/universal-race-engine/buildProductionRaceInput.ts";
 import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7a1537ee287a2cc802e14ff67c17c65a5ccb6e15/src/universal-race-engine/buildProductionRaceOutput.ts";
-import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
+import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7a1537ee287a2cc802e14ff67c17c65a5ccb6e15/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7a1537ee287a2cc802e14ff67c17c65a5ccb6e15/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7a1537ee287a2cc802e14ff67c17c65a5ccb6e15/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
 const SOURCE_COMMIT = "7a1537ee287a2cc802e14ff67c17c65a5ccb6e15";
-const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
-const CONTRACT = "universal_race_pass2_resume_v12";
+const FALLBACK_SOURCE_COMMIT = SOURCE_COMMIT;
+const CONTRACT = "universal_race_pass2_resume_v14";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -273,9 +273,16 @@ function applyAtomicIntermediatePointReplayPublication(input: any, result: Unive
 }
 function buildOutputWithReplayProgressGuarantee(input: any, result: UniversalRaceEngineResult): any {
   const replayPolicy = classifyUniversalReplaySynchronizationForPublication(result.replaySynchronization);
-  if (result.replaySynchronization.synchronized && !replayPolicy.nonBlockingIssues.length && !replayPolicy.blockingIssues.length) {
+  if (replayPolicy.blockingIssues.length > 0) {
+    throw new Error(
+      `Blocking replay synchronization issues: ${replayPolicy.blockingIssues.slice(0, 12).join(" | ")}`
+    );
+  }
+  if (result.replaySynchronization.synchronized && !replayPolicy.nonBlockingIssues.length) {
     return buildProductionUniversalRaceOutput(input, result);
   }
+  // Only explicitly non-blocking replay presentation issues may use the
+  // degraded publication path. Physical-state contradictions are rejected.
   const builderResult: UniversalRaceEngineResult = {
     ...result,
     replaySynchronization: { ...result.replaySynchronization, synchronized: true },
@@ -348,7 +355,7 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
   if (!stageId || !runId) throw new Error("Pass 2 claim is missing stage/run identity.");
   const scenarioMode = text(claim.scenario_mode) || "none";
   const useFallback = scenarioMode === "emergency_fallback";
-  const fallbackReason = useFallback ? "emergency_recovery" : null;
+  const fallbackReason = useFallback ? "same_engine_recovery" : null;
 
   try {
     await heartbeat(supabase, stageId, runId, "pass2_payload_loading", { source_commit: SOURCE_COMMIT });
@@ -451,7 +458,7 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
       resumed_pass2: true,
       fallback_used: useFallback,
       fallback_reason: fallbackReason,
-      output_bytes_estimate: JSON.stringify(output).length,
+      output_size_estimate_skipped: true,
     });
     const submit = await submitWithRetry(supabase, {
       p_stage_id: stageId,
