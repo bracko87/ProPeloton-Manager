@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11o-v1-counterattack-survival-catch-timing-2026-09-22' as const
+  'phase11q-v1-decisive-attack-establishment-2026-09-23' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -13708,11 +13708,11 @@ export function resolveRoadPhase3Decisive(
       )
     const averageLaunchSkill = average(launchAttemptSkills)
     const momentumWindowKm =
-      5 +
+      6 +
       calculateDeterministicUnitRoll(
-        `${input.engine.deterministicSeed}|${input.stage.stageId}|${lineage.lineageId}|phase3-front-momentum-window-v1`,
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|${lineage.lineageId}|phase3-front-momentum-window-v2`,
       ) *
-        5
+        6
     const ageKm = Math.max(0, stepMidKm - lineage.launchKm)
     const fraction = clamp(
       1 - ageKm / Math.max(0.1, momentumWindowKm),
@@ -13723,7 +13723,7 @@ export function resolveRoadPhase3Decisive(
       fraction,
       boostKmh:
         fraction *
-        clamp(1.3 + averageLaunchSkill * 0.022, 1.9, 3.5),
+        clamp(1.45 + averageLaunchSkill * 0.024, 2.1, 4.0),
     }
   }
 
@@ -13816,22 +13816,54 @@ export function resolveRoadPhase3Decisive(
     )
   }
 
-  const phase3PelotonPaceForFrontKmh = (stepMidKm: number): number => {
+  const phase3PelotonPaceForFrontKmh = (
+    stepMidKm: number,
+    lineage: MutablePhase3FrontLineage,
+  ): number => {
     const weather = calculatePhase9WeatherModifiers(input.weather)
     const windSpeedMultiplier = applyRoadWindExposureToMultiplier(
       weather.speedMultiplier,
       input.stage,
       stepMidKm,
     )
+
+    /*
+     * Phase 11Q: organized pursuit has diminishing returns. The previous
+     * linear team/worker bonus let a large field stack so much pace that a
+     * successful decisive attack was often erased within only a few km.
+     *
+     * A fresh attack also needs a short real-world reaction/organization
+     * period. This is not a protected target gap: both groups still move from
+     * calculated road speed every step, and the response lag decays smoothly
+     * with the attack's own momentum window.
+     */
+    const chasingTeamOrganizationBonus = Math.min(
+      0.038,
+      Math.log2(1 + physicalChasingTeamIds.length) * 0.009,
+    )
+    const workerOrganizationBonus = Math.min(
+      0.024,
+      Math.sqrt(Math.max(0, phase3AvailableChaseAssets)) * 0.003,
+    )
+    const momentum = phase3FrontMomentum(lineage, stepMidKm)
+    const responseLagStrength = clamp(
+      0.026 - physicalChasingTeamIds.length * 0.00065,
+      0.01,
+      0.026,
+    )
+    const responseOrganizationMultiplier =
+      1 - momentum.fraction * responseLagStrength
+
     return clamp(
       calculateRoadReferencePaceKmh(input.stage, stepMidKm) *
-        (0.995 +
-          physicalChasingTeamIds.length * 0.004 +
-          phase3AvailableChaseAssets * 0.0008) *
-        windSpeedMultiplier +
+        (0.992 +
+          chasingTeamOrganizationBonus +
+          workerOrganizationBonus) *
+        windSpeedMultiplier *
+        responseOrganizationMultiplier +
         phase11fPaceVariationKmh(
           input.engine.deterministicSeed,
-          'phase3-front-lineage-peloton',
+          'phase3-front-lineage-peloton-v2',
           stepMidKm,
           0.75,
         ),
@@ -13850,9 +13882,12 @@ export function resolveRoadPhase3Decisive(
         stepEndKm - phase3FrontSimulationKm,
       )
       const stepMidKm = (phase3FrontSimulationKm + stepEndKm) / 2
-      const pelotonPaceKmh = phase3PelotonPaceForFrontKmh(stepMidKm)
 
       phase3ActiveLineages().forEach((lineage) => {
+        const pelotonPaceKmh = phase3PelotonPaceForFrontKmh(
+          stepMidKm,
+          lineage,
+        )
         const frontPaceKmh = phase3FrontPaceKmh(lineage, stepMidKm)
         const momentum = phase3FrontMomentum(lineage, stepMidKm)
         const gapBeforeStep = lineage.currentGapToPelotonSeconds
@@ -13873,7 +13908,7 @@ export function resolveRoadPhase3Decisive(
         if (momentum.fraction > 0.000001) {
           const maximumFreshAttackClosureSeconds =
             stepDistanceKm *
-            (4.2 + (1 - momentum.fraction) * 2.8)
+            (2.4 + (1 - momentum.fraction) * 3.0)
           lineage.currentGapToPelotonSeconds = Math.max(
             lineage.currentGapToPelotonSeconds,
             gapBeforeStep - maximumFreshAttackClosureSeconds,
@@ -14100,14 +14135,14 @@ export function resolveRoadPhase3Decisive(
 
     const launchSeparationSeconds = deterministicRound(
       clamp(
-        10 +
-          rawAttempt.attackExecutionSkillScore * 0.08 +
+        11 +
+          rawAttempt.attackExecutionSkillScore * 0.1 +
           calculateDeterministicUnitRoll(
-            `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11o-front-launch|${rawAttempt.riderId}|${rawAttempt.attemptKm}`,
+            `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11q-front-launch|${rawAttempt.riderId}|${rawAttempt.attemptKm}`,
           ) *
-            10,
-        Math.max(PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1, 12),
-        28,
+            12,
+        Math.max(PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1, 14),
+        32,
       ),
       6,
     )
@@ -16764,14 +16799,14 @@ export function resolveRoadPhase4Finish(
     freshPhase4FrontRiderIds.length > 0
       ? deterministicRound(
           clamp(
-            7 +
-              freshPhase4FrontCandidateScore * 0.07 +
+            9 +
+              freshPhase4FrontCandidateScore * 0.08 +
               calculateDeterministicUnitRoll(
-                `${input.engine.deterministicSeed}|${input.stage.stageId}|v55-fresh-phase4-front-gap`,
+                `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11q-fresh-phase4-front-gap`,
               ) *
-                6,
-            PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS + 1,
-            20,
+                8,
+            Math.max(PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS + 1, 10),
+            26,
           ),
           6,
         )
@@ -17264,6 +17299,26 @@ export function resolveRoadPhase4Finish(
             Math.log2(effectiveExplicitChasingTeamIds.length / 4) * 0.012,
           )
         : 1
+    const freshFrontReactionFraction =
+      freshPhase4FrontCreationKm !== null &&
+      phase4StepMidKm >= freshPhase4FrontCreationKm - 0.000001
+        ? clamp(
+            1 -
+              (phase4StepMidKm - freshPhase4FrontCreationKm) /
+                9,
+            0,
+            1,
+          )
+        : 0
+    const freshFrontResponseLagStrength = clamp(
+      0.024 - effectiveExplicitChasingTeamIds.length * 0.0015,
+      0.008,
+      0.024,
+    )
+    const freshFrontResponseOrganizationMultiplier =
+      1 -
+      freshFrontReactionFraction *
+        freshFrontResponseLagStrength
     const effectivePelotonPaceKmh = calculateRoadPhysicalGroupPaceKmh(
       input.stage,
       phase4StepMidKm,
@@ -17276,7 +17331,9 @@ export function resolveRoadPhase4Finish(
       // race, so keep response/coalition organization as a separate bounded
       // speed input. The >4-team term is logarithmic, preserving diminishing
       // returns without inventing any target gap or scripted catch.
-      response.selectedResponseMultiplier * explicitChaseCoalitionMultiplier,
+      response.selectedResponseMultiplier *
+        explicitChaseCoalitionMultiplier *
+        freshFrontResponseOrganizationMultiplier,
       response.pelotonWorkIntensityFraction,
       phase4WindSpeedMultiplier,
       1,
