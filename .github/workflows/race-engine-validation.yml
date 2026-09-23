@@ -1,0 +1,48 @@
+name: Race engine validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/universal-race-engine/**'
+      - 'src/pages/dashboard/RaceDetailPage.tsx'
+      - '.github/workflows/race-engine-validation.yml'
+  push:
+    branches:
+      - fix/race-engine-replay-sync-gap-exhaustion
+    paths:
+      - 'src/universal-race-engine/**'
+      - 'src/pages/dashboard/RaceDetailPage.tsx'
+      - '.github/workflows/race-engine-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Build and race-engine regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Compile race engine
+        run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
+
+      - name: Production build
+        run: npm run build
+
+      - name: Run universal race-engine regressions
+        run: npx --yes vitest@3.2.4 run src/universal-race-engine/runRaceEngine.test.ts --reporter=dot
