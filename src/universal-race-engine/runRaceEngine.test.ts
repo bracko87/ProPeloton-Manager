@@ -17845,6 +17845,68 @@ describe('Phase 11G organic race physics and replay continuity', () => {
             phase3.secondaryFrontCatchKm !== null,
         ).toBe(true)
       }
+      if (index === 130 && result.replaySynchronization.issues.length > 0) {
+        const riderId = 'expanded-rider-12'
+        throw new Error(
+          JSON.stringify(
+            {
+              issues: result.replaySynchronization.issues,
+              phase3Lineages: phase3.frontLineages.filter((lineage) =>
+                [
+                  ...lineage.riderIdsBeforeResolution,
+                  ...lineage.riderIdsAtEnd,
+                ].includes(riderId),
+              ),
+              phase4BridgeGroups:
+                result.roadRaceResolution.phase4Finish!.bridgeGroups.filter(
+                  (bridge) => bridge.riderIds.includes(riderId),
+                ),
+              phase4RiderState:
+                result.roadRaceResolution.phase4Finish!.riderStates.find(
+                  (row) => row.riderId === riderId,
+                ),
+              replay: result.replayTimeline.checkpoints
+                .filter(
+                  (checkpoint) =>
+                    checkpoint.checkpointId.includes('bridge') &&
+                    (checkpoint.groups.some((group) =>
+                      group.riderIds.includes(riderId),
+                    ) ||
+                      checkpoint.commentary.some((entry) =>
+                        entry.riderIds.includes(riderId),
+                      )),
+                )
+                .map((checkpoint) => ({
+                  id: checkpoint.checkpointId,
+                  km: checkpoint.raceProgress.kmFromStart,
+                  energy:
+                    checkpoint.riderStates.find(
+                      (row) => row.riderId === riderId,
+                    )?.energy ?? null,
+                  groups: checkpoint.groups
+                    .filter(
+                      (group) =>
+                        group.riderIds.includes(riderId) ||
+                        group.displayCode === 'P',
+                    )
+                    .map((group) => ({
+                      code: group.displayCode,
+                      lineage: group.physicalLineageId,
+                      gap: group.gapSeconds,
+                      containsRider: group.riderIds.includes(riderId),
+                    })),
+                  commentary: checkpoint.commentary.map((entry) => ({
+                    type: entry.eventType,
+                    riderIds: entry.riderIds,
+                    lineage: entry.physicalLineageId,
+                  })),
+                })),
+            },
+            null,
+            2,
+          ),
+        )
+      }
       expect(
         result.replaySynchronization.issues,
         `mixed stress index ${index}`,
