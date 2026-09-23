@@ -29647,17 +29647,18 @@ function buildUniversalReplayTimeline(
         finalResultsVisible || isAtFinishKm || preserveExplicitFrontTransitionState
           ? cloneReplayGroups(definition.groups)
           : normalizeReplayGroups(definition.groups)
-      const publishedGroups = finalResultsVisible
-        ? normalizedGroups
-            .map((group) => ({
-              ...group,
-              riderIds: group.riderIds.filter(
-                (riderId) =>
-                  finishByRiderId.get(riderId)?.status === 'finished',
-              ),
-            }))
-            .filter((group) => group.riderIds.length > 0)
-        : normalizedGroups
+      const publishedGroups =
+        finalResultsVisible || isAtFinishKm
+          ? normalizedGroups
+              .map((group) => ({
+                ...group,
+                riderIds: group.riderIds.filter(
+                  (riderId) =>
+                    finishByRiderId.get(riderId)?.status === 'finished',
+                ),
+              }))
+              .filter((group) => group.riderIds.length > 0)
+          : normalizedGroups
       const groupByRiderId = new Map<
         string,
         UniversalPhase5GroupSnapshot
