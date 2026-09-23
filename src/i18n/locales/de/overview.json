@@ -296,9 +296,16 @@
     "Dec": "Dez"
   },
   "managerFocus": {
-    "title": "Clubstatus & Prioritäten",
-    "subtitle": "Die wichtigsten Clubsignale, die du jetzt prüfen solltest.",
-    "priorities": "Prioritäre Aufgaben",
-    "allClear": "Derzeit wartet keine dringende Clubaufgabe."
+    "title": "Clubstatus & Schnellzugriff",
+    "subtitle": "Aktuelle Clubsignale und schneller Zugriff auf wichtige Managementbereiche.",
+    "quickAccess": "Schnellzugriff",
+    "racePreparation": "Rennvorbereitung",
+    "racePreparationHint": "Startlisten, Logistik und Etappenpläne",
+    "squad": "Kader",
+    "squadHint": "Fahrer und Kader verwalten",
+    "training": "Training",
+    "trainingHint": "Fahrertraining und Einheiten",
+    "transfers": "Transfers",
+    "transfersHint": "Kaufen, verkaufen und verhandeln"
   }
 }

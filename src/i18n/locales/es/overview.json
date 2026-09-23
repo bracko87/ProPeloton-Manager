@@ -296,9 +296,16 @@
     "Dec": "Dic"
   },
   "managerFocus": {
-    "title": "Estado y prioridades del club",
-    "subtitle": "Las señales más importantes del club que debes revisar ahora.",
-    "priorities": "Acciones prioritarias",
-    "allClear": "No hay ninguna acción urgente del club pendiente."
+    "title": "Estado del club y acceso rápido",
+    "subtitle": "Señales actuales del club y acceso rápido a áreas clave de gestión.",
+    "quickAccess": "Acceso rápido",
+    "racePreparation": "Preparación de carrera",
+    "racePreparationHint": "Alineaciones, logística y planes de etapa",
+    "squad": "Plantilla",
+    "squadHint": "Gestiona ciclistas y plantilla",
+    "training": "Entrenamiento",
+    "trainingHint": "Entrenamiento y sesiones de ciclistas",
+    "transfers": "Fichajes",
+    "transfersHint": "Compra, vende y negocia"
   }
 }

@@ -296,9 +296,16 @@
     "Dec": "Dec"
   },
   "managerFocus": {
-    "title": "Club Status & Priorities",
-    "subtitle": "The most important club signals to check right now.",
-    "priorities": "Priority actions",
-    "allClear": "No urgent club action is waiting right now."
+    "title": "Club Status & Quick Access",
+    "subtitle": "Current club signals and fast access to key management areas.",
+    "quickAccess": "Quick access",
+    "racePreparation": "Race Preparation",
+    "racePreparationHint": "Startlists, logistics and stage plans",
+    "squad": "Squad",
+    "squadHint": "Manage riders and roster",
+    "training": "Training",
+    "trainingHint": "Rider training and sessions",
+    "transfers": "Transfers",
+    "transfersHint": "Buy, sell and negotiate"
   }
 }

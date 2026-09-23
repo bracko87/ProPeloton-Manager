@@ -7418,29 +7418,17 @@ function ClubHonoursCard({
 }
 
 function ManagerFocusCard({
-  alerts,
   upcomingRaceCount,
   todayRaceCount,
   finance,
   operations,
 }: {
-  alerts: AlertItem[];
   upcomingRaceCount: number;
   todayRaceCount: number;
   finance: FinanceHealth;
   operations: OperationItem[];
 }) {
   const { t } = useTranslation("overview");
-  const severity: Record<AlertLevel, number> = {
-    danger: 0,
-    warning: 1,
-    info: 2,
-    success: 3,
-  };
-
-  const priorities = [...alerts]
-    .sort((left, right) => severity[left.level] - severity[right.level])
-    .slice(0, 3);
 
   const summaryItems = [
     {
@@ -7469,18 +7457,40 @@ function ManagerFocusCard({
     },
   ];
 
+  const quickAccessItems = [
+    {
+      label: t("managerFocus.racePreparation"),
+      detail: t("managerFocus.racePreparationHint"),
+      href: "#/dashboard/race-preparation",
+      icon: "🏁",
+    },
+    {
+      label: t("managerFocus.squad"),
+      detail: t("managerFocus.squadHint"),
+      href: "#/dashboard/squad",
+      icon: "👥",
+    },
+    {
+      label: t("managerFocus.training"),
+      detail: t("managerFocus.trainingHint"),
+      href: "#/dashboard/training",
+      icon: "📈",
+    },
+    {
+      label: t("managerFocus.transfers"),
+      detail: t("managerFocus.transfersHint"),
+      href: "#/dashboard/transfers",
+      icon: "↔",
+    },
+  ];
+
   return (
     <Card className="overflow-hidden">
       <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-white px-5 py-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <SectionTitle
-            title={t("managerFocus.title")}
-            subtitle={t("managerFocus.subtitle")}
-          />
-          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 shadow-sm">
-            {priorities.length}
-          </span>
-        </div>
+        <SectionTitle
+          title={t("managerFocus.title")}
+          subtitle={t("managerFocus.subtitle")}
+        />
       </div>
 
       <div className="p-5">
@@ -7503,55 +7513,30 @@ function ManagerFocusCard({
 
         <div className="mt-5 border-t border-slate-100 pt-4">
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-            {t("managerFocus.priorities")}
+            {t("managerFocus.quickAccess")}
           </div>
 
-          {priorities.length > 0 ? (
-            <div className="mt-2 divide-y divide-slate-100">
-              {priorities.map((alert) => {
-                const tone = getAttentionTone(alert);
-                const deadlineLabel = getAttentionDeadlineLabel(alert);
-
-                return (
-                  <div
-                    key={alert.id}
-                    className="flex items-center gap-3 py-3"
-                  >
-                    <div
-                      className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black ring-4",
-                        getAttentionBubbleIconClasses(tone),
-                      )}
-                    >
-                      {getAttentionIcon(alert)}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold text-slate-950">
-                        {alert.label}
-                      </div>
-                      <div className="mt-0.5 text-xs text-slate-500">
-                        {deadlineLabel}
-                      </div>
-                    </div>
-
-                    {alert.href ? (
-                      <a
-                        href={alert.href}
-                        className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
-                      >
-                        {t("common.open")}
-                      </a>
-                    ) : null}
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {quickAccessItems.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="group flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 transition hover:border-sky-300 hover:bg-sky-50/40"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base transition group-hover:bg-white">
+                  {item.icon}
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-slate-950">
+                    {item.label}
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-800">
-              {t("managerFocus.allClear")}
-            </div>
-          )}
+                  <div className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-slate-500">
+                    {item.detail}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </Card>
@@ -9150,7 +9135,6 @@ export default function OverviewPage() {
           <div className="col-span-12 space-y-6 xl:col-span-8">
             <div data-tutorial-target="overview-manager-focus">
               <ManagerFocusCard
-                alerts={attentionItems}
                 upcomingRaceCount={raceWorld.upcomingSchedule.length}
                 todayRaceCount={raceWorld.todayRaces.length}
                 finance={data.finance}

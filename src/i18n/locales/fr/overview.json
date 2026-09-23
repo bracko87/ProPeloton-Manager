@@ -296,9 +296,16 @@
     "Dec": "Déc"
   },
   "managerFocus": {
-    "title": "État et priorités du club",
-    "subtitle": "Les informations les plus importantes du club à vérifier maintenant.",
-    "priorities": "Actions prioritaires",
-    "allClear": "Aucune action urgente du club n'est actuellement en attente."
+    "title": "État du club et accès rapide",
+    "subtitle": "Signaux actuels du club et accès rapide aux principales zones de gestion.",
+    "quickAccess": "Accès rapide",
+    "racePreparation": "Préparation de course",
+    "racePreparationHint": "Listes de départ, logistique et plans d’étape",
+    "squad": "Effectif",
+    "squadHint": "Gérer les coureurs et l’effectif",
+    "training": "Entraînement",
+    "trainingHint": "Entraînement et séances des coureurs",
+    "transfers": "Transferts",
+    "transfersHint": "Acheter, vendre et négocier"
   }
 }

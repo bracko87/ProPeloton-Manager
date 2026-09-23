@@ -296,9 +296,16 @@
     "Dec": "Dec"
   },
   "managerFocus": {
-    "title": "Status i prioriteti kluba",
-    "subtitle": "Najvažnije informacije o klubu koje sada treba proveriti.",
-    "priorities": "Prioritetne aktivnosti",
-    "allClear": "Trenutno nema hitnih klupskih aktivnosti."
+    "title": "Status kluba i brzi pristup",
+    "subtitle": "Aktuelni signali kluba i brzi pristup ključnim oblastima upravljanja.",
+    "quickAccess": "Brzi pristup",
+    "racePreparation": "Priprema trke",
+    "racePreparationHint": "Startne liste, logistika i planovi etapa",
+    "squad": "Tim",
+    "squadHint": "Upravljanje vozačima i sastavom",
+    "training": "Trening",
+    "trainingHint": "Trening vozača i sesije",
+    "transfers": "Transferi",
+    "transfersHint": "Kupovina, prodaja i pregovori"
   }
 }
