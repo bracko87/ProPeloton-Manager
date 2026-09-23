@@ -53,6 +53,12 @@ type AlertItem = {
   deadlineLabel?: string;
   icon?: string;
   tone?: AttentionTone;
+  typeCode?: string;
+  eventDate?: string;
+  raceId?: string;
+  stageId?: string;
+  racePreparationId?: string;
+  actionable?: boolean;
 };
 
 type KpiItem = {
@@ -1489,7 +1495,7 @@ function normalizeDashboardPayload(payload: unknown): DashboardOverviewData {
       inboxUnread: 0,
       notificationsUnread: 0,
     }),
-    alerts: asArray<AlertItem>(safe.alerts),
+    alerts: normalizeOverviewAttentionItems(safe.alerts),
     kpis: asArray<KpiItem>(safe.kpis),
     operations: asArray<OperationItem>(safe.operations),
     squadPulse: asObject(safe.squadPulse, {
@@ -2650,6 +2656,10 @@ async function loadOverviewFinancePeriodSummary(
 function normalizeOverviewAttentionItems(value: unknown): AlertItem[] {
   return asArray<Record<string, unknown>>(value)
     .map((row, index): AlertItem => {
+      const metadata = asObject<Record<string, unknown>>(
+        row.metadata ?? row.payload_json ?? row.payload,
+        {},
+      );
       const rawLevel = asString(row.level, "info").toLowerCase();
       const level: AlertLevel =
         rawLevel === "danger" || rawLevel === "warning" || rawLevel === "success"
@@ -2666,12 +2676,32 @@ function normalizeOverviewAttentionItems(value: unknown): AlertItem[] {
           ? rawTone
           : undefined;
 
+      const rawActionable =
+        row.actionable ??
+        row.is_actionable ??
+        metadata.actionable ??
+        metadata.is_actionable;
+      const actionable =
+        typeof rawActionable === "boolean" ? rawActionable : undefined;
+
       return {
         id: asString(row.id, `attention:${index}`),
         label: asString(row.label ?? row.title, "Attention item"),
         level,
-        href: asString(row.href ?? row.action_url, "") || undefined,
-        status: asString(row.status ?? row.state ?? row.attention_status, "") || undefined,
+        href:
+          asString(
+            row.href ??
+              row.action_url ??
+              metadata.href ??
+              metadata.action_url ??
+              metadata.target_url,
+            "",
+          ) || undefined,
+        status:
+          asString(
+            row.status ?? row.state ?? row.attention_status ?? metadata.status,
+            "",
+          ) || undefined,
         deadlineAt:
           asString(
             row.deadlineAt ??
@@ -2682,7 +2712,11 @@ function normalizeOverviewAttentionItems(value: unknown): AlertItem[] {
               row.due_date ??
               row.activeUntil ??
               row.active_until ??
-              row.expires_at,
+              row.expires_at ??
+              metadata.deadline_at ??
+              metadata.deadlineDate ??
+              metadata.due_date ??
+              metadata.expires_at,
             "",
           ) || undefined,
         deadlineLabel:
@@ -2692,11 +2726,67 @@ function normalizeOverviewAttentionItems(value: unknown): AlertItem[] {
               row.dueLabel ??
               row.due_label ??
               row.activeUntilLabel ??
-              row.active_until_label,
+              row.active_until_label ??
+              metadata.deadline_label ??
+              metadata.due_label,
             "",
           ) || undefined,
         icon: asString(row.icon ?? row.icon_name, "") || undefined,
         tone,
+        typeCode:
+          asString(
+            row.typeCode ??
+              row.type_code ??
+              row.notification_type ??
+              row.type ??
+              metadata.type_code ??
+              metadata.notification_type ??
+              metadata.type,
+            "",
+          ) || undefined,
+        eventDate:
+          asString(
+            row.eventDate ??
+              row.event_date ??
+              row.raceDate ??
+              row.race_date ??
+              row.stageDate ??
+              row.stage_date ??
+              row.startDate ??
+              row.start_date ??
+              metadata.event_date ??
+              metadata.race_date ??
+              metadata.stage_date ??
+              metadata.start_date,
+            "",
+          ) || undefined,
+        raceId:
+          asString(
+            row.raceId ??
+              row.race_id ??
+              metadata.race_id ??
+              metadata.raceId,
+            "",
+          ) || undefined,
+        stageId:
+          asString(
+            row.stageId ??
+              row.stage_id ??
+              metadata.stage_id ??
+              metadata.stageId,
+            "",
+          ) || undefined,
+        racePreparationId:
+          asString(
+            row.racePreparationId ??
+              row.race_preparation_id ??
+              row.preparation_id ??
+              metadata.race_preparation_id ??
+              metadata.racePreparationId ??
+              metadata.preparation_id,
+            "",
+          ) || undefined,
+        actionable,
       };
     })
     .filter(shouldShowAttentionItem);
@@ -2735,7 +2825,6 @@ function buildAttentionAlertsFromFeed(feed: FeedItem[]): AlertItem[] {
     "condition low",
     "supplies low",
     "scout",
-    "report completed",
   ];
 
   return feed
@@ -3356,7 +3445,7 @@ function getAttentionSearchText(alertOrLabel: AlertItem | string): string {
   }
 
   return normalizeOverviewAttentionMatchValue(
-    `${alertOrLabel.label} ${alertOrLabel.status ?? ""} ${alertOrLabel.deadlineLabel ?? ""}`,
+    `${alertOrLabel.label} ${alertOrLabel.status ?? ""} ${alertOrLabel.deadlineLabel ?? ""} ${alertOrLabel.typeCode ?? ""}`,
   );
 }
 
@@ -3388,6 +3477,270 @@ function shouldShowAttentionItem(alert: AlertItem): boolean {
   }
 
   return true;
+}
+
+
+function getAttentionDateOnly(value?: string | null): string | null {
+  if (!value) return null;
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(value.trim());
+  return match?.[1] ?? null;
+}
+
+function getAttentionHrefUuid(value?: string | null): string | null {
+  if (!value) return null;
+  const match = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.exec(
+    value,
+  );
+  return match?.[0]?.toLowerCase() ?? null;
+}
+
+function isRaceRelatedPriorityAction(alert: AlertItem): boolean {
+  const text = getAttentionSearchText(alert);
+  const topic = getOverviewAttentionTopic(text);
+
+  return Boolean(
+    alert.raceId ||
+      alert.stageId ||
+      alert.racePreparationId ||
+      topic === "race_plan" ||
+      topic === "stage_plan" ||
+      topic === "race_application" ||
+      /\b(race|stage)\b/.test(text),
+  );
+}
+
+function isCompletedPriorityNotificationType(value?: string | null): boolean {
+  const typeCode = (value ?? "").trim().toUpperCase();
+  if (!typeCode) return false;
+
+  const completedTypes = new Set([
+    "SPONSOR_DEAL_SIGNED",
+    "INFRASTRUCTURE_UPGRADE_COMPLETED",
+    "INFRASTRUCTURE_ASSET_DELIVERED",
+    "TRANSFER_OFFER_REJECTED",
+    "TRANSFER_COMPLETED",
+    "FREE_AGENT_SIGNED",
+    "SCOUT_REPORT_COMPLETED",
+  ]);
+
+  return (
+    completedTypes.has(typeCode) ||
+    /_(COMPLETED|DELIVERED|RESULT|RESULTS)$/.test(typeCode)
+  );
+}
+
+/**
+ * Priority actions means exactly: items the manager can still do something about.
+ * Historical/results/completed information is kept in News/Notifications, not here.
+ */
+function shouldShowPriorityActionItem(
+  alert: AlertItem,
+  currentGameDate?: string | null,
+): boolean {
+  if (!shouldShowAttentionItem(alert)) return false;
+  if (alert.actionable === false) return false;
+  if (isCompletedPriorityNotificationType(alert.typeCode)) return false;
+
+  const text = getAttentionSearchText(alert);
+  const status = normalizeOverviewAttentionMatchValue(alert.status ?? "");
+
+  if (
+    [
+      "completed",
+      "done",
+      "finished",
+      "signed",
+      "delivered",
+      "rejected",
+      "declined",
+      "withdrawn",
+      "cancelled",
+      "canceled",
+      "expired",
+      "closed",
+      "resolved",
+    ].includes(status)
+  ) {
+    return false;
+  }
+
+  if (
+    /\b(stage result|race result|final result|results available|report completed|scout report completed|transfer completed|free agent signed|deal signed|upgrade completed|asset delivered|completed successfully|has been completed|race finished|stage finished)\b/.test(
+      text,
+    )
+  ) {
+    return false;
+  }
+
+  const currentDate = getAttentionDateOnly(currentGameDate);
+  const deadlineDate = getAttentionDateOnly(alert.deadlineAt);
+
+  if (currentDate && deadlineDate && isDateBefore(deadlineDate, currentDate)) {
+    return false;
+  }
+
+  const eventDate = getAttentionDateOnly(alert.eventDate);
+  if (
+    currentDate &&
+    eventDate &&
+    isRaceRelatedPriorityAction(alert) &&
+    isDateBefore(eventDate, currentDate)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Final live-state validation for race/stage Priority actions.
+ * It removes actions tied to races/stages that are already finished, cancelled,
+ * or whose relevant game date is in the past.
+ */
+async function filterOverviewPriorityActions(
+  items: AlertItem[],
+): Promise<AlertItem[]> {
+  const currentGameDate = await loadCurrentGameDateOnly();
+  const candidates = items.filter((item) =>
+    shouldShowPriorityActionItem(item, currentGameDate),
+  );
+
+  if (!currentGameDate || candidates.length === 0) {
+    return candidates;
+  }
+
+  const raceCandidates = candidates.filter(isRaceRelatedPriorityAction);
+  if (raceCandidates.length === 0) return candidates;
+
+  const possibleIds = Array.from(
+    new Set(
+      raceCandidates
+        .flatMap((item) => [
+          item.raceId,
+          item.stageId,
+          item.racePreparationId,
+          getAttentionHrefUuid(item.href),
+        ])
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+
+  if (possibleIds.length === 0) return candidates;
+
+  try {
+    const [preparationResult, stageResult] = await Promise.all([
+      supabase
+        .from("race_preparations")
+        .select("id, race_id, status, startlist_status")
+        .in("id", possibleIds),
+      supabase
+        .from("race_stages")
+        .select("id, race_id, stage_date")
+        .in("id", possibleIds),
+    ]);
+
+    const preparations =
+      preparationResult.error
+        ? []
+        : asArray<Record<string, unknown>>(preparationResult.data);
+    const stages =
+      stageResult.error ? [] : asArray<Record<string, unknown>>(stageResult.data);
+
+    const raceIdByPreparationId = new Map(
+      preparations.map((row) => [
+        asString(row.id, "").toLowerCase(),
+        asString(row.race_id, "").toLowerCase(),
+      ]),
+    );
+    const stageById = new Map(
+      stages.map((row) => [asString(row.id, "").toLowerCase(), row]),
+    );
+
+    const raceIds = Array.from(
+      new Set(
+        [
+          ...possibleIds,
+          ...raceCandidates.map((item) => item.raceId ?? ""),
+          ...preparations.map((row) => asString(row.race_id, "")),
+          ...stages.map((row) => asString(row.race_id, "")),
+        ]
+          .map((value) => value.toLowerCase())
+          .filter(Boolean),
+      ),
+    );
+
+    const raceResult =
+      raceIds.length > 0
+        ? await supabase
+            .from("races")
+            .select("id, start_date, end_date, status")
+            .in("id", raceIds)
+        : { data: [], error: null };
+
+    const races =
+      raceResult.error ? [] : asArray<Record<string, unknown>>(raceResult.data);
+    const raceById = new Map(
+      races.map((row) => [asString(row.id, "").toLowerCase(), row]),
+    );
+
+    return candidates.filter((item) => {
+      if (!isRaceRelatedPriorityAction(item)) return true;
+
+      const hrefUuid = getAttentionHrefUuid(item.href);
+      const explicitStageId = item.stageId?.toLowerCase() ?? null;
+      const possibleStageId =
+        explicitStageId ??
+        (hrefUuid && stageById.has(hrefUuid) ? hrefUuid : null);
+      const stage = possibleStageId ? stageById.get(possibleStageId) : undefined;
+      const stageDate = getAttentionDateOnly(
+        stage ? asString(stage.stage_date, "") : null,
+      );
+
+      if (stageDate && isDateBefore(stageDate, currentGameDate)) {
+        return false;
+      }
+
+      const explicitPreparationId =
+        item.racePreparationId?.toLowerCase() ?? null;
+      const possiblePreparationId =
+        explicitPreparationId ??
+        (hrefUuid && raceIdByPreparationId.has(hrefUuid) ? hrefUuid : null);
+
+      const linkedRaceId =
+        item.raceId?.toLowerCase() ??
+        (possiblePreparationId
+          ? raceIdByPreparationId.get(possiblePreparationId)
+          : undefined) ??
+        (stage ? asString(stage.race_id, "").toLowerCase() : undefined) ??
+        (hrefUuid && raceById.has(hrefUuid) ? hrefUuid : undefined);
+
+      if (!linkedRaceId) return true;
+
+      const race = raceById.get(linkedRaceId);
+      if (!race) return true;
+
+      const raceStatus = asString(race.status, "");
+      if (
+        isFinishedRaceStatusForOverview(raceStatus) ||
+        isCancelledRaceStatusForOverview(raceStatus)
+      ) {
+        return false;
+      }
+
+      const endDate = getAttentionDateOnly(
+        asString(race.end_date ?? race.start_date, ""),
+      );
+
+      if (endDate && isDateBefore(endDate, currentGameDate)) {
+        return false;
+      }
+
+      return true;
+    });
+  } catch (err) {
+    console.warn("Priority action live-state validation failed:", err);
+    return candidates;
+  }
 }
 
 function formatAttentionDateLabel(value?: string): string | null {
@@ -7614,7 +7967,7 @@ function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
             </div>
           </div>
 
-          <div className="mt-4 grid items-center gap-4 sm:grid-cols-[128px_minmax(0,1fr)]">
+          <div className="mt-4 grid items-center gap-3 sm:grid-cols-[128px_190px] sm:justify-center">
             <div className="flex justify-center">
               <div
                 className="relative h-32 w-32 rounded-full"
@@ -7640,7 +7993,7 @@ function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
               </div>
             </div>
 
-            <div className="w-full space-y-2 sm:max-w-[190px] sm:justify-self-end">
+            <div className="w-full space-y-2">
               <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50/60 px-2.5 py-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
@@ -7781,6 +8134,7 @@ export default function OverviewPage() {
   );
   const [raceWorldLoading, setRaceWorldLoading] = React.useState(true);
   const [attentionAlerts, setAttentionAlerts] = React.useState<AlertItem[]>([]);
+  const [priorityActionAlerts, setPriorityActionAlerts] = React.useState<AlertItem[]>([]);
   const [openedAttentionKeys, setOpenedAttentionKeys] = React.useState<Set<string>>(
     () => readOpenedAttentionKeys(),
   );
@@ -7820,6 +8174,32 @@ export default function OverviewPage() {
   React.useEffect(() => {
     dataRef.current = data;
   }, [data]);
+
+  React.useEffect(() => {
+    let alive = true;
+
+    const merged = mergeOverviewAlerts(
+      data?.alerts ?? [],
+      attentionAlerts,
+    ).filter((item) => !isAttentionItemDismissed(item, openedAttentionKeys));
+
+    void filterOverviewPriorityActions(merged)
+      .then((filtered) => {
+        if (alive) setPriorityActionAlerts(filtered);
+      })
+      .catch((err) => {
+        console.warn("Priority action filtering failed:", err);
+        if (alive) {
+          setPriorityActionAlerts(
+            merged.filter((item) => shouldShowPriorityActionItem(item)),
+          );
+        }
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [data?.alerts, attentionAlerts, openedAttentionKeys]);
 
   React.useEffect(() => {
     const refreshOpenedAttentionKeys = () => {
@@ -8733,9 +9113,7 @@ export default function OverviewPage() {
     );
   }
 
-  const attentionItems = mergeOverviewAlerts(data.alerts, attentionAlerts).filter(
-    (item) => !isAttentionItemDismissed(item, openedAttentionKeys),
-  );
+  const attentionItems = priorityActionAlerts;
   const visibleSquadPulse = squadPulseOverride ?? data.squadPulse;
   const isPremium = premiumStatus?.is_premium === true;
   const steps = overviewTutorialSteps;
@@ -8792,11 +9170,6 @@ export default function OverviewPage() {
               races={raceWorld.todayRaces}
             />
 
-            <CyclingWorldNewsCard
-              items={externalCyclingNews}
-              loading={externalCyclingNewsLoading}
-            />
-
             <NewsCommandCenter
               alerts={attentionItems}
               feed={data.feed}
@@ -8809,6 +9182,11 @@ export default function OverviewPage() {
                 raceWorld.worldNews.length === 0 &&
                 data.news.length === 0
               }
+            />
+
+            <CyclingWorldNewsCard
+              items={externalCyclingNews}
+              loading={externalCyclingNewsLoading}
             />
           </div>
 
