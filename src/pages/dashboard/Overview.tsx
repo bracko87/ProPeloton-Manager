@@ -7062,12 +7062,14 @@ function ClubHonoursCard({
 
 function ManagerFocusCard({
   alerts,
-  pulse,
+  upcomingRaceCount,
+  todayRaceCount,
   finance,
   operations,
 }: {
   alerts: AlertItem[];
-  pulse: SquadPulse;
+  upcomingRaceCount: number;
+  todayRaceCount: number;
   finance: FinanceHealth;
   operations: OperationItem[];
 }) {
@@ -7085,19 +7087,16 @@ function ManagerFocusCard({
 
   const summaryItems = [
     {
-      label: t("squad.readiness"),
-      value: `${Math.round(pulse.readiness)}%`,
-      detail: `${pulse.availableRiders} ${t("squad.available").toLowerCase()}`,
-      valueClass: "text-violet-700",
+      label: t("races.upcomingTitle"),
+      value: String(upcomingRaceCount),
+      detail: t("races.upcomingSubtitle"),
+      valueClass: "text-sky-700",
     },
     {
-      label: t("squad.fitness"),
-      value: `${Math.round(pulse.fitness)}%`,
-      detail:
-        pulse.injured + pulse.sick > 0
-          ? `${pulse.injured + pulse.sick} ${t("squad.injured").toLowerCase()}/${t("squad.sick").toLowerCase()}`
-          : t("attention.allClear"),
-      valueClass: "text-sky-700",
+      label: t("races.todayTitle"),
+      value: String(todayRaceCount),
+      detail: t("races.todayCurrent"),
+      valueClass: todayRaceCount > 0 ? "text-violet-700" : "text-slate-700",
     },
     {
       label: t("finance.weeklyNet"),
@@ -8769,7 +8768,8 @@ export default function OverviewPage() {
             <div data-tutorial-target="overview-manager-focus">
               <ManagerFocusCard
                 alerts={attentionItems}
-                pulse={visibleSquadPulse}
+                upcomingRaceCount={raceWorld.upcomingSchedule.length}
+                todayRaceCount={raceWorld.todayRaces.length}
                 finance={data.finance}
                 operations={data.operations}
               />
