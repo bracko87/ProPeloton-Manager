@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11t-v1-incident-aware-front-lineage-2026-09-23' as const
+  'phase11u-v1-grand-tour-survival-energy-semantics-2026-09-23' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -22744,10 +22744,16 @@ export function buildUniversalOfficialRoadClassification(
   const scoreByRider = new Map(
     scoredContexts.map((row) => [row.context.riderId, row]),
   )
+  /*
+   * Race reserve reaching 0 means the rider has exhausted competitive
+   * reserve, not that the rider has physically abandoned the race. Exhausted
+   * riders must lose contact / ride slower groups and may still finish or be
+   * classified OTL. DNF is reserved for an explicit abandon/incident/health
+   * outcome later in the authoritative incident/finalization path.
+   */
   const finishers = riderContexts.filter(
     (context) =>
       context.eligibleToStart &&
-      (context.remainingEnergy ?? 0) > 0.000001 &&
       context.phase5OfficialTimeSeconds != null &&
       context.physicalGroupOrder != null,
   )
@@ -22801,28 +22807,9 @@ export function buildUniversalOfficialRoadClassification(
       }
     },
   )
-  const dnfRows: UniversalOfficialFinishRow[] = riderContexts
-    .filter(
-      (context) =>
-        context.eligibleToStart &&
-        (context.remainingEnergy ?? 0) <= 0.000001 &&
-        context.phase5OfficialTimeSeconds != null,
-    )
-    .slice()
-    .sort((left, right) => left.riderId.localeCompare(right.riderId))
-    .map((context) => ({
-      rank: null,
-      riderId: context.riderId,
-      teamId: context.teamId,
-      status: 'dnf',
-      physicalGroupCode: null,
-      physicalGroupOrder: null,
-      officialTimeSeconds: null,
-      gapSeconds: null,
-      sameTimeAsPrevious: false,
-      finishScore: null,
-      components: null,
-    }))
+  // Energy depletion alone never creates a DNF row. Explicit DNF
+  // consequences are applied by the incident/finalization model.
+  const dnfRows: UniversalOfficialFinishRow[] = []
   const dnsRows: UniversalOfficialFinishRow[] = riderContexts
     .filter((context) => !context.eligibleToStart)
     .slice()
