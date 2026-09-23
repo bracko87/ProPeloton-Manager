@@ -14889,10 +14889,10 @@ function UniversalRaceReplayPage({
 
     /*
      * Road-race naming mirrors television/race-radio convention without
-     * replacing the physical B/F/P/C identity. A chase group containing the
-     * race leader is the Yellow jersey group; otherwise classification leaders
-     * take precedence, then the best-placed GC rider lends the group a compact
-     * rider-name label.
+     * replacing the physical B/F/P/C identity. Only meaningful classification
+     * leaders receive descriptive group names. Ordinary chase/dropped groups
+     * remain C1/C2/etc.; a solo rider must never create an arbitrary
+     * "<rider> group" label.
      */
     const roadGroupRaceLabelByDisplayCode = new Map<string, string>()
     if (!resultsVisible) {
@@ -14978,30 +14978,6 @@ function UniversalRaceReplayPage({
             'Points leader group'
           )
           return
-        }
-        const bestGcRiderId = group.riderIds
-          .filter(
-            (riderId) =>
-              preStageStandingByRiderId[riderId]?.generalRank !== null &&
-              preStageStandingByRiderId[riderId]?.generalRank !== undefined
-          )
-          .sort(
-            (left, right) =>
-              Number(
-                preStageStandingByRiderId[left]?.generalRank ??
-                  Number.MAX_SAFE_INTEGER
-              ) -
-                Number(
-                  preStageStandingByRiderId[right]?.generalRank ??
-                    Number.MAX_SAFE_INTEGER
-                ) ||
-              left.localeCompare(right)
-          )[0]
-        if (bestGcRiderId) {
-          roadGroupRaceLabelByDisplayCode.set(
-            group.displayCode,
-            `${riderShortLabel(bestGcRiderId)} group`
-          )
         }
       })
     }
