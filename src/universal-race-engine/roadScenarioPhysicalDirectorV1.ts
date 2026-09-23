@@ -940,94 +940,35 @@ export function applyRoadScenarioFinishFragmentationV1<
 ): T[] {
   const audit = getRoadScenarioPhysicalAuditV1(input)
   if (!audit || states.length < 3) return [...states]
+
+  /*
+   * V2.4 physical-only finish topology.
+   *
+   * A scenario is allowed to influence attacks, pace, chase behaviour and
+   * energy while the riders are physically on the road. It is NOT allowed to
+   * manufacture a new time gap at the finish between riders who never lost
+   * contact. Previous versions detached a fraction of the largest finishing
+   * group here from a scenario "fragmentation pressure" value, which produced
+   * exactly the impossible replay jump P -> C1/C2 at the finish.
+   *
+   * Final road gaps now come only from physical engine state: surviving
+   * escapes/front groups, recorded contact loss, incidents and their real
+   * gap trajectories. Sprint/finish scoring may order riders inside one
+   * physical group but cannot create seconds between them.
+   */
   recordRuntimeApplication(input, 'fragmentation', { adjusted: false })
   finalizeGenerationAdherence(input)
-
-  // Flat road stages should keep the physical engine's peloton topology.
-  // A scenario template may shape breakaway/chase behaviour, but it must not
-  // manufacture extra finish-line fragmentation on an otherwise flat race.
-  if (input.stage.terrainType === 'flat') return [...states]
-
-  const parameters = object(audit.generatedParameters)
-  let pressure = clamp(finite(parameters.fragmentationPressure, 0), 0, 1)
-  const allowRegroup = parameters.allowRegroup === true
-  const settings = directorSettings(audit)
-  if (allowRegroup) pressure *= 0.68
-  if (audit.templateFamily === 'breakaway') pressure *= 0.80
-  pressure *= settings.variationFactor
-  pressure = clamp(pressure, 0, 1)
-  if (pressure < 0.30) return [...states]
-
-  const groups = new Map<string, T[]>()
-  states.forEach((state) => {
-    const key = round(Math.max(0, state.finalGapSeconds), 1).toFixed(1)
-    const group = groups.get(key) ?? []
-    group.push(state)
-    groups.set(key, group)
-  })
-  const largest = [...groups.values()]
-    .sort((left, right) => right.length - left.length)[0] ?? []
-  if (largest.length < 8) return [...states]
-
-  const seedBias = (stableHash(`${audit.selectionSeed}:fragmentation-retention`) / 0xffffffff - 0.5) * 0.12
-  const retentionFraction = clamp(0.91 - pressure * 0.48 + seedBias, 0.34, 0.94)
-  let keepCount = Math.max(2, Math.min(largest.length, Math.ceil(largest.length * retentionFraction)))
-
-  // Keep the generated front-group range for audit/comparison only. The old
-  // V2.1 code nudged keepCount back inside that range, which made the template
-  // too close to an outcome blueprint. V2.2 lets terrain pressure, rider energy
-  // and the physical topology decide the actual survivor count.
-  const targetRange = numericRange(parameters.targetFrontGroupRange)
-
-  if (keepCount >= largest.length) return [...states]
-
-  const selected = [...largest].sort((left, right) =>
-    right.energyAtFinish - left.energyAtFinish ||
-    stableHash(`${audit.selectionSeed}:${left.riderId}`) -
-      stableHash(`${audit.selectionSeed}:${right.riderId}`),
-  )
-  const retainedIds = new Set(selected.slice(0, keepCount).map((state) => state.riderId))
-  const detached = selected.slice(keepCount)
-  const detachedRank = new Map(detached.map((state, index) => [state.riderId, index] as const))
-  const naturalGap = 12 + pressure * 70
-  const configuredGap = finite(parameters.secondaryGapSec, naturalGap)
-  // Scenario secondary-gap values are now only a minority influence. This
-  // preserves tactical character without prescribing a finish-line time gap.
-  const tacticalGap = naturalGap * 0.70 + configuredGap * 0.30
-  const secondaryGap = Math.max(6, tacticalGap * (0.52 + pressure * 0.34))
-  const baseGap = Math.min(...largest.map((state) => Math.max(0, state.finalGapSeconds)))
-  const topologyBands = pressure >= 0.78 ? 3 : pressure >= 0.48 ? 2 : 1
-
-  const result = states.map((state) => {
-    if (!largest.some((candidate) => candidate.riderId === state.riderId)) return state
-    if (retainedIds.has(state.riderId)) return state
-    const rank = detachedRank.get(state.riderId) ?? 0
-    const normalizedRank = detached.length <= 1 ? 0 : rank / (detached.length - 1)
-    const band = Math.min(topologyBands - 1, Math.floor(normalizedRank * topologyBands))
-    const bandMultiplier = topologyBands === 1 ? 0.72 : 0.52 + band * (0.48 / Math.max(1, topologyBands - 1))
-    const gap = round(baseGap + secondaryGap * bandMultiplier, 6)
-    const energyPenalty = 0.30 + pressure * 0.82 + band * (0.20 + pressure * 0.18)
-    return {
-      ...state,
-      finalGapSeconds: gap,
-      finalGroupCode: groupCodeForGap(gap),
-      energyAtFinish: round(Math.max(0, state.energyAtFinish - energyPenalty), 6),
-    }
-  })
 
   const rawAudit = actualScenarioAudit(input)
   if (rawAudit) {
     const proof = object(rawAudit.runtimeApplicationProof)
     proof.fragmentationTopology = {
-      pressure: round(pressure, 4),
-      topologyBands,
-      largestGroupBefore: largest.length,
-      frontGroupAfter: keepCount,
-      targetFrontGroupRange: targetRange,
-      allowRegroup,
+      disabled: true,
+      reason: 'physical_road_topology_is_authoritative',
+      modelVersion: 'road_scenario_finish_fragmentation_v2_4_physical_only',
     }
     rawAudit.runtimeApplicationProof = proof
   }
-  recordRuntimeApplication(input, 'fragmentation', { adjusted: true })
-  return result
+
+  return [...states]
 }
