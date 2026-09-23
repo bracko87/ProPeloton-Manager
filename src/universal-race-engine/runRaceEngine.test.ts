@@ -14875,6 +14875,83 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     })
   })
 
+
+  it('moves every live sub-5% rider out of B, F and P instead of showing impossible group contact', () => {
+    const results = [
+      runRaceEngine(createPhase11hLateClimbEnergyInput(45)),
+      runRaceEngine(createPhase11gMixedStressInput(5)),
+    ]
+    let inspectedLowReserveStates = 0
+
+    results.forEach((result) => {
+      result.replayTimeline.checkpoints
+        .filter(
+          (checkpoint) =>
+            !checkpoint.finalResultsVisible &&
+            checkpoint.raceProgress.kmFromStart > 0.000001,
+        )
+        .forEach((checkpoint) => {
+          checkpoint.riderStates
+            .filter(
+              (state) =>
+                state.status === 'racing' &&
+                state.energy > 0.000001 &&
+                state.energy < 5 - 0.000001 &&
+                state.displayCode !== null,
+            )
+            .forEach((state) => {
+              inspectedLowReserveStates += 1
+              expect(state.displayCode).not.toBe('P')
+              expect(state.displayCode?.startsWith('B')).toBe(false)
+              expect(state.displayCode?.startsWith('F')).toBe(false)
+            })
+        })
+    })
+
+    expect(inspectedLowReserveStates).toBeGreaterThan(0)
+  })
+
+  it('keeps hard road stages selective without exhausting most of a capable field to DNF', () => {
+    const base = createExpandedFieldInput(60)
+    const input: UniversalRaceEngineInput = {
+      ...base,
+      stage: {
+        ...base.stage,
+        terrainType: 'mountain',
+        profileType: 'mountain',
+        finishType: 'summit_finish',
+        summitFinish: true,
+        elevationGainM: 1_850,
+        terrainPercentages: {
+          flat: 30,
+          hilly: 20,
+          mountain: 50,
+          cobbled: 0,
+        },
+        profilePoints: [
+          { km: 0, elevationM: 120 },
+          { km: 24, elevationM: 180 },
+          { km: 48, elevationM: 620 },
+          { km: 70, elevationM: 420 },
+          { km: 92, elevationM: 980 },
+          { km: 108, elevationM: 760 },
+          { km: 120, elevationM: 1_420 },
+        ],
+      },
+    }
+
+    const result = runRaceEngine(input)
+    const starters = result.riderReadiness.filter(
+      (row) => row.eligibleToStart,
+    ).length
+    const exhaustionDnfs = result.finishResolution.classification.filter(
+      (row) => row.status === 'dnf',
+    ).length
+
+    expect(starters).toBeGreaterThan(40)
+    expect(exhaustionDnfs).toBeLessThan(starters * 0.35)
+  })
+
   it('consumes existing health/start availability as DNS without creating a second health system', () => {
     const base = createValidInput()
     const input: UniversalRaceEngineInput = {
