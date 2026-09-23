@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11q-v1-decisive-attack-establishment-2026-09-23' as const
+  'phase11r-v1-physical-finish-and-opening-breakaway-2026-09-23' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -9977,7 +9977,7 @@ export function resolveRoadPhase1Opening(
     )
     const rawInitialGapSeconds = attackSucceeded
       ? Math.max(
-          6,
+          7,
           outcome.projectedBurstDurationSeconds *
             Math.max(0, outcome.projectedBurstSpeedMultiplier - 1),
         )
@@ -10131,6 +10131,24 @@ export function resolveRoadPhase1Opening(
         row.stageRole === 'protected_rider'),
   ).length
   const phase1Weather = calculatePhase9WeatherModifiers(input.weather)
+  /*
+   * A successful opening attack has physical momentum before organized chase
+   * can fully respond. Without this short response-latency window a genuine
+   * 7-second escape could be erased in the very next 1.5 km integration step,
+   * making early breakaways effectively cosmetic.
+   *
+   * This is not a guaranteed breakaway duration: the gap can still shrink,
+   * grow or be caught, but closure ramps in over roughly 5-9 km instead of
+   * becoming maximal immediately.
+   */
+  const phase1OpeningMomentumWindowKm = deterministicRound(
+    5 +
+      calculateDeterministicUnitRoll(
+        `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11r-opening-momentum-window-v1`,
+      ) *
+        4,
+    6,
+  )
 
   while (
     acceptedRiderIds.length > 0 &&
@@ -10300,9 +10318,24 @@ export function resolveRoadPhase1Opening(
         (stepDistanceKm / Math.max(5, pelotonPaceKmh)) * 3600 -
         (stepDistanceKm / Math.max(5, escapePaceKmh)) * 3600,
     )
+    const openingAgeKm = Math.max(0, stepMidKm - openingFormationKm)
+    const openingMomentum = clamp(
+      1 - openingAgeKm / Math.max(0.1, phase1OpeningMomentumWindowKm),
+      0,
+      1,
+    )
+    const maximumOpeningClosureSeconds =
+      stepDistanceKm * (1.1 + (1 - openingMomentum) * 2.4)
+    const momentumGuardedNextGapSeconds =
+      openingMomentum > 0
+        ? Math.max(
+            calculatedNextGapSeconds,
+            phase1PhysicalGapSeconds - maximumOpeningClosureSeconds,
+          )
+        : calculatedNextGapSeconds
     phase1PhysicalGapSeconds = limitRoadChaseGapClosure(
       phase1PhysicalGapSeconds,
-      calculatedNextGapSeconds,
+      momentumGuardedNextGapSeconds,
       phase1PhysicalKm,
       stepEndKm,
       input.stage.distanceKm,
@@ -26566,9 +26599,11 @@ function buildUniversalReplayTimeline(
         left.selectedRank - right.selectedRank ||
         left.riderId.localeCompare(right.riderId),
     )
+  // Replay the temporary physical opening move even when it is later caught
+  // inside Phase 1. acceptedEscapeLaunch means the rider really opened road
+  // separation; end-of-phase status must not erase that earlier road state.
   const openingBreakawayActive =
-    phase1.status === 'breakaway_formed' &&
-    phase1.breakawayRiderIds.length > 0
+    acceptedOpeningAttempts.length > 0
   /*
    * B1 is a road-lineage identity, not a rider identity. Former opening-break
    * riders do not resurrect B1 after the original group has been caught.
