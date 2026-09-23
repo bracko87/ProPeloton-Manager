@@ -4110,6 +4110,52 @@ describe('Phase 3 Race Phase 1 opening resolution', () => {
         ),
       ),
     ).toBe(true)
+
+    const acceptedSuccessful = observed!.result.roadRaceResolution.phase1Opening!
+      .attackAttempts
+      .filter((attempt) => attempt.acceptedEscapeLaunch)
+      .slice()
+      .sort(
+        (left, right) =>
+          left.attemptKm - right.attemptKm ||
+          left.riderId.localeCompare(right.riderId),
+      )
+    expect(
+      new Set(acceptedSuccessful.map((attempt) => attempt.attemptKm)).size,
+    ).toBeGreaterThan(1)
+
+    acceptedSuccessful.forEach((attempt) => {
+      const checkpoint = observed!.result.replayTimeline.checkpoints.find(
+        (row) =>
+          row.phase === 1 &&
+          Math.abs(row.raceProgress.kmFromStart - attempt.attemptKm) <=
+            0.000001 &&
+          row.commentary.some(
+            (entry) =>
+              entry.eventType === 'attack' &&
+              entry.riderIds.includes(attempt.riderId) &&
+              entry.title.includes('succeeds'),
+          ),
+      )
+      const front = checkpoint?.groups.find((group) =>
+        group.displayCode.startsWith('B'),
+      )
+      expect(checkpoint).toBeDefined()
+      expect(front?.riderIds).toContain(attempt.riderId)
+      expect(
+        checkpoint?.riderStates.find(
+          (state) => state.riderId === attempt.riderId,
+        )?.displayCode,
+      ).not.toBe('P')
+
+      acceptedSuccessful
+        .filter(
+          (later) => later.attemptKm > attempt.attemptKm + 0.000001,
+        )
+        .forEach((later) => {
+          expect(front?.riderIds).not.toContain(later.riderId)
+        })
+    })
   })
 
   it('blocks a join-only opening because an eligible attack must launch the move', () => {
@@ -11003,9 +11049,15 @@ describe('Phase 7 calculated replay events — Task 7.2', () => {
   it('stores accepted opening attacks and the one original breakaway formation', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
     const phase1 = result.roadRaceResolution.phase1Opening!
-    const acceptedAttempts = phase1.attackAttempts.filter(
-      (attempt) => attempt.acceptedEscapeLaunch,
-    )
+    const acceptedAttempts = phase1.attackAttempts
+      .filter((attempt) => attempt.acceptedEscapeLaunch)
+      .slice()
+      .sort(
+        (left, right) =>
+          left.attemptKm - right.attemptKm ||
+          left.selectedRank - right.selectedRank ||
+          left.riderId.localeCompare(right.riderId),
+      )
     const attackCheckpoints = result.replayTimeline.checkpoints.filter(
       (checkpoint) =>
         checkpoint.checkpointKind === 'event' &&
@@ -11020,18 +11072,51 @@ describe('Phase 7 calculated replay events — Task 7.2', () => {
     expect(acceptedAttempts.length).toBeGreaterThan(0)
     expect(attackCheckpoints).toHaveLength(acceptedAttempts.length)
     expect(formationCheckpoint).toBeDefined()
+    const formationKm = acceptedAttempts[0]!.attemptKm
+    const formationAttempts = acceptedAttempts.filter(
+      (attempt) => Math.abs(attempt.attemptKm - formationKm) <= 0.000001,
+    )
+    const formationRiderIds = formationAttempts
+      .map((attempt) => attempt.riderId)
+      .sort()
+    expect(formationCheckpoint?.raceProgress.kmFromStart).toBe(formationKm)
     expect(formationCheckpoint?.commentary[0].riderIds).toEqual(
-      phase1.breakawayRiderIds,
+      formationRiderIds,
     )
     expect(
-      formationCheckpoint?.groups.some((group) =>
-        group.displayCode.startsWith('B'),
-      ),
-    ).toBe(true)
+      formationCheckpoint?.groups
+        .find((group) => group.displayCode.startsWith('B'))
+        ?.riderIds.slice()
+        .sort(),
+    ).toEqual(formationRiderIds)
     expect(
       formationCheckpoint?.gaps.find((gap) => gap.displayCode === 'P')
         ?.gapSeconds,
-    ).toBe(phase1.initialGapSeconds)
+    ).toBe(
+      Math.max(...formationAttempts.map((attempt) => attempt.initialGapSeconds)),
+    )
+
+    acceptedAttempts.forEach((attempt) => {
+      const checkpoint = attackCheckpoints.find(
+        (row) =>
+          Math.abs(row.raceProgress.kmFromStart - attempt.attemptKm) <=
+            0.000001 &&
+          row.commentary[0]?.riderIds.includes(attempt.riderId),
+      )
+      const state = checkpoint?.riderStates.find(
+        (row) => row.riderId === attempt.riderId,
+      )
+      expect(checkpoint).toBeDefined()
+      expect(state?.displayCode).not.toBeNull()
+      expect(state?.displayCode).not.toBe('P')
+      expect(
+        checkpoint?.groups.some(
+          (group) =>
+            group.displayCode.startsWith('B') &&
+            group.riderIds.includes(attempt.riderId),
+        ),
+      ).toBe(true)
+    })
   })
 
   it('publishes every successful decisive attack inside the calculated Phase 3 attack stream and split sequence', () => {
@@ -14754,6 +14839,42 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
       .toHaveLength(result.finishResolution.classification.length)
   })
 
+  it('never publishes a road finisher with zero usable reserve', () => {
+    const results = [
+      runRaceEngine(createPhase11hLateClimbEnergyInput(45)),
+      runRaceEngine(createPhase11gMixedStressInput(5)),
+    ]
+
+    results.forEach((result) => {
+      const finalCheckpoint = result.replayTimeline.checkpoints.find(
+        (checkpoint) =>
+          checkpoint.checkpointId === result.replayTimeline.finalCheckpointId,
+      )!
+      const finalStateByRiderId = new Map(
+        finalCheckpoint.riderStates.map(
+          (state) => [state.riderId, state] as const,
+        ),
+      )
+
+      result.finishResolution.classification.forEach((official) => {
+        const state = finalStateByRiderId.get(official.riderId)!
+        if (official.status === 'finished') {
+          expect(state.energy).toBeGreaterThan(0.000001)
+        }
+        if (state.energy <= 0.000001 && official.status !== 'dns') {
+          expect(official.status).toBe('dnf')
+          expect(state.status).toBe('dnf')
+          expect(state.displayCode).toBeNull()
+          expect(
+            finalCheckpoint.groups.some((group) =>
+              group.riderIds.includes(official.riderId),
+            ),
+          ).toBe(false)
+        }
+      })
+    })
+  })
+
   it('consumes existing health/start availability as DNS without creating a second health system', () => {
     const base = createValidInput()
     const input: UniversalRaceEngineInput = {
@@ -17544,6 +17665,15 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     if (phase1.breakawayCatchKm === null && phase1.endGapSeconds > 0.5) {
       expect(new Set(roundedGaps).size).toBeGreaterThan(1)
     }
+
+    const directorSource = readFileSync(
+      new URL('./roadScenarioPhysicalDirectorV1.ts', import.meta.url),
+      'utf8',
+    )
+    expect(directorSource).not.toContain(
+      'Math.max(1.5, Math.min(5, caughtEnvelope.lower))',
+    )
+    expect(directorSource).toContain('previousLiveGap * decayFactor')
   })
 
   it('gives fresh Phase 2 and Phase 3 fronts a decaying five-to-ten kilometre attack momentum window', () => {
