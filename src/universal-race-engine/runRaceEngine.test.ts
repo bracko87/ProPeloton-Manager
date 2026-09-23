@@ -17801,7 +17801,7 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(directorSource).toContain('previousLiveGap * decayFactor')
   })
 
-  it('gives fresh Phase 2 and Phase 3 fronts a decaying five-to-ten kilometre attack momentum window', () => {
+  it('gives fresh Phase 2 and Phase 3 fronts a decaying multi-kilometre attack momentum window', () => {
     const source = readFileSync(
       new URL('./runRaceEngine.ts', import.meta.url),
       'utf8',
@@ -17815,6 +17815,35 @@ describe('Phase 11G organic race physics and replay continuity', () => {
       'phase3-front-momentum-window-v2',
     )
     expect(source).toContain('maximumFreshAttackClosureSeconds')
+  })
+
+  it('does not retroactively drop a rider before a later successful peloton attack', () => {
+    const result = runRaceEngine(createPhase11gMixedStressInput(130))
+    const riderId = 'expanded-rider-12'
+    const successfulPelotonAttack =
+      result.roadRaceResolution.phase3Decisive!.attackAttempts.find(
+        (attempt) =>
+          attempt.riderId === riderId &&
+          attempt.attackSucceeded &&
+          attempt.sourceGroupCode === 'main_peloton',
+      )
+    const phase4State =
+      result.roadRaceResolution.phase4Finish!.riderStates.find(
+        (row) => row.riderId === riderId,
+      )
+
+    expect(successfulPelotonAttack).toBeDefined()
+    expect(phase4State).toBeDefined()
+    if (
+      phase4State?.contactLossKm !== null &&
+      phase4State?.contactLossKm !== undefined
+    ) {
+      expect(phase4State.contactLossKm).toBeGreaterThanOrEqual(
+        successfulPelotonAttack!.attemptKm - 0.000001,
+      )
+    }
+    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(result.replaySynchronization.issues).toEqual([])
   })
 
   it('keeps every successful peloton attack in a physical F lifecycle', () => {
@@ -17844,68 +17873,6 @@ describe('Phase 11G organic race physics and replay continuity', () => {
             phase3.secondaryFrontMergeKm !== null ||
             phase3.secondaryFrontCatchKm !== null,
         ).toBe(true)
-      }
-      if (index === 130 && result.replaySynchronization.issues.length > 0) {
-        const riderId = 'expanded-rider-12'
-        throw new Error(
-          JSON.stringify(
-            {
-              issues: result.replaySynchronization.issues,
-              phase3Lineages: phase3.frontLineages.filter((lineage) =>
-                [
-                  ...lineage.riderIdsBeforeResolution,
-                  ...lineage.riderIdsAtEnd,
-                ].includes(riderId),
-              ),
-              phase4BridgeGroups:
-                result.roadRaceResolution.phase4Finish!.bridgeGroups.filter(
-                  (bridge) => bridge.riderIds.includes(riderId),
-                ),
-              phase4RiderState:
-                result.roadRaceResolution.phase4Finish!.riderStates.find(
-                  (row) => row.riderId === riderId,
-                ),
-              replay: result.replayTimeline.checkpoints
-                .filter(
-                  (checkpoint) =>
-                    checkpoint.checkpointId.includes('bridge') &&
-                    (checkpoint.groups.some((group) =>
-                      group.riderIds.includes(riderId),
-                    ) ||
-                      checkpoint.commentary.some((entry) =>
-                        entry.riderIds.includes(riderId),
-                      )),
-                )
-                .map((checkpoint) => ({
-                  id: checkpoint.checkpointId,
-                  km: checkpoint.raceProgress.kmFromStart,
-                  energy:
-                    checkpoint.riderStates.find(
-                      (row) => row.riderId === riderId,
-                    )?.energy ?? null,
-                  groups: checkpoint.groups
-                    .filter(
-                      (group) =>
-                        group.riderIds.includes(riderId) ||
-                        group.displayCode === 'P',
-                    )
-                    .map((group) => ({
-                      code: group.displayCode,
-                      lineage: group.physicalLineageId,
-                      gap: group.gapSeconds,
-                      containsRider: group.riderIds.includes(riderId),
-                    })),
-                  commentary: checkpoint.commentary.map((entry) => ({
-                    type: entry.eventType,
-                    riderIds: entry.riderIds,
-                    lineage: entry.physicalLineageId,
-                  })),
-                })),
-            },
-            null,
-            2,
-          ),
-        )
       }
       expect(
         result.replaySynchronization.issues,
