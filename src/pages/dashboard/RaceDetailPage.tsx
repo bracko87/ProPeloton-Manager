@@ -16403,16 +16403,25 @@ function UniversalRaceReplayPage({
                                     <div
                                       className="h-full rounded-full bg-emerald-500"
                                       style={{
-                                        width: `${universalClamp(
-                                          row.energy,
-                                          0,
-                                          100
-                                        )}%`,
+                                        width: `${
+                                          row.energy > 0
+                                            ? Math.max(
+                                                1,
+                                                universalClamp(
+                                                  row.energy,
+                                                  0,
+                                                  100
+                                                )
+                                              )
+                                            : 0
+                                        }%`,
                                       }}
                                     />
                                   </div>
                                   <span className="w-6 text-right text-[8px] font-semibold text-emerald-700">
-                                    {Math.round(row.energy)}%
+                                    {row.energy > 0 && row.energy < 0.5
+                                      ? '<1%'
+                                      : `${Math.round(row.energy)}%`}
                                   </span>
                                 </div>
                               </div>
