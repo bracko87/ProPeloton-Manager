@@ -29647,11 +29647,22 @@ function buildUniversalReplayTimeline(
         finalResultsVisible || isAtFinishKm || preserveExplicitFrontTransitionState
           ? cloneReplayGroups(definition.groups)
           : normalizeReplayGroups(definition.groups)
+      const publishedGroups = finalResultsVisible
+        ? normalizedGroups
+            .map((group) => ({
+              ...group,
+              riderIds: group.riderIds.filter(
+                (riderId) =>
+                  finishByRiderId.get(riderId)?.status === 'finished',
+              ),
+            }))
+            .filter((group) => group.riderIds.length > 0)
+        : normalizedGroups
       const groupByRiderId = new Map<
         string,
         UniversalPhase5GroupSnapshot
       >()
-      normalizedGroups.forEach((group) => {
+      publishedGroups.forEach((group) => {
         group.riderIds.forEach((riderId) => {
           groupByRiderId.set(riderId, group)
         })
@@ -29757,7 +29768,7 @@ function buildUniversalReplayTimeline(
           authoritativeRaceSecond:
             definition.authoritativeRaceSecond ?? null,
         },
-        groups: normalizedGroups.map((group) => ({
+        groups: publishedGroups.map((group) => ({
           groupCode: group.groupCode,
           displayCode: group.displayCode,
           physicalLineageId: group.physicalLineageId ?? null,
@@ -29765,7 +29776,7 @@ function buildUniversalReplayTimeline(
           colorKey: group.colorKey,
           riderIds: [...group.riderIds],
         })),
-        gaps: normalizedGroups.map((group) => ({
+        gaps: publishedGroups.map((group) => ({
           groupCode: group.groupCode,
           displayCode: group.displayCode,
           gapSeconds: group.gapSeconds,
@@ -37029,57 +37040,6 @@ export function runRaceEngine(
     )
   const replayPublicationPolicy =
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
-
-  if (
-    !replayPublicationPolicy.publishable &&
-    calculationInput.engine.deterministicSeed === 'phase11g-mixed-stress-34'
-  ) {
-    const debugFinalCheckpoint = replayTimeline.checkpoints.at(-1)
-    console.error(
-      '[race-engine-seed34]',
-      JSON.stringify(
-        {
-          blockingIssues: replayPublicationPolicy.blockingIssues,
-          baseClassification: baseFinishResolution.classification.map((row) => ({
-            riderId: row.riderId,
-            status: row.status,
-            rank: row.rank,
-            gapSeconds: row.gapSeconds,
-            officialTimeSeconds: row.officialTimeSeconds,
-          })),
-          phase10Classification: finishResolution.classification.map((row) => ({
-            riderId: row.riderId,
-            status: row.status,
-            rank: row.rank,
-            gapSeconds: row.gapSeconds,
-            officialTimeSeconds: row.officialTimeSeconds,
-          })),
-          phase4Energy: roadRaceResolution.phase4Finish?.riderStates.map((row) => ({
-            riderId: row.riderId,
-            energyAtFinish: row.energyAtFinish,
-            contactLossReason: row.contactLossReason,
-            finalGroupCode: row.finalGroupCode,
-            finalGapSeconds: row.finalGapSeconds,
-          })),
-          phase10FinalGroups: phase10Incidents.finalRoadGroups,
-          phase10FinalGaps: phase10Incidents.finalRoadGaps,
-          replayFinalGroups: debugFinalCheckpoint?.groups,
-          replayFinalGaps: debugFinalCheckpoint?.gaps,
-          replayFinalRiders: debugFinalCheckpoint?.riderStates.map((row) => ({
-            riderId: row.riderId,
-            status: row.status,
-            finishRank: row.finishRank,
-            officialTimeSeconds: row.officialTimeSeconds,
-            gapSeconds: row.gapSeconds,
-            displayCode: row.displayCode,
-            energy: row.energy,
-          })),
-        },
-        null,
-        2,
-      ),
-    )
-  }
 
   if (!replayPublicationPolicy.publishable) {
     throw new Error(
