@@ -294,5 +294,11 @@
     "Oct": "Oct.",
     "Nov": "Nov.",
     "Dec": "Déc"
+  },
+  "managerFocus": {
+    "title": "État et priorités du club",
+    "subtitle": "Les informations les plus importantes du club à vérifier maintenant.",
+    "priorities": "Actions prioritaires",
+    "allClear": "Aucune action urgente du club n'est actuellement en attente."
   }
 }

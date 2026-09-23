@@ -294,5 +294,11 @@
     "Oct": "Okt",
     "Nov": "Nov",
     "Dec": "Dec"
+  },
+  "managerFocus": {
+    "title": "Status i prioriteti kluba",
+    "subtitle": "Najvažnije informacije o klubu koje sada treba provjeriti.",
+    "priorities": "Prioritetne radnje",
+    "allClear": "Trenutačno nema hitnih klupskih radnji."
   }
 }

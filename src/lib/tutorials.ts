@@ -109,14 +109,14 @@ export const overviewTutorialSteps: TutorialStep[] = [
     target: 'overview-attention',
   },
   {
-    key: 'overview-news-board',
-    title: 'News Board',
+    key: 'overview-manager-focus',
+    title: 'Club Status & Priorities',
     body:
-      'The News Board shows important team and world news.\n\n' +
-      'Some news is about your own team, such as sponsor offers, birthdays, or team updates. Other news can be about the wider race world, such as race results or important cycling events.\n\n' +
-      'Clicking a news row can reveal more information when extra details are available.',
+      'This block gives you a fast operational picture of the club.\n\n' +
+      'It combines upcoming races, races happening today, weekly finances, active operations, and the most important current action items. It is a factual dashboard summary, not a Staff Advisor report.\n\n' +
+      'Use the Open buttons on priority rows to jump directly to the page that needs attention.',
     primaryAction: 'Next',
-    target: 'overview-news-board',
+    target: 'overview-manager-focus',
   },
   {
     key: 'overview-next-race',

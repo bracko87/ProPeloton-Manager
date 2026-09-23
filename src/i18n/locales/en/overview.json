@@ -294,5 +294,11 @@
     "Oct": "Oct",
     "Nov": "Nov",
     "Dec": "Dec"
+  },
+  "managerFocus": {
+    "title": "Club Status & Priorities",
+    "subtitle": "The most important club signals to check right now.",
+    "priorities": "Priority actions",
+    "allClear": "No urgent club action is waiting right now."
   }
 }

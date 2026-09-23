@@ -6408,7 +6408,7 @@ function NewsCommandCenter({
     teamNewsItems,
     worldNewsItems,
     currentGameDateLabel,
-    7,
+    3,
   );
 
   const displayItems = combinedItems.map((item) => {
@@ -6444,7 +6444,7 @@ function NewsCommandCenter({
             subtitle={t("news.boardSubtitle")}
           />
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-            {displayItems.length}/7
+            {displayItems.length}/3
           </span>
         </div>
       </div>
@@ -7060,6 +7060,303 @@ function ClubHonoursCard({
   );
 }
 
+function ManagerFocusCard({
+  alerts,
+  upcomingRaceCount,
+  todayRaceCount,
+  finance,
+  operations,
+}: {
+  alerts: AlertItem[];
+  upcomingRaceCount: number;
+  todayRaceCount: number;
+  finance: FinanceHealth;
+  operations: OperationItem[];
+}) {
+  const { t } = useTranslation("overview");
+  const severity: Record<AlertLevel, number> = {
+    danger: 0,
+    warning: 1,
+    info: 2,
+    success: 3,
+  };
+
+  const priorities = [...alerts]
+    .sort((left, right) => severity[left.level] - severity[right.level])
+    .slice(0, 3);
+
+  const summaryItems = [
+    {
+      label: t("races.upcomingTitle"),
+      value: String(upcomingRaceCount),
+      detail: t("races.upcomingSubtitle"),
+      valueClass: "text-sky-700",
+    },
+    {
+      label: t("races.todayTitle"),
+      value: String(todayRaceCount),
+      detail: t("races.todayCurrent"),
+      valueClass: todayRaceCount > 0 ? "text-violet-700" : "text-slate-700",
+    },
+    {
+      label: t("finance.weeklyNet"),
+      value: formatSignedCurrency(finance.weeklyNet),
+      detail: formatCurrency(finance.balance),
+      valueClass: finance.weeklyNet >= 0 ? "text-emerald-700" : "text-red-700",
+    },
+    {
+      label: t("operations.title"),
+      value: String(operations.length),
+      detail: t("operations.subtitle"),
+      valueClass: operations.length > 0 ? "text-emerald-700" : "text-slate-700",
+    },
+  ];
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-white px-5 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <SectionTitle
+            title={t("managerFocus.title")}
+            subtitle={t("managerFocus.subtitle")}
+          />
+          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 shadow-sm">
+            {priorities.length}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-5">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {summaryItems.map((item) => (
+            <div
+              key={item.label}
+              className="rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-3"
+            >
+              <div className="text-[11px] font-medium text-slate-500">{item.label}</div>
+              <div className={cn("mt-1 text-lg font-bold tabular-nums", item.valueClass)}>
+                {item.value}
+              </div>
+              <div className="mt-0.5 truncate text-[10px] text-slate-400">
+                {item.detail}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 border-t border-slate-100 pt-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            {t("managerFocus.priorities")}
+          </div>
+
+          {priorities.length > 0 ? (
+            <div className="mt-2 divide-y divide-slate-100">
+              {priorities.map((alert) => {
+                const tone = getAttentionTone(alert);
+                const deadlineLabel = getAttentionDeadlineLabel(alert);
+
+                return (
+                  <div
+                    key={alert.id}
+                    className="flex items-center gap-3 py-3"
+                  >
+                    <div
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black ring-4",
+                        getAttentionBubbleIconClasses(tone),
+                      )}
+                    >
+                      {getAttentionIcon(alert)}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-slate-950">
+                        {alert.label}
+                      </div>
+                      <div className="mt-0.5 text-xs text-slate-500">
+                        {deadlineLabel}
+                      </div>
+                    </div>
+
+                    {alert.href ? (
+                      <a
+                        href={alert.href}
+                        className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
+                      >
+                        {t("common.open")}
+                      </a>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-800">
+              {t("managerFocus.allClear")}
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function SquadPulseOverviewCard({
+  pulse,
+  isPremium,
+  premiumStatusLoading,
+  onUnlock,
+}: {
+  pulse: SquadPulse;
+  isPremium: boolean;
+  premiumStatusLoading: boolean;
+  onUnlock: () => void;
+}) {
+  const { t } = useTranslation("overview");
+
+  if (premiumStatusLoading) {
+    return (
+      <Card className="p-5">
+        <SectionTitle
+          title={t("squad.title")}
+          subtitle={t("squad.subtitle")}
+        />
+        <div className="mt-5 h-48 animate-pulse rounded-2xl bg-slate-50" />
+      </Card>
+    );
+  }
+
+  if (!isPremium) {
+    return (
+      <Card className="p-5">
+        <SectionTitle
+          title={t("squad.title")}
+          subtitle={t("squad.subtitle")}
+        />
+        <div className="mt-5 flex min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-amber-200 bg-amber-50/70 px-6 text-center">
+          <div className="rounded-full border border-amber-200 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-800">
+            {t("premium.label")}
+          </div>
+          <div className="mt-3 text-base font-semibold text-slate-950">
+            {t("premiumCenter:integrations.overview.squadIntelligenceTitle")}
+          </div>
+          <div className="mt-1 max-w-lg text-sm leading-6 text-slate-600">
+            {t("premiumCenter:integrations.overview.squadIntelligenceBody")}
+          </div>
+          <button
+            type="button"
+            onClick={onUnlock}
+            className="mt-4 rounded-lg bg-slate-950 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
+          >
+            {t("premiumCenter:integrations.overview.unlockTools")}
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  const statusItems = [
+    {
+      label: t("squad.availableRiders"),
+      value: pulse.availableRiders,
+      valueClass: "text-emerald-700",
+    },
+    {
+      label: t("squad.injured"),
+      value: pulse.injured,
+      valueClass: pulse.injured > 0 ? "text-red-700" : "text-slate-900",
+    },
+    {
+      label: t("squad.sick"),
+      value: pulse.sick,
+      valueClass: pulse.sick > 0 ? "text-red-700" : "text-slate-900",
+    },
+    {
+      label: t("squad.notFullyFit"),
+      value: pulse.notFullyFit,
+      valueClass: pulse.notFullyFit > 0 ? "text-amber-700" : "text-slate-900",
+    },
+    {
+      label: t("squad.expiringContracts"),
+      value: pulse.expiringContracts,
+      valueClass: pulse.expiringContracts > 0 ? "text-amber-700" : "text-slate-900",
+    },
+  ];
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50 px-5 py-4">
+        <SectionTitle
+          title={t("squad.title")}
+          subtitle={t("squad.subtitle")}
+        />
+      </div>
+
+      <div className="p-5">
+        <div className="grid items-center gap-6 lg:grid-cols-[180px_minmax(0,1fr)]">
+          <div className="flex justify-center">
+            <div
+              className="relative h-36 w-36 rounded-full"
+              style={{
+                background: `conic-gradient(#8b5cf6 0 ${Math.max(
+                  0,
+                  Math.min(100, pulse.readiness),
+                )}%, #eef2f7 ${Math.max(
+                  0,
+                  Math.min(100, pulse.readiness),
+                )}% 100%)`,
+              }}
+            >
+              <div className="absolute inset-[13px] flex items-center justify-center rounded-full border border-slate-100 bg-white shadow-inner">
+                <div className="text-center">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    {t("squad.readiness")}
+                  </div>
+                  <div className="mt-1 text-3xl font-bold tabular-nums text-slate-950">
+                    {Math.round(pulse.readiness)}%
+                  </div>
+                  <div className="mt-1 text-xs font-semibold text-emerald-600">
+                    {pulse.form}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <ProgressMetric
+              label={t("squad.fitness")}
+              value={pulse.fitness}
+              colorClass="bg-sky-500"
+            />
+            <ProgressMetric
+              label={t("squad.morale")}
+              value={pulse.morale}
+              colorClass="bg-emerald-500"
+            />
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {statusItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-center"
+                >
+                  <div className={cn("text-xl font-bold tabular-nums", item.valueClass)}>
+                    {item.value}
+                  </div>
+                  <div className="mt-1 text-[10px] leading-4 text-slate-500">
+                    {item.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 /**
  * CompactOperationsCard
  * Right-rail version of active operations without large boxes.
@@ -7233,7 +7530,7 @@ function getFinancePeriodValues(
  * IncomeExpenseCard
  * Replaces the emergency debt card with a simple income/expense pie style view.
  */
-function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
+function FinanceOverviewCard({ finance }: { finance: FinanceHealth }) {
   const { t } = useTranslation("overview");
   const [period, setPeriod] = React.useState<FinancePeriodKey>("monthly");
 
@@ -7252,105 +7549,153 @@ function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
   const expensePct = 100 - incomePct;
   const net = income - expenses;
 
+  const compactMetrics = [
+    {
+      label: t("finance.sponsorIncome"),
+      value: formatCurrency(finance.sponsorIncome),
+      valueClass: "text-emerald-700",
+    },
+    {
+      label: t("finance.recurringPolicyCost"),
+      value: formatCurrency(finance.recurringPolicyCost),
+      valueClass: finance.recurringPolicyCost > 0 ? "text-red-700" : "text-slate-900",
+    },
+    {
+      label: t("finance.nextTripForecast"),
+      value: formatCurrency(finance.nextTripForecast),
+      valueClass: finance.nextTripForecast > 0 ? "text-red-700" : "text-slate-900",
+    },
+    {
+      label: t("finance.latestMajorTransaction"),
+      value: formatSignedCurrency(finance.latestTransactionAmount),
+      valueClass:
+        finance.latestTransactionAmount >= 0 ? "text-emerald-700" : "text-red-700",
+      hint: finance.latestTransactionLabel,
+    },
+  ];
+
   return (
     <Card className="overflow-hidden">
       <div className="border-b border-slate-100 bg-gradient-to-br from-white via-white to-slate-50 px-5 py-5">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-950">
-            {t("finance.incomeExpensesTitle")}
-          </h3>
-          <p className="mt-1 max-w-sm text-sm leading-5 text-slate-500">
-            {t("finance.operatingBalance", { period: periodConfig.label })}
-          </p>
-        </div>
-
-        <div className="mt-4 grid grid-cols-3 rounded-xl bg-slate-100 p-1">
-          {(["weekly", "monthly", "season"] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setPeriod(option)}
-              className={cn(
-                "rounded-lg px-2 py-2 text-[11px] font-bold transition",
-                period === option
-                  ? "bg-white text-slate-950 shadow-sm"
-                  : "text-slate-500 hover:text-slate-800",
-              )}
-            >
-              {option === "weekly"
-                ? t("finance.week")
-                : option === "monthly"
-                  ? t("finance.month")
-                  : t("finance.season")}
-            </button>
-          ))}
-        </div>
+        <SectionTitle
+          title={t("finance.healthTitle")}
+          subtitle={t("finance.healthSubtitle")}
+        />
       </div>
 
       <div className="p-5">
-        <div className="grid items-center gap-5 sm:grid-cols-[132px_minmax(0,1fr)]">
-          <div className="flex justify-center">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+            <div className="text-xs text-slate-500">{t("finance.balance")}</div>
+            <div className="mt-1 text-base font-bold tabular-nums text-slate-950">
+              {formatCurrency(finance.balance)}
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+            <div className="text-xs text-slate-500">{t("finance.weeklyNet")}</div>
             <div
-              className="relative h-32 w-32 rounded-full shadow-sm"
-              style={{
-                background: `conic-gradient(#10b981 0 ${incomePct}%, #ef4444 ${incomePct}% 100%)`,
-              }}
+              className={cn(
+                "mt-1 text-base font-bold tabular-nums",
+                finance.weeklyNet >= 0 ? "text-emerald-700" : "text-red-700",
+              )}
             >
-              <div className="absolute inset-[12px] flex items-center justify-center rounded-full bg-white shadow-inner">
-                <div className="px-2 text-center">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                    {t("finance.net")}
-                  </div>
-                  <div
-                    className={cn(
-                      "mt-1 text-base font-bold tabular-nums",
-                      net >= 0 ? "text-emerald-600" : "text-red-600",
-                    )}
-                  >
-                    {formatSignedCurrency(net)}
-                  </div>
-                </div>
+              {formatSignedCurrency(finance.weeklyNet)}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 border-t border-slate-100 pt-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold text-slate-950">
+                {t("finance.incomeExpensesTitle")}
               </div>
+              <div className="mt-0.5 text-xs text-slate-500">
+                {t("finance.operatingBalance", { period: periodConfig.label })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 rounded-lg bg-slate-100 p-1">
+              {(["weekly", "monthly", "season"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setPeriod(option)}
+                  className={cn(
+                    "rounded-md px-2.5 py-1.5 text-[10px] font-bold transition",
+                    period === option
+                      ? "bg-white text-slate-950 shadow-sm"
+                      : "text-slate-500 hover:text-slate-800",
+                  )}
+                >
+                  {option === "weekly"
+                    ? t("finance.week")
+                    : option === "monthly"
+                      ? t("finance.month")
+                      : t("finance.season")}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="space-y-2.5">
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3.5 py-3">
-              <div className="flex items-center justify-between gap-3">
+          <div className="mt-4 grid items-center gap-4 sm:grid-cols-[112px_minmax(0,1fr)]">
+            <div className="flex justify-center">
+              <div
+                className="relative h-24 w-24 rounded-full"
+                style={{
+                  background: `conic-gradient(#10b981 0 ${incomePct}%, #ef4444 ${incomePct}% 100%)`,
+                }}
+              >
+                <div className="absolute inset-[18px] flex items-center justify-center rounded-full bg-white">
+                  <div className="px-1 text-center">
+                    <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                      {t("finance.net")}
+                    </div>
+                    <div
+                      className={cn(
+                        "mt-0.5 text-[12px] font-bold tabular-nums",
+                        net >= 0 ? "text-emerald-700" : "text-red-700",
+                      )}
+                    >
+                      {formatSignedCurrency(net)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2.5">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
-                  <span className="truncate text-sm font-medium text-slate-700">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                  <span className="truncate text-xs font-medium text-slate-700">
                     {t("finance.incomePercent", { percent: incomePct })}
                   </span>
                 </div>
-                <span className="shrink-0 text-sm font-bold tabular-nums text-emerald-700">
+                <span className="shrink-0 text-xs font-bold tabular-nums text-emerald-700">
                   {formatCurrency(income)}
                 </span>
               </div>
-            </div>
 
-            <div className="rounded-xl border border-red-100 bg-red-50/60 px-3.5 py-3">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-red-100 bg-red-50/60 px-3 py-2.5">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
-                  <span className="truncate text-sm font-medium text-slate-700">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                  <span className="truncate text-xs font-medium text-slate-700">
                     {t("finance.expensesPercent", { percent: expensePct })}
                   </span>
                 </div>
-                <span className="shrink-0 text-sm font-bold tabular-nums text-red-700">
+                <span className="shrink-0 text-xs font-bold tabular-nums text-red-700">
                   {formatCurrency(expenses)}
                 </span>
               </div>
-            </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-semibold text-slate-700">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                <span className="text-xs font-semibold text-slate-700">
                   {t("finance.finalBalance")}
                 </span>
                 <span
                   className={cn(
-                    "shrink-0 text-sm font-bold tabular-nums",
+                    "shrink-0 text-xs font-bold tabular-nums",
                     net >= 0 ? "text-emerald-700" : "text-red-700",
                   )}
                 >
@@ -7359,6 +7704,25 @@ function IncomeExpenseCard({ finance }: { finance: FinanceHealth }) {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-2 border-t border-slate-100 pt-5 sm:grid-cols-2">
+          {compactMetrics.map((metric) => (
+            <div
+              key={metric.label}
+              className="min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5"
+            >
+              <div className="truncate text-[11px] text-slate-500">{metric.label}</div>
+              <div className={cn("mt-0.5 truncate text-sm font-bold tabular-nums", metric.valueClass)}>
+                {metric.value}
+              </div>
+              {"hint" in metric && metric.hint ? (
+                <div className="mt-0.5 truncate text-[10px] text-slate-400">
+                  {metric.hint}
+                </div>
+              ) : null}
+            </div>
+          ))}
         </div>
       </div>
     </Card>
@@ -8011,6 +8375,33 @@ export default function OverviewPage() {
 
             if (fastClubId) {
               startFastRaceSchedule(fastClubId);
+
+              // Do not keep the entire Overview behind the header RPC. A cached
+              // main-club id is enough to render the dashboard shell immediately
+              // while schedule/day-race and other lightweight widgets load.
+              if (alive && !dataRef.current) {
+                const instantShellData = normalizeDashboardPayload({
+                  club: { id: fastClubId },
+                  alerts: [],
+                  kpis: [],
+                  operations: [],
+                  schedule: [],
+                  dayRaces: [],
+                  news: [],
+                  feed: [],
+                  quickActions: [],
+                });
+
+                setData(instantShellData);
+                setLoading(false);
+                setError(null);
+                bootstrappedVisibleData = true;
+
+                startFastOverviewWidgets(
+                  fastClubId,
+                  getSeasonYearFromOverview(instantShellData),
+                );
+              }
             }
 
             const { data: headerData, error: headerError } =
@@ -8401,104 +8792,22 @@ export default function OverviewPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 space-y-6 xl:col-span-8">
-            {/* Main top-left area: newsletter instead of operations */}
-            <div data-tutorial-target="overview-news-board">
-              <NewsCommandCenter
+            <div data-tutorial-target="overview-manager-focus">
+              <ManagerFocusCard
                 alerts={attentionItems}
-                feed={data.feed}
-                news={
-                  raceWorld.worldNews.length > 0 ? raceWorld.worldNews : data.news
-                }
-                currentGameDateLabel={data.club.dateLabel}
-                loading={
-                  raceWorldLoading &&
-                  raceWorld.worldNews.length === 0 &&
-                  data.news.length === 0
-                }
+                upcomingRaceCount={raceWorld.upcomingSchedule.length}
+                todayRaceCount={raceWorld.todayRaces.length}
+                finance={data.finance}
+                operations={data.operations}
               />
             </div>
 
-            <Card className="p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <SectionTitle
-                  title={t("squad.title")}
-                  subtitle={t("squad.subtitle")}
-                />
-                {!premiumStatusLoading && !isPremium ? (
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-                    {t("premiumCenter:integrations.overview.freeCoreView")}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <SmallStat
-                    label={t("squad.availableRiders")}
-                    value={visibleSquadPulse.availableRiders}
-                  />
-                  <SmallStat
-                    label={t("squad.injured")}
-                    value={visibleSquadPulse.injured}
-                    valueClassName={visibleSquadPulse.injured > 0 ? "text-red-600" : ""}
-                  />
-                  <SmallStat
-                    label={t("squad.sick")}
-                    value={visibleSquadPulse.sick}
-                    valueClassName={visibleSquadPulse.sick > 0 ? "text-red-600" : ""}
-                  />
-                  <SmallStat
-                    label={t("squad.notFullyFit")}
-                    value={visibleSquadPulse.notFullyFit}
-                    valueClassName={visibleSquadPulse.notFullyFit > 0 ? "text-yellow-600" : ""}
-                  />
-                </div>
-
-                {premiumStatusLoading ? (
-                  <div className="min-h-[120px] animate-pulse rounded-xl bg-slate-50" />
-                ) : isPremium ? (
-                  <div className="space-y-4">
-                    <ProgressMetric
-                      label={t("squad.fitness")}
-                      value={visibleSquadPulse.fitness}
-                      colorClass="bg-blue-500"
-                    />
-                    <ProgressMetric
-                      label={t("squad.morale")}
-                      value={visibleSquadPulse.morale}
-                      colorClass="bg-emerald-500"
-                    />
-                    <ProgressMetric
-                      label={t("squad.readiness")}
-                      value={visibleSquadPulse.readiness}
-                      colorClass="bg-violet-500"
-                    />
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <SmallStat
-                        label={t("squad.form")}
-                        value={visibleSquadPulse.form}
-                        valueClassName="text-emerald-600"
-                      />
-                      <SmallStat
-                        label={t("squad.expiringContracts")}
-                        value={visibleSquadPulse.expiringContracts}
-                        valueClassName={visibleSquadPulse.expiringContracts > 0 ? "text-yellow-600" : ""}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex min-h-[120px] flex-col justify-center rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-4">
-                    <div className="text-sm font-semibold text-amber-900">{t("premiumCenter:integrations.overview.squadIntelligenceTitle")}</div>
-                    <div className="mt-1 text-sm text-amber-800">
-                      {t("premiumCenter:integrations.overview.squadIntelligenceBody")}
-                    </div>
-                    <button type="button" onClick={openPremiumPage} className="mt-3 w-fit rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-900">
-                      {t("premiumCenter:integrations.overview.unlockTools")}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </Card>
+            <SquadPulseOverviewCard
+              pulse={visibleSquadPulse}
+              isPremium={isPremium}
+              premiumStatusLoading={premiumStatusLoading}
+              onUnlock={openPremiumPage}
+            />
 
             <UpcomingRaceScheduleCard schedule={raceWorld.upcomingSchedule} />
 
@@ -8507,9 +8816,25 @@ export default function OverviewPage() {
               races={raceWorld.todayRaces}
             />
 
+            <CompactOperationsCard operations={data.operations} />
+
             <CyclingWorldNewsCard
               items={externalCyclingNews}
               loading={externalCyclingNewsLoading}
+            />
+
+            <NewsCommandCenter
+              alerts={attentionItems}
+              feed={data.feed}
+              news={
+                raceWorld.worldNews.length > 0 ? raceWorld.worldNews : data.news
+              }
+              currentGameDateLabel={data.club.dateLabel}
+              loading={
+                raceWorldLoading &&
+                raceWorld.worldNews.length === 0 &&
+                data.news.length === 0
+              }
             />
           </div>
 
@@ -8540,69 +8865,7 @@ export default function OverviewPage() {
               </Card>
             </div>
 
-            <Card className="p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <SectionTitle
-                  title={t("finance.healthTitle")}
-                  subtitle={t("finance.healthSubtitle")}
-                />
-                {!premiumStatusLoading && !isPremium ? (
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-                    {t("premiumCenter:integrations.overview.freeCoreView")}
-                  </span>
-                ) : null}
-              </div>
-
-              <div className="mt-5 space-y-3">
-                <SmallStat
-                  label={t("finance.balance")}
-                  value={formatCurrency(data.finance.balance)}
-                />
-                <SmallStat
-                  label={t("finance.weeklyNet")}
-                  value={formatSignedCurrency(data.finance.weeklyNet)}
-                  valueClassName={data.finance.weeklyNet >= 0 ? "text-emerald-600" : "text-red-600"}
-                />
-
-                {premiumStatusLoading ? (
-                  <div className="h-20 animate-pulse rounded-xl bg-slate-50" />
-                ) : isPremium ? (
-                  <>
-                    <SmallStat
-                      label={t("finance.sponsorIncome")}
-                      value={formatCurrency(data.finance.sponsorIncome)}
-                    />
-                    <SmallStat
-                      label={t("finance.recurringPolicyCost")}
-                      value={formatCurrency(data.finance.recurringPolicyCost)}
-                    />
-                    <SmallStat
-                      label={t("finance.nextTripForecast")}
-                      value={formatCurrency(data.finance.nextTripForecast)}
-                    />
-                    <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                      <div className="text-xs uppercase tracking-wide text-slate-500">
-                        {t("finance.latestMajorTransaction")}
-                      </div>
-                      <div className="mt-2 text-sm font-semibold text-slate-900">
-                        {data.finance.latestTransactionLabel}
-                      </div>
-                      <div className={cn("mt-1 text-sm font-bold", data.finance.latestTransactionAmount >= 0 ? "text-emerald-600" : "text-red-600")}>
-                        {formatSignedCurrency(data.finance.latestTransactionAmount)}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    {t("premiumCenter:integrations.overview.financeLockedBody")}
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            <IncomeExpenseCard finance={data.finance} />
-
-            <CompactOperationsCard operations={data.operations} />
+            <FinanceOverviewCard finance={data.finance} />
 
             <ClubHonoursCard
               items={clubHonours}
