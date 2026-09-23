@@ -294,5 +294,11 @@
     "Oct": "Okt",
     "Nov": "Nov",
     "Dec": "Dez"
+  },
+  "managerFocus": {
+    "title": "Clubstatus & Prioritäten",
+    "subtitle": "Die wichtigsten Clubsignale, die du jetzt prüfen solltest.",
+    "priorities": "Prioritäre Aufgaben",
+    "allClear": "Derzeit wartet keine dringende Clubaufgabe."
   }
 }
