@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11r-v1-physical-finish-and-opening-breakaway-2026-09-23' as const
+  'phase11s-v1-strict-physical-replay-integrity-2026-09-23' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -18858,7 +18858,6 @@ export function resolveRoadPhase4Finish(
 
     if (
       phase4MeaningfulContactPressure &&
-      phase4PelotonRiderSetAtStart.has(row.riderId) &&
       !escapeSet.has(row.riderId) &&
       !persistentOpeningState.droppedRiderIds.includes(row.riderId) &&
       energyAtFinish < phase4DepletionContactFloor - 0.000001 &&
@@ -37234,37 +37233,9 @@ export function buildUniversalPhase78AcceptanceReport(
  *
  * Hard issues are never bypassed.
  */
-const UNIVERSAL_NON_BLOCKING_REPLAY_ISSUE_PREFIXES = [
-  'duplicate_group_display_code:',
-  'duplicate_physical_group_gap:',
-  'group_gap_cardinality_mismatch:',
-  'group_gap_identity_mismatch:',
-  'rider_group_gap_mismatch:',
-  'same_kilometre_physical_state_mismatch:',
-  'gap_change_not_distance_bounded:',
-  'front_group_transfer_without_physical_transition:',
-  'post_catch_group_transfer_without_physical_transition:',
-  'opening_breakaway_lineage_changed:',
-  'opening_breakaway_lineage_changed_without_bridge_merge:',
-  'successful_attack_without_physical_group:',
-  'opening_breakaway_formation_missing_physical_group',
-  'opening_breakaway_reappears:',
-  'bridge_attack_invalid:',
-  'bridge_progress_invalid:',
-  'bridge_merge_invalid:',
-  'bridge_group_disappears_without_merge:',
-  'bridge_group_without_peloton:',
-  'post_catch_breakaway_or_chase_reappears:',
-] as const
+const UNIVERSAL_NON_BLOCKING_REPLAY_ISSUE_PREFIXES = [] as const
 
-const UNIVERSAL_NON_BLOCKING_PHASE78_ISSUES = new Set([
-  'phase7_replay_synchronized',
-  'phase7_same_kilometre_states_consistent',
-  'phase7_gap_changes_distance_bounded',
-  'phase7_opening_breakaway_lineage_stable',
-  'phase7_front_group_transfers_physically_valid',
-  'phase7_post_catch_state_stable',
-])
+const UNIVERSAL_NON_BLOCKING_PHASE78_ISSUES = new Set<string>()
 
 export function isUniversalReplayIssueNonBlocking(issue: string): boolean {
   return UNIVERSAL_NON_BLOCKING_REPLAY_ISSUE_PREFIXES.some(
