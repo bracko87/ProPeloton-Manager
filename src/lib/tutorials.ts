@@ -113,7 +113,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
     title: 'Club Status & Priorities',
     body:
       'This block gives you a fast operational picture of the club.\n\n' +
-      'It combines squad readiness, weekly finances, active operations, and the most important current action items. It is a factual dashboard summary, not a Staff Advisor report.\n\n' +
+      'It combines upcoming races, races happening today, weekly finances, active operations, and the most important current action items. It is a factual dashboard summary, not a Staff Advisor report.\n\n' +
       'Use the Open buttons on priority rows to jump directly to the page that needs attention.',
     primaryAction: 'Next',
     target: 'overview-manager-focus',
