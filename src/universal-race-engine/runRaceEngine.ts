@@ -32918,35 +32918,13 @@ function resolveUniversalPhase10Incidents({
     })
   })
 
-  const baseFinalReplayCheckpoint =
-    baseReplayTimeline.checkpoints.find(
-      (checkpoint) => checkpoint.finalResultsVisible,
-    ) ?? baseReplayTimeline.checkpoints.at(-1)
-  const baseFinishEnergyByRiderId = new Map(
-    baseFinalReplayCheckpoint?.riderStates.map(
-      (state) => [state.riderId, state.energy] as const,
-    ) ?? [],
-  )
-
   const physicalFinishTimeByRiderId = new Map<string, number>()
   const adjustedFinishScoreByRiderId = new Map<string, number>()
   const preliminary = baseFinishResolution.classification.map(
     (row): UniversalOfficialFinishRow => {
       const consequence = consequenceByRiderId.get(row.riderId)
       if (row.status === 'dns') return row
-      const baseFinishEnergy = baseFinishEnergyByRiderId.get(row.riderId)
-      const postIncidentEnergy =
-        baseFinishEnergy === undefined
-          ? null
-          : deterministicRound(
-              Math.max(0, baseFinishEnergy - (consequence?.energyLoss ?? 0)),
-              6,
-            )
-      const exhaustedByRaceLoad =
-        row.status === 'finished' &&
-        postIncidentEnergy !== null &&
-        postIncidentEnergy <= 0.000001
-      if (consequence?.dnf || exhaustedByRaceLoad) {
+      if (consequence?.dnf) {
         return {
           ...row,
           rank: null,
