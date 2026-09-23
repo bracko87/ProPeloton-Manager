@@ -14887,6 +14887,125 @@ function UniversalRaceReplayPage({
       )
     )
 
+    /*
+     * Road-race naming mirrors television/race-radio convention without
+     * replacing the physical B/F/P/C identity. A chase group containing the
+     * race leader is the Yellow jersey group; otherwise classification leaders
+     * take precedence, then the best-placed GC rider lends the group a compact
+     * rider-name label.
+     */
+    const roadGroupRaceLabelByDisplayCode = new Map<string, string>()
+    if (!resultsVisible) {
+      const eligibleRiderIds = input.riders.map((rider) => rider.riderId)
+      const uniqueMountainLeaderId = (() => {
+        const scored = eligibleRiderIds
+          .map((riderId) => ({
+            riderId,
+            points: preStageStandingByRiderId[riderId]?.mountainPoints ?? 0,
+          }))
+          .filter((row) => row.points > 0)
+          .sort(
+            (left, right) =>
+              right.points - left.points ||
+              left.riderId.localeCompare(right.riderId)
+          )
+        return scored.length > 0 &&
+          (scored.length === 1 || scored[0].points > scored[1].points)
+          ? scored[0].riderId
+          : null
+      })()
+      const uniquePointsLeaderId = (() => {
+        const scored = eligibleRiderIds
+          .map((riderId) => ({
+            riderId,
+            points: preStageStandingByRiderId[riderId]?.sprintPoints ?? 0,
+          }))
+          .filter((row) => row.points > 0)
+          .sort(
+            (left, right) =>
+              right.points - left.points ||
+              left.riderId.localeCompare(right.riderId)
+          )
+        return scored.length > 0 &&
+          (scored.length === 1 || scored[0].points > scored[1].points)
+          ? scored[0].riderId
+          : null
+      })()
+      const riderShortLabel = (riderId: string): string => {
+        const identity = replayRiderIdentityById.get(riderId) ?? null
+        const participantRider =
+          participantRiderLookup.get(riderId)?.rider ?? null
+        const fullName =
+          getFullRiderNameFromLookup(identity) ??
+          (participantRider
+            ? getRaceParticipantRiderDisplayName(participantRider)
+            : input.riders.find((rider) => rider.riderId === riderId)
+                ?.snapshot.displayName?.trim()) ??
+          riderId
+        const tokens = fullName.trim().split(/\s+/).filter(Boolean)
+        return tokens.at(-1) ?? fullName
+      }
+
+      currentFrame.groups.forEach((group) => {
+        if (group.displayCode === 'P' || group.riderIds.length === 0) return
+        const generalLeader = group.riderIds.find(
+          (riderId) =>
+            preStageStandingByRiderId[riderId]?.generalRank === 1
+        )
+        if (generalLeader) {
+          roadGroupRaceLabelByDisplayCode.set(
+            group.displayCode,
+            'Yellow jersey group'
+          )
+          return
+        }
+        if (
+          uniqueMountainLeaderId &&
+          group.riderIds.includes(uniqueMountainLeaderId)
+        ) {
+          roadGroupRaceLabelByDisplayCode.set(
+            group.displayCode,
+            'KOM leader group'
+          )
+          return
+        }
+        if (
+          uniquePointsLeaderId &&
+          group.riderIds.includes(uniquePointsLeaderId)
+        ) {
+          roadGroupRaceLabelByDisplayCode.set(
+            group.displayCode,
+            'Points leader group'
+          )
+          return
+        }
+        const bestGcRiderId = group.riderIds
+          .filter(
+            (riderId) =>
+              preStageStandingByRiderId[riderId]?.generalRank !== null &&
+              preStageStandingByRiderId[riderId]?.generalRank !== undefined
+          )
+          .sort(
+            (left, right) =>
+              Number(
+                preStageStandingByRiderId[left]?.generalRank ??
+                  Number.MAX_SAFE_INTEGER
+              ) -
+                Number(
+                  preStageStandingByRiderId[right]?.generalRank ??
+                    Number.MAX_SAFE_INTEGER
+                ) ||
+              left.localeCompare(right)
+          )[0]
+        if (bestGcRiderId) {
+          roadGroupRaceLabelByDisplayCode.set(
+            group.displayCode,
+            `${riderShortLabel(bestGcRiderId)} group`
+          )
+        }
+      })
+    }
+
     const rows = input.riders.map((rider) => {
       const currentState = currentStateByRiderId.get(rider.riderId)
       const nextState = nextStateByRiderId.get(rider.riderId) ?? currentState
@@ -14956,7 +15075,10 @@ function UniversalRaceReplayPage({
         groupCode,
         displayCode,
         colorKey: group?.colorKey ?? 'peloton_blue',
-        groupLabel: displayCode === 'P' ? 'Peloton' : displayCode,
+        groupLabel:
+          displayCode === 'P'
+            ? 'Peloton'
+            : roadGroupRaceLabelByDisplayCode.get(displayCode) ?? displayCode,
         groupOrder:
           (currentState?.displayCode
             ? groupOrderByDisplayCode.get(currentState.displayCode)
@@ -15002,6 +15124,7 @@ function UniversalRaceReplayPage({
     input,
     nextFrame,
     participantRiderLookup,
+    preStageStandingByRiderId,
     readinessByRiderId,
     replayRiderIdentityById,
     resultsVisible,
@@ -16328,7 +16451,7 @@ function UniversalRaceReplayPage({
                       </div>
                     ) : (
                       <div className="w-full min-w-[600px]">
-                        <div className="grid grid-cols-[38px_44px_minmax(140px,1fr)_128px_76px_142px] items-center gap-0 border-b border-slate-200 bg-slate-100 px-2.5 py-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        <div className="grid grid-cols-[38px_96px_minmax(140px,1fr)_128px_76px_142px] items-center gap-0 border-b border-slate-200 bg-slate-100 px-2.5 py-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                           <div className="px-1 text-center">Pos.</div>
                           <div className="border-l border-slate-200 px-2 text-center">Group</div>
                           <div className="border-l border-slate-200 px-2.5">Rider</div>
@@ -16344,7 +16467,7 @@ function UniversalRaceReplayPage({
                           return (
                             <div
                               key={row.riderId}
-                              className="grid grid-cols-[38px_44px_minmax(140px,1fr)_128px_76px_142px] items-center gap-0 border-b border-slate-100 bg-white px-2.5 py-2.5 text-xs"
+                              className="grid grid-cols-[38px_96px_minmax(140px,1fr)_128px_76px_142px] items-center gap-0 border-b border-slate-100 bg-white px-2.5 py-2.5 text-xs"
                             >
                               <div className="px-1 text-center font-semibold text-slate-500">
                                 {replayProgress <= 0 || row.position === null
@@ -16352,17 +16475,27 @@ function UniversalRaceReplayPage({
                                   : row.position}
                               </div>
 
-                              <div className="flex justify-center border-l border-slate-200 px-2">
+                              <div className="flex min-w-0 flex-col items-center justify-center gap-1 border-l border-slate-200 px-1">
                                 <span
                                   className={`rounded-full px-3 py-1 text-[10px] font-bold text-white ${getUniversalReplayGroupBadgeClass(
                                     row.displayCode,
                                     row.colorKey
                                   )}`}
+                                  title={row.groupLabel}
                                 >
                                   {getUniversalReplayGroupBadge(
                                     row.displayCode
                                   )}
                                 </span>
+                                {row.groupLabel !== row.displayCode &&
+                                row.groupLabel !== 'Peloton' ? (
+                                  <span
+                                    className="max-w-[88px] truncate text-center text-[8px] font-semibold leading-3 text-slate-500"
+                                    title={row.groupLabel}
+                                  >
+                                    {row.groupLabel}
+                                  </span>
+                                ) : null}
                               </div>
 
                               <div className="min-w-0 border-l border-slate-200 px-2.5">
