@@ -17812,7 +17812,7 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     )
     expect(source).toContain('5 +')
     expect(source).toContain(
-      'phase3-front-momentum-window-v1',
+      'phase3-front-momentum-window-v2',
     )
     expect(source).toContain('maximumFreshAttackClosureSeconds')
   })
@@ -17845,7 +17845,10 @@ describe('Phase 11G organic race physics and replay continuity', () => {
             phase3.secondaryFrontCatchKm !== null,
         ).toBe(true)
       }
-      expect(result.replaySynchronization.issues).toEqual([])
+      expect(
+        result.replaySynchronization.issues,
+        `mixed stress index ${index}`,
+      ).toEqual([])
     }
   })
 
