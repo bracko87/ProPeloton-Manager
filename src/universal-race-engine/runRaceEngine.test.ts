@@ -11168,6 +11168,54 @@ describe('Phase 7 calculated replay events — Task 7.2', () => {
     )
   })
 
+  it('lets some successful decisive attacks establish a meaningful physical move before the chase fully organizes', () => {
+    let freshLineageCount = 0
+    let establishedLineageCount = 0
+    let immediateCatchCount = 0
+
+    for (let index = 0; index < 32; index += 1) {
+      const result = runRaceEngine(createPhase11gMixedStressInput(index))
+      const phase3 = result.roadRaceResolution.phase3Decisive!
+
+      phase3.frontLineages
+        .filter((lineage) => !lineage.carriedFromPreviousPhase)
+        .forEach((lineage) => {
+          freshLineageCount += 1
+          const resolutionKm =
+            lineage.catchKm ??
+            lineage.mergeKm ??
+            phase3.phaseBoundary.endKm
+          const lifetimeKm = Math.max(0, resolutionKm - lineage.launchKm)
+          const peakGapToPelotonSeconds = Math.max(
+            lineage.launchGapToPelotonSeconds,
+            ...lineage.gapTrajectory.map(
+              (sample) => sample.gapToPelotonSeconds,
+            ),
+          )
+
+          if (
+            lifetimeKm >= 6 - 0.000001 &&
+            peakGapToPelotonSeconds >= 15 - 0.000001
+          ) {
+            establishedLineageCount += 1
+          }
+          if (
+            lineage.catchKm !== null &&
+            lifetimeKm < 4.5 - 0.000001
+          ) {
+            immediateCatchCount += 1
+          }
+        })
+    }
+
+    expect(freshLineageCount).toBeGreaterThan(3)
+    expect(establishedLineageCount).toBeGreaterThan(0)
+    expect(establishedLineageCount / freshLineageCount).toBeGreaterThanOrEqual(
+      0.15,
+    )
+    expect(immediateCatchCount).toBeLessThan(freshLineageCount)
+  })
+
   it('reveals the calculated late chase and performs one atomic catch checkpoint', () => {
     const result = runRaceEngine(createPhase11gMixedStressInput(0))
     const phase4 = result.roadRaceResolution.phase4Finish!
@@ -17753,7 +17801,7 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(directorSource).toContain('previousLiveGap * decayFactor')
   })
 
-  it('gives fresh Phase 2 and Phase 3 fronts a decaying five-to-ten kilometre attack momentum window', () => {
+  it('gives fresh Phase 2 and Phase 3 fronts a decaying multi-kilometre attack momentum window', () => {
     const source = readFileSync(
       new URL('./runRaceEngine.ts', import.meta.url),
       'utf8',
@@ -17764,9 +17812,38 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     )
     expect(source).toContain('5 +')
     expect(source).toContain(
-      'phase3-front-momentum-window-v1',
+      'phase3-front-momentum-window-v2',
     )
     expect(source).toContain('maximumFreshAttackClosureSeconds')
+  })
+
+  it('does not retroactively drop a rider before a later successful peloton attack', () => {
+    const result = runRaceEngine(createPhase11gMixedStressInput(130))
+    const riderId = 'expanded-rider-12'
+    const successfulPelotonAttack =
+      result.roadRaceResolution.phase3Decisive!.attackAttempts.find(
+        (attempt) =>
+          attempt.riderId === riderId &&
+          attempt.attackSucceeded &&
+          attempt.sourceGroupCode === 'main_peloton',
+      )
+    const phase4State =
+      result.roadRaceResolution.phase4Finish!.riderStates.find(
+        (row) => row.riderId === riderId,
+      )
+
+    expect(successfulPelotonAttack).toBeDefined()
+    expect(phase4State).toBeDefined()
+    if (
+      phase4State?.contactLossKm !== null &&
+      phase4State?.contactLossKm !== undefined
+    ) {
+      expect(phase4State.contactLossKm).toBeGreaterThanOrEqual(
+        successfulPelotonAttack!.attemptKm - 0.000001,
+      )
+    }
+    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(result.replaySynchronization.issues).toEqual([])
   })
 
   it('keeps every successful peloton attack in a physical F lifecycle', () => {
@@ -17797,7 +17874,10 @@ describe('Phase 11G organic race physics and replay continuity', () => {
             phase3.secondaryFrontCatchKm !== null,
         ).toBe(true)
       }
-      expect(result.replaySynchronization.issues).toEqual([])
+      expect(
+        result.replaySynchronization.issues,
+        `mixed stress index ${index}`,
+      ).toEqual([])
     }
   })
 

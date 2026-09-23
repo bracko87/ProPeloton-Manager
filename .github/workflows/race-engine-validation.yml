@@ -49,7 +49,7 @@ jobs:
           npx --yes vitest@3.2.4 run
           src/universal-race-engine/runRaceEngine.test.ts
           --reporter=dot
-          -t "uses one 82% reactive-counterattack decision for the whole second opening wave and exposes it in replay|stores accepted opening attacks and the one original breakaway formation|never freezes an established opening escape at its launch gap|never publishes a road finisher with zero usable reserve|keeps every successful peloton attack in a physical F lifecycle"
+          -t "uses one 82% reactive-counterattack decision for the whole second opening wave and exposes it in replay|stores accepted opening attacks and the one original breakaway formation|never freezes an established opening escape at its launch gap|never publishes a road finisher with zero usable reserve|keeps every successful peloton attack in a physical F lifecycle|does not retroactively drop a rider before a later successful peloton attack|lets some successful decisive attacks establish a meaningful physical move before the chase fully organizes"
 
       - name: Run full legacy race-engine suite for visibility
         continue-on-error: true
