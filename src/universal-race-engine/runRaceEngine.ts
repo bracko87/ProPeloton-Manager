@@ -16111,6 +16111,65 @@ export function resolveRoadPhase4Finish(
     return persistentOpeningState.lateFrontRiderIds.includes(riderId)
   }
 
+  /*
+   * Phase 11Q continuity proof.
+   *
+   * Profile-wide climb selection is reconstructed after the earlier road
+   * phases have already resolved their physical attacks. A successful attack
+   * explicitly launched from P is therefore authoritative proof that the rider
+   * was physically in the peloton at that kilometre. A later profile pass must
+   * not retroactively mark that rider as permanently detached before the
+   * attack unless its own detached trajectory also rejoins before the attack.
+   */
+  const resolvedPelotonAttackProofsForProfile = [
+    ...phase1ForProfile.attackAttempts
+      .filter((attempt) => attempt.acceptedEscapeLaunch)
+      .map((attempt) => ({
+        riderId: attempt.riderId,
+        kmFromStart: attempt.attemptKm,
+      })),
+    ...phase2ForProfile.attackAttempts
+      .filter(
+        (attempt) =>
+          attempt.attackSucceeded &&
+          attempt.sourceGroupCode === 'main_peloton',
+      )
+      .map((attempt) => ({
+        riderId: attempt.riderId,
+        kmFromStart: attempt.attemptKm,
+      })),
+    ...phase3.attackAttempts
+      .filter(
+        (attempt) =>
+          attempt.attackSucceeded &&
+          attempt.sourceGroupCode === 'main_peloton',
+      )
+      .map((attempt) => ({
+        riderId: attempt.riderId,
+        kmFromStart: attempt.attemptKm,
+      })),
+  ].sort(
+    (left, right) =>
+      left.kmFromStart - right.kmFromStart ||
+      left.riderId.localeCompare(right.riderId),
+  )
+
+  const conflictingPelotonAttackProofKm = (
+    riderId: string,
+    contactLossKm: number,
+    rejoinKm: number | null,
+    corridorEndKm: number,
+  ): number | null => {
+    const proof = resolvedPelotonAttackProofsForProfile.find(
+      (row) =>
+        row.riderId === riderId &&
+        row.kmFromStart > contactLossKm + 0.000001 &&
+        row.kmFromStart <= corridorEndKm + 0.000001 &&
+        (rejoinKm === null || rejoinKm > row.kmFromStart + 0.000001),
+    )
+    return proof?.kmFromStart ?? null
+  }
+
   type PhysicalDetachedTrajectory = {
     readonly samples: readonly UniversalRoadDetachedGapSample[]
     readonly rejoinKm: number | null
@@ -16486,6 +16545,31 @@ export function resolveRoadPhase4Finish(
           6,
         )
         const rejoinKm = physicalTrajectory.rejoinKm
+        const conflictingAttackKm = conflictingPelotonAttackProofKm(
+          row.riderId,
+          contactLossKm,
+          rejoinKm,
+          recoveryCorridorEndKm,
+        )
+        if (conflictingAttackKm !== null) {
+          /*
+           * The previously resolved attack proves this rider was still in P.
+           * Keep the climb selection from inventing an impossible P -> C ->
+           * (no rejoin) -> P teleport before the attack. Other riders on the
+           * same climb keep their calculated splits unchanged.
+           */
+          return {
+            riderId: row.riderId,
+            holdScore,
+            energyAtClimbStart,
+            energyAtSummit,
+            contactLossKm: null,
+            gapAtSummitSeconds: 0,
+            rejoinKm: null,
+            finalDetached: false,
+            gapSamples: [],
+          }
+        }
         return {
           riderId: row.riderId,
           holdScore,
