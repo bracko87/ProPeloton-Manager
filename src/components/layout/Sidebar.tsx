@@ -47,12 +47,6 @@ const GAME_LOGO_URL =
 
 const navItems: NavItem[] = [
   {
-    to: '/dashboard/premium-center',
-    labelKey: 'premiumCenter',
-    descriptionKey: 'descriptions.premiumCenter',
-    icon: Sparkles,
-  },
-  {
     to: '/dashboard/overview',
     labelKey: 'overview',
     descriptionKey: 'descriptions.overview',
@@ -118,6 +112,12 @@ const navItems: NavItem[] = [
     labelKey: 'statistics',
     descriptionKey: 'descriptions.statistics',
     icon: LineChart,
+  },
+  {
+    to: '/dashboard/premium-center',
+    labelKey: 'premiumCenter',
+    descriptionKey: 'descriptions.premiumCenter',
+    icon: Sparkles,
   },
 ]
 
