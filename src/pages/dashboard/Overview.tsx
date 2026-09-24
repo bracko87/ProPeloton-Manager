@@ -416,6 +416,9 @@ type OverviewRecentRaceResult = {
   stageNumber: number;
   stageCount: number;
   stageDate: string;
+  stageName: string | null;
+  startCity: string | null;
+  finishCity: string | null;
 
   winnerRiderId: string | null;
   winnerName: string;
@@ -2522,6 +2525,12 @@ function normalizeOverviewRecentRaceResults(
           asNumber(row.stage_count ?? row.stageCount, 1),
         ),
         stageDate: asString(row.stage_date ?? row.stageDate, ""),
+        stageName:
+          asString(row.stage_name ?? row.stageName, "") || null,
+        startCity:
+          asString(row.start_city ?? row.startCity, "") || null,
+        finishCity:
+          asString(row.finish_city ?? row.finishCity, "") || null,
         winnerRiderId:
           asString(row.winner_rider_id ?? row.winnerRiderId, "") || null,
         winnerName,
@@ -7699,8 +7708,15 @@ function ManagerFocusCard({
                       <span className="h-[16px] w-[24px] shrink-0 rounded-[2px] bg-slate-200" />
                     )}
 
-                    <span className="truncate text-sm font-bold text-slate-950">
+                    <span className="shrink-0 text-sm font-bold text-slate-950">
                       {activeResult.raceName}
+                    </span>
+
+                    <span className="min-w-0 truncate text-xs font-medium text-slate-500">
+                      {activeResult.stageName ??
+                        (activeResult.startCity && activeResult.finishCity
+                          ? `Stage ${activeResult.stageNumber}: ${activeResult.startCity} → ${activeResult.finishCity}`
+                          : `Stage ${activeResult.stageNumber}`)}
                     </span>
                   </div>
 
@@ -7713,48 +7729,88 @@ function ManagerFocusCard({
                 </div>
 
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="min-w-0 rounded-lg border border-amber-100 bg-amber-50/70 px-2.5 py-2">
+                  <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
                     <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
                       <span className="h-2 w-2 rounded-full bg-amber-400" />
                       {t("managerFocus.stageWinner")}
                     </div>
-                    <div className="mt-1 truncate text-xs font-bold text-slate-950">
-                      [{activeResult.winnerName}]
+                    <div className="mt-1 flex min-w-0 items-center gap-1 text-xs">
+                      <span className="shrink-0 font-bold text-slate-950">
+                        [{activeResult.winnerName}]
+                      </span>
+                      {activeResult.winnerTeamName ? (
+                        <span
+                          className="min-w-0 truncate text-slate-500"
+                          title={activeResult.winnerTeamName}
+                        >
+                          ({activeResult.winnerTeamName})
+                        </span>
+                      ) : null}
                     </div>
                   </div>
 
                   {activeResult.stageCount > 1 && activeResult.gcName ? (
-                    <div className="min-w-0 rounded-lg border border-yellow-100 bg-yellow-50/70 px-2.5 py-2">
+                    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
                       <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-yellow-700">
                         <span className="h-2 w-2 rounded-full bg-yellow-400" />
                         {t("managerFocus.gcLeader")}
                       </div>
-                      <div className="mt-1 truncate text-xs font-bold text-slate-950">
-                        [{activeResult.gcName}]
+                      <div className="mt-1 flex min-w-0 items-center gap-1 text-xs">
+                        <span className="shrink-0 font-bold text-slate-950">
+                          [{activeResult.gcName}]
+                        </span>
+                        {activeResult.gcTeamName ? (
+                          <span
+                            className="min-w-0 truncate text-slate-500"
+                            title={activeResult.gcTeamName}
+                          >
+                            ({activeResult.gcTeamName})
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}
 
                   {activeResult.mountainName ? (
-                    <div className="min-w-0 rounded-lg border border-red-100 bg-red-50/60 px-2.5 py-2">
+                    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
                       <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-red-700">
                         <span className="h-2 w-2 rounded-full bg-red-500" />
                         {t("managerFocus.mountainLeader")}
                       </div>
-                      <div className="mt-1 truncate text-xs font-bold text-slate-950">
-                        [{activeResult.mountainName}]
+                      <div className="mt-1 flex min-w-0 items-center gap-1 text-xs">
+                        <span className="shrink-0 font-bold text-slate-950">
+                          [{activeResult.mountainName}]
+                        </span>
+                        {activeResult.mountainTeamName ? (
+                          <span
+                            className="min-w-0 truncate text-slate-500"
+                            title={activeResult.mountainTeamName}
+                          >
+                            ({activeResult.mountainTeamName})
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}
 
                   {activeResult.pointsName ? (
-                    <div className="min-w-0 rounded-lg border border-emerald-100 bg-emerald-50/60 px-2.5 py-2">
+                    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
                       <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700">
                         <span className="h-2 w-2 rounded-full bg-emerald-500" />
                         {t("managerFocus.pointsLeader")}
                       </div>
-                      <div className="mt-1 truncate text-xs font-bold text-slate-950">
-                        [{activeResult.pointsName}]
+                      <div className="mt-1 flex min-w-0 items-center gap-1 text-xs">
+                        <span className="shrink-0 font-bold text-slate-950">
+                          [{activeResult.pointsName}]
+                        </span>
+                        {activeResult.pointsTeamName ? (
+                          <span
+                            className="min-w-0 truncate text-slate-500"
+                            title={activeResult.pointsTeamName}
+                          >
+                            ({activeResult.pointsTeamName})
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                   ) : null}
