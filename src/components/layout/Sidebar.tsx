@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   ShieldCheck,
   Activity,
+  HeartPulse,
   GitBranch,
   Bug,
   Star,
@@ -134,6 +135,7 @@ export default function Sidebar({
   const navigate = useNavigate()
   const location = useLocation()
   const { isAdmin } = useAppAdmin()
+  const [systemHealthUnread, setSystemHealthUnread] = useState(0)
   const [raceOperationsProblems, setRaceOperationsProblems] = useState(0)
   const [migrationProblems, setMigrationProblems] = useState(0)
   const [unreadBugReports, setUnreadBugReports] = useState(0)
@@ -172,6 +174,68 @@ export default function Sidebar({
       window.removeEventListener('premium-status-changed', handlePremiumStatusChanged)
     }
   }, [])
+
+  useEffect(() => {
+    let alive = true
+
+    if (!isAdmin) {
+      setSystemHealthUnread(0)
+      return () => {
+        alive = false
+      }
+    }
+
+    const refreshSystemHealthUnread = async (): Promise<void> => {
+      const { data, error } = await supabase.rpc(
+        'get_admin_system_incident_unread_count_v1',
+      )
+
+      if (!alive) return
+
+      if (error) {
+        console.warn('Could not load System Health incident count:', error)
+        return
+      }
+
+      setSystemHealthUnread(Number(data ?? 0))
+    }
+
+    void refreshSystemHealthUnread()
+
+    const channel = supabase
+      .channel('admin-system-health-sidebar')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'system_incidents',
+        },
+        () => {
+          void refreshSystemHealthUnread()
+        },
+      )
+      .subscribe()
+
+    const intervalId = window.setInterval(() => {
+      void refreshSystemHealthUnread()
+    }, 45_000)
+
+    const handleRefresh = (): void => {
+      void refreshSystemHealthUnread()
+    }
+
+    window.addEventListener('focus', handleRefresh)
+    window.addEventListener('admin-system-health-count-refresh', handleRefresh)
+
+    return () => {
+      alive = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', handleRefresh)
+      window.removeEventListener('admin-system-health-count-refresh', handleRefresh)
+      void supabase.removeChannel(channel)
+    }
+  }, [isAdmin])
 
   useEffect(() => {
     let alive = true
@@ -622,6 +686,44 @@ export default function Sidebar({
                     </div>
                     <div className="mt-1 text-xs leading-tight text-white/55">
                       Private website and game statistics
+                    </div>
+                  </div>
+                )}
+              </NavLink>
+
+              <NavLink
+                to="/dashboard/admin/system-health"
+                className={`${linkClass(
+                  location.pathname === '/dashboard/admin/system-health' ||
+                    location.pathname.startsWith('/dashboard/admin/system-health/'),
+                )} relative`}
+              >
+                <div className="relative mt-0.5 flex-shrink-0">
+                  <HeartPulse size={18} />
+
+                  {collapsed && systemHealthUnread > 0 ? (
+                    <span className="absolute -right-2 -top-2 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold leading-[18px] text-white shadow-sm">
+                      {systemHealthUnread > 99 ? '99+' : systemHealthUnread}
+                    </span>
+                  ) : null}
+                </div>
+
+                {!collapsed && (
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-base font-semibold leading-tight">
+                        System Health
+                      </div>
+
+                      {systemHealthUnread > 0 ? (
+                        <span className="inline-flex min-w-[22px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-extrabold text-white shadow-sm">
+                          {systemHealthUnread > 99 ? '99+' : systemHealthUnread}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-1 text-xs leading-tight text-white/55">
+                      Game processes, incidents and alerts
                     </div>
                   </div>
                 )}
