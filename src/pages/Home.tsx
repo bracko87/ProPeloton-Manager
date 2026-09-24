@@ -67,6 +67,8 @@ type ReviewFormErrors = {
 }
 
 const CONTACT_EMAIL = 'contact@propelotonmanager.com'
+const NEXT_QUEST_STUDIO_NAME = 'Next Quest Studio'
+const NEXT_QUEST_STUDIO_URL = 'https://www.nextqueststudio.net/'
 const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
 
 const SOCIAL_LINKS = {
@@ -92,6 +94,28 @@ const HOMEPAGE_GUIDE_CARDS = [
   { titleKey: 'guide.howTitle', textKey: 'guide.howText' },
   { titleKey: 'guide.preparationTitle', textKey: 'guide.preparationText' },
 ]
+
+function renderTextWithNextQuestStudioLink(value: string): React.ReactNode {
+  const parts = value.split(NEXT_QUEST_STUDIO_NAME)
+
+  if (parts.length === 1) return value
+
+  return parts.map((part, index) => (
+    <React.Fragment key={`${index}-${part}`}>
+      {part}
+      {index < parts.length - 1 ? (
+        <a
+          href={NEXT_QUEST_STUDIO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-white/80 underline decoration-white/30 underline-offset-2 hover:text-yellow-400"
+        >
+          {NEXT_QUEST_STUDIO_NAME}
+        </a>
+      ) : null}
+    </React.Fragment>
+  ))
+}
 
 function toNumber(value: unknown): number {
   const parsedValue = Number(value)
@@ -1103,8 +1127,12 @@ export default function HomePage(): JSX.Element {
         <div className="mx-auto grid max-w-7xl gap-8 px-6 md:grid-cols-[1.4fr_auto_auto_1fr] md:gap-x-10 lg:gap-x-14">
           <div>
             <div className="text-lg font-semibold">ProPeloton Manager</div>
-            <div className="mt-2 max-w-md text-sm leading-6 text-white/70">{t('footer.description')}</div>
-            <div className="mt-4 text-xs text-white/50">{t('footer.copyright')}</div>
+            <div className="mt-2 max-w-md text-sm leading-6 text-white/70">
+              {renderTextWithNextQuestStudioLink(t('footer.description'))}
+            </div>
+            <div className="mt-4 text-xs text-white/50">
+              {renderTextWithNextQuestStudioLink(t('footer.copyright'))}
+            </div>
           </div>
 
           <nav aria-label={t('footer.gameAria')}>
