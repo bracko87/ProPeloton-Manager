@@ -62,6 +62,7 @@ import ClubIdentityPage from './pages/dashboard/ClubIdentityPage'
 import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
 import AdminAnalyticsPage from './pages/dashboard/AdminAnalyticsPage'
 import AdminRaceOperationsPage from './pages/dashboard/AdminRaceOperationsPage'
+import AdminMigrationProcessPage from './pages/dashboard/AdminMigrationProcessPage'
 import AdminBugReportsPage from './pages/dashboard/AdminBugReportsPage'
 import AdminPlayerReviewsPage from './pages/dashboard/AdminPlayerReviewsPage'
 import AdminContactMessagesPage from './pages/dashboard/AdminContactMessagesPage'
@@ -551,6 +552,15 @@ export default function App(): JSX.Element {
               element={
                 <RequireAppAdmin>
                   <AdminRaceOperationsPage />
+                </RequireAppAdmin>
+              }
+            />
+
+            <Route
+              path="admin/migration-process"
+              element={
+                <RequireAppAdmin>
+                  <AdminMigrationProcessPage />
                 </RequireAppAdmin>
               }
             />
