@@ -750,6 +750,7 @@ export default function PremiumCommandCenter(): JSX.Element {
   const [strategyByStage, setStrategyByStage] = useState<Record<string, string>>({})
   const [riskByStage, setRiskByStage] = useState<Record<string, string>>({})
   const [prefillMatch, setPrefillMatch] = useState<Record<string, any> | null>(null)
+  const strategyAutoAppliedStageIdsRef = React.useRef<Set<string>>(new Set())
 
   const [templateSection, setTemplateSection] = useState<'race' | 'training' | 'finance' | 'automation'>('race')
 
@@ -1281,6 +1282,16 @@ export default function PremiumCommandCenter(): JSX.Element {
       }
     }
   }, [clubId, selectedStage])
+
+  useEffect(() => {
+    const stageId = selectedStage?.stage_id
+    if (!clubId || !stageId || strategyAutoAppliedStageIdsRef.current.has(stageId)) {
+      return
+    }
+
+    strategyAutoAppliedStageIdsRef.current.add(stageId)
+    void checkStrategyPrefill()
+  }, [checkStrategyPrefill, clubId, selectedStage?.stage_id])
 
   const deleteAutomationRule = useCallback(
     async (ruleId: string): Promise<void> => {

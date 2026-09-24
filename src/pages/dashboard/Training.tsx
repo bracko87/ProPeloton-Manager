@@ -1184,6 +1184,7 @@ export default function TrainingPage(): JSX.Element {
   const [premiumTrainingTemplates, setPremiumTrainingTemplates] = useState<PremiumTrainingTemplate[]>([])
   const [premiumPrefillMessage, setPremiumPrefillMessage] = useState<string | null>(null)
   const [premiumPrefillRiderId, setPremiumPrefillRiderId] = useState<string | null>(null)
+  const premiumAutoAppliedRiderIdsRef = useRef<Set<string>>(new Set())
   const [error, setError] = useState<string | null>(null)
 
   const [clubId, setClubId] = useState<string | null>(null)
@@ -1959,6 +1960,33 @@ export default function TrainingPage(): JSX.Element {
       })
     }
   }, [isPremium, premiumStatusLoading])
+
+  useEffect(() => {
+    if (!clubId || !isPremium || premiumStatusLoading || loading || roster.length === 0) {
+      return
+    }
+
+    const existingPlanRiderIds = new Set(regularPlans.map(row => row.rider_id))
+    const pendingRiders = roster.filter(
+      rider =>
+        !existingPlanRiderIds.has(rider.rider_id) &&
+        !premiumAutoAppliedRiderIdsRef.current.has(rider.rider_id)
+    )
+
+    if (pendingRiders.length === 0) return
+
+    pendingRiders.forEach(rider => {
+      premiumAutoAppliedRiderIdsRef.current.add(rider.rider_id)
+      void applyMatchingTrainingPrefill(rider)
+    })
+  }, [
+    clubId,
+    isPremium,
+    loading,
+    premiumStatusLoading,
+    regularPlans,
+    roster,
+  ])
 
   useEffect(() => {
     if (focusedRiderId) {
