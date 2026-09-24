@@ -296,16 +296,11 @@
     "Dec": "Dec"
   },
   "managerFocus": {
-    "title": "Status kluba i brzi pristup",
-    "subtitle": "Aktuelni signali kluba i brzi pristup ključnim oblastima upravljanja.",
-    "quickAccess": "Brzi pristup",
-    "racePreparation": "Priprema trke",
-    "racePreparationHint": "Startne liste, logistika i planovi etapa",
-    "squad": "Tim",
-    "squadHint": "Upravljanje vozačima i sastavom",
-    "training": "Trening",
-    "trainingHint": "Trening vozača i sesije",
-    "transfers": "Transferi",
-    "transfersHint": "Kupovina, prodaja i pregovori"
+    "title": "Status kluba i rezultati trka",
+    "subtitle": "Aktuelni signali kluba i najnoviji pobednici iz današnjih i jučerašnjih trka.",
+    "recentResults": "Rezultati danas i juče",
+    "stageLabel": "Etapa {{stage}} od {{count}}",
+    "winner": "Pobednik",
+    "noRecentResults": "Još nema završenih rezultata trka za danas ili juče."
   }
 }

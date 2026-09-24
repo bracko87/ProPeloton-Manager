@@ -296,16 +296,11 @@
     "Dec": "Dic"
   },
   "managerFocus": {
-    "title": "Estado del club y acceso rápido",
-    "subtitle": "Señales actuales del club y acceso rápido a áreas clave de gestión.",
-    "quickAccess": "Acceso rápido",
-    "racePreparation": "Preparación de carrera",
-    "racePreparationHint": "Alineaciones, logística y planes de etapa",
-    "squad": "Plantilla",
-    "squadHint": "Gestiona ciclistas y plantilla",
-    "training": "Entrenamiento",
-    "trainingHint": "Entrenamiento y sesiones de ciclistas",
-    "transfers": "Fichajes",
-    "transfersHint": "Compra, vende y negocia"
+    "title": "Estado del club y resultados",
+    "subtitle": "Señales actuales del club y los últimos ganadores de hoy y ayer.",
+    "recentResults": "Resultados de hoy y ayer",
+    "stageLabel": "Etapa {{stage}} de {{count}}",
+    "winner": "Ganador",
+    "noRecentResults": "Todavía no hay resultados completados disponibles de hoy o de ayer."
   }
 }

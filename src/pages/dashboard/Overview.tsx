@@ -408,6 +408,21 @@ type OverviewRaceWorldData = {
   worldNews: NewsItem[];
 };
 
+type OverviewRecentRaceResult = {
+  stageId: string;
+  raceId: string;
+  raceName: string;
+  countryCode: string | null;
+  stageNumber: number;
+  stageCount: number;
+  stageDate: string;
+  winnerRiderId: string | null;
+  winnerName: string;
+  winnerTeamId: string | null;
+  winnerTeamName: string | null;
+  href: string;
+};
+
 const EMPTY_RACE_WORLD_DATA: OverviewRaceWorldData = {
   upcomingSchedule: [],
   todayRaces: [],
@@ -2450,6 +2465,75 @@ async function loadOverviewRaceWorldData(
   }
 
   return EMPTY_RACE_WORLD_DATA;
+}
+
+function normalizeOverviewRecentRaceResults(
+  value: unknown,
+): OverviewRecentRaceResult[] {
+  const rows = Array.isArray(value)
+    ? value
+    : asArray<Record<string, unknown>>(
+        asObject<Record<string, unknown>>(value, {}).items,
+      );
+
+  return asArray<Record<string, unknown>>(rows)
+    .map((row, index) => {
+      const raceId = asString(row.race_id ?? row.raceId, "");
+      const stageId = asString(row.stage_id ?? row.stageId, "");
+      const raceName = asString(row.race_name ?? row.raceName, "").trim();
+      const winnerName = asString(
+        row.winner_name ?? row.winnerName,
+        "",
+      ).trim();
+
+      if (!raceId || !stageId || !raceName || !winnerName) return null;
+
+      return {
+        stageId,
+        raceId,
+        raceName,
+        countryCode:
+          asString(row.country_code ?? row.countryCode, "") || null,
+        stageNumber: Math.max(
+          1,
+          asNumber(row.stage_number ?? row.stageNumber, 1),
+        ),
+        stageCount: Math.max(
+          1,
+          asNumber(row.stage_count ?? row.stageCount, 1),
+        ),
+        stageDate: asString(row.stage_date ?? row.stageDate, ""),
+        winnerRiderId:
+          asString(row.winner_rider_id ?? row.winnerRiderId, "") || null,
+        winnerName,
+        winnerTeamId:
+          asString(row.winner_team_id ?? row.winnerTeamId, "") || null,
+        winnerTeamName:
+          asString(row.winner_team_name ?? row.winnerTeamName, "") || null,
+        href: `#/dashboard/races/${raceId}`,
+      };
+    })
+    .filter((item): item is OverviewRecentRaceResult => Boolean(item));
+}
+
+async function loadOverviewRecentRaceResults(): Promise<
+  OverviewRecentRaceResult[]
+> {
+  try {
+    const { data, error } = await supabase.rpc(
+      "get_overview_recent_race_results_v1",
+    );
+
+    if (error) {
+      console.warn("Could not load recent Overview race results:", error.message);
+      return [];
+    }
+
+    return normalizeOverviewRecentRaceResults(data);
+  } catch (err) {
+    console.warn("Recent Overview race results lookup failed:", err);
+    return [];
+  }
 }
 
 function normalizeOverviewActiveOperations(value: unknown): OperationItem[] {
@@ -7422,13 +7506,41 @@ function ManagerFocusCard({
   todayRaceCount,
   finance,
   operations,
+  recentResults,
+  recentResultsLoading,
 }: {
   upcomingRaceCount: number;
   todayRaceCount: number;
   finance: FinanceHealth;
   operations: OperationItem[];
+  recentResults: OverviewRecentRaceResult[];
+  recentResultsLoading: boolean;
 }) {
   const { t } = useTranslation("overview");
+  const [resultIndex, setResultIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    setResultIndex((current) =>
+      recentResults.length > 0 ? current % recentResults.length : 0,
+    );
+  }, [recentResults.length]);
+
+  React.useEffect(() => {
+    if (recentResults.length <= 1) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      setResultIndex((current) => (current + 1) % recentResults.length);
+    }, 30_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [recentResults.length]);
+
+  const activeResult =
+    recentResults.length > 0
+      ? recentResults[resultIndex % recentResults.length]
+      : null;
 
   const summaryItems = [
     {
@@ -7454,33 +7566,6 @@ function ManagerFocusCard({
       value: String(operations.length),
       detail: t("operations.subtitle"),
       valueClass: operations.length > 0 ? "text-emerald-700" : "text-slate-700",
-    },
-  ];
-
-  const quickAccessItems = [
-    {
-      label: t("managerFocus.racePreparation"),
-      detail: t("managerFocus.racePreparationHint"),
-      href: "#/dashboard/race-preparation",
-      icon: "🏁",
-    },
-    {
-      label: t("managerFocus.squad"),
-      detail: t("managerFocus.squadHint"),
-      href: "#/dashboard/squad",
-      icon: "👥",
-    },
-    {
-      label: t("managerFocus.training"),
-      detail: t("managerFocus.trainingHint"),
-      href: "#/dashboard/training",
-      icon: "📈",
-    },
-    {
-      label: t("managerFocus.transfers"),
-      detail: t("managerFocus.transfersHint"),
-      href: "#/dashboard/transfers",
-      icon: "↔",
     },
   ];
 
@@ -7512,31 +7597,73 @@ function ManagerFocusCard({
         </div>
 
         <div className="mt-5 border-t border-slate-100 pt-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-            {t("managerFocus.quickAccess")}
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              {t("managerFocus.recentResults")}
+            </div>
+
+            {recentResults.length > 1 ? (
+              <div className="text-[10px] font-semibold tabular-nums text-slate-400">
+                {resultIndex + 1} / {recentResults.length}
+              </div>
+            ) : null}
           </div>
 
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {quickAccessItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="group flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 transition hover:border-sky-300 hover:bg-sky-50/40"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-base transition group-hover:bg-white">
-                  {item.icon}
+          {recentResultsLoading ? (
+            <div className="mt-3 h-[76px] animate-pulse rounded-xl border border-slate-200 bg-slate-50" />
+          ) : activeResult ? (
+            <a
+              href={activeResult.href}
+              className="mt-3 block rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 transition hover:border-sky-300 hover:bg-white"
+            >
+              <div className="flex min-w-0 items-center justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="shrink-0 text-xs font-semibold text-slate-500">
+                    {formatShortOverviewDate(activeResult.stageDate)}
+                  </span>
+                  {activeResult.countryCode ? (
+                    <span
+                      className="shrink-0 text-base"
+                      aria-label={activeResult.countryCode}
+                    >
+                      {countryCodeToFlagEmoji(activeResult.countryCode)}
+                    </span>
+                  ) : null}
+                  <span className="truncate text-sm font-bold text-slate-950">
+                    {activeResult.raceName}
+                  </span>
                 </div>
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-slate-950">
-                    {item.label}
-                  </div>
-                  <div className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-slate-500">
-                    {item.detail}
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
+
+                <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-inset ring-slate-200">
+                  {t("managerFocus.stageLabel", {
+                    stage: activeResult.stageNumber,
+                    count: activeResult.stageCount,
+                  })}
+                </span>
+              </div>
+
+              <div className="mt-2 flex min-w-0 items-center gap-2 text-xs text-slate-600">
+                <span className="shrink-0 font-semibold text-slate-500">
+                  {t("managerFocus.winner")}
+                </span>
+                <span className="truncate font-bold text-slate-950">
+                  [{activeResult.winnerName}]
+                </span>
+                {activeResult.winnerTeamName ? (
+                  <>
+                    <span className="shrink-0 text-slate-300">•</span>
+                    <span className="truncate text-slate-500">
+                      {activeResult.winnerTeamName}
+                    </span>
+                  </>
+                ) : null}
+              </div>
+            </a>
+          ) : (
+            <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+              {t("managerFocus.noRecentResults")}
+            </div>
+          )}
         </div>
       </div>
     </Card>
@@ -8120,6 +8247,11 @@ export default function OverviewPage() {
     EMPTY_RACE_WORLD_DATA,
   );
   const [raceWorldLoading, setRaceWorldLoading] = React.useState(true);
+  const [recentRaceResults, setRecentRaceResults] = React.useState<
+    OverviewRecentRaceResult[]
+  >([]);
+  const [recentRaceResultsLoading, setRecentRaceResultsLoading] =
+    React.useState(true);
   const [attentionAlerts, setAttentionAlerts] = React.useState<AlertItem[]>([]);
   const [priorityActionAlerts, setPriorityActionAlerts] = React.useState<AlertItem[]>([]);
   const [openedAttentionKeys, setOpenedAttentionKeys] = React.useState<Set<string>>(
@@ -8207,6 +8339,39 @@ export default function OverviewPage() {
         OVERVIEW_ATTENTION_DISMISSED_EVENT,
         refreshOpenedAttentionKeys,
       );
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let alive = true;
+
+    const refreshRecentRaceResults = async (showLoading = false) => {
+      if (showLoading) setRecentRaceResultsLoading(true);
+
+      const loaded = await loadOverviewRecentRaceResults();
+
+      if (!alive) return;
+
+      setRecentRaceResults(loaded);
+      setRecentRaceResultsLoading(false);
+    };
+
+    void refreshRecentRaceResults(true);
+
+    const intervalId = window.setInterval(() => {
+      void refreshRecentRaceResults(false);
+    }, 5 * 60_000);
+
+    const handleFocus = () => {
+      void refreshRecentRaceResults(false);
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      alive = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
@@ -9139,6 +9304,8 @@ export default function OverviewPage() {
                 todayRaceCount={raceWorld.todayRaces.length}
                 finance={data.finance}
                 operations={data.operations}
+                recentResults={recentRaceResults}
+                recentResultsLoading={recentRaceResultsLoading}
               />
             </div>
 

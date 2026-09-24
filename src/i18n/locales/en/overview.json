@@ -296,16 +296,11 @@
     "Dec": "Dec"
   },
   "managerFocus": {
-    "title": "Club Status & Quick Access",
-    "subtitle": "Current club signals and fast access to key management areas.",
-    "quickAccess": "Quick access",
-    "racePreparation": "Race Preparation",
-    "racePreparationHint": "Startlists, logistics and stage plans",
-    "squad": "Squad",
-    "squadHint": "Manage riders and roster",
-    "training": "Training",
-    "trainingHint": "Rider training and sessions",
-    "transfers": "Transfers",
-    "transfersHint": "Buy, sell and negotiate"
+    "title": "Club Status & Race Results",
+    "subtitle": "Current club signals and the latest winners from today and yesterday.",
+    "recentResults": "Today & yesterday results",
+    "stageLabel": "Stage {{stage}} of {{count}}",
+    "winner": "Winner",
+    "noRecentResults": "No completed race results are available from today or yesterday yet."
   }
 }

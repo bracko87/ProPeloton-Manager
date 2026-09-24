@@ -296,16 +296,11 @@
     "Dec": "Dic"
   },
   "managerFocus": {
-    "title": "Stato del club e accesso rapido",
-    "subtitle": "Segnali attuali del club e accesso rapido alle principali aree di gestione.",
-    "quickAccess": "Accesso rapido",
-    "racePreparation": "Preparazione gara",
-    "racePreparationHint": "Liste di partenza, logistica e piani di tappa",
-    "squad": "Squadra",
-    "squadHint": "Gestisci corridori e rosa",
-    "training": "Allenamento",
-    "trainingHint": "Allenamento e sessioni dei corridori",
-    "transfers": "Trasferimenti",
-    "transfersHint": "Compra, vendi e negozia"
+    "title": "Stato del club e risultati",
+    "subtitle": "Segnali attuali del club e ultimi vincitori di oggi e ieri.",
+    "recentResults": "Risultati di oggi e ieri",
+    "stageLabel": "Tappa {{stage}} di {{count}}",
+    "winner": "Vincitore",
+    "noRecentResults": "Non sono ancora disponibili risultati completati di oggi o ieri."
   }
 }
