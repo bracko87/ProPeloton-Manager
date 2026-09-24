@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   ShieldCheck,
   Activity,
+  GitBranch,
   Bug,
   Star,
   Mail,
@@ -134,6 +135,7 @@ export default function Sidebar({
   const location = useLocation()
   const { isAdmin } = useAppAdmin()
   const [raceOperationsProblems, setRaceOperationsProblems] = useState(0)
+  const [migrationProblems, setMigrationProblems] = useState(0)
   const [unreadBugReports, setUnreadBugReports] = useState(0)
   const [pendingPlayerReviews, setPendingPlayerReviews] = useState(0)
   const [unreadContactMessages, setUnreadContactMessages] = useState(0)
@@ -220,6 +222,58 @@ export default function Sidebar({
       window.removeEventListener('focus', handleRefresh)
       window.removeEventListener(
         'admin-race-operations-count-refresh',
+        handleRefresh,
+      )
+    }
+  }, [isAdmin])
+
+  useEffect(() => {
+    let alive = true
+
+    if (!isAdmin) {
+      setMigrationProblems(0)
+      return () => {
+        alive = false
+      }
+    }
+
+    const refreshMigrationProblems = async (): Promise<void> => {
+      const { data, error } = await supabase.rpc(
+        'get_admin_season_migration_problem_count_v1',
+      )
+
+      if (!alive) return
+
+      if (error) {
+        console.warn('Could not load Migration Process problem count:', error)
+        return
+      }
+
+      setMigrationProblems(Number(data ?? 0))
+    }
+
+    void refreshMigrationProblems()
+
+    const intervalId = window.setInterval(() => {
+      void refreshMigrationProblems()
+    }, 15 * 60_000)
+
+    const handleRefresh = (): void => {
+      void refreshMigrationProblems()
+    }
+
+    window.addEventListener('focus', handleRefresh)
+    window.addEventListener(
+      'admin-season-migration-count-refresh',
+      handleRefresh,
+    )
+
+    return () => {
+      alive = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', handleRefresh)
+      window.removeEventListener(
+        'admin-season-migration-count-refresh',
         handleRefresh,
       )
     }
@@ -612,6 +666,46 @@ export default function Sidebar({
 
                     <div className="mt-1 text-xs leading-tight text-white/55">
                       Race calculation and replay monitor
+                    </div>
+                  </div>
+                )}
+              </NavLink>
+
+              <NavLink
+                to="/dashboard/admin/migration-process"
+                className={`${linkClass(
+                  location.pathname === '/dashboard/admin/migration-process' ||
+                    location.pathname.startsWith(
+                      '/dashboard/admin/migration-process/',
+                    ),
+                )} relative`}
+              >
+                <div className="relative mt-0.5 flex-shrink-0">
+                  <GitBranch size={18} />
+
+                  {collapsed && migrationProblems > 0 ? (
+                    <span className="absolute -right-2 -top-2 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold leading-[18px] text-white shadow-sm">
+                      {migrationProblems > 99 ? '99+' : migrationProblems}
+                    </span>
+                  ) : null}
+                </div>
+
+                {!collapsed && (
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-base font-semibold leading-tight">
+                        Migration Process
+                      </div>
+
+                      {migrationProblems > 0 ? (
+                        <span className="inline-flex min-w-[22px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[11px] font-extrabold text-white shadow-sm">
+                          {migrationProblems > 99 ? '99+' : migrationProblems}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="mt-1 text-xs leading-tight text-white/55">
+                      Season rollover checklist and health
                     </div>
                   </div>
                 )}
