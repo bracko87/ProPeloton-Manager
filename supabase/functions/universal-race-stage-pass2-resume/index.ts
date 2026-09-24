@@ -17,7 +17,7 @@ declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 type JsonObject = Record<string, unknown>;
 const SOURCE_COMMIT = "651310fb364897b8cb70d1c8be8d5cde7fbfb043";
 const FALLBACK_SOURCE_COMMIT = SOURCE_COMMIT;
-const CONTRACT = "universal_race_pass2_resume_v18";
+const CONTRACT = "universal_race_pass2_resume_v19";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -354,8 +354,11 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
   const runId = text(claim.simulation_run_id);
   if (!stageId || !runId) throw new Error("Pass 2 claim is missing stage/run identity.");
   const scenarioMode = text(claim.scenario_mode) || "none";
-  const useFallback = scenarioMode === "emergency_fallback";
-  const fallbackReason = useFallback ? "same_engine_recovery" : null;
+  const legacyFallbackRequested = scenarioMode === "emergency_fallback";
+  // Recovery must preserve the same complete sporting input. A retry may not
+  // silently drop the stored scenario/director layer to force publication.
+  const useFallback = false;
+  const fallbackReason = legacyFallbackRequested ? "same_full_input_recovery" : null;
 
   try {
     await heartbeat(supabase, stageId, runId, "pass2_payload_loading", { source_commit: SOURCE_COMMIT });
@@ -440,11 +443,15 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
         primarySourceCommit: SOURCE_COMMIT,
         fallbackUsed: useFallback,
         fallbackReason,
-        fallbackSourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : null,
-        calculationSurvivalModel: "split_pass_v3",
+        fallbackSourceCommit: null,
+        recoveryPolicy: "same_full_input_or_quarantine_v1",
+        scenarioPreserved: Boolean(scenarioData),
+        calculationSurvivalModel: "split_pass_v4_same_full_input",
+        recoveryPolicy: "same_full_input_or_quarantine_v1",
+        scenarioPreserved: Boolean(scenarioData),
       },
       calculationSurvival: {
-        modelVersion: "split_pass_v3",
+        modelVersion: "split_pass_v4_same_full_input",
         resumedPass2: true,
         sourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : SOURCE_COMMIT,
         primarySourceCommit: SOURCE_COMMIT,
