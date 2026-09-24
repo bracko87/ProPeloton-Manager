@@ -7558,6 +7558,7 @@ function ClubHonoursCard({
   );
 }
 
+// Deployment refresh marker: enriched rolling race-results card v2.
 function ManagerFocusCard({
   upcomingRaceCount,
   todayRaceCount,
