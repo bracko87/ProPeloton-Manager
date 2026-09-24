@@ -6,7 +6,7 @@ import {
   Clock3,
   GitBranch,
   History,
-  LabFlask,
+  FlaskConical,
   Loader2,
   RefreshCw,
   ShieldCheck,
@@ -795,7 +795,7 @@ export default function AdminMigrationProcessPage(): JSX.Element {
           <section className="rounded-2xl border border-black/5 bg-white shadow-sm">
             <div className="border-b border-gray-100 px-5 py-4">
               <div className="flex items-center gap-2">
-                <LabFlask size={20} className="text-gray-700" />
+                <FlaskConical size={20} className="text-gray-700" />
                 <h2 className="text-lg font-extrabold text-gray-950">Migration test checkpoints</h2>
               </div>
               <p className="mt-1 text-sm text-gray-600">
