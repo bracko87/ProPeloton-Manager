@@ -338,8 +338,10 @@ export default function AdminSystemHealthPage(): JSX.Element {
           System Health
         </h1>
         <p className="mt-2 max-w-5xl text-sm leading-6 text-gray-600">
-          Monitor critical game processes, user-sensitive workflows, scheduler execution,
-          incidents and automatic administrator alerts.
+          Monitor platform and gameplay services outside the race-stage pipeline:
+          schedulers, finance, transfers, staff, scouting, infrastructure, equipment,
+          messaging and administrator alerts. Race calculation, replay readiness and
+          result publication stay exclusively in Race Operations.
         </p>
       </div>
 
@@ -461,9 +463,9 @@ export default function AdminSystemHealthPage(): JSX.Element {
                 <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <div className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-sky-700">Process monitor</div>
-                    <h2 className="mt-1 text-lg font-extrabold text-gray-950">Game systems</h2>
+                    <h2 className="mt-1 text-lg font-extrabold text-gray-950">Platform & gameplay systems</h2>
                   </div>
-                  <div className="text-xs text-gray-500">Latest execution or watchdog state</div>
+                  <div className="text-xs text-gray-500">Race-stage operations are monitored separately</div>
                 </div>
                 <div className="overflow-x-auto">
                   <div className="min-w-[1050px]">
