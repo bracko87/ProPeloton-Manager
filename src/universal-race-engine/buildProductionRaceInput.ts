@@ -789,7 +789,16 @@ export function buildProductionUniversalRaceEngineInput(
         inStageEnergyCostMultiplier: clamp(preparationApplied ? numberValue(modifier.in_stage_energy_cost_multiplier, 1) : 1, 0.75, 1.35),
         postStageFatigueMultiplier: clamp((preparationApplied ? numberValue(modifier.post_stage_fatigue_multiplier, 1) : 1) * (1 - clamp(numberValue(modifier.equipment_fatigue_reduction_pct, 0), 0, 10) / 100), 0.7, 1.4),
         postStageRecoveryBonusPoints: clamp(preparationApplied ? numberValue(modifier.post_stage_recovery_bonus_points, 0) : 0, 0, 4),
-        performanceBonusPoints: 0,
+        performanceBonusPoints: clamp(
+          preparationApplied
+            ? numberValue(
+                modifier.non_neutral_command_capability_bonus,
+                0,
+              )
+            : 0,
+          0,
+          1.5,
+        ),
         equipmentStagePerformancePct: (() => {
           const equipmentPct = clamp(
             numberValue(

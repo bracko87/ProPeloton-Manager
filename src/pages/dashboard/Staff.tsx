@@ -479,7 +479,7 @@ const STAFF_ROLE_INFORMATION: Record<StaffRole, StaffRoleInformation> = {
     gameplay: [
       'Combines with the Team Doctor and Physio in the live medical-support calculation.',
       'Supports daily recovery, health-risk reduction and fitness consistency.',
-      'Race-specific nutrition workflows can be expanded separately from the club-wide medical effect.',
+      'Now also contributes to race feeding, hydration/fatigue control, post-stage recovery and health protection in Race Preparation.',
     ],
   },
   mechanic: {
@@ -501,8 +501,8 @@ const STAFF_ROLE_INFORMATION: Record<StaffRole, StaffRoleInformation> = {
     ],
   },
   sport_director: {
-    statusLabel: 'Planned connection',
-    statusClassName: 'bg-amber-100 text-amber-800',
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
     capacitySummary: 'Capacity follows the live Sport Director role limit.',
     purpose:
       'Owns race tactics, in-race organisation, motivation, teamwork and domestique coordination.',
@@ -514,8 +514,8 @@ const STAFF_ROLE_INFORMATION: Record<StaffRole, StaffRoleInformation> = {
     ],
     gameplay: [
       'The role, contracts, courses and capacity are live.',
-      'The full end-to-end race-tactics bonus connection remains a planned gameplay integration.',
-      'Until that connection is completed, do not assume every displayed tactical effect changes race results.',
+      'Selected Sport Directors now generate live Race Support from their staff quality and availability.',
+      'Race Support is consumed by the universal race engine as a capped readiness/performance and preparation-support bonus.',
     ],
   },
   scout_analyst: {
@@ -537,12 +537,12 @@ const STAFF_ROLE_INFORMATION: Record<StaffRole, StaffRoleInformation> = {
     ],
   },
   u23_head_coach: {
-    statusLabel: 'Training live',
-    statusClassName: 'bg-indigo-100 text-indigo-700',
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
     capacitySummary:
       'One U23 Head Coach after the Developing Team is unlocked.',
     purpose:
-      'Manages developing-team training, young-rider development and the future U23 race-tactical workflow.',
+      'Manages developing-team training, young-rider development and stage-by-stage U23 race tactics.',
     attributes: [
       'Youth Training controls regular-training quality for the developing team.',
       'Training Efficiency supports load and recovery planning.',
@@ -552,8 +552,8 @@ const STAFF_ROLE_INFORMATION: Record<StaffRole, StaffRoleInformation> = {
     ],
     gameplay: [
       'Can manage the same rolling three-day training system for U23 riders once hired and enabled.',
-      'First-team and U23 automation remain separate.',
-      'Automatic stage-by-stage U23 race planning is a later dedicated integration.',
+      'Automatic stage-by-stage U23 race planning is live, including initial generation on race-plan submission and regeneration after completed stages.',
+      'When U23 automation is enabled, coach quality also contributes a capped Race Support bonus to the universal race engine.',
     ],
   },
 }
