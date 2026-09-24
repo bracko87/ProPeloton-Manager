@@ -301,6 +301,10 @@
     "recentResults": "Resultados de hoy y ayer",
     "stageLabel": "Etapa {{stage}} de {{count}}",
     "winner": "Ganador",
-    "noRecentResults": "Todavía no hay resultados completados disponibles de hoy o de ayer."
+    "noRecentResults": "Todavía no hay resultados completados disponibles de hoy o de ayer.",
+    "stageWinner": "Ganador de etapa",
+    "gcLeader": "Líder general",
+    "mountainLeader": "Montaña",
+    "pointsLeader": "Líder por puntos"
   }
 }

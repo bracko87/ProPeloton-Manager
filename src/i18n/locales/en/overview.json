@@ -301,6 +301,10 @@
     "recentResults": "Today & yesterday results",
     "stageLabel": "Stage {{stage}} of {{count}}",
     "winner": "Winner",
-    "noRecentResults": "No completed race results are available from today or yesterday yet."
+    "noRecentResults": "No completed race results are available from today or yesterday yet.",
+    "stageWinner": "Stage winner",
+    "gcLeader": "GC leader",
+    "mountainLeader": "Climber",
+    "pointsLeader": "Points leader"
   }
 }

@@ -416,10 +416,29 @@ type OverviewRecentRaceResult = {
   stageNumber: number;
   stageCount: number;
   stageDate: string;
+
   winnerRiderId: string | null;
   winnerName: string;
   winnerTeamId: string | null;
   winnerTeamName: string | null;
+
+  gcRiderId: string | null;
+  gcName: string | null;
+  gcTeamId: string | null;
+  gcTeamName: string | null;
+
+  mountainRiderId: string | null;
+  mountainName: string | null;
+  mountainTeamId: string | null;
+  mountainTeamName: string | null;
+  mountainPoints: number | null;
+
+  pointsRiderId: string | null;
+  pointsName: string | null;
+  pointsTeamId: string | null;
+  pointsTeamName: string | null;
+  pointsTotal: number | null;
+
   href: string;
 };
 
@@ -2510,6 +2529,44 @@ function normalizeOverviewRecentRaceResults(
           asString(row.winner_team_id ?? row.winnerTeamId, "") || null,
         winnerTeamName:
           asString(row.winner_team_name ?? row.winnerTeamName, "") || null,
+
+        gcRiderId:
+          asString(row.gc_rider_id ?? row.gcRiderId, "") || null,
+        gcName:
+          asString(row.gc_name ?? row.gcName, "") || null,
+        gcTeamId:
+          asString(row.gc_team_id ?? row.gcTeamId, "") || null,
+        gcTeamName:
+          asString(row.gc_team_name ?? row.gcTeamName, "") || null,
+
+        mountainRiderId:
+          asString(row.mountain_rider_id ?? row.mountainRiderId, "") || null,
+        mountainName:
+          asString(row.mountain_name ?? row.mountainName, "") || null,
+        mountainTeamId:
+          asString(row.mountain_team_id ?? row.mountainTeamId, "") || null,
+        mountainTeamName:
+          asString(row.mountain_team_name ?? row.mountainTeamName, "") || null,
+        mountainPoints: Number.isFinite(
+          asNumber(row.mountain_points ?? row.mountainPoints, Number.NaN),
+        )
+          ? asNumber(row.mountain_points ?? row.mountainPoints, 0)
+          : null,
+
+        pointsRiderId:
+          asString(row.points_rider_id ?? row.pointsRiderId, "") || null,
+        pointsName:
+          asString(row.points_name ?? row.pointsName, "") || null,
+        pointsTeamId:
+          asString(row.points_team_id ?? row.pointsTeamId, "") || null,
+        pointsTeamName:
+          asString(row.points_team_name ?? row.pointsTeamName, "") || null,
+        pointsTotal: Number.isFinite(
+          asNumber(row.points_total ?? row.pointsTotal, Number.NaN),
+        )
+          ? asNumber(row.points_total ?? row.pointsTotal, 0)
+          : null,
+
         href: `#/dashboard/races/${raceId}`,
       };
     })
@@ -7614,49 +7671,93 @@ function ManagerFocusCard({
           ) : activeResult ? (
             <a
               href={activeResult.href}
-              className="mt-3 block rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 transition hover:border-sky-300 hover:bg-white"
+              className="mt-3 grid min-h-[112px] grid-cols-[78px_minmax(0,1fr)] overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 transition hover:border-sky-300 hover:bg-white"
             >
-              <div className="flex min-w-0 items-center justify-between gap-4">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="shrink-0 text-xs font-semibold text-slate-500">
-                    {formatShortOverviewDate(activeResult.stageDate)}
-                  </span>
-                  {activeResult.countryCode ? (
-                    <span
-                      className="shrink-0 text-base"
-                      aria-label={activeResult.countryCode}
-                    >
-                      {countryCodeToFlagEmoji(activeResult.countryCode)}
+              <div className="flex items-center justify-center border-r border-slate-200 bg-white/70 px-3 text-center">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    {formatShortOverviewDate(activeResult.stageDate).split(" ")[0]}
+                  </div>
+                  <div className="mt-1 text-xl font-bold tabular-nums text-slate-950">
+                    {formatShortOverviewDate(activeResult.stageDate).split(" ")[1] ?? ""}
+                  </div>
+                </div>
+              </div>
+
+              <div className="min-w-0 px-4 py-3">
+                <div className="flex min-w-0 items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {activeResult.countryCode ? (
+                      <img
+                        src={`https://flagcdn.com/w40/${activeResult.countryCode.toLowerCase()}.png`}
+                        alt={activeResult.countryCode}
+                        className="h-[16px] w-[24px] shrink-0 rounded-[2px] object-cover shadow-sm ring-1 ring-slate-200"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="h-[16px] w-[24px] shrink-0 rounded-[2px] bg-slate-200" />
+                    )}
+
+                    <span className="truncate text-sm font-bold text-slate-950">
+                      {activeResult.raceName}
                     </span>
-                  ) : null}
-                  <span className="truncate text-sm font-bold text-slate-950">
-                    {activeResult.raceName}
+                  </div>
+
+                  <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-inset ring-slate-200">
+                    {t("managerFocus.stageLabel", {
+                      stage: activeResult.stageNumber,
+                      count: activeResult.stageCount,
+                    })}
                   </span>
                 </div>
 
-                <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-inset ring-slate-200">
-                  {t("managerFocus.stageLabel", {
-                    stage: activeResult.stageNumber,
-                    count: activeResult.stageCount,
-                  })}
-                </span>
-              </div>
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="min-w-0 rounded-lg border border-amber-100 bg-amber-50/70 px-2.5 py-2">
+                    <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
+                      <span className="h-2 w-2 rounded-full bg-amber-400" />
+                      {t("managerFocus.stageWinner")}
+                    </div>
+                    <div className="mt-1 truncate text-xs font-bold text-slate-950">
+                      [{activeResult.winnerName}]
+                    </div>
+                  </div>
 
-              <div className="mt-2 flex min-w-0 items-center gap-2 text-xs text-slate-600">
-                <span className="shrink-0 font-semibold text-slate-500">
-                  {t("managerFocus.winner")}
-                </span>
-                <span className="truncate font-bold text-slate-950">
-                  [{activeResult.winnerName}]
-                </span>
-                {activeResult.winnerTeamName ? (
-                  <>
-                    <span className="shrink-0 text-slate-300">•</span>
-                    <span className="truncate text-slate-500">
-                      {activeResult.winnerTeamName}
-                    </span>
-                  </>
-                ) : null}
+                  {activeResult.stageCount > 1 && activeResult.gcName ? (
+                    <div className="min-w-0 rounded-lg border border-yellow-100 bg-yellow-50/70 px-2.5 py-2">
+                      <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-yellow-700">
+                        <span className="h-2 w-2 rounded-full bg-yellow-400" />
+                        {t("managerFocus.gcLeader")}
+                      </div>
+                      <div className="mt-1 truncate text-xs font-bold text-slate-950">
+                        [{activeResult.gcName}]
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeResult.mountainName ? (
+                    <div className="min-w-0 rounded-lg border border-red-100 bg-red-50/60 px-2.5 py-2">
+                      <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-red-700">
+                        <span className="h-2 w-2 rounded-full bg-red-500" />
+                        {t("managerFocus.mountainLeader")}
+                      </div>
+                      <div className="mt-1 truncate text-xs font-bold text-slate-950">
+                        [{activeResult.mountainName}]
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {activeResult.pointsName ? (
+                    <div className="min-w-0 rounded-lg border border-emerald-100 bg-emerald-50/60 px-2.5 py-2">
+                      <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        {t("managerFocus.pointsLeader")}
+                      </div>
+                      <div className="mt-1 truncate text-xs font-bold text-slate-950">
+                        [{activeResult.pointsName}]
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </a>
           ) : (

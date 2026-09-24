@@ -301,6 +301,10 @@
     "recentResults": "Ergebnisse von heute & gestern",
     "stageLabel": "Etappe {{stage}} von {{count}}",
     "winner": "Sieger",
-    "noRecentResults": "Für heute oder gestern sind noch keine abgeschlossenen Rennergebnisse verfügbar."
+    "noRecentResults": "Für heute oder gestern sind noch keine abgeschlossenen Rennergebnisse verfügbar.",
+    "stageWinner": "Etappensieger",
+    "gcLeader": "Gesamtführung",
+    "mountainLeader": "Bergwertung",
+    "pointsLeader": "Punkteführung"
   }
 }

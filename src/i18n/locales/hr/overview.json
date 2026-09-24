@@ -301,6 +301,10 @@
     "recentResults": "Rezultati danas i jučer",
     "stageLabel": "Etapa {{stage}} od {{count}}",
     "winner": "Pobjednik",
-    "noRecentResults": "Još nema završenih rezultata utrka za danas ili jučer."
+    "noRecentResults": "Još nema završenih rezultata utrka za danas ili jučer.",
+    "stageWinner": "Pobjednik etape",
+    "gcLeader": "Vodeći ukupno",
+    "mountainLeader": "Brdski poredak",
+    "pointsLeader": "Bodovni poredak"
   }
 }
