@@ -705,7 +705,7 @@ export default function Sidebar({
                     </div>
 
                     <div className="mt-1 text-xs leading-tight text-white/55">
-                      Season rollover checklist and health
+                      Season rollover checklist and migration health
                     </div>
                   </div>
                 )}
