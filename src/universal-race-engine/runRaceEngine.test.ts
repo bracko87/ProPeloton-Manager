@@ -7629,6 +7629,24 @@ describe('Phase 5 dynamic chase activation and stage-profile survival targets', 
       'chase_emergency_rail_prolonged_saturation',
     )
   })
+
+  it('adds bounded natural rhythm to the chase-realism rail without scripting a catch', () => {
+    const source = readFileSync(
+      new URL('./runRaceEngine.ts', import.meta.url),
+      'utf8',
+    )
+
+    expect(source).toContain('Phase 11P5 natural chase rhythm')
+    expect(source).toContain('roadChaseRhythmStateSeconds')
+    expect(source).toContain(
+      'calculateRoadChaseRhythmClosureAdjustmentSeconds',
+    )
+    expect(source).toContain('baseClosureSeconds * 0.3')
+    expect(source).toContain('stepDistanceKm * 4.5')
+    expect(source).toContain('stepDistanceKm * 15')
+    expect(source).not.toContain('preferredCatch')
+    expect(source).not.toContain('targetCatchKm')
+  })
   it('keeps the Phase 3 to Phase 4 replay on one continuous stored checkpoint sequence', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
     const timeline = result.replayTimeline
