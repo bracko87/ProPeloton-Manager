@@ -8298,6 +8298,12 @@ function getOpeningEffectiveTerrain(
   return 'flat'
 }
 
+
+const roadOpeningRouteSegmentCacheV1 = new WeakMap<
+  UniversalStageInput,
+  Map<string, readonly RoadOpeningRouteSegment[]>
+>()
+
 function buildRoadOpeningRouteSegments(
   stage: UniversalStageInput,
   rangeStartKm: number,
@@ -8305,6 +8311,15 @@ function buildRoadOpeningRouteSegments(
 ): readonly RoadOpeningRouteSegment[] {
   const startKm = clamp(rangeStartKm, 0, stage.distanceKm)
   const endKm = clamp(rangeEndKm, startKm, stage.distanceKm)
+  const cacheKey = `${deterministicRound(startKm, 6)}|${deterministicRound(endKm, 6)}`
+  let stageCache = roadOpeningRouteSegmentCacheV1.get(stage)
+  if (!stageCache) {
+    stageCache = new Map<string, readonly RoadOpeningRouteSegment[]>()
+    roadOpeningRouteSegmentCacheV1.set(stage, stageCache)
+  }
+  const cached = stageCache.get(cacheKey)
+  if (cached) return cached
+
   const segments: RoadOpeningRouteSegment[] = []
 
   for (let index = 1; index < stage.profilePoints.length; index += 1) {
@@ -8342,6 +8357,7 @@ function buildRoadOpeningRouteSegments(
     }
   }
 
+  stageCache.set(cacheKey, segments)
   return segments
 }
 
@@ -8677,6 +8693,12 @@ function calculateRoadStepEnergyComponents(
   }
 }
 
+
+const roadEnergyCostCacheV1 = new WeakMap<
+  UniversalRaceEngineInput,
+  Map<string, number>
+>()
+
 function calculateRoadEnergyCostForRange(
   input: UniversalRaceEngineInput,
   rider: UniversalRiderInput,
@@ -8686,6 +8708,21 @@ function calculateRoadEnergyCostForRange(
   endKm: number,
 ): number {
   if (endKm <= startKm || !readiness.eligibleToStart) return 0
+
+  let inputCache = roadEnergyCostCacheV1.get(input)
+  if (!inputCache) {
+    inputCache = new Map<string, number>()
+    roadEnergyCostCacheV1.set(input, inputCache)
+  }
+  const cacheKey = [
+    rider.riderId,
+    deterministicRound(commandEffortMultiplier, 8),
+    deterministicRound(readiness.fatigueBalance.inStageEnergyCostMultiplier, 8),
+    deterministicRound(startKm, 6),
+    deterministicRound(endKm, 6),
+  ].join('|')
+  const cached = inputCache.get(cacheKey)
+  if (cached !== undefined) return cached
 
   const segments = buildRoadOpeningRouteSegments(
     input.stage,
@@ -8704,7 +8741,9 @@ function calculateRoadEnergyCostForRange(
       ).netEnergyCost,
     0,
   )
-  return deterministicRound(total, 6)
+  const result = deterministicRound(total, 6)
+  inputCache.set(cacheKey, result)
+  return result
 }
 
 /**
@@ -15435,6 +15474,9 @@ export function resolveRoadPhase4Finish(
       row.phases.find((phase) => phase.phaseNumber === 4)!,
     ]),
   )
+  const commandResolutionByRiderId = new Map(
+    roadCommandResolution.riders.map((row) => [row.riderId, row] as const),
+  )
 
   const finishEligibleRiderIds = [...phase3.finishEligibleRiderIds].sort()
   const physicallyAvailableRiderIds = roadCommandResolution.riders
@@ -16060,9 +16102,7 @@ export function resolveRoadPhase4Finish(
   const profileEnergyAtKm = (riderId: string, kmFromStart: number): number => {
     const rider = ridersById.get(riderId)!
     const readiness = readinessByRiderId.get(riderId)!
-    const commandRow = roadCommandResolution.riders.find(
-      (row) => row.riderId === riderId,
-    )!
+    const commandRow = commandResolutionByRiderId.get(riderId)!
     const phase1Energy = phase1EnergyByRiderIdForProfile.get(riderId)
     const phase2Energy = phase2EnergyByRiderIdForProfile.get(riderId)
     const phase3State = phase3StateByRiderId.get(riderId)
@@ -19252,7 +19292,7 @@ export function resolveRoadPhase4Finish(
     .map((riderId) => {
       const rider = ridersById.get(riderId)!
       const riderState = provisionalRiderStates.find((state) => state.riderId === riderId)!
-      const commandRow = roadCommandResolution.riders.find((row) => row.riderId === riderId)!
+      const commandRow = commandResolutionByRiderId.get(riderId)!
       const phase = commandByRiderId.get(riderId)!
       const suitability = suitabilityByRiderId.get(riderId)!
       const scored = scoreRoadFinishRider(
