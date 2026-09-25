@@ -296,8 +296,8 @@
     "Dec": "Déc"
   },
   "managerFocus": {
-    "title": "État du club et résultats",
-    "subtitle": "Signaux actuels du club et derniers vainqueurs d’aujourd’hui et d’hier.",
+    "title": "État du club et Team Copilot",
+    "subtitle": "Signaux actuels du club et rappels opérationnels. Les conseils spécialisés restent réservés aux conseillers achetés.",
     "recentResults": "Résultats d’aujourd’hui et d’hier",
     "stageLabel": "Étape {{stage}} sur {{count}}",
     "winner": "Vainqueur",
@@ -305,6 +305,40 @@
     "stageWinner": "Vainqueur d’étape",
     "gcLeader": "Leader général",
     "mountainLeader": "Montagne",
-    "pointsLeader": "Leader aux points"
+    "pointsLeader": "Leader aux points",
+    "copilot": {
+      "title": "Team Copilot",
+      "coreBadge": "Rappels essentiels",
+      "riderFallback": "Coureur",
+      "injuredTitle": "{{name}} est blessé",
+      "sickTitle": "{{name}} est malade",
+      "unavailableTitle": "{{name}} n'est pas totalement disponible",
+      "healthBody": "Vérifiez ce coureur avant votre prochaine décision de sélection.",
+      "viewRider": "Voir le coureur",
+      "medicalBody": "Un élément de santé de l'effectif nécessite votre attention.",
+      "moraleBody": "Un élément lié au moral nécessite votre attention.",
+      "trainingBody": "Un élément d'entraînement nécessite votre attention.",
+      "equipmentBody": "Un élément d'équipement ou de ravitaillement nécessite votre attention.",
+      "scoutingBody": "Un élément de scouting nécessite votre attention.",
+      "raceBody": "Un élément de course ou de calendrier nécessite votre attention.",
+      "generalBody": "Un élément de gestion du club nécessite votre attention.",
+      "openFinance": "Ouvrir Finances",
+      "openInfrastructure": "Ouvrir Infrastructure",
+      "openSquad": "Ouvrir l'effectif",
+      "openTraining": "Ouvrir Entraînement",
+      "openEquipment": "Vérifier l'équipement",
+      "openScouting": "Ouvrir Scouting",
+      "openRace": "Ouvrir la course",
+      "review": "Vérifier",
+      "lowMoraleTitle": "Le moral de l'équipe est bas",
+      "lowMoraleBody": "Vérifiez l'effectif et les changements récents de moral.",
+      "contractsTitle": "Des contrats nécessitent votre attention ({{count}})",
+      "contractsBody": "Vérifiez les contrats des coureurs proches de leur échéance.",
+      "nextRaceTitle": "Prochaine course : {{race}}",
+      "allClearTitle": "Tout semble prêt",
+      "allClearBody": "Aucun rappel opérationnel ne nécessite votre attention pour le moment.",
+      "openCalendar": "Ouvrir le calendrier",
+      "boundaryNote": "Rappels essentiels uniquement. Les analyses des conseillers payants et Premium restent dans leurs espaces dédiés."
+    }
   }
 }
