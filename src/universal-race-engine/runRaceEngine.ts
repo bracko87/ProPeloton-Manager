@@ -35833,9 +35833,29 @@ export function buildUniversalReplaySynchronizationSummary(
           currentBridgeGap > currentPelotonGap + 0.000001 ||
           !authoritativeSampleMatchesReplay
         ) {
+          const bridgeInvalidReasons = [
+            lineageRiderIds.length === 0 ? 'empty_lineage_riders' : null,
+            !sameLineageDisplayCode ? 'display_code_changed' : null,
+            !lineageRidersRemainInGroup ? 'lineage_membership_changed' : null,
+            previousBridgeGap === undefined ? 'previous_bridge_gap_missing' : null,
+            currentBridgeGap === undefined ? 'current_bridge_gap_missing' : null,
+            previousPelotonGap === undefined ? 'previous_peloton_gap_missing' : null,
+            currentPelotonGap === undefined ? 'current_peloton_gap_missing' : null,
+            currentBridgeGap !== undefined && currentBridgeGap < 0
+              ? 'bridge_gap_negative'
+              : null,
+            currentBridgeGap !== undefined &&
+            currentPelotonGap !== undefined &&
+            currentBridgeGap > currentPelotonGap + 0.000001
+              ? 'bridge_behind_peloton'
+              : null,
+            !authoritativeSampleMatchesReplay
+              ? 'authoritative_sample_mismatch'
+              : null,
+          ].filter((reason): reason is string => reason !== null)
           allBridgeSequencesPhysicallyValid = false
           pushIssue(
-            `bridge_progress_invalid:${checkpoint.checkpointId}:${lineageRiderIds.join('|')}`,
+            `bridge_progress_invalid:${checkpoint.checkpointId}:${lineageRiderIds.join('|')}:reason=${bridgeInvalidReasons.join('+')}:prev=${previousBridge?.displayCode ?? 'none'}@${previousBridgeGap ?? 'na'}:current=${currentBridge?.displayCode ?? 'none'}@${currentBridgeGap ?? 'na'}:peloton=${currentPelotonGap ?? 'na'}:sample=${authoritativeSample?.gapToLeaderSeconds ?? 'na'}/${authoritativeSample?.gapToPelotonSeconds ?? 'na'}`,
           )
         }
       })
