@@ -13581,6 +13581,57 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
     expect(result.replaySynchronization.synchronized).toBe(true)
   })
 
+  it('keeps every active Phase 4 bridge sample inside the same canonical leader-peloton corridor', () => {
+    const results = [
+      runRaceEngine(createPhase11gMixedStressInput(0)),
+      runRaceEngine(createPhase11gMixedStressInput(5)),
+      runRaceEngine(createPhase11hLateClimbEnergyInput(45)),
+    ]
+    let inspectedSamples = 0
+
+    results.forEach((result) => {
+      const phase4 = result.roadRaceResolution.phase4Finish
+      if (!phase4) return
+
+      const mainGapAtKm = (km: number): number | null => {
+        const exactEnd = phase4.chaseSteps.find(
+          (step) => Math.abs(step.kmEnd - km) <= 0.00001,
+        )
+        if (exactEnd) return exactEnd.endGapSeconds
+        const exactStart = phase4.chaseSteps.find(
+          (step) => Math.abs(step.kmStart - km) <= 0.00001,
+        )
+        if (exactStart) return exactStart.startGapSeconds
+        const containing = phase4.chaseSteps.find(
+          (step) =>
+            km > step.kmStart + 0.00001 &&
+            km < step.kmEnd - 0.00001,
+        )
+        if (!containing) return null
+        const fraction =
+          (km - containing.kmStart) /
+          Math.max(0.000001, containing.kmEnd - containing.kmStart)
+        return (
+          containing.startGapSeconds +
+          (containing.endGapSeconds - containing.startGapSeconds) * fraction
+        )
+      }
+
+      phase4.bridgeGroups.forEach((bridge) => {
+        bridge.gapSamples.forEach((sample) => {
+          const mainGap = mainGapAtKm(sample.km)
+          if (mainGap === null) return
+          inspectedSamples += 1
+          expect(
+            sample.gapToLeaderSeconds + sample.gapToPelotonSeconds,
+          ).toBeCloseTo(mainGap, 4)
+        })
+      })
+    })
+
+    expect(inspectedSamples).toBeGreaterThan(0)
+  })
+
   it('keeps bridge-progress commentary attached only to riders still occupying the live bridge lineage', () => {
     const results = [
       runRaceEngine(createPhase11gMixedStressInput(0)),
