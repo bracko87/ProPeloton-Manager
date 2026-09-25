@@ -296,8 +296,8 @@
     "Dec": "Dez"
   },
   "managerFocus": {
-    "title": "Clubstatus & Rennergebnisse",
-    "subtitle": "Aktuelle Clubsignale und die neuesten Sieger von heute und gestern.",
+    "title": "Clubstatus & Team-Copilot",
+    "subtitle": "Aktuelle Clubsignale und operative Erinnerungen. Fachberatung bleibt bei gekauften Beratern.",
     "recentResults": "Ergebnisse von heute & gestern",
     "stageLabel": "Etappe {{stage}} von {{count}}",
     "winner": "Sieger",
@@ -305,6 +305,40 @@
     "stageWinner": "Etappensieger",
     "gcLeader": "Gesamtführung",
     "mountainLeader": "Bergwertung",
-    "pointsLeader": "Punkteführung"
+    "pointsLeader": "Punkteführung",
+    "copilot": {
+      "title": "Team-Copilot",
+      "coreBadge": "Basis-Hinweise",
+      "riderFallback": "Fahrer",
+      "injuredTitle": "{{name}} ist verletzt",
+      "sickTitle": "{{name}} ist krank",
+      "unavailableTitle": "{{name}} ist nicht voll verfügbar",
+      "healthBody": "Prüfe diesen Fahrer vor deiner nächsten Aufstellungsentscheidung.",
+      "viewRider": "Fahrer ansehen",
+      "medicalBody": "Ein Gesundheitsthema im Kader benötigt deine Aufmerksamkeit.",
+      "moraleBody": "Ein Moralthema benötigt deine Aufmerksamkeit.",
+      "trainingBody": "Ein Trainingsthema benötigt deine Aufmerksamkeit.",
+      "equipmentBody": "Ein Ausrüstungs- oder Rennversorgungs-Thema benötigt deine Aufmerksamkeit.",
+      "scoutingBody": "Ein Scouting-Thema benötigt deine Aufmerksamkeit.",
+      "raceBody": "Ein Renn- oder Kalenderthema benötigt deine Aufmerksamkeit.",
+      "generalBody": "Ein Thema im Clubmanagement benötigt deine Aufmerksamkeit.",
+      "openFinance": "Finanzen öffnen",
+      "openInfrastructure": "Infrastruktur öffnen",
+      "openSquad": "Kader öffnen",
+      "openTraining": "Training öffnen",
+      "openEquipment": "Ausrüstung prüfen",
+      "openScouting": "Scouting öffnen",
+      "openRace": "Rennen öffnen",
+      "review": "Prüfen",
+      "lowMoraleTitle": "Die Teammoral ist niedrig",
+      "lowMoraleBody": "Prüfe den Kader und die jüngsten Moralveränderungen.",
+      "contractsTitle": "Verträge benötigen Aufmerksamkeit ({{count}})",
+      "contractsBody": "Prüfe Fahrerverträge, deren Ablauf näher rückt.",
+      "nextRaceTitle": "Nächstes Rennen: {{race}}",
+      "allClearTitle": "Alles sieht bereit aus",
+      "allClearBody": "Aktuell gibt es keine operativen Hinweise, die deine Aufmerksamkeit benötigen.",
+      "openCalendar": "Kalender öffnen",
+      "boundaryNote": "Nur Basis-Hinweise. Bezahlte Berater- und Premium-Analysen bleiben in ihren eigenen Bereichen."
+    }
   }
 }
