@@ -1,6 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 
+type ScoutIntelligencePayload = {
+  has_scout_report: boolean
+  precision_score: number | null
+  precision_tier: string | null
+  overall_label: string | null
+  potential_label: string | null
+  analyst_staff_id: string | null
+  analyst_name: string | null
+  analyst_quality: number | null
+  analysis_confidence_pct: number | null
+  analysis_confidence_label: string | null
+}
+
 type ComparisonPayload = {
   club_id: string
   rider_id: string
@@ -9,6 +22,7 @@ type ComparisonPayload = {
   salary_rank: number | null
   would_be_highest_paid_in_role: boolean
   role_duplication_warning: boolean
+  scout_intelligence?: ScoutIntelligencePayload | null
 }
 
 type ReportAccessPayload = {
@@ -276,6 +290,43 @@ export default function TransferNegotiationIntelligence({
                     Squad already has several riders in this role.
                   </div>
                 ) : null}
+                <div className="mt-2 border-t border-slate-200 pt-2">
+                  Scout/Analyst confidence:{' '}
+                  <span className="font-semibold capitalize">
+                    {comparison?.scout_intelligence?.analysis_confidence_label ?? 'limited'}
+                  </span>
+                  {comparison?.scout_intelligence?.analysis_confidence_pct != null
+                    ? ' (' + Math.round(comparison.scout_intelligence.analysis_confidence_pct) + '%)'
+                    : ''}
+                </div>
+                {comparison?.scout_intelligence?.analyst_name ? (
+                  <div>
+                    Analyst:{' '}
+                    <span className="font-semibold">
+                      {comparison.scout_intelligence.analyst_name}
+                    </span>
+                  </div>
+                ) : null}
+                {comparison?.scout_intelligence?.has_scout_report ? (
+                  <>
+                    <div>
+                      Scouted overall:{' '}
+                      <span className="font-semibold">
+                        {comparison.scout_intelligence.overall_label ?? '—'}
+                      </span>
+                    </div>
+                    <div>
+                      Scouted potential:{' '}
+                      <span className="font-semibold">
+                        {comparison.scout_intelligence.potential_label ?? '—'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-slate-500">
+                    No completed scout report yet; confidence is based on your active Scout/Analyst.
+                  </div>
+                )}
               </div>
             </div>
 
