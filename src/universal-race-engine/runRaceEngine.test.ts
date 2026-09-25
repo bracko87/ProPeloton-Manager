@@ -13581,6 +13581,47 @@ describe('Phase 7 replay continuity and measured chase pacing', () => {
     expect(result.replaySynchronization.synchronized).toBe(true)
   })
 
+  it('keeps bridge-progress commentary attached only to riders still occupying the live bridge lineage', () => {
+    const results = [
+      runRaceEngine(createPhase11gMixedStressInput(0)),
+      runRaceEngine(createPhase11gMixedStressInput(5)),
+      runRaceEngine(createPhase11hLateClimbEnergyInput(45)),
+    ]
+    let inspectedBridgeProgressEntries = 0
+
+    results.forEach((result) => {
+      result.replayTimeline.checkpoints.forEach((checkpoint) => {
+        checkpoint.commentary
+          .filter((entry) => entry.eventType === 'bridge_progress')
+          .forEach((entry) => {
+            inspectedBridgeProgressEntries += 1
+            const liveBridgeGroup =
+              checkpoint.groups.find(
+                (group) =>
+                  entry.physicalLineageId !== null &&
+                  entry.physicalLineageId !== undefined &&
+                  group.physicalLineageId === entry.physicalLineageId,
+              ) ??
+              checkpoint.groups.find((group) =>
+                entry.riderIds.every((riderId) =>
+                  group.riderIds.includes(riderId),
+                ),
+              )
+
+            expect(entry.riderIds.length).toBeGreaterThan(0)
+            expect(liveBridgeGroup).toBeDefined()
+            expect(
+              entry.riderIds.every((riderId) =>
+                liveBridgeGroup!.riderIds.includes(riderId),
+              ),
+            ).toBe(true)
+          })
+      })
+    })
+
+    expect(inspectedBridgeProgressEntries).toBeGreaterThan(0)
+  })
+
   it('starts the final chase from the persistent physical Phase 3 front lineage', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
     const phase3 = result.roadRaceResolution.phase3Decisive!
