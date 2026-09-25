@@ -287,6 +287,14 @@ export default function TransferShortlistPage({
                         </strong>{' '}
                         {row.overall_label ?? '—'}
                       </span>
+                      {row.is_scouted || row.potential_label ? (
+                        <span>
+                          <strong className="text-slate-900">
+                            Potential
+                          </strong>{' '}
+                          {row.potential_label ?? '—'}
+                        </span>
+                      ) : null}
                       <span>
                         <strong className="text-slate-900">
                           {t('shortlist.age')}
