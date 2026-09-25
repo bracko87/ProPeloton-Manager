@@ -296,8 +296,8 @@
     "Dec": "Dec"
   },
   "managerFocus": {
-    "title": "Club Status & Race Results",
-    "subtitle": "Current club signals and the latest winners from today and yesterday.",
+    "title": "Club Status & Team Copilot",
+    "subtitle": "Current club signals and operational reminders. Specialist advice stays with purchased advisors.",
     "recentResults": "Today & yesterday results",
     "stageLabel": "Stage {{stage}} of {{count}}",
     "winner": "Winner",
@@ -305,6 +305,40 @@
     "stageWinner": "Stage winner",
     "gcLeader": "GC leader",
     "mountainLeader": "Climber",
-    "pointsLeader": "Points leader"
+    "pointsLeader": "Points leader",
+    "copilot": {
+      "title": "Team Copilot",
+      "coreBadge": "Core reminders",
+      "riderFallback": "Rider",
+      "injuredTitle": "{{name}} is injured",
+      "sickTitle": "{{name}} is sick",
+      "unavailableTitle": "{{name}} is not fully available",
+      "healthBody": "Review this rider before your next lineup decision.",
+      "viewRider": "View rider",
+      "medicalBody": "A squad health item needs your attention.",
+      "moraleBody": "A morale item needs your attention.",
+      "trainingBody": "A training item needs your attention.",
+      "equipmentBody": "An equipment or race-supplies item needs your attention.",
+      "scoutingBody": "A scouting item needs your attention.",
+      "raceBody": "A race or calendar item needs your attention.",
+      "generalBody": "A club-management item needs your attention.",
+      "openFinance": "Open Finance",
+      "openInfrastructure": "Open Infrastructure",
+      "openSquad": "Open Squad",
+      "openTraining": "Open Training",
+      "openEquipment": "Check Equipment",
+      "openScouting": "Open Scouting",
+      "openRace": "Open race",
+      "review": "Review",
+      "lowMoraleTitle": "Team morale is low",
+      "lowMoraleBody": "Review the squad and recent morale changes.",
+      "contractsTitle": "Contracts need attention ({{count}})",
+      "contractsBody": "Review rider contracts that are approaching expiry.",
+      "nextRaceTitle": "Next race: {{race}}",
+      "allClearTitle": "Everything looks ready",
+      "allClearBody": "No operational reminders need your attention right now.",
+      "openCalendar": "Open calendar",
+      "boundaryNote": "Core reminders only. Paid advisor and Premium intelligence stays in its dedicated areas."
+    }
   }
 }
