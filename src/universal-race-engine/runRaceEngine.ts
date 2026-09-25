@@ -65,7 +65,7 @@ export const PPM_UNIVERSAL_RACE_ENGINE_KEY =
   'ppm_universal_race_v1' as const
 export const PPM_UNIVERSAL_RACE_ENGINE_VERSION = 1 as const
 export const UNIVERSAL_RACE_ENGINE_DEBUG_BUILD =
-  'phase11u-v1-grand-tour-survival-energy-semantics-2026-09-23' as const
+  'phase11p5-v1-natural-chase-rhythm-2026-09-25' as const
 
 export const RACE_TYPES = ['one_day', 'stage_race'] as const
 export type RaceType = (typeof RACE_TYPES)[number]
@@ -14984,6 +14984,101 @@ const PHASE11G_ROAD_CHASE_EMERGENCY_RAIL_PROLONGED_MIN_KM = 6
 const V5_3_1_GAP_CLOSURE_REALISM_SECONDS_PER_KM = 30
 const V5_3_1_GAP_CLOSURE_REALISM_MIN_KM = 6
 
+/*
+ * Phase 11P5 natural chase rhythm.
+ *
+ * The realism rail used to be perfectly constant over long flat sections.
+ * Whenever the physical peloton/escape speed difference was larger than that
+ * rail, the visible gap therefore fell by almost the same number of seconds
+ * every kilometre. The overall chase strength was credible, but the replay
+ * looked mechanical.
+ *
+ * This adds a small deterministic, smooth oscillation to the RAIL only. It
+ * does not add a target catch point, does not choose the winner, and does not
+ * alter the underlying peloton/front road speeds. The oscillation is expressed
+ * as a bounded state difference, so its cumulative effect cannot drift
+ * indefinitely: it redistributes closure between nearby road sections instead
+ * of making the chase systematically stronger or weaker.
+ */
+function roadChaseRhythmStateSeconds(
+  stage: UniversalStageInput,
+  kmFromStart: number,
+): number {
+  const primaryPhase =
+    calculateDeterministicUnitRoll(
+      `${stage.stageId}|phase11p5-chase-rhythm-primary-v1`,
+    ) *
+    Math.PI *
+    2
+  const secondaryPhase =
+    calculateDeterministicUnitRoll(
+      `${stage.stageId}|phase11p5-chase-rhythm-secondary-v1`,
+    ) *
+    Math.PI *
+    2
+
+  const primaryWave =
+    Math.sin((kmFromStart / 18) * Math.PI * 2 + primaryPhase) * 7
+  const secondaryWave =
+    Math.sin((kmFromStart / 7.5) * Math.PI * 2 + secondaryPhase) * 3
+
+  return deterministicRound(primaryWave + secondaryWave, 6)
+}
+
+function calculateRoadChaseRhythmClosureAdjustmentSeconds(
+  stage: UniversalStageInput,
+  currentGapSeconds: number,
+  currentKm: number,
+  stepEndKm: number,
+  raceProgress: number,
+  baseClosureSeconds: number,
+): number {
+  if (baseClosureSeconds <= 0 || stepEndKm <= currentKm) return 0
+
+  /*
+   * Large, established gaps can breathe most naturally. As the catch becomes
+   * imminent, damp the rhythm so a few seconds of cosmetic variation cannot
+   * create or prevent a materially different sporting outcome.
+   */
+  const gapDamping =
+    currentGapSeconds >= 180
+      ? 1
+      : currentGapSeconds >= 90
+        ? 0.8
+        : currentGapSeconds >= 45
+          ? 0.55
+          : 0.3
+  const raceDamping =
+    raceProgress >= 0.95
+      ? 0.35
+      : raceProgress >= 0.9
+        ? 0.6
+        : raceProgress <= 0.35
+          ? 0.45
+          : 1
+
+  const rawAdjustment =
+    (roadChaseRhythmStateSeconds(stage, currentKm) -
+      roadChaseRhythmStateSeconds(stage, stepEndKm)) *
+    gapDamping *
+    raceDamping
+
+  /*
+   * Never move the rail by more than 30% on one integration step. This keeps
+   * the existing physically verified closure limits authoritative while still
+   * producing visible surges and brief stabilisation periods in long chases.
+   */
+  const maximumAdjustment = Math.min(
+    baseClosureSeconds * 0.3,
+    Math.max(0, stepEndKm - currentKm) * 3,
+  )
+
+  return deterministicRound(
+    clamp(rawAdjustment, -maximumAdjustment, maximumAdjustment),
+    6,
+  )
+}
+
 function limitRoadChaseGapClosure(
   currentGapSeconds: number,
   calculatedNextGapSeconds: number,
@@ -15054,7 +15149,21 @@ function limitRoadChaseGapClosure(
     4.5,
     15,
   )
-  const distanceClosureLimit = stepDistanceKm * closurePerKmLimit
+  const baseDistanceClosureLimit = stepDistanceKm * closurePerKmLimit
+  const rhythmAdjustmentSeconds =
+    calculateRoadChaseRhythmClosureAdjustmentSeconds(
+      stage,
+      currentGapSeconds,
+      currentKm,
+      stepEndKm,
+      raceProgress,
+      baseDistanceClosureLimit,
+    )
+  const distanceClosureLimit = clamp(
+    baseDistanceClosureLimit + rhythmAdjustmentSeconds,
+    stepDistanceKm * 4.5,
+    stepDistanceKm * 15,
+  )
   const maximumClosureSeconds = Math.min(
     currentGapSeconds,
     distanceClosureLimit,
