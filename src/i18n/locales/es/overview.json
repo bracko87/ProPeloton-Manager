@@ -296,8 +296,8 @@
     "Dec": "Dic"
   },
   "managerFocus": {
-    "title": "Estado del club y resultados",
-    "subtitle": "Señales actuales del club y los últimos ganadores de hoy y ayer.",
+    "title": "Estado del club y Team Copilot",
+    "subtitle": "Señales actuales del club y recordatorios operativos. El asesoramiento especializado queda para los asesores contratados.",
     "recentResults": "Resultados de hoy y ayer",
     "stageLabel": "Etapa {{stage}} de {{count}}",
     "winner": "Ganador",
@@ -305,6 +305,40 @@
     "stageWinner": "Ganador de etapa",
     "gcLeader": "Líder general",
     "mountainLeader": "Montaña",
-    "pointsLeader": "Líder por puntos"
+    "pointsLeader": "Líder por puntos",
+    "copilot": {
+      "title": "Team Copilot",
+      "coreBadge": "Recordatorios básicos",
+      "riderFallback": "Ciclista",
+      "injuredTitle": "{{name}} está lesionado",
+      "sickTitle": "{{name}} está enfermo",
+      "unavailableTitle": "{{name}} no está totalmente disponible",
+      "healthBody": "Revisa a este ciclista antes de tu próxima decisión de alineación.",
+      "viewRider": "Ver ciclista",
+      "medicalBody": "Un asunto de salud de la plantilla requiere tu atención.",
+      "moraleBody": "Un asunto de moral requiere tu atención.",
+      "trainingBody": "Un asunto de entrenamiento requiere tu atención.",
+      "equipmentBody": "Un asunto de equipamiento o suministros de carrera requiere tu atención.",
+      "scoutingBody": "Un asunto de scouting requiere tu atención.",
+      "raceBody": "Un asunto de carrera o calendario requiere tu atención.",
+      "generalBody": "Un asunto de gestión del club requiere tu atención.",
+      "openFinance": "Abrir Finanzas",
+      "openInfrastructure": "Abrir Infraestructura",
+      "openSquad": "Abrir plantilla",
+      "openTraining": "Abrir Entrenamiento",
+      "openEquipment": "Revisar equipamiento",
+      "openScouting": "Abrir Scouting",
+      "openRace": "Abrir carrera",
+      "review": "Revisar",
+      "lowMoraleTitle": "La moral del equipo es baja",
+      "lowMoraleBody": "Revisa la plantilla y los cambios recientes de moral.",
+      "contractsTitle": "Los contratos requieren atención ({{count}})",
+      "contractsBody": "Revisa los contratos de ciclistas próximos a vencer.",
+      "nextRaceTitle": "Próxima carrera: {{race}}",
+      "allClearTitle": "Todo parece listo",
+      "allClearBody": "Ahora mismo no hay recordatorios operativos que requieran tu atención.",
+      "openCalendar": "Abrir calendario",
+      "boundaryNote": "Solo recordatorios básicos. La inteligencia de asesores de pago y Premium permanece en sus áreas específicas."
+    }
   }
 }
