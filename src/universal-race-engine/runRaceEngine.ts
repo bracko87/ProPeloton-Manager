@@ -17515,7 +17515,23 @@ export function resolveRoadPhase4Finish(
       escapeStillActive &&
       calculatedNextGapSeconds <
         currentGapSeconds - emergencyRailClosureLimitSeconds - 0.000001
-    let resolvedNextGapSeconds = boundedNextGapSeconds
+    /*
+     * Phase 11P3 canonical road corridor.
+     *
+     * Scenario guidance is part of the authoritative B/P gap. Apply it before
+     * evolving an active bridge, otherwise F is calculated against the
+     * pre-guidance peloton position while replay P uses the post-guidance
+     * position. That creates three mutually inconsistent distances:
+     * leader->F + F->P != leader->P.
+     */
+    const scenarioGuidedBaseNextGapSeconds =
+      applyRoadScenarioGapGuidanceV1(
+        input,
+        boundedNextGapSeconds,
+        stepEndKm,
+        stepDistanceKm,
+      )
+    let resolvedNextGapSeconds = scenarioGuidedBaseNextGapSeconds
 
     const bridgeStartGapToLeaderSeconds: number | null =
       bridgeActive && bridgeCurrentGapToLeaderSeconds !== null
@@ -17610,7 +17626,7 @@ export function resolveRoadPhase4Finish(
           PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001 &&
         bridgeClosureSeconds > 0.000001
       const pelotonCanReachFrontThisStep =
-        boundedNextGapSeconds <=
+        resolvedNextGapSeconds <=
           PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 0.000001 &&
         currentGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
       const bridgeMergeFraction = bridgeCanReachFrontThisStep
@@ -17624,7 +17640,7 @@ export function resolveRoadPhase4Finish(
         : Number.POSITIVE_INFINITY
       const pelotonClosureSeconds = Math.max(
         0,
-        currentGapSeconds - boundedNextGapSeconds,
+        currentGapSeconds - resolvedNextGapSeconds,
       )
       const pelotonCatchFraction = pelotonCanReachFrontThisStep
         ? clamp(
@@ -17645,7 +17661,7 @@ export function resolveRoadPhase4Finish(
           Math.max(
             0,
             currentGapSeconds +
-              (boundedNextGapSeconds - currentGapSeconds) *
+              (resolvedNextGapSeconds - currentGapSeconds) *
                 bridgeMergeFraction,
           ),
           6,
@@ -17776,7 +17792,7 @@ export function resolveRoadPhase4Finish(
         const tentativeGapToPelotonSeconds = deterministicRound(
           Math.max(
             0,
-            boundedNextGapSeconds - tentativeGapToLeaderSeconds,
+            resolvedNextGapSeconds - tentativeGapToLeaderSeconds,
           ),
           6,
         )
@@ -17804,7 +17820,7 @@ export function resolveRoadPhase4Finish(
             Math.max(
               0,
               currentGapSeconds +
-                (boundedNextGapSeconds - currentGapSeconds) * catchFraction,
+                (resolvedNextGapSeconds - currentGapSeconds) * catchFraction,
             ),
             6,
           )
@@ -17832,12 +17848,20 @@ export function resolveRoadPhase4Finish(
       }
     }
 
-    resolvedNextGapSeconds = applyRoadScenarioGapGuidanceV1(
-      input,
-      resolvedNextGapSeconds,
-      stepEndKm,
-      stepDistanceKm,
-    )
+    /*
+     * A bridge merge changes the leader composition and recalculates the
+     * remainder of this step, so run scenario guidance once on that new
+     * post-merge B/P result. Non-merge steps were already guided before bridge
+     * evolution and must not be guided twice.
+     */
+    if (bridgeMergedThisStep) {
+      resolvedNextGapSeconds = applyRoadScenarioGapGuidanceV1(
+        input,
+        resolvedNextGapSeconds,
+        stepEndKm,
+        stepDistanceKm,
+      )
+    }
 
     const caughtThisStep =
       escapeStillActive &&
