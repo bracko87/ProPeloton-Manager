@@ -445,6 +445,37 @@ type OverviewRecentRaceResult = {
   href: string;
 };
 
+type OverviewCopilotDomain =
+  | "general"
+  | "race"
+  | "medical"
+  | "training"
+  | "equipment"
+  | "scouting"
+  | "morale";
+
+type OverviewCopilotTone = "danger" | "warning" | "info" | "success";
+
+type OverviewCopilotItem = {
+  id: string;
+  domain: OverviewCopilotDomain;
+  tone: OverviewCopilotTone;
+  priority: number;
+  title: string;
+  message: string;
+  href?: string;
+  actionLabel?: string;
+};
+
+type OverviewCopilotHealthRow = {
+  rider_id: string;
+  display_name: string;
+  availability_status: string | null;
+  unavailable_until: string | null;
+  unavailable_reason: string | null;
+  fatigue: number | null;
+};
+
 const EMPTY_RACE_WORLD_DATA: OverviewRaceWorldData = {
   upcomingSchedule: [],
   todayRaces: [],
@@ -7567,46 +7598,331 @@ function ClubHonoursCard({
   );
 }
 
-// Deployment refresh marker: enriched rolling race-results card v2.
+// Deployment refresh marker: free operational Team Copilot v1.
+function getOverviewCopilotDismissStorageKey(
+  clubId: string,
+  gameDateLabel: string,
+) {
+  return `ppm:overview-copilot-dismissed:${clubId}:${gameDateLabel}`;
+}
+
+function readOverviewCopilotDismissedIds(
+  clubId: string,
+  gameDateLabel: string,
+): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(
+      getOverviewCopilotDismissStorageKey(clubId, gameDateLabel),
+    );
+
+    if (!raw) return new Set();
+
+    const parsed = JSON.parse(raw);
+    return new Set(
+      Array.isArray(parsed)
+        ? parsed.filter((value): value is string => typeof value === "string")
+        : [],
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function writeOverviewCopilotDismissedIds(
+  clubId: string,
+  gameDateLabel: string,
+  ids: Set<string>,
+) {
+  try {
+    window.localStorage.setItem(
+      getOverviewCopilotDismissStorageKey(clubId, gameDateLabel),
+      JSON.stringify(Array.from(ids)),
+    );
+  } catch {
+    // Local storage is best-effort only; unresolved backend signals still return next game day.
+  }
+}
+
+function getOverviewCopilotAlertDomain(
+  alert: AlertItem,
+): OverviewCopilotDomain {
+  const haystack = [
+    alert.id,
+    alert.label,
+    alert.href,
+    alert.typeCode,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/injur|sick|illness|health|fatigue|fitness|readiness/.test(haystack)) {
+    return "medical";
+  }
+
+  if (/morale/.test(haystack)) return "morale";
+  if (/training|camp/.test(haystack)) return "training";
+  if (/equipment|jersey|suppl|mechanic/.test(haystack)) return "equipment";
+  if (/scout/.test(haystack)) return "scouting";
+  if (/race|calendar|startlist|lineup|stage plan|preparation/.test(haystack)) {
+    return "race";
+  }
+
+  return "general";
+}
+
+function getOverviewCopilotDomainMessage(
+  domain: OverviewCopilotDomain,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) {
+  switch (domain) {
+    case "medical":
+      return t("managerFocus.copilot.medicalBody");
+    case "morale":
+      return t("managerFocus.copilot.moraleBody");
+    case "training":
+      return t("managerFocus.copilot.trainingBody");
+    case "equipment":
+      return t("managerFocus.copilot.equipmentBody");
+    case "scouting":
+      return t("managerFocus.copilot.scoutingBody");
+    case "race":
+      return t("managerFocus.copilot.raceBody");
+    default:
+      return t("managerFocus.copilot.generalBody");
+  }
+}
+
+function getOverviewCopilotActionLabel(
+  domain: OverviewCopilotDomain,
+  href: string | undefined,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) {
+  const normalizedHref = (href ?? "").toLowerCase();
+
+  if (normalizedHref.includes("/finance")) {
+    return t("managerFocus.copilot.openFinance");
+  }
+  if (normalizedHref.includes("/infrastructure")) {
+    return t("managerFocus.copilot.openInfrastructure");
+  }
+
+  switch (domain) {
+    case "medical":
+    case "morale":
+      return t("managerFocus.copilot.openSquad");
+    case "training":
+      return t("managerFocus.copilot.openTraining");
+    case "equipment":
+      return t("managerFocus.copilot.openEquipment");
+    case "scouting":
+      return t("managerFocus.copilot.openScouting");
+    case "race":
+      return t("managerFocus.copilot.openRace");
+    default:
+      return t("managerFocus.copilot.review");
+  }
+}
+
+function buildOverviewCopilotItems({
+  dashboard,
+  raceWorld,
+  healthRows,
+  advisorRows,
+  t,
+}: {
+  dashboard: DashboardOverviewData;
+  raceWorld: OverviewRaceWorldData;
+  healthRows: OverviewCopilotHealthRow[];
+  advisorRows: StaffAdvisoryOverviewRow[];
+  t: (key: string, options?: Record<string, unknown>) => string;
+}): OverviewCopilotItem[] {
+  const activeAdvisorRoles = new Set(
+    advisorRows
+      .filter(
+        (row) =>
+          row.advisory_status === "active" &&
+          Number(row.remaining_game_seconds ?? 0) > 0,
+      )
+      .map((row) => row.role_type),
+  );
+
+  const suppressedDomains = new Set<OverviewCopilotDomain>();
+  if (activeAdvisorRoles.has("sport_director")) suppressedDomains.add("race");
+  if (activeAdvisorRoles.has("team_doctor")) suppressedDomains.add("medical");
+  if (activeAdvisorRoles.has("mechanic")) suppressedDomains.add("equipment");
+  if (activeAdvisorRoles.has("head_coach")) {
+    suppressedDomains.add("training");
+    suppressedDomains.add("morale");
+  }
+  if (activeAdvisorRoles.has("scout_analyst")) suppressedDomains.add("scouting");
+
+  const items: OverviewCopilotItem[] = [];
+  const seen = new Set<string>();
+
+  const pushItem = (item: OverviewCopilotItem) => {
+    if (suppressedDomains.has(item.domain)) return;
+    if (seen.has(item.id)) return;
+    seen.add(item.id);
+    items.push(item);
+  };
+
+  const uniqueHealthRows = Array.from(
+    new Map(
+      healthRows
+        .filter((row) => row.rider_id)
+        .map((row) => [row.rider_id, row] as const),
+    ).values(),
+  );
+
+  uniqueHealthRows.slice(0, 3).forEach((row, index) => {
+    const status = (row.availability_status ?? "").trim().toLowerCase();
+    const name = row.display_name?.trim() || t("managerFocus.copilot.riderFallback");
+
+    const title =
+      status === "injured"
+        ? t("managerFocus.copilot.injuredTitle", { name })
+        : status === "sick" || status === "ill" || status === "illness"
+          ? t("managerFocus.copilot.sickTitle", { name })
+          : t("managerFocus.copilot.unavailableTitle", { name });
+
+    pushItem({
+      id: `health:${row.rider_id}`,
+      domain: "medical",
+      tone: status === "injured" ? "danger" : "warning",
+      priority: 10 + index,
+      title,
+      message: t("managerFocus.copilot.healthBody"),
+      href: `#/dashboard/my-riders/${row.rider_id}`,
+      actionLabel: t("managerFocus.copilot.viewRider"),
+    });
+  });
+
+  const hasSpecificHealth = uniqueHealthRows.length > 0;
+
+  dashboard.alerts.forEach((alert, index) => {
+    const domain = getOverviewCopilotAlertDomain(alert);
+
+    if (
+      hasSpecificHealth &&
+      domain === "medical" &&
+      /injur|sick|illness|not fully fit/i.test(`${alert.id} ${alert.label}`)
+    ) {
+      return;
+    }
+
+    pushItem({
+      id: `alert:${alert.id}`,
+      domain,
+      tone: alert.level,
+      priority:
+        alert.level === "danger"
+          ? 20 + index
+          : alert.level === "warning"
+            ? 40 + index
+            : alert.level === "info"
+              ? 60 + index
+              : 80 + index,
+      title: alert.label,
+      message: getOverviewCopilotDomainMessage(domain, t),
+      href: normalizeDashboardHref(alert.href),
+      actionLabel: getOverviewCopilotActionLabel(domain, alert.href, t),
+    });
+  });
+
+  if (
+    dashboard.squadPulse.morale > 0 &&
+    dashboard.squadPulse.morale < 50
+  ) {
+    pushItem({
+      id: "squad:low-morale",
+      domain: "morale",
+      tone: "warning",
+      priority: 45,
+      title: t("managerFocus.copilot.lowMoraleTitle"),
+      message: t("managerFocus.copilot.lowMoraleBody"),
+      href: "#/dashboard/squad",
+      actionLabel: t("managerFocus.copilot.openSquad"),
+    });
+  }
+
+  if (dashboard.squadPulse.expiringContracts > 0) {
+    pushItem({
+      id: "squad:contracts",
+      domain: "general",
+      tone: "warning",
+      priority: 48,
+      title: t("managerFocus.copilot.contractsTitle", {
+        count: dashboard.squadPulse.expiringContracts,
+      }),
+      message: t("managerFocus.copilot.contractsBody"),
+      href: "#/dashboard/squad",
+      actionLabel: t("managerFocus.copilot.openSquad"),
+    });
+  }
+
+  const nextRace = raceWorld.upcomingSchedule[0] ?? null;
+  if (nextRace) {
+    pushItem({
+      id: `race:next:${nextRace.id}`,
+      domain: "race",
+      tone: "info",
+      priority: 70,
+      title: t("managerFocus.copilot.nextRaceTitle", {
+        race: nextRace.title,
+      }),
+      message: [nextRace.dateLabel, nextRace.subtitle]
+        .filter(Boolean)
+        .join(" · "),
+      href: nextRace.href ?? "#/dashboard/calendar",
+      actionLabel: t("managerFocus.copilot.openRace"),
+    });
+  }
+
+  return items.sort((a, b) => a.priority - b.priority).slice(0, 6);
+}
+
 function ManagerFocusCard({
   upcomingRaceCount,
   todayRaceCount,
   finance,
   operations,
-  recentResults,
-  recentResultsLoading,
+  copilotItems,
+  copilotLoading,
+  onCopilotItemOpened,
 }: {
   upcomingRaceCount: number;
   todayRaceCount: number;
   finance: FinanceHealth;
   operations: OperationItem[];
-  recentResults: OverviewRecentRaceResult[];
-  recentResultsLoading: boolean;
+  copilotItems: OverviewCopilotItem[];
+  copilotLoading: boolean;
+  onCopilotItemOpened: (item: OverviewCopilotItem) => void;
 }) {
   const { t } = useTranslation("overview");
-  const [resultIndex, setResultIndex] = React.useState(0);
+  const [copilotIndex, setCopilotIndex] = React.useState(0);
 
   React.useEffect(() => {
-    setResultIndex((current) =>
-      recentResults.length > 0 ? current % recentResults.length : 0,
+    setCopilotIndex((current) =>
+      copilotItems.length > 0 ? current % copilotItems.length : 0,
     );
-  }, [recentResults.length]);
+  }, [copilotItems.length]);
 
   React.useEffect(() => {
-    if (recentResults.length <= 1) return undefined;
+    if (copilotItems.length <= 1) return undefined;
 
     const intervalId = window.setInterval(() => {
-      setResultIndex((current) => (current + 1) % recentResults.length);
+      setCopilotIndex((current) => (current + 1) % copilotItems.length);
     }, 30_000);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [recentResults.length]);
+  }, [copilotItems.length]);
 
-  const activeResult =
-    recentResults.length > 0
-      ? recentResults[resultIndex % recentResults.length]
+  const activeCopilotItem =
+    copilotItems.length > 0
+      ? copilotItems[copilotIndex % copilotItems.length]
       : null;
 
   const summaryItems = [
@@ -7635,6 +7951,20 @@ function ManagerFocusCard({
       valueClass: operations.length > 0 ? "text-emerald-700" : "text-slate-700",
     },
   ];
+
+  const toneClasses: Record<OverviewCopilotTone, string> = {
+    danger: "border-red-200 bg-red-50/70",
+    warning: "border-amber-200 bg-amber-50/70",
+    info: "border-sky-200 bg-sky-50/60",
+    success: "border-emerald-200 bg-emerald-50/60",
+  };
+
+  const dotClasses: Record<OverviewCopilotTone, string> = {
+    danger: "bg-red-500",
+    warning: "bg-amber-500",
+    info: "bg-sky-500",
+    success: "bg-emerald-500",
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -7665,163 +7995,84 @@ function ManagerFocusCard({
 
         <div className="mt-5 border-t border-slate-100 pt-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              {t("managerFocus.recentResults")}
+            <div className="flex items-center gap-2">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {t("managerFocus.copilot.title")}
+              </div>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                {t("managerFocus.copilot.coreBadge")}
+              </span>
             </div>
 
-            {recentResults.length > 1 ? (
+            {copilotItems.length > 1 ? (
               <div className="text-[10px] font-semibold tabular-nums text-slate-400">
-                {resultIndex + 1} / {recentResults.length}
+                {copilotIndex + 1} / {copilotItems.length}
               </div>
             ) : null}
           </div>
 
-          {recentResultsLoading ? (
-            <div className="mt-3 h-[76px] animate-pulse rounded-xl border border-slate-200 bg-slate-50" />
-          ) : activeResult ? (
-            <a
-              href={activeResult.href}
-              className="mt-3 grid min-h-[112px] grid-cols-[78px_minmax(0,1fr)] overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 transition hover:border-sky-300 hover:bg-white"
+          {copilotLoading ? (
+            <div className="mt-3 h-[112px] animate-pulse rounded-xl border border-slate-200 bg-slate-50" />
+          ) : activeCopilotItem ? (
+            <div
+              className={cn(
+                "mt-3 min-h-[112px] rounded-xl border px-4 py-3.5",
+                toneClasses[activeCopilotItem.tone],
+              )}
             >
-              <div className="flex items-center justify-center border-r border-slate-200 bg-white/70 px-3 text-center">
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                    {formatShortOverviewDate(activeResult.stageDate).split(" ")[0]}
+              <div className="flex items-start gap-3">
+                <span
+                  className={cn(
+                    "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                    dotClasses[activeCopilotItem.tone],
+                  )}
+                />
+
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-bold text-slate-950">
+                    {activeCopilotItem.title}
                   </div>
-                  <div className="mt-1 text-xl font-bold tabular-nums text-slate-950">
-                    {formatShortOverviewDate(activeResult.stageDate).split(" ")[1] ?? ""}
-                  </div>
-                </div>
-              </div>
-
-              <div className="min-w-0 px-4 py-3">
-                <div className="flex min-w-0 items-center justify-between gap-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    {activeResult.countryCode ? (
-                      <img
-                        src={`https://flagcdn.com/w40/${activeResult.countryCode.toLowerCase()}.png`}
-                        alt={activeResult.countryCode}
-                        className="h-[16px] w-[24px] shrink-0 rounded-[2px] object-cover shadow-sm ring-1 ring-slate-200"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span className="h-[16px] w-[24px] shrink-0 rounded-[2px] bg-slate-200" />
-                    )}
-
-                    <span className="shrink-0 text-sm font-bold text-slate-950">
-                      {activeResult.raceName}
-                    </span>
-
-                    <span className="min-w-0 truncate text-xs font-medium text-slate-500">
-                      {activeResult.stageName ??
-                        (activeResult.startCity && activeResult.finishCity
-                          ? `Stage ${activeResult.stageNumber}: ${activeResult.startCity} → ${activeResult.finishCity}`
-                          : `Stage ${activeResult.stageNumber}`)}
-                    </span>
+                  <div className="mt-1 text-xs leading-5 text-slate-600">
+                    {activeCopilotItem.message}
                   </div>
 
-                  <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-inset ring-slate-200">
-                    {t("managerFocus.stageLabel", {
-                      stage: activeResult.stageNumber,
-                      count: activeResult.stageCount,
-                    })}
-                  </span>
-                </div>
-
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
-                    <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700">
-                      <span className="h-2 w-2 rounded-full bg-amber-400" />
-                      {t("managerFocus.stageWinner")}
-                    </div>
-                    <div className="mt-1 flex min-w-0 items-center gap-1 text-xs">
-                      <span className="shrink-0 font-bold text-slate-950">
-                        [{activeResult.winnerName}]
-                      </span>
-                      {activeResult.winnerTeamName ? (
-                        <span
-                          className="min-w-0 truncate text-slate-500"
-                          title={activeResult.winnerTeamName}
-                        >
-                          ({activeResult.winnerTeamName})
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {activeResult.stageCount > 1 && activeResult.gcName ? (
-                    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
-                      <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-yellow-700">
-                        <span className="h-2 w-2 rounded-full bg-yellow-400" />
-                        {t("managerFocus.gcLeader")}
-                      </div>
-                      <div className="mt-1 flex min-w-0 items-center gap-1 text-xs">
-                        <span className="shrink-0 font-bold text-slate-950">
-                          [{activeResult.gcName}]
-                        </span>
-                        {activeResult.gcTeamName ? (
-                          <span
-                            className="min-w-0 truncate text-slate-500"
-                            title={activeResult.gcTeamName}
-                          >
-                            ({activeResult.gcTeamName})
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {activeResult.mountainName ? (
-                    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
-                      <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-red-700">
-                        <span className="h-2 w-2 rounded-full bg-red-500" />
-                        {t("managerFocus.mountainLeader")}
-                      </div>
-                      <div className="mt-1 flex min-w-0 items-center gap-1 text-xs">
-                        <span className="shrink-0 font-bold text-slate-950">
-                          [{activeResult.mountainName}]
-                        </span>
-                        {activeResult.mountainTeamName ? (
-                          <span
-                            className="min-w-0 truncate text-slate-500"
-                            title={activeResult.mountainTeamName}
-                          >
-                            ({activeResult.mountainTeamName})
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {activeResult.pointsName ? (
-                    <div className="min-w-0 rounded-lg border border-slate-200 bg-white px-2.5 py-2">
-                      <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                        {t("managerFocus.pointsLeader")}
-                      </div>
-                      <div className="mt-1 flex min-w-0 items-center gap-1 text-xs">
-                        <span className="shrink-0 font-bold text-slate-950">
-                          [{activeResult.pointsName}]
-                        </span>
-                        {activeResult.pointsTeamName ? (
-                          <span
-                            className="min-w-0 truncate text-slate-500"
-                            title={activeResult.pointsTeamName}
-                          >
-                            ({activeResult.pointsTeamName})
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
+                  {activeCopilotItem.href ? (
+                    <a
+                      href={activeCopilotItem.href}
+                      onClick={() => onCopilotItemOpened(activeCopilotItem)}
+                      className="mt-3 inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:border-sky-300 hover:text-sky-700"
+                    >
+                      {activeCopilotItem.actionLabel ??
+                        t("managerFocus.copilot.review")}
+                      <span className="ml-1.5" aria-hidden="true">→</span>
+                    </a>
                   ) : null}
                 </div>
               </div>
-            </a>
+            </div>
           ) : (
-            <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500">
-              {t("managerFocus.noRecentResults")}
+            <div className="mt-3 flex min-h-[112px] items-center rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-4">
+              <div>
+                <div className="text-sm font-bold text-emerald-900">
+                  {t("managerFocus.copilot.allClearTitle")}
+                </div>
+                <div className="mt-1 text-xs leading-5 text-emerald-800/80">
+                  {t("managerFocus.copilot.allClearBody")}
+                </div>
+                <a
+                  href="#/dashboard/calendar"
+                  className="mt-3 inline-flex items-center text-[11px] font-semibold text-emerald-800 hover:text-emerald-950"
+                >
+                  {t("managerFocus.copilot.openCalendar")}
+                  <span className="ml-1.5" aria-hidden="true">→</span>
+                </a>
+              </div>
             </div>
           )}
+
+          <div className="mt-2 text-[10px] leading-4 text-slate-400">
+            {t("managerFocus.copilot.boundaryNote")}
+          </div>
         </div>
       </div>
     </Card>
@@ -8405,11 +8656,17 @@ export default function OverviewPage() {
     EMPTY_RACE_WORLD_DATA,
   );
   const [raceWorldLoading, setRaceWorldLoading] = React.useState(true);
-  const [recentRaceResults, setRecentRaceResults] = React.useState<
-    OverviewRecentRaceResult[]
+  const [copilotHealthRows, setCopilotHealthRows] = React.useState<
+    OverviewCopilotHealthRow[]
   >([]);
-  const [recentRaceResultsLoading, setRecentRaceResultsLoading] =
+  const [copilotAdvisorRows, setCopilotAdvisorRows] = React.useState<
+    StaffAdvisoryOverviewRow[]
+  >([]);
+  const [copilotContextLoading, setCopilotContextLoading] =
     React.useState(true);
+  const [dismissedCopilotIds, setDismissedCopilotIds] = React.useState<
+    Set<string>
+  >(() => new Set());
   const [attentionAlerts, setAttentionAlerts] = React.useState<AlertItem[]>([]);
   const [priorityActionAlerts, setPriorityActionAlerts] = React.useState<AlertItem[]>([]);
   const [openedAttentionKeys, setOpenedAttentionKeys] = React.useState<Set<string>>(
@@ -8502,36 +8759,83 @@ export default function OverviewPage() {
 
   React.useEffect(() => {
     let alive = true;
+    const clubId = data?.club.id?.trim() || null;
 
-    const refreshRecentRaceResults = async (showLoading = false) => {
-      if (showLoading) setRecentRaceResultsLoading(true);
+    if (!clubId) {
+      setCopilotHealthRows([]);
+      setCopilotAdvisorRows([]);
+      setCopilotContextLoading(false);
+      return () => {
+        alive = false;
+      };
+    }
 
-      const loaded = await loadOverviewRecentRaceResults();
+    async function loadCopilotContext(showLoading = false) {
+      if (showLoading) setCopilotContextLoading(true);
+
+      const [healthResult, advisorResult] = await Promise.all([
+        supabase.rpc("get_club_health_overview", { p_club_id: clubId }),
+        supabase.rpc("staff_advisory_get_overview_v2", {
+          p_club_id: clubId,
+        }),
+      ]);
 
       if (!alive) return;
 
-      setRecentRaceResults(loaded);
-      setRecentRaceResultsLoading(false);
-    };
+      if (healthResult.error) {
+        console.warn(
+          "Could not load Team Copilot health context:",
+          healthResult.error.message,
+        );
+        setCopilotHealthRows([]);
+      } else {
+        setCopilotHealthRows(
+          asArray<OverviewCopilotHealthRow>(healthResult.data),
+        );
+      }
 
-    void refreshRecentRaceResults(true);
+      if (advisorResult.error) {
+        console.warn(
+          "Could not load Team Copilot advisor ownership:",
+          advisorResult.error.message,
+        );
+        setCopilotAdvisorRows([]);
+      } else {
+        setCopilotAdvisorRows(
+          asArray<StaffAdvisoryOverviewRow>(advisorResult.data),
+        );
+      }
 
-    const intervalId = window.setInterval(() => {
-      void refreshRecentRaceResults(false);
-    }, 5 * 60_000);
+      setCopilotContextLoading(false);
+    }
+
+    void loadCopilotContext(true);
 
     const handleFocus = () => {
-      void refreshRecentRaceResults(false);
+      void loadCopilotContext(false);
     };
 
     window.addEventListener("focus", handleFocus);
 
     return () => {
       alive = false;
-      window.clearInterval(intervalId);
       window.removeEventListener("focus", handleFocus);
     };
-  }, []);
+  }, [data?.club.id]);
+
+  React.useEffect(() => {
+    const clubId = data?.club.id?.trim() || null;
+    const gameDateLabel = data?.club.dateLabel?.trim() || "";
+
+    if (!clubId || !gameDateLabel) {
+      setDismissedCopilotIds(new Set());
+      return;
+    }
+
+    setDismissedCopilotIds(
+      readOverviewCopilotDismissedIds(clubId, gameDateLabel),
+    );
+  }, [data?.club.id, data?.club.dateLabel]);
 
   React.useEffect(() => {
     let alive = true;
@@ -9404,6 +9708,42 @@ export default function OverviewPage() {
     [data?.club.id],
   );
 
+  const copilotItems = React.useMemo(() => {
+    if (!data) return [];
+
+    return buildOverviewCopilotItems({
+      dashboard: data,
+      raceWorld,
+      healthRows: copilotHealthRows,
+      advisorRows: copilotAdvisorRows,
+      t,
+    }).filter((item) => !dismissedCopilotIds.has(item.id));
+  }, [
+    data,
+    raceWorld,
+    copilotHealthRows,
+    copilotAdvisorRows,
+    dismissedCopilotIds,
+    t,
+  ]);
+
+  const handleCopilotItemOpened = React.useCallback(
+    (item: OverviewCopilotItem) => {
+      const clubId = data?.club.id?.trim() || null;
+      const gameDateLabel = data?.club.dateLabel?.trim() || "";
+
+      if (!clubId || !gameDateLabel) return;
+
+      setDismissedCopilotIds((current) => {
+        const next = new Set(current);
+        next.add(item.id);
+        writeOverviewCopilotDismissedIds(clubId, gameDateLabel, next);
+        return next;
+      });
+    },
+    [data?.club.id, data?.club.dateLabel],
+  );
+
   if (loading && !data) {
     return <DashboardSkeleton />;
   }
@@ -9462,8 +9802,9 @@ export default function OverviewPage() {
                 todayRaceCount={raceWorld.todayRaces.length}
                 finance={data.finance}
                 operations={data.operations}
-                recentResults={recentRaceResults}
-                recentResultsLoading={recentRaceResultsLoading}
+                copilotItems={copilotItems}
+                copilotLoading={copilotContextLoading}
+                onCopilotItemOpened={handleCopilotItemOpened}
               />
             </div>
 
