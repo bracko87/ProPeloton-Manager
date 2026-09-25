@@ -137,29 +137,6 @@ export default function TransferNegotiationIntelligence({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [riderId, accessKey])
 
-  async function purchaseReport(): Promise<void> {
-    if (!riderId || !accessKey) return
-
-    setPurchaseLoading(true)
-    setError(null)
-
-    try {
-      const { error: rpcError } = await supabase.rpc(
-        'transfer_purchase_financial_report_v1',
-        {
-          p_access_key: accessKey,
-          p_rider_id: riderId,
-        },
-      )
-      if (rpcError) throw rpcError
-      window.dispatchEvent(new CustomEvent('coin-balance-changed'))
-      await load()
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Failed to unlock report.')
-    } finally {
-      setPurchaseLoading(false)
-    }
-  }
 
   const hasAccess = access?.has_access === true
 
