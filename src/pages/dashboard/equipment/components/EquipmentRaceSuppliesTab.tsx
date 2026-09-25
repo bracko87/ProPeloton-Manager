@@ -755,7 +755,6 @@ export default function EquipmentRaceSuppliesTab({
   const [autoRestockRules, setAutoRestockRules] = useState<EquipmentAutoRestockRule[]>([])
   const [autoRestockLoading, setAutoRestockLoading] = useState(false)
   const [autoRestockExpanded, setAutoRestockExpanded] = useState(false)
-  const autoRestockRanRef = React.useRef(false)
 
   const sortedItems = useMemo(() => sortRaceSupplyItems(items), [items])
 
@@ -816,7 +815,6 @@ export default function EquipmentRaceSuppliesTab({
       }
 
       setMessage(t('supplies.rulesSaved'))
-      autoRestockRanRef.current = false
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -910,18 +908,8 @@ export default function EquipmentRaceSuppliesTab({
 
   useEffect(() => {
     void loadAutoRestockRules()
-    autoRestockRanRef.current = false
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId, equipmentAccess?.is_premium])
-
-  useEffect(() => {
-    if (!equipmentAccess?.is_premium || autoRestockRanRef.current) return
-    if (loading || items.length === 0 || autoRestockRules.length === 0) return
-
-    autoRestockRanRef.current = true
-    void runAutomaticRestock()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, items, autoRestockRules, equipmentAccess?.is_premium])
 
   async function handleBuy(item: RaceSupplyItem): Promise<void> {
     const displayName = getRaceSupplyDisplayName(item, t)
