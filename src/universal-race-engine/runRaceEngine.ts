@@ -4797,7 +4797,7 @@ function normalizeTerrainShares(
   ]
 }
 
-function analyzeTerrain(
+export function analyzeTerrain(
   stage: UniversalStageInput,
 ): UniversalTerrainSummary {
   const segments = buildTerrainProfileSegments(stage.profilePoints)
@@ -5066,7 +5066,7 @@ function difficultyCategoryFromScore(
   return 5
 }
 
-function calculateDifficulty(
+export function calculateDifficulty(
   input: UniversalRaceEngineInput,
   terrain: UniversalTerrainSummary,
 ): UniversalDifficultySummary {
@@ -5613,7 +5613,7 @@ export function buildUniversalPhase9ModifierSummary(
   }
 }
 
-function applyUniversalPhase9ModifiersToInput(
+export function applyUniversalPhase9ModifiersToInput(
   input: UniversalRaceEngineInput,
   phase9: UniversalPhase9ModifierSummary,
 ): UniversalRaceEngineInput {
@@ -5740,7 +5740,7 @@ function phase9CoverageStatus(
   return appliedSignalCount > 0 ? 'applied' : 'received_neutral'
 }
 
-function buildUniversalPhase9AcceptanceReport(
+export function buildUniversalPhase9AcceptanceReport(
   originalInput: UniversalRaceEngineInput,
   calculationInput: UniversalRaceEngineInput,
   phase9: UniversalPhase9ModifierSummary,
@@ -6261,7 +6261,7 @@ export function calculateRiderReadiness(
   }
 }
 
-function calculateAllRiderReadiness(
+export function calculateAllRiderReadiness(
   riders: readonly UniversalRiderInput[],
 ): readonly UniversalRiderReadinessResult[] {
   return riders
@@ -19378,7 +19378,7 @@ export function resolveRoadPhase4Finish(
   }
 }
 
-function classifyStage(
+export function classifyStage(
   stage: UniversalStageInput,
 ): UniversalStageClassification {
   switch (stage.stageFormat) {
@@ -20653,7 +20653,7 @@ export function buildUniversalIntermediatePointFinalization(
 
 
 
-function reconcileFinishLineIntermediatePointBattlesV1(
+export function reconcileFinishLineIntermediatePointBattlesV1(
   input: UniversalRaceEngineInput,
   summary: UniversalIntermediatePointBattleSummary,
   finishResolution: UniversalFinishResolution,
@@ -20744,7 +20744,7 @@ function reconcileFinishLineIntermediatePointBattlesV1(
   }
 }
 
-function reconcileReplayTimelineIntermediatePointsV1(
+export function reconcileReplayTimelineIntermediatePointsV1(
   timeline: UniversalReplayTimeline,
   finalization: UniversalIntermediatePointFinalizationSummary,
 ): UniversalReplayTimeline {
@@ -21414,7 +21414,7 @@ function phase5OfficialTimesConsistent(
   })
 }
 
-function buildUniversalPhase5GroupingSummary(
+export function buildUniversalPhase5GroupingSummary(
   input: UniversalRaceEngineInput,
   difficulty: UniversalDifficultySummary,
   riderReadiness: readonly UniversalRiderReadinessResult[],
@@ -25914,7 +25914,7 @@ function buildUniversalTimeTrialReplayTimeline(
 }
 
 
-function buildUniversalReplayTimeline(
+export function buildUniversalReplayTimeline(
   input: UniversalRaceEngineInput,
   riderReadiness: readonly UniversalRiderReadinessResult[],
   roadCommandResolution: UniversalRoadCommandResolutionSummary,
@@ -32486,7 +32486,7 @@ function phase10BuildFinalRoadGroups(
   }
 }
 
-function resolveUniversalPhase10Incidents({
+export function resolveUniversalPhase10Incidents({
   input,
   sourceInput,
   phase9,
