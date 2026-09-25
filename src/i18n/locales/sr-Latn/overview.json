@@ -296,8 +296,8 @@
     "Dec": "Dec"
   },
   "managerFocus": {
-    "title": "Status kluba i rezultati trka",
-    "subtitle": "Aktuelni signali kluba i najnoviji pobednici iz današnjih i jučerašnjih trka.",
+    "title": "Status kluba i Team Copilot",
+    "subtitle": "Trenutni signali kluba i operativni podsetnici. Stručni saveti ostaju kod kupljenih savetnika.",
     "recentResults": "Rezultati danas i juče",
     "stageLabel": "Etapa {{stage}} od {{count}}",
     "winner": "Pobednik",
@@ -305,6 +305,40 @@
     "stageWinner": "Pobednik etape",
     "gcLeader": "Vodeći ukupno",
     "mountainLeader": "Brdski plasman",
-    "pointsLeader": "Bodovni plasman"
+    "pointsLeader": "Bodovni plasman",
+    "copilot": {
+      "title": "Team Copilot",
+      "coreBadge": "Osnovni podsetnici",
+      "riderFallback": "Vozač",
+      "injuredTitle": "{{name}} je povređen",
+      "sickTitle": "{{name}} je bolestan",
+      "unavailableTitle": "{{name}} nije potpuno dostupan",
+      "healthBody": "Proveri ovog vozača pre sledeće odluke o sastavu.",
+      "viewRider": "Otvori vozača",
+      "medicalBody": "Zdravstvena stavka u ekipi zahteva pažnju.",
+      "moraleBody": "Stavka vezana za moral zahteva pažnju.",
+      "trainingBody": "Stavka vezana za trening zahteva pažnju.",
+      "equipmentBody": "Oprema ili zalihe za trku zahtevaju pažnju.",
+      "scoutingBody": "Stavka vezana za skautiranje zahteva pažnju.",
+      "raceBody": "Trka ili kalendar zahtevaju pažnju.",
+      "generalBody": "Stavka upravljanja klubom zahteva pažnju.",
+      "openFinance": "Otvori finansije",
+      "openInfrastructure": "Otvori infrastrukturu",
+      "openSquad": "Otvori ekipu",
+      "openTraining": "Otvori trening",
+      "openEquipment": "Proveri opremu",
+      "openScouting": "Otvori skautiranje",
+      "openRace": "Otvori trku",
+      "review": "Proveri",
+      "lowMoraleTitle": "Moral ekipe je nizak",
+      "lowMoraleBody": "Proveri ekipu i nedavne promene morala.",
+      "contractsTitle": "Ugovori zahtevaju pažnju ({{count}})",
+      "contractsBody": "Proveri ugovore vozača kojima se približava istek.",
+      "nextRaceTitle": "Sledeća trka: {{race}}",
+      "allClearTitle": "Sve izgleda spremno",
+      "allClearBody": "Trenutno nema operativnih podsetnika koji zahtevaju tvoju pažnju.",
+      "openCalendar": "Otvori kalendar",
+      "boundaryNote": "Samo osnovni podsetnici. Plaćeni savetnici i Premium analitika ostaju u svojim posebnim oblastima."
+    }
   }
 }
