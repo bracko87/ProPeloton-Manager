@@ -5,17 +5,17 @@ import {
   isUniversalPhase78IssueNonBlocking,
   runRaceEngine,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/8b2de4be9c5761e0949d2cc20ea1a67d492501b2/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/8b2de4be9c5761e0949d2cc20ea1a67d492501b2/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/8b2de4be9c5761e0949d2cc20ea1a67d492501b2/src/universal-race-engine/buildProductionRaceOutput.ts";
-import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/8b2de4be9c5761e0949d2cc20ea1a67d492501b2/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/8b2de4be9c5761e0949d2cc20ea1a67d492501b2/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/8b2de4be9c5761e0949d2cc20ea1a67d492501b2/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceOutput.ts";
+import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
-const SOURCE_COMMIT = "8b2de4be9c5761e0949d2cc20ea1a67d492501b2";
+const SOURCE_COMMIT = "38fec7814395d77331ae255d1b9203edba0142c7";
 const FALLBACK_SOURCE_COMMIT = SOURCE_COMMIT;
 const CONTRACT = "universal_race_pass2_resume_v19";
 
@@ -347,6 +347,48 @@ function outcomeSummary(result: any): JsonObject {
   };
 }
 
+
+function checkpointedSafeModeDecision(payloadValue: unknown): {
+  safe: boolean;
+  score: number;
+  riderCount: number;
+  distanceKm: number;
+  elevationGainM: number;
+  terrain: string;
+  climbCount: number;
+} {
+  const payload = object(payloadValue);
+  const stage = object(payload.stage);
+  const riderCount = rows(payload.rider_inputs).length;
+  const distanceKm = Math.max(0, finite(stage.distance_km ?? stage.distanceKm, 0));
+  const elevationGainM = Math.max(0, finite(stage.elevation_gain_m ?? stage.elevationGainM, 0));
+  const terrain = text(stage.terrain_type ?? stage.terrainType).toLowerCase();
+  const stagePoints = rows(payload.stage_points);
+  const climbCount = stagePoints.filter((point) => text(point.point_type ?? point.pointType).toUpperCase() === "KOM").length;
+  const score =
+    (riderCount / 160) * 40 +
+    (distanceKm / 180) * 22 +
+    (elevationGainM / 3200) * 25 +
+    climbCount * 3 +
+    (terrain === "mountain" ? 13 : terrain === "hilly" ? 5 : 0);
+  const safe =
+    riderCount >= 160 &&
+    (
+      (terrain === "mountain" && (distanceKm >= 155 || elevationGainM >= 2800)) ||
+      elevationGainM >= 3500 ||
+      (distanceKm >= 210 && elevationGainM >= 2500)
+    );
+  return {
+    safe,
+    score: Math.round(score * 100) / 100,
+    riderCount,
+    distanceKm,
+    elevationGainM,
+    terrain,
+    climbCount,
+  };
+}
+
 async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
   /*
    * Replay-validation quarantines are fail-closed on the same engine build.
@@ -397,6 +439,31 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
     await heartbeat(supabase, stageId, runId, "pass2_payload_loading", { source_commit: SOURCE_COMMIT });
     const payload = object(await rpc(supabase, "universal_race_stage_get_calculation_payload_v1", { p_stage_id: stageId }));
     const stageNumber = Math.max(1, Math.trunc(finite(object(payload.stage).stage_number, 1)));
+
+    const safeDecision = checkpointedSafeModeDecision(payload);
+    if (safeDecision.safe) {
+      const enabled = object(await rpc(supabase, "universal_race_stage_enable_safe_mode_v1", {
+        p_stage_id: stageId,
+        p_simulation_run_id: runId,
+        p_reason: "preemptive_heavy_stage",
+        p_workload_score: safeDecision.score,
+      }));
+      try { await rpc(supabase, "universal_race_stage_kick_safe_worker_v1"); } catch {}
+      await heartbeat(supabase, stageId, runId, "safe_mode_pending", {
+        source_commit: SOURCE_COMMIT,
+        reason: "preemptive_heavy_stage",
+        safe_decision: safeDecision,
+        safe_mode_enable_result: enabled,
+      });
+      return {
+        status: "safe_mode_queued",
+        contract: CONTRACT,
+        stage_id: stageId,
+        simulation_run_id: runId,
+        safe_decision: safeDecision,
+      };
+    }
+
     let standings: unknown = [];
     try {
       standings = await rpc(supabase, "get_race_stage_pre_stage_standings_v1", { p_stage_id: stageId });
