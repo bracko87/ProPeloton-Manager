@@ -296,8 +296,8 @@
     "Dec": "Dic"
   },
   "managerFocus": {
-    "title": "Stato del club e risultati",
-    "subtitle": "Segnali attuali del club e ultimi vincitori di oggi e ieri.",
+    "title": "Stato del club e Team Copilot",
+    "subtitle": "Segnali attuali del club e promemoria operativi. I consigli specialistici restano ai consulenti acquistati.",
     "recentResults": "Risultati di oggi e ieri",
     "stageLabel": "Tappa {{stage}} di {{count}}",
     "winner": "Vincitore",
@@ -305,6 +305,40 @@
     "stageWinner": "Vincitore tappa",
     "gcLeader": "Leader generale",
     "mountainLeader": "Montagna",
-    "pointsLeader": "Leader punti"
+    "pointsLeader": "Leader punti",
+    "copilot": {
+      "title": "Team Copilot",
+      "coreBadge": "Promemoria base",
+      "riderFallback": "Corridore",
+      "injuredTitle": "{{name}} è infortunato",
+      "sickTitle": "{{name}} è malato",
+      "unavailableTitle": "{{name}} non è pienamente disponibile",
+      "healthBody": "Controlla questo corridore prima della prossima decisione sulla formazione.",
+      "viewRider": "Vedi corridore",
+      "medicalBody": "Un elemento sanitario della squadra richiede attenzione.",
+      "moraleBody": "Un elemento relativo al morale richiede attenzione.",
+      "trainingBody": "Un elemento di allenamento richiede attenzione.",
+      "equipmentBody": "Un elemento di attrezzatura o rifornimenti gara richiede attenzione.",
+      "scoutingBody": "Un elemento di scouting richiede attenzione.",
+      "raceBody": "Un elemento di gara o calendario richiede attenzione.",
+      "generalBody": "Un elemento di gestione del club richiede attenzione.",
+      "openFinance": "Apri Finanze",
+      "openInfrastructure": "Apri Infrastrutture",
+      "openSquad": "Apri squadra",
+      "openTraining": "Apri Allenamento",
+      "openEquipment": "Controlla attrezzatura",
+      "openScouting": "Apri Scouting",
+      "openRace": "Apri gara",
+      "review": "Controlla",
+      "lowMoraleTitle": "Il morale della squadra è basso",
+      "lowMoraleBody": "Controlla la squadra e i recenti cambiamenti di morale.",
+      "contractsTitle": "I contratti richiedono attenzione ({{count}})",
+      "contractsBody": "Controlla i contratti dei corridori prossimi alla scadenza.",
+      "nextRaceTitle": "Prossima gara: {{race}}",
+      "allClearTitle": "Sembra tutto pronto",
+      "allClearBody": "Al momento non ci sono promemoria operativi che richiedono attenzione.",
+      "openCalendar": "Apri calendario",
+      "boundaryNote": "Solo promemoria base. Le analisi dei consulenti a pagamento e Premium restano nelle rispettive aree."
+    }
   }
 }
