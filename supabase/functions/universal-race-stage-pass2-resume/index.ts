@@ -5,17 +5,17 @@ import {
   isUniversalPhase78IssueNonBlocking,
   runRaceEngine,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/651310fb364897b8cb70d1c8be8d5cde7fbfb043/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/651310fb364897b8cb70d1c8be8d5cde7fbfb043/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/651310fb364897b8cb70d1c8be8d5cde7fbfb043/src/universal-race-engine/buildProductionRaceOutput.ts";
-import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/651310fb364897b8cb70d1c8be8d5cde7fbfb043/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/651310fb364897b8cb70d1c8be8d5cde7fbfb043/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/651310fb364897b8cb70d1c8be8d5cde7fbfb043/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/568b17633424ecbb815fa36f31b3aab696333296/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/568b17633424ecbb815fa36f31b3aab696333296/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/568b17633424ecbb815fa36f31b3aab696333296/src/universal-race-engine/buildProductionRaceOutput.ts";
+import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/568b17633424ecbb815fa36f31b3aab696333296/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/568b17633424ecbb815fa36f31b3aab696333296/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/568b17633424ecbb815fa36f31b3aab696333296/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
-const SOURCE_COMMIT = "651310fb364897b8cb70d1c8be8d5cde7fbfb043";
+const SOURCE_COMMIT = "568b17633424ecbb815fa36f31b3aab696333296";
 const FALLBACK_SOURCE_COMMIT = SOURCE_COMMIT;
 const CONTRACT = "universal_race_pass2_resume_v19";
 
@@ -348,6 +348,39 @@ function outcomeSummary(result: any): JsonObject {
 }
 
 async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
+  /*
+   * Replay-validation quarantines are fail-closed on the same engine build.
+   * After a new production engine commit is deployed, automatically reopen
+   * eligible replay-sync quarantines once and retry the exact preserved
+   * sporting scenario. This turns a deployed engine fix into a self-healing
+   * recovery instead of requiring a manual quarantine delete.
+   */
+  try {
+    const reopened = object(
+      await rpc(
+        supabase,
+        "universal_race_reopen_replay_quarantine_after_engine_upgrade_v1",
+        { p_source_commit: SOURCE_COMMIT },
+      ),
+    );
+    if (finite(reopened.reopened) > 0) {
+      console.log(JSON.stringify({
+        status: "replay_quarantine_auto_reopened",
+        contract: CONTRACT,
+        source_commit: SOURCE_COMMIT,
+        reopened: reopened.reopened,
+        stage_ids: reopened.stage_ids ?? [],
+      }));
+    }
+  } catch (error) {
+    console.warn(JSON.stringify({
+      status: "replay_quarantine_auto_reopen_check_failed",
+      contract: CONTRACT,
+      source_commit: SOURCE_COMMIT,
+      error: errorPayload(error),
+    }));
+  }
+
   const claim = object(await rpc(supabase, "universal_race_stage_claim_pass2_resume_v1"));
   if (claim.status !== "claimed") return { status: "idle", contract: CONTRACT };
   const stageId = text(claim.stage_id);
@@ -465,7 +498,7 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
       resumed_pass2: true,
       fallback_used: useFallback,
       fallback_reason: fallbackReason,
-      output_size_estimate_skipped: true,
+      output_size_measurement_skipped: true,
     });
     const submit = await submitWithRetry(supabase, {
       p_stage_id: stageId,
