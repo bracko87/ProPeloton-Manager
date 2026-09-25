@@ -29697,20 +29697,65 @@ function buildUniversalReplayTimeline(
       }
       if (sample.km >= stageDistanceKm - 0.000001) return
       if (catchKm !== null && sample.km >= catchKm - 0.000001) return
+
+      /*
+       * Phase 11P2: bridge replay membership follows the live attachment
+       * overlay, not the immutable launch roster. A rider can legitimately
+       * fall below the 5% attachment floor and leave F/B before the bridge
+       * lifecycle itself ends. The old static riderIds made the replay
+       * validator reject that physical detachment as bridge_progress_invalid.
+       */
+      const sampleGroups = groupsAtKm(sample.km)
+      const sampleBridgeGroup =
+        sampleGroups.find(
+          (group) =>
+            bridgeGroup.lineageId !== null &&
+            bridgeGroup.lineageId !== undefined &&
+            group.physicalLineageId === bridgeGroup.lineageId,
+        ) ??
+        sampleGroups.find(
+          (group) => group.displayCode === bridgeDisplayCode,
+        ) ??
+        null
+
+      // When all bridge riders have already detached, the explicit
+      // low-energy/group-split checkpoint owns the physical transition.
+      if (!sampleBridgeGroup || sampleBridgeGroup.riderIds.length === 0) {
+        return
+      }
+
+      const activeBridgeRiderIds = [...sampleBridgeGroup.riderIds].sort()
+      const activeBridgeTeamIds = Array.from(
+        new Set(
+          activeBridgeRiderIds
+            .map((riderId) => riderById.get(riderId)?.teamId)
+            .filter((teamId): teamId is string => Boolean(teamId)),
+        ),
+      ).sort()
+      const samplePelotonGap =
+        sampleGroups.find((group) => group.displayCode === 'P')?.gapSeconds ??
+        null
+      const displayedGapToLeader = sampleBridgeGroup.gapSeconds
+      const displayedGapToPeloton =
+        samplePelotonGap === null
+          ? sample.gapToPelotonSeconds
+          : Math.max(0, samplePelotonGap - displayedGapToLeader)
+
       eventDefinitions.push({
         checkpointIdSuffix: `bridge-progress-${bridgeIndex + 1}-${sampleIndex + 1}`,
         checkpointKind: 'event',
         phase: 4,
         kmFromStart: sample.km,
         sortOrder: 755 + bridgeIndex * 20 + sampleIndex,
-        groups: groupsAtKm(sample.km),
+        groups: sampleGroups,
         energyByRiderId: energyAtKm(4, sample.km),
         eventType: 'bridge_progress',
         title: `The chasing group closes on ${openingFrontDisplayCode}`,
-        description: `${bridgeDisplayCode} is ${formatReplaySeconds(sample.gapToLeaderSeconds)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(sample.gapToPelotonSeconds)} ahead of the peloton.`,
-        riderIds: [...bridgeGroup.riderIds],
-        teamIds,
-        physicalLineageId: bridgeGroup.lineageId ?? null,
+        description: `${sampleBridgeGroup.displayCode} is ${formatReplaySeconds(displayedGapToLeader)} behind ${openingFrontDisplayCode} and ${formatReplaySeconds(displayedGapToPeloton)} ahead of the peloton.`,
+        riderIds: activeBridgeRiderIds,
+        teamIds: activeBridgeTeamIds,
+        physicalLineageId:
+          sampleBridgeGroup.physicalLineageId ?? bridgeGroup.lineageId ?? null,
         physicalSourceDisplayCode: bridgeGroup.sourceDisplayCode ?? null,
         physicalLaunchKm: bridgeGroup.launchKm,
         physicalMergeTargetDisplayCode: mergeTargetDisplayCode,
