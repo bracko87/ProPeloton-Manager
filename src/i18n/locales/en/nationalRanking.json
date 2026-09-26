@@ -125,8 +125,8 @@
     "climateTitle": "Climate window unavailable",
     "climateUnavailable": "No championship window above 20°C is available in the current climate data. Warmest eligible weekly maximum: {{temperature}}°C.",
     "routeTitle": "Championship route needed",
-    "routeMissing": "This country does not currently have a suitable road stage for its National Championship. The championship will remain planned until a route is added.",
-    "singleRoute": "Only one suitable road stage currently exists for this country, so qualification and final will reuse the same route.",
+    "routeMissing": "This country does not currently have a suitable National Championship road stage. The championship stays paused until at least two suitable road stages exist.",
+    "singleRoute": "Only one suitable National Championship road stage currently exists. The championship stays paused until a second suitable route is added, so qualification and final can use different routes.",
     "windowTitle": "National Duty window:",
     "windowDates": "{{start}}–{{end}} · expected warm-window maximum {{temperature}}°C · no team cost."
   },
