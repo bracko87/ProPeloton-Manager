@@ -235,24 +235,25 @@ function seasonFromDate(value?: string | null): number | null {
   return date.getUTCFullYear() - 1999
 }
 
-function formatGameDate(value?: string | null, seasonNumber?: number | null): string {
+function formatGameDate(
+  value?: string | null,
+  seasonLabel?: string | null,
+): string {
   if (!value) return '—'
-  const season = seasonNumber ?? seasonFromDate(value)
   const dayMonth = formatDayMonth(value)
-  return season && season > 0 ? `${dayMonth} · Season ${season}` : dayMonth
+  return seasonLabel ? `${dayMonth} · ${seasonLabel}` : dayMonth
 }
 
 function formatGameDateRange(
   start?: string | null,
   end?: string | null,
-  seasonNumber?: number | null,
+  seasonLabel?: string | null,
 ): string {
   if (!start && !end) return '—'
-  if (!start) return formatGameDate(end, seasonNumber)
-  if (!end) return formatGameDate(start, seasonNumber)
-  const season = seasonNumber ?? seasonFromDate(start) ?? seasonFromDate(end)
+  if (!start) return formatGameDate(end, seasonLabel)
+  if (!end) return formatGameDate(start, seasonLabel)
   return `${formatDayMonth(start)} – ${formatDayMonth(end)}${
-    season && season > 0 ? ` · Season ${season}` : ''
+    seasonLabel ? ` · ${seasonLabel}` : ''
   }`
 }
 
@@ -319,6 +320,11 @@ function NationalDutyPlanCard({
     eventType === 'qualification'
       ? t('plan.qualificationHeat', { number: entry.heat_number ?? '—' })
       : t('plan.final')
+  const eventSeason = seasonFromDate(eventDate)
+  const eventDateLabel = formatGameDate(
+    eventDate,
+    eventSeason ? t('champions.season', { number: eventSeason }) : null,
+  )
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -329,7 +335,7 @@ function NationalDutyPlanCard({
             <h4 className="text-base font-bold text-slate-900">{eventName}</h4>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            {formatGameDate(eventDate)}
+            {eventDateLabel}
             {raceId ? (
               <>
                 {' · '}
@@ -573,6 +579,33 @@ export default function NationalRankingPage(): JSX.Element {
     data?.country_code ??
     t('common.national')
   const countryFlag = flagUrl(data?.country_code)
+  const pageDate = (
+    value?: string | null,
+    seasonNumber?: number | null,
+  ): string => {
+    const season = seasonNumber ?? seasonFromDate(value)
+    return formatGameDate(
+      value,
+      season && season > 0
+        ? t('champions.season', { number: season })
+        : null,
+    )
+  }
+  const pageDateRange = (
+    start?: string | null,
+    end?: string | null,
+    seasonNumber?: number | null,
+  ): string => {
+    const season =
+      seasonNumber ?? seasonFromDate(start) ?? seasonFromDate(end)
+    return formatGameDateRange(
+      start,
+      end,
+      season && season > 0
+        ? t('champions.season', { number: season })
+        : null,
+    )
+  }
 
   const finalResults = (data?.results ?? []).filter(
     result => result.event_type === 'final',
@@ -735,7 +768,7 @@ export default function NationalRankingPage(): JSX.Element {
               {t('cards.freeze')}
             </div>
             <div className="mt-2 text-base font-black text-slate-900">
-              {formatGameDate(edition.ranking_snapshot_date, edition.season_number)}
+              {pageDate(edition.ranking_snapshot_date, edition.season_number)}
             </div>
             <div className="mt-1 text-xs text-slate-500">
               {data?.ranking_is_frozen ? t('cards.frozen') : t('cards.live')}
@@ -749,7 +782,7 @@ export default function NationalRankingPage(): JSX.Element {
             </div>
             <div className="mt-2 text-base font-black text-slate-900">
               {heatCount > 0
-                ? formatGameDate(edition.qualification_date, edition.season_number)
+                ? pageDate(edition.qualification_date, edition.season_number)
                 : t('cards.notRequired')}
             </div>
             <div className="mt-1 text-xs text-slate-500">
@@ -771,7 +804,7 @@ export default function NationalRankingPage(): JSX.Element {
               {t('cards.final')}
             </div>
             <div className="mt-2 text-base font-black text-slate-900">
-              {formatGameDate(edition.final_date, edition.season_number)}
+              {pageDate(edition.final_date, edition.season_number)}
             </div>
             <div className="mt-1 text-xs text-slate-600">
               {t('cards.targetField', {
@@ -789,7 +822,7 @@ export default function NationalRankingPage(): JSX.Element {
               {t('cards.dutyWindow')}
             </div>
             <div className="mt-2 text-base font-black text-slate-900">
-              {formatGameDateRange(
+              {pageDateRange(
                 edition.duty_window_start_date,
                 edition.duty_window_end_date,
                 edition.season_number,
@@ -862,7 +895,7 @@ export default function NationalRankingPage(): JSX.Element {
                         {t('draw.qualificationHeat', { number: heat.heat_number })}
                       </div>
                       <div className="mt-1 font-bold text-slate-900">
-                        {formatGameDate(
+                        {pageDate(
                           heat.qualification_date || edition.qualification_date,
                           edition.season_number,
                         )}
@@ -885,7 +918,7 @@ export default function NationalRankingPage(): JSX.Element {
                 {t('draw.final')}
               </div>
               <div className="mt-1 font-black text-slate-900">
-                {formatGameDate(edition.final_date, edition.season_number)}
+                {pageDate(edition.final_date, edition.season_number)}
               </div>
               <div className="mt-1 text-xs text-slate-600">
                 {data?.final_host?.route_label ?? t('draw.routePending')}
@@ -1016,7 +1049,7 @@ export default function NationalRankingPage(): JSX.Element {
                           {formatPoints(row.raw_points)}
                         </td>
                         <td className="px-4 py-3 text-slate-600">
-                          {formatGameDate(row.latest_result_date)}
+                          {pageDate(row.latest_result_date)}
                         </td>
                         <td className="px-4 py-3 text-slate-600">
                           {row.overall ?? '—'}
@@ -1170,11 +1203,11 @@ export default function NationalRankingPage(): JSX.Element {
                         </div>
                         <div className="mt-1 text-xs leading-5 text-slate-600">
                           {t('decision.blockedWindow', {
-                            start: formatGameDate(
+                            start: pageDate(
                               entry.duty_window_start_date,
                               edition?.season_number,
                             ),
-                            end: formatGameDate(
+                            end: pageDate(
                               entry.duty_window_end_date,
                               edition?.season_number,
                             ),
@@ -1183,7 +1216,7 @@ export default function NationalRankingPage(): JSX.Element {
                         {entry.participation_decision_deadline ? (
                           <div className="mt-1 text-xs text-slate-500">
                             {t('decision.deadline', {
-                              date: formatGameDate(
+                              date: pageDate(
                                 entry.participation_decision_deadline,
                                 edition?.season_number,
                               ),
