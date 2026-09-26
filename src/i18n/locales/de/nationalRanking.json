@@ -1,0 +1,124 @@
+{
+  "title": "Nationale Rangliste {{country}}",
+  "eyebrow": "Nationaler Wettbewerb",
+  "description": "Nationale Einzelrangliste der Fahrer mit Meisterschaftsqualifikation, National Duty und individueller Rennvorbereitung. Die Team-Ranglistenpunkte werden nicht beeinflusst.",
+  "country": "Land",
+  "loading": "Nationale Rangliste wird geladen…",
+  "errors": {
+    "unavailable": "Die nationale Rangliste ist nicht verfügbar.",
+    "load": "Die nationale Rangliste konnte nicht geladen werden.",
+    "save": "Der Fahrerplan konnte nicht gespeichert werden."
+  },
+  "cards": {
+    "freeze": "Ranglisten-Stichtag",
+    "frozen": "Rangliste für diese Austragung eingefroren",
+    "live": "Live-Rangliste verändert sich noch",
+    "qualification": "Qualifikation",
+    "notRequired": "Nicht erforderlich",
+    "heatPlaces": "{{heats}} Qualifikationslauf/-läufe · {{places}} Finalplätze",
+    "directField": "Das Feld passt direkt ins Finale",
+    "final": "Nationales Finale",
+    "targetField": "Zielfeld {{count}} · {{status}}",
+    "preparation": "Vorbereitung",
+    "riderControlled": "Vom Fahrer-Manager steuerbar",
+    "prepDescription": "Nur Ausrüstung und individuelle Taktik. Personal, Fahrzeuge und Verpflegung stellt der Veranstalter."
+  },
+  "duty": {
+    "title": "Meine National Duty",
+    "description": "Diese Fahrer werden automatisch gemeldet. Du steuerst nur die Ausrüstung und die individuelle Rennstrategie jedes Fahrers.",
+    "locked": "Einzelrennen — keine Teamtaktik. Personal, Fahrzeuge und Club-Verpflegung sind nicht verfügbar.",
+    "directQualifier": "Direkt qualifiziert",
+    "qualificationHeat": "Qualifikationslauf {{number}}",
+    "noPlan": "Für diesen Fahrer ist derzeit kein bearbeitbarer National-Duty-Plan offen."
+  },
+  "organizer": {
+    "title": "Rennpaket des Veranstalters",
+    "bidons": "{{count}} Bidons",
+    "gels": "{{count}} Gels",
+    "nutrition": "{{count}} Verpflegungspakete",
+    "kit": "Meisterschaftstrikot wird gestellt",
+    "rain": "Regenschutz wird bei Bedarf gestellt"
+  },
+  "plan": {
+    "qualificationHeat": "Qualifikationslauf {{number}}",
+    "final": "Finale der nationalen Straßenmeisterschaft",
+    "openRace": "Rennen öffnen",
+    "individualBadge": "Einzelrennen — keine Teamtaktik",
+    "equipment": "Fahrerausrüstung",
+    "organizerEquipment": "Standardausrüstung des Veranstalters",
+    "equipmentHelp": "Du kannst eine Club-Ausrüstung wählen; ansonsten wird die Standardausrüstung des Veranstalters verwendet. Personal, Fahrzeuge und Rennverpflegung bleiben veranstaltergeführt.",
+    "strategy": "Individuelle Rennstrategie",
+    "phaseStart": "Start",
+    "phaseEarly": "Früh / Mitte",
+    "phaseLate": "Späte Rennphase",
+    "phaseFinish": "Finale",
+    "save": "Fahrerplan speichern",
+    "saved": "{{rider}}: Plan für {{event}} gespeichert."
+  },
+  "event": {
+    "qualification": "Qualifikation",
+    "final": "Finale"
+  },
+  "tactics": {
+    "rideNaturally": "Natürlich fahren",
+    "conserveEnergy": "Energie sparen",
+    "stayNearFront": "Vorne bleiben",
+    "joinBreakaway": "In die Ausreißergruppe gehen",
+    "attack": "Attackieren",
+    "chaseBreakaway": "Ausreißer verfolgen",
+    "climbHard": "Anstiege hart fahren",
+    "sprint": "Sprinten",
+    "avoidRisks": "Risiken vermeiden"
+  },
+  "heats": {
+    "title": "Qualifikationsläufe",
+    "heat": "Lauf {{number}}",
+    "summary": "{{riders}} Fahrer · die besten {{places}} kommen weiter",
+    "open": "Lauf öffnen"
+  },
+  "ranking": {
+    "frozen": "Eingefrorene nationale Rangliste",
+    "live": "Live-Nationalrangliste",
+    "description": "Basierend auf Rennpunkten der Fahrer mit Aktualitätsgewichtung. Meisterschaftsboni zählen nur für Fahrer.",
+    "refresh": "Aktualisieren",
+    "rank": "Rang",
+    "rider": "Fahrer",
+    "weighted": "Gewichtete Punkte",
+    "raw": "Rohpunkte",
+    "latest": "Letztes Ergebnis",
+    "overall": "Gesamt"
+  },
+  "results": {
+    "title": "Meisterschaftsergebnisse",
+    "pending": "Die Finalergebnisse erscheinen automatisch nach der Berechnung der Meisterschaft.",
+    "independent": "Unabhängig"
+  },
+  "champions": {
+    "title": "Bisherige Meister",
+    "season": "Saison {{number}}",
+    "first": "Der erste Meister wird hier automatisch eingetragen.",
+    "badge": "Nationaler Meister",
+    "history": "Meisterschaftshistorie",
+    "titles": "{{count}} nationale Titel"
+  },
+  "common": {
+    "club": "Club",
+    "national": "National"
+  },
+  "status": {
+    "planned": "Geplant",
+    "ranking_frozen": "Rangliste eingefroren",
+    "qualification_pending": "Qualifikation ausstehend",
+    "qualification_completed": "Qualifikation abgeschlossen",
+    "final_ready": "Finale bereit",
+    "completed": "Abgeschlossen",
+    "cancelled": "Abgesagt",
+    "ready": "Bereit",
+    "direct_qualified": "Direkt qualifiziert",
+    "qualification_assigned": "Qualifikation zugeteilt",
+    "qualified": "Qualifiziert",
+    "eliminated": "Ausgeschieden",
+    "withdrawn": "Zurückgezogen",
+    "finalist": "Finalist"
+  }
+}
