@@ -186,5 +186,12 @@
   "info": {
     "title": "Informazioni sul campionato",
     "description": "I Campionati Nazionali sono gare individuali. Non ci sono tattiche di squadra, staff, veicoli o rifornimenti del club. L'organizzatore copre logistica e costi; tu controlli solo equipaggiamento e tattiche individuali di ogni corridore invitato."
+  },
+  "summary": {
+    "title": "Calendario del Campionato Nazionale",
+    "subtitle": "Date chiave, finestra dell'impegno nazionale e percorso ospitante del campionato del tuo paese."
+  },
+  "host": {
+    "openRace": "Apri pagina gara"
   }
 }
