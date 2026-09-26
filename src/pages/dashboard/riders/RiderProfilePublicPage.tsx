@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import RiderProfileModal from '../../../components/riders/RiderProfileModal'
-import { supabase } from '../../../lib/supabase'
+import NationalChampionBadge from '../../../components/riders/NationalChampionBadge'\nimport { supabase } from '../../../lib/supabase'
 
 type RiderPopupRow = {
   id: string
@@ -208,18 +208,21 @@ export default function RiderProfilePublicPage() {
   }
 
   return (
-    <RiderProfileModal
-      rider={rider}
-      isOpen
-      onClose={() => navigate(-1)}
-      onOpenTeamProfile={() => {}}
-      isRiderScouted={isRiderScouted}
-      setIsRiderScouted={setIsRiderScouted}
-      showRiderHistory={showRiderHistory}
-      setShowRiderHistory={setShowRiderHistory}
-      countryNameByCode={new Map<string, string>()}
-      variant="page"
-      backButtonLabel={t('common.back')}
-    />
+    <>
+      <NationalChampionBadge riderId={riderId ?? rider.id} />
+      <RiderProfileModal
+        rider={rider}
+        isOpen
+        onClose={() => navigate(-1)}
+        onOpenTeamProfile={() => {}}
+        isRiderScouted={isRiderScouted}
+        setIsRiderScouted={setIsRiderScouted}
+        showRiderHistory={showRiderHistory}
+        setShowRiderHistory={setShowRiderHistory}
+        countryNameByCode={new Map<string, string>()}
+        variant="page"
+        backButtonLabel={t('common.back')}
+      />
+    </>
   )
 }
