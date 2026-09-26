@@ -16240,6 +16240,11 @@ function UniversalRaceReplayPage({
                   }
                   compact
                   roadReplayCompactUi={!isTimeTrialReplay}
+                  minimumVerticalSpanOverride={
+                    stage.id === TROFEJ_ALEKSANDROVA_VISUAL_PROFILE_STAGE_ID
+                      ? 100
+                      : null
+                  }
                 />
 
                 {isTimeTrialReplay ? (
