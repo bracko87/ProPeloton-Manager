@@ -125,8 +125,8 @@
     "climateTitle": "Klimatski termin nije dostupan",
     "climateUnavailable": "U trenutačnim klimatskim podacima nema termina prvenstva iznad 20 °C. Najtopliji prihvatljivi tjedni maksimum: {{temperature}} °C.",
     "routeTitle": "Potrebna je ruta za prvenstvo",
-    "routeMissing": "Ova država trenutačno nema prikladnu cestovnu etapu za nacionalno prvenstvo. Prvenstvo će ostati planirano dok se ne doda ruta.",
-    "singleRoute": "Ova država trenutačno ima samo jednu prikladnu cestovnu etapu pa će kvalifikacije i finale koristiti istu rutu.",
+    "routeMissing": "Ova država trenutačno nema prikladnu cestovnu etapu za nacionalno prvenstvo. Prvenstvo ostaje pauzirano dok ne postoje najmanje dvije prikladne cestovne etape.",
+    "singleRoute": "Ova država trenutačno ima samo jednu prikladnu cestovnu etapu za nacionalno prvenstvo. Prvenstvo ostaje pauzirano dok se ne doda druga prikladna ruta kako bi kvalifikacije i finale koristili različite trase.",
     "windowTitle": "Termin nacionalne obveze:",
     "windowDates": "{{start}}–{{end}} · očekivani maksimum u toplom terminu {{temperature}} °C · bez troška za klub."
   },
