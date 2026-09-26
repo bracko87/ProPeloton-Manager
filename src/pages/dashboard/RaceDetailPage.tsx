@@ -8583,27 +8583,75 @@ type BackendStageProfilePoint = {
 }
 
 /**
- * Temporary, fully reversible visual experiment for Trofej Aleksandrova.
+ * Global display-only micro-terrain mode.
+ *
+ * Set this one switch to false to restore the previous stage-profile design
+ * everywhere without touching Supabase or any race-engine data.
  *
  * IMPORTANT:
  * - Never used by the race engine.
  * - Never written back to Supabase.
  * - Never used by replay terrain timing / gradients.
- * - Existing authoritative profile points stay exact anchors.
- *
- * Remove this stage id / helper calls to restore the previous display instantly.
+ * - Every authoritative profile point remains an exact anchor.
  */
-const TROFEJ_ALEKSANDROVA_VISUAL_PROFILE_STAGE_ID =
-  '27ff7ae3-f539-4771-8500-09deebea0d3a'
+const ENABLE_DISPLAY_ONLY_STAGE_MICRO_TERRAIN = true
+
+function getStageVisualSeed(stageId: string | null | undefined): number {
+  if (!stageId) return 0
+
+  let seed = 0
+
+  for (let index = 0; index < stageId.length; index += 1) {
+    seed = (seed * 31 + stageId.charCodeAt(index)) % 1000003
+  }
+
+  return seed
+}
+
+function getDisplayOnlyMicroTerrainAmplitudeMeters(
+  terrainType: string | null | undefined,
+  absoluteGradientPercent: number,
+  anchorIndex: number,
+  stageSeed: number
+): number {
+  const normalizedTerrain = String(terrainType ?? '').toLowerCase()
+
+  const baseAmplitude =
+    normalizedTerrain === 'hilly'
+      ? 24
+      : normalizedTerrain === 'mountain'
+        ? 18
+        : normalizedTerrain === 'cobbled'
+          ? 14
+          : normalizedTerrain === 'individual_time_trial' ||
+              normalizedTerrain === 'team_time_trial' ||
+              normalizedTerrain === 'prologue' ||
+              normalizedTerrain === 'time_trial'
+            ? 10
+            : 10
+
+  // Do not visually distort real sustained climbs/descents.
+  const slopeFactor =
+    absoluteGradientPercent >= 5
+      ? 0.2
+      : absoluteGradientPercent >= 3
+        ? 0.4
+        : absoluteGradientPercent >= 1.5
+          ? 0.7
+          : 1
+
+  const deterministicVariation =
+    0.85 + (((stageSeed + anchorIndex * 17) % 31) / 30) * 0.3
+
+  return baseAmplitude * slopeFactor * deterministicVariation
+}
 
 function getDisplayOnlyStageProfilePoints(
   stageId: string | null | undefined,
-  points: BackendStageProfilePoint[]
+  points: BackendStageProfilePoint[],
+  terrainType?: string | null
 ): BackendStageProfilePoint[] {
-  if (
-    stageId !== TROFEJ_ALEKSANDROVA_VISUAL_PROFILE_STAGE_ID ||
-    points.length < 2
-  ) {
+  if (!ENABLE_DISPLAY_ONLY_STAGE_MICRO_TERRAIN || points.length < 2) {
     return points
   }
 
@@ -8621,6 +8669,7 @@ function getDisplayOnlyStageProfilePoints(
 
   if (anchors.length < 2) return points
 
+  const stageSeed = getStageVisualSeed(stageId)
   const displayPoints: BackendStageProfilePoint[] = []
 
   for (let anchorIndex = 0; anchorIndex < anchors.length - 1; anchorIndex += 1) {
@@ -8630,8 +8679,18 @@ function getDisplayOnlyStageProfilePoints(
 
     if (spanKm <= 0) continue
 
-    const visualStepKm = 1
-    const stepCount = Math.max(2, Math.ceil(spanKm / visualStepKm))
+    const segmentGradientPercent =
+      ((end.elevation - start.elevation) / (spanKm * 1000)) * 100
+
+    const amplitudeMeters = getDisplayOnlyMicroTerrainAmplitudeMeters(
+      terrainType,
+      Math.abs(segmentGradientPercent),
+      anchorIndex,
+      stageSeed
+    )
+
+    // About one visual point per km. These points are render-only.
+    const stepCount = Math.max(2, Math.ceil(spanKm))
 
     for (let step = 0; step < stepCount; step += 1) {
       const fraction = step / stepCount
@@ -8639,16 +8698,15 @@ function getDisplayOnlyStageProfilePoints(
       const baseline =
         start.elevation + (end.elevation - start.elevation) * fraction
 
-      // Smooth local road texture. sin(pi*fraction) makes the deviation
-      // exactly zero at every real engine anchor.
+      // The envelope is zero at every real anchor. Two long smooth waves avoid
+      // saw-tooth spikes while making otherwise flat roads look organic.
       const envelope = Math.sin(Math.PI * fraction)
-      const phase = anchorIndex * 0.73
+      const phase =
+        ((stageSeed % 360) * Math.PI) / 180 +
+        anchorIndex * 0.67
       const wave =
         Math.sin(fraction * Math.PI * 2 + phase) * 0.72 +
-        Math.sin(fraction * Math.PI * 4 + phase * 0.45) * 0.28
-
-      // Deliberately modest for the genuinely flat Central Banat route.
-      const amplitudeMeters = 7 + (anchorIndex % 3) * 2
+        Math.sin(fraction * Math.PI * 4 + phase * 0.43) * 0.28
 
       displayPoints.push({
         km,
@@ -8661,6 +8719,34 @@ function getDisplayOnlyStageProfilePoints(
   displayPoints.push(anchors[anchors.length - 1])
 
   return displayPoints
+}
+
+function getDisplayOnlyProfileMinimumVerticalSpan(
+  terrainType: string | null | undefined
+): number | null {
+  if (!ENABLE_DISPLAY_ONLY_STAGE_MICRO_TERRAIN) return null
+
+  switch (String(terrainType ?? '').toLowerCase()) {
+    case 'flat':
+      return 140
+
+    case 'hilly':
+      return 500
+
+    case 'cobbled':
+      return 320
+
+    case 'individual_time_trial':
+    case 'team_time_trial':
+    case 'time_trial':
+    case 'prologue':
+      return 220
+
+    // Real mountain profiles keep the existing large vertical scale.
+    case 'mountain':
+    default:
+      return null
+  }
 }
 
 type TerrainReplaySegment = {
@@ -15921,7 +16007,11 @@ function UniversalRaceReplayPage({
           { km: Math.max(1, Number(stage.distance_km ?? 1)), elevation: 0 },
         ]
 
-    return getDisplayOnlyStageProfilePoints(stage.id, authoritativePoints)
+    return getDisplayOnlyStageProfilePoints(
+      stage.id,
+      authoritativePoints,
+      stage.terrain_type
+    )
   }, [profile, stage.id, stage.distance_km])
 
   const chartMarkers = useMemo(() => {
@@ -16240,11 +16330,9 @@ function UniversalRaceReplayPage({
                   }
                   compact
                   roadReplayCompactUi={!isTimeTrialReplay}
-                  minimumVerticalSpanOverride={
-                    stage.id === TROFEJ_ALEKSANDROVA_VISUAL_PROFILE_STAGE_ID
-                      ? 100
-                      : null
-                  }
+                  minimumVerticalSpanOverride={getDisplayOnlyProfileMinimumVerticalSpan(
+                    input.stage.terrainType
+                  )}
                 />
 
                 {isTimeTrialReplay ? (
@@ -16976,17 +17064,16 @@ function RaceStageProfilePanel({
           <StageProfileChart
             points={getDisplayOnlyStageProfilePoints(
               selectedStage?.id,
-              profile.profile_points ?? []
+              profile.profile_points ?? [],
+              profile.terrain_type
             )}
             markers={profile.route_markers ?? []}
             distanceKm={Number(profile.distance_km ?? 0)}
             terrainType={profile.terrain_type}
             mountainClimbs={profile.mountain_climbs ?? []}
-            minimumVerticalSpanOverride={
-              selectedStage?.id === TROFEJ_ALEKSANDROVA_VISUAL_PROFILE_STAGE_ID
-                ? 100
-                : null
-            }
+            minimumVerticalSpanOverride={getDisplayOnlyProfileMinimumVerticalSpan(
+              profile.terrain_type
+            )}
           />
         </div>
 
