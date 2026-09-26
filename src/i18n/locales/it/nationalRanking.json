@@ -1,0 +1,124 @@
+{
+  "title": "Classifica nazionale {{country}}",
+  "eyebrow": "Competizione nazionale",
+  "description": "Classifica nazionale individuale dei corridori, qualificazione al campionato, impegno nazionale e preparazione individuale. I punti della classifica a squadre non vengono influenzati.",
+  "country": "Paese",
+  "loading": "Caricamento classifica nazionale…",
+  "errors": {
+    "unavailable": "La classifica nazionale non è disponibile.",
+    "load": "Impossibile caricare la classifica nazionale.",
+    "save": "Impossibile salvare il piano del corridore."
+  },
+  "cards": {
+    "freeze": "Blocco classifica",
+    "frozen": "Classifica bloccata per questa edizione",
+    "live": "La classifica live è ancora in movimento",
+    "qualification": "Qualificazione",
+    "notRequired": "Non richiesta",
+    "heatPlaces": "{{heats}} batteria/e di qualificazione · {{places}} posti in finale",
+    "directField": "Il gruppo accede direttamente alla finale",
+    "final": "Finale nazionale",
+    "targetField": "Gruppo obiettivo {{count}} · {{status}}",
+    "preparation": "Preparazione",
+    "riderControlled": "Gestione corridore",
+    "prepDescription": "Solo equipaggiamento e tattiche individuali. Staff, mezzi e rifornimenti sono gestiti dall’organizzatore."
+  },
+  "duty": {
+    "title": "Il mio impegno nazionale",
+    "description": "Questi corridori vengono iscritti automaticamente. Gestisci solo equipaggiamento e strategia individuale di ciascuno.",
+    "locked": "Gara individuale — nessuna tattica di squadra. Staff, mezzi e rifornimenti del club non sono disponibili.",
+    "directQualifier": "Qualificato diretto",
+    "qualificationHeat": "Batteria di qualificazione {{number}}",
+    "noPlan": "Al momento non è disponibile un piano modificabile per questo corridore."
+  },
+  "organizer": {
+    "title": "Pacchetto gara dell’organizzatore",
+    "bidons": "{{count}} borracce",
+    "gels": "{{count}} gel",
+    "nutrition": "{{count}} pacchetti nutrizione",
+    "kit": "Completo del campionato fornito",
+    "rain": "Protezione pioggia fornita se necessaria"
+  },
+  "plan": {
+    "qualificationHeat": "Batteria di qualificazione {{number}}",
+    "final": "Finale del Campionato Nazionale",
+    "openRace": "Apri gara",
+    "individualBadge": "Gara individuale — nessuna tattica di squadra",
+    "equipment": "Equipaggiamento corridore",
+    "organizerEquipment": "Equipaggiamento standard dell’organizzatore",
+    "equipmentHelp": "Puoi scegliere un setup del club; altrimenti viene usato l’equipaggiamento standard dell’organizzatore. Staff, mezzi e rifornimenti restano gestiti dall’organizzatore.",
+    "strategy": "Strategia individuale",
+    "phaseStart": "Partenza",
+    "phaseEarly": "Inizio / metà",
+    "phaseLate": "Finale di gara",
+    "phaseFinish": "Arrivo",
+    "save": "Salva piano corridore",
+    "saved": "{{rider}}: piano {{event}} salvato."
+  },
+  "event": {
+    "qualification": "qualificazione",
+    "final": "finale"
+  },
+  "tactics": {
+    "rideNaturally": "Correre naturalmente",
+    "conserveEnergy": "Risparmiare energie",
+    "stayNearFront": "Restare davanti",
+    "joinBreakaway": "Entrare nella fuga",
+    "attack": "Attaccare",
+    "chaseBreakaway": "Inseguire la fuga",
+    "climbHard": "Spingere in salita",
+    "sprint": "Sprintare",
+    "avoidRisks": "Evitare rischi"
+  },
+  "heats": {
+    "title": "Batterie di qualificazione",
+    "heat": "Batteria {{number}}",
+    "summary": "{{riders}} corridori · avanzano i primi {{places}}",
+    "open": "Apri batteria"
+  },
+  "ranking": {
+    "frozen": "Classifica nazionale bloccata",
+    "live": "Classifica nazionale live",
+    "description": "Basata sui punti gara con ponderazione della recenza. I bonus del Campionato Nazionale valgono solo per i corridori.",
+    "refresh": "Aggiorna",
+    "rank": "Pos.",
+    "rider": "Corridore",
+    "weighted": "Punti ponderati",
+    "raw": "Punti grezzi",
+    "latest": "Ultimo risultato",
+    "overall": "Generale"
+  },
+  "results": {
+    "title": "Risultati del campionato",
+    "pending": "I risultati della finale appariranno automaticamente dopo il calcolo del campionato.",
+    "independent": "Indipendente"
+  },
+  "champions": {
+    "title": "Campioni precedenti",
+    "season": "Stagione {{number}}",
+    "first": "Il primo campione verrà aggiunto qui automaticamente.",
+    "badge": "Campione nazionale",
+    "history": "Storico del campionato",
+    "titles": "{{count}} titoli nazionali"
+  },
+  "common": {
+    "club": "Club",
+    "national": "Nazionale"
+  },
+  "status": {
+    "planned": "Pianificato",
+    "ranking_frozen": "Classifica bloccata",
+    "qualification_pending": "Qualificazione in attesa",
+    "qualification_completed": "Qualificazione completata",
+    "final_ready": "Finale pronta",
+    "completed": "Completato",
+    "cancelled": "Annullato",
+    "ready": "Pronto",
+    "direct_qualified": "Qualificato diretto",
+    "qualification_assigned": "Qualificazione assegnata",
+    "qualified": "Qualificato",
+    "eliminated": "Eliminato",
+    "withdrawn": "Ritirato",
+    "finalist": "Finalista"
+  }
+}
