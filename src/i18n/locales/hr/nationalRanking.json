@@ -1,0 +1,124 @@
+{
+  "title": "Nacionalni poredak — {{country}}",
+  "eyebrow": "Nacionalno natjecanje",
+  "description": "Individualni nacionalni poredak vozača, kvalifikacije za prvenstvo, nacionalna obveza i individualna priprema. Bodovi ekipnog poretka nisu pogođeni.",
+  "country": "Država",
+  "loading": "Učitavanje nacionalnog poretka…",
+  "errors": {
+    "unavailable": "Nacionalni poredak nije dostupan.",
+    "load": "Nije moguće učitati nacionalni poredak.",
+    "save": "Nije moguće spremiti plan vozača."
+  },
+  "cards": {
+    "freeze": "Zaključavanje poretka",
+    "frozen": "Poredak je zaključan za ovo izdanje",
+    "live": "Poredak uživo se još mijenja",
+    "qualification": "Kvalifikacije",
+    "notRequired": "Nisu potrebne",
+    "heatPlaces": "{{heats}} kvalifikacijska skupina/e · {{places}} mjesta u finalu",
+    "directField": "Svi vozači ulaze izravno u finale",
+    "final": "Nacionalno finale",
+    "targetField": "Ciljani broj {{count}} · {{status}}",
+    "preparation": "Priprema",
+    "riderControlled": "Upravljanje vozačem",
+    "prepDescription": "Samo oprema i individualna taktika. Osoblje, vozila i zalihe osigurava organizator."
+  },
+  "duty": {
+    "title": "Moja nacionalna obveza",
+    "description": "Ovi vozači prijavljuju se automatski. Upravljaš samo opremom i individualnom strategijom svakog vozača.",
+    "locked": "Individualna utrka — nema ekipne taktike. Osoblje, vozila i klupske zalihe nisu dostupni.",
+    "directQualifier": "Izravno kvalificiran",
+    "qualificationHeat": "Kvalifikacijska skupina {{number}}",
+    "noPlan": "Za ovog vozača trenutačno nema otvorenog plana koji se može uređivati."
+  },
+  "organizer": {
+    "title": "Paket organizatora",
+    "bidons": "{{count}} bidona",
+    "gels": "{{count}} gelova",
+    "nutrition": "{{count}} paketa prehrane",
+    "kit": "Prvenstveni komplet je osiguran",
+    "rain": "Zaštita od kiše osigurana po potrebi"
+  },
+  "plan": {
+    "qualificationHeat": "Kvalifikacijska skupina {{number}}",
+    "final": "Finale nacionalnog prvenstva",
+    "openRace": "Otvori utrku",
+    "individualBadge": "Individualna utrka — nema ekipne taktike",
+    "equipment": "Oprema vozača",
+    "organizerEquipment": "Standardna oprema organizatora",
+    "equipmentHelp": "Možeš odabrati klupski setup; u suprotnom koristi se standardna oprema organizatora. Osoblje, vozila i zalihe ostaju pod kontrolom organizatora.",
+    "strategy": "Individualna strategija",
+    "phaseStart": "Start",
+    "phaseEarly": "Rani / srednji dio",
+    "phaseLate": "Kasni dio utrke",
+    "phaseFinish": "Cilj",
+    "save": "Spremi plan vozača",
+    "saved": "{{rider}}: plan za {{event}} je spremljen."
+  },
+  "event": {
+    "qualification": "kvalifikacije",
+    "final": "finale"
+  },
+  "tactics": {
+    "rideNaturally": "Vozi prirodno",
+    "conserveEnergy": "Čuvaj energiju",
+    "stayNearFront": "Drži se naprijed",
+    "joinBreakaway": "Uđi u bijeg",
+    "attack": "Napadni",
+    "chaseBreakaway": "Lov na bijeg",
+    "climbHard": "Snažno na usponima",
+    "sprint": "Sprintaj",
+    "avoidRisks": "Izbjegavaj rizike"
+  },
+  "heats": {
+    "title": "Kvalifikacijske skupine",
+    "heat": "Skupina {{number}}",
+    "summary": "{{riders}} vozača · najboljih {{places}} prolazi",
+    "open": "Otvori skupinu"
+  },
+  "ranking": {
+    "frozen": "Zaključani nacionalni poredak",
+    "live": "Nacionalni poredak uživo",
+    "description": "Temelji se na bodovima iz utrka uz ponderiranje svježine rezultata. Bonus nacionalnog prvenstva vrijedi samo za vozača.",
+    "refresh": "Osvježi",
+    "rank": "Mjesto",
+    "rider": "Vozač",
+    "weighted": "Ponderirani bodovi",
+    "raw": "Osnovni bodovi",
+    "latest": "Zadnji rezultat",
+    "overall": "Ukupno"
+  },
+  "results": {
+    "title": "Rezultati prvenstva",
+    "pending": "Rezultati finala pojavit će se automatski nakon izračuna prvenstva.",
+    "independent": "Neovisno"
+  },
+  "champions": {
+    "title": "Prijašnji prvaci",
+    "season": "Sezona {{number}}",
+    "first": "Prvi prvak bit će automatski dodan ovdje.",
+    "badge": "Nacionalni prvak",
+    "history": "Povijest prvenstva",
+    "titles": "{{count}} nacionalnih naslova"
+  },
+  "common": {
+    "club": "Klub",
+    "national": "Nacionalno"
+  },
+  "status": {
+    "planned": "Planirano",
+    "ranking_frozen": "Poredak zaključan",
+    "qualification_pending": "Kvalifikacije čekaju",
+    "qualification_completed": "Kvalifikacije završene",
+    "final_ready": "Finale spremno",
+    "completed": "Završeno",
+    "cancelled": "Otkazano",
+    "ready": "Spremno",
+    "direct_qualified": "Izravno kvalificiran",
+    "qualification_assigned": "Dodijeljene kvalifikacije",
+    "qualified": "Kvalificiran",
+    "eliminated": "Ispao",
+    "withdrawn": "Povučen",
+    "finalist": "Finalist"
+  }
+}
