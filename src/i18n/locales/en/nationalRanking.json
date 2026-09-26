@@ -21,7 +21,12 @@
     "targetField": "Target field {{count}} · {{status}}",
     "preparation": "Preparation",
     "riderControlled": "Rider controlled",
-    "prepDescription": "Equipment and individual tactics only. Staff, assets and supplies are organizer-managed."
+    "prepDescription": "Equipment and individual tactics only. Staff, assets and supplies are organizer-managed.",
+    "dutyWindow": "National Duty window",
+    "noTeamCost": "No team cost",
+    "hostRoute": "Final host route",
+    "hostPending": "Route not ready",
+    "hostPendingHelp": "Championship waits until two suitable routes are available."
   },
   "duty": {
     "title": "My National Duty",
@@ -29,7 +34,8 @@
     "locked": "Individual race — no team tactics. Staff, assets and club supplies are unavailable.",
     "directQualifier": "Direct qualifier",
     "qualificationHeat": "Qualification heat {{number}}",
-    "noPlan": "No editable National Duty plan is currently open for this rider."
+    "noPlan": "No editable National Duty plan is currently open for this rider.",
+    "empty": "None of your riders has an active National Duty invitation for this championship."
   },
   "organizer": {
     "title": "Organizer race pack",
@@ -86,7 +92,20 @@
     "weighted": "Weighted points",
     "raw": "Raw points",
     "latest": "Latest result",
-    "overall": "Overall"
+    "overall": "Overall",
+    "team": "Team",
+    "qualificationStatus": "Qualification status",
+    "freeAgent": "Free Agent",
+    "pageRange": "{{from}}–{{to}} of {{total}}",
+    "perPage": "{{count}} per page",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{page}} of {{pages}}",
+    "directFinal": "Direct final",
+    "qualificationHeat": "Qualification Heat {{number}}",
+    "qualifiedFinal": "Qualified for final",
+    "eliminated": "Eliminated",
+    "withdrawn": "Not participating"
   },
   "results": {
     "title": "Championship results",
@@ -147,5 +166,25 @@
       "auto_approved": "Automatically approved",
       "rejected": "Participation refused"
     }
+  },
+  "header": {
+    "subtitle": "National riders, qualification and championship duties"
+  },
+  "draw": {
+    "title": "Championship draw",
+    "confirmed": "Confirmed championship structure",
+    "projected": "Projected from the current National Ranking until the ranking freeze",
+    "qualificationHeat": "Qualification Heat {{number}}",
+    "final": "National Final",
+    "routePending": "Host route pending"
+  },
+  "tabs": {
+    "ranking": "Ranking",
+    "duty": "My National Duty",
+    "history": "History"
+  },
+  "info": {
+    "title": "Championship information",
+    "description": "National Championships are individual races. There are no team tactics, staff, vehicles or club supplies. The organizer covers logistics and cost; you control only each invited rider's equipment and individual tactics."
   }
 }
