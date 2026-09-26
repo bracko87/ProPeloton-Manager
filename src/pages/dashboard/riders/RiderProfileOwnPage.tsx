@@ -8,7 +8,8 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import RiderProfilePage from '../../../features/squad/components/RiderProfilePage'
-import NationalChampionBadge from '../../../components/riders/NationalChampionBadge'\nimport { normalizeGameDateValue } from '../../../features/squad/utils/dates'
+import NationalChampionBadge from '../../../components/riders/NationalChampionBadge'
+import { normalizeGameDateValue } from '../../../features/squad/utils/dates'
 import { supabase } from '../../../lib/supabase'
 
 export default function RiderProfileOwnPage() {
