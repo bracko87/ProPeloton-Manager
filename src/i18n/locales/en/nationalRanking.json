@@ -120,5 +120,32 @@
     "eliminated": "Eliminated",
     "withdrawn": "Withdrawn",
     "finalist": "Finalist"
+  },
+  "availability": {
+    "climateTitle": "Climate window unavailable",
+    "climateUnavailable": "No championship window above 20°C is available in the current climate data. Warmest eligible weekly maximum: {{temperature}}°C.",
+    "routeTitle": "Championship route needed",
+    "routeMissing": "This country does not currently have a suitable road stage for its National Championship. The championship will remain planned until a route is added.",
+    "singleRoute": "Only one suitable road stage currently exists for this country, so qualification and final will reuse the same route.",
+    "windowTitle": "National Duty window:",
+    "windowDates": "{{start}}–{{end}} · expected warm-window maximum {{temperature}}°C · no team cost."
+  },
+  "decision": {
+    "title": "National Duty participation",
+    "blockedWindow": "This rider is provisionally blocked from club duty from {{start}} to {{end}}.",
+    "deadline": "Decision deadline: {{date}}",
+    "approve": "Approve National Duty",
+    "reject": "Refuse · keep with club",
+    "rejectWarning": "Refusing cancels the three-day National Duty block and costs the rider 2 morale.",
+    "participationBenefit": "If the rider competes, normal race fatigue and skill development apply; finishing a National Championship race also gives +1 morale.",
+    "error": "Could not save the National Duty decision.",
+    "approvedMessage": "{{rider}} will participate in National Duty.",
+    "rejectedMessage": "{{rider}} will remain with the club and has received the refusal morale penalty.",
+    "status": {
+      "pending": "Awaiting club decision",
+      "approved": "Approved by club",
+      "auto_approved": "Automatically approved",
+      "rejected": "Participation refused"
+    }
   }
 }
