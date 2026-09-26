@@ -21,7 +21,12 @@
     "targetField": "Peloton cible {{count}} · {{status}}",
     "preparation": "Préparation",
     "riderControlled": "Coureur contrôlé",
-    "prepDescription": "Équipement et tactique individuelle uniquement. Personnel, véhicules et ravitaillement sont gérés par l’organisateur."
+    "prepDescription": "Équipement et tactique individuelle uniquement. Personnel, véhicules et ravitaillement sont gérés par l’organisateur.",
+    "dutyWindow": "Fenêtre de devoir national",
+    "noTeamCost": "Aucun coût pour l'équipe",
+    "hostRoute": "Parcours de la finale",
+    "hostPending": "Parcours pas encore prêt",
+    "hostPendingHelp": "Le championnat attend que deux parcours adaptés soient disponibles."
   },
   "duty": {
     "title": "Mon devoir national",
@@ -29,7 +34,8 @@
     "locked": "Course individuelle — aucune tactique d’équipe. Personnel, véhicules et ravitaillement du club indisponibles.",
     "directQualifier": "Qualifié directement",
     "qualificationHeat": "Série de qualification {{number}}",
-    "noPlan": "Aucun plan de devoir national modifiable n’est actuellement ouvert pour ce coureur."
+    "noPlan": "Aucun plan de devoir national modifiable n’est actuellement ouvert pour ce coureur.",
+    "empty": "Aucun de vos coureurs n'a actuellement d'invitation active au devoir national pour ce championnat."
   },
   "organizer": {
     "title": "Pack course de l’organisateur",
@@ -86,7 +92,20 @@
     "weighted": "Points pondérés",
     "raw": "Points bruts",
     "latest": "Dernier résultat",
-    "overall": "Général"
+    "overall": "Général",
+    "team": "Équipe",
+    "qualificationStatus": "Statut de qualification",
+    "freeAgent": "Agent libre",
+    "pageRange": "{{from}}–{{to}} sur {{total}}",
+    "perPage": "{{count}} par page",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "page": "Page {{page}} sur {{pages}}",
+    "directFinal": "Finale directe",
+    "qualificationHeat": "Série de qualification {{number}}",
+    "qualifiedFinal": "Qualifié pour la finale",
+    "eliminated": "Éliminé",
+    "withdrawn": "Ne participe pas"
   },
   "results": {
     "title": "Résultats du championnat",
@@ -147,5 +166,25 @@
       "auto_approved": "Accepté automatiquement",
       "rejected": "Participation refusée"
     }
+  },
+  "header": {
+    "subtitle": "Coureurs nationaux, qualification et devoirs du championnat"
+  },
+  "draw": {
+    "title": "Tableau du championnat",
+    "confirmed": "Structure confirmée du championnat",
+    "projected": "Projection selon le classement national actuel jusqu'au gel du classement",
+    "qualificationHeat": "Série de qualification {{number}}",
+    "final": "Finale nationale",
+    "routePending": "Parcours hôte en attente"
+  },
+  "tabs": {
+    "ranking": "Classement",
+    "duty": "Mon devoir national",
+    "history": "Historique"
+  },
+  "info": {
+    "title": "Informations sur le championnat",
+    "description": "Les championnats nationaux sont des courses individuelles. Il n'y a ni tactique d'équipe, ni personnel, ni véhicules, ni ravitaillement du club. L'organisateur couvre la logistique et les coûts ; vous contrôlez uniquement l'équipement et la tactique individuelle de chaque coureur invité."
   }
 }
