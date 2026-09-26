@@ -57,6 +57,7 @@ import CalendarPage from './pages/dashboard/CalendarPage'
 import RaceDetailPage from './pages/dashboard/RaceDetailPage'
 import RacePreparationPage from './pages/dashboard/RacePreparation'
 import TeamRankingPage from './pages/dashboard/TeamRanking'
+import NationalRankingPage from './pages/dashboard/NationalRanking'
 import TeamProfilePage from './pages/dashboard/TeamProfilePage'
 import ClubIdentityPage from './pages/dashboard/ClubIdentityPage'
 import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
@@ -522,6 +523,11 @@ export default function App(): JSX.Element {
             <Route
               path="team-ranking"
               element={<TeamRankingPage />}
+            />
+
+            <Route
+              path="national-ranking"
+              element={<NationalRankingPage />}
             />
 
             <Route
