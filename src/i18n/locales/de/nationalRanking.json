@@ -186,5 +186,12 @@
   "info": {
     "title": "Information zur Meisterschaft",
     "description": "Nationale Meisterschaften sind Einzelrennen. Es gibt keine Teamtaktik, kein Personal, keine Fahrzeuge und keine Club-Verpflegung. Der Veranstalter übernimmt Logistik und Kosten; du steuerst nur Ausrüstung und individuelle Taktik jedes eingeladenen Fahrers."
+  },
+  "summary": {
+    "title": "Zeitplan der nationalen Meisterschaft",
+    "subtitle": "Wichtige Termine, National-Duty-Zeitraum und Austragungsstrecke für die Meisterschaft deines Landes."
+  },
+  "host": {
+    "openRace": "Rennseite öffnen"
   }
 }
