@@ -1,0 +1,124 @@
+{
+  "title": "Ranking nacional de {{country}}",
+  "eyebrow": "Competición nacional",
+  "description": "Ranking nacional individual de ciclistas, clasificación al campeonato, deber nacional y preparación individual. Los puntos del ranking por equipos no se ven afectados.",
+  "country": "País",
+  "loading": "Cargando ranking nacional…",
+  "errors": {
+    "unavailable": "El ranking nacional no está disponible.",
+    "load": "No se pudo cargar el ranking nacional.",
+    "save": "No se pudo guardar el plan del ciclista."
+  },
+  "cards": {
+    "freeze": "Cierre del ranking",
+    "frozen": "Ranking cerrado para esta edición",
+    "live": "El ranking en vivo sigue cambiando",
+    "qualification": "Clasificación",
+    "notRequired": "No necesaria",
+    "heatPlaces": "{{heats}} manga(s) de clasificación · {{places}} plazas para la final",
+    "directField": "El pelotón entra directamente en la final",
+    "final": "Final nacional",
+    "targetField": "Pelotón objetivo {{count}} · {{status}}",
+    "preparation": "Preparación",
+    "riderControlled": "Control del ciclista",
+    "prepDescription": "Solo equipamiento y táctica individual. Personal, vehículos y suministros los gestiona el organizador."
+  },
+  "duty": {
+    "title": "Mi deber nacional",
+    "description": "Estos ciclistas se inscriben automáticamente. Solo gestionas el equipamiento y la estrategia individual de cada ciclista.",
+    "locked": "Carrera individual — sin tácticas de equipo. No se pueden usar personal, vehículos ni suministros del club.",
+    "directQualifier": "Clasificado directo",
+    "qualificationHeat": "Manga de clasificación {{number}}",
+    "noPlan": "No hay un plan de deber nacional editable para este ciclista."
+  },
+  "organizer": {
+    "title": "Pack de carrera del organizador",
+    "bidons": "{{count}} bidones",
+    "gels": "{{count}} geles",
+    "nutrition": "{{count}} packs de nutrición",
+    "kit": "Equipación del campeonato incluida",
+    "rain": "Protección de lluvia incluida si es necesaria"
+  },
+  "plan": {
+    "qualificationHeat": "Manga de clasificación {{number}}",
+    "final": "Final del Campeonato Nacional",
+    "openRace": "Abrir carrera",
+    "individualBadge": "Carrera individual — sin tácticas de equipo",
+    "equipment": "Equipamiento del ciclista",
+    "organizerEquipment": "Equipamiento estándar del organizador",
+    "equipmentHelp": "Puedes elegir un montaje del club; si no, se utiliza el equipamiento estándar del organizador. Personal, vehículos y suministros siguen gestionados por el organizador.",
+    "strategy": "Estrategia individual",
+    "phaseStart": "Salida",
+    "phaseEarly": "Inicio / mitad",
+    "phaseLate": "Final de carrera",
+    "phaseFinish": "Meta",
+    "save": "Guardar plan del ciclista",
+    "saved": "{{rider}}: plan de {{event}} guardado."
+  },
+  "event": {
+    "qualification": "clasificación",
+    "final": "final"
+  },
+  "tactics": {
+    "rideNaturally": "Correr de forma natural",
+    "conserveEnergy": "Ahorrar energía",
+    "stayNearFront": "Mantenerse delante",
+    "joinBreakaway": "Entrar en la fuga",
+    "attack": "Atacar",
+    "chaseBreakaway": "Perseguir la fuga",
+    "climbHard": "Forzar en las subidas",
+    "sprint": "Esprintar",
+    "avoidRisks": "Evitar riesgos"
+  },
+  "heats": {
+    "title": "Mangas de clasificación",
+    "heat": "Manga {{number}}",
+    "summary": "{{riders}} ciclistas · avanzan los mejores {{places}}",
+    "open": "Abrir manga"
+  },
+  "ranking": {
+    "frozen": "Ranking nacional cerrado",
+    "live": "Ranking nacional en vivo",
+    "description": "Basado en puntos de carrera con ponderación por recencia. Los bonos del Campeonato Nacional son solo para ciclistas.",
+    "refresh": "Actualizar",
+    "rank": "Pos.",
+    "rider": "Ciclista",
+    "weighted": "Puntos ponderados",
+    "raw": "Puntos brutos",
+    "latest": "Último resultado",
+    "overall": "General"
+  },
+  "results": {
+    "title": "Resultados del campeonato",
+    "pending": "Los resultados de la final aparecerán automáticamente tras calcular el campeonato.",
+    "independent": "Independiente"
+  },
+  "champions": {
+    "title": "Campeones anteriores",
+    "season": "Temporada {{number}}",
+    "first": "El primer campeón se añadirá aquí automáticamente.",
+    "badge": "Campeón nacional",
+    "history": "Historial del campeonato",
+    "titles": "{{count}} títulos nacionales"
+  },
+  "common": {
+    "club": "Club",
+    "national": "Nacional"
+  },
+  "status": {
+    "planned": "Planificado",
+    "ranking_frozen": "Ranking cerrado",
+    "qualification_pending": "Clasificación pendiente",
+    "qualification_completed": "Clasificación completada",
+    "final_ready": "Final preparada",
+    "completed": "Completado",
+    "cancelled": "Cancelado",
+    "ready": "Preparado",
+    "direct_qualified": "Clasificado directo",
+    "qualification_assigned": "Clasificación asignada",
+    "qualified": "Clasificado",
+    "eliminated": "Eliminado",
+    "withdrawn": "Retirado",
+    "finalist": "Finalista"
+  }
+}
