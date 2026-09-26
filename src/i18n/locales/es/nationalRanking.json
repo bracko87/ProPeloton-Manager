@@ -120,5 +120,32 @@
     "eliminated": "Eliminado",
     "withdrawn": "Retirado",
     "finalist": "Finalista"
+  },
+  "availability": {
+    "climateTitle": "Ventana climática no disponible",
+    "climateUnavailable": "Los datos climáticos actuales no ofrecen una ventana de campeonato por encima de 20 °C. Máxima semanal elegible más cálida: {{temperature}} °C.",
+    "routeTitle": "Se necesita una ruta para el campeonato",
+    "routeMissing": "Este país no dispone actualmente de una etapa de carretera adecuada para su Campeonato Nacional. El campeonato seguirá planificado hasta que se añada una ruta.",
+    "singleRoute": "Este país solo dispone actualmente de una etapa de carretera adecuada, por lo que clasificación y final usarán la misma ruta.",
+    "windowTitle": "Ventana de deber nacional:",
+    "windowDates": "{{start}}–{{end}} · máxima prevista en la ventana cálida {{temperature}} °C · sin coste para el equipo."
+  },
+  "decision": {
+    "title": "Participación en el deber nacional",
+    "blockedWindow": "Este ciclista queda bloqueado provisionalmente para tareas del club del {{start}} al {{end}}.",
+    "deadline": "Fecha límite para decidir: {{date}}",
+    "approve": "Aprobar deber nacional",
+    "reject": "Rechazar · mantener en el club",
+    "rejectWarning": "Rechazar cancela el bloqueo de tres días y reduce la moral del ciclista en 2 puntos.",
+    "participationBenefit": "Si compite, se aplican la fatiga y el desarrollo de habilidades normales; terminar una carrera del Campeonato Nacional también otorga +1 de moral.",
+    "error": "No se pudo guardar la decisión de deber nacional.",
+    "approvedMessage": "{{rider}} participará en el deber nacional.",
+    "rejectedMessage": "{{rider}} permanecerá con el club y ha recibido la penalización de moral por el rechazo.",
+    "status": {
+      "pending": "Decisión del club pendiente",
+      "approved": "Aprobado por el club",
+      "auto_approved": "Aprobado automáticamente",
+      "rejected": "Participación rechazada"
+    }
   }
 }
