@@ -5,10 +5,12 @@ import {
   Bike,
   CalendarDays,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Flag,
   Loader2,
   Lock,
+  MapPin,
   Medal,
   RefreshCw,
   Save,
@@ -21,6 +23,7 @@ type RankingRow = {
   national_rank: number
   rider_id: string
   club_id?: string | null
+  club_name?: string | null
   rider_name: string
   country_code: string
   raw_points: number
@@ -28,6 +31,9 @@ type RankingRow = {
   best_weighted_result?: number
   latest_result_date?: string | null
   overall?: number | null
+  entry_path?: 'direct' | 'qualification' | null
+  entry_status?: string | null
+  heat_number?: number | null
 }
 
 type CountryOption = {
@@ -138,11 +144,38 @@ type EditionRow = {
   final_source_stage_id?: string | null
 }
 
+type QualificationProjection = {
+  eligible_count: number
+  final_field_size: number
+  direct_qualifiers: number
+  qualification_population: number
+  qualification_places: number
+  heat_count: number
+}
+
+type HostRoute = {
+  stage_id: string
+  start_city: string
+  finish_city: string
+  route_label: string
+  distance_km?: number | null
+  terrain_type?: string | null
+  elevation_gain_m?: number | null
+  profile_type?: string | null
+}
+
+type PageTab = 'ranking' | 'duty' | 'history'
+
 type NationalPageData = {
   season_number: number
   current_game_date: string
   country_code: string
+  country_name?: string | null
   countries: CountryOption[]
+  ranking_total?: number
+  qualification_projection?: QualificationProjection
+  qualification_host?: HostRoute | null
+  final_host?: HostRoute | null
   edition: EditionRow | null
   organizer_supplies: Record<string, unknown>
   preparation_mode: Record<string, unknown>
@@ -184,16 +217,59 @@ function flagUrl(code?: string | null): string | null {
     : null
 }
 
-function formatDate(value?: string | null): string {
+function formatDayMonth(value?: string | null): string {
   if (!value) return '—'
   const date = new Date(`${value}T00:00:00Z`)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleDateString(undefined, {
     day: '2-digit',
     month: 'short',
-    year: 'numeric',
     timeZone: 'UTC',
   })
+}
+
+function seasonFromDate(value?: string | null): number | null {
+  if (!value) return null
+  const date = new Date(`${value}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return null
+  return date.getUTCFullYear() - 1999
+}
+
+function formatGameDate(value?: string | null, seasonNumber?: number | null): string {
+  if (!value) return '—'
+  const season = seasonNumber ?? seasonFromDate(value)
+  const dayMonth = formatDayMonth(value)
+  return season && season > 0 ? `${dayMonth} · Season ${season}` : dayMonth
+}
+
+function formatGameDateRange(
+  start?: string | null,
+  end?: string | null,
+  seasonNumber?: number | null,
+): string {
+  if (!start && !end) return '—'
+  if (!start) return formatGameDate(end, seasonNumber)
+  if (!end) return formatGameDate(start, seasonNumber)
+  const season = seasonNumber ?? seasonFromDate(start) ?? seasonFromDate(end)
+  return `${formatDayMonth(start)} – ${formatDayMonth(end)}${
+    season && season > 0 ? ` · Season ${season}` : ''
+  }`
+}
+
+function formatRouteMeta(route?: HostRoute | null): string {
+  if (!route) return '—'
+  const parts: string[] = []
+  if (Number.isFinite(Number(route.distance_km))) {
+    parts.push(`${Number(route.distance_km).toFixed(1).replace(/\.0$/, '')} km`)
+  }
+  if (route.terrain_type) {
+    parts.push(
+      route.terrain_type
+        .replaceAll('_', ' ')
+        .replace(/\b\w/g, letter => letter.toUpperCase()),
+    )
+  }
+  return parts.join(' · ') || '—'
 }
 
 function formatPoints(value?: number | null): string {
@@ -253,7 +329,7 @@ function NationalDutyPlanCard({
             <h4 className="text-base font-bold text-slate-900">{eventName}</h4>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            {formatDate(eventDate)}
+            {formatGameDate(eventDate)}
             {raceId ? (
               <>
                 {' · '}
@@ -352,12 +428,13 @@ export default function NationalRankingPage(): JSX.Element {
   const { t } = useTranslation('nationalRanking')
   const location = useLocation()
   const navigate = useNavigate()
-  const queryCountry = useMemo(
-    () => new URLSearchParams(location.search).get('country')?.toUpperCase() ?? '',
-    [location.search],
-  )
 
-  const [countryCode, setCountryCode] = useState(queryCountry)
+  const requestedTab = useMemo<PageTab>(() => {
+    const tab = new URLSearchParams(location.search).get('tab')
+    return tab === 'duty' || tab === 'history' ? tab : 'ranking'
+  }, [location.search])
+
+  const [activeTab, setActiveTab] = useState<PageTab>(requestedTab)
   const [data, setData] = useState<NationalPageData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -365,8 +442,9 @@ export default function NationalRankingPage(): JSX.Element {
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [decisionSavingRiderId, setDecisionSavingRiderId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [rankingPage, setRankingPage] = useState(1)
 
-  const loadPage = async (requestedCountry?: string): Promise<void> => {
+  const loadPage = async (): Promise<void> => {
     try {
       setLoading(true)
       setError(null)
@@ -374,9 +452,9 @@ export default function NationalRankingPage(): JSX.Element {
       const { data: rpcData, error: rpcError } = await supabase.rpc(
         'get_national_ranking_page_v1',
         {
-          p_country_code: requestedCountry || null,
+          p_country_code: null,
           p_season_number: null,
-          p_limit: 200,
+          p_limit: 500,
         },
       )
 
@@ -386,16 +464,6 @@ export default function NationalRankingPage(): JSX.Element {
       if (!next) throw new Error(t('errors.unavailable'))
 
       setData(next)
-
-      const resolvedCountry = next.country_code || requestedCountry || ''
-      setCountryCode(resolvedCountry)
-
-      if (resolvedCountry && resolvedCountry !== queryCountry) {
-        navigate(
-          `${location.pathname}?country=${encodeURIComponent(resolvedCountry)}`,
-          { replace: true },
-        )
-      }
 
       const nextDrafts: Record<string, PlanDraft> = {}
       for (const entry of next.my_entries ?? []) {
@@ -413,16 +481,21 @@ export default function NationalRankingPage(): JSX.Element {
   }
 
   useEffect(() => {
-    void loadPage(queryCountry)
+    void loadPage()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryCountry])
+  }, [])
 
-  const onCountryChange = (nextCountry: string): void => {
-    setCountryCode(nextCountry)
-    navigate(
-      `${location.pathname}?country=${encodeURIComponent(nextCountry)}`,
-      { replace: true },
-    )
+  useEffect(() => {
+    setActiveTab(requestedTab)
+  }, [requestedTab])
+
+  useEffect(() => {
+    setRankingPage(1)
+  }, [data?.country_code, data?.ranking_is_frozen])
+
+  const changeTab = (tab: PageTab): void => {
+    setActiveTab(tab)
+    navigate(`${location.pathname}?tab=${tab}`, { replace: true })
   }
 
   const savePlan = async (entry: MyEntry, eventType: EventType): Promise<void> => {
@@ -449,8 +522,10 @@ export default function NationalRankingPage(): JSX.Element {
 
       if (saveError) throw saveError
 
-      setSaveMessage(t('plan.saved', { rider: entry.rider_name, event: t(`event.${eventType}`) }))
-      await loadPage(countryCode)
+      setSaveMessage(
+        t('plan.saved', { rider: entry.rider_name, event: t(`event.${eventType}`) }),
+      )
+      await loadPage()
     } catch (caught: any) {
       setSaveMessage(caught?.message ?? t('errors.save'))
     } finally {
@@ -458,7 +533,10 @@ export default function NationalRankingPage(): JSX.Element {
     }
   }
 
-  const decideParticipation = async (entry: MyEntry, approve: boolean): Promise<void> => {
+  const decideParticipation = async (
+    entry: MyEntry,
+    approve: boolean,
+  ): Promise<void> => {
     try {
       setDecisionSavingRiderId(entry.rider_id)
       setSaveMessage(null)
@@ -479,7 +557,7 @@ export default function NationalRankingPage(): JSX.Element {
           ? t('decision.approvedMessage', { rider: entry.rider_name })
           : t('decision.rejectedMessage', { rider: entry.rider_name }),
       )
-      await loadPage(countryCode)
+      await loadPage()
     } catch (caught: any) {
       setSaveMessage(caught?.message ?? t('decision.error'))
     } finally {
@@ -488,15 +566,121 @@ export default function NationalRankingPage(): JSX.Element {
   }
 
   const edition = data?.edition ?? null
-  const finalResults = (data?.results ?? []).filter(result => result.event_type === 'final')
+  const projection = data?.qualification_projection ?? null
+  const countryName =
+    data?.country_name ??
+    data?.countries?.[0]?.name ??
+    data?.country_code ??
+    t('common.national')
+  const countryFlag = flagUrl(data?.country_code)
+
+  const finalResults = (data?.results ?? []).filter(
+    result => result.event_type === 'final',
+  )
   const qualificationResults = (data?.results ?? []).filter(
     result => result.event_type === 'qualification',
   )
+  const pendingApprovals = (data?.my_entries ?? []).filter(
+    entry => entry.participation_decision === 'pending',
+  )
 
-  const countryName =
-    data?.countries.find(country => country.code === data.country_code)?.name ??
-    data?.country_code ??
-    t('common.national')
+  const heatCount = Number(
+    edition?.qualification_heat_count ?? projection?.heat_count ?? 0,
+  )
+
+  const projectedHeatNumber = (rank: number): number | null => {
+    if (!projection || projection.heat_count <= 0) return null
+    if (rank <= projection.direct_qualifiers) return null
+
+    const index = rank - projection.direct_qualifiers - 1
+    const block = Math.floor(index / projection.heat_count)
+    const position = index % projection.heat_count
+    return block % 2 === 0
+      ? position + 1
+      : projection.heat_count - position
+  }
+
+  const qualificationStatus = (
+    row: RankingRow,
+  ): { label: string; className: string } => {
+    if (row.entry_status === 'withdrawn') {
+      return {
+        label: t('ranking.withdrawn'),
+        className: 'bg-slate-100 text-slate-600',
+      }
+    }
+    if (row.entry_status === 'eliminated') {
+      return {
+        label: t('ranking.eliminated'),
+        className: 'bg-rose-100 text-rose-700',
+      }
+    }
+    if (row.entry_status === 'qualified') {
+      return {
+        label: t('ranking.qualifiedFinal'),
+        className: 'bg-emerald-100 text-emerald-700',
+      }
+    }
+    if (
+      row.entry_status === 'direct_qualified' ||
+      row.entry_status === 'finalist'
+    ) {
+      return {
+        label: t('ranking.directFinal'),
+        className: 'bg-emerald-100 text-emerald-700',
+      }
+    }
+    if (row.entry_status === 'qualification_assigned') {
+      return {
+        label: t('ranking.qualificationHeat', {
+          number: row.heat_number ?? projectedHeatNumber(row.national_rank) ?? '—',
+        }),
+        className: 'bg-amber-100 text-amber-800',
+      }
+    }
+
+    if (!projection || projection.heat_count <= 0) {
+      return {
+        label: t('ranking.directFinal'),
+        className: 'bg-emerald-100 text-emerald-700',
+      }
+    }
+
+    if (row.national_rank <= projection.direct_qualifiers) {
+      return {
+        label: t('ranking.directFinal'),
+        className: 'bg-emerald-100 text-emerald-700',
+      }
+    }
+
+    return {
+      label: t('ranking.qualificationHeat', {
+        number: projectedHeatNumber(row.national_rank) ?? '—',
+      }),
+      className: 'bg-amber-100 text-amber-800',
+    }
+  }
+
+  const pageSize = 50
+  const rankingTotal = Number(data?.ranking_total ?? data?.ranking?.length ?? 0)
+  const totalPages = Math.max(1, Math.ceil(rankingTotal / pageSize))
+  const safePage = Math.min(rankingPage, totalPages)
+  const pageStart = (safePage - 1) * pageSize
+  const pageRows = (data?.ranking ?? []).slice(pageStart, pageStart + pageSize)
+  const pageEnd = Math.min(pageStart + pageRows.length, rankingTotal)
+
+  const drawHeats =
+    (data?.heats?.length ?? 0) > 0
+      ? data?.heats ?? []
+      : Array.from({ length: heatCount }, (_, index) => ({
+          id: `projected-${index + 1}`,
+          heat_number: index + 1,
+          qualification_date: edition?.qualification_date ?? '',
+          qualifying_places: 0,
+          assigned_count: 0,
+          race_id: null,
+          status: 'planned',
+        }))
 
   if (loading && !data) {
     return (
@@ -510,40 +694,26 @@ export default function NationalRankingPage(): JSX.Element {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <section className="overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl">
-        <div className="grid gap-5 p-6 md:grid-cols-[1fr_auto] md:items-end md:p-8">
-          <div>
-            <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
-              <Flag className="h-4 w-4" />
-              {t('eyebrow')}
-            </div>
-            <h1 className="text-3xl font-black tracking-tight md:text-4xl">
-              {t('title', { country: countryName })}
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-              {t('description')}
-            </p>
+    <div className="space-y-5 p-4 md:p-6">
+      <header className="flex flex-wrap items-center gap-4">
+        {countryFlag ? (
+          <img
+            src={countryFlag}
+            alt={data?.country_code ?? countryName}
+            className="h-11 w-16 rounded-lg border border-slate-200 object-cover shadow-sm"
+          />
+        ) : (
+          <div className="flex h-11 w-16 items-center justify-center rounded-lg bg-slate-100">
+            <Flag className="h-5 w-5 text-slate-500" />
           </div>
-
-          <div className="min-w-[220px]">
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-              {t('country')}
-            </label>
-            <select
-              value={countryCode}
-              onChange={event => onCountryChange(event.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm text-white outline-none"
-            >
-              {(data?.countries ?? []).map(country => (
-                <option key={country.code} value={country.code} className="text-slate-900">
-                  {country.name}
-                </option>
-              ))}
-            </select>
-          </div>
+        )}
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-slate-950">
+            {t('title', { country: countryName })}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">{t('header.subtitle')}</p>
         </div>
-      </section>
+      </header>
 
       {error ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -558,58 +728,86 @@ export default function NationalRankingPage(): JSX.Element {
       ) : null}
 
       {edition ? (
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
               <CalendarDays className="h-4 w-4" />
               {t('cards.freeze')}
             </div>
-            <div className="mt-2 text-lg font-bold text-slate-900">
-              {formatDate(edition.ranking_snapshot_date)}
+            <div className="mt-2 text-base font-black text-slate-900">
+              {formatGameDate(edition.ranking_snapshot_date, edition.season_number)}
             </div>
             <div className="mt-1 text-xs text-slate-500">
               {data?.ranking_is_frozen ? t('cards.frozen') : t('cards.live')}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
               <Medal className="h-4 w-4" />
               {t('cards.qualification')}
             </div>
-            <div className="mt-2 text-lg font-bold text-slate-900">
-              {edition.qualification_heat_count
-                ? formatDate(edition.qualification_date)
+            <div className="mt-2 text-base font-black text-slate-900">
+              {heatCount > 0
+                ? formatGameDate(edition.qualification_date, edition.season_number)
                 : t('cards.notRequired')}
             </div>
             <div className="mt-1 text-xs text-slate-500">
-              {edition.qualification_heat_count
-                ? t('cards.heatPlaces', { heats: edition.qualification_heat_count, places: edition.qualification_places ?? 0 })
+              {heatCount > 0
+                ? t('cards.heatPlaces', {
+                    heats: heatCount,
+                    places:
+                      edition.qualification_places ??
+                      projection?.qualification_places ??
+                      0,
+                  })
                 : t('cards.directField')}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-amber-700">
               <Trophy className="h-4 w-4" />
               {t('cards.final')}
             </div>
-            <div className="mt-2 text-lg font-bold text-slate-900">
-              {formatDate(edition.final_date)}
+            <div className="mt-2 text-base font-black text-slate-900">
+              {formatGameDate(edition.final_date, edition.season_number)}
             </div>
             <div className="mt-1 text-xs text-slate-600">
-              {t('cards.targetField', { count: edition.final_field_size, status: t(`status.${edition.status}`, { defaultValue: edition.status.replaceAll('_', ' ') }) })}
+              {t('cards.targetField', {
+                count: edition.final_field_size,
+                status: t(`status.${edition.status}`, {
+                  defaultValue: edition.status.replaceAll('_', ' '),
+                }),
+              })}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-indigo-700">
               <ShieldCheck className="h-4 w-4" />
-              {t('cards.preparation')}
+              {t('cards.dutyWindow')}
             </div>
-            <div className="mt-2 text-lg font-bold text-slate-900">{t('cards.riderControlled')}</div>
-            <div className="mt-1 text-xs leading-5 text-slate-500">
-              {t('cards.prepDescription')}
+            <div className="mt-2 text-base font-black text-slate-900">
+              {formatGameDateRange(
+                edition.duty_window_start_date,
+                edition.duty_window_end_date,
+                edition.season_number,
+              )}
+            </div>
+            <div className="mt-1 text-xs text-slate-600">{t('cards.noTeamCost')}</div>
+          </div>
+
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-blue-700">
+              <MapPin className="h-4 w-4" />
+              {t('cards.hostRoute')}
+            </div>
+            <div className="mt-2 text-base font-black text-slate-900">
+              {data?.final_host?.route_label ?? t('cards.hostPending')}
+            </div>
+            <div className="mt-1 text-xs text-slate-600">
+              {data?.final_host ? formatRouteMeta(data.final_host) : t('cards.hostPendingHelp')}
             </div>
           </div>
         </section>
@@ -637,25 +835,244 @@ export default function NationalRankingPage(): JSX.Element {
         </div>
       ) : null}
 
-      {edition?.duty_window_start_date && edition?.duty_window_end_date ? (
-        <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm text-indigo-900">
-          <span className="font-bold">{t('availability.windowTitle')}</span>{' '}
-          {t('availability.windowDates', {
-            start: formatDate(edition.duty_window_start_date),
-            end: formatDate(edition.duty_window_end_date),
-            temperature: edition.climate_expected_max_temp_c ?? '—',
-          })}
+      {edition ? (
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-black text-slate-900">{t('draw.title')}</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                {data?.ranking_is_frozen ? t('draw.confirmed') : t('draw.projected')}
+              </p>
+            </div>
+            <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              {t('champions.season', { number: edition.season_number })}
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-stretch gap-3 overflow-x-auto pb-1">
+            {heatCount > 0 ? (
+              <>
+                <div className="flex min-w-max gap-2">
+                  {drawHeats.map(heat => (
+                    <div
+                      key={heat.id}
+                      className="min-w-[190px] rounded-xl border border-slate-200 bg-slate-50 p-3"
+                    >
+                      <div className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                        {t('draw.qualificationHeat', { number: heat.heat_number })}
+                      </div>
+                      <div className="mt-1 font-bold text-slate-900">
+                        {formatGameDate(
+                          heat.qualification_date || edition.qualification_date,
+                          edition.season_number,
+                        )}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {data?.qualification_host?.route_label ??
+                          t('draw.routePending')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center px-1 text-slate-400">
+                  <ChevronRight className="h-6 w-6" />
+                </div>
+              </>
+            ) : null}
+
+            <div className="min-w-[230px] rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <div className="text-xs font-bold uppercase tracking-wide text-amber-700">
+                {t('draw.final')}
+              </div>
+              <div className="mt-1 font-black text-slate-900">
+                {formatGameDate(edition.final_date, edition.season_number)}
+              </div>
+              <div className="mt-1 text-xs text-slate-600">
+                {data?.final_host?.route_label ?? t('draw.routePending')}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <nav className="flex flex-wrap gap-2 border-b border-slate-200">
+        {(
+          [
+            ['ranking', t('tabs.ranking')],
+            ['duty', t('tabs.duty')],
+            ['history', t('tabs.history')],
+          ] as const
+        ).map(([tab, label]) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => changeTab(tab)}
+            className={[
+              'relative px-4 py-3 text-sm font-bold transition',
+              activeTab === tab
+                ? 'text-amber-700'
+                : 'text-slate-500 hover:text-slate-800',
+            ].join(' ')}
+          >
+            {label}
+            {tab === 'duty' && pendingApprovals.length > 0 ? (
+              <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-black text-white">
+                {pendingApprovals.length}
+              </span>
+            ) : null}
+            {activeTab === tab ? (
+              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-amber-500" />
+            ) : null}
+          </button>
+        ))}
+      </nav>
+
+      {activeTab === 'ranking' ? (
+        <div className="space-y-5">
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">
+                  {data?.ranking_is_frozen ? t('ranking.frozen') : t('ranking.live')}
+                </h2>
+                <p className="text-xs text-slate-500">{t('ranking.description')}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="text-xs font-semibold text-slate-500">
+                  {t('ranking.pageRange', {
+                    from: rankingTotal === 0 ? 0 : pageStart + 1,
+                    to: pageEnd,
+                    total: rankingTotal,
+                  })}
+                  {' · '}
+                  {t('ranking.perPage', { count: pageSize })}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void loadPage()}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  {t('ranking.refresh')}
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">{t('ranking.rank')}</th>
+                    <th className="px-4 py-3">{t('ranking.rider')}</th>
+                    <th className="px-4 py-3">{t('ranking.team')}</th>
+                    <th className="px-4 py-3">{t('ranking.weighted')}</th>
+                    <th className="px-4 py-3">{t('ranking.raw')}</th>
+                    <th className="px-4 py-3">{t('ranking.latest')}</th>
+                    <th className="px-4 py-3">{t('ranking.overall')}</th>
+                    <th className="px-4 py-3">{t('ranking.qualificationStatus')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pageRows.map(row => {
+                    const qStatus = qualificationStatus(row)
+                    return (
+                      <tr key={row.rider_id} className="hover:bg-slate-50/70">
+                        <td className="px-4 py-3">
+                          <span
+                            className={[
+                              'inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 font-black',
+                              row.national_rank <= 3
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-slate-100 text-slate-700',
+                            ].join(' ')}
+                          >
+                            {row.national_rank}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {flagUrl(row.country_code) ? (
+                              <img
+                                src={flagUrl(row.country_code) ?? undefined}
+                                alt={row.country_code}
+                                className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
+                              />
+                            ) : null}
+                            <Link
+                              to={`/dashboard/riders/${row.rider_id}`}
+                              className="font-semibold text-blue-700 underline-offset-2 hover:underline"
+                            >
+                              {row.rider_name}
+                            </Link>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {row.club_name ?? t('ranking.freeAgent')}
+                        </td>
+                        <td className="px-4 py-3 font-bold text-slate-900">
+                          {formatPoints(row.weighted_points)}
+                        </td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {formatPoints(row.raw_points)}
+                        </td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {formatGameDate(row.latest_result_date)}
+                        </td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {row.overall ?? '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${qStatus.className}`}
+                          >
+                            {qStatus.label}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4">
+              <button
+                type="button"
+                disabled={safePage <= 1}
+                onClick={() => setRankingPage(page => Math.max(1, page - 1))}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                {t('ranking.previous')}
+              </button>
+              <div className="text-xs font-semibold text-slate-500">
+                {t('ranking.page', { page: safePage, pages: totalPages })}
+              </div>
+              <button
+                type="button"
+                disabled={safePage >= totalPages}
+                onClick={() => setRankingPage(page => Math.min(totalPages, page + 1))}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {t('ranking.next')}
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </section>
+
+          <aside className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+            <div className="font-black">{t('info.title')}</div>
+            <p className="mt-1 leading-6">{t('info.description')}</p>
+          </aside>
         </div>
       ) : null}
 
-      {(data?.my_entries?.length ?? 0) > 0 ? (
+      {activeTab === 'duty' ? (
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-xl font-black text-slate-900">{t('duty.title')}</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                {t('duty.description')}
-              </p>
+              <p className="mt-1 text-sm text-slate-500">{t('duty.description')}</p>
             </div>
             <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
               <Lock className="h-4 w-4" />
@@ -667,295 +1084,220 @@ export default function NationalRankingPage(): JSX.Element {
             <div className="font-semibold text-emerald-900">{t('organizer.title')}</div>
             <div className="mt-2 flex flex-wrap gap-2 text-xs text-emerald-800">
               <span className="rounded-full bg-white/70 px-3 py-1">
-                {t('organizer.bidons', { count: String(data?.organizer_supplies?.bidons_water_bottles ?? 8) })}
+                {t('organizer.bidons', {
+                  count: String(data?.organizer_supplies?.bidons_water_bottles ?? 8),
+                })}
               </span>
               <span className="rounded-full bg-white/70 px-3 py-1">
-                {t('organizer.gels', { count: String(data?.organizer_supplies?.energy_gels ?? 6) })}
+                {t('organizer.gels', {
+                  count: String(data?.organizer_supplies?.energy_gels ?? 6),
+                })}
               </span>
               <span className="rounded-full bg-white/70 px-3 py-1">
-                {t('organizer.nutrition', { count: String(data?.organizer_supplies?.nutrition_packs ?? 2) })}
+                {t('organizer.nutrition', {
+                  count: String(data?.organizer_supplies?.nutrition_packs ?? 2),
+                })}
               </span>
-              <span className="rounded-full bg-white/70 px-3 py-1">{t('organizer.kit')}</span>
-              <span className="rounded-full bg-white/70 px-3 py-1">{t('organizer.rain')}</span>
+              <span className="rounded-full bg-white/70 px-3 py-1">
+                {t('organizer.kit')}
+              </span>
+              <span className="rounded-full bg-white/70 px-3 py-1">
+                {t('organizer.rain')}
+              </span>
             </div>
           </div>
 
-          {(data?.my_entries ?? []).map(entry => {
-            const showQualification =
-              entry.entry_path === 'qualification' &&
-              Boolean(entry.qualification_race_id) &&
-              !['eliminated'].includes(entry.entry_status)
+          {(data?.my_entries?.length ?? 0) === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+              {t('duty.empty')}
+            </div>
+          ) : (
+            (data?.my_entries ?? []).map(entry => {
+              const showQualification =
+                entry.entry_path === 'qualification' &&
+                Boolean(entry.qualification_race_id) &&
+                !['eliminated'].includes(entry.entry_status)
 
-            const showFinal =
-              Boolean(entry.final_race_id) &&
-              ['direct_qualified', 'qualified', 'finalist'].includes(entry.entry_status)
+              const showFinal =
+                Boolean(entry.final_race_id) &&
+                ['direct_qualified', 'qualified', 'finalist'].includes(entry.entry_status)
 
-            return (
-              <div key={entry.entry_id} className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 md:p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
+              return (
+                <div
+                  key={entry.entry_id}
+                  className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 md:p-5"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white">
                         {entry.national_rank}
                       </span>
                       <div>
                         <Link
                           to={`/dashboard/riders/${entry.rider_id}`}
-                          className="font-bold text-slate-900 hover:text-blue-600"
+                          className="font-bold text-blue-700 underline-offset-2 hover:underline"
                         >
                           {entry.rider_name}
                         </Link>
                         <div className="text-xs text-slate-500">
-                          {entry.club_name ?? t('common.club')} · {t(`status.${entry.entry_status}`, { defaultValue: entry.entry_status.replaceAll('_', ' ') })}
+                          {entry.club_name ?? t('ranking.freeAgent')}
                         </div>
                       </div>
                     </div>
+                    <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                      {entry.entry_path === 'direct'
+                        ? t('duty.directQualifier')
+                        : t('duty.qualificationHeat', {
+                            number: entry.heat_number ?? '—',
+                          })}
+                    </div>
                   </div>
-                  <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
-                    {entry.entry_path === 'direct'
-                      ? t('duty.directQualifier')
-                      : t('duty.qualificationHeat', { number: entry.heat_number ?? '—' })}
-                  </div>
-                </div>
 
-                <div
-                  className={[
-                    'rounded-2xl border p-4',
-                    entry.participation_decision === 'rejected'
-                      ? 'border-rose-200 bg-rose-50'
-                      : entry.participation_decision === 'pending'
-                        ? 'border-amber-200 bg-amber-50'
-                        : 'border-emerald-200 bg-emerald-50',
-                  ].join(' ')}
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-bold text-slate-900">
-                        {t('decision.title')}
-                      </div>
-                      <div className="mt-1 text-xs leading-5 text-slate-600">
-                        {t('decision.blockedWindow', {
-                          start: formatDate(entry.duty_window_start_date),
-                          end: formatDate(entry.duty_window_end_date),
-                        })}
-                      </div>
-                      {entry.participation_decision_deadline ? (
-                        <div className="mt-1 text-xs text-slate-500">
-                          {t('decision.deadline', {
-                            date: formatDate(entry.participation_decision_deadline),
+                  <div
+                    className={[
+                      'rounded-2xl border p-4',
+                      entry.participation_decision === 'rejected'
+                        ? 'border-rose-200 bg-rose-50'
+                        : entry.participation_decision === 'pending'
+                          ? 'border-amber-200 bg-amber-50'
+                          : 'border-emerald-200 bg-emerald-50',
+                    ].join(' ')}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">
+                          {t('decision.title')}
+                        </div>
+                        <div className="mt-1 text-xs leading-5 text-slate-600">
+                          {t('decision.blockedWindow', {
+                            start: formatGameDate(
+                              entry.duty_window_start_date,
+                              edition?.season_number,
+                            ),
+                            end: formatGameDate(
+                              entry.duty_window_end_date,
+                              edition?.season_number,
+                            ),
                           })}
                         </div>
-                      ) : null}
-                      <div className="mt-2 text-xs font-semibold text-slate-700">
-                        {t(`decision.status.${entry.participation_decision ?? 'pending'}`)}
+                        {entry.participation_decision_deadline ? (
+                          <div className="mt-1 text-xs text-slate-500">
+                            {t('decision.deadline', {
+                              date: formatGameDate(
+                                entry.participation_decision_deadline,
+                                edition?.season_number,
+                              ),
+                            })}
+                          </div>
+                        ) : null}
+                        <div className="mt-2 text-xs font-semibold text-slate-700">
+                          {t(
+                            `decision.status.${entry.participation_decision ?? 'pending'}`,
+                          )}
+                        </div>
                       </div>
+
+                      {entry.participation_decision === 'pending' &&
+                      entry.can_decide_participation !== false ? (
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={decisionSavingRiderId === entry.rider_id}
+                            onClick={() => void decideParticipation(entry, true)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {decisionSavingRiderId === entry.rider_id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4" />
+                            )}
+                            {t('decision.approve')}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={decisionSavingRiderId === entry.rider_id}
+                            onClick={() => void decideParticipation(entry, false)}
+                            className="rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {t('decision.reject')}
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
 
-                    {entry.participation_decision === 'pending' &&
-                    entry.can_decide_participation !== false ? (
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          disabled={decisionSavingRiderId === entry.rider_id}
-                          onClick={() => void decideParticipation(entry, true)}
-                          className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {decisionSavingRiderId === entry.rider_id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="h-4 w-4" />
-                          )}
-                          {t('decision.approve')}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={decisionSavingRiderId === entry.rider_id}
-                          onClick={() => void decideParticipation(entry, false)}
-                          className="rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {t('decision.reject')}
-                        </button>
+                    {entry.participation_decision === 'pending' ? (
+                      <div className="mt-3 text-xs text-rose-700">
+                        {t('decision.rejectWarning')}
+                      </div>
+                    ) : null}
+                    {entry.participation_decision !== 'rejected' ? (
+                      <div className="mt-2 text-xs text-slate-600">
+                        {t('decision.participationBenefit')}
                       </div>
                     ) : null}
                   </div>
 
-                  {entry.participation_decision === 'pending' ? (
-                    <div className="mt-3 text-xs text-rose-700">
-                      {t('decision.rejectWarning')}
-                    </div>
+                  {showQualification &&
+                  entry.participation_decision !== 'rejected' ? (
+                    <NationalDutyPlanCard
+                      entry={entry}
+                      eventType="qualification"
+                      eventDate={edition?.qualification_date}
+                      raceId={entry.qualification_race_id}
+                      plan={
+                        drafts[planKey(entry.rider_id, 'qualification')] ??
+                        planFromValue(entry.qualification_plan)
+                      }
+                      equipmentPresets={data?.equipment_presets ?? []}
+                      onChange={next =>
+                        setDrafts(current => ({
+                          ...current,
+                          [planKey(entry.rider_id, 'qualification')]: next,
+                        }))
+                      }
+                      onSave={() => void savePlan(entry, 'qualification')}
+                      saving={
+                        savingKey === planKey(entry.rider_id, 'qualification')
+                      }
+                    />
                   ) : null}
-                  {entry.participation_decision !== 'rejected' ? (
-                    <div className="mt-2 text-xs text-slate-600">
-                      {t('decision.participationBenefit')}
+
+                  {showFinal && entry.participation_decision !== 'rejected' ? (
+                    <NationalDutyPlanCard
+                      entry={entry}
+                      eventType="final"
+                      eventDate={edition?.final_date}
+                      raceId={entry.final_race_id}
+                      plan={
+                        drafts[planKey(entry.rider_id, 'final')] ??
+                        planFromValue(entry.final_plan)
+                      }
+                      equipmentPresets={data?.equipment_presets ?? []}
+                      onChange={next =>
+                        setDrafts(current => ({
+                          ...current,
+                          [planKey(entry.rider_id, 'final')]: next,
+                        }))
+                      }
+                      onSave={() => void savePlan(entry, 'final')}
+                      saving={savingKey === planKey(entry.rider_id, 'final')}
+                    />
+                  ) : null}
+
+                  {((!showQualification && !showFinal) ||
+                    entry.participation_decision === 'rejected') ? (
+                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+                      {t('duty.noPlan')}
                     </div>
                   ) : null}
                 </div>
-
-                {showQualification && entry.participation_decision !== 'rejected' ? (
-                  <NationalDutyPlanCard
-                    entry={entry}
-                    eventType="qualification"
-                    eventDate={edition?.qualification_date}
-                    raceId={entry.qualification_race_id}
-                    plan={
-                      drafts[planKey(entry.rider_id, 'qualification')] ??
-                      planFromValue(entry.qualification_plan)
-                    }
-                    equipmentPresets={data?.equipment_presets ?? []}
-                    onChange={next =>
-                      setDrafts(current => ({
-                        ...current,
-                        [planKey(entry.rider_id, 'qualification')]: next,
-                      }))
-                    }
-                    onSave={() => void savePlan(entry, 'qualification')}
-                    saving={savingKey === planKey(entry.rider_id, 'qualification')}
-                  />
-                ) : null}
-
-                {showFinal && entry.participation_decision !== 'rejected' ? (
-                  <NationalDutyPlanCard
-                    entry={entry}
-                    eventType="final"
-                    eventDate={edition?.final_date}
-                    raceId={entry.final_race_id}
-                    plan={
-                      drafts[planKey(entry.rider_id, 'final')] ??
-                      planFromValue(entry.final_plan)
-                    }
-                    equipmentPresets={data?.equipment_presets ?? []}
-                    onChange={next =>
-                      setDrafts(current => ({
-                        ...current,
-                        [planKey(entry.rider_id, 'final')]: next,
-                      }))
-                    }
-                    onSave={() => void savePlan(entry, 'final')}
-                    saving={savingKey === planKey(entry.rider_id, 'final')}
-                  />
-                ) : null}
-
-                {(!showQualification && !showFinal) || entry.participation_decision === 'rejected' ? (
-                  <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
-                    {t('duty.noPlan')}
-                  </div>
-                ) : null}
-              </div>
-            )
-          })}
+              )
+            })
+          )}
         </section>
       ) : null}
 
-      {(data?.heats?.length ?? 0) > 0 ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <Medal className="h-5 w-5 text-slate-700" />
-            <h2 className="text-lg font-black text-slate-900">{t('heats.title')}</h2>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {data?.heats.map(heat => (
-              <div key={heat.id} className="rounded-xl border border-slate-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="font-bold text-slate-900">{t('heats.heat', { number: heat.heat_number })}</div>
-                  <div className="text-xs font-semibold text-slate-500">{t(`status.${heat.status}`, { defaultValue: heat.status.replaceAll('_', ' ') })}</div>
-                </div>
-                <div className="mt-2 text-sm text-slate-600">
-                  {t('heats.summary', { riders: heat.assigned_count, places: heat.qualifying_places })}
-                </div>
-                <div className="mt-1 text-xs text-slate-500">{formatDate(heat.qualification_date)}</div>
-                {heat.race_id ? (
-                  <Link
-                    to={`/dashboard/races/${heat.race_id}`}
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
-                  >
-                    {t('heats.open')}
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
-          <div>
-            <h2 className="text-lg font-black text-slate-900">
-              {data?.ranking_is_frozen ? t('ranking.frozen') : t('ranking.live')}
-            </h2>
-            <p className="text-xs text-slate-500">
-              {t('ranking.description')}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void loadPage(countryCode)}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            <RefreshCw className="h-4 w-4" />
-            {t('ranking.refresh')}
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">{t('ranking.rank')}</th>
-                <th className="px-4 py-3">{t('ranking.rider')}</th>
-                <th className="px-4 py-3">{t('ranking.weighted')}</th>
-                <th className="px-4 py-3">{t('ranking.raw')}</th>
-                <th className="px-4 py-3">{t('ranking.latest')}</th>
-                <th className="px-4 py-3">{t('ranking.overall')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {(data?.ranking ?? []).map(row => (
-                <tr key={row.rider_id} className="hover:bg-slate-50/70">
-                  <td className="px-4 py-3">
-                    <span
-                      className={[
-                        'inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 font-black',
-                        row.national_rank <= 3
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-slate-100 text-slate-700',
-                      ].join(' ')}
-                    >
-                      {row.national_rank}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {flagUrl(row.country_code) ? (
-                        <img
-                          src={flagUrl(row.country_code) ?? undefined}
-                          alt={row.country_code}
-                          className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
-                        />
-                      ) : null}
-                      <Link
-                        to={`/dashboard/riders/${row.rider_id}`}
-                        className="font-semibold text-slate-900 hover:text-blue-600"
-                      >
-                        {row.rider_name}
-                      </Link>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 font-bold text-slate-900">
-                    {formatPoints(row.weighted_points)}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{formatPoints(row.raw_points)}</td>
-                  <td className="px-4 py-3 text-slate-600">{formatDate(row.latest_result_date)}</td>
-                  <td className="px-4 py-3 text-slate-600">{row.overall ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {(finalResults.length > 0 || qualificationResults.length > 0 || (data?.past_champions?.length ?? 0) > 0) ? (
+      {activeTab === 'history' ? (
         <section className="grid gap-5 xl:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
@@ -965,35 +1307,41 @@ export default function NationalRankingPage(): JSX.Element {
 
             {finalResults.length > 0 ? (
               <div className="space-y-2">
-                {finalResults.slice(0, 20).map(result => (
+                {finalResults.slice(0, 50).map(result => (
                   <div
                     key={`${result.rider_id}:${result.rank}`}
                     className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="w-7 font-black text-slate-700">{result.rank}</span>
+                      <span className="w-7 font-black text-slate-700">
+                        {result.rank}
+                      </span>
                       <Link
                         to={`/dashboard/riders/${result.rider_id}`}
-                        className="font-semibold text-slate-900 hover:text-blue-600"
+                        className="font-semibold text-blue-700 underline-offset-2 hover:underline"
                       >
                         {result.rider_name}
                       </Link>
                     </div>
-                    <span className="text-xs text-slate-500">{result.club_name ?? t('results.independent')}</span>
+                    <span className="text-xs text-slate-500">
+                      {result.club_name ?? t('ranking.freeAgent')}
+                    </span>
                   </div>
                 ))}
               </div>
+            ) : qualificationResults.length > 0 ? (
+              <div className="text-sm text-slate-500">{t('results.pending')}</div>
             ) : (
-              <div className="text-sm text-slate-500">
-                {t('results.pending')}
-              </div>
+              <div className="text-sm text-slate-500">{t('results.pending')}</div>
             )}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-              <h2 className="text-lg font-black text-slate-900">{t('champions.title')}</h2>
+              <h2 className="text-lg font-black text-slate-900">
+                {t('champions.title')}
+              </h2>
             </div>
 
             {(data?.past_champions?.length ?? 0) > 0 ? (
@@ -1004,24 +1352,25 @@ export default function NationalRankingPage(): JSX.Element {
                     className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2"
                   >
                     <div>
-                      <div className="text-xs text-slate-500">{t('champions.season', { number: champion.season_number })}</div>
+                      <div className="text-xs text-slate-500">
+                        {t('champions.season', { number: champion.season_number })}
+                      </div>
                       <Link
                         to={`/dashboard/riders/${champion.champion_rider_id}`}
-                        className="font-semibold text-slate-900 hover:text-blue-600"
+                        className="font-semibold text-blue-700 underline-offset-2 hover:underline"
                       >
                         {champion.champion_name_snapshot}
                       </Link>
                     </div>
                     <div className="text-xs text-slate-500">
-                      {champion.champion_club_name_snapshot ?? t('results.independent')}
+                      {champion.champion_club_name_snapshot ??
+                        t('results.independent')}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-slate-500">
-                {t('champions.first')}
-              </div>
+              <div className="text-sm text-slate-500">{t('champions.first')}</div>
             )}
           </div>
         </section>
