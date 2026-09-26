@@ -21,7 +21,12 @@
     "targetField": "Pelotón objetivo {{count}} · {{status}}",
     "preparation": "Preparación",
     "riderControlled": "Control del ciclista",
-    "prepDescription": "Solo equipamiento y táctica individual. Personal, vehículos y suministros los gestiona el organizador."
+    "prepDescription": "Solo equipamiento y táctica individual. Personal, vehículos y suministros los gestiona el organizador.",
+    "dutyWindow": "Ventana de deber nacional",
+    "noTeamCost": "Sin coste para el equipo",
+    "hostRoute": "Ruta de la final",
+    "hostPending": "Ruta aún no preparada",
+    "hostPendingHelp": "El campeonato espera hasta que haya dos rutas adecuadas disponibles."
   },
   "duty": {
     "title": "Mi deber nacional",
@@ -29,7 +34,8 @@
     "locked": "Carrera individual — sin tácticas de equipo. No se pueden usar personal, vehículos ni suministros del club.",
     "directQualifier": "Clasificado directo",
     "qualificationHeat": "Manga de clasificación {{number}}",
-    "noPlan": "No hay un plan de deber nacional editable para este ciclista."
+    "noPlan": "No hay un plan de deber nacional editable para este ciclista.",
+    "empty": "Ninguno de tus ciclistas tiene una invitación activa de deber nacional para este campeonato."
   },
   "organizer": {
     "title": "Pack de carrera del organizador",
@@ -86,7 +92,20 @@
     "weighted": "Puntos ponderados",
     "raw": "Puntos brutos",
     "latest": "Último resultado",
-    "overall": "General"
+    "overall": "General",
+    "team": "Equipo",
+    "qualificationStatus": "Estado de clasificación",
+    "freeAgent": "Agente libre",
+    "pageRange": "{{from}}–{{to}} de {{total}}",
+    "perPage": "{{count}} por página",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Página {{page}} de {{pages}}",
+    "directFinal": "Final directa",
+    "qualificationHeat": "Manga de clasificación {{number}}",
+    "qualifiedFinal": "Clasificado para la final",
+    "eliminated": "Eliminado",
+    "withdrawn": "No participa"
   },
   "results": {
     "title": "Resultados del campeonato",
@@ -147,5 +166,25 @@
       "auto_approved": "Aprobado automáticamente",
       "rejected": "Participación rechazada"
     }
+  },
+  "header": {
+    "subtitle": "Ciclistas nacionales, clasificación y deberes del campeonato"
+  },
+  "draw": {
+    "title": "Cuadro del campeonato",
+    "confirmed": "Estructura confirmada del campeonato",
+    "projected": "Proyección según el ranking nacional actual hasta el cierre del ranking",
+    "qualificationHeat": "Manga de clasificación {{number}}",
+    "final": "Final nacional",
+    "routePending": "Ruta anfitriona pendiente"
+  },
+  "tabs": {
+    "ranking": "Ranking",
+    "duty": "Mi deber nacional",
+    "history": "Historial"
+  },
+  "info": {
+    "title": "Información del campeonato",
+    "description": "Los Campeonatos Nacionales son carreras individuales. No hay tácticas de equipo, personal, vehículos ni suministros del club. El organizador cubre la logística y los costes; tú solo controlas el equipamiento y la táctica individual de cada ciclista invitado."
   }
 }
