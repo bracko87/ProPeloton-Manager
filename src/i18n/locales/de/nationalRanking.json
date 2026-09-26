@@ -21,7 +21,12 @@
     "targetField": "Zielfeld {{count}} · {{status}}",
     "preparation": "Vorbereitung",
     "riderControlled": "Vom Fahrer-Manager steuerbar",
-    "prepDescription": "Nur Ausrüstung und individuelle Taktik. Personal, Fahrzeuge und Verpflegung stellt der Veranstalter."
+    "prepDescription": "Nur Ausrüstung und individuelle Taktik. Personal, Fahrzeuge und Verpflegung stellt der Veranstalter.",
+    "dutyWindow": "National-Duty-Zeitraum",
+    "noTeamCost": "Keine Teamkosten",
+    "hostRoute": "Finalstrecke",
+    "hostPending": "Strecke noch nicht bereit",
+    "hostPendingHelp": "Die Meisterschaft wartet, bis zwei geeignete Strecken verfügbar sind."
   },
   "duty": {
     "title": "Meine National Duty",
@@ -29,7 +34,8 @@
     "locked": "Einzelrennen — keine Teamtaktik. Personal, Fahrzeuge und Club-Verpflegung sind nicht verfügbar.",
     "directQualifier": "Direkt qualifiziert",
     "qualificationHeat": "Qualifikationslauf {{number}}",
-    "noPlan": "Für diesen Fahrer ist derzeit kein bearbeitbarer National-Duty-Plan offen."
+    "noPlan": "Für diesen Fahrer ist derzeit kein bearbeitbarer National-Duty-Plan offen.",
+    "empty": "Keiner deiner Fahrer hat aktuell eine National-Duty-Einladung für diese Meisterschaft."
   },
   "organizer": {
     "title": "Rennpaket des Veranstalters",
@@ -86,7 +92,20 @@
     "weighted": "Gewichtete Punkte",
     "raw": "Rohpunkte",
     "latest": "Letztes Ergebnis",
-    "overall": "Gesamt"
+    "overall": "Gesamt",
+    "team": "Team",
+    "qualificationStatus": "Qualifikationsstatus",
+    "freeAgent": "Free Agent",
+    "pageRange": "{{from}}–{{to}} von {{total}}",
+    "perPage": "{{count}} pro Seite",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "page": "Seite {{page}} von {{pages}}",
+    "directFinal": "Direkt im Finale",
+    "qualificationHeat": "Qualifikationslauf {{number}}",
+    "qualifiedFinal": "Für das Finale qualifiziert",
+    "eliminated": "Ausgeschieden",
+    "withdrawn": "Nimmt nicht teil"
   },
   "results": {
     "title": "Meisterschaftsergebnisse",
@@ -147,5 +166,25 @@
       "auto_approved": "Automatisch bestätigt",
       "rejected": "Teilnahme abgelehnt"
     }
+  },
+  "header": {
+    "subtitle": "Nationale Fahrer, Qualifikation und Meisterschaftspflichten"
+  },
+  "draw": {
+    "title": "Meisterschaftsauslosung",
+    "confirmed": "Bestätigte Meisterschaftsstruktur",
+    "projected": "Prognose auf Basis der aktuellen nationalen Rangliste bis zum Ranglisten-Stichtag",
+    "qualificationHeat": "Qualifikationslauf {{number}}",
+    "final": "Nationales Finale",
+    "routePending": "Austragungsstrecke noch offen"
+  },
+  "tabs": {
+    "ranking": "Rangliste",
+    "duty": "Meine National Duty",
+    "history": "Historie"
+  },
+  "info": {
+    "title": "Information zur Meisterschaft",
+    "description": "Nationale Meisterschaften sind Einzelrennen. Es gibt keine Teamtaktik, kein Personal, keine Fahrzeuge und keine Club-Verpflegung. Der Veranstalter übernimmt Logistik und Kosten; du steuerst nur Ausrüstung und individuelle Taktik jedes eingeladenen Fahrers."
   }
 }
