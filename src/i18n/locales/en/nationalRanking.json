@@ -186,5 +186,12 @@
   "info": {
     "title": "Championship information",
     "description": "National Championships are individual races. There are no team tactics, staff, vehicles or club supplies. The organizer covers logistics and cost; you control only each invited rider's equipment and individual tactics."
+  },
+  "summary": {
+    "title": "National Championship schedule",
+    "subtitle": "Key dates, National Duty window and host route for your country's championship."
+  },
+  "host": {
+    "openRace": "Open race page"
   }
 }
