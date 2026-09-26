@@ -18,6 +18,7 @@ import enManual from './locales/en/manual.json'
 import enHome from './locales/en/home.json'
 import enInfrastructure from './locales/en/infrastructure.json'
 import enNavigation from './locales/en/navigation.json'
+import enNationalRanking from './locales/en/nationalRanking.json'
 import enNotifications from './locales/en/notifications.json'
 import enOverview from './locales/en/overview.json'
 import enPreferences from './locales/en/preferences.json'
@@ -57,6 +58,7 @@ import srManual from './locales/sr-Latn/manual.json'
 import srHome from './locales/sr-Latn/home.json'
 import srInfrastructure from './locales/sr-Latn/infrastructure.json'
 import srNavigation from './locales/sr-Latn/navigation.json'
+import srNationalRanking from './locales/sr-Latn/nationalRanking.json'
 import srNotifications from './locales/sr-Latn/notifications.json'
 import srOverview from './locales/sr-Latn/overview.json'
 import srPreferences from './locales/sr-Latn/preferences.json'
@@ -96,6 +98,7 @@ import deManual from './locales/de/manual.json'
 import deHome from './locales/de/home.json'
 import deInfrastructure from './locales/de/infrastructure.json'
 import deNavigation from './locales/de/navigation.json'
+import deNationalRanking from './locales/de/nationalRanking.json'
 import deNotifications from './locales/de/notifications.json'
 import deOverview from './locales/de/overview.json'
 import dePreferences from './locales/de/preferences.json'
@@ -135,6 +138,7 @@ import hrManual from './locales/hr/manual.json'
 import hrHome from './locales/hr/home.json'
 import hrInfrastructure from './locales/hr/infrastructure.json'
 import hrNavigation from './locales/hr/navigation.json'
+import hrNationalRanking from './locales/hr/nationalRanking.json'
 import hrNotifications from './locales/hr/notifications.json'
 import hrOverview from './locales/hr/overview.json'
 import hrPreferences from './locales/hr/preferences.json'
@@ -174,6 +178,7 @@ import esManual from './locales/es/manual.json'
 import esHome from './locales/es/home.json'
 import esInfrastructure from './locales/es/infrastructure.json'
 import esNavigation from './locales/es/navigation.json'
+import esNationalRanking from './locales/es/nationalRanking.json'
 import esNotifications from './locales/es/notifications.json'
 import esOverview from './locales/es/overview.json'
 import esPreferences from './locales/es/preferences.json'
@@ -202,6 +207,7 @@ import itCommon from './locales/it/common.json'
 import itCreateClub from './locales/it/createClub.json'
 import itHome from './locales/it/home.json'
 import itNavigation from './locales/it/navigation.json'
+import itNationalRanking from './locales/it/nationalRanking.json'
 import itProfile from './locales/it/profile.json'
 
 import itAppShell from './locales/it/appShell.json'
@@ -253,6 +259,7 @@ import frManual from './locales/fr/manual.json'
 import frHome from './locales/fr/home.json'
 import frInfrastructure from './locales/fr/infrastructure.json'
 import frNavigation from './locales/fr/navigation.json'
+import frNationalRanking from './locales/fr/nationalRanking.json'
 import frNotifications from './locales/fr/notifications.json'
 import frOverview from './locales/fr/overview.json'
 import frPreferences from './locales/fr/preferences.json'
@@ -292,6 +299,7 @@ import ruManual from './locales/ru/manual.json'
 import ruHome from './locales/ru/home.json'
 import ruInfrastructure from './locales/ru/infrastructure.json'
 import ruNavigation from './locales/ru/navigation.json'
+import ruNationalRanking from './locales/ru/nationalRanking.json'
 import ruNotifications from './locales/ru/notifications.json'
 import ruOverview from './locales/ru/overview.json'
 import ruPreferences from './locales/ru/preferences.json'
@@ -342,6 +350,7 @@ const resources = {
     home: enHome,
     infrastructure: enInfrastructure,
     navigation: enNavigation,
+    nationalRanking: enNationalRanking,
     notifications: enNotifications,
     overview: enOverview,
     preferences: enPreferences,
@@ -382,6 +391,7 @@ const resources = {
     home: srHome,
     infrastructure: srInfrastructure,
     navigation: srNavigation,
+    nationalRanking: srNationalRanking,
     notifications: srNotifications,
     overview: srOverview,
     preferences: srPreferences,
@@ -422,6 +432,7 @@ const resources = {
     home: deHome,
     infrastructure: deInfrastructure,
     navigation: deNavigation,
+    nationalRanking: deNationalRanking,
     notifications: deNotifications,
     overview: deOverview,
     preferences: dePreferences,
@@ -462,6 +473,7 @@ const resources = {
     home: hrHome,
     infrastructure: hrInfrastructure,
     navigation: hrNavigation,
+    nationalRanking: hrNationalRanking,
     notifications: hrNotifications,
     overview: hrOverview,
     preferences: hrPreferences,
@@ -502,6 +514,7 @@ const resources = {
     home: esHome,
     infrastructure: esInfrastructure,
     navigation: esNavigation,
+    nationalRanking: esNationalRanking,
     notifications: esNotifications,
     overview: esOverview,
     preferences: esPreferences,
@@ -542,6 +555,7 @@ const resources = {
     home: itHome,
     infrastructure: itInfrastructure,
     navigation: itNavigation,
+    nationalRanking: itNationalRanking,
     notifications: itNotifications,
     overview: itOverview,
     preferences: itPreferences,
@@ -582,6 +596,7 @@ const resources = {
     home: frHome,
     infrastructure: frInfrastructure,
     navigation: frNavigation,
+    nationalRanking: frNationalRanking,
     notifications: frNotifications,
     overview: frOverview,
     preferences: frPreferences,
@@ -622,6 +637,7 @@ const resources = {
     home: ruHome,
     infrastructure: ruInfrastructure,
     navigation: ruNavigation,
+    nationalRanking: ruNationalRanking,
     notifications: ruNotifications,
     overview: ruOverview,
     preferences: ruPreferences,
@@ -674,6 +690,7 @@ void i18n
       'home',
       'infrastructure',
       'navigation',
+      'nationalRanking',
       'notifications',
       'overview',
       'preferences',
