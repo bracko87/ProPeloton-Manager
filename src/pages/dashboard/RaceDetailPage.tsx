@@ -2348,6 +2348,15 @@ type StageProfilePoint = {
   elevation_m: number
 }
 
+/**
+ * Third independent display-only profile layer.
+ *
+ * Set this to false to restore the exact axis/perception behaviour that was
+ * present before the low-elevation scaling + spike-softening pass.
+ *
+ * This switch never changes authoritative elevation data or race logic.
+ */
+const ENABLE_DISPLAY_ONLY_ABSOLUTE_ELEVATION_SCALING = true
 
 function getTerrainMinimumVerticalSpanMeters(terrainType: string | null | undefined): number {
   switch (terrainType) {
@@ -2378,16 +2387,126 @@ function getNiceElevationAxisBounds(
   const rawMax = Math.max(...points.map((point) => point.elevation_m))
 
   const dataSpan = Math.max(rawMax - rawMin, 1)
-  const minimumSpan =
+  const legacyMinimumSpan =
     minimumVerticalSpanOverride != null
       ? Math.max(20, minimumVerticalSpanOverride)
       : getTerrainMinimumVerticalSpanMeters(terrainType)
 
-  const targetSpan = Math.max(dataSpan * 1.25, minimumSpan)
-  const midpoint = (rawMin + rawMax) / 2
+  // Exact pre-change behaviour remains available behind the new switch.
+  if (!ENABLE_DISPLAY_ONLY_ABSOLUTE_ELEVATION_SCALING) {
+    const targetSpan = Math.max(dataSpan * 1.25, legacyMinimumSpan)
+    const midpoint = (rawMin + rawMax) / 2
 
-  const minElevation = Math.max(0, Math.floor((midpoint - targetSpan / 2) / 100) * 100)
-  const maxElevation = Math.ceil((midpoint + targetSpan / 2) / 100) * 100
+    const minElevation = Math.max(
+      0,
+      Math.floor((midpoint - targetSpan / 2) / 100) * 100
+    )
+    const maxElevation =
+      Math.ceil((midpoint + targetSpan / 2) / 100) * 100
+
+    return {
+      minElevation,
+      maxElevation: Math.max(maxElevation, minElevation + 100),
+    }
+  }
+
+  const normalizedTerrain = String(terrainType ?? '').toLowerCase()
+  const lowAltitudeStage = rawMin <= 300
+
+  /*
+   * If a genuinely tiny lowland profile stays below ~120 m, keep the compact
+   * treatment. Once lowland relief reaches the 150–400 m range, stop stretching
+   * it to fill the chart: show it against a broader absolute elevation frame.
+   */
+  if (lowAltitudeStage && rawMax <= 120) {
+    const targetSpan = Math.max(dataSpan * 1.25, legacyMinimumSpan)
+    const midpoint = (rawMin + rawMax) / 2
+
+    const minElevation = Math.max(
+      0,
+      Math.floor((midpoint - targetSpan / 2) / 100) * 100
+    )
+    const maxElevation =
+      Math.ceil((midpoint + targetSpan / 2) / 100) * 100
+
+    return {
+      minElevation,
+      maxElevation: Math.max(maxElevation, minElevation + 100),
+    }
+  }
+
+  let perceptionMinimumSpan = legacyMinimumSpan
+
+  switch (normalizedTerrain) {
+    case 'cobbled':
+      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 800)
+      break
+
+    case 'hilly':
+      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 800)
+      break
+
+    case 'mountain':
+      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 1500)
+      break
+
+    case 'flat':
+      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 600)
+      break
+
+    case 'individual_time_trial':
+    case 'team_time_trial':
+    case 'time_trial':
+    case 'prologue':
+      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 500)
+      break
+
+    default:
+      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 600)
+      break
+  }
+
+  // Absolute elevation also influences first-glance scale perception.
+  if (lowAltitudeStage) {
+    if (rawMax <= 400) {
+      perceptionMinimumSpan = Math.max(
+        perceptionMinimumSpan,
+        normalizedTerrain === 'flat' ? 600 : 800
+      )
+    } else if (rawMax <= 700) {
+      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 900)
+    } else if (rawMax <= 1100) {
+      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 1200)
+    } else {
+      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 1500)
+    }
+
+    // For low/medium altitude profiles, zero gives the viewer an honest
+    // reference instead of making 150–250 m bergs fill the full chart height.
+    const targetMax = Math.max(
+      rawMax * 1.08,
+      perceptionMinimumSpan
+    )
+    const maxElevation = Math.ceil(targetMax / 100) * 100
+
+    return {
+      minElevation: 0,
+      maxElevation: Math.max(maxElevation, 100),
+    }
+  }
+
+  // High-altitude stages should not waste most of the card on sea level.
+  const targetSpan = Math.max(
+    dataSpan * 1.25,
+    perceptionMinimumSpan
+  )
+  const midpoint = (rawMin + rawMax) / 2
+  const minElevation = Math.max(
+    0,
+    Math.floor((midpoint - targetSpan / 2) / 100) * 100
+  )
+  const maxElevation =
+    Math.ceil((midpoint + targetSpan / 2) / 100) * 100
 
   return {
     minElevation,
@@ -8757,6 +8876,98 @@ function clampDisplayOnlyReliefElevation(
   return Math.min(guardedHigh, Math.max(guardedLow, value))
 }
 
+function softenDisplayOnlyLowReliefPeakShoulders(
+  displayPoints: BackendStageProfilePoint[],
+  anchors: BackendStageProfilePoint[],
+  terrainType: string | null | undefined
+): BackendStageProfilePoint[] {
+  if (
+    !ENABLE_DISPLAY_ONLY_ABSOLUTE_ELEVATION_SCALING ||
+    displayPoints.length < 3 ||
+    anchors.length < 3
+  ) {
+    return displayPoints
+  }
+
+  const normalizedTerrain = String(terrainType ?? '').toLowerCase()
+  const stageMin = Math.min(...anchors.map((point) => point.elevation))
+  const stageMax = Math.max(...anchors.map((point) => point.elevation))
+  const stageRange = stageMax - stageMin
+
+  // This correction is mainly for low/moderate-relief classics and punchy
+  // stages. Genuine large mountain relief should keep its authoritative shape.
+  if (
+    stageRange > 750 &&
+    normalizedTerrain !== 'cobbled' &&
+    normalizedTerrain !== 'hilly'
+  ) {
+    return displayPoints
+  }
+
+  const anchorKmKeys = new Set(
+    anchors.map((point) => point.km.toFixed(4))
+  )
+  const softened = displayPoints.map((point) => ({ ...point }))
+
+  for (let index = 1; index < anchors.length - 1; index += 1) {
+    const previous = anchors[index - 1]
+    const peak = anchors[index]
+    const next = anchors[index + 1]
+
+    const leftRise = peak.elevation - previous.elevation
+    const rightDrop = peak.elevation - next.elevation
+    const leftSpan = peak.km - previous.km
+    const rightSpan = next.km - peak.km
+
+    if (
+      leftRise < 45 ||
+      rightDrop < 45 ||
+      leftSpan <= 0 ||
+      rightSpan <= 0
+    ) {
+      continue
+    }
+
+    // Do not try to reshape genuinely tiny few-kilometre climbs.
+    if (leftSpan + rightSpan < 9 || Math.max(leftSpan, rightSpan) < 4) {
+      continue
+    }
+
+    const prominence = Math.min(leftRise, rightDrop)
+    const shoulderRadiusKm = Math.min(
+      7,
+      Math.max(2.5, Math.min(leftSpan, rightSpan) * 0.55)
+    )
+    const shoulderDepthMeters = Math.min(
+      70,
+      Math.max(18, prominence * 0.42)
+    )
+
+    for (const point of softened) {
+      if (anchorKmKeys.has(point.km.toFixed(4))) continue
+
+      const distanceKm = Math.abs(point.km - peak.km)
+      if (distanceKm >= shoulderRadiusKm) continue
+
+      const proximity = 1 - distanceKm / shoulderRadiusKm
+      const desiredShoulder =
+        peak.elevation -
+        shoulderDepthMeters *
+          Math.pow(distanceKm / shoulderRadiusKm, 0.75)
+
+      if (point.elevation < desiredShoulder) {
+        // Blend rather than force a plateau. This broadens needle-like peaks
+        // while keeping the actual KOM/summit anchor exactly untouched.
+        const blend = 0.38 * proximity * proximity
+        point.elevation +=
+          (desiredShoulder - point.elevation) * blend
+      }
+    }
+  }
+
+  return softened
+}
+
 function getDisplayOnlyStageProfilePoints(
   stageId: string | null | undefined,
   points: BackendStageProfilePoint[],
@@ -8860,7 +9071,11 @@ function getDisplayOnlyStageProfilePoints(
   // Preserve the final authoritative anchor exactly.
   displayPoints.push(anchors[anchors.length - 1])
 
-  return displayPoints
+  return softenDisplayOnlyLowReliefPeakShoulders(
+    displayPoints,
+    anchors,
+    terrainType
+  )
 }
 
 function getDisplayOnlyProfileMinimumVerticalSpan(
