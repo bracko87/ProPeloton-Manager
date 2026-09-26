@@ -1,0 +1,124 @@
+{
+  "title": "Classement national {{country}}",
+  "eyebrow": "Compétition nationale",
+  "description": "Classement national individuel des coureurs, qualification au championnat, devoir national et préparation individuelle. Les points du classement par équipes ne sont pas affectés.",
+  "country": "Pays",
+  "loading": "Chargement du classement national…",
+  "errors": {
+    "unavailable": "Le classement national est indisponible.",
+    "load": "Impossible de charger le classement national.",
+    "save": "Impossible d’enregistrer le plan du coureur."
+  },
+  "cards": {
+    "freeze": "Gel du classement",
+    "frozen": "Classement gelé pour cette édition",
+    "live": "Le classement en direct évolue encore",
+    "qualification": "Qualification",
+    "notRequired": "Non requise",
+    "heatPlaces": "{{heats}} série(s) de qualification · {{places}} places en finale",
+    "directField": "Le peloton accède directement à la finale",
+    "final": "Finale nationale",
+    "targetField": "Peloton cible {{count}} · {{status}}",
+    "preparation": "Préparation",
+    "riderControlled": "Coureur contrôlé",
+    "prepDescription": "Équipement et tactique individuelle uniquement. Personnel, véhicules et ravitaillement sont gérés par l’organisateur."
+  },
+  "duty": {
+    "title": "Mon devoir national",
+    "description": "Ces coureurs sont engagés automatiquement. Vous gérez uniquement l’équipement et la stratégie individuelle de chacun.",
+    "locked": "Course individuelle — aucune tactique d’équipe. Personnel, véhicules et ravitaillement du club indisponibles.",
+    "directQualifier": "Qualifié directement",
+    "qualificationHeat": "Série de qualification {{number}}",
+    "noPlan": "Aucun plan de devoir national modifiable n’est actuellement ouvert pour ce coureur."
+  },
+  "organizer": {
+    "title": "Pack course de l’organisateur",
+    "bidons": "{{count}} bidons",
+    "gels": "{{count}} gels",
+    "nutrition": "{{count}} packs nutrition",
+    "kit": "Tenue de championnat fournie",
+    "rain": "Protection pluie fournie si nécessaire"
+  },
+  "plan": {
+    "qualificationHeat": "Série de qualification {{number}}",
+    "final": "Finale du championnat national",
+    "openRace": "Ouvrir la course",
+    "individualBadge": "Course individuelle — aucune tactique d’équipe",
+    "equipment": "Équipement du coureur",
+    "organizerEquipment": "Équipement standard de l’organisateur",
+    "equipmentHelp": "Vous pouvez choisir un montage du club ; sinon l’équipement standard de l’organisateur est utilisé. Personnel, véhicules et ravitaillement restent gérés par l’organisateur.",
+    "strategy": "Stratégie individuelle",
+    "phaseStart": "Départ",
+    "phaseEarly": "Début / milieu",
+    "phaseLate": "Fin de course",
+    "phaseFinish": "Arrivée",
+    "save": "Enregistrer le plan",
+    "saved": "{{rider}} : plan de {{event}} enregistré."
+  },
+  "event": {
+    "qualification": "qualification",
+    "final": "finale"
+  },
+  "tactics": {
+    "rideNaturally": "Courir naturellement",
+    "conserveEnergy": "Économiser l’énergie",
+    "stayNearFront": "Rester à l’avant",
+    "joinBreakaway": "Rejoindre l’échappée",
+    "attack": "Attaquer",
+    "chaseBreakaway": "Chasser l’échappée",
+    "climbHard": "Forcer dans les montées",
+    "sprint": "Sprinter",
+    "avoidRisks": "Éviter les risques"
+  },
+  "heats": {
+    "title": "Séries de qualification",
+    "heat": "Série {{number}}",
+    "summary": "{{riders}} coureurs · les {{places}} premiers avancent",
+    "open": "Ouvrir la série"
+  },
+  "ranking": {
+    "frozen": "Classement national gelé",
+    "live": "Classement national en direct",
+    "description": "Basé sur les points de course avec pondération de récence. Les bonus du championnat national sont individuels.",
+    "refresh": "Actualiser",
+    "rank": "Rang",
+    "rider": "Coureur",
+    "weighted": "Points pondérés",
+    "raw": "Points bruts",
+    "latest": "Dernier résultat",
+    "overall": "Général"
+  },
+  "results": {
+    "title": "Résultats du championnat",
+    "pending": "Les résultats de la finale apparaîtront automatiquement après le calcul du championnat.",
+    "independent": "Indépendant"
+  },
+  "champions": {
+    "title": "Anciens champions",
+    "season": "Saison {{number}}",
+    "first": "Le premier champion sera ajouté ici automatiquement.",
+    "badge": "Champion national",
+    "history": "Historique du championnat",
+    "titles": "{{count}} titres nationaux"
+  },
+  "common": {
+    "club": "Club",
+    "national": "National"
+  },
+  "status": {
+    "planned": "Planifié",
+    "ranking_frozen": "Classement gelé",
+    "qualification_pending": "Qualification en attente",
+    "qualification_completed": "Qualification terminée",
+    "final_ready": "Finale prête",
+    "completed": "Terminé",
+    "cancelled": "Annulé",
+    "ready": "Prêt",
+    "direct_qualified": "Qualifié directement",
+    "qualification_assigned": "Qualification attribuée",
+    "qualified": "Qualifié",
+    "eliminated": "Éliminé",
+    "withdrawn": "Retiré",
+    "finalist": "Finaliste"
+  }
+}
