@@ -21,7 +21,12 @@
     "targetField": "Ciljani broj {{count}} · {{status}}",
     "preparation": "Priprema",
     "riderControlled": "Upravljanje vozačem",
-    "prepDescription": "Samo oprema i individualna taktika. Osoblje, vozila i zalihe osigurava organizator."
+    "prepDescription": "Samo oprema i individualna taktika. Osoblje, vozila i zalihe osigurava organizator.",
+    "dutyWindow": "Termin nacionalne obveze",
+    "noTeamCost": "Bez troška za klub",
+    "hostRoute": "Ruta finala",
+    "hostPending": "Ruta još nije spremna",
+    "hostPendingHelp": "Prvenstvo čeka dok ne budu dostupne dvije prikladne rute."
   },
   "duty": {
     "title": "Moja nacionalna obveza",
@@ -29,7 +34,8 @@
     "locked": "Individualna utrka — nema ekipne taktike. Osoblje, vozila i klupske zalihe nisu dostupni.",
     "directQualifier": "Izravno kvalificiran",
     "qualificationHeat": "Kvalifikacijska skupina {{number}}",
-    "noPlan": "Za ovog vozača trenutačno nema otvorenog plana koji se može uređivati."
+    "noPlan": "Za ovog vozača trenutačno nema otvorenog plana koji se može uređivati.",
+    "empty": "Nijedan tvoj vozač trenutačno nema aktivan poziv za nacionalnu obvezu na ovom prvenstvu."
   },
   "organizer": {
     "title": "Paket organizatora",
@@ -86,7 +92,20 @@
     "weighted": "Ponderirani bodovi",
     "raw": "Osnovni bodovi",
     "latest": "Zadnji rezultat",
-    "overall": "Ukupno"
+    "overall": "Ukupno",
+    "team": "Ekipa",
+    "qualificationStatus": "Status kvalifikacije",
+    "freeAgent": "Slobodan vozač",
+    "pageRange": "{{from}}–{{to}} od {{total}}",
+    "perPage": "{{count}} po stranici",
+    "previous": "Prethodno",
+    "next": "Sljedeće",
+    "page": "Stranica {{page}} od {{pages}}",
+    "directFinal": "Izravno u finale",
+    "qualificationHeat": "Kvalifikacijska skupina {{number}}",
+    "qualifiedFinal": "Kvalificiran za finale",
+    "eliminated": "Ispao",
+    "withdrawn": "Ne sudjeluje"
   },
   "results": {
     "title": "Rezultati prvenstva",
@@ -147,5 +166,25 @@
       "auto_approved": "Automatski potvrđeno",
       "rejected": "Sudjelovanje odbijeno"
     }
+  },
+  "header": {
+    "subtitle": "Nacionalni vozači, kvalifikacije i obveze prvenstva"
+  },
+  "draw": {
+    "title": "Ždrijeb prvenstva",
+    "confirmed": "Potvrđena struktura prvenstva",
+    "projected": "Projekcija prema trenutačnom nacionalnom poretku do zaključavanja poretka",
+    "qualificationHeat": "Kvalifikacijska skupina {{number}}",
+    "final": "Nacionalno finale",
+    "routePending": "Ruta domaćin još nije određena"
+  },
+  "tabs": {
+    "ranking": "Poredak",
+    "duty": "Moja nacionalna obveza",
+    "history": "Povijest"
+  },
+  "info": {
+    "title": "Informacije o prvenstvu",
+    "description": "Nacionalna prvenstva su individualne utrke. Nema ekipne taktike, osoblja, vozila ni klupskih zaliha. Organizator pokriva logistiku i troškove; ti kontroliraš samo opremu i individualnu taktiku svakog pozvanog vozača."
   }
 }
