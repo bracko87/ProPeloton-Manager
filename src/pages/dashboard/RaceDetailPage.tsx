@@ -2371,13 +2371,17 @@ function getTerrainMinimumVerticalSpanMeters(terrainType: string | null | undefi
 
 function getNiceElevationAxisBounds(
   points: StageProfilePoint[],
-  terrainType: string | null | undefined
+  terrainType: string | null | undefined,
+  minimumVerticalSpanOverride?: number | null
 ): { minElevation: number; maxElevation: number } {
   const rawMin = Math.min(...points.map((point) => point.elevation_m))
   const rawMax = Math.max(...points.map((point) => point.elevation_m))
 
   const dataSpan = Math.max(rawMax - rawMin, 1)
-  const minimumSpan = getTerrainMinimumVerticalSpanMeters(terrainType)
+  const minimumSpan =
+    minimumVerticalSpanOverride != null
+      ? Math.max(20, minimumVerticalSpanOverride)
+      : getTerrainMinimumVerticalSpanMeters(terrainType)
 
   const targetSpan = Math.max(dataSpan * 1.25, minimumSpan)
   const midpoint = (rawMin + rawMax) / 2
@@ -2406,7 +2410,8 @@ function buildStageProfilePath(
   width: number,
   height: number,
   padding: { top: number; right: number; bottom: number; left: number },
-  terrainType: string | null | undefined
+  terrainType: string | null | undefined,
+  minimumVerticalSpanOverride?: number | null
 ) {
   if (points.length < 2) return ''
 
@@ -2416,7 +2421,11 @@ function buildStageProfilePath(
   const minKm = Math.min(...points.map((point) => point.km))
   const maxKm = Math.max(...points.map((point) => point.km))
 
-  const { minElevation, maxElevation } = getNiceElevationAxisBounds(points, terrainType)
+  const { minElevation, maxElevation } = getNiceElevationAxisBounds(
+    points,
+    terrainType,
+    minimumVerticalSpanOverride
+  )
 
   const kmSpan = Math.max(maxKm - minKm, 1)
   const elevationSpan = Math.max(maxElevation - minElevation, 1)
@@ -8573,6 +8582,87 @@ type BackendStageProfilePoint = {
   elevation: number
 }
 
+/**
+ * Temporary, fully reversible visual experiment for Trofej Aleksandrova.
+ *
+ * IMPORTANT:
+ * - Never used by the race engine.
+ * - Never written back to Supabase.
+ * - Never used by replay terrain timing / gradients.
+ * - Existing authoritative profile points stay exact anchors.
+ *
+ * Remove this stage id / helper calls to restore the previous display instantly.
+ */
+const TROFEJ_ALEKSANDROVA_VISUAL_PROFILE_STAGE_ID =
+  '27ff7ae3-f539-4771-8500-09deebea0d3a'
+
+function getDisplayOnlyStageProfilePoints(
+  stageId: string | null | undefined,
+  points: BackendStageProfilePoint[]
+): BackendStageProfilePoint[] {
+  if (
+    stageId !== TROFEJ_ALEKSANDROVA_VISUAL_PROFILE_STAGE_ID ||
+    points.length < 2
+  ) {
+    return points
+  }
+
+  const anchors = [...points]
+    .map((point) => ({
+      km: Number(point.km),
+      elevation: Number(point.elevation),
+    }))
+    .filter(
+      (point) =>
+        Number.isFinite(point.km) &&
+        Number.isFinite(point.elevation)
+    )
+    .sort((left, right) => left.km - right.km)
+
+  if (anchors.length < 2) return points
+
+  const displayPoints: BackendStageProfilePoint[] = []
+
+  for (let anchorIndex = 0; anchorIndex < anchors.length - 1; anchorIndex += 1) {
+    const start = anchors[anchorIndex]
+    const end = anchors[anchorIndex + 1]
+    const spanKm = end.km - start.km
+
+    if (spanKm <= 0) continue
+
+    const visualStepKm = 1
+    const stepCount = Math.max(2, Math.ceil(spanKm / visualStepKm))
+
+    for (let step = 0; step < stepCount; step += 1) {
+      const fraction = step / stepCount
+      const km = start.km + spanKm * fraction
+      const baseline =
+        start.elevation + (end.elevation - start.elevation) * fraction
+
+      // Smooth local road texture. sin(pi*fraction) makes the deviation
+      // exactly zero at every real engine anchor.
+      const envelope = Math.sin(Math.PI * fraction)
+      const phase = anchorIndex * 0.73
+      const wave =
+        Math.sin(fraction * Math.PI * 2 + phase) * 0.72 +
+        Math.sin(fraction * Math.PI * 4 + phase * 0.45) * 0.28
+
+      // Deliberately modest for the genuinely flat Central Banat route.
+      const amplitudeMeters = 7 + (anchorIndex % 3) * 2
+
+      displayPoints.push({
+        km,
+        elevation: baseline + envelope * wave * amplitudeMeters,
+      })
+    }
+  }
+
+  // Preserve the final authoritative anchor exactly.
+  displayPoints.push(anchors[anchors.length - 1])
+
+  return displayPoints
+}
+
 type TerrainReplaySegment = {
   startKm: number
   endKm: number
@@ -9267,6 +9357,7 @@ function StageProfileChart({
   auxiliaryMarkers = [],
   compact = false,
   roadReplayCompactUi = false,
+  minimumVerticalSpanOverride = null,
 }: {
   points: BackendStageProfilePoint[]
   markers: StageRouteMarker[]
@@ -9279,6 +9370,7 @@ function StageProfileChart({
   auxiliaryMarkers?: StageProfileAuxiliaryMarker[]
   compact?: boolean
   roadReplayCompactUi?: boolean
+  minimumVerticalSpanOverride?: number | null
 }) {
   const { t } = useTranslation('raceDetail')
   const chartInstanceId = useId().replace(/:/g, '')
@@ -9310,7 +9402,8 @@ function StageProfileChart({
     width,
     height,
     padding,
-    terrainType
+    terrainType,
+    minimumVerticalSpanOverride
   )
 
   if (!pathPayload) {
@@ -15821,14 +15914,15 @@ function UniversalRaceReplayPage({
   }, [profile, stage.weather_snapshot])
 
   const chartPoints: BackendStageProfilePoint[] = useMemo(() => {
-    if (profile?.profile_points?.length) return profile.profile_points
+    const authoritativePoints = profile?.profile_points?.length
+      ? profile.profile_points
+      : [
+          { km: 0, elevation: 0 },
+          { km: Math.max(1, Number(stage.distance_km ?? 1)), elevation: 0 },
+        ]
 
-    const distanceKm = Math.max(1, Number(stage.distance_km ?? 1))
-    return [
-      { km: 0, elevation: 0 },
-      { km: distanceKm, elevation: 0 },
-    ]
-  }, [profile, stage.distance_km])
+    return getDisplayOnlyStageProfilePoints(stage.id, authoritativePoints)
+  }, [profile, stage.id, stage.distance_km])
 
   const chartMarkers = useMemo(() => {
     if (profile?.route_markers?.length) return profile.route_markers
@@ -16875,11 +16969,19 @@ function RaceStageProfilePanel({
 
         <div className="mt-4">
           <StageProfileChart
-            points={profile.profile_points ?? []}
+            points={getDisplayOnlyStageProfilePoints(
+              selectedStage?.id,
+              profile.profile_points ?? []
+            )}
             markers={profile.route_markers ?? []}
             distanceKm={Number(profile.distance_km ?? 0)}
             terrainType={profile.terrain_type}
             mountainClimbs={profile.mountain_climbs ?? []}
+            minimumVerticalSpanOverride={
+              selectedStage?.id === TROFEJ_ALEKSANDROVA_VISUAL_PROFILE_STAGE_ID
+                ? 100
+                : null
+            }
           />
         </div>
 
