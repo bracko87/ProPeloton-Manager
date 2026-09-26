@@ -120,5 +120,32 @@
     "eliminated": "Eliminato",
     "withdrawn": "Ritirato",
     "finalist": "Finalista"
+  },
+  "availability": {
+    "climateTitle": "Finestra climatica non disponibile",
+    "climateUnavailable": "Nei dati climatici attuali non esiste una finestra di campionato sopra i 20 °C. Massima settimanale idonea più calda: {{temperature}} °C.",
+    "routeTitle": "Serve un percorso per il campionato",
+    "routeMissing": "Questo paese non dispone attualmente di una tappa su strada adatta al Campionato Nazionale. Il campionato resterà pianificato finché non verrà aggiunto un percorso.",
+    "singleRoute": "Per questo paese esiste attualmente una sola tappa su strada adatta, quindi qualificazione e finale useranno lo stesso percorso.",
+    "windowTitle": "Finestra impegno nazionale:",
+    "windowDates": "{{start}}–{{end}} · massima prevista nella finestra calda {{temperature}} °C · nessun costo per la squadra."
+  },
+  "decision": {
+    "title": "Partecipazione all'impegno nazionale",
+    "blockedWindow": "Questo corridore è provvisoriamente indisponibile per il club dal {{start}} al {{end}}.",
+    "deadline": "Scadenza decisione: {{date}}",
+    "approve": "Approva impegno nazionale",
+    "reject": "Rifiuta · tieni al club",
+    "rejectWarning": "Il rifiuto annulla il blocco di tre giorni e costa al corridore 2 punti morale.",
+    "participationBenefit": "Se partecipa, si applicano normalmente fatica e sviluppo delle abilità; concludere una gara del Campionato Nazionale dà anche +1 morale.",
+    "error": "Impossibile salvare la decisione sull'impegno nazionale.",
+    "approvedMessage": "{{rider}} parteciperà all'impegno nazionale.",
+    "rejectedMessage": "{{rider}} resterà con il club e ha ricevuto la penalità morale per il rifiuto.",
+    "status": {
+      "pending": "Decisione del club in attesa",
+      "approved": "Approvato dal club",
+      "auto_approved": "Approvato automaticamente",
+      "rejected": "Partecipazione rifiutata"
+    }
   }
 }
