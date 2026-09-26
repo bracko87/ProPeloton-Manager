@@ -125,8 +125,8 @@
     "climateTitle": "Kein geeignetes Klimafenster",
     "climateUnavailable": "In den aktuellen Klimadaten gibt es kein Meisterschaftsfenster über 20 °C. Wärmstes geeignetes wöchentliches Maximum: {{temperature}} °C.",
     "routeTitle": "Meisterschaftsstrecke benötigt",
-    "routeMissing": "Für dieses Land gibt es derzeit keine geeignete Straßenetappe für die nationale Meisterschaft. Die Meisterschaft bleibt geplant, bis eine Strecke hinzugefügt wird.",
-    "singleRoute": "Für dieses Land gibt es derzeit nur eine geeignete Straßenetappe. Qualifikation und Finale verwenden daher dieselbe Strecke.",
+    "routeMissing": "Für dieses Land gibt es derzeit keine geeignete Straßenetappe für die nationale Meisterschaft. Die Meisterschaft bleibt pausiert, bis mindestens zwei geeignete Straßenetappen vorhanden sind.",
+    "singleRoute": "Für dieses Land gibt es derzeit nur eine geeignete Straßenetappe für die nationale Meisterschaft. Die Meisterschaft bleibt pausiert, bis eine zweite geeignete Route vorhanden ist, damit Qualifikation und Finale unterschiedliche Strecken nutzen.",
     "windowTitle": "National-Duty-Zeitraum:",
     "windowDates": "{{start}}–{{end}} · erwartetes Maximum im Warmwetterfenster {{temperature}} °C · keine Teamkosten."
   },
