@@ -186,5 +186,12 @@
   "info": {
     "title": "Información del campeonato",
     "description": "Los Campeonatos Nacionales son carreras individuales. No hay tácticas de equipo, personal, vehículos ni suministros del club. El organizador cubre la logística y los costes; tú solo controlas el equipamiento y la táctica individual de cada ciclista invitado."
+  },
+  "summary": {
+    "title": "Calendario del Campeonato Nacional",
+    "subtitle": "Fechas clave, ventana de deber nacional y ruta anfitriona del campeonato de tu país."
+  },
+  "host": {
+    "openRace": "Abrir página de la carrera"
   }
 }
