@@ -784,6 +784,11 @@ export default function NationalRankingPage(): JSX.Element {
                       {t('decision.rejectWarning')}
                     </div>
                   ) : null}
+                  {entry.participation_decision !== 'rejected' ? (
+                    <div className="mt-2 text-xs text-slate-600">
+                      {t('decision.participationBenefit')}
+                    </div>
+                  ) : null}
                 </div>
 
                 {showQualification && entry.participation_decision !== 'rejected' ? (
