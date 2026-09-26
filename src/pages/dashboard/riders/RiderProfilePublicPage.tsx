@@ -13,7 +13,8 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import RiderProfileModal from '../../../components/riders/RiderProfileModal'
-import NationalChampionBadge from '../../../components/riders/NationalChampionBadge'\nimport { supabase } from '../../../lib/supabase'
+import NationalChampionBadge from '../../../components/riders/NationalChampionBadge'
+import { supabase } from '../../../lib/supabase'
 
 type RiderPopupRow = {
   id: string
