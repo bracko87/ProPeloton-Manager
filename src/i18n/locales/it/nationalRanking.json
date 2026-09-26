@@ -125,8 +125,8 @@
     "climateTitle": "Finestra climatica non disponibile",
     "climateUnavailable": "Nei dati climatici attuali non esiste una finestra di campionato sopra i 20 °C. Massima settimanale idonea più calda: {{temperature}} °C.",
     "routeTitle": "Serve un percorso per il campionato",
-    "routeMissing": "Questo paese non dispone attualmente di una tappa su strada adatta al Campionato Nazionale. Il campionato resterà pianificato finché non verrà aggiunto un percorso.",
-    "singleRoute": "Per questo paese esiste attualmente una sola tappa su strada adatta, quindi qualificazione e finale useranno lo stesso percorso.",
+    "routeMissing": "Questo paese non dispone attualmente di una tappa su strada adatta al Campionato Nazionale. Il campionato resterà in pausa finché non saranno disponibili almeno due tappe adatte.",
+    "singleRoute": "Per questo paese esiste attualmente una sola tappa su strada adatta al Campionato Nazionale. Il campionato resterà in pausa finché non verrà aggiunto un secondo percorso, così qualificazione e finale potranno usare tracciati diversi.",
     "windowTitle": "Finestra impegno nazionale:",
     "windowDates": "{{start}}–{{end}} · massima prevista nella finestra calda {{temperature}} °C · nessun costo per la squadra."
   },
