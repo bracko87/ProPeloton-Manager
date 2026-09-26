@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import RiderProfilePage from '../../../features/squad/components/RiderProfilePage'
-import { normalizeGameDateValue } from '../../../features/squad/utils/dates'
+import NationalChampionBadge from '../../../components/riders/NationalChampionBadge'\nimport { normalizeGameDateValue } from '../../../features/squad/utils/dates'
 import { supabase } from '../../../lib/supabase'
 
 export default function RiderProfileOwnPage() {
@@ -54,12 +54,15 @@ export default function RiderProfileOwnPage() {
   }
 
   return (
-    <RiderProfilePage
-      riderId={riderId}
-      gameDate={gameDate}
-      currentTeamType="first"
-      trainingPagePath="/training"
-      onBack={() => navigate(-1)}
-    />
+    <>
+      <NationalChampionBadge riderId={riderId} />
+      <RiderProfilePage
+        riderId={riderId}
+        gameDate={gameDate}
+        currentTeamType="first"
+        trainingPagePath="/training"
+        onBack={() => navigate(-1)}
+      />
+    </>
   )
 }
