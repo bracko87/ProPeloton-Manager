@@ -20,6 +20,7 @@ import {
   LogOut,
   ClipboardCheck,
   Sparkles,
+  Trophy,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -70,6 +71,12 @@ const navItems: NavItem[] = [
     labelKey: 'teamRanking',
     descriptionKey: 'descriptions.teamRanking',
     icon: BarChart2,
+  },
+  {
+    to: '/dashboard/national-ranking',
+    labelKey: 'nationalRanking',
+    descriptionKey: 'descriptions.nationalRanking',
+    icon: Trophy,
   },
   {
     to: '/dashboard/training',
