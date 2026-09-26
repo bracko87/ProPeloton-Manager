@@ -120,5 +120,32 @@
     "eliminated": "Ausgeschieden",
     "withdrawn": "Zurückgezogen",
     "finalist": "Finalist"
+  },
+  "availability": {
+    "climateTitle": "Kein geeignetes Klimafenster",
+    "climateUnavailable": "In den aktuellen Klimadaten gibt es kein Meisterschaftsfenster über 20 °C. Wärmstes geeignetes wöchentliches Maximum: {{temperature}} °C.",
+    "routeTitle": "Meisterschaftsstrecke benötigt",
+    "routeMissing": "Für dieses Land gibt es derzeit keine geeignete Straßenetappe für die nationale Meisterschaft. Die Meisterschaft bleibt geplant, bis eine Strecke hinzugefügt wird.",
+    "singleRoute": "Für dieses Land gibt es derzeit nur eine geeignete Straßenetappe. Qualifikation und Finale verwenden daher dieselbe Strecke.",
+    "windowTitle": "National-Duty-Zeitraum:",
+    "windowDates": "{{start}}–{{end}} · erwartetes Maximum im Warmwetterfenster {{temperature}} °C · keine Teamkosten."
+  },
+  "decision": {
+    "title": "Teilnahme an der National Duty",
+    "blockedWindow": "Dieser Fahrer ist vom {{start}} bis {{end}} vorläufig für Club-Aufgaben gesperrt.",
+    "deadline": "Entscheidungsfrist: {{date}}",
+    "approve": "National Duty bestätigen",
+    "reject": "Ablehnen · beim Club behalten",
+    "rejectWarning": "Eine Ablehnung hebt die dreitägige National-Duty-Sperre auf und kostet den Fahrer 2 Moralpunkte.",
+    "participationBenefit": "Bei Teilnahme gelten normale Rennmüdigkeit und Skill-Entwicklung; für das Beenden eines National-Championship-Rennens erhält der Fahrer zusätzlich +1 Moral.",
+    "error": "Die National-Duty-Entscheidung konnte nicht gespeichert werden.",
+    "approvedMessage": "{{rider}} nimmt an der National Duty teil.",
+    "rejectedMessage": "{{rider}} bleibt beim Club und hat den Moralabzug für die Ablehnung erhalten.",
+    "status": {
+      "pending": "Club-Entscheidung ausstehend",
+      "approved": "Vom Club bestätigt",
+      "auto_approved": "Automatisch bestätigt",
+      "rejected": "Teilnahme abgelehnt"
+    }
   }
 }
