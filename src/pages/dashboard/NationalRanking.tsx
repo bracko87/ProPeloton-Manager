@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   Bike,
   CalendarDays,
@@ -148,16 +149,15 @@ type PlanDraft = {
 type EventType = 'qualification' | 'final'
 
 const TACTIC_OPTIONS = [
-  ['follow_team_plan', 'Follow balanced plan'],
-  ['conserve_energy', 'Conserve energy'],
-  ['stay_near_front', 'Stay near front'],
-  ['control_tempo', 'Control tempo'],
-  ['join_breakaway', 'Join breakaway'],
-  ['attack', 'Attack'],
-  ['chase_breakaway', 'Chase breakaway'],
-  ['climb_hard', 'Climb hard'],
-  ['sprint', 'Sprint'],
-  ['avoid_risks', 'Avoid risks'],
+  ['ride_naturally', 'tactics.rideNaturally'],
+  ['conserve_energy', 'tactics.conserveEnergy'],
+  ['stay_near_front', 'tactics.stayNearFront'],
+  ['join_breakaway', 'tactics.joinBreakaway'],
+  ['attack', 'tactics.attack'],
+  ['chase_breakaway', 'tactics.chaseBreakaway'],
+  ['climb_hard', 'tactics.climbHard'],
+  ['sprint', 'tactics.sprint'],
+  ['avoid_risks', 'tactics.avoidRisks'],
 ] as const
 
 function flagUrl(code?: string | null): string | null {
@@ -186,19 +186,13 @@ function formatPoints(value?: number | null): string {
     : '0'
 }
 
-function statusLabel(value?: string | null): string {
-  return String(value ?? '')
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, letter => letter.toUpperCase())
-}
-
 function planFromValue(value?: RiderPlan | null): PlanDraft {
   return {
     equipmentSetupId: value?.equipment_setup_id ?? '',
-    phase1: value?.phase_1_command ?? 'follow_team_plan',
-    phase2: value?.phase_2_command ?? 'follow_team_plan',
-    phase3: value?.phase_3_command ?? 'follow_team_plan',
-    phase4: value?.phase_4_command ?? 'follow_team_plan',
+    phase1: value?.phase_1_command ?? 'ride_naturally',
+    phase2: value?.phase_2_command ?? 'ride_naturally',
+    phase3: value?.phase_3_command ?? 'ride_naturally',
+    phase4: value?.phase_4_command ?? 'ride_naturally',
   }
 }
 
@@ -227,10 +221,11 @@ function NationalDutyPlanCard({
   onSave: () => void
   saving: boolean
 }) {
+  const { t } = useTranslation('nationalRanking')
   const eventName =
     eventType === 'qualification'
-      ? `Qualification Heat ${entry.heat_number ?? ''}`.trim()
-      : 'National Championship Final'
+      ? t('plan.qualificationHeat', { number: entry.heat_number ?? '—' })
+      : t('plan.final')
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -249,7 +244,7 @@ function NationalDutyPlanCard({
                   className="font-medium text-blue-600 hover:text-blue-700"
                   to={`/dashboard/races/${raceId}`}
                 >
-                  Open race
+                  {t('plan.openRace')}
                 </Link>
               </>
             ) : null}
@@ -257,7 +252,7 @@ function NationalDutyPlanCard({
         </div>
 
         <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-          Team plan: Balanced
+          {t('plan.individualBadge')}
         </div>
       </div>
 
@@ -265,7 +260,7 @@ function NationalDutyPlanCard({
         <label className="block">
           <span className="mb-1.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <Bike className="h-4 w-4" />
-            Rider equipment
+            {t('plan.equipment')}
           </span>
           <select
             value={plan.equipmentSetupId}
@@ -274,7 +269,7 @@ function NationalDutyPlanCard({
             }
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500"
           >
-            <option value="">Club default equipment</option>
+            <option value="">{t('plan.organizerEquipment')}</option>
             {equipmentPresets.map(preset => (
               <option key={preset.id} value={preset.id}>
                 {preset.setup_name}
@@ -282,21 +277,20 @@ function NationalDutyPlanCard({
             ))}
           </select>
           <p className="mt-2 text-xs leading-5 text-slate-500">
-            Equipment is the only club inventory choice used here. Staff, vehicles and race
-            supplies are organizer-managed.
+            {t('plan.equipmentHelp')}
           </p>
         </label>
 
         <div>
           <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Individual race strategy
+            {t('plan.strategy')}
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {[
-              ['Start', 'phase1'],
-              ['Early / middle', 'phase2'],
-              ['Late race', 'phase3'],
-              ['Finish', 'phase4'],
+              [t('plan.phaseStart'), 'phase1'] as const,
+              [t('plan.phaseEarly'), 'phase2'] as const,
+              [t('plan.phaseLate'), 'phase3'] as const,
+              [t('plan.phaseFinish'), 'phase4'] as const,
             ].map(([label, key]) => (
               <label key={key} className="block">
                 <span className="mb-1 block text-xs text-slate-500">{label}</span>
@@ -310,9 +304,9 @@ function NationalDutyPlanCard({
                   }
                   className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
                 >
-                  {TACTIC_OPTIONS.map(([value, text]) => (
+                  {TACTIC_OPTIONS.map(([value, labelKey]) => (
                     <option key={value} value={value}>
-                      {text}
+                      {t(labelKey)}
                     </option>
                   ))}
                 </select>
@@ -330,7 +324,7 @@ function NationalDutyPlanCard({
           className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Save rider plan
+          {t('plan.save')}
         </button>
       </div>
     </div>
@@ -338,6 +332,7 @@ function NationalDutyPlanCard({
 }
 
 export default function NationalRankingPage(): JSX.Element {
+  const { t } = useTranslation('nationalRanking')
   const location = useLocation()
   const navigate = useNavigate()
   const queryCountry = useMemo(
@@ -370,7 +365,7 @@ export default function NationalRankingPage(): JSX.Element {
       if (rpcError) throw rpcError
 
       const next = (rpcData ?? null) as NationalPageData | null
-      if (!next) throw new Error('National Ranking data is unavailable.')
+      if (!next) throw new Error(t('errors.unavailable'))
 
       setData(next)
 
@@ -393,7 +388,7 @@ export default function NationalRankingPage(): JSX.Element {
       }
       setDrafts(nextDrafts)
     } catch (caught: any) {
-      setError(caught?.message ?? 'Failed to load National Ranking.')
+      setError(caught?.message ?? t('errors.load'))
     } finally {
       setLoading(false)
     }
@@ -436,10 +431,10 @@ export default function NationalRankingPage(): JSX.Element {
 
       if (saveError) throw saveError
 
-      setSaveMessage(`${entry.rider_name}: ${statusLabel(eventType)} plan saved.`)
+      setSaveMessage(t('plan.saved', { rider: entry.rider_name, event: t(`event.${eventType}`) }))
       await loadPage(countryCode)
     } catch (caught: any) {
-      setSaveMessage(caught?.message ?? 'Could not save rider plan.')
+      setSaveMessage(caught?.message ?? t('errors.save'))
     } finally {
       setSavingKey(null)
     }
@@ -454,14 +449,14 @@ export default function NationalRankingPage(): JSX.Element {
   const countryName =
     data?.countries.find(country => country.code === data.country_code)?.name ??
     data?.country_code ??
-    'National'
+    t('common.national')
 
   if (loading && !data) {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
         <div className="flex items-center gap-3 text-sm text-slate-500">
           <Loader2 className="h-5 w-5 animate-spin" />
-          Loading National Ranking…
+          {t('loading')}
         </div>
       </div>
     )
@@ -474,20 +469,19 @@ export default function NationalRankingPage(): JSX.Element {
           <div>
             <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">
               <Flag className="h-4 w-4" />
-              National competition
+              {t('eyebrow')}
             </div>
             <h1 className="text-3xl font-black tracking-tight md:text-4xl">
-              {countryName} National Ranking
+              {t('title', { country: countryName })}
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-              Rider-only national ranking, championship qualification, National Duty and
-              individual championship preparation. Team Ranking points are not affected.
+              {t('description')}
             </p>
           </div>
 
           <div className="min-w-[220px]">
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Country
+              {t('country')}
             </label>
             <select
               value={countryCode}
@@ -521,54 +515,54 @@ export default function NationalRankingPage(): JSX.Element {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <CalendarDays className="h-4 w-4" />
-              Ranking freeze
+              {t('cards.freeze')}
             </div>
             <div className="mt-2 text-lg font-bold text-slate-900">
               {formatDate(edition.ranking_snapshot_date)}
             </div>
             <div className="mt-1 text-xs text-slate-500">
-              {data?.ranking_is_frozen ? 'Ranking frozen for this edition' : 'Live ranking still moving'}
+              {data?.ranking_is_frozen ? t('cards.frozen') : t('cards.live')}
             </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <Medal className="h-4 w-4" />
-              Qualification
+              {t('cards.qualification')}
             </div>
             <div className="mt-2 text-lg font-bold text-slate-900">
               {edition.qualification_heat_count
                 ? formatDate(edition.qualification_date)
-                : 'Not required'}
+                : t('cards.notRequired')}
             </div>
             <div className="mt-1 text-xs text-slate-500">
               {edition.qualification_heat_count
-                ? `${edition.qualification_heat_count} heat(s) · ${edition.qualification_places ?? 0} final places`
-                : 'Field fits directly into the final'}
+                ? t('cards.heatPlaces', { heats: edition.qualification_heat_count, places: edition.qualification_places ?? 0 })
+                : t('cards.directField')}
             </div>
           </div>
 
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
               <Trophy className="h-4 w-4" />
-              National final
+              {t('cards.final')}
             </div>
             <div className="mt-2 text-lg font-bold text-slate-900">
               {formatDate(edition.final_date)}
             </div>
             <div className="mt-1 text-xs text-slate-600">
-              Target field {edition.final_field_size} · {statusLabel(edition.status)}
+              {t('cards.targetField', { count: edition.final_field_size, status: t(`status.${edition.status}`, { defaultValue: edition.status.replaceAll('_', ' ') }) })}
             </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <ShieldCheck className="h-4 w-4" />
-              Preparation
+              {t('cards.preparation')}
             </div>
-            <div className="mt-2 text-lg font-bold text-slate-900">Rider controlled</div>
+            <div className="mt-2 text-lg font-bold text-slate-900">{t('cards.riderControlled')}</div>
             <div className="mt-1 text-xs leading-5 text-slate-500">
-              Equipment + individual tactics. Staff, assets and supplies are standardized.
+              {t('cards.prepDescription')}
             </div>
           </div>
         </section>
@@ -578,31 +572,31 @@ export default function NationalRankingPage(): JSX.Element {
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-xl font-black text-slate-900">My National Duty</h2>
+              <h2 className="text-xl font-black text-slate-900">{t('duty.title')}</h2>
               <p className="mt-1 text-sm text-slate-500">
-                These riders are entered automatically. You only manage their equipment and individual race strategy.
+                {t('duty.description')}
               </p>
             </div>
             <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
               <Lock className="h-4 w-4" />
-              Team plan, staff, assets and supplies are locked
+              {t('duty.locked')}
             </div>
           </div>
 
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-            <div className="font-semibold text-emerald-900">Organizer race pack</div>
+            <div className="font-semibold text-emerald-900">{t('organizer.title')}</div>
             <div className="mt-2 flex flex-wrap gap-2 text-xs text-emerald-800">
               <span className="rounded-full bg-white/70 px-3 py-1">
-                {String(data?.organizer_supplies?.bidons_water_bottles ?? 8)} bidons
+                {t('organizer.bidons', { count: String(data?.organizer_supplies?.bidons_water_bottles ?? 8) })}
               </span>
               <span className="rounded-full bg-white/70 px-3 py-1">
-                {String(data?.organizer_supplies?.energy_gels ?? 6)} gels
+                {t('organizer.gels', { count: String(data?.organizer_supplies?.energy_gels ?? 6) })}
               </span>
               <span className="rounded-full bg-white/70 px-3 py-1">
-                {String(data?.organizer_supplies?.nutrition_packs ?? 2)} nutrition packs
+                {t('organizer.nutrition', { count: String(data?.organizer_supplies?.nutrition_packs ?? 2) })}
               </span>
-              <span className="rounded-full bg-white/70 px-3 py-1">Championship kit supplied</span>
-              <span className="rounded-full bg-white/70 px-3 py-1">Rain protection supplied if needed</span>
+              <span className="rounded-full bg-white/70 px-3 py-1">{t('organizer.kit')}</span>
+              <span className="rounded-full bg-white/70 px-3 py-1">{t('organizer.rain')}</span>
             </div>
           </div>
 
@@ -632,15 +626,15 @@ export default function NationalRankingPage(): JSX.Element {
                           {entry.rider_name}
                         </Link>
                         <div className="text-xs text-slate-500">
-                          {entry.club_name ?? 'Club'} · {statusLabel(entry.entry_status)}
+                          {entry.club_name ?? t('common.club')} · {t(`status.${entry.entry_status}`, { defaultValue: entry.entry_status.replaceAll('_', ' ') })}
                         </div>
                       </div>
                     </div>
                   </div>
                   <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600">
                     {entry.entry_path === 'direct'
-                      ? 'Direct qualifier'
-                      : `Qualification heat ${entry.heat_number ?? '—'}`}
+                      ? t('duty.directQualifier')
+                      : t('duty.qualificationHeat', { number: entry.heat_number ?? '—' })}
                   </div>
                 </div>
 
@@ -690,7 +684,7 @@ export default function NationalRankingPage(): JSX.Element {
 
                 {!showQualification && !showFinal ? (
                   <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
-                    No editable National Duty plan is currently open for this rider.
+                    {t('duty.noPlan')}
                   </div>
                 ) : null}
               </div>
@@ -703,17 +697,17 @@ export default function NationalRankingPage(): JSX.Element {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2">
             <Medal className="h-5 w-5 text-slate-700" />
-            <h2 className="text-lg font-black text-slate-900">Qualification heats</h2>
+            <h2 className="text-lg font-black text-slate-900">{t('heats.title')}</h2>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {data?.heats.map(heat => (
               <div key={heat.id} className="rounded-xl border border-slate-200 p-4">
                 <div className="flex items-center justify-between">
-                  <div className="font-bold text-slate-900">Heat {heat.heat_number}</div>
-                  <div className="text-xs font-semibold text-slate-500">{statusLabel(heat.status)}</div>
+                  <div className="font-bold text-slate-900">{t('heats.heat', { number: heat.heat_number })}</div>
+                  <div className="text-xs font-semibold text-slate-500">{t(`status.${heat.status}`, { defaultValue: heat.status.replaceAll('_', ' ') })}</div>
                 </div>
                 <div className="mt-2 text-sm text-slate-600">
-                  {heat.assigned_count} riders · top {heat.qualifying_places} advance
+                  {t('heats.summary', { riders: heat.assigned_count, places: heat.qualifying_places })}
                 </div>
                 <div className="mt-1 text-xs text-slate-500">{formatDate(heat.qualification_date)}</div>
                 {heat.race_id ? (
@@ -721,7 +715,7 @@ export default function NationalRankingPage(): JSX.Element {
                     to={`/dashboard/races/${heat.race_id}`}
                     className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700"
                   >
-                    Open heat
+                    {t('heats.open')}
                     <ChevronRight className="h-4 w-4" />
                   </Link>
                 ) : null}
@@ -735,10 +729,10 @@ export default function NationalRankingPage(): JSX.Element {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
           <div>
             <h2 className="text-lg font-black text-slate-900">
-              {data?.ranking_is_frozen ? 'Frozen National Ranking' : 'Live National Ranking'}
+              {data?.ranking_is_frozen ? t('ranking.frozen') : t('ranking.live')}
             </h2>
             <p className="text-xs text-slate-500">
-              Based on rider race points with recency weighting. National Championship bonuses are rider-only.
+              {t('ranking.description')}
             </p>
           </div>
           <button
@@ -747,7 +741,7 @@ export default function NationalRankingPage(): JSX.Element {
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             <RefreshCw className="h-4 w-4" />
-            Refresh
+            {t('ranking.refresh')}
           </button>
         </div>
 
@@ -755,12 +749,12 @@ export default function NationalRankingPage(): JSX.Element {
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3">Rank</th>
-                <th className="px-4 py-3">Rider</th>
-                <th className="px-4 py-3">Weighted points</th>
-                <th className="px-4 py-3">Raw points</th>
-                <th className="px-4 py-3">Latest result</th>
-                <th className="px-4 py-3">Overall</th>
+                <th className="px-4 py-3">{t('ranking.rank')}</th>
+                <th className="px-4 py-3">{t('ranking.rider')}</th>
+                <th className="px-4 py-3">{t('ranking.weighted')}</th>
+                <th className="px-4 py-3">{t('ranking.raw')}</th>
+                <th className="px-4 py-3">{t('ranking.latest')}</th>
+                <th className="px-4 py-3">{t('ranking.overall')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -813,7 +807,7 @@ export default function NationalRankingPage(): JSX.Element {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
               <Trophy className="h-5 w-5 text-amber-500" />
-              <h2 className="text-lg font-black text-slate-900">Championship results</h2>
+              <h2 className="text-lg font-black text-slate-900">{t('results.title')}</h2>
             </div>
 
             {finalResults.length > 0 ? (
@@ -832,13 +826,13 @@ export default function NationalRankingPage(): JSX.Element {
                         {result.rider_name}
                       </Link>
                     </div>
-                    <span className="text-xs text-slate-500">{result.club_name ?? 'Independent'}</span>
+                    <span className="text-xs text-slate-500">{result.club_name ?? t('results.independent')}</span>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-sm text-slate-500">
-                Final results will appear automatically after the championship is calculated.
+                {t('results.pending')}
               </div>
             )}
           </div>
@@ -846,7 +840,7 @@ export default function NationalRankingPage(): JSX.Element {
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-              <h2 className="text-lg font-black text-slate-900">Past champions</h2>
+              <h2 className="text-lg font-black text-slate-900">{t('champions.title')}</h2>
             </div>
 
             {(data?.past_champions?.length ?? 0) > 0 ? (
@@ -857,7 +851,7 @@ export default function NationalRankingPage(): JSX.Element {
                     className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2"
                   >
                     <div>
-                      <div className="text-xs text-slate-500">Season {champion.season_number}</div>
+                      <div className="text-xs text-slate-500">{t('champions.season', { number: champion.season_number })}</div>
                       <Link
                         to={`/dashboard/riders/${champion.champion_rider_id}`}
                         className="font-semibold text-slate-900 hover:text-blue-600"
@@ -866,14 +860,14 @@ export default function NationalRankingPage(): JSX.Element {
                       </Link>
                     </div>
                     <div className="text-xs text-slate-500">
-                      {champion.champion_club_name_snapshot ?? 'Independent'}
+                      {champion.champion_club_name_snapshot ?? t('results.independent')}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-sm text-slate-500">
-                The first champion will be added here automatically.
+                {t('champions.first')}
               </div>
             )}
           </div>
