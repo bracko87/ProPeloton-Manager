@@ -71,6 +71,13 @@ type MyEntry = {
   final_plan?: RiderPlan | null
   club_id?: string | null
   club_name?: string | null
+  participation_decision?: 'pending' | 'approved' | 'auto_approved' | 'rejected'
+  participation_decision_at?: string | null
+  refusal_morale_delta?: number
+  participation_decision_deadline?: string | null
+  duty_window_start_date?: string | null
+  duty_window_end_date?: string | null
+  can_decide_participation?: boolean
 }
 
 type EquipmentPreset = {
@@ -119,6 +126,16 @@ type EditionRow = {
   champion_rider_id?: string | null
   champion_name_snapshot?: string | null
   champion_club_name_snapshot?: string | null
+  duty_window_start_date?: string | null
+  duty_window_end_date?: string | null
+  participation_decision_deadline?: string | null
+  climate_source_country_code?: string | null
+  climate_week_of_year?: number | null
+  climate_expected_max_temp_c?: number | null
+  climate_status?: string | null
+  route_status?: string | null
+  qualification_source_stage_id?: string | null
+  final_source_stage_id?: string | null
 }
 
 type NationalPageData = {
@@ -346,6 +363,7 @@ export default function NationalRankingPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Record<string, PlanDraft>>({})
   const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [decisionSavingRiderId, setDecisionSavingRiderId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   const loadPage = async (requestedCountry?: string): Promise<void> => {
@@ -437,6 +455,35 @@ export default function NationalRankingPage(): JSX.Element {
       setSaveMessage(caught?.message ?? t('errors.save'))
     } finally {
       setSavingKey(null)
+    }
+  }
+
+  const decideParticipation = async (entry: MyEntry, approve: boolean): Promise<void> => {
+    try {
+      setDecisionSavingRiderId(entry.rider_id)
+      setSaveMessage(null)
+
+      const { error: decisionError } = await supabase.rpc(
+        'set_my_national_championship_participation_v1',
+        {
+          p_edition_id: data?.edition?.id,
+          p_rider_id: entry.rider_id,
+          p_approve: approve,
+        },
+      )
+
+      if (decisionError) throw decisionError
+
+      setSaveMessage(
+        approve
+          ? t('decision.approvedMessage', { rider: entry.rider_name })
+          : t('decision.rejectedMessage', { rider: entry.rider_name }),
+      )
+      await loadPage(countryCode)
+    } catch (caught: any) {
+      setSaveMessage(caught?.message ?? t('decision.error'))
+    } finally {
+      setDecisionSavingRiderId(null)
     }
   }
 
@@ -568,6 +615,39 @@ export default function NationalRankingPage(): JSX.Element {
         </section>
       ) : null}
 
+      {edition?.climate_status && edition.climate_status !== 'ready' ? (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+          <div className="font-bold">{t('availability.climateTitle')}</div>
+          <div className="mt-1">
+            {t('availability.climateUnavailable', {
+              temperature: edition.climate_expected_max_temp_c ?? '—',
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {edition?.route_status === 'missing_route' ? (
+        <div className="rounded-2xl border border-rose-300 bg-rose-50 px-5 py-4 text-sm text-rose-900">
+          <div className="font-bold">{t('availability.routeTitle')}</div>
+          <div className="mt-1">{t('availability.routeMissing')}</div>
+        </div>
+      ) : edition?.route_status === 'single_route_only' ? (
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm text-sky-900">
+          {t('availability.singleRoute')}
+        </div>
+      ) : null}
+
+      {edition?.duty_window_start_date && edition?.duty_window_end_date ? (
+        <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm text-indigo-900">
+          <span className="font-bold">{t('availability.windowTitle')}</span>{' '}
+          {t('availability.windowDates', {
+            start: formatDate(edition.duty_window_start_date),
+            end: formatDate(edition.duty_window_end_date),
+            temperature: edition.climate_expected_max_temp_c ?? '—',
+          })}
+        </div>
+      ) : null}
+
       {(data?.my_entries?.length ?? 0) > 0 ? (
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -638,7 +718,75 @@ export default function NationalRankingPage(): JSX.Element {
                   </div>
                 </div>
 
-                {showQualification ? (
+                <div
+                  className={[
+                    'rounded-2xl border p-4',
+                    entry.participation_decision === 'rejected'
+                      ? 'border-rose-200 bg-rose-50'
+                      : entry.participation_decision === 'pending'
+                        ? 'border-amber-200 bg-amber-50'
+                        : 'border-emerald-200 bg-emerald-50',
+                  ].join(' ')}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-bold text-slate-900">
+                        {t('decision.title')}
+                      </div>
+                      <div className="mt-1 text-xs leading-5 text-slate-600">
+                        {t('decision.blockedWindow', {
+                          start: formatDate(entry.duty_window_start_date),
+                          end: formatDate(entry.duty_window_end_date),
+                        })}
+                      </div>
+                      {entry.participation_decision_deadline ? (
+                        <div className="mt-1 text-xs text-slate-500">
+                          {t('decision.deadline', {
+                            date: formatDate(entry.participation_decision_deadline),
+                          })}
+                        </div>
+                      ) : null}
+                      <div className="mt-2 text-xs font-semibold text-slate-700">
+                        {t(`decision.status.${entry.participation_decision ?? 'pending'}`)}
+                      </div>
+                    </div>
+
+                    {entry.participation_decision === 'pending' &&
+                    entry.can_decide_participation !== false ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={decisionSavingRiderId === entry.rider_id}
+                          onClick={() => void decideParticipation(entry, true)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {decisionSavingRiderId === entry.rider_id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4" />
+                          )}
+                          {t('decision.approve')}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={decisionSavingRiderId === entry.rider_id}
+                          onClick={() => void decideParticipation(entry, false)}
+                          className="rounded-lg border border-rose-300 bg-white px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {t('decision.reject')}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {entry.participation_decision === 'pending' ? (
+                    <div className="mt-3 text-xs text-rose-700">
+                      {t('decision.rejectWarning')}
+                    </div>
+                  ) : null}
+                </div>
+
+                {showQualification && entry.participation_decision !== 'rejected' ? (
                   <NationalDutyPlanCard
                     entry={entry}
                     eventType="qualification"
@@ -660,7 +808,7 @@ export default function NationalRankingPage(): JSX.Element {
                   />
                 ) : null}
 
-                {showFinal ? (
+                {showFinal && entry.participation_decision !== 'rejected' ? (
                   <NationalDutyPlanCard
                     entry={entry}
                     eventType="final"
@@ -682,7 +830,7 @@ export default function NationalRankingPage(): JSX.Element {
                   />
                 ) : null}
 
-                {!showQualification && !showFinal ? (
+                {(!showQualification && !showFinal) || entry.participation_decision === 'rejected' ? (
                   <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
                     {t('duty.noPlan')}
                   </div>
