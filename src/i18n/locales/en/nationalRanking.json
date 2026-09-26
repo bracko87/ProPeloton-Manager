@@ -1,0 +1,124 @@
+{
+  "title": "{{country}} National Ranking",
+  "eyebrow": "National competition",
+  "description": "Rider-only national ranking, championship qualification, National Duty and individual championship preparation. Team Ranking points are not affected.",
+  "country": "Country",
+  "loading": "Loading National Ranking…",
+  "errors": {
+    "unavailable": "National Ranking data is unavailable.",
+    "load": "Failed to load National Ranking.",
+    "save": "Could not save rider plan."
+  },
+  "cards": {
+    "freeze": "Ranking freeze",
+    "frozen": "Ranking frozen for this edition",
+    "live": "Live ranking still moving",
+    "qualification": "Qualification",
+    "notRequired": "Not required",
+    "heatPlaces": "{{heats}} qualification heat(s) · {{places}} final places",
+    "directField": "Field fits directly into the final",
+    "final": "National final",
+    "targetField": "Target field {{count}} · {{status}}",
+    "preparation": "Preparation",
+    "riderControlled": "Rider controlled",
+    "prepDescription": "Equipment and individual tactics only. Staff, assets and supplies are organizer-managed."
+  },
+  "duty": {
+    "title": "My National Duty",
+    "description": "These riders are entered automatically. You manage only each rider's equipment and individual race strategy.",
+    "locked": "Individual race — no team tactics. Staff, assets and club supplies are unavailable.",
+    "directQualifier": "Direct qualifier",
+    "qualificationHeat": "Qualification heat {{number}}",
+    "noPlan": "No editable National Duty plan is currently open for this rider."
+  },
+  "organizer": {
+    "title": "Organizer race pack",
+    "bidons": "{{count}} bidons",
+    "gels": "{{count}} gels",
+    "nutrition": "{{count}} nutrition packs",
+    "kit": "Championship kit supplied",
+    "rain": "Rain protection supplied if needed"
+  },
+  "plan": {
+    "qualificationHeat": "Qualification Heat {{number}}",
+    "final": "National Championship Final",
+    "openRace": "Open race",
+    "individualBadge": "Individual race — no team tactics",
+    "equipment": "Rider equipment",
+    "organizerEquipment": "Organizer standard equipment",
+    "equipmentHelp": "Choose a club equipment setup if you want; otherwise organizer-standard equipment is used. Staff, vehicles and race supplies remain organizer-managed.",
+    "strategy": "Individual race strategy",
+    "phaseStart": "Start",
+    "phaseEarly": "Early / middle",
+    "phaseLate": "Late race",
+    "phaseFinish": "Finish",
+    "save": "Save rider plan",
+    "saved": "{{rider}}: {{event}} plan saved."
+  },
+  "event": {
+    "qualification": "qualification",
+    "final": "final"
+  },
+  "tactics": {
+    "rideNaturally": "Ride naturally",
+    "conserveEnergy": "Conserve energy",
+    "stayNearFront": "Stay near front",
+    "joinBreakaway": "Join breakaway",
+    "attack": "Attack",
+    "chaseBreakaway": "Chase breakaway",
+    "climbHard": "Push the climbs",
+    "sprint": "Sprint",
+    "avoidRisks": "Avoid risks"
+  },
+  "heats": {
+    "title": "Qualification heats",
+    "heat": "Heat {{number}}",
+    "summary": "{{riders}} riders · top {{places}} advance",
+    "open": "Open heat"
+  },
+  "ranking": {
+    "frozen": "Frozen National Ranking",
+    "live": "Live National Ranking",
+    "description": "Based on rider race points with recency weighting. National Championship bonuses are rider-only.",
+    "refresh": "Refresh",
+    "rank": "Rank",
+    "rider": "Rider",
+    "weighted": "Weighted points",
+    "raw": "Raw points",
+    "latest": "Latest result",
+    "overall": "Overall"
+  },
+  "results": {
+    "title": "Championship results",
+    "pending": "Final results will appear automatically after the championship is calculated.",
+    "independent": "Independent"
+  },
+  "champions": {
+    "title": "Past champions",
+    "season": "Season {{number}}",
+    "first": "The first champion will be added here automatically.",
+    "badge": "National Champion",
+    "history": "Championship history",
+    "titles": "{{count}} national titles"
+  },
+  "common": {
+    "club": "Club",
+    "national": "National"
+  },
+  "status": {
+    "planned": "Planned",
+    "ranking_frozen": "Ranking frozen",
+    "qualification_pending": "Qualification pending",
+    "qualification_completed": "Qualification completed",
+    "final_ready": "Final ready",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "ready": "Ready",
+    "direct_qualified": "Directly qualified",
+    "qualification_assigned": "Qualification assigned",
+    "qualified": "Qualified",
+    "eliminated": "Eliminated",
+    "withdrawn": "Withdrawn",
+    "finalist": "Finalist"
+  }
+}
