@@ -120,5 +120,32 @@
     "eliminated": "Éliminé",
     "withdrawn": "Retiré",
     "finalist": "Finaliste"
+  },
+  "availability": {
+    "climateTitle": "Fenêtre climatique indisponible",
+    "climateUnavailable": "Les données climatiques actuelles n'offrent aucune fenêtre de championnat au-dessus de 20 °C. Maximum hebdomadaire admissible le plus chaud : {{temperature}} °C.",
+    "routeTitle": "Parcours de championnat requis",
+    "routeMissing": "Ce pays ne dispose actuellement d'aucune étape sur route adaptée à son championnat national. Le championnat restera planifié jusqu'à l'ajout d'un parcours.",
+    "singleRoute": "Une seule étape sur route adaptée existe actuellement pour ce pays ; la qualification et la finale utiliseront donc le même parcours.",
+    "windowTitle": "Fenêtre de devoir national :",
+    "windowDates": "{{start}}–{{end}} · maximum prévu sur la fenêtre chaude {{temperature}} °C · aucun coût pour l'équipe."
+  },
+  "decision": {
+    "title": "Participation au devoir national",
+    "blockedWindow": "Ce coureur est provisoirement indisponible pour le club du {{start}} au {{end}}.",
+    "deadline": "Date limite de décision : {{date}}",
+    "approve": "Accepter le devoir national",
+    "reject": "Refuser · garder au club",
+    "rejectWarning": "Un refus annule le blocage de trois jours et fait perdre 2 points de moral au coureur.",
+    "participationBenefit": "S'il participe, la fatigue de course et la progression des compétences s'appliquent normalement ; terminer une course du championnat national donne aussi +1 de moral.",
+    "error": "Impossible d'enregistrer la décision de devoir national.",
+    "approvedMessage": "{{rider}} participera au devoir national.",
+    "rejectedMessage": "{{rider}} restera avec le club et a reçu la pénalité de moral liée au refus.",
+    "status": {
+      "pending": "Décision du club en attente",
+      "approved": "Accepté par le club",
+      "auto_approved": "Accepté automatiquement",
+      "rejected": "Participation refusée"
+    }
   }
 }
