@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { Trophy } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -24,6 +25,7 @@ export default function NationalChampionBadge({
   riderId: string
   className?: string
 }): JSX.Element | null {
+  const { t } = useTranslation('nationalRanking')
   const [titles, setTitles] = useState<NationalTitle[]>([])
 
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function NationalChampionBadge({
 
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-black text-amber-950">National Champion</span>
+            <span className="font-black text-amber-950">{t('champions.badge')}</span>
             {flag ? (
               <img
                 src={flag}
@@ -77,8 +79,8 @@ export default function NationalChampionBadge({
             )}
           </div>
           <div className="mt-0.5 text-xs text-amber-800">
-            Season {latest.season_number}
-            {titles.length > 1 ? ` · ${titles.length} national titles` : ''}
+            {t('champions.season', { number: latest.season_number })}
+            {titles.length > 1 ? ` · ${t('champions.titles', { count: titles.length })}` : ''}
           </div>
         </div>
       </div>
@@ -87,7 +89,7 @@ export default function NationalChampionBadge({
         to={`/dashboard/national-ranking?country=${encodeURIComponent(latest.country_code)}`}
         className="text-sm font-bold text-amber-900 hover:text-amber-700"
       >
-        Championship history
+        {t('champions.history')}
       </Link>
     </div>
   )
