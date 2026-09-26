@@ -125,8 +125,8 @@
     "climateTitle": "Fenêtre climatique indisponible",
     "climateUnavailable": "Les données climatiques actuelles n'offrent aucune fenêtre de championnat au-dessus de 20 °C. Maximum hebdomadaire admissible le plus chaud : {{temperature}} °C.",
     "routeTitle": "Parcours de championnat requis",
-    "routeMissing": "Ce pays ne dispose actuellement d'aucune étape sur route adaptée à son championnat national. Le championnat restera planifié jusqu'à l'ajout d'un parcours.",
-    "singleRoute": "Une seule étape sur route adaptée existe actuellement pour ce pays ; la qualification et la finale utiliseront donc le même parcours.",
+    "routeMissing": "Ce pays ne dispose actuellement d'aucune étape sur route adaptée au championnat national. Le championnat reste en pause jusqu'à ce qu'au moins deux étapes adaptées soient disponibles.",
+    "singleRoute": "Une seule étape sur route adaptée au championnat national existe actuellement pour ce pays. Le championnat reste en pause jusqu'à l'ajout d'un deuxième parcours afin que la qualification et la finale utilisent des routes différentes.",
     "windowTitle": "Fenêtre de devoir national :",
     "windowDates": "{{start}}–{{end}} · maximum prévu sur la fenêtre chaude {{temperature}} °C · aucun coût pour l'équipe."
   },
