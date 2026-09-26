@@ -21,7 +21,12 @@
     "targetField": "Gruppo obiettivo {{count}} · {{status}}",
     "preparation": "Preparazione",
     "riderControlled": "Gestione corridore",
-    "prepDescription": "Solo equipaggiamento e tattiche individuali. Staff, mezzi e rifornimenti sono gestiti dall’organizzatore."
+    "prepDescription": "Solo equipaggiamento e tattiche individuali. Staff, mezzi e rifornimenti sono gestiti dall’organizzatore.",
+    "dutyWindow": "Finestra impegno nazionale",
+    "noTeamCost": "Nessun costo per la squadra",
+    "hostRoute": "Percorso della finale",
+    "hostPending": "Percorso non ancora pronto",
+    "hostPendingHelp": "Il campionato attende finché non sono disponibili due percorsi adatti."
   },
   "duty": {
     "title": "Il mio impegno nazionale",
@@ -29,7 +34,8 @@
     "locked": "Gara individuale — nessuna tattica di squadra. Staff, mezzi e rifornimenti del club non sono disponibili.",
     "directQualifier": "Qualificato diretto",
     "qualificationHeat": "Batteria di qualificazione {{number}}",
-    "noPlan": "Al momento non è disponibile un piano modificabile per questo corridore."
+    "noPlan": "Al momento non è disponibile un piano modificabile per questo corridore.",
+    "empty": "Nessuno dei tuoi corridori ha un invito attivo per l'impegno nazionale in questo campionato."
   },
   "organizer": {
     "title": "Pacchetto gara dell’organizzatore",
@@ -86,7 +92,20 @@
     "weighted": "Punti ponderati",
     "raw": "Punti grezzi",
     "latest": "Ultimo risultato",
-    "overall": "Generale"
+    "overall": "Generale",
+    "team": "Squadra",
+    "qualificationStatus": "Stato qualificazione",
+    "freeAgent": "Svincolato",
+    "pageRange": "{{from}}–{{to}} di {{total}}",
+    "perPage": "{{count}} per pagina",
+    "previous": "Precedente",
+    "next": "Successiva",
+    "page": "Pagina {{page}} di {{pages}}",
+    "directFinal": "Finale diretta",
+    "qualificationHeat": "Batteria di qualificazione {{number}}",
+    "qualifiedFinal": "Qualificato per la finale",
+    "eliminated": "Eliminato",
+    "withdrawn": "Non partecipa"
   },
   "results": {
     "title": "Risultati del campionato",
@@ -147,5 +166,25 @@
       "auto_approved": "Approvato automaticamente",
       "rejected": "Partecipazione rifiutata"
     }
+  },
+  "header": {
+    "subtitle": "Corridori nazionali, qualificazione e impegni del campionato"
+  },
+  "draw": {
+    "title": "Tabellone del campionato",
+    "confirmed": "Struttura del campionato confermata",
+    "projected": "Proiezione basata sulla classifica nazionale attuale fino al blocco della classifica",
+    "qualificationHeat": "Batteria di qualificazione {{number}}",
+    "final": "Finale nazionale",
+    "routePending": "Percorso ospitante in attesa"
+  },
+  "tabs": {
+    "ranking": "Classifica",
+    "duty": "Il mio impegno nazionale",
+    "history": "Storico"
+  },
+  "info": {
+    "title": "Informazioni sul campionato",
+    "description": "I Campionati Nazionali sono gare individuali. Non ci sono tattiche di squadra, staff, veicoli o rifornimenti del club. L'organizzatore copre logistica e costi; tu controlli solo equipaggiamento e tattiche individuali di ogni corridore invitato."
   }
 }
