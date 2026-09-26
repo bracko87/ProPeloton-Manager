@@ -125,8 +125,8 @@
     "climateTitle": "Ventana climática no disponible",
     "climateUnavailable": "Los datos climáticos actuales no ofrecen una ventana de campeonato por encima de 20 °C. Máxima semanal elegible más cálida: {{temperature}} °C.",
     "routeTitle": "Se necesita una ruta para el campeonato",
-    "routeMissing": "Este país no dispone actualmente de una etapa de carretera adecuada para su Campeonato Nacional. El campeonato seguirá planificado hasta que se añada una ruta.",
-    "singleRoute": "Este país solo dispone actualmente de una etapa de carretera adecuada, por lo que clasificación y final usarán la misma ruta.",
+    "routeMissing": "Este país no dispone actualmente de una etapa de carretera adecuada para el Campeonato Nacional. El campeonato permanecerá pausado hasta que existan al menos dos etapas adecuadas.",
+    "singleRoute": "Este país solo dispone actualmente de una etapa de carretera adecuada para el Campeonato Nacional. El campeonato permanecerá pausado hasta que se añada una segunda ruta, para que clasificación y final usen recorridos diferentes.",
     "windowTitle": "Ventana de deber nacional:",
     "windowDates": "{{start}}–{{end}} · máxima prevista en la ventana cálida {{temperature}} °C · sin coste para el equipo."
   },
