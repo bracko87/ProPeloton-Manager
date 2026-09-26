@@ -120,5 +120,32 @@
     "eliminated": "Ispao",
     "withdrawn": "Povučen",
     "finalist": "Finalist"
+  },
+  "availability": {
+    "climateTitle": "Klimatski termin nije dostupan",
+    "climateUnavailable": "U trenutačnim klimatskim podacima nema termina prvenstva iznad 20 °C. Najtopliji prihvatljivi tjedni maksimum: {{temperature}} °C.",
+    "routeTitle": "Potrebna je ruta za prvenstvo",
+    "routeMissing": "Ova država trenutačno nema prikladnu cestovnu etapu za nacionalno prvenstvo. Prvenstvo će ostati planirano dok se ne doda ruta.",
+    "singleRoute": "Ova država trenutačno ima samo jednu prikladnu cestovnu etapu pa će kvalifikacije i finale koristiti istu rutu.",
+    "windowTitle": "Termin nacionalne obveze:",
+    "windowDates": "{{start}}–{{end}} · očekivani maksimum u toplom terminu {{temperature}} °C · bez troška za klub."
+  },
+  "decision": {
+    "title": "Sudjelovanje u nacionalnoj obvezi",
+    "blockedWindow": "Ovaj vozač je privremeno nedostupan za klupske obveze od {{start}} do {{end}}.",
+    "deadline": "Rok za odluku: {{date}}",
+    "approve": "Potvrdi nacionalnu obvezu",
+    "reject": "Odbij · zadrži u klubu",
+    "rejectWarning": "Odbijanje ukida trodnevnu blokadu i vozaču oduzima 2 boda morala.",
+    "participationBenefit": "Ako vozač nastupi, normalno se primjenjuju umor i razvoj vještina; završetak utrke nacionalnog prvenstva donosi i +1 moral.",
+    "error": "Nije moguće spremiti odluku o nacionalnoj obvezi.",
+    "approvedMessage": "{{rider}} će nastupiti za nacionalnu obvezu.",
+    "rejectedMessage": "{{rider}} ostaje u klubu i dobio je kaznu na moral zbog odbijanja.",
+    "status": {
+      "pending": "Čeka se odluka kluba",
+      "approved": "Klub potvrdio",
+      "auto_approved": "Automatski potvrđeno",
+      "rejected": "Sudjelovanje odbijeno"
+    }
   }
 }
