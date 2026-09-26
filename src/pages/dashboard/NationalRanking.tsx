@@ -728,11 +728,6 @@ export default function NationalRankingPage(): JSX.Element {
 
   const finalHostRaceId =
     edition?.final_race_id ?? data?.final_host?.source_race_id ?? null
-  const qualificationHostRaceId =
-    (data?.heats ?? []).find(heat => Boolean(heat.race_id))?.race_id ??
-    data?.qualification_host?.source_race_id ??
-    null
-
   if (loading && !data) {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
