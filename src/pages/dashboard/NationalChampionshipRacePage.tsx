@@ -81,9 +81,11 @@ function humanize(value?: string | null): string {
 function NationalProfileChart({
   points,
   distanceKm,
+  ariaLabel,
 }: {
   points: ProfilePoint[]
   distanceKm: number
+  ariaLabel: string
 }): JSX.Element {
   const width = 1000
   const height = 280
@@ -152,7 +154,7 @@ function NationalProfileChart({
       viewBox={`0 0 ${width} ${height}`}
       className="h-auto w-full"
       role="img"
-      aria-label="National Championship stage profile"
+      aria-label={ariaLabel}
     >
       {model.ticks.map(tick => (
         <g key={tick.fraction}>
@@ -317,7 +319,10 @@ export default function NationalChampionshipRacePage(): JSX.Element {
 
   const seasonLabel = t('champions.season', { number: data.season_number })
   const dateLabel = `${formatDayMonth(data.event_date)} · ${seasonLabel}`
-  const terrain = humanize(data.route.terrain_type)
+  const terrainKey = String(data.route.terrain_type ?? '').trim().toLowerCase()
+  const terrain = t(`eventPage.terrainTypes.${terrainKey}`, {
+    defaultValue: humanize(data.route.terrain_type),
+  })
 
   return (
     <div className="w-full space-y-6">
@@ -422,7 +427,7 @@ export default function NationalChampionshipRacePage(): JSX.Element {
               {data.route.route_label}
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              {data.route.summary}
+              {t('eventPage.profileDescription')}
             </p>
           </div>
 
@@ -460,6 +465,7 @@ export default function NationalChampionshipRacePage(): JSX.Element {
           <NationalProfileChart
             points={points}
             distanceKm={Number(data.route.distance_km ?? 0)}
+            ariaLabel={t('eventPage.profileChartAlt')}
           />
         </div>
 
