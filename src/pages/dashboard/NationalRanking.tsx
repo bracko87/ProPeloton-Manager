@@ -644,6 +644,30 @@ export default function NationalRankingPage(): JSX.Element {
       : projection.heat_count - position
   }
 
+  const projectedGroupSize = (
+    totalRiders: number,
+    groups: number,
+    groupNumber: number,
+  ): number => {
+    if (groups <= 0 || groupNumber < 1 || groupNumber > groups) return 0
+
+    const cycleSize = groups * 2
+    const fullCycles = Math.floor(totalRiders / cycleSize)
+    let count = fullCycles * 2
+    const remainder = totalRiders % cycleSize
+
+    for (let index = 0; index < remainder; index += 1) {
+      const block = Math.floor(index / groups)
+      const position = index % groups
+      const assignedGroup =
+        block % 2 === 0 ? position + 1 : groups - position
+
+      if (assignedGroup === groupNumber) count += 1
+    }
+
+    return count
+  }
+
   const qualificationStatus = (
     row: RankingRow,
   ): { label: string; className: string } => {
@@ -743,7 +767,7 @@ export default function NationalRankingPage(): JSX.Element {
             qualifying_places: basePlaces + (index < remainder ? 1 : 0),
             assigned_count:
               heatCount > 0
-                ? Math.ceil(rankingTotal / heatCount)
+                ? projectedGroupSize(rankingTotal, heatCount, index + 1)
                 : 0,
             race_id: null,
             status: 'planned',
