@@ -15,7 +15,7 @@
     "live": "Live ranking still moving",
     "qualification": "Qualification",
     "notRequired": "Not required",
-    "heatPlaces": "{{heats}} qualification heat(s) · {{places}} final places",
+    "heatPlaces": "{{heats}} qualification group(s) · {{places}} final places",
     "directField": "Field fits directly into the final",
     "final": "National final",
     "targetField": "Target field {{count}} · {{status}}",
@@ -33,7 +33,7 @@
     "description": "These riders are entered automatically. You manage only each rider's equipment and individual race strategy.",
     "locked": "Individual race — no team tactics. Staff, assets and club supplies are unavailable.",
     "directQualifier": "Direct qualifier",
-    "qualificationHeat": "Qualification heat {{number}}",
+    "qualificationHeat": "Qualification Group {{number}}",
     "noPlan": "No editable National Duty plan is currently open for this rider.",
     "empty": "None of your riders has an active National Duty invitation for this championship."
   },
@@ -46,7 +46,7 @@
     "rain": "Rain protection supplied if needed"
   },
   "plan": {
-    "qualificationHeat": "Qualification Heat {{number}}",
+    "qualificationHeat": "Qualification Group {{number}}",
     "final": "National Championship Final",
     "openRace": "Open race",
     "individualBadge": "Individual race — no team tactics",
@@ -77,8 +77,8 @@
     "avoidRisks": "Avoid risks"
   },
   "heats": {
-    "title": "Qualification heats",
-    "heat": "Heat {{number}}",
+    "title": "Qualification groups",
+    "heat": "Group {{number}}",
     "summary": "{{riders}} riders · top {{places}} advance",
     "open": "Open heat"
   },
@@ -102,7 +102,7 @@
     "next": "Next",
     "page": "Page {{page}} of {{pages}}",
     "directFinal": "Direct final",
-    "qualificationHeat": "Qualification Heat {{number}}",
+    "qualificationHeat": "Qualification Group {{number}}",
     "qualifiedFinal": "Qualified for final",
     "eliminated": "Eliminated",
     "withdrawn": "Not participating"
@@ -155,7 +155,7 @@
     "deadline": "Decision deadline: {{date}}",
     "approve": "Approve National Duty",
     "reject": "Refuse · keep with club",
-    "rejectWarning": "Refusing cancels the three-day National Duty block and costs the rider 2 morale.",
+    "rejectWarning": "Refusing cancels this rider's scheduled National Duty participation and costs the rider 2 morale.",
     "participationBenefit": "If the rider competes, normal race fatigue and skill development apply; finishing a National Championship race also gives +1 morale.",
     "error": "Could not save the National Duty decision.",
     "approvedMessage": "{{rider}} will participate in National Duty.",
@@ -174,9 +174,12 @@
     "title": "Championship draw",
     "confirmed": "Confirmed championship structure",
     "projected": "Projected from the current National Ranking until the ranking freeze",
-    "qualificationHeat": "Qualification Heat {{number}}",
+    "qualificationHeat": "Qualification Group {{number}}",
     "final": "National Final",
-    "routePending": "Host route pending"
+    "routePending": "Host route pending",
+    "ridersCount": "{{count}} riders",
+    "advanceCount": "Top {{count}} advance",
+    "finalFieldCount": "{{count}} riders in final"
   },
   "tabs": {
     "ranking": "Ranking",
@@ -193,5 +196,35 @@
   },
   "host": {
     "openRace": "Open race page"
+  },
+  "eventPage": {
+    "invalid": "This National Championship event is not available.",
+    "back": "Back to National Ranking",
+    "qualificationTitle": "{{country}} National Qualification Group {{number}}",
+    "finalTitle": "{{country}} National Championship Final",
+    "nationalEvent": "National Championship",
+    "group": "Group {{number}}",
+    "subtitle": "Individual national event. No team tactics, team applications or club race costs.",
+    "date": "Date",
+    "startTime": "Start",
+    "startTimeTbd": "Start time set when race is generated",
+    "riders": "Riders",
+    "qualifyingPlaces": "Qualifying places",
+    "finalField": "Final field",
+    "route": "Route",
+    "stageProfile": "Route profile",
+    "distance": "Distance",
+    "terrain": "Terrain",
+    "elevation": "Elevation",
+    "expectedTemperature": "Expected max temperature",
+    "profileNote": "Only the start, finish and terrain profile are used for National Championship events. There are no KOM or intermediate sprint gates.",
+    "profileChartAlt": "National Championship route elevation profile",
+    "profileDescription": "National Championship route using the selected host-country terrain profile.",
+    "terrainTypes": {
+      "flat": "Flat",
+      "hilly": "Hilly",
+      "mountain": "Mountain",
+      "cobbled": "Cobbled"
+    }
   }
 }
