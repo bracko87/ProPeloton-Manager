@@ -15,7 +15,7 @@
     "live": "Poredak uživo se još mijenja",
     "qualification": "Kvalifikacije",
     "notRequired": "Nisu potrebne",
-    "heatPlaces": "{{heats}} kvalifikacijska skupina/e · {{places}} mjesta u finalu",
+    "heatPlaces": "{{heats}} kvalifikacijska grupa/e · {{places}} mjesta u finalu",
     "directField": "Svi vozači ulaze izravno u finale",
     "final": "Nacionalno finale",
     "targetField": "Ciljani broj {{count}} · {{status}}",
@@ -33,7 +33,7 @@
     "description": "Ovi vozači prijavljuju se automatski. Upravljaš samo opremom i individualnom strategijom svakog vozača.",
     "locked": "Individualna utrka — nema ekipne taktike. Osoblje, vozila i klupske zalihe nisu dostupni.",
     "directQualifier": "Izravno kvalificiran",
-    "qualificationHeat": "Kvalifikacijska skupina {{number}}",
+    "qualificationHeat": "Kvalifikacijska grupa {{number}}",
     "noPlan": "Za ovog vozača trenutačno nema otvorenog plana koji se može uređivati.",
     "empty": "Nijedan tvoj vozač trenutačno nema aktivan poziv za nacionalnu obvezu na ovom prvenstvu."
   },
@@ -46,7 +46,7 @@
     "rain": "Zaštita od kiše osigurana po potrebi"
   },
   "plan": {
-    "qualificationHeat": "Kvalifikacijska skupina {{number}}",
+    "qualificationHeat": "Kvalifikacijska grupa {{number}}",
     "final": "Finale nacionalnog prvenstva",
     "openRace": "Otvori utrku",
     "individualBadge": "Individualna utrka — nema ekipne taktike",
@@ -77,8 +77,8 @@
     "avoidRisks": "Izbjegavaj rizike"
   },
   "heats": {
-    "title": "Kvalifikacijske skupine",
-    "heat": "Skupina {{number}}",
+    "title": "Kvalifikacijske grupe",
+    "heat": "Grupa {{number}}",
     "summary": "{{riders}} vozača · najboljih {{places}} prolazi",
     "open": "Otvori skupinu"
   },
@@ -102,7 +102,7 @@
     "next": "Sljedeće",
     "page": "Stranica {{page}} od {{pages}}",
     "directFinal": "Izravno u finale",
-    "qualificationHeat": "Kvalifikacijska skupina {{number}}",
+    "qualificationHeat": "Kvalifikacijska grupa {{number}}",
     "qualifiedFinal": "Kvalificiran za finale",
     "eliminated": "Ispao",
     "withdrawn": "Ne sudjeluje"
@@ -155,7 +155,7 @@
     "deadline": "Rok za odluku: {{date}}",
     "approve": "Potvrdi nacionalnu obvezu",
     "reject": "Odbij · zadrži u klubu",
-    "rejectWarning": "Odbijanje ukida trodnevnu blokadu i vozaču oduzima 2 boda morala.",
+    "rejectWarning": "Odbijanje otkazuje planirani nastup ovog vozača u nacionalnoj obvezi i oduzima mu 2 boda morala.",
     "participationBenefit": "Ako vozač nastupi, normalno se primjenjuju umor i razvoj vještina; završetak utrke nacionalnog prvenstva donosi i +1 moral.",
     "error": "Nije moguće spremiti odluku o nacionalnoj obvezi.",
     "approvedMessage": "{{rider}} će nastupiti za nacionalnu obvezu.",
@@ -174,9 +174,12 @@
     "title": "Ždrijeb prvenstva",
     "confirmed": "Potvrđena struktura prvenstva",
     "projected": "Projekcija prema trenutačnom nacionalnom poretku do zaključavanja poretka",
-    "qualificationHeat": "Kvalifikacijska skupina {{number}}",
+    "qualificationHeat": "Kvalifikacijska grupa {{number}}",
     "final": "Nacionalno finale",
-    "routePending": "Ruta domaćin još nije određena"
+    "routePending": "Ruta domaćin još nije određena",
+    "ridersCount": "{{count}} vozača",
+    "advanceCount": "Prvih {{count}} prolazi",
+    "finalFieldCount": "{{count}} vozača u finalu"
   },
   "tabs": {
     "ranking": "Poredak",
@@ -193,5 +196,35 @@
   },
   "host": {
     "openRace": "Otvori stranicu utrke"
+  },
+  "eventPage": {
+    "invalid": "Ovaj događaj nacionalnog prvenstva nije dostupan.",
+    "back": "Natrag na nacionalni poredak",
+    "qualificationTitle": "{{country}} – nacionalne kvalifikacije, grupa {{number}}",
+    "finalTitle": "{{country}} – finale nacionalnog prvenstva",
+    "nationalEvent": "Nacionalno prvenstvo",
+    "group": "Grupa {{number}}",
+    "subtitle": "Individualna nacionalna utrka. Nema ekipne taktike, prijave ekipe ni troška utrke za klub.",
+    "date": "Datum",
+    "startTime": "Start",
+    "startTimeTbd": "Vrijeme starta određuje se kada se utrka generira",
+    "riders": "Vozači",
+    "qualifyingPlaces": "Kvalifikacijska mjesta",
+    "finalField": "Finalno polje",
+    "route": "Ruta",
+    "stageProfile": "Profil rute",
+    "distance": "Duljina",
+    "terrain": "Teren",
+    "elevation": "Uspon",
+    "expectedTemperature": "Očekivana maksimalna temperatura",
+    "profileNote": "Za nacionalno prvenstvo koriste se samo start, cilj i profil terena. Nema KOM/GPM bodova ni prolaznih sprintova.",
+    "profileChartAlt": "Visinski profil rute nacionalnog prvenstva",
+    "profileDescription": "Ruta nacionalnog prvenstva koristi odabrani profil terena zemlje domaćina.",
+    "terrainTypes": {
+      "flat": "Ravno",
+      "hilly": "Valovito",
+      "mountain": "Planinsko",
+      "cobbled": "Kocke"
+    }
   }
 }
