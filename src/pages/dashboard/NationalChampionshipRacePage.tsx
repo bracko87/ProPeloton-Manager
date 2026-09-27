@@ -212,7 +212,13 @@ function NationalProfileChart({
 export default function NationalChampionshipRacePage(): JSX.Element {
   const { t } = useTranslation('nationalRanking')
   const navigate = useNavigate()
-  const { editionId, eventType, heatNumber } = useParams()
+  const { editionId, eventType: routeEventType, heatNumber } = useParams()
+  const eventType: 'qualification' | 'final' | null =
+    routeEventType === 'qualification' || routeEventType === 'final'
+      ? routeEventType
+      : heatNumber
+        ? 'qualification'
+        : 'final'
 
   const [data, setData] = useState<EventData | null>(null)
   const [loading, setLoading] = useState(true)
