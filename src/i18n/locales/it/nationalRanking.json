@@ -15,7 +15,7 @@
     "live": "La classifica live è ancora in movimento",
     "qualification": "Qualificazione",
     "notRequired": "Non richiesta",
-    "heatPlaces": "{{heats}} batteria/e di qualificazione · {{places}} posti in finale",
+    "heatPlaces": "{{heats}} gruppo/i di qualificazione · {{places}} posti in finale",
     "directField": "Il gruppo accede direttamente alla finale",
     "final": "Finale nazionale",
     "targetField": "Gruppo obiettivo {{count}} · {{status}}",
@@ -33,7 +33,7 @@
     "description": "Questi corridori vengono iscritti automaticamente. Gestisci solo equipaggiamento e strategia individuale di ciascuno.",
     "locked": "Gara individuale — nessuna tattica di squadra. Staff, mezzi e rifornimenti del club non sono disponibili.",
     "directQualifier": "Qualificato diretto",
-    "qualificationHeat": "Batteria di qualificazione {{number}}",
+    "qualificationHeat": "Gruppo di qualificazione {{number}}",
     "noPlan": "Al momento non è disponibile un piano modificabile per questo corridore.",
     "empty": "Nessuno dei tuoi corridori ha un invito attivo per l'impegno nazionale in questo campionato."
   },
@@ -46,7 +46,7 @@
     "rain": "Protezione pioggia fornita se necessaria"
   },
   "plan": {
-    "qualificationHeat": "Batteria di qualificazione {{number}}",
+    "qualificationHeat": "Gruppo di qualificazione {{number}}",
     "final": "Finale del Campionato Nazionale",
     "openRace": "Apri gara",
     "individualBadge": "Gara individuale — nessuna tattica di squadra",
@@ -77,8 +77,8 @@
     "avoidRisks": "Evitare rischi"
   },
   "heats": {
-    "title": "Batterie di qualificazione",
-    "heat": "Batteria {{number}}",
+    "title": "Gruppi di qualificazione",
+    "heat": "Gruppo {{number}}",
     "summary": "{{riders}} corridori · avanzano i primi {{places}}",
     "open": "Apri batteria"
   },
@@ -102,7 +102,7 @@
     "next": "Successiva",
     "page": "Pagina {{page}} di {{pages}}",
     "directFinal": "Finale diretta",
-    "qualificationHeat": "Batteria di qualificazione {{number}}",
+    "qualificationHeat": "Gruppo di qualificazione {{number}}",
     "qualifiedFinal": "Qualificato per la finale",
     "eliminated": "Eliminato",
     "withdrawn": "Non partecipa"
@@ -155,7 +155,7 @@
     "deadline": "Scadenza decisione: {{date}}",
     "approve": "Approva impegno nazionale",
     "reject": "Rifiuta · tieni al club",
-    "rejectWarning": "Il rifiuto annulla il blocco di tre giorni e costa al corridore 2 punti morale.",
+    "rejectWarning": "Il rifiuto annulla la partecipazione programmata di questo corridore all'impegno nazionale e gli costa 2 punti morale.",
     "participationBenefit": "Se partecipa, si applicano normalmente fatica e sviluppo delle abilità; concludere una gara del Campionato Nazionale dà anche +1 morale.",
     "error": "Impossibile salvare la decisione sull'impegno nazionale.",
     "approvedMessage": "{{rider}} parteciperà all'impegno nazionale.",
@@ -174,9 +174,12 @@
     "title": "Tabellone del campionato",
     "confirmed": "Struttura del campionato confermata",
     "projected": "Proiezione basata sulla classifica nazionale attuale fino al blocco della classifica",
-    "qualificationHeat": "Batteria di qualificazione {{number}}",
+    "qualificationHeat": "Gruppo di qualificazione {{number}}",
     "final": "Finale nazionale",
-    "routePending": "Percorso ospitante in attesa"
+    "routePending": "Percorso ospitante in attesa",
+    "ridersCount": "{{count}} corridori",
+    "advanceCount": "Passano i primi {{count}}",
+    "finalFieldCount": "{{count}} corridori in finale"
   },
   "tabs": {
     "ranking": "Classifica",
@@ -193,5 +196,35 @@
   },
   "host": {
     "openRace": "Apri pagina gara"
+  },
+  "eventPage": {
+    "invalid": "Questo evento del Campionato Nazionale non è disponibile.",
+    "back": "Torna alla classifica nazionale",
+    "qualificationTitle": "Qualificazione nazionale {{country}} · Gruppo {{number}}",
+    "finalTitle": "Finale del Campionato Nazionale {{country}}",
+    "nationalEvent": "Campionato Nazionale",
+    "group": "Gruppo {{number}}",
+    "subtitle": "Evento nazionale individuale. Nessuna tattica di squadra, iscrizione della squadra o costo gara per il club.",
+    "date": "Data",
+    "startTime": "Partenza",
+    "startTimeTbd": "L'orario di partenza viene definito quando la gara viene generata",
+    "riders": "Corridori",
+    "qualifyingPlaces": "Posti di qualificazione",
+    "finalField": "Partecipanti alla finale",
+    "route": "Percorso",
+    "stageProfile": "Profilo del percorso",
+    "distance": "Distanza",
+    "terrain": "Terreno",
+    "elevation": "Dislivello",
+    "expectedTemperature": "Temperatura massima prevista",
+    "profileNote": "Negli eventi del Campionato Nazionale vengono usati solo partenza, arrivo e profilo del terreno. Non ci sono GPM/KOM o sprint intermedi.",
+    "profileChartAlt": "Profilo altimetrico del percorso del Campionato Nazionale",
+    "profileDescription": "Percorso del Campionato Nazionale basato sul profilo di terreno selezionato nel paese ospitante.",
+    "terrainTypes": {
+      "flat": "Pianeggiante",
+      "hilly": "Collinare",
+      "mountain": "Montagna",
+      "cobbled": "Pavé"
+    }
   }
 }
