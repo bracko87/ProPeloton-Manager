@@ -15,7 +15,7 @@
     "live": "Live-Rangliste verändert sich noch",
     "qualification": "Qualifikation",
     "notRequired": "Nicht erforderlich",
-    "heatPlaces": "{{heats}} Qualifikationslauf/-läufe · {{places}} Finalplätze",
+    "heatPlaces": "{{heats}} Qualifikationsgruppe(n) · {{places}} Finalplätze",
     "directField": "Das Feld passt direkt ins Finale",
     "final": "Nationales Finale",
     "targetField": "Zielfeld {{count}} · {{status}}",
@@ -33,7 +33,7 @@
     "description": "Diese Fahrer werden automatisch gemeldet. Du steuerst nur die Ausrüstung und die individuelle Rennstrategie jedes Fahrers.",
     "locked": "Einzelrennen — keine Teamtaktik. Personal, Fahrzeuge und Club-Verpflegung sind nicht verfügbar.",
     "directQualifier": "Direkt qualifiziert",
-    "qualificationHeat": "Qualifikationslauf {{number}}",
+    "qualificationHeat": "Qualifikationsgruppe {{number}}",
     "noPlan": "Für diesen Fahrer ist derzeit kein bearbeitbarer National-Duty-Plan offen.",
     "empty": "Keiner deiner Fahrer hat aktuell eine National-Duty-Einladung für diese Meisterschaft."
   },
@@ -46,7 +46,7 @@
     "rain": "Regenschutz wird bei Bedarf gestellt"
   },
   "plan": {
-    "qualificationHeat": "Qualifikationslauf {{number}}",
+    "qualificationHeat": "Qualifikationsgruppe {{number}}",
     "final": "Finale der nationalen Straßenmeisterschaft",
     "openRace": "Rennen öffnen",
     "individualBadge": "Einzelrennen — keine Teamtaktik",
@@ -77,8 +77,8 @@
     "avoidRisks": "Risiken vermeiden"
   },
   "heats": {
-    "title": "Qualifikationsläufe",
-    "heat": "Lauf {{number}}",
+    "title": "Qualifikationsgruppen",
+    "heat": "Gruppe {{number}}",
     "summary": "{{riders}} Fahrer · die besten {{places}} kommen weiter",
     "open": "Lauf öffnen"
   },
@@ -102,7 +102,7 @@
     "next": "Weiter",
     "page": "Seite {{page}} von {{pages}}",
     "directFinal": "Direkt im Finale",
-    "qualificationHeat": "Qualifikationslauf {{number}}",
+    "qualificationHeat": "Qualifikationsgruppe {{number}}",
     "qualifiedFinal": "Für das Finale qualifiziert",
     "eliminated": "Ausgeschieden",
     "withdrawn": "Nimmt nicht teil"
@@ -155,7 +155,7 @@
     "deadline": "Entscheidungsfrist: {{date}}",
     "approve": "National Duty bestätigen",
     "reject": "Ablehnen · beim Club behalten",
-    "rejectWarning": "Eine Ablehnung hebt die dreitägige National-Duty-Sperre auf und kostet den Fahrer 2 Moralpunkte.",
+    "rejectWarning": "Eine Ablehnung storniert die geplante National-Duty-Teilnahme dieses Fahrers und kostet ihn 2 Moralpunkte.",
     "participationBenefit": "Bei Teilnahme gelten normale Rennmüdigkeit und Skill-Entwicklung; für das Beenden eines National-Championship-Rennens erhält der Fahrer zusätzlich +1 Moral.",
     "error": "Die National-Duty-Entscheidung konnte nicht gespeichert werden.",
     "approvedMessage": "{{rider}} nimmt an der National Duty teil.",
@@ -174,9 +174,12 @@
     "title": "Meisterschaftsauslosung",
     "confirmed": "Bestätigte Meisterschaftsstruktur",
     "projected": "Prognose auf Basis der aktuellen nationalen Rangliste bis zum Ranglisten-Stichtag",
-    "qualificationHeat": "Qualifikationslauf {{number}}",
+    "qualificationHeat": "Qualifikationsgruppe {{number}}",
     "final": "Nationales Finale",
-    "routePending": "Austragungsstrecke noch offen"
+    "routePending": "Austragungsstrecke noch offen",
+    "ridersCount": "{{count}} Fahrer",
+    "advanceCount": "Top {{count}} kommen weiter",
+    "finalFieldCount": "{{count}} Fahrer im Finale"
   },
   "tabs": {
     "ranking": "Rangliste",
@@ -193,5 +196,35 @@
   },
   "host": {
     "openRace": "Rennseite öffnen"
+  },
+  "eventPage": {
+    "invalid": "Dieses nationale Meisterschaftsereignis ist nicht verfügbar.",
+    "back": "Zurück zur nationalen Rangliste",
+    "qualificationTitle": "{{country}} – Nationale Qualifikation, Gruppe {{number}}",
+    "finalTitle": "{{country}} – Finale der nationalen Meisterschaft",
+    "nationalEvent": "Nationale Meisterschaft",
+    "group": "Gruppe {{number}}",
+    "subtitle": "Individuelles nationales Rennen. Keine Teamtaktik, keine Teamanmeldung und keine Club-Rennkosten.",
+    "date": "Datum",
+    "startTime": "Start",
+    "startTimeTbd": "Startzeit wird bei Erstellung des Rennens festgelegt",
+    "riders": "Fahrer",
+    "qualifyingPlaces": "Qualifikationsplätze",
+    "finalField": "Finalfeld",
+    "route": "Strecke",
+    "stageProfile": "Streckenprofil",
+    "distance": "Distanz",
+    "terrain": "Terrain",
+    "elevation": "Höhenmeter",
+    "expectedTemperature": "Erwartete Höchsttemperatur",
+    "profileNote": "Für nationale Meisterschaftsrennen werden nur Start, Ziel und das Streckenprofil verwendet. Es gibt keine KOM- oder Zwischensprint-Wertungen.",
+    "profileChartAlt": "Höhenprofil der nationalen Meisterschaftsstrecke",
+    "profileDescription": "Nationale Meisterschaft auf dem ausgewählten Streckenprofil des Gastgeberlandes.",
+    "terrainTypes": {
+      "flat": "Flach",
+      "hilly": "Hügelig",
+      "mountain": "Bergig",
+      "cobbled": "Kopfsteinpflaster"
+    }
   }
 }
