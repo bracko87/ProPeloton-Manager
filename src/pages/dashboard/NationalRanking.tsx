@@ -471,7 +471,7 @@ export default function NationalRankingPage(): JSX.Element {
         {
           p_country_code: null,
           p_season_number: null,
-          p_limit: 500,
+          p_limit: 5000,
         },
       )
 
@@ -899,9 +899,18 @@ export default function NationalRankingPage(): JSX.Element {
               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                 {t('cards.hostRoute')}
               </div>
-              <div className="mt-1 truncate text-sm font-semibold text-slate-900">
-                {data?.final_host?.route_label ?? t('cards.hostPending')}
-              </div>
+              {data?.final_host ? (
+                <Link
+                  to={`/dashboard/national-championships/${edition.id}/final`}
+                  className="mt-1 block truncate text-sm font-semibold text-slate-900 hover:text-yellow-700 hover:underline"
+                >
+                  {data.final_host.route_label}
+                </Link>
+              ) : (
+                <div className="mt-1 truncate text-sm font-semibold text-slate-900">
+                  {t('cards.hostPending')}
+                </div>
+              )}
               <div className="mt-0.5 text-xs text-slate-500">
                 {data?.final_host
                   ? formatRouteMeta(data.final_host)
