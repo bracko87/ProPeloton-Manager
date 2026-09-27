@@ -58,6 +58,7 @@ import RaceDetailPage from './pages/dashboard/RaceDetailPage'
 import RacePreparationPage from './pages/dashboard/RacePreparation'
 import TeamRankingPage from './pages/dashboard/TeamRanking'
 import NationalRankingPage from './pages/dashboard/NationalRanking'
+import NationalChampionshipRacePage from './pages/dashboard/NationalChampionshipRacePage'
 import TeamProfilePage from './pages/dashboard/TeamProfilePage'
 import ClubIdentityPage from './pages/dashboard/ClubIdentityPage'
 import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
@@ -528,6 +529,16 @@ export default function App(): JSX.Element {
             <Route
               path="national-ranking"
               element={<NationalRankingPage />}
+            />
+
+            <Route
+              path="national-championships/:editionId/final"
+              element={<NationalChampionshipRacePage />}
+            />
+
+            <Route
+              path="national-championships/:editionId/qualification/:heatNumber"
+              element={<NationalChampionshipRacePage />}
             />
 
             <Route
