@@ -18347,6 +18347,39 @@ export default function RaceDetailPage({
       setCurrentMonthNumber(Number(gameDateParts?.month_number ?? 1))
       setCurrentDayNumber(Number(gameDateParts?.day_number ?? 1))
 
+      const loadedRaceMetadata = getRecord(loadedRace?.metadata)
+      const isNationalChampionship =
+        loadedRaceMetadata.national_championship === true ||
+        loadedRaceMetadata.national_championship === 'true'
+      const nationalEditionId =
+        typeof loadedRaceMetadata.edition_id === 'string'
+          ? loadedRaceMetadata.edition_id
+          : null
+      const nationalEventType =
+        typeof loadedRaceMetadata.event_type === 'string'
+          ? loadedRaceMetadata.event_type
+          : null
+      const nationalHeatNumber = Number(loadedRaceMetadata.heat_number)
+
+      if (
+        !raceIdOverride &&
+        isNationalChampionship &&
+        nationalEditionId &&
+        (nationalEventType === 'final' ||
+          (nationalEventType === 'qualification' &&
+            Number.isInteger(nationalHeatNumber) &&
+            nationalHeatNumber > 0))
+      ) {
+        const nationalPath =
+          nationalEventType === 'qualification'
+            ? `/dashboard/national-championships/${nationalEditionId}/qualification/${nationalHeatNumber}`
+            : `/dashboard/national-championships/${nationalEditionId}/final`
+
+        navigate(nationalPath, { replace: true })
+        setLoading(false)
+        return
+      }
+
       setRace(loadedRace)
       setEntry(loadedEntry)
       setRaceEntryStatus(loadedRace?.existing_application_status ?? null)
