@@ -309,7 +309,7 @@ function NationalDutyPlanCard({
   entry,
   eventType,
   eventDate,
-  raceId,
+  raceHref,
   plan,
   equipmentPresets,
   onChange,
@@ -319,7 +319,7 @@ function NationalDutyPlanCard({
   entry: MyEntry
   eventType: EventType
   eventDate?: string | null
-  raceId?: string | null
+  raceHref?: string | null
   plan: PlanDraft
   equipmentPresets: EquipmentPreset[]
   onChange: (next: PlanDraft) => void
@@ -347,12 +347,12 @@ function NationalDutyPlanCard({
           </div>
           <p className="mt-1 text-sm text-slate-500">
             {eventDateLabel}
-            {raceId ? (
+            {raceHref ? (
               <>
                 {' · '}
                 <Link
-                  className="font-medium text-blue-600 hover:text-blue-700"
-                  to={`/dashboard/races/${raceId}`}
+                  className="font-medium text-yellow-700 hover:text-yellow-800 hover:underline"
+                  to={raceHref}
                 >
                   {t('plan.openRace')}
                 </Link>
@@ -1334,7 +1334,11 @@ export default function NationalRankingPage(): JSX.Element {
                         entry={entry}
                         eventType="qualification"
                         eventDate={entry.duty_window_start_date ?? edition?.qualification_date}
-                        raceId={entry.qualification_race_id}
+                        raceHref={
+                          edition
+                            ? `/dashboard/national-championships/${edition.id}/qualification/${entry.heat_number ?? 1}`
+                            : null
+                        }
                         plan={
                           drafts[planKey(entry.rider_id, 'qualification')] ??
                           planFromValue(entry.qualification_plan)
@@ -1358,7 +1362,11 @@ export default function NationalRankingPage(): JSX.Element {
                         entry={entry}
                         eventType="final"
                         eventDate={edition?.final_date}
-                        raceId={entry.final_race_id}
+                        raceHref={
+                          edition
+                            ? `/dashboard/national-championships/${edition.id}/final`
+                            : null
+                        }
                         plan={
                           drafts[planKey(entry.rider_id, 'final')] ??
                           planFromValue(entry.final_plan)
