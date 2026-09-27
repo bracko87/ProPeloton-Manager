@@ -155,7 +155,7 @@
     "deadline": "Rok za odluku: {{date}}",
     "approve": "Potvrdi nacionalnu obavezu",
     "reject": "Odbij · zadrži u klubu",
-    "rejectWarning": "Odbijanje ukida trodnevnu blokadu i vozaču oduzima 2 poena morala.",
+    "rejectWarning": "Odbijanje otkazuje planirani nastup ovog vozača u nacionalnoj obavezi i oduzima mu 2 poena morala.",
     "participationBenefit": "Ako vozač nastupi, normalno se primenjuju umor i razvoj veština; završetak trke nacionalnog prvenstva donosi i +1 moral.",
     "error": "Nije moguće sačuvati odluku o nacionalnoj obavezi.",
     "approvedMessage": "{{rider}} će nastupiti u nacionalnoj obavezi.",
@@ -176,7 +176,10 @@
     "projected": "Projekcija prema trenutnom nacionalnom rangu do zaključavanja ranga",
     "qualificationHeat": "Kvalifikaciona grupa {{number}}",
     "final": "Nacionalno finale",
-    "routePending": "Ruta domaćin još nije određena"
+    "routePending": "Ruta domaćin još nije određena",
+    "ridersCount": "{{count}} vozača",
+    "advanceCount": "Prvih {{count}} prolazi",
+    "finalFieldCount": "{{count}} vozača u finalu"
   },
   "tabs": {
     "ranking": "Rang",
@@ -193,5 +196,35 @@
   },
   "host": {
     "openRace": "Otvori stranicu trke"
+  },
+  "eventPage": {
+    "invalid": "Ovaj događaj nacionalnog prvenstva nije dostupan.",
+    "back": "Nazad na nacionalni rang",
+    "qualificationTitle": "{{country}} – nacionalne kvalifikacije, grupa {{number}}",
+    "finalTitle": "{{country}} – finale nacionalnog prvenstva",
+    "nationalEvent": "Nacionalno prvenstvo",
+    "group": "Grupa {{number}}",
+    "subtitle": "Individualna nacionalna trka. Nema ekipne taktike, prijave ekipe niti troška trke za klub.",
+    "date": "Datum",
+    "startTime": "Start",
+    "startTimeTbd": "Vreme starta se određuje kada se trka generiše",
+    "riders": "Vozači",
+    "qualifyingPlaces": "Kvalifikaciona mesta",
+    "finalField": "Finalno polje",
+    "route": "Ruta",
+    "stageProfile": "Profil rute",
+    "distance": "Dužina",
+    "terrain": "Teren",
+    "elevation": "Uspon",
+    "expectedTemperature": "Očekivana maksimalna temperatura",
+    "profileNote": "Za nacionalno prvenstvo koriste se samo start, cilj i profil terena. Nema KOM/GPM bodova niti prolaznih sprintova.",
+    "profileChartAlt": "Visinski profil rute nacionalnog prvenstva",
+    "profileDescription": "Ruta nacionalnog prvenstva koristi izabrani profil terena zemlje domaćina.",
+    "terrainTypes": {
+      "flat": "Ravno",
+      "hilly": "Valovito",
+      "mountain": "Planinsko",
+      "cobbled": "Kocka"
+    }
   }
 }
