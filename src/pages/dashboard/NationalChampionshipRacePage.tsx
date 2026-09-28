@@ -3,7 +3,7 @@ import { ChevronLeft, Loader2, RefreshCw } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import RaceDetailPage from './RaceDetailPage'
+import RaceDetailPage, { StageProfileChart } from './RaceDetailPage'
 
 const FREE_AGENT_JERSEY_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit53.png'
@@ -208,216 +208,6 @@ function normalizeCoinAccess(value: unknown): ReplayCoinAccess | null {
     has_replay_access:
       row.has_replay_access === true || row.has_replay_access === 'true',
   }
-}
-
-function NationalStageProfileChart({
-  points,
-  distanceKm,
-  terrainType,
-  startLabel,
-  finishLabel,
-  ariaLabel,
-}: {
-  points: ProfilePoint[]
-  distanceKm: number
-  terrainType?: string | null
-  startLabel: string
-  finishLabel: string
-  ariaLabel: string
-}): JSX.Element {
-  const width = 920
-  const height = 320
-  const padding = { top: 38, right: 18, bottom: 52, left: 70 }
-
-  const model = useMemo(() => {
-    if (points.length < 2 || !distanceKm) return null
-
-    const sorted = [...points].sort((a, b) => a.km - b.km)
-    const innerWidth = width - padding.left - padding.right
-    const innerHeight = height - padding.top - padding.bottom
-    const rawMin = Math.min(...sorted.map(point => point.elevation))
-    const rawMax = Math.max(...sorted.map(point => point.elevation))
-    const normalizedTerrain = String(terrainType ?? '').toLowerCase()
-
-    let minElevation = 0
-    let maxElevation: number
-
-    if (rawMax <= 120) {
-      maxElevation = Math.max(200, Math.ceil((rawMax * 1.15) / 100) * 100)
-    } else if (normalizedTerrain === 'mountain') {
-      minElevation = Math.max(0, Math.floor((rawMin - 250) / 100) * 100)
-      maxElevation = Math.ceil(Math.max(rawMax * 1.08, minElevation + 1400) / 100) * 100
-    } else if (normalizedTerrain === 'hilly') {
-      maxElevation = Math.ceil(Math.max(rawMax * 1.08, 800) / 100) * 100
-    } else {
-      maxElevation = Math.ceil(Math.max(rawMax * 1.08, 500) / 100) * 100
-    }
-
-    const elevationSpan = Math.max(maxElevation - minElevation, 1)
-    const safeDistance = Math.max(distanceKm, 1)
-
-    const coords = sorted.map(point => ({
-      km: point.km,
-      x: padding.left + (point.km / safeDistance) * innerWidth,
-      y:
-        padding.top +
-        innerHeight -
-        ((point.elevation - minElevation) / elevationSpan) * innerHeight,
-    }))
-
-    const linePath = coords.reduce((path, point, index) => {
-      if (index === 0) return `M ${point.x} ${point.y}`
-      const previous = coords[index - 1]
-      const controlX = (previous.x + point.x) / 2
-      return `${path} C ${controlX} ${previous.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`
-    }, '')
-
-    const areaPath = [
-      linePath,
-      `L ${coords[coords.length - 1].x} ${height - padding.bottom}`,
-      `L ${coords[0].x} ${height - padding.bottom}`,
-      'Z',
-    ].join(' ')
-
-    const rawTicks: number[] = []
-    const tickStep = maxElevation <= 400 ? 100 : maxElevation <= 1000 ? 200 : 500
-    for (let value = maxElevation; value >= minElevation; value -= tickStep) {
-      rawTicks.push(value)
-    }
-    if (rawTicks[rawTicks.length - 1] !== minElevation) rawTicks.push(minElevation)
-
-    return {
-      linePath,
-      areaPath,
-      minElevation,
-      maxElevation,
-      ticks: rawTicks.slice(0, 6),
-      innerHeight,
-      innerWidth,
-      safeDistance,
-    }
-  }, [points, distanceKm, terrainType])
-
-  if (!model) {
-    return (
-      <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-sm text-slate-500">
-        —
-      </div>
-    )
-  }
-
-  const yForElevation = (elevation: number) =>
-    padding.top +
-    model.innerHeight -
-    ((elevation - model.minElevation) /
-      Math.max(model.maxElevation - model.minElevation, 1)) *
-      model.innerHeight
-
-  const startX = padding.left
-  const finishX = width - padding.right
-  const badgeY = 16
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-auto w-full"
-        role="img"
-        aria-label={ariaLabel}
-      >
-        {model.ticks.map(tick => {
-          const y = yForElevation(tick)
-          return (
-            <g key={tick}>
-              <line
-                x1={padding.left}
-                x2={width - padding.right}
-                y1={y}
-                y2={y}
-                stroke="#e2e8f0"
-                strokeWidth="1"
-              />
-              <text
-                x={padding.left - 12}
-                y={y + 4}
-                textAnchor="end"
-                fontSize="12"
-                fill="#64748b"
-              >
-                {tick} m
-              </text>
-            </g>
-          )
-        })}
-
-        <path d={model.areaPath} fill="rgba(250, 204, 21, 0.55)" />
-        <path d={model.linePath} fill="none" stroke="#334155" strokeWidth="3" />
-
-        <line
-          x1={startX}
-          x2={startX}
-          y1={padding.top}
-          y2={height - padding.bottom}
-          stroke="#64748b"
-          strokeWidth="1.5"
-          strokeDasharray="5 5"
-        />
-        <rect x={startX - 29} y={badgeY} width="58" height="22" rx="11" fill="#64748b" />
-        <text
-          x={startX}
-          y={badgeY + 15}
-          textAnchor="middle"
-          fontSize="11"
-          fontWeight="700"
-          fill="white"
-        >
-          {startLabel}
-        </text>
-
-        <line
-          x1={finishX}
-          x2={finishX}
-          y1={padding.top}
-          y2={height - padding.bottom}
-          stroke="#2563eb"
-          strokeWidth="1.5"
-          strokeDasharray="5 5"
-        />
-        <rect x={finishX - 29} y={badgeY} width="58" height="22" rx="11" fill="#2563eb" />
-        <text
-          x={finishX}
-          y={badgeY + 15}
-          textAnchor="middle"
-          fontSize="11"
-          fontWeight="700"
-          fill="white"
-        >
-          {finishLabel}
-        </text>
-
-        <text
-          x={padding.left}
-          y={height - 14}
-          textAnchor="middle"
-          fontSize="12"
-          fontWeight="600"
-          fill="#334155"
-        >
-          0 km
-        </text>
-        <text
-          x={width - padding.right}
-          y={height - 14}
-          textAnchor="middle"
-          fontSize="12"
-          fontWeight="600"
-          fill="#334155"
-        >
-          {model.safeDistance.toFixed(1).replace(/\.0$/, '')} km
-        </text>
-      </svg>
-    </div>
-  )
 }
 
 function Jersey({
@@ -909,13 +699,23 @@ export default function NationalChampionshipRacePage(): JSX.Element {
           </div>
 
           <div className="mt-6">
-            <NationalStageProfileChart
+            <StageProfileChart
               points={points}
+              markers={[
+                {
+                  type: 'start',
+                  km: 0,
+                  label: tr('stage.start'),
+                },
+                {
+                  type: 'finish',
+                  km: Number(data.route.distance_km ?? 0),
+                  label: tr('stage.finish'),
+                },
+              ]}
               distanceKm={Number(data.route.distance_km ?? 0)}
               terrainType={data.route.terrain_type}
-              startLabel={tr('stage.start')}
-              finishLabel={tr('stage.finish')}
-              ariaLabel={t('eventPage.profileChartAlt')}
+              mountainClimbs={[]}
             />
           </div>
         </section>
