@@ -9,9 +9,6 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 
 const TENNIS_LEGACY_URL = 'https://tennislegacygame.com/?source=propeloton_manager'
-const TENNIS_LEGACY_LOGO_URL =
-  'https://cwfznmroiqcyhfkfcrow.supabase.co/storage/v1/object/sign/Admin/Branding/logo%20333.png?token=eyJraWQiOiJmYWIyM2E5ZS02NDA1LTQxNjUtODVmNC0wNzZjZjA4NDgyYmQiLCJhbGciOiJIUzUxMiJ9.eyJ1cmwiOiJBZG1pbi9CcmFuZGluZy9sb2dvIDMzMy5wbmciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3OTQ1MDc5LCJleHAiOjQ5MTAwMDkwNzl9.Q7Ocay_B1kouWo_XmmgtVcGOCh0xtzhzaIm713AhU-ci-xJPY3JanaT3xhdkptAuKV5kUJGHov34fSM2TGjmcQ'
-
 interface GameTimeRow {
   season_number: number
   month_number: number
@@ -191,28 +188,18 @@ export default function Footer({
             {t('navigation:footer.description')}
           </div>
 
-          <a
-            href={TENNIS_LEGACY_URL}
-            target="_blank"
-            rel="noreferrer"
-            onClick={recordCrossGameClick}
-            className="mt-3 inline-flex max-w-md items-center gap-3 rounded-xl border border-black/15 bg-black/5 px-3 py-2 text-black no-underline hover:bg-black/10"
-            aria-label="Play Tennis Legacy: Rise to Glory, another game from Next Quest Studio"
-          >
-            <img
-              src={TENNIS_LEGACY_LOGO_URL}
-              alt=""
-              aria-hidden="true"
-              className="h-9 w-9 rounded-lg bg-slate-950 object-contain"
-            />
-            <span className="min-w-0">
-              <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-black/55">
-                Also from our studio
-              </span>
-              <span className="block text-xs font-bold">Tennis Legacy: Rise to Glory</span>
-            </span>
-            <span className="ml-auto text-xs font-bold">Play Now ↗</span>
-          </a>
+          <div className="mt-2 text-xs text-black/70">
+            Also from our studio:{' '}
+            <a
+              href={TENNIS_LEGACY_URL}
+              target="_blank"
+              rel="noreferrer"
+              onClick={recordCrossGameClick}
+              className="font-bold text-black underline decoration-black/30 underline-offset-2 hover:opacity-70"
+            >
+              Tennis Legacy: Rise to Glory ↗
+            </a>
+          </div>
         </div>
 
         <nav
