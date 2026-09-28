@@ -1112,7 +1112,7 @@ export default function NationalRankingPage(): JSX.Element {
 
           <div className="overflow-x-auto p-4">
             {heatCount > 0 ? (
-              <div className="grid min-w-[720px] grid-cols-[minmax(300px,1fr)_80px_minmax(300px,1fr)] items-center gap-4">
+              <div className="grid min-w-[1120px] grid-cols-[minmax(300px,1.2fr)_80px_minmax(280px,0.9fr)_80px_minmax(320px,1fr)] items-center gap-4">
                 <div className="space-y-2">
                   {drawHeats.map(heat => (
                     <Link
@@ -1165,10 +1165,88 @@ export default function NationalRankingPage(): JSX.Element {
                   <div className="mt-2 text-xs font-semibold text-slate-700">
                     {t('draw.finalFieldCount', { count: edition.final_field_size })}
                   </div>
+                  <div className="mt-2 text-[11px] font-semibold text-yellow-800">
+                    Winner qualifies automatically for the World Road Championship
+                  </div>
                 </Link>
+
+                <div className="relative h-full min-h-[150px]">
+                  <div className="absolute left-0 right-0 top-1/2 h-px bg-sky-300" />
+                  <div className="absolute bottom-4 left-1/2 top-4 w-px bg-sky-300" />
+                  <ChevronRight className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 bg-white text-sky-600" />
+                </div>
+
+                {worldData?.edition?.race_id ? (
+                  <Link
+                    to={`/dashboard/races/${worldData.edition.race_id}`}
+                    className="block rounded border border-sky-300 bg-gradient-to-br from-sky-50 via-white to-amber-50 px-4 py-4 transition hover:border-sky-500 hover:shadow-sm"
+                  >
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={worldData.edition.logo_url}
+                        alt="World Road Championship"
+                        className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-sky-800">
+                          World Road Championship
+                        </div>
+                        <div className="mt-1 text-base font-bold text-slate-950">
+                          Grand Finale
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-slate-800">
+                          {pageDate(
+                            worldData.edition.race_date,
+                            worldData.edition.season_number,
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-xs text-slate-600">
+                      {worldData.edition.host_country_name_snapshot ?? 'Warm-weather host'}
+                      {worldData.route?.route_label
+                        ? ` · ${worldData.route.route_label}`
+                        : ''}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
+                      <span className="rounded-full bg-sky-100 px-2 py-1 text-sky-800">
+                        {worldData.participant_count} champions qualified
+                      </span>
+                      <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-800">
+                        {worldData.confirmed_count} confirmed
+                      </span>
+                    </div>
+                    <div className="mt-3 text-xs font-bold text-sky-800">
+                      Open World Championship →
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="rounded border border-sky-200 bg-sky-50 px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      {worldData?.edition?.logo_url ? (
+                        <img
+                          src={worldData.edition.logo_url}
+                          alt="World Road Championship"
+                          className="h-12 w-12 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                        />
+                      ) : (
+                        <Globe2 className="h-9 w-9 text-sky-700" />
+                      )}
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-sky-800">
+                          World Road Championship
+                        </div>
+                        <div className="mt-1 font-bold text-slate-950">Grand Finale</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-xs text-slate-600">
+                      Scheduled from the start of the season. National champions are added automatically.
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="max-w-md">
+              <div className="grid min-w-[760px] max-w-5xl grid-cols-[minmax(300px,1fr)_80px_minmax(320px,1fr)] items-center gap-4">
                 <Link
                   to={`/dashboard/national-championships/${edition.id}/final`}
                   className="block rounded border border-yellow-300 bg-yellow-50 px-4 py-4 transition hover:border-yellow-500"
@@ -1185,134 +1263,68 @@ export default function NationalRankingPage(): JSX.Element {
                   <div className="mt-2 text-xs font-semibold text-slate-700">
                     {t('draw.finalFieldCount', { count: edition.final_field_size })}
                   </div>
+                  <div className="mt-2 text-[11px] font-semibold text-yellow-800">
+                    Winner qualifies automatically for the World Road Championship
+                  </div>
                 </Link>
+
+                <div className="relative h-full min-h-[150px]">
+                  <div className="absolute left-0 right-0 top-1/2 h-px bg-sky-300" />
+                  <div className="absolute bottom-4 left-1/2 top-4 w-px bg-sky-300" />
+                  <ChevronRight className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 bg-white text-sky-600" />
+                </div>
+
+                {worldData?.edition?.race_id ? (
+                  <Link
+                    to={`/dashboard/races/${worldData.edition.race_id}`}
+                    className="block rounded border border-sky-300 bg-gradient-to-br from-sky-50 via-white to-amber-50 px-4 py-4 transition hover:border-sky-500 hover:shadow-sm"
+                  >
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={worldData.edition.logo_url}
+                        alt="World Road Championship"
+                        className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-sky-800">
+                          World Road Championship
+                        </div>
+                        <div className="mt-1 text-base font-bold text-slate-950">
+                          Grand Finale
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-slate-800">
+                          {pageDate(
+                            worldData.edition.race_date,
+                            worldData.edition.season_number,
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-xs text-slate-600">
+                      {worldData.edition.host_country_name_snapshot ?? 'Warm-weather host'}
+                      {worldData.route?.route_label
+                        ? ` · ${worldData.route.route_label}`
+                        : ''}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
+                      <span className="rounded-full bg-sky-100 px-2 py-1 text-sky-800">
+                        {worldData.participant_count} champions qualified
+                      </span>
+                      <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-800">
+                        {worldData.confirmed_count} confirmed
+                      </span>
+                    </div>
+                    <div className="mt-3 text-xs font-bold text-sky-800">
+                      Open World Championship →
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="rounded border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-slate-600">
+                    World Road Championship Grand Finale is scheduled for this season.
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        </section>
-      ) : null}
-
-      {worldData?.edition ? (
-        <section className="overflow-hidden rounded bg-white shadow">
-          <div className="border-b border-slate-200 bg-gradient-to-r from-sky-50 via-white to-amber-50 px-4 py-4">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex min-w-0 items-center gap-4">
-                <img
-                  src={worldData.edition.logo_url}
-                  alt="World Road Championship"
-                  className="h-16 w-16 shrink-0 rounded-xl border border-slate-200 bg-white object-contain p-1.5 shadow-sm"
-                />
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Globe2 className="h-5 w-5 text-sky-700" />
-                    <h3 className="text-lg font-black text-slate-950">
-                      World Road Championship Grand Finale
-                    </h3>
-                    <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800">
-                      Season {worldData.edition.season_number}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-slate-600">
-                    National champions only · one-day world title race · all team costs covered · no prize money
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-600">
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1">
-                      National Championship Final
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-slate-400" />
-                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-amber-800">
-                      National Champion
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-slate-400" />
-                    <span className="rounded-full bg-sky-100 px-2.5 py-1 text-sky-800">
-                      World Road Championship Grand Finale
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {worldData.edition.race_id ? (
-                <Link
-                  to={`/dashboard/races/${worldData.edition.race_id}`}
-                  className="rounded bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800"
-                >
-                  Open World Championship
-                </Link>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-5">
-            <div className="bg-white px-4 py-3">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Grand Finale
-              </div>
-              <div className="mt-1 text-sm font-bold text-slate-950">
-                {pageDate(
-                  worldData.edition.race_date,
-                  worldData.edition.season_number,
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white px-4 py-3">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Host
-              </div>
-              <div className="mt-1 text-sm font-bold text-slate-950">
-                {worldData.edition.host_country_name_snapshot ??
-                  worldData.edition.host_country_code ??
-                  'TBD'}
-              </div>
-              <div className="mt-0.5 text-xs text-slate-500">
-                {worldData.edition.climate_avg_temp_c == null
-                  ? 'Warm-weather host'
-                  : `Average temperature ${Number(
-                      worldData.edition.climate_avg_temp_c,
-                    ).toFixed(1)}°C`}
-              </div>
-            </div>
-
-            <div className="bg-white px-4 py-3">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Route
-              </div>
-              <div className="mt-1 truncate text-sm font-bold text-slate-950">
-                {worldData.route?.route_label ?? 'Route scheduled'}
-              </div>
-              <div className="mt-0.5 text-xs text-slate-500">
-                {worldData.route
-                  ? formatRouteMeta(worldData.route)
-                  : 'Warm-weather road route'}
-              </div>
-            </div>
-
-            <div className="bg-white px-4 py-3">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Qualified champions
-              </div>
-              <div className="mt-1 text-sm font-bold text-slate-950">
-                {worldData.participant_count}
-              </div>
-              <div className="mt-0.5 text-xs text-slate-500">
-                Added automatically as national finals finish
-              </div>
-            </div>
-
-            <div className="bg-white px-4 py-3">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Confirmed
-              </div>
-              <div className="mt-1 text-sm font-bold text-slate-950">
-                {worldData.confirmed_count}
-              </div>
-              <div className="mt-0.5 text-xs text-slate-500">
-                Manager decisions close {pageDate(
-                  worldData.edition.decision_deadline,
-                  worldData.edition.season_number,
-                )}
-              </div>
-            </div>
           </div>
         </section>
       ) : null}
