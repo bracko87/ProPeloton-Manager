@@ -506,6 +506,7 @@ export default function NationalRankingPage(): JSX.Element {
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [decisionSavingRiderId, setDecisionSavingRiderId] = useState<string | null>(null)
   const [worldDecisionSavingRiderId, setWorldDecisionSavingRiderId] = useState<string | null>(null)
+  const [finalWithdrawalSavingRiderId, setFinalWithdrawalSavingRiderId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [rankingPage, setRankingPage] = useState(1)
 
@@ -673,6 +674,40 @@ export default function NationalRankingPage(): JSX.Element {
       )
     } finally {
       setWorldDecisionSavingRiderId(null)
+    }
+  }
+
+  const withdrawFromNationalFinal = async (
+    entry: MyEntry,
+  ): Promise<void> => {
+    const editionId = data?.edition?.id
+    if (!editionId) return
+
+    try {
+      setFinalWithdrawalSavingRiderId(entry.rider_id)
+      setSaveMessage(null)
+
+      const { error: withdrawError } = await supabase.rpc(
+        'withdraw_my_national_championship_final_v1',
+        {
+          p_edition_id: editionId,
+          p_rider_id: entry.rider_id,
+        },
+      )
+
+      if (withdrawError) throw withdrawError
+
+      setSaveMessage(
+        `${entry.rider_name} has been withdrawn from the National Championship final. The rider was removed from the final startlist and received the refusal morale penalty.`,
+      )
+      await loadPage()
+    } catch (caught: any) {
+      setSaveMessage(
+        caught?.message ??
+          'Unable to withdraw this rider from the National Championship final.',
+      )
+    } finally {
+      setFinalWithdrawalSavingRiderId(null)
     }
   }
 
@@ -1715,29 +1750,50 @@ export default function NationalRankingPage(): JSX.Element {
                     ) : null}
 
                     {showFinal && entry.participation_decision !== 'rejected' ? (
-                      <NationalDutyPlanCard
-                        entry={entry}
-                        eventType="final"
-                        eventDate={edition?.final_date}
-                        raceHref={
-                          edition
-                            ? `/dashboard/national-championships/${edition.id}/final`
-                            : null
-                        }
-                        plan={
-                          drafts[planKey(entry.rider_id, 'final')] ??
-                          planFromValue(entry.final_plan)
-                        }
-                        equipmentPresets={data?.equipment_presets ?? []}
-                        onChange={next =>
-                          setDrafts(current => ({
-                            ...current,
-                            [planKey(entry.rider_id, 'final')]: next,
-                          }))
-                        }
-                        onSave={() => void savePlan(entry, 'final')}
-                        saving={savingKey === planKey(entry.rider_id, 'final')}
-                      />
+                      <div className="space-y-2">
+                        <NationalDutyPlanCard
+                          entry={entry}
+                          eventType="final"
+                          eventDate={edition?.final_date}
+                          raceHref={
+                            edition
+                              ? `/dashboard/national-championships/${edition.id}/final`
+                              : null
+                          }
+                          plan={
+                            drafts[planKey(entry.rider_id, 'final')] ??
+                            planFromValue(entry.final_plan)
+                          }
+                          equipmentPresets={data?.equipment_presets ?? []}
+                          onChange={next =>
+                            setDrafts(current => ({
+                              ...current,
+                              [planKey(entry.rider_id, 'final')]: next,
+                            }))
+                          }
+                          onSave={() => void savePlan(entry, 'final')}
+                          saving={savingKey === planKey(entry.rider_id, 'final')}
+                        />
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-red-200 bg-red-50 px-4 py-3">
+                          <div className="text-xs leading-5 text-red-800">
+                            A qualified rider can still be withdrawn before the final. The rider will be removed immediately from the final startlist and receives the National Championship refusal morale penalty.
+                          </div>
+                          <button
+                            type="button"
+                            disabled={
+                              finalWithdrawalSavingRiderId === entry.rider_id
+                            }
+                            onClick={() => void withdrawFromNationalFinal(entry)}
+                            className="inline-flex shrink-0 items-center gap-2 rounded border border-red-300 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {finalWithdrawalSavingRiderId === entry.rider_id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : null}
+                            Withdraw from final
+                          </button>
+                        </div>
+                      </div>
                     ) : null}
 
                     {((!showQualification && !showFinal) ||
