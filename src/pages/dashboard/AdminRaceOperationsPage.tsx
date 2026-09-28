@@ -231,6 +231,17 @@ function overallClasses(row: RaceOperationsRow): string {
   return 'bg-slate-100 text-slate-700'
 }
 
+function championshipRaceLabel(category?: string | null): string | null {
+  if (category === 'NCQ') return 'National qualification'
+  if (category === 'NC') return 'National final'
+  if (category === 'WRC') return 'World championship'
+  return null
+}
+
+function isChampionshipRace(category?: string | null): boolean {
+  return category === 'NCQ' || category === 'NC' || category === 'WRC'
+}
+
 export default function AdminRaceOperationsPage(): JSX.Element {
   const [view, setView] = useState<OperationsView>('today')
   const [payload, setPayload] = useState<RaceOperationsPayload | null>(null)
@@ -508,8 +519,15 @@ export default function AdminRaceOperationsPage(): JSX.Element {
                       ].join(' ')}
                     >
                       <td className="px-4 py-4">
-                        <div className="font-bold text-gray-950">
-                          {row.race_name}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="font-bold text-gray-950">
+                            {row.race_name}
+                          </div>
+                          {championshipRaceLabel(row.race_category) ? (
+                            <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-sky-800">
+                              {championshipRaceLabel(row.race_category)}
+                            </span>
+                          ) : null}
                         </div>
                         <div className="mt-1 text-xs text-gray-500">
                           Stage {row.stage_number}
@@ -579,9 +597,16 @@ export default function AdminRaceOperationsPage(): JSX.Element {
               <div className="text-xs font-bold uppercase tracking-[0.12em] text-gray-400">
                 Stage details
               </div>
-              <h2 className="mt-1 text-xl font-extrabold text-gray-950">
-                {selected.race_name} · Stage {selected.stage_number}
-              </h2>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-extrabold text-gray-950">
+                  {selected.race_name} · Stage {selected.stage_number}
+                </h2>
+                {championshipRaceLabel(selected.race_category) ? (
+                  <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-sky-800">
+                    {championshipRaceLabel(selected.race_category)}
+                  </span>
+                ) : null}
+              </div>
               <div className="mt-1 text-sm text-gray-500">
                 {formatGameDate(selected.stage_start_game_at)}
               </div>
@@ -645,10 +670,27 @@ export default function AdminRaceOperationsPage(): JSX.Element {
             <CheckCard
               title="3 · Completion"
               status={selected.completion_status}
-              detail={`Results due ${formatGameDate(selected.results_due_game_at)}`}
+              detail={
+                isChampionshipRace(selected.race_category)
+                  ? `Results + championship post-processing due ${formatGameDate(
+                      selected.results_due_game_at,
+                    )}`
+                  : `Results due ${formatGameDate(selected.results_due_game_at)}`
+              }
               phase="completion"
             />
           </div>
+
+          {isChampionshipRace(selected.race_category) ? (
+            <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-6 text-sky-900">
+              <strong>ARC championship validation is active.</strong>{' '}
+              Calculation and replay use the normal production race pipeline.
+              Completion also verifies the championship-specific follow-up:
+              qualification progression for NCQ, champion/history/honours and
+              World invitation for NC, and World Champion/podium honours for WRC.
+              A missing step becomes a Control Center incident automatically.
+            </div>
+          ) : null}
 
           <div className="mt-5 grid gap-4 rounded-2xl border border-black/5 bg-gray-50 p-4 sm:grid-cols-2 xl:grid-cols-4">
             <div>
@@ -702,21 +744,31 @@ export default function AdminRaceOperationsPage(): JSX.Element {
               </div>
             </div>
             <div className="rounded-xl border border-black/5 p-3">
-              <div className="text-xs text-gray-500">Ranking awards</div>
+              <div className="text-xs text-gray-500">
+                {isChampionshipRace(selected.race_category)
+                  ? 'Generic ranking awards'
+                  : 'Ranking awards'}
+              </div>
               <div className="mt-1 text-lg font-extrabold text-gray-950">
-                {selected.ranking_award_rows}
+                {isChampionshipRace(selected.race_category)
+                  ? 'Not required'
+                  : selected.ranking_award_rows}
               </div>
             </div>
             <div className="rounded-xl border border-black/5 p-3">
               <div className="text-xs text-gray-500">Prize awards</div>
               <div className="mt-1 text-lg font-extrabold text-gray-950">
-                {selected.prize_award_rows}
+                {isChampionshipRace(selected.race_category)
+                  ? 'Not required'
+                  : selected.prize_award_rows}
               </div>
             </div>
             <div className="rounded-xl border border-black/5 p-3">
               <div className="text-xs text-gray-500">Prizes paid</div>
               <div className="mt-1 text-lg font-extrabold text-gray-950">
-                {selected.paid_prize_award_rows}
+                {isChampionshipRace(selected.race_category)
+                  ? 'Not required'
+                  : selected.paid_prize_award_rows}
               </div>
             </div>
           </div>
