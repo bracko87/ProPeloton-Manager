@@ -85,6 +85,13 @@ type MyEntry = {
   final_window_start_date?: string | null
   final_window_end_date?: string | null
   can_decide_participation?: boolean
+  final_participation_decision?: 'not_open' | 'pending' | 'approved' | 'auto_approved' | 'rejected'
+  final_participation_decision_at?: string | null
+  final_decision_notified_at?: string | null
+  final_refusal_morale_delta?: number
+  final_decision_deadline?: string | null
+  can_decide_final_participation?: boolean
+  requires_second_confirmation?: boolean
 }
 
 type EquipmentPreset = {
@@ -198,6 +205,13 @@ type WorldRoadEntry = {
   race_date: string
   race_id?: string | null
   can_decide_participation?: boolean
+  final_participation_decision?: 'not_open' | 'pending' | 'approved' | 'auto_approved' | 'rejected'
+  final_participation_decision_at?: string | null
+  final_decision_notified_at?: string | null
+  final_decision_deadline?: string | null
+  final_confirmation_open_date?: string | null
+  can_decide_final_participation?: boolean
+  requires_second_confirmation?: boolean
 }
 
 type WorldRoadOverview = {
@@ -506,6 +520,8 @@ export default function NationalRankingPage(): JSX.Element {
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [decisionSavingRiderId, setDecisionSavingRiderId] = useState<string | null>(null)
   const [worldDecisionSavingRiderId, setWorldDecisionSavingRiderId] = useState<string | null>(null)
+  const [nationalFinalDecisionSavingRiderId, setNationalFinalDecisionSavingRiderId] = useState<string | null>(null)
+  const [worldFinalDecisionSavingRiderId, setWorldFinalDecisionSavingRiderId] = useState<string | null>(null)
   const [finalWithdrawalSavingRiderId, setFinalWithdrawalSavingRiderId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [rankingPage, setRankingPage] = useState(1)
@@ -515,32 +531,76 @@ export default function NationalRankingPage(): JSX.Element {
       setLoading(true)
       setError(null)
 
-      const [nationalResponse, worldResponse] = await Promise.all([
-        supabase.rpc(
-          'get_national_ranking_page_v1',
-          {
-            p_country_code: null,
-            p_season_number: null,
-            p_limit: 5000,
-          },
-        ),
-        supabase.rpc(
-          'get_world_road_championship_overview_v1',
-          { p_season_number: null },
-        ),
-      ])
+      const [nationalResponse, worldResponse, confirmationResponse] =
+        await Promise.all([
+          supabase.rpc(
+            'get_national_ranking_page_v1',
+            {
+              p_country_code: null,
+              p_season_number: null,
+              p_limit: 5000,
+            },
+          ),
+          supabase.rpc(
+            'get_world_road_championship_overview_v1',
+            { p_season_number: null },
+          ),
+          supabase.rpc('get_my_championship_second_confirmations_v1'),
+        ])
 
       if (nationalResponse.error) throw nationalResponse.error
       if (worldResponse.error) throw worldResponse.error
+      if (confirmationResponse.error) throw confirmationResponse.error
 
       const next = (nationalResponse.data ?? null) as NationalPageData | null
       if (!next) throw new Error(t('errors.unavailable'))
 
-      setData(next)
-      setWorldData((worldResponse.data ?? null) as WorldRoadOverview | null)
+      const confirmations = (confirmationResponse.data ?? {
+        national: [],
+        world: [],
+      }) as {
+        national?: Array<Record<string, unknown>>
+        world?: Array<Record<string, unknown>>
+      }
+
+      const nationalFinalByRider = new Map(
+        (confirmations.national ?? []).map(row => [
+          String(row.rider_id ?? ''),
+          row,
+        ]),
+      )
+
+      const mergedNational: NationalPageData = {
+        ...next,
+        my_entries: (next.my_entries ?? []).map(entry => ({
+          ...entry,
+          ...(nationalFinalByRider.get(entry.rider_id) ?? {}),
+        })),
+      }
+
+      const nextWorld =
+        (worldResponse.data ?? null) as WorldRoadOverview | null
+      const worldFinalByRider = new Map(
+        (confirmations.world ?? []).map(row => [
+          String(row.rider_id ?? ''),
+          row,
+        ]),
+      )
+      const mergedWorld = nextWorld
+        ? {
+            ...nextWorld,
+            my_entries: (nextWorld.my_entries ?? []).map(entry => ({
+              ...entry,
+              ...(worldFinalByRider.get(entry.rider_id) ?? {}),
+            })),
+          }
+        : null
+
+      setData(mergedNational)
+      setWorldData(mergedWorld)
 
       const nextDrafts: Record<string, PlanDraft> = {}
-      for (const entry of next.my_entries ?? []) {
+      for (const entry of mergedNational.my_entries ?? []) {
         nextDrafts[planKey(entry.rider_id, 'qualification')] = planFromValue(
           entry.qualification_plan,
         )
@@ -674,6 +734,82 @@ export default function NationalRankingPage(): JSX.Element {
       )
     } finally {
       setWorldDecisionSavingRiderId(null)
+    }
+  }
+
+  const decideNationalFinalParticipation = async (
+    entry: MyEntry,
+    approve: boolean,
+  ): Promise<void> => {
+    const editionId = data?.edition?.id
+    if (!editionId) return
+
+    try {
+      setNationalFinalDecisionSavingRiderId(entry.rider_id)
+      setSaveMessage(null)
+
+      const { error: decisionError } = await supabase.rpc(
+        'set_my_national_championship_final_participation_v1',
+        {
+          p_edition_id: editionId,
+          p_rider_id: entry.rider_id,
+          p_approve: approve,
+        },
+      )
+
+      if (decisionError) throw decisionError
+
+      setSaveMessage(
+        approve
+          ? `${entry.rider_name} is confirmed again for the National Championship final.`
+          : `${entry.rider_name} will not ride the National Championship final.`,
+      )
+      await loadPage()
+    } catch (caught: any) {
+      setSaveMessage(
+        caught?.message ??
+          'Unable to update the second National Championship confirmation.',
+      )
+    } finally {
+      setNationalFinalDecisionSavingRiderId(null)
+    }
+  }
+
+  const decideWorldFinalParticipation = async (
+    entry: WorldRoadEntry,
+    approve: boolean,
+  ): Promise<void> => {
+    const worldEditionId = worldData?.edition?.id
+    if (!worldEditionId) return
+
+    try {
+      setWorldFinalDecisionSavingRiderId(entry.rider_id)
+      setSaveMessage(null)
+
+      const { error: decisionError } = await supabase.rpc(
+        'set_my_world_road_championship_final_participation_v1',
+        {
+          p_edition_id: worldEditionId,
+          p_rider_id: entry.rider_id,
+          p_approve: approve,
+        },
+      )
+
+      if (decisionError) throw decisionError
+
+      setSaveMessage(
+        approve
+          ? `${entry.rider_name} is finally confirmed for the World Road Championship.`
+          : `${entry.rider_name} has been withdrawn from the World Road Championship. Morale -15.`,
+      )
+      await loadPage()
+    } catch (caught: any) {
+      setSaveMessage(
+        caught?.message ??
+          'Unable to update the final World Championship confirmation.',
+      )
+    } finally {
+      setWorldFinalDecisionSavingRiderId(null)
     }
   }
 
@@ -1598,6 +1734,80 @@ export default function NationalRankingPage(): JSX.Element {
                       </div>
                     ) : null}
                   </div>
+
+                  {entry.requires_second_confirmation ? (
+                    <div
+                      className={[
+                        'mx-4 mb-4 rounded border p-4',
+                        entry.final_participation_decision === 'rejected'
+                          ? 'border-red-200 bg-red-50'
+                          : entry.final_participation_decision === 'pending'
+                            ? 'border-violet-200 bg-violet-50'
+                            : 'border-emerald-200 bg-emerald-50',
+                      ].join(' ')}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-bold text-slate-950">
+                            2nd confirmation · World Championship final
+                          </div>
+                          <div className="mt-1 text-xs leading-5 text-slate-600">
+                            You already accepted the World Championship invitation.
+                            Please confirm the rider again shortly before the Grand Finale.
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            Final confirmation deadline:{' '}
+                            {pageDate(
+                              entry.final_decision_deadline,
+                              worldData?.edition?.season_number,
+                            )}
+                          </div>
+                          <div className="mt-2 text-xs font-semibold text-slate-700">
+                            Status:{' '}
+                            {(entry.final_participation_decision ?? 'not_open').replaceAll(
+                              '_',
+                              ' ',
+                            )}
+                          </div>
+                        </div>
+
+                        {entry.final_participation_decision === 'pending' &&
+                        entry.can_decide_final_participation !== false ? (
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={
+                                worldFinalDecisionSavingRiderId === entry.rider_id
+                              }
+                              onClick={() =>
+                                void decideWorldFinalParticipation(entry, true)
+                              }
+                              className="inline-flex items-center gap-2 rounded bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:bg-violet-500 disabled:opacity-50"
+                            >
+                              {worldFinalDecisionSavingRiderId === entry.rider_id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="h-4 w-4" />
+                              )}
+                              Confirm again
+                            </button>
+                            <button
+                              type="button"
+                              disabled={
+                                worldFinalDecisionSavingRiderId === entry.rider_id
+                              }
+                              onClick={() =>
+                                void decideWorldFinalParticipation(entry, false)
+                              }
+                              className="rounded border border-red-300 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                            >
+                              Refuse final
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -1731,6 +1941,82 @@ export default function NationalRankingPage(): JSX.Element {
                         </div>
                       ) : null}
                     </div>
+
+                    {showFinal && entry.requires_second_confirmation ? (
+                      <div
+                        className={[
+                          'rounded border p-4',
+                          entry.final_participation_decision === 'rejected'
+                            ? 'border-red-200 bg-red-50'
+                            : entry.final_participation_decision === 'pending'
+                              ? 'border-violet-200 bg-violet-50'
+                              : 'border-emerald-200 bg-emerald-50',
+                        ].join(' ')}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">
+                              2nd confirmation · National Championship final
+                            </div>
+                            <div className="mt-1 text-xs leading-5 text-slate-600">
+                              This rider has reached the National Championship final.
+                              The manager must approve or refuse the final separately.
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              Final: {pageDate(edition?.final_date, edition?.season_number)}
+                              {' · '}
+                              Decision deadline:{' '}
+                              {pageDate(
+                                entry.final_decision_deadline,
+                                edition?.season_number,
+                              )}
+                            </div>
+                            <div className="mt-2 text-xs font-medium text-slate-700">
+                              Status:{' '}
+                              {(entry.final_participation_decision ?? 'not_open').replaceAll(
+                                '_',
+                                ' ',
+                              )}
+                            </div>
+                          </div>
+
+                          {entry.final_participation_decision === 'pending' &&
+                          entry.can_decide_final_participation !== false ? (
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                disabled={
+                                  nationalFinalDecisionSavingRiderId === entry.rider_id
+                                }
+                                onClick={() =>
+                                  void decideNationalFinalParticipation(entry, true)
+                                }
+                                className="inline-flex items-center gap-2 rounded bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
+                              >
+                                {nationalFinalDecisionSavingRiderId === entry.rider_id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="h-4 w-4" />
+                                )}
+                                Confirm final
+                              </button>
+                              <button
+                                type="button"
+                                disabled={
+                                  nationalFinalDecisionSavingRiderId === entry.rider_id
+                                }
+                                onClick={() =>
+                                  void decideNationalFinalParticipation(entry, false)
+                                }
+                                className="rounded border border-red-300 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                              >
+                                Refuse final
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
 
                     {showQualification &&
                     entry.participation_decision !== 'rejected' ? (
