@@ -92,24 +92,18 @@ export default function AboutPage(): JSX.Element {
           </article>
         </section>
 
-        <article className="rounded-2xl border border-yellow-200 bg-yellow-50 p-6 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-800">
-            Also from Next Quest Studio
-          </p>
-          <h2 className="mt-2 text-2xl font-bold">Tennis Legacy: Rise to Glory</h2>
-          <p className="mt-3 max-w-3xl leading-relaxed text-slate-700">
-            Build and develop your own professional tennis career in a persistent multiplayer world.
-          </p>
+        <p className="text-sm text-slate-600">
+          Also from our studio:{' '}
           <a
             href={TENNIS_LEGACY_URL}
             target="_blank"
             rel="noreferrer"
             onClick={recordCrossGameClick}
-            className="mt-4 inline-flex rounded-lg bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
+            className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-yellow-700"
           >
-            Play Tennis Legacy ↗
+            Tennis Legacy: Rise to Glory ↗
           </a>
-        </article>
+        </p>
 
         <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-bold">{t('about.developmentTitle')}</h2>
