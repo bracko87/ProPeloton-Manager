@@ -1180,6 +1180,19 @@ export default function NationalRankingPage(): JSX.Element {
                   <p className="mt-1 text-sm text-slate-600">
                     National champions only · one-day world title race · all team costs covered · no prize money
                   </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                      National Championship Final
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-amber-800">
+                      National Champion
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-slate-400" />
+                    <span className="rounded-full bg-sky-100 px-2.5 py-1 text-sky-800">
+                      World Road Championship Grand Finale
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1543,7 +1556,8 @@ export default function NationalRankingPage(): JSX.Element {
             </div>
           ) : null}
 
-          {(data?.my_entries?.length ?? 0) === 0 ? (
+          {(data?.my_entries?.length ?? 0) === 0 &&
+          (worldData?.my_entries?.length ?? 0) === 0 ? (
             <div className="rounded bg-white p-6 text-sm text-slate-500 shadow">
               {t('duty.empty')}
             </div>
