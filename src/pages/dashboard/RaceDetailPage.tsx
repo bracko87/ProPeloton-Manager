@@ -19551,7 +19551,9 @@ export default function RaceDetailPage({
                     className="h-9 w-9 rounded-lg border border-slate-200 bg-white object-contain p-1"
                   />
                 ) : (
-                  <Globe2 className="h-8 w-8 text-sky-700" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-lg" aria-hidden="true">
+                    🌐
+                  </div>
                 )
               ) : (
                 <RaceTitleFlag code={race.country_code} />
@@ -19587,7 +19589,9 @@ export default function RaceDetailPage({
                       className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1"
                     />
                   ) : (
-                    <Globe2 className="h-10 w-10 shrink-0 text-sky-700" />
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-xl" aria-hidden="true">
+                      🌐
+                    </div>
                   )}
                   <div>
                     <div className="text-sm font-bold text-slate-950">
