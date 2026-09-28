@@ -225,6 +225,28 @@
       "hilly": "Collinare",
       "mountain": "Montagna",
       "cobbled": "Pavé"
-    }
+    },
+    "oneDayRace": "Gara di un giorno",
+    "raceDateLine": "Data gara: {{date}} — {{place}}",
+    "noTeamCost": "Nessun costo per la squadra",
+    "stages": "Tappe",
+    "stageOne": "Tappa 1",
+    "replayAfterGeneration": "Il replay sarà disponibile tramite il normale sistema di replay dopo che questa gara del Campionato Nazionale sarà stata generata e calcolata.",
+    "raceInformation": "Informazioni gara",
+    "ridersResults": "Corridori e risultati",
+    "results": "Risultati",
+    "finalRidersPending": "I partecipanti alla finale saranno noti dopo il completamento dei gruppi di qualificazione.",
+    "noRiders": "Al momento non ci sono corridori assegnati a questo evento.",
+    "jersey": "Maglia",
+    "rider": "Corridore",
+    "team": "Squadra",
+    "time": "Tempo",
+    "gap": "Distacco",
+    "status": "Stato",
+    "resultsPending": "I risultati saranno pubblicati qui dopo la conclusione della gara.",
+    "refresh": "Aggiorna",
+    "finished": "Gara conclusa",
+    "ready": "Gara pronta",
+    "planned": "Pianificata"
   }
 }
