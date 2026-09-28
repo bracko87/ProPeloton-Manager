@@ -493,6 +493,7 @@
     "countSeasons": "{{count}} Saisons"
   },
   "templateWords": {
+    "10": "10",
     "ADVISOR": "Berater",
     "ADMIN": "Verwaltung",
     "MESSAGE": "Nachricht",
@@ -607,7 +608,6 @@
     "CLASSIFICATION": "Einreihung",
     "INVITATION": "Einladung",
     "INVITED": "Eingeladen",
-    "10": "10",
     "AGAIN": "Wieder",
     "AGE": "Alter",
     "AGENTS": "Agenten",
@@ -876,7 +876,17 @@
     "RACE_APPLICATION_RULE_CHANGE": "Änderung der Anmeldefristen",
     "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Rennplan abgeschlossen",
-    "STAGE_PLAN_MISSING_REMINDER": "Erinnerung: Etappenplan fehlt"
+    "STAGE_PLAN_MISSING_REMINDER": "Erinnerung: Etappenplan fehlt",
+    "NATIONAL_CHAMPIONSHIP_SELECTED": "Auswahl zur Nationalmeisterschaft",
+    "NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT": "Ergebnis der nationalen Qualifikation",
+    "NATIONAL_CHAMPIONSHIP_QUALIFIED": "Für das nationale Finale qualifiziert",
+    "NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Bestätigung des nationalen Finales",
+    "NATIONAL_CHAMPIONSHIP_FINAL_RESULT": "Ergebnis der Nationalmeisterschaft",
+    "NATIONAL_CHAMPION": "Nationaler Meister",
+    "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Einladung zur Weltmeisterschaft",
+    "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Bestätigung zur Weltmeisterschaft",
+    "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Ergebnis der Weltmeisterschaft",
+    "WORLD_ROAD_CHAMPION": "Straßen-Weltmeister"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Rennplan erfordert Aufmerksamkeit: {{entity}}",
@@ -1083,5 +1093,97 @@
     "raceEffect": "Das Team bleibt startberechtigt; der Leistungsmalus steigt mit der Zahl fehlender Trikot-Sets",
     "extraWithMissing": "Noch benötigte einsatzbereite Renntrikot-Sets: {{missing}}. Ergänzen Sie den Bestand, um den Leistungsmalus zu verringern oder zu beseitigen. Ein vollständiger Mangel bedeutet -30% auf positive Vorbereitungsboni, +8% Energieverbrauch während der Etappe und +15% Ermüdung nach der Etappe.",
     "extraGeneric": "Öffnen Sie den Rennbedarf und prüfen Sie den Bestand einsatzbereiter Renntrikot-Sets. Ein Mangel verhindert die Teilnahme nicht."
+  },
+  "championship": {
+    "common": {
+      "previewPrefix": "[Vorschau]",
+      "countryFallback": "Land"
+    },
+    "labels": {
+      "qualificationGroup": "Qualifikationsgruppe",
+      "nationalFinal": "Nationales Finale",
+      "decisionDeadline": "Entscheidungsfrist",
+      "finalDate": "Finaldatum",
+      "qualifyingPlaces": "Qualifikationsplätze",
+      "yourRiderResults": "Ergebnisse deiner Fahrer",
+      "yourRidersQualified": "Deine qualifizierten Fahrer",
+      "topThree": "Top 3",
+      "champion": "Meister",
+      "podium": "Podium",
+      "grandFinale": "Großes Finale",
+      "worldRoadChampion": "Straßen-Weltmeister",
+      "worldPodium": "WM-Podium",
+      "qualifiedAs": "Qualifiziert als",
+      "finalDeadline": "Letzte Frist",
+      "raceDate": "Renndatum",
+      "result": "Ergebnis"
+    },
+    "values": {
+      "group": "Gruppe {{number}}",
+      "none": "Keine",
+      "firstPlace": "1. Platz"
+    },
+    "actions": {
+      "openMyNationalDuty": "Nationalen Einsatz öffnen",
+      "confirmFinalParticipation": "Finalteilnahme bestätigen",
+      "openQualificationResults": "Qualifikationsergebnisse öffnen",
+      "myNationalDuty": "Mein nationaler Einsatz",
+      "openNationalFinal": "Nationales Finale öffnen",
+      "openChampion": "Meister öffnen",
+      "openWorldDuty": "WM-Einsatz öffnen",
+      "confirmWorld": "Weltmeisterschaft bestätigen",
+      "openWorldResults": "WM-Ergebnisse öffnen",
+      "openWorldChampionship": "Weltmeisterschaft öffnen"
+    },
+    "selected": {
+      "title": "{{rider}} wurde für die Nationalmeisterschaft ausgewählt",
+      "message": "{{rider}} wurde für die Nationalmeisterschaft von {{country}} ausgewählt. Qualifikationsgruppe {{heat}} findet am {{qualificationDate}} statt. Bei Qualifikation folgt das Finale am {{finalDate}}. Entscheidung bis {{deadline}}.",
+      "extra": "Alle Kosten des nationalen Einsatzes werden übernommen. Öffne den nationalen Einsatz, um vor der Frist zuzustimmen oder abzulehnen."
+    },
+    "qualificationResult": {
+      "title": "{{country}} – Qualifikationsgruppe {{heat}} abgeschlossen",
+      "message": "Die offiziellen Ergebnisse sind verfügbar. Die besten {{places}} Fahrer erreichen das nationale Finale am {{finalDate}}.",
+      "extra": "Öffne das Qualifikationsrennen für die vollständige Wertung und den nationalen Einsatz für die nächsten Schritte deiner Fahrer."
+    },
+    "qualified": {
+      "title": "{{rider}} hat sich für das nationale Finale qualifiziert",
+      "message": "{{rider}} hat einen Platz im Finale der Nationalmeisterschaft von {{country}} am {{finalDate}} erreicht.",
+      "extra": "Für das nationale Finale ist eine separate zweite Bestätigung des Managers erforderlich."
+    },
+    "nationalFinalConfirmation": {
+      "title": "{{rider}} erneut für das nationale Finale bestätigen",
+      "message": "{{rider}} hat einen Platz im Finale der Nationalmeisterschaft von {{country}} am {{finalDate}}. Die Finalteilnahme muss bis {{finalDeadline}} separat bestätigt oder abgelehnt werden.",
+      "extra": "Dies ist die zweite Zustimmung für dieselbe Nationalmeisterschaft. Ohne Entscheidung bis zur Frist wird der Fahrer automatisch bestätigt."
+    },
+    "nationalFinalResult": {
+      "title": "{{country}} – Nationalmeisterschaft abgeschlossen",
+      "message": "{{champion}} ist nationaler Straßenmeister der Saison {{season}}. Die Schlusswertung ist jetzt offiziell.",
+      "extra": "Der Sieger wird automatisch zum großen Finale der Straßen-Weltmeisterschaft eingeladen."
+    },
+    "nationalChampion": {
+      "title": "{{rider}} ist nationaler Straßenmeister!",
+      "message": "{{rider}} gewann die Straßen-Nationalmeisterschaft von {{country}}. Der Titel ist jetzt Teil der Karriere-Ehrungen.",
+      "extra": "Das Abzeichen des nationalen Meisters ist in der aktuellen Saison aktiv und bleibt dauerhaft in der Karrierehistorie."
+    },
+    "worldInvitation": {
+      "title": "{{rider}} ist zur Straßen-Weltmeisterschaft eingeladen!",
+      "message": "{{rider}} hat sich als nationaler Meister von {{country}} für das große Finale der Straßen-Weltmeisterschaft am {{raceDate}} qualifiziert. Alle Teamkosten werden übernommen. Entscheidung bis {{deadline}}.",
+      "extra": "Der Manager muss die Einladung annehmen oder ablehnen. Kurz vor dem großen Finale ist eine zweite Bestätigung erforderlich."
+    },
+    "worldFinalConfirmation": {
+      "title": "{{rider}} erneut für die Straßen-Weltmeisterschaft bestätigen",
+      "message": "{{rider}} ist bereits für das große Finale der Straßen-Weltmeisterschaft am {{raceDate}} qualifiziert und bestätigt. Die endgültige Teilnahme muss bis {{finalDeadline}} erneut bestätigt werden.",
+      "extra": "Eine Ablehnung in dieser Phase entfernt den Fahrer von der Startliste und führt zum großen Moralabzug."
+    },
+    "worldResult": {
+      "title": "Straßen-Weltmeisterschaft abgeschlossen",
+      "message": "{{champion}} ist Straßen-Weltmeister der Saison {{season}}. Die Wertung des großen Finales ist jetzt offiziell.",
+      "extra": "Es gibt kein Team-Preisgeld. Das WM-Podium bleibt dauerhaft in den Karriere-Ehrungen der Fahrer gespeichert."
+    },
+    "worldChampion": {
+      "title": "{{rider}} ist Straßen-Weltmeister!",
+      "message": "{{rider}} gewann das große Finale der Straßen-Weltmeisterschaft. Dieser prestigeträchtige Titel ist jetzt Teil der Karriere-Ehrungen.",
+      "extra": "Das Weltmeister-Abzeichen ist in dieser Saison aktiv und bleibt dauerhaft in der Karrierehistorie."
+    }
   }
 }
