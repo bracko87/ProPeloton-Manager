@@ -3,11 +3,7 @@ import { ChevronLeft, Loader2, RefreshCw } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import RaceDetailPage, {
-  StageProfileChart,
-  getDisplayOnlyProfileMinimumVerticalSpan,
-  getDisplayOnlyStageProfilePoints,
-} from './RaceDetailPage'
+import RaceDetailPage, { StageProfileChart } from './RaceDetailPage'
 
 const FREE_AGENT_JERSEY_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit53.png'
@@ -449,26 +445,14 @@ export default function NationalChampionshipRacePage(): JSX.Element {
     setCoinPurchaseLoading(false)
   }
 
-  const points = useMemo(() => {
-    const authoritativePoints = (data?.route?.profile_points ?? [])
-      .map(normalizePoint)
-      .filter((point): point is ProfilePoint => point !== null)
-      .sort((a, b) => a.km - b.km)
-
-    return getDisplayOnlyStageProfilePoints(
-      data?.route?.stage_id ??
-        data?.generated_stage_id ??
-        data?.race_id,
-      authoritativePoints,
-      data?.route?.terrain_type,
-    )
-  }, [
-    data?.generated_stage_id,
-    data?.race_id,
-    data?.route?.profile_points,
-    data?.route?.stage_id,
-    data?.route?.terrain_type,
-  ])
+  const points = useMemo(
+    () =>
+      (data?.route?.profile_points ?? [])
+        .map(normalizePoint)
+        .filter((point): point is ProfilePoint => point !== null)
+        .sort((a, b) => a.km - b.km),
+    [data?.route?.profile_points],
+  )
 
   if (
     replayOpen &&
@@ -732,9 +716,6 @@ export default function NationalChampionshipRacePage(): JSX.Element {
               distanceKm={Number(data.route.distance_km ?? 0)}
               terrainType={data.route.terrain_type}
               mountainClimbs={[]}
-              minimumVerticalSpanOverride={getDisplayOnlyProfileMinimumVerticalSpan(
-                data.route.terrain_type,
-              )}
             />
           </div>
         </section>
