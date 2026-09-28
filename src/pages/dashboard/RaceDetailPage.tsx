@@ -8696,7 +8696,7 @@ function StagePointResultsTable({
   )
 }
 
-type BackendStageProfilePoint = {
+export type BackendStageProfilePoint = {
   km: number
   elevation: number
 }
@@ -8854,10 +8854,8 @@ function getDisplayOnlyMajorExtremaIndices(
 
     if (!isLocalPeak && !isLocalValley) continue
 
-    let leftReference =
-      isLocalPeak ? current.elevation : current.elevation
-    let rightReference =
-      isLocalPeak ? current.elevation : current.elevation
+    let leftReference = current.elevation
+    let rightReference = current.elevation
 
     for (let left = index - 1; left >= 0; left -= 1) {
       if (
