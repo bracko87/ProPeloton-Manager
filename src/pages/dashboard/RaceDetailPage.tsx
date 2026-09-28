@@ -2414,26 +2414,14 @@ function getNiceElevationAxisBounds(
   const lowAltitudeStage = rawMin <= 300
 
   /*
-   * If a genuinely tiny lowland profile stays below ~120 m, keep the compact
-   * treatment. Once lowland relief reaches the 150–400 m range, stop stretching
-   * it to fill the chart: show it against a broader absolute elevation frame.
+   * Low-altitude stages must use an absolute scale from zero even when the
+   * route only reaches 80–150 m. Otherwise a tiny local ridge fills the chart
+   * and visually looks comparable to a 500–700 m climb on another stage.
+   *
+   * The terrain-specific minimum below therefore controls the first-glance
+   * scale: flat lowland stages use at least 600 m, while hilly/cobbled and
+   * other non-flat lowland stages use at least 800 m.
    */
-  if (lowAltitudeStage && rawMax <= 120) {
-    const targetSpan = Math.max(dataSpan * 1.25, legacyMinimumSpan)
-    const midpoint = (rawMin + rawMax) / 2
-
-    const minElevation = Math.max(
-      0,
-      Math.floor((midpoint - targetSpan / 2) / 100) * 100
-    )
-    const maxElevation =
-      Math.ceil((midpoint + targetSpan / 2) / 100) * 100
-
-    return {
-      minElevation,
-      maxElevation: Math.max(maxElevation, minElevation + 100),
-    }
-  }
 
   let perceptionMinimumSpan = legacyMinimumSpan
 
