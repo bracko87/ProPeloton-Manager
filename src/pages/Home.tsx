@@ -69,6 +69,9 @@ type ReviewFormErrors = {
 const CONTACT_EMAIL = 'contact@propelotonmanager.com'
 const NEXT_QUEST_STUDIO_NAME = 'Next Quest Studio'
 const NEXT_QUEST_STUDIO_URL = 'https://www.nextqueststudio.net/'
+const TENNIS_LEGACY_URL = 'https://tennislegacygame.com/?source=propeloton_manager'
+const TENNIS_LEGACY_LOGO_URL =
+  'https://cwfznmroiqcyhfkfcrow.supabase.co/storage/v1/object/sign/Admin/Branding/logo%20333.png?token=eyJraWQiOiJmYWIyM2E5ZS02NDA1LTQxNjUtODVmNC0wNzZjZjA4NDgyYmQiLCJhbGciOiJIUzUxMiJ9.eyJ1cmwiOiJBZG1pbi9CcmFuZGluZy9sb2dvIDMzMy5wbmciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3OTQ1MDc5LCJleHAiOjQ5MTAwMDkwNzl9.Q7Ocay_B1kouWo_XmmgtVcGOCh0xtzhzaIm713AhU-ci-xJPY3JanaT3xhdkptAuKV5kUJGHov34fSM2TGjmcQ'
 const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
 
 const SOCIAL_LINKS = {
@@ -256,6 +259,28 @@ export default function HomePage(): JSX.Element {
   const [reviewSubmitMessage, setReviewSubmitMessage] = useState<string | null>(null)
   const [reviewSubmitTone, setReviewSubmitTone] = useState<'success' | 'error' | null>(null)
   const [submittingReview, setSubmittingReview] = useState(false)
+
+  function recordCrossGameClick(): void {
+    void supabase.rpc('record_cross_game_referral_event_v1', {
+      p_event_type: 'outgoing_click',
+      p_source_game: 'propeloton_manager',
+      p_destination_game: 'tennis_legacy',
+      p_surface: 'public_home_footer',
+    })
+  }
+
+  useEffect(() => {
+    const source = new URLSearchParams(window.location.search).get('source')
+    if (source !== 'tennis_legacy') return
+
+    window.localStorage.setItem('ppm-cross-game-source', source)
+    void supabase.rpc('record_cross_game_referral_event_v1', {
+      p_event_type: 'landing',
+      p_source_game: 'tennis_legacy',
+      p_destination_game: 'propeloton_manager',
+      p_surface: 'public_home',
+    })
+  }, [])
 
   const loadHomepageReviews = useCallback(async (): Promise<void> => {
     setReviewsLoading(true)
@@ -1133,6 +1158,32 @@ export default function HomePage(): JSX.Element {
             <div className="mt-4 text-xs text-white/50">
               {renderTextWithNextQuestStudioLink(t('footer.copyright'))}
             </div>
+
+            <a
+              href={TENNIS_LEGACY_URL}
+              target="_blank"
+              rel="noreferrer"
+              onClick={recordCrossGameClick}
+              className="mt-5 flex max-w-md items-center gap-3 rounded-xl border border-white/15 bg-white/5 px-3 py-3 text-white no-underline hover:border-white/30 hover:bg-white/10"
+              aria-label="Play Tennis Legacy: Rise to Glory, another game from Next Quest Studio"
+            >
+              <img
+                src={TENNIS_LEGACY_LOGO_URL}
+                alt=""
+                aria-hidden="true"
+                className="h-11 w-11 rounded-lg bg-slate-950 object-contain"
+              />
+              <span className="min-w-0">
+                <span className="block text-[10px] font-bold uppercase tracking-[0.08em] text-white/50">
+                  Also from our studio
+                </span>
+                <span className="block text-sm font-bold">Tennis Legacy: Rise to Glory</span>
+                <span className="mt-1 block text-xs leading-5 text-white/65">
+                  Build your professional tennis career.
+                </span>
+              </span>
+              <span className="ml-auto shrink-0 text-xs font-bold text-yellow-300">Play Now ↗</span>
+            </a>
           </div>
 
           <nav aria-label={t('footer.gameAria')}>
