@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, Loader2, RefreshCw } from 'lucide-react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import RaceDetailPage, {
@@ -332,6 +332,7 @@ export default function NationalChampionshipRacePage(): JSX.Element {
   const { t } = useTranslation('nationalRanking')
   const { t: tr } = useTranslation('raceDetail')
   const navigate = useNavigate()
+  const location = useLocation()
   const { editionId, eventType: routeEventType, heatNumber } = useParams()
 
   const eventType: 'qualification' | 'final' | null =
@@ -342,6 +343,7 @@ export default function NationalChampionshipRacePage(): JSX.Element {
         : 'final'
 
   const [data, setData] = useState<EventData | null>(null)
+  const [myClubIds, setMyClubIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [raceInfoTab, setRaceInfoTab] = useState<'riders' | 'results'>('riders')
@@ -402,6 +404,47 @@ export default function NationalChampionshipRacePage(): JSX.Element {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editionId, eventType, heatNumber])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadMyClubs(): Promise<void> {
+      try {
+        const { data: authData } = await supabase.auth.getUser()
+        const userId = authData.user?.id ?? null
+
+        if (!userId || cancelled) {
+          if (!cancelled) setMyClubIds([])
+          return
+        }
+
+        const { data: clubRows, error: clubError } = await supabase
+          .from('clubs')
+          .select('id')
+          .eq('owner_user_id', userId)
+          .in('club_type', ['main', 'developing'])
+
+        if (cancelled) return
+        if (clubError) throw clubError
+
+        setMyClubIds(
+          ((clubRows ?? []) as Array<{ id: string }>).map(club => club.id),
+        )
+      } catch (clubLoadError) {
+        console.error(
+          'Failed to resolve owned clubs for National Championship rider links:',
+          clubLoadError,
+        )
+        if (!cancelled) setMyClubIds([])
+      }
+    }
+
+    void loadMyClubs()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     const stageId = data?.generated_stage_id
@@ -598,6 +641,18 @@ export default function NationalChampionshipRacePage(): JSX.Element {
       : data.status === 'ready' || data.status === 'final_ready'
         ? t('eventPage.ready')
         : t('eventPage.planned')
+
+  const riderProfilePath = (
+    riderId: string,
+    clubId?: string | null,
+  ): string =>
+    clubId && myClubIds.includes(clubId)
+      ? `/dashboard/my-riders/${riderId}`
+      : `/dashboard/external-riders/${riderId}`
+
+  const riderProfileReturnState = {
+    returnTo: `${location.pathname}${location.search}`,
+  }
 
   return (
     <div className="w-full space-y-6">
@@ -1011,7 +1066,8 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                           </td>
                           <td className="px-4 py-3">
                             <Link
-                              to={`/dashboard/riders/${rider.rider_id}`}
+                              to={riderProfilePath(rider.rider_id, rider.club_id)}
+                              state={riderProfileReturnState}
                               className="font-semibold text-slate-950 hover:underline"
                             >
                               {rider.rider_name}
@@ -1066,7 +1122,8 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                           </td>
                           <td className="px-4 py-3">
                             <Link
-                              to={`/dashboard/riders/${result.rider_id}`}
+                              to={riderProfilePath(result.rider_id, result.club_id)}
+                              state={riderProfileReturnState}
                               className="font-semibold text-slate-950 hover:underline"
                             >
                               {result.rider_name}
