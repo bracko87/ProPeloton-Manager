@@ -3,7 +3,10 @@ import { ChevronLeft, Loader2, RefreshCw } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import RaceDetailPage, { StageProfileChart } from './RaceDetailPage'
+import RaceDetailPage, {
+  StageProfileChart,
+  getDisplayOnlyStageProfilePoints,
+} from './RaceDetailPage'
 
 const FREE_AGENT_JERSEY_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit53.png'
@@ -454,6 +457,16 @@ export default function NationalChampionshipRacePage(): JSX.Element {
     [data?.route?.profile_points],
   )
 
+  const displayPoints = useMemo(
+    () =>
+      getDisplayOnlyStageProfilePoints(
+        data?.route?.stage_id,
+        points,
+        data?.route?.terrain_type,
+      ),
+    [data?.route?.stage_id, data?.route?.terrain_type, points],
+  )
+
   if (
     replayOpen &&
     data?.race_id &&
@@ -700,7 +713,7 @@ export default function NationalChampionshipRacePage(): JSX.Element {
 
           <div className="mt-6">
             <StageProfileChart
-              points={points}
+              points={displayPoints}
               markers={[
                 {
                   type: 'start',
