@@ -214,30 +214,74 @@ function normalizeCoinAccess(value: unknown): ReplayCoinAccess | null {
   }
 }
 
-function Jersey({
+function CountryCell({
+  code,
+  fallbackCode,
+  fallbackFlagUrl,
+}: {
+  code?: string | null
+  fallbackCode?: string | null
+  fallbackFlagUrl?: string | null
+}): JSX.Element {
+  const normalizedCode = (code?.trim() || fallbackCode?.trim() || '').toUpperCase()
+  const flagCode = normalizedCode.toLowerCase()
+  const flagUrl =
+    /^[a-z]{2}$/.test(flagCode)
+      ? `https://flagcdn.com/w40/${flagCode}.png`
+      : fallbackFlagUrl?.trim() || null
+
+  return (
+    <div className="flex items-center gap-2">
+      {flagUrl ? (
+        <img
+          src={flagUrl}
+          alt={normalizedCode || 'Country'}
+          className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
+          loading="lazy"
+        />
+      ) : null}
+      <span className="font-medium text-slate-600">
+        {normalizedCode || '—'}
+      </span>
+    </div>
+  )
+}
+
+function TeamKitStrip({
   url,
   name,
 }: {
   url?: string | null
   name: string
 }): JSX.Element {
-  const [src, setSrc] = useState(url?.trim() || FREE_AGENT_JERSEY_URL)
+  const preferredUrl = url?.trim() || FREE_AGENT_JERSEY_URL
+  const [src, setSrc] = useState(preferredUrl)
 
   useEffect(() => {
-    setSrc(url?.trim() || FREE_AGENT_JERSEY_URL)
-  }, [url])
+    setSrc(preferredUrl)
+  }, [preferredUrl])
 
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5">
+    <div
+      className="group relative h-9 w-full min-w-[150px] max-w-[230px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+      title={name}
+    >
       <img
         src={src}
-        alt={name}
-        className="h-full w-full scale-[1.12] object-contain"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full scale-[5] object-contain opacity-95"
+        style={{
+          objectPosition: '50% 37%',
+          transformOrigin: '50% 37%',
+        }}
         loading="lazy"
         onError={() => {
           if (src !== FREE_AGENT_JERSEY_URL) setSrc(FREE_AGENT_JERSEY_URL)
         }}
       />
+      <span className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-slate-950/5" />
+      <span className="sr-only">{name}</span>
     </div>
   )
 }
@@ -939,9 +983,10 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                     <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <tr>
                         <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">{tr('results.country')}</th>
+                        <th className="px-4 py-3">{tr('results.rider')}</th>
+                        <th className="px-4 py-3">{tr('results.team')}</th>
                         <th className="px-4 py-3">{t('eventPage.jersey')}</th>
-                        <th className="px-4 py-3">{t('eventPage.rider')}</th>
-                        <th className="px-4 py-3">{t('eventPage.team')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
@@ -950,10 +995,11 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                           <td className="px-4 py-3 font-semibold text-slate-700">
                             {rider.seed_number ?? rider.national_rank}
                           </td>
-                          <td className="px-4 py-2">
-                            <Jersey
-                              url={rider.jersey_url}
-                              name={rider.team_name ?? t('ranking.freeAgent')}
+                          <td className="px-4 py-3">
+                            <CountryCell
+                              code={rider.country_code}
+                              fallbackCode={data.country_code}
+                              fallbackFlagUrl={data.flag_url}
                             />
                           </td>
                           <td className="px-4 py-3">
@@ -966,6 +1012,12 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             {rider.team_name ?? t('ranking.freeAgent')}
+                          </td>
+                          <td className="px-4 py-2">
+                            <TeamKitStrip
+                              url={rider.jersey_url}
+                              name={rider.team_name ?? t('ranking.freeAgent')}
+                            />
                           </td>
                         </tr>
                       ))}
@@ -986,12 +1038,10 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                     <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <tr>
                         <th className="px-4 py-3">#</th>
-                        <th className="px-4 py-3">{t('eventPage.jersey')}</th>
-                        <th className="px-4 py-3">{t('eventPage.rider')}</th>
-                        <th className="px-4 py-3">{t('eventPage.team')}</th>
-                        <th className="px-4 py-3 text-right">{t('eventPage.time')}</th>
-                        <th className="px-4 py-3 text-right">{t('eventPage.gap')}</th>
-                        <th className="px-4 py-3">{t('eventPage.status')}</th>
+                        <th className="px-4 py-3">{tr('results.rider')}</th>
+                        <th className="px-4 py-3">{tr('results.team')}</th>
+                        <th className="px-4 py-3 text-right">{tr('results.time')}</th>
+                        <th className="px-4 py-3 text-right">{tr('results.gap')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
@@ -999,12 +1049,6 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                         <tr key={result.rider_id} className="hover:bg-slate-50">
                           <td className="px-4 py-3 font-semibold text-slate-900">
                             {result.rank ?? '—'}
-                          </td>
-                          <td className="px-4 py-2">
-                            <Jersey
-                              url={result.jersey_url}
-                              name={result.team_name ?? t('ranking.freeAgent')}
-                            />
                           </td>
                           <td className="px-4 py-3">
                             <Link
@@ -1014,17 +1058,17 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                               {result.rider_name}
                             </Link>
                           </td>
-                          <td className="px-4 py-3 text-slate-600">
-                            {result.team_name ?? t('ranking.freeAgent')}
+                          <td className="px-4 py-2">
+                            <TeamKitStrip
+                              url={result.jersey_url}
+                              name={result.team_name ?? t('ranking.freeAgent')}
+                            />
                           </td>
-                          <td className="px-4 py-3 text-right font-medium text-slate-900">
+                          <td className="px-4 py-3 text-right font-semibold text-slate-900">
                             {formatRaceTime(result.elapsed_seconds)}
                           </td>
                           <td className="px-4 py-3 text-right text-slate-600">
                             {formatGap(result.gap_seconds)}
-                          </td>
-                          <td className="px-4 py-3 text-slate-600">
-                            {humanize(result.status ?? 'finished')}
                           </td>
                         </tr>
                       ))}
