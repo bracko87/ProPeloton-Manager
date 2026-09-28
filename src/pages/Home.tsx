@@ -69,7 +69,8 @@ type ReviewFormErrors = {
 const CONTACT_EMAIL = 'contact@propelotonmanager.com'
 const NEXT_QUEST_STUDIO_NAME = 'Next Quest Studio'
 const NEXT_QUEST_STUDIO_URL = 'https://www.nextqueststudio.net/'
-const TENNIS_LEGACY_URL = 'https://tennislegacygame.com/?source=propeloton_manager'const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
+const TENNIS_LEGACY_URL = 'https://tennislegacygame.com/?source=propeloton_manager'
+const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
 
 const SOCIAL_LINKS = {
   facebook: 'https://www.facebook.com/profile.php?id=61583549010426',
