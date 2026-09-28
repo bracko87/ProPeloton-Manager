@@ -225,6 +225,28 @@
       "hilly": "Vallonné",
       "mountain": "Montagne",
       "cobbled": "Pavés"
-    }
+    },
+    "oneDayRace": "Course d'un jour",
+    "raceDateLine": "Date de la course : {{date}} — {{place}}",
+    "noTeamCost": "Aucun coût pour l'équipe",
+    "stages": "Étapes",
+    "stageOne": "Étape 1",
+    "replayAfterGeneration": "Le replay sera disponible via le système normal de replay une fois cette course du championnat national créée et calculée.",
+    "raceInformation": "Informations de course",
+    "ridersResults": "Coureurs et résultats",
+    "results": "Résultats",
+    "finalRidersPending": "Les participants à la finale seront connus après la fin des groupes de qualification.",
+    "noRiders": "Aucun coureur n'est actuellement affecté à cette épreuve.",
+    "jersey": "Maillot",
+    "rider": "Coureur",
+    "team": "Équipe",
+    "time": "Temps",
+    "gap": "Écart",
+    "status": "Statut",
+    "resultsPending": "Les résultats seront publiés ici après la fin de la course.",
+    "refresh": "Actualiser",
+    "finished": "Course terminée",
+    "ready": "Course prête",
+    "planned": "Planifiée"
   }
 }
