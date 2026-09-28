@@ -1569,6 +1569,377 @@ function isSportDirectorAdvisoryType(
 
 export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
 
+  NATIONAL_CHAMPIONSHIP_SELECTED: {
+    defaultTitle: 'Selected for National Duty',
+    defaultMessage: 'A rider from your team has been selected for the National Road Championship.',
+    getImageSrc: (item) => {
+      const payload = getPayload(item)
+      const code = pickFirstString(payload, ['country_code'])
+      return code && /^[a-z]{2}$/i.test(code)
+        ? `https://flagcdn.com/w80/${code.toLowerCase()}.png`
+        : null
+    },
+    getIntroText: (item) => item.message || 'A rider from your team has been selected for National Duty.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow('Country', formatCountryName(pickFirstString(payload, ['country_code']))),
+        detailRow(
+          'Qualification',
+          formatContractSeasonLabel(pickFirstString(payload, ['qualification_date']))
+        ),
+        detailRow(
+          'National final',
+          formatContractSeasonLabel(pickFirstString(payload, ['final_date']))
+        ),
+        detailRow(
+          'Decision deadline',
+          formatContractSeasonLabel(
+            pickFirstString(payload, ['participation_decision_deadline'])
+          )
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'All National Duty costs are covered. Open My National Duty to approve or refuse the rider before the deadline.',
+    actions: [
+      withFallbackHref('Open My National Duty', '/dashboard/national-ranking?tab=duty'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_CHAMPIONSHIP_QUALIFIED: {
+    defaultTitle: 'Qualified for the National Championship final',
+    defaultMessage: 'Your rider has qualified for the National Championship final.',
+    getImageSrc: (item) => {
+      const code = pickFirstString(getPayload(item), ['country_code'])
+      return code && /^[a-z]{2}$/i.test(code)
+        ? `https://flagcdn.com/w80/${code.toLowerCase()}.png`
+        : null
+    },
+    getIntroText: (item) => item.message || 'Your rider earned a place in the National Championship final.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow('Country', formatCountryName(pickFirstString(payload, ['country_code']))),
+        detailRow(
+          'Qualification group',
+          (() => {
+            const value = pickFirstNumber(payload, ['heat_number'])
+            return value !== null ? `Group ${value}` : null
+          })()
+        ),
+        detailRow(
+          'National final',
+          formatContractSeasonLabel(pickFirstString(payload, ['final_date']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'The rider has earned the ticket to the final. A separate final participation confirmation will be required.',
+    actions: [
+      withFallbackHref('Open My National Duty', '/dashboard/national-ranking?tab=duty'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: {
+    defaultTitle: 'Confirm National Championship final participation',
+    defaultMessage: 'Your rider has reached the National Championship final and must be confirmed again.',
+    getImageSrc: (item) => {
+      const code = pickFirstString(getPayload(item), ['country_code'])
+      return code && /^[a-z]{2}$/i.test(code)
+        ? `https://flagcdn.com/w80/${code.toLowerCase()}.png`
+        : null
+    },
+    getIntroText: (item) => item.message || 'A second manager decision is required for the National Championship final.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow('Country', formatCountryName(pickFirstString(payload, ['country_code']))),
+        detailRow(
+          'Final date',
+          formatContractSeasonLabel(pickFirstString(payload, ['final_date']))
+        ),
+        detailRow(
+          'Decision deadline',
+          formatContractSeasonLabel(pickFirstString(payload, ['final_decision_deadline']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'This is the second approval for the same National Championship campaign. If no decision is made by the deadline, the rider is auto-approved.',
+    actions: [
+      withFallbackHref('Confirm final participation', '/dashboard/national-ranking?tab=duty'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT: {
+    defaultTitle: 'National qualification results are official',
+    defaultMessage: 'The National Championship qualification race has been completed.',
+    getImageSrc: (item) => {
+      const code = pickFirstString(getPayload(item), ['country_code'])
+      return code && /^[a-z]{2}$/i.test(code)
+        ? `https://flagcdn.com/w80/${code.toLowerCase()}.png`
+        : null
+    },
+    getIntroText: (item) => item.message || 'Official qualification results are now available.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const topThree = getRaceResultEntries(payload, 'top_three')
+        .map(row => formatRaceResultEntry(row, true))
+        .filter(Boolean)
+        .join(' · ')
+      const myRiders = getRaceResultEntries(payload, 'my_riders')
+        .map(row => formatRaceResultEntry(row, false))
+        .filter(Boolean)
+        .join(' · ')
+      const qualified = pickStringArray(payload, ['my_qualified_riders']).join(', ')
+      const places = pickFirstNumber(payload, ['qualifying_places'])
+      const heat = pickFirstNumber(payload, ['heat_number'])
+
+      return compactRows([
+        detailRow('Country', formatCountryName(pickFirstString(payload, ['country_code']))),
+        detailRow('Qualification group', heat !== null ? `Group ${heat}` : null),
+        detailRow('Qualifying places', places !== null ? String(places) : null),
+        detailRow('Your rider results', myRiders || null),
+        detailRow('Your riders qualified', qualified || 'None'),
+        detailRow('Top 3', topThree || null),
+        detailRow(
+          'National final',
+          formatContractSeasonLabel(pickFirstString(payload, ['final_date']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'Riders inside the qualifying places advance to the National Championship final. Open the race page for the complete classification.',
+    actions: [
+      withFallbackHref('Open qualification results', '/dashboard/national-ranking'),
+      {
+        key: 'open-national-duty',
+        label: 'My National Duty',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/national-ranking?tab=duty',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_CHAMPIONSHIP_FINAL_RESULT: {
+    defaultTitle: 'National Championship final completed',
+    defaultMessage: 'The National Championship final classification is official.',
+    getImageSrc: (item) => {
+      const code = pickFirstString(getPayload(item), ['country_code'])
+      return code && /^[a-z]{2}$/i.test(code)
+        ? `https://flagcdn.com/w80/${code.toLowerCase()}.png`
+        : null
+    },
+    getIntroText: (item) => item.message || 'The National Championship final has been completed.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const topThree = getRaceResultEntries(payload, 'top_three')
+        .map(row => formatRaceResultEntry(row, true))
+        .filter(Boolean)
+        .join(' · ')
+      const myRiders = getRaceResultEntries(payload, 'my_riders')
+        .map(row => formatRaceResultEntry(row, false))
+        .filter(Boolean)
+        .join(' · ')
+
+      return compactRows([
+        detailRow('Country', formatCountryName(pickFirstString(payload, ['country_name', 'country_code']))),
+        detailRow('Champion', pickFirstString(payload, ['champion_rider_name'])),
+        detailRow('Your rider results', myRiders || null),
+        detailRow('Podium', topThree || null),
+        detailRow(
+          'Race date',
+          formatContractSeasonLabel(pickFirstString(payload, ['final_date']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'The winner is now the current National Road Champion and is automatically invited to the World Road Championship Grand Finale.',
+    actions: [
+      withFallbackHref('Open National Championship final', '/dashboard/national-ranking'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_CHAMPION: {
+    defaultTitle: 'National Road Champion',
+    defaultMessage: 'Your rider has won the National Road Championship.',
+    getImageSrc: (item) => {
+      const code = pickFirstString(getPayload(item), ['country_code'])
+      return code && /^[a-z]{2}$/i.test(code)
+        ? `https://flagcdn.com/w80/${code.toLowerCase()}.png`
+        : null
+    },
+    getIntroText: (item) => item.message || 'Your rider is the new National Road Champion.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Champion', getPreferredRiderName(item)),
+        detailRow('Country', formatCountryName(pickFirstString(payload, ['country_code']))),
+        detailRow(
+          'Season',
+          (() => {
+            const season = pickFirstNumber(payload, ['season_number'])
+            return season !== null ? `Season ${season}` : null
+          })()
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'The National Champion badge is active for the current season and remains permanently in the rider career honours.',
+    actions: [
+      {
+        key: 'open-champion-rider',
+        label: 'Open champion',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => getRiderProfileHref(item),
+        show: (item) => Boolean(getRiderProfileHref(item)),
+      },
+      withFallbackHref('National Ranking', '/dashboard/national-ranking'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  WORLD_ROAD_CHAMPIONSHIP_INVITATION: {
+    defaultTitle: 'World Road Championship invitation',
+    defaultMessage: 'Your National Champion has qualified for the World Road Championship Grand Finale.',
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/world%20championship%20logo.webp',
+    getIntroText: (item) => item.message || 'Your National Champion has earned a World Championship invitation.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow('Qualified as', formatCountryName(pickFirstString(payload, ['country_code']))),
+        detailRow(
+          'Grand Finale',
+          formatContractSeasonLabel(pickFirstString(payload, ['race_date']))
+        ),
+        detailRow(
+          'Decision deadline',
+          formatContractSeasonLabel(pickFirstString(payload, ['decision_deadline']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'All team costs are covered. The manager must approve or refuse the invitation; a separate final confirmation is required again shortly before the race.',
+    actions: [
+      withFallbackHref('Open World Championship duty', '/dashboard/national-ranking?tab=duty'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: {
+    defaultTitle: 'Confirm World Championship participation again',
+    defaultMessage: 'A second manager confirmation is required for the World Road Championship Grand Finale.',
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/world%20championship%20logo.webp',
+    getIntroText: (item) => item.message || 'Your rider is already qualified and accepted, but the final confirmation must be made again.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow('Country', formatCountryName(pickFirstString(payload, ['country_code']))),
+        detailRow(
+          'Grand Finale',
+          formatContractSeasonLabel(pickFirstString(payload, ['race_date']))
+        ),
+        detailRow(
+          'Final deadline',
+          formatContractSeasonLabel(pickFirstString(payload, ['final_decision_deadline']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'This is the second World Championship approval. Refusing at this stage removes the rider from the startlist and applies the major morale penalty.',
+    actions: [
+      withFallbackHref('Confirm World Championship', '/dashboard/national-ranking?tab=duty'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  WORLD_ROAD_CHAMPIONSHIP_RESULT: {
+    defaultTitle: 'World Road Championship completed',
+    defaultMessage: 'The World Road Championship Grand Finale classification is official.',
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/world%20championship%20logo.webp',
+    getIntroText: (item) => item.message || 'The World Road Championship Grand Finale has been completed.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const topThree = getRaceResultEntries(payload, 'top_three')
+        .map(row => formatRaceResultEntry(row, true))
+        .filter(Boolean)
+        .join(' · ')
+      const myRiders = getRaceResultEntries(payload, 'my_riders')
+        .map(row => formatRaceResultEntry(row, false))
+        .filter(Boolean)
+        .join(' · ')
+
+      return compactRows([
+        detailRow('World Road Champion', pickFirstString(payload, ['champion_rider_name'])),
+        detailRow('Your rider results', myRiders || null),
+        detailRow('World podium', topThree || null),
+        detailRow(
+          'Grand Finale',
+          formatContractSeasonLabel(pickFirstString(payload, ['race_date']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'There is no team prize money. The winner receives the World Road Champion title and the podium is stored permanently in rider career honours.',
+    actions: [
+      withFallbackHref('Open World Championship results', '/dashboard/national-ranking'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  WORLD_ROAD_CHAMPION: {
+    defaultTitle: 'World Road Champion!',
+    defaultMessage: 'Your rider has won the World Road Championship Grand Finale.',
+    imageSrc:
+      'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/world%20championship%20logo.webp',
+    getIntroText: (item) => item.message || 'Your rider is the new World Road Champion.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('World Road Champion', getPreferredRiderName(item)),
+        detailRow(
+          'Season',
+          (() => {
+            const season = pickFirstNumber(payload, ['season_number'])
+            return season !== null ? `Season ${season}` : null
+          })()
+        ),
+        detailRow('Result', '1st place'),
+      ])
+    },
+    getExtraText: () =>
+      'This is a prestige title with no team cash prize. The World Road Champion badge is active this season and remains in career history afterward.',
+    actions: [
+      {
+        key: 'open-world-champion',
+        label: 'Open champion',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => getRiderProfileHref(item),
+        show: (item) => Boolean(getRiderProfileHref(item)),
+      },
+      withFallbackHref('Open World Championship', '/dashboard/national-ranking'),
+      MARK_READ_ACTION,
+    ],
+  },
+
   RACE_PLAN_NEEDS_ATTENTION: {
     defaultTitle: 'Race plan needs attention',
 
