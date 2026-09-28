@@ -3107,8 +3107,12 @@ export default function ExternalRiderProfilePage({
                             <span className="text-base font-semibold text-slate-900">{currentTeamDisplayName}</span>
                           </div>
                           {currentTeamLogoUrl ? (
-                            <div className="mt-5 flex min-h-[130px] items-center justify-start">
-                              <img src={currentTeamLogoUrl} alt={currentTeamDisplayName} className="max-h-36 max-w-[280px] object-contain" />
+                            <div className="mt-5 flex min-h-[130px] w-full items-center justify-center">
+                              <img
+                                src={currentTeamLogoUrl}
+                                alt={currentTeamDisplayName}
+                                className="mx-auto block max-h-36 max-w-[280px] object-contain"
+                              />
                             </div>
                           ) : null}
                         </div>
