@@ -168,7 +168,7 @@ function formatRaceTime(seconds?: number | null): string {
 function formatGap(seconds?: number | null): string {
   if (seconds == null || !Number.isFinite(Number(seconds))) return '—'
   const total = Math.max(0, Math.round(Number(seconds)))
-  if (total === 0) return '—'
+  if (total === 0) return 'Leader'
   if (total < 60) return `+${total}s`
   const minutes = Math.floor(total / 60)
   const secs = total % 60
@@ -979,14 +979,21 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-2xl border border-slate-200">
-                  <table className="min-w-full text-sm">
+                  <table className="min-w-full table-fixed text-sm">
+                    <colgroup>
+                      <col className="w-[7%]" />
+                      <col className="w-[13%]" />
+                      <col className="w-[27%]" />
+                      <col className="w-[24%]" />
+                      <col className="w-[29%]" />
+                    </colgroup>
                     <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <tr>
                         <th className="px-4 py-3">#</th>
                         <th className="px-4 py-3">{tr('results.country')}</th>
                         <th className="px-4 py-3">{tr('results.rider')}</th>
                         <th className="px-4 py-3">{tr('results.team')}</th>
-                        <th className="px-4 py-3">{t('eventPage.jersey')}</th>
+                        <th className="px-4 py-3">{t('eventPage.kit', { defaultValue: 'Kit' })}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
@@ -1034,7 +1041,14 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-2xl border border-slate-200">
-                  <table className="min-w-full text-sm">
+                  <table className="min-w-full table-fixed text-sm">
+                    <colgroup>
+                      <col className="w-[8%]" />
+                      <col className="w-[34%]" />
+                      <col className="w-[34%]" />
+                      <col className="w-[14%]" />
+                      <col className="w-[10%]" />
+                    </colgroup>
                     <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <tr>
                         <th className="px-4 py-3">#</th>
