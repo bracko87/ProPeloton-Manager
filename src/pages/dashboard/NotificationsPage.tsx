@@ -2304,7 +2304,7 @@ export default function NotificationsPage(): JSX.Element {
                                   : 'font-medium text-slate-900'
                               }`}
                             >
-                              {localizeAdvisorNotificationRuntimeText(item.title, t)}
+                              {localizeNotificationRuntimeText(item.title, item, t)}
                             </div>
 
                             <div className="shrink-0 text-xs text-slate-500">
@@ -2313,7 +2313,7 @@ export default function NotificationsPage(): JSX.Element {
                           </div>
 
                           <p className="mt-1 line-clamp-2 text-sm text-slate-600">
-                            {localizeAdvisorNotificationRuntimeText(item.message, t)}
+                            {localizeNotificationRuntimeText(item.message, item, t)}
                           </p>
 
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -2446,7 +2446,7 @@ export default function NotificationsPage(): JSX.Element {
                                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
                                     <div className="text-sm font-semibold text-slate-900">
-                                      {localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                      {localizeNotificationRuntimeText(item.title, item, t)}
                                     </div>
                                     <div className="mt-1 text-xs text-slate-500">
                                       {advisorPayload.staff?.name ??
@@ -2570,7 +2570,7 @@ export default function NotificationsPage(): JSX.Element {
                                     <div className="flex items-start justify-center lg:justify-end">
                                       <img
                                         src={imageSrc}
-                                        alt={localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                        alt={localizeNotificationRuntimeText(item.title, item, t)}
                                         className="w-full max-w-[340px] rounded-xl object-cover shadow-sm"
                                         draggable={false}
                                       />
@@ -2725,7 +2725,7 @@ export default function NotificationsPage(): JSX.Element {
                                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
                                     <div className="text-sm font-semibold text-slate-900">
-                                      {localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                      {localizeNotificationRuntimeText(item.title, item, t)}
                                     </div>
                                     <div className="mt-1 text-xs text-slate-500">
                                       {advisorPayload.staff?.name ??
@@ -2877,7 +2877,7 @@ export default function NotificationsPage(): JSX.Element {
                                     <div className="flex items-start justify-center lg:justify-end">
                                       <img
                                         src={imageSrc}
-                                        alt={localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                        alt={localizeNotificationRuntimeText(item.title, item, t)}
                                         className="w-full max-w-[340px] rounded-xl object-cover shadow-sm"
                                         draggable={false}
                                       />
@@ -3005,7 +3005,7 @@ export default function NotificationsPage(): JSX.Element {
                                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
                                     <div className="text-sm font-semibold text-slate-900">
-                                      {localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                      {localizeNotificationRuntimeText(item.title, item, t)}
                                     </div>
                                     <div className="mt-1 text-xs text-slate-500">
                                       {advisorPayload.staff?.name ??
@@ -3169,7 +3169,7 @@ export default function NotificationsPage(): JSX.Element {
                                     <div className="flex items-start justify-center lg:justify-end">
                                       <img
                                         src={imageSrc}
-                                        alt={localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                        alt={localizeNotificationRuntimeText(item.title, item, t)}
                                         className="w-full max-w-[340px] rounded-xl object-cover shadow-sm"
                                         draggable={false}
                                       />
@@ -3273,7 +3273,7 @@ export default function NotificationsPage(): JSX.Element {
                               <div className="border-b border-slate-300 bg-white px-4 py-3">
                                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
-                                    <div className="text-sm font-semibold text-slate-900">{localizeAdvisorNotificationRuntimeText(item.title, t)}</div>
+                                    <div className="text-sm font-semibold text-slate-900">{localizeNotificationRuntimeText(item.title, item, t)}</div>
                                     <div className="mt-1 text-xs text-slate-500">
                                       {advisorPayload.staff?.name ?? advisorPayload.advisor_staff_name ?? t('roles.chiefMechanic')} · {t('roles.chiefMechanic')}
                                     </div>
@@ -3384,7 +3384,7 @@ export default function NotificationsPage(): JSX.Element {
 
                                   {imageSrc ? (
                                     <div className="flex items-start justify-center lg:justify-end">
-                                      <img src={imageSrc} alt={localizeAdvisorNotificationRuntimeText(item.title, t)} className="w-full max-w-[340px] rounded-xl object-cover shadow-sm" draggable={false} />
+                                      <img src={imageSrc} alt={localizeNotificationRuntimeText(item.title, item, t)} className="w-full max-w-[340px] rounded-xl object-cover shadow-sm" draggable={false} />
                                     </div>
                                   ) : null}
                                 </div>
@@ -3465,7 +3465,7 @@ export default function NotificationsPage(): JSX.Element {
                                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                   <div>
                                     <div className="text-sm font-semibold text-slate-900">
-                                      {localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                      {localizeNotificationRuntimeText(item.title, item, t)}
                                     </div>
                                     <div className="mt-1 text-xs text-slate-500">
                                       {advisorPayload.staff?.name ??
@@ -3743,7 +3743,7 @@ export default function NotificationsPage(): JSX.Element {
                                     <div className="flex items-start justify-center lg:justify-end">
                                       <img
                                         src={imageSrc}
-                                        alt={localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                        alt={localizeNotificationRuntimeText(item.title, item, t)}
                                         className="w-full max-w-[340px] rounded-xl object-cover shadow-sm"
                                         draggable={false}
                                       />
@@ -3816,7 +3816,7 @@ export default function NotificationsPage(): JSX.Element {
                           <div className="ml-5 mt-4 overflow-hidden rounded-xl border border-slate-300 bg-slate-50 shadow-sm">
                             <div className="border-b border-slate-300 bg-white px-4 py-3">
                               <div className="text-sm font-semibold text-slate-900">
-                                {localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                {localizeNotificationRuntimeText(item.title, item, t)}
                               </div>
                             </div>
 
@@ -3910,7 +3910,7 @@ export default function NotificationsPage(): JSX.Element {
                                   <div className="flex items-start justify-center lg:justify-end">
                                     <img
                                       src={imageSrc}
-                                      alt={localizeAdvisorNotificationRuntimeText(item.title, t)}
+                                      alt={localizeNotificationRuntimeText(item.title, item, t)}
                                       className="w-full max-w-[340px] rounded-xl object-cover shadow-sm"
                                       draggable={false}
                                     />
