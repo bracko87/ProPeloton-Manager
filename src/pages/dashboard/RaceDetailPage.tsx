@@ -8745,80 +8745,34 @@ function getDisplayOnlyMicroTerrainAmplitudeMeters(
 
   const normalizedTerrain = String(terrainType ?? '').toLowerCase()
 
-  /*
-   * V2: micro relief must remain genuinely micro.
-   *
-   * The previous 18–24 m amplitudes were large enough to turn ordinary
-   * lowland roads into a continuous saw-tooth. Keep only a small amount of
-   * local texture and let the broad route anchors carry the profile shape.
-   */
   const baseAmplitude =
-    normalizedTerrain === 'mountain'
-      ? 9
-      : normalizedTerrain === 'hilly'
-        ? 7
+    normalizedTerrain === 'hilly'
+      ? 24
+      : normalizedTerrain === 'mountain'
+        ? 18
         : normalizedTerrain === 'cobbled'
-          ? 6
+          ? 14
           : normalizedTerrain === 'individual_time_trial' ||
               normalizedTerrain === 'team_time_trial' ||
               normalizedTerrain === 'prologue' ||
               normalizedTerrain === 'time_trial'
-            ? 3
-            : 4
+            ? 10
+            : 10
 
-  // Sustained climbs/descents should look like sustained roads, not teeth.
+  // Do not visually distort real sustained climbs/descents.
   const slopeFactor =
-    absoluteGradientPercent >= 3
-      ? 0
-      : absoluteGradientPercent >= 1.5
-        ? 0.2
-        : absoluteGradientPercent >= 0.75
-          ? 0.45
+    absoluteGradientPercent >= 5
+      ? 0.2
+      : absoluteGradientPercent >= 3
+        ? 0.4
+        : absoluteGradientPercent >= 1.5
+          ? 0.7
           : 1
 
   const deterministicVariation =
-    0.88 + (((stageSeed + anchorIndex * 17) % 23) / 22) * 0.24
+    0.85 + (((stageSeed + anchorIndex * 17) % 31) / 30) * 0.3
 
   return baseAmplitude * slopeFactor * deterministicVariation
-}
-
-function shouldAddDisplayOnlyBroadLowReliefWave(
-  spanKm: number,
-  absoluteGradientPercent: number,
-  anchorIndex: number,
-  stageSeed: number
-): boolean {
-  if (!ENABLE_DISPLAY_ONLY_STAGE_MICRO_TERRAIN) return false
-  if (spanKm < 7 || absoluteGradientPercent > 1.1) return false
-
-  /*
-   * Only some long, low-gradient segments get a broad drag/roller.
-   * This deliberately leaves many 10–25 km stretches almost straight.
-   */
-  return (stageSeed + anchorIndex * 13) % 4 === 0
-}
-
-function getDisplayOnlyBroadLowReliefMeters(
-  fraction: number,
-  spanKm: number,
-  terrainType: string | null | undefined,
-  anchorIndex: number,
-  stageSeed: number
-): number {
-  const normalizedTerrain = String(terrainType ?? '').toLowerCase()
-  const direction = (stageSeed + anchorIndex * 7) % 2 === 0 ? 1 : -1
-  const baseAmplitude =
-    normalizedTerrain === 'mountain'
-      ? 10
-      : normalizedTerrain === 'hilly'
-        ? 8
-        : normalizedTerrain === 'cobbled'
-          ? 6
-          : 5
-  const amplitude = Math.min(baseAmplitude, 2.5 + spanKm * 0.32)
-
-  // One broad half-wave only. No repeated up/down pattern inside the segment.
-  return direction * Math.sin(Math.PI * fraction) * amplitude
 }
 
 function shouldApplyDisplayOnlyMajorReliefShaping(
@@ -8850,100 +8804,7 @@ function shouldApplyDisplayOnlyMajorReliefShaping(
   return spanKm >= minimumSpanKm && absoluteGain >= minimumGainMeters
 }
 
-function getDisplayOnlyNaturalSlopeWeight(
-  fraction: number,
-  elevationDeltaMeters: number,
-  anchorIndex: number,
-  stageSeed: number
-): number {
-  const clamped = Math.max(0, Math.min(1, fraction))
-  const directionOffset = elevationDeltaMeters < 0 ? 97 : 0
-  const phaseA =
-    ((stageSeed + anchorIndex * 37 + directionOffset) % 360) *
-    (Math.PI / 180)
-  const phaseB =
-    ((stageSeed + anchorIndex * 53 + directionOffset * 2) % 360) *
-    (Math.PI / 180)
-
-  /*
-   * This is deliberately low-frequency. It changes the gradient over broad
-   * kilometres rather than introducing lots of short teeth or staircase
-   * shelves. The weight always stays positive, so an ascent remains an ascent
-   * and a descent remains a descent unless the separate broad-descent relief
-   * layer creates one small natural rebound.
-   */
-  const weight =
-    1 +
-    Math.sin(clamped * Math.PI * 2 + phaseA) * 0.34 +
-    Math.sin(clamped * Math.PI + phaseB) * 0.17
-
-  return Math.max(0.28, weight)
-}
-
-function integrateDisplayOnlyNaturalSlopeWeight(
-  toFraction: number,
-  elevationDeltaMeters: number,
-  anchorIndex: number,
-  stageSeed: number
-): number {
-  const to = Math.max(0, Math.min(1, toFraction))
-  if (to <= 0) return 0
-
-  const steps = Math.max(6, Math.ceil(30 * to))
-  const stepSize = to / steps
-  let total =
-    (getDisplayOnlyNaturalSlopeWeight(
-      0,
-      elevationDeltaMeters,
-      anchorIndex,
-      stageSeed
-    ) +
-      getDisplayOnlyNaturalSlopeWeight(
-        to,
-        elevationDeltaMeters,
-        anchorIndex,
-        stageSeed
-      )) *
-    0.5
-
-  for (let step = 1; step < steps; step += 1) {
-    total += getDisplayOnlyNaturalSlopeWeight(
-      step * stepSize,
-      elevationDeltaMeters,
-      anchorIndex,
-      stageSeed
-    )
-  }
-
-  return total * stepSize
-}
-
-function getDisplayOnlyNaturalReliefProgress(
-  fraction: number,
-  elevationDeltaMeters: number,
-  anchorIndex: number,
-  stageSeed: number
-): number {
-  const total = integrateDisplayOnlyNaturalSlopeWeight(
-    1,
-    elevationDeltaMeters,
-    anchorIndex,
-    stageSeed
-  )
-
-  if (total <= 0.000001) return fraction
-
-  return (
-    integrateDisplayOnlyNaturalSlopeWeight(
-      fraction,
-      elevationDeltaMeters,
-      anchorIndex,
-      stageSeed
-    ) / total
-  )
-}
-
-function getDisplayOnlyBroadDescentReliefMeters(
+function getDisplayOnlyMajorReliefAdjustmentMeters(
   fraction: number,
   spanKm: number,
   elevationDeltaMeters: number,
@@ -8952,8 +8813,6 @@ function getDisplayOnlyBroadDescentReliefMeters(
   stageSeed: number
 ): number {
   if (
-    elevationDeltaMeters >= 0 ||
-    spanKm < 5 ||
     !shouldApplyDisplayOnlyMajorReliefShaping(
       spanKm,
       elevationDeltaMeters,
@@ -8963,28 +8822,36 @@ function getDisplayOnlyBroadDescentReliefMeters(
     return 0
   }
 
-  const absoluteDrop = Math.abs(elevationDeltaMeters)
-  const envelope = Math.pow(Math.sin(Math.PI * fraction), 2)
-  const phase =
-    (((stageSeed + anchorIndex * 19) % 120) - 60) * (Math.PI / 180)
+  const absoluteGain = Math.abs(elevationDeltaMeters)
+  const envelope = Math.sin(Math.PI * fraction)
 
-  /*
-   * One broad wave across the whole descent can create a short shelf or small
-   * rebound after the summit, similar to a real road dropping, levelling,
-   * rising slightly and dropping again. There is never a train of little
-   * oscillations.
-   */
+  // Long transitions get several broad sub-ramps/shelves. The stage seed
+  // chooses a stable pattern per stage so profiles do not all look alike.
+  const pattern = (stageSeed + anchorIndex * 13) % 4
+  const phase = ((stageSeed + anchorIndex * 29) % 180) * (Math.PI / 180)
+
+  const wave =
+    pattern === 0
+      ? Math.sin(fraction * Math.PI * 4 + phase) * 0.72 +
+        Math.sin(fraction * Math.PI * 8 + phase * 0.35) * 0.28
+      : pattern === 1
+        ? Math.sin(fraction * Math.PI * 3 + phase) * 0.68 +
+          Math.sin(fraction * Math.PI * 7 + phase * 0.5) * 0.32
+        : pattern === 2
+          ? Math.sin(fraction * Math.PI * 5 + phase) * 0.62 +
+            Math.sin(fraction * Math.PI * 2 + phase * 0.4) * 0.38
+          : Math.sin(fraction * Math.PI * 4.5 + phase) * 0.7 +
+            Math.sin(fraction * Math.PI * 6.5 + phase * 0.55) * 0.3
+
+  // Cap the visual deviation so the real summit/base remains dominant.
+  // Scale with both total gain and transition length.
   const amplitudeMeters = Math.min(
-    42,
-    absoluteDrop * 0.085,
-    6 + spanKm * 1.7
+    85,
+    absoluteGain * 0.16,
+    18 + spanKm * 1.6
   )
 
-  return (
-    envelope *
-    Math.sin(fraction * Math.PI * 2 + phase) *
-    amplitudeMeters
-  )
+  return envelope * wave * amplitudeMeters
 }
 
 function clampDisplayOnlyReliefElevation(
@@ -8999,34 +8866,48 @@ function clampDisplayOnlyReliefElevation(
 
   if (totalGain <= 0) return value
 
-  const endpointGuard = Math.max(2, totalGain * 0.0125)
+  // Internal sub-peaks may approach the real summit/base, but should not
+  // visually create a higher summit or deeper valley than the authoritative
+  // anchors at either end of the interval.
+  const endpointGuard = Math.max(2, totalGain * 0.015)
   const guardedLow = low + endpointGuard * Math.sin(Math.PI * fraction)
   const guardedHigh = high - endpointGuard * Math.sin(Math.PI * fraction)
 
   return Math.min(guardedHigh, Math.max(guardedLow, value))
 }
 
-function shapeDisplayOnlyNaturalPeakShoulders(
+function softenDisplayOnlyLowReliefPeakShoulders(
   displayPoints: BackendStageProfilePoint[],
   anchors: BackendStageProfilePoint[],
   terrainType: string | null | undefined
 ): BackendStageProfilePoint[] {
-  if (displayPoints.length < 3 || anchors.length < 3) {
+  if (
+    !ENABLE_DISPLAY_ONLY_ABSOLUTE_ELEVATION_SCALING ||
+    displayPoints.length < 3 ||
+    anchors.length < 3
+  ) {
     return displayPoints
   }
 
   const normalizedTerrain = String(terrainType ?? '').toLowerCase()
-  const shaped = displayPoints.map((point) => ({ ...point }))
+  const stageMin = Math.min(...anchors.map((point) => point.elevation))
+  const stageMax = Math.max(...anchors.map((point) => point.elevation))
+  const stageRange = stageMax - stageMin
 
-  /*
-   * Protect only the stage endpoints and the real summit anchor itself.
-   * Adjacent source anchors are display-only editable: preserving every one
-   * exactly was the reason triangular profiles survived the old helper.
-   */
-  const protectedKmKeys = new Set<string>([
-    anchors[0].km.toFixed(4),
-    anchors[anchors.length - 1].km.toFixed(4),
-  ])
+  // This correction is mainly for low/moderate-relief classics and punchy
+  // stages. Genuine large mountain relief should keep its authoritative shape.
+  if (
+    stageRange > 750 &&
+    normalizedTerrain !== 'cobbled' &&
+    normalizedTerrain !== 'hilly'
+  ) {
+    return displayPoints
+  }
+
+  const anchorKmKeys = new Set(
+    anchors.map((point) => point.km.toFixed(4))
+  )
+  const softened = displayPoints.map((point) => ({ ...point }))
 
   for (let index = 1; index < anchors.length - 1; index += 1) {
     const previous = anchors[index - 1]
@@ -9039,99 +8920,55 @@ function shapeDisplayOnlyNaturalPeakShoulders(
     const rightSpan = next.km - peak.km
 
     if (
-      leftRise < 65 ||
-      rightDrop < 65 ||
+      leftRise < 45 ||
+      rightDrop < 45 ||
       leftSpan <= 0 ||
-      rightSpan <= 0 ||
-      leftSpan + rightSpan < 6
+      rightSpan <= 0
     ) {
       continue
     }
 
-    protectedKmKeys.add(peak.km.toFixed(4))
+    // Do not try to reshape genuinely tiny few-kilometre climbs.
+    if (leftSpan + rightSpan < 9 || Math.max(leftSpan, rightSpan) < 4) {
+      continue
+    }
 
     const prominence = Math.min(leftRise, rightDrop)
-    const terrainFactor =
-      normalizedTerrain === 'mountain'
-        ? 1.3
-        : normalizedTerrain === 'hilly'
-          ? 1.15
-          : 1
-
-    /*
-     * Broader than V1. A real summit normally has approach shoulders and/or
-     * a short high road after the crest instead of one mathematical apex.
-     */
-    const leftRadiusKm = Math.min(
+    const shoulderRadiusKm = Math.min(
       7,
-      Math.max(2.2, leftSpan * 0.9 * terrainFactor)
-    )
-    const rightRadiusKm = Math.min(
-      10,
-      Math.max(3.2, rightSpan * 1.15 * terrainFactor)
+      Math.max(2.5, Math.min(leftSpan, rightSpan) * 0.55)
     )
     const shoulderDepthMeters = Math.min(
-      normalizedTerrain === 'mountain' ? 150 : 105,
-      Math.max(24, prominence * 0.3)
-    )
-    const reboundAmplitudeMeters = Math.min(
-      34,
-      Math.max(8, prominence * 0.07)
+      70,
+      Math.max(18, prominence * 0.42)
     )
 
-    for (const point of shaped) {
-      if (protectedKmKeys.has(point.km.toFixed(4))) continue
+    for (const point of softened) {
+      if (anchorKmKeys.has(point.km.toFixed(4))) continue
 
-      const offsetKm = point.km - peak.km
-      const isBeforePeak = offsetKm < 0
-      const radiusKm = isBeforePeak ? leftRadiusKm : rightRadiusKm
-      const distanceKm = Math.abs(offsetKm)
+      const distanceKm = Math.abs(point.km - peak.km)
+      if (distanceKm >= shoulderRadiusKm) continue
 
-      if (distanceKm >= radiusKm) continue
-
-      const normalizedDistance = distanceKm / radiusKm
-      const shoulderExponent = isBeforePeak ? 1.55 : 1.35
-      const desiredElevation =
+      const proximity = 1 - distanceKm / shoulderRadiusKm
+      const desiredShoulder =
         peak.elevation -
         shoulderDepthMeters *
-          Math.pow(normalizedDistance, shoulderExponent)
+          Math.pow(distanceKm / shoulderRadiusKm, 0.75)
 
-      if (point.elevation < desiredElevation) {
-        const proximity = 1 - normalizedDistance
-        const blend = Math.min(
-          0.82,
-          (isBeforePeak ? 0.46 : 0.58) + proximity * 0.28
-        )
+      if (point.elevation < desiredShoulder) {
+        // Blend rather than force a plateau. This broadens needle-like peaks
+        // while keeping the actual KOM/summit anchor exactly untouched.
+        const blend = 0.38 * proximity * proximity
         point.elevation +=
-          (desiredElevation - point.elevation) * blend
-      }
-
-      if (!isBeforePeak && rightSpan >= 4) {
-        /*
-         * One broad shelf/rebound after the summit. This creates the
-         * "down a little → flatter → slight rise → descend again" behaviour
-         * without repeated small teeth.
-         */
-        const rebound =
-          Math.exp(
-            -Math.pow(
-              (normalizedDistance - 0.6) / 0.2,
-              2
-            )
-          ) * reboundAmplitudeMeters
-
-        point.elevation = Math.min(
-          peak.elevation - 2,
-          point.elevation + rebound
-        )
+          (desiredShoulder - point.elevation) * blend
       }
     }
   }
 
-  return shaped
+  return softened
 }
 
-export function getDisplayOnlyStageProfilePoints(
+function getDisplayOnlyStageProfilePoints(
   stageId: string | null | undefined,
   points: BackendStageProfilePoint[],
   terrainType?: string | null
@@ -9161,11 +8998,7 @@ export function getDisplayOnlyStageProfilePoints(
   const stageSeed = getStageVisualSeed(stageId)
   const displayPoints: BackendStageProfilePoint[] = []
 
-  for (
-    let anchorIndex = 0;
-    anchorIndex < anchors.length - 1;
-    anchorIndex += 1
-  ) {
+  for (let anchorIndex = 0; anchorIndex < anchors.length - 1; anchorIndex += 1) {
     const start = anchors[anchorIndex]
     const end = anchors[anchorIndex + 1]
     const spanKm = end.km - start.km
@@ -9181,73 +9014,36 @@ export function getDisplayOnlyStageProfilePoints(
       terrainType
     )
 
-    const microAmplitudeMeters = majorReliefActive
-      ? 0
-      : getDisplayOnlyMicroTerrainAmplitudeMeters(
-          terrainType,
-          Math.abs(segmentGradientPercent),
-          anchorIndex,
-          stageSeed
-        )
-
-    const broadLowReliefActive =
-      !majorReliefActive &&
-      shouldAddDisplayOnlyBroadLowReliefWave(
-        spanKm,
+    const microAmplitudeMeters =
+      getDisplayOnlyMicroTerrainAmplitudeMeters(
+        terrainType,
         Math.abs(segmentGradientPercent),
         anchorIndex,
         stageSeed
-      )
+      ) * (majorReliefActive ? 0.35 : 1)
 
-    /*
-     * Use fewer display points on ordinary terrain. A dense point every
-     * kilometre made harmless small variations look busier than the road.
-     */
-    const targetStepKm = majorReliefActive ? 0.75 : 2
-    const stepCount = Math.max(2, Math.ceil(spanKm / targetStepKm))
+    // About one visual point per km. These points are render-only.
+    const stepCount = Math.max(2, Math.ceil(spanKm))
 
     for (let step = 0; step < stepCount; step += 1) {
       const fraction = step / stepCount
       const km = start.km + spanKm * fraction
-
-      const reliefProgress = majorReliefActive
-        ? getDisplayOnlyNaturalReliefProgress(
-            fraction,
-            elevationDeltaMeters,
-            anchorIndex,
-            stageSeed
-          )
-        : fraction
-
       const baseline =
-        start.elevation + elevationDeltaMeters * reliefProgress
+        start.elevation + elevationDeltaMeters * fraction
 
       const envelope = Math.sin(Math.PI * fraction)
       const microPhase =
-        ((stageSeed + anchorIndex * 29) % 360) * (Math.PI / 180)
+        ((stageSeed % 360) * Math.PI) / 180 +
+        anchorIndex * 0.67
+      const microWave =
+        Math.sin(fraction * Math.PI * 2 + microPhase) * 0.72 +
+        Math.sin(fraction * Math.PI * 4 + microPhase * 0.43) * 0.28
 
-      /*
-       * At most one very shallow local wave. V1 used two frequencies per
-       * segment, which is what produced the visible up/down/up/down texture.
-       */
       const microAdjustment =
-        envelope *
-        Math.sin(fraction * Math.PI + microPhase) *
-        microAmplitudeMeters
+        envelope * microWave * microAmplitudeMeters
 
-      const broadLowRelief =
-        broadLowReliefActive
-          ? getDisplayOnlyBroadLowReliefMeters(
-              fraction,
-              spanKm,
-              terrainType,
-              anchorIndex,
-              stageSeed
-            )
-          : 0
-
-      const broadDescentRelief =
-        getDisplayOnlyBroadDescentReliefMeters(
+      const majorReliefAdjustment =
+        getDisplayOnlyMajorReliefAdjustmentMeters(
           fraction,
           spanKm,
           elevationDeltaMeters,
@@ -9258,12 +9054,12 @@ export function getDisplayOnlyStageProfilePoints(
 
       const shapedElevation = majorReliefActive
         ? clampDisplayOnlyReliefElevation(
-            baseline + broadDescentRelief,
+            baseline + majorReliefAdjustment + microAdjustment,
             start.elevation,
             end.elevation,
-            reliefProgress
+            fraction
           )
-        : baseline + broadLowRelief + microAdjustment
+        : baseline + microAdjustment
 
       displayPoints.push({
         km,
@@ -9272,9 +9068,10 @@ export function getDisplayOnlyStageProfilePoints(
     }
   }
 
+  // Preserve the final authoritative anchor exactly.
   displayPoints.push(anchors[anchors.length - 1])
 
-  return shapeDisplayOnlyNaturalPeakShoulders(
+  return softenDisplayOnlyLowReliefPeakShoulders(
     displayPoints,
     anchors,
     terrainType
