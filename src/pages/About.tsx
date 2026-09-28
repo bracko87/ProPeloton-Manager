@@ -6,9 +6,21 @@
 import React from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { supabase } from '../lib/supabase'
+
+const TENNIS_LEGACY_URL = 'https://tennislegacygame.com/?source=propeloton_manager'
 
 export default function AboutPage(): JSX.Element {
   const { t } = useTranslation('publicInfo')
+
+  function recordCrossGameClick(): void {
+    void supabase.rpc('record_cross_game_referral_event_v1', {
+      p_event_type: 'outgoing_click',
+      p_source_game: 'propeloton_manager',
+      p_destination_game: 'tennis_legacy',
+      p_surface: 'about',
+    })
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -79,6 +91,25 @@ export default function AboutPage(): JSX.Element {
             </p>
           </article>
         </section>
+
+        <article className="rounded-2xl border border-yellow-200 bg-yellow-50 p-6 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-800">
+            Also from Next Quest Studio
+          </p>
+          <h2 className="mt-2 text-2xl font-bold">Tennis Legacy: Rise to Glory</h2>
+          <p className="mt-3 max-w-3xl leading-relaxed text-slate-700">
+            Build and develop your own professional tennis career in a persistent multiplayer world.
+          </p>
+          <a
+            href={TENNIS_LEGACY_URL}
+            target="_blank"
+            rel="noreferrer"
+            onClick={recordCrossGameClick}
+            className="mt-4 inline-flex rounded-lg bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
+          >
+            Play Tennis Legacy ↗
+          </a>
+        </article>
 
         <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-bold">{t('about.developmentTitle')}</h2>
