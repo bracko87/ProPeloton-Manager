@@ -225,6 +225,28 @@
       "hilly": "Valovito",
       "mountain": "Planinsko",
       "cobbled": "Kocka"
-    }
+    },
+    "oneDayRace": "Jednodnevna trka",
+    "raceDateLine": "Datum trke: {{date}} — {{place}}",
+    "noTeamCost": "Bez troška za ekipu",
+    "stages": "Etape",
+    "stageOne": "Etapa 1",
+    "replayAfterGeneration": "Snimak će biti dostupan kroz standardni sistem snimaka nakon što se ova trka nacionalnog prvenstva generiše i izračuna.",
+    "raceInformation": "Informacije o trci",
+    "ridersResults": "Vozači i rezultati",
+    "results": "Rezultati",
+    "finalRidersPending": "Učesnici finala biće poznati nakon završetka kvalifikacionih grupa.",
+    "noRiders": "Trenutno nema vozača dodeljenih ovom događaju.",
+    "jersey": "Dres",
+    "rider": "Vozač",
+    "team": "Ekipa",
+    "time": "Vreme",
+    "gap": "Zaostatak",
+    "status": "Status",
+    "resultsPending": "Rezultati će biti objavljeni ovde nakon završetka trke.",
+    "refresh": "Osveži",
+    "finished": "Trka završena",
+    "ready": "Trka spremna",
+    "planned": "Planirano"
   }
 }
