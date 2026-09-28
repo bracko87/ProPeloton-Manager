@@ -2454,23 +2454,22 @@ function getNiceElevationAxisBounds(
       break
   }
 
-  // Absolute elevation also influences first-glance scale perception.
+  // Low-altitude stages always use an absolute zero baseline. This keeps a
+  // 100–150 m ridge visually small and a ~600 m climb clearly larger, instead
+  // of auto-zooming every stage to roughly the same apparent height.
   if (lowAltitudeStage) {
-    if (rawMax <= 400) {
-      perceptionMinimumSpan = Math.max(
-        perceptionMinimumSpan,
-        normalizedTerrain === 'flat' ? 600 : 800
-      )
-    } else if (rawMax <= 700) {
-      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 900)
-    } else if (rawMax <= 1100) {
-      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 1200)
-    } else {
-      perceptionMinimumSpan = Math.max(perceptionMinimumSpan, 1500)
-    }
+    const lowAltitudeMinimumSpan =
+      normalizedTerrain === 'hilly' ||
+      normalizedTerrain === 'cobbled' ||
+      normalizedTerrain === 'mountain'
+        ? 800
+        : 600
 
-    // For low/medium altitude profiles, zero gives the viewer an honest
-    // reference instead of making 150–250 m bergs fill the full chart height.
+    perceptionMinimumSpan = Math.max(
+      perceptionMinimumSpan,
+      lowAltitudeMinimumSpan
+    )
+
     const targetMax = Math.max(
       rawMax * 1.08,
       perceptionMinimumSpan
@@ -2479,7 +2478,7 @@ function getNiceElevationAxisBounds(
 
     return {
       minElevation: 0,
-      maxElevation: Math.max(maxElevation, 100),
+      maxElevation: Math.max(maxElevation, lowAltitudeMinimumSpan),
     }
   }
 
@@ -8684,7 +8683,7 @@ function StagePointResultsTable({
   )
 }
 
-type BackendStageProfilePoint = {
+export type BackendStageProfilePoint = {
   km: number
   elevation: number
 }
@@ -8813,30 +8812,29 @@ function getDisplayOnlyMajorReliefAdjustmentMeters(
   const absoluteGain = Math.abs(elevationDeltaMeters)
   const envelope = Math.sin(Math.PI * fraction)
 
-  // Long transitions get several broad sub-ramps/shelves. The stage seed
-  // chooses a stable pattern per stage so profiles do not all look alike.
+  // Long climbs/descents should have only a few broad gradient changes.
+  // The previous 3–8x frequency waves could create repeated up/down teeth.
+  // Two low-frequency components keep the road natural without touching
+  // flat/rolling sections or authoritative endpoints.
   const pattern = (stageSeed + anchorIndex * 13) % 4
-  const phase = ((stageSeed + anchorIndex * 29) % 180) * (Math.PI / 180)
+  const phase = ((stageSeed + anchorIndex * 29) % 120) * (Math.PI / 180)
+
+  const primaryCycles =
+    pattern === 0 ? 1 :
+    pattern === 1 ? 1.25 :
+    pattern === 2 ? 1.5 :
+    1.75
 
   const wave =
-    pattern === 0
-      ? Math.sin(fraction * Math.PI * 4 + phase) * 0.72 +
-        Math.sin(fraction * Math.PI * 8 + phase * 0.35) * 0.28
-      : pattern === 1
-        ? Math.sin(fraction * Math.PI * 3 + phase) * 0.68 +
-          Math.sin(fraction * Math.PI * 7 + phase * 0.5) * 0.32
-        : pattern === 2
-          ? Math.sin(fraction * Math.PI * 5 + phase) * 0.62 +
-            Math.sin(fraction * Math.PI * 2 + phase * 0.4) * 0.38
-          : Math.sin(fraction * Math.PI * 4.5 + phase) * 0.7 +
-            Math.sin(fraction * Math.PI * 6.5 + phase * 0.55) * 0.3
+    Math.sin(fraction * Math.PI * 2 * primaryCycles + phase) * 0.82 +
+    Math.sin(fraction * Math.PI * 4 + phase * 0.35) * 0.18
 
-  // Cap the visual deviation so the real summit/base remains dominant.
-  // Scale with both total gain and transition length.
+  // Keep the broad bends modest so a sustained climb remains a sustained
+  // climb rather than turning into multiple artificial mini-climbs.
   const amplitudeMeters = Math.min(
-    85,
-    absoluteGain * 0.16,
-    18 + spanKm * 1.6
+    46,
+    absoluteGain * 0.085,
+    10 + spanKm * 0.85
   )
 
   return envelope * wave * amplitudeMeters
@@ -8956,7 +8954,7 @@ function softenDisplayOnlyLowReliefPeakShoulders(
   return softened
 }
 
-function getDisplayOnlyStageProfilePoints(
+export function getDisplayOnlyStageProfilePoints(
   stageId: string | null | undefined,
   points: BackendStageProfilePoint[],
   terrainType?: string | null
@@ -9066,7 +9064,7 @@ function getDisplayOnlyStageProfilePoints(
   )
 }
 
-function getDisplayOnlyProfileMinimumVerticalSpan(
+export function getDisplayOnlyProfileMinimumVerticalSpan(
   terrainType: string | null | undefined
 ): number | null {
   if (!ENABLE_DISPLAY_ONLY_STAGE_MICRO_TERRAIN) return null
