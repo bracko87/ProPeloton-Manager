@@ -493,6 +493,7 @@
     "countSeasons": "{{count}} seasons"
   },
   "templateWords": {
+    "10": "10",
     "ADVISOR": "Advisor",
     "ADMIN": "Admin",
     "MESSAGE": "Message",
@@ -607,7 +608,6 @@
     "CLASSIFICATION": "Classification",
     "INVITATION": "Invitation",
     "INVITED": "Invited",
-    "10": "10",
     "AGAIN": "Again",
     "AGE": "Age",
     "AGENTS": "Agents",
@@ -808,7 +808,17 @@
     "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Race plan finalised",
     "STAGE_PLAN_MISSING_REMINDER": "Stage plan missing reminder",
-    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty"
+    "RACE_JERSEYS_MANDATORY_WARNING": "Race jersey shortage — performance penalty",
+    "NATIONAL_CHAMPIONSHIP_SELECTED": "National Championship selection",
+    "NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT": "National qualification result",
+    "NATIONAL_CHAMPIONSHIP_QUALIFIED": "Qualified for National Final",
+    "NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "National Final confirmation",
+    "NATIONAL_CHAMPIONSHIP_FINAL_RESULT": "National Championship result",
+    "NATIONAL_CHAMPION": "National Champion",
+    "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "World Championship invitation",
+    "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "World Championship confirmation",
+    "WORLD_ROAD_CHAMPIONSHIP_RESULT": "World Championship result",
+    "WORLD_ROAD_CHAMPION": "World Road Champion"
   },
   "richReports": {
     "common": {
@@ -996,5 +1006,97 @@
   },
   "semanticTypeMessages": {
     "RACE_JERSEYS_MANDATORY_WARNING": "{{entity}}: your team has fewer usable Race Jersey Kits than selected riders. The team remains eligible, but the shortage applies a proportional performance penalty."
+  },
+  "championship": {
+    "common": {
+      "previewPrefix": "[Preview]",
+      "countryFallback": "Country"
+    },
+    "labels": {
+      "qualificationGroup": "Qualification group",
+      "nationalFinal": "National final",
+      "decisionDeadline": "Decision deadline",
+      "finalDate": "Final date",
+      "qualifyingPlaces": "Qualifying places",
+      "yourRiderResults": "Your rider results",
+      "yourRidersQualified": "Your riders qualified",
+      "topThree": "Top 3",
+      "champion": "Champion",
+      "podium": "Podium",
+      "grandFinale": "Grand Finale",
+      "worldRoadChampion": "World Road Champion",
+      "worldPodium": "World podium",
+      "qualifiedAs": "Qualified as",
+      "finalDeadline": "Final deadline",
+      "raceDate": "Race date",
+      "result": "Result"
+    },
+    "values": {
+      "group": "Group {{number}}",
+      "none": "None",
+      "firstPlace": "1st place"
+    },
+    "actions": {
+      "openMyNationalDuty": "Open My National Duty",
+      "confirmFinalParticipation": "Confirm final participation",
+      "openQualificationResults": "Open qualification results",
+      "myNationalDuty": "My National Duty",
+      "openNationalFinal": "Open National Championship final",
+      "openChampion": "Open champion",
+      "openWorldDuty": "Open World Championship duty",
+      "confirmWorld": "Confirm World Championship",
+      "openWorldResults": "Open World Championship results",
+      "openWorldChampionship": "Open World Championship"
+    },
+    "selected": {
+      "title": "{{rider}} selected for the National Championship",
+      "message": "{{rider}} has been selected for the {{country}} National Championship. Qualification Group {{heat}} is on {{qualificationDate}}. If the rider qualifies, the final is on {{finalDate}}. Decide by {{deadline}}.",
+      "extra": "All National Duty costs are covered. Open My National Duty to approve or refuse participation before the deadline."
+    },
+    "qualificationResult": {
+      "title": "{{country}} National Qualification Group {{heat}} completed",
+      "message": "Official results are available. The top {{places}} riders advance to the National Championship final on {{finalDate}}.",
+      "extra": "Open the qualification race for the full classification and My National Duty for your riders' next steps."
+    },
+    "qualified": {
+      "title": "{{rider}} qualified for the National Championship final",
+      "message": "{{rider}} earned a place in the {{country}} National Championship final on {{finalDate}}.",
+      "extra": "A separate second manager confirmation is required for the National Championship final."
+    },
+    "nationalFinalConfirmation": {
+      "title": "Confirm {{rider}} again for the National Championship final",
+      "message": "{{rider}} has a place in the {{country}} National Championship final on {{finalDate}}. Approve or refuse the final participation separately before {{finalDeadline}}.",
+      "extra": "This is the second approval for the same National Championship campaign. If no decision is made by the deadline, the rider is auto-approved."
+    },
+    "nationalFinalResult": {
+      "title": "{{country}} National Championship completed",
+      "message": "{{champion}} is the Season {{season}} National Road Champion. The final classification is now official.",
+      "extra": "The winner is automatically invited to the World Road Championship Grand Finale."
+    },
+    "nationalChampion": {
+      "title": "{{rider}} is National Road Champion!",
+      "message": "{{rider}} won the {{country}} National Road Championship. The title is now part of the rider's career honours.",
+      "extra": "The National Champion badge is active for the current season and remains permanently in career history."
+    },
+    "worldInvitation": {
+      "title": "{{rider}} invited to the World Road Championship!",
+      "message": "{{rider}} qualified as {{country}} National Champion for the World Road Championship Grand Finale on {{raceDate}}. All team costs are covered. Decide by {{deadline}}.",
+      "extra": "The manager must approve or refuse the invitation. A separate second confirmation is required shortly before the Grand Finale."
+    },
+    "worldFinalConfirmation": {
+      "title": "Confirm {{rider}} again for the World Road Championship",
+      "message": "{{rider}} is already qualified and accepted for the World Road Championship Grand Finale on {{raceDate}}. Confirm the final participation again before {{finalDeadline}}.",
+      "extra": "Refusing at this stage removes the rider from the startlist and applies the major morale penalty."
+    },
+    "worldResult": {
+      "title": "World Road Championship completed",
+      "message": "{{champion}} is the Season {{season}} World Road Champion. The Grand Finale classification is now official.",
+      "extra": "There is no team prize money. The World Championship podium is stored permanently in rider career honours."
+    },
+    "worldChampion": {
+      "title": "{{rider}} is World Road Champion!",
+      "message": "{{rider}} won the World Road Championship Grand Finale. This prestige title is now part of the rider's career honours.",
+      "extra": "The World Road Champion badge is active this season and remains permanently in career history."
+    }
   }
 }
