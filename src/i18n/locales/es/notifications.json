@@ -493,6 +493,7 @@
     "countSeasons": "{{count}} temporadas"
   },
   "templateWords": {
+    "10": "10",
     "ADVISOR": "Advisor",
     "ADMIN": "Administración",
     "MESSAGE": "Mensaje",
@@ -607,7 +608,6 @@
     "CLASSIFICATION": "Clasificación",
     "INVITATION": "Invitación",
     "INVITED": "Invitado",
-    "10": "10",
     "AGAIN": "De nuevo",
     "AGE": "Edad",
     "AGENTS": "Agentes",
@@ -876,7 +876,17 @@
     "RACE_APPLICATION_RULE_CHANGE": "Cambio de plazos de inscripción",
     "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Plan de carrera finalizado",
-    "STAGE_PLAN_MISSING_REMINDER": "Recordatorio: falta el plan de etapa"
+    "STAGE_PLAN_MISSING_REMINDER": "Recordatorio: falta el plan de etapa",
+    "NATIONAL_CHAMPIONSHIP_SELECTED": "Selección para el Campeonato Nacional",
+    "NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT": "Resultado de la clasificación nacional",
+    "NATIONAL_CHAMPIONSHIP_QUALIFIED": "Clasificado para la final nacional",
+    "NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Confirmación de la final nacional",
+    "NATIONAL_CHAMPIONSHIP_FINAL_RESULT": "Resultado del Campeonato Nacional",
+    "NATIONAL_CHAMPION": "Campeón nacional",
+    "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Invitación al Campeonato Mundial",
+    "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Confirmación del Campeonato Mundial",
+    "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Resultado del Campeonato Mundial",
+    "WORLD_ROAD_CHAMPION": "Campeón Mundial de Ruta"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "El plan de carrera requiere atención: {{entity}}",
@@ -1083,5 +1093,97 @@
     "raceEffect": "El equipo sigue siendo elegible; la penalización aumenta según los kits que falten",
     "extraWithMissing": "Kits de maillot utilizables que aún faltan: {{missing}}. Añádelos para reducir o eliminar la penalización. Una falta total implica -30% a los bonos positivos de preparación, +8% de consumo de energía durante la etapa y +15% de fatiga después de la etapa.",
     "extraGeneric": "Abre Suministros de carrera y revisa los kits de maillot utilizables. La falta no impide la participación."
+  },
+  "championship": {
+    "common": {
+      "previewPrefix": "[Vista previa]",
+      "countryFallback": "País"
+    },
+    "labels": {
+      "qualificationGroup": "Grupo de clasificación",
+      "nationalFinal": "Final nacional",
+      "decisionDeadline": "Fecha límite",
+      "finalDate": "Fecha de la final",
+      "qualifyingPlaces": "Plazas de clasificación",
+      "yourRiderResults": "Resultados de tus corredores",
+      "yourRidersQualified": "Tus corredores clasificados",
+      "topThree": "Top 3",
+      "champion": "Campeón",
+      "podium": "Podio",
+      "grandFinale": "Gran Final",
+      "worldRoadChampion": "Campeón Mundial de Ruta",
+      "worldPodium": "Podio mundial",
+      "qualifiedAs": "Clasificado como",
+      "finalDeadline": "Fecha límite final",
+      "raceDate": "Fecha de la carrera",
+      "result": "Resultado"
+    },
+    "values": {
+      "group": "Grupo {{number}}",
+      "none": "Ninguno",
+      "firstPlace": "1.º puesto"
+    },
+    "actions": {
+      "openMyNationalDuty": "Abrir deber nacional",
+      "confirmFinalParticipation": "Confirmar participación en la final",
+      "openQualificationResults": "Abrir resultados de clasificación",
+      "myNationalDuty": "Mi deber nacional",
+      "openNationalFinal": "Abrir final del Campeonato Nacional",
+      "openChampion": "Abrir campeón",
+      "openWorldDuty": "Abrir deber del Mundial",
+      "confirmWorld": "Confirmar Campeonato Mundial",
+      "openWorldResults": "Abrir resultados del Mundial",
+      "openWorldChampionship": "Abrir Campeonato Mundial"
+    },
+    "selected": {
+      "title": "{{rider}} ha sido seleccionado para el Campeonato Nacional",
+      "message": "{{rider}} ha sido seleccionado para el Campeonato Nacional de {{country}}. El Grupo de clasificación {{heat}} se disputa el {{qualificationDate}}. Si se clasifica, la final será el {{finalDate}}. Decide antes del {{deadline}}.",
+      "extra": "Todos los costes del deber nacional están cubiertos. Abre Mi deber nacional para aprobar o rechazar la participación antes de la fecha límite."
+    },
+    "qualificationResult": {
+      "title": "{{country}} – Grupo de clasificación {{heat}} completado",
+      "message": "Los resultados oficiales ya están disponibles. Los primeros {{places}} corredores avanzan a la final nacional del {{finalDate}}.",
+      "extra": "Abre la carrera de clasificación para ver la clasificación completa y Mi deber nacional para los próximos pasos de tus corredores."
+    },
+    "qualified": {
+      "title": "{{rider}} se ha clasificado para la final nacional",
+      "message": "{{rider}} ha conseguido una plaza en la final del Campeonato Nacional de {{country}} del {{finalDate}}.",
+      "extra": "La final nacional requiere una segunda confirmación independiente del mánager."
+    },
+    "nationalFinalConfirmation": {
+      "title": "Confirma de nuevo a {{rider}} para la final nacional",
+      "message": "{{rider}} tiene plaza en la final del Campeonato Nacional de {{country}} del {{finalDate}}. Aprueba o rechaza por separado la participación en la final antes del {{finalDeadline}}.",
+      "extra": "Esta es la segunda aprobación para la misma campaña nacional. Si no hay decisión antes del plazo, el corredor queda aprobado automáticamente."
+    },
+    "nationalFinalResult": {
+      "title": "{{country}} – Campeonato Nacional completado",
+      "message": "{{champion}} es el Campeón Nacional de Ruta de la temporada {{season}}. La clasificación final ya es oficial.",
+      "extra": "El ganador recibe automáticamente una invitación para la Gran Final del Campeonato Mundial de Ruta."
+    },
+    "nationalChampion": {
+      "title": "¡{{rider}} es Campeón Nacional de Ruta!",
+      "message": "{{rider}} ganó el Campeonato Nacional de Ruta de {{country}}. El título ya forma parte del historial de carrera del corredor.",
+      "extra": "La insignia de Campeón Nacional está activa esta temporada y permanece para siempre en el historial de carrera."
+    },
+    "worldInvitation": {
+      "title": "¡{{rider}} está invitado al Campeonato Mundial!",
+      "message": "{{rider}} se clasificó como Campeón Nacional de {{country}} para la Gran Final del Campeonato Mundial de Ruta del {{raceDate}}. Todos los costes del equipo están cubiertos. Decide antes del {{deadline}}.",
+      "extra": "El mánager debe aprobar o rechazar la invitación. Poco antes de la Gran Final será necesaria una segunda confirmación."
+    },
+    "worldFinalConfirmation": {
+      "title": "Confirma de nuevo a {{rider}} para el Campeonato Mundial",
+      "message": "{{rider}} ya está clasificado y aceptado para la Gran Final del Campeonato Mundial de Ruta del {{raceDate}}. Confirma de nuevo la participación final antes del {{finalDeadline}}.",
+      "extra": "Rechazar en esta fase elimina al corredor de la lista de salida y aplica una penalización importante de moral."
+    },
+    "worldResult": {
+      "title": "Campeonato Mundial de Ruta completado",
+      "message": "{{champion}} es el Campeón Mundial de Ruta de la temporada {{season}}. La clasificación de la Gran Final ya es oficial.",
+      "extra": "No hay premio económico para el equipo. El podio mundial queda guardado permanentemente en el historial de carrera."
+    },
+    "worldChampion": {
+      "title": "¡{{rider}} es Campeón Mundial de Ruta!",
+      "message": "{{rider}} ganó la Gran Final del Campeonato Mundial de Ruta. Este prestigioso título ya forma parte del historial de carrera del corredor.",
+      "extra": "La insignia de Campeón Mundial de Ruta está activa esta temporada y permanece para siempre en el historial de carrera."
+    }
   }
 }
