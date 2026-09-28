@@ -770,6 +770,13 @@ function getRiderProfileHref(item: NotificationItem): string | null {
       'RIDER_CONTRACT_EXPIRING',
       'RIDER_WANTS_MORE_RACE_SELECTION',
       'RIDER_REQUESTS_RELEASE',
+      'NATIONAL_CHAMPIONSHIP_SELECTED',
+      'NATIONAL_CHAMPIONSHIP_QUALIFIED',
+      'NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED',
+      'NATIONAL_CHAMPION',
+      'WORLD_ROAD_CHAMPIONSHIP_INVITATION',
+      'WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED',
+      'WORLD_ROAD_CHAMPION',
     ].includes(typeCode)
 
   return shouldUseOwnRiderProfile
@@ -1935,7 +1942,19 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
         getHref: (item) => getRiderProfileHref(item),
         show: (item) => Boolean(getRiderProfileHref(item)),
       },
-      withFallbackHref('Open World Championship', '/dashboard/national-ranking'),
+      {
+        key: 'open-world-championship',
+        label: 'Open World Championship',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: (item) => {
+          const raceId = pickFirstString(getPayload(item), ['race_id'])
+          return raceId
+            ? `/dashboard/races/${raceId}`
+            : '/dashboard/national-ranking'
+        },
+        show: () => true,
+      },
       MARK_READ_ACTION,
     ],
   },
