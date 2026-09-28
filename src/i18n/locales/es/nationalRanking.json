@@ -225,6 +225,28 @@
       "hilly": "Ondulado",
       "mountain": "Montaña",
       "cobbled": "Adoquines"
-    }
+    },
+    "oneDayRace": "Carrera de un día",
+    "raceDateLine": "Fecha de carrera: {{date}} — {{place}}",
+    "noTeamCost": "Sin coste para el equipo",
+    "stages": "Etapas",
+    "stageOne": "Etapa 1",
+    "replayAfterGeneration": "La repetición estará disponible mediante el sistema normal de repeticiones después de generar y calcular esta carrera del Campeonato Nacional.",
+    "raceInformation": "Información de la carrera",
+    "ridersResults": "Ciclistas y resultados",
+    "results": "Resultados",
+    "finalRidersPending": "Los participantes de la final se conocerán cuando terminen los grupos de clasificación.",
+    "noRiders": "Actualmente no hay ciclistas asignados a este evento.",
+    "jersey": "Maillot",
+    "rider": "Ciclista",
+    "team": "Equipo",
+    "time": "Tiempo",
+    "gap": "Diferencia",
+    "status": "Estado",
+    "resultsPending": "Los resultados se publicarán aquí cuando finalice la carrera.",
+    "refresh": "Actualizar",
+    "finished": "Carrera finalizada",
+    "ready": "Carrera preparada",
+    "planned": "Planificada"
   }
 }
