@@ -99,4 +99,3 @@ export function persistLanguage(language: SupportedLanguage): void {
 export function getLanguageDefinition(language: SupportedLanguage) {
   return SUPPORTED_LANGUAGES.find(item => item.code === language) ?? SUPPORTED_LANGUAGES[0]
 }
-// Temporary stage-profile realism build verification trigger.
