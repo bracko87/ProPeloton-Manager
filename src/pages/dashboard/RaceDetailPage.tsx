@@ -9788,7 +9788,7 @@ type StageProfileAuxiliaryMarker = {
   color?: string
 }
 
-function StageProfileChart({
+export function StageProfileChart({
   points,
   markers,
   distanceKm,
