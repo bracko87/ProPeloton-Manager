@@ -8954,29 +8954,30 @@ function getDisplayOnlyMajorReliefAdjustmentMeters(
   const absoluteGain = Math.abs(elevationDeltaMeters)
   const envelope = Math.sin(Math.PI * fraction)
 
-  // Long climbs/descents should have only a few broad gradient changes.
-  // The previous 3–8x frequency waves could create repeated up/down teeth.
-  // Two low-frequency components keep the road natural without touching
-  // flat/rolling sections or authoritative endpoints.
+  // Long transitions get several broad sub-ramps/shelves. The stage seed
+  // chooses a stable pattern per stage so profiles do not all look alike.
   const pattern = (stageSeed + anchorIndex * 13) % 4
-  const phase = ((stageSeed + anchorIndex * 29) % 120) * (Math.PI / 180)
-
-  const primaryCycles =
-    pattern === 0 ? 1 :
-    pattern === 1 ? 1.25 :
-    pattern === 2 ? 1.5 :
-    1.75
+  const phase = ((stageSeed + anchorIndex * 29) % 180) * (Math.PI / 180)
 
   const wave =
-    Math.sin(fraction * Math.PI * 2 * primaryCycles + phase) * 0.82 +
-    Math.sin(fraction * Math.PI * 4 + phase * 0.35) * 0.18
+    pattern === 0
+      ? Math.sin(fraction * Math.PI * 4 + phase) * 0.72 +
+        Math.sin(fraction * Math.PI * 8 + phase * 0.35) * 0.28
+      : pattern === 1
+        ? Math.sin(fraction * Math.PI * 3 + phase) * 0.68 +
+          Math.sin(fraction * Math.PI * 7 + phase * 0.5) * 0.32
+        : pattern === 2
+          ? Math.sin(fraction * Math.PI * 5 + phase) * 0.62 +
+            Math.sin(fraction * Math.PI * 2 + phase * 0.4) * 0.38
+          : Math.sin(fraction * Math.PI * 4.5 + phase) * 0.7 +
+            Math.sin(fraction * Math.PI * 6.5 + phase * 0.55) * 0.3
 
-  // Keep the broad bends modest so a sustained climb remains a sustained
-  // climb rather than turning into multiple artificial mini-climbs.
+  // Cap the visual deviation so the real summit/base remains dominant.
+  // Scale with both total gain and transition length.
   const amplitudeMeters = Math.min(
-    46,
-    absoluteGain * 0.085,
-    10 + spanKm * 0.85
+    85,
+    absoluteGain * 0.16,
+    18 + spanKm * 1.6
   )
 
   return envelope * wave * amplitudeMeters
