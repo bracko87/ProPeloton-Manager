@@ -8696,7 +8696,7 @@ function StagePointResultsTable({
   )
 }
 
-export type BackendStageProfilePoint = {
+type BackendStageProfilePoint = {
   km: number
   elevation: number
 }
@@ -8723,387 +8723,6 @@ const ENABLE_DISPLAY_ONLY_STAGE_MICRO_TERRAIN = true
  */
 const ENABLE_DISPLAY_ONLY_MAJOR_RELIEF_SHAPING = true
 
-/**
- * Fourth independent display-only layer.
- *
- * The backend profile can contain a dense point every ~1 km. Treating every
- * one of those points as an untouchable visual anchor is what kept the
- * kilometre-by-kilometre up/down teeth visible even after the earlier
- * smoothing changes.
- *
- * This layer builds a calmer visual baseline from the same authoritative
- * profile. It preserves the start/end and genuinely prominent peaks/valleys,
- * but removes short low-prominence reversals before the chart is rendered.
- *
- * Set this to false for an instant rollback to the previous rendering.
- */
-const ENABLE_DISPLAY_ONLY_CALMED_PROFILE_ANCHORS = true
-
-type DisplayOnlyProfileCalmingSettings = {
-  smoothingRadiusKm: number
-  simplificationToleranceMeters: number
-  reversalProminenceMeters: number
-  shortReversalSpanKm: number
-  protectedExtremaProminenceMeters: number
-  protectedExtremaWindowKm: number
-}
-
-function getDisplayOnlyProfileCalmingSettings(
-  terrainType: string | null | undefined
-): DisplayOnlyProfileCalmingSettings {
-  switch (String(terrainType ?? '').toLowerCase()) {
-    case 'mountain':
-      return {
-        smoothingRadiusKm: 3,
-        simplificationToleranceMeters: 34,
-        reversalProminenceMeters: 55,
-        shortReversalSpanKm: 9,
-        protectedExtremaProminenceMeters: 130,
-        protectedExtremaWindowKm: 10,
-      }
-
-    case 'hilly':
-      return {
-        smoothingRadiusKm: 2.4,
-        simplificationToleranceMeters: 28,
-        reversalProminenceMeters: 42,
-        shortReversalSpanKm: 7,
-        protectedExtremaProminenceMeters: 85,
-        protectedExtremaWindowKm: 8,
-      }
-
-    case 'cobbled':
-      return {
-        smoothingRadiusKm: 1.9,
-        simplificationToleranceMeters: 20,
-        reversalProminenceMeters: 32,
-        shortReversalSpanKm: 6,
-        protectedExtremaProminenceMeters: 70,
-        protectedExtremaWindowKm: 7,
-      }
-
-    case 'individual_time_trial':
-    case 'team_time_trial':
-    case 'time_trial':
-    case 'prologue':
-      return {
-        smoothingRadiusKm: 1.5,
-        simplificationToleranceMeters: 14,
-        reversalProminenceMeters: 22,
-        shortReversalSpanKm: 5,
-        protectedExtremaProminenceMeters: 55,
-        protectedExtremaWindowKm: 6,
-      }
-
-    case 'flat':
-    default:
-      return {
-        smoothingRadiusKm: 1.5,
-        simplificationToleranceMeters: 14,
-        reversalProminenceMeters: 22,
-        shortReversalSpanKm: 5,
-        protectedExtremaProminenceMeters: 55,
-        protectedExtremaWindowKm: 6,
-      }
-  }
-}
-
-function getDisplayOnlyMajorExtremaIndices(
-  points: BackendStageProfilePoint[],
-  terrainType: string | null | undefined
-): Set<number> {
-  const protectedIndices = new Set<number>()
-
-  if (points.length === 0) return protectedIndices
-
-  protectedIndices.add(0)
-  protectedIndices.add(points.length - 1)
-
-  if (points.length < 3) return protectedIndices
-
-  const settings = getDisplayOnlyProfileCalmingSettings(terrainType)
-
-  let globalMaxIndex = 0
-  let globalMinIndex = 0
-
-  for (let index = 1; index < points.length; index += 1) {
-    if (points[index].elevation > points[globalMaxIndex].elevation) {
-      globalMaxIndex = index
-    }
-
-    if (points[index].elevation < points[globalMinIndex].elevation) {
-      globalMinIndex = index
-    }
-  }
-
-  protectedIndices.add(globalMaxIndex)
-  protectedIndices.add(globalMinIndex)
-
-  for (let index = 1; index < points.length - 1; index += 1) {
-    const previous = points[index - 1]
-    const current = points[index]
-    const next = points[index + 1]
-
-    const isLocalPeak =
-      current.elevation >= previous.elevation &&
-      current.elevation >= next.elevation
-
-    const isLocalValley =
-      current.elevation <= previous.elevation &&
-      current.elevation <= next.elevation
-
-    if (!isLocalPeak && !isLocalValley) continue
-
-    let leftReference = current.elevation
-    let rightReference = current.elevation
-
-    for (let left = index - 1; left >= 0; left -= 1) {
-      if (
-        current.km - points[left].km >
-        settings.protectedExtremaWindowKm
-      ) {
-        break
-      }
-
-      leftReference = isLocalPeak
-        ? Math.min(leftReference, points[left].elevation)
-        : Math.max(leftReference, points[left].elevation)
-    }
-
-    for (let right = index + 1; right < points.length; right += 1) {
-      if (
-        points[right].km - current.km >
-        settings.protectedExtremaWindowKm
-      ) {
-        break
-      }
-
-      rightReference = isLocalPeak
-        ? Math.min(rightReference, points[right].elevation)
-        : Math.max(rightReference, points[right].elevation)
-    }
-
-    const prominence = isLocalPeak
-      ? Math.min(
-          current.elevation - leftReference,
-          current.elevation - rightReference
-        )
-      : Math.min(
-          leftReference - current.elevation,
-          rightReference - current.elevation
-        )
-
-    if (prominence >= settings.protectedExtremaProminenceMeters) {
-      protectedIndices.add(index)
-    }
-  }
-
-  return protectedIndices
-}
-
-function getDisplayOnlySmoothedElevation(
-  points: BackendStageProfilePoint[],
-  index: number,
-  radiusKm: number
-): number {
-  const center = points[index]
-
-  if (radiusKm <= 0) return center.elevation
-
-  let weightedElevation = 0
-  let totalWeight = 0
-
-  for (const point of points) {
-    const distanceKm = Math.abs(point.km - center.km)
-    if (distanceKm > radiusKm) continue
-
-    const proximity = 1 - distanceKm / radiusKm
-    const weight = Math.max(0.05, proximity * proximity)
-
-    weightedElevation += point.elevation * weight
-    totalWeight += weight
-  }
-
-  return totalWeight > 0
-    ? weightedElevation / totalWeight
-    : center.elevation
-}
-
-function simplifyDisplayOnlyProfileByVerticalError(
-  points: BackendStageProfilePoint[],
-  protectedIndices: Set<number>,
-  toleranceMeters: number
-): BackendStageProfilePoint[] {
-  if (points.length <= 2) return points
-
-  const keep = new Set<number>(protectedIndices)
-  keep.add(0)
-  keep.add(points.length - 1)
-
-  const protectedSorted = [...keep].sort((left, right) => left - right)
-  const segmentStack: Array<[number, number]> = []
-
-  for (let index = 0; index < protectedSorted.length - 1; index += 1) {
-    const startIndex = protectedSorted[index]
-    const endIndex = protectedSorted[index + 1]
-
-    if (endIndex - startIndex > 1) {
-      segmentStack.push([startIndex, endIndex])
-    }
-  }
-
-  while (segmentStack.length > 0) {
-    const segment = segmentStack.pop()
-    if (!segment) break
-
-    const [startIndex, endIndex] = segment
-    const start = points[startIndex]
-    const end = points[endIndex]
-    const spanKm = end.km - start.km
-
-    if (spanKm <= 0 || endIndex - startIndex <= 1) continue
-
-    let bestIndex = -1
-    let bestError = -1
-
-    for (let index = startIndex + 1; index < endIndex; index += 1) {
-      if (keep.has(index)) continue
-
-      const fraction = (points[index].km - start.km) / spanKm
-      const expectedElevation =
-        start.elevation +
-        (end.elevation - start.elevation) * fraction
-      const error = Math.abs(
-        points[index].elevation - expectedElevation
-      )
-
-      if (error > bestError) {
-        bestError = error
-        bestIndex = index
-      }
-    }
-
-    if (bestIndex !== -1 && bestError > toleranceMeters) {
-      keep.add(bestIndex)
-
-      if (bestIndex - startIndex > 1) {
-        segmentStack.push([startIndex, bestIndex])
-      }
-
-      if (endIndex - bestIndex > 1) {
-        segmentStack.push([bestIndex, endIndex])
-      }
-    }
-  }
-
-  return [...keep]
-    .sort((left, right) => left - right)
-    .map((index) => points[index])
-}
-
-function removeDisplayOnlyMinorReversals(
-  points: BackendStageProfilePoint[],
-  protectedKmKeys: Set<string>,
-  terrainType: string | null | undefined
-): BackendStageProfilePoint[] {
-  if (points.length < 3) return points
-
-  const settings = getDisplayOnlyProfileCalmingSettings(terrainType)
-  const result = points.map((point) => ({ ...point }))
-
-  let changed = true
-  let pass = 0
-
-  while (changed && pass < 12) {
-    changed = false
-    pass += 1
-
-    for (let index = 1; index < result.length - 1; index += 1) {
-      const previous = result[index - 1]
-      const current = result[index]
-      const next = result[index + 1]
-
-      if (protectedKmKeys.has(current.km.toFixed(4))) continue
-
-      const leftDelta = current.elevation - previous.elevation
-      const rightDelta = next.elevation - current.elevation
-
-      const isPeak = leftDelta > 0 && rightDelta < 0
-      const isValley = leftDelta < 0 && rightDelta > 0
-
-      if (!isPeak && !isValley) continue
-
-      const prominence = Math.min(
-        Math.abs(leftDelta),
-        Math.abs(rightDelta)
-      )
-      const surroundingSpanKm = next.km - previous.km
-
-      const isMinorProminence =
-        prominence < settings.reversalProminenceMeters
-      const isShortReversal =
-        surroundingSpanKm <= settings.shortReversalSpanKm &&
-        prominence <
-          settings.reversalProminenceMeters * 1.6
-
-      if (isMinorProminence || isShortReversal) {
-        result.splice(index, 1)
-        changed = true
-        break
-      }
-    }
-  }
-
-  return result
-}
-
-function buildDisplayOnlyCalmedProfileAnchors(
-  points: BackendStageProfilePoint[],
-  terrainType: string | null | undefined
-): BackendStageProfilePoint[] {
-  if (
-    !ENABLE_DISPLAY_ONLY_CALMED_PROFILE_ANCHORS ||
-    points.length < 4
-  ) {
-    return points
-  }
-
-  const settings = getDisplayOnlyProfileCalmingSettings(terrainType)
-  const protectedIndices = getDisplayOnlyMajorExtremaIndices(
-    points,
-    terrainType
-  )
-
-  const smoothed = points.map((point, index) => ({
-    km: point.km,
-    elevation: protectedIndices.has(index)
-      ? point.elevation
-      : getDisplayOnlySmoothedElevation(
-          points,
-          index,
-          settings.smoothingRadiusKm
-        ),
-  }))
-
-  const simplified = simplifyDisplayOnlyProfileByVerticalError(
-    smoothed,
-    protectedIndices,
-    settings.simplificationToleranceMeters
-  )
-
-  const protectedKmKeys = new Set(
-    [...protectedIndices].map((index) =>
-      points[index].km.toFixed(4)
-    )
-  )
-
-  return removeDisplayOnlyMinorReversals(
-    simplified,
-    protectedKmKeys,
-    terrainType
-  )
-}
-
 function getStageVisualSeed(stageId: string | null | undefined): number {
   if (!stageId) return 0
 
@@ -9126,38 +8745,32 @@ function getDisplayOnlyMicroTerrainAmplitudeMeters(
 
   const normalizedTerrain = String(terrainType ?? '').toLowerCase()
 
-  /*
-   * Keep texture on genuinely flat/rolling roads, but stop drawing the
-   * kilometre-by-kilometre saw-tooth pattern on sustained climbs and descents.
-   * The user's authoritative anchors stay untouched; this is render-only.
-   */
   const baseAmplitude =
     normalizedTerrain === 'hilly'
-      ? 7
+      ? 24
       : normalizedTerrain === 'mountain'
-        ? 6
+        ? 18
         : normalizedTerrain === 'cobbled'
-          ? 6
+          ? 14
           : normalizedTerrain === 'individual_time_trial' ||
               normalizedTerrain === 'team_time_trial' ||
               normalizedTerrain === 'prologue' ||
               normalizedTerrain === 'time_trial'
-            ? 4
-            : 5
+            ? 10
+            : 10
 
+  // Do not visually distort real sustained climbs/descents.
   const slopeFactor =
-    absoluteGradientPercent >= 3
-      ? 0
-      : absoluteGradientPercent >= 2
-        ? 0.06
-        : absoluteGradientPercent >= 1
-          ? 0.22
-          : absoluteGradientPercent >= 0.5
-            ? 0.5
-            : 1
+    absoluteGradientPercent >= 5
+      ? 0.2
+      : absoluteGradientPercent >= 3
+        ? 0.4
+        : absoluteGradientPercent >= 1.5
+          ? 0.7
+          : 1
 
   const deterministicVariation =
-    0.9 + (((stageSeed + anchorIndex * 17) % 21) / 20) * 0.2
+    0.85 + (((stageSeed + anchorIndex * 17) % 31) / 30) * 0.3
 
   return baseAmplitude * slopeFactor * deterministicVariation
 }
@@ -9212,30 +8825,33 @@ function getDisplayOnlyMajorReliefAdjustmentMeters(
   const absoluteGain = Math.abs(elevationDeltaMeters)
   const envelope = Math.sin(Math.PI * fraction)
 
-  /*
-   * Previous version stacked several sine waves here. That made long climbs
-   * and descents repeatedly pitch up/down every few kilometres.
-   *
-   * Use one broad deterministic bow instead: the segment remains monotonic
-   * and reads as straight/slightly curved rather than artificial micro-ramps.
-   */
+  // Long transitions get several broad sub-ramps/shelves. The stage seed
+  // chooses a stable pattern per stage so profiles do not all look alike.
   const pattern = (stageSeed + anchorIndex * 13) % 4
-  const bend =
-    pattern === 0
-      ? 0.42
-      : pattern === 1
-        ? -0.34
-        : pattern === 2
-          ? 0.24
-          : -0.2
+  const phase = ((stageSeed + anchorIndex * 29) % 180) * (Math.PI / 180)
 
+  const wave =
+    pattern === 0
+      ? Math.sin(fraction * Math.PI * 4 + phase) * 0.72 +
+        Math.sin(fraction * Math.PI * 8 + phase * 0.35) * 0.28
+      : pattern === 1
+        ? Math.sin(fraction * Math.PI * 3 + phase) * 0.68 +
+          Math.sin(fraction * Math.PI * 7 + phase * 0.5) * 0.32
+        : pattern === 2
+          ? Math.sin(fraction * Math.PI * 5 + phase) * 0.62 +
+            Math.sin(fraction * Math.PI * 2 + phase * 0.4) * 0.38
+          : Math.sin(fraction * Math.PI * 4.5 + phase) * 0.7 +
+            Math.sin(fraction * Math.PI * 6.5 + phase * 0.55) * 0.3
+
+  // Cap the visual deviation so the real summit/base remains dominant.
+  // Scale with both total gain and transition length.
   const amplitudeMeters = Math.min(
-    28,
-    absoluteGain * 0.055,
-    8 + spanKm * 0.55
+    85,
+    absoluteGain * 0.16,
+    18 + spanKm * 1.6
   )
 
-  return envelope * bend * amplitudeMeters
+  return envelope * wave * amplitudeMeters
 }
 
 function clampDisplayOnlyReliefElevation(
@@ -9263,8 +8879,7 @@ function clampDisplayOnlyReliefElevation(
 function softenDisplayOnlyLowReliefPeakShoulders(
   displayPoints: BackendStageProfilePoint[],
   anchors: BackendStageProfilePoint[],
-  terrainType: string | null | undefined,
-  stageSeed: number
+  terrainType: string | null | undefined
 ): BackendStageProfilePoint[] {
   if (
     !ENABLE_DISPLAY_ONLY_ABSOLUTE_ELEVATION_SCALING ||
@@ -9279,8 +8894,10 @@ function softenDisplayOnlyLowReliefPeakShoulders(
   const stageMax = Math.max(...anchors.map((point) => point.elevation))
   const stageRange = stageMax - stageMin
 
+  // This correction is mainly for low/moderate-relief classics and punchy
+  // stages. Genuine large mountain relief should keep its authoritative shape.
   if (
-    stageRange > 900 &&
+    stageRange > 750 &&
     normalizedTerrain !== 'cobbled' &&
     normalizedTerrain !== 'hilly'
   ) {
@@ -9303,58 +8920,45 @@ function softenDisplayOnlyLowReliefPeakShoulders(
     const rightSpan = next.km - peak.km
 
     if (
-      leftRise < 70 ||
-      rightDrop < 70 ||
+      leftRise < 45 ||
+      rightDrop < 45 ||
       leftSpan <= 0 ||
       rightSpan <= 0
     ) {
       continue
     }
 
-    if (leftSpan + rightSpan < 8 || Math.max(leftSpan, rightSpan) < 3.5) {
+    // Do not try to reshape genuinely tiny few-kilometre climbs.
+    if (leftSpan + rightSpan < 9 || Math.max(leftSpan, rightSpan) < 4) {
       continue
     }
 
     const prominence = Math.min(leftRise, rightDrop)
-    const asymmetry = ((stageSeed + index * 19) % 5) / 10
-
-    /*
-     * Build a broad, asymmetric summit shoulder. One side is deliberately
-     * longer than the other so the summit stops reading as a perfect pyramid.
-     * No extra local peaks are introduced.
-     */
-    const leftRadiusKm = Math.min(
-      5.5,
-      Math.max(2.2, leftSpan * (0.68 + asymmetry * 0.12))
-    )
-    const rightRadiusKm = Math.min(
+    const shoulderRadiusKm = Math.min(
       7,
-      Math.max(3, rightSpan * (0.72 + (0.4 - asymmetry) * 0.14))
+      Math.max(2.5, Math.min(leftSpan, rightSpan) * 0.55)
     )
     const shoulderDepthMeters = Math.min(
-      58,
-      Math.max(18, prominence * 0.22)
+      70,
+      Math.max(18, prominence * 0.42)
     )
 
     for (const point of softened) {
       if (anchorKmKeys.has(point.km.toFixed(4))) continue
 
-      const offsetKm = point.km - peak.km
-      const radiusKm = offsetKm < 0 ? leftRadiusKm : rightRadiusKm
-      const distanceKm = Math.abs(offsetKm)
+      const distanceKm = Math.abs(point.km - peak.km)
+      if (distanceKm >= shoulderRadiusKm) continue
 
-      if (distanceKm >= radiusKm) continue
-
-      const normalizedDistance = distanceKm / radiusKm
+      const proximity = 1 - distanceKm / shoulderRadiusKm
       const desiredShoulder =
         peak.elevation -
-        shoulderDepthMeters * Math.pow(normalizedDistance, 1.35)
+        shoulderDepthMeters *
+          Math.pow(distanceKm / shoulderRadiusKm, 0.75)
 
       if (point.elevation < desiredShoulder) {
-        const proximity = 1 - normalizedDistance
-        // Fade the shoulder smoothly back into the authoritative descent/
-        // approach so there is no artificial ledge at the edge of the summit.
-        const blend = 0.9 * Math.pow(proximity, 0.8)
+        // Blend rather than force a plateau. This broadens needle-like peaks
+        // while keeping the actual KOM/summit anchor exactly untouched.
+        const blend = 0.38 * proximity * proximity
         point.elevation +=
           (desiredShoulder - point.elevation) * blend
       }
@@ -9364,21 +8968,20 @@ function softenDisplayOnlyLowReliefPeakShoulders(
   return softened
 }
 
-export function getDisplayOnlyStageProfilePoints(
+function getDisplayOnlyStageProfilePoints(
   stageId: string | null | undefined,
   points: BackendStageProfilePoint[],
   terrainType?: string | null
 ): BackendStageProfilePoint[] {
   if (
     (!ENABLE_DISPLAY_ONLY_STAGE_MICRO_TERRAIN &&
-      !ENABLE_DISPLAY_ONLY_MAJOR_RELIEF_SHAPING &&
-      !ENABLE_DISPLAY_ONLY_CALMED_PROFILE_ANCHORS) ||
+      !ENABLE_DISPLAY_ONLY_MAJOR_RELIEF_SHAPING) ||
     points.length < 2
   ) {
     return points
   }
 
-  const sourceAnchors = [...points]
+  const anchors = [...points]
     .map((point) => ({
       km: Number(point.km),
       elevation: Number(point.elevation),
@@ -9389,18 +8992,6 @@ export function getDisplayOnlyStageProfilePoints(
         Number.isFinite(point.elevation)
     )
     .sort((left, right) => left.km - right.km)
-    .filter(
-      (point, index, rows) =>
-        index === 0 ||
-        Math.abs(point.km - rows[index - 1].km) > 0.000001
-    )
-
-  if (sourceAnchors.length < 2) return points
-
-  const anchors = buildDisplayOnlyCalmedProfileAnchors(
-    sourceAnchors,
-    terrainType
-  )
 
   if (anchors.length < 2) return points
 
@@ -9483,12 +9074,11 @@ export function getDisplayOnlyStageProfilePoints(
   return softenDisplayOnlyLowReliefPeakShoulders(
     displayPoints,
     anchors,
-    terrainType,
-    stageSeed
+    terrainType
   )
 }
 
-export function getDisplayOnlyProfileMinimumVerticalSpan(
+function getDisplayOnlyProfileMinimumVerticalSpan(
   terrainType: string | null | undefined
 ): number | null {
   if (!ENABLE_DISPLAY_ONLY_STAGE_MICRO_TERRAIN) return null
