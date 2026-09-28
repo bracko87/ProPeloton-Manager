@@ -6,8 +6,10 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { supabase } from '../lib/supabase'
 
 const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
+const TENNIS_LEGACY_URL = 'https://tennislegacygame.com/?source=propeloton_manager'
 
 /**
  * HelpPage
@@ -16,6 +18,15 @@ const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
 export default function HelpPage(): JSX.Element {
   const { t } = useTranslation('help')
   const [openFaqKey, setOpenFaqKey] = useState<string | null>('new-team-first')
+
+  function recordCrossGameClick(): void {
+    void supabase.rpc('record_cross_game_referral_event_v1', {
+      p_event_type: 'outgoing_click',
+      p_source_game: 'propeloton_manager',
+      p_destination_game: 'tennis_legacy',
+      p_surface: 'help',
+    })
+  }
 
   const firstSteps = [
     {
@@ -547,6 +558,25 @@ export default function HelpPage(): JSX.Element {
             )
           })}
         </div>
+      </section>
+
+      <section className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-800">
+          Discover our other game
+        </p>
+        <h2 className="mt-2 text-lg font-semibold text-slate-900">Tennis Legacy: Rise to Glory</h2>
+        <p className="mt-2 max-w-4xl text-sm leading-relaxed text-slate-700">
+          Build, train and manage your own professional tennis career in a persistent multiplayer world.
+        </p>
+        <a
+          href={TENNIS_LEGACY_URL}
+          target="_blank"
+          rel="noreferrer"
+          onClick={recordCrossGameClick}
+          className="mt-4 inline-flex rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        >
+          Play Tennis Legacy ↗
+        </a>
       </section>
 
       <section className="rounded-xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
