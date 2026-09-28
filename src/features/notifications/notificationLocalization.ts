@@ -84,6 +84,137 @@ function getPrimaryEntity(item: NotificationItem): string | null {
   ])
 }
 
+const CHAMPIONSHIP_NOTIFICATION_KEY_BY_CODE: Record<string, string> = {
+  NATIONAL_CHAMPIONSHIP_SELECTED: 'selected',
+  NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT: 'qualificationResult',
+  NATIONAL_CHAMPIONSHIP_QUALIFIED: 'qualified',
+  NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: 'nationalFinalConfirmation',
+  NATIONAL_CHAMPIONSHIP_FINAL_RESULT: 'nationalFinalResult',
+  NATIONAL_CHAMPION: 'nationalChampion',
+  WORLD_ROAD_CHAMPIONSHIP_INVITATION: 'worldInvitation',
+  WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: 'worldFinalConfirmation',
+  WORLD_ROAD_CHAMPIONSHIP_RESULT: 'worldResult',
+  WORLD_ROAD_CHAMPION: 'worldChampion',
+}
+
+function isChampionshipNotificationType(typeCode: string | null | undefined): boolean {
+  return Boolean(CHAMPIONSHIP_NOTIFICATION_KEY_BY_CODE[String(typeCode ?? '').toUpperCase()])
+}
+
+function championshipShortDate(value: unknown): string {
+  const text = String(value ?? '').trim()
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(text)
+  if (!match) return text || '—'
+  return `${match[3]}.${match[2]}.`
+}
+
+function championshipCountry(payload: Record<string, unknown>): string {
+  const explicit = readString(payload, ['country_name', 'countryName'])
+  if (explicit) return explicit
+
+  const code = readString(payload, ['country_code', 'countryCode'])
+  if (!code) return nt('championship.common.countryFallback')
+
+  try {
+    if (/^[a-z]{2}$/i.test(code) && typeof Intl !== 'undefined' && Intl.DisplayNames) {
+      const names = new Intl.DisplayNames([activeLanguageCode()], { type: 'region' })
+      return names.of(code.toUpperCase()) || code.toUpperCase()
+    }
+  } catch {
+    // Keep the stable country code when Intl.DisplayNames is unavailable.
+  }
+
+  return code.toUpperCase()
+}
+
+function championshipNotificationParams(item: NotificationItem): Record<string, unknown> {
+  const payload = payloadOf(item)
+  const rider =
+    readString(payload, [
+      'rider_name',
+      'rider_full_name',
+      'champion_rider_name',
+      'champion_name',
+    ]) ||
+    getPrimaryEntity(item) ||
+    nt('common.rider')
+
+  const champion =
+    readString(payload, [
+      'champion_rider_name',
+      'champion_name',
+      'rider_name',
+      'rider_full_name',
+    ]) || rider
+
+  return {
+    rider,
+    champion,
+    country: championshipCountry(payload),
+    heat: readNumber(payload, ['heat_number']) ?? '—',
+    places: readNumber(payload, ['qualifying_places']) ?? '—',
+    season: readNumber(payload, ['season_number', 'season']) ?? '—',
+    qualificationDate: championshipShortDate(
+      readString(payload, ['qualification_date'])
+    ),
+    finalDate: championshipShortDate(
+      readString(payload, ['final_date'])
+    ),
+    raceDate: championshipShortDate(
+      readString(payload, ['race_date'])
+    ),
+    deadline: championshipShortDate(
+      readString(payload, [
+        'participation_decision_deadline',
+        'decision_deadline',
+        'final_decision_deadline',
+      ])
+    ),
+    finalDeadline: championshipShortDate(
+      readString(payload, ['final_decision_deadline'])
+    ),
+  }
+}
+
+function localizeChampionshipNotificationItem(
+  item: NotificationItem
+): NotificationItem | null {
+  if (!shouldLocalizeNotifications()) return null
+
+  const code = String(item.type_code ?? '').toUpperCase()
+  const key = CHAMPIONSHIP_NOTIFICATION_KEY_BY_CODE[code]
+  if (!key) return null
+
+  const params = championshipNotificationParams(item)
+  const payload = payloadOf(item)
+  const isPreview = payload.is_preview === true || /^\[Preview(?:\s+\d+)?\]/i.test(String(item.title ?? ''))
+
+  const translatedTitle = nt(`championship.${key}.title`, params)
+  const translatedMessage = nt(`championship.${key}.message`, params)
+  const title = isPreview
+    ? `${nt('championship.common.previewPrefix')} ${translatedTitle}`
+    : translatedTitle
+
+  return {
+    ...item,
+    title: repairRotatedLocalizedNotificationTitle(title),
+    message: translatedMessage,
+  }
+}
+
+function championshipExtraText(item: NotificationItem): string | null {
+  const code = String(item.type_code ?? '').toUpperCase()
+  const key = CHAMPIONSHIP_NOTIFICATION_KEY_BY_CODE[code]
+  if (!key || !shouldLocalizeNotifications()) return null
+
+  const translationKey = `championship.${key}.extra`
+  const value = nt(translationKey, {
+    ...championshipNotificationParams(item),
+    defaultValue: '',
+  })
+  return value && value !== translationKey ? value : null
+}
+
 function normalizePhrase(value: string): string {
   return value
     .trim()
@@ -840,6 +971,9 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
     }
   }
 
+  const championshipItem = localizeChampionshipNotificationItem(item)
+  if (championshipItem) return championshipItem
+
   const feedCopy = localizeNotificationFeedCopy(item.title, item.message, { genericFallback: false })
 
   if (typeCode === 'STAFF_HIRED') {
@@ -965,6 +1099,20 @@ export function localizeNotificationNarrative(
       : nt('templateLocalization.sponsorSelectionRequired.message')
   }
 
+  if (item && isChampionshipNotificationType(typeCode)) {
+    const localizedItem = localizeChampionshipNotificationItem(item)
+    if (localizedItem) {
+      const rawTitle = String(item.title ?? '').trim()
+      const rawMessage = String(item.message ?? '').trim()
+
+      if (value === rawTitle) return localizedItem.title
+      if (value === rawMessage) return localizedItem.message
+
+      const extra = championshipExtraText(item)
+      if (extra && looksEnglish(value)) return extra
+    }
+  }
+
   const resourceLocalized =
     localizeExistingGamePhrase(value) || localizeExistingGameTemplate(value)
   if (resourceLocalized) return resourceLocalized
@@ -1043,6 +1191,23 @@ const DETAIL_LABEL_KEYS: Record<string, string> = {
   'available jersey kits': 'templateLabels.availableJerseyKits',
   'missing jersey kits': 'templateLabels.missingJerseyKits',
   'eligibility check': 'templateLabels.eligibilityCheck',
+  'qualification group': 'championship.labels.qualificationGroup',
+  'national final': 'championship.labels.nationalFinal',
+  'decision deadline': 'championship.labels.decisionDeadline',
+  'final date': 'championship.labels.finalDate',
+  'qualifying places': 'championship.labels.qualifyingPlaces',
+  'your rider results': 'championship.labels.yourRiderResults',
+  'your riders qualified': 'championship.labels.yourRidersQualified',
+  'top 3': 'championship.labels.topThree',
+  'champion': 'championship.labels.champion',
+  'podium': 'championship.labels.podium',
+  'grand finale': 'championship.labels.grandFinale',
+  'world road champion': 'championship.labels.worldRoadChampion',
+  'world podium': 'championship.labels.worldPodium',
+  'qualified as': 'championship.labels.qualifiedAs',
+  'final deadline': 'championship.labels.finalDeadline',
+  'race date': 'championship.labels.raceDate',
+  'result': 'championship.labels.result',
 }
 
 export function localizeNotificationDetailLabel(
@@ -1050,6 +1215,19 @@ export function localizeNotificationDetailLabel(
   item?: NotificationItem
 ): string {
   if (!shouldLocalizeNotifications()) return label
+
+  if (item && isChampionshipNotificationType(item.type_code)) {
+    const groupMatch = /^Group\s+(\d+)$/i.exec(cleanValue)
+    if (groupMatch) {
+      return nt('championship.values.group', { number: Number(groupMatch[1]) })
+    }
+    if (/^None$/i.test(cleanValue)) {
+      return nt('championship.values.none')
+    }
+    if (/^1st place$/i.test(cleanValue)) {
+      return nt('championship.values.firstPlace')
+    }
+  }
 
   if (String(item?.type_code ?? '').toUpperCase() === 'SEASON_STARTED' && item) {
     const context = getSeasonStartedContext(item)
@@ -1329,6 +1507,16 @@ const ACTION_KEY_BY_LABEL: Record<string, string> = {
   'race supplies': 'details.raceSupplies',
   'open stage': 'details.openStage',
   'open race': 'details.openRace',
+  'open my national duty': 'championship.actions.openMyNationalDuty',
+  'confirm final participation': 'championship.actions.confirmFinalParticipation',
+  'open qualification results': 'championship.actions.openQualificationResults',
+  'my national duty': 'championship.actions.myNationalDuty',
+  'open national championship final': 'championship.actions.openNationalFinal',
+  'open champion': 'championship.actions.openChampion',
+  'open world championship duty': 'championship.actions.openWorldDuty',
+  'confirm world championship': 'championship.actions.confirmWorld',
+  'open world championship results': 'championship.actions.openWorldResults',
+  'open world championship': 'championship.actions.openWorldChampionship',
   'open equipment': 'details.openEquipment',
   'open infrastructure': 'details.openInfrastructure',
   'open finance': 'details.openFinance',
