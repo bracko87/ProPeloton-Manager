@@ -225,6 +225,28 @@
       "hilly": "Hilly",
       "mountain": "Mountain",
       "cobbled": "Cobbled"
-    }
+    },
+    "oneDayRace": "One-day race",
+    "raceDateLine": "Race date: {{date}} — {{place}}",
+    "noTeamCost": "No team cost",
+    "stages": "Stages",
+    "stageOne": "Stage 1",
+    "replayAfterGeneration": "Replay becomes available through the normal race replay system after this National Championship race is generated and calculated.",
+    "raceInformation": "Race information",
+    "ridersResults": "Riders & results",
+    "results": "Results",
+    "finalRidersPending": "Final participants will be known after the qualification groups are completed.",
+    "noRiders": "No riders are currently assigned to this event.",
+    "jersey": "Jersey",
+    "rider": "Rider",
+    "team": "Team",
+    "time": "Time",
+    "gap": "Gap",
+    "status": "Status",
+    "resultsPending": "Results will be published here after the race is completed.",
+    "refresh": "Refresh",
+    "finished": "Race finished",
+    "ready": "Race ready",
+    "planned": "Planned"
   }
 }
