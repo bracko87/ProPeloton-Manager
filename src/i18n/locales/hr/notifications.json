@@ -496,6 +496,7 @@
     "countSeasons": "{{count}} sezona"
   },
   "templateWords": {
+    "10": "10",
     "ADVISOR": "Savjetnik",
     "ADMIN": "Administracija",
     "MESSAGE": "Poruka",
@@ -610,7 +611,6 @@
     "CLASSIFICATION": "Klasifikacija",
     "INVITATION": "Poziv",
     "INVITED": "Pozvan",
-    "10": "10",
     "AGAIN": "Ponovno",
     "AGE": "Dob",
     "AGENTS": "Agenti",
@@ -879,7 +879,17 @@
     "RACE_APPLICATION_RULE_CHANGE": "Promjena rokova za prijavu na utrke",
     "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Plan utrke je dovršen",
-    "STAGE_PLAN_MISSING_REMINDER": "Podsjetnik: nedostaje plan etape"
+    "STAGE_PLAN_MISSING_REMINDER": "Podsjetnik: nedostaje plan etape",
+    "NATIONAL_CHAMPIONSHIP_SELECTED": "Odabir za nacionalno prvenstvo",
+    "NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT": "Rezultat nacionalnih kvalifikacija",
+    "NATIONAL_CHAMPIONSHIP_QUALIFIED": "Plasman u nacionalno finale",
+    "NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Potvrda nacionalnog finala",
+    "NATIONAL_CHAMPIONSHIP_FINAL_RESULT": "Rezultat nacionalnog prvenstva",
+    "NATIONAL_CHAMPION": "Nacionalni prvak",
+    "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Poziv na Svjetsko prvenstvo",
+    "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Potvrda za Svjetsko prvenstvo",
+    "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Rezultat Svjetskog prvenstva",
+    "WORLD_ROAD_CHAMPION": "Svjetski cestovni prvak"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Plan utrke zahtijeva pažnju: {{entity}}",
@@ -1086,5 +1096,97 @@
     "raceEffect": "Momčad i dalje može nastupiti; smanjenje učinka raste s brojem nedostajućih kompleta",
     "extraWithMissing": "Još potrebnih upotrebljivih kompleta trkaćih dresova: {{missing}}. Dodajte ih kako biste smanjili ili uklonili kaznu. Potpuni nedostatak znači -30% pozitivnih bonusa pripreme, +8% potrošnje energije tijekom etape i +15% umora nakon etape.",
     "extraGeneric": "Otvorite Zalihe za utrku i provjerite upotrebljive komplete trkaćih dresova. Nedostatak ne sprječava nastup."
+  },
+  "championship": {
+    "common": {
+      "previewPrefix": "[Pregled]",
+      "countryFallback": "Država"
+    },
+    "labels": {
+      "qualificationGroup": "Kvalifikacijska skupina",
+      "nationalFinal": "Nacionalno finale",
+      "decisionDeadline": "Rok za odluku",
+      "finalDate": "Datum finala",
+      "qualifyingPlaces": "Kvalifikacijska mjesta",
+      "yourRiderResults": "Rezultati vaših vozača",
+      "yourRidersQualified": "Vaši kvalificirani vozači",
+      "topThree": "Top 3",
+      "champion": "Prvak",
+      "podium": "Postolje",
+      "grandFinale": "Veliko finale",
+      "worldRoadChampion": "Svjetski cestovni prvak",
+      "worldPodium": "Svjetsko postolje",
+      "qualifiedAs": "Kvalificiran kao",
+      "finalDeadline": "Krajnji rok",
+      "raceDate": "Datum utrke",
+      "result": "Rezultat"
+    },
+    "values": {
+      "group": "Skupina {{number}}",
+      "none": "Nitko",
+      "firstPlace": "1. mjesto"
+    },
+    "actions": {
+      "openMyNationalDuty": "Otvori nacionalnu obvezu",
+      "confirmFinalParticipation": "Potvrdi nastup u finalu",
+      "openQualificationResults": "Otvori rezultate kvalifikacija",
+      "myNationalDuty": "Moja nacionalna obveza",
+      "openNationalFinal": "Otvori finale nacionalnog prvenstva",
+      "openChampion": "Otvori prvaka",
+      "openWorldDuty": "Otvori obvezu za Svjetsko prvenstvo",
+      "confirmWorld": "Potvrdi Svjetsko prvenstvo",
+      "openWorldResults": "Otvori rezultate Svjetskog prvenstva",
+      "openWorldChampionship": "Otvori Svjetsko prvenstvo"
+    },
+    "selected": {
+      "title": "{{rider}} je odabran za nacionalno prvenstvo",
+      "message": "{{rider}} je odabran za nacionalno prvenstvo države {{country}}. Kvalifikacijska skupina {{heat}} vozi se {{qualificationDate}}. Ako se kvalificira, finale je {{finalDate}}. Odluku donesite do {{deadline}}.",
+      "extra": "Sve troškove nacionalne obveze pokriva organizator. Otvorite nacionalnu obvezu kako biste prije roka odobrili ili odbili nastup."
+    },
+    "qualificationResult": {
+      "title": "{{country}} – završena kvalifikacijska skupina {{heat}}",
+      "message": "Službeni rezultati su dostupni. Prvih {{places}} vozača prolazi u finale nacionalnog prvenstva {{finalDate}}.",
+      "extra": "Otvorite kvalifikacijsku utrku za cijelu klasifikaciju i nacionalnu obvezu za sljedeće korake vaših vozača."
+    },
+    "qualified": {
+      "title": "{{rider}} se kvalificirao za finale nacionalnog prvenstva",
+      "message": "{{rider}} je izborio mjesto u finalu nacionalnog prvenstva države {{country}} {{finalDate}}.",
+      "extra": "Za finale nacionalnog prvenstva potrebna je zasebna druga potvrda menadžera."
+    },
+    "nationalFinalConfirmation": {
+      "title": "Ponovno potvrdite {{rider}} za finale nacionalnog prvenstva",
+      "message": "{{rider}} ima mjesto u finalu nacionalnog prvenstva države {{country}} {{finalDate}}. Posebno odobrite ili odbijte nastup u finalu do {{finalDeadline}}.",
+      "extra": "Ovo je druga potvrda za isto nacionalno prvenstvo. Ako odluka ne bude donesena do roka, vozač će biti automatski odobren."
+    },
+    "nationalFinalResult": {
+      "title": "{{country}} – završeno nacionalno prvenstvo",
+      "message": "{{champion}} je nacionalni cestovni prvak sezone {{season}}. Konačna klasifikacija sada je službena.",
+      "extra": "Pobjednik se automatski poziva na Veliko finale Svjetskog prvenstva u cestovnoj vožnji."
+    },
+    "nationalChampion": {
+      "title": "{{rider}} je nacionalni cestovni prvak!",
+      "message": "{{rider}} je osvojio nacionalno cestovno prvenstvo države {{country}}. Titula je sada dio povijesti karijere vozača.",
+      "extra": "Značka nacionalnog prvaka aktivna je u tekućoj sezoni i trajno ostaje u povijesti karijere."
+    },
+    "worldInvitation": {
+      "title": "{{rider}} je pozvan na Svjetsko prvenstvo!",
+      "message": "{{rider}} se kao nacionalni prvak države {{country}} kvalificirao za Veliko finale Svjetskog prvenstva {{raceDate}}. Sve troškove pokriva organizator. Odluku donesite do {{deadline}}.",
+      "extra": "Menadžer mora odobriti ili odbiti poziv. Neposredno prije Velikog finala potrebna je još jedna, druga potvrda."
+    },
+    "worldFinalConfirmation": {
+      "title": "Ponovno potvrdite {{rider}} za Svjetsko prvenstvo",
+      "message": "{{rider}} je već kvalificiran i prihvaćen za Veliko finale Svjetskog prvenstva {{raceDate}}. Ponovno potvrdite konačni nastup do {{finalDeadline}}.",
+      "extra": "Odbijanje u ovoj fazi uklanja vozača sa startne liste i donosi veliki minus morala."
+    },
+    "worldResult": {
+      "title": "Završeno Svjetsko prvenstvo u cestovnoj vožnji",
+      "message": "{{champion}} je svjetski cestovni prvak sezone {{season}}. Klasifikacija Velikog finala sada je službena.",
+      "extra": "Nema novčane nagrade za momčad. Postolje Svjetskog prvenstva trajno se sprema u povijest karijere vozača."
+    },
+    "worldChampion": {
+      "title": "{{rider}} je svjetski cestovni prvak!",
+      "message": "{{rider}} je osvojio Veliko finale Svjetskog prvenstva u cestovnoj vožnji. Ova prestižna titula sada je dio povijesti karijere vozača.",
+      "extra": "Značka svjetskog cestovnog prvaka aktivna je ove sezone i trajno ostaje u povijesti karijere."
+    }
   }
 }
