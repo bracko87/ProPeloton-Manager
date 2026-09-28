@@ -1,12 +1,67 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, Loader2 } from 'lucide-react'
-import { useNavigate, useParams } from 'react-router'
+import { ChevronLeft, Loader2, RefreshCw } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
+import RaceDetailPage from './RaceDetailPage'
+
+const FREE_AGENT_JERSEY_URL =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit53.png'
 
 type ProfilePoint = {
   km: number
   elevation: number
+}
+
+type RiderRow = {
+  rider_id: string
+  rider_name: string
+  national_rank: number
+  seed_number?: number | null
+  club_id?: string | null
+  team_name?: string | null
+  country_code?: string | null
+  entry_status?: string | null
+  participation_decision?: string | null
+  jersey_url?: string | null
+}
+
+type ResultRow = {
+  rank: number | null
+  rider_id: string
+  rider_name: string
+  club_id?: string | null
+  team_name?: string | null
+  country_code?: string | null
+  elapsed_seconds?: number | null
+  gap_seconds?: number | null
+  status?: string | null
+  jersey_url?: string | null
+}
+
+type GeneratedStage = {
+  id: string
+  race_id: string
+  stage_number: number
+  stage_date: string
+  name?: string | null
+  start_city?: string | null
+  finish_city?: string | null
+  planned_start_time_label?: string | null
+  planned_start_hour_number?: number | null
+  planned_start_minute?: number | null
+  terrain_type?: string | null
+  profile_type?: string | null
+  distance_km?: number | null
+  elevation_gain_m?: number | null
+  flat_pct?: number | null
+  hilly_pct?: number | null
+  mountain_pct?: number | null
+  cobbled_pct?: number | null
+  weather_snapshot?: Record<string, unknown> | null
+  weather_summary?: string | null
+  weather_cancelled?: boolean | null
+  weather_cancellation_reason?: string | null
 }
 
 type RouteData = {
@@ -47,7 +102,27 @@ type EventData = {
   final_date: string
   start_time_label: string | null
   expected_max_temp_c: number | null
+  current_game_date: string
+  generated_stage_id: string | null
+  generated_stage: GeneratedStage | null
+  participants: RiderRow[]
+  participants_known: boolean
+  results: ResultRow[]
+  viewer_has_participant: boolean
   route: RouteData
+}
+
+type ReplayAvailability = {
+  status: 'loading' | 'available' | 'not_open' | 'not_available' | 'error'
+  replayOpensGameAt: string | null
+}
+
+type ReplayCoinAccess = {
+  coin_cost: number
+  coin_balance: number
+  has_coin_unlock: boolean
+  has_premium_access: boolean
+  has_replay_access: boolean
 }
 
 function normalizePoint(value: unknown): ProfilePoint | null {
@@ -55,7 +130,6 @@ function normalizePoint(value: unknown): ProfilePoint | null {
   const record = value as Record<string, unknown>
   const km = Number(record.km)
   const elevation = Number(record.elevation_m ?? record.elevation)
-
   if (!Number.isFinite(km) || !Number.isFinite(elevation)) return null
   return { km, elevation }
 }
@@ -78,141 +152,350 @@ function humanize(value?: string | null): string {
     .replace(/\b\w/g, letter => letter.toUpperCase())
 }
 
-function NationalProfileChart({
+function formatRaceTime(seconds?: number | null): string {
+  if (seconds == null || !Number.isFinite(Number(seconds))) return '—'
+  const total = Math.max(0, Math.round(Number(seconds)))
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const secs = total % 60
+  return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
+function formatGap(seconds?: number | null): string {
+  if (seconds == null || !Number.isFinite(Number(seconds))) return '—'
+  const total = Math.max(0, Math.round(Number(seconds)))
+  if (total === 0) return '—'
+  if (total < 60) return `+${total}s`
+  const minutes = Math.floor(total / 60)
+  const secs = total % 60
+  return `+${minutes}:${String(secs).padStart(2, '0')}`
+}
+
+function normalizeReplayAvailability(value: unknown): ReplayAvailability {
+  const data = Array.isArray(value) ? value[0] : value
+  if (!data || typeof data !== 'object') {
+    return { status: 'error', replayOpensGameAt: null }
+  }
+  const row = data as Record<string, unknown>
+  const rawStatus = String(row.status ?? 'not_available')
+  const status: ReplayAvailability['status'] =
+    rawStatus === 'available' ||
+    rawStatus === 'not_open' ||
+    rawStatus === 'not_available'
+      ? rawStatus
+      : 'error'
+
+  return {
+    status,
+    replayOpensGameAt:
+      typeof row.replay_opens_game_at === 'string'
+        ? row.replay_opens_game_at
+        : null,
+  }
+}
+
+function normalizeCoinAccess(value: unknown): ReplayCoinAccess | null {
+  const data = Array.isArray(value) ? value[0] : value
+  if (!data || typeof data !== 'object') return null
+  const row = data as Record<string, unknown>
+  return {
+    coin_cost: Number(row.coin_cost ?? 2),
+    coin_balance: Number(row.coin_balance ?? 0),
+    has_coin_unlock:
+      row.has_coin_unlock === true || row.has_coin_unlock === 'true',
+    has_premium_access:
+      row.has_premium_access === true || row.has_premium_access === 'true',
+    has_replay_access:
+      row.has_replay_access === true || row.has_replay_access === 'true',
+  }
+}
+
+function NationalStageProfileChart({
   points,
   distanceKm,
+  terrainType,
+  startLabel,
+  finishLabel,
   ariaLabel,
 }: {
   points: ProfilePoint[]
   distanceKm: number
+  terrainType?: string | null
+  startLabel: string
+  finishLabel: string
   ariaLabel: string
 }): JSX.Element {
-  const width = 1000
-  const height = 280
-  const padding = { left: 56, right: 24, top: 24, bottom: 38 }
+  const width = 920
+  const height = 320
+  const padding = { top: 38, right: 18, bottom: 52, left: 70 }
 
   const model = useMemo(() => {
-    if (points.length < 2) return null
+    if (points.length < 2 || !distanceKm) return null
 
     const sorted = [...points].sort((a, b) => a.km - b.km)
-    const minKm = Math.min(...sorted.map(point => point.km))
-    const maxKm = Math.max(distanceKm, ...sorted.map(point => point.km), 1)
-    const rawMin = Math.min(...sorted.map(point => point.elevation))
-    const rawMax = Math.max(...sorted.map(point => point.elevation))
-    const minElevation = Math.max(0, Math.floor((rawMin - 100) / 100) * 100)
-    const maxElevation = Math.max(
-      minElevation + 300,
-      Math.ceil((rawMax + 150) / 100) * 100,
-    )
     const innerWidth = width - padding.left - padding.right
     const innerHeight = height - padding.top - padding.bottom
+    const rawMin = Math.min(...sorted.map(point => point.elevation))
+    const rawMax = Math.max(...sorted.map(point => point.elevation))
+    const normalizedTerrain = String(terrainType ?? '').toLowerCase()
+
+    let minElevation = 0
+    let maxElevation: number
+
+    if (rawMax <= 120) {
+      maxElevation = Math.max(200, Math.ceil((rawMax * 1.15) / 100) * 100)
+    } else if (normalizedTerrain === 'mountain') {
+      minElevation = Math.max(0, Math.floor((rawMin - 250) / 100) * 100)
+      maxElevation = Math.ceil(Math.max(rawMax * 1.08, minElevation + 1400) / 100) * 100
+    } else if (normalizedTerrain === 'hilly') {
+      maxElevation = Math.ceil(Math.max(rawMax * 1.08, 800) / 100) * 100
+    } else {
+      maxElevation = Math.ceil(Math.max(rawMax * 1.08, 500) / 100) * 100
+    }
+
+    const elevationSpan = Math.max(maxElevation - minElevation, 1)
+    const safeDistance = Math.max(distanceKm, 1)
 
     const coords = sorted.map(point => ({
-      x:
-        padding.left +
-        ((point.km - minKm) / Math.max(maxKm - minKm, 1)) * innerWidth,
+      km: point.km,
+      x: padding.left + (point.km / safeDistance) * innerWidth,
       y:
         padding.top +
         innerHeight -
-        ((point.elevation - minElevation) /
-          Math.max(maxElevation - minElevation, 1)) *
-          innerHeight,
+        ((point.elevation - minElevation) / elevationSpan) * innerHeight,
     }))
 
-    const line = coords
-      .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
-      .join(' ')
-    const area = `${line} L ${coords[coords.length - 1].x} ${
-      height - padding.bottom
-    } L ${coords[0].x} ${height - padding.bottom} Z`
+    const linePath = coords.reduce((path, point, index) => {
+      if (index === 0) return `M ${point.x} ${point.y}`
+      const previous = coords[index - 1]
+      const controlX = (previous.x + point.x) / 2
+      return `${path} C ${controlX} ${previous.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`
+    }, '')
+
+    const areaPath = [
+      linePath,
+      `L ${coords[coords.length - 1].x} ${height - padding.bottom}`,
+      `L ${coords[0].x} ${height - padding.bottom}`,
+      'Z',
+    ].join(' ')
+
+    const rawTicks: number[] = []
+    const tickStep = maxElevation <= 400 ? 100 : maxElevation <= 1000 ? 200 : 500
+    for (let value = maxElevation; value >= minElevation; value -= tickStep) {
+      rawTicks.push(value)
+    }
+    if (rawTicks[rawTicks.length - 1] !== minElevation) rawTicks.push(minElevation)
 
     return {
-      line,
-      area,
+      linePath,
+      areaPath,
       minElevation,
       maxElevation,
-      maxKm,
-      ticks: [0, 0.25, 0.5, 0.75, 1].map(fraction => ({
-        fraction,
-        elevation:
-          minElevation + (maxElevation - minElevation) * (1 - fraction),
-        y: padding.top + innerHeight * fraction,
-      })),
+      ticks: rawTicks.slice(0, 6),
+      innerHeight,
+      innerWidth,
+      safeDistance,
     }
-  }, [points, distanceKm])
+  }, [points, distanceKm, terrainType])
 
   if (!model) {
     return (
-      <div className="flex h-64 items-center justify-center rounded border border-slate-200 bg-slate-50 text-sm text-slate-500">
+      <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-sm text-slate-500">
         —
       </div>
     )
   }
 
+  const yForElevation = (elevation: number) =>
+    padding.top +
+    model.innerHeight -
+    ((elevation - model.minElevation) /
+      Math.max(model.maxElevation - model.minElevation, 1)) *
+      model.innerHeight
+
+  const startX = padding.left
+  const finishX = width - padding.right
+  const badgeY = 16
+
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      className="h-auto w-full"
-      role="img"
-      aria-label={ariaLabel}
-    >
-      {model.ticks.map(tick => (
-        <g key={tick.fraction}>
-          <line
-            x1={padding.left}
-            x2={width - padding.right}
-            y1={tick.y}
-            y2={tick.y}
-            stroke="#e2e8f0"
-            strokeWidth="1"
-          />
-          <text
-            x={padding.left - 10}
-            y={tick.y + 4}
-            textAnchor="end"
-            fontSize="11"
-            fill="#64748b"
-          >
-            {Math.round(tick.elevation)} m
-          </text>
-        </g>
-      ))}
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-auto w-full"
+        role="img"
+        aria-label={ariaLabel}
+      >
+        {model.ticks.map(tick => {
+          const y = yForElevation(tick)
+          return (
+            <g key={tick}>
+              <line
+                x1={padding.left}
+                x2={width - padding.right}
+                y1={y}
+                y2={y}
+                stroke="#e2e8f0"
+                strokeWidth="1"
+              />
+              <text
+                x={padding.left - 12}
+                y={y + 4}
+                textAnchor="end"
+                fontSize="12"
+                fill="#64748b"
+              >
+                {tick} m
+              </text>
+            </g>
+          )
+        })}
 
-      <path d={model.area} fill="#fef3c7" />
-      <path
-        d={model.line}
-        fill="none"
-        stroke="#d97706"
-        strokeWidth="3"
-        strokeLinejoin="round"
-        strokeLinecap="round"
+        <path d={model.areaPath} fill="rgba(250, 204, 21, 0.55)" />
+        <path d={model.linePath} fill="none" stroke="#334155" strokeWidth="3" />
+
+        <line
+          x1={startX}
+          x2={startX}
+          y1={padding.top}
+          y2={height - padding.bottom}
+          stroke="#64748b"
+          strokeWidth="1.5"
+          strokeDasharray="5 5"
+        />
+        <rect x={startX - 29} y={badgeY} width="58" height="22" rx="11" fill="#64748b" />
+        <text
+          x={startX}
+          y={badgeY + 15}
+          textAnchor="middle"
+          fontSize="11"
+          fontWeight="700"
+          fill="white"
+        >
+          {startLabel}
+        </text>
+
+        <line
+          x1={finishX}
+          x2={finishX}
+          y1={padding.top}
+          y2={height - padding.bottom}
+          stroke="#2563eb"
+          strokeWidth="1.5"
+          strokeDasharray="5 5"
+        />
+        <rect x={finishX - 29} y={badgeY} width="58" height="22" rx="11" fill="#2563eb" />
+        <text
+          x={finishX}
+          y={badgeY + 15}
+          textAnchor="middle"
+          fontSize="11"
+          fontWeight="700"
+          fill="white"
+        >
+          {finishLabel}
+        </text>
+
+        <text
+          x={padding.left}
+          y={height - 14}
+          textAnchor="middle"
+          fontSize="12"
+          fontWeight="600"
+          fill="#334155"
+        >
+          0 km
+        </text>
+        <text
+          x={width - padding.right}
+          y={height - 14}
+          textAnchor="middle"
+          fontSize="12"
+          fontWeight="600"
+          fill="#334155"
+        >
+          {model.safeDistance.toFixed(1).replace(/\.0$/, '')} km
+        </text>
+      </svg>
+    </div>
+  )
+}
+
+function Jersey({
+  url,
+  name,
+}: {
+  url?: string | null
+  name: string
+}): JSX.Element {
+  const [src, setSrc] = useState(url?.trim() || FREE_AGENT_JERSEY_URL)
+
+  useEffect(() => {
+    setSrc(url?.trim() || FREE_AGENT_JERSEY_URL)
+  }, [url])
+
+  return (
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5">
+      <img
+        src={src}
+        alt={name}
+        className="h-full w-full scale-[1.12] object-contain"
+        loading="lazy"
+        onError={() => {
+          if (src !== FREE_AGENT_JERSEY_URL) setSrc(FREE_AGENT_JERSEY_URL)
+        }}
       />
+    </div>
+  )
+}
 
-      <text
-        x={padding.left}
-        y={height - 12}
-        fontSize="11"
-        fill="#64748b"
-      >
-        0 km
-      </text>
-      <text
-        x={width - padding.right}
-        y={height - 12}
-        textAnchor="end"
-        fontSize="11"
-        fill="#64748b"
-      >
-        {model.maxKm.toFixed(1).replace(/\.0$/, '')} km
-      </text>
-    </svg>
+function TerrainSplit({
+  data,
+  labels,
+}: {
+  data: RouteData
+  labels: { title: string; flat: string; hilly: string; mountain: string; cobbled: string }
+}): JSX.Element {
+  const rows = [
+    [labels.flat, Number(data.flat_pct ?? 0)],
+    [labels.hilly, Number(data.hilly_pct ?? 0)],
+    [labels.mountain, Number(data.mountain_pct ?? 0)],
+    [labels.cobbled, Number(data.cobbled_pct ?? 0)],
+  ] as const
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+        {labels.title}
+      </div>
+      <div className="mt-4 space-y-3">
+        {rows.map(([label, raw]) => {
+          const value = Math.max(0, Math.min(100, Number.isFinite(raw) ? raw : 0))
+          return (
+            <div key={label}>
+              <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
+                <span>{label}</span>
+                <span>{value.toFixed(0)}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-100">
+                <div
+                  className="h-2 rounded-full bg-slate-800"
+                  style={{ width: `${value}%` }}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
 export default function NationalChampionshipRacePage(): JSX.Element {
   const { t } = useTranslation('nationalRanking')
+  const { t: tr } = useTranslation('raceDetail')
   const navigate = useNavigate()
   const { editionId, eventType: routeEventType, heatNumber } = useParams()
+
   const eventType: 'qualification' | 'final' | null =
     routeEventType === 'qualification' || routeEventType === 'final'
       ? routeEventType
@@ -223,59 +506,154 @@ export default function NationalChampionshipRacePage(): JSX.Element {
   const [data, setData] = useState<EventData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [raceInfoTab, setRaceInfoTab] = useState<'riders' | 'results'>('riders')
+  const [replayOpen, setReplayOpen] = useState(false)
+  const [replayAvailability, setReplayAvailability] =
+    useState<ReplayAvailability>({
+      status: 'loading',
+      replayOpensGameAt: null,
+    })
+  const [coinAccess, setCoinAccess] = useState<ReplayCoinAccess | null>(null)
+  const [coinAccessLoading, setCoinAccessLoading] = useState(false)
+  const [coinPurchaseLoading, setCoinPurchaseLoading] = useState(false)
+  const [coinMessage, setCoinMessage] = useState<string | null>(null)
+  const [coinError, setCoinError] = useState<string | null>(null)
+
+  const load = async (): Promise<void> => {
+    if (!editionId || (eventType !== 'qualification' && eventType !== 'final')) {
+      setError(t('eventPage.invalid'))
+      setLoading(false)
+      return
+    }
+
+    const parsedHeat =
+      eventType === 'qualification' ? Number(heatNumber ?? Number.NaN) : null
+
+    if (
+      eventType === 'qualification' &&
+      (!Number.isInteger(parsedHeat) || Number(parsedHeat) < 1)
+    ) {
+      setError(t('eventPage.invalid'))
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      'get_national_championship_event_page_v2',
+      {
+        p_edition_id: editionId,
+        p_event_type: eventType,
+        p_heat_number: parsedHeat,
+      },
+    )
+
+    if (rpcError) {
+      setError(rpcError.message)
+      setData(null)
+    } else {
+      setData((rpcData ?? null) as EventData | null)
+    }
+
+    setLoading(false)
+  }
 
   useEffect(() => {
+    void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editionId, eventType, heatNumber])
+
+  useEffect(() => {
+    const stageId = data?.generated_stage_id
+    const raceId = data?.race_id
+
+    if (!stageId || !raceId) {
+      setReplayAvailability({
+        status: 'not_available',
+        replayOpensGameAt: null,
+      })
+      setCoinAccess(null)
+      return
+    }
+
     let cancelled = false
 
-    async function load(): Promise<void> {
-      if (!editionId || (eventType !== 'qualification' && eventType !== 'final')) {
-        setError(t('eventPage.invalid'))
-        setLoading(false)
-        return
-      }
-
-      const parsedHeat =
-        eventType === 'qualification' ? Number(heatNumber ?? Number.NaN) : null
-
-      if (
-        eventType === 'qualification' &&
-        (!Number.isInteger(parsedHeat) || Number(parsedHeat) < 1)
-      ) {
-        setError(t('eventPage.invalid'))
-        setLoading(false)
-        return
-      }
-
-      setLoading(true)
-      setError(null)
-
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'get_national_championship_event_page_v1',
-        {
-          p_edition_id: editionId,
-          p_event_type: eventType,
-          p_heat_number: parsedHeat,
-        },
+    async function loadReplayState(): Promise<void> {
+      const replayRes = await supabase.rpc(
+        'get_universal_race_stage_replay_payload_v1',
+        { p_stage_id: stageId },
       )
 
       if (cancelled) return
 
-      if (rpcError) {
-        setError(rpcError.message)
-        setData(null)
+      if (replayRes.error) {
+        setReplayAvailability({
+          status: 'error',
+          replayOpensGameAt: null,
+        })
       } else {
-        setData((rpcData ?? null) as EventData | null)
+        setReplayAvailability(normalizeReplayAvailability(replayRes.data))
       }
 
-      setLoading(false)
+      if (data?.viewer_has_participant) {
+        setCoinAccess(null)
+        setCoinAccessLoading(false)
+        return
+      }
+
+      setCoinAccessLoading(true)
+      const accessRes = await supabase.rpc('get_race_replay_coin_access_v1', {
+        p_race_id: raceId,
+      })
+
+      if (cancelled) return
+
+      if (!accessRes.error) {
+        setCoinAccess(normalizeCoinAccess(accessRes.data))
+      }
+      setCoinAccessLoading(false)
     }
 
-    void load()
+    void loadReplayState()
+    const timer = window.setInterval(() => void loadReplayState(), 5000)
 
     return () => {
       cancelled = true
+      window.clearInterval(timer)
     }
-  }, [editionId, eventType, heatNumber, t])
+  }, [
+    data?.generated_stage_id,
+    data?.race_id,
+    data?.viewer_has_participant,
+  ])
+
+  async function purchaseReplay(): Promise<void> {
+    if (!data?.race_id || coinPurchaseLoading) return
+
+    setCoinPurchaseLoading(true)
+    setCoinError(null)
+    setCoinMessage(null)
+
+    const { data: purchaseData, error: purchaseError } = await supabase.rpc(
+      'purchase_race_replay_access_v1',
+      { p_race_id: data.race_id },
+    )
+
+    if (purchaseError) {
+      setCoinError(purchaseError.message)
+    } else {
+      const next = normalizeCoinAccess(purchaseData)
+      setCoinAccess(next)
+      setCoinMessage(
+        tr('replay.unlocked', { coins: next?.coin_cost ?? 2 }),
+      )
+      window.dispatchEvent(new CustomEvent('coin-balance-changed'))
+    }
+
+    setCoinPurchaseLoading(false)
+  }
 
   const points = useMemo(
     () =>
@@ -285,6 +663,20 @@ export default function NationalChampionshipRacePage(): JSX.Element {
         .sort((a, b) => a.km - b.km),
     [data?.route?.profile_points],
   )
+
+  if (
+    replayOpen &&
+    data?.race_id &&
+    data?.generated_stage_id
+  ) {
+    return (
+      <RaceDetailPage
+        raceIdOverride={data.race_id}
+        replayStageIdOverride={data.generated_stage_id}
+        onCloseReplayOverride={() => setReplayOpen(false)}
+      />
+    )
+  }
 
   if (loading) {
     return (
@@ -329,6 +721,33 @@ export default function NationalChampionshipRacePage(): JSX.Element {
   const terrain = t(`eventPage.terrainTypes.${terrainKey}`, {
     defaultValue: humanize(data.route.terrain_type),
   })
+  const generatedStage = data.generated_stage
+  const weather = generatedStage?.weather_snapshot ?? {}
+  const hasWeather = Object.keys(weather).length > 0
+  const weatherCondition = String(weather.condition ?? '')
+  const weatherTemp = Number(
+    weather.avg_temp_c ?? weather.temperature_c ?? weather.temp_c,
+  )
+  const weatherMin = Number(weather.avg_min_temp_c)
+  const weatherMax = Number(weather.avg_max_temp_c)
+  const weatherWind = Number(weather.avg_wind_kmh)
+  const weatherRain = Number(weather.avg_precip_mm)
+
+  const hasReplayAccess =
+    data.viewer_has_participant ||
+    coinAccess?.has_coin_unlock === true ||
+    coinAccess?.has_premium_access === true ||
+    coinAccess?.has_replay_access === true
+  const replayAvailable = replayAvailability.status === 'available'
+  const canWatchReplay =
+    Boolean(data.generated_stage_id) && replayAvailable && hasReplayAccess
+
+  const statusLabel =
+    data.status === 'completed'
+      ? t('eventPage.finished')
+      : data.status === 'ready' || data.status === 'final_ready'
+        ? t('eventPage.ready')
+        : t('eventPage.planned')
 
   return (
     <div className="w-full space-y-6">
@@ -341,142 +760,472 @@ export default function NationalChampionshipRacePage(): JSX.Element {
         {t('eventPage.back')}
       </button>
 
-      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap gap-2 text-xs font-medium text-slate-600">
-              <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-800">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-stretch">
+          <div>
+            <div className="mb-2 flex flex-wrap gap-2">
+              <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
                 {t('eventPage.nationalEvent')}
               </span>
-              <span className="rounded-full bg-slate-100 px-3 py-1">
-                {seasonLabel}
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                {t('eventPage.oneDayRace')}
               </span>
-              {data.event_type === 'qualification' ? (
-                <span className="rounded-full bg-slate-100 px-3 py-1">
-                  {t('eventPage.group', { number: data.heat_number ?? '—' })}
-                </span>
-              ) : null}
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                {statusLabel}
+              </span>
             </div>
 
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">
-              {title}
-            </h1>
+            <div className="flex items-center gap-3">
+              <img
+                src={data.flag_url}
+                alt={data.country_name}
+                className="h-6 w-9 rounded border border-slate-200 object-cover"
+              />
+              <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+                {title}
+              </h1>
+            </div>
+
             <p className="mt-2 text-sm text-slate-600">
-              {t('eventPage.subtitle')}
+              {t('eventPage.raceDateLine', {
+                date: dateLabel,
+                place: data.route.start_city,
+              })}
             </p>
+
+            <div className="mt-5 flex flex-wrap gap-2 text-sm text-slate-700">
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-2">
+                {t('eventPage.riders')}: <strong>{data.field_count}</strong>
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-2">
+                {data.event_type === 'qualification'
+                  ? t('eventPage.qualifyingPlaces')
+                  : t('eventPage.finalField')}: {' '}
+                <strong>
+                  {data.event_type === 'qualification'
+                    ? data.qualifying_places
+                    : data.final_field_size}
+                </strong>
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-2">
+                {t('eventPage.startTime')}: {' '}
+                <strong>
+                  {data.start_time_label ?? t('eventPage.startTimeTbd')}
+                </strong>
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-2">
+                {t('eventPage.noTeamCost')}
+              </span>
+            </div>
           </div>
 
-          <div className="flex min-w-[180px] items-center justify-center lg:justify-end">
+          <div className="flex min-h-[180px] items-center justify-center rounded-2xl bg-white p-4">
             <img
               src={data.flag_url}
               alt={data.country_name}
-              className="h-28 w-40 rounded-xl border border-slate-200 object-cover shadow-sm"
+              className="max-h-[150px] w-full max-w-[245px] rounded-xl border border-slate-200 object-cover shadow-sm"
             />
           </div>
         </div>
+      </section>
 
-        <div className="grid gap-px border-t border-slate-200 bg-slate-200 sm:grid-cols-2 xl:grid-cols-5">
-          <div className="bg-white px-5 py-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {t('eventPage.date')}
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {t('eventPage.stages')}
+        </div>
+        <div className="mt-4">
+          <div className="min-h-[92px] rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-left text-slate-950 shadow-sm">
+            <div className="text-sm font-medium text-slate-500">
+              {dateLabel}
+              {data.start_time_label ? ` · ${data.start_time_label}` : ''}
             </div>
-            <div className="mt-1 font-semibold text-slate-900">{dateLabel}</div>
-          </div>
-
-          <div className="bg-white px-5 py-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {t('eventPage.startTime')}
+            <div className="mt-1 text-base font-semibold">
+              {t('eventPage.stageOne')}
             </div>
-            <div className="mt-1 font-semibold text-slate-900">
-              {data.start_time_label ?? t('eventPage.startTimeTbd')}
-            </div>
-          </div>
-
-          <div className="bg-white px-5 py-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {t('eventPage.riders')}
-            </div>
-            <div className="mt-1 font-semibold text-slate-900">{data.field_count}</div>
-          </div>
-
-          <div className="bg-white px-5 py-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {data.event_type === 'qualification'
-                ? t('eventPage.qualifyingPlaces')
-                : t('eventPage.finalField')}
-            </div>
-            <div className="mt-1 font-semibold text-slate-900">
-              {data.event_type === 'qualification'
-                ? data.qualifying_places
-                : data.final_field_size}
-            </div>
-          </div>
-
-          <div className="bg-white px-5 py-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {t('eventPage.route')}
-            </div>
-            <div className="mt-1 font-semibold text-slate-900">
+            <div className="mt-1 text-xs text-slate-700">
               {data.route.route_label}
+            </div>
+            <div className="mt-1 text-xs text-slate-600">
+              {terrain} · {' '}
+              {Number(data.route.distance_km ?? 0)
+                .toFixed(1)
+                .replace(/\.0$/, '')}{' '}
+              km
             </div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {t('eventPage.stageProfile')}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            {t('eventPage.stageProfile')}
+          </div>
+
+          <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-xl font-semibold text-slate-950">
+                {data.route.route_label}
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                {t('eventPage.profileDescription')}
+              </p>
             </div>
-            <h2 className="mt-2 text-xl font-semibold text-slate-950">
-              {data.route.route_label}
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              {t('eventPage.profileDescription')}
+
+            <div className="grid shrink-0 grid-cols-2 gap-x-8 gap-y-3 text-sm">
+              <div>
+                <div className="text-xs text-slate-500">{t('eventPage.distance')}</div>
+                <div className="mt-1 font-semibold text-slate-900">
+                  {Number(data.route.distance_km ?? 0)
+                    .toFixed(1)
+                    .replace(/\.0$/, '')}{' '}
+                  km
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">{t('eventPage.terrain')}</div>
+                <div className="mt-1 font-semibold text-slate-900">{terrain}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">{t('eventPage.elevation')}</div>
+                <div className="mt-1 font-semibold text-slate-900">
+                  {Math.round(
+                    Number(data.route.elevation_gain_m ?? 0),
+                  ).toLocaleString()}{' '}
+                  m
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">
+                  {t('eventPage.expectedTemperature')}
+                </div>
+                <div className="mt-1 font-semibold text-slate-900">
+                  {data.expected_max_temp_c == null
+                    ? '—'
+                    : `${Number(data.expected_max_temp_c).toFixed(1)}°C`}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <NationalStageProfileChart
+              points={points}
+              distanceKm={Number(data.route.distance_km ?? 0)}
+              terrainType={data.route.terrain_type}
+              startLabel={tr('stage.start')}
+              finishLabel={tr('stage.finish')}
+              ariaLabel={t('eventPage.profileChartAlt')}
+            />
+          </div>
+        </section>
+
+        <div className="space-y-6">
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              {tr('replay.liveRace')}
+            </div>
+            <h3 className="mt-2 text-lg font-semibold text-slate-950">
+              {replayAvailable ? tr('replay.available') : tr('replay.unavailable')}
+            </h3>
+            <p className="mt-2 text-sm leading-5 text-slate-500">
+              {!data.generated_stage_id
+                ? t('eventPage.replayAfterGeneration')
+                : replayAvailability.status === 'not_open'
+                  ? tr('replay.notOpen')
+                  : replayAvailability.status === 'not_available'
+                    ? tr('replay.notAvailable')
+                    : replayAvailability.status === 'error'
+                      ? tr('replay.temporaryUnavailable')
+                      : data.viewer_has_participant
+                        ? tr('replay.availableForRace', { race: title })
+                        : hasReplayAccess
+                          ? tr('replay.availableForRace', { race: title })
+                          : tr('replay.unlockDescription', {
+                              coins: coinAccess?.coin_cost ?? 2,
+                            })}
             </p>
-          </div>
 
-          <div className="grid shrink-0 grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-4 lg:grid-cols-2">
-            <div>
-              <div className="text-xs text-slate-500">{t('eventPage.distance')}</div>
-              <div className="mt-1 font-semibold text-slate-900">
-                {Number(data.route.distance_km ?? 0).toFixed(1).replace(/\.0$/, '')} km
+            {replayAvailable &&
+            !data.viewer_has_participant &&
+            !hasReplayAccess ? (
+              <div className="mt-5 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => void purchaseReplay()}
+                  disabled={
+                    coinPurchaseLoading ||
+                    coinAccessLoading ||
+                    Number(coinAccess?.coin_balance ?? 0) <
+                      Number(coinAccess?.coin_cost ?? 2)
+                  }
+                  className="w-full rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm font-semibold text-yellow-950 hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {coinPurchaseLoading
+                    ? tr('replay.unlocking')
+                    : tr('replay.unlockReplay', {
+                        coins: coinAccess?.coin_cost ?? 2,
+                      })}
+                </button>
+                <div className="text-center text-xs text-slate-500">
+                  {tr('replay.coinBalance', {
+                    balance: Number(
+                      coinAccess?.coin_balance ?? 0,
+                    ).toLocaleString(),
+                  })}
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500">{t('eventPage.terrain')}</div>
-              <div className="mt-1 font-semibold text-slate-900">{terrain}</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500">{t('eventPage.elevation')}</div>
-              <div className="mt-1 font-semibold text-slate-900">
-                {Math.round(Number(data.route.elevation_gain_m ?? 0)).toLocaleString()} m
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-500">
-                {t('eventPage.expectedTemperature')}
-              </div>
-              <div className="mt-1 font-semibold text-slate-900">
-                {data.expected_max_temp_c == null
-                  ? '—'
-                  : `${Number(data.expected_max_temp_c).toFixed(1)}°C`}
-              </div>
-            </div>
-          </div>
-        </div>
+            ) : null}
 
-        <div className="mt-6">
-          <NationalProfileChart
-            points={points}
-            distanceKm={Number(data.route.distance_km ?? 0)}
-            ariaLabel={t('eventPage.profileChartAlt')}
+            {coinMessage ? (
+              <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                {coinMessage}
+              </div>
+            ) : null}
+            {coinError ? (
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {coinError}
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              disabled={!canWatchReplay || coinAccessLoading}
+              onClick={() => setReplayOpen(true)}
+              className={`mt-5 w-full rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                canWatchReplay
+                  ? 'bg-slate-950 text-white hover:bg-slate-800'
+                  : 'cursor-not-allowed bg-slate-100 text-slate-400'
+              }`}
+            >
+              {canWatchReplay ? tr('replay.watch') : tr('replay.unavailable')}
+            </button>
+          </section>
+
+          <TerrainSplit
+            data={data.route}
+            labels={{
+              title: tr('stage.terrainSplit'),
+              flat: tr('stage.flat'),
+              hilly: tr('stage.hilly'),
+              mountain: tr('stage.mountain'),
+              cobbled: tr('stage.cobbled'),
+            }}
           />
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              {tr('weather.title')}
+            </div>
+            {hasWeather ? (
+              <>
+                <div className="mt-3 text-lg font-semibold text-slate-950">
+                  {humanize(weatherCondition)}
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <div className="text-slate-500">{tr('weather.average')}</div>
+                    <div className="mt-1 font-semibold text-slate-950">
+                      {Number.isFinite(weatherTemp)
+                        ? `${weatherTemp.toFixed(1)}°C`
+                        : '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500">{tr('weather.minMax')}</div>
+                    <div className="mt-1 font-semibold text-slate-950">
+                      {Number.isFinite(weatherMin) && Number.isFinite(weatherMax)
+                        ? `${weatherMin.toFixed(1)} / ${weatherMax.toFixed(1)}°C`
+                        : '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500">{tr('weather.wind')}</div>
+                    <div className="mt-1 font-semibold text-slate-950">
+                      {Number.isFinite(weatherWind)
+                        ? `${weatherWind.toFixed(0)} km/h`
+                        : '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500">{tr('weather.rain')}</div>
+                    <div className="mt-1 font-semibold text-slate-950">
+                      {Number.isFinite(weatherRain)
+                        ? `${weatherRain.toFixed(1)} mm`
+                        : '—'}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="mt-4 text-sm text-slate-600">
+                {tr('weather.forecastLater')}
+              </p>
+            )}
+          </section>
+        </div>
+      </div>
+
+      <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="px-6 py-5">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {t('eventPage.raceInformation')}
+          </div>
+          <div className="mt-1 text-lg font-semibold text-slate-950">
+            {t('eventPage.ridersResults')}
+          </div>
         </div>
 
-        <div className="mt-4 rounded border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-          {t('eventPage.profileNote')}
+        <div className="border-t border-slate-100 p-6">
+          <div className="flex rounded-2xl bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => setRaceInfoTab('riders')}
+              className={[
+                'rounded-xl px-4 py-2 text-sm font-semibold',
+                raceInfoTab === 'riders'
+                  ? 'bg-white text-slate-950 shadow-sm'
+                  : 'text-slate-500',
+              ].join(' ')}
+            >
+              {t('eventPage.riders')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setRaceInfoTab('results')}
+              className={[
+                'rounded-xl px-4 py-2 text-sm font-semibold',
+                raceInfoTab === 'results'
+                  ? 'bg-white text-slate-950 shadow-sm'
+                  : 'text-slate-500',
+              ].join(' ')}
+            >
+              {t('eventPage.results')}
+            </button>
+          </div>
+
+          {raceInfoTab === 'riders' ? (
+            <div className="mt-6">
+              {!data.participants_known ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                  {t('eventPage.finalRidersPending')}
+                </div>
+              ) : data.participants.length === 0 ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                  {t('eventPage.noRiders')}
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">{t('eventPage.jersey')}</th>
+                        <th className="px-4 py-3">{t('eventPage.rider')}</th>
+                        <th className="px-4 py-3">{t('eventPage.team')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {data.participants.map(rider => (
+                        <tr key={rider.rider_id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 font-semibold text-slate-700">
+                            {rider.seed_number ?? rider.national_rank}
+                          </td>
+                          <td className="px-4 py-2">
+                            <Jersey
+                              url={rider.jersey_url}
+                              name={rider.team_name ?? t('ranking.freeAgent')}
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Link
+                              to={`/dashboard/riders/${rider.rider_id}`}
+                              className="font-semibold text-slate-950 hover:underline"
+                            >
+                              {rider.rider_name}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {rider.team_name ?? t('ranking.freeAgent')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-6">
+              {data.results.length === 0 ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                  {t('eventPage.resultsPending')}
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3">#</th>
+                        <th className="px-4 py-3">{t('eventPage.jersey')}</th>
+                        <th className="px-4 py-3">{t('eventPage.rider')}</th>
+                        <th className="px-4 py-3">{t('eventPage.team')}</th>
+                        <th className="px-4 py-3 text-right">{t('eventPage.time')}</th>
+                        <th className="px-4 py-3 text-right">{t('eventPage.gap')}</th>
+                        <th className="px-4 py-3">{t('eventPage.status')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {data.results.map(result => (
+                        <tr key={result.rider_id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 font-semibold text-slate-900">
+                            {result.rank ?? '—'}
+                          </td>
+                          <td className="px-4 py-2">
+                            <Jersey
+                              url={result.jersey_url}
+                              name={result.team_name ?? t('ranking.freeAgent')}
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Link
+                              to={`/dashboard/riders/${result.rider_id}`}
+                              className="font-semibold text-slate-950 hover:underline"
+                            >
+                              {result.rider_name}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {result.team_name ?? t('ranking.freeAgent')}
+                          </td>
+                          <td className="px-4 py-3 text-right font-medium text-slate-900">
+                            {formatRaceTime(result.elapsed_seconds)}
+                          </td>
+                          <td className="px-4 py-3 text-right text-slate-600">
+                            {formatGap(result.gap_seconds)}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {humanize(result.status ?? 'finished')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              <RefreshCw className="h-4 w-4" />
+              {t('eventPage.refresh')}
+            </button>
+          </div>
         </div>
       </section>
     </div>
