@@ -8705,6 +8705,16 @@ const ENABLE_DISPLAY_ONLY_STAGE_MICRO_TERRAIN = true
  */
 const ENABLE_DISPLAY_ONLY_MAJOR_RELIEF_SHAPING = true
 
+/**
+ * Display-only simplification for genuinely large sustained relief.
+ *
+ * Only monotonic climbs/descents with more than 400 m cumulative vertical
+ * change are simplified. Smaller climbs, rollers and all other profile
+ * sections keep their existing behaviour unchanged.
+ */
+const ENABLE_DISPLAY_ONLY_LARGE_RELIEF_SIMPLIFICATION = true
+const DISPLAY_ONLY_LARGE_RELIEF_THRESHOLD_METERS = 400
+
 function getStageVisualSeed(stageId: string | null | undefined): number {
   if (!stageId) return 0
 
@@ -8715,6 +8725,143 @@ function getStageVisualSeed(stageId: string | null | undefined): number {
   }
 
   return seed
+}
+
+function simplifyDisplayOnlyLargeReliefRuns(
+  anchors: BackendStageProfilePoint[],
+  stageSeed: number
+): BackendStageProfilePoint[] {
+  if (
+    !ENABLE_DISPLAY_ONLY_LARGE_RELIEF_SIMPLIFICATION ||
+    anchors.length < 3
+  ) {
+    return anchors
+  }
+
+  const simplified: BackendStageProfilePoint[] = []
+
+  const pushUnique = (point: BackendStageProfilePoint) => {
+    const last = simplified[simplified.length - 1]
+
+    if (
+      last &&
+      Math.abs(last.km - point.km) < 0.000001
+    ) {
+      simplified[simplified.length - 1] = point
+      return
+    }
+
+    simplified.push(point)
+  }
+
+  let index = 0
+
+  while (index < anchors.length - 1) {
+    const runStartIndex = index
+    const firstDelta =
+      anchors[index + 1].elevation - anchors[index].elevation
+    const direction = Math.sign(firstDelta)
+
+    if (direction === 0) {
+      pushUnique(anchors[index])
+      index += 1
+      continue
+    }
+
+    let runEndIndex = index + 1
+
+    while (runEndIndex < anchors.length - 1) {
+      const nextDelta =
+        anchors[runEndIndex + 1].elevation -
+        anchors[runEndIndex].elevation
+      const nextDirection = Math.sign(nextDelta)
+
+      if (nextDirection !== direction) break
+
+      runEndIndex += 1
+    }
+
+    const start = anchors[runStartIndex]
+    const end = anchors[runEndIndex]
+    const totalVerticalMeters =
+      end.elevation - start.elevation
+    const spanKm = end.km - start.km
+
+    if (
+      Math.abs(totalVerticalMeters) >
+        DISPLAY_ONLY_LARGE_RELIEF_THRESHOLD_METERS &&
+      spanKm > 0
+    ) {
+      pushUnique(start)
+
+      /*
+       * Replace the many small source steps inside a large sustained climb or
+       * descent with only three broad slope sections. The progression remains
+       * strictly monotonic: no artificial mini-climbs or mini-descents.
+       *
+       * Small deterministic variation stops every large climb from sharing
+       * exactly the same geometry, while keeping the requested simple shape.
+       */
+      const pattern =
+        (stageSeed + runStartIndex * 17 + runEndIndex * 11) % 3
+
+      const firstFraction =
+        pattern === 0 ? 0.31 : pattern === 1 ? 0.36 : 0.28
+      const secondFraction =
+        pattern === 0 ? 0.68 : pattern === 1 ? 0.72 : 0.64
+
+      const firstProgress =
+        direction > 0
+          ? pattern === 0
+            ? 0.25
+            : pattern === 1
+              ? 0.34
+              : 0.22
+          : pattern === 0
+            ? 0.29
+            : pattern === 1
+              ? 0.36
+              : 0.26
+
+      const secondProgress =
+        direction > 0
+          ? pattern === 0
+            ? 0.7
+            : pattern === 1
+              ? 0.76
+              : 0.62
+          : pattern === 0
+            ? 0.68
+            : pattern === 1
+              ? 0.74
+              : 0.64
+
+      pushUnique({
+        km: start.km + spanKm * firstFraction,
+        elevation:
+          start.elevation +
+          totalVerticalMeters * firstProgress,
+      })
+
+      pushUnique({
+        km: start.km + spanKm * secondFraction,
+        elevation:
+          start.elevation +
+          totalVerticalMeters * secondProgress,
+      })
+
+      pushUnique(end)
+      index = runEndIndex
+      continue
+    }
+
+    pushUnique(anchors[index])
+    index += 1
+  }
+
+  pushUnique(anchors[anchors.length - 1])
+
+  return simplified
 }
 
 function getDisplayOnlyMicroTerrainAmplitudeMeters(
@@ -8962,7 +9109,7 @@ export function getDisplayOnlyStageProfilePoints(
     return points
   }
 
-  const anchors = [...points]
+  const sourceAnchors = [...points]
     .map((point) => ({
       km: Number(point.km),
       elevation: Number(point.elevation),
@@ -8974,9 +9121,16 @@ export function getDisplayOnlyStageProfilePoints(
     )
     .sort((left, right) => left.km - right.km)
 
-  if (anchors.length < 2) return points
+  if (sourceAnchors.length < 2) return points
 
   const stageSeed = getStageVisualSeed(stageId)
+  const anchors = simplifyDisplayOnlyLargeReliefRuns(
+    sourceAnchors,
+    stageSeed
+  )
+
+  if (anchors.length < 2) return points
+
   const displayPoints: BackendStageProfilePoint[] = []
 
   for (let anchorIndex = 0; anchorIndex < anchors.length - 1; anchorIndex += 1) {
