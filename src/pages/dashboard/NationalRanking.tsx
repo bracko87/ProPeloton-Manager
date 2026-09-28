@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Flag,
+  Globe2,
   Loader2,
   Lock,
   RefreshCw,
@@ -163,6 +164,51 @@ type HostRoute = {
   terrain_type?: string | null
   elevation_gain_m?: number | null
   profile_type?: string | null
+}
+
+type WorldRoadEdition = {
+  id: string
+  season_number: number
+  race_date: string
+  decision_deadline: string
+  host_country_code?: string | null
+  host_country_name_snapshot?: string | null
+  climate_avg_temp_c?: number | null
+  climate_expected_max_temp_c?: number | null
+  race_id?: string | null
+  status: string
+  route_status: string
+  logo_url: string
+  participant_count?: number
+  confirmed_count?: number
+}
+
+type WorldRoadEntry = {
+  entry_id: string
+  rider_id: string
+  rider_name: string
+  country_code: string
+  club_id?: string | null
+  club_name?: string | null
+  entry_status: 'invited' | 'confirmed' | 'withdrawn' | 'unavailable' | string
+  participation_decision: 'pending' | 'approved' | 'auto_approved' | 'rejected'
+  participation_decision_at?: string | null
+  morale_delta?: number
+  decision_deadline: string
+  race_date: string
+  race_id?: string | null
+  can_decide_participation?: boolean
+}
+
+type WorldRoadOverview = {
+  season_number: number
+  current_game_date: string
+  edition: WorldRoadEdition | null
+  route?: HostRoute | null
+  participant_count: number
+  confirmed_count: number
+  my_entries: WorldRoadEntry[]
+  past_champions?: Array<Record<string, unknown>>
 }
 
 type PageTab = 'ranking' | 'duty' | 'history'
@@ -453,11 +499,13 @@ export default function NationalRankingPage(): JSX.Element {
 
   const [activeTab, setActiveTab] = useState<PageTab>(requestedTab)
   const [data, setData] = useState<NationalPageData | null>(null)
+  const [worldData, setWorldData] = useState<WorldRoadOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Record<string, PlanDraft>>({})
   const [savingKey, setSavingKey] = useState<string | null>(null)
   const [decisionSavingRiderId, setDecisionSavingRiderId] = useState<string | null>(null)
+  const [worldDecisionSavingRiderId, setWorldDecisionSavingRiderId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [rankingPage, setRankingPage] = useState(1)
 
@@ -466,21 +514,29 @@ export default function NationalRankingPage(): JSX.Element {
       setLoading(true)
       setError(null)
 
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'get_national_ranking_page_v1',
-        {
-          p_country_code: null,
-          p_season_number: null,
-          p_limit: 5000,
-        },
-      )
+      const [nationalResponse, worldResponse] = await Promise.all([
+        supabase.rpc(
+          'get_national_ranking_page_v1',
+          {
+            p_country_code: null,
+            p_season_number: null,
+            p_limit: 5000,
+          },
+        ),
+        supabase.rpc(
+          'get_world_road_championship_overview_v1',
+          { p_season_number: null },
+        ),
+      ])
 
-      if (rpcError) throw rpcError
+      if (nationalResponse.error) throw nationalResponse.error
+      if (worldResponse.error) throw worldResponse.error
 
-      const next = (rpcData ?? null) as NationalPageData | null
+      const next = (nationalResponse.data ?? null) as NationalPageData | null
       if (!next) throw new Error(t('errors.unavailable'))
 
       setData(next)
+      setWorldData((worldResponse.data ?? null) as WorldRoadOverview | null)
 
       const nextDrafts: Record<string, PlanDraft> = {}
       for (const entry of next.my_entries ?? []) {
@@ -579,6 +635,44 @@ export default function NationalRankingPage(): JSX.Element {
       setSaveMessage(caught?.message ?? t('decision.error'))
     } finally {
       setDecisionSavingRiderId(null)
+    }
+  }
+
+  const decideWorldParticipation = async (
+    entry: WorldRoadEntry,
+    approve: boolean,
+  ): Promise<void> => {
+    const worldEditionId = worldData?.edition?.id
+    if (!worldEditionId) return
+
+    try {
+      setWorldDecisionSavingRiderId(entry.rider_id)
+      setSaveMessage(null)
+
+      const { error: decisionError } = await supabase.rpc(
+        'set_my_world_road_championship_participation_v1',
+        {
+          p_edition_id: worldEditionId,
+          p_rider_id: entry.rider_id,
+          p_approve: approve,
+        },
+      )
+
+      if (decisionError) throw decisionError
+
+      setSaveMessage(
+        approve
+          ? `${entry.rider_name} will ride the World Road Championship Grand Finale. Morale +10.`
+          : `${entry.rider_name} will not ride the World Road Championship Grand Finale. Morale -15.`,
+      )
+      await loadPage()
+    } catch (caught: any) {
+      setSaveMessage(
+        caught?.message ??
+          'Unable to update World Road Championship participation.',
+      )
+    } finally {
+      setWorldDecisionSavingRiderId(null)
     }
   }
 
@@ -1063,6 +1157,118 @@ export default function NationalRankingPage(): JSX.Element {
         </section>
       ) : null}
 
+      {worldData?.edition ? (
+        <section className="overflow-hidden rounded bg-white shadow">
+          <div className="border-b border-slate-200 bg-gradient-to-r from-sky-50 via-white to-amber-50 px-4 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-4">
+                <img
+                  src={worldData.edition.logo_url}
+                  alt="World Road Championship"
+                  className="h-16 w-16 shrink-0 rounded-xl border border-slate-200 bg-white object-contain p-1.5 shadow-sm"
+                />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Globe2 className="h-5 w-5 text-sky-700" />
+                    <h3 className="text-lg font-black text-slate-950">
+                      World Road Championship Grand Finale
+                    </h3>
+                    <span className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-800">
+                      Season {worldData.edition.season_number}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-slate-600">
+                    National champions only · one-day world title race · all team costs covered · no prize money
+                  </p>
+                </div>
+              </div>
+
+              {worldData.edition.race_id ? (
+                <Link
+                  to={`/dashboard/races/${worldData.edition.race_id}`}
+                  className="rounded bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800"
+                >
+                  Open World Championship
+                </Link>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="bg-white px-4 py-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Grand Finale
+              </div>
+              <div className="mt-1 text-sm font-bold text-slate-950">
+                {pageDate(
+                  worldData.edition.race_date,
+                  worldData.edition.season_number,
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white px-4 py-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Host
+              </div>
+              <div className="mt-1 text-sm font-bold text-slate-950">
+                {worldData.edition.host_country_name_snapshot ??
+                  worldData.edition.host_country_code ??
+                  'TBD'}
+              </div>
+              <div className="mt-0.5 text-xs text-slate-500">
+                {worldData.edition.climate_avg_temp_c == null
+                  ? 'Warm-weather host'
+                  : `Average temperature ${Number(
+                      worldData.edition.climate_avg_temp_c,
+                    ).toFixed(1)}°C`}
+              </div>
+            </div>
+
+            <div className="bg-white px-4 py-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Route
+              </div>
+              <div className="mt-1 truncate text-sm font-bold text-slate-950">
+                {worldData.route?.route_label ?? 'Route scheduled'}
+              </div>
+              <div className="mt-0.5 text-xs text-slate-500">
+                {worldData.route
+                  ? formatRouteMeta(worldData.route)
+                  : 'Warm-weather road route'}
+              </div>
+            </div>
+
+            <div className="bg-white px-4 py-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Qualified champions
+              </div>
+              <div className="mt-1 text-sm font-bold text-slate-950">
+                {worldData.participant_count}
+              </div>
+              <div className="mt-0.5 text-xs text-slate-500">
+                Added automatically as national finals finish
+              </div>
+            </div>
+
+            <div className="bg-white px-4 py-3">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Confirmed
+              </div>
+              <div className="mt-1 text-sm font-bold text-slate-950">
+                {worldData.confirmed_count}
+              </div>
+              <div className="mt-0.5 text-xs text-slate-500">
+                Manager decisions close {pageDate(
+                  worldData.edition.decision_deadline,
+                  worldData.edition.season_number,
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {activeTab === 'ranking' ? (
         <div className="space-y-4">
           <section className="overflow-hidden rounded bg-white shadow">
@@ -1223,6 +1429,119 @@ export default function NationalRankingPage(): JSX.Element {
               <span className="rounded-full bg-slate-100 px-3 py-1">{t('organizer.rain')}</span>
             </div>
           </div>
+
+          {(worldData?.my_entries?.length ?? 0) > 0 ? (
+            <div className="space-y-3">
+              {(worldData?.my_entries ?? []).map(entry => (
+                <div
+                  key={entry.entry_id}
+                  className="overflow-hidden rounded border border-sky-200 bg-white shadow-sm"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-sky-100 bg-sky-50 px-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={
+                          worldData?.edition?.logo_url ??
+                          'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/world%20championship%20logo.webp'
+                        }
+                        alt=""
+                        className="h-11 w-11 rounded-lg border border-sky-200 bg-white object-contain p-1"
+                      />
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-sky-700">
+                          World Road Championship invitation
+                        </div>
+                        <Link
+                          to={riderProfilePath(entry.rider_id, entry.club_id)}
+                          className="mt-0.5 block font-bold text-slate-950 hover:underline"
+                        >
+                          {entry.rider_name}
+                        </Link>
+                        <div className="text-xs text-slate-500">
+                          {entry.country_code} National Champion · {entry.club_name ?? t('ranking.freeAgent')}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span
+                      className={[
+                        'rounded-full px-3 py-1 text-xs font-bold',
+                        entry.entry_status === 'unavailable'
+                          ? 'bg-rose-100 text-rose-700'
+                          : entry.participation_decision === 'rejected'
+                            ? 'bg-red-100 text-red-700'
+                            : entry.participation_decision === 'pending'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-emerald-100 text-emerald-700',
+                      ].join(' ')}
+                    >
+                      {entry.entry_status === 'unavailable'
+                        ? 'Unavailable'
+                        : entry.participation_decision.replaceAll('_', ' ')}
+                    </span>
+                  </div>
+
+                  <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                    <div className="text-sm text-slate-600">
+                      <div>
+                        Grand Finale: <strong className="text-slate-900">
+                          {pageDate(
+                            entry.race_date,
+                            worldData?.edition?.season_number,
+                          )}
+                        </strong>
+                      </div>
+                      <div className="mt-1">
+                        Decision deadline: {pageDate(
+                          entry.decision_deadline,
+                          worldData?.edition?.season_number,
+                        )}
+                      </div>
+                      <div className="mt-2 text-xs leading-5 text-slate-500">
+                        The rider is reserved for this World Championship duty. All costs are covered by the organizer. Approval gives <strong>+10 morale</strong>; refusal gives <strong>-15 morale</strong>. Race fatigue and normal race effects still apply.
+                      </div>
+                      {entry.race_id ? (
+                        <Link
+                          to={`/dashboard/races/${entry.race_id}`}
+                          className="mt-2 inline-block text-xs font-bold text-sky-700 hover:underline"
+                        >
+                          Open World Championship race page
+                        </Link>
+                      ) : null}
+                    </div>
+
+                    {entry.participation_decision === 'pending' &&
+                    entry.can_decide_participation !== false &&
+                    entry.entry_status !== 'unavailable' ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={worldDecisionSavingRiderId === entry.rider_id}
+                          onClick={() => void decideWorldParticipation(entry, true)}
+                          className="inline-flex items-center gap-2 rounded bg-yellow-400 px-3 py-2 text-xs font-bold text-black hover:bg-yellow-300 disabled:opacity-50"
+                        >
+                          {worldDecisionSavingRiderId === entry.rider_id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-4 w-4" />
+                          )}
+                          Allow rider
+                        </button>
+                        <button
+                          type="button"
+                          disabled={worldDecisionSavingRiderId === entry.rider_id}
+                          onClick={() => void decideWorldParticipation(entry, false)}
+                          className="rounded border border-red-300 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          Refuse
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
 
           {(data?.my_entries?.length ?? 0) === 0 ? (
             <div className="rounded bg-white p-6 text-sm text-slate-500 shadow">
