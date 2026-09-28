@@ -19543,7 +19543,19 @@ export default function RaceDetailPage({
             </div>
 
             <div className="flex items-center gap-3">
-              <RaceTitleFlag code={race.country_code} />
+              {race.metadata?.world_road_championship === true ? (
+                race.logo_url ? (
+                  <img
+                    src={race.logo_url}
+                    alt="World Road Championship"
+                    className="h-9 w-9 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                  />
+                ) : (
+                  <Globe2 className="h-8 w-8 text-sky-700" />
+                )
+              ) : (
+                <RaceTitleFlag code={race.country_code} />
+              )}
 
               <h1 className="text-3xl font-bold tracking-tight text-slate-950">
                 {race.name}
@@ -19562,6 +19574,50 @@ export default function RaceDetailPage({
             {race.description ? (
               <div className="mt-2 max-w-3xl text-sm text-slate-600">
                 {race.description}
+              </div>
+            ) : null}
+
+            {race.metadata?.world_road_championship === true ? (
+              <div className="mt-4 max-w-4xl rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 via-white to-amber-50 px-4 py-4">
+                <div className="flex items-start gap-3">
+                  {race.logo_url ? (
+                    <img
+                      src={race.logo_url}
+                      alt="World Road Championship"
+                      className="h-12 w-12 shrink-0 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                    />
+                  ) : (
+                    <Globe2 className="h-10 w-10 shrink-0 text-sky-700" />
+                  )}
+                  <div>
+                    <div className="text-sm font-bold text-slate-950">
+                      World Road Championship Grand Finale
+                    </div>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      This one-day race is reserved for the current season's National Road Champions.
+                      Each national champion is invited automatically after winning the national final.
+                      The club manager may allow or refuse participation before the decision deadline;
+                      unavailable or injured riders are removed from the startlist.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                      <span className="rounded-full bg-sky-100 px-2.5 py-1 text-sky-800">
+                        National champions only
+                      </span>
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-800">
+                        All team costs covered
+                      </span>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                        No prize money
+                      </span>
+                      <span className="rounded-full bg-amber-100 px-2.5 py-1 text-amber-800">
+                        Winner becomes World Road Champion
+                      </span>
+                      <span className="rounded-full bg-violet-100 px-2.5 py-1 text-violet-800">
+                        Normal fatigue & morale effects
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : null}
 
