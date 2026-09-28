@@ -493,6 +493,7 @@
     "countSeasons": "{{count}} stagioni"
   },
   "templateWords": {
+    "10": "10",
     "ADVISOR": "Consulente",
     "ADMIN": "Amministratore",
     "MESSAGE": "Messaggio",
@@ -607,7 +608,6 @@
     "CLASSIFICATION": "Classificazione",
     "INVITATION": "Invito",
     "INVITED": "Invitato",
-    "10": "10",
     "AGAIN": "Di nuovo",
     "AGE": "Età",
     "AGENTS": "Agenti",
@@ -876,7 +876,17 @@
     "RACE_APPLICATION_RULE_CHANGE": "Modifica delle scadenze di iscrizione",
     "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Piano gara finalizzato",
-    "STAGE_PLAN_MISSING_REMINDER": "Promemoria: manca il piano di tappa"
+    "STAGE_PLAN_MISSING_REMINDER": "Promemoria: manca il piano di tappa",
+    "NATIONAL_CHAMPIONSHIP_SELECTED": "Selezione per il Campionato Nazionale",
+    "NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT": "Risultato qualificazione nazionale",
+    "NATIONAL_CHAMPIONSHIP_QUALIFIED": "Qualificato per la finale nazionale",
+    "NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Conferma finale nazionale",
+    "NATIONAL_CHAMPIONSHIP_FINAL_RESULT": "Risultato Campionato Nazionale",
+    "NATIONAL_CHAMPION": "Campione nazionale",
+    "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Invito al Campionato del Mondo",
+    "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Conferma Campionato del Mondo",
+    "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Risultato Campionato del Mondo",
+    "WORLD_ROAD_CHAMPION": "Campione del Mondo su strada"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Il piano di gara richiede attenzione: {{entity}}",
@@ -1083,5 +1093,97 @@
     "raceEffect": "La squadra resta idonea; la penalità aumenta in base ai kit mancanti",
     "extraWithMissing": "Kit di maglie da gara utilizzabili ancora necessari: {{missing}}. Aggiungili per ridurre o eliminare la penalità. Una carenza totale comporta -30% ai bonus positivi di preparazione, +8% di consumo energetico durante la tappa e +15% di fatica dopo la tappa.",
     "extraGeneric": "Apri le Scorte gara e controlla i kit di maglie da gara utilizzabili. La carenza non impedisce la partecipazione."
+  },
+  "championship": {
+    "common": {
+      "previewPrefix": "[Anteprima]",
+      "countryFallback": "Paese"
+    },
+    "labels": {
+      "qualificationGroup": "Gruppo di qualificazione",
+      "nationalFinal": "Finale nazionale",
+      "decisionDeadline": "Scadenza decisione",
+      "finalDate": "Data finale",
+      "qualifyingPlaces": "Posti di qualificazione",
+      "yourRiderResults": "Risultati dei tuoi corridori",
+      "yourRidersQualified": "I tuoi corridori qualificati",
+      "topThree": "Top 3",
+      "champion": "Campione",
+      "podium": "Podio",
+      "grandFinale": "Gran Finale",
+      "worldRoadChampion": "Campione del Mondo su strada",
+      "worldPodium": "Podio mondiale",
+      "qualifiedAs": "Qualificato come",
+      "finalDeadline": "Scadenza finale",
+      "raceDate": "Data gara",
+      "result": "Risultato"
+    },
+    "values": {
+      "group": "Gruppo {{number}}",
+      "none": "Nessuno",
+      "firstPlace": "1° posto"
+    },
+    "actions": {
+      "openMyNationalDuty": "Apri impegno nazionale",
+      "confirmFinalParticipation": "Conferma partecipazione alla finale",
+      "openQualificationResults": "Apri risultati qualificazione",
+      "myNationalDuty": "Il mio impegno nazionale",
+      "openNationalFinal": "Apri finale nazionale",
+      "openChampion": "Apri campione",
+      "openWorldDuty": "Apri impegno mondiale",
+      "confirmWorld": "Conferma Campionato del Mondo",
+      "openWorldResults": "Apri risultati mondiali",
+      "openWorldChampionship": "Apri Campionato del Mondo"
+    },
+    "selected": {
+      "title": "{{rider}} selezionato per il Campionato Nazionale",
+      "message": "{{rider}} è stato selezionato per il Campionato Nazionale di {{country}}. Il Gruppo di qualificazione {{heat}} si corre il {{qualificationDate}}. In caso di qualificazione, la finale è il {{finalDate}}. Decidi entro il {{deadline}}.",
+      "extra": "Tutti i costi dell'impegno nazionale sono coperti. Apri Il mio impegno nazionale per approvare o rifiutare la partecipazione entro la scadenza."
+    },
+    "qualificationResult": {
+      "title": "{{country}} – Gruppo di qualificazione {{heat}} completato",
+      "message": "I risultati ufficiali sono disponibili. I primi {{places}} corridori avanzano alla finale nazionale del {{finalDate}}.",
+      "extra": "Apri la gara di qualificazione per la classifica completa e l'impegno nazionale per i prossimi passi dei tuoi corridori."
+    },
+    "qualified": {
+      "title": "{{rider}} qualificato per la finale nazionale",
+      "message": "{{rider}} ha conquistato un posto nella finale del Campionato Nazionale di {{country}} del {{finalDate}}.",
+      "extra": "Per la finale nazionale è richiesta una seconda conferma separata del manager."
+    },
+    "nationalFinalConfirmation": {
+      "title": "Conferma di nuovo {{rider}} per la finale nazionale",
+      "message": "{{rider}} ha un posto nella finale del Campionato Nazionale di {{country}} del {{finalDate}}. Approva o rifiuta separatamente la partecipazione entro il {{finalDeadline}}.",
+      "extra": "Questa è la seconda approvazione per la stessa campagna nazionale. In assenza di decisione entro la scadenza, il corridore viene approvato automaticamente."
+    },
+    "nationalFinalResult": {
+      "title": "{{country}} – Campionato Nazionale completato",
+      "message": "{{champion}} è il Campione Nazionale su strada della stagione {{season}}. La classifica finale è ora ufficiale.",
+      "extra": "Il vincitore riceve automaticamente l'invito alla Gran Finale del Campionato del Mondo su strada."
+    },
+    "nationalChampion": {
+      "title": "{{rider}} è Campione Nazionale su strada!",
+      "message": "{{rider}} ha vinto il Campionato Nazionale su strada di {{country}}. Il titolo fa ora parte degli onori di carriera del corridore.",
+      "extra": "Il badge di Campione Nazionale è attivo nella stagione corrente e rimane per sempre nella storia della carriera."
+    },
+    "worldInvitation": {
+      "title": "{{rider}} invitato al Campionato del Mondo!",
+      "message": "{{rider}} si è qualificato come Campione Nazionale di {{country}} per la Gran Finale del Campionato del Mondo su strada del {{raceDate}}. Tutti i costi della squadra sono coperti. Decidi entro il {{deadline}}.",
+      "extra": "Il manager deve approvare o rifiutare l'invito. Poco prima della Gran Finale sarà richiesta una seconda conferma."
+    },
+    "worldFinalConfirmation": {
+      "title": "Conferma di nuovo {{rider}} per il Campionato del Mondo",
+      "message": "{{rider}} è già qualificato e accettato per la Gran Finale del Campionato del Mondo su strada del {{raceDate}}. Conferma di nuovo la partecipazione finale entro il {{finalDeadline}}.",
+      "extra": "Un rifiuto in questa fase rimuove il corridore dalla lista di partenza e applica una forte penalità al morale."
+    },
+    "worldResult": {
+      "title": "Campionato del Mondo su strada completato",
+      "message": "{{champion}} è il Campione del Mondo su strada della stagione {{season}}. La classifica della Gran Finale è ora ufficiale.",
+      "extra": "Non ci sono premi in denaro per la squadra. Il podio mondiale resta memorizzato permanentemente negli onori di carriera."
+    },
+    "worldChampion": {
+      "title": "{{rider}} è Campione del Mondo su strada!",
+      "message": "{{rider}} ha vinto la Gran Finale del Campionato del Mondo su strada. Questo prestigioso titolo fa ora parte degli onori di carriera del corridore.",
+      "extra": "Il badge di Campione del Mondo è attivo questa stagione e rimane per sempre nella storia della carriera."
+    }
   }
 }
