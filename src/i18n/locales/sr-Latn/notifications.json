@@ -496,6 +496,7 @@
     "countSeasons": "{{count}} sezona"
   },
   "templateWords": {
+    "10": "10",
     "ADVISOR": "Savetnik",
     "ADMIN": "Administracija",
     "MESSAGE": "Poruka",
@@ -610,7 +611,6 @@
     "CLASSIFICATION": "Klasifikacija",
     "INVITATION": "Poziv",
     "INVITED": "Pozvan",
-    "10": "10",
     "AGAIN": "Ponovo",
     "AGE": "Godine",
     "AGENTS": "Agenti",
@@ -879,7 +879,17 @@
     "RACE_APPLICATION_RULE_CHANGE": "Izmena rokova za prijavu na trke",
     "RACE_TEAM_DISQUALIFIED_JERSEYS": "Legacy jersey-shortage event",
     "RACE_PLAN_FINALISED": "Plan trke je završen",
-    "STAGE_PLAN_MISSING_REMINDER": "Podsetnik: nedostaje plan etape"
+    "STAGE_PLAN_MISSING_REMINDER": "Podsetnik: nedostaje plan etape",
+    "NATIONAL_CHAMPIONSHIP_SELECTED": "Izbor za nacionalno prvenstvo",
+    "NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT": "Rezultat nacionalnih kvalifikacija",
+    "NATIONAL_CHAMPIONSHIP_QUALIFIED": "Plasman u nacionalno finale",
+    "NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Potvrda nacionalnog finala",
+    "NATIONAL_CHAMPIONSHIP_FINAL_RESULT": "Rezultat nacionalnog prvenstva",
+    "NATIONAL_CHAMPION": "Nacionalni prvak",
+    "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Poziv na Svetsko prvenstvo",
+    "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Potvrda za Svetsko prvenstvo",
+    "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Rezultat Svetskog prvenstva",
+    "WORLD_ROAD_CHAMPION": "Svetski drumski prvak"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Plan trke zahteva pažnju: {{entity}}",
@@ -1086,5 +1096,97 @@
     "raceEffect": "Tim i dalje može da nastupi; smanjenje učinka raste sa brojem nedostajućih kompleta",
     "extraWithMissing": "Još potrebnih upotrebljivih kompleta trkačkih dresova: {{missing}}. Dodajte ih da biste smanjili ili uklonili kaznu. Potpuni nedostatak znači -30% pozitivnih bonusa pripreme, +8% potrošnje energije tokom etape i +15% umora posle etape.",
     "extraGeneric": "Otvorite Zalihe za trku i proverite upotrebljive komplete trkačkih dresova. Nedostatak ne sprečava nastup."
+  },
+  "championship": {
+    "common": {
+      "previewPrefix": "[Pregled]",
+      "countryFallback": "Država"
+    },
+    "labels": {
+      "qualificationGroup": "Kvalifikaciona grupa",
+      "nationalFinal": "Nacionalno finale",
+      "decisionDeadline": "Rok za odluku",
+      "finalDate": "Datum finala",
+      "qualifyingPlaces": "Mesta koja vode dalje",
+      "yourRiderResults": "Rezultati vaših vozača",
+      "yourRidersQualified": "Vaši kvalifikovani vozači",
+      "topThree": "Prva 3",
+      "champion": "Prvak",
+      "podium": "Podijum",
+      "grandFinale": "Veliko finale",
+      "worldRoadChampion": "Svetski drumski prvak",
+      "worldPodium": "Svetski podijum",
+      "qualifiedAs": "Kvalifikovan kao",
+      "finalDeadline": "Krajnji rok",
+      "raceDate": "Datum trke",
+      "result": "Rezultat"
+    },
+    "values": {
+      "group": "Grupa {{number}}",
+      "none": "Niko",
+      "firstPlace": "1. mesto"
+    },
+    "actions": {
+      "openMyNationalDuty": "Otvori Moju nacionalnu dužnost",
+      "confirmFinalParticipation": "Potvrdi učešće u finalu",
+      "openQualificationResults": "Otvori rezultate kvalifikacija",
+      "myNationalDuty": "Moja nacionalna dužnost",
+      "openNationalFinal": "Otvori finale nacionalnog prvenstva",
+      "openChampion": "Otvori profil prvaka",
+      "openWorldDuty": "Otvori obavezu za Svetsko prvenstvo",
+      "confirmWorld": "Potvrdi Svetsko prvenstvo",
+      "openWorldResults": "Otvori rezultate Svetskog prvenstva",
+      "openWorldChampionship": "Otvori Svetsko prvenstvo"
+    },
+    "selected": {
+      "title": "{{rider}} je izabran za nacionalno prvenstvo",
+      "message": "{{rider}} je izabran za nacionalno prvenstvo države {{country}}. Kvalifikaciona grupa {{heat}} vozi se {{qualificationDate}}. Ako se kvalifikuje, finale je {{finalDate}}. Odluku donesite do {{deadline}}.",
+      "extra": "Sve troškove nacionalne dužnosti pokriva organizator. Otvorite Moju nacionalnu dužnost da odobrite ili odbijete učešće pre roka."
+    },
+    "qualificationResult": {
+      "title": "{{country}} – završena kvalifikaciona grupa {{heat}}",
+      "message": "Zvanični rezultati su dostupni. Prvih {{places}} vozača prolazi u finale nacionalnog prvenstva {{finalDate}}.",
+      "extra": "Otvorite kvalifikacionu trku za kompletnu klasifikaciju i Moju nacionalnu dužnost za sledeće korake vaših vozača."
+    },
+    "qualified": {
+      "title": "{{rider}} se plasirao u finale nacionalnog prvenstva",
+      "message": "{{rider}} je izborio mesto u finalu nacionalnog prvenstva države {{country}} {{finalDate}}.",
+      "extra": "Za finale nacionalnog prvenstva potrebna je posebna druga potvrda menadžera."
+    },
+    "nationalFinalConfirmation": {
+      "title": "Ponovo potvrdite {{rider}} za finale nacionalnog prvenstva",
+      "message": "{{rider}} ima mesto u finalu nacionalnog prvenstva države {{country}} {{finalDate}}. Posebno odobrite ili odbijte učešće u finalu do {{finalDeadline}}.",
+      "extra": "Ovo je druga potvrda za isto nacionalno prvenstvo. Ako odluka ne bude doneta do roka, vozač se automatski odobrava."
+    },
+    "nationalFinalResult": {
+      "title": "{{country}} – završeno nacionalno prvenstvo",
+      "message": "{{champion}} je nacionalni drumski prvak za sezonu {{season}}. Konačna klasifikacija je sada zvanična.",
+      "extra": "Pobednik se automatski poziva na Veliko finale Svetskog prvenstva u drumskoj vožnji."
+    },
+    "nationalChampion": {
+      "title": "{{rider}} je nacionalni drumski prvak!",
+      "message": "{{rider}} je osvojio nacionalno drumsko prvenstvo države {{country}}. Titula je sada deo istorije karijere vozača.",
+      "extra": "Značka nacionalnog prvaka aktivna je u tekućoj sezoni i trajno ostaje u istoriji karijere."
+    },
+    "worldInvitation": {
+      "title": "{{rider}} je pozvan na Svetsko prvenstvo!",
+      "message": "{{rider}} se kao nacionalni prvak države {{country}} kvalifikovao za Veliko finale Svetskog prvenstva {{raceDate}}. Sve troškove pokriva organizator. Odluku donesite do {{deadline}}.",
+      "extra": "Menadžer mora da odobri ili odbije poziv. Neposredno pre Velikog finala potrebna je još jedna, druga potvrda."
+    },
+    "worldFinalConfirmation": {
+      "title": "Ponovo potvrdite {{rider}} za Svetsko prvenstvo",
+      "message": "{{rider}} je već kvalifikovan i prihvaćen za Veliko finale Svetskog prvenstva {{raceDate}}. Ponovo potvrdite konačno učešće do {{finalDeadline}}.",
+      "extra": "Odbijanje u ovoj fazi uklanja vozača sa startne liste i primenjuje veliki minus na moral."
+    },
+    "worldResult": {
+      "title": "Završeno Svetsko prvenstvo u drumskoj vožnji",
+      "message": "{{champion}} je svetski drumski prvak za sezonu {{season}}. Klasifikacija Velikog finala je sada zvanična.",
+      "extra": "Nema novčane nagrade za tim. Podijum Svetskog prvenstva trajno se čuva u istoriji karijere vozača."
+    },
+    "worldChampion": {
+      "title": "{{rider}} je svetski drumski prvak!",
+      "message": "{{rider}} je osvojio Veliko finale Svetskog prvenstva u drumskoj vožnji. Ova prestižna titula je sada deo istorije karijere vozača.",
+      "extra": "Značka svetskog drumskog prvaka aktivna je ove sezone i trajno ostaje u istoriji karijere."
+    }
   }
 }
