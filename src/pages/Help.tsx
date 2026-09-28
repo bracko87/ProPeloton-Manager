@@ -560,24 +560,18 @@ export default function HelpPage(): JSX.Element {
         </div>
       </section>
 
-      <section className="rounded-xl border border-yellow-200 bg-yellow-50 p-5 shadow-sm">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-yellow-800">
-          Discover our other game
-        </p>
-        <h2 className="mt-2 text-lg font-semibold text-slate-900">Tennis Legacy: Rise to Glory</h2>
-        <p className="mt-2 max-w-4xl text-sm leading-relaxed text-slate-700">
-          Build, train and manage your own professional tennis career in a persistent multiplayer world.
-        </p>
+      <p className="text-sm text-slate-600">
+        Also from our studio:{' '}
         <a
           href={TENNIS_LEGACY_URL}
           target="_blank"
           rel="noreferrer"
           onClick={recordCrossGameClick}
-          className="mt-4 inline-flex rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-yellow-700"
         >
-          Play Tennis Legacy ↗
+          Tennis Legacy: Rise to Glory ↗
         </a>
-      </section>
+      </p>
 
       <section className="rounded-xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
         <h2 className="text-lg font-semibold">{t('footer.title')}</h2>
