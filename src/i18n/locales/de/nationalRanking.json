@@ -225,6 +225,28 @@
       "hilly": "Hügelig",
       "mountain": "Bergig",
       "cobbled": "Kopfsteinpflaster"
-    }
+    },
+    "oneDayRace": "Eintagesrennen",
+    "raceDateLine": "Renndatum: {{date}} — {{place}}",
+    "noTeamCost": "Keine Teamkosten",
+    "stages": "Etappen",
+    "stageOne": "Etappe 1",
+    "replayAfterGeneration": "Die Wiederholung ist über das normale Rennwiedergabe-System verfügbar, nachdem dieses nationale Meisterschaftsrennen erstellt und berechnet wurde.",
+    "raceInformation": "Renninformationen",
+    "ridersResults": "Fahrer & Ergebnisse",
+    "results": "Ergebnisse",
+    "finalRidersPending": "Die Finalteilnehmer stehen nach Abschluss der Qualifikationsgruppen fest.",
+    "noRiders": "Diesem Rennen sind derzeit keine Fahrer zugeordnet.",
+    "jersey": "Trikot",
+    "rider": "Fahrer",
+    "team": "Team",
+    "time": "Zeit",
+    "gap": "Rückstand",
+    "status": "Status",
+    "resultsPending": "Die Ergebnisse werden hier nach Abschluss des Rennens veröffentlicht.",
+    "refresh": "Aktualisieren",
+    "finished": "Rennen beendet",
+    "ready": "Rennen bereit",
+    "planned": "Geplant"
   }
 }
