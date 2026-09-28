@@ -8745,32 +8745,40 @@ function getDisplayOnlyMicroTerrainAmplitudeMeters(
 
   const normalizedTerrain = String(terrainType ?? '').toLowerCase()
 
+  /*
+   * Keep local relief deliberately subtle. The previous values (10–24 m)
+   * created visible teeth every few kilometres, especially on flat stages.
+   * These amplitudes are only enough to stop a profile looking ruler-straight.
+   */
   const baseAmplitude =
     normalizedTerrain === 'hilly'
-      ? 24
+      ? 7
       : normalizedTerrain === 'mountain'
-        ? 18
+        ? 6
         : normalizedTerrain === 'cobbled'
-          ? 14
+          ? 5
           : normalizedTerrain === 'individual_time_trial' ||
               normalizedTerrain === 'team_time_trial' ||
               normalizedTerrain === 'prologue' ||
               normalizedTerrain === 'time_trial'
-            ? 10
-            : 10
+            ? 2
+            : 3
 
-  // Do not visually distort real sustained climbs/descents.
+  // Sustained climbs and descents should be shaped by the broad relief model,
+  // not by local oscillation.
   const slopeFactor =
     absoluteGradientPercent >= 5
-      ? 0.2
+      ? 0.08
       : absoluteGradientPercent >= 3
-        ? 0.4
+        ? 0.18
         : absoluteGradientPercent >= 1.5
-          ? 0.7
-          : 1
+          ? 0.4
+          : absoluteGradientPercent >= 0.75
+            ? 0.7
+            : 1
 
   const deterministicVariation =
-    0.85 + (((stageSeed + anchorIndex * 17) % 31) / 30) * 0.3
+    0.82 + (((stageSeed + anchorIndex * 17) % 31) / 30) * 0.28
 
   return baseAmplitude * slopeFactor * deterministicVariation
 }
@@ -8804,54 +8812,89 @@ function shouldApplyDisplayOnlyMajorReliefShaping(
   return spanKm >= minimumSpanKm && absoluteGain >= minimumGainMeters
 }
 
-function getDisplayOnlyMajorReliefAdjustmentMeters(
+type DisplayOnlyReliefKnot = {
+  fraction: number
+  progress: number
+}
+
+const DISPLAY_ONLY_RELIEF_PATTERNS: DisplayOnlyReliefKnot[][] = [
+  [
+    { fraction: 0, progress: 0 },
+    { fraction: 0.24, progress: 0.28 },
+    { fraction: 0.42, progress: 0.48 },
+    { fraction: 0.58, progress: 0.54 },
+    { fraction: 0.78, progress: 0.76 },
+    { fraction: 1, progress: 1 },
+  ],
+  [
+    { fraction: 0, progress: 0 },
+    { fraction: 0.18, progress: 0.16 },
+    { fraction: 0.39, progress: 0.43 },
+    { fraction: 0.57, progress: 0.58 },
+    { fraction: 0.73, progress: 0.64 },
+    { fraction: 1, progress: 1 },
+  ],
+  [
+    { fraction: 0, progress: 0 },
+    { fraction: 0.27, progress: 0.21 },
+    { fraction: 0.48, progress: 0.51 },
+    { fraction: 0.66, progress: 0.7 },
+    { fraction: 0.82, progress: 0.76 },
+    { fraction: 1, progress: 1 },
+  ],
+  [
+    { fraction: 0, progress: 0 },
+    { fraction: 0.2, progress: 0.26 },
+    { fraction: 0.38, progress: 0.46 },
+    { fraction: 0.61, progress: 0.57 },
+    { fraction: 0.83, progress: 0.86 },
+    { fraction: 1, progress: 1 },
+  ],
+]
+
+function smoothStep01(value: number): number {
+  const clamped = Math.max(0, Math.min(1, value))
+  return clamped * clamped * (3 - 2 * clamped)
+}
+
+function getDisplayOnlyNaturalReliefProgress(
   fraction: number,
-  spanKm: number,
   elevationDeltaMeters: number,
-  terrainType: string | null | undefined,
   anchorIndex: number,
   stageSeed: number
 ): number {
-  if (
-    !shouldApplyDisplayOnlyMajorReliefShaping(
-      spanKm,
-      elevationDeltaMeters,
-      terrainType
-    )
-  ) {
-    return 0
+  const clamped = Math.max(0, Math.min(1, fraction))
+
+  /*
+   * A deterministic monotonic progression gives every long ascent/descent
+   * broad ramps plus one or two shelf-like sections without ever introducing
+   * artificial up/down reversals. Descents use a different pattern from the
+   * corresponding ascent so a summit is not a mirrored pyramid.
+   */
+  const directionOffset = elevationDeltaMeters < 0 ? 2 : 0
+  const patternIndex =
+    (stageSeed + anchorIndex * 13 + directionOffset) %
+    DISPLAY_ONLY_RELIEF_PATTERNS.length
+  const knots = DISPLAY_ONLY_RELIEF_PATTERNS[patternIndex]
+
+  for (let index = 1; index < knots.length; index += 1) {
+    const previous = knots[index - 1]
+    const next = knots[index]
+
+    if (clamped <= next.fraction) {
+      const localFraction =
+        (clamped - previous.fraction) /
+        Math.max(next.fraction - previous.fraction, 0.000001)
+      const eased = smoothStep01(localFraction)
+
+      return (
+        previous.progress +
+        (next.progress - previous.progress) * eased
+      )
+    }
   }
 
-  const absoluteGain = Math.abs(elevationDeltaMeters)
-  const envelope = Math.sin(Math.PI * fraction)
-
-  // Long transitions get several broad sub-ramps/shelves. The stage seed
-  // chooses a stable pattern per stage so profiles do not all look alike.
-  const pattern = (stageSeed + anchorIndex * 13) % 4
-  const phase = ((stageSeed + anchorIndex * 29) % 180) * (Math.PI / 180)
-
-  const wave =
-    pattern === 0
-      ? Math.sin(fraction * Math.PI * 4 + phase) * 0.72 +
-        Math.sin(fraction * Math.PI * 8 + phase * 0.35) * 0.28
-      : pattern === 1
-        ? Math.sin(fraction * Math.PI * 3 + phase) * 0.68 +
-          Math.sin(fraction * Math.PI * 7 + phase * 0.5) * 0.32
-        : pattern === 2
-          ? Math.sin(fraction * Math.PI * 5 + phase) * 0.62 +
-            Math.sin(fraction * Math.PI * 2 + phase * 0.4) * 0.38
-          : Math.sin(fraction * Math.PI * 4.5 + phase) * 0.7 +
-            Math.sin(fraction * Math.PI * 6.5 + phase * 0.55) * 0.3
-
-  // Cap the visual deviation so the real summit/base remains dominant.
-  // Scale with both total gain and transition length.
-  const amplitudeMeters = Math.min(
-    85,
-    absoluteGain * 0.16,
-    18 + spanKm * 1.6
-  )
-
-  return envelope * wave * amplitudeMeters
+  return 1
 }
 
 function clampDisplayOnlyReliefElevation(
@@ -8890,19 +8933,9 @@ function softenDisplayOnlyLowReliefPeakShoulders(
   }
 
   const normalizedTerrain = String(terrainType ?? '').toLowerCase()
-  const stageMin = Math.min(...anchors.map((point) => point.elevation))
-  const stageMax = Math.max(...anchors.map((point) => point.elevation))
-  const stageRange = stageMax - stageMin
-
-  // This correction is mainly for low/moderate-relief classics and punchy
-  // stages. Genuine large mountain relief should keep its authoritative shape.
-  if (
-    stageRange > 750 &&
-    normalizedTerrain !== 'cobbled' &&
-    normalizedTerrain !== 'hilly'
-  ) {
-    return displayPoints
-  }
+  const stageSeed = getStageVisualSeed(
+    anchors.map((point) => `${point.km}:${point.elevation}`).join('|')
+  )
 
   const anchorKmKeys = new Set(
     anchors.map((point) => point.km.toFixed(4))
@@ -8934,31 +8967,59 @@ function softenDisplayOnlyLowReliefPeakShoulders(
     }
 
     const prominence = Math.min(leftRise, rightDrop)
-    const shoulderRadiusKm = Math.min(
-      7,
-      Math.max(2.5, Math.min(leftSpan, rightSpan) * 0.55)
+    const terrainRadiusBonus =
+      normalizedTerrain === 'mountain'
+        ? 1.35
+        : normalizedTerrain === 'hilly'
+          ? 1.15
+          : 1
+
+    // Use different shoulder lengths before and after the summit so the climb
+    // never looks like a mathematically mirrored pyramid.
+    const asymmetry =
+      0.82 + (((stageSeed + index * 23) % 37) / 36) * 0.36
+    const leftShoulderKm = Math.min(
+      9,
+      Math.max(
+        2.5,
+        Math.min(leftSpan, rightSpan) * 0.5 * terrainRadiusBonus
+      )
+    )
+    const rightShoulderKm = Math.min(
+      11,
+      Math.max(
+        3,
+        Math.min(leftSpan, rightSpan) * 0.58 * terrainRadiusBonus * asymmetry
+      )
     )
     const shoulderDepthMeters = Math.min(
-      70,
-      Math.max(18, prominence * 0.42)
+      normalizedTerrain === 'mountain' ? 110 : 75,
+      Math.max(14, prominence * 0.34)
     )
 
     for (const point of softened) {
       if (anchorKmKeys.has(point.km.toFixed(4))) continue
 
+      const isBeforeSummit = point.km < peak.km
+      const shoulderRadiusKm = isBeforeSummit
+        ? leftShoulderKm
+        : rightShoulderKm
       const distanceKm = Math.abs(point.km - peak.km)
+
       if (distanceKm >= shoulderRadiusKm) continue
 
-      const proximity = 1 - distanceKm / shoulderRadiusKm
+      const normalizedDistance = distanceKm / shoulderRadiusKm
       const desiredShoulder =
         peak.elevation -
         shoulderDepthMeters *
-          Math.pow(distanceKm / shoulderRadiusKm, 0.75)
+          Math.pow(normalizedDistance, isBeforeSummit ? 0.8 : 1.05)
 
       if (point.elevation < desiredShoulder) {
-        // Blend rather than force a plateau. This broadens needle-like peaks
-        // while keeping the actual KOM/summit anchor exactly untouched.
-        const blend = 0.38 * proximity * proximity
+        const proximity = 1 - normalizedDistance
+        const blend =
+          (isBeforeSummit ? 0.32 : 0.46) *
+          proximity *
+          proximity
         point.elevation +=
           (desiredShoulder - point.elevation) * blend
       }
@@ -9022,42 +9083,54 @@ function getDisplayOnlyStageProfilePoints(
         stageSeed
       ) * (majorReliefActive ? 0.35 : 1)
 
-    // About one visual point per km. These points are render-only.
-    const stepCount = Math.max(2, Math.ceil(spanKm))
+    /*
+     * Use wider visual spacing than the previous one-point-per-km helper.
+     * Flat terrain gets the longest blocks; major relief gets enough points to
+     * show shelves and changing gradients without creating saw-teeth.
+     */
+    const normalizedTerrain = String(terrainType ?? '').toLowerCase()
+    const targetStepKm = majorReliefActive
+      ? 1.75
+      : normalizedTerrain === 'flat'
+        ? 4
+        : normalizedTerrain === 'hilly'
+          ? 2.75
+          : 2.5
+    const stepCount = Math.max(2, Math.ceil(spanKm / targetStepKm))
 
     for (let step = 0; step < stepCount; step += 1) {
       const fraction = step / stepCount
       const km = start.km + spanKm * fraction
+
+      const reliefProgress = majorReliefActive
+        ? getDisplayOnlyNaturalReliefProgress(
+            fraction,
+            elevationDeltaMeters,
+            anchorIndex,
+            stageSeed
+          )
+        : fraction
       const baseline =
-        start.elevation + elevationDeltaMeters * fraction
+        start.elevation + elevationDeltaMeters * reliefProgress
 
-      const envelope = Math.sin(Math.PI * fraction)
-      const microPhase =
-        ((stageSeed % 360) * Math.PI) / 180 +
-        anchorIndex * 0.67
+      /*
+       * One broad deterministic swell per anchor interval replaces the former
+       * two-frequency sine pattern. It can gently bow a flat/rolling section,
+       * but it cannot produce repeated short up/down teeth.
+       */
+      const microDirection =
+        (stageSeed + anchorIndex * 19) % 2 === 0 ? 1 : -1
       const microWave =
-        Math.sin(fraction * Math.PI * 2 + microPhase) * 0.72 +
-        Math.sin(fraction * Math.PI * 4 + microPhase * 0.43) * 0.28
-
+        Math.sin(Math.PI * fraction) * microDirection
       const microAdjustment =
-        envelope * microWave * microAmplitudeMeters
-
-      const majorReliefAdjustment =
-        getDisplayOnlyMajorReliefAdjustmentMeters(
-          fraction,
-          spanKm,
-          elevationDeltaMeters,
-          terrainType,
-          anchorIndex,
-          stageSeed
-        )
+        microWave * microAmplitudeMeters
 
       const shapedElevation = majorReliefActive
         ? clampDisplayOnlyReliefElevation(
-            baseline + majorReliefAdjustment + microAdjustment,
+            baseline + microAdjustment,
             start.elevation,
             end.elevation,
-            fraction
+            reliefProgress
           )
         : baseline + microAdjustment
 
@@ -9085,13 +9158,13 @@ function getDisplayOnlyProfileMinimumVerticalSpan(
 
   switch (String(terrainType ?? '').toLowerCase()) {
     case 'flat':
-      return 140
+      return 180
 
     case 'hilly':
-      return 500
+      return 520
 
     case 'cobbled':
-      return 320
+      return 340
 
     case 'individual_time_trial':
     case 'team_time_trial':
