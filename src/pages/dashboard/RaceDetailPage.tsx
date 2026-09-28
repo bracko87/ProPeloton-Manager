@@ -8971,7 +8971,9 @@ function softenDisplayOnlyLowReliefPeakShoulders(
 
       if (point.elevation < desiredShoulder) {
         const proximity = 1 - normalizedDistance
-        const blend = 0.72 + proximity * 0.18
+        // Fade the shoulder smoothly back into the authoritative descent/
+        // approach so there is no artificial ledge at the edge of the summit.
+        const blend = 0.9 * Math.pow(proximity, 0.8)
         point.elevation +=
           (desiredShoulder - point.elevation) * blend
       }
