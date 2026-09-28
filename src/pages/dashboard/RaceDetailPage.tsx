@@ -9029,7 +9029,7 @@ function softenDisplayOnlyLowReliefPeakShoulders(
   return softened
 }
 
-function getDisplayOnlyStageProfilePoints(
+export function getDisplayOnlyStageProfilePoints(
   stageId: string | null | undefined,
   points: BackendStageProfilePoint[],
   terrainType?: string | null
