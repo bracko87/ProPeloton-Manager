@@ -2465,14 +2465,9 @@ function getNiceElevationAxisBounds(
         ? 800
         : 600
 
-    perceptionMinimumSpan = Math.max(
-      perceptionMinimumSpan,
-      lowAltitudeMinimumSpan
-    )
-
     const targetMax = Math.max(
       rawMax * 1.08,
-      perceptionMinimumSpan
+      lowAltitudeMinimumSpan
     )
     const maxElevation = Math.ceil(targetMax / 100) * 100
 
