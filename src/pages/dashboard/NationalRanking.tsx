@@ -178,6 +178,8 @@ type WorldRoadEdition = {
   season_number: number
   race_date: string
   decision_deadline: string
+  final_confirmation_open_date?: string | null
+  final_decision_deadline?: string | null
   host_country_code?: string | null
   host_country_name_snapshot?: string | null
   climate_avg_temp_c?: number | null
@@ -327,6 +329,41 @@ function addGameDays(value: string | null | undefined, days: number): string {
   return date.toISOString().slice(0, 10)
 }
 
+
+function worldChampionshipPhase(
+  overview: WorldRoadOverview | null,
+): string {
+  const edition = overview?.edition
+  if (!edition) return 'Planned'
+
+  if (edition.status === 'completed') return 'Completed'
+
+  const currentDate = overview?.current_game_date ?? ''
+  const finalOpen = edition.final_confirmation_open_date ?? ''
+  const firstDeadline = edition.decision_deadline ?? ''
+
+  if (finalOpen && currentDate >= finalOpen) return 'Final confirmations'
+
+  if (
+    firstDeadline &&
+    currentDate > firstDeadline &&
+    (overview?.participant_count ?? 0) > 0
+  ) {
+    return 'Startlist confirmed'
+  }
+
+  if ((overview?.participant_count ?? 0) > 0) return 'Invitations open'
+
+  return 'National champions qualifying'
+}
+
+function worldChampionshipPhaseClasses(label: string): string {
+  if (label === 'Completed') return 'bg-emerald-100 text-emerald-800'
+  if (label === 'Final confirmations') return 'bg-violet-100 text-violet-800'
+  if (label === 'Startlist confirmed') return 'bg-blue-100 text-blue-800'
+  if (label === 'Invitations open') return 'bg-amber-100 text-amber-800'
+  return 'bg-sky-100 text-sky-800'
+}
 
 function formatRouteMeta(route?: HostRoute | null): string {
   if (!route) return '—'
@@ -1327,8 +1364,20 @@ export default function NationalRankingPage(): JSX.Element {
                         <div className="text-xs font-semibold uppercase tracking-wide text-sky-800">
                           World Road Championship
                         </div>
-                        <div className="mt-1 text-base font-bold text-slate-950">
-                          Grand Finale
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <div className="text-base font-bold text-slate-950">
+                            Grand Finale
+                          </div>
+                          <span
+                            className={[
+                              'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                              worldChampionshipPhaseClasses(
+                                worldChampionshipPhase(worldData),
+                              ),
+                            ].join(' ')}
+                          >
+                            {worldChampionshipPhase(worldData)}
+                          </span>
                         </div>
                         <div className="mt-1 text-sm font-semibold text-slate-800">
                           {pageDate(
@@ -1425,8 +1474,20 @@ export default function NationalRankingPage(): JSX.Element {
                         <div className="text-xs font-semibold uppercase tracking-wide text-sky-800">
                           World Road Championship
                         </div>
-                        <div className="mt-1 text-base font-bold text-slate-950">
-                          Grand Finale
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <div className="text-base font-bold text-slate-950">
+                            Grand Finale
+                          </div>
+                          <span
+                            className={[
+                              'rounded-full px-2 py-0.5 text-[10px] font-bold',
+                              worldChampionshipPhaseClasses(
+                                worldChampionshipPhase(worldData),
+                              ),
+                            ].join(' ')}
+                          >
+                            {worldChampionshipPhase(worldData)}
+                          </span>
                         </div>
                         <div className="mt-1 text-sm font-semibold text-slate-800">
                           {pageDate(
