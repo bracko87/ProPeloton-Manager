@@ -279,10 +279,17 @@ function nationalSystemParams(item: NotificationItem): Record<string, unknown> {
     rank: readNumber(payload, ['final_group_rank']) ?? '—',
     points: readNumber(payload, ['total_points']) ?? '—',
     raceDay: readNumber(payload, ['race_day']) ?? '—',
-    raceLabel:
-      readString(payload, ['race_label']) ||
-      readString(payload, ['race_type']) ||
-      nt('common.race'),
+    raceLabel: (() => {
+      const raceType = readString(payload, ['race_type'])
+      if (raceType === 'team_time_trial') return nt('nationalSystem.values.teamTimeTrial')
+      if (raceType === 'flat_road_race') return nt('nationalSystem.values.flatRoadRace')
+      if (raceType === 'mountain_road_race') return nt('nationalSystem.values.hillyMountainRoadRace')
+      return (
+        readString(payload, ['race_label']) ||
+        raceType ||
+        nt('common.race')
+      )
+    })(),
     eventPoints: readNumber(payload, ['event_points']) ?? 0,
     nationRaceRank: readNumber(payload, ['nation_race_rank']) ?? '—',
     bestRiderRank: readNumber(payload, ['best_rider_rank']) ?? '—',
@@ -1446,6 +1453,18 @@ export function localizeNotificationValue(
   }
   const advisorRuntimeKey = advisorRuntimeValueKeys[normalizePhrase(cleanValue)]
   if (advisorRuntimeKey) return nt(advisorRuntimeKey)
+
+
+  if (item && isNationalSystemNotificationType(item.type_code)) {
+    const nationalRaceValueKeys: Record<string, string> = {
+      'team time trial': 'nationalSystem.values.teamTimeTrial',
+      'flat road race': 'nationalSystem.values.flatRoadRace',
+      'hilly / mountain road race': 'nationalSystem.values.hillyMountainRoadRace',
+      'hilly mountain road race': 'nationalSystem.values.hillyMountainRoadRace',
+    }
+    const raceValueKey = nationalRaceValueKeys[normalizePhrase(cleanValue)]
+    if (raceValueKey) return nt(raceValueKey)
+  }
 
   let advisorMatch = /^in\s+(\d+)\s+days?$/i.exec(cleanValue)
   if (advisorMatch) {
