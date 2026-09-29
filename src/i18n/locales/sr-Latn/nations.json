@@ -37,7 +37,8 @@
     "electionRequired": "Potreban izbor",
     "notCompleted": "Nije završeno",
     "associations": "Savezi",
-    "race": "Trka"
+    "race": "Trka",
+    "yearsShort": "{{years}} god."
   },
   "association": {
     "loading": "Učitavanje nacionalnog saveza...",
@@ -192,7 +193,8 @@
     "errors": {
       "load": "Nije moguće učitati Svetsko prvenstvo nacija.",
       "hostSubmit": "Nije moguće poslati prijavu za domaćina."
-    }
+    },
+    "drawPending": "Žreb još nije završen."
   },
   "admin": {
     "loading": "Učitavanje World Nations operacija...",
@@ -242,7 +244,24 @@
       "stressField": "Testno polje",
       "associationOption": "{{count}} Saveza",
       "resultSummary": "Polje: {{field}} Saveza · greške {{failures}} · upozorenja {{warnings}}",
-      "defaultCase": "Podrazumevani stresni slučaj: 48 Saveza → 6 preliminarnih grupa → 32 nacije → 4 grupe završnih kvalifikacija → Svetsko finale sa 16 nacija."
+      "defaultCase": "Podrazumevani stresni slučaj: 48 Saveza → 6 preliminarnih grupa → 32 nacije → 4 grupe završnih kvalifikacija → Svetsko finale sa 16 nacija.",
+      "passSummary": "World Nations E2E provera ugovora je prošla.",
+      "failSummary": "World Nations E2E provera ugovora pronašla je greške.",
+      "checks": {
+        "core_config": "Osnovna konfiguracija",
+        "no_treasury": "Bez blagajne",
+        "qualificationStress": "Stres kvalifikacija · {{count}} Saveza",
+        "qualification_scale_100": "Skaliranje kvalifikacija · 100 Saveza",
+        "calendar_anchors": "Kalendarske tačke",
+        "standard_package": "Standardni paket reprezentacije",
+        "masked_overall_stability": "Stabilnost maskirane ukupne ocene",
+        "points_balance": "Balans bodova",
+        "lineup_contract": "Ugovor postave",
+        "complete_field_race_gate": "Uslov potpunog polja",
+        "notification_lifecycle": "Životni ciklus obaveštenja",
+        "automatic_runtime": "Automatsko izvršavanje",
+        "current_operations_health": "Trenutno operativno stanje"
+      }
     },
     "fixture": {
       "title": "Rollback test životnog ciklusa",
@@ -252,7 +271,10 @@
       "actualField": "Stvarno testno polje: {{count}} Saveza",
       "temporaryManagers": "{{count}} privremenih menadžera",
       "rounds": "{{count}} rundi",
-      "groups": "{{count}} grupa"
+      "groups": "{{count}} grupa",
+      "passSummary": "Rollback test životnog ciklusa je prošao.",
+      "skippedSummary": "Rollback test životnog ciklusa je preskočen.",
+      "failSummary": "Rollback test životnog ciklusa nije prošao."
     },
     "stats": {
       "championCount": "Broj šampiona",
@@ -316,5 +338,14 @@
     "error": "Greška",
     "warning": "Upozorenje",
     "skipped": "Preskočeno"
+  },
+  "roles": {
+    "all_rounder": "Svestrani",
+    "breakaway": "Bjegunac",
+    "climber": "Brdaš",
+    "domestique": "Pomoćnik",
+    "leader": "Vođa",
+    "sprinter": "Sprinter",
+    "tt": "Hronometraš"
   }
 }
