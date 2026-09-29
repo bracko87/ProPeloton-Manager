@@ -1,0 +1,15 @@
+grant CREATE on schema control_center_private to postgres;
+grant USAGE on schema control_center_private to postgres;
+grant CREATE on schema finance to postgres;
+grant USAGE on schema finance to postgres;
+grant USAGE on schema finance to authenticated;
+grant USAGE on schema finance to service_role;
+grant CREATE on schema private to postgres;
+grant USAGE on schema private to postgres;
+grant USAGE on schema public to public;
+grant CREATE on schema public to pg_database_owner;
+grant USAGE on schema public to pg_database_owner;
+grant USAGE on schema public to postgres;
+grant USAGE on schema public to anon;
+grant USAGE on schema public to authenticated;
+grant USAGE on schema public to service_role;
