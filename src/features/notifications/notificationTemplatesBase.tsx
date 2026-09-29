@@ -1815,6 +1815,54 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     ],
   },
 
+  NATIONAL_TEAM_DUTY_STARTED: {
+    defaultTitle: 'National Duty started',
+    defaultMessage: 'A rider from your club has entered National Duty.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'A rider from your club has entered National Duty.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow('Association', pickFirstString(payload, ['association_name'])),
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Start date', formatContractSeasonLabel(pickFirstString(payload, ['start_date']))),
+        detailRow('End date', formatContractSeasonLabel(pickFirstString(payload, ['end_date']))),
+        detailRow('Status', getNationalSystemStatus(item)),
+      ])
+    },
+    getExtraText: () =>
+      'National Duty is reserved for National Team participation. The rider is unavailable for overlapping club races throughout this duty window.',
+    actions: [
+      withFallbackHref('Open National Association', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_TEAM_DUTY_COMPLETED: {
+    defaultTitle: 'National Duty completed',
+    defaultMessage: 'A rider from your club has completed National Duty.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'A rider from your club has completed National Duty.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow('Association', pickFirstString(payload, ['association_name'])),
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Start date', formatContractSeasonLabel(pickFirstString(payload, ['start_date']))),
+        detailRow('End date', formatContractSeasonLabel(pickFirstString(payload, ['end_date']))),
+        detailRow('Status', getNationalSystemStatus(item)),
+      ])
+    },
+    getExtraText: () =>
+      'National Duty has ended. The rider is available to the club again, subject to normal health, fatigue and race availability.',
+    actions: [
+      withFallbackHref('Open National Association', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
   NATIONS_RACE_RESULT: {
     defaultTitle: 'World Nations race completed',
     defaultMessage: 'A World Nations race day has been completed.',
