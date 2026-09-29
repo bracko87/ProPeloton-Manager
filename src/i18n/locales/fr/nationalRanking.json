@@ -29,13 +29,13 @@
     "hostPendingHelp": "Le championnat attend que deux parcours adaptés soient disponibles."
   },
   "duty": {
-    "title": "Mon devoir national",
-    "description": "Ces coureurs sont engagés automatiquement. Vous gérez uniquement l’équipement et la stratégie individuelle de chacun.",
-    "locked": "Course individuelle — aucune tactique d’équipe. Personnel, véhicules et ravitaillement du club indisponibles.",
+    "title": "Participation aux championnats",
+    "description": "Ces coureurs sont inscrits automatiquement aux épreuves du Championnat National ou Mondial. Gérez ici la participation, l'équipement et la stratégie individuelle.",
+    "locked": "Course individuelle de championnat — aucune tactique d'équipe. Le personnel, les véhicules et les fournitures du club ne sont pas disponibles.",
     "directQualifier": "Qualifié directement",
     "qualificationHeat": "Groupe de qualification {{number}}",
-    "noPlan": "Aucun plan de devoir national modifiable n’est actuellement ouvert pour ce coureur.",
-    "empty": "Aucun de vos coureurs n'a actuellement d'invitation active au devoir national pour ce championnat."
+    "noPlan": "Aucun plan de participation au championnat modifiable n'est actuellement ouvert pour ce coureur.",
+    "empty": "Aucun de vos coureurs n'a actuellement de participation active au Championnat National ou Mondial."
   },
   "organizer": {
     "title": "Pack course de l’organisateur",
@@ -183,7 +183,7 @@
   },
   "tabs": {
     "ranking": "Classement",
-    "duty": "Mon devoir national",
+    "duty": "Participation aux championnats",
     "history": "Historique"
   },
   "info": {
