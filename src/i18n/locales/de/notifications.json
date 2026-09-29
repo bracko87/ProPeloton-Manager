@@ -1297,6 +1297,16 @@
       "title": "World-Nations-Finale abgeschlossen",
       "message": "{{country}} belegte im World-Nations-Finale Rang {{rank}} mit {{points}} Punkten.",
       "extra": "Die Finalwertung kombiniert Punkte aus Mannschaftszeitfahren, Flach- und Hügel-/Bergrennen. Der Champion wird dauerhaft in der World-Nations-Historie gespeichert."
+    },
+    "dutyStarted": {
+      "title": "Nationalmannschaftsdienst für {{rider}} begonnen",
+      "message": "{{rider}} ist vom {{dutyStart}} bis {{dutyEnd}} für {{association}} im Nationalmannschaftsdienst und für überschneidende Clubrennen nicht verfügbar.",
+      "extra": "Nationalmannschaftsdienst gilt ausschließlich für Einsätze im Nationalteam. Der Fahrer bleibt während des gesamten Zeitfensters einschließlich Reservetagen für den Club nicht verfügbar."
+    },
+    "dutyCompleted": {
+      "title": "Nationalmannschaftsdienst für {{rider}} beendet",
+      "message": "{{rider}} hat den Nationalmannschaftsdienst bei {{association}} beendet und steht dem Club wieder zur Verfügung.",
+      "extra": "Nach Ende des Nationalmannschaftsdienstes gelten weiterhin die normalen Regeln für Gesundheit, Ermüdung und Rennverfügbarkeit."
     }
   }
 }
