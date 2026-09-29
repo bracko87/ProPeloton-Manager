@@ -139,6 +139,25 @@ type StandardPackage = {
   supplies?: StandardSupply[]
 }
 
+type Lineup = {
+  lineup_id: string
+  race_day: number
+  race_type: string
+  status: string
+  submitted_on?: string | null
+  riders: Array<{
+    rider_id: string
+    rider_name: string
+    club_name?: string | null
+  }>
+}
+
+type LineupData = {
+  allowed: boolean
+  squad_id?: string
+  lineups?: Lineup[]
+}
+
 type CoachDashboard = {
   allowed: boolean
   reason?: string
@@ -250,6 +269,9 @@ export default function NationalAssociationPage(): JSX.Element {
   const [dashboard, setDashboard] = useState<CoachDashboard | null>(null)
   const [coachCallups, setCoachCallups] = useState<CoachCallupData | null>(null)
   const [myCallups, setMyCallups] = useState<Callup[]>([])
+  const [standardPackage, setStandardPackage] = useState<StandardPackage | null>(null)
+  const [lineupData, setLineupData] = useState<LineupData | null>(null)
+  const [lineupDrafts, setLineupDrafts] = useState<Record<number, string[]>>({})
   const [loading, setLoading] = useState(true)
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -268,26 +290,47 @@ export default function NationalAssociationPage(): JSX.Element {
       const nextAssociation = (associationResponse.data ?? null) as AssociationData | null
       setAssociation(nextAssociation)
 
-      const [dashboardResponse, coachCallupsResponse, myCallupsResponse] = await Promise.all([
+      const [dashboardResponse, coachCallupsResponse, myCallupsResponse, packageResponse] = await Promise.all([
         supabase.rpc('get_national_coach_dashboard_v1'),
         supabase.rpc('get_my_national_coach_callups_v1', { p_cycle_key: 'season_main' }),
         supabase.rpc('get_my_national_team_callups_v1'),
+        supabase.rpc('get_national_team_standard_package_v1'),
       ])
 
       if (dashboardResponse.error) throw dashboardResponse.error
       if (coachCallupsResponse.error) throw coachCallupsResponse.error
       if (myCallupsResponse.error) throw myCallupsResponse.error
+      if (packageResponse.error) throw packageResponse.error
 
       const nextDashboard = (dashboardResponse.data ?? null) as CoachDashboard | null
       const nextCoachCallups = (coachCallupsResponse.data ?? null) as CoachCallupData | null
       const nextMyCallups = (myCallupsResponse.data ?? []) as Callup[]
+      const nextPackage = (packageResponse.data ?? null) as StandardPackage | null
 
       setDashboard(nextDashboard)
       setCoachCallups(nextCoachCallups)
       setMyCallups(nextMyCallups)
+      setStandardPackage(nextPackage)
 
       if (nextCoachCallups?.squad?.members?.length) {
         setSelectedSquad(nextCoachCallups.squad.members.map(member => member.rider_id))
+      }
+
+      if (nextCoachCallups?.squad?.squad_id) {
+        const lineupResponse = await supabase.rpc('get_my_national_team_lineups_v1', {
+          p_squad_id: nextCoachCallups.squad.squad_id,
+        })
+        if (lineupResponse.error) throw lineupResponse.error
+        const nextLineups = (lineupResponse.data ?? null) as LineupData | null
+        setLineupData(nextLineups)
+        const drafts: Record<number, string[]> = {}
+        for (const lineup of nextLineups?.lineups ?? []) {
+          drafts[lineup.race_day] = lineup.riders.map(rider => rider.rider_id)
+        }
+        setLineupDrafts(drafts)
+      } else {
+        setLineupData(null)
+        setLineupDrafts({})
       }
     } catch (caught: any) {
       setError(caught?.message ?? 'Unable to load National Association data.')
@@ -401,6 +444,22 @@ export default function NationalAssociationPage(): JSX.Element {
       })
       if (rpcError) throw rpcError
       setMessage('The 10-rider National Team squad has been confirmed.')
+    })
+  }
+
+  const submitLineup = async (raceDay: number): Promise<void> => {
+    const squadId = coachCallups?.squad?.squad_id
+    const riderIds = lineupDrafts[raceDay] ?? []
+    if (!squadId) return
+
+    await perform(`lineup:${raceDay}`, async () => {
+      const { error: rpcError } = await supabase.rpc('submit_national_team_lineup_v1', {
+        p_squad_id: squadId,
+        p_race_day: raceDay,
+        p_rider_ids: riderIds,
+      })
+      if (rpcError) throw rpcError
+      setMessage(`Race Day ${raceDay} lineup has been confirmed.`)
     })
   }
 
@@ -734,7 +793,7 @@ export default function NationalAssociationPage(): JSX.Element {
             </section>
           ) : null}
 
-          {(dashboard?.standard_package || isCoach) ? (
+          {standardPackage ? (
             <section className="rounded bg-white shadow">
               <div className="border-b border-slate-200 p-4">
                 <div className="flex items-center gap-2">
@@ -750,7 +809,7 @@ export default function NationalAssociationPage(): JSX.Element {
                 <div className="rounded border border-slate-200 p-4">
                   <div className="text-sm font-semibold text-slate-900">Race assets</div>
                   <div className="mt-3 space-y-2">
-                    {(dashboard?.standard_package?.assets ?? []).map(asset => (
+                    {(standardPackage?.assets ?? []).map(asset => (
                       <div key={asset.asset_key} className="flex items-center justify-between gap-3 text-sm">
                         <span className="text-slate-600">{humanize(asset.asset_key)}</span>
                         <span className="font-semibold text-slate-900">
@@ -764,7 +823,7 @@ export default function NationalAssociationPage(): JSX.Element {
                 <div className="rounded border border-slate-200 p-4 xl:col-span-2">
                   <div className="text-sm font-semibold text-slate-900">Rider equipment</div>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {(dashboard?.standard_package?.equipment ?? []).map(item => (
+                    {(standardPackage?.equipment ?? []).map(item => (
                       <div
                         key={`${item.equipment_category}:${item.specialization}`}
                         className="rounded bg-slate-50 px-3 py-2"
@@ -787,7 +846,7 @@ export default function NationalAssociationPage(): JSX.Element {
               <div className="border-t border-slate-200 p-4">
                 <div className="text-sm font-semibold text-slate-900">Race supplies</div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                  {(dashboard?.standard_package?.supplies ?? []).map(supply => (
+                  {(standardPackage?.supplies ?? []).map(supply => (
                     <div key={supply.supply_key} className="rounded bg-slate-50 px-3 py-3">
                       <div className="text-sm font-medium text-slate-700">{supply.display_name}</div>
                       <div className="mt-1 text-lg font-semibold text-slate-900">{supply.quantity}</div>
@@ -1034,7 +1093,104 @@ export default function NationalAssociationPage(): JSX.Element {
                 )}
               </div>
             </section>
-          ) : association.coach ? (
+          ) : null}
+
+          {isCoach && coachCallups?.squad?.squad_id ? (
+            <section className="rounded bg-white shadow">
+              <div className="border-b border-slate-200 p-4">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5 text-yellow-600" />
+                  <h3 className="text-base font-semibold text-slate-900">Three-day National Team lineups</h3>
+                </div>
+                <p className="mt-1 text-sm text-slate-500">
+                  Select exactly 7 riders per race day. A maximum of 3 changes is allowed between consecutive days.
+                </p>
+              </div>
+
+              <div className="grid gap-4 p-4 xl:grid-cols-3">
+                {[
+                  [1, 'Team Time Trial'],
+                  [2, 'Flat Road Race'],
+                  [3, 'Hilly / Mountain Road Race'],
+                ].map(([dayValue, label]) => {
+                  const day = Number(dayValue)
+                  const selected = lineupDrafts[day] ?? []
+                  const saved = (lineupData?.lineups ?? []).find(lineup => lineup.race_day === day)
+
+                  return (
+                    <div key={day} className="rounded border border-slate-200 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            Race Day {day}
+                          </div>
+                          <div className="mt-1 font-semibold text-slate-900">{label}</div>
+                        </div>
+                        {saved ? (
+                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">
+                            Confirmed
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-4 space-y-2">
+                        {(coachCallups.squad.members ?? []).map(member => {
+                          const checked = selected.includes(member.rider_id)
+                          return (
+                            <label
+                              key={member.rider_id}
+                              className="flex cursor-pointer items-center justify-between gap-3 rounded bg-slate-50 px-3 py-2 text-sm"
+                            >
+                              <span>
+                                <span className="font-medium text-slate-900">{member.rider_name}</span>
+                                <span className="ml-2 text-xs text-slate-500">{member.club_name ?? ''}</span>
+                              </span>
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={event => {
+                                  setLineupDrafts(current => {
+                                    const existing = current[day] ?? []
+                                    if (event.target.checked) {
+                                      if (existing.length >= 7) return current
+                                      return { ...current, [day]: [...existing, member.rider_id] }
+                                    }
+                                    return {
+                                      ...current,
+                                      [day]: existing.filter(id => id !== member.rider_id),
+                                    }
+                                  })
+                                }}
+                                className="h-4 w-4 rounded border-slate-300"
+                              />
+                            </label>
+                          )
+                        })}
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <span className="text-sm text-slate-600">{selected.length}/7 riders</span>
+                        <button
+                          type="button"
+                          disabled={busyKey === `lineup:${day}` || selected.length !== 7}
+                          onClick={() => void submitLineup(day)}
+                          className="inline-flex items-center gap-2 rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                        >
+                          {busyKey === `lineup:${day}`
+                            ? <Loader2 className="h-4 w-4 animate-spin" />
+                            : <CheckCircle2 className="h-4 w-4" />}
+                          Confirm
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          {!isCoach && association.coach ? (
+            <section className="rounded border border-slate-200 bg-white p-5 shadow">
             <section className="rounded border border-slate-200 bg-white p-5 shadow">
               <div className="flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-slate-600" />
