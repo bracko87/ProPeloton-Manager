@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   Sparkles,
   Trophy,
+  Flag,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -77,6 +78,12 @@ const navItems: NavItem[] = [
     labelKey: 'nationalRanking',
     descriptionKey: 'descriptions.nationalRanking',
     icon: Trophy,
+  },
+  {
+    to: '/dashboard/national-association',
+    labelKey: 'nationalAssociation',
+    descriptionKey: 'descriptions.nationalAssociation',
+    icon: Flag,
   },
   {
     to: '/dashboard/training',
