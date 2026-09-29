@@ -37,7 +37,8 @@
     "electionRequired": "Election required",
     "notCompleted": "Not completed",
     "associations": "Associations",
-    "race": "Race"
+    "race": "Race",
+    "yearsShort": "{{years}} yrs"
   },
   "association": {
     "loading": "Loading National Association...",
@@ -192,7 +193,8 @@
     "errors": {
       "load": "Unable to load World Nations Championship.",
       "hostSubmit": "Unable to submit the host application."
-    }
+    },
+    "drawPending": "Draw not completed yet."
   },
   "admin": {
     "loading": "Loading World Nations Operations...",
@@ -242,7 +244,24 @@
       "stressField": "Stress field",
       "associationOption": "{{count}} Associations",
       "resultSummary": "Field: {{field}} Associations · failures {{failures}} · warnings {{warnings}}",
-      "defaultCase": "Default stress case: 48 Associations → 6 preliminary groups → 32 nations → 4 Final Qualification groups → 16-nation World Final."
+      "defaultCase": "Default stress case: 48 Associations → 6 preliminary groups → 32 nations → 4 Final Qualification groups → 16-nation World Final.",
+      "passSummary": "World Nations E2E contract validation passed.",
+      "failSummary": "World Nations E2E contract validation found failures.",
+      "checks": {
+        "core_config": "Core configuration",
+        "no_treasury": "No treasury",
+        "qualificationStress": "Qualification stress · {{count}} Associations",
+        "qualification_scale_100": "Qualification scale · 100 Associations",
+        "calendar_anchors": "Calendar anchors",
+        "standard_package": "Standard National Team package",
+        "masked_overall_stability": "Masked Overall stability",
+        "points_balance": "Points balance",
+        "lineup_contract": "Lineup contract",
+        "complete_field_race_gate": "Complete-field race gate",
+        "notification_lifecycle": "Notification lifecycle",
+        "automatic_runtime": "Automatic runtime",
+        "current_operations_health": "Current operations health"
+      }
     },
     "fixture": {
       "title": "Rollback lifecycle fixture",
@@ -252,7 +271,10 @@
       "actualField": "Actual fixture field: {{count}} Associations",
       "temporaryManagers": "{{count}} temporary managers",
       "rounds": "{{count}} rounds",
-      "groups": "{{count}} groups"
+      "groups": "{{count}} groups",
+      "passSummary": "Rollback lifecycle fixture passed.",
+      "skippedSummary": "Rollback lifecycle fixture was skipped.",
+      "failSummary": "Rollback lifecycle fixture failed."
     },
     "stats": {
       "championCount": "Champion count",
@@ -316,5 +338,14 @@
     "error": "Error",
     "warning": "Warning",
     "skipped": "Skipped"
+  },
+  "roles": {
+    "all_rounder": "All-rounder",
+    "breakaway": "Breakaway",
+    "climber": "Climber",
+    "domestique": "Domestique",
+    "leader": "Leader",
+    "sprinter": "Sprinter",
+    "tt": "TT"
   }
 }
