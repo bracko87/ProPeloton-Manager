@@ -93,6 +93,21 @@ type E2EFixtureResult = {
   error?: string
 }
 
+type E2ECheck = {
+  key: string
+  passed: boolean
+  severity?: string | null
+  details?: unknown
+}
+
+type E2EValidation = {
+  status: string
+  mode: string
+  passed_checks: number
+  failed_checks: number
+  checks: E2ECheck[]
+}
+
 type OperationsPayload = {
   season_number: number
   game_date: string
@@ -182,6 +197,8 @@ export default function AdminNationsOperationsPage(): JSX.Element {
   const [data, setData] = useState<OperationsPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
+  const [validating, setValidating] = useState(false)
+  const [e2e, setE2e] = useState<E2EValidation | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [e2eRunning, setE2eRunning] = useState(false)
@@ -337,6 +354,15 @@ export default function AdminNationsOperationsPage(): JSX.Element {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
+          </button>
+          <button
+            type="button"
+            onClick={() => void runE2EValidation()}
+            disabled={validating}
+            className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            Run E2E validation
           </button>
           <button
             type="button"
