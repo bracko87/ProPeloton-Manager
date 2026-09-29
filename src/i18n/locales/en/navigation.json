@@ -41,7 +41,8 @@
     "transfers": "Buy, sell and negotiate",
     "statistics": "Performance and analytics",
     "premiumCenter": "Advanced planning, simulation and automation",
-    "nationalAssociation": "Association, coach elections and national team"
+    "nationalAssociation": "Association, coach elections and national team",
+    "nationalTeam": "Call-ups, squad and national-team equipment"
   },
   "header": {
     "toggleSidebar": "Toggle sidebar",
@@ -157,5 +158,6 @@
     "unlock": "Unlock with Premium"
   },
   "premiumCenter": "Premium Center",
-  "nationalAssociation": "National Association"
+  "nationalAssociation": "National Association",
+  "nationalTeam": "National Team"
 }
