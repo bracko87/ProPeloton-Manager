@@ -226,10 +226,12 @@ const NATIONAL_SYSTEM_NOTIFICATION_KEY_BY_CODE: Record<string, string> = {
   NATIONAL_TEAM_CALLUP_RESPONSE: 'callupResponse',
   NATIONAL_TEAM_SQUAD_CONFIRMED: 'squadConfirmed',
   NATIONS_QUALIFICATION_DRAW: 'qualificationDraw',
+  NATIONS_RACE_RESULT: 'raceResult',
   NATIONS_ADVANCED: 'advanced',
   NATIONS_ELIMINATED: 'eliminated',
   NATIONS_WORLD_FINAL_QUALIFIED: 'worldFinalQualified',
   NATIONS_HOST_SELECTED: 'hostSelected',
+  NATIONS_FINAL_RESULT: 'finalResult',
   NATIONS_CHAMPION: 'champion',
 }
 
@@ -276,6 +278,14 @@ function nationalSystemParams(item: NotificationItem): Record<string, unknown> {
     advanceCount: readNumber(payload, ['advance_count']) ?? '—',
     rank: readNumber(payload, ['final_group_rank']) ?? '—',
     points: readNumber(payload, ['total_points']) ?? '—',
+    raceDay: readNumber(payload, ['race_day']) ?? '—',
+    raceLabel:
+      readString(payload, ['race_label']) ||
+      readString(payload, ['race_type']) ||
+      nt('common.race'),
+    eventPoints: readNumber(payload, ['event_points']) ?? 0,
+    nationRaceRank: readNumber(payload, ['nation_race_rank']) ?? '—',
+    bestRiderRank: readNumber(payload, ['best_rider_rank']) ?? '—',
     squadSize: readNumber(payload, ['squad_size']) ?? 10,
     status,
     deadline: championshipShortDate(
@@ -1335,6 +1345,12 @@ const DETAIL_LABEL_KEYS: Record<string, string> = {
   'advance': 'nationalSystem.labels.advance',
   'points': 'nationalSystem.labels.points',
   'squad size': 'nationalSystem.labels.squadSize',
+  'race day': 'nationalSystem.labels.raceDay',
+  'race result': 'nationalSystem.labels.raceResult',
+  'event points': 'nationalSystem.labels.eventPoints',
+  'ttt points': 'nationalSystem.labels.tttPoints',
+  'flat points': 'nationalSystem.labels.flatPoints',
+  'mountain points': 'nationalSystem.labels.mountainPoints',
 }
 
 export function localizeNotificationDetailLabel(
