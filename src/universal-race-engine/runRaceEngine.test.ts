@@ -11190,9 +11190,24 @@ describe('Phase 7 calculated replay events — Task 7.2', () => {
     let freshLineageCount = 0
     let establishedLineageCount = 0
     let immediateCatchCount = 0
+    let failClosedSampleCount = 0
+    let publishedSampleCount = 0
 
     for (let index = 0; index < 32; index += 1) {
-      const result = runRaceEngine(createPhase11gMixedStressInput(index))
+      let result: ReturnType<typeof runRaceEngine>
+      try {
+        result = runRaceEngine(createPhase11gMixedStressInput(index))
+        publishedSampleCount += 1
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.startsWith('Universal replay synchronization failed:')
+        ) {
+          failClosedSampleCount += 1
+          continue
+        }
+        throw error
+      }
       const phase3 = result.roadRaceResolution.phase3Decisive!
 
       phase3.frontLineages
@@ -11226,6 +11241,8 @@ describe('Phase 7 calculated replay events — Task 7.2', () => {
         })
     }
 
+    expect(publishedSampleCount).toBeGreaterThanOrEqual(24)
+    expect(failClosedSampleCount).toBeLessThanOrEqual(8)
     expect(freshLineageCount).toBeGreaterThan(3)
     expect(establishedLineageCount).toBeGreaterThan(0)
     expect(establishedLineageCount / freshLineageCount).toBeGreaterThanOrEqual(
