@@ -15,6 +15,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 
 type EventRow = {
@@ -194,6 +195,7 @@ function StatusIcon({ status }: { status?: string | null }): JSX.Element {
 }
 
 export default function AdminNationsOperationsPage(): JSX.Element {
+  const { t } = useTranslation('nations')
   const [data, setData] = useState<OperationsPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
@@ -251,10 +253,10 @@ export default function AdminNationsOperationsPage(): JSX.Element {
           ? String((result as any).operations_health?.status ?? 'completed')
           : 'completed'
 
-      setMessage(`World Nations runtime completed: ${humanize(status)}.`)
+      setMessage(t('admin.messages.runtimeCompleted', { status: t(`status.${status}`, { defaultValue: humanize(status) }) }))
       await load(true)
     } catch (caught: any) {
-      setError(caught?.message ?? 'Unable to run World Nations maintenance.')
+      setError(caught?.message ?? t('admin.errors.maintenance'))
     } finally {
       setRunning(false)
     }
@@ -273,7 +275,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
 
       setE2eResult((result ?? null) as E2EValidationResult | null)
     } catch (caught: any) {
-      setError(caught?.message ?? 'Unable to run World Nations E2E validation.')
+      setError(caught?.message ?? t('admin.errors.validation'))
     } finally {
       setE2eRunning(false)
     }
@@ -293,7 +295,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
       setFixtureResult((result ?? null) as E2EFixtureResult | null)
       await load(true)
     } catch (caught: any) {
-      setError(caught?.message ?? 'Unable to run rollback World Nations lifecycle fixture.')
+      setError(caught?.message ?? t('admin.errors.fixture'))
     } finally {
       setFixtureRunning(false)
     }
@@ -301,14 +303,14 @@ export default function AdminNationsOperationsPage(): JSX.Element {
 
   const details = data?.health?.details ?? {}
   const issueCards = [
-    ['Edition missing', details.edition_missing_after_gate ? 1 : 0],
-    ['Unscheduled groups', details.unscheduled_groups ?? 0],
-    ['Drawn without entries', details.drawn_groups_without_entries ?? 0],
-    ['Overdue events', details.overdue_events ?? 0],
-    ['Invalid squads', details.invalid_confirmed_squads ?? 0],
-    ['Invalid lineups', details.invalid_lineups ?? 0],
-    ['Lineup-blocked events · next 3 days', details.lineup_blocked_events_next_3_days ?? 0],
-    ['Unsafe scheduled events', details.unsafe_scheduled_events ?? 0],
+    [t('admin.health.editionMissing'), details.edition_missing_after_gate ? 1 : 0],
+    [t('admin.health.unscheduledGroups'), details.unscheduled_groups ?? 0],
+    [t('admin.health.drawnWithoutEntries'), details.drawn_groups_without_entries ?? 0],
+    [t('admin.health.overdueEvents'), details.overdue_events ?? 0],
+    [t('admin.health.invalidSquads'), details.invalid_confirmed_squads ?? 0],
+    [t('admin.health.invalidLineups'), details.invalid_lineups ?? 0],
+    [t('admin.health.lineupBlocked'), details.lineup_blocked_events_next_3_days ?? 0],
+    [t('admin.health.unsafeScheduled'), details.unsafe_scheduled_events ?? 0],
   ] as const
 
   if (loading && !data) {
@@ -316,7 +318,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
       <div className="flex min-h-[420px] items-center justify-center">
         <div className="flex items-center gap-3 text-sm text-slate-500">
           <Loader2 className="h-5 w-5 animate-spin" />
-          Loading World Nations Operations...
+          {t('admin.loading')}
         </div>
       </div>
     )
@@ -329,18 +331,18 @@ export default function AdminNationsOperationsPage(): JSX.Element {
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-slate-800" />
             <h2 className="text-2xl font-semibold text-slate-900">
-              World Nations Operations
+              {t('admin.title')}
             </h2>
           </div>
           <p className="mt-1 text-sm text-slate-600">
-            Control Center for Association activation, elections, squads, schedules, races and competition progression.
+            {t('admin.subtitle')}
           </p>
           <div className="mt-2 flex gap-3 text-xs font-semibold">
             <Link to="/dashboard/world-nations" className="text-yellow-700 hover:underline">
-              Open player page
+              {t('admin.openPlayerPage')}
             </Link>
             <Link to="/dashboard/admin/system-health" className="text-yellow-700 hover:underline">
-              System Health
+              {t('admin.systemHealth')}
             </Link>
           </div>
         </div>
@@ -353,7 +355,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
             className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('common.refresh')}
           </button>
           <button
             type="button"
@@ -362,7 +364,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
             className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             {validating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            Run E2E validation
+            {t('admin.runValidation')}
           </button>
           <button
             type="button"
@@ -371,7 +373,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
             className="inline-flex items-center gap-2 rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
-            Run maintenance now
+            {t('admin.runMaintenance')}
           </button>
         </div>
       </div>
@@ -393,12 +395,12 @@ export default function AdminNationsOperationsPage(): JSX.Element {
           <div>
             <div className="flex items-center gap-2 font-semibold">
               <StatusIcon status={data?.health?.status} />
-              Operations Health
+              {t('admin.operationsHealth')}
             </div>
-            <p className="mt-1 text-sm">{data?.health?.summary ?? 'No health result available.'}</p>
+            <p className="mt-1 text-sm">{data?.health ? (data.health.issues === 0 ? t('admin.health.ok') : t('admin.health.issueSummary', { count: data.health.issues })) : t('admin.health.noResult')}</p>
           </div>
           <div className="rounded-full bg-white/70 px-3 py-1 text-sm font-bold">
-            {data?.health?.issues ?? 0} issues
+            {t('admin.health.issueCount', { count: data?.health?.issues ?? 0 })}
           </div>
         </div>
       </section>
@@ -406,34 +408,34 @@ export default function AdminNationsOperationsPage(): JSX.Element {
       <section className="overflow-hidden rounded bg-white shadow">
         <div className="grid gap-px bg-slate-200 md:grid-cols-4">
           <div className="bg-white p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Game date</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('admin.gameDate')}</div>
             <div className="mt-2 text-lg font-semibold text-slate-900">
-              Season {data?.season_number ?? '—'} · {formatGameDate(data?.game_date)}
+              {t('common.seasonNumber', { season: data?.season_number ?? '—' })} · {formatGameDate(data?.game_date)}
             </div>
           </div>
           <div className="bg-white p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Edition</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('admin.edition')}</div>
             <div className="mt-2 text-lg font-semibold text-slate-900">
-              {data?.edition ? humanize(data.edition.status) : 'Not generated'}
+              {data?.edition ? t(`status.${data.edition.status}`, { defaultValue: humanize(data.edition.status) }) : t('common.notGenerated')}
             </div>
             <div className="mt-1 text-xs text-slate-500">
-              Gate: {formatGameDate(details.generation_gate)}
+              {t('admin.gate', { date: formatGameDate(details.generation_gate) })}
             </div>
           </div>
           <div className="bg-white p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Associations</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.associations')}</div>
             <div className="mt-2 text-lg font-semibold text-slate-900">
               {data?.edition?.active_association_count ?? details.active_associations ?? 0}
             </div>
-            <div className="mt-1 text-xs text-slate-500">Active and eligible</div>
+            <div className="mt-1 text-xs text-slate-500">{t('admin.activeEligible')}</div>
           </div>
           <div className="bg-white p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Final target</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('admin.finalTarget')}</div>
             <div className="mt-2 text-lg font-semibold text-slate-900">
               {data?.edition?.finalist_target ?? 16}
             </div>
             <div className="mt-1 text-xs text-slate-500">
-              Host: {data?.edition?.host_country_code ?? 'Not selected'}
+              {t('common.host')}: {data?.edition?.host_country_code ?? t('common.notSelected')}
             </div>
           </div>
         </div>
@@ -443,7 +445,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
         <div className="border-b border-slate-200 p-4">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-600" />
-            <h3 className="font-semibold text-slate-900">Automatic health checks</h3>
+            <h3 className="font-semibold text-slate-900">{t('admin.automaticHealth')}</h3>
           </div>
         </div>
         <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -473,19 +475,17 @@ export default function AdminNationsOperationsPage(): JSX.Element {
           <div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-emerald-700" />
-              <h3 className="font-semibold text-slate-900">World Nations E2E stress validation</h3>
+              <h3 className="font-semibold text-slate-900">{t('admin.e2e.title')}</h3>
             </div>
             <p className="mt-1 text-sm text-slate-500">
-              Read-only contract test for the full Nations architecture. It validates the qualification pyramid,
-              January election rules, fixed National Team package, masked Overall, scoring balance, lineup rules,
-              complete-field race gates, notifications and automatic maintenance without creating fake live Associations.
+              {t('admin.e2e.description')}
             </p>
           </div>
 
           <div className="flex flex-wrap items-end gap-2">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Stress field
+                {t('admin.e2e.stressField')}
               </span>
               <select
                 value={e2eAssociationCount}
@@ -494,7 +494,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
               >
                 {[25, 40, 48, 50, 64, 100, 128].map(count => (
                   <option key={count} value={count}>
-                    {count} Associations
+                    {t('admin.e2e.associationOption', { count })}
                   </option>
                 ))}
               </select>
@@ -507,7 +507,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
               className="inline-flex items-center gap-2 rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
             >
               {e2eRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
-              Run E2E validation
+              {t('admin.runValidation')}
             </button>
           </div>
         </div>
@@ -527,7 +527,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                     {e2eResult.summary}
                   </div>
                   <div className="mt-1 text-xs text-slate-600">
-                    Field: {e2eResult.association_count_tested} Associations · failures {e2eResult.failures} · warnings {e2eResult.warnings}
+                    {t('admin.e2e.resultSummary', { field: e2eResult.association_count_tested, failures: e2eResult.failures, warnings: e2eResult.warnings })}
                   </div>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-bold ${
@@ -578,7 +578,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
           </div>
         ) : (
           <div className="p-4 text-sm text-slate-500">
-            Default stress case: 48 Associations → 6 preliminary groups → 32 nations → 4 Final Qualification groups → 16-nation World Final.
+            {t('admin.e2e.defaultCase')}
           </div>
         )}
 
@@ -586,17 +586,13 @@ export default function AdminNationsOperationsPage(): JSX.Element {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="max-w-3xl">
               <div className="text-sm font-semibold text-slate-900">
-                Rollback lifecycle fixture
+                {t('admin.fixture.title')}
               </div>
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Runs a synthetic World Nations lifecycle using temporary users, five eligible managers per Association,
-                the real edition generator, schedule, draw, host selector, race-lineup gate, advancement logic,
-                champion/history writes and notification triggers. The entire fixture runs inside a rollback
-                subtransaction and verifies that no synthetic users or Associations remain afterwards.
+                {t('admin.fixture.description')}
               </p>
               <p className="mt-2 text-xs font-medium text-amber-700">
-                Safety rule: the server refuses this fixture once live National Associations or a current-season
-                Nations edition exists. The read-only stress validator above remains available at all times.
+                {t('admin.fixture.safety')}
               </p>
             </div>
 
@@ -607,7 +603,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
               className="inline-flex shrink-0 items-center gap-2 rounded border border-emerald-700 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-50"
             >
               {fixtureRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
-              Run rollback lifecycle fixture
+              {t('admin.fixture.run')}
             </button>
           </div>
 
@@ -625,10 +621,10 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                     {fixtureResult.summary ?? humanize(fixtureResult.reason ?? fixtureResult.status)}
                   </div>
                   <div className="mt-1 text-xs text-slate-600">
-                    Actual fixture field: {fixtureResult.association_count ?? '—'} Associations
-                    {fixtureResult.member_count ? ` · ${fixtureResult.member_count} temporary managers` : ''}
-                    {fixtureResult.round_count ? ` · ${fixtureResult.round_count} rounds` : ''}
-                    {fixtureResult.group_count ? ` · ${fixtureResult.group_count} groups` : ''}
+                    {t('admin.fixture.actualField', { count: fixtureResult.association_count ?? '—' })}
+                    {fixtureResult.member_count ? ` · ${t('admin.fixture.temporaryManagers', { count: fixtureResult.member_count })}` : ''}
+                    {fixtureResult.round_count ? ` · ${t('admin.fixture.rounds', { count: fixtureResult.round_count })}` : ''}
+                    {fixtureResult.group_count ? ` · ${t('admin.fixture.groups', { count: fixtureResult.group_count })}` : ''}
                   </div>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-bold ${
@@ -645,21 +641,21 @@ export default function AdminNationsOperationsPage(): JSX.Element {
               {fixtureResult.status === 'pass' ? (
                 <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded bg-white/70 p-3">
-                    <div className="text-xs text-slate-500">Champion count</div>
+                    <div className="text-xs text-slate-500">{t('admin.stats.championCount')}</div>
                     <div className="mt-1 font-semibold text-slate-900">{fixtureResult.champion_count ?? '—'}</div>
                   </div>
                   <div className="rounded bg-white/70 p-3">
-                    <div className="text-xs text-slate-500">Final history rows</div>
+                    <div className="text-xs text-slate-500">{t('admin.stats.finalHistoryRows')}</div>
                     <div className="mt-1 font-semibold text-slate-900">{fixtureResult.history_rows ?? '—'}</div>
                   </div>
                   <div className="rounded bg-white/70 p-3">
-                    <div className="text-xs text-slate-500">Notifications generated</div>
+                    <div className="text-xs text-slate-500">{t('admin.stats.notificationsGenerated')}</div>
                     <div className="mt-1 font-semibold text-slate-900">
                       {fixtureResult.member_notifications_generated ?? '—'}
                     </div>
                   </div>
                   <div className="rounded bg-white/70 p-3">
-                    <div className="text-xs text-slate-500">Cleanup leaks</div>
+                    <div className="text-xs text-slate-500">{t('admin.stats.cleanupLeaks')}</div>
                     <div className="mt-1 font-semibold text-slate-900">
                       {(fixtureResult.cleanup_check?.leaked_users ?? 0) + (fixtureResult.cleanup_check?.leaked_associations ?? 0)}
                     </div>
@@ -681,16 +677,16 @@ export default function AdminNationsOperationsPage(): JSX.Element {
         <div className="border-b border-slate-200 p-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-sky-700" />
-            <h3 className="font-semibold text-slate-900">National Team checks</h3>
+            <h3 className="font-semibold text-slate-900">{t('admin.teamChecks')}</h3>
           </div>
         </div>
         <div className="grid gap-px bg-slate-200 md:grid-cols-5">
           {[
-            ['Nations squads', data?.team_checks?.nations_squads ?? 0],
-            ['Confirmed squads', data?.team_checks?.confirmed_squads ?? 0],
-            ['Invalid squads', data?.team_checks?.invalid_squads ?? 0],
-            ['Confirmed lineups', data?.team_checks?.confirmed_lineups ?? 0],
-            ['Invalid lineups', data?.team_checks?.invalid_lineups ?? 0],
+            [t('admin.team.nationsSquads'), data?.team_checks?.nations_squads ?? 0],
+            [t('admin.team.confirmedSquads'), data?.team_checks?.confirmed_squads ?? 0],
+            [t('admin.team.invalidSquads'), data?.team_checks?.invalid_squads ?? 0],
+            [t('admin.team.confirmedLineups'), data?.team_checks?.confirmed_lineups ?? 0],
+            [t('admin.team.invalidLineups'), data?.team_checks?.invalid_lineups ?? 0],
           ].map(([label, value]) => (
             <div key={String(label)} className="bg-white p-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -722,7 +718,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                   <h3 className="font-semibold text-slate-900">{round.round_label}</h3>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
-                  {round.entrants_target} entrants · {round.advance_target} advance · {formatGameDate(round.starts_on)}–{formatGameDate(round.ends_on)}
+                  {t('admin.roundSummary', { entrants: round.entrants_target, advance: round.advance_target, start: formatGameDate(round.starts_on), end: formatGameDate(round.ends_on) })}
                 </p>
               </div>
               <span className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-semibold ${statusClass(round.status)}`}>
@@ -738,7 +734,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                     <div>
                       <div className="font-semibold text-slate-900">{group.group_label}</div>
                       <div className="mt-0.5 text-xs text-slate-500">
-                        Entries {group.entry_count}/{group.planned_entrant_count} · scored {group.scored_entry_count} · advance {group.planned_advance_count}
+                        {t('admin.groupSummary', { entries: group.entry_count, planned: group.planned_entrant_count, scored: group.scored_entry_count, advance: group.planned_advance_count })}
                       </div>
                     </div>
                     <span className={`rounded border px-2 py-1 text-[11px] font-semibold ${statusClass(group.status)}`}>
@@ -748,7 +744,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
 
                   {group.overdue_event_count > 0 ? (
                     <div className="border-t border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-                      {group.overdue_event_count} overdue event(s)
+                      {t('admin.overdueEventsCount', { count: group.overdue_event_count })}
                     </div>
                   ) : null}
 
@@ -757,7 +753,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                       <div key={event.event_id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 text-sm">
                         <div>
                           <div className="font-medium text-slate-900">
-                            Day {event.race_day} · {humanize(event.race_type)}
+                            {t('common.dayRace', { day: event.race_day, race: t(`raceTypes.${event.race_type}`, { defaultValue: humanize(event.race_type) }) })}
                           </div>
                           <div className="mt-0.5 text-xs text-slate-500">
                             {formatGameDate(event.event_date)}
@@ -772,7 +768,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                               to={`/dashboard/races/${event.race_id}`}
                               className="inline-flex items-center gap-1 text-xs font-semibold text-yellow-700 hover:underline"
                             >
-                              Race
+                              {t('common.race')}
                               <ExternalLink className="h-3 w-3" />
                             </Link>
                           ) : null}
@@ -788,7 +784,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
 
         {(data?.rounds ?? []).length === 0 ? (
           <div className="rounded border border-slate-200 bg-white p-5 text-sm text-slate-500 shadow">
-            No World Nations rounds have been generated for the current season yet.
+            {t('admin.noRounds')}
           </div>
         ) : null}
       </section>
