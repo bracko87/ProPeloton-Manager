@@ -93,6 +93,25 @@ type PointsCurveRow = {
   version: number
 }
 
+type EventScheduleRow = {
+  round_id: string
+  round_index: number
+  round_type: string
+  round_label: string
+  group_id: string
+  group_number: number
+  group_label: string
+  event_id: string
+  race_day: number
+  race_type: string
+  cycle_key: string
+  event_date?: string | null
+  race_id?: string | null
+  stage_id?: string | null
+  source_stage_id?: string | null
+  status: string
+}
+
 type HistoryRow = {
   season_number: number
   association_id?: string | null
@@ -211,9 +230,11 @@ function CountryLabel({
 function RoundCard({
   round,
   viewerAssociationId,
+  scheduleRows,
 }: {
   round: NationsRound
   viewerAssociationId?: string | null
+  scheduleRows: EventScheduleRow[]
 }): JSX.Element {
   return (
     <section className="rounded bg-white shadow">
@@ -244,6 +265,8 @@ function RoundCard({
               ),
           )
 
+          const groupEvents = scheduleRows.filter(event => event.group_id === group.id)
+
           return (
           <div key={group.id} className="overflow-hidden rounded border border-slate-200">
             <div className="flex items-center justify-between gap-3 bg-slate-50 px-3 py-2.5">
@@ -267,6 +290,34 @@ function RoundCard({
                 </span>
               </div>
             </div>
+
+            {groupEvents.length > 0 ? (
+              <div className="grid gap-px border-t border-slate-200 bg-slate-200 sm:grid-cols-3">
+                {groupEvents.map(event => (
+                  <div key={event.event_id} className="bg-white px-3 py-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                      Day {event.race_day} · {humanize(event.race_type)}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-slate-900">
+                      {formatGameDate(event.event_date)}
+                    </div>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses(event.status)}`}>
+                        {humanize(event.status)}
+                      </span>
+                      {event.race_id ? (
+                        <Link
+                          to={`/dashboard/races/${event.race_id}`}
+                          className="text-[11px] font-semibold text-yellow-700 hover:underline"
+                        >
+                          Open race
+                        </Link>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
 
             {group.entries?.length ? (
               <div className="overflow-x-auto">
@@ -325,6 +376,7 @@ export default function WorldNationsPage(): JSX.Element {
   const [message, setMessage] = useState<string | null>(null)
   const [hostStatement, setHostStatement] = useState('')
   const [hostSaving, setHostSaving] = useState(false)
+  const [scheduleRows, setScheduleRows] = useState<EventScheduleRow[]>([])
 
   const load = async (): Promise<void> => {
     try {
@@ -335,7 +387,20 @@ export default function WorldNationsPage(): JSX.Element {
         { p_season_number: null },
       )
       if (rpcError) throw rpcError
-      setData((response ?? null) as Overview | null)
+
+      const next = (response ?? null) as Overview | null
+      setData(next)
+
+      if (next?.edition?.id) {
+        const { data: eventSchedule, error: eventScheduleError } = await supabase.rpc(
+          'get_nations_competition_event_schedule_v1',
+          { p_edition_id: next.edition.id },
+        )
+        if (eventScheduleError) throw eventScheduleError
+        setScheduleRows((eventSchedule ?? []) as EventScheduleRow[])
+      } else {
+        setScheduleRows([])
+      }
     } catch (caught: any) {
       setError(caught?.message ?? 'Unable to load World Nations Championship.')
     } finally {
@@ -531,6 +596,7 @@ export default function WorldNationsPage(): JSX.Element {
           key={round.id}
           round={round}
           viewerAssociationId={data?.viewer?.association_id}
+          scheduleRows={scheduleRows}
         />
       ))}
 
