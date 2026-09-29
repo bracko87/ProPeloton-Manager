@@ -1185,5 +1185,97 @@
       "message": "{{rider}} gewann das große Finale der Straßen-Weltmeisterschaft. Dieser prestigeträchtige Titel ist jetzt Teil der Karriere-Ehrungen.",
       "extra": "Das Weltmeister-Abzeichen ist in dieser Saison aktiv und bleibt dauerhaft in der Karrierehistorie."
     }
+  },
+  "nationalSystem": {
+    "common": {
+      "association": "Nationalverband",
+      "electedCoach": "der gewählte Nationaltrainer",
+      "competitionRound": "Wettbewerbsrunde",
+      "group": "Gruppe"
+    },
+    "labels": {
+      "association": "Verband",
+      "electionRound": "Wahlrunde",
+      "competitionRound": "Wettbewerbsrunde",
+      "group": "Gruppe",
+      "advance": "Weiterkommen",
+      "points": "Punkte",
+      "squadSize": "Kadergröße"
+    },
+    "actions": {
+      "openAssociation": "Nationalverband öffnen",
+      "openWorldNations": "World Nations öffnen",
+      "manageNationalTeam": "Nationalteam verwalten"
+    },
+    "associationActivated": {
+      "title": "Nationalverband von {{country}} aktiviert",
+      "message": "Der {{association}} ist jetzt aktiv. Mitglieder können an der Nationaltrainerwahl und an der World Nations Championship teilnehmen.",
+      "extra": "Es gibt keine Verbandskasse. Reisen, Ausrüstung und Betriebskosten des Nationalteams werden vom System übernommen."
+    },
+    "electionOpen": {
+      "title": "Kandidatur für den Nationaltrainer ist geöffnet",
+      "message": "Berechtigte Mitglieder können ihre Kandidatur bis {{deadline}} einreichen.",
+      "extra": "Die jährliche Wahl beginnt im Januar. Jedes berechtigte Mitglied hat eine Stimme."
+    },
+    "votingOpen": {
+      "title": "Abstimmung zum Nationaltrainer ist geöffnet",
+      "message": "Runde {{round}} der Nationaltrainerwahl läuft bis {{deadline}}. Jedes berechtigte Mitglied hat in dieser Runde eine endgültige Stimme.",
+      "extra": "Zusätzliche Mittel geben keine zusätzlichen Stimmen: pro Runde gilt genau eine Stimme je berechtigtem Mitglied."
+    },
+    "runoffOpen": {
+      "title": "Stichwahl zum Nationaltrainer ist geöffnet",
+      "message": "Es gab keinen eindeutigen Sieger. Stichwahlrunde {{round}} läuft bis {{deadline}}, mit einer neuen Stimme je berechtigtem Mitglied.",
+      "extra": "Bei erneutem Gleichstand wird eine weitere siebentägige Stichwahl eröffnet, bis ein eindeutiger Sieger feststeht."
+    },
+    "coachElected": {
+      "title": "Nationaltrainer gewählt",
+      "message": "{{winner}} wurde für Saison {{season}} zum Nationaltrainer gewählt.",
+      "extra": "Der Nationaltrainer steuert Einberufungen, den 10-Fahrer-Kader und die Aufstellungen an den Renntagen."
+    },
+    "callupReceived": {
+      "title": "{{rider}} für das Nationalteam einberufen",
+      "message": "Der {{association}} hat {{rider}} einberufen. Bis {{deadline}} annehmen oder ablehnen.",
+      "extra": "Eine angenommene Einberufung kann den Fahrer während des bestätigten Wettbewerbsfensters in den Nationaldienst versetzen."
+    },
+    "callupResponse": {
+      "title": "Einberufung von {{rider}}: {{status}}",
+      "message": "Die Nationalteam-Einberufung von {{rider}} hat jetzt den Status {{status}}.",
+      "extra": "Der Nationaltrainer kann den aktualisierten vorläufigen Kader auf der Verbandsseite prüfen."
+    },
+    "squadConfirmed": {
+      "title": "Nationalteam-Kader bestätigt",
+      "message": "Der endgültige Nationalteam-Kader mit {{squadSize}} Fahrern wurde bestätigt.",
+      "extra": "Alle ausgewählten Fahrer befinden sich im geplanten Wettbewerbsfenster im Nationaldienst, einschließlich der Reserven."
+    },
+    "qualificationDraw": {
+      "title": "Auslosung {{roundLabel}} bestätigt",
+      "message": "{{country}} wurde in {{group}} gelost. {{advanceCount}} Nation(en) kommen aus dieser Gruppe weiter.",
+      "extra": "Öffne World Nations für die komplette Gruppe, den Zeitplan und den Qualifikationsweg."
+    },
+    "advanced": {
+      "title": "In der World Nations Championship weiter",
+      "message": "{{country}} ist mit {{points}} Punkten aus {{roundLabel}} weitergekommen.",
+      "extra": "Die nächste Runde wird nach Abschluss der vorherigen Runde automatisch ausgelost."
+    },
+    "eliminated": {
+      "title": "World-Nations-Lauf beendet",
+      "message": "{{country}} ist in {{roundLabel}} ausgeschieden.",
+      "extra": "Der Verband bleibt aktiv und kann sich in der nächsten Saison wieder über das normale Qualifikationssystem qualifizieren."
+    },
+    "worldFinalQualified": {
+      "title": "Für das World Nations Final qualifiziert",
+      "message": "{{country}} hat sich für das World Nations Final qualifiziert.",
+      "extra": "Das Finale besteht aus drei Renntagen: TTT, Flachrennen und Hügel/Berg."
+    },
+    "hostSelected": {
+      "title": "Gastgeber des World Nations Final gewählt",
+      "message": "{{country}} richtet in dieser Saison das World Nations Final aus.",
+      "extra": "Die Gastgeberrolle bringt nur Prestige und Präsentation, aber keinen sportlichen Vorteil."
+    },
+    "champion": {
+      "title": "World Nations Champion",
+      "message": "{{country}} hat die World Nations Championship gewonnen.",
+      "extra": "Der Titel wird dauerhaft in der World-Nations-Historie gespeichert."
+    }
   }
 }
