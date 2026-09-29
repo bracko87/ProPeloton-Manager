@@ -330,5 +330,88 @@
       "completed": "Conclusa",
       "cancelled": "Annullata"
     }
+  },
+  "nationalTeamPage": {
+    "loading": "Caricamento Nazionale…",
+    "eyebrow": "Nazionale",
+    "title": "Nazionale {{country}}",
+    "titleFallback": "Nazionale",
+    "description": "Area di lavoro del Commissario Tecnico per convocazioni, rosa finale di 10 corridori e attrezzatura standardizzata della nazionale.",
+    "refresh": "Aggiorna",
+    "errors": {
+      "load": "Impossibile caricare la Nazionale.",
+      "action": "Impossibile completare l'azione."
+    },
+    "cards": {
+      "coach": "Commissario Tecnico",
+      "callups": "Convocazioni provvisorie",
+      "accepted": "{{count}} accettate",
+      "squad": "Rosa finale",
+      "notConfirmed": "Non confermata"
+    },
+    "clubCallups": {
+      "title": "Convocazioni in Nazionale",
+      "description": "Il tuo club deve accettare o rifiutare le convocazioni ufficiali prima della scadenza.",
+      "deadline": "Decisione entro {{date}}",
+      "accept": "Accetta",
+      "decline": "Rifiuta"
+    },
+    "callupStatus": {
+      "pending": "In attesa del club",
+      "accepted": "Accettata",
+      "auto_accepted": "Accettata automaticamente",
+      "declined": "Rifiutata",
+      "withdrawn": "Ritirata",
+      "not_selected": "Non selezionato",
+      "expired": "Scaduta"
+    },
+    "riders": {
+      "title": "Corridori nazionali idonei",
+      "description": "Il CT vede Ranking Nazionale, disponibilità e un intervallo Overall volutamente approssimativo. Abilità nascoste esatte e potenziale restano privati.",
+      "maskedOverall": "Overall approssimativo",
+      "rank": "Pos.",
+      "rider": "Corridore",
+      "club": "Club",
+      "overall": "Overall",
+      "form": "Forma",
+      "fatigue": "Fatica",
+      "nc": "Campionato Nazionale",
+      "callup": "Convocazione",
+      "freeAgent": "Svincolato",
+      "champion": "Campione Nazionale",
+      "finalRank": "Finale #{{rank}}",
+      "sendCallup": "Convoca"
+    },
+    "squad": {
+      "title": "Rosa finale di 10 corridori",
+      "description": "Seleziona esattamente 10 corridori tra le convocazioni accettate. Le formazioni da 7 per le gare saranno scelte successivamente da questa rosa.",
+      "noAccepted": "Non ci sono ancora convocazioni accettate.",
+      "confirm": "Conferma rosa di 10"
+    },
+    "squadStatus": {
+      "draft": "Bozza",
+      "confirmed": "Confermata",
+      "on_duty": "Impegno nazionale",
+      "completed": "Completata",
+      "cancelled": "Annullata"
+    },
+    "package": {
+      "title": "Pacchetto standard della Nazionale",
+      "description": "Ogni paese riceve lo stesso pacchetto finanziato dal sistema. Non può essere acquistato, migliorato o sostituito con attrezzatura del club.",
+      "equipment": "Modelli di attrezzatura",
+      "assets": "Mezzi di gara",
+      "supplies": "Rifornimenti gara",
+      "level": "Livello {{level}}"
+    },
+    "notCoach": {
+      "title": "Controlli del CT bloccati",
+      "body": "Solo il Commissario Tecnico eletto o l'attuale interim può selezionare i corridori e gestire la rosa. I manager dei club possono comunque rispondere sopra alle convocazioni dei propri corridori."
+    },
+    "messages": {
+      "callupSent": "Convocazione inviata a {{rider}}.",
+      "callupAccepted": "{{rider}} è stato autorizzato per la selezione nazionale.",
+      "callupDeclined": "{{rider}} resterà con il club.",
+      "squadConfirmed": "La rosa di 10 corridori della Nazionale è confermata."
+    }
   }
 }
