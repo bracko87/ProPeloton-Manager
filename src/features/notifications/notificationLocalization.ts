@@ -215,6 +215,109 @@ function championshipExtraText(item: NotificationItem): string | null {
   return value && value !== translationKey ? value : null
 }
 
+
+const NATIONAL_SYSTEM_NOTIFICATION_KEY_BY_CODE: Record<string, string> = {
+  NATIONAL_ASSOCIATION_ACTIVATED: 'associationActivated',
+  NATIONAL_COACH_ELECTION_OPEN: 'electionOpen',
+  NATIONAL_COACH_VOTING_OPEN: 'votingOpen',
+  NATIONAL_COACH_RUNOFF_OPEN: 'runoffOpen',
+  NATIONAL_COACH_ELECTED: 'coachElected',
+  NATIONAL_TEAM_CALLUP_RECEIVED: 'callupReceived',
+  NATIONAL_TEAM_CALLUP_RESPONSE: 'callupResponse',
+  NATIONAL_TEAM_SQUAD_CONFIRMED: 'squadConfirmed',
+  NATIONS_QUALIFICATION_DRAW: 'qualificationDraw',
+  NATIONS_ADVANCED: 'advanced',
+  NATIONS_ELIMINATED: 'eliminated',
+  NATIONS_WORLD_FINAL_QUALIFIED: 'worldFinalQualified',
+  NATIONS_HOST_SELECTED: 'hostSelected',
+  NATIONS_CHAMPION: 'champion',
+}
+
+function isNationalSystemNotificationType(typeCode: string | null | undefined): boolean {
+  return Boolean(
+    NATIONAL_SYSTEM_NOTIFICATION_KEY_BY_CODE[String(typeCode ?? '').toUpperCase()]
+  )
+}
+
+function nationalSystemParams(item: NotificationItem): Record<string, unknown> {
+  const payload = payloadOf(item)
+  const statusRaw = readString(payload, ['status']) ?? ''
+  const status = statusRaw ? localizeNotificationValue(statusRaw) : ''
+  const countryCode =
+    readString(payload, [
+      'country_code',
+      'host_country_code',
+      'champion_country_code',
+    ]) ?? ''
+  const country = countryCode
+    ? championshipCountry({ country_code: countryCode })
+    : nt('championship.common.countryFallback')
+
+  return {
+    association:
+      readString(payload, ['association_name']) ||
+      nt('nationalSystem.common.association'),
+    rider:
+      readString(payload, ['rider_name', 'rider_full_name']) ||
+      nt('common.rider'),
+    winner:
+      readString(payload, ['winner_name', 'winner_club_name']) ||
+      nt('nationalSystem.common.electedCoach'),
+    country,
+    countryCode: countryCode.toUpperCase(),
+    season: readNumber(payload, ['season_number', 'season']) ?? '—',
+    round: readNumber(payload, ['round_number']) ?? '—',
+    roundLabel:
+      readString(payload, ['round_label']) ||
+      nt('nationalSystem.common.competitionRound'),
+    group:
+      readString(payload, ['group_label']) ||
+      nt('nationalSystem.common.group'),
+    advanceCount: readNumber(payload, ['advance_count']) ?? '—',
+    rank: readNumber(payload, ['final_group_rank']) ?? '—',
+    points: readNumber(payload, ['total_points']) ?? '—',
+    squadSize: readNumber(payload, ['squad_size']) ?? 10,
+    status,
+    deadline: championshipShortDate(
+      readString(payload, [
+        'response_deadline',
+        'registration_close_date',
+        'round_close_date',
+      ])
+    ),
+  }
+}
+
+function localizeNationalSystemNotificationItem(
+  item: NotificationItem
+): NotificationItem | null {
+  if (!shouldLocalizeNotifications()) return null
+
+  const code = String(item.type_code ?? '').toUpperCase()
+  const key = NATIONAL_SYSTEM_NOTIFICATION_KEY_BY_CODE[code]
+  if (!key) return null
+
+  const params = nationalSystemParams(item)
+  return {
+    ...item,
+    title: nt(`nationalSystem.${key}.title`, params),
+    message: nt(`nationalSystem.${key}.message`, params),
+  }
+}
+
+function nationalSystemExtraText(item: NotificationItem): string | null {
+  const code = String(item.type_code ?? '').toUpperCase()
+  const key = NATIONAL_SYSTEM_NOTIFICATION_KEY_BY_CODE[code]
+  if (!key || !shouldLocalizeNotifications()) return null
+
+  const translationKey = `nationalSystem.${key}.extra`
+  const value = nt(translationKey, {
+    ...nationalSystemParams(item),
+    defaultValue: '',
+  })
+  return value && value !== translationKey ? value : null
+}
+
 function normalizePhrase(value: string): string {
   return value
     .trim()
@@ -974,6 +1077,9 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
   const championshipItem = localizeChampionshipNotificationItem(item)
   if (championshipItem) return championshipItem
 
+  const nationalSystemItem = localizeNationalSystemNotificationItem(item)
+  if (nationalSystemItem) return nationalSystemItem
+
   const feedCopy = localizeNotificationFeedCopy(item.title, item.message, { genericFallback: false })
 
   if (typeCode === 'STAFF_HIRED') {
@@ -1113,6 +1219,20 @@ export function localizeNotificationNarrative(
     }
   }
 
+  if (item && isNationalSystemNotificationType(typeCode)) {
+    const localizedItem = localizeNationalSystemNotificationItem(item)
+    if (localizedItem) {
+      const rawTitle = String(item.title ?? '').trim()
+      const rawMessage = String(item.message ?? '').trim()
+
+      if (value === rawTitle) return localizedItem.title
+      if (value === rawMessage) return localizedItem.message
+
+      const extra = nationalSystemExtraText(item)
+      if (extra && looksEnglish(value)) return extra
+    }
+  }
+
   const resourceLocalized =
     localizeExistingGamePhrase(value) || localizeExistingGameTemplate(value)
   if (resourceLocalized) return resourceLocalized
@@ -1208,6 +1328,13 @@ const DETAIL_LABEL_KEYS: Record<string, string> = {
   'final deadline': 'championship.labels.finalDeadline',
   'race date': 'championship.labels.raceDate',
   'result': 'championship.labels.result',
+  'association': 'nationalSystem.labels.association',
+  'election round': 'nationalSystem.labels.electionRound',
+  'competition round': 'nationalSystem.labels.competitionRound',
+  'group': 'nationalSystem.labels.group',
+  'advance': 'nationalSystem.labels.advance',
+  'points': 'nationalSystem.labels.points',
+  'squad size': 'nationalSystem.labels.squadSize',
 }
 
 export function localizeNotificationDetailLabel(
@@ -1517,6 +1644,10 @@ const ACTION_KEY_BY_LABEL: Record<string, string> = {
   'confirm world championship': 'championship.actions.confirmWorld',
   'open world championship results': 'championship.actions.openWorldResults',
   'open world championship': 'championship.actions.openWorldChampionship',
+  'open national association': 'nationalSystem.actions.openAssociation',
+  'open world nations': 'nationalSystem.actions.openWorldNations',
+  'open world nations championship': 'nationalSystem.actions.openWorldNations',
+  'manage national team': 'nationalSystem.actions.manageNationalTeam',
   'open equipment': 'details.openEquipment',
   'open infrastructure': 'details.openInfrastructure',
   'open finance': 'details.openFinance',
