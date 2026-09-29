@@ -248,5 +248,87 @@
     "finished": "Race finished",
     "ready": "Race ready",
     "planned": "Planned"
+  },
+  "associationPage": {
+    "loading": "Loading National Association…",
+    "eyebrow": "National Association",
+    "title": "{{country}} National Association",
+    "description": "Build your country's user-run National Association, elect the National Coach and prepare the national-team structure. There is no Association treasury: travel, staff support, vehicles, equipment and race supplies are covered by the game.",
+    "refresh": "Refresh",
+    "errors": {
+      "load": "Failed to load National Association.",
+      "action": "The action could not be completed."
+    },
+    "notEligible": {
+      "title": "Not eligible for this Association",
+      "body": "You need an active human-controlled main club to participate in a National Association."
+    },
+    "join": {
+      "noAssociationTitle": "Create your National Association",
+      "noAssociationBody": "Your country does not have an Association yet. At least {{count}} eligible club managers must support it before it becomes active.",
+      "createSupport": "Create / support Association",
+      "joined": "You are now supporting your National Association.",
+      "existingTitle": "Join your National Association",
+      "existingBody": "An Association already exists for your country. Join it to vote, stand for National Coach and participate in the national-team system.",
+      "join": "Join Association"
+    },
+    "cards": {
+      "status": "Association status",
+      "members": "Eligible members",
+      "coach": "National Coach",
+      "noCoach": "No coach elected",
+      "operations": "Operations",
+      "covered": "Fully covered",
+      "coveredHelp": "No treasury or club spending. National-team operating costs are system-funded."
+    },
+    "status": {
+      "forming": "Forming",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "coachKind": {
+      "elected": "Elected National Coach",
+      "caretaker": "Caretaker until the election finishes",
+      "replacement": "Replacement National Coach"
+    },
+    "forming": {
+      "title": "Association is forming",
+      "body": "{{count}} more eligible manager(s) are needed before this Association activates.",
+      "ready": "Activation requirements are met."
+    },
+    "election": {
+      "title": "National Coach election",
+      "oneVote": "One eligible Association member = one vote. Votes are secret and final for each round.",
+      "notOpen": "No coach election is currently open.",
+      "registration": "Candidate registration",
+      "round": "Current round",
+      "currentWindow": "Voting window",
+      "yourCandidacy": "Your candidacy",
+      "standForCoach": "Stand for National Coach",
+      "manifesto": "Manifesto",
+      "manifestoPlaceholder": "Explain your national-team approach, rider selection principles and goals…",
+      "candidacySaved": "Your National Coach candidacy has been saved.",
+      "candidacyWithdrawn": "Your candidacy has been withdrawn.",
+      "updateCandidacy": "Update candidacy",
+      "registerCandidacy": "Submit candidacy",
+      "withdraw": "Withdraw candidacy",
+      "candidates": "Candidates",
+      "secretBallot": "Live vote totals are hidden",
+      "noCandidates": "No candidates are currently available in this round.",
+      "unknownClub": "Unknown club",
+      "you": "You",
+      "vote": "Vote",
+      "voted": "Vote submitted",
+      "voteSaved": "Your vote has been submitted and cannot be changed.",
+      "completed": "Election completed",
+      "winnerConfirmed": "National Coach confirmed."
+    },
+    "electionStatus": {
+      "candidate_registration": "Candidate registration",
+      "voting": "First-round voting",
+      "runoff": "Runoff",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
   }
 }
