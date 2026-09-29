@@ -41,7 +41,8 @@
     "transfers": "Kupovina, prodaja i pregovori",
     "statistics": "Učinak i analitika",
     "premiumCenter": "Napredno planiranje, simulacije i automatizacija",
-    "nationalAssociation": "Savez, izbor izbornika i reprezentacija"
+    "nationalAssociation": "Savez, izbor izbornika i reprezentacija",
+    "nationalTeam": "Pozivi, sastav i oprema reprezentacije"
   },
   "header": {
     "toggleSidebar": "Prikaži ili sakrij bočnu navigaciju",
@@ -157,5 +158,6 @@
     "unlock": "Otključaj uz Premium"
   },
   "premiumCenter": "Premium centar",
-  "nationalAssociation": "Nacionalni savez"
+  "nationalAssociation": "Nacionalni savez",
+  "nationalTeam": "Reprezentacija"
 }
