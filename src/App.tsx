@@ -542,6 +542,11 @@ export default function App(): JSX.Element {
             />
 
             <Route
+              path="nations-competition"
+              element={<WorldNationsPage />}
+            />
+
+            <Route
               path="national-championships/:editionId/final"
               element={<NationalChampionshipRacePage />}
             />
