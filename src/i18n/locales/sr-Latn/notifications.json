@@ -1188,5 +1188,97 @@
       "message": "{{rider}} je osvojio Veliko finale Svetskog prvenstva u drumskoj vožnji. Ova prestižna titula je sada deo istorije karijere vozača.",
       "extra": "Značka svetskog drumskog prvaka aktivna je ove sezone i trajno ostaje u istoriji karijere."
     }
+  },
+  "nationalSystem": {
+    "common": {
+      "association": "Nacionalni savez",
+      "electedCoach": "izabrani nacionalni selektor",
+      "competitionRound": "Runda takmičenja",
+      "group": "Grupa"
+    },
+    "labels": {
+      "association": "Savez",
+      "electionRound": "Izborna runda",
+      "competitionRound": "Runda takmičenja",
+      "group": "Grupa",
+      "advance": "Prolazi",
+      "points": "Poeni",
+      "squadSize": "Veličina sastava"
+    },
+    "actions": {
+      "openAssociation": "Otvori Nacionalni savez",
+      "openWorldNations": "Otvori World Nations",
+      "manageNationalTeam": "Upravljaj reprezentacijom"
+    },
+    "associationActivated": {
+      "title": "Nacionalni savez države {{country}} je aktiviran",
+      "message": "{{association}} je sada aktivan. Članovi mogu učestvovati u izboru nacionalnog selektora i World Nations Championshipu.",
+      "extra": "Savez nema trezor. Sistem pokriva putovanja, opremu i operativne troškove reprezentacije."
+    },
+    "electionOpen": {
+      "title": "Otvorene kandidature za nacionalnog selektora",
+      "message": "Članovi koji ispunjavaju uslove mogu podneti kandidaturu do {{deadline}}.",
+      "extra": "Godišnji izbor počinje u januaru. Svaki član koji ispunjava uslove ima jedan glas."
+    },
+    "votingOpen": {
+      "title": "Otvoreno glasanje za nacionalnog selektora",
+      "message": "Runda {{round}} otvorena je do {{deadline}}. Svaki član ima jedan konačan glas u ovoj rundi.",
+      "extra": "Dodatna sredstva ne donose dodatne glasove: jedan član ima tačno jedan glas po rundi."
+    },
+    "runoffOpen": {
+      "title": "Otvoren drugi krug izbora",
+      "message": "Nije dobijen jedinstven pobednik. Runda {{round}} otvorena je do {{deadline}}, uz jedan novi glas po članu.",
+      "extra": "Ako ponovo bude nerešeno, otvara se nova sedmodnevna runda dok se ne dobije jedinstven pobednik."
+    },
+    "coachElected": {
+      "title": "Nacionalni selektor je izabran",
+      "message": "{{winner}} je izabran za nacionalnog selektora u Sezoni {{season}}.",
+      "extra": "Selektor upravlja pozivima, sastavom od 10 vozača i postavama za svaki trkački dan."
+    },
+    "callupReceived": {
+      "title": "{{rider}} je pozvan u reprezentaciju",
+      "message": "{{association}} je pozvao {{rider}}. Prihvati ili odbij do {{deadline}}.",
+      "extra": "Prihvaćen poziv može staviti vozača na nacionalnu dužnost tokom potvrđenog perioda takmičenja."
+    },
+    "callupResponse": {
+      "title": "Poziv za {{rider}}: {{status}}",
+      "message": "Poziv vozača {{rider}} u reprezentaciju sada ima status {{status}}.",
+      "extra": "Selektor može proveriti ažurirani privremeni sastav na stranici Nacionalnog saveza."
+    },
+    "squadConfirmed": {
+      "title": "Sastav reprezentacije je potvrđen",
+      "message": "Potvrđen je konačni sastav od {{squadSize}} vozača.",
+      "extra": "Svi izabrani vozači ulaze u nacionalnu dužnost tokom perioda takmičenja, uključujući rezerve."
+    },
+    "qualificationDraw": {
+      "title": "Žreb za {{roundLabel}} je potvrđen",
+      "message": "{{country}} je izvučena u {{group}}. {{advanceCount}} reprezentacija prolazi iz ove grupe.",
+      "extra": "Otvori World Nations za kompletnu grupu, raspored i put kroz kvalifikacije."
+    },
+    "advanced": {
+      "title": "Prolaz u World Nations Championshipu",
+      "message": "{{country}} je prošla iz {{roundLabel}} sa {{points}} poena.",
+      "extra": "Žreb sledeće runde kreira se automatski po završetku prethodne runde."
+    },
+    "eliminated": {
+      "title": "Nastup u World Nations Championshipu je završen",
+      "message": "{{country}} je eliminisana u {{roundLabel}}.",
+      "extra": "Savez ostaje aktivan i naredne sezone može ponovo kroz redovan sistem kvalifikacija."
+    },
+    "worldFinalQualified": {
+      "title": "Kvalifikacija za World Nations finale",
+      "message": "{{country}} se kvalifikovala za World Nations finale.",
+      "extra": "Finale traje tri dana: ekipni hronometar, ravna trka i brdsko/planinska trka."
+    },
+    "hostSelected": {
+      "title": "Domaćin World Nations finala je izabran",
+      "message": "{{country}} će biti domaćin World Nations finala ove sezone.",
+      "extra": "Domaćinstvo donosi samo prestiž i prezentaciju, bez sportske prednosti."
+    },
+    "champion": {
+      "title": "World Nations šampion",
+      "message": "{{country}} je osvojila World Nations Championship.",
+      "extra": "Titula se trajno čuva u istoriji World Nations."
+    }
   }
 }
