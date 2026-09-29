@@ -248,5 +248,87 @@
     "finished": "Gara conclusa",
     "ready": "Gara pronta",
     "planned": "Pianificata"
+  },
+  "associationPage": {
+    "loading": "Caricamento Associazione Nazionale…",
+    "eyebrow": "Associazione Nazionale",
+    "title": "Associazione Nazionale {{country}}",
+    "description": "Costruisci l'Associazione Nazionale del tuo paese gestita dagli utenti, eleggi il Commissario Tecnico e prepara la nazionale. Non esiste una tesoreria: viaggi, supporto, veicoli, attrezzatura e rifornimenti sono coperti dal gioco.",
+    "refresh": "Aggiorna",
+    "errors": {
+      "load": "Impossibile caricare l'Associazione Nazionale.",
+      "action": "Impossibile completare l'azione."
+    },
+    "notEligible": {
+      "title": "Non idoneo",
+      "body": "Per partecipare serve un club principale attivo controllato da un giocatore."
+    },
+    "join": {
+      "noAssociationTitle": "Crea l'Associazione Nazionale",
+      "noAssociationBody": "Il tuo paese non ha ancora un'associazione. Almeno {{count}} manager idonei devono sostenerla prima dell'attivazione.",
+      "createSupport": "Crea / sostieni associazione",
+      "joined": "Ora sostieni la tua Associazione Nazionale.",
+      "existingTitle": "Unisciti all'Associazione Nazionale",
+      "existingBody": "Esiste già un'associazione per il tuo paese. Unisciti per votare, candidarti come CT e partecipare al sistema della nazionale.",
+      "join": "Unisciti all'associazione"
+    },
+    "cards": {
+      "status": "Stato associazione",
+      "members": "Membri idonei",
+      "coach": "Commissario Tecnico",
+      "noCoach": "Nessun CT eletto",
+      "operations": "Operazioni",
+      "covered": "Tutto coperto",
+      "coveredHelp": "Nessuna tesoreria o spesa del club. I costi della nazionale sono coperti dal sistema."
+    },
+    "status": {
+      "forming": "In formazione",
+      "active": "Attiva",
+      "inactive": "Inattiva"
+    },
+    "coachKind": {
+      "elected": "CT eletto",
+      "caretaker": "Interim fino alla fine delle elezioni",
+      "replacement": "CT sostitutivo"
+    },
+    "forming": {
+      "title": "Associazione in formazione",
+      "body": "Servono ancora {{count}} manager idonei prima dell'attivazione.",
+      "ready": "I requisiti di attivazione sono soddisfatti."
+    },
+    "election": {
+      "title": "Elezione del Commissario Tecnico",
+      "oneVote": "Un membro idoneo = un voto. I voti sono segreti e definitivi per ogni turno.",
+      "notOpen": "Al momento non ci sono elezioni aperte.",
+      "registration": "Registrazione candidati",
+      "round": "Turno attuale",
+      "currentWindow": "Finestra di voto",
+      "yourCandidacy": "La tua candidatura",
+      "standForCoach": "Candidati come CT",
+      "manifesto": "Programma",
+      "manifestoPlaceholder": "Descrivi approccio alla nazionale, criteri di selezione e obiettivi…",
+      "candidacySaved": "La tua candidatura è stata salvata.",
+      "candidacyWithdrawn": "La tua candidatura è stata ritirata.",
+      "updateCandidacy": "Aggiorna candidatura",
+      "registerCandidacy": "Invia candidatura",
+      "withdraw": "Ritira candidatura",
+      "candidates": "Candidati",
+      "secretBallot": "I risultati live sono nascosti",
+      "noCandidates": "Nessun candidato disponibile in questo turno.",
+      "unknownClub": "Club sconosciuto",
+      "you": "Tu",
+      "vote": "Vota",
+      "voted": "Voto inviato",
+      "voteSaved": "Il tuo voto è stato inviato e non può essere modificato.",
+      "completed": "Elezione conclusa",
+      "winnerConfirmed": "Commissario Tecnico confermato."
+    },
+    "electionStatus": {
+      "candidate_registration": "Registrazione candidati",
+      "voting": "Primo turno",
+      "runoff": "Ballottaggio",
+      "completed": "Conclusa",
+      "cancelled": "Annullata"
+    }
   }
 }
