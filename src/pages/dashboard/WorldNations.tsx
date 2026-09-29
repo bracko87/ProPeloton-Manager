@@ -13,6 +13,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 
 type QualificationRound = {
@@ -177,7 +178,7 @@ function humanize(value?: string | null): string {
 }
 
 function formatGameDate(value?: string | null): string {
-  if (!value) return 'Schedule pending'
+  if (!value) return '—'
   const date = new Date(`${value}T00:00:00Z`)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleDateString(undefined, {
@@ -236,6 +237,7 @@ function RoundCard({
   viewerAssociationId?: string | null
   scheduleRows: EventScheduleRow[]
 }): JSX.Element {
+  const { t } = useTranslation('nations')
   return (
     <section className="rounded bg-white shadow">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-4">
@@ -245,7 +247,7 @@ function RoundCard({
             <h3 className="text-base font-semibold text-slate-900">{round.round_label}</h3>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            {round.entrants_target} nations → {round.advance_target} advance
+            {t('world.roundSummary', { entrants: round.entrants_target, advance: round.advance_target })}
             {' · '}
             {formatGameDate(round.starts_on_game_date)}
             {round.ends_on_game_date ? ` – ${formatGameDate(round.ends_on_game_date)}` : ''}
@@ -273,7 +275,7 @@ function RoundCard({
               <div>
                 <div className="font-semibold text-slate-900">{group.group_label}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
-                  {group.planned_entrant_count} nations · {group.planned_advance_count} advance
+                  {t('world.groupSummary', { entrants: group.planned_entrant_count, advance: group.planned_advance_count })}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -282,7 +284,7 @@ function RoundCard({
                     to={`/dashboard/national-association?cycle=nations:${group.id}`}
                     className="rounded bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black hover:bg-yellow-300"
                   >
-                    Manage National Team
+                    {t('world.manageNationalTeam')}
                   </Link>
                 ) : null}
                 <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusClasses(group.status)}`}>
@@ -296,7 +298,7 @@ function RoundCard({
                 {groupEvents.map(event => (
                   <div key={event.event_id} className="bg-white px-3 py-3">
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                      Day {event.race_day} · {humanize(event.race_type)}
+                      {t('common.dayRace', { day: event.race_day, race: t(`raceTypes.${event.race_type}`, { defaultValue: humanize(event.race_type) }) })}
                     </div>
                     <div className="mt-1 text-sm font-semibold text-slate-900">
                       {formatGameDate(event.event_date)}
@@ -310,7 +312,7 @@ function RoundCard({
                           to={`/dashboard/races/${event.race_id}`}
                           className="text-[11px] font-semibold text-yellow-700 hover:underline"
                         >
-                          Open race
+                          {t('world.openRace')}
                         </Link>
                       ) : null}
                     </div>
@@ -325,12 +327,12 @@ function RoundCard({
                   <thead className="border-t border-slate-200 bg-white text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                     <tr>
                       <th className="px-3 py-2">#</th>
-                      <th className="px-3 py-2">Nation</th>
-                      <th className="px-3 py-2 text-right">TTT</th>
-                      <th className="px-3 py-2 text-right">Flat</th>
-                      <th className="px-3 py-2 text-right">Mountain</th>
-                      <th className="px-3 py-2 text-right">Total</th>
-                      <th className="px-3 py-2">Status</th>
+                      <th className="px-3 py-2">{t('world.table.nation')}</th>
+                      <th className="px-3 py-2 text-right">{t('world.table.ttt')}</th>
+                      <th className="px-3 py-2 text-right">{t('world.table.flat')}</th>
+                      <th className="px-3 py-2 text-right">{t('world.table.mountain')}</th>
+                      <th className="px-3 py-2 text-right">{t('world.table.total')}</th>
+                      <th className="px-3 py-2">{t('common.status')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -370,6 +372,7 @@ function RoundCard({
 }
 
 export default function WorldNationsPage(): JSX.Element {
+  const { t } = useTranslation('nations')
   const [data, setData] = useState<Overview | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -402,7 +405,7 @@ export default function WorldNationsPage(): JSX.Element {
         setScheduleRows([])
       }
     } catch (caught: any) {
-      setError(caught?.message ?? 'Unable to load World Nations Championship.')
+      setError(caught?.message ?? t('world.errors.load'))
     } finally {
       setLoading(false)
     }
@@ -429,10 +432,10 @@ export default function WorldNationsPage(): JSX.Element {
         p_statement: hostStatement.trim() || null,
       })
       if (rpcError) throw rpcError
-      setMessage('Host application submitted. Hosting is selected by rotation, never by spending.')
+      setMessage(t('world.host.submitSuccess'))
       await load()
     } catch (caught: any) {
-      setError(caught?.message ?? 'Unable to submit the host application.')
+      setError(caught?.message ?? t('world.errors.hostSubmit'))
     } finally {
       setHostSaving(false)
     }
@@ -457,7 +460,7 @@ export default function WorldNationsPage(): JSX.Element {
       <div className="flex min-h-[420px] items-center justify-center">
         <div className="flex items-center gap-3 text-sm text-slate-500">
           <Loader2 className="h-5 w-5 animate-spin" />
-          Loading World Nations Championship...
+          {t('world.loading')}
         </div>
       </div>
     )
@@ -469,24 +472,24 @@ export default function WorldNationsPage(): JSX.Element {
         <div>
           <div className="flex items-center gap-2">
             <Globe2 className="h-7 w-7 text-yellow-600" />
-            <h2 className="text-2xl font-semibold text-slate-900">World Nations Championship</h2>
+            <h2 className="text-2xl font-semibold text-slate-900">{t('world.title')}</h2>
           </div>
           <p className="mt-1 text-sm text-slate-600">
-            Association-based international competition: TTT, Flat and Hilly/Mountain over three race days.
+            {t('world.subtitle')}
           </p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
             <Link
               to="/dashboard/national-association"
               className="text-yellow-700 hover:text-yellow-800 hover:underline"
             >
-              National Association
+              {t('association.title')}
             </Link>
             <span className="text-slate-300">•</span>
             <Link
               to="/dashboard/national-ranking"
               className="text-yellow-700 hover:text-yellow-800 hover:underline"
             >
-              National Ranking & Championship
+              {t('world.navRankingChampionship')}
             </Link>
           </div>
         </div>
@@ -498,7 +501,7 @@ export default function WorldNationsPage(): JSX.Element {
           className="inline-flex items-center gap-2 self-start rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -519,43 +522,43 @@ export default function WorldNationsPage(): JSX.Element {
           <div className="bg-white p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <Users className="h-4 w-4" />
-              Active Associations
+              {t('world.activeAssociations')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">
               {data?.edition?.active_association_count ?? data?.active_association_count ?? 0}
             </div>
-            <p className="mt-1 text-xs text-slate-500">Season {data?.season_number ?? '—'}</p>
+            <p className="mt-1 text-xs text-slate-500">{t('common.seasonNumber', { season: data?.season_number ?? '—' })}</p>
           </div>
 
           <div className="bg-white p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <ShieldCheck className="h-4 w-4" />
-              Final Qualification
+              {t('world.finalQualification')}
             </div>
-            <div className="mt-2 text-xl font-semibold text-slate-900">32 nations</div>
-            <p className="mt-1 text-xs text-slate-500">4 groups of 8 · top 4 advance when the field reaches 32</p>
+            <div className="mt-2 text-xl font-semibold text-slate-900">{t('world.nationsCount', { count: 32 })}</div>
+            <p className="mt-1 text-xs text-slate-500">{t('world.finalQualificationHelp')}</p>
           </div>
 
           <div className="bg-white p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <Trophy className="h-4 w-4" />
-              World Final
+              {t('world.worldFinal')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">
-              {data?.edition?.finalist_target ?? data?.qualification_plan?.finalist_target ?? 16} nations
+              {data?.edition?.finalist_target ?? data?.qualification_plan?.finalist_target ?? 16} {t('world.nationsLabel')}
             </div>
-            <p className="mt-1 text-xs text-slate-500">One three-day final determines the champion nation</p>
+            <p className="mt-1 text-xs text-slate-500">{t('world.worldFinalHelp')}</p>
           </div>
 
           <div className="bg-white p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <MapPin className="h-4 w-4" />
-              Host
+              {t('common.host')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">
-              {data?.edition?.host_country_code ?? 'Pending'}
+              {data?.edition?.host_country_code ?? t('common.pending')}
             </div>
-            <p className="mt-1 text-xs text-slate-500">Rotation and history only · no spending advantage</p>
+            <p className="mt-1 text-xs text-slate-500">{t('world.hostRule')}</p>
           </div>
         </div>
       </section>
@@ -565,9 +568,9 @@ export default function WorldNationsPage(): JSX.Element {
           <div className="flex items-start gap-3">
             <Globe2 className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
             <div>
-              <h3 className="font-semibold text-amber-950">Current season edition not generated yet</h3>
+              <h3 className="font-semibold text-amber-950">{t('world.noEditionTitle')}</h3>
               <p className="mt-1 text-sm leading-6 text-amber-900">
-                The competition field is created from active National Associations. The structure below is the live projection for the current field size.
+                {t('world.noEditionHelp')}
               </p>
             </div>
           </div>
@@ -576,14 +579,14 @@ export default function WorldNationsPage(): JSX.Element {
             {(data?.qualification_plan?.rounds ?? []).map(round => (
               <div key={round.round_index} className="rounded bg-white p-4">
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Round {round.round_index}
+                  {t('common.roundNumber', { round: round.round_index })}
                 </div>
                 <div className="mt-1 font-semibold text-slate-900">{round.round_label}</div>
                 <div className="mt-2 text-sm text-slate-600">
-                  {round.entrants_target} → {round.advance_target} nations
+                  {t('world.projectionAdvance', { entrants: round.entrants_target, advance: round.advance_target })}
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  {round.group_count} group{round.group_count === 1 ? '' : 's'}
+                  {t('world.groupCount', { count: round.group_count })}
                 </div>
               </div>
             ))}
@@ -605,10 +608,10 @@ export default function WorldNationsPage(): JSX.Element {
           <div className="border-b border-slate-200 p-4">
             <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-yellow-600" />
-              <h3 className="text-base font-semibold text-slate-900">World Nations Final host</h3>
+              <h3 className="text-base font-semibold text-slate-900">{t('world.host.title')}</h3>
             </div>
             <p className="mt-1 text-sm text-slate-500">
-              National Coaches may apply. The selected host receives presentation prestige only; there is no sporting advantage.
+              {t('world.host.description')}
             </p>
           </div>
 
@@ -618,12 +621,12 @@ export default function WorldNationsPage(): JSX.Element {
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                   <span className="text-sm font-semibold text-slate-900">
-                    Your Association application: {humanize(data.viewer.host_application.status)}
+                    {t('world.host.applicationStatus', { status: t(`status.${data.viewer.host_application.status}`, { defaultValue: humanize(data.viewer.host_application.status) }) })}
                   </span>
                 </div>
                 {data.viewer.host_application.submitted_on ? (
                   <div className="mt-1 text-xs text-slate-500">
-                    Submitted {formatGameDate(data.viewer.host_application.submitted_on)}
+                    {t('world.host.submitted', { date: formatGameDate(data.viewer.host_application.submitted_on) })}
                   </div>
                 ) : null}
               </div>
@@ -635,7 +638,7 @@ export default function WorldNationsPage(): JSX.Element {
                   rows={4}
                   value={hostStatement}
                   onChange={event => setHostStatement(event.target.value)}
-                  placeholder="Optional hosting statement..."
+                  placeholder={t('world.host.statementPlaceholder')}
                   className="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-yellow-500"
                 />
                 <div className="mt-3 flex justify-end">
@@ -646,15 +649,15 @@ export default function WorldNationsPage(): JSX.Element {
                     className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                   >
                     {hostSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-                    {data.viewer.host_application ? 'Update application' : 'Apply to host'}
+                    {data.viewer.host_application ? t('world.host.updateApplication') : t('world.host.apply')}
                   </button>
                 </div>
               </>
             ) : (
               <div className="text-sm text-slate-500">
                 {data.edition.host_country_code
-                  ? `Host selected: ${data.edition.host_country_code}`
-                  : 'Host applications are available to the active National Coach.'}
+                  ? t('world.host.selected', { country: data.edition.host_country_code })
+                  : t('world.host.coachOnly')}
               </div>
             )}
           </div>
@@ -665,16 +668,16 @@ export default function WorldNationsPage(): JSX.Element {
         <div className="border-b border-slate-200 p-4">
           <div className="flex items-center gap-2">
             <Medal className="h-5 w-5 text-yellow-600" />
-            <h3 className="text-base font-semibold text-slate-900">Nations Championship Points</h3>
+            <h3 className="text-base font-semibold text-slate-900">{t('world.points.title')}</h3>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Overall ranking is points-based, not summed race time. Day 1 scores the TTT; on Days 2 and 3 only the best three riders from each nation score.
+            {t('world.points.description')}
           </p>
         </div>
 
         <div className="grid gap-4 p-4 xl:grid-cols-2">
           <div className="rounded border border-slate-200 p-4">
-            <div className="font-semibold text-slate-900">Day 1 · Team Time Trial</div>
+            <div className="font-semibold text-slate-900">{t('world.points.day1')}</div>
             <div className="mt-3 grid grid-cols-4 gap-2 text-sm">
               {tttCurve.slice(0, 16).map(row => (
                 <div key={row.finishing_position} className="flex items-center justify-between rounded bg-slate-50 px-2.5 py-2">
@@ -686,7 +689,7 @@ export default function WorldNationsPage(): JSX.Element {
           </div>
 
           <div className="rounded border border-slate-200 p-4">
-            <div className="font-semibold text-slate-900">Days 2–3 · Road race rider points</div>
+            <div className="font-semibold text-slate-900">{t('world.points.days23')}</div>
             <div className="mt-3 grid grid-cols-4 gap-2 text-sm">
               {roadCurve.slice(0, 16).map(row => (
                 <div key={row.finishing_position} className="flex items-center justify-between rounded bg-slate-50 px-2.5 py-2">
@@ -696,13 +699,13 @@ export default function WorldNationsPage(): JSX.Element {
               ))}
             </div>
             <p className="mt-3 text-xs leading-5 text-slate-500">
-              The three highest-scoring riders from the nation count toward that day's nation score.
+              {t('world.points.bestThree')}
             </p>
           </div>
         </div>
 
         <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
-          Tie-break order: most race wins → most podium finishes → better TTT placing → best-placed rider on Day 3.
+          {t('world.points.tiebreak')}
         </div>
       </section>
 
@@ -710,7 +713,7 @@ export default function WorldNationsPage(): JSX.Element {
         <div className="border-b border-slate-200 p-4">
           <div className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-600" />
-            <h3 className="text-base font-semibold text-slate-900">World Nations history</h3>
+            <h3 className="text-base font-semibold text-slate-900">{t('world.history.title')}</h3>
           </div>
         </div>
 
@@ -720,22 +723,22 @@ export default function WorldNationsPage(): JSX.Element {
               <div key={`${row.season_number}:${row.country_code}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Season {row.season_number}
+                    {t('common.seasonNumber', { season: row.season_number })}
                   </div>
                   <div className="mt-1 font-semibold text-slate-900">
                     <CountryLabel code={row.country_code} name={row.association_name} />
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-slate-900">{row.total_points} pts</div>
-                  {row.was_host ? <div className="mt-0.5 text-xs text-slate-500">Host champion</div> : null}
+                  <div className="text-sm font-semibold text-slate-900">{t('world.history.points', { points: row.total_points })}</div>
+                  {row.was_host ? <div className="mt-0.5 text-xs text-slate-500">{t('world.history.hostChampion')}</div> : null}
                 </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="p-5 text-sm text-slate-500">
-            No completed World Nations Championship yet.
+            {t('world.history.none')}
           </div>
         )}
       </section>
