@@ -1755,7 +1755,7 @@ export default function NationalRankingPage(): JSX.Element {
                         )}
                       </div>
                       <div className="mt-2 text-xs leading-5 text-slate-500">
-                        The rider is reserved for this World Championship duty. All costs are covered by the organizer. Approval gives <strong>+10 morale</strong>; refusal gives <strong>-15 morale</strong>. Race fatigue and normal race effects still apply.
+                        The rider is reserved for this World Championship participation. All costs are covered by the organizer. Approval gives <strong>+10 morale</strong>; refusal gives <strong>-15 morale</strong>. Race fatigue and normal race effects still apply.
                       </div>
                       {entry.race_id ? (
                         <Link
