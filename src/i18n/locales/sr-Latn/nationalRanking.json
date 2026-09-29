@@ -330,5 +330,88 @@
       "completed": "Završeno",
       "cancelled": "Otkazano"
     }
+  },
+  "nationalTeamPage": {
+    "loading": "Učitavanje reprezentacije…",
+    "eyebrow": "Reprezentacija",
+    "title": "Reprezentacija — {{country}}",
+    "titleFallback": "Reprezentacija",
+    "description": "Radni prostor nacionalnog selektora za pozive vozača, konačni sastav od 10 vozača i standardizovanu opremu reprezentacije.",
+    "refresh": "Osveži",
+    "errors": {
+      "load": "Nije moguće učitati reprezentaciju.",
+      "action": "Radnja nije mogla biti završena."
+    },
+    "cards": {
+      "coach": "Nacionalni selektor",
+      "callups": "Privremeni pozivi",
+      "accepted": "{{count}} prihvaćeno",
+      "squad": "Konačni sastav",
+      "notConfirmed": "Nije potvrđen"
+    },
+    "clubCallups": {
+      "title": "Pozivi u reprezentaciju",
+      "description": "Vaš klub mora prihvatiti ili odbiti zvanične pozive u reprezentaciju pre roka.",
+      "deadline": "Odluka do {{date}}",
+      "accept": "Prihvati",
+      "decline": "Odbij"
+    },
+    "callupStatus": {
+      "pending": "Čeka odluku kluba",
+      "accepted": "Prihvaćeno",
+      "auto_accepted": "Automatski prihvaćeno",
+      "declined": "Odbijeno",
+      "withdrawn": "Povučeno",
+      "not_selected": "Nije izabran",
+      "expired": "Isteklo"
+    },
+    "riders": {
+      "title": "Dostupni nacionalni vozači",
+      "description": "Selektor vidi Nacionalni ranking, dostupnost i namerno maskiran raspon Overall ocene. Tačne skrivene veštine i potencijal ostaju privatni.",
+      "maskedOverall": "Overall je približan",
+      "rank": "Rang",
+      "rider": "Vozač",
+      "club": "Klub",
+      "overall": "Overall",
+      "form": "Forma",
+      "fatigue": "Umor",
+      "nc": "Nacionalno prvenstvo",
+      "callup": "Poziv",
+      "freeAgent": "Slobodan igrač",
+      "champion": "Nacionalni šampion",
+      "finalRank": "Finale #{{rank}}",
+      "sendCallup": "Pozovi"
+    },
+    "squad": {
+      "title": "Konačni sastav od 10 vozača",
+      "description": "Izaberite tačno 10 vozača iz prihvaćenih poziva. Postave od 7 vozača za trke biraju se kasnije iz ovog sastava.",
+      "noAccepted": "Još nema prihvaćenih poziva.",
+      "confirm": "Potvrdi sastav od 10 vozača"
+    },
+    "squadStatus": {
+      "draft": "Nacrt",
+      "confirmed": "Potvrđen",
+      "on_duty": "National Duty",
+      "completed": "Završen",
+      "cancelled": "Otkazan"
+    },
+    "package": {
+      "title": "Standardni paket reprezentacije",
+      "description": "Svaka zemlja dobija isti paket koji finansira sistem. Ne može se kupovati, unapređivati niti zameniti klupskom opremom.",
+      "equipment": "Modeli opreme",
+      "assets": "Trkačka sredstva",
+      "supplies": "Trkačke zalihe",
+      "level": "Nivo {{level}}"
+    },
+    "notCoach": {
+      "title": "Kontrole selektora su zaključane",
+      "body": "Samo izabrani nacionalni selektor ili trenutni vršilac dužnosti može birati vozače i upravljati sastavom. Menadžeri klubova i dalje mogu odgovoriti na pozive svojih vozača iznad."
+    },
+    "messages": {
+      "callupSent": "Poziv je poslat vozaču {{rider}}.",
+      "callupAccepted": "{{rider}} je odobren za izbor u reprezentaciju.",
+      "callupDeclined": "{{rider}} ostaje u klubu.",
+      "squadConfirmed": "Sastav reprezentacije od 10 vozača je potvrđen."
+    }
   }
 }
