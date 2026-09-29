@@ -1297,6 +1297,16 @@
       "title": "Final de World Nations completada",
       "message": "{{country}} terminó en la posición {{rank}} de la Final de World Nations con {{points}} puntos.",
       "extra": "La clasificación final combina los puntos de la contrarreloj por equipos, la carrera llana y la carrera de colinas/montaña. El campeón queda guardado permanentemente en el historial de World Nations."
+    },
+    "dutyStarted": {
+      "title": "Comenzó el deber con la selección para {{rider}}",
+      "message": "{{rider}} está con {{association}} desde {{dutyStart}} hasta {{dutyEnd}} y no está disponible para carreras del club que se solapen.",
+      "extra": "El deber con la selección se reserva exclusivamente para la participación con el equipo nacional. El corredor no está disponible para el club durante toda la ventana, incluidos los días como reserva."
+    },
+    "dutyCompleted": {
+      "title": "Finalizó el deber con la selección para {{rider}}",
+      "message": "{{rider}} ha completado su deber con {{association}} y vuelve a estar disponible para el club.",
+      "extra": "Tras finalizar el deber con la selección siguen aplicándose las reglas normales de salud, fatiga y disponibilidad para carreras."
     }
   }
 }
