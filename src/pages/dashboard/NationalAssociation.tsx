@@ -561,6 +561,13 @@ export default function NationalAssociationPage(): JSX.Element {
               >
                 National Championship history
               </Link>
+              <span className="text-xs text-slate-300">•</span>
+              <Link
+                to="/dashboard/nations-competition"
+                className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
+              >
+                World Nations Championship
+              </Link>
             </div>
           </div>
         </div>
