@@ -1124,13 +1124,13 @@
       "firstPlace": "1.º puesto"
     },
     "actions": {
-      "openMyNationalDuty": "Abrir deber nacional",
+      "openMyNationalDuty": "Abrir Campeonato Nacional",
       "confirmFinalParticipation": "Confirmar participación en la final",
       "openQualificationResults": "Abrir resultados de clasificación",
-      "myNationalDuty": "Mi deber nacional",
+      "myNationalDuty": "Campeonato Nacional",
       "openNationalFinal": "Abrir final del Campeonato Nacional",
       "openChampion": "Abrir campeón",
-      "openWorldDuty": "Abrir deber del Mundial",
+      "openWorldDuty": "Abrir Campeonato Mundial",
       "confirmWorld": "Confirmar Campeonato Mundial",
       "openWorldResults": "Abrir resultados del Mundial",
       "openWorldChampionship": "Abrir Campeonato Mundial"
@@ -1138,12 +1138,12 @@
     "selected": {
       "title": "{{rider}} ha sido seleccionado para el Campeonato Nacional",
       "message": "{{rider}} ha sido seleccionado para el Campeonato Nacional de {{country}}. El Grupo de clasificación {{heat}} se disputa el {{qualificationDate}}. Si se clasifica, la final será el {{finalDate}}. Decide antes del {{deadline}}.",
-      "extra": "Todos los costes del deber nacional están cubiertos. Abre Mi deber nacional para aprobar o rechazar la participación antes de la fecha límite."
+      "extra": "Todos los costes de participación en el Campeonato Nacional están cubiertos. Abre el Campeonato Nacional para aprobar o rechazar la participación antes de la fecha límite."
     },
     "qualificationResult": {
       "title": "{{country}} – Grupo de clasificación {{heat}} completado",
       "message": "Los resultados oficiales ya están disponibles. Los primeros {{places}} corredores avanzan a la final nacional del {{finalDate}}.",
-      "extra": "Abre la carrera de clasificación para ver la clasificación completa y Mi deber nacional para los próximos pasos de tus corredores."
+      "extra": "Abre la carrera de clasificación para ver la clasificación completa y el Campeonato Nacional para los próximos pasos de tus corredores."
     },
     "qualified": {
       "title": "{{rider}} se ha clasificado para la final nacional",
