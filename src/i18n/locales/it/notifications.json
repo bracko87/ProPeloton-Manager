@@ -1297,6 +1297,16 @@
       "title": "Finale World Nations completata",
       "message": "{{country}} ha concluso al posto {{rank}} nella Finale World Nations con {{points}} punti.",
       "extra": "La classifica finale combina i punti della cronometro a squadre, della gara pianeggiante e della gara collinare/montagna. Il campione resta salvato permanentemente nella storia World Nations."
+    },
+    "dutyStarted": {
+      "title": "Impegno con la Nazionale iniziato per {{rider}}",
+      "message": "{{rider}} è con {{association}} dal {{dutyStart}} al {{dutyEnd}} e non è disponibile per le gare di club sovrapposte.",
+      "extra": "L’impegno con la Nazionale è riservato esclusivamente alla partecipazione con la squadra nazionale. Il corridore non è disponibile per il club per l’intera finestra, compresi i giorni da riserva."
+    },
+    "dutyCompleted": {
+      "title": "Impegno con la Nazionale completato per {{rider}}",
+      "message": "{{rider}} ha completato l’impegno con {{association}} ed è di nuovo disponibile per il club.",
+      "extra": "Dopo la fine dell’impegno con la Nazionale continuano ad applicarsi le normali regole di salute, fatica e disponibilità alle gare."
     }
   }
 }
