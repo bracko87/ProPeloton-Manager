@@ -1577,7 +1577,7 @@ function isSportDirectorAdvisoryType(
 export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
 
   NATIONAL_CHAMPIONSHIP_SELECTED: {
-    defaultTitle: 'Selected for National Duty',
+    defaultTitle: 'Selected for National Championship',
     defaultMessage: 'A rider from your team has been selected for the National Road Championship.',
     getImageSrc: (item) => {
       const payload = getPayload(item)
@@ -1586,7 +1586,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
         ? `https://flagcdn.com/w80/${code.toLowerCase()}.png`
         : null
     },
-    getIntroText: (item) => item.message || 'A rider from your team has been selected for National Duty.',
+    getIntroText: (item) => item.message || 'A rider from your team has been selected for the National Championship.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
       return compactRows([
@@ -1609,9 +1609,9 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
       ])
     },
     getExtraText: () =>
-      'All National Duty costs are covered. Open My National Duty to approve or refuse the rider before the deadline.',
+      'All National Championship participation costs are covered. Open National Championship to approve or refuse the rider before the deadline.',
     actions: [
-      withFallbackHref('Open My National Duty', '/dashboard/national-ranking?tab=duty'),
+      withFallbackHref('Open National Championship', '/dashboard/national-ranking?tab=duty'),
       MARK_READ_ACTION,
     ],
   },
@@ -1647,7 +1647,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     getExtraText: () =>
       'The rider has earned the ticket to the final. A separate final participation confirmation will be required.',
     actions: [
-      withFallbackHref('Open My National Duty', '/dashboard/national-ranking?tab=duty'),
+      withFallbackHref('Open National Championship', '/dashboard/national-ranking?tab=duty'),
       MARK_READ_ACTION,
     ],
   },
@@ -1842,7 +1842,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     getExtraText: () =>
       'All team costs are covered. The manager must approve or refuse the invitation; a separate final confirmation is required again shortly before the race.',
     actions: [
-      withFallbackHref('Open World Championship duty', '/dashboard/national-ranking?tab=duty'),
+      withFallbackHref('Open World Championship', '/dashboard/national-ranking?tab=duty'),
       MARK_READ_ACTION,
     ],
   },
