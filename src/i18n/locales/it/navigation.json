@@ -41,7 +41,8 @@
     "transfers": "Compra, vendi e negozia",
     "statistics": "Prestazioni e analisi",
     "premiumCenter": "Pianificazione, simulazione e automazione avanzate",
-    "nationalAssociation": "Associazione, elezione del CT e nazionale"
+    "nationalAssociation": "Associazione, elezione del CT e nazionale",
+    "nationalTeam": "Convocazioni, squadra e attrezzatura nazionale"
   },
   "header": {
     "toggleSidebar": "Mostra o nascondi barra laterale",
@@ -157,5 +158,6 @@
     "unlock": "Sblocca con Premium"
   },
   "premiumCenter": "Centro Premium",
-  "nationalAssociation": "Associazione Nazionale"
+  "nationalAssociation": "Associazione Nazionale",
+  "nationalTeam": "Nazionale"
 }
