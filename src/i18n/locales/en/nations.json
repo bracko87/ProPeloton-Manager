@@ -273,7 +273,7 @@
       "rounds": "{{count}} rounds",
       "groups": "{{count}} groups",
       "passSummary": "Rollback lifecycle fixture passed.",
-      "skippedSummary": "Rollback lifecycle fixture skipped for safety.",
+      "skippedSummary": "Rollback lifecycle fixture was skipped by its safety guard.",
       "failSummary": "Rollback lifecycle fixture failed."
     },
     "stats": {
