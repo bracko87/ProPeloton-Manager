@@ -1599,6 +1599,33 @@ function getNationalSystemStatus(item: NotificationItem): string | null {
   return status ? formatLabel(status) : null
 }
 
+
+function getNationsTopThreeLabel(item: NotificationItem): string | null {
+  const payload = getPayload(item)
+  if (!payload) return null
+
+  const raw = payload.top_three_riders
+  if (!Array.isArray(raw)) return null
+
+  const values = raw
+    .map((entry) => {
+      const record = asRecord(entry)
+      if (!record) return null
+
+      const rank = readNumber(record.rank)
+      const name =
+        readString(record.rider_name) ||
+        readString(record.rider_full_name) ||
+        readString(record.name)
+
+      if (!name) return null
+      return rank !== null ? `#${rank} ${name}` : name
+    })
+    .filter((value): value is string => Boolean(value))
+
+  return values.length > 0 ? values.join(', ') : null
+}
+
 /* -------------------------------------------------------------------------- */
 /* Template Registry                                                          */
 /* -------------------------------------------------------------------------- */
@@ -1788,6 +1815,60 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     ],
   },
 
+  NATIONS_RACE_RESULT: {
+    defaultTitle: 'World Nations race completed',
+    defaultMessage: 'A World Nations race day has been completed.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'A World Nations race day has been completed.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const day = pickFirstNumber(payload, ['race_day'])
+      const eventPoints = pickFirstNumber(payload, ['event_points'])
+      const nationRank = pickFirstNumber(payload, ['nation_race_rank'])
+      const bestRiderRank = pickFirstNumber(payload, ['best_rider_rank'])
+      const raceLabel =
+        pickFirstString(payload, ['race_label']) ||
+        formatLabel(pickFirstString(payload, ['race_type']))
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Competition round', pickFirstString(payload, ['round_label'])),
+        detailRow('Group', pickFirstString(payload, ['group_label'])),
+        detailRow('Race day', day !== null ? String(day) : null),
+        detailRow('Race', raceLabel),
+        detailRow(
+          'Race result',
+          nationRank !== null
+            ? `#${nationRank}`
+            : bestRiderRank !== null
+              ? `Best rider #${bestRiderRank}`
+              : null
+        ),
+        detailRow('Event points', eventPoints !== null ? String(eventPoints) : null),
+        detailRow('Top 3', getNationsTopThreeLabel(item)),
+      ])
+    },
+    getExtraText: () =>
+      'Open the race for the full classification. World Nations standings update automatically after all three race days.',
+    actions: [
+      {
+        key: 'open-nations-race',
+        label: 'Open race',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: (item) => getRaceHrefFromItem(item),
+        show: (item) => Boolean(getRaceHrefFromItem(item)),
+      },
+      {
+        key: 'open-world-nations',
+        label: 'Open World Nations',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/world-nations',
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
   NATIONS_QUALIFICATION_DRAW: {
     defaultTitle: 'World Nations draw confirmed',
     defaultMessage: 'The World Nations qualification draw has been confirmed.',
@@ -1897,6 +1978,41 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
       'Hosting provides presentation prestige only and gives no sporting advantage.',
     actions: [
       withFallbackHref('Open World Nations', '/dashboard/world-nations'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONS_FINAL_RESULT: {
+    defaultTitle: 'World Nations Final completed',
+    defaultMessage: 'The World Nations Final classification is official.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'The World Nations Final classification is official.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const rank = pickFirstNumber(payload, ['final_group_rank'])
+      const total = pickFirstNumber(payload, ['total_points'])
+      const ttt = pickFirstNumber(payload, ['ttt_points'])
+      const flat = pickFirstNumber(payload, ['flat_points'])
+      const mountain = pickFirstNumber(payload, ['mountain_points'])
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Result', rank !== null ? `#${rank}` : null),
+        detailRow('Points', total !== null ? String(total) : null),
+        detailRow('TTT points', ttt !== null ? String(ttt) : null),
+        detailRow('Flat points', flat !== null ? String(flat) : null),
+        detailRow('Mountain points', mountain !== null ? String(mountain) : null),
+      ])
+    },
+    getExtraText: () =>
+      'The final table combines Team Time Trial, Flat and Hilly/Mountain points. The champion is stored permanently in World Nations history.',
+    actions: [
+      {
+        key: 'open-world-nations-final',
+        label: 'Open World Nations',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/world-nations',
+      },
       MARK_READ_ACTION,
     ],
   },
