@@ -22,12 +22,12 @@ begin
   pivoted as (
     select
       s.slot_no,s.specialization,s.setup_name,
-      max(e.catalog_item_id) filter(where e.equipment_category='frame') as frame_id,
-      max(e.catalog_item_id) filter(where e.equipment_category='wheelset') as wheelset_id,
-      max(e.catalog_item_id) filter(where e.equipment_category='tires') as tires_id,
-      max(e.catalog_item_id) filter(where e.equipment_category='groupset') as groupset_id,
-      max(e.catalog_item_id) filter(where e.equipment_category='helmet') as helmet_id,
-      max(e.catalog_item_id) filter(where e.equipment_category='shoes') as shoes_id
+      max(e.catalog_item_id::text) filter(where e.equipment_category='frame')::uuid as frame_id,
+      max(e.catalog_item_id::text) filter(where e.equipment_category='wheelset')::uuid as wheelset_id,
+      max(e.catalog_item_id::text) filter(where e.equipment_category='tires')::uuid as tires_id,
+      max(e.catalog_item_id::text) filter(where e.equipment_category='groupset')::uuid as groupset_id,
+      max(e.catalog_item_id::text) filter(where e.equipment_category='helmet')::uuid as helmet_id,
+      max(e.catalog_item_id::text) filter(where e.equipment_category='shoes')::uuid as shoes_id
     from specs s
     left join public.national_team_standard_equipment e
       on e.specialization=s.specialization and e.is_active=true
