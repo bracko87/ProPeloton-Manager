@@ -41,7 +41,8 @@
     "transfers": "Покупка, продажа и переговоры",
     "statistics": "Эффективность и анализ",
     "premiumCenter": "Расширенное планирование, симуляции и автоматизация",
-    "nationalAssociation": "Ассоциация, выборы тренера и сборная"
+    "nationalAssociation": "Ассоциация, выборы тренера и сборная",
+    "nationalTeam": "Вызовы, состав и экипировка сборной"
   },
   "header": {
     "toggleSidebar": "Боковой блок@ info: whatsthis",
@@ -157,5 +158,6 @@
     "unlock": "Отключиться Premium"
   },
   "premiumCenter": "Premium-центр",
-  "nationalAssociation": "Национальная ассоциация"
+  "nationalAssociation": "Национальная ассоциация",
+  "nationalTeam": "Сборная"
 }
