@@ -194,7 +194,7 @@
       "load": "No se pudo cargar el Campeonato Mundial de Naciones.",
       "hostSubmit": "No se pudo enviar la solicitud de anfitrión."
     },
-    "drawPending": "El sorteo aún no ha finalizado."
+    "drawPending": "El sorteo aún no se ha completado."
   },
   "admin": {
     "loading": "Cargando operaciones de World Nations...",
@@ -245,19 +245,19 @@
       "associationOption": "{{count}} Asociaciones",
       "resultSummary": "Cuadro: {{field}} Asociaciones · fallos {{failures}} · avisos {{warnings}}",
       "defaultCase": "Caso de estrés por defecto: 48 Asociaciones → 6 grupos preliminares → 32 naciones → 4 grupos de Clasificación Final → Final Mundial de 16 naciones.",
-      "passSummary": "La validación de contrato E2E de World Nations ha pasado.",
-      "failSummary": "La validación de contrato E2E de World Nations ha encontrado fallos.",
+      "passSummary": "La validación contractual E2E de World Nations ha sido superada.",
+      "failSummary": "La validación contractual E2E de World Nations encontró fallos.",
       "checks": {
         "core_config": "Configuración principal",
         "no_treasury": "Sin tesorería",
         "qualificationStress": "Estrés de clasificación · {{count}} Asociaciones",
         "qualification_scale_100": "Escala de clasificación · 100 Asociaciones",
-        "calendar_anchors": "Anclajes del calendario",
+        "calendar_anchors": "Anclas del calendario",
         "standard_package": "Paquete estándar de la selección",
-        "masked_overall_stability": "Estabilidad de valoración enmascarada",
+        "masked_overall_stability": "Estabilidad de la valoración enmascarada",
         "points_balance": "Equilibrio de puntos",
         "lineup_contract": "Contrato de alineación",
-        "complete_field_race_gate": "Puerta de campo completo",
+        "complete_field_race_gate": "Bloqueo de carrera con campo completo",
         "notification_lifecycle": "Ciclo de notificaciones",
         "automatic_runtime": "Ejecución automática",
         "current_operations_health": "Estado operativo actual"
@@ -272,8 +272,8 @@
       "temporaryManagers": "{{count}} mánagers temporales",
       "rounds": "{{count}} rondas",
       "groups": "{{count}} grupos",
-      "passSummary": "La prueba de ciclo de vida con rollback ha pasado.",
-      "skippedSummary": "La prueba con rollback se omitió por seguridad.",
+      "passSummary": "La prueba de ciclo de vida con rollback ha sido superada.",
+      "skippedSummary": "La prueba con rollback fue omitida por su regla de seguridad.",
       "failSummary": "La prueba de ciclo de vida con rollback ha fallado."
     },
     "stats": {
@@ -345,7 +345,7 @@
     "climber": "Escalador",
     "domestique": "Gregario",
     "leader": "Líder",
-    "sprinter": "Esprínter",
+    "sprinter": "Velocista",
     "tt": "Contrarrelojista"
   }
 }
