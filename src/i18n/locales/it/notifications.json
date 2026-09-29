@@ -1185,5 +1185,97 @@
       "message": "{{rider}} ha vinto la Gran Finale del Campionato del Mondo su strada. Questo prestigioso titolo fa ora parte degli onori di carriera del corridore.",
       "extra": "Il badge di Campione del Mondo è attivo questa stagione e rimane per sempre nella storia della carriera."
     }
+  },
+  "nationalSystem": {
+    "common": {
+      "association": "Associazione Nazionale",
+      "electedCoach": "il commissario tecnico eletto",
+      "competitionRound": "Turno di gara",
+      "group": "Gruppo"
+    },
+    "labels": {
+      "association": "Associazione",
+      "electionRound": "Turno elettorale",
+      "competitionRound": "Turno di gara",
+      "group": "Gruppo",
+      "advance": "Qualificati",
+      "points": "Punti",
+      "squadSize": "Dimensione rosa"
+    },
+    "actions": {
+      "openAssociation": "Apri Associazione Nazionale",
+      "openWorldNations": "Apri World Nations",
+      "manageNationalTeam": "Gestisci Nazionale"
+    },
+    "associationActivated": {
+      "title": "Associazione Nazionale di {{country}} attivata",
+      "message": "L'{{association}} è ora attiva. I membri possono partecipare all'elezione del CT e al World Nations Championship.",
+      "extra": "Non esiste una tesoreria dell'Associazione. Viaggi, equipaggiamento e costi operativi della Nazionale sono coperti dal sistema."
+    },
+    "electionOpen": {
+      "title": "Candidature per il CT aperte",
+      "message": "I membri idonei possono presentare la candidatura entro il {{deadline}}.",
+      "extra": "L'elezione annuale inizia a gennaio. Ogni membro idoneo dispone di un voto."
+    },
+    "votingOpen": {
+      "title": "Votazione per il CT aperta",
+      "message": "Il turno {{round}} è aperto fino al {{deadline}}. Ogni membro idoneo ha un voto definitivo in questo turno.",
+      "extra": "Non è possibile ottenere più voti con spese aggiuntive: un voto per membro idoneo per turno."
+    },
+    "runoffOpen": {
+      "title": "Ballottaggio per il CT aperto",
+      "message": "Non è emerso un vincitore unico. Il ballottaggio {{round}} è aperto fino al {{deadline}}, con un nuovo voto per ogni membro idoneo.",
+      "extra": "In caso di nuovo pareggio viene aperto un altro ballottaggio di sette giorni fino a un vincitore unico."
+    },
+    "coachElected": {
+      "title": "Commissario tecnico eletto",
+      "message": "{{winner}} è stato eletto CT per la Stagione {{season}}.",
+      "extra": "Il CT gestisce convocazioni, rosa di 10 corridori e formazioni dei giorni di gara."
+    },
+    "callupReceived": {
+      "title": "{{rider}} convocato in Nazionale",
+      "message": "L'{{association}} ha convocato {{rider}}. Accetta o rifiuta entro il {{deadline}}.",
+      "extra": "Una convocazione accettata può mettere il corridore in impegno nazionale durante la finestra di competizione confermata."
+    },
+    "callupResponse": {
+      "title": "Convocazione di {{rider}}: {{status}}",
+      "message": "La convocazione in Nazionale di {{rider}} è ora {{status}}.",
+      "extra": "Il CT può controllare la rosa provvisoria aggiornata nella pagina dell'Associazione Nazionale."
+    },
+    "squadConfirmed": {
+      "title": "Rosa della Nazionale confermata",
+      "message": "È stata confermata la rosa finale di {{squadSize}} corridori.",
+      "extra": "Tutti i corridori selezionati entrano in impegno nazionale nella finestra di gara, comprese le riserve."
+    },
+    "qualificationDraw": {
+      "title": "Sorteggio di {{roundLabel}} confermato",
+      "message": "{{country}} è stato inserito in {{group}}. {{advanceCount}} nazione/i avanzano da questo gruppo.",
+      "extra": "Apri World Nations per vedere gruppo completo, calendario e percorso di qualificazione."
+    },
+    "advanced": {
+      "title": "Avanzamento nel World Nations Championship",
+      "message": "{{country}} ha superato {{roundLabel}} con {{points}} punti.",
+      "extra": "Il sorteggio del turno successivo viene creato automaticamente al termine del precedente."
+    },
+    "eliminated": {
+      "title": "Percorso World Nations terminato",
+      "message": "{{country}} è stato eliminato in {{roundLabel}}.",
+      "extra": "L'Associazione resta attiva e potrà tornare tramite le qualificazioni normali nella prossima stagione."
+    },
+    "worldFinalQualified": {
+      "title": "Qualificato per la Finale World Nations",
+      "message": "{{country}} si è qualificato per la Finale World Nations.",
+      "extra": "La Finale è un evento di tre giorni: TTT, gara pianeggiante e gara collinare/montagna."
+    },
+    "hostSelected": {
+      "title": "Sede della Finale World Nations selezionata",
+      "message": "{{country}} ospiterà la Finale World Nations di questa stagione.",
+      "extra": "Ospitare offre solo prestigio e visibilità, senza vantaggi sportivi."
+    },
+    "champion": {
+      "title": "Campione World Nations",
+      "message": "{{country}} ha vinto il World Nations Championship.",
+      "extra": "Il titolo viene registrato permanentemente nella storia World Nations."
+    }
   }
 }
