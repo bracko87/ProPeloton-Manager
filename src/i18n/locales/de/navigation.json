@@ -41,7 +41,8 @@
     "transfers": "Kaufen, verkaufen und verhandeln",
     "statistics": "Leistung und Analysen",
     "premiumCenter": "Erweiterte Planung, Simulation und Automatisierung",
-    "nationalAssociation": "Verband, Nationaltrainer-Wahl und Nationalteam"
+    "nationalAssociation": "Verband, Nationaltrainer-Wahl und Nationalteam",
+    "nationalTeam": "Nominierungen, Kader und Nationalteam-Ausrüstung"
   },
   "header": {
     "toggleSidebar": "Seitenleiste ein-/ausblenden",
@@ -157,5 +158,6 @@
     "unlock": "Mit Premium freischalten"
   },
   "premiumCenter": "Premium-Zentrale",
-  "nationalAssociation": "Nationalverband"
+  "nationalAssociation": "Nationalverband",
+  "nationalTeam": "Nationalteam"
 }
