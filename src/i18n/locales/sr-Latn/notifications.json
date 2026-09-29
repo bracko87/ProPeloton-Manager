@@ -1300,6 +1300,16 @@
       "title": "World Nations finale završeno",
       "message": "{{country}} je završila na {{rank}}. mestu World Nations finala sa {{points}} bodova.",
       "extra": "Konačna tabela kombinuje bodove ekipnog hronometra, ravničarske i brdske/planinske trke. Šampion se trajno čuva u World Nations istoriji."
+    },
+    "dutyStarted": {
+      "title": "National Duty je počeo za {{rider}}",
+      "message": "{{rider}} je na National Duty sa {{association}} od {{dutyStart}} do {{dutyEnd}} i nije dostupan za klupske trke koje se preklapaju.",
+      "extra": "National Duty se koristi isključivo za učešće u nacionalnom timu. Vozač nije dostupan klubu tokom celog perioda, uključujući dane kada je rezerva."
+    },
+    "dutyCompleted": {
+      "title": "National Duty je završen za {{rider}}",
+      "message": "{{rider}} je završio National Duty sa {{association}} i ponovo je dostupan klubu.",
+      "extra": "Nakon završetka National Duty i dalje važe uobičajena pravila zdravlja, umora i dostupnosti za trke."
     }
   }
 }
