@@ -1200,7 +1200,13 @@
       "group": "Grupo",
       "advance": "Clasifican",
       "points": "Puntos",
-      "squadSize": "Tamaño de plantilla"
+      "squadSize": "Tamaño de plantilla",
+      "raceDay": "Día de carrera",
+      "raceResult": "Resultado de la carrera",
+      "eventPoints": "Puntos del evento",
+      "tttPoints": "Puntos de CRE",
+      "flatPoints": "Puntos de llano",
+      "mountainPoints": "Puntos de montaña"
     },
     "actions": {
       "openAssociation": "Abrir Asociación Nacional",
@@ -1276,6 +1282,21 @@
       "title": "Campeón de World Nations",
       "message": "{{country}} ha ganado el World Nations Championship.",
       "extra": "El título queda guardado permanentemente en el historial de World Nations."
+    },
+    "values": {
+      "teamTimeTrial": "Contrarreloj por equipos",
+      "flatRoadRace": "Carrera en ruta llana",
+      "hillyMountainRoadRace": "Carrera en ruta de colinas/montaña"
+    },
+    "raceResult": {
+      "title": "{{roundLabel}} · Día {{raceDay}} completado",
+      "message": "{{country}} consiguió {{eventPoints}} puntos de Naciones en {{raceLabel}}.",
+      "extra": "Abre la carrera para ver la clasificación completa. La tabla de World Nations se actualiza automáticamente después de los tres días de competición."
+    },
+    "finalResult": {
+      "title": "Final de World Nations completada",
+      "message": "{{country}} terminó en la posición {{rank}} de la Final de World Nations con {{points}} puntos.",
+      "extra": "La clasificación final combina los puntos de la contrarreloj por equipos, la carrera llana y la carrera de colinas/montaña. El campeón queda guardado permanentemente en el historial de World Nations."
     }
   }
 }
