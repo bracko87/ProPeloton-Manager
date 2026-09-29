@@ -18594,4 +18594,83 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(withProtection.replaySynchronization.issues).toEqual([])
   })
 
+
+  it('runs the committed World Nations three-day TypeScript race-engine lifecycle', () => {
+    const committedJobs = [
+      {
+        key: 'world_nations_day1_ttt',
+        input: withTimeTrialRules(
+          withStageFormat(createExpandedFieldInput(12), {
+            stageFormat: 'team_time_trial',
+            terrainType: 'team_time_trial',
+            finishType: 'team_time_trial_finish',
+            profileType: 'time_trial',
+          }),
+          4,
+        ),
+        expectedClassification: 'team_time_trial',
+      },
+      {
+        key: 'world_nations_day2_flat',
+        input: withStageFormat(createExpandedFieldInput(24), {
+          stageFormat: 'road_race',
+          terrainType: 'flat',
+          finishType: 'flat_finish',
+          profileType: 'sprinter',
+        }),
+        expectedClassification: 'flat_road_stage',
+      },
+      {
+        key: 'world_nations_day3_mountain',
+        input: withStageFormat(createExpandedFieldInput(24), {
+          stageFormat: 'road_race',
+          terrainType: 'mountain',
+          finishType: 'summit_finish',
+          profileType: 'climber',
+        }),
+        expectedClassification: 'mountain_road_stage',
+      },
+    ] as const
+
+    const completedJobs = committedJobs.map((job, index) => {
+      const input = {
+        ...job.input,
+        engine: {
+          ...job.input.engine,
+          deterministicSeed: `world-nations-committed-job-${index + 1}`,
+        },
+        race: {
+          ...job.input.race,
+          raceId: 'world-nations-e2e-race',
+          raceType: 'stage_race' as const,
+          stageCount: 3,
+        },
+        stage: {
+          ...job.input.stage,
+          raceId: 'world-nations-e2e-race',
+          stageId: `world-nations-e2e-stage-${index + 1}`,
+          stageNumber: index + 1,
+        },
+      }
+      const result = runRaceEngine(input)
+
+      expect(result.validationPassed, job.key).toBe(true)
+      expect(result.stageClassification, job.key).toBe(job.expectedClassification)
+      expect(result.finishResolution.classification.length, job.key).toBeGreaterThan(0)
+      expect(result.replaySynchronization.synchronized, job.key).toBe(true)
+      expect(result.replaySynchronization.issues, job.key).toEqual([])
+
+      return {
+        key: job.key,
+        winnerRiderId: result.finishResolution.winnerRiderId,
+        winnerTeamId: result.finishResolution.winnerTeamId,
+        classificationSize: result.finishResolution.classification.length,
+      }
+    })
+
+    expect(completedJobs).toHaveLength(3)
+    expect(completedJobs.every((job) => job.winnerRiderId)).toBe(true)
+    expect(completedJobs.every((job) => job.classificationSize > 0)).toBe(true)
+  })
+
 })
