@@ -1158,12 +1158,6 @@ export default function NationalRankingPage(): JSX.Element {
           >
             World Nations
           </Link>
-          <Link
-            to="/dashboard/world-nations"
-            className="rounded-md px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100"
-          >
-            World Nations
-          </Link>
         </div>
       </div>
 
