@@ -753,7 +753,7 @@ export default function NationalAssociationPage(): JSX.Element {
                     <div className="rounded border border-slate-200 p-3">
                       <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.status')}</div>
                       <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(election.status)}`}>
-                        {humanize(election.status)}
+                        {t(`status.${election.status}`, { defaultValue: humanize(election.status) })}
                       </span>
                     </div>
                     <div className="rounded border border-slate-200 p-3">
@@ -938,7 +938,7 @@ export default function NationalAssociationPage(): JSX.Element {
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(callup.status)}`}>
-                        {humanize(callup.status)}
+                        {t(`status.${callup.status}`, { defaultValue: humanize(callup.status) })}
                       </span>
                       {callup.can_respond ? (
                         <>
@@ -1098,7 +1098,7 @@ export default function NationalAssociationPage(): JSX.Element {
                                 {rider.rider_name}
                               </Link>
                               <div className="mt-0.5 text-xs text-slate-500">
-                                {humanize(rider.role)} · {rider.age_years ?? '—'} yrs
+                                {t(`roles.${String(rider.role ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '_')}`, { defaultValue: humanize(rider.role) })} · {t('common.yearsShort', { years: rider.age_years ?? '—' })}
                               </div>
                             </td>
                             <td className="px-3 py-3 text-slate-600">{rider.club_name ?? t('common.freeAgent')}</td>
@@ -1115,13 +1115,13 @@ export default function NationalAssociationPage(): JSX.Element {
                             <td className="px-3 py-3 text-slate-600">{rider.fatigue ?? '—'}</td>
                             <td className="px-3 py-3">
                               <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusClasses(rider.availability_status === 'fit' ? 'active' : 'inactive')}`}>
-                                {humanize(rider.availability_status)}
+                                {t(`status.${rider.availability_status}`, { defaultValue: humanize(rider.availability_status) })}
                               </span>
                             </td>
                             <td className="px-3 py-3">
                               {callup ? (
                                 <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusClasses(callup.status)}`}>
-                                  {humanize(callup.status)}
+                                  {t(`status.${callup.status}`, { defaultValue: humanize(callup.status) })}
                                 </span>
                               ) : (
                                 <button
