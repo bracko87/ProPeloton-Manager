@@ -248,5 +248,87 @@
     "finished": "Trka završena",
     "ready": "Trka spremna",
     "planned": "Planirano"
+  },
+  "associationPage": {
+    "loading": "Učitavanje Nacionalnog saveza…",
+    "eyebrow": "Nacionalni savez",
+    "title": "Nacionalni savez — {{country}}",
+    "description": "Izgradite korisnički vođen Nacionalni savez svoje zemlje, izaberite nacionalnog selektora i pripremite reprezentaciju. Savez nema budžet: putovanja, podrška, vozila, oprema i potrošni materijal pokriveni su od strane igre.",
+    "refresh": "Osveži",
+    "errors": {
+      "load": "Nije moguće učitati Nacionalni savez.",
+      "action": "Radnja nije mogla biti završena."
+    },
+    "notEligible": {
+      "title": "Nemate pravo učešća",
+      "body": "Za učešće u Nacionalnom savezu potreban je aktivan glavni klub kojim upravlja igrač."
+    },
+    "join": {
+      "noAssociationTitle": "Osnujte Nacionalni savez",
+      "noAssociationBody": "Vaša zemlja još nema savez. Potrebno je najmanje {{count}} podobnih menadžera klubova da ga podrže pre aktivacije.",
+      "createSupport": "Osnuj / podrži savez",
+      "joined": "Sada podržavate svoj Nacionalni savez.",
+      "existingTitle": "Pridružite se Nacionalnom savezu",
+      "existingBody": "Savez za vašu zemlju već postoji. Pridružite se da glasate, kandidujete se za selektora i učestvujete u reprezentativnom sistemu.",
+      "join": "Pridruži se savezu"
+    },
+    "cards": {
+      "status": "Status saveza",
+      "members": "Podobni članovi",
+      "coach": "Nacionalni selektor",
+      "noCoach": "Selektor nije izabran",
+      "operations": "Operativa",
+      "covered": "Sve pokriveno",
+      "coveredHelp": "Nema budžeta saveza niti troškova kluba. Troškove reprezentacije pokriva sistem."
+    },
+    "status": {
+      "forming": "U osnivanju",
+      "active": "Aktivan",
+      "inactive": "Neaktivan"
+    },
+    "coachKind": {
+      "elected": "Izabrani nacionalni selektor",
+      "caretaker": "Vršilac dužnosti do završetka izbora",
+      "replacement": "Novi nacionalni selektor"
+    },
+    "forming": {
+      "title": "Savez je u osnivanju",
+      "body": "Potrebno je još {{count}} podobnih menadžera da bi se savez aktivirao.",
+      "ready": "Uslovi za aktivaciju su ispunjeni."
+    },
+    "election": {
+      "title": "Izbor nacionalnog selektora",
+      "oneVote": "Jedan podoban član saveza = jedan glas. Glasanje je tajno i glas je konačan u svakom krugu.",
+      "notOpen": "Trenutno nema otvorenih izbora za selektora.",
+      "registration": "Prijava kandidata",
+      "round": "Trenutni krug",
+      "currentWindow": "Period glasanja",
+      "yourCandidacy": "Vaša kandidatura",
+      "standForCoach": "Kandidujte se za selektora",
+      "manifesto": "Program",
+      "manifestoPlaceholder": "Objasnite pristup reprezentaciji, principe izbora vozača i ciljeve…",
+      "candidacySaved": "Vaša kandidatura je sačuvana.",
+      "candidacyWithdrawn": "Vaša kandidatura je povučena.",
+      "updateCandidacy": "Izmeni kandidaturu",
+      "registerCandidacy": "Pošalji kandidaturu",
+      "withdraw": "Povuci kandidaturu",
+      "candidates": "Kandidati",
+      "secretBallot": "Trenutni broj glasova je skriven",
+      "noCandidates": "U ovom krugu trenutno nema kandidata.",
+      "unknownClub": "Nepoznat klub",
+      "you": "Vi",
+      "vote": "Glasaj",
+      "voted": "Glas poslat",
+      "voteSaved": "Vaš glas je poslat i ne može se menjati.",
+      "completed": "Izbor završen",
+      "winnerConfirmed": "Nacionalni selektor je potvrđen."
+    },
+    "electionStatus": {
+      "candidate_registration": "Prijava kandidata",
+      "voting": "Prvi krug glasanja",
+      "runoff": "Drugi krug",
+      "completed": "Završeno",
+      "cancelled": "Otkazano"
+    }
   }
 }
