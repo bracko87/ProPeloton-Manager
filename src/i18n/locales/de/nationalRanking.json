@@ -29,13 +29,13 @@
     "hostPendingHelp": "Die Meisterschaft wartet, bis zwei geeignete Strecken verfügbar sind."
   },
   "duty": {
-    "title": "Meine National Duty",
-    "description": "Diese Fahrer werden automatisch gemeldet. Du steuerst nur die Ausrüstung und die individuelle Rennstrategie jedes Fahrers.",
-    "locked": "Einzelrennen — keine Teamtaktik. Personal, Fahrzeuge und Club-Verpflegung sind nicht verfügbar.",
+    "title": "Meisterschaftsteilnahme",
+    "description": "Diese Fahrer sind automatisch für nationale oder Weltmeisterschaftsrennen gemeldet. Hier verwaltest du Teilnahme, Ausrüstung und individuelle Rennstrategie.",
+    "locked": "Einzelnes Meisterschaftsrennen — keine Teamtaktik. Personal, Fahrzeuge und Klubvorräte sind nicht verfügbar.",
     "directQualifier": "Direkt qualifiziert",
     "qualificationHeat": "Qualifikationsgruppe {{number}}",
-    "noPlan": "Für diesen Fahrer ist derzeit kein bearbeitbarer National-Duty-Plan offen.",
-    "empty": "Keiner deiner Fahrer hat aktuell eine National-Duty-Einladung für diese Meisterschaft."
+    "noPlan": "Für diesen Fahrer ist derzeit kein bearbeitbarer Teilnahmeplan geöffnet.",
+    "empty": "Keiner deiner Fahrer hat derzeit eine aktive Teilnahme an einer nationalen oder Weltmeisterschaft."
   },
   "organizer": {
     "title": "Rennpaket des Veranstalters",
@@ -183,7 +183,7 @@
   },
   "tabs": {
     "ranking": "Rangliste",
-    "duty": "Meine National Duty",
+    "duty": "Meisterschaftsteilnahme",
     "history": "Historie"
   },
   "info": {
