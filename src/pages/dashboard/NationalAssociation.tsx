@@ -1191,7 +1191,6 @@ export default function NationalAssociationPage(): JSX.Element {
 
           {!isCoach && association.coach ? (
             <section className="rounded border border-slate-200 bg-white p-5 shadow">
-            <section className="rounded border border-slate-200 bg-white p-5 shadow">
               <div className="flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-slate-600" />
                 <h3 className="font-semibold text-slate-900">National Coach appointed</h3>
