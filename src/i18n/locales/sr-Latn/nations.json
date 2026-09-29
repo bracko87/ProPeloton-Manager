@@ -246,20 +246,20 @@
       "resultSummary": "Polje: {{field}} Saveza · greške {{failures}} · upozorenja {{warnings}}",
       "defaultCase": "Podrazumevani stresni slučaj: 48 Saveza → 6 preliminarnih grupa → 32 nacije → 4 grupe završnih kvalifikacija → Svetsko finale sa 16 nacija.",
       "passSummary": "World Nations E2E provera ugovora je prošla.",
-      "failSummary": "World Nations E2E provera ugovora je pronašla greške.",
+      "failSummary": "World Nations E2E provera ugovora pronašla je greške.",
       "checks": {
         "core_config": "Osnovna konfiguracija",
         "no_treasury": "Bez blagajne",
         "qualificationStress": "Stres kvalifikacija · {{count}} Saveza",
         "qualification_scale_100": "Skaliranje kvalifikacija · 100 Saveza",
-        "calendar_anchors": "Sidra kalendara",
+        "calendar_anchors": "Kalendarske tačke",
         "standard_package": "Standardni paket reprezentacije",
         "masked_overall_stability": "Stabilnost maskirane ukupne ocene",
         "points_balance": "Balans bodova",
-        "lineup_contract": "Ugovor postave",
-        "complete_field_race_gate": "Blokada punog polja",
+        "lineup_contract": "Pravila postave",
+        "complete_field_race_gate": "Uslov potpunog polja",
         "notification_lifecycle": "Životni ciklus obaveštenja",
-        "automatic_runtime": "Automatsko izvršavanje",
+        "automatic_runtime": "Automatska obrada",
         "current_operations_health": "Trenutno operativno stanje"
       }
     },
@@ -273,7 +273,7 @@
       "rounds": "{{count}} rundi",
       "groups": "{{count}} grupa",
       "passSummary": "Rollback test životnog ciklusa je prošao.",
-      "skippedSummary": "Rollback test je preskočen zbog bezbednosti.",
+      "skippedSummary": "Rollback test je preskočen zbog sigurnosnog pravila.",
       "failSummary": "Rollback test životnog ciklusa nije uspeo."
     },
     "stats": {
@@ -341,10 +341,10 @@
   },
   "roles": {
     "all_rounder": "Svestrani",
-    "breakaway": "Begač",
-    "climber": "Brdaš",
+    "breakaway": "Bjegunac",
+    "climber": "Penjač",
     "domestique": "Pomoćni vozač",
-    "leader": "Lider",
+    "leader": "Vođa",
     "sprinter": "Sprinter",
     "tt": "Hronometrista"
   }
