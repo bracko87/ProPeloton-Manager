@@ -29,7 +29,7 @@ CREATE OR REPLACE FUNCTION public.finalize_nations_round_v1(p_round_id uuid)
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $function$;
+AS $function$
 declare
   v_round public.nations_competition_rounds%rowtype;
   v_edition public.nations_competition_editions%rowtype;
@@ -207,7 +207,7 @@ CREATE OR REPLACE FUNCTION private.run_nations_e2e_fixture_core_v1(p_association
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $function$;
+AS $function$
 declare
   v_count integer:=greatest(16,least(coalesce(p_association_count,48),64));
   v_season integer;
@@ -730,7 +730,7 @@ CREATE OR REPLACE FUNCTION public.run_admin_nations_e2e_fixture_v1(p_association
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $function$;
+AS $function$
 begin
   if not public.is_app_admin_v1() then
     raise exception 'Administrator access required.';
