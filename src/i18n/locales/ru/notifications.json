@@ -1206,7 +1206,13 @@
       "group": "Группа",
       "advance": "Проходят",
       "points": "Очки",
-      "squadSize": "Размер состава"
+      "squadSize": "Размер состава",
+      "raceDay": "День гонки",
+      "raceResult": "Результат гонки",
+      "eventPoints": "Очки этапа",
+      "tttPoints": "Очки командной разделки",
+      "flatPoints": "Очки равнинной гонки",
+      "mountainPoints": "Очки горной гонки"
     },
     "actions": {
       "openAssociation": "Открыть национальную ассоциацию",
@@ -1282,6 +1288,21 @@
       "title": "Чемпион World Nations",
       "message": "{{country}} выиграла World Nations Championship.",
       "extra": "Титул навсегда сохраняется в истории World Nations."
+    },
+    "values": {
+      "teamTimeTrial": "Командная гонка на время",
+      "flatRoadRace": "Равнинная шоссейная гонка",
+      "hillyMountainRoadRace": "Холмистая / горная шоссейная гонка"
+    },
+    "raceResult": {
+      "title": "{{roundLabel}} · День {{raceDay}} завершён",
+      "message": "{{country}} набрала {{eventPoints}} очков Nations в гонке «{{raceLabel}}».",
+      "extra": "Откройте гонку, чтобы увидеть полную классификацию. Таблица World Nations обновляется автоматически после всех трёх гоночных дней."
+    },
+    "finalResult": {
+      "title": "Финал World Nations завершён",
+      "message": "{{country}} заняла место {{rank}} в финале World Nations, набрав {{points}} очков.",
+      "extra": "Итоговая таблица объединяет очки командной гонки на время, равнинной и холмистой/горной гонок. Чемпион навсегда сохраняется в истории World Nations."
     }
   }
 }
