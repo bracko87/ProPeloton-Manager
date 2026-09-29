@@ -601,6 +601,15 @@ export default function App(): JSX.Element {
             />
 
             <Route
+              path="admin/nations-operations"
+              element={
+                <RequireAppAdmin>
+                  <AdminNationsOperationsPage />
+                </RequireAppAdmin>
+              }
+            />
+
+            <Route
               path="admin/migration-process"
               element={
                 <RequireAppAdmin>
