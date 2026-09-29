@@ -1366,6 +1366,8 @@ export function localizeNotificationDetailLabel(
 ): string {
   if (!shouldLocalizeNotifications()) return label
 
+  const cleanValue = label.trim()
+
   if (item && isChampionshipNotificationType(item.type_code)) {
     const groupMatch = /^Group\s+(\d+)$/i.exec(cleanValue)
     if (groupMatch) {
