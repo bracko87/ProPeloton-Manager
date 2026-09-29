@@ -245,8 +245,8 @@
       "associationOption": "{{count}} Associations",
       "resultSummary": "Tableau : {{field}} Associations · échecs {{failures}} · avertissements {{warnings}}",
       "defaultCase": "Cas de charge par défaut : 48 Associations → 6 groupes préliminaires → 32 nations → 4 groupes de Qualification finale → Finale mondiale à 16 nations.",
-      "passSummary": "La validation contractuelle E2E World Nations est réussie.",
-      "failSummary": "La validation contractuelle E2E World Nations a détecté des échecs.",
+      "passSummary": "La validation de contrat E2E World Nations a réussi.",
+      "failSummary": "La validation de contrat E2E World Nations a détecté des échecs.",
       "checks": {
         "core_config": "Configuration principale",
         "no_treasury": "Aucune trésorerie",
@@ -257,7 +257,7 @@
         "masked_overall_stability": "Stabilité du niveau global masqué",
         "points_balance": "Équilibre des points",
         "lineup_contract": "Contrat de composition",
-        "complete_field_race_gate": "Barrière de course à tableau complet",
+        "complete_field_race_gate": "Barrière de champ complet",
         "notification_lifecycle": "Cycle des notifications",
         "automatic_runtime": "Exécution automatique",
         "current_operations_health": "État opérationnel actuel"
@@ -272,9 +272,9 @@
       "temporaryManagers": "{{count}} managers temporaires",
       "rounds": "{{count}} tours",
       "groups": "{{count}} groupes",
-      "passSummary": "Le scénario de cycle avec rollback est réussi.",
-      "skippedSummary": "Le scénario de cycle avec rollback a été ignoré.",
-      "failSummary": "Le scénario de cycle avec rollback a échoué."
+      "passSummary": "Le scénario de cycle de vie avec rollback a réussi.",
+      "skippedSummary": "Le scénario avec rollback a été ignoré par sécurité.",
+      "failSummary": "Le scénario de cycle de vie avec rollback a échoué."
     },
     "stats": {
       "championCount": "Nombre de champions",
@@ -346,6 +346,6 @@
     "domestique": "Équipier",
     "leader": "Leader",
     "sprinter": "Sprinteur",
-    "tt": "Rouleur"
+    "tt": "Rouleur CLM"
   }
 }
