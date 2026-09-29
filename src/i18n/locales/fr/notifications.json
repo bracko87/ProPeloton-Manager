@@ -1124,13 +1124,13 @@
       "firstPlace": "1re place"
     },
     "actions": {
-      "openMyNationalDuty": "Ouvrir le devoir national",
+      "openMyNationalDuty": "Ouvrir le Championnat national",
       "confirmFinalParticipation": "Confirmer la participation à la finale",
       "openQualificationResults": "Ouvrir les résultats de qualification",
-      "myNationalDuty": "Mon devoir national",
+      "myNationalDuty": "Championnat national",
       "openNationalFinal": "Ouvrir la finale nationale",
       "openChampion": "Ouvrir le champion",
-      "openWorldDuty": "Ouvrir le devoir mondial",
+      "openWorldDuty": "Ouvrir le Championnat du monde",
       "confirmWorld": "Confirmer le Championnat du monde",
       "openWorldResults": "Ouvrir les résultats mondiaux",
       "openWorldChampionship": "Ouvrir le Championnat du monde"
@@ -1138,12 +1138,12 @@
     "selected": {
       "title": "{{rider}} sélectionné pour le Championnat national",
       "message": "{{rider}} a été sélectionné pour le Championnat national de {{country}}. Le Groupe de qualification {{heat}} a lieu le {{qualificationDate}}. En cas de qualification, la finale est le {{finalDate}}. Décidez avant le {{deadline}}.",
-      "extra": "Tous les frais du devoir national sont pris en charge. Ouvrez Mon devoir national pour accepter ou refuser la participation avant la date limite."
+      "extra": "Tous les frais de participation au Championnat national sont pris en charge. Ouvrez le Championnat national pour accepter ou refuser la participation avant la date limite."
     },
     "qualificationResult": {
       "title": "{{country}} – Groupe de qualification {{heat}} terminé",
       "message": "Les résultats officiels sont disponibles. Les {{places}} premiers coureurs accèdent à la finale nationale du {{finalDate}}.",
-      "extra": "Ouvrez la course de qualification pour le classement complet et le devoir national pour les prochaines étapes de vos coureurs."
+      "extra": "Ouvrez la course de qualification pour le classement complet et le Championnat national pour les prochaines étapes de vos coureurs."
     },
     "qualified": {
       "title": "{{rider}} qualifié pour la finale nationale",
