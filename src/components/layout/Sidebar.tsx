@@ -86,6 +86,12 @@ const navItems: NavItem[] = [
     icon: Flag,
   },
   {
+    to: '/dashboard/national-team',
+    labelKey: 'nationalTeam',
+    descriptionKey: 'descriptions.nationalTeam',
+    icon: Users,
+  },
+  {
     to: '/dashboard/training',
     labelKey: 'training',
     descriptionKey: 'descriptions.training',
