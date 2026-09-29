@@ -248,5 +248,87 @@
     "finished": "Carrera finalizada",
     "ready": "Carrera preparada",
     "planned": "Planificada"
+  },
+  "associationPage": {
+    "loading": "Cargando Asociación Nacional…",
+    "eyebrow": "Asociación Nacional",
+    "title": "Asociación Nacional de {{country}}",
+    "description": "Crea la Asociación Nacional de tu país gestionada por usuarios, elige al seleccionador nacional y prepara la estructura de la selección. No existe tesorería: viajes, apoyo, vehículos, equipamiento y suministros de carrera los cubre el juego.",
+    "refresh": "Actualizar",
+    "errors": {
+      "load": "No se pudo cargar la Asociación Nacional.",
+      "action": "No se pudo completar la acción."
+    },
+    "notEligible": {
+      "title": "No puedes participar",
+      "body": "Necesitas un club principal activo controlado por un jugador para participar en una Asociación Nacional."
+    },
+    "join": {
+      "noAssociationTitle": "Crear la Asociación Nacional",
+      "noAssociationBody": "Tu país todavía no tiene asociación. Al menos {{count}} mánagers de club elegibles deben apoyarla antes de que se active.",
+      "createSupport": "Crear / apoyar asociación",
+      "joined": "Ahora apoyas a tu Asociación Nacional.",
+      "existingTitle": "Unirse a la Asociación Nacional",
+      "existingBody": "Ya existe una asociación para tu país. Únete para votar, presentarte como seleccionador y participar en el sistema de selecciones.",
+      "join": "Unirse a la asociación"
+    },
+    "cards": {
+      "status": "Estado de la asociación",
+      "members": "Miembros elegibles",
+      "coach": "Seleccionador nacional",
+      "noCoach": "Sin seleccionador",
+      "operations": "Operaciones",
+      "covered": "Todo cubierto",
+      "coveredHelp": "Sin tesorería ni gastos del club. Los costes de la selección los cubre el sistema."
+    },
+    "status": {
+      "forming": "En formación",
+      "active": "Activa",
+      "inactive": "Inactiva"
+    },
+    "coachKind": {
+      "elected": "Seleccionador nacional elegido",
+      "caretaker": "Interino hasta que termine la elección",
+      "replacement": "Seleccionador sustituto"
+    },
+    "forming": {
+      "title": "La asociación se está formando",
+      "body": "Faltan {{count}} mánager(es) elegibles para activar la asociación.",
+      "ready": "Se cumplen los requisitos de activación."
+    },
+    "election": {
+      "title": "Elección del seleccionador nacional",
+      "oneVote": "Un miembro elegible = un voto. Los votos son secretos y definitivos en cada ronda.",
+      "notOpen": "No hay una elección abierta en este momento.",
+      "registration": "Registro de candidatos",
+      "round": "Ronda actual",
+      "currentWindow": "Periodo de votación",
+      "yourCandidacy": "Tu candidatura",
+      "standForCoach": "Presentarse como seleccionador",
+      "manifesto": "Programa",
+      "manifestoPlaceholder": "Explica tu enfoque para la selección, criterios de convocatoria y objetivos…",
+      "candidacySaved": "Tu candidatura se ha guardado.",
+      "candidacyWithdrawn": "Tu candidatura se ha retirado.",
+      "updateCandidacy": "Actualizar candidatura",
+      "registerCandidacy": "Enviar candidatura",
+      "withdraw": "Retirar candidatura",
+      "candidates": "Candidatos",
+      "secretBallot": "Los resultados en directo están ocultos",
+      "noCandidates": "No hay candidatos disponibles en esta ronda.",
+      "unknownClub": "Club desconocido",
+      "you": "Tú",
+      "vote": "Votar",
+      "voted": "Voto enviado",
+      "voteSaved": "Tu voto se ha enviado y no puede cambiarse.",
+      "completed": "Elección finalizada",
+      "winnerConfirmed": "Seleccionador nacional confirmado."
+    },
+    "electionStatus": {
+      "candidate_registration": "Registro de candidatos",
+      "voting": "Primera ronda",
+      "runoff": "Segunda vuelta",
+      "completed": "Finalizada",
+      "cancelled": "Cancelada"
+    }
   }
 }
