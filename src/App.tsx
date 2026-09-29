@@ -59,6 +59,8 @@ import RacePreparationPage from './pages/dashboard/RacePreparation'
 import TeamRankingPage from './pages/dashboard/TeamRanking'
 import NationalRankingPage from './pages/dashboard/NationalRanking'
 import NationalChampionshipRacePage from './pages/dashboard/NationalChampionshipRacePage'
+import NationalAssociationPage from './pages/dashboard/NationalAssociation'
+import WorldNationsPage from './pages/dashboard/WorldNations'
 import TeamProfilePage from './pages/dashboard/TeamProfilePage'
 import ClubIdentityPage from './pages/dashboard/ClubIdentityPage'
 import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
@@ -532,6 +534,21 @@ export default function App(): JSX.Element {
             />
 
             <Route
+              path="national-association"
+              element={<NationalAssociationPage />}
+            />
+
+            <Route
+              path="world-nations"
+              element={<WorldNationsPage />}
+            />
+
+            <Route
+              path="nations-competition"
+              element={<WorldNationsPage />}
+            />
+
+            <Route
               path="national-championships/:editionId/final"
               element={<NationalChampionshipRacePage />}
             />
@@ -579,6 +596,15 @@ export default function App(): JSX.Element {
               element={
                 <RequireAppAdmin>
                   <AdminRaceOperationsPage />
+                </RequireAppAdmin>
+              }
+            />
+
+            <Route
+              path="admin/nations-operations"
+              element={
+                <RequireAppAdmin>
+                  <AdminNationsOperationsPage />
                 </RequireAppAdmin>
               }
             />

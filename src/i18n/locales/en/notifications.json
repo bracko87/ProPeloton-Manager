@@ -1037,13 +1037,13 @@
       "firstPlace": "1st place"
     },
     "actions": {
-      "openMyNationalDuty": "Open My National Duty",
+      "openMyNationalDuty": "Open National Championship",
       "confirmFinalParticipation": "Confirm final participation",
       "openQualificationResults": "Open qualification results",
-      "myNationalDuty": "My National Duty",
+      "myNationalDuty": "National Championship",
       "openNationalFinal": "Open National Championship final",
       "openChampion": "Open champion",
-      "openWorldDuty": "Open World Championship duty",
+      "openWorldDuty": "Open World Championship",
       "confirmWorld": "Confirm World Championship",
       "openWorldResults": "Open World Championship results",
       "openWorldChampionship": "Open World Championship"
@@ -1051,12 +1051,12 @@
     "selected": {
       "title": "{{rider}} selected for the National Championship",
       "message": "{{rider}} has been selected for the {{country}} National Championship. Qualification Group {{heat}} is on {{qualificationDate}}. If the rider qualifies, the final is on {{finalDate}}. Decide by {{deadline}}.",
-      "extra": "All National Duty costs are covered. Open My National Duty to approve or refuse participation before the deadline."
+      "extra": "All National Championship participation costs are covered. Open National Championship to approve or refuse participation before the deadline."
     },
     "qualificationResult": {
       "title": "{{country}} National Qualification Group {{heat}} completed",
       "message": "Official results are available. The top {{places}} riders advance to the National Championship final on {{finalDate}}.",
-      "extra": "Open the qualification race for the full classification and My National Duty for your riders' next steps."
+      "extra": "Open the qualification race for the full classification and National Championship for your riders' next steps."
     },
     "qualified": {
       "title": "{{rider}} qualified for the National Championship final",
@@ -1097,6 +1097,129 @@
       "title": "{{rider}} is World Road Champion!",
       "message": "{{rider}} won the World Road Championship Grand Finale. This prestige title is now part of the rider's career honours.",
       "extra": "The World Road Champion badge is active this season and remains permanently in career history."
+    }
+  },
+  "nationalSystem": {
+    "common": {
+      "association": "National Association",
+      "electedCoach": "the elected National Coach",
+      "competitionRound": "Competition round",
+      "group": "Group"
+    },
+    "labels": {
+      "association": "Association",
+      "electionRound": "Election round",
+      "competitionRound": "Competition round",
+      "group": "Group",
+      "advance": "Advance",
+      "points": "Points",
+      "squadSize": "Squad size",
+      "raceDay": "Race day",
+      "raceResult": "Race result",
+      "eventPoints": "Event points",
+      "tttPoints": "TTT points",
+      "flatPoints": "Flat points",
+      "mountainPoints": "Mountain points"
+    },
+    "actions": {
+      "openAssociation": "Open National Association",
+      "openWorldNations": "Open World Nations",
+      "manageNationalTeam": "Manage National Team"
+    },
+    "associationActivated": {
+      "title": "{{country}} National Association activated",
+      "message": "The {{association}} is now active. Members can participate in the National Coach election and the World Nations Championship.",
+      "extra": "There is no Association treasury. National Team travel, equipment and operational costs are covered by the system."
+    },
+    "electionOpen": {
+      "title": "National Coach candidature is open",
+      "message": "Eligible members can submit their National Coach candidature before {{deadline}}.",
+      "extra": "The annual election starts in January. One eligible member has one vote."
+    },
+    "votingOpen": {
+      "title": "National Coach voting is open",
+      "message": "Round {{round}} of the National Coach election is open until {{deadline}}. Each eligible member has one final vote in this round.",
+      "extra": "Vote totals are not used to create extra voting power: every eligible member receives exactly one vote per round."
+    },
+    "runoffOpen": {
+      "title": "National Coach runoff is open",
+      "message": "No unique winner was produced. Runoff round {{round}} is open until {{deadline}}, with one new vote per eligible member.",
+      "extra": "If the runoff is tied again, another seven-day runoff is opened until a unique winner exists."
+    },
+    "coachElected": {
+      "title": "National Coach elected",
+      "message": "{{winner}} has been elected National Coach for Season {{season}}.",
+      "extra": "The National Coach controls National Team call-ups, the 10-rider squad and race-day lineups."
+    },
+    "callupReceived": {
+      "title": "{{rider}} called up for the National Team",
+      "message": "The {{association}} has called up {{rider}}. Accept or decline before {{deadline}}.",
+      "extra": "An accepted call-up can place the rider on National Duty during the confirmed competition window."
+    },
+    "callupResponse": {
+      "title": "{{rider}} call-up: {{status}}",
+      "message": "{{rider}}'s National Team call-up is now {{status}}.",
+      "extra": "The National Coach can review the updated provisional squad in the National Association page."
+    },
+    "squadConfirmed": {
+      "title": "National Team squad confirmed",
+      "message": "The final {{squadSize}}-rider National Team squad has been confirmed.",
+      "extra": "All selected riders enter National Duty for the scheduled competition window, including reserves."
+    },
+    "qualificationDraw": {
+      "title": "{{roundLabel}} draw confirmed",
+      "message": "{{country}} has been drawn into {{group}}. {{advanceCount}} nation(s) advance from this group.",
+      "extra": "Open World Nations to see the complete group, schedule and qualification path."
+    },
+    "advanced": {
+      "title": "Advanced in the World Nations Championship",
+      "message": "{{country}} has advanced from {{roundLabel}} with {{points}} points.",
+      "extra": "The next-round draw is created automatically after the previous round is completed."
+    },
+    "eliminated": {
+      "title": "World Nations Championship run ended",
+      "message": "{{country}} has been eliminated in {{roundLabel}}.",
+      "extra": "The Association remains active and can return through the normal qualification system next season."
+    },
+    "worldFinalQualified": {
+      "title": "Qualified for the World Nations Final",
+      "message": "{{country}} has qualified for the World Nations Final.",
+      "extra": "The Final is a three-day TTT, Flat and Hilly/Mountain event for the qualified nations."
+    },
+    "hostSelected": {
+      "title": "World Nations Final host selected",
+      "message": "{{country}} will host this season's World Nations Final.",
+      "extra": "Hosting provides presentation prestige only and gives no sporting advantage."
+    },
+    "champion": {
+      "title": "World Nations Champion",
+      "message": "{{country}} has won the World Nations Championship.",
+      "extra": "The title is stored permanently in World Nations history."
+    },
+    "values": {
+      "teamTimeTrial": "Team Time Trial",
+      "flatRoadRace": "Flat Road Race",
+      "hillyMountainRoadRace": "Hilly / Mountain Road Race"
+    },
+    "raceResult": {
+      "title": "{{roundLabel}} · Day {{raceDay}} completed",
+      "message": "{{country}} earned {{eventPoints}} Nations points in the {{raceLabel}}.",
+      "extra": "Open the race for the full classification. World Nations standings update automatically after all three race days."
+    },
+    "finalResult": {
+      "title": "World Nations Final completed",
+      "message": "{{country}} finished #{{rank}} in the World Nations Final with {{points}} points.",
+      "extra": "The final table combines Team Time Trial, Flat and Hilly/Mountain points. The champion is stored permanently in World Nations history."
+    },
+    "dutyStarted": {
+      "title": "National Duty started for {{rider}}",
+      "message": "{{rider}} is now on National Duty with {{association}} from {{dutyStart}} through {{dutyEnd}} and is unavailable for overlapping club races.",
+      "extra": "National Duty is reserved for National Team participation. The rider remains unavailable to the club for the complete duty window, including reserve days."
+    },
+    "dutyCompleted": {
+      "title": "National Duty completed for {{rider}}",
+      "message": "{{rider}} has completed National Duty with {{association}} and is available to the club again.",
+      "extra": "Normal health, fatigue and race-availability rules still apply after National Duty ends."
     }
   }
 }

@@ -1127,13 +1127,13 @@
       "firstPlace": "1. mjesto"
     },
     "actions": {
-      "openMyNationalDuty": "Otvori nacionalnu obvezu",
+      "openMyNationalDuty": "Otvori nacionalno prvenstvo",
       "confirmFinalParticipation": "Potvrdi nastup u finalu",
       "openQualificationResults": "Otvori rezultate kvalifikacija",
-      "myNationalDuty": "Moja nacionalna obveza",
+      "myNationalDuty": "Nacionalno prvenstvo",
       "openNationalFinal": "Otvori finale nacionalnog prvenstva",
       "openChampion": "Otvori prvaka",
-      "openWorldDuty": "Otvori obvezu za Svjetsko prvenstvo",
+      "openWorldDuty": "Otvori Svjetsko prvenstvo",
       "confirmWorld": "Potvrdi Svjetsko prvenstvo",
       "openWorldResults": "Otvori rezultate Svjetskog prvenstva",
       "openWorldChampionship": "Otvori Svjetsko prvenstvo"
@@ -1141,12 +1141,12 @@
     "selected": {
       "title": "{{rider}} je odabran za nacionalno prvenstvo",
       "message": "{{rider}} je odabran za nacionalno prvenstvo države {{country}}. Kvalifikacijska skupina {{heat}} vozi se {{qualificationDate}}. Ako se kvalificira, finale je {{finalDate}}. Odluku donesite do {{deadline}}.",
-      "extra": "Sve troškove nacionalne obveze pokriva organizator. Otvorite nacionalnu obvezu kako biste prije roka odobrili ili odbili nastup."
+      "extra": "Sve troškove nastupa na nacionalnom prvenstvu pokriva organizator. Otvorite nacionalno prvenstvo kako biste prije roka odobrili ili odbili nastup."
     },
     "qualificationResult": {
       "title": "{{country}} – završena kvalifikacijska skupina {{heat}}",
       "message": "Službeni rezultati su dostupni. Prvih {{places}} vozača prolazi u finale nacionalnog prvenstva {{finalDate}}.",
-      "extra": "Otvorite kvalifikacijsku utrku za cijelu klasifikaciju i nacionalnu obvezu za sljedeće korake vaših vozača."
+      "extra": "Otvorite kvalifikacijsku utrku za cijelu klasifikaciju i nacionalno prvenstvo za sljedeće korake vaših vozača."
     },
     "qualified": {
       "title": "{{rider}} se kvalificirao za finale nacionalnog prvenstva",
@@ -1187,6 +1187,129 @@
       "title": "{{rider}} je svjetski cestovni prvak!",
       "message": "{{rider}} je osvojio Veliko finale Svjetskog prvenstva u cestovnoj vožnji. Ova prestižna titula sada je dio povijesti karijere vozača.",
       "extra": "Značka svjetskog cestovnog prvaka aktivna je ove sezone i trajno ostaje u povijesti karijere."
+    }
+  },
+  "nationalSystem": {
+    "common": {
+      "association": "Nacionalni savez",
+      "electedCoach": "izabrani nacionalni izbornik",
+      "competitionRound": "Krug natjecanja",
+      "group": "Skupina"
+    },
+    "labels": {
+      "association": "Savez",
+      "electionRound": "Izborni krug",
+      "competitionRound": "Krug natjecanja",
+      "group": "Skupina",
+      "advance": "Prolaze",
+      "points": "Bodovi",
+      "squadSize": "Veličina sastava",
+      "raceDay": "Dan utrke",
+      "raceResult": "Rezultat utrke",
+      "eventPoints": "Bodovi događaja",
+      "tttPoints": "TTT bodovi",
+      "flatPoints": "Bodovi ravnice",
+      "mountainPoints": "Brdski bodovi"
+    },
+    "actions": {
+      "openAssociation": "Otvori Nacionalni savez",
+      "openWorldNations": "Otvori World Nations",
+      "manageNationalTeam": "Upravljaj reprezentacijom"
+    },
+    "associationActivated": {
+      "title": "Nacionalni savez države {{country}} aktiviran",
+      "message": "{{association}} je sada aktivan. Članovi mogu sudjelovati u izboru nacionalnog izbornika i World Nations Championshipu.",
+      "extra": "Savez nema riznicu. Sustav pokriva putovanja, opremu i operativne troškove reprezentacije."
+    },
+    "electionOpen": {
+      "title": "Otvorene kandidature za nacionalnog izbornika",
+      "message": "Članovi koji ispunjavaju uvjete mogu predati kandidaturu do {{deadline}}.",
+      "extra": "Godišnji izbor počinje u siječnju. Svaki član koji ispunjava uvjete ima jedan glas."
+    },
+    "votingOpen": {
+      "title": "Otvoreno glasovanje za nacionalnog izbornika",
+      "message": "Krug {{round}} otvoren je do {{deadline}}. Svaki član ima jedan konačan glas u ovom krugu.",
+      "extra": "Dodatna sredstva ne donose dodatne glasove: jedan član ima jedan glas po krugu."
+    },
+    "runoffOpen": {
+      "title": "Otvoren drugi krug izbora",
+      "message": "Nije dobiven jedinstveni pobjednik. Krug {{round}} traje do {{deadline}}, uz jedan novi glas po članu.",
+      "extra": "Ako ponovno bude izjednačeno, otvara se novi sedmodnevni krug dok se ne dobije jedinstveni pobjednik."
+    },
+    "coachElected": {
+      "title": "Nacionalni izbornik izabran",
+      "message": "{{winner}} je izabran za nacionalnog izbornika u Sezoni {{season}}.",
+      "extra": "Izbornik upravlja pozivima, sastavom od 10 vozača i postavama za dane utrke."
+    },
+    "callupReceived": {
+      "title": "{{rider}} pozvan u reprezentaciju",
+      "message": "{{association}} je pozvao {{rider}}. Prihvatite ili odbijte do {{deadline}}.",
+      "extra": "Prihvaćen poziv može staviti vozača na nacionalnu dužnost tijekom potvrđenog natjecateljskog razdoblja."
+    },
+    "callupResponse": {
+      "title": "Poziv za {{rider}}: {{status}}",
+      "message": "Poziv za reprezentaciju vozača {{rider}} sada ima status {{status}}.",
+      "extra": "Izbornik može pregledati ažurirani privremeni sastav na stranici Nacionalnog saveza."
+    },
+    "squadConfirmed": {
+      "title": "Sastav reprezentacije potvrđen",
+      "message": "Potvrđen je konačni sastav od {{squadSize}} vozača.",
+      "extra": "Svi odabrani vozači ulaze u nacionalnu dužnost tijekom natjecateljskog razdoblja, uključujući rezerve."
+    },
+    "qualificationDraw": {
+      "title": "Ždrijeb {{roundLabel}} potvrđen",
+      "message": "{{country}} je izvučen u {{group}}. {{advanceCount}} nacija prolazi iz ove skupine.",
+      "extra": "Otvorite World Nations za cijelu skupinu, raspored i put kvalifikacija."
+    },
+    "advanced": {
+      "title": "Prolaz u World Nations Championshipu",
+      "message": "{{country}} je prošao iz {{roundLabel}} s {{points}} bodova.",
+      "extra": "Ždrijeb sljedećeg kruga kreira se automatski nakon završetka prethodnog."
+    },
+    "eliminated": {
+      "title": "Nastup u World Nations Championshipu završen",
+      "message": "{{country}} je eliminiran u {{roundLabel}}.",
+      "extra": "Savez ostaje aktivan i sljedeće sezone može ponovno kroz redovni sustav kvalifikacija."
+    },
+    "worldFinalQualified": {
+      "title": "Kvalificiran za World Nations finale",
+      "message": "{{country}} se kvalificirao za World Nations finale.",
+      "extra": "Finale traje tri dana: ekipni kronometar, ravničarska utrka i brdsko/planinska utrka."
+    },
+    "hostSelected": {
+      "title": "Domaćin World Nations finala odabran",
+      "message": "{{country}} će biti domaćin ovosezonskog World Nations finala.",
+      "extra": "Domaćinstvo donosi samo prestiž i prezentaciju, bez sportske prednosti."
+    },
+    "champion": {
+      "title": "World Nations prvak",
+      "message": "{{country}} je osvojio World Nations Championship.",
+      "extra": "Naslov se trajno čuva u povijesti World Nations."
+    },
+    "values": {
+      "teamTimeTrial": "Ekipni kronometar",
+      "flatRoadRace": "Ravničarska cestovna utrka",
+      "hillyMountainRoadRace": "Brdska / planinska cestovna utrka"
+    },
+    "raceResult": {
+      "title": "{{roundLabel}} · Dan {{raceDay}} završen",
+      "message": "{{country}} je osvojio {{eventPoints}} Nations bodova u utrci {{raceLabel}}.",
+      "extra": "Otvorite utrku za puni poredak. World Nations ljestvica automatski se ažurira nakon sva tri dana utrke."
+    },
+    "finalResult": {
+      "title": "World Nations finale završeno",
+      "message": "{{country}} je završio na {{rank}}. mjestu World Nations finala s {{points}} bodova.",
+      "extra": "Završni poredak kombinira bodove ekipnog kronometra, ravničarske i brdske/planinske utrke. Prvak se trajno sprema u World Nations povijest."
+    },
+    "dutyStarted": {
+      "title": "Nacionalna dužnost započela za {{rider}}",
+      "message": "{{rider}} je na Nacionalnoj dužnosti s {{association}} od {{dutyStart}} do {{dutyEnd}} i nije dostupan za klupske utrke koje se preklapaju.",
+      "extra": "Nacionalna dužnost odnosi se isključivo na nastup za reprezentaciju. Vozač nije dostupan klubu tijekom cijelog prozora, uključujući dane kada je rezerva."
+    },
+    "dutyCompleted": {
+      "title": "Nacionalna dužnost završena za {{rider}}",
+      "message": "{{rider}} je završio Nacionalnu dužnost s {{association}} i ponovno je dostupan klubu.",
+      "extra": "Nakon završetka Nacionalne dužnosti i dalje vrijede uobičajena pravila zdravlja, umora i dostupnosti za utrke."
     }
   }
 }

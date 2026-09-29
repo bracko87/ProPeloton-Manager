@@ -1124,13 +1124,13 @@
       "firstPlace": "1re place"
     },
     "actions": {
-      "openMyNationalDuty": "Ouvrir le devoir national",
+      "openMyNationalDuty": "Ouvrir le Championnat national",
       "confirmFinalParticipation": "Confirmer la participation à la finale",
       "openQualificationResults": "Ouvrir les résultats de qualification",
-      "myNationalDuty": "Mon devoir national",
+      "myNationalDuty": "Championnat national",
       "openNationalFinal": "Ouvrir la finale nationale",
       "openChampion": "Ouvrir le champion",
-      "openWorldDuty": "Ouvrir le devoir mondial",
+      "openWorldDuty": "Ouvrir le Championnat du monde",
       "confirmWorld": "Confirmer le Championnat du monde",
       "openWorldResults": "Ouvrir les résultats mondiaux",
       "openWorldChampionship": "Ouvrir le Championnat du monde"
@@ -1138,12 +1138,12 @@
     "selected": {
       "title": "{{rider}} sélectionné pour le Championnat national",
       "message": "{{rider}} a été sélectionné pour le Championnat national de {{country}}. Le Groupe de qualification {{heat}} a lieu le {{qualificationDate}}. En cas de qualification, la finale est le {{finalDate}}. Décidez avant le {{deadline}}.",
-      "extra": "Tous les frais du devoir national sont pris en charge. Ouvrez Mon devoir national pour accepter ou refuser la participation avant la date limite."
+      "extra": "Tous les frais de participation au Championnat national sont pris en charge. Ouvrez le Championnat national pour accepter ou refuser la participation avant la date limite."
     },
     "qualificationResult": {
       "title": "{{country}} – Groupe de qualification {{heat}} terminé",
       "message": "Les résultats officiels sont disponibles. Les {{places}} premiers coureurs accèdent à la finale nationale du {{finalDate}}.",
-      "extra": "Ouvrez la course de qualification pour le classement complet et le devoir national pour les prochaines étapes de vos coureurs."
+      "extra": "Ouvrez la course de qualification pour le classement complet et le Championnat national pour les prochaines étapes de vos coureurs."
     },
     "qualified": {
       "title": "{{rider}} qualifié pour la finale nationale",
@@ -1184,6 +1184,129 @@
       "title": "{{rider}} est Champion du monde sur route !",
       "message": "{{rider}} a remporté la Grande Finale du Championnat du monde sur route. Ce titre prestigieux fait désormais partie des honneurs de carrière du coureur.",
       "extra": "Le badge de Champion du monde est actif cette saison et reste définitivement dans l'historique de carrière."
+    }
+  },
+  "nationalSystem": {
+    "common": {
+      "association": "Association nationale",
+      "electedCoach": "le sélectionneur national élu",
+      "competitionRound": "Tour de compétition",
+      "group": "Groupe"
+    },
+    "labels": {
+      "association": "Association",
+      "electionRound": "Tour électoral",
+      "competitionRound": "Tour de compétition",
+      "group": "Groupe",
+      "advance": "Qualifiés",
+      "points": "Points",
+      "squadSize": "Taille de l'effectif",
+      "raceDay": "Jour de course",
+      "raceResult": "Résultat de la course",
+      "eventPoints": "Points de l’épreuve",
+      "tttPoints": "Points CLM par équipes",
+      "flatPoints": "Points plat",
+      "mountainPoints": "Points montagne"
+    },
+    "actions": {
+      "openAssociation": "Ouvrir l'Association nationale",
+      "openWorldNations": "Ouvrir World Nations",
+      "manageNationalTeam": "Gérer l'équipe nationale"
+    },
+    "associationActivated": {
+      "title": "Association nationale de {{country}} activée",
+      "message": "L'{{association}} est maintenant active. Les membres peuvent participer à l'élection du sélectionneur et au World Nations Championship.",
+      "extra": "Il n'y a pas de trésorerie d'Association. Les déplacements, l'équipement et les frais opérationnels de l'équipe nationale sont pris en charge par le système."
+    },
+    "electionOpen": {
+      "title": "Candidatures au poste de sélectionneur ouvertes",
+      "message": "Les membres éligibles peuvent déposer leur candidature avant le {{deadline}}.",
+      "extra": "L'élection annuelle commence en janvier. Chaque membre éligible dispose d'une voix."
+    },
+    "votingOpen": {
+      "title": "Vote du sélectionneur national ouvert",
+      "message": "Le tour {{round}} est ouvert jusqu'au {{deadline}}. Chaque membre éligible dispose d'une voix définitive pour ce tour.",
+      "extra": "Aucune dépense ne donne de voix supplémentaire : une voix par membre éligible et par tour."
+    },
+    "runoffOpen": {
+      "title": "Second tour du sélectionneur ouvert",
+      "message": "Aucun vainqueur unique n'a été désigné. Le tour de barrage {{round}} est ouvert jusqu'au {{deadline}}, avec une nouvelle voix par membre éligible.",
+      "extra": "En cas de nouvelle égalité, un autre barrage de sept jours est organisé jusqu'à obtenir un vainqueur unique."
+    },
+    "coachElected": {
+      "title": "Sélectionneur national élu",
+      "message": "{{winner}} a été élu sélectionneur national pour la Saison {{season}}.",
+      "extra": "Le sélectionneur gère les convocations, l'effectif de 10 coureurs et les alignements de course."
+    },
+    "callupReceived": {
+      "title": "{{rider}} convoqué en équipe nationale",
+      "message": "L'{{association}} a convoqué {{rider}}. Acceptez ou refusez avant le {{deadline}}.",
+      "extra": "Une convocation acceptée peut placer le coureur en devoir national pendant la fenêtre de compétition confirmée."
+    },
+    "callupResponse": {
+      "title": "Convocation de {{rider}} : {{status}}",
+      "message": "La convocation en équipe nationale de {{rider}} est maintenant {{status}}.",
+      "extra": "Le sélectionneur peut consulter l'effectif provisoire mis à jour sur la page de l'Association nationale."
+    },
+    "squadConfirmed": {
+      "title": "Effectif national confirmé",
+      "message": "L'effectif final de {{squadSize}} coureurs a été confirmé.",
+      "extra": "Tous les coureurs sélectionnés sont en devoir national pendant la fenêtre de compétition, réservistes compris."
+    },
+    "qualificationDraw": {
+      "title": "Tirage de {{roundLabel}} confirmé",
+      "message": "{{country}} a été placé dans {{group}}. {{advanceCount}} nation(s) se qualifient depuis ce groupe.",
+      "extra": "Ouvrez World Nations pour voir le groupe complet, le calendrier et le parcours de qualification."
+    },
+    "advanced": {
+      "title": "Qualification au tour suivant de World Nations",
+      "message": "{{country}} s'est qualifié depuis {{roundLabel}} avec {{points}} points.",
+      "extra": "Le tirage du tour suivant est créé automatiquement après la fin du tour précédent."
+    },
+    "eliminated": {
+      "title": "Parcours World Nations terminé",
+      "message": "{{country}} a été éliminé lors de {{roundLabel}}.",
+      "extra": "L'Association reste active et pourra revenir par les qualifications normales la saison prochaine."
+    },
+    "worldFinalQualified": {
+      "title": "Qualifié pour la Finale World Nations",
+      "message": "{{country}} s'est qualifié pour la Finale World Nations.",
+      "extra": "La Finale se dispute sur trois jours : TTT, course plate et course vallonnée/montagne."
+    },
+    "hostSelected": {
+      "title": "Hôte de la Finale World Nations sélectionné",
+      "message": "{{country}} accueillera la Finale World Nations de cette saison.",
+      "extra": "L'organisation apporte du prestige et de la visibilité, sans avantage sportif."
+    },
+    "champion": {
+      "title": "Champion World Nations",
+      "message": "{{country}} a remporté le World Nations Championship.",
+      "extra": "Le titre est conservé définitivement dans l'historique World Nations."
+    },
+    "values": {
+      "teamTimeTrial": "Contre-la-montre par équipes",
+      "flatRoadRace": "Course sur route plate",
+      "hillyMountainRoadRace": "Course vallonnée / montagne"
+    },
+    "raceResult": {
+      "title": "{{roundLabel}} · Jour {{raceDay}} terminé",
+      "message": "{{country}} a marqué {{eventPoints}} points Nations lors de {{raceLabel}}.",
+      "extra": "Ouvrez la course pour voir le classement complet. Le classement World Nations est mis à jour automatiquement après les trois jours de course."
+    },
+    "finalResult": {
+      "title": "Finale World Nations terminée",
+      "message": "{{country}} a terminé {{rank}}e de la Finale World Nations avec {{points}} points.",
+      "extra": "Le classement final combine les points du contre-la-montre par équipes, de la course plate et de la course vallonnée/montagne. Le champion est conservé définitivement dans l’historique World Nations."
+    },
+    "dutyStarted": {
+      "title": "Devoir national commencé pour {{rider}}",
+      "message": "{{rider}} est en devoir national avec {{association}} du {{dutyStart}} au {{dutyEnd}} et n’est pas disponible pour les courses de club qui se chevauchent.",
+      "extra": "Le devoir national est réservé à la participation avec l’équipe nationale. Le coureur reste indisponible pour le club pendant toute la fenêtre, y compris les jours comme remplaçant."
+    },
+    "dutyCompleted": {
+      "title": "Devoir national terminé pour {{rider}}",
+      "message": "{{rider}} a terminé son devoir national avec {{association}} et est de nouveau disponible pour le club.",
+      "extra": "Les règles normales de santé, de fatigue et de disponibilité en course continuent de s’appliquer après la fin du devoir national."
     }
   }
 }

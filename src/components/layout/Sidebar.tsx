@@ -74,6 +74,7 @@ const navItems: NavItem[] = [
   },
   {
     to: '/dashboard/national-ranking',
+    aliases: ['/dashboard/national-association', '/dashboard/world-nations'],
     labelKey: 'nationalRanking',
     descriptionKey: 'descriptions.nationalRanking',
     icon: Trophy,

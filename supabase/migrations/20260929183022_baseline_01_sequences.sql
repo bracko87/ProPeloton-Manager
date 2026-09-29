@@ -1,0 +1,17 @@
+create sequence if not exists public.admin_function_definition_backup_v1_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.competition_transition_movements_v1_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.cron_guard_run_log_v1_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.db_io_monitor_snapshots_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.email_outbox_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.game_daily_tick_backlog_processor_runs_v1_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.game_daily_tick_backlog_v1_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.game_time_job_warnings_v1_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.notification_types_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.notifications_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.race_engine_access_lockdown_log_v1_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.race_engine_function_registry_v1_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.race_stage_weather_test_override_backup_20260710_backup_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.rider_contract_transition_audit_v1_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.staff_assignment_load_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.training_camp_notification_log_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
+create sequence if not exists public.user_notifications_id_seq as bigint increment by 1 minvalue 1 maxvalue 9223372036854775807 start with 1 cache 1 no cycle;
