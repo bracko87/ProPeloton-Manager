@@ -245,19 +245,19 @@
       "associationOption": "{{count}} Associazioni",
       "resultSummary": "Campo: {{field}} Associazioni · errori {{failures}} · avvisi {{warnings}}",
       "defaultCase": "Caso standard: 48 Associazioni → 6 gruppi preliminari → 32 nazioni → 4 gruppi di Qualificazione finale → Finale mondiale a 16 nazioni.",
-      "passSummary": "La validazione del contratto E2E World Nations è stata superata.",
-      "failSummary": "La validazione del contratto E2E World Nations ha rilevato errori.",
+      "passSummary": "La validazione contrattuale E2E di World Nations è riuscita.",
+      "failSummary": "La validazione contrattuale E2E di World Nations ha rilevato errori.",
       "checks": {
         "core_config": "Configurazione principale",
         "no_treasury": "Nessuna tesoreria",
         "qualificationStress": "Stress qualificazione · {{count}} Associazioni",
         "qualification_scale_100": "Scala qualificazione · 100 Associazioni",
-        "calendar_anchors": "Ancoraggi calendario",
+        "calendar_anchors": "Riferimenti calendario",
         "standard_package": "Pacchetto standard della Nazionale",
         "masked_overall_stability": "Stabilità Overall mascherato",
-        "points_balance": "Bilanciamento punti",
-        "lineup_contract": "Contratto formazione",
-        "complete_field_race_gate": "Blocco campo completo",
+        "points_balance": "Equilibrio punti",
+        "lineup_contract": "Regole formazione",
+        "complete_field_race_gate": "Blocco gara a campo completo",
         "notification_lifecycle": "Ciclo notifiche",
         "automatic_runtime": "Esecuzione automatica",
         "current_operations_health": "Stato operativo attuale"
@@ -272,9 +272,9 @@
       "temporaryManagers": "{{count}} manager temporanei",
       "rounds": "{{count}} turni",
       "groups": "{{count}} gruppi",
-      "passSummary": "Il test del ciclo di vita con rollback è stato superato.",
-      "skippedSummary": "Il test con rollback è stato saltato per sicurezza.",
-      "failSummary": "Il test del ciclo di vita con rollback non è riuscito."
+      "passSummary": "Il test del ciclo con rollback è riuscito.",
+      "skippedSummary": "Il test con rollback è stato saltato dalla regola di sicurezza.",
+      "failSummary": "Il test del ciclo con rollback non è riuscito."
     },
     "stats": {
       "championCount": "Numero campioni",
@@ -340,7 +340,7 @@
     "skipped": "Saltato"
   },
   "roles": {
-    "all_rounder": "Passista completo",
+    "all_rounder": "Tuttofare",
     "breakaway": "Attaccante",
     "climber": "Scalatore",
     "domestique": "Gregario",
