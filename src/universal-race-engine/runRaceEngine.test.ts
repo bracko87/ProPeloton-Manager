@@ -18633,6 +18633,7 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     ] as const
 
     const completedJobs = committedJobs.map((job, index) => {
+      const stageId = `world-nations-e2e-stage-${index + 1}`
       const input = {
         ...job.input,
         engine: {
@@ -18648,9 +18649,10 @@ describe('Phase 11G organic race physics and replay continuity', () => {
         stage: {
           ...job.input.stage,
           raceId: 'world-nations-e2e-race',
-          stageId: `world-nations-e2e-stage-${index + 1}`,
+          stageId,
           stageNumber: index + 1,
         },
+        points: job.input.points.map((point) => ({ ...point, stageId })),
       }
       const result = runRaceEngine(input)
 
