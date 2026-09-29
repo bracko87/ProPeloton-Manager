@@ -228,6 +228,33 @@ type CoachCallupData = {
   } | null
 }
 
+type NationsCycle = {
+  state: string
+  association_id?: string | null
+  edition_id?: string | null
+  entry_id?: string | null
+  entry_status?: string | null
+  season_number?: number | null
+  current_game_date?: string | null
+  cycle_key?: string | null
+  round_id?: string | null
+  round_index?: number | null
+  round_type?: string | null
+  round_label?: string | null
+  round_status?: string | null
+  group_id?: string | null
+  group_number?: number | null
+  group_label?: string | null
+  group_status?: string | null
+  group_entry_id?: string | null
+  group_entry_status?: string | null
+  start_date?: string | null
+  end_date?: string | null
+  day1_date?: string | null
+  day2_date?: string | null
+  day3_date?: string | null
+}
+
 function flagUrl(code?: string | null): string | null {
   const normalized = code?.trim().toLowerCase()
   return normalized && /^[a-z]{2}$/.test(normalized)
@@ -266,10 +293,14 @@ function statusClasses(status?: string | null): string {
 
 export default function NationalAssociationPage(): JSX.Element {
   const location = useLocation()
-  const cycleKey = useMemo(() => {
+  const requestedCycleKey = useMemo(() => {
     const requested = new URLSearchParams(location.search).get('cycle')?.trim()
-    return requested || 'season_main'
+    return requested || null
   }, [location.search])
+  const [nationsCycle, setNationsCycle] = useState<NationsCycle | null>(null)
+  const detectedCycleKey =
+    nationsCycle?.state === 'active_cycle' ? nationsCycle.cycle_key ?? null : null
+  const cycleKey = requestedCycleKey || detectedCycleKey || 'season_main'
   const isNationsCycle = cycleKey.startsWith('nations:')
 
   const [association, setAssociation] = useState<AssociationData | null>(null)
@@ -297,22 +328,35 @@ export default function NationalAssociationPage(): JSX.Element {
       const nextAssociation = (associationResponse.data ?? null) as AssociationData | null
       setAssociation(nextAssociation)
 
-      const [dashboardResponse, coachCallupsResponse, myCallupsResponse, packageResponse] = await Promise.all([
+      const [dashboardResponse, myCallupsResponse, packageResponse, cycleResponse] = await Promise.all([
         supabase.rpc('get_national_coach_dashboard_v1'),
-        supabase.rpc('get_my_national_coach_callups_v1', { p_cycle_key: cycleKey }),
         supabase.rpc('get_my_national_team_callups_v1'),
         supabase.rpc('get_national_team_standard_package_v1'),
+        supabase.rpc('get_my_current_nations_cycle_v1'),
       ])
 
       if (dashboardResponse.error) throw dashboardResponse.error
-      if (coachCallupsResponse.error) throw coachCallupsResponse.error
       if (myCallupsResponse.error) throw myCallupsResponse.error
       if (packageResponse.error) throw packageResponse.error
+      if (cycleResponse.error) throw cycleResponse.error
 
       const nextDashboard = (dashboardResponse.data ?? null) as CoachDashboard | null
-      const nextCoachCallups = (coachCallupsResponse.data ?? null) as CoachCallupData | null
       const nextMyCallups = (myCallupsResponse.data ?? []) as Callup[]
       const nextPackage = (packageResponse.data ?? null) as StandardPackage | null
+      const nextCycle = (cycleResponse.data ?? null) as NationsCycle | null
+      const resolvedCycleKey =
+        requestedCycleKey ||
+        (nextCycle?.state === 'active_cycle' ? nextCycle.cycle_key ?? null : null) ||
+        'season_main'
+
+      setNationsCycle(nextCycle)
+
+      const coachCallupsResponse = await supabase.rpc('get_my_national_coach_callups_v1', {
+        p_cycle_key: resolvedCycleKey,
+      })
+      if (coachCallupsResponse.error) throw coachCallupsResponse.error
+
+      const nextCoachCallups = (coachCallupsResponse.data ?? null) as CoachCallupData | null
 
       setDashboard(nextDashboard)
       setCoachCallups(nextCoachCallups)
@@ -349,7 +393,7 @@ export default function NationalAssociationPage(): JSX.Element {
   useEffect(() => {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cycleKey])
+  }, [requestedCycleKey])
 
   const perform = async (key: string, action: () => Promise<void>): Promise<void> => {
     try {
@@ -549,13 +593,6 @@ export default function NationalAssociationPage(): JSX.Element {
               </Link>
               <span className="text-xs text-slate-300">•</span>
               <Link
-                to="/dashboard/world-nations"
-                className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
-              >
-                World Nations Championship
-              </Link>
-              <span className="text-xs text-slate-300">•</span>
-              <Link
                 to="/dashboard/national-ranking?tab=history"
                 className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
               >
@@ -563,7 +600,7 @@ export default function NationalAssociationPage(): JSX.Element {
               </Link>
               <span className="text-xs text-slate-300">•</span>
               <Link
-                to="/dashboard/nations-competition"
+                to="/dashboard/world-nations"
                 className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
               >
                 World Nations Championship
