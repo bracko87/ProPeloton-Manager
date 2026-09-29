@@ -248,5 +248,87 @@
     "finished": "Rennen beendet",
     "ready": "Rennen bereit",
     "planned": "Geplant"
+  },
+  "associationPage": {
+    "loading": "Nationalverband wird geladen…",
+    "eyebrow": "Nationalverband",
+    "title": "Nationalverband {{country}}",
+    "description": "Baue den nutzergeführten Nationalverband deines Landes auf, wähle den Nationaltrainer und bereite die Nationalmannschaft vor. Es gibt keine Verbandskasse: Reisen, Betreuung, Fahrzeuge, Ausrüstung und Rennverpflegung werden vom Spiel übernommen.",
+    "refresh": "Aktualisieren",
+    "errors": {
+      "load": "Nationalverband konnte nicht geladen werden.",
+      "action": "Die Aktion konnte nicht abgeschlossen werden."
+    },
+    "notEligible": {
+      "title": "Nicht teilnahmeberechtigt",
+      "body": "Für die Teilnahme brauchst du einen aktiven, von einem Spieler geführten Hauptverein."
+    },
+    "join": {
+      "noAssociationTitle": "Nationalverband gründen",
+      "noAssociationBody": "Für dein Land gibt es noch keinen Verband. Mindestens {{count}} berechtigte Klubmanager müssen ihn unterstützen, bevor er aktiv wird.",
+      "createSupport": "Verband gründen / unterstützen",
+      "joined": "Du unterstützt jetzt deinen Nationalverband.",
+      "existingTitle": "Nationalverband beitreten",
+      "existingBody": "Für dein Land existiert bereits ein Verband. Tritt bei, um abzustimmen, als Nationaltrainer zu kandidieren und am Nationalteam-System teilzunehmen.",
+      "join": "Verband beitreten"
+    },
+    "cards": {
+      "status": "Verbandsstatus",
+      "members": "Berechtigte Mitglieder",
+      "coach": "Nationaltrainer",
+      "noCoach": "Kein Trainer gewählt",
+      "operations": "Betrieb",
+      "covered": "Vollständig abgedeckt",
+      "coveredHelp": "Keine Verbandskasse und keine Klubkosten. Der Betrieb des Nationalteams wird vom System finanziert."
+    },
+    "status": {
+      "forming": "In Gründung",
+      "active": "Aktiv",
+      "inactive": "Inaktiv"
+    },
+    "coachKind": {
+      "elected": "Gewählter Nationaltrainer",
+      "caretaker": "Interimstrainer bis zum Wahlende",
+      "replacement": "Ersatz-Nationaltrainer"
+    },
+    "forming": {
+      "title": "Verband wird gegründet",
+      "body": "Noch {{count}} berechtigte Manager werden benötigt, bevor der Verband aktiviert wird.",
+      "ready": "Die Aktivierungsanforderungen sind erfüllt."
+    },
+    "election": {
+      "title": "Nationaltrainer-Wahl",
+      "oneVote": "Ein berechtigtes Verbandsmitglied = eine Stimme. Stimmen sind geheim und pro Runde endgültig.",
+      "notOpen": "Derzeit ist keine Nationaltrainer-Wahl geöffnet.",
+      "registration": "Kandidatenregistrierung",
+      "round": "Aktuelle Runde",
+      "currentWindow": "Wahlzeitraum",
+      "yourCandidacy": "Deine Kandidatur",
+      "standForCoach": "Als Nationaltrainer kandidieren",
+      "manifesto": "Programm",
+      "manifestoPlaceholder": "Beschreibe deinen Ansatz für das Nationalteam, Auswahlprinzipien und Ziele…",
+      "candidacySaved": "Deine Kandidatur wurde gespeichert.",
+      "candidacyWithdrawn": "Deine Kandidatur wurde zurückgezogen.",
+      "updateCandidacy": "Kandidatur aktualisieren",
+      "registerCandidacy": "Kandidatur einreichen",
+      "withdraw": "Kandidatur zurückziehen",
+      "candidates": "Kandidaten",
+      "secretBallot": "Live-Stimmenzahlen sind verborgen",
+      "noCandidates": "In dieser Runde sind derzeit keine Kandidaten verfügbar.",
+      "unknownClub": "Unbekannter Klub",
+      "you": "Du",
+      "vote": "Abstimmen",
+      "voted": "Stimme abgegeben",
+      "voteSaved": "Deine Stimme wurde abgegeben und kann nicht geändert werden.",
+      "completed": "Wahl abgeschlossen",
+      "winnerConfirmed": "Nationaltrainer bestätigt."
+    },
+    "electionStatus": {
+      "candidate_registration": "Kandidatenregistrierung",
+      "voting": "Erster Wahlgang",
+      "runoff": "Stichwahl",
+      "completed": "Abgeschlossen",
+      "cancelled": "Abgesagt"
+    }
   }
 }
