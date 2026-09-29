@@ -330,5 +330,88 @@
       "completed": "Finalizada",
       "cancelled": "Cancelada"
     }
+  },
+  "nationalTeamPage": {
+    "loading": "Cargando Selección Nacional…",
+    "eyebrow": "Selección Nacional",
+    "title": "Selección Nacional de {{country}}",
+    "titleFallback": "Selección Nacional",
+    "description": "Espacio de trabajo del seleccionador nacional para convocatorias, la plantilla final de 10 ciclistas y el equipamiento nacional estandarizado.",
+    "refresh": "Actualizar",
+    "errors": {
+      "load": "No se pudo cargar la Selección Nacional.",
+      "action": "No se pudo completar la acción."
+    },
+    "cards": {
+      "coach": "Seleccionador nacional",
+      "callups": "Convocatorias provisionales",
+      "accepted": "{{count}} aceptadas",
+      "squad": "Plantilla final",
+      "notConfirmed": "No confirmada"
+    },
+    "clubCallups": {
+      "title": "Convocatorias de la Selección Nacional",
+      "description": "Tu club debe aceptar o rechazar las convocatorias oficiales antes de la fecha límite.",
+      "deadline": "Decisión antes del {{date}}",
+      "accept": "Aceptar",
+      "decline": "Rechazar"
+    },
+    "callupStatus": {
+      "pending": "Pendiente del club",
+      "accepted": "Aceptada",
+      "auto_accepted": "Aceptada automáticamente",
+      "declined": "Rechazada",
+      "withdrawn": "Retirada",
+      "not_selected": "No seleccionado",
+      "expired": "Caducada"
+    },
+    "riders": {
+      "title": "Ciclistas nacionales elegibles",
+      "description": "El seleccionador ve el Ranking Nacional, la disponibilidad y un rango Overall deliberadamente aproximado. Las habilidades ocultas exactas y el potencial siguen siendo privados.",
+      "maskedOverall": "Overall aproximado",
+      "rank": "Rango",
+      "rider": "Ciclista",
+      "club": "Club",
+      "overall": "Overall",
+      "form": "Forma",
+      "fatigue": "Fatiga",
+      "nc": "Campeonato Nacional",
+      "callup": "Convocatoria",
+      "freeAgent": "Agente libre",
+      "champion": "Campeón Nacional",
+      "finalRank": "Final #{{rank}}",
+      "sendCallup": "Convocar"
+    },
+    "squad": {
+      "title": "Plantilla final de 10 ciclistas",
+      "description": "Selecciona exactamente 10 ciclistas entre las convocatorias aceptadas. Las alineaciones de 7 para cada carrera se elegirán después desde esta plantilla.",
+      "noAccepted": "Todavía no hay convocatorias aceptadas.",
+      "confirm": "Confirmar plantilla de 10"
+    },
+    "squadStatus": {
+      "draft": "Borrador",
+      "confirmed": "Confirmada",
+      "on_duty": "Servicio nacional",
+      "completed": "Completada",
+      "cancelled": "Cancelada"
+    },
+    "package": {
+      "title": "Paquete estándar de la Selección Nacional",
+      "description": "Todos los países reciben el mismo paquete financiado por el sistema. No se puede comprar, mejorar ni sustituir por equipamiento del club.",
+      "equipment": "Modelos de equipamiento",
+      "assets": "Activos de carrera",
+      "supplies": "Suministros de carrera",
+      "level": "Nivel {{level}}"
+    },
+    "notCoach": {
+      "title": "Controles del seleccionador bloqueados",
+      "body": "Solo el seleccionador elegido o el interino actual puede seleccionar ciclistas y gestionar la plantilla. Los mánagers de club pueden seguir respondiendo arriba a las convocatorias de sus propios ciclistas."
+    },
+    "messages": {
+      "callupSent": "Convocatoria enviada a {{rider}}.",
+      "callupAccepted": "{{rider}} ha sido autorizado para la selección nacional.",
+      "callupDeclined": "{{rider}} permanecerá con el club.",
+      "squadConfirmed": "La plantilla de 10 ciclistas de la Selección Nacional está confirmada."
+    }
   }
 }
