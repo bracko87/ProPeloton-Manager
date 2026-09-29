@@ -72,6 +72,8 @@ type OperationsPayload = {
       overdue_events?: number
       invalid_confirmed_squads?: number
       invalid_lineups?: number
+      lineup_blocked_events_next_3_days?: number
+      unsafe_scheduled_events?: number
     }
   }
   edition?: {
@@ -207,6 +209,8 @@ export default function AdminNationsOperationsPage(): JSX.Element {
     ['Overdue events', details.overdue_events ?? 0],
     ['Invalid squads', details.invalid_confirmed_squads ?? 0],
     ['Invalid lineups', details.invalid_lineups ?? 0],
+    ['Lineup-blocked events · next 3 days', details.lineup_blocked_events_next_3_days ?? 0],
+    ['Unsafe scheduled events', details.unsafe_scheduled_events ?? 0],
   ] as const
 
   if (loading && !data) {
