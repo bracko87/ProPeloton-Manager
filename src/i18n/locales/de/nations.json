@@ -245,8 +245,8 @@
       "associationOption": "{{count}} Verbände",
       "resultSummary": "Feld: {{field}} Verbände · Fehler {{failures}} · Warnungen {{warnings}}",
       "defaultCase": "Standard-Stresstest: 48 Verbände → 6 Vorrundengruppen → 32 Nationen → 4 Finalqualifikationsgruppen → Weltfinale mit 16 Nationen.",
-      "passSummary": "World-Nations-E2E-Vertragstest bestanden.",
-      "failSummary": "World-Nations-E2E-Vertragstest hat Fehler gefunden.",
+      "passSummary": "World-Nations-E2E-Vertragsprüfung bestanden.",
+      "failSummary": "World-Nations-E2E-Vertragsprüfung hat Fehler gefunden.",
       "checks": {
         "core_config": "Kernkonfiguration",
         "no_treasury": "Keine Kasse",
@@ -256,10 +256,10 @@
         "standard_package": "Standardpaket der Nationalmannschaft",
         "masked_overall_stability": "Stabilität des maskierten Gesamtwerts",
         "points_balance": "Punktebalance",
-        "lineup_contract": "Aufstellungsvertrag",
+        "lineup_contract": "Aufstellungsregeln",
         "complete_field_race_gate": "Rennsperre für vollständiges Feld",
         "notification_lifecycle": "Benachrichtigungs-Lifecycle",
-        "automatic_runtime": "Automatische Laufzeit",
+        "automatic_runtime": "Automatischer Lauf",
         "current_operations_health": "Aktueller Betriebszustand"
       }
     },
@@ -273,7 +273,7 @@
       "rounds": "{{count}} Runden",
       "groups": "{{count}} Gruppen",
       "passSummary": "Rollback-Lifecycle-Fixture bestanden.",
-      "skippedSummary": "Rollback-Lifecycle-Fixture aus Sicherheitsgründen übersprungen.",
+      "skippedSummary": "Rollback-Lifecycle-Fixture wurde durch die Sicherheitsregel übersprungen.",
       "failSummary": "Rollback-Lifecycle-Fixture fehlgeschlagen."
     },
     "stats": {
@@ -342,7 +342,7 @@
   "roles": {
     "all_rounder": "Allrounder",
     "breakaway": "Ausreißer",
-    "climber": "Bergfahrer",
+    "climber": "Kletterer",
     "domestique": "Helfer",
     "leader": "Kapitän",
     "sprinter": "Sprinter",
