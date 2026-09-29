@@ -1210,6 +1210,16 @@
       "title": "World Nations Final completed",
       "message": "{{country}} finished #{{rank}} in the World Nations Final with {{points}} points.",
       "extra": "The final table combines Team Time Trial, Flat and Hilly/Mountain points. The champion is stored permanently in World Nations history."
+    },
+    "dutyStarted": {
+      "title": "National Duty started for {{rider}}",
+      "message": "{{rider}} is now on National Duty with {{association}} from {{dutyStart}} through {{dutyEnd}} and is unavailable for overlapping club races.",
+      "extra": "National Duty is reserved for National Team participation. The rider remains unavailable to the club for the complete duty window, including reserve days."
+    },
+    "dutyCompleted": {
+      "title": "National Duty completed for {{rider}}",
+      "message": "{{rider}} has completed National Duty with {{association}} and is available to the club again.",
+      "extra": "Normal health, fatigue and race-availability rules still apply after National Duty ends."
     }
   }
 }
