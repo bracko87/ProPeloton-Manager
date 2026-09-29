@@ -15,6 +15,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 
 type Candidate = {
@@ -292,6 +293,7 @@ function statusClasses(status?: string | null): string {
 }
 
 export default function NationalAssociationPage(): JSX.Element {
+  const { t } = useTranslation('nations')
   const location = useLocation()
   const requestedCycleKey = useMemo(() => {
     const requested = new URLSearchParams(location.search).get('cycle')?.trim()
@@ -384,7 +386,7 @@ export default function NationalAssociationPage(): JSX.Element {
         setLineupDrafts({})
       }
     } catch (caught: any) {
-      setError(caught?.message ?? 'Unable to load National Association data.')
+      setError(caught?.message ?? t('association.errors.load'))
     } finally {
       setLoading(false)
     }
@@ -403,7 +405,7 @@ export default function NationalAssociationPage(): JSX.Element {
       await action()
       await load()
     } catch (caught: any) {
-      setError(caught?.message ?? 'Action failed.')
+      setError(caught?.message ?? t('association.errors.action'))
     } finally {
       setBusyKey(null)
     }
@@ -413,7 +415,7 @@ export default function NationalAssociationPage(): JSX.Element {
     await perform('join', async () => {
       const { error: rpcError } = await supabase.rpc('join_my_national_association_v1')
       if (rpcError) throw rpcError
-      setMessage('You joined your country National Association.')
+      setMessage(t('association.messages.joined'))
     })
   }
 
@@ -421,7 +423,7 @@ export default function NationalAssociationPage(): JSX.Element {
     await perform('leave', async () => {
       const { error: rpcError } = await supabase.rpc('leave_my_national_association_v1')
       if (rpcError) throw rpcError
-      setMessage('You left the National Association.')
+      setMessage(t('association.messages.left'))
     })
   }
 
@@ -429,7 +431,7 @@ export default function NationalAssociationPage(): JSX.Element {
     await perform('sync-election', async () => {
       const { error: rpcError } = await supabase.rpc('sync_my_national_association_election_v1')
       if (rpcError) throw rpcError
-      setMessage('Election state updated.')
+      setMessage(t('association.messages.electionUpdated'))
     })
   }
 
@@ -443,7 +445,7 @@ export default function NationalAssociationPage(): JSX.Element {
         p_manifesto: manifesto,
       })
       if (rpcError) throw rpcError
-      setMessage('Your National Coach candidature has been registered.')
+      setMessage(t('association.messages.candidatureRegistered'))
     })
   }
 
@@ -457,7 +459,7 @@ export default function NationalAssociationPage(): JSX.Element {
         p_candidate_id: candidateId,
       })
       if (rpcError) throw rpcError
-      setMessage('Your vote has been submitted and is final for this round.')
+      setMessage(t('association.messages.voteSubmitted'))
     })
   }
 
@@ -468,7 +470,7 @@ export default function NationalAssociationPage(): JSX.Element {
         p_cycle_key: cycleKey,
       })
       if (rpcError) throw rpcError
-      setMessage(`${rider.rider_name} has been called up for the national team.`)
+      setMessage(t('association.messages.calledUp', { rider: rider.rider_name }))
     })
   }
 
@@ -495,7 +497,7 @@ export default function NationalAssociationPage(): JSX.Element {
         p_rider_ids: selectedSquad,
       })
       if (rpcError) throw rpcError
-      setMessage('The 10-rider National Team squad has been confirmed.')
+      setMessage(t('association.messages.squadConfirmed'))
     })
   }
 
@@ -511,7 +513,7 @@ export default function NationalAssociationPage(): JSX.Element {
         p_rider_ids: riderIds,
       })
       if (rpcError) throw rpcError
-      setMessage(`Race Day ${raceDay} lineup has been confirmed.`)
+      setMessage(t('association.messages.lineupConfirmed', { day: raceDay }))
     })
   }
 
@@ -553,7 +555,7 @@ export default function NationalAssociationPage(): JSX.Element {
       <div className="flex min-h-[420px] items-center justify-center">
         <div className="flex items-center gap-3 text-sm text-slate-500">
           <Loader2 className="h-5 w-5 animate-spin" />
-          Loading National Association...
+          {t('association.loading')}
         </div>
       </div>
     )
@@ -566,7 +568,7 @@ export default function NationalAssociationPage(): JSX.Element {
           {countryFlag ? (
             <img
               src={countryFlag}
-              alt={association?.country_code ?? 'Country'}
+              alt={association?.country_code ?? t('common.country')}
               className="mt-0.5 h-9 w-14 rounded border border-slate-200 object-cover"
             />
           ) : (
@@ -578,32 +580,32 @@ export default function NationalAssociationPage(): JSX.Element {
             <h2 className="text-2xl font-semibold text-slate-900">
               {association?.association_name ??
                 (association?.country_code
-                  ? `${association.country_code} National Association`
-                  : 'National Association')}
+                  ? t('association.countryTitle', { country: association.country_code })
+                  : t('association.title'))}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              National Coach elections, rider selection and National Team management.
+              {t('association.subtitle')}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Link
                 to="/dashboard/national-ranking"
                 className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
               >
-                National Ranking
+                {t('association.navRanking')}
               </Link>
               <span className="text-xs text-slate-300">•</span>
               <Link
                 to="/dashboard/national-ranking?tab=history"
                 className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
               >
-                National Championship history
+                {t('association.navChampionshipHistory')}
               </Link>
               <span className="text-xs text-slate-300">•</span>
               <Link
                 to="/dashboard/world-nations"
                 className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
               >
-                World Nations Championship
+                {t('association.navWorldNations')}
               </Link>
             </div>
           </div>
@@ -616,7 +618,7 @@ export default function NationalAssociationPage(): JSX.Element {
           className="inline-flex items-center gap-2 self-start rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('common.refresh')}
         </button>
       </div>
 
@@ -634,9 +636,9 @@ export default function NationalAssociationPage(): JSX.Element {
 
       {!association?.eligible ? (
         <section className="rounded bg-white p-5 shadow">
-          <h3 className="text-base font-semibold text-slate-900">Not currently eligible</h3>
+          <h3 className="text-base font-semibold text-slate-900">{t('association.ineligibleTitle')}</h3>
           <p className="mt-2 text-sm text-slate-600">
-            National Association membership requires an active human-controlled main club.
+            {t('association.ineligibleText')}
           </p>
         </section>
       ) : (
@@ -646,14 +648,14 @@ export default function NationalAssociationPage(): JSX.Element {
               <div className="bg-white p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <ShieldCheck className="h-4 w-4" />
-                  Association
+                  {t('association.summary.association')}
                 </div>
                 <div className="mt-2 text-lg font-semibold text-slate-900">
-                  {association.association_exists ? humanize(association.association_status) : 'Not created'}
+                  {association.association_exists ? t(`status.${association.association_status}`, { defaultValue: humanize(association.association_status) }) : t('common.notCreated')}
                 </div>
                 {association.association_status ? (
                   <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(association.association_status)}`}>
-                    {humanize(association.association_status)}
+                    {t(`status.${association.association_status}`, { defaultValue: humanize(association.association_status) })}
                   </span>
                 ) : null}
               </div>
@@ -661,39 +663,39 @@ export default function NationalAssociationPage(): JSX.Element {
               <div className="bg-white p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <Users className="h-4 w-4" />
-                  Members
+                  {t('association.summary.members')}
                 </div>
                 <div className="mt-2 text-lg font-semibold text-slate-900">
                   {association.member_count ?? 0} / {association.minimum_members ?? 5}
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
-                  Five eligible managers activate the Association.
+                  {t('association.summary.membersHint')}
                 </p>
               </div>
 
               <div className="bg-white p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <UserCheck className="h-4 w-4" />
-                  National Coach
+                  {t('association.summary.coach')}
                 </div>
                 <div className="mt-2 text-lg font-semibold text-slate-900">
-                  {association.coach?.club_name ?? 'Not elected'}
+                  {association.coach?.club_name ?? t('common.notElected')}
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
                   {association.coach
-                    ? `Season ${association.coach.season_number} · ${humanize(association.coach.term_kind)}`
-                    : 'Election required'}
+                    ? t('association.summary.coachSeason', { season: association.coach.season_number, term: humanize(association.coach.term_kind) })
+                    : t('common.electionRequired')}
                 </p>
               </div>
 
               <div className="bg-white p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <Bike className="h-4 w-4" />
-                  Operations
+                  {t('association.summary.operations')}
                 </div>
-                <div className="mt-2 text-lg font-semibold text-slate-900">Fully covered</div>
+                <div className="mt-2 text-lg font-semibold text-slate-900">{t('association.summary.fullyCovered')}</div>
                 <p className="mt-1 text-xs text-slate-500">
-                  No treasury, travel bill, staff payroll or equipment purchases.
+                  {t('association.summary.operationsHint')}
                 </p>
               </div>
             </div>
@@ -707,7 +709,7 @@ export default function NationalAssociationPage(): JSX.Element {
                   className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                 >
                   {busyKey === 'join' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
-                  Join National Association
+                  {t('association.join')}
                 </button>
               ) : (
                 <button
@@ -716,7 +718,7 @@ export default function NationalAssociationPage(): JSX.Element {
                   onClick={() => void leaveAssociation()}
                   className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                 >
-                  Leave Association
+                  {t('association.leave')}
                 </button>
               )}
             </div>
@@ -728,10 +730,10 @@ export default function NationalAssociationPage(): JSX.Element {
                 <div>
                   <div className="flex items-center gap-2">
                     <Vote className="h-5 w-5 text-yellow-600" />
-                    <h3 className="text-base font-semibold text-slate-900">National Coach Election</h3>
+                    <h3 className="text-base font-semibold text-slate-900">{t('association.election.title')}</h3>
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
-                    January 1–10 candidature · January 10–20 first vote · January 20–27 runoff · repeated 7-day runoff if still tied.
+                    {t('association.election.schedule')}
                   </p>
                 </div>
                 <button
@@ -741,7 +743,7 @@ export default function NationalAssociationPage(): JSX.Element {
                   className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                 >
                   {busyKey === 'sync-election' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                  Update election
+                  {t('association.election.update')}
                 </button>
               </div>
 
@@ -749,38 +751,38 @@ export default function NationalAssociationPage(): JSX.Element {
                 <div className="space-y-4 p-4">
                   <div className="grid gap-3 md:grid-cols-4">
                     <div className="rounded border border-slate-200 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.status')}</div>
                       <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(election.status)}`}>
                         {humanize(election.status)}
                       </span>
                     </div>
                     <div className="rounded border border-slate-200 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Round</div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.round')}</div>
                       <div className="mt-2 text-sm font-semibold text-slate-900">{election.current_round}</div>
                     </div>
                     <div className="rounded border border-slate-200 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Current window</div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.currentWindow')}</div>
                       <div className="mt-2 text-sm font-semibold text-slate-900">
                         {formatGameDate(election.current_round_open_date)} – {formatGameDate(election.current_round_close_date)}
                       </div>
                     </div>
                     <div className="rounded border border-slate-200 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Voting rule</div>
-                      <div className="mt-2 text-sm font-semibold text-slate-900">1 member = 1 vote</div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.votingRule')}</div>
+                      <div className="mt-2 text-sm font-semibold text-slate-900">{t('association.election.oneMemberOneVote')}</div>
                     </div>
                   </div>
 
                   {election.status === 'candidate_registration' && !election.my_candidate_id ? (
                     <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
                       <label className="block">
-                        <span className="text-sm font-semibold text-slate-900">Candidate manifesto</span>
+                        <span className="text-sm font-semibold text-slate-900">{t('association.election.manifesto')}</span>
                         <textarea
                           value={manifesto}
                           onChange={event => setManifesto(event.target.value)}
                           rows={4}
                           maxLength={1000}
                           className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
-                          placeholder="Explain how you would select and manage the national team..."
+                          placeholder={t('association.election.manifestoPlaceholder')}
                         />
                       </label>
                       <div className="mt-3 flex justify-end">
@@ -791,7 +793,7 @@ export default function NationalAssociationPage(): JSX.Element {
                           className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                         >
                           {busyKey === 'candidate' ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
-                          Submit candidature
+                          {t('association.election.submitCandidature')}
                         </button>
                       </div>
                     </div>
@@ -811,11 +813,11 @@ export default function NationalAssociationPage(): JSX.Element {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="font-semibold text-slate-900">
-                              {candidate.club_name ?? 'Candidate'}
-                              {candidate.is_me ? ' · You' : ''}
+                              {candidate.club_name ?? t('common.candidate')}
+                              {candidate.is_me ? ` · ${t('common.you')}` : ''}
                             </div>
                             <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
-                              {candidate.manifesto || 'No manifesto provided.'}
+                              {candidate.manifesto || t('association.election.noManifesto')}
                             </p>
                           </div>
                           {election.my_vote_candidate_id === candidate.candidate_id ? (
@@ -836,7 +838,7 @@ export default function NationalAssociationPage(): JSX.Element {
                               {busyKey === `vote:${candidate.candidate_id}`
                                 ? <Loader2 className="h-4 w-4 animate-spin" />
                                 : <Vote className="h-4 w-4" />}
-                              Vote
+                              {t('common.vote')}
                             </button>
                           </div>
                         ) : null}
@@ -846,7 +848,7 @@ export default function NationalAssociationPage(): JSX.Element {
                 </div>
               ) : (
                 <div className="p-4 text-sm text-slate-500">
-                  No election is currently available.
+                  {t('association.election.none')}
                 </div>
               )}
             </section>
@@ -857,22 +859,22 @@ export default function NationalAssociationPage(): JSX.Element {
               <div className="border-b border-slate-200 p-4">
                 <div className="flex items-center gap-2">
                   <Bike className="h-5 w-5 text-yellow-600" />
-                  <h3 className="text-base font-semibold text-slate-900">Standard National Team package</h3>
+                  <h3 className="text-base font-semibold text-slate-900">{t('association.package.title')}</h3>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
-                  Every country receives the same fixed operational package. It cannot be bought, upgraded or sold.
+                  {t('association.package.description')}
                 </p>
               </div>
 
               <div className="grid gap-4 p-4 xl:grid-cols-3">
                 <div className="rounded border border-slate-200 p-4">
-                  <div className="text-sm font-semibold text-slate-900">Race assets</div>
+                  <div className="text-sm font-semibold text-slate-900">{t('association.package.assets')}</div>
                   <div className="mt-3 space-y-2">
                     {(standardPackage?.assets ?? []).map(asset => (
                       <div key={asset.asset_key} className="flex items-center justify-between gap-3 text-sm">
                         <span className="text-slate-600">{humanize(asset.asset_key)}</span>
                         <span className="font-semibold text-slate-900">
-                          {asset.quantity} × Level {asset.asset_level}
+                          {t('association.package.assetLevel', { quantity: asset.quantity, level: asset.asset_level })}
                         </span>
                       </div>
                     ))}
@@ -880,7 +882,7 @@ export default function NationalAssociationPage(): JSX.Element {
                 </div>
 
                 <div className="rounded border border-slate-200 p-4 xl:col-span-2">
-                  <div className="text-sm font-semibold text-slate-900">Rider equipment</div>
+                  <div className="text-sm font-semibold text-slate-900">{t('association.package.equipment')}</div>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {(standardPackage?.equipment ?? []).map(item => (
                       <div
@@ -891,10 +893,10 @@ export default function NationalAssociationPage(): JSX.Element {
                           {humanize(item.equipment_category)} · {humanize(item.specialization)}
                         </div>
                         <div className="mt-1 text-sm font-semibold text-slate-900">
-                          {item.display_name ?? 'Standard model'}
+                          {item.display_name ?? t('common.standardModel')}
                         </div>
                         <div className="mt-0.5 text-xs text-slate-500">
-                          Tier {item.tier ?? '—'} · Quality {item.quality_score ?? '—'}
+                          {t('association.package.tierQuality', { tier: item.tier ?? '—', quality: item.quality_score ?? '—' })}
                         </div>
                       </div>
                     ))}
@@ -903,7 +905,7 @@ export default function NationalAssociationPage(): JSX.Element {
               </div>
 
               <div className="border-t border-slate-200 p-4">
-                <div className="text-sm font-semibold text-slate-900">Race supplies</div>
+                <div className="text-sm font-semibold text-slate-900">{t('association.package.supplies')}</div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
                   {(standardPackage?.supplies ?? []).map(supply => (
                     <div key={supply.supply_key} className="rounded bg-slate-50 px-3 py-3">
@@ -919,9 +921,9 @@ export default function NationalAssociationPage(): JSX.Element {
           {myCallups.length > 0 ? (
             <section className="rounded bg-white shadow">
               <div className="border-b border-slate-200 p-4">
-                <h3 className="text-base font-semibold text-slate-900">National Team call-ups for your riders</h3>
+                <h3 className="text-base font-semibold text-slate-900">{t('association.callups.title')}</h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  Accepting National Duty makes the rider unavailable to the club for the confirmed duty window.
+                  {t('association.callups.description')}
                 </p>
               </div>
               <div className="divide-y divide-slate-200">
@@ -930,8 +932,8 @@ export default function NationalAssociationPage(): JSX.Element {
                     <div>
                       <div className="font-semibold text-slate-900">{callup.rider_name}</div>
                       <div className="mt-1 text-sm text-slate-500">
-                        {callup.association_name ?? 'National Team'}
-                        {callup.response_deadline ? ` · Reply by ${formatGameDate(callup.response_deadline)}` : ''}
+                        {callup.association_name ?? t('association.callups.team')}
+                        {callup.response_deadline ? ` · ${t('association.callups.replyBy', { date: formatGameDate(callup.response_deadline) })}` : ''}
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -947,7 +949,7 @@ export default function NationalAssociationPage(): JSX.Element {
                             className="inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
                           >
                             <CheckCircle2 className="h-4 w-4" />
-                            Accept
+                            {t('common.accept')}
                           </button>
                           <button
                             type="button"
@@ -956,7 +958,7 @@ export default function NationalAssociationPage(): JSX.Element {
                             className="inline-flex items-center gap-1.5 rounded border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
                           >
                             <XCircle className="h-4 w-4" />
-                            Decline
+                            {t('common.decline')}
                           </button>
                         </>
                       ) : null}
@@ -973,17 +975,17 @@ export default function NationalAssociationPage(): JSX.Element {
                 <div>
                   <div className="flex items-center gap-2">
                     <Trophy className="h-5 w-5 text-yellow-600" />
-                    <h3 className="text-base font-semibold text-slate-900">National Coach workspace</h3>
+                    <h3 className="text-base font-semibold text-slate-900">{t('association.workspace.title')}</h3>
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
-                    Rider Overall is intentionally shown as a stable approximate range. Exact hidden skills and potential remain private.
-                    {isNationsCycle ? ' This squad and its three race-day lineups belong to the selected World Nations event.' : ''}
+                    {t('association.workspace.maskedOverall')}
+                    {isNationsCycle ? ` ${t('association.workspace.nationsCycleNotice')}` : ''}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {isNationsCycle ? (
                     <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
-                      World Nations event
+                      {t('association.workspace.worldNationsEvent')}
                     </span>
                   ) : null}
                   <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
@@ -997,10 +999,10 @@ export default function NationalAssociationPage(): JSX.Element {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                        Current World Nations assignment
+                        {t('association.workspace.currentAssignment')}
                       </div>
                       <div className="mt-1 text-base font-semibold text-slate-900">
-                        {nationsCycle.round_label ?? 'World Nations Championship'} · {nationsCycle.group_label ?? 'Group'}
+                        {nationsCycle.round_label ?? t('association.navWorldNations')} · {nationsCycle.group_label ?? t('common.group')}
                       </div>
                       <div className="mt-1 text-sm text-slate-600">
                         Day 1 {formatGameDate(nationsCycle.day1_date)} · Day 2 {formatGameDate(nationsCycle.day2_date)} · Day 3 {formatGameDate(nationsCycle.day3_date)}
@@ -1010,7 +1012,7 @@ export default function NationalAssociationPage(): JSX.Element {
                       to="/dashboard/world-nations"
                       className="rounded border border-sky-300 bg-white px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-100"
                     >
-                      Open World Nations
+                      {t('association.workspace.openWorldNations')}
                     </Link>
                   </div>
                 </div>
@@ -1018,22 +1020,22 @@ export default function NationalAssociationPage(): JSX.Element {
 
               <div className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-3">
                 <div className="rounded border border-slate-200 p-3">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">National Championship</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('association.workspace.nationalChampionship')}</div>
                   <div className="mt-2 text-sm font-semibold text-slate-900">
-                    {dashboard?.national_championship?.champion_name ?? 'Not completed'}
+                    {dashboard?.national_championship?.champion_name ?? t('common.notCompleted')}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    {dashboard?.national_championship?.ranking_frozen ? 'Ranking frozen' : 'Live National Ranking'}
+                    {dashboard?.national_championship?.ranking_frozen ? t('association.workspace.rankingFrozen') : t('association.workspace.liveRanking')}
                   </div>
                 </div>
                 <div className="rounded border border-slate-200 p-3">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Provisional call-ups</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('association.workspace.provisionalCallups')}</div>
                   <div className="mt-2 text-sm font-semibold text-slate-900">
                     {(coachCallups?.callups ?? []).filter(item => ['pending', 'accepted', 'auto_accepted'].includes(item.status)).length} / 15
                   </div>
                 </div>
                 <div className="rounded border border-slate-200 p-3">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Final squad</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('association.workspace.finalSquad')}</div>
                   <div className="mt-2 text-sm font-semibold text-slate-900">
                     {coachCallups?.squad?.members?.length ?? selectedSquad.length} / 10 riders
                   </div>
@@ -1043,15 +1045,15 @@ export default function NationalAssociationPage(): JSX.Element {
               <div className="p-4">
                 <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <h4 className="font-semibold text-slate-900">Eligible riders</h4>
+                    <h4 className="font-semibold text-slate-900">{t('association.workspace.eligibleRiders')}</h4>
                     <p className="mt-1 text-xs text-slate-500">
-                      National Ranking, Championship result, form, fatigue and approximate Overall are available for selection.
+                      {t('association.workspace.eligibleHelp')}
                     </p>
                   </div>
                   <input
                     value={riderSearch}
                     onChange={event => setRiderSearch(event.target.value)}
-                    placeholder="Search rider, club or role..."
+                    placeholder={t('association.workspace.searchPlaceholder')}
                     className="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-yellow-500 md:w-72"
                   />
                 </div>
@@ -1060,15 +1062,15 @@ export default function NationalAssociationPage(): JSX.Element {
                   <table className="min-w-[1080px] w-full text-sm">
                     <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <tr>
-                        <th className="px-3 py-2.5">Rank</th>
-                        <th className="px-3 py-2.5">Rider</th>
-                        <th className="px-3 py-2.5">Club</th>
-                        <th className="px-3 py-2.5">Overall</th>
-                        <th className="px-3 py-2.5">NC result</th>
-                        <th className="px-3 py-2.5">Fatigue</th>
-                        <th className="px-3 py-2.5">Availability</th>
-                        <th className="px-3 py-2.5">Call-up</th>
-                        <th className="px-3 py-2.5">Final 10</th>
+                        <th className="px-3 py-2.5">{t('common.rank')}</th>
+                        <th className="px-3 py-2.5">{t('common.rider')}</th>
+                        <th className="px-3 py-2.5">{t('common.club')}</th>
+                        <th className="px-3 py-2.5">{t('common.overall')}</th>
+                        <th className="px-3 py-2.5">{t('association.workspace.ncResult')}</th>
+                        <th className="px-3 py-2.5">{t('common.fatigue')}</th>
+                        <th className="px-3 py-2.5">{t('common.availability')}</th>
+                        <th className="px-3 py-2.5">{t('association.workspace.callup')}</th>
+                        <th className="px-3 py-2.5">{t('association.workspace.final10')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
@@ -1078,7 +1080,7 @@ export default function NationalAssociationPage(): JSX.Element {
                         const selected = selectedSquad.includes(rider.rider_id)
                         const finalRank = rider.national_championship?.final_rank
                         const ncLabel = rider.national_championship?.is_current_champion
-                          ? 'Champion'
+                          ? t('common.champion')
                           : finalRank
                             ? `#${finalRank}`
                             : '—'
@@ -1099,7 +1101,7 @@ export default function NationalAssociationPage(): JSX.Element {
                                 {humanize(rider.role)} · {rider.age_years ?? '—'} yrs
                               </div>
                             </td>
-                            <td className="px-3 py-3 text-slate-600">{rider.club_name ?? 'Free Agent'}</td>
+                            <td className="px-3 py-3 text-slate-600">{rider.club_name ?? t('common.freeAgent')}</td>
                             <td className="px-3 py-3 font-semibold text-slate-900">
                               {rider.overall_range
                                 ? `${rider.overall_range.min}–${rider.overall_range.max}`
@@ -1128,7 +1130,7 @@ export default function NationalAssociationPage(): JSX.Element {
                                   onClick={() => void sendCallup(rider)}
                                   className="rounded bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                                 >
-                                  Call up
+                                  {t('association.workspace.callUp')}
                                 </button>
                               )}
                             </td>
@@ -1159,7 +1161,7 @@ export default function NationalAssociationPage(): JSX.Element {
                 {!coachCallups?.squad ? (
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded border border-slate-200 bg-slate-50 p-3">
                     <div className="text-sm text-slate-600">
-                      Select exactly <strong>10 accepted riders</strong>. Current selection: <strong>{selectedSquad.length}/10</strong>.
+                      {t('association.workspace.selectTenPrefix')} <strong>{t('association.workspace.tenAccepted')}</strong>. {t('association.workspace.currentSelection')} <strong>{selectedSquad.length}/10</strong>.
                     </div>
                     <button
                       type="button"
@@ -1168,17 +1170,17 @@ export default function NationalAssociationPage(): JSX.Element {
                       className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                     >
                       {busyKey === 'confirm-squad' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-                      Confirm final 10
+                      {t('association.workspace.confirmFinalTen')}
                     </button>
                   </div>
                 ) : (
                   <div className="mt-4 rounded border border-emerald-200 bg-emerald-50 p-4">
                     <div className="flex items-center gap-2 font-semibold text-emerald-900">
                       <CheckCircle2 className="h-5 w-5" />
-                      National Team squad confirmed
+                      {t('association.workspace.squadConfirmed')}
                     </div>
                     <p className="mt-1 text-sm text-emerald-800">
-                      {coachCallups.squad.members?.length ?? 10} riders are in the confirmed squad.
+                      {t('association.workspace.squadConfirmedCount', { count: coachCallups.squad.members?.length ?? 10 })}
                     </p>
                   </div>
                 )}
@@ -1191,18 +1193,18 @@ export default function NationalAssociationPage(): JSX.Element {
               <div className="border-b border-slate-200 p-4">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-5 w-5 text-yellow-600" />
-                  <h3 className="text-base font-semibold text-slate-900">Three-day National Team lineups</h3>
+                  <h3 className="text-base font-semibold text-slate-900">{t('association.lineups.title')}</h3>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
-                  Select exactly 7 riders per race day. A maximum of 3 changes is allowed between consecutive days.
+                  {t('association.lineups.description')}
                 </p>
               </div>
 
               <div className="grid gap-4 p-4 xl:grid-cols-3">
                 {[
-                  [1, 'Team Time Trial'],
-                  [2, 'Flat Road Race'],
-                  [3, 'Hilly / Mountain Road Race'],
+                  [1, t('raceTypes.teamTimeTrial')],
+                  [2, t('raceTypes.flatRoadRace')],
+                  [3, t('raceTypes.hillyMountainRoadRace')],
                 ].map(([dayValue, label]) => {
                   const day = Number(dayValue)
                   const selected = lineupDrafts[day] ?? []
@@ -1213,13 +1215,13 @@ export default function NationalAssociationPage(): JSX.Element {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            Race Day {day}
+                            {t('common.raceDay', { day })}
                           </div>
                           <div className="mt-1 font-semibold text-slate-900">{label}</div>
                         </div>
                         {saved ? (
                           <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">
-                            Confirmed
+                            {t('common.confirmed')}
                           </span>
                         ) : null}
                       </div>
@@ -1260,7 +1262,7 @@ export default function NationalAssociationPage(): JSX.Element {
                       </div>
 
                       <div className="mt-4 flex items-center justify-between gap-3">
-                        <span className="text-sm text-slate-600">{selected.length}/7 riders</span>
+                        <span className="text-sm text-slate-600">{t('common.riderCount', { count: selected.length, total: 7 })}</span>
                         <button
                           type="button"
                           disabled={busyKey === `lineup:${day}` || selected.length !== 7}
@@ -1270,7 +1272,7 @@ export default function NationalAssociationPage(): JSX.Element {
                           {busyKey === `lineup:${day}`
                             ? <Loader2 className="h-4 w-4 animate-spin" />
                             : <CheckCircle2 className="h-4 w-4" />}
-                          Confirm
+                          {t('common.confirm')}
                         </button>
                       </div>
                     </div>
@@ -1284,10 +1286,10 @@ export default function NationalAssociationPage(): JSX.Element {
             <section className="rounded border border-slate-200 bg-white p-5 shadow">
               <div className="flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-slate-600" />
-                <h3 className="font-semibold text-slate-900">National Coach appointed</h3>
+                <h3 className="font-semibold text-slate-900">{t('association.coachAppointed')}</h3>
               </div>
               <p className="mt-2 text-sm text-slate-600">
-                {association.coach.club_name ?? 'The elected manager'} controls National Team call-ups, the 10-rider squad and race lineups.
+                {t('association.coachAppointedHelp', { manager: association.coach.club_name ?? t('association.electedManager') })}
               </p>
             </section>
           ) : null}
