@@ -1571,10 +1571,357 @@ function isSportDirectorAdvisoryType(
 
 
 /* -------------------------------------------------------------------------- */
+/* National Association / National Team / World Nations                      */
+/* -------------------------------------------------------------------------- */
+
+function getNationalSystemCountryCode(item: NotificationItem): string | null {
+  const payload = getPayload(item)
+  return pickFirstString(payload, [
+    'country_code',
+    'host_country_code',
+    'champion_country_code',
+  ])
+}
+
+function getNationalSystemFlagImage(item: NotificationItem): string | null {
+  const code = getNationalSystemCountryCode(item)
+  return code && /^[a-z]{2}$/i.test(code)
+    ? `https://flagcdn.com/w160/${code.toLowerCase()}.png`
+    : null
+}
+
+function getNationalSystemCountryName(item: NotificationItem): string | null {
+  return formatCountryName(getNationalSystemCountryCode(item))
+}
+
+function getNationalSystemStatus(item: NotificationItem): string | null {
+  const status = pickFirstString(getPayload(item), ['status'])
+  return status ? formatLabel(status) : null
+}
+
+/* -------------------------------------------------------------------------- */
 /* Template Registry                                                          */
 /* -------------------------------------------------------------------------- */
 
 export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
+
+  NATIONAL_ASSOCIATION_ACTIVATED: {
+    defaultTitle: 'National Association activated',
+    defaultMessage: 'Your National Association is now active.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'Your National Association is now active.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Association', pickFirstString(payload, ['association_name'])),
+        detailRow('Country', getNationalSystemCountryName(item)),
+      ])
+    },
+    getExtraText: () =>
+      'There is no Association treasury. National Team travel, equipment and operational costs are covered by the system.',
+    actions: [
+      withFallbackHref('Open National Association', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_COACH_ELECTION_OPEN: {
+    defaultTitle: 'National Coach candidature is open',
+    defaultMessage: 'Eligible Association members can submit their National Coach candidature.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'National Coach candidature is open.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow(
+          'Season',
+          (() => {
+            const season = pickFirstNumber(payload, ['season_number'])
+            return season !== null ? `Season ${season}` : null
+          })()
+        ),
+        detailRow(
+          'Decision deadline',
+          formatContractSeasonLabel(pickFirstString(payload, ['registration_close_date']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'The annual National Coach election starts in January. Every eligible Association member has one vote.',
+    actions: [
+      withFallbackHref('Open National Association', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_COACH_VOTING_OPEN: {
+    defaultTitle: 'National Coach voting is open',
+    defaultMessage: 'The current National Coach election round is open for voting.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'National Coach voting is open.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const round = pickFirstNumber(payload, ['round_number'])
+      return compactRows([
+        detailRow('Election round', round !== null ? String(round) : null),
+        detailRow(
+          'Decision deadline',
+          formatContractSeasonLabel(pickFirstString(payload, ['round_close_date']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'Each eligible Association member has exactly one final vote in this election round.',
+    actions: [
+      withFallbackHref('Open National Association', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_COACH_RUNOFF_OPEN: {
+    defaultTitle: 'National Coach runoff is open',
+    defaultMessage: 'No unique winner was produced, so a new runoff round is open.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'A National Coach runoff is now open.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const round = pickFirstNumber(payload, ['round_number'])
+      return compactRows([
+        detailRow('Election round', round !== null ? String(round) : null),
+        detailRow(
+          'Decision deadline',
+          formatContractSeasonLabel(pickFirstString(payload, ['round_close_date']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'If the vote remains tied, another seven-day runoff is opened until one candidate has a unique lead.',
+    actions: [
+      withFallbackHref('Open National Association', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_COACH_ELECTED: {
+    defaultTitle: 'National Coach elected',
+    defaultMessage: 'A National Coach has been elected for the current season.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'A National Coach has been elected.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const season = pickFirstNumber(payload, ['season_number'])
+      return compactRows([
+        detailRow('Association', pickFirstString(payload, ['association_name'])),
+        detailRow('Club', pickFirstString(payload, ['winner_name', 'winner_club_name'])),
+        detailRow('Season', season !== null ? `Season ${season}` : null),
+      ])
+    },
+    getExtraText: () =>
+      'The National Coach manages National Team call-ups, the 10-rider squad and the seven-rider race-day lineups.',
+    actions: [
+      withFallbackHref('Open National Association', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_TEAM_CALLUP_RECEIVED: {
+    defaultTitle: 'National Team call-up received',
+    defaultMessage: 'One of your riders has been called up for the National Team.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'One of your riders has received a National Team call-up.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Rider', getPreferredRiderName(item)),
+        detailRow('Association', pickFirstString(payload, ['association_name'])),
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow(
+          'Decision deadline',
+          formatContractSeasonLabel(pickFirstString(payload, ['response_deadline']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'Accepting the call-up can place this rider on National Duty for the confirmed competition window.',
+    actions: [
+      withFallbackHref('Manage National Team', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_TEAM_CALLUP_RESPONSE: {
+    defaultTitle: 'National Team call-up response',
+    defaultMessage: 'A National Team call-up has received a club response.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'A National Team call-up status has changed.',
+    getDetailRows: (item) => compactRows([
+      detailRow('Rider', getPreferredRiderName(item)),
+      detailRow('Status', getNationalSystemStatus(item)),
+    ]),
+    getExtraText: () =>
+      'Review the provisional National Team squad before confirming the final 10 riders.',
+    actions: [
+      withFallbackHref('Manage National Team', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_TEAM_SQUAD_CONFIRMED: {
+    defaultTitle: 'National Team squad confirmed',
+    defaultMessage: 'The final National Team squad has been confirmed.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'The final National Team squad is confirmed.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const size = pickFirstNumber(payload, ['squad_size'])
+      return compactRows([
+        detailRow('Squad size', size !== null ? String(size) : '10'),
+        detailRow('Country', getNationalSystemCountryName(item)),
+      ])
+    },
+    getExtraText: () =>
+      'All selected riders enter National Duty for the scheduled competition window, including reserves.',
+    actions: [
+      withFallbackHref('Manage National Team', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONS_QUALIFICATION_DRAW: {
+    defaultTitle: 'World Nations draw confirmed',
+    defaultMessage: 'The World Nations qualification draw has been confirmed.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'The World Nations draw is confirmed.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const advance = pickFirstNumber(payload, ['advance_count'])
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Competition round', pickFirstString(payload, ['round_label'])),
+        detailRow('Group', pickFirstString(payload, ['group_label'])),
+        detailRow('Advance', advance !== null ? String(advance) : null),
+      ])
+    },
+    getExtraText: () =>
+      'Open World Nations to see the full group, competition dates and qualification path.',
+    actions: [
+      withFallbackHref('Open World Nations', '/dashboard/world-nations'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONS_ADVANCED: {
+    defaultTitle: 'Advanced in the World Nations Championship',
+    defaultMessage: 'Your nation has advanced to the next World Nations round.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'Your nation has advanced in the World Nations Championship.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const points = pickFirstNumber(payload, ['total_points'])
+      const rank = pickFirstNumber(payload, ['final_group_rank'])
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Competition round', pickFirstString(payload, ['round_label'])),
+        detailRow('Group', pickFirstString(payload, ['group_label'])),
+        detailRow('Result', rank !== null ? `#${rank}` : null),
+        detailRow('Points', points !== null ? String(points) : null),
+      ])
+    },
+    getExtraText: () =>
+      'The next-round draw is created automatically after the previous round is completed.',
+    actions: [
+      withFallbackHref('Open World Nations', '/dashboard/world-nations'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONS_ELIMINATED: {
+    defaultTitle: 'World Nations Championship run ended',
+    defaultMessage: 'Your nation has been eliminated from the World Nations Championship.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'Your nation has been eliminated from the World Nations Championship.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const points = pickFirstNumber(payload, ['total_points'])
+      const rank = pickFirstNumber(payload, ['final_group_rank'])
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Competition round', pickFirstString(payload, ['round_label'])),
+        detailRow('Result', rank !== null ? `#${rank}` : null),
+        detailRow('Points', points !== null ? String(points) : null),
+      ])
+    },
+    getExtraText: () =>
+      'The Association remains active and can return through the normal qualification system next season.',
+    actions: [
+      withFallbackHref('Open World Nations', '/dashboard/world-nations'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONS_WORLD_FINAL_QUALIFIED: {
+    defaultTitle: 'Qualified for the World Nations Final',
+    defaultMessage: 'Your nation has qualified for the World Nations Final.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'Your nation has qualified for the World Nations Final.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const points = pickFirstNumber(payload, ['total_points'])
+      const rank = pickFirstNumber(payload, ['final_group_rank'])
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Group', pickFirstString(payload, ['group_label'])),
+        detailRow('Result', rank !== null ? `#${rank}` : null),
+        detailRow('Points', points !== null ? String(points) : null),
+      ])
+    },
+    getExtraText: () =>
+      'The World Nations Final is a three-day Team Time Trial, Flat and Hilly/Mountain event.',
+    actions: [
+      withFallbackHref('Open World Nations', '/dashboard/world-nations'),
+      withFallbackHref('Manage National Team', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONS_HOST_SELECTED: {
+    defaultTitle: 'World Nations Final host selected',
+    defaultMessage: 'The host nation for the World Nations Final has been selected.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'The World Nations Final host has been selected.',
+    getDetailRows: (item) => compactRows([
+      detailRow('Country', getNationalSystemCountryName(item)),
+    ]),
+    getExtraText: () =>
+      'Hosting provides presentation prestige only and gives no sporting advantage.',
+    actions: [
+      withFallbackHref('Open World Nations', '/dashboard/world-nations'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONS_CHAMPION: {
+    defaultTitle: 'World Nations Champion',
+    defaultMessage: 'The World Nations Championship has a new champion.',
+    getImageSrc: getNationalSystemFlagImage,
+    getIntroText: (item) => item.message || 'The World Nations Championship has been completed.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const season = pickFirstNumber(payload, ['season_number'])
+      return compactRows([
+        detailRow('Champion', getNationalSystemCountryName(item)),
+        detailRow('Season', season !== null ? `Season ${season}` : null),
+      ])
+    },
+    getExtraText: () =>
+      'The World Nations Championship title is stored permanently in competition history.',
+    actions: [
+      withFallbackHref('Open World Nations', '/dashboard/world-nations'),
+      MARK_READ_ACTION,
+    ],
+  },
+
 
   NATIONAL_CHAMPIONSHIP_SELECTED: {
     defaultTitle: 'Selected for National Championship',
