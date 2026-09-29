@@ -330,5 +330,88 @@
       "completed": "Completed",
       "cancelled": "Cancelled"
     }
+  },
+  "nationalTeamPage": {
+    "loading": "Loading National Team…",
+    "eyebrow": "National Team",
+    "title": "{{country}} National Team",
+    "titleFallback": "National Team",
+    "description": "National Coach workspace for rider call-ups, the 10-rider squad and standardized national-team equipment.",
+    "refresh": "Refresh",
+    "errors": {
+      "load": "Failed to load National Team.",
+      "action": "The action could not be completed."
+    },
+    "cards": {
+      "coach": "National Coach",
+      "callups": "Provisional call-ups",
+      "accepted": "{{count}} accepted",
+      "squad": "Final squad",
+      "notConfirmed": "Not confirmed"
+    },
+    "clubCallups": {
+      "title": "National Team call-ups",
+      "description": "Your club must accept or decline official national-team call-ups before the deadline.",
+      "deadline": "Decision by {{date}}",
+      "accept": "Accept",
+      "decline": "Decline"
+    },
+    "callupStatus": {
+      "pending": "Awaiting club decision",
+      "accepted": "Accepted",
+      "auto_accepted": "Automatically accepted",
+      "declined": "Declined",
+      "withdrawn": "Withdrawn",
+      "not_selected": "Not selected",
+      "expired": "Expired"
+    },
+    "riders": {
+      "title": "Eligible national riders",
+      "description": "The coach sees National Ranking, availability and a deliberately masked Overall range. Exact hidden skills and potential remain private.",
+      "maskedOverall": "Overall is approximate",
+      "rank": "Rank",
+      "rider": "Rider",
+      "club": "Club",
+      "overall": "Overall",
+      "form": "Form",
+      "fatigue": "Fatigue",
+      "nc": "National Championship",
+      "callup": "Call-up",
+      "freeAgent": "Free Agent",
+      "champion": "National Champion",
+      "finalRank": "Final #{{rank}}",
+      "sendCallup": "Call up"
+    },
+    "squad": {
+      "title": "Final 10-rider squad",
+      "description": "Select exactly 10 riders from accepted call-ups. The 7-rider race lineups will be chosen later from this squad.",
+      "noAccepted": "No accepted call-ups are available yet.",
+      "confirm": "Confirm 10-rider squad"
+    },
+    "squadStatus": {
+      "draft": "Draft",
+      "confirmed": "Confirmed",
+      "on_duty": "National Duty",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "package": {
+      "title": "Standard National Team package",
+      "description": "Every country receives the same system-funded package. It cannot be purchased, upgraded or replaced with club equipment.",
+      "equipment": "Equipment models",
+      "assets": "Race assets",
+      "supplies": "Race supplies",
+      "level": "Level {{level}}"
+    },
+    "notCoach": {
+      "title": "National Coach controls are locked",
+      "body": "Only the elected National Coach or current caretaker can select riders and manage the national squad. Club managers can still answer call-ups for their own riders above."
+    },
+    "messages": {
+      "callupSent": "Call-up sent to {{rider}}.",
+      "callupAccepted": "{{rider}} has been accepted for national-team selection.",
+      "callupDeclined": "{{rider}} will remain with the club.",
+      "squadConfirmed": "The 10-rider National Team squad is confirmed."
+    }
   }
 }
