@@ -254,7 +254,7 @@ function RoundCard({
           </p>
         </div>
         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses(round.status)}`}>
-          {humanize(round.status)}
+          {t(`status.${round.status}`, { defaultValue: humanize(round.status) })}
         </span>
       </div>
 
@@ -288,7 +288,7 @@ function RoundCard({
                   </Link>
                 ) : null}
                 <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusClasses(group.status)}`}>
-                  {humanize(group.status)}
+                  {t(`status.${group.status}`, { defaultValue: humanize(group.status) })}
                 </span>
               </div>
             </div>
@@ -305,7 +305,7 @@ function RoundCard({
                     </div>
                     <div className="mt-1 flex items-center justify-between gap-2">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses(event.status)}`}>
-                        {humanize(event.status)}
+                        {t(`status.${event.status}`, { defaultValue: humanize(event.status) })}
                       </span>
                       {event.race_id ? (
                         <Link
@@ -350,7 +350,7 @@ function RoundCard({
                         <td className="px-3 py-2.5 text-right font-semibold text-slate-900">{entry.total_points}</td>
                         <td className="px-3 py-2.5">
                           <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusClasses(entry.status)}`}>
-                            {humanize(entry.status)}
+                            {t(`status.${entry.status}`, { defaultValue: humanize(entry.status) })}
                           </span>
                         </td>
                       </tr>
@@ -360,7 +360,7 @@ function RoundCard({
               </div>
             ) : (
               <div className="px-3 py-5 text-sm text-slate-500">
-                Draw not completed yet.
+                {t('world.drawPending')}
               </div>
             )}
           </div>
