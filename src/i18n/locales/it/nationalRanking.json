@@ -29,13 +29,13 @@
     "hostPendingHelp": "Il campionato attende finché non sono disponibili due percorsi adatti."
   },
   "duty": {
-    "title": "Il mio impegno nazionale",
-    "description": "Questi corridori vengono iscritti automaticamente. Gestisci solo equipaggiamento e strategia individuale di ciascuno.",
-    "locked": "Gara individuale — nessuna tattica di squadra. Staff, mezzi e rifornimenti del club non sono disponibili.",
+    "title": "Partecipazione ai campionati",
+    "description": "Questi corridori sono iscritti automaticamente agli eventi del Campionato Nazionale o Mondiale. Gestisci qui partecipazione, attrezzatura e strategia individuale.",
+    "locked": "Gara individuale di campionato — niente tattiche di squadra. Staff, mezzi e scorte del club non sono disponibili.",
     "directQualifier": "Qualificato diretto",
     "qualificationHeat": "Gruppo di qualificazione {{number}}",
-    "noPlan": "Al momento non è disponibile un piano modificabile per questo corridore.",
-    "empty": "Nessuno dei tuoi corridori ha un invito attivo per l'impegno nazionale in questo campionato."
+    "noPlan": "Al momento non c'è un piano modificabile di partecipazione al campionato per questo corridore.",
+    "empty": "Nessuno dei tuoi corridori ha attualmente una partecipazione attiva al Campionato Nazionale o Mondiale."
   },
   "organizer": {
     "title": "Pacchetto gara dell’organizzatore",
@@ -183,7 +183,7 @@
   },
   "tabs": {
     "ranking": "Classifica",
-    "duty": "Il mio impegno nazionale",
+    "duty": "Partecipazione ai campionati",
     "history": "Storico"
   },
   "info": {
