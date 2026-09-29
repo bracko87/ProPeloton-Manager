@@ -194,7 +194,7 @@
       "load": "World Nations Championship konnte nicht geladen werden.",
       "hostSubmit": "Gastgeberbewerbung konnte nicht eingereicht werden."
     },
-    "drawPending": "Die Auslosung ist noch nicht abgeschlossen."
+    "drawPending": "Auslosung noch nicht abgeschlossen."
   },
   "admin": {
     "loading": "World-Nations-Betrieb wird geladen...",
@@ -245,8 +245,8 @@
       "associationOption": "{{count}} Verbände",
       "resultSummary": "Feld: {{field}} Verbände · Fehler {{failures}} · Warnungen {{warnings}}",
       "defaultCase": "Standard-Stresstest: 48 Verbände → 6 Vorrundengruppen → 32 Nationen → 4 Finalqualifikationsgruppen → Weltfinale mit 16 Nationen.",
-      "passSummary": "Die World-Nations-E2E-Vertragsprüfung wurde bestanden.",
-      "failSummary": "Die World-Nations-E2E-Vertragsprüfung hat Fehler gefunden.",
+      "passSummary": "World-Nations-E2E-Vertragstest bestanden.",
+      "failSummary": "World-Nations-E2E-Vertragstest hat Fehler gefunden.",
       "checks": {
         "core_config": "Kernkonfiguration",
         "no_treasury": "Keine Kasse",
@@ -259,7 +259,7 @@
         "lineup_contract": "Aufstellungsvertrag",
         "complete_field_race_gate": "Rennsperre für vollständiges Feld",
         "notification_lifecycle": "Benachrichtigungs-Lifecycle",
-        "automatic_runtime": "Automatischer Lauf",
+        "automatic_runtime": "Automatische Laufzeit",
         "current_operations_health": "Aktueller Betriebszustand"
       }
     },
@@ -273,7 +273,7 @@
       "rounds": "{{count}} Runden",
       "groups": "{{count}} Gruppen",
       "passSummary": "Rollback-Lifecycle-Fixture bestanden.",
-      "skippedSummary": "Rollback-Lifecycle-Fixture wurde übersprungen.",
+      "skippedSummary": "Rollback-Lifecycle-Fixture aus Sicherheitsgründen übersprungen.",
       "failSummary": "Rollback-Lifecycle-Fixture fehlgeschlagen."
     },
     "stats": {
@@ -342,7 +342,7 @@
   "roles": {
     "all_rounder": "Allrounder",
     "breakaway": "Ausreißer",
-    "climber": "Kletterer",
+    "climber": "Bergfahrer",
     "domestique": "Helfer",
     "leader": "Kapitän",
     "sprinter": "Sprinter",
