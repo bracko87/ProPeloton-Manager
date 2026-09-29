@@ -330,5 +330,88 @@
       "completed": "Abgeschlossen",
       "cancelled": "Abgesagt"
     }
+  },
+  "nationalTeamPage": {
+    "loading": "Nationalteam wird geladen…",
+    "eyebrow": "Nationalteam",
+    "title": "Nationalteam {{country}}",
+    "titleFallback": "Nationalteam",
+    "description": "Arbeitsbereich des Nationaltrainers für Nominierungen, den 10-Fahrer-Kader und die standardisierte Nationalteam-Ausrüstung.",
+    "refresh": "Aktualisieren",
+    "errors": {
+      "load": "Nationalteam konnte nicht geladen werden.",
+      "action": "Die Aktion konnte nicht abgeschlossen werden."
+    },
+    "cards": {
+      "coach": "Nationaltrainer",
+      "callups": "Vorläufige Nominierungen",
+      "accepted": "{{count}} angenommen",
+      "squad": "Endgültiger Kader",
+      "notConfirmed": "Nicht bestätigt"
+    },
+    "clubCallups": {
+      "title": "Nationalteam-Nominierungen",
+      "description": "Dein Klub muss offizielle Nominierungen vor der Frist annehmen oder ablehnen.",
+      "deadline": "Entscheidung bis {{date}}",
+      "accept": "Annehmen",
+      "decline": "Ablehnen"
+    },
+    "callupStatus": {
+      "pending": "Klubentscheidung ausstehend",
+      "accepted": "Angenommen",
+      "auto_accepted": "Automatisch angenommen",
+      "declined": "Abgelehnt",
+      "withdrawn": "Zurückgezogen",
+      "not_selected": "Nicht ausgewählt",
+      "expired": "Abgelaufen"
+    },
+    "riders": {
+      "title": "Berechtigte Nationalfahrer",
+      "description": "Der Trainer sieht National Ranking, Verfügbarkeit und einen bewusst verschleierten Overall-Bereich. Exakte versteckte Fähigkeiten und Potenzial bleiben privat.",
+      "maskedOverall": "Overall ist ungefähr",
+      "rank": "Rang",
+      "rider": "Fahrer",
+      "club": "Klub",
+      "overall": "Overall",
+      "form": "Form",
+      "fatigue": "Ermüdung",
+      "nc": "Nationale Meisterschaft",
+      "callup": "Nominierung",
+      "freeAgent": "Vereinslos",
+      "champion": "Nationaler Meister",
+      "finalRank": "Finale #{{rank}}",
+      "sendCallup": "Nominieren"
+    },
+    "squad": {
+      "title": "Endgültiger 10-Fahrer-Kader",
+      "description": "Wähle genau 10 Fahrer aus angenommenen Nominierungen. Die 7 Fahrer pro Renntag werden später aus diesem Kader gewählt.",
+      "noAccepted": "Noch keine angenommenen Nominierungen verfügbar.",
+      "confirm": "10-Fahrer-Kader bestätigen"
+    },
+    "squadStatus": {
+      "draft": "Entwurf",
+      "confirmed": "Bestätigt",
+      "on_duty": "National Duty",
+      "completed": "Abgeschlossen",
+      "cancelled": "Abgesagt"
+    },
+    "package": {
+      "title": "Standardpaket des Nationalteams",
+      "description": "Jedes Land erhält dasselbe vom System finanzierte Paket. Es kann weder gekauft noch verbessert oder durch Klubausrüstung ersetzt werden.",
+      "equipment": "Ausrüstungsmodelle",
+      "assets": "Renn-Assets",
+      "supplies": "Rennverpflegung",
+      "level": "Level {{level}}"
+    },
+    "notCoach": {
+      "title": "Nationaltrainer-Steuerung gesperrt",
+      "body": "Nur der gewählte Nationaltrainer oder aktuelle Interimstrainer kann Fahrer auswählen und den Kader verwalten. Klubmanager können oben weiterhin Nominierungen ihrer eigenen Fahrer beantworten."
+    },
+    "messages": {
+      "callupSent": "Nominierung für {{rider}} gesendet.",
+      "callupAccepted": "{{rider}} wurde für die Nationalteam-Auswahl freigegeben.",
+      "callupDeclined": "{{rider}} bleibt beim Klub.",
+      "squadConfirmed": "Der 10-Fahrer-Kader des Nationalteams ist bestätigt."
+    }
   }
 }
