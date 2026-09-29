@@ -37,7 +37,8 @@
     "electionRequired": "Elezione necessaria",
     "notCompleted": "Non completato",
     "associations": "Associazioni",
-    "race": "Gara"
+    "race": "Gara",
+    "yearsShort": "{{years}} anni"
   },
   "association": {
     "loading": "Caricamento Associazione Nazionale...",
@@ -192,7 +193,8 @@
     "errors": {
       "load": "Impossibile caricare il Campionato Mondiale delle Nazioni.",
       "hostSubmit": "Impossibile inviare la candidatura per ospitare."
-    }
+    },
+    "drawPending": "Il sorteggio non è ancora completato."
   },
   "admin": {
     "loading": "Caricamento operazioni World Nations...",
@@ -242,7 +244,24 @@
       "stressField": "Campo di stress",
       "associationOption": "{{count}} Associazioni",
       "resultSummary": "Campo: {{field}} Associazioni · errori {{failures}} · avvisi {{warnings}}",
-      "defaultCase": "Caso standard: 48 Associazioni → 6 gruppi preliminari → 32 nazioni → 4 gruppi di Qualificazione finale → Finale mondiale a 16 nazioni."
+      "defaultCase": "Caso standard: 48 Associazioni → 6 gruppi preliminari → 32 nazioni → 4 gruppi di Qualificazione finale → Finale mondiale a 16 nazioni.",
+      "passSummary": "La validazione contrattuale E2E World Nations è stata superata.",
+      "failSummary": "La validazione contrattuale E2E World Nations ha rilevato errori.",
+      "checks": {
+        "core_config": "Configurazione principale",
+        "no_treasury": "Nessuna tesoreria",
+        "qualificationStress": "Stress qualificazione · {{count}} Associazioni",
+        "qualification_scale_100": "Scala qualificazione · 100 Associazioni",
+        "calendar_anchors": "Punti calendario",
+        "standard_package": "Pacchetto standard della Nazionale",
+        "masked_overall_stability": "Stabilità del valore generale mascherato",
+        "points_balance": "Equilibrio punti",
+        "lineup_contract": "Contratto formazione",
+        "complete_field_race_gate": "Blocco gara con campo completo",
+        "notification_lifecycle": "Ciclo notifiche",
+        "automatic_runtime": "Esecuzione automatica",
+        "current_operations_health": "Stato operativo attuale"
+      }
     },
     "fixture": {
       "title": "Test ciclo di vita con rollback",
@@ -252,7 +271,10 @@
       "actualField": "Campo reale del test: {{count}} Associazioni",
       "temporaryManagers": "{{count}} manager temporanei",
       "rounds": "{{count}} turni",
-      "groups": "{{count}} gruppi"
+      "groups": "{{count}} gruppi",
+      "passSummary": "Il test del ciclo con rollback è stato superato.",
+      "skippedSummary": "Il test del ciclo con rollback è stato saltato.",
+      "failSummary": "Il test del ciclo con rollback non è riuscito."
     },
     "stats": {
       "championCount": "Numero campioni",
@@ -316,5 +338,14 @@
     "error": "Errore",
     "warning": "Avviso",
     "skipped": "Saltato"
+  },
+  "roles": {
+    "all_rounder": "Completo",
+    "breakaway": "Attaccante",
+    "climber": "Scalatore",
+    "domestique": "Gregario",
+    "leader": "Capitano",
+    "sprinter": "Velocista",
+    "tt": "Cronoman"
   }
 }
