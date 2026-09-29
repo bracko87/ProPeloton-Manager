@@ -29,13 +29,13 @@
     "hostPendingHelp": "Championship waits until two suitable routes are available."
   },
   "duty": {
-    "title": "My National Duty",
-    "description": "These riders are entered automatically. You manage only each rider's equipment and individual race strategy.",
-    "locked": "Individual race — no team tactics. Staff, assets and club supplies are unavailable.",
+    "title": "Championship Participation",
+    "description": "These riders are entered automatically for National or World Championship events. Manage participation, equipment and individual race strategy here.",
+    "locked": "Individual championship race — no team tactics. Staff, assets and club supplies are unavailable.",
     "directQualifier": "Direct qualifier",
     "qualificationHeat": "Qualification Group {{number}}",
-    "noPlan": "No editable National Duty plan is currently open for this rider.",
-    "empty": "None of your riders has an active National Duty invitation for this championship."
+    "noPlan": "No editable Championship participation plan is currently open for this rider.",
+    "empty": "None of your riders currently has an active National or World Championship participation entry."
   },
   "organizer": {
     "title": "Organizer race pack",
@@ -183,7 +183,7 @@
   },
   "tabs": {
     "ranking": "Ranking",
-    "duty": "My National Duty",
+    "duty": "Championship Participation",
     "history": "History"
   },
   "info": {
