@@ -1127,13 +1127,13 @@
       "firstPlace": "1. mjesto"
     },
     "actions": {
-      "openMyNationalDuty": "Otvori nacionalnu obvezu",
+      "openMyNationalDuty": "Otvori nacionalno prvenstvo",
       "confirmFinalParticipation": "Potvrdi nastup u finalu",
       "openQualificationResults": "Otvori rezultate kvalifikacija",
-      "myNationalDuty": "Moja nacionalna obveza",
+      "myNationalDuty": "Nacionalno prvenstvo",
       "openNationalFinal": "Otvori finale nacionalnog prvenstva",
       "openChampion": "Otvori prvaka",
-      "openWorldDuty": "Otvori obvezu za Svjetsko prvenstvo",
+      "openWorldDuty": "Otvori Svjetsko prvenstvo",
       "confirmWorld": "Potvrdi Svjetsko prvenstvo",
       "openWorldResults": "Otvori rezultate Svjetskog prvenstva",
       "openWorldChampionship": "Otvori Svjetsko prvenstvo"
@@ -1141,12 +1141,12 @@
     "selected": {
       "title": "{{rider}} je odabran za nacionalno prvenstvo",
       "message": "{{rider}} je odabran za nacionalno prvenstvo države {{country}}. Kvalifikacijska skupina {{heat}} vozi se {{qualificationDate}}. Ako se kvalificira, finale je {{finalDate}}. Odluku donesite do {{deadline}}.",
-      "extra": "Sve troškove nacionalne obveze pokriva organizator. Otvorite nacionalnu obvezu kako biste prije roka odobrili ili odbili nastup."
+      "extra": "Sve troškove nastupa na nacionalnom prvenstvu pokriva organizator. Otvorite nacionalno prvenstvo kako biste prije roka odobrili ili odbili nastup."
     },
     "qualificationResult": {
       "title": "{{country}} – završena kvalifikacijska skupina {{heat}}",
       "message": "Službeni rezultati su dostupni. Prvih {{places}} vozača prolazi u finale nacionalnog prvenstva {{finalDate}}.",
-      "extra": "Otvorite kvalifikacijsku utrku za cijelu klasifikaciju i nacionalnu obvezu za sljedeće korake vaših vozača."
+      "extra": "Otvorite kvalifikacijsku utrku za cijelu klasifikaciju i nacionalno prvenstvo za sljedeće korake vaših vozača."
     },
     "qualified": {
       "title": "{{rider}} se kvalificirao za finale nacionalnog prvenstva",
