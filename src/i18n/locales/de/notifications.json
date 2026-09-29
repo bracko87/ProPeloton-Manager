@@ -1200,7 +1200,13 @@
       "group": "Gruppe",
       "advance": "Weiterkommen",
       "points": "Punkte",
-      "squadSize": "Kadergröße"
+      "squadSize": "Kadergröße",
+      "raceDay": "Renntag",
+      "raceResult": "Rennergebnis",
+      "eventPoints": "Event-Punkte",
+      "tttPoints": "MZF-Punkte",
+      "flatPoints": "Flach-Punkte",
+      "mountainPoints": "Berg-Punkte"
     },
     "actions": {
       "openAssociation": "Nationalverband öffnen",
@@ -1276,6 +1282,21 @@
       "title": "World Nations Champion",
       "message": "{{country}} hat die World Nations Championship gewonnen.",
       "extra": "Der Titel wird dauerhaft in der World-Nations-Historie gespeichert."
+    },
+    "values": {
+      "teamTimeTrial": "Mannschaftszeitfahren",
+      "flatRoadRace": "Flaches Straßenrennen",
+      "hillyMountainRoadRace": "Hügel-/Bergrennen"
+    },
+    "raceResult": {
+      "title": "{{roundLabel}} · Tag {{raceDay}} abgeschlossen",
+      "message": "{{country}} erzielte {{eventPoints}} Nations-Punkte im {{raceLabel}}.",
+      "extra": "Öffne das Rennen für die vollständige Wertung. Die World-Nations-Tabelle wird nach allen drei Renntagen automatisch aktualisiert."
+    },
+    "finalResult": {
+      "title": "World-Nations-Finale abgeschlossen",
+      "message": "{{country}} belegte im World-Nations-Finale Rang {{rank}} mit {{points}} Punkten.",
+      "extra": "Die Finalwertung kombiniert Punkte aus Mannschaftszeitfahren, Flach- und Hügel-/Bergrennen. Der Champion wird dauerhaft in der World-Nations-Historie gespeichert."
     }
   }
 }
