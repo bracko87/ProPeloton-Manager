@@ -245,20 +245,20 @@
       "associationOption": "Ассоциаций: {{count}}",
       "resultSummary": "Поле: {{field}} ассоциаций · ошибок {{failures}} · предупреждений {{warnings}}",
       "defaultCase": "Стандартный тест: 48 ассоциаций → 6 предварительных групп → 32 нации → 4 группы финальной квалификации → мировой финал из 16 наций.",
-      "passSummary": "E2E-проверка контракта World Nations пройдена.",
-      "failSummary": "E2E-проверка контракта World Nations обнаружила ошибки.",
+      "passSummary": "Контрактная E2E-проверка World Nations пройдена.",
+      "failSummary": "Контрактная E2E-проверка World Nations обнаружила ошибки.",
       "checks": {
         "core_config": "Основная конфигурация",
         "no_treasury": "Без казны",
         "qualificationStress": "Нагрузочная квалификация · {{count}} ассоциаций",
         "qualification_scale_100": "Масштаб квалификации · 100 ассоциаций",
-        "calendar_anchors": "Опорные даты календаря",
+        "calendar_anchors": "Календарные точки",
         "standard_package": "Стандартный пакет сборной",
-        "masked_overall_stability": "Стабильность скрытого общего рейтинга",
+        "masked_overall_stability": "Стабильность скрытого Overall",
         "points_balance": "Баланс очков",
-        "lineup_contract": "Контракт состава",
-        "complete_field_race_gate": "Шлюз полного поля",
-        "notification_lifecycle": "Жизненный цикл уведомлений",
+        "lineup_contract": "Правила составов",
+        "complete_field_race_gate": "Допуск гонки при полном поле",
+        "notification_lifecycle": "Цикл уведомлений",
         "automatic_runtime": "Автоматический запуск",
         "current_operations_health": "Текущее операционное состояние"
       }
@@ -273,7 +273,7 @@
       "rounds": "Раундов: {{count}}",
       "groups": "Групп: {{count}}",
       "passSummary": "Rollback-тест жизненного цикла пройден.",
-      "skippedSummary": "Rollback-тест пропущен из соображений безопасности.",
+      "skippedSummary": "Rollback-тест пропущен по правилу безопасности.",
       "failSummary": "Rollback-тест жизненного цикла завершился ошибкой."
     },
     "stats": {
@@ -343,7 +343,7 @@
     "all_rounder": "Универсал",
     "breakaway": "Отрывщик",
     "climber": "Горняк",
-    "domestique": "Помощник",
+    "domestique": "Грегари",
     "leader": "Лидер",
     "sprinter": "Спринтер",
     "tt": "Раздельщик"
