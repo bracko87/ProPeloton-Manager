@@ -16,7 +16,7 @@ if (languages.length === 0 || !languages.includes('en')) {
   throw new Error('Could not resolve supported languages from src/i18n/languages.ts')
 }
 
-const strictNamespaces = ['premiumCenter']
+const strictNamespaces = ['premiumCenter', 'nations']
 const requiredNavigationKeys = ['premiumCenter', 'descriptions.premiumCenter']
 
 const premiumSourceFiles = [
