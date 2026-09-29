@@ -29,13 +29,13 @@
     "hostPendingHelp": "El campeonato espera hasta que haya dos rutas adecuadas disponibles."
   },
   "duty": {
-    "title": "Mi deber nacional",
-    "description": "Estos ciclistas se inscriben automáticamente. Solo gestionas el equipamiento y la estrategia individual de cada ciclista.",
-    "locked": "Carrera individual — sin tácticas de equipo. No se pueden usar personal, vehículos ni suministros del club.",
+    "title": "Participación en campeonatos",
+    "description": "Estos ciclistas están inscritos automáticamente en eventos del Campeonato Nacional o Mundial. Gestiona aquí la participación, el equipamiento y la estrategia individual.",
+    "locked": "Carrera individual de campeonato: sin tácticas de equipo. El personal, los vehículos y los suministros del club no están disponibles.",
     "directQualifier": "Clasificado directo",
     "qualificationHeat": "Grupo de clasificación {{number}}",
-    "noPlan": "No hay un plan de deber nacional editable para este ciclista.",
-    "empty": "Ninguno de tus ciclistas tiene una invitación activa de deber nacional para este campeonato."
+    "noPlan": "No hay un plan editable de participación en el campeonato abierto para este ciclista.",
+    "empty": "Ninguno de tus ciclistas tiene actualmente una participación activa en el Campeonato Nacional o Mundial."
   },
   "organizer": {
     "title": "Pack de carrera del organizador",
@@ -183,7 +183,7 @@
   },
   "tabs": {
     "ranking": "Ranking",
-    "duty": "Mi deber nacional",
+    "duty": "Participación en campeonatos",
     "history": "Historial"
   },
   "info": {
