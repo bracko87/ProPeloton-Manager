@@ -29,13 +29,13 @@
     "hostPendingHelp": "Prvenstvo čeka dok ne budu dostupne dve odgovarajuće rute."
   },
   "duty": {
-    "title": "Moja nacionalna obaveza",
-    "description": "Ovi vozači se prijavljuju automatski. Upravljaš samo opremom i individualnom strategijom svakog vozača.",
-    "locked": "Individualna trka — nema ekipne taktike. Osoblje, vozila i klupske zalihe nisu dostupni.",
+    "title": "Učešće na prvenstvima",
+    "description": "Ovi vozači su automatski prijavljeni za Nacionalno ili Svetsko prvenstvo. Ovde upravljate učešćem, opremom i individualnom strategijom.",
+    "locked": "Individualna prvenstvena trka — nema timske taktike. Osoblje, sredstva i klupske zalihe nisu dostupni.",
     "directQualifier": "Direktno kvalifikovan",
     "qualificationHeat": "Kvalifikaciona grupa {{number}}",
-    "noPlan": "Za ovog vozača trenutno nema otvorenog plana koji može da se menja.",
-    "empty": "Nijedan tvoj vozač trenutno nema aktivan poziv za nacionalnu obavezu na ovom prvenstvu."
+    "noPlan": "Za ovog vozača trenutno nema otvorenog plana za učešće na prvenstvu.",
+    "empty": "Nijedan vaš vozač trenutno nema aktivno učešće na Nacionalnom ili Svetskom prvenstvu."
   },
   "organizer": {
     "title": "Paket organizatora",
@@ -183,7 +183,7 @@
   },
   "tabs": {
     "ranking": "Rang",
-    "duty": "Moja nacionalna obaveza",
+    "duty": "Učešće na prvenstvima",
     "history": "Istorija"
   },
   "info": {
