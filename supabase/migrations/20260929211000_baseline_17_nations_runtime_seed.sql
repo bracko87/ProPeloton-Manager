@@ -1,6 +1,57 @@
 -- Restore National Team fixed-package configuration and Nations runtime scheduling.
 -- Only the catalog rows referenced by the fixed National Team package are seeded here.
 
+insert into public.country_market_groups
+select *
+from jsonb_populate_recordset(
+  null::public.country_market_groups,
+  $groups$
+[
+  {
+    "code": "alpine_italy",
+    "name": "Alpine Europe + Italy",
+    "created_at": "2026-03-24T19:00:32.249912+00:00",
+    "sort_order": 3,
+    "updated_at": "2026-03-24T19:00:32.249912+00:00",
+    "macro_region": "europe"
+  },
+  {
+    "code": "france_benelux",
+    "name": "France & Benelux",
+    "created_at": "2026-03-24T19:00:32.249912+00:00",
+    "sort_order": 2,
+    "updated_at": "2026-03-24T19:00:32.249912+00:00",
+    "macro_region": "europe"
+  },
+  {
+    "code": "japan_korea",
+    "name": "Japan + Korea",
+    "created_at": "2026-03-24T19:00:32.249912+00:00",
+    "sort_order": 21,
+    "updated_at": "2026-03-24T19:00:32.249912+00:00",
+    "macro_region": "asia"
+  },
+  {
+    "code": "nordics_baltics",
+    "name": "Nordics + Baltics",
+    "created_at": "2026-03-24T19:00:32.249912+00:00",
+    "sort_order": 5,
+    "updated_at": "2026-03-24T19:00:32.249912+00:00",
+    "macro_region": "europe"
+  },
+  {
+    "code": "us_canada",
+    "name": "United States + Canada",
+    "created_at": "2026-03-24T19:00:32.249912+00:00",
+    "sort_order": 32,
+    "updated_at": "2026-03-24T19:00:32.249912+00:00",
+    "macro_region": "americas"
+  }
+]
+$groups$::jsonb
+)
+on conflict do nothing;
+
 insert into public.sponsor_companies
 select *
 from jsonb_populate_recordset(
