@@ -248,5 +248,87 @@
     "finished": "Course terminée",
     "ready": "Course prête",
     "planned": "Planifiée"
+  },
+  "associationPage": {
+    "loading": "Chargement de l'Association Nationale…",
+    "eyebrow": "Association Nationale",
+    "title": "Association Nationale — {{country}}",
+    "description": "Construisez l'Association Nationale de votre pays gérée par les utilisateurs, élisez le sélectionneur national et préparez l'équipe nationale. Il n'y a pas de trésorerie : voyages, assistance, véhicules, équipement et ravitaillement sont pris en charge par le jeu.",
+    "refresh": "Actualiser",
+    "errors": {
+      "load": "Impossible de charger l'Association Nationale.",
+      "action": "L'action n'a pas pu être effectuée."
+    },
+    "notEligible": {
+      "title": "Non éligible",
+      "body": "Vous devez avoir un club principal actif contrôlé par un joueur pour participer à une Association Nationale."
+    },
+    "join": {
+      "noAssociationTitle": "Créer l'Association Nationale",
+      "noAssociationBody": "Votre pays n'a pas encore d'association. Au moins {{count}} managers de club éligibles doivent la soutenir avant son activation.",
+      "createSupport": "Créer / soutenir l'association",
+      "joined": "Vous soutenez maintenant votre Association Nationale.",
+      "existingTitle": "Rejoindre l'Association Nationale",
+      "existingBody": "Une association existe déjà pour votre pays. Rejoignez-la pour voter, vous présenter comme sélectionneur et participer au système national.",
+      "join": "Rejoindre l'association"
+    },
+    "cards": {
+      "status": "Statut de l'association",
+      "members": "Membres éligibles",
+      "coach": "Sélectionneur national",
+      "noCoach": "Aucun sélectionneur élu",
+      "operations": "Opérations",
+      "covered": "Entièrement pris en charge",
+      "coveredHelp": "Aucune trésorerie ni dépense de club. Les coûts de l'équipe nationale sont financés par le système."
+    },
+    "status": {
+      "forming": "En formation",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "coachKind": {
+      "elected": "Sélectionneur national élu",
+      "caretaker": "Intérimaire jusqu'à la fin de l'élection",
+      "replacement": "Sélectionneur remplaçant"
+    },
+    "forming": {
+      "title": "L'association est en formation",
+      "body": "Il faut encore {{count}} manager(s) éligible(s) avant l'activation.",
+      "ready": "Les conditions d'activation sont remplies."
+    },
+    "election": {
+      "title": "Élection du sélectionneur national",
+      "oneVote": "Un membre éligible = une voix. Les votes sont secrets et définitifs à chaque tour.",
+      "notOpen": "Aucune élection n'est actuellement ouverte.",
+      "registration": "Inscription des candidats",
+      "round": "Tour actuel",
+      "currentWindow": "Période de vote",
+      "yourCandidacy": "Votre candidature",
+      "standForCoach": "Se présenter comme sélectionneur",
+      "manifesto": "Programme",
+      "manifestoPlaceholder": "Expliquez votre approche de l'équipe nationale, vos principes de sélection et vos objectifs…",
+      "candidacySaved": "Votre candidature a été enregistrée.",
+      "candidacyWithdrawn": "Votre candidature a été retirée.",
+      "updateCandidacy": "Mettre à jour la candidature",
+      "registerCandidacy": "Déposer la candidature",
+      "withdraw": "Retirer la candidature",
+      "candidates": "Candidats",
+      "secretBallot": "Les totaux de votes en direct sont masqués",
+      "noCandidates": "Aucun candidat n'est disponible pour ce tour.",
+      "unknownClub": "Club inconnu",
+      "you": "Vous",
+      "vote": "Voter",
+      "voted": "Vote envoyé",
+      "voteSaved": "Votre vote a été envoyé et ne peut plus être modifié.",
+      "completed": "Élection terminée",
+      "winnerConfirmed": "Sélectionneur national confirmé."
+    },
+    "electionStatus": {
+      "candidate_registration": "Inscription des candidats",
+      "voting": "Premier tour",
+      "runoff": "Second tour",
+      "completed": "Terminée",
+      "cancelled": "Annulée"
+    }
   }
 }
