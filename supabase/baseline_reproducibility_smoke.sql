@@ -32,6 +32,29 @@ begin
     raise exception 'Baseline smoke failed: Nations operations monitor definition missing.';
   end if;
 
+  if coalesce((
+    select sum((x->>'quantity')::integer)
+    from jsonb_array_elements(public.get_national_team_standard_package_v1()->'assets') x
+    where x->>'asset_key'='team_car'
+  ),0) <> 10 then
+    raise exception 'Baseline smoke failed: standard National Team cars are missing.';
+  end if;
+
+  if coalesce(jsonb_array_length(public.get_national_team_standard_package_v1()->'equipment'),0) <> 18 then
+    raise exception 'Baseline smoke failed: standard National Team equipment is incomplete.';
+  end if;
+
+  if not exists (
+    select 1
+    from cron.job
+    where jobname='national-association-nations-runtime-v1'
+      and active=true
+      and schedule='*/15 * * * *'
+      and command ilike '%process_national_association_nations_runtime_v4%'
+  ) then
+    raise exception 'Baseline smoke failed: Nations runtime cron is missing or misconfigured.';
+  end if;
+
   v_health := public.check_nations_operations_health_v1();
   if coalesce(v_health->>'status','error') <> 'success' then
     raise exception 'Baseline smoke failed: Nations operations health is not successful: %', v_health;
