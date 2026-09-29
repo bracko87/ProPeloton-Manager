@@ -1113,7 +1113,13 @@
       "group": "Group",
       "advance": "Advance",
       "points": "Points",
-      "squadSize": "Squad size"
+      "squadSize": "Squad size",
+      "raceDay": "Race day",
+      "raceResult": "Race result",
+      "eventPoints": "Event points",
+      "tttPoints": "TTT points",
+      "flatPoints": "Flat points",
+      "mountainPoints": "Mountain points"
     },
     "actions": {
       "openAssociation": "Open National Association",
@@ -1189,6 +1195,21 @@
       "title": "World Nations Champion",
       "message": "{{country}} has won the World Nations Championship.",
       "extra": "The title is stored permanently in World Nations history."
+    },
+    "values": {
+      "teamTimeTrial": "Team Time Trial",
+      "flatRoadRace": "Flat Road Race",
+      "hillyMountainRoadRace": "Hilly / Mountain Road Race"
+    },
+    "raceResult": {
+      "title": "{{roundLabel}} · Day {{raceDay}} completed",
+      "message": "{{country}} earned {{eventPoints}} Nations points in the {{raceLabel}}.",
+      "extra": "Open the race for the full classification. World Nations standings update automatically after all three race days."
+    },
+    "finalResult": {
+      "title": "World Nations Final completed",
+      "message": "{{country}} finished #{{rank}} in the World Nations Final with {{points}} points.",
+      "extra": "The final table combines Team Time Trial, Flat and Hilly/Mountain points. The champion is stored permanently in World Nations history."
     }
   }
 }
