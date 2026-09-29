@@ -210,8 +210,10 @@ function CountryLabel({
 
 function RoundCard({
   round,
+  viewerAssociationId,
 }: {
   round: NationsRound
+  viewerAssociationId?: string | null
 }): JSX.Element {
   return (
     <section className="rounded bg-white shadow">
@@ -234,7 +236,15 @@ function RoundCard({
       </div>
 
       <div className="grid gap-4 p-4 xl:grid-cols-2">
-        {(round.groups ?? []).map(group => (
+        {(round.groups ?? []).map(group => {
+          const viewerInGroup = Boolean(
+            viewerAssociationId &&
+              (group.entries ?? []).some(
+                entry => entry.association_id === viewerAssociationId,
+              ),
+          )
+
+          return (
           <div key={group.id} className="overflow-hidden rounded border border-slate-200">
             <div className="flex items-center justify-between gap-3 bg-slate-50 px-3 py-2.5">
               <div>
@@ -243,9 +253,19 @@ function RoundCard({
                   {group.planned_entrant_count} nations · {group.planned_advance_count} advance
                 </div>
               </div>
-              <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusClasses(group.status)}`}>
-                {humanize(group.status)}
-              </span>
+              <div className="flex items-center gap-2">
+                {viewerInGroup ? (
+                  <Link
+                    to={`/dashboard/national-association?cycle=nations:${group.id}`}
+                    className="rounded bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black hover:bg-yellow-300"
+                  >
+                    Manage National Team
+                  </Link>
+                ) : null}
+                <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusClasses(group.status)}`}>
+                  {humanize(group.status)}
+                </span>
+              </div>
             </div>
 
             {group.entries?.length ? (
@@ -291,7 +311,8 @@ function RoundCard({
               </div>
             )}
           </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )
@@ -506,7 +527,11 @@ export default function WorldNationsPage(): JSX.Element {
       ) : null}
 
       {(data?.rounds ?? []).map(round => (
-        <RoundCard key={round.id} round={round} />
+        <RoundCard
+          key={round.id}
+          round={round}
+          viewerAssociationId={data?.viewer?.association_id}
+        />
       ))}
 
       {data?.edition ? (
