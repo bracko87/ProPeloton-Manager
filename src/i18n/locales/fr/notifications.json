@@ -1297,6 +1297,16 @@
       "title": "Finale World Nations terminée",
       "message": "{{country}} a terminé {{rank}}e de la Finale World Nations avec {{points}} points.",
       "extra": "Le classement final combine les points du contre-la-montre par équipes, de la course plate et de la course vallonnée/montagne. Le champion est conservé définitivement dans l’historique World Nations."
+    },
+    "dutyStarted": {
+      "title": "Devoir national commencé pour {{rider}}",
+      "message": "{{rider}} est en devoir national avec {{association}} du {{dutyStart}} au {{dutyEnd}} et n’est pas disponible pour les courses de club qui se chevauchent.",
+      "extra": "Le devoir national est réservé à la participation avec l’équipe nationale. Le coureur reste indisponible pour le club pendant toute la fenêtre, y compris les jours comme remplaçant."
+    },
+    "dutyCompleted": {
+      "title": "Devoir national terminé pour {{rider}}",
+      "message": "{{rider}} a terminé son devoir national avec {{association}} et est de nouveau disponible pour le club.",
+      "extra": "Les règles normales de santé, de fatigue et de disponibilité en course continuent de s’appliquer après la fin du devoir national."
     }
   }
 }
