@@ -992,6 +992,30 @@ export default function NationalAssociationPage(): JSX.Element {
                 </div>
               </div>
 
+              {isNationsCycle && nationsCycle?.state === 'active_cycle' ? (
+                <div className="border-b border-sky-200 bg-sky-50 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                        Current World Nations assignment
+                      </div>
+                      <div className="mt-1 text-base font-semibold text-slate-900">
+                        {nationsCycle.round_label ?? 'World Nations Championship'} · {nationsCycle.group_label ?? 'Group'}
+                      </div>
+                      <div className="mt-1 text-sm text-slate-600">
+                        Day 1 {formatGameDate(nationsCycle.day1_date)} · Day 2 {formatGameDate(nationsCycle.day2_date)} · Day 3 {formatGameDate(nationsCycle.day3_date)}
+                      </div>
+                    </div>
+                    <Link
+                      to="/dashboard/world-nations"
+                      className="rounded border border-sky-300 bg-white px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-100"
+                    >
+                      Open World Nations
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-3">
                 <div className="rounded border border-slate-200 p-3">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">National Championship</div>
