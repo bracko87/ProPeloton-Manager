@@ -629,7 +629,7 @@ export default function WorldNationsPage(): JSX.Element {
               </div>
             ) : null}
 
-            {data.viewer?.can_apply_to_host ? (
+            {data.viewer?.can_apply_to_host && !data.edition.host_association_id ? (
               <>
                 <textarea
                   rows={4}
