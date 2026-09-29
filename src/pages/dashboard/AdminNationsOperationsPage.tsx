@@ -524,7 +524,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                   <div className={`font-semibold ${
                     e2eResult.status === 'pass' ? 'text-emerald-900' : 'text-red-900'
                   }`}>
-                    {e2eResult.summary}
+                    {e2eResult.status === 'pass' ? t('admin.e2e.passSummary') : t('admin.e2e.failSummary')}
                   </div>
                   <div className="mt-1 text-xs text-slate-600">
                     {t('admin.e2e.resultSummary', { field: e2eResult.association_count_tested, failures: e2eResult.failures, warnings: e2eResult.warnings })}
@@ -554,7 +554,9 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-slate-900">
-                      {humanize(check.key)}
+                      {check.key.startsWith('qualification_stress_')
+                      ? t('admin.e2e.checks.qualificationStress', { count: check.key.split('_').at(-1) })
+                      : t(`admin.e2e.checks.${check.key}`, { defaultValue: humanize(check.key) })}
                     </div>
                     <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${
                       check.status === 'pass'
@@ -618,7 +620,11 @@ export default function AdminNationsOperationsPage(): JSX.Element {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="font-semibold text-slate-900">
-                    {fixtureResult.summary ?? humanize(fixtureResult.reason ?? fixtureResult.status)}
+                    {fixtureResult.status === 'pass'
+                      ? t('admin.fixture.passSummary')
+                      : fixtureResult.status === 'skipped'
+                        ? t('admin.fixture.skippedSummary')
+                        : t('admin.fixture.failSummary')}
                   </div>
                   <div className="mt-1 text-xs text-slate-600">
                     {t('admin.fixture.actualField', { count: fixtureResult.association_count ?? '—' })}
@@ -682,18 +688,18 @@ export default function AdminNationsOperationsPage(): JSX.Element {
         </div>
         <div className="grid gap-px bg-slate-200 md:grid-cols-5">
           {[
-            [t('admin.team.nationsSquads'), data?.team_checks?.nations_squads ?? 0],
-            [t('admin.team.confirmedSquads'), data?.team_checks?.confirmed_squads ?? 0],
-            [t('admin.team.invalidSquads'), data?.team_checks?.invalid_squads ?? 0],
-            [t('admin.team.confirmedLineups'), data?.team_checks?.confirmed_lineups ?? 0],
-            [t('admin.team.invalidLineups'), data?.team_checks?.invalid_lineups ?? 0],
-          ].map(([label, value]) => (
+            [t('admin.team.nationsSquads'), data?.team_checks?.nations_squads ?? 0, false],
+            [t('admin.team.confirmedSquads'), data?.team_checks?.confirmed_squads ?? 0, false],
+            [t('admin.team.invalidSquads'), data?.team_checks?.invalid_squads ?? 0, true],
+            [t('admin.team.confirmedLineups'), data?.team_checks?.confirmed_lineups ?? 0, false],
+            [t('admin.team.invalidLineups'), data?.team_checks?.invalid_lineups ?? 0, true],
+          ].map(([label, value, isInvalid]) => (
             <div key={String(label)} className="bg-white p-4">
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {label}
               </div>
               <div className={`mt-2 text-xl font-semibold ${
-                String(label).startsWith('Invalid') && Number(value) > 0
+                Boolean(isInvalid) && Number(value) > 0
                   ? 'text-red-700'
                   : 'text-slate-900'
               }`}>
@@ -723,7 +729,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
               </div>
               <span className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-semibold ${statusClass(round.status)}`}>
                 <StatusIcon status={round.status} />
-                {humanize(round.status)}
+                {t(`status.${round.status}`, { defaultValue: humanize(round.status) })}
               </span>
             </div>
 
@@ -738,7 +744,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                       </div>
                     </div>
                     <span className={`rounded border px-2 py-1 text-[11px] font-semibold ${statusClass(group.status)}`}>
-                      {humanize(group.status)}
+                      {t(`status.${group.status}`, { defaultValue: humanize(group.status) })}
                     </span>
                   </div>
 
@@ -761,7 +767,7 @@ export default function AdminNationsOperationsPage(): JSX.Element {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`rounded border px-2 py-1 text-[11px] font-semibold ${statusClass(event.status)}`}>
-                            {humanize(event.status)}
+                            {t(`status.${event.status}`, { defaultValue: humanize(event.status) })}
                           </span>
                           {event.race_id ? (
                             <Link
