@@ -541,6 +541,13 @@ export default function NationalAssociationPage(): JSX.Element {
               </Link>
               <span className="text-xs text-slate-300">•</span>
               <Link
+                to="/dashboard/world-nations"
+                className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
+              >
+                World Nations Championship
+              </Link>
+              <span className="text-xs text-slate-300">•</span>
+              <Link
                 to="/dashboard/national-ranking?tab=history"
                 className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
               >
