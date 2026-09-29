@@ -1124,13 +1124,13 @@
       "firstPlace": "1. Platz"
     },
     "actions": {
-      "openMyNationalDuty": "Nationalen Einsatz öffnen",
+      "openMyNationalDuty": "Nationalmeisterschaft öffnen",
       "confirmFinalParticipation": "Finalteilnahme bestätigen",
       "openQualificationResults": "Qualifikationsergebnisse öffnen",
-      "myNationalDuty": "Mein nationaler Einsatz",
+      "myNationalDuty": "Nationalmeisterschaft",
       "openNationalFinal": "Nationales Finale öffnen",
       "openChampion": "Meister öffnen",
-      "openWorldDuty": "WM-Einsatz öffnen",
+      "openWorldDuty": "Weltmeisterschaft öffnen",
       "confirmWorld": "Weltmeisterschaft bestätigen",
       "openWorldResults": "WM-Ergebnisse öffnen",
       "openWorldChampionship": "Weltmeisterschaft öffnen"
@@ -1138,12 +1138,12 @@
     "selected": {
       "title": "{{rider}} wurde für die Nationalmeisterschaft ausgewählt",
       "message": "{{rider}} wurde für die Nationalmeisterschaft von {{country}} ausgewählt. Qualifikationsgruppe {{heat}} findet am {{qualificationDate}} statt. Bei Qualifikation folgt das Finale am {{finalDate}}. Entscheidung bis {{deadline}}.",
-      "extra": "Alle Kosten des nationalen Einsatzes werden übernommen. Öffne den nationalen Einsatz, um vor der Frist zuzustimmen oder abzulehnen."
+      "extra": "Alle Kosten der Teilnahme an der Nationalmeisterschaft werden übernommen. Öffne die Nationalmeisterschaft, um die Teilnahme vor der Frist zu bestätigen oder abzulehnen."
     },
     "qualificationResult": {
       "title": "{{country}} – Qualifikationsgruppe {{heat}} abgeschlossen",
       "message": "Die offiziellen Ergebnisse sind verfügbar. Die besten {{places}} Fahrer erreichen das nationale Finale am {{finalDate}}.",
-      "extra": "Öffne das Qualifikationsrennen für die vollständige Wertung und den nationalen Einsatz für die nächsten Schritte deiner Fahrer."
+      "extra": "Öffne das Qualifikationsrennen für die vollständige Wertung und die Nationalmeisterschaft für die nächsten Schritte deiner Fahrer."
     },
     "qualified": {
       "title": "{{rider}} hat sich für das nationale Finale qualifiziert",
