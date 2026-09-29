@@ -330,5 +330,88 @@
       "completed": "Terminée",
       "cancelled": "Annulée"
     }
+  },
+  "nationalTeamPage": {
+    "loading": "Chargement de l'équipe nationale…",
+    "eyebrow": "Équipe nationale",
+    "title": "Équipe nationale — {{country}}",
+    "titleFallback": "Équipe nationale",
+    "description": "Espace du sélectionneur national pour les convocations, le groupe final de 10 coureurs et l'équipement standardisé de l'équipe nationale.",
+    "refresh": "Actualiser",
+    "errors": {
+      "load": "Impossible de charger l'équipe nationale.",
+      "action": "L'action n'a pas pu être effectuée."
+    },
+    "cards": {
+      "coach": "Sélectionneur national",
+      "callups": "Convocations provisoires",
+      "accepted": "{{count}} acceptées",
+      "squad": "Groupe final",
+      "notConfirmed": "Non confirmé"
+    },
+    "clubCallups": {
+      "title": "Convocations en équipe nationale",
+      "description": "Votre club doit accepter ou refuser les convocations officielles avant la date limite.",
+      "deadline": "Décision avant le {{date}}",
+      "accept": "Accepter",
+      "decline": "Refuser"
+    },
+    "callupStatus": {
+      "pending": "Décision du club en attente",
+      "accepted": "Acceptée",
+      "auto_accepted": "Acceptée automatiquement",
+      "declined": "Refusée",
+      "withdrawn": "Retirée",
+      "not_selected": "Non sélectionné",
+      "expired": "Expirée"
+    },
+    "riders": {
+      "title": "Coureurs nationaux éligibles",
+      "description": "Le sélectionneur voit le Classement National, la disponibilité et une plage Overall volontairement approximative. Les aptitudes cachées exactes et le potentiel restent privés.",
+      "maskedOverall": "Overall approximatif",
+      "rank": "Rang",
+      "rider": "Coureur",
+      "club": "Club",
+      "overall": "Overall",
+      "form": "Forme",
+      "fatigue": "Fatigue",
+      "nc": "Championnat National",
+      "callup": "Convocation",
+      "freeAgent": "Sans club",
+      "champion": "Champion National",
+      "finalRank": "Finale #{{rank}}",
+      "sendCallup": "Convoquer"
+    },
+    "squad": {
+      "title": "Groupe final de 10 coureurs",
+      "description": "Sélectionnez exactement 10 coureurs parmi les convocations acceptées. Les alignements de 7 coureurs seront choisis ensuite dans ce groupe.",
+      "noAccepted": "Aucune convocation acceptée pour le moment.",
+      "confirm": "Confirmer le groupe de 10"
+    },
+    "squadStatus": {
+      "draft": "Brouillon",
+      "confirmed": "Confirmé",
+      "on_duty": "Devoir national",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "package": {
+      "title": "Pack standard de l'équipe nationale",
+      "description": "Chaque pays reçoit le même pack financé par le système. Il ne peut pas être acheté, amélioré ou remplacé par l'équipement d'un club.",
+      "equipment": "Modèles d'équipement",
+      "assets": "Moyens de course",
+      "supplies": "Ravitaillement",
+      "level": "Niveau {{level}}"
+    },
+    "notCoach": {
+      "title": "Contrôles du sélectionneur verrouillés",
+      "body": "Seul le sélectionneur élu ou l'intérimaire actuel peut choisir les coureurs et gérer le groupe. Les managers de club peuvent toujours répondre ci-dessus aux convocations concernant leurs propres coureurs."
+    },
+    "messages": {
+      "callupSent": "Convocation envoyée à {{rider}}.",
+      "callupAccepted": "{{rider}} est autorisé pour la sélection nationale.",
+      "callupDeclined": "{{rider}} restera avec son club.",
+      "squadConfirmed": "Le groupe de 10 coureurs de l'équipe nationale est confirmé."
+    }
   }
 }
