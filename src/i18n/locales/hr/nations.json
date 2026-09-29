@@ -194,7 +194,7 @@
       "load": "Nije moguće učitati Svjetsko prvenstvo nacija.",
       "hostSubmit": "Nije moguće poslati prijavu za domaćina."
     },
-    "drawPending": "Ždrijeb još nije dovršen."
+    "drawPending": "Ždrijeb još nije završen."
   },
   "admin": {
     "loading": "Učitavanje World Nations operacija...",
@@ -246,20 +246,20 @@
       "resultSummary": "Polje: {{field}} Saveza · greške {{failures}} · upozorenja {{warnings}}",
       "defaultCase": "Zadani stresni slučaj: 48 Saveza → 6 preliminarnih skupina → 32 nacije → 4 skupine završnih kvalifikacija → Svjetsko finale sa 16 nacija.",
       "passSummary": "World Nations E2E provjera ugovora je prošla.",
-      "failSummary": "World Nations E2E provjera ugovora pronašla je pogreške.",
+      "failSummary": "World Nations E2E provjera ugovora pronašla je greške.",
       "checks": {
         "core_config": "Osnovna konfiguracija",
         "no_treasury": "Bez blagajne",
         "qualificationStress": "Stres kvalifikacija · {{count}} Saveza",
         "qualification_scale_100": "Skaliranje kvalifikacija · 100 Saveza",
-        "calendar_anchors": "Sidra kalendara",
+        "calendar_anchors": "Kalendarske točke",
         "standard_package": "Standardni paket reprezentacije",
         "masked_overall_stability": "Stabilnost maskirane ukupne ocjene",
         "points_balance": "Ravnoteža bodova",
-        "lineup_contract": "Ugovor postave",
-        "complete_field_race_gate": "Blokada za potpuno polje",
+        "lineup_contract": "Pravila postave",
+        "complete_field_race_gate": "Uvjet potpunog polja",
         "notification_lifecycle": "Životni ciklus obavijesti",
-        "automatic_runtime": "Automatsko izvršavanje",
+        "automatic_runtime": "Automatska obrada",
         "current_operations_health": "Trenutno operativno stanje"
       }
     },
@@ -273,7 +273,7 @@
       "rounds": "{{count}} rundi",
       "groups": "{{count}} skupina",
       "passSummary": "Rollback test životnog ciklusa je prošao.",
-      "skippedSummary": "Rollback test je preskočen zbog sigurnosti.",
+      "skippedSummary": "Rollback test je preskočen zbog sigurnosnog pravila.",
       "failSummary": "Rollback test životnog ciklusa nije uspio."
     },
     "stats": {
@@ -341,7 +341,7 @@
   },
   "roles": {
     "all_rounder": "Svestrani",
-    "breakaway": "Bjegač",
+    "breakaway": "Bjegunac",
     "climber": "Penjač",
     "domestique": "Pomoćni vozač",
     "leader": "Vođa",
