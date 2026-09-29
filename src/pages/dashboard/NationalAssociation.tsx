@@ -14,7 +14,7 @@ import {
   Vote,
   XCircle,
 } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { supabase } from '../../lib/supabase'
 
 type Candidate = {
@@ -265,6 +265,13 @@ function statusClasses(status?: string | null): string {
 }
 
 export default function NationalAssociationPage(): JSX.Element {
+  const location = useLocation()
+  const cycleKey = useMemo(() => {
+    const requested = new URLSearchParams(location.search).get('cycle')?.trim()
+    return requested || 'season_main'
+  }, [location.search])
+  const isNationsCycle = cycleKey.startsWith('nations:')
+
   const [association, setAssociation] = useState<AssociationData | null>(null)
   const [dashboard, setDashboard] = useState<CoachDashboard | null>(null)
   const [coachCallups, setCoachCallups] = useState<CoachCallupData | null>(null)
@@ -292,7 +299,7 @@ export default function NationalAssociationPage(): JSX.Element {
 
       const [dashboardResponse, coachCallupsResponse, myCallupsResponse, packageResponse] = await Promise.all([
         supabase.rpc('get_national_coach_dashboard_v1'),
-        supabase.rpc('get_my_national_coach_callups_v1', { p_cycle_key: 'season_main' }),
+        supabase.rpc('get_my_national_coach_callups_v1', { p_cycle_key: cycleKey }),
         supabase.rpc('get_my_national_team_callups_v1'),
         supabase.rpc('get_national_team_standard_package_v1'),
       ])
@@ -341,7 +348,8 @@ export default function NationalAssociationPage(): JSX.Element {
 
   useEffect(() => {
     void load()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cycleKey])
 
   const perform = async (key: string, action: () => Promise<void>): Promise<void> => {
     try {
@@ -413,7 +421,7 @@ export default function NationalAssociationPage(): JSX.Element {
     await perform(`callup:${rider.rider_id}`, async () => {
       const { error: rpcError } = await supabase.rpc('send_national_team_callup_v1', {
         p_rider_id: rider.rider_id,
-        p_cycle_key: 'season_main',
+        p_cycle_key: cycleKey,
       })
       if (rpcError) throw rpcError
       setMessage(`${rider.rider_name} has been called up for the national team.`)
@@ -439,7 +447,7 @@ export default function NationalAssociationPage(): JSX.Element {
   const confirmSquad = async (): Promise<void> => {
     await perform('confirm-squad', async () => {
       const { error: rpcError } = await supabase.rpc('confirm_national_team_squad_v1', {
-        p_cycle_key: 'season_main',
+        p_cycle_key: cycleKey,
         p_rider_ids: selectedSquad,
       })
       if (rpcError) throw rpcError
@@ -925,10 +933,18 @@ export default function NationalAssociationPage(): JSX.Element {
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
                     Rider Overall is intentionally shown as a stable approximate range. Exact hidden skills and potential remain private.
+                    {isNationsCycle ? ' This squad and its three race-day lineups belong to the selected World Nations event.' : ''}
                   </p>
                 </div>
-                <div className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
-                  Season {dashboard?.season_number}
+                <div className="flex flex-wrap items-center gap-2">
+                  {isNationsCycle ? (
+                    <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+                      World Nations event
+                    </span>
+                  ) : null}
+                  <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
+                    Season {dashboard?.season_number}
+                  </span>
                 </div>
               </div>
 
