@@ -1127,13 +1127,13 @@
       "firstPlace": "1. mesto"
     },
     "actions": {
-      "openMyNationalDuty": "Otvori Moju nacionalnu dužnost",
+      "openMyNationalDuty": "Otvori nacionalno prvenstvo",
       "confirmFinalParticipation": "Potvrdi učešće u finalu",
       "openQualificationResults": "Otvori rezultate kvalifikacija",
-      "myNationalDuty": "Moja nacionalna dužnost",
+      "myNationalDuty": "Nacionalno prvenstvo",
       "openNationalFinal": "Otvori finale nacionalnog prvenstva",
       "openChampion": "Otvori profil prvaka",
-      "openWorldDuty": "Otvori obavezu za Svetsko prvenstvo",
+      "openWorldDuty": "Otvori Svetsko prvenstvo",
       "confirmWorld": "Potvrdi Svetsko prvenstvo",
       "openWorldResults": "Otvori rezultate Svetskog prvenstva",
       "openWorldChampionship": "Otvori Svetsko prvenstvo"
@@ -1141,12 +1141,12 @@
     "selected": {
       "title": "{{rider}} je izabran za nacionalno prvenstvo",
       "message": "{{rider}} je izabran za nacionalno prvenstvo države {{country}}. Kvalifikaciona grupa {{heat}} vozi se {{qualificationDate}}. Ako se kvalifikuje, finale je {{finalDate}}. Odluku donesite do {{deadline}}.",
-      "extra": "Sve troškove nacionalne dužnosti pokriva organizator. Otvorite Moju nacionalnu dužnost da odobrite ili odbijete učešće pre roka."
+      "extra": "Sve troškove učešća na nacionalnom prvenstvu pokriva organizator. Otvorite nacionalno prvenstvo da odobrite ili odbijete učešće pre roka."
     },
     "qualificationResult": {
       "title": "{{country}} – završena kvalifikaciona grupa {{heat}}",
       "message": "Zvanični rezultati su dostupni. Prvih {{places}} vozača prolazi u finale nacionalnog prvenstva {{finalDate}}.",
-      "extra": "Otvorite kvalifikacionu trku za kompletnu klasifikaciju i Moju nacionalnu dužnost za sledeće korake vaših vozača."
+      "extra": "Otvorite kvalifikacionu trku za kompletnu klasifikaciju i nacionalno prvenstvo za sledeće korake vaših vozača."
     },
     "qualified": {
       "title": "{{rider}} se plasirao u finale nacionalnog prvenstva",
