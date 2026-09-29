@@ -1203,7 +1203,13 @@
       "group": "Grupa",
       "advance": "Prolazi",
       "points": "Poeni",
-      "squadSize": "Veličina sastava"
+      "squadSize": "Veličina sastava",
+      "raceDay": "Dan trke",
+      "raceResult": "Rezultat trke",
+      "eventPoints": "Bodovi događaja",
+      "tttPoints": "TTT bodovi",
+      "flatPoints": "Bodovi ravničarske trke",
+      "mountainPoints": "Bodovi brdske trke"
     },
     "actions": {
       "openAssociation": "Otvori Nacionalni savez",
@@ -1279,6 +1285,21 @@
       "title": "World Nations šampion",
       "message": "{{country}} je osvojila World Nations Championship.",
       "extra": "Titula se trajno čuva u istoriji World Nations."
+    },
+    "values": {
+      "teamTimeTrial": "Ekipni hronometar",
+      "flatRoadRace": "Ravničarska drumska trka",
+      "hillyMountainRoadRace": "Brdska / planinska drumska trka"
+    },
+    "raceResult": {
+      "title": "{{roundLabel}} · Dan {{raceDay}} završen",
+      "message": "{{country}} je osvojila {{eventPoints}} Nations bodova u trci {{raceLabel}}.",
+      "extra": "Otvori trku za kompletnu klasifikaciju. World Nations tabela se automatski ažurira nakon sva tri dana takmičenja."
+    },
+    "finalResult": {
+      "title": "World Nations finale završeno",
+      "message": "{{country}} je završila na {{rank}}. mestu World Nations finala sa {{points}} bodova.",
+      "extra": "Konačna tabela kombinuje bodove ekipnog hronometra, ravničarske i brdske/planinske trke. Šampion se trajno čuva u World Nations istoriji."
     }
   }
 }
