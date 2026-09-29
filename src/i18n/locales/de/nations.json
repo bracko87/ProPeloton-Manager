@@ -37,7 +37,8 @@
     "electionRequired": "Wahl erforderlich",
     "notCompleted": "Nicht abgeschlossen",
     "associations": "Verbände",
-    "race": "Rennen"
+    "race": "Rennen",
+    "yearsShort": "{{years}} J."
   },
   "association": {
     "loading": "Nationalverband wird geladen...",
@@ -192,7 +193,8 @@
     "errors": {
       "load": "World Nations Championship konnte nicht geladen werden.",
       "hostSubmit": "Gastgeberbewerbung konnte nicht eingereicht werden."
-    }
+    },
+    "drawPending": "Die Auslosung ist noch nicht abgeschlossen."
   },
   "admin": {
     "loading": "World-Nations-Betrieb wird geladen...",
@@ -242,7 +244,24 @@
       "stressField": "Testfeld",
       "associationOption": "{{count}} Verbände",
       "resultSummary": "Feld: {{field}} Verbände · Fehler {{failures}} · Warnungen {{warnings}}",
-      "defaultCase": "Standard-Stresstest: 48 Verbände → 6 Vorrundengruppen → 32 Nationen → 4 Finalqualifikationsgruppen → Weltfinale mit 16 Nationen."
+      "defaultCase": "Standard-Stresstest: 48 Verbände → 6 Vorrundengruppen → 32 Nationen → 4 Finalqualifikationsgruppen → Weltfinale mit 16 Nationen.",
+      "passSummary": "Die World-Nations-E2E-Vertragsprüfung wurde bestanden.",
+      "failSummary": "Die World-Nations-E2E-Vertragsprüfung hat Fehler gefunden.",
+      "checks": {
+        "core_config": "Kernkonfiguration",
+        "no_treasury": "Keine Kasse",
+        "qualificationStress": "Qualifikations-Stresstest · {{count}} Verbände",
+        "qualification_scale_100": "Qualifikationsskalierung · 100 Verbände",
+        "calendar_anchors": "Kalenderanker",
+        "standard_package": "Standardpaket der Nationalmannschaft",
+        "masked_overall_stability": "Stabilität des maskierten Gesamtwerts",
+        "points_balance": "Punktebalance",
+        "lineup_contract": "Aufstellungsvertrag",
+        "complete_field_race_gate": "Rennsperre für vollständiges Feld",
+        "notification_lifecycle": "Benachrichtigungs-Lifecycle",
+        "automatic_runtime": "Automatischer Lauf",
+        "current_operations_health": "Aktueller Betriebszustand"
+      }
     },
     "fixture": {
       "title": "Rollback-Lifecycle-Fixture",
@@ -252,7 +271,10 @@
       "actualField": "Tatsächliches Testfeld: {{count}} Verbände",
       "temporaryManagers": "{{count}} temporäre Manager",
       "rounds": "{{count}} Runden",
-      "groups": "{{count}} Gruppen"
+      "groups": "{{count}} Gruppen",
+      "passSummary": "Rollback-Lifecycle-Fixture bestanden.",
+      "skippedSummary": "Rollback-Lifecycle-Fixture wurde übersprungen.",
+      "failSummary": "Rollback-Lifecycle-Fixture fehlgeschlagen."
     },
     "stats": {
       "championCount": "Anzahl Meister",
@@ -316,5 +338,14 @@
     "error": "Fehler",
     "warning": "Warnung",
     "skipped": "Übersprungen"
+  },
+  "roles": {
+    "all_rounder": "Allrounder",
+    "breakaway": "Ausreißer",
+    "climber": "Kletterer",
+    "domestique": "Helfer",
+    "leader": "Kapitän",
+    "sprinter": "Sprinter",
+    "tt": "Zeitfahrer"
   }
 }
