@@ -1,6 +1,395 @@
 -- Restore National Team fixed-package configuration and Nations runtime scheduling.
 -- Only the catalog rows referenced by the fixed National Team package are seeded here.
 
+insert into public.sponsor_companies
+select *
+from jsonb_populate_recordset(
+  null::public.sponsor_companies,
+  $companies$
+[
+  {
+    "id": "06942d66-c044-4ec5-b365-fe9d2132bb15",
+    "name": "Shemano",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/Shemano.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "groupset",
+        "wheelset",
+        "shoes"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:04:39.562262+00:00",
+    "country_code": "JP",
+    "sponsor_kind": "technical",
+    "home_group_code": "japan_korea",
+    "home_macro_region": "asia"
+  },
+  {
+    "id": "087733a3-4894-4253-a07e-bb3f1971f06a",
+    "name": "BMX Corp",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/BMX%20Corp.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "frame"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:08:08.450917+00:00",
+    "country_code": "CH",
+    "sponsor_kind": "technical",
+    "home_group_code": "alpine_italy",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "2eb9b259-2eb3-46d1-8966-604b0ceb00fb",
+    "name": "Campagnola",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/Campagnola.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "groupset",
+        "wheelset"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:08:05.361782+00:00",
+    "country_code": "IT",
+    "sponsor_kind": "technical",
+    "home_group_code": "alpine_italy",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "340a88a8-a456-4624-8d66-24cffe422a33",
+    "name": "DTM",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/DTM.jpeg\r\n",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "equipment_durable_expansion_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "shoes"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-05-15T09:29:57.838831+00:00",
+    "updated_at": "2026-05-15T11:07:30.845851+00:00",
+    "country_code": "IT",
+    "sponsor_kind": "technical",
+    "home_group_code": "alpine_italy",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "5673ac7a-6c9e-42c8-9184-38d857da134d",
+    "name": "ENVA",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/ENVA.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "frame",
+        "wheelset"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:07:19.218945+00:00",
+    "country_code": "US",
+    "sponsor_kind": "technical",
+    "home_group_code": "us_canada",
+    "home_macro_region": "americas"
+  },
+  {
+    "id": "58aed363-e662-47ea-b49b-0f7410a20442",
+    "name": "Gira",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/Gira.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "equipment_durable_expansion_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "helmet"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-05-15T09:29:57.838831+00:00",
+    "updated_at": "2026-05-15T11:06:51.061179+00:00",
+    "country_code": "US",
+    "sponsor_kind": "technical",
+    "home_group_code": "us_canada",
+    "home_macro_region": "americas"
+  },
+  {
+    "id": "600b3e26-dc6e-4f5f-a35c-dbe65f7fce87",
+    "name": "Pinarella",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/Pinarella.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "frame"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:05:59.64725+00:00",
+    "country_code": "IT",
+    "sponsor_kind": "technical",
+    "home_group_code": "alpine_italy",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "752c890c-e09b-49af-97fd-1e9cbb0239f9",
+    "name": "KASQ",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/KASQ.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "equipment_durable_expansion_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "helmet"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-05-15T09:29:57.838831+00:00",
+    "updated_at": "2026-05-15T11:06:36.719371+00:00",
+    "country_code": "IT",
+    "sponsor_kind": "technical",
+    "home_group_code": "alpine_italy",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "91168035-c4be-46dd-a5e1-5428af72c05c",
+    "name": "Vittorio",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/Vittorio.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "tires"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:04:12.743841+00:00",
+    "country_code": "IT",
+    "sponsor_kind": "technical",
+    "home_group_code": "alpine_italy",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "9176080c-f07b-4413-a5be-e31de4774bb6",
+    "name": "Rovall",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/Rovall.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "equipment_durable_expansion_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "wheelset"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-05-15T09:29:57.838831+00:00",
+    "updated_at": "2026-05-15T11:05:29.637792+00:00",
+    "country_code": "US",
+    "sponsor_kind": "technical",
+    "home_group_code": "us_canada",
+    "home_macro_region": "americas"
+  },
+  {
+    "id": "c07d8dfb-93ce-4d48-8f3d-e8035f20db18",
+    "name": "Mavik",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/Mavik.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "wheelset"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:06:28.989517+00:00",
+    "country_code": "FR",
+    "sponsor_kind": "technical",
+    "home_group_code": "france_benelux",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "c0e9ded7-c333-43fb-91f9-85aa8a441304",
+    "name": "POK",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/POK.jpeg\r\n",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "helmet"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:05:48.255868+00:00",
+    "country_code": "SE",
+    "sponsor_kind": "technical",
+    "home_group_code": "nordics_baltics",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "c84dcf6d-0429-4b8e-82fe-d4a7e194765d",
+    "name": "Sida",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/Sida.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "equipment_durable_expansion_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "shoes"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-05-15T09:29:57.838831+00:00",
+    "updated_at": "2026-05-15T11:04:33.182107+00:00",
+    "country_code": "IT",
+    "sponsor_kind": "technical",
+    "home_group_code": "alpine_italy",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "ced0b7fb-a026-4b67-8244-1e0bec92b376",
+    "name": "SRMA",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/SRMA.jpeg\r\n",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "groupset"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:04:21.361068+00:00",
+    "country_code": "US",
+    "sponsor_kind": "technical",
+    "home_group_code": "us_canada",
+    "home_macro_region": "americas"
+  },
+  {
+    "id": "db609feb-3126-4190-8a3b-b201338bb228",
+    "name": "Kontinental",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/Kontinental.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "tires"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:07:36.625687+00:00",
+    "country_code": "DE",
+    "sponsor_kind": "technical",
+    "home_group_code": "alpine_italy",
+    "home_macro_region": "europe"
+  },
+  {
+    "id": "db7fb57f-9711-4355-9311-fc5e237a0a1d",
+    "name": "FAS",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/FAS.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "equipment_durable_expansion_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "groupset"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-05-15T09:29:57.838831+00:00",
+    "updated_at": "2026-05-15T11:07:02.703819+00:00",
+    "country_code": "US",
+    "sponsor_kind": "technical",
+    "home_group_code": "us_canada",
+    "home_macro_region": "americas"
+  },
+  {
+    "id": "f45b885d-2957-4271-9dea-eaf138bd2749",
+    "name": "DX Swiss",
+    "is_test": true,
+    "logo_url": "https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Tehnical%20Sponsors/DX%20Swiss.jpeg",
+    "metadata": {
+      "seed_scope": "worldwide",
+      "seed_source": "worldwide_technical_seed_v1",
+      "placeholder_branding": true,
+      "equipment_market_types": [
+        "wheelset"
+      ],
+      "real_brand_placeholder": true
+    },
+    "is_active": true,
+    "created_at": "2026-03-24T20:21:44.58134+00:00",
+    "updated_at": "2026-05-15T11:07:26.308306+00:00",
+    "country_code": "CH",
+    "sponsor_kind": "technical",
+    "home_group_code": "alpine_italy",
+    "home_macro_region": "europe"
+  }
+]
+$companies$::jsonb
+)
+on conflict do nothing;
+
 insert into public.equipment_catalog
 select *
 from jsonb_populate_recordset(
