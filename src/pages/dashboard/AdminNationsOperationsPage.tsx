@@ -71,6 +71,28 @@ type E2EValidationResult = {
   checks: E2ECheck[]
 }
 
+type E2EFixtureResult = {
+  status: 'pass' | 'fail' | 'skipped'
+  summary?: string
+  reason?: string
+  association_count?: number
+  member_count?: number
+  round_count?: number
+  group_count?: number
+  groups_with_three_scheduled_events?: number
+  champion_count?: number
+  history_rows?: number
+  member_notifications_generated?: number
+  rollback_mode?: boolean
+  cleanup_check?: {
+    leaked_users?: number
+    leaked_associations?: number
+  }
+  host_selection?: Record<string, unknown>
+  race_gate_test?: Record<string, unknown>
+  error?: string
+}
+
 type OperationsPayload = {
   season_number: number
   game_date: string
@@ -165,6 +187,8 @@ export default function AdminNationsOperationsPage(): JSX.Element {
   const [e2eRunning, setE2eRunning] = useState(false)
   const [e2eAssociationCount, setE2eAssociationCount] = useState(48)
   const [e2eResult, setE2eResult] = useState<E2EValidationResult | null>(null)
+  const [fixtureRunning, setFixtureRunning] = useState(false)
+  const [fixtureResult, setFixtureResult] = useState<E2EFixtureResult | null>(null)
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -235,6 +259,26 @@ export default function AdminNationsOperationsPage(): JSX.Element {
       setError(caught?.message ?? 'Unable to run World Nations E2E validation.')
     } finally {
       setE2eRunning(false)
+    }
+  }
+
+  const runRollbackFixture = async (): Promise<void> => {
+    try {
+      setFixtureRunning(true)
+      setError(null)
+
+      const { data: result, error: rpcError } = await supabase.rpc(
+        'run_admin_nations_e2e_fixture_v1',
+        { p_association_count: e2eAssociationCount },
+      )
+      if (rpcError) throw rpcError
+
+      setFixtureResult((result ?? null) as E2EFixtureResult | null)
+      await load(true)
+    } catch (caught: any) {
+      setError(caught?.message ?? 'Unable to run rollback World Nations lifecycle fixture.')
+    } finally {
+      setFixtureRunning(false)
     }
   }
 
@@ -511,6 +555,100 @@ export default function AdminNationsOperationsPage(): JSX.Element {
             Default stress case: 48 Associations → 6 preliminary groups → 32 nations → 4 Final Qualification groups → 16-nation World Final.
           </div>
         )}
+
+        <div className="border-t border-slate-200 p-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div className="max-w-3xl">
+              <div className="text-sm font-semibold text-slate-900">
+                Rollback lifecycle fixture
+              </div>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Runs a synthetic World Nations lifecycle using temporary users, five eligible managers per Association,
+                the real edition generator, schedule, draw, host selector, race-lineup gate, advancement logic,
+                champion/history writes and notification triggers. The entire fixture runs inside a rollback
+                subtransaction and verifies that no synthetic users or Associations remain afterwards.
+              </p>
+              <p className="mt-2 text-xs font-medium text-amber-700">
+                Safety rule: the server refuses this fixture once live National Associations or a current-season
+                Nations edition exists. The read-only stress validator above remains available at all times.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void runRollbackFixture()}
+              disabled={fixtureRunning}
+              className="inline-flex shrink-0 items-center gap-2 rounded border border-emerald-700 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-50"
+            >
+              {fixtureRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+              Run rollback lifecycle fixture
+            </button>
+          </div>
+
+          {fixtureResult ? (
+            <div className={`mt-4 rounded border p-4 ${
+              fixtureResult.status === 'pass'
+                ? 'border-emerald-200 bg-emerald-50'
+                : fixtureResult.status === 'skipped'
+                  ? 'border-amber-200 bg-amber-50'
+                  : 'border-red-200 bg-red-50'
+            }`}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-semibold text-slate-900">
+                    {fixtureResult.summary ?? humanize(fixtureResult.reason ?? fixtureResult.status)}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-600">
+                    Actual fixture field: {fixtureResult.association_count ?? '—'} Associations
+                    {fixtureResult.member_count ? ` · ${fixtureResult.member_count} temporary managers` : ''}
+                    {fixtureResult.round_count ? ` · ${fixtureResult.round_count} rounds` : ''}
+                    {fixtureResult.group_count ? ` · ${fixtureResult.group_count} groups` : ''}
+                  </div>
+                </div>
+                <span className={`rounded-full px-3 py-1 text-xs font-bold ${
+                  fixtureResult.status === 'pass'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : fixtureResult.status === 'skipped'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-red-100 text-red-800'
+                }`}>
+                  {fixtureResult.status.toUpperCase()}
+                </span>
+              </div>
+
+              {fixtureResult.status === 'pass' ? (
+                <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded bg-white/70 p-3">
+                    <div className="text-xs text-slate-500">Champion count</div>
+                    <div className="mt-1 font-semibold text-slate-900">{fixtureResult.champion_count ?? '—'}</div>
+                  </div>
+                  <div className="rounded bg-white/70 p-3">
+                    <div className="text-xs text-slate-500">Final history rows</div>
+                    <div className="mt-1 font-semibold text-slate-900">{fixtureResult.history_rows ?? '—'}</div>
+                  </div>
+                  <div className="rounded bg-white/70 p-3">
+                    <div className="text-xs text-slate-500">Notifications generated</div>
+                    <div className="mt-1 font-semibold text-slate-900">
+                      {fixtureResult.member_notifications_generated ?? '—'}
+                    </div>
+                  </div>
+                  <div className="rounded bg-white/70 p-3">
+                    <div className="text-xs text-slate-500">Cleanup leaks</div>
+                    <div className="mt-1 font-semibold text-slate-900">
+                      {(fixtureResult.cleanup_check?.leaked_users ?? 0) + (fixtureResult.cleanup_check?.leaked_associations ?? 0)}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {fixtureResult.error ? (
+                <div className="mt-3 rounded bg-white/70 px-3 py-2 text-xs text-red-800">
+                  {fixtureResult.error}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <section className="rounded bg-white shadow">
