@@ -1840,7 +1840,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
           nationRank !== null
             ? `#${nationRank}`
             : bestRiderRank !== null
-              ? `Best rider #${bestRiderRank}`
+              ? `#${bestRiderRank}`
               : null
         ),
         detailRow('Event points', eventPoints !== null ? String(eventPoints) : null),
