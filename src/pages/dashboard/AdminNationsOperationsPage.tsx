@@ -56,6 +56,21 @@ type RoundRow = {
   groups: GroupRow[]
 }
 
+type E2ECheck = {
+  key: string
+  status: 'pass' | 'fail' | 'warning'
+  detail: unknown
+}
+
+type E2EValidationResult = {
+  status: 'pass' | 'fail'
+  association_count_tested: number
+  failures: number
+  warnings: number
+  summary: string
+  checks: E2ECheck[]
+}
+
 type OperationsPayload = {
   season_number: number
   game_date: string
@@ -147,6 +162,9 @@ export default function AdminNationsOperationsPage(): JSX.Element {
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [e2eRunning, setE2eRunning] = useState(false)
+  const [e2eAssociationCount, setE2eAssociationCount] = useState(48)
+  const [e2eResult, setE2eResult] = useState<E2EValidationResult | null>(null)
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -198,6 +216,25 @@ export default function AdminNationsOperationsPage(): JSX.Element {
       setError(caught?.message ?? 'Unable to run World Nations maintenance.')
     } finally {
       setRunning(false)
+    }
+  }
+
+  const runE2EValidation = async (): Promise<void> => {
+    try {
+      setE2eRunning(true)
+      setError(null)
+
+      const { data: result, error: rpcError } = await supabase.rpc(
+        'run_admin_nations_e2e_validation_v1',
+        { p_association_count: e2eAssociationCount },
+      )
+      if (rpcError) throw rpcError
+
+      setE2eResult((result ?? null) as E2EValidationResult | null)
+    } catch (caught: any) {
+      setError(caught?.message ?? 'Unable to run World Nations E2E validation.')
+    } finally {
+      setE2eRunning(false)
     }
   }
 
@@ -359,6 +396,121 @@ export default function AdminNationsOperationsPage(): JSX.Element {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="rounded bg-white shadow">
+        <div className="flex flex-col gap-4 border-b border-slate-200 p-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-emerald-700" />
+              <h3 className="font-semibold text-slate-900">World Nations E2E stress validation</h3>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">
+              Read-only contract test for the full Nations architecture. It validates the qualification pyramid,
+              January election rules, fixed National Team package, masked Overall, scoring balance, lineup rules,
+              complete-field race gates, notifications and automatic maintenance without creating fake live Associations.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Stress field
+              </span>
+              <select
+                value={e2eAssociationCount}
+                onChange={event => setE2eAssociationCount(Number(event.target.value))}
+                className="rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+              >
+                {[25, 40, 48, 50, 64, 100, 128].map(count => (
+                  <option key={count} value={count}>
+                    {count} Associations
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              type="button"
+              onClick={() => void runE2EValidation()}
+              disabled={e2eRunning}
+              className="inline-flex items-center gap-2 rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
+            >
+              {e2eRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
+              Run E2E validation
+            </button>
+          </div>
+        </div>
+
+        {e2eResult ? (
+          <div className="space-y-4 p-4">
+            <div className={`rounded border p-4 ${
+              e2eResult.status === 'pass'
+                ? 'border-emerald-200 bg-emerald-50'
+                : 'border-red-200 bg-red-50'
+            }`}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className={`font-semibold ${
+                    e2eResult.status === 'pass' ? 'text-emerald-900' : 'text-red-900'
+                  }`}>
+                    {e2eResult.summary}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-600">
+                    Field: {e2eResult.association_count_tested} Associations · failures {e2eResult.failures} · warnings {e2eResult.warnings}
+                  </div>
+                </div>
+                <span className={`rounded-full px-3 py-1 text-xs font-bold ${
+                  e2eResult.status === 'pass'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {e2eResult.status.toUpperCase()}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-2">
+              {(e2eResult.checks ?? []).map(check => (
+                <div
+                  key={check.key}
+                  className={`rounded border p-3 ${
+                    check.status === 'pass'
+                      ? 'border-emerald-200 bg-white'
+                      : check.status === 'warning'
+                        ? 'border-amber-200 bg-amber-50'
+                        : 'border-red-200 bg-red-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-slate-900">
+                      {humanize(check.key)}
+                    </div>
+                    <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${
+                      check.status === 'pass'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : check.status === 'warning'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-red-100 text-red-800'
+                    }`}>
+                      {check.status.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-slate-950 px-3 py-2 text-[11px] leading-5 text-slate-200">
+                    {typeof check.detail === 'string'
+                      ? check.detail
+                      : JSON.stringify(check.detail, null, 2)}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 text-sm text-slate-500">
+            Default stress case: 48 Associations → 6 preliminary groups → 32 nations → 4 Final Qualification groups → 16-nation World Final.
+          </div>
+        )}
       </section>
 
       <section className="rounded bg-white shadow">
