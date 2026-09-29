@@ -1037,13 +1037,13 @@
       "firstPlace": "1st place"
     },
     "actions": {
-      "openMyNationalDuty": "Open My National Duty",
+      "openMyNationalDuty": "Open National Championship",
       "confirmFinalParticipation": "Confirm final participation",
       "openQualificationResults": "Open qualification results",
-      "myNationalDuty": "My National Duty",
+      "myNationalDuty": "National Championship",
       "openNationalFinal": "Open National Championship final",
       "openChampion": "Open champion",
-      "openWorldDuty": "Open World Championship duty",
+      "openWorldDuty": "Open World Championship",
       "confirmWorld": "Confirm World Championship",
       "openWorldResults": "Open World Championship results",
       "openWorldChampionship": "Open World Championship"
@@ -1051,12 +1051,12 @@
     "selected": {
       "title": "{{rider}} selected for the National Championship",
       "message": "{{rider}} has been selected for the {{country}} National Championship. Qualification Group {{heat}} is on {{qualificationDate}}. If the rider qualifies, the final is on {{finalDate}}. Decide by {{deadline}}.",
-      "extra": "All National Duty costs are covered. Open My National Duty to approve or refuse participation before the deadline."
+      "extra": "All National Championship participation costs are covered. Open National Championship to approve or refuse participation before the deadline."
     },
     "qualificationResult": {
       "title": "{{country}} National Qualification Group {{heat}} completed",
       "message": "Official results are available. The top {{places}} riders advance to the National Championship final on {{finalDate}}.",
-      "extra": "Open the qualification race for the full classification and My National Duty for your riders' next steps."
+      "extra": "Open the qualification race for the full classification and National Championship for your riders' next steps."
     },
     "qualified": {
       "title": "{{rider}} qualified for the National Championship final",
