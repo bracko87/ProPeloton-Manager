@@ -576,6 +576,16 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     );
     next={...checkpoint,baseReplayTimeline};
   } else if(step===8){
+    const baseReplayTimelineSource=checkpoint.baseReplayTimeline as any;
+    const phase10BaseReplayTimeline={
+      ...baseReplayTimelineSource,
+      checkpoints:Array.isArray(baseReplayTimelineSource?.checkpoints)
+        ? baseReplayTimelineSource.checkpoints.map((row:any)=>({
+            ...row,
+            intermediateResults:[],
+          }))
+        : [],
+    };
     const phase10Resolution=resolveUniversalPhase10Incidents({
       input:calculationInput,
       sourceInput:input,
@@ -583,7 +593,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       riderReadiness:checkpoint.riderReadiness as any,
       roadCommandResolution:checkpoint.roadCommandResolution as any,
       baseFinishResolution:checkpoint.baseFinishResolution as any,
-      baseReplayTimeline:checkpoint.baseReplayTimeline as any,
+      baseReplayTimeline:phase10BaseReplayTimeline as any,
     });
     const phase10Incidents=phase10Resolution.summary;
     const finishResolution=phase10Resolution.finishResolution;
