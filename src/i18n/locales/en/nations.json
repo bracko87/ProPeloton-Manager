@@ -55,7 +55,7 @@
     "summary": {
       "association": "Association",
       "members": "Members",
-      "membersHint": "Five eligible managers activate the Association.",
+      "membersHint": "Five eligible managers are required for activation.",
       "coach": "National Coach",
       "coachSeason": "Season {{season}} · {{term}}",
       "operations": "Operations",
@@ -75,13 +75,27 @@
     },
     "package": {
       "title": "Standard National Team package",
-      "description": "Every country receives the same fixed operational package. It cannot be bought, upgraded or sold.",
+      "description": "Every National Association receives the same system-provided equipment pool. National Team resources are unlimited, supplies never deplete, and equipment/assets remain at 100% condition.",
       "assets": "Race assets",
       "assetLevel": "{{quantity}} × Level {{level}}",
       "equipment": "Rider equipment",
       "tierQuality": "Tier {{tier}} · Quality {{quality}}",
       "supplies": "Race supplies",
-      "tab": "Team Package"
+      "tab": "Team Package",
+      "coachSetsTitle": "National Coach equipment sets",
+      "coachSetsDescription": "Create and name three persistent race sets. Each category can use any item from the National Team equipment pool; the three slots are applied to Flat, Hilly/Mountain and Team Time Trial races.",
+      "setNumber": "Set {{slot}}",
+      "setName": "Set name",
+      "chooseItem": "Choose equipment...",
+      "saveSet": "Save equipment set",
+      "completeSet": "Choose one item for every equipment category before saving.",
+      "setSaved": "Equipment set {{slot}} saved.",
+      "selectionPoolTitle": "National Team rider equipment",
+      "selectionPoolDescription": "Three choices are available for every equipment category in Flat, Mountain and Time Trial. All National Team equipment is always available at 100% condition.",
+      "alwaysPerfect": "Always 100% condition",
+      "unlimited": "Unlimited",
+      "assetsUnlimitedHelp": "National Team race assets are permanently available. The race engine may use the maximum allowed number for an event; they never wear out.",
+      "suppliesUnlimitedHelp": "National Team race supplies are permanently available and are never deducted after use."
     },
     "callups": {
       "title": "National Team call-ups for your riders",
@@ -135,6 +149,23 @@
       "calledUp": "{{rider}} has been called up for the National Team.",
       "squadConfirmed": "The 10-rider National Team squad has been confirmed.",
       "lineupConfirmed": "Race Day {{day}} lineup has been confirmed."
+    },
+    "activation": {
+      "title": "Association activation fund",
+      "description": "Members can jointly fund the one-time 50-Coin activation requirement. This is a founding requirement, not an Association treasury.",
+      "coins": "Coins",
+      "remaining": "Still needed",
+      "yourContribution": "Your contribution",
+      "yourBalance": "Your balance",
+      "contribute": "Contribute Coins",
+      "permanentNote": "Contributions are permanent and non-refundable. They do not create voting power or ownership. Any amount above the remaining target is automatically capped.",
+      "custom": "Custom",
+      "giveCoins": "Give Coins",
+      "joinFirst": "Join the National Association before contributing to its activation fund.",
+      "funded": "Activation fund complete. No further Coins are required.",
+      "requirements": "Activation requires {{members}} eligible managers and {{coins}} Coins in the shared founding fund.",
+      "message": "{{amount}} Coins added to the Association activation fund.",
+      "alreadyFunded": "The activation fund is already complete."
     }
   },
   "world": {

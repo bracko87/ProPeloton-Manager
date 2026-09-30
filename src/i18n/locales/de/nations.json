@@ -55,7 +55,7 @@
     "summary": {
       "association": "Verband",
       "members": "Mitglieder",
-      "membersHint": "Fünf teilnahmeberechtigte Manager aktivieren den Verband.",
+      "membersHint": "Für die Aktivierung sind fünf berechtigte Manager erforderlich.",
       "coach": "Nationaltrainer",
       "coachSeason": "Saison {{season}} · {{term}}",
       "operations": "Betrieb",
@@ -75,13 +75,27 @@
     },
     "package": {
       "title": "Standardpaket der Nationalmannschaft",
-      "description": "Jedes Land erhält dasselbe feste Betriebspaket. Es kann weder gekauft, verbessert noch verkauft werden.",
+      "description": "Jeder Nationalverband erhält denselben systemseitig bereitgestellten Ausrüstungspool. Ressourcen der Nationalmannschaft sind unbegrenzt, Verbrauchsmaterial wird nie aufgebraucht und Ausrüstung/Fahrzeuge bleiben bei 100 % Zustand.",
       "assets": "Rennfahrzeuge",
       "assetLevel": "{{quantity}} × Stufe {{level}}",
       "equipment": "Fahrerausrüstung",
       "tierQuality": "Stufe {{tier}} · Qualität {{quality}}",
       "supplies": "Rennversorgung",
-      "tab": "Teampaket"
+      "tab": "Teampaket",
+      "coachSetsTitle": "Ausrüstungssets des Nationaltrainers",
+      "coachSetsDescription": "Erstelle und benenne drei dauerhafte Rennsets. Für jede Kategorie kann ein beliebiger Artikel aus dem Nationalmannschaftspool gewählt werden; die drei Slots gelten für Flach, Hügelig/Berg und Mannschaftszeitfahren.",
+      "setNumber": "Set {{slot}}",
+      "setName": "Set-Name",
+      "chooseItem": "Ausrüstung wählen...",
+      "saveSet": "Ausrüstungsset speichern",
+      "completeSet": "Wähle vor dem Speichern für jede Ausrüstungskategorie einen Artikel.",
+      "setSaved": "Ausrüstungsset {{slot}} gespeichert.",
+      "selectionPoolTitle": "Fahrerausrüstung der Nationalmannschaft",
+      "selectionPoolDescription": "Für jede Ausrüstungskategorie stehen je drei Optionen für Flach, Berg und Zeitfahren zur Verfügung. Nationalmannschaftsausrüstung ist immer verfügbar und hat 100 % Zustand.",
+      "alwaysPerfect": "Immer 100 % Zustand",
+      "unlimited": "Unbegrenzt",
+      "assetsUnlimitedHelp": "Rennfahrzeuge der Nationalmannschaft sind dauerhaft verfügbar. Pro Rennen kann die maximal erlaubte Anzahl genutzt werden; Verschleiß gibt es nicht.",
+      "suppliesUnlimitedHelp": "Rennverbrauchsmaterial der Nationalmannschaft ist dauerhaft verfügbar und wird bei Nutzung nie abgezogen."
     },
     "callups": {
       "title": "Nationalmannschafts-Nominierungen deiner Fahrer",
@@ -135,6 +149,23 @@
       "calledUp": "{{rider}} wurde für die Nationalmannschaft nominiert.",
       "squadConfirmed": "Der 10-Fahrer-Kader der Nationalmannschaft wurde bestätigt.",
       "lineupConfirmed": "Aufstellung für Renntag {{day}} wurde bestätigt."
+    },
+    "activation": {
+      "title": "Aktivierungsfonds des Verbands",
+      "description": "Mitglieder können gemeinsam die einmalig benötigten 50 Coins zur Aktivierung finanzieren. Dies ist eine Gründungsvoraussetzung und keine Verbandskasse.",
+      "coins": "Coins",
+      "remaining": "Noch benötigt",
+      "yourContribution": "Dein Beitrag",
+      "yourBalance": "Dein Guthaben",
+      "contribute": "Coins beitragen",
+      "permanentNote": "Beiträge sind dauerhaft und nicht erstattungsfähig. Sie geben weder Stimmrecht noch Eigentum. Beträge über dem noch fehlenden Ziel werden automatisch begrenzt.",
+      "custom": "Frei",
+      "giveCoins": "Coins geben",
+      "joinFirst": "Tritt zuerst dem Nationalverband bei, bevor du zum Aktivierungsfonds beiträgst.",
+      "funded": "Aktivierungsfonds vollständig. Es werden keine weiteren Coins benötigt.",
+      "requirements": "Für die Aktivierung werden {{members}} berechtigte Manager und {{coins}} Coins im gemeinsamen Gründungsfonds benötigt.",
+      "message": "{{amount}} Coins wurden dem Aktivierungsfonds hinzugefügt.",
+      "alreadyFunded": "Der Aktivierungsfonds ist bereits vollständig."
     }
   },
   "world": {

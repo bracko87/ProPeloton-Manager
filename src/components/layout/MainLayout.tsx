@@ -548,9 +548,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
       void loadCoinStatus()
     }
 
+    const onCoinBalanceChanged = () => {
+      void loadCoinStatus()
+    }
+
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('focus', onFocus)
     window.addEventListener('online', onOnline)
+    window.addEventListener('coin-balance-changed', onCoinBalanceChanged)
 
     const {
       data: { subscription: authSubscription },
@@ -603,6 +608,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('focus', onFocus)
       window.removeEventListener('online', onOnline)
+      window.removeEventListener('coin-balance-changed', onCoinBalanceChanged)
       authSubscription.unsubscribe()
     }
   }, [

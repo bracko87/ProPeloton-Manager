@@ -48,6 +48,12 @@ type AssociationData = {
   membership_id?: string | null
   member_count?: number
   minimum_members?: number
+  activation_coin_target?: number
+  activation_coin_contributed?: number
+  activation_coin_remaining?: number
+  my_activation_coin_contribution?: number
+  coin_balance?: number
+  activation_ready?: boolean
   has_treasury?: boolean
   coach?: {
     term_id: string
@@ -305,6 +311,7 @@ export default function NationalAssociationPage(): JSX.Element {
   const [manifesto, setManifesto] = useState('')
   const [selectedSquad, setSelectedSquad] = useState<string[]>([])
   const [riderSearch, setRiderSearch] = useState('')
+  const [coinContributionInput, setCoinContributionInput] = useState('')
 
   const load = async (): Promise<void> => {
     setLoading(true)
@@ -406,6 +413,28 @@ export default function NationalAssociationPage(): JSX.Element {
       const { error: rpcError } = await supabase.rpc('leave_my_national_association_v1')
       if (rpcError) throw rpcError
       setMessage(t('association.messages.left'))
+    })
+  }
+
+  const contributeActivationCoins = async (amount: number): Promise<void> => {
+    const requested = Math.floor(Number(amount))
+    if (!Number.isFinite(requested) || requested <= 0) return
+
+    await perform('contribute-coins', async () => {
+      const { data, error: rpcError } = await supabase.rpc(
+        'contribute_national_association_activation_coins_v1',
+        { p_amount: requested },
+      )
+      if (rpcError) throw rpcError
+
+      const appliedAmount = Number((data as any)?.applied_amount ?? 0)
+      setCoinContributionInput('')
+      window.dispatchEvent(new Event('coin-balance-changed'))
+      setMessage(
+        appliedAmount > 0
+          ? t('association.activation.message', { amount: appliedAmount })
+          : t('association.activation.alreadyFunded'),
+      )
     })
   }
 
@@ -701,6 +730,142 @@ export default function NationalAssociationPage(): JSX.Element {
               )}
             </div>
           </section>
+
+          {association.association_exists ? (
+            <section className="overflow-hidden rounded bg-white shadow">
+              <div className="border-b border-slate-200 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900">
+                      {t('association.activation.title')}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {t('association.activation.description')}
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-900">
+                    {association.activation_coin_contributed ?? 0} / {association.activation_coin_target ?? 50} {t('association.activation.coins')}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4">
+                <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-yellow-400 transition-all"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(
+                          0,
+                          ((association.activation_coin_contributed ?? 0) /
+                            Math.max(association.activation_coin_target ?? 50, 1)) *
+                            100,
+                        ),
+                      )}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+                  <div className="rounded border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t('association.activation.remaining')}
+                    </div>
+                    <div className="mt-1 font-semibold text-slate-900">
+                      {association.activation_coin_remaining ?? association.activation_coin_target ?? 50} {t('association.activation.coins')}
+                    </div>
+                  </div>
+                  <div className="rounded border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t('association.activation.yourContribution')}
+                    </div>
+                    <div className="mt-1 font-semibold text-slate-900">
+                      {association.my_activation_coin_contribution ?? 0} {t('association.activation.coins')}
+                    </div>
+                  </div>
+                  <div className="rounded border border-slate-200 bg-slate-50 p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t('association.activation.yourBalance')}
+                    </div>
+                    <div className="mt-1 font-semibold text-slate-900">
+                      {association.coin_balance ?? 0} {t('association.activation.coins')}
+                    </div>
+                  </div>
+                </div>
+
+                {(association.activation_coin_remaining ?? 0) > 0 ? (
+                  association.is_member ? (
+                    <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                      <div className="text-sm font-semibold text-slate-900">
+                        {t('association.activation.contribute')}
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                        {t('association.activation.permanentNote')}
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {[1, 5, 10].map(amount => (
+                          <button
+                            key={amount}
+                            type="button"
+                            disabled={
+                              busyKey === 'contribute-coins' ||
+                              amount > (association.coin_balance ?? 0)
+                            }
+                            onClick={() => void contributeActivationCoins(amount)}
+                            className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+                          >
+                            +{amount}
+                          </button>
+                        ))}
+                        <input
+                          type="number"
+                          min={1}
+                          max={Math.max(association.activation_coin_remaining ?? 1, 1)}
+                          value={coinContributionInput}
+                          onChange={event => setCoinContributionInput(event.target.value)}
+                          placeholder={t('association.activation.custom')}
+                          className="w-28 rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-yellow-500"
+                        />
+                        <button
+                          type="button"
+                          disabled={
+                            busyKey === 'contribute-coins' ||
+                            !coinContributionInput ||
+                            Number(coinContributionInput) <= 0 ||
+                            Number(coinContributionInput) > (association.coin_balance ?? 0)
+                          }
+                          onClick={() => void contributeActivationCoins(Number(coinContributionInput))}
+                          className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-40"
+                        >
+                          {busyKey === 'contribute-coins' ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : null}
+                          {t('association.activation.giveCoins')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm text-slate-600">
+                      {t('association.activation.joinFirst')}
+                    </p>
+                  )
+                ) : (
+                  <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+                    {t('association.activation.funded')}
+                  </div>
+                )}
+
+                <p className="mt-3 text-xs text-slate-500">
+                  {t('association.activation.requirements', {
+                    members: association.minimum_members ?? 5,
+                    coins: association.activation_coin_target ?? 50,
+                  })}
+                </p>
+              </div>
+            </section>
+          ) : null}
 
           {association.is_member && association.association_status === 'active' ? (
             <section className="rounded bg-white shadow">
