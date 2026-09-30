@@ -458,6 +458,9 @@ export default function WorldNationsPage(): JSX.Element {
       <section className="rounded border border-slate-200 bg-white px-4 py-3 shadow-sm">
         <h3 className="text-sm font-semibold text-slate-900">{t('world.title')}</h3>
         <p className="mt-1 text-sm text-slate-500">{t('world.subtitle')}</p>
+        <p className="mt-2 text-xs font-medium text-emerald-700">
+          {t('world.autoEntry')}
+        </p>
         <div className="mt-2">
           <Link
             to="/dashboard/national-ranking"
