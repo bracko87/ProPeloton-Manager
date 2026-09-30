@@ -194,7 +194,8 @@
       "load": "Impossibile caricare il Campionato Mondiale delle Nazioni.",
       "hostSubmit": "Impossibile inviare la candidatura per ospitare."
     },
-    "drawPending": "Il sorteggio non è ancora completato."
+    "drawPending": "Il sorteggio non è ancora completato.",
+    "season1LaunchNote": "La stagione 1 parte volutamente più tardi: il campo World Nations verrà bloccato il 1° giugno usando solo le Associazioni Nazionali attive in quel momento."
   },
   "admin": {
     "loading": "Caricamento operazioni World Nations...",
