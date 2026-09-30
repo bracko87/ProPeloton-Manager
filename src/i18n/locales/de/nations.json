@@ -209,7 +209,8 @@
       "teamChat": "Team-Chat",
       "history": "Historie",
       "competition": "Wettbewerb",
-      "squad": "Kader"
+      "squad": "Kader",
+      "coachLocked": "Wird für den gewählten Nationaltrainer freigeschaltet"
     },
     "userStatus": {
       "member": "Verbandsmitglied",
@@ -440,6 +441,17 @@
         "ready_to_confirm": "Ready to confirm",
         "confirmed": "Final squad confirmed"
       }
+    },
+    "renewal": {
+      "validityTitle": "Gültigkeit des Verbands",
+      "validUntil": "Aktiv bis {{date}} · Verlängerung für Saison {{season}}",
+      "cost": "Verlängerung: {{coins}} Coins bis 1. Februar",
+      "title": "Verlängerung für Saison {{season}}",
+      "deadline": "Spätestens bis {{date}} verlängern.",
+      "renew": "Verband verlängern",
+      "opens": "Die Verlängerung öffnet am {{date}} für Saison {{season}}.",
+      "message": "{{amount}} Coins wurden zur Verbandsverlängerung hinzugefügt.",
+      "alreadyFunded": "Die Verlängerung des Verbands ist bereits vollständig finanziert."
     }
   },
   "world": {
@@ -553,7 +565,45 @@
       "gap": "Gap",
       "bestRider": "Best rider"
     },
-    "autoEntry": "Jeder aktive Nationalverband wird automatisch gemeldet. Eine separate Anmeldung zum Wettbewerb ist nicht erforderlich."
+    "autoEntry": "Jeder aktive Nationalverband wird automatisch gemeldet. Eine separate Anmeldung zum Wettbewerb ist nicht erforderlich.",
+    "groupHost": "Gastgeber · {{country}} · alle drei Renntage",
+    "finalHost": "Gastgeber des Weltfinales",
+    "finalHostHelp": "Ein Land richtet alle drei Renntage des Weltfinales aus.",
+    "applyHost": "Renn-Gastgeber",
+    "applyHostButton": "Als Gastgeber bewerben",
+    "applyHostHelp": "Bewerbung für eine Qualifikationsgruppe oder das Weltfinale mit drei Strecken aus dem eigenen Land.",
+    "hostApplication": {
+      "title": "Bewerbung als World-Nations-Gastgeber",
+      "description": "Ein Gastgeberland muss ein Mannschaftszeitfahren, ein flaches Straßenrennen und ein hügeliges/Bergrennen bereitstellen. Alle drei Renntage der zugewiesenen Gruppe finden im selben Land statt.",
+      "close": "Schließen",
+      "applyFor": "Bewerben für",
+      "qualification": "Qualifikationsrunde",
+      "final": "Weltfinale",
+      "alreadyApplied": "Bereits beworbene Länder",
+      "noApplications": "Für diesen Gastgebertyp liegen noch keine Bewerbungen vor.",
+      "notEligibleTitle": "Dein Land hat noch kein vollständiges Gastgeberpaket",
+      "notEligibleText": "{{country}} kann sich erst bewerben, wenn alle drei benötigten Renntypen in der Datenbank vorhanden sind.",
+      "missing": "Fehlt: {{types}}",
+      "askAdmin": "Bitte einen Administrator, die fehlende Etappe anzulegen. Sobald alle drei Renntypen vorhanden sind, wird die Bewerbung freigeschaltet.",
+      "sameCountryRule": "Alle drei ausgewählten Rennen müssen in {{country}} stattfinden. Die Strecken werden direkt aus der Etappendatenbank geladen.",
+      "ttt": "Mannschaftszeitfahren",
+      "flat": "Flaches Straßenrennen",
+      "mountain": "Hügeliges / Bergrennen",
+      "note": "Bewerbungsnotiz",
+      "notePlaceholder": "Optionale Notiz zur Bewerbung...",
+      "cancel": "Abbrechen",
+      "saving": "Speichern…",
+      "submit": "Gastgeberbewerbung senden",
+      "saved": "Gastgeberbewerbung gespeichert.",
+      "error": "Die Gastgeberbewerbung konnte nicht gespeichert werden.",
+      "coachOnly": "Nur Nationaltrainer",
+      "coachOnlyHelp": "Mitglieder können Bewerbungen ansehen, aber nur der gewählte Nationaltrainer kann eine Bewerbung senden oder ändern.",
+      "type": {
+        "team_time_trial": "Mannschaftszeitfahren",
+        "flat": "Flaches Straßenrennen",
+        "hilly_mountain": "Hügeliges / Bergrennen"
+      }
+    }
   },
   "admin": {
     "loading": "World-Nations-Betrieb wird geladen...",
