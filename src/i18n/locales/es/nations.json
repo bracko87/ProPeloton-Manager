@@ -244,7 +244,9 @@
         "world_nations_day_1": "World Nations · Día 1",
         "world_nations_day_2": "World Nations · Día 2",
         "world_nations_day_3": "World Nations · Día 3"
-      }
+      },
+      "squadMovedHelp": "La selección de corredores, invitaciones, reemplazos y confirmación de los 10 finales se gestionan ahora en la pestaña Selección.",
+      "openSquad": "Abrir selección"
     },
     "guide": {
       "eyebrow": "Cómo funciona",
