@@ -2,11 +2,17 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import NationalAssociationTabs from '../../components/nations/NationalAssociationTabs'
+import NationalAssociationHeader from '../../components/nations/NationalAssociationHeader'
 
 type AssociationData = {
   country_code?: string
   association_name?: string
+  association_status?: string | null
+  is_member?: boolean
+  coach?: {
+    club_name?: string | null
+    user_id?: string | null
+  } | null
 }
 
 type StandardEquipment = {
@@ -157,6 +163,7 @@ export default function NationalTeamPackagePage(): JSX.Element {
   const [presetData, setPresetData] = useState<EquipmentPresetData | null>(null)
   const [presetDrafts, setPresetDrafts] = useState<Record<number, EquipmentPresetDraft>>({})
   const [loading, setLoading] = useState(true)
+  const [isCoach, setIsCoach] = useState(false)
   const [busySlot, setBusySlot] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -166,10 +173,11 @@ export default function NationalTeamPackagePage(): JSX.Element {
     setError(null)
 
     try {
-      const [associationResponse, packageResponse, presetsResponse] = await Promise.all([
+      const [associationResponse, packageResponse, presetsResponse, coachResponse] = await Promise.all([
         supabase.rpc('get_my_national_association_v1'),
         supabase.rpc('get_national_team_standard_package_v1'),
         supabase.rpc('get_my_national_team_equipment_presets_v1'),
+        supabase.rpc('get_national_coach_dashboard_v1'),
       ])
 
       if (associationResponse.error) throw associationResponse.error
@@ -182,6 +190,7 @@ export default function NationalTeamPackagePage(): JSX.Element {
         : ((presetsResponse.data ?? null) as EquipmentPresetData | null)
 
       setAssociation(nextAssociation)
+      setIsCoach(!coachResponse.error && Boolean((coachResponse.data as any)?.allowed))
       setStandardPackage(nextPackage)
       setPresetData(nextPresets)
 
@@ -357,49 +366,21 @@ export default function NationalTeamPackagePage(): JSX.Element {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div className="flex items-start gap-3">
-          {countryFlag ? (
-            <img
-              src={countryFlag}
-              alt={association?.country_code ?? t('common.country')}
-              className="mt-0.5 h-9 w-14 rounded border border-slate-200 object-cover"
-            />
-          ) : (
-            <div className="mt-0.5 flex h-9 w-14 items-center justify-center rounded border border-slate-200 bg-white text-xs font-semibold text-slate-500">
-              {association?.country_code ?? '—'}
-            </div>
-          )}
+      <NationalAssociationHeader
+        association={association}
+        isCoach={isCoach}
+        loading={loading}
+        onRefresh={() => void load()}
+      />
 
-          <div>
-            <h2 className="text-2xl font-semibold text-slate-900">
-              {association?.association_name ??
-                (association?.country_code
-                  ? t('association.countryTitle', { country: association.country_code })
-                  : t('association.title'))}
-            </h2>
-            <p className="mt-1 text-sm font-medium text-slate-700">
-              {t('association.package.title')}
-            </p>
-            <p className="mt-1 max-w-3xl text-sm text-slate-500">
-              {t('association.package.description')}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 self-start">
-          <NationalAssociationTabs />
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading}
-            className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
-            {t('common.refresh')}
-          </button>
-        </div>
-      </div>
+      <section className="rounded border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-900">
+          {t('association.package.title')}
+        </h3>
+        <p className="mt-1 text-sm text-slate-500">
+          {t('association.package.description')}
+        </p>
+      </section>
 
       {error ? (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
