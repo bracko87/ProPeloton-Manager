@@ -338,8 +338,18 @@ export default function NationalTeamPackagePage(): JSX.Element {
     return humanize(specialization)
   }
 
-  const categoryLabel = (category: EquipmentCategory): string =>
-    equipmentT(`categories.${category}`, { defaultValue: humanize(category) })
+  const categoryLabel = (category: EquipmentCategory): string => {
+    const keyMap: Record<EquipmentCategory, string> = {
+      frame: 'categories.frames',
+      wheelset: 'categories.wheelsets',
+      tires: 'categories.tires',
+      groupset: 'categories.groupsets',
+      helmet: 'categories.helmets',
+      shoes: 'categories.shoes',
+    }
+
+    return equipmentT(keyMap[category], { defaultValue: humanize(category) })
+  }
 
   const loadBonusPreview = async (
     slot: number,
