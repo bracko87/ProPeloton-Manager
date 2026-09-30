@@ -345,7 +345,9 @@ function stabilizeFinalReplayPhysicalState(timeline: any): any {
     return {
       ...row,
       groups: Array.isArray(finalCheckpoint.groups) ? finalCheckpoint.groups : row.groups,
-      gaps: Array.isArray(finalCheckpoint.gaps) ? finalCheckpoint.gaps : row.gaps,
+      gaps: Array.isArray(finalCheckpoint.gaps)
+        ? rows(finalCheckpoint.gaps).map((gap) => ({ ...gap, officialTimeSeconds: null }))
+        : row.gaps,
       riderStates,
     };
   });
