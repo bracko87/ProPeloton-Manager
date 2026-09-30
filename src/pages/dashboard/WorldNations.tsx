@@ -661,13 +661,11 @@ export default function WorldNationsPage(): JSX.Element {
             </div>
             <button
               type="button"
-              disabled={!data?.edition || !hostWorkspace?.viewer_can_apply}
+              disabled={!data?.edition}
               onClick={() => openHostModal('qualification')}
               className="mt-2 rounded bg-yellow-400 px-3 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
-              {hostWorkspace?.viewer_can_apply
-                ? t('world.applyHostButton')
-                : t('world.hostApplication.coachOnly')}
+              {t('world.applyHostButton')}
             </button>
             <p className="mt-1 text-xs text-slate-500">
               {t('world.applyHostHelp')}
@@ -833,7 +831,16 @@ export default function WorldNationsPage(): JSX.Element {
                 </div>
               </div>
 
-              {!hostWorkspace?.country_has_complete_bundle ? (
+              {!hostWorkspace?.viewer_can_apply ? (
+                <div className="rounded border border-slate-200 bg-slate-50 p-4">
+                  <div className="font-semibold text-slate-900">
+                    {t('world.hostApplication.coachOnly')}
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    {t('world.hostApplication.coachOnlyHelp')}
+                  </p>
+                </div>
+              ) : !hostWorkspace?.country_has_complete_bundle ? (
                 <div className="rounded border border-amber-200 bg-amber-50 p-4">
                   <div className="font-semibold text-amber-950">
                     {t('world.hostApplication.notEligibleTitle')}
