@@ -275,10 +275,12 @@ function CountryLabel({
 function RoundCard({
   round,
   viewerAssociationId,
+  viewerIsCoach,
   scheduleRows,
 }: {
   round: NationsRound
   viewerAssociationId?: string | null
+  viewerIsCoach?: boolean
   scheduleRows: EventScheduleRow[]
 }): JSX.Element {
   const { t } = useTranslation('nations')
@@ -339,7 +341,7 @@ function RoundCard({
                 ) : null}
               </div>
               <div className="flex items-center gap-2">
-                {viewerInGroup ? (
+                {viewerInGroup && viewerIsCoach ? (
                   <Link
                     to={`/dashboard/national-association/squad?cycle=nations:${group.id}`}
                     className="rounded bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black hover:bg-yellow-300"
@@ -694,6 +696,7 @@ export default function WorldNationsPage(): JSX.Element {
           key={round.id}
           round={round}
           viewerAssociationId={data?.viewer?.association_id}
+          viewerIsCoach={Boolean(data?.viewer?.is_national_coach)}
           scheduleRows={scheduleRows}
         />
       ))}
