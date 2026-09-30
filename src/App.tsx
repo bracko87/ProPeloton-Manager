@@ -60,6 +60,7 @@ import TeamRankingPage from './pages/dashboard/TeamRanking'
 import NationalRankingPage from './pages/dashboard/NationalRanking'
 import NationalChampionshipRacePage from './pages/dashboard/NationalChampionshipRacePage'
 import NationalAssociationPage from './pages/dashboard/NationalAssociation'
+import NationalAssociationSquadPage from './pages/dashboard/NationalAssociationSquad'
 import NationalAssociationElectionsPage from './pages/dashboard/NationalAssociationElections'
 import NationalAssociationTeamChatPage from './pages/dashboard/NationalAssociationTeamChat'
 import NationalAssociationHistoryPage from './pages/dashboard/NationalAssociationHistory'
@@ -541,6 +542,11 @@ export default function App(): JSX.Element {
             <Route
               path="national-association"
               element={<NationalAssociationPage />}
+            />
+
+            <Route
+              path="national-association/squad"
+              element={<NationalAssociationSquadPage />}
             />
 
             <Route
