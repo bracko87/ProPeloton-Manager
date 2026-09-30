@@ -305,7 +305,8 @@
       "principle4": "In caso di parità, solo i leader a pari merito passano al ballottaggio successivo.",
       "kindSeason": "Elezione stagionale",
       "kindActivation": "Prima elezione di attivazione",
-      "kindSpecial": "Elezione sostitutiva"
+      "kindSpecial": "Elezione sostitutiva",
+      "scheduleActual": "Candidature {{registrationStart}}–{{registrationEnd}} · prima votazione {{voteStart}}–{{voteEnd}} · in caso di parità seguono ballottaggi di sette giorni."
     },
     "chat": {
       "privateEyebrow": "Chat privata squadra",
