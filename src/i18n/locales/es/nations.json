@@ -55,7 +55,7 @@
     "summary": {
       "association": "Asociación",
       "members": "Miembros",
-      "membersHint": "Cinco mánagers elegibles activan la Asociación.",
+      "membersHint": "Se requieren cinco managers elegibles para la activación.",
       "coach": "Seleccionador nacional",
       "coachSeason": "Temporada {{season}} · {{term}}",
       "operations": "Operaciones",
@@ -75,13 +75,27 @@
     },
     "package": {
       "title": "Paquete estándar de la selección nacional",
-      "description": "Cada país recibe el mismo paquete operativo fijo. No se puede comprar, mejorar ni vender.",
+      "description": "Cada Asociación Nacional recibe el mismo conjunto de equipamiento proporcionado por el sistema. Los recursos son ilimitados, los suministros no se agotan y el equipamiento/activos permanecen al 100 %.",
       "assets": "Vehículos de carrera",
       "assetLevel": "{{quantity}} × Nivel {{level}}",
       "equipment": "Equipamiento de ciclistas",
       "tierQuality": "Nivel {{tier}} · Calidad {{quality}}",
       "supplies": "Suministros de carrera",
-      "tab": "Paquete del equipo"
+      "tab": "Paquete del equipo",
+      "coachSetsTitle": "Sets de equipamiento del seleccionador",
+      "coachSetsDescription": "Crea y nombra tres sets permanentes. Cada categoría puede usar cualquier artículo del conjunto nacional; los tres slots se aplican a Llano, Colinas/Montaña y Contrarreloj por equipos.",
+      "setNumber": "Set {{slot}}",
+      "setName": "Nombre del set",
+      "chooseItem": "Elegir equipamiento...",
+      "saveSet": "Guardar set",
+      "completeSet": "Elige un artículo de cada categoría antes de guardar.",
+      "setSaved": "Set {{slot}} guardado.",
+      "selectionPoolTitle": "Equipamiento de ciclistas de la selección",
+      "selectionPoolDescription": "Hay tres opciones por categoría para Llano, Montaña y Contrarreloj. Todo el equipamiento nacional está siempre disponible al 100 %.",
+      "alwaysPerfect": "Siempre al 100 %",
+      "unlimited": "Ilimitado",
+      "assetsUnlimitedHelp": "Los activos de carrera de la selección están siempre disponibles. Se puede usar el máximo permitido por evento y nunca se desgastan.",
+      "suppliesUnlimitedHelp": "Los suministros de carrera de la selección son ilimitados y nunca se descuentan."
     },
     "callups": {
       "title": "Convocatorias de tus ciclistas",
@@ -135,6 +149,23 @@
       "calledUp": "{{rider}} ha sido convocado a la selección nacional.",
       "squadConfirmed": "La plantilla de 10 ciclistas de la selección ha sido confirmada.",
       "lineupConfirmed": "La alineación del día {{day}} ha sido confirmada."
+    },
+    "activation": {
+      "title": "Fondo de activación de la asociación",
+      "description": "Los miembros pueden reunir conjuntamente los 50 Coins necesarios una sola vez para activar la asociación. Es un requisito de fundación, no una tesorería.",
+      "coins": "Coins",
+      "remaining": "Aún faltan",
+      "yourContribution": "Tu aportación",
+      "yourBalance": "Tu saldo",
+      "contribute": "Aportar Coins",
+      "permanentNote": "Las aportaciones son permanentes y no reembolsables. No otorgan poder de voto ni propiedad. Cualquier exceso se limita automáticamente a lo que falta.",
+      "custom": "Otro",
+      "giveCoins": "Dar Coins",
+      "joinFirst": "Únete a la Asociación Nacional antes de aportar al fondo de activación.",
+      "funded": "Fondo de activación completado. No se necesitan más Coins.",
+      "requirements": "La activación requiere {{members}} managers elegibles y {{coins}} Coins en el fondo común de fundación.",
+      "message": "Se añadieron {{amount}} Coins al fondo de activación.",
+      "alreadyFunded": "El fondo de activación ya está completo."
     }
   },
   "world": {
