@@ -844,6 +844,10 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       const incidents=Array.isArray((checkpoint.phase10Incidents as any)?.incidents)
         ? (checkpoint.phase10Incidents as any).incidents
         : [];
+      const step9TeamIds=(Array.isArray(calculationInput?.teams)?calculationInput.teams:[])
+        .map((team:any)=>String(team?.teamId??""))
+        .filter(Boolean);
+      let step9PreviousCheckpoint:any=null;
       for(const replayCheckpoint of (replayTimeline as any).checkpoints){
         const checkpointKm=finite(replayCheckpoint?.raceProgress?.kmFromStart,0);
         const dnfRiderIds=new Set(
@@ -858,6 +862,73 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         );
         replayCheckpoint.activeCommands=(step9CommandsByPhase.get(Number(replayCheckpoint?.phase))??[])
           .filter((command:any)=>!dnfRiderIds.has(String(command?.riderId??"")));
+
+        if(Array.isArray(replayCheckpoint?.riderStates)){
+          replayCheckpoint.teamStates=step9TeamIds.map((teamId:string)=>{
+            const teamRiders=replayCheckpoint.riderStates.filter(
+              (row:any)=>String(row?.teamId??"")===teamId
+            );
+            return {
+              teamId,
+              activeRiderIds:teamRiders
+                .filter((row:any)=>row?.status==="racing"||row?.status==="finished")
+                .map((row:any)=>String(row?.riderId??""))
+                .sort(),
+              racingRiderCount:teamRiders.filter((row:any)=>row?.status==="racing").length,
+              finishedRiderCount:teamRiders.filter((row:any)=>row?.status==="finished").length,
+              dnsRiderCount:teamRiders.filter((row:any)=>row?.status==="dns").length,
+              dnfRiderCount:teamRiders.filter((row:any)=>row?.status==="dnf").length,
+              otlRiderCount:teamRiders.filter((row:any)=>row?.status==="otl").length,
+            };
+          });
+        }
+
+        if(step9PreviousCheckpoint&&Array.isArray(replayCheckpoint?.riderStates)){
+          const previousByRider=new Map(
+            (Array.isArray(step9PreviousCheckpoint?.riderStates)?step9PreviousCheckpoint.riderStates:[])
+              .map((row:any)=>[String(row?.riderId??""),row] as const)
+          );
+          const changedRiderIds=replayCheckpoint.riderStates
+            .filter((row:any)=>{
+              const previous=previousByRider.get(String(row?.riderId??"")) as any;
+              const before=previous?.displayCode??null;
+              const after=row?.displayCode??null;
+              return before!==after&&before!==null&&after!==null&&
+                !String(before).startsWith("I")&&!String(after).startsWith("I");
+            })
+            .map((row:any)=>String(row?.riderId??""))
+            .filter(Boolean);
+          const hasPublishedPhysicalTransition=(Array.isArray(replayCheckpoint?.commentary)
+            ? replayCheckpoint.commentary
+            : []
+          ).some((entry:any)=>
+            entry?.eventType==="group_split"||
+            entry?.eventType==="group_merge"||
+            entry?.eventType==="incident"
+          );
+          if(changedRiderIds.length>0&&!hasPublishedPhysicalTransition){
+            const riderTeamIds=Array.from(new Set(
+              changedRiderIds
+                .map((riderId:string)=>
+                  replayCheckpoint.riderStates.find((row:any)=>String(row?.riderId??"")===riderId)?.teamId
+                )
+                .filter(Boolean)
+                .map(String)
+            )).sort();
+            replayCheckpoint.commentary=[
+              ...(Array.isArray(replayCheckpoint?.commentary)?replayCheckpoint.commentary:[]),
+              {
+                commentaryId:`${String(replayCheckpoint?.checkpointId??"checkpoint")}:physical-group-transition`,
+                eventType:"group_split",
+                title:"Road groups reorganize",
+                description:"The race formation changes as riders move between road groups.",
+                riderIds:[...changedRiderIds].sort(),
+                teamIds:riderTeamIds,
+              },
+            ];
+          }
+        }
+        step9PreviousCheckpoint=replayCheckpoint;
       }
     }
     const replaySynchronization=buildUniversalReplaySynchronizationSummary(
