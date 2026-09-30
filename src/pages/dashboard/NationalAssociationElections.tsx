@@ -87,6 +87,7 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
   const { t } = useTranslation('nations')
   const [association, setAssociation] = useState<AssociationData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isCoach, setIsCoach] = useState(false)
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [manifesto, setManifesto] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -97,11 +98,15 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
     setError(null)
 
     try {
-      const { data, error: rpcError } = await supabase.rpc('get_my_national_association_v1')
-      if (rpcError) throw rpcError
+      const [associationResponse, coachResponse] = await Promise.all([
+        supabase.rpc('get_my_national_association_v1'),
+        supabase.rpc('get_national_coach_dashboard_v1'),
+      ])
+      if (associationResponse.error) throw associationResponse.error
 
-      const next = (data ?? null) as AssociationData | null
+      const next = (associationResponse.data ?? null) as AssociationData | null
       setAssociation(next)
+      setIsCoach(!coachResponse.error && Boolean((coachResponse.data as any)?.allowed))
 
       const myCandidate = next?.election?.candidates?.find(candidate => candidate.is_me)
       if (myCandidate?.manifesto) setManifesto(myCandidate.manifesto)
@@ -168,10 +173,6 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
   }
 
   const election = association?.election ?? null
-  const isCoach = Boolean(
-    association?.coach?.user_id &&
-    association?.coach?.user_id === (association as any)?.viewer_user_id,
-  )
 
   if (loading && !association) {
     return (
