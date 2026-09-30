@@ -606,7 +606,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     );
     next={...checkpoint,phase10Incidents,finishResolution,intermediatePointBattles,intermediatePointFinalization,replayTimeline};
   } else if(step===9){
-    const replayTimeline=stabilizeFinalReplayPhysicalState(replayTimeline as any);
+    const replayTimeline=stabilizeFinalReplayPhysicalState(checkpoint.replayTimeline as any);
     const replaySynchronization=buildUniversalReplaySynchronizationSummary(
       calculationInput,
       checkpoint.riderReadiness as any,
