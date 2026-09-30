@@ -180,7 +180,7 @@ Generate only the finished jersey image.`
           {t('association.customization.jerseyTitle')}
         </h3>
         <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">
-          {t('association.customization.jerseyHelp')}
+          Upload your own National Team jersey. Until you save one, the automatically assigned default jersey remains in use.
         </p>
       </div>
 
