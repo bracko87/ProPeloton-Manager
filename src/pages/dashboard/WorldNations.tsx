@@ -555,6 +555,11 @@ export default function WorldNationsPage(): JSX.Element {
               <p className="mt-1 text-sm leading-6 text-amber-900">
                 {t('world.noEditionHelp')}
               </p>
+              {data?.season_number === 1 ? (
+                <p className="mt-2 text-sm font-medium leading-6 text-amber-950">
+                  {t('world.season1LaunchNote')}
+                </p>
+              ) : null}
             </div>
           </div>
 
