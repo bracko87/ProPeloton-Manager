@@ -244,7 +244,9 @@
         "world_nations_day_1": "World Nations · Dan 1",
         "world_nations_day_2": "World Nations · Dan 2",
         "world_nations_day_3": "World Nations · Dan 3"
-      }
+      },
+      "squadMovedHelp": "Izbor vozača, pozivi, zamene i potvrda konačnih 10 sada se vode u posebnoj kartici Sastav.",
+      "openSquad": "Otvori sastav"
     },
     "guide": {
       "eyebrow": "Kako funkcioniše",
