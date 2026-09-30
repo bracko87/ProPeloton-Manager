@@ -1254,11 +1254,11 @@ begin
       jsonb_array_length(v_ttt)>0
       and jsonb_array_length(v_flat)>0
       and jsonb_array_length(v_mountain)>0,
-    'missing_types',jsonb_build_array(
+    'missing_types',to_jsonb(array_remove(ARRAY[
       case when jsonb_array_length(v_ttt)=0 then 'team_time_trial' end,
       case when jsonb_array_length(v_flat)=0 then 'flat' end,
       case when jsonb_array_length(v_mountain)=0 then 'hilly_mountain' end
-    ) - 'null'::jsonb,
+    ]::text[],null)),
     'stage_options',jsonb_build_object(
       'team_time_trial',v_ttt,
       'flat',v_flat,
