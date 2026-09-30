@@ -209,7 +209,8 @@
       "teamChat": "Chat d’équipe",
       "history": "Historique",
       "competition": "Compétition",
-      "squad": "Sélection"
+      "squad": "Sélection",
+      "coachLocked": "Débloqué pour le sélectionneur national élu"
     },
     "userStatus": {
       "member": "Membre de l’association",
@@ -440,6 +441,17 @@
         "ready_to_confirm": "Ready to confirm",
         "confirmed": "Final squad confirmed"
       }
+    },
+    "renewal": {
+      "validityTitle": "Validité de l’Association",
+      "validUntil": "Active jusqu’au {{date}} · renouvellement pour la Saison {{season}}",
+      "cost": "Renouvellement : {{coins}} Coins avant le 1er février",
+      "title": "Renouvellement Saison {{season}}",
+      "deadline": "Renouveler au plus tard le {{date}}.",
+      "renew": "Renouveler l’Association",
+      "opens": "Le renouvellement ouvre le {{date}} pour la Saison {{season}}.",
+      "message": "{{amount}} Coins ajoutés au renouvellement de l’Association.",
+      "alreadyFunded": "Le renouvellement de l’Association est déjà entièrement financé."
     }
   },
   "world": {
@@ -553,7 +565,45 @@
       "gap": "Gap",
       "bestRider": "Best rider"
     },
-    "autoEntry": "Chaque Association Nationale active est inscrite automatiquement. Aucune inscription séparée à la compétition n’est nécessaire."
+    "autoEntry": "Chaque Association Nationale active est inscrite automatiquement. Aucune inscription séparée à la compétition n’est nécessaire.",
+    "groupHost": "Hôte · {{country}} · les trois jours de course",
+    "finalHost": "Hôte de la Finale mondiale",
+    "finalHostHelp": "Un seul pays accueille les trois jours de la Finale mondiale.",
+    "applyHost": "Accueil des courses",
+    "applyHostButton": "Candidater comme hôte",
+    "applyHostHelp": "Candidatez pour un groupe de qualification ou la Finale mondiale avec trois parcours de votre pays.",
+    "hostApplication": {
+      "title": "Candidature pour accueillir World Nations",
+      "description": "Le pays hôte doit proposer un contre-la-montre par équipes, une course plate et une course vallonnée/montagne. Les trois jours du groupe se déroulent dans le même pays.",
+      "close": "Fermer",
+      "applyFor": "Candidater pour",
+      "qualification": "Tour de qualification",
+      "final": "Finale mondiale",
+      "alreadyApplied": "Pays déjà candidats",
+      "noApplications": "Aucune candidature pour ce type d’accueil.",
+      "notEligibleTitle": "Votre pays ne dispose pas encore d’un pack hôte complet",
+      "notEligibleText": "{{country}} pourra candidater lorsque les trois types de course seront présents dans la base.",
+      "missing": "Manque : {{types}}",
+      "askAdmin": "Demandez à un administrateur de créer l’étape manquante. La candidature sera disponible dès que les trois types existent.",
+      "sameCountryRule": "Les trois courses sélectionnées doivent se dérouler en {{country}}. Les parcours proviennent directement de la base des étapes.",
+      "ttt": "Contre-la-montre par équipes",
+      "flat": "Course plate",
+      "mountain": "Course vallonnée / montagne",
+      "note": "Note de candidature",
+      "notePlaceholder": "Note facultative...",
+      "cancel": "Annuler",
+      "saving": "Enregistrement…",
+      "submit": "Envoyer la candidature",
+      "saved": "Candidature hôte enregistrée.",
+      "error": "Impossible d’enregistrer la candidature.",
+      "coachOnly": "Sélectionneur national uniquement",
+      "coachOnlyHelp": "Les membres peuvent consulter les candidatures, mais seul le sélectionneur élu peut en envoyer ou les modifier.",
+      "type": {
+        "team_time_trial": "Contre-la-montre par équipes",
+        "flat": "Course plate",
+        "hilly_mountain": "Course vallonnée / montagne"
+      }
+    }
   },
   "admin": {
     "loading": "Chargement des opérations World Nations...",
