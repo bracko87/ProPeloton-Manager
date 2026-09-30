@@ -307,7 +307,17 @@
       "kindSeason": "Elección de temporada",
       "kindActivation": "Primera elección de activación",
       "kindSpecial": "Elección de reemplazo",
-      "scheduleActual": "Registro de candidatos {{registrationStart}}–{{registrationEnd}} · primera votación {{voteStart}}–{{voteEnd}} · si persiste el empate, continúan rondas de desempate de siete días."
+      "scheduleActual": "Registro de candidatos {{registrationStart}}–{{registrationEnd}} · primera votación {{voteStart}}–{{voteEnd}} · si persiste el empate, continúan rondas de desempate de siete días.",
+      "updateCandidature": "Actualizar candidatura",
+      "candidatureFormTitle": "Presentar candidatura",
+      "candidatureFormHelp": "Introduce el nombre y apellido que verán los miembros de la Asociación y publica tu manifiesto.",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "firstNamePlaceholder": "Nombre",
+      "lastNamePlaceholder": "Apellido",
+      "saveCandidature": "Guardar candidatura",
+      "candidateNumber": "Candidato {{number}}",
+      "viewManifesto": "Ver manifiesto"
     },
     "chat": {
       "privateEyebrow": "Chat privado del equipo",
@@ -452,6 +462,40 @@
       "opens": "La renovación abre el {{date}} para la Temporada {{season}}.",
       "message": "Se añadieron {{amount}} Coins al fondo de renovación.",
       "alreadyFunded": "La renovación de la Asociación ya está financiada por completo."
+    },
+    "customization": {
+      "loading": "Cargando personalización…",
+      "eyebrow": "Personalización de la Asociación",
+      "title": "Logo y maillot nacional",
+      "description": "La bandera nacional siempre permanece visible. La Asociación puede añadir su propio logo y maillot. Sin personalización se usa la bandera como logo y un maillot genérico automático.",
+      "flagTitle": "Bandera nacional",
+      "flagLocked": "La bandera nacional es permanente y no se puede reemplazar.",
+      "logoTitle": "Logo de la Asociación",
+      "logoHelp": "Sube un logo. Sin logo personalizado se usa automáticamente la bandera nacional.",
+      "jerseyTitle": "Maillot nacional",
+      "jerseyHelp": "Elige un maillot genérico o sube uno propio.",
+      "freeRemaining": "Quedan {{count}} cambios gratis",
+      "paidNext": "Siguiente cambio: {{coins}} Coins",
+      "uploadLogo": "Subir logo",
+      "applyLogo": "Aplicar logo",
+      "useFlag": "Usar bandera",
+      "uploadJersey": "Subir maillot",
+      "applyJersey": "Aplicar maillot",
+      "useDefaultJersey": "Usar predeterminado",
+      "genericKits": "Maillots genéricos",
+      "genericKitNumber": "Generic jersey {{number}}",
+      "saving": "Guardando…",
+      "chooseLogo": "Elige primero una imagen de logo.",
+      "chooseJersey": "Elige o sube primero un maillot.",
+      "fileTooLarge": "Las imágenes pueden tener hasta 2 MB.",
+      "fileType": "Usa imágenes PNG, JPG o WEBP.",
+      "logoReset": "Logo restablecido a la bandera nacional.",
+      "logoSaved": "Logo guardado.",
+      "jerseyReset": "Maillot restablecido al genérico predeterminado.",
+      "jerseySaved": "Maillot guardado.",
+      "pricing": "{{used}} cambios usados esta temporada. Los primeros {{free}} son gratis; cada cambio posterior cuesta {{coins}} Coins.",
+      "coachOnly": "Todos los miembros pueden verlo, pero solo el seleccionador nacional elegido puede modificarlo.",
+      "balance": "Saldo: {{balance}} Coins"
     }
   },
   "world": {
@@ -603,7 +647,10 @@
         "flat": "Carrera llana",
         "hilly_mountain": "Carrera de colinas / montaña"
       }
-    }
+    },
+    "groupLiveSummary": "Equipos: {{current}} / {{entrants}} · avanzan {{advance}}",
+    "hostLabel": "Sede",
+    "allThreeRaceDays": "· los tres días"
   },
   "admin": {
     "loading": "Cargando operaciones de World Nations...",

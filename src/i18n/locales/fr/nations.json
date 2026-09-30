@@ -307,7 +307,17 @@
       "kindSeason": "Élection de saison",
       "kindActivation": "Première élection d’activation",
       "kindSpecial": "Élection de remplacement",
-      "scheduleActual": "Candidatures du {{registrationStart}} au {{registrationEnd}} · premier vote du {{voteStart}} au {{voteEnd}} · des tours de départage de sept jours suivent en cas d’égalité."
+      "scheduleActual": "Candidatures du {{registrationStart}} au {{registrationEnd}} · premier vote du {{voteStart}} au {{voteEnd}} · des tours de départage de sept jours suivent en cas d’égalité.",
+      "updateCandidature": "Mettre à jour la candidature",
+      "candidatureFormTitle": "Déposer votre candidature",
+      "candidatureFormHelp": "Saisissez le prénom et le nom affichés aux membres de l’Association, puis publiez votre manifeste.",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "firstNamePlaceholder": "Prénom",
+      "lastNamePlaceholder": "Nom",
+      "saveCandidature": "Enregistrer la candidature",
+      "candidateNumber": "Candidat {{number}}",
+      "viewManifesto": "Voir le manifeste"
     },
     "chat": {
       "privateEyebrow": "Chat privé de l’équipe",
@@ -452,6 +462,40 @@
       "opens": "Le renouvellement ouvre le {{date}} pour la Saison {{season}}.",
       "message": "{{amount}} Coins ajoutés au renouvellement de l’Association.",
       "alreadyFunded": "Le renouvellement de l’Association est déjà entièrement financé."
+    },
+    "customization": {
+      "loading": "Chargement de la personnalisation…",
+      "eyebrow": "Personnalisation de l’Association",
+      "title": "Logo et maillot national",
+      "description": "Le drapeau national reste toujours visible. L’Association peut ajouter son propre logo et son maillot. Sans personnalisation, le drapeau sert de logo et un maillot générique est attribué automatiquement.",
+      "flagTitle": "Drapeau national",
+      "flagLocked": "Le drapeau national est permanent et ne peut pas être remplacé.",
+      "logoTitle": "Logo de l’Association",
+      "logoHelp": "Téléversez un logo. Sans logo personnalisé, le drapeau national est utilisé automatiquement.",
+      "jerseyTitle": "Maillot national",
+      "jerseyHelp": "Choisissez un maillot générique ou téléversez votre propre maillot.",
+      "freeRemaining": "{{count}} changements gratuits restants",
+      "paidNext": "Prochain changement : {{coins}} Coins",
+      "uploadLogo": "Téléverser le logo",
+      "applyLogo": "Appliquer le logo",
+      "useFlag": "Utiliser le drapeau",
+      "uploadJersey": "Téléverser le maillot",
+      "applyJersey": "Appliquer le maillot",
+      "useDefaultJersey": "Utiliser le défaut",
+      "genericKits": "Maillots génériques",
+      "genericKitNumber": "Generic jersey {{number}}",
+      "saving": "Enregistrement…",
+      "chooseLogo": "Choisissez d’abord une image de logo.",
+      "chooseJersey": "Choisissez ou téléversez d’abord un maillot.",
+      "fileTooLarge": "Les images sont limitées à 2 Mo.",
+      "fileType": "Utilisez des images PNG, JPG ou WEBP.",
+      "logoReset": "Logo réinitialisé au drapeau national.",
+      "logoSaved": "Logo enregistré.",
+      "jerseyReset": "Maillot réinitialisé au modèle générique.",
+      "jerseySaved": "Maillot enregistré.",
+      "pricing": "{{used}} changements utilisés cette saison. Les {{free}} premiers sont gratuits ; chaque changement suivant coûte {{coins}} Coins.",
+      "coachOnly": "Tous les membres peuvent voir cette zone, mais seul le sélectionneur élu peut la modifier.",
+      "balance": "Solde : {{balance}} Coins"
     }
   },
   "world": {
@@ -603,7 +647,10 @@
         "flat": "Course plate",
         "hilly_mountain": "Course vallonnée / montagne"
       }
-    }
+    },
+    "groupLiveSummary": "Équipes : {{current}} / {{entrants}} · {{advance}} qualifiées",
+    "hostLabel": "Hôte",
+    "allThreeRaceDays": "· les trois jours de course"
   },
   "admin": {
     "loading": "Chargement des opérations World Nations...",

@@ -307,7 +307,17 @@
       "kindSeason": "Elezione stagionale",
       "kindActivation": "Prima elezione di attivazione",
       "kindSpecial": "Elezione sostitutiva",
-      "scheduleActual": "Candidature {{registrationStart}}–{{registrationEnd}} · prima votazione {{voteStart}}–{{voteEnd}} · in caso di parità seguono ballottaggi di sette giorni."
+      "scheduleActual": "Candidature {{registrationStart}}–{{registrationEnd}} · prima votazione {{voteStart}}–{{voteEnd}} · in caso di parità seguono ballottaggi di sette giorni.",
+      "updateCandidature": "Aggiorna candidatura",
+      "candidatureFormTitle": "Presenta candidatura",
+      "candidatureFormHelp": "Inserisci nome e cognome mostrati ai membri dell’Associazione, poi pubblica il manifesto.",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "firstNamePlaceholder": "Nome",
+      "lastNamePlaceholder": "Cognome",
+      "saveCandidature": "Salva candidatura",
+      "candidateNumber": "Candidato {{number}}",
+      "viewManifesto": "Mostra manifesto"
     },
     "chat": {
       "privateEyebrow": "Chat privata squadra",
@@ -452,6 +462,40 @@
       "opens": "Il rinnovo apre il {{date}} per la Stagione {{season}}.",
       "message": "Aggiunti {{amount}} Coins al rinnovo dell’Associazione.",
       "alreadyFunded": "Il rinnovo dell’Associazione è già completamente finanziato."
+    },
+    "customization": {
+      "loading": "Caricamento personalizzazione…",
+      "eyebrow": "Personalizzazione Associazione",
+      "title": "Logo e maglia nazionale",
+      "description": "La bandiera nazionale resta sempre visibile. L’Associazione può aggiungere un logo e una maglia. Senza personalizzazione la bandiera viene usata come logo e viene assegnata una maglia generica.",
+      "flagTitle": "Bandiera nazionale",
+      "flagLocked": "La bandiera nazionale è permanente e non può essere sostituita.",
+      "logoTitle": "Logo Associazione",
+      "logoHelp": "Carica un logo. Senza logo personalizzato viene usata automaticamente la bandiera.",
+      "jerseyTitle": "Maglia nazionale",
+      "jerseyHelp": "Scegli una maglia generica o caricane una personalizzata.",
+      "freeRemaining": "{{count}} modifiche gratuite rimaste",
+      "paidNext": "Prossima modifica: {{coins}} Coins",
+      "uploadLogo": "Carica logo",
+      "applyLogo": "Applica logo",
+      "useFlag": "Usa bandiera",
+      "uploadJersey": "Carica maglia",
+      "applyJersey": "Applica maglia",
+      "useDefaultJersey": "Usa predefinita",
+      "genericKits": "Maglie generiche",
+      "genericKitNumber": "Generic jersey {{number}}",
+      "saving": "Salvataggio…",
+      "chooseLogo": "Scegli prima un’immagine logo.",
+      "chooseJersey": "Scegli o carica prima una maglia.",
+      "fileTooLarge": "Le immagini possono avere massimo 2 MB.",
+      "fileType": "Usa immagini PNG, JPG o WEBP.",
+      "logoReset": "Logo ripristinato alla bandiera nazionale.",
+      "logoSaved": "Logo salvato.",
+      "jerseyReset": "Maglia ripristinata al modello generico.",
+      "jerseySaved": "Maglia salvata.",
+      "pricing": "{{used}} modifiche usate in questa stagione. Le prime {{free}} sono gratuite; ogni modifica successiva costa {{coins}} Coins.",
+      "coachOnly": "Tutti i membri possono vedere la personalizzazione, ma solo il CT eletto può modificarla.",
+      "balance": "Saldo: {{balance}} Coins"
     }
   },
   "world": {
@@ -603,7 +647,10 @@
         "flat": "Gara pianeggiante",
         "hilly_mountain": "Gara collinare / montagna"
       }
-    }
+    },
+    "groupLiveSummary": "Squadre: {{current}} / {{entrants}} · {{advance}} passano",
+    "hostLabel": "Ospite",
+    "allThreeRaceDays": "· tutti e tre i giorni"
   },
   "admin": {
     "loading": "Caricamento operazioni World Nations...",

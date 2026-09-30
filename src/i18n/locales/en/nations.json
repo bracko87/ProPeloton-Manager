@@ -307,7 +307,17 @@
       "kindSeason": "Season election",
       "kindActivation": "First activation election",
       "kindSpecial": "Replacement election",
-      "scheduleActual": "Candidate registration {{registrationStart}}–{{registrationEnd}} · first vote {{voteStart}}–{{voteEnd}} · seven-day runoff rounds continue if still tied."
+      "scheduleActual": "Candidate registration {{registrationStart}}–{{registrationEnd}} · first vote {{voteStart}}–{{voteEnd}} · seven-day runoff rounds continue if still tied.",
+      "updateCandidature": "Update your candidature",
+      "candidatureFormTitle": "Submit your candidature",
+      "candidatureFormHelp": "Enter the first and last name that will be shown to Association members, then publish your manifesto.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "firstNamePlaceholder": "First name",
+      "lastNamePlaceholder": "Last name",
+      "saveCandidature": "Save candidature",
+      "candidateNumber": "Candidate {{number}}",
+      "viewManifesto": "View manifesto"
     },
     "chat": {
       "privateEyebrow": "Private Team Chat",
@@ -452,6 +462,40 @@
       "opens": "Renewal opens {{date}} for Season {{season}}.",
       "message": "{{amount}} Coins added to the Association renewal fund.",
       "alreadyFunded": "The Association renewal is already fully funded."
+    },
+    "customization": {
+      "loading": "Loading Association customization…",
+      "eyebrow": "Association customization",
+      "title": "Logo & National Team jersey",
+      "description": "The national flag always stays visible. The Association can add its own logo and National Team jersey. If nothing is customized, the country flag is used as the logo and a generic jersey is assigned automatically.",
+      "flagTitle": "National flag",
+      "flagLocked": "The national flag is permanent and cannot be replaced.",
+      "logoTitle": "Association logo",
+      "logoHelp": "Upload an Association logo. If no custom logo is saved, the national flag is used automatically.",
+      "jerseyTitle": "National Team jersey",
+      "jerseyHelp": "Choose a generic jersey or upload your own National Team jersey.",
+      "freeRemaining": "{{count}} free changes left",
+      "paidNext": "Next change: {{coins}} Coins",
+      "uploadLogo": "Upload logo",
+      "applyLogo": "Apply logo",
+      "useFlag": "Use flag",
+      "uploadJersey": "Upload jersey",
+      "applyJersey": "Apply jersey",
+      "useDefaultJersey": "Use default",
+      "genericKits": "Generic jersey pool",
+      "genericKitNumber": "Generic jersey {{number}}",
+      "saving": "Saving…",
+      "chooseLogo": "Choose a logo image first.",
+      "chooseJersey": "Choose or upload a jersey first.",
+      "fileTooLarge": "Image files may be up to 2 MB.",
+      "fileType": "Use PNG, JPG or WEBP images.",
+      "logoReset": "Association logo reset to the national flag.",
+      "logoSaved": "Association logo saved.",
+      "jerseyReset": "National Team jersey reset to the default generic jersey.",
+      "jerseySaved": "National Team jersey saved.",
+      "pricing": "{{used}} changes used this Season. The first {{free}} changes are free; every later logo or jersey change costs {{coins}} Coins.",
+      "coachOnly": "Customization is visible to all Association members, but only the elected National Coach can change the logo or jersey.",
+      "balance": "Balance: {{balance}} Coins"
     }
   },
   "world": {
@@ -603,7 +647,10 @@
         "flat": "Flat road race",
         "hilly_mountain": "Hilly / Mountain road race"
       }
-    }
+    },
+    "groupLiveSummary": "Teams: {{current}} / {{entrants}} · {{advance}} advance",
+    "hostLabel": "Host",
+    "allThreeRaceDays": "· all three race days"
   },
   "admin": {
     "loading": "Loading World Nations Operations...",
