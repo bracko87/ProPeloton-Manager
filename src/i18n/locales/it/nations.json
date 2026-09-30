@@ -80,7 +80,8 @@
       "assetLevel": "{{quantity}} × Livello {{level}}",
       "equipment": "Equipaggiamento corridori",
       "tierQuality": "Livello {{tier}} · Qualità {{quality}}",
-      "supplies": "Forniture di gara"
+      "supplies": "Forniture di gara",
+      "tab": "Pacchetto squadra"
     },
     "callups": {
       "title": "Convocazioni dei tuoi corridori",
