@@ -194,7 +194,8 @@
       "load": "Unable to load World Nations Championship.",
       "hostSubmit": "Unable to submit the host application."
     },
-    "drawPending": "Draw not completed yet."
+    "drawPending": "Draw not completed yet.",
+    "season1LaunchNote": "Season 1 is intentionally delayed: the World Nations field will be locked on 1 June using only National Associations that are active at that time."
   },
   "admin": {
     "loading": "Loading World Nations Operations...",
