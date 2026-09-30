@@ -95,10 +95,10 @@ export default function NationalAssociationHeader({
         </div>
       </div>
 
-        <div className="flex max-w-full flex-col items-start gap-2 self-start">
+        <div className="flex max-w-full flex-col items-end gap-2 self-start">
           <NationalAssociationTabs isCoach={isCoach} />
           {onRefresh ? (
-            <div className="flex w-full justify-start">
+            <div className="flex w-full justify-end">
               <button
                 type="button"
                 onClick={onRefresh}
