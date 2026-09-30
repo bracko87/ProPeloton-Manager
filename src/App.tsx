@@ -60,6 +60,9 @@ import TeamRankingPage from './pages/dashboard/TeamRanking'
 import NationalRankingPage from './pages/dashboard/NationalRanking'
 import NationalChampionshipRacePage from './pages/dashboard/NationalChampionshipRacePage'
 import NationalAssociationPage from './pages/dashboard/NationalAssociation'
+import NationalAssociationElectionsPage from './pages/dashboard/NationalAssociationElections'
+import NationalAssociationTeamChatPage from './pages/dashboard/NationalAssociationTeamChat'
+import NationalAssociationHistoryPage from './pages/dashboard/NationalAssociationHistory'
 import NationalTeamPackagePage from './pages/dashboard/NationalTeamPackage'
 import WorldNationsPage from './pages/dashboard/WorldNations'
 import TeamProfilePage from './pages/dashboard/TeamProfilePage'
@@ -548,6 +551,21 @@ export default function App(): JSX.Element {
             <Route
               path="national-association/world-nations"
               element={<WorldNationsPage />}
+            />
+
+            <Route
+              path="national-association/elections"
+              element={<NationalAssociationElectionsPage />}
+            />
+
+            <Route
+              path="national-association/team-chat"
+              element={<NationalAssociationTeamChatPage />}
+            />
+
+            <Route
+              path="national-association/history"
+              element={<NationalAssociationHistoryPage />}
             />
 
             <Route
