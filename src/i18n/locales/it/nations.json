@@ -209,7 +209,8 @@
       "teamChat": "Chat squadra",
       "history": "Storico",
       "competition": "Competizione",
-      "squad": "Rosa"
+      "squad": "Rosa",
+      "coachLocked": "Si sblocca per il Commissario Tecnico eletto"
     },
     "userStatus": {
       "member": "Membro dell’associazione",
@@ -440,6 +441,17 @@
         "ready_to_confirm": "Ready to confirm",
         "confirmed": "Final squad confirmed"
       }
+    },
+    "renewal": {
+      "validityTitle": "Validità dell’Associazione",
+      "validUntil": "Attiva fino al {{date}} · rinnovo per la Stagione {{season}}",
+      "cost": "Rinnovo: {{coins}} Coins entro il 1° febbraio",
+      "title": "Rinnovo Stagione {{season}}",
+      "deadline": "Rinnovare entro il {{date}}.",
+      "renew": "Rinnova Associazione",
+      "opens": "Il rinnovo apre il {{date}} per la Stagione {{season}}.",
+      "message": "Aggiunti {{amount}} Coins al rinnovo dell’Associazione.",
+      "alreadyFunded": "Il rinnovo dell’Associazione è già completamente finanziato."
     }
   },
   "world": {
@@ -553,7 +565,45 @@
       "gap": "Gap",
       "bestRider": "Best rider"
     },
-    "autoEntry": "Ogni Associazione Nazionale attiva viene iscritta automaticamente. Non serve una registrazione separata."
+    "autoEntry": "Ogni Associazione Nazionale attiva viene iscritta automaticamente. Non serve una registrazione separata.",
+    "groupHost": "Ospite · {{country}} · tutti e tre i giorni",
+    "finalHost": "Ospite della Finale Mondiale",
+    "finalHostHelp": "Un solo paese ospita tutti e tre i giorni della Finale Mondiale.",
+    "applyHost": "Ospitalità gare",
+    "applyHostButton": "Candidati come ospite",
+    "applyHostHelp": "Candidati per un gruppo di qualificazione o per la Finale Mondiale con tre percorsi del tuo paese.",
+    "hostApplication": {
+      "title": "Candidatura per ospitare World Nations",
+      "description": "Il paese ospitante deve fornire una cronometro a squadre, una gara pianeggiante e una gara collinare/montagna. Tutti e tre i giorni del gruppo si svolgono nello stesso paese.",
+      "close": "Chiudi",
+      "applyFor": "Candidati per",
+      "qualification": "Turno di qualificazione",
+      "final": "Finale Mondiale",
+      "alreadyApplied": "Paesi già candidati",
+      "noApplications": "Nessuna candidatura per questo tipo di ospitalità.",
+      "notEligibleTitle": "Il tuo paese non ha ancora un pacchetto ospite completo",
+      "notEligibleText": "{{country}} può candidarsi solo quando il database contiene tutti e tre i tipi di gara.",
+      "missing": "Manca: {{types}}",
+      "askAdmin": "Chiedi a un amministratore di creare la tappa mancante. Quando esistono tutti e tre i tipi, la candidatura sarà disponibile.",
+      "sameCountryRule": "Tutte e tre le gare selezionate devono essere in {{country}}. I percorsi vengono caricati direttamente dal database delle tappe.",
+      "ttt": "Cronometro a squadre",
+      "flat": "Gara pianeggiante",
+      "mountain": "Gara collinare / montagna",
+      "note": "Nota candidatura",
+      "notePlaceholder": "Nota opzionale...",
+      "cancel": "Annulla",
+      "saving": "Salvataggio…",
+      "submit": "Invia candidatura",
+      "saved": "Candidatura salvata.",
+      "error": "Impossibile salvare la candidatura.",
+      "coachOnly": "Solo Commissario Tecnico",
+      "coachOnlyHelp": "I membri possono vedere le candidature, ma solo il Commissario Tecnico eletto può inviarle o modificarle.",
+      "type": {
+        "team_time_trial": "Cronometro a squadre",
+        "flat": "Gara pianeggiante",
+        "hilly_mountain": "Gara collinare / montagna"
+      }
+    }
   },
   "admin": {
     "loading": "Caricamento operazioni World Nations...",
