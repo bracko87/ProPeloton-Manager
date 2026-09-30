@@ -24,6 +24,8 @@ type TeamRow = {
   status: string
   team_id?: string | null
   flag_url?: string | null
+  logo_url?: string | null
+  jersey_url?: string | null
 }
 
 type TeamResult = {
@@ -159,9 +161,11 @@ function flagUrl(code?: string | null): string | null {
 function NationCell({
   code,
   name,
+  jerseyUrl,
 }: {
   code?: string | null
   name?: string | null
+  jerseyUrl?: string | null
 }): JSX.Element {
   const src = flagUrl(code)
 
@@ -176,6 +180,13 @@ function NationCell({
       ) : (
         <div className="h-5 w-8 rounded border border-slate-200 bg-slate-50" />
       )}
+      {jerseyUrl ? (
+        <img
+          src={jerseyUrl}
+          alt=""
+          className="h-9 w-9 rounded border border-slate-200 bg-white object-contain p-0.5"
+        />
+      ) : null}
       <div>
         <div className="font-semibold text-slate-950">{name ?? code ?? '—'}</div>
         <div className="text-xs text-slate-500">{code ?? '—'}</div>
@@ -246,7 +257,7 @@ export default function WorldNationsEventPage(): JSX.Element {
     setError(null)
 
     const { data: responseData, error: responseError } = await supabase.rpc(
-      'get_nations_competition_event_page_v1',
+      'get_nations_competition_event_page_v2',
       { p_event_id: eventId },
     )
 
@@ -648,7 +659,11 @@ export default function WorldNationsEventPage(): JSX.Element {
                             {team.seed_position ?? '—'}
                           </td>
                           <td className="px-4 py-3">
-                            <NationCell code={team.country_code} name={team.association_name} />
+                            <NationCell
+                              code={team.country_code}
+                              name={team.association_name}
+                              jerseyUrl={team.jersey_url}
+                            />
                           </td>
                           <td className="px-4 py-3">
                             <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(team.status)}`}>
@@ -693,7 +708,15 @@ export default function WorldNationsEventPage(): JSX.Element {
                             {result.rank ?? '—'}
                           </td>
                           <td className="px-4 py-3">
-                            <NationCell code={result.country_code} name={result.association_name} />
+                            <NationCell
+                              code={result.country_code}
+                              name={result.association_name}
+                              jerseyUrl={
+                                data.participants.find(
+                                  team => team.association_id === result.association_id,
+                                )?.jersey_url
+                              }
+                            />
                           </td>
                           <td className="px-4 py-3 text-right font-semibold text-slate-900">
                             {result.points}
