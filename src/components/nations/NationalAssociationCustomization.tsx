@@ -112,7 +112,7 @@ Generate only the finished jersey image.`
   }, [])
 
   const effectiveJersey =
-    jerseyPreview ?? data?.jersey_url ?? data?.default_jersey_url ?? null
+    data?.jersey_url ?? data?.default_jersey_url ?? null
 
 
   const applyJersey = async (): Promise<void> => {
@@ -207,7 +207,7 @@ Generate only the finished jersey image.`
                 Upload new jersey
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                Upload your own National Team jersey image. The currently assigned generic jersey remains in use until you save a custom one.
+                Upload your own National Team jersey image. The currently assigned default jersey remains in use until you save a custom one.
               </p>
             </div>
           </div>
