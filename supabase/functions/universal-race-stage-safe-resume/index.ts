@@ -630,10 +630,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       }
     }
     activeCommandsByPhase.forEach((bucket,phaseNumber)=>{
-      bucket.sort((a:any,b:any)=>
-        String(a.teamId).localeCompare(String(b.teamId))||
-        String(a.riderId).localeCompare(String(b.riderId))
-      );
+      bucket.sort((a:any,b:any)=>String(a.riderId).localeCompare(String(b.riderId)));
       activeCommandsByPhase.set(phaseNumber,bucket);
     });
     const phase10BaseReplayTimeline=baseReplayTimelineSource;
@@ -668,7 +665,19 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     );
     if(Array.isArray(phase10Resolution?.replayTimeline?.checkpoints)){
       for(const replayCheckpoint of phase10Resolution.replayTimeline.checkpoints){
-        replayCheckpoint.activeCommands=(activeCommandsByPhase.get(Number(replayCheckpoint?.phase))??[]);
+        const checkpointKm=finite(replayCheckpoint?.raceProgress?.kmFromStart,0);
+        const dnfRiderIds=new Set(
+          (Array.isArray(phase10Resolution?.summary?.incidents)?phase10Resolution.summary.incidents:[])
+            .filter((incident:any)=>finite(incident?.kmFromStart,Number.POSITIVE_INFINITY)<=checkpointKm+0.000001)
+            .flatMap((incident:any)=>
+              (Array.isArray(incident?.riderConsequences)?incident.riderConsequences:[])
+                .filter((row:any)=>row?.statusImpact==="dnf")
+                .map((row:any)=>String(row?.riderId??""))
+            )
+            .filter(Boolean)
+        );
+        replayCheckpoint.activeCommands=(activeCommandsByPhase.get(Number(replayCheckpoint?.phase))??[])
+          .filter((command:any)=>!dnfRiderIds.has(String(command?.riderId??"")));
         if(!Array.isArray(replayCheckpoint?.riderStates)) continue;
         replayCheckpoint.riderStates=replayCheckpoint.riderStates.map((state:any)=>{
           const rider=replayRiderById.get(String(state?.riderId??"")) as any;
@@ -713,6 +722,16 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       ),
     );
     next={...checkpoint,phase10Incidents,finishResolution,intermediatePointBattles,intermediatePointFinalization,replayTimeline};
+    // Step 9 no longer needs the heavy construction-only payloads. Removing
+    // them prevents the final validation/submission step from holding both the
+    // base and final replay timelines in the Edge heap.
+    delete next.baseReplayTimeline;
+    delete next.baseFinishResolution;
+    delete next.provisionalIntermediatePointBattles;
+    delete next.provisionalIntermediatePointFinalization;
+    delete next.phase1RoadRaceResolution;
+    delete next.phase2RoadRaceResolution;
+    delete next.phase3RoadRaceResolution;
   } else if(step===9){
     const replayTimeline=stabilizeFinalReplayPhysicalState(checkpoint.replayTimeline as any);
     const replaySynchronization=buildUniversalReplaySynchronizationSummary(
