@@ -297,7 +297,10 @@
       "principle1": "Ogni membro attivo ha esattamente un voto per turno elettorale.",
       "principle2": "I contributi di attivazione non danno voti aggiuntivi, proprietà o diritti di governo.",
       "principle3": "Il CT nazionale è eletto dai membri e non ottiene automaticamente un posto da corridore nella squadra.",
-      "principle4": "In caso di parità, solo i leader a pari merito passano al ballottaggio successivo."
+      "principle4": "In caso di parità, solo i leader a pari merito passano al ballottaggio successivo.",
+      "kindSeason": "Elezione stagionale",
+      "kindActivation": "Prima elezione di attivazione",
+      "kindSpecial": "Elezione sostitutiva"
     },
     "chat": {
       "privateEyebrow": "Chat privata squadra",
