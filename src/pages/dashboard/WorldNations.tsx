@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import NationalAssociationTabs from '../../components/nations/NationalAssociationTabs'
+import NationalAssociationHeader from '../../components/nations/NationalAssociationHeader'
 
 type QualificationRound = {
   round_index: number
@@ -138,6 +138,17 @@ type Edition = {
   champion_country_code?: string | null
   created_on_game_date: string
   completed_on_game_date?: string | null
+}
+
+type AssociationData = {
+  country_code?: string | null
+  association_name?: string | null
+  association_status?: string | null
+  is_member?: boolean
+  coach?: {
+    club_name?: string | null
+    user_id?: string | null
+  } | null
 }
 
 type Overview = {
@@ -361,6 +372,7 @@ function RoundCard({
 export default function WorldNationsPage(): JSX.Element {
   const { t } = useTranslation('nations')
   const [data, setData] = useState<Overview | null>(null)
+  const [association, setAssociation] = useState<AssociationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -372,14 +384,16 @@ export default function WorldNationsPage(): JSX.Element {
     try {
       setLoading(true)
       setError(null)
-      const { data: response, error: rpcError } = await supabase.rpc(
-        'get_nations_competition_overview_v1',
-        { p_season_number: null },
-      )
-      if (rpcError) throw rpcError
+      const [overviewResponse, associationResponse] = await Promise.all([
+        supabase.rpc('get_nations_competition_overview_v1', { p_season_number: null }),
+        supabase.rpc('get_my_national_association_v1'),
+      ])
+      if (overviewResponse.error) throw overviewResponse.error
+      if (associationResponse.error) throw associationResponse.error
 
-      const next = (response ?? null) as Overview | null
+      const next = (overviewResponse.data ?? null) as Overview | null
       setData(next)
+      setAssociation((associationResponse.data ?? null) as AssociationData | null)
 
       if (next?.edition?.id) {
         const { data: eventSchedule, error: eventScheduleError } = await supabase.rpc(
@@ -455,38 +469,25 @@ export default function WorldNationsPage(): JSX.Element {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
+      <NationalAssociationHeader
+        association={association}
+        isCoach={Boolean(data?.viewer?.is_national_coach)}
+        loading={loading}
+        onRefresh={() => void load()}
+      />
 
-            <h2 className="text-2xl font-semibold text-slate-900">{t('world.title')}</h2>
-          </div>
-          <p className="mt-1 text-sm text-slate-600">
-            {t('world.subtitle')}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
-            <Link
-              to="/dashboard/national-ranking"
-              className="text-yellow-700 hover:text-yellow-800 hover:underline"
-            >
-              {t('world.navRankingChampionship')}
-            </Link>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 self-start">
-          <NationalAssociationTabs />
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => void load()}
-            className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+      <section className="rounded border border-slate-200 bg-white px-4 py-3 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-900">{t('world.title')}</h3>
+        <p className="mt-1 text-sm text-slate-500">{t('world.subtitle')}</p>
+        <div className="mt-2">
+          <Link
+            to="/dashboard/national-ranking"
+            className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
           >
-            {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
-            {t('common.refresh')}
-          </button>
+            {t('world.navRankingChampionship')}
+          </Link>
         </div>
-      </div>
+      </section>
 
       {error ? (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
