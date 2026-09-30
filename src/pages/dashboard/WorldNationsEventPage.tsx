@@ -305,7 +305,6 @@ export default function WorldNationsEventPage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'teams' | 'results'>('teams')
-  const [resultsView, setResultsView] = useState<'stage' | 'general'>('stage')
   const [raceTeams, setRaceTeams] = useState<RaceParticipantTeam[]>([])
   const [raceFavorites, setRaceFavorites] = useState<RaceFavorite[]>([])
   const [stageResults, setStageResults] = useState<StageResultRow[]>([])
@@ -675,36 +674,32 @@ export default function WorldNationsEventPage(): JSX.Element {
         <div className="space-y-6">
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              {t('world.eventPage.host')}
+              Live race
             </div>
-            <div className="mt-3 flex items-center gap-3">
-              {data.host_flag_url ? (
-                <img
-                  src={data.host_flag_url}
-                  alt={data.host_country_name ?? 'Host'}
-                  className="h-9 w-14 rounded border border-slate-200 object-cover"
-                />
-              ) : null}
-              <div>
-                <div className="font-semibold text-slate-950">
-                  {data.host_country_name ?? data.host_country_code ?? '—'}
-                </div>
-                <div className="text-xs text-slate-500">
-                  {t('world.eventPage.hostRotates')}
-                </div>
-              </div>
+            <div className="mt-3 text-lg font-semibold text-slate-950">
+              {data.race_id ? 'Race page available' : 'Replay unavailable'}
             </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {data.race_id
+                ? 'Open the generated race page for live race status, replay and race controls.'
+                : 'Replay is not available yet.'}
+            </p>
+            {!data.race_id ? (
+              <p className="mt-2 text-xs font-medium leading-5 text-slate-500">
+                Replay becomes available after race generation at the scheduled race time.
+              </p>
+            ) : null}
 
             {data.race_id ? (
               <Link
                 to={`/dashboard/races/${data.race_id}`}
                 className="mt-5 block w-full rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-slate-800"
               >
-                {t('world.eventPage.openLiveRace')}
+                Open race page
               </Link>
             ) : (
               <div className="mt-5 rounded-2xl bg-slate-100 px-4 py-3 text-center text-sm font-semibold text-slate-400">
-                {t('world.eventPage.raceGeneratedLater')}
+                Replay unavailable
               </div>
             )}
           </section>
@@ -764,7 +759,7 @@ export default function WorldNationsEventPage(): JSX.Element {
             {t('world.eventPage.raceInformation')}
           </div>
           <div className="mt-1 text-lg font-semibold text-slate-950">
-            Teams & riders
+            Participants and results
           </div>
         </div>
 
@@ -788,7 +783,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                 activeTab === 'results' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500',
               ].join(' ')}
             >
-              {t('world.eventPage.results')}
+              Results
             </button>
           </div>
 
@@ -799,31 +794,49 @@ export default function WorldNationsEventPage(): JSX.Element {
                   <div className="border-b border-sky-100 px-4 py-3">
                     <div className="text-sm font-semibold text-sky-950">Top 5 race favorites</div>
                     <div className="text-xs text-sky-700">
-                      Calculated from the confirmed race field.
+                      Calculated from rider skills, this season results, race profile and assigned role.
                     </div>
                   </div>
                   <div className="grid gap-2 p-3 lg:grid-cols-5">
-                    {raceFavorites.map((favorite, index) => (
-                      <div
-                        key={favorite.rider_id ?? `${favorite.rider_name}-${index}`}
-                        className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
-                      >
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-800">
-                            {favorite.favorite_rank ?? index + 1}
-                          </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
-                            {favorite.start_number ? `#${favorite.start_number}` : '—'}
-                          </span>
+                    {raceFavorites.map((favorite, index) => {
+                      const nation = data.participants.find(team => team.team_id === favorite.team_id)
+                      const nationFlag = flagUrl(nation?.country_code ?? favorite.country_code)
+                      return (
+                        <div
+                          key={favorite.rider_id ?? `${favorite.rider_name}-${index}`}
+                          className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                        >
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-800">
+                              {favorite.favorite_rank ?? index + 1}
+                            </span>
+                            <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                              {favorite.start_number ? `#${favorite.start_number}` : '—'}
+                            </span>
+                          </div>
+                          <div className="truncate text-sm font-semibold text-slate-950">
+                            {favorite.rider_name ?? '—'}
+                          </div>
+                          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                            {nationFlag ? (
+                              <img
+                                src={nationFlag}
+                                alt=""
+                                className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
+                              />
+                            ) : null}
+                            <span className="truncate">
+                              {nation ? nationDisplayName(nation.association_name, nation.country_code) : 'National Team'}
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                              {favorite.role_snapshot ? humanize(favorite.role_snapshot) : '—'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="truncate text-sm font-semibold text-slate-950">
-                          {favorite.rider_name ?? '—'}
-                        </div>
-                        <div className="mt-1 truncate text-xs text-slate-500">
-                          {favorite.role_snapshot ? humanize(favorite.role_snapshot) : '—'}
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               ) : null}
@@ -844,6 +857,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                         return ids.some(id => id && id === team.team_id)
                       })
                       const riders = raceTeam?.riders ?? []
+                      const nationalFlag = flagUrl(team.country_code)
 
                       return (
                         <article
@@ -854,24 +868,48 @@ export default function WorldNationsEventPage(): JSX.Element {
                             <div className="text-lg font-semibold text-slate-950">
                               {nationDisplayName(team.association_name, team.country_code)}
                             </div>
-                            <div className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                              {team.country_code} · National Team
+                            <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                              {nationalFlag ? (
+                                <img
+                                  src={nationalFlag}
+                                  alt=""
+                                  className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
+                                />
+                              ) : null}
+                              <span>National Team</span>
                             </div>
                           </div>
 
                           <div className="grid md:grid-cols-[190px_minmax(0,1fr)]">
-                            <div className="border-b border-slate-100 p-5 md:border-b-0 md:border-r">
-                              <div className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                                Team jersey
+                            <div className="border-b border-slate-100 md:border-b-0 md:border-r">
+                              <div className="border-b border-slate-100 p-5">
+                                <div className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                  Team logo
+                                </div>
+                                <div className="mt-3 flex min-h-[120px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                  {nationalFlag ? (
+                                    <img
+                                      src={nationalFlag}
+                                      alt={nationDisplayName(team.association_name, team.country_code)}
+                                      className="max-h-20 max-w-[120px] object-contain"
+                                    />
+                                  ) : null}
+                                </div>
                               </div>
-                              <div className="mt-3 flex min-h-[190px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                {team.jersey_url ? (
-                                  <img
-                                    src={team.jersey_url}
-                                    alt=""
-                                    className="max-h-44 max-w-full object-contain"
-                                  />
-                                ) : null}
+
+                              <div className="p-5">
+                                <div className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                  Team jersey
+                                </div>
+                                <div className="mt-3 flex min-h-[175px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                  {team.jersey_url ? (
+                                    <img
+                                      src={team.jersey_url}
+                                      alt=""
+                                      className="max-h-40 max-w-full object-contain"
+                                    />
+                                  ) : null}
+                                </div>
                               </div>
                             </div>
 
@@ -881,8 +919,8 @@ export default function WorldNationsEventPage(): JSX.Element {
                               </div>
                               <div className="mt-1 text-sm text-slate-500">
                                 {riders.length > 0
-                                  ? `${riders.length} confirmed rider${riders.length === 1 ? '' : 's'}`
-                                  : 'Riders will appear as soon as the race lineup is confirmed.'}
+                                  ? `${riders.length} assigned rider${riders.length === 1 ? '' : 's'}`
+                                  : 'No riders submitted yet.'}
                               </div>
 
                               <div className="mt-3 space-y-2">
@@ -896,12 +934,20 @@ export default function WorldNationsEventPage(): JSX.Element {
                                         {rider.start_number ? `#${rider.start_number} ` : ''}
                                         {rider.rider_name_snapshot ?? '—'}
                                       </div>
-                                      <div className="mt-0.5 text-xs text-slate-500">
-                                        {[
-                                          rider.country_code_snapshot,
-                                          rider.age_snapshot ? `${rider.age_snapshot} yrs` : null,
-                                          rider.role_snapshot ? humanize(rider.role_snapshot) : null,
-                                        ].filter(Boolean).join(' · ')}
+                                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                                        {flagUrl(rider.country_code_snapshot) ? (
+                                          <img
+                                            src={flagUrl(rider.country_code_snapshot) ?? ''}
+                                            alt=""
+                                            className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
+                                          />
+                                        ) : null}
+                                        <span>
+                                          {[
+                                            rider.age_snapshot ? `${rider.age_snapshot} yrs` : null,
+                                            rider.role_snapshot ? humanize(rider.role_snapshot) : null,
+                                          ].filter(Boolean).join(' · ')}
+                                        </span>
                                       </div>
                                     </div>
                                   </div>
@@ -918,109 +964,170 @@ export default function WorldNationsEventPage(): JSX.Element {
             </div>
           ) : (
             <div className="mt-6">
-              <div className="mb-5 flex w-fit rounded-xl bg-slate-100 p-1">
-                <button
-                  type="button"
-                  onClick={() => setResultsView('stage')}
-                  className={[
-                    'rounded-lg px-4 py-2 text-sm font-semibold',
-                    resultsView === 'stage' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500',
-                  ].join(' ')}
-                >
-                  Stage
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setResultsView('general')}
-                  className={[
-                    'rounded-lg px-4 py-2 text-sm font-semibold',
-                    resultsView === 'general' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500',
-                  ].join(' ')}
-                >
-                  General classification
-                </button>
-              </div>
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <div>
+                    <div className="font-semibold text-slate-950">
+                      National team classification
+                    </div>
+                    <div className="mt-0.5 text-xs text-slate-500">
+                      Current group standing
+                    </div>
+                  </div>
 
-              {resultsView === 'stage' ? (
-                stageResults.length === 0 ? (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-                    {t('world.eventPage.resultsPending')}
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                    <table className="min-w-[760px] w-full text-sm">
-                      <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        <tr>
-                          <th className="px-4 py-3">#</th>
-                          <th className="px-4 py-3">Rider</th>
-                          <th className="px-4 py-3">Nation</th>
-                          <th className="px-4 py-3 text-right">{t('world.eventPage.time')}</th>
-                          <th className="px-4 py-3 text-right">{t('world.eventPage.gap')}</th>
+                  <div className="mt-4 overflow-x-auto rounded-xl bg-white">
+                    <table className="min-w-full table-fixed text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          <th className="w-[8%] px-3 py-3">#</th>
+                          <th className="w-[52%] px-3 py-3">Team</th>
+                          <th className="w-[22%] px-3 py-3 text-right">
+                            {data.race_type === 'team_time_trial' ? 'Time' : 'Points'}
+                          </th>
+                          <th className="w-[18%] px-3 py-3 text-right">
+                            {data.race_type === 'team_time_trial' ? 'Gap' : 'Total'}
+                          </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 bg-white">
-                        {stageResults.map((result, index) => {
-                          const participant = data.participants.find(team => team.team_id === result.team_id)
-                          return (
-                            <tr key={`${result.rider_id ?? index}`}>
-                              <td className="px-4 py-3 font-semibold text-slate-900">{result.rank ?? '—'}</td>
-                              <td className="px-4 py-3 font-semibold text-slate-900">{result.rider_name_snapshot ?? '—'}</td>
-                              <td className="px-4 py-3 text-slate-600">
-                                {participant ? nationDisplayName(participant.association_name, participant.country_code) : '—'}
-                              </td>
-                              <td className="px-4 py-3 text-right font-semibold text-slate-900">
-                                {formatRaceTime(result.elapsed_seconds)}
-                              </td>
-                              <td className="px-4 py-3 text-right text-slate-600">
-                                {formatGap(result.gap_seconds)}
-                              </td>
-                            </tr>
-                          )
-                        })}
+                      <tbody>
+                        {data.race_type === 'team_time_trial' && data.results.length > 0
+                          ? data.results.map((result, index) => {
+                              const team = data.participants.find(candidate => candidate.association_id === result.association_id)
+                              return (
+                                <tr key={result.association_id} className="border-b border-slate-100 bg-white">
+                                  <td className="px-3 py-3 font-semibold text-slate-900">{result.rank ?? index + 1}</td>
+                                  <td className="px-3 py-2">
+                                    <div className="flex items-center gap-3">
+                                      {team?.jersey_url ? (
+                                        <div className="flex h-9 w-24 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+                                          <img src={team.jersey_url} alt="" className="h-12 w-full object-cover object-top" />
+                                        </div>
+                                      ) : null}
+                                      <span className="font-semibold text-slate-900">
+                                        {nationDisplayName(result.association_name, result.country_code)}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-3 text-right font-semibold text-slate-900">
+                                    {formatRaceTime(result.elapsed_seconds)}
+                                  </td>
+                                  <td className="px-3 py-3 text-right text-slate-500">
+                                    {formatGap(result.gap_seconds)}
+                                  </td>
+                                </tr>
+                              )
+                            })
+                          : [...generalStandings]
+                              .sort((a, b) => (a.final_group_rank ?? 999) - (b.final_group_rank ?? 999) || b.total_points - a.total_points)
+                              .map((standing, index) => {
+                                const team = data.participants.find(candidate => candidate.association_id === standing.association_id)
+                                return (
+                                  <tr key={standing.association_id} className="border-b border-slate-100 bg-white">
+                                    <td className="px-3 py-3 font-semibold text-slate-900">
+                                      {standing.final_group_rank ?? index + 1}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <div className="flex items-center gap-3">
+                                        {team?.jersey_url ? (
+                                          <div className="flex h-9 w-24 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+                                            <img src={team.jersey_url} alt="" className="h-12 w-full object-cover object-top" />
+                                          </div>
+                                        ) : null}
+                                        <span className="font-semibold text-slate-900">
+                                          {nationDisplayName(standing.association_name, standing.country_code)}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className="px-3 py-3 text-right font-semibold text-slate-900">
+                                      {standing.total_points}
+                                    </td>
+                                    <td className="px-3 py-3 text-right text-slate-500">
+                                      {standing.ttt_points + standing.flat_points + standing.mountain_points}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
                       </tbody>
                     </table>
                   </div>
-                )
-              ) : (
-                generalStandings.length === 0 ? (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-                    General classification will appear once the group has standings.
+                </div>
+
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <div className="font-semibold text-slate-950">
+                    Stage results
                   </div>
-                ) : (
-                  <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                    <table className="min-w-[760px] w-full text-sm">
-                      <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        <tr>
-                          <th className="px-4 py-3">#</th>
-                          <th className="px-4 py-3">Nation</th>
-                          <th className="px-4 py-3 text-right">TTT</th>
-                          <th className="px-4 py-3 text-right">Flat</th>
-                          <th className="px-4 py-3 text-right">Mountain</th>
-                          <th className="px-4 py-3 text-right">Total</th>
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    {data.race_type === 'team_time_trial'
+                      ? 'National Team Time Trial result'
+                      : 'Riders who participated in this race'}
+                  </div>
+
+                  <div className="mt-4 overflow-x-auto rounded-xl bg-white">
+                    <table className="min-w-full table-fixed text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          <th className="w-[8%] px-3 py-3">#</th>
+                          <th className="w-[52%] px-3 py-3">
+                            {data.race_type === 'team_time_trial' ? 'Team' : 'Rider'}
+                          </th>
+                          <th className="w-[22%] px-3 py-3 text-right">Time</th>
+                          <th className="w-[18%] px-3 py-3 text-right">Gap</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 bg-white">
-                        {[...generalStandings]
-                          .sort((a, b) => (a.final_group_rank ?? 999) - (b.final_group_rank ?? 999) || b.total_points - a.total_points)
-                          .map((standing, index) => (
-                            <tr key={standing.association_id}>
-                              <td className="px-4 py-3 font-semibold text-slate-900">
-                                {standing.final_group_rank ?? index + 1}
-                              </td>
-                              <td className="px-4 py-3 font-semibold text-slate-900">
-                                {nationDisplayName(standing.association_name, standing.country_code)}
-                              </td>
-                              <td className="px-4 py-3 text-right text-slate-600">{standing.ttt_points}</td>
-                              <td className="px-4 py-3 text-right text-slate-600">{standing.flat_points}</td>
-                              <td className="px-4 py-3 text-right text-slate-600">{standing.mountain_points}</td>
-                              <td className="px-4 py-3 text-right font-semibold text-slate-950">{standing.total_points}</td>
-                            </tr>
-                          ))}
+                      <tbody>
+                        {data.race_type === 'team_time_trial'
+                          ? data.results.map((result, index) => {
+                              const team = data.participants.find(candidate => candidate.association_id === result.association_id)
+                              return (
+                                <tr key={`ttt-${result.association_id}`} className="border-b border-slate-100 bg-white">
+                                  <td className="px-3 py-3 font-semibold text-slate-900">{result.rank ?? index + 1}</td>
+                                  <td className="px-3 py-2">
+                                    <div className="flex items-center gap-3">
+                                      {team?.jersey_url ? (
+                                        <div className="flex h-9 w-24 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
+                                          <img src={team.jersey_url} alt="" className="h-12 w-full object-cover object-top" />
+                                        </div>
+                                      ) : null}
+                                      <span className="font-semibold text-slate-900">
+                                        {nationDisplayName(result.association_name, result.country_code)}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-3 text-right font-semibold text-slate-900">{formatRaceTime(result.elapsed_seconds)}</td>
+                                  <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds)}</td>
+                                </tr>
+                              )
+                            })
+                          : stageResults.map((result, index) => {
+                              const participant = data.participants.find(team => team.team_id === result.team_id)
+                              return (
+                                <tr key={`stage-${result.rider_id ?? index}`} className="border-b border-slate-100 bg-white">
+                                  <td className="px-3 py-3 font-semibold text-slate-900">{result.rank ?? '—'}</td>
+                                  <td className="px-3 py-3">
+                                    <div className="font-semibold text-slate-900">{result.rider_name_snapshot ?? '—'}</div>
+                                    {participant ? (
+                                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                                        {flagUrl(participant.country_code) ? (
+                                          <img
+                                            src={flagUrl(participant.country_code) ?? ''}
+                                            alt=""
+                                            className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
+                                          />
+                                        ) : null}
+                                        <span>{nationDisplayName(participant.association_name, participant.country_code)}</span>
+                                      </div>
+                                    ) : null}
+                                  </td>
+                                  <td className="px-3 py-3 text-right font-semibold text-slate-900">{formatRaceTime(result.elapsed_seconds)}</td>
+                                  <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds)}</td>
+                                </tr>
+                              )
+                            })}
                       </tbody>
                     </table>
                   </div>
-                )
-              )}
+                </div>
+              </div>
             </div>
           )}
 

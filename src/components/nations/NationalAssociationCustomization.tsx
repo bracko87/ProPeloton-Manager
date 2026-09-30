@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
@@ -87,14 +87,6 @@ export default function NationalAssociationCustomization(): JSX.Element {
   const effectiveJersey =
     jerseyPreview ?? data?.jersey_url ?? data?.default_jersey_url ?? null
 
-  const pricingLabel = useMemo(() => {
-    if (!data) return ''
-    const remaining = data.free_changes_remaining ?? 0
-    if (remaining > 0) {
-      return t('association.customization.freeRemaining', { count: remaining })
-    }
-    return t('association.customization.paidNext', { coins: data.next_change_cost ?? 2 })
-  }, [data, t])
 
   const applyJersey = async (): Promise<void> => {
     if (!data?.association_id || !data.can_edit || !jerseyFile) return
@@ -115,11 +107,17 @@ export default function NationalAssociationCustomization(): JSX.Element {
       )
       if (rpcError) throw rpcError
 
-      setData((result ?? null) as CustomizationData | null)
+      const nextData = (result ?? null) as CustomizationData | null
+      setData(nextData)
       setJerseyFile(null)
       setJerseyPreview(null)
       window.dispatchEvent(new Event('coin-balance-changed'))
-      setMessage(t('association.customization.jerseySaved'))
+      const remaining = nextData?.free_changes_remaining ?? 0
+      setMessage(
+        remaining > 0
+          ? `${t('association.customization.jerseySaved')} ${remaining} free change${remaining === 1 ? '' : 's'} remaining.`
+          : `${t('association.customization.jerseySaved')} Future jersey changes cost ${nextData?.next_change_cost ?? 2} Coins.`,
+      )
     } catch (caught: any) {
       if (uploadedPath) {
         await supabase.storage.from('club-logos').remove([uploadedPath])
@@ -176,7 +174,7 @@ export default function NationalAssociationCustomization(): JSX.Element {
         </div>
 
         <div className="bg-white p-5">
-          <div className="flex items-start justify-between gap-3">
+          <div>
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Upload new jersey
@@ -185,9 +183,6 @@ export default function NationalAssociationCustomization(): JSX.Element {
                 Upload your own National Team jersey image. The currently assigned generic jersey remains in use until you save a custom one.
               </p>
             </div>
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">
-              {pricingLabel}
-            </span>
           </div>
 
           <div className="mt-4 flex min-h-[190px] items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5">
@@ -255,12 +250,8 @@ export default function NationalAssociationCustomization(): JSX.Element {
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="text-slate-600">
             {data.can_edit
-              ? t('association.customization.pricing', {
-                  used: data.change_count ?? 0,
-                  free: data.free_change_limit ?? 3,
-                  coins: 2,
-                })
-              : t('association.customization.coachOnly')}
+              ? `${data.change_count ?? 0} jersey changes used this Season. The first ${data.free_change_limit ?? 3} changes are free; every later jersey change costs 2 Coins.`
+              : 'Customization is visible to all Association members, but only the elected National Coach can change the jersey.'}
           </div>
           <div className="font-semibold text-slate-700">
             {t('association.customization.balance', { balance: data.coin_balance ?? 0 })}
