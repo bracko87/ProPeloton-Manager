@@ -8,32 +8,31 @@ export default function NationalAssociationTabs(): JSX.Element {
 
   const linkClass = ({ isActive }: { isActive: boolean }): string =>
     [
-      'rounded-md px-4 py-2 text-sm font-medium transition',
+      'rounded-md px-3 py-2 text-sm font-medium transition whitespace-nowrap',
       isActive
         ? 'bg-yellow-400 text-black'
         : 'text-gray-600 hover:bg-gray-100',
     ].join(' ')
 
   return (
-    <div className="inline-flex rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
-      <NavLink
-        to="/dashboard/national-association"
-        end
-        className={linkClass}
-      >
+    <div className="inline-flex max-w-full flex-wrap rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+      <NavLink to="/dashboard/national-association" end className={linkClass}>
         {navigationT('overview')}
       </NavLink>
-      <NavLink
-        to="/dashboard/national-association/team-package"
-        className={linkClass}
-      >
+      <NavLink to="/dashboard/national-association/team-package" className={linkClass}>
         {nationsT('association.package.tab')}
       </NavLink>
-      <NavLink
-        to="/dashboard/national-association/world-nations"
-        className={linkClass}
-      >
+      <NavLink to="/dashboard/national-association/world-nations" className={linkClass}>
         {nationsT('association.navWorldNations')}
+      </NavLink>
+      <NavLink to="/dashboard/national-association/elections" className={linkClass}>
+        {nationsT('association.tabs.elections')}
+      </NavLink>
+      <NavLink to="/dashboard/national-association/team-chat" className={linkClass}>
+        {nationsT('association.tabs.teamChat')}
+      </NavLink>
+      <NavLink to="/dashboard/national-association/history" className={linkClass}>
+        {nationsT('association.tabs.history')}
       </NavLink>
     </div>
   )
