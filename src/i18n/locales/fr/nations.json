@@ -55,7 +55,7 @@
     "summary": {
       "association": "Association",
       "members": "Membres",
-      "membersHint": "Cinq managers éligibles activent l'Association.",
+      "membersHint": "Cinq managers éligibles sont requis pour l’activation.",
       "coach": "Sélectionneur national",
       "coachSeason": "Saison {{season}} · {{term}}",
       "operations": "Fonctionnement",
@@ -75,13 +75,27 @@
     },
     "package": {
       "title": "Pack standard de l'équipe nationale",
-      "description": "Chaque pays reçoit le même pack opérationnel fixe. Il ne peut être ni acheté, ni amélioré, ni vendu.",
+      "description": "Chaque Association Nationale reçoit le même pool d’équipement fourni par le système. Les ressources sont illimitées, les consommables ne diminuent jamais et l’équipement/les véhicules restent à 100 %.",
       "assets": "Véhicules de course",
       "assetLevel": "{{quantity}} × Niveau {{level}}",
       "equipment": "Équipement des coureurs",
       "tierQuality": "Niveau {{tier}} · Qualité {{quality}}",
       "supplies": "Fournitures de course",
-      "tab": "Pack de l’équipe"
+      "tab": "Pack de l’équipe",
+      "coachSetsTitle": "Sets d’équipement du sélectionneur",
+      "coachSetsDescription": "Créez et nommez trois sets permanents. Chaque catégorie peut utiliser n’importe quel article du pool national ; les trois slots s’appliquent au Plat, Vallonné/Montagne et Contre-la-montre par équipes.",
+      "setNumber": "Set {{slot}}",
+      "setName": "Nom du set",
+      "chooseItem": "Choisir l’équipement...",
+      "saveSet": "Enregistrer le set",
+      "completeSet": "Choisissez un article dans chaque catégorie avant d’enregistrer.",
+      "setSaved": "Set {{slot}} enregistré.",
+      "selectionPoolTitle": "Équipement des coureurs de l’équipe nationale",
+      "selectionPoolDescription": "Trois choix sont disponibles par catégorie pour Plat, Montagne et Contre-la-montre. Tout l’équipement national est toujours disponible à 100 %.",
+      "alwaysPerfect": "Toujours à 100 %",
+      "unlimited": "Illimité",
+      "assetsUnlimitedHelp": "Les véhicules de course nationaux sont toujours disponibles. Le maximum autorisé par épreuve peut être utilisé et ils ne s’usent jamais.",
+      "suppliesUnlimitedHelp": "Les consommables de course nationaux sont illimités et ne sont jamais déduits."
     },
     "callups": {
       "title": "Convocations de vos coureurs en équipe nationale",
@@ -135,6 +149,23 @@
       "calledUp": "{{rider}} a été convoqué en équipe nationale.",
       "squadConfirmed": "La sélection de 10 coureurs a été confirmée.",
       "lineupConfirmed": "La composition du jour {{day}} a été confirmée."
+    },
+    "activation": {
+      "title": "Fonds d’activation de l’association",
+      "description": "Les membres peuvent réunir ensemble les 50 Coins requis une seule fois pour activer l’association. Il s’agit d’une condition de fondation, pas d’une trésorerie.",
+      "coins": "Coins",
+      "remaining": "Encore nécessaires",
+      "yourContribution": "Votre contribution",
+      "yourBalance": "Votre solde",
+      "contribute": "Contribuer en Coins",
+      "permanentNote": "Les contributions sont permanentes et non remboursables. Elles ne donnent ni pouvoir de vote ni propriété. Tout montant supérieur au reste dû est automatiquement plafonné.",
+      "custom": "Autre",
+      "giveCoins": "Donner des Coins",
+      "joinFirst": "Rejoignez d’abord l’Association Nationale avant de contribuer au fonds d’activation.",
+      "funded": "Fonds d’activation complet. Aucun Coin supplémentaire n’est requis.",
+      "requirements": "L’activation nécessite {{members}} managers éligibles et {{coins}} Coins dans le fonds commun de fondation.",
+      "message": "{{amount}} Coins ajoutés au fonds d’activation.",
+      "alreadyFunded": "Le fonds d’activation est déjà complet."
     }
   },
   "world": {
