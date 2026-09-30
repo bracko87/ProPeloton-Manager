@@ -194,7 +194,8 @@
       "load": "Impossible de charger le Championnat mondial des nations.",
       "hostSubmit": "Impossible d'envoyer la candidature d'hôte."
     },
-    "drawPending": "Le tirage n'est pas encore terminé."
+    "drawPending": "Le tirage n'est pas encore terminé.",
+    "season1LaunchNote": "La saison 1 est volontairement retardée : le tableau World Nations sera figé le 1er juin avec uniquement les Associations nationales actives à cette date."
   },
   "admin": {
     "loading": "Chargement des opérations World Nations...",
