@@ -641,7 +641,10 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       for(const row of phase10BaseReplayTimeline.checkpoints){
         row.intermediateResults=[];
         row.teamStates=[];
-        row.activeCommands=(activeCommandsByPhase.get(Number(row?.phase))??[]);
+        // Phase 10 does not need command payloads to calculate incidents.
+        // Restore them after the incident pass to avoid duplicating thousands
+        // of command objects while the large replay is being transformed.
+        row.activeCommands=[];
       }
     }
     const phase10Resolution=resolveUniversalPhase10Incidents({
@@ -665,6 +668,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     );
     if(Array.isArray(phase10Resolution?.replayTimeline?.checkpoints)){
       for(const replayCheckpoint of phase10Resolution.replayTimeline.checkpoints){
+        replayCheckpoint.activeCommands=(activeCommandsByPhase.get(Number(replayCheckpoint?.phase))??[]);
         if(!Array.isArray(replayCheckpoint?.riderStates)) continue;
         replayCheckpoint.riderStates=replayCheckpoint.riderStates.map((state:any)=>{
           const rider=replayRiderById.get(String(state?.riderId??"")) as any;
