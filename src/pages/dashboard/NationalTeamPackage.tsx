@@ -530,6 +530,28 @@ export default function NationalTeamPackagePage(): JSX.Element {
     )
   }
 
+  if (!isCoach) {
+    return (
+      <div className="w-full space-y-6">
+        <NationalAssociationHeader
+          association={association}
+          isCoach={false}
+          loading={loading}
+          onRefresh={() => void load()}
+        />
+
+        <section className="rounded border border-amber-200 bg-amber-50 p-5 shadow-sm">
+          <h3 className="font-semibold text-amber-950">
+            {t('association.package.coachOnlyTitle')}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-amber-900">
+            {t('association.package.coachOnlyText')}
+          </p>
+        </section>
+      </div>
+    )
+  }
+
   const equipmentCount = standardPackage?.equipment?.length ?? 0
   const assetCount = standardPackage?.assets?.reduce(
     (sum, item) => sum + Number(item.quantity ?? 0),
