@@ -99,6 +99,8 @@ type EventScheduleRow = {
   race_id?: string | null
   stage_id?: string | null
   source_stage_id?: string | null
+  host_association_id?: string | null
+  host_country_code?: string | null
   status: string
 }
 
@@ -279,7 +281,7 @@ function RoundCard({
               <div className="flex items-center gap-2">
                 {viewerInGroup ? (
                   <Link
-                    to={`/dashboard/national-association?cycle=nations:${group.id}`}
+                    to={`/dashboard/national-association/squad?cycle=nations:${group.id}`}
                     className="rounded bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black hover:bg-yellow-300"
                   >
                     {t('world.manageNationalTeam')}
@@ -301,18 +303,24 @@ function RoundCard({
                     <div className="mt-1 text-sm font-semibold text-slate-900">
                       {formatGameDate(event.event_date)}
                     </div>
+                    {event.host_country_code ? (
+                      <div className="mt-1">
+                        <CountryLabel
+                          code={event.host_country_code}
+                          name={t('world.raceHostShort', { country: event.host_country_code })}
+                        />
+                      </div>
+                    ) : null}
                     <div className="mt-1 flex items-center justify-between gap-2">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses(event.status)}`}>
                         {t(`status.${event.status}`, { defaultValue: humanize(event.status) })}
                       </span>
-                      {event.race_id ? (
-                        <Link
-                          to={`/dashboard/races/${event.race_id}`}
-                          className="text-[11px] font-semibold text-yellow-700 hover:underline"
-                        >
-                          {t('world.openRace')}
-                        </Link>
-                      ) : null}
+                      <Link
+                        to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
+                        className="text-[11px] font-semibold text-yellow-700 hover:underline"
+                      >
+                        {t('world.openRace')}
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -375,9 +383,6 @@ export default function WorldNationsPage(): JSX.Element {
   const [association, setAssociation] = useState<AssociationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
-  const [hostStatement, setHostStatement] = useState('')
-  const [hostSaving, setHostSaving] = useState(false)
   const [scheduleRows, setScheduleRows] = useState<EventScheduleRow[]>([])
 
   const load = async (): Promise<void> => {
@@ -415,32 +420,6 @@ export default function WorldNationsPage(): JSX.Element {
   useEffect(() => {
     void load()
   }, [])
-
-  useEffect(() => {
-    setHostStatement(data?.viewer?.host_application?.statement ?? '')
-  }, [data?.viewer?.host_application?.statement])
-
-  const submitHostApplication = async (): Promise<void> => {
-    const editionId = data?.edition?.id
-    if (!editionId) return
-
-    try {
-      setHostSaving(true)
-      setError(null)
-      setMessage(null)
-      const { error: rpcError } = await supabase.rpc('submit_nations_host_application_v1', {
-        p_edition_id: editionId,
-        p_statement: hostStatement.trim() || null,
-      })
-      if (rpcError) throw rpcError
-      setMessage(t('world.host.submitSuccess'))
-      await load()
-    } catch (caught: any) {
-      setError(caught?.message ?? t('world.errors.hostSubmit'))
-    } finally {
-      setHostSaving(false)
-    }
-  }
 
   const tttCurve = useMemo(
     () => (data?.points_curve ?? []).filter(row => row.race_type === 'team_time_trial'),
@@ -495,12 +474,6 @@ export default function WorldNationsPage(): JSX.Element {
         </div>
       ) : null}
 
-      {message ? (
-        <div className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {message}
-        </div>
-      ) : null}
-
       <section className="overflow-hidden rounded bg-white shadow">
         <div className="grid gap-px bg-slate-200 md:grid-cols-4">
           <div className="bg-white p-4">
@@ -537,12 +510,12 @@ export default function WorldNationsPage(): JSX.Element {
           <div className="bg-white p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
 
-              {t('common.host')}
+              {t('world.raceHosts')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">
-              {data?.edition?.host_country_code ?? t('common.pending')}
+              {t('world.raceHostsRotating')}
             </div>
-            <p className="mt-1 text-xs text-slate-500">{t('world.hostRule')}</p>
+            <p className="mt-1 text-xs text-slate-500">{t('world.raceHostsHelp')}</p>
           </div>
         </div>
       </section>
@@ -591,67 +564,6 @@ export default function WorldNationsPage(): JSX.Element {
           scheduleRows={scheduleRows}
         />
       ))}
-
-      {data?.edition ? (
-        <section className="rounded bg-white shadow">
-          <div className="border-b border-slate-200 p-4">
-            <div className="flex items-center gap-2">
-
-              <h3 className="text-base font-semibold text-slate-900">{t('world.host.title')}</h3>
-            </div>
-            <p className="mt-1 text-sm text-slate-500">
-              {t('world.host.description')}
-            </p>
-          </div>
-
-          <div className="p-4">
-            {data.viewer?.host_application ? (
-              <div className="mb-4 rounded border border-slate-200 bg-slate-50 p-3">
-                <div className="flex items-center gap-2">
-
-                  <span className="text-sm font-semibold text-slate-900">
-                    {t('world.host.applicationStatus', { status: t(`status.${data.viewer.host_application.status}`, { defaultValue: humanize(data.viewer.host_application.status) }) })}
-                  </span>
-                </div>
-                {data.viewer.host_application.submitted_on ? (
-                  <div className="mt-1 text-xs text-slate-500">
-                    {t('world.host.submitted', { date: formatGameDate(data.viewer.host_application.submitted_on) })}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-
-            {data.viewer?.can_apply_to_host && !data.edition.host_association_id ? (
-              <>
-                <textarea
-                  rows={4}
-                  value={hostStatement}
-                  onChange={event => setHostStatement(event.target.value)}
-                  placeholder={t('world.host.statementPlaceholder')}
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-yellow-500"
-                />
-                <div className="mt-3 flex justify-end">
-                  <button
-                    type="button"
-                    disabled={hostSaving}
-                    onClick={() => void submitHostApplication()}
-                    className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
-                  >
-                    {hostSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {data.viewer.host_application ? t('world.host.updateApplication') : t('world.host.apply')}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-sm text-slate-500">
-                {data.edition.host_country_code
-                  ? t('world.host.selected', { country: data.edition.host_country_code })
-                  : t('world.host.coachOnly')}
-              </div>
-            )}
-          </div>
-        </section>
-      ) : null}
 
       <section className="rounded bg-white shadow">
         <div className="border-b border-slate-200 p-4">
