@@ -297,7 +297,10 @@
       "principle1": "Chaque membre actif dispose exactement d’une voix par tour électoral.",
       "principle2": "Les contributions d’activation ne donnent aucune voix supplémentaire, propriété ou droit de gouvernance.",
       "principle3": "Le sélectionneur est élu par les membres et n’obtient pas automatiquement une place de coureur dans l’équipe.",
-      "principle4": "En cas d’égalité, seuls les candidats en tête à égalité passent au tour de départage suivant."
+      "principle4": "En cas d’égalité, seuls les candidats en tête à égalité passent au tour de départage suivant.",
+      "kindSeason": "Élection de saison",
+      "kindActivation": "Première élection d’activation",
+      "kindSpecial": "Élection de remplacement"
     },
     "chat": {
       "privateEyebrow": "Chat privé de l’équipe",
