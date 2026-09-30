@@ -55,7 +55,7 @@
     "summary": {
       "association": "Savez",
       "members": "Članovi",
-      "membersHint": "Pet kvalifikovanih menadžera aktivira Savez.",
+      "membersHint": "Za aktivaciju je potrebno pet podobnih menadžera.",
       "coach": "Selektor reprezentacije",
       "coachSeason": "Sezona {{season}} · {{term}}",
       "operations": "Operacije",
@@ -75,13 +75,27 @@
     },
     "package": {
       "title": "Standardni paket reprezentacije",
-      "description": "Svaka država dobija isti fiksni operativni paket. Ne može se kupiti, unaprediti niti prodati.",
+      "description": "Svaki Nacionalni savez dobija isti paket opreme koji obezbeđuje sistem. Resursi su neograničeni, zalihe se ne troše, a oprema i vozila uvek ostaju na 100% stanja.",
       "assets": "Vozila za trku",
       "assetLevel": "{{quantity}} × Nivo {{level}}",
       "equipment": "Oprema vozača",
       "tierQuality": "Nivo {{tier}} · Kvalitet {{quality}}",
       "supplies": "Potrošni materijal",
-      "tab": "Paket reprezentacije"
+      "tab": "Paket reprezentacije",
+      "coachSetsTitle": "Kompleti opreme nacionalnog selektora",
+      "coachSetsDescription": "Napravi i nazovi tri trajna kompleta. U svakoj kategoriji možeš izabrati bilo koji predmet iz nacionalnog paketa; tri slota se koriste za ravnicu, brda/planine i ekipni hronometar.",
+      "setNumber": "Komplet {{slot}}",
+      "setName": "Naziv kompleta",
+      "chooseItem": "Izaberi opremu...",
+      "saveSet": "Sačuvaj komplet",
+      "completeSet": "Pre čuvanja izaberi po jedan predmet iz svake kategorije.",
+      "setSaved": "Komplet {{slot}} je sačuvan.",
+      "selectionPoolTitle": "Oprema vozača nacionalne ekipe",
+      "selectionPoolDescription": "Za svaku kategoriju dostupna su tri izbora za ravnicu, planine i hronometar. Nacionalna oprema je uvek dostupna na 100% stanja.",
+      "alwaysPerfect": "Uvek 100% stanja",
+      "unlimited": "Neograničeno",
+      "assetsUnlimitedHelp": "Vozila nacionalne ekipe su stalno dostupna. Može se koristiti maksimalan broj dozvoljen za trku i nikada se ne troše.",
+      "suppliesUnlimitedHelp": "Trkačke zalihe nacionalne ekipe su neograničene i nikada se ne umanjuju."
     },
     "callups": {
       "title": "Pozivi vašim vozačima u reprezentaciju",
@@ -135,6 +149,23 @@
       "calledUp": "{{rider}} je pozvan u reprezentaciju.",
       "squadConfirmed": "Sastav reprezentacije od 10 vozača je potvrđen.",
       "lineupConfirmed": "Postava za dan {{day}} je potvrđena."
+    },
+    "activation": {
+      "title": "Fond za aktivaciju saveza",
+      "description": "Članovi mogu zajedno da prikupe jednokratnih 50 Coina potrebnih za aktivaciju saveza. Ovo je uslov osnivanja, a ne blagajna saveza.",
+      "coins": "Coina",
+      "remaining": "Još potrebno",
+      "yourContribution": "Tvoj doprinos",
+      "yourBalance": "Tvoje stanje",
+      "contribute": "Doprinesi Coinima",
+      "permanentNote": "Doprinosi su trajni i ne vraćaju se. Ne daju dodatno pravo glasa niti vlasništvo. Iznos veći od preostalog cilja automatski se ograničava.",
+      "custom": "Drugo",
+      "giveCoins": "Daj Coine",
+      "joinFirst": "Prvo se pridruži Nacionalnom savezu da bi mogao da doprineseš fondu za aktivaciju.",
+      "funded": "Fond za aktivaciju je popunjen. Dodatni Coini nisu potrebni.",
+      "requirements": "Za aktivaciju je potrebno {{members}} podobnih menadžera i {{coins}} Coina u zajedničkom fondu osnivanja.",
+      "message": "{{amount}} Coina je dodato fondu za aktivaciju.",
+      "alreadyFunded": "Fond za aktivaciju je već popunjen."
     }
   },
   "world": {
