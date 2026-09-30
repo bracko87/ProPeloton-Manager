@@ -244,7 +244,9 @@
         "world_nations_day_1": "World Nations · Giorno 1",
         "world_nations_day_2": "World Nations · Giorno 2",
         "world_nations_day_3": "World Nations · Giorno 3"
-      }
+      },
+      "squadMovedHelp": "Selezione corridori, convocazioni, sostituzioni e conferma dei 10 finali sono ora gestite nella scheda Rosa.",
+      "openSquad": "Apri rosa"
     },
     "guide": {
       "eyebrow": "Come funziona",
