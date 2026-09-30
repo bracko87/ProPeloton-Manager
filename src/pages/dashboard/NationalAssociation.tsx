@@ -945,7 +945,7 @@ export default function NationalAssociationPage(): JSX.Element {
                                 {rider.rider_name}
                               </Link>
                               <div className="mt-0.5 text-xs text-slate-500">
-                                {humanize(rider.role)} · {t('common.yearsShort', { years: rider.age_years ?? '—' })}
+                                {humanize(rider.role)} · {t('association.workspace.age', { age: rider.age_years ?? '—' })}
                               </div>
                             </td>
                             <td className="px-3 py-3 text-slate-600">
@@ -1133,12 +1133,14 @@ export default function NationalAssociationPage(): JSX.Element {
 
             <div className="grid gap-4 border-t border-slate-200 p-4 md:grid-cols-2 xl:grid-cols-3">
               {[
+                ['membership', t('association.guide.membershipTitle'), t('association.guide.membershipText')],
                 ['activation', t('association.guide.activationTitle'), t('association.guide.activationText')],
                 ['elections', t('association.guide.electionsTitle'), t('association.guide.electionsText')],
                 ['selection', t('association.guide.selectionTitle'), t('association.guide.selectionText')],
-                ['package', t('association.guide.packageTitle'), t('association.guide.packageText')],
-                ['worldNations', t('association.guide.worldNationsTitle'), t('association.guide.worldNationsText')],
-                ['chatHistory', t('association.guide.chatHistoryTitle'), t('association.guide.chatHistoryText')],
+                ['equipment', t('association.guide.equipmentTitle'), t('association.guide.equipmentText')],
+                ['competition', t('association.guide.competitionTitle'), t('association.guide.competitionText')],
+                ['chat', t('association.guide.chatTitle'), t('association.guide.chatText')],
+                ['history', t('association.guide.historyTitle'), t('association.guide.historyText')],
               ].map(([key, title, body]) => (
                 <div key={key} className="rounded border border-slate-200 bg-slate-50 p-4">
                   <h4 className="font-semibold text-slate-900">{title}</h4>
