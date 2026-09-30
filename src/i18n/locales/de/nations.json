@@ -305,7 +305,8 @@
       "principle4": "Bei Gleichstand gehen nur die gleichauf Führenden in die nächste Stichwahl.",
       "kindSeason": "Saisonwahl",
       "kindActivation": "Erste Aktivierungswahl",
-      "kindSpecial": "Ersatzwahl"
+      "kindSpecial": "Ersatzwahl",
+      "scheduleActual": "Kandidatenregistrierung {{registrationStart}}–{{registrationEnd}} · erste Abstimmung {{voteStart}}–{{voteEnd}} · bei Gleichstand folgen weitere siebentägige Stichwahlen."
     },
     "chat": {
       "privateEyebrow": "Privater Team-Chat",
