@@ -209,7 +209,8 @@
       "teamChat": "Timski chat",
       "history": "Povijest",
       "competition": "Natjecanje",
-      "squad": "Sastav"
+      "squad": "Sastav",
+      "coachLocked": "Otključava se izabranom nacionalnom izborniku"
     },
     "userStatus": {
       "member": "Član saveza",
@@ -440,6 +441,17 @@
         "ready_to_confirm": "Ready to confirm",
         "confirmed": "Final squad confirmed"
       }
+    },
+    "renewal": {
+      "validityTitle": "Valjanost saveza",
+      "validUntil": "Aktivan do {{date}} · obnova za Sezonu {{season}}",
+      "cost": "Obnova: {{coins}} Coina do 1. veljače",
+      "title": "Obnova za Sezonu {{season}}",
+      "deadline": "Obnoviti najkasnije do {{date}}.",
+      "renew": "Obnovi savez",
+      "opens": "Obnova se otvara {{date}} za Sezonu {{season}}.",
+      "message": "{{amount}} Coina dodano je u obnovu saveza.",
+      "alreadyFunded": "Obnova saveza već je potpuno financirana."
     }
   },
   "world": {
@@ -553,7 +565,45 @@
       "gap": "Gap",
       "bestRider": "Best rider"
     },
-    "autoEntry": "Svaki aktivni nacionalni savez automatski ulazi u natjecanje. Nema zasebne prijave."
+    "autoEntry": "Svaki aktivni nacionalni savez automatski ulazi u natjecanje. Nema zasebne prijave.",
+    "groupHost": "Domaćin · {{country}} · sva tri dana utrke",
+    "finalHost": "Domaćin svjetskog finala",
+    "finalHostHelp": "Jedna država domaćin je sva tri dana svjetskog finala.",
+    "applyHost": "Domaćinstvo utrke",
+    "applyHostButton": "Prijavi domaćinstvo",
+    "applyHostHelp": "Prijavi kvalifikacijsku grupu ili svjetsko finale s tri rute iz svoje države.",
+    "hostApplication": {
+      "title": "Prijava za domaćina World Nations",
+      "description": "Država domaćin mora imati ekipni kronometar, ravničarsku cestovnu utrku i brdsku/planinsku utrku. Sva tri dana iste grupe održavaju se u istoj državi.",
+      "close": "Zatvori",
+      "applyFor": "Prijava za",
+      "qualification": "Kvalifikacijska runda",
+      "final": "Svjetsko finale",
+      "alreadyApplied": "Već prijavljene države",
+      "noApplications": "Još nema prijava za ovu vrstu domaćinstva.",
+      "notEligibleTitle": "Vaša država još nema kompletan paket domaćina",
+      "notEligibleText": "{{country}} se može prijaviti tek kada baza ima sva tri potrebna tipa utrke.",
+      "missing": "Nedostaje: {{types}}",
+      "askAdmin": "Zatražite od administratora da izradi nedostajuću etapu. Kad postoje sva tri tipa, prijava će biti dostupna.",
+      "sameCountryRule": "Sve tri odabrane utrke moraju biti u {{country}}. Rute se povlače izravno iz baze etapa.",
+      "ttt": "Ekipni kronometar",
+      "flat": "Ravničarska cestovna utrka",
+      "mountain": "Brdska / planinska utrka",
+      "note": "Napomena prijave",
+      "notePlaceholder": "Neobavezna napomena...",
+      "cancel": "Odustani",
+      "saving": "Spremanje…",
+      "submit": "Pošalji prijavu",
+      "saved": "Prijava domaćinstva spremljena.",
+      "error": "Prijavu domaćinstva nije moguće spremiti.",
+      "coachOnly": "Samo nacionalni izbornik",
+      "coachOnlyHelp": "Članovi mogu vidjeti prijave, ali samo izabrani nacionalni izbornik može poslati ili promijeniti prijavu.",
+      "type": {
+        "team_time_trial": "Ekipni kronometar",
+        "flat": "Ravničarska cestovna utrka",
+        "hilly_mountain": "Brdska / planinska utrka"
+      }
+    }
   },
   "admin": {
     "loading": "Učitavanje World Nations operacija...",
