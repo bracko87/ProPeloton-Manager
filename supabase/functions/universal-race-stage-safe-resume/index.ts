@@ -305,51 +305,50 @@ function stabilizeFinalReplayPhysicalState(timeline: any): any {
   const checkpoints = Array.isArray(timeline?.checkpoints) ? timeline.checkpoints : [];
   if (checkpoints.length < 2) return timeline;
 
-  const stabilized = [...checkpoints];
-  for (let index = 1; index < stabilized.length; index += 1) {
-    const finalCheckpoint = object(stabilized[index]);
-    if (finalCheckpoint.finalResultsVisible !== true) continue;
+  const finalIndex = checkpoints.findLastIndex(
+    (checkpoint: any) => object(checkpoint).finalResultsVisible === true,
+  );
+  if (finalIndex <= 0) return timeline;
 
-    const finalKm = finite(object(finalCheckpoint.raceProgress).kmFromStart, -1);
-    if (finalKm < 0) continue;
+  const finalCheckpoint = object(checkpoints[finalIndex]);
+  const finalKm = finite(object(finalCheckpoint.raceProgress).kmFromStart, -1);
+  if (finalKm < 0) return timeline;
 
-    let physicalSource: JsonObject | null = null;
-    for (let priorIndex = index - 1; priorIndex >= 0; priorIndex -= 1) {
-      const prior = object(stabilized[priorIndex]);
-      const priorKm = finite(object(prior.raceProgress).kmFromStart, -1);
-      if (priorKm < 0) continue;
-      if (Math.abs(priorKm - finalKm) <= 0.000001) {
-        physicalSource = prior;
-        break;
-      }
-      if (priorKm < finalKm - 0.000001) break;
-    }
-    if (!physicalSource) continue;
+  const finalStatesByRider = new Map(
+    rows(finalCheckpoint.riderStates)
+      .map((state) => [text(state.riderId), state] as const)
+      .filter(([riderId]) => Boolean(riderId)),
+  );
 
-    const sourceStatesByRider = new Map(
-      rows(physicalSource.riderStates)
-        .map((state) => [text(state.riderId), state] as const)
-        .filter(([riderId]) => Boolean(riderId)),
-    );
+  const stabilized = checkpoints.map((checkpoint: any, index: number) => {
+    if (index >= finalIndex) return checkpoint;
+    const row = object(checkpoint);
+    const checkpointKm = finite(object(row.raceProgress).kmFromStart, -1);
+    if (Math.abs(checkpointKm - finalKm) > 0.000001) return checkpoint;
 
-    const riderStates = rows(finalCheckpoint.riderStates).map((state) => {
-      const sourceState = sourceStatesByRider.get(text(state.riderId));
-      if (!sourceState) return state;
+    const isFinishObservation =
+      text(row.checkpointId).endsWith("|replay|winner-finish") ||
+      rows(row.commentary).some((entry) => text(entry.eventType) === "finish");
+    if (!isFinishObservation) return checkpoint;
+
+    const riderStates = rows(row.riderStates).map((state) => {
+      const finalState = finalStatesByRider.get(text(state.riderId));
+      if (!finalState) return state;
       return {
         ...state,
-        groupCode: sourceState.groupCode ?? state.groupCode,
-        displayCode: sourceState.displayCode ?? state.displayCode,
-        gapSeconds: sourceState.gapSeconds ?? state.gapSeconds,
+        groupCode: finalState.groupCode ?? state.groupCode,
+        displayCode: finalState.displayCode ?? state.displayCode,
+        gapSeconds: finalState.gapSeconds ?? state.gapSeconds,
       };
     });
 
-    stabilized[index] = {
-      ...finalCheckpoint,
-      groups: Array.isArray(physicalSource.groups) ? physicalSource.groups : finalCheckpoint.groups,
-      gaps: Array.isArray(physicalSource.gaps) ? physicalSource.gaps : finalCheckpoint.gaps,
+    return {
+      ...row,
+      groups: Array.isArray(finalCheckpoint.groups) ? finalCheckpoint.groups : row.groups,
+      gaps: Array.isArray(finalCheckpoint.gaps) ? finalCheckpoint.gaps : row.gaps,
       riderStates,
     };
-  }
+  });
 
   return { ...timeline, checkpoints: stabilized };
 }
