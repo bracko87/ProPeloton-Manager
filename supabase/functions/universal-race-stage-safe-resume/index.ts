@@ -585,6 +585,19 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
             intermediateResults:[],
             activeCommands:[],
             teamStates:[],
+            riderStates:Array.isArray(row?.riderStates)
+              ? row.riderStates.map((state:any)=>{
+                  const {
+                    teamId:_teamId,
+                    condition:_condition,
+                    readinessScore:_readinessScore,
+                    finishRank:_finishRank,
+                    officialTimeSeconds:_officialTimeSeconds,
+                    ...compactState
+                  }=state;
+                  return compactState;
+                })
+              : [],
           }))
         : [],
     };
@@ -640,6 +653,32 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       baseFinishResolution:checkpoint.baseFinishResolution as any,
       baseReplayTimeline:phase10BaseReplayTimeline as any,
     });
+    const replayRiderById=new Map(
+      (Array.isArray(calculationInput?.riders)?calculationInput.riders:[])
+        .map((rider:any)=>[String(rider?.riderId??""),rider] as const)
+        .filter(([riderId]:any)=>Boolean(riderId))
+    );
+    const replayReadinessById=new Map(
+      (Array.isArray(checkpoint.riderReadiness)?checkpoint.riderReadiness:[])
+        .map((row:any)=>[String(row?.riderId??""),row] as const)
+        .filter(([riderId]:any)=>Boolean(riderId))
+    );
+    if(Array.isArray(phase10Resolution?.replayTimeline?.checkpoints)){
+      for(const replayCheckpoint of phase10Resolution.replayTimeline.checkpoints){
+        if(!Array.isArray(replayCheckpoint?.riderStates)) continue;
+        replayCheckpoint.riderStates=replayCheckpoint.riderStates.map((state:any)=>{
+          const rider=replayRiderById.get(String(state?.riderId??"")) as any;
+          const readiness=replayReadinessById.get(String(state?.riderId??"")) as any;
+          const startEnergy=Math.max(1,finite(readiness?.fatigueBalance?.startEnergy,100));
+          return {
+            ...state,
+            teamId:rider?.teamId??state?.teamId??null,
+            readinessScore:finite(readiness?.readinessScore,state?.readinessScore??0),
+            ...buildUniversalReplayEnergyDisplay(finite(state?.energy,0),startEnergy),
+          };
+        });
+      }
+    }
     const phase10Incidents=phase10Resolution.summary;
     const finishResolution=phase10Resolution.finishResolution;
     const intermediatePointBattles=reconcileFinishLineIntermediatePointBattlesV1(
