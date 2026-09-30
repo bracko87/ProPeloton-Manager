@@ -583,18 +583,54 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         ? builtBaseReplayTimeline.checkpoints.map((row:any)=>({
             ...row,
             intermediateResults:[],
+            activeCommands:[],
+            teamStates:[],
           }))
         : [],
     };
     next={...checkpoint,baseReplayTimeline};
   } else if(step===8){
     const baseReplayTimelineSource=checkpoint.baseReplayTimeline as any;
+    const roadCommandResolutionForReplay=checkpoint.roadCommandResolution as any;
+    const activeCommandsByPhase=new Map<number,any[]>();
+    const roadCommandRiders=Array.isArray(roadCommandResolutionForReplay?.riders)
+      ? roadCommandResolutionForReplay.riders
+      : [];
+    for(const rider of roadCommandRiders){
+      if(rider?.eligibleToStart===false) continue;
+      const phases=Array.isArray(rider?.phases)?rider.phases:[];
+      for(const phase of phases){
+        const phaseNumber=Number(phase?.phaseNumber);
+        if(!Number.isFinite(phaseNumber)) continue;
+        const bucket=activeCommandsByPhase.get(phaseNumber)??[];
+        bucket.push({
+          teamId:rider.teamId,
+          riderId:rider.riderId,
+          behaviour:phase.behaviour,
+          stageRole:rider.stageRole,
+          phaseNumber,
+          savedCommand:phase.savedCommand,
+          resolvedSource:phase.resolvedSource,
+          resolvedCommand:phase.resolvedCommand,
+        });
+        activeCommandsByPhase.set(phaseNumber,bucket);
+      }
+    }
+    activeCommandsByPhase.forEach((bucket,phaseNumber)=>{
+      bucket.sort((a:any,b:any)=>
+        String(a.teamId).localeCompare(String(b.teamId))||
+        String(a.riderId).localeCompare(String(b.riderId))
+      );
+      activeCommandsByPhase.set(phaseNumber,bucket);
+    });
     const phase10BaseReplayTimeline={
       ...baseReplayTimelineSource,
       checkpoints:Array.isArray(baseReplayTimelineSource?.checkpoints)
         ? baseReplayTimelineSource.checkpoints.map((row:any)=>({
             ...row,
             intermediateResults:[],
+            teamStates:[],
+            activeCommands:(activeCommandsByPhase.get(Number(row?.phase))??[]).map((command:any)=>({...command})),
           }))
         : [],
     };
