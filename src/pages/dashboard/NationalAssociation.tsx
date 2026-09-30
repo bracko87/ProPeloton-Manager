@@ -1,22 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import {
-  BadgeCheck,
-  Bike,
-  CalendarDays,
-  CheckCircle2,
-  Flag,
-  Loader2,
-  RefreshCw,
-  ShieldCheck,
-  Trophy,
-  UserCheck,
-  Users,
-  Vote,
-  XCircle,
-} from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
+import NationalAssociationTabs from '../../components/nations/NationalAssociationTabs'
 
 type Candidate = {
   candidate_id: string
@@ -572,8 +559,8 @@ export default function NationalAssociationPage(): JSX.Element {
               className="mt-0.5 h-9 w-14 rounded border border-slate-200 object-cover"
             />
           ) : (
-            <div className="mt-0.5 flex h-9 w-14 items-center justify-center rounded border border-slate-200 bg-white">
-              <Flag className="h-4 w-4 text-slate-500" />
+            <div className="mt-0.5 flex h-9 w-14 items-center justify-center rounded border border-slate-200 bg-white text-xs font-semibold text-slate-500">
+              {association?.country_code ?? '—'}
             </div>
           )}
           <div>
@@ -600,26 +587,22 @@ export default function NationalAssociationPage(): JSX.Element {
               >
                 {t('association.navChampionshipHistory')}
               </Link>
-              <span className="text-xs text-slate-300">•</span>
-              <Link
-                to="/dashboard/world-nations"
-                className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
-              >
-                {t('association.navWorldNations')}
-              </Link>
             </div>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => void load()}
-          disabled={loading}
-          className="inline-flex items-center gap-2 self-start rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          {t('common.refresh')}
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          <NationalAssociationTabs />
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={loading}
+            className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
+            {t('common.refresh')}
+          </button>
+        </div>
       </div>
 
       {error ? (
@@ -647,7 +630,7 @@ export default function NationalAssociationPage(): JSX.Element {
             <div className="grid gap-px bg-slate-200 md:grid-cols-4">
               <div className="bg-white p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <ShieldCheck className="h-4 w-4" />
+
                   {t('association.summary.association')}
                 </div>
                 <div className="mt-2 text-lg font-semibold text-slate-900">
@@ -662,7 +645,7 @@ export default function NationalAssociationPage(): JSX.Element {
 
               <div className="bg-white p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <Users className="h-4 w-4" />
+
                   {t('association.summary.members')}
                 </div>
                 <div className="mt-2 text-lg font-semibold text-slate-900">
@@ -675,7 +658,7 @@ export default function NationalAssociationPage(): JSX.Element {
 
               <div className="bg-white p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <UserCheck className="h-4 w-4" />
+
                   {t('association.summary.coach')}
                 </div>
                 <div className="mt-2 text-lg font-semibold text-slate-900">
@@ -690,7 +673,7 @@ export default function NationalAssociationPage(): JSX.Element {
 
               <div className="bg-white p-4">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <Bike className="h-4 w-4" />
+
                   {t('association.summary.operations')}
                 </div>
                 <div className="mt-2 text-lg font-semibold text-slate-900">{t('association.summary.fullyCovered')}</div>
@@ -708,7 +691,7 @@ export default function NationalAssociationPage(): JSX.Element {
                   onClick={() => void joinAssociation()}
                   className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                 >
-                  {busyKey === 'join' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Users className="h-4 w-4" />}
+                  {busyKey === 'join' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {t('association.join')}
                 </button>
               ) : (
@@ -729,7 +712,7 @@ export default function NationalAssociationPage(): JSX.Element {
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Vote className="h-5 w-5 text-yellow-600" />
+
                     <h3 className="text-base font-semibold text-slate-900">{t('association.election.title')}</h3>
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
@@ -742,7 +725,7 @@ export default function NationalAssociationPage(): JSX.Element {
                   onClick={() => void syncElection()}
                   className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                 >
-                  {busyKey === 'sync-election' ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  {busyKey === 'sync-election' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {t('association.election.update')}
                 </button>
               </div>
@@ -792,7 +775,7 @@ export default function NationalAssociationPage(): JSX.Element {
                           onClick={() => void registerCandidate()}
                           className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                         >
-                          {busyKey === 'candidate' ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
+                          {busyKey === 'candidate' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                           {t('association.election.submitCandidature')}
                         </button>
                       </div>
@@ -820,9 +803,6 @@ export default function NationalAssociationPage(): JSX.Element {
                               {candidate.manifesto || t('association.election.noManifesto')}
                             </p>
                           </div>
-                          {election.my_vote_candidate_id === candidate.candidate_id ? (
-                            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
-                          ) : null}
                         </div>
 
                         {(election.status === 'voting' || election.status === 'runoff') &&
@@ -837,7 +817,7 @@ export default function NationalAssociationPage(): JSX.Element {
                             >
                               {busyKey === `vote:${candidate.candidate_id}`
                                 ? <Loader2 className="h-4 w-4 animate-spin" />
-                                : <Vote className="h-4 w-4" />}
+                                : null}
                               {t('common.vote')}
                             </button>
                           </div>
@@ -858,7 +838,7 @@ export default function NationalAssociationPage(): JSX.Element {
             <section className="rounded bg-white shadow">
               <div className="border-b border-slate-200 p-4">
                 <div className="flex items-center gap-2">
-                  <Bike className="h-5 w-5 text-yellow-600" />
+
                   <h3 className="text-base font-semibold text-slate-900">{t('association.package.title')}</h3>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
@@ -948,7 +928,7 @@ export default function NationalAssociationPage(): JSX.Element {
                             onClick={() => void respondCallup(callup, true)}
                             className="inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
                           >
-                            <CheckCircle2 className="h-4 w-4" />
+
                             {t('common.accept')}
                           </button>
                           <button
@@ -957,7 +937,7 @@ export default function NationalAssociationPage(): JSX.Element {
                             onClick={() => void respondCallup(callup, false)}
                             className="inline-flex items-center gap-1.5 rounded border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
                           >
-                            <XCircle className="h-4 w-4" />
+
                             {t('common.decline')}
                           </button>
                         </>
@@ -974,7 +954,7 @@ export default function NationalAssociationPage(): JSX.Element {
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-yellow-600" />
+
                     <h3 className="text-base font-semibold text-slate-900">{t('association.workspace.title')}</h3>
                   </div>
                   <p className="mt-1 text-sm text-slate-500">
@@ -1009,7 +989,7 @@ export default function NationalAssociationPage(): JSX.Element {
                       </div>
                     </div>
                     <Link
-                      to="/dashboard/world-nations"
+                      to="/dashboard/national-association/world-nations"
                       className="rounded border border-sky-300 bg-white px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-100"
                     >
                       {t('association.workspace.openWorldNations')}
@@ -1169,14 +1149,14 @@ export default function NationalAssociationPage(): JSX.Element {
                       onClick={() => void confirmSquad()}
                       className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                     >
-                      {busyKey === 'confirm-squad' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                      {busyKey === 'confirm-squad' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                       {t('association.workspace.confirmFinalTen')}
                     </button>
                   </div>
                 ) : (
                   <div className="mt-4 rounded border border-emerald-200 bg-emerald-50 p-4">
                     <div className="flex items-center gap-2 font-semibold text-emerald-900">
-                      <CheckCircle2 className="h-5 w-5" />
+
                       {t('association.workspace.squadConfirmed')}
                     </div>
                     <p className="mt-1 text-sm text-emerald-800">
@@ -1192,7 +1172,7 @@ export default function NationalAssociationPage(): JSX.Element {
             <section className="rounded bg-white shadow">
               <div className="border-b border-slate-200 p-4">
                 <div className="flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5 text-yellow-600" />
+
                   <h3 className="text-base font-semibold text-slate-900">{t('association.lineups.title')}</h3>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
@@ -1271,7 +1251,7 @@ export default function NationalAssociationPage(): JSX.Element {
                         >
                           {busyKey === `lineup:${day}`
                             ? <Loader2 className="h-4 w-4 animate-spin" />
-                            : <CheckCircle2 className="h-4 w-4" />}
+                            : null}
                           {t('common.confirm')}
                         </button>
                       </div>
@@ -1285,7 +1265,7 @@ export default function NationalAssociationPage(): JSX.Element {
           {!isCoach && association.coach ? (
             <section className="rounded border border-slate-200 bg-white p-5 shadow">
               <div className="flex items-center gap-2">
-                <UserCheck className="h-5 w-5 text-slate-600" />
+
                 <h3 className="font-semibold text-slate-900">{t('association.coachAppointed')}</h3>
               </div>
               <p className="mt-2 text-sm text-slate-600">

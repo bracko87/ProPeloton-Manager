@@ -74,10 +74,16 @@ const navItems: NavItem[] = [
   },
   {
     to: '/dashboard/national-ranking',
-    aliases: ['/dashboard/national-association', '/dashboard/world-nations'],
     labelKey: 'nationalRanking',
     descriptionKey: 'descriptions.nationalRanking',
     icon: Trophy,
+  },
+  {
+    to: '/dashboard/national-association',
+    aliases: ['/dashboard/world-nations', '/dashboard/nations-competition'],
+    labelKey: 'nationalAssociation',
+    descriptionKey: 'descriptions.nationalAssociation',
+    icon: Users,
   },
   {
     to: '/dashboard/training',

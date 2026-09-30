@@ -194,7 +194,8 @@
       "load": "World Nations Championship konnte nicht geladen werden.",
       "hostSubmit": "Gastgeberbewerbung konnte nicht eingereicht werden."
     },
-    "drawPending": "Auslosung noch nicht abgeschlossen."
+    "drawPending": "Auslosung noch nicht abgeschlossen.",
+    "season1LaunchNote": "Saison 1 startet bewusst später: Das World-Nations-Feld wird am 1. Juni ausschließlich aus den zu diesem Zeitpunkt aktiven Nationalverbänden festgelegt."
   },
   "admin": {
     "loading": "World-Nations-Betrieb wird geladen...",

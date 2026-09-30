@@ -194,7 +194,8 @@
       "load": "Nije moguće učitati Svjetsko prvenstvo nacija.",
       "hostSubmit": "Nije moguće poslati prijavu za domaćina."
     },
-    "drawPending": "Ždrijeb još nije završen."
+    "drawPending": "Ždrijeb još nije završen.",
+    "season1LaunchNote": "Sezona 1 namjerno počinje kasnije: World Nations polje zaključat će se 1. lipnja samo s Nacionalnim savezima koji su tada aktivni."
   },
   "admin": {
     "loading": "Učitavanje World Nations operacija...",

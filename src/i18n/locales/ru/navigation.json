@@ -40,7 +40,8 @@
     "finance": "Бюджет, поступления и расходы",
     "transfers": "Покупка, продажа и переговоры",
     "statistics": "Эффективность и анализ",
-    "premiumCenter": "Расширенное планирование, симуляции и автоматизация"
+    "premiumCenter": "Расширенное планирование, симуляции и автоматизация",
+    "nationalAssociation": "Управление сборной и World Nations"
   },
   "header": {
     "toggleSidebar": "Боковой блок@ info: whatsthis",
@@ -155,5 +156,6 @@
   "premiumFeature": {
     "unlock": "Отключиться Premium"
   },
-  "premiumCenter": "Premium-центр"
+  "premiumCenter": "Premium-центр",
+  "nationalAssociation": "Национальная ассоциация"
 }

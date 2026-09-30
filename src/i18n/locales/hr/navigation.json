@@ -40,7 +40,8 @@
     "finance": "Budžet, prihodi i troškovi",
     "transfers": "Kupovina, prodaja i pregovori",
     "statistics": "Učinak i analitika",
-    "premiumCenter": "Napredno planiranje, simulacije i automatizacija"
+    "premiumCenter": "Napredno planiranje, simulacije i automatizacija",
+    "nationalAssociation": "Upravljanje reprezentacijom i World Nations"
   },
   "header": {
     "toggleSidebar": "Prikaži ili sakrij bočnu navigaciju",
@@ -155,5 +156,6 @@
   "premiumFeature": {
     "unlock": "Otključaj uz Premium"
   },
-  "premiumCenter": "Premium centar"
+  "premiumCenter": "Premium centar",
+  "nationalAssociation": "Nacionalni savez"
 }

@@ -40,7 +40,8 @@
     "finance": "Budget, Einnahmen und Kosten",
     "transfers": "Kaufen, verkaufen und verhandeln",
     "statistics": "Leistung und Analysen",
-    "premiumCenter": "Erweiterte Planung, Simulation und Automatisierung"
+    "premiumCenter": "Erweiterte Planung, Simulation und Automatisierung",
+    "nationalAssociation": "Nationalmannschaft und World Nations verwalten"
   },
   "header": {
     "toggleSidebar": "Seitenleiste ein-/ausblenden",
@@ -155,5 +156,6 @@
   "premiumFeature": {
     "unlock": "Mit Premium freischalten"
   },
-  "premiumCenter": "Premium-Zentrale"
+  "premiumCenter": "Premium-Zentrale",
+  "nationalAssociation": "Nationalverband"
 }
