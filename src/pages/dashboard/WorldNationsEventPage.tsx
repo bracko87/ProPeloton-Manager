@@ -39,6 +39,61 @@ type TeamResult = {
   best_rider_rank?: number | null
 }
 
+type RaceParticipantRider = {
+  id: string
+  team_id: string
+  club_id?: string | null
+  rider_id: string
+  rider_name_snapshot?: string | null
+  country_code_snapshot?: string | null
+  age_snapshot?: number | null
+  start_number?: number | null
+  role_snapshot?: string | null
+}
+
+type RaceParticipantTeam = {
+  id: string
+  team_id: string
+  club_id?: string | null
+  participating_club_id?: string | null
+  race_team_entry_id?: string | null
+  assigned_riders_count?: number | null
+  riders: RaceParticipantRider[]
+}
+
+type RaceFavorite = {
+  favorite_rank?: number | null
+  rider_id?: string | null
+  rider_name?: string | null
+  team_id?: string | null
+  team_name?: string | null
+  country_code?: string | null
+  start_number?: number | null
+  role_snapshot?: string | null
+}
+
+type StageResultRow = {
+  rank?: number | null
+  rider_id?: string | null
+  team_id?: string | null
+  rider_name_snapshot?: string | null
+  elapsed_seconds?: number | null
+  gap_seconds?: number | null
+  status?: string | null
+}
+
+type GeneralStanding = {
+  association_id: string
+  association_name: string
+  country_code: string
+  final_group_rank?: number | null
+  total_points: number
+  ttt_points: number
+  flat_points: number
+  mountain_points: number
+  status: string
+}
+
 type RouteData = {
   stage_id?: string | null
   route_label?: string | null
@@ -136,6 +191,11 @@ function formatGap(seconds?: number | null): string {
   const minutes = Math.floor(total / 60)
   const secs = total % 60
   return `+${minutes}:${String(secs).padStart(2, '0')}`
+}
+
+function nationDisplayName(name?: string | null, code?: string | null): string {
+  const cleaned = name?.replace(/\s+National Association$/i, '').trim()
+  return cleaned || code || '—'
 }
 
 function statusClasses(status?: string | null): string {
@@ -245,6 +305,11 @@ export default function WorldNationsEventPage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'teams' | 'results'>('teams')
+  const [resultsView, setResultsView] = useState<'stage' | 'general'>('stage')
+  const [raceTeams, setRaceTeams] = useState<RaceParticipantTeam[]>([])
+  const [raceFavorites, setRaceFavorites] = useState<RaceFavorite[]>([])
+  const [stageResults, setStageResults] = useState<StageResultRow[]>([])
+  const [generalStandings, setGeneralStandings] = useState<GeneralStanding[]>([])
 
   const load = async (): Promise<void> => {
     if (!eventId) {
@@ -275,6 +340,106 @@ export default function WorldNationsEventPage(): JSX.Element {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId])
+
+  useEffect(() => {
+    if (!data) {
+      setRaceTeams([])
+      setRaceFavorites([])
+      setStageResults([])
+      setGeneralStandings([])
+      return
+    }
+
+    let cancelled = false
+
+    async function loadRaceInformation(): Promise<void> {
+      const raceId = data?.race_id ?? null
+      const stageId = data?.generated_stage_id ?? data?.route?.stage_id ?? null
+
+      if (raceId) {
+        const [teamsResponse, ridersResponse, favoritesResponse] = await Promise.all([
+          supabase
+            .from('race_participant_teams_v1')
+            .select('*')
+            .eq('race_id', raceId)
+            .eq('status', 'accepted'),
+          supabase
+            .from('race_participant_riders_v1')
+            .select('id, team_id, club_id, rider_id, rider_name_snapshot, country_code_snapshot, age_snapshot, start_number, role_snapshot')
+            .eq('race_id', raceId),
+          supabase.rpc('get_race_favorites_v1', { p_race_id: raceId, p_limit: 5 }),
+        ])
+
+        if (!cancelled) {
+          const riders = (ridersResponse.data ?? []) as RaceParticipantRider[]
+          const teams = ((teamsResponse.data ?? []) as Omit<RaceParticipantTeam, 'riders'>[]).map(team => {
+            const ids = new Set(
+              [team.id, team.team_id, team.club_id, team.participating_club_id, team.race_team_entry_id]
+                .filter((value): value is string => Boolean(value)),
+            )
+            return {
+              ...team,
+              riders: riders
+                .filter(rider => ids.has(rider.team_id) || (rider.club_id ? ids.has(rider.club_id) : false))
+                .sort((a, b) => (a.start_number ?? 999) - (b.start_number ?? 999)),
+            }
+          })
+          setRaceTeams(teams)
+          setRaceFavorites(((favoritesResponse.data ?? []) as RaceFavorite[]).slice(0, 5))
+        }
+      } else if (!cancelled) {
+        setRaceTeams([])
+        setRaceFavorites([])
+      }
+
+      if (stageId) {
+        const { data: resultRows } = await supabase
+          .from('race_stage_results')
+          .select('rank, rider_id, team_id, rider_name_snapshot, elapsed_seconds, gap_seconds, status')
+          .eq('stage_id', stageId)
+          .order('rank', { ascending: true })
+
+        if (!cancelled) {
+          setStageResults((resultRows ?? []) as StageResultRow[])
+        }
+      } else if (!cancelled) {
+        setStageResults([])
+      }
+
+      const { data: overviewData } = await supabase.rpc('get_nations_competition_overview_v1', {
+        p_season_number: data.season_number,
+      })
+
+      if (!cancelled) {
+        const overview = (overviewData ?? {}) as any
+        const rounds = Array.isArray(overview.rounds) ? overview.rounds : []
+        const group = rounds
+          .flatMap((round: any) => (Array.isArray(round.groups) ? round.groups : []))
+          .find((candidate: any) => candidate?.id === data.group_id)
+        setGeneralStandings(
+          Array.isArray(group?.entries)
+            ? group.entries.map((entry: any) => ({
+                association_id: String(entry.association_id ?? ''),
+                association_name: String(entry.association_name ?? entry.country_code ?? ''),
+                country_code: String(entry.country_code ?? ''),
+                final_group_rank: entry.final_group_rank == null ? null : Number(entry.final_group_rank),
+                total_points: Number(entry.total_points ?? 0),
+                ttt_points: Number(entry.ttt_points ?? 0),
+                flat_points: Number(entry.flat_points ?? 0),
+                mountain_points: Number(entry.mountain_points ?? 0),
+                status: String(entry.status ?? 'entered'),
+              }))
+            : [],
+        )
+      }
+    }
+
+    void loadRaceInformation()
+    return () => {
+      cancelled = true
+    }
+  }, [data?.event_id, data?.race_id, data?.generated_stage_id, data?.group_id, data?.season_number, data?.route?.stage_id])
+
 
   const points = useMemo(() => {
     const authoritative = (data?.route?.profile_points ?? [])
@@ -599,7 +764,7 @@ export default function WorldNationsEventPage(): JSX.Element {
             {t('world.eventPage.raceInformation')}
           </div>
           <div className="mt-1 text-lg font-semibold text-slate-950">
-            {t('world.eventPage.teamsResults')}
+            Teams & riders
           </div>
         </div>
 
@@ -610,21 +775,17 @@ export default function WorldNationsEventPage(): JSX.Element {
               onClick={() => setActiveTab('teams')}
               className={[
                 'rounded-xl px-4 py-2 text-sm font-semibold',
-                activeTab === 'teams'
-                  ? 'bg-white text-slate-950 shadow-sm'
-                  : 'text-slate-500',
+                activeTab === 'teams' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500',
               ].join(' ')}
             >
-              {t('world.eventPage.teams')}
+              Teams & riders
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('results')}
               className={[
                 'rounded-xl px-4 py-2 text-sm font-semibold',
-                activeTab === 'results'
-                  ? 'bg-white text-slate-950 shadow-sm'
-                  : 'text-slate-500',
+                activeTab === 'results' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500',
               ].join(' ')}
             >
               {t('world.eventPage.results')}
@@ -632,119 +793,238 @@ export default function WorldNationsEventPage(): JSX.Element {
           </div>
 
           {activeTab === 'teams' ? (
-            <div className="mt-6">
+            <div className="mt-6 space-y-5">
+              {raceFavorites.length > 0 ? (
+                <div className="overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/40">
+                  <div className="border-b border-sky-100 px-4 py-3">
+                    <div className="text-sm font-semibold text-sky-950">Top 5 race favorites</div>
+                    <div className="text-xs text-sky-700">
+                      Calculated from the confirmed race field.
+                    </div>
+                  </div>
+                  <div className="grid gap-2 p-3 lg:grid-cols-5">
+                    {raceFavorites.map((favorite, index) => (
+                      <div
+                        key={favorite.rider_id ?? `${favorite.rider_name}-${index}`}
+                        className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                      >
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-800">
+                            {favorite.favorite_rank ?? index + 1}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                            {favorite.start_number ? `#${favorite.start_number}` : '—'}
+                          </span>
+                        </div>
+                        <div className="truncate text-sm font-semibold text-slate-950">
+                          {favorite.rider_name ?? '—'}
+                        </div>
+                        <div className="mt-1 truncate text-xs text-slate-500">
+                          {favorite.role_snapshot ? humanize(favorite.role_snapshot) : '—'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               {!data.participants_known ? (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
                   {t('world.eventPage.teamsPending')}
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-2xl border border-slate-200">
-                  <table className="min-w-full table-fixed text-sm">
-                    <colgroup>
-                      <col className="w-[10%]" />
-                      <col className="w-[60%]" />
-                      <col className="w-[30%]" />
-                    </colgroup>
-                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      <tr>
-                        <th className="px-4 py-3">#</th>
-                        <th className="px-4 py-3">{t('world.eventPage.nationalTeam')}</th>
-                        <th className="px-4 py-3">{t('common.status')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
-                      {data.participants.map(team => (
-                        <tr key={team.group_entry_id} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-semibold text-slate-700">
-                            {team.seed_position ?? '—'}
-                          </td>
-                          <td className="px-4 py-3">
-                            <NationCell
-                              code={team.country_code}
-                              name={team.association_name}
-                              jerseyUrl={team.jersey_url}
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(team.status)}`}>
-                              {t(`status.${team.status}`, { defaultValue: humanize(team.status) })}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div>
+                  <div className="mb-4 text-sm font-semibold text-slate-700">
+                    {data.participants.length} national team{data.participants.length === 1 ? '' : 's'}
+                  </div>
+                  <div className="grid gap-5 xl:grid-cols-2">
+                    {data.participants.map(team => {
+                      const raceTeam = raceTeams.find(candidate => {
+                        const ids = [candidate.id, candidate.team_id, candidate.club_id, candidate.participating_club_id, candidate.race_team_entry_id]
+                        return ids.some(id => id && id === team.team_id)
+                      })
+                      const riders = raceTeam?.riders ?? []
+
+                      return (
+                        <article
+                          key={team.group_entry_id}
+                          className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                        >
+                          <div className="border-b border-slate-100 px-5 py-4">
+                            <div className="text-lg font-semibold text-slate-950">
+                              {nationDisplayName(team.association_name, team.country_code)}
+                            </div>
+                            <div className="mt-1 text-xs font-medium uppercase tracking-wide text-slate-500">
+                              {team.country_code} · National Team
+                            </div>
+                          </div>
+
+                          <div className="grid md:grid-cols-[190px_minmax(0,1fr)]">
+                            <div className="border-b border-slate-100 p-5 md:border-b-0 md:border-r">
+                              <div className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                                Team jersey
+                              </div>
+                              <div className="mt-3 flex min-h-[190px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                {team.jersey_url ? (
+                                  <img
+                                    src={team.jersey_url}
+                                    alt=""
+                                    className="max-h-44 max-w-full object-contain"
+                                  />
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="p-5">
+                              <div className="font-semibold text-slate-900">
+                                Riders participating in this race
+                              </div>
+                              <div className="mt-1 text-sm text-slate-500">
+                                {riders.length > 0
+                                  ? `${riders.length} confirmed rider${riders.length === 1 ? '' : 's'}`
+                                  : 'Riders will appear as soon as the race lineup is confirmed.'}
+                              </div>
+
+                              <div className="mt-3 space-y-2">
+                                {riders.map(rider => (
+                                  <div
+                                    key={rider.rider_id}
+                                    className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2.5"
+                                  >
+                                    <div className="min-w-0">
+                                      <div className="truncate text-sm font-semibold text-slate-900">
+                                        {rider.start_number ? `#${rider.start_number} ` : ''}
+                                        {rider.rider_name_snapshot ?? '—'}
+                                      </div>
+                                      <div className="mt-0.5 text-xs text-slate-500">
+                                        {[
+                                          rider.country_code_snapshot,
+                                          rider.age_snapshot ? `${rider.age_snapshot} yrs` : null,
+                                          rider.role_snapshot ? humanize(rider.role_snapshot) : null,
+                                        ].filter(Boolean).join(' · ')}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>
           ) : (
             <div className="mt-6">
-              {data.results.length === 0 ? (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-                  {t('world.eventPage.resultsPending')}
-                </div>
-              ) : (
-                <div className="overflow-hidden rounded-2xl border border-slate-200">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      <tr>
-                        <th className="px-4 py-3">#</th>
-                        <th className="px-4 py-3">{t('world.eventPage.nationalTeam')}</th>
-                        <th className="px-4 py-3 text-right">{t('world.eventPage.points')}</th>
-                        {data.race_type === 'team_time_trial' ? (
-                          <>
-                            <th className="px-4 py-3 text-right">{t('world.eventPage.time')}</th>
-                            <th className="px-4 py-3 text-right">{t('world.eventPage.gap')}</th>
-                          </>
-                        ) : (
-                          <th className="px-4 py-3 text-right">{t('world.eventPage.bestRider')}</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
-                      {data.results.map(result => (
-                        <tr key={result.association_id} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-semibold text-slate-900">
-                            {result.rank ?? '—'}
-                          </td>
-                          <td className="px-4 py-3">
-                            <NationCell
-                              code={result.country_code}
-                              name={result.association_name}
-                              jerseyUrl={
-                                data.participants.find(
-                                  team => team.association_id === result.association_id,
-                                )?.jersey_url
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold text-slate-900">
-                            {result.points}
-                          </td>
-                          {data.race_type === 'team_time_trial' ? (
-                            <>
+              <div className="mb-5 flex w-fit rounded-xl bg-slate-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => setResultsView('stage')}
+                  className={[
+                    'rounded-lg px-4 py-2 text-sm font-semibold',
+                    resultsView === 'stage' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500',
+                  ].join(' ')}
+                >
+                  Stage
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResultsView('general')}
+                  className={[
+                    'rounded-lg px-4 py-2 text-sm font-semibold',
+                    resultsView === 'general' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500',
+                  ].join(' ')}
+                >
+                  General classification
+                </button>
+              </div>
+
+              {resultsView === 'stage' ? (
+                stageResults.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                    {t('world.eventPage.resultsPending')}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                    <table className="min-w-[760px] w-full text-sm">
+                      <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <tr>
+                          <th className="px-4 py-3">#</th>
+                          <th className="px-4 py-3">Rider</th>
+                          <th className="px-4 py-3">Nation</th>
+                          <th className="px-4 py-3 text-right">{t('world.eventPage.time')}</th>
+                          <th className="px-4 py-3 text-right">{t('world.eventPage.gap')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {stageResults.map((result, index) => {
+                          const participant = data.participants.find(team => team.team_id === result.team_id)
+                          return (
+                            <tr key={`${result.rider_id ?? index}`}>
+                              <td className="px-4 py-3 font-semibold text-slate-900">{result.rank ?? '—'}</td>
+                              <td className="px-4 py-3 font-semibold text-slate-900">{result.rider_name_snapshot ?? '—'}</td>
+                              <td className="px-4 py-3 text-slate-600">
+                                {participant ? nationDisplayName(participant.association_name, participant.country_code) : '—'}
+                              </td>
                               <td className="px-4 py-3 text-right font-semibold text-slate-900">
                                 {formatRaceTime(result.elapsed_seconds)}
                               </td>
                               <td className="px-4 py-3 text-right text-slate-600">
                                 {formatGap(result.gap_seconds)}
                               </td>
-                            </>
-                          ) : (
-                            <td className="px-4 py-3 text-right text-slate-600">
-                              {result.best_rider_rank ? `#${result.best_rider_rank}` : '—'}
-                            </td>
-                          )}
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              ) : (
+                generalStandings.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                    General classification will appear once the group has standings.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                    <table className="min-w-[760px] w-full text-sm">
+                      <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <tr>
+                          <th className="px-4 py-3">#</th>
+                          <th className="px-4 py-3">Nation</th>
+                          <th className="px-4 py-3 text-right">TTT</th>
+                          <th className="px-4 py-3 text-right">Flat</th>
+                          <th className="px-4 py-3 text-right">Mountain</th>
+                          <th className="px-4 py-3 text-right">Total</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {[...generalStandings]
+                          .sort((a, b) => (a.final_group_rank ?? 999) - (b.final_group_rank ?? 999) || b.total_points - a.total_points)
+                          .map((standing, index) => (
+                            <tr key={standing.association_id}>
+                              <td className="px-4 py-3 font-semibold text-slate-900">
+                                {standing.final_group_rank ?? index + 1}
+                              </td>
+                              <td className="px-4 py-3 font-semibold text-slate-900">
+                                {nationDisplayName(standing.association_name, standing.country_code)}
+                              </td>
+                              <td className="px-4 py-3 text-right text-slate-600">{standing.ttt_points}</td>
+                              <td className="px-4 py-3 text-right text-slate-600">{standing.flat_points}</td>
+                              <td className="px-4 py-3 text-right text-slate-600">{standing.mountain_points}</td>
+                              <td className="px-4 py-3 text-right font-semibold text-slate-950">{standing.total_points}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
               )}
             </div>
           )}
 
-          <div className="mt-4 flex justify-end">
+          <div className="mt-5 flex justify-end">
             <button
               type="button"
               onClick={() => void load()}
@@ -755,6 +1035,7 @@ export default function WorldNationsEventPage(): JSX.Element {
             </button>
           </div>
         </div>
+      </section>
       </section>
     </div>
   )
