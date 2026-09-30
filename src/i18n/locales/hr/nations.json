@@ -80,7 +80,8 @@
       "assetLevel": "{{quantity}} × Razina {{level}}",
       "equipment": "Oprema vozača",
       "tierQuality": "Razina {{tier}} · Kvaliteta {{quality}}",
-      "supplies": "Potrošni materijal"
+      "supplies": "Potrošni materijal",
+      "tab": "Paket reprezentacije"
     },
     "callups": {
       "title": "Pozivi vašim vozačima u reprezentaciju",
