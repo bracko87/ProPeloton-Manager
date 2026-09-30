@@ -244,7 +244,9 @@
         "world_nations_day_1": "World Nations · День 1",
         "world_nations_day_2": "World Nations · День 2",
         "world_nations_day_3": "World Nations · День 3"
-      }
+      },
+      "squadMovedHelp": "Выбор гонщиков, вызовы, замены и подтверждение итоговой десятки теперь выполняются во вкладке Состав.",
+      "openSquad": "Открыть состав"
     },
     "guide": {
       "eyebrow": "Как это работает",
