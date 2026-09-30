@@ -82,6 +82,14 @@ type StageResultRow = {
   status?: string | null
 }
 
+type ReplayAvailability = {
+  status?: string | null
+  calculated?: boolean | null
+  results_visible?: boolean | null
+  publication_pending?: boolean | null
+  replay_opens_game_at?: string | null
+}
+
 type GeneralStanding = {
   association_id: string
   association_name: string
@@ -309,6 +317,8 @@ export default function WorldNationsEventPage(): JSX.Element {
   const [raceFavorites, setRaceFavorites] = useState<RaceFavorite[]>([])
   const [stageResults, setStageResults] = useState<StageResultRow[]>([])
   const [generalStandings, setGeneralStandings] = useState<GeneralStanding[]>([])
+  const [replayAvailability, setReplayAvailability] = useState<ReplayAvailability | null>(null)
+  const [raceInformationOpen, setRaceInformationOpen] = useState(true)
 
   const load = async (): Promise<void> => {
     if (!eventId) {
@@ -339,6 +349,42 @@ export default function WorldNationsEventPage(): JSX.Element {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId])
+
+  useEffect(() => {
+    const stageId = data?.generated_stage_id ?? data?.route?.stage_id ?? null
+    if (!stageId) {
+      setReplayAvailability(null)
+      return
+    }
+
+    let cancelled = false
+
+    async function loadReplayAvailability(): Promise<void> {
+      const { data: response, error: availabilityError } = await supabase.rpc(
+        'get_universal_race_stage_replay_availability_v1',
+        { p_stage_id: stageId },
+      )
+
+      if (cancelled) return
+
+      if (availabilityError) {
+        setReplayAvailability(null)
+        return
+      }
+
+      setReplayAvailability((response ?? null) as ReplayAvailability | null)
+    }
+
+    void loadReplayAvailability()
+    const interval = window.setInterval(() => void loadReplayAvailability(), 5000)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [data?.generated_stage_id, data?.route?.stage_id])
+
+  const resultsVisible = replayAvailability?.results_visible === true
 
   useEffect(() => {
     if (!data) {
@@ -391,6 +437,14 @@ export default function WorldNationsEventPage(): JSX.Element {
         setRaceFavorites([])
       }
 
+      if (!resultsVisible) {
+        if (!cancelled) {
+          setStageResults([])
+          setGeneralStandings([])
+        }
+        return
+      }
+
       if (stageId) {
         const { data: resultRows } = await supabase
           .from('race_stage_results')
@@ -437,7 +491,7 @@ export default function WorldNationsEventPage(): JSX.Element {
     return () => {
       cancelled = true
     }
-  }, [data?.event_id, data?.race_id, data?.generated_stage_id, data?.group_id, data?.season_number, data?.route?.stage_id])
+  }, [data?.event_id, data?.race_id, data?.generated_stage_id, data?.group_id, data?.season_number, data?.route?.stage_id, resultsVisible])
 
 
   const points = useMemo(() => {
@@ -754,15 +808,25 @@ export default function WorldNationsEventPage(): JSX.Element {
       </div>
 
       <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="px-6 py-5">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            {t('world.eventPage.raceInformation')}
+        <button
+          type="button"
+          onClick={() => setRaceInformationOpen(value => !value)}
+          className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+        >
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {t('world.eventPage.raceInformation')}
+            </div>
+            <div className="mt-1 text-lg font-semibold text-slate-950">
+              Participants and results
+            </div>
           </div>
-          <div className="mt-1 text-lg font-semibold text-slate-950">
-            Participants and results
-          </div>
-        </div>
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
+            {raceInformationOpen ? 'Hide' : 'Show'}
+          </span>
+        </button>
 
+        {raceInformationOpen ? (
         <div className="border-t border-slate-100 p-6">
           <div className="flex rounded-2xl bg-slate-100 p-1">
             <button
@@ -964,6 +1028,14 @@ export default function WorldNationsEventPage(): JSX.Element {
             </div>
           ) : (
             <div className="mt-6">
+              {!resultsVisible ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 text-sm text-slate-600">
+                  <div className="font-semibold text-slate-900">Results are not published yet.</div>
+                  <div className="mt-1">
+                    Classification and stage results follow the same publication gate as regular races and stay hidden until the replay/result publication window is complete.
+                  </div>
+                </div>
+              ) : (
               <div className="grid gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
                 <div className="rounded-2xl bg-slate-50 p-4">
                   <div>
@@ -1128,6 +1200,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                   </div>
                 </div>
               </div>
+              )}
             </div>
           )}
 
@@ -1142,6 +1215,7 @@ export default function WorldNationsEventPage(): JSX.Element {
             </button>
           </div>
         </div>
+        ) : null}
       </section>
     </div>
   )
