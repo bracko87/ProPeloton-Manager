@@ -307,7 +307,17 @@
       "kindSeason": "Sezonski izbori",
       "kindActivation": "Prvi izbori nakon aktivacije",
       "kindSpecial": "Vanredni izbori",
-      "scheduleActual": "Prijava kandidata {{registrationStart}}–{{registrationEnd}} · prvo glasanje {{voteStart}}–{{voteEnd}} · ako ostane nerešeno, slede sedmodnevni krugovi."
+      "scheduleActual": "Prijava kandidata {{registrationStart}}–{{registrationEnd}} · prvo glasanje {{voteStart}}–{{voteEnd}} · ako ostane nerešeno, slede sedmodnevni krugovi.",
+      "updateCandidature": "Ažuriraj kandidaturu",
+      "candidatureFormTitle": "Podnesi kandidaturu",
+      "candidatureFormHelp": "Unesi ime i prezime koje će članovi saveza videti, zatim objavi svoj manifest.",
+      "firstName": "Ime",
+      "lastName": "Prezime",
+      "firstNamePlaceholder": "Ime",
+      "lastNamePlaceholder": "Prezime",
+      "saveCandidature": "Sačuvaj kandidaturu",
+      "candidateNumber": "Kandidat {{number}}",
+      "viewManifesto": "Prikaži manifest"
     },
     "chat": {
       "privateEyebrow": "Privatni timski čet",
@@ -452,6 +462,40 @@
       "opens": "Obnova se otvara {{date}} za sezonu {{season}}.",
       "message": "{{amount}} Coins dodato je za obnovu saveza.",
       "alreadyFunded": "Obnova saveza je već u potpunosti finansirana."
+    },
+    "customization": {
+      "loading": "Učitavanje prilagođavanja…",
+      "eyebrow": "Prilagođavanje saveza",
+      "title": "Logo i dres reprezentacije",
+      "description": "Državna zastava uvek ostaje vidljiva. Savez može dodati svoj logo i dres reprezentacije. Bez prilagođavanja zastava se koristi kao logo, a generički dres se dodeljuje automatski.",
+      "flagTitle": "Državna zastava",
+      "flagLocked": "Državna zastava je stalna i ne može se menjati.",
+      "logoTitle": "Logo saveza",
+      "logoHelp": "Otpremi logo saveza. Bez posebnog loga automatski se koristi zastava.",
+      "jerseyTitle": "Dres reprezentacije",
+      "jerseyHelp": "Izaberi generički dres ili otpremi svoj.",
+      "freeRemaining": "Preostalo besplatnih izmena: {{count}}",
+      "paidNext": "Sledeća izmena: {{coins}} Coins",
+      "uploadLogo": "Otpremi logo",
+      "applyLogo": "Primeni logo",
+      "useFlag": "Koristi zastavu",
+      "uploadJersey": "Otpremi dres",
+      "applyJersey": "Primeni dres",
+      "useDefaultJersey": "Koristi podrazumevani",
+      "genericKits": "Generički dresovi",
+      "genericKitNumber": "Generic jersey {{number}}",
+      "saving": "Čuvanje…",
+      "chooseLogo": "Prvo izaberi logo.",
+      "chooseJersey": "Prvo izaberi ili otpremi dres.",
+      "fileTooLarge": "Slika može imati najviše 2 MB.",
+      "fileType": "Koristi PNG, JPG ili WEBP slike.",
+      "logoReset": "Logo vraćen na državnu zastavu.",
+      "logoSaved": "Logo sačuvan.",
+      "jerseyReset": "Dres vraćen na podrazumevani generički dres.",
+      "jerseySaved": "Dres sačuvan.",
+      "pricing": "{{used}} izmena ove sezone. Prve {{free}} su besplatne; svaka sledeća izmena košta {{coins}} Coins.",
+      "coachOnly": "Svi članovi mogu videti prilagođavanje, ali samo izabrani selektor može menjati logo ili dres.",
+      "balance": "Stanje: {{balance}} Coins"
     }
   },
   "world": {
@@ -603,7 +647,10 @@
         "flat": "Ravničarska drumska trka",
         "hilly_mountain": "Brdska / planinska trka"
       }
-    }
+    },
+    "groupLiveSummary": "Timovi: {{current}} / {{entrants}} · {{advance}} prolaze",
+    "hostLabel": "Domaćin",
+    "allThreeRaceDays": "· sva tri trkačka dana"
   },
   "admin": {
     "loading": "Učitavanje World Nations operacija...",
