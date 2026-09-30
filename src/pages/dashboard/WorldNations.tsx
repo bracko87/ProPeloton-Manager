@@ -603,9 +603,9 @@ export default function WorldNationsPage(): JSX.Element {
 
               {t('world.finalQualification')}
             </div>
-            <div className="mt-2 text-xl font-semibold text-slate-900">12–16 teams per group</div>
+            <div className="mt-2 text-xl font-semibold text-slate-900">Max 16 teams per group</div>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Season 1 keeps existing group membership stable and fills a group up to 16 before opening the next. From Season 2, ranked nations are spread evenly across groups.
+              Target size is 12–16 when the field is large enough. Season 1 fills the existing group before opening the next; from Season 2, ranked nations are spread evenly across groups.
             </p>
           </div>
 
