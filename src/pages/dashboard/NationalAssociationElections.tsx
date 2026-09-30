@@ -73,6 +73,13 @@ function formatGameDate(value?: string | null): string {
   })
 }
 
+function electionKindLabel(kind: string | null | undefined, t: (key: string, options?: any) => string): string {
+  if (kind === 'annual') return t('association.electionsPage.kindSeason')
+  if (kind === 'activation') return t('association.electionsPage.kindActivation')
+  if (kind === 'special') return t('association.electionsPage.kindSpecial')
+  return humanize(kind)
+}
+
 function statusClasses(status?: string | null): string {
   if (status === 'active' || status === 'completed') return 'bg-emerald-100 text-emerald-800'
   if (status === 'candidate_registration' || status === 'voting' || status === 'runoff' || status === 'forming') {
@@ -313,7 +320,7 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                       {t('association.electionsPage.type')}
                     </div>
                     <div className="mt-2 text-sm font-semibold text-slate-900">
-                      {humanize(election.kind)}
+                      {electionKindLabel(election.kind, t)}
                     </div>
                   </div>
                   <div className="rounded border border-slate-200 p-3">
