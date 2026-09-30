@@ -25,6 +25,16 @@ type AssociationData = {
   my_activation_coin_contribution?: number
   coin_balance?: number
   activation_ready?: boolean
+  renewal_coin_target?: number
+  renewal_paid_through_season?: number | null
+  renewal_target_season?: number | null
+  renewal_coin_contributed?: number
+  renewal_coin_remaining?: number
+  my_renewal_coin_contribution?: number
+  renewal_window_open?: boolean
+  renewal_window_opens_on?: string | null
+  renewal_deadline?: string | null
+  association_valid_until?: string | null
   coach?: {
     term_id: string
     user_id: string
@@ -219,6 +229,7 @@ export default function NationalAssociationPage(): JSX.Element {
   const [selectedSquad, setSelectedSquad] = useState<string[]>([])
   const [riderSearch, setRiderSearch] = useState('')
   const [coinContributionInput, setCoinContributionInput] = useState('')
+  const [renewalContributionInput, setRenewalContributionInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -356,6 +367,28 @@ export default function NationalAssociationPage(): JSX.Element {
         appliedAmount > 0
           ? t('association.activation.message', { amount: appliedAmount })
           : t('association.activation.alreadyFunded'),
+      )
+    })
+  }
+
+  const contributeRenewalCoins = async (amount: number): Promise<void> => {
+    const requested = Math.floor(Number(amount))
+    if (!Number.isFinite(requested) || requested <= 0) return
+
+    await perform('contribute-renewal-coins', async () => {
+      const { data, error: rpcError } = await supabase.rpc(
+        'contribute_national_association_renewal_coins_v1',
+        { p_amount: requested },
+      )
+      if (rpcError) throw rpcError
+
+      const appliedAmount = Number((data as any)?.applied_amount ?? 0)
+      setRenewalContributionInput('')
+      window.dispatchEvent(new Event('coin-balance-changed'))
+      setMessage(
+        appliedAmount > 0
+          ? t('association.renewal.message', { amount: appliedAmount })
+          : t('association.renewal.alreadyFunded'),
       )
     })
   }
@@ -600,9 +633,125 @@ export default function NationalAssociationPage(): JSX.Element {
                     </span>
                   </div>
                 ) : (association.activation_coin_remaining ?? 0) <= 0 ? (
-                  <p className="mt-3 text-xs font-semibold text-emerald-700">
-                    {t('association.activation.funded')}
-                  </p>
+                  <div className="mt-3 space-y-3">
+                    <p className="text-xs font-semibold text-emerald-700">
+                      {t('association.activation.funded')}
+                    </p>
+
+                    {association.association_valid_until ? (
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                            {t('association.renewal.validityTitle')}
+                          </div>
+                          <div className="mt-0.5 text-sm font-semibold text-emerald-950">
+                            {t('association.renewal.validUntil', {
+                              date: formatGameDate(association.association_valid_until),
+                              season: association.renewal_target_season ?? '—',
+                            })}
+                          </div>
+                        </div>
+                        <div className="text-right text-xs text-emerald-800">
+                          {t('association.renewal.cost', {
+                            coins: association.renewal_coin_target ?? 30,
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {association.renewal_window_open ? (
+                      <div className="rounded border border-amber-200 bg-amber-50 p-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                              {t('association.renewal.title', {
+                                season: association.renewal_target_season ?? '—',
+                              })}
+                            </div>
+                            <div className="mt-1 text-sm font-semibold text-slate-900">
+                              {association.renewal_coin_contributed ?? 0} / {association.renewal_coin_target ?? 30} {t('association.activation.coins')}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-600">
+                              {t('association.renewal.deadline', {
+                                date: formatGameDate(association.renewal_deadline),
+                              })}
+                            </div>
+                          </div>
+                          <div className="text-right text-xs text-slate-500">
+                            {t('association.activation.remaining')}
+                            <div className="mt-0.5 text-sm font-semibold text-slate-900">
+                              {association.renewal_coin_remaining ?? association.renewal_coin_target ?? 30} {t('association.activation.coins')}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-amber-100">
+                          <div
+                            className="h-full rounded-full bg-yellow-400"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.max(
+                                  0,
+                                  ((association.renewal_coin_contributed ?? 0) /
+                                    Math.max(association.renewal_coin_target ?? 30, 1)) *
+                                    100,
+                                ),
+                              )}%`,
+                            }}
+                          />
+                        </div>
+
+                        {(association.renewal_coin_remaining ?? 0) > 0 && association.is_member ? (
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            {[1, 5, 10].map(amount => (
+                              <button
+                                key={amount}
+                                type="button"
+                                disabled={
+                                  busyKey === 'contribute-renewal-coins' ||
+                                  amount > (association.coin_balance ?? 0)
+                                }
+                                onClick={() => void contributeRenewalCoins(amount)}
+                                className="rounded bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+                              >
+                                +{amount}
+                              </button>
+                            ))}
+                            <input
+                              type="number"
+                              min={1}
+                              max={Math.max(association.renewal_coin_remaining ?? 1, 1)}
+                              value={renewalContributionInput}
+                              onChange={event => setRenewalContributionInput(event.target.value)}
+                              placeholder={t('association.activation.custom')}
+                              className="w-24 rounded border border-slate-300 bg-white px-2 py-1.5 text-xs outline-none focus:border-yellow-500"
+                            />
+                            <button
+                              type="button"
+                              disabled={
+                                busyKey === 'contribute-renewal-coins' ||
+                                !renewalContributionInput ||
+                                Number(renewalContributionInput) <= 0 ||
+                                Number(renewalContributionInput) > (association.coin_balance ?? 0)
+                              }
+                              onClick={() => void contributeRenewalCoins(Number(renewalContributionInput))}
+                              className="rounded bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black hover:bg-yellow-300 disabled:opacity-40"
+                            >
+                              {t('association.renewal.renew')}
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : association.renewal_window_opens_on ? (
+                      <p className="text-xs text-slate-500">
+                        {t('association.renewal.opens', {
+                          date: formatGameDate(association.renewal_window_opens_on),
+                          season: association.renewal_target_season ?? '—',
+                        })}
+                      </p>
+                    ) : null}
+                  </div>
                 ) : (
                   <p className="mt-3 text-xs text-slate-500">
                     {t('association.activation.joinFirst')}
