@@ -440,7 +440,7 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                                 onClick={() => void voteForCandidate(candidate.candidate_id)}
                                 className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
                               >
-                                {t('association.election.vote')}
+                                {t('common.vote')}
                               </button>
                             </div>
                           ) : null}
