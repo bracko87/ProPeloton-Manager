@@ -552,7 +552,8 @@
       "time": "Time",
       "gap": "Gap",
       "bestRider": "Best rider"
-    }
+    },
+    "autoEntry": "Jeder aktive Nationalverband wird automatisch gemeldet. Eine separate Anmeldung zum Wettbewerb ist nicht erforderlich."
   },
   "admin": {
     "loading": "World-Nations-Betrieb wird geladen...",
