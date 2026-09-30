@@ -244,7 +244,9 @@
         "world_nations_day_1": "World Nations · Tag 1",
         "world_nations_day_2": "World Nations · Tag 2",
         "world_nations_day_3": "World Nations · Tag 3"
-      }
+      },
+      "squadMovedHelp": "Fahrerauswahl, Einladungen, Ersatzfahrer und die Bestätigung des finalen 10er-Kaders werden jetzt im eigenen Kader-Tab verwaltet.",
+      "openSquad": "Kader öffnen"
     },
     "guide": {
       "eyebrow": "So funktioniert es",
