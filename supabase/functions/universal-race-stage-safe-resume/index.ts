@@ -564,7 +564,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     });
     next={...checkpoint,groupAndTimeResolution,baseFinishResolution};
   } else if(step===7){
-    const baseReplayTimeline=buildUniversalReplayTimeline(
+    const builtBaseReplayTimeline=buildUniversalReplayTimeline(
       calculationInput,
       checkpoint.riderReadiness as any,
       checkpoint.roadCommandResolution as any,
@@ -574,6 +574,18 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       checkpoint.groupAndTimeResolution as any,
       checkpoint.baseFinishResolution as any,
     );
+    // Intermediate point results are rebuilt authoritatively in step 8 from
+    // provisionalIntermediatePointBattles/finalization. Keeping the cumulative
+    // arrays inside every checkpoint makes long classics exceed the Edge heap.
+    const baseReplayTimeline={
+      ...builtBaseReplayTimeline,
+      checkpoints:Array.isArray(builtBaseReplayTimeline?.checkpoints)
+        ? builtBaseReplayTimeline.checkpoints.map((row:any)=>({
+            ...row,
+            intermediateResults:[],
+          }))
+        : [],
+    };
     next={...checkpoint,baseReplayTimeline};
   } else if(step===8){
     const baseReplayTimelineSource=checkpoint.baseReplayTimeline as any;
