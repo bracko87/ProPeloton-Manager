@@ -244,7 +244,9 @@
         "world_nations_day_1": "World Nations · Day 1",
         "world_nations_day_2": "World Nations · Day 2",
         "world_nations_day_3": "World Nations · Day 3"
-      }
+      },
+      "squadMovedHelp": "Rider selection, invitations, replacements and final 10-rider confirmation are now managed in the dedicated Squad tab.",
+      "openSquad": "Open Squad"
     },
     "guide": {
       "eyebrow": "How it works",
