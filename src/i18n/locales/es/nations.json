@@ -194,7 +194,8 @@
       "load": "No se pudo cargar el Campeonato Mundial de Naciones.",
       "hostSubmit": "No se pudo enviar la solicitud de anfitrión."
     },
-    "drawPending": "El sorteo aún no se ha completado."
+    "drawPending": "El sorteo aún no se ha completado.",
+    "season1LaunchNote": "La temporada 1 se retrasa intencionadamente: el cuadro de World Nations se cerrará el 1 de junio usando solo las Asociaciones Nacionales activas en ese momento."
   },
   "admin": {
     "loading": "Cargando operaciones de World Nations...",
