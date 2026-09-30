@@ -477,7 +477,9 @@ export default function NationalAssociationPage(): JSX.Element {
 
   const isCoach = dashboard?.allowed === true
   const currentSquad = overview?.current_squad
-  const upcomingEvents = overview?.upcoming_events ?? []
+  const upcomingEvents = (overview?.upcoming_events ?? []).filter(event =>
+    event.event_type.startsWith('world_nations_'),
+  )
 
   if (loading && !association) {
     return (
