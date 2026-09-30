@@ -305,7 +305,8 @@
       "principle4": "Kod nerešenog rezultata samo izjednačeni vodeći kandidati idu u sledeći krug.",
       "kindSeason": "Sezonski izbori",
       "kindActivation": "Prvi izbori nakon aktivacije",
-      "kindSpecial": "Vanredni izbori"
+      "kindSpecial": "Vanredni izbori",
+      "scheduleActual": "Prijava kandidata {{registrationStart}}–{{registrationEnd}} · prvo glasanje {{voteStart}}–{{voteEnd}} · ako ostane nerešeno, slede sedmodnevni krugovi."
     },
     "chat": {
       "privateEyebrow": "Privatni timski čet",
