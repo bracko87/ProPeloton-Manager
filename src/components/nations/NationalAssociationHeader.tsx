@@ -116,7 +116,7 @@ export default function NationalAssociationHeader({
       </div>
 
         <div className="flex max-w-full flex-wrap items-center justify-end gap-2 self-start">
-          <NationalAssociationTabs />
+          <NationalAssociationTabs isCoach={isCoach} />
         </div>
       </div>
 

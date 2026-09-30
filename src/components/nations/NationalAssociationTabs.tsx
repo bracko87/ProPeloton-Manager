@@ -2,7 +2,11 @@ import React from 'react'
 import { NavLink } from 'react-router'
 import { useTranslation } from 'react-i18next'
 
-export default function NationalAssociationTabs(): JSX.Element {
+export default function NationalAssociationTabs({
+  isCoach = false,
+}: {
+  isCoach?: boolean
+}): JSX.Element {
   const { t: navigationT } = useTranslation('navigation')
   const { t: nationsT } = useTranslation('nations')
 
@@ -19,9 +23,19 @@ export default function NationalAssociationTabs(): JSX.Element {
       <NavLink to="/dashboard/national-association" end className={linkClass}>
         {navigationT('overview')}
       </NavLink>
-      <NavLink to="/dashboard/national-association/team-package" className={linkClass}>
-        {nationsT('association.package.tab')}
-      </NavLink>
+
+      {isCoach ? (
+        <NavLink to="/dashboard/national-association/squad" className={linkClass}>
+          {nationsT('association.tabs.squad')}
+        </NavLink>
+      ) : null}
+
+      {isCoach ? (
+        <NavLink to="/dashboard/national-association/team-package" className={linkClass}>
+          {nationsT('association.package.tab')}
+        </NavLink>
+      ) : null}
+
       <NavLink to="/dashboard/national-association/world-nations" className={linkClass}>
         {nationsT('association.tabs.competition')}
       </NavLink>

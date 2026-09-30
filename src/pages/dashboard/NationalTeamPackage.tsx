@@ -400,25 +400,39 @@ export default function NationalTeamPackagePage(): JSX.Element {
     setError(null)
 
     try {
-      const [associationResponse, packageResponse, presetsResponse, coachResponse] = await Promise.all([
+      const [associationResponse, coachResponse] = await Promise.all([
         supabase.rpc('get_my_national_association_v1'),
-        supabase.rpc('get_national_team_standard_package_v1'),
-        supabase.rpc('get_my_national_team_equipment_presets_v1'),
         supabase.rpc('get_national_coach_dashboard_v1'),
       ])
 
       if (associationResponse.error) throw associationResponse.error
-      if (packageResponse.error) throw packageResponse.error
 
       const nextAssociation = (associationResponse.data ?? null) as AssociationData | null
-      const nextPackage = (packageResponse.data ?? null) as StandardPackage | null
-      const nextPresets = presetsResponse.error
-        ? ({ allowed: false, can_edit: false, reason: 'unavailable', presets: [] } as EquipmentPresetData)
-        : ((presetsResponse.data ?? null) as EquipmentPresetData | null)
       const nextIsCoach = !coachResponse.error && Boolean((coachResponse.data as any)?.allowed)
 
       setAssociation(nextAssociation)
       setIsCoach(nextIsCoach)
+
+      if (!nextIsCoach) {
+        setStandardPackage(null)
+        setPresetData(null)
+        setPresetDrafts({})
+        setBonusPreviews({})
+        return
+      }
+
+      const [packageResponse, presetsResponse] = await Promise.all([
+        supabase.rpc('get_national_team_standard_package_v1'),
+        supabase.rpc('get_my_national_team_equipment_presets_v1'),
+      ])
+
+      if (packageResponse.error) throw packageResponse.error
+
+      const nextPackage = (packageResponse.data ?? null) as StandardPackage | null
+      const nextPresets = presetsResponse.error
+        ? ({ allowed: false, can_edit: false, reason: 'unavailable', presets: [] } as EquipmentPresetData)
+        : ((presetsResponse.data ?? null) as EquipmentPresetData | null)
+
       setStandardPackage(nextPackage)
       setPresetData(nextPresets)
 
@@ -526,6 +540,28 @@ export default function NationalTeamPackagePage(): JSX.Element {
           <Loader2 className="h-5 w-5 animate-spin" />
           {t('association.loading')}
         </div>
+      </div>
+    )
+  }
+
+  if (!isCoach) {
+    return (
+      <div className="w-full space-y-6">
+        <NationalAssociationHeader
+          association={association}
+          isCoach={false}
+          loading={loading}
+          onRefresh={() => void load()}
+        />
+
+        <section className="rounded border border-amber-200 bg-amber-50 p-5 shadow-sm">
+          <h3 className="font-semibold text-amber-950">
+            {t('association.package.coachOnlyTitle')}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-amber-900">
+            {t('association.package.coachOnlyText')}
+          </p>
+        </section>
       </div>
     )
   }
