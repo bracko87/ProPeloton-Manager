@@ -1,20 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import {
-  CheckCircle2,
-  Flag,
-  Globe2,
-  Loader2,
-  MapPin,
-  Medal,
-  RefreshCw,
-  Route,
-  ShieldCheck,
-  Trophy,
-  Users,
-} from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
+import NationalAssociationTabs from '../../components/nations/NationalAssociationTabs'
 
 type QualificationRound = {
   round_index: number
@@ -220,9 +209,7 @@ function CountryLabel({
           alt={code ?? name ?? 'Country'}
           className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
         />
-      ) : (
-        <Flag className="h-4 w-4 text-slate-400" />
-      )}
+      ) : null}
       <span>{name || code || '—'}</span>
     </div>
   )
@@ -243,7 +230,7 @@ function RoundCard({
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-4">
         <div>
           <div className="flex items-center gap-2">
-            <Route className="h-5 w-5 text-yellow-600" />
+
             <h3 className="text-base font-semibold text-slate-900">{round.round_label}</h3>
           </div>
           <p className="mt-1 text-sm text-slate-500">
@@ -471,20 +458,13 @@ export default function WorldNationsPage(): JSX.Element {
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Globe2 className="h-7 w-7 text-yellow-600" />
+
             <h2 className="text-2xl font-semibold text-slate-900">{t('world.title')}</h2>
           </div>
           <p className="mt-1 text-sm text-slate-600">
             {t('world.subtitle')}
           </p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
-            <Link
-              to="/dashboard/national-association"
-              className="text-yellow-700 hover:text-yellow-800 hover:underline"
-            >
-              {t('association.title')}
-            </Link>
-            <span className="text-slate-300">•</span>
             <Link
               to="/dashboard/national-ranking"
               className="text-yellow-700 hover:text-yellow-800 hover:underline"
@@ -494,15 +474,18 @@ export default function WorldNationsPage(): JSX.Element {
           </div>
         </div>
 
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => void load()}
-          className="inline-flex items-center gap-2 self-start rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          {t('common.refresh')}
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          <NationalAssociationTabs />
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => void load()}
+            className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
+            {t('common.refresh')}
+          </button>
+        </div>
       </div>
 
       {error ? (
@@ -521,7 +504,7 @@ export default function WorldNationsPage(): JSX.Element {
         <div className="grid gap-px bg-slate-200 md:grid-cols-4">
           <div className="bg-white p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <Users className="h-4 w-4" />
+
               {t('world.activeAssociations')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">
@@ -532,7 +515,7 @@ export default function WorldNationsPage(): JSX.Element {
 
           <div className="bg-white p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <ShieldCheck className="h-4 w-4" />
+
               {t('world.finalQualification')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">{t('world.nationsCount', { count: 32 })}</div>
@@ -541,7 +524,7 @@ export default function WorldNationsPage(): JSX.Element {
 
           <div className="bg-white p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <Trophy className="h-4 w-4" />
+
               {t('world.worldFinal')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">
@@ -552,7 +535,7 @@ export default function WorldNationsPage(): JSX.Element {
 
           <div className="bg-white p-4">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <MapPin className="h-4 w-4" />
+
               {t('common.host')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">
@@ -566,7 +549,7 @@ export default function WorldNationsPage(): JSX.Element {
       {!data?.edition ? (
         <section className="rounded border border-amber-200 bg-amber-50 p-5">
           <div className="flex items-start gap-3">
-            <Globe2 className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+
             <div>
               <h3 className="font-semibold text-amber-950">{t('world.noEditionTitle')}</h3>
               <p className="mt-1 text-sm leading-6 text-amber-900">
@@ -607,7 +590,7 @@ export default function WorldNationsPage(): JSX.Element {
         <section className="rounded bg-white shadow">
           <div className="border-b border-slate-200 p-4">
             <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-yellow-600" />
+
               <h3 className="text-base font-semibold text-slate-900">{t('world.host.title')}</h3>
             </div>
             <p className="mt-1 text-sm text-slate-500">
@@ -619,7 +602,7 @@ export default function WorldNationsPage(): JSX.Element {
             {data.viewer?.host_application ? (
               <div className="mb-4 rounded border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+
                   <span className="text-sm font-semibold text-slate-900">
                     {t('world.host.applicationStatus', { status: t(`status.${data.viewer.host_application.status}`, { defaultValue: humanize(data.viewer.host_application.status) }) })}
                   </span>
@@ -648,7 +631,7 @@ export default function WorldNationsPage(): JSX.Element {
                     onClick={() => void submitHostApplication()}
                     className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                   >
-                    {hostSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+                    {hostSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                     {data.viewer.host_application ? t('world.host.updateApplication') : t('world.host.apply')}
                   </button>
                 </div>
@@ -667,7 +650,7 @@ export default function WorldNationsPage(): JSX.Element {
       <section className="rounded bg-white shadow">
         <div className="border-b border-slate-200 p-4">
           <div className="flex items-center gap-2">
-            <Medal className="h-5 w-5 text-yellow-600" />
+
             <h3 className="text-base font-semibold text-slate-900">{t('world.points.title')}</h3>
           </div>
           <p className="mt-1 text-sm text-slate-500">
@@ -712,7 +695,7 @@ export default function WorldNationsPage(): JSX.Element {
       <section className="rounded bg-white shadow">
         <div className="border-b border-slate-200 p-4">
           <div className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-600" />
+
             <h3 className="text-base font-semibold text-slate-900">{t('world.history.title')}</h3>
           </div>
         </div>
