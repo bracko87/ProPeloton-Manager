@@ -66,6 +66,7 @@ import NationalAssociationTeamChatPage from './pages/dashboard/NationalAssociati
 import NationalAssociationHistoryPage from './pages/dashboard/NationalAssociationHistory'
 import NationalTeamPackagePage from './pages/dashboard/NationalTeamPackage'
 import WorldNationsPage from './pages/dashboard/WorldNations'
+import WorldNationsEventPage from './pages/dashboard/WorldNationsEventPage'
 import TeamProfilePage from './pages/dashboard/TeamProfilePage'
 import ClubIdentityPage from './pages/dashboard/ClubIdentityPage'
 import SeasonResetPreviewPage from './pages/dashboard/SeasonResetPreview'
@@ -557,6 +558,11 @@ export default function App(): JSX.Element {
             <Route
               path="national-association/world-nations"
               element={<WorldNationsPage />}
+            />
+
+            <Route
+              path="national-association/world-nations/events/:eventId"
+              element={<WorldNationsEventPage />}
             />
 
             <Route
