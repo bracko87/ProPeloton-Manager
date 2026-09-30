@@ -125,8 +125,18 @@ export default function NationalAssociationHistoryPage(): JSX.Element {
       })
     }
     if (event.event_type === 'coach_election_opened') {
+      const rawKind = String(details.election_kind ?? '')
+      const kind =
+        rawKind === 'annual'
+          ? t('association.electionsPage.kindSeason')
+          : rawKind === 'activation'
+            ? t('association.electionsPage.kindActivation')
+            : rawKind === 'special'
+              ? t('association.electionsPage.kindSpecial')
+              : rawKind || '—'
+
       return t('association.history.detail.electionOpened', {
-        kind: String(details.election_kind ?? '—'),
+        kind,
         round: Number(details.round ?? 1),
       })
     }
