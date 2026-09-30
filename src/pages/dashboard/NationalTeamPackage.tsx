@@ -446,10 +446,13 @@ export default function NationalTeamPackagePage(): JSX.Element {
   }, [])
 
   const updateDraftName = (slot: number, value: string): void => {
+    const existing = presetDrafts[slot]
+    if (!existing) return
+
     setPresetDrafts(current => ({
       ...current,
       [slot]: {
-        ...current[slot],
+        ...existing,
         setup_name: value,
       },
     }))
@@ -601,8 +604,8 @@ export default function NationalTeamPackagePage(): JSX.Element {
                 const missing = EQUIPMENT_CATEGORY_ORDER
                   .filter(category => !draft[`${category}_catalog_item_id` as keyof EquipmentPresetDraft])
                   .map(categoryLabel)
-                const canEdit = presetData.can_edit === true
-                const defaultSlot = preset.setup_slot === Number(presetData.default_slot ?? 1)
+                const canEdit = presetData?.can_edit === true
+                const defaultSlot = preset.setup_slot === Number(presetData?.default_slot ?? 1)
 
                 return (
                   <article
