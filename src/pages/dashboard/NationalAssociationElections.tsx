@@ -8,6 +8,8 @@ type Candidate = {
   candidate_id: string
   club_id?: string | null
   club_name?: string | null
+  first_name?: string | null
+  last_name?: string | null
   manifesto?: string | null
   status: string
   is_me?: boolean
@@ -95,6 +97,8 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [isCoach, setIsCoach] = useState(false)
   const [busyKey, setBusyKey] = useState<string | null>(null)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [manifesto, setManifesto] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -111,11 +115,45 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
       if (associationResponse.error) throw associationResponse.error
 
       const next = (associationResponse.data ?? null) as AssociationData | null
-      setAssociation(next)
       setIsCoach(!coachResponse.error && Boolean((coachResponse.data as any)?.allowed))
 
-      const myCandidate = next?.election?.candidates?.find(candidate => candidate.is_me)
-      if (myCandidate?.manifesto) setManifesto(myCandidate.manifesto)
+      if (next?.election?.id) {
+        const [profilesResponse, formResponse] = await Promise.all([
+          supabase.rpc('get_national_coach_candidate_profiles_v1', {
+            p_election_id: next.election.id,
+          }),
+          supabase.rpc('get_my_national_coach_candidate_form_v1', {
+            p_election_id: next.election.id,
+          }),
+        ])
+
+        if (profilesResponse.error) throw profilesResponse.error
+        if (formResponse.error) throw formResponse.error
+
+        const existingById = new Map(
+          (next.election.candidates ?? []).map(candidate => [candidate.candidate_id, candidate]),
+        )
+        const profiles = (profilesResponse.data ?? []) as Candidate[]
+        next.election.candidates = profiles.map(profile => ({
+          ...existingById.get(profile.candidate_id),
+          ...profile,
+        }))
+
+        const form = (formResponse.data ?? {}) as {
+          first_name?: string | null
+          last_name?: string | null
+          manifesto?: string | null
+        }
+        setFirstName(form.first_name ?? '')
+        setLastName(form.last_name ?? '')
+        setManifesto(form.manifesto ?? '')
+      } else {
+        setFirstName('')
+        setLastName('')
+        setManifesto('')
+      }
+
+      setAssociation(next)
     } catch (caught: any) {
       setError(caught?.message ?? t('association.errors.load'))
     } finally {
@@ -155,8 +193,10 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
     if (!electionId) return
 
     await perform('candidate', async () => {
-      const { error: rpcError } = await supabase.rpc('register_national_coach_candidate_v1', {
+      const { error: rpcError } = await supabase.rpc('register_national_coach_candidate_v2', {
         p_election_id: electionId,
+        p_first_name: firstName,
+        p_last_name: lastName,
         p_manifesto: manifesto,
       })
       if (rpcError) throw rpcError
@@ -386,10 +426,48 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                   </div>
                 </div>
 
-                {election.status === 'candidate_registration' && !election.my_candidate_id ? (
+                {(election.status === 'candidate_registration' ||
+                  (election.status === 'runoff' && election.runoff_registration_open)) ? (
                   <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
-                    <label className="block">
-                      <span className="text-sm font-semibold text-slate-900">
+                    <div className="text-sm font-semibold text-slate-900">
+                      {election.my_candidate_id
+                        ? t('association.electionsPage.updateCandidature')
+                        : t('association.electionsPage.candidatureFormTitle')}
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">
+                      {t('association.electionsPage.candidatureFormHelp')}
+                    </p>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <label className="block">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          {t('association.electionsPage.firstName')}
+                        </span>
+                        <input
+                          value={firstName}
+                          onChange={event => setFirstName(event.target.value)}
+                          maxLength={40}
+                          className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
+                          placeholder={t('association.electionsPage.firstNamePlaceholder')}
+                        />
+                      </label>
+
+                      <label className="block">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          {t('association.electionsPage.lastName')}
+                        </span>
+                        <input
+                          value={lastName}
+                          onChange={event => setLastName(event.target.value)}
+                          maxLength={40}
+                          className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
+                          placeholder={t('association.electionsPage.lastNamePlaceholder')}
+                        />
+                      </label>
+                    </div>
+
+                    <label className="mt-3 block">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                         {t('association.election.manifesto')}
                       </span>
                       <textarea
@@ -397,19 +475,27 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                         onChange={event => setManifesto(event.target.value)}
                         rows={5}
                         maxLength={1000}
-                        className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
+                        className="mt-1 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
                         placeholder={t('association.election.manifestoPlaceholder')}
                       />
                     </label>
+
                     <div className="mt-3 flex justify-end">
                       <button
                         type="button"
-                        disabled={busyKey === 'candidate' || manifesto.trim().length < 10}
+                        disabled={
+                          busyKey === 'candidate' ||
+                          firstName.trim().length < 2 ||
+                          lastName.trim().length < 2 ||
+                          manifesto.trim().length < 10
+                        }
                         onClick={() => void registerCandidate()}
                         className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                       >
                         {busyKey === 'candidate' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                        {t('association.election.submitCandidature')}
+                        {election.my_candidate_id
+                          ? t('association.electionsPage.saveCandidature')
+                          : t('association.election.submitCandidature')}
                       </button>
                     </div>
                   </div>
@@ -419,46 +505,69 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                   <h4 className="text-sm font-semibold text-slate-900">
                     {t('association.electionsPage.candidates')}
                   </h4>
-                  <div className="mt-3 grid gap-3 lg:grid-cols-2">
+
+                  <div className="mt-3 overflow-hidden rounded border border-slate-200">
                     {(election.candidates ?? []).length === 0 ? (
-                      <div className="rounded border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                      <div className="bg-slate-50 p-4 text-sm text-slate-500">
                         {t('association.electionsPage.noCandidates')}
                       </div>
                     ) : (
-                      (election.candidates ?? []).map(candidate => (
-                        <article
-                          key={candidate.candidate_id}
-                          className={[
-                            'rounded border p-4',
-                            candidate.in_current_round === false
-                              ? 'border-slate-200 bg-slate-50 opacity-60'
-                              : 'border-slate-200 bg-white',
-                          ].join(' ')}
-                        >
-                          <div className="font-semibold text-slate-900">
-                            {candidate.club_name ?? t('common.candidate')}
-                            {candidate.is_me ? ` · ${t('common.you')}` : ''}
-                          </div>
-                          <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
-                            {candidate.manifesto || t('association.election.noManifesto')}
-                          </p>
+                      <div className="divide-y divide-slate-200 bg-white">
+                        {(election.candidates ?? []).map((candidate, index) => {
+                          const fullName = [candidate.first_name, candidate.last_name]
+                            .filter(Boolean)
+                            .join(' ')
+                          return (
+                            <div
+                              key={candidate.candidate_id}
+                              className={[
+                                'px-4 py-3',
+                                candidate.in_current_round === false ? 'bg-slate-50 opacity-60' : '',
+                              ].join(' ')}
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex min-w-0 items-center gap-3">
+                                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+                                    {index + 1}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="font-semibold text-slate-900">
+                                      {fullName || t('common.candidate')}
+                                      {candidate.club_name ? ` (${candidate.club_name})` : ''}
+                                      {candidate.is_me ? ` · ${t('common.you')}` : ''}
+                                    </div>
+                                    <div className="mt-0.5 text-xs text-slate-500">
+                                      {t('association.electionsPage.candidateNumber', { number: index + 1 })}
+                                    </div>
+                                  </div>
+                                </div>
 
-                          {(election.status === 'voting' || election.status === 'runoff') &&
-                          candidate.in_current_round !== false &&
-                          !election.my_vote_candidate_id ? (
-                            <div className="mt-4">
-                              <button
-                                type="button"
-                                disabled={busyKey === `vote:${candidate.candidate_id}`}
-                                onClick={() => void voteForCandidate(candidate.candidate_id)}
-                                className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-                              >
-                                {t('common.vote')}
-                              </button>
+                                {(election.status === 'voting' || election.status === 'runoff') &&
+                                candidate.in_current_round !== false &&
+                                !election.my_vote_candidate_id ? (
+                                  <button
+                                    type="button"
+                                    disabled={busyKey === `vote:${candidate.candidate_id}`}
+                                    onClick={() => void voteForCandidate(candidate.candidate_id)}
+                                    className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                                  >
+                                    {t('common.vote')}
+                                  </button>
+                                ) : null}
+                              </div>
+
+                              <details className="mt-3 rounded border border-slate-200 bg-slate-50">
+                                <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-700">
+                                  {t('association.electionsPage.viewManifesto')}
+                                </summary>
+                                <div className="border-t border-slate-200 px-3 py-3 text-sm leading-6 text-slate-600 whitespace-pre-line">
+                                  {candidate.manifesto || t('association.election.noManifesto')}
+                                </div>
+                              </details>
                             </div>
-                          ) : null}
-                        </article>
-                      ))
+                          )
+                        })}
+                      </div>
                     )}
                   </div>
                 </div>
