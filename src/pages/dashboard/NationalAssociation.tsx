@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import NationalAssociationHeader from '../../components/nations/NationalAssociationHeader'
+import NationalAssociationCustomization from '../../components/nations/NationalAssociationCustomization'
 
 type AssociationData = {
   eligible: boolean
@@ -946,6 +947,8 @@ export default function NationalAssociationPage(): JSX.Element {
               </div>
             </div>
           </section>
+
+          <NationalAssociationCustomization />
 
           {myCallups.length > 0 ? (
             <section className="rounded bg-white shadow">
