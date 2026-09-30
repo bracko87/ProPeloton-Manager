@@ -540,13 +540,28 @@ export default function App(): JSX.Element {
             />
 
             <Route
-              path="world-nations"
+              path="national-association/world-nations"
               element={<WorldNationsPage />}
             />
 
             <Route
+              path="world-nations"
+              element={
+                <Navigate
+                  to="/dashboard/national-association/world-nations"
+                  replace
+                />
+              }
+            />
+
+            <Route
               path="nations-competition"
-              element={<WorldNationsPage />}
+              element={
+                <Navigate
+                  to="/dashboard/national-association/world-nations"
+                  replace
+                />
+              }
             />
 
             <Route
