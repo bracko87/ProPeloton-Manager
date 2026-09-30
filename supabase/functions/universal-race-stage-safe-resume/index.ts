@@ -623,17 +623,14 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       );
       activeCommandsByPhase.set(phaseNumber,bucket);
     });
-    const phase10BaseReplayTimeline={
-      ...baseReplayTimelineSource,
-      checkpoints:Array.isArray(baseReplayTimelineSource?.checkpoints)
-        ? baseReplayTimelineSource.checkpoints.map((row:any)=>({
-            ...row,
-            intermediateResults:[],
-            teamStates:[],
-            activeCommands:(activeCommandsByPhase.get(Number(row?.phase))??[]).map((command:any)=>({...command})),
-          }))
-        : [],
-    };
+    const phase10BaseReplayTimeline=baseReplayTimelineSource;
+    if(Array.isArray(phase10BaseReplayTimeline?.checkpoints)){
+      for(const row of phase10BaseReplayTimeline.checkpoints){
+        row.intermediateResults=[];
+        row.teamStates=[];
+        row.activeCommands=(activeCommandsByPhase.get(Number(row?.phase))??[]);
+      }
+    }
     const phase10Resolution=resolveUniversalPhase10Incidents({
       input:calculationInput,
       sourceInput:input,
