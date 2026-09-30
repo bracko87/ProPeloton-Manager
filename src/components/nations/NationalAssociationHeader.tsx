@@ -1,6 +1,5 @@
 import React from 'react'
 import { Loader2 } from 'lucide-react'
-import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import NationalAssociationTabs from './NationalAssociationTabs'
 
@@ -20,7 +19,6 @@ type Props = {
   isCoach?: boolean
   loading?: boolean
   onRefresh?: () => void
-  showReferenceLinks?: boolean
 }
 
 function flagUrl(code?: string | null): string | null {
@@ -35,7 +33,6 @@ export default function NationalAssociationHeader({
   isCoach = false,
   loading = false,
   onRefresh,
-  showReferenceLinks = true,
 }: Props): JSX.Element {
   const { t } = useTranslation('nations')
   const countryFlag = flagUrl(association?.country_code)
@@ -95,38 +92,23 @@ export default function NationalAssociationHeader({
             ) : null}
           </div>
 
-          {showReferenceLinks ? (
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Link
-                to="/dashboard/national-ranking"
-                className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
-              >
-                {t('association.navRanking')}
-              </Link>
-              <span className="text-xs text-slate-300">•</span>
-              <Link
-                to="/dashboard/national-ranking?tab=history"
-                className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
-              >
-                {t('association.navChampionshipHistory')}
-              </Link>
-            </div>
-          ) : null}
         </div>
       </div>
 
-        <div className="flex max-w-full flex-wrap items-center justify-end gap-2 self-start">
+        <div className="flex max-w-full flex-col items-start gap-2 self-start">
           <NationalAssociationTabs isCoach={isCoach} />
           {onRefresh ? (
-            <button
-              type="button"
-              onClick={onRefresh}
-              disabled={loading}
-              className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
-              {t('common.refresh')}
-            </button>
+            <div className="flex w-full justify-start">
+              <button
+                type="button"
+                onClick={onRefresh}
+                disabled={loading}
+                className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
+                {t('common.refresh')}
+              </button>
+            </div>
           ) : null}
         </div>
       </div>

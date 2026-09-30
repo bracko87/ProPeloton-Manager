@@ -167,6 +167,48 @@ type Overview = {
   history: HistoryRow[]
 }
 
+type HostStageOption = {
+  stage_id: string
+  stage_name?: string | null
+  race_name?: string | null
+  route_label?: string | null
+  distance_km?: number | null
+  terrain_type?: string | null
+  stage_format?: string | null
+}
+
+type HostApplicationSummary = {
+  application_id: string
+  association_id?: string | null
+  association_name?: string | null
+  country_code?: string | null
+  host_scope: 'qualification' | 'final'
+  status: string
+  submitted_on?: string | null
+  ttt_stage_id?: string | null
+  flat_stage_id?: string | null
+  mountain_stage_id?: string | null
+  statement?: string | null
+}
+
+type HostWorkspace = {
+  edition_id: string
+  season_number: number
+  viewer_can_apply: boolean
+  viewer_association_id?: string | null
+  viewer_country_code?: string | null
+  country_has_complete_bundle: boolean
+  missing_types?: string[]
+  stage_options?: {
+    team_time_trial?: HostStageOption[]
+    flat?: HostStageOption[]
+    hilly_mountain?: HostStageOption[]
+  }
+  applications?: HostApplicationSummary[]
+  my_applications?: HostApplicationSummary[]
+  world_final_host_country_code?: string | null
+}
+
 function flagUrl(code?: string | null): string | null {
   const normalized = code?.trim().toLowerCase()
   return normalized && /^[a-z]{2}$/.test(normalized)
@@ -268,6 +310,7 @@ function RoundCard({
           )
 
           const groupEvents = scheduleRows.filter(event => event.group_id === group.id)
+          const groupHost = groupEvents.find(event => event.host_country_code)?.host_country_code ?? null
 
           return (
           <div key={group.id} className="overflow-hidden rounded border border-slate-200">
@@ -277,6 +320,11 @@ function RoundCard({
                 <div className="mt-0.5 text-xs text-slate-500">
                   {t('world.groupSummary', { entrants: group.planned_entrant_count, advance: group.planned_advance_count })}
                 </div>
+                {groupHost ? (
+                  <div className="mt-1 text-xs font-medium text-slate-700">
+                    {t('world.groupHost', { country: groupHost })}
+                  </div>
+                ) : null}
               </div>
               <div className="flex items-center gap-2">
                 {viewerInGroup ? (
@@ -303,14 +351,6 @@ function RoundCard({
                     <div className="mt-1 text-sm font-semibold text-slate-900">
                       {formatGameDate(event.event_date)}
                     </div>
-                    {event.host_country_code ? (
-                      <div className="mt-1">
-                        <CountryLabel
-                          code={event.host_country_code}
-                          name={t('world.raceHostShort', { country: event.host_country_code })}
-                        />
-                      </div>
-                    ) : null}
                     <div className="mt-1 flex items-center justify-between gap-2">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses(event.status)}`}>
                         {t(`status.${event.status}`, { defaultValue: humanize(event.status) })}
@@ -383,7 +423,16 @@ export default function WorldNationsPage(): JSX.Element {
   const [association, setAssociation] = useState<AssociationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const [scheduleRows, setScheduleRows] = useState<EventScheduleRow[]>([])
+  const [hostWorkspace, setHostWorkspace] = useState<HostWorkspace | null>(null)
+  const [hostModalOpen, setHostModalOpen] = useState(false)
+  const [hostScope, setHostScope] = useState<'qualification' | 'final'>('qualification')
+  const [hostTttStageId, setHostTttStageId] = useState('')
+  const [hostFlatStageId, setHostFlatStageId] = useState('')
+  const [hostMountainStageId, setHostMountainStageId] = useState('')
+  const [hostStatement, setHostStatement] = useState('')
+  const [hostSaving, setHostSaving] = useState(false)
 
   const load = async (): Promise<void> => {
     try {
@@ -401,14 +450,23 @@ export default function WorldNationsPage(): JSX.Element {
       setAssociation((associationResponse.data ?? null) as AssociationData | null)
 
       if (next?.edition?.id) {
-        const { data: eventSchedule, error: eventScheduleError } = await supabase.rpc(
-          'get_nations_competition_event_schedule_v1',
-          { p_edition_id: next.edition.id },
-        )
-        if (eventScheduleError) throw eventScheduleError
-        setScheduleRows((eventSchedule ?? []) as EventScheduleRow[])
+        const [eventScheduleResponse, hostWorkspaceResponse] = await Promise.all([
+          supabase.rpc('get_nations_competition_event_schedule_v1', {
+            p_edition_id: next.edition.id,
+          }),
+          supabase.rpc('get_nations_host_application_workspace_v1', {
+            p_edition_id: next.edition.id,
+          }),
+        ])
+
+        if (eventScheduleResponse.error) throw eventScheduleResponse.error
+        if (hostWorkspaceResponse.error) throw hostWorkspaceResponse.error
+
+        setScheduleRows((eventScheduleResponse.data ?? []) as EventScheduleRow[])
+        setHostWorkspace((hostWorkspaceResponse.data ?? null) as HostWorkspace | null)
       } else {
         setScheduleRows([])
+        setHostWorkspace(null)
       }
     } catch (caught: any) {
       setError(caught?.message ?? t('world.errors.load'))
@@ -434,6 +492,90 @@ export default function WorldNationsPage(): JSX.Element {
     () => (data?.history ?? []).filter(row => row.final_rank === 1),
     [data?.history],
   )
+
+  const finalHostCountry =
+    hostWorkspace?.world_final_host_country_code ??
+    scheduleRows.find(row => row.round_type === 'world_final' && row.host_country_code)
+      ?.host_country_code ??
+    null
+
+  const applicationsForScope = useMemo(
+    () =>
+      (hostWorkspace?.applications ?? []).filter(
+        application => application.host_scope === hostScope,
+      ),
+    [hostScope, hostWorkspace?.applications],
+  )
+
+  const openHostModal = (scope: 'qualification' | 'final' = 'qualification'): void => {
+    setHostScope(scope)
+    setMessage(null)
+    const own = (hostWorkspace?.my_applications ?? []).find(
+      application => application.host_scope === scope,
+    )
+    const tttOptions = hostWorkspace?.stage_options?.team_time_trial ?? []
+    const flatOptions = hostWorkspace?.stage_options?.flat ?? []
+    const mountainOptions = hostWorkspace?.stage_options?.hilly_mountain ?? []
+
+    setHostTttStageId(own?.ttt_stage_id ?? tttOptions[0]?.stage_id ?? '')
+    setHostFlatStageId(own?.flat_stage_id ?? flatOptions[0]?.stage_id ?? '')
+    setHostMountainStageId(own?.mountain_stage_id ?? mountainOptions[0]?.stage_id ?? '')
+    setHostStatement(own?.statement ?? '')
+    setHostModalOpen(true)
+  }
+
+  const changeHostScope = (scope: 'qualification' | 'final'): void => {
+    setHostScope(scope)
+    const own = (hostWorkspace?.my_applications ?? []).find(
+      application => application.host_scope === scope,
+    )
+    const tttOptions = hostWorkspace?.stage_options?.team_time_trial ?? []
+    const flatOptions = hostWorkspace?.stage_options?.flat ?? []
+    const mountainOptions = hostWorkspace?.stage_options?.hilly_mountain ?? []
+    setHostTttStageId(own?.ttt_stage_id ?? tttOptions[0]?.stage_id ?? '')
+    setHostFlatStageId(own?.flat_stage_id ?? flatOptions[0]?.stage_id ?? '')
+    setHostMountainStageId(own?.mountain_stage_id ?? mountainOptions[0]?.stage_id ?? '')
+    setHostStatement(own?.statement ?? '')
+  }
+
+  const submitHostApplication = async (): Promise<void> => {
+    const editionId = data?.edition?.id
+    if (
+      !editionId ||
+      !hostWorkspace?.viewer_can_apply ||
+      !hostWorkspace.country_has_complete_bundle ||
+      !hostTttStageId ||
+      !hostFlatStageId ||
+      !hostMountainStageId
+    ) {
+      return
+    }
+
+    try {
+      setHostSaving(true)
+      setError(null)
+      setMessage(null)
+      const { error: submitError } = await supabase.rpc(
+        'submit_nations_host_application_v2',
+        {
+          p_edition_id: editionId,
+          p_host_scope: hostScope,
+          p_ttt_stage_id: hostTttStageId,
+          p_flat_stage_id: hostFlatStageId,
+          p_mountain_stage_id: hostMountainStageId,
+          p_statement: hostStatement.trim() || null,
+        },
+      )
+      if (submitError) throw submitError
+      setMessage(t('world.hostApplication.saved'))
+      setHostModalOpen(false)
+      await load()
+    } catch (caught: any) {
+      setError(caught?.message ?? t('world.hostApplication.error'))
+    } finally {
+      setHostSaving(false)
+    }
+  }
 
   if (loading && !data) {
     return (
@@ -461,19 +603,17 @@ export default function WorldNationsPage(): JSX.Element {
         <p className="mt-2 text-xs font-medium text-emerald-700">
           {t('world.autoEntry')}
         </p>
-        <div className="mt-2">
-          <Link
-            to="/dashboard/national-ranking"
-            className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
-          >
-            {t('world.navRankingChampionship')}
-          </Link>
-        </div>
       </section>
 
       {error ? (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      ) : null}
+
+      {message ? (
+        <div className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          {message}
         </div>
       ) : null}
 
@@ -500,64 +640,39 @@ export default function WorldNationsPage(): JSX.Element {
           </div>
 
           <div className="bg-white p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-
-              {t('world.worldFinal')}
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {t('world.finalHost')}
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">
-              {data?.edition?.finalist_target ?? data?.qualification_plan?.finalist_target ?? 16} {t('world.nationsLabel')}
+              {finalHostCountry ? (
+                <CountryLabel code={finalHostCountry} name={finalHostCountry} />
+              ) : (
+                t('common.pending')
+              )}
             </div>
-            <p className="mt-1 text-xs text-slate-500">{t('world.worldFinalHelp')}</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('world.finalHostHelp')}
+            </p>
           </div>
 
           <div className="bg-white p-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-
-              {t('world.raceHosts')}
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {t('world.applyHost')}
             </div>
-            <div className="mt-2 text-xl font-semibold text-slate-900">
-              {t('world.raceHostsRotating')}
-            </div>
-            <p className="mt-1 text-xs text-slate-500">{t('world.raceHostsHelp')}</p>
+            <button
+              type="button"
+              disabled={!data?.edition}
+              onClick={() => openHostModal('qualification')}
+              className="mt-2 rounded bg-yellow-400 px-3 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              {t('world.applyHostButton')}
+            </button>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('world.applyHostHelp')}
+            </p>
           </div>
         </div>
       </section>
-
-      {!data?.edition ? (
-        <section className="rounded border border-amber-200 bg-amber-50 p-5">
-          <div className="flex items-start gap-3">
-
-            <div>
-              <h3 className="font-semibold text-amber-950">{t('world.noEditionTitle')}</h3>
-              <p className="mt-1 text-sm leading-6 text-amber-900">
-                {t('world.noEditionHelp')}
-              </p>
-              {data?.season_number === 1 ? (
-                <p className="mt-2 text-sm font-medium leading-6 text-amber-950">
-                  {t('world.season1LaunchNote')}
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {(data?.qualification_plan?.rounds ?? []).map(round => (
-              <div key={round.round_index} className="rounded bg-white p-4">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {t('common.roundNumber', { round: round.round_index })}
-                </div>
-                <div className="mt-1 font-semibold text-slate-900">{round.round_label}</div>
-                <div className="mt-2 text-sm text-slate-600">
-                  {t('world.projectionAdvance', { entrants: round.entrants_target, advance: round.advance_target })}
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {t('world.groupCount', { count: round.group_count })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       {(data?.rounds ?? []).map(round => (
         <RoundCard
@@ -646,6 +761,198 @@ export default function WorldNationsPage(): JSX.Element {
           </div>
         )}
       </section>
+
+      {hostModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-950">
+                  {t('world.hostApplication.title')}
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  {t('world.hostApplication.description')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHostModalOpen(false)}
+                className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {t('world.hostApplication.close')}
+              </button>
+            </div>
+
+            <div className="space-y-5 p-5">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('world.hostApplication.applyFor')}
+                </div>
+                <div className="mt-2 inline-flex rounded-lg bg-slate-100 p-1">
+                  {(['qualification', 'final'] as const).map(scope => (
+                    <button
+                      key={scope}
+                      type="button"
+                      onClick={() => changeHostScope(scope)}
+                      className={[
+                        'rounded-md px-4 py-2 text-sm font-semibold',
+                        hostScope === scope
+                          ? 'bg-yellow-400 text-black shadow-sm'
+                          : 'text-slate-600 hover:bg-white',
+                      ].join(' ')}
+                    >
+                      {scope === 'qualification'
+                        ? t('world.hostApplication.qualification')
+                        : t('world.hostApplication.final')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded border border-slate-200 bg-slate-50 p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('world.hostApplication.alreadyApplied')}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {applicationsForScope.length ? (
+                    applicationsForScope.map(application => (
+                      <span
+                        key={application.application_id}
+                        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700"
+                      >
+                        {application.country_code ?? application.association_name ?? '—'}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm text-slate-500">
+                      {t('world.hostApplication.noApplications')}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {!hostWorkspace?.viewer_can_apply ? (
+                <div className="rounded border border-slate-200 bg-slate-50 p-4">
+                  <div className="font-semibold text-slate-900">
+                    {t('world.hostApplication.coachOnly')}
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    {t('world.hostApplication.coachOnlyHelp')}
+                  </p>
+                </div>
+              ) : !hostWorkspace?.country_has_complete_bundle ? (
+                <div className="rounded border border-amber-200 bg-amber-50 p-4">
+                  <div className="font-semibold text-amber-950">
+                    {t('world.hostApplication.notEligibleTitle')}
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-amber-900">
+                    {t('world.hostApplication.notEligibleText', {
+                      country: hostWorkspace?.viewer_country_code ?? association?.country_code ?? '—',
+                    })}
+                  </p>
+                  <div className="mt-2 text-xs font-medium text-amber-800">
+                    {t('world.hostApplication.missing', {
+                      types: (hostWorkspace?.missing_types ?? [])
+                        .map(type => t(`world.hostApplication.type.${type}`, { defaultValue: humanize(type) }))
+                        .join(', '),
+                    })}
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-amber-800">
+                    {t('world.hostApplication.askAdmin')}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm leading-6 text-slate-600">
+                    {t('world.hostApplication.sameCountryRule', {
+                      country: hostWorkspace?.viewer_country_code ?? association?.country_code ?? '—',
+                    })}
+                  </p>
+
+                  {[
+                    {
+                      key: 'ttt',
+                      label: t('world.hostApplication.ttt'),
+                      value: hostTttStageId,
+                      onChange: setHostTttStageId,
+                      options: hostWorkspace?.stage_options?.team_time_trial ?? [],
+                    },
+                    {
+                      key: 'flat',
+                      label: t('world.hostApplication.flat'),
+                      value: hostFlatStageId,
+                      onChange: setHostFlatStageId,
+                      options: hostWorkspace?.stage_options?.flat ?? [],
+                    },
+                    {
+                      key: 'mountain',
+                      label: t('world.hostApplication.mountain'),
+                      value: hostMountainStageId,
+                      onChange: setHostMountainStageId,
+                      options: hostWorkspace?.stage_options?.hilly_mountain ?? [],
+                    },
+                  ].map(field => (
+                    <label key={field.key} className="block">
+                      <span className="text-sm font-semibold text-slate-900">{field.label}</span>
+                      <select
+                        value={field.value}
+                        onChange={event => field.onChange(event.target.value)}
+                        className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
+                      >
+                        {field.options.map(option => (
+                          <option key={option.stage_id} value={option.stage_id}>
+                            {option.race_name ?? option.stage_name ?? 'Race'} · {option.route_label ?? option.stage_name ?? 'Stage'} · {Number(option.distance_km ?? 0).toFixed(1).replace(/\.0$/, '')} km
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ))}
+
+                  <label className="block">
+                    <span className="text-sm font-semibold text-slate-900">
+                      {t('world.hostApplication.note')}
+                    </span>
+                    <textarea
+                      rows={3}
+                      value={hostStatement}
+                      onChange={event => setHostStatement(event.target.value)}
+                      placeholder={t('world.hostApplication.notePlaceholder')}
+                      className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-slate-200 p-5">
+              <button
+                type="button"
+                onClick={() => setHostModalOpen(false)}
+                className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                {t('world.hostApplication.cancel')}
+              </button>
+              <button
+                type="button"
+                disabled={
+                  hostSaving ||
+                  !hostWorkspace?.viewer_can_apply ||
+                  !hostWorkspace?.country_has_complete_bundle ||
+                  !hostTttStageId ||
+                  !hostFlatStageId ||
+                  !hostMountainStageId
+                }
+                onClick={() => void submitHostApplication()}
+                className="rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {hostSaving
+                  ? t('world.hostApplication.saving')
+                  : t('world.hostApplication.submit')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

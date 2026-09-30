@@ -209,7 +209,8 @@
       "teamChat": "Timski čet",
       "history": "Istorija",
       "competition": "Takmičenje",
-      "squad": "Sastav"
+      "squad": "Sastav",
+      "coachLocked": "Otključava se izabranom selektoru reprezentacije"
     },
     "userStatus": {
       "member": "Član saveza",
@@ -253,7 +254,7 @@
       "title": "Vodič Nacionalnog saveza",
       "expand": "Otvori vodič",
       "activationTitle": "How activation works",
-      "activationText": "A new Association starts in Forming status. It becomes active only after two founding requirements are completed: at least five eligible managers must be active members and the shared one-time 50-Coin activation requirement must be fully funded. Members may contribute any amount up to the remaining target. The 50 Coins are only an activation requirement; they do not create a treasury, ownership share, extra vote, special privilege or future spending budget.",
+      "activationText": "Novi nacionalni savez počinje sa statusom Formiranje. Postaje aktivan kada se učlani najmanje pet kvalifikovanih menadžera i kada se u potpunosti prikupi jednokratnih 50 Coins za osnivanje. Ta uplata je trajna i ne pravi budžet saveza. Posle aktivacije savez važi do 1. februara sledeće sezone. Od 1. januara članovi mogu zajedno da finansiraju obnovu od 30 Coins; do 1. februara moraju biti ispunjeni i obnova i uslov od pet članova, inače savez postaje neaktivan.",
       "electionsTitle": "National Coach elections",
       "electionsText": "Once the Association is active, its members elect the National Coach. Candidate registration opens first, then members vote, and tied leaders can continue into runoff rounds until there is a unique winner. Every active member has exactly one vote in each election round, including candidates. Coin contributions never affect voting power. The Elections tab shows the current coach, election phase, dates within the current Season, candidates, manifestos and voting actions.",
       "selectionTitle": "Call-ups, squad and race-day selection",
@@ -261,7 +262,7 @@
       "packageTitle": "Oprema",
       "packageText": "Svaki Nacionalni savez dobija isti sistemski pokriven paket opreme, vozila i zaliha. Selektor može da sačuva tri kompleta opreme, a resursi se ne troše.",
       "worldNationsTitle": "Takmičenje",
-      "worldNationsText": "Aktivni savezi učestvuju u World Nations takmičenju prema sezonskom rasporedu. Grupe, dani trke, rezultati i prolazak prikazani su u World Nations Championship tabu.",
+      "worldNationsText": "Tab Competition sadrži World Nations. Planiranje, datumi grupa, države domaćini i paketi ruta pripremaju se već u januaru. Svaki aktivni savez automatski učestvuje. U Sezoni 1 spisak učesnika ostaje otvoren do 1. juna kako bi novi savezi imali vremena da se formiraju, dok su struktura i rute domaćina već ranije vidljive.",
       "chatHistoryTitle": "Timski čet i istorija",
       "chatHistoryText": "Članovi saveza dele privatni Timski čet. Istorija trajno čuva aktivaciju, članstva, izbore, selektore, sastave, šampione i World Nations rezultate.",
       "membershipTitle": "Membership and Association status",
@@ -269,7 +270,7 @@
       "equipmentTitle": "National Team Equipment",
       "equipmentText": "The Association does not buy equipment and does not maintain a treasury for equipment costs. The game provides the same National Team equipment pool, race-support assets and race supplies to every Association. The active National Coach can save three named race setup configurations. Setup 1 begins with a complete Flat setup, while setups 2 and 3 are available for custom configurations. Equipment stays at 100% condition, National Team resources are system-covered, and the Equipment page shows the same weighted setup bonus logic used by club Equipment.",
       "competitionTitle": "Competition and World Nations",
-      "competitionText": "The Competition tab contains the World Nations structure for National Associations. Active Associations enter according to the Season schedule and the current competition stage. The page shows qualification rounds, groups, race dates, standings, advancement and the World Nations Final. Season 1 follows its special delayed launch rule so Associations have time to form; later Seasons follow the normal competition schedule.",
+      "competitionText": "World Nations planiranje generiše se u januaru kako bi kvalifikacione grupe, datumi, domaćini i stranice trka bili spremni ranije. Svaka grupa ima jednu državu domaćina za sva tri dana: ekipni hronometar, ravničarsku drumsku trku i brdsku/planinsku trku. Zato prijava domaćina zahteva sva tri tipa etapa iz iste države. U Sezoni 1 spisak učesnika ostaje otvoren do 1. juna; kasnije sezone koriste normalno rano zaključavanje.",
       "chatTitle": "Private Team Chat",
       "chatText": "Team Chat is a private Association room for active members. Members can read the conversation at any time and can join the live room when they want to post. Joining the live room also shows the member in the active-participant list. Live presence expires after inactivity, but the message history remains available to Association members.",
       "historyTitle": "Permanent Association History",
@@ -440,6 +441,17 @@
         "ready_to_confirm": "Ready to confirm",
         "confirmed": "Final squad confirmed"
       }
+    },
+    "renewal": {
+      "validityTitle": "Važenje saveza",
+      "validUntil": "Aktivan do {{date}} · obnova za sezonu {{season}}",
+      "cost": "Obnova: {{coins}} Coins do 1. februara",
+      "title": "Obnova za sezonu {{season}}",
+      "deadline": "Obnoviti najkasnije do {{date}}.",
+      "renew": "Obnovi savez",
+      "opens": "Obnova se otvara {{date}} za sezonu {{season}}.",
+      "message": "{{amount}} Coins dodato je za obnovu saveza.",
+      "alreadyFunded": "Obnova saveza je već u potpunosti finansirana."
     }
   },
   "world": {
@@ -502,9 +514,9 @@
     },
     "drawPending": "Žreb još nije završen.",
     "season1LaunchNote": "Sezona 1 namerno počinje kasnije: World Nations polje će biti zaključano 1. juna samo sa Nacionalnim savezima koji su tada aktivni.",
-    "raceHosts": "Domaćini trka",
-    "raceHostsRotating": "Menja se za svaku trku",
-    "raceHostsHelp": "Svaka World Nations trka dobija posebnog domaćina i lokaciju trase.",
+    "raceHosts": "Domaćini grupa",
+    "raceHostsRotating": "Menja se po grupi",
+    "raceHostsHelp": "Svaka kvalifikaciona grupa ili finale ima jednu državu domaćina za sva tri dana.",
     "raceHostShort": "Domaćin · {{country}}",
     "eventPage": {
       "loading": "Loading World Nations race…",
@@ -533,7 +545,7 @@
       "hilly": "Hilly",
       "mountain": "Mountain",
       "cobbled": "Cobbled",
-      "hostRotates": "A different host is assigned for each World Nations race.",
+      "hostRotates": "Ista država domaćin organizuje sva tri trkačka dana ove grupe.",
       "openLiveRace": "Open live race / replay",
       "raceGeneratedLater": "Live race opens after race generation",
       "weather": "Weather",
@@ -553,7 +565,45 @@
       "gap": "Gap",
       "bestRider": "Best rider"
     },
-    "autoEntry": "Svaki aktivni nacionalni savez automatski ulazi u takmičenje. Nema posebne prijave."
+    "autoEntry": "Svaki aktivni nacionalni savez automatski ulazi u takmičenje. Nema posebne prijave.",
+    "groupHost": "Domaćin · {{country}} · sva tri trkačka dana",
+    "finalHost": "Domaćin svetskog finala",
+    "finalHostHelp": "Jedna država je domaćin sva tri dana svetskog finala.",
+    "applyHost": "Domaćinstvo trke",
+    "applyHostButton": "Prijavi domaćinstvo",
+    "applyHostHelp": "Prijavi kvalifikacionu grupu ili svetsko finale sa tri rute iz svoje države.",
+    "hostApplication": {
+      "title": "Prijava za domaćina World Nations",
+      "description": "Država domaćin mora imati ekipni hronometar, ravničarsku drumsku trku i brdsku/planinsku trku. Sva tri dana iste grupe voze se u istoj državi.",
+      "close": "Zatvori",
+      "applyFor": "Prijava za",
+      "qualification": "Kvalifikaciona runda",
+      "final": "Svetsko finale",
+      "alreadyApplied": "Države koje su se već prijavile",
+      "noApplications": "Još nema prijava za ovu vrstu domaćinstva.",
+      "notEligibleTitle": "Vaša država još nema kompletan paket za domaćinstvo",
+      "notEligibleText": "{{country}} može da se prijavi tek kada baza ima sva tri potrebna tipa trke.",
+      "missing": "Nedostaje: {{types}}",
+      "askAdmin": "Zatražite od administratora da napravi nedostajuću etapu. Čim postoje sva tri tipa, prijava će biti omogućena.",
+      "sameCountryRule": "Sve tri izabrane trke moraju biti u {{country}}. Rute se povlače direktno iz baze etapa.",
+      "ttt": "Ekipni hronometar",
+      "flat": "Ravničarska drumska trka",
+      "mountain": "Brdska / planinska trka",
+      "note": "Napomena uz prijavu",
+      "notePlaceholder": "Opciona napomena...",
+      "cancel": "Otkaži",
+      "saving": "Čuvanje…",
+      "submit": "Pošalji prijavu",
+      "saved": "Prijava domaćinstva je sačuvana.",
+      "error": "Prijava domaćinstva nije mogla da se sačuva.",
+      "coachOnly": "Samo nacionalni selektor",
+      "coachOnlyHelp": "Članovi mogu da vide prijave, ali samo izabrani nacionalni selektor može da ih pošalje ili izmeni.",
+      "type": {
+        "team_time_trial": "Ekipni hronometar",
+        "flat": "Ravničarska drumska trka",
+        "hilly_mountain": "Brdska / planinska trka"
+      }
+    }
   },
   "admin": {
     "loading": "Učitavanje World Nations operacija...",

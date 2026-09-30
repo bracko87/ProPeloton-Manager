@@ -209,7 +209,8 @@
       "teamChat": "Chat del equipo",
       "history": "Historial",
       "competition": "Competición",
-      "squad": "Selección"
+      "squad": "Selección",
+      "coachLocked": "Se desbloquea para el seleccionador nacional elegido"
     },
     "userStatus": {
       "member": "Miembro de la asociación",
@@ -253,7 +254,7 @@
       "title": "Guía de la Asociación Nacional",
       "expand": "Abrir guía",
       "activationTitle": "How activation works",
-      "activationText": "A new Association starts in Forming status. It becomes active only after two founding requirements are completed: at least five eligible managers must be active members and the shared one-time 50-Coin activation requirement must be fully funded. Members may contribute any amount up to the remaining target. The 50 Coins are only an activation requirement; they do not create a treasury, ownership share, extra vote, special privilege or future spending budget.",
+      "activationText": "Una Asociación nueva comienza en estado En formación. Se activa cuando se unen al menos cinco managers elegibles y se completa el requisito fundador compartido de 50 Coins. Ese pago fundador es permanente y no crea una tesorería. Tras activarse, la Asociación es válida hasta el 1 de febrero de la siguiente Temporada. Desde el 1 de enero los miembros pueden financiar conjuntamente la renovación de 30 Coins; debe completarse antes del 1 de febrero junto con el requisito de cinco miembros o la Asociación quedará inactiva.",
       "electionsTitle": "National Coach elections",
       "electionsText": "Once the Association is active, its members elect the National Coach. Candidate registration opens first, then members vote, and tied leaders can continue into runoff rounds until there is a unique winner. Every active member has exactly one vote in each election round, including candidates. Coin contributions never affect voting power. The Elections tab shows the current coach, election phase, dates within the current Season, candidates, manifestos and voting actions.",
       "selectionTitle": "Call-ups, squad and race-day selection",
@@ -261,7 +262,7 @@
       "packageTitle": "Equipamiento",
       "packageText": "Cada Asociación Nacional recibe el mismo equipamiento, activos y suministros cubiertos por el sistema. El seleccionador puede guardar tres configuraciones y los recursos de la selección no se consumen.",
       "worldNationsTitle": "Competición",
-      "worldNationsText": "Las asociaciones activas participan en World Nations según el calendario de la temporada. Los grupos, días de carrera, resultados y clasificaciones aparecen en la pestaña World Nations Championship.",
+      "worldNationsText": "La pestaña Competición contiene World Nations. La planificación, las fechas de grupos, los países anfitriones y los paquetes de recorridos se preparan en enero. Cada Asociación activa entra automáticamente. En la Temporada 1 el campo de participantes queda abierto hasta el 1 de junio para permitir la creación de nuevas Asociaciones, aunque la estructura y los recorridos ya son visibles antes.",
       "chatHistoryTitle": "Chat e historial",
       "chatHistoryText": "Los miembros comparten un chat privado. La pestaña Historial conserva de forma permanente la activación, membresías, elecciones, seleccionadores, plantillas, campeones y resultados de World Nations.",
       "membershipTitle": "Membership and Association status",
@@ -269,7 +270,7 @@
       "equipmentTitle": "National Team Equipment",
       "equipmentText": "The Association does not buy equipment and does not maintain a treasury for equipment costs. The game provides the same National Team equipment pool, race-support assets and race supplies to every Association. The active National Coach can save three named race setup configurations. Setup 1 begins with a complete Flat setup, while setups 2 and 3 are available for custom configurations. Equipment stays at 100% condition, National Team resources are system-covered, and the Equipment page shows the same weighted setup bonus logic used by club Equipment.",
       "competitionTitle": "Competition and World Nations",
-      "competitionText": "The Competition tab contains the World Nations structure for National Associations. Active Associations enter according to the Season schedule and the current competition stage. The page shows qualification rounds, groups, race dates, standings, advancement and the World Nations Final. Season 1 follows its special delayed launch rule so Associations have time to form; later Seasons follow the normal competition schedule.",
+      "competitionText": "La planificación de World Nations se genera en enero para preparar con antelación grupos de clasificación, fechas, países anfitriones y páginas de carrera. Cada grupo usa un único país anfitrión para sus tres días: contrarreloj por equipos, carrera llana y carrera de colinas/montaña. Por eso una solicitud de sede necesita los tres tipos de etapa del mismo país. En la Temporada 1 el campo queda abierto hasta el 1 de junio; las siguientes usan el cierre temprano normal.",
       "chatTitle": "Private Team Chat",
       "chatText": "Team Chat is a private Association room for active members. Members can read the conversation at any time and can join the live room when they want to post. Joining the live room also shows the member in the active-participant list. Live presence expires after inactivity, but the message history remains available to Association members.",
       "historyTitle": "Permanent Association History",
@@ -440,6 +441,17 @@
         "ready_to_confirm": "Ready to confirm",
         "confirmed": "Final squad confirmed"
       }
+    },
+    "renewal": {
+      "validityTitle": "Validez de la Asociación",
+      "validUntil": "Activa hasta {{date}} · renovación para la Temporada {{season}}",
+      "cost": "Renovación: {{coins}} Coins antes del 1 de febrero",
+      "title": "Renovación de la Temporada {{season}}",
+      "deadline": "Renovar como máximo el {{date}}.",
+      "renew": "Renovar Asociación",
+      "opens": "La renovación abre el {{date}} para la Temporada {{season}}.",
+      "message": "Se añadieron {{amount}} Coins al fondo de renovación.",
+      "alreadyFunded": "La renovación de la Asociación ya está financiada por completo."
     }
   },
   "world": {
@@ -502,9 +514,9 @@
     },
     "drawPending": "El sorteo aún no se ha completado.",
     "season1LaunchNote": "La temporada 1 se retrasa intencionadamente: el cuadro de World Nations se cerrará el 1 de junio usando solo las Asociaciones Nacionales activas en ese momento.",
-    "raceHosts": "Sedes de carrera",
-    "raceHostsRotating": "Cambia en cada carrera",
-    "raceHostsHelp": "Cada carrera de World Nations recibe su propia sede y ubicación.",
+    "raceHosts": "Sedes por grupo",
+    "raceHostsRotating": "Cambia por grupo",
+    "raceHostsHelp": "Cada grupo de clasificación o final tiene un único país anfitrión para los tres días.",
     "raceHostShort": "Sede · {{country}}",
     "eventPage": {
       "loading": "Loading World Nations race…",
@@ -533,7 +545,7 @@
       "hilly": "Hilly",
       "mountain": "Mountain",
       "cobbled": "Cobbled",
-      "hostRotates": "A different host is assigned for each World Nations race.",
+      "hostRotates": "El mismo país anfitrión acoge los tres días de carrera de este grupo.",
       "openLiveRace": "Open live race / replay",
       "raceGeneratedLater": "Live race opens after race generation",
       "weather": "Weather",
@@ -553,7 +565,45 @@
       "gap": "Gap",
       "bestRider": "Best rider"
     },
-    "autoEntry": "Cada Asociación Nacional activa entra automáticamente. No existe una inscripción separada para la competición."
+    "autoEntry": "Cada Asociación Nacional activa entra automáticamente. No existe una inscripción separada para la competición.",
+    "groupHost": "Sede · {{country}} · los tres días de carrera",
+    "finalHost": "Sede de la Final Mundial",
+    "finalHostHelp": "Un país acoge los tres días de carrera de la Final Mundial.",
+    "applyHost": "Sede de carrera",
+    "applyHostButton": "Solicitar ser sede",
+    "applyHostHelp": "Solicita una ronda de clasificación o la Final Mundial con tres recorridos de tu país.",
+    "hostApplication": {
+      "title": "Solicitar ser sede de World Nations",
+      "description": "El país anfitrión debe aportar una contrarreloj por equipos, una carrera llana y una carrera de colinas/montaña. Los tres días del grupo se disputan en el mismo país.",
+      "close": "Cerrar",
+      "applyFor": "Solicitar para",
+      "qualification": "Ronda de clasificación",
+      "final": "Final Mundial",
+      "alreadyApplied": "Países que ya solicitaron",
+      "noApplications": "Todavía no hay solicitudes para este tipo de sede.",
+      "notEligibleTitle": "Tu país aún no tiene un paquete completo de sede",
+      "notEligibleText": "{{country}} solo puede solicitarlo cuando la base de datos contenga los tres tipos de carrera.",
+      "missing": "Falta: {{types}}",
+      "askAdmin": "Pide a un administrador que cree la etapa que falta. Cuando existan los tres tipos, se habilitará la solicitud.",
+      "sameCountryRule": "Las tres carreras seleccionadas deben estar en {{country}}. Los recorridos se cargan directamente desde la base de datos.",
+      "ttt": "Contrarreloj por equipos",
+      "flat": "Carrera llana",
+      "mountain": "Carrera de colinas / montaña",
+      "note": "Nota de solicitud",
+      "notePlaceholder": "Nota opcional...",
+      "cancel": "Cancelar",
+      "saving": "Guardando…",
+      "submit": "Enviar solicitud",
+      "saved": "Solicitud de sede guardada.",
+      "error": "No se pudo guardar la solicitud.",
+      "coachOnly": "Solo seleccionador nacional",
+      "coachOnlyHelp": "Los miembros pueden ver las solicitudes, pero solo el seleccionador elegido puede enviarlas o modificarlas.",
+      "type": {
+        "team_time_trial": "Contrarreloj por equipos",
+        "flat": "Carrera llana",
+        "hilly_mountain": "Carrera de colinas / montaña"
+      }
+    }
   },
   "admin": {
     "loading": "Cargando operaciones de World Nations...",

@@ -209,7 +209,8 @@
       "teamChat": "Chat d’équipe",
       "history": "Historique",
       "competition": "Compétition",
-      "squad": "Sélection"
+      "squad": "Sélection",
+      "coachLocked": "Débloqué pour le sélectionneur national élu"
     },
     "userStatus": {
       "member": "Membre de l’association",
@@ -253,7 +254,7 @@
       "title": "Guide de l’Association Nationale",
       "expand": "Ouvrir le guide",
       "activationTitle": "How activation works",
-      "activationText": "A new Association starts in Forming status. It becomes active only after two founding requirements are completed: at least five eligible managers must be active members and the shared one-time 50-Coin activation requirement must be fully funded. Members may contribute any amount up to the remaining target. The 50 Coins are only an activation requirement; they do not create a treasury, ownership share, extra vote, special privilege or future spending budget.",
+      "activationText": "Une nouvelle Association commence avec le statut En formation. Elle devient active après l’adhésion d’au moins cinq managers éligibles et le financement complet des 50 Coins fondateurs partagés. Ce paiement fondateur est permanent et ne constitue pas une trésorerie. Après activation, l’Association reste valable jusqu’au 1er février de la Saison suivante. Dès le 1er janvier, les membres peuvent financer ensemble le renouvellement de 30 Coins ; il doit être complet au 1er février avec cinq membres éligibles, sinon l’Association devient inactive.",
       "electionsTitle": "National Coach elections",
       "electionsText": "Once the Association is active, its members elect the National Coach. Candidate registration opens first, then members vote, and tied leaders can continue into runoff rounds until there is a unique winner. Every active member has exactly one vote in each election round, including candidates. Coin contributions never affect voting power. The Elections tab shows the current coach, election phase, dates within the current Season, candidates, manifestos and voting actions.",
       "selectionTitle": "Call-ups, squad and race-day selection",
@@ -261,7 +262,7 @@
       "packageTitle": "Équipement",
       "packageText": "Chaque Association Nationale reçoit le même équipement, les mêmes véhicules et fournitures pris en charge par le système. Le sélectionneur peut enregistrer trois configurations et les ressources de l’équipe nationale ne s’épuisent pas.",
       "worldNationsTitle": "Compétition",
-      "worldNationsText": "Les associations actives participent aux World Nations selon le calendrier de la saison. Groupes, journées de course, résultats et qualifications figurent dans l’onglet World Nations Championship.",
+      "worldNationsText": "L’onglet Compétition contient World Nations. La planification, les dates de groupes, les pays hôtes et les packs de parcours sont préparés en janvier. Chaque Association active est engagée automatiquement. En Saison 1, le champ des participants reste ouvert jusqu’au 1er juin afin de laisser le temps aux Associations de se former, tandis que la structure et les parcours hôtes sont déjà visibles.",
       "chatHistoryTitle": "Chat & historique",
       "chatHistoryText": "Les membres disposent d’un chat privé. L’onglet Historique conserve définitivement l’activation, les adhésions, élections, sélectionneurs, équipes, champions et résultats World Nations.",
       "membershipTitle": "Membership and Association status",
@@ -269,7 +270,7 @@
       "equipmentTitle": "National Team Equipment",
       "equipmentText": "The Association does not buy equipment and does not maintain a treasury for equipment costs. The game provides the same National Team equipment pool, race-support assets and race supplies to every Association. The active National Coach can save three named race setup configurations. Setup 1 begins with a complete Flat setup, while setups 2 and 3 are available for custom configurations. Equipment stays at 100% condition, National Team resources are system-covered, and the Equipment page shows the same weighted setup bonus logic used by club Equipment.",
       "competitionTitle": "Competition and World Nations",
-      "competitionText": "The Competition tab contains the World Nations structure for National Associations. Active Associations enter according to the Season schedule and the current competition stage. The page shows qualification rounds, groups, race dates, standings, advancement and the World Nations Final. Season 1 follows its special delayed launch rule so Associations have time to form; later Seasons follow the normal competition schedule.",
+      "competitionText": "La planification World Nations est générée en janvier afin de préparer tôt les groupes de qualification, les dates, les pays hôtes et les pages de course. Chaque groupe utilise un seul pays hôte pour les trois jours : contre-la-montre par équipes, course plate et course vallonnée/montagne. Une candidature hôte exige donc les trois types d’étape dans le même pays. En Saison 1, le champ reste ouvert jusqu’au 1er juin ; les Saisons suivantes utilisent le verrouillage normal de début de saison.",
       "chatTitle": "Private Team Chat",
       "chatText": "Team Chat is a private Association room for active members. Members can read the conversation at any time and can join the live room when they want to post. Joining the live room also shows the member in the active-participant list. Live presence expires after inactivity, but the message history remains available to Association members.",
       "historyTitle": "Permanent Association History",
@@ -440,6 +441,17 @@
         "ready_to_confirm": "Ready to confirm",
         "confirmed": "Final squad confirmed"
       }
+    },
+    "renewal": {
+      "validityTitle": "Validité de l’Association",
+      "validUntil": "Active jusqu’au {{date}} · renouvellement pour la Saison {{season}}",
+      "cost": "Renouvellement : {{coins}} Coins avant le 1er février",
+      "title": "Renouvellement Saison {{season}}",
+      "deadline": "Renouveler au plus tard le {{date}}.",
+      "renew": "Renouveler l’Association",
+      "opens": "Le renouvellement ouvre le {{date}} pour la Saison {{season}}.",
+      "message": "{{amount}} Coins ajoutés au renouvellement de l’Association.",
+      "alreadyFunded": "Le renouvellement de l’Association est déjà entièrement financé."
     }
   },
   "world": {
@@ -502,9 +514,9 @@
     },
     "drawPending": "Le tirage n'est pas encore terminé.",
     "season1LaunchNote": "La saison 1 est volontairement retardée : le tableau World Nations sera figé le 1er juin avec uniquement les Associations nationales actives à cette date.",
-    "raceHosts": "Hôtes des courses",
-    "raceHostsRotating": "Change à chaque course",
-    "raceHostsHelp": "Chaque course World Nations reçoit son propre pays hôte et son propre parcours.",
+    "raceHosts": "Hôtes par groupe",
+    "raceHostsRotating": "Change selon le groupe",
+    "raceHostsHelp": "Chaque groupe de qualification ou finale a un seul pays hôte pour ses trois jours.",
     "raceHostShort": "Hôte · {{country}}",
     "eventPage": {
       "loading": "Loading World Nations race…",
@@ -533,7 +545,7 @@
       "hilly": "Hilly",
       "mountain": "Mountain",
       "cobbled": "Cobbled",
-      "hostRotates": "A different host is assigned for each World Nations race.",
+      "hostRotates": "Le même pays hôte accueille les trois jours de course de ce groupe.",
       "openLiveRace": "Open live race / replay",
       "raceGeneratedLater": "Live race opens after race generation",
       "weather": "Weather",
@@ -553,7 +565,45 @@
       "gap": "Gap",
       "bestRider": "Best rider"
     },
-    "autoEntry": "Chaque Association Nationale active est inscrite automatiquement. Aucune inscription séparée à la compétition n’est nécessaire."
+    "autoEntry": "Chaque Association Nationale active est inscrite automatiquement. Aucune inscription séparée à la compétition n’est nécessaire.",
+    "groupHost": "Hôte · {{country}} · les trois jours de course",
+    "finalHost": "Hôte de la Finale mondiale",
+    "finalHostHelp": "Un seul pays accueille les trois jours de la Finale mondiale.",
+    "applyHost": "Accueil des courses",
+    "applyHostButton": "Candidater comme hôte",
+    "applyHostHelp": "Candidatez pour un groupe de qualification ou la Finale mondiale avec trois parcours de votre pays.",
+    "hostApplication": {
+      "title": "Candidature pour accueillir World Nations",
+      "description": "Le pays hôte doit proposer un contre-la-montre par équipes, une course plate et une course vallonnée/montagne. Les trois jours du groupe se déroulent dans le même pays.",
+      "close": "Fermer",
+      "applyFor": "Candidater pour",
+      "qualification": "Tour de qualification",
+      "final": "Finale mondiale",
+      "alreadyApplied": "Pays déjà candidats",
+      "noApplications": "Aucune candidature pour ce type d’accueil.",
+      "notEligibleTitle": "Votre pays ne dispose pas encore d’un pack hôte complet",
+      "notEligibleText": "{{country}} pourra candidater lorsque les trois types de course seront présents dans la base.",
+      "missing": "Manque : {{types}}",
+      "askAdmin": "Demandez à un administrateur de créer l’étape manquante. La candidature sera disponible dès que les trois types existent.",
+      "sameCountryRule": "Les trois courses sélectionnées doivent se dérouler en {{country}}. Les parcours proviennent directement de la base des étapes.",
+      "ttt": "Contre-la-montre par équipes",
+      "flat": "Course plate",
+      "mountain": "Course vallonnée / montagne",
+      "note": "Note de candidature",
+      "notePlaceholder": "Note facultative...",
+      "cancel": "Annuler",
+      "saving": "Enregistrement…",
+      "submit": "Envoyer la candidature",
+      "saved": "Candidature hôte enregistrée.",
+      "error": "Impossible d’enregistrer la candidature.",
+      "coachOnly": "Sélectionneur national uniquement",
+      "coachOnlyHelp": "Les membres peuvent consulter les candidatures, mais seul le sélectionneur élu peut en envoyer ou les modifier.",
+      "type": {
+        "team_time_trial": "Contre-la-montre par équipes",
+        "flat": "Course plate",
+        "hilly_mountain": "Course vallonnée / montagne"
+      }
+    }
   },
   "admin": {
     "loading": "Chargement des opérations World Nations...",
