@@ -305,7 +305,8 @@
       "principle4": "Kod izjednačenja samo vodeći izjednačeni kandidati idu u sljedeći krug.",
       "kindSeason": "Sezonski izbori",
       "kindActivation": "Prvi izbori nakon aktivacije",
-      "kindSpecial": "Zamjenski izbori"
+      "kindSpecial": "Zamjenski izbori",
+      "scheduleActual": "Prijava kandidata {{registrationStart}}–{{registrationEnd}} · prvo glasanje {{voteStart}}–{{voteEnd}} · ako ostane izjednačeno, slijede sedmodnevni krugovi."
     },
     "chat": {
       "privateEyebrow": "Privatni timski chat",
