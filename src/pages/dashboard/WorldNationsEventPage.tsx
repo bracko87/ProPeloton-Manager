@@ -1036,7 +1036,6 @@ export default function WorldNationsEventPage(): JSX.Element {
           </div>
         </div>
       </section>
-      </section>
     </div>
   )
 }
