@@ -297,7 +297,10 @@
       "principle1": "Jedes aktive Verbandsmitglied hat genau eine Stimme pro Wahlrunde.",
       "principle2": "Aktivierungsbeiträge geben keine zusätzlichen Stimmen, Eigentum oder Führungsrechte.",
       "principle3": "Der Nationaltrainer wird von den Mitgliedern gewählt und erhält keinen automatischen Fahrerplatz im Kader.",
-      "principle4": "Bei Gleichstand gehen nur die gleichauf Führenden in die nächste Stichwahl."
+      "principle4": "Bei Gleichstand gehen nur die gleichauf Führenden in die nächste Stichwahl.",
+      "kindSeason": "Saisonwahl",
+      "kindActivation": "Erste Aktivierungswahl",
+      "kindSpecial": "Ersatzwahl"
     },
     "chat": {
       "privateEyebrow": "Privater Team-Chat",
