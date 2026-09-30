@@ -38,7 +38,7 @@ interface NavItem {
 }
 
 const GAME_LOGO_URL =
-  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png'
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/transparent%20logo%20hhh.png'
 
 const navItems: NavItem[] = [
   {
