@@ -552,7 +552,8 @@
       "time": "Time",
       "gap": "Gap",
       "bestRider": "Best rider"
-    }
+    },
+    "autoEntry": "Every active National Association is entered automatically. There is no separate competition registration."
   },
   "admin": {
     "loading": "Loading World Nations Operations...",
