@@ -670,11 +670,20 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
           const rider=replayRiderById.get(String(state?.riderId??"")) as any;
           const readiness=replayReadinessById.get(String(state?.riderId??"")) as any;
           const startEnergy=Math.max(1,finite(readiness?.fatigueBalance?.startEnergy,100));
+          const energy=finite(state?.energy,0);
+          const liveEnergyPercent=Math.round(
+            Math.min(100,Math.max(0,(Math.max(0,energy)/startEnergy)*100))*10
+          )/10;
+          const condition=
+            liveEnergyPercent>=70?"fresh":
+            liveEnergyPercent>=40?"stable":
+            liveEnergyPercent>=18?"under_pressure":"critical";
           return {
             ...state,
             teamId:rider?.teamId??state?.teamId??null,
             readinessScore:finite(readiness?.readinessScore,state?.readinessScore??0),
-            ...buildUniversalReplayEnergyDisplay(finite(state?.energy,0),startEnergy),
+            liveEnergyPercent,
+            condition,
           };
         });
       }
