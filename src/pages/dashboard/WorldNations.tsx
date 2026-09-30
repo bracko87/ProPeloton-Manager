@@ -603,8 +603,10 @@ export default function WorldNationsPage(): JSX.Element {
 
               {t('world.finalQualification')}
             </div>
-            <div className="mt-2 text-xl font-semibold text-slate-900">{t('world.nationsCount', { count: 32 })}</div>
-            <p className="mt-1 text-xs text-slate-500">{t('world.finalQualificationHelp')}</p>
+            <div className="mt-2 text-xl font-semibold text-slate-900">12–16 teams per group</div>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              Season 1 keeps existing group membership stable and fills a group up to 16 before opening the next. From Season 2, ranked nations are spread evenly across groups.
+            </p>
           </div>
 
           <div className="bg-white p-4">
