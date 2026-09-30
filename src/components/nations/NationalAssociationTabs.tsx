@@ -28,13 +28,31 @@ export default function NationalAssociationTabs({
         <NavLink to="/dashboard/national-association/squad" className={linkClass}>
           {nationsT('association.tabs.squad')}
         </NavLink>
-      ) : null}
+      ) : (
+        <button
+          type="button"
+          disabled
+          title={nationsT('association.tabs.coachLocked')}
+          className="cursor-not-allowed rounded-md px-3 py-2 text-sm font-medium text-gray-400 opacity-70 whitespace-nowrap"
+        >
+          {nationsT('association.tabs.squad')}
+        </button>
+      )}
 
       {isCoach ? (
         <NavLink to="/dashboard/national-association/team-package" className={linkClass}>
           {nationsT('association.package.tab')}
         </NavLink>
-      ) : null}
+      ) : (
+        <button
+          type="button"
+          disabled
+          title={nationsT('association.tabs.coachLocked')}
+          className="cursor-not-allowed rounded-md px-3 py-2 text-sm font-medium text-gray-400 opacity-70 whitespace-nowrap"
+        >
+          {nationsT('association.package.tab')}
+        </button>
+      )}
 
       <NavLink to="/dashboard/national-association/world-nations" className={linkClass}>
         {nationsT('association.tabs.competition')}
