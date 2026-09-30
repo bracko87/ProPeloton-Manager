@@ -305,7 +305,8 @@
       "principle4": "Si hay empate, solo los líderes empatados pasan a la siguiente ronda de desempate.",
       "kindSeason": "Elección de temporada",
       "kindActivation": "Primera elección de activación",
-      "kindSpecial": "Elección de reemplazo"
+      "kindSpecial": "Elección de reemplazo",
+      "scheduleActual": "Registro de candidatos {{registrationStart}}–{{registrationEnd}} · primera votación {{voteStart}}–{{voteEnd}} · si persiste el empate, continúan rondas de desempate de siete días."
     },
     "chat": {
       "privateEyebrow": "Chat privado del equipo",
