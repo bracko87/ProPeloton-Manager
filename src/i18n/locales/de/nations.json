@@ -307,7 +307,17 @@
       "kindSeason": "Saisonwahl",
       "kindActivation": "Erste Aktivierungswahl",
       "kindSpecial": "Ersatzwahl",
-      "scheduleActual": "Kandidatenregistrierung {{registrationStart}}–{{registrationEnd}} · erste Abstimmung {{voteStart}}–{{voteEnd}} · bei Gleichstand folgen weitere siebentägige Stichwahlen."
+      "scheduleActual": "Kandidatenregistrierung {{registrationStart}}–{{registrationEnd}} · erste Abstimmung {{voteStart}}–{{voteEnd}} · bei Gleichstand folgen weitere siebentägige Stichwahlen.",
+      "updateCandidature": "Kandidatur aktualisieren",
+      "candidatureFormTitle": "Kandidatur einreichen",
+      "candidatureFormHelp": "Gib Vor- und Nachnamen ein, die den Verbandsmitgliedern angezeigt werden, und veröffentliche anschließend dein Manifest.",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "firstNamePlaceholder": "Vorname",
+      "lastNamePlaceholder": "Nachname",
+      "saveCandidature": "Kandidatur speichern",
+      "candidateNumber": "Kandidat {{number}}",
+      "viewManifesto": "Manifest anzeigen"
     },
     "chat": {
       "privateEyebrow": "Privater Team-Chat",
@@ -452,6 +462,40 @@
       "opens": "Die Verlängerung öffnet am {{date}} für Saison {{season}}.",
       "message": "{{amount}} Coins wurden zur Verbandsverlängerung hinzugefügt.",
       "alreadyFunded": "Die Verlängerung des Verbands ist bereits vollständig finanziert."
+    },
+    "customization": {
+      "loading": "Verbandsanpassung wird geladen…",
+      "eyebrow": "Verbandsanpassung",
+      "title": "Logo & Nationaltrikot",
+      "description": "Die Nationalflagge bleibt immer sichtbar. Der Verband kann ein eigenes Logo und ein Nationaltrikot festlegen. Ohne Anpassung wird die Flagge als Logo und automatisch ein generisches Trikot verwendet.",
+      "flagTitle": "Nationalflagge",
+      "flagLocked": "Die Nationalflagge ist dauerhaft und kann nicht ersetzt werden.",
+      "logoTitle": "Verbandslogo",
+      "logoHelp": "Lade ein Verbandslogo hoch. Ohne eigenes Logo wird automatisch die Nationalflagge verwendet.",
+      "jerseyTitle": "Nationaltrikot",
+      "jerseyHelp": "Wähle ein generisches Trikot oder lade ein eigenes Nationaltrikot hoch.",
+      "freeRemaining": "Noch {{count}} kostenlose Änderungen",
+      "paidNext": "Nächste Änderung: {{coins}} Coins",
+      "uploadLogo": "Logo hochladen",
+      "applyLogo": "Logo anwenden",
+      "useFlag": "Flagge verwenden",
+      "uploadJersey": "Trikot hochladen",
+      "applyJersey": "Trikot anwenden",
+      "useDefaultJersey": "Standard verwenden",
+      "genericKits": "Generische Trikots",
+      "genericKitNumber": "Generic jersey {{number}}",
+      "saving": "Speichern…",
+      "chooseLogo": "Wähle zuerst ein Logo aus.",
+      "chooseJersey": "Wähle oder lade zuerst ein Trikot hoch.",
+      "fileTooLarge": "Bilddateien dürfen maximal 2 MB groß sein.",
+      "fileType": "Verwende PNG-, JPG- oder WEBP-Bilder.",
+      "logoReset": "Verbandslogo auf Nationalflagge zurückgesetzt.",
+      "logoSaved": "Verbandslogo gespeichert.",
+      "jerseyReset": "Nationaltrikot auf das generische Standardtrikot zurückgesetzt.",
+      "jerseySaved": "Nationaltrikot gespeichert.",
+      "pricing": "{{used}} Änderungen in dieser Saison. Die ersten {{free}} sind kostenlos; jede weitere Logo- oder Trikotänderung kostet {{coins}} Coins.",
+      "coachOnly": "Alle Mitglieder sehen die Anpassung, ändern darf sie nur der gewählte Nationaltrainer.",
+      "balance": "Guthaben: {{balance}} Coins"
     }
   },
   "world": {
@@ -603,7 +647,10 @@
         "flat": "Flaches Straßenrennen",
         "hilly_mountain": "Hügeliges / Bergrennen"
       }
-    }
+    },
+    "groupLiveSummary": "Teams: {{current}} / {{entrants}} · {{advance}} kommen weiter",
+    "hostLabel": "Gastgeber",
+    "allThreeRaceDays": "· alle drei Renntage"
   },
   "admin": {
     "loading": "World-Nations-Betrieb wird geladen...",
