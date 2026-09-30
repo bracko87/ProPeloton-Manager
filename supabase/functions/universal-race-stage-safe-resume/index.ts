@@ -701,6 +701,77 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         });
       }
     }
+    if(Array.isArray(phase10Resolution?.replayTimeline?.checkpoints)){
+      const teamIds=(Array.isArray(calculationInput?.teams)?calculationInput.teams:[])
+        .map((team:any)=>String(team?.teamId??""))
+        .filter(Boolean);
+      let previousReplayCheckpoint:any=null;
+      for(const replayCheckpoint of phase10Resolution.replayTimeline.checkpoints){
+        if(Array.isArray(replayCheckpoint?.riderStates)){
+          replayCheckpoint.teamStates=teamIds.map((teamId:string)=>{
+            const teamRiders=replayCheckpoint.riderStates.filter(
+              (row:any)=>String(row?.teamId??"")===teamId
+            );
+            return {
+              teamId,
+              activeRiderIds:teamRiders
+                .filter((row:any)=>row?.status==="racing"||row?.status==="finished")
+                .map((row:any)=>String(row?.riderId??""))
+                .sort(),
+              racingRiderCount:teamRiders.filter((row:any)=>row?.status==="racing").length,
+              finishedRiderCount:teamRiders.filter((row:any)=>row?.status==="finished").length,
+              dnsRiderCount:teamRiders.filter((row:any)=>row?.status==="dns").length,
+              dnfRiderCount:teamRiders.filter((row:any)=>row?.status==="dnf").length,
+              otlRiderCount:teamRiders.filter((row:any)=>row?.status==="otl").length,
+            };
+          });
+        }
+        if(previousReplayCheckpoint&&Array.isArray(replayCheckpoint?.riderStates)){
+          const previousByRider=new Map(
+            (Array.isArray(previousReplayCheckpoint?.riderStates)?previousReplayCheckpoint.riderStates:[])
+              .map((row:any)=>[String(row?.riderId??""),row] as const)
+          );
+          const changedRiderIds=replayCheckpoint.riderStates
+            .filter((row:any)=>{
+              const previous=previousByRider.get(String(row?.riderId??"")) as any;
+              const before=previous?.displayCode??null;
+              const after=row?.displayCode??null;
+              return before!==after&&before!==null&&after!==null&&
+                !String(before).startsWith("I")&&!String(after).startsWith("I");
+            })
+            .map((row:any)=>String(row?.riderId??""))
+            .filter(Boolean);
+          const hasPublishedPhysicalTransition=(Array.isArray(replayCheckpoint?.commentary)
+            ? replayCheckpoint.commentary
+            : []
+          ).some((entry:any)=>
+            entry?.eventType==="group_split"||
+            entry?.eventType==="group_merge"||
+            entry?.eventType==="incident"
+          );
+          if(changedRiderIds.length>0&&!hasPublishedPhysicalTransition){
+            const riderTeamIds=Array.from(new Set(
+              changedRiderIds
+                .map((riderId:string)=>(replayRiderById.get(riderId) as any)?.teamId)
+                .filter(Boolean)
+                .map(String)
+            )).sort();
+            replayCheckpoint.commentary=[
+              ...(Array.isArray(replayCheckpoint?.commentary)?replayCheckpoint.commentary:[]),
+              {
+                commentaryId:`${String(replayCheckpoint?.checkpointId??"checkpoint")}:physical-group-transition`,
+                eventType:"group_split",
+                title:"Road groups reorganize",
+                description:"The race formation changes as riders move between road groups.",
+                riderIds:[...changedRiderIds].sort(),
+                teamIds:riderTeamIds,
+              },
+            ];
+          }
+        }
+        previousReplayCheckpoint=replayCheckpoint;
+      }
+    }
     const phase10Incidents=phase10Resolution.summary;
     const finishResolution=phase10Resolution.finishResolution;
     const intermediatePointBattles=reconcileFinishLineIntermediatePointBattlesV1(
@@ -715,11 +786,9 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       checkpoint.intermediatePointPlan as any,
       intermediatePointBattles,
     );
-    const replayTimeline=stabilizeFinalReplayPhysicalState(
-      reconcileReplayTimelineIntermediatePointsV1(
-        phase10Resolution.replayTimeline,
-        intermediatePointFinalization,
-      ),
+    const replayTimeline=reconcileReplayTimelineIntermediatePointsV1(
+      phase10Resolution.replayTimeline,
+      intermediatePointFinalization,
     );
     next={...checkpoint,phase10Incidents,finishResolution,intermediatePointBattles,intermediatePointFinalization,replayTimeline};
     // Step 9 no longer needs the heavy construction-only payloads. Removing
@@ -743,7 +812,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     delete checkpoint.phase2RoadRaceResolution;
     delete checkpoint.phase3RoadRaceResolution;
 
-    const replayTimeline=stabilizeFinalReplayPhysicalState(checkpoint.replayTimeline as any);
+    const replayTimeline=checkpoint.replayTimeline as any;
     const step9CommandsByPhase=new Map<number,any[]>();
     const step9CommandRiders=Array.isArray((checkpoint.roadCommandResolution as any)?.riders)
       ? (checkpoint.roadCommandResolution as any).riders
