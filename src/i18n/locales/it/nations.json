@@ -55,7 +55,7 @@
     "summary": {
       "association": "Associazione",
       "members": "Membri",
-      "membersHint": "Cinque manager idonei attivano l'Associazione.",
+      "membersHint": "Per l’attivazione sono necessari cinque manager idonei.",
       "coach": "CT della Nazionale",
       "coachSeason": "Stagione {{season}} · {{term}}",
       "operations": "Operazioni",
@@ -75,13 +75,27 @@
     },
     "package": {
       "title": "Pacchetto standard della Nazionale",
-      "description": "Ogni Paese riceve lo stesso pacchetto operativo fisso. Non può essere acquistato, potenziato o venduto.",
+      "description": "Ogni Associazione Nazionale riceve lo stesso pool di equipaggiamento fornito dal sistema. Le risorse sono illimitate, le scorte non si esauriscono e attrezzatura/mezzi restano al 100%.",
       "assets": "Mezzi da gara",
       "assetLevel": "{{quantity}} × Livello {{level}}",
       "equipment": "Equipaggiamento corridori",
       "tierQuality": "Livello {{tier}} · Qualità {{quality}}",
       "supplies": "Forniture di gara",
-      "tab": "Pacchetto squadra"
+      "tab": "Pacchetto squadra",
+      "coachSetsTitle": "Set di equipaggiamento del CT",
+      "coachSetsDescription": "Crea e nomina tre set permanenti. Ogni categoria può usare qualsiasi articolo del pool nazionale; i tre slot si applicano a Pianura, Collina/Montagna e Cronometro a squadre.",
+      "setNumber": "Set {{slot}}",
+      "setName": "Nome del set",
+      "chooseItem": "Scegli equipaggiamento...",
+      "saveSet": "Salva set",
+      "completeSet": "Scegli un articolo per ogni categoria prima di salvare.",
+      "setSaved": "Set {{slot}} salvato.",
+      "selectionPoolTitle": "Equipaggiamento corridori della Nazionale",
+      "selectionPoolDescription": "Sono disponibili tre scelte per categoria per Pianura, Montagna e Cronometro. Tutto l’equipaggiamento nazionale è sempre disponibile al 100%.",
+      "alwaysPerfect": "Sempre al 100%",
+      "unlimited": "Illimitato",
+      "assetsUnlimitedHelp": "I mezzi da gara della Nazionale sono sempre disponibili. Si può usare il massimo consentito per evento e non si usurano mai.",
+      "suppliesUnlimitedHelp": "Le scorte da gara della Nazionale sono illimitate e non vengono mai scalate."
     },
     "callups": {
       "title": "Convocazioni dei tuoi corridori",
@@ -135,6 +149,23 @@
       "calledUp": "{{rider}} è stato convocato in Nazionale.",
       "squadConfirmed": "La rosa di 10 corridori della Nazionale è stata confermata.",
       "lineupConfirmed": "La formazione del giorno {{day}} è stata confermata."
+    },
+    "activation": {
+      "title": "Fondo di attivazione dell’associazione",
+      "description": "I membri possono raccogliere insieme i 50 Coin richiesti una sola volta per attivare l’associazione. È un requisito di fondazione, non una tesoreria.",
+      "coins": "Coin",
+      "remaining": "Ancora necessari",
+      "yourContribution": "Il tuo contributo",
+      "yourBalance": "Il tuo saldo",
+      "contribute": "Contribuisci con Coin",
+      "permanentNote": "I contributi sono permanenti e non rimborsabili. Non danno potere di voto o proprietà. Gli importi oltre il residuo vengono automaticamente limitati.",
+      "custom": "Altro",
+      "giveCoins": "Dona Coin",
+      "joinFirst": "Entra prima nell’Associazione Nazionale per contribuire al fondo di attivazione.",
+      "funded": "Fondo di attivazione completo. Non servono altri Coin.",
+      "requirements": "L’attivazione richiede {{members}} manager idonei e {{coins}} Coin nel fondo comune di fondazione.",
+      "message": "{{amount}} Coin aggiunti al fondo di attivazione.",
+      "alreadyFunded": "Il fondo di attivazione è già completo."
     }
   },
   "world": {
