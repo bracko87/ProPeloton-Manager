@@ -552,7 +552,8 @@
       "time": "Time",
       "gap": "Gap",
       "bestRider": "Best rider"
-    }
+    },
+    "autoEntry": "Chaque Association Nationale active est inscrite automatiquement. Aucune inscription séparée à la compétition n’est nécessaire."
   },
   "admin": {
     "loading": "Chargement des opérations World Nations...",
