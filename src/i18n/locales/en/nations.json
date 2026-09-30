@@ -80,7 +80,8 @@
       "assetLevel": "{{quantity}} × Level {{level}}",
       "equipment": "Rider equipment",
       "tierQuality": "Tier {{tier}} · Quality {{quality}}",
-      "supplies": "Race supplies"
+      "supplies": "Race supplies",
+      "tab": "Team Package"
     },
     "callups": {
       "title": "National Team call-ups for your riders",

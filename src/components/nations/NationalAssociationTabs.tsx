@@ -24,6 +24,12 @@ export default function NationalAssociationTabs(): JSX.Element {
         {navigationT('overview')}
       </NavLink>
       <NavLink
+        to="/dashboard/national-association/team-package"
+        className={linkClass}
+      >
+        {nationsT('association.package.tab')}
+      </NavLink>
+      <NavLink
         to="/dashboard/national-association/world-nations"
         className={linkClass}
       >

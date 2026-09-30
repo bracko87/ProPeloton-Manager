@@ -80,7 +80,8 @@
       "assetLevel": "{{quantity}} × Nivel {{level}}",
       "equipment": "Equipamiento de ciclistas",
       "tierQuality": "Nivel {{tier}} · Calidad {{quality}}",
-      "supplies": "Suministros de carrera"
+      "supplies": "Suministros de carrera",
+      "tab": "Paquete del equipo"
     },
     "callups": {
       "title": "Convocatorias de tus ciclistas",

@@ -80,7 +80,8 @@
       "assetLevel": "{{quantity}} × Stufe {{level}}",
       "equipment": "Fahrerausrüstung",
       "tierQuality": "Stufe {{tier}} · Qualität {{quality}}",
-      "supplies": "Rennversorgung"
+      "supplies": "Rennversorgung",
+      "tab": "Teampaket"
     },
     "callups": {
       "title": "Nationalmannschafts-Nominierungen deiner Fahrer",
