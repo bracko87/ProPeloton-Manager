@@ -244,7 +244,9 @@
         "world_nations_day_1": "World Nations · Jour 1",
         "world_nations_day_2": "World Nations · Jour 2",
         "world_nations_day_3": "World Nations · Jour 3"
-      }
+      },
+      "squadMovedHelp": "La sélection des coureurs, les convocations, les remplacements et la confirmation des 10 sont désormais gérés dans l’onglet Sélection.",
+      "openSquad": "Ouvrir la sélection"
     },
     "guide": {
       "eyebrow": "Fonctionnement",
