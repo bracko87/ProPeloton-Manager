@@ -80,7 +80,8 @@
       "assetLevel": "{{quantity}} × Niveau {{level}}",
       "equipment": "Équipement des coureurs",
       "tierQuality": "Niveau {{tier}} · Qualité {{quality}}",
-      "supplies": "Fournitures de course"
+      "supplies": "Fournitures de course",
+      "tab": "Pack de l’équipe"
     },
     "callups": {
       "title": "Convocations de vos coureurs en équipe nationale",
