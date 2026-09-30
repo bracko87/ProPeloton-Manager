@@ -90,6 +90,7 @@ export default function NationalAssociationTeamChatPage(): JSX.Element {
   const [presence, setPresence] = useState<PresenceData>(EMPTY_PRESENCE)
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(true)
+  const [isCoach, setIsCoach] = useState(false)
   const [working, setWorking] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const lastInteractionRef = useRef(Date.now())
@@ -115,10 +116,8 @@ export default function NationalAssociationTeamChatPage(): JSX.Element {
       if (presenceResponse.error) throw presenceResponse.error
 
       const nextAssociation = (associationResponse.data ?? null) as AssociationData | null
-      setAssociation({
-        ...nextAssociation,
-        ...(coachResponse.error ? {} : { _isCoach: Boolean((coachResponse.data as any)?.allowed) }),
-      } as AssociationData)
+      setAssociation(nextAssociation)
+      setIsCoach(!coachResponse.error && Boolean((coachResponse.data as any)?.allowed))
       setChat((chatResponse.data ?? EMPTY_CHAT) as ChatData)
       setPresence((presenceResponse.data ?? EMPTY_PRESENCE) as PresenceData)
     } catch (caught: any) {
@@ -218,7 +217,6 @@ export default function NationalAssociationTeamChatPage(): JSX.Element {
     setWorking(false)
   }
 
-  const isCoach = Boolean((association as any)?._isCoach)
   const messages = chat.messages ?? []
   const participants = presence.participants ?? []
 
