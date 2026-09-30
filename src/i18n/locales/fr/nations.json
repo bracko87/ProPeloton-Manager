@@ -305,7 +305,8 @@
       "principle4": "En cas d’égalité, seuls les candidats en tête à égalité passent au tour de départage suivant.",
       "kindSeason": "Élection de saison",
       "kindActivation": "Première élection d’activation",
-      "kindSpecial": "Élection de remplacement"
+      "kindSpecial": "Élection de remplacement",
+      "scheduleActual": "Candidatures du {{registrationStart}} au {{registrationEnd}} · premier vote du {{voteStart}} au {{voteEnd}} · des tours de départage de sept jours suivent en cas d’égalité."
     },
     "chat": {
       "privateEyebrow": "Chat privé de l’équipe",
