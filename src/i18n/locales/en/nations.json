@@ -209,7 +209,8 @@
       "teamChat": "Team Chat",
       "history": "History",
       "competition": "Competition",
-      "squad": "Squad"
+      "squad": "Squad",
+      "coachLocked": "Unlocked for the elected National Coach"
     },
     "userStatus": {
       "member": "Association member",
@@ -440,6 +441,17 @@
         "ready_to_confirm": "Ready to confirm",
         "confirmed": "Final squad confirmed"
       }
+    },
+    "renewal": {
+      "validityTitle": "Association validity",
+      "validUntil": "Active until {{date}} · renewal for Season {{season}}",
+      "cost": "Renewal: {{coins}} Coins by 1 February",
+      "title": "Season {{season}} renewal",
+      "deadline": "Renew no later than {{date}}.",
+      "renew": "Renew Association",
+      "opens": "Renewal opens {{date}} for Season {{season}}.",
+      "message": "{{amount}} Coins added to the Association renewal fund.",
+      "alreadyFunded": "The Association renewal is already fully funded."
     }
   },
   "world": {
@@ -553,7 +565,45 @@
       "gap": "Gap",
       "bestRider": "Best rider"
     },
-    "autoEntry": "Every active National Association is entered automatically. There is no separate competition registration."
+    "autoEntry": "Every active National Association is entered automatically. There is no separate competition registration.",
+    "groupHost": "Host · {{country}} · all three race days",
+    "finalHost": "World Final host",
+    "finalHostHelp": "One country hosts all three World Final race days.",
+    "applyHost": "Race hosting",
+    "applyHostButton": "Apply for Race Host",
+    "applyHostHelp": "Apply for a qualification group or the World Final with three routes from your country.",
+    "hostApplication": {
+      "title": "Apply to host World Nations",
+      "description": "A host country must provide one Team Time Trial, one Flat road race and one Hilly/Mountain road race. All three race days of the assigned group are held in the same country.",
+      "close": "Close",
+      "applyFor": "Apply for",
+      "qualification": "Qualification round",
+      "final": "World Final",
+      "alreadyApplied": "Countries already applied",
+      "noApplications": "No countries have applied for this host type yet.",
+      "notEligibleTitle": "Your country does not yet have a complete host package",
+      "notEligibleText": "{{country}} can apply only after the database contains all three required race types.",
+      "missing": "Missing: {{types}}",
+      "askAdmin": "Ask an administrator to create the missing stage. As soon as all three race types exist, the host application becomes available.",
+      "sameCountryRule": "All three selected races must be in {{country}}. These routes are pulled directly from the stage database.",
+      "ttt": "Team Time Trial",
+      "flat": "Flat road race",
+      "mountain": "Hilly / Mountain road race",
+      "note": "Application note",
+      "notePlaceholder": "Optional hosting note...",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "submit": "Submit host application",
+      "saved": "Host application saved.",
+      "error": "Unable to save the host application.",
+      "coachOnly": "National Coach only",
+      "coachOnlyHelp": "Applications can be viewed by Association members, but only the elected National Coach can submit or change an application.",
+      "type": {
+        "team_time_trial": "Team Time Trial",
+        "flat": "Flat road race",
+        "hilly_mountain": "Hilly / Mountain road race"
+      }
+    }
   },
   "admin": {
     "loading": "Loading World Nations Operations...",
