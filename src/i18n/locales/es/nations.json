@@ -297,7 +297,10 @@
       "principle1": "Cada miembro activo tiene exactamente un voto por ronda electoral.",
       "principle2": "Las contribuciones de activación no otorgan votos adicionales, propiedad ni derechos de gobierno.",
       "principle3": "Los miembros eligen al seleccionador y este no obtiene automáticamente una plaza como ciclista en la plantilla.",
-      "principle4": "Si hay empate, solo los líderes empatados pasan a la siguiente ronda de desempate."
+      "principle4": "Si hay empate, solo los líderes empatados pasan a la siguiente ronda de desempate.",
+      "kindSeason": "Elección de temporada",
+      "kindActivation": "Primera elección de activación",
+      "kindSpecial": "Elección de reemplazo"
     },
     "chat": {
       "privateEyebrow": "Chat privado del equipo",
