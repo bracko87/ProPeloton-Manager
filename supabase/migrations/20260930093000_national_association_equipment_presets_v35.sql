@@ -19,18 +19,19 @@ declare
   v_flat_helmet uuid;
   v_flat_shoes uuid;
   v_count integer:=0;
+  v_rows integer:=0;
 begin
   if p_club_id is null then
     raise exception 'Technical National Team club ID is required.';
   end if;
 
   select
-    max(o.catalog_item_id) filter(where o.equipment_category='frame'),
-    max(o.catalog_item_id) filter(where o.equipment_category='wheelset'),
-    max(o.catalog_item_id) filter(where o.equipment_category='tires'),
-    max(o.catalog_item_id) filter(where o.equipment_category='groupset'),
-    max(o.catalog_item_id) filter(where o.equipment_category='helmet'),
-    max(o.catalog_item_id) filter(where o.equipment_category='shoes')
+    max(o.catalog_item_id::text) filter(where o.equipment_category='frame')::uuid,
+    max(o.catalog_item_id::text) filter(where o.equipment_category='wheelset')::uuid,
+    max(o.catalog_item_id::text) filter(where o.equipment_category='tires')::uuid,
+    max(o.catalog_item_id::text) filter(where o.equipment_category='groupset')::uuid,
+    max(o.catalog_item_id::text) filter(where o.equipment_category='helmet')::uuid,
+    max(o.catalog_item_id::text) filter(where o.equipment_category='shoes')::uuid
   into
     v_flat_frame,
     v_flat_wheelset,
@@ -138,7 +139,8 @@ begin
     updated_at=now()
   where coalesce((public.club_equipment_setup_presets.metadata->>'coach_customized')::boolean,false)=false;
 
-  get diagnostics v_count=v_count+row_count;
+  get diagnostics v_rows=row_count;
+  v_count:=v_count+v_rows;
 
   return jsonb_build_object(
     'club_id',p_club_id,
