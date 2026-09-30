@@ -297,7 +297,10 @@
       "principle1": "Svaki aktivni član saveza ima točno jedan glas po izbornom krugu.",
       "principle2": "Doprinosi za aktivaciju ne daju dodatne glasove, vlasništvo ili upravljačka prava.",
       "principle3": "Nacionalnog izbornika biraju članovi i on ne dobiva automatsko mjesto vozača u sastavu.",
-      "principle4": "Kod izjednačenja samo vodeći izjednačeni kandidati idu u sljedeći krug."
+      "principle4": "Kod izjednačenja samo vodeći izjednačeni kandidati idu u sljedeći krug.",
+      "kindSeason": "Sezonski izbori",
+      "kindActivation": "Prvi izbori nakon aktivacije",
+      "kindSpecial": "Zamjenski izbori"
     },
     "chat": {
       "privateEyebrow": "Privatni timski chat",
