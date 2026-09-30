@@ -154,7 +154,7 @@ export default function NationalTeamPackagePage(): JSX.Element {
   const specializationLabel = (specialization: string): string => {
     if (specialization === 'flat') return t('raceTypes.flat')
     if (specialization === 'mountain') return t('raceTypes.mountain')
-    if (specialization === 'time_trial') return t('raceTypes.teamTimeTrial')
+    if (specialization === 'time_trial') return humanize(specialization)
     return humanize(specialization)
   }
 
