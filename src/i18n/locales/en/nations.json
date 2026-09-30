@@ -305,7 +305,8 @@
       "principle4": "If the vote is tied, only the tied leaders continue to the next runoff round.",
       "kindSeason": "Season election",
       "kindActivation": "First activation election",
-      "kindSpecial": "Replacement election"
+      "kindSpecial": "Replacement election",
+      "scheduleActual": "Candidate registration {{registrationStart}}–{{registrationEnd}} · first vote {{voteStart}}–{{voteEnd}} · seven-day runoff rounds continue if still tied."
     },
     "chat": {
       "privateEyebrow": "Private Team Chat",
