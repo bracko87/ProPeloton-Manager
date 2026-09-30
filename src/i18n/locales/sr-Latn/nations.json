@@ -38,7 +38,6 @@
     "notCompleted": "Nije završeno",
     "associations": "Savezi",
     "race": "Trka",
-    "yearsShort": "{{years}} god.",
     "deadline": "rok"
   },
   "association": {
@@ -75,14 +74,14 @@
       "none": "Trenutno nema dostupnih izbora."
     },
     "package": {
-      "title": "Standardni paket reprezentacije",
+      "title": "Oprema",
       "description": "Svaki Nacionalni savez dobija isti paket opreme koji obezbeđuje sistem. Resursi su neograničeni, zalihe se ne troše, a oprema i vozila uvek ostaju na 100% stanja.",
       "assets": "Vozila za trku",
       "assetLevel": "{{quantity}} × Nivo {{level}}",
       "equipment": "Oprema vozača",
       "tierQuality": "Nivo {{tier}} · Kvalitet {{quality}}",
       "supplies": "Potrošni materijal",
-      "tab": "Paket reprezentacije",
+      "tab": "Oprema",
       "coachSetsTitle": "Kompleti opreme nacionalnog selektora",
       "coachSetsDescription": "Napravi i nazovi tri trajna kompleta. U svakoj kategoriji možeš izabrati bilo koji predmet iz nacionalnog paketa; tri slota se koriste za ravnicu, brda/planine i ekipni hronometar.",
       "setNumber": "Komplet {{slot}}",
@@ -96,7 +95,38 @@
       "alwaysPerfect": "Uvek 100% stanja",
       "unlimited": "Neograničeno",
       "assetsUnlimitedHelp": "Vozila nacionalne ekipe su stalno dostupna. Može se koristiti maksimalan broj dozvoljen za trku i nikada se ne troše.",
-      "suppliesUnlimitedHelp": "Trkačke zalihe nacionalne ekipe su neograničene i nikada se ne umanjuju."
+      "suppliesUnlimitedHelp": "Trkačke zalihe nacionalne ekipe su neograničene i nikada se ne umanjuju.",
+      "overviewTab": "Pregled",
+      "inventoryTab": "Inventar",
+      "raceSetupsTitle": "Race Setup Configurations",
+      "raceSetupsDescription": "Create up to three National Team race setups in the same way as the club Equipment page. Setup 1 is created automatically as a complete Flat configuration. Setups 2 and 3 start empty and can be named and configured by the active National Coach. Each setup uses one Frame, Wheelset, Tires, Groupset, Helmet and Shoes from the shared National Team equipment pool.",
+      "coachOnlyEdit": "National Coach can edit",
+      "setupPlaceholder": "Setup {{slot}}",
+      "defaultFlat": "Default Flat",
+      "complete": "Complete",
+      "empty": "Empty",
+      "noneSelected": "No {{category}} selected",
+      "itemSummary": "Tier {{tier}} · Quality {{quality}}",
+      "weightedPreview": "Weighted bonus preview",
+      "calculating": "Calculating bonuses…",
+      "noWeightedBonus": "No weighted setup bonus is available for this selection.",
+      "selectSixForPreview": "Select all six equipment categories to calculate the setup bonus.",
+      "previewExplanation": "The preview uses the same weighted equipment calculation as the club Equipment page. Bonuses are weighted by equipment category and remain subject to the normal game caps; they are not simply added together.",
+      "completeSetup": "Setup is complete and ready to save.",
+      "missingCategories": "Missing: {{categories}}",
+      "saving": "Saving…",
+      "saveSetup": "Save Setup",
+      "summaryEquipment": "Rider equipment models",
+      "summaryEquipmentHelp": "Flat, Mountain and Time Trial options across all six equipment categories.",
+      "summaryAssets": "Race support assets",
+      "summaryAssetsHelp": "System-provided National Team race vehicles at full condition.",
+      "summarySupplies": "Race supply types",
+      "summarySuppliesHelp": "Shared National Team supplies available for every competition window.",
+      "resourcePolicy": "Resource policy",
+      "resourcePolicyHelp": "No Association treasury is used. Equipment, assets and supplies are system-covered, remain at full condition and are not depleted by normal National Team use.",
+      "models": "models",
+      "units": "units",
+      "supplyTypes": "supply types"
     },
     "callups": {
       "title": "Pozivi vašim vozačima u reprezentaciju",
@@ -128,7 +158,8 @@
       "currentSelection": "Trenutni izbor:",
       "confirmFinalTen": "Potvrdi konačnih 10",
       "squadConfirmed": "Sastav reprezentacije potvrđen",
-      "squadConfirmedCount": "{{count}} vozača je u potvrđenom sastavu."
+      "squadConfirmedCount": "{{count}} vozača je u potvrđenom sastavu.",
+      "age": "Starost {{age}}"
     },
     "lineups": {
       "title": "Trodnevne postave reprezentacije",
@@ -174,7 +205,8 @@
     "tabs": {
       "elections": "Izbori",
       "teamChat": "Timski čet",
-      "history": "Istorija"
+      "history": "Istorija",
+      "competition": "Takmičenje"
     },
     "userStatus": {
       "member": "Član saveza",
@@ -215,18 +247,28 @@
       "eyebrow": "Kako funkcioniše",
       "title": "Vodič Nacionalnog saveza",
       "expand": "Otvori vodič",
-      "activationTitle": "Aktivacija",
-      "activationText": "Nacionalni savez postaje aktivan kada ima najmanje pet podobnih menadžera i kada je ispunjen zajednički jednokratni uslov od 50 Coina. Doprinosi ne daju vlasništvo ni dodatno pravo glasa.",
-      "electionsTitle": "Izbori",
-      "electionsText": "Aktivni članovi biraju Nacionalnog selektora. Kandidatura, glasanje i eventualni drugi krugovi nalaze se u tabu Izbori. Svaki aktivni član ima jedan glas po krugu.",
-      "selectionTitle": "Izbor vozača",
-      "selectionText": "Selektor šalje pozive, potvrđuje sastav od 10 vozača i bira sedam vozača za svaki trkački dan. Vozač mora da prihvati poziv pre izbora.",
-      "packageTitle": "Paket tima",
+      "activationTitle": "How activation works",
+      "activationText": "A new Association starts in Forming status. It becomes active only after two founding requirements are completed: at least five eligible managers must be active members and the shared one-time 50-Coin activation requirement must be fully funded. Members may contribute any amount up to the remaining target. The 50 Coins are only an activation requirement; they do not create a treasury, ownership share, extra vote, special privilege or future spending budget.",
+      "electionsTitle": "National Coach elections",
+      "electionsText": "Once the Association is active, its members elect the National Coach. Candidate registration opens first, then members vote, and tied leaders can continue into runoff rounds until there is a unique winner. Every active member has exactly one vote in each election round, including candidates. Coin contributions never affect voting power. The Elections tab shows the current coach, election phase, dates within the current Season, candidates, manifestos and voting actions.",
+      "selectionTitle": "Call-ups, squad and race-day selection",
+      "selectionText": "The National Coach manages sporting selection. The coach can send provisional call-ups to eligible riders, and each rider's club must accept the call-up before that rider can be included in the final squad. The coach then confirms a 10-rider National Team squad. For each competition race day, exactly seven riders are selected from that confirmed squad, with the normal rules controlling how many changes may be made between consecutive race days.",
+      "packageTitle": "Oprema",
       "packageText": "Svaki Nacionalni savez dobija isti sistemski pokriven paket opreme, vozila i zaliha. Selektor može da sačuva tri kompleta opreme, a resursi se ne troše.",
-      "worldNationsTitle": "World Nations",
+      "worldNationsTitle": "Takmičenje",
       "worldNationsText": "Aktivni savezi učestvuju u World Nations takmičenju prema sezonskom rasporedu. Grupe, dani trke, rezultati i prolazak prikazani su u World Nations Championship tabu.",
       "chatHistoryTitle": "Timski čet i istorija",
-      "chatHistoryText": "Članovi saveza dele privatni Timski čet. Istorija trajno čuva aktivaciju, članstva, izbore, selektore, sastave, šampione i World Nations rezultate."
+      "chatHistoryText": "Članovi saveza dele privatni Timski čet. Istorija trajno čuva aktivaciju, članstva, izbore, selektore, sastave, šampione i World Nations rezultate.",
+      "membershipTitle": "Membership and Association status",
+      "membershipText": "Your country's National Association is the shared home for eligible human-controlled clubs from that country. Joining makes your club an Association member, gives you access to member functions such as elections and Team Chat, and places your riders in the pool that can be considered for National Team call-ups. Membership does not guarantee selection, and leaving the Association removes your active membership without deleting the Association's permanent history.",
+      "equipmentTitle": "National Team Equipment",
+      "equipmentText": "The Association does not buy equipment and does not maintain a treasury for equipment costs. The game provides the same National Team equipment pool, race-support assets and race supplies to every Association. The active National Coach can save three named race setup configurations. Setup 1 begins with a complete Flat setup, while setups 2 and 3 are available for custom configurations. Equipment stays at 100% condition, National Team resources are system-covered, and the Equipment page shows the same weighted setup bonus logic used by club Equipment.",
+      "competitionTitle": "Competition and World Nations",
+      "competitionText": "The Competition tab contains the World Nations structure for National Associations. Active Associations enter according to the Season schedule and the current competition stage. The page shows qualification rounds, groups, race dates, standings, advancement and the World Nations Final. Season 1 follows its special delayed launch rule so Associations have time to form; later Seasons follow the normal competition schedule.",
+      "chatTitle": "Private Team Chat",
+      "chatText": "Team Chat is a private Association room for active members. Members can read the conversation at any time and can join the live room when they want to post. Joining the live room also shows the member in the active-participant list. Live presence expires after inactivity, but the message history remains available to Association members.",
+      "historyTitle": "Permanent Association History",
+      "historyText": "The History tab is the long-term record of the National Association across Seasons. It keeps important governance and sporting events such as Association creation and activation, membership changes, activation contributions, National Coach elections and appointments, confirmed National Team squads, National Champions and completed World Nations results. Changing coach, becoming inactive or moving into a new Season does not erase the previous record."
     },
     "electionsPage": {
       "unavailableTitle": "Izbori nisu dostupni",
@@ -255,7 +297,10 @@
       "principle1": "Svaki aktivni član saveza ima tačno jedan glas po izbornom krugu.",
       "principle2": "Doprinosi za aktivaciju ne daju dodatne glasove, vlasništvo ili upravljačka prava.",
       "principle3": "Nacionalnog selektora biraju članovi i on ne dobija automatsko mesto vozača u sastavu.",
-      "principle4": "Kod nerešenog rezultata samo izjednačeni vodeći kandidati idu u sledeći krug."
+      "principle4": "Kod nerešenog rezultata samo izjednačeni vodeći kandidati idu u sledeći krug.",
+      "kindSeason": "Sezonski izbori",
+      "kindActivation": "Prvi izbori nakon aktivacije",
+      "kindSpecial": "Vanredni izbori"
     },
     "chat": {
       "privateEyebrow": "Privatni timski čet",

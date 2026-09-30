@@ -23,7 +23,7 @@ export default function NationalAssociationTabs(): JSX.Element {
         {nationsT('association.package.tab')}
       </NavLink>
       <NavLink to="/dashboard/national-association/world-nations" className={linkClass}>
-        {nationsT('association.navWorldNations')}
+        {nationsT('association.tabs.competition')}
       </NavLink>
       <NavLink to="/dashboard/national-association/elections" className={linkClass}>
         {nationsT('association.tabs.elections')}

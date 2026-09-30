@@ -69,9 +69,15 @@ function formatGameDate(value?: string | null): string {
   return date.toLocaleDateString(undefined, {
     day: '2-digit',
     month: 'short',
-    year: 'numeric',
     timeZone: 'UTC',
   })
+}
+
+function electionKindLabel(kind: string | null | undefined, t: (key: string, options?: any) => string): string {
+  if (kind === 'annual') return t('association.electionsPage.kindSeason')
+  if (kind === 'activation') return t('association.electionsPage.kindActivation')
+  if (kind === 'special') return t('association.electionsPage.kindSpecial')
+  return humanize(kind)
 }
 
 function statusClasses(status?: string | null): string {
@@ -314,7 +320,7 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                       {t('association.electionsPage.type')}
                     </div>
                     <div className="mt-2 text-sm font-semibold text-slate-900">
-                      {humanize(election.kind)}
+                      {electionKindLabel(election.kind, t)}
                     </div>
                   </div>
                   <div className="rounded border border-slate-200 p-3">

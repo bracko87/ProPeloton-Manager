@@ -41,8 +41,9 @@ export default function NationalAssociationHeader({
   const countryFlag = flagUrl(association?.country_code)
 
   return (
-    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-      <div className="flex items-start gap-3">
+    <div className="space-y-3">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex items-start gap-3">
         {countryFlag ? (
           <img
             src={countryFlag}
@@ -114,9 +115,13 @@ export default function NationalAssociationHeader({
         </div>
       </div>
 
-      <div className="flex max-w-full flex-wrap items-center justify-end gap-2 self-start">
-        <NationalAssociationTabs />
-        {onRefresh ? (
+        <div className="flex max-w-full flex-wrap items-center justify-end gap-2 self-start">
+          <NationalAssociationTabs />
+        </div>
+      </div>
+
+      {onRefresh ? (
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={onRefresh}
@@ -126,8 +131,8 @@ export default function NationalAssociationHeader({
             {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
             {t('common.refresh')}
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   )
 }
