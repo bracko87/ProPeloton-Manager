@@ -463,10 +463,10 @@ export default function WorldNationsPage(): JSX.Element {
 
       if (next?.edition?.id) {
         const [eventScheduleResponse, hostWorkspaceResponse] = await Promise.all([
-          supabase.rpc('get_nations_competition_event_schedule_v1', {
+          supabase.rpc('get_nations_competition_event_schedule_v2', {
             p_edition_id: next.edition.id,
           }),
-          supabase.rpc('get_nations_host_application_workspace_v1', {
+          supabase.rpc('get_nations_host_application_workspace_v2', {
             p_edition_id: next.edition.id,
           }),
         ])
