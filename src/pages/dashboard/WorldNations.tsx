@@ -295,15 +295,14 @@ function RoundCard({
             <h3 className="text-base font-semibold text-slate-900">{round.round_label}</h3>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            {t('world.roundSummary', { entrants: round.entrants_target, advance: round.advance_target })}
+            {round.round_type === 'world_final'
+              ? 'Final field'
+              : `${round.entrants_target} nation${round.entrants_target === 1 ? '' : 's'}`}
             {' · '}
             {formatGameDate(round.starts_on_game_date)}
             {round.ends_on_game_date ? ` – ${formatGameDate(round.ends_on_game_date)}` : ''}
           </p>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses(round.status)}`}>
-          {t(`status.${round.status}`, { defaultValue: humanize(round.status) })}
-        </span>
       </div>
 
       <div className="grid gap-4 p-4 xl:grid-cols-2">
@@ -316,9 +315,6 @@ function RoundCard({
           )
 
           const groupEvents = scheduleRows.filter(event => event.group_id === group.id)
-          const groupHostEvent = groupEvents.find(event => event.host_country_code)
-          const groupHost = groupHostEvent?.host_country_code ?? null
-          const groupHostName = groupHostEvent?.host_country_name ?? groupHost
 
           return (
           <div key={group.id} className="overflow-hidden rounded border border-slate-200">
@@ -326,21 +322,10 @@ function RoundCard({
               <div>
                 <div className="font-semibold text-slate-900">{group.group_label}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
-                  {t('world.groupLiveSummary', {
-                    current: group.entries?.length ?? 0,
-                    entrants: group.planned_entrant_count,
-                    advance: group.planned_advance_count,
-                  })}
+                  {round.round_type === 'world_final'
+                    ? `Teams: ${group.entries?.length ?? 0}`
+                    : `Teams: ${group.entries?.length ?? 0} / ${round.group_size_max || 16}`}
                 </div>
-                {groupHost ? (
-                  <div className="mt-1 text-xs font-medium text-slate-700">
-                    <span className="mr-1">{t('world.hostLabel')}:</span>
-                    <span className="inline-flex align-middle">
-                      <CountryLabel code={groupHost} name={groupHostName} />
-                    </span>
-                    <span className="ml-1">{t('world.allThreeRaceDays')}</span>
-                  </div>
-                ) : null}
               </div>
               <div className="flex items-center gap-2">
                 {viewerInGroup && viewerIsCoach ? (
