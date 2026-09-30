@@ -3,36 +3,7 @@ import { Loader2 } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
-import NationalAssociationTabs from '../../components/nations/NationalAssociationTabs'
-
-type Candidate = {
-  candidate_id: string
-  club_id?: string | null
-  club_name?: string | null
-  manifesto?: string | null
-  status: string
-  is_me?: boolean
-  in_current_round?: boolean
-}
-
-type Election = {
-  id: string
-  season_number: number
-  kind: string
-  status: string
-  registration_open_date?: string | null
-  registration_close_date?: string | null
-  round1_open_date?: string | null
-  round1_close_date?: string | null
-  current_round: number
-  current_round_open_date?: string | null
-  current_round_close_date?: string | null
-  runoff_registration_open?: boolean
-  winning_candidate_id?: string | null
-  my_candidate_id?: string | null
-  my_vote_candidate_id?: string | null
-  candidates: Candidate[]
-}
+import NationalAssociationHeader from '../../components/nations/NationalAssociationHeader'
 
 type AssociationData = {
   eligible: boolean
@@ -54,7 +25,6 @@ type AssociationData = {
   my_activation_coin_contribution?: number
   coin_balance?: number
   activation_ready?: boolean
-  has_treasury?: boolean
   coach?: {
     term_id: string
     user_id: string
@@ -65,7 +35,6 @@ type AssociationData = {
     starts_on?: string | null
     ends_on?: string | null
   } | null
-  election?: Election | null
 }
 
 type OverallRange = {
@@ -76,111 +45,25 @@ type OverallRange = {
 type CoachRider = {
   rider_id: string
   rider_name: string
-  image_url?: string | null
   country_code: string
   role?: string | null
   age_years?: number | null
   club_id?: string | null
   club_name?: string | null
-  club_is_ai?: boolean
   availability_status?: string | null
   fatigue?: number | null
-  race_sharpness?: number | null
-  last_raced_on?: string | null
-  race_days_last_14?: number | null
-  season_points?: number | null
   national_rank?: number | null
-  national_raw_points?: number | null
-  national_weighted_points?: number | null
-  latest_ranked_result_date?: string | null
   overall_range?: OverallRange | null
   national_championship?: {
     is_current_champion?: boolean
     final_rank?: number | null
-    qualification_rank?: number | null
-    final_status?: string | null
-    qualification_status?: string | null
   } | null
-}
-
-type StandardEquipment = {
-  equipment_category: string
-  specialization: string
-  model_count: number
-  catalog_item_id?: string | null
-  display_name?: string | null
-  tier?: number | null
-  quality_score?: number | null
-}
-
-type StandardAsset = {
-  asset_key: string
-  asset_level: number
-  quantity: number
-  usage_note?: string | null
-}
-
-type StandardSupply = {
-  supply_key: string
-  display_name: string
-  quantity: number
-  replenishment_scope: string
-}
-
-type StandardPackage = {
-  assets?: StandardAsset[]
-  equipment?: StandardEquipment[]
-  supplies?: StandardSupply[]
-}
-
-type Lineup = {
-  lineup_id: string
-  race_day: number
-  race_type: string
-  status: string
-  submitted_on?: string | null
-  riders: Array<{
-    rider_id: string
-    rider_name: string
-    club_name?: string | null
-  }>
-}
-
-type LineupData = {
-  allowed: boolean
-  squad_id?: string
-  lineups?: Lineup[]
 }
 
 type CoachDashboard = {
   allowed: boolean
-  reason?: string
   season_number: number
   current_game_date: string
-  association?: {
-    id: string
-    name: string
-    country_code: string
-    country_name: string
-  }
-  coach?: {
-    term_id: string
-    term_kind: string
-    club_id?: string | null
-    club_name?: string | null
-    starts_on?: string | null
-    ends_on?: string | null
-  }
-  national_championship?: {
-    edition_id: string
-    status: string
-    qualification_date?: string | null
-    final_date?: string | null
-    champion_rider_id?: string | null
-    champion_name?: string | null
-    ranking_frozen?: boolean
-  } | null
-  standard_package?: StandardPackage
   riders?: CoachRider[]
 }
 
@@ -195,8 +78,6 @@ type Callup = {
   response_deadline?: string | null
   responded_on?: string | null
   can_respond?: boolean
-  association_name?: string
-  country_code?: string
 }
 
 type CoachCallupData = {
@@ -222,38 +103,72 @@ type CoachCallupData = {
   } | null
 }
 
+type Lineup = {
+  lineup_id: string
+  race_day: number
+  race_type: string
+  status: string
+  submitted_on?: string | null
+  riders: Array<{
+    rider_id: string
+    rider_name: string
+    club_name?: string | null
+  }>
+}
+
+type LineupData = {
+  allowed: boolean
+  squad_id?: string
+  lineups?: Lineup[]
+}
+
 type NationsCycle = {
   state: string
-  association_id?: string | null
-  edition_id?: string | null
-  entry_id?: string | null
-  entry_status?: string | null
-  season_number?: number | null
-  current_game_date?: string | null
   cycle_key?: string | null
-  round_id?: string | null
-  round_index?: number | null
-  round_type?: string | null
   round_label?: string | null
-  round_status?: string | null
-  group_id?: string | null
-  group_number?: number | null
   group_label?: string | null
-  group_status?: string | null
-  group_entry_id?: string | null
-  group_entry_status?: string | null
-  start_date?: string | null
-  end_date?: string | null
   day1_date?: string | null
   day2_date?: string | null
   day3_date?: string | null
 }
 
-function flagUrl(code?: string | null): string | null {
-  const normalized = code?.trim().toLowerCase()
-  return normalized && /^[a-z]{2}$/.test(normalized)
-    ? `https://flagcdn.com/w80/${normalized}.png`
-    : null
+type OverviewEvent = {
+  event_type: string
+  event_date: string
+  label: string
+  status?: string | null
+}
+
+type OverviewData = {
+  available: boolean
+  association_exists?: boolean
+  season_number?: number
+  current_game_date?: string
+  stats?: {
+    member_count?: number
+    active_callups?: number
+    selected_riders?: number
+    national_champion?: string | null
+    last_world_nations_rank?: number | null
+    last_world_nations_points?: number | null
+  }
+  upcoming_events?: OverviewEvent[]
+  current_squad?: {
+    squad_id: string
+    cycle_key: string
+    status: string
+    squad_size: number
+    confirmed_on?: string | null
+    duty_start_date?: string | null
+    duty_end_date?: string | null
+    members?: Array<{
+      rider_id: string
+      rider_name: string
+      club_id?: string | null
+      club_name?: string | null
+      squad_role?: string | null
+    }>
+  } | null
 }
 
 function humanize(value?: string | null): string {
@@ -276,7 +191,7 @@ function statusClasses(status?: string | null): string {
   if (status === 'active' || status === 'completed' || status === 'accepted' || status === 'auto_accepted') {
     return 'bg-emerald-100 text-emerald-800'
   }
-  if (status === 'forming' || status === 'candidate_registration' || status === 'voting' || status === 'runoff' || status === 'pending') {
+  if (status === 'forming' || status === 'pending' || status === 'confirmed' || status === 'on_duty') {
     return 'bg-amber-100 text-amber-800'
   }
   if (status === 'inactive' || status === 'declined' || status === 'expired') {
@@ -292,47 +207,50 @@ export default function NationalAssociationPage(): JSX.Element {
     const requested = new URLSearchParams(location.search).get('cycle')?.trim()
     return requested || null
   }, [location.search])
-  const [nationsCycle, setNationsCycle] = useState<NationsCycle | null>(null)
-  const detectedCycleKey =
-    nationsCycle?.state === 'active_cycle' ? nationsCycle.cycle_key ?? null : null
-  const cycleKey = requestedCycleKey || detectedCycleKey || 'season_main'
-  const isNationsCycle = cycleKey.startsWith('nations:')
 
   const [association, setAssociation] = useState<AssociationData | null>(null)
+  const [overview, setOverview] = useState<OverviewData | null>(null)
   const [dashboard, setDashboard] = useState<CoachDashboard | null>(null)
+  const [nationsCycle, setNationsCycle] = useState<NationsCycle | null>(null)
   const [coachCallups, setCoachCallups] = useState<CoachCallupData | null>(null)
   const [myCallups, setMyCallups] = useState<Callup[]>([])
   const [lineupData, setLineupData] = useState<LineupData | null>(null)
   const [lineupDrafts, setLineupDrafts] = useState<Record<number, string[]>>({})
+  const [selectedSquad, setSelectedSquad] = useState<string[]>([])
+  const [riderSearch, setRiderSearch] = useState('')
+  const [coinContributionInput, setCoinContributionInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
-  const [manifesto, setManifesto] = useState('')
-  const [selectedSquad, setSelectedSquad] = useState<string[]>([])
-  const [riderSearch, setRiderSearch] = useState('')
-  const [coinContributionInput, setCoinContributionInput] = useState('')
+
+  const detectedCycleKey =
+    nationsCycle?.state === 'active_cycle' ? nationsCycle.cycle_key ?? null : null
+  const cycleKey = requestedCycleKey || detectedCycleKey || 'season_main'
+  const isNationsCycle = cycleKey.startsWith('nations:')
 
   const load = async (): Promise<void> => {
     setLoading(true)
     setError(null)
 
     try {
-      const associationResponse = await supabase.rpc('get_my_national_association_v1')
+      const [associationResponse, overviewResponse, dashboardResponse, myCallupsResponse, cycleResponse] =
+        await Promise.all([
+          supabase.rpc('get_my_national_association_v1'),
+          supabase.rpc('get_my_national_association_overview_v1'),
+          supabase.rpc('get_national_coach_dashboard_v1'),
+          supabase.rpc('get_my_national_team_callups_v1'),
+          supabase.rpc('get_my_current_nations_cycle_v1'),
+        ])
+
       if (associationResponse.error) throw associationResponse.error
-      const nextAssociation = (associationResponse.data ?? null) as AssociationData | null
-      setAssociation(nextAssociation)
-
-      const [dashboardResponse, myCallupsResponse, cycleResponse] = await Promise.all([
-        supabase.rpc('get_national_coach_dashboard_v1'),
-        supabase.rpc('get_my_national_team_callups_v1'),
-        supabase.rpc('get_my_current_nations_cycle_v1'),
-      ])
-
+      if (overviewResponse.error) throw overviewResponse.error
       if (dashboardResponse.error) throw dashboardResponse.error
       if (myCallupsResponse.error) throw myCallupsResponse.error
       if (cycleResponse.error) throw cycleResponse.error
 
+      const nextAssociation = (associationResponse.data ?? null) as AssociationData | null
+      const nextOverview = (overviewResponse.data ?? null) as OverviewData | null
       const nextDashboard = (dashboardResponse.data ?? null) as CoachDashboard | null
       const nextMyCallups = (myCallupsResponse.data ?? []) as Callup[]
       const nextCycle = (cycleResponse.data ?? null) as NationsCycle | null
@@ -341,6 +259,10 @@ export default function NationalAssociationPage(): JSX.Element {
         (nextCycle?.state === 'active_cycle' ? nextCycle.cycle_key ?? null : null) ||
         'season_main'
 
+      setAssociation(nextAssociation)
+      setOverview(nextOverview)
+      setDashboard(nextDashboard)
+      setMyCallups(nextMyCallups)
       setNationsCycle(nextCycle)
 
       const coachCallupsResponse = await supabase.rpc('get_my_national_coach_callups_v1', {
@@ -349,13 +271,12 @@ export default function NationalAssociationPage(): JSX.Element {
       if (coachCallupsResponse.error) throw coachCallupsResponse.error
 
       const nextCoachCallups = (coachCallupsResponse.data ?? null) as CoachCallupData | null
-
-      setDashboard(nextDashboard)
       setCoachCallups(nextCoachCallups)
-      setMyCallups(nextMyCallups)
 
       if (nextCoachCallups?.squad?.members?.length) {
         setSelectedSquad(nextCoachCallups.squad.members.map(member => member.rider_id))
+      } else {
+        setSelectedSquad([])
       }
 
       if (nextCoachCallups?.squad?.squad_id) {
@@ -365,6 +286,7 @@ export default function NationalAssociationPage(): JSX.Element {
         if (lineupResponse.error) throw lineupResponse.error
         const nextLineups = (lineupResponse.data ?? null) as LineupData | null
         setLineupData(nextLineups)
+
         const drafts: Record<number, string[]> = {}
         for (const lineup of nextLineups?.lineups ?? []) {
           drafts[lineup.race_day] = lineup.riders.map(rider => rider.rider_id)
@@ -438,39 +360,19 @@ export default function NationalAssociationPage(): JSX.Element {
     })
   }
 
-  const syncElection = async (): Promise<void> => {
-    await perform('sync-election', async () => {
-      const { error: rpcError } = await supabase.rpc('sync_my_national_association_election_v1')
-      if (rpcError) throw rpcError
-      setMessage(t('association.messages.electionUpdated'))
-    })
-  }
-
-  const registerCandidate = async (): Promise<void> => {
-    const electionId = association?.election?.id
-    if (!electionId) return
-
-    await perform('candidate', async () => {
-      const { error: rpcError } = await supabase.rpc('register_national_coach_candidate_v1', {
-        p_election_id: electionId,
-        p_manifesto: manifesto,
+  const respondCallup = async (callup: Callup, accept: boolean): Promise<void> => {
+    await perform(`respond:${callup.callup_id}`, async () => {
+      const { error: rpcError } = await supabase.rpc('respond_to_national_team_callup_v1', {
+        p_callup_id: callup.callup_id,
+        p_accept: accept,
+        p_note: null,
       })
       if (rpcError) throw rpcError
-      setMessage(t('association.messages.candidatureRegistered'))
-    })
-  }
-
-  const voteForCandidate = async (candidateId: string): Promise<void> => {
-    const electionId = association?.election?.id
-    if (!electionId) return
-
-    await perform(`vote:${candidateId}`, async () => {
-      const { error: rpcError } = await supabase.rpc('cast_national_coach_vote_v1', {
-        p_election_id: electionId,
-        p_candidate_id: candidateId,
-      })
-      if (rpcError) throw rpcError
-      setMessage(t('association.messages.voteSubmitted'))
+      setMessage(
+        accept
+          ? t('association.messages.callupAccepted', { rider: callup.rider_name })
+          : t('association.messages.callupDeclined', { rider: callup.rider_name }),
+      )
     })
   }
 
@@ -482,22 +384,6 @@ export default function NationalAssociationPage(): JSX.Element {
       })
       if (rpcError) throw rpcError
       setMessage(t('association.messages.calledUp', { rider: rider.rider_name }))
-    })
-  }
-
-  const respondCallup = async (callup: Callup, accept: boolean): Promise<void> => {
-    await perform(`respond:${callup.callup_id}`, async () => {
-      const { error: rpcError } = await supabase.rpc('respond_to_national_team_callup_v1', {
-        p_callup_id: callup.callup_id,
-        p_accept: accept,
-        p_note: null,
-      })
-      if (rpcError) throw rpcError
-      setMessage(
-        accept
-          ? `${callup.rider_name}'s National Team call-up was accepted.`
-          : `${callup.rider_name}'s National Team call-up was declined.`,
-      )
     })
   }
 
@@ -539,10 +425,7 @@ export default function NationalAssociationPage(): JSX.Element {
   )
 
   const existingCallupByRider = useMemo(
-    () =>
-      new Map(
-        (coachCallups?.callups ?? []).map(callup => [callup.rider_id, callup]),
-      ),
+    () => new Map((coachCallups?.callups ?? []).map(callup => [callup.rider_id, callup])),
     [coachCallups],
   )
 
@@ -550,6 +433,7 @@ export default function NationalAssociationPage(): JSX.Element {
     const search = riderSearch.trim().toLowerCase()
     const riders = dashboard?.riders ?? []
     if (!search) return riders
+
     return riders.filter(rider =>
       [rider.rider_name, rider.club_name, rider.role]
         .filter(Boolean)
@@ -557,9 +441,9 @@ export default function NationalAssociationPage(): JSX.Element {
     )
   }, [dashboard?.riders, riderSearch])
 
-  const countryFlag = flagUrl(association?.country_code ?? dashboard?.association?.country_code)
-  const election = association?.election ?? null
   const isCoach = dashboard?.allowed === true
+  const currentSquad = overview?.current_squad
+  const upcomingEvents = overview?.upcoming_events ?? []
 
   if (loading && !association) {
     return (
@@ -574,60 +458,12 @@ export default function NationalAssociationPage(): JSX.Element {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div className="flex items-start gap-3">
-          {countryFlag ? (
-            <img
-              src={countryFlag}
-              alt={association?.country_code ?? t('common.country')}
-              className="mt-0.5 h-9 w-14 rounded border border-slate-200 object-cover"
-            />
-          ) : (
-            <div className="mt-0.5 flex h-9 w-14 items-center justify-center rounded border border-slate-200 bg-white text-xs font-semibold text-slate-500">
-              {association?.country_code ?? '—'}
-            </div>
-          )}
-          <div>
-            <h2 className="text-2xl font-semibold text-slate-900">
-              {association?.association_name ??
-                (association?.country_code
-                  ? t('association.countryTitle', { country: association.country_code })
-                  : t('association.title'))}
-            </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              {t('association.subtitle')}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Link
-                to="/dashboard/national-ranking"
-                className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
-              >
-                {t('association.navRanking')}
-              </Link>
-              <span className="text-xs text-slate-300">•</span>
-              <Link
-                to="/dashboard/national-ranking?tab=history"
-                className="text-xs font-semibold text-yellow-700 hover:text-yellow-800 hover:underline"
-              >
-                {t('association.navChampionshipHistory')}
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 self-start">
-          <NationalAssociationTabs />
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={loading}
-            className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
-            {t('common.refresh')}
-          </button>
-        </div>
-      </div>
+      <NationalAssociationHeader
+        association={association}
+        isCoach={isCoach}
+        loading={loading}
+        onRefresh={() => void load()}
+      />
 
       {error ? (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -643,33 +479,37 @@ export default function NationalAssociationPage(): JSX.Element {
 
       {!association?.eligible ? (
         <section className="rounded bg-white p-5 shadow">
-          <h3 className="text-base font-semibold text-slate-900">{t('association.ineligibleTitle')}</h3>
-          <p className="mt-2 text-sm text-slate-600">
-            {t('association.ineligibleText')}
-          </p>
+          <h3 className="text-base font-semibold text-slate-900">
+            {t('association.ineligibleTitle')}
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">{t('association.ineligibleText')}</p>
         </section>
       ) : (
         <>
           <section className="overflow-hidden rounded bg-white shadow">
             <div className="grid gap-px bg-slate-200 md:grid-cols-4">
               <div className="bg-white p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {t('association.summary.association')}
                 </div>
                 <div className="mt-2 text-lg font-semibold text-slate-900">
-                  {association.association_exists ? t(`status.${association.association_status}`, { defaultValue: humanize(association.association_status) }) : t('common.notCreated')}
+                  {association.association_exists
+                    ? t(`status.${association.association_status}`, {
+                        defaultValue: humanize(association.association_status),
+                      })
+                    : t('common.notCreated')}
                 </div>
                 {association.association_status ? (
                   <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(association.association_status)}`}>
-                    {t(`status.${association.association_status}`, { defaultValue: humanize(association.association_status) })}
+                    {t(`status.${association.association_status}`, {
+                      defaultValue: humanize(association.association_status),
+                    })}
                   </span>
                 ) : null}
               </div>
 
               <div className="bg-white p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {t('association.summary.members')}
                 </div>
                 <div className="mt-2 text-lg font-semibold text-slate-900">
@@ -680,34 +520,105 @@ export default function NationalAssociationPage(): JSX.Element {
                 </p>
               </div>
 
-              <div className="bg-white p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-
-                  {t('association.summary.coach')}
+              <div className="bg-white p-4 md:col-span-2">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t('association.activation.title')}
+                    </div>
+                    <div className="mt-2 text-lg font-semibold text-slate-900">
+                      {association.activation_coin_contributed ?? 0} / {association.activation_coin_target ?? 50} {t('association.activation.coins')}
+                    </div>
+                  </div>
+                  <div className="text-right text-xs text-slate-500">
+                    <div>{t('association.activation.remaining')}</div>
+                    <strong className="text-sm text-slate-900">
+                      {association.activation_coin_remaining ?? association.activation_coin_target ?? 50} {t('association.activation.coins')}
+                    </strong>
+                  </div>
                 </div>
-                <div className="mt-2 text-lg font-semibold text-slate-900">
-                  {association.coach?.club_name ?? t('common.notElected')}
-                </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  {association.coach
-                    ? t('association.summary.coachSeason', { season: association.coach.season_number, term: humanize(association.coach.term_kind) })
-                    : t('common.electionRequired')}
-                </p>
-              </div>
 
-              <div className="bg-white p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-
-                  {t('association.summary.operations')}
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-yellow-400"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(
+                          0,
+                          ((association.activation_coin_contributed ?? 0) /
+                            Math.max(association.activation_coin_target ?? 50, 1)) *
+                            100,
+                        ),
+                      )}%`,
+                    }}
+                  />
                 </div>
-                <div className="mt-2 text-lg font-semibold text-slate-900">{t('association.summary.fullyCovered')}</div>
-                <p className="mt-1 text-xs text-slate-500">
-                  {t('association.summary.operationsHint')}
-                </p>
+
+                {(association.activation_coin_remaining ?? 0) > 0 && association.is_member ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {[1, 5, 10].map(amount => (
+                      <button
+                        key={amount}
+                        type="button"
+                        disabled={
+                          busyKey === 'contribute-coins' ||
+                          amount > (association.coin_balance ?? 0)
+                        }
+                        onClick={() => void contributeActivationCoins(amount)}
+                        className="rounded bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+                      >
+                        +{amount}
+                      </button>
+                    ))}
+                    <input
+                      type="number"
+                      min={1}
+                      max={Math.max(association.activation_coin_remaining ?? 1, 1)}
+                      value={coinContributionInput}
+                      onChange={event => setCoinContributionInput(event.target.value)}
+                      placeholder={t('association.activation.custom')}
+                      className="w-24 rounded border border-slate-300 bg-white px-2 py-1.5 text-xs outline-none focus:border-yellow-500"
+                    />
+                    <button
+                      type="button"
+                      disabled={
+                        busyKey === 'contribute-coins' ||
+                        !coinContributionInput ||
+                        Number(coinContributionInput) <= 0 ||
+                        Number(coinContributionInput) > (association.coin_balance ?? 0)
+                      }
+                      onClick={() => void contributeActivationCoins(Number(coinContributionInput))}
+                      className="rounded bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black hover:bg-yellow-300 disabled:opacity-40"
+                    >
+                      {t('association.activation.giveCoins')}
+                    </button>
+                    <span className="text-xs text-slate-500">
+                      {t('association.activation.balanceShort', {
+                        balance: association.coin_balance ?? 0,
+                      })}
+                    </span>
+                  </div>
+                ) : (association.activation_coin_remaining ?? 0) <= 0 ? (
+                  <p className="mt-3 text-xs font-semibold text-emerald-700">
+                    {t('association.activation.funded')}
+                  </p>
+                ) : (
+                  <p className="mt-3 text-xs text-slate-500">
+                    {t('association.activation.joinFirst')}
+                  </p>
+                )}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 border-t border-slate-200 px-4 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-4">
+              <p className="text-xs leading-5 text-slate-500">
+                {t('association.activation.requirements', {
+                  members: association.minimum_members ?? 5,
+                  coins: association.activation_coin_target ?? 50,
+                })}
+              </p>
+
               {!association.is_member ? (
                 <button
                   type="button"
@@ -723,7 +634,7 @@ export default function NationalAssociationPage(): JSX.Element {
                   type="button"
                   disabled={busyKey === 'leave'}
                   onClick={() => void leaveAssociation()}
-                  className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                 >
                   {t('association.leave')}
                 </button>
@@ -731,288 +642,182 @@ export default function NationalAssociationPage(): JSX.Element {
             </div>
           </section>
 
-          {association.association_exists ? (
-            <section className="overflow-hidden rounded bg-white shadow">
-              <div className="border-b border-slate-200 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-slate-900">
-                      {t('association.activation.title')}
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {t('association.activation.description')}
-                    </p>
-                  </div>
-                  <div className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-900">
-                    {association.activation_coin_contributed ?? 0} / {association.activation_coin_target ?? 50} {t('association.activation.coins')}
-                  </div>
+          <section className="rounded bg-white shadow">
+            <div className="border-b border-slate-200 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {t('association.dashboard.eyebrow')}
+              </div>
+              <h3 className="mt-1 text-lg font-semibold text-slate-900">
+                {t('association.dashboard.title')}
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                {t('association.dashboard.description')}
+              </p>
+            </div>
+
+            <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.dashboard.season')}
+                </div>
+                <div className="mt-2 text-xl font-semibold text-slate-900">
+                  {overview?.season_number ?? dashboard?.season_number ?? '—'}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {formatGameDate(overview?.current_game_date ?? dashboard?.current_game_date)}
                 </div>
               </div>
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.dashboard.activeCallups')}
+                </div>
+                <div className="mt-2 text-xl font-semibold text-slate-900">
+                  {overview?.stats?.active_callups ?? 0}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {t('association.dashboard.activeCallupsHelp')}
+                </div>
+              </div>
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.dashboard.selectedRiders')}
+                </div>
+                <div className="mt-2 text-xl font-semibold text-slate-900">
+                  {overview?.stats?.selected_riders ?? 0} / 10
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {currentSquad?.status
+                    ? t(`status.${currentSquad.status}`, { defaultValue: humanize(currentSquad.status) })
+                    : t('association.dashboard.noSquad')}
+                </div>
+              </div>
+              <div className="bg-white p-4">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t('association.dashboard.lastWorldNations')}
+                </div>
+                <div className="mt-2 text-xl font-semibold text-slate-900">
+                  {overview?.stats?.last_world_nations_rank
+                    ? `#${overview.stats.last_world_nations_rank}`
+                    : '—'}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {overview?.stats?.last_world_nations_points
+                    ? t('association.dashboard.points', {
+                        points: overview.stats.last_world_nations_points,
+                      })
+                    : t('association.dashboard.noWorldResult')}
+                </div>
+              </div>
+            </div>
 
-              <div className="p-4">
-                <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
-                  <div
-                    className="h-full rounded-full bg-yellow-400 transition-all"
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        Math.max(
-                          0,
-                          ((association.activation_coin_contributed ?? 0) /
-                            Math.max(association.activation_coin_target ?? 50, 1)) *
-                            100,
-                        ),
-                      )}%`,
-                    }}
-                  />
+            <div className="grid gap-6 p-4 xl:grid-cols-2">
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold text-slate-900">
+                    {t('association.dashboard.upcomingEvents')}
+                  </h4>
+                  <Link
+                    to="/dashboard/national-association/world-nations"
+                    className="text-xs font-semibold text-yellow-700 hover:underline"
+                  >
+                    {t('association.dashboard.openWorldNations')}
+                  </Link>
                 </div>
 
-                <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
-                  <div className="rounded border border-slate-200 bg-slate-50 p-3">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      {t('association.activation.remaining')}
-                    </div>
-                    <div className="mt-1 font-semibold text-slate-900">
-                      {association.activation_coin_remaining ?? association.activation_coin_target ?? 50} {t('association.activation.coins')}
-                    </div>
-                  </div>
-                  <div className="rounded border border-slate-200 bg-slate-50 p-3">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      {t('association.activation.yourContribution')}
-                    </div>
-                    <div className="mt-1 font-semibold text-slate-900">
-                      {association.my_activation_coin_contribution ?? 0} {t('association.activation.coins')}
-                    </div>
-                  </div>
-                  <div className="rounded border border-slate-200 bg-slate-50 p-3">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      {t('association.activation.yourBalance')}
-                    </div>
-                    <div className="mt-1 font-semibold text-slate-900">
-                      {association.coin_balance ?? 0} {t('association.activation.coins')}
-                    </div>
-                  </div>
-                </div>
-
-                {(association.activation_coin_remaining ?? 0) > 0 ? (
-                  association.is_member ? (
-                    <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-                      <div className="text-sm font-semibold text-slate-900">
-                        {t('association.activation.contribute')}
-                      </div>
-                      <p className="mt-1 text-xs leading-5 text-slate-600">
-                        {t('association.activation.permanentNote')}
-                      </p>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        {[1, 5, 10].map(amount => (
-                          <button
-                            key={amount}
-                            type="button"
-                            disabled={
-                              busyKey === 'contribute-coins' ||
-                              amount > (association.coin_balance ?? 0)
-                            }
-                            onClick={() => void contributeActivationCoins(amount)}
-                            className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
-                          >
-                            +{amount}
-                          </button>
-                        ))}
-                        <input
-                          type="number"
-                          min={1}
-                          max={Math.max(association.activation_coin_remaining ?? 1, 1)}
-                          value={coinContributionInput}
-                          onChange={event => setCoinContributionInput(event.target.value)}
-                          placeholder={t('association.activation.custom')}
-                          className="w-28 rounded border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-yellow-500"
-                        />
-                        <button
-                          type="button"
-                          disabled={
-                            busyKey === 'contribute-coins' ||
-                            !coinContributionInput ||
-                            Number(coinContributionInput) <= 0 ||
-                            Number(coinContributionInput) > (association.coin_balance ?? 0)
-                          }
-                          onClick={() => void contributeActivationCoins(Number(coinContributionInput))}
-                          className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-40"
-                        >
-                          {busyKey === 'contribute-coins' ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : null}
-                          {t('association.activation.giveCoins')}
-                        </button>
-                      </div>
+                <div className="mt-3 space-y-2">
+                  {upcomingEvents.length === 0 ? (
+                    <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                      {t('association.dashboard.noUpcomingEvents')}
                     </div>
                   ) : (
-                    <p className="mt-4 text-sm text-slate-600">
-                      {t('association.activation.joinFirst')}
-                    </p>
-                  )
-                ) : (
-                  <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-                    {t('association.activation.funded')}
-                  </div>
-                )}
-
-                <p className="mt-3 text-xs text-slate-500">
-                  {t('association.activation.requirements', {
-                    members: association.minimum_members ?? 5,
-                    coins: association.activation_coin_target ?? 50,
-                  })}
-                </p>
-              </div>
-            </section>
-          ) : null}
-
-          {association.is_member && association.association_status === 'active' ? (
-            <section className="rounded bg-white shadow">
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-4">
-                <div>
-                  <div className="flex items-center gap-2">
-
-                    <h3 className="text-base font-semibold text-slate-900">{t('association.election.title')}</h3>
-                  </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {t('association.election.schedule')}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={busyKey === 'sync-election'}
-                  onClick={() => void syncElection()}
-                  className="inline-flex items-center gap-2 rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                >
-                  {busyKey === 'sync-election' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  {t('association.election.update')}
-                </button>
-              </div>
-
-              {election ? (
-                <div className="space-y-4 p-4">
-                  <div className="grid gap-3 md:grid-cols-4">
-                    <div className="rounded border border-slate-200 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.status')}</div>
-                      <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(election.status)}`}>
-                        {t(`status.${election.status}`, { defaultValue: humanize(election.status) })}
-                      </span>
-                    </div>
-                    <div className="rounded border border-slate-200 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.round')}</div>
-                      <div className="mt-2 text-sm font-semibold text-slate-900">{election.current_round}</div>
-                    </div>
-                    <div className="rounded border border-slate-200 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.currentWindow')}</div>
-                      <div className="mt-2 text-sm font-semibold text-slate-900">
-                        {formatGameDate(election.current_round_open_date)} – {formatGameDate(election.current_round_close_date)}
-                      </div>
-                    </div>
-                    <div className="rounded border border-slate-200 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('common.votingRule')}</div>
-                      <div className="mt-2 text-sm font-semibold text-slate-900">{t('association.election.oneMemberOneVote')}</div>
-                    </div>
-                  </div>
-
-                  {election.status === 'candidate_registration' && !election.my_candidate_id ? (
-                    <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
-                      <label className="block">
-                        <span className="text-sm font-semibold text-slate-900">{t('association.election.manifesto')}</span>
-                        <textarea
-                          value={manifesto}
-                          onChange={event => setManifesto(event.target.value)}
-                          rows={4}
-                          maxLength={1000}
-                          className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
-                          placeholder={t('association.election.manifestoPlaceholder')}
-                        />
-                      </label>
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          type="button"
-                          disabled={busyKey === 'candidate' || manifesto.trim().length < 10}
-                          onClick={() => void registerCandidate()}
-                          className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
-                        >
-                          {busyKey === 'candidate' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                          {t('association.election.submitCandidature')}
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="grid gap-3 lg:grid-cols-2">
-                    {(election.candidates ?? []).map(candidate => (
+                    upcomingEvents.map(event => (
                       <div
-                        key={candidate.candidate_id}
-                        className={[
-                          'rounded border p-4',
-                          candidate.in_current_round === false
-                            ? 'border-slate-200 bg-slate-50 opacity-60'
-                            : 'border-slate-200 bg-white',
-                        ].join(' ')}
+                        key={`${event.event_type}:${event.event_date}`}
+                        className="flex items-center justify-between gap-3 rounded border border-slate-200 bg-slate-50 p-3"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="font-semibold text-slate-900">
-                              {candidate.club_name ?? t('common.candidate')}
-                              {candidate.is_me ? ` · ${t('common.you')}` : ''}
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">
+                            {t(`association.dashboard.event.${event.event_type}`, {
+                              defaultValue: event.label,
+                            })}
+                          </div>
+                          {event.status ? (
+                            <div className="mt-1 text-xs text-slate-500">
+                              {humanize(event.status)}
                             </div>
-                            <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
-                              {candidate.manifesto || t('association.election.noManifesto')}
-                            </p>
+                          ) : null}
+                        </div>
+                        <div className="text-sm font-semibold text-slate-700">
+                          {formatGameDate(event.event_date)}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold text-slate-900">
+                    {t('association.dashboard.currentSelection')}
+                  </h4>
+                  {isCoach ? (
+                    <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-semibold text-yellow-900">
+                      {t('association.userStatus.nationalCoach')}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="mt-3">
+                  {!currentSquad?.members?.length ? (
+                    <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                      {t('association.dashboard.noCurrentSelection')}
+                    </div>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {currentSquad.members.map((member, index) => (
+                        <div
+                          key={member.rider_id}
+                          className="rounded border border-slate-200 bg-slate-50 px-3 py-2.5"
+                        >
+                          <div className="text-xs font-semibold text-slate-400">
+                            #{index + 1}
+                          </div>
+                          <div className="mt-0.5 text-sm font-semibold text-slate-900">
+                            {member.rider_name}
+                          </div>
+                          <div className="mt-0.5 text-xs text-slate-500">
+                            {member.club_name ?? t('common.freeAgent')}
                           </div>
                         </div>
-
-                        {(election.status === 'voting' || election.status === 'runoff') &&
-                        candidate.in_current_round !== false &&
-                        !election.my_vote_candidate_id ? (
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              type="button"
-                              disabled={busyKey === `vote:${candidate.candidate_id}`}
-                              onClick={() => void voteForCandidate(candidate.candidate_id)}
-                              className="inline-flex items-center gap-2 rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-                            >
-                              {busyKey === `vote:${candidate.candidate_id}`
-                                ? <Loader2 className="h-4 w-4 animate-spin" />
-                                : null}
-                              {t('common.vote')}
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="p-4 text-sm text-slate-500">
-                  {t('association.election.none')}
-                </div>
-              )}
-            </section>
-          ) : null}
+              </div>
+            </div>
+          </section>
 
           {myCallups.length > 0 ? (
             <section className="rounded bg-white shadow">
               <div className="border-b border-slate-200 p-4">
-                <h3 className="text-base font-semibold text-slate-900">{t('association.callups.title')}</h3>
+                <h3 className="font-semibold text-slate-900">
+                  {t('association.dashboard.yourCallups')}
+                </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  {t('association.callups.description')}
+                  {t('association.dashboard.yourCallupsHelp')}
                 </p>
               </div>
               <div className="divide-y divide-slate-200">
                 {myCallups.map(callup => (
-                  <div key={callup.callup_id} className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+                  <div key={callup.callup_id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                     <div>
                       <div className="font-semibold text-slate-900">{callup.rider_name}</div>
-                      <div className="mt-1 text-sm text-slate-500">
-                        {callup.association_name ?? t('association.callups.team')}
-                        {callup.response_deadline ? ` · ${t('association.callups.replyBy', { date: formatGameDate(callup.response_deadline) })}` : ''}
+                      <div className="mt-1 text-xs text-slate-500">
+                        {callup.club_name ?? t('common.freeAgent')} · {t('common.deadline')} {formatGameDate(callup.response_deadline)}
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(callup.status)}`}>
                         {t(`status.${callup.status}`, { defaultValue: humanize(callup.status) })}
                       </span>
@@ -1022,18 +827,16 @@ export default function NationalAssociationPage(): JSX.Element {
                             type="button"
                             disabled={busyKey === `respond:${callup.callup_id}`}
                             onClick={() => void respondCallup(callup, true)}
-                            className="inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                            className="rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
                           >
-
                             {t('common.accept')}
                           </button>
                           <button
                             type="button"
                             disabled={busyKey === `respond:${callup.callup_id}`}
                             onClick={() => void respondCallup(callup, false)}
-                            className="inline-flex items-center gap-1.5 rounded border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                            className="rounded border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
                           >
-
                             {t('common.decline')}
                           </button>
                         </>
@@ -1046,29 +849,27 @@ export default function NationalAssociationPage(): JSX.Element {
           ) : null}
 
           {isCoach ? (
-            <section className="rounded bg-white shadow">
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-4">
-                <div>
-                  <div className="flex items-center gap-2">
-
-                    <h3 className="text-base font-semibold text-slate-900">{t('association.workspace.title')}</h3>
+            <details className="group rounded bg-white shadow" open>
+              <summary className="cursor-pointer list-none border-b border-slate-200 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {t('association.dashboard.coachWorkspaceEyebrow')}
+                    </div>
+                    <h3 className="mt-1 font-semibold text-slate-900">
+                      {t('association.workspace.title')}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {isNationsCycle
+                        ? t('association.workspace.nationsCycleNotice')
+                        : t('association.workspace.maskedOverall')}
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {t('association.workspace.maskedOverall')}
-                    {isNationsCycle ? ` ${t('association.workspace.nationsCycleNotice')}` : ''}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {isNationsCycle ? (
-                    <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
-                      {t('association.workspace.worldNationsEvent')}
-                    </span>
-                  ) : null}
-                  <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
-                    Season {dashboard?.season_number}
+                  <span className="text-sm font-semibold text-yellow-700">
+                    {t('association.dashboard.expandCollapse')}
                   </span>
                 </div>
-              </div>
+              </summary>
 
               {isNationsCycle && nationsCycle?.state === 'active_cycle' ? (
                 <div className="border-b border-sky-200 bg-sky-50 p-4">
@@ -1077,11 +878,11 @@ export default function NationalAssociationPage(): JSX.Element {
                       <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
                         {t('association.workspace.currentAssignment')}
                       </div>
-                      <div className="mt-1 text-base font-semibold text-slate-900">
-                        {nationsCycle.round_label ?? t('association.navWorldNations')} · {nationsCycle.group_label ?? t('common.group')}
+                      <div className="mt-1 font-semibold text-slate-900">
+                        {nationsCycle.round_label ?? t('association.navWorldNations')} · {nationsCycle.group_label ?? '—'}
                       </div>
                       <div className="mt-1 text-sm text-slate-600">
-                        Day 1 {formatGameDate(nationsCycle.day1_date)} · Day 2 {formatGameDate(nationsCycle.day2_date)} · Day 3 {formatGameDate(nationsCycle.day3_date)}
+                        {formatGameDate(nationsCycle.day1_date)} · {formatGameDate(nationsCycle.day2_date)} · {formatGameDate(nationsCycle.day3_date)}
                       </div>
                     </div>
                     <Link
@@ -1094,34 +895,12 @@ export default function NationalAssociationPage(): JSX.Element {
                 </div>
               ) : null}
 
-              <div className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-3">
-                <div className="rounded border border-slate-200 p-3">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('association.workspace.nationalChampionship')}</div>
-                  <div className="mt-2 text-sm font-semibold text-slate-900">
-                    {dashboard?.national_championship?.champion_name ?? t('common.notCompleted')}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {dashboard?.national_championship?.ranking_frozen ? t('association.workspace.rankingFrozen') : t('association.workspace.liveRanking')}
-                  </div>
-                </div>
-                <div className="rounded border border-slate-200 p-3">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('association.workspace.provisionalCallups')}</div>
-                  <div className="mt-2 text-sm font-semibold text-slate-900">
-                    {(coachCallups?.callups ?? []).filter(item => ['pending', 'accepted', 'auto_accepted'].includes(item.status)).length} / 15
-                  </div>
-                </div>
-                <div className="rounded border border-slate-200 p-3">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('association.workspace.finalSquad')}</div>
-                  <div className="mt-2 text-sm font-semibold text-slate-900">
-                    {coachCallups?.squad?.members?.length ?? selectedSquad.length} / 10 riders
-                  </div>
-                </div>
-              </div>
-
               <div className="p-4">
                 <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <h4 className="font-semibold text-slate-900">{t('association.workspace.eligibleRiders')}</h4>
+                    <h4 className="font-semibold text-slate-900">
+                      {t('association.workspace.eligibleRiders')}
+                    </h4>
                     <p className="mt-1 text-xs text-slate-500">
                       {t('association.workspace.eligibleHelp')}
                     </p>
@@ -1135,15 +914,13 @@ export default function NationalAssociationPage(): JSX.Element {
                 </div>
 
                 <div className="overflow-x-auto rounded border border-slate-200">
-                  <table className="min-w-[1080px] w-full text-sm">
+                  <table className="min-w-[940px] w-full text-sm">
                     <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <tr>
                         <th className="px-3 py-2.5">{t('common.rank')}</th>
                         <th className="px-3 py-2.5">{t('common.rider')}</th>
                         <th className="px-3 py-2.5">{t('common.club')}</th>
                         <th className="px-3 py-2.5">{t('common.overall')}</th>
-                        <th className="px-3 py-2.5">{t('association.workspace.ncResult')}</th>
-                        <th className="px-3 py-2.5">{t('common.fatigue')}</th>
                         <th className="px-3 py-2.5">{t('common.availability')}</th>
                         <th className="px-3 py-2.5">{t('association.workspace.callup')}</th>
                         <th className="px-3 py-2.5">{t('association.workspace.final10')}</th>
@@ -1154,12 +931,6 @@ export default function NationalAssociationPage(): JSX.Element {
                         const callup = existingCallupByRider.get(rider.rider_id)
                         const accepted = acceptedRiderIds.has(rider.rider_id)
                         const selected = selectedSquad.includes(rider.rider_id)
-                        const finalRank = rider.national_championship?.final_rank
-                        const ncLabel = rider.national_championship?.is_current_champion
-                          ? t('common.champion')
-                          : finalRank
-                            ? `#${finalRank}`
-                            : '—'
 
                         return (
                           <tr key={rider.rider_id} className="bg-white">
@@ -1174,30 +945,30 @@ export default function NationalAssociationPage(): JSX.Element {
                                 {rider.rider_name}
                               </Link>
                               <div className="mt-0.5 text-xs text-slate-500">
-                                {t(`roles.${String(rider.role ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '_')}`, { defaultValue: humanize(rider.role) })} · {t('common.yearsShort', { years: rider.age_years ?? '—' })}
+                                {humanize(rider.role)} · {t('common.yearsShort', { years: rider.age_years ?? '—' })}
                               </div>
                             </td>
-                            <td className="px-3 py-3 text-slate-600">{rider.club_name ?? t('common.freeAgent')}</td>
+                            <td className="px-3 py-3 text-slate-600">
+                              {rider.club_name ?? t('common.freeAgent')}
+                            </td>
                             <td className="px-3 py-3 font-semibold text-slate-900">
                               {rider.overall_range
                                 ? `${rider.overall_range.min}–${rider.overall_range.max}`
                                 : '—'}
                             </td>
                             <td className="px-3 py-3">
-                              <span className={rider.national_championship?.is_current_champion ? 'font-semibold text-yellow-700' : 'text-slate-600'}>
-                                {ncLabel}
-                              </span>
-                            </td>
-                            <td className="px-3 py-3 text-slate-600">{rider.fatigue ?? '—'}</td>
-                            <td className="px-3 py-3">
                               <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusClasses(rider.availability_status === 'fit' ? 'active' : 'inactive')}`}>
-                                {t(`status.${rider.availability_status}`, { defaultValue: humanize(rider.availability_status) })}
+                                {t(`status.${rider.availability_status}`, {
+                                  defaultValue: humanize(rider.availability_status),
+                                })}
                               </span>
                             </td>
                             <td className="px-3 py-3">
                               {callup ? (
                                 <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusClasses(callup.status)}`}>
-                                  {t(`status.${callup.status}`, { defaultValue: humanize(callup.status) })}
+                                  {t(`status.${callup.status}`, {
+                                    defaultValue: humanize(callup.status),
+                                  })}
                                 </span>
                               ) : (
                                 <button
@@ -1237,7 +1008,7 @@ export default function NationalAssociationPage(): JSX.Element {
                 {!coachCallups?.squad ? (
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded border border-slate-200 bg-slate-50 p-3">
                     <div className="text-sm text-slate-600">
-                      {t('association.workspace.selectTenPrefix')} <strong>{t('association.workspace.tenAccepted')}</strong>. {t('association.workspace.currentSelection')} <strong>{selectedSquad.length}/10</strong>.
+                      {t('association.workspace.currentSelection')} <strong>{selectedSquad.length}/10</strong>
                     </div>
                     <button
                       type="button"
@@ -1249,126 +1020,133 @@ export default function NationalAssociationPage(): JSX.Element {
                       {t('association.workspace.confirmFinalTen')}
                     </button>
                   </div>
-                ) : (
-                  <div className="mt-4 rounded border border-emerald-200 bg-emerald-50 p-4">
-                    <div className="flex items-center gap-2 font-semibold text-emerald-900">
-
-                      {t('association.workspace.squadConfirmed')}
-                    </div>
-                    <p className="mt-1 text-sm text-emerald-800">
-                      {t('association.workspace.squadConfirmedCount', { count: coachCallups.squad.members?.length ?? 10 })}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </section>
-          ) : null}
-
-          {isCoach && coachCallups?.squad?.squad_id ? (
-            <section className="rounded bg-white shadow">
-              <div className="border-b border-slate-200 p-4">
-                <div className="flex items-center gap-2">
-
-                  <h3 className="text-base font-semibold text-slate-900">{t('association.lineups.title')}</h3>
-                </div>
-                <p className="mt-1 text-sm text-slate-500">
-                  {t('association.lineups.description')}
-                </p>
+                ) : null}
               </div>
 
-              <div className="grid gap-4 p-4 xl:grid-cols-3">
-                {[
-                  [1, t('raceTypes.teamTimeTrial')],
-                  [2, t('raceTypes.flatRoadRace')],
-                  [3, t('raceTypes.hillyMountainRoadRace')],
-                ].map(([dayValue, label]) => {
-                  const day = Number(dayValue)
-                  const selected = lineupDrafts[day] ?? []
-                  const saved = (lineupData?.lineups ?? []).find(lineup => lineup.race_day === day)
+              {coachCallups?.squad?.squad_id ? (
+                <div className="border-t border-slate-200 p-4">
+                  <h4 className="font-semibold text-slate-900">
+                    {t('association.lineups.title')}
+                  </h4>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {t('association.lineups.description')}
+                  </p>
 
-                  return (
-                    <div key={day} className="rounded border border-slate-200 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            {t('common.raceDay', { day })}
-                          </div>
-                          <div className="mt-1 font-semibold text-slate-900">{label}</div>
-                        </div>
-                        {saved ? (
-                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">
-                            {t('common.confirmed')}
-                          </span>
-                        ) : null}
-                      </div>
+                  <div className="mt-4 grid gap-4 xl:grid-cols-3">
+                    {[
+                      [1, t('raceTypes.teamTimeTrial')],
+                      [2, t('raceTypes.flatRoadRace')],
+                      [3, t('raceTypes.hillyMountainRoadRace')],
+                    ].map(([dayValue, label]) => {
+                      const day = Number(dayValue)
+                      const selected = lineupDrafts[day] ?? []
+                      const saved = (lineupData?.lineups ?? []).find(lineup => lineup.race_day === day)
 
-                      <div className="mt-4 space-y-2">
-                        {(coachCallups.squad.members ?? []).map(member => {
-                          const checked = selected.includes(member.rider_id)
-                          return (
-                            <label
-                              key={member.rider_id}
-                              className="flex cursor-pointer items-center justify-between gap-3 rounded bg-slate-50 px-3 py-2 text-sm"
-                            >
-                              <span>
-                                <span className="font-medium text-slate-900">{member.rider_name}</span>
-                                <span className="ml-2 text-xs text-slate-500">{member.club_name ?? ''}</span>
+                      return (
+                        <div key={day} className="rounded border border-slate-200 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                {t('common.raceDay', { day })}
+                              </div>
+                              <div className="mt-1 font-semibold text-slate-900">{label}</div>
+                            </div>
+                            {saved ? (
+                              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800">
+                                {t('common.confirmed')}
                               </span>
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={event => {
-                                  setLineupDrafts(current => {
-                                    const existing = current[day] ?? []
-                                    if (event.target.checked) {
-                                      if (existing.length >= 7) return current
-                                      return { ...current, [day]: [...existing, member.rider_id] }
-                                    }
-                                    return {
-                                      ...current,
-                                      [day]: existing.filter(id => id !== member.rider_id),
-                                    }
-                                  })
-                                }}
-                                className="h-4 w-4 rounded border-slate-300"
-                              />
-                            </label>
-                          )
-                        })}
-                      </div>
+                            ) : null}
+                          </div>
 
-                      <div className="mt-4 flex items-center justify-between gap-3">
-                        <span className="text-sm text-slate-600">{t('common.riderCount', { count: selected.length, total: 7 })}</span>
-                        <button
-                          type="button"
-                          disabled={busyKey === `lineup:${day}` || selected.length !== 7}
-                          onClick={() => void submitLineup(day)}
-                          className="inline-flex items-center gap-2 rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-                        >
-                          {busyKey === `lineup:${day}`
-                            ? <Loader2 className="h-4 w-4 animate-spin" />
-                            : null}
-                          {t('common.confirm')}
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </section>
+                          <div className="mt-4 space-y-2">
+                            {(coachCallups.squad?.members ?? []).map(member => {
+                              const checked = selected.includes(member.rider_id)
+                              return (
+                                <label
+                                  key={member.rider_id}
+                                  className="flex cursor-pointer items-center justify-between gap-3 rounded bg-slate-50 px-3 py-2 text-sm"
+                                >
+                                  <span className="font-medium text-slate-900">
+                                    {member.rider_name}
+                                  </span>
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={event => {
+                                      setLineupDrafts(current => {
+                                        const existing = current[day] ?? []
+                                        if (event.target.checked) {
+                                          if (existing.length >= 7) return current
+                                          return { ...current, [day]: [...existing, member.rider_id] }
+                                        }
+                                        return {
+                                          ...current,
+                                          [day]: existing.filter(id => id !== member.rider_id),
+                                        }
+                                      })
+                                    }}
+                                    className="h-4 w-4 rounded border-slate-300"
+                                  />
+                                </label>
+                              )
+                            })}
+                          </div>
+
+                          <div className="mt-4 flex items-center justify-between gap-3">
+                            <span className="text-sm text-slate-600">
+                              {t('common.riderCount', { count: selected.length, total: 7 })}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={busyKey === `lineup:${day}` || selected.length !== 7}
+                              onClick={() => void submitLineup(day)}
+                              className="rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                            >
+                              {t('common.confirm')}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </details>
           ) : null}
 
-          {!isCoach && association.coach ? (
-            <section className="rounded border border-slate-200 bg-white p-5 shadow">
-              <div className="flex items-center gap-2">
-
-                <h3 className="font-semibold text-slate-900">{t('association.coachAppointed')}</h3>
+          <details className="rounded border border-slate-200 bg-white shadow">
+            <summary className="cursor-pointer list-none p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {t('association.guide.eyebrow')}
+                  </div>
+                  <h3 className="mt-1 font-semibold text-slate-900">
+                    {t('association.guide.title')}
+                  </h3>
+                </div>
+                <span className="text-sm font-semibold text-yellow-700">
+                  {t('association.guide.expand')}
+                </span>
               </div>
-              <p className="mt-2 text-sm text-slate-600">
-                {t('association.coachAppointedHelp', { manager: association.coach.club_name ?? t('association.electedManager') })}
-              </p>
-            </section>
-          ) : null}
+            </summary>
+
+            <div className="grid gap-4 border-t border-slate-200 p-4 md:grid-cols-2 xl:grid-cols-3">
+              {[
+                ['activation', t('association.guide.activationTitle'), t('association.guide.activationText')],
+                ['elections', t('association.guide.electionsTitle'), t('association.guide.electionsText')],
+                ['selection', t('association.guide.selectionTitle'), t('association.guide.selectionText')],
+                ['package', t('association.guide.packageTitle'), t('association.guide.packageText')],
+                ['worldNations', t('association.guide.worldNationsTitle'), t('association.guide.worldNationsText')],
+                ['chatHistory', t('association.guide.chatHistoryTitle'), t('association.guide.chatHistoryText')],
+              ].map(([key, title, body]) => (
+                <div key={key} className="rounded border border-slate-200 bg-slate-50 p-4">
+                  <h4 className="font-semibold text-slate-900">{title}</h4>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
+                </div>
+              ))}
+            </div>
+          </details>
         </>
       )}
     </div>
