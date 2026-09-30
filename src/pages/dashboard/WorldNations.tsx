@@ -101,6 +101,7 @@ type EventScheduleRow = {
   source_stage_id?: string | null
   host_association_id?: string | null
   host_country_code?: string | null
+  host_country_name?: string | null
   status: string
 }
 
@@ -207,6 +208,7 @@ type HostWorkspace = {
   applications?: HostApplicationSummary[]
   my_applications?: HostApplicationSummary[]
   world_final_host_country_code?: string | null
+  world_final_host_country_name?: string | null
 }
 
 function flagUrl(code?: string | null): string | null {
@@ -310,7 +312,9 @@ function RoundCard({
           )
 
           const groupEvents = scheduleRows.filter(event => event.group_id === group.id)
-          const groupHost = groupEvents.find(event => event.host_country_code)?.host_country_code ?? null
+          const groupHostEvent = groupEvents.find(event => event.host_country_code)
+          const groupHost = groupHostEvent?.host_country_code ?? null
+          const groupHostName = groupHostEvent?.host_country_name ?? groupHost
 
           return (
           <div key={group.id} className="overflow-hidden rounded border border-slate-200">
@@ -318,11 +322,19 @@ function RoundCard({
               <div>
                 <div className="font-semibold text-slate-900">{group.group_label}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
-                  {t('world.groupSummary', { entrants: group.planned_entrant_count, advance: group.planned_advance_count })}
+                  {t('world.groupLiveSummary', {
+                    current: group.entries?.length ?? 0,
+                    entrants: group.planned_entrant_count,
+                    advance: group.planned_advance_count,
+                  })}
                 </div>
                 {groupHost ? (
                   <div className="mt-1 text-xs font-medium text-slate-700">
-                    {t('world.groupHost', { country: groupHost })}
+                    <span className="mr-1">{t('world.hostLabel')}:</span>
+                    <span className="inline-flex align-middle">
+                      <CountryLabel code={groupHost} name={groupHostName} />
+                    </span>
+                    <span className="ml-1">{t('world.allThreeRaceDays')}</span>
                   </div>
                 ) : null}
               </div>
@@ -645,7 +657,10 @@ export default function WorldNationsPage(): JSX.Element {
             </div>
             <div className="mt-2 text-xl font-semibold text-slate-900">
               {finalHostCountry ? (
-                <CountryLabel code={finalHostCountry} name={finalHostCountry} />
+                <CountryLabel
+                  code={finalHostCountry}
+                  name={hostWorkspace?.world_final_host_country_name ?? finalHostCountry}
+                />
               ) : (
                 t('common.pending')
               )}
