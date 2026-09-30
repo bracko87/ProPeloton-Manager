@@ -381,48 +381,6 @@ function RoundCard({
               </div>
             ) : null}
 
-            {group.entries?.length ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-[720px] w-full text-sm">
-                  <thead className="border-t border-slate-200 bg-white text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    <tr>
-                      <th className="px-3 py-2">#</th>
-                      <th className="px-3 py-2">{t('world.table.nation')}</th>
-                      <th className="px-3 py-2 text-right">{t('world.table.ttt')}</th>
-                      <th className="px-3 py-2 text-right">{t('world.table.flat')}</th>
-                      <th className="px-3 py-2 text-right">{t('world.table.mountain')}</th>
-                      <th className="px-3 py-2 text-right">{t('world.table.total')}</th>
-                      <th className="px-3 py-2">{t('common.status')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {group.entries.map((entry, index) => (
-                      <tr key={entry.group_entry_id} className="bg-white">
-                        <td className="px-3 py-2.5 font-semibold text-slate-600">
-                          {entry.final_group_rank ?? index + 1}
-                        </td>
-                        <td className="px-3 py-2.5 font-medium text-slate-900">
-                          <CountryLabel code={entry.country_code} name={entry.association_name} />
-                        </td>
-                        <td className="px-3 py-2.5 text-right text-slate-600">{entry.ttt_points}</td>
-                        <td className="px-3 py-2.5 text-right text-slate-600">{entry.flat_points}</td>
-                        <td className="px-3 py-2.5 text-right text-slate-600">{entry.mountain_points}</td>
-                        <td className="px-3 py-2.5 text-right font-semibold text-slate-900">{entry.total_points}</td>
-                        <td className="px-3 py-2.5">
-                          <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusClasses(entry.status)}`}>
-                            {t(`status.${entry.status}`, { defaultValue: humanize(entry.status) })}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="px-3 py-5 text-sm text-slate-500">
-                {t('world.drawPending')}
-              </div>
-            )}
           </div>
           )
         })}
