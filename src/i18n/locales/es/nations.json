@@ -552,7 +552,8 @@
       "time": "Time",
       "gap": "Gap",
       "bestRider": "Best rider"
-    }
+    },
+    "autoEntry": "Cada Asociación Nacional activa entra automáticamente. No existe una inscripción separada para la competición."
   },
   "admin": {
     "loading": "Cargando operaciones de World Nations...",
