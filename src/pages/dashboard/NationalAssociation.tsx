@@ -296,7 +296,6 @@ export default function NationalAssociationPage(): JSX.Element {
   const [dashboard, setDashboard] = useState<CoachDashboard | null>(null)
   const [coachCallups, setCoachCallups] = useState<CoachCallupData | null>(null)
   const [myCallups, setMyCallups] = useState<Callup[]>([])
-  const [standardPackage, setStandardPackage] = useState<StandardPackage | null>(null)
   const [lineupData, setLineupData] = useState<LineupData | null>(null)
   const [lineupDrafts, setLineupDrafts] = useState<Record<number, string[]>>({})
   const [loading, setLoading] = useState(true)
@@ -317,21 +316,18 @@ export default function NationalAssociationPage(): JSX.Element {
       const nextAssociation = (associationResponse.data ?? null) as AssociationData | null
       setAssociation(nextAssociation)
 
-      const [dashboardResponse, myCallupsResponse, packageResponse, cycleResponse] = await Promise.all([
+      const [dashboardResponse, myCallupsResponse, cycleResponse] = await Promise.all([
         supabase.rpc('get_national_coach_dashboard_v1'),
         supabase.rpc('get_my_national_team_callups_v1'),
-        supabase.rpc('get_national_team_standard_package_v1'),
         supabase.rpc('get_my_current_nations_cycle_v1'),
       ])
 
       if (dashboardResponse.error) throw dashboardResponse.error
       if (myCallupsResponse.error) throw myCallupsResponse.error
-      if (packageResponse.error) throw packageResponse.error
       if (cycleResponse.error) throw cycleResponse.error
 
       const nextDashboard = (dashboardResponse.data ?? null) as CoachDashboard | null
       const nextMyCallups = (myCallupsResponse.data ?? []) as Callup[]
-      const nextPackage = (packageResponse.data ?? null) as StandardPackage | null
       const nextCycle = (cycleResponse.data ?? null) as NationsCycle | null
       const resolvedCycleKey =
         requestedCycleKey ||
@@ -350,7 +346,6 @@ export default function NationalAssociationPage(): JSX.Element {
       setDashboard(nextDashboard)
       setCoachCallups(nextCoachCallups)
       setMyCallups(nextMyCallups)
-      setStandardPackage(nextPackage)
 
       if (nextCoachCallups?.squad?.members?.length) {
         setSelectedSquad(nextCoachCallups.squad.members.map(member => member.rider_id))
@@ -831,70 +826,6 @@ export default function NationalAssociationPage(): JSX.Element {
                   {t('association.election.none')}
                 </div>
               )}
-            </section>
-          ) : null}
-
-          {standardPackage ? (
-            <section className="rounded bg-white shadow">
-              <div className="border-b border-slate-200 p-4">
-                <div className="flex items-center gap-2">
-
-                  <h3 className="text-base font-semibold text-slate-900">{t('association.package.title')}</h3>
-                </div>
-                <p className="mt-1 text-sm text-slate-500">
-                  {t('association.package.description')}
-                </p>
-              </div>
-
-              <div className="grid gap-4 p-4 xl:grid-cols-3">
-                <div className="rounded border border-slate-200 p-4">
-                  <div className="text-sm font-semibold text-slate-900">{t('association.package.assets')}</div>
-                  <div className="mt-3 space-y-2">
-                    {(standardPackage?.assets ?? []).map(asset => (
-                      <div key={asset.asset_key} className="flex items-center justify-between gap-3 text-sm">
-                        <span className="text-slate-600">{humanize(asset.asset_key)}</span>
-                        <span className="font-semibold text-slate-900">
-                          {t('association.package.assetLevel', { quantity: asset.quantity, level: asset.asset_level })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rounded border border-slate-200 p-4 xl:col-span-2">
-                  <div className="text-sm font-semibold text-slate-900">{t('association.package.equipment')}</div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {(standardPackage?.equipment ?? []).map(item => (
-                      <div
-                        key={`${item.equipment_category}:${item.specialization}`}
-                        className="rounded bg-slate-50 px-3 py-2"
-                      >
-                        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          {humanize(item.equipment_category)} · {humanize(item.specialization)}
-                        </div>
-                        <div className="mt-1 text-sm font-semibold text-slate-900">
-                          {item.display_name ?? t('common.standardModel')}
-                        </div>
-                        <div className="mt-0.5 text-xs text-slate-500">
-                          {t('association.package.tierQuality', { tier: item.tier ?? '—', quality: item.quality_score ?? '—' })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-slate-200 p-4">
-                <div className="text-sm font-semibold text-slate-900">{t('association.package.supplies')}</div>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                  {(standardPackage?.supplies ?? []).map(supply => (
-                    <div key={supply.supply_key} className="rounded bg-slate-50 px-3 py-3">
-                      <div className="text-sm font-medium text-slate-700">{supply.display_name}</div>
-                      <div className="mt-1 text-lg font-semibold text-slate-900">{supply.quantity}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </section>
           ) : null}
 
