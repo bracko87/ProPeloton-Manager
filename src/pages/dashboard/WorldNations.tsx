@@ -277,11 +277,13 @@ function RoundCard({
   viewerAssociationId,
   viewerIsCoach,
   scheduleRows,
+  seasonNumber,
 }: {
   round: NationsRound
   viewerAssociationId?: string | null
   viewerIsCoach?: boolean
   scheduleRows: EventScheduleRow[]
+  seasonNumber?: number | null
 }): JSX.Element {
   const { t } = useTranslation('nations')
   return (
@@ -362,20 +364,29 @@ function RoundCard({
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                       {t('common.dayRace', { day: event.race_day, race: t(`raceTypes.${event.race_type}`, { defaultValue: humanize(event.race_type) }) })}
                     </div>
-                    <div className="mt-1 text-sm font-semibold text-slate-900">
-                      {formatGameDate(event.event_date)}
-                    </div>
-                    <div className="mt-1 flex items-center justify-between gap-2">
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                      <span className="font-semibold text-slate-900">
+                        {formatGameDate(event.event_date)}
+                      </span>
+                      {seasonNumber ? (
+                        <>
+                          <span className="text-slate-300">·</span>
+                          <span className="font-medium text-slate-500">
+                            {t('common.seasonNumber', { season: seasonNumber })}
+                          </span>
+                        </>
+                      ) : null}
+                      <span className="text-slate-300">·</span>
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses(event.status)}`}>
                         {t(`status.${event.status}`, { defaultValue: humanize(event.status) })}
                       </span>
-                      <Link
-                        to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
-                        className="text-[11px] font-semibold text-yellow-700 hover:underline"
-                      >
-                        {t('world.openRace')}
-                      </Link>
                     </div>
+                    <Link
+                      to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
+                      className="mt-2 inline-flex rounded-lg bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black shadow-sm hover:bg-yellow-300"
+                    >
+                      Open race page
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -656,6 +667,7 @@ export default function WorldNationsPage(): JSX.Element {
           viewerAssociationId={data?.viewer?.association_id}
           viewerIsCoach={Boolean(data?.viewer?.is_national_coach)}
           scheduleRows={scheduleRows}
+          seasonNumber={data?.season_number ?? null}
         />
       ))}
 
