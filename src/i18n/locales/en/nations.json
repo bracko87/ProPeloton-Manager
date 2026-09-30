@@ -297,7 +297,10 @@
       "principle1": "Every active Association member has exactly one vote per election round.",
       "principle2": "Activation contributions never create extra votes, ownership or governance rights.",
       "principle3": "The National Coach is elected by members and does not receive an automatic rider place in the squad.",
-      "principle4": "If the vote is tied, only the tied leaders continue to the next runoff round."
+      "principle4": "If the vote is tied, only the tied leaders continue to the next runoff round.",
+      "kindSeason": "Season election",
+      "kindActivation": "First activation election",
+      "kindSpecial": "Replacement election"
     },
     "chat": {
       "privateEyebrow": "Private Team Chat",
