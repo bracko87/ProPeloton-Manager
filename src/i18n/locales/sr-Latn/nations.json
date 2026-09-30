@@ -552,7 +552,8 @@
       "time": "Time",
       "gap": "Gap",
       "bestRider": "Best rider"
-    }
+    },
+    "autoEntry": "Svaki aktivni nacionalni savez automatski ulazi u takmičenje. Nema posebne prijave."
   },
   "admin": {
     "loading": "Učitavanje World Nations operacija...",
