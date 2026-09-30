@@ -733,7 +733,64 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     delete next.phase2RoadRaceResolution;
     delete next.phase3RoadRaceResolution;
   } else if(step===9){
+    // Drop construction-only payloads before final validation. They are no
+    // longer needed and can otherwise keep a second full replay in memory.
+    delete checkpoint.baseReplayTimeline;
+    delete checkpoint.baseFinishResolution;
+    delete checkpoint.provisionalIntermediatePointBattles;
+    delete checkpoint.provisionalIntermediatePointFinalization;
+    delete checkpoint.phase1RoadRaceResolution;
+    delete checkpoint.phase2RoadRaceResolution;
+    delete checkpoint.phase3RoadRaceResolution;
+
     const replayTimeline=stabilizeFinalReplayPhysicalState(checkpoint.replayTimeline as any);
+    const step9CommandsByPhase=new Map<number,any[]>();
+    const step9CommandRiders=Array.isArray((checkpoint.roadCommandResolution as any)?.riders)
+      ? (checkpoint.roadCommandResolution as any).riders
+      : [];
+    for(const rider of step9CommandRiders){
+      if(rider?.eligibleToStart===false) continue;
+      for(const phase of (Array.isArray(rider?.phases)?rider.phases:[])){
+        const phaseNumber=Number(phase?.phaseNumber);
+        if(!Number.isFinite(phaseNumber)) continue;
+        const bucket=step9CommandsByPhase.get(phaseNumber)??[];
+        bucket.push({
+          riderId:rider.riderId,
+          teamId:rider.teamId,
+          phaseNumber,
+          stageRole:rider.stageRole,
+          savedCommand:phase.savedCommand,
+          resolvedCommand:phase.resolvedCommand,
+          resolvedSource:phase.resolvedSource,
+          behaviour:phase.behaviour,
+        });
+        step9CommandsByPhase.set(phaseNumber,bucket);
+      }
+    }
+    step9CommandsByPhase.forEach((bucket,phaseNumber)=>{
+      bucket.sort((a:any,b:any)=>String(a.riderId).localeCompare(String(b.riderId)));
+      step9CommandsByPhase.set(phaseNumber,bucket);
+    });
+    if(Array.isArray((replayTimeline as any)?.checkpoints)){
+      const incidents=Array.isArray((checkpoint.phase10Incidents as any)?.incidents)
+        ? (checkpoint.phase10Incidents as any).incidents
+        : [];
+      for(const replayCheckpoint of (replayTimeline as any).checkpoints){
+        const checkpointKm=finite(replayCheckpoint?.raceProgress?.kmFromStart,0);
+        const dnfRiderIds=new Set(
+          incidents
+            .filter((incident:any)=>finite(incident?.kmFromStart,Number.POSITIVE_INFINITY)<=checkpointKm+0.000001)
+            .flatMap((incident:any)=>
+              (Array.isArray(incident?.riderConsequences)?incident.riderConsequences:[])
+                .filter((row:any)=>row?.statusImpact==="dnf")
+                .map((row:any)=>String(row?.riderId??""))
+            )
+            .filter(Boolean)
+        );
+        replayCheckpoint.activeCommands=(step9CommandsByPhase.get(Number(replayCheckpoint?.phase))??[])
+          .filter((command:any)=>!dnfRiderIds.has(String(command?.riderId??"")));
+      }
+    }
     const replaySynchronization=buildUniversalReplaySynchronizationSummary(
       calculationInput,
       checkpoint.riderReadiness as any,
@@ -892,7 +949,18 @@ Deno.serve(async (request: Request) => {
       if(result.status==="step_completed") await triggerNext(request);
     }catch(error){
       const serialized=errorPayload(error);
-      console.error(JSON.stringify({status:"safe_step_failed",contract:CONTRACT,error:serialized,claim}));
+      console.error(JSON.stringify({
+        status:"safe_step_failed",
+        contract:CONTRACT,
+        error:serialized,
+        claim:{
+          stage_id:claim.stage_id,
+          simulation_run_id:claim.simulation_run_id,
+          step:claim.step,
+          step_attempt_count:claim.step_attempt_count,
+          total_attempt_count:claim.total_attempt_count,
+        },
+      }));
       try{
         await rpc(supabase,"universal_race_stage_fail_safe_step_v1",{
           p_stage_id:text(claim.stage_id),
