@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import NationalAssociationHeader from '../../components/nations/NationalAssociationHeader'
@@ -199,6 +199,12 @@ function riderSortValue(rider: Rider, key: SortKey): number {
 
 export default function NationalAssociationSquadPage(): JSX.Element {
   const { t } = useTranslation('nations')
+  const location = useLocation()
+  const requestedCycleKey = useMemo(() => {
+    const value = new URLSearchParams(location.search).get('cycle')?.trim()
+    return value || null
+  }, [location.search])
+
   const [association, setAssociation] = useState<AssociationData | null>(null)
   const [workspace, setWorkspace] = useState<Workspace | null>(null)
   const [cycle, setCycle] = useState<NationsCycle | null>(null)
@@ -216,9 +222,10 @@ export default function NationalAssociationSquadPage(): JSX.Element {
   const [message, setMessage] = useState<string | null>(null)
 
   const cycleKey =
-    cycle?.state === 'active_cycle' && cycle.cycle_key
+    requestedCycleKey ||
+    (cycle?.state === 'active_cycle' && cycle.cycle_key
       ? cycle.cycle_key
-      : 'season_main'
+      : 'season_main')
 
   const load = async (): Promise<void> => {
     setLoading(true)
@@ -236,9 +243,10 @@ export default function NationalAssociationSquadPage(): JSX.Element {
       const nextAssociation = (associationResponse.data ?? null) as AssociationData | null
       const nextCycle = (cycleResponse.data ?? null) as NationsCycle | null
       const resolvedCycle =
-        nextCycle?.state === 'active_cycle' && nextCycle.cycle_key
+        requestedCycleKey ||
+        (nextCycle?.state === 'active_cycle' && nextCycle.cycle_key
           ? nextCycle.cycle_key
-          : 'season_main'
+          : 'season_main')
 
       const workspaceResponse = await supabase.rpc(
         'get_my_national_team_squad_workspace_v1',
@@ -262,7 +270,7 @@ export default function NationalAssociationSquadPage(): JSX.Element {
   useEffect(() => {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [requestedCycleKey])
 
   const callupByRider = useMemo(
     () => new Map((workspace?.callups ?? []).map(callup => [callup.rider_id, callup])),

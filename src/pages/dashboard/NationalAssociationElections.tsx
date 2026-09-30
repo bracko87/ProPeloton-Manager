@@ -275,7 +275,14 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                   {t('association.election.title')}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  {t('association.election.schedule')}
+                  {election
+                    ? t('association.electionsPage.scheduleActual', {
+                        registrationStart: formatGameDate(election.registration_open_date),
+                        registrationEnd: formatGameDate(election.registration_close_date),
+                        voteStart: formatGameDate(election.round1_open_date),
+                        voteEnd: formatGameDate(election.round1_close_date),
+                      })
+                    : t('association.election.schedule')}
                 </p>
               </div>
 

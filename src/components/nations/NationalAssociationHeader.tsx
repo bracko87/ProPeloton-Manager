@@ -117,22 +117,19 @@ export default function NationalAssociationHeader({
 
         <div className="flex max-w-full flex-wrap items-center justify-end gap-2 self-start">
           <NationalAssociationTabs isCoach={isCoach} />
+          {onRefresh ? (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={loading}
+              className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
+              {t('common.refresh')}
+            </button>
+          ) : null}
         </div>
       </div>
-
-      {onRefresh ? (
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={loading}
-            className="rounded border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> : null}
-            {t('common.refresh')}
-          </button>
-        </div>
-      ) : null}
     </div>
   )
 }
