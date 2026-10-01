@@ -8020,53 +8020,55 @@ function ManagerFocusCard({
                 toneClasses[activeCopilotItem.tone],
               )}
             >
-              <div className="flex items-start gap-3">
-                <span
-                  className={cn(
-                    "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
-                    dotClasses[activeCopilotItem.tone],
-                  )}
-                />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span
+                    className={cn(
+                      "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                      dotClasses[activeCopilotItem.tone],
+                    )}
+                  />
 
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold text-slate-950">
-                    {activeCopilotItem.title}
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-slate-950">
+                      {activeCopilotItem.title}
+                    </div>
+                    <div className="mt-1 text-xs leading-5 text-slate-600">
+                      {activeCopilotItem.message}
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs leading-5 text-slate-600">
-                    {activeCopilotItem.message}
-                  </div>
-
-                  {activeCopilotItem.href ? (
-                    <a
-                      href={activeCopilotItem.href}
-                      onClick={() => onCopilotItemOpened(activeCopilotItem)}
-                      className="mt-3 inline-flex items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:border-sky-300 hover:text-sky-700"
-                    >
-                      {activeCopilotItem.actionLabel ??
-                        t("managerFocus.copilot.review")}
-                      <span className="ml-1.5" aria-hidden="true">→</span>
-                    </a>
-                  ) : null}
                 </div>
+
+                {activeCopilotItem.href ? (
+                  <a
+                    href={activeCopilotItem.href}
+                    onClick={() => onCopilotItemOpened(activeCopilotItem)}
+                    className="inline-flex shrink-0 items-center self-start rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:border-sky-300 hover:text-sky-700 sm:self-center"
+                  >
+                    {activeCopilotItem.actionLabel ??
+                      t("managerFocus.copilot.review")}
+                    <span className="ml-1.5" aria-hidden="true">→</span>
+                  </a>
+                ) : null}
               </div>
             </div>
           ) : (
-            <div className="mt-3 flex min-h-[112px] items-center rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-4">
-              <div>
+            <div className="mt-3 flex min-h-[112px] flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <div className="text-sm font-bold text-emerald-900">
                   {t("managerFocus.copilot.allClearTitle")}
                 </div>
                 <div className="mt-1 text-xs leading-5 text-emerald-800/80">
                   {t("managerFocus.copilot.allClearBody")}
                 </div>
-                <a
-                  href="#/dashboard/calendar"
-                  className="mt-3 inline-flex items-center text-[11px] font-semibold text-emerald-800 hover:text-emerald-950"
-                >
-                  {t("managerFocus.copilot.openCalendar")}
-                  <span className="ml-1.5" aria-hidden="true">→</span>
-                </a>
               </div>
+              <a
+                href="#/dashboard/calendar"
+                className="inline-flex shrink-0 items-center self-start text-[11px] font-semibold text-emerald-800 hover:text-emerald-950 sm:self-center"
+              >
+                {t("managerFocus.copilot.openCalendar")}
+                <span className="ml-1.5" aria-hidden="true">→</span>
+              </a>
             </div>
           )}
 
