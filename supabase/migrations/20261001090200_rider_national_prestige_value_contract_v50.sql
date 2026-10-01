@@ -128,6 +128,13 @@ begin
       source_kind=excluded.source_kind,source_id=coalesce(excluded.source_id,public.rider_national_prestige_awards.source_id),
       metadata=public.rider_national_prestige_awards.metadata||excluded.metadata
   returning id into v_id;
+
+  begin
+    perform public.refresh_rider_market_value(p_rider_id);
+  exception when others then
+    null;
+  end;
+
   return v_id;
 end;
 $function$
