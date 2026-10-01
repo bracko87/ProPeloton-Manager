@@ -65,6 +65,7 @@ type Rider = {
   season_points_sprint?: number | null
   season_points_climbing?: number | null
   national_rank?: number | null
+  uci_rank?: number | null
   overall_range?: { min?: number | null; max?: number | null } | null
   skills?: SkillSet | null
   selection_scores?: SelectionScores | null
@@ -127,7 +128,7 @@ type NationsCycle = {
 }
 
 type SortKey =
-  | 'national_rank'
+  | 'uci_rank'
   | 'overall'
   | 'flat'
   | 'climbing'
@@ -181,8 +182,8 @@ function numeric(value: unknown, fallback = 0): number {
 
 function riderSortValue(rider: Rider, key: SortKey): number {
   switch (key) {
-    case 'national_rank':
-      return rider.national_rank == null ? Number.POSITIVE_INFINITY : numeric(rider.national_rank)
+    case 'uci_rank':
+      return rider.uci_rank == null ? Number.POSITIVE_INFINITY : numeric(rider.uci_rank)
     case 'overall':
       return (
         numeric(rider.overall_range?.min) +
@@ -201,7 +202,7 @@ function riderSortValue(rider: Rider, key: SortKey): number {
     case 'season_points':
       return numeric(rider.season_points)
     default:
-      return numeric(rider.national_rank, Number.POSITIVE_INFINITY)
+      return numeric(rider.uci_rank, Number.POSITIVE_INFINITY)
   }
 }
 
@@ -222,7 +223,7 @@ export default function NationalAssociationSquadPage(): JSX.Element {
   const [availabilityFilter, setAvailabilityFilter] = useState('all')
   const [ageMin, setAgeMin] = useState('')
   const [ageMax, setAgeMax] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('national_rank')
+  const [sortKey, setSortKey] = useState<SortKey>('uci_rank')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
@@ -336,8 +337,13 @@ export default function NationalAssociationSquadPage(): JSX.Element {
       const bv = riderSortValue(b, sortKey)
       const direction = sortDirection === 'asc' ? 1 : -1
 
-      if (sortKey === 'national_rank') {
-        return (av - bv) * (sortDirection === 'asc' ? 1 : -1)
+      if (sortKey === 'uci_rank') {
+        const aMissing = a.uci_rank == null
+        const bMissing = b.uci_rank == null
+        if (aMissing && bMissing) return a.rider_name.localeCompare(b.rider_name)
+        if (aMissing) return 1
+        if (bMissing) return -1
+        return (av - bv) * direction
       }
 
       return (av - bv) * direction
@@ -827,7 +833,7 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                 onChange={event => setSortKey(event.target.value as SortKey)}
                 className="rounded border border-slate-300 bg-white px-3 py-2 text-sm"
               >
-                <option value="national_rank">{t('association.squad.sortNationalRank')}</option>
+                <option value="uci_rank">UCI rank</option>
                 <option value="overall">{t('association.squad.sortOverall')}</option>
                 <option value="flat">{t('association.squad.sortFlat')}</option>
                 <option value="climbing">{t('association.squad.sortClimbing')}</option>
@@ -860,9 +866,9 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                     <th className="w-36 px-3 py-2.5">{t('association.squad.roleAge')}</th>
                     <th
                       className="w-24 px-3 py-2.5 text-center"
-                      title="Current ranking among riders of this nationality."
+                      title="Current UCI World Ranking position from the Statistics ranking."
                     >
-                      National rank
+                      UCI rank
                     </th>
                     <th className="w-24 px-3 py-2.5 text-center">{t('common.overall')}</th>
                     <th className="w-20 px-3 py-2.5 text-center">{t('association.squad.flat')}</th>
@@ -942,7 +948,7 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                           {humanize(rider.role)} · {rider.age_years ?? '—'}
                         </td>
                         <td className="px-3 py-3 text-center font-semibold text-slate-700">
-                          {rider.national_rank ? `#${rider.national_rank}` : '—'}
+                          {rider.uci_rank ? `#${rider.uci_rank}` : '—'}
                         </td>
                         <td className="px-3 py-3 text-center font-semibold text-slate-900">
                           {rider.overall_range
@@ -971,7 +977,7 @@ export default function NationalAssociationSquadPage(): JSX.Element {
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3">
               <div className="text-xs leading-5 text-slate-500">
-                National rank = current position among riders of this nationality. Showing {filteredRiders.length === 0 ? 0 : (currentPage - 1) * RIDERS_PER_PAGE + 1}–{Math.min(currentPage * RIDERS_PER_PAGE, filteredRiders.length)} of {filteredRiders.length} riders.
+                UCI rank = current UCI World Ranking position from the Statistics ranking. Showing {filteredRiders.length === 0 ? 0 : (currentPage - 1) * RIDERS_PER_PAGE + 1}–{Math.min(currentPage * RIDERS_PER_PAGE, filteredRiders.length)} of {filteredRiders.length} riders.
               </div>
               <div className="flex items-center gap-2">
                 <button
