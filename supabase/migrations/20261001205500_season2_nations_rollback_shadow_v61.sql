@@ -49,6 +49,7 @@ declare
   m record;
   v_election_id uuid;
   v_candidate_id uuid;
+  v_candidate_user uuid;
   v_result jsonb;
 begin
   select to_jsonb(gs),count(*) over()
@@ -218,11 +219,11 @@ begin
     for r in select * from pg_temp._s2_associations order by idx loop
       v_election_id:=public.ensure_national_coach_election_v1(r.id,2);
 
-      select user_id into m
+      select user_id into v_candidate_user
       from pg_temp._s2_member_clubs
       where association_id=r.id and member_no=1;
 
-      perform set_config('request.jwt.claim.sub',m.user_id::text,true);
+      perform set_config('request.jwt.claim.sub',v_candidate_user::text,true);
       v_candidate_id:=public.register_national_coach_candidate_v1(
         v_election_id,
         'Season 2 shadow candidate: national-team selection, preparation and World Nations management.'
