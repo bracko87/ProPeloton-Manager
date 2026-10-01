@@ -240,6 +240,8 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
   }
 
   const election = association?.election ?? null
+  const nextRegularElectionSeason =
+    election?.status === 'completed' ? election.season_number + 1 : null
 
   if (loading && !association) {
     return (
@@ -352,18 +354,22 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                   {t('association.election.title')}
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
-                  {election
-                    ? t('association.electionsPage.scheduleActual', {
-                        registrationStart: formatGameDate(election.registration_open_date),
-                        registrationEnd: formatGameDate(election.registration_close_date),
-                        voteStart: formatGameDate(election.round1_open_date),
-                        voteEnd: formatGameDate(election.round1_close_date),
-                      })
-                    : t('association.election.schedule')}
+                  {election?.status === 'completed'
+                    ? `Election completed. Next regular election: Season ${election.season_number + 1} · candidate registration 01 Jan–10 Jan · main vote 10 Jan–20 Jan.`
+                    : election
+                      ? t('association.electionsPage.scheduleActual', {
+                          registrationStart: formatGameDate(election.registration_open_date),
+                          registrationEnd: formatGameDate(election.registration_close_date),
+                          voteStart: formatGameDate(election.round1_open_date),
+                          voteEnd: formatGameDate(election.round1_close_date),
+                        })
+                      : t('association.election.schedule')}
                 </p>
               </div>
 
-              {association.is_member && association.association_status === 'active' ? (
+              {association.is_member &&
+              association.association_status === 'active' &&
+              election?.status !== 'completed' ? (
                 <button
                   type="button"
                   disabled={busyKey === 'sync'}
@@ -420,10 +426,48 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                       {t('common.currentWindow')}
                     </div>
                     <div className="mt-2 text-sm font-semibold text-slate-900">
-                      {formatGameDate(election.current_round_open_date)} – {formatGameDate(election.current_round_close_date)}
+                      {election.status === 'completed'
+                        ? 'Completed'
+                        : `${formatGameDate(election.current_round_open_date)} – ${formatGameDate(election.current_round_close_date)}`}
                     </div>
                   </div>
                 </div>
+
+                {nextRegularElectionSeason ? (
+                  <div className="rounded border border-sky-200 bg-sky-50 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                      Next regular National Coach election
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-sky-950">
+                      Season {nextRegularElectionSeason} · January
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded border border-sky-100 bg-white px-3 py-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                          Candidate registration
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-slate-900">01 Jan – 10 Jan</div>
+                      </div>
+                      <div className="rounded border border-sky-100 bg-white px-3 py-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                          Main vote
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-slate-900">10 Jan – 20 Jan</div>
+                      </div>
+                      <div className="rounded border border-sky-100 bg-white px-3 py-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                          Until the result
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-slate-900">
+                          Current coach continues as caretaker
+                        </div>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-sky-800">
+                      The annual election is created automatically when the new season reaches the January registration window.
+                    </p>
+                  </div>
+                ) : null}
 
                 <div className="grid gap-3 lg:grid-cols-3">
                   <div className="rounded border border-slate-200 bg-slate-50 p-4">

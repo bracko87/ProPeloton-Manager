@@ -89,6 +89,44 @@ Image requirements:
 
 Generate only the finished jersey image.`
 
+  const copyJerseyPrompt = async (): Promise<void> => {
+    try {
+      let copied = false
+
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(jerseyCreationPrompt)
+          copied = true
+        } catch {
+          copied = false
+        }
+      }
+
+      if (!copied) {
+        const textarea = document.createElement('textarea')
+        textarea.value = jerseyCreationPrompt
+        textarea.setAttribute('readonly', '')
+        textarea.style.position = 'fixed'
+        textarea.style.left = '-9999px'
+        textarea.style.top = '0'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        copied = document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+
+      if (!copied) throw new Error('Copy is not available in this browser.')
+
+      setPromptCopied(true)
+      setError(null)
+      window.setTimeout(() => setPromptCopied(false), 1800)
+    } catch (caught: any) {
+      setPromptCopied(false)
+      setError(caught?.message ?? 'Could not copy the jersey prompt. Please select the prompt text manually.')
+    }
+  }
+
   const load = async (): Promise<void> => {
     setLoading(true)
     setError(null)
@@ -283,11 +321,7 @@ Generate only the finished jersey image.`
               </div>
               <button
                 type="button"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(jerseyCreationPrompt)
-                  setPromptCopied(true)
-                  window.setTimeout(() => setPromptCopied(false), 1800)
-                }}
+                onClick={() => void copyJerseyPrompt()}
                 className="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
               >
                 {promptCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
