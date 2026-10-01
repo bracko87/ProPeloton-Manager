@@ -361,7 +361,8 @@ function isRecoverableReplayOnlyIssue(issue: string): boolean {
     || normalized.startsWith("successful_attack_without_physical_group:")
     || normalized.startsWith("opening_breakaway_lineage_changed:")
     || normalized.startsWith("opening_breakaway_lineage_changed_without_bridge_merge:")
-    || normalized.startsWith("bridge_merge_invalid:");
+    || normalized.startsWith("bridge_merge_invalid:")
+    || normalized.startsWith("front_group_transfer_without_physical_transition:");
 }
 
 function isRecoverablePhase78ReplayIssue(issue: string): boolean {
@@ -878,34 +879,32 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         return replacementCode?{...group,displayCode:replacementCode}:group;
       });
 
-      const relabelQueueByIdentity=new Map<string,string[]>();
-      for(const [group,replacementCode] of relabels.entries()){
-        const key=`${String(group?.displayCode??"")}|${String(group?.groupCode??"")}|${finite(group?.gapSeconds,0)}`;
-        const queue=relabelQueueByIdentity.get(key)??[];
-        queue.push(replacementCode);
-        relabelQueueByIdentity.set(key,queue);
-      }
+      // Rebuild the gap list from the repaired group identities so display-code
+      // cardinality and group/gap identity can never diverge.
+      replayCheckpoint.gaps=replayCheckpoint.groups.map((group:any)=>({
+        displayCode:String(group?.displayCode??""),
+        groupCode:group?.groupCode,
+        gapSeconds:finite(group?.gapSeconds,0),
+        officialTimeSeconds:replayCheckpoint?.finalResultsVisible===true
+          ? (group?.officialTimeSeconds??null)
+          : null,
+      }));
 
-      if(Array.isArray(replayCheckpoint?.gaps)){
-        replayCheckpoint.gaps=replayCheckpoint.gaps.map((gap:any)=>{
-          const key=`${String(gap?.displayCode??"")}|${String(gap?.groupCode??"")}|${finite(gap?.gapSeconds,0)}`;
-          const queue=relabelQueueByIdentity.get(key);
-          if(!queue||queue.length===0) return gap;
-          const replacementCode=queue.shift();
-          return replacementCode?{...gap,displayCode:replacementCode}:gap;
-        });
-      }
-
-      const replacementByRiderId=new Map<string,string>();
-      for(const [group,replacementCode] of relabels.entries()){
+      const groupByRiderId=new Map<string,any>();
+      for(const group of replayCheckpoint.groups){
         for(const riderId of (Array.isArray(group?.riderIds)?group.riderIds:[])){
-          replacementByRiderId.set(String(riderId),replacementCode);
+          groupByRiderId.set(String(riderId),group);
         }
       }
       if(Array.isArray(replayCheckpoint?.riderStates)){
         replayCheckpoint.riderStates=replayCheckpoint.riderStates.map((state:any)=>{
-          const replacementCode=replacementByRiderId.get(String(state?.riderId??""));
-          return replacementCode?{...state,displayCode:replacementCode}:state;
+          const group=groupByRiderId.get(String(state?.riderId??""));
+          return group?{
+            ...state,
+            groupCode:group.groupCode,
+            displayCode:group.displayCode,
+            gapSeconds:finite(group.gapSeconds,0),
+          }:state;
         });
       }
     };
