@@ -846,134 +846,66 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     const normalizeCheckpointPhysicalGroups=(replayCheckpoint:any)=>{
       if(!Array.isArray(replayCheckpoint?.groups)||replayCheckpoint.groups.length===0) return;
 
-      const sorted=[...replayCheckpoint.groups].sort((a:any,b:any)=>
-        finite(a?.gapSeconds,0)-finite(b?.gapSeconds,0)||
-        finite(a?.groupOrder,0)-finite(b?.groupOrder,0)||
-        String(a?.displayCode??"").localeCompare(String(b?.displayCode??""))
-      );
+      const usedCodes=new Set<string>();
+      const nextAvailableChaseCode=()=>{
+        let number=1;
+        while(usedCodes.has(`C${number}`)) number+=1;
+        const code=`C${number}`;
+        usedCodes.add(code);
+        return code;
+      };
 
-      // Groups at the exact same physical gap are the same road unit.
-      const merged:any[]=[];
-      for(const group of sorted){
-        const gap=finite(group?.gapSeconds,0);
-        const existing=merged.find((candidate:any)=>
-          Math.abs(finite(candidate?.gapSeconds,0)-gap)<=0.000001
-        );
-        if(existing){
-          existing.riderIds=Array.from(new Set([
-            ...(Array.isArray(existing?.riderIds)?existing.riderIds:[]),
-            ...(Array.isArray(group?.riderIds)?group.riderIds:[]),
-          ].map(String))).sort();
-          if(String(group?.displayCode??"")==="P"){
-            existing.groupCode="main_peloton";
-            existing.displayCode="P";
-            existing.physicalPosition="peloton";
-            existing.colorKey="peloton_blue";
-          }
+      const relabels=new Map<any,string>();
+      for(const group of replayCheckpoint.groups){
+        const code=String(group?.displayCode??"");
+        if(!code){
           continue;
         }
-        merged.push({
-          ...group,
-          riderIds:Array.from(new Set(
-            (Array.isArray(group?.riderIds)?group.riderIds:[]).map(String)
-          )).sort(),
-          gapSeconds:gap,
+        if(!usedCodes.has(code)){
+          usedCodes.add(code);
+          continue;
+        }
+        // Only repair duplicate positional C-labels. B/F/P identities carry
+        // physical lineage semantics and must never be rewritten here.
+        if(/^C\d+$/.test(code)){
+          relabels.set(group,nextAvailableChaseCode());
+        }
+      }
+      if(relabels.size===0) return;
+
+      replayCheckpoint.groups=replayCheckpoint.groups.map((group:any)=>{
+        const replacementCode=relabels.get(group);
+        return replacementCode?{...group,displayCode:replacementCode}:group;
+      });
+
+      const relabelQueueByIdentity=new Map<string,string[]>();
+      for(const [group,replacementCode] of relabels.entries()){
+        const key=`${String(group?.displayCode??"")}|${String(group?.groupCode??"")}|${finite(group?.gapSeconds,0)}`;
+        const queue=relabelQueueByIdentity.get(key)??[];
+        queue.push(replacementCode);
+        relabelQueueByIdentity.set(key,queue);
+      }
+
+      if(Array.isArray(replayCheckpoint?.gaps)){
+        replayCheckpoint.gaps=replayCheckpoint.gaps.map((gap:any)=>{
+          const key=`${String(gap?.displayCode??"")}|${String(gap?.groupCode??"")}|${finite(gap?.gapSeconds,0)}`;
+          const queue=relabelQueueByIdentity.get(key);
+          if(!queue||queue.length===0) return gap;
+          const replacementCode=queue.shift();
+          return replacementCode?{...gap,displayCode:replacementCode}:gap;
         });
       }
 
-      let pelotonIndex=merged.findIndex((group:any)=>String(group?.displayCode??"")==="P");
-      if(pelotonIndex<0){
-        pelotonIndex=merged.reduce((best:number,group:any,index:number)=>{
-          const bestCount=Array.isArray(merged[best]?.riderIds)?merged[best].riderIds.length:0;
-          const count=Array.isArray(group?.riderIds)?group.riderIds.length:0;
-          return count>bestCount?index:best;
-        },0);
-      }
-
-      const frontGroups=merged.slice(0,pelotonIndex);
-      const hasOpeningBreakaway=frontGroups.some((group:any)=>
-        String(group?.displayCode??"").startsWith("B")||group?.groupCode==="breakaway"
-      );
-      let bAssigned=false;
-      let fNumber=0;
-      let cNumber=0;
-
-      const normalizedGroups=merged.map((group:any,index:number)=>{
-        let displayCode=String(group?.displayCode??"");
-        let groupCode=group?.groupCode;
-        let physicalPosition=group?.physicalPosition;
-        let colorKey=group?.colorKey;
-
-        if(index<pelotonIndex){
-          const shouldBeOpeningBreakaway=
-            hasOpeningBreakaway&&!bAssigned&&(
-              displayCode.startsWith("B")||groupCode==="breakaway"
-            );
-          if(shouldBeOpeningBreakaway){
-            bAssigned=true;
-            displayCode="B1";
-            groupCode="breakaway";
-            physicalPosition="ahead_of_peloton";
-            colorKey="breakaway_red";
-          }else{
-            fNumber+=1;
-            displayCode=`F${fNumber}`;
-            if(groupCode==="main_peloton"||groupCode==="reduced_peloton"||groupCode==="dropped_group"){
-              groupCode="chasing_group";
-            }
-            physicalPosition="ahead_of_peloton";
-            colorKey="chasing_orange";
-          }
-        }else if(index===pelotonIndex){
-          displayCode="P";
-          groupCode="main_peloton";
-          physicalPosition="peloton";
-          colorKey="peloton_blue";
-        }else{
-          cNumber+=1;
-          displayCode=`C${cNumber}`;
-          if(groupCode==="breakaway"||groupCode==="main_peloton"||groupCode==="reduced_peloton"){
-            groupCode=cNumber<=2?"chasing_group":"dropped_group";
-          }
-          physicalPosition="behind_peloton";
-          colorKey="chasing_orange";
-        }
-
-        return {
-          ...group,
-          groupOrder:index+1,
-          displayCode,
-          groupCode,
-          physicalPosition,
-          colorKey,
-        };
-      });
-
-      const groupByRiderId=new Map<string,any>();
-      for(const group of normalizedGroups){
+      const replacementByRiderId=new Map<string,string>();
+      for(const [group,replacementCode] of relabels.entries()){
         for(const riderId of (Array.isArray(group?.riderIds)?group.riderIds:[])){
-          groupByRiderId.set(String(riderId),group);
+          replacementByRiderId.set(String(riderId),replacementCode);
         }
       }
-
-      replayCheckpoint.groups=normalizedGroups;
-      replayCheckpoint.gaps=normalizedGroups.map((group:any)=>({
-        displayCode:group.displayCode,
-        groupCode:group.groupCode,
-        gapSeconds:finite(group.gapSeconds,0),
-        officialTimeSeconds:replayCheckpoint?.finalResultsVisible===true
-          ? (group.officialTimeSeconds??null)
-          : null,
-      }));
       if(Array.isArray(replayCheckpoint?.riderStates)){
         replayCheckpoint.riderStates=replayCheckpoint.riderStates.map((state:any)=>{
-          const group=groupByRiderId.get(String(state?.riderId??""));
-          return group?{
-            ...state,
-            groupCode:group.groupCode,
-            displayCode:group.displayCode,
-            gapSeconds:finite(group.gapSeconds,0),
-          }:state;
+          const replacementCode=replacementByRiderId.get(String(state?.riderId??""));
+          return replacementCode?{...state,displayCode:replacementCode}:state;
         });
       }
     };
