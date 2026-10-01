@@ -368,7 +368,8 @@ function isRecoverableReplayOnlyIssue(issue: string): boolean {
 function isRecoverablePhase78ReplayIssue(issue: string): boolean {
   const normalized = String(issue ?? "").trim().toLowerCase();
   return normalized === "phase7_replay_synchronized"
-    || normalized === "phase7_front_group_transfers_physically_valid";
+    || normalized === "phase7_front_group_transfers_physically_valid"
+    || normalized === "phase7_opening_breakaway_lineage_stable";
 }
 
 function buildOutputWithReplayProgressGuarantee(input: any, result: UniversalRaceEngineResult): any {
