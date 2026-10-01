@@ -105,6 +105,19 @@ type EventScheduleRow = {
   status: string
 }
 
+type NationalTeamStanding = {
+  standing_rank: number
+  association_id: string
+  association_name: string
+  country_code: string
+  country_name: string
+  season_points: number
+  qualification_points: number
+  world_final_points: number
+  all_time_points: number
+  seasons_scored: number
+}
+
 type HistoryRow = {
   season_number: number
   association_id?: string | null
@@ -323,6 +336,7 @@ function RoundCard({
           )
 
           const groupEvents = scheduleRows.filter(event => event.group_id === group.id)
+          const groupHost = groupEvents.find(event => event.host_country_code) ?? null
 
           return (
           <div key={group.id} className="overflow-hidden rounded border border-slate-200">
@@ -330,9 +344,22 @@ function RoundCard({
               <div>
                 <div className="font-semibold text-slate-900">{group.group_label}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
+                  {round.round_type === 'world_final' ? 'World Nations Final' : 'Qualification group'}
+                  {' · '}
                   {round.round_type === 'world_final'
                     ? `Teams: ${group.entries?.length ?? 0}`
                     : `Teams: ${group.entries?.length ?? 0} / ${round.group_size_max || 16}`}
+                </div>
+                <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-600">
+                  <span className="font-semibold uppercase tracking-wide text-slate-400">Host</span>
+                  {groupHost?.host_country_code ? (
+                    <CountryLabel
+                      code={groupHost.host_country_code}
+                      name={groupHost.host_country_name ?? groupHost.host_country_code}
+                    />
+                  ) : (
+                    <span className="font-medium text-slate-500">Pending</span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -401,6 +428,7 @@ export default function WorldNationsPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [scheduleRows, setScheduleRows] = useState<EventScheduleRow[]>([])
+  const [standings, setStandings] = useState<NationalTeamStanding[]>([])
   const [hostWorkspace, setHostWorkspace] = useState<HostWorkspace | null>(null)
   const [hostModalOpen, setHostModalOpen] = useState(false)
   const [hostMode, setHostMode] = useState<'qualification' | 'final' | 'routes'>('qualification')
@@ -416,16 +444,19 @@ export default function WorldNationsPage(): JSX.Element {
     try {
       setLoading(true)
       setError(null)
-      const [overviewResponse, associationResponse] = await Promise.all([
+      const [overviewResponse, associationResponse, standingsResponse] = await Promise.all([
         supabase.rpc('get_nations_competition_overview_v1', { p_season_number: null }),
         supabase.rpc('get_my_national_association_v1'),
+        supabase.rpc('get_nations_team_standings_v1', { p_season_number: null }),
       ])
       if (overviewResponse.error) throw overviewResponse.error
       if (associationResponse.error) throw associationResponse.error
+      if (standingsResponse.error) throw standingsResponse.error
 
       const next = (overviewResponse.data ?? null) as Overview | null
       setData(next)
       setAssociation((associationResponse.data ?? null) as AssociationData | null)
+      setStandings((standingsResponse.data ?? []) as NationalTeamStanding[])
 
       if (next?.edition?.id) {
         const [eventScheduleResponse, hostWorkspaceResponse] = await Promise.all([
@@ -690,16 +721,65 @@ export default function WorldNationsPage(): JSX.Element {
         />
       ))}
 
-      <section className="rounded bg-white shadow">
+      <section className="overflow-hidden rounded bg-white shadow">
         <div className="border-b border-slate-200 p-4">
-          <div className="flex items-center gap-2">
-
-            <h3 className="text-base font-semibold text-slate-900">{t('world.points.title')}</h3>
-          </div>
+          <h3 className="text-base font-semibold text-slate-900">National Team Standing</h3>
           <p className="mt-1 text-sm text-slate-500">
-            {t('world.points.description')}
+            World Nations ranking points accumulate from season to season. There are no defending points to remove; this persistent standing seeds the next season&apos;s qualification groups.
           </p>
         </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Rank</th>
+                <th className="px-4 py-3">National Team</th>
+                <th className="px-4 py-3 text-right">Season</th>
+                <th className="px-4 py-3 text-right">Qualification</th>
+                <th className="px-4 py-3 text-right">World Final</th>
+                <th className="px-4 py-3 text-right">All-time</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {standings.length ? standings.map(row => (
+                <tr key={row.association_id} className="bg-white">
+                  <td className="px-4 py-3 font-semibold text-slate-900">#{row.standing_rank}</td>
+                  <td className="px-4 py-3 font-semibold text-slate-900">
+                    <CountryLabel code={row.country_code} name={row.country_name || row.association_name} />
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold text-slate-700">{row.season_points}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{row.qualification_points}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{row.world_final_points}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-slate-950">{row.all_time_points}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
+                    No active National Teams are available for the standing yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
+          Qualification and World Final placement points are awarded when each group is completed. The point scale is versioned so it can be tuned without deleting historical awards.
+        </div>
+      </section>
+
+      <details className="group rounded bg-white shadow">
+        <summary className="cursor-pointer list-none border-b border-slate-200 p-4 [&::-webkit-details-marker]:hidden">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">{t('world.points.title')}</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                {t('world.points.description')}
+              </p>
+            </div>
+            <span className="shrink-0 text-xs font-semibold text-slate-500 group-open:hidden">Show points</span>
+            <span className="hidden shrink-0 text-xs font-semibold text-slate-500 group-open:inline">Hide points</span>
+          </div>
+        </summary>
 
         <div className="grid gap-4 p-4 xl:grid-cols-2">
           <div className="rounded border border-slate-200 p-4">
@@ -733,7 +813,7 @@ export default function WorldNationsPage(): JSX.Element {
         <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
           {t('world.points.tiebreak')}
         </div>
-      </section>
+      </details>
 
       <section className="rounded bg-white shadow">
         <div className="border-b border-slate-200 p-4">
