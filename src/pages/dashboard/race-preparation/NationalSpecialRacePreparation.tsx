@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 
 export type NationalTeamListEvent = {
@@ -154,14 +154,6 @@ function dateLabel(value?: string | null): string {
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleDateString(undefined, { day: '2-digit', month: 'long', timeZone: 'UTC' })
-}
-
-function shortDate(value?: string | null): string {
-  if (!value) return '—'
-  const date = new Date(`${value}T00:00:00Z`)
-  return Number.isNaN(date.getTime())
-    ? value
-    : date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', timeZone: 'UTC' })
 }
 
 function countryName(code?: string | null): string {
