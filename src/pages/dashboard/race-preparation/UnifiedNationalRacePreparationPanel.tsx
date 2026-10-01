@@ -221,8 +221,8 @@ function teamStatus(event: NationalTeamEvent, today: string): {
 
   if (event.test_override) {
     return {
-      label: 'Test access',
-      tone: 'bg-violet-100 text-violet-800',
+      label: `Opens ${formatDate(event.setup_window_opens_on)}`,
+      tone: 'bg-slate-100 text-slate-700',
       preparationOpen: true,
     }
   }
