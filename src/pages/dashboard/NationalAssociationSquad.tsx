@@ -57,6 +57,7 @@ type Rider = {
   age_years?: number | null
   club_id?: string | null
   club_name?: string | null
+  club_country_code?: string | null
   club_is_ai?: boolean
   availability_status?: string | null
   fatigue?: number | null
@@ -126,7 +127,6 @@ type NationsCycle = {
 }
 
 type SortKey =
-  | 'selection_score'
   | 'national_rank'
   | 'overall'
   | 'flat'
@@ -135,6 +135,15 @@ type SortKey =
   | 'sprint'
   | 'age'
   | 'season_points'
+
+const RIDERS_PER_PAGE = 30
+
+function flagUrl(code?: string | null): string | null {
+  const normalized = code?.trim().toLowerCase()
+  return normalized && /^[a-z]{2}$/.test(normalized)
+    ? `https://flagcdn.com/w40/${normalized}.png`
+    : null
+}
 
 function humanize(value?: string | null): string {
   if (!value) return '—'
@@ -191,9 +200,8 @@ function riderSortValue(rider: Rider, key: SortKey): number {
       return numeric(rider.age_years)
     case 'season_points':
       return numeric(rider.season_points)
-    case 'selection_score':
     default:
-      return numeric(rider.selection_scores?.overall)
+      return numeric(rider.national_rank, Number.POSITIVE_INFINITY)
   }
 }
 
@@ -214,8 +222,9 @@ export default function NationalAssociationSquadPage(): JSX.Element {
   const [availabilityFilter, setAvailabilityFilter] = useState('all')
   const [ageMin, setAgeMin] = useState('')
   const [ageMax, setAgeMax] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('selection_score')
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [sortKey, setSortKey] = useState<SortKey>('national_rank')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -343,6 +352,25 @@ export default function NationalAssociationSquadPage(): JSX.Element {
     sortKey,
     sortDirection,
   ])
+
+  const pageCount = Math.max(1, Math.ceil(filteredRiders.length / RIDERS_PER_PAGE))
+  const currentPage = Math.min(page, pageCount)
+  const paginatedRiders = useMemo(
+    () =>
+      filteredRiders.slice(
+        (currentPage - 1) * RIDERS_PER_PAGE,
+        currentPage * RIDERS_PER_PAGE,
+      ),
+    [filteredRiders, currentPage],
+  )
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, roleFilter, availabilityFilter, ageMin, ageMax, sortKey, sortDirection])
+
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount)
+  }, [page, pageCount])
 
   const selectionStatus = workspace?.selection?.status ?? 'draft'
   const canEditDraft =
@@ -799,7 +827,6 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                 onChange={event => setSortKey(event.target.value as SortKey)}
                 className="rounded border border-slate-300 bg-white px-3 py-2 text-sm"
               >
-                <option value="selection_score">{t('association.squad.sortSelectionScore')}</option>
                 <option value="national_rank">{t('association.squad.sortNationalRank')}</option>
                 <option value="overall">{t('association.squad.sortOverall')}</option>
                 <option value="flat">{t('association.squad.sortFlat')}</option>
@@ -824,26 +851,31 @@ export default function NationalAssociationSquadPage(): JSX.Element {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="min-w-[1380px] w-full text-sm">
+              <table className="min-w-[1260px] w-full table-fixed text-sm">
                 <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <tr>
-                    <th className="px-3 py-2.5">{t('association.squad.pick')}</th>
-                    <th className="px-3 py-2.5">{t('common.rider')}</th>
-                    <th className="px-3 py-2.5">{t('common.club')}</th>
-                    <th className="px-3 py-2.5">{t('association.squad.roleAge')}</th>
-                    <th className="px-3 py-2.5">{t('common.rank')}</th>
-                    <th className="px-3 py-2.5">{t('common.overall')}</th>
-                    <th className="px-3 py-2.5">{t('association.squad.selectionScore')}</th>
-                    <th className="px-3 py-2.5">{t('association.squad.flat')}</th>
-                    <th className="px-3 py-2.5">{t('association.squad.climbing')}</th>
-                    <th className="px-3 py-2.5">{t('association.squad.timeTrial')}</th>
-                    <th className="px-3 py-2.5">{t('association.squad.sprint')}</th>
-                    <th className="px-3 py-2.5">{t('association.squad.fatigue')}</th>
-                    <th className="px-3 py-2.5">{t('common.availability')}</th>
+                    <th className="w-14 px-3 py-2.5 text-center">{t('association.squad.pick')}</th>
+                    <th className="w-48 px-3 py-2.5">{t('common.rider')}</th>
+                    <th className="w-52 px-3 py-2.5">{t('common.club')}</th>
+                    <th className="w-36 px-3 py-2.5">{t('association.squad.roleAge')}</th>
+                    <th
+                      className="w-24 px-3 py-2.5 text-center"
+                      title="Current ranking among riders of this nationality."
+                    >
+                      National rank
+                    </th>
+                    <th className="w-24 px-3 py-2.5 text-center">{t('common.overall')}</th>
+                    <th className="w-20 px-3 py-2.5 text-center">{t('association.squad.flat')}</th>
+                    <th className="w-20 px-3 py-2.5 text-center">{t('association.squad.climbing')}</th>
+                    <th className="w-24 px-3 py-2.5 text-center">{t('association.squad.timeTrial')}</th>
+                    <th className="w-20 px-3 py-2.5 text-center">{t('association.squad.sprint')}</th>
+                    <th className="w-20 px-3 py-2.5 text-center">{t('association.squad.fatigue')}</th>
+                    <th className="w-24 px-3 py-2.5 text-center">Sharpness</th>
+                    <th className="w-28 px-3 py-2.5 text-center">{t('common.availability')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {filteredRiders.map(rider => {
+                  {paginatedRiders.map(rider => {
                     const selected = selectedIds.includes(rider.rider_id)
                     const callup = callupByRider.get(rider.rider_id)
                     const locked = lockedRiderIds.has(rider.rider_id)
@@ -867,18 +899,18 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                           />
                         </td>
                         <td className="px-3 py-3">
-                          <div className="flex items-center gap-2">
-                            {rider.image_url ? (
+                          <div className="flex min-w-0 items-center gap-2">
+                            {flagUrl(rider.country_code) ? (
                               <img
-                                src={rider.image_url}
-                                alt={rider.rider_name}
-                                className="h-9 w-9 rounded object-cover"
+                                src={flagUrl(rider.country_code) ?? undefined}
+                                alt={rider.country_code ?? 'Rider country'}
+                                className="h-3.5 w-5 shrink-0 rounded-sm border border-slate-200 object-cover"
                               />
                             ) : null}
-                            <div>
+                            <div className="min-w-0">
                               <Link
                                 to={`/dashboard/external-riders/${rider.rider_id}`}
-                                className="font-semibold text-slate-900 hover:text-yellow-700 hover:underline"
+                                className="block truncate font-semibold text-slate-900 hover:text-yellow-700 hover:underline"
                               >
                                 {rider.rider_name}
                               </Link>
@@ -895,28 +927,35 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                           </div>
                         </td>
                         <td className="px-3 py-3 text-slate-600">
-                          {rider.club_name ?? '—'}
+                          <div className="flex min-w-0 items-center gap-2">
+                            {flagUrl(rider.club_country_code) ? (
+                              <img
+                                src={flagUrl(rider.club_country_code) ?? undefined}
+                                alt={rider.club_country_code ?? 'Club country'}
+                                className="h-3.5 w-5 shrink-0 rounded-sm border border-slate-200 object-cover"
+                              />
+                            ) : null}
+                            <span className="truncate">{rider.club_name ?? '—'}</span>
+                          </div>
                         </td>
                         <td className="px-3 py-3 text-slate-600">
                           {humanize(rider.role)} · {rider.age_years ?? '—'}
                         </td>
-                        <td className="px-3 py-3 font-semibold text-slate-700">
+                        <td className="px-3 py-3 text-center font-semibold text-slate-700">
                           {rider.national_rank ? `#${rider.national_rank}` : '—'}
                         </td>
-                        <td className="px-3 py-3 font-semibold text-slate-900">
+                        <td className="px-3 py-3 text-center font-semibold text-slate-900">
                           {rider.overall_range
                             ? `${rider.overall_range.min ?? '—'}–${rider.overall_range.max ?? '—'}`
                             : '—'}
                         </td>
-                        <td className="px-3 py-3 font-semibold text-yellow-700">
-                          {rider.selection_scores?.overall ?? '—'}
-                        </td>
-                        <td className="px-3 py-3">{rider.skills?.flat ?? '—'}</td>
-                        <td className="px-3 py-3">{rider.skills?.climbing ?? '—'}</td>
-                        <td className="px-3 py-3">{rider.skills?.time_trial ?? '—'}</td>
-                        <td className="px-3 py-3">{rider.skills?.sprint ?? '—'}</td>
-                        <td className="px-3 py-3">{rider.fatigue ?? '—'}</td>
-                        <td className="px-3 py-3">
+                        <td className="px-3 py-3 text-center">{rider.skills?.flat ?? '—'}</td>
+                        <td className="px-3 py-3 text-center">{rider.skills?.climbing ?? '—'}</td>
+                        <td className="px-3 py-3 text-center">{rider.skills?.time_trial ?? '—'}</td>
+                        <td className="px-3 py-3 text-center">{rider.skills?.sprint ?? '—'}</td>
+                        <td className="px-3 py-3 text-center">{rider.fatigue ?? '—'}</td>
+                        <td className="px-3 py-3 text-center">{rider.race_condition?.race_sharpness ?? '—'}</td>
+                        <td className="px-3 py-3 text-center">
                           <span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusClass(rider.availability_status === 'fit' ? 'active' : rider.availability_status)}`}>
                             {t(`status.${rider.availability_status}`, {
                               defaultValue: humanize(rider.availability_status),
@@ -930,8 +969,31 @@ export default function NationalAssociationSquadPage(): JSX.Element {
               </table>
             </div>
 
-            <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
-              {t('association.squad.scoreExplanation')}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="text-xs leading-5 text-slate-500">
+                National rank = current position among riders of this nationality. Showing {filteredRiders.length === 0 ? 0 : (currentPage - 1) * RIDERS_PER_PAGE + 1}–{Math.min(currentPage * RIDERS_PER_PAGE, filteredRiders.length)} of {filteredRiders.length} riders.
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage(current => Math.max(1, current - 1))}
+                  className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <span className="min-w-20 text-center text-xs font-semibold text-slate-600">
+                  Page {currentPage} / {pageCount}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentPage >= pageCount}
+                  onClick={() => setPage(current => Math.min(pageCount, current + 1))}
+                  className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </section>
         </>
