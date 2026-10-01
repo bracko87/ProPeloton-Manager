@@ -846,6 +846,8 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     });
     const normalizeCheckpointPhysicalGroups=(replayCheckpoint:any)=>{
       if(!Array.isArray(replayCheckpoint?.groups)||replayCheckpoint.groups.length===0) return;
+      const originalGroups=replayCheckpoint.groups;
+      const originalGaps=Array.isArray(replayCheckpoint?.gaps)?replayCheckpoint.gaps:[];
 
       const usedCodes=new Set<string>();
       const nextAvailableChaseCode=()=>{
@@ -856,55 +858,62 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         return code;
       };
 
-      const relabels=new Map<any,string>();
-      for(const group of replayCheckpoint.groups){
-        const code=String(group?.displayCode??"");
-        if(!code){
-          continue;
+      const records=originalGroups.map((group:any)=>{
+        const originalCode=String(group?.displayCode??"");
+        let newCode=originalCode;
+        if(originalCode&&usedCodes.has(originalCode)&&/^C\d+$/.test(originalCode)){
+          newCode=nextAvailableChaseCode();
+        }else if(originalCode){
+          usedCodes.add(originalCode);
         }
-        if(!usedCodes.has(code)){
-          usedCodes.add(code);
-          continue;
-        }
-        // Only repair duplicate positional C-labels. B/F/P identities carry
-        // physical lineage semantics and must never be rewritten here.
-        if(/^C\d+$/.test(code)){
-          relabels.set(group,nextAvailableChaseCode());
-        }
-      }
-      if(relabels.size===0) return;
-
-      replayCheckpoint.groups=replayCheckpoint.groups.map((group:any)=>{
-        const replacementCode=relabels.get(group);
-        return replacementCode?{...group,displayCode:replacementCode}:group;
+        const sourceGap=
+          originalGaps.find((gap:any)=>
+            String(gap?.displayCode??"")===originalCode&&
+            String(gap?.groupCode??"")===String(group?.groupCode??"")
+          ) ??
+          originalGaps.find((gap:any)=>
+            String(gap?.displayCode??"")===originalCode
+          ) ??
+          null;
+        return {group,originalCode,newCode,sourceGap};
       });
 
-      // Rebuild the gap list from the repaired group identities so display-code
-      // cardinality and group/gap identity can never diverge.
-      replayCheckpoint.gaps=replayCheckpoint.groups.map((group:any)=>({
-        displayCode:String(group?.displayCode??""),
-        groupCode:group?.groupCode,
-        gapSeconds:finite(group?.gapSeconds,0),
-        officialTimeSeconds:replayCheckpoint?.finalResultsVisible===true
-          ? (group?.officialTimeSeconds??null)
-          : null,
+      const changed=records.some((record:any)=>record.newCode!==record.originalCode);
+      if(!changed) return;
+
+      replayCheckpoint.groups=records.map((record:any)=>({
+        ...record.group,
+        displayCode:record.newCode,
       }));
 
-      const groupByRiderId=new Map<string,any>();
-      for(const group of replayCheckpoint.groups){
-        for(const riderId of (Array.isArray(group?.riderIds)?group.riderIds:[])){
-          groupByRiderId.set(String(riderId),group);
+      replayCheckpoint.gaps=records.map((record:any)=>({
+        ...(record.sourceGap??{
+          groupCode:record.group?.groupCode,
+          gapSeconds:0,
+          officialTimeSeconds:null,
+        }),
+        displayCode:record.newCode,
+        groupCode:record.group?.groupCode,
+      }));
+
+      const recordByRiderId=new Map<string,any>();
+      for(const record of records){
+        for(const riderId of (Array.isArray(record.group?.riderIds)?record.group.riderIds:[])){
+          recordByRiderId.set(String(riderId),record);
         }
       }
       if(Array.isArray(replayCheckpoint?.riderStates)){
         replayCheckpoint.riderStates=replayCheckpoint.riderStates.map((state:any)=>{
-          const group=groupByRiderId.get(String(state?.riderId??""));
-          return group?{
+          const record=recordByRiderId.get(String(state?.riderId??""));
+          if(!record) return state;
+          return {
             ...state,
-            groupCode:group.groupCode,
-            displayCode:group.displayCode,
-            gapSeconds:finite(group.gapSeconds,0),
-          }:state;
+            groupCode:record.group?.groupCode,
+            displayCode:record.newCode,
+            gapSeconds:record.sourceGap
+              ? finite(record.sourceGap?.gapSeconds,state?.gapSeconds??0)
+              : state?.gapSeconds,
+          };
         });
       }
     };
