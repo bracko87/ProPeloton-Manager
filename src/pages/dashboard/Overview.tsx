@@ -8070,9 +8070,6 @@ function ManagerFocusCard({
             </div>
           )}
 
-          <div className="mt-2 text-[10px] leading-4 text-slate-400">
-            {t("managerFocus.copilot.boundaryNote")}
-          </div>
         </div>
       </div>
     </Card>
