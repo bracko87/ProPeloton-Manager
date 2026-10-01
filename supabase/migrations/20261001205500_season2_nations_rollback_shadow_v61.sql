@@ -42,6 +42,8 @@ declare
   v_host_mutations integer:=0;
   v_report jsonb:='{}'::jsonb;
   v_error text;
+  v_error_context text;
+  v_error_detail text;
   v_leaked_users integer:=0;
   v_leaked_associations integer:=0;
   v_clock_after jsonb;
@@ -467,9 +469,13 @@ begin
   exception
     when sqlstate 'Z1001' then null;
     when others then
-      v_error:=sqlerrm;
+      get stacked diagnostics
+        v_error=message_text,
+        v_error_detail=pg_exception_detail,
+        v_error_context=pg_exception_context;
       v_report:=jsonb_build_object(
         'status','fail','mode','rollback_only_shadow','error',v_error,
+        'error_detail',v_error_detail,'error_context',v_error_context,
         'summary','Season 2 National Association / World Nations shadow lifecycle failed and was rolled back.'
       );
   end;
