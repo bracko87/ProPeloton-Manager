@@ -105,6 +105,13 @@ type EventScheduleRow = {
   status: string
 }
 
+type NationalTeamRankingScaleRow = {
+  phase: 'qualification' | 'world_final'
+  finishing_position: number
+  points: number
+  version: number
+}
+
 type NationalTeamStanding = {
   standing_rank: number
   association_id: string
@@ -429,6 +436,7 @@ export default function WorldNationsPage(): JSX.Element {
   const [message, setMessage] = useState<string | null>(null)
   const [scheduleRows, setScheduleRows] = useState<EventScheduleRow[]>([])
   const [standings, setStandings] = useState<NationalTeamStanding[]>([])
+  const [rankingScale, setRankingScale] = useState<NationalTeamRankingScaleRow[]>([])
   const [hostWorkspace, setHostWorkspace] = useState<HostWorkspace | null>(null)
   const [hostModalOpen, setHostModalOpen] = useState(false)
   const [hostMode, setHostMode] = useState<'qualification' | 'final' | 'routes'>('qualification')
@@ -444,19 +452,22 @@ export default function WorldNationsPage(): JSX.Element {
     try {
       setLoading(true)
       setError(null)
-      const [overviewResponse, associationResponse, standingsResponse] = await Promise.all([
+      const [overviewResponse, associationResponse, standingsResponse, rankingScaleResponse] = await Promise.all([
         supabase.rpc('get_nations_competition_overview_v1', { p_season_number: null }),
         supabase.rpc('get_my_national_association_v1'),
         supabase.rpc('get_nations_team_standings_v1', { p_season_number: null }),
+        supabase.rpc('get_nations_team_ranking_scale_v1'),
       ])
       if (overviewResponse.error) throw overviewResponse.error
       if (associationResponse.error) throw associationResponse.error
       if (standingsResponse.error) throw standingsResponse.error
+      if (rankingScaleResponse.error) throw rankingScaleResponse.error
 
       const next = (overviewResponse.data ?? null) as Overview | null
       setData(next)
       setAssociation((associationResponse.data ?? null) as AssociationData | null)
       setStandings((standingsResponse.data ?? []) as NationalTeamStanding[])
+      setRankingScale((rankingScaleResponse.data ?? []) as NationalTeamRankingScaleRow[])
 
       if (next?.edition?.id) {
         const [eventScheduleResponse, hostWorkspaceResponse] = await Promise.all([
@@ -807,6 +818,33 @@ export default function WorldNationsPage(): JSX.Element {
             <p className="mt-3 text-xs leading-5 text-slate-500">
               {t('world.points.bestThree')}
             </p>
+          </div>
+        </div>
+
+        <div className="border-t border-slate-200 p-4">
+          <div className="font-semibold text-slate-900">National Team Standing points</div>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            These are the persistent ranking points added to the National Team Standing after the Qualification group and World Final. They are cumulative and are never defended or removed.
+          </p>
+          <div className="mt-3 grid gap-4 xl:grid-cols-2">
+            {(['qualification', 'world_final'] as const).map(phase => (
+              <div key={phase} className="rounded border border-slate-200 p-3">
+                <div className="text-sm font-semibold text-slate-900">
+                  {phase === 'qualification' ? 'Qualification group' : 'World Final'}
+                </div>
+                <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
+                  {rankingScale.filter(row => row.phase === phase).map(row => (
+                    <div
+                      key={`${phase}:${row.finishing_position}`}
+                      className="flex items-center justify-between rounded bg-slate-50 px-2 py-2"
+                    >
+                      <span className="text-slate-500">#{row.finishing_position}</span>
+                      <strong className="text-slate-900">{row.points}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
