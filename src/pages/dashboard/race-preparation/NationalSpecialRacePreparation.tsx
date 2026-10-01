@@ -18,6 +18,7 @@ export type NationalTeamListEvent = {
   setup_window_opens_on: string
   lineup_deadline_on: string
   test_override?: boolean
+  special_plan_status?: string | null
   can_manage: boolean
   association_id: string
   country_code: string
@@ -40,6 +41,7 @@ export type NationalRankingListEvent = {
   setup_window_opens_on: string
   riders: Array<{ rider_id: string; rider_name: string }>
   is_preview?: boolean
+  special_plan_status?: string | null
 }
 
 export type NationalSpecialSelection =
