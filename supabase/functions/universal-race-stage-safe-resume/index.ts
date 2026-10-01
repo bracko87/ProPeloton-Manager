@@ -358,7 +358,9 @@ function stabilizeFinalReplayPhysicalState(timeline: any): any {
 function isRecoverableReplayOnlyIssue(issue: string): boolean {
   const normalized = String(issue ?? "").trim().toLowerCase();
   return normalized.startsWith("bridge_progress_invalid:")
-    || normalized.startsWith("successful_attack_without_physical_group:");
+    || normalized.startsWith("successful_attack_without_physical_group:")
+    || normalized.startsWith("opening_breakaway_lineage_changed:")
+    || normalized.startsWith("opening_breakaway_lineage_changed_without_bridge_merge:");
 }
 
 function isRecoverablePhase78ReplayIssue(issue: string): boolean {
@@ -840,6 +842,87 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       bucket.sort((a:any,b:any)=>String(a.riderId).localeCompare(String(b.riderId)));
       step9CommandsByPhase.set(phaseNumber,bucket);
     });
+    const normalizeCheckpointPhysicalGroups=(replayCheckpoint:any)=>{
+      if(!Array.isArray(replayCheckpoint?.groups)||replayCheckpoint.groups.length===0) return;
+      const ordered=[...replayCheckpoint.groups].sort((a:any,b:any)=>
+        finite(a?.gapSeconds,0)-finite(b?.gapSeconds,0)||
+        finite(a?.groupOrder,0)-finite(b?.groupOrder,0)||
+        String(a?.displayCode??"").localeCompare(String(b?.displayCode??""))
+      );
+      let pelotonIndex=ordered.findIndex((group:any)=>String(group?.displayCode??"")==="P");
+      if(pelotonIndex<0){
+        pelotonIndex=ordered.reduce((best:number,group:any,index:number)=>{
+          const bestCount=Array.isArray(ordered[best]?.riderIds)?ordered[best].riderIds.length:0;
+          const count=Array.isArray(group?.riderIds)?group.riderIds.length:0;
+          return count>bestCount?index:best;
+        },0);
+      }
+      let frontNumber=0;
+      let chaseNumber=0;
+      const normalizedGroups=ordered.map((group:any,index:number)=>{
+        let displayCode=String(group?.displayCode??"");
+        let groupCode=group?.groupCode;
+        let physicalPosition=group?.physicalPosition;
+        let colorKey=group?.colorKey;
+        if(index<pelotonIndex){
+          if(!displayCode.startsWith("B")&&!displayCode.startsWith("F")){
+            frontNumber+=1;
+            displayCode=`B${frontNumber}`;
+            groupCode="breakaway";
+            physicalPosition="ahead_of_peloton";
+            colorKey="breakaway_red";
+          }
+        }else if(index===pelotonIndex){
+          displayCode="P";
+          groupCode="main_peloton";
+          physicalPosition="peloton";
+          colorKey="peloton_blue";
+        }else{
+          chaseNumber+=1;
+          displayCode=`C${chaseNumber}`;
+          if(groupCode==="breakaway"||groupCode==="main_peloton"||groupCode==="reduced_peloton"){
+            groupCode=chaseNumber<=2?"chasing_group":"dropped_group";
+          }
+          physicalPosition="behind_peloton";
+          colorKey="chasing_orange";
+        }
+        return {
+          ...group,
+          groupOrder:index+1,
+          displayCode,
+          groupCode,
+          physicalPosition,
+          colorKey,
+        };
+      });
+      const groupByRiderId=new Map<string,any>();
+      for(const group of normalizedGroups){
+        for(const riderId of (Array.isArray(group?.riderIds)?group.riderIds:[])){
+          groupByRiderId.set(String(riderId),group);
+        }
+      }
+      replayCheckpoint.groups=normalizedGroups;
+      replayCheckpoint.gaps=normalizedGroups.map((group:any)=>({
+        displayCode:group.displayCode,
+        groupCode:group.groupCode,
+        gapSeconds:finite(group.gapSeconds,0),
+        officialTimeSeconds:replayCheckpoint?.finalResultsVisible===true
+          ? (group.officialTimeSeconds??null)
+          : null,
+      }));
+      if(Array.isArray(replayCheckpoint?.riderStates)){
+        replayCheckpoint.riderStates=replayCheckpoint.riderStates.map((state:any)=>{
+          const group=groupByRiderId.get(String(state?.riderId??""));
+          return group?{
+            ...state,
+            groupCode:group.groupCode,
+            displayCode:group.displayCode,
+            gapSeconds:finite(group.gapSeconds,0),
+          }:state;
+        });
+      }
+    };
+
     if(Array.isArray((replayTimeline as any)?.checkpoints)){
       const incidents=Array.isArray((checkpoint.phase10Incidents as any)?.incidents)
         ? (checkpoint.phase10Incidents as any).incidents
@@ -849,6 +932,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         .filter(Boolean);
       let step9PreviousCheckpoint:any=null;
       for(const replayCheckpoint of (replayTimeline as any).checkpoints){
+        normalizeCheckpointPhysicalGroups(replayCheckpoint);
         const checkpointKm=finite(replayCheckpoint?.raceProgress?.kmFromStart,0);
         const dnfRiderIds=new Set(
           incidents
