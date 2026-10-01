@@ -524,6 +524,48 @@ export default function NationalAssociationPage(): JSX.Element {
   const selectedEventLineup = selectedOverviewEvent?.lineup ?? null
   const selectedEventMembers = selectedEventLineup?.riders ?? []
 
+  const overviewEventGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        key: string
+        roundLabel: string
+        groupLabel: string
+        events: OverviewEvent[]
+      }
+    >()
+
+    for (const event of upcomingEvents) {
+      const key =
+        event.cycle_key ||
+        `${event.round_label ?? 'World Nations'}:${event.group_label ?? 'National Team'}`
+      const existing = groups.get(key)
+      if (existing) {
+        existing.events.push(event)
+      } else {
+        groups.set(key, {
+          key,
+          roundLabel: event.round_label ?? 'World Nations',
+          groupLabel: event.group_label ?? 'National Team',
+          events: [event],
+        })
+      }
+    }
+
+    return Array.from(groups.values())
+      .map(group => ({
+        ...group,
+        events: [...group.events].sort(
+          (a, b) =>
+            (a.race_day ?? 99) - (b.race_day ?? 99) ||
+            a.event_date.localeCompare(b.event_date),
+        ),
+      }))
+      .sort((a, b) =>
+        (a.events[0]?.event_date ?? '').localeCompare(b.events[0]?.event_date ?? ''),
+      )
+  }, [upcomingEvents])
+
   useEffect(() => {
     if (!upcomingEvents.length) {
       setSelectedOverviewEventId(null)
@@ -929,52 +971,73 @@ export default function NationalAssociationPage(): JSX.Element {
                   </Link>
                 </div>
 
-                <div className="mt-3 space-y-2">
-                  {upcomingEvents.length === 0 ? (
+                <div className="mt-3 space-y-3">
+                  {overviewEventGroups.length === 0 ? (
                     <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
                       {t('association.dashboard.noUpcomingEvents')}
                     </div>
                   ) : (
-                    upcomingEvents.map(event => {
-                      const selected = selectedOverviewEvent?.event_id === event.event_id
-                      return (
-                        <div
-                          key={event.event_id}
-                          className={[
-                            'rounded border p-3 transition',
-                            selected
-                              ? 'border-yellow-400 bg-yellow-50'
-                              : 'border-slate-200 bg-slate-50 hover:border-slate-300',
-                          ].join(' ')}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setSelectedOverviewEventId(event.event_id)}
-                            className="flex w-full items-start justify-between gap-3 text-left"
-                          >
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-slate-900">
-                                {event.label}
-                              </div>
-                              <div className="mt-1 text-xs text-slate-500">
-                                {event.status ? humanize(event.status) : 'Scheduled'}
-                              </div>
-                            </div>
-                            <div className="shrink-0 text-sm font-semibold text-slate-700">
-                              {formatGameDate(event.event_date)}
-                            </div>
-                          </button>
-                          <div className="mt-2 flex justify-end">
-                            <Link
-                              to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
-                              className="inline-flex rounded bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black hover:bg-yellow-300"
-                            >
-                              Open race page
-                            </Link>
+                    overviewEventGroups.map(group => (
+                      <div
+                        key={group.key}
+                        className="overflow-hidden rounded border border-slate-200 bg-white"
+                      >
+                        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2.5">
+                          <div className="text-sm font-semibold text-slate-900">
+                            {group.roundLabel} · {group.groupLabel}
+                          </div>
+                          <div className="mt-0.5 text-xs text-slate-500">
+                            {group.events.length} scheduled race day{group.events.length === 1 ? '' : 's'}
                           </div>
                         </div>
-                      )
-                    })
+
+                        <div className="grid gap-px bg-slate-200 sm:grid-cols-3">
+                          {group.events.map(event => {
+                            const selected =
+                              selectedOverviewEvent?.event_id === event.event_id
+                            return (
+                              <div
+                                key={event.event_id}
+                                className={[
+                                  'min-w-0 bg-white px-3 py-3',
+                                  selected ? 'ring-2 ring-inset ring-yellow-400' : '',
+                                ].join(' ')}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedOverviewEventId(event.event_id)}
+                                  className="w-full text-left"
+                                >
+                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                    Day {event.race_day ?? '—'} · {humanize(event.race_type)}
+                                  </div>
+                                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                                    <span className="font-semibold text-slate-900">
+                                      {formatGameDate(event.event_date)}
+                                    </span>
+                                    <span className="text-slate-300">·</span>
+                                    <span className="font-medium text-slate-500">
+                                      Season {overview?.season_number ?? dashboard?.season_number ?? '—'}
+                                    </span>
+                                    <span className="text-slate-300">·</span>
+                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses(event.status)}`}>
+                                      {event.status ? humanize(event.status) : 'Scheduled'}
+                                    </span>
+                                  </div>
+                                </button>
+
+                                <Link
+                                  to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
+                                  className="mt-2 inline-flex rounded-lg bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black shadow-sm hover:bg-yellow-300"
+                                >
+                                  Open race page
+                                </Link>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
               </div>
