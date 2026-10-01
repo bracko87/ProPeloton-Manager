@@ -185,16 +185,16 @@ Generate only the finished jersey image.`
       </div>
 
       <div className="grid gap-px bg-slate-200 lg:grid-cols-2">
-        <div className="bg-white p-5">
+        <div className="flex h-full flex-col bg-white p-5">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Current National Team jersey
           </div>
-          <div className="mt-4 flex min-h-[260px] items-center justify-center rounded-lg border border-slate-200 bg-white p-6">
+          <div className="mt-4 flex min-h-[420px] flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white p-8">
             {effectiveJersey ? (
               <img
                 src={effectiveJersey}
                 alt={t('association.customization.jerseyTitle')}
-                className="max-h-56 max-w-full object-contain"
+                className="max-h-[430px] max-w-[82%] object-contain"
               />
             ) : null}
           </div>

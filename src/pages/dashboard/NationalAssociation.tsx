@@ -143,11 +143,50 @@ type NationsCycle = {
   day3_date?: string | null
 }
 
+type OverviewSquad = {
+  squad_id: string
+  cycle_key: string
+  status: string
+  squad_size: number
+  confirmed_on?: string | null
+  duty_start_date?: string | null
+  duty_end_date?: string | null
+  members?: Array<{
+    rider_id: string
+    rider_name: string
+    club_id?: string | null
+    club_name?: string | null
+    squad_role?: string | null
+  }>
+}
+
+type OverviewLineup = {
+  lineup_id: string
+  status: string
+  race_day: number
+  race_type: string
+  riders?: Array<{
+    rider_id: string
+    rider_name: string
+    club_id?: string | null
+    club_name?: string | null
+    squad_role?: string | null
+  }>
+}
+
 type OverviewEvent = {
+  event_id: string
   event_type: string
   event_date: string
+  race_day?: number | null
+  race_type?: string | null
+  round_label?: string | null
+  group_label?: string | null
+  cycle_key?: string | null
   label: string
   status?: string | null
+  lineup?: OverviewLineup | null
+  squad?: OverviewSquad | null
 }
 
 type OverviewData = {
@@ -235,6 +274,7 @@ export default function NationalAssociationPage(): JSX.Element {
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [selectedOverviewEventId, setSelectedOverviewEventId] = useState<string | null>(null)
 
   const detectedCycleKey =
     nationsCycle?.state === 'active_cycle' ? nationsCycle.cycle_key ?? null : null
@@ -249,7 +289,7 @@ export default function NationalAssociationPage(): JSX.Element {
       const [associationResponse, overviewResponse, dashboardResponse, myCallupsResponse, cycleResponse] =
         await Promise.all([
           supabase.rpc('get_my_national_association_v1'),
-          supabase.rpc('get_my_national_association_overview_v1'),
+          supabase.rpc('get_my_national_association_overview_v2'),
           supabase.rpc('get_national_coach_dashboard_v1'),
           supabase.rpc('get_my_national_team_callups_v1'),
           supabase.rpc('get_my_current_nations_cycle_v1'),
@@ -476,10 +516,23 @@ export default function NationalAssociationPage(): JSX.Element {
   }, [dashboard?.riders, riderSearch])
 
   const isCoach = dashboard?.allowed === true
-  const currentSquad = overview?.current_squad
-  const upcomingEvents = (overview?.upcoming_events ?? []).filter(event =>
-    event.event_type.startsWith('world_nations_'),
-  )
+  const upcomingEvents = overview?.upcoming_events ?? []
+  const selectedOverviewEvent =
+    upcomingEvents.find(event => event.event_id === selectedOverviewEventId) ??
+    upcomingEvents[0] ??
+    null
+  const selectedEventLineup = selectedOverviewEvent?.lineup ?? null
+  const selectedEventMembers = selectedEventLineup?.riders ?? []
+
+  useEffect(() => {
+    if (!upcomingEvents.length) {
+      setSelectedOverviewEventId(null)
+      return
+    }
+    if (!selectedOverviewEventId || !upcomingEvents.some(event => event.event_id === selectedOverviewEventId)) {
+      setSelectedOverviewEventId(upcomingEvents[0].event_id)
+    }
+  }, [selectedOverviewEventId, upcomingEvents])
 
   if (loading && !association) {
     return (
@@ -835,11 +888,11 @@ export default function NationalAssociationPage(): JSX.Element {
                   {t('association.dashboard.selectedRiders')}
                 </div>
                 <div className="mt-2 text-xl font-semibold text-slate-900">
-                  {overview?.stats?.selected_riders ?? 0} / 10
+                  {selectedEventMembers.length} / 7
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  {currentSquad?.status
-                    ? t(`status.${currentSquad.status}`, { defaultValue: humanize(currentSquad.status) })
+                  {selectedOverviewEvent
+                    ? selectedOverviewEvent.label
                     : t('association.dashboard.noSquad')}
                 </div>
               </div>
@@ -882,37 +935,62 @@ export default function NationalAssociationPage(): JSX.Element {
                       {t('association.dashboard.noUpcomingEvents')}
                     </div>
                   ) : (
-                    upcomingEvents.map(event => (
-                      <div
-                        key={`${event.event_type}:${event.event_date}`}
-                        className="flex items-center justify-between gap-3 rounded border border-slate-200 bg-slate-50 p-3"
-                      >
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">
-                            {t(`association.dashboard.event.${event.event_type}`, {
-                              defaultValue: event.label,
-                            })}
-                          </div>
-                          {event.status ? (
-                            <div className="mt-1 text-xs text-slate-500">
-                              {humanize(event.status)}
+                    upcomingEvents.map(event => {
+                      const selected = selectedOverviewEvent?.event_id === event.event_id
+                      return (
+                        <div
+                          key={event.event_id}
+                          className={[
+                            'rounded border p-3 transition',
+                            selected
+                              ? 'border-yellow-400 bg-yellow-50'
+                              : 'border-slate-200 bg-slate-50 hover:border-slate-300',
+                          ].join(' ')}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setSelectedOverviewEventId(event.event_id)}
+                            className="flex w-full items-start justify-between gap-3 text-left"
+                          >
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-slate-900">
+                                {event.label}
+                              </div>
+                              <div className="mt-1 text-xs text-slate-500">
+                                {event.status ? humanize(event.status) : 'Scheduled'}
+                              </div>
                             </div>
-                          ) : null}
+                            <div className="shrink-0 text-sm font-semibold text-slate-700">
+                              {formatGameDate(event.event_date)}
+                            </div>
+                          </button>
+                          <div className="mt-2 flex justify-end">
+                            <Link
+                              to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
+                              className="inline-flex rounded bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black hover:bg-yellow-300"
+                            >
+                              Open race page
+                            </Link>
+                          </div>
                         </div>
-                        <div className="text-sm font-semibold text-slate-700">
-                          {formatGameDate(event.event_date)}
-                        </div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between gap-3">
-                  <h4 className="font-semibold text-slate-900">
-                    {t('association.dashboard.currentSelection')}
-                  </h4>
+                  <div>
+                    <h4 className="font-semibold text-slate-900">
+                      Selected riders
+                    </h4>
+                    {selectedOverviewEvent ? (
+                      <div className="mt-0.5 text-xs text-slate-500">
+                        {selectedOverviewEvent.label}
+                      </div>
+                    ) : null}
+                  </div>
                   {isCoach ? (
                     <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-semibold text-yellow-900">
                       {t('association.userStatus.nationalCoach')}
@@ -921,13 +999,17 @@ export default function NationalAssociationPage(): JSX.Element {
                 </div>
 
                 <div className="mt-3">
-                  {!currentSquad?.members?.length ? (
+                  {!selectedOverviewEvent ? (
                     <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-                      {t('association.dashboard.noCurrentSelection')}
+                      No upcoming World Nations race is assigned to this National Team.
+                    </div>
+                  ) : !selectedEventMembers.length ? (
+                    <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+                      No 7-rider lineup has been submitted for this race yet.
                     </div>
                   ) : (
                     <div className="grid gap-2 sm:grid-cols-2">
-                      {currentSquad.members.map((member, index) => (
+                      {selectedEventMembers.map((member, index) => (
                         <div
                           key={member.rider_id}
                           className="rounded border border-slate-200 bg-slate-50 px-3 py-2.5"
