@@ -29,6 +29,7 @@ import {
 import { supabase } from "../../lib/supabase";
 import RaceDetailPage from "./RaceDetailPage";
 import PremiumRaceStrategyPanel from "./race-preparation/PremiumRaceStrategyPanel";
+import UnifiedNationalRacePreparationPanel from "./race-preparation/UnifiedNationalRacePreparationPanel";
 import {
   askSportDirectorForStagePlan,
   getRiderName,
@@ -3451,14 +3452,17 @@ export default function RacePreparationPage(): JSX.Element {
       ) : null}
 
       {activeTab === "acceptedRaces" && (
-        <AcceptedRacesTab
-          acceptedRaces={acceptedRaces}
-          selectedRaceId={raceId}
-          currentGameDate={target?.current_game_date}
-          actionLoading={actionLoading}
-          onPrepareRace={(id) => selectRace(id, "racePackage")}
-          onOpenStages={(id) => selectRace(id, "stagePlans")}
-        />
+        <div className="space-y-5">
+          <UnifiedNationalRacePreparationPanel />
+          <AcceptedRacesTab
+            acceptedRaces={acceptedRaces}
+            selectedRaceId={raceId}
+            currentGameDate={target?.current_game_date}
+            actionLoading={actionLoading}
+            onPrepareRace={(id) => selectRace(id, "racePackage")}
+            onOpenStages={(id) => selectRace(id, "stagePlans")}
+          />
+        </div>
       )}
 
       {activeTab === "racePackage" && (
