@@ -525,6 +525,7 @@ export default function WorldNationsPage(): JSX.Element {
   )
 
   const openHostModal = (scope: 'qualification' | 'final' = 'qualification'): void => {
+    if (!hostWorkspace?.viewer_can_apply) return
     setHostMode(scope)
     setMessage(null)
     const own = (hostWorkspace?.my_applications ?? []).find(
@@ -708,14 +709,18 @@ export default function WorldNationsPage(): JSX.Element {
             </div>
             <button
               type="button"
-              disabled={!data?.edition}
+              disabled={!data?.edition || !hostWorkspace?.viewer_can_apply}
               onClick={() => openHostModal('qualification')}
               className="mt-2 rounded bg-yellow-400 px-3 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
-              Apply for Season {hostWorkspace?.target_season_number ?? ((data?.season_number ?? 0) + 1)}
+              {hostWorkspace?.viewer_can_apply
+                ? `Apply for Season ${hostWorkspace?.target_season_number ?? ((data?.season_number ?? 0) + 1)}`
+                : 'National Coach only'}
             </button>
             <p className="mt-1 text-xs text-slate-500">
-              Host applications are always for the next season.
+              {hostWorkspace?.viewer_can_apply
+                ? 'Host applications are always for the next season.'
+                : 'Only the elected National Coach can submit host applications or missing-race requests.'}
             </p>
           </div>
         </div>
