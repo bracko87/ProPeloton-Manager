@@ -204,6 +204,27 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
     })
   }
 
+  const withdrawCandidate = async (): Promise<void> => {
+    const electionId = association?.election?.id
+    if (!electionId) return
+
+    await perform('withdraw-candidate', async () => {
+      const { error: rpcError } = await supabase.rpc('withdraw_national_coach_candidate_v1', {
+        p_election_id: electionId,
+      })
+      if (rpcError) throw rpcError
+      setMessage('Your candidature was withdrawn. A new candidature will receive a new list position.')
+    })
+  }
+
+  const resignAsCoach = async (): Promise<void> => {
+    await perform('resign-coach', async () => {
+      const { error: rpcError } = await supabase.rpc('resign_national_coach_v1')
+      if (rpcError) throw rpcError
+      setMessage('You resigned as National Coach. Association members have been notified and a replacement election has been opened.')
+    })
+  }
+
   const voteForCandidate = async (candidateId: string): Promise<void> => {
     const electionId = association?.election?.id
     if (!electionId) return
@@ -267,17 +288,33 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
               <h3 className="mt-1 text-lg font-semibold text-slate-900">
                 {association.coach?.club_name ?? t('common.notElected')}
               </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                {association.coach
-                  ? t('association.electionsPage.currentCoachTerm', {
-                      season: association.coach.season_number,
-                      start: formatGameDate(association.coach.starts_on),
-                      end: formatGameDate(association.coach.ends_on),
-                    })
-                  : association.association_status === 'active'
-                    ? t('association.electionsPage.coachPending')
-                    : t('association.electionsPage.coachAfterActivation')}
-              </p>
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <p className="mt-1 text-sm text-slate-500">
+                  {association.coach
+                    ? t('association.electionsPage.currentCoachTerm', {
+                        season: association.coach.season_number,
+                        start: formatGameDate(association.coach.starts_on),
+                        end: formatGameDate(association.coach.ends_on),
+                      })
+                    : association.association_status === 'active'
+                      ? t('association.electionsPage.coachPending')
+                      : t('association.electionsPage.coachAfterActivation')}
+                </p>
+                {isCoach && association.coach ? (
+                  <button
+                    type="button"
+                    disabled={busyKey === 'resign-coach'}
+                    onClick={() => {
+                      if (window.confirm('Resign as National Coach? A replacement election will start immediately and all Association members will be notified.')) {
+                        void resignAsCoach()
+                      }
+                    }}
+                    className="rounded border border-rose-300 bg-white px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                  >
+                    {busyKey === 'resign-coach' ? 'Resigning…' : 'Resign as National Coach'}
+                  </button>
+                ) : null}
+              </div>
             </div>
 
             <div className="grid gap-px bg-slate-200 sm:grid-cols-3">
@@ -427,12 +464,33 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                 </div>
 
                 {(election.status === 'candidate_registration' ||
+                  (election.status === 'runoff' && election.runoff_registration_open)) &&
+                election.my_candidate_id ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-slate-200 bg-slate-50 p-4">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">Your candidature is submitted</div>
+                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                        A submitted candidature cannot be edited. To change your name or manifesto, withdraw it and submit a new candidature. The new candidature receives a new list position.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={busyKey === 'withdraw-candidate'}
+                      onClick={() => {
+                        if (window.confirm('Withdraw this candidature? If you register again, you will receive a new candidate number.')) {
+                          void withdrawCandidate()
+                        }
+                      }}
+                      className="rounded border border-rose-300 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                    >
+                      {busyKey === 'withdraw-candidate' ? 'Withdrawing…' : 'Withdraw candidature'}
+                    </button>
+                  </div>
+                ) : (election.status === 'candidate_registration' ||
                   (election.status === 'runoff' && election.runoff_registration_open)) ? (
                   <div className="rounded border border-yellow-200 bg-yellow-50 p-4">
                     <div className="text-sm font-semibold text-slate-900">
-                      {election.my_candidate_id
-                        ? t('association.electionsPage.updateCandidature')
-                        : t('association.electionsPage.candidatureFormTitle')}
+                      {t('association.electionsPage.candidatureFormTitle')}
                     </div>
                     <p className="mt-1 text-xs leading-5 text-slate-600">
                       {t('association.electionsPage.candidatureFormHelp')}
@@ -493,9 +551,7 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                         className="inline-flex items-center gap-2 rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
                       >
                         {busyKey === 'candidate' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                        {election.my_candidate_id
-                          ? t('association.electionsPage.saveCandidature')
-                          : t('association.election.submitCandidature')}
+                        {t('association.election.submitCandidature')}
                       </button>
                     </div>
                   </div>
