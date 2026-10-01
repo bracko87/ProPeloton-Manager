@@ -192,9 +192,18 @@ type HostApplicationSummary = {
   statement?: string | null
 }
 
+type HostRouteRequest = {
+  request_id: string
+  target_season_number: number
+  requested_types?: string[]
+  note?: string | null
+  status: string
+  submitted_on?: string | null
+}
+
 type HostWorkspace = {
-  edition_id: string
-  season_number: number
+  current_season_number: number
+  target_season_number: number
   viewer_can_apply: boolean
   viewer_association_id?: string | null
   viewer_country_code?: string | null
@@ -207,8 +216,7 @@ type HostWorkspace = {
   }
   applications?: HostApplicationSummary[]
   my_applications?: HostApplicationSummary[]
-  world_final_host_country_code?: string | null
-  world_final_host_country_name?: string | null
+  route_request?: HostRouteRequest | null
 }
 
 function flagUrl(code?: string | null): string | null {
@@ -395,12 +403,14 @@ export default function WorldNationsPage(): JSX.Element {
   const [scheduleRows, setScheduleRows] = useState<EventScheduleRow[]>([])
   const [hostWorkspace, setHostWorkspace] = useState<HostWorkspace | null>(null)
   const [hostModalOpen, setHostModalOpen] = useState(false)
-  const [hostScope, setHostScope] = useState<'qualification' | 'final'>('qualification')
+  const [hostMode, setHostMode] = useState<'qualification' | 'final' | 'routes'>('qualification')
   const [hostTttStageId, setHostTttStageId] = useState('')
   const [hostFlatStageId, setHostFlatStageId] = useState('')
   const [hostMountainStageId, setHostMountainStageId] = useState('')
   const [hostStatement, setHostStatement] = useState('')
   const [hostSaving, setHostSaving] = useState(false)
+  const [routeRequestTypes, setRouteRequestTypes] = useState<string[]>([])
+  const [routeRequestNote, setRouteRequestNote] = useState('')
 
   const load = async (): Promise<void> => {
     try {
@@ -422,9 +432,7 @@ export default function WorldNationsPage(): JSX.Element {
           supabase.rpc('get_nations_competition_event_schedule_v2', {
             p_edition_id: next.edition.id,
           }),
-          supabase.rpc('get_nations_host_application_workspace_v2', {
-            p_edition_id: next.edition.id,
-          }),
+          supabase.rpc('get_nations_host_application_workspace_v3'),
         ])
 
         if (eventScheduleResponse.error) throw eventScheduleResponse.error
@@ -461,22 +469,21 @@ export default function WorldNationsPage(): JSX.Element {
     [data?.history],
   )
 
-  const finalHostCountry =
-    hostWorkspace?.world_final_host_country_code ??
-    scheduleRows.find(row => row.round_type === 'world_final' && row.host_country_code)
-      ?.host_country_code ??
-    null
+  const finalHostEvent = scheduleRows.find(
+    row => row.round_type === 'world_final' && row.host_country_code,
+  )
+  const finalHostCountry = finalHostEvent?.host_country_code ?? null
 
   const applicationsForScope = useMemo(
     () =>
       (hostWorkspace?.applications ?? []).filter(
-        application => application.host_scope === hostScope,
+        application => application.host_scope === hostMode,
       ),
-    [hostScope, hostWorkspace?.applications],
+    [hostMode, hostWorkspace?.applications],
   )
 
   const openHostModal = (scope: 'qualification' | 'final' = 'qualification'): void => {
-    setHostScope(scope)
+    setHostMode(scope)
     setMessage(null)
     const own = (hostWorkspace?.my_applications ?? []).find(
       application => application.host_scope === scope,
@@ -489,11 +496,13 @@ export default function WorldNationsPage(): JSX.Element {
     setHostFlatStageId(own?.flat_stage_id ?? flatOptions[0]?.stage_id ?? '')
     setHostMountainStageId(own?.mountain_stage_id ?? mountainOptions[0]?.stage_id ?? '')
     setHostStatement(own?.statement ?? '')
+    setRouteRequestTypes(hostWorkspace?.route_request?.requested_types ?? hostWorkspace?.missing_types ?? [])
+    setRouteRequestNote(hostWorkspace?.route_request?.note ?? '')
     setHostModalOpen(true)
   }
 
   const changeHostScope = (scope: 'qualification' | 'final'): void => {
-    setHostScope(scope)
+    setHostMode(scope)
     const own = (hostWorkspace?.my_applications ?? []).find(
       application => application.host_scope === scope,
     )
@@ -507,9 +516,7 @@ export default function WorldNationsPage(): JSX.Element {
   }
 
   const submitHostApplication = async (): Promise<void> => {
-    const editionId = data?.edition?.id
     if (
-      !editionId ||
       !hostWorkspace?.viewer_can_apply ||
       !hostWorkspace.country_has_complete_bundle ||
       !hostTttStageId ||
@@ -524,10 +531,9 @@ export default function WorldNationsPage(): JSX.Element {
       setError(null)
       setMessage(null)
       const { error: submitError } = await supabase.rpc(
-        'submit_nations_host_application_v2',
+        'submit_nations_host_application_v3',
         {
-          p_edition_id: editionId,
-          p_host_scope: hostScope,
+          p_host_scope: hostMode,
           p_ttt_stage_id: hostTttStageId,
           p_flat_stage_id: hostFlatStageId,
           p_mountain_stage_id: hostMountainStageId,
@@ -540,6 +546,31 @@ export default function WorldNationsPage(): JSX.Element {
       await load()
     } catch (caught: any) {
       setError(caught?.message ?? t('world.hostApplication.error'))
+    } finally {
+      setHostSaving(false)
+    }
+  }
+
+  const submitRouteRequest = async (): Promise<void> => {
+    if (!hostWorkspace?.viewer_can_apply || routeRequestTypes.length === 0) return
+
+    try {
+      setHostSaving(true)
+      setError(null)
+      setMessage(null)
+      const { error: submitError } = await supabase.rpc(
+        'submit_nations_host_route_request_v1',
+        {
+          p_requested_types: routeRequestTypes,
+          p_note: routeRequestNote.trim() || null,
+        },
+      )
+      if (submitError) throw submitError
+      setMessage(`Race creation request submitted for Season ${hostWorkspace.target_season_number}.`)
+      setHostModalOpen(false)
+      await load()
+    } catch (caught: any) {
+      setError(caught?.message ?? 'Could not submit the race creation request.')
     } finally {
       setHostSaving(false)
     }
@@ -617,7 +648,7 @@ export default function WorldNationsPage(): JSX.Element {
               {finalHostCountry ? (
                 <CountryLabel
                   code={finalHostCountry}
-                  name={hostWorkspace?.world_final_host_country_name ?? finalHostCountry}
+                  name={finalHostEvent?.host_country_name ?? finalHostCountry}
                 />
               ) : (
                 t('common.pending')
@@ -638,10 +669,10 @@ export default function WorldNationsPage(): JSX.Element {
               onClick={() => openHostModal('qualification')}
               className="mt-2 rounded bg-yellow-400 px-3 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
-              {t('world.applyHostButton')}
+              Apply for Season {hostWorkspace?.target_season_number ?? ((data?.season_number ?? 0) + 1)}
             </button>
             <p className="mt-1 text-xs text-slate-500">
-              {t('world.applyHostHelp')}
+              Host applications are always for the next season.
             </p>
           </div>
         </div>
