@@ -219,6 +219,10 @@ function statusClasses(status?: string | null): string {
   return 'bg-slate-100 text-slate-700'
 }
 
+function isAssociationCustomJersey(url?: string | null): boolean {
+  return Boolean(url && /\/national-associations\//i.test(url))
+}
+
 function flagUrl(code?: string | null): string | null {
   const normalized = code?.trim().toLowerCase()
   return normalized && /^[a-z]{2}$/.test(normalized)
@@ -965,12 +969,17 @@ export default function WorldNationsEventPage(): JSX.Element {
                                 <div className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
                                   Team jersey
                                 </div>
-                                <div className="mt-3 flex min-h-[175px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                <div className="mt-3 flex h-[190px] items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2">
                                   {team.jersey_url ? (
                                     <img
                                       src={team.jersey_url}
                                       alt=""
-                                      className="max-h-40 max-w-full object-contain"
+                                      className={[
+                                        'h-44 w-44 object-contain',
+                                        isAssociationCustomJersey(team.jersey_url)
+                                          ? 'scale-[1.32]'
+                                          : '',
+                                      ].join(' ')}
                                     />
                                   ) : null}
                                 </div>
@@ -1176,19 +1185,32 @@ export default function WorldNationsEventPage(): JSX.Element {
                                 <tr key={`stage-${result.rider_id ?? index}`} className="border-b border-slate-100 bg-white">
                                   <td className="px-3 py-3 font-semibold text-slate-900">{result.rank ?? '—'}</td>
                                   <td className="px-3 py-3">
-                                    <div className="font-semibold text-slate-900">{result.rider_name_snapshot ?? '—'}</div>
-                                    {participant ? (
-                                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
-                                        {flagUrl(participant.country_code) ? (
+                                    <div className="flex items-center gap-3">
+                                      {participant?.jersey_url ? (
+                                        <div className="flex h-9 w-24 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
                                           <img
-                                            src={flagUrl(participant.country_code) ?? ''}
+                                            src={participant.jersey_url}
                                             alt=""
-                                            className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
+                                            className="h-12 w-full object-cover object-top"
                                           />
+                                        </div>
+                                      ) : null}
+                                      <div>
+                                        <div className="font-semibold text-slate-900">{result.rider_name_snapshot ?? '—'}</div>
+                                        {participant ? (
+                                          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                                            {flagUrl(participant.country_code) ? (
+                                              <img
+                                                src={flagUrl(participant.country_code) ?? ''}
+                                                alt=""
+                                                className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
+                                              />
+                                            ) : null}
+                                            <span>{nationDisplayName(participant.association_name, participant.country_code)}</span>
+                                          </div>
                                         ) : null}
-                                        <span>{nationDisplayName(participant.association_name, participant.country_code)}</span>
                                       </div>
-                                    ) : null}
+                                    </div>
                                   </td>
                                   <td className="px-3 py-3 text-right font-semibold text-slate-900">{formatRaceTime(result.elapsed_seconds)}</td>
                                   <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds)}</td>
