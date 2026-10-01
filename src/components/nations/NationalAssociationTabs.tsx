@@ -12,14 +12,14 @@ export default function NationalAssociationTabs({
 
   const linkClass = ({ isActive }: { isActive: boolean }): string =>
     [
-      'rounded-md px-3 py-2 text-sm font-medium transition whitespace-nowrap',
+      'rounded-md px-2.5 py-2 text-[13px] font-medium transition whitespace-nowrap',
       isActive
         ? 'bg-yellow-400 text-black'
         : 'text-gray-600 hover:bg-gray-100',
     ].join(' ')
 
   return (
-    <div className="inline-flex max-w-full flex-wrap rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+    <div className="inline-flex max-w-full flex-nowrap overflow-x-auto rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
       <NavLink to="/dashboard/national-association" end className={linkClass}>
         {navigationT('overview')}
       </NavLink>
@@ -33,7 +33,7 @@ export default function NationalAssociationTabs({
           type="button"
           disabled
           title={nationsT('association.tabs.coachLocked')}
-          className="cursor-not-allowed rounded-md px-3 py-2 text-sm font-medium text-gray-400 opacity-70 whitespace-nowrap"
+          className="cursor-not-allowed rounded-md px-2.5 py-2 text-[13px] font-medium text-gray-400 opacity-70 whitespace-nowrap"
         >
           {nationsT('association.tabs.squad')}
         </button>
@@ -48,7 +48,7 @@ export default function NationalAssociationTabs({
           type="button"
           disabled
           title={nationsT('association.tabs.coachLocked')}
-          className="cursor-not-allowed rounded-md px-3 py-2 text-sm font-medium text-gray-400 opacity-70 whitespace-nowrap"
+          className="cursor-not-allowed rounded-md px-2.5 py-2 text-[13px] font-medium text-gray-400 opacity-70 whitespace-nowrap"
         >
           {nationsT('association.package.tab')}
         </button>
@@ -61,7 +61,7 @@ export default function NationalAssociationTabs({
         {nationsT('association.tabs.elections')}
       </NavLink>
       <NavLink to="/dashboard/national-association/team-chat" className={linkClass}>
-        {nationsT('association.tabs.teamChat')}
+        {nationsT('association.tabs.chat', { defaultValue: 'Chat' })}
       </NavLink>
       <NavLink to="/dashboard/national-association/history" className={linkClass}>
         {nationsT('association.tabs.history')}
