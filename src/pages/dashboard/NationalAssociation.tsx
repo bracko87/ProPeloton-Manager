@@ -53,6 +53,15 @@ type OverallRange = {
   max: number
 }
 
+type RiderIdentity = {
+  id: string
+  first_name?: string | null
+  last_name?: string | null
+  display_name?: string | null
+  country_code?: string | null
+  role?: string | null
+}
+
 type CoachRider = {
   rider_id: string
   rider_name: string
@@ -226,6 +235,13 @@ function humanize(value?: string | null): string {
   return value.replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase())
 }
 
+function riderFlagUrl(code?: string | null): string | null {
+  const normalized = code?.trim().toLowerCase()
+  return normalized && /^[a-z]{2}$/.test(normalized)
+    ? `https://flagcdn.com/w40/${normalized}.png`
+    : null
+}
+
 function formatGameDate(value?: string | null): string {
   if (!value) return '—'
   const date = new Date(`${value}T00:00:00Z`)
@@ -275,6 +291,7 @@ export default function NationalAssociationPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [selectedOverviewEventId, setSelectedOverviewEventId] = useState<string | null>(null)
+  const [selectedRiderIdentities, setSelectedRiderIdentities] = useState<Record<string, RiderIdentity>>({})
 
   const detectedCycleKey =
     nationsCycle?.state === 'active_cycle' ? nationsCycle.cycle_key ?? null : null
@@ -523,6 +540,48 @@ export default function NationalAssociationPage(): JSX.Element {
     null
   const selectedEventLineup = selectedOverviewEvent?.lineup ?? null
   const selectedEventMembers = selectedEventLineup?.riders ?? []
+
+  useEffect(() => {
+    let cancelled = false
+
+    const riderIds = Array.from(
+      new Set(selectedEventMembers.map(member => member.rider_id).filter(Boolean)),
+    )
+
+    if (!riderIds.length) {
+      setSelectedRiderIdentities({})
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const loadSelectedRiderIdentities = async (): Promise<void> => {
+      const { data, error: riderError } = await supabase
+        .from('riders')
+        .select('id, first_name, last_name, display_name, country_code, role')
+        .in('id', riderIds)
+
+      if (cancelled) return
+
+      if (riderError) {
+        console.warn('Could not load selected National Team rider identities:', riderError.message)
+        setSelectedRiderIdentities({})
+        return
+      }
+
+      const next: Record<string, RiderIdentity> = {}
+      for (const rider of (data ?? []) as RiderIdentity[]) {
+        next[rider.id] = rider
+      }
+      setSelectedRiderIdentities(next)
+    }
+
+    void loadSelectedRiderIdentities()
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedEventMembers])
 
   const overviewEventGroups = useMemo(() => {
     const groups = new Map<
@@ -991,7 +1050,7 @@ export default function NationalAssociationPage(): JSX.Element {
                           </div>
                         </div>
 
-                        <div className="grid gap-px bg-slate-200 sm:grid-cols-3">
+                        <div className="divide-y divide-slate-200">
                           {group.events.map(event => {
                             const selected =
                               selectedOverviewEvent?.event_id === event.event_id
@@ -999,14 +1058,14 @@ export default function NationalAssociationPage(): JSX.Element {
                               <div
                                 key={event.event_id}
                                 className={[
-                                  'min-w-0 bg-white px-3 py-3',
+                                  'flex min-w-0 flex-col gap-3 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between',
                                   selected ? 'ring-2 ring-inset ring-yellow-400' : '',
                                 ].join(' ')}
                               >
                                 <button
                                   type="button"
                                   onClick={() => setSelectedOverviewEventId(event.event_id)}
-                                  className="w-full text-left"
+                                  className="min-w-0 flex-1 text-left"
                                 >
                                   <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                                     Day {event.race_day ?? '—'} · {humanize(event.race_type)}
@@ -1028,7 +1087,7 @@ export default function NationalAssociationPage(): JSX.Element {
 
                                 <Link
                                   to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
-                                  className="mt-2 inline-flex rounded-lg bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black shadow-sm hover:bg-yellow-300"
+                                  className="inline-flex shrink-0 self-start rounded-lg bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black shadow-sm hover:bg-yellow-300 sm:self-center"
                                 >
                                   Open race page
                                 </Link>
@@ -1072,22 +1131,60 @@ export default function NationalAssociationPage(): JSX.Element {
                     </div>
                   ) : (
                     <div className="grid gap-2 sm:grid-cols-2">
-                      {selectedEventMembers.map((member, index) => (
-                        <div
-                          key={member.rider_id}
-                          className="rounded border border-slate-200 bg-slate-50 px-3 py-2.5"
-                        >
-                          <div className="text-xs font-semibold text-slate-400">
-                            #{index + 1}
+                      {selectedEventMembers.map(member => {
+                        const riderIdentity = selectedRiderIdentities[member.rider_id]
+                        const fullName = [
+                          riderIdentity?.first_name?.trim(),
+                          riderIdentity?.last_name?.trim(),
+                        ]
+                          .filter(Boolean)
+                          .join(' ')
+                        const countryCode =
+                          riderIdentity?.country_code?.trim().toUpperCase() ?? ''
+                        const countryFlag = riderFlagUrl(countryCode)
+                        const role = riderIdentity?.role ?? member.squad_role ?? null
+
+                        return (
+                          <div
+                            key={member.rider_id}
+                            className="rounded border border-slate-200 bg-slate-50 px-3 py-2.5"
+                          >
+                            <div className="flex items-start gap-2.5">
+                              {countryFlag ? (
+                                <img
+                                  src={countryFlag}
+                                  alt={countryCode}
+                                  className="mt-0.5 h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
+                                />
+                              ) : (
+                                <div className="mt-0.5 flex h-4 w-6 shrink-0 items-center justify-center rounded-sm border border-slate-200 bg-white text-[8px] font-semibold text-slate-400">
+                                  {countryCode || '—'}
+                                </div>
+                              )}
+
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-semibold text-slate-900">
+                                  {fullName || riderIdentity?.display_name || member.rider_name}
+                                </div>
+                                <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-slate-500">
+                                  {countryCode ? (
+                                    <>
+                                      <span>{countryCode}</span>
+                                      <span className="text-slate-300">·</span>
+                                    </>
+                                  ) : null}
+                                  <span className="font-medium text-slate-600">
+                                    {role ? humanize(role) : 'Role not set'}
+                                  </span>
+                                </div>
+                                <div className="mt-0.5 text-xs text-slate-500">
+                                  {member.club_name ?? t('common.freeAgent')}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="mt-0.5 text-sm font-semibold text-slate-900">
-                            {member.rider_name}
-                          </div>
-                          <div className="mt-0.5 text-xs text-slate-500">
-                            {member.club_name ?? t('common.freeAgent')}
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </div>
