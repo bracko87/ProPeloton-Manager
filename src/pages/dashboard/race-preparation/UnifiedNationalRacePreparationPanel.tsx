@@ -69,6 +69,7 @@ type NationalTeamEvent = {
   host_country_code?: string | null
   setup_window_opens_on: string
   lineup_deadline_on: string
+  test_override?: boolean
   can_manage: boolean
   association_id: string
   country_code: string
@@ -218,6 +219,14 @@ function teamStatus(event: NationalTeamEvent, today: string): {
     }
   }
 
+  if (event.test_override) {
+    return {
+      label: 'Test access',
+      tone: 'bg-violet-100 text-violet-800',
+      preparationOpen: true,
+    }
+  }
+
   if (compareDate(today, event.setup_window_opens_on) < 0) {
     return {
       label: `Opens ${formatDate(event.setup_window_opens_on)}`,
@@ -297,7 +306,8 @@ function NationalTeamPreparation({
 
   const canEditLineup =
     Boolean(event.can_manage && event.squad) &&
-    compareDate(today, event.setup_window_opens_on) >= 0 &&
+    (event.test_override === true ||
+      compareDate(today, event.setup_window_opens_on) >= 0) &&
     compareDate(today, event.lineup_deadline_on) <= 0
 
   const toggleRider = (riderId: string): void => {
@@ -412,6 +422,11 @@ function NationalTeamPreparation({
                 <div className="mt-1 text-sm text-slate-600">
                   Choose exactly 7 riders from the confirmed 10-rider squad.
                   Deadline: {formatDate(event.lineup_deadline_on)}.
+                  {event.test_override ? (
+                    <span className="ml-1 font-semibold text-violet-700">
+                      Test access is active for this race only; the normal opening date remains {formatDate(event.setup_window_opens_on)}.
+                    </span>
+                  ) : null}
                 </div>
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
