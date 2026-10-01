@@ -107,7 +107,7 @@ where club_id = '3eb1ca2e-0b65-41c9-9793-ce3d2539410e'
   );
 
 update public.race_commitment_score_events
-set event_type = 'missed_startlist_reversed_deadline_bug',
+set event_type = 'missed_startlist_reversed_deadline_bug_retry',
     reason = 'REVERSED: date-only rider deadline is valid through the end of the listed game day. Original reason: ' || coalesce(reason, '')
 where id = 'c2e1d481-525e-4232-9d9d-b5219547ee9a'
   and event_type = 'missed_startlist';
