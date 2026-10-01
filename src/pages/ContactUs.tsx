@@ -166,7 +166,7 @@ export default function ContactUsPage(): JSX.Element {
       )}
 
       {isDashboardContact && (
-        <section className="mx-auto max-w-5xl px-6 pt-6">
+        <section className="w-full px-6 pt-6">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-yellow-700">
             {t('contactPage.eyebrow')}
           </p>
@@ -184,7 +184,7 @@ export default function ContactUsPage(): JSX.Element {
       <section
         className={
           isDashboardContact
-            ? 'mx-auto grid max-w-5xl gap-6 px-6 py-6 lg:grid-cols-[0.95fr_1.4fr]'
+            ? 'grid w-full gap-6 px-6 py-6 lg:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.5fr)]'
             : 'mx-auto grid max-w-5xl gap-6 px-6 py-12 lg:grid-cols-[0.95fr_1.4fr]'
         }
       >
