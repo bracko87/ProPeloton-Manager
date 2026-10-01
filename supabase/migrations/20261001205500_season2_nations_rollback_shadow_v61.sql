@@ -46,7 +46,7 @@ declare
   v_leaked_associations integer:=0;
   v_clock_after jsonb;
   r record;
-  m record;
+  g_rec record;
   v_election_id uuid;
   v_candidate_id uuid;
   v_candidate_user uuid;
@@ -355,14 +355,14 @@ begin
     loop
       if r.round_index>1 then perform public.draw_nations_round_v1(r.id); end if;
 
-      for m in
+      for g_rec in
         select * from public.nations_competition_groups
         where round_id=r.id order by group_number
       loop
         with ranked as (
           select nge.id,row_number() over(order by nge.seed_position,nge.id)::int rn
           from public.nations_group_entries nge
-          where nge.group_id=m.id and nge.status<>'withdrawn'
+          where nge.group_id=g_rec.id and nge.status<>'withdrawn'
         )
         update public.nations_group_entries nge
         set ttt_points=300-x.rn,
@@ -374,7 +374,7 @@ begin
             ttt_rank=x.rn,best_day3_rider_rank=x.rn,updated_at=now()
         from ranked x where nge.id=x.id;
 
-        v_result:=public.finalize_nations_group_v1(m.id);
+        v_result:=public.finalize_nations_group_v1(g_rec.id);
         if coalesce(v_result->>'status','')<>'completed' then
           raise exception 'Group finalization failed: %',v_result::text;
         end if;
