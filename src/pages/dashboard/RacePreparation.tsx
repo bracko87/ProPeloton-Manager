@@ -31,6 +31,11 @@ import RaceDetailPage from "./RaceDetailPage";
 import PremiumRaceStrategyPanel from "./race-preparation/PremiumRaceStrategyPanel";
 import UnifiedNationalRacePreparationPanel from "./race-preparation/UnifiedNationalRacePreparationPanel";
 import {
+  NationalSpecialRacePlan,
+  NationalSpecialStagePlan,
+  type NationalSpecialSelection,
+} from "./race-preparation/NationalSpecialRacePreparation";
+import {
   askSportDirectorForStagePlan,
   getRiderName,
   loadAcceptedRacePreparations,
@@ -1766,6 +1771,8 @@ export default function RacePreparationPage(): JSX.Element {
 
   const [clubId, setClubId] = useState<UUID | null>(null);
   const [selectedRaceId, setSelectedRaceId] = useState<UUID | null>(null);
+  const [nationalSpecialSelection, setNationalSpecialSelection] =
+    useState<NationalSpecialSelection | null>(null);
   const [acceptedRaces, setAcceptedRaces] = useState<
     AcceptedRacePreparationRow[]
   >([]);
@@ -2375,6 +2382,10 @@ export default function RacePreparationPage(): JSX.Element {
     !selectedRaceAllWeatherCanceled &&
     !selectedRaceClosed;
 
+  const stagePlansAvailable = nationalSpecialSelection
+    ? Boolean(nationalSpecialSelection.submitted)
+    : stagePlansOpen;
+
   const racePlanUiStatus =
     selectedRaceAllWeatherCanceled || selectedRaceCancelled
       ? "cancelled"
@@ -2483,10 +2494,10 @@ export default function RacePreparationPage(): JSX.Element {
   }, [payload, canEdit]);
 
   useEffect(() => {
-    if (!loading && activeTab === "stagePlans" && !stagePlansOpen) {
+    if (!loading && activeTab === "stagePlans" && !stagePlansAvailable) {
       setActiveTab("racePackage");
     }
-  }, [activeTab, loading, stagePlansOpen]);
+  }, [activeTab, loading, stagePlansAvailable]);
 
   async function applyContext(
     context: RacePreparationTarget,
@@ -2699,6 +2710,7 @@ export default function RacePreparationPage(): JSX.Element {
     setMessage(null);
     setQuote(null);
     setSelectedRaceId(raceIdToSelect);
+    setNationalSpecialSelection(null);
     setParticipatingClubId(clubId);
     setPendingParticipatingClubId(null);
     setSelectedRiderIds([]);
@@ -2721,6 +2733,17 @@ export default function RacePreparationPage(): JSX.Element {
     } finally {
       setActionLoading(false);
     }
+  }
+
+  function selectNationalRace(
+    selection: NationalSpecialSelection,
+    nextTab: RacePreparationTab,
+  ) {
+    setNationalSpecialSelection(selection);
+    setMessage(null);
+    setErrorMessage(null);
+    setQuote(null);
+    setActiveTab(nextTab);
   }
 
   async function refreshSelectedRace() {
@@ -3428,7 +3451,7 @@ export default function RacePreparationPage(): JSX.Element {
         <TabButton
           label={t("tabs.stagePlans")}
           active={activeTab === "stagePlans"}
-          disabled={!stagePlansOpen}
+          disabled={!stagePlansAvailable}
           onClick={() => setActiveTab("stagePlans")}
         />
       </div>
@@ -3445,7 +3468,7 @@ export default function RacePreparationPage(): JSX.Element {
         </div>
       )}
 
-      {target?.has_target && target.race_preparation_id && activeTab !== "acceptedRaces" ? (
+      {!nationalSpecialSelection && target?.has_target && target.race_preparation_id && activeTab !== "acceptedRaces" ? (
         <PremiumRaceStrategyPanel
           racePreparationId={String(target.race_preparation_id)}
         />
@@ -3453,7 +3476,14 @@ export default function RacePreparationPage(): JSX.Element {
 
       {activeTab === "acceptedRaces" && (
         <div className="space-y-5">
-          <UnifiedNationalRacePreparationPanel />
+          <UnifiedNationalRacePreparationPanel
+            onOpenRacePlan={(selection) =>
+              selectNationalRace(selection, "racePackage")
+            }
+            onOpenStagePlans={(selection) =>
+              selectNationalRace({ ...selection, submitted: true }, "stagePlans")
+            }
+          />
           <AcceptedRacesTab
             acceptedRaces={acceptedRaces}
             selectedRaceId={raceId}
@@ -3466,6 +3496,15 @@ export default function RacePreparationPage(): JSX.Element {
       )}
 
       {activeTab === "racePackage" && (
+        nationalSpecialSelection ? (
+          <NationalSpecialRacePlan
+            selection={nationalSpecialSelection}
+            onSubmitted={(selection) =>
+              setNationalSpecialSelection(selection)
+            }
+            onOpenStagePlans={() => setActiveTab("stagePlans")}
+          />
+        ) : (
         <>
           {!target?.has_target ? (
             <EmptyCard message={t("page.noAcceptedSelected")} />
@@ -4064,25 +4103,30 @@ export default function RacePreparationPage(): JSX.Element {
             </>
           )}
         </>
+        )
       )}
 
       {activeTab === "stagePlans" && (
-        <StagePlansTab
-          target={target}
-          packageSubmitted={stagePlansOpen}
-          raceId={raceId}
-          selectedRiders={selectedRacePlanRiders}
-          equipmentPresetOptions={selectableData?.equipmentPresets ?? []}
-          supplyOptions={selectableData?.supplies ?? []}
-          standardizedBonus={standardizedBonus}
-          exactBonusPreview={bonusPreview}
-          hasSportDirectorAssigned={Boolean(selectedStaffByRole.sport_director)}
-          tacticalPlannerChoice={effectiveTacticalPlannerChoice}
-          u23HeadCoachId={selectedU23HeadCoachId}
-          u23AutomationEnabled={u23AutomationEnabled}
-          selectedStageIdFromUrl={searchParams.get("stageId")}
-          onOpenRacePreview={setRacePreviewId}
-        />
+        nationalSpecialSelection ? (
+          <NationalSpecialStagePlan selection={nationalSpecialSelection} />
+        ) : (
+          <StagePlansTab
+            target={target}
+            packageSubmitted={stagePlansOpen}
+            raceId={raceId}
+            selectedRiders={selectedRacePlanRiders}
+            equipmentPresetOptions={selectableData?.equipmentPresets ?? []}
+            supplyOptions={selectableData?.supplies ?? []}
+            standardizedBonus={standardizedBonus}
+            exactBonusPreview={bonusPreview}
+            hasSportDirectorAssigned={Boolean(selectedStaffByRole.sport_director)}
+            tacticalPlannerChoice={effectiveTacticalPlannerChoice}
+            u23HeadCoachId={selectedU23HeadCoachId}
+            u23AutomationEnabled={u23AutomationEnabled}
+            selectedStageIdFromUrl={searchParams.get("stageId")}
+            onOpenRacePreview={setRacePreviewId}
+          />
+        )
       )}
 
       {pendingParticipatingClubId && pendingSquadOption && (
