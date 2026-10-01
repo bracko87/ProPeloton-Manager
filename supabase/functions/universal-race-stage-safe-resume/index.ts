@@ -360,7 +360,8 @@ function isRecoverableReplayOnlyIssue(issue: string): boolean {
   return normalized.startsWith("bridge_progress_invalid:")
     || normalized.startsWith("successful_attack_without_physical_group:")
     || normalized.startsWith("opening_breakaway_lineage_changed:")
-    || normalized.startsWith("opening_breakaway_lineage_changed_without_bridge_merge:");
+    || normalized.startsWith("opening_breakaway_lineage_changed_without_bridge_merge:")
+    || normalized.startsWith("bridge_merge_invalid:");
 }
 
 function isRecoverablePhase78ReplayIssue(issue: string): boolean {
@@ -844,33 +845,84 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     });
     const normalizeCheckpointPhysicalGroups=(replayCheckpoint:any)=>{
       if(!Array.isArray(replayCheckpoint?.groups)||replayCheckpoint.groups.length===0) return;
-      const ordered=[...replayCheckpoint.groups].sort((a:any,b:any)=>
+
+      const sorted=[...replayCheckpoint.groups].sort((a:any,b:any)=>
         finite(a?.gapSeconds,0)-finite(b?.gapSeconds,0)||
         finite(a?.groupOrder,0)-finite(b?.groupOrder,0)||
         String(a?.displayCode??"").localeCompare(String(b?.displayCode??""))
       );
-      let pelotonIndex=ordered.findIndex((group:any)=>String(group?.displayCode??"")==="P");
+
+      // Groups at the exact same physical gap are the same road unit.
+      const merged:any[]=[];
+      for(const group of sorted){
+        const gap=finite(group?.gapSeconds,0);
+        const existing=merged.find((candidate:any)=>
+          Math.abs(finite(candidate?.gapSeconds,0)-gap)<=0.000001
+        );
+        if(existing){
+          existing.riderIds=Array.from(new Set([
+            ...(Array.isArray(existing?.riderIds)?existing.riderIds:[]),
+            ...(Array.isArray(group?.riderIds)?group.riderIds:[]),
+          ].map(String))).sort();
+          if(String(group?.displayCode??"")==="P"){
+            existing.groupCode="main_peloton";
+            existing.displayCode="P";
+            existing.physicalPosition="peloton";
+            existing.colorKey="peloton_blue";
+          }
+          continue;
+        }
+        merged.push({
+          ...group,
+          riderIds:Array.from(new Set(
+            (Array.isArray(group?.riderIds)?group.riderIds:[]).map(String)
+          )).sort(),
+          gapSeconds:gap,
+        });
+      }
+
+      let pelotonIndex=merged.findIndex((group:any)=>String(group?.displayCode??"")==="P");
       if(pelotonIndex<0){
-        pelotonIndex=ordered.reduce((best:number,group:any,index:number)=>{
-          const bestCount=Array.isArray(ordered[best]?.riderIds)?ordered[best].riderIds.length:0;
+        pelotonIndex=merged.reduce((best:number,group:any,index:number)=>{
+          const bestCount=Array.isArray(merged[best]?.riderIds)?merged[best].riderIds.length:0;
           const count=Array.isArray(group?.riderIds)?group.riderIds.length:0;
           return count>bestCount?index:best;
         },0);
       }
-      let frontNumber=0;
-      let chaseNumber=0;
-      const normalizedGroups=ordered.map((group:any,index:number)=>{
+
+      const frontGroups=merged.slice(0,pelotonIndex);
+      const hasOpeningBreakaway=frontGroups.some((group:any)=>
+        String(group?.displayCode??"").startsWith("B")||group?.groupCode==="breakaway"
+      );
+      let bAssigned=false;
+      let fNumber=0;
+      let cNumber=0;
+
+      const normalizedGroups=merged.map((group:any,index:number)=>{
         let displayCode=String(group?.displayCode??"");
         let groupCode=group?.groupCode;
         let physicalPosition=group?.physicalPosition;
         let colorKey=group?.colorKey;
+
         if(index<pelotonIndex){
-          if(!displayCode.startsWith("B")&&!displayCode.startsWith("F")){
-            frontNumber+=1;
-            displayCode=`B${frontNumber}`;
+          const shouldBeOpeningBreakaway=
+            hasOpeningBreakaway&&!bAssigned&&(
+              displayCode.startsWith("B")||groupCode==="breakaway"
+            );
+          if(shouldBeOpeningBreakaway){
+            bAssigned=true;
+            displayCode="B1";
             groupCode="breakaway";
             physicalPosition="ahead_of_peloton";
             colorKey="breakaway_red";
+          }else{
+            fNumber+=1;
+            displayCode=`F${fNumber}`;
+            if(groupCode==="main_peloton"||groupCode==="reduced_peloton"||groupCode==="dropped_group"){
+              groupCode="chasing_group";
+            }
+            physicalPosition="ahead_of_peloton";
+            colorKey="chasing_orange";
           }
         }else if(index===pelotonIndex){
           displayCode="P";
@@ -878,14 +930,15 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
           physicalPosition="peloton";
           colorKey="peloton_blue";
         }else{
-          chaseNumber+=1;
-          displayCode=`C${chaseNumber}`;
+          cNumber+=1;
+          displayCode=`C${cNumber}`;
           if(groupCode==="breakaway"||groupCode==="main_peloton"||groupCode==="reduced_peloton"){
-            groupCode=chaseNumber<=2?"chasing_group":"dropped_group";
+            groupCode=cNumber<=2?"chasing_group":"dropped_group";
           }
           physicalPosition="behind_peloton";
           colorKey="chasing_orange";
         }
+
         return {
           ...group,
           groupOrder:index+1,
@@ -895,12 +948,14 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
           colorKey,
         };
       });
+
       const groupByRiderId=new Map<string,any>();
       for(const group of normalizedGroups){
         for(const riderId of (Array.isArray(group?.riderIds)?group.riderIds:[])){
           groupByRiderId.set(String(riderId),group);
         }
       }
+
       replayCheckpoint.groups=normalizedGroups;
       replayCheckpoint.gaps=normalizedGroups.map((group:any)=>({
         displayCode:group.displayCode,
