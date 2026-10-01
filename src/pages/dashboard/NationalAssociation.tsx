@@ -160,6 +160,20 @@ type OverviewSquad = {
   }>
 }
 
+type OverviewLineup = {
+  lineup_id: string
+  status: string
+  race_day: number
+  race_type: string
+  riders?: Array<{
+    rider_id: string
+    rider_name: string
+    club_id?: string | null
+    club_name?: string | null
+    squad_role?: string | null
+  }>
+}
+
 type OverviewEvent = {
   event_id: string
   event_type: string
@@ -171,6 +185,7 @@ type OverviewEvent = {
   cycle_key?: string | null
   label: string
   status?: string | null
+  lineup?: OverviewLineup | null
   squad?: OverviewSquad | null
 }
 
@@ -506,8 +521,8 @@ export default function NationalAssociationPage(): JSX.Element {
     upcomingEvents.find(event => event.event_id === selectedOverviewEventId) ??
     upcomingEvents[0] ??
     null
-  const selectedEventSquad = selectedOverviewEvent?.squad ?? null
-  const selectedEventMembers = selectedEventSquad?.members ?? []
+  const selectedEventLineup = selectedOverviewEvent?.lineup ?? null
+  const selectedEventMembers = selectedEventLineup?.riders ?? []
 
   useEffect(() => {
     if (!upcomingEvents.length) {
@@ -873,7 +888,7 @@ export default function NationalAssociationPage(): JSX.Element {
                   {t('association.dashboard.selectedRiders')}
                 </div>
                 <div className="mt-2 text-xl font-semibold text-slate-900">
-                  {selectedEventMembers.length} / 10
+                  {selectedEventMembers.length} / 7
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
                   {selectedOverviewEvent
@@ -990,7 +1005,7 @@ export default function NationalAssociationPage(): JSX.Element {
                     </div>
                   ) : !selectedEventMembers.length ? (
                     <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-                      No National Team squad has been confirmed for this event yet.
+                      No 7-rider lineup has been submitted for this race yet.
                     </div>
                   ) : (
                     <div className="grid gap-2 sm:grid-cols-2">
