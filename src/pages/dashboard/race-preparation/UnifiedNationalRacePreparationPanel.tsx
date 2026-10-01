@@ -156,6 +156,42 @@ function formatDate(value?: string | null): string {
   })
 }
 
+function flagUrl(code?: string | null): string | null {
+  const normalized = code?.trim().toLowerCase()
+  return normalized && /^[a-z]{2}$/.test(normalized)
+    ? `https://flagcdn.com/w40/${normalized}.png`
+    : null
+}
+
+function countryName(code?: string | null): string {
+  const normalized = code?.trim().toUpperCase()
+  if (!normalized) return '—'
+  try {
+    return (
+      new Intl.DisplayNames(['en'], { type: 'region' }).of(normalized) ??
+      normalized
+    )
+  } catch {
+    return normalized
+  }
+}
+
+function HostLine({ code }: { code?: string | null }): JSX.Element {
+  const flag = flagUrl(code)
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {flag ? (
+        <img
+          src={flag}
+          alt={countryName(code)}
+          className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
+        />
+      ) : null}
+      <span>Host {countryName(code)}</span>
+    </span>
+  )
+}
+
 function compareDate(a?: string | null, b?: string | null): number {
   return String(a ?? '').localeCompare(String(b ?? ''))
 }
@@ -599,57 +635,65 @@ export default function UnifiedNationalRacePreparationPanel(): JSX.Element | nul
           const state = teamStatus(event, workspace?.current_game_date ?? '')
           const expanded = expandedEventId === event.event_id
           return (
-            <div key={event.event_id}>
-              <div className="grid gap-4 p-4 md:grid-cols-[90px_1fr_auto] md:items-center">
-                <div className="text-right">
-                  <div className="text-sm font-semibold text-slate-900">
-                    {formatDate(event.event_date)}
+            <div key={event.event_id} className="px-4 py-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50">
+                <div className="grid gap-4 md:grid-cols-[96px_1fr_auto] md:items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 text-right text-sm font-semibold leading-tight text-slate-950">
+                      <div>{formatDate(event.event_date)}</div>
+                      <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        Day {event.race_day}
+                      </div>
+                    </div>
+                    <div className="h-14 w-px bg-emerald-400" />
                   </div>
-                  <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Day {event.race_day}
-                  </div>
-                </div>
 
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-[11px] font-semibold text-indigo-800">
-                      National Team
-                    </span>
-                    <span className="font-semibold text-slate-900">
-                      {event.round_label} · {event.group_label} · {raceTypeLabel(event.race_type)}
-                    </span>
+                  <div className="min-w-0">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="truncate text-base font-semibold text-slate-900">
+                        {event.round_label} · {event.group_label} · {raceTypeLabel(event.race_type)}
+                      </span>
+                      <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
+                        National Team
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                      <HostLine code={event.host_country_code} />
+                      <span>Preparation opens {formatDate(event.setup_window_opens_on)}</span>
+                      <span>Lineup deadline {formatDate(event.lineup_deadline_on)}</span>
+                      {event.route?.start_city && event.route?.finish_city ? (
+                        <span>{event.route.start_city} → {event.route.finish_city}</span>
+                      ) : null}
+                      {event.route?.distance_km ? (
+                        <span>
+                          {Number(event.route.distance_km).toFixed(1).replace(/\.0$/, '')} km
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {event.route?.start_city && event.route?.finish_city
-                      ? `${event.route.start_city} → ${event.route.finish_city}`
-                      : `Preparation opens ${formatDate(event.setup_window_opens_on)} · lineup deadline ${formatDate(event.lineup_deadline_on)}`}
-                    {event.route?.distance_km
-                      ? ` · ${Number(event.route.distance_km).toFixed(1).replace(/\.0$/, '')} km`
-                      : ''}
-                  </div>
-                </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${state.tone}`}>
-                    {state.label}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setExpandedEventId(current =>
-                        current === event.event_id ? null : event.event_id,
-                      )
-                    }
-                    className="rounded-lg bg-yellow-400 px-3 py-2 text-xs font-semibold text-black hover:bg-yellow-300"
-                  >
-                    {expanded ? 'Close preparation' : 'Open preparation'}
-                  </button>
-                  <Link
-                    to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Race page
-                  </Link>
+                  <div className="flex flex-nowrap items-center justify-start gap-2 md:justify-end">
+                    <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${state.tone}`}>
+                      {state.label}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedEventId(current =>
+                          current === event.event_id ? null : event.event_id,
+                        )
+                      }
+                      className="whitespace-nowrap rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-slate-950 hover:bg-yellow-300"
+                    >
+                      {expanded ? 'Close preparation' : 'Open preparation'}
+                    </button>
+                    <Link
+                      to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
+                      className="whitespace-nowrap rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Race page
+                    </Link>
+                  </div>
                 </div>
               </div>
 
@@ -670,40 +714,51 @@ export default function UnifiedNationalRacePreparationPanel(): JSX.Element | nul
               ? `/dashboard/national-championships/${event.edition_id}/final`
               : `/dashboard/national-championships/${event.edition_id}/qualification/${event.heat_number ?? 1}`
           return (
-            <div
-              key={event.event_key}
-              className="grid gap-4 p-4 md:grid-cols-[90px_1fr_auto] md:items-center"
-            >
-              <div className="text-right">
-                <div className="text-sm font-semibold text-slate-900">
-                  {formatDate(event.event_date)}
+            <div key={event.event_key} className="px-4 py-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50">
+                <div className="grid gap-4 md:grid-cols-[96px_1fr_auto] md:items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 text-right text-sm font-semibold leading-tight text-slate-950">
+                      <div>{formatDate(event.event_date)}</div>
+                      <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        {event.event_type === 'final'
+                          ? 'Final'
+                          : `Heat ${event.heat_number ?? 1}`}
+                      </div>
+                    </div>
+                    <div className="h-14 w-px bg-emerald-400" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="truncate text-base font-semibold text-slate-900">
+                        {countryName(event.country_code)} National Championship · {title(event.event_type)}
+                        {event.heat_number ? ` · Heat ${event.heat_number}` : ''}
+                      </span>
+                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        National Ranking
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                      <HostLine code={event.country_code} />
+                      <span>{event.riders.map(rider => rider.rider_name).join(', ')}</span>
+                      <span>Individual race · no club team commands</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-nowrap items-center justify-start gap-2 md:justify-end">
+                    <span className="whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                      {title(event.status)}
+                    </span>
+                    <Link
+                      to={target}
+                      className="whitespace-nowrap rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      Open event
+                    </Link>
+                  </div>
                 </div>
               </div>
-
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">
-                    National Championship
-                  </span>
-                  <span className="font-semibold text-slate-900">
-                    {event.country_code} · {title(event.event_type)}
-                    {event.heat_number ? ` · Heat ${event.heat_number}` : ''}
-                  </span>
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {event.riders.map(rider => rider.rider_name).join(', ')}
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  Individual race · standardized event rules · no club team commands.
-                </div>
-              </div>
-
-              <Link
-                to={target}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Open event
-              </Link>
             </div>
           )
         })}
