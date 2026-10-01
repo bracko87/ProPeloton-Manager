@@ -774,10 +774,10 @@ export default function WorldNationsPage(): JSX.Element {
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5">
               <div>
                 <h3 className="text-lg font-semibold text-slate-950">
-                  {t('world.hostApplication.title')}
+                  Apply to host World Nations · Season {hostWorkspace?.target_season_number ?? '—'}
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  {t('world.hostApplication.description')}
+                  Applications are always for the next season. A host must provide exactly three races from the same country: one Team Time Trial, one Flat road race and one Hilly/Mountain road race.
                 </p>
               </div>
               <button
@@ -792,141 +792,239 @@ export default function WorldNationsPage(): JSX.Element {
             <div className="space-y-5 p-5">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {t('world.hostApplication.applyFor')}
+                  Application type
                 </div>
-                <div className="mt-2 inline-flex rounded-lg bg-slate-100 p-1">
-                  {(['qualification', 'final'] as const).map(scope => (
-                    <button
-                      key={scope}
-                      type="button"
-                      onClick={() => changeHostScope(scope)}
-                      className={[
-                        'rounded-md px-4 py-2 text-sm font-semibold',
-                        hostScope === scope
-                          ? 'bg-yellow-400 text-black shadow-sm'
-                          : 'text-slate-600 hover:bg-white',
-                      ].join(' ')}
-                    >
-                      {scope === 'qualification'
-                        ? t('world.hostApplication.qualification')
-                        : t('world.hostApplication.final')}
-                    </button>
-                  ))}
+                <div className="mt-2 inline-flex flex-wrap rounded-lg bg-slate-100 p-1">
+                  <button
+                    type="button"
+                    onClick={() => changeHostScope('qualification')}
+                    className={[
+                      'rounded-md px-4 py-2 text-sm font-semibold',
+                      hostMode === 'qualification'
+                        ? 'bg-yellow-400 text-black shadow-sm'
+                        : 'text-slate-600 hover:bg-white',
+                    ].join(' ')}
+                  >
+                    Qualification round
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeHostScope('final')}
+                    className={[
+                      'rounded-md px-4 py-2 text-sm font-semibold',
+                      hostMode === 'final'
+                        ? 'bg-yellow-400 text-black shadow-sm'
+                        : 'text-slate-600 hover:bg-white',
+                    ].join(' ')}
+                  >
+                    World Final
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHostMode('routes')
+                      setRouteRequestTypes(
+                        hostWorkspace?.route_request?.requested_types ??
+                        hostWorkspace?.missing_types ??
+                        [],
+                      )
+                      setRouteRequestNote(hostWorkspace?.route_request?.note ?? '')
+                    }}
+                    className={[
+                      'rounded-md px-4 py-2 text-sm font-semibold',
+                      hostMode === 'routes'
+                        ? 'bg-yellow-400 text-black shadow-sm'
+                        : 'text-slate-600 hover:bg-white',
+                    ].join(' ')}
+                  >
+                    Request missing race type
+                  </button>
                 </div>
               </div>
 
-              <div className="rounded border border-slate-200 bg-slate-50 p-4">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {t('world.hostApplication.alreadyApplied')}
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {applicationsForScope.length ? (
-                    applicationsForScope.map(application => (
-                      <span
-                        key={application.application_id}
-                        className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700"
-                      >
-                        {application.country_code ?? application.association_name ?? '—'}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-sm text-slate-500">
-                      {t('world.hostApplication.noApplications')}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {!hostWorkspace?.viewer_can_apply ? (
-                <div className="rounded border border-slate-200 bg-slate-50 p-4">
-                  <div className="font-semibold text-slate-900">
-                    {t('world.hostApplication.coachOnly')}
-                  </div>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    {t('world.hostApplication.coachOnlyHelp')}
-                  </p>
-                </div>
-              ) : !hostWorkspace?.country_has_complete_bundle ? (
-                <div className="rounded border border-amber-200 bg-amber-50 p-4">
-                  <div className="font-semibold text-amber-950">
-                    {t('world.hostApplication.notEligibleTitle')}
-                  </div>
-                  <p className="mt-1 text-sm leading-6 text-amber-900">
-                    {t('world.hostApplication.notEligibleText', {
-                      country: hostWorkspace?.viewer_country_code ?? association?.country_code ?? '—',
-                    })}
-                  </p>
-                  <div className="mt-2 text-xs font-medium text-amber-800">
-                    {t('world.hostApplication.missing', {
-                      types: (hostWorkspace?.missing_types ?? [])
-                        .map(type => t(`world.hostApplication.type.${type}`, { defaultValue: humanize(type) }))
-                        .join(', '),
-                    })}
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-amber-800">
-                    {t('world.hostApplication.askAdmin')}
-                  </p>
-                </div>
-              ) : (
+              {hostMode === 'routes' ? (
                 <div className="space-y-4">
-                  <p className="text-sm leading-6 text-slate-600">
-                    {t('world.hostApplication.sameCountryRule', {
-                      country: hostWorkspace?.viewer_country_code ?? association?.country_code ?? '—',
-                    })}
-                  </p>
+                  <div className="rounded border border-slate-200 bg-slate-50 p-4">
+                    <div className="font-semibold text-slate-900">
+                      Request race creation for {hostWorkspace?.viewer_country_code ?? association?.country_code ?? 'your country'}
+                    </div>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      Use this only when your country is missing one of the three race types required to host World Nations. The request is sent to the Game Control Center for administrator review.
+                    </p>
+                    {hostWorkspace?.route_request ? (
+                      <div className="mt-3 rounded border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+                        Existing Season {hostWorkspace.route_request.target_season_number} request: {humanize(hostWorkspace.route_request.status)}
+                      </div>
+                    ) : null}
+                  </div>
 
-                  {[
-                    {
-                      key: 'ttt',
-                      label: t('world.hostApplication.ttt'),
-                      value: hostTttStageId,
-                      onChange: setHostTttStageId,
-                      options: hostWorkspace?.stage_options?.team_time_trial ?? [],
-                    },
-                    {
-                      key: 'flat',
-                      label: t('world.hostApplication.flat'),
-                      value: hostFlatStageId,
-                      onChange: setHostFlatStageId,
-                      options: hostWorkspace?.stage_options?.flat ?? [],
-                    },
-                    {
-                      key: 'mountain',
-                      label: t('world.hostApplication.mountain'),
-                      value: hostMountainStageId,
-                      onChange: setHostMountainStageId,
-                      options: hostWorkspace?.stage_options?.hilly_mountain ?? [],
-                    },
-                  ].map(field => (
-                    <label key={field.key} className="block">
-                      <span className="text-sm font-semibold text-slate-900">{field.label}</span>
-                      <select
-                        value={field.value}
-                        onChange={event => field.onChange(event.target.value)}
-                        className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
-                      >
-                        {field.options.map(option => (
-                          <option key={option.stage_id} value={option.stage_id}>
-                            {option.race_name ?? option.stage_name ?? 'Race'} · {option.route_label ?? option.stage_name ?? 'Stage'} · {Number(option.distance_km ?? 0).toFixed(1).replace(/\.0$/, '')} km
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  ))}
+                  {(hostWorkspace?.missing_types ?? []).length ? (
+                    <div className="space-y-2">
+                      {(hostWorkspace?.missing_types ?? []).map(type => {
+                        const checked = routeRequestTypes.includes(type)
+                        return (
+                          <label
+                            key={type}
+                            className="flex cursor-pointer items-center gap-3 rounded border border-slate-200 bg-white px-3 py-3"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() =>
+                                setRouteRequestTypes(current =>
+                                  checked
+                                    ? current.filter(item => item !== type)
+                                    : [...current, type],
+                                )
+                              }
+                            />
+                            <span className="text-sm font-semibold text-slate-900">
+                              {type === 'team_time_trial'
+                                ? 'Team Time Trial'
+                                : type === 'flat'
+                                  ? 'Flat road race'
+                                  : 'Hilly / Mountain road race'}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                      Your country already has all three required host race types. No race-creation request is needed.
+                    </div>
+                  )}
 
                   <label className="block">
-                    <span className="text-sm font-semibold text-slate-900">
-                      {t('world.hostApplication.note')}
-                    </span>
+                    <span className="text-sm font-semibold text-slate-900">Request note</span>
                     <textarea
                       rows={3}
-                      value={hostStatement}
-                      onChange={event => setHostStatement(event.target.value)}
-                      placeholder={t('world.hostApplication.notePlaceholder')}
+                      value={routeRequestNote}
+                      onChange={event => setRouteRequestNote(event.target.value)}
+                      placeholder="Optional details for the administrator, for example preferred city, region or route character."
                       className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
                     />
                   </label>
                 </div>
+              ) : (
+                <>
+                  <div className="rounded border border-slate-200 bg-slate-50 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Countries already applied for Season {hostWorkspace?.target_season_number ?? '—'}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {applicationsForScope.length ? (
+                        applicationsForScope.map(application => (
+                          <span
+                            key={application.application_id}
+                            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700"
+                          >
+                            {application.country_code ?? application.association_name ?? '—'}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-slate-500">
+                          No countries have applied for this host type yet.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {!hostWorkspace?.viewer_can_apply ? (
+                    <div className="rounded border border-slate-200 bg-slate-50 p-4">
+                      <div className="font-semibold text-slate-900">National Coach only</div>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">
+                        Applications can be viewed by Association members, but only the elected National Coach can submit or change an application.
+                      </p>
+                    </div>
+                  ) : !hostWorkspace?.country_has_complete_bundle ? (
+                    <div className="rounded border border-amber-200 bg-amber-50 p-4">
+                      <div className="font-semibold text-amber-950">
+                        Your country is missing a required host race type
+                      </div>
+                      <p className="mt-1 text-sm leading-6 text-amber-900">
+                        A host application needs exactly one Team Time Trial, one Flat road race and one Hilly/Mountain road race from the same country.
+                      </p>
+                      <div className="mt-2 text-xs font-medium text-amber-800">
+                        Missing: {(hostWorkspace?.missing_types ?? [])
+                          .map(type =>
+                            type === 'team_time_trial'
+                              ? 'Team Time Trial'
+                              : type === 'flat'
+                                ? 'Flat road race'
+                                : 'Hilly / Mountain road race',
+                          )
+                          .join(', ')}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHostMode('routes')
+                          setRouteRequestTypes(hostWorkspace?.missing_types ?? [])
+                        }}
+                        className="mt-3 rounded bg-white px-3 py-2 text-xs font-semibold text-amber-900 ring-1 ring-amber-300 hover:bg-amber-100"
+                      >
+                        Request missing race type
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+                        Exactly three host races will be submitted for Season {hostWorkspace?.target_season_number ?? '—'}.
+                      </div>
+
+                      {[
+                        {
+                          key: 'ttt',
+                          label: '1 · Team Time Trial',
+                          value: hostTttStageId,
+                          onChange: setHostTttStageId,
+                          options: hostWorkspace?.stage_options?.team_time_trial ?? [],
+                        },
+                        {
+                          key: 'flat',
+                          label: '2 · Flat road race',
+                          value: hostFlatStageId,
+                          onChange: setHostFlatStageId,
+                          options: hostWorkspace?.stage_options?.flat ?? [],
+                        },
+                        {
+                          key: 'mountain',
+                          label: '3 · Hilly / Mountain road race',
+                          value: hostMountainStageId,
+                          onChange: setHostMountainStageId,
+                          options: hostWorkspace?.stage_options?.hilly_mountain ?? [],
+                        },
+                      ].map(field => (
+                        <label key={field.key} className="block">
+                          <span className="text-sm font-semibold text-slate-900">{field.label}</span>
+                          <select
+                            value={field.value}
+                            onChange={event => field.onChange(event.target.value)}
+                            className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
+                          >
+                            {field.options.map(option => (
+                              <option key={option.stage_id} value={option.stage_id}>
+                                {option.race_name ?? option.stage_name ?? 'Race'} · {option.route_label ?? option.stage_name ?? 'Stage'} · {Number(option.distance_km ?? 0).toFixed(1).replace(/.0$/, '')} km
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ))}
+
+                      <label className="block">
+                        <span className="text-sm font-semibold text-slate-900">Application note</span>
+                        <textarea
+                          rows={3}
+                          value={hostStatement}
+                          onChange={event => setHostStatement(event.target.value)}
+                          placeholder="Optional note about your host proposal."
+                          className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
+                        />
+                      </label>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -936,24 +1034,32 @@ export default function WorldNationsPage(): JSX.Element {
                 onClick={() => setHostModalOpen(false)}
                 className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                {t('world.hostApplication.cancel')}
+                Cancel
               </button>
               <button
                 type="button"
                 disabled={
                   hostSaving ||
                   !hostWorkspace?.viewer_can_apply ||
-                  !hostWorkspace?.country_has_complete_bundle ||
-                  !hostTttStageId ||
-                  !hostFlatStageId ||
-                  !hostMountainStageId
+                  (hostMode === 'routes'
+                    ? routeRequestTypes.length === 0
+                    : !hostWorkspace?.country_has_complete_bundle ||
+                      !hostTttStageId ||
+                      !hostFlatStageId ||
+                      !hostMountainStageId)
                 }
-                onClick={() => void submitHostApplication()}
+                onClick={() =>
+                  void (hostMode === 'routes'
+                    ? submitRouteRequest()
+                    : submitHostApplication())
+                }
                 className="rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {hostSaving
-                  ? t('world.hostApplication.saving')
-                  : t('world.hostApplication.submit')}
+                  ? 'Submitting…'
+                  : hostMode === 'routes'
+                    ? 'Submit race request'
+                    : 'Submit host application'}
               </button>
             </div>
           </div>
