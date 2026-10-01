@@ -516,6 +516,7 @@ export default function WorldNationsPage(): JSX.Element {
   }
 
   const submitHostApplication = async (): Promise<void> => {
+    if (hostMode === 'routes') return
     if (
       !hostWorkspace?.viewer_can_apply ||
       !hostWorkspace.country_has_complete_bundle ||
@@ -1005,7 +1006,7 @@ export default function WorldNationsPage(): JSX.Element {
                           >
                             {field.options.map(option => (
                               <option key={option.stage_id} value={option.stage_id}>
-                                {option.race_name ?? option.stage_name ?? 'Race'} · {option.route_label ?? option.stage_name ?? 'Stage'} · {Number(option.distance_km ?? 0).toFixed(1).replace(/.0$/, '')} km
+                                {option.race_name ?? option.stage_name ?? 'Race'} · {option.route_label ?? option.stage_name ?? 'Stage'} · {Number(option.distance_km ?? 0).toFixed(1).replace(/\.0$/, '')} km
                               </option>
                             ))}
                           </select>
