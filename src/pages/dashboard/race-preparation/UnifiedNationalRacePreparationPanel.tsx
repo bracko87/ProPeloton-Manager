@@ -137,7 +137,12 @@ function teamStatus(event: NationalTeamEvent, today: string): {
     }
   }
 
-  if (event.lineup?.status === 'confirmed' || event.lineup?.status === 'locked') {
+  if (
+    event.special_plan_status === 'submitted' ||
+    event.special_plan_status === 'locked' ||
+    event.lineup?.status === 'confirmed' ||
+    event.lineup?.status === 'locked'
+  ) {
     return {
       label: 'Race Plan Submitted',
       tone: 'bg-emerald-100 text-emerald-800',
@@ -239,7 +244,11 @@ export default function UnifiedNationalRacePreparationPanel({
       <div className="divide-y divide-slate-200">
         {(workspace?.national_team_events ?? []).map(event => {
           const state = teamStatus(event, workspace?.current_game_date ?? '')
-          const submitted = event.lineup?.status === 'confirmed' || event.lineup?.status === 'locked'
+          const submitted =
+            event.special_plan_status === 'submitted' ||
+            event.special_plan_status === 'locked' ||
+            event.lineup?.status === 'confirmed' ||
+            event.lineup?.status === 'locked'
           const selection: NationalSpecialSelection = {
             kind: 'national_team',
             event,
@@ -318,10 +327,13 @@ export default function UnifiedNationalRacePreparationPanel({
             event.event_type === 'final'
               ? `/dashboard/national-championships/${event.edition_id}/final`
               : `/dashboard/national-championships/${event.edition_id}/qualification/${event.heat_number ?? 1}`
+          const submitted =
+            event.special_plan_status === 'submitted' ||
+            event.special_plan_status === 'locked'
           const selection: NationalSpecialSelection = {
             kind: 'national_ranking',
             event,
-            submitted: false,
+            submitted,
           }
 
           return (
@@ -356,8 +368,16 @@ export default function UnifiedNationalRacePreparationPanel({
                   </div>
 
                   <div className="flex flex-nowrap items-center justify-start gap-2 md:justify-end">
-                    <span className="whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                      {event.is_preview ? 'Test Preview' : title(event.status)}
+                    <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
+                      submitted
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-slate-100 text-slate-700'
+                    }`}>
+                      {submitted
+                        ? 'Race Plan Submitted'
+                        : event.is_preview
+                          ? 'Test Preview'
+                          : title(event.status)}
                     </span>
                     <button
                       type="button"
@@ -366,6 +386,15 @@ export default function UnifiedNationalRacePreparationPanel({
                     >
                       Race Plan
                     </button>
+                    {submitted ? (
+                      <button
+                        type="button"
+                        onClick={() => onOpenStagePlans(selection)}
+                        className="whitespace-nowrap rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-slate-950 hover:bg-yellow-300"
+                      >
+                        Stage Plans
+                      </button>
+                    ) : null}
                     <Link
                       to={target}
                       className="whitespace-nowrap rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
