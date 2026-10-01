@@ -194,6 +194,8 @@ type OverviewEvent = {
   cycle_key?: string | null
   label: string
   status?: string | null
+  host_country_code?: string | null
+  host_city?: string | null
   lineup?: OverviewLineup | null
   squad?: OverviewSquad | null
 }
@@ -235,7 +237,7 @@ function humanize(value?: string | null): string {
   return value.replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase())
 }
 
-function riderFlagUrl(code?: string | null): string | null {
+function countryFlagUrl(code?: string | null): string | null {
   const normalized = code?.trim().toLowerCase()
   return normalized && /^[a-z]{2}$/.test(normalized)
     ? `https://flagcdn.com/w40/${normalized}.png`
@@ -1083,6 +1085,24 @@ export default function NationalAssociationPage(): JSX.Element {
                                       {event.status ? humanize(event.status) : 'Scheduled'}
                                     </span>
                                   </div>
+                                  {event.host_country_code || event.host_city ? (
+                                    <div className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+                                      {countryFlagUrl(event.host_country_code) ? (
+                                        <img
+                                          src={countryFlagUrl(event.host_country_code) ?? undefined}
+                                          alt={event.host_country_code ?? ''}
+                                          className="h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
+                                        />
+                                      ) : event.host_country_code ? (
+                                        <span className="inline-flex h-4 min-w-6 items-center justify-center rounded-sm border border-slate-200 bg-slate-50 px-1 text-[8px] font-semibold text-slate-500">
+                                          {event.host_country_code}
+                                        </span>
+                                      ) : null}
+                                      <span className="font-medium text-slate-700">
+                                        {event.host_city ?? 'Host city not assigned'}
+                                      </span>
+                                    </div>
+                                  ) : null}
                                 </button>
 
                                 <Link
@@ -1141,7 +1161,7 @@ export default function NationalAssociationPage(): JSX.Element {
                           .join(' ')
                         const countryCode =
                           riderIdentity?.country_code?.trim().toUpperCase() ?? ''
-                        const countryFlag = riderFlagUrl(countryCode)
+                        const countryFlag = countryFlagUrl(countryCode)
                         const role = riderIdentity?.role ?? member.squad_role ?? null
 
                         return (
