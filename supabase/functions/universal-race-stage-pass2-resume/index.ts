@@ -5,7 +5,7 @@ import {
   isUniversalPhase78IssueNonBlocking,
   runRaceEngine,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/9888174f26d023a2e5684d5a349b431ff874af16/src/universal-race-engine/runRaceEngine.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/00a34c7d8f4f2ed50c6ac468b3e9c9474f1933f5/src/universal-race-engine/runRaceEngine.ts";
 import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceInput.ts";
 import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceOutput.ts";
 import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/runRaceEngine.ts";
@@ -15,7 +15,7 @@ import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
-const SOURCE_COMMIT = "9888174f26d023a2e5684d5a349b431ff874af16";
+const SOURCE_COMMIT = "00a34c7d8f4f2ed50c6ac468b3e9c9474f1933f5";
 const FALLBACK_SOURCE_COMMIT = "38fec7814395d77331ae255d1b9203edba0142c7";
 const CONTRACT = "universal_race_pass2_resume_v19";
 
