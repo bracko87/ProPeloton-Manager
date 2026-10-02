@@ -670,7 +670,10 @@
     "SELECTED": "Ausgewählt",
     "SQUAD": "Kader",
     "VOTING": "Abstimmung",
-    "WORLD": "Welt"
+    "WORLD": "Welt",
+    "POSITION": "Position",
+    "RESIGNED": "Zurückgetreten",
+    "VACANT": "Vakant"
   },
   "reportVariants": {
     "rider_skill_change": "Änderung einer Fahrerfähigkeit",
