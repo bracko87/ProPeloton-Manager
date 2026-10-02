@@ -1,0 +1,133 @@
+{
+  "loading": "Učitavanje Omladinske akademije…",
+  "title": "Omladinska akademija",
+  "subtitle": "Premium U16 program razvoja vozača uzrasta 12–16 godina.",
+  "readOnly": "Premium nije aktivan. Vozači i istorija akademije ostaju sačuvani, ali je upravljanje samo za čitanje.",
+  "week": "nedeljno",
+  "save": "Sačuvaj izmene",
+  "saving": "Čuvanje…",
+  "comingSoon": "Dolazi u sledećoj fazi Omladinske akademije",
+  "notAssigned": "Nije dodeljeno",
+  "optionalNotHired": "Opciono — nije angažovan",
+  "premium": {
+    "title": "Premium Omladinska akademija",
+    "description": "Omladinska akademija je Premium razvojni sistem. Premium član može opciono da aktivira U16 akademiju sa fiksnim kapacitetom od 16 vozača.",
+    "capacity": "Fiksni kapacitet od 16 mladih vozača",
+    "localStart": "Početak sa 6 lokalnih vozača",
+    "staff": "Prosečan direktor akademije + U16 glavni trener uključeni",
+    "scouting": "Opcioni omladinski skaut sa dometom koji zavisi od budžeta",
+    "openPremium": "Pogledaj Premium"
+  },
+  "activation": {
+    "title": "Aktiviraj Omladinsku akademiju",
+    "description": "Aktivacija kreira odvojenu U16 akademiju. Počinješ sa šest lokalnih vozača, prosečnim direktorom akademije i U16 glavnim trenerom. Omladinski skaut je opcioni. V1 nema infrastrukturne uslove.",
+    "capacityLabel": "Maksimalno vozača",
+    "starterRidersLabel": "Početni vozači",
+    "staffLabel": "Uključeno osoblje",
+    "infrastructureLabel": "Infrastruktura",
+    "none": "Nije potrebna",
+    "seasonBudget": "Sezonski budžet akademije",
+    "budgetHelp": "Budžet pokriva podršku vozačima, osoblje, skauting, opremu, kampove, putovanja i troškove omladinskih trka.",
+    "activate": "Aktiviraj Omladinsku akademiju",
+    "activating": "Aktivacija…"
+  },
+  "header": {
+    "capacity": "{{current}} / {{max}} vozača"
+  },
+  "tabs": {
+    "overview": "Pregled",
+    "riders": "Mladi vozači",
+    "staff": "Osoblje",
+    "budget": "Budžet",
+    "scouting": "Skauting",
+    "settings": "Odgovornosti",
+    "calendar": "Kalendar",
+    "rankings": "Rang-liste",
+    "equipment": "Oprema i sredstva",
+    "history": "Istorija"
+  },
+  "overview": {
+    "budget": "Dostupan budžet akademije",
+    "ofSeasonBudget": "od {{value}} sezonskog budžeta",
+    "roster": "Omladinski sastav",
+    "fixedCapacity": "Fiksni Premium kapacitet — nezavisan od infrastrukture",
+    "scouting": "Skauting program",
+    "perSeason": "po sezoni",
+    "directorReport": "Izveštaj direktora Omladinske akademije",
+    "directorReady": "{{name}} vodi program akademije, zahteve za troškove i preporuke budžeta.",
+    "directorMissing": "Nedostaje direktor Omladinske akademije.",
+    "nextRace": "Sledeća omladinska trka",
+    "recruitment": "Domet regrutacije",
+    "reputation": "Reputacija akademije",
+    "staff": "Osoblje akademije"
+  },
+  "roles": {
+    "director": "Direktor Omladinske akademije",
+    "headCoach": "U16 glavni trener",
+    "scout": "Omladinski skaut"
+  },
+  "riders": {
+    "title": "Mladi vozači",
+    "rider": "Vozač",
+    "age": "Godine",
+    "role": "Profil",
+    "assessment": "Procena talenta",
+    "focus": "Fokus razvoja",
+    "readiness": "Spremnost",
+    "stipend": "Ugovor o podršci",
+    "potentialNote": "Tačan Potential je namerno skriven. Procena postaje preciznija sa više skautskih i razvojnih informacija."
+  },
+  "staff": {
+    "expertise": "Stručnost",
+    "experience": "Iskustvo",
+    "salary": "Nedeljna plata",
+    "scoutOptional": "Omladinski skaut je opcioni. Angažuj ga na Staff stranici da počne aktivno otkrivanje talenata.",
+    "openStaffPage": "Otvori Squad → Staff"
+  },
+  "budget": {
+    "title": "Sezonski budžet akademije",
+    "seasonBudget": "Dodeljeni sezonski budžet",
+    "spent": "Potrošeno",
+    "committed": "Rezervisano",
+    "available": "Dostupno",
+    "scoutingAllocation": "Budžet za skauting",
+    "scoutingHelp": "Cena programa za {{range}} skauting. Domet skautinga određuje budžet, ne infrastruktura."
+  },
+  "scouting": {
+    "title": "Domet omladinskog skautinga",
+    "description": "Odaberi gde omladinski skaut sme da traži talente. Kvalitet skauta određuje koliko vozača pronalazi i koliko su procene korisne; budžet određuje samo geografski domet.",
+    "skillNote": "Worldwide program ne garantuje elitne talente. On samo omogućava skautu da traži globalno.",
+    "ranges": {
+      "local": "Lokalno — sopstvena zemlja",
+      "regional": "Regionalno",
+      "continental": "Kontinentalno",
+      "world": "Širom sveta"
+    }
+  },
+  "settings": {
+    "title": "Odgovornosti",
+    "description": "Odredi ko vodi rutinske odluke Omladinske akademije. Menadžer kasnije uvek može promeniti odgovornosti.",
+    "recruitment": "Odluke o regrutaciji",
+    "raceEntry": "Učešće na trkama",
+    "raceSquad": "Izbor sastava za trku",
+    "camps": "Razvojni kampovi",
+    "equipment": "Kupovina opreme",
+    "negotiations": "Pregovori sa talentima",
+    "options": {
+      "manager": "Menadžer",
+      "academy_director": "Direktor Omladinske akademije",
+      "u16_head_coach": "U16 glavni trener"
+    }
+  },
+  "placeholders": {
+    "calendar": "Odvojeni U16 kalendar i pojednostavljeni race engine biće povezani u sledećoj fazi. Troškovi omladinskih trka uglavnom će pokrivati putovanje i logistiku.",
+    "rankings": "Regionalna omladinska rang-lista i Youth World Ranking biće povezani sa U16 kalendarom.",
+    "equipment": "Omladinska akademija imaće sopstvenu opremu, koristeći odabrani jeftiniji deo postojećeg kataloga i postojećih slika.",
+    "history": "Istorija akademije, rezultati i razvoj ostaju trajno vezani za vozača nakon diplomiranja."
+  },
+  "errors": {
+    "load": "Nije moguće učitati Omladinsku akademiju.",
+    "activate": "Nije moguće aktivirati Omladinsku akademiju.",
+    "save": "Nije moguće sačuvati podešavanja Omladinske akademije."
+  }
+}
