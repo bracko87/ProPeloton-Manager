@@ -239,9 +239,7 @@
       "exceptional": "Izuzetan"
     }
   },
-  "placeholders": {
-    "history": "Povijest akademije, rezultati i razvoj ostaju trajno povezani s vozačem nakon završetka akademije."
-  },
+  "placeholders": {},
   "errors": {
     "load": "Nije moguće učitati Omladinsku akademiju.",
     "activate": "Nije moguće aktivirati Omladinsku akademiju.",
@@ -259,7 +257,9 @@
     "calendarLoad": "Nije moguće učitati kalendar mladih.",
     "rankingsLoad": "Nije moguće učitati rang-liste mladih.",
     "raceEntry": "Nije moguće prijaviti utrku mladih.",
-    "raceLineup": "Nije moguće spremiti postavu za utrku mladih."
+    "raceLineup": "Nije moguće spremiti postavu za utrku mladih.",
+    "historyLoad": "Nije moguće učitati povijest Akademije.",
+    "reportFrequency": "Nije moguće spremiti postavku U16 izvještaja."
   },
   "equipment": {
     "title": "Oprema za mlade",
@@ -353,5 +353,59 @@
     "academy": "Akademija",
     "starts": "Završene utrke",
     "points": "Bodovi"
+  },
+  "reports": {
+    "title": "Izvještaji U16 utrka",
+    "description": "Interni sažeci U16 trenera uvijek se čuvaju u povijesti Akademije. Odaberite kada završena utrka treba poslati i izvještaj u inbox.",
+    "frequency": "Učestalost inbox izvještaja",
+    "save": "Spremi postavku izvještaja",
+    "options": {
+      "every_race": "Svaka utrka",
+      "important_only": "Samo važne utrke",
+      "podium_exceptional": "Samo podij / izniman rezultat",
+      "problems_only": "Samo problemi",
+      "never": "Nikad"
+    }
+  },
+  "history": {
+    "graduates": "Diplomirani vozači",
+    "raceWins": "Pobjede",
+    "podiums": "Podiji",
+    "racesCompleted": "Završene utrke",
+    "alumni": "Alumni Akademije",
+    "alumniCount": "{{count}} alumni",
+    "loading": "Učitavanje povijesti…",
+    "noAlumni": "Još nema alumni vozača.",
+    "rider": "Vozač",
+    "joined": "Dolazak",
+    "graduated": "Izlazak / otpuštanje",
+    "path": "Put",
+    "starts": "Startovi",
+    "wins": "Pobjede",
+    "regionalRank": "Završni regionalni rang",
+    "worldRank": "Završni svjetski rang",
+    "regionalPoints": "Regionalni bodovi",
+    "worldPoints": "Svjetski bodovi",
+    "ageValue": "dob {{age}}",
+    "raceReports": "Izvještaji U16 trenera",
+    "reportCount": "{{count}} izvještaja",
+    "noReports": "Još nema izvještaja U16 utrka.",
+    "fatigue": "Umor",
+    "developmentEvents": "Razvojni događaji",
+    "development": "razvoj",
+    "reportClasses": {
+      "routine": "Rutinski",
+      "important": "Važan",
+      "exceptional": "Izuzetan",
+      "problem": "Problem"
+    },
+    "developmentHistory": "Povijest razvoja",
+    "latestWeeks": "{{count}} zapisa",
+    "noDevelopmentHistory": "Još nema tjedne povijesti razvoja.",
+    "week": "Tjedan",
+    "focus": "Fokus",
+    "workload": "Opterećenje",
+    "change": "Razvojna promjena",
+    "readinessFatigue": "Spremnost / umor"
   }
 }
