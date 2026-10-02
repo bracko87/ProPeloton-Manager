@@ -2307,17 +2307,6 @@ export default function NotificationsPage(): JSX.Element {
                           }`}
                         />
 
-                        {isNationalFeatureNotice && imageSrc ? (
-                          <div className="flex h-11 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1.5 shadow-sm">
-                            <img
-                              src={imageSrc}
-                              alt=""
-                              className="h-full w-full object-contain"
-                              draggable={false}
-                            />
-                          </div>
-                        ) : null}
-
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
                             <div
