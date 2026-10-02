@@ -1174,7 +1174,7 @@
     "worldFinalConfirmation": {
       "title": "Confirmez à nouveau {{rider}} pour le Championnat du monde",
       "message": "{{rider}} est déjà qualifié et accepté pour la Grande Finale du Championnat du monde sur route le {{raceDate}}. Confirmez à nouveau la participation finale avant le {{finalDeadline}}.",
-      "extra": "Un refus à ce stade retire le coureur de la liste de départ et applique une forte pénalité de moral."
+      "extra": "Un refus à ce stade retire le coureur de la Startlist et applique une forte pénalité de moral."
     },
     "worldResult": {
       "title": "Championnat du monde sur route terminé",
@@ -1205,7 +1205,7 @@
       "raceDay": "Jour de course",
       "raceResult": "Résultat de la course",
       "eventPoints": "Points de l’épreuve",
-      "tttPoints": "Points CLM par équipes",
+      "tttPoints": "Points TTT",
       "flatPoints": "Points plat",
       "mountainPoints": "Points montagne"
     },
