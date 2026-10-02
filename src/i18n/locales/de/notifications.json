@@ -1389,5 +1389,16 @@
       "message": "Der Nationaltrainer ist zurückgetreten. Eine Ersatzwahl wird gestartet.",
       "extra": "Der Verband bleibt aktiv, während die Ersatzwahl durchgeführt wird."
     }
+  },
+  "youthRaceReport": {
+    "raceFallback": "Jugendrennen",
+    "title": "Jugendakademie-Bericht — {{raceName}}",
+    "message": "{{raceName}}: beste Platzierung {{bestFinish}}, +{{regionalPoints}} Regionalpunkte, +{{worldPoints}} Weltpunkte. DNF {{dnf}}, DNS {{dns}}. Bericht: {{reportClass}}.",
+    "classes": {
+      "routine": "Routine",
+      "important": "wichtig",
+      "exceptional": "außergewöhnlich",
+      "problem": "Problem"
+    }
   }
 }
