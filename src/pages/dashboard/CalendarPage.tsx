@@ -89,6 +89,8 @@ type RaceCalendarItem = RaceCalendarEntry & {
   status: string | null
   description: string | null
   metadata?: JsonRecord | null
+  calendar_target_url?: string | null
+  calendar_placeholder?: boolean | null
 
   stored_stage_count?: number | null
   actual_stage_count?: number | null
@@ -1285,6 +1287,14 @@ export default function CalendarPage(): JSX.Element {
             )
           }
 
+          const { data: specialNationalCalendarData, error: specialNationalCalendarError } =
+            await supabase.rpc('get_special_national_calendar_events_v1')
+
+          const specialNationalCalendarRows =
+            specialNationalCalendarError || !Array.isArray(specialNationalCalendarData)
+              ? []
+              : (specialNationalCalendarData as Partial<RaceCalendarItem>[])
+
           resolvedRaces = raceRows.map(row => {
             const raceId = toNullableString(row.id) ?? ''
             const entryRules = entryRulesByRaceId[raceId]
@@ -1323,6 +1333,35 @@ export default function CalendarPage(): JSX.Element {
                 toNullableString(row.existing_application_status) ?? userEntry?.status ?? null
             } as RaceCalendarItem
           })
+
+          const existingCalendarIds = new Set(resolvedRaces.map(race => race.id))
+          resolvedRaces.push(
+            ...specialNationalCalendarRows
+              .map(row => ({
+                ...row,
+                id: toNullableString(row.id) ?? '',
+                name: toNullableString(row.name) ?? '',
+                start_date: toNullableString(row.start_date) ?? '',
+                end_date: toNullableString(row.end_date),
+                category: toNullableString(row.category),
+                applications_status: toNullableString(row.applications_status),
+                status: toNullableString(row.status),
+                metadata: asRecord(row.metadata),
+                calendar_target_url: toNullableString(row.calendar_target_url),
+                calendar_placeholder: row.calendar_placeholder === true,
+                stored_stage_count: toNullableNumber(row.stored_stage_count),
+                actual_stage_count: toNullableNumber(row.actual_stage_count),
+                first_start_city: toNullableString(row.first_start_city),
+                final_finish_city: toNullableString(row.final_finish_city),
+                target_teams: toNullableNumber(row.target_teams),
+                max_teams: toNullableNumber(row.max_teams),
+                min_riders_per_team: toNullableNumber(row.min_riders_per_team),
+                max_riders_per_team: toNullableNumber(row.max_riders_per_team),
+                accepted_teams: toCount(row.accepted_teams),
+                existing_application_status: toNullableString(row.existing_application_status),
+              } as RaceCalendarItem))
+              .filter(row => Boolean(row.id) && !existingCalendarIds.has(row.id))
+          )
 
           if (raceIds.length > 0) {
             const stageResponses = await Promise.all(
@@ -1939,8 +1978,22 @@ export default function CalendarPage(): JSX.Element {
     }
   }
 
-  function openRaceDetail(raceId: string): void {
-    navigate(`/dashboard/races/${raceId}?raceId=${raceId}`, {
+  function getCalendarRaceTarget(race: RaceCalendarItem): string {
+    return race.calendar_target_url?.trim() ||
+      `/dashboard/races/${race.id}?raceId=${race.id}`
+  }
+
+  function openRaceDetail(raceOrId: RaceCalendarItem | string): void {
+    const race =
+      typeof raceOrId === 'string'
+        ? races.find(candidate => candidate.id === raceOrId) ?? null
+        : raceOrId
+    const raceId = typeof raceOrId === 'string' ? raceOrId : raceOrId.id
+    const target = race
+      ? getCalendarRaceTarget(race)
+      : `/dashboard/races/${raceId}?raceId=${raceId}`
+
+    navigate(target, {
       state: getCalendarReturnState(raceId),
     })
   }
@@ -2306,7 +2359,7 @@ export default function CalendarPage(): JSX.Element {
                           >
                             <button
                               type="button"
-                              onClick={() => openRaceDetail(race.id)}
+                              onClick={() => openRaceDetail(race)}
                               className="text-left hover:underline"
                             >
                               {formatRaceBadgeLabel(race, day.canonicalDateString, raceStagesByRaceId, t)}
@@ -2720,7 +2773,7 @@ export default function CalendarPage(): JSX.Element {
                           <div className="font-medium text-gray-900">
                             <button
                               type="button"
-                              onClick={() => openRaceDetail(race.id)}
+                              onClick={() => openRaceDetail(race)}
                               className="text-left hover:underline"
                             >
                               <span className="mr-2 inline-flex align-middle">
@@ -2775,7 +2828,7 @@ export default function CalendarPage(): JSX.Element {
                         ) : null}
 
                         <Link
-                          to={`/dashboard/races/${race.id}?raceId=${race.id}`}
+                          to={getCalendarRaceTarget(race)}
                           state={getCalendarReturnState(race.id)}
                           className="rounded-full bg-gray-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-gray-700"
                         >
