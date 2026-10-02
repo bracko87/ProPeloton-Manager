@@ -691,16 +691,16 @@ export default function YouthAcademyPage(): JSX.Element {
       )
       if (saveError) throw saveError
 
-      const { error: philosophyError } = await supabase.rpc(
-        'update_my_youth_training_philosophy_v1',
-        {
-          p_training_philosophy:
-            draftSettings.training_philosophy ?? 'balanced',
-        }
-      )
+      const {
+        data: philosophyPayload,
+        error: philosophyError,
+      } = await supabase.rpc('update_my_youth_training_philosophy_v1', {
+        p_training_philosophy:
+          draftSettings.training_philosophy ?? 'balanced',
+      })
       if (philosophyError) throw philosophyError
 
-      const next = payload as AcademyPayload
+      const next = (philosophyPayload ?? payload) as AcademyPayload
       setData(next)
       setDraftBudget(Number(next.budget?.season_budget ?? draftBudget))
       setDraftRange(next.budget?.scouting_range ?? draftRange)
@@ -970,6 +970,7 @@ export default function YouthAcademyPage(): JSX.Element {
       ) : null}
 
       {tab === 'riders' ? (
+        <div className="space-y-4">
         <Card
           title={t('riders.title')}
           right={<span className="text-xs text-slate-500">{riders.length}/16</span>}
@@ -1103,6 +1104,7 @@ export default function YouthAcademyPage(): JSX.Element {
             </div>
           )}
         </Card>
+        </div>
       ) : null}
 
       {tab === 'staff' ? (
