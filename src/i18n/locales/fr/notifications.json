@@ -670,7 +670,10 @@
     "SELECTED": "Sélectionné",
     "SQUAD": "Sélection",
     "VOTING": "Vote",
-    "WORLD": "Mondial"
+    "WORLD": "Mondial",
+    "POSITION": "Poste",
+    "RESIGNED": "Démissionné",
+    "VACANT": "Vacant"
   },
   "reportVariants": {
     "rider_skill_change": "Évolution d’une compétence du coureur",
