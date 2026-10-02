@@ -21,6 +21,7 @@ import {
   ClipboardCheck,
   Sparkles,
   Trophy,
+  GraduationCap,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -52,6 +53,12 @@ const navItems: NavItem[] = [
     labelKey: 'squad',
     descriptionKey: 'descriptions.squad',
     icon: Users,
+  },
+  {
+    to: '/dashboard/youth-academy',
+    labelKey: 'youthAcademy',
+    descriptionKey: 'descriptions.youthAcademy',
+    icon: GraduationCap,
   },
   {
     to: '/dashboard/training',
