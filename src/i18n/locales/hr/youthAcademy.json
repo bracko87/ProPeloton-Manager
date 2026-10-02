@@ -91,7 +91,17 @@
     "committed": "Rezervirano",
     "available": "Dostupno",
     "scoutingAllocation": "Budžet za skauting",
-    "scoutingHelp": "Cijena programa za {{range}} skauting. Doseg skautinga određuje budžet, ne infrastruktura."
+    "scoutingHelp": "Cijena programa za {{range}} skauting. Doseg skautinga određuje budžet, ne infrastruktura.",
+    "weeklyRiderSupport": "Tjedna podrška vozačima",
+    "weeklyStaff": "Tjedni trošak osoblja akademije",
+    "equipmentSpend": "Trošak opreme ove sezone",
+    "ledger": "Povijest transakcija akademije",
+    "loadingLedger": "Učitavanje…",
+    "noLedger": "Još nema zabilježenih transakcija akademije.",
+    "date": "Datum",
+    "category": "Kategorija",
+    "description": "Opis",
+    "amount": "Iznos"
   },
   "scouting": {
     "title": "Doseg omladinskog skautinga",
@@ -232,7 +242,6 @@
   "placeholders": {
     "calendar": "Odvojeni U16 kalendar i pojednostavljeni motor utrke bit će povezani u sljedećoj fazi. Troškovi omladinskih utrka uglavnom će pokrivati putovanje i logistiku.",
     "rankings": "Regionalni omladinski poredak i Youth World Ranking bit će povezani s U16 kalendarom.",
-    "equipment": "Omladinska akademija imat će vlastitu opremu, koristeći odabrani jeftiniji dio postojećeg kataloga i postojećih slika.",
     "history": "Povijest akademije, rezultati i razvoj ostaju trajno povezani s vozačem nakon završetka akademije."
   },
   "errors": {
@@ -242,6 +251,33 @@
     "scoutingLoad": "Nije moguće učitati omladinske skautske izvještaje.",
     "scoutingRun": "Nije moguće pokrenuti mjesečni omladinski skauting.",
     "recruitmentOffer": "Nije moguće poslati ponudu za omladinskog vozača.",
-    "incomingOffer": "Nije moguće odgovoriti na dolaznu ponudu Omladinske akademije."
+    "incomingOffer": "Nije moguće odgovoriti na dolaznu ponudu Omladinske akademije.",
+    "financeLoad": "Nije moguće učitati financije Akademije mladih.",
+    "equipmentLoad": "Nije moguće učitati opremu Akademije mladih.",
+    "equipmentPurchase": "Nije moguće kupiti opremu za Akademiju mladih.",
+    "equipmentDirector": "Direktor Akademije mladih nije uspio dovršiti opremanje."
+  },
+  "equipment": {
+    "title": "Oprema za mlade",
+    "description": "Akademija mladih ima zasebnu U16 opremu. Koristi povoljnije modele razine 1–2 iz postojećeg kataloga opreme i plaća ih iz sezonskog budžeta akademije.",
+    "managerManaged": "Upravlja menadžer",
+    "directorManaged": "Upravlja direktor akademije",
+    "directorHelp": "Direktor Akademije mladih kupuje najjeftiniju dopuštenu opremu koja nedostaje u svakoj kategoriji, uz poštovanje preostalog budžeta akademije.",
+    "runDirector": "Prepusti opremanje direktoru",
+    "equipping": "Opremanje…",
+    "inventory": "Inventar opreme akademije",
+    "itemsOwned": "{{count}} kom.",
+    "noInventory": "Akademija mladih još nema vlastitu opremu.",
+    "item": "Oprema",
+    "category": "Kategorija",
+    "quality": "Kvaliteta",
+    "condition": "Stanje",
+    "cost": "Trošak akademije",
+    "catalog": "Povoljniji katalog za mlade",
+    "catalogHelp": "Ovdje je dostupna samo trajna oprema razine 1–2 iz postojećeg klupskog kataloga. To su zasebne kupnje Akademije mladih i ne koriste novac profesionalnog kluba.",
+    "tier": "Razina {{tier}}",
+    "purchase": "Kupi za akademiju",
+    "purchasing": "Kupnja…",
+    "durability": "Izdržljivost"
   }
 }
