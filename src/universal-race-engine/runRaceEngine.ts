@@ -8699,6 +8699,32 @@ const roadEnergyCostCacheV1 = new WeakMap<
   Map<string, number>
 >()
 
+const roadRangeSegmentCacheV1 = new WeakMap<
+  UniversalRaceEngineInput,
+  Map<string, readonly RoadOpeningRouteSegment[]>
+>()
+
+function getCachedRoadOpeningRouteSegments(
+  input: UniversalRaceEngineInput,
+  startKm: number,
+  endKm: number,
+): readonly RoadOpeningRouteSegment[] {
+  let inputCache = roadRangeSegmentCacheV1.get(input)
+  if (!inputCache) {
+    inputCache = new Map<string, readonly RoadOpeningRouteSegment[]>()
+    roadRangeSegmentCacheV1.set(input, inputCache)
+  }
+  const key = [
+    deterministicRound(startKm, 6),
+    deterministicRound(endKm, 6),
+  ].join('|')
+  const cached = inputCache.get(key)
+  if (cached) return cached
+  const segments = buildRoadOpeningRouteSegments(input.stage, startKm, endKm)
+  inputCache.set(key, segments)
+  return segments
+}
+
 function calculateRoadEnergyCostForRange(
   input: UniversalRaceEngineInput,
   rider: UniversalRiderInput,
@@ -8724,8 +8750,8 @@ function calculateRoadEnergyCostForRange(
   const cached = inputCache.get(cacheKey)
   if (cached !== undefined) return cached
 
-  const segments = buildRoadOpeningRouteSegments(
-    input.stage,
+  const segments = getCachedRoadOpeningRouteSegments(
+    input,
     startKm,
     endKm,
   )
@@ -8815,10 +8841,24 @@ function getRoadOpeningSegmentAtKm(
  * Phase 11G route-speed reference. The physics loop probes the actual route
  * at the current kilometre instead of applying one stage-wide road speed.
  */
+const roadReferencePaceCacheV1 = new WeakMap<
+  UniversalStageInput,
+  Map<number, number>
+>()
+
 function calculateRoadReferencePaceKmh(
   stage: UniversalStageInput,
   km: number,
 ): number {
+  let stageCache = roadReferencePaceCacheV1.get(stage)
+  if (!stageCache) {
+    stageCache = new Map<number, number>()
+    roadReferencePaceCacheV1.set(stage, stageCache)
+  }
+  const cacheKm = deterministicRound(km, 6)
+  const cachedPace = stageCache.get(cacheKm)
+  if (cachedPace !== undefined) return cachedPace
+
   const segment = getRoadOpeningSegmentAtKm(stage, km)
   let basePaceKmh = 42
   switch (segment.terrainType) {
@@ -8853,7 +8893,9 @@ function calculateRoadReferencePaceKmh(
     segment.slopePercent > 0
       ? -Math.min(9, segment.slopePercent * 0.85)
       : Math.min(5.5, Math.abs(segment.slopePercent) * 0.45)
-  return deterministicRound(clamp(basePaceKmh + gradientAdjustment, 20, 55), 6)
+  const result = deterministicRound(clamp(basePaceKmh + gradientAdjustment, 20, 55), 6)
+  stageCache.set(cacheKm, result)
+  return result
 }
 
 
