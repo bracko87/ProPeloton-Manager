@@ -1395,5 +1395,16 @@
       "message": "Тренер сборной ушёл в отставку. Будут запущены выборы нового тренера.",
       "extra": "Ассоциация остаётся активной на время проведения новых выборов."
     }
+  },
+  "youthRaceReport": {
+    "raceFallback": "Юниорская гонка",
+    "title": "Отчет Академии — {{raceName}}",
+    "message": "{{raceName}}: лучший результат {{bestFinish}}, +{{regionalPoints}} региональных очков, +{{worldPoints}} мировых очков. DNF {{dnf}}, DNS {{dns}}. Отчет: {{reportClass}}.",
+    "classes": {
+      "routine": "обычный",
+      "important": "важный",
+      "exceptional": "выдающийся",
+      "problem": "проблема"
+    }
   }
 }
