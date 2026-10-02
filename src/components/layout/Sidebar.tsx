@@ -55,12 +55,6 @@ const navItems: NavItem[] = [
     icon: Users,
   },
   {
-    to: '/dashboard/youth-academy',
-    labelKey: 'youthAcademy',
-    descriptionKey: 'descriptions.youthAcademy',
-    icon: GraduationCap,
-  },
-  {
     to: '/dashboard/training',
     labelKey: 'training',
     descriptionKey: 'descriptions.training',
@@ -127,6 +121,12 @@ const navItems: NavItem[] = [
     labelKey: 'statistics',
     descriptionKey: 'descriptions.statistics',
     icon: LineChart,
+  },
+  {
+    to: '/dashboard/youth-academy',
+    labelKey: 'youthAcademy',
+    descriptionKey: 'descriptions.youthAcademy',
+    icon: GraduationCap,
   },
   {
     to: '/dashboard/premium-center',
@@ -244,7 +244,9 @@ export default function Sidebar({
             const Icon = item.icon
             const active = isPathActive(location.pathname, item)
             const premiumLocked =
-              item.to === '/dashboard/premium-center' && isPremium !== true
+              (item.to === '/dashboard/premium-center' ||
+                item.to === '/dashboard/youth-academy') &&
+              isPremium !== true
 
             if (premiumLocked) {
               return (
