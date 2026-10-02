@@ -1085,6 +1085,30 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
   const championshipItem = localizeChampionshipNotificationItem(item)
   if (championshipItem) return championshipItem
 
+  if (typeCode === 'YOUTH_RACE_REPORT') {
+    const raceName =
+      readString(payload, ['race_name']) ||
+      entity ||
+      nt('youthRaceReport.raceFallback')
+    const reportClass =
+      readString(payload, ['report_class']) || 'routine'
+    return {
+      ...item,
+      title: nt('youthRaceReport.title', { raceName }),
+      message: nt('youthRaceReport.message', {
+        raceName,
+        bestFinish: readNumber(payload, ['best_finish']) ?? '—',
+        regionalPoints: readNumber(payload, ['regional_points']) ?? 0,
+        worldPoints: readNumber(payload, ['world_points']) ?? 0,
+        dnf: readNumber(payload, ['dnf_count']) ?? 0,
+        dns: readNumber(payload, ['dns_count']) ?? 0,
+        reportClass: nt(`youthRaceReport.classes.${reportClass}`, {
+          defaultValue: reportClass,
+        }),
+      }),
+    }
+  }
+
   const nationalSystemItem = localizeNationalSystemNotificationItem(item)
   if (nationalSystemItem) return nationalSystemItem
 
@@ -1189,6 +1213,14 @@ export function localizeNotificationNarrative(
         ? nt('seasonStarted.feedMessage', params)
         : nt('seasonStarted.feedMessageGeneric', params)
     }
+  }
+
+  if (typeCode === 'YOUTH_RACE_REPORT' && item) {
+    const localized = localizeNotificationItem(item)
+    const rawTitle = String(item.title ?? '').trim()
+    const rawMessage = String(item.message ?? '').trim()
+    if (value === rawTitle) return localized.title
+    if (value === rawMessage) return localized.message
   }
 
   if (typeCode === 'STAFF_HIRED') {
