@@ -58,7 +58,8 @@ set name=excluded.name,
 
 create or replace function private.build_youth_race_report_v1(
   p_race_id uuid,
-  p_academy_id uuid
+  p_academy_id uuid,
+  p_allow_notification boolean default true
 )
 returns jsonb
 language plpgsql
@@ -224,7 +225,7 @@ begin
     else false
   end;
 
-  if v_should_notify and v_owner is not null and v_academy.is_ai=false then
+  if p_allow_notification and v_should_notify and v_owner is not null and v_academy.is_ai=false then
     v_notification_id:=public.create_user_game_notification_v1(
       v_owner,
       'YOUTH_RACE_REPORT',
@@ -262,14 +263,15 @@ begin
   return jsonb_build_object(
     'ok',true,'race_id',p_race_id,'academy_id',p_academy_id,
     'report_class',v_class,'notification_mode',v_frequency,
-    'notification_created',v_should_notify and v_owner is not null and v_academy.is_ai=false,
+    'notification_created',p_allow_notification and v_should_notify and v_owner is not null and v_academy.is_ai=false,
     'notification_id',v_notification_id
   );
 end;
 $function$;
 
 create or replace function private.generate_youth_race_reports_for_race_v1(
-  p_race_id uuid
+  p_race_id uuid,
+  p_allow_notification boolean default true
 )
 returns jsonb
 language plpgsql
@@ -285,7 +287,9 @@ begin
     from public.youth_race_entries e
     where e.race_id=p_race_id and e.status='completed'
   loop
-    perform private.build_youth_race_report_v1(p_race_id,v_entry.academy_id);
+    perform private.build_youth_race_report_v1(
+      p_race_id,v_entry.academy_id,p_allow_notification
+    );
     v_count:=v_count+1;
   end loop;
 
@@ -302,7 +306,7 @@ as $function$
 begin
   if new.status='completed'
      and (tg_op='INSERT' or old.status is distinct from new.status) then
-    perform private.generate_youth_race_reports_for_race_v1(new.id);
+    perform private.generate_youth_race_reports_for_race_v1(new.id,true);
   end if;
   return new;
 end;
@@ -322,7 +326,7 @@ begin
   for v_race in
     select id from public.youth_races where status='completed'
   loop
-    perform private.generate_youth_race_reports_for_race_v1(v_race.id);
+    perform private.generate_youth_race_reports_for_race_v1(v_race.id,false);
   end loop;
 end $$;
 
@@ -339,6 +343,9 @@ declare
   v_academy_id uuid;
 begin
   if v_user is null then raise exception 'Not authenticated'; end if;
+  if not public.user_has_premium_access_v1(v_user) then
+    raise exception 'Premium membership is required to manage Youth Academy.';
+  end if;
   if p_frequency not in (
     'every_race','important_only','podium_exceptional','problems_only','never'
   ) then
@@ -447,7 +454,19 @@ begin
         'world_points',(
           select coalesce(sum(rr.world_points),0) from public.youth_race_results rr
           where rr.youth_rider_id=yr.id
-        )
+        ),
+        'final_regional_rank',case when g.completed_on is null then null else
+          private.youth_rider_regional_rank_v1(
+            yr.id,
+            greatest(1,extract(year from g.completed_on)::integer-1999)
+          )
+        end,
+        'final_world_rank',case when g.completed_on is null then null else
+          private.youth_rider_world_rank_v1(
+            yr.id,
+            greatest(1,extract(year from g.completed_on)::integer-1999)
+          )
+        end
       ) order by g.completed_on desc nulls last,yr.display_name),'[]'::jsonb)
       from public.youth_riders yr
       left join public.youth_graduation_records g on g.youth_rider_id=yr.id
