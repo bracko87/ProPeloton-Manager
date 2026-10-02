@@ -255,7 +255,9 @@
     "financeLoad": "No se pudieron cargar las finanzas de la Academia Juvenil.",
     "equipmentLoad": "No se pudo cargar el equipamiento de la Academia Juvenil.",
     "equipmentPurchase": "No se pudo comprar el equipamiento de la Academia Juvenil.",
-    "equipmentDirector": "No se pudo completar la gestión de equipamiento del Director de la Academia Juvenil."
+    "equipmentDirector": "No se pudo completar la gestión de equipamiento del Director de la Academia Juvenil.",
+    "graduationLoad": "No se pudieron cargar las decisiones de graduación juvenil.",
+    "graduationDecision": "No se pudo completar la decisión de graduación juvenil."
   },
   "equipment": {
     "title": "Equipamiento juvenil",
@@ -279,5 +281,26 @@
     "purchase": "Comprar para la academia",
     "purchasing": "Comprando…",
     "durability": "Durabilidad"
+  },
+  "training": {
+    "title": "Filosofía de desarrollo juvenil",
+    "description": "Define la prioridad general de entrenamiento de la academia. El entrenador principal U16 la convierte en cargas y focos individuales protegiendo preparación y fatiga.",
+    "philosophy": "Filosofía de entrenamiento de la academia",
+    "options": {
+      "freshness": "Priorizar frescura",
+      "balanced": "Desarrollo equilibrado",
+      "development": "Priorizar desarrollo"
+    }
+  },
+  "graduation": {
+    "title": "Decisiones de graduación a los 16",
+    "pendingCount": "{{count}} pendiente(s)",
+    "none": "Ningún ciclista juvenil necesita ahora una decisión de graduación.",
+    "decisionHelp": "A los 16 años, elige el siguiente paso. El ascenso directo al primer equipo no es la vía normal.",
+    "pathway": "Ruta temporal de Graduado Juvenil de 30 días",
+    "pathwayUntil": "Ruta hasta {{date}}",
+    "pathwayHelp": "Esta ruta temporal da 30 días de juego para mover al ciclista al equipo de desarrollo. Si no se completa, pasa a ser agente libre profesional.",
+    "toDeveloping": "Mover al equipo de desarrollo ({{slots}} libres)",
+    "release": "Liberar como agente libre profesional"
   }
 }
