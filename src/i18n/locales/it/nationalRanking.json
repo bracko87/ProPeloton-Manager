@@ -188,7 +188,8 @@
   },
   "info": {
     "title": "Informazioni sul campionato",
-    "description": "I Campionati Nazionali sono gare individuali. Non ci sono tattiche di squadra, staff, veicoli o rifornimenti del club. L'organizzatore copre logistica e costi; tu controlli solo equipaggiamento e tattiche individuali di ogni corridore invitato."
+    "description": "I Campionati Nazionali sono gare individuali. Non ci sono tattiche di squadra, staff, veicoli o rifornimenti del club. L'organizzatore copre logistica e costi; tu controlli solo equipaggiamento e tattiche individuali di ogni corridore invitato.",
+    "openGuide": "Apri la guida completa alla Classifica Nazionale e al Campionato"
   },
   "summary": {
     "title": "Calendario del Campionato Nazionale",
