@@ -188,7 +188,8 @@
   },
   "info": {
     "title": "Information zur Meisterschaft",
-    "description": "Nationale Meisterschaften sind Einzelrennen. Es gibt keine Teamtaktik, kein Personal, keine Fahrzeuge und keine Club-Verpflegung. Der Veranstalter übernimmt Logistik und Kosten; du steuerst nur Ausrüstung und individuelle Taktik jedes eingeladenen Fahrers."
+    "description": "Nationale Meisterschaften sind Einzelrennen. Es gibt keine Teamtaktik, kein Personal, keine Fahrzeuge und keine Club-Verpflegung. Der Veranstalter übernimmt Logistik und Kosten; du steuerst nur Ausrüstung und individuelle Taktik jedes eingeladenen Fahrers.",
+    "openGuide": "Vollständigen Leitfaden zu Nationaler Rangliste & Meisterschaft öffnen"
   },
   "summary": {
     "title": "Zeitplan der nationalen Meisterschaft",
