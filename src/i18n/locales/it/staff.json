@@ -61,6 +61,18 @@
     "u23HeadCoach": {
       "label": "Coach di testa U23",
       "subtitle": "Formazione programmata per lo sviluppo del team e supporto tattico per la gara U23."
+    },
+    "youthAcademyDirector": {
+      "label": "Direttore dell'Accademia Giovanile",
+      "subtitle": "Gestisce il programma U16, il budget, il reclutamento delegato e le richieste operative."
+    },
+    "u16HeadCoach": {
+      "label": "Allenatore capo U16",
+      "subtitle": "Gestisce allenamento U16, carico, focus di sviluppo e selezione per le gare."
+    },
+    "youthScout": {
+      "label": "Scout giovanile",
+      "subtitle": "Individua e valuta talenti U16 nell'area di scouting finanziata dall'Accademia Giovanile."
     }
   },
   "impactAreas": {
@@ -88,7 +100,16 @@
     "transferIntelligence": "Informazioni di trasferimento",
     "u23Training": "Formazione U23",
     "youthDevelopment": "Sviluppo della gioventù",
-    "u23RaceTactics": "Tattiche di gara U23"
+    "u23RaceTactics": "Tattiche di gara U23",
+    "academyBudget": "Budget dell'accademia",
+    "recruitmentManagement": "Gestione del reclutamento",
+    "youthProgramme": "Programma giovanile",
+    "u16Training": "Allenamento U16",
+    "workloadManagement": "Gestione del carico",
+    "raceSelection": "Selezione per le gare",
+    "youthScouting": "Scouting giovanile",
+    "talentAssessment": "Valutazione del talento",
+    "recruitmentReach": "Portata del reclutamento"
   },
   "common": {
     "close": "Chiudi",
@@ -110,7 +131,8 @@
     "focus": "Obiettivo specifico: {{value}}",
     "duration": "Duration: {{count}} days",
     "cost": "Costo: {{value}}",
-    "completed": "Completato: {{date}}"
+    "completed": "Completato: {{date}}",
+    "youthAcademy": "Accademia Giovanile"
   },
   "assignment": {
     "notAssigned": "Attualmente non assegnato",
@@ -292,7 +314,8 @@
     "mechanicTitle": "Impatto meccanico del personale",
     "directorTitle": "Impatto del personale del direttore sportivo",
     "u23Title": "Impatto del personale di allenamento U23",
-    "scoutingTitle": "Impatto del personale di scouting"
+    "scoutingTitle": "Impatto del personale di scouting",
+    "youthTitle": "Impatto dello staff dell'Accademia Giovanile"
   },
   "scoutingExplainer": {
     "title": "Come funziona la qualità Scout",
