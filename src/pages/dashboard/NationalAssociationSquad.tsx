@@ -623,7 +623,7 @@ export default function NationalAssociationSquadPage(): JSX.Element {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                    Current National Team selection window
+                    {t('association.squad.windowEyebrow')}
                   </div>
                   <div className="mt-1 font-semibold">
                     {cycle?.state === 'active_cycle'
@@ -631,25 +631,25 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                       : t('association.squad.seasonPreparation')}
                   </div>
                   <div className="mt-1 text-xs text-sky-800">
-                    Race window: {cycle?.start_date ? formatGameDate(cycle.start_date) : formatGameDate(workspace?.timeline?.target_event_date)}
+                    {t('association.squad.raceWindow')}: {cycle?.start_date ? formatGameDate(cycle.start_date) : formatGameDate(workspace?.timeline?.target_event_date)}
                     {' – '}
                     {cycle?.end_date ? formatGameDate(cycle.end_date) : formatGameDate(workspace?.timeline?.target_event_date)}
                   </div>
                 </div>
                 <div className="grid gap-1 text-xs text-sky-900 sm:text-right">
                   <div>
-                    Draft / invitations recommended by:{' '}
+                    {t('association.squad.invitationsRecommendedBy')}:{' '}
                     <strong>{formatGameDate(workspace?.timeline?.recommended_selection_lock_date)}</strong>
                   </div>
                   <div>
-                    Final 10-rider squad due:{' '}
+                    {t('association.squad.finalSquadDue')}:{' '}
                     <strong>{formatGameDate(workspace?.timeline?.final_squad_deadline)}</strong>
                   </div>
                 </div>
               </div>
               {cycle?.round_label?.toLowerCase().includes('final') ? (
                 <div className="mt-3 rounded border border-sky-200 bg-white/70 px-3 py-2 text-xs leading-5 text-sky-900">
-                  This is a new competition window. The National Coach may keep riders from the previous round or choose a different eligible 10-rider squad for this Final.
+                  {t('association.squad.newWindowHelp')}
                 </div>
               ) : null}
             </div>
@@ -685,7 +685,7 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                       title={
                         invitationWindowOpen
                           ? undefined
-                          : `Invitations open on ${formatGameDate(workspace?.timeline?.recommended_selection_lock_date)}`
+                          : t('association.squad.invitationsOpenOn', { date: formatGameDate(workspace?.timeline?.recommended_selection_lock_date) })
                       }
                       className="rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
                     >
@@ -693,7 +693,7 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                         ? t('association.squad.locking')
                         : invitationWindowOpen
                           ? t('association.squad.lockSend')
-                          : `Invitations open ${formatGameDate(workspace?.timeline?.recommended_selection_lock_date)}`}
+                          : t('association.squad.invitationsOpenOn', { date: formatGameDate(workspace?.timeline?.recommended_selection_lock_date) })}
                     </button>
                   ) : null}
                   {canConfirm ? (
