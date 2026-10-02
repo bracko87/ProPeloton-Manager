@@ -31,6 +31,10 @@
     "account": {
       "title": "Account & system notifications",
       "description": "Official game messages and onboarding information."
+    },
+    "national": {
+      "title": "National & international notifications",
+      "description": "National Association, National Team, National Championships, World Nations and international championship updates."
     }
   },
   "groups": {
@@ -121,6 +125,26 @@
     "systemMessages": {
       "label": "System messages",
       "description": "Show welcome messages and general official game messages."
+    },
+    "riderHealth": {
+      "label": "Team medical report",
+      "description": "Show one daily Core medical summary covering injuries, sickness, reduced fitness and recoveries. Team Doctor Advisory remains separate treatment and recovery guidance."
+    },
+    "nationalAssociation": {
+      "label": "National Association & elections",
+      "description": "Show National Association activation, candidature, voting and National Coach status notifications."
+    },
+    "nationalTeam": {
+      "label": "National Team & call-ups",
+      "description": "Show National Team selection windows, call-ups, squad changes and National Duty notifications."
+    },
+    "nationalChampionships": {
+      "label": "National Championships & ranking",
+      "description": "Show National Championship participation, qualification, final confirmation and result notifications."
+    },
+    "worldNations": {
+      "label": "World Nations & international competitions",
+      "description": "Show World Nations draws, race updates, finals and international championship notifications."
     }
   },
   "advisorCategories": {
