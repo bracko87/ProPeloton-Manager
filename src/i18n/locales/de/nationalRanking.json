@@ -30,12 +30,12 @@
   },
   "duty": {
     "title": "Meine National Duty",
-    "description": "Diese Fahrer werden automatisch gemeldet. Du steuerst nur die Ausrüstung und die individuelle Rennstrategie jedes Fahrers.",
+    "description": "Diese Fahrer werden automatisch gemeldet. Sie steuern nur die Ausrüstung und die individuelle Rennstrategie jedes Fahrers.",
     "locked": "Einzelrennen — keine Teamtaktik. Personal, Fahrzeuge und Club-Verpflegung sind nicht verfügbar.",
     "directQualifier": "Direkt qualifiziert",
     "qualificationHeat": "Qualifikationsgruppe {{number}}",
     "noPlan": "Für diesen Fahrer ist derzeit kein bearbeitbarer National-Duty-Plan offen.",
-    "empty": "Keiner deiner Fahrer hat aktuell eine National-Duty-Einladung für diese Meisterschaft."
+    "empty": "Keiner Ihrer Fahrer hat aktuell eine Einladung zum Nationaldienst für diese Meisterschaft."
   },
   "organizer": {
     "title": "Rennpaket des Veranstalters",
@@ -52,7 +52,7 @@
     "individualBadge": "Einzelrennen — keine Teamtaktik",
     "equipment": "Fahrerausrüstung",
     "organizerEquipment": "Standardausrüstung des Veranstalters",
-    "equipmentHelp": "Du kannst eine Club-Ausrüstung wählen; ansonsten wird die Standardausrüstung des Veranstalters verwendet. Personal, Fahrzeuge und Rennverpflegung bleiben veranstaltergeführt.",
+    "equipmentHelp": "Sie können Club-Ausrüstung wählen; andernfalls wird die Standardausrüstung des Veranstalters verwendet. Personal, Fahrzeuge und Rennverpflegung bleiben durch den Veranstalter vorgegeben.",
     "strategy": "Individuelle Rennstrategie",
     "phaseStart": "Start",
     "phaseEarly": "Früh / Mitte",
@@ -188,12 +188,12 @@
   },
   "info": {
     "title": "Information zur Meisterschaft",
-    "description": "Nationale Meisterschaften sind Einzelrennen. Es gibt keine Teamtaktik, kein Personal, keine Fahrzeuge und keine Club-Verpflegung. Der Veranstalter übernimmt Logistik und Kosten; du steuerst nur Ausrüstung und individuelle Taktik jedes eingeladenen Fahrers.",
+    "description": "Nationale Meisterschaften sind Einzelrennen. Es gibt keine Teamtaktik, kein Personal, keine Fahrzeuge und keine Club-Verpflegung. Der Veranstalter übernimmt Logistik und Kosten; Sie steuern nur die Ausrüstung und die individuellen Taktiken jedes eingeladenen Fahrers.",
     "openGuide": "Vollständigen Leitfaden zu Nationaler Rangliste & Meisterschaft öffnen"
   },
   "summary": {
     "title": "Zeitplan der nationalen Meisterschaft",
-    "subtitle": "Wichtige Termine, National-Duty-Zeitraum und Austragungsstrecke für die Meisterschaft deines Landes."
+    "subtitle": "Wichtige Termine, Zeitraum des Nationaldienstes und Austragungsstrecke für die Meisterschaft Ihres Landes."
   },
   "host": {
     "openRace": "Rennseite öffnen"
