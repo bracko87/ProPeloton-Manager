@@ -125,6 +125,11 @@ type NationsCycle = {
   cycle_key?: string | null
   round_label?: string | null
   group_label?: string | null
+  start_date?: string | null
+  end_date?: string | null
+  day1_date?: string | null
+  day2_date?: string | null
+  day3_date?: string | null
 }
 
 type SortKey =
@@ -610,13 +615,39 @@ export default function NationalAssociationSquadPage(): JSX.Element {
               </div>
             </div>
 
-            <div className="border-t border-slate-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-              <strong>{t('association.squad.nextEvent')}:</strong>{' '}
-              {cycle?.state === 'active_cycle'
-                ? `${cycle.round_label ?? t('association.tabs.competition')} · ${cycle.group_label ?? '—'}`
-                : t('association.squad.seasonPreparation')}
-              {' · '}
-              {formatGameDate(workspace?.timeline?.target_event_date)}
+            <div className="border-t border-slate-200 bg-sky-50 px-4 py-4 text-sm text-sky-950">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+                    Current National Team selection window
+                  </div>
+                  <div className="mt-1 font-semibold">
+                    {cycle?.state === 'active_cycle'
+                      ? `${cycle.round_label ?? t('association.tabs.competition')} · ${cycle.group_label ?? '—'}`
+                      : t('association.squad.seasonPreparation')}
+                  </div>
+                  <div className="mt-1 text-xs text-sky-800">
+                    Race window: {cycle?.start_date ? formatGameDate(cycle.start_date) : formatGameDate(workspace?.timeline?.target_event_date)}
+                    {' – '}
+                    {cycle?.end_date ? formatGameDate(cycle.end_date) : formatGameDate(workspace?.timeline?.target_event_date)}
+                  </div>
+                </div>
+                <div className="grid gap-1 text-xs text-sky-900 sm:text-right">
+                  <div>
+                    Draft / invitations recommended by:{' '}
+                    <strong>{formatGameDate(workspace?.timeline?.recommended_selection_lock_date)}</strong>
+                  </div>
+                  <div>
+                    Final 10-rider squad due:{' '}
+                    <strong>{formatGameDate(workspace?.timeline?.final_squad_deadline)}</strong>
+                  </div>
+                </div>
+              </div>
+              {cycle?.round_label?.toLowerCase().includes('final') ? (
+                <div className="mt-3 rounded border border-sky-200 bg-white/70 px-3 py-2 text-xs leading-5 text-sky-900">
+                  This is a new competition window. The National Coach may keep riders from the previous round or choose a different eligible 10-rider squad for this Final.
+                </div>
+              ) : null}
             </div>
           </section>
 
