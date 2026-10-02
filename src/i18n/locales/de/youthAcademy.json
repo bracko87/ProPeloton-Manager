@@ -95,18 +95,103 @@
   },
   "scouting": {
     "title": "Reichweite des Jugendscoutings",
-    "description": "Wähle, wo der Jugendscout suchen darf. Die Scout-Qualität bestimmt, wie viele Talente gefunden werden und wie nützlich die Bewertungen sind; das Budget bestimmt nur die geografische Reichweite.",
+    "description": "Wählen Sie, wo der Jugendscout suchen darf. Die Scout-Qualität bestimmt, wie viele Talente gefunden werden und wie nützlich die Bewertungen sind; das Budget bestimmt nur die geografische Reichweite.",
     "skillNote": "Ein weltweites Programm garantiert keine Elite-Talente. Es erlaubt dem Scout lediglich, weltweit zu suchen.",
     "ranges": {
       "local": "Lokal — eigenes Land",
       "regional": "Regional",
       "continental": "Kontinental",
       "world": "Weltweit"
+    },
+    "scoutReport": "Bericht des Jugendscouts",
+    "loading": "Scouting-Berichte werden geladen…",
+    "scoutScore": "Scouting-Effektivität: {{score}} / 100",
+    "monthlyReports": "Berichte / Monat",
+    "qualityExplainer": "Das Budget bestimmt, wo gesucht werden darf. Die Qualität des Scouts bestimmt Anzahl und Genauigkeit der Berichte sowie die Chance, stärkere Talente zu erkennen.",
+    "noScout": "Stellen Sie einen Jugendscout ein, um die monatliche Talentsuche zu starten. Die Akademie funktioniert auch ohne Scout, erzeugt dann aber keine neuen Scouting-Berichte.",
+    "monthlyCycle": "Monatlicher Scouting-Zyklus",
+    "currentRange": "Aktuelle Reichweite",
+    "programBudget": "Scouting-Budget der Saison",
+    "cycleCompleted": "{{count}} Scouting-Bericht(e) in diesem Spielmonat geliefert. Der nächste Zyklus öffnet im nächsten Spielmonat.",
+    "cycleReady": "Der Scouting-Zyklus dieses Monats ist bereit.",
+    "run": "Monatliches Scouting starten",
+    "running": "Scouting läuft…",
+    "alreadyRun": "Dieser Monat abgeschlossen",
+    "delegation": "Verantwortung für Rekrutierung",
+    "directorMode": "Leiter der Jugendakademie",
+    "managerMode": "Manager",
+    "directorModeHelp": "Der Akademieleiter setzt Talente auf die Auswahlliste, die Ihre Grenzen erfüllen. Sind auch Verhandlungen delegiert, darf er innerhalb dieser Grenzen automatisch Angebote abgeben.",
+    "managerModeHelp": "Sie prüfen jeden Bericht und entscheiden selbst, welche Talente ein Angebot erhalten.",
+    "autoRuleSummary": "Auto-Rekrutierung ab {{band}} · max. {{stipend}}/Woche · max. Entschädigung {{compensation}} · {{slots}} Platz/Plätze frei halten.",
+    "prospects": "Scouting-Berichte & Rekrutierung",
+    "reportCount": "{{count}} aktive(r) Bericht(e)",
+    "noReports": "Noch keine aktiven Talentberichte",
+    "noReportsHelp": "Starten Sie nach der Einstellung eines Jugendscouts den monatlichen Scouting-Zyklus. Berichte laufen nach 60 Spieltagen ab.",
+    "fromAcademy": "Bei {{academy}}",
+    "otherAcademy": "einer anderen Jugendakademie",
+    "unattachedProspect": "Vereinsloses Nachwuchstalent",
+    "confidence": "{{value}} % Sicherheit",
+    "strengths": "Beobachtete Stärken",
+    "relocation": "Umzug",
+    "expectedSupport": "Erwartete Unterstützung",
+    "developmentCompensation": "Ausbildungsentschädigung",
+    "none": "Keine",
+    "offerPackage": "Angebotspaket",
+    "weeklyStipend": "Wöchentliches Stipendium",
+    "accommodation": "Unterkunft / Woche",
+    "compensationOffer": "Akademie-Entschädigung",
+    "offerHelp": "Fahrer und Familie berücksichtigen Standort, Unterkunft, Trainerqualität und Unterstützung. Eine KI-Akademie kann außerdem die Ausbildungsentschädigung annehmen oder ablehnen.",
+    "submittingOffer": "Wird gesendet…",
+    "improveOffer": "Verbessertes Angebot senden",
+    "submitOffer": "Angebot senden",
+    "signedToAcademy": "Für Ihre Jugendakademie verpflichtet.",
+    "relocationValues": {
+      "easy": "Einfach",
+      "moderate": "Mittel",
+      "hard": "Schwierig",
+      "very_hard": "Sehr schwierig"
+    },
+    "offerStatuses": {
+      "submitted": "Angebot gesendet",
+      "academy_rejected": "Aktuelle Akademie hat abgelehnt",
+      "rider_rejected": "Fahrer/Familie hat abgelehnt",
+      "accepted": "Angebot angenommen"
+    },
+    "offerStatusHelp": {
+      "submitted": "Das Angebot wird geprüft.",
+      "academy_rejected": "Erhöhen Sie die Ausbildungsentschädigung, wenn Sie erneut anbieten möchten.",
+      "rider_rejected": "Sie können Stipendium oder Unterkunft verbessern und erneut anbieten.",
+      "accepted": "Der Fahrer ist Ihrer Jugendakademie beigetreten."
+    },
+    "assessmentBands": {
+      "limited": "Begrenzt",
+      "promising": "Vielversprechend",
+      "very_promising": "Sehr vielversprechend",
+      "exceptional": "Außergewöhnlich"
+    },
+    "roles": {
+      "all_rounder": "Allrounder",
+      "sprinter": "Sprinter",
+      "climber": "Kletterer",
+      "time_trial": "Zeitfahrer",
+      "domestique": "Helfer",
+      "breakaway": "Ausreißer"
+    },
+    "skillNames": {
+      "sprint": "Sprint",
+      "climbing": "Klettern",
+      "time_trial": "Zeitfahren",
+      "endurance": "Ausdauer",
+      "flat": "Flach",
+      "recovery": "Erholung",
+      "resistance": "Widerstand",
+      "race_iq": "Renn-IQ",
+      "teamwork": "Teamarbeit"
     }
   },
   "settings": {
     "title": "Verantwortlichkeiten",
-    "description": "Lege fest, wer Routineentscheidungen der Jugendakademie übernimmt. Der Manager kann diese Zuständigkeiten später jederzeit ändern.",
+    "description": "Legen Sie fest, wer Routineentscheidungen der Jugendakademie übernimmt. Sie können diese Zuständigkeiten später jederzeit ändern.",
     "recruitment": "Rekrutierungsentscheidungen",
     "raceEntry": "Rennteilnahme",
     "raceSquad": "Auswahl des Rennkaders",
@@ -117,6 +202,17 @@
       "manager": "Manager",
       "academy_director": "Leiter der Jugendakademie",
       "u16_head_coach": "U16-Cheftrainer"
+    },
+    "autoRecruitmentTitle": "Schutzgrenzen für Rekrutierung durch den Akademieleiter",
+    "autoRecruitmentDescription": "Diese Grenzen gelten nur, wenn die Rekrutierung delegiert ist. Automatische Angebote erfordern zusätzlich delegierte Verhandlungen.",
+    "minimumAssessment": "Mindestbewertung",
+    "maxStipend": "Maximales Wochenstipendium",
+    "maxCompensation": "Maximale Ausbildungsentschädigung",
+    "keepFreeSlots": "Freie Kaderplätze behalten",
+    "bands": {
+      "promising": "Vielversprechend",
+      "very_promising": "Sehr vielversprechend",
+      "exceptional": "Außergewöhnlich"
     }
   },
   "placeholders": {
@@ -128,6 +224,9 @@
   "errors": {
     "load": "Jugendakademie konnte nicht geladen werden.",
     "activate": "Jugendakademie konnte nicht aktiviert werden.",
-    "save": "Einstellungen der Jugendakademie konnten nicht gespeichert werden."
+    "save": "Einstellungen der Jugendakademie konnten nicht gespeichert werden.",
+    "scoutingLoad": "Jugend-Scouting-Berichte konnten nicht geladen werden.",
+    "scoutingRun": "Der monatliche Jugend-Scouting-Zyklus konnte nicht gestartet werden.",
+    "recruitmentOffer": "Das Jugend-Rekrutierungsangebot konnte nicht gesendet werden."
   }
 }
