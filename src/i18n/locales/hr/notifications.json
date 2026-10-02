@@ -1392,5 +1392,16 @@
       "message": "Nacionalni izbornik je podnio ostavku. Pokrenut će se izbor zamjene.",
       "extra": "Savez ostaje aktivan dok se ne završi izbor zamjene."
     }
+  },
+  "youthRaceReport": {
+    "raceFallback": "Utrka mladih",
+    "title": "Izvještaj Akademije — {{raceName}}",
+    "message": "{{raceName}}: najbolji rezultat {{bestFinish}}, +{{regionalPoints}} regionalnih bodova, +{{worldPoints}} svjetskih bodova. DNF {{dnf}}, DNS {{dns}}. Izvještaj: {{reportClass}}.",
+    "classes": {
+      "routine": "rutinski",
+      "important": "važan",
+      "exceptional": "izuzetan",
+      "problem": "problem"
+    }
   }
 }
