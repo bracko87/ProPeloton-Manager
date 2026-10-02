@@ -889,7 +889,8 @@
     "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Poziv na Svetsko prvenstvo",
     "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Potvrda za Svetsko prvenstvo",
     "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Rezultat Svetskog prvenstva",
-    "WORLD_ROAD_CHAMPION": "Svetski drumski prvak"
+    "WORLD_ROAD_CHAMPION": "Svetski drumski prvak",
+    "NATIONAL_TEAM_NEW_SELECTION_WINDOW": "Novi period za izbor reprezentacije"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Plan trke zahteva pažnju: {{entity}}",
@@ -1310,6 +1311,11 @@
       "title": "National Duty je završen za {{rider}}",
       "message": "{{rider}} je završio National Duty sa {{association}} i ponovo je dostupan klubu.",
       "extra": "Nakon završetka National Duty i dalje važe uobičajena pravila zdravlja, umora i dostupnosti za trke."
+    },
+    "newSelectionWindow": {
+      "title": "Otvoren izbor sastava za {{roundLabel}}",
+      "message": "Vaša reprezentacija je prošla u {{roundLabel}}. Izaberite novi sastav od 10 vozača za {{group}}. Možete zadržati prethodne vozače ili izabrati druge podobne vozače.",
+      "extra": "Rok za konačni sastav: {{finalSquadDeadline}}. Otvorite karticu Sastav Nacionalnog saveza da pripremite novi takmičarski period."
     }
   }
 }
