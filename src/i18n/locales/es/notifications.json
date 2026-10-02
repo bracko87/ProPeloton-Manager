@@ -670,7 +670,10 @@
     "SELECTED": "Seleccionado",
     "SQUAD": "Plantilla",
     "VOTING": "Votación",
-    "WORLD": "Mundial"
+    "WORLD": "Mundial",
+    "POSITION": "Puesto",
+    "RESIGNED": "Dimitió",
+    "VACANT": "Vacante"
   },
   "reportVariants": {
     "rider_skill_change": "Cambio de habilidad del ciclista",
