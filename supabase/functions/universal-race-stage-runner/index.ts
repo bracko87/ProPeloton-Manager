@@ -5,13 +5,13 @@ import {
   isUniversalPhase78IssueNonBlocking,
   runRaceEngine,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/00a34c7d8f4f2ed50c6ac468b3e9c9474f1933f5/src/universal-race-engine/runRaceEngine.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/4f5ef713a5e23b89df2d5684a33e2e106b37cd92/src/universal-race-engine/runRaceEngine.ts";
 import {
   buildScenarioProductionUniversalRaceEngineInput as buildProductionUniversalRaceEngineInput,
   getRoadScenarioAuditV1,
   type ScenarioProductionUniversalRaceSources as ProductionUniversalRaceSources,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/00a34c7d8f4f2ed50c6ac468b3e9c9474f1933f5/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/00a34c7d8f4f2ed50c6ac468b3e9c9474f1933f5/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/4f5ef713a5e23b89df2d5684a33e2e106b37cd92/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/4f5ef713a5e23b89df2d5684a33e2e106b37cd92/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 // Accepted V5.2 is kept as the emergency sporting fallback only. It is used
 // only after a failed/orphaned primary attempt or at the mandatory T-15 deadline.
@@ -20,7 +20,7 @@ import { buildProductionUniversalRaceEngineInput as buildFallbackProductionUnive
 import { buildProductionUniversalRaceOutput as buildFallbackProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
-const SOURCE_COMMIT = "00a34c7d8f4f2ed50c6ac468b3e9c9474f1933f5";
+const SOURCE_COMMIT = "4f5ef713a5e23b89df2d5684a33e2e106b37cd92";
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
 const WORKER_BUILD = "race_director_v2_split_claim_payload_2026_09_15";
 const MAX_CALCULATIONS_PER_TICK = 1;
