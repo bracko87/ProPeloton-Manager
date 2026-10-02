@@ -868,7 +868,23 @@
     "NATIONS_FINAL_RESULT": "World Nations Final completed",
     "NATIONS_CHAMPION": "World Nations Champion",
     "NATIONAL_COACH_POSITION_VACANT": "National Coach position is vacant",
-    "NATIONAL_COACH_RESIGNED": "National Coach has resigned"
+    "NATIONAL_COACH_RESIGNED": "National Coach has resigned",
+    "NATIONAL_ASSOCIATION_STATUS": "National Association status",
+    "NATIONAL_COACH_CANDIDATURE_OPEN": "National Coach candidature is open",
+    "NATIONAL_COACH_VOTING_REQUIRED": "National Coach vote required",
+    "NATIONAL_COACH_STATUS_CHANGED": "National Coach status changed",
+    "NATIONAL_TEAM_SELECTION_WINDOW": "National Team squad selection is open",
+    "NATIONAL_TEAM_CALLUP_REQUIRED": "National Team call-up requires a decision",
+    "NATIONAL_TEAM_SQUAD_UPDATE": "National Team squad update",
+    "NATIONAL_TEAM_DUTY_UPDATE": "National Duty update",
+    "NATIONS_DRAW_NEXT_ROUND": "World Nations draw / next round",
+    "NATIONS_RACE_UPDATE": "World Nations race update",
+    "NATIONS_FINAL_INFO": "World Nations Final information",
+    "NATIONS_FINAL_RESULT_MERGED": "World Nations Final result",
+    "CHAMPIONSHIP_PARTICIPATION_REQUIRED": "Championship participation decision required",
+    "CHAMPIONSHIP_QUALIFICATION_UPDATE": "Championship qualification update",
+    "CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Championship final confirmation required",
+    "CHAMPIONSHIP_RESULT": "Championship result"
   },
   "richReports": {
     "common": {
