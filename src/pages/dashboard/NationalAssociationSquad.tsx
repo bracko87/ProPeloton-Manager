@@ -386,7 +386,11 @@ export default function NationalAssociationSquadPage(): JSX.Element {
   const selectionStatus = workspace?.selection?.status ?? 'draft'
   const canEditDraft =
     selectionStatus === 'draft' || selectionStatus === 'needs_replacement'
-  const canLock = canEditDraft && selectedIds.length === 10
+  const invitationWindowOpen =
+    !workspace?.timeline?.recommended_selection_lock_date ||
+    !workspace?.current_game_date ||
+    workspace.current_game_date >= workspace.timeline.recommended_selection_lock_date
+  const canLock = canEditDraft && selectedIds.length === 10 && invitationWindowOpen
   const canConfirm = selectionStatus === 'ready_to_confirm'
 
   const lockedRiderIds = useMemo(
@@ -673,14 +677,23 @@ export default function NationalAssociationSquadPage(): JSX.Element {
                       {busy === 'save' ? t('association.squad.saving') : t('association.squad.saveDraft')}
                     </button>
                   ) : null}
-                  {canLock ? (
+                  {canEditDraft && selectedIds.length === 10 ? (
                     <button
                       type="button"
-                      disabled={busy !== null}
+                      disabled={busy !== null || !invitationWindowOpen}
                       onClick={() => void lockSelection()}
-                      className="rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:opacity-50"
+                      title={
+                        invitationWindowOpen
+                          ? undefined
+                          : `Invitations open on ${formatGameDate(workspace?.timeline?.recommended_selection_lock_date)}`
+                      }
+                      className="rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      {busy === 'lock' ? t('association.squad.locking') : t('association.squad.lockSend')}
+                      {busy === 'lock'
+                        ? t('association.squad.locking')
+                        : invitationWindowOpen
+                          ? t('association.squad.lockSend')
+                          : `Invitations open ${formatGameDate(workspace?.timeline?.recommended_selection_lock_date)}`}
                     </button>
                   ) : null}
                   {canConfirm ? (
