@@ -240,8 +240,6 @@
     }
   },
   "placeholders": {
-    "calendar": "El calendario U16 separado y el motor de carrera simplificado se conectarán en la siguiente fase. Los costes de inscripción juvenil serán principalmente de viaje y logística.",
-    "rankings": "La base del Ranking Juvenil Regional y del Youth World Ranking se conectará con el calendario U16.",
     "history": "Los graduados, resultados juveniles y el historial de desarrollo a largo plazo seguirán vinculados a los ciclistas después de graduarse."
   },
   "errors": {
@@ -257,7 +255,11 @@
     "equipmentPurchase": "No se pudo comprar el equipamiento de la Academia Juvenil.",
     "equipmentDirector": "No se pudo completar la gestión de equipamiento del Director de la Academia Juvenil.",
     "graduationLoad": "No se pudieron cargar las decisiones de graduación juvenil.",
-    "graduationDecision": "No se pudo completar la decisión de graduación juvenil."
+    "graduationDecision": "No se pudo completar la decisión de graduación juvenil.",
+    "calendarLoad": "No se pudo cargar el calendario juvenil.",
+    "rankingsLoad": "No se pudieron cargar los rankings juveniles.",
+    "raceEntry": "No se pudo inscribir la carrera juvenil.",
+    "raceLineup": "No se pudo guardar la alineación juvenil."
   },
   "equipment": {
     "title": "Equipamiento juvenil",
@@ -302,5 +304,54 @@
     "pathwayHelp": "Esta ruta temporal da 30 días de juego para mover al ciclista al equipo de desarrollo. Si no se completa, pasa a ser agente libre profesional.",
     "toDeveloping": "Mover al equipo de desarrollo ({{slots}} libres)",
     "release": "Liberar como agente libre profesional"
+  },
+  "calendar": {
+    "title": "Calendario U16",
+    "format": "Formato",
+    "resultsOnly": "Solo resultados — sin repetición",
+    "entryResponsibility": "Participación",
+    "squadResponsibility": "Alineación y estrategia",
+    "ageLimitHelp": "Los ciclistas tienen límites de salidas según la edad en 30 días de juego. El entrenador U16 también valora perfil, preparación y fatiga, por lo que la academia suele elegir solo una parte de las 12 pruebas regionales disponibles cada mes.",
+    "races": "Carreras juveniles",
+    "loading": "Cargando carreras…",
+    "levels": {
+      "regional": "Copa Juvenil Regional",
+      "world_series": "Youth World Series",
+      "world_final": "Youth World Final"
+    },
+    "qualified": "Clasificado",
+    "notQualified": "No clasificado",
+    "qualificationHelp": "La World Series se clasifica mediante el Ranking Juvenil Regional. La Final Mundial utiliza el Ranking Mundial Juvenil.",
+    "strategy": "Estrategia",
+    "strategies": {
+      "conservative": "Conservadora",
+      "balanced": "Equilibrada",
+      "aggressive": "Agresiva"
+    },
+    "enterRace": "Inscribir carrera",
+    "entering": "Inscribiendo…",
+    "coachEntryHelp": "La participación está delegada. El entrenador U16 revisa la prueba siete días de juego antes y solo participa si encaja con plantilla, fatiga y desarrollo.",
+    "entered": "Academia inscrita",
+    "enteredBy": "Inscrito por {{who}}",
+    "selectLineup": "Seleccionar alineación — {{count}} / {{max}}",
+    "saveLineup": "Guardar alineación y estrategia",
+    "savingLineup": "Guardando…",
+    "coachLineupHelp": "El entrenador U16 seleccionó {{count}} ciclista(s) y controla la estrategia.",
+    "myResults": "Resultados de mi academia",
+    "topResults": "Mejores resultados",
+    "didNotRace": "Tu academia no disputó esta prueba."
+  },
+  "rankings": {
+    "title": "Rankings juveniles",
+    "description": "Tu academia compite en el Ranking Juvenil Regional de {{region}}. Los resultados regionales también aportan menos puntos al Ranking Mundial Juvenil; World Series y Final Mundial otorgan más puntos mundiales.",
+    "regionalTitle": "Ranking Juvenil Regional",
+    "worldTitle": "Ranking Mundial Juvenil",
+    "loading": "Cargando rankings…",
+    "noPoints": "Todavía no hay puntos.",
+    "rank": "Puesto",
+    "rider": "Ciclista",
+    "academy": "Academia",
+    "starts": "Llegadas",
+    "points": "Puntos"
   }
 }
