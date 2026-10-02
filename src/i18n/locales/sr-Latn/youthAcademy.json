@@ -187,6 +187,19 @@
       "resistance": "Otpornost",
       "race_iq": "Trkački IQ",
       "teamwork": "Timski rad"
+    },
+    "incoming": {
+      "title": "Dolazne ponude drugih akademija",
+      "count": "{{count}} na čekanju",
+      "none": "Nema dolaznih ponuda",
+      "noneHelp": "Druge Premium akademije mogu direktno prići tvojim omladinskim vozačima. Ponude koje čekaju tvoju odluku pojaviće se ovde.",
+      "approachFrom": "Ponuda od {{club}}",
+      "newStipend": "Ponuđena nedeljna stipendija",
+      "accommodation": "Ponuđeni smeštaj",
+      "decisionHelp": "Ako prihvatiš ponudu akademije, vozač i porodica zatim donose konačnu odluku o preseljenju. Odbijanje zadržava vozača u tvojoj Akademiji.",
+      "accept": "Prihvati ponudu akademije",
+      "decline": "Odbij",
+      "processing": "Obrada…"
     }
   },
   "settings": {
@@ -227,6 +240,7 @@
     "save": "Nije moguće sačuvati podešavanja Omladinske akademije.",
     "scoutingLoad": "Nije moguće učitati omladinske skautske izveštaje.",
     "scoutingRun": "Nije moguće pokrenuti mesečni omladinski skauting.",
-    "recruitmentOffer": "Nije moguće poslati ponudu za omladinskog vozača."
+    "recruitmentOffer": "Nije moguće poslati ponudu za omladinskog vozača.",
+    "incomingOffer": "Nije moguće odgovoriti na dolaznu ponudu Omladinske akademije."
   }
 }
