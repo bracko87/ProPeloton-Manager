@@ -1302,5 +1302,16 @@
       "message": "The National Coach has resigned. A replacement election will start.",
       "extra": "The Association remains active while the replacement election is completed."
     }
+  },
+  "youthRaceReport": {
+    "raceFallback": "Youth race",
+    "title": "Youth Academy report — {{raceName}}",
+    "message": "{{raceName}}: best finish {{bestFinish}}, +{{regionalPoints}} regional points, +{{worldPoints}} world points. DNF {{dnf}}, DNS {{dns}}. Report: {{reportClass}}.",
+    "classes": {
+      "routine": "routine",
+      "important": "important",
+      "exceptional": "exceptional",
+      "problem": "problem"
+    }
   }
 }
