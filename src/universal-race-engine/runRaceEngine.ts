@@ -16388,6 +16388,17 @@ export function resolveRoadPhase4Finish(
     readonly finalGapBehindPelotonSeconds: number
   }
 
+  // Detached-rider trajectories for the same climb repeatedly evaluate the
+  // same peloton at the same kilometre. Cache that shared context once per
+  // target field/km and reuse it across riders. This turns the expensive
+  // mountain recovery section from repeated O(riders² × km) setup work into
+  // effectively O(riders × km) lookups while preserving the exact model.
+  const detachedPelotonContextCache = new Map<string, {
+    activePelotonRiderIds: readonly string[]
+    liveEnergyByRiderId: ReadonlyMap<string, number>
+  }>()
+  const phase4WeatherModifiers = calculatePhase9WeatherModifiers(input.weather)
+
   /**
    * V5.3 authoritative P/C movement. A rider starts only six seconds detached
    * (merge tolerance + 1) and every later gap is integrated from the local
@@ -16411,7 +16422,8 @@ export function resolveRoadPhase4Finish(
       6,
     )
     let rejoinKm: number | null = null
-    const weather = calculatePhase9WeatherModifiers(input.weather)
+    const weather = phase4WeatherModifiers
+    const targetPelotonCacheKey = [...targetPelotonRiderIds].sort().join(",")
     const routeSegments = buildRoadOpeningRouteSegments(
       input.stage,
       currentKm,
@@ -16439,16 +16451,30 @@ export function resolveRoadPhase4Finish(
       if (stepEndKm <= currentKm + 0.0000005) break
       const stepDistanceKm = stepEndKm - currentKm
       const midKm = (currentKm + stepEndKm) / 2
-      const activePelotonRiderIds = targetPelotonRiderIds
+      const pelotonContextKey =
+        `${targetPelotonCacheKey}|${deterministicRound(midKm, 6)}`
+      let pelotonContext = detachedPelotonContextCache.get(pelotonContextKey)
+      if (!pelotonContext) {
+        const activePelotonRiderIds = targetPelotonRiderIds
+          .filter((candidateId) => !isKnownFrontRiderAtProfileKm(candidateId, midKm))
+          .sort()
+        const liveEnergyByRiderId = new Map(
+          activePelotonRiderIds.map((candidateId) =>
+            [candidateId, profileEnergyAtKm(candidateId, midKm)] as const,
+          ),
+        )
+        pelotonContext = { activePelotonRiderIds, liveEnergyByRiderId }
+        detachedPelotonContextCache.set(pelotonContextKey, pelotonContext)
+      }
+      const activePelotonRiderIds = pelotonContext.activePelotonRiderIds
         .filter((candidateId) => candidateId !== riderId)
-        .filter((candidateId) => !isKnownFrontRiderAtProfileKm(candidateId, midKm))
-        .sort()
-      const energyIds = Array.from(new Set([...activePelotonRiderIds, riderId]))
-      const liveEnergyByRiderId = new Map(
-        energyIds.map((candidateId) =>
-          [candidateId, profileEnergyAtKm(candidateId, midKm)] as const,
-        ),
-      )
+      const liveEnergyByRiderId =
+        pelotonContext.liveEnergyByRiderId.has(riderId)
+          ? pelotonContext.liveEnergyByRiderId
+          : new Map([
+              ...pelotonContext.liveEnergyByRiderId.entries(),
+              [riderId, profileEnergyAtKm(riderId, midKm)] as const,
+            ])
       const windMultiplier = applyRoadWindExposureToMultiplier(
         weather.speedMultiplier,
         input.stage,
