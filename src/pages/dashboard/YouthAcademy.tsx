@@ -294,6 +294,83 @@ type YouthRankingsPayload = {
   world?: YouthRankingRow[]
 }
 
+type YouthHistoryPayload = {
+  activated: boolean
+  race_report_frequency?: 'every_race' | 'important_only' | 'podium_exceptional' | 'problems_only' | 'never'
+  summary?: {
+    graduates: number
+    race_wins: number
+    podiums: number
+    races_completed: number
+  }
+  alumni?: Array<{
+    youth_rider_id: string
+    rider_name: string
+    country_code: string
+    role: string
+    joined_game_date: string
+    joined_season: number
+    joined_age: number
+    graduated_on?: string | null
+    graduation_age?: number | null
+    graduation_decision?: string | null
+    professional_rider_id?: string | null
+    race_starts: number
+    wins: number
+    podiums: number
+    regional_points: number
+    world_points: number
+  }>
+  race_reports?: Array<{
+    race_id: string
+    race_name: string
+    race_date: string
+    race_level: string
+    terrain_type: string
+    distance_km: number
+    report_class: 'routine' | 'important' | 'exceptional' | 'problem'
+    headline: string
+    summary: string
+    best_finish?: number | null
+    podium_count: number
+    dnf_count: number
+    dns_count: number
+    regional_points: number
+    world_points: number
+    fatigue_added: number
+    development_events: number
+    key_events?: Array<{
+      rider_id: string
+      rider_name: string
+      result_status: string
+      position?: number | null
+      gap_seconds?: number | null
+      regional_points?: number
+      world_points?: number
+      fatigue_delta?: number
+      development_bonus?: number
+      incident_code?: string | null
+    }>
+  }>
+  development_history?: Array<{
+    week_start: string
+    processed_on: string
+    youth_rider_id: string
+    rider_name: string
+    age: number
+    workload: string
+    development_focus: string
+    attribute_changed?: string | null
+    primary_delta: number
+    secondary_attribute_changed?: string | null
+    secondary_delta: number
+    readiness_before: number
+    readiness_after: number
+    fatigue_before: number
+    fatigue_after: number
+  }>
+}
+
 type AcademyPayload = {
   premium: boolean
   activated: boolean
@@ -433,6 +510,11 @@ export default function YouthAcademyPage(): JSX.Element {
   const [raceStrategies, setRaceStrategies] = useState<
     Record<string, 'conservative' | 'balanced' | 'aggressive'>
   >({})
+  const [historyData, setHistoryData] = useState<YouthHistoryPayload | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [raceReportFrequency, setRaceReportFrequency] = useState<
+    'every_race' | 'important_only' | 'podium_exceptional' | 'problems_only' | 'never'
+  >('important_only')
 
   const applyScoutingPayload = (payload: ScoutingPayload): void => {
     setScoutingData(payload)
@@ -666,6 +748,43 @@ export default function YouthAcademyPage(): JSX.Element {
     })
   }
 
+  const loadHistory = async (): Promise<void> => {
+    setHistoryLoading(true)
+    try {
+      const { data: payload, error: historyError } = await supabase.rpc(
+        'get_my_youth_academy_history_v1'
+      )
+      if (historyError) throw historyError
+      const next = payload as YouthHistoryPayload
+      setHistoryData(next)
+      setRaceReportFrequency(next.race_report_frequency ?? 'important_only')
+    } catch (historyError: any) {
+      console.error('Youth Academy history load failed:', historyError)
+      setError(historyError?.message ?? t('errors.historyLoad'))
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  const saveRaceReportFrequency = async (): Promise<void> => {
+    if (data?.read_only || saving) return
+    setSaving(true)
+    setError(null)
+    try {
+      const { error: frequencyError } = await supabase.rpc(
+        'update_my_youth_race_report_frequency_v1',
+        { p_frequency: raceReportFrequency }
+      )
+      if (frequencyError) throw frequencyError
+      await loadHistory()
+    } catch (frequencyError: any) {
+      console.error('Youth race report preference save failed:', frequencyError)
+      setError(frequencyError?.message ?? t('errors.reportFrequency'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const loadRaceCalendar = async (): Promise<void> => {
     setPhase3Loading(true)
     try {
@@ -849,6 +968,9 @@ export default function YouthAcademyPage(): JSX.Element {
     if (tab === 'rankings' && data?.activated) {
       void loadYouthRankings()
     }
+    if (tab === 'history' && data?.activated) {
+      void loadHistory()
+    }
   }, [tab, data?.activated])
 
   const activate = async (): Promise<void> => {
@@ -956,7 +1078,7 @@ export default function YouthAcademyPage(): JSX.Element {
     return <div className="p-6 text-sm text-red-700">{error ?? t('errors.load')}</div>
   }
 
-  if (!data.premium) {
+  if (!data.premium && !data.activated) {
     return (
       <div className="space-y-5">
         <div>
@@ -2011,6 +2133,49 @@ export default function YouthAcademyPage(): JSX.Element {
 
           <div className="mb-6 border-b border-slate-200 pb-5">
             <h4 className="text-sm font-semibold text-slate-900">
+              {t('reports.title')}
+            </h4>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {t('reports.description')}
+            </p>
+            <label className="mt-4 block max-w-sm text-sm">
+              <span className="font-medium text-slate-800">
+                {t('reports.frequency')}
+              </span>
+              <select
+                disabled={data.read_only}
+                value={raceReportFrequency}
+                onChange={event =>
+                  setRaceReportFrequency(
+                    event.target.value as
+                      | 'every_race'
+                      | 'important_only'
+                      | 'podium_exceptional'
+                      | 'problems_only'
+                      | 'never'
+                  )
+                }
+                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2"
+              >
+                <option value="every_race">{t('reports.options.every_race')}</option>
+                <option value="important_only">{t('reports.options.important_only')}</option>
+                <option value="podium_exceptional">{t('reports.options.podium_exceptional')}</option>
+                <option value="problems_only">{t('reports.options.problems_only')}</option>
+                <option value="never">{t('reports.options.never')}</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              disabled={data.read_only || saving}
+              onClick={() => void saveRaceReportFrequency()}
+              className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium disabled:opacity-50"
+            >
+              {saving ? t('saving') : t('reports.save')}
+            </button>
+          </div>
+
+          <div className="mb-6 border-b border-slate-200 pb-5">
+            <h4 className="text-sm font-semibold text-slate-900">
               {t('training.title')}
             </h4>
             <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -2642,11 +2807,206 @@ export default function YouthAcademyPage(): JSX.Element {
       ) : null}
 
       {tab === 'history' ? (
-        <Card title={t('tabs.history')}>
-          <p className="text-sm leading-6 text-slate-600">
-            {t('placeholders.history')}
-          </p>
-        </Card>
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              [t('history.graduates'), historyData?.summary?.graduates ?? 0],
+              [t('history.raceWins'), historyData?.summary?.race_wins ?? 0],
+              [t('history.podiums'), historyData?.summary?.podiums ?? 0],
+              [t('history.racesCompleted'), historyData?.summary?.races_completed ?? 0],
+            ].map(([label, value]) => (
+              <Card key={String(label)} title={String(label)}>
+                <div className="text-2xl font-semibold text-slate-950">{String(value)}</div>
+              </Card>
+            ))}
+          </div>
+
+          <Card
+            title={t('history.alumni')}
+            right={
+              <span className="text-xs text-slate-500">
+                {t('history.alumniCount', { count: historyData?.alumni?.length ?? 0 })}
+              </span>
+            }
+          >
+            {historyLoading && !historyData ? (
+              <div className="text-sm text-slate-500">{t('history.loading')}</div>
+            ) : (historyData?.alumni?.length ?? 0) === 0 ? (
+              <div className="text-sm text-slate-500">{t('history.noAlumni')}</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[920px] text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs text-slate-500">
+                    <tr>
+                      <th className="py-2 pr-3">{t('history.rider')}</th>
+                      <th className="py-2 pr-3">{t('history.joined')}</th>
+                      <th className="py-2 pr-3">{t('history.graduated')}</th>
+                      <th className="py-2 pr-3">{t('history.path')}</th>
+                      <th className="py-2 pr-3">{t('history.starts')}</th>
+                      <th className="py-2 pr-3">{t('history.wins')}</th>
+                      <th className="py-2 pr-3">{t('history.regionalPoints')}</th>
+                      <th className="py-2">{t('history.worldPoints')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(historyData?.alumni ?? []).map(rider => {
+                      const flag = flagUrl(rider.country_code)
+                      return (
+                        <tr key={rider.youth_rider_id}>
+                          <td className="py-3 pr-3">
+                            <div className="flex items-center gap-2">
+                              {flag ? <img src={flag} alt="" className="h-4 w-6 object-cover" /> : null}
+                              <div>
+                                <div className="font-medium text-slate-900">{rider.rider_name}</div>
+                                <div className="text-xs text-slate-500">{humanize(rider.role)}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 pr-3">
+                            {rider.joined_game_date} · {t('history.ageValue', { age: rider.joined_age })}
+                          </td>
+                          <td className="py-3 pr-3">
+                            {rider.graduated_on
+                              ? `${rider.graduated_on} · ${t('history.ageValue', { age: rider.graduation_age })}`
+                              : '—'}
+                          </td>
+                          <td className="py-3 pr-3">{humanize(rider.graduation_decision)}</td>
+                          <td className="py-3 pr-3">{rider.race_starts}</td>
+                          <td className="py-3 pr-3">{rider.wins}</td>
+                          <td className="py-3 pr-3">{rider.regional_points}</td>
+                          <td className="py-3">{rider.world_points}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+
+          <Card
+            title={t('history.raceReports')}
+            right={
+              <span className="text-xs text-slate-500">
+                {t('history.reportCount', { count: historyData?.race_reports?.length ?? 0 })}
+              </span>
+            }
+          >
+            {(historyData?.race_reports?.length ?? 0) === 0 ? (
+              <div className="text-sm text-slate-500">{t('history.noReports')}</div>
+            ) : (
+              <div className="space-y-3">
+                {(historyData?.race_reports ?? []).map(report => (
+                  <div
+                    key={report.race_id}
+                    className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="font-semibold text-slate-900">{report.headline}</div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {report.race_date} · {humanize(report.race_level)} · {humanize(report.terrain_type)} · {report.distance_km} km
+                        </div>
+                      </div>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        report.report_class === 'problem'
+                          ? 'bg-red-50 text-red-700'
+                          : report.report_class === 'exceptional'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : report.report_class === 'important'
+                              ? 'bg-amber-50 text-amber-800'
+                              : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {t(`history.reportClasses.${report.report_class}`)}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{report.summary}</p>
+                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
+                      <span>{t('history.regionalPoints')}: +{report.regional_points}</span>
+                      <span>{t('history.worldPoints')}: +{report.world_points}</span>
+                      <span>{t('history.fatigue')}: +{report.fatigue_added}</span>
+                      <span>{t('history.developmentEvents')}: {report.development_events}</span>
+                    </div>
+                    {(report.key_events?.length ?? 0) > 0 ? (
+                      <div className="mt-3 space-y-1.5">
+                        {(report.key_events ?? []).slice(0, 8).map(event => (
+                          <div
+                            key={`${report.race_id}-${event.rider_id}-${event.result_status}`}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-xs"
+                          >
+                            <span className="font-medium text-slate-800">
+                              {event.position ? `#${event.position} · ` : ''}
+                              {event.rider_name}
+                            </span>
+                            <span className="text-slate-500">
+                              {humanize(event.result_status)}
+                              {event.incident_code ? ` · ${humanize(event.incident_code)}` : ''}
+                              {event.development_bonus
+                                ? ` · +${event.development_bonus} ${t('history.development')}`
+                                : ''}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card
+            title={t('history.developmentHistory')}
+            right={
+              <span className="text-xs text-slate-500">
+                {t('history.latestWeeks', { count: historyData?.development_history?.length ?? 0 })}
+              </span>
+            }
+          >
+            {(historyData?.development_history?.length ?? 0) === 0 ? (
+              <div className="text-sm text-slate-500">{t('history.noDevelopmentHistory')}</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[820px] text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs text-slate-500">
+                    <tr>
+                      <th className="py-2 pr-3">{t('history.week')}</th>
+                      <th className="py-2 pr-3">{t('history.rider')}</th>
+                      <th className="py-2 pr-3">{t('history.focus')}</th>
+                      <th className="py-2 pr-3">{t('history.workload')}</th>
+                      <th className="py-2 pr-3">{t('history.change')}</th>
+                      <th className="py-2">{t('history.readinessFatigue')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(historyData?.development_history ?? []).slice(0, 100).map((row, index) => {
+                      const changes = [
+                        row.primary_delta > 0 && row.attribute_changed
+                          ? `+${row.primary_delta} ${humanize(row.attribute_changed)}`
+                          : null,
+                        row.secondary_delta > 0 && row.secondary_attribute_changed
+                          ? `+${row.secondary_delta} ${humanize(row.secondary_attribute_changed)}`
+                          : null,
+                      ].filter(Boolean).join(' · ')
+                      return (
+                        <tr key={`${row.week_start}-${row.youth_rider_id}-${index}`}>
+                          <td className="py-3 pr-3">{row.week_start}</td>
+                          <td className="py-3 pr-3 font-medium">{row.rider_name}</td>
+                          <td className="py-3 pr-3">{humanize(row.development_focus)}</td>
+                          <td className="py-3 pr-3">{humanize(row.workload)}</td>
+                          <td className="py-3 pr-3">{changes || '—'}</td>
+                          <td className="py-3">
+                            {row.readiness_before}% → {row.readiness_after}% · {row.fatigue_before}% → {row.fatigue_after}%
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </div>
       ) : null}
 
       {['budget', 'scouting', 'settings'].includes(tab) ? (
