@@ -139,8 +139,8 @@
       "description": "Affiche les fenêtres de sélection, convocations, changements d’effectif et périodes de mission nationale."
     },
     "nationalChampionships": {
-      "label": "Championnats nationaux & classement",
-      "description": "Affiche les notifications de participation, qualification, confirmation de finale et résultats des championnats nationaux."
+      "label": "Championnats & classement",
+      "description": "Affiche les notifications de participation, qualification, confirmation de finale et résultats des championnats nationaux et du Championnat du monde sur route."
     },
     "worldNations": {
       "label": "World Nations & compétitions internationales",
