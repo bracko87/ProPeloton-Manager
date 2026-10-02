@@ -886,7 +886,8 @@
     "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Einladung zur Weltmeisterschaft",
     "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Bestätigung zur Weltmeisterschaft",
     "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Ergebnis der Weltmeisterschaft",
-    "WORLD_ROAD_CHAMPION": "Straßen-Weltmeister"
+    "WORLD_ROAD_CHAMPION": "Straßen-Weltmeister",
+    "NATIONAL_TEAM_NEW_SELECTION_WINDOW": "Neues Auswahlfenster für die Nationalmannschaft"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Rennplan erfordert Aufmerksamkeit: {{entity}}",
@@ -1307,6 +1308,11 @@
       "title": "Nationalmannschaftsdienst für {{rider}} beendet",
       "message": "{{rider}} hat den Nationalmannschaftsdienst bei {{association}} beendet und steht dem Club wieder zur Verfügung.",
       "extra": "Nach Ende des Nationalmannschaftsdienstes gelten weiterhin die normalen Regeln für Gesundheit, Ermüdung und Rennverfügbarkeit."
+    },
+    "newSelectionWindow": {
+      "title": "Kaderauswahl für {{roundLabel}} ist geöffnet",
+      "message": "Deine Nation hat {{roundLabel}} erreicht. Wähle einen neuen 10-Fahrer-Kader für {{group}}. Du kannst die bisherigen Fahrer behalten oder andere berechtigte Fahrer auswählen.",
+      "extra": "Frist für den endgültigen Kader: {{finalSquadDeadline}}. Öffne den Kader der Nationalen Vereinigung, um das neue Wettbewerbsfenster vorzubereiten."
     }
   }
 }
