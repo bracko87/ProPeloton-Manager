@@ -1389,5 +1389,16 @@
       "message": "El seleccionador nacional ha dimitido. Se iniciará una elección de sustitución.",
       "extra": "La Asociación seguirá activa mientras se completa la elección de sustitución."
     }
+  },
+  "youthRaceReport": {
+    "raceFallback": "Carrera juvenil",
+    "title": "Informe de la Academia — {{raceName}}",
+    "message": "{{raceName}}: mejor puesto {{bestFinish}}, +{{regionalPoints}} puntos regionales, +{{worldPoints}} puntos mundiales. DNF {{dnf}}, DNS {{dns}}. Informe: {{reportClass}}.",
+    "classes": {
+      "routine": "rutina",
+      "important": "importante",
+      "exceptional": "excepcional",
+      "problem": "problema"
+    }
   }
 }
