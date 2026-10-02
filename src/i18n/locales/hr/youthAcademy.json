@@ -255,7 +255,9 @@
     "financeLoad": "Nije moguće učitati financije Akademije mladih.",
     "equipmentLoad": "Nije moguće učitati opremu Akademije mladih.",
     "equipmentPurchase": "Nije moguće kupiti opremu za Akademiju mladih.",
-    "equipmentDirector": "Direktor Akademije mladih nije uspio dovršiti opremanje."
+    "equipmentDirector": "Direktor Akademije mladih nije uspio dovršiti opremanje.",
+    "graduationLoad": "Nije moguće učitati odluke o izlasku mladih vozača.",
+    "graduationDecision": "Nije moguće dovršiti odluku o izlasku mladog vozača."
   },
   "equipment": {
     "title": "Oprema za mlade",
@@ -279,5 +281,26 @@
     "purchase": "Kupi za akademiju",
     "purchasing": "Kupnja…",
     "durability": "Izdržljivost"
+  },
+  "training": {
+    "title": "Filozofija razvoja mladih",
+    "description": "Postavite opći prioritet treninga akademije. U16 glavni trener pretvara ga u individualno opterećenje i razvojne fokuse uz kontrolu spremnosti i umora.",
+    "philosophy": "Filozofija treninga akademije",
+    "options": {
+      "freshness": "Svježina na prvom mjestu",
+      "balanced": "Uravnotežen razvoj",
+      "development": "Razvoj na prvom mjestu"
+    }
+  },
+  "graduation": {
+    "title": "Odluke o izlasku sa 16 godina",
+    "pendingCount": "{{count}} na čekanju",
+    "none": "Trenutno nema mladih vozača koji zahtijevaju odluku.",
+    "decisionHelp": "Sa 16 godina odaberite sljedeći razvojni put. Izravan prelazak u prvu momčad nije uobičajen put.",
+    "pathway": "30-dnevni Youth Graduate put",
+    "pathwayUntil": "Put do {{date}}",
+    "pathwayHelp": "Privremeni put daje 30 dana igre za prelazak u razvojnu momčad. Ako se to ne dogodi, vozač postaje profesionalni slobodni agent.",
+    "toDeveloping": "U razvojnu momčad ({{slots}} slobodno)",
+    "release": "Otpusti kao profesionalnog slobodnog agenta"
   }
 }
