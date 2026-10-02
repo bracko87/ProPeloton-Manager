@@ -670,7 +670,10 @@
     "SELECTED": "Selected",
     "SQUAD": "Squad",
     "VOTING": "Voting",
-    "WORLD": "World"
+    "WORLD": "World",
+    "POSITION": "Position",
+    "RESIGNED": "Resigned",
+    "VACANT": "Vacant"
   },
   "reportVariants": {
     "rider_skill_change": "Rider skill change",
