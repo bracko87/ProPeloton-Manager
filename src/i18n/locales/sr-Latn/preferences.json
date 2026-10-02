@@ -139,8 +139,8 @@
       "description": "Prikazuje obaveštenja o izboru sastava, pozivima, promenama sastava i reprezentativnoj dužnosti."
     },
     "nationalChampionships": {
-      "label": "Nacionalna prvenstva i rang-lista",
-      "description": "Prikazuje obaveštenja o učešću, kvalifikacijama, potvrdi finala i rezultatima nacionalnih prvenstava."
+      "label": "Prvenstva i rang-lista",
+      "description": "Prikazuje obaveštenja o učešću, kvalifikacijama, potvrdi finala i rezultatima nacionalnih prvenstava i Svetskog drumskog prvenstva."
     },
     "worldNations": {
       "label": "World Nations i međunarodna takmičenja",
