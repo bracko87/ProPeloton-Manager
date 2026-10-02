@@ -54,6 +54,12 @@ const navItems: NavItem[] = [
     icon: Users,
   },
   {
+    to: '/dashboard/training',
+    labelKey: 'training',
+    descriptionKey: 'descriptions.training',
+    icon: List,
+  },
+  {
     to: '/dashboard/calendar',
     labelKey: 'calendar',
     descriptionKey: 'descriptions.calendar',
@@ -71,25 +77,6 @@ const navItems: NavItem[] = [
     labelKey: 'teamRanking',
     descriptionKey: 'descriptions.teamRanking',
     icon: BarChart2,
-  },
-  {
-    to: '/dashboard/national-ranking',
-    labelKey: 'nationalRanking',
-    descriptionKey: 'descriptions.nationalRanking',
-    icon: Trophy,
-  },
-  {
-    to: '/dashboard/national-association',
-    aliases: ['/dashboard/world-nations', '/dashboard/nations-competition'],
-    labelKey: 'nationalAssociation',
-    descriptionKey: 'descriptions.nationalAssociation',
-    icon: Users,
-  },
-  {
-    to: '/dashboard/training',
-    labelKey: 'training',
-    descriptionKey: 'descriptions.training',
-    icon: List,
   },
   {
     to: '/dashboard/equipment',
@@ -114,6 +101,19 @@ const navItems: NavItem[] = [
     labelKey: 'transfers',
     descriptionKey: 'descriptions.transfers',
     icon: ShoppingCart,
+  },
+  {
+    to: '/dashboard/national-ranking',
+    labelKey: 'nationalRanking',
+    descriptionKey: 'descriptions.nationalRanking',
+    icon: Trophy,
+  },
+  {
+    to: '/dashboard/national-association',
+    aliases: ['/dashboard/world-nations', '/dashboard/nations-competition'],
+    labelKey: 'nationalAssociation',
+    descriptionKey: 'descriptions.nationalAssociation',
+    icon: Users,
   },
   {
     to: '/dashboard/statistics',
