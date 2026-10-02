@@ -41,7 +41,8 @@
     "transfers": "Покупка, продажа и переговоры",
     "statistics": "Эффективность и анализ",
     "premiumCenter": "Расширенное планирование, симуляции и автоматизация",
-    "nationalAssociation": "Управление сборной и World Nations"
+    "nationalAssociation": "Управление сборной и World Nations",
+    "youthAcademy": "Премиальная программа развития U16"
   },
   "header": {
     "toggleSidebar": "Боковой блок@ info: whatsthis",
@@ -157,5 +158,6 @@
     "unlock": "Отключиться Premium"
   },
   "premiumCenter": "Premium-центр",
-  "nationalAssociation": "Национальная ассоциация"
+  "nationalAssociation": "Национальная ассоциация",
+  "youthAcademy": "Молодёжная академия"
 }
