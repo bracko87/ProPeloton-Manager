@@ -73,11 +73,12 @@
     "a5": "Manager Briefing, intelligenza avanzata del calendario, previsioni finanziarie e strumenti di comodità.",
     "a6": "Analisi avanzate delle prestazioni dei corridori, trend di sviluppo e replay illimitati delle gare mondiali.",
     "a7": "Premium migliora informazioni, automazione e comodità — mai la forza nel motore di gara, l'accettazione dei trasferimenti o le abilità nascoste.",
-    "a8": "Accesso esclusivo alla Squadra di Sviluppo, incluso l'Allenatore Capo U23: 100 Coins per attivare e 100 Coins per stagione per rinnovare."
+    "a8": "Accesso esclusivo alla Squadra di Sviluppo, incluso l'Allenatore Capo U23: 100 Coins per attivare e 100 Coins per stagione per rinnovare.",
+    "a9": "Accademia Giovanile Premium facoltativa: attiva un programma U16 separato con 16 posti, sei giovani locali iniziali, staff dedicato, scouting basato sul budget e un percorso verso la Squadra di Sviluppo."
   },
   "comparison": {
     "title": "Free vs Premium",
-    "description": "Premium aggiunge strumenti avanzati e accesso esclusivo alla Squadra di Sviluppo e all'Allenatore Capo U23.",
+    "description": "Premium aggiunge strumenti avanzati e accesso esclusivo alla Squadra di Sviluppo, all'allenatore U23 e all'Accademia Giovanile facoltativa.",
     "benefit": "Prestazioni",
     "free": "Libero",
     "premium": "Premium",
@@ -91,8 +92,9 @@
     "r8": "Usare le caratteristiche opzionali della Coins",
     "developing": "Servizio di sviluppo del team",
     "activationRenewal": "Attivazione {{activation}} / Rinnovo {{renewal}}",
-    "note": "Squadra di Sviluppo e Allenatore Capo U23 richiedono Premium attivo. Attivazione e rinnovo stagionale continuano a usare Coins.",
-    "premiumOnly": "Solo Premium"
+    "note": "Squadra di Sviluppo, allenatore U23 e Accademia Giovanile richiedono un abbonamento Premium attivo. L'attivazione dell'Accademia è facoltativa e i costi di sviluppo sono finanziati con il normale denaro del club.",
+    "premiumOnly": "Solo Premium",
+    "r9": "Accademia Giovanile / sviluppo U16"
   },
   "packages": {
     "title": "Hai bisogno di Coins aggiuntive?",
