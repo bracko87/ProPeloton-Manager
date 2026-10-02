@@ -816,8 +816,8 @@ begin
 
   v_new:=replace(
     v_def,
-    E"      'developing_team',v_developing,\n      'rewards_preflight',v_rewards_preflight,",
-    E"      'developing_team',v_developing,\n      'youth_academy',v_youth_academy,\n      'rewards_preflight',v_rewards_preflight,"
+    E'      ''developing_team'',v_developing,\n      ''rewards_preflight'',v_rewards_preflight,',
+    E'      ''developing_team'',v_developing,\n      ''youth_academy'',v_youth_academy,\n      ''rewards_preflight'',v_rewards_preflight,'
   );
   if v_new=v_def then raise exception 'Youth transition report patch point not found'; end if;
 
