@@ -255,7 +255,9 @@
     "financeLoad": "Impossibile caricare le finanze dell'Accademia Giovanile.",
     "equipmentLoad": "Impossibile caricare l'attrezzatura dell'Accademia Giovanile.",
     "equipmentPurchase": "Impossibile acquistare l'attrezzatura dell'Accademia Giovanile.",
-    "equipmentDirector": "Impossibile completare l'operazione attrezzatura del Direttore dell'Accademia Giovanile."
+    "equipmentDirector": "Impossibile completare l'operazione attrezzatura del Direttore dell'Accademia Giovanile.",
+    "graduationLoad": "Impossibile caricare le decisioni di uscita giovanile.",
+    "graduationDecision": "Impossibile completare la decisione di uscita giovanile."
   },
   "equipment": {
     "title": "Attrezzatura giovanile",
@@ -279,5 +281,26 @@
     "purchase": "Compra per l'Accademia",
     "purchasing": "Acquisto…",
     "durability": "Durata"
+  },
+  "training": {
+    "title": "Filosofia di sviluppo giovanile",
+    "description": "Imposta la priorità generale di allenamento dell'Accademia. L'allenatore U16 la traduce in carichi e focus individuali proteggendo forma e fatica.",
+    "philosophy": "Filosofia di allenamento dell'Accademia",
+    "options": {
+      "freshness": "Priorità alla freschezza",
+      "balanced": "Sviluppo equilibrato",
+      "development": "Priorità allo sviluppo"
+    }
+  },
+  "graduation": {
+    "title": "Decisioni di uscita a 16 anni",
+    "pendingCount": "{{count}} in attesa",
+    "none": "Nessun giovane corridore richiede attualmente una decisione.",
+    "decisionHelp": "A 16 anni scegli il passo successivo. Il passaggio diretto alla Prima Squadra non è il percorso normale.",
+    "pathway": "Percorso Youth Graduate di 30 giorni",
+    "pathwayUntil": "Percorso fino al {{date}}",
+    "pathwayHelp": "Questo percorso temporaneo concede 30 giorni di gioco per spostare il corridore nella Squadra di Sviluppo. In caso contrario diventa un professionista svincolato.",
+    "toDeveloping": "Alla Squadra di Sviluppo ({{slots}} liberi)",
+    "release": "Rilascia come professionista svincolato"
   }
 }
