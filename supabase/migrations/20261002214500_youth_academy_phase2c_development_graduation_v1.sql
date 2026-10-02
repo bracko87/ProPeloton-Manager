@@ -596,6 +596,50 @@ from public,anon,authenticated;
 grant execute on function public.process_youth_academy_game_day_v1(date)
 to service_role;
 
+create or replace function public.update_my_youth_training_philosophy_v1(
+  p_training_philosophy text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path=public,private,auth,pg_temp
+as $function$
+declare
+  v_user uuid:=auth.uid();
+  v_academy_id uuid;
+begin
+  if v_user is null then raise exception 'Not authenticated'; end if;
+  if not public.user_has_premium_access_v1(v_user) then
+    raise exception 'Premium membership is required to manage Youth Academy.';
+  end if;
+  if p_training_philosophy not in ('freshness','balanced','development') then
+    raise exception 'Invalid Youth Academy training philosophy';
+  end if;
+
+  select a.id into v_academy_id
+  from public.youth_academies a
+  join public.clubs c on c.id=a.club_id
+  where c.owner_user_id=v_user
+    and c.deleted_at is null
+    and a.is_active=true
+  limit 1;
+
+  if v_academy_id is null then raise exception 'Youth Academy is not activated'; end if;
+
+  update public.youth_academy_settings
+  set training_philosophy=p_training_philosophy,
+      updated_at=now()
+  where academy_id=v_academy_id;
+
+  return public.get_my_youth_academy_v1();
+end;
+$function$;
+
+revoke all on function public.update_my_youth_training_philosophy_v1(text)
+from public,anon;
+grant execute on function public.update_my_youth_training_philosophy_v1(text)
+to authenticated;
+
 create or replace function public.get_my_youth_graduations_v1()
 returns jsonb
 language plpgsql
