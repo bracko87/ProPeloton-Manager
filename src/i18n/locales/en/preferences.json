@@ -139,8 +139,8 @@
       "description": "Show National Team selection windows, call-ups, squad changes and National Duty notifications."
     },
     "nationalChampionships": {
-      "label": "National Championships & ranking",
-      "description": "Show National Championship participation, qualification, final confirmation and result notifications."
+      "label": "Championships & ranking",
+      "description": "Show National Championship and World Road Championship participation, qualification, final confirmation and result notifications."
     },
     "worldNations": {
       "label": "World Nations & international competitions",
