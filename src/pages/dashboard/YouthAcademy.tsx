@@ -195,6 +195,22 @@ type YouthEquipmentPayload = {
   inventory?: YouthEquipmentInventoryItem[]
 }
 
+type YouthGraduation = {
+  id: string
+  youth_rider_id: string
+  rider_name: string
+  country_code: string
+  role: string
+  assessment_band: string
+  became_eligible_on: string
+  decision: 'pending' | 'pathway' | 'developing_team' | 'release'
+  pathway_expires_on?: string | null
+  completed_on?: string | null
+  professional_rider_id?: string | null
+  has_developing_team: boolean
+  developing_team_free_slots: number
+}
+
 type AcademyPayload = {
   premium: boolean
   activated: boolean
@@ -233,6 +249,7 @@ type AcademyPayload = {
     auto_recruit_max_stipend_weekly: number
     auto_recruit_max_compensation: number
     auto_recruit_min_free_slots: number
+    training_philosophy?: 'freshness' | 'balanced' | 'development'
   }
   riders?: AcademyRider[]
   staff?: AcademyStaff[]
@@ -323,6 +340,8 @@ export default function YouthAcademyPage(): JSX.Element {
   const [equipmentData, setEquipmentData] = useState<YouthEquipmentPayload | null>(null)
   const [phase2Loading, setPhase2Loading] = useState(false)
   const [equipmentAction, setEquipmentAction] = useState<string | null>(null)
+  const [graduations, setGraduations] = useState<YouthGraduation[]>([])
+  const [graduationAction, setGraduationAction] = useState<string | null>(null)
 
   const applyScoutingPayload = (payload: ScoutingPayload): void => {
     setScoutingData(payload)
@@ -534,6 +553,45 @@ export default function YouthAcademyPage(): JSX.Element {
     }
   }
 
+  const loadGraduations = async (): Promise<void> => {
+    try {
+      const { data: payload, error: graduationError } = await supabase.rpc(
+        'get_my_youth_graduations_v1'
+      )
+      if (graduationError) throw graduationError
+      setGraduations((payload ?? []) as YouthGraduation[])
+    } catch (graduationError: any) {
+      console.error('Youth Academy graduation load failed:', graduationError)
+      setError(graduationError?.message ?? t('errors.graduationLoad'))
+    }
+  }
+
+  const decideGraduation = async (
+    graduation: YouthGraduation,
+    decision: 'pathway' | 'developing_team' | 'release'
+  ): Promise<void> => {
+    if (data?.read_only || graduationAction) return
+    setGraduationAction(graduation.id)
+    setError(null)
+    try {
+      const { data: payload, error: graduationError } = await supabase.rpc(
+        'decide_my_youth_graduation_v1',
+        {
+          p_youth_rider_id: graduation.youth_rider_id,
+          p_decision: decision,
+        }
+      )
+      if (graduationError) throw graduationError
+      setGraduations((payload ?? []) as YouthGraduation[])
+      await load()
+    } catch (graduationError: any) {
+      console.error('Youth Academy graduation decision failed:', graduationError)
+      setError(graduationError?.message ?? t('errors.graduationDecision'))
+    } finally {
+      setGraduationAction(null)
+    }
+  }
+
   const load = async (): Promise<void> => {
     setLoading(true)
     setError(null)
@@ -566,6 +624,9 @@ export default function YouthAcademyPage(): JSX.Element {
     }
     if (tab === 'budget' && data?.activated) {
       void loadFinance()
+    }
+    if (tab === 'riders' && data?.activated) {
+      void loadGraduations()
     }
     if (tab === 'equipment' && data?.activated) {
       void loadEquipment()
@@ -629,6 +690,16 @@ export default function YouthAcademyPage(): JSX.Element {
         }
       )
       if (saveError) throw saveError
+
+      const { error: philosophyError } = await supabase.rpc(
+        'update_my_youth_training_philosophy_v1',
+        {
+          p_training_philosophy:
+            draftSettings.training_philosophy ?? 'balanced',
+        }
+      )
+      if (philosophyError) throw philosophyError
+
       const next = payload as AcademyPayload
       setData(next)
       setDraftBudget(Number(next.budget?.season_budget ?? draftBudget))
@@ -940,6 +1011,97 @@ export default function YouthAcademyPage(): JSX.Element {
             </table>
           </div>
           <p className="mt-3 text-xs text-slate-500">{t('riders.potentialNote')}</p>
+        </Card>
+
+        <Card
+          title={t('graduation.title')}
+          right={
+            <span className="text-xs text-slate-500">
+              {t('graduation.pendingCount', {
+                count: graduations.filter(item => !item.completed_on).length,
+              })}
+            </span>
+          }
+        >
+          {graduations.filter(item => !item.completed_on).length === 0 ? (
+            <div className="text-sm text-slate-500">{t('graduation.none')}</div>
+          ) : (
+            <div className="space-y-3">
+              {graduations
+                .filter(item => !item.completed_on)
+                .map(item => {
+                  const flag = flagUrl(item.country_code)
+                  const busy = graduationAction === item.id
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            {flag ? (
+                              <img src={flag} alt="" className="h-4 w-6 object-cover" />
+                            ) : null}
+                            <div className="font-semibold text-slate-900">
+                              {item.rider_name}
+                            </div>
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            {humanize(item.role)} · {item.assessment_band}
+                          </div>
+                        </div>
+                        {item.decision === 'pathway' && item.pathway_expires_on ? (
+                          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                            {t('graduation.pathwayUntil', {
+                              date: item.pathway_expires_on,
+                            })}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-slate-600">
+                        {item.decision === 'pathway'
+                          ? t('graduation.pathwayHelp')
+                          : t('graduation.decisionHelp')}
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={data.read_only || busy}
+                          onClick={() => void decideGraduation(item, 'pathway')}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium disabled:opacity-50"
+                        >
+                          {t('graduation.pathway')}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={
+                            data.read_only ||
+                            busy ||
+                            !item.has_developing_team ||
+                            item.developing_team_free_slots <= 0
+                          }
+                          onClick={() => void decideGraduation(item, 'developing_team')}
+                          className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        >
+                          {t('graduation.toDeveloping', {
+                            slots: item.developing_team_free_slots,
+                          })}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={data.read_only || busy}
+                          onClick={() => void decideGraduation(item, 'release')}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium disabled:opacity-50"
+                        >
+                          {t('graduation.release')}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          )}
         </Card>
       ) : null}
 
@@ -1626,6 +1788,42 @@ export default function YouthAcademyPage(): JSX.Element {
                 </select>
               </label>
             ))}
+          </div>
+
+          <div className="mb-6 border-b border-slate-200 pb-5">
+            <h4 className="text-sm font-semibold text-slate-900">
+              {t('training.title')}
+            </h4>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {t('training.description')}
+            </p>
+            <label className="mt-4 block max-w-sm text-sm">
+              <span className="font-medium text-slate-800">
+                {t('training.philosophy')}
+              </span>
+              <select
+                disabled={data.read_only}
+                value={draftSettings.training_philosophy ?? 'balanced'}
+                onChange={event =>
+                  setDraftSettings(current =>
+                    current
+                      ? {
+                          ...current,
+                          training_philosophy: event.target.value as
+                            | 'freshness'
+                            | 'balanced'
+                            | 'development',
+                        }
+                      : current
+                  )
+                }
+                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2"
+              >
+                <option value="freshness">{t('training.options.freshness')}</option>
+                <option value="balanced">{t('training.options.balanced')}</option>
+                <option value="development">{t('training.options.development')}</option>
+              </select>
+            </label>
           </div>
 
           {draftSettings.recruitment_decider === 'academy_director' ? (
