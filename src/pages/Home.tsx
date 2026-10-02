@@ -476,6 +476,23 @@ export default function HomePage(): JSX.Element {
       }
 
       if (!data) {
+        const { data: canCreateClub, error: exceptionError } = await supabase.rpc(
+          'is_current_user_club_creation_exception_v1',
+        )
+
+        if (!isMounted) return
+
+        if (exceptionError) {
+          setClubError(t('status.clubStatusError'))
+          setCheckingClub(false)
+          return
+        }
+
+        if (canCreateClub === true) {
+          navigate('/create-club', { replace: true })
+          return
+        }
+
         setClubError(t('status.clubCreationDisabled'))
         setCheckingClub(false)
       } else {
