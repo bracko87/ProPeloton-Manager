@@ -1,6 +1,45 @@
 -- Assign the consolidated National-system notification family, plus its
 -- historical aliases, to dedicated Core preference groups.
 
+insert into public.notification_preference_groups(
+  code,label,description,sort_order,is_active
+)
+values
+  (
+    'nationalAssociation',
+    'National Association & elections',
+    'Show National Association activation, candidature, voting and National Coach status notifications.',
+    23,
+    true
+  ),
+  (
+    'nationalTeam',
+    'National Team & call-ups',
+    'Show National Team selection windows, call-ups, squad changes and National Duty notifications.',
+    24,
+    true
+  ),
+  (
+    'nationalChampionships',
+    'Championships & ranking',
+    'Show National Championship and World Road Championship participation, qualification, final confirmation and result notifications.',
+    25,
+    true
+  ),
+  (
+    'worldNations',
+    'World Nations & international competitions',
+    'Show World Nations draws, race updates and finals.',
+    26,
+    true
+  )
+on conflict(code) do update
+set
+  label=excluded.label,
+  description=excluded.description,
+  sort_order=excluded.sort_order,
+  is_active=true;
+
 update public.notification_types
 set preference_group='nationalAssociation'
 where code in (
