@@ -139,8 +139,8 @@
       "description": "Muestra ventanas de selección, convocatorias, cambios de plantilla y servicio con la Selección Nacional."
     },
     "nationalChampionships": {
-      "label": "Campeonatos Nacionales y ranking",
-      "description": "Muestra notificaciones de participación, clasificación, confirmación de la final y resultados de los Campeonatos Nacionales."
+      "label": "Campeonatos y ranking",
+      "description": "Muestra notificaciones de participación, clasificación, confirmación de final y resultados de los Campeonatos Nacionales y del Campeonato Mundial en Ruta."
     },
     "worldNations": {
       "label": "World Nations y competiciones internacionales",
