@@ -1392,5 +1392,16 @@
       "message": "Nacionalni selektor je podneo ostavku. Biće pokrenuti izbori za novog selektora.",
       "extra": "Savez ostaje aktivan dok se ne završe novi izbori."
     }
+  },
+  "youthRaceReport": {
+    "raceFallback": "U16 trka",
+    "title": "Izveštaj Akademije — {{raceName}}",
+    "message": "{{raceName}}: najbolji rezultat {{bestFinish}}, +{{regionalPoints}} regionalnih bodova, +{{worldPoints}} svetskih bodova. DNF {{dnf}}, DNS {{dns}}. Izveštaj: {{reportClass}}.",
+    "classes": {
+      "routine": "rutinski",
+      "important": "važan",
+      "exceptional": "izuzetan",
+      "problem": "problem"
+    }
   }
 }
