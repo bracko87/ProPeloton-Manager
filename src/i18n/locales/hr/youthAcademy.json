@@ -240,8 +240,6 @@
     }
   },
   "placeholders": {
-    "calendar": "Odvojeni U16 kalendar i pojednostavljeni motor utrke bit će povezani u sljedećoj fazi. Troškovi omladinskih utrka uglavnom će pokrivati putovanje i logistiku.",
-    "rankings": "Regionalni omladinski poredak i Youth World Ranking bit će povezani s U16 kalendarom.",
     "history": "Povijest akademije, rezultati i razvoj ostaju trajno povezani s vozačem nakon završetka akademije."
   },
   "errors": {
@@ -257,7 +255,11 @@
     "equipmentPurchase": "Nije moguće kupiti opremu za Akademiju mladih.",
     "equipmentDirector": "Direktor Akademije mladih nije uspio dovršiti opremanje.",
     "graduationLoad": "Nije moguće učitati odluke o izlasku mladih vozača.",
-    "graduationDecision": "Nije moguće dovršiti odluku o izlasku mladog vozača."
+    "graduationDecision": "Nije moguće dovršiti odluku o izlasku mladog vozača.",
+    "calendarLoad": "Nije moguće učitati kalendar mladih.",
+    "rankingsLoad": "Nije moguće učitati rang-liste mladih.",
+    "raceEntry": "Nije moguće prijaviti utrku mladih.",
+    "raceLineup": "Nije moguće spremiti postavu za utrku mladih."
   },
   "equipment": {
     "title": "Oprema za mlade",
@@ -302,5 +304,54 @@
     "pathwayHelp": "Privremeni put daje 30 dana igre za prelazak u razvojnu momčad. Ako se to ne dogodi, vozač postaje profesionalni slobodni agent.",
     "toDeveloping": "U razvojnu momčad ({{slots}} slobodno)",
     "release": "Otpusti kao profesionalnog slobodnog agenta"
+  },
+  "calendar": {
+    "title": "U16 kalendar utrka",
+    "format": "Format utrke",
+    "resultsOnly": "Samo rezultati — bez replaya",
+    "entryResponsibility": "Sudjelovanje",
+    "squadResponsibility": "Postava i strategija",
+    "ageLimitHelp": "Vozači imaju dobna ograničenja nastupa u razdoblju od 30 dana igre. U16 trener gleda profil, spremnost i umor pa akademija obično bira samo dio od 12 regionalnih utrka mjesečno.",
+    "races": "Utrke mladih",
+    "loading": "Učitavanje utrka…",
+    "levels": {
+      "regional": "Regionalni Youth Cup",
+      "world_series": "Youth World Series",
+      "world_final": "Youth World Final"
+    },
+    "qualified": "Kvalificiran",
+    "notQualified": "Nije kvalificiran",
+    "qualificationHelp": "World Series se kvalificira preko Regional Youth Rankinga. Youth World Final koristi Youth World Ranking.",
+    "strategy": "Strategija",
+    "strategies": {
+      "conservative": "Konzervativna",
+      "balanced": "Uravnotežena",
+      "aggressive": "Agresivna"
+    },
+    "enterRace": "Prijavi utrku",
+    "entering": "Prijava…",
+    "coachEntryHelp": "Sudjelovanje je delegirano. U16 trener provjerava utrku sedam dana igre unaprijed i prijavljuje samo ako odgovara postavi, umoru i razvoju.",
+    "entered": "Akademija prijavljena",
+    "enteredBy": "Prijavio {{who}}",
+    "selectLineup": "Odaberi postavu — {{count}} / {{max}}",
+    "saveLineup": "Spremi postavu i strategiju",
+    "savingLineup": "Spremanje…",
+    "coachLineupHelp": "U16 trener je odabrao {{count}} vozača i vodi strategiju.",
+    "myResults": "Rezultati moje akademije",
+    "topResults": "Najbolji rezultati",
+    "didNotRace": "Tvoja akademija nije nastupila."
+  },
+  "rankings": {
+    "title": "Youth rang-liste",
+    "description": "Akademija se natječe u regionalnoj rang-listi {{region}}. Regionalni rezultati daju i manji broj bodova za svjetsku rang-listu; World Series i World Final nose više svjetskih bodova.",
+    "regionalTitle": "Regional Youth Ranking",
+    "worldTitle": "Youth World Ranking",
+    "loading": "Učitavanje rang-lista…",
+    "noPoints": "Još nema osvojenih bodova.",
+    "rank": "Rang",
+    "rider": "Vozač",
+    "academy": "Akademija",
+    "starts": "Završene utrke",
+    "points": "Bodovi"
   }
 }
