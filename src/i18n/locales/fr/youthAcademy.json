@@ -102,6 +102,91 @@
       "regional": "Régional",
       "continental": "Continental",
       "world": "Mondial"
+    },
+    "scoutReport": "Rapport du scout jeunes",
+    "loading": "Chargement des rapports de scouting…",
+    "scoutScore": "Efficacité du scouting : {{score}} / 100",
+    "monthlyReports": "Rapports / mois",
+    "qualityExplainer": "Le budget détermine où le scout peut chercher. Sa qualité détermine le nombre de coureurs signalés, la précision des évaluations et sa capacité à repérer les meilleurs prospects.",
+    "noScout": "Recrutez un scout jeunes pour commencer la détection mensuelle. L'Académie peut fonctionner sans lui, mais aucun nouveau rapport ne sera généré.",
+    "monthlyCycle": "Cycle mensuel de scouting",
+    "currentRange": "Portée actuelle",
+    "programBudget": "Budget scouting de la saison",
+    "cycleCompleted": "{{count}} rapport(s) livré(s) ce mois de jeu. Le prochain cycle ouvrira le mois suivant.",
+    "cycleReady": "Le cycle de scouting de ce mois est prêt.",
+    "run": "Lancer le scouting mensuel",
+    "running": "Scouting…",
+    "alreadyRun": "Mois terminé",
+    "delegation": "Responsabilité du recrutement",
+    "directorMode": "Directeur de l'Académie Jeunes",
+    "managerMode": "Manager",
+    "directorModeHelp": "Le Directeur présélectionne les prospects respectant vos limites. Si les négociations sont aussi déléguées, il peut envoyer automatiquement des offres dans ces limites.",
+    "managerModeHelp": "Vous examinez chaque rapport et choisissez les prospects qui reçoivent une offre.",
+    "autoRuleSummary": "Recrutement auto à partir de {{band}} · max {{stipend}}/semaine · compensation max {{compensation}} · conserver {{slots}} place(s) libre(s).",
+    "prospects": "Rapports & recrutement",
+    "reportCount": "{{count}} rapport(s) actif(s)",
+    "noReports": "Aucun rapport actif pour le moment",
+    "noReportsHelp": "Lancez le cycle mensuel après avoir recruté un scout jeunes. Les rapports expirent après 60 jours de jeu.",
+    "fromAcademy": "À {{academy}}",
+    "otherAcademy": "une autre Académie Jeunes",
+    "unattachedProspect": "Jeune prospect sans académie",
+    "confidence": "Confiance : {{value}} %",
+    "strengths": "Points forts observés",
+    "relocation": "Relocalisation",
+    "expectedSupport": "Soutien attendu",
+    "developmentCompensation": "Indemnité de formation",
+    "none": "Aucune",
+    "offerPackage": "Offre",
+    "weeklyStipend": "Allocation hebdomadaire",
+    "accommodation": "Hébergement / semaine",
+    "compensationOffer": "Indemnité à l'académie",
+    "offerHelp": "Le coureur et sa famille évaluent le lieu, l'hébergement, la qualité du staff et le soutien proposé. Une académie IA peut aussi accepter ou refuser l'indemnité de formation.",
+    "submittingOffer": "Envoi…",
+    "improveOffer": "Envoyer une meilleure offre",
+    "submitOffer": "Envoyer l'offre",
+    "signedToAcademy": "A rejoint votre Académie Jeunes.",
+    "relocationValues": {
+      "easy": "Facile",
+      "moderate": "Modérée",
+      "hard": "Difficile",
+      "very_hard": "Très difficile"
+    },
+    "offerStatuses": {
+      "submitted": "Offre envoyée",
+      "academy_rejected": "L'académie actuelle a refusé",
+      "rider_rejected": "Le coureur/la famille a refusé",
+      "accepted": "Offre acceptée"
+    },
+    "offerStatusHelp": {
+      "submitted": "L'offre est en cours d'évaluation.",
+      "academy_rejected": "Augmentez l'indemnité de formation pour réessayer.",
+      "rider_rejected": "Vous pouvez améliorer l'allocation ou l'hébergement et réessayer.",
+      "accepted": "Le coureur a rejoint votre Académie Jeunes."
+    },
+    "assessmentBands": {
+      "limited": "Limité",
+      "promising": "Prometteur",
+      "very_promising": "Très prometteur",
+      "exceptional": "Exceptionnel"
+    },
+    "roles": {
+      "all_rounder": "Polyvalent",
+      "sprinter": "Sprinteur",
+      "climber": "Grimpeur",
+      "time_trial": "Rouleur",
+      "domestique": "Équipier",
+      "breakaway": "Baroudeur"
+    },
+    "skillNames": {
+      "sprint": "Sprint",
+      "climbing": "Montagne",
+      "time_trial": "Contre-la-montre",
+      "endurance": "Endurance",
+      "flat": "Plat",
+      "recovery": "Récupération",
+      "resistance": "Résistance",
+      "race_iq": "QI de course",
+      "teamwork": "Travail d'équipe"
     }
   },
   "settings": {
@@ -117,6 +202,17 @@
       "manager": "Manager",
       "academy_director": "Directeur de l'Académie Jeunes",
       "u16_head_coach": "Entraîneur principal U16"
+    },
+    "autoRecruitmentTitle": "Garde-fous de recrutement du Directeur",
+    "autoRecruitmentDescription": "Ces limites s'appliquent uniquement lorsque le recrutement est délégué au Directeur. Les offres automatiques exigent aussi que les négociations soient déléguées.",
+    "minimumAssessment": "Évaluation minimale",
+    "maxStipend": "Allocation hebdomadaire maximale",
+    "maxCompensation": "Indemnité de formation maximale",
+    "keepFreeSlots": "Conserver des places libres",
+    "bands": {
+      "promising": "Prometteur",
+      "very_promising": "Très prometteur",
+      "exceptional": "Exceptionnel"
     }
   },
   "placeholders": {
@@ -128,6 +224,9 @@
   "errors": {
     "load": "Impossible de charger l'Académie Jeunes.",
     "activate": "Impossible d'activer l'Académie Jeunes.",
-    "save": "Impossible d'enregistrer les paramètres de l'Académie Jeunes."
+    "save": "Impossible d'enregistrer les paramètres de l'Académie Jeunes.",
+    "scoutingLoad": "Impossible de charger les rapports de scouting jeunes.",
+    "scoutingRun": "Impossible de lancer le cycle mensuel de scouting jeunes.",
+    "recruitmentOffer": "Impossible d'envoyer l'offre de recrutement jeunes."
   }
 }
