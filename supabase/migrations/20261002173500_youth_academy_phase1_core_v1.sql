@@ -866,11 +866,11 @@ begin
 
   v_new:=replace(
     v_def,
-    $$  if v_candidate.role_type = 'u23_head_coach'
+    $old$  if v_candidate.role_type = 'u23_head_coach'
      and not public.current_user_has_premium_v1() then
     raise exception 'Premium membership is required to hire a U23 Head Coach.';
-  end if;$$,
-    $$  if v_candidate.role_type = 'u23_head_coach'
+  end if;$old$,
+    $new$  if v_candidate.role_type = 'u23_head_coach'
      and not public.current_user_has_premium_v1() then
     raise exception 'Premium membership is required to hire a U23 Head Coach.';
   end if;
@@ -886,20 +886,20 @@ begin
     ) then
       raise exception 'Activate Youth Academy before hiring Youth Academy staff.';
     end if;
-  end if;$$
+  end if;$new$
   );
   if v_new=v_def then raise exception 'Youth staff Premium guard patch point not found'; end if;
   v_def:=v_new;
 
   v_new:=replace(
     v_def,
-    $$      when 'u23' then 'u23'
+    $old$      when 'u23' then 'u23'
       else 'all'
-    end;$$,
-    $$      when 'u23' then 'u23'
+    end;$old$,
+    $new$      when 'u23' then 'u23'
       when 'youth' then 'youth'
       else 'all'
-    end;$$
+    end;$new$
   );
   if v_new=v_def then raise exception 'Youth team_scope patch point not found'; end if;
 
