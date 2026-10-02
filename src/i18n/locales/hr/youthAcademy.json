@@ -102,6 +102,91 @@
       "regional": "Regionalno",
       "continental": "Kontinentalno",
       "world": "Svjetski"
+    },
+    "scoutReport": "Izvještaj omladinskog skauta",
+    "loading": "Učitavanje skautskih izvještaja…",
+    "scoutScore": "Učinkovitost skautinga: {{score}} / 100",
+    "monthlyReports": "Izvještaji / mjesec",
+    "qualityExplainer": "Budžet određuje gdje skaut može tražiti. Kvaliteta skauta određuje broj prijavljenih vozača, točnost procjena i uspješnost prepoznavanja boljih talenata.",
+    "noScout": "Zaposli omladinskog skauta za mjesečno otkrivanje talenata. Akademija može raditi bez njega, ali neće dobivati nove skautske izvještaje.",
+    "monthlyCycle": "Mjesečni skautski ciklus",
+    "currentRange": "Trenutačni doseg",
+    "programBudget": "Sezonski budžet za skauting",
+    "cycleCompleted": "{{count}} izvještaj(a) dostavljeno je ovog mjeseca igre. Sljedeći ciklus otvara se idući mjesec.",
+    "cycleReady": "Skautski ciklus za ovaj mjesec je spreman.",
+    "run": "Pokreni mjesečni skauting",
+    "running": "Skautiranje…",
+    "alreadyRun": "Mjesec završen",
+    "delegation": "Odgovornost za regrutiranje",
+    "directorMode": "Direktor Omladinske akademije",
+    "managerMode": "Menadžer",
+    "directorModeHelp": "Direktor stavlja na uži popis talente koji zadovoljavaju postavljena ograničenja. Ako su i pregovori delegirani, može automatski slati ponude unutar tih granica.",
+    "managerModeHelp": "Pregledavaš svaki izvještaj i odlučuješ tko dobiva ponudu.",
+    "autoRuleSummary": "Automatsko regrutiranje od {{band}} · max {{stipend}}/tjedno · max naknada {{compensation}} · sačuvaj {{slots}} slobodna mjesta.",
+    "prospects": "Skautski izvještaji i regrutiranje",
+    "reportCount": "{{count}} aktivnih izvještaja",
+    "noReports": "Još nema aktivnih izvještaja",
+    "noReportsHelp": "Pokreni mjesečni ciklus nakon zapošljavanja omladinskog skauta. Izvještaji istječu nakon 60 dana igre.",
+    "fromAcademy": "U {{academy}}",
+    "otherAcademy": "drugoj Omladinskoj akademiji",
+    "unattachedProspect": "Slobodan omladinski talent",
+    "confidence": "Pouzdanost {{value}}%",
+    "strengths": "Uočene prednosti",
+    "relocation": "Preseljenje",
+    "expectedSupport": "Očekivana podrška",
+    "developmentCompensation": "Razvojna naknada",
+    "none": "Nema",
+    "offerPackage": "Paket ponude",
+    "weeklyStipend": "Tjedna stipendija",
+    "accommodation": "Smještaj / tjedan",
+    "compensationOffer": "Naknada akademiji",
+    "offerHelp": "Vozač i obitelj procjenjuju lokaciju, smještaj, kvalitetu osoblja i paket podrške. AI akademija može prihvatiti ili odbiti razvojnu naknadu.",
+    "submittingOffer": "Slanje…",
+    "improveOffer": "Pošalji poboljšanu ponudu",
+    "submitOffer": "Pošalji ponudu",
+    "signedToAcademy": "Pridružio se tvojoj Omladinskoj akademiji.",
+    "relocationValues": {
+      "easy": "Lako",
+      "moderate": "Umjereno",
+      "hard": "Teško",
+      "very_hard": "Vrlo teško"
+    },
+    "offerStatuses": {
+      "submitted": "Ponuda poslana",
+      "academy_rejected": "Trenutačna akademija odbila je ponudu",
+      "rider_rejected": "Vozač/obitelj odbili su ponudu",
+      "accepted": "Ponuda prihvaćena"
+    },
+    "offerStatusHelp": {
+      "submitted": "Ponuda se procjenjuje.",
+      "academy_rejected": "Povećaj razvojnu naknadu ako želiš pokušati ponovno.",
+      "rider_rejected": "Možeš poboljšati stipendiju ili smještaj i pokušati ponovno.",
+      "accepted": "Vozač se pridružio tvojoj Omladinskoj akademiji."
+    },
+    "assessmentBands": {
+      "limited": "Ograničen",
+      "promising": "Perspektivan",
+      "very_promising": "Vrlo perspektivan",
+      "exceptional": "Izuzetan"
+    },
+    "roles": {
+      "all_rounder": "Svestrani",
+      "sprinter": "Sprinter",
+      "climber": "Brdaš",
+      "time_trial": "Kronometraš",
+      "domestique": "Pomoćnik",
+      "breakaway": "Bjegač"
+    },
+    "skillNames": {
+      "sprint": "Sprint",
+      "climbing": "Uspon",
+      "time_trial": "Kronometar",
+      "endurance": "Izdržljivost",
+      "flat": "Ravnica",
+      "recovery": "Oporavak",
+      "resistance": "Otpornost",
+      "race_iq": "Trkaći IQ",
+      "teamwork": "Timski rad"
     }
   },
   "settings": {
@@ -117,6 +202,17 @@
       "manager": "Menadžer",
       "academy_director": "Direktor Omladinske akademije",
       "u16_head_coach": "U16 glavni trener"
+    },
+    "autoRecruitmentTitle": "Ograničenja regrutiranja za Direktora",
+    "autoRecruitmentDescription": "Ova ograničenja vrijede samo kada je regrutiranje delegirano Direktoru. Automatske ponude zahtijevaju i delegirane pregovore.",
+    "minimumAssessment": "Minimalna procjena",
+    "maxStipend": "Maksimalna tjedna stipendija",
+    "maxCompensation": "Maksimalna razvojna naknada",
+    "keepFreeSlots": "Sačuvaj slobodna mjesta",
+    "bands": {
+      "promising": "Perspektivan",
+      "very_promising": "Vrlo perspektivan",
+      "exceptional": "Izuzetan"
     }
   },
   "placeholders": {
@@ -128,6 +224,9 @@
   "errors": {
     "load": "Nije moguće učitati Omladinsku akademiju.",
     "activate": "Nije moguće aktivirati Omladinsku akademiju.",
-    "save": "Nije moguće spremiti postavke Omladinske akademije."
+    "save": "Nije moguće spremiti postavke Omladinske akademije.",
+    "scoutingLoad": "Nije moguće učitati omladinske skautske izvještaje.",
+    "scoutingRun": "Nije moguće pokrenuti mjesečni omladinski skauting.",
+    "recruitmentOffer": "Nije moguće poslati ponudu za omladinskog vozača."
   }
 }
