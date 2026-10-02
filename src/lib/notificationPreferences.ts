@@ -258,6 +258,10 @@ export const NOTIFICATION_PREFERENCE_GROUP_ORDER = [
   'raceSupplies',
   'equipmentUpdates',
   'infrastructureUpdates',
+  'nationalAssociation',
+  'nationalTeam',
+  'nationalChampionships',
+  'worldNations',
   'systemMessages',
 ] as const
 
@@ -269,7 +273,7 @@ export type NotificationSettings = Record<NotificationPreferenceGroup, boolean>
 export type NotificationPreferenceGroupDefinition = {
   label: string
   description: string
-  section: 'race' | 'team' | 'club' | 'account'
+  section: 'race' | 'team' | 'club' | 'national' | 'account'
 }
 
 export const NOTIFICATION_PREFERENCE_GROUPS: Record<
@@ -400,6 +404,30 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
       'Show notifications for infrastructure orders, deliveries, repairs, sales, upgrades, and condition warnings.',
     section: 'club',
   },
+  nationalAssociation: {
+    label: 'National Association & elections',
+    description:
+      'Show National Association activation, candidature, voting and National Coach status notifications.',
+    section: 'national',
+  },
+  nationalTeam: {
+    label: 'National Team & call-ups',
+    description:
+      'Show National Team selection windows, call-ups, squad changes and National Duty notifications.',
+    section: 'national',
+  },
+  nationalChampionships: {
+    label: 'National Championships & ranking',
+    description:
+      'Show National Championship participation, qualification, final confirmation and result notifications.',
+    section: 'national',
+  },
+  worldNations: {
+    label: 'World Nations & international competitions',
+    description:
+      'Show World Nations draws, race updates, finals and international championship notifications.',
+    section: 'national',
+  },
   systemMessages: {
     label: 'System messages',
     description: 'Show welcome messages and general official game messages.',
@@ -424,6 +452,12 @@ export const NOTIFICATION_PREFERENCE_SECTIONS = [
     code: 'club' as const,
     title: 'Club management notifications',
     description: 'Finance, coins, rewards, supplies, equipment, tax, and infrastructure.',
+  },
+  {
+    code: 'national' as const,
+    title: 'National & international notifications',
+    description:
+      'National Association, National Team, National Championships, World Nations and international championship updates.',
   },
   {
     code: 'account' as const,
@@ -478,6 +512,63 @@ const EXACT_TYPE_GROUPS: Record<string, NotificationPreferenceGroup> = {
   REFERRAL_REWARD_GRANTED: 'walletRewards',
   ADMIN_MESSAGE: 'systemMessages',
   WELCOME_MESSAGE: 'systemMessages',
+
+  // National Association / National Team / National competitions.
+  NATIONAL_ASSOCIATION_STATUS: 'nationalAssociation',
+  NATIONAL_COACH_CANDIDATURE_OPEN: 'nationalAssociation',
+  NATIONAL_COACH_VOTING_REQUIRED: 'nationalAssociation',
+  NATIONAL_COACH_STATUS_CHANGED: 'nationalAssociation',
+
+  NATIONAL_TEAM_SELECTION_WINDOW: 'nationalTeam',
+  NATIONAL_TEAM_CALLUP_REQUIRED: 'nationalTeam',
+  NATIONAL_TEAM_SQUAD_UPDATE: 'nationalTeam',
+  NATIONAL_TEAM_DUTY_UPDATE: 'nationalTeam',
+
+  CHAMPIONSHIP_PARTICIPATION_REQUIRED: 'nationalChampionships',
+  CHAMPIONSHIP_QUALIFICATION_UPDATE: 'nationalChampionships',
+  CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: 'nationalChampionships',
+  CHAMPIONSHIP_RESULT: 'nationalChampionships',
+
+  NATIONS_DRAW_NEXT_ROUND: 'worldNations',
+  NATIONS_RACE_UPDATE: 'worldNations',
+  NATIONS_FINAL_INFO: 'worldNations',
+  NATIONS_FINAL_RESULT_MERGED: 'worldNations',
+
+  // Historical National-system aliases remain controlled by the same settings.
+  NATIONAL_ASSOCIATION_ACTIVATED: 'nationalAssociation',
+  NATIONAL_COACH_ELECTION_OPEN: 'nationalAssociation',
+  NATIONAL_COACH_VOTING_OPEN: 'nationalAssociation',
+  NATIONAL_COACH_RUNOFF_OPEN: 'nationalAssociation',
+  NATIONAL_COACH_ELECTED: 'nationalAssociation',
+  NATIONAL_COACH_POSITION_VACANT: 'nationalAssociation',
+  NATIONAL_COACH_RESIGNED: 'nationalAssociation',
+
+  NATIONAL_TEAM_NEW_SELECTION_WINDOW: 'nationalTeam',
+  NATIONAL_TEAM_CALLUP_RECEIVED: 'nationalTeam',
+  NATIONAL_TEAM_CALLUP_RESPONSE: 'nationalTeam',
+  NATIONAL_TEAM_SQUAD_CONFIRMED: 'nationalTeam',
+  NATIONAL_TEAM_DUTY_STARTED: 'nationalTeam',
+  NATIONAL_TEAM_DUTY_COMPLETED: 'nationalTeam',
+
+  NATIONAL_CHAMPIONSHIP_SELECTED: 'nationalChampionships',
+  NATIONAL_CHAMPIONSHIP_QUALIFICATION_RESULT: 'nationalChampionships',
+  NATIONAL_CHAMPIONSHIP_QUALIFIED: 'nationalChampionships',
+  NATIONAL_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: 'nationalChampionships',
+  NATIONAL_CHAMPIONSHIP_FINAL_RESULT: 'nationalChampionships',
+  NATIONAL_CHAMPION: 'nationalChampionships',
+
+  NATIONS_QUALIFICATION_DRAW: 'worldNations',
+  NATIONS_RACE_RESULT: 'worldNations',
+  NATIONS_ADVANCED: 'worldNations',
+  NATIONS_ELIMINATED: 'worldNations',
+  NATIONS_WORLD_FINAL_QUALIFIED: 'worldNations',
+  NATIONS_HOST_SELECTED: 'worldNations',
+  NATIONS_FINAL_RESULT: 'worldNations',
+  NATIONS_CHAMPION: 'worldNations',
+  WORLD_ROAD_CHAMPIONSHIP_INVITATION: 'worldNations',
+  WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED: 'worldNations',
+  WORLD_ROAD_CHAMPIONSHIP_RESULT: 'worldNations',
+  WORLD_ROAD_CHAMPION: 'worldNations',
 
   // Historical/legacy rows remain classifiable under the old preference area.
   RACE_APPLICATION_WINDOW_OPEN: 'raceApplicationResults',
@@ -575,6 +666,17 @@ export function getNotificationTypeFromEvent(
 
   if (EXACT_TYPE_GROUPS[rawCode]) return EXACT_TYPE_GROUPS[rawCode]
   if (EXACT_TYPE_GROUPS[upper]) return EXACT_TYPE_GROUPS[upper]
+
+  if (upper.startsWith('NATIONAL_ASSOCIATION_') || upper.startsWith('NATIONAL_COACH_')) {
+    return 'nationalAssociation'
+  }
+  if (upper.startsWith('NATIONAL_TEAM_')) return 'nationalTeam'
+  if (upper.startsWith('NATIONAL_CHAMPIONSHIP_') || upper === 'NATIONAL_CHAMPION') {
+    return 'nationalChampionships'
+  }
+  if (upper.startsWith('NATIONS_') || upper.startsWith('WORLD_ROAD_')) {
+    return 'worldNations'
+  }
 
   if (upper.startsWith('INFRASTRUCTURE_')) return 'infrastructureUpdates'
   if (upper.startsWith('EQUIPMENT_')) return 'equipmentUpdates'
