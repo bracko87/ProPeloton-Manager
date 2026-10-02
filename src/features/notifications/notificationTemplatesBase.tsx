@@ -405,6 +405,7 @@ function getImageSrcFromItem(item: NotificationItem): string | null {
   return (
     getItemFieldString(item, 'image_url') ||
     getItemFieldString(item, 'image_src') ||
+    getItemFieldString(item, 'default_image_url') ||
     pickFirstString(payload, [
       'image_url',
       'image_src',
@@ -1574,12 +1575,27 @@ function isSportDirectorAdvisoryType(
 /* National Association / National Team / World Nations                      */
 /* -------------------------------------------------------------------------- */
 
+function isNationalAssociationNotificationType(typeCode: string | null | undefined): boolean {
+  const code = String(typeCode ?? '').trim().toUpperCase()
+  return (
+    code.startsWith('NATIONAL_ASSOCIATION_') ||
+    code.startsWith('NATIONAL_COACH_') ||
+    code.startsWith('NATIONAL_TEAM_') ||
+    code.startsWith('NATIONS_')
+  )
+}
+
 function getNationalSystemCountryCode(item: NotificationItem): string | null {
   const payload = getPayload(item)
   return pickFirstString(payload, [
     'country_code',
+    'association_country_code',
+    'nation_country_code',
+    'nation_code',
     'host_country_code',
     'champion_country_code',
+    'team_country_code',
+    'rider_country_code',
   ])
 }
 
@@ -1588,6 +1604,12 @@ function getNationalSystemFlagImage(item: NotificationItem): string | null {
   return code && /^[a-z]{2}$/i.test(code)
     ? `https://flagcdn.com/w160/${code.toLowerCase()}.png`
     : null
+}
+
+function getNationalSystemImage(item: NotificationItem): string | null {
+  // A dedicated notification image always wins. When National Association /
+  // National Team / World Nations notices do not define one, show the nation flag.
+  return getImageSrcFromItem(item) || getNationalSystemFlagImage(item)
 }
 
 function getNationalSystemCountryName(item: NotificationItem): string | null {
@@ -1635,7 +1657,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_ASSOCIATION_ACTIVATED: {
     defaultTitle: 'National Association activated',
     defaultMessage: 'Your National Association is now active.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'Your National Association is now active.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1655,7 +1677,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_COACH_ELECTION_OPEN: {
     defaultTitle: 'National Coach candidature is open',
     defaultMessage: 'Eligible Association members can submit their National Coach candidature.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'National Coach candidature is open.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1685,7 +1707,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_COACH_VOTING_OPEN: {
     defaultTitle: 'National Coach voting is open',
     defaultMessage: 'The current National Coach election round is open for voting.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'National Coach voting is open.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1709,7 +1731,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_COACH_RUNOFF_OPEN: {
     defaultTitle: 'National Coach runoff is open',
     defaultMessage: 'No unique winner was produced, so a new runoff round is open.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'A National Coach runoff is now open.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1733,7 +1755,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_COACH_ELECTED: {
     defaultTitle: 'National Coach elected',
     defaultMessage: 'A National Coach has been elected for the current season.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'A National Coach has been elected.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1755,7 +1777,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_TEAM_CALLUP_RECEIVED: {
     defaultTitle: 'National Team call-up received',
     defaultMessage: 'One of your riders has been called up for the National Team.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'One of your riders has received a National Team call-up.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1780,7 +1802,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_TEAM_CALLUP_RESPONSE: {
     defaultTitle: 'National Team call-up response',
     defaultMessage: 'A National Team call-up has received a club response.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'A National Team call-up status has changed.',
     getDetailRows: (item) => compactRows([
       detailRow('Rider', getPreferredRiderName(item)),
@@ -1797,7 +1819,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_TEAM_SQUAD_CONFIRMED: {
     defaultTitle: 'National Team squad confirmed',
     defaultMessage: 'The final National Team squad has been confirmed.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'The final National Team squad is confirmed.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1818,7 +1840,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_TEAM_DUTY_STARTED: {
     defaultTitle: 'National Duty started',
     defaultMessage: 'A rider from your club has entered National Duty.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'A rider from your club has entered National Duty.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1842,7 +1864,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONAL_TEAM_DUTY_COMPLETED: {
     defaultTitle: 'National Duty completed',
     defaultMessage: 'A rider from your club has completed National Duty.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'A rider from your club has completed National Duty.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1866,7 +1888,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONS_RACE_RESULT: {
     defaultTitle: 'World Nations race completed',
     defaultMessage: 'A World Nations race day has been completed.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'A World Nations race day has been completed.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1920,7 +1942,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONS_QUALIFICATION_DRAW: {
     defaultTitle: 'World Nations draw confirmed',
     defaultMessage: 'The World Nations qualification draw has been confirmed.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'The World Nations draw is confirmed.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1943,7 +1965,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONS_ADVANCED: {
     defaultTitle: 'Advanced in the World Nations Championship',
     defaultMessage: 'Your nation has advanced to the next World Nations round.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'Your nation has advanced in the World Nations Championship.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1968,7 +1990,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONS_ELIMINATED: {
     defaultTitle: 'World Nations Championship run ended',
     defaultMessage: 'Your nation has been eliminated from the World Nations Championship.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'Your nation has been eliminated from the World Nations Championship.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -1992,7 +2014,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONS_WORLD_FINAL_QUALIFIED: {
     defaultTitle: 'Qualified for the World Nations Final',
     defaultMessage: 'Your nation has qualified for the World Nations Final.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'Your nation has qualified for the World Nations Final.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -2017,7 +2039,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONS_HOST_SELECTED: {
     defaultTitle: 'World Nations Final host selected',
     defaultMessage: 'The host nation for the World Nations Final has been selected.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'The World Nations Final host has been selected.',
     getDetailRows: (item) => compactRows([
       detailRow('Country', getNationalSystemCountryName(item)),
@@ -2033,7 +2055,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONS_FINAL_RESULT: {
     defaultTitle: 'World Nations Final completed',
     defaultMessage: 'The World Nations Final classification is official.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'The World Nations Final classification is official.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -2068,7 +2090,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
   NATIONS_CHAMPION: {
     defaultTitle: 'World Nations Champion',
     defaultMessage: 'The World Nations Championship has a new champion.',
-    getImageSrc: getNationalSystemFlagImage,
+    getImageSrc: getNationalSystemImage,
     getIntroText: (item) => item.message || 'The World Nations Championship has been completed.',
     getDetailRows: (item) => {
       const payload = getPayload(item)
@@ -16961,10 +16983,23 @@ export function applyNotificationTemplates(
 
 export function getNotificationImageSrc(item: NotificationItem): string | null {
   const template = getNotificationTemplate(item.type_code)
-  if (!template) return getImageSrcFromItem(item)
 
-  if (template.getImageSrc) return template.getImageSrc(item)
-  return template.imageSrc || getImageSrcFromItem(item)
+  if (!template) {
+    return isNationalAssociationNotificationType(item.type_code)
+      ? getNationalSystemImage(item)
+      : getImageSrcFromItem(item)
+  }
+
+  if (template.getImageSrc) {
+    const resolved = template.getImageSrc(item)
+    if (resolved) return resolved
+  }
+
+  if (template.imageSrc) return template.imageSrc
+
+  return isNationalAssociationNotificationType(item.type_code)
+    ? getNationalSystemFlagImage(item)
+    : getImageSrcFromItem(item)
 }
 
 export function getNotificationIntroText(item: NotificationItem): string | null {
