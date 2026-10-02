@@ -247,6 +247,7 @@ const COMPARISON_ROWS = [
   ['comparison.r6', '—', '50'],
   ['comparison.r7', '✓', '✓'],
   ['comparison.r8', '✓', '✓'],
+  ['comparison.r9', '—', '✓'],
 ] as const
 
 const PREMIUM_ADVANTAGES = [
@@ -258,6 +259,7 @@ const PREMIUM_ADVANTAGES = [
   'advantages.a6',
   'advantages.a7',
   'advantages.a8',
+  'advantages.a9',
 ] as const
 
 function eur(value: number) {
