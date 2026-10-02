@@ -657,6 +657,15 @@ export default function NationalAssociationPage(): JSX.Element {
         onRefresh={() => void load()}
       />
 
+      <div className="flex justify-end">
+        <Link
+          to="/dashboard/manual?section=national-association-world-nations"
+          className="inline-flex items-center rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+        >
+          {t('association.openGuide', { defaultValue: 'Open National Association & World Nations guide' })}
+        </Link>
+      </div>
+
       {error ? (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
