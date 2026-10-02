@@ -1106,8 +1106,8 @@
       "decisionDeadline": "Entscheidungsfrist",
       "finalDate": "Finaldatum",
       "qualifyingPlaces": "Qualifikationsplätze",
-      "yourRiderResults": "Ergebnisse deiner Fahrer",
-      "yourRidersQualified": "Deine qualifizierten Fahrer",
+      "yourRiderResults": "Ergebnisse Ihrer Fahrer",
+      "yourRidersQualified": "Ihre qualifizierten Fahrer",
       "topThree": "Top 3",
       "champion": "Meister",
       "podium": "Podium",
@@ -1144,7 +1144,7 @@
     "qualificationResult": {
       "title": "{{country}} – Qualifikationsgruppe {{heat}} abgeschlossen",
       "message": "Die offiziellen Ergebnisse sind verfügbar. Die besten {{places}} Fahrer erreichen das nationale Finale am {{finalDate}}.",
-      "extra": "Öffne das Qualifikationsrennen für die vollständige Wertung und die Nationalmeisterschaft für die nächsten Schritte deiner Fahrer."
+      "extra": "Öffnen Sie das Qualifikationsrennen für die vollständige Wertung und die Nationalmeisterschaft für die nächsten Schritte Ihrer Fahrer."
     },
     "qualified": {
       "title": "{{rider}} hat sich für das nationale Finale qualifiziert",
@@ -1311,7 +1311,7 @@
     },
     "newSelectionWindow": {
       "title": "Kaderauswahl für {{roundLabel}} ist geöffnet",
-      "message": "Deine Nation hat {{roundLabel}} erreicht. Wähle einen neuen 10-Fahrer-Kader für {{group}}. Du kannst die bisherigen Fahrer behalten oder andere berechtigte Fahrer auswählen.",
+      "message": "Ihre Nation hat {{roundLabel}} erreicht. Wählen Sie einen neuen 10-Fahrer-Kader für {{group}}. Sie können die bisherigen Fahrer behalten oder andere berechtigte Fahrer auswählen.",
       "extra": "Frist für den endgültigen Kader: {{finalSquadDeadline}}. Öffne den Kader der Nationalen Vereinigung, um das neue Wettbewerbsfenster vorzubereiten."
     }
   }
