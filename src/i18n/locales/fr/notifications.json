@@ -886,7 +886,8 @@
     "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Invitation au Championnat du monde",
     "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Confirmation du Championnat du monde",
     "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Résultat du Championnat du monde",
-    "WORLD_ROAD_CHAMPION": "Champion du monde sur route"
+    "WORLD_ROAD_CHAMPION": "Champion du monde sur route",
+    "NATIONAL_TEAM_NEW_SELECTION_WINDOW": "Nouvelle fenêtre de sélection de l’équipe nationale"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Le plan de course nécessite votre attention : {{entity}}",
@@ -1307,6 +1308,11 @@
       "title": "Devoir national terminé pour {{rider}}",
       "message": "{{rider}} a terminé son devoir national avec {{association}} et est de nouveau disponible pour le club.",
       "extra": "Les règles normales de santé, de fatigue et de disponibilité en course continuent de s’appliquer après la fin du devoir national."
+    },
+    "newSelectionWindow": {
+      "title": "Sélection de l’équipe ouverte pour {{roundLabel}}",
+      "message": "Votre nation a atteint {{roundLabel}}. Sélectionnez un nouveau groupe de 10 coureurs pour {{group}}. Vous pouvez conserver les coureurs précédents ou choisir d’autres coureurs éligibles.",
+      "extra": "Date limite du groupe définitif : {{finalSquadDeadline}}. Ouvrez l’onglet Effectif de l’Association nationale pour préparer la nouvelle fenêtre de compétition."
     }
   }
 }
