@@ -73,11 +73,12 @@
     "a5": "Manager Briefing, advanced calendar intelligence, finance forecasts and management convenience tools.",
     "a6": "Advanced rider-performance analytics, development trends and unlimited world-race replays.",
     "a7": "Premium improves information, automation and convenience — never race-engine strength, transfer acceptance or hidden rider skills.",
-    "a8": "Exclusive Developing Team access, including the U23 Head Coach: 100 coins to activate and 100 coins per season to renew."
+    "a8": "Exclusive Developing Team access, including the U23 Head Coach: 100 coins to activate and 100 coins per season to renew.",
+    "a9": "Optional Premium Youth Academy: activate a separate U16 development programme with 16 rider places, six local starters, dedicated staff, budget-based scouting and a pathway into the Developing Team."
   },
   "comparison": {
     "title": "Free vs Premium",
-    "description": "Premium adds advanced tools plus exclusive Developing Team and U23 Head Coach access.",
+    "description": "Premium adds advanced tools plus exclusive Developing Team, U23 Head Coach and optional Youth Academy access.",
     "benefit": "Benefit",
     "free": "Free",
     "premium": "Premium",
@@ -91,8 +92,9 @@
     "r8": "Use optional coin features",
     "developing": "Developing Team service",
     "activationRenewal": "{{activation}} activation / {{renewal}} renewal",
-    "note": "Developing Team and U23 Head Coach require an active Premium membership. Developing Team activation and seasonal renewal still use coins.",
-    "premiumOnly": "Premium only"
+    "note": "Developing Team, U23 Head Coach and Youth Academy require an active Premium membership. Youth Academy activation is optional and its development costs are funded with normal club money.",
+    "premiumOnly": "Premium only",
+    "r9": "Youth Academy / U16 development"
   },
   "packages": {
     "title": "Need additional coins?",
