@@ -239,9 +239,7 @@
       "exceptional": "Exceptional"
     }
   },
-  "placeholders": {
-    "history": "Academy graduates, youth results and long-term development history will remain attached to riders after graduation."
-  },
+  "placeholders": {},
   "errors": {
     "load": "Could not load Youth Academy.",
     "activate": "Could not activate Youth Academy.",
@@ -259,7 +257,9 @@
     "calendarLoad": "Could not load the Youth race calendar.",
     "rankingsLoad": "Could not load Youth rankings.",
     "raceEntry": "Could not enter the Youth race.",
-    "raceLineup": "Could not save the Youth race lineup."
+    "raceLineup": "Could not save the Youth race lineup.",
+    "historyLoad": "Could not load Youth Academy history.",
+    "reportFrequency": "Could not save Youth Race Reports preference."
   },
   "equipment": {
     "title": "Youth equipment",
@@ -353,5 +353,59 @@
     "academy": "Academy",
     "starts": "Finishes",
     "points": "Points"
+  },
+  "reports": {
+    "title": "Youth Race Reports",
+    "description": "Internal Head Coach summaries are always stored in Academy History. Choose when completed races should also create an inbox report.",
+    "frequency": "Inbox report frequency",
+    "save": "Save report preference",
+    "options": {
+      "every_race": "Every race",
+      "important_only": "Important races only",
+      "podium_exceptional": "Podium / exceptional result only",
+      "problems_only": "Problems only",
+      "never": "Never"
+    }
+  },
+  "history": {
+    "graduates": "Graduates",
+    "raceWins": "Race wins",
+    "podiums": "Podiums",
+    "racesCompleted": "Races completed",
+    "alumni": "Academy alumni",
+    "alumniCount": "{{count}} alumni",
+    "loading": "Loading Academy history…",
+    "noAlumni": "No Academy alumni yet.",
+    "rider": "Rider",
+    "joined": "Joined Academy",
+    "graduated": "Graduated / released",
+    "path": "Path",
+    "starts": "Starts",
+    "wins": "Wins",
+    "regionalRank": "Final regional rank",
+    "worldRank": "Final world rank",
+    "regionalPoints": "Regional points",
+    "worldPoints": "World points",
+    "ageValue": "age {{age}}",
+    "raceReports": "Head Coach race reports",
+    "reportCount": "{{count}} report(s)",
+    "noReports": "No Youth race reports recorded yet.",
+    "fatigue": "Fatigue",
+    "developmentEvents": "Development events",
+    "development": "development",
+    "reportClasses": {
+      "routine": "Routine",
+      "important": "Important",
+      "exceptional": "Exceptional",
+      "problem": "Problem"
+    },
+    "developmentHistory": "Development history",
+    "latestWeeks": "{{count}} records",
+    "noDevelopmentHistory": "No weekly development history yet.",
+    "week": "Week",
+    "focus": "Focus",
+    "workload": "Workload",
+    "change": "Development change",
+    "readinessFatigue": "Readiness / fatigue"
   }
 }
