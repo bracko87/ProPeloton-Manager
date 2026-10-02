@@ -676,7 +676,10 @@
     "SELECTED": "Выбран",
     "SQUAD": "Состав",
     "VOTING": "Голосование",
-    "WORLD": "Мир"
+    "WORLD": "Мир",
+    "POSITION": "Пост",
+    "RESIGNED": "Ушёл в отставку",
+    "VACANT": "Вакантен"
   },
   "reportVariants": {
     "rider_skill_change": "Изменение навыка гонщика",
