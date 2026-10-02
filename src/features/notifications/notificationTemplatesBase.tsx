@@ -1774,6 +1774,49 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     ],
   },
 
+  NATIONAL_COACH_POSITION_VACANT: {
+    defaultTitle: 'National Coach position is vacant',
+    defaultMessage: 'The National Coach position is vacant. A replacement election will start.',
+    getImageSrc: getNationalSystemImage,
+    getIntroText: (item) => item.message || 'The National Coach position is vacant.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const season = pickFirstNumber(payload, ['season_number'])
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Season', season !== null ? `Season ${season}` : null),
+        detailRow('Reason', formatLabel(pickFirstString(payload, ['reason']))),
+      ])
+    },
+    getExtraText: () =>
+      'Eligible Association members can register for the replacement election when candidature opens.',
+    actions: [
+      withFallbackHref('Open National Association', '/dashboard/national-association/elections'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_COACH_RESIGNED: {
+    defaultTitle: 'National Coach has resigned',
+    defaultMessage: 'The National Coach has resigned. A replacement election will start.',
+    getImageSrc: getNationalSystemImage,
+    getIntroText: (item) => item.message || 'The National Coach has resigned.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const season = pickFirstNumber(payload, ['season_number'])
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Season', season !== null ? `Season ${season}` : null),
+      ])
+    },
+    getExtraText: () =>
+      'The Association remains active while the replacement election is completed.',
+    actions: [
+      withFallbackHref('Open National Association', '/dashboard/national-association/elections'),
+      MARK_READ_ACTION,
+    ],
+  },
+
   NATIONAL_TEAM_CALLUP_RECEIVED: {
     defaultTitle: 'National Team call-up received',
     defaultMessage: 'One of your riders has been called up for the National Team.',
@@ -1833,6 +1876,35 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
       'All selected riders enter National Duty for the scheduled competition window, including reserves.',
     actions: [
       withFallbackHref('Manage National Team', '/dashboard/national-association'),
+      MARK_READ_ACTION,
+    ],
+  },
+
+  NATIONAL_TEAM_NEW_SELECTION_WINDOW: {
+    defaultTitle: 'New National Team squad selection is open',
+    defaultMessage: 'Select a fresh 10-rider National Team squad for the new competition window.',
+    getImageSrc: getNationalSystemImage,
+    getIntroText: (item) => item.message || 'A new National Team squad selection window is open.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      return compactRows([
+        detailRow('Country', getNationalSystemCountryName(item)),
+        detailRow('Competition round', pickFirstString(payload, ['round_label'])),
+        detailRow('Group', pickFirstString(payload, ['group_label'])),
+        detailRow(
+          'Start date',
+          formatContractSeasonLabel(pickFirstString(payload, ['target_event_date']))
+        ),
+        detailRow(
+          'Final deadline',
+          formatContractSeasonLabel(pickFirstString(payload, ['final_squad_deadline']))
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'Open National Association Squad to prepare the new competition window before the final squad deadline.',
+    actions: [
+      withFallbackHref('Manage National Team', '/dashboard/national-association/squad'),
       MARK_READ_ACTION,
     ],
   },
