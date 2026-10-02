@@ -200,7 +200,8 @@
       "accept": "Accepter l'offre de l'académie",
       "decline": "Refuser",
       "processing": "Traitement…"
-    }
+    },
+    "awaitingAcademyResponse": "En attente de la réponse de l’académie"
   },
   "settings": {
     "title": "Responsabilités",
