@@ -255,7 +255,9 @@
     "financeLoad": "Nije moguće učitati finansije Omladinske akademije.",
     "equipmentLoad": "Nije moguće učitati opremu Omladinske akademije.",
     "equipmentPurchase": "Nije moguće kupiti opremu za Omladinsku akademiju.",
-    "equipmentDirector": "Direktor Omladinske akademije nije uspeo da završi opremanje."
+    "equipmentDirector": "Direktor Omladinske akademije nije uspeo da završi opremanje.",
+    "graduationLoad": "Nije moguće učitati odluke o izlasku mladih vozača.",
+    "graduationDecision": "Nije moguće završiti odluku o izlasku mladog vozača."
   },
   "equipment": {
     "title": "Oprema za mlade",
@@ -279,5 +281,26 @@
     "purchase": "Kupi za akademiju",
     "purchasing": "Kupovina…",
     "durability": "Izdržljivost"
+  },
+  "training": {
+    "title": "Filozofija razvoja mladih",
+    "description": "Postavi opšti prioritet treninga akademije. U16 glavni trener pretvara ga u individualno opterećenje i razvojni fokus uz kontrolu spremnosti i umora.",
+    "philosophy": "Filozofija treninga akademije",
+    "options": {
+      "freshness": "Svežina na prvom mestu",
+      "balanced": "Uravnotežen razvoj",
+      "development": "Razvoj na prvom mestu"
+    }
+  },
+  "graduation": {
+    "title": "Odluke o izlasku sa 16 godina",
+    "pendingCount": "{{count}} na čekanju",
+    "none": "Trenutno nema mladih vozača koji zahtevaju odluku.",
+    "decisionHelp": "Sa 16 godina izaberi sledeći razvojni put. Direktan prelazak u prvi tim nije uobičajen put.",
+    "pathway": "30-dnevni Youth Graduate put",
+    "pathwayUntil": "Put do {{date}}",
+    "pathwayHelp": "Privremeni put daje 30 dana igre za prelazak u Razvojni tim. Ako se prelazak ne završi, vozač postaje profesionalni slobodni agent.",
+    "toDeveloping": "U Razvojni tim ({{slots}} slobodno)",
+    "release": "Otpusti kao profesionalnog slobodnog agenta"
   }
 }
