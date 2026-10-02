@@ -91,7 +91,17 @@
     "committed": "Gebunden",
     "available": "Verfügbar",
     "scoutingAllocation": "Scouting-Budget",
-    "scoutingHelp": "Kosten des Scouting-Programms {{range}}. Die Scouting-Reichweite wird vom Budget bestimmt, nicht von der Infrastruktur."
+    "scoutingHelp": "Kosten des Scouting-Programms {{range}}. Die Scouting-Reichweite wird vom Budget bestimmt, nicht von der Infrastruktur.",
+    "weeklyRiderSupport": "Wöchentliche Fahrerunterstützung",
+    "weeklyStaff": "Wöchentliche Akademie-Personalkosten",
+    "equipmentSpend": "Ausrüstungsausgaben dieser Saison",
+    "ledger": "Transaktionsverlauf der Akademie",
+    "loadingLedger": "Wird geladen…",
+    "noLedger": "Noch keine Akademie-Transaktionen erfasst.",
+    "date": "Datum",
+    "category": "Kategorie",
+    "description": "Beschreibung",
+    "amount": "Betrag"
   },
   "scouting": {
     "title": "Reichweite des Jugendscoutings",
@@ -232,7 +242,6 @@
   "placeholders": {
     "calendar": "Der separate U16-Kalender und die vereinfachte Rennengine werden in der nächsten Implementierungsphase angebunden. Die Kosten für Jugendrennen bleiben hauptsächlich Reise- und Logistikkosten.",
     "rankings": "Die Grundlagen der regionalen Jugendrangliste und der Youth World Ranking werden mit dem U16-Kalender verbunden.",
-    "equipment": "Die Jugendakademie besitzt eigene Ausrüstung und verwendet dafür eine ausgewählte günstigere Teilmenge des bestehenden Ausrüstungskatalogs und der vorhandenen Bilder.",
     "history": "Akademieabsolventen, Jugendergebnisse und langfristige Entwicklungshistorie bleiben nach dem Abschluss dauerhaft mit den Fahrern verbunden."
   },
   "errors": {
@@ -242,6 +251,33 @@
     "scoutingLoad": "Jugend-Scouting-Berichte konnten nicht geladen werden.",
     "scoutingRun": "Der monatliche Jugend-Scouting-Zyklus konnte nicht gestartet werden.",
     "recruitmentOffer": "Das Jugend-Rekrutierungsangebot konnte nicht gesendet werden.",
-    "incomingOffer": "Die eingehende Jugendakademie-Anfrage konnte nicht beantwortet werden."
+    "incomingOffer": "Die eingehende Jugendakademie-Anfrage konnte nicht beantwortet werden.",
+    "financeLoad": "Die Finanzen der Jugendakademie konnten nicht geladen werden.",
+    "equipmentLoad": "Die Ausrüstung der Jugendakademie konnte nicht geladen werden.",
+    "equipmentPurchase": "Die Ausrüstung für die Jugendakademie konnte nicht gekauft werden.",
+    "equipmentDirector": "Der Ausrüstungslauf des Jugendakademie-Direktors konnte nicht abgeschlossen werden."
+  },
+  "equipment": {
+    "title": "Jugendausrüstung",
+    "description": "Die Jugendakademie besitzt eigene U16-Ausrüstung. Sie nutzt günstigere Modelle der Stufen 1–2 aus dem bestehenden Ausrüstungskatalog und bezahlt sie aus dem Saisonbudget der Akademie.",
+    "managerManaged": "Vom Manager verwaltet",
+    "directorManaged": "Vom Akademiedirektor verwaltet",
+    "directorHelp": "Der Jugendakademie-Direktor kauft je Kategorie die günstigste zulässige fehlende Ausrüstung und berücksichtigt dabei das verbleibende Akademiebudget.",
+    "runDirector": "Direktor Akademie ausrüsten lassen",
+    "equipping": "Ausrüstung wird zusammengestellt…",
+    "inventory": "Ausrüstungsbestand der Akademie",
+    "itemsOwned": "{{count}} Gegenstand/Gegenstände",
+    "noInventory": "Die Jugendakademie besitzt noch keine Ausrüstung.",
+    "item": "Gegenstand",
+    "category": "Kategorie",
+    "quality": "Qualität",
+    "condition": "Zustand",
+    "cost": "Akademiekosten",
+    "catalog": "Günstiger Jugendkatalog",
+    "catalogHelp": "Hier ist nur langlebige Ausrüstung der Stufen 1–2 aus dem bestehenden Clubkatalog verfügbar. Diese Käufe gehören separat zur Jugendakademie und verwenden kein Profi-Clubguthaben.",
+    "tier": "Stufe {{tier}}",
+    "purchase": "Für Akademie kaufen",
+    "purchasing": "Kauf läuft…",
+    "durability": "Haltbarkeit"
   }
 }
