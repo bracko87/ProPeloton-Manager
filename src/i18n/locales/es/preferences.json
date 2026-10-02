@@ -31,6 +31,10 @@
     "account": {
       "title": "Notificación de cuenta y sistema",
       "description": "Mensajes oficiales del juego e información de incorporación."
+    },
+    "national": {
+      "title": "Notificaciones nacionales e internacionales",
+      "description": "Asociación Nacional, Selección Nacional, Campeonatos Nacionales, World Nations y campeonatos internacionales."
     }
   },
   "groups": {
@@ -121,6 +125,26 @@
     "systemMessages": {
       "label": "Mensajes del sistema",
       "description": "Mostrar mensajes de bienvenida y mensajes oficiales generales del juego."
+    },
+    "riderHealth": {
+      "label": "Informe médico del equipo",
+      "description": "Muestra un resumen médico diario sobre lesiones, enfermedades, forma reducida y recuperaciones. El asesoramiento del médico del equipo se controla por separado."
+    },
+    "nationalAssociation": {
+      "label": "Asociación Nacional y elecciones",
+      "description": "Muestra notificaciones de activación de la Asociación Nacional, candidaturas, votaciones y cambios del seleccionador nacional."
+    },
+    "nationalTeam": {
+      "label": "Selección Nacional y convocatorias",
+      "description": "Muestra ventanas de selección, convocatorias, cambios de plantilla y servicio con la Selección Nacional."
+    },
+    "nationalChampionships": {
+      "label": "Campeonatos Nacionales y ranking",
+      "description": "Muestra notificaciones de participación, clasificación, confirmación de la final y resultados de los Campeonatos Nacionales."
+    },
+    "worldNations": {
+      "label": "World Nations y competiciones internacionales",
+      "description": "Muestra sorteos, actualizaciones de carrera, finales de World Nations y notificaciones de campeonatos internacionales."
     }
   },
   "advisorCategories": {
