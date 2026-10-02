@@ -145,6 +145,56 @@ type IncomingYouthOffer = {
   status: string
 }
 
+type YouthFinancePayload = {
+  activated: boolean
+  season_number?: number
+  season_budget?: number
+  spent_amount?: number
+  committed_amount?: number
+  available_amount?: number
+  weekly_rider_support?: number
+  weekly_staff_salary?: number
+  weekly_operating_commitment?: number
+  equipment_spend?: number
+  ledger?: Array<{
+    id: string
+    game_date: string
+    category: string
+    description: string
+    amount: number
+  }>
+}
+
+type YouthEquipmentCatalogItem = {
+  id: string
+  display_name: string
+  equipment_category: string
+  tier: number
+  quality_score: number
+  durability_score: number
+  price: number
+}
+
+type YouthEquipmentInventoryItem = {
+  id: string
+  catalog_item_id: string
+  display_name: string
+  equipment_category: string
+  quality_score: number
+  durability_score: number
+  condition_percent: number
+  purchase_cost: number
+  status: string
+  purchased_on: string
+}
+
+type YouthEquipmentPayload = {
+  activated: boolean
+  equipment_decider?: 'manager' | 'academy_director'
+  catalog?: YouthEquipmentCatalogItem[]
+  inventory?: YouthEquipmentInventoryItem[]
+}
+
 type AcademyPayload = {
   premium: boolean
   activated: boolean
@@ -269,6 +319,10 @@ export default function YouthAcademyPage(): JSX.Element {
   const [scoutingAction, setScoutingAction] = useState<string | null>(null)
   const [offerDrafts, setOfferDrafts] = useState<Record<string, OfferDraft>>({})
   const [incomingOffers, setIncomingOffers] = useState<IncomingYouthOffer[]>([])
+  const [financeData, setFinanceData] = useState<YouthFinancePayload | null>(null)
+  const [equipmentData, setEquipmentData] = useState<YouthEquipmentPayload | null>(null)
+  const [phase2Loading, setPhase2Loading] = useState(false)
+  const [equipmentAction, setEquipmentAction] = useState<string | null>(null)
 
   const applyScoutingPayload = (payload: ScoutingPayload): void => {
     setScoutingData(payload)
@@ -405,6 +459,81 @@ export default function YouthAcademyPage(): JSX.Element {
     }
   }
 
+  const loadFinance = async (): Promise<void> => {
+    setPhase2Loading(true)
+    try {
+      const { data: payload, error: financeError } = await supabase.rpc(
+        'get_my_youth_academy_finances_v1'
+      )
+      if (financeError) throw financeError
+      setFinanceData(payload as YouthFinancePayload)
+    } catch (financeError: any) {
+      console.error('Youth Academy finance load failed:', financeError)
+      setError(financeError?.message ?? t('errors.financeLoad'))
+    } finally {
+      setPhase2Loading(false)
+    }
+  }
+
+  const loadEquipment = async (): Promise<void> => {
+    setPhase2Loading(true)
+    try {
+      const { data: payload, error: equipmentError } = await supabase.rpc(
+        'get_my_youth_academy_equipment_v1'
+      )
+      if (equipmentError) throw equipmentError
+      setEquipmentData(payload as YouthEquipmentPayload)
+    } catch (equipmentError: any) {
+      console.error('Youth Academy equipment load failed:', equipmentError)
+      setError(equipmentError?.message ?? t('errors.equipmentLoad'))
+    } finally {
+      setPhase2Loading(false)
+    }
+  }
+
+  const purchaseEquipment = async (
+    item: YouthEquipmentCatalogItem
+  ): Promise<void> => {
+    if (data?.read_only || equipmentAction) return
+    setEquipmentAction(item.id)
+    setError(null)
+    try {
+      const { data: payload, error: purchaseError } = await supabase.rpc(
+        'purchase_my_youth_academy_equipment_v1',
+        { p_catalog_item_id: item.id }
+      )
+      if (purchaseError) throw purchaseError
+      setEquipmentData(payload as YouthEquipmentPayload)
+      await loadFinance()
+      await load()
+    } catch (purchaseError: any) {
+      console.error('Youth Academy equipment purchase failed:', purchaseError)
+      setError(purchaseError?.message ?? t('errors.equipmentPurchase'))
+    } finally {
+      setEquipmentAction(null)
+    }
+  }
+
+  const runEquipmentDirector = async (): Promise<void> => {
+    if (data?.read_only || equipmentAction) return
+    setEquipmentAction('director')
+    setError(null)
+    try {
+      const { data: payload, error: directorError } = await supabase.rpc(
+        'run_my_youth_academy_equipment_director_v1'
+      )
+      if (directorError) throw directorError
+      setEquipmentData(payload as YouthEquipmentPayload)
+      await loadFinance()
+      await load()
+    } catch (directorError: any) {
+      console.error('Youth Academy Director equipment run failed:', directorError)
+      setError(directorError?.message ?? t('errors.equipmentDirector'))
+    } finally {
+      setEquipmentAction(null)
+    }
+  }
+
   const load = async (): Promise<void> => {
     setLoading(true)
     setError(null)
@@ -434,6 +563,13 @@ export default function YouthAcademyPage(): JSX.Element {
   useEffect(() => {
     if (tab === 'scouting' && data?.activated) {
       void loadScouting()
+    }
+    if (tab === 'budget' && data?.activated) {
+      void loadFinance()
+    }
+    if (tab === 'equipment' && data?.activated) {
+      void loadEquipment()
+      void loadFinance()
     }
   }, [tab, data?.activated])
 
@@ -848,38 +984,103 @@ export default function YouthAcademyPage(): JSX.Element {
       ) : null}
 
       {tab === 'budget' ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card title={t('budget.title')}>
-            <label className="text-sm font-medium">{t('budget.seasonBudget')}</label>
-            <input
-              type="number"
-              min={0}
-              step={5000}
-              value={draftBudget}
-              disabled={data.read_only}
-              onChange={event => setDraftBudget(Number(event.target.value || 0))}
-              className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            />
-            <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-              <div>
-                <div className="text-xs text-slate-500">{t('budget.spent')}</div>
-                <div className="font-medium">{money(data.budget?.spent_amount)}</div>
+        <div className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card title={t('budget.title')}>
+              <label className="text-sm font-medium">{t('budget.seasonBudget')}</label>
+              <input
+                type="number"
+                min={0}
+                step={5000}
+                value={draftBudget}
+                disabled={data.read_only}
+                onChange={event => setDraftBudget(Number(event.target.value || 0))}
+                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+              <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <div className="text-xs text-slate-500">{t('budget.spent')}</div>
+                  <div className="font-medium">
+                    {money(financeData?.spent_amount ?? data.budget?.spent_amount)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">{t('budget.committed')}</div>
+                  <div className="font-medium">
+                    {money(financeData?.committed_amount ?? data.budget?.committed_amount)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">{t('budget.available')}</div>
+                  <div className="font-medium">
+                    {money(financeData?.available_amount ?? availableBudget)}
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-slate-500">{t('budget.committed')}</div>
-                <div className="font-medium">{money(data.budget?.committed_amount)}</div>
+            </Card>
+            <Card title={t('budget.scoutingAllocation')}>
+              <div className="text-2xl font-semibold">{money(currentProgram?.season_cost)}</div>
+              <p className="mt-2 text-sm text-slate-500">
+                {t('budget.scoutingHelp', { range: humanize(draftRange) })}
+              </p>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card title={t('budget.weeklyRiderSupport')}>
+              <div className="text-2xl font-semibold">
+                {money(financeData?.weekly_rider_support)}/{t('week')}
               </div>
-              <div>
-                <div className="text-xs text-slate-500">{t('budget.available')}</div>
-                <div className="font-medium">{money(availableBudget)}</div>
+            </Card>
+            <Card title={t('budget.weeklyStaff')}>
+              <div className="text-2xl font-semibold">
+                {money(financeData?.weekly_staff_salary)}/{t('week')}
               </div>
-            </div>
-          </Card>
-          <Card title={t('budget.scoutingAllocation')}>
-            <div className="text-2xl font-semibold">{money(currentProgram?.season_cost)}</div>
-            <p className="mt-2 text-sm text-slate-500">
-              {t('budget.scoutingHelp', { range: humanize(draftRange) })}
-            </p>
+            </Card>
+            <Card title={t('budget.equipmentSpend')}>
+              <div className="text-2xl font-semibold">
+                {money(financeData?.equipment_spend)}
+              </div>
+            </Card>
+          </div>
+
+          <Card
+            title={t('budget.ledger')}
+            right={
+              phase2Loading ? (
+                <span className="text-xs text-slate-500">{t('budget.loadingLedger')}</span>
+              ) : null
+            }
+          >
+            {(financeData?.ledger?.length ?? 0) === 0 ? (
+              <div className="text-sm text-slate-500">{t('budget.noLedger')}</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[680px] text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs text-slate-500">
+                    <tr>
+                      <th className="py-2 pr-3">{t('budget.date')}</th>
+                      <th className="py-2 pr-3">{t('budget.category')}</th>
+                      <th className="py-2 pr-3">{t('budget.description')}</th>
+                      <th className="py-2 text-right">{t('budget.amount')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(financeData?.ledger ?? []).map(entry => (
+                      <tr key={entry.id}>
+                        <td className="py-2 pr-3">{entry.game_date}</td>
+                        <td className="py-2 pr-3">{humanize(entry.category)}</td>
+                        <td className="py-2 pr-3">{entry.description}</td>
+                        <td className="py-2 text-right font-medium">
+                          {entry.amount > 0 ? '+' : ''}
+                          {money(entry.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </Card>
         </div>
       ) : null}
@@ -1550,7 +1751,129 @@ export default function YouthAcademyPage(): JSX.Element {
         </Card>
       ) : null}
 
-      {['calendar', 'rankings', 'equipment', 'history'].includes(tab) ? (
+      {tab === 'equipment' ? (
+        <div className="space-y-4">
+          <Card
+            title={t('equipment.title')}
+            right={
+              <span className="text-xs text-slate-500">
+                {t(
+                  equipmentData?.equipment_decider === 'academy_director'
+                    ? 'equipment.directorManaged'
+                    : 'equipment.managerManaged'
+                )}
+              </span>
+            }
+          >
+            <p className="text-sm leading-6 text-slate-600">
+              {t('equipment.description')}
+            </p>
+            {equipmentData?.equipment_decider === 'academy_director' ? (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4">
+                <p className="max-w-2xl text-sm text-slate-600">
+                  {t('equipment.directorHelp')}
+                </p>
+                <button
+                  type="button"
+                  disabled={data.read_only || equipmentAction !== null}
+                  onClick={() => void runEquipmentDirector()}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {equipmentAction === 'director'
+                    ? t('equipment.equipping')
+                    : t('equipment.runDirector')}
+                </button>
+              </div>
+            ) : null}
+          </Card>
+
+          <Card
+            title={t('equipment.inventory')}
+            right={
+              <span className="text-xs text-slate-500">
+                {t('equipment.itemsOwned', {
+                  count: equipmentData?.inventory?.length ?? 0,
+                })}
+              </span>
+            }
+          >
+            {(equipmentData?.inventory?.length ?? 0) === 0 ? (
+              <div className="text-sm text-slate-500">{t('equipment.noInventory')}</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs text-slate-500">
+                    <tr>
+                      <th className="py-2 pr-3">{t('equipment.item')}</th>
+                      <th className="py-2 pr-3">{t('equipment.category')}</th>
+                      <th className="py-2 pr-3">{t('equipment.quality')}</th>
+                      <th className="py-2 pr-3">{t('equipment.condition')}</th>
+                      <th className="py-2">{t('equipment.cost')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(equipmentData?.inventory ?? []).map(item => (
+                      <tr key={item.id}>
+                        <td className="py-3 pr-3 font-medium">{item.display_name}</td>
+                        <td className="py-3 pr-3">{humanize(item.equipment_category)}</td>
+                        <td className="py-3 pr-3">{item.quality_score}</td>
+                        <td className="py-3 pr-3">{Number(item.condition_percent).toFixed(0)}%</td>
+                        <td className="py-3">{money(item.purchase_cost)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+
+          {equipmentData?.equipment_decider !== 'academy_director' ? (
+            <Card title={t('equipment.catalog')}>
+              <p className="mb-4 text-xs leading-5 text-slate-500">
+                {t('equipment.catalogHelp')}
+              </p>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {(equipmentData?.catalog ?? []).map(item => (
+                  <div
+                    key={item.id}
+                    className="rounded-xl border border-slate-200 bg-white p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-semibold text-slate-900">
+                          {item.display_name}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {humanize(item.equipment_category)} · {t('equipment.tier', {
+                            tier: item.tier,
+                          })}
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold">{money(item.price)}</div>
+                    </div>
+                    <div className="mt-3 flex gap-4 text-xs text-slate-500">
+                      <span>{t('equipment.quality')}: {item.quality_score}</span>
+                      <span>{t('equipment.durability')}: {item.durability_score}</span>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={data.read_only || equipmentAction !== null}
+                      onClick={() => void purchaseEquipment(item)}
+                      className="mt-4 w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                    >
+                      {equipmentAction === item.id
+                        ? t('equipment.purchasing')
+                        : t('equipment.purchase')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
+
+      {['calendar', 'rankings', 'history'].includes(tab) ? (
         <Card title={t(`tabs.${tab}`)}>
           <p className="text-sm leading-6 text-slate-600">
             {t(`placeholders.${tab}`)}
