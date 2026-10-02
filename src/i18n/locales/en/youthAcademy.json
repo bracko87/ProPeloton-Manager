@@ -187,6 +187,19 @@
       "resistance": "Resistance",
       "race_iq": "Race IQ",
       "teamwork": "Teamwork"
+    },
+    "incoming": {
+      "title": "Incoming Academy approaches",
+      "count": "{{count}} pending",
+      "none": "No incoming approaches",
+      "noneHelp": "Other Premium academies can approach your Youth Riders directly. Offers waiting for your decision will appear here.",
+      "approachFrom": "Approach from {{club}}",
+      "newStipend": "Offered weekly stipend",
+      "accommodation": "Offered accommodation",
+      "decisionHelp": "Accepting the Academy offer allows the rider and family to make the final relocation decision. Declining keeps the rider in your Academy.",
+      "accept": "Accept Academy offer",
+      "decline": "Decline",
+      "processing": "Processing…"
     }
   },
   "settings": {
@@ -227,6 +240,7 @@
     "save": "Could not save Youth Academy settings.",
     "scoutingLoad": "Could not load Youth scouting reports.",
     "scoutingRun": "Could not run the monthly Youth scouting cycle.",
-    "recruitmentOffer": "Could not submit the Youth recruitment offer."
+    "recruitmentOffer": "Could not submit the Youth recruitment offer.",
+    "incomingOffer": "Could not respond to the incoming Youth Academy offer."
   }
 }
