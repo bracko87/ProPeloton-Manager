@@ -255,7 +255,9 @@
     "financeLoad": "Impossible de charger les finances de l'Académie Jeunes.",
     "equipmentLoad": "Impossible de charger l'équipement de l'Académie Jeunes.",
     "equipmentPurchase": "Impossible d'acheter l'équipement de l'Académie Jeunes.",
-    "equipmentDirector": "Impossible de terminer la gestion d'équipement du Directeur de l'Académie Jeunes."
+    "equipmentDirector": "Impossible de terminer la gestion d'équipement du Directeur de l'Académie Jeunes.",
+    "graduationLoad": "Impossible de charger les décisions de sortie des jeunes.",
+    "graduationDecision": "Impossible de finaliser la décision de sortie du jeune."
   },
   "equipment": {
     "title": "Équipement jeunes",
@@ -279,5 +281,26 @@
     "purchase": "Acheter pour l'académie",
     "purchasing": "Achat…",
     "durability": "Durabilité"
+  },
+  "training": {
+    "title": "Philosophie de développement des jeunes",
+    "description": "Définissez la priorité générale d'entraînement de l'académie. L'entraîneur U16 la traduit en charges et axes individuels tout en protégeant fraîcheur et fatigue.",
+    "philosophy": "Philosophie d'entraînement de l'académie",
+    "options": {
+      "freshness": "Priorité à la fraîcheur",
+      "balanced": "Développement équilibré",
+      "development": "Priorité au développement"
+    }
+  },
+  "graduation": {
+    "title": "Décisions de sortie à 16 ans",
+    "pendingCount": "{{count}} en attente",
+    "none": "Aucun jeune coureur ne nécessite actuellement de décision de sortie.",
+    "decisionHelp": "À 16 ans, choisissez la prochaine étape. Le passage direct en équipe première n'est pas la voie normale.",
+    "pathway": "Parcours Jeune Diplômé de 30 jours",
+    "pathwayUntil": "Parcours jusqu'au {{date}}",
+    "pathwayHelp": "Ce parcours temporaire offre 30 jours de jeu pour intégrer le coureur à l'équipe de développement. Sinon, il devient coureur professionnel libre.",
+    "toDeveloping": "Vers l'équipe de développement ({{slots}} places)",
+    "release": "Libérer comme coureur professionnel libre"
   }
 }
