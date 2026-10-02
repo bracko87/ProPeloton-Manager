@@ -1575,14 +1575,52 @@ function isSportDirectorAdvisoryType(
 /* National Association / National Team / World Nations                      */
 /* -------------------------------------------------------------------------- */
 
+const WORLD_CPI_NOTIFICATION_IMAGE =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/world%20championship%20logo.webp'
+
+const CONSOLIDATED_NATIONAL_NOTIFICATION_TYPES = new Set([
+  'NATIONAL_ASSOCIATION_STATUS',
+  'NATIONAL_COACH_CANDIDATURE_OPEN',
+  'NATIONAL_COACH_VOTING_REQUIRED',
+  'NATIONAL_COACH_STATUS_CHANGED',
+  'NATIONAL_TEAM_SELECTION_WINDOW',
+  'NATIONAL_TEAM_CALLUP_REQUIRED',
+  'NATIONAL_TEAM_SQUAD_UPDATE',
+  'NATIONAL_TEAM_DUTY_UPDATE',
+  'NATIONS_DRAW_NEXT_ROUND',
+  'NATIONS_RACE_UPDATE',
+  'NATIONS_FINAL_INFO',
+  'NATIONS_FINAL_RESULT_MERGED',
+  'CHAMPIONSHIP_PARTICIPATION_REQUIRED',
+  'CHAMPIONSHIP_QUALIFICATION_UPDATE',
+  'CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED',
+  'CHAMPIONSHIP_RESULT',
+])
+
+function isConsolidatedNationalNotificationType(typeCode: string | null | undefined): boolean {
+  return CONSOLIDATED_NATIONAL_NOTIFICATION_TYPES.has(
+    String(typeCode ?? '').trim().toUpperCase()
+  )
+}
+
 function isNationalAssociationNotificationType(typeCode: string | null | undefined): boolean {
   const code = String(typeCode ?? '').trim().toUpperCase()
   return (
     code.startsWith('NATIONAL_ASSOCIATION_') ||
     code.startsWith('NATIONAL_COACH_') ||
     code.startsWith('NATIONAL_TEAM_') ||
-    code.startsWith('NATIONS_')
+    code.startsWith('NATIONS_') ||
+    isConsolidatedNationalNotificationType(code)
   )
+}
+
+function getNotificationSourceEventCode(item: NotificationItem): string {
+  const payload = getPayload(item)
+  return String(
+    pickFirstString(payload, ['source_event_code', 'source_type_code']) ||
+      item.type_code ||
+      ''
+  ).trim().toUpperCase()
 }
 
 function getNationalSystemCountryCode(item: NotificationItem): string | null {
@@ -1608,8 +1646,28 @@ function getNationalSystemFlagImage(item: NotificationItem): string | null {
 
 function getNationalSystemImage(item: NotificationItem): string | null {
   // A dedicated notification image always wins. When National Association /
-  // National Team / World Nations notices do not define one, show the nation flag.
+  // National Team notices do not define one, show the nation flag.
   return getImageSrcFromItem(item) || getNationalSystemFlagImage(item)
+}
+
+function getConsolidatedNationalNotificationImage(item: NotificationItem): string | null {
+  const typeCode = String(item.type_code ?? '').trim().toUpperCase()
+  const sourceCode = getNotificationSourceEventCode(item)
+  const payload = getPayload(item)
+  const scope = String(
+    pickFirstString(payload, ['competition_scope', 'competition_type', 'scope']) || ''
+  ).trim().toLowerCase()
+
+  const isInternational =
+    typeCode.startsWith('NATIONS_') ||
+    sourceCode.startsWith('NATIONS_') ||
+    sourceCode.startsWith('WORLD_ROAD_') ||
+    scope === 'world' ||
+    scope === 'international'
+
+  if (isInternational) return WORLD_CPI_NOTIFICATION_IMAGE
+
+  return getNationalSystemFlagImage(item)
 }
 
 function getNationalSystemCountryName(item: NotificationItem): string | null {
@@ -17006,6 +17064,20 @@ const CONSOLIDATED_NATIONAL_TEMPLATE_ALIAS: Record<string, string> = {
   CHAMPIONSHIP_RESULT: 'NATIONAL_CHAMPIONSHIP_FINAL_RESULT',
 }
 
+function getNotificationTemplateForItem(item: NotificationItem): NotificationTemplate | null {
+  const payload = getPayload(item)
+  const sourceCode = String(
+    pickFirstString(payload, ['source_event_code', 'source_type_code']) || ''
+  ).trim().toUpperCase()
+
+  if (sourceCode && sourceCode !== String(item.type_code ?? '').trim().toUpperCase()) {
+    const sourceTemplate = getNotificationTemplate(sourceCode)
+    if (sourceTemplate) return sourceTemplate
+  }
+
+  return getNotificationTemplate(item.type_code)
+}
+
 export function getNotificationTemplate(
   typeCode: string | null | undefined
 ): NotificationTemplate | null {
@@ -17055,7 +17127,7 @@ export function getNotificationTemplate(
  * - Templates only fill in missing values or optionally enrich them.
  */
 export function applyNotificationTemplate(item: NotificationItem): NotificationItem {
-  const template = getNotificationTemplate(item.type_code)
+  const template = getNotificationTemplateForItem(item)
   if (!template) return localizeNotificationItem(item)
 
   const enriched = template.enrich ? template.enrich(item) : item
@@ -17079,7 +17151,11 @@ export function applyNotificationTemplates(
 }
 
 export function getNotificationImageSrc(item: NotificationItem): string | null {
-  const template = getNotificationTemplate(item.type_code)
+  if (isConsolidatedNationalNotificationType(item.type_code)) {
+    return getConsolidatedNationalNotificationImage(item)
+  }
+
+  const template = getNotificationTemplateForItem(item)
 
   if (!template) {
     return isNationalAssociationNotificationType(item.type_code)
@@ -17100,15 +17176,26 @@ export function getNotificationImageSrc(item: NotificationItem): string | null {
 }
 
 export function getNotificationIntroText(item: NotificationItem): string | null {
-  const template = getNotificationTemplate(item.type_code)
+  const template = getNotificationTemplateForItem(item)
   const raw = template?.getIntroText?.(item) || buildIntroFromMessage(item)
+
+  if (!raw) return null
+
+  // applyNotificationTemplates already localized the main message. If a rich
+  // template reuses that exact message as its intro, do not run it through a
+  // second parser/localization pass (which previously moved rider first names
+  // to the end of the sentence).
+  if (raw.trim() === String(item.message ?? '').trim()) {
+    return String(item.message ?? '').trim() || null
+  }
+
   return localizeNotificationNarrative(raw, item)
 }
 
 export function getNotificationDetailRows(
   item: NotificationItem
 ): NotificationDetailRow[] {
-  const template = getNotificationTemplate(item.type_code)
+  const template = getNotificationTemplateForItem(item)
   const rows = template?.getDetailRows?.(item) || []
   return rows.map(row => ({
     label: localizeNotificationDetailLabel(row.label, item),
@@ -17117,14 +17204,14 @@ export function getNotificationDetailRows(
 }
 
 export function getNotificationExtraText(item: NotificationItem): string | null {
-  const template = getNotificationTemplate(item.type_code)
+  const template = getNotificationTemplateForItem(item)
   return localizeNotificationExtraText(template?.getExtraText?.(item) || null, item)
 }
 
 export function getNotificationActions(
   item: NotificationItem
 ): NotificationActionTemplate[] {
-  const template = getNotificationTemplate(item.type_code)
+  const template = getNotificationTemplateForItem(item)
   const actions = (template?.actions || [GENERIC_OPEN_ACTION, MARK_READ_ACTION]).map(action => ({
     ...action,
     label: localizeNotificationActionLabel(action.label),
@@ -17139,6 +17226,12 @@ export function getNotificationActions(
 
     return action.show ? action.show(item) : true
   })
+}
+
+export function isConsolidatedNationalNotification(
+  item: NotificationItem
+): boolean {
+  return isConsolidatedNationalNotificationType(item.type_code)
 }
 
 /**
