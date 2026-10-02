@@ -187,6 +187,19 @@
       "resistance": "Résistance",
       "race_iq": "QI de course",
       "teamwork": "Travail d'équipe"
+    },
+    "incoming": {
+      "title": "Approches reçues d'autres académies",
+      "count": "{{count}} en attente",
+      "none": "Aucune approche reçue",
+      "noneHelp": "D'autres académies Premium peuvent approcher directement vos jeunes coureurs. Les offres nécessitant votre décision apparaîtront ici.",
+      "approachFrom": "Approche de {{club}}",
+      "newStipend": "Allocation hebdomadaire proposée",
+      "accommodation": "Hébergement proposé",
+      "decisionHelp": "Accepter l'offre de l'académie permet ensuite au coureur et à sa famille de prendre la décision finale de déménagement. Un refus conserve le coureur dans votre Académie.",
+      "accept": "Accepter l'offre de l'académie",
+      "decline": "Refuser",
+      "processing": "Traitement…"
     }
   },
   "settings": {
@@ -227,6 +240,7 @@
     "save": "Impossible d'enregistrer les paramètres de l'Académie Jeunes.",
     "scoutingLoad": "Impossible de charger les rapports de scouting jeunes.",
     "scoutingRun": "Impossible de lancer le cycle mensuel de scouting jeunes.",
-    "recruitmentOffer": "Impossible d'envoyer l'offre de recrutement jeunes."
+    "recruitmentOffer": "Impossible d'envoyer l'offre de recrutement jeunes.",
+    "incomingOffer": "Impossible de répondre à l'approche reçue pour l'Académie Jeunes."
   }
 }
