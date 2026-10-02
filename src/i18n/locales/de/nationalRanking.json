@@ -95,7 +95,7 @@
     "overall": "Gesamt",
     "team": "Team",
     "qualificationStatus": "Qualifikationsstatus",
-    "freeAgent": "Free Agent",
+    "freeAgent": "Vereinslos",
     "pageRange": "{{from}}–{{to}} von {{total}}",
     "perPage": "{{count}} pro Seite",
     "previous": "Zurück",
@@ -121,7 +121,7 @@
     "titles": "{{count}} nationale Titel"
   },
   "common": {
-    "club": "Club",
+    "club": "Verein",
     "national": "National"
   },
   "status": {
