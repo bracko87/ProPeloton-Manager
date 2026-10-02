@@ -931,7 +931,9 @@
     "NATIONS_WORLD_FINAL_QUALIFIED": "Qualifié pour la Finale World Nations",
     "NATIONS_HOST_SELECTED": "Hôte de la Finale World Nations sélectionné",
     "NATIONS_FINAL_RESULT": "Finale World Nations terminée",
-    "NATIONS_CHAMPION": "Champion World Nations"
+    "NATIONS_CHAMPION": "Champion World Nations",
+    "NATIONAL_COACH_POSITION_VACANT": "Poste de sélectionneur national vacant",
+    "NATIONAL_COACH_RESIGNED": "Le sélectionneur national a démissionné"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Le plan de course nécessite votre attention : {{entity}}",
@@ -1357,6 +1359,16 @@
       "title": "Sélection de l’équipe ouverte pour {{roundLabel}}",
       "message": "Votre nation a atteint {{roundLabel}}. Sélectionnez un nouveau groupe de 10 coureurs pour {{group}}. Vous pouvez conserver les coureurs précédents ou choisir d’autres coureurs éligibles.",
       "extra": "Date limite du groupe définitif : {{finalSquadDeadline}}. Ouvrez l’onglet Effectif de l’Association nationale pour préparer la nouvelle fenêtre de compétition."
+    },
+    "coachPositionVacant": {
+      "title": "Poste de sélectionneur national vacant",
+      "message": "Le poste de sélectionneur national est vacant. Une élection de remplacement va commencer.",
+      "extra": "Les membres éligibles de l’Association pourront présenter leur candidature dès l’ouverture de l’élection de remplacement."
+    },
+    "coachResigned": {
+      "title": "Le sélectionneur national a démissionné",
+      "message": "Le sélectionneur national a démissionné. Une élection de remplacement va commencer.",
+      "extra": "L’Association reste active pendant le déroulement de l’élection de remplacement."
     }
   }
 }
