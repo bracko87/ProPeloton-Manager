@@ -42,6 +42,16 @@ type Workspace = {
   stage_plan?: JsonRecord | null
   equipment_presets?: JsonRecord[]
   saved_rider_plans?: Record<string, JsonRecord>
+  test_override?: boolean
+}
+
+type StageTiming = {
+  available?: boolean
+  current_game_ts?: string | null
+  stage_start_game_ts?: string | null
+  stage_lock_game_ts?: string | null
+  locked?: boolean
+  lock_policy?: string | null
 }
 
 type RiderCommands = Record<
@@ -132,6 +142,24 @@ function dateLabel(value?: string | null): string {
     month: 'long',
     timeZone: 'UTC',
   })
+}
+
+function formatGameTimestamp(value?: string | null): string {
+  if (!value) return '—'
+  const normalized = value.endsWith('Z') || /[+-]\d\d:\d\d$/.test(value)
+    ? value
+    : value + 'Z'
+  const date = new Date(normalized)
+  if (Number.isNaN(date.getTime())) return value
+
+  const season = Math.max(1, date.getUTCFullYear() - 1999)
+  const weekday = date.toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' })
+  const month = date.toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' })
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const hour = String(date.getUTCHours()).padStart(2, '0')
+  const minute = String(date.getUTCMinutes()).padStart(2, '0')
+
+  return 'S' + season + ' · ' + weekday + ' · ' + month + ' ' + day + ' · ' + hour + ':' + minute
 }
 
 function roleLabel(value?: string | null): string {
@@ -421,6 +449,7 @@ export default function NationalSpecialStagePlanV3({
   selection: NationalSpecialSelection
 }): JSX.Element {
   const [workspace, setWorkspace] = useState<Workspace | null>(null)
+  const [timing, setTiming] = useState<StageTiming | null>(null)
   const [roles, setRoles] = useState<Record<string, string>>({})
   const [equipmentByRider, setEquipmentByRider] = useState<Record<string, string>>({})
   const [commands, setCommands] = useState<RiderCommands>({})
@@ -432,7 +461,19 @@ export default function NationalSpecialStagePlanV3({
 
   const load = async () => {
     const next = await loadWorkspace(selection)
+
+    let nextTiming: StageTiming | null = null
+    if (next.stage_id) {
+      const timingResponse = await supabase.rpc('get_national_stage_plan_timing_v1', {
+        p_stage_id: next.stage_id,
+      })
+      if (!timingResponse.error) {
+        nextTiming = (timingResponse.data || null) as StageTiming | null
+      }
+    }
+
     setWorkspace(next)
+    setTiming(nextTiming)
 
     const nextCommands: RiderCommands = {}
     const nextRoles: Record<string, string> = {}
@@ -508,6 +549,7 @@ export default function NationalSpecialStagePlanV3({
 
   useEffect(() => {
     setWorkspace(null)
+    setTiming(null)
     setMessage(null)
     setError(null)
     void load().catch(caught => setError(caught?.message || 'Could not load National Stage Plan.'))
@@ -547,6 +589,13 @@ export default function NationalSpecialStagePlanV3({
   const hostCode = isTeam ? workspace.host_country_code : workspace.country_code
   const hostFlag = flagUrl(hostCode)
   const strategyOptions = isTT ? TTT_STRATEGIES : ROAD_STRATEGIES
+  const stageLocked = Boolean(timing?.locked) && !Boolean(workspace.test_override)
+  const stageStartLabel = timing?.stage_start_game_ts
+    ? formatGameTimestamp(timing.stage_start_game_ts)
+    : dateLabel(workspace.event_date)
+  const stageLockLabel = timing?.stage_lock_game_ts
+    ? formatGameTimestamp(timing.stage_lock_game_ts)
+    : '—'
   const racePath = selection.kind === 'national_team'
     ? '/dashboard/national-association/world-nations/events/' + selection.event.event_id
     : selection.event.event_type === 'final'
@@ -671,7 +720,7 @@ export default function NationalSpecialStagePlanV3({
               <div className="text-xs uppercase tracking-wide text-slate-500">Selected Stage Profile</div>
               <h3 className="mt-1 text-lg font-semibold text-slate-900">Stage 1: {profileTitle}</h3>
               <div className="mt-4 grid gap-2">
-                <CompactInfo label="Date" value={dateLabel(workspace.event_date)} />
+                <CompactInfo label="Date" value={stageStartLabel} />
                 <CompactInfo label="Route" value={routeLabel} />
                 <CompactInfo label="Profile" value={profileLabel} />
                 <CompactInfo
@@ -709,6 +758,36 @@ export default function NationalSpecialStagePlanV3({
         </section>
       ) : null}
 
+      {timing?.available ? (
+        <section className={'rounded-2xl border px-4 py-3 ' + (
+          stageLocked
+            ? 'border-red-200 bg-red-50 text-red-900'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+        )}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+            <span className="font-semibold">Stage Plan lock</span>
+            <span>·</span>
+            <span>Locks 3 hours before stage start</span>
+            <span>·</span>
+            <span>Lock time: {stageLockLabel}</span>
+            <span>·</span>
+            <span>Stage start: {stageStartLabel}</span>
+            <span className={'rounded-full px-2 py-0.5 text-[11px] font-semibold ' + (
+              stageLocked
+                ? 'bg-red-100 text-red-800'
+                : 'bg-emerald-100 text-emerald-800'
+            )}>
+              Status: {stageLocked ? 'Locked' : 'Open'}
+            </span>
+          </div>
+          <div className="mt-1 text-xs">
+            {stageLocked
+              ? 'This Stage Plan is locked because the three-hour cutoff has been reached.'
+              : 'This Stage Plan is still open and can be edited until the lock time is reached.'}
+          </div>
+        </section>
+      ) : null}
+
       <section className="rounded-2xl border bg-white p-4 shadow-sm">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Stages</div>
         <div className={'mt-3 rounded-2xl border p-4 ' + (saved ? 'border-emerald-200 bg-emerald-50/40' : 'border-yellow-300 bg-yellow-50/70')}>
@@ -736,7 +815,7 @@ export default function NationalSpecialStagePlanV3({
           </div>
           <button
             type="button"
-            disabled={saving || (isTeam && completePresets.length === 0)}
+            disabled={saving || stageLocked || (isTeam && completePresets.length === 0)}
             onClick={() => void save()}
             className="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
           >
@@ -759,7 +838,7 @@ export default function NationalSpecialStagePlanV3({
             </div>
             <button
               type="button"
-              disabled={saving || (isTeam && completePresets.length === 0)}
+              disabled={saving || stageLocked || (isTeam && completePresets.length === 0)}
               onClick={() => void save()}
               className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300 disabled:bg-slate-200 disabled:text-slate-500"
             >
@@ -781,6 +860,7 @@ export default function NationalSpecialStagePlanV3({
                   <div className="mt-1 text-xs text-slate-500">{roleLabel(rider.role)}{rider.club_name ? ' · ' + rider.club_name : ''}</div>
                 </div>
                 <select
+                  disabled={stageLocked}
                   value={equipmentByRider[rider.rider_id] || ''}
                   onChange={event => {
                     setEquipmentByRider(current => ({ ...current, [rider.rider_id]: event.target.value }))
@@ -817,7 +897,7 @@ export default function NationalSpecialStagePlanV3({
             {isTeam ? (
               <button
                 type="button"
-                disabled={saving}
+                disabled={saving || stageLocked}
                 onClick={() => void save()}
                 className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300"
               >
@@ -832,6 +912,7 @@ export default function NationalSpecialStagePlanV3({
             <label className="mt-4 block">
               <span className="text-sm font-medium text-slate-700">Pacing plan</span>
               <select
+                disabled={stageLocked}
                 value={teamStrategy}
                 onChange={event => {
                   setTeamStrategy(event.target.value)
@@ -857,6 +938,7 @@ export default function NationalSpecialStagePlanV3({
                   </div>
                   {isTeam ? (
                     <select
+                      disabled={stageLocked}
                       value={roles[rider.rider_id] || (isTT ? 'team_time_trial_rider' : 'free_role')}
                       onChange={event => {
                         setRoles(current => ({ ...current, [rider.rider_id]: event.target.value }))
@@ -890,7 +972,7 @@ export default function NationalSpecialStagePlanV3({
           </div>
           <button
             type="button"
-            disabled={saving}
+            disabled={saving || stageLocked}
             onClick={() => void save()}
             className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300"
           >
@@ -927,6 +1009,7 @@ export default function NationalSpecialStagePlanV3({
                   {visiblePhases.map(phase => (
                     <select
                       key={phase.key}
+                      disabled={stageLocked}
                       value={(commands[rider.rider_id] || defaultCommands())[phase.key].command}
                       onChange={event => updateCommand(rider.rider_id, phase.key, event.target.value)}
                       className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
