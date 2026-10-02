@@ -673,7 +673,10 @@
     "SELECTED": "Odabran",
     "SQUAD": "Sastav",
     "VOTING": "Glasanje",
-    "WORLD": "Svijet"
+    "WORLD": "Svijet",
+    "POSITION": "Mjesto",
+    "RESIGNED": "Podnio ostavku",
+    "VACANT": "Upražnjeno"
   },
   "reportVariants": {
     "rider_skill_change": "Promjena vještine vozača",
