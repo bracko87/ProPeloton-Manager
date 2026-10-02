@@ -818,7 +818,8 @@
     "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "World Championship invitation",
     "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "World Championship confirmation",
     "WORLD_ROAD_CHAMPIONSHIP_RESULT": "World Championship result",
-    "WORLD_ROAD_CHAMPION": "World Road Champion"
+    "WORLD_ROAD_CHAMPION": "World Road Champion",
+    "NATIONAL_TEAM_NEW_SELECTION_WINDOW": "New National Team selection window"
   },
   "richReports": {
     "common": {
@@ -1220,6 +1221,11 @@
       "title": "National Duty completed for {{rider}}",
       "message": "{{rider}} has completed National Duty with {{association}} and is available to the club again.",
       "extra": "Normal health, fatigue and race-availability rules still apply after National Duty ends."
+    },
+    "newSelectionWindow": {
+      "title": "{{roundLabel}} squad selection is open",
+      "message": "Your nation has entered {{roundLabel}}. Select a fresh 10-rider squad for {{group}}. You may keep the previous riders or choose different eligible riders.",
+      "extra": "Final squad deadline: {{finalSquadDeadline}}. Open National Association Squad to prepare the new competition window."
     }
   }
 }
