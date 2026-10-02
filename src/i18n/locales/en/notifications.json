@@ -845,7 +845,25 @@
     "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "World Championship confirmation",
     "WORLD_ROAD_CHAMPIONSHIP_RESULT": "World Championship result",
     "WORLD_ROAD_CHAMPION": "World Road Champion",
-    "NATIONAL_TEAM_NEW_SELECTION_WINDOW": "New National Team selection window"
+    "NATIONAL_TEAM_NEW_SELECTION_WINDOW": "{{roundLabel}} squad selection is open",
+    "NATIONAL_ASSOCIATION_ACTIVATED": "{{country}} National Association activated",
+    "NATIONAL_COACH_ELECTION_OPEN": "National Coach candidature is open",
+    "NATIONAL_COACH_VOTING_OPEN": "National Coach voting is open",
+    "NATIONAL_COACH_RUNOFF_OPEN": "National Coach runoff is open",
+    "NATIONAL_COACH_ELECTED": "National Coach elected",
+    "NATIONAL_TEAM_CALLUP_RECEIVED": "{{rider}} called up for the National Team",
+    "NATIONAL_TEAM_CALLUP_RESPONSE": "{{rider}} call-up: {{status}}",
+    "NATIONAL_TEAM_SQUAD_CONFIRMED": "National Team squad confirmed",
+    "NATIONAL_TEAM_DUTY_STARTED": "National Duty started for {{rider}}",
+    "NATIONAL_TEAM_DUTY_COMPLETED": "National Duty completed for {{rider}}",
+    "NATIONS_QUALIFICATION_DRAW": "{{roundLabel}} draw confirmed",
+    "NATIONS_RACE_RESULT": "{{roundLabel}} · Day {{raceDay}} completed",
+    "NATIONS_ADVANCED": "Advanced in the World Nations Championship",
+    "NATIONS_ELIMINATED": "World Nations Championship run ended",
+    "NATIONS_WORLD_FINAL_QUALIFIED": "Qualified for the World Nations Final",
+    "NATIONS_HOST_SELECTED": "World Nations Final host selected",
+    "NATIONS_FINAL_RESULT": "World Nations Final completed",
+    "NATIONS_CHAMPION": "World Nations Champion"
   },
   "richReports": {
     "common": {
