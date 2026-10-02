@@ -1997,8 +1997,8 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
         label: 'Open race',
         variant: 'primary',
         kind: 'navigate',
-        getHref: (item) => getRaceHrefFromItem(item),
-        show: (item) => Boolean(getRaceHrefFromItem(item)),
+        getHref: (item) => getRacePageHref(item),
+        show: (item) => Boolean(getRacePageHref(item)),
       },
       {
         key: 'open-world-nations',
