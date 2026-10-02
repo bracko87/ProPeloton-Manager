@@ -280,6 +280,9 @@ function formatGameDate(value?: string | null): string {
   })
 }
 
+const EMPTY_OVERVIEW_EVENTS: OverviewEvent[] = []
+const EMPTY_OVERVIEW_LINEUP_RIDERS: NonNullable<OverviewLineup['riders']> = []
+
 function statusClasses(status?: string | null): string {
   if (status === 'active' || status === 'completed' || status === 'accepted' || status === 'auto_accepted') {
     return 'bg-emerald-100 text-emerald-800'
@@ -594,13 +597,13 @@ export default function NationalAssociationPage(): JSX.Element {
   }, [dashboard?.riders, riderSearch])
 
   const isCoach = dashboard?.allowed === true
-  const upcomingEvents = overview?.upcoming_events ?? []
+  const upcomingEvents = overview?.upcoming_events ?? EMPTY_OVERVIEW_EVENTS
   const selectedOverviewEvent =
     upcomingEvents.find(event => event.event_id === selectedOverviewEventId) ??
     upcomingEvents[0] ??
     null
   const selectedEventLineup = selectedOverviewEvent?.lineup ?? null
-  const selectedEventMembers = selectedEventLineup?.riders ?? []
+  const selectedEventMembers = selectedEventLineup?.riders ?? EMPTY_OVERVIEW_LINEUP_RIDERS
 
   useEffect(() => {
     let cancelled = false
@@ -610,7 +613,9 @@ export default function NationalAssociationPage(): JSX.Element {
     )
 
     if (!riderIds.length) {
-      setSelectedRiderIdentities({})
+      setSelectedRiderIdentities(current =>
+        Object.keys(current).length > 0 ? {} : current,
+      )
       return () => {
         cancelled = true
       }
@@ -688,11 +693,20 @@ export default function NationalAssociationPage(): JSX.Element {
 
   useEffect(() => {
     if (!upcomingEvents.length) {
-      setSelectedOverviewEventId(null)
+      if (selectedOverviewEventId !== null) {
+        setSelectedOverviewEventId(null)
+      }
       return
     }
-    if (!selectedOverviewEventId || !upcomingEvents.some(event => event.event_id === selectedOverviewEventId)) {
-      setSelectedOverviewEventId(upcomingEvents[0].event_id)
+
+    if (
+      !selectedOverviewEventId ||
+      !upcomingEvents.some(event => event.event_id === selectedOverviewEventId)
+    ) {
+      const nextEventId = upcomingEvents[0]?.event_id ?? null
+      if (nextEventId !== selectedOverviewEventId) {
+        setSelectedOverviewEventId(nextEventId)
+      }
     }
   }, [selectedOverviewEventId, upcomingEvents])
 
