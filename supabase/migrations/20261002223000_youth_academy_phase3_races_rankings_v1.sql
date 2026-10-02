@@ -266,12 +266,11 @@ declare
 begin
   for v_month in 1..12 loop
     foreach v_region in array v_regions loop
-      for v_round in 1..2 loop
-        v_day:=case v_round when 1 then 6 else 20 end+
-          case v_region
-            when 'europe' then 0 when 'americas' then 1 when 'asia' then 2
-            when 'africa' then 3 when 'oceania' then 4 else 5 end;
-        if v_day>28 then v_day:=28; end if;
+      -- Twelve available regional events per Academy region each month. Riders
+      -- still have strict age-based start limits, so Academies select only the
+      -- events that fit development, fatigue and profile.
+      for v_round in 1..12 loop
+        v_day:=v_round*2;
 
         v_date:=public.game_date_from_parts(v_season,v_month,v_day);
         v_terrain:=(array['flat','hilly','mountain','mixed','time_trial'])
@@ -286,7 +285,7 @@ begin
         )
         values(
           v_season,v_date,v_name,'regional',v_region,v_terrain,
-          48+v_month+v_round*4,150,5,null,
+          42+v_month+v_round*2,150,5,null,
           jsonb_build_object('calendar_source','phase3','series','regional_youth_cup')
         )
         on conflict(season_number,race_date,race_name) do nothing;
