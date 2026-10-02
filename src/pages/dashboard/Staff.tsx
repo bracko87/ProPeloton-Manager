@@ -15,6 +15,9 @@ type StaffRole =
   | 'sport_director'
   | 'scout_analyst'
   | 'u23_head_coach'
+  | 'youth_academy_director'
+  | 'u16_head_coach'
+  | 'youth_scout'
 
 type ClubRow = {
   id: string
@@ -29,7 +32,7 @@ type ClubStaffRow = {
   club_id: string
   role_type: StaffRole
   specialization: string | null
-  team_scope: 'first_team' | 'u23' | 'all'
+  team_scope: 'first_team' | 'u23' | 'youth' | 'all'
   staff_name: string
   country_code: string | null
   expertise: number
@@ -165,7 +168,7 @@ type StaffListMember = {
   contractExpiresAt: string | null
   contractPrimaryLabel: string
   contractSecondaryLabel: string
-  teamScope: 'first_team' | 'u23' | 'all'
+  teamScope: 'first_team' | 'u23' | 'youth' | 'all'
   birthDate: string | null
   ageYears: number | null
   stats: StaffStat[]
@@ -269,6 +272,24 @@ const ROLE_TABS: RoleTabMeta[] = [
     subtitle: 'Planned developing-team training and U23 race tactical support.',
     impactAreas: ['U23 training', 'Youth development', 'U23 race tactics'],
   },
+  {
+    role: 'youth_academy_director',
+    label: 'Youth Academy Director',
+    subtitle: 'Runs the U16 academy programme, budget, recruitment delegation and operating requests.',
+    impactAreas: ['Academy budget', 'Recruitment management', 'Youth programme'],
+  },
+  {
+    role: 'u16_head_coach',
+    label: 'U16 Head Coach',
+    subtitle: 'Controls U16 training, workload, development focus and youth race selection.',
+    impactAreas: ['U16 training', 'Workload management', 'Race selection'],
+  },
+  {
+    role: 'youth_scout',
+    label: 'Youth Scout',
+    subtitle: 'Finds and assesses U16 prospects inside the funded Youth Academy scouting range.',
+    impactAreas: ['Youth scouting', 'Talent assessment', 'Recruitment reach'],
+  },
 ]
 
 const ROLE_TRANSLATION_KEYS = {
@@ -281,6 +302,9 @@ const ROLE_TRANSLATION_KEYS = {
   sport_director: { label: 'roles.sportDirector.label', subtitle: 'roles.sportDirector.subtitle' },
   scout_analyst: { label: 'roles.scoutAnalyst.label', subtitle: 'roles.scoutAnalyst.subtitle' },
   u23_head_coach: { label: 'roles.u23HeadCoach.label', subtitle: 'roles.u23HeadCoach.subtitle' },
+  youth_academy_director: { label: 'roles.youthAcademyDirector.label', subtitle: 'roles.youthAcademyDirector.subtitle' },
+  u16_head_coach: { label: 'roles.u16HeadCoach.label', subtitle: 'roles.u16HeadCoach.subtitle' },
+  youth_scout: { label: 'roles.youthScout.label', subtitle: 'roles.youthScout.subtitle' },
 } as const satisfies Record<StaffRole, { label: string; subtitle: string }>
 
 const IMPACT_AREA_TRANSLATION_KEYS = {
@@ -309,6 +333,15 @@ const IMPACT_AREA_TRANSLATION_KEYS = {
   'U23 training': 'impactAreas.u23Training',
   'Youth development': 'impactAreas.youthDevelopment',
   'U23 race tactics': 'impactAreas.u23RaceTactics',
+  'Academy budget': 'impactAreas.academyBudget',
+  'Recruitment management': 'impactAreas.recruitmentManagement',
+  'Youth programme': 'impactAreas.youthProgramme',
+  'U16 training': 'impactAreas.u16Training',
+  'Workload management': 'impactAreas.workloadManagement',
+  'Race selection': 'impactAreas.raceSelection',
+  'Youth scouting': 'impactAreas.youthScouting',
+  'Talent assessment': 'impactAreas.talentAssessment',
+  'Recruitment reach': 'impactAreas.recruitmentReach',
 } as const
 
 const QUALITY_TRANSLATION_KEYS = {
@@ -556,6 +589,57 @@ const STAFF_ROLE_INFORMATION: Record<StaffRole, StaffRoleInformation> = {
       'When U23 automation is enabled, coach quality also contributes a capped Race Support bonus to the universal race engine.',
     ],
   },
+  youth_academy_director: {
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'One Youth Academy Director after the Premium Youth Academy is activated.',
+    purpose: 'Runs the U16 academy programme, operating budget, recruitment delegation, camps and spending requests.',
+    attributes: [
+      'Expertise supports programme quality and financial recommendations.',
+      'Leadership supports delegated recruitment and academy decisions.',
+      'Efficiency improves operating planning and budget use.',
+      'Experience improves consistency of academy recommendations.',
+    ],
+    gameplay: [
+      'Included automatically at average quality on first Youth Academy activation.',
+      'Can own delegated recruitment, race-entry, camp, equipment and prospect-negotiation decisions.',
+      'Youth Academy V1 has no infrastructure dependency.',
+    ],
+  },
+  u16_head_coach: {
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'One U16 Head Coach after the Premium Youth Academy is activated.',
+    purpose: 'Controls U16 training, workload, development emphasis, readiness and normal youth-race squad selection.',
+    attributes: [
+      'Expertise represents U16 training quality.',
+      'Efficiency supports workload and recovery planning.',
+      'Potential supports long-term development decisions.',
+      'Leadership supports race selection and team development.',
+    ],
+    gameplay: [
+      'Included automatically at average quality on first Youth Academy activation.',
+      'Owns race squad selection when that responsibility is delegated.',
+      'Youth Academy V1 has no infrastructure dependency.',
+    ],
+  },
+  youth_scout: {
+    statusLabel: 'Live',
+    statusClassName: 'bg-emerald-100 text-emerald-700',
+    capacitySummary: 'One optional Youth Scout per activated Premium Youth Academy.',
+    purpose: 'Discovers and assesses U16 prospects inside the scouting range funded from the Youth Academy budget.',
+    attributes: [
+      'Expertise improves prospect evaluation.',
+      'Experience improves discovery volume and network quality.',
+      'Efficiency improves assessment confidence.',
+      'Potential supports talent recognition.',
+    ],
+    gameplay: [
+      'Not assigned automatically; the manager may hire a Youth Scout from the Staff market.',
+      'Scouting budget controls geographic reach: Local, Regional, Continental or Worldwide.',
+      'Scout quality controls discovery effectiveness and assessment quality, not hidden Potential.',
+    ],
+  },
 }
 
 const gainLabelsByRole: Record<StaffRole, Record<string, string>> = {
@@ -631,6 +715,30 @@ const gainLabelsByRole: Record<StaffRole, Record<string, string>> = {
     efficiency_gain: 'Training Efficiency',
     loyalty_gain: 'Loyalty',
   },
+  youth_academy_director: {
+    expertise_gain: 'Academy Management',
+    experience_gain: 'Experience',
+    potential_gain: 'Long-Term Planning',
+    leadership_gain: 'Leadership',
+    efficiency_gain: 'Budget Efficiency',
+    loyalty_gain: 'Loyalty',
+  },
+  u16_head_coach: {
+    expertise_gain: 'U16 Training',
+    experience_gain: 'Experience',
+    potential_gain: 'Youth Development',
+    leadership_gain: 'Race Selection',
+    efficiency_gain: 'Workload Management',
+    loyalty_gain: 'Loyalty',
+  },
+  youth_scout: {
+    expertise_gain: 'Youth Evaluation',
+    experience_gain: 'Discovery Network',
+    potential_gain: 'Talent Sense',
+    leadership_gain: 'Communication',
+    efficiency_gain: 'Assessment Accuracy',
+    loyalty_gain: 'Loyalty',
+  },
 }
 
 function isStaffRole(value: string | null | undefined): value is StaffRole {
@@ -643,7 +751,10 @@ function isStaffRole(value: string | null | undefined): value is StaffRole {
     value === 'mechanic' ||
     value === 'sport_director' ||
     value === 'scout_analyst' ||
-    value === 'u23_head_coach'
+    value === 'u23_head_coach' ||
+    value === 'youth_academy_director' ||
+    value === 'u16_head_coach' ||
+    value === 'youth_scout'
   )
 }
 
@@ -957,6 +1068,14 @@ function getRoleInfrastructureWarning(
   role: StaffRole,
   infrastructure: ClubInfrastructureRow | null
 ) {
+  if (
+    role === 'youth_academy_director' ||
+    role === 'u16_head_coach' ||
+    role === 'youth_scout'
+  ) {
+    return null
+  }
+
   if (!infrastructure) return null
 
   if (
@@ -1261,6 +1380,14 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
         focusLabel: 'Youth Training + Leadership',
       },
     ]
+  }
+
+  if (
+    role === 'youth_academy_director' ||
+    role === 'u16_head_coach' ||
+    role === 'youth_scout'
+  ) {
+    return []
   }
 
   if (role === 'scout_analyst') {
@@ -1671,6 +1798,32 @@ function buildEffects(
       'Planned: U23 training support',
       'Planned: developing-team race tactics',
       'Planned: young rider development boost',
+    ]
+  }
+
+  if (role === 'youth_academy_director') {
+    return [
+      'Youth Academy programme and budget management',
+      'Delegated recruitment and operating decisions',
+      'No infrastructure dependency in V1',
+    ]
+  }
+
+  if (role === 'u16_head_coach') {
+    return [
+      'U16 training and workload management',
+      'Youth rider development planning',
+      'Youth race squad selection when delegated',
+    ]
+  }
+
+  if (role === 'youth_scout') {
+    const discoveryBonus = Math.max(2, Math.floor(row.experience / 15))
+    const assessmentBonus = Math.max(2, Math.floor(row.expertise / 15))
+    return [
+      `+${discoveryBonus}% youth prospect discovery support`,
+      `+${assessmentBonus}% youth assessment quality`,
+      'Scouting range is funded from the Youth Academy budget',
     ]
   }
 
@@ -2561,6 +2714,39 @@ function mapStats(role: StaffRole, row: ClubStaffRow): StaffStat[] {
     ]
   }
 
+  if (role === 'youth_academy_director') {
+    return [
+      { label: 'Academy Management', value: row.expertise },
+      { label: 'Budget Efficiency', value: row.efficiency },
+      { label: 'Long-Term Planning', value: row.potential },
+      { label: 'Experience', value: row.experience },
+      { label: 'Leadership', value: row.leadership },
+      { label: 'Loyalty', value: row.loyalty },
+    ]
+  }
+
+  if (role === 'u16_head_coach') {
+    return [
+      { label: 'U16 Training', value: row.expertise },
+      { label: 'Workload Management', value: row.efficiency },
+      { label: 'Youth Development', value: row.potential },
+      { label: 'Experience', value: row.experience },
+      { label: 'Race Selection', value: row.leadership },
+      { label: 'Loyalty', value: row.loyalty },
+    ]
+  }
+
+  if (role === 'youth_scout') {
+    return [
+      { label: 'Youth Evaluation', value: row.expertise },
+      { label: 'Discovery Network', value: row.experience },
+      { label: 'Assessment Accuracy', value: row.efficiency },
+      { label: 'Talent Sense', value: row.potential },
+      { label: 'Communication', value: row.leadership },
+      { label: 'Loyalty', value: row.loyalty },
+    ]
+  }
+
   return [
     { label: 'Evaluation', value: row.expertise },
     { label: 'Network', value: row.experience },
@@ -2702,6 +2888,11 @@ function getImpactPanelTitle(role: StaffRole) {
   if (role === 'mechanic') return 'Technical Staff Impact'
   if (role === 'sport_director') return 'Race Staff Impact'
   if (role === 'u23_head_coach') return 'Developing Team Staff Impact'
+  if (
+    role === 'youth_academy_director' ||
+    role === 'u16_head_coach' ||
+    role === 'youth_scout'
+  ) return 'Youth Academy Staff Impact'
 
   return 'Scouting Staff Impact'
 }
@@ -2903,6 +3094,34 @@ function buildAggregateEffectSummary(
     ]
   }
 
+  if (role === 'youth_academy_director') {
+    return [
+      'Youth Academy budget and programme oversight active.',
+      'Delegated academy decisions use this role when enabled in Youth Academy responsibilities.',
+      'No infrastructure cap applies in Youth Academy V1.',
+    ]
+  }
+
+  if (role === 'u16_head_coach') {
+    const training = Math.max(2, Math.floor(getStatValue(activeMembers[0], 'U16 Training') / 12))
+    const workload = Math.max(1, Math.floor(getStatValue(activeMembers[0], 'Workload Management') / 18))
+    return [
+      `+${training}% U16 coaching support`,
+      `+${workload}% workload-planning support`,
+      'Controls youth race squad selection when delegated.',
+    ]
+  }
+
+  if (role === 'youth_scout') {
+    const discovery = Math.max(2, Math.floor(getStatValue(activeMembers[0], 'Discovery Network') / 15))
+    const accuracy = Math.max(2, Math.floor(getStatValue(activeMembers[0], 'Youth Evaluation') / 15))
+    return [
+      `+${discovery}% prospect discovery support`,
+      `+${accuracy}% assessment support`,
+      'Geographic reach is controlled by Youth Academy scouting budget.',
+    ]
+  }
+
   const scoutingScore = activeMembers.reduce(
     (sum, member) => sum + Math.max(2, Math.floor(getStatValue(member, 'Evaluation') / 15)),
     0
@@ -3022,7 +3241,9 @@ function StaffListRow({
       ? t('common.firstTeam')
       : staff.teamScope === 'u23'
         ? t('common.u23')
-        : t('common.all')
+        : staff.teamScope === 'youth'
+          ? t('common.youthAcademy')
+          : t('common.all')
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
@@ -3157,7 +3378,11 @@ function RoleContributionPanel({
     <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <div className="text-base font-semibold text-gray-900">{t(role === 'head_coach' || role === 'trainer' ? 'impactI18n.coachingTitle' : role === 'team_doctor' || role === 'physio' || role === 'nutritionist' ? 'impactI18n.medicalTitle' : role === 'mechanic' ? 'impactI18n.mechanicTitle' : role === 'sport_director' ? 'impactI18n.directorTitle' : role === 'u23_head_coach' ? 'impactI18n.u23Title' : 'impactI18n.scoutingTitle')}</div>
+          <div className="text-base font-semibold text-gray-900">{t(role === 'head_coach' || role === 'trainer' ? 'impactI18n.coachingTitle' : role === 'team_doctor' || role === 'physio' || role === 'nutritionist' ? 'impactI18n.medicalTitle' : role === 'mechanic' ? 'impactI18n.mechanicTitle' : role === 'sport_director' ? 'impactI18n.directorTitle' : role === 'u23_head_coach'
+              ? 'impactI18n.u23Title'
+              : role === 'youth_academy_director' || role === 'u16_head_coach' || role === 'youth_scout'
+                ? 'impactI18n.youthTitle'
+                : 'impactI18n.scoutingTitle')}</div>
           <div className="mt-1 text-sm text-gray-500">{t(roleKeys.subtitle)}</div>
         </div>
 
@@ -3310,7 +3535,9 @@ function StaffDetailModal({
       ? t('common.firstTeam')
       : staff.teamScope === 'u23'
         ? t('common.u23')
-        : t('common.all')
+        : staff.teamScope === 'youth'
+          ? t('common.youthAcademy')
+          : t('common.all')
 
   const qualityPanel = buildStaffQualityPanel(staff, infrastructure)
   const qualityExplanation = buildStaffQualityExplanation(staff.role, infrastructure)
@@ -4493,6 +4720,9 @@ export default function StaffPage() {
       sport_director: [],
       scout_analyst: [],
       u23_head_coach: [],
+      youth_academy_director: [],
+      u16_head_coach: [],
+      youth_scout: [],
     }
 
     for (const member of staffMembers) {
@@ -4503,12 +4733,29 @@ export default function StaffPage() {
   }, [staffMembers])
 
   const visibleRoleTabs = useMemo(
-    () => isPremium ? ROLE_TABS : ROLE_TABS.filter((roleMeta) => roleMeta.role !== 'u23_head_coach'),
+    () => isPremium
+      ? ROLE_TABS
+      : ROLE_TABS.filter(
+          (roleMeta) =>
+            roleMeta.role !== 'u23_head_coach' &&
+            roleMeta.role !== 'youth_academy_director' &&
+            roleMeta.role !== 'u16_head_coach' &&
+            roleMeta.role !== 'youth_scout'
+        ),
     [isPremium]
   )
 
   useEffect(() => {
-    if (!isPremiumLoading && !isPremium && selectedRole === 'u23_head_coach') {
+    if (
+      !isPremiumLoading &&
+      !isPremium &&
+      (
+        selectedRole === 'u23_head_coach' ||
+        selectedRole === 'youth_academy_director' ||
+        selectedRole === 'u16_head_coach' ||
+        selectedRole === 'youth_scout'
+      )
+    ) {
       setSelectedRole('head_coach')
     }
   }, [isPremium, isPremiumLoading, selectedRole])
