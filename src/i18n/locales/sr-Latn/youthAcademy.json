@@ -200,7 +200,8 @@
       "accept": "Prihvati ponudu akademije",
       "decline": "Odbij",
       "processing": "Obrada…"
-    }
+    },
+    "awaitingAcademyResponse": "Čeka se odgovor akademije"
   },
   "settings": {
     "title": "Odgovornosti",
