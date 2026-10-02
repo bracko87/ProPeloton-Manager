@@ -91,7 +91,17 @@
     "committed": "Committed",
     "available": "Available",
     "scoutingAllocation": "Scouting allocation",
-    "scoutingHelp": "{{range}} scouting programme cost. Scouting reach is controlled by budget, not infrastructure."
+    "scoutingHelp": "{{range}} scouting programme cost. Scouting reach is controlled by budget, not infrastructure.",
+    "weeklyRiderSupport": "Weekly rider support",
+    "weeklyStaff": "Weekly Academy staff",
+    "equipmentSpend": "Equipment spend this season",
+    "ledger": "Academy transaction history",
+    "loadingLedger": "Loading…",
+    "noLedger": "No Academy transactions recorded yet.",
+    "date": "Date",
+    "category": "Category",
+    "description": "Description",
+    "amount": "Amount"
   },
   "scouting": {
     "title": "Youth scouting range",
@@ -232,7 +242,6 @@
   "placeholders": {
     "calendar": "The separate U16 calendar and lightweight race engine will be connected in the next implementation phase. Youth race entry costs will remain mainly travel/logistics costs.",
     "rankings": "Regional Youth Ranking and Youth World Ranking foundation will be connected with the U16 race calendar.",
-    "equipment": "Youth Academy will own separate equipment, reusing a curated lower-cost subset of the existing equipment catalogue and images.",
     "history": "Academy graduates, youth results and long-term development history will remain attached to riders after graduation."
   },
   "errors": {
@@ -242,6 +251,33 @@
     "scoutingLoad": "Could not load Youth scouting reports.",
     "scoutingRun": "Could not run the monthly Youth scouting cycle.",
     "recruitmentOffer": "Could not submit the Youth recruitment offer.",
-    "incomingOffer": "Could not respond to the incoming Youth Academy offer."
+    "incomingOffer": "Could not respond to the incoming Youth Academy offer.",
+    "financeLoad": "Could not load Youth Academy finances.",
+    "equipmentLoad": "Could not load Youth Academy equipment.",
+    "equipmentPurchase": "Could not purchase Youth Academy equipment.",
+    "equipmentDirector": "Could not complete the Youth Academy Director equipment run."
+  },
+  "equipment": {
+    "title": "Youth equipment",
+    "description": "The Youth Academy owns separate U16 equipment. It reuses lower-cost tier 1–2 models from the existing equipment catalogue and pays for them from the Academy season budget.",
+    "managerManaged": "Manager controlled",
+    "directorManaged": "Academy Director controlled",
+    "directorHelp": "The Youth Academy Director buys the lowest-cost eligible missing equipment by category while respecting the remaining Academy budget.",
+    "runDirector": "Let Director equip Academy",
+    "equipping": "Equipping…",
+    "inventory": "Academy equipment inventory",
+    "itemsOwned": "{{count}} item(s)",
+    "noInventory": "The Youth Academy does not own equipment yet.",
+    "item": "Item",
+    "category": "Category",
+    "quality": "Quality",
+    "condition": "Condition",
+    "cost": "Academy cost",
+    "catalog": "Low-cost Youth catalogue",
+    "catalogHelp": "Only durable tier 1–2 equipment from the existing club catalogue is available here. These are separate Youth Academy purchases and do not use professional club cash.",
+    "tier": "Tier {{tier}}",
+    "purchase": "Buy for Academy",
+    "purchasing": "Buying…",
+    "durability": "Durability"
   }
 }
