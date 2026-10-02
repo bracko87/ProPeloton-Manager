@@ -240,8 +240,6 @@
     }
   },
   "placeholders": {
-    "calendar": "Il calendario U16 separato e il motore di gara semplificato saranno collegati nella prossima fase. I costi delle gare giovanili resteranno principalmente costi di viaggio e logistica.",
-    "rankings": "Le basi della Classifica Giovanile Regionale e della Youth World Ranking saranno collegate al calendario U16.",
     "history": "Diplomati dell'accademia, risultati giovanili e storico di sviluppo a lungo termine resteranno collegati ai corridori dopo il passaggio ai professionisti."
   },
   "errors": {
@@ -257,7 +255,11 @@
     "equipmentPurchase": "Impossibile acquistare l'attrezzatura dell'Accademia Giovanile.",
     "equipmentDirector": "Impossibile completare l'operazione attrezzatura del Direttore dell'Accademia Giovanile.",
     "graduationLoad": "Impossibile caricare le decisioni di uscita giovanile.",
-    "graduationDecision": "Impossibile completare la decisione di uscita giovanile."
+    "graduationDecision": "Impossibile completare la decisione di uscita giovanile.",
+    "calendarLoad": "Impossibile caricare il calendario giovanile.",
+    "rankingsLoad": "Impossibile caricare i ranking giovanili.",
+    "raceEntry": "Impossibile iscrivere la gara giovanile.",
+    "raceLineup": "Impossibile salvare la formazione giovanile."
   },
   "equipment": {
     "title": "Attrezzatura giovanile",
@@ -302,5 +304,54 @@
     "pathwayHelp": "Questo percorso temporaneo concede 30 giorni di gioco per spostare il corridore nella Squadra di Sviluppo. In caso contrario diventa un professionista svincolato.",
     "toDeveloping": "Alla Squadra di Sviluppo ({{slots}} liberi)",
     "release": "Rilascia come professionista svincolato"
+  },
+  "calendar": {
+    "title": "Calendario U16",
+    "format": "Formato",
+    "resultsOnly": "Solo risultati — nessun replay",
+    "entryResponsibility": "Partecipazione",
+    "squadResponsibility": "Formazione e strategia",
+    "ageLimitHelp": "I corridori hanno limiti di partenze in 30 giorni in base all'età. L'allenatore U16 considera anche profilo, forma e fatica, quindi l'Accademia sceglie normalmente solo una parte delle 12 gare regionali disponibili ogni mese.",
+    "races": "Gare giovanili",
+    "loading": "Caricamento gare…",
+    "levels": {
+      "regional": "Coppa Giovanile Regionale",
+      "world_series": "Youth World Series",
+      "world_final": "Youth World Final"
+    },
+    "qualified": "Qualificato",
+    "notQualified": "Non qualificato",
+    "qualificationHelp": "La qualificazione alle World Series arriva dal Ranking Regionale. La Finale Mondiale usa il Ranking Mondiale Giovanile.",
+    "strategy": "Strategia",
+    "strategies": {
+      "conservative": "Conservativa",
+      "balanced": "Equilibrata",
+      "aggressive": "Aggressiva"
+    },
+    "enterRace": "Iscrivi gara",
+    "entering": "Iscrizione…",
+    "coachEntryHelp": "La partecipazione è delegata. L'allenatore U16 valuta la gara sette giorni di gioco prima e la sceglie solo se rosa, fatica e piano di sviluppo sono adatti.",
+    "entered": "Accademia iscritta",
+    "enteredBy": "Iscritta da {{who}}",
+    "selectLineup": "Seleziona formazione — {{count}} / {{max}}",
+    "saveLineup": "Salva formazione e strategia",
+    "savingLineup": "Salvataggio…",
+    "coachLineupHelp": "L'allenatore U16 ha selezionato {{count}} corridore/i e gestisce la strategia.",
+    "myResults": "Risultati della mia Accademia",
+    "topResults": "Migliori risultati",
+    "didNotRace": "La tua Accademia non ha partecipato."
+  },
+  "rankings": {
+    "title": "Ranking giovanili",
+    "description": "La tua Accademia compete nel Ranking Regionale {{region}}. I risultati regionali contribuiscono anche con meno punti al Ranking Mondiale; World Series e Finale Mondiale assegnano più punti mondiali.",
+    "regionalTitle": "Ranking Regionale Giovanile",
+    "worldTitle": "Ranking Mondiale Giovanile",
+    "loading": "Caricamento ranking…",
+    "noPoints": "Nessun punto ancora ottenuto.",
+    "rank": "Pos.",
+    "rider": "Corridore",
+    "academy": "Accademia",
+    "starts": "Arrivi",
+    "points": "Punti"
   }
 }
