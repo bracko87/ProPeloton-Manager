@@ -225,6 +225,7 @@ const NATIONAL_SYSTEM_NOTIFICATION_KEY_BY_CODE: Record<string, string> = {
   NATIONAL_TEAM_CALLUP_RECEIVED: 'callupReceived',
   NATIONAL_TEAM_CALLUP_RESPONSE: 'callupResponse',
   NATIONAL_TEAM_SQUAD_CONFIRMED: 'squadConfirmed',
+  NATIONAL_TEAM_NEW_SELECTION_WINDOW: 'newSelectionWindow',
   NATIONAL_TEAM_DUTY_STARTED: 'dutyStarted',
   NATIONAL_TEAM_DUTY_COMPLETED: 'dutyCompleted',
   NATIONS_QUALIFICATION_DRAW: 'qualificationDraw',
@@ -298,6 +299,8 @@ function nationalSystemParams(item: NotificationItem): Record<string, unknown> {
     dutyStart: championshipShortDate(readString(payload, ['start_date'])),
     dutyEnd: championshipShortDate(readString(payload, ['end_date'])),
     squadSize: readNumber(payload, ['squad_size']) ?? 10,
+    targetEventDate: championshipShortDate(readString(payload, ['target_event_date'])),
+    finalSquadDeadline: championshipShortDate(readString(payload, ['final_squad_deadline'])),
     status,
     deadline: championshipShortDate(
       readString(payload, [
