@@ -61,6 +61,18 @@
     "u23HeadCoach": {
       "label": "U23 Head Coach",
       "subtitle": "Planned developing-team training and U23 race tactical support."
+    },
+    "youthAcademyDirector": {
+      "label": "Youth Academy Director",
+      "subtitle": "Runs the U16 academy programme, budget, delegated recruitment and operating requests."
+    },
+    "u16HeadCoach": {
+      "label": "U16 Head Coach",
+      "subtitle": "Controls U16 training, workload, development focus and youth race selection."
+    },
+    "youthScout": {
+      "label": "Youth Scout",
+      "subtitle": "Finds and assesses U16 prospects within the funded Youth Academy scouting range."
     }
   },
   "impactAreas": {
@@ -88,7 +100,16 @@
     "transferIntelligence": "Transfer intelligence",
     "u23Training": "U23 training",
     "youthDevelopment": "Youth development",
-    "u23RaceTactics": "U23 race tactics"
+    "u23RaceTactics": "U23 race tactics",
+    "academyBudget": "Academy budget",
+    "recruitmentManagement": "Recruitment management",
+    "youthProgramme": "Youth programme",
+    "u16Training": "U16 training",
+    "workloadManagement": "Workload management",
+    "raceSelection": "Race selection",
+    "youthScouting": "Youth scouting",
+    "talentAssessment": "Talent assessment",
+    "recruitmentReach": "Recruitment reach"
   },
   "common": {
     "close": "Close",
@@ -110,7 +131,8 @@
     "focus": "Focus: {{value}}",
     "duration": "Duration: {{count}} days",
     "cost": "Cost: {{value}}",
-    "completed": "Completed: {{date}}"
+    "completed": "Completed: {{date}}",
+    "youthAcademy": "Youth Academy"
   },
   "assignment": {
     "notAssigned": "Currently not assigned",
@@ -292,7 +314,8 @@
     "mechanicTitle": "Mechanic Staff Impact",
     "directorTitle": "Sport Director Staff Impact",
     "u23Title": "U23 Coaching Staff Impact",
-    "scoutingTitle": "Scouting Staff Impact"
+    "scoutingTitle": "Scouting Staff Impact",
+    "youthTitle": "Youth Academy Staff Impact"
   },
   "scoutingExplainer": {
     "title": "How Scout Quality Works",
