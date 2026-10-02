@@ -430,10 +430,11 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
   if (!stageId || !runId) throw new Error("Pass 2 claim is missing stage/run identity.");
   const scenarioMode = text(claim.scenario_mode) || "none";
   const legacyFallbackRequested = scenarioMode === "emergency_fallback";
-  // Recovery must preserve the same complete sporting input. A retry may not
-  // silently drop the stored scenario/director layer to force publication.
-  const useFallback = false;
-  const fallbackReason = legacyFallbackRequested ? "same_full_input_recovery" : null;
+  // CPU-exhausted heavy stages must not be sent back into the same monolithic
+  // Phase 4 loop. Use the accepted lighter sporting fallback after the bounded
+  // checkpoint retry budget is exhausted.
+  const useFallback = legacyFallbackRequested;
+  const fallbackReason = legacyFallbackRequested ? "phase4_cpu_retry_budget_exhausted" : null;
 
   try {
     await heartbeat(supabase, stageId, runId, "pass2_payload_loading", { source_commit: SOURCE_COMMIT });
@@ -441,7 +442,7 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
     const stageNumber = Math.max(1, Math.trunc(finite(object(payload.stage).stage_number, 1)));
 
     const safeDecision = checkpointedSafeModeDecision(payload);
-    if (safeDecision.safe) {
+    if (safeDecision.safe && !useFallback) {
       const enabled = object(await rpc(supabase, "universal_race_stage_enable_safe_mode_v1", {
         p_stage_id: stageId,
         p_simulation_run_id: runId,
@@ -543,7 +544,7 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
         primarySourceCommit: SOURCE_COMMIT,
         fallbackUsed: useFallback,
         fallbackReason,
-        fallbackSourceCommit: null,
+        fallbackSourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : null,
         recoveryPolicy: "same_full_input_or_quarantine_v1",
         scenarioPreserved: Boolean(scenarioData),
         calculationSurvivalModel: "split_pass_v4_same_full_input",
