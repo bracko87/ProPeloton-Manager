@@ -448,7 +448,7 @@ export default function NationalSpecialStagePlanV3({
       const savedRoles = asRecord(stagePlan.rider_roles_json)
       const savedEquipment = asRecord(stagePlan.rider_equipment_json)
       const savedCommands = asRecord(stagePlan.rider_individual_tactics_json)
-      const allowedRoleIds = new Set(ROAD_ROLES.map(option => option[0]))
+      const allowedRoleIds = new Set<string>(ROAD_ROLES.map(option => option[0]))
       const isTimeTrial = next.race_type === 'team_time_trial'
 
       next.riders.forEach(rider => {
@@ -459,9 +459,7 @@ export default function NationalSpecialStagePlanV3({
             : rawRole === 'leader'
               ? 'team_leader_gc'
               : rawRole
-        nextRoles[rider.rider_id] = allowedRoleIds.has(
-          normalizedLegacyRole as (typeof ROAD_ROLES)[number][0],
-        )
+        nextRoles[rider.rider_id] = allowedRoleIds.has(normalizedLegacyRole)
           ? normalizedLegacyRole
           : isTimeTrial
             ? 'team_time_trial_rider'
@@ -476,11 +474,11 @@ export default function NationalSpecialStagePlanV3({
       })
 
       const rawTeamStrategy = String(stagePlan.team_strategy ?? '')
-      const validTeamStrategies = new Set(
+      const validTeamStrategies = new Set<string>(
         (isTimeTrial ? TTT_STRATEGIES : ROAD_STRATEGIES).map(option => option[0]),
       )
       setTeamStrategy(
-        validTeamStrategies.has(rawTeamStrategy as never)
+        validTeamStrategies.has(rawTeamStrategy)
           ? rawTeamStrategy
           : isTimeTrial
             ? 'tt_balanced_pace'
