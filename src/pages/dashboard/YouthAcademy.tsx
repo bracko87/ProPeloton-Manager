@@ -961,7 +961,9 @@ export default function YouthAcademyPage(): JSX.Element {
                 {scoutingData?.auto_rules ? (
                   <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
                     {t('scouting.autoRuleSummary', {
-                      band: humanize(scoutingData.auto_rules.min_band),
+                      band: t(
+                        `scouting.assessmentBands.${scoutingData.auto_rules.min_band}`
+                      ),
                       stipend: money(scoutingData.auto_rules.max_stipend_weekly),
                       compensation: money(scoutingData.auto_rules.max_compensation),
                       slots: scoutingData.auto_rules.min_free_slots,
@@ -1028,7 +1030,7 @@ export default function YouthAcademyPage(): JSX.Element {
                             </span>
                           </div>
                           <div className="mt-1 text-xs text-slate-500">
-                            {humanize(report.role)} ·{' '}
+                            {t(`scouting.roles.${report.role}`)} ·{' '}
                             {report.target_kind === 'academy'
                               ? t('scouting.fromAcademy', {
                                   academy: report.source_academy_name ?? t('scouting.otherAcademy'),
@@ -1038,7 +1040,9 @@ export default function YouthAcademyPage(): JSX.Element {
                         </div>
                         <div className="text-right">
                           <div className="text-sm font-semibold text-slate-900">
-                            {report.assessment_band}
+                            {t(`scouting.assessmentBands.${report.assessment_band
+                              .toLowerCase()
+                              .replaceAll(' ', '_')}`)}
                           </div>
                           <div className="text-xs text-slate-500">
                             {t('scouting.confidence', { value: report.confidence })}
@@ -1052,7 +1056,9 @@ export default function YouthAcademyPage(): JSX.Element {
                             {t('scouting.strengths')}
                           </div>
                           <div className="mt-1 text-sm font-medium">
-                            {(report.strengths ?? []).join(' · ') || '—'}
+                            {(report.strengths ?? [])
+                              .map(strength => t(`scouting.skillNames.${strength}`))
+                              .join(' · ') || '—'}
                           </div>
                         </div>
                         <div className="rounded-lg border border-slate-200 bg-white p-3">
@@ -1094,8 +1100,10 @@ export default function YouthAcademyPage(): JSX.Element {
                           <div className="font-medium">
                             {t(`scouting.offerStatuses.${latestOffer.status}`)}
                           </div>
-                          {latestOffer.rejection_reason ? (
-                            <div className="mt-1 text-xs">{latestOffer.rejection_reason}</div>
+                          {latestOffer.status !== 'accepted' ? (
+                            <div className="mt-1 text-xs">
+                              {t(`scouting.offerStatusHelp.${latestOffer.status}`)}
+                            </div>
                           ) : null}
                         </div>
                       ) : null}
