@@ -188,7 +188,8 @@
   },
   "info": {
     "title": "Informacije o prvenstvu",
-    "description": "Nacionalna prvenstva su individualne utrke. Nema ekipne taktike, osoblja, vozila ni klupskih zaliha. Organizator pokriva logistiku i troškove; ti kontroliraš samo opremu i individualnu taktiku svakog pozvanog vozača."
+    "description": "Nacionalna prvenstva su individualne utrke. Nema ekipne taktike, osoblja, vozila ni klupskih zaliha. Organizator pokriva logistiku i troškove; ti kontroliraš samo opremu i individualnu taktiku svakog pozvanog vozača.",
+    "openGuide": "Otvori potpuni vodič za nacionalni poredak i prvenstvo"
   },
   "summary": {
     "title": "Raspored nacionalnog prvenstva",
