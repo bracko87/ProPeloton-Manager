@@ -73,11 +73,12 @@
     "a5": "Manager Briefing, napredna analiza kalendara, finansijske prognoze i alati za lakše upravljanje.",
     "a6": "Napredna analiza učinka vozača, trendovi razvoja i neograničeni replay-i svih svetskih trka.",
     "a7": "Premium poboljšava informacije, automatizaciju i praktičnost — nikada snagu u race engine-u, prihvatanje transfera ili skrivene atribute vozača.",
-    "a8": "Ekskluzivan pristup Razvojnom timu i U23 glavnom treneru: 100 Coins za aktivaciju i 100 Coins po sezoni za obnovu."
+    "a8": "Ekskluzivan pristup Razvojnom timu i U23 glavnom treneru: 100 Coins za aktivaciju i 100 Coins po sezoni za obnovu.",
+    "a9": "Opciona Premium Omladinska akademija: aktiviraj odvojeni U16 razvojni program sa 16 mesta, šest lokalnih početnih vozača, posebnim osobljem, skautingom prema budžetu i putem ka Razvojnom timu."
   },
   "comparison": {
     "title": "Besplatno i Premium",
-    "description": "Premium donosi napredne alate i ekskluzivan pristup Razvojnom timu i U23 glavnom treneru.",
+    "description": "Premium donosi napredne alate i ekskluzivan pristup Razvojnom timu, U23 glavnom treneru i opcionoj Omladinskoj akademiji.",
     "benefit": "Pogodnost",
     "free": "Besplatno",
     "premium": "Premium",
@@ -91,8 +92,9 @@
     "r8": "Korišćenje opcionih funkcija za novčiće",
     "developing": "Usluga Razvojnog tima",
     "activationRenewal": "{{activation}} aktivacija / {{renewal}} obnova",
-    "note": "Razvojni tim i U23 glavni trener zahtevaju aktivan Premium. Aktivacija i sezonska obnova Razvojnog tima i dalje se plaćaju Coins-ima.",
-    "premiumOnly": "Samo Premium"
+    "note": "Razvojni tim, U23 glavni trener i Omladinska akademija zahtevaju aktivan Premium. Aktivacija Omladinske akademije je opcionalna, a njeni razvojni troškovi finansiraju se običnim klupskim novcem.",
+    "premiumOnly": "Samo Premium",
+    "r9": "Omladinska akademija / U16 razvoj"
   },
   "packages": {
     "title": "Potrebni su vam dodatni novčići?",
