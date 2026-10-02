@@ -10710,7 +10710,7 @@ function StageReplayAccessCard({
       }
 
       const { data, error } = await supabase.rpc(
-        'get_universal_race_stage_replay_payload_v1',
+        'get_authorized_race_stage_replay_payload_v1',
         { p_stage_id: stage.id }
       )
 
@@ -14266,7 +14266,7 @@ function UniversalRaceReplayPage({
         raceDetailReadRpc('get_race_stage_profile_detail_v1', {
           p_stage_id: stage.id,
         }),
-        raceDetailReadRpc('get_universal_race_stage_replay_payload_v1', {
+        raceDetailReadRpc('get_authorized_race_stage_replay_payload_v1', {
           p_stage_id: stage.id,
         }),
       ])
@@ -14412,7 +14412,7 @@ function UniversalRaceReplayPage({
         }
 
         const payloadResponse = await raceDetailReadRpc(
-          'get_universal_race_stage_replay_payload_v1',
+          'get_authorized_race_stage_replay_payload_v1',
           { p_stage_id: stage.id }
         )
 
