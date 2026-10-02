@@ -73,11 +73,12 @@
     "a5": "Manager-Briefing, erweiterte Kalenderintelligenz, Finanzprognosen und Komfortfunktionen.",
     "a6": "Erweiterte Fahrerleistungsanalysen, Entwicklungstrends und unbegrenzte Replays von Weltrennen.",
     "a7": "Premium verbessert Informationen, Automatisierung und Komfort — niemals Rennstärke, Transferannahme oder verborgene Fahrerwerte.",
-    "a8": "Exklusiver Zugriff auf das Entwicklungsteam inklusive U23-Cheftrainer: 100 Coins Aktivierung und 100 Coins Verlängerung pro Saison."
+    "a8": "Exklusiver Zugriff auf das Entwicklungsteam inklusive U23-Cheftrainer: 100 Coins Aktivierung und 100 Coins Verlängerung pro Saison.",
+    "a9": "Optionale Premium-Jugendakademie: Aktiviere ein separates U16-Entwicklungsprogramm mit 16 Fahrerplätzen, sechs lokalen Startern, eigenem Personal, budgetabhängigem Scouting und einem Weg ins Entwicklungsteam."
   },
   "comparison": {
     "title": "Frei vs. Premium",
-    "description": "Premium bietet erweiterte Werkzeuge sowie exklusiven Zugriff auf Entwicklungsteam und U23-Cheftrainer.",
+    "description": "Premium bietet erweiterte Werkzeuge sowie exklusiven Zugang zum Entwicklungsteam, U23-Cheftrainer und zur optionalen Jugendakademie.",
     "benefit": "Nutzen",
     "free": "Frei",
     "premium": "Premium",
@@ -91,8 +92,9 @@
     "r8": "Optionale Münzmerkmale verwenden",
     "developing": "Team-Service entwickeln",
     "activationRenewal": "{{activation}} Aktivierung / {{renewal}} Verlängerung",
-    "note": "Entwicklungsteam und U23-Cheftrainer erfordern aktives Premium. Aktivierung und Saisonverlängerung des Entwicklungsteams kosten zusätzlich Coins.",
-    "premiumOnly": "Nur Premium"
+    "note": "Entwicklungsteam, U23-Cheftrainer und Jugendakademie benötigen eine aktive Premium-Mitgliedschaft. Die Aktivierung der Jugendakademie ist optional; ihre Entwicklungskosten werden mit normalem Clubgeld finanziert.",
+    "premiumOnly": "Nur Premium",
+    "r9": "Jugendakademie / U16-Entwicklung"
   },
   "packages": {
     "title": "Brauchen Sie weitere Coins?",
