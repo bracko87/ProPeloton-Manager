@@ -187,6 +187,19 @@
       "resistance": "Tenuta",
       "race_iq": "IQ di gara",
       "teamwork": "Lavoro di squadra"
+    },
+    "incoming": {
+      "title": "Proposte in arrivo da altre accademie",
+      "count": "{{count}} in attesa",
+      "none": "Nessuna proposta in arrivo",
+      "noneHelp": "Altre accademie Premium possono contattare direttamente i tuoi giovani corridori. Le offerte che richiedono una tua decisione appariranno qui.",
+      "approachFrom": "Proposta da {{club}}",
+      "newStipend": "Stipendio settimanale offerto",
+      "accommodation": "Alloggio offerto",
+      "decisionHelp": "Accettare l'offerta dell'accademia permette poi al corridore e alla famiglia di prendere la decisione finale sul trasferimento. Rifiutando, il corridore resta nella tua Accademia.",
+      "accept": "Accetta offerta dell'accademia",
+      "decline": "Rifiuta",
+      "processing": "Elaborazione…"
     }
   },
   "settings": {
@@ -227,6 +240,7 @@
     "save": "Impossibile salvare le impostazioni dell'Accademia Giovanile.",
     "scoutingLoad": "Impossibile caricare i rapporti scouting giovanile.",
     "scoutingRun": "Impossibile avviare il ciclo mensile di scouting giovanile.",
-    "recruitmentOffer": "Impossibile inviare l'offerta di reclutamento giovanile."
+    "recruitmentOffer": "Impossibile inviare l'offerta di reclutamento giovanile.",
+    "incomingOffer": "Impossibile rispondere alla proposta in arrivo per l'Accademia Giovanile."
   }
 }
