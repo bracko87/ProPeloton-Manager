@@ -438,6 +438,9 @@ export default function NationalSpecialStagePlanV3({
     const nextRoles: Record<string, string> = {}
     const nextEquipment: Record<string, string> = {}
     const presets = normalizeEquipmentPresets(next)
+    const completePresetIds = new Set(
+      presets.filter(preset => !preset.is_empty).map(preset => preset.id),
+    )
     const firstCompletePreset = presets.find(preset => !preset.is_empty)?.id || ''
 
     if (next.kind === 'national_team') {
@@ -445,18 +448,43 @@ export default function NationalSpecialStagePlanV3({
       const savedRoles = asRecord(stagePlan.rider_roles_json)
       const savedEquipment = asRecord(stagePlan.rider_equipment_json)
       const savedCommands = asRecord(stagePlan.rider_individual_tactics_json)
+      const allowedRoleIds = new Set(ROAD_ROLES.map(option => option[0]))
+      const isTimeTrial = next.race_type === 'team_time_trial'
 
       next.riders.forEach(rider => {
-        nextRoles[rider.rider_id] = String(
-          savedRoles[rider.rider_id] ??
-          (next.race_type === 'team_time_trial' ? 'team_time_trial_rider' : 'free_role')
+        const rawRole = String(savedRoles[rider.rider_id] ?? '')
+        const normalizedLegacyRole =
+          rawRole === 'domestique'
+            ? 'helper_domestique'
+            : rawRole === 'leader'
+              ? 'team_leader_gc'
+              : rawRole
+        nextRoles[rider.rider_id] = allowedRoleIds.has(
+          normalizedLegacyRole as (typeof ROAD_ROLES)[number][0],
         )
-        nextEquipment[rider.rider_id] = String(savedEquipment[rider.rider_id] ?? firstCompletePreset)
+          ? normalizedLegacyRole
+          : isTimeTrial
+            ? 'team_time_trial_rider'
+            : 'free_role'
+
+        const savedPresetId = String(savedEquipment[rider.rider_id] ?? '')
+        nextEquipment[rider.rider_id] = completePresetIds.has(savedPresetId)
+          ? savedPresetId
+          : firstCompletePreset
+
         nextCommands[rider.rider_id] = normalizeCommands(savedCommands[rider.rider_id])
       })
 
+      const rawTeamStrategy = String(stagePlan.team_strategy ?? '')
+      const validTeamStrategies = new Set(
+        (isTimeTrial ? TTT_STRATEGIES : ROAD_STRATEGIES).map(option => option[0]),
+      )
       setTeamStrategy(
-        String(stagePlan.team_strategy ?? (next.race_type === 'team_time_trial' ? 'tt_balanced_pace' : 'balanced'))
+        validTeamStrategies.has(rawTeamStrategy as never)
+          ? rawTeamStrategy
+          : isTimeTrial
+            ? 'tt_balanced_pace'
+            : 'balanced',
       )
       setSaved(Boolean(stagePlan.last_saved_at))
     } else {
