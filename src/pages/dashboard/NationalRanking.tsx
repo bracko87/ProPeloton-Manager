@@ -1647,6 +1647,12 @@ export default function NationalRankingPage(): JSX.Element {
           <aside className="rounded bg-white p-4 shadow">
             <h3 className="text-base font-semibold text-slate-900">{t('info.title')}</h3>
             <p className="mt-1 text-sm leading-6 text-slate-600">{t('info.description')}</p>
+            <Link
+              to="/dashboard/manual?section=national-ranking-championships"
+              className="mt-4 inline-flex items-center rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              {t('info.openGuide', { defaultValue: 'Open complete National Ranking & Championship guide' })}
+            </Link>
           </aside>
         </div>
       ) : null}
