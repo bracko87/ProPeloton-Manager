@@ -1,133 +1,133 @@
 {
-  "loading": "Loading Youth Academy…",
+  "loading": "Cargando Academia Juvenil…",
   "title": "Academia Juvenil",
   "subtitle": "Programa Premium de desarrollo U16 para ciclistas de 12 a 16 años.",
-  "readOnly": "Premium is inactive. Your academy history and riders are preserved, but management is read-only.",
-  "week": "week",
-  "save": "Save changes",
-  "saving": "Saving…",
-  "comingSoon": "Coming in the next Youth Academy phase",
-  "notAssigned": "Not assigned",
-  "optionalNotHired": "Optional — not hired",
+  "readOnly": "Premium está inactivo. Los ciclistas y el historial de la academia se conservan, pero la gestión queda en modo solo lectura.",
+  "week": "semana",
+  "save": "Guardar cambios",
+  "saving": "Guardando…",
+  "comingSoon": "Disponible en la siguiente fase de la Academia Juvenil",
+  "notAssigned": "Sin asignar",
+  "optionalNotHired": "Opcional — no contratado",
   "premium": {
-    "title": "Premium Youth Academy",
-    "description": "Youth Academy is a Premium-only development layer. Premium members can optionally activate an U16 academy with a fixed 16-rider capacity.",
-    "capacity": "Fixed capacity of 16 Youth Riders",
-    "localStart": "Start with 6 local Youth Riders",
-    "staff": "Average Youth Academy Director + U16 Head Coach included",
-    "scouting": "Optional Youth Scout with budget-based scouting range",
-    "openPremium": "View Premium"
+    "title": "Academia Juvenil Premium",
+    "description": "La Academia Juvenil es un sistema de desarrollo exclusivo de Premium. Los miembros Premium pueden activar opcionalmente una academia U16 con capacidad fija para 16 ciclistas.",
+    "capacity": "Capacidad fija de 16 ciclistas juveniles",
+    "localStart": "Empieza con 6 ciclistas juveniles locales",
+    "staff": "Director de Academia Juvenil medio + entrenador principal U16 incluidos",
+    "scouting": "Ojeador juvenil opcional con alcance según presupuesto",
+    "openPremium": "Ver Premium"
   },
   "activation": {
-    "title": "Activate Youth Academy",
-    "description": "Activation creates your separate U16 academy. You start with six local riders, an average Youth Academy Director and U16 Head Coach. Youth Scout is optional. V1 has no infrastructure requirement.",
-    "capacityLabel": "Maximum riders",
-    "starterRidersLabel": "Starting riders",
-    "staffLabel": "Included staff",
-    "infrastructureLabel": "Infrastructure requirement",
-    "none": "None",
-    "seasonBudget": "Season Academy budget",
-    "budgetHelp": "This budget funds rider support, staff, scouting, equipment, camps, travel and youth competition costs.",
-    "activate": "Activate Youth Academy",
-    "activating": "Activating…"
+    "title": "Activar Academia Juvenil",
+    "description": "La activación crea tu academia U16 independiente. Empiezas con seis ciclistas locales, un Director de Academia Juvenil de nivel medio y un entrenador principal U16. El ojeador juvenil es opcional. V1 no exige infraestructura.",
+    "capacityLabel": "Máximo de ciclistas",
+    "starterRidersLabel": "Ciclistas iniciales",
+    "staffLabel": "Personal incluido",
+    "infrastructureLabel": "Requisito de infraestructura",
+    "none": "Ninguno",
+    "seasonBudget": "Presupuesto de temporada",
+    "budgetHelp": "Este presupuesto financia apoyo a ciclistas, personal, scouting, equipamiento, concentraciones, viajes y costes de competición juvenil.",
+    "activate": "Activar Academia Juvenil",
+    "activating": "Activando…"
   },
   "header": {
-    "capacity": "{{current}} / {{max}} riders"
+    "capacity": "{{current}} / {{max}} ciclistas"
   },
   "tabs": {
-    "overview": "Overview",
-    "riders": "Youth Riders",
-    "staff": "Staff",
-    "budget": "Budget",
+    "overview": "Resumen",
+    "riders": "Ciclistas juveniles",
+    "staff": "Personal",
+    "budget": "Presupuesto",
     "scouting": "Scouting",
-    "settings": "Responsibilities",
-    "calendar": "Calendar",
+    "settings": "Responsabilidades",
+    "calendar": "Calendario",
     "rankings": "Rankings",
-    "equipment": "Equipment & Assets",
-    "history": "History"
+    "equipment": "Equipamiento y activos",
+    "history": "Historial"
   },
   "overview": {
-    "budget": "Available Academy budget",
-    "ofSeasonBudget": "of {{value}} season budget",
-    "roster": "Youth roster",
-    "fixedCapacity": "Fixed Premium capacity — independent of infrastructure",
-    "scouting": "Scouting programme",
-    "perSeason": "per season",
-    "directorReport": "Youth Academy Director report",
-    "directorReady": "{{name}} is responsible for the Academy programme, operating requests and budget recommendations.",
-    "directorMissing": "Youth Academy Director is missing.",
-    "nextRace": "Next youth race",
-    "recruitment": "Recruitment reach",
-    "reputation": "Academy reputation",
-    "staff": "Academy staff"
+    "budget": "Presupuesto disponible de la academia",
+    "ofSeasonBudget": "de {{value}} de presupuesto de temporada",
+    "roster": "Plantilla juvenil",
+    "fixedCapacity": "Capacidad Premium fija — independiente de la infraestructura",
+    "scouting": "Programa de scouting",
+    "perSeason": "por temporada",
+    "directorReport": "Informe del Director de la Academia Juvenil",
+    "directorReady": "{{name}} es responsable del programa de la academia, las solicitudes operativas y las recomendaciones de presupuesto.",
+    "directorMissing": "Falta el Director de la Academia Juvenil.",
+    "nextRace": "Próxima carrera juvenil",
+    "recruitment": "Alcance de captación",
+    "reputation": "Reputación de la academia",
+    "staff": "Personal de la academia"
   },
   "roles": {
-    "director": "Youth Academy Director",
-    "headCoach": "U16 Head Coach",
-    "scout": "Youth Scout"
+    "director": "Director de la Academia Juvenil",
+    "headCoach": "Entrenador principal U16",
+    "scout": "Ojeador juvenil"
   },
   "riders": {
-    "title": "Youth Riders",
-    "rider": "Rider",
-    "age": "Age",
-    "role": "Profile",
-    "assessment": "Talent assessment",
-    "focus": "Development focus",
-    "readiness": "Readiness",
-    "stipend": "Support agreement",
-    "potentialNote": "Exact Potential is intentionally hidden. Assessment bands become more reliable as scouting and development information improves."
+    "title": "Ciclistas juveniles",
+    "rider": "Ciclista",
+    "age": "Edad",
+    "role": "Perfil",
+    "assessment": "Evaluación del talento",
+    "focus": "Enfoque de desarrollo",
+    "readiness": "Preparación",
+    "stipend": "Acuerdo de apoyo",
+    "potentialNote": "El Potential exacto se mantiene oculto intencionadamente. Los rangos de evaluación se vuelven más fiables a medida que mejora la información de scouting y desarrollo."
   },
   "staff": {
-    "expertise": "Expertise",
-    "experience": "Experience",
-    "salary": "Weekly salary",
-    "scoutOptional": "Youth Scout is optional. Hire one from Staff to begin active prospect discovery.",
-    "openStaffPage": "Open Squad → Staff"
+    "expertise": "Experiencia técnica",
+    "experience": "Experiencia",
+    "salary": "Salario semanal",
+    "scoutOptional": "El ojeador juvenil es opcional. Contrata uno desde Personal para empezar a descubrir talentos activamente.",
+    "openStaffPage": "Abrir Plantilla → Personal"
   },
   "budget": {
-    "title": "Season Academy budget",
-    "seasonBudget": "Allocated season budget",
-    "spent": "Spent",
-    "committed": "Committed",
-    "available": "Available",
-    "scoutingAllocation": "Scouting allocation",
-    "scoutingHelp": "{{range}} scouting programme cost. Scouting reach is controlled by budget, not infrastructure."
+    "title": "Presupuesto de temporada de la academia",
+    "seasonBudget": "Presupuesto de temporada asignado",
+    "spent": "Gastado",
+    "committed": "Comprometido",
+    "available": "Disponible",
+    "scoutingAllocation": "Asignación de scouting",
+    "scoutingHelp": "Coste del programa de scouting {{range}}. El alcance depende del presupuesto, no de la infraestructura."
   },
   "scouting": {
-    "title": "Youth scouting range",
-    "description": "Choose where the Youth Scout may search. Scout quality determines how many prospects are found and how useful the assessments are; budget only determines geographic reach.",
-    "skillNote": "A Worldwide programme does not guarantee elite prospects. It only gives the scout permission to search globally.",
+    "title": "Alcance del scouting juvenil",
+    "description": "Elige dónde puede buscar el ojeador juvenil. La calidad del ojeador determina cuántos talentos encuentra y la utilidad de sus evaluaciones; el presupuesto solo determina el alcance geográfico.",
+    "skillNote": "Un programa mundial no garantiza talentos de élite. Solo permite al ojeador buscar a escala global.",
     "ranges": {
-      "local": "Local — own country",
+      "local": "Local — propio país",
       "regional": "Regional",
       "continental": "Continental",
-      "world": "Worldwide"
+      "world": "Mundial"
     }
   },
   "settings": {
-    "title": "Responsibilities",
-    "description": "Choose who handles routine Youth Academy decisions. The manager can always change these responsibilities later.",
-    "recruitment": "Recruitment decisions",
-    "raceEntry": "Race participation",
-    "raceSquad": "Race squad selection",
-    "camps": "Development camps",
-    "equipment": "Equipment purchases",
-    "negotiations": "Prospect negotiations",
+    "title": "Responsabilidades",
+    "description": "Elige quién gestiona las decisiones rutinarias de la Academia Juvenil. El manager siempre podrá cambiar estas responsabilidades más adelante.",
+    "recruitment": "Decisiones de captación",
+    "raceEntry": "Participación en carreras",
+    "raceSquad": "Selección para la carrera",
+    "camps": "Concentraciones de desarrollo",
+    "equipment": "Compras de equipamiento",
+    "negotiations": "Negociaciones con talentos",
     "options": {
       "manager": "Manager",
-      "academy_director": "Youth Academy Director",
-      "u16_head_coach": "U16 Head Coach"
+      "academy_director": "Director de la Academia Juvenil",
+      "u16_head_coach": "Entrenador principal U16"
     }
   },
   "placeholders": {
-    "calendar": "The separate U16 calendar and lightweight race engine will be connected in the next implementation phase. Youth race entry costs will remain mainly travel/logistics costs.",
-    "rankings": "Regional Youth Ranking and Youth World Ranking foundation will be connected with the U16 race calendar.",
-    "equipment": "Youth Academy will own separate equipment, reusing a curated lower-cost subset of the existing equipment catalogue and images.",
-    "history": "Academy graduates, youth results and long-term development history will remain attached to riders after graduation."
+    "calendar": "El calendario U16 separado y el motor de carrera simplificado se conectarán en la siguiente fase. Los costes de inscripción juvenil serán principalmente de viaje y logística.",
+    "rankings": "La base del Ranking Juvenil Regional y del Youth World Ranking se conectará con el calendario U16.",
+    "equipment": "La Academia Juvenil tendrá equipamiento propio reutilizando una selección más económica del catálogo y las imágenes existentes.",
+    "history": "Los graduados, resultados juveniles y el historial de desarrollo a largo plazo seguirán vinculados a los ciclistas después de graduarse."
   },
   "errors": {
-    "load": "Could not load Youth Academy.",
-    "activate": "Could not activate Youth Academy.",
-    "save": "Could not save Youth Academy settings."
+    "load": "No se pudo cargar la Academia Juvenil.",
+    "activate": "No se pudo activar la Academia Juvenil.",
+    "save": "No se pudieron guardar los ajustes de la Academia Juvenil."
   }
 }
