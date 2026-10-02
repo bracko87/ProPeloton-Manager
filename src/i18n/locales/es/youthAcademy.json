@@ -187,6 +187,19 @@
       "resistance": "Resistencia física",
       "race_iq": "IQ de carrera",
       "teamwork": "Trabajo en equipo"
+    },
+    "incoming": {
+      "title": "Ofertas entrantes de academias",
+      "count": "{{count}} pendiente(s)",
+      "none": "No hay ofertas entrantes",
+      "noneHelp": "Otras academias Premium pueden acercarse directamente a tus corredores juveniles. Las ofertas que requieran tu decisión aparecerán aquí.",
+      "approachFrom": "Oferta de {{club}}",
+      "newStipend": "Asignación semanal ofrecida",
+      "accommodation": "Alojamiento ofrecido",
+      "decisionHelp": "Aceptar la oferta de la academia permite que el corredor y su familia tomen después la decisión final sobre el traslado. Rechazarla mantiene al corredor en tu Academia.",
+      "accept": "Aceptar oferta de academia",
+      "decline": "Rechazar",
+      "processing": "Procesando…"
     }
   },
   "settings": {
@@ -227,6 +240,7 @@
     "save": "No se pudieron guardar los ajustes de la Academia Juvenil.",
     "scoutingLoad": "No se pudieron cargar los informes de scouting juvenil.",
     "scoutingRun": "No se pudo ejecutar el ciclo mensual de scouting juvenil.",
-    "recruitmentOffer": "No se pudo enviar la oferta de captación juvenil."
+    "recruitmentOffer": "No se pudo enviar la oferta de captación juvenil.",
+    "incomingOffer": "No se pudo responder a la oferta entrante de la Academia Juvenil."
   }
 }
