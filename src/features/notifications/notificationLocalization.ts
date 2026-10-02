@@ -197,7 +197,8 @@ function localizeChampionshipNotificationItem(
 
   return {
     ...item,
-    title: repairRotatedLocalizedNotificationTitle(title),
+    // Complete locale title: preserve the language's own word order.
+    title,
     message: translatedMessage,
   }
 }
@@ -1063,16 +1064,24 @@ export function localizeNotificationFeedCopy(
   }
 
   if (options?.genericFallback !== false && (looksEnglish(cleanTitle) || looksEnglish(cleanMessage))) {
+    const fallbackTitle =
+      resourceTitle ||
+      (looksEnglish(cleanTitle) ? nt('templateLocalization.feed.teamUpdateTitle') : cleanTitle)
+
     return {
-      title: repairRotatedLocalizedNotificationTitle(
-        resourceTitle || (looksEnglish(cleanTitle) ? nt('templateLocalization.feed.teamUpdateTitle') : cleanTitle)
-      ),
+      // Exact i18n resources are complete titles; never rotate their words.
+      title: resourceTitle
+        ? resourceTitle
+        : repairRotatedLocalizedNotificationTitle(fallbackTitle),
       message: resourceMessage || (looksEnglish(cleanMessage) ? nt('templateLocalization.feed.teamUpdateMessage') : cleanMessage),
     }
   }
 
   return {
-    title: repairRotatedLocalizedNotificationTitle(resourceTitle || cleanTitle),
+    // Exact i18n resources are canonical for every language.
+    title: resourceTitle
+      ? resourceTitle
+      : repairRotatedLocalizedNotificationTitle(cleanTitle),
     message: resourceMessage || cleanMessage,
   }
 }
@@ -1151,9 +1160,15 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
   const topic = semanticType || localizedType || getTopic(item)
   const semanticEntityTitle = localizeSemanticEntityTitle(typeCode, entity)
   const semanticMessage = localizeSemanticMessage(typeCode, entity)
-  const localizedTitle = feedCopy.title && !looksEnglish(feedCopy.title)
-    ? feedCopy.title
-    : semanticEntityTitle || semanticType || nt('templateLocalization.genericTitle', { topic })
+
+  // Full semantic titles are reviewed locale sentences for an exact type code.
+  // They must win over already-localized/stored copy so word order is never
+  // reconstructed from translated tokens.
+  const canonicalSemanticTitle = semanticEntityTitle || semanticType
+  const localizedTitle = canonicalSemanticTitle ||
+    (feedCopy.title && !looksEnglish(feedCopy.title)
+      ? feedCopy.title
+      : nt('templateLocalization.genericTitle', { topic }))
   const localizedMessage = feedCopy.message && !looksEnglish(feedCopy.message)
     ? feedCopy.message
     : semanticMessage || (entity
@@ -1162,7 +1177,9 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
 
   return {
     ...item,
-    title: repairRotatedLocalizedNotificationTitle(localizedTitle),
+    title: canonicalSemanticTitle
+      ? localizedTitle
+      : repairRotatedLocalizedNotificationTitle(localizedTitle),
     message: localizedMessage,
   }
 }
