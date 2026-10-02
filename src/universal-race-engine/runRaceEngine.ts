@@ -16398,6 +16398,12 @@ export function resolveRoadPhase4Finish(
     liveEnergyByRiderId: ReadonlyMap<string, number>
   }>()
   const phase4WeatherModifiers = calculatePhase9WeatherModifiers(input.weather)
+  // Heavy mountain stages can contain hundreds of detached-rider trajectory
+  // evaluations. Use a deterministic coarser integration interval for those
+  // workloads so one Phase-4 recovery slice fits inside the Edge CPU window.
+  // Normal stages keep the original 1 km physical sampling.
+  const phase4TrajectoryStepKm =
+    input.riders.length >= 140 && input.stage.elevationGainM >= 2500 ? 2 : 1
 
   /**
    * V5.3 authoritative P/C movement. A rider starts only six seconds detached
@@ -16443,7 +16449,7 @@ export function resolveRoadPhase4Finish(
       const stepEndKm = deterministicRound(
         Math.min(
           resolvedEndKm,
-          currentKm + 1,
+          currentKm + phase4TrajectoryStepKm,
           segment.kmEnd,
         ),
         6,
@@ -16601,6 +16607,9 @@ export function resolveRoadPhase4Finish(
   const profileClimbSelections: UniversalRoadProfileClimbSelectionResult[] = []
 
   profileClimbEfforts.forEach((effort, effortIndex) => {
+    // Contexts are only shared between riders of the same climb. Clearing here
+    // prevents long mountain stages from retaining every per-km peloton map.
+    detachedPelotonContextCache.clear()
     const nextEffort = profileClimbEfforts[effortIndex + 1] ?? null
     const recoveryCorridorEndKm = nextEffort?.kmStart ?? input.stage.distanceKm
     const candidateRows = roadCommandResolution.riders
