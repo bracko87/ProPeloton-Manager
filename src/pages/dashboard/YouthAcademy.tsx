@@ -1180,6 +1180,9 @@ export default function YouthAcademyPage(): JSX.Element {
                   }
                   const latestOffer = report.latest_offer
                   const signed = report.status === 'signed' || latestOffer?.status === 'accepted'
+                  const waitingForAcademy =
+                    latestOffer?.status === 'submitted' &&
+                    latestOffer.source_academy_decision === 'pending'
 
                   return (
                     <div
@@ -1349,15 +1352,21 @@ export default function YouthAcademyPage(): JSX.Element {
                             </p>
                             <button
                               type="button"
-                              disabled={data.read_only || scoutingAction !== null}
+                              disabled={
+                                data.read_only ||
+                                scoutingAction !== null ||
+                                waitingForAcademy
+                              }
                               onClick={() => void submitRecruitmentOffer(report)}
                               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                             >
                               {scoutingAction === report.id
                                 ? t('scouting.submittingOffer')
-                                : latestOffer
-                                  ? t('scouting.improveOffer')
-                                  : t('scouting.submitOffer')}
+                                : waitingForAcademy
+                                  ? t('scouting.awaitingAcademyResponse')
+                                  : latestOffer
+                                    ? t('scouting.improveOffer')
+                                    : t('scouting.submitOffer')}
                             </button>
                           </div>
                         </div>
