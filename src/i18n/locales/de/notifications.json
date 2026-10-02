@@ -931,7 +931,9 @@
     "NATIONS_WORLD_FINAL_QUALIFIED": "Für das World Nations Final qualifiziert",
     "NATIONS_HOST_SELECTED": "Gastgeber des World Nations Final gewählt",
     "NATIONS_FINAL_RESULT": "World-Nations-Finale abgeschlossen",
-    "NATIONS_CHAMPION": "World-Nations-Sieger"
+    "NATIONS_CHAMPION": "World-Nations-Sieger",
+    "NATIONAL_COACH_POSITION_VACANT": "Amt des Nationaltrainers ist vakant",
+    "NATIONAL_COACH_RESIGNED": "Nationaltrainer ist zurückgetreten"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Rennplan erfordert Aufmerksamkeit: {{entity}}",
@@ -1356,7 +1358,17 @@
     "newSelectionWindow": {
       "title": "Kaderauswahl für {{roundLabel}} ist geöffnet",
       "message": "Ihre Nation hat {{roundLabel}} erreicht. Wählen Sie einen neuen 10-Fahrer-Kader für {{group}}. Sie können die bisherigen Fahrer behalten oder andere berechtigte Fahrer auswählen.",
-      "extra": "Frist für den endgültigen Kader: {{finalSquadDeadline}}. Öffne den Kader der Nationalen Vereinigung, um das neue Wettbewerbsfenster vorzubereiten."
+      "extra": "Frist für den endgültigen Kader: {{finalSquadDeadline}}. Öffnen Sie den Kader des Nationalverbands, um das neue Wettbewerbsfenster vorzubereiten."
+    },
+    "coachPositionVacant": {
+      "title": "Amt des Nationaltrainers ist vakant",
+      "message": "Das Amt des Nationaltrainers ist vakant. Eine Ersatzwahl wird gestartet.",
+      "extra": "Berechtigte Verbandsmitglieder können sich für die Ersatzwahl bewerben, sobald die Kandidatur geöffnet ist."
+    },
+    "coachResigned": {
+      "title": "Nationaltrainer ist zurückgetreten",
+      "message": "Der Nationaltrainer ist zurückgetreten. Eine Ersatzwahl wird gestartet.",
+      "extra": "Der Verband bleibt aktiv, während die Ersatzwahl durchgeführt wird."
     }
   }
 }
