@@ -320,6 +320,8 @@ type YouthHistoryPayload = {
     podiums: number
     regional_points: number
     world_points: number
+    final_regional_rank?: number | null
+    final_world_rank?: number | null
   }>
   race_reports?: Array<{
     race_id: string
@@ -2844,6 +2846,8 @@ export default function YouthAcademyPage(): JSX.Element {
                       <th className="py-2 pr-3">{t('history.path')}</th>
                       <th className="py-2 pr-3">{t('history.starts')}</th>
                       <th className="py-2 pr-3">{t('history.wins')}</th>
+                      <th className="py-2 pr-3">{t('history.regionalRank')}</th>
+                      <th className="py-2 pr-3">{t('history.worldRank')}</th>
                       <th className="py-2 pr-3">{t('history.regionalPoints')}</th>
                       <th className="py-2">{t('history.worldPoints')}</th>
                     </tr>
@@ -2873,6 +2877,12 @@ export default function YouthAcademyPage(): JSX.Element {
                           <td className="py-3 pr-3">{humanize(rider.graduation_decision)}</td>
                           <td className="py-3 pr-3">{rider.race_starts}</td>
                           <td className="py-3 pr-3">{rider.wins}</td>
+                          <td className="py-3 pr-3">
+                            {rider.final_regional_rank ? `#${rider.final_regional_rank}` : '—'}
+                          </td>
+                          <td className="py-3 pr-3">
+                            {rider.final_world_rank ? `#${rider.final_world_rank}` : '—'}
+                          </td>
                           <td className="py-3 pr-3">{rider.regional_points}</td>
                           <td className="py-3">{rider.world_points}</td>
                         </tr>
