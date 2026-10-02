@@ -139,8 +139,8 @@
       "description": "Mostra finestre di selezione, convocazioni, cambi di rosa e impegni con la Nazionale."
     },
     "nationalChampionships": {
-      "label": "Campionati Nazionali e classifica",
-      "description": "Mostra notifiche su partecipazione, qualificazione, conferma della finale e risultati dei Campionati Nazionali."
+      "label": "Campionati e classifica",
+      "description": "Mostra notifiche su partecipazione, qualificazione, conferma della finale e risultati dei Campionati Nazionali e del Campionato del Mondo su strada."
     },
     "worldNations": {
       "label": "World Nations e competizioni internazionali",
