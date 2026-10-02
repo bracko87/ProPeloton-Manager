@@ -203,6 +203,28 @@ type OverviewEvent = {
   squad?: OverviewSquad | null
 }
 
+
+type AssociationMemberRow = {
+  user_id: string
+  club_id?: string | null
+  username: string
+  club_name: string
+  club_country_code?: string | null
+  membership_status: string
+  joined_on_game_date?: string | null
+  joined_season_number?: number | null
+  activation_contribution?: number | null
+  is_national_coach?: boolean
+}
+
+type AssociationMemberDirectory = {
+  association_id?: string | null
+  total: number
+  limit: number
+  offset: number
+  members: AssociationMemberRow[]
+}
+
 type OverviewData = {
   available: boolean
   association_exists?: boolean
@@ -297,6 +319,9 @@ export default function NationalAssociationPage(): JSX.Element {
   const [message, setMessage] = useState<string | null>(null)
   const [selectedOverviewEventId, setSelectedOverviewEventId] = useState<string | null>(null)
   const [selectedRiderIdentities, setSelectedRiderIdentities] = useState<Record<string, RiderIdentity>>({})
+  const [memberPage, setMemberPage] = useState(1)
+  const [memberDirectory, setMemberDirectory] = useState<AssociationMemberDirectory | null>(null)
+  const [membersLoading, setMembersLoading] = useState(false)
 
   const detectedCycleKey =
     nationsCycle?.state === 'active_cycle' ? nationsCycle.cycle_key ?? null : null
@@ -381,6 +406,37 @@ export default function NationalAssociationPage(): JSX.Element {
     void load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestedCycleKey])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadMembers(): Promise<void> {
+      setMembersLoading(true)
+      const { data, error: memberError } = await supabase.rpc(
+        'get_my_national_association_members_v1',
+        {
+          p_limit: 20,
+          p_offset: (memberPage - 1) * 20,
+        },
+      )
+
+      if (!cancelled) {
+        if (memberError) {
+          console.error('Failed to load National Association members:', memberError)
+          setMemberDirectory(null)
+        } else {
+          setMemberDirectory((data ?? null) as AssociationMemberDirectory | null)
+        }
+        setMembersLoading(false)
+      }
+    }
+
+    void loadMembers()
+
+    return () => {
+      cancelled = true
+    }
+  }, [memberPage, association?.association_id])
 
   const perform = async (key: string, action: () => Promise<void>): Promise<void> => {
     try {
@@ -1223,6 +1279,139 @@ export default function NationalAssociationPage(): JSX.Element {
               </div>
             </div>
           </section>
+
+
+          <details className="rounded bg-white shadow">
+            <summary className="cursor-pointer list-none border-b border-slate-200 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Association members
+                  </div>
+                  <h3 className="mt-1 text-lg font-semibold text-slate-900">
+                    Member directory
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Active members, join date, team, role and activation-fund contribution.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-slate-900">
+                    {memberDirectory?.total ?? 0} member{(memberDirectory?.total ?? 0) === 1 ? '' : 's'}
+                  </div>
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    Oldest members first
+                  </div>
+                </div>
+              </div>
+            </summary>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-[900px] w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Joined</th>
+                    <th className="px-4 py-3">Player</th>
+                    <th className="px-4 py-3">Team</th>
+                    <th className="px-4 py-3 text-center">Activation fund</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {membersLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                        Loading members…
+                      </td>
+                    </tr>
+                  ) : (memberDirectory?.members ?? []).length ? (
+                    (memberDirectory?.members ?? []).map(member => {
+                      const teamFlag = countryFlagUrl(member.club_country_code)
+                      return (
+                        <tr key={member.user_id} className="bg-white">
+                          <td className="px-4 py-3 align-top">
+                            <div className="font-medium text-slate-900">
+                              {formatGameDate(member.joined_on_game_date)}
+                            </div>
+                            <div className="mt-0.5 text-xs text-slate-500">
+                              Season {member.joined_season_number ?? '—'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <div className="font-semibold text-slate-900">
+                              {member.username}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <div className="flex items-center gap-2">
+                              {teamFlag ? (
+                                <img
+                                  src={teamFlag}
+                                  alt={member.club_country_code ?? ''}
+                                  className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
+                                />
+                              ) : null}
+                              <span className="font-medium text-slate-700">
+                                {member.club_name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center align-top">
+                            <span className="font-semibold text-slate-900">
+                              {member.activation_contribution ?? 0}
+                            </span>
+                            <span className="ml-1 text-xs text-slate-500">Coins</span>
+                          </td>
+                          <td className="px-4 py-3 align-top">
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              member.is_national_coach
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}>
+                              {member.is_national_coach ? 'National Coach' : 'Member'}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                        No active Association members found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {(memberDirectory?.total ?? 0) > 20 ? (
+              <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+                <div className="text-xs text-slate-500">
+                  Showing {(memberPage - 1) * 20 + 1}–
+                  {Math.min(memberPage * 20, memberDirectory?.total ?? 0)} of {memberDirectory?.total ?? 0}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={memberPage <= 1}
+                    onClick={() => setMemberPage(page => Math.max(1, page - 1))}
+                    className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    disabled={memberPage * 20 >= (memberDirectory?.total ?? 0)}
+                    onClick={() => setMemberPage(page => page + 1)}
+                    className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </details>
 
           <NationalAssociationCustomization />
 
