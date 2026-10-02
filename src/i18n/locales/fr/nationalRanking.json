@@ -188,7 +188,8 @@
   },
   "info": {
     "title": "Informations sur le championnat",
-    "description": "Les championnats nationaux sont des courses individuelles. Il n'y a ni tactique d'équipe, ni personnel, ni véhicules, ni ravitaillement du club. L'organisateur couvre la logistique et les coûts ; vous contrôlez uniquement l'équipement et la tactique individuelle de chaque coureur invité."
+    "description": "Les championnats nationaux sont des courses individuelles. Il n'y a ni tactique d'équipe, ni personnel, ni véhicules, ni ravitaillement du club. L'organisateur couvre la logistique et les coûts ; vous contrôlez uniquement l'équipement et la tactique individuelle de chaque coureur invité.",
+    "openGuide": "Ouvrir le guide complet du classement national et du championnat"
   },
   "summary": {
     "title": "Calendrier du championnat national",
