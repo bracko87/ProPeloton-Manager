@@ -46,6 +46,7 @@ import {
   getNotificationExtraText,
   getNotificationImageSrc,
   getNotificationIntroText,
+  isConsolidatedNationalNotification,
   type NotificationActionTemplate,
 } from '@/features/notifications/notificationTemplates'
 
@@ -2277,6 +2278,7 @@ export default function NotificationsPage(): JSX.Element {
                   const isUnread = item.status === 'unread'
                   const isExpanded = expandedId === item.user_notification_id
                   const isSeasonStartNotice = item.type_code === 'SEASON_STARTED'
+                  const isNationalFeatureNotice = isConsolidatedNationalNotification(item)
                   const imageSrc = getNotificationImageSrc(item)
                   const introText = getNotificationIntroText(item)
                   const detailRows = getNotificationDetailRows(item)
@@ -2304,6 +2306,17 @@ export default function NotificationsPage(): JSX.Element {
                             isUnread ? 'bg-emerald-500' : 'bg-slate-300'
                           }`}
                         />
+
+                        {isNationalFeatureNotice && imageSrc ? (
+                          <div className="flex h-11 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white p-1.5 shadow-sm">
+                            <img
+                              src={imageSrc}
+                              alt=""
+                              className="h-full w-full object-contain"
+                              draggable={false}
+                            />
+                          </div>
+                        ) : null}
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
@@ -2581,7 +2594,11 @@ export default function NotificationsPage(): JSX.Element {
                                       <img
                                         src={imageSrc}
                                         alt={localizeNotificationRuntimeText(item.title, item, t)}
-                                        className="w-full max-w-[340px] rounded-xl object-cover shadow-sm"
+                                        className={
+                                        isNationalFeatureNotice
+                                          ? 'w-full max-w-[300px] rounded-xl border border-slate-200 bg-white object-contain p-4 shadow-sm'
+                                          : 'w-full max-w-[340px] rounded-xl object-cover shadow-sm'
+                                      }
                                         draggable={false}
                                       />
                                     </div>
@@ -3844,7 +3861,9 @@ export default function NotificationsPage(): JSX.Element {
                                       className={
                                         isSeasonStartNotice
                                           ? 'rounded-xl border border-sky-200 bg-sky-50 px-3 py-3 text-sm leading-6 text-slate-700'
-                                          : 'text-sm leading-6 text-slate-700'
+                                          : isNationalFeatureNotice
+                                            ? 'rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700 shadow-sm'
+                                            : 'text-sm leading-6 text-slate-700'
                                       }
                                     >
                                       {introText}
@@ -3854,7 +3873,7 @@ export default function NotificationsPage(): JSX.Element {
                                   {detailRows.length > 0 ? (
                                     <div
                                       className={
-                                        isSeasonStartNotice
+                                        isSeasonStartNotice || isNationalFeatureNotice
                                           ? 'mt-4 grid gap-3 sm:grid-cols-2'
                                           : 'mt-4 space-y-2'
                                       }
@@ -3863,12 +3882,12 @@ export default function NotificationsPage(): JSX.Element {
                                         <div
                                           key={`${item.user_notification_id}-${row.label}-${index}`}
                                           className={
-                                            isSeasonStartNotice
+                                            isSeasonStartNotice || isNationalFeatureNotice
                                               ? 'rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm'
                                               : 'text-sm leading-6 text-slate-700'
                                           }
                                         >
-                                          {isSeasonStartNotice ? (
+                                          {isSeasonStartNotice || isNationalFeatureNotice ? (
                                             <>
                                               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                                 {row.label}
@@ -3908,7 +3927,9 @@ export default function NotificationsPage(): JSX.Element {
                                       className={
                                         isSeasonStartNotice
                                           ? 'mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-6 text-amber-900'
-                                          : 'mt-4 text-sm leading-6 text-slate-600'
+                                          : isNationalFeatureNotice
+                                            ? 'mt-4 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-600 shadow-sm'
+                                            : 'mt-4 text-sm leading-6 text-slate-600'
                                       }
                                     >
                                       {extraText}
