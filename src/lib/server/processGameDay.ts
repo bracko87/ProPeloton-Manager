@@ -17,6 +17,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { processDailyFatigue } from './fatigue'
+import { processYouthAcademyGameDay } from './processYouthAcademyGameDay'
 // import { processDailyMorale } from './morale'
 
 /**
@@ -30,6 +31,7 @@ export async function processGameDay(
   gameDate: string
 ) {
   await processDailyFatigue(supabaseAdmin, gameDate)
+  await processYouthAcademyGameDay(supabaseAdmin, gameDate)
 
   /**
    * Enable later once morale daily processor is fully wired
