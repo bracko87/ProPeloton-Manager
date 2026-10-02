@@ -863,7 +863,9 @@
     "NATIONS_WORLD_FINAL_QUALIFIED": "Qualified for the World Nations Final",
     "NATIONS_HOST_SELECTED": "World Nations Final host selected",
     "NATIONS_FINAL_RESULT": "World Nations Final completed",
-    "NATIONS_CHAMPION": "World Nations Champion"
+    "NATIONS_CHAMPION": "World Nations Champion",
+    "NATIONAL_COACH_POSITION_VACANT": "National Coach position is vacant",
+    "NATIONAL_COACH_RESIGNED": "National Coach has resigned"
   },
   "richReports": {
     "common": {
@@ -1270,6 +1272,16 @@
       "title": "{{roundLabel}} squad selection is open",
       "message": "Your nation has entered {{roundLabel}}. Select a fresh 10-rider squad for {{group}}. You may keep the previous riders or choose different eligible riders.",
       "extra": "Final squad deadline: {{finalSquadDeadline}}. Open National Association Squad to prepare the new competition window."
+    },
+    "coachPositionVacant": {
+      "title": "National Coach position is vacant",
+      "message": "The National Coach position is vacant. A replacement election will start.",
+      "extra": "Eligible Association members can register for the replacement election when candidature opens."
+    },
+    "coachResigned": {
+      "title": "National Coach has resigned",
+      "message": "The National Coach has resigned. A replacement election will start.",
+      "extra": "The Association remains active while the replacement election is completed."
     }
   }
 }
