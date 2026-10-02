@@ -1174,7 +1174,7 @@
     "worldFinalConfirmation": {
       "title": "Conferma di nuovo {{rider}} per il Campionato del Mondo",
       "message": "{{rider}} è già qualificato e accettato per la Gran Finale del Campionato del Mondo su strada del {{raceDate}}. Conferma di nuovo la partecipazione finale entro il {{finalDeadline}}.",
-      "extra": "Un rifiuto in questa fase rimuove il corridore dalla lista di partenza e applica una forte penalità al morale."
+      "extra": "Un rifiuto in questa fase rimuove il corridore dalla Startlist e applica una forte penalità al morale."
     },
     "worldResult": {
       "title": "Campionato del Mondo su strada completato",
