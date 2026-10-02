@@ -425,7 +425,7 @@ export default function NationalAssociationPage(): JSX.Element {
 
       if (!cancelled) {
         if (memberError) {
-          console.error('Failed to load National Association members:', memberError)
+          console.error('Failed to load National {t('association.members.eyebrow')}:', memberError)
           setMemberDirectory(null)
         } else {
           setMemberDirectory((data ?? null) as AssociationMemberDirectory | null)
@@ -735,7 +735,7 @@ export default function NationalAssociationPage(): JSX.Element {
           to="/dashboard/manual?section=national-association-world-nations"
           className="inline-flex items-center rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
         >
-          {t('association.openGuide', { defaultValue: 'Open National Association & World Nations guide' })}
+          {t('association.openGuide')}
         </Link>
       </div>
 
@@ -1303,18 +1303,18 @@ export default function NationalAssociationPage(): JSX.Element {
                     Association members
                   </div>
                   <h3 className="mt-1 text-lg font-semibold text-slate-900">
-                    Member directory
+                    {t('association.members.title')}
                   </h3>
                   <p className="mt-1 text-sm text-slate-500">
-                    Active members, join date, team, role and activation-fund contribution.
+                    {t('association.members.description')}
                   </p>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold text-slate-900">
-                    {memberDirectory?.total ?? 0} member{(memberDirectory?.total ?? 0) === 1 ? '' : 's'}
+                    {t('association.members.count', { count: memberDirectory?.total ?? 0 })}
                   </div>
                   <div className="mt-0.5 text-xs text-slate-500">
-                    Oldest members first
+                    {t('association.members.oldestFirst')}
                   </div>
                 </div>
               </div>
@@ -1324,18 +1324,18 @@ export default function NationalAssociationPage(): JSX.Element {
               <table className="min-w-[900px] w-full text-sm">
                 <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <tr>
-                    <th className="px-4 py-3">Joined</th>
-                    <th className="px-4 py-3">Player</th>
-                    <th className="px-4 py-3">Team</th>
-                    <th className="px-4 py-3 text-center">Activation fund</th>
-                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">{t('association.members.joined')}</th>
+                    <th className="px-4 py-3">{t('association.members.player')}</th>
+                    <th className="px-4 py-3">{t('association.members.team')}</th>
+                    <th className="px-4 py-3 text-center">{t('association.members.activationFund')}</th>
+                    <th className="px-4 py-3">{t('association.members.status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {membersLoading ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
-                        Loading members…
+                        {t('association.members.loading')}
                       </td>
                     </tr>
                   ) : (memberDirectory?.members ?? []).length ? (
@@ -1348,7 +1348,7 @@ export default function NationalAssociationPage(): JSX.Element {
                               {formatGameDate(member.joined_on_game_date)}
                             </div>
                             <div className="mt-0.5 text-xs text-slate-500">
-                              Season {member.joined_season_number ?? '—'}
+                              {t('association.members.season', { season: member.joined_season_number ?? '—' })}
                             </div>
                           </td>
                           <td className="px-4 py-3 align-top">
@@ -1372,9 +1372,8 @@ export default function NationalAssociationPage(): JSX.Element {
                           </td>
                           <td className="px-4 py-3 text-center align-top">
                             <span className="font-semibold text-slate-900">
-                              {member.activation_contribution ?? 0}
+                              {t('association.members.coins', { count: member.activation_contribution ?? 0 })}
                             </span>
-                            <span className="ml-1 text-xs text-slate-500">Coins</span>
                           </td>
                           <td className="px-4 py-3 align-top">
                             <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -1382,7 +1381,7 @@ export default function NationalAssociationPage(): JSX.Element {
                                 ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-slate-100 text-slate-700'
                             }`}>
-                              {member.is_national_coach ? 'National Coach' : 'Member'}
+                              {member.is_national_coach ? t('association.members.nationalCoach') : t('association.members.member')}
                             </span>
                           </td>
                         </tr>
@@ -1391,7 +1390,7 @@ export default function NationalAssociationPage(): JSX.Element {
                   ) : (
                     <tr>
                       <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
-                        No active Association members found.
+                        {t('association.members.empty')}
                       </td>
                     </tr>
                   )}
@@ -1402,8 +1401,11 @@ export default function NationalAssociationPage(): JSX.Element {
             {(memberDirectory?.total ?? 0) > 20 ? (
               <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
                 <div className="text-xs text-slate-500">
-                  Showing {(memberPage - 1) * 20 + 1}–
-                  {Math.min(memberPage * 20, memberDirectory?.total ?? 0)} of {memberDirectory?.total ?? 0}
+                  {t('association.members.showing', {
+                    from: (memberPage - 1) * 20 + 1,
+                    to: Math.min(memberPage * 20, memberDirectory?.total ?? 0),
+                    total: memberDirectory?.total ?? 0,
+                  })}
                 </div>
                 <div className="flex gap-2">
                   <button
