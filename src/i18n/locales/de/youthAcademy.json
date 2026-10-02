@@ -187,6 +187,19 @@
       "resistance": "Widerstand",
       "race_iq": "Renn-IQ",
       "teamwork": "Teamarbeit"
+    },
+    "incoming": {
+      "title": "Eingehende Akademie-Anfragen",
+      "count": "{{count}} offen",
+      "none": "Keine eingehenden Anfragen",
+      "noneHelp": "Andere Premium-Akademien können Ihre Nachwuchsfahrer direkt ansprechen. Angebote, die Ihre Entscheidung benötigen, erscheinen hier.",
+      "approachFrom": "Anfrage von {{club}}",
+      "newStipend": "Angebotenes Wochenstipendium",
+      "accommodation": "Angebotene Unterkunft",
+      "decisionHelp": "Wenn Sie das Akademie-Angebot annehmen, treffen Fahrer und Familie anschließend die endgültige Umzugsentscheidung. Bei Ablehnung bleibt der Fahrer in Ihrer Akademie.",
+      "accept": "Akademie-Angebot annehmen",
+      "decline": "Ablehnen",
+      "processing": "Wird verarbeitet…"
     }
   },
   "settings": {
@@ -227,6 +240,7 @@
     "save": "Einstellungen der Jugendakademie konnten nicht gespeichert werden.",
     "scoutingLoad": "Jugend-Scouting-Berichte konnten nicht geladen werden.",
     "scoutingRun": "Der monatliche Jugend-Scouting-Zyklus konnte nicht gestartet werden.",
-    "recruitmentOffer": "Das Jugend-Rekrutierungsangebot konnte nicht gesendet werden."
+    "recruitmentOffer": "Das Jugend-Rekrutierungsangebot konnte nicht gesendet werden.",
+    "incomingOffer": "Die eingehende Jugendakademie-Anfrage konnte nicht beantwortet werden."
   }
 }
