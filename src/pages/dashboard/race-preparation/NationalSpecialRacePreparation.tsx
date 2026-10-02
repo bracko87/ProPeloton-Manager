@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-import NationalSpecialStagePlanV2 from './NationalSpecialStagePlanV2'
+import NationalSpecialStagePlanV3 from './NationalSpecialStagePlanV3'
 
 export type NationalTeamListEvent = {
   kind: 'national_team'
@@ -563,5 +563,5 @@ export function NationalSpecialStagePlan({
 }: {
   selection: NationalSpecialSelection
 }): JSX.Element {
-  return <NationalSpecialStagePlanV2 selection={selection} />
+  return <NationalSpecialStagePlanV3 selection={selection} />
 }
