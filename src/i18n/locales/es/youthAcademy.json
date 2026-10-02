@@ -102,6 +102,91 @@
       "regional": "Regional",
       "continental": "Continental",
       "world": "Mundial"
+    },
+    "scoutReport": "Informe del ojeador juvenil",
+    "loading": "Cargando informes de scouting…",
+    "scoutScore": "Eficacia de scouting: {{score}} / 100",
+    "monthlyReports": "Informes / mes",
+    "qualityExplainer": "El presupuesto determina dónde puede buscar el ojeador. Su calidad determina cuántos corredores informa, la precisión de las evaluaciones y su capacidad para detectar mejores talentos.",
+    "noScout": "Contrata a un ojeador juvenil para iniciar la búsqueda mensual de talentos. La Academia puede funcionar sin él, pero no generará nuevos informes.",
+    "monthlyCycle": "Ciclo mensual de scouting",
+    "currentRange": "Alcance actual",
+    "programBudget": "Presupuesto de scouting de la temporada",
+    "cycleCompleted": "{{count}} informe(s) entregado(s) este mes de juego. El próximo ciclo se abrirá el mes siguiente.",
+    "cycleReady": "El ciclo de scouting de este mes está listo.",
+    "run": "Ejecutar scouting mensual",
+    "running": "Buscando…",
+    "alreadyRun": "Mes completado",
+    "delegation": "Responsabilidad de captación",
+    "directorMode": "Director de la Academia Juvenil",
+    "managerMode": "Manager",
+    "directorModeHelp": "El Director preselecciona talentos que cumplen tus límites. Si las negociaciones también están delegadas, puede presentar ofertas automáticamente dentro de esos límites.",
+    "managerModeHelp": "Revisas cada informe y decides qué talentos reciben una oferta.",
+    "autoRuleSummary": "Captación automática desde {{band}} · máx. {{stipend}}/semana · compensación máx. {{compensation}} · conservar {{slots}} plaza(s) libre(s).",
+    "prospects": "Informes y captación",
+    "reportCount": "{{count}} informe(s) activo(s)",
+    "noReports": "Todavía no hay informes activos",
+    "noReportsHelp": "Ejecuta el ciclo mensual después de contratar a un ojeador juvenil. Los informes caducan tras 60 días de juego.",
+    "fromAcademy": "En {{academy}}",
+    "otherAcademy": "otra Academia Juvenil",
+    "unattachedProspect": "Talento juvenil sin academia",
+    "confidence": "{{value}} % de confianza",
+    "strengths": "Fortalezas observadas",
+    "relocation": "Traslado",
+    "expectedSupport": "Apoyo esperado",
+    "developmentCompensation": "Compensación de formación",
+    "none": "Ninguna",
+    "offerPackage": "Paquete de oferta",
+    "weeklyStipend": "Asignación semanal",
+    "accommodation": "Alojamiento / semana",
+    "compensationOffer": "Compensación a la academia",
+    "offerHelp": "El corredor y su familia valoran ubicación, alojamiento, calidad del staff y apoyo económico. Una academia de IA también puede aceptar o rechazar la compensación de formación.",
+    "submittingOffer": "Enviando…",
+    "improveOffer": "Enviar oferta mejorada",
+    "submitOffer": "Enviar oferta",
+    "signedToAcademy": "Incorporado a tu Academia Juvenil.",
+    "relocationValues": {
+      "easy": "Fácil",
+      "moderate": "Moderado",
+      "hard": "Difícil",
+      "very_hard": "Muy difícil"
+    },
+    "offerStatuses": {
+      "submitted": "Oferta enviada",
+      "academy_rejected": "La academia actual rechazó la oferta",
+      "rider_rejected": "El corredor/la familia rechazó",
+      "accepted": "Oferta aceptada"
+    },
+    "offerStatusHelp": {
+      "submitted": "La oferta está siendo evaluada.",
+      "academy_rejected": "Aumenta la compensación de formación si quieres intentarlo de nuevo.",
+      "rider_rejected": "Puedes mejorar la asignación o el alojamiento y volver a intentarlo.",
+      "accepted": "El corredor se ha unido a tu Academia Juvenil."
+    },
+    "assessmentBands": {
+      "limited": "Limitado",
+      "promising": "Prometedor",
+      "very_promising": "Muy prometedor",
+      "exceptional": "Excepcional"
+    },
+    "roles": {
+      "all_rounder": "Todoterreno",
+      "sprinter": "Sprinter",
+      "climber": "Escalador",
+      "time_trial": "Contrarrelojista",
+      "domestique": "Gregario",
+      "breakaway": "Escapista"
+    },
+    "skillNames": {
+      "sprint": "Sprint",
+      "climbing": "Escalada",
+      "time_trial": "Contrarreloj",
+      "endurance": "Resistencia",
+      "flat": "Llano",
+      "recovery": "Recuperación",
+      "resistance": "Resistencia física",
+      "race_iq": "IQ de carrera",
+      "teamwork": "Trabajo en equipo"
     }
   },
   "settings": {
@@ -117,6 +202,17 @@
       "manager": "Manager",
       "academy_director": "Director de la Academia Juvenil",
       "u16_head_coach": "Entrenador principal U16"
+    },
+    "autoRecruitmentTitle": "Límites de captación del Director",
+    "autoRecruitmentDescription": "Estos límites solo se aplican cuando la captación está delegada al Director. Las ofertas automáticas requieren que las negociaciones también estén delegadas.",
+    "minimumAssessment": "Evaluación mínima",
+    "maxStipend": "Asignación semanal máxima",
+    "maxCompensation": "Compensación de formación máxima",
+    "keepFreeSlots": "Mantener plazas libres",
+    "bands": {
+      "promising": "Prometedor",
+      "very_promising": "Muy prometedor",
+      "exceptional": "Excepcional"
     }
   },
   "placeholders": {
@@ -128,6 +224,9 @@
   "errors": {
     "load": "No se pudo cargar la Academia Juvenil.",
     "activate": "No se pudo activar la Academia Juvenil.",
-    "save": "No se pudieron guardar los ajustes de la Academia Juvenil."
+    "save": "No se pudieron guardar los ajustes de la Academia Juvenil.",
+    "scoutingLoad": "No se pudieron cargar los informes de scouting juvenil.",
+    "scoutingRun": "No se pudo ejecutar el ciclo mensual de scouting juvenil.",
+    "recruitmentOffer": "No se pudo enviar la oferta de captación juvenil."
   }
 }
