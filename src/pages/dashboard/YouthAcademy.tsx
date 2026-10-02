@@ -414,7 +414,7 @@ export default function YouthAcademyPage(): JSX.Element {
     setError(null)
     try {
       const { data: payload, error: saveError } = await supabase.rpc(
-        'update_my_youth_academy_settings_v1',
+        'update_my_youth_academy_settings_v2',
         {
           p_recruitment_decider: draftSettings.recruitment_decider,
           p_race_entry_decider: draftSettings.race_entry_decider,
