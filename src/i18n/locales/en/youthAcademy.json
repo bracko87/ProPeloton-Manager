@@ -240,8 +240,6 @@
     }
   },
   "placeholders": {
-    "calendar": "The separate U16 calendar and lightweight race engine will be connected in the next implementation phase. Youth race entry costs will remain mainly travel/logistics costs.",
-    "rankings": "Regional Youth Ranking and Youth World Ranking foundation will be connected with the U16 race calendar.",
     "history": "Academy graduates, youth results and long-term development history will remain attached to riders after graduation."
   },
   "errors": {
@@ -257,7 +255,11 @@
     "equipmentPurchase": "Could not purchase Youth Academy equipment.",
     "equipmentDirector": "Could not complete the Youth Academy Director equipment run.",
     "graduationLoad": "Could not load Youth graduation decisions.",
-    "graduationDecision": "Could not complete the Youth graduation decision."
+    "graduationDecision": "Could not complete the Youth graduation decision.",
+    "calendarLoad": "Could not load the Youth race calendar.",
+    "rankingsLoad": "Could not load Youth rankings.",
+    "raceEntry": "Could not enter the Youth race.",
+    "raceLineup": "Could not save the Youth race lineup."
   },
   "equipment": {
     "title": "Youth equipment",
@@ -302,5 +304,54 @@
     "pathwayHelp": "This temporary pathway gives you 30 game days to move the rider into the Developing Team. If no Developing Team move is completed by then, the rider becomes a professional free agent.",
     "toDeveloping": "Move to Developing Team ({{slots}} free)",
     "release": "Release as professional free agent"
+  },
+  "calendar": {
+    "title": "U16 race calendar",
+    "format": "Race format",
+    "resultsOnly": "Results only — no replay",
+    "entryResponsibility": "Race participation",
+    "squadResponsibility": "Lineup & strategy",
+    "ageLimitHelp": "Riders have age-based rolling 30-day race-start limits. The Head Coach also considers profile, readiness and fatigue, so an Academy normally enters only a small selection of the 12 available regional events each game month.",
+    "races": "Youth races",
+    "loading": "Loading Youth races…",
+    "levels": {
+      "regional": "Regional Youth Cup",
+      "world_series": "Youth World Series",
+      "world_final": "Youth World Final"
+    },
+    "qualified": "Qualified",
+    "notQualified": "Not qualified",
+    "qualificationHelp": "Qualification for World Series events comes from the Regional Youth Ranking. The Youth World Final uses the Youth World Ranking.",
+    "strategy": "Race strategy",
+    "strategies": {
+      "conservative": "Conservative",
+      "balanced": "Balanced",
+      "aggressive": "Aggressive"
+    },
+    "enterRace": "Enter race",
+    "entering": "Entering…",
+    "coachEntryHelp": "Race participation is delegated. The U16 Head Coach reviews this event seven game days before the race and enters it only when the roster, fatigue and development plan fit.",
+    "entered": "Academy entered",
+    "enteredBy": "Entered by {{who}}",
+    "selectLineup": "Select lineup — {{count}} / {{max}}",
+    "saveLineup": "Save lineup & strategy",
+    "savingLineup": "Saving…",
+    "coachLineupHelp": "The U16 Head Coach selected {{count}} rider(s) and controls race strategy.",
+    "myResults": "My Academy results",
+    "topResults": "Top results",
+    "didNotRace": "Your Academy did not race this event."
+  },
+  "rankings": {
+    "title": "Youth Rankings",
+    "description": "Your Academy competes in the {{region}} Regional Youth Ranking. Regional results also contribute a smaller number of points to the Youth World Ranking; Youth World Series and the World Final carry stronger World points.",
+    "regionalTitle": "Regional Youth Ranking",
+    "worldTitle": "Youth World Ranking",
+    "loading": "Loading rankings…",
+    "noPoints": "No ranking points have been scored yet.",
+    "rank": "Rank",
+    "rider": "Rider",
+    "academy": "Academy",
+    "starts": "Finishes",
+    "points": "Points"
   }
 }
