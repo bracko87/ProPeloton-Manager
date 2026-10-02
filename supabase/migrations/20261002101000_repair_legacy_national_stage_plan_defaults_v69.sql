@@ -208,14 +208,12 @@ with plans as (
 )
 update public.race_stage_plan_riders spr
 set stage_role = case
-      when spr.stage_role = 'domestique' then 'helper_domestique'
-      when spr.stage_role = 'leader' then 'team_leader_gc'
+      -- race_stage_plan_riders still uses the legacy engine-role vocabulary.
+      -- Rich National Team roles stay in race_stage_plans.rider_roles_json.
       when spr.stage_role in (
-        'team_time_trial_rider','team_leader_gc','sprinter','lead_out_rider',
-        'sprint_train_rider','climber','mountain_domestique','helper_domestique',
-        'breakaway_rider','breakaway_chaser','rouleur','protected_rider','free_role'
+        'team_leader','protected_rider','sprinter','climber','domestique',
+        'leadout','breakaway','road_captain','free_role'
       ) then spr.stage_role
-      when p.national_race_type = 'team_time_trial' then 'team_time_trial_rider'
       else 'free_role'
     end,
     updated_at = now()
