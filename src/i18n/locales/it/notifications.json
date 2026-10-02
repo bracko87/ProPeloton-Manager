@@ -886,7 +886,8 @@
     "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Invito al Campionato del Mondo",
     "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Conferma Campionato del Mondo",
     "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Risultato Campionato del Mondo",
-    "WORLD_ROAD_CHAMPION": "Campione del Mondo su strada"
+    "WORLD_ROAD_CHAMPION": "Campione del Mondo su strada",
+    "NATIONAL_TEAM_NEW_SELECTION_WINDOW": "Nuova finestra di selezione della Nazionale"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Il piano di gara richiede attenzione: {{entity}}",
@@ -1307,6 +1308,11 @@
       "title": "Impegno con la Nazionale completato per {{rider}}",
       "message": "{{rider}} ha completato l’impegno con {{association}} ed è di nuovo disponibile per il club.",
       "extra": "Dopo la fine dell’impegno con la Nazionale continuano ad applicarsi le normali regole di salute, fatica e disponibilità alle gare."
+    },
+    "newSelectionWindow": {
+      "title": "Selezione della rosa aperta per {{roundLabel}}",
+      "message": "La tua nazione ha raggiunto {{roundLabel}}. Seleziona una nuova rosa di 10 corridori per {{group}}. Puoi mantenere i corridori precedenti oppure scegliere altri corridori idonei.",
+      "extra": "Scadenza per la rosa definitiva: {{finalSquadDeadline}}. Apri la sezione Rosa dell’Associazione Nazionale per preparare la nuova finestra di competizione."
     }
   }
 }
