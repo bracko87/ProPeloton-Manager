@@ -94,7 +94,7 @@
       "selectionPoolDescription": "Trois choix sont disponibles pour chaque catégorie en Plat, Montagne et Contre-la-montre. Tout l’équipement de l’équipe nationale est toujours disponible à 100 %.",
       "alwaysPerfect": "Toujours à 100 %",
       "unlimited": "Illimité",
-      "assetsUnlimitedHelp": "Les moyens d’assistance de l’équipe nationale sont disponibles en permanence. Le moteur de course peut utiliser le maximum autorisé pour une épreuve ; ils ne s’usent jamais.",
+      "assetsUnlimitedHelp": "Les moyens d’assistance de l’équipe nationale sont disponibles en permanence. Le Race Engine peut utiliser le maximum autorisé pour une épreuve ; ils ne s’usent jamais.",
       "suppliesUnlimitedHelp": "Les ravitaillements de l’équipe nationale sont toujours disponibles et ne sont jamais déduits après utilisation.",
       "overviewTab": "Vue d’ensemble",
       "inventoryTab": "Inventaire",
@@ -198,7 +198,7 @@
       "custom": "Autre",
       "giveCoins": "Donner des Coins",
       "joinFirst": "Rejoignez d’abord l’Association Nationale avant de contribuer au fonds d’activation.",
-      "funded": "Fonds d’activation complet. Aucun Coin supplémentaire n’est requis.",
+      "funded": "Fonds d’activation complet. Aucun paiement supplémentaire en Coins n’est requis.",
       "requirements": "L’activation nécessite {{members}} managers éligibles et {{coins}} Coins dans le fonds commun de fondation.",
       "message": "{{amount}} Coins ajoutés au fonds d’activation.",
       "alreadyFunded": "Le fonds d’activation est déjà complet.",
@@ -529,7 +529,7 @@
   "world": {
     "loading": "Chargement du Championnat mondial des nations...",
     "title": "Championnat mondial des nations",
-    "subtitle": "Compétition internationale entre associations : CLM par équipes, plat et vallonné/montagne sur trois jours de course.",
+    "subtitle": "Compétition internationale entre associations : TTT, course sur route plate et course vallonnée/de montagne sur trois jours.",
     "navRankingChampionship": "Classement & Championnat national",
     "activeAssociations": "Associations actives",
     "finalQualification": "Qualification finale",
@@ -549,7 +549,7 @@
     "openRace": "Ouvrir la course",
     "table": {
       "nation": "Nation",
-      "ttt": "CLM Éq.",
+      "ttt": "TTT",
       "flat": "Plat",
       "mountain": "Montagne",
       "total": "Total"
@@ -568,11 +568,11 @@
     },
     "points": {
       "title": "Points du Championnat des nations",
-      "description": "Le classement général est fondé sur les points, pas sur le temps cumulé. Le jour 1 attribue les points du CLM par équipes ; les jours 2 et 3, seuls les trois meilleurs coureurs de chaque nation marquent.",
+      "description": "Le classement général est fondé sur les points, pas sur le temps cumulé. Le jour 1 attribue les points du TTT ; les jours 2 et 3, seuls les trois meilleurs coureurs de chaque nation marquent.",
       "day1": "Jour 1 · Contre-la-montre par équipes",
       "days23": "Jours 2–3 · Points des coureurs en course en ligne",
       "bestThree": "Les trois coureurs ayant le plus de points comptent pour le score national du jour.",
-      "tiebreak": "Ordre de départage : plus de victoires → plus de podiums → meilleur classement au CLM par équipes → meilleur coureur du jour 3."
+      "tiebreak": "Ordre de départage : plus de victoires → plus de podiums → meilleur classement au TTT → meilleur coureur du jour 3."
     },
     "history": {
       "title": "Historique World Nations",
