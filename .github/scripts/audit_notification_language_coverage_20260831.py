@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TEMPLATE_FILE = ROOT / 'src/features/notifications/notificationTemplates.tsx'
+TEMPLATE_FILE = ROOT / 'src/features/notifications/notificationTemplatesBase.tsx'
 LOCALES = ['en', 'sr-Latn', 'de', 'hr', 'es', 'it', 'fr', 'ru']
 
 text = TEMPLATE_FILE.read_text(encoding='utf-8')
