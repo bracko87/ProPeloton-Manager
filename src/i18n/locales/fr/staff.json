@@ -61,6 +61,18 @@
     "u23HeadCoach": {
       "label": "U23 Coach chef",
       "subtitle": "Formation en équipe de développement prévue et soutien tactique de course U23."
+    },
+    "youthAcademyDirector": {
+      "label": "Directeur de l'Académie Jeunes",
+      "subtitle": "Gère le programme U16, le budget, le recrutement délégué et les demandes opérationnelles."
+    },
+    "u16HeadCoach": {
+      "label": "Entraîneur principal U16",
+      "subtitle": "Gère l'entraînement U16, la charge, les axes de développement et la sélection en course."
+    },
+    "youthScout": {
+      "label": "Scout jeunes",
+      "subtitle": "Découvre et évalue les talents U16 dans la zone de scouting financée par l'Académie Jeunes."
     }
   },
   "impactAreas": {
@@ -88,7 +100,16 @@
     "transferIntelligence": "Transfert de renseignements",
     "u23Training": "Formation U23",
     "youthDevelopment": "Développement de la jeunesse",
-    "u23RaceTactics": "U23 tactique de course"
+    "u23RaceTactics": "U23 tactique de course",
+    "academyBudget": "Budget de l'académie",
+    "recruitmentManagement": "Gestion du recrutement",
+    "youthProgramme": "Programme jeunes",
+    "u16Training": "Entraînement U16",
+    "workloadManagement": "Gestion de la charge",
+    "raceSelection": "Sélection en course",
+    "youthScouting": "Scouting jeunes",
+    "talentAssessment": "Évaluation du talent",
+    "recruitmentReach": "Portée du recrutement"
   },
   "common": {
     "close": "Fermer",
@@ -110,7 +131,8 @@
     "focus": "Focus: {{value}}",
     "duration": "Durée: {{count}} jours",
     "cost": "Coût: {{value}}",
-    "completed": "Terminé: {{date}}"
+    "completed": "Terminé: {{date}}",
+    "youthAcademy": "Académie Jeunes"
   },
   "assignment": {
     "notAssigned": "Actuellement non assigné",
@@ -292,7 +314,8 @@
     "mechanicTitle": "Impact du personnel mécanicien",
     "directorTitle": "Impact du personnel du directeur du sport",
     "u23Title": "U23 Impact du personnel d'entraîneur",
-    "scoutingTitle": "Impact du personnel de scoutisme"
+    "scoutingTitle": "Impact du personnel de scoutisme",
+    "youthTitle": "Impact du personnel de l'Académie Jeunes"
   },
   "scoutingExplainer": {
     "title": "Comment fonctionne la qualité scout",
