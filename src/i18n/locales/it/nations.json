@@ -94,7 +94,7 @@
       "selectionPoolDescription": "Sono disponibili tre scelte per ogni categoria in Pianura, Montagna e Cronometro. Tutto l’equipaggiamento della Nazionale è sempre disponibile al 100 %.",
       "alwaysPerfect": "Sempre al 100 %",
       "unlimited": "Illimitato",
-      "assetsUnlimitedHelp": "I mezzi di supporto della Nazionale sono sempre disponibili. Il motore di gara può usare il massimo consentito per un evento; non si usurano mai.",
+      "assetsUnlimitedHelp": "I mezzi di supporto della Nazionale sono sempre disponibili. Il Race Engine può usare il massimo consentito per un evento; non si usurano mai.",
       "suppliesUnlimitedHelp": "I rifornimenti della Nazionale sono sempre disponibili e non vengono mai scalati dopo l’uso.",
       "overviewTab": "Panoramica",
       "inventoryTab": "Inventario",
@@ -189,20 +189,20 @@
     "activation": {
       "title": "Fondo di attivazione dell’associazione",
       "description": "I membri possono raccogliere insieme i 50 Coin richiesti una sola volta per attivare l’associazione. È un requisito di fondazione, non una tesoreria.",
-      "coins": "Coin",
+      "coins": "Coins",
       "remaining": "Ancora necessari",
       "yourContribution": "Il tuo contributo",
       "yourBalance": "Il tuo saldo",
-      "contribute": "Contribuisci con Coin",
+      "contribute": "Contribuisci con Coins",
       "permanentNote": "I contributi sono permanenti e non rimborsabili. Non danno potere di voto o proprietà. Gli importi oltre il residuo vengono automaticamente limitati.",
       "custom": "Altro",
-      "giveCoins": "Dona Coin",
+      "giveCoins": "Dona Coins",
       "joinFirst": "Entra prima nell’Associazione Nazionale per contribuire al fondo di attivazione.",
-      "funded": "Fondo di attivazione completo. Non servono altri Coin.",
+      "funded": "Fondo di attivazione completo. Non servono altri Coins.",
       "requirements": "L’attivazione richiede {{members}} manager idonei e {{coins}} Coin nel fondo comune di fondazione.",
-      "message": "{{amount}} Coin aggiunti al fondo di attivazione.",
+      "message": "{{amount}} Coins aggiunti al fondo di attivazione.",
       "alreadyFunded": "Il fondo di attivazione è già completo.",
-      "balanceShort": "Saldo: {{balance}} Coin"
+      "balanceShort": "Saldo: {{balance}} Coins"
     },
     "tabs": {
       "elections": "Elezioni",
@@ -367,7 +367,7 @@
         "national_champion_crowned": "Campione nazionale proclamato"
       },
       "detail": {
-        "activationContribution": "{{club}} ha contribuito {{amount}} Coin.",
+        "activationContribution": "{{club}} ha contribuito {{amount}} Coins.",
         "coachAppointed": "{{club}} · mandato {{term}}",
         "squadConfirmed": "{{size}} corridori · {{cycle}}",
         "worldNations": "Posizione finale #{{rank}} · {{points}} punti",
@@ -529,7 +529,7 @@
   "world": {
     "loading": "Caricamento Campionato Mondiale delle Nazioni...",
     "title": "Campionato Mondiale delle Nazioni",
-    "subtitle": "Competizione internazionale tra Associazioni: cronometro a squadre, pianura e colline/montagna in tre giorni di gara.",
+    "subtitle": "Competizione internazionale tra Associazioni: TTT, gara in pianura e gara collinare/montana in tre giorni.",
     "navRankingChampionship": "Classifica e Campionato Nazionale",
     "activeAssociations": "Associazioni attive",
     "finalQualification": "Qualificazione finale",
@@ -549,7 +549,7 @@
     "openRace": "Apri gara",
     "table": {
       "nation": "Nazione",
-      "ttt": "CR Squadre",
+      "ttt": "TTT",
       "flat": "Pianura",
       "mountain": "Montagna",
       "total": "Totale"
@@ -568,11 +568,11 @@
     },
     "points": {
       "title": "Punti del Campionato delle Nazioni",
-      "description": "La classifica generale è basata sui punti, non sul tempo totale. Il giorno 1 assegna punti alla cronometro a squadre; nei giorni 2 e 3 segnano solo i tre migliori corridori di ogni nazione.",
+      "description": "La classifica generale è basata sui punti, non sul tempo totale. Il giorno 1 assegna i punti del TTT; nei giorni 2 e 3 segnano solo i tre migliori corridori di ogni nazione.",
       "day1": "Giorno 1 · Cronometro a squadre",
       "days23": "Giorni 2–3 · Punti corridori nelle gare su strada",
       "bestThree": "I tre corridori con più punti contano per il punteggio giornaliero della nazione.",
-      "tiebreak": "Ordine spareggio: più vittorie → più podi → miglior piazzamento nella cronometro a squadre → miglior corridore del giorno 3."
+      "tiebreak": "Ordine spareggio: più vittorie → più podi → miglior piazzamento nel TTT → miglior corridore del giorno 3."
     },
     "history": {
       "title": "Storico World Nations",
