@@ -52,6 +52,7 @@ import OverviewPage from './pages/dashboard/Overview'
 import ManualPage from './pages/dashboard/Manual'
 import SquadPage from './pages/dashboard/Squad'
 import DevelopingTeamPage from './pages/dashboard/DevelopingTeam'
+import YouthAcademyPage from './pages/dashboard/YouthAcademy'
 import StaffPage from './pages/dashboard/Staff'
 import CalendarPage from './pages/dashboard/CalendarPage'
 import RaceDetailPage from './pages/dashboard/RaceDetailPage'
@@ -500,6 +501,11 @@ export default function App(): JSX.Element {
             <Route
               path="developing-team"
               element={<DevelopingTeamPage />}
+            />
+
+            <Route
+              path="youth-academy"
+              element={<YouthAcademyPage />}
             />
 
             <Route
