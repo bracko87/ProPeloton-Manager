@@ -1289,6 +1289,10 @@ export default function CalendarPage(): JSX.Element {
             const raceId = toNullableString(row.id) ?? ''
             const entryRules = entryRulesByRaceId[raceId]
             const userEntry = userEntriesByRaceId[raceId]
+            const raceMetadata = raceMetadataByRaceId[raceId] ?? asRecord(row.metadata)
+            const isNationalAssociationRace =
+              raceMetadata?.nations_competition === true ||
+              String(raceMetadata?.nations_competition ?? '').toLowerCase() === 'true'
 
             return {
               ...row,
@@ -1296,10 +1300,12 @@ export default function CalendarPage(): JSX.Element {
               name: toNullableString(row.name) ?? '',
               start_date: toNullableString(row.start_date) ?? '',
               end_date: toNullableString(row.end_date),
-              category: toNullableString(row.category),
+              category: isNationalAssociationRace
+                ? 'National Association'
+                : toNullableString(row.category),
               applications_status: entryRules?.applications_status ?? null,
               status: toNullableString(row.status),
-              metadata: raceMetadataByRaceId[raceId] ?? asRecord(row.metadata),
+              metadata: raceMetadata,
               stored_stage_count: toNullableNumber(row.stored_stage_count),
               actual_stage_count: toNullableNumber(row.actual_stage_count),
               first_start_city: toNullableString(row.first_start_city),
