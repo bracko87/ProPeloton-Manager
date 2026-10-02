@@ -2689,7 +2689,7 @@ const manualSections: ManualSection[] = [
       { "label": "Staff Market", "to": "/dashboard/transfers?tab=staff" },
       { "label": "Infrastructure", "to": "/dashboard/infrastructure" }
     ]
-  }
+  },
 
   {
     id: 'national-ranking-championships',
