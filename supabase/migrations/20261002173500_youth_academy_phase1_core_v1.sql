@@ -625,6 +625,37 @@ grant execute on function public.update_my_youth_academy_settings_v1(
   text,text,text,text,text,text,text,bigint
 ) to authenticated;
 
+-- Extend existing staff constraints for the three Youth Academy roles and
+-- the dedicated youth team scope.
+alter table public.club_staff
+  drop constraint if exists club_staff_role_type_chk;
+alter table public.club_staff
+  add constraint club_staff_role_type_chk check(
+    role_type=any(array[
+      'head_coach','mechanic','nutritionist','physio','scout_analyst',
+      'sport_director','team_doctor','trainer','u23_head_coach',
+      'youth_academy_director','u16_head_coach','youth_scout'
+    ]::text[])
+  );
+
+alter table public.club_staff
+  drop constraint if exists club_staff_team_scope_chk;
+alter table public.club_staff
+  add constraint club_staff_team_scope_chk check(
+    team_scope=any(array['first_team','u23','youth','all']::text[])
+  );
+
+alter table public.staff_candidates
+  drop constraint if exists staff_candidates_role_type_chk;
+alter table public.staff_candidates
+  add constraint staff_candidates_role_type_chk check(
+    role_type=any(array[
+      'head_coach','mechanic','nutritionist','physio','scout_analyst',
+      'sport_director','team_doctor','trainer','u23_head_coach',
+      'youth_academy_director','u16_head_coach','youth_scout'
+    ]::text[])
+  );
+
 -- Dedicated Youth Academy staff roles. They are Premium roles but deliberately
 -- have no infrastructure dependency in V1.
 insert into public.staff_role_catalog(
