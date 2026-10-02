@@ -344,17 +344,22 @@ security definer
 set search_path=public,private,pg_temp
 as $function$
   with rider_region as (
-    select private.youth_region_for_country_v1(r.country_code) region_code
-    from public.youth_riders r where r.id=p_youth_rider_id
+    select private.youth_region_for_country_v1(c.country_code) region_code
+    from public.youth_riders r
+    join public.youth_academies a on a.id=r.academy_id
+    join public.clubs c on c.id=a.club_id
+    where r.id=p_youth_rider_id
   ),
   points as (
     select rr.youth_rider_id,sum(rr.regional_points)::bigint points
     from public.youth_race_results rr
     join public.youth_races r on r.id=rr.race_id
     join public.youth_riders yr on yr.id=rr.youth_rider_id
+    join public.youth_academies ya on ya.id=yr.academy_id
+    join public.clubs yc on yc.id=ya.club_id
     cross join rider_region rg
     where r.season_number=p_season
-      and private.youth_region_for_country_v1(yr.country_code)=rg.region_code
+      and private.youth_region_for_country_v1(yc.country_code)=rg.region_code
     group by rr.youth_rider_id
   ),
   ranked as (
@@ -407,10 +412,17 @@ begin
   if v_race.id is null then return false; end if;
 
   if v_race.race_level='regional' then
-    return exists(
-      select 1 from public.youth_riders r
-      where r.academy_id=p_academy_id and r.status='academy'
-        and private.youth_region_for_country_v1(r.country_code)=v_race.region_code
+    return (
+      select private.youth_region_for_country_v1(c.country_code)=v_race.region_code
+        and (
+          select count(*)
+          from public.youth_riders r
+          where r.academy_id=p_academy_id
+            and private.youth_race_rider_eligible_v1(r.id,v_race.race_date)
+        )>=3
+      from public.youth_academies a
+      join public.clubs c on c.id=a.club_id
+      where a.id=p_academy_id
     );
   elsif v_race.race_level='world_series' then
     return exists(
@@ -469,10 +481,6 @@ begin
     from public.youth_riders r
     where r.academy_id=v_entry.academy_id
       and private.youth_race_rider_eligible_v1(r.id,v_race.race_date)
-      and (
-        v_race.race_level<>'regional'
-        or private.youth_region_for_country_v1(r.country_code)=v_race.region_code
-      )
       and (
         v_race.race_level='regional'
         or (
@@ -975,10 +983,6 @@ begin
           where yr.academy_id=v_academy_id
             and private.youth_race_rider_eligible_v1(yr.id,r.race_date)
             and (
-              r.race_level<>'regional'
-              or private.youth_region_for_country_v1(yr.country_code)=r.region_code
-            )
-            and (
               r.race_level='regional'
               or (
                 r.race_level='world_series'
@@ -1219,8 +1223,10 @@ begin
         from public.youth_riders yr
         join public.youth_race_results rr on rr.youth_rider_id=yr.id
         join public.youth_races r on r.id=rr.race_id
+        join public.youth_academies ya on ya.id=yr.academy_id
+        join public.clubs yc on yc.id=ya.club_id
         where r.season_number=v_season
-          and private.youth_region_for_country_v1(yr.country_code)=v_region
+          and private.youth_region_for_country_v1(yc.country_code)=v_region
         group by yr.id,yr.display_name,yr.country_code,yr.academy_id
       ),
       ranked as (
