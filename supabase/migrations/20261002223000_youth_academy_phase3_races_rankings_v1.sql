@@ -3,14 +3,16 @@
 -- rankings, World Series qualification and December Youth World Final.
 
 -- The U16 Head Coach is the normal race operator. Managers may retain control.
-update public.youth_academy_settings
-set race_entry_decider='u16_head_coach',updated_at=now()
-where race_entry_decider='academy_director';
-
+-- Drop the Phase 1 manager/Director constraint before migrating delegated rows.
 alter table public.youth_academy_settings
   drop constraint if exists youth_academy_settings_race_entry_decider_check;
 alter table public.youth_academy_settings
   drop constraint if exists youth_academy_settings_race_entry_decider_chk;
+
+update public.youth_academy_settings
+set race_entry_decider='u16_head_coach',updated_at=now()
+where race_entry_decider='academy_director';
+
 alter table public.youth_academy_settings
   add constraint youth_academy_settings_race_entry_decider_check
   check(race_entry_decider in ('manager','u16_head_coach'));
