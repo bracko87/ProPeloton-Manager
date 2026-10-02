@@ -128,6 +128,23 @@ type OfferDraft = {
   compensation: number
 }
 
+type IncomingYouthOffer = {
+  id: string
+  report_id: string
+  rider_id: string
+  rider_name: string
+  rider_country_code: string
+  rider_age: number
+  offering_academy_id: string
+  offering_club_name: string
+  offering_country_code: string
+  stipend_weekly: number
+  accommodation_weekly: number
+  compensation_offer: number
+  submitted_on: string
+  status: string
+}
+
 type AcademyPayload = {
   premium: boolean
   activated: boolean
@@ -251,6 +268,7 @@ export default function YouthAcademyPage(): JSX.Element {
   const [scoutingLoading, setScoutingLoading] = useState(false)
   const [scoutingAction, setScoutingAction] = useState<string | null>(null)
   const [offerDrafts, setOfferDrafts] = useState<Record<string, OfferDraft>>({})
+  const [incomingOffers, setIncomingOffers] = useState<IncomingYouthOffer[]>([])
 
   const applyScoutingPayload = (payload: ScoutingPayload): void => {
     setScoutingData(payload)
@@ -272,11 +290,16 @@ export default function YouthAcademyPage(): JSX.Element {
   const loadScouting = async (): Promise<void> => {
     setScoutingLoading(true)
     try {
-      const { data: payload, error: scoutingError } = await supabase.rpc(
-        'get_my_youth_scouting_v1'
-      )
-      if (scoutingError) throw scoutingError
-      applyScoutingPayload(payload as ScoutingPayload)
+      const [scoutingResult, incomingResult] = await Promise.all([
+        supabase.rpc('get_my_youth_scouting_v1'),
+        supabase.rpc('get_my_youth_incoming_offers_v1'),
+      ])
+
+      if (scoutingResult.error) throw scoutingResult.error
+      if (incomingResult.error) throw incomingResult.error
+
+      applyScoutingPayload(scoutingResult.data as ScoutingPayload)
+      setIncomingOffers((incomingResult.data ?? []) as IncomingYouthOffer[])
     } catch (scoutingError: any) {
       console.error('Youth scouting load failed:', scoutingError)
       setError(scoutingError?.message ?? t('errors.scoutingLoad'))
@@ -348,6 +371,35 @@ export default function YouthAcademyPage(): JSX.Element {
     } catch (offerError: any) {
       console.error('Youth recruitment offer failed:', offerError)
       setError(offerError?.message ?? t('errors.recruitmentOffer'))
+    } finally {
+      setScoutingAction(null)
+    }
+  }
+
+  const respondToIncomingOffer = async (
+    offer: IncomingYouthOffer,
+    accept: boolean
+  ): Promise<void> => {
+    if (scoutingAction || data?.read_only) return
+
+    setScoutingAction(`incoming:${offer.id}`)
+    setError(null)
+    try {
+      const { data: payload, error: responseError } = await supabase.rpc(
+        'respond_to_youth_recruitment_offer_v1',
+        {
+          p_offer_id: offer.id,
+          p_accept: accept,
+        }
+      )
+      if (responseError) throw responseError
+
+      setIncomingOffers((payload ?? []) as IncomingYouthOffer[])
+      await load()
+      await loadScouting()
+    } catch (responseError: any) {
+      console.error('Youth incoming recruitment response failed:', responseError)
+      setError(responseError?.message ?? t('errors.incomingOffer'))
     } finally {
       setScoutingAction(null)
     }
@@ -973,6 +1025,128 @@ export default function YouthAcademyPage(): JSX.Element {
               </div>
             </Card>
           </div>
+
+          <Card
+            title={t('scouting.incoming.title')}
+            right={
+              <span className="text-xs text-slate-500">
+                {t('scouting.incoming.count', { count: incomingOffers.length })}
+              </span>
+            }
+          >
+            {incomingOffers.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center">
+                <div className="text-sm font-medium text-slate-800">
+                  {t('scouting.incoming.none')}
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  {t('scouting.incoming.noneHelp')}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {incomingOffers.map(offer => {
+                  const riderFlag = flagUrl(offer.rider_country_code)
+                  const clubFlag = flagUrl(offer.offering_country_code)
+                  const actionKey = `incoming:${offer.id}`
+                  const isResponding = scoutingAction === actionKey
+
+                  return (
+                    <div
+                      key={offer.id}
+                      className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            {riderFlag ? (
+                              <img
+                                src={riderFlag}
+                                alt=""
+                                className="h-4 w-6 rounded-sm object-cover"
+                              />
+                            ) : null}
+                            <div className="font-semibold text-slate-950">
+                              {offer.rider_name}
+                            </div>
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                              {offer.rider_age}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                            {clubFlag ? (
+                              <img
+                                src={clubFlag}
+                                alt=""
+                                className="h-3.5 w-5 rounded-sm object-cover"
+                              />
+                            ) : null}
+                            {t('scouting.incoming.approachFrom', {
+                              club: offer.offering_club_name,
+                            })}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-right">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-500">
+                            {t('scouting.developmentCompensation')}
+                          </div>
+                          <div className="mt-1 font-semibold text-slate-900">
+                            {money(offer.compensation_offer)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-lg border border-slate-200 bg-white p-3">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-500">
+                            {t('scouting.incoming.newStipend')}
+                          </div>
+                          <div className="mt-1 text-sm font-medium">
+                            {money(offer.stipend_weekly)}/{t('week')}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white p-3">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-500">
+                            {t('scouting.incoming.accommodation')}
+                          </div>
+                          <div className="mt-1 text-sm font-medium">
+                            {money(offer.accommodation_weekly)}/{t('week')}
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="mt-3 text-xs leading-5 text-slate-500">
+                        {t('scouting.incoming.decisionHelp')}
+                      </p>
+
+                      <div className="mt-4 flex flex-wrap justify-end gap-2">
+                        <button
+                          type="button"
+                          disabled={data.read_only || scoutingAction !== null}
+                          onClick={() => void respondToIncomingOffer(offer, false)}
+                          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
+                        >
+                          {isResponding
+                            ? t('scouting.incoming.processing')
+                            : t('scouting.incoming.decline')}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={data.read_only || scoutingAction !== null}
+                          onClick={() => void respondToIncomingOffer(offer, true)}
+                          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        >
+                          {isResponding
+                            ? t('scouting.incoming.processing')
+                            : t('scouting.incoming.accept')}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </Card>
 
           <Card
             title={t('scouting.prospects')}
