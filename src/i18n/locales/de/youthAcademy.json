@@ -239,9 +239,7 @@
       "exceptional": "Außergewöhnlich"
     }
   },
-  "placeholders": {
-    "history": "Akademieabsolventen, Jugendergebnisse und langfristige Entwicklungshistorie bleiben nach dem Abschluss dauerhaft mit den Fahrern verbunden."
-  },
+  "placeholders": {},
   "errors": {
     "load": "Jugendakademie konnte nicht geladen werden.",
     "activate": "Jugendakademie konnte nicht aktiviert werden.",
@@ -259,7 +257,9 @@
     "calendarLoad": "Der Jugend-Rennkalender konnte nicht geladen werden.",
     "rankingsLoad": "Die Jugendranglisten konnten nicht geladen werden.",
     "raceEntry": "Das Jugendrennen konnte nicht gemeldet werden.",
-    "raceLineup": "Die Jugend-Rennaufstellung konnte nicht gespeichert werden."
+    "raceLineup": "Die Jugend-Rennaufstellung konnte nicht gespeichert werden.",
+    "historyLoad": "Der Verlauf der Jugendakademie konnte nicht geladen werden.",
+    "reportFrequency": "Die Einstellung für Jugend-Rennberichte konnte nicht gespeichert werden."
   },
   "equipment": {
     "title": "Jugendausrüstung",
@@ -353,5 +353,59 @@
     "academy": "Akademie",
     "starts": "Zielankünfte",
     "points": "Punkte"
+  },
+  "reports": {
+    "title": "Jugend-Rennberichte",
+    "description": "Interne Zusammenfassungen des U16-Cheftrainers werden immer im Akademie-Verlauf gespeichert. Lege fest, wann abgeschlossene Rennen zusätzlich einen Inbox-Bericht erzeugen.",
+    "frequency": "Häufigkeit der Inbox-Berichte",
+    "save": "Berichtseinstellung speichern",
+    "options": {
+      "every_race": "Jedes Rennen",
+      "important_only": "Nur wichtige Rennen",
+      "podium_exceptional": "Nur Podium / außergewöhnliches Ergebnis",
+      "problems_only": "Nur Probleme",
+      "never": "Nie"
+    }
+  },
+  "history": {
+    "graduates": "Absolventen",
+    "raceWins": "Rennsiege",
+    "podiums": "Podien",
+    "racesCompleted": "Abgeschlossene Rennen",
+    "alumni": "Akademie-Alumni",
+    "alumniCount": "{{count}} Alumni",
+    "loading": "Akademie-Verlauf wird geladen…",
+    "noAlumni": "Noch keine Akademie-Alumni.",
+    "rider": "Fahrer",
+    "joined": "Akademiebeitritt",
+    "graduated": "Abschluss / Freigabe",
+    "path": "Weg",
+    "starts": "Starts",
+    "wins": "Siege",
+    "regionalRank": "Finaler Regionalrang",
+    "worldRank": "Finaler Weltrang",
+    "regionalPoints": "Regionalpunkte",
+    "worldPoints": "Weltpunkte",
+    "ageValue": "Alter {{age}}",
+    "raceReports": "Rennberichte des U16-Cheftrainers",
+    "reportCount": "{{count}} Bericht(e)",
+    "noReports": "Noch keine Jugend-Rennberichte.",
+    "fatigue": "Ermüdung",
+    "developmentEvents": "Entwicklungsereignisse",
+    "development": "Entwicklung",
+    "reportClasses": {
+      "routine": "Routine",
+      "important": "Wichtig",
+      "exceptional": "Außergewöhnlich",
+      "problem": "Problem"
+    },
+    "developmentHistory": "Entwicklungsverlauf",
+    "latestWeeks": "{{count}} Einträge",
+    "noDevelopmentHistory": "Noch kein wöchentlicher Entwicklungsverlauf.",
+    "week": "Woche",
+    "focus": "Fokus",
+    "workload": "Belastung",
+    "change": "Entwicklungsänderung",
+    "readinessFatigue": "Frische / Ermüdung"
   }
 }
