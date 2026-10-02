@@ -91,7 +91,17 @@
     "committed": "Impegnato",
     "available": "Disponibile",
     "scoutingAllocation": "Budget scouting",
-    "scoutingHelp": "Costo del programma scouting {{range}}. Il raggio di scouting dipende dal budget, non dalle infrastrutture."
+    "scoutingHelp": "Costo del programma scouting {{range}}. Il raggio di scouting dipende dal budget, non dalle infrastrutture.",
+    "weeklyRiderSupport": "Supporto settimanale ai corridori",
+    "weeklyStaff": "Personale settimanale dell'Accademia",
+    "equipmentSpend": "Spesa attrezzatura questa stagione",
+    "ledger": "Storico transazioni dell'Accademia",
+    "loadingLedger": "Caricamento…",
+    "noLedger": "Nessuna transazione dell'Accademia registrata.",
+    "date": "Data",
+    "category": "Categoria",
+    "description": "Descrizione",
+    "amount": "Importo"
   },
   "scouting": {
     "title": "Raggio dello scouting giovanile",
@@ -232,7 +242,6 @@
   "placeholders": {
     "calendar": "Il calendario U16 separato e il motore di gara semplificato saranno collegati nella prossima fase. I costi delle gare giovanili resteranno principalmente costi di viaggio e logistica.",
     "rankings": "Le basi della Classifica Giovanile Regionale e della Youth World Ranking saranno collegate al calendario U16.",
-    "equipment": "L'Accademia Giovanile avrà equipaggiamento proprio riutilizzando una selezione più economica del catalogo e delle immagini esistenti.",
     "history": "Diplomati dell'accademia, risultati giovanili e storico di sviluppo a lungo termine resteranno collegati ai corridori dopo il passaggio ai professionisti."
   },
   "errors": {
@@ -242,6 +251,33 @@
     "scoutingLoad": "Impossibile caricare i rapporti scouting giovanile.",
     "scoutingRun": "Impossibile avviare il ciclo mensile di scouting giovanile.",
     "recruitmentOffer": "Impossibile inviare l'offerta di reclutamento giovanile.",
-    "incomingOffer": "Impossibile rispondere alla proposta in arrivo per l'Accademia Giovanile."
+    "incomingOffer": "Impossibile rispondere alla proposta in arrivo per l'Accademia Giovanile.",
+    "financeLoad": "Impossibile caricare le finanze dell'Accademia Giovanile.",
+    "equipmentLoad": "Impossibile caricare l'attrezzatura dell'Accademia Giovanile.",
+    "equipmentPurchase": "Impossibile acquistare l'attrezzatura dell'Accademia Giovanile.",
+    "equipmentDirector": "Impossibile completare l'operazione attrezzatura del Direttore dell'Accademia Giovanile."
+  },
+  "equipment": {
+    "title": "Attrezzatura giovanile",
+    "description": "L'Accademia Giovanile possiede attrezzatura U16 separata. Riutilizza i modelli più economici di livello 1–2 del catalogo esistente e li paga con il budget stagionale dell'Accademia.",
+    "managerManaged": "Gestita dal manager",
+    "directorManaged": "Gestita dal Direttore dell'Accademia",
+    "directorHelp": "Il Direttore dell'Accademia Giovanile acquista l'attrezzatura idonea meno costosa mancante in ogni categoria, rispettando il budget residuo.",
+    "runDirector": "Lascia equipaggiare l'Accademia al Direttore",
+    "equipping": "Equipaggiamento…",
+    "inventory": "Inventario dell'Accademia",
+    "itemsOwned": "{{count}} articolo/i",
+    "noInventory": "L'Accademia Giovanile non possiede ancora attrezzatura.",
+    "item": "Articolo",
+    "category": "Categoria",
+    "quality": "Qualità",
+    "condition": "Condizione",
+    "cost": "Costo Accademia",
+    "catalog": "Catalogo giovanile economico",
+    "catalogHelp": "Qui è disponibile solo attrezzatura durevole di livello 1–2 del catalogo esistente. Questi sono acquisti separati dell'Accademia Giovanile e non usano il denaro del club professionistico.",
+    "tier": "Livello {{tier}}",
+    "purchase": "Compra per l'Accademia",
+    "purchasing": "Acquisto…",
+    "durability": "Durata"
   }
 }
