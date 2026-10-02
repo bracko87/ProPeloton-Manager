@@ -91,7 +91,17 @@
     "committed": "Comprometido",
     "available": "Disponible",
     "scoutingAllocation": "Asignación de scouting",
-    "scoutingHelp": "Coste del programa de scouting {{range}}. El alcance depende del presupuesto, no de la infraestructura."
+    "scoutingHelp": "Coste del programa de scouting {{range}}. El alcance depende del presupuesto, no de la infraestructura.",
+    "weeklyRiderSupport": "Apoyo semanal a ciclistas",
+    "weeklyStaff": "Personal semanal de la academia",
+    "equipmentSpend": "Gasto en equipamiento esta temporada",
+    "ledger": "Historial de transacciones de la academia",
+    "loadingLedger": "Cargando…",
+    "noLedger": "Aún no hay transacciones de la academia.",
+    "date": "Fecha",
+    "category": "Categoría",
+    "description": "Descripción",
+    "amount": "Importe"
   },
   "scouting": {
     "title": "Alcance del scouting juvenil",
@@ -232,7 +242,6 @@
   "placeholders": {
     "calendar": "El calendario U16 separado y el motor de carrera simplificado se conectarán en la siguiente fase. Los costes de inscripción juvenil serán principalmente de viaje y logística.",
     "rankings": "La base del Ranking Juvenil Regional y del Youth World Ranking se conectará con el calendario U16.",
-    "equipment": "La Academia Juvenil tendrá equipamiento propio reutilizando una selección más económica del catálogo y las imágenes existentes.",
     "history": "Los graduados, resultados juveniles y el historial de desarrollo a largo plazo seguirán vinculados a los ciclistas después de graduarse."
   },
   "errors": {
@@ -242,6 +251,33 @@
     "scoutingLoad": "No se pudieron cargar los informes de scouting juvenil.",
     "scoutingRun": "No se pudo ejecutar el ciclo mensual de scouting juvenil.",
     "recruitmentOffer": "No se pudo enviar la oferta de captación juvenil.",
-    "incomingOffer": "No se pudo responder a la oferta entrante de la Academia Juvenil."
+    "incomingOffer": "No se pudo responder a la oferta entrante de la Academia Juvenil.",
+    "financeLoad": "No se pudieron cargar las finanzas de la Academia Juvenil.",
+    "equipmentLoad": "No se pudo cargar el equipamiento de la Academia Juvenil.",
+    "equipmentPurchase": "No se pudo comprar el equipamiento de la Academia Juvenil.",
+    "equipmentDirector": "No se pudo completar la gestión de equipamiento del Director de la Academia Juvenil."
+  },
+  "equipment": {
+    "title": "Equipamiento juvenil",
+    "description": "La Academia Juvenil posee equipamiento U16 separado. Reutiliza modelos más económicos de nivel 1–2 del catálogo existente y los paga con el presupuesto de temporada de la academia.",
+    "managerManaged": "Gestionado por el mánager",
+    "directorManaged": "Gestionado por el director de la academia",
+    "directorHelp": "El Director de la Academia Juvenil compra el equipamiento elegible más económico que falte en cada categoría, respetando el presupuesto disponible.",
+    "runDirector": "Dejar que el director equipe la academia",
+    "equipping": "Equipando…",
+    "inventory": "Inventario de la academia",
+    "itemsOwned": "{{count}} artículo(s)",
+    "noInventory": "La Academia Juvenil todavía no tiene equipamiento.",
+    "item": "Artículo",
+    "category": "Categoría",
+    "quality": "Calidad",
+    "condition": "Estado",
+    "cost": "Coste para la academia",
+    "catalog": "Catálogo juvenil económico",
+    "catalogHelp": "Aquí solo está disponible equipamiento duradero de nivel 1–2 del catálogo existente. Son compras separadas de la Academia Juvenil y no usan el dinero del club profesional.",
+    "tier": "Nivel {{tier}}",
+    "purchase": "Comprar para la academia",
+    "purchasing": "Comprando…",
+    "durability": "Durabilidad"
   }
 }
