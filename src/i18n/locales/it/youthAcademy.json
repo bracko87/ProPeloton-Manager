@@ -239,9 +239,7 @@
       "exceptional": "Eccezionale"
     }
   },
-  "placeholders": {
-    "history": "Diplomati dell'accademia, risultati giovanili e storico di sviluppo a lungo termine resteranno collegati ai corridori dopo il passaggio ai professionisti."
-  },
+  "placeholders": {},
   "errors": {
     "load": "Impossibile caricare l'Accademia Giovanile.",
     "activate": "Impossibile attivare l'Accademia Giovanile.",
@@ -259,7 +257,9 @@
     "calendarLoad": "Impossibile caricare il calendario giovanile.",
     "rankingsLoad": "Impossibile caricare i ranking giovanili.",
     "raceEntry": "Impossibile iscrivere la gara giovanile.",
-    "raceLineup": "Impossibile salvare la formazione giovanile."
+    "raceLineup": "Impossibile salvare la formazione giovanile.",
+    "historyLoad": "Impossibile caricare lo storico dell'Accademia.",
+    "reportFrequency": "Impossibile salvare la preferenza dei report giovanili."
   },
   "equipment": {
     "title": "Attrezzatura giovanile",
@@ -353,5 +353,59 @@
     "academy": "Accademia",
     "starts": "Arrivi",
     "points": "Punti"
+  },
+  "reports": {
+    "title": "Report gare giovanili",
+    "description": "I riepiloghi interni dell'allenatore U16 vengono sempre conservati nello storico. Scegli quando una gara completata deve generare anche un report nella posta.",
+    "frequency": "Frequenza report",
+    "save": "Salva preferenza",
+    "options": {
+      "every_race": "Ogni gara",
+      "important_only": "Solo gare importanti",
+      "podium_exceptional": "Solo podio / risultato eccezionale",
+      "problems_only": "Solo problemi",
+      "never": "Mai"
+    }
+  },
+  "history": {
+    "graduates": "Graduati",
+    "raceWins": "Vittorie",
+    "podiums": "Podi",
+    "racesCompleted": "Gare completate",
+    "alumni": "Alumni dell'Accademia",
+    "alumniCount": "{{count}} alumni",
+    "loading": "Caricamento storico…",
+    "noAlumni": "Nessun alumni per ora.",
+    "rider": "Corridore",
+    "joined": "Ingresso",
+    "graduated": "Uscita / rilascio",
+    "path": "Percorso",
+    "starts": "Partenze",
+    "wins": "Vittorie",
+    "regionalRank": "Ranking regionale finale",
+    "worldRank": "Ranking mondiale finale",
+    "regionalPoints": "Punti regionali",
+    "worldPoints": "Punti mondiali",
+    "ageValue": "età {{age}}",
+    "raceReports": "Report allenatore U16",
+    "reportCount": "{{count}} report",
+    "noReports": "Nessun report gara giovanile.",
+    "fatigue": "Fatica",
+    "developmentEvents": "Eventi di sviluppo",
+    "development": "sviluppo",
+    "reportClasses": {
+      "routine": "Routine",
+      "important": "Importante",
+      "exceptional": "Eccezionale",
+      "problem": "Problema"
+    },
+    "developmentHistory": "Storico sviluppo",
+    "latestWeeks": "{{count}} record",
+    "noDevelopmentHistory": "Nessuno storico settimanale ancora.",
+    "week": "Settimana",
+    "focus": "Focus",
+    "workload": "Carico",
+    "change": "Cambiamento",
+    "readinessFatigue": "Forma / fatica"
   }
 }
