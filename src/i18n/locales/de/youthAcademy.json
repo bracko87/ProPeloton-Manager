@@ -240,8 +240,6 @@
     }
   },
   "placeholders": {
-    "calendar": "Der separate U16-Kalender und die vereinfachte Rennengine werden in der nächsten Implementierungsphase angebunden. Die Kosten für Jugendrennen bleiben hauptsächlich Reise- und Logistikkosten.",
-    "rankings": "Die Grundlagen der regionalen Jugendrangliste und der Youth World Ranking werden mit dem U16-Kalender verbunden.",
     "history": "Akademieabsolventen, Jugendergebnisse und langfristige Entwicklungshistorie bleiben nach dem Abschluss dauerhaft mit den Fahrern verbunden."
   },
   "errors": {
@@ -257,7 +255,11 @@
     "equipmentPurchase": "Die Ausrüstung für die Jugendakademie konnte nicht gekauft werden.",
     "equipmentDirector": "Der Ausrüstungslauf des Jugendakademie-Direktors konnte nicht abgeschlossen werden.",
     "graduationLoad": "Die Abschlussentscheidungen der Jugendakademie konnten nicht geladen werden.",
-    "graduationDecision": "Die Abschlussentscheidung konnte nicht abgeschlossen werden."
+    "graduationDecision": "Die Abschlussentscheidung konnte nicht abgeschlossen werden.",
+    "calendarLoad": "Der Jugend-Rennkalender konnte nicht geladen werden.",
+    "rankingsLoad": "Die Jugendranglisten konnten nicht geladen werden.",
+    "raceEntry": "Das Jugendrennen konnte nicht gemeldet werden.",
+    "raceLineup": "Die Jugend-Rennaufstellung konnte nicht gespeichert werden."
   },
   "equipment": {
     "title": "Jugendausrüstung",
@@ -302,5 +304,54 @@
     "pathwayHelp": "Dieser Übergang gibt dir 30 Spieltage Zeit, den Fahrer ins Entwicklungsteam zu übernehmen. Erfolgt das nicht, wird er Profi-Free-Agent.",
     "toDeveloping": "Ins Entwicklungsteam ({{slots}} frei)",
     "release": "Als Profi-Free-Agent freigeben"
+  },
+  "calendar": {
+    "title": "U16-Rennkalender",
+    "format": "Rennformat",
+    "resultsOnly": "Nur Ergebnisse — keine Wiederholung",
+    "entryResponsibility": "Rennteilnahme",
+    "squadResponsibility": "Aufstellung & Strategie",
+    "ageLimitHelp": "Für Fahrer gelten altersabhängige Startlimits über 30 Spieltage. Der U16-Cheftrainer berücksichtigt außerdem Profil, Frische und Ermüdung, sodass die Akademie normalerweise nur einen Teil der 12 regionalen Rennen pro Spielmonat auswählt.",
+    "races": "Jugendrennen",
+    "loading": "Jugendrennen werden geladen…",
+    "levels": {
+      "regional": "Regionaler Jugend-Cup",
+      "world_series": "Youth World Series",
+      "world_final": "Youth World Final"
+    },
+    "qualified": "Qualifiziert",
+    "notQualified": "Nicht qualifiziert",
+    "qualificationHelp": "Die Qualifikation für die World Series erfolgt über die Regionale Jugendrangliste. Für das Youth World Final zählt die Youth World Ranking.",
+    "strategy": "Rennstrategie",
+    "strategies": {
+      "conservative": "Konservativ",
+      "balanced": "Ausgewogen",
+      "aggressive": "Aggressiv"
+    },
+    "enterRace": "Rennen melden",
+    "entering": "Meldung…",
+    "coachEntryHelp": "Die Rennteilnahme ist delegiert. Der U16-Cheftrainer prüft das Rennen sieben Spieltage vorher und meldet nur, wenn Kader, Ermüdung und Entwicklungsplan passen.",
+    "entered": "Akademie gemeldet",
+    "enteredBy": "Gemeldet von {{who}}",
+    "selectLineup": "Aufstellung wählen — {{count}} / {{max}}",
+    "saveLineup": "Aufstellung & Strategie speichern",
+    "savingLineup": "Speichern…",
+    "coachLineupHelp": "Der U16-Cheftrainer hat {{count}} Fahrer ausgewählt und steuert die Rennstrategie.",
+    "myResults": "Ergebnisse meiner Akademie",
+    "topResults": "Top-Ergebnisse",
+    "didNotRace": "Deine Akademie nahm an diesem Rennen nicht teil."
+  },
+  "rankings": {
+    "title": "Jugendranglisten",
+    "description": "Deine Akademie startet in der regionalen Jugendrangliste {{region}}. Regionale Ergebnisse bringen außerdem weniger Punkte für die Youth World Ranking; World Series und World Final vergeben stärkere Weltpunkte.",
+    "regionalTitle": "Regionale Jugendrangliste",
+    "worldTitle": "Youth World Ranking",
+    "loading": "Ranglisten werden geladen…",
+    "noPoints": "Noch keine Ranglistenpunkte erzielt.",
+    "rank": "Rang",
+    "rider": "Fahrer",
+    "academy": "Akademie",
+    "starts": "Zielankünfte",
+    "points": "Punkte"
   }
 }
