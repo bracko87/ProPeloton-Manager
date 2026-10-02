@@ -934,7 +934,9 @@
     "NATIONS_WORLD_FINAL_QUALIFIED": "Kvalifikacija za World Nations finale",
     "NATIONS_HOST_SELECTED": "Domaćin World Nations finala je izabran",
     "NATIONS_FINAL_RESULT": "World Nations finale završeno",
-    "NATIONS_CHAMPION": "World Nations šampion"
+    "NATIONS_CHAMPION": "World Nations šampion",
+    "NATIONAL_COACH_POSITION_VACANT": "Mesto nacionalnog selektora je upražnjeno",
+    "NATIONAL_COACH_RESIGNED": "Nacionalni selektor je podneo ostavku"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Plan trke zahteva pažnju: {{entity}}",
@@ -1360,6 +1362,16 @@
       "title": "Otvoren izbor sastava za {{roundLabel}}",
       "message": "Vaša reprezentacija je prošla u {{roundLabel}}. Izaberite novi sastav od 10 vozača za {{group}}. Možete zadržati prethodne vozače ili izabrati druge podobne vozače.",
       "extra": "Rok za konačni sastav: {{finalSquadDeadline}}. Otvorite karticu Sastav Nacionalnog saveza da pripremite novi takmičarski period."
+    },
+    "coachPositionVacant": {
+      "title": "Mesto nacionalnog selektora je upražnjeno",
+      "message": "Mesto nacionalnog selektora je upražnjeno. Biće pokrenuti izbori za novog selektora.",
+      "extra": "Članovi Saveza koji ispunjavaju uslove moći će da se kandiduju kada se otvore prijave za nove izbore."
+    },
+    "coachResigned": {
+      "title": "Nacionalni selektor je podneo ostavku",
+      "message": "Nacionalni selektor je podneo ostavku. Biće pokrenuti izbori za novog selektora.",
+      "extra": "Savez ostaje aktivan dok se ne završe novi izbori."
     }
   }
 }
