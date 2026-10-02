@@ -41,7 +41,8 @@
     "transfers": "Kaufen, verkaufen und verhandeln",
     "statistics": "Leistung und Analysen",
     "premiumCenter": "Erweiterte Planung, Simulation und Automatisierung",
-    "nationalAssociation": "Nationalmannschaft und World Nations verwalten"
+    "nationalAssociation": "Nationalmannschaft und World Nations verwalten",
+    "youthAcademy": "Premium-U16-Entwicklungsprogramm"
   },
   "header": {
     "toggleSidebar": "Seitenleiste ein-/ausblenden",
@@ -157,5 +158,6 @@
     "unlock": "Mit Premium freischalten"
   },
   "premiumCenter": "Premium-Zentrale",
-  "nationalAssociation": "Nationalverband"
+  "nationalAssociation": "Nationalverband",
+  "youthAcademy": "Jugendakademie"
 }
