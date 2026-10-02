@@ -31,6 +31,10 @@
     "account": {
       "title": "Obaveštenja naloga i sistema",
       "description": "Zvanične poruke igre i informacije za početak igranja."
+    },
+    "national": {
+      "title": "Nacionalna i međunarodna obaveštenja",
+      "description": "Nacionalni savez, reprezentacija, nacionalna prvenstva, World Nations i međunarodna prvenstva."
     }
   },
   "groups": {
@@ -121,6 +125,26 @@
     "systemMessages": {
       "label": "Sistemske poruke",
       "description": "Prikaži poruke dobrodošlice i opšte zvanične poruke igre."
+    },
+    "riderHealth": {
+      "label": "Medicinski izveštaj tima",
+      "description": "Prikazuje jedan dnevni osnovni medicinski pregled povreda, bolesti, smanjene spremnosti i oporavaka. Saveti timskog lekara ostaju odvojeni."
+    },
+    "nationalAssociation": {
+      "label": "Nacionalni savez i izbori",
+      "description": "Prikazuje obaveštenja o aktivaciji saveza, kandidaturama, glasanju i statusu nacionalnog selektora."
+    },
+    "nationalTeam": {
+      "label": "Reprezentacija i pozivi",
+      "description": "Prikazuje obaveštenja o izboru sastava, pozivima, promenama sastava i reprezentativnoj dužnosti."
+    },
+    "nationalChampionships": {
+      "label": "Nacionalna prvenstva i rang-lista",
+      "description": "Prikazuje obaveštenja o učešću, kvalifikacijama, potvrdi finala i rezultatima nacionalnih prvenstava."
+    },
+    "worldNations": {
+      "label": "World Nations i međunarodna takmičenja",
+      "description": "Prikazuje žrebove, ažuriranja trka, finala World Nations i obaveštenja međunarodnih prvenstava."
     }
   },
   "advisorCategories": {
