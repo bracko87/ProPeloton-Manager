@@ -61,6 +61,18 @@
     "u23HeadCoach": {
       "label": "Entrenador principal U23",
       "subtitle": "Planeado el entrenamiento de equipo y el apoyo táctico de carrera U23."
+    },
+    "youthAcademyDirector": {
+      "label": "Director de la Academia Juvenil",
+      "subtitle": "Dirige el programa U16, el presupuesto, la captación delegada y las solicitudes operativas."
+    },
+    "u16HeadCoach": {
+      "label": "Entrenador principal U16",
+      "subtitle": "Gestiona el entrenamiento U16, la carga, el enfoque de desarrollo y la selección para carreras."
+    },
+    "youthScout": {
+      "label": "Ojeador juvenil",
+      "subtitle": "Descubre y evalúa talentos U16 dentro del alcance de scouting financiado por la Academia Juvenil."
     }
   },
   "impactAreas": {
@@ -88,7 +100,16 @@
     "transferIntelligence": "Transferencia de información",
     "u23Training": "Entrenamiento U23",
     "youthDevelopment": "Desarrollo de la juventud",
-    "u23RaceTactics": "Tácticas de carrera U23"
+    "u23RaceTactics": "Tácticas de carrera U23",
+    "academyBudget": "Presupuesto de la academia",
+    "recruitmentManagement": "Gestión de captación",
+    "youthProgramme": "Programa juvenil",
+    "u16Training": "Entrenamiento U16",
+    "workloadManagement": "Gestión de carga",
+    "raceSelection": "Selección para carreras",
+    "youthScouting": "Scouting juvenil",
+    "talentAssessment": "Evaluación de talento",
+    "recruitmentReach": "Alcance de captación"
   },
   "common": {
     "close": "Cerrar",
@@ -110,7 +131,8 @@
     "focus": "Enfoque: {{value}}",
     "duration": "Duración: {{count}} días",
     "cost": "Costo: {{value}}",
-    "completed": "Terminado: {{date}}"
+    "completed": "Terminado: {{date}}",
+    "youthAcademy": "Academia Juvenil"
   },
   "assignment": {
     "notAssigned": "Actualmente no se ha asignado",
@@ -292,7 +314,8 @@
     "mechanicTitle": "Impacto del personal mecánico",
     "directorTitle": "Impacto del personal del Director de Deportes",
     "u23Title": "U23 Impacto del personal de entrenamiento",
-    "scoutingTitle": "Impacto del personal de exploración"
+    "scoutingTitle": "Impacto del personal de exploración",
+    "youthTitle": "Impacto del personal de la Academia Juvenil"
   },
   "scoutingExplainer": {
     "title": "Cómo funciona la calidad de los scouts",
