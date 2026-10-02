@@ -1389,5 +1389,16 @@
       "message": "Il commissario tecnico si è dimesso. Verrà avviata un’elezione sostitutiva.",
       "extra": "L’Associazione resta attiva durante lo svolgimento dell’elezione sostitutiva."
     }
+  },
+  "youthRaceReport": {
+    "raceFallback": "Gara giovanile",
+    "title": "Report Accademia — {{raceName}}",
+    "message": "{{raceName}}: miglior piazzamento {{bestFinish}}, +{{regionalPoints}} punti regionali, +{{worldPoints}} punti mondiali. DNF {{dnf}}, DNS {{dns}}. Report: {{reportClass}}.",
+    "classes": {
+      "routine": "routine",
+      "important": "importante",
+      "exceptional": "eccezionale",
+      "problem": "problema"
+    }
   }
 }
