@@ -898,11 +898,13 @@ begin
     v_source_academy:=null;
 
     if random()<0.30 then
-      select r.*,a.*
-      into v_target_rider,v_source_academy
+      v_target_rider.id:=null;
+      v_source_academy.id:=null;
+
+      select r.*
+      into v_target_rider
       from public.youth_riders r
       join public.youth_academies a on a.id=r.academy_id
-      join public.clubs c on c.id=a.club_id
       where a.id<>v_academy.id
         and a.is_active=true
         and a.is_ai=true
@@ -926,6 +928,10 @@ begin
       limit 1;
 
       if v_target_rider.id is not null then
+        select a.* into v_source_academy
+        from public.youth_academies a
+        where a.id=v_target_rider.academy_id;
+
         v_target_kind:='academy';
       end if;
     end if;
