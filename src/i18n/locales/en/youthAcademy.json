@@ -102,6 +102,91 @@
       "regional": "Regional",
       "continental": "Continental",
       "world": "Worldwide"
+    },
+    "scoutReport": "Youth Scout report",
+    "loading": "Loading scouting reports…",
+    "scoutScore": "Scouting effectiveness: {{score}} / 100",
+    "monthlyReports": "Reports / month",
+    "qualityExplainer": "Budget determines where the scout can search. Scout quality determines how many riders are reported, how accurately they are assessed and how effectively stronger prospects are identified.",
+    "noScout": "Hire a Youth Scout to begin active monthly prospect discovery. The Academy can operate without one, but no new scout reports will be generated.",
+    "monthlyCycle": "Monthly scouting cycle",
+    "currentRange": "Current reach",
+    "programBudget": "Season scouting allocation",
+    "cycleCompleted": "{{count}} scouting report(s) delivered this game month. The next cycle opens next game month.",
+    "cycleReady": "This month's scouting cycle is ready.",
+    "run": "Run monthly scouting",
+    "running": "Scouting…",
+    "alreadyRun": "This month completed",
+    "delegation": "Recruitment responsibility",
+    "directorMode": "Youth Academy Director",
+    "managerMode": "Manager",
+    "directorModeHelp": "The Director shortlists prospects that meet your safeguards. If negotiations are also delegated, the Director may submit offers automatically within those limits.",
+    "managerModeHelp": "You review every report and decide which prospects receive an offer.",
+    "autoRuleSummary": "Auto-recruit from {{band}} · max {{stipend}}/week · max compensation {{compensation}} · keep {{slots}} free slot(s).",
+    "prospects": "Scout reports & recruitment",
+    "reportCount": "{{count}} active report(s)",
+    "noReports": "No active prospect reports yet",
+    "noReportsHelp": "Run the monthly scouting cycle after hiring a Youth Scout. Reports expire after 60 game days.",
+    "fromAcademy": "At {{academy}}",
+    "otherAcademy": "another Youth Academy",
+    "unattachedProspect": "Unattached youth prospect",
+    "confidence": "{{value}}% confidence",
+    "strengths": "Observed strengths",
+    "relocation": "Relocation",
+    "expectedSupport": "Expected support",
+    "developmentCompensation": "Development compensation",
+    "none": "None",
+    "offerPackage": "Offer package",
+    "weeklyStipend": "Weekly stipend",
+    "accommodation": "Accommodation / week",
+    "compensationOffer": "Academy compensation",
+    "offerHelp": "The rider and family consider location, accommodation, staff quality and the support package. An AI Academy can also accept or reject the proposed development compensation.",
+    "submittingOffer": "Submitting…",
+    "improveOffer": "Submit improved offer",
+    "submitOffer": "Submit offer",
+    "signedToAcademy": "Signed to your Youth Academy.",
+    "relocationValues": {
+      "easy": "Easy",
+      "moderate": "Moderate",
+      "hard": "Difficult",
+      "very_hard": "Very difficult"
+    },
+    "offerStatuses": {
+      "submitted": "Offer submitted",
+      "academy_rejected": "Current Academy rejected the offer",
+      "rider_rejected": "Rider/family declined",
+      "accepted": "Offer accepted"
+    },
+    "offerStatusHelp": {
+      "submitted": "The offer is being evaluated.",
+      "academy_rejected": "Increase the development compensation if you want to try again.",
+      "rider_rejected": "You can improve the stipend or accommodation package and try again.",
+      "accepted": "The rider has joined your Youth Academy."
+    },
+    "assessmentBands": {
+      "limited": "Limited",
+      "promising": "Promising",
+      "very_promising": "Very Promising",
+      "exceptional": "Exceptional"
+    },
+    "roles": {
+      "all_rounder": "All-rounder",
+      "sprinter": "Sprinter",
+      "climber": "Climber",
+      "time_trial": "Time trialist",
+      "domestique": "Domestique",
+      "breakaway": "Breakaway"
+    },
+    "skillNames": {
+      "sprint": "Sprint",
+      "climbing": "Climbing",
+      "time_trial": "Time trial",
+      "endurance": "Endurance",
+      "flat": "Flat",
+      "recovery": "Recovery",
+      "resistance": "Resistance",
+      "race_iq": "Race IQ",
+      "teamwork": "Teamwork"
     }
   },
   "settings": {
@@ -117,6 +202,17 @@
       "manager": "Manager",
       "academy_director": "Youth Academy Director",
       "u16_head_coach": "U16 Head Coach"
+    },
+    "autoRecruitmentTitle": "Academy Director recruitment safeguards",
+    "autoRecruitmentDescription": "These limits apply only when recruitment is delegated to the Youth Academy Director. Automatic offers require negotiations to be delegated as well.",
+    "minimumAssessment": "Minimum assessment",
+    "maxStipend": "Maximum weekly stipend",
+    "maxCompensation": "Maximum development compensation",
+    "keepFreeSlots": "Keep free roster slots",
+    "bands": {
+      "promising": "Promising",
+      "very_promising": "Very Promising",
+      "exceptional": "Exceptional"
     }
   },
   "placeholders": {
@@ -128,6 +224,9 @@
   "errors": {
     "load": "Could not load Youth Academy.",
     "activate": "Could not activate Youth Academy.",
-    "save": "Could not save Youth Academy settings."
+    "save": "Could not save Youth Academy settings.",
+    "scoutingLoad": "Could not load Youth scouting reports.",
+    "scoutingRun": "Could not run the monthly Youth scouting cycle.",
+    "recruitmentOffer": "Could not submit the Youth recruitment offer."
   }
 }
