@@ -1,0 +1,133 @@
+{
+  "loading": "Loading Youth Academy…",
+  "title": "Молодёжная академия",
+  "subtitle": "Премиальная программа развития U16 для гонщиков 12–16 лет.",
+  "readOnly": "Premium is inactive. Your academy history and riders are preserved, but management is read-only.",
+  "week": "week",
+  "save": "Save changes",
+  "saving": "Saving…",
+  "comingSoon": "Coming in the next Youth Academy phase",
+  "notAssigned": "Not assigned",
+  "optionalNotHired": "Optional — not hired",
+  "premium": {
+    "title": "Premium Youth Academy",
+    "description": "Youth Academy is a Premium-only development layer. Premium members can optionally activate an U16 academy with a fixed 16-rider capacity.",
+    "capacity": "Fixed capacity of 16 Youth Riders",
+    "localStart": "Start with 6 local Youth Riders",
+    "staff": "Average Youth Academy Director + U16 Head Coach included",
+    "scouting": "Optional Youth Scout with budget-based scouting range",
+    "openPremium": "View Premium"
+  },
+  "activation": {
+    "title": "Activate Youth Academy",
+    "description": "Activation creates your separate U16 academy. You start with six local riders, an average Youth Academy Director and U16 Head Coach. Youth Scout is optional. V1 has no infrastructure requirement.",
+    "capacityLabel": "Maximum riders",
+    "starterRidersLabel": "Starting riders",
+    "staffLabel": "Included staff",
+    "infrastructureLabel": "Infrastructure requirement",
+    "none": "None",
+    "seasonBudget": "Season Academy budget",
+    "budgetHelp": "This budget funds rider support, staff, scouting, equipment, camps, travel and youth competition costs.",
+    "activate": "Activate Youth Academy",
+    "activating": "Activating…"
+  },
+  "header": {
+    "capacity": "{{current}} / {{max}} riders"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "riders": "Youth Riders",
+    "staff": "Staff",
+    "budget": "Budget",
+    "scouting": "Scouting",
+    "settings": "Responsibilities",
+    "calendar": "Calendar",
+    "rankings": "Rankings",
+    "equipment": "Equipment & Assets",
+    "history": "History"
+  },
+  "overview": {
+    "budget": "Available Academy budget",
+    "ofSeasonBudget": "of {{value}} season budget",
+    "roster": "Youth roster",
+    "fixedCapacity": "Fixed Premium capacity — independent of infrastructure",
+    "scouting": "Scouting programme",
+    "perSeason": "per season",
+    "directorReport": "Youth Academy Director report",
+    "directorReady": "{{name}} is responsible for the Academy programme, operating requests and budget recommendations.",
+    "directorMissing": "Youth Academy Director is missing.",
+    "nextRace": "Next youth race",
+    "recruitment": "Recruitment reach",
+    "reputation": "Academy reputation",
+    "staff": "Academy staff"
+  },
+  "roles": {
+    "director": "Youth Academy Director",
+    "headCoach": "U16 Head Coach",
+    "scout": "Youth Scout"
+  },
+  "riders": {
+    "title": "Youth Riders",
+    "rider": "Rider",
+    "age": "Age",
+    "role": "Profile",
+    "assessment": "Talent assessment",
+    "focus": "Development focus",
+    "readiness": "Readiness",
+    "stipend": "Support agreement",
+    "potentialNote": "Exact Potential is intentionally hidden. Assessment bands become more reliable as scouting and development information improves."
+  },
+  "staff": {
+    "expertise": "Expertise",
+    "experience": "Experience",
+    "salary": "Weekly salary",
+    "scoutOptional": "Youth Scout is optional. Hire one from Staff to begin active prospect discovery.",
+    "openStaffPage": "Open Squad → Staff"
+  },
+  "budget": {
+    "title": "Season Academy budget",
+    "seasonBudget": "Allocated season budget",
+    "spent": "Spent",
+    "committed": "Committed",
+    "available": "Available",
+    "scoutingAllocation": "Scouting allocation",
+    "scoutingHelp": "{{range}} scouting programme cost. Scouting reach is controlled by budget, not infrastructure."
+  },
+  "scouting": {
+    "title": "Youth scouting range",
+    "description": "Choose where the Youth Scout may search. Scout quality determines how many prospects are found and how useful the assessments are; budget only determines geographic reach.",
+    "skillNote": "A Worldwide programme does not guarantee elite prospects. It only gives the scout permission to search globally.",
+    "ranges": {
+      "local": "Local — own country",
+      "regional": "Regional",
+      "continental": "Continental",
+      "world": "Worldwide"
+    }
+  },
+  "settings": {
+    "title": "Responsibilities",
+    "description": "Choose who handles routine Youth Academy decisions. The manager can always change these responsibilities later.",
+    "recruitment": "Recruitment decisions",
+    "raceEntry": "Race participation",
+    "raceSquad": "Race squad selection",
+    "camps": "Development camps",
+    "equipment": "Equipment purchases",
+    "negotiations": "Prospect negotiations",
+    "options": {
+      "manager": "Manager",
+      "academy_director": "Youth Academy Director",
+      "u16_head_coach": "U16 Head Coach"
+    }
+  },
+  "placeholders": {
+    "calendar": "The separate U16 calendar and lightweight race engine will be connected in the next implementation phase. Youth race entry costs will remain mainly travel/logistics costs.",
+    "rankings": "Regional Youth Ranking and Youth World Ranking foundation will be connected with the U16 race calendar.",
+    "equipment": "Youth Academy will own separate equipment, reusing a curated lower-cost subset of the existing equipment catalogue and images.",
+    "history": "Academy graduates, youth results and long-term development history will remain attached to riders after graduation."
+  },
+  "errors": {
+    "load": "Could not load Youth Academy.",
+    "activate": "Could not activate Youth Academy.",
+    "save": "Could not save Youth Academy settings."
+  }
+}
