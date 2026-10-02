@@ -931,7 +931,9 @@
     "NATIONS_WORLD_FINAL_QUALIFIED": "Qualificato per la Finale World Nations",
     "NATIONS_HOST_SELECTED": "Sede della Finale World Nations selezionata",
     "NATIONS_FINAL_RESULT": "Finale World Nations completata",
-    "NATIONS_CHAMPION": "Campione World Nations"
+    "NATIONS_CHAMPION": "Campione World Nations",
+    "NATIONAL_COACH_POSITION_VACANT": "Posto di commissario tecnico vacante",
+    "NATIONAL_COACH_RESIGNED": "Il commissario tecnico si è dimesso"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "Il piano di gara richiede attenzione: {{entity}}",
@@ -1357,6 +1359,16 @@
       "title": "Selezione della rosa aperta per {{roundLabel}}",
       "message": "La tua nazione ha raggiunto {{roundLabel}}. Seleziona una nuova rosa di 10 corridori per {{group}}. Puoi mantenere i corridori precedenti oppure scegliere altri corridori idonei.",
       "extra": "Scadenza per la rosa definitiva: {{finalSquadDeadline}}. Apri la sezione Rosa dell’Associazione Nazionale per preparare la nuova finestra di competizione."
+    },
+    "coachPositionVacant": {
+      "title": "Posto di commissario tecnico vacante",
+      "message": "Il posto di commissario tecnico è vacante. Verrà avviata un’elezione sostitutiva.",
+      "extra": "I membri idonei dell’Associazione potranno candidarsi quando si apriranno le candidature per l’elezione sostitutiva."
+    },
+    "coachResigned": {
+      "title": "Il commissario tecnico si è dimesso",
+      "message": "Il commissario tecnico si è dimesso. Verrà avviata un’elezione sostitutiva.",
+      "extra": "L’Associazione resta attiva durante lo svolgimento dell’elezione sostitutiva."
     }
   }
 }
