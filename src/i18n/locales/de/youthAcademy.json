@@ -255,7 +255,9 @@
     "financeLoad": "Die Finanzen der Jugendakademie konnten nicht geladen werden.",
     "equipmentLoad": "Die Ausrüstung der Jugendakademie konnte nicht geladen werden.",
     "equipmentPurchase": "Die Ausrüstung für die Jugendakademie konnte nicht gekauft werden.",
-    "equipmentDirector": "Der Ausrüstungslauf des Jugendakademie-Direktors konnte nicht abgeschlossen werden."
+    "equipmentDirector": "Der Ausrüstungslauf des Jugendakademie-Direktors konnte nicht abgeschlossen werden.",
+    "graduationLoad": "Die Abschlussentscheidungen der Jugendakademie konnten nicht geladen werden.",
+    "graduationDecision": "Die Abschlussentscheidung konnte nicht abgeschlossen werden."
   },
   "equipment": {
     "title": "Jugendausrüstung",
@@ -279,5 +281,26 @@
     "purchase": "Für Akademie kaufen",
     "purchasing": "Kauf läuft…",
     "durability": "Haltbarkeit"
+  },
+  "training": {
+    "title": "Entwicklungsphilosophie der Jugend",
+    "description": "Lege die übergeordnete Trainingspriorität der Akademie fest. Der U16-Cheftrainer setzt sie in individuelle Belastung und Entwicklungsschwerpunkte um und schützt dabei Frische und Ermüdung.",
+    "philosophy": "Trainingsphilosophie der Akademie",
+    "options": {
+      "freshness": "Frische zuerst",
+      "balanced": "Ausgewogene Entwicklung",
+      "development": "Entwicklung zuerst"
+    }
+  },
+  "graduation": {
+    "title": "Entscheidungen zum Abschluss mit 16",
+    "pendingCount": "{{count}} offen",
+    "none": "Aktuell benötigt kein Jugendfahrer eine Abschlussentscheidung.",
+    "decisionHelp": "Mit 16 Jahren wählst du den nächsten Entwicklungsschritt. Ein direkter Sprung in die erste Mannschaft ist nicht der normale Weg.",
+    "pathway": "30-Tage-Jugendabsolventen-Pfad",
+    "pathwayUntil": "Pfad bis {{date}}",
+    "pathwayHelp": "Dieser Übergang gibt dir 30 Spieltage Zeit, den Fahrer ins Entwicklungsteam zu übernehmen. Erfolgt das nicht, wird er Profi-Free-Agent.",
+    "toDeveloping": "Ins Entwicklungsteam ({{slots}} frei)",
+    "release": "Als Profi-Free-Agent freigeben"
   }
 }
