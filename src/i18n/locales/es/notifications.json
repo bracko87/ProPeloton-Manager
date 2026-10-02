@@ -886,7 +886,8 @@
     "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Invitación al Campeonato Mundial",
     "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Confirmación del Campeonato Mundial",
     "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Resultado del Campeonato Mundial",
-    "WORLD_ROAD_CHAMPION": "Campeón Mundial de Ruta"
+    "WORLD_ROAD_CHAMPION": "Campeón Mundial de Ruta",
+    "NATIONAL_TEAM_NEW_SELECTION_WINDOW": "Nueva ventana de selección de la selección nacional"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "El plan de carrera requiere atención: {{entity}}",
@@ -1307,6 +1308,11 @@
       "title": "Finalizó el deber con la selección para {{rider}}",
       "message": "{{rider}} ha completado su deber con {{association}} y vuelve a estar disponible para el club.",
       "extra": "Tras finalizar el deber con la selección siguen aplicándose las reglas normales de salud, fatiga y disponibilidad para carreras."
+    },
+    "newSelectionWindow": {
+      "title": "Selección de plantilla abierta para {{roundLabel}}",
+      "message": "Tu nación ha accedido a {{roundLabel}}. Selecciona una nueva plantilla de 10 corredores para {{group}}. Puedes mantener a los corredores anteriores o elegir otros corredores elegibles.",
+      "extra": "Fecha límite de la plantilla definitiva: {{finalSquadDeadline}}. Abre la Plantilla de la Asociación Nacional para preparar la nueva ventana de competición."
     }
   }
 }
