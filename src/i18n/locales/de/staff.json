@@ -61,6 +61,18 @@
     "u23HeadCoach": {
       "label": "U23-Cheftrainer",
       "subtitle": "Plant Training des Entwicklungsteams und taktische Unterstützung bei U23-Rennen."
+    },
+    "youthAcademyDirector": {
+      "label": "Leiter der Jugendakademie",
+      "subtitle": "Leitet das U16-Akademieprogramm, Budget, delegierte Rekrutierung und operative Anfragen."
+    },
+    "u16HeadCoach": {
+      "label": "U16-Cheftrainer",
+      "subtitle": "Steuert U16-Training, Belastung, Entwicklungsschwerpunkte und Rennauswahl."
+    },
+    "youthScout": {
+      "label": "Jugendscout",
+      "subtitle": "Findet und bewertet U16-Talente innerhalb des finanzierten Scouting-Gebiets der Jugendakademie."
     }
   },
   "impactAreas": {
@@ -88,7 +100,16 @@
     "transferIntelligence": "Transferinformationen",
     "u23Training": "U23-Training",
     "youthDevelopment": "Nachwuchsentwicklung",
-    "u23RaceTactics": "U23-Renntaktik"
+    "u23RaceTactics": "U23-Renntaktik",
+    "academyBudget": "Akademiebudget",
+    "recruitmentManagement": "Rekrutierungsmanagement",
+    "youthProgramme": "Jugendprogramm",
+    "u16Training": "U16-Training",
+    "workloadManagement": "Belastungssteuerung",
+    "raceSelection": "Rennauswahl",
+    "youthScouting": "Jugendscouting",
+    "talentAssessment": "Talentbewertung",
+    "recruitmentReach": "Rekrutierungsreichweite"
   },
   "common": {
     "close": "Schließen",
@@ -110,7 +131,8 @@
     "focus": "Schwerpunkt: {{value}}",
     "duration": "Dauer: {{count}} Tage",
     "cost": "Kosten: {{value}}",
-    "completed": "Abgeschlossen: {{date}}"
+    "completed": "Abgeschlossen: {{date}}",
+    "youthAcademy": "Jugendakademie"
   },
   "assignment": {
     "notAssigned": "Derzeit nicht zugewiesen",
@@ -292,7 +314,8 @@
     "mechanicTitle": "Einfluss der Mechaniker",
     "directorTitle": "Einfluss des Sportdirektors",
     "u23Title": "Einfluss des U23-Trainerpersonals",
-    "scoutingTitle": "Einfluss des Scouting-Personals"
+    "scoutingTitle": "Einfluss des Scouting-Personals",
+    "youthTitle": "Einfluss des Jugendakademie-Personals"
   },
   "scoutingExplainer": {
     "title": "So funktioniert Scout-Qualität",
