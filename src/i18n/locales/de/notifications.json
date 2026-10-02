@@ -1280,7 +1280,7 @@
       "extra": "Die Gastgeberrolle bringt nur Prestige und Präsentation, aber keinen sportlichen Vorteil."
     },
     "champion": {
-      "title": "World Nations Champion",
+      "title": "World-Nations-Sieger",
       "message": "{{country}} hat die World Nations Championship gewonnen.",
       "extra": "Der Titel wird dauerhaft in der World-Nations-Historie gespeichert."
     },
