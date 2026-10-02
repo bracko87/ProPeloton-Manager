@@ -417,9 +417,9 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
     section: 'national',
   },
   nationalChampionships: {
-    label: 'National Championships & ranking',
+    label: 'Championships & ranking',
     description:
-      'Show National Championship participation, qualification, final confirmation and result notifications.',
+      'Show National Championship and World Road Championship participation, qualification, final confirmation and result notifications.',
     section: 'national',
   },
   worldNations: {
