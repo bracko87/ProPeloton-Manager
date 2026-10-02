@@ -239,9 +239,7 @@
       "exceptional": "Exceptionnel"
     }
   },
-  "placeholders": {
-    "history": "Les diplômés de l'académie, les résultats jeunes et l'historique de développement à long terme resteront liés aux coureurs après leur passage chez les professionnels."
-  },
+  "placeholders": {},
   "errors": {
     "load": "Impossible de charger l'Académie Jeunes.",
     "activate": "Impossible d'activer l'Académie Jeunes.",
@@ -259,7 +257,9 @@
     "calendarLoad": "Impossible de charger le calendrier jeunes.",
     "rankingsLoad": "Impossible de charger les classements jeunes.",
     "raceEntry": "Impossible d'inscrire la course jeunes.",
-    "raceLineup": "Impossible d'enregistrer la sélection jeunes."
+    "raceLineup": "Impossible d'enregistrer la sélection jeunes.",
+    "historyLoad": "Impossible de charger l'historique de l'Académie.",
+    "reportFrequency": "Impossible d'enregistrer la préférence de rapports jeunes."
   },
   "equipment": {
     "title": "Équipement jeunes",
@@ -353,5 +353,59 @@
     "academy": "Académie",
     "starts": "Arrivées",
     "points": "Points"
+  },
+  "reports": {
+    "title": "Rapports de course jeunes",
+    "description": "Les résumés internes de l'entraîneur U16 sont toujours conservés dans l'historique. Choisissez quand une course terminée doit aussi créer un rapport dans la boîte de réception.",
+    "frequency": "Fréquence des rapports",
+    "save": "Enregistrer la préférence",
+    "options": {
+      "every_race": "Chaque course",
+      "important_only": "Courses importantes uniquement",
+      "podium_exceptional": "Podium / résultat exceptionnel uniquement",
+      "problems_only": "Problèmes uniquement",
+      "never": "Jamais"
+    }
+  },
+  "history": {
+    "graduates": "Diplômés",
+    "raceWins": "Victoires",
+    "podiums": "Podiums",
+    "racesCompleted": "Courses terminées",
+    "alumni": "Anciens de l'Académie",
+    "alumniCount": "{{count}} anciens",
+    "loading": "Chargement de l'historique…",
+    "noAlumni": "Aucun ancien de l'Académie pour le moment.",
+    "rider": "Coureur",
+    "joined": "Entrée",
+    "graduated": "Sortie / libération",
+    "path": "Parcours",
+    "starts": "Départs",
+    "wins": "Victoires",
+    "regionalRank": "Classement régional final",
+    "worldRank": "Classement mondial final",
+    "regionalPoints": "Points régionaux",
+    "worldPoints": "Points mondiaux",
+    "ageValue": "âge {{age}}",
+    "raceReports": "Rapports de l'entraîneur U16",
+    "reportCount": "{{count}} rapport(s)",
+    "noReports": "Aucun rapport jeunes enregistré.",
+    "fatigue": "Fatigue",
+    "developmentEvents": "Événements de développement",
+    "development": "développement",
+    "reportClasses": {
+      "routine": "Routine",
+      "important": "Important",
+      "exceptional": "Exceptionnel",
+      "problem": "Problème"
+    },
+    "developmentHistory": "Historique de développement",
+    "latestWeeks": "{{count}} entrées",
+    "noDevelopmentHistory": "Aucun historique hebdomadaire pour le moment.",
+    "week": "Semaine",
+    "focus": "Axe",
+    "workload": "Charge",
+    "change": "Progression",
+    "readinessFatigue": "Fraîcheur / fatigue"
   }
 }
