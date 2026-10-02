@@ -91,7 +91,17 @@
     "committed": "Engagé",
     "available": "Disponible",
     "scoutingAllocation": "Allocation scouting",
-    "scoutingHelp": "Coût du programme de scouting {{range}}. La portée du scouting dépend du budget, pas de l'infrastructure."
+    "scoutingHelp": "Coût du programme de scouting {{range}}. La portée du scouting dépend du budget, pas de l'infrastructure.",
+    "weeklyRiderSupport": "Soutien hebdomadaire des coureurs",
+    "weeklyStaff": "Personnel hebdomadaire de l'académie",
+    "equipmentSpend": "Dépenses d'équipement cette saison",
+    "ledger": "Historique des transactions de l'académie",
+    "loadingLedger": "Chargement…",
+    "noLedger": "Aucune transaction de l'académie pour le moment.",
+    "date": "Date",
+    "category": "Catégorie",
+    "description": "Description",
+    "amount": "Montant"
   },
   "scouting": {
     "title": "Portée du scouting jeunes",
@@ -232,7 +242,6 @@
   "placeholders": {
     "calendar": "Le calendrier U16 séparé et le moteur de course allégé seront connectés lors de la prochaine phase. Les coûts d'inscription aux courses jeunes resteront principalement liés au voyage et à la logistique.",
     "rankings": "Les bases du Classement Jeunes Régional et du Youth World Ranking seront reliées au calendrier U16.",
-    "equipment": "L'Académie Jeunes possédera son propre équipement en réutilisant une sélection moins chère du catalogue et des images existants.",
     "history": "Les diplômés de l'académie, les résultats jeunes et l'historique de développement à long terme resteront liés aux coureurs après leur passage chez les professionnels."
   },
   "errors": {
@@ -242,6 +251,33 @@
     "scoutingLoad": "Impossible de charger les rapports de scouting jeunes.",
     "scoutingRun": "Impossible de lancer le cycle mensuel de scouting jeunes.",
     "recruitmentOffer": "Impossible d'envoyer l'offre de recrutement jeunes.",
-    "incomingOffer": "Impossible de répondre à l'approche reçue pour l'Académie Jeunes."
+    "incomingOffer": "Impossible de répondre à l'approche reçue pour l'Académie Jeunes.",
+    "financeLoad": "Impossible de charger les finances de l'Académie Jeunes.",
+    "equipmentLoad": "Impossible de charger l'équipement de l'Académie Jeunes.",
+    "equipmentPurchase": "Impossible d'acheter l'équipement de l'Académie Jeunes.",
+    "equipmentDirector": "Impossible de terminer la gestion d'équipement du Directeur de l'Académie Jeunes."
+  },
+  "equipment": {
+    "title": "Équipement jeunes",
+    "description": "L'Académie Jeunes possède son propre équipement U16. Elle réutilise les modèles moins coûteux de niveaux 1–2 du catalogue existant et les finance avec le budget saisonnier de l'académie.",
+    "managerManaged": "Géré par le manager",
+    "directorManaged": "Géré par le directeur de l'académie",
+    "directorHelp": "Le Directeur de l'Académie Jeunes achète l'équipement admissible le moins cher manquant dans chaque catégorie, dans la limite du budget restant.",
+    "runDirector": "Laisser le directeur équiper l'académie",
+    "equipping": "Équipement en cours…",
+    "inventory": "Inventaire de l'académie",
+    "itemsOwned": "{{count}} article(s)",
+    "noInventory": "L'Académie Jeunes ne possède pas encore d'équipement.",
+    "item": "Article",
+    "category": "Catégorie",
+    "quality": "Qualité",
+    "condition": "État",
+    "cost": "Coût académie",
+    "catalog": "Catalogue jeunes économique",
+    "catalogHelp": "Seuls les équipements durables de niveaux 1–2 du catalogue existant sont disponibles ici. Ces achats sont propres à l'Académie Jeunes et n'utilisent pas la trésorerie du club professionnel.",
+    "tier": "Niveau {{tier}}",
+    "purchase": "Acheter pour l'académie",
+    "purchasing": "Achat…",
+    "durability": "Durabilité"
   }
 }
