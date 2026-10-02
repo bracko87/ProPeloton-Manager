@@ -200,7 +200,8 @@
       "accept": "Accept Academy offer",
       "decline": "Decline",
       "processing": "Processing…"
-    }
+    },
+    "awaitingAcademyResponse": "Waiting for Academy response"
   },
   "settings": {
     "title": "Responsibilities",
