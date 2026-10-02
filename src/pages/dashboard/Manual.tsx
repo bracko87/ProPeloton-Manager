@@ -13,9 +13,9 @@
  * - Adds expanded guide paragraphs and rule-by-rule explanations for every opened section.
  */
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 
 type ManualLink = {
   label: string
@@ -2690,6 +2690,155 @@ const manualSections: ManualSection[] = [
       { "label": "Infrastructure", "to": "/dashboard/infrastructure" }
     ]
   }
+
+  {
+    id: 'national-ranking-championships',
+    category: 'National Competitions',
+    title: 'National Ranking & National Championships — Complete Guide',
+    subtitle: 'How nationality rankings, invitations, qualification groups, finals, rider locks, race preparation and the World Road Championship work from start to finish.',
+    overview:
+      'National Ranking and National Championships are system-controlled competitions based on rider nationality. Every rider belongs to the national system of their nationality, regardless of which club employs them. The game automatically schedules eligible national competitions, freezes the National Ranking at the correct moment, creates qualification groups when required, sends participation decisions to club managers, locks confirmed riders for national competition dates, calculates qualification and final results, crowns the National Champion and can later invite that champion to the World Road Championship Grand Finale.',
+    facts: [
+      { label: 'Eligibility', value: 'Riders compete for their nationality, not for their club country' },
+      { label: 'Final field', value: 'Up to 96 riders; qualification groups are used when the eligible field is larger' },
+      { label: 'Qualification seeding', value: 'Top-ranked riders are distributed across groups so the strongest riders are not concentrated together' },
+      { label: 'Rider control', value: 'Club manager accepts or refuses participation; National Championship racing itself is individual' },
+      { label: 'Costs', value: 'Organizer/system covered; the club does not pay National Championship race costs' },
+      { label: 'Equipment', value: 'A standardized organizer package is supplied, while allowed individual setup/tactic controls remain available in Race Preparation' },
+      { label: 'National Champion', value: 'Winner of the National Championship final for that country and season' },
+      { label: 'World invitation', value: 'The National Champion can be invited to the World Road Championship Grand Finale' },
+    ],
+    details: [
+      '1. National Ranking is a nationality-specific rider ranking. A rider appears in the ranking of the rider’s own nationality even if the rider is employed by a club from another country. Club nationality does not change the rider’s national eligibility.',
+      '2. The National Ranking is built from eligible sporting results and is used as the sporting order for the national competition process. The ranking page shows the current order until the championship ranking-freeze date is reached.',
+      '3. Every country has its own National Championship schedule. Countries do not all race in the same month. The system chooses dates and routes according to the national scheduling rules and avoids unsuitable race profiles where possible.',
+      '4. A National Championship route must belong to the same country. Cross-border routes are excluded from this system. If a country has no usable route in the database, its edition can remain inactive/missing-route instead of creating a broken race.',
+      '5. The system uses climate and route suitability when assigning the championship calendar. The goal is to avoid unsuitable conditions and profiles such as TT/prologue-only or extreme mountain routes for the standard national road championship.',
+      '6. Before invitations are created, the National Ranking reaches its ranking-freeze date. At that moment the sporting order used for the championship field is locked for that edition. Later ordinary race results do not reshuffle that already-frozen championship field.',
+      '7. If the eligible national field is small enough, qualification is not required and the championship can proceed directly toward its final field. If the field is larger, all eligible riders enter qualification groups; there are no protected “safe finalists” who bypass qualification.',
+      '8. When qualification is required, the system creates enough groups to reduce the field to the target final size. The final field is designed for 96 riders when the country has enough eligible riders.',
+      '9. The highest-ranked riders are seeded across qualification groups. In particular, the strongest riders are distributed so one group does not accidentally contain all of the top-ranked riders.',
+      '10. Each qualification group has a fixed number of qualifying places. Together, the places from all groups produce the planned National Championship final field.',
+      '11. Club managers receive a participation decision for their riders. The decision belongs to the rider’s current club manager because the rider will become unavailable to the club during the national competition duty window.',
+      '12. Accepting participation confirms that the rider may take part in that National Championship step. Refusing participation removes the rider from that step and applies the configured morale consequence for refusing national selection.',
+      '13. If a participation decision is still pending when its deadline is reached, the system can automatically resolve the decision according to the championship rules so the event does not remain blocked by unanswered invitations.',
+      '14. Once participation is confirmed, the rider receives a National Championship duty/lock covering the required competition period. During that duty the rider cannot simultaneously be used by the club in a conflicting team race.',
+      '15. Qualification groups are held on separate race dates when multiple groups are needed. This prevents a rider from being expected to race simultaneous qualification groups and lets the lifecycle progress group by group.',
+      '16. National Championship racing is individual. There are no club team orders and no National Coach team commands in the National Championship. Riders compete for themselves and their nationality.',
+      '17. The organizer provides the standard race package. The club is not charged participation, travel, staff, car, supply or ordinary race-operation costs for National Championship participation.',
+      '18. Riders still bring their real sporting condition into the event. Fatigue, race sharpness, health and other rider state are not magically reset just because the event is system-covered.',
+      '19. Race Preparation for a National Championship is intentionally restricted. The parts that are meaningful for an individual rider can be managed, while team-only or organizer-owned areas remain locked.',
+      '20. Where enabled, the manager can choose the rider equipment setup and individual race tactics for the selected rider. Time-trial-specific setup controls are available when the actual championship event format requires them.',
+      '21. Race supplies and the final-stage calculation are organizer/engine controlled and cannot be manually changed by the club manager. The standardized competition package prevents richer clubs from buying a sporting advantage in national events.',
+      '22. After each qualification race is completed, results are processed automatically. Qualified riders are moved into the National Championship final process; riders who do not qualify are released from that next-stage obligation.',
+      '23. Reaching the final can require a second participation confirmation. This is deliberate: qualifying for the final creates another future rider commitment, so the club manager gets a fresh opportunity to confirm or refuse the final.',
+      '24. If the final confirmation is accepted, the rider is placed into the final start list and receives the corresponding final duty lock. If it is refused, the rider is removed from the final and the configured morale penalty applies.',
+      '25. A rider who has qualified can still be withdrawn before the final while withdrawal is allowed. Withdrawal removes the rider from the final start list and is treated like refusing the National Championship final for morale purposes.',
+      '26. The final is a normal race-engine event using the National Championship field. When it is completed, the result is stored, the winner becomes that country’s National Champion for the season, and the historical champion record is preserved.',
+      '27. National Championship results and historical champions can be reviewed from the National Ranking page. Rider names link to the normal rider profile so users can inspect the same rider statistics used elsewhere in the game.',
+      '28. The National Champion title is separate from the season-long National Ranking leader. One rider can lead the season ranking while another rider wins the one-day National Championship final.',
+      '29. Later in the season, National Champions can feed the World Road Championship Grand Finale. The World Road Championship is separate from World Nations: it is an individual champions event, not a National Association team competition.',
+      '30. A World Road Championship invitation again requires a manager decision. The invited rider can be accepted or refused, the rider is locked away from the club for the event if accepted, and refusing carries the larger world-championship morale consequence configured by the game.',
+      '31. The World Road Championship uses a warm-climate host rule and organizer-covered race operations. It crowns its own world champion and does not replace the separate season National Ranking standings.',
+      '32. Notifications are part of the lifecycle. Managers can receive messages for National Championship selection, participation decisions, rider locks, qualification results, final results, World Road Championship invitations and World results.',
+      '33. If a country has no usable route, that absence is treated as a scheduling limitation rather than a false critical race-calculation failure. The game can surface the missing-route state without pretending that a race exists.',
+      '34. The National Championship lifecycle is automatically monitored. Ranking freeze, invitations, decisions, rider duties, qualification results, final confirmations, start lists and champion creation are checked so an overdue step can be detected by operations monitoring.',
+      '35. For managers, the practical routine is simple: watch National Ranking and notifications, answer participation requests before their deadlines, open the National Duty/Race Preparation area for accepted riders, configure only the controls that are unlocked, and check qualification/final results after the races.',
+    ],
+    tips: [
+      'Do not schedule an important club race for a rider during a confirmed National Championship duty window.',
+      'Check fatigue and sharpness before accepting a national invitation; organizer-covered costs do not mean organizer-reset fitness.',
+      'Qualification acceptance and final acceptance can be separate decisions. Read both deadlines.',
+      'Use the National Duty tab to prepare accepted riders instead of looking for normal team-based race commands.',
+      'Remember that National Champion and National Ranking leader are two different achievements.',
+    ],
+    relatedLinks: [
+      { label: 'Open National Ranking', to: '/dashboard/national-ranking' },
+      { label: 'Open National Duty', to: '/dashboard/national-ranking?tab=duty' },
+      { label: 'Open National Championship History', to: '/dashboard/national-ranking?tab=history' },
+    ],
+  },
+  {
+    id: 'national-association-world-nations',
+    category: 'National Competitions',
+    title: 'National Association & World Nations — Complete Guide',
+    subtitle: 'How an Association is created, funded and renewed; how the National Coach is elected; how squads, lineups, race preparation, hosts and World Nations competition work.',
+    overview:
+      'National Association is the cooperative national-team system. Eligible managers from the same country can establish and fund their Association, elect a National Coach, maintain national branding, select National Team squads and compete in World Nations. World Nations is team-based and is separate from the individual National Ranking/National Championship system. The National Coach manages the sporting selections, while the game automatically creates competition structure, race entries and system-covered race operations.',
+    facts: [
+      { label: 'Association membership', value: 'Eligible active main-club managers join the Association of their club country' },
+      { label: 'Activation threshold', value: 'Minimum eligible members plus the configured Association activation coin target' },
+      { label: 'National Coach', value: 'Chosen through the Association election process; sporting controls are coach-only' },
+      { label: 'National Team squad', value: '10 riders selected for a World Nations competition cycle' },
+      { label: 'Race-day lineup', value: 'Exactly 7 riders submitted for each race day' },
+      { label: 'World Nations race days', value: 'Team Time Trial, Flat Road Race, Hilly/Mountain Road Race' },
+      { label: 'Race costs', value: 'System covered; no National Treasury or club race costs' },
+      { label: 'Scoring', value: 'Nation points determine advancement and final standings, with competition tie-break rules' },
+    ],
+    details: [
+      '1. National Association is based on the manager’s eligible main club and its country. It is a cooperative organization for managers of that nation; it is not the same system as the individual National Championship.',
+      '2. Only eligible active main clubs count as valid Association members. Technical teams, AI clubs, deleted clubs and other ineligible club records do not count toward the real membership requirement.',
+      '3. An Association begins in a forming/inactive state until the configured minimum membership and activation funding requirements are satisfied. The Association page shows the current member count and activation progress.',
+      '4. Activation uses account Coins contributed by Association members. Contributions move the Association toward the configured activation target. This is an activation mechanism, not a sporting-budget advantage.',
+      '5. There is no National Treasury that can be spent to improve race performance. Once active, National Team race participation, organizer equipment and race-operation costs are system covered.',
+      '6. After legitimate activation, the Association remains an established national organization. Later changes in eligible-member count do not erase its historical identity or remove it from already-established World Nations structures solely because membership later changes.',
+      '7. Associations have seasonal validity and renewal rules. The Association page shows the renewal target, renewal window, renewal deadline and how far the Association is funded for the next season.',
+      '8. Renewal is completed through the configured member Coin contributions. Managers should not wait until after the renewal deadline because an expired Association can lose access to future-season competition functions.',
+      '9. The Association has a National Coach. The coach is elected, not permanently assigned by the system. Election phases can include candidate registration, voting and a runoff when required.',
+      '10. Election timing is tied to the season calendar. If the National Coach position becomes vacant, the election system can open the appropriate replacement process so the Association is not permanently left without sporting control.',
+      '11. Association members can see Association information, but coach-only sporting actions are protected. Selecting the National Team, submitting lineups, saving race strategy and changing certain national presentation settings require the active National Coach.',
+      '12. The Association can have its own logo and National Team jersey. The national flag remains the permanent national identity fallback. If no custom Association logo exists, the flag can be used automatically.',
+      '13. National Team jerseys belong to World Nations/National Association races. National Championship riders continue to represent themselves/their clubs visually according to the National Championship presentation rules; the two systems should not be confused.',
+      '14. World Nations entry is automatic for Associations that meet the competition-field rules. Managers do not submit a normal club-style race application for World Nations.',
+      '15. Season 1 uses its special delayed-launch rule: the World Nations field is locked at the configured Season 1 field-lock date, and only Associations active at that lock are included. Associations activated after that lock wait for the next normal season cycle.',
+      '16. From the normal Season 2 cycle onward, Association elections, qualification structure and World Nations generation follow the regular season process rather than the Season 1 migration/launch exception.',
+      '17. The World Nations competition structure scales with the number of active Associations. When necessary, qualification rounds reduce the field before Final Qualification and the World Final.',
+      '18. The competition engine draws groups and applies the configured capacity/advancement rules. The field is designed to progress through qualification stages until the final group of nations is reached.',
+      '19. Hosts are assigned at group/round level. A host country supplies the routes for that group’s three race days. Hosting is a presentation/prestige role and does not give a sporting performance bonus.',
+      '20. A host package needs the required route types from the same country: a Team Time Trial route, a Flat road-race route and a Hilly/Mountain road-race route. Missing route types can block that country from being used as a complete host package.',
+      '21. The three World Nations race days are deliberately different. Day 1 is Team Time Trial, Day 2 is Flat Road Race, and Day 3 is Hilly/Mountain Road Race. This makes National Team selection reward a balanced national squad.',
+      '22. Before a competition cycle, the National Coach selects a 10-rider National Team squad from the eligible national rider pool. The squad page provides rider role, age, National Ranking, masked Overall information, core skills, fatigue and neutral selection calculations to support that choice.',
+      '23. The selection score is a planning aid, not a hidden race-engine boost. It helps the coach compare riders but does not secretly add performance to a selected rider.',
+      '24. The 10-rider squad is first prepared as a draft. Once locked, call-ups are sent and the selected riders/clubs enter the response process. Declined places can require replacements before the final squad is confirmed.',
+      '25. If a call-up is not answered by its deadline, the automatic response rule prevents one silent manager from blocking the whole nation. Accepted/auto-accepted riders continue toward the confirmed squad.',
+      '26. After the 10-rider squad is confirmed, the National Coach selects exactly 7 riders for each race day. The 7-rider lineup is separate from the 10-rider overall squad.',
+      '27. A later race-day lineup may change riders from the previous day only within the configured lineup-change limit. This prevents completely replacing the National Team between every race day while still allowing tactical rotation.',
+      '28. Each race-day lineup has an opening date and a submission deadline. The coach should confirm the seven riders before the deadline; late lineups can become locked and cannot be freely changed.',
+      '29. Once a lineup is confirmed, those seven riders are synchronized into the actual race participant/start-list system. They then appear on the race page under their National Team and can be used for race favorites, start numbers and race-engine input.',
+      '30. The race page shows Top 5 race favorites separately from the full nation-by-nation participant list. Favorites are calculated from the actual submitted race field, while each National Team card shows the seven riders submitted for that race day.',
+      '31. National Team Race Preparation uses the same unified preparation framework as normal racing but with national-team restrictions. The coach manages the areas that are meaningful for World Nations while organizer/system-owned costs stay locked.',
+      '32. Rider equipment, time-trial setup where applicable, and individual tactics can be adjusted according to the National Team preparation rules. This lets the National Coach prepare the seven selected riders without opening unrelated club-budget systems.',
+      '33. Race supplies and final-stage calculation remain locked/system controlled. Standardized supplies and organizer coverage prevent a richer club or Association from gaining an external spending advantage.',
+      '34. National Team staff selection is disabled for World Nations. The competition is not a contest over which club can bring the most expensive staff. The National Team uses the standardized national competition framework.',
+      '35. National Team cars are limited by the national package rules. The system can provide/use the allowed National Team car allocation while keeping all associated competition costs at zero for the user’s club.',
+      '36. Riders still carry their real fatigue, health and race sharpness into World Nations. The system covers logistics and standard equipment; it does not reset sporting condition.',
+      '37. Day 1 Team Time Trial produces the nation’s TTT result/points. Days 2 and 3 are rider road races; only the configured best-scoring riders from each nation count toward that day’s nation score.',
+      '38. Overall World Nations ranking is points-based rather than simply adding three race times. The scoring table shown on the World Nations page is the authoritative explanation of how places convert into nation points.',
+      '39. Tie-breaks are applied in the documented order when nations finish level on points. The current competition explanation uses race wins, podiums, TTT placing and the best-placed rider on Day 3 as successive tie-break information.',
+      '40. After all three race days of a group are completed, standings are finalized and the configured number of nations advance. Eliminated nations leave the active competition while advancing nations are placed into the next stage.',
+      '41. The World Final is another three-day National Team competition. It crowns one champion nation for the season and stores the completed final in World Nations history.',
+      '42. World Nations champion nation, National Champion rider and National Ranking leader are three different achievements. One is team-based international Association competition, one is a one-day national individual title, and one is a season ranking.',
+      '43. National Association notifications cover important state changes such as elections, coach results, squad/call-up actions, competition draws, lineups and World Nations progression so managers do not need to discover every deadline manually.',
+      '44. Operations monitoring checks Association integrity, coach/election availability, World Nations group scheduling, hosts, squads, lineups, overdue events and competition progression. Important failures can therefore appear in System Health/Control Center instead of silently stopping the competition.',
+      '45. For ordinary Association members, the practical routine is: keep the Association active/renewed, follow elections, answer rider call-ups if one of your riders is selected, and follow World Nations results.',
+      '46. For the National Coach, the practical routine is: monitor the competition cycle, build and confirm the 10-rider squad, replace declined call-ups, submit seven riders for each race day, open Race Preparation for each event, set permitted equipment/tactics, and review results/advancement after every race day.',
+    ],
+    tips: [
+      'Build the 10-rider squad for all three race types, not just one day.',
+      'Submit the 7-rider lineup before its deadline; a confirmed squad alone is not the race start list.',
+      'Use different riders strategically across TTT, flat and hilly/mountain days, while respecting the lineup-change limit.',
+      'National Association funds/Coins activate and renew the organization; they do not buy race performance.',
+      'If a race page shows the nation but no riders, verify the race-day lineup is confirmed—not only the 10-rider squad.',
+      'Treat World Nations and National Championship as separate systems: team-based Association racing versus individual nationality racing.',
+    ],
+    relatedLinks: [
+      { label: 'Open National Association', to: '/dashboard/national-association' },
+      { label: 'Open National Team Squad', to: '/dashboard/national-association/squad' },
+      { label: 'Open Elections', to: '/dashboard/national-association/elections' },
+      { label: 'Open World Nations', to: '/dashboard/world-nations' },
+      { label: 'Open National Ranking & Championships', to: '/dashboard/national-ranking' },
+    ],
+  },
 ]
 
 const manualCategories = Array.from(new Set(manualSections.map(section => section.category)))
@@ -2925,9 +3074,30 @@ function getExpandedDetailExplanation(section: ManualSection, detail: string): s
 
 export default function ManualPage(): JSX.Element {
   const { t, i18n } = useTranslation('manual')
+  const location = useLocation()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [openSectionIds, setOpenSectionIds] = useState<Set<string>>(() => new Set())
+
+  useEffect(() => {
+    const requestedSection = new URLSearchParams(location.search).get('section')?.trim()
+    if (!requestedSection || !manualSectionById.has(requestedSection)) return
+
+    setCategory('all')
+    setQuery('')
+    setOpenSectionIds(current => {
+      const next = new Set(current)
+      next.add(requestedSection)
+      return next
+    })
+
+    window.requestAnimationFrame(() => {
+      document.getElementById(`manual-section-${requestedSection}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    })
+  }, [location.search])
 
   const filteredSections = useMemo(() => {
     return manualSections
@@ -3094,6 +3264,7 @@ export default function ManualPage(): JSX.Element {
 
             return (
               <article
+                id={`manual-section-${section.id}`}
                 key={section.id}
                 className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
               >
