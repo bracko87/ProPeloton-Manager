@@ -255,7 +255,9 @@
     "financeLoad": "Could not load Youth Academy finances.",
     "equipmentLoad": "Could not load Youth Academy equipment.",
     "equipmentPurchase": "Could not purchase Youth Academy equipment.",
-    "equipmentDirector": "Could not complete the Youth Academy Director equipment run."
+    "equipmentDirector": "Could not complete the Youth Academy Director equipment run.",
+    "graduationLoad": "Could not load Youth graduation decisions.",
+    "graduationDecision": "Could not complete the Youth graduation decision."
   },
   "equipment": {
     "title": "Youth equipment",
@@ -279,5 +281,26 @@
     "purchase": "Buy for Academy",
     "purchasing": "Buying…",
     "durability": "Durability"
+  },
+  "training": {
+    "title": "Youth development philosophy",
+    "description": "Set the Academy's broad training priority. The U16 Head Coach converts this into individual workloads and development focus while protecting readiness and fatigue.",
+    "philosophy": "Academy training philosophy",
+    "options": {
+      "freshness": "Freshness first",
+      "balanced": "Balanced development",
+      "development": "Development first"
+    }
+  },
+  "graduation": {
+    "title": "Age-16 graduation decisions",
+    "pendingCount": "{{count}} pending",
+    "none": "No Youth Riders currently require a graduation decision.",
+    "decisionHelp": "At age 16, choose the rider's next pathway. Direct promotion to the First Squad is not the normal route.",
+    "pathway": "Keep on 30-day Youth Graduate pathway",
+    "pathwayUntil": "Pathway until {{date}}",
+    "pathwayHelp": "This temporary pathway gives you 30 game days to move the rider into the Developing Team. If no Developing Team move is completed by then, the rider becomes a professional free agent.",
+    "toDeveloping": "Move to Developing Team ({{slots}} free)",
+    "release": "Release as professional free agent"
   }
 }
