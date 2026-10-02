@@ -9,6 +9,9 @@ import {
   getDisplayOnlyStageProfilePoints,
 } from './RaceDetailPage'
 
+const NATIONAL_ASSOCIATION_RACE_LOGO_URL =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/world%20championship%20logo.webp'
+
 type ProfilePoint = {
   km: number
   elevation: number
@@ -45,6 +48,8 @@ type RaceParticipantRider = {
   club_id?: string | null
   rider_id: string
   rider_name_snapshot?: string | null
+  first_name?: string | null
+  last_name?: string | null
   country_code_snapshot?: string | null
   age_snapshot?: number | null
   start_number?: number | null
@@ -164,6 +169,47 @@ function normalizePoint(value: unknown): ProfilePoint | null {
   const elevation = Number(record.elevation_m ?? record.elevation)
   if (!Number.isFinite(km) || !Number.isFinite(elevation)) return null
   return { km, elevation }
+}
+
+type RiderNameLookupRow = {
+  id: string
+  first_name?: string | null
+  last_name?: string | null
+  display_name?: string | null
+}
+
+function fullRiderName(row?: RiderNameLookupRow | null): string | null {
+  if (!row) return null
+  const firstName = row.first_name?.trim() ?? ''
+  const lastName = row.last_name?.trim() ?? ''
+  const fullName = `${firstName} ${lastName}`.trim()
+  return fullName || row.display_name?.trim() || null
+}
+
+async function loadFullRiderNames(riderIds: string[]): Promise<Map<string, string>> {
+  const ids = Array.from(new Set(riderIds.filter(Boolean)))
+  if (ids.length === 0) return new Map()
+
+  const { data, error } = await supabase
+    .from('riders')
+    .select('id, first_name, last_name, display_name')
+    .in('id', ids)
+
+  if (error) {
+    console.warn('Could not load full rider names for World Nations race:', error.message)
+    return new Map()
+  }
+
+  const result = new Map<string, string>()
+  for (const row of (data ?? []) as RiderNameLookupRow[]) {
+    const name = fullRiderName(row)
+    if (row.id && name) result.set(row.id, name)
+  }
+  return result
+}
+
+function riderProfilePath(riderId?: string | null): string {
+  return riderId ? `/dashboard/riders/${riderId}` : '#'
 }
 
 function humanize(value?: string | null): string {
@@ -420,7 +466,33 @@ export default function WorldNationsEventPage(): JSX.Element {
         ])
 
         if (!cancelled) {
-          const riders = (ridersResponse.data ?? []) as RaceParticipantRider[]
+          const rawRiders = (ridersResponse.data ?? []) as RaceParticipantRider[]
+          const rawFavorites = ((favoritesResponse.data ?? []) as RaceFavorite[]).slice(0, 5)
+          const fullNames = await loadFullRiderNames([
+            ...rawRiders.map(rider => rider.rider_id),
+            ...rawFavorites
+              .map(favorite => favorite.rider_id ?? '')
+              .filter(Boolean),
+          ])
+
+          if (cancelled) return
+
+          const riders = rawRiders.map(rider => ({
+            ...rider,
+            rider_name_snapshot:
+              fullNames.get(rider.rider_id) ??
+              rider.rider_name_snapshot ??
+              null,
+          }))
+
+          const favorites = rawFavorites.map(favorite => ({
+            ...favorite,
+            rider_name:
+              (favorite.rider_id ? fullNames.get(favorite.rider_id) : null) ??
+              favorite.rider_name ??
+              null,
+          }))
+
           const teams = ((teamsResponse.data ?? []) as Omit<RaceParticipantTeam, 'riders'>[]).map(team => {
             const ids = new Set(
               [team.id, team.team_id, team.club_id, team.participating_club_id, team.race_team_entry_id]
@@ -434,7 +506,7 @@ export default function WorldNationsEventPage(): JSX.Element {
             }
           })
           setRaceTeams(teams)
-          setRaceFavorites(((favoritesResponse.data ?? []) as RaceFavorite[]).slice(0, 5))
+          setRaceFavorites(favorites)
         }
       } else if (!cancelled) {
         setRaceTeams([])
@@ -457,7 +529,24 @@ export default function WorldNationsEventPage(): JSX.Element {
           .order('rank', { ascending: true })
 
         if (!cancelled) {
-          setStageResults((resultRows ?? []) as StageResultRow[])
+          const rawResults = (resultRows ?? []) as StageResultRow[]
+          const fullNames = await loadFullRiderNames(
+            rawResults
+              .map(result => result.rider_id ?? '')
+              .filter(Boolean),
+          )
+
+          if (cancelled) return
+
+          setStageResults(
+            rawResults.map(result => ({
+              ...result,
+              rider_name_snapshot:
+                (result.rider_id ? fullNames.get(result.rider_id) : null) ??
+                result.rider_name_snapshot ??
+                null,
+            })),
+          )
         }
       } else if (!cancelled) {
         setStageResults([])
@@ -630,15 +719,11 @@ export default function WorldNationsEventPage(): JSX.Element {
           </div>
 
           <div className="flex min-h-[180px] items-center justify-center rounded-2xl bg-white p-4">
-            {data.host_flag_url ? (
-              <img
-                src={data.host_flag_url}
-                alt={data.host_country_name ?? data.host_country_code ?? 'Host'}
-                className="max-h-[150px] w-full max-w-[245px] rounded-xl border border-slate-200 object-cover shadow-sm"
-              />
-            ) : (
-              <div className="text-sm text-slate-400">{t('world.eventPage.hostPending')}</div>
-            )}
+            <img
+              src={NATIONAL_ASSOCIATION_RACE_LOGO_URL}
+              alt="Cycling World Championships"
+              className="max-h-[150px] w-full max-w-[245px] object-contain"
+            />
           </div>
         </div>
       </section>
@@ -882,9 +967,18 @@ export default function WorldNationsEventPage(): JSX.Element {
                               {favorite.start_number ? `#${favorite.start_number}` : '—'}
                             </span>
                           </div>
-                          <div className="truncate text-sm font-semibold text-slate-950">
-                            {favorite.rider_name ?? '—'}
-                          </div>
+                          {favorite.rider_id ? (
+                            <Link
+                              to={riderProfilePath(favorite.rider_id)}
+                              className="block truncate text-sm font-semibold text-slate-950 no-underline hover:text-slate-950 hover:no-underline"
+                            >
+                              {favorite.rider_name ?? '—'}
+                            </Link>
+                          ) : (
+                            <div className="truncate text-sm font-semibold text-slate-950">
+                              {favorite.rider_name ?? '—'}
+                            </div>
+                          )}
                           <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
                             {nationFlag ? (
                               <img
@@ -1004,8 +1098,15 @@ export default function WorldNationsEventPage(): JSX.Element {
                                   >
                                     <div className="min-w-0">
                                       <div className="truncate text-sm font-semibold text-slate-900">
-                                        {rider.start_number ? `#${rider.start_number} ` : ''}
-                                        {rider.rider_name_snapshot ?? '—'}
+                                        {rider.start_number ? (
+                                          <span>{`#${rider.start_number} `}</span>
+                                        ) : null}
+                                        <Link
+                                          to={riderProfilePath(rider.rider_id)}
+                                          className="text-slate-900 no-underline hover:text-slate-900 hover:no-underline"
+                                        >
+                                          {rider.rider_name_snapshot ?? '—'}
+                                        </Link>
                                       </div>
                                       <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                                         {flagUrl(rider.country_code_snapshot) ? (
@@ -1196,7 +1297,16 @@ export default function WorldNationsEventPage(): JSX.Element {
                                         </div>
                                       ) : null}
                                       <div>
-                                        <div className="font-semibold text-slate-900">{result.rider_name_snapshot ?? '—'}</div>
+                                        {result.rider_id ? (
+                                          <Link
+                                            to={riderProfilePath(result.rider_id)}
+                                            className="font-semibold text-slate-900 no-underline hover:text-slate-900 hover:no-underline"
+                                          >
+                                            {result.rider_name_snapshot ?? '—'}
+                                          </Link>
+                                        ) : (
+                                          <div className="font-semibold text-slate-900">{result.rider_name_snapshot ?? '—'}</div>
+                                        )}
                                         {participant ? (
                                           <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                                             {flagUrl(participant.country_code) ? (
