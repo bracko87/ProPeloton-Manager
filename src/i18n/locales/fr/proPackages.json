@@ -73,11 +73,12 @@
     "a5": "Manager Briefing, intelligence avancée du calendrier, prévisions financières et outils de confort.",
     "a6": "Analyses avancées des performances des coureurs, tendances de développement et replays illimités des courses mondiales.",
     "a7": "Premium améliore l'information, l'automatisation et le confort — jamais la force en course, l'acceptation des transferts ni les attributs cachés.",
-    "a8": "Accès exclusif à l'Équipe de Développement, y compris l'Entraîneur Principal U23 : 100 Coins à l'activation et 100 Coins par saison au renouvellement."
+    "a8": "Accès exclusif à l'Équipe de Développement, y compris l'Entraîneur Principal U23 : 100 Coins à l'activation et 100 Coins par saison au renouvellement.",
+    "a9": "Académie Jeunes Premium facultative : activez un programme U16 séparé avec 16 places, six jeunes locaux au départ, un staff dédié, un scouting lié au budget et une passerelle vers l'équipe de développement."
   },
   "comparison": {
     "title": "Gratuit vs Premium",
-    "description": "Premium ajoute des outils avancés ainsi qu'un accès exclusif à l'Équipe de Développement et à l'Entraîneur Principal U23.",
+    "description": "Premium ajoute des outils avancés ainsi qu'un accès exclusif à l'équipe de développement, à l'entraîneur U23 et à l'Académie Jeunes facultative.",
     "benefit": "Avantages",
     "free": "Gratuit",
     "premium": "Premium",
@@ -91,8 +92,9 @@
     "r8": "Utiliser des fonctionnalités de pièce en option",
     "developing": "Développement du service d'équipe",
     "activationRenewal": "Activation {{activation}} / Renouvellement {{renewal}}",
-    "note": "L'Équipe de Développement et l'Entraîneur Principal U23 exigent un Premium actif. L'activation et le renouvellement saisonnier utilisent toujours des Coins.",
-    "premiumOnly": "Premium uniquement"
+    "note": "L'équipe de développement, l'entraîneur U23 et l'Académie Jeunes nécessitent un abonnement Premium actif. L'activation de l'Académie est facultative et ses coûts de développement sont financés avec l'argent normal du club.",
+    "premiumOnly": "Premium uniquement",
+    "r9": "Académie Jeunes / développement U16"
   },
   "packages": {
     "title": "Besoin de Coins supplémentaires?",
