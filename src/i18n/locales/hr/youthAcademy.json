@@ -1,133 +1,133 @@
 {
-  "loading": "Loading Youth Academy…",
+  "loading": "Učitavanje Omladinske akademije…",
   "title": "Omladinska akademija",
   "subtitle": "Premium U16 razvojni program za vozače od 12 do 16 godina.",
-  "readOnly": "Premium is inactive. Your academy history and riders are preserved, but management is read-only.",
-  "week": "week",
-  "save": "Save changes",
-  "saving": "Saving…",
-  "comingSoon": "Coming in the next Youth Academy phase",
-  "notAssigned": "Not assigned",
-  "optionalNotHired": "Optional — not hired",
+  "readOnly": "Premium nije aktivan. Vozači i povijest akademije ostaju sačuvani, ali je upravljanje samo za čitanje.",
+  "week": "tjedno",
+  "save": "Spremi promjene",
+  "saving": "Spremanje…",
+  "comingSoon": "Dolazi u sljedećoj fazi Omladinske akademije",
+  "notAssigned": "Nije dodijeljeno",
+  "optionalNotHired": "Opcionalno — nije angažiran",
   "premium": {
-    "title": "Premium Youth Academy",
-    "description": "Youth Academy is a Premium-only development layer. Premium members can optionally activate an U16 academy with a fixed 16-rider capacity.",
-    "capacity": "Fixed capacity of 16 Youth Riders",
-    "localStart": "Start with 6 local Youth Riders",
-    "staff": "Average Youth Academy Director + U16 Head Coach included",
-    "scouting": "Optional Youth Scout with budget-based scouting range",
-    "openPremium": "View Premium"
+    "title": "Premium Omladinska akademija",
+    "description": "Omladinska akademija je Premium razvojni sustav. Premium član može opcionalno aktivirati U16 akademiju s fiksnim kapacitetom od 16 vozača.",
+    "capacity": "Fiksni kapacitet od 16 mladih vozača",
+    "localStart": "Početak sa 6 lokalnih mladih vozača",
+    "staff": "Prosječan direktor Omladinske akademije + U16 glavni trener uključeni",
+    "scouting": "Opcionalni omladinski skaut s dosegom prema budžetu",
+    "openPremium": "Pogledaj Premium"
   },
   "activation": {
-    "title": "Activate Youth Academy",
-    "description": "Activation creates your separate U16 academy. You start with six local riders, an average Youth Academy Director and U16 Head Coach. Youth Scout is optional. V1 has no infrastructure requirement.",
-    "capacityLabel": "Maximum riders",
-    "starterRidersLabel": "Starting riders",
-    "staffLabel": "Included staff",
-    "infrastructureLabel": "Infrastructure requirement",
-    "none": "None",
-    "seasonBudget": "Season Academy budget",
-    "budgetHelp": "This budget funds rider support, staff, scouting, equipment, camps, travel and youth competition costs.",
-    "activate": "Activate Youth Academy",
-    "activating": "Activating…"
+    "title": "Aktiviraj Omladinsku akademiju",
+    "description": "Aktivacija stvara zasebnu U16 akademiju. Počinješ sa šest lokalnih vozača, prosječnim direktorom akademije i U16 glavnim trenerom. Omladinski skaut je opcionalan. V1 nema infrastrukturne uvjete.",
+    "capacityLabel": "Maksimalno vozača",
+    "starterRidersLabel": "Početni vozači",
+    "staffLabel": "Uključeno osoblje",
+    "infrastructureLabel": "Infrastrukturni uvjet",
+    "none": "Nije potreban",
+    "seasonBudget": "Sezonski budžet akademije",
+    "budgetHelp": "Budžet pokriva podršku vozačima, osoblje, skauting, opremu, kampove, putovanja i troškove omladinskih natjecanja.",
+    "activate": "Aktiviraj Omladinsku akademiju",
+    "activating": "Aktivacija…"
   },
   "header": {
-    "capacity": "{{current}} / {{max}} riders"
+    "capacity": "{{current}} / {{max}} vozača"
   },
   "tabs": {
-    "overview": "Overview",
-    "riders": "Youth Riders",
-    "staff": "Staff",
-    "budget": "Budget",
-    "scouting": "Scouting",
-    "settings": "Responsibilities",
-    "calendar": "Calendar",
-    "rankings": "Rankings",
-    "equipment": "Equipment & Assets",
-    "history": "History"
+    "overview": "Pregled",
+    "riders": "Mladi vozači",
+    "staff": "Osoblje",
+    "budget": "Budžet",
+    "scouting": "Skauting",
+    "settings": "Odgovornosti",
+    "calendar": "Kalendar",
+    "rankings": "Poredak",
+    "equipment": "Oprema i sredstva",
+    "history": "Povijest"
   },
   "overview": {
-    "budget": "Available Academy budget",
-    "ofSeasonBudget": "of {{value}} season budget",
-    "roster": "Youth roster",
-    "fixedCapacity": "Fixed Premium capacity — independent of infrastructure",
-    "scouting": "Scouting programme",
-    "perSeason": "per season",
-    "directorReport": "Youth Academy Director report",
-    "directorReady": "{{name}} is responsible for the Academy programme, operating requests and budget recommendations.",
-    "directorMissing": "Youth Academy Director is missing.",
-    "nextRace": "Next youth race",
-    "recruitment": "Recruitment reach",
-    "reputation": "Academy reputation",
-    "staff": "Academy staff"
+    "budget": "Dostupan budžet akademije",
+    "ofSeasonBudget": "od {{value}} sezonskog budžeta",
+    "roster": "Omladinski sastav",
+    "fixedCapacity": "Fiksni Premium kapacitet — neovisan o infrastrukturi",
+    "scouting": "Skauting program",
+    "perSeason": "po sezoni",
+    "directorReport": "Izvještaj direktora Omladinske akademije",
+    "directorReady": "{{name}} vodi program akademije, operativne zahtjeve i preporuke budžeta.",
+    "directorMissing": "Nedostaje direktor Omladinske akademije.",
+    "nextRace": "Sljedeća omladinska utrka",
+    "recruitment": "Doseg regrutiranja",
+    "reputation": "Reputacija akademije",
+    "staff": "Osoblje akademije"
   },
   "roles": {
-    "director": "Youth Academy Director",
-    "headCoach": "U16 Head Coach",
-    "scout": "Youth Scout"
+    "director": "Direktor Omladinske akademije",
+    "headCoach": "U16 glavni trener",
+    "scout": "Omladinski skaut"
   },
   "riders": {
-    "title": "Youth Riders",
-    "rider": "Rider",
-    "age": "Age",
-    "role": "Profile",
-    "assessment": "Talent assessment",
-    "focus": "Development focus",
-    "readiness": "Readiness",
-    "stipend": "Support agreement",
-    "potentialNote": "Exact Potential is intentionally hidden. Assessment bands become more reliable as scouting and development information improves."
+    "title": "Mladi vozači",
+    "rider": "Vozač",
+    "age": "Godine",
+    "role": "Profil",
+    "assessment": "Procjena talenta",
+    "focus": "Fokus razvoja",
+    "readiness": "Spremnost",
+    "stipend": "Ugovor o podršci",
+    "potentialNote": "Točan Potential namjerno je skriven. Procjene postaju pouzdanije kako se poboljšavaju informacije iz skautinga i razvoja."
   },
   "staff": {
-    "expertise": "Expertise",
-    "experience": "Experience",
-    "salary": "Weekly salary",
-    "scoutOptional": "Youth Scout is optional. Hire one from Staff to begin active prospect discovery.",
-    "openStaffPage": "Open Squad → Staff"
+    "expertise": "Stručnost",
+    "experience": "Iskustvo",
+    "salary": "Tjedna plaća",
+    "scoutOptional": "Omladinski skaut je opcionalan. Angažiraj ga na stranici Osoblje za aktivno otkrivanje talenata.",
+    "openStaffPage": "Otvori Momčad → Osoblje"
   },
   "budget": {
-    "title": "Season Academy budget",
-    "seasonBudget": "Allocated season budget",
-    "spent": "Spent",
-    "committed": "Committed",
-    "available": "Available",
-    "scoutingAllocation": "Scouting allocation",
-    "scoutingHelp": "{{range}} scouting programme cost. Scouting reach is controlled by budget, not infrastructure."
+    "title": "Sezonski budžet akademije",
+    "seasonBudget": "Dodijeljeni sezonski budžet",
+    "spent": "Potrošeno",
+    "committed": "Rezervirano",
+    "available": "Dostupno",
+    "scoutingAllocation": "Budžet za skauting",
+    "scoutingHelp": "Cijena programa za {{range}} skauting. Doseg skautinga određuje budžet, ne infrastruktura."
   },
   "scouting": {
-    "title": "Youth scouting range",
-    "description": "Choose where the Youth Scout may search. Scout quality determines how many prospects are found and how useful the assessments are; budget only determines geographic reach.",
-    "skillNote": "A Worldwide programme does not guarantee elite prospects. It only gives the scout permission to search globally.",
+    "title": "Doseg omladinskog skautinga",
+    "description": "Odaberi gdje omladinski skaut smije tražiti talente. Kvaliteta skauta određuje koliko kandidata nalazi i koliko su procjene korisne; budžet određuje samo geografski doseg.",
+    "skillNote": "Svjetski program ne jamči elitne talente. On samo omogućuje skautu globalnu potragu.",
     "ranges": {
-      "local": "Local — own country",
-      "regional": "Regional",
-      "continental": "Continental",
-      "world": "Worldwide"
+      "local": "Lokalno — vlastita država",
+      "regional": "Regionalno",
+      "continental": "Kontinentalno",
+      "world": "Svjetski"
     }
   },
   "settings": {
-    "title": "Responsibilities",
-    "description": "Choose who handles routine Youth Academy decisions. The manager can always change these responsibilities later.",
-    "recruitment": "Recruitment decisions",
-    "raceEntry": "Race participation",
-    "raceSquad": "Race squad selection",
-    "camps": "Development camps",
-    "equipment": "Equipment purchases",
-    "negotiations": "Prospect negotiations",
+    "title": "Odgovornosti",
+    "description": "Odredi tko vodi rutinske odluke Omladinske akademije. Menadžer te odgovornosti uvijek može kasnije promijeniti.",
+    "recruitment": "Odluke o regrutiranju",
+    "raceEntry": "Sudjelovanje na utrkama",
+    "raceSquad": "Izbor sastava za utrku",
+    "camps": "Razvojni kampovi",
+    "equipment": "Kupnja opreme",
+    "negotiations": "Pregovori s talentima",
     "options": {
-      "manager": "Manager",
-      "academy_director": "Youth Academy Director",
-      "u16_head_coach": "U16 Head Coach"
+      "manager": "Menadžer",
+      "academy_director": "Direktor Omladinske akademije",
+      "u16_head_coach": "U16 glavni trener"
     }
   },
   "placeholders": {
-    "calendar": "The separate U16 calendar and lightweight race engine will be connected in the next implementation phase. Youth race entry costs will remain mainly travel/logistics costs.",
-    "rankings": "Regional Youth Ranking and Youth World Ranking foundation will be connected with the U16 race calendar.",
-    "equipment": "Youth Academy will own separate equipment, reusing a curated lower-cost subset of the existing equipment catalogue and images.",
-    "history": "Academy graduates, youth results and long-term development history will remain attached to riders after graduation."
+    "calendar": "Odvojeni U16 kalendar i pojednostavljeni motor utrke bit će povezani u sljedećoj fazi. Troškovi omladinskih utrka uglavnom će pokrivati putovanje i logistiku.",
+    "rankings": "Regionalni omladinski poredak i Youth World Ranking bit će povezani s U16 kalendarom.",
+    "equipment": "Omladinska akademija imat će vlastitu opremu, koristeći odabrani jeftiniji dio postojećeg kataloga i postojećih slika.",
+    "history": "Povijest akademije, rezultati i razvoj ostaju trajno povezani s vozačem nakon završetka akademije."
   },
   "errors": {
-    "load": "Could not load Youth Academy.",
-    "activate": "Could not activate Youth Academy.",
-    "save": "Could not save Youth Academy settings."
+    "load": "Nije moguće učitati Omladinsku akademiju.",
+    "activate": "Nije moguće aktivirati Omladinsku akademiju.",
+    "save": "Nije moguće spremiti postavke Omladinske akademije."
   }
 }
