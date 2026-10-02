@@ -710,7 +710,7 @@ export default function NationalSpecialStagePlanV3({
           </div>
           <button
             type="button"
-            disabled={saving || completePresets.length === 0}
+            disabled={saving || (isTeam && completePresets.length === 0)}
             onClick={() => void save()}
             className="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
           >
@@ -733,7 +733,7 @@ export default function NationalSpecialStagePlanV3({
             </div>
             <button
               type="button"
-              disabled={saving || completePresets.length === 0}
+              disabled={saving || (isTeam && completePresets.length === 0)}
               onClick={() => void save()}
               className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-yellow-300 disabled:bg-slate-200 disabled:text-slate-500"
             >
@@ -762,7 +762,7 @@ export default function NationalSpecialStagePlanV3({
                   }}
                   className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
                 >
-                  <option value="">Choose equipment package</option>
+                  <option value="">{isTeam ? 'Choose equipment package' : 'Default race equipment'}</option>
                   {presets.map(preset => (
                     <option key={preset.id} value={preset.id} disabled={preset.is_empty}>
                       {preset.setup_name}{preset.is_empty ? ' · incomplete' : ''}
