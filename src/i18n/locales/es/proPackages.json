@@ -73,11 +73,12 @@
     "a5": "Manager Briefing, inteligencia avanzada del calendario, previsiones financieras y herramientas de comodidad.",
     "a6": "Análisis avanzado del rendimiento de ciclistas, tendencias de desarrollo y repeticiones ilimitadas de carreras mundiales.",
     "a7": "Premium mejora la información, la automatización y la comodidad; nunca la fuerza en carrera, la aceptación de fichajes ni atributos ocultos.",
-    "a8": "Acceso exclusivo al Equipo de Desarrollo, incluido el Entrenador Principal U23: 100 Coins para activar y 100 Coins por temporada para renovar."
+    "a8": "Acceso exclusivo al Equipo de Desarrollo, incluido el Entrenador Principal U23: 100 Coins para activar y 100 Coins por temporada para renovar.",
+    "a9": "Academia Juvenil Premium opcional: activa un programa U16 independiente con 16 plazas, seis ciclistas locales iniciales, personal propio, scouting según presupuesto y una ruta hacia el Equipo de Desarrollo."
   },
   "comparison": {
     "title": "gratis vs Premium",
-    "description": "Premium añade herramientas avanzadas y acceso exclusivo al Equipo de Desarrollo y al Entrenador Principal U23.",
+    "description": "Premium añade herramientas avanzadas y acceso exclusivo al Equipo de Desarrollo, entrenador U23 y Academia Juvenil opcional.",
     "benefit": "Prestaciones",
     "free": "gratis",
     "premium": "Premium",
@@ -91,8 +92,9 @@
     "r8": "Usar características opcionales de Coins",
     "developing": "Desarrollo del servicio de equipo",
     "activationRenewal": "Activación {{activation}} / renovación {{renewal}}",
-    "note": "El Equipo de Desarrollo y el Entrenador Principal U23 requieren Premium activo. La activación y renovación estacional del Equipo de Desarrollo siguen usando Coins.",
-    "premiumOnly": "Solo Premium"
+    "note": "El Equipo de Desarrollo, el entrenador U23 y la Academia Juvenil requieren una suscripción Premium activa. Activar la Academia Juvenil es opcional y sus costes de desarrollo se pagan con dinero normal del club.",
+    "premiumOnly": "Solo Premium",
+    "r9": "Academia Juvenil / desarrollo U16"
   },
   "packages": {
     "title": "¿Necesitas Coins adicionales?",
