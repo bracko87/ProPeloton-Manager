@@ -11,6 +11,7 @@ import enCommon from './locales/en/common.json'
 import enCreateClub from './locales/en/createClub.json'
 import enCustomizeTeam from './locales/en/customizeTeam.json'
 import enDevelopingTeam from './locales/en/developingTeam.json'
+import enYouthAcademy from './locales/en/youthAcademy.json'
 import enEquipment from './locales/en/equipment.json'
 import enFinance from './locales/en/finance.json'
 import enHelp from './locales/en/help.json'
@@ -52,6 +53,7 @@ import srCommon from './locales/sr-Latn/common.json'
 import srCreateClub from './locales/sr-Latn/createClub.json'
 import srCustomizeTeam from './locales/sr-Latn/customizeTeam.json'
 import srDevelopingTeam from './locales/sr-Latn/developingTeam.json'
+import srYouthAcademy from './locales/sr-Latn/youthAcademy.json'
 import srEquipment from './locales/sr-Latn/equipment.json'
 import srFinance from './locales/sr-Latn/finance.json'
 import srHelp from './locales/sr-Latn/help.json'
@@ -93,6 +95,7 @@ import deCommon from './locales/de/common.json'
 import deCreateClub from './locales/de/createClub.json'
 import deCustomizeTeam from './locales/de/customizeTeam.json'
 import deDevelopingTeam from './locales/de/developingTeam.json'
+import deYouthAcademy from './locales/de/youthAcademy.json'
 import deEquipment from './locales/de/equipment.json'
 import deFinance from './locales/de/finance.json'
 import deHelp from './locales/de/help.json'
@@ -134,6 +137,7 @@ import hrCommon from './locales/hr/common.json'
 import hrCreateClub from './locales/hr/createClub.json'
 import hrCustomizeTeam from './locales/hr/customizeTeam.json'
 import hrDevelopingTeam from './locales/hr/developingTeam.json'
+import hrYouthAcademy from './locales/hr/youthAcademy.json'
 import hrEquipment from './locales/hr/equipment.json'
 import hrFinance from './locales/hr/finance.json'
 import hrHelp from './locales/hr/help.json'
@@ -175,6 +179,7 @@ import esCommon from './locales/es/common.json'
 import esCreateClub from './locales/es/createClub.json'
 import esCustomizeTeam from './locales/es/customizeTeam.json'
 import esDevelopingTeam from './locales/es/developingTeam.json'
+import esYouthAcademy from './locales/es/youthAcademy.json'
 import esEquipment from './locales/es/equipment.json'
 import esFinance from './locales/es/finance.json'
 import esHelp from './locales/es/help.json'
@@ -222,6 +227,7 @@ import itCalendarPage from './locales/it/calendarPage.json'
 import itClub from './locales/it/club.json'
 import itCustomizeTeam from './locales/it/customizeTeam.json'
 import itDevelopingTeam from './locales/it/developingTeam.json'
+import itYouthAcademy from './locales/it/youthAcademy.json'
 import itEquipment from './locales/it/equipment.json'
 import itFinance from './locales/it/finance.json'
 import itHelp from './locales/it/help.json'
@@ -258,6 +264,7 @@ import frCommon from './locales/fr/common.json'
 import frCreateClub from './locales/fr/createClub.json'
 import frCustomizeTeam from './locales/fr/customizeTeam.json'
 import frDevelopingTeam from './locales/fr/developingTeam.json'
+import frYouthAcademy from './locales/fr/youthAcademy.json'
 import frEquipment from './locales/fr/equipment.json'
 import frFinance from './locales/fr/finance.json'
 import frHelp from './locales/fr/help.json'
@@ -299,6 +306,7 @@ import ruCommon from './locales/ru/common.json'
 import ruCreateClub from './locales/ru/createClub.json'
 import ruCustomizeTeam from './locales/ru/customizeTeam.json'
 import ruDevelopingTeam from './locales/ru/developingTeam.json'
+import ruYouthAcademy from './locales/ru/youthAcademy.json'
 import ruEquipment from './locales/ru/equipment.json'
 import ruFinance from './locales/ru/finance.json'
 import ruHelp from './locales/ru/help.json'
@@ -351,6 +359,7 @@ const resources = {
     createClub: enCreateClub,
     customizeTeam: enCustomizeTeam,
     developingTeam: enDevelopingTeam,
+    youthAcademy: enYouthAcademy,
     equipment: enEquipment,
     finance: enFinance,
     help: enHelp,
@@ -393,6 +402,7 @@ const resources = {
     createClub: srCreateClub,
     customizeTeam: srCustomizeTeam,
     developingTeam: srDevelopingTeam,
+    youthAcademy: srYouthAcademy,
     equipment: srEquipment,
     finance: srFinance,
     help: srHelp,
@@ -435,6 +445,7 @@ const resources = {
     createClub: deCreateClub,
     customizeTeam: deCustomizeTeam,
     developingTeam: deDevelopingTeam,
+    youthAcademy: deYouthAcademy,
     equipment: deEquipment,
     finance: deFinance,
     help: deHelp,
@@ -477,6 +488,7 @@ const resources = {
     createClub: hrCreateClub,
     customizeTeam: hrCustomizeTeam,
     developingTeam: hrDevelopingTeam,
+    youthAcademy: hrYouthAcademy,
     equipment: hrEquipment,
     finance: hrFinance,
     help: hrHelp,
@@ -519,6 +531,7 @@ const resources = {
     createClub: esCreateClub,
     customizeTeam: esCustomizeTeam,
     developingTeam: esDevelopingTeam,
+    youthAcademy: esYouthAcademy,
     equipment: esEquipment,
     finance: esFinance,
     help: esHelp,
@@ -561,6 +574,7 @@ const resources = {
     createClub: itCreateClub,
     customizeTeam: itCustomizeTeam,
     developingTeam: itDevelopingTeam,
+    youthAcademy: itYouthAcademy,
     equipment: itEquipment,
     finance: itFinance,
     help: itHelp,
@@ -603,6 +617,7 @@ const resources = {
     createClub: frCreateClub,
     customizeTeam: frCustomizeTeam,
     developingTeam: frDevelopingTeam,
+    youthAcademy: frYouthAcademy,
     equipment: frEquipment,
     finance: frFinance,
     help: frHelp,
@@ -645,6 +660,7 @@ const resources = {
     createClub: ruCreateClub,
     customizeTeam: ruCustomizeTeam,
     developingTeam: ruDevelopingTeam,
+    youthAcademy: ruYouthAcademy,
     equipment: ruEquipment,
     finance: ruFinance,
     help: ruHelp,
@@ -699,6 +715,7 @@ void i18n
       'createClub',
       'customizeTeam',
       'developingTeam',
+      'youthAcademy',
       'equipment',
       'finance',
       'help',
