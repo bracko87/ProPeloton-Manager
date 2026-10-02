@@ -200,7 +200,8 @@
       "accept": "Akademie-Angebot annehmen",
       "decline": "Ablehnen",
       "processing": "Wird verarbeitet…"
-    }
+    },
+    "awaitingAcademyResponse": "Warten auf Antwort der Akademie"
   },
   "settings": {
     "title": "Verantwortlichkeiten",
