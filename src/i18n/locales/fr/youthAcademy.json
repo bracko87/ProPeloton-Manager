@@ -240,8 +240,6 @@
     }
   },
   "placeholders": {
-    "calendar": "Le calendrier U16 séparé et le moteur de course allégé seront connectés lors de la prochaine phase. Les coûts d'inscription aux courses jeunes resteront principalement liés au voyage et à la logistique.",
-    "rankings": "Les bases du Classement Jeunes Régional et du Youth World Ranking seront reliées au calendrier U16.",
     "history": "Les diplômés de l'académie, les résultats jeunes et l'historique de développement à long terme resteront liés aux coureurs après leur passage chez les professionnels."
   },
   "errors": {
@@ -257,7 +255,11 @@
     "equipmentPurchase": "Impossible d'acheter l'équipement de l'Académie Jeunes.",
     "equipmentDirector": "Impossible de terminer la gestion d'équipement du Directeur de l'Académie Jeunes.",
     "graduationLoad": "Impossible de charger les décisions de sortie des jeunes.",
-    "graduationDecision": "Impossible de finaliser la décision de sortie du jeune."
+    "graduationDecision": "Impossible de finaliser la décision de sortie du jeune.",
+    "calendarLoad": "Impossible de charger le calendrier jeunes.",
+    "rankingsLoad": "Impossible de charger les classements jeunes.",
+    "raceEntry": "Impossible d'inscrire la course jeunes.",
+    "raceLineup": "Impossible d'enregistrer la sélection jeunes."
   },
   "equipment": {
     "title": "Équipement jeunes",
@@ -302,5 +304,54 @@
     "pathwayHelp": "Ce parcours temporaire offre 30 jours de jeu pour intégrer le coureur à l'équipe de développement. Sinon, il devient coureur professionnel libre.",
     "toDeveloping": "Vers l'équipe de développement ({{slots}} places)",
     "release": "Libérer comme coureur professionnel libre"
+  },
+  "calendar": {
+    "title": "Calendrier U16",
+    "format": "Format",
+    "resultsOnly": "Résultats uniquement — aucun replay",
+    "entryResponsibility": "Participation",
+    "squadResponsibility": "Sélection & stratégie",
+    "ageLimitHelp": "Les coureurs ont des limites de départ sur 30 jours selon l'âge. L'entraîneur U16 tient aussi compte du profil, de la fraîcheur et de la fatigue; l'Académie ne choisit donc qu'une partie des 12 courses régionales disponibles chaque mois.",
+    "races": "Courses jeunes",
+    "loading": "Chargement des courses…",
+    "levels": {
+      "regional": "Coupe Jeunes Régionale",
+      "world_series": "Youth World Series",
+      "world_final": "Youth World Final"
+    },
+    "qualified": "Qualifié",
+    "notQualified": "Non qualifié",
+    "qualificationHelp": "La qualification pour les World Series vient du classement régional. La finale mondiale utilise le classement mondial jeunes.",
+    "strategy": "Stratégie",
+    "strategies": {
+      "conservative": "Prudente",
+      "balanced": "Équilibrée",
+      "aggressive": "Agressive"
+    },
+    "enterRace": "Inscrire la course",
+    "entering": "Inscription…",
+    "coachEntryHelp": "La participation est déléguée. L'entraîneur U16 examine l'épreuve sept jours de jeu avant et ne l'inscrit que si l'effectif, la fatigue et le plan de développement conviennent.",
+    "entered": "Académie inscrite",
+    "enteredBy": "Inscrit par {{who}}",
+    "selectLineup": "Choisir l'équipe — {{count}} / {{max}}",
+    "saveLineup": "Enregistrer équipe & stratégie",
+    "savingLineup": "Enregistrement…",
+    "coachLineupHelp": "L'entraîneur U16 a sélectionné {{count}} coureur(s) et gère la stratégie.",
+    "myResults": "Résultats de mon Académie",
+    "topResults": "Meilleurs résultats",
+    "didNotRace": "Votre Académie n'a pas participé."
+  },
+  "rankings": {
+    "title": "Classements jeunes",
+    "description": "Votre Académie participe au classement régional {{region}}. Les résultats régionaux contribuent aussi, avec moins de points, au classement mondial; World Series et finale mondiale rapportent davantage.",
+    "regionalTitle": "Classement Régional Jeunes",
+    "worldTitle": "Classement Mondial Jeunes",
+    "loading": "Chargement des classements…",
+    "noPoints": "Aucun point n'a encore été marqué.",
+    "rank": "Rang",
+    "rider": "Coureur",
+    "academy": "Académie",
+    "starts": "Arrivées",
+    "points": "Points"
   }
 }
