@@ -16099,14 +16099,26 @@ export function resolveRoadPhase4Finish(
     ),
   )
 
+  // Phase-4 profile reconstruction repeatedly asks for identical rider/km
+  // energy points while evaluating mountain attrition and detached-rider
+  // chases. Cache deterministic lookups so large mountain fields stay inside
+  // the Edge CPU budget instead of recomputing the same profile integrations.
+  const profileEnergyAtKmCache = new Map<string, number>()
   const profileEnergyAtKm = (riderId: string, kmFromStart: number): number => {
+    const cacheKey = `${riderId}|${deterministicRound(kmFromStart, 6)}`
+    const cached = profileEnergyAtKmCache.get(cacheKey)
+    if (cached !== undefined) return cached
+
     const rider = ridersById.get(riderId)!
     const readiness = readinessByRiderId.get(riderId)!
     const commandRow = commandResolutionByRiderId.get(riderId)!
     const phase1Energy = phase1EnergyByRiderIdForProfile.get(riderId)
     const phase2Energy = phase2EnergyByRiderIdForProfile.get(riderId)
     const phase3State = phase3StateByRiderId.get(riderId)
-    if (!phase1Energy || !phase2Energy || !phase3State) return 0
+    if (!phase1Energy || !phase2Energy || !phase3State) {
+      profileEnergyAtKmCache.set(cacheKey, 0)
+      return 0
+    }
 
     if (kmFromStart <= phase1ForProfile.phaseBoundary.endKm + 0.000001) {
       const phase = commandRow.phases.find((entry) => entry.phaseNumber === 1)!
@@ -16123,10 +16135,12 @@ export function resolveRoadPhase4Finish(
         phase1Attack && phase1Attack.attemptKm <= kmFromStart + 0.000001
           ? phase1Energy.attackEnergyCost
           : 0
-      return deterministicRound(
+      const value = deterministicRound(
         Math.max(0, phase1Energy.startEnergy - baseline - attackSpent),
         6,
       )
+      profileEnergyAtKmCache.set(cacheKey, value)
+      return value
     }
     if (kmFromStart <= phase2ForProfile.phaseBoundary.endKm + 0.000001) {
       const phase = commandRow.phases.find((entry) => entry.phaseNumber === 2)!
@@ -16155,10 +16169,12 @@ export function resolveRoadPhase4Finish(
                 phase2Energy.objectiveEnergyCost,
             )
           : 0
-      return deterministicRound(
+      const value = deterministicRound(
         Math.max(0, phase1Energy.energyAfterPhase - baseline - objectiveSpent - attackSpent),
         6,
       )
+      profileEnergyAtKmCache.set(cacheKey, value)
+      return value
     }
     if (kmFromStart <= phase3.phaseBoundary.endKm + 0.000001) {
       const phase = commandRow.phases.find((entry) => entry.phaseNumber === 3)!
@@ -16175,10 +16191,12 @@ export function resolveRoadPhase4Finish(
         phase3Attack && phase3Attack.attemptKm <= kmFromStart + 0.000001
           ? phase3State.attackEnergyCost
           : 0
-      return deterministicRound(
+      const value = deterministicRound(
         Math.max(0, phase2Energy.energyAfterPhase - baseline - attackSpent),
         6,
       )
+      profileEnergyAtKmCache.set(cacheKey, value)
+      return value
     }
     const phase = commandRow.phases.find((entry) => entry.phaseNumber === 4)!
     const baseline = calculateRoadEnergyCostForRange(
@@ -16189,13 +16207,16 @@ export function resolveRoadPhase4Finish(
       phaseBoundary.startKm,
       kmFromStart,
     )
-    return deterministicRound(
+    const value = deterministicRound(
       Math.max(0, phase3State.energyAfterPhase - baseline),
       6,
     )
+    profileEnergyAtKmCache.set(cacheKey, value)
+    return value
   }
 
-  const isKnownFrontRiderAtProfileKm = (riderId: string, kmFromStart: number): boolean => {
+  const knownFrontAtKmCache = new Map<string, boolean>()
+  const isKnownFrontRiderAtProfileKmUncached = (riderId: string, kmFromStart: number): boolean => {
     if (kmFromStart < phase2ForProfile.phaseBoundary.endKm - 0.000001) {
       const openingActive =
         phase2ForProfile.breakawayRiderIdsAtStart.includes(riderId) &&
@@ -16335,6 +16356,15 @@ export function resolveRoadPhase4Finish(
       left.kmFromStart - right.kmFromStart ||
       left.riderId.localeCompare(right.riderId),
   )
+  const isKnownFrontRiderAtProfileKm = (riderId: string, kmFromStart: number): boolean => {
+    const cacheKey = `${riderId}|${deterministicRound(kmFromStart, 6)}`
+    const cached = knownFrontAtKmCache.get(cacheKey)
+    if (cached !== undefined) return cached
+    const value = isKnownFrontRiderAtProfileKmUncached(riderId, kmFromStart)
+    knownFrontAtKmCache.set(cacheKey, value)
+    return value
+  }
+
 
   const conflictingPelotonAttackProofKm = (
     riderId: string,
