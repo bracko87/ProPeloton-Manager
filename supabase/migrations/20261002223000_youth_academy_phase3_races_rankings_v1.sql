@@ -969,6 +969,31 @@ begin
         'entry_status',e.status,
         'strategy',e.strategy,
         'entered_by',e.entered_by,
+        'eligible_rider_ids',coalesce((
+          select jsonb_agg(yr.id order by yr.display_name)
+          from public.youth_riders yr
+          where yr.academy_id=v_academy_id
+            and private.youth_race_rider_eligible_v1(yr.id,r.race_date)
+            and (
+              r.race_level<>'regional'
+              or private.youth_region_for_country_v1(yr.country_code)=r.region_code
+            )
+            and (
+              r.race_level='regional'
+              or (
+                r.race_level='world_series'
+                and coalesce(private.youth_rider_regional_rank_v1(
+                  yr.id,r.season_number
+                ),9999)<=coalesce(r.qualification_rank_limit,40)
+              )
+              or (
+                r.race_level='world_final'
+                and coalesce(private.youth_rider_world_rank_v1(
+                  yr.id,r.season_number
+                ),9999)<=coalesce(r.qualification_rank_limit,60)
+              )
+            )
+        ),'[]'::jsonb),
         'lineup',coalesce((
           select jsonb_agg(jsonb_build_object(
             'rider_id',yr.id,'name',yr.display_name,'age',
