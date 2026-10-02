@@ -670,7 +670,10 @@
     "SELECTED": "Selezionato",
     "SQUAD": "Rosa",
     "VOTING": "Votazione",
-    "WORLD": "Mondiale"
+    "WORLD": "Mondiale",
+    "POSITION": "Ruolo",
+    "RESIGNED": "Dimesso",
+    "VACANT": "Vacante"
   },
   "reportVariants": {
     "rider_skill_change": "Cambio di abilità del corridore",
