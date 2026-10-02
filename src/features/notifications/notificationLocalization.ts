@@ -890,39 +890,12 @@ function getLocalizedNotificationTitleFirstTokens(): Set<string> {
  * Serbian, Croatian, German, Spanish, Italian, French and Russian.
  */
 function repairRotatedLocalizedNotificationTitle(value: string): string {
-  const trimmed = value.trim()
-  if (!trimmed || !shouldLocalizeNotifications()) return trimmed
-
-  const lastTokenMatch = trimmed.match(/(\S+)\s*$/u)
-  const lastToken = lastTokenMatch?.[1] ?? ''
-  const normalizedLastToken = normalizeNotificationTitleToken(lastToken)
-  const titleFirstTokens = getLocalizedNotificationTitleFirstTokens()
-
-  const candidateWasRotated =
-    normalizedLastToken.length > 0 &&
-    titleFirstTokens.has(normalizedLastToken) &&
-    !normalizeNotificationTitleToken(trimmed.match(/^\S+/u)?.[0] ?? '').startsWith(normalizedLastToken)
-
-  // Most corrupted titles start with a lower-case word. Generic notification
-  // wrappers such as "Obavijest:"/"Benachrichtigung:" are the exception: they
-  // may be rotated after a period while the remaining subject still starts with
-  // an uppercase noun. A trailing colon is therefore also a strong signal.
-  const shouldRotate =
-    candidateWasRotated &&
-    (startsWithLowercaseLetter(trimmed) || /[:：]$/u.test(lastToken))
-
-  let repaired = trimmed
-  if (shouldRotate && lastTokenMatch?.index !== undefined) {
-    let body = trimmed.slice(0, lastTokenMatch.index).trim()
-    // A period/semicolon immediately before the displaced leading word was only
-    // acting as a separator introduced by the broken rendering order.
-    body = body.replace(/[.;]\s*$/u, '').trim()
-    repaired = `${lastToken} ${body}`.trim()
-  }
-
-  // UI notification headlines always use sentence/title capitalization. This is
-  // also a safety net for any translated title that was stored without it.
-  return capitalizeFirstAlphabeticCharacter(repaired)
+  // Do not reorder translated notification words at runtime.
+  // Complete locale resources and already-localized backend copy own their
+  // grammar/word order. The old heuristic could incorrectly turn
+  // "Potrebna potvrda ..." into "... Potrebna" and could also disturb
+  // dynamic subject names. Only normalize capitalization here.
+  return capitalizeFirstAlphabeticCharacter(value.trim())
 }
 
 
