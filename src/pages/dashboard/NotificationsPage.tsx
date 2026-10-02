@@ -751,6 +751,16 @@ function localizeNotificationRuntimeText(
   const text = String(value ?? '').trim()
   if (!text) return text
 
+  // Notification rows are already normalized through applyNotificationTemplates.
+  // Re-localizing the final title/message here caused a second template pass,
+  // which could move the leading capitalized word or rider first name to the end.
+  if (
+    text === String(item.title ?? '').trim() ||
+    text === String(item.message ?? '').trim()
+  ) {
+    return text
+  }
+
   const advisorSpecific = localizeAdvisorNotificationRuntimeText(text, t)
   if (advisorSpecific !== text) return advisorSpecific
 
