@@ -892,7 +892,8 @@
     "WORLD_ROAD_CHAMPIONSHIP_INVITATION": "Приглашение на чемпионат мира",
     "WORLD_ROAD_CHAMPIONSHIP_FINAL_CONFIRMATION_REQUIRED": "Подтверждение чемпионата мира",
     "WORLD_ROAD_CHAMPIONSHIP_RESULT": "Результат чемпионата мира",
-    "WORLD_ROAD_CHAMPION": "Чемпион мира на шоссе"
+    "WORLD_ROAD_CHAMPION": "Чемпион мира на шоссе",
+    "NATIONAL_TEAM_NEW_SELECTION_WINDOW": "Новое окно выбора состава сборной"
   },
   "semanticTypeEntityTitles": {
     "RACE_PLAN_NEEDS_ATTENTION": "План гонки требует внимания: {{entity}}",
@@ -1313,6 +1314,11 @@
       "title": "Сборная: вызов завершён для {{rider}}",
       "message": "{{rider}} завершил выступление за {{association}} и снова доступен клубу.",
       "extra": "После завершения National Duty продолжают действовать обычные правила здоровья, усталости и доступности для гонок."
+    },
+    "newSelectionWindow": {
+      "title": "Открыт выбор состава на {{roundLabel}}",
+      "message": "Ваша сборная вышла в {{roundLabel}}. Выберите новый состав из 10 гонщиков для {{group}}. Можно сохранить прежних гонщиков или выбрать других доступных кандидатов.",
+      "extra": "Срок подтверждения окончательного состава: {{finalSquadDeadline}}. Откройте раздел состава Национальной ассоциации, чтобы подготовиться к новому этапу."
     }
   }
 }
