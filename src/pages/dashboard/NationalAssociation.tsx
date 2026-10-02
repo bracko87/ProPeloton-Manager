@@ -425,7 +425,7 @@ export default function NationalAssociationPage(): JSX.Element {
 
       if (!cancelled) {
         if (memberError) {
-          console.error('Failed to load National {t('association.members.eyebrow')}:', memberError)
+          console.error('Failed to load National Association members:', memberError)
           setMemberDirectory(null)
         } else {
           setMemberDirectory((data ?? null) as AssociationMemberDirectory | null)
@@ -1414,7 +1414,7 @@ export default function NationalAssociationPage(): JSX.Element {
                     onClick={() => setMemberPage(page => Math.max(1, page - 1))}
                     className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
                   >
-                    Previous
+                    {t('association.members.previous')}
                   </button>
                   <button
                     type="button"
@@ -1422,7 +1422,7 @@ export default function NationalAssociationPage(): JSX.Element {
                     onClick={() => setMemberPage(page => page + 1)}
                     className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40"
                   >
-                    Next
+                    {t('association.members.next')}
                   </button>
                 </div>
               </div>
