@@ -1389,5 +1389,16 @@
       "message": "Le sélectionneur national a démissionné. Une élection de remplacement va commencer.",
       "extra": "L’Association reste active pendant le déroulement de l’élection de remplacement."
     }
+  },
+  "youthRaceReport": {
+    "raceFallback": "Course jeunes",
+    "title": "Rapport de l’Académie — {{raceName}}",
+    "message": "{{raceName}} : meilleur résultat {{bestFinish}}, +{{regionalPoints}} points régionaux, +{{worldPoints}} points mondiaux. DNF {{dnf}}, DNS {{dns}}. Rapport : {{reportClass}}.",
+    "classes": {
+      "routine": "routine",
+      "important": "important",
+      "exceptional": "exceptionnel",
+      "problem": "problème"
+    }
   }
 }
