@@ -3942,7 +3942,11 @@ export default function NotificationsPage(): JSX.Element {
                                     <img
                                       src={imageSrc}
                                       alt={localizeNotificationRuntimeText(item.title, item, t)}
-                                      className="w-full max-w-[340px] rounded-xl object-cover shadow-sm"
+                                      className={
+                                        isNationalFeatureNotice
+                                          ? 'w-full max-w-[300px] rounded-xl border border-slate-200 bg-white object-contain p-4 shadow-sm'
+                                          : 'w-full max-w-[340px] rounded-xl object-cover shadow-sm'
+                                      }
                                       draggable={false}
                                     />
                                   </div>
