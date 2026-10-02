@@ -450,7 +450,13 @@
         "needs_replacement": "Replacement required",
         "ready_to_confirm": "Ready to confirm",
         "confirmed": "Final squad confirmed"
-      }
+      },
+      "windowEyebrow": "Current National Team selection window",
+      "raceWindow": "Race window",
+      "invitationsRecommendedBy": "Draft / invitations recommended by",
+      "finalSquadDue": "Final 10-rider squad due",
+      "newWindowHelp": "This is a new competition window. The National Coach may keep riders from the previous round or choose a different eligible 10-rider squad for this Final.",
+      "invitationsOpenOn": "Invitations open {{date}}"
     },
     "renewal": {
       "validityTitle": "Association validity",
@@ -496,6 +502,28 @@
       "pricing": "{{used}} changes used this Season. The first {{free}} changes are free; every later logo or jersey change costs {{coins}} Coins.",
       "coachOnly": "Customization is visible to all Association members, but only the elected National Coach can change the logo or jersey.",
       "balance": "Balance: {{balance}} Coins"
+    },
+    "openGuide": "Open National Association & World Nations guide",
+    "members": {
+      "eyebrow": "Association members",
+      "title": "Member directory",
+      "description": "Active members, join date, team, role and activation-fund contribution.",
+      "count": "{{count}} members",
+      "oldestFirst": "Oldest members first",
+      "joined": "Joined",
+      "player": "Player",
+      "team": "Team",
+      "activationFund": "Activation fund",
+      "status": "Status",
+      "season": "Season {{season}}",
+      "coins": "{{count}} Coins",
+      "nationalCoach": "National Coach",
+      "member": "Member",
+      "loading": "Loading members…",
+      "empty": "No active Association members found.",
+      "showing": "Showing {{from}}–{{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
     }
   },
   "world": {
