@@ -146,10 +146,10 @@ begin
         'simulation_run_id', p_simulation_run_id
       );
 
-      if case v_prior_case.severity
-           when 'major' then 3 when 'moderate' then 2 else 1 end
-         > case v_severity
-           when 'major' then 3 when 'moderate' then 2 else 1 end then
+      if (case v_prior_case.severity
+            when 'major' then 3 when 'moderate' then 2 else 1 end)
+         > (case v_severity
+            when 'major' then 3 when 'moderate' then 2 else 1 end) then
         -- Keep the stronger case active; retain the additional race incident
         -- in its existing medical record so a retry is idempotent.
         update public.rider_health_cases hc
