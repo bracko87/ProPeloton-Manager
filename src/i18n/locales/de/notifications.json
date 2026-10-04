@@ -1400,5 +1400,9 @@
       "exceptional": "außergewöhnlich",
       "problem": "Problem"
     }
+  },
+  "youthAcademyStarted": {
+    "title": "Deine Youth Academy ist bereit",
+    "message": "Dein U16-Programm ist aktiv. Prüfe Verantwortlichkeiten, Scouting, Rennen und das eigene Akademiebudget vor den ersten Events."
   }
 }
