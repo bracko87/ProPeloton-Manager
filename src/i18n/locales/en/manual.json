@@ -3410,6 +3410,56 @@
           "to": "/dashboard/staff"
         }
       ]
+    },
+    "youth-academy": {
+      "category": "Riders",
+      "title": "Youth Academy: U16 Starter Guide",
+      "subtitle": "How to run your Premium U16 programme, riders, staff, races and budget.",
+      "overview": "Youth Academy is a Premium U16 development programme with a fixed capacity of 16 riders. Recruit young riders, give them suitable racing opportunities, manage dedicated Academy staff and finances, and decide their pathway when they reach age 16.",
+      "facts": {
+        "0": {
+          "label": "Capacity",
+          "value": "Maximum 16 Youth Riders"
+        },
+        "1": {
+          "label": "Starting package",
+          "value": "6 local Youth Riders, Youth Academy Director and U16 Head Coach"
+        },
+        "2": {
+          "label": "Optional staff",
+          "value": "Up to 3 Youth Scouts can be hired through the Staff Market"
+        },
+        "3": {
+          "label": "Race format",
+          "value": "Results-only: World Class, Continental West/East and Regional Class"
+        },
+        "4": {
+          "label": "Budget",
+          "value": "Separate Youth Academy fund with race income and two-way senior-team transfers"
+        }
+      },
+      "details": {
+        "0": "Open Youth Rider profiles from the Youth Riders tab. Riding attributes, readiness, fatigue, development focus, agreement and race history are visible, while exact hidden potential remains hidden behind the Talent Assessment band.",
+        "1": "The Academy starts with six local riders and can grow to 16. Youth staff are hired from the regular Staff Market: Youth Academy Director, U16 Head Coach and Youth Scouts.",
+        "2": "Responsibilities decide whether the manager or Academy staff handle recruitment, race participation, lineups and equipment-related decisions.",
+        "3": "Youth racing is results-only with World Class, Continental West/East and Regional divisions. Different squads may race simultaneously, but the same rider cannot be selected for overlapping events.",
+        "4": "World Class Academies receive World Class invitations. Declined places can be filled by weighted wildcards. Monthly plans control race volume and monthly racing spend.",
+        "5": "The activation allocation is permanent history and cannot be edited later. Current Academy funds change through spending, race income and explicit transfers.",
+        "6": "Youth race income goes directly to the Youth Academy fund. Use Adjust Budget only when you deliberately want to move money between the senior team and the Academy.",
+        "7": "At age 16, riders require a graduation decision: pathway, Developing Team when eligible and space exists, or release."
+      },
+      "tips": {
+        "0": "Rotate the roster instead of using the same best riders every race.",
+        "1": "Approve the monthly race plan before deadlines become urgent.",
+        "2": "Keep enough Academy funds for support, staff, scouting, equipment and travel.",
+        "3": "Check Youth Rider profiles regularly for readiness and fatigue."
+      },
+      "relatedLinks": {
+        "0": "Open Youth Academy",
+        "1": "Open Youth Riders",
+        "2": "Open Staff",
+        "3": "Open Staff Market"
+      }
     }
   }
 }
