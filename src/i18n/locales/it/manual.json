@@ -3410,6 +3410,56 @@
           "to": "/dashboard/staff"
         }
       ]
+    },
+    "youth-academy": {
+      "category": "Corridori",
+      "title": "Accademia Giovanile: guida iniziale U16",
+      "subtitle": "Come gestire programma Premium U16, corridori, staff, gare e budget.",
+      "overview": "L'Accademia Giovanile è un programma Premium U16 con capacità fissa di 16 corridori. Recluta giovani, assegna gare adatte, gestisci staff e finanze dedicate e decidi il percorso a 16 anni.",
+      "facts": {
+        "0": {
+          "label": "Capacità",
+          "value": "Massimo 16 corridori giovani"
+        },
+        "1": {
+          "label": "Pacchetto iniziale",
+          "value": "6 corridori locali, Direttore Accademia e Allenatore capo U16"
+        },
+        "2": {
+          "label": "Staff opzionale",
+          "value": "Fino a 3 scout giovanili tramite il mercato staff"
+        },
+        "3": {
+          "label": "Formato gare",
+          "value": "Solo risultati: Classe Mondiale, Continentale Ovest/Est e Regionale"
+        },
+        "4": {
+          "label": "Budget",
+          "value": "Fondo separato con entrate gare e trasferimenti in entrambe le direzioni"
+        }
+      },
+      "details": {
+        "0": "Apri i profili dal tab Giovani Corridori. Attributi, prontezza, fatica, focus sviluppo, accordo e storia gare sono visibili; il potenziale esatto resta nascosto dietro la valutazione talento.",
+        "1": "L'Accademia parte con sei corridori locali e può arrivare a 16. Direttore, allenatore U16 e scout si assumono nel normale mercato staff.",
+        "2": "Le responsabilità stabiliscono se manager o staff gestiscono reclutamento, partecipazione, formazioni e decisioni sull'equipaggiamento.",
+        "3": "Le gare giovanili sono solo a risultati: Classe Mondiale, Continentale Ovest/Est e divisioni Regionali. Squadre diverse possono gareggiare insieme, ma lo stesso corridore non può essere in eventi sovrapposti.",
+        "4": "Le Accademie di Classe Mondiale ricevono inviti. I posti liberi dopo rifiuti possono essere coperti da wildcard ponderate. Il piano mensile limita gare e spesa.",
+        "5": "L'allocazione iniziale resta uno storico fisso. I fondi correnti cambiano con spese, entrate gare e trasferimenti espliciti.",
+        "6": "Le entrate delle gare giovanili vanno direttamente all'Accademia. Usa Regola budget solo per spostare volontariamente denaro tra senior e Accademia.",
+        "7": "A 16 anni serve una decisione: pathway, squadra di sviluppo se disponibile oppure rilascio."
+      },
+      "tips": {
+        "0": "Ruota il roster invece di usare sempre i migliori.",
+        "1": "Approva il piano mensile prima delle scadenze.",
+        "2": "Mantieni fondi per supporto, staff, scouting, equipaggiamento e viaggi.",
+        "3": "Controlla spesso prontezza e fatica."
+      },
+      "relatedLinks": {
+        "0": "Apri Accademia Giovanile",
+        "1": "Apri Giovani Corridori",
+        "2": "Apri Staff",
+        "3": "Apri mercato Staff"
+      }
     }
   }
 }
