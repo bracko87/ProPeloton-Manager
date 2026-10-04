@@ -3491,7 +3491,7 @@
         "1": "Akademija počinje sa šest vozača i može da poraste na 16. Youth osoblje koristi istu skalu kao seniori: Slab, Osnovni, Kompetentan, Jak, Elitan i Svetska klasa.",
         "2": "Uloge imaju bonuse: Direktor poboljšava upravljanje i kupovinu opreme, U16 trener razvoj i izbor za trke, Scout izbor talenata i preciznost izveštaja.",
         "3": "Youth osoblje napreduje kroz posebne kurseve na standardnom Staff profilu. Trošak se plaća iz Academy budžeta.",
-        "4": "Scout ima jednu besplatnu pretragu po nedelji i do tri dodatne: Lokalna 10, Regionalna 15, Kontinentalna 20, Svetska 30 Coina.",
+        "4": "Youth Scout ima jednu besplatnu pretragu po nedelji igre i do tri dodatne Coin pretrage: Lokalna 2, Regionalna 5, Kontinentalna 8 i Svetska 12 Coina. Nivo Scouta određuje broj izveštaja: Slab 1, Osnovni 2, Kompetentan 3, Jak 4, Elitan 5 i Svetska klasa 6 po pretrazi; bolji Scout efikasnije pronalazi jače talente i daje sigurnije procene.",
         "5": "Odgovornosti se potvrđuju po temi. Regrutacija i pregovori mogu biti delegirani Direktoru, a trke i postave U16 treneru.",
         "6": "Takmičenje ima Svetsku, Kontinentalnu Zapad/Istok i Regionalne divizije. Kalendar prikazuje ceo mesec ili samo prilike Akademije. Isti vozač ne može na trke koje se preklapaju.",
         "7": "World Class Akademije dobijaju pozive; slobodna mesta popunjavaju ponderisani wildcardovi. Mesečni plan ograničava broj trka i trošak.",
