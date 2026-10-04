@@ -653,6 +653,7 @@ export default function YouthAcademyPage(): JSX.Element {
   const [calendarScope, setCalendarScope] = useState<'all' | 'my_opportunities'>('all')
   const [rankingClassFilter, setRankingClassFilter] = useState<'world' | 'continental' | 'regional'>('world')
   const [rankingDivisionFilter, setRankingDivisionFilter] = useState('')
+  const [riderRankingFilter, setRiderRankingFilter] = useState<'regional' | 'world'>('regional')
   const [responsibilityAction, setResponsibilityAction] = useState<string | null>(null)
   const [monthlyPlanDraft, setMonthlyPlanDraft] = useState<YouthMonthlyRacePlan | null>(null)
   const [phase3Loading, setPhase3Loading] = useState(false)
@@ -3776,111 +3777,255 @@ export default function YouthAcademyPage(): JSX.Element {
 
       {tab === 'rankings' ? (
         <div className="space-y-4">
-          <Card title={t('rankings.title')}>
-            <p className="text-sm leading-6 text-slate-600">
-              {t('rankings.description', {
-                region: humanize(youthRankings?.region_code),
-              })}
-            </p>
-          </Card>
+          <div className="rounded bg-white p-4 shadow">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="grid w-full gap-4 md:grid-cols-2 lg:max-w-2xl">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    {t('rankings.selectClass', { defaultValue: 'Select class' })}
+                  </label>
+                  <select
+                    value={rankingClassFilter}
+                    onChange={event => {
+                      const next = event.target.value as 'world' | 'continental' | 'regional'
+                      setRankingClassFilter(next)
+                      const first = (youthRankings?.academy_divisions ?? []).find(
+                        division => division.competition_class === next
+                      )
+                      setRankingDivisionFilter(first?.division_code ?? '')
+                    }}
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  >
+                    <option value="world">{t('calendar.competition.world')}</option>
+                    <option value="continental">{t('calendar.competition.continental')}</option>
+                    <option value="regional">{t('calendar.competition.regional')}</option>
+                  </select>
+                </div>
 
-          {(youthRankings?.academy_divisions ?? []).map(division => (
-            <Card
-              key={`${division.competition_class}-${division.division_code}`}
-              title={competitionLabel(division.competition_class, division.division_code)}
-              right={
-                youthRankings?.my_membership?.competition_class === division.competition_class &&
-                youthRankings?.my_membership?.division_code === division.division_code ? (
-                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                    {t('rankings.yourDivision')}
-                  </span>
-                ) : null
-              }
-            >
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left text-sm">
-                  <thead className="border-b border-slate-200 text-xs text-slate-500">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    {t('rankings.selectDivision', { defaultValue: 'Select division' })}
+                  </label>
+                  <select
+                    value={selectedRankingDivision?.division_code ?? ''}
+                    onChange={event => setRankingDivisionFilter(event.target.value)}
+                    disabled={rankingDivisions.length <= 1}
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    {rankingDivisions.map(division => (
+                      <option key={division.division_code} value={division.division_code}>
+                        {division.competition_class === 'world'
+                          ? t('calendar.competition.world')
+                          : humanizeCode(
+                              division.division_code.replace('CONTINENTAL_', '')
+                            )}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {selectedRankingDivision &&
+              youthRankings?.my_membership?.competition_class ===
+                selectedRankingDivision.competition_class &&
+              youthRankings?.my_membership?.division_code ===
+                selectedRankingDivision.division_code ? (
+                <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">
+                  {t('rankings.yourDivision')}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded bg-white shadow">
+            <div className="border-b border-slate-200 px-4 py-4">
+              <h3 className="text-lg font-semibold text-slate-900">
+                {selectedRankingDivision
+                  ? competitionLabel(
+                      selectedRankingDivision.competition_class,
+                      selectedRankingDivision.division_code
+                    )
+                  : t('rankings.title')}
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">
+                {t('rankings.description', {
+                  region: humanizeCode(youthRankings?.region_code),
+                })}
+              </p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-slate-50">
+                  <tr className="text-left">
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.rank')}
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.academy')}
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.country', { defaultValue: 'Country' })}
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.raceStarts')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.points')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {phase3Loading && !youthRankings ? (
                     <tr>
-                      <th className="py-2 pr-3">{t('rankings.rank')}</th>
-                      <th className="py-2 pr-3">{t('rankings.academy')}</th>
-                      <th className="py-2 pr-3">{t('rankings.raceStarts')}</th>
-                      <th className="py-2 text-right">{t('rankings.points')}</th>
+                      <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
+                        {t('rankings.loading')}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {(division.teams ?? []).map(team => {
+                  ) : null}
+
+                  {!phase3Loading &&
+                    (selectedRankingDivision?.teams ?? []).map(team => {
                       const flag = flagUrl(team.country_code)
                       return (
-                        <tr key={team.academy_id} className={team.is_mine ? 'bg-amber-50/50' : ''}>
-                          <td className="py-3 pr-3 font-semibold">#{team.rank}</td>
-                          <td className="py-3 pr-3">
+                        <tr
+                          key={team.academy_id}
+                          className={team.is_mine ? 'bg-yellow-50' : 'border-t border-slate-100'}
+                        >
+                          <td className="px-4 py-3 text-sm font-semibold text-slate-900">
+                            {team.rank}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-semibold text-slate-900">
                             <div className="flex items-center gap-2">
-                              {flag ? <img src={flag} alt="" className="h-4 w-6 object-cover" /> : null}
-                              <span className="font-medium">{team.academy_name}</span>
+                              {flag ? (
+                                <img src={flag} alt="" className="h-4 w-6 object-cover" />
+                              ) : null}
+                              <span>{team.academy_name}</span>
+                              {team.is_mine ? (
+                                <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-medium text-yellow-800">
+                                  {t('rankings.yourAcademy', {
+                                    defaultValue: 'Your Academy',
+                                  })}
+                                </span>
+                              ) : null}
                             </div>
                           </td>
-                          <td className="py-3 pr-3">{team.starts}</td>
-                          <td className="py-3 text-right font-semibold">{team.points}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700">
+                            {team.country_code}
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm text-slate-700">
+                            {team.starts}
+                          </td>
+                          <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
+                            {team.points.toLocaleString()}
+                          </td>
                         </tr>
                       )
                     })}
-                  </tbody>
-                </table>
+
+                  {!phase3Loading &&
+                  (selectedRankingDivision?.teams?.length ?? 0) === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
+                        {t('rankings.noPoints')}
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-wrap gap-4 border-t border-slate-200 px-4 py-3 text-xs text-slate-600">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded border border-yellow-300 bg-yellow-100" />
+                <span>{t('rankings.yourAcademy', { defaultValue: 'Your Academy' })}</span>
               </div>
-            </Card>
-          ))}
+              <span className="text-slate-500">
+                {t('rankings.promotionNote')}
+              </span>
+            </div>
+          </div>
 
-          <Card title={t('rankings.riderRankings')}>
-            <p className="text-sm leading-6 text-slate-600">
-              {t('rankings.promotionNote')}
-            </p>
-          </Card>
+          <div className="rounded bg-white p-4 shadow">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {t('rankings.riderRankings')}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  {t('rankings.riderRankingHelp', {
+                    defaultValue:
+                      'Rider rankings are separate from Academy class standings.',
+                  })}
+                </p>
+              </div>
+              <select
+                value={riderRankingFilter}
+                onChange={event =>
+                  setRiderRankingFilter(event.target.value as 'regional' | 'world')
+                }
+                className="rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              >
+                <option value="regional">{t('rankings.regionalTitle')}</option>
+                <option value="world">{t('rankings.worldTitle')}</option>
+              </select>
+            </div>
+          </div>
 
-          {[
-            ['regional', t('rankings.regionalTitle'), youthRankings?.regional ?? []],
-            ['world', t('rankings.worldTitle'), youthRankings?.world ?? []],
-          ].map(([key, title, rows]) => (
-            <Card key={String(key)} title={String(title)}>
-              {phase3Loading && !youthRankings ? (
-                <div className="text-sm text-slate-500">{t('rankings.loading')}</div>
-              ) : (rows as YouthRankingRow[]).length === 0 ? (
-                <div className="text-sm text-slate-500">{t('rankings.noPoints')}</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[700px] text-left text-sm">
-                    <thead className="border-b border-slate-200 text-xs text-slate-500">
-                      <tr>
-                        <th className="py-2 pr-3">{t('rankings.rank')}</th>
-                        <th className="py-2 pr-3">{t('rankings.rider')}</th>
-                        <th className="py-2 pr-3">{t('rankings.academy')}</th>
-                        <th className="py-2 pr-3">{t('rankings.starts')}</th>
-                        <th className="py-2 text-right">{t('rankings.points')}</th>
+          <div className="overflow-hidden rounded bg-white shadow">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-slate-50">
+                  <tr className="text-left">
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.rank')}
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.rider')}
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.academy')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.starts')}
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.points')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(riderRankingFilter === 'regional'
+                    ? youthRankings?.regional ?? []
+                    : youthRankings?.world ?? []
+                  ).map(row => {
+                    const flag = flagUrl(row.country_code)
+                    return (
+                      <tr
+                        key={row.rider_id}
+                        className={row.is_mine ? 'bg-yellow-50' : 'border-t border-slate-100'}
+                      >
+                        <td className="px-4 py-3 text-sm font-semibold">{row.rank}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            {flag ? (
+                              <img src={flag} alt="" className="h-4 w-6 object-cover" />
+                            ) : null}
+                            <span className="font-semibold">{row.rider_name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{row.academy_name}</td>
+                        <td className="px-4 py-3 text-right text-sm">{row.starts}</td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold">
+                          {row.points.toLocaleString()}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {(rows as YouthRankingRow[]).map(row => {
-                        const flag = flagUrl(row.country_code)
-                        return (
-                          <tr key={row.rider_id} className={row.is_mine ? 'bg-amber-50/50' : ''}>
-                            <td className="py-3 pr-3 font-semibold">#{row.rank}</td>
-                            <td className="py-3 pr-3">
-                              <div className="flex items-center gap-2">
-                                {flag ? <img src={flag} alt="" className="h-4 w-6 object-cover" /> : null}
-                                <span className="font-medium">{row.rider_name}</span>
-                              </div>
-                            </td>
-                            <td className="py-3 pr-3">{row.academy_name}</td>
-                            <td className="py-3 pr-3">{row.starts}</td>
-                            <td className="py-3 text-right font-semibold">{row.points}</td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </Card>
-          ))}
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       ) : null}
 
