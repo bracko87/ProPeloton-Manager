@@ -3446,7 +3446,8 @@
         "4": "Le Accademie di Classe Mondiale ricevono inviti. I posti liberi dopo rifiuti possono essere coperti da wildcard ponderate. Il piano mensile limita gare e spesa.",
         "5": "L'allocazione iniziale resta uno storico fisso. I fondi correnti cambiano con spese, entrate gare e trasferimenti espliciti.",
         "6": "Le entrate delle gare giovanili vanno direttamente all'Accademia. Usa Regola budget solo per spostare volontariamente denaro tra senior e Accademia.",
-        "7": "A 16 anni serve una decisione: pathway, squadra di sviluppo se disponibile oppure rilascio."
+        "7": "A 16 anni serve una decisione: pathway, squadra di sviluppo se disponibile oppure rilascio.",
+        "8": "Lo Youth Scout ha una ricerca gratuita per settimana di gioco e fino a tre ricerche extra con Coins: Locale 2, Regionale 5, Continentale 8 e Mondiale 12 Coins. Il livello dello Scout determina il volume: Scarso 1, Base 2, Competente 3, Forte 4, Elite 5 e Classe Mondiale 6 report per ricerca; gli Scout migliori individuano talenti più forti con maggiore efficacia e affidabilità."
       },
       "tips": {
         "0": "Ruota il roster invece di usare sempre i migliori.",
