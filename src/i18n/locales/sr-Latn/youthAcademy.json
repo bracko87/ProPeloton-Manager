@@ -59,7 +59,14 @@
     "nextRace": "Sledeća omladinska trka",
     "recruitment": "Domet regrutacije",
     "reputation": "Reputacija akademije",
-    "staff": "Osoblje akademije"
+    "staff": "Osoblje akademije",
+    "racingTitle": "Trke Akademije",
+    "openCalendar": "Otvori kalendar",
+    "previousRace": "Prethodna trka",
+    "latestResult": "Poslednji rezultat",
+    "noPreviousRace": "Još nema završene trke Akademije",
+    "noUpcomingRace": "Nije izabrana sledeća trka Akademije",
+    "noResult": "Još nema rezultata trke mladih"
   },
   "roles": {
     "director": "Direktor Omladinske akademije",
@@ -158,7 +165,7 @@
     "loading": "Učitavanje skautskih izveštaja…",
     "scoutScore": "Efikasnost skautinga: {{score}} / 100",
     "monthlyReports": "Izveštaji / mesec",
-    "qualityExplainer": "Budžet određuje gde skaut može da traži. Kvalitet skauta određuje koliko vozača prijavljuje, koliko su procene precizne i koliko uspešno prepoznaje bolje talente.",
+    "qualityExplainer": "Kvalitet skauta određuje i količinu i kvalitet: bolji skauti daju više izveštaja po pretrazi, biraju iz jačeg skrivenog bazena kandidata i procenjuju talente sa većom sigurnošću.",
     "noScout": "Angažuj omladinskog skauta da započne mesečno otkrivanje talenata. Akademija može da radi bez njega, ali neće dobijati nove skautske izveštaje.",
     "monthlyCycle": "Mesečni skautski ciklus",
     "currentRange": "Trenutni domet",
@@ -258,11 +265,12 @@
     "runsThisWeek": "Pretrage ove nedelje",
     "coinBalance": "Stanje Coina",
     "weeklyRule": "1 besplatna pretraga + do 3 Coin pretrage po nedelji igre",
-    "boostPrices": "Dodatna pretraga: Lokalna 10 · Regionalna 15 · Kontinentalna 20 · Svetska 30 Coina.",
+    "boostPrices": "Cena dodatne pretrage: Lokalno 2 · Regionalno 5 · Kontinentalno 8 · Svetski 12 Coins.",
     "runFreeSearch": "Pokreni besplatnu nedeljnu pretragu",
     "runCoinSearch": "Pokreni dodatnu pretragu · {{cost}} Coina",
     "weeklyLimitReached": "Nedeljni limit je dostignut",
-    "lastSearch": "Poslednja pretraga: pokušaj {{run}} · {{reports}} izveštaja"
+    "lastSearch": "Poslednja pretraga: pokušaj {{run}} · {{reports}} izveštaja",
+    "maxReportsPerWeek": "Maks. izveštaja / nedelju"
   },
   "settings": {
     "title": "Odgovornosti",
