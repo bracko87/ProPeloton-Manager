@@ -82,7 +82,14 @@
     "experience": "Experience",
     "salary": "Weekly salary",
     "scoutOptional": "Youth Scout is optional. Hire one from Staff to begin active prospect discovery.",
-    "openStaffPage": "Open Squad → Staff"
+    "openStaffPage": "Open Staff Page",
+    "youthScope": "Youth Academy",
+    "potential": "Potential",
+    "leadership": "Leadership",
+    "efficiency": "Efficiency",
+    "loyalty": "Loyalty",
+    "weeklyWage": "Weekly wage",
+    "contractUntil": "Contract until {{date}}"
   },
   "budget": {
     "title": "Season Academy budget",
@@ -101,7 +108,27 @@
     "date": "Date",
     "category": "Category",
     "description": "Description",
-    "amount": "Amount"
+    "amount": "Amount",
+    "initialAllocation": "Initial season allocation",
+    "initialAllocationHelp": "The amount assigned when the Academy was activated. This historical allocation does not change later.",
+    "currentFunds": "Current Academy funds",
+    "includesIncomeTransfers": "Includes race income and later budget transfers.",
+    "afterCommitments": "Available after spending and commitments.",
+    "seniorBalance": "Senior team balance",
+    "seniorBalanceHelp": "Available senior-team cash before any new transfer.",
+    "fundsChart": "Academy funds",
+    "incomeChart": "Income & transfers",
+    "raceIncome": "Youth race income",
+    "transfersIn": "Transfers from senior team",
+    "transfersOut": "Returned to senior team",
+    "adjustBudget": "Adjust Academy budget",
+    "direction": "Transfer direction",
+    "seniorToYouth": "Senior team → Youth Academy",
+    "youthToSenior": "Youth Academy → Senior team",
+    "transferAmount": "Amount",
+    "transferring": "Transferring…",
+    "transferFunds": "Transfer funds",
+    "transferHelp": "Race income remains in the Youth Academy automatically. Use this control only when you deliberately want to move money between the senior team and the Academy."
   },
   "scouting": {
     "title": "Youth scouting range",
@@ -261,7 +288,8 @@
     "historyLoad": "Could not load Youth Academy history.",
     "reportFrequency": "Could not save Youth Race Reports preference.",
     "monthlyRacePlan": "Could not save the monthly Youth race plan.",
-    "raceInvitationDecline": "Could not decline the Youth race invitation."
+    "raceInvitationDecline": "Could not decline the Youth race invitation.",
+    "budgetTransfer": "Could not transfer Youth Academy funds."
   },
   "equipment": {
     "title": "Youth equipment",
@@ -449,5 +477,35 @@
     "workload": "Workload",
     "change": "Development change",
     "readinessFatigue": "Readiness / fatigue"
+  },
+  "profile": {
+    "loading": "Loading Youth Rider profile…",
+    "notFound": "Youth Rider profile could not be loaded.",
+    "back": "Back to Youth Riders",
+    "youthRider": "Youth Rider",
+    "readiness": "Readiness",
+    "fatigue": "Fatigue",
+    "developmentFocus": "Development focus",
+    "talentAssessment": "Talent assessment",
+    "hiddenPotential": "Exact potential remains hidden.",
+    "attributes": "Rider attributes",
+    "supportAgreement": "Support agreement",
+    "weeklyStipend": "Weekly stipend",
+    "accommodation": "Accommodation",
+    "joined": "Joined Academy",
+    "agreementUntil": "Agreement until",
+    "raceSummary": "Race summary",
+    "starts": "Starts",
+    "wins": "Wins",
+    "podiums": "Podiums",
+    "regionalPoints": "Regional points",
+    "worldPoints": "World points",
+    "recentResults": "Recent results",
+    "noResults": "No Youth race results yet.",
+    "date": "Date",
+    "race": "Race",
+    "class": "Class",
+    "result": "Result",
+    "points": "Points"
   }
 }
