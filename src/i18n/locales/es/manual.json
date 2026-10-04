@@ -3410,6 +3410,56 @@
           "to": "/dashboard/staff"
         }
       ]
+    },
+    "youth-academy": {
+      "category": "Ciclistas",
+      "title": "Academia Juvenil: guía inicial U16",
+      "subtitle": "Cómo gestionar tu programa Premium U16, ciclistas, staff, carreras y presupuesto.",
+      "overview": "La Academia Juvenil es un programa Premium U16 con capacidad fija de 16 ciclistas. Recluta jóvenes, dales carreras adecuadas, gestiona staff y finanzas propias y decide su camino al cumplir 16 años.",
+      "facts": {
+        "0": {
+          "label": "Capacidad",
+          "value": "Máximo 16 ciclistas juveniles"
+        },
+        "1": {
+          "label": "Paquete inicial",
+          "value": "6 ciclistas locales, Director de Academia y Entrenador jefe U16"
+        },
+        "2": {
+          "label": "Staff opcional",
+          "value": "Hasta 3 ojeadores juveniles desde el mercado de staff"
+        },
+        "3": {
+          "label": "Carreras",
+          "value": "Solo resultados: Clase Mundial, Continental Oeste/Este y Regional"
+        },
+        "4": {
+          "label": "Presupuesto",
+          "value": "Fondo separado con ingresos de carreras y transferencias bidireccionales"
+        }
+      },
+      "details": {
+        "0": "Abre los perfiles desde Ciclistas Juveniles. Se muestran atributos, preparación, fatiga, foco de desarrollo, acuerdo e historial; el potencial exacto permanece oculto tras la evaluación de talento.",
+        "1": "La Academia empieza con seis ciclistas locales y puede crecer hasta 16. Director, entrenador U16 y ojeadores se contratan en el mercado de staff normal.",
+        "2": "Responsabilidades decide si el manager o el staff de la Academia controlan reclutamiento, participación, alineaciones y decisiones de equipo.",
+        "3": "Las carreras juveniles son solo resultados: Clase Mundial, Continental Oeste/Este y divisiones Regionales. Pueden competir plantillas distintas a la vez, pero un ciclista no puede estar en pruebas solapadas.",
+        "4": "Las Academias de Clase Mundial reciben invitaciones. Las plazas libres tras rechazos pueden cubrirse con wildcards ponderadas. El plan mensual limita carreras y gasto.",
+        "5": "La asignación inicial queda fija como historial. Los fondos actuales cambian por gastos, ingresos de carreras y transferencias explícitas.",
+        "6": "Los ingresos de carreras van directamente al fondo juvenil. Usa Ajustar presupuesto solo para mover dinero deliberadamente entre sénior y Academia.",
+        "7": "A los 16 años cada ciclista necesita una decisión: pathway, equipo de desarrollo si es posible o liberación."
+      },
+      "tips": {
+        "0": "Rota la plantilla y no uses siempre a los mejores.",
+        "1": "Aprueba el plan mensual antes de las fechas límite.",
+        "2": "Mantén fondos para apoyo, staff, scouting, equipo y viajes.",
+        "3": "Revisa preparación y fatiga en los perfiles."
+      },
+      "relatedLinks": {
+        "0": "Abrir Academia Juvenil",
+        "1": "Abrir ciclistas juveniles",
+        "2": "Abrir Staff",
+        "3": "Abrir mercado de Staff"
+      }
     }
   }
 }
