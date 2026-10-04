@@ -234,18 +234,50 @@ type YouthRaceResult = {
   world_points?: number
 }
 
+type YouthCompetitionClass = 'world' | 'continental' | 'regional'
+
+type YouthCompetitionMembership = {
+  competition_class: YouthCompetitionClass
+  division_code: string
+  seed_rank?: number | null
+}
+
+type YouthMonthlyRacePlan = {
+  month_number: number
+  world_race_limit: number
+  continental_race_limit: number
+  regional_race_limit: number
+  max_monthly_cost: number
+  approved: boolean
+  available_world: number
+  available_continental: number
+  available_regional: number
+  entered_cost: number
+}
+
 type YouthRace = {
   id: string
   race_date: string
+  race_end_date?: string
+  race_days?: number
   race_name: string
   race_level: 'regional' | 'world_series' | 'world_final'
+  competition_class: YouthCompetitionClass
+  division_code?: string | null
   region_code: string
+  host_city?: string | null
+  host_country_code?: string | null
   terrain_type: string
   distance_km: number
   entry_cost: number
   lineup_size: number
+  team_limit?: number
+  entries_count?: number
   status: 'scheduled' | 'completed' | 'cancelled'
   qualified: boolean
+  invitation_status?: 'pending' | 'accepted' | 'declined' | 'expired' | 'waitlist' | null
+  invitation_type?: string | null
+  invitation_response_deadline?: string | null
   entry_id?: string | null
   entry_status?: string | null
   strategy?: 'conservative' | 'balanced' | 'aggressive' | null
@@ -260,7 +292,11 @@ type YouthRaceCalendarPayload = {
   activated: boolean
   season_number?: number
   game_date?: string
+  current_month?: number
   academy_region?: string
+  regional_division?: string
+  competition_membership?: YouthCompetitionMembership
+  monthly_plan?: YouthMonthlyRacePlan
   race_entry_decider?: 'manager' | 'u16_head_coach'
   race_squad_decider?: 'manager' | 'u16_head_coach'
   races?: YouthRace[]
@@ -286,10 +322,31 @@ type YouthRankingRow = {
   is_mine: boolean
 }
 
+type YouthAcademyStandingRow = {
+  rank: number
+  academy_id: string
+  academy_name: string
+  country_code: string
+  points: number
+  starts: number
+  total_teams: number
+  is_mine: boolean
+  promotion_zone: boolean
+  relegation_zone: boolean
+}
+
+type YouthAcademyDivision = {
+  competition_class: YouthCompetitionClass
+  division_code: string
+  teams: YouthAcademyStandingRow[]
+}
+
 type YouthRankingsPayload = {
   activated: boolean
   season_number?: number
   region_code?: string
+  my_membership?: YouthCompetitionMembership
+  academy_divisions?: YouthAcademyDivision[]
   regional?: YouthRankingRow[]
   world?: YouthRankingRow[]
 }
@@ -456,6 +513,29 @@ function humanize(value: string | null | undefined): string {
   return value.replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase())
 }
 
+function youthCompetitionLabel(
+  competitionClass: YouthCompetitionClass | null | undefined,
+  divisionCode?: string | null
+): string {
+  if (competitionClass === 'world') return 'World Class'
+  if (competitionClass === 'continental') {
+    return `Continental Class · ${humanize(
+      String(divisionCode ?? '').replace('CONTINENTAL_', '')
+    )}`
+  }
+  if (competitionClass === 'regional') {
+    return `Regional Class · ${humanize(divisionCode)}`
+  }
+  return 'Youth Competition'
+}
+
+function monthLabel(month: number | null | undefined): string {
+  const safe = Math.max(1, Math.min(12, Number(month ?? 1)))
+  return new Intl.DateTimeFormat(undefined, { month: 'long' }).format(
+    new Date(2000, safe - 1, 1)
+  )
+}
+
 function flagUrl(code: string | null | undefined): string | null {
   const safe = String(code ?? '').trim().toLowerCase()
   return /^[a-z]{2}$/.test(safe) ? `https://flagcdn.com/w40/${safe}.png` : null
@@ -506,6 +586,8 @@ export default function YouthAcademyPage(): JSX.Element {
   const [graduationAction, setGraduationAction] = useState<string | null>(null)
   const [raceCalendar, setRaceCalendar] = useState<YouthRaceCalendarPayload | null>(null)
   const [youthRankings, setYouthRankings] = useState<YouthRankingsPayload | null>(null)
+  const [calendarMonth, setCalendarMonth] = useState(0)
+  const [monthlyPlanDraft, setMonthlyPlanDraft] = useState<YouthMonthlyRacePlan | null>(null)
   const [phase3Loading, setPhase3Loading] = useState(false)
   const [raceAction, setRaceAction] = useState<string | null>(null)
   const [lineupDrafts, setLineupDrafts] = useState<Record<string, string[]>>({})
@@ -730,6 +812,8 @@ export default function YouthAcademyPage(): JSX.Element {
 
   const applyRaceCalendar = (payload: YouthRaceCalendarPayload): void => {
     setRaceCalendar(payload)
+    setMonthlyPlanDraft(payload.monthly_plan ?? null)
+    setCalendarMonth(current => current || payload.current_month || 1)
     setLineupDrafts(current => {
       const next = { ...current }
       for (const race of payload.races ?? []) {
@@ -816,6 +900,51 @@ export default function YouthAcademyPage(): JSX.Element {
       setError(rankingsError?.message ?? t('errors.rankingsLoad'))
     } finally {
       setPhase3Loading(false)
+    }
+  }
+
+  const saveYouthMonthlyRacePlan = async (): Promise<void> => {
+    if (data?.read_only || !monthlyPlanDraft || raceAction) return
+    setRaceAction('monthly-plan')
+    setError(null)
+    try {
+      const { data: payload, error: planError } = await supabase.rpc(
+        'save_my_youth_monthly_race_plan_v1',
+        {
+          p_month_number: monthlyPlanDraft.month_number,
+          p_world_race_limit: monthlyPlanDraft.world_race_limit,
+          p_continental_race_limit: monthlyPlanDraft.continental_race_limit,
+          p_regional_race_limit: monthlyPlanDraft.regional_race_limit,
+          p_max_monthly_cost: Math.max(0, Math.round(monthlyPlanDraft.max_monthly_cost)),
+        }
+      )
+      if (planError) throw planError
+      applyRaceCalendar(payload as YouthRaceCalendarPayload)
+      await loadFinance()
+    } catch (planError: any) {
+      console.error('Youth monthly race plan save failed:', planError)
+      setError(planError?.message ?? 'Could not save the monthly Youth race plan.')
+    } finally {
+      setRaceAction(null)
+    }
+  }
+
+  const declineYouthRaceInvitation = async (race: YouthRace): Promise<void> => {
+    if (data?.read_only || raceAction) return
+    setRaceAction(`decline:${race.id}`)
+    setError(null)
+    try {
+      const { data: payload, error: declineError } = await supabase.rpc(
+        'decline_my_youth_race_invitation_v1',
+        { p_race_id: race.id }
+      )
+      if (declineError) throw declineError
+      applyRaceCalendar(payload as YouthRaceCalendarPayload)
+    } catch (declineError: any) {
+      console.error('Youth race invitation decline failed:', declineError)
+      setError(declineError?.message ?? 'Could not decline the Youth race invitation.')
+    } finally {
+      setRaceAction(null)
     }
   }
 
@@ -1071,6 +1200,14 @@ export default function YouthAcademyPage(): JSX.Element {
     const committed = Number(data?.budget?.committed_amount ?? 0)
     return Math.max(0, budget - spent - committed)
   }, [data?.budget])
+
+  const visibleYouthRaces = useMemo(
+    () =>
+      (raceCalendar?.races ?? []).filter(
+        race => Number(race.race_date.slice(5, 7)) === calendarMonth
+      ),
+    [raceCalendar?.races, calendarMonth]
+  )
 
   if (loading) {
     return <div className="p-6 text-sm text-slate-500">{t('loading')}</div>
@@ -2467,7 +2604,16 @@ export default function YouthAcademyPage(): JSX.Element {
               </span>
             }
           >
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-lg bg-slate-50 p-3">
+                <div className="text-xs text-slate-500">Academy competition</div>
+                <div className="mt-1 text-sm font-medium">
+                  {youthCompetitionLabel(
+                    raceCalendar?.competition_membership?.competition_class,
+                    raceCalendar?.competition_membership?.division_code
+                  )}
+                </div>
+              </div>
               <div className="rounded-lg bg-slate-50 p-3">
                 <div className="text-xs text-slate-500">{t('calendar.format')}</div>
                 <div className="mt-1 text-sm font-medium">{t('calendar.resultsOnly')}</div>
@@ -2494,13 +2640,133 @@ export default function YouthAcademyPage(): JSX.Element {
             </p>
           </Card>
 
+          {monthlyPlanDraft ? (
+            <Card
+              title={`${monthLabel(monthlyPlanDraft.month_number)} Youth race plan`}
+              right={
+                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                  monthlyPlanDraft.approved
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-amber-50 text-amber-800'
+                }`}>
+                  {monthlyPlanDraft.approved ? 'Approved' : 'Approval required'}
+                </span>
+              }
+            >
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                {([
+                  ['World Class', 'world_race_limit', monthlyPlanDraft.available_world, 6],
+                  ['Continental', 'continental_race_limit', monthlyPlanDraft.available_continental, 10],
+                  ['Regional', 'regional_race_limit', monthlyPlanDraft.available_regional, 6],
+                ] as const).map(([label, key, available, max]) => (
+                  <label key={key} className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+                    {label} races
+                    <div className="mt-1 text-[11px] text-slate-400">{available} calendar events this month</div>
+                    <input
+                      type="number"
+                      min={0}
+                      max={max}
+                      value={monthlyPlanDraft[key]}
+                      disabled={data.read_only}
+                      onChange={event =>
+                        setMonthlyPlanDraft(current =>
+                          current
+                            ? {
+                                ...current,
+                                [key]: Math.max(
+                                  0,
+                                  Math.min(max, Math.round(Number(event.target.value || 0)))
+                                ),
+                              }
+                            : current
+                        )
+                      }
+                      className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                    />
+                  </label>
+                ))}
+                <label className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+                  Monthly racing budget
+                  <div className="mt-1 text-[11px] text-slate-400">
+                    Entered so far: {money(monthlyPlanDraft.entered_cost)}
+                  </div>
+                  <input
+                    type="number"
+                    min={0}
+                    step={250}
+                    value={monthlyPlanDraft.max_monthly_cost}
+                    disabled={data.read_only}
+                    onChange={event =>
+                      setMonthlyPlanDraft(current =>
+                        current
+                          ? {
+                              ...current,
+                              max_monthly_cost: Math.max(
+                                0,
+                                Math.round(Number(event.target.value || 0))
+                              ),
+                            }
+                          : current
+                      )
+                    }
+                    className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  />
+                </label>
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    disabled={data.read_only || raceAction !== null}
+                    onClick={() => void saveYouthMonthlyRacePlan()}
+                    className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                  >
+                    {raceAction === 'monthly-plan'
+                      ? 'Saving plan…'
+                      : monthlyPlanDraft.approved
+                        ? 'Update monthly plan'
+                        : 'Approve monthly plan'}
+                  </button>
+                </div>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                The plan limits how many races the Academy may enter this month and how much can be spent.
+                The U16 Head Coach can rotate separate squads across simultaneous races, but the same rider
+                cannot be booked into overlapping events.
+              </p>
+            </Card>
+          ) : null}
+
+          <Card
+            title="Race calendar"
+            right={
+              <select
+                value={calendarMonth || raceCalendar?.current_month || 1}
+                onChange={event => setCalendarMonth(Number(event.target.value))}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs"
+              >
+                {Array.from({ length: 12 }, (_, index) => index + 1).map(month => (
+                  <option key={month} value={month}>
+                    {monthLabel(month)}
+                  </option>
+                ))}
+              </select>
+            }
+          >
+            <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+              <span>{visibleYouthRaces.length} visible events</span>
+              <span>·</span>
+              <span>World Class races are shown globally</span>
+              <span>·</span>
+              <span>Regional races are limited to your home division</span>
+            </div>
+          </Card>
+
           {phase3Loading && !raceCalendar ? (
             <Card title={t('calendar.races')}>
               <div className="text-sm text-slate-500">{t('calendar.loading')}</div>
             </Card>
           ) : (
             <div className="space-y-3">
-              {(raceCalendar?.races ?? []).map(race => {
+              {visibleYouthRaces.map(race => {
                 const selected = lineupDrafts[race.id] ?? []
                 const eligible = new Set(race.eligible_rider_ids ?? [])
                 const isManagerEntry = raceCalendar?.race_entry_decider === 'manager'
@@ -2520,24 +2786,50 @@ export default function YouthAcademyPage(): JSX.Element {
                   >
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                       <span className="rounded-full bg-slate-100 px-2.5 py-1">
-                        {t(`calendar.levels.${race.race_level}`)}
+                        {youthCompetitionLabel(race.competition_class, race.division_code)}
                       </span>
+                      {race.host_city ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          {flagUrl(race.host_country_code) ? (
+                            <img
+                              src={flagUrl(race.host_country_code) ?? ''}
+                              alt=""
+                              className="h-3.5 w-5 object-cover"
+                            />
+                          ) : null}
+                          {race.host_city}
+                        </span>
+                      ) : null}
+                      <span>·</span>
+                      <span>
+                        {race.race_days && race.race_days > 1
+                          ? `${race.race_days} days`
+                          : '1 day'}
+                      </span>
+                      <span>·</span>
+                      <span>{Number(race.entries_count ?? 0)}/{Number(race.team_limit ?? 16)} teams</span>
+                      <span>·</span>
                       <span>{humanize(race.terrain_type)}</span>
                       <span>·</span>
                       <span>{race.distance_km} km</span>
                       <span>·</span>
                       <span>{money(race.entry_cost)}</span>
-                      {race.race_level !== 'regional' ? (
+                      {race.invitation_status ? (
                         <span className={`rounded-full px-2.5 py-1 ${
-                          race.qualified
+                          race.invitation_status === 'accepted'
                             ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-amber-50 text-amber-800'
+                            : race.invitation_status === 'pending'
+                              ? 'bg-amber-50 text-amber-800'
+                              : 'bg-slate-100 text-slate-500'
                         }`}>
-                          {race.qualified
-                            ? t('calendar.qualified')
-                            : t('calendar.notQualified')}
+                          {humanize(race.invitation_status)}
+                          {race.invitation_type ? ` · ${humanize(race.invitation_type)}` : ''}
                         </span>
-                      ) : null}
+                      ) : (
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-500">
+                          No invitation yet
+                        </span>
+                      )}
                     </div>
 
                     {isCompleted ? (
@@ -2629,12 +2921,28 @@ export default function YouthAcademyPage(): JSX.Element {
                             >
                               {raceAction === race.id ? t('calendar.entering') : t('calendar.enterRace')}
                             </button>
+                            {race.invitation_status === 'pending' ? (
+                              <button
+                                type="button"
+                                disabled={data.read_only || raceAction !== null}
+                                onClick={() => void declineYouthRaceInvitation(race)}
+                                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
+                              >
+                                {raceAction === `decline:${race.id}` ? 'Declining…' : 'Decline invitation'}
+                              </button>
+                            ) : null}
                           </div>
                         ) : null}
 
                         {!isManagerEntry && !race.entry_id && race.qualified ? (
                           <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                             {t('calendar.coachEntryHelp')}
+                          </div>
+                        ) : null}
+
+                        {race.invitation_status === 'pending' && race.invitation_response_deadline ? (
+                          <div className="mt-3 text-xs text-amber-700">
+                            Response deadline: {race.invitation_response_deadline}
                           </div>
                         ) : null}
 
@@ -2757,6 +3065,59 @@ export default function YouthAcademyPage(): JSX.Element {
               {t('rankings.description', {
                 region: humanize(youthRankings?.region_code),
               })}
+            </p>
+          </Card>
+
+          {(youthRankings?.academy_divisions ?? []).map(division => (
+            <Card
+              key={`${division.competition_class}-${division.division_code}`}
+              title={youthCompetitionLabel(division.competition_class, division.division_code)}
+              right={
+                youthRankings?.my_membership?.competition_class === division.competition_class &&
+                youthRankings?.my_membership?.division_code === division.division_code ? (
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                    Your division
+                  </span>
+                ) : null
+              }
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs text-slate-500">
+                    <tr>
+                      <th className="py-2 pr-3">Rank</th>
+                      <th className="py-2 pr-3">Academy</th>
+                      <th className="py-2 pr-3">Starts</th>
+                      <th className="py-2 text-right">Points</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(division.teams ?? []).map(team => {
+                      const flag = flagUrl(team.country_code)
+                      return (
+                        <tr key={team.academy_id} className={team.is_mine ? 'bg-amber-50/50' : ''}>
+                          <td className="py-3 pr-3 font-semibold">#{team.rank}</td>
+                          <td className="py-3 pr-3">
+                            <div className="flex items-center gap-2">
+                              {flag ? <img src={flag} alt="" className="h-4 w-6 object-cover" /> : null}
+                              <span className="font-medium">{team.academy_name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 pr-3">{team.starts}</td>
+                          <td className="py-3 text-right font-semibold">{team.points}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          ))}
+
+          <Card title="Youth rider rankings">
+            <p className="text-sm leading-6 text-slate-600">
+              Academy promotion and relegation lines are prepared in the competition model.
+              The exact promotion/relegation spots will be activated after those rules are finalized.
             </p>
           </Card>
 
