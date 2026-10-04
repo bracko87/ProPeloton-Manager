@@ -1313,5 +1313,9 @@
       "exceptional": "exceptional",
       "problem": "problem"
     }
+  },
+  "youthAcademyStarted": {
+    "title": "Your Youth Academy is ready",
+    "message": "Your U16 programme is active. Review responsibilities, scouting, racing and the dedicated Academy budget before the first events."
   }
 }
