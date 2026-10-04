@@ -285,7 +285,10 @@
     "nutritionist": "Питатель",
     "mechanic": "Механика",
     "sportDirector": "Директор по вопросам спорта",
-    "scoutAnalyst": "Скаут/аналитик"
+    "scoutAnalyst": "Скаут/аналитик",
+    "youthAcademyDirector": "Директор молодёжной академии",
+    "u16HeadCoach": "Главный тренер U16",
+    "youthScout": "Юниорский скаут"
   },
   "staffQuality": {
     "elite": "Элитная",
