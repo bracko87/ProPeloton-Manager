@@ -259,7 +259,9 @@
     "raceEntry": "Impossibile iscrivere la gara giovanile.",
     "raceLineup": "Impossibile salvare la formazione giovanile.",
     "historyLoad": "Impossibile caricare lo storico dell'Accademia.",
-    "reportFrequency": "Impossibile salvare la preferenza dei report giovanili."
+    "reportFrequency": "Impossibile salvare la preferenza dei report giovanili.",
+    "monthlyRacePlan": "Impossibile salvare il piano mensile delle gare giovanili.",
+    "raceInvitationDecline": "Impossibile rifiutare l'invito alla gara giovanile."
   },
   "equipment": {
     "title": "Attrezzatura giovanile",
@@ -311,7 +313,7 @@
     "resultsOnly": "Solo risultati — nessun replay",
     "entryResponsibility": "Partecipazione",
     "squadResponsibility": "Formazione e strategia",
-    "ageLimitHelp": "I corridori hanno limiti di partenze in 30 giorni in base all'età. L'allenatore U16 considera anche profilo, forma e fatica, quindi l'Accademia sceglie normalmente solo una parte delle 12 gare regionali disponibili ogni mese.",
+    "ageLimitHelp": "Le gare giovanili sono solo a risultati. Classe Mondiale, Continentale e Regionale usano limiti di partenze per età, forma e fatica. L'Accademia può schierare squadre diverse contemporaneamente, ma un corridore non può partecipare a gare sovrapposte.",
     "races": "Gare giovanili",
     "loading": "Caricamento gare…",
     "levels": {
@@ -321,7 +323,7 @@
     },
     "qualified": "Qualificato",
     "notQualified": "Non qualificato",
-    "qualificationHelp": "La qualificazione alle World Series arriva dal Ranking Regionale. La Finale Mondiale usa il Ranking Mondiale Giovanile.",
+    "qualificationHelp": "La gara è visibile, ma la tua Accademia non ha un invito attivo o abbastanza corridori eleggibili.",
     "strategy": "Strategia",
     "strategies": {
       "conservative": "Conservativa",
@@ -339,11 +341,47 @@
     "coachLineupHelp": "L'allenatore U16 ha selezionato {{count}} corridore/i e gestisce la strategia.",
     "myResults": "Risultati della mia Accademia",
     "topResults": "Migliori risultati",
-    "didNotRace": "La tua Accademia non ha partecipato."
+    "didNotRace": "La tua Accademia non ha partecipato.",
+    "academyCompetition": "Competizione Accademia",
+    "competition": {
+      "world": "Classe Mondiale",
+      "continental": "Classe Continentale",
+      "regional": "Classe Regionale",
+      "youth": "Competizione Giovanile"
+    },
+    "monthlyPlanTitle": "Piano gare giovanili di {{month}}",
+    "approved": "Approvato",
+    "approvalRequired": "Approvazione richiesta",
+    "raceLimitLabel": "Gare {{className}}",
+    "calendarEventsThisMonth": "{{count}} eventi in calendario questo mese",
+    "monthlyBudget": "Budget mensile gare",
+    "enteredSoFar": "Iscritto finora: {{value}}",
+    "savingPlan": "Salvataggio piano…",
+    "updatePlan": "Aggiorna piano mensile",
+    "approvePlan": "Approva piano mensile",
+    "planHelp": "Il piano limita quante gare può disputare l'Accademia nel mese e quanto può spendere. L'allenatore U16 può ruotare squadre diverse in gare simultanee, ma lo stesso corridore non può essere iscritto a eventi sovrapposti.",
+    "raceCalendar": "Calendario gare",
+    "visibleEvents": "{{count}} eventi visibili",
+    "worldVisible": "Le gare di Classe Mondiale sono visibili globalmente",
+    "regionalVisible": "Le gare Regionali sono limitate alla tua divisione locale",
+    "days": "{{count}} giorni",
+    "oneDay": "1 giorno",
+    "teams": "{{current}}/{{max}} squadre",
+    "invitationStatuses": {
+      "pending": "In attesa",
+      "accepted": "Accettato",
+      "declined": "Rifiutato",
+      "expired": "Scaduto",
+      "waitlist": "Lista d'attesa"
+    },
+    "noInvitation": "Nessun invito per ora",
+    "declining": "Rifiuto…",
+    "declineInvitation": "Rifiuta invito",
+    "responseDeadline": "Scadenza risposta: {{date}}"
   },
   "rankings": {
     "title": "Ranking giovanili",
-    "description": "La tua Accademia compete nel Ranking Regionale {{region}}. I risultati regionali contribuiscono anche con meno punti al Ranking Mondiale; World Series e Finale Mondiale assegnano più punti mondiali.",
+    "description": "Le classifiche Accademie seguono Classe Mondiale Giovanile, Continentale Ovest/Est e divisioni Regionali. I ranking dei corridori restano separati e si basano sui risultati regionali e mondiali.",
     "regionalTitle": "Ranking Regionale Giovanile",
     "worldTitle": "Ranking Mondiale Giovanile",
     "loading": "Caricamento ranking…",
@@ -352,7 +390,11 @@
     "rider": "Corridore",
     "academy": "Accademia",
     "starts": "Arrivi",
-    "points": "Punti"
+    "points": "Punti",
+    "yourDivision": "La tua divisione",
+    "raceStarts": "Partenze",
+    "riderRankings": "Ranking corridori giovanili",
+    "promotionNote": "Le zone promozione e retrocessione sono predisposte nel modello. Le posizioni esatte saranno attivate quando le regole saranno definite."
   },
   "reports": {
     "title": "Report gare giovanili",
