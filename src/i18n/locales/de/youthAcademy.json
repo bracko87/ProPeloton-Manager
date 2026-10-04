@@ -89,7 +89,21 @@
     "efficiency": "Effizienz",
     "loyalty": "Loyalität",
     "weeklyWage": "Wochengehalt",
-    "contractUntil": "Vertrag bis {{date}}"
+    "contractUntil": "Vertrag bis {{date}}",
+    "careerFramework": "Stufen & Gehälter des Jugendpersonals",
+    "directorBonusHelp": "Führung und Effizienz verbessern die Akademiesteuerung. Starke Direktoren können die Einkaufskosten für Jugendausrüstung um bis zu 8 % senken.",
+    "coachBonusHelp": "Expertise, Potenzial und Effizienz verbessern die wöchentliche Fahrerentwicklung, Belastungssteuerung und Rennauswahl.",
+    "scoutBonusHelp": "Expertise, Erfahrung und Effizienz verbessern Talentauswahl, Berichtssicherheit und die Anzahl der Berichte je Suche.",
+    "levelScaleHelp": "Es gilt dieselbe Personalstufe wie beim Senior-Team: Schwach (<30), Basis (30–44), Kompetent (45–59), Stark (60–74), Elite (75–89) und Weltklasse (90+).",
+    "openProfile": "Personalprofil öffnen",
+    "openScoutStaff": "Jugendscout-Personal öffnen",
+    "activeBonus": "Aktiver Rollenbonus",
+    "level": "Stufe",
+    "salaryRange": "Rollenbereich: {{value}}",
+    "contract": "Vertrag",
+    "directorActiveBonus": "Bis zu {{value}} % Rabatt beim Kauf von Jugendausrüstung",
+    "coachActiveBonus": "Entwicklungswert {{score}}: beeinflusst Wochenentwicklung, Bereitschaft und Rennauswahl",
+    "scoutActiveBonus": "Scout-Wert {{score}}: bis zu {{reports}} Berichte je Suche mit höherer Bewertungsgenauigkeit"
   },
   "budget": {
     "title": "Saisonbudget der Akademie",
@@ -238,7 +252,17 @@
       "decline": "Ablehnen",
       "processing": "Wird verarbeitet…"
     },
-    "awaitingAcademyResponse": "Warten auf Antwort der Akademie"
+    "awaitingAcademyResponse": "Warten auf Antwort der Akademie",
+    "reportsPerSearch": "Berichte je Suche",
+    "weeklySearch": "Wöchentliche Scouting-Suchen",
+    "runsThisWeek": "Suchen diese Woche",
+    "coinBalance": "Coin-Guthaben",
+    "weeklyRule": "1 kostenlose Suche + bis zu 3 Coin-Suchen pro Spielwoche",
+    "boostPrices": "Zusatzsuche: Lokal 10 · Regional 15 · Kontinental 20 · Weltweit 30 Coins.",
+    "runFreeSearch": "Kostenlose Wochensuche starten",
+    "runCoinSearch": "Zusatzsuche starten · {{cost}} Coins",
+    "weeklyLimitReached": "Wochenlimit erreicht",
+    "lastSearch": "Letzte Suche: Lauf {{run}} · {{reports}} Berichte erstellt"
   },
   "settings": {
     "title": "Verantwortlichkeiten",
@@ -264,7 +288,18 @@
       "promising": "Vielversprechend",
       "very_promising": "Sehr vielversprechend",
       "exceptional": "Außergewöhnlich"
-    }
+    },
+    "recruitmentHelp": "Bestimmt, welche gescouteten Talente in den Rekrutierungsprozess kommen und ob die Akademie einen Fahrer aktiv verfolgt.",
+    "raceEntryHelp": "Bestimmt, welche Einladungen angenommen oder abgelehnt werden und an welchen Jugendrennen die Akademie teilnimmt.",
+    "raceSquadHelp": "Wählt Fahrer und Rennstrategie für jedes gemeldete Jugendrennen, einschließlich Rotation bei parallelen Rennen.",
+    "campsHelp": "Genehmigt Jugend-Akademie-Camps und die dazugehörige Verwendung des Akademiebudgets.",
+    "equipmentHelp": "Steuert Käufe von Jugendausrüstung. Der Akademiedirektor kann fehlende Ausrüstung automatisch im verfügbaren Budget ergänzen.",
+    "negotiationsHelp": "Verwaltet Stipendium, Unterkunft und Ausbildungsentschädigung nach Entdeckung eines Talents.",
+    "pendingConfirmation": "Bestätigung ausstehend",
+    "confirmed": "Bestätigt",
+    "responsiblePerson": "Verantwortliche Person",
+    "confirming": "Wird bestätigt…",
+    "confirmResponsibility": "Verantwortung bestätigen"
   },
   "placeholders": {},
   "errors": {
@@ -312,7 +347,22 @@
     "tier": "Stufe {{tier}}",
     "purchase": "Für Akademie kaufen",
     "purchasing": "Kauf läuft…",
-    "durability": "Haltbarkeit"
+    "durability": "Haltbarkeit",
+    "tabs": {
+      "overview": "Übersicht",
+      "inventory": "Inventar",
+      "market": "Markt",
+      "assets": "Assets"
+    },
+    "overviewOwnedHelp": "Aktuell im Besitz der Jugendakademie befindliche langlebige Ausrüstung.",
+    "availableMarket": "Marktartikel",
+    "overviewMarketHelp": "Für Jugendliche freigegebene Tier-1–2-Ausrüstung.",
+    "averageQuality": "Durchschnittsqualität",
+    "averageCondition": "Durchschnittszustand",
+    "marketDelegated": "Ausrüstungskäufe sind an den Akademiedirektor delegiert. Du kannst den Markt prüfen; der Direktor nutzt Akademiebudget und Rollenbonus, um Bedarf zu decken.",
+    "assetOverview": "Assets der Jugendakademie",
+    "items": "Artikel",
+    "invested": "Investiert"
   },
   "training": {
     "title": "Entwicklungsphilosophie der Jugend",
@@ -405,7 +455,16 @@
     "noInvitation": "Noch keine Einladung",
     "declining": "Wird abgelehnt…",
     "declineInvitation": "Einladung ablehnen",
-    "responseDeadline": "Antwortfrist: {{date}}"
+    "responseDeadline": "Antwortfrist: {{date}}",
+    "selectedMonth": "Ausgewählter Monat",
+    "competitionHelp": "Weltklasse-, Kontinental- und Regionalrennen berücksichtigen altersabhängige Startlimits, Bereitschaft und Ermüdung. Verschiedene Akademie-Kader dürfen gleichzeitig fahren, derselbe Fahrer aber nicht in sich überschneidenden Rennen.",
+    "allCompetitions": "Alle Wettbewerbe",
+    "allRaces": "Alle Rennen",
+    "myOpportunities": "Möglichkeiten meiner Akademie",
+    "classCounts": "Welt {{world}} · Kontinental {{continental}} · Regional {{regional}}",
+    "browserHelp": "Hier siehst du den vollständigen Jugend-Rennkalender des ausgewählten Monats. Mit „Möglichkeiten meiner Akademie“ werden Einladungen und deine regionale Heimdivision gefiltert.",
+    "pastPrelaunch": "Vergangen · vor Einführung",
+    "prelaunchHelp": "Dieses Rennen bleibt zur Vollständigkeit im Kalender. Es lag bereits in der Vergangenheit, als das Jugend-Wettbewerbssystem eingeführt wurde; daher wurde kein Ergebnis erzeugt."
   },
   "rankings": {
     "title": "Jugendranglisten",
@@ -422,7 +481,12 @@
     "yourDivision": "Deine Division",
     "raceStarts": "Rennstarts",
     "riderRankings": "Jugend-Fahrerranglisten",
-    "promotionNote": "Auf- und Abstiegsbereiche sind im Wettbewerbsmodell vorbereitet. Die genauen Auf- und Abstiegsplätze werden aktiviert, sobald diese Regeln festgelegt sind."
+    "promotionNote": "Auf- und Abstiegsbereiche sind im Wettbewerbsmodell vorbereitet. Die genauen Auf- und Abstiegsplätze werden aktiviert, sobald diese Regeln festgelegt sind.",
+    "selectClass": "Klasse auswählen",
+    "selectDivision": "Division auswählen",
+    "country": "Land",
+    "yourAcademy": "Deine Akademie",
+    "riderRankingHelp": "Fahrer-Ranglisten sind von den Akademie-Klassenwertungen getrennt."
   },
   "reports": {
     "title": "Jugend-Rennberichte",
