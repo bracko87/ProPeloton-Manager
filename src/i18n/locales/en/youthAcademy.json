@@ -59,7 +59,14 @@
     "nextRace": "Next youth race",
     "recruitment": "Recruitment reach",
     "reputation": "Academy reputation",
-    "staff": "Academy staff"
+    "staff": "Academy staff",
+    "racingTitle": "Academy racing",
+    "openCalendar": "Open Calendar",
+    "previousRace": "Previous race",
+    "latestResult": "Latest result",
+    "noPreviousRace": "No completed Academy race yet",
+    "noUpcomingRace": "No upcoming Academy race selected",
+    "noResult": "No Youth race result yet"
   },
   "roles": {
     "director": "Youth Academy Director",
@@ -158,7 +165,7 @@
     "loading": "Loading scouting reports…",
     "scoutScore": "Scouting effectiveness: {{score}} / 100",
     "monthlyReports": "Reports / month",
-    "qualityExplainer": "Budget determines where the scout can search. Scout quality determines how many riders are reported, how accurately they are assessed and how effectively stronger prospects are identified.",
+    "qualityExplainer": "Scout quality determines both volume and quality: stronger scouts return more reports per search, sample a stronger hidden candidate pool and assess prospects with higher confidence.",
     "noScout": "Hire a Youth Scout to begin active monthly prospect discovery. The Academy can operate without one, but no new scout reports will be generated.",
     "monthlyCycle": "Monthly scouting cycle",
     "currentRange": "Current reach",
@@ -258,11 +265,12 @@
     "runsThisWeek": "Searches this week",
     "coinBalance": "Coin balance",
     "weeklyRule": "1 free search + up to 3 Coin searches per in-game week",
-    "boostPrices": "Extra search cost: Local 10 · Regional 15 · Continental 20 · Worldwide 30 Coins.",
+    "boostPrices": "Extra search cost: Local 2 · Regional 5 · Continental 8 · Worldwide 12 Coins.",
     "runFreeSearch": "Run free weekly search",
     "runCoinSearch": "Run extra search · {{cost}} Coins",
     "weeklyLimitReached": "Weekly search limit reached",
-    "lastSearch": "Last search: run {{run}} · {{reports}} reports created"
+    "lastSearch": "Last search: run {{run}} · {{reports}} reports created",
+    "maxReportsPerWeek": "Max reports / week"
   },
   "settings": {
     "title": "Responsibilities",
