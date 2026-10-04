@@ -2770,44 +2770,149 @@ export default function YouthAcademyPage(): JSX.Element {
       {tab === 'settings' && draftSettings ? (
         <Card title={t('settings.title')}>
           <p className="mb-4 text-sm text-slate-600">{t('settings.description')}</p>
-          <div className="grid gap-4 md:grid-cols-2">
-            {[
-              ['recruitment_decider', t('settings.recruitment'), ['manager', 'academy_director']],
-              ['race_entry_decider', t('settings.raceEntry'), ['manager', 'u16_head_coach']],
-              ['race_squad_decider', t('settings.raceSquad'), ['manager', 'u16_head_coach']],
-              ['camp_decider', t('settings.camps'), ['manager', 'academy_director']],
-              ['equipment_decider', t('settings.equipment'), ['manager', 'academy_director']],
-              [
-                'recruitment_negotiation_decider',
-                t('settings.negotiations'),
-                ['manager', 'academy_director'],
-              ],
-            ].map(([key, label, options]) => (
-              <label key={String(key)} className="text-sm">
-                <span className="font-medium text-slate-800">{String(label)}</span>
-                <select
-                  disabled={data.read_only}
-                  value={String(draftSettings[key as keyof typeof draftSettings])}
-                  onChange={event =>
-                    setDraftSettings(current =>
-                      current
-                        ? {
-                            ...current,
-                            [String(key)]: event.target.value,
-                          } as typeof current
-                        : current
-                    )
-                  }
-                  className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2"
+          <div className="space-y-3">
+            {([
+              {
+                key: 'recruitment_decider',
+                label: t('settings.recruitment'),
+                description: t('settings.recruitmentHelp', {
+                  defaultValue:
+                    'Decides which scouted prospects should enter the Academy recruitment process and whether the Academy actively pursues a rider.',
+                }),
+                options: ['manager', 'academy_director'],
+              },
+              {
+                key: 'race_entry_decider',
+                label: t('settings.raceEntry'),
+                description: t('settings.raceEntryHelp', {
+                  defaultValue:
+                    'Decides which Youth race invitations are accepted or declined and which events the Academy will enter.',
+                }),
+                options: ['manager', 'u16_head_coach'],
+              },
+              {
+                key: 'race_squad_decider',
+                label: t('settings.raceSquad'),
+                description: t('settings.raceSquadHelp', {
+                  defaultValue:
+                    'Selects the riders and race strategy for each entered Youth event, including rotation between simultaneous races.',
+                }),
+                options: ['manager', 'u16_head_coach'],
+              },
+              {
+                key: 'camp_decider',
+                label: t('settings.camps'),
+                description: t('settings.campsHelp', {
+                  defaultValue:
+                    'Approves Youth Academy camps and the related use of Academy funds when camp opportunities are available.',
+                }),
+                options: ['manager', 'academy_director'],
+              },
+              {
+                key: 'equipment_decider',
+                label: t('settings.equipment'),
+                description: t('settings.equipmentHelp', {
+                  defaultValue:
+                    'Controls Youth equipment purchasing. The Academy Director can automatically fill missing equipment within the available Academy budget.',
+                }),
+                options: ['manager', 'academy_director'],
+              },
+              {
+                key: 'recruitment_negotiation_decider',
+                label: t('settings.negotiations'),
+                description: t('settings.negotiationsHelp', {
+                  defaultValue:
+                    'Manages stipend, accommodation and development-compensation offers after a Youth prospect has been identified.',
+                }),
+                options: ['manager', 'academy_director'],
+              },
+            ] as Array<{
+              key: keyof NonNullable<AcademyPayload['settings']>
+              label: string
+              description: string
+              options: string[]
+            }>).map(item => {
+              const savedValue = data.settings?.[item.key]
+              const draftValue = draftSettings[item.key]
+              const changed = String(savedValue ?? '') !== String(draftValue ?? '')
+
+              return (
+                <div
+                  key={String(item.key)}
+                  className="rounded-xl border border-slate-200 bg-slate-50/50 p-4"
                 >
-                  {(options as string[]).map(option => (
-                    <option key={option} value={option}>
-                      {t(`settings.options.${option}`)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ))}
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="max-w-3xl">
+                      <h4 className="text-sm font-semibold text-slate-900">{item.label}</h4>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                        {item.description}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                        changed
+                          ? 'bg-amber-50 text-amber-800'
+                          : 'bg-emerald-50 text-emerald-700'
+                      }`}
+                    >
+                      {changed
+                        ? t('settings.pendingConfirmation', {
+                            defaultValue: 'Pending confirmation',
+                          })
+                        : t('settings.confirmed', { defaultValue: 'Confirmed' })}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                    <label className="text-sm">
+                      <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        {t('settings.responsiblePerson', {
+                          defaultValue: 'Responsible person',
+                        })}
+                      </span>
+                      <select
+                        disabled={data.read_only || responsibilityAction !== null}
+                        value={String(draftValue ?? '')}
+                        onChange={event =>
+                          setDraftSettings(current =>
+                            current
+                              ? {
+                                  ...current,
+                                  [String(item.key)]: event.target.value,
+                                } as typeof current
+                              : current
+                          )
+                        }
+                        className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5"
+                      >
+                        {item.options.map(option => (
+                          <option key={option} value={option}>
+                            {t(`settings.options.${option}`)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <button
+                      type="button"
+                      disabled={
+                        data.read_only ||
+                        responsibilityAction !== null ||
+                        !changed
+                      }
+                      onClick={() => void confirmResponsibility(String(item.key))}
+                      className="rounded-md bg-yellow-400 px-4 py-2.5 text-sm font-medium text-black transition hover:bg-yellow-300 disabled:opacity-50"
+                    >
+                      {responsibilityAction === String(item.key)
+                        ? t('settings.confirming', { defaultValue: 'Confirming…' })
+                        : t('settings.confirmResponsibility', {
+                            defaultValue: 'Confirm responsibility',
+                          })}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           <div className="mb-6 border-b border-slate-200 pb-5">
