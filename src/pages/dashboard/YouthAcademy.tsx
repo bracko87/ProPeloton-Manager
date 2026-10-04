@@ -1225,6 +1225,10 @@ export default function YouthAcademyPage(): JSX.Element {
   }, [location.search])
 
   useEffect(() => {
+    if (tab === 'overview' && data?.activated) {
+      void loadRaceCalendar()
+      void loadHistory()
+    }
     if (tab === 'scouting' && data?.activated) {
       void loadScouting()
     }
@@ -1399,6 +1403,39 @@ export default function YouthAcademyPage(): JSX.Element {
     () => raceMonthData?.races ?? [],
     [raceMonthData?.races]
   )
+
+  const overviewRaceSnapshot = useMemo(() => {
+    const races = [...(raceCalendar?.races ?? [])]
+    const gameDate = String(raceCalendar?.game_date ?? '')
+    const eligibleNext = races
+      .filter(race =>
+        race.status === 'scheduled' &&
+        (!gameDate || race.race_date >= gameDate) &&
+        (
+          Boolean(race.entry_id) ||
+          race.invitation_status === 'accepted' ||
+          race.invitation_status === 'pending' ||
+          race.qualified
+        )
+      )
+      .sort((a, b) => a.race_date.localeCompare(b.race_date))
+
+    const completed = races
+      .filter(race =>
+        race.status === 'completed' &&
+        ((race.my_results?.length ?? 0) > 0 || race.entry_status === 'completed')
+      )
+      .sort((a, b) => b.race_date.localeCompare(a.race_date))
+
+    const previousRace = completed[0] ?? null
+    const nextRace = eligibleNext[0] ?? null
+    const latestResult =
+      previousRace?.my_results
+        ?.filter(result => Number(result.position ?? 0) > 0)
+        .sort((a, b) => Number(a.position ?? 9999) - Number(b.position ?? 9999))[0] ?? null
+
+    return { previousRace, nextRace, latestResult }
+  }, [raceCalendar?.races, raceCalendar?.game_date])
 
   const rankingDivisions = useMemo(
     () =>
@@ -1605,7 +1642,7 @@ export default function YouthAcademyPage(): JSX.Element {
             </div>
           </Card>
 
-          <div className="xl:col-span-2">
+          <div className="xl:col-span-2 [&>section]:h-full">
             <Card title={t('overview.directorReport')}>
               <p className="text-sm leading-6 text-slate-600">
                 {academyDirector
@@ -1615,7 +1652,10 @@ export default function YouthAcademyPage(): JSX.Element {
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <div className="rounded-lg bg-slate-50 p-3">
                   <div className="text-xs text-slate-500">{t('overview.nextRace')}</div>
-                  <div className="mt-1 text-sm font-medium">{t('comingSoon')}</div>
+                  <div className="mt-1 text-sm font-medium">
+                    {overviewRaceSnapshot.nextRace?.race_name ??
+                      t('overview.noUpcomingRace', { defaultValue: 'No upcoming Academy race selected' })}
+                  </div>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-3">
                   <div className="text-xs text-slate-500">{t('overview.recruitment')}</div>
@@ -1629,22 +1669,107 @@ export default function YouthAcademyPage(): JSX.Element {
             </Card>
           </div>
 
-          <Card title={t('overview.staff')}>
-            <div className="space-y-3 text-sm">
-              <div>
-                <div className="text-xs text-slate-500">{t('roles.director')}</div>
-                <div className="font-medium">{academyDirector?.staff_name ?? t('notAssigned')}</div>
+          <div className="[&>section]:h-full">
+            <Card title={t('overview.staff')}>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <div className="text-xs text-slate-500">{t('roles.director')}</div>
+                  <div className="font-medium">{academyDirector?.staff_name ?? t('notAssigned')}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">{t('roles.headCoach')}</div>
+                  <div className="font-medium">{headCoach?.staff_name ?? t('notAssigned')}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">{t('roles.scout')}</div>
+                  <div className="font-medium">{youthScout?.staff_name ?? t('optionalNotHired')}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-slate-500">{t('roles.headCoach')}</div>
-                <div className="font-medium">{headCoach?.staff_name ?? t('notAssigned')}</div>
+            </Card>
+          </div>
+
+          <div className="xl:col-span-3">
+            <Card
+              title={t('overview.racingTitle', { defaultValue: 'Academy racing' })}
+              right={
+                <button
+                  type="button"
+                  onClick={() => setTab('calendar')}
+                  className="text-xs font-medium text-slate-700 underline underline-offset-2"
+                >
+                  {t('overview.openCalendar', { defaultValue: 'Open Calendar' })}
+                </button>
+              }
+            >
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-lg bg-slate-50 p-4">
+                  <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    {t('overview.previousRace', { defaultValue: 'Previous race' })}
+                  </div>
+                  {overviewRaceSnapshot.previousRace ? (
+                    <>
+                      <div className="mt-2 text-sm font-semibold text-slate-900">
+                        {overviewRaceSnapshot.previousRace.race_name}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {overviewRaceSnapshot.previousRace.race_date} · {competitionLabel(
+                          overviewRaceSnapshot.previousRace.competition_class,
+                          overviewRaceSnapshot.previousRace.division_code
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-2 text-sm text-slate-500">
+                      {t('overview.noPreviousRace', { defaultValue: 'No completed Academy race yet' })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-lg bg-slate-50 p-4">
+                  <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    {t('overview.nextRace', { defaultValue: 'Next race' })}
+                  </div>
+                  {overviewRaceSnapshot.nextRace ? (
+                    <>
+                      <div className="mt-2 text-sm font-semibold text-slate-900">
+                        {overviewRaceSnapshot.nextRace.race_name}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {overviewRaceSnapshot.nextRace.race_date} · {competitionLabel(
+                          overviewRaceSnapshot.nextRace.competition_class,
+                          overviewRaceSnapshot.nextRace.division_code
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-2 text-sm text-slate-500">
+                      {t('overview.noUpcomingRace', { defaultValue: 'No upcoming Academy race selected' })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-lg bg-slate-50 p-4">
+                  <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    {t('overview.latestResult', { defaultValue: 'Latest result' })}
+                  </div>
+                  {overviewRaceSnapshot.previousRace && overviewRaceSnapshot.latestResult ? (
+                    <>
+                      <div className="mt-2 text-sm font-semibold text-slate-900">
+                        #{overviewRaceSnapshot.latestResult.position} · {overviewRaceSnapshot.latestResult.name}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {overviewRaceSnapshot.previousRace.race_name}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-2 text-sm text-slate-500">
+                      {t('overview.noResult', { defaultValue: 'No Youth race result yet' })}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-slate-500">{t('roles.scout')}</div>
-                <div className="font-medium">{youthScout?.staff_name ?? t('optionalNotHired')}</div>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
       ) : null}
 
@@ -2266,7 +2391,7 @@ export default function YouthAcademyPage(): JSX.Element {
                       {t('scouting.scoutScore', { score: scoutingData.scout.score })}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     <div className="rounded-lg bg-slate-50 p-3">
                       <div className="text-xs text-slate-500">{t('staff.expertise')}</div>
                       <div className="mt-1 font-semibold">{scoutingData.scout.expertise}</div>
@@ -2277,6 +2402,18 @@ export default function YouthAcademyPage(): JSX.Element {
                       </div>
                       <div className="mt-1 font-semibold">
                         {scoutingData.scout.reports_per_search ?? scoutingData.scout.monthly_report_quota}
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-3">
+                      <div className="text-xs text-slate-500">
+                        {t('scouting.maxReportsPerWeek', { defaultValue: 'Max reports / week' })}
+                      </div>
+                      <div className="mt-1 font-semibold">
+                        {Number(
+                          scoutingData.scout.reports_per_search ??
+                          scoutingData.scout.monthly_report_quota ??
+                          0
+                        ) * Number(scoutingData?.weekly_run_limit ?? 4)}
                       </div>
                     </div>
                   </div>
@@ -2336,7 +2473,7 @@ export default function YouthAcademyPage(): JSX.Element {
                   <div className="mt-1">
                     {t('scouting.boostPrices', {
                       defaultValue:
-                        'Extra search cost: Local 10 · Regional 15 · Continental 20 · Worldwide 30 Coins.',
+                        'Extra search cost: Local 2 · Regional 5 · Continental 8 · Worldwide 12 Coins.',
                     })}
                   </div>
                 </div>
