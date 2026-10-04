@@ -477,6 +477,51 @@
       "title": "Leistungsdatenanalyse",
       "description": "Verbessert die analytische Überprüfung der Fahrer und Rennvorbereitungsberichte.",
       "focus": "Genauigkeit + Analyse"
+    },
+    "youth_director_programme_management": {
+      "title": "Akademie-Programmmanagement",
+      "description": "Verbessert Führung und Effizienz im täglichen Akademiebetrieb.",
+      "focus": "Führung + Effizienz"
+    },
+    "youth_director_budget_pathways": {
+      "title": "Akademiebudget & Entwicklungswege",
+      "description": "Verbessert Planung, Management und kosteneffiziente Entwicklungswege.",
+      "focus": "Akademiemanagement + Effizienz"
+    },
+    "youth_director_recruitment_strategy": {
+      "title": "Jugend-Rekrutierungsstrategie",
+      "description": "Fortgeschrittenes Programm für Talentwege, Rekrutierungsplanung und Führung.",
+      "focus": "Talentwege + Führung"
+    },
+    "u16_development_methodology": {
+      "title": "U16-Entwicklungsmethodik",
+      "description": "Verbessert die wöchentliche Entwicklung und langfristige Förderung.",
+      "focus": "Jugendentwicklung + Potenzial"
+    },
+    "u16_workload_management": {
+      "title": "U16-Belastungssteuerung",
+      "description": "Verbessert Entscheidungen zu Ermüdung, Bereitschaft und Entwicklungsbelastung.",
+      "focus": "Effizienz + Erfahrung"
+    },
+    "u16_race_coaching": {
+      "title": "U16-Renncoaching",
+      "description": "Verbessert Rennauswahl, Coachingentscheidungen und Entwicklung am Renntag.",
+      "focus": "Renncoaching + Führung"
+    },
+    "youth_scout_talent_id": {
+      "title": "Jugend-Talenterkennung",
+      "description": "Verbessert Talentauswahl und Genauigkeit der Scouting-Bewertung.",
+      "focus": "Talenterkennung + Genauigkeit"
+    },
+    "youth_scout_network_building": {
+      "title": "Jugend-Scoutingnetzwerk",
+      "description": "Baut Scouting-Erfahrung und das Netzwerk zur Talentsuche aus.",
+      "focus": "Netzwerk + Erfahrung"
+    },
+    "youth_scout_assessment_accuracy": {
+      "title": "Genauigkeit der Jugendbewertung",
+      "description": "Fortgeschrittene Talentbewertung für verlässlichere Berichte.",
+      "focus": "Genauigkeit + Potenzial"
     }
   }
 }
