@@ -1792,6 +1792,59 @@ export default function YouthAcademyPage(): JSX.Element {
 
       {tab === 'staff' ? (
         <div className="space-y-4">
+          <Card title={t('staff.careerFramework', { defaultValue: 'Youth staff levels & salaries' })}>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-lg bg-slate-50 p-3">
+                <div className="text-xs font-medium text-slate-500">
+                  {t('roles.director')}
+                </div>
+                <div className="mt-1 text-sm font-semibold text-slate-900">
+                  {youthSalaryRange('youth_academy_director')}
+                </div>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {t('staff.directorBonusHelp', {
+                    defaultValue:
+                      'Leadership and efficiency improve Academy management. Strong Directors can reduce Youth equipment purchase costs by up to 8%.',
+                  })}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <div className="text-xs font-medium text-slate-500">
+                  {t('roles.headCoach')}
+                </div>
+                <div className="mt-1 text-sm font-semibold text-slate-900">
+                  {youthSalaryRange('u16_head_coach')}
+                </div>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {t('staff.coachBonusHelp', {
+                    defaultValue:
+                      'Expertise, potential and efficiency improve weekly rider development, workload decisions and race selection.',
+                  })}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <div className="text-xs font-medium text-slate-500">
+                  {t('roles.scout')}
+                </div>
+                <div className="mt-1 text-sm font-semibold text-slate-900">
+                  {youthSalaryRange('youth_scout')}
+                </div>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {t('staff.scoutBonusHelp', {
+                    defaultValue:
+                      'Expertise, experience and efficiency improve prospect selection, report confidence and reports produced per search.',
+                  })}
+                </p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-500">
+              {t('staff.levelScaleHelp', {
+                defaultValue:
+                  'Levels use the same staff scale as the senior team: Poor (<30), Basic (30–44), Competent (45–59), Strong (60–74), Elite (75–89) and World Class (90+).',
+              })}
+            </p>
+          </Card>
+
           <div className="space-y-3">
             {staff.map(member => {
               const flag = flagUrl(member.country_code)
@@ -1801,38 +1854,69 @@ export default function YouthAcademyPage(): JSX.Element {
                   : member.role_type === 'u16_head_coach'
                     ? t('roles.headCoach')
                     : t('roles.scout')
+              const score = youthStaffScore(member)
+              const level = youthStaffLevel(score)
+              const scoutReports = Math.min(6, Math.max(1, 2 + Math.floor((score - 45) / 15)))
+              const directorDiscount = Math.min(8, Math.max(0, Math.floor((score - 45) / 6)))
+              const bonusText =
+                member.role_type === 'youth_academy_director'
+                  ? t('staff.directorActiveBonus', {
+                      value: directorDiscount,
+                      defaultValue: 'Up to {{value}}% Youth equipment purchasing discount',
+                    })
+                  : member.role_type === 'u16_head_coach'
+                    ? t('staff.coachActiveBonus', {
+                        score,
+                        defaultValue:
+                          'Development score {{score}}: affects weekly progression, readiness and race selection',
+                      })
+                    : t('staff.scoutActiveBonus', {
+                        score,
+                        reports: scoutReports,
+                        defaultValue:
+                          'Scout score {{score}}: up to {{reports}} reports per search with stronger assessment accuracy',
+                      })
 
               return (
                 <div
                   key={member.id}
                   className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
                 >
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-stretch">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-3">
-                        {flag ? (
-                          <img
-                            src={flag}
-                            alt=""
-                            className="h-4 w-6 rounded-sm border border-gray-200 object-cover"
-                          />
-                        ) : null}
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-gray-900">
-                            {member.staff_name}
-                          </div>
-                          <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-gray-500">
-                            <span>{roleLabel}</span>
-                            {member.specialization ? (
-                              <>
-                                <span>•</span>
-                                <span>{member.specialization}</span>
-                              </>
-                            ) : null}
-                            <span>•</span>
-                            <span>{t('staff.youthScope')}</span>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {flag ? (
+                            <img
+                              src={flag}
+                              alt=""
+                              className="h-4 w-6 rounded-sm border border-gray-200 object-cover"
+                            />
+                          ) : null}
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold text-gray-900">
+                              {member.staff_name}
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-x-2 text-xs text-gray-500">
+                              <span>{roleLabel}</span>
+                              {member.specialization ? (
+                                <>
+                                  <span>•</span>
+                                  <span>{humanizeCode(member.specialization)}</span>
+                                </>
+                              ) : null}
+                              <span>•</span>
+                              <span>{t('staff.youthScope')}</span>
+                            </div>
                           </div>
                         </div>
+
+                        <Link
+                          to={`/dashboard/staff?role=${member.role_type}&staff=${member.id}`}
+                          className="rounded-md bg-yellow-400 px-3 py-2 text-xs font-medium text-black transition hover:bg-yellow-300"
+                        >
+                          {t('staff.openProfile', { defaultValue: 'Open staff profile' })}
+                        </Link>
                       </div>
 
                       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
@@ -1854,18 +1938,46 @@ export default function YouthAcademyPage(): JSX.Element {
                           </div>
                         ))}
                       </div>
+
+                      <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2.5">
+                        <div className="text-[11px] font-medium uppercase tracking-wide text-amber-700">
+                          {t('staff.activeBonus', { defaultValue: 'Active role bonus' })}
+                        </div>
+                        <div className="mt-1 text-sm text-amber-950">{bonusText}</div>
+                      </div>
                     </div>
 
-                    <div className="w-full rounded-lg bg-gray-50 px-3 py-3 xl:w-60">
-                      <div className="text-[11px] uppercase tracking-wide text-gray-400">
-                        {t('staff.weeklyWage')}
+                    <div className="grid w-full gap-2 rounded-lg bg-gray-50 px-3 py-3 sm:grid-cols-2 xl:w-72 xl:grid-cols-1">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-wide text-gray-400">
+                          {t('staff.level', { defaultValue: 'Level' })}
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-gray-900">
+                          {level} · {score}/100
+                        </div>
                       </div>
-                      <div className="mt-1 text-sm font-semibold text-gray-900">
-                        {money(member.salary_weekly)}/{t('week')}
+                      <div>
+                        <div className="text-[11px] uppercase tracking-wide text-gray-400">
+                          {t('staff.weeklyWage')}
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-gray-900">
+                          {money(member.salary_weekly)}/{t('week')}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">
+                          {t('staff.salaryRange', {
+                            value: youthSalaryRange(member.role_type),
+                            defaultValue: 'Role range: {{value}}',
+                          })}
+                        </div>
                       </div>
                       {member.contract_expires_at ? (
-                        <div className="mt-2 text-xs text-gray-500">
-                          {t('staff.contractUntil', { date: member.contract_expires_at })}
+                        <div>
+                          <div className="text-[11px] uppercase tracking-wide text-gray-400">
+                            {t('staff.contract', { defaultValue: 'Contract' })}
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-gray-900">
+                            {contractSeason(member.contract_expires_at)}
+                          </div>
                         </div>
                       ) : null}
                     </div>
@@ -1878,6 +1990,12 @@ export default function YouthAcademyPage(): JSX.Element {
               <div className="rounded-xl border border-dashed border-gray-200 bg-white p-5 text-sm text-gray-500">
                 <div className="font-medium text-gray-900">{t('roles.scout')}</div>
                 <div className="mt-1">{t('staff.scoutOptional')}</div>
+                <Link
+                  to="/dashboard/staff?role=youth_scout"
+                  className="mt-3 inline-flex rounded-md bg-yellow-400 px-3 py-2 text-xs font-medium text-black"
+                >
+                  {t('staff.openScoutStaff', { defaultValue: 'Open Youth Scout staff' })}
+                </Link>
               </div>
             ) : null}
           </div>
@@ -1885,7 +2003,7 @@ export default function YouthAcademyPage(): JSX.Element {
           <div className="flex justify-end">
             <Link
               to="/dashboard/staff"
-              className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition hover:bg-yellow-300"
+              className="rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
             >
               {t('staff.openStaffPage')}
             </Link>
