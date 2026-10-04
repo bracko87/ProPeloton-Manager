@@ -3446,7 +3446,8 @@
         "4": "Akademije Svjetske klase dobivaju pozivnice. Slobodna mjesta nakon odbijanja mogu se popuniti ponderiranim wildcardima. Mjesečni plan ograničava broj utrka i trošak.",
         "5": "Početna alokacija ostaje fiksna povijesna vrijednost. Trenutačna sredstva mijenjaju se kroz troškove, prihode od utrka i izričite transfere.",
         "6": "Prihodi od utrka mladih idu izravno Akademiji. Prilagodbu budžeta koristi samo kada namjerno želiš premjestiti novac između seniora i Akademije.",
-        "7": "Sa 16 godina vozač treba odluku: pathway, razvojni tim kada je moguće ili otpuštanje."
+        "7": "Sa 16 godina vozač treba odluku: pathway, razvojni tim kada je moguće ili otpuštanje.",
+        "8": "Youth Scout ima jednu besplatnu pretragu po tjednu igre i do tri dodatne Coin pretrage: Lokalno 2, Regionalno 5, Kontinentalno 8 i Svjetski 12 Coins. Razina Scouta određuje broj izvještaja: Slab 1, Osnovni 2, Kompetentan 3, Jak 4, Elitan 5 i Svjetska klasa 6 po pretrazi; bolji Scout učinkovitije pronalazi jače talente i daje sigurnije procjene."
       },
       "tips": {
         "0": "Rotiraj roster umjesto da uvijek koristiš najbolje.",
