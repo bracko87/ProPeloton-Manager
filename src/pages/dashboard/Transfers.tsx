@@ -31,6 +31,9 @@ type StaffRole =
   | 'mechanic'
   | 'sport_director'
   | 'scout_analyst'
+  | 'youth_academy_director'
+  | 'u16_head_coach'
+  | 'youth_scout'
 
 type StaffSortField = 'salary' | 'skills' | 'name' | 'country'
 type SortDirection = 'asc' | 'desc'
@@ -366,6 +369,9 @@ const STAFF_ROLES: StaffRole[] = [
   'head_coach',
   'trainer',
   'u23_head_coach',
+  'youth_academy_director',
+  'u16_head_coach',
+  'youth_scout',
   'team_doctor',
   'physio',
   'nutritionist',
