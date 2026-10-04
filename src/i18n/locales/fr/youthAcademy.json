@@ -259,7 +259,9 @@
     "raceEntry": "Impossible d'inscrire la course jeunes.",
     "raceLineup": "Impossible d'enregistrer la sélection jeunes.",
     "historyLoad": "Impossible de charger l'historique de l'Académie.",
-    "reportFrequency": "Impossible d'enregistrer la préférence de rapports jeunes."
+    "reportFrequency": "Impossible d'enregistrer la préférence de rapports jeunes.",
+    "monthlyRacePlan": "Impossible d'enregistrer le plan mensuel des courses jeunes.",
+    "raceInvitationDecline": "Impossible de refuser l'invitation à la course jeunes."
   },
   "equipment": {
     "title": "Équipement jeunes",
@@ -311,7 +313,7 @@
     "resultsOnly": "Résultats uniquement — aucun replay",
     "entryResponsibility": "Participation",
     "squadResponsibility": "Sélection & stratégie",
-    "ageLimitHelp": "Les coureurs ont des limites de départ sur 30 jours selon l'âge. L'entraîneur U16 tient aussi compte du profil, de la fraîcheur et de la fatigue; l'Académie ne choisit donc qu'une partie des 12 courses régionales disponibles chaque mois.",
+    "ageLimitHelp": "Les courses jeunes sont uniquement calculées par résultats. Les classes Mondiale, Continentale et Régionale utilisent des limites de départ selon l'âge, la forme et la fatigue. Plusieurs équipes peuvent courir en parallèle, mais un coureur ne peut pas disputer des épreuves qui se chevauchent.",
     "races": "Courses jeunes",
     "loading": "Chargement des courses…",
     "levels": {
@@ -321,7 +323,7 @@
     },
     "qualified": "Qualifié",
     "notQualified": "Non qualifié",
-    "qualificationHelp": "La qualification pour les World Series vient du classement régional. La finale mondiale utilise le classement mondial jeunes.",
+    "qualificationHelp": "Cette épreuve est visible, mais votre Académie n'a pas d'invitation active ou pas assez de coureurs éligibles.",
     "strategy": "Stratégie",
     "strategies": {
       "conservative": "Prudente",
@@ -339,11 +341,47 @@
     "coachLineupHelp": "L'entraîneur U16 a sélectionné {{count}} coureur(s) et gère la stratégie.",
     "myResults": "Résultats de mon Académie",
     "topResults": "Meilleurs résultats",
-    "didNotRace": "Votre Académie n'a pas participé."
+    "didNotRace": "Votre Académie n'a pas participé.",
+    "academyCompetition": "Compétition de l'Académie",
+    "competition": {
+      "world": "Classe Mondiale",
+      "continental": "Classe Continentale",
+      "regional": "Classe Régionale",
+      "youth": "Compétition Jeunes"
+    },
+    "monthlyPlanTitle": "Plan de courses jeunes de {{month}}",
+    "approved": "Approuvé",
+    "approvalRequired": "Approbation requise",
+    "raceLimitLabel": "Courses {{className}}",
+    "calendarEventsThisMonth": "{{count}} épreuves au calendrier ce mois-ci",
+    "monthlyBudget": "Budget mensuel de course",
+    "enteredSoFar": "Engagé jusqu'ici : {{value}}",
+    "savingPlan": "Enregistrement…",
+    "updatePlan": "Mettre à jour le plan",
+    "approvePlan": "Approuver le plan mensuel",
+    "planHelp": "Le plan limite le nombre de courses auxquelles l'Académie peut participer ce mois-ci et le budget utilisé. L'entraîneur U16 peut faire tourner plusieurs équipes en parallèle, mais un même coureur ne peut pas être engagé sur des épreuves qui se chevauchent.",
+    "raceCalendar": "Calendrier des courses",
+    "visibleEvents": "{{count}} épreuves visibles",
+    "worldVisible": "Les courses de Classe Mondiale sont visibles mondialement",
+    "regionalVisible": "Les courses régionales sont limitées à votre division locale",
+    "days": "{{count}} jours",
+    "oneDay": "1 jour",
+    "teams": "{{current}}/{{max}} équipes",
+    "invitationStatuses": {
+      "pending": "En attente",
+      "accepted": "Acceptée",
+      "declined": "Refusée",
+      "expired": "Expirée",
+      "waitlist": "Liste d'attente"
+    },
+    "noInvitation": "Pas encore d'invitation",
+    "declining": "Refus…",
+    "declineInvitation": "Refuser l'invitation",
+    "responseDeadline": "Date limite de réponse : {{date}}"
   },
   "rankings": {
     "title": "Classements jeunes",
-    "description": "Votre Académie participe au classement régional {{region}}. Les résultats régionaux contribuent aussi, avec moins de points, au classement mondial; World Series et finale mondiale rapportent davantage.",
+    "description": "Le classement des Académies suit la Classe Mondiale Jeunes, les divisions Continentales Ouest/Est et les divisions Régionales. Les classements des coureurs restent séparés et reposent sur les résultats régionaux et mondiaux.",
     "regionalTitle": "Classement Régional Jeunes",
     "worldTitle": "Classement Mondial Jeunes",
     "loading": "Chargement des classements…",
@@ -352,7 +390,11 @@
     "rider": "Coureur",
     "academy": "Académie",
     "starts": "Arrivées",
-    "points": "Points"
+    "points": "Points",
+    "yourDivision": "Votre division",
+    "raceStarts": "Départs",
+    "riderRankings": "Classements des coureurs jeunes",
+    "promotionNote": "Les zones de promotion et relégation sont préparées dans le modèle. Les places exactes seront activées lorsque ces règles seront finalisées."
   },
   "reports": {
     "title": "Rapports de course jeunes",
