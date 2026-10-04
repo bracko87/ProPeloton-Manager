@@ -2843,31 +2843,37 @@ const manualSections: ManualSection[] = [
     id: 'youth-academy',
     category: 'Riders',
     title: 'Youth Academy: U16 Starter Guide',
-    subtitle: 'How to run your Premium U16 programme, riders, staff, races and budget.',
+    subtitle: 'How to run your Premium U16 programme, riders, staff, scouting, races and budget.',
     overview:
-      'Youth Academy is a Premium U16 development programme with a fixed capacity of 16 riders. It is designed for long-term development: recruit young riders, give them suitable racing opportunities, manage dedicated Academy staff and finances, and decide their pathway when they reach age 16.',
+      'Youth Academy is a Premium U16 development programme with a fixed capacity of 16 riders. It is designed for long-term development: recruit young riders, develop them with dedicated staff and courses, give them suitable racing opportunities, manage a separate Academy budget, and decide their pathway when they reach age 16.',
     facts: [
       { label: 'Capacity', value: 'Maximum 16 Youth Riders' },
       { label: 'Starting package', value: '6 local Youth Riders, Youth Academy Director and U16 Head Coach' },
       { label: 'Optional staff', value: 'Up to 3 Youth Scouts can be hired through the Staff Market' },
-      { label: 'Race format', value: 'Results-only: World Class, Continental West/East and Regional Class' },
-      { label: 'Budget', value: 'Separate Youth Academy fund with its own race income and two-way senior-team transfers' },
+      { label: 'Scouting frequency', value: '1 free search + up to 3 Coin searches per in-game week' },
+      { label: 'Competition structure', value: 'World Class, Continental West/East and Regional Class' },
+      { label: 'Budget', value: 'Separate Youth Academy fund with race income and two-way senior-team transfers' },
     ],
     details: [
       'Youth Rider profiles are available from the Youth Riders tab. Their riding attributes, readiness, fatigue, development focus, support agreement and race history are visible, but exact hidden potential is intentionally not shown. Use the Talent Assessment band instead.',
-      'The Academy starts with six local riders and can grow to 16. Scouting and recruitment add new prospects. Youth staff are hired from the regular Staff Market, including Youth Academy Director, U16 Head Coach and Youth Scout roles.',
-      'Responsibilities decide whether the manager or Academy staff handle recruitment, race participation, lineups, scouting-related decisions and equipment. Delegation reduces micromanagement, while manager control gives direct approval.',
-      'Youth racing is results-only and has three levels. World Class contains the strongest Academies, Continental Class is split West and East, and Regional Class follows geographic divisions. The same Academy can send different squads to simultaneous races, but the same rider cannot be selected for overlapping events.',
+      'The Academy starts with six local riders and can grow to 16. Youth staff are hired from the regular Staff Market: Youth Academy Director, U16 Head Coach and Youth Scout. Youth staff use the same Poor, Basic, Competent, Strong, Elite and World Class quality scale as senior staff.',
+      'Youth staff have dedicated role bonuses. Director quality improves Academy management and can reduce eligible Youth equipment purchase costs. U16 Head Coach quality affects weekly development, workload decisions and race selection. Youth Scout quality affects prospect selection, assessment confidence and reports per search.',
+      'Youth staff can improve through dedicated courses. Courses are started from the normal Staff profile, but Youth staff course costs are paid from the Youth Academy budget.',
+      'The Youth Scout has one free search per in-game week. After the free search, up to three additional searches can be run in the same week with Coins: Local 10, Regional 15, Continental 20 and Worldwide 30 Coins per additional search.',
+      'Responsibilities are confirmed per decision area. The manager can retain control or delegate recruitment and negotiations to the Academy Director, and race participation or lineups to the U16 Head Coach.',
+      'Youth competition has World Class, Continental West/East and Regional divisions. The Calendar can show the complete monthly race list or only your Academy opportunities. Different Academy squads may race simultaneously, but the same rider cannot be selected for overlapping events.',
       'World Class Academies receive World Class invitations. If invited teams decline, vacant places can be filled by weighted wildcards. Monthly participation plans limit how many World, Continental and Regional races the Academy may enter and how much can be spent.',
       'The activation allocation is permanent history and cannot be edited later. Current Academy funds can change through spending, symbolic Youth race income and explicit transfers. Youth race income goes directly to the Youth Academy fund, not to senior-team cash.',
       'Use Adjust Budget when you deliberately want to move funds. Senior-to-Youth transfers reduce senior cash and increase Academy funds. Youth-to-senior transfers are allowed only from unspent and uncommitted Academy funds.',
       'At age 16, riders require a graduation decision. Depending on the available pathway, you can keep a temporary pathway, move an eligible rider to the Developing Team when space exists, or release the rider.',
     ],
     tips: [
-      'Do not use the same best riders in every race. Rotate the 16-rider roster so younger and weaker riders also gain race experience.',
+      'Open each Youth staff profile to review level, role skills, active bonuses, contract season and available courses.',
+      'Use the free weekly scouting search first; spend Coins on extra searches only when additional prospect coverage is worth it.',
+      'Rotate the roster instead of using the same best riders every race so younger and weaker riders gain experience.',
       'Approve the monthly race plan before invitations and race deadlines become urgent.',
-      'Keep enough Academy funds available for support agreements, staff, scouting, equipment and race travel.',
-      'Open Youth Rider profiles regularly; readiness and fatigue matter as much as talent assessment for race selection.',
+      'Keep enough Academy funds for support agreements, staff payroll, scouting, courses, equipment and race travel.',
+      'Check Youth Rider profiles regularly; readiness and fatigue matter as much as talent assessment for race selection.',
     ],
     relatedLinks: [
       { label: 'Open Youth Academy', to: '/dashboard/youth-academy' },
@@ -2875,7 +2881,7 @@ const manualSections: ManualSection[] = [
       { label: 'Open Staff', to: '/dashboard/staff' },
       { label: 'Open Staff Market', to: '/dashboard/transfers' },
     ],
-  },
+  }
 ]
 
 const manualCategories = Array.from(new Set(manualSections.map(section => section.category)))
