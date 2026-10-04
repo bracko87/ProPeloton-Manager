@@ -89,7 +89,21 @@
     "efficiency": "Efficiency",
     "loyalty": "Loyalty",
     "weeklyWage": "Weekly wage",
-    "contractUntil": "Contract until {{date}}"
+    "contractUntil": "Contract until {{date}}",
+    "careerFramework": "Youth staff levels & salaries",
+    "directorBonusHelp": "Leadership and efficiency improve Academy management. Strong Directors can reduce Youth equipment purchase costs by up to 8%.",
+    "coachBonusHelp": "Expertise, potential and efficiency improve weekly rider development, workload decisions and race selection.",
+    "scoutBonusHelp": "Expertise, experience and efficiency improve prospect selection, report confidence and reports produced per search.",
+    "levelScaleHelp": "Levels use the same staff scale as the senior team: Poor (<30), Basic (30–44), Competent (45–59), Strong (60–74), Elite (75–89) and World Class (90+).",
+    "openProfile": "Open staff profile",
+    "openScoutStaff": "Open Youth Scout staff",
+    "activeBonus": "Active role bonus",
+    "level": "Level",
+    "salaryRange": "Role range: {{value}}",
+    "contract": "Contract",
+    "directorActiveBonus": "Up to {{value}}% Youth equipment purchasing discount",
+    "coachActiveBonus": "Development score {{score}}: affects weekly progression, readiness and race selection",
+    "scoutActiveBonus": "Scout score {{score}}: up to {{reports}} reports per search with stronger assessment accuracy"
   },
   "budget": {
     "title": "Season Academy budget",
@@ -238,7 +252,17 @@
       "decline": "Decline",
       "processing": "Processing…"
     },
-    "awaitingAcademyResponse": "Waiting for Academy response"
+    "awaitingAcademyResponse": "Waiting for Academy response",
+    "reportsPerSearch": "Reports per search",
+    "weeklySearch": "Weekly scouting searches",
+    "runsThisWeek": "Searches this week",
+    "coinBalance": "Coin balance",
+    "weeklyRule": "1 free search + up to 3 Coin searches per in-game week",
+    "boostPrices": "Extra search cost: Local 10 · Regional 15 · Continental 20 · Worldwide 30 Coins.",
+    "runFreeSearch": "Run free weekly search",
+    "runCoinSearch": "Run extra search · {{cost}} Coins",
+    "weeklyLimitReached": "Weekly search limit reached",
+    "lastSearch": "Last search: run {{run}} · {{reports}} reports created"
   },
   "settings": {
     "title": "Responsibilities",
@@ -264,7 +288,18 @@
       "promising": "Promising",
       "very_promising": "Very Promising",
       "exceptional": "Exceptional"
-    }
+    },
+    "recruitmentHelp": "Decides which scouted prospects should enter the Academy recruitment process and whether the Academy actively pursues a rider.",
+    "raceEntryHelp": "Decides which Youth race invitations are accepted or declined and which events the Academy will enter.",
+    "raceSquadHelp": "Selects the riders and race strategy for each entered Youth event, including rotation between simultaneous races.",
+    "campsHelp": "Approves Youth Academy camps and the related use of Academy funds when camp opportunities are available.",
+    "equipmentHelp": "Controls Youth equipment purchasing. The Academy Director can automatically fill missing equipment within the available Academy budget.",
+    "negotiationsHelp": "Manages stipend, accommodation and development-compensation offers after a Youth prospect has been identified.",
+    "pendingConfirmation": "Pending confirmation",
+    "confirmed": "Confirmed",
+    "responsiblePerson": "Responsible person",
+    "confirming": "Confirming…",
+    "confirmResponsibility": "Confirm responsibility"
   },
   "placeholders": {},
   "errors": {
@@ -312,7 +347,22 @@
     "tier": "Tier {{tier}}",
     "purchase": "Buy for Academy",
     "purchasing": "Buying…",
-    "durability": "Durability"
+    "durability": "Durability",
+    "tabs": {
+      "overview": "Overview",
+      "inventory": "Inventory",
+      "market": "Market",
+      "assets": "Assets"
+    },
+    "overviewOwnedHelp": "Durable Youth Academy equipment currently owned.",
+    "availableMarket": "Market items",
+    "overviewMarketHelp": "Youth-approved Tier 1–2 equipment available to buy.",
+    "averageQuality": "Average quality",
+    "averageCondition": "Average condition",
+    "marketDelegated": "Equipment purchasing is delegated to the Youth Academy Director. You can review the market here, while the Director uses the Academy budget and role bonus when filling equipment needs.",
+    "assetOverview": "Youth Academy assets",
+    "items": "Items",
+    "invested": "Invested"
   },
   "training": {
     "title": "Youth development philosophy",
@@ -405,7 +455,16 @@
     "noInvitation": "No invitation yet",
     "declining": "Declining…",
     "declineInvitation": "Decline invitation",
-    "responseDeadline": "Response deadline: {{date}}"
+    "responseDeadline": "Response deadline: {{date}}",
+    "selectedMonth": "Selected month",
+    "competitionHelp": "World Class, Continental and Regional events use age-based start limits, rider readiness and fatigue. Separate Academy squads may race at the same time, but the same rider cannot be selected for overlapping events.",
+    "allCompetitions": "All competitions",
+    "allRaces": "All races",
+    "myOpportunities": "My Academy opportunities",
+    "classCounts": "World {{world}} · Continental {{continental}} · Regional {{regional}}",
+    "browserHelp": "This browser shows the complete Youth race calendar for the selected month. Use My Academy opportunities to narrow it to invitations and your home Regional division.",
+    "pastPrelaunch": "Past · pre-launch",
+    "prelaunchHelp": "This event is kept in the calendar for completeness. It was already in the past when the Youth competition system was launched, so no result was generated."
   },
   "rankings": {
     "title": "Youth Rankings",
@@ -422,7 +481,12 @@
     "yourDivision": "Your division",
     "raceStarts": "Race starts",
     "riderRankings": "Youth rider rankings",
-    "promotionNote": "Promotion and relegation positions are prepared in the competition model. The exact promotion/relegation spots will be activated after those rules are finalized."
+    "promotionNote": "Promotion and relegation positions are prepared in the competition model. The exact promotion/relegation spots will be activated after those rules are finalized.",
+    "selectClass": "Select class",
+    "selectDivision": "Select division",
+    "country": "Country",
+    "yourAcademy": "Your Academy",
+    "riderRankingHelp": "Rider rankings are separate from Academy class standings."
   },
   "reports": {
     "title": "Youth Race Reports",
