@@ -285,7 +285,10 @@
     "nutritionist": "Nutricionista",
     "mechanic": "Mehaničar",
     "sportDirector": "Sportski direktor",
-    "scoutAnalyst": "Skaut / Analitičar"
+    "scoutAnalyst": "Skaut / Analitičar",
+    "youthAcademyDirector": "Direktor Akademije mladih",
+    "u16HeadCoach": "U16 glavni trener",
+    "youthScout": "Skaut mladih"
   },
   "staffQuality": {
     "elite": "Elitno",
