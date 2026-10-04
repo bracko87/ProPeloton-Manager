@@ -1085,6 +1085,14 @@ export function localizeNotificationItem(item: NotificationItem): NotificationIt
   const championshipItem = localizeChampionshipNotificationItem(item)
   if (championshipItem) return championshipItem
 
+  if (typeCode === 'YOUTH_ACADEMY_STARTED') {
+    return {
+      ...item,
+      title: nt('youthAcademyStarted.title'),
+      message: nt('youthAcademyStarted.message'),
+    }
+  }
+
   if (typeCode === 'YOUTH_RACE_REPORT') {
     const raceName =
       readString(payload, ['race_name']) ||
@@ -1213,6 +1221,14 @@ export function localizeNotificationNarrative(
         ? nt('seasonStarted.feedMessage', params)
         : nt('seasonStarted.feedMessageGeneric', params)
     }
+  }
+
+  if (typeCode === 'YOUTH_ACADEMY_STARTED' && item) {
+    const localized = localizeNotificationItem(item)
+    const rawTitle = String(item.title ?? '').trim()
+    const rawMessage = String(item.message ?? '').trim()
+    if (value === rawTitle) return localized.title
+    if (value === rawMessage) return localized.message
   }
 
   if (typeCode === 'YOUTH_RACE_REPORT' && item) {
