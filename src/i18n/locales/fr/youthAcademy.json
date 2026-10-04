@@ -59,7 +59,14 @@
     "nextRace": "Prochaine course jeunes",
     "recruitment": "Portée du recrutement",
     "reputation": "Réputation de l'académie",
-    "staff": "Personnel de l'académie"
+    "staff": "Personnel de l'académie",
+    "racingTitle": "Courses de l'Académie",
+    "openCalendar": "Ouvrir le calendrier",
+    "previousRace": "Course précédente",
+    "latestResult": "Dernier résultat",
+    "noPreviousRace": "Aucune course de l'Académie terminée",
+    "noUpcomingRace": "Aucune prochaine course de l'Académie sélectionnée",
+    "noResult": "Aucun résultat jeunes pour le moment"
   },
   "roles": {
     "director": "Directeur de l'Académie Jeunes",
@@ -158,7 +165,7 @@
     "loading": "Chargement des rapports de scouting…",
     "scoutScore": "Efficacité du scouting : {{score}} / 100",
     "monthlyReports": "Rapports / mois",
-    "qualityExplainer": "Le budget détermine où le scout peut chercher. Sa qualité détermine le nombre de coureurs signalés, la précision des évaluations et sa capacité à repérer les meilleurs prospects.",
+    "qualityExplainer": "La qualité du scout détermine le volume et la qualité : les meilleurs scouts produisent plus de rapports par recherche, examinent un meilleur vivier caché et évaluent les prospects avec davantage de confiance.",
     "noScout": "Recrutez un scout jeunes pour commencer la détection mensuelle. L'Académie peut fonctionner sans lui, mais aucun nouveau rapport ne sera généré.",
     "monthlyCycle": "Cycle mensuel de scouting",
     "currentRange": "Portée actuelle",
@@ -258,11 +265,12 @@
     "runsThisWeek": "Recherches cette semaine",
     "coinBalance": "Solde de Coins",
     "weeklyRule": "1 recherche gratuite + jusqu’à 3 recherches en Coins par semaine de jeu",
-    "boostPrices": "Recherche supplémentaire : Locale 10 · Régionale 15 · Continentale 20 · Mondiale 30 Coins.",
+    "boostPrices": "Coût par recherche supplémentaire : Local 2 · Régional 5 · Continental 8 · Mondial 12 Coins.",
     "runFreeSearch": "Lancer la recherche gratuite",
     "runCoinSearch": "Recherche supplémentaire · {{cost}} Coins",
     "weeklyLimitReached": "Limite hebdomadaire atteinte",
-    "lastSearch": "Dernière recherche : passage {{run}} · {{reports}} rapports"
+    "lastSearch": "Dernière recherche : passage {{run}} · {{reports}} rapports",
+    "maxReportsPerWeek": "Rapports max. / semaine"
   },
   "settings": {
     "title": "Responsabilités",
