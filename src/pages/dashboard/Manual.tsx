@@ -2839,6 +2839,43 @@ const manualSections: ManualSection[] = [
       { label: 'Open National Ranking & Championships', to: '/dashboard/national-ranking' },
     ],
   },
+  {
+    id: 'youth-academy',
+    category: 'Riders',
+    title: 'Youth Academy: U16 Starter Guide',
+    subtitle: 'How to run your Premium U16 programme, riders, staff, races and budget.',
+    overview:
+      'Youth Academy is a Premium U16 development programme with a fixed capacity of 16 riders. It is designed for long-term development: recruit young riders, give them suitable racing opportunities, manage dedicated Academy staff and finances, and decide their pathway when they reach age 16.',
+    facts: [
+      { label: 'Capacity', value: 'Maximum 16 Youth Riders' },
+      { label: 'Starting package', value: '6 local Youth Riders, Youth Academy Director and U16 Head Coach' },
+      { label: 'Optional staff', value: 'Up to 3 Youth Scouts can be hired through the Staff Market' },
+      { label: 'Race format', value: 'Results-only: World Class, Continental West/East and Regional Class' },
+      { label: 'Budget', value: 'Separate Youth Academy fund with its own race income and two-way senior-team transfers' },
+    ],
+    details: [
+      'Youth Rider profiles are available from the Youth Riders tab. Their riding attributes, readiness, fatigue, development focus, support agreement and race history are visible, but exact hidden potential is intentionally not shown. Use the Talent Assessment band instead.',
+      'The Academy starts with six local riders and can grow to 16. Scouting and recruitment add new prospects. Youth staff are hired from the regular Staff Market, including Youth Academy Director, U16 Head Coach and Youth Scout roles.',
+      'Responsibilities decide whether the manager or Academy staff handle recruitment, race participation, lineups, scouting-related decisions and equipment. Delegation reduces micromanagement, while manager control gives direct approval.',
+      'Youth racing is results-only and has three levels. World Class contains the strongest Academies, Continental Class is split West and East, and Regional Class follows geographic divisions. The same Academy can send different squads to simultaneous races, but the same rider cannot be selected for overlapping events.',
+      'World Class Academies receive World Class invitations. If invited teams decline, vacant places can be filled by weighted wildcards. Monthly participation plans limit how many World, Continental and Regional races the Academy may enter and how much can be spent.',
+      'The activation allocation is permanent history and cannot be edited later. Current Academy funds can change through spending, symbolic Youth race income and explicit transfers. Youth race income goes directly to the Youth Academy fund, not to senior-team cash.',
+      'Use Adjust Budget when you deliberately want to move funds. Senior-to-Youth transfers reduce senior cash and increase Academy funds. Youth-to-senior transfers are allowed only from unspent and uncommitted Academy funds.',
+      'At age 16, riders require a graduation decision. Depending on the available pathway, you can keep a temporary pathway, move an eligible rider to the Developing Team when space exists, or release the rider.',
+    ],
+    tips: [
+      'Do not use the same best riders in every race. Rotate the 16-rider roster so younger and weaker riders also gain race experience.',
+      'Approve the monthly race plan before invitations and race deadlines become urgent.',
+      'Keep enough Academy funds available for support agreements, staff, scouting, equipment and race travel.',
+      'Open Youth Rider profiles regularly; readiness and fatigue matter as much as talent assessment for race selection.',
+    ],
+    relatedLinks: [
+      { label: 'Open Youth Academy', to: '/dashboard/youth-academy' },
+      { label: 'Open Youth Riders', to: '/dashboard/youth-academy?tab=riders' },
+      { label: 'Open Staff', to: '/dashboard/staff' },
+      { label: 'Open Staff Market', to: '/dashboard/transfers' },
+    ],
+  },
 ]
 
 const manualCategories = Array.from(new Set(manualSections.map(section => section.category)))
