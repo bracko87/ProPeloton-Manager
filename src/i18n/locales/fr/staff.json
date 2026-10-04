@@ -477,6 +477,51 @@
       "title": "Analyse des données sur le rendement",
       "description": "Améliore l'examen analytique des coureurs et des rapports de préparation de course.",
       "focus": "Précision + analyse"
+    },
+    "youth_director_programme_management": {
+      "title": "Gestion du programme Académie",
+      "description": "Améliore leadership et efficacité quotidienne de l’Académie.",
+      "focus": "Leadership + Efficacité"
+    },
+    "youth_director_budget_pathways": {
+      "title": "Budget & parcours de développement",
+      "description": "Améliore gestion, planification et parcours de développement efficaces.",
+      "focus": "Gestion + Efficacité"
+    },
+    "youth_director_recruitment_strategy": {
+      "title": "Stratégie de recrutement jeunes",
+      "description": "Programme avancé pour parcours de talents, recrutement et leadership.",
+      "focus": "Parcours + Leadership"
+    },
+    "u16_development_methodology": {
+      "title": "Méthodologie de développement U16",
+      "description": "Améliore le développement hebdomadaire et la progression à long terme.",
+      "focus": "Développement + Potentiel"
+    },
+    "u16_workload_management": {
+      "title": "Gestion de charge U16",
+      "description": "Améliore les décisions de fatigue, forme et charge de développement.",
+      "focus": "Efficacité + Expérience"
+    },
+    "u16_race_coaching": {
+      "title": "Programme de coaching U16",
+      "description": "Améliore la sélection des courses et le développement en compétition.",
+      "focus": "Coaching + Leadership"
+    },
+    "youth_scout_talent_id": {
+      "title": "Identification des talents jeunes",
+      "description": "Améliore la sélection et la précision d’évaluation.",
+      "focus": "Identification + Précision"
+    },
+    "youth_scout_network_building": {
+      "title": "Réseau de scouting jeunes",
+      "description": "Développe l’expérience et le réseau de détection.",
+      "focus": "Réseau + Expérience"
+    },
+    "youth_scout_assessment_accuracy": {
+      "title": "Précision d’évaluation jeunes",
+      "description": "Évaluation avancée pour des rapports plus fiables.",
+      "focus": "Précision + Potentiel"
     }
   },
   "legacyUi": {
