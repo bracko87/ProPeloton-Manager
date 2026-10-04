@@ -82,7 +82,14 @@
     "experience": "Esperienza",
     "salary": "Salario settimanale",
     "scoutOptional": "Lo scout giovanile è facoltativo. Ingaggiane uno dalla pagina Staff per iniziare la ricerca attiva di talenti.",
-    "openStaffPage": "Apri Rosa → Staff"
+    "openStaffPage": "Apri pagina staff",
+    "youthScope": "Accademia Giovanile",
+    "potential": "Potenziale",
+    "leadership": "Leadership",
+    "efficiency": "Efficienza",
+    "loyalty": "Lealtà",
+    "weeklyWage": "Stipendio settimanale",
+    "contractUntil": "Contratto fino al {{date}}"
   },
   "budget": {
     "title": "Budget stagionale dell'accademia",
@@ -101,7 +108,27 @@
     "date": "Data",
     "category": "Categoria",
     "description": "Descrizione",
-    "amount": "Importo"
+    "amount": "Importo",
+    "initialAllocation": "Allocazione iniziale stagionale",
+    "initialAllocationHelp": "Importo assegnato all'attivazione dell'Accademia. Questa allocazione storica non cambia in seguito.",
+    "currentFunds": "Fondi attuali dell'Accademia",
+    "includesIncomeTransfers": "Include entrate gare e trasferimenti successivi.",
+    "afterCommitments": "Disponibile dopo spese e impegni.",
+    "seniorBalance": "Saldo squadra senior",
+    "seniorBalanceHelp": "Liquidità senior disponibile prima di un nuovo trasferimento.",
+    "fundsChart": "Fondi Accademia",
+    "incomeChart": "Entrate e trasferimenti",
+    "raceIncome": "Entrate gare giovanili",
+    "transfersIn": "Trasferimenti dalla senior",
+    "transfersOut": "Restituito alla senior",
+    "adjustBudget": "Modifica budget Accademia",
+    "direction": "Direzione",
+    "seniorToYouth": "Squadra senior → Accademia",
+    "youthToSenior": "Accademia → Squadra senior",
+    "transferAmount": "Importo",
+    "transferring": "Trasferimento…",
+    "transferFunds": "Trasferisci fondi",
+    "transferHelp": "Le entrate delle gare restano automaticamente nell'Accademia. Usa questo controllo solo per spostare intenzionalmente denaro tra squadra senior e Accademia."
   },
   "scouting": {
     "title": "Raggio dello scouting giovanile",
@@ -261,7 +288,8 @@
     "historyLoad": "Impossibile caricare lo storico dell'Accademia.",
     "reportFrequency": "Impossibile salvare la preferenza dei report giovanili.",
     "monthlyRacePlan": "Impossibile salvare il piano mensile delle gare giovanili.",
-    "raceInvitationDecline": "Impossibile rifiutare l'invito alla gara giovanile."
+    "raceInvitationDecline": "Impossibile rifiutare l'invito alla gara giovanile.",
+    "budgetTransfer": "Impossibile trasferire i fondi dell'Accademia."
   },
   "equipment": {
     "title": "Attrezzatura giovanile",
@@ -449,5 +477,35 @@
     "workload": "Carico",
     "change": "Cambiamento",
     "readinessFatigue": "Forma / fatica"
+  },
+  "profile": {
+    "loading": "Caricamento profilo giovane…",
+    "notFound": "Impossibile caricare il profilo del giovane corridore.",
+    "back": "Torna ai giovani corridori",
+    "youthRider": "Corridore giovane",
+    "readiness": "Prontezza",
+    "fatigue": "Fatica",
+    "developmentFocus": "Focus sviluppo",
+    "talentAssessment": "Valutazione talento",
+    "hiddenPotential": "Il potenziale esatto rimane nascosto.",
+    "attributes": "Attributi",
+    "supportAgreement": "Accordo di supporto",
+    "weeklyStipend": "Stipendio settimanale",
+    "accommodation": "Alloggio",
+    "joined": "Ingresso in Accademia",
+    "agreementUntil": "Accordo fino al",
+    "raceSummary": "Riepilogo gare",
+    "starts": "Partenze",
+    "wins": "Vittorie",
+    "podiums": "Podi",
+    "regionalPoints": "Punti regionali",
+    "worldPoints": "Punti mondiali",
+    "recentResults": "Risultati recenti",
+    "noResults": "Nessun risultato giovanile.",
+    "date": "Data",
+    "race": "Gara",
+    "class": "Classe",
+    "result": "Risultato",
+    "points": "Punti"
   }
 }
