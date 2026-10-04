@@ -259,7 +259,9 @@
     "raceEntry": "No se pudo inscribir la carrera juvenil.",
     "raceLineup": "No se pudo guardar la alineación juvenil.",
     "historyLoad": "No se pudo cargar el historial de la Academia.",
-    "reportFrequency": "No se pudo guardar la preferencia de informes juveniles."
+    "reportFrequency": "No se pudo guardar la preferencia de informes juveniles.",
+    "monthlyRacePlan": "No se pudo guardar el plan mensual de carreras juveniles.",
+    "raceInvitationDecline": "No se pudo rechazar la invitación a la carrera juvenil."
   },
   "equipment": {
     "title": "Equipamiento juvenil",
@@ -311,7 +313,7 @@
     "resultsOnly": "Solo resultados — sin repetición",
     "entryResponsibility": "Participación",
     "squadResponsibility": "Alineación y estrategia",
-    "ageLimitHelp": "Los ciclistas tienen límites de salidas según la edad en 30 días de juego. El entrenador U16 también valora perfil, preparación y fatiga, por lo que la academia suele elegir solo una parte de las 12 pruebas regionales disponibles cada mes.",
+    "ageLimitHelp": "Las carreras juveniles son solo de resultados. Clase Mundial, Continental y Regional usan límites de salidas por edad, preparación y fatiga. La Academia puede enviar plantillas distintas al mismo tiempo, pero un ciclista no puede estar en carreras solapadas.",
     "races": "Carreras juveniles",
     "loading": "Cargando carreras…",
     "levels": {
@@ -321,7 +323,7 @@
     },
     "qualified": "Clasificado",
     "notQualified": "No clasificado",
-    "qualificationHelp": "La World Series se clasifica mediante el Ranking Juvenil Regional. La Final Mundial utiliza el Ranking Mundial Juvenil.",
+    "qualificationHelp": "Esta prueba es visible, pero tu Academia no tiene una invitación activa o suficientes ciclistas elegibles.",
     "strategy": "Estrategia",
     "strategies": {
       "conservative": "Conservadora",
@@ -339,11 +341,47 @@
     "coachLineupHelp": "El entrenador U16 seleccionó {{count}} ciclista(s) y controla la estrategia.",
     "myResults": "Resultados de mi academia",
     "topResults": "Mejores resultados",
-    "didNotRace": "Tu academia no disputó esta prueba."
+    "didNotRace": "Tu academia no disputó esta prueba.",
+    "academyCompetition": "Competición de la academia",
+    "competition": {
+      "world": "Clase Mundial",
+      "continental": "Clase Continental",
+      "regional": "Clase Regional",
+      "youth": "Competición Juvenil"
+    },
+    "monthlyPlanTitle": "Plan de carreras juveniles de {{month}}",
+    "approved": "Aprobado",
+    "approvalRequired": "Requiere aprobación",
+    "raceLimitLabel": "Carreras de {{className}}",
+    "calendarEventsThisMonth": "{{count}} pruebas de calendario este mes",
+    "monthlyBudget": "Presupuesto mensual de carreras",
+    "enteredSoFar": "Inscrito hasta ahora: {{value}}",
+    "savingPlan": "Guardando plan…",
+    "updatePlan": "Actualizar plan mensual",
+    "approvePlan": "Aprobar plan mensual",
+    "planHelp": "El plan limita cuántas carreras puede disputar la Academia este mes y cuánto puede gastar. El entrenador U16 puede rotar plantillas diferentes en carreras simultáneas, pero un mismo ciclista no puede participar en pruebas que se solapen.",
+    "raceCalendar": "Calendario de carreras",
+    "visibleEvents": "{{count}} pruebas visibles",
+    "worldVisible": "Las carreras de Clase Mundial son visibles globalmente",
+    "regionalVisible": "Las carreras regionales se limitan a tu división local",
+    "days": "{{count}} días",
+    "oneDay": "1 día",
+    "teams": "{{current}}/{{max}} equipos",
+    "invitationStatuses": {
+      "pending": "Pendiente",
+      "accepted": "Aceptada",
+      "declined": "Rechazada",
+      "expired": "Caducada",
+      "waitlist": "Lista de espera"
+    },
+    "noInvitation": "Aún sin invitación",
+    "declining": "Rechazando…",
+    "declineInvitation": "Rechazar invitación",
+    "responseDeadline": "Fecha límite: {{date}}"
   },
   "rankings": {
     "title": "Rankings juveniles",
-    "description": "Tu academia compite en el Ranking Juvenil Regional de {{region}}. Los resultados regionales también aportan menos puntos al Ranking Mundial Juvenil; World Series y Final Mundial otorgan más puntos mundiales.",
+    "description": "La clasificación de Academias sigue la Clase Mundial Juvenil, Continental Oeste/Este y las divisiones Regionales. Los rankings de ciclistas permanecen separados y se basan en resultados regionales y mundiales.",
     "regionalTitle": "Ranking Juvenil Regional",
     "worldTitle": "Ranking Mundial Juvenil",
     "loading": "Cargando rankings…",
@@ -352,7 +390,11 @@
     "rider": "Ciclista",
     "academy": "Academia",
     "starts": "Llegadas",
-    "points": "Puntos"
+    "points": "Puntos",
+    "yourDivision": "Tu división",
+    "raceStarts": "Salidas",
+    "riderRankings": "Rankings de ciclistas juveniles",
+    "promotionNote": "Las zonas de ascenso y descenso están preparadas en el modelo. Las posiciones exactas se activarán cuando se definan esas reglas."
   },
   "reports": {
     "title": "Informes de carreras juveniles",
