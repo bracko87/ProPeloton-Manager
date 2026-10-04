@@ -1712,6 +1712,24 @@ function getNationsTopThreeLabel(item: NotificationItem): string | null {
 
 export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
 
+  YOUTH_ACADEMY_STARTED: {
+    defaultTitle: 'Your Youth Academy is ready',
+    defaultMessage:
+      'Your U16 programme is active. Review responsibilities, scouting, racing and the dedicated Academy budget before the first events.',
+    getIntroText: (item) =>
+      item.message ||
+      'Your U16 programme is active. Review responsibilities, scouting, racing and the dedicated Academy budget before the first events.',
+    getExtraText: () =>
+      'The Youth Academy has its own riders, staff, race calendar and budget. The starter guide explains the complete workflow.',
+    actions: [
+      withFallbackHref(
+        'Open Youth Academy manual',
+        '/dashboard/manual?section=youth-academy'
+      ),
+      MARK_READ_ACTION,
+    ],
+  },
+
   NATIONAL_ASSOCIATION_ACTIVATED: {
     defaultTitle: 'National Association activated',
     defaultMessage: 'Your National Association is now active.',
