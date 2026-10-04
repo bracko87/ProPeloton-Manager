@@ -82,7 +82,14 @@
     "experience": "Erfahrung",
     "salary": "Wochengehalt",
     "scoutOptional": "Ein Jugendscout ist optional. Stelle einen über Personal ein, um aktiv Talente zu entdecken.",
-    "openStaffPage": "Kader → Personal öffnen"
+    "openStaffPage": "Staff-Seite öffnen",
+    "youthScope": "Youth Academy",
+    "potential": "Potenzial",
+    "leadership": "Führung",
+    "efficiency": "Effizienz",
+    "loyalty": "Loyalität",
+    "weeklyWage": "Wochengehalt",
+    "contractUntil": "Vertrag bis {{date}}"
   },
   "budget": {
     "title": "Saisonbudget der Akademie",
@@ -101,7 +108,27 @@
     "date": "Datum",
     "category": "Kategorie",
     "description": "Beschreibung",
-    "amount": "Betrag"
+    "amount": "Betrag",
+    "initialAllocation": "Ursprüngliches Saisonbudget",
+    "initialAllocationHelp": "Der Betrag, der bei Aktivierung der Akademie zugewiesen wurde. Diese historische Startzuweisung bleibt unverändert.",
+    "currentFunds": "Aktuelle Akademiemittel",
+    "includesIncomeTransfers": "Enthält Renneinnahmen und spätere Budgettransfers.",
+    "afterCommitments": "Verfügbar nach Ausgaben und Verpflichtungen.",
+    "seniorBalance": "Kontostand Senior-Team",
+    "seniorBalanceHelp": "Verfügbares Senior-Team-Bargeld vor einem neuen Transfer.",
+    "fundsChart": "Akademiemittel",
+    "incomeChart": "Einnahmen & Transfers",
+    "raceIncome": "Jugend-Renneinnahmen",
+    "transfersIn": "Transfers vom Senior-Team",
+    "transfersOut": "An Senior-Team zurückgegeben",
+    "adjustBudget": "Akademiebudget anpassen",
+    "direction": "Transferrichtung",
+    "seniorToYouth": "Senior-Team → Youth Academy",
+    "youthToSenior": "Youth Academy → Senior-Team",
+    "transferAmount": "Betrag",
+    "transferring": "Übertragung…",
+    "transferFunds": "Geld übertragen",
+    "transferHelp": "Renneinnahmen bleiben automatisch in der Youth Academy. Nutze diese Funktion nur, wenn du bewusst Geld zwischen Senior-Team und Akademie verschieben möchtest."
   },
   "scouting": {
     "title": "Reichweite des Jugendscoutings",
@@ -261,7 +288,8 @@
     "historyLoad": "Der Verlauf der Jugendakademie konnte nicht geladen werden.",
     "reportFrequency": "Die Einstellung für Jugend-Rennberichte konnte nicht gespeichert werden.",
     "monthlyRacePlan": "Der monatliche Jugend-Rennplan konnte nicht gespeichert werden.",
-    "raceInvitationDecline": "Die Einladung zum Jugendrennen konnte nicht abgelehnt werden."
+    "raceInvitationDecline": "Die Einladung zum Jugendrennen konnte nicht abgelehnt werden.",
+    "budgetTransfer": "Youth-Academie-Geld konnte nicht übertragen werden."
   },
   "equipment": {
     "title": "Jugendausrüstung",
@@ -449,5 +477,35 @@
     "workload": "Belastung",
     "change": "Entwicklungsänderung",
     "readinessFatigue": "Frische / Ermüdung"
+  },
+  "profile": {
+    "loading": "Jugendfahrer-Profil wird geladen…",
+    "notFound": "Jugendfahrer-Profil konnte nicht geladen werden.",
+    "back": "Zurück zu Jugendfahrern",
+    "youthRider": "Jugendfahrer",
+    "readiness": "Bereitschaft",
+    "fatigue": "Ermüdung",
+    "developmentFocus": "Entwicklungsfokus",
+    "talentAssessment": "Talentbewertung",
+    "hiddenPotential": "Das exakte Potenzial bleibt verborgen.",
+    "attributes": "Fahrerattribute",
+    "supportAgreement": "Unterstützungsvereinbarung",
+    "weeklyStipend": "Wöchentliches Stipendium",
+    "accommodation": "Unterkunft",
+    "joined": "Akademiebeitritt",
+    "agreementUntil": "Vereinbarung bis",
+    "raceSummary": "Rennbilanz",
+    "starts": "Starts",
+    "wins": "Siege",
+    "podiums": "Podien",
+    "regionalPoints": "Regionale Punkte",
+    "worldPoints": "Weltpunkte",
+    "recentResults": "Letzte Ergebnisse",
+    "noResults": "Noch keine Jugendrennergebnisse.",
+    "date": "Datum",
+    "race": "Rennen",
+    "class": "Klasse",
+    "result": "Ergebnis",
+    "points": "Punkte"
   }
 }
