@@ -3413,46 +3413,55 @@
     },
     "youth-academy": {
       "category": "Coureurs",
-      "title": "Académie Jeunes : guide de démarrage U16",
-      "subtitle": "Gérer le programme Premium U16, les coureurs, le staff, les courses et le budget.",
-      "overview": "L'Académie Jeunes est un programme Premium U16 limité à 16 coureurs. Recrutez des jeunes, donnez-leur des courses adaptées, gérez le staff et les finances dédiés et décidez de leur parcours à 16 ans.",
+      "title": "Youth Academy : guide de démarrage U16",
+      "subtitle": "Gérer le programme Premium U16, coureurs, staff, scouting, courses et budget.",
+      "overview": "La Youth Academy est un programme Premium U16 limité à 16 coureurs. Recrutez et développez les talents avec un staff et des cours dédiés, gérez scouting, compétitions et budget séparé, puis choisissez leur parcours à 16 ans.",
       "facts": {
         "0": {
           "label": "Capacité",
-          "value": "Maximum 16 coureurs jeunes"
+          "value": "16 coureurs Youth maximum"
         },
         "1": {
           "label": "Pack de départ",
-          "value": "6 coureurs locaux, Directeur d'Académie et entraîneur principal U16"
+          "value": "6 coureurs locaux, Directeur d’Académie et Coach U16"
         },
         "2": {
           "label": "Staff optionnel",
-          "value": "Jusqu'à 3 scouts jeunes via le marché du staff"
+          "value": "Jusqu’à 3 Youth Scouts via le marché du staff"
         },
         "3": {
-          "label": "Format des courses",
-          "value": "Résultats uniquement : Classe Mondiale, Continentale Ouest/Est et Régionale"
+          "label": "Fréquence scouting",
+          "value": "1 recherche gratuite + jusqu’à 3 recherches en Coins par semaine de jeu"
         },
         "4": {
+          "label": "Compétition",
+          "value": "Classe Mondiale, Continentale Ouest/Est et Régionale"
+        },
+        "5": {
           "label": "Budget",
           "value": "Fonds séparé avec revenus de course et transferts dans les deux sens"
         }
       },
       "details": {
-        "0": "Ouvrez les profils depuis Coureurs Jeunes. Attributs, préparation, fatigue, développement, accord et historique sont visibles ; le potentiel exact reste masqué derrière l'évaluation du talent.",
-        "1": "L'Académie démarre avec six coureurs locaux et peut atteindre 16. Directeur, entraîneur U16 et scouts sont recrutés via le marché du staff normal.",
-        "2": "Les responsabilités déterminent si le manager ou le staff gère recrutement, participation aux courses, compositions et décisions d'équipement.",
-        "3": "Les courses jeunes sont calculées uniquement par résultats : Classe Mondiale, Continentale Ouest/Est et divisions Régionales. Plusieurs équipes peuvent courir simultanément, mais pas le même coureur sur des épreuves qui se chevauchent.",
-        "4": "Les Académies de Classe Mondiale reçoivent des invitations. Les places libérées peuvent être attribuées par wildcards pondérées. Le plan mensuel limite le volume de courses et les dépenses.",
-        "5": "L'allocation d'activation reste une valeur historique fixe. Les fonds actuels évoluent avec les dépenses, revenus de course et transferts explicites.",
-        "6": "Les revenus des courses jeunes vont directement à l'Académie. Utilisez Ajuster le budget uniquement pour déplacer volontairement de l'argent entre équipe senior et Académie.",
-        "7": "À 16 ans, une décision est requise : pathway, équipe de développement si possible ou libération."
+        "0": "Les profils Youth affichent attributs, forme, fatigue, développement, accord de soutien et historique ; le potentiel exact reste caché derrière l’évaluation.",
+        "1": "L’Académie débute avec six coureurs et peut atteindre 16. Le staff Youth utilise la même échelle que le staff senior : Faible, Basique, Compétent, Fort, Élite et Classe Mondiale.",
+        "2": "Chaque rôle possède ses bonus : le Directeur améliore gestion et achats, le Coach U16 influence développement et sélection, le Scout améliore sélection et précision des rapports.",
+        "3": "Le staff Youth progresse via des cours dédiés dans le profil Staff normal. Les cours sont payés par le budget de l’Académie.",
+        "4": "Le Scout dispose d’une recherche gratuite par semaine plus trois recherches supplémentaires : Locale 10, Régionale 15, Continentale 20 et Mondiale 30 Coins.",
+        "5": "Les responsabilités sont confirmées domaine par domaine. Recrutement et négociations peuvent être délégués au Directeur ; participation et compositions au Coach U16.",
+        "6": "La compétition comprend Classe Mondiale, Continentale Ouest/Est et divisions Régionales. Le Calendrier peut afficher tout le mois ou uniquement les opportunités de votre Académie. Un coureur ne peut pas participer à des courses qui se chevauchent.",
+        "7": "Les Académies World Class reçoivent les invitations ; les places libres peuvent être attribuées par wildcards pondérées. Le plan mensuel limite volume et dépenses.",
+        "8": "L’allocation initiale reste figée dans l’historique. Les fonds évoluent avec dépenses, revenus Youth et transferts ; les revenus de course vont directement à l’Académie.",
+        "9": "Ajuster le budget permet des transferts dans les deux sens. Le retour vers l’équipe senior est limité aux fonds libres non engagés.",
+        "10": "À 16 ans, une décision est nécessaire : parcours temporaire, Developing Team si possible, ou libération."
       },
       "tips": {
-        "0": "Faites tourner l'effectif au lieu d'utiliser toujours les meilleurs.",
-        "1": "Approuvez le plan mensuel avant les échéances.",
-        "2": "Gardez des fonds pour soutien, staff, scouting, équipement et déplacements.",
-        "3": "Contrôlez régulièrement préparation et fatigue."
+        "0": "Consultez les profils du staff Youth pour niveau, compétences, bonus, saison de contrat et cours.",
+        "1": "Utilisez d’abord la recherche hebdomadaire gratuite.",
+        "2": "Faites tourner l’effectif pour donner de l’expérience à tous.",
+        "3": "Validez le plan mensuel avant les échéances.",
+        "4": "Gardez du budget pour soutien, salaires, scouting, cours, équipement et voyages.",
+        "5": "Surveillez régulièrement forme et fatigue."
       },
       "relatedLinks": {
         "0": "Ouvrir l'Académie Jeunes",
