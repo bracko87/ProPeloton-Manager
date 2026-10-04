@@ -259,7 +259,9 @@
     "raceEntry": "Nije moguće prijaviti U16 trku.",
     "raceLineup": "Nije moguće sačuvati U16 postavu.",
     "historyLoad": "Nije moguće učitati istoriju Akademije.",
-    "reportFrequency": "Nije moguće sačuvati postavku U16 izveštaja."
+    "reportFrequency": "Nije moguće sačuvati postavku U16 izveštaja.",
+    "monthlyRacePlan": "Nije moguće sačuvati mesečni plan trka mladih.",
+    "raceInvitationDecline": "Nije moguće odbiti poziv za trku mladih."
   },
   "equipment": {
     "title": "Oprema za mlade",
@@ -311,7 +313,7 @@
     "resultsOnly": "Samo rezultati — bez replay-a",
     "entryResponsibility": "Učešće na trkama",
     "squadResponsibility": "Postava i strategija",
-    "ageLimitHelp": "Vozači imaju starosna ograničenja broja startova u periodu od 30 dana igre. U16 glavni trener uzima u obzir profil, spremnost i umor, pa Akademija obično bira samo deo od 12 regionalnih trka dostupnih svakog meseca.",
+    "ageLimitHelp": "Trke mladih imaju samo obračun rezultata, bez replay-a. Svetska, Kontinentalna i Regionalna klasa koriste starosne limite startova, spremnost i umor. Akademija može da pošalje različite postave na trke u isto vreme, ali isti vozač ne može da vozi trke koje se preklapaju.",
     "races": "Trke mladih",
     "loading": "Učitavanje trka…",
     "levels": {
@@ -321,7 +323,7 @@
     },
     "qualified": "Kvalifikovan",
     "notQualified": "Nije kvalifikovan",
-    "qualificationHelp": "Za World Series se kvalifikuje preko Regional Youth Rankinga. Youth World Final koristi Youth World Ranking.",
+    "qualificationHelp": "Trka je vidljiva, ali Akademija trenutno nema aktivan poziv ili dovoljno raspoloživih vozača.",
     "strategy": "Strategija trke",
     "strategies": {
       "conservative": "Konzervativna",
@@ -339,11 +341,47 @@
     "coachLineupHelp": "U16 glavni trener je izabrao {{count}} vozača i vodi strategiju trke.",
     "myResults": "Rezultati moje Akademije",
     "topResults": "Najbolji rezultati",
-    "didNotRace": "Tvoja Akademija nije vozila ovu trku."
+    "didNotRace": "Tvoja Akademija nije vozila ovu trku.",
+    "academyCompetition": "Takmičenje Akademije",
+    "competition": {
+      "world": "Svetska klasa",
+      "continental": "Kontinentalna klasa",
+      "regional": "Regionalna klasa",
+      "youth": "Takmičenje mladih"
+    },
+    "monthlyPlanTitle": "Plan trka mladih za {{month}}",
+    "approved": "Odobreno",
+    "approvalRequired": "Potrebno odobrenje",
+    "raceLimitLabel": "Trke: {{className}}",
+    "calendarEventsThisMonth": "{{count}} događaja u kalendaru ovog meseca",
+    "monthlyBudget": "Mesečni budžet za trke",
+    "enteredSoFar": "Prijavljeno do sada: {{value}}",
+    "savingPlan": "Čuvanje plana…",
+    "updatePlan": "Ažuriraj mesečni plan",
+    "approvePlan": "Odobri mesečni plan",
+    "planHelp": "Plan ograničava koliko trka Akademija može da vozi ovog meseca i koliko može da potroši. U16 glavni trener može da rotira različite postave na trkama koje se voze istovremeno, ali isti vozač ne može biti prijavljen na trke koje se preklapaju.",
+    "raceCalendar": "Kalendar trka",
+    "visibleEvents": "{{count}} vidljivih događaja",
+    "worldVisible": "Trke Svetske klase su vidljive svima",
+    "regionalVisible": "Regionalne trke su ograničene na tvoju matičnu diviziju",
+    "days": "{{count}} dana",
+    "oneDay": "1 dan",
+    "teams": "{{current}}/{{max}} timova",
+    "invitationStatuses": {
+      "pending": "Na čekanju",
+      "accepted": "Prihvaćeno",
+      "declined": "Odbijeno",
+      "expired": "Isteklo",
+      "waitlist": "Lista čekanja"
+    },
+    "noInvitation": "Još nema poziva",
+    "declining": "Odbijanje…",
+    "declineInvitation": "Odbij poziv",
+    "responseDeadline": "Rok za odgovor: {{date}}"
   },
   "rankings": {
     "title": "Rang-liste mladih",
-    "description": "Tvoja Akademija se takmiči u regionalnom Youth Rankingu za region {{region}}. Regionalni rezultati donose i manji broj bodova za Youth World Ranking; World Series i World Final nose više svetskih bodova.",
+    "description": "Poredak Akademija prati Svetsku klasu mladih, Kontinentalni Zapad/Istok i Regionalne divizije. Rang-liste vozača ostaju odvojene i zasnivaju se na regionalnim i svetskim rezultatima.",
     "regionalTitle": "Regional Youth Ranking",
     "worldTitle": "Youth World Ranking",
     "loading": "Učitavanje rang-lista…",
@@ -352,7 +390,11 @@
     "rider": "Vozač",
     "academy": "Akademija",
     "starts": "Završene trke",
-    "points": "Bodovi"
+    "points": "Bodovi",
+    "yourDivision": "Tvoja divizija",
+    "raceStarts": "Startovi",
+    "riderRankings": "Rang-lista mladih vozača",
+    "promotionNote": "Zone promocije i ispadanja su pripremljene u modelu takmičenja. Tačna mesta će biti aktivirana kada pravila budu potvrđena."
   },
   "reports": {
     "title": "Izveštaji U16 trka",
