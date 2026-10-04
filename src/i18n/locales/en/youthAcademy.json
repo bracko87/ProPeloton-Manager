@@ -259,7 +259,9 @@
     "raceEntry": "Could not enter the Youth race.",
     "raceLineup": "Could not save the Youth race lineup.",
     "historyLoad": "Could not load Youth Academy history.",
-    "reportFrequency": "Could not save Youth Race Reports preference."
+    "reportFrequency": "Could not save Youth Race Reports preference.",
+    "monthlyRacePlan": "Could not save the monthly Youth race plan.",
+    "raceInvitationDecline": "Could not decline the Youth race invitation."
   },
   "equipment": {
     "title": "Youth equipment",
@@ -311,7 +313,7 @@
     "resultsOnly": "Results only — no replay",
     "entryResponsibility": "Race participation",
     "squadResponsibility": "Lineup & strategy",
-    "ageLimitHelp": "Riders have age-based rolling 30-day race-start limits. The Head Coach also considers profile, readiness and fatigue, so an Academy normally enters only a small selection of the 12 available regional events each game month.",
+    "ageLimitHelp": "Youth racing is results-only. World Class, Continental and Regional events use age-based rolling start limits, rider readiness and fatigue. Separate Academy squads may race at the same time, but one rider cannot be selected for overlapping events.",
     "races": "Youth races",
     "loading": "Loading Youth races…",
     "levels": {
@@ -321,7 +323,7 @@
     },
     "qualified": "Qualified",
     "notQualified": "Not qualified",
-    "qualificationHelp": "Qualification for World Series events comes from the Regional Youth Ranking. The Youth World Final uses the Youth World Ranking.",
+    "qualificationHelp": "This event is visible, but your Academy does not currently have an active invitation or enough eligible riders.",
     "strategy": "Race strategy",
     "strategies": {
       "conservative": "Conservative",
@@ -339,11 +341,47 @@
     "coachLineupHelp": "The U16 Head Coach selected {{count}} rider(s) and controls race strategy.",
     "myResults": "My Academy results",
     "topResults": "Top results",
-    "didNotRace": "Your Academy did not race this event."
+    "didNotRace": "Your Academy did not race this event.",
+    "academyCompetition": "Academy competition",
+    "competition": {
+      "world": "World Class",
+      "continental": "Continental Class",
+      "regional": "Regional Class",
+      "youth": "Youth Competition"
+    },
+    "monthlyPlanTitle": "{{month}} Youth race plan",
+    "approved": "Approved",
+    "approvalRequired": "Approval required",
+    "raceLimitLabel": "{{className}} races",
+    "calendarEventsThisMonth": "{{count}} calendar events this month",
+    "monthlyBudget": "Monthly racing budget",
+    "enteredSoFar": "Entered so far: {{value}}",
+    "savingPlan": "Saving plan…",
+    "updatePlan": "Update monthly plan",
+    "approvePlan": "Approve monthly plan",
+    "planHelp": "The plan limits how many races the Academy may enter this month and how much can be spent. The U16 Head Coach can rotate separate squads across simultaneous races, but the same rider cannot be booked into overlapping events.",
+    "raceCalendar": "Race calendar",
+    "visibleEvents": "{{count}} visible events",
+    "worldVisible": "World Class races are shown globally",
+    "regionalVisible": "Regional races are limited to your home division",
+    "days": "{{count}} days",
+    "oneDay": "1 day",
+    "teams": "{{current}}/{{max}} teams",
+    "invitationStatuses": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "expired": "Expired",
+      "waitlist": "Waitlist"
+    },
+    "noInvitation": "No invitation yet",
+    "declining": "Declining…",
+    "declineInvitation": "Decline invitation",
+    "responseDeadline": "Response deadline: {{date}}"
   },
   "rankings": {
     "title": "Youth Rankings",
-    "description": "Your Academy competes in the {{region}} Regional Youth Ranking. Regional results also contribute a smaller number of points to the Youth World Ranking; Youth World Series and the World Final carry stronger World points.",
+    "description": "Academy standings follow the Youth World Class, Continental West/East and Regional divisions. Rider rankings remain separate and are based on race results in your region and worldwide.",
     "regionalTitle": "Regional Youth Ranking",
     "worldTitle": "Youth World Ranking",
     "loading": "Loading rankings…",
@@ -352,7 +390,11 @@
     "rider": "Rider",
     "academy": "Academy",
     "starts": "Finishes",
-    "points": "Points"
+    "points": "Points",
+    "yourDivision": "Your division",
+    "raceStarts": "Race starts",
+    "riderRankings": "Youth rider rankings",
+    "promotionNote": "Promotion and relegation positions are prepared in the competition model. The exact promotion/relegation spots will be activated after those rules are finalized."
   },
   "reports": {
     "title": "Youth Race Reports",
