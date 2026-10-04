@@ -477,6 +477,51 @@
       "title": "Analisi dei dati sulle prestazioni",
       "description": "Migliora la revisione analitica dei ciclisti e dei rapporti di preparazione della gara.",
       "focus": "Precisione + Analisi"
+    },
+    "youth_director_programme_management": {
+      "title": "Gestione programma Accademia",
+      "description": "Migliora leadership ed efficienza quotidiana dell’Accademia.",
+      "focus": "Leadership + Efficienza"
+    },
+    "youth_director_budget_pathways": {
+      "title": "Budget e percorsi Accademia",
+      "description": "Migliora gestione, pianificazione e percorsi di sviluppo efficienti.",
+      "focus": "Gestione + Efficienza"
+    },
+    "youth_director_recruitment_strategy": {
+      "title": "Strategia reclutamento giovanile",
+      "description": "Programma avanzato per percorsi talento, reclutamento e leadership.",
+      "focus": "Percorsi talento + Leadership"
+    },
+    "u16_development_methodology": {
+      "title": "Metodologia sviluppo U16",
+      "description": "Migliora sviluppo settimanale e progressione a lungo termine.",
+      "focus": "Sviluppo + Potenziale"
+    },
+    "u16_workload_management": {
+      "title": "Gestione carico U16",
+      "description": "Migliora decisioni su fatica, forma e carico di sviluppo.",
+      "focus": "Efficienza + Esperienza"
+    },
+    "u16_race_coaching": {
+      "title": "Programma coaching gare U16",
+      "description": "Migliora selezione gare, decisioni tecniche e sviluppo in corsa.",
+      "focus": "Coaching + Leadership"
+    },
+    "youth_scout_talent_id": {
+      "title": "Identificazione talenti Youth",
+      "description": "Migliora selezione prospetti e precisione scouting.",
+      "focus": "Talento + Precisione"
+    },
+    "youth_scout_network_building": {
+      "title": "Rete scouting Youth",
+      "description": "Sviluppa esperienza e rete per scoprire talenti.",
+      "focus": "Rete + Esperienza"
+    },
+    "youth_scout_assessment_accuracy": {
+      "title": "Precisione valutazione Youth",
+      "description": "Valutazione avanzata per rapporti più affidabili.",
+      "focus": "Precisione + Potenziale"
     }
   },
   "legacyUi": {
