@@ -3410,6 +3410,56 @@
           "to": "/dashboard/staff"
         }
       ]
+    },
+    "youth-academy": {
+      "category": "Coureurs",
+      "title": "Académie Jeunes : guide de démarrage U16",
+      "subtitle": "Gérer le programme Premium U16, les coureurs, le staff, les courses et le budget.",
+      "overview": "L'Académie Jeunes est un programme Premium U16 limité à 16 coureurs. Recrutez des jeunes, donnez-leur des courses adaptées, gérez le staff et les finances dédiés et décidez de leur parcours à 16 ans.",
+      "facts": {
+        "0": {
+          "label": "Capacité",
+          "value": "Maximum 16 coureurs jeunes"
+        },
+        "1": {
+          "label": "Pack de départ",
+          "value": "6 coureurs locaux, Directeur d'Académie et entraîneur principal U16"
+        },
+        "2": {
+          "label": "Staff optionnel",
+          "value": "Jusqu'à 3 scouts jeunes via le marché du staff"
+        },
+        "3": {
+          "label": "Format des courses",
+          "value": "Résultats uniquement : Classe Mondiale, Continentale Ouest/Est et Régionale"
+        },
+        "4": {
+          "label": "Budget",
+          "value": "Fonds séparé avec revenus de course et transferts dans les deux sens"
+        }
+      },
+      "details": {
+        "0": "Ouvrez les profils depuis Coureurs Jeunes. Attributs, préparation, fatigue, développement, accord et historique sont visibles ; le potentiel exact reste masqué derrière l'évaluation du talent.",
+        "1": "L'Académie démarre avec six coureurs locaux et peut atteindre 16. Directeur, entraîneur U16 et scouts sont recrutés via le marché du staff normal.",
+        "2": "Les responsabilités déterminent si le manager ou le staff gère recrutement, participation aux courses, compositions et décisions d'équipement.",
+        "3": "Les courses jeunes sont calculées uniquement par résultats : Classe Mondiale, Continentale Ouest/Est et divisions Régionales. Plusieurs équipes peuvent courir simultanément, mais pas le même coureur sur des épreuves qui se chevauchent.",
+        "4": "Les Académies de Classe Mondiale reçoivent des invitations. Les places libérées peuvent être attribuées par wildcards pondérées. Le plan mensuel limite le volume de courses et les dépenses.",
+        "5": "L'allocation d'activation reste une valeur historique fixe. Les fonds actuels évoluent avec les dépenses, revenus de course et transferts explicites.",
+        "6": "Les revenus des courses jeunes vont directement à l'Académie. Utilisez Ajuster le budget uniquement pour déplacer volontairement de l'argent entre équipe senior et Académie.",
+        "7": "À 16 ans, une décision est requise : pathway, équipe de développement si possible ou libération."
+      },
+      "tips": {
+        "0": "Faites tourner l'effectif au lieu d'utiliser toujours les meilleurs.",
+        "1": "Approuvez le plan mensuel avant les échéances.",
+        "2": "Gardez des fonds pour soutien, staff, scouting, équipement et déplacements.",
+        "3": "Contrôlez régulièrement préparation et fatigue."
+      },
+      "relatedLinks": {
+        "0": "Ouvrir l'Académie Jeunes",
+        "1": "Ouvrir les coureurs jeunes",
+        "2": "Ouvrir Staff",
+        "3": "Ouvrir le marché du Staff"
+      }
     }
   }
 }
