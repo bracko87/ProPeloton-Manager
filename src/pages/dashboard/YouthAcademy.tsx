@@ -3577,7 +3577,7 @@ export default function YouthAcademyPage(): JSX.Element {
         </div>
       ) : null}
 
-      {['budget', 'scouting', 'settings'].includes(tab) ? (
+      {['scouting', 'settings'].includes(tab) ? (
         <div className="flex justify-end">
           <button
             type="button"
