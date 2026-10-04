@@ -3120,84 +3120,174 @@ export default function YouthAcademyPage(): JSX.Element {
 
       {tab === 'equipment' ? (
         <div className="space-y-4">
-          <Card
-            title={t('equipment.title')}
-            right={
-              <span className="text-xs text-slate-500">
-                {t(
-                  equipmentData?.equipment_decider === 'academy_director'
-                    ? 'equipment.directorManaged'
-                    : 'equipment.managerManaged'
-                )}
-              </span>
-            }
-          >
-            <p className="text-sm leading-6 text-slate-600">
-              {t('equipment.description')}
-            </p>
-            {equipmentData?.equipment_decider === 'academy_director' ? (
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4">
-                <p className="max-w-2xl text-sm text-slate-600">
-                  {t('equipment.directorHelp')}
+          <div className="inline-flex flex-wrap rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+            {([
+              ['overview', t('equipment.tabs.overview', { defaultValue: 'Overview' })],
+              ['inventory', t('equipment.tabs.inventory', { defaultValue: 'Inventory' })],
+              ['market', t('equipment.tabs.market', { defaultValue: 'Market' })],
+              ['assets', t('equipment.tabs.assets', { defaultValue: 'Assets' })],
+            ] as Array<[YouthEquipmentInnerTab, string]>).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setEquipmentInnerTab(key)}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                  equipmentInnerTab === key
+                    ? 'bg-yellow-400 text-black'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {equipmentInnerTab === 'overview' ? (
+            <div className="space-y-4">
+              <Card
+                title={t('equipment.title')}
+                right={
+                  <span className="text-xs text-slate-500">
+                    {t(
+                      equipmentData?.equipment_decider === 'academy_director'
+                        ? 'equipment.directorManaged'
+                        : 'equipment.managerManaged'
+                    )}
+                  </span>
+                }
+              >
+                <p className="text-sm leading-6 text-slate-600">
+                  {t('equipment.description')}
                 </p>
-                <button
-                  type="button"
-                  disabled={data.read_only || equipmentAction !== null}
-                  onClick={() => void runEquipmentDirector()}
-                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                >
-                  {equipmentAction === 'director'
-                    ? t('equipment.equipping')
-                    : t('equipment.runDirector')}
-                </button>
-              </div>
-            ) : null}
-          </Card>
+                {equipmentData?.equipment_decider === 'academy_director' ? (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4">
+                    <p className="max-w-2xl text-sm text-slate-600">
+                      {t('equipment.directorHelp')}
+                    </p>
+                    <button
+                      type="button"
+                      disabled={data.read_only || equipmentAction !== null}
+                      onClick={() => void runEquipmentDirector()}
+                      className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black transition hover:bg-yellow-300 disabled:opacity-50"
+                    >
+                      {equipmentAction === 'director'
+                        ? t('equipment.equipping')
+                        : t('equipment.runDirector')}
+                    </button>
+                  </div>
+                ) : null}
+              </Card>
 
-          <Card
-            title={t('equipment.inventory')}
-            right={
-              <span className="text-xs text-slate-500">
-                {t('equipment.itemsOwned', {
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <Card title={t('equipment.itemsOwned', {
                   count: equipmentData?.inventory?.length ?? 0,
-                })}
-              </span>
-            }
-          >
-            {(equipmentData?.inventory?.length ?? 0) === 0 ? (
-              <div className="text-sm text-slate-500">{t('equipment.noInventory')}</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[720px] text-left text-sm">
-                  <thead className="border-b border-slate-200 text-xs text-slate-500">
-                    <tr>
-                      <th className="py-2 pr-3">{t('equipment.item')}</th>
-                      <th className="py-2 pr-3">{t('equipment.category')}</th>
-                      <th className="py-2 pr-3">{t('equipment.quality')}</th>
-                      <th className="py-2 pr-3">{t('equipment.condition')}</th>
-                      <th className="py-2">{t('equipment.cost')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {(equipmentData?.inventory ?? []).map(item => (
-                      <tr key={item.id}>
-                        <td className="py-3 pr-3 font-medium">{item.display_name}</td>
-                        <td className="py-3 pr-3">{humanize(item.equipment_category)}</td>
-                        <td className="py-3 pr-3">{item.quality_score}</td>
-                        <td className="py-3 pr-3">{Number(item.condition_percent).toFixed(0)}%</td>
-                        <td className="py-3">{money(item.purchase_cost)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                })}>
+                  <div className="text-2xl font-semibold">
+                    {equipmentData?.inventory?.length ?? 0}
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {t('equipment.overviewOwnedHelp', {
+                      defaultValue: 'Durable Youth Academy equipment currently owned.',
+                    })}
+                  </p>
+                </Card>
+                <Card title={t('equipment.availableMarket', {
+                  defaultValue: 'Market items',
+                })}>
+                  <div className="text-2xl font-semibold">
+                    {equipmentData?.catalog?.length ?? 0}
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {t('equipment.overviewMarketHelp', {
+                      defaultValue: 'Youth-approved Tier 1–2 equipment available to buy.',
+                    })}
+                  </p>
+                </Card>
+                <Card title={t('equipment.averageQuality', {
+                  defaultValue: 'Average quality',
+                })}>
+                  <div className="text-2xl font-semibold">
+                    {(equipmentData?.inventory?.length ?? 0) > 0
+                      ? Math.round(
+                          (equipmentData?.inventory ?? []).reduce(
+                            (sum, item) => sum + Number(item.quality_score ?? 0),
+                            0
+                          ) / Math.max(1, equipmentData?.inventory?.length ?? 0)
+                        )
+                      : 0}
+                  </div>
+                </Card>
+                <Card title={t('equipment.averageCondition', {
+                  defaultValue: 'Average condition',
+                })}>
+                  <div className="text-2xl font-semibold">
+                    {(equipmentData?.inventory?.length ?? 0) > 0
+                      ? `${Math.round(
+                          (equipmentData?.inventory ?? []).reduce(
+                            (sum, item) => sum + Number(item.condition_percent ?? 0),
+                            0
+                          ) / Math.max(1, equipmentData?.inventory?.length ?? 0)
+                        )}%`
+                      : '—'}
+                  </div>
+                </Card>
               </div>
-            )}
-          </Card>
+            </div>
+          ) : null}
 
-          {equipmentData?.equipment_decider !== 'academy_director' ? (
+          {equipmentInnerTab === 'inventory' ? (
+            <Card
+              title={t('equipment.inventory')}
+              right={
+                <span className="text-xs text-slate-500">
+                  {t('equipment.itemsOwned', {
+                    count: equipmentData?.inventory?.length ?? 0,
+                  })}
+                </span>
+              }
+            >
+              {(equipmentData?.inventory?.length ?? 0) === 0 ? (
+                <div className="text-sm text-slate-500">{t('equipment.noInventory')}</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead className="bg-slate-50 text-xs text-slate-500">
+                      <tr>
+                        <th className="px-3 py-3">{t('equipment.item')}</th>
+                        <th className="px-3 py-3">{t('equipment.category')}</th>
+                        <th className="px-3 py-3">{t('equipment.quality')}</th>
+                        <th className="px-3 py-3">{t('equipment.condition')}</th>
+                        <th className="px-3 py-3 text-right">{t('equipment.cost')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(equipmentData?.inventory ?? []).map(item => (
+                        <tr key={item.id}>
+                          <td className="px-3 py-3 font-medium">{item.display_name}</td>
+                          <td className="px-3 py-3">{humanizeCode(item.equipment_category)}</td>
+                          <td className="px-3 py-3">{item.quality_score}</td>
+                          <td className="px-3 py-3">
+                            {Number(item.condition_percent).toFixed(0)}%
+                          </td>
+                          <td className="px-3 py-3 text-right">{money(item.purchase_cost)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          ) : null}
+
+          {equipmentInnerTab === 'market' ? (
             <Card title={t('equipment.catalog')}>
               <p className="mb-4 text-xs leading-5 text-slate-500">
-                {t('equipment.catalogHelp')}
+                {equipmentData?.equipment_decider === 'academy_director'
+                  ? t('equipment.marketDelegated', {
+                      defaultValue:
+                        'Equipment purchasing is delegated to the Youth Academy Director. You can review the market here, while the Director uses the Academy budget and role bonus when filling equipment needs.',
+                    })
+                  : t('equipment.catalogHelp')}
               </p>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {(equipmentData?.catalog ?? []).map(item => (
@@ -3211,7 +3301,7 @@ export default function YouthAcademyPage(): JSX.Element {
                           {item.display_name}
                         </div>
                         <div className="mt-1 text-xs text-slate-500">
-                          {humanize(item.equipment_category)} · {t('equipment.tier', {
+                          {humanizeCode(item.equipment_category)} · {t('equipment.tier', {
                             tier: item.tier,
                           })}
                         </div>
@@ -3222,19 +3312,94 @@ export default function YouthAcademyPage(): JSX.Element {
                       <span>{t('equipment.quality')}: {item.quality_score}</span>
                       <span>{t('equipment.durability')}: {item.durability_score}</span>
                     </div>
-                    <button
-                      type="button"
-                      disabled={data.read_only || equipmentAction !== null}
-                      onClick={() => void purchaseEquipment(item)}
-                      className="mt-4 w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                    >
-                      {equipmentAction === item.id
-                        ? t('equipment.purchasing')
-                        : t('equipment.purchase')}
-                    </button>
+                    {equipmentData?.equipment_decider !== 'academy_director' ? (
+                      <button
+                        type="button"
+                        disabled={data.read_only || equipmentAction !== null}
+                        onClick={() => void purchaseEquipment(item)}
+                        className="mt-4 w-full rounded-md bg-yellow-400 px-3 py-2 text-sm font-medium text-black transition hover:bg-yellow-300 disabled:opacity-50"
+                      >
+                        {equipmentAction === item.id
+                          ? t('equipment.purchasing')
+                          : t('equipment.purchase')}
+                      </button>
+                    ) : null}
                   </div>
                 ))}
               </div>
+            </Card>
+          ) : null}
+
+          {equipmentInnerTab === 'assets' ? (
+            <Card title={t('equipment.assetOverview', { defaultValue: 'Youth Academy assets' })}>
+              {(() => {
+                const groups = new Map<
+                  string,
+                  { count: number; quality: number; condition: number; value: number }
+                >()
+                for (const item of equipmentData?.inventory ?? []) {
+                  const current = groups.get(item.equipment_category) ?? {
+                    count: 0,
+                    quality: 0,
+                    condition: 0,
+                    value: 0,
+                  }
+                  current.count += 1
+                  current.quality += Number(item.quality_score ?? 0)
+                  current.condition += Number(item.condition_percent ?? 0)
+                  current.value += Number(item.purchase_cost ?? 0)
+                  groups.set(item.equipment_category, current)
+                }
+
+                if (groups.size === 0) {
+                  return (
+                    <div className="text-sm text-slate-500">
+                      {t('equipment.noInventory')}
+                    </div>
+                  )
+                }
+
+                return (
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {Array.from(groups.entries()).map(([category, group]) => (
+                      <div
+                        key={category}
+                        className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"
+                      >
+                        <div className="font-semibold text-slate-900">
+                          {humanizeCode(category)}
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <div className="text-slate-500">
+                              {t('equipment.items', { defaultValue: 'Items' })}
+                            </div>
+                            <div className="mt-1 font-semibold">{group.count}</div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500">{t('equipment.quality')}</div>
+                            <div className="mt-1 font-semibold">
+                              {Math.round(group.quality / group.count)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500">{t('equipment.condition')}</div>
+                            <div className="mt-1 font-semibold">
+                              {Math.round(group.condition / group.count)}%
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500">
+                              {t('equipment.invested', { defaultValue: 'Invested' })}
+                            </div>
+                            <div className="mt-1 font-semibold">{money(group.value)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
             </Card>
           ) : null}
         </div>
