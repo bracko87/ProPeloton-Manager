@@ -3454,6 +3454,56 @@
           "to": "/dashboard/staff"
         }
       ]
+    },
+    "youth-academy": {
+      "category": "Vozači",
+      "title": "Akademija mladih: U16 početni vodič",
+      "subtitle": "Kako da vodiš Premium U16 program, vozače, osoblje, trke i budžet.",
+      "overview": "Akademija mladih je Premium U16 razvojni program sa kapacitetom od 16 vozača. Regrutuj mlade, daj im odgovarajuće trke, upravljaj posebnim osobljem i finansijama i odluči o njihovom putu sa 16 godina.",
+      "facts": {
+        "0": {
+          "label": "Kapacitet",
+          "value": "Najviše 16 mladih vozača"
+        },
+        "1": {
+          "label": "Početni paket",
+          "value": "6 lokalnih vozača, Direktor Akademije i U16 glavni trener"
+        },
+        "2": {
+          "label": "Opcionalno osoblje",
+          "value": "Do 3 skauta mladih preko tržišta osoblja"
+        },
+        "3": {
+          "label": "Format trka",
+          "value": "Samo rezultati: Svetska, Kontinentalna Zapad/Istok i Regionalna klasa"
+        },
+        "4": {
+          "label": "Budžet",
+          "value": "Odvojeni fond Akademije sa prihodima od trka i transferima u oba smera"
+        }
+      },
+      "details": {
+        "0": "Profile mladih vozača otvaraš iz taba Youth Riders. Vidljivi su atributi, spremnost, umor, fokus razvoja, ugovor i istorija trka, dok tačan skriveni potencijal ostaje sakriven iza procene talenta.",
+        "1": "Akademija počinje sa šest lokalnih vozača i može da poraste do 16. Direktor, U16 trener i skauti zapošljavaju se preko običnog tržišta osoblja.",
+        "2": "Odgovornosti određuju da li manager ili osoblje Akademije upravljaju regrutacijom, učešćem na trkama, postavama i odlukama o opremi.",
+        "3": "Trke mladih imaju samo rezultate: Svetska, Kontinentalna Zapad/Istok i Regionalne divizije. Različite postave mogu da voze istovremeno, ali isti vozač ne može biti prijavljen na trke koje se preklapaju.",
+        "4": "Akademije Svetske klase dobijaju pozive. Slobodna mesta nakon odbijanja mogu da se popune ponderisanim wildcard pozivima. Mesečni plan ograničava broj trka i trošak.",
+        "5": "Početna alokacija ostaje fiksna istorijska vrednost. Trenutna sredstva se menjaju kroz troškove, prihode od trka i eksplicitne transfere.",
+        "6": "Prihodi od trka mladih idu direktno Akademiji. Prilagođavanje budžeta koristi samo kada namerno želiš da prebaciš novac između seniorskog tima i Akademije.",
+        "7": "Sa 16 godina vozač zahteva odluku: pathway, razvojni tim kada je moguće ili otpuštanje."
+      },
+      "tips": {
+        "0": "Rotiraj roster umesto da uvek koristiš najbolje.",
+        "1": "Odobri mesečni plan pre rokova.",
+        "2": "Ostavi dovoljno sredstava za podršku, osoblje, skauting, opremu i putovanja.",
+        "3": "Redovno proveravaj spremnost i umor."
+      },
+      "relatedLinks": {
+        "0": "Otvori Akademiju mladih",
+        "1": "Otvori mlade vozače",
+        "2": "Otvori osoblje",
+        "3": "Otvori tržište osoblja"
+      }
     }
   }
 }
