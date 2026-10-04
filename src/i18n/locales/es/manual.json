@@ -3413,46 +3413,55 @@
     },
     "youth-academy": {
       "category": "Ciclistas",
-      "title": "Academia Juvenil: guía inicial U16",
-      "subtitle": "Cómo gestionar tu programa Premium U16, ciclistas, staff, carreras y presupuesto.",
-      "overview": "La Academia Juvenil es un programa Premium U16 con capacidad fija de 16 ciclistas. Recluta jóvenes, dales carreras adecuadas, gestiona staff y finanzas propias y decide su camino al cumplir 16 años.",
+      "title": "Youth Academy: guía inicial U16",
+      "subtitle": "Cómo gestionar tu programa Premium U16, corredores, personal, scouting, carreras y presupuesto.",
+      "overview": "Youth Academy es un programa Premium U16 para hasta 16 corredores. Recluta y desarrolla talentos con personal y cursos propios, gestiona scouting, competición y presupuesto separado, y decide su futuro a los 16 años.",
       "facts": {
         "0": {
           "label": "Capacidad",
-          "value": "Máximo 16 ciclistas juveniles"
+          "value": "Máximo 16 corredores Youth"
         },
         "1": {
           "label": "Paquete inicial",
-          "value": "6 ciclistas locales, Director de Academia y Entrenador jefe U16"
+          "value": "6 corredores locales, Director de Academia y Entrenador U16"
         },
         "2": {
-          "label": "Staff opcional",
-          "value": "Hasta 3 ojeadores juveniles desde el mercado de staff"
+          "label": "Personal opcional",
+          "value": "Hasta 3 Youth Scouts desde Staff Market"
         },
         "3": {
-          "label": "Carreras",
-          "value": "Solo resultados: Clase Mundial, Continental Oeste/Este y Regional"
+          "label": "Frecuencia de scouting",
+          "value": "1 búsqueda gratis + hasta 3 con Coins por semana de juego"
         },
         "4": {
+          "label": "Competición",
+          "value": "Clase Mundial, Continental Oeste/Este y Regional"
+        },
+        "5": {
           "label": "Presupuesto",
           "value": "Fondo separado con ingresos de carreras y transferencias bidireccionales"
         }
       },
       "details": {
-        "0": "Abre los perfiles desde Ciclistas Juveniles. Se muestran atributos, preparación, fatiga, foco de desarrollo, acuerdo e historial; el potencial exacto permanece oculto tras la evaluación de talento.",
-        "1": "La Academia empieza con seis ciclistas locales y puede crecer hasta 16. Director, entrenador U16 y ojeadores se contratan en el mercado de staff normal.",
-        "2": "Responsabilidades decide si el manager o el staff de la Academia controlan reclutamiento, participación, alineaciones y decisiones de equipo.",
-        "3": "Las carreras juveniles son solo resultados: Clase Mundial, Continental Oeste/Este y divisiones Regionales. Pueden competir plantillas distintas a la vez, pero un ciclista no puede estar en pruebas solapadas.",
-        "4": "Las Academias de Clase Mundial reciben invitaciones. Las plazas libres tras rechazos pueden cubrirse con wildcards ponderadas. El plan mensual limita carreras y gasto.",
-        "5": "La asignación inicial queda fija como historial. Los fondos actuales cambian por gastos, ingresos de carreras y transferencias explícitas.",
-        "6": "Los ingresos de carreras van directamente al fondo juvenil. Usa Ajustar presupuesto solo para mover dinero deliberadamente entre sénior y Academia.",
-        "7": "A los 16 años cada ciclista necesita una decisión: pathway, equipo de desarrollo si es posible o liberación."
+        "0": "Los perfiles Youth muestran atributos, preparación, fatiga, enfoque de desarrollo, acuerdo de apoyo e historial; el potencial exacto permanece oculto tras la evaluación de talento.",
+        "1": "La Academia empieza con seis corredores y puede llegar a 16. El personal Youth usa la misma escala de calidad que el sénior: Deficiente, Básico, Competente, Fuerte, Élite y Clase Mundial.",
+        "2": "Cada rol tiene bonificaciones: el Director mejora gestión y compras; el Entrenador U16 influye en desarrollo y selección; el Scout mejora selección y precisión de informes.",
+        "3": "El personal Youth puede mejorar con cursos propios desde el perfil normal de Staff. Los cursos se pagan con el presupuesto de la Academia.",
+        "4": "El Scout tiene una búsqueda gratis por semana de juego y hasta tres extras: Local 10, Regional 15, Continental 20 y Mundial 30 Coins.",
+        "5": "Las responsabilidades se confirman por decisión. Reclutamiento y negociaciones pueden delegarse al Director; participación y alineaciones al Entrenador U16.",
+        "6": "La competición usa Clase Mundial, Continental Oeste/Este y divisiones Regionales. El Calendario muestra todo el mes o solo tus oportunidades. Un corredor no puede disputar carreras solapadas.",
+        "7": "Las Academias de Clase Mundial reciben invitaciones y las plazas libres pueden cubrirse con wildcards ponderadas. El plan mensual limita carreras y gasto.",
+        "8": "La asignación inicial queda fija como historial. Los fondos cambian con gastos, ingresos Youth y transferencias; los ingresos de carrera van directamente a la Academia.",
+        "9": "Ajustar presupuesto mueve dinero en ambas direcciones. La devolución al equipo sénior solo usa fondos libres y no comprometidos.",
+        "10": "A los 16 años se requiere decisión: vía temporal, Developing Team si procede y hay plaza, o liberación."
       },
       "tips": {
-        "0": "Rota la plantilla y no uses siempre a los mejores.",
-        "1": "Aprueba el plan mensual antes de las fechas límite.",
-        "2": "Mantén fondos para apoyo, staff, scouting, equipo y viajes.",
-        "3": "Revisa preparación y fatiga en los perfiles."
+        "0": "Revisa perfiles del personal Youth para nivel, habilidades, bonos, temporada de contrato y cursos.",
+        "1": "Usa primero la búsqueda semanal gratis y Coins solo si necesitas cobertura extra.",
+        "2": "Rota la plantilla para dar experiencia a jóvenes y menos fuertes.",
+        "3": "Aprueba el plan mensual antes de los plazos.",
+        "4": "Reserva fondos para apoyo, nóminas, scouting, cursos, equipo y viajes.",
+        "5": "Controla preparación y fatiga regularmente."
       },
       "relatedLinks": {
         "0": "Abrir Academia Juvenil",
