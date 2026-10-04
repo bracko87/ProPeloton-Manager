@@ -1403,5 +1403,9 @@
       "exceptional": "izuzetan",
       "problem": "problem"
     }
+  },
+  "youthAcademyStarted": {
+    "title": "Tvoja Akademija mladih je spremna",
+    "message": "Tvoj U16 program je aktivan. Proveri odgovornosti, skauting, trke i poseban budžet Akademije pre prvih događaja."
   }
 }
