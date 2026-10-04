@@ -259,7 +259,9 @@
     "raceEntry": "Das Jugendrennen konnte nicht gemeldet werden.",
     "raceLineup": "Die Jugend-Rennaufstellung konnte nicht gespeichert werden.",
     "historyLoad": "Der Verlauf der Jugendakademie konnte nicht geladen werden.",
-    "reportFrequency": "Die Einstellung für Jugend-Rennberichte konnte nicht gespeichert werden."
+    "reportFrequency": "Die Einstellung für Jugend-Rennberichte konnte nicht gespeichert werden.",
+    "monthlyRacePlan": "Der monatliche Jugend-Rennplan konnte nicht gespeichert werden.",
+    "raceInvitationDecline": "Die Einladung zum Jugendrennen konnte nicht abgelehnt werden."
   },
   "equipment": {
     "title": "Jugendausrüstung",
@@ -311,7 +313,7 @@
     "resultsOnly": "Nur Ergebnisse — keine Wiederholung",
     "entryResponsibility": "Rennteilnahme",
     "squadResponsibility": "Aufstellung & Strategie",
-    "ageLimitHelp": "Für Fahrer gelten altersabhängige Startlimits über 30 Spieltage. Der U16-Cheftrainer berücksichtigt außerdem Profil, Frische und Ermüdung, sodass die Akademie normalerweise nur einen Teil der 12 regionalen Rennen pro Spielmonat auswählt.",
+    "ageLimitHelp": "Jugendrennen sind reine Ergebnisrennen. World Class, Continental und Regional berücksichtigen altersabhängige Startlimits, Frische und Ermüdung. Verschiedene Akademie-Kader dürfen gleichzeitig fahren, derselbe Fahrer aber nicht in überlappenden Rennen.",
     "races": "Jugendrennen",
     "loading": "Jugendrennen werden geladen…",
     "levels": {
@@ -321,7 +323,7 @@
     },
     "qualified": "Qualifiziert",
     "notQualified": "Nicht qualifiziert",
-    "qualificationHelp": "Die Qualifikation für die World Series erfolgt über die Regionale Jugendrangliste. Für das Youth World Final zählt die Youth World Ranking.",
+    "qualificationHelp": "Dieses Rennen ist sichtbar, aber deine Akademie hat derzeit keine aktive Einladung oder nicht genügend berechtigte Fahrer.",
     "strategy": "Rennstrategie",
     "strategies": {
       "conservative": "Konservativ",
@@ -339,11 +341,47 @@
     "coachLineupHelp": "Der U16-Cheftrainer hat {{count}} Fahrer ausgewählt und steuert die Rennstrategie.",
     "myResults": "Ergebnisse meiner Akademie",
     "topResults": "Top-Ergebnisse",
-    "didNotRace": "Deine Akademie nahm an diesem Rennen nicht teil."
+    "didNotRace": "Deine Akademie nahm an diesem Rennen nicht teil.",
+    "academyCompetition": "Akademie-Wettbewerb",
+    "competition": {
+      "world": "World Class",
+      "continental": "Continental Class",
+      "regional": "Regional Class",
+      "youth": "Jugendwettbewerb"
+    },
+    "monthlyPlanTitle": "Jugend-Rennplan {{month}}",
+    "approved": "Genehmigt",
+    "approvalRequired": "Genehmigung erforderlich",
+    "raceLimitLabel": "{{className}}-Rennen",
+    "calendarEventsThisMonth": "{{count}} Kalenderevents in diesem Monat",
+    "monthlyBudget": "Monatliches Rennbudget",
+    "enteredSoFar": "Bisher gemeldet: {{value}}",
+    "savingPlan": "Plan wird gespeichert…",
+    "updatePlan": "Monatsplan aktualisieren",
+    "approvePlan": "Monatsplan genehmigen",
+    "planHelp": "Der Plan begrenzt, an wie vielen Rennen die Akademie in diesem Monat teilnehmen darf und wie viel ausgegeben werden kann. Der U16-Cheftrainer kann verschiedene Kader parallel einsetzen, derselbe Fahrer darf aber nicht für sich überschneidende Rennen gemeldet werden.",
+    "raceCalendar": "Rennkalender",
+    "visibleEvents": "{{count}} sichtbare Events",
+    "worldVisible": "World-Class-Rennen sind weltweit sichtbar",
+    "regionalVisible": "Regionale Rennen sind auf deine Heimatdivision begrenzt",
+    "days": "{{count}} Tage",
+    "oneDay": "1 Tag",
+    "teams": "{{current}}/{{max}} Teams",
+    "invitationStatuses": {
+      "pending": "Offen",
+      "accepted": "Angenommen",
+      "declined": "Abgelehnt",
+      "expired": "Abgelaufen",
+      "waitlist": "Warteliste"
+    },
+    "noInvitation": "Noch keine Einladung",
+    "declining": "Wird abgelehnt…",
+    "declineInvitation": "Einladung ablehnen",
+    "responseDeadline": "Antwortfrist: {{date}}"
   },
   "rankings": {
     "title": "Jugendranglisten",
-    "description": "Deine Akademie startet in der regionalen Jugendrangliste {{region}}. Regionale Ergebnisse bringen außerdem weniger Punkte für die Youth World Ranking; World Series und World Final vergeben stärkere Weltpunkte.",
+    "description": "Die Akademie-Wertungen folgen Youth World Class, Continental West/Ost und den Regionaldivisionen. Fahrer-Ranglisten bleiben getrennt und basieren auf Rennresultaten in der Region und weltweit.",
     "regionalTitle": "Regionale Jugendrangliste",
     "worldTitle": "Youth World Ranking",
     "loading": "Ranglisten werden geladen…",
@@ -352,7 +390,11 @@
     "rider": "Fahrer",
     "academy": "Akademie",
     "starts": "Zielankünfte",
-    "points": "Punkte"
+    "points": "Punkte",
+    "yourDivision": "Deine Division",
+    "raceStarts": "Rennstarts",
+    "riderRankings": "Jugend-Fahrerranglisten",
+    "promotionNote": "Auf- und Abstiegsbereiche sind im Wettbewerbsmodell vorbereitet. Die genauen Auf- und Abstiegsplätze werden aktiviert, sobald diese Regeln festgelegt sind."
   },
   "reports": {
     "title": "Jugend-Rennberichte",
