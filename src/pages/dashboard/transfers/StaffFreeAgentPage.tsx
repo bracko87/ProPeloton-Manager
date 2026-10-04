@@ -13,6 +13,9 @@ type StaffRole =
   | 'mechanic'
   | 'sport_director'
   | 'scout_analyst'
+  | 'youth_academy_director'
+  | 'u16_head_coach'
+  | 'youth_scout'
 
 type StaffSortField = 'salary' | 'skills' | 'name' | 'country'
 type SortDirection = 'asc' | 'desc'
@@ -78,6 +81,9 @@ const STAFF_ROLE_FILTERS: Array<{
   { value: 'head_coach', labelKey: 'staffRoles.headCoach' },
   { value: 'trainer', labelKey: 'staffRoles.trainer' },
   { value: 'u23_head_coach', labelKey: 'staffRoles.u23HeadCoach' },
+  { value: 'youth_academy_director', labelKey: 'staffRoles.youthAcademyDirector' },
+  { value: 'u16_head_coach', labelKey: 'staffRoles.u16HeadCoach' },
+  { value: 'youth_scout', labelKey: 'staffRoles.youthScout' },
   { value: 'team_doctor', labelKey: 'staffRoles.teamDoctor' },
   { value: 'physio', labelKey: 'staffRoles.physio' },
   { value: 'nutritionist', labelKey: 'staffRoles.nutritionist' },
@@ -99,6 +105,9 @@ function normalizeStaffRole(value: unknown): StaffRole | null {
     normalized === 'head_coach' ||
     normalized === 'trainer' ||
     normalized === 'u23_head_coach' ||
+    normalized === 'youth_academy_director' ||
+    normalized === 'u16_head_coach' ||
+    normalized === 'youth_scout' ||
     normalized === 'team_doctor' ||
     normalized === 'physio' ||
     normalized === 'nutritionist' ||
