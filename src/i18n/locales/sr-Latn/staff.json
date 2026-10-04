@@ -477,6 +477,51 @@
       "title": "Analiza podataka o učinku",
       "description": "Poboljšava analitički pregled vozača i izveštaja za pripremu trke.",
       "focus": "Preciznost + analiza"
+    },
+    "youth_director_programme_management": {
+      "title": "Upravljanje programom Akademije",
+      "description": "Poboljšava liderstvo i svakodnevnu efikasnost Akademije.",
+      "focus": "Liderstvo + Efikasnost"
+    },
+    "youth_director_budget_pathways": {
+      "title": "Budžet i razvojni putevi Akademije",
+      "description": "Poboljšava upravljanje, planiranje i efikasne razvojne puteve.",
+      "focus": "Upravljanje + Efikasnost"
+    },
+    "youth_director_recruitment_strategy": {
+      "title": "Strategija regrutacije mladih",
+      "description": "Napredni program za razvojne puteve, regrutaciju i liderstvo.",
+      "focus": "Razvojni putevi + Liderstvo"
+    },
+    "u16_development_methodology": {
+      "title": "Metodologija U16 razvoja",
+      "description": "Poboljšava nedeljni razvoj i dugoročan napredak.",
+      "focus": "Razvoj mladih + Potencijal"
+    },
+    "u16_workload_management": {
+      "title": "U16 upravljanje opterećenjem",
+      "description": "Poboljšava odluke o umoru, spremnosti i razvojnom opterećenju.",
+      "focus": "Efikasnost + Iskustvo"
+    },
+    "u16_race_coaching": {
+      "title": "U16 program vođenja trka",
+      "description": "Poboljšava izbor trka, odluke trenera i razvoj na trkama.",
+      "focus": "Vođenje trka + Liderstvo"
+    },
+    "youth_scout_talent_id": {
+      "title": "Prepoznavanje mladih talenata",
+      "description": "Poboljšava izbor talenata i preciznost scouting procene.",
+      "focus": "Talent + Preciznost"
+    },
+    "youth_scout_network_building": {
+      "title": "Youth scouting mreža",
+      "description": "Gradi iskustvo i mrežu za otkrivanje talenata.",
+      "focus": "Mreža + Iskustvo"
+    },
+    "youth_scout_assessment_accuracy": {
+      "title": "Preciznost procene talenata",
+      "description": "Napredna procena za pouzdanije izveštaje.",
+      "focus": "Preciznost + Potencijal"
     }
   }
 }
