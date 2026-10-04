@@ -89,7 +89,21 @@
     "efficiency": "Efikasnost",
     "loyalty": "Lojalnost",
     "weeklyWage": "Nedeljna plata",
-    "contractUntil": "Ugovor do {{date}}"
+    "contractUntil": "Ugovor do {{date}}",
+    "careerFramework": "Nivoi i plate osoblja Akademije",
+    "directorBonusHelp": "Liderstvo i efikasnost poboljšavaju upravljanje Akademijom. Kvalitetan Direktor može smanjiti cenu Youth opreme do 8%.",
+    "coachBonusHelp": "Ekspertiza, potencijal i efikasnost poboljšavaju nedeljni razvoj, upravljanje opterećenjem i izbor za trke.",
+    "scoutBonusHelp": "Ekspertiza, iskustvo i efikasnost poboljšavaju izbor talenata, pouzdanost izveštaja i broj izveštaja po pretrazi.",
+    "levelScaleHelp": "Koristi se ista skala kao za seniorsko osoblje: Slab (<30), Osnovni (30–44), Kompetentan (45–59), Jak (60–74), Elitan (75–89), Svetska klasa (90+).",
+    "openProfile": "Otvori profil osoblja",
+    "openScoutStaff": "Otvori osoblje Youth Scouta",
+    "activeBonus": "Aktivni bonus uloge",
+    "level": "Nivo",
+    "salaryRange": "Raspon uloge: {{value}}",
+    "contract": "Ugovor",
+    "directorActiveBonus": "Do {{value}}% popusta pri kupovini Youth opreme",
+    "coachActiveBonus": "Razvojni rezultat {{score}}: utiče na napredak, spremnost i izbor",
+    "scoutActiveBonus": "Scout rezultat {{score}}: do {{reports}} izveštaja po pretrazi uz bolju preciznost"
   },
   "budget": {
     "title": "Sezonski budžet akademije",
@@ -238,7 +252,17 @@
       "decline": "Odbij",
       "processing": "Obrada…"
     },
-    "awaitingAcademyResponse": "Čeka se odgovor akademije"
+    "awaitingAcademyResponse": "Čeka se odgovor akademije",
+    "reportsPerSearch": "Izveštaji po pretrazi",
+    "weeklySearch": "Nedeljne scouting pretrage",
+    "runsThisWeek": "Pretrage ove nedelje",
+    "coinBalance": "Stanje Coina",
+    "weeklyRule": "1 besplatna pretraga + do 3 Coin pretrage po nedelji igre",
+    "boostPrices": "Dodatna pretraga: Lokalna 10 · Regionalna 15 · Kontinentalna 20 · Svetska 30 Coina.",
+    "runFreeSearch": "Pokreni besplatnu nedeljnu pretragu",
+    "runCoinSearch": "Pokreni dodatnu pretragu · {{cost}} Coina",
+    "weeklyLimitReached": "Nedeljni limit je dostignut",
+    "lastSearch": "Poslednja pretraga: pokušaj {{run}} · {{reports}} izveštaja"
   },
   "settings": {
     "title": "Odgovornosti",
@@ -264,7 +288,18 @@
       "promising": "Perspektivan",
       "very_promising": "Veoma perspektivan",
       "exceptional": "Izuzetan"
-    }
+    },
+    "recruitmentHelp": "Odlučuje koji pronađeni talenti ulaze u proces regrutacije i da li će ih Akademija aktivno pokušati dovesti.",
+    "raceEntryHelp": "Odlučuje koje pozive prihvatiti ili odbiti i na kojim Youth trkama učestvovati.",
+    "raceSquadHelp": "Bira vozače i strategiju za svaku trku, uključujući rotaciju između trka u isto vreme.",
+    "campsHelp": "Odobrava kampove Akademije i povezano trošenje budžeta.",
+    "equipmentHelp": "Kontroliše kupovinu Youth opreme. Direktor može automatski popuniti potrebe u okviru raspoloživog budžeta.",
+    "negotiationsHelp": "Vodi stipendiju, smeštaj i razvojnu naknadu nakon što je talenat pronađen.",
+    "pendingConfirmation": "Čeka potvrdu",
+    "confirmed": "Potvrđeno",
+    "responsiblePerson": "Odgovorna osoba",
+    "confirming": "Potvrđivanje…",
+    "confirmResponsibility": "Potvrdi odgovornost"
   },
   "placeholders": {},
   "errors": {
@@ -312,7 +347,22 @@
     "tier": "Nivo {{tier}}",
     "purchase": "Kupi za akademiju",
     "purchasing": "Kupovina…",
-    "durability": "Izdržljivost"
+    "durability": "Izdržljivost",
+    "tabs": {
+      "overview": "Pregled",
+      "inventory": "Inventar",
+      "market": "Tržište",
+      "assets": "Imovina"
+    },
+    "overviewOwnedHelp": "Trajna oprema koju Akademija trenutno poseduje.",
+    "availableMarket": "Artikli na tržištu",
+    "overviewMarketHelp": "Youth oprema Tier 1–2 dostupna za kupovinu.",
+    "averageQuality": "Prosečan kvalitet",
+    "averageCondition": "Prosečno stanje",
+    "marketDelegated": "Kupovina opreme je delegirana Direktoru Akademije. Možeš pregledati tržište, a Direktor koristi budžet i bonus uloge.",
+    "assetOverview": "Imovina Youth Akademije",
+    "items": "Artikli",
+    "invested": "Uloženo"
   },
   "training": {
     "title": "Filozofija razvoja mladih",
@@ -405,7 +455,16 @@
     "noInvitation": "Još nema poziva",
     "declining": "Odbijanje…",
     "declineInvitation": "Odbij poziv",
-    "responseDeadline": "Rok za odgovor: {{date}}"
+    "responseDeadline": "Rok za odgovor: {{date}}",
+    "selectedMonth": "Izabrani mesec",
+    "competitionHelp": "Trke Svetske, Kontinentalne i Regionalne klase koriste starosne limite startova, spremnost i umor. Različite postave mogu voziti istovremeno, ali isti vozač ne može na trke koje se preklapaju.",
+    "allCompetitions": "Sva takmičenja",
+    "allRaces": "Sve trke",
+    "myOpportunities": "Prilike moje Akademije",
+    "classCounts": "Svetske {{world}} · Kontinentalne {{continental}} · Regionalne {{regional}}",
+    "browserHelp": "Prikazuje kompletan Youth kalendar za izabrani mesec. Filtriraj Prilike moje Akademije za pozive i domaću Regionalnu diviziju.",
+    "pastPrelaunch": "Prošlo · pre pokretanja",
+    "prelaunchHelp": "Trka ostaje u kalendaru radi potpunosti. Već je bila prošla kada je Youth sistem pokrenut, pa rezultat nije generisan."
   },
   "rankings": {
     "title": "Rang-liste mladih",
@@ -422,7 +481,12 @@
     "yourDivision": "Tvoja divizija",
     "raceStarts": "Startovi",
     "riderRankings": "Rang-lista mladih vozača",
-    "promotionNote": "Zone promocije i ispadanja su pripremljene u modelu takmičenja. Tačna mesta će biti aktivirana kada pravila budu potvrđena."
+    "promotionNote": "Zone promocije i ispadanja su pripremljene u modelu takmičenja. Tačna mesta će biti aktivirana kada pravila budu potvrđena.",
+    "selectClass": "Izaberi klasu",
+    "selectDivision": "Izaberi diviziju",
+    "country": "Država",
+    "yourAcademy": "Tvoja Akademija",
+    "riderRankingHelp": "Rang-lista vozača je odvojena od klasnog poretka Akademija."
   },
   "reports": {
     "title": "Izveštaji U16 trka",
