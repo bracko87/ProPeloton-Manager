@@ -3410,6 +3410,56 @@
           "to": "/dashboard/staff"
         }
       ]
+    },
+    "youth-academy": {
+      "category": "Vozači",
+      "title": "Akademija mladih: U16 početni vodič",
+      "subtitle": "Kako voditi Premium U16 program, vozače, osoblje, utrke i budžet.",
+      "overview": "Akademija mladih je Premium U16 razvojni program s kapacitetom od 16 vozača. Regrutiraj mlade, osiguraj im odgovarajuće utrke, upravljaj posebnim osobljem i financijama te odluči o njihovom putu sa 16 godina.",
+      "facts": {
+        "0": {
+          "label": "Kapacitet",
+          "value": "Najviše 16 mladih vozača"
+        },
+        "1": {
+          "label": "Početni paket",
+          "value": "6 lokalnih vozača, Direktor Akademije i U16 glavni trener"
+        },
+        "2": {
+          "label": "Opcionalno osoblje",
+          "value": "Do 3 skauta mladih preko tržišta osoblja"
+        },
+        "3": {
+          "label": "Format utrka",
+          "value": "Samo rezultati: Svjetska, Kontinentalna Zapad/Istok i Regionalna klasa"
+        },
+        "4": {
+          "label": "Budžet",
+          "value": "Odvojeni fond Akademije s prihodima od utrka i dvosmjernim transferima"
+        }
+      },
+      "details": {
+        "0": "Profile mladih vozača otvaraš iz taba Youth Riders. Vidljivi su atributi, spremnost, umor, razvojni fokus, ugovor i povijest utrka, dok točan skriveni potencijal ostaje skriven iza procjene talenta.",
+        "1": "Akademija počinje sa šest lokalnih vozača i može narasti do 16. Direktor, U16 trener i skauti zapošljavaju se preko običnog tržišta osoblja.",
+        "2": "Odgovornosti određuju upravlja li manager ili osoblje Akademije regrutacijom, sudjelovanjem na utrkama, postavama i odlukama o opremi.",
+        "3": "Utrke mladih su samo rezultatske: Svjetska, Kontinentalna Zapad/Istok i Regionalne divizije. Različite postave mogu voziti istovremeno, ali isti vozač ne može biti prijavljen na preklapajuće utrke.",
+        "4": "Akademije Svjetske klase dobivaju pozivnice. Slobodna mjesta nakon odbijanja mogu se popuniti ponderiranim wildcardima. Mjesečni plan ograničava broj utrka i trošak.",
+        "5": "Početna alokacija ostaje fiksna povijesna vrijednost. Trenutačna sredstva mijenjaju se kroz troškove, prihode od utrka i izričite transfere.",
+        "6": "Prihodi od utrka mladih idu izravno Akademiji. Prilagodbu budžeta koristi samo kada namjerno želiš premjestiti novac između seniora i Akademije.",
+        "7": "Sa 16 godina vozač treba odluku: pathway, razvojni tim kada je moguće ili otpuštanje."
+      },
+      "tips": {
+        "0": "Rotiraj roster umjesto da uvijek koristiš najbolje.",
+        "1": "Odobri mjesečni plan prije rokova.",
+        "2": "Ostavi dovoljno sredstava za podršku, osoblje, scouting, opremu i putovanja.",
+        "3": "Redovito provjeravaj spremnost i umor."
+      },
+      "relatedLinks": {
+        "0": "Otvori Akademiju mladih",
+        "1": "Otvori mlade vozače",
+        "2": "Otvori osoblje",
+        "3": "Otvori tržište osoblja"
+      }
     }
   }
 }
