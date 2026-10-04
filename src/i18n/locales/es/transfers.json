@@ -285,7 +285,10 @@
     "nutritionist": "Nutricionista",
     "mechanic": "Mecánico",
     "sportDirector": "Director de Deportes",
-    "scoutAnalyst": "Scout / Analista"
+    "scoutAnalyst": "Scout / Analista",
+    "youthAcademyDirector": "Director de Academia Juvenil",
+    "u16HeadCoach": "Entrenador jefe U16",
+    "youthScout": "Ojeador juvenil"
   },
   "staffQuality": {
     "elite": "Elite",
