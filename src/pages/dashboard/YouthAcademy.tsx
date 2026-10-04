@@ -2271,9 +2271,11 @@ export default function YouthAcademyPage(): JSX.Element {
                       <div className="mt-1 font-semibold">{scoutingData.scout.expertise}</div>
                     </div>
                     <div className="rounded-lg bg-slate-50 p-3">
-                      <div className="text-xs text-slate-500">{t('scouting.monthlyReports')}</div>
+                      <div className="text-xs text-slate-500">
+                        {t('scouting.reportsPerSearch', { defaultValue: 'Reports per search' })}
+                      </div>
                       <div className="mt-1 font-semibold">
-                        {scoutingData.scout.monthly_report_quota}
+                        {scoutingData.scout.reports_per_search ?? scoutingData.scout.monthly_report_quota}
                       </div>
                     </div>
                   </div>
@@ -2296,43 +2298,86 @@ export default function YouthAcademyPage(): JSX.Element {
               )}
             </Card>
 
-            <Card title={t('scouting.monthlyCycle')}>
+            <Card title={t('scouting.weeklySearch', { defaultValue: 'Weekly scouting searches' })}>
               <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-slate-50 p-3">
+                    <div className="text-xs text-slate-500">
+                      {t('scouting.runsThisWeek', { defaultValue: 'Searches this week' })}
+                    </div>
+                    <div className="mt-1 font-semibold">
+                      {Number(scoutingData?.weekly_runs_used ?? 0)}/{Number(scoutingData?.weekly_run_limit ?? 4)}
+                    </div>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 p-3">
+                    <div className="text-xs text-slate-500">
+                      {t('scouting.coinBalance', { defaultValue: 'Coin balance' })}
+                    </div>
+                    <div className="mt-1 font-semibold">
+                      {Number(scoutingData?.coin_balance ?? 0)} Coins
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <div className="text-xs text-slate-500">{t('scouting.currentRange')}</div>
                   <div className="mt-1 font-semibold">
                     {t(`scouting.ranges.${scoutingData?.scouting_range ?? draftRange}`)}
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs text-slate-500">{t('scouting.programBudget')}</div>
-                  <div className="mt-1 font-semibold">
-                    {money(scoutingData?.scouting_budget ?? currentProgram?.season_cost)}
+
+                <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs leading-5 text-slate-600">
+                  <div className="font-medium text-slate-800">
+                    {t('scouting.weeklyRule', {
+                      defaultValue: '1 free search + up to 3 Coin searches per in-game week',
+                    })}
+                  </div>
+                  <div className="mt-1">
+                    {t('scouting.boostPrices', {
+                      defaultValue:
+                        'Extra search cost: Local 10 · Regional 15 · Continental 20 · Worldwide 30 Coins.',
+                    })}
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-                  {scoutingData?.current_cycle
-                    ? t('scouting.cycleCompleted', {
-                        count: scoutingData.current_cycle.reports_created,
-                      })
-                    : t('scouting.cycleReady')}
-                </div>
+
                 <button
                   type="button"
                   disabled={
                     data.read_only ||
                     scoutingAction !== null ||
-                    !scoutingData?.can_run
+                    !scoutingData?.can_run ||
+                    (
+                      scoutingData?.can_run_coin === true &&
+                      Number(scoutingData?.coin_balance ?? 0) <
+                        Number(scoutingData?.boost_coin_cost ?? 0)
+                    )
                   }
-                  onClick={() => void runScoutingCycle()}
+                  onClick={() => void runScoutingCycle(scoutingData?.can_run_coin === true)}
                   className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
                 >
-                  {scoutingAction === 'cycle'
+                  {scoutingAction === 'cycle' || scoutingAction === 'cycle-coins'
                     ? t('scouting.running')
-                    : scoutingData?.current_cycle
-                      ? t('scouting.alreadyRun')
-                      : t('scouting.run')}
+                    : scoutingData?.can_run_free
+                      ? t('scouting.runFreeSearch', { defaultValue: 'Run free weekly search' })
+                      : scoutingData?.can_run_coin
+                        ? t('scouting.runCoinSearch', {
+                            cost: Number(scoutingData?.boost_coin_cost ?? 0),
+                            defaultValue: 'Run extra search · {{cost}} Coins',
+                          })
+                        : t('scouting.weeklyLimitReached', {
+                            defaultValue: 'Weekly search limit reached',
+                          })}
                 </button>
+
+                {scoutingData?.current_cycle ? (
+                  <div className="text-xs text-slate-500">
+                    {t('scouting.lastSearch', {
+                      reports: scoutingData.current_cycle.reports_created,
+                      run: scoutingData.current_cycle.run_number ?? 1,
+                      defaultValue: 'Last search: run {{run}} · {{reports}} reports created',
+                    })}
+                  </div>
+                ) : null}
               </div>
             </Card>
 
