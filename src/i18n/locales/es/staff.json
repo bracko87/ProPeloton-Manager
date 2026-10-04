@@ -477,6 +477,51 @@
       "title": "Análisis de los datos de rendimiento",
       "description": "Mejora la revisión analítica de los ciclistas y los informes de preparación de carreras.",
       "focus": "Precisión + Análisis"
+    },
+    "youth_director_programme_management": {
+      "title": "Gestión del programa de Academia",
+      "description": "Mejora liderazgo y eficiencia diaria de la Academia.",
+      "focus": "Liderazgo + Eficiencia"
+    },
+    "youth_director_budget_pathways": {
+      "title": "Presupuesto y vías de desarrollo",
+      "description": "Mejora gestión, planificación y vías de desarrollo eficientes.",
+      "focus": "Gestión + Eficiencia"
+    },
+    "youth_director_recruitment_strategy": {
+      "title": "Estrategia de reclutamiento juvenil",
+      "description": "Programa avanzado de talento, planificación y liderazgo.",
+      "focus": "Vías de talento + Liderazgo"
+    },
+    "u16_development_methodology": {
+      "title": "Metodología de desarrollo U16",
+      "description": "Mejora el desarrollo semanal y la progresión a largo plazo.",
+      "focus": "Desarrollo + Potencial"
+    },
+    "u16_workload_management": {
+      "title": "Gestión de carga U16",
+      "description": "Mejora decisiones sobre fatiga, preparación y carga de desarrollo.",
+      "focus": "Eficiencia + Experiencia"
+    },
+    "u16_race_coaching": {
+      "title": "Programa de coaching U16",
+      "description": "Mejora selección de carreras, decisiones y desarrollo en competición.",
+      "focus": "Coaching + Liderazgo"
+    },
+    "youth_scout_talent_id": {
+      "title": "Identificación de talento juvenil",
+      "description": "Mejora selección de prospectos y precisión del scouting.",
+      "focus": "Talento + Precisión"
+    },
+    "youth_scout_network_building": {
+      "title": "Red de scouting juvenil",
+      "description": "Amplía experiencia y red para descubrir prospectos.",
+      "focus": "Red + Experiencia"
+    },
+    "youth_scout_assessment_accuracy": {
+      "title": "Precisión de evaluación juvenil",
+      "description": "Evaluación avanzada para informes más fiables.",
+      "focus": "Precisión + Potencial"
     }
   },
   "legacyUi": {
