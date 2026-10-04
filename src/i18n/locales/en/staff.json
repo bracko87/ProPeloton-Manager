@@ -477,6 +477,51 @@
       "title": "Performance Data Analysis",
       "description": "Improves analytical review of riders and race preparation reports.",
       "focus": "Accuracy + Analysis"
+    },
+    "youth_director_programme_management": {
+      "title": "Academy Programme Management",
+      "description": "Improves leadership and day-to-day Academy programme efficiency.",
+      "focus": "Leadership + Efficiency"
+    },
+    "youth_director_budget_pathways": {
+      "title": "Academy Budget & Pathways",
+      "description": "Improves Academy management, planning and cost-efficient development pathways.",
+      "focus": "Academy Management + Efficiency"
+    },
+    "youth_director_recruitment_strategy": {
+      "title": "Youth Recruitment Strategy",
+      "description": "Advanced programme for talent pathways, recruitment planning and leadership.",
+      "focus": "Talent Pathways + Leadership"
+    },
+    "u16_development_methodology": {
+      "title": "U16 Development Methodology",
+      "description": "Improves weekly Youth development work and long-term progression support.",
+      "focus": "Youth Development + Potential"
+    },
+    "u16_workload_management": {
+      "title": "U16 Workload Management",
+      "description": "Improves fatigue, readiness and development-load decisions for young riders.",
+      "focus": "Efficiency + Experience"
+    },
+    "u16_race_coaching": {
+      "title": "U16 Race Coaching Programme",
+      "description": "Improves Youth race selection, coaching decisions and race-day development.",
+      "focus": "Race Coaching + Leadership"
+    },
+    "youth_scout_talent_id": {
+      "title": "Youth Talent Identification",
+      "description": "Improves prospect selection and scouting assessment accuracy.",
+      "focus": "Talent ID + Accuracy"
+    },
+    "youth_scout_network_building": {
+      "title": "Youth Scouting Network",
+      "description": "Builds scouting experience and strengthens the prospect discovery network.",
+      "focus": "Network + Experience"
+    },
+    "youth_scout_assessment_accuracy": {
+      "title": "Youth Assessment Accuracy",
+      "description": "Advanced prospect evaluation for more reliable Youth talent reports.",
+      "focus": "Accuracy + Potential"
     }
   },
   "legacyUi": {
