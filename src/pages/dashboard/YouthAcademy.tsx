@@ -3260,8 +3260,12 @@ export default function YouthAcademyPage(): JSX.Element {
                 </div>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
-                <div className="text-xs text-slate-500">{t('calendar.format')}</div>
-                <div className="mt-1 text-sm font-medium">{t('calendar.resultsOnly')}</div>
+                <div className="text-xs text-slate-500">
+                  {t('calendar.selectedMonth', { defaultValue: 'Selected month' })}
+                </div>
+                <div className="mt-1 text-sm font-medium">
+                  {monthLabel(calendarMonth || raceCalendar?.current_month || 1)}
+                </div>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
                 <div className="text-xs text-slate-500">{t('calendar.entryResponsibility')}</div>
@@ -3281,7 +3285,10 @@ export default function YouthAcademyPage(): JSX.Element {
               </div>
             </div>
             <p className="mt-3 text-xs leading-5 text-slate-500">
-              {t('calendar.ageLimitHelp')}
+              {t('calendar.competitionHelp', {
+                defaultValue:
+                  'World Class, Continental and Regional events use age-based start limits, rider readiness and fatigue. Separate Academy squads may race at the same time, but the same rider cannot be selected for overlapping events.',
+              })}
             </p>
           </Card>
 
@@ -3381,26 +3388,76 @@ export default function YouthAcademyPage(): JSX.Element {
           <Card
             title={t('calendar.raceCalendar')}
             right={
-              <select
-                value={calendarMonth || raceCalendar?.current_month || 1}
-                onChange={event => setCalendarMonth(Number(event.target.value))}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs"
-              >
-                {Array.from({ length: 12 }, (_, index) => index + 1).map(month => (
-                  <option key={month} value={month}>
-                    {monthLabel(month)}
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <select
+                  value={calendarMonth || raceCalendar?.current_month || 1}
+                  onChange={event => setCalendarMonth(Number(event.target.value))}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs"
+                >
+                  {Array.from({ length: 12 }, (_, index) => index + 1).map(month => (
+                    <option key={month} value={month}>
+                      {monthLabel(month)}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={calendarClassFilter}
+                  onChange={event =>
+                    setCalendarClassFilter(
+                      event.target.value as 'all' | YouthCompetitionClass
+                    )
+                  }
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs"
+                >
+                  <option value="all">
+                    {t('calendar.allCompetitions', { defaultValue: 'All competitions' })}
                   </option>
-                ))}
-              </select>
+                  <option value="world">{t('calendar.competition.world')}</option>
+                  <option value="continental">{t('calendar.competition.continental')}</option>
+                  <option value="regional">{t('calendar.competition.regional')}</option>
+                </select>
+                <select
+                  value={calendarScope}
+                  onChange={event =>
+                    setCalendarScope(
+                      event.target.value as 'all' | 'my_opportunities'
+                    )
+                  }
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs"
+                >
+                  <option value="all">
+                    {t('calendar.allRaces', { defaultValue: 'All races' })}
+                  </option>
+                  <option value="my_opportunities">
+                    {t('calendar.myOpportunities', {
+                      defaultValue: 'My Academy opportunities',
+                    })}
+                  </option>
+                </select>
+              </div>
             }
           >
-            <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-              <span>{t('calendar.visibleEvents', { count: visibleYouthRaces.length })}</span>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span>
+                {t('calendar.visibleEvents', { count: visibleYouthRaces.length })}
+              </span>
               <span>·</span>
-              <span>{t('calendar.worldVisible')}</span>
-              <span>·</span>
-              <span>{t('calendar.regionalVisible')}</span>
+              <span>
+                {t('calendar.classCounts', {
+                  world: Number(raceMonthData?.class_counts?.world ?? 0),
+                  continental: Number(raceMonthData?.class_counts?.continental ?? 0),
+                  regional: Number(raceMonthData?.class_counts?.regional ?? 0),
+                  defaultValue:
+                    'World {{world}} · Continental {{continental}} · Regional {{regional}}',
+                })}
+              </span>
             </div>
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              {t('calendar.browserHelp', {
+                defaultValue:
+                  'This browser shows the complete Youth race calendar for the selected month. Use My Academy opportunities to narrow it to invitations and your home Regional division.',
+              })}
+            </p>
           </Card>
 
           {phase3Loading && !raceCalendar ? (
@@ -3416,6 +3473,8 @@ export default function YouthAcademyPage(): JSX.Element {
                 const isManagerSquad = raceCalendar?.race_squad_decider === 'manager'
                 const isEntered = race.entry_status === 'entered'
                 const isCompleted = race.status === 'completed'
+                const isPastPrelaunch = race.status === 'cancelled' && race.prelaunch_past === true
+                const isScheduled = race.status === 'scheduled'
 
                 return (
                   <Card
@@ -3473,9 +3532,23 @@ export default function YouthAcademyPage(): JSX.Element {
                           {t('calendar.noInvitation')}
                         </span>
                       )}
+                      {isPastPrelaunch ? (
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                          {t('calendar.pastPrelaunch', {
+                            defaultValue: 'Past · pre-launch',
+                          })}
+                        </span>
+                      ) : null}
                     </div>
 
-                    {isCompleted ? (
+                    {isPastPrelaunch ? (
+                      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600">
+                        {t('calendar.prelaunchHelp', {
+                          defaultValue:
+                            'This event is kept in the calendar for completeness. It was already in the past when the Youth competition system was launched, so no result was generated.',
+                        })}
+                      </div>
+                    ) : isCompleted ? (
                       <div className="mt-4 grid gap-4 xl:grid-cols-2">
                         <div>
                           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -3528,13 +3601,13 @@ export default function YouthAcademyPage(): JSX.Element {
                       </div>
                     ) : (
                       <>
-                        {!race.qualified ? (
+                        {isScheduled && !race.qualified ? (
                           <p className="mt-4 text-sm text-slate-500">
                             {t('calendar.qualificationHelp')}
                           </p>
                         ) : null}
 
-                        {isManagerEntry && !race.entry_id && race.qualified ? (
+                        {isScheduled && isManagerEntry && !race.entry_id && race.qualified ? (
                           <div className="mt-4 flex flex-wrap items-end gap-3">
                             <label className="text-xs text-slate-600">
                               {t('calendar.strategy')}
@@ -3577,13 +3650,13 @@ export default function YouthAcademyPage(): JSX.Element {
                           </div>
                         ) : null}
 
-                        {!isManagerEntry && !race.entry_id && race.qualified ? (
+                        {isScheduled && !isManagerEntry && !race.entry_id && race.qualified ? (
                           <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                             {t('calendar.coachEntryHelp')}
                           </div>
                         ) : null}
 
-                        {race.invitation_status === 'pending' && race.invitation_response_deadline ? (
+                        {isScheduled && race.invitation_status === 'pending' && race.invitation_response_deadline ? (
                           <div className="mt-3 text-xs text-amber-700">
                             {t('calendar.responseDeadline', { date: race.invitation_response_deadline })}
                           </div>
