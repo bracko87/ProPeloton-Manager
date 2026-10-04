@@ -82,7 +82,14 @@
     "experience": "Iskustvo",
     "salary": "Nedeljna plata",
     "scoutOptional": "Omladinski skaut je opcioni. Angažuj ga na Staff stranici da počne aktivno otkrivanje talenata.",
-    "openStaffPage": "Otvori Squad → Staff"
+    "openStaffPage": "Otvori stranicu osoblja",
+    "youthScope": "Akademija mladih",
+    "potential": "Potencijal",
+    "leadership": "Vođstvo",
+    "efficiency": "Efikasnost",
+    "loyalty": "Lojalnost",
+    "weeklyWage": "Nedeljna plata",
+    "contractUntil": "Ugovor do {{date}}"
   },
   "budget": {
     "title": "Sezonski budžet akademije",
@@ -101,7 +108,27 @@
     "date": "Datum",
     "category": "Kategorija",
     "description": "Opis",
-    "amount": "Iznos"
+    "amount": "Iznos",
+    "initialAllocation": "Početna sezonska alokacija",
+    "initialAllocationHelp": "Iznos dodeljen pri aktivaciji Akademije. Ova istorijska početna alokacija se kasnije ne menja.",
+    "currentFunds": "Trenutna sredstva Akademije",
+    "includesIncomeTransfers": "Uključuje prihode od trka i kasnije transfere.",
+    "afterCommitments": "Dostupno nakon troškova i obaveza.",
+    "seniorBalance": "Stanje seniorskog tima",
+    "seniorBalanceHelp": "Dostupna sredstva seniorskog tima pre novog transfera.",
+    "fundsChart": "Sredstva Akademije",
+    "incomeChart": "Prihodi i transferi",
+    "raceIncome": "Prihod od trka mladih",
+    "transfersIn": "Transferi iz seniorskog tima",
+    "transfersOut": "Vraćeno seniorskom timu",
+    "adjustBudget": "Prilagodi budžet Akademije",
+    "direction": "Smer transfera",
+    "seniorToYouth": "Seniorski tim → Akademija",
+    "youthToSenior": "Akademija → Seniorski tim",
+    "transferAmount": "Iznos",
+    "transferring": "Prenos…",
+    "transferFunds": "Prenesi sredstva",
+    "transferHelp": "Prihodi od trka automatski ostaju u Akademiji. Ovu opciju koristi samo kada namerno želiš da prebaciš novac između seniorskog tima i Akademije."
   },
   "scouting": {
     "title": "Domet omladinskog skautinga",
@@ -261,7 +288,8 @@
     "historyLoad": "Nije moguće učitati istoriju Akademije.",
     "reportFrequency": "Nije moguće sačuvati postavku U16 izveštaja.",
     "monthlyRacePlan": "Nije moguće sačuvati mesečni plan trka mladih.",
-    "raceInvitationDecline": "Nije moguće odbiti poziv za trku mladih."
+    "raceInvitationDecline": "Nije moguće odbiti poziv za trku mladih.",
+    "budgetTransfer": "Nije moguće preneti sredstva Akademije."
   },
   "equipment": {
     "title": "Oprema za mlade",
@@ -449,5 +477,35 @@
     "workload": "Opterećenje",
     "change": "Razvojna promena",
     "readinessFatigue": "Spremnost / umor"
+  },
+  "profile": {
+    "loading": "Učitavanje profila mladog vozača…",
+    "notFound": "Profil mladog vozača nije moguće učitati.",
+    "back": "Nazad na mlade vozače",
+    "youthRider": "Mladi vozač",
+    "readiness": "Spremnost",
+    "fatigue": "Umor",
+    "developmentFocus": "Fokus razvoja",
+    "talentAssessment": "Procena talenta",
+    "hiddenPotential": "Tačan potencijal ostaje skriven.",
+    "attributes": "Atributi vozača",
+    "supportAgreement": "Ugovor o podršci",
+    "weeklyStipend": "Nedeljna stipendija",
+    "accommodation": "Smeštaj",
+    "joined": "Dolazak u Akademiju",
+    "agreementUntil": "Ugovor do",
+    "raceSummary": "Pregled trka",
+    "starts": "Startovi",
+    "wins": "Pobede",
+    "podiums": "Podijumi",
+    "regionalPoints": "Regionalni bodovi",
+    "worldPoints": "Svetski bodovi",
+    "recentResults": "Nedavni rezultati",
+    "noResults": "Još nema rezultata trka mladih.",
+    "date": "Datum",
+    "race": "Trka",
+    "class": "Klasa",
+    "result": "Rezultat",
+    "points": "Bodovi"
   }
 }
