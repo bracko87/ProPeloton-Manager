@@ -89,7 +89,21 @@
     "efficiency": "Eficiencia",
     "loyalty": "Lealtad",
     "weeklyWage": "Salario semanal",
-    "contractUntil": "Contrato hasta {{date}}"
+    "contractUntil": "Contrato hasta {{date}}",
+    "careerFramework": "Niveles y salarios del personal juvenil",
+    "directorBonusHelp": "El liderazgo y la eficiencia mejoran la gestión de la Academia. Los directores fuertes pueden reducir hasta un 8 % el coste del equipamiento juvenil.",
+    "coachBonusHelp": "La experiencia, el potencial y la eficiencia mejoran el desarrollo semanal, la carga y la selección de carrera.",
+    "scoutBonusHelp": "La experiencia y eficiencia mejoran la selección de talentos, la confianza de los informes y los informes por búsqueda.",
+    "levelScaleHelp": "Se usa la misma escala que en el equipo sénior: Deficiente (<30), Básico (30–44), Competente (45–59), Fuerte (60–74), Élite (75–89) y Clase Mundial (90+).",
+    "openProfile": "Abrir perfil del personal",
+    "openScoutStaff": "Abrir personal de scout juvenil",
+    "activeBonus": "Bonificación activa",
+    "level": "Nivel",
+    "salaryRange": "Rango del puesto: {{value}}",
+    "contract": "Contrato",
+    "directorActiveBonus": "Hasta {{value}} % de descuento en equipamiento juvenil",
+    "coachActiveBonus": "Puntuación de desarrollo {{score}}: afecta progresión, preparación y selección",
+    "scoutActiveBonus": "Puntuación scout {{score}}: hasta {{reports}} informes por búsqueda con mejor precisión"
   },
   "budget": {
     "title": "Presupuesto de temporada de la academia",
@@ -238,7 +252,17 @@
       "decline": "Rechazar",
       "processing": "Procesando…"
     },
-    "awaitingAcademyResponse": "Esperando respuesta de la academia"
+    "awaitingAcademyResponse": "Esperando respuesta de la academia",
+    "reportsPerSearch": "Informes por búsqueda",
+    "weeklySearch": "Búsquedas semanales",
+    "runsThisWeek": "Búsquedas esta semana",
+    "coinBalance": "Saldo de Coins",
+    "weeklyRule": "1 búsqueda gratis + hasta 3 búsquedas con Coins por semana de juego",
+    "boostPrices": "Búsqueda extra: Local 10 · Regional 15 · Continental 20 · Mundial 30 Coins.",
+    "runFreeSearch": "Ejecutar búsqueda semanal gratis",
+    "runCoinSearch": "Ejecutar búsqueda extra · {{cost}} Coins",
+    "weeklyLimitReached": "Límite semanal alcanzado",
+    "lastSearch": "Última búsqueda: ejecución {{run}} · {{reports}} informes"
   },
   "settings": {
     "title": "Responsabilidades",
@@ -264,7 +288,18 @@
       "promising": "Prometedor",
       "very_promising": "Muy prometedor",
       "exceptional": "Excepcional"
-    }
+    },
+    "recruitmentHelp": "Decide qué talentos observados entran en el proceso de reclutamiento y si la Academia los persigue.",
+    "raceEntryHelp": "Decide qué invitaciones se aceptan o rechazan y en qué carreras participa la Academia.",
+    "raceSquadHelp": "Selecciona corredores y estrategia para cada carrera, incluida la rotación entre pruebas simultáneas.",
+    "campsHelp": "Aprueba concentraciones juveniles y el gasto correspondiente.",
+    "equipmentHelp": "Controla las compras de equipamiento juvenil. El Director puede cubrir automáticamente necesidades dentro del presupuesto.",
+    "negotiationsHelp": "Gestiona estipendio, alojamiento y compensación de desarrollo tras identificar un talento.",
+    "pendingConfirmation": "Pendiente de confirmar",
+    "confirmed": "Confirmado",
+    "responsiblePerson": "Responsable",
+    "confirming": "Confirmando…",
+    "confirmResponsibility": "Confirmar responsabilidad"
   },
   "placeholders": {},
   "errors": {
@@ -312,7 +347,22 @@
     "tier": "Nivel {{tier}}",
     "purchase": "Comprar para la academia",
     "purchasing": "Comprando…",
-    "durability": "Durabilidad"
+    "durability": "Durabilidad",
+    "tabs": {
+      "overview": "Resumen",
+      "inventory": "Inventario",
+      "market": "Mercado",
+      "assets": "Activos"
+    },
+    "overviewOwnedHelp": "Equipamiento duradero actualmente propiedad de la Academia.",
+    "availableMarket": "Artículos del mercado",
+    "overviewMarketHelp": "Equipamiento Tier 1–2 aprobado para la Academia.",
+    "averageQuality": "Calidad media",
+    "averageCondition": "Estado medio",
+    "marketDelegated": "Las compras están delegadas al Director. Puedes revisar el mercado mientras él usa presupuesto y bonificación del puesto.",
+    "assetOverview": "Activos de la Academia Juvenil",
+    "items": "Artículos",
+    "invested": "Invertido"
   },
   "training": {
     "title": "Filosofía de desarrollo juvenil",
@@ -405,7 +455,16 @@
     "noInvitation": "Aún sin invitación",
     "declining": "Rechazando…",
     "declineInvitation": "Rechazar invitación",
-    "responseDeadline": "Fecha límite: {{date}}"
+    "responseDeadline": "Fecha límite: {{date}}",
+    "selectedMonth": "Mes seleccionado",
+    "competitionHelp": "Las pruebas Mundial, Continental y Regional usan límites de salidas por edad, preparación y fatiga. Se pueden usar plantillas distintas a la vez, pero un corredor no puede estar en carreras solapadas.",
+    "allCompetitions": "Todas las competiciones",
+    "allRaces": "Todas las carreras",
+    "myOpportunities": "Oportunidades de mi Academia",
+    "classCounts": "Mundial {{world}} · Continental {{continental}} · Regional {{regional}}",
+    "browserHelp": "Muestra el calendario juvenil completo del mes. Usa Oportunidades de mi Academia para ver invitaciones y tu división Regional.",
+    "pastPrelaunch": "Pasada · pre-lanzamiento",
+    "prelaunchHelp": "Se conserva para completar el calendario. Ya había pasado cuando se lanzó el sistema juvenil, por lo que no se generó resultado."
   },
   "rankings": {
     "title": "Rankings juveniles",
@@ -422,7 +481,12 @@
     "yourDivision": "Tu división",
     "raceStarts": "Salidas",
     "riderRankings": "Rankings de ciclistas juveniles",
-    "promotionNote": "Las zonas de ascenso y descenso están preparadas en el modelo. Las posiciones exactas se activarán cuando se definan esas reglas."
+    "promotionNote": "Las zonas de ascenso y descenso están preparadas en el modelo. Las posiciones exactas se activarán cuando se definan esas reglas.",
+    "selectClass": "Seleccionar clase",
+    "selectDivision": "Seleccionar división",
+    "country": "País",
+    "yourAcademy": "Tu Academia",
+    "riderRankingHelp": "El ranking de corredores es independiente de la clasificación de Academias."
   },
   "reports": {
     "title": "Informes de carreras juveniles",
