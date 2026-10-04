@@ -82,7 +82,14 @@
     "experience": "Experiencia",
     "salary": "Salario semanal",
     "scoutOptional": "El ojeador juvenil es opcional. Contrata uno desde Personal para empezar a descubrir talentos activamente.",
-    "openStaffPage": "Abrir Plantilla → Personal"
+    "openStaffPage": "Abrir página de staff",
+    "youthScope": "Academia Juvenil",
+    "potential": "Potencial",
+    "leadership": "Liderazgo",
+    "efficiency": "Eficiencia",
+    "loyalty": "Lealtad",
+    "weeklyWage": "Salario semanal",
+    "contractUntil": "Contrato hasta {{date}}"
   },
   "budget": {
     "title": "Presupuesto de temporada de la academia",
@@ -101,7 +108,27 @@
     "date": "Fecha",
     "category": "Categoría",
     "description": "Descripción",
-    "amount": "Importe"
+    "amount": "Importe",
+    "initialAllocation": "Asignación inicial de temporada",
+    "initialAllocationHelp": "Cantidad asignada al activar la Academia. Esta asignación histórica no cambia después.",
+    "currentFunds": "Fondos actuales de la Academia",
+    "includesIncomeTransfers": "Incluye ingresos de carreras y transferencias posteriores.",
+    "afterCommitments": "Disponible tras gastos y compromisos.",
+    "seniorBalance": "Saldo del equipo sénior",
+    "seniorBalanceHelp": "Efectivo disponible del equipo sénior antes de otra transferencia.",
+    "fundsChart": "Fondos de la Academia",
+    "incomeChart": "Ingresos y transferencias",
+    "raceIncome": "Ingresos por carreras juveniles",
+    "transfersIn": "Transferencias desde el sénior",
+    "transfersOut": "Devuelto al equipo sénior",
+    "adjustBudget": "Ajustar presupuesto",
+    "direction": "Dirección",
+    "seniorToYouth": "Equipo sénior → Academia Juvenil",
+    "youthToSenior": "Academia Juvenil → Equipo sénior",
+    "transferAmount": "Importe",
+    "transferring": "Transfiriendo…",
+    "transferFunds": "Transferir fondos",
+    "transferHelp": "Los ingresos de carreras permanecen automáticamente en la Academia. Usa este control solo para mover dinero deliberadamente entre el sénior y la Academia."
   },
   "scouting": {
     "title": "Alcance del scouting juvenil",
@@ -261,7 +288,8 @@
     "historyLoad": "No se pudo cargar el historial de la Academia.",
     "reportFrequency": "No se pudo guardar la preferencia de informes juveniles.",
     "monthlyRacePlan": "No se pudo guardar el plan mensual de carreras juveniles.",
-    "raceInvitationDecline": "No se pudo rechazar la invitación a la carrera juvenil."
+    "raceInvitationDecline": "No se pudo rechazar la invitación a la carrera juvenil.",
+    "budgetTransfer": "No se pudieron transferir fondos de la Academia."
   },
   "equipment": {
     "title": "Equipamiento juvenil",
@@ -449,5 +477,35 @@
     "workload": "Carga",
     "change": "Cambio de desarrollo",
     "readinessFatigue": "Preparación / fatiga"
+  },
+  "profile": {
+    "loading": "Cargando perfil juvenil…",
+    "notFound": "No se pudo cargar el perfil del ciclista juvenil.",
+    "back": "Volver a ciclistas juveniles",
+    "youthRider": "Ciclista juvenil",
+    "readiness": "Preparación",
+    "fatigue": "Fatiga",
+    "developmentFocus": "Foco de desarrollo",
+    "talentAssessment": "Evaluación de talento",
+    "hiddenPotential": "El potencial exacto permanece oculto.",
+    "attributes": "Atributos",
+    "supportAgreement": "Acuerdo de apoyo",
+    "weeklyStipend": "Estipendio semanal",
+    "accommodation": "Alojamiento",
+    "joined": "Ingreso en Academia",
+    "agreementUntil": "Acuerdo hasta",
+    "raceSummary": "Resumen de carreras",
+    "starts": "Salidas",
+    "wins": "Victorias",
+    "podiums": "Podios",
+    "regionalPoints": "Puntos regionales",
+    "worldPoints": "Puntos mundiales",
+    "recentResults": "Resultados recientes",
+    "noResults": "Aún no hay resultados juveniles.",
+    "date": "Fecha",
+    "race": "Carrera",
+    "class": "Clase",
+    "result": "Resultado",
+    "points": "Puntos"
   }
 }
