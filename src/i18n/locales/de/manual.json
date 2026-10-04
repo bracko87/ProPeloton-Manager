@@ -3410,6 +3410,56 @@
           "to": "/dashboard/staff"
         }
       ]
+    },
+    "youth-academy": {
+      "category": "Fahrer",
+      "title": "Youth Academy: U16-Starthilfe",
+      "subtitle": "So steuerst du dein Premium-U16-Programm, Fahrer, Staff, Rennen und Budget.",
+      "overview": "Die Youth Academy ist ein Premium-U16-Entwicklungsprogramm mit maximal 16 Fahrern. Rekrutiere Talente, gib ihnen passende Renneinsätze, verwalte Akademie-Staff und Finanzen und entscheide mit 16 Jahren über ihren nächsten Weg.",
+      "facts": {
+        "0": {
+          "label": "Kapazität",
+          "value": "Maximal 16 Jugendfahrer"
+        },
+        "1": {
+          "label": "Startpaket",
+          "value": "6 lokale Jugendfahrer, Youth Academy Director und U16-Cheftrainer"
+        },
+        "2": {
+          "label": "Optionaler Staff",
+          "value": "Bis zu 3 Youth Scouts können über den Staff Market verpflichtet werden"
+        },
+        "3": {
+          "label": "Rennformat",
+          "value": "Nur Ergebnisse: World Class, Continental West/Ost und Regional Class"
+        },
+        "4": {
+          "label": "Budget",
+          "value": "Eigenes Akademiebudget mit Renneinnahmen und Transfers in beide Richtungen"
+        }
+      },
+      "details": {
+        "0": "Jugendfahrer-Profile öffnest du im Tab Jugendfahrer. Attribute, Bereitschaft, Ermüdung, Entwicklungsfokus, Vereinbarung und Rennhistorie sind sichtbar; das exakte versteckte Potenzial bleibt hinter der Talentbewertung verborgen.",
+        "1": "Die Akademie startet mit sechs lokalen Fahrern und kann auf 16 wachsen. Youth Academy Director, U16-Cheftrainer und Youth Scouts werden über den normalen Staff Market verpflichtet.",
+        "2": "Über Verantwortlichkeiten entscheidest du, ob Manager oder Akademie-Staff Rekrutierung, Rennteilnahme, Aufstellungen und Ausrüstungsentscheidungen übernehmen.",
+        "3": "Jugendrennen werden nur als Ergebnis berechnet: World Class, Continental West/Ost und Regionaldivisionen. Unterschiedliche Kader dürfen gleichzeitig fahren, derselbe Fahrer aber nicht in überlappenden Rennen.",
+        "4": "World-Class-Akademien erhalten Einladungen. Freie Plätze nach Absagen können über gewichtete Wildcards vergeben werden. Der Monatsplan begrenzt Rennanzahl und Rennbudget.",
+        "5": "Die Startzuweisung bleibt als historische Originalsumme unverändert. Aktuelle Akademiemittel ändern sich durch Ausgaben, Renneinnahmen und bewusste Transfers.",
+        "6": "Jugend-Renneinnahmen gehen direkt an die Youth Academy. Nutze Budget anpassen nur, wenn du bewusst Geld zwischen Senior-Team und Akademie verschieben willst.",
+        "7": "Mit 16 Jahren braucht jeder Fahrer eine Abschlussentscheidung: Pathway, Developing Team bei Eignung und freiem Platz oder Freigabe."
+      },
+      "tips": {
+        "0": "Rotiere den Kader, statt immer dieselben besten Fahrer einzusetzen.",
+        "1": "Genehmige den Monatsplan rechtzeitig vor Fristen.",
+        "2": "Halte genug Mittel für Unterstützung, Staff, Scouting, Equipment und Reisen frei.",
+        "3": "Prüfe regelmäßig Bereitschaft und Ermüdung in den Jugendfahrer-Profilen."
+      },
+      "relatedLinks": {
+        "0": "Youth Academy öffnen",
+        "1": "Jugendfahrer öffnen",
+        "2": "Staff öffnen",
+        "3": "Staff Market öffnen"
+      }
     }
   }
 }
