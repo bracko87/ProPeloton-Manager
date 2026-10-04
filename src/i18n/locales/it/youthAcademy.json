@@ -59,7 +59,14 @@
     "nextRace": "Prossima gara giovanile",
     "recruitment": "Raggio di reclutamento",
     "reputation": "Reputazione dell'accademia",
-    "staff": "Staff dell'accademia"
+    "staff": "Staff dell'accademia",
+    "racingTitle": "Gare dell'Accademia",
+    "openCalendar": "Apri calendario",
+    "previousRace": "Gara precedente",
+    "latestResult": "Ultimo risultato",
+    "noPreviousRace": "Nessuna gara dell'Accademia completata",
+    "noUpcomingRace": "Nessuna prossima gara dell'Accademia selezionata",
+    "noResult": "Nessun risultato giovanile"
   },
   "roles": {
     "director": "Direttore dell'Accademia Giovanile",
@@ -158,7 +165,7 @@
     "loading": "Caricamento rapporti scouting…",
     "scoutScore": "Efficacia scouting: {{score}} / 100",
     "monthlyReports": "Rapporti / mese",
-    "qualityExplainer": "Il budget determina dove lo scout può cercare. La qualità dello scout determina quanti corridori segnala, la precisione delle valutazioni e la capacità di individuare talenti migliori.",
+    "qualityExplainer": "La qualità dello scout determina quantità e qualità: gli scout migliori producono più report per ricerca, esaminano un gruppo nascosto di candidati più forte e valutano i prospetti con maggiore affidabilità.",
     "noScout": "Assumi uno scout giovanile per iniziare la ricerca mensile. L'Accademia può funzionare senza scout, ma non produrrà nuovi rapporti.",
     "monthlyCycle": "Ciclo mensile di scouting",
     "currentRange": "Raggio attuale",
@@ -258,11 +265,12 @@
     "runsThisWeek": "Ricerche questa settimana",
     "coinBalance": "Saldo Coins",
     "weeklyRule": "1 ricerca gratuita + fino a 3 ricerche con Coins per settimana di gioco",
-    "boostPrices": "Ricerca extra: Locale 10 · Regionale 15 · Continentale 20 · Mondiale 30 Coins.",
+    "boostPrices": "Costo per ricerca extra: Locale 2 · Regionale 5 · Continentale 8 · Mondiale 12 Coins.",
     "runFreeSearch": "Avvia ricerca settimanale gratuita",
     "runCoinSearch": "Avvia ricerca extra · {{cost}} Coins",
     "weeklyLimitReached": "Limite settimanale raggiunto",
-    "lastSearch": "Ultima ricerca: run {{run}} · {{reports}} rapporti"
+    "lastSearch": "Ultima ricerca: run {{run}} · {{reports}} rapporti",
+    "maxReportsPerWeek": "Report max / settimana"
   },
   "settings": {
     "title": "Responsabilità",
