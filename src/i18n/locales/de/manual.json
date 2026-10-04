@@ -3413,46 +3413,55 @@
     },
     "youth-academy": {
       "category": "Fahrer",
-      "title": "Youth Academy: U16-Starthilfe",
-      "subtitle": "So steuerst du dein Premium-U16-Programm, Fahrer, Staff, Rennen und Budget.",
-      "overview": "Die Youth Academy ist ein Premium-U16-Entwicklungsprogramm mit maximal 16 Fahrern. Rekrutiere Talente, gib ihnen passende Renneinsätze, verwalte Akademie-Staff und Finanzen und entscheide mit 16 Jahren über ihren nächsten Weg.",
+      "title": "Youth Academy: U16-Starterguide",
+      "subtitle": "So führst du dein Premium-U16-Programm mit Fahrern, Personal, Scouting, Rennen und Budget.",
+      "overview": "Die Youth Academy ist ein Premium-U16-Entwicklungsprogramm mit maximal 16 Fahrern. Rekrutiere und entwickle Talente mit eigenem Personal und Kursen, steuere Scouting und Rennen sowie ein separates Akademiebudget und entscheide mit 16 über ihren nächsten Weg.",
       "facts": {
         "0": {
           "label": "Kapazität",
-          "value": "Maximal 16 Jugendfahrer"
+          "value": "Maximal 16 Youth-Fahrer"
         },
         "1": {
           "label": "Startpaket",
-          "value": "6 lokale Jugendfahrer, Youth Academy Director und U16-Cheftrainer"
+          "value": "6 lokale Youth-Fahrer, Youth Academy Director und U16 Head Coach"
         },
         "2": {
-          "label": "Optionaler Staff",
-          "value": "Bis zu 3 Youth Scouts können über den Staff Market verpflichtet werden"
+          "label": "Optionales Personal",
+          "value": "Bis zu 3 Youth Scouts über den Staff Market"
         },
         "3": {
-          "label": "Rennformat",
-          "value": "Nur Ergebnisse: World Class, Continental West/Ost und Regional Class"
+          "label": "Scouting-Häufigkeit",
+          "value": "1 kostenlose Suche + bis zu 3 Coin-Suchen pro Spielwoche"
         },
         "4": {
+          "label": "Wettbewerbsstruktur",
+          "value": "World Class, Continental West/Ost und Regional Class"
+        },
+        "5": {
           "label": "Budget",
-          "value": "Eigenes Akademiebudget mit Renneinnahmen und Transfers in beide Richtungen"
+          "value": "Separater Academy-Fonds mit Renneinnahmen und Transfers in beide Richtungen"
         }
       },
       "details": {
-        "0": "Jugendfahrer-Profile öffnest du im Tab Jugendfahrer. Attribute, Bereitschaft, Ermüdung, Entwicklungsfokus, Vereinbarung und Rennhistorie sind sichtbar; das exakte versteckte Potenzial bleibt hinter der Talentbewertung verborgen.",
-        "1": "Die Akademie startet mit sechs lokalen Fahrern und kann auf 16 wachsen. Youth Academy Director, U16-Cheftrainer und Youth Scouts werden über den normalen Staff Market verpflichtet.",
-        "2": "Über Verantwortlichkeiten entscheidest du, ob Manager oder Akademie-Staff Rekrutierung, Rennteilnahme, Aufstellungen und Ausrüstungsentscheidungen übernehmen.",
-        "3": "Jugendrennen werden nur als Ergebnis berechnet: World Class, Continental West/Ost und Regionaldivisionen. Unterschiedliche Kader dürfen gleichzeitig fahren, derselbe Fahrer aber nicht in überlappenden Rennen.",
-        "4": "World-Class-Akademien erhalten Einladungen. Freie Plätze nach Absagen können über gewichtete Wildcards vergeben werden. Der Monatsplan begrenzt Rennanzahl und Rennbudget.",
-        "5": "Die Startzuweisung bleibt als historische Originalsumme unverändert. Aktuelle Akademiemittel ändern sich durch Ausgaben, Renneinnahmen und bewusste Transfers.",
-        "6": "Jugend-Renneinnahmen gehen direkt an die Youth Academy. Nutze Budget anpassen nur, wenn du bewusst Geld zwischen Senior-Team und Akademie verschieben willst.",
-        "7": "Mit 16 Jahren braucht jeder Fahrer eine Abschlussentscheidung: Pathway, Developing Team bei Eignung und freiem Platz oder Freigabe."
+        "0": "Youth-Fahrerprofile öffnest du im Tab Youth Riders. Attribute, Bereitschaft, Ermüdung, Entwicklungsfokus, Unterstützungsvereinbarung und Rennhistorie sind sichtbar; das exakte versteckte Potenzial bleibt hinter der Talentbewertung verborgen.",
+        "1": "Die Akademie startet mit sechs lokalen Fahrern und kann auf 16 wachsen. Das Youth-Personal nutzt dieselben Stufen wie das Senior-Personal: Schwach, Basis, Kompetent, Stark, Elite und Weltklasse.",
+        "2": "Youth-Rollen besitzen eigene Boni: Die Qualität des Direktors verbessert Verwaltung und Ausrüstungseinkauf; der U16 Head Coach beeinflusst Entwicklung und Rennauswahl; der Youth Scout verbessert Talentauswahl und Berichtssicherheit.",
+        "3": "Youth-Personal kann über eigene Kurse im normalen Personalprofil verbessert werden. Die Kurskosten werden aus dem Youth-Academy-Budget bezahlt.",
+        "4": "Der Youth Scout hat eine kostenlose Suche pro Spielwoche plus bis zu drei zusätzliche Coin-Suchen: Lokal 10, Regional 15, Kontinental 20 und Weltweit 30 Coins je Suche.",
+        "5": "Verantwortlichkeiten werden je Entscheidungsbereich bestätigt. Rekrutierung und Verhandlungen können an den Akademiedirektor, Rennteilnahme und Aufstellungen an den U16 Head Coach delegiert werden.",
+        "6": "Der Youth-Wettbewerb besteht aus World Class, Continental West/Ost und Regionaldivisionen. Der Kalender kann alle Rennen eines Monats oder nur die Möglichkeiten deiner Akademie zeigen. Derselbe Fahrer darf nicht in sich überschneidenden Rennen eingesetzt werden.",
+        "7": "World-Class-Akademien erhalten Einladungen; freie Plätze können über gewichtete Wildcards vergeben werden. Monatspläne begrenzen Rennanzahl und Rennbudget.",
+        "8": "Die Aktivierungszuweisung bleibt als Historie fix. Das aktuelle Akademiebudget ändert sich durch Ausgaben, Youth-Renneinnahmen und Transfers; Renneinnahmen gehen direkt an die Akademie.",
+        "9": "Über Budget anpassen kann Geld in beide Richtungen bewegt werden. Rücktransfers zum Senior-Team sind nur aus freien, nicht gebundenen Mitteln möglich.",
+        "10": "Mit 16 ist eine Abschlussentscheidung nötig: temporärer Entwicklungspfad, Developing Team bei Berechtigung und Platz oder Freigabe."
       },
       "tips": {
-        "0": "Rotiere den Kader, statt immer dieselben besten Fahrer einzusetzen.",
-        "1": "Genehmige den Monatsplan rechtzeitig vor Fristen.",
-        "2": "Halte genug Mittel für Unterstützung, Staff, Scouting, Equipment und Reisen frei.",
-        "3": "Prüfe regelmäßig Bereitschaft und Ermüdung in den Jugendfahrer-Profilen."
+        "0": "Öffne Youth-Personalprofile regelmäßig für Stufe, Skills, Boni, Vertragssaison und Kurse.",
+        "1": "Nutze zuerst die kostenlose Wochensuche und Coins nur für sinnvolle Zusatzsuchen.",
+        "2": "Rotiere den Kader, damit auch jüngere und schwächere Fahrer Rennerfahrung sammeln.",
+        "3": "Bestätige den Monatsrennplan rechtzeitig vor Einladungen und Fristen.",
+        "4": "Halte genug Budget für Unterstützung, Gehälter, Scouting, Kurse, Ausrüstung und Reisen frei.",
+        "5": "Kontrolliere regelmäßig Bereitschaft und Ermüdung der Youth-Fahrer."
       },
       "relatedLinks": {
         "0": "Youth Academy öffnen",
