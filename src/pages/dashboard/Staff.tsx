@@ -1382,12 +1382,91 @@ function buildCourseOptions(role: StaffRole): CourseOption[] {
     ]
   }
 
-  if (
-    role === 'youth_academy_director' ||
-    role === 'u16_head_coach' ||
-    role === 'youth_scout'
-  ) {
-    return []
+  if (role === 'youth_academy_director') {
+    return [
+      {
+        code: 'youth_director_programme_management',
+        title: 'Academy Programme Management',
+        description: 'Improves leadership and day-to-day Academy programme efficiency.',
+        durationDays: 30,
+        costCash: 16000,
+        focusLabel: 'Leadership + Efficiency',
+      },
+      {
+        code: 'youth_director_budget_pathways',
+        title: 'Academy Budget & Pathways',
+        description: 'Improves Academy management, planning and cost-efficient development pathways.',
+        durationDays: 45,
+        costCash: 26000,
+        focusLabel: 'Academy Management + Efficiency',
+      },
+      {
+        code: 'youth_director_recruitment_strategy',
+        title: 'Youth Recruitment Strategy',
+        description: 'Advanced programme for talent pathways, recruitment planning and leadership.',
+        durationDays: 60,
+        costCash: 38000,
+        focusLabel: 'Talent Pathways + Leadership',
+      },
+    ]
+  }
+
+  if (role === 'u16_head_coach') {
+    return [
+      {
+        code: 'u16_development_methodology',
+        title: 'U16 Development Methodology',
+        description: 'Improves weekly Youth development work and long-term progression support.',
+        durationDays: 30,
+        costCash: 16000,
+        focusLabel: 'Youth Development + Potential',
+      },
+      {
+        code: 'u16_workload_management',
+        title: 'U16 Workload Management',
+        description: 'Improves fatigue, readiness and development-load decisions for young riders.',
+        durationDays: 45,
+        costCash: 26000,
+        focusLabel: 'Efficiency + Experience',
+      },
+      {
+        code: 'u16_race_coaching',
+        title: 'U16 Race Coaching Programme',
+        description: 'Improves Youth race selection, coaching decisions and race-day development.',
+        durationDays: 60,
+        costCash: 38000,
+        focusLabel: 'Race Coaching + Leadership',
+      },
+    ]
+  }
+
+  if (role === 'youth_scout') {
+    return [
+      {
+        code: 'youth_scout_talent_id',
+        title: 'Youth Talent Identification',
+        description: 'Improves prospect selection and scouting assessment accuracy.',
+        durationDays: 30,
+        costCash: 16000,
+        focusLabel: 'Talent ID + Accuracy',
+      },
+      {
+        code: 'youth_scout_network_building',
+        title: 'Youth Scouting Network',
+        description: 'Builds scouting experience and strengthens the prospect discovery network.',
+        durationDays: 45,
+        costCash: 24000,
+        focusLabel: 'Network + Experience',
+      },
+      {
+        code: 'youth_scout_assessment_accuracy',
+        title: 'Youth Assessment Accuracy',
+        description: 'Advanced prospect evaluation for more reliable Youth talent reports.',
+        durationDays: 60,
+        costCash: 36000,
+        focusLabel: 'Accuracy + Potential',
+      },
+    ]
   }
 
   if (role === 'scout_analyst') {
@@ -4389,6 +4468,7 @@ function StaffRolesInformationModal({
 
 export default function StaffPage() {
   const { t } = useTranslation('staff')
+  const location = useLocation()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [clubName, setClubName] = useState<string | null>(null)
@@ -4709,6 +4789,24 @@ export default function StaffPage() {
     [staffRows, currentGameDate, activeCourseByStaffId, infrastructure, t]
   )
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const requestedStaffId = params.get('staff')
+    const requestedRole = params.get('role') as StaffRole | null
+
+    if (requestedRole && ROLE_TABS.some(item => item.role === requestedRole)) {
+      setSelectedRole(requestedRole)
+    }
+
+    if (!requestedStaffId || staffMembers.length === 0) return
+
+    const requestedStaff = staffMembers.find(member => member.id === requestedStaffId)
+    if (!requestedStaff) return
+
+    setSelectedRole(requestedStaff.role)
+    setSelectedStaff(current => current?.id === requestedStaff.id ? current : requestedStaff)
+  }, [location.search, staffMembers])
+
   const membersByRole = useMemo(() => {
     const grouped: Record<StaffRole, StaffListMember[]> = {
       head_coach: [],
@@ -4974,10 +5072,18 @@ export default function StaffPage() {
       setCourseError(null)
       setPageMessage(null)
 
-      const { data, error } = await supabase.rpc('start_staff_course', {
-        p_staff_id: previousStaff.id,
-        p_course_code: courseCode,
-      })
+      const isYouthAcademyRole =
+        previousStaff.role === 'youth_academy_director' ||
+        previousStaff.role === 'u16_head_coach' ||
+        previousStaff.role === 'youth_scout'
+
+      const { data, error } = await supabase.rpc(
+        isYouthAcademyRole ? 'start_youth_staff_course_v1' : 'start_staff_course',
+        {
+          p_staff_id: previousStaff.id,
+          p_course_code: courseCode,
+        }
+      )
 
       if (error) throw error
 
