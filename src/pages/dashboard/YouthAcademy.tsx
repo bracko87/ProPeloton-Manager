@@ -513,22 +513,6 @@ function humanize(value: string | null | undefined): string {
   return value.replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase())
 }
 
-function youthCompetitionLabel(
-  competitionClass: YouthCompetitionClass | null | undefined,
-  divisionCode?: string | null
-): string {
-  if (competitionClass === 'world') return 'World Class'
-  if (competitionClass === 'continental') {
-    return `Continental Class · ${humanize(
-      String(divisionCode ?? '').replace('CONTINENTAL_', '')
-    )}`
-  }
-  if (competitionClass === 'regional') {
-    return `Regional Class · ${humanize(divisionCode)}`
-  }
-  return 'Youth Competition'
-}
-
 function monthLabel(month: number | null | undefined): string {
   const safe = Math.max(1, Math.min(12, Number(month ?? 1)))
   return new Intl.DateTimeFormat(undefined, { month: 'long' }).format(
@@ -599,6 +583,22 @@ export default function YouthAcademyPage(): JSX.Element {
   const [raceReportFrequency, setRaceReportFrequency] = useState<
     'every_race' | 'important_only' | 'podium_exceptional' | 'problems_only' | 'never'
   >('important_only')
+
+  const competitionLabel = (
+    competitionClass: YouthCompetitionClass | null | undefined,
+    divisionCode?: string | null
+  ): string => {
+    if (competitionClass === 'world') return t('calendar.competition.world')
+    if (competitionClass === 'continental') {
+      return `${t('calendar.competition.continental')} · ${humanize(
+        String(divisionCode ?? '').replace('CONTINENTAL_', '')
+      )}`
+    }
+    if (competitionClass === 'regional') {
+      return `${t('calendar.competition.regional')} · ${humanize(divisionCode)}`
+    }
+    return t('calendar.competition.youth')
+  }
 
   const applyScoutingPayload = (payload: ScoutingPayload): void => {
     setScoutingData(payload)
@@ -923,7 +923,7 @@ export default function YouthAcademyPage(): JSX.Element {
       await loadFinance()
     } catch (planError: any) {
       console.error('Youth monthly race plan save failed:', planError)
-      setError(planError?.message ?? 'Could not save the monthly Youth race plan.')
+      setError(planError?.message ?? t('errors.monthlyRacePlan'))
     } finally {
       setRaceAction(null)
     }
@@ -942,7 +942,7 @@ export default function YouthAcademyPage(): JSX.Element {
       applyRaceCalendar(payload as YouthRaceCalendarPayload)
     } catch (declineError: any) {
       console.error('Youth race invitation decline failed:', declineError)
-      setError(declineError?.message ?? 'Could not decline the Youth race invitation.')
+      setError(declineError?.message ?? t('errors.raceInvitationDecline'))
     } finally {
       setRaceAction(null)
     }
@@ -2606,9 +2606,9 @@ export default function YouthAcademyPage(): JSX.Element {
           >
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-lg bg-slate-50 p-3">
-                <div className="text-xs text-slate-500">Academy competition</div>
+                <div className="text-xs text-slate-500">{t('calendar.academyCompetition')}</div>
                 <div className="mt-1 text-sm font-medium">
-                  {youthCompetitionLabel(
+                  {competitionLabel(
                     raceCalendar?.competition_membership?.competition_class,
                     raceCalendar?.competition_membership?.division_code
                   )}
@@ -2642,26 +2642,26 @@ export default function YouthAcademyPage(): JSX.Element {
 
           {monthlyPlanDraft ? (
             <Card
-              title={`${monthLabel(monthlyPlanDraft.month_number)} Youth race plan`}
+              title={t('calendar.monthlyPlanTitle', { month: monthLabel(monthlyPlanDraft.month_number) })}
               right={
                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                   monthlyPlanDraft.approved
                     ? 'bg-emerald-50 text-emerald-700'
                     : 'bg-amber-50 text-amber-800'
                 }`}>
-                  {monthlyPlanDraft.approved ? 'Approved' : 'Approval required'}
+                  {monthlyPlanDraft.approved ? t('calendar.approved') : t('calendar.approvalRequired')}
                 </span>
               }
             >
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                 {([
-                  ['World Class', 'world_race_limit', monthlyPlanDraft.available_world, 6],
-                  ['Continental', 'continental_race_limit', monthlyPlanDraft.available_continental, 10],
-                  ['Regional', 'regional_race_limit', monthlyPlanDraft.available_regional, 6],
+                  [t('calendar.competition.world'), 'world_race_limit', monthlyPlanDraft.available_world, 6],
+                  [t('calendar.competition.continental'), 'continental_race_limit', monthlyPlanDraft.available_continental, 10],
+                  [t('calendar.competition.regional'), 'regional_race_limit', monthlyPlanDraft.available_regional, 6],
                 ] as const).map(([label, key, available, max]) => (
                   <label key={key} className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
-                    {label} races
-                    <div className="mt-1 text-[11px] text-slate-400">{available} calendar events this month</div>
+                    {t('calendar.raceLimitLabel', { className: label })}
+                    <div className="mt-1 text-[11px] text-slate-400">{t('calendar.calendarEventsThisMonth', { count: available })}</div>
                     <input
                       type="number"
                       min={0}
@@ -2686,9 +2686,9 @@ export default function YouthAcademyPage(): JSX.Element {
                   </label>
                 ))}
                 <label className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
-                  Monthly racing budget
+                  {t('calendar.monthlyBudget')}
                   <div className="mt-1 text-[11px] text-slate-400">
-                    Entered so far: {money(monthlyPlanDraft.entered_cost)}
+                    {t('calendar.enteredSoFar', { value: money(monthlyPlanDraft.entered_cost) })}
                   </div>
                   <input
                     type="number"
@@ -2720,23 +2720,21 @@ export default function YouthAcademyPage(): JSX.Element {
                     className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
                   >
                     {raceAction === 'monthly-plan'
-                      ? 'Saving plan…'
+                      ? t('calendar.savingPlan')
                       : monthlyPlanDraft.approved
-                        ? 'Update monthly plan'
-                        : 'Approve monthly plan'}
+                        ? t('calendar.updatePlan')
+                        : t('calendar.approvePlan')}
                   </button>
                 </div>
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">
-                The plan limits how many races the Academy may enter this month and how much can be spent.
-                The U16 Head Coach can rotate separate squads across simultaneous races, but the same rider
-                cannot be booked into overlapping events.
+                {t('calendar.planHelp')}
               </p>
             </Card>
           ) : null}
 
           <Card
-            title="Race calendar"
+            title={t('calendar.raceCalendar')}
             right={
               <select
                 value={calendarMonth || raceCalendar?.current_month || 1}
@@ -2752,11 +2750,11 @@ export default function YouthAcademyPage(): JSX.Element {
             }
           >
             <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-              <span>{visibleYouthRaces.length} visible events</span>
+              <span>{t('calendar.visibleEvents', { count: visibleYouthRaces.length })}</span>
               <span>·</span>
-              <span>World Class races are shown globally</span>
+              <span>{t('calendar.worldVisible')}</span>
               <span>·</span>
-              <span>Regional races are limited to your home division</span>
+              <span>{t('calendar.regionalVisible')}</span>
             </div>
           </Card>
 
@@ -2786,7 +2784,7 @@ export default function YouthAcademyPage(): JSX.Element {
                   >
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                       <span className="rounded-full bg-slate-100 px-2.5 py-1">
-                        {youthCompetitionLabel(race.competition_class, race.division_code)}
+                        {competitionLabel(race.competition_class, race.division_code)}
                       </span>
                       {race.host_city ? (
                         <span className="inline-flex items-center gap-1.5">
@@ -2803,11 +2801,11 @@ export default function YouthAcademyPage(): JSX.Element {
                       <span>·</span>
                       <span>
                         {race.race_days && race.race_days > 1
-                          ? `${race.race_days} days`
-                          : '1 day'}
+                          ? t('calendar.days', { count: race.race_days })
+                          : t('calendar.oneDay')}
                       </span>
                       <span>·</span>
-                      <span>{Number(race.entries_count ?? 0)}/{Number(race.team_limit ?? 16)} teams</span>
+                      <span>{t('calendar.teams', { current: Number(race.entries_count ?? 0), max: Number(race.team_limit ?? 16) })}</span>
                       <span>·</span>
                       <span>{humanize(race.terrain_type)}</span>
                       <span>·</span>
@@ -2822,12 +2820,12 @@ export default function YouthAcademyPage(): JSX.Element {
                               ? 'bg-amber-50 text-amber-800'
                               : 'bg-slate-100 text-slate-500'
                         }`}>
-                          {humanize(race.invitation_status)}
+                          {t(`calendar.invitationStatuses.${race.invitation_status}`, { defaultValue: humanize(race.invitation_status) })}
                           {race.invitation_type ? ` · ${humanize(race.invitation_type)}` : ''}
                         </span>
                       ) : (
                         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-500">
-                          No invitation yet
+                          {t('calendar.noInvitation')}
                         </span>
                       )}
                     </div>
@@ -2928,7 +2926,7 @@ export default function YouthAcademyPage(): JSX.Element {
                                 onClick={() => void declineYouthRaceInvitation(race)}
                                 className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
                               >
-                                {raceAction === `decline:${race.id}` ? 'Declining…' : 'Decline invitation'}
+                                {raceAction === `decline:${race.id}` ? t('calendar.declining') : t('calendar.declineInvitation')}
                               </button>
                             ) : null}
                           </div>
@@ -2942,7 +2940,7 @@ export default function YouthAcademyPage(): JSX.Element {
 
                         {race.invitation_status === 'pending' && race.invitation_response_deadline ? (
                           <div className="mt-3 text-xs text-amber-700">
-                            Response deadline: {race.invitation_response_deadline}
+                            {t('calendar.responseDeadline', { date: race.invitation_response_deadline })}
                           </div>
                         ) : null}
 
@@ -3071,12 +3069,12 @@ export default function YouthAcademyPage(): JSX.Element {
           {(youthRankings?.academy_divisions ?? []).map(division => (
             <Card
               key={`${division.competition_class}-${division.division_code}`}
-              title={youthCompetitionLabel(division.competition_class, division.division_code)}
+              title={competitionLabel(division.competition_class, division.division_code)}
               right={
                 youthRankings?.my_membership?.competition_class === division.competition_class &&
                 youthRankings?.my_membership?.division_code === division.division_code ? (
                   <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                    Your division
+                    {t('rankings.yourDivision')}
                   </span>
                 ) : null
               }
@@ -3085,10 +3083,10 @@ export default function YouthAcademyPage(): JSX.Element {
                 <table className="w-full min-w-[640px] text-left text-sm">
                   <thead className="border-b border-slate-200 text-xs text-slate-500">
                     <tr>
-                      <th className="py-2 pr-3">Rank</th>
-                      <th className="py-2 pr-3">Academy</th>
-                      <th className="py-2 pr-3">Starts</th>
-                      <th className="py-2 text-right">Points</th>
+                      <th className="py-2 pr-3">{t('rankings.rank')}</th>
+                      <th className="py-2 pr-3">{t('rankings.academy')}</th>
+                      <th className="py-2 pr-3">{t('rankings.raceStarts')}</th>
+                      <th className="py-2 text-right">{t('rankings.points')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -3114,10 +3112,9 @@ export default function YouthAcademyPage(): JSX.Element {
             </Card>
           ))}
 
-          <Card title="Youth rider rankings">
+          <Card title={t('rankings.riderRankings')}>
             <p className="text-sm leading-6 text-slate-600">
-              Academy promotion and relegation lines are prepared in the competition model.
-              The exact promotion/relegation spots will be activated after those rules are finalized.
+              {t('rankings.promotionNote')}
             </p>
           </Card>
 
