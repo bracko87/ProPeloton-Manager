@@ -1400,5 +1400,9 @@
       "exceptional": "eccezionale",
       "problem": "problema"
     }
+  },
+  "youthAcademyStarted": {
+    "title": "La tua Accademia Giovanile è pronta",
+    "message": "Il programma U16 è attivo. Controlla responsabilità, scouting, gare e budget dedicato dell'Accademia prima dei primi eventi."
   }
 }
