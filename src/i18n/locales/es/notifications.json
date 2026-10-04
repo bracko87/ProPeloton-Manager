@@ -1400,5 +1400,9 @@
       "exceptional": "excepcional",
       "problem": "problema"
     }
+  },
+  "youthAcademyStarted": {
+    "title": "Tu Academia Juvenil está lista",
+    "message": "Tu programa U16 está activo. Revisa responsabilidades, scouting, carreras y el presupuesto propio de la Academia antes de los primeros eventos."
   }
 }
