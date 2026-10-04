@@ -82,7 +82,14 @@
     "experience": "Expérience",
     "salary": "Salaire hebdomadaire",
     "scoutOptional": "Le scout jeunes est facultatif. Recrutez-en un depuis Personnel pour commencer la recherche active de talents.",
-    "openStaffPage": "Ouvrir Équipe → Personnel"
+    "openStaffPage": "Ouvrir la page Staff",
+    "youthScope": "Académie Jeunes",
+    "potential": "Potentiel",
+    "leadership": "Leadership",
+    "efficiency": "Efficacité",
+    "loyalty": "Loyauté",
+    "weeklyWage": "Salaire hebdomadaire",
+    "contractUntil": "Contrat jusqu'au {{date}}"
   },
   "budget": {
     "title": "Budget de saison de l'académie",
@@ -101,7 +108,27 @@
     "date": "Date",
     "category": "Catégorie",
     "description": "Description",
-    "amount": "Montant"
+    "amount": "Montant",
+    "initialAllocation": "Allocation initiale de saison",
+    "initialAllocationHelp": "Montant attribué lors de l'activation de l'Académie. Cette allocation historique ne change plus.",
+    "currentFunds": "Fonds actuels de l'Académie",
+    "includesIncomeTransfers": "Inclut les revenus de course et les transferts ultérieurs.",
+    "afterCommitments": "Disponible après dépenses et engagements.",
+    "seniorBalance": "Solde équipe senior",
+    "seniorBalanceHelp": "Trésorerie senior disponible avant un nouveau transfert.",
+    "fundsChart": "Fonds de l'Académie",
+    "incomeChart": "Revenus et transferts",
+    "raceIncome": "Revenus des courses jeunes",
+    "transfersIn": "Transferts depuis l'équipe senior",
+    "transfersOut": "Renvoyé à l'équipe senior",
+    "adjustBudget": "Ajuster le budget",
+    "direction": "Direction du transfert",
+    "seniorToYouth": "Équipe senior → Académie",
+    "youthToSenior": "Académie → Équipe senior",
+    "transferAmount": "Montant",
+    "transferring": "Transfert…",
+    "transferFunds": "Transférer les fonds",
+    "transferHelp": "Les revenus des courses restent automatiquement dans l'Académie. Utilisez ce contrôle uniquement pour déplacer volontairement de l'argent entre l'équipe senior et l'Académie."
   },
   "scouting": {
     "title": "Portée du scouting jeunes",
@@ -261,7 +288,8 @@
     "historyLoad": "Impossible de charger l'historique de l'Académie.",
     "reportFrequency": "Impossible d'enregistrer la préférence de rapports jeunes.",
     "monthlyRacePlan": "Impossible d'enregistrer le plan mensuel des courses jeunes.",
-    "raceInvitationDecline": "Impossible de refuser l'invitation à la course jeunes."
+    "raceInvitationDecline": "Impossible de refuser l'invitation à la course jeunes.",
+    "budgetTransfer": "Impossible de transférer les fonds de l'Académie."
   },
   "equipment": {
     "title": "Équipement jeunes",
@@ -449,5 +477,35 @@
     "workload": "Charge",
     "change": "Progression",
     "readinessFatigue": "Fraîcheur / fatigue"
+  },
+  "profile": {
+    "loading": "Chargement du profil jeune…",
+    "notFound": "Impossible de charger le profil du coureur jeune.",
+    "back": "Retour aux coureurs jeunes",
+    "youthRider": "Coureur jeune",
+    "readiness": "Préparation",
+    "fatigue": "Fatigue",
+    "developmentFocus": "Axe de développement",
+    "talentAssessment": "Évaluation du talent",
+    "hiddenPotential": "Le potentiel exact reste masqué.",
+    "attributes": "Attributs",
+    "supportAgreement": "Accord de soutien",
+    "weeklyStipend": "Allocation hebdomadaire",
+    "accommodation": "Hébergement",
+    "joined": "Arrivée à l'Académie",
+    "agreementUntil": "Accord jusqu'au",
+    "raceSummary": "Bilan des courses",
+    "starts": "Départs",
+    "wins": "Victoires",
+    "podiums": "Podiums",
+    "regionalPoints": "Points régionaux",
+    "worldPoints": "Points mondiaux",
+    "recentResults": "Résultats récents",
+    "noResults": "Aucun résultat jeune pour le moment.",
+    "date": "Date",
+    "race": "Course",
+    "class": "Classe",
+    "result": "Résultat",
+    "points": "Points"
   }
 }
