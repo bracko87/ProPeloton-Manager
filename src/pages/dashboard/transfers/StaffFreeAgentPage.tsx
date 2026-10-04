@@ -806,26 +806,43 @@ export default function StaffFreeAgentPage({
     }
   }, [])
 
+  const premiumOnlyRoles = useMemo(
+    () =>
+      new Set<StaffRole>([
+        'u23_head_coach',
+        'youth_academy_director',
+        'u16_head_coach',
+        'youth_scout',
+      ]),
+    []
+  )
+
   useEffect(() => {
-    if (!isPremium && roleFilter === 'u23_head_coach') {
+    if (
+      !isPremium &&
+      roleFilter !== 'all' &&
+      premiumOnlyRoles.has(roleFilter)
+    ) {
       setRoleFilter('all')
     }
-  }, [isPremium, roleFilter, setRoleFilter])
+  }, [isPremium, premiumOnlyRoles, roleFilter, setRoleFilter])
 
   const visibleStaffRoleFilters = useMemo(
     () =>
       isPremium
         ? STAFF_ROLE_FILTERS
-        : STAFF_ROLE_FILTERS.filter((role) => role.value !== 'u23_head_coach'),
-    [isPremium]
+        : STAFF_ROLE_FILTERS.filter(
+            role => role.value === 'all' || !premiumOnlyRoles.has(role.value)
+          ),
+    [isPremium, premiumOnlyRoles]
   )
 
   const visibleStaffRoles = useMemo(
     () =>
       isPremium
         ? STAFF_ROLES
-        : STAFF_ROLES.filter((role) => role.value !== 'u23_head_coach'),
-    [isPremium]
+        : STAFF_ROLES.filter(role => !premiumOnlyRoles.has(role.value)),
+    [isPremium, premiumOnlyRoles]
   )
 
   const roleLimitMap = new Map(roleLimits.map((row) => [row.role_type, row] as const))
