@@ -59,7 +59,14 @@
     "nextRace": "Nächstes Jugendrennen",
     "recruitment": "Rekrutierungsreichweite",
     "reputation": "Akademiereputation",
-    "staff": "Akademiepersonal"
+    "staff": "Akademiepersonal",
+    "racingTitle": "Akademie-Rennen",
+    "openCalendar": "Kalender öffnen",
+    "previousRace": "Vorheriges Rennen",
+    "latestResult": "Letztes Ergebnis",
+    "noPreviousRace": "Noch kein abgeschlossenes Akademie-Rennen",
+    "noUpcomingRace": "Noch kein kommendes Akademie-Rennen ausgewählt",
+    "noResult": "Noch kein Jugend-Rennergebnis"
   },
   "roles": {
     "director": "Leiter der Jugendakademie",
@@ -158,7 +165,7 @@
     "loading": "Scouting-Berichte werden geladen…",
     "scoutScore": "Scouting-Effektivität: {{score}} / 100",
     "monthlyReports": "Berichte / Monat",
-    "qualityExplainer": "Das Budget bestimmt, wo gesucht werden darf. Die Qualität des Scouts bestimmt Anzahl und Genauigkeit der Berichte sowie die Chance, stärkere Talente zu erkennen.",
+    "qualityExplainer": "Die Scout-Qualität bestimmt Menge und Qualität: bessere Scouts liefern mehr Berichte pro Suche, prüfen einen stärkeren versteckten Kandidatenpool und bewerten Talente mit höherer Sicherheit.",
     "noScout": "Stellen Sie einen Jugendscout ein, um die monatliche Talentsuche zu starten. Die Akademie funktioniert auch ohne Scout, erzeugt dann aber keine neuen Scouting-Berichte.",
     "monthlyCycle": "Monatlicher Scouting-Zyklus",
     "currentRange": "Aktuelle Reichweite",
@@ -258,11 +265,12 @@
     "runsThisWeek": "Suchen diese Woche",
     "coinBalance": "Coin-Guthaben",
     "weeklyRule": "1 kostenlose Suche + bis zu 3 Coin-Suchen pro Spielwoche",
-    "boostPrices": "Zusatzsuche: Lokal 10 · Regional 15 · Kontinental 20 · Weltweit 30 Coins.",
+    "boostPrices": "Kosten je Extrasuche: Lokal 2 · Regional 5 · Kontinental 8 · Weltweit 12 Coins.",
     "runFreeSearch": "Kostenlose Wochensuche starten",
     "runCoinSearch": "Zusatzsuche starten · {{cost}} Coins",
     "weeklyLimitReached": "Wochenlimit erreicht",
-    "lastSearch": "Letzte Suche: Lauf {{run}} · {{reports}} Berichte erstellt"
+    "lastSearch": "Letzte Suche: Lauf {{run}} · {{reports}} Berichte erstellt",
+    "maxReportsPerWeek": "Max. Berichte / Woche"
   },
   "settings": {
     "title": "Verantwortlichkeiten",
