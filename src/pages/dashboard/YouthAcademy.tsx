@@ -86,6 +86,14 @@ type ScoutingPayload = {
   read_only?: boolean
   game_date?: string
   cycle_month?: string
+  cycle_week?: string
+  weekly_runs_used?: number
+  weekly_run_limit?: number
+  free_runs_remaining?: number
+  boost_runs_remaining?: number
+  next_run_coin_cost?: number
+  boost_coin_cost?: number
+  coin_balance?: number
   scouting_range?: 'local' | 'regional' | 'continental' | 'world'
   scouting_budget?: number
   scouting_committed_amount?: number
@@ -98,15 +106,22 @@ type ScoutingPayload = {
     efficiency: number
     score: number
     monthly_report_quota: number
+    reports_per_search?: number
   } | null
   current_cycle?: {
     id: string
     cycle_month: string
+    cycle_week?: string
+    run_number?: number
+    coin_cost?: number
+    is_coin_boost?: boolean
     range: string
     scout_score: number
     reports_created: number
   } | null
   can_run?: boolean
+  can_run_free?: boolean
+  can_run_coin?: boolean
   director_mode?: boolean
   auto_rules?: {
     min_band: 'promising' | 'very_promising' | 'exceptional'
@@ -274,6 +289,8 @@ type YouthRace = {
   team_limit?: number
   entries_count?: number
   status: 'scheduled' | 'completed' | 'cancelled'
+  prelaunch_past?: boolean
+  is_home_regional?: boolean
   qualified: boolean
   invitation_status?: 'pending' | 'accepted' | 'declined' | 'expired' | 'waitlist' | null
   invitation_type?: string | null
@@ -309,6 +326,24 @@ type YouthRaceCalendarPayload = {
     fatigue: number
   }>
 }
+
+type YouthRaceMonthPayload = {
+  activated: boolean
+  season_number?: number
+  month_number?: number
+  competition_filter?: 'all' | YouthCompetitionClass
+  scope?: 'all' | 'my_opportunities'
+  regional_division?: string
+  monthly_plan?: YouthMonthlyRacePlan
+  class_counts?: {
+    world: number
+    continental: number
+    regional: number
+  }
+  races?: YouthRace[]
+}
+
+type YouthEquipmentInnerTab = 'overview' | 'inventory' | 'market' | 'assets'
 
 type YouthRankingRow = {
   rank: number
@@ -501,6 +536,50 @@ function humanize(value: string | null | undefined): string {
   return value.replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase())
 }
 
+function humanizeCode(value: string | null | undefined): string {
+  if (!value) return '—'
+  return value
+    .toLowerCase()
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function contractSeason(value: string | null | undefined): string {
+  if (!value) return '—'
+  const year = Number(String(value).slice(0, 4))
+  return Number.isFinite(year) && year >= 2000 ? `Season ${year - 1999}` : '—'
+}
+
+function youthStaffScore(member: AcademyStaff): number {
+  const role = member.role_type
+  const weights =
+    role === 'youth_academy_director'
+      ? [0.20, 0.15, 0.10, 0.25, 0.25, 0.05]
+      : role === 'u16_head_coach'
+        ? [0.30, 0.10, 0.20, 0.10, 0.25, 0.05]
+        : [0.35, 0.20, 0.10, 0.05, 0.25, 0.05]
+  const values = [
+    member.expertise, member.experience, member.potential,
+    member.leadership, member.efficiency, member.loyalty,
+  ]
+  return Math.round(values.reduce((sum, value, index) => sum + Number(value ?? 0) * weights[index], 0))
+}
+
+function youthStaffLevel(score: number): string {
+  if (score < 30) return 'Poor'
+  if (score < 45) return 'Basic'
+  if (score < 60) return 'Competent'
+  if (score < 75) return 'Strong'
+  if (score < 90) return 'Elite'
+  return 'World Class'
+}
+
+function youthSalaryRange(role: string): string {
+  if (role === 'youth_academy_director') return '€432–€1,296/week'
+  if (role === 'u16_head_coach') return '€405–€1,269/week'
+  return '€351–€1,215/week'
+}
+
 function percent(part: number | null | undefined, total: number | null | undefined): number {
   const safeTotal = Number(total ?? 0)
   if (safeTotal <= 0) return 0
@@ -561,13 +640,20 @@ export default function YouthAcademyPage(): JSX.Element {
   const [budgetTransferAmount, setBudgetTransferAmount] = useState(10000)
   const [budgetTransferLoading, setBudgetTransferLoading] = useState(false)
   const [equipmentData, setEquipmentData] = useState<YouthEquipmentPayload | null>(null)
+  const [equipmentInnerTab, setEquipmentInnerTab] = useState<YouthEquipmentInnerTab>('overview')
   const [phase2Loading, setPhase2Loading] = useState(false)
   const [equipmentAction, setEquipmentAction] = useState<string | null>(null)
   const [graduations, setGraduations] = useState<YouthGraduation[]>([])
   const [graduationAction, setGraduationAction] = useState<string | null>(null)
   const [raceCalendar, setRaceCalendar] = useState<YouthRaceCalendarPayload | null>(null)
+  const [raceMonthData, setRaceMonthData] = useState<YouthRaceMonthPayload | null>(null)
   const [youthRankings, setYouthRankings] = useState<YouthRankingsPayload | null>(null)
   const [calendarMonth, setCalendarMonth] = useState(0)
+  const [calendarClassFilter, setCalendarClassFilter] = useState<'all' | YouthCompetitionClass>('all')
+  const [calendarScope, setCalendarScope] = useState<'all' | 'my_opportunities'>('all')
+  const [rankingClassFilter, setRankingClassFilter] = useState<'world' | 'continental' | 'regional'>('world')
+  const [rankingDivisionFilter, setRankingDivisionFilter] = useState('')
+  const [responsibilityAction, setResponsibilityAction] = useState<string | null>(null)
   const [monthlyPlanDraft, setMonthlyPlanDraft] = useState<YouthMonthlyRacePlan | null>(null)
   const [phase3Loading, setPhase3Loading] = useState(false)
   const [raceAction, setRaceAction] = useState<string | null>(null)
@@ -587,12 +673,10 @@ export default function YouthAcademyPage(): JSX.Element {
   ): string => {
     if (competitionClass === 'world') return t('calendar.competition.world')
     if (competitionClass === 'continental') {
-      return `${t('calendar.competition.continental')} · ${humanize(
-        String(divisionCode ?? '').replace('CONTINENTAL_', '')
-      )}`
+      return `${t('calendar.competition.continental')} · ${humanizeCode(String(divisionCode ?? '').replace('CONTINENTAL_', ''))}`
     }
     if (competitionClass === 'regional') {
-      return `${t('calendar.competition.regional')} · ${humanize(divisionCode)}`
+      return `${t('calendar.competition.regional')} · ${humanizeCode(divisionCode)}`
     }
     return t('calendar.competition.youth')
   }
@@ -635,13 +719,14 @@ export default function YouthAcademyPage(): JSX.Element {
     }
   }
 
-  const runScoutingCycle = async (): Promise<void> => {
+  const runScoutingCycle = async (useCoins = false): Promise<void> => {
     if (scoutingAction || data?.read_only) return
-    setScoutingAction('cycle')
+    setScoutingAction(useCoins ? 'cycle-coins' : 'cycle')
     setError(null)
     try {
       const { data: payload, error: cycleError } = await supabase.rpc(
-        'run_my_youth_scouting_cycle_v1'
+        'run_my_youth_scouting_search_v2',
+        { p_use_coins: useCoins }
       )
       if (cycleError) throw cycleError
       applyScoutingPayload(payload as ScoutingPayload)
@@ -907,6 +992,33 @@ export default function YouthAcademyPage(): JSX.Element {
     }
   }
 
+  const loadRaceMonth = async (
+    month = calendarMonth || raceCalendar?.current_month || 1,
+    competitionClass = calendarClassFilter,
+    scope = calendarScope
+  ): Promise<void> => {
+    setPhase3Loading(true)
+    try {
+      const { data: payload, error: monthError } = await supabase.rpc(
+        'get_my_youth_race_month_v1',
+        {
+          p_month_number: month,
+          p_competition_class: competitionClass,
+          p_scope: scope,
+        }
+      )
+      if (monthError) throw monthError
+      const next = payload as YouthRaceMonthPayload
+      setRaceMonthData(next)
+      if (next.monthly_plan) setMonthlyPlanDraft(next.monthly_plan)
+    } catch (monthError: any) {
+      console.error('Youth race month load failed:', monthError)
+      setError(monthError?.message ?? t('errors.calendarLoad'))
+    } finally {
+      setPhase3Loading(false)
+    }
+  }
+
   const loadYouthRankings = async (): Promise<void> => {
     setPhase3Loading(true)
     try {
@@ -940,6 +1052,7 @@ export default function YouthAcademyPage(): JSX.Element {
       )
       if (planError) throw planError
       applyRaceCalendar(payload as YouthRaceCalendarPayload)
+      await loadRaceMonth(monthlyPlanDraft.month_number, calendarClassFilter, calendarScope)
       await loadFinance()
     } catch (planError: any) {
       console.error('Youth monthly race plan save failed:', planError)
@@ -960,6 +1073,7 @@ export default function YouthAcademyPage(): JSX.Element {
       )
       if (declineError) throw declineError
       applyRaceCalendar(payload as YouthRaceCalendarPayload)
+      await loadRaceMonth(calendarMonth, calendarClassFilter, calendarScope)
     } catch (declineError: any) {
       console.error('Youth race invitation decline failed:', declineError)
       setError(declineError?.message ?? t('errors.raceInvitationDecline'))
@@ -982,6 +1096,7 @@ export default function YouthAcademyPage(): JSX.Element {
       )
       if (enterError) throw enterError
       applyRaceCalendar(payload as YouthRaceCalendarPayload)
+      await loadRaceMonth(calendarMonth, calendarClassFilter, calendarScope)
       await loadFinance()
     } catch (enterError: any) {
       console.error('Youth race entry failed:', enterError)
@@ -1133,6 +1248,24 @@ export default function YouthAcademyPage(): JSX.Element {
     }
   }, [tab, data?.activated])
 
+  useEffect(() => {
+    if (tab !== 'calendar' || !data?.activated || !calendarMonth) return
+    void loadRaceMonth(calendarMonth, calendarClassFilter, calendarScope)
+  }, [tab, data?.activated, calendarMonth, calendarClassFilter, calendarScope])
+
+  useEffect(() => {
+    if (!youthRankings?.academy_divisions?.length) return
+    const mine = youthRankings.my_membership
+    if (mine) {
+      setRankingClassFilter(mine.competition_class)
+      setRankingDivisionFilter(mine.division_code)
+    } else {
+      const first = youthRankings.academy_divisions[0]
+      setRankingClassFilter(first.competition_class)
+      setRankingDivisionFilter(first.division_code)
+    }
+  }, [youthRankings?.season_number])
+
   const activate = async (): Promise<void> => {
     if (saving) return
     setSaving(true)
@@ -1213,6 +1346,39 @@ export default function YouthAcademyPage(): JSX.Element {
     }
   }
 
+  const confirmResponsibility = async (key: string): Promise<void> => {
+    if (!draftSettings || data?.read_only || responsibilityAction) return
+    setResponsibilityAction(key)
+    setError(null)
+    try {
+      const { data: payload, error: saveError } = await supabase.rpc(
+        'update_my_youth_academy_settings_v2',
+        {
+          p_recruitment_decider: draftSettings.recruitment_decider,
+          p_race_entry_decider: draftSettings.race_entry_decider,
+          p_race_squad_decider: draftSettings.race_squad_decider,
+          p_camp_decider: draftSettings.camp_decider,
+          p_equipment_decider: draftSettings.equipment_decider,
+          p_recruitment_negotiation_decider: draftSettings.recruitment_negotiation_decider,
+          p_scouting_range: draftRange,
+          p_season_budget: null,
+          p_auto_recruit_min_band: draftSettings.auto_recruit_min_band,
+          p_auto_recruit_max_stipend_weekly: draftSettings.auto_recruit_max_stipend_weekly,
+          p_auto_recruit_max_compensation: draftSettings.auto_recruit_max_compensation,
+          p_auto_recruit_min_free_slots: draftSettings.auto_recruit_min_free_slots,
+        }
+      )
+      if (saveError) throw saveError
+      const next = payload as AcademyPayload
+      setData(next)
+      setDraftSettings(next.settings)
+    } catch (saveError: any) {
+      setError(saveError?.message ?? t('errors.save'))
+    } finally {
+      setResponsibilityAction(null)
+    }
+  }
+
   const riders = data?.riders ?? []
   const staff = data?.staff ?? []
   const programs = data?.scouting_programs ?? []
@@ -1229,12 +1395,23 @@ export default function YouthAcademyPage(): JSX.Element {
   }, [data?.budget])
 
   const visibleYouthRaces = useMemo(
-    () =>
-      (raceCalendar?.races ?? []).filter(
-        race => Number(race.race_date.slice(5, 7)) === calendarMonth
-      ),
-    [raceCalendar?.races, calendarMonth]
+    () => raceMonthData?.races ?? [],
+    [raceMonthData?.races]
   )
+
+  const rankingDivisions = useMemo(
+    () =>
+      (youthRankings?.academy_divisions ?? []).filter(
+        division => division.competition_class === rankingClassFilter
+      ),
+    [youthRankings?.academy_divisions, rankingClassFilter]
+  )
+
+  const selectedRankingDivision = useMemo(() => {
+    if (rankingDivisions.length === 0) return null
+    return rankingDivisions.find(division => division.division_code === rankingDivisionFilter)
+      ?? rankingDivisions[0]
+  }, [rankingDivisions, rankingDivisionFilter])
 
   if (loading) {
     return <div className="p-6 text-sm text-slate-500">{t('loading')}</div>
