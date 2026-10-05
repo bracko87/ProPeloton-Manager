@@ -87,6 +87,28 @@ type RaceOperationsPayload = {
   rows: RaceOperationsRow[]
 }
 
+type YouthRaceOperationsRow = {
+  race_id: string
+  race_name: string
+  race_date: string
+  competition_class: string
+  division_code: string
+  team_limit: number
+  entries_count: number
+  planned_start_time_label: string | null
+  start_time_region_code: string | null
+  stage_count: number
+  scheduled_stage_count: number
+  health: 'healthy' | 'warning'
+}
+
+type YouthRaceOperationsPayload = {
+  game_date: string
+  allocation_window_days: number
+  final_fill_days: number
+  races: YouthRaceOperationsRow[]
+}
+
 const EMPTY_COUNTS: RaceOperationsCounts = {
   today_total: 0,
   today_problems: 0,
@@ -245,6 +267,7 @@ function isChampionshipRace(category?: string | null): boolean {
 export default function AdminRaceOperationsPage(): JSX.Element {
   const [view, setView] = useState<OperationsView>('today')
   const [payload, setPayload] = useState<RaceOperationsPayload | null>(null)
+  const [youthPayload, setYouthPayload] = useState<YouthRaceOperationsPayload | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -259,16 +282,20 @@ export default function AdminRaceOperationsPage(): JSX.Element {
       setError(null)
 
       try {
-        const { data, error: rpcError } = await supabase.rpc(
-          'get_admin_race_operations_v1',
-          {
+        const [seniorResult, youthResult] = await Promise.all([
+          supabase.rpc('get_admin_race_operations_v1', {
             p_view: nextView,
             p_days: 7,
-          },
-        )
+          }),
+          supabase.rpc('get_admin_youth_race_operations_v1', {
+            p_days: 14,
+          }),
+        ])
 
-        if (rpcError) throw rpcError
+        if (seniorResult.error) throw seniorResult.error
+        if (youthResult.error) throw youthResult.error
 
+        const data = seniorResult.data
         const next = (data ?? {
           game_now: '',
           alert_email: '',
@@ -287,6 +314,12 @@ export default function AdminRaceOperationsPage(): JSX.Element {
           },
           rows,
         })
+        setYouthPayload((youthResult.data ?? {
+          game_date: '',
+          allocation_window_days: 14,
+          final_fill_days: 7,
+          races: [],
+        }) as YouthRaceOperationsPayload)
 
         setSelectedId(current => {
           if (current && rows.some(row => row.stage_id === current)) {
@@ -313,11 +346,13 @@ export default function AdminRaceOperationsPage(): JSX.Element {
     setError(null)
 
     try {
-      const { error: refreshError } = await supabase.rpc(
-        'admin_refresh_race_operations_v1',
-      )
+      const [refreshResult, youthHealthResult] = await Promise.all([
+        supabase.rpc('admin_refresh_race_operations_v1'),
+        supabase.rpc('monitor_youth_competition_health_v1'),
+      ])
 
-      if (refreshError) throw refreshError
+      if (refreshResult.error) throw refreshResult.error
+      if (youthHealthResult.error) throw youthHealthResult.error
 
       await loadOperations(view, false)
       window.dispatchEvent(
@@ -442,6 +477,64 @@ export default function AdminRaceOperationsPage(): JSX.Element {
           </div>
         </div>
       </div>
+
+      <section className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
+        <div className="flex flex-col gap-2 border-b border-black/5 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-extrabold text-gray-950">Youth Academy race operations</h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Teams begin filling 14 game days before a race. Final field allocation happens 7 days before the start.
+            </p>
+          </div>
+          <div className="text-xs font-semibold text-gray-500">
+            {(youthPayload?.races ?? []).filter(race => race.health === 'warning').length} warning(s)
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-[900px] w-full border-collapse">
+            <thead>
+              <tr className="border-b border-black/5 bg-gray-50 text-left text-[11px] font-extrabold uppercase tracking-[0.1em] text-gray-500">
+                <th className="px-4 py-3">Race</th>
+                <th className="px-4 py-3">Date / time</th>
+                <th className="px-4 py-3">Class</th>
+                <th className="px-4 py-3">Teams</th>
+                <th className="px-4 py-3">Stages</th>
+                <th className="px-4 py-3">Health</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(youthPayload?.races ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
+                    No scheduled Youth races in the next 14 game days.
+                  </td>
+                </tr>
+              ) : (
+                (youthPayload?.races ?? []).map(race => (
+                  <tr key={race.race_id} className="border-b border-black/5 last:border-b-0">
+                    <td className="px-4 py-3 text-sm font-semibold text-gray-950">{race.race_name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {race.race_date} · {race.planned_start_time_label ?? '—'} · {race.start_time_region_code ?? '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{race.competition_class} · {race.division_code}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-gray-950">{race.entries_count} / {race.team_limit}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{race.stage_count} total · {race.scheduled_stage_count} pending</td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                        race.health === 'healthy'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {race.health === 'healthy' ? 'Healthy' : 'Needs attention'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <div className="flex flex-wrap gap-2">
         {VIEWS.map(item => (
