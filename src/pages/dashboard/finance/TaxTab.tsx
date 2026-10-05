@@ -157,15 +157,10 @@ function slicePage<T>(items: T[], page: number, pageSize: number): T[] {
   return items.slice(start, start + pageSize)
 }
 
-function formatMoney(n: number, currency: 'EUR' | 'USD' = 'EUR'): string {
-  const formatted = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    currencyDisplay: 'narrowSymbol',
-    maximumFractionDigits: 0,
-  }).format(n)
-
-  return formatted.replace('US$', '$')
+function formatMoney(n: number, _currency: 'EUR' | 'USD' = 'USD'): string {
+  const amount = Math.round(Number(n) || 0)
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function getMeta(row: {
