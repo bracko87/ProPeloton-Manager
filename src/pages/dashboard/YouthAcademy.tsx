@@ -37,6 +37,12 @@ type AcademyStaff = {
   loyalty: number
   salary_weekly: number
   contract_expires_at?: string | null
+  available?: boolean
+  active_course?: {
+    id: string
+    title: string
+    returns_on: string
+  } | null
 }
 
 type ScoutingProgram = {
@@ -465,6 +471,21 @@ type YouthHistoryPayload = {
   }>
 }
 
+type AcademySettings = {
+  recruitment_decider: 'manager' | 'academy_director'
+  race_entry_decider: 'manager' | 'u16_head_coach'
+  race_squad_decider: 'manager' | 'u16_head_coach'
+  camp_decider: 'manager' | 'academy_director'
+  equipment_decider: 'manager' | 'academy_director'
+  recruitment_negotiation_decider: 'manager' | 'academy_director'
+  training_decider: 'manager' | 'u16_head_coach'
+  auto_recruit_min_band: 'promising' | 'very_promising' | 'exceptional'
+  auto_recruit_max_stipend_weekly: number
+  auto_recruit_max_compensation: number
+  auto_recruit_min_free_slots: number
+  training_philosophy?: 'freshness' | 'balanced' | 'development'
+}
+
 type AcademyPayload = {
   premium: boolean
   activated: boolean
@@ -493,19 +514,8 @@ type AcademyPayload = {
     scouting_range: 'local' | 'regional' | 'continental' | 'world'
     scouting_budget: number
   }
-  settings?: {
-    recruitment_decider: 'manager' | 'academy_director'
-    race_entry_decider: 'manager' | 'u16_head_coach'
-    race_squad_decider: 'manager' | 'u16_head_coach'
-    camp_decider: 'manager' | 'academy_director'
-    equipment_decider: 'manager' | 'academy_director'
-    recruitment_negotiation_decider: 'manager' | 'academy_director'
-    auto_recruit_min_band: 'promising' | 'very_promising' | 'exceptional'
-    auto_recruit_max_stipend_weekly: number
-    auto_recruit_max_compensation: number
-    auto_recruit_min_free_slots: number
-    training_philosophy?: 'freshness' | 'balanced' | 'development'
-  }
+  settings?: AcademySettings
+  effective_settings?: AcademySettings
   riders?: AcademyRider[]
   staff?: AcademyStaff[]
   scouting_programs?: ScoutingProgram[]
@@ -1299,7 +1309,7 @@ export default function YouthAcademyPage(): JSX.Element {
     setError(null)
     try {
       const { data: payload, error: saveError } = await supabase.rpc(
-        'update_my_youth_academy_settings_v2',
+        'update_my_youth_academy_settings_v3',
         {
           p_recruitment_decider: draftSettings.recruitment_decider,
           p_race_entry_decider: draftSettings.race_entry_decider,
@@ -1308,6 +1318,7 @@ export default function YouthAcademyPage(): JSX.Element {
           p_equipment_decider: draftSettings.equipment_decider,
           p_recruitment_negotiation_decider:
             draftSettings.recruitment_negotiation_decider,
+          p_training_decider: draftSettings.training_decider ?? 'manager',
           p_scouting_range: draftRange,
           p_season_budget: null,
           p_auto_recruit_min_band: draftSettings.auto_recruit_min_band,
@@ -1357,7 +1368,7 @@ export default function YouthAcademyPage(): JSX.Element {
     setError(null)
     try {
       const { data: payload, error: saveError } = await supabase.rpc(
-        'update_my_youth_academy_settings_v2',
+        'update_my_youth_academy_settings_v3',
         {
           p_recruitment_decider: draftSettings.recruitment_decider,
           p_race_entry_decider: draftSettings.race_entry_decider,
@@ -1365,6 +1376,7 @@ export default function YouthAcademyPage(): JSX.Element {
           p_camp_decider: draftSettings.camp_decider,
           p_equipment_decider: draftSettings.equipment_decider,
           p_recruitment_negotiation_decider: draftSettings.recruitment_negotiation_decider,
+          p_training_decider: draftSettings.training_decider ?? 'manager',
           p_scouting_range: draftRange,
           p_season_budget: null,
           p_auto_recruit_min_band: draftSettings.auto_recruit_min_band,
@@ -1982,6 +1994,17 @@ export default function YouthAcademyPage(): JSX.Element {
                     : t('roles.scout')
               const score = youthStaffScore(member)
               const level = youthStaffLevel(score)
+              const delegationRole =
+                member.role_type === 'youth_academy_director'
+                  ? 'academy_director'
+                  : member.role_type
+              const assignedResponsibilities = Object.entries(data.settings ?? {})
+                .filter(([key, value]) => key.endsWith('_decider') && value === delegationRole)
+                .map(([key]) => key.replace(/_decider$/, ''))
+              const temporaryManagerResponsibilities = assignedResponsibilities.filter(name => {
+                const key = `${name}_decider` as keyof AcademySettings
+                return data.effective_settings?.[key] === 'manager'
+              })
               const scoutReports = Math.min(6, Math.max(1, 2 + Math.floor((score - 45) / 15)))
               const directorDiscount = Math.min(8, Math.max(0, Math.floor((score - 45) / 6)))
               const bonusText =
@@ -2065,11 +2088,55 @@ export default function YouthAcademyPage(): JSX.Element {
                         ))}
                       </div>
 
+                      {member.active_course ? (
+                        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="text-xs font-medium text-blue-900">
+                              {t('staff.courseInProgress', {
+                                defaultValue: 'Training course in progress',
+                              })}
+                            </div>
+                            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-medium text-blue-800">
+                              {t('staff.onCourseUntil', {
+                                date: member.active_course.returns_on,
+                                defaultValue: 'On course until {{date}}',
+                              })}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-sm text-blue-900">
+                            {member.active_course.title}
+                          </div>
+                          <p className="mt-2 text-xs leading-5 text-blue-800">
+                            {temporaryManagerResponsibilities.length > 0
+                              ? t('staff.courseManagerHandover', {
+                                  responsibilities: temporaryManagerResponsibilities
+                                    .map(value => humanize(value))
+                                    .join(', '),
+                                  defaultValue:
+                                    'Manager temporarily handles: {{responsibilities}}. Saved assignments remain unchanged and resume automatically when an available staff member returns.',
+                                })
+                              : t('staff.courseRolePaused', {
+                                  defaultValue:
+                                    'This staff member is unavailable for active Youth Academy duties until the course is completed.',
+                                })}
+                          </p>
+                        </div>
+                      ) : null}
+
                       <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2.5">
                         <div className="text-[11px] font-medium uppercase tracking-wide text-amber-700">
-                          {t('staff.activeBonus', { defaultValue: 'Active role bonus' })}
+                          {member.active_course
+                            ? t('staff.roleBonusPaused', { defaultValue: 'Role bonus paused' })
+                            : t('staff.activeBonus', { defaultValue: 'Active role bonus' })}
                         </div>
-                        <div className="mt-1 text-sm text-amber-950">{bonusText}</div>
+                        <div className="mt-1 text-sm text-amber-950">
+                          {member.active_course
+                            ? t('staff.roleBonusPausedHelp', {
+                                defaultValue:
+                                  'Active role effects are paused while this staff member is on a course.',
+                              })
+                            : bonusText}
+                        </div>
                       </div>
                     </div>
 
@@ -2964,6 +3031,17 @@ export default function YouthAcademyPage(): JSX.Element {
                 }),
                 options: ['manager', 'academy_director'],
               },
+              {
+                key: 'training_decider',
+                label: t('settings.trainingResponsibility', {
+                  defaultValue: 'Training plan',
+                }),
+                description: t('settings.trainingResponsibilityHelp', {
+                  defaultValue:
+                    'Controls the Youth training philosophy and rider development focus. The U16 Head Coach can manage this automatically when delegated.',
+                }),
+                options: ['manager', 'u16_head_coach'],
+              },
             ] as Array<{
               key: keyof NonNullable<AcademyPayload['settings']>
               label: string
@@ -2972,7 +3050,19 @@ export default function YouthAcademyPage(): JSX.Element {
             }>).map(item => {
               const savedValue = data.settings?.[item.key]
               const draftValue = draftSettings[item.key]
+              const effectiveValue = data.effective_settings?.[item.key] ?? savedValue
               const changed = String(savedValue ?? '') !== String(draftValue ?? '')
+              const temporaryManager =
+                savedValue !== 'manager' &&
+                effectiveValue === 'manager'
+              const savedStaffRole =
+                savedValue === 'academy_director'
+                  ? 'youth_academy_director'
+                  : savedValue
+              const savedStaff =
+                savedValue && savedValue !== 'manager'
+                  ? staff.find(member => member.role_type === savedStaffRole)
+                  : undefined
 
               return (
                 <div
@@ -3000,6 +3090,39 @@ export default function YouthAcademyPage(): JSX.Element {
                         : t('settings.confirmed', { defaultValue: 'Confirmed' })}
                     </span>
                   </div>
+
+                  {temporaryManager ? (
+                    <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs leading-5 text-blue-800">
+                      <div className="font-medium text-blue-900">
+                        {t('settings.managerTemporaryHandover', {
+                          defaultValue: 'Temporarily handled by Manager',
+                        })}
+                      </div>
+                      <div className="mt-1">
+                        {savedStaff?.active_course
+                          ? t('settings.managerTemporaryHandoverCourse', {
+                              staff: savedStaff.staff_name,
+                              course: savedStaff.active_course.title,
+                              date: savedStaff.active_course.returns_on,
+                              role: t(`settings.options.${String(savedValue)}`),
+                              defaultValue:
+                                '{{staff}} is attending {{course}} until {{date}}. The saved assignment remains {{role}} and resumes automatically when an available staff member returns.',
+                            })
+                          : t('settings.managerTemporaryHandoverUnavailable', {
+                              role: t(`settings.options.${String(savedValue)}`),
+                              defaultValue:
+                                'The delegated {{role}} is currently unavailable. The saved assignment is preserved and will resume automatically when an available staff member returns.',
+                            })}
+                      </div>
+                    </div>
+                  ) : savedValue ? (
+                    <div className="mt-3 text-xs text-slate-500">
+                      {t('settings.activeResponsibilityNow', {
+                        person: t(`settings.options.${String(effectiveValue)}`),
+                        defaultValue: 'Active now: {{person}}',
+                      })}
+                    </div>
+                  ) : null}
 
                   <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
                     <label className="text-sm">
