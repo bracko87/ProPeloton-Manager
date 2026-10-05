@@ -4316,80 +4316,116 @@ export default function YouthAcademyPage(): JSX.Element {
             </Card>
           ) : null}
 
-          <Card
-            title={t('calendar.raceCalendar')}
-            right={
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <select
-                  value={calendarMonth || raceCalendar?.current_month || 1}
-                  onChange={event => setCalendarMonth(Number(event.target.value))}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs"
-                >
-                  {Array.from({ length: 12 }, (_, index) => index + 1).map(month => (
-                    <option key={month} value={month}>
-                      {monthLabel(month)}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={calendarClassFilter}
-                  onChange={event =>
-                    setCalendarClassFilter(
-                      event.target.value as 'all' | YouthCompetitionClass
-                    )
-                  }
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs"
-                >
-                  <option value="all">
-                    {t('calendar.allCompetitions', { defaultValue: 'All competitions' })}
-                  </option>
-                  <option value="world">{t('calendar.competition.world')}</option>
-                  <option value="continental">{t('calendar.competition.continental')}</option>
-                  <option value="regional">{t('calendar.competition.regional')}</option>
-                </select>
-                <select
-                  value={calendarScope}
-                  onChange={event =>
-                    setCalendarScope(
-                      event.target.value as 'all' | 'my_opportunities'
-                    )
-                  }
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs"
-                >
-                  <option value="all">
-                    {t('calendar.allRaces', { defaultValue: 'All races' })}
-                  </option>
-                  <option value="my_opportunities">
-                    {t('calendar.myOpportunities', {
-                      defaultValue: 'My Academy opportunities',
-                    })}
-                  </option>
-                </select>
+          <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h3 className="text-base font-semibold text-slate-950">
+                  {t('calendar.seasonRaceCalendarTitle', {
+                    season: Number(raceCalendar?.season_number ?? 1),
+                    defaultValue: 'Season {{season}} Youth Race Calendar',
+                  })}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {t('calendar.seasonRaceCalendarHelp', {
+                    defaultValue: 'Each month has its own tab with all scheduled Youth races.',
+                  })}
+                </p>
               </div>
-            }
-          >
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-              <span>
+              <div className="text-xs text-slate-500">
                 {t('calendar.visibleEvents', { count: visibleYouthRaces.length })}
-              </span>
-              <span>·</span>
-              <span>
-                {t('calendar.classCounts', {
-                  world: Number(raceMonthData?.class_counts?.world ?? 0),
-                  continental: Number(raceMonthData?.class_counts?.continental ?? 0),
-                  regional: Number(raceMonthData?.class_counts?.regional ?? 0),
-                  defaultValue:
-                    'World {{world}} · Continental {{continental}} · Regional {{regional}}',
-                })}
-              </span>
+              </div>
             </div>
-            <p className="mt-2 text-xs leading-5 text-slate-500">
-              {t('calendar.browserHelp', {
-                defaultValue:
-                  'This browser shows the complete Youth race calendar for the selected month. Use My Academy opportunities to narrow it to invitations and your home Regional division.',
+
+            <div className="mt-5 grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:grid-cols-4 lg:grid-cols-12">
+              {Array.from({ length: 12 }, (_, index) => index + 1).map(month => {
+                const activeMonth = month === (calendarMonth || raceCalendar?.current_month || 1)
+                return (
+                  <button
+                    key={month}
+                    type="button"
+                    onClick={() => setCalendarMonth(month)}
+                    className={`rounded-lg px-2 py-2.5 text-xs font-medium transition sm:text-sm ${
+                      activeMonth
+                        ? 'bg-yellow-400 text-black'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {monthLabel(month)}
+                  </button>
+                )
               })}
-            </p>
-          </Card>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-slate-900">
+                      {t('calendar.raceFilters', { defaultValue: 'Race filters' })}
+                    </span>
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-700">
+                      {t('calendar.youthFilters', { defaultValue: 'Youth filters' })}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    {t('calendar.browserHelp', {
+                      defaultValue:
+                        'Filter this month by competition class and by your Academy opportunities.',
+                    })}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={calendarClassFilter}
+                    onChange={event =>
+                      setCalendarClassFilter(
+                        event.target.value as 'all' | YouthCompetitionClass
+                      )
+                    }
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700"
+                  >
+                    <option value="all">
+                      {t('calendar.allCompetitions', { defaultValue: 'All competitions' })}
+                    </option>
+                    <option value="world">{t('calendar.competition.world')}</option>
+                    <option value="continental">{t('calendar.competition.continental')}</option>
+                    <option value="regional">{t('calendar.competition.regional')}</option>
+                  </select>
+                  <select
+                    value={calendarScope}
+                    onChange={event =>
+                      setCalendarScope(
+                        event.target.value as 'all' | 'my_opportunities'
+                      )
+                    }
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700"
+                  >
+                    <option value="all">
+                      {t('calendar.allRaces', { defaultValue: 'All races' })}
+                    </option>
+                    <option value="my_opportunities">
+                      {t('calendar.myOpportunities', {
+                        defaultValue: 'My Academy opportunities',
+                      })}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span>
+                  {t('calendar.classCounts', {
+                    world: Number(raceMonthData?.class_counts?.world ?? 0),
+                    continental: Number(raceMonthData?.class_counts?.continental ?? 0),
+                    regional: Number(raceMonthData?.class_counts?.regional ?? 0),
+                    defaultValue:
+                      'World {{world}} · Continental {{continental}} · Regional {{regional}}',
+                  })}
+                </span>
+              </div>
+            </div>
+          </section>
 
           {phase3Loading && !raceCalendar ? (
             <Card title={t('calendar.races')}>
@@ -4397,307 +4433,392 @@ export default function YouthAcademyPage(): JSX.Element {
             </Card>
           ) : (
             <div className="space-y-3">
+              {visibleYouthRaces.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+                  {t('calendar.noVisibleRaces', {
+                    defaultValue: 'No Youth races match the selected month and filters.',
+                  })}
+                </div>
+              ) : null}
               {visibleYouthRaces.map(race => {
                 const selected = lineupDrafts[race.id] ?? []
                 const eligible = new Set(race.eligible_rider_ids ?? [])
-                const isManagerEntry = raceCalendar?.race_entry_decider === 'manager'
-                const isManagerSquad = raceCalendar?.race_squad_decider === 'manager'
+                const hasRaceEntryCover = temporaryCovers.some(
+                  cover => cover.responsibility === 'race_entry'
+                )
+                const hasRaceSquadCover = temporaryCovers.some(
+                  cover => cover.responsibility === 'race_squad'
+                )
+                const isManagerEntry =
+                  raceCalendar?.race_entry_decider === 'manager' && !hasRaceEntryCover
+                const isManagerSquad =
+                  raceCalendar?.race_squad_decider === 'manager' && !hasRaceSquadCover
                 const isEntered = race.entry_status === 'entered'
                 const isCompleted = race.status === 'completed'
                 const isPastPrelaunch = race.status === 'cancelled' && race.prelaunch_past === true
                 const isScheduled = race.status === 'scheduled'
 
+                const isExpanded = calendarExpandedRaceId === race.id
+                const statusLabel = isCompleted
+                  ? t('calendar.raceFinished', { defaultValue: 'Race finished' })
+                  : isEntered
+                    ? t('calendar.entered', { defaultValue: 'Entered' })
+                    : isPastPrelaunch
+                      ? t('calendar.pastPrelaunch', { defaultValue: 'Past · pre-launch' })
+                      : t('calendar.scheduled', { defaultValue: 'Scheduled' })
+                const formatLabel =
+                  race.race_days && race.race_days > 1
+                    ? t('calendar.stageRace', { defaultValue: 'Stage Race' })
+                    : t('calendar.oneDay')
+                const hostFlag = flagUrl(race.host_country_code)
+
                 return (
-                  <Card
+                  <div
                     key={race.id}
-                    title={race.race_name}
-                    right={
-                      <span className="text-xs text-slate-500">
-                        {race.race_date}
-                      </span>
-                    }
+                    className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
                   >
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1">
-                        {competitionLabel(race.competition_class, race.division_code)}
-                      </span>
-                      {race.host_city ? (
-                        <span className="inline-flex items-center gap-1.5">
-                          {flagUrl(race.host_country_code) ? (
-                            <img
-                              src={flagUrl(race.host_country_code) ?? ''}
-                              alt=""
-                              className="h-3.5 w-5 object-cover"
-                            />
+                    <div className="flex flex-col lg:flex-row lg:items-stretch">
+                      <div className="flex min-w-[92px] items-center justify-center gap-2 border-b border-slate-100 px-4 py-4 text-center lg:flex-col lg:border-b-0">
+                        <span className="text-sm font-semibold text-slate-950">
+                          {shortGameDate(race.race_date)}
+                        </span>
+                        {race.race_end_date && race.race_end_date !== race.race_date ? (
+                          <span className="text-xs font-medium text-slate-600">
+                            {shortGameDate(race.race_end_date)}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mx-4 my-3 hidden w-0.5 shrink-0 bg-emerald-400 lg:block" />
+
+                      <div className="flex min-w-0 flex-1 flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between lg:pl-0">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            {hostFlag ? (
+                              <img
+                                src={hostFlag}
+                                alt=""
+                                className="h-4 w-6 rounded-sm object-cover"
+                              />
+                            ) : null}
+                            <div className="truncate text-base font-semibold text-slate-950">
+                              {race.race_name}
+                            </div>
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            {race.host_city
+                              ? `${race.host_city} · ${humanize(race.terrain_type)} · ${race.distance_km} km`
+                              : `${humanize(race.terrain_type)} · ${race.distance_km} km`}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                            isCompleted
+                              ? 'bg-slate-100 text-slate-700'
+                              : isEntered
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-amber-50 text-amber-800'
+                          }`}>
+                            {statusLabel}
+                          </span>
+                          <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">
+                            {competitionLabel(race.competition_class, race.division_code)}
+                          </span>
+                          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                            {formatLabel}
+                          </span>
+                          {race.invitation_status ? (
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                              race.invitation_status === 'accepted'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : race.invitation_status === 'pending'
+                                  ? 'bg-amber-50 text-amber-800'
+                                  : 'bg-slate-100 text-slate-600'
+                            }`}>
+                              {t(`calendar.invitationStatuses.${race.invitation_status}`, {
+                                defaultValue: humanize(race.invitation_status),
+                              })}
+                            </span>
                           ) : null}
-                          {race.host_city}
-                        </span>
-                      ) : null}
-                      <span>·</span>
-                      <span>
-                        {race.race_days && race.race_days > 1
-                          ? t('calendar.days', { count: race.race_days })
-                          : t('calendar.oneDay')}
-                      </span>
-                      <span>·</span>
-                      <span>{t('calendar.teams', { current: Number(race.entries_count ?? 0), max: Number(race.team_limit ?? 16) })}</span>
-                      <span>·</span>
-                      <span>{humanize(race.terrain_type)}</span>
-                      <span>·</span>
-                      <span>{race.distance_km} km</span>
-                      <span>·</span>
-                      <span>{money(race.entry_cost)}</span>
-                      {race.invitation_status ? (
-                        <span className={`rounded-full px-2.5 py-1 ${
-                          race.invitation_status === 'accepted'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : race.invitation_status === 'pending'
-                              ? 'bg-amber-50 text-amber-800'
-                              : 'bg-slate-100 text-slate-500'
-                        }`}>
-                          {t(`calendar.invitationStatuses.${race.invitation_status}`, { defaultValue: humanize(race.invitation_status) })}
-                          {race.invitation_type ? ` · ${humanize(race.invitation_type)}` : ''}
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-500">
-                          {t('calendar.noInvitation')}
-                        </span>
-                      )}
-                      {isPastPrelaunch ? (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
-                          {t('calendar.pastPrelaunch', {
-                            defaultValue: 'Past · pre-launch',
-                          })}
-                        </span>
-                      ) : null}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCalendarExpandedRaceId(current =>
+                                current === race.id ? null : race.id
+                              )
+                            }
+                            className="rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+                          >
+                            {isExpanded
+                              ? t('calendar.closeRace', { defaultValue: 'Close Race' })
+                              : t('calendar.openRace', { defaultValue: 'Open Race' })}
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
-                    {isPastPrelaunch ? (
-                      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600">
-                        {t('calendar.prelaunchHelp', {
-                          defaultValue:
-                            'This event is kept in the calendar for completeness. It was already in the past when the Youth competition system was launched, so no result was generated.',
-                        })}
-                      </div>
-                    ) : isCompleted ? (
-                      <div className="mt-4 grid gap-4 xl:grid-cols-2">
-                        <div>
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            {t('calendar.myResults')}
-                          </div>
-                          {(race.my_results?.length ?? 0) === 0 ? (
-                            <div className="text-sm text-slate-500">{t('calendar.didNotRace')}</div>
-                          ) : (
-                            <div className="space-y-1.5 text-sm">
-                              {(race.my_results ?? []).map(result => (
-                                <div
-                                  key={result.rider_id}
-                                  className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
-                                >
-                                  <span>
-                                    {result.position ? `#${result.position} · ` : ''}
-                                    {result.name}
-                                  </span>
-                                  <span className="text-xs text-slate-500">
-                                    +{Number(result.regional_points ?? 0)} R · +{Number(result.world_points ?? 0)} W
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                    {isExpanded ? (
+                      <div className="border-t border-slate-100 bg-slate-50/30 p-4">
+                        <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                          <span>{competitionLabel(race.competition_class, race.division_code)}</span>
+                          <span>·</span>
+                          <span>
+                            {t('calendar.teams', {
+                              current: Number(race.entries_count ?? 0),
+                              max: Number(race.team_limit ?? 16),
+                            })}
+                          </span>
+                          <span>·</span>
+                          <span>{money(race.entry_cost)}</span>
+                          {race.invitation_response_deadline ? (
+                            <>
+                              <span>·</span>
+                              <span>
+                                {t('calendar.responseDeadline', {
+                                  date: gameDateLabel(race.invitation_response_deadline),
+                                })}
+                              </span>
+                            </>
+                          ) : null}
                         </div>
-                        <div>
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                            {t('calendar.topResults')}
-                          </div>
-                          <div className="space-y-1.5 text-sm">
-                            {(race.top_results ?? []).slice(0, 5).map(result => {
-                              const flag = flagUrl(result.country_code)
-                              return (
-                                <div
-                                  key={`${result.position}-${result.rider_name}`}
-                                  className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
-                                >
-                                  <span className="flex items-center gap-2">
-                                    <strong>#{result.position}</strong>
-                                    {flag ? <img src={flag} alt="" className="h-4 w-6 object-cover" /> : null}
-                                    {result.rider_name}
-                                  </span>
-                                  <span className="text-xs text-slate-500">{result.academy_name}</span>
-                                </div>
-                              )
+                        {isPastPrelaunch ? (
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                              {t('calendar.pastPrelaunch', {
+                                defaultValue: 'Past · pre-launch',
+                              })}
+                            </span>
+                          ) : null}
+                        </div>
+    
+                        {isPastPrelaunch ? (
+                          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600">
+                            {t('calendar.prelaunchHelp', {
+                              defaultValue:
+                                'This event is kept in the calendar for completeness. It was already in the past when the Youth competition system was launched, so no result was generated.',
                             })}
                           </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        {isScheduled && !race.qualified ? (
-                          <p className="mt-4 text-sm text-slate-500">
-                            {t('calendar.qualificationHelp')}
-                          </p>
-                        ) : null}
-
-                        {isScheduled && isManagerEntry && !race.entry_id && race.qualified ? (
-                          <div className="mt-4 flex flex-wrap items-end gap-3">
-                            <label className="text-xs text-slate-600">
-                              {t('calendar.strategy')}
-                              <select
-                                value={raceStrategies[race.id] ?? 'balanced'}
-                                onChange={event =>
-                                  setRaceStrategies(current => ({
-                                    ...current,
-                                    [race.id]: event.target.value as
-                                      | 'conservative'
-                                      | 'balanced'
-                                      | 'aggressive',
-                                  }))
-                                }
-                                className="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                              >
-                                <option value="conservative">{t('calendar.strategies.conservative')}</option>
-                                <option value="balanced">{t('calendar.strategies.balanced')}</option>
-                                <option value="aggressive">{t('calendar.strategies.aggressive')}</option>
-                              </select>
-                            </label>
-                            <button
-                              type="button"
-                              disabled={data.read_only || raceAction !== null}
-                              onClick={() => void enterYouthRace(race)}
-                              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                            >
-                              {raceAction === race.id ? t('calendar.entering') : t('calendar.enterRace')}
-                            </button>
-                            {race.invitation_status === 'pending' ? (
-                              <button
-                                type="button"
-                                disabled={data.read_only || raceAction !== null}
-                                onClick={() => void declineYouthRaceInvitation(race)}
-                                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
-                              >
-                                {raceAction === `decline:${race.id}` ? t('calendar.declining') : t('calendar.declineInvitation')}
-                              </button>
-                            ) : null}
-                          </div>
-                        ) : null}
-
-                        {isScheduled && !isManagerEntry && !race.entry_id && race.qualified ? (
-                          <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                            {t('calendar.coachEntryHelp')}
-                          </div>
-                        ) : null}
-
-                        {isScheduled && race.invitation_status === 'pending' && race.invitation_response_deadline ? (
-                          <div className="mt-3 text-xs text-amber-700">
-                            {t('calendar.responseDeadline', { date: race.invitation_response_deadline })}
-                          </div>
-                        ) : null}
-
-                        {isEntered ? (
-                          <div className="mt-4">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div>
-                                <div className="text-sm font-medium text-slate-900">
-                                  {t('calendar.entered')}
-                                </div>
-                                <div className="text-xs text-slate-500">
-                                  {t('calendar.enteredBy', {
-                                    who: humanize(race.entered_by),
-                                  })}
-                                </div>
+                        ) : isCompleted ? (
+                          <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                            <div>
+                              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                {t('calendar.myResults')}
                               </div>
-                              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                                {humanize(race.strategy)}
-                              </span>
-                            </div>
-
-                            {isManagerSquad ? (
-                              <div className="mt-4 border-t border-slate-200 pt-4">
-                                <div className="mb-2 text-sm font-medium text-slate-900">
-                                  {t('calendar.selectLineup', {
-                                    count: selected.length,
-                                    max: race.lineup_size,
-                                  })}
-                                </div>
-                                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-                                  {(raceCalendar?.riders ?? []).map(rider => {
-                                    const canSelect = eligible.has(rider.id)
-                                    const checked = selected.includes(rider.id)
-                                    return (
-                                      <label
-                                        key={rider.id}
-                                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                                          canSelect
-                                            ? 'border-slate-200 bg-white'
-                                            : 'border-slate-100 bg-slate-50 text-slate-400'
-                                        }`}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          disabled={!canSelect || data.read_only}
-                                          checked={checked}
-                                          onChange={() => toggleRaceLineupRider(race, rider.id)}
-                                        />
-                                        <span className="min-w-0">
-                                          <span className="block truncate font-medium">{rider.name}</span>
-                                          <span className="block text-xs text-slate-500">
-                                            {rider.age} · {humanize(rider.role)} · {rider.readiness}% / {rider.fatigue}%
-                                          </span>
-                                        </span>
-                                      </label>
-                                    )
-                                  })}
-                                </div>
-                                <div className="mt-3 flex flex-wrap items-end gap-3">
-                                  <label className="text-xs text-slate-600">
-                                    {t('calendar.strategy')}
-                                    <select
-                                      value={raceStrategies[race.id] ?? race.strategy ?? 'balanced'}
-                                      onChange={event =>
-                                        setRaceStrategies(current => ({
-                                          ...current,
-                                          [race.id]: event.target.value as
-                                            | 'conservative'
-                                            | 'balanced'
-                                            | 'aggressive',
-                                        }))
-                                      }
-                                      className="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                              {(race.my_results?.length ?? 0) === 0 ? (
+                                <div className="text-sm text-slate-500">{t('calendar.didNotRace')}</div>
+                              ) : (
+                                <div className="space-y-1.5 text-sm">
+                                  {(race.my_results ?? []).map(result => (
+                                    <div
+                                      key={result.rider_id}
+                                      className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
                                     >
-                                      <option value="conservative">{t('calendar.strategies.conservative')}</option>
-                                      <option value="balanced">{t('calendar.strategies.balanced')}</option>
-                                      <option value="aggressive">{t('calendar.strategies.aggressive')}</option>
-                                    </select>
-                                  </label>
-                                  <button
-                                    type="button"
-                                    disabled={
-                                      data.read_only ||
-                                      raceAction !== null ||
-                                      selected.length < 3 ||
-                                      selected.length > race.lineup_size
-                                    }
-                                    onClick={() => void saveYouthRaceLineup(race)}
-                                    className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                                  >
-                                    {raceAction === `lineup:${race.id}`
-                                      ? t('calendar.savingLineup')
-                                      : t('calendar.saveLineup')}
-                                  </button>
+                                      <span>
+                                        {result.position ? `#${result.position} · ` : ''}
+                                        {result.name}
+                                      </span>
+                                      <span className="text-xs text-slate-500">
+                                        +{Number(result.regional_points ?? 0)} R · +{Number(result.world_points ?? 0)} W
+                                      </span>
+                                    </div>
+                                  ))}
                                 </div>
+                              )}
+                            </div>
+                            <div>
+                              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                {t('calendar.topResults')}
                               </div>
-                            ) : (
-                              <div className="mt-3 text-xs text-slate-500">
-                                {t('calendar.coachLineupHelp', {
-                                  count: race.lineup?.length ?? 0,
+                              <div className="space-y-1.5 text-sm">
+                                {(race.top_results ?? []).slice(0, 5).map(result => {
+                                  const flag = flagUrl(result.country_code)
+                                  return (
+                                    <div
+                                      key={`${result.position}-${result.rider_name}`}
+                                      className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2"
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <strong>#{result.position}</strong>
+                                        {flag ? <img src={flag} alt="" className="h-4 w-6 object-cover" /> : null}
+                                        {result.rider_name}
+                                      </span>
+                                      <span className="text-xs text-slate-500">{result.academy_name}</span>
+                                    </div>
+                                  )
                                 })}
                               </div>
-                            )}
+                            </div>
                           </div>
-                        ) : null}
-                      </>
-                    )}
-                  </Card>
+                        ) : (
+                          <>
+                            {isScheduled && !race.qualified ? (
+                              <p className="mt-4 text-sm text-slate-500">
+                                {t('calendar.qualificationHelp')}
+                              </p>
+                            ) : null}
+    
+                            {isScheduled && isManagerEntry && !race.entry_id && race.qualified ? (
+                              <div className="mt-4 flex flex-wrap items-end gap-3">
+                                <label className="text-xs text-slate-600">
+                                  {t('calendar.strategy')}
+                                  <select
+                                    value={raceStrategies[race.id] ?? 'balanced'}
+                                    onChange={event =>
+                                      setRaceStrategies(current => ({
+                                        ...current,
+                                        [race.id]: event.target.value as
+                                          | 'conservative'
+                                          | 'balanced'
+                                          | 'aggressive',
+                                      }))
+                                    }
+                                    className="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                  >
+                                    <option value="conservative">{t('calendar.strategies.conservative')}</option>
+                                    <option value="balanced">{t('calendar.strategies.balanced')}</option>
+                                    <option value="aggressive">{t('calendar.strategies.aggressive')}</option>
+                                  </select>
+                                </label>
+                                <button
+                                  type="button"
+                                  disabled={data.read_only || raceAction !== null}
+                                  onClick={() => void enterYouthRace(race)}
+                                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                                >
+                                  {raceAction === race.id ? t('calendar.entering') : t('calendar.enterRace')}
+                                </button>
+                                {race.invitation_status === 'pending' ? (
+                                  <button
+                                    type="button"
+                                    disabled={data.read_only || raceAction !== null}
+                                    onClick={() => void declineYouthRaceInvitation(race)}
+                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
+                                  >
+                                    {raceAction === `decline:${race.id}` ? t('calendar.declining') : t('calendar.declineInvitation')}
+                                  </button>
+                                ) : null}
+                              </div>
+                            ) : null}
+    
+                            {isScheduled && !isManagerEntry && !race.entry_id && race.qualified ? (
+                              <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                                {t('calendar.coachEntryHelp')}
+                              </div>
+                            ) : null}
+    
+                            {isScheduled && race.invitation_status === 'pending' && race.invitation_response_deadline ? (
+                              <div className="mt-3 text-xs text-amber-700">
+                                {t('calendar.responseDeadline', { date: race.invitation_response_deadline })}
+                              </div>
+                            ) : null}
+    
+                            {isEntered ? (
+                              <div className="mt-4">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                  <div>
+                                    <div className="text-sm font-medium text-slate-900">
+                                      {t('calendar.entered')}
+                                    </div>
+                                    <div className="text-xs text-slate-500">
+                                      {t('calendar.enteredBy', {
+                                        who: humanize(race.entered_by),
+                                      })}
+                                    </div>
+                                  </div>
+                                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                                    {humanize(race.strategy)}
+                                  </span>
+                                </div>
+    
+                                {isManagerSquad ? (
+                                  <div className="mt-4 border-t border-slate-200 pt-4">
+                                    <div className="mb-2 text-sm font-medium text-slate-900">
+                                      {t('calendar.selectLineup', {
+                                        count: selected.length,
+                                        max: race.lineup_size,
+                                      })}
+                                    </div>
+                                    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                                      {(raceCalendar?.riders ?? []).map(rider => {
+                                        const canSelect = eligible.has(rider.id)
+                                        const checked = selected.includes(rider.id)
+                                        return (
+                                          <label
+                                            key={rider.id}
+                                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                                              canSelect
+                                                ? 'border-slate-200 bg-white'
+                                                : 'border-slate-100 bg-slate-50 text-slate-400'
+                                            }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              disabled={!canSelect || data.read_only}
+                                              checked={checked}
+                                              onChange={() => toggleRaceLineupRider(race, rider.id)}
+                                            />
+                                            <span className="min-w-0">
+                                              <span className="block truncate font-medium">{rider.name}</span>
+                                              <span className="block text-xs text-slate-500">
+                                                {rider.age} · {humanize(rider.role)} · {rider.readiness}% / {rider.fatigue}%
+                                              </span>
+                                            </span>
+                                          </label>
+                                        )
+                                      })}
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap items-end gap-3">
+                                      <label className="text-xs text-slate-600">
+                                        {t('calendar.strategy')}
+                                        <select
+                                          value={raceStrategies[race.id] ?? race.strategy ?? 'balanced'}
+                                          onChange={event =>
+                                            setRaceStrategies(current => ({
+                                              ...current,
+                                              [race.id]: event.target.value as
+                                                | 'conservative'
+                                                | 'balanced'
+                                                | 'aggressive',
+                                            }))
+                                          }
+                                          className="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                        >
+                                          <option value="conservative">{t('calendar.strategies.conservative')}</option>
+                                          <option value="balanced">{t('calendar.strategies.balanced')}</option>
+                                          <option value="aggressive">{t('calendar.strategies.aggressive')}</option>
+                                        </select>
+                                      </label>
+                                      <button
+                                        type="button"
+                                        disabled={
+                                          data.read_only ||
+                                          raceAction !== null ||
+                                          selected.length < 3 ||
+                                          selected.length > race.lineup_size
+                                        }
+                                        onClick={() => void saveYouthRaceLineup(race)}
+                                        className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                                      >
+                                        {raceAction === `lineup:${race.id}`
+                                          ? t('calendar.savingLineup')
+                                          : t('calendar.saveLineup')}
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="mt-3 text-xs text-slate-500">
+                                    {t('calendar.coachLineupHelp', {
+                                      count: race.lineup?.length ?? 0,
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            ) : null}
+                          </>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 )
               })}
             </div>
