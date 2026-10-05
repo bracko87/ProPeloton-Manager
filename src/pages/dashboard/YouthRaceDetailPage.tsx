@@ -170,6 +170,18 @@ function flagUrl(code: string | null | undefined): string | null {
   return /^[a-z]{2}$/.test(safe) ? `https://flagcdn.com/w40/${safe}.png` : null
 }
 
+function JerseyThumb({ url, name }: { url?: string | null; name: string }): JSX.Element {
+  return (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white">
+      {url ? (
+        <img src={url} alt={`${name} jersey`} className="h-full w-full object-contain p-0.5" />
+      ) : (
+        <span className="text-[9px] text-slate-400">Kit</span>
+      )}
+    </span>
+  )
+}
+
 function classLabel(value: CompetitionClass): string {
   if (value === 'world') return 'World Class'
   if (value === 'continental') return 'Continental Class'
@@ -725,8 +737,12 @@ export default function YouthRaceDetailPage(): JSX.Element {
                         <div key={`${result.rider_id}:${index}`} className="grid grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
                           <strong>{result.position ? `#${result.position}` : result.result_status.toUpperCase()}</strong>
                           <span className="flex min-w-0 items-center gap-2">
+                            <JerseyThumb url={result.jersey_url} name={result.academy_name} />
                             {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
-                            <span className="truncate">{result.rider_name}</span>
+                            <span className="min-w-0">
+                              <span className="block truncate font-medium">{result.rider_name}</span>
+                              <span className="block truncate text-xs text-slate-500">{result.academy_name}</span>
+                            </span>
                           </span>
                           <span className="text-xs font-medium text-slate-600">{Number(result.ranking_points ?? 0)} pts</span>
                         </div>
@@ -789,10 +805,13 @@ export default function YouthRaceDetailPage(): JSX.Element {
                 return (
                   <div className="space-y-1.5">
                     {stage.results.map((result, index) => (
-                      <div key={`${result.rider_id}:${index}`} className="grid grid-cols-[46px_minmax(0,1fr)_minmax(90px,150px)] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                      <div key={`${result.rider_id}:${index}`} className="grid grid-cols-[46px_minmax(0,1fr)_minmax(130px,210px)] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
                         <strong>{result.position ? `#${result.position}` : result.result_status.toUpperCase()}</strong>
-                        <span className="truncate">{result.rider_name}</span>
-                        <span className="truncate text-right text-xs text-slate-500">{result.academy_name}</span>
+                        <span className="truncate font-medium">{result.rider_name}</span>
+                        <span className="flex min-w-0 items-center justify-end gap-2 text-xs text-slate-500">
+                          <JerseyThumb url={result.jersey_url} name={result.academy_name} />
+                          <span className="truncate">{result.academy_name}</span>
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -810,6 +829,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                     <div key={team.academy_id} className={`grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-sm ${team.is_mine ? 'bg-yellow-50' : 'bg-slate-50'}`}>
                       <strong>#{team.team_position}</strong>
                       <span className="flex min-w-0 items-center gap-2">
+                        <JerseyThumb url={team.jersey_url} name={team.academy_name} />
                         {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
                         <span className="truncate">{team.academy_name}</span>
                       </span>
