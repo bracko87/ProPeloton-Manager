@@ -160,7 +160,685 @@ function slicePage<T>(items: T[], page: number, pageSize: number): T[] {
 function formatMoney(n: number, _currency: 'EUR' | 'USD' = 'USD'): string {
   const amount = Math.round(Number(n) || 0)
   const sign = amount < 0 ? '-' : ''
-  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
+  return sign + '
+}
+
+function getMeta(row: {
+  metadata: Record<string, unknown> | null
+}): Record<string, unknown> | null {
+  return row.metadata && typeof row.metadata === 'object' ? row.metadata : null
+}
+
+function pickText(v: unknown): string | null {
+  if (typeof v !== 'string') return null
+
+  const t = v.trim()
+  return t ? t : null
+}
+
+function extractGameDate(meta: Record<string, unknown> | null): unknown | null {
+  if (!meta) return null
+
+  return (
+    meta.game_date ??
+    meta.in_game_date ??
+    meta.gameDate ??
+    meta.source_game_date ??
+    meta.sourceGameDate ??
+    null
+  )
+}
+
+function formatGameDateValue(value: unknown): string | null {
+  const resolved = resolveGameDate(value)
+  return resolved ? formatGameDate(resolved, true) : null
+}
+
+function extractPeriod(meta: Record<string, unknown> | null): string | null {
+  if (!meta) return null
+
+  const start = pickText(meta.period_start)
+  const end = pickText(meta.period_end)
+
+  if (!start || !end) return null
+
+  return formatGameDateRange(start, end)
+}
+
+function statusBadgeClass(status: AuditRow['audit_status']): string {
+  switch (status) {
+    case 'ok':
+      return 'bg-green-100 text-green-800'
+
+    case 'adjusted':
+      return 'bg-yellow-100 text-yellow-800'
+
+    case 'refunded':
+      return 'bg-blue-100 text-blue-800'
+
+    default:
+      return 'bg-gray-100 text-gray-800'
+  }
+}
+
+function TablePagination({
+  page,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  itemLabel,
+}: {
+  page: number
+  totalPages: number
+  totalItems: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  itemLabel: string
+}): JSX.Element {
+  const { t } = useTranslation('finance')
+  const safePage = clampPage(page, totalPages)
+  const firstVisible = totalItems === 0 ? 0 : (safePage - 1) * pageSize + 1
+  const lastVisible = Math.min(safePage * pageSize, totalItems)
+
+  return (
+    <div className="border-t bg-gray-50 p-3 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+      <div className="text-xs text-gray-600">
+        Showing {firstVisible}-{lastVisible} of {totalItems} {itemLabel}.
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.max(safePage - 1, 1))}
+          disabled={safePage <= 1}
+          className={[
+            'px-3 py-2 rounded text-sm shadow',
+            safePage <= 1
+              ? 'bg-gray-200 text-gray-500'
+              : 'bg-white hover:bg-gray-100',
+          ].join(' ')}
+        >
+          {t('common.previous')}
+        </button>
+
+        <div className="text-xs text-gray-600 min-w-[72px] text-center">
+          Page {safePage} / {totalPages}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onPageChange(Math.min(safePage + 1, totalPages))}
+          disabled={safePage >= totalPages}
+          className={[
+            'px-3 py-2 rounded text-sm shadow',
+            safePage >= totalPages
+              ? 'bg-gray-200 text-gray-500'
+              : 'bg-white hover:bg-gray-100',
+          ].join(' ')}
+        >
+          {t('common.next')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export function TaxTab({
+  clubId,
+  currency = 'EUR',
+}: {
+  clubId: string
+  currency?: 'EUR' | 'USD'
+}): JSX.Element {
+  const { t } = useTranslation('finance')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [audits, setAudits] = useState<AuditRow[]>([])
+  const [allRows, setAllRows] = useState<StatementRowV2[]>([])
+  const [gameState, setGameState] = useState<GameStateRow | null>(null)
+  const [currentTaxPosition, setCurrentTaxPosition] =
+    useState<TaxPositionRow | null>(null)
+
+  const [taxStatementPage, setTaxStatementPage] = useState(1)
+  const [auditPage, setAuditPage] = useState(1)
+
+  function getAuditStatusLabel(status: AuditRow['audit_status']): string {
+    switch (status) {
+      case 'ok':
+        return t('tax.ok')
+
+      case 'adjusted':
+        return t('tax.adjusted')
+
+      case 'refunded':
+        return t('tax.refunded')
+    }
+  }
+
+  function getTransactionTypeLabel(row: StatementRowV2): string {
+    if (row.type === 'tax_withholding') {
+      return t('transactionLabels.taxWithholding')
+    }
+
+    return row.type_name || row.type
+  }
+
+  function getFinanceCategoryLabel(category: string): string {
+    if (category === 'income') {
+      return t('financeCategories.income')
+    }
+
+    if (category === 'expense') {
+      return t('financeCategories.expense')
+    }
+
+    return category
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load(): Promise<void> {
+      if (!clubId) {
+        setAudits([])
+        setAllRows([])
+        setGameState(null)
+        setCurrentTaxPosition(null)
+        setTaxStatementPage(1)
+        setAuditPage(1)
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setError(null)
+
+      const gameStateRes = await supabase
+        .from('game_state')
+        .select('season_number, month_number, day_number, hour_number, minute_number')
+        .eq('id', true)
+        .single<GameStateRow>()
+
+      if (cancelled) return
+
+      if (gameStateRes.error) {
+        setError(gameStateRes.error.message)
+        setLoading(false)
+        return
+      }
+
+      const currentPeriod = getCurrentGameMonthPeriod(gameStateRes.data)
+
+      const [auditsRes, statementRes, taxPositionRes] = await Promise.all([
+        supabase.rpc('finance_get_club_tax_audits', {
+          p_club_id: clubId,
+          p_limit: 500,
+        }),
+        supabase.rpc('finance_get_club_statement_v2', {
+          p_club_id: clubId,
+          p_limit: 500,
+          p_before: null,
+        }),
+        supabase.rpc('finance_get_club_tax_position_for_period', {
+          p_club_id: clubId,
+          p_period_start: currentPeriod.periodStart,
+          p_period_end: currentPeriod.periodEnd,
+        }),
+      ])
+
+      if (cancelled) return
+
+      if (auditsRes.error) {
+        setError(auditsRes.error.message)
+        setLoading(false)
+        return
+      }
+
+      if (statementRes.error) {
+        setError(statementRes.error.message)
+        setLoading(false)
+        return
+      }
+
+      if (taxPositionRes.error) {
+        setError(taxPositionRes.error.message)
+        setLoading(false)
+        return
+      }
+
+      setAudits((auditsRes.data ?? []) as AuditRow[])
+      setAllRows((statementRes.data ?? []) as StatementRowV2[])
+      setGameState(gameStateRes.data)
+      setCurrentTaxPosition(
+        ((taxPositionRes.data ?? []) as TaxPositionRow[])[0] ?? null
+      )
+      setTaxStatementPage(1)
+      setAuditPage(1)
+      setLoading(false)
+    }
+
+    void load()
+
+    return () => {
+      cancelled = true
+    }
+  }, [clubId])
+
+  const latestAudit = audits[0] ?? null
+
+  const nextAuditLabel = useMemo(() => {
+    if (DEV_TAX_NEXT_AUDIT_OVERRIDE_LABEL) {
+      return DEV_TAX_NEXT_AUDIT_OVERRIDE_LABEL
+    }
+
+    if (currentTaxPosition) {
+      return t('tax.afterDate', {
+        date:
+          formatGameDateValue(currentTaxPosition.period_end) ??
+          currentTaxPosition.period_end,
+      })
+    }
+
+    return latestAudit ? getNextGameMonthEndLabel(latestAudit.period_end) : '—'
+  }, [currentTaxPosition, latestAudit, t])
+
+  const summary = useMemo(() => {
+    if (!currentTaxPosition) {
+      return {
+        gross: 0,
+        expected: 0,
+        withheld: 0,
+        adjustment: 0,
+      }
+    }
+
+    return {
+      gross: toNumber(currentTaxPosition.taxable_income_gross),
+      expected: toNumber(currentTaxPosition.expected_tax),
+      withheld: toNumber(currentTaxPosition.already_withheld),
+      adjustment: toNumber(currentTaxPosition.adjustment_amount),
+    }
+  }, [currentTaxPosition])
+
+  const taxRows = useMemo(() => {
+    return allRows
+      .filter(row => TAX_TYPES.has(row.type))
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+  }, [allRows])
+
+  const rowById = useMemo(() => {
+    const map = new Map<string, StatementRowV2>()
+
+    for (const row of allRows) {
+      map.set(row.transaction_id, row)
+    }
+
+    return map
+  }, [allRows])
+
+  const taxStatementTotalPages = useMemo(
+    () => getTotalPages(taxRows.length, TAX_PAGE_SIZE),
+    [taxRows.length]
+  )
+
+  const safeTaxStatementPage = clampPage(
+    taxStatementPage,
+    taxStatementTotalPages
+  )
+
+  const visibleTaxRows = useMemo(
+    () => slicePage(taxRows, safeTaxStatementPage, TAX_PAGE_SIZE),
+    [safeTaxStatementPage, taxRows]
+  )
+
+  const auditTotalPages = useMemo(
+    () => getTotalPages(audits.length, TAX_PAGE_SIZE),
+    [audits.length]
+  )
+
+  const safeAuditPage = clampPage(auditPage, auditTotalPages)
+
+  const visibleAudits = useMemo(
+    () => slicePage(audits, safeAuditPage, TAX_PAGE_SIZE),
+    [audits, safeAuditPage]
+  )
+
+  useEffect(() => {
+    setTaxStatementPage((current) =>
+      clampPage(current, getTotalPages(taxRows.length, TAX_PAGE_SIZE))
+    )
+  }, [taxRows.length])
+
+  useEffect(() => {
+    setAuditPage((current) =>
+      clampPage(current, getTotalPages(audits.length, TAX_PAGE_SIZE))
+    )
+  }, [audits.length])
+
+  function getInGameTimeLabel(row: StatementRowV2): string {
+    const meta = getMeta(row)
+
+    const ownGameDate = extractGameDate(meta)
+    const ownGameDateLabel = formatGameDateValue(ownGameDate)
+    if (ownGameDateLabel) return ownGameDateLabel
+
+    const ownPeriod = extractPeriod(meta)
+    if (ownPeriod) return ownPeriod
+
+    const sourceTxId = pickText(meta?.source_transaction_id)
+
+    if (sourceTxId) {
+      const sourceRow = rowById.get(sourceTxId)
+
+      if (sourceRow) {
+        const sourceMeta = getMeta(sourceRow)
+
+        const sourceGameDate = extractGameDate(sourceMeta)
+        const sourceGameDateLabel = formatGameDateValue(sourceGameDate)
+        if (sourceGameDateLabel) return sourceGameDateLabel
+
+        const sourcePeriod = extractPeriod(sourceMeta)
+        if (sourcePeriod) return sourcePeriod
+
+        return '—'
+      }
+    }
+
+    return 'Unknown'
+  }
+
+  function getReferenceText(row: StatementRowV2): string {
+    const meta = getMeta(row)
+    return pickText(meta?.source_transaction_id) ?? row.transaction_id
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white p-4 rounded shadow">
+        <h4 className="font-semibold">{t('tax.title')}</h4>
+        <div className="mt-2 text-sm text-gray-600">{t('tax.loading')}</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white p-4 rounded shadow">
+        <h4 className="font-semibold">{t('tax.title')}</h4>
+        <div className="mt-2 text-sm text-red-600">{error}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white p-4 rounded shadow">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h4 className="font-semibold">{t('tax.title')}</h4>
+
+            <div className="mt-1 text-sm text-gray-600">
+              {t('tax.flatRate')}{' '}
+              <span className="font-medium">15%</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-end gap-2">
+            {latestAudit ? (
+              <span
+                className={`inline-flex items-center rounded px-2 py-1 text-xs font-medium ${statusBadgeClass(
+                  latestAudit.audit_status
+                )}`}
+              >
+                {t('tax.latestAudit', {
+                  status: getAuditStatusLabel(latestAudit.audit_status),
+                })}
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                {t('tax.noAudits')}
+              </span>
+            )}
+
+            <span className="inline-flex items-center rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+              {t('tax.nextAudit', { date: nextAuditLabel })}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded border p-3">
+            <div className="text-xs uppercase tracking-wide text-gray-500">
+              {t('tax.currentTaxable')}
+            </div>
+
+            <div className="mt-1 text-lg font-semibold">
+              {formatMoney(summary.gross, currency)}
+            </div>
+          </div>
+
+          <div className="rounded border p-3">
+            <div className="text-xs uppercase tracking-wide text-gray-500">
+              {t('tax.expectedTax')}
+            </div>
+
+            <div className="mt-1 text-lg font-semibold">
+              {formatMoney(summary.expected, currency)}
+            </div>
+          </div>
+
+          <div className="rounded border p-3">
+            <div className="text-xs uppercase tracking-wide text-gray-500">
+              {t('tax.alreadyWithheld')}
+            </div>
+
+            <div className="mt-1 text-lg font-semibold">
+              {formatMoney(summary.withheld, currency)}
+            </div>
+          </div>
+
+          <div className="rounded border p-3">
+            <div className="text-xs uppercase tracking-wide text-gray-500">
+              {t('tax.estimatedAdjustment')}
+            </div>
+
+            <div
+              className={`mt-1 text-lg font-semibold ${
+                summary.adjustment < 0
+                  ? 'text-red-700'
+                  : summary.adjustment > 0
+                    ? 'text-green-700'
+                    : 'text-gray-900'
+              }`}
+            >
+              {formatMoney(summary.adjustment, currency)}
+            </div>
+          </div>
+        </div>
+
+        {currentTaxPosition ? (
+          <div className="mt-4 text-sm text-gray-600">
+            {t('tax.currentPeriod')}{' '}
+            {formatGameDateRange(
+              currentTaxPosition.period_start,
+              currentTaxPosition.period_end
+            )}
+          </div>
+        ) : gameState ? (
+          <div className="mt-4 text-sm text-gray-600">
+            {t('tax.periodLoading')}
+          </div>
+        ) : (
+          <div className="mt-4 text-sm text-gray-600">
+            {t('tax.periodUnavailable')}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white p-4 rounded shadow">
+        <h5 className="font-medium">{t('tax.statement')}</h5>
+
+        {taxRows.length === 0 ? (
+          <div className="mt-3 text-sm text-gray-600">
+            {t('tax.noStatement')}
+          </div>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full table-fixed text-sm">
+              <thead>
+                <tr className="border-b text-left text-gray-500">
+                  <th className="py-2 pr-4 w-[20%]">{t('tax.gameTime')}</th>
+                  <th className="py-2 pr-4 w-[20%]">{t('common.type')}</th>
+                  <th className="py-2 pr-4 w-[20%]">{t('tax.category')}</th>
+                  <th className="py-2 pr-4 w-[20%]">{t('tax.reference')}</th>
+                  <th className="py-2 w-[20%] text-right">{t('common.amount')}</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {visibleTaxRows.map(row => {
+                  const amount = toNumber(row.net_amount)
+
+                  return (
+                    <tr
+                      key={row.transaction_id}
+                      className="border-b last:border-b-0"
+                    >
+                      <td className="py-2 pr-4">{getInGameTimeLabel(row)}</td>
+
+                      <td className="py-2 pr-4">
+                        {getTransactionTypeLabel(row)}
+                      </td>
+
+                      <td className="py-2 pr-4">
+                        {row.category ? getFinanceCategoryLabel(row.category) : '—'}
+                      </td>
+
+                      <td className="py-2 pr-4">
+                        <span className="font-mono text-xs text-gray-600">
+                          {getReferenceText(row)}
+                        </span>
+                      </td>
+
+                      <td
+                        className={`py-2 text-right font-medium ${
+                          amount < 0
+                            ? 'text-red-700'
+                            : amount > 0
+                              ? 'text-green-700'
+                              : 'text-gray-700'
+                        }`}
+                      >
+                        {formatMoney(amount, currency)}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {taxRows.length > 0 ? (
+          <TablePagination
+            page={safeTaxStatementPage}
+            totalPages={taxStatementTotalPages}
+            totalItems={taxRows.length}
+            pageSize={TAX_PAGE_SIZE}
+            itemLabel={t('tax.statementRows')}
+            onPageChange={setTaxStatementPage}
+          />
+        ) : null}
+      </div>
+
+      <div className="bg-white p-4 rounded shadow">
+        <h5 className="font-medium">{t('tax.auditHistory')}</h5>
+
+        {audits.length === 0 ? (
+          <div className="mt-3 text-sm text-gray-600">{t('tax.noAuditHistory')}</div>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full table-fixed text-sm">
+              <thead>
+                <tr className="border-b text-left text-gray-500">
+                  <th className="py-2 pr-4 w-[22%]">{t('tax.gamePeriod')}</th>
+                  <th className="py-2 pr-4 w-[12%]">{t('tax.status')}</th>
+                  <th className="py-2 pr-4 w-[18%]">{t('tax.taxableIncome')}</th>
+                  <th className="py-2 pr-4 w-[16%]">{t('tax.expectedTaxColumn')}</th>
+                  <th className="py-2 pr-4 w-[16%]">{t('tax.withheld')}</th>
+                  <th className="py-2 w-[16%]">{t('tax.adjustment')}</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {visibleAudits.map(audit => (
+                  <tr
+                    key={`${audit.period_start}-${audit.period_end}-${audit.created_at}`}
+                    className="border-b last:border-b-0"
+                  >
+                    <td className="py-2 pr-4">
+                      {formatGameDateRange(audit.period_start, audit.period_end)}
+                    </td>
+
+                    <td className="py-2 pr-4">
+                      <span
+                        className={`inline-flex items-center rounded px-2 py-1 text-xs font-medium ${statusBadgeClass(
+                          audit.audit_status
+                        )}`}
+                      >
+                        {getAuditStatusLabel(audit.audit_status)}
+                      </span>
+                    </td>
+
+                    <td className="py-2 pr-4">
+                      {formatMoney(toNumber(audit.taxable_income_gross), currency)}
+                    </td>
+
+                    <td className="py-2 pr-4">
+                      {formatMoney(toNumber(audit.expected_tax), currency)}
+                    </td>
+
+                    <td className="py-2 pr-4">
+                      {formatMoney(toNumber(audit.already_withheld), currency)}
+                    </td>
+
+                    <td
+                      className={`py-2 font-medium ${
+                        toNumber(audit.adjustment_amount) < 0
+                          ? 'text-red-700'
+                          : toNumber(audit.adjustment_amount) > 0
+                            ? 'text-green-700'
+                            : 'text-gray-700'
+                      }`}
+                    >
+                      {formatMoney(toNumber(audit.adjustment_amount), currency)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {audits.length > 0 ? (
+          <TablePagination
+            page={safeAuditPage}
+            totalPages={auditTotalPages}
+            totalItems={audits.length}
+            pageSize={TAX_PAGE_SIZE}
+            itemLabel={t('tax.auditRows')}
+            onPageChange={setAuditPage}
+          />
+        ) : null}
+      </div>
+    </div>
+  )
+}
+ + Math.abs(amount).toLocaleString('en-US')
 }
 
 function getMeta(row: {
