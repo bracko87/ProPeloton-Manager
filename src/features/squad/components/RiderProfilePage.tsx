@@ -464,32 +464,9 @@ const ACTIVE_TRANSFER_LISTING_STATUSES = ['listed', 'active', 'open'] as const
 
 function formatCompactMoneyValue(value?: number | null) {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—'
-
-  const absoluteValue = Math.abs(value)
-  const prefix = value < 0 ? '-$' : '$'
-  const formatOneDecimal = (amount: number) =>
-    new Intl.NumberFormat(getRiderProfileLocale(), {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 1,
-    }).format(amount)
-
-  if (absoluteValue >= 1_000_000_000) {
-    return `${prefix}${formatOneDecimal(absoluteValue / 1_000_000_000)}b`
-  }
-
-  if (absoluteValue >= 1_000_000) {
-    return `${prefix}${formatOneDecimal(absoluteValue / 1_000_000)}m`
-  }
-
-  if (absoluteValue >= 100_000) {
-    return `${prefix}${Math.floor(absoluteValue / 1_000)}k`
-  }
-
-  if (absoluteValue >= 1_000) {
-    return `${prefix}${formatOneDecimal(absoluteValue / 1_000)}k`
-  }
-
-  return `${prefix}${new Intl.NumberFormat(getRiderProfileLocale()).format(Math.round(absoluteValue))}`
+  const amount = Math.round(value)
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function formatSkillDeltaSource(source?: string | null) {
