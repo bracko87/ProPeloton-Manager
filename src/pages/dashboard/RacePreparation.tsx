@@ -438,8 +438,10 @@ function getNumber(obj: unknown, key: string) {
 }
 
 function formatMoney(value: unknown) {
-  const n = Number(value ?? 0);
-  return `$${n.toLocaleString()}`;
+  const numeric = Number(value ?? 0);
+  const amount = Math.round(Number.isFinite(numeric) ? numeric : 0);
+  const sign = amount < 0 ? "-" : "";
+  return `${sign}${Math.abs(amount).toLocaleString("en-US")}`;
 }
 
 function normalizeNumericValue(value: unknown, fallback = 0): number {
