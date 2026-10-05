@@ -25,12 +25,10 @@ export function toNumber(v: unknown): number {
  * formatMoney
  * Format integer currency values (no cents).
  */
-export function formatMoney(n: number, currency: 'EUR' | 'USD' = 'EUR'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(n)
+export function formatMoney(n: number, _currency: 'EUR' | 'USD' = 'USD'): string {
+  const amount = Math.round(Number(n) || 0)
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 /**
