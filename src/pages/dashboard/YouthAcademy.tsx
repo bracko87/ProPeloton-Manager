@@ -5647,8 +5647,8 @@ export default function YouthAcademyPage(): JSX.Element {
                 <p className="mt-1 text-xs leading-5">Each group champion is promoted directly. 2nd and 3rd from West and East enter a four-team playoff table; the best two are also promoted to World Class.</p>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
-                <div className="font-medium text-slate-900">Regional · unlimited</div>
-                <p className="mt-1 text-xs leading-5">Only Regional champions are promoted. Four Regional divisions feed Continental West, so West relegates its bottom four. Two Regional divisions feed Continental East, so East relegates its bottom two. Regional AI depth is limited to 2–5 teams per division.</p>
+                <div className="font-medium text-slate-900">Regional · 12 divisions</div>
+                <p className="mt-1 text-xs leading-5">Youth Regional now uses the same 12 geographic divisions as the senior Team Ranking. Six divisions feed Continental West and six feed Continental East. Each Regional champion is promoted, so each Continental group relegates six teams. Regional AI depth stays small at two AI Academies per division.</p>
               </div>
             </div>
             <p className="mt-3 text-xs leading-5 text-slate-500">

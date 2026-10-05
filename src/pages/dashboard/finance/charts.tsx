@@ -8,6 +8,12 @@
 
 import React from 'react'
 
+function formatCash(value: number): string {
+  const amount = Math.round(Number(value) || 0)
+  const sign = amount < 0 ? '-' : ''
+  return sign + String.fromCharCode(36) + Math.abs(amount).toLocaleString('en-US')
+}
+
 /**
  * MiniBars
  * Simple stacked mini bar chart for income/expenses series.
@@ -166,14 +172,14 @@ export function Donut({
         <div className="flex items-center gap-2">
           <span className="inline-block w-3 h-3 rounded" style={{ background: '#16a34a' }} />
           <span className="text-gray-700">Income:</span>
-          <span className="font-semibold">{income.toLocaleString()}</span>
+          <span className="font-semibold">{formatCash(income)}</span>
         </div>
         <div className="flex items-center gap-2 mt-1">
           <span className="inline-block w-3 h-3 rounded" style={{ background: '#dc2626' }} />
           <span className="text-gray-700">Expenses:</span>
-          <span className="font-semibold">{expenses.toLocaleString()}</span>
+          <span className="font-semibold">{formatCash(expenses)}</span>
         </div>
-        <div className="mt-2 text-xs text-gray-500">Total: {total.toLocaleString()}</div>
+        <div className="mt-2 text-xs text-gray-500">Total: {formatCash(total)}</div>
       </div>
     </div>
   )

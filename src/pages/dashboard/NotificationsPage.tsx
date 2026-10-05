@@ -3851,7 +3851,7 @@ export default function NotificationsPage(): JSX.Element {
                                         isSeasonStartNotice
                                           ? 'rounded-xl border border-sky-200 bg-sky-50 px-3 py-3 text-sm leading-6 text-slate-700'
                                           : isNationalFeatureNotice
-                                            ? 'rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700 shadow-sm'
+                                            ? 'rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700 shadow-sm whitespace-pre-line'
                                             : 'text-sm leading-6 text-slate-700'
                                       }
                                     >
