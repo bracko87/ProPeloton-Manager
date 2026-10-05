@@ -1338,14 +1338,18 @@ export default function YouthAcademyPage(): JSX.Element {
       )
       if (saveError) throw saveError
 
-      const {
-        data: philosophyPayload,
-        error: philosophyError,
-      } = await supabase.rpc('update_my_youth_training_philosophy_v1', {
-        p_training_philosophy:
-          draftSettings.training_philosophy ?? 'balanced',
-      })
-      if (philosophyError) throw philosophyError
+      let philosophyPayload: unknown = null
+      if ((draftSettings.training_decider ?? 'manager') === 'manager') {
+        const { data, error: philosophyError } = await supabase.rpc(
+          'update_my_youth_training_philosophy_v1',
+          {
+            p_training_philosophy:
+              draftSettings.training_philosophy ?? 'balanced',
+          }
+        )
+        if (philosophyError) throw philosophyError
+        philosophyPayload = data
+      }
 
       const next = (philosophyPayload ?? payload) as AcademyPayload
       setData(next)
