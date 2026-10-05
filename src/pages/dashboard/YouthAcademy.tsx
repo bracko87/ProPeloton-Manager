@@ -485,6 +485,7 @@ type YouthAcademyStandingRow = {
   total_teams: number
   is_mine: boolean
   promotion_zone: boolean
+  playoff_zone?: boolean
   relegation_zone: boolean
 }
 
@@ -5073,15 +5074,40 @@ export default function YouthAcademyPage(): JSX.Element {
                           {isScheduled &&
                           !isParticipating &&
                           isManagerEntry ? (
+                            race.invitation_status === 'pending' ? (
+                              <button
+                                type="button"
+                                disabled={data.read_only || raceAction !== null}
+                                onClick={() => void declineYouthRaceInvitation(race)}
+                                className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                              >
+                                {raceAction === `decline:${race.id}`
+                                  ? t('calendar.declining')
+                                  : t('calendar.withdrawApplication', { defaultValue: 'Withdraw Application' })}
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={data.read_only || raceAction !== null}
+                                onClick={() => void enterYouthRace(race)}
+                                className="rounded-full bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-yellow-300 disabled:opacity-50"
+                              >
+                                {raceAction === race.id
+                                  ? t('calendar.entering')
+                                  : t('calendar.applyRace', { defaultValue: 'Apply for Race' })}
+                              </button>
+                            )
+                          ) : null}
+                          {isScheduled && isParticipating && isManagerEntry ? (
                             <button
                               type="button"
                               disabled={data.read_only || raceAction !== null}
-                              onClick={() => void enterYouthRace(race)}
-                              className="rounded-full bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-yellow-300 disabled:opacity-50"
+                              onClick={() => void declineYouthRaceInvitation(race)}
+                              className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
                             >
-                              {raceAction === race.id
-                                ? t('calendar.entering')
-                                : t('calendar.applyRace', { defaultValue: 'Apply for Race' })}
+                              {raceAction === `decline:${race.id}`
+                                ? t('calendar.declining')
+                                : t('calendar.withdrawRace', { defaultValue: 'Withdraw Race' })}
                             </button>
                           ) : null}
                           <button
@@ -5213,7 +5239,7 @@ export default function YouthAcademyPage(): JSX.Element {
                           </div>
                         ) : (
                           <>
-                            {isScheduled && isManagerEntry && !race.entry_id ? (
+                            {isScheduled && isManagerEntry && !race.entry_id && race.invitation_status !== 'pending' ? (
                               <div className="mt-4 flex flex-wrap items-end gap-3">
                                 <label className="text-xs text-slate-600">
                                   {t('calendar.strategy')}
@@ -5245,16 +5271,21 @@ export default function YouthAcademyPage(): JSX.Element {
                                     ? t('calendar.entering')
                                     : t('calendar.applyRace', { defaultValue: 'Apply for Race' })}
                                 </button>
-                                {race.invitation_status === 'pending' ? (
-                                  <button
-                                    type="button"
-                                    disabled={data.read_only || raceAction !== null}
-                                    onClick={() => void declineYouthRaceInvitation(race)}
-                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
-                                  >
-                                    {raceAction === `decline:${race.id}` ? t('calendar.declining') : t('calendar.declineInvitation')}
-                                  </button>
-                                ) : null}
+                              </div>
+                            ) : null}
+
+                            {isScheduled && isManagerEntry && !race.entry_id && race.invitation_status === 'pending' ? (
+                              <div className="mt-4">
+                                <button
+                                  type="button"
+                                  disabled={data.read_only || raceAction !== null}
+                                  onClick={() => void declineYouthRaceInvitation(race)}
+                                  className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                                >
+                                  {raceAction === `decline:${race.id}`
+                                    ? t('calendar.declining')
+                                    : t('calendar.withdrawApplication', { defaultValue: 'Withdraw Application' })}
+                                </button>
                               </div>
                             ) : null}
     
@@ -5502,7 +5533,17 @@ export default function YouthAcademyPage(): JSX.Element {
                       return (
                         <tr
                           key={team.academy_id}
-                          className={team.is_mine ? 'bg-yellow-50' : 'border-t border-slate-100'}
+                          className={`border-t border-slate-100 ${
+                            team.is_mine
+                              ? 'bg-yellow-50'
+                              : team.relegation_zone
+                                ? 'bg-red-50'
+                                : team.promotion_zone
+                                  ? 'bg-emerald-50'
+                                  : team.playoff_zone
+                                    ? 'bg-blue-50'
+                                    : ''
+                          }`}
                         >
                           <td className="px-4 py-3 text-sm font-semibold text-slate-900">
                             {team.rank}
@@ -5528,6 +5569,21 @@ export default function YouthAcademyPage(): JSX.Element {
                                   {t('rankings.yourAcademy', {
                                     defaultValue: 'Your Academy',
                                   })}
+                                </span>
+                              ) : null}
+                              {team.promotion_zone ? (
+                                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800">
+                                  Promotion
+                                </span>
+                              ) : null}
+                              {team.playoff_zone ? (
+                                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-800">
+                                  Playoff
+                                </span>
+                              ) : null}
+                              {team.relegation_zone ? (
+                                <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-800">
+                                  Relegation
                                 </span>
                               ) : null}
                             </div>
@@ -5565,9 +5621,11 @@ export default function YouthAcademyPage(): JSX.Element {
                 <span className="h-3 w-3 rounded border border-yellow-300 bg-yellow-100" />
                 <span>{t('rankings.yourAcademy', { defaultValue: 'Your Academy' })}</span>
               </div>
-              <span className="text-slate-500">
-                {t('rankings.promotionNote')}
-              </span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-emerald-100" />Promotion</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-blue-100" />Playoff</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-red-100" />Relegation</span>
+              </div>
             </div>
           </div>
 
@@ -5582,11 +5640,11 @@ export default function YouthAcademyPage(): JSX.Element {
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
                 <div className="font-medium text-slate-900">Continental West & East · 20 teams each</div>
-                <p className="mt-1 text-xs leading-5">Each group winner is promoted directly. Places 2–4 enter the six-team World promotion playoff; the best two are promoted.</p>
+                <p className="mt-1 text-xs leading-5">Each group champion is promoted directly. 2nd and 3rd from West and East enter a four-team playoff table; the best two are also promoted to World Class.</p>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
                 <div className="font-medium text-slate-900">Regional · unlimited</div>
-                <p className="mt-1 text-xs leading-5">Each Regional winner is promoted to its mapped Continental group. Continental groups are balanced back to exactly 20 teams.</p>
+                <p className="mt-1 text-xs leading-5">Only Regional champions are promoted. Four Regional divisions feed Continental West, so West relegates its bottom four. Two Regional divisions feed Continental East, so East relegates its bottom two. Regional AI depth is limited to 2–5 teams per division.</p>
               </div>
             </div>
             <p className="mt-3 text-xs leading-5 text-slate-500">
