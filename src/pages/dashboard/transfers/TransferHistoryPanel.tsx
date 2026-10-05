@@ -43,15 +43,12 @@ function resolveDisplayLocale(language: string | undefined): string {
 
 function formatCurrency(
   value: number | null | undefined,
-  locale: string
+  _locale: string
 ): string {
   if (value == null || Number.isNaN(value)) return '—'
-
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Math.round(Number(value)))
+  const amount = Math.round(Number(value))
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function formatHistoryGameDate(
