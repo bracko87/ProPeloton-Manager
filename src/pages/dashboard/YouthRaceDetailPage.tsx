@@ -27,7 +27,36 @@ type YouthRaceDetailPayload = {
     entries_count: number
     status: 'scheduled' | 'completed' | 'cancelled'
     results_published_at?: string | null
+    start_time_region_code?: string | null
+    planned_start_time_label?: string | null
   }
+  stages: Array<{
+    id: string
+    stage_number: number
+    stage_date: string
+    stage_type: string
+    distance_km: number
+    planned_start_time_label?: string | null
+    start_time_region_code?: string | null
+    sprint_points_total: number
+    mountain_points_total: number
+    time_trial_points_total: number
+    status: string
+    results: Array<{
+      position?: number | null
+      rider_id: string
+      rider_name: string
+      country_code: string
+      academy_id: string
+      academy_name: string
+      result_status: string
+      gap_seconds?: number | null
+      time_seconds?: number | null
+      sprint_points: number
+      mountain_points: number
+      time_trial_points: number
+    }>
+  }>
   my_entry: {
     id: string
     status: 'entered' | 'completed'
@@ -46,6 +75,7 @@ type YouthRaceDetailPayload = {
     is_mine: boolean
     team_position?: number | null
     prize_cash: number
+    logo_path?: string | null
   }>
   my_lineup: Array<{
     rider_id: string
@@ -73,7 +103,17 @@ type YouthRaceDetailPayload = {
     academy_name: string
     result_status: string
     gap_seconds?: number | null
+    general_points?: number
+    sprint_points?: number
+    mountain_points?: number
+    time_trial_points?: number
+    ranking_points?: number
   }>
+  classifications: {
+    sprint: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; points: number }>
+    mountain: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; points: number }>
+    time_trial: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; points: number }>
+  }
   team_results: Array<{
     team_position: number
     academy_id: string
@@ -177,6 +217,8 @@ export default function YouthRaceDetailPage(): JSX.Element {
     useState<'conservative' | 'balanced' | 'aggressive'>('balanced')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [selectedStageNumber, setSelectedStageNumber] = useState(1)
+  const [resultView, setResultView] = useState<'general' | 'sprint' | 'mountain' | 'time_trial'>('general')
   const [error, setError] = useState<string | null>(null)
 
   const load = async (): Promise<void> => {
@@ -193,6 +235,11 @@ export default function YouthRaceDetailPage(): JSX.Element {
       setPayload(next)
       setSelectedRiders((next.my_lineup ?? []).map(rider => rider.rider_id))
       setStrategy(next.my_entry?.strategy ?? 'balanced')
+      setSelectedStageNumber(current =>
+        (next.stages ?? []).some(stage => stage.stage_number === current)
+          ? current
+          : Number(next.stages?.[0]?.stage_number ?? 1)
+      )
     } catch (loadError: any) {
       console.error('Youth race detail load failed:', loadError)
       setError(
@@ -349,6 +396,11 @@ export default function YouthRaceDetailPage(): JSX.Element {
             <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${classBadge(race.competition_class)}`}>
               {classLabel(race.competition_class)}
             </span>
+            {race.planned_start_time_label ? (
+              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
+                {race.planned_start_time_label} · {humanize(race.start_time_region_code)}
+              </span>
+            ) : null}
             <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
               {race.entries_count} / {race.team_limit} teams
             </span>
@@ -391,6 +443,9 @@ export default function YouthRaceDetailPage(): JSX.Element {
                 ? `${shortDate(race.race_date)} – ${shortDate(race.race_end_date)}`
                 : shortDate(race.race_date)],
               ['Race length', raceDays === 1 ? '1 day' : `${raceDays} days`],
+              ['Start time', race.planned_start_time_label
+                ? `${race.planned_start_time_label} · ${humanize(race.start_time_region_code)}`
+                : '—'],
               ['Distance', `${race.distance_km} km${raceDays > 1 ? ' / stage' : ''}`],
               ['Teams', `${race.entries_count} / ${race.team_limit}`],
               ['Prize fund', money(race.prize_fund_cash)],
@@ -407,6 +462,44 @@ export default function YouthRaceDetailPage(): JSX.Element {
             The prize fund is paid to the best Youth Academy teams after the race.
             Up to five teams receive prize money, with the winner receiving the largest share.
           </p>
+
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-slate-900">Stages</h3>
+              <span className="text-xs text-slate-500">{payload.stages.length} stage{payload.stages.length === 1 ? '' : 's'}</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {payload.stages.map(stage => (
+                <button
+                  key={stage.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedStageNumber(stage.stage_number)
+                    if (stage.status === 'completed') setTab('results')
+                  }}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-slate-300 hover:bg-white"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        Stage {stage.stage_number} · {shortDate(stage.stage_date)}
+                      </div>
+                      <div className="mt-1 text-base font-semibold text-slate-900">{humanize(stage.stage_type)}</div>
+                    </div>
+                    <span className="rounded-full bg-white px-2 py-1 text-[11px] font-medium text-slate-600">
+                      {stage.planned_start_time_label ?? '—'}
+                    </span>
+                  </div>
+                  <div className="mt-3 text-sm text-slate-600">{stage.distance_km} km</div>
+                  <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
+                    {stage.sprint_points_total > 0 ? <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">Sprint {stage.sprint_points_total}</span> : null}
+                    {stage.mountain_points_total > 0 ? <span className="rounded-full bg-orange-50 px-2 py-1 text-orange-700">Mountain {stage.mountain_points_total}</span> : null}
+                    {stage.time_trial_points_total > 0 ? <span className="rounded-full bg-violet-50 px-2 py-1 text-violet-700">TT {stage.time_trial_points_total}</span> : null}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         </Section>
       ) : null}
 
@@ -564,63 +657,141 @@ export default function YouthRaceDetailPage(): JSX.Element {
 
       {tab === 'results' ? (
         <div className="space-y-4">
-          {!isFinished ? (
-            <Section title="Results">
-              <p className="text-sm text-slate-500">
-                Results will be published here when the race is finished.
-              </p>
-            </Section>
-          ) : (
-            <>
-              <Section title="Team classification & prize money">
-                <div className="space-y-2">
-                  {payload.team_results.map(team => {
-                    const flag = flagUrl(team.country_code)
-                    return (
-                      <div
-                        key={team.academy_id}
-                        className={`grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-                          team.is_mine ? 'bg-yellow-50' : 'bg-slate-50'
-                        }`}
-                      >
-                        <strong>#{team.team_position}</strong>
-                        <span className="flex min-w-0 items-center gap-2">
-                          {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
-                          <span className="truncate">{team.academy_name}</span>
-                        </span>
-                        <span className="font-medium text-emerald-700">
-                          {team.prize_cash > 0 ? money(team.prize_cash) : '—'}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </Section>
+          <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+            {([
+              ['general', 'General'],
+              ['sprint', 'Sprint'],
+              ['mountain', 'Mountain'],
+              ['time_trial', 'Time Trial'],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setResultView(key)}
+                className={`rounded-lg px-3 py-2 text-sm font-medium ${
+                  resultView === key ? 'bg-yellow-400 text-black' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
 
-              <Section title="Rider results">
-                <div className="space-y-1.5">
-                  {payload.rider_results.map((result, index) => {
-                    const flag = flagUrl(result.country_code)
-                    return (
-                      <div
-                        key={`${result.rider_id}:${index}`}
-                        className="grid grid-cols-[48px_minmax(0,1fr)_minmax(120px,220px)] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm"
-                      >
-                        <strong>{result.position ? `#${result.position}` : result.result_status.toUpperCase()}</strong>
-                        <span className="flex min-w-0 items-center gap-2">
-                          {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
-                          <span className="truncate">{result.rider_name}</span>
-                        </span>
-                        <span className="truncate text-xs text-slate-500">
-                          {result.academy_name}
-                        </span>
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+            <Section title={
+              resultView === 'general'
+                ? 'General classification'
+                : resultView === 'sprint'
+                  ? 'Sprint classification'
+                  : resultView === 'mountain'
+                    ? 'Mountain classification'
+                    : 'Time Trial classification'
+            }>
+              {resultView === 'general' ? (
+                payload.rider_results.length === 0 ? (
+                  <p className="text-sm text-slate-500">General classification will appear as stages are completed.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {payload.rider_results.map((result, index) => {
+                      const flag = flagUrl(result.country_code)
+                      return (
+                        <div key={`${result.rider_id}:${index}`} className="grid grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                          <strong>{result.position ? `#${result.position}` : result.result_status.toUpperCase()}</strong>
+                          <span className="flex min-w-0 items-center gap-2">
+                            {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
+                            <span className="truncate">{result.rider_name}</span>
+                          </span>
+                          <span className="text-xs font-medium text-slate-600">{Number(result.ranking_points ?? 0)} pts</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              ) : (
+                (() => {
+                  const rows = payload.classifications?.[resultView] ?? []
+                  return rows.length === 0 ? (
+                    <p className="text-sm text-slate-500">No points are available for this classification in this race.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {rows.map((row, index) => (
+                        <div key={row.rider_id} className="grid grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                          <strong>#{index + 1}</strong>
+                          <span>{row.rider_name}</span>
+                          <span className="font-medium">{row.points} pts</span>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()
+              )}
+            </Section>
+
+            <Section
+              title="Stage results"
+              right={
+                <select
+                  value={selectedStageNumber}
+                  onChange={event => setSelectedStageNumber(Number(event.target.value))}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs"
+                >
+                  {payload.stages.map(stage => (
+                    <option key={stage.id} value={stage.stage_number}>
+                      Stage {stage.stage_number} · {shortDate(stage.stage_date)} · {humanize(stage.stage_type)}
+                    </option>
+                  ))}
+                </select>
+              }
+            >
+              {(() => {
+                const stage = payload.stages.find(item => item.stage_number === selectedStageNumber)
+                if (!stage) return <p className="text-sm text-slate-500">No stage selected.</p>
+                if (stage.status !== 'completed' || stage.results.length === 0) {
+                  return (
+                    <div>
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Date</div><div className="mt-1 text-sm font-medium">{shortDate(stage.stage_date)}</div></div>
+                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Type</div><div className="mt-1 text-sm font-medium">{humanize(stage.stage_type)}</div></div>
+                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Distance / start</div><div className="mt-1 text-sm font-medium">{stage.distance_km} km · {stage.planned_start_time_label ?? '—'}</div></div>
                       </div>
-                    )
-                  })}
-                </div>
-              </Section>
-            </>
-          )}
+                      <p className="mt-4 text-sm text-slate-500">Stage results will appear after this stage is completed.</p>
+                    </div>
+                  )
+                }
+                return (
+                  <div className="space-y-1.5">
+                    {stage.results.map((result, index) => (
+                      <div key={`${result.rider_id}:${index}`} className="grid grid-cols-[46px_minmax(0,1fr)_minmax(90px,150px)] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                        <strong>{result.position ? `#${result.position}` : result.result_status.toUpperCase()}</strong>
+                        <span className="truncate">{result.rider_name}</span>
+                        <span className="truncate text-right text-xs text-slate-500">{result.academy_name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+            </Section>
+          </div>
+
+          {isFinished ? (
+            <Section title="Team classification & prize money">
+              <div className="space-y-2">
+                {payload.team_results.map(team => {
+                  const flag = flagUrl(team.country_code)
+                  return (
+                    <div key={team.academy_id} className={`grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-sm ${team.is_mine ? 'bg-yellow-50' : 'bg-slate-50'}`}>
+                      <strong>#{team.team_position}</strong>
+                      <span className="flex min-w-0 items-center gap-2">
+                        {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
+                        <span className="truncate">{team.academy_name}</span>
+                      </span>
+                      <span className="font-medium text-emerald-700">{team.prize_cash > 0 ? money(team.prize_cash) : '—'}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </Section>
+          ) : null}
         </div>
       ) : null}
     </div>
