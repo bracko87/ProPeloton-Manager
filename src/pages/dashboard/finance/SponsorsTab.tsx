@@ -203,7 +203,7 @@ function toNumber(v: unknown): number {
 function formatMoney(n: number, _currency: 'USD' | 'EUR' = 'USD'): string {
   const amount = Math.round(Number(n) || 0)
   const sign = amount < 0 ? '-' : ''
-  return sign + '
+  return sign + String.fromCharCode(36) + Math.abs(amount).toLocaleString('en-US')
 }
 
 function formatCashAmount(value: number | null | undefined): string {
