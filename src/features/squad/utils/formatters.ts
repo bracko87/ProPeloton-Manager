@@ -50,7 +50,9 @@ export function getFlagImageUrl(countryCode?: string) {
  */
 export function formatMoney(n?: number | null) {
   if (n == null) return '—'
-  return `$${new Intl.NumberFormat(getActiveFormattingLocale()).format(n)}`
+  const amount = Math.round(Number(n))
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 /**
@@ -78,11 +80,7 @@ export function getSeasonWage(weeklySalary?: number | null) {
 export function formatSalary(value?: number | null) {
   if (value === null || value === undefined) return '—'
 
-  const amount = new Intl.NumberFormat(getActiveFormattingLocale(), {
-    maximumFractionDigits: 0,
-  }).format(value)
-
-  return `$${amount}${i18n.t('riderProfile:common.week')}`
+  return `${formatMoney(value)}${i18n.t('riderProfile:common.week')}`
 }
 
 /**
