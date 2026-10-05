@@ -62,11 +62,9 @@ function resolvePremiumStatus(data: unknown): boolean {
 }
 
 function formatCurrency(value: number): string {
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number.isFinite(value) ? value : 0)
+  const amount = Math.round(Number.isFinite(value) ? value : 0)
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function formatNumber(value: number | null | undefined): string {
