@@ -1040,7 +1040,9 @@ function formatStaffAge(ageYears: number | null) {
 }
 
 function formatCurrency(value: number) {
-  return `$${value.toLocaleString('de-DE')}`
+  const amount = Math.round(Number(value) || 0)
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function getStaffReleaseCost(salaryWeekly: number) {
