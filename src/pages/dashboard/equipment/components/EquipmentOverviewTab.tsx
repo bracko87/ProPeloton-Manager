@@ -74,7 +74,7 @@ function toNumber(value: unknown): number {
 function formatMoney(value: unknown, _locale: string): string {
   const amount = Math.round(toNumber(value))
   const sign = amount < 0 ? '-' : ''
-  return sign + '
+  return sign + String.fromCharCode(36) + Math.abs(amount).toLocaleString('en-US')
 }
 
 function getEquipmentCategoryTranslationKey(category: string): string | null {
