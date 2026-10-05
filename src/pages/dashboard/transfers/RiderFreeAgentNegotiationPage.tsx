@@ -350,7 +350,9 @@ function normalizeMoneyInput(raw: string): number | null {
 
 function formatMoney(value?: number | null): string {
   if (value == null || !Number.isFinite(value)) return '—'
-  return `$${Math.round(value).toLocaleString()}`
+  const amount = Math.round(value)
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function calculateMinimumSigningBonus(marketValue?: number | null): number {
