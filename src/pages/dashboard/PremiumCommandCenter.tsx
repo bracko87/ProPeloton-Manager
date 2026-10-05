@@ -298,12 +298,10 @@ function parseStoredMainClubId(): string | null {
 }
 
 function formatCurrency(value: number | null | undefined): string {
-  const amount = Number(value ?? 0)
-  return new Intl.NumberFormat(appI18n.resolvedLanguage || appI18n.language || undefined, {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number.isFinite(amount) ? amount : 0)
+  const numeric = Number(value ?? 0)
+  const amount = Math.round(Number.isFinite(numeric) ? numeric : 0)
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function formatNumber(value: number | null | undefined): string {
