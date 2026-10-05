@@ -52,7 +52,7 @@ export function formatMoney(n?: number | null) {
   if (n == null) return '—'
   const amount = Math.round(Number(n))
   const sign = amount < 0 ? '-' : ''
-  return sign + '
+  return sign + String.fromCharCode(36) + Math.abs(amount).toLocaleString('en-US')
 }
 
 /**
