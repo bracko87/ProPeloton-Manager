@@ -83,6 +83,7 @@ type ScoutingReport = {
   status: 'new' | 'shortlisted' | 'approached' | 'signed' | 'expired'
   discovered_on: string
   expires_on: string
+  visible_until?: string
   latest_offer?: RecruitmentOfferSummary | null
 }
 
@@ -93,6 +94,7 @@ type ScoutingPayload = {
   game_date?: string
   cycle_month?: string
   cycle_week?: string
+  next_reset_on?: string
   weekly_runs_used?: number
   weekly_run_limit?: number
   free_runs_remaining?: number
@@ -209,11 +211,61 @@ type YouthEquipmentInventoryItem = {
   purchased_on: string
 }
 
+type YouthAssetCatalogItem = {
+  asset_key: 'team_car' | 'team_bus'
+  asset_level: number
+  asset_name: string
+  cost: number
+  delivery_game_days: number
+  support_value: number
+  max_total_quantity: number
+}
+
+type YouthAssetItem = {
+  id: string
+  asset_key: 'team_car' | 'team_bus'
+  asset_level: number
+  asset_name: string
+  quantity: number
+  condition_percent: number
+  purchase_cost_total: number
+  purchased_on: string
+}
+
+type YouthRaceSupplyItem = {
+  id: string
+  catalog_item_id: string
+  supply_key: string
+  display_name: string
+  quantity_available: number
+  total_purchased: number
+  total_used: number
+  unit_price: number
+  last_purchased_game_date?: string | null
+  metadata?: Record<string, unknown>
+}
+
 type YouthEquipmentPayload = {
   activated: boolean
   equipment_decider?: 'manager' | 'academy_director'
+  temporary_cover?: {
+    cover_staff_id: string
+    cover_staff_name: string
+    cover_staff_role: string
+    quality_penalty_percent: number
+  } | null
   catalog?: YouthEquipmentCatalogItem[]
   inventory?: YouthEquipmentInventoryItem[]
+  asset_catalog?: YouthAssetCatalogItem[]
+  assets?: YouthAssetItem[]
+  race_supply_catalog?: Array<{
+    id: string
+    display_name: string
+    supply_key: string
+    price: number
+    metadata?: Record<string, unknown>
+  }>
+  race_supplies?: YouthRaceSupplyItem[]
 }
 
 type YouthGraduation = {
@@ -349,7 +401,7 @@ type YouthRaceMonthPayload = {
   races?: YouthRace[]
 }
 
-type YouthEquipmentInnerTab = 'overview' | 'inventory' | 'market' | 'assets'
+type YouthEquipmentInnerTab = 'overview' | 'inventory' | 'market' | 'assets' | 'race-supplies'
 
 type YouthRankingRow = {
   rank: number
@@ -471,6 +523,18 @@ type YouthHistoryPayload = {
   }>
 }
 
+type YouthTemporaryCover = {
+  id: string
+  responsibility: string
+  original_role: string
+  cover_staff_id: string
+  cover_staff_name: string
+  cover_staff_role: string
+  quality_penalty_percent: number
+  effective_quality_percent: number
+  assigned_on: string
+}
+
 type AcademySettings = {
   recruitment_decider: 'manager' | 'academy_director'
   race_entry_decider: 'manager' | 'u16_head_coach'
@@ -558,6 +622,32 @@ function contractSeason(value: string | null | undefined): string {
   if (!value) return '—'
   const year = Number(String(value).slice(0, 4))
   return Number.isFinite(year) && year >= 2000 ? `Season ${year - 1999}` : '—'
+}
+
+function gameDateLabel(value: string | null | undefined): string {
+  if (!value) return '—'
+  const safe = String(value)
+  const date = new Date(`${safe.slice(0, 10)}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return safe
+  const season = Math.max(1, date.getUTCFullYear() - 1999)
+  const dayMonth = new Intl.DateTimeFormat(undefined, {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(date)
+  return `Season ${season} · ${dayMonth}`
+}
+
+function shortGameDate(value: string | null | undefined): string {
+  if (!value) return '—'
+  const safe = String(value)
+  const date = new Date(`${safe.slice(0, 10)}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return safe
+  return new Intl.DateTimeFormat(undefined, {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(date)
 }
 
 function youthStaffScore(member: AcademyStaff): number {
@@ -651,6 +741,9 @@ export default function YouthAcademyPage(): JSX.Element {
   const [budgetTransferLoading, setBudgetTransferLoading] = useState(false)
   const [equipmentData, setEquipmentData] = useState<YouthEquipmentPayload | null>(null)
   const [equipmentInnerTab, setEquipmentInnerTab] = useState<YouthEquipmentInnerTab>('overview')
+  const [raceSupplyQuantities, setRaceSupplyQuantities] = useState<Record<string, number>>({})
+  const [temporaryCovers, setTemporaryCovers] = useState<YouthTemporaryCover[]>([])
+  const [temporaryCoverAction, setTemporaryCoverAction] = useState<string | null>(null)
   const [phase2Loading, setPhase2Loading] = useState(false)
   const [equipmentAction, setEquipmentAction] = useState<string | null>(null)
   const [graduations, setGraduations] = useState<YouthGraduation[]>([])
@@ -668,6 +761,7 @@ export default function YouthAcademyPage(): JSX.Element {
   const [monthlyPlanDraft, setMonthlyPlanDraft] = useState<YouthMonthlyRacePlan | null>(null)
   const [phase3Loading, setPhase3Loading] = useState(false)
   const [raceAction, setRaceAction] = useState<string | null>(null)
+  const [calendarExpandedRaceId, setCalendarExpandedRaceId] = useState<string | null>(null)
   const [lineupDrafts, setLineupDrafts] = useState<Record<string, string[]>>({})
   const [raceStrategies, setRaceStrategies] = useState<
     Record<string, 'conservative' | 'balanced' | 'aggressive'>
@@ -903,6 +997,90 @@ export default function YouthAcademyPage(): JSX.Element {
       setError(purchaseError?.message ?? t('errors.equipmentPurchase'))
     } finally {
       setEquipmentAction(null)
+    }
+  }
+
+  const purchaseYouthAsset = async (
+    asset: YouthAssetCatalogItem
+  ): Promise<void> => {
+    if (data?.read_only || equipmentAction) return
+    const actionKey = `asset:${asset.asset_key}:${asset.asset_level}`
+    setEquipmentAction(actionKey)
+    setError(null)
+    try {
+      const { data: payload, error: purchaseError } = await supabase.rpc(
+        'purchase_my_youth_academy_asset_v1',
+        {
+          p_asset_key: asset.asset_key,
+          p_asset_level: asset.asset_level,
+        }
+      )
+      if (purchaseError) throw purchaseError
+      setEquipmentData(payload as YouthEquipmentPayload)
+      await loadFinance()
+      await load()
+    } catch (purchaseError: any) {
+      console.error('Youth Academy asset purchase failed:', purchaseError)
+      setError(purchaseError?.message ?? t('errors.equipmentPurchase'))
+    } finally {
+      setEquipmentAction(null)
+    }
+  }
+
+  const purchaseYouthRaceSupply = async (
+    item: YouthRaceSupplyItem
+  ): Promise<void> => {
+    if (data?.read_only || equipmentAction) return
+    const actionKey = `supply:${item.catalog_item_id}`
+    setEquipmentAction(actionKey)
+    setError(null)
+    try {
+      const quantity = Math.max(
+        1,
+        Math.min(100, Math.round(raceSupplyQuantities[item.catalog_item_id] ?? 10))
+      )
+      const { data: payload, error: purchaseError } = await supabase.rpc(
+        'purchase_my_youth_academy_race_supply_v1',
+        {
+          p_catalog_item_id: item.catalog_item_id,
+          p_quantity: quantity,
+        }
+      )
+      if (purchaseError) throw purchaseError
+      setEquipmentData(payload as YouthEquipmentPayload)
+      await loadFinance()
+      await load()
+    } catch (purchaseError: any) {
+      console.error('Youth Academy race-supply purchase failed:', purchaseError)
+      setError(purchaseError?.message ?? t('errors.equipmentPurchase'))
+    } finally {
+      setEquipmentAction(null)
+    }
+  }
+
+  const setTemporaryCover = async (
+    responsibility: string,
+    staffId: string | null
+  ): Promise<void> => {
+    if (data?.read_only || temporaryCoverAction) return
+    setTemporaryCoverAction(responsibility)
+    setError(null)
+    try {
+      const { data: payload, error: coverError } = await supabase.rpc(
+        'set_my_youth_temporary_cover_v1',
+        {
+          p_responsibility: responsibility,
+          p_staff_id: staffId,
+        }
+      )
+      if (coverError) throw coverError
+      setTemporaryCovers((payload ?? []) as YouthTemporaryCover[])
+      await Promise.all([load(), loadEquipment(), loadRaceCalendar()])
+    } catch (coverError: any) {
+      console.error('Youth temporary responsibility cover failed:', coverError)
+      setError(coverError?.message ?? t('errors.save'))
+    } finally {
+      setTemporaryCoverAction(null)
     }
   }
 
@@ -1203,12 +1381,15 @@ export default function YouthAcademyPage(): JSX.Element {
     setLoading(true)
     setError(null)
     try {
-      const { data: payload, error: loadError } = await supabase.rpc(
-        'get_my_youth_academy_v1'
-      )
-      if (loadError) throw loadError
-      const next = payload as AcademyPayload
+      const [academyResult, coverResult] = await Promise.all([
+        supabase.rpc('get_my_youth_academy_v1'),
+        supabase.rpc('get_my_youth_temporary_covers_v1'),
+      ])
+      if (academyResult.error) throw academyResult.error
+      if (coverResult.error) throw coverResult.error
+      const next = academyResult.data as AcademyPayload
       setData(next)
+      setTemporaryCovers((coverResult.data ?? []) as YouthTemporaryCover[])
       setActivationBudget(Number(next.default_season_budget ?? 100000))
       setDraftRange(next.budget?.scouting_range ?? 'local')
       setDraftSettings(next.settings)
