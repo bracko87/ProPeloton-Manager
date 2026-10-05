@@ -47,11 +47,9 @@ type YouthRiderProfilePayload = {
 }
 
 function money(value: number | null | undefined): string {
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-  }).format(Number(value ?? 0))
+  const amount = Math.round(Number(value ?? 0))
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function humanize(value: string | null | undefined): string {
