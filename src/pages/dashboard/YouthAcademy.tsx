@@ -658,11 +658,9 @@ type TabKey =
   | 'history'
 
 function money(value: number | null | undefined): string {
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number(value ?? 0))
+  const amount = Math.round(Number(value ?? 0))
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function humanize(value: string | null | undefined): string {
@@ -5056,23 +5054,6 @@ export default function YouthAcademyPage(): JSX.Element {
                           <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${competitionClassBadgeClass(race.competition_class)}`}>
                             {competitionClassLabel(race.competition_class)}
                           </span>
-                          {isParticipating ? (
-                            <>
-                              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
-                                {t('calendar.teamCountCompact', {
-                                  current: Number(race.entries_count ?? 0),
-                                  max: Number(race.team_limit ?? 16),
-                                  defaultValue: '{{current}} / {{max}} teams',
-                                })}
-                              </span>
-                              <span className="rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-800">
-                                {t('calendar.prizeFundCompact', {
-                                  value: money(race.prize_fund_cash),
-                                  defaultValue: 'Prize fund {{value}}',
-                                })}
-                              </span>
-                            </>
-                          ) : null}
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                             {formatLabel}
                           </span>
@@ -5093,36 +5074,16 @@ export default function YouthAcademyPage(): JSX.Element {
                           !isParticipating &&
                           isManagerEntry &&
                           race.qualified ? (
-                            <>
-                              <select
-                                value={raceStrategies[race.id] ?? 'balanced'}
-                                onChange={event =>
-                                  setRaceStrategies(current => ({
-                                    ...current,
-                                    [race.id]: event.target.value as
-                                      | 'conservative'
-                                      | 'balanced'
-                                      | 'aggressive',
-                                  }))
-                                }
-                                className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700"
-                                aria-label={t('calendar.strategy')}
-                              >
-                                <option value="conservative">{t('calendar.strategies.conservative')}</option>
-                                <option value="balanced">{t('calendar.strategies.balanced')}</option>
-                                <option value="aggressive">{t('calendar.strategies.aggressive')}</option>
-                              </select>
-                              <button
-                                type="button"
-                                disabled={data.read_only || raceAction !== null}
-                                onClick={() => void enterYouthRace(race)}
-                                className="rounded-full bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-yellow-300 disabled:opacity-50"
-                              >
-                                {raceAction === race.id
-                                  ? t('calendar.entering')
-                                  : t('calendar.applyRace', { defaultValue: 'Apply for Race' })}
-                              </button>
-                            </>
+                            <button
+                              type="button"
+                              disabled={data.read_only || raceAction !== null}
+                              onClick={() => void enterYouthRace(race)}
+                              className="rounded-full bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-yellow-300 disabled:opacity-50"
+                            >
+                              {raceAction === race.id
+                                ? t('calendar.entering')
+                                : t('calendar.applyRace', { defaultValue: 'Apply for Race' })}
+                            </button>
                           ) : null}
                           <button
                             type="button"
@@ -5161,6 +5122,13 @@ export default function YouthAcademyPage(): JSX.Element {
                             {t('calendar.teams', {
                               current: Number(race.entries_count ?? 0),
                               max: Number(race.team_limit ?? 16),
+                            })}
+                          </span>
+                          <span>·</span>
+                          <span>
+                            {t('calendar.prizeFundCompact', {
+                              value: money(race.prize_fund_cash),
+                              defaultValue: 'Prize fund {{value}}',
                             })}
                           </span>
                           <span>·</span>
