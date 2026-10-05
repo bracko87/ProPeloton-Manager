@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Crown, GraduationCap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -382,6 +382,7 @@ type YouthRace = {
   terrain_type: string
   distance_km: number
   entry_cost: number
+  prize_fund_cash?: number
   lineup_size: number
   team_limit?: number
   entries_count?: number
@@ -737,6 +738,22 @@ function flagUrl(code: string | null | undefined): string | null {
   return /^[a-z]{2}$/.test(safe) ? `https://flagcdn.com/w40/${safe}.png` : null
 }
 
+function competitionClassBadgeClass(value: YouthCompetitionClass): string {
+  if (value === 'world') {
+    return 'border-violet-200 bg-violet-50 text-violet-700'
+  }
+  if (value === 'continental') {
+    return 'border-orange-200 bg-orange-50 text-orange-700'
+  }
+  return 'border-sky-200 bg-sky-50 text-sky-700'
+}
+
+function competitionClassAccentClass(value: YouthCompetitionClass): string {
+  if (value === 'world') return 'bg-violet-500'
+  if (value === 'continental') return 'bg-orange-500'
+  return 'bg-sky-500'
+}
+
 function Card({
   title,
   children,
@@ -760,6 +777,7 @@ function Card({
 export default function YouthAcademyPage(): JSX.Element {
   const { t } = useTranslation('youthAcademy')
   const location = useLocation()
+  const navigate = useNavigate()
   const [data, setData] = useState<AcademyPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -1478,7 +1496,7 @@ export default function YouthAcademyPage(): JSX.Element {
     const requestedTab = new URLSearchParams(location.search).get('tab') as TabKey | null
     if (requestedTab && [
       'overview','riders','staff','budget','scouting','settings',
-      'calendar','rankings','equipment','history',
+      'calendar','rankings','history',
     ].includes(requestedTab)) {
       setTab(requestedTab)
     }
@@ -1497,10 +1515,6 @@ export default function YouthAcademyPage(): JSX.Element {
     }
     if (tab === 'riders' && data?.activated) {
       void loadGraduations()
-    }
-    if (tab === 'equipment' && data?.activated) {
-      void loadEquipment()
-      void loadFinance()
     }
     if (tab === 'calendar' && data?.activated) {
       void loadRaceCalendar()
@@ -1565,7 +1579,7 @@ export default function YouthAcademyPage(): JSX.Element {
           p_race_entry_decider: draftSettings.race_entry_decider,
           p_race_squad_decider: draftSettings.race_squad_decider,
           p_camp_decider: draftSettings.camp_decider,
-          p_equipment_decider: draftSettings.equipment_decider,
+          p_equipment_decider: 'manager',
           p_recruitment_negotiation_decider:
             draftSettings.recruitment_negotiation_decider,
           p_training_decider: draftSettings.training_decider ?? 'manager',
@@ -1628,7 +1642,7 @@ export default function YouthAcademyPage(): JSX.Element {
           p_race_entry_decider: draftSettings.race_entry_decider,
           p_race_squad_decider: draftSettings.race_squad_decider,
           p_camp_decider: draftSettings.camp_decider,
-          p_equipment_decider: draftSettings.equipment_decider,
+          p_equipment_decider: 'manager',
           p_recruitment_negotiation_decider: draftSettings.recruitment_negotiation_decider,
           p_training_decider: draftSettings.training_decider ?? 'manager',
           p_scouting_range: draftRange,
@@ -1836,7 +1850,6 @@ export default function YouthAcademyPage(): JSX.Element {
     'settings',
     'calendar',
     'rankings',
-    'equipment',
     'history',
   ]
 
@@ -2572,8 +2585,13 @@ export default function YouthAcademyPage(): JSX.Element {
                 {money(financeData?.weekly_staff_salary)}/{t('week')}
               </div>
             </Card>
-            <Card title={t('budget.equipmentSpend')}>
-              <div className="text-2xl font-semibold">{money(financeData?.equipment_spend)}</div>
+            <Card title={t('budget.racePrizeIncome', { defaultValue: 'Race prize income' })}>
+              <div className="text-2xl font-semibold">{money(financeData?.race_income)}</div>
+              <p className="mt-2 text-xs text-slate-500">
+                {t('budget.racePrizeIncomeHelp', {
+                  defaultValue: 'Prize money earned by the Youth Academy from race team classifications.',
+                })}
+              </p>
             </Card>
             <Card title={t('budget.scoutingAllocation')}>
               <div className="text-2xl font-semibold">{money(currentProgram?.season_cost)}</div>
@@ -3380,15 +3398,6 @@ export default function YouthAcademyPage(): JSX.Element {
                 description: t('settings.campsHelp', {
                   defaultValue:
                     'Approves Youth Academy camps and the related use of Academy funds when camp opportunities are available.',
-                }),
-                options: ['manager', 'academy_director'],
-              },
-              {
-                key: 'equipment_decider',
-                label: t('settings.equipment'),
-                description: t('settings.equipmentHelp', {
-                  defaultValue:
-                    'Controls Youth equipment purchasing. The Academy Director can automatically fill missing equipment within the available Academy budget.',
                 }),
                 options: ['manager', 'academy_director'],
               },
@@ -4932,6 +4941,8 @@ export default function YouthAcademyPage(): JSX.Element {
                 const isManagerSquad =
                   raceCalendar?.race_squad_decider === 'manager' && !hasRaceSquadCover
                 const isEntered = race.entry_status === 'entered'
+                const isParticipating =
+                  race.entry_status === 'entered' || race.entry_status === 'completed'
                 const currentGameDate = String(raceCalendar?.game_date ?? '').slice(0, 10)
                 const raceStartDate = String(race.race_date ?? '').slice(0, 10)
                 const raceEndDate = String(race.race_end_date ?? race.race_date ?? '').slice(0, 10)
@@ -4966,7 +4977,9 @@ export default function YouthAcademyPage(): JSX.Element {
                 return (
                   <div
                     key={race.id}
-                    className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                    className={`overflow-hidden rounded-xl border border-slate-200 shadow-sm ${
+                      isParticipating ? 'bg-white' : 'bg-slate-50/70'
+                    }`}
                   >
                     <div className="flex flex-col lg:flex-row lg:items-stretch">
                       <div className="flex min-w-[92px] items-center justify-center gap-2 border-b border-slate-100 px-4 py-4 text-center lg:flex-col lg:border-b-0">
@@ -4974,13 +4987,13 @@ export default function YouthAcademyPage(): JSX.Element {
                           {shortGameDate(race.race_date)}
                         </span>
                         {race.race_end_date && race.race_end_date !== race.race_date ? (
-                          <span className="text-xs font-medium text-slate-600">
+                          <span className="text-sm font-semibold text-slate-950">
                             {shortGameDate(race.race_end_date)}
                           </span>
                         ) : null}
                       </div>
 
-                      <div className="mx-4 my-3 hidden w-0.5 shrink-0 bg-emerald-400 lg:block" />
+                      <div className={`mx-4 my-3 hidden w-0.5 shrink-0 lg:block ${competitionClassAccentClass(race.competition_class)}`} />
 
                       <div className="flex min-w-0 flex-1 flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between lg:pl-0">
                         <div className="min-w-0">
@@ -5013,8 +5026,21 @@ export default function YouthAcademyPage(): JSX.Element {
                           }`}>
                             {statusLabel}
                           </span>
-                          <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">
+                          <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${competitionClassBadgeClass(race.competition_class)}`}>
                             {competitionClassLabel(race.competition_class)}
+                          </span>
+                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
+                            {t('calendar.teamCountCompact', {
+                              current: Number(race.entries_count ?? 0),
+                              max: Number(race.team_limit ?? 16),
+                              defaultValue: '{{current}} / {{max}} teams',
+                            })}
+                          </span>
+                          <span className="rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-800">
+                            {t('calendar.prizeFundCompact', {
+                              value: money(race.prize_fund_cash),
+                              defaultValue: 'Prize fund {{value}}',
+                            })}
                           </span>
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                             {formatLabel}
@@ -5032,18 +5058,64 @@ export default function YouthAcademyPage(): JSX.Element {
                               })}
                             </span>
                           ) : null}
+                          {isScheduled &&
+                          !isParticipating &&
+                          isManagerEntry &&
+                          race.qualified ? (
+                            <>
+                              <select
+                                value={raceStrategies[race.id] ?? 'balanced'}
+                                onChange={event =>
+                                  setRaceStrategies(current => ({
+                                    ...current,
+                                    [race.id]: event.target.value as
+                                      | 'conservative'
+                                      | 'balanced'
+                                      | 'aggressive',
+                                  }))
+                                }
+                                className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700"
+                                aria-label={t('calendar.strategy')}
+                              >
+                                <option value="conservative">{t('calendar.strategies.conservative')}</option>
+                                <option value="balanced">{t('calendar.strategies.balanced')}</option>
+                                <option value="aggressive">{t('calendar.strategies.aggressive')}</option>
+                              </select>
+                              <button
+                                type="button"
+                                disabled={data.read_only || raceAction !== null}
+                                onClick={() => void enterYouthRace(race)}
+                                className="rounded-full bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-yellow-300 disabled:opacity-50"
+                              >
+                                {raceAction === race.id
+                                  ? t('calendar.entering')
+                                  : t('calendar.enterRace')}
+                              </button>
+                            </>
+                          ) : null}
                           <button
                             type="button"
+                            disabled={!isParticipating}
                             onClick={() =>
-                              setCalendarExpandedRaceId(current =>
-                                current === race.id ? null : race.id
-                              )
+                              isParticipating
+                                ? navigate(`/dashboard/youth-academy/races/${race.id}`)
+                                : undefined
                             }
-                            className="rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+                            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                              isParticipating
+                                ? 'bg-slate-950 text-white hover:bg-slate-800'
+                                : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
+                            }`}
+                            title={
+                              isParticipating
+                                ? t('calendar.openRace', { defaultValue: 'Open Race' })
+                                : t('calendar.openRaceParticipatingOnly', {
+                                    defaultValue:
+                                      'Race page is available only when your Youth Academy participates.',
+                                  })
+                            }
                           >
-                            {isExpanded
-                              ? t('calendar.closeRace', { defaultValue: 'Close Race' })
-                              : t('calendar.openRace', { defaultValue: 'Open Race' })}
+                            {t('calendar.openRace', { defaultValue: 'Open Race' })}
                           </button>
                         </div>
                       </div>
