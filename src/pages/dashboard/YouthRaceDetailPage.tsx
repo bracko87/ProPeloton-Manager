@@ -531,7 +531,9 @@ export default function YouthRaceDetailPage(): JSX.Element {
                   </div>
                   <div className="mt-3 text-sm text-slate-600">
                     {stage.start_city && stage.finish_city
-                      ? `${stage.start_city} → ${stage.finish_city}`
+                      ? stage.start_city === stage.finish_city
+                        ? `${stage.start_city} circuit`
+                        : `${stage.start_city} → ${stage.finish_city}`
                       : race.host_city ?? 'Route TBC'}
                   </div>
                   <div className="mt-1 text-sm text-slate-600">{stage.distance_km} km</div>
@@ -795,7 +797,11 @@ export default function YouthRaceDetailPage(): JSX.Element {
                       <div className="grid gap-2 sm:grid-cols-3">
                         <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Date</div><div className="mt-1 text-sm font-medium">{shortDate(stage.stage_date)}</div></div>
                         <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Type</div><div className="mt-1 text-sm font-medium">{humanize(stage.stage_type)}</div></div>
-                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Route</div><div className="mt-1 text-sm font-medium">{stage.start_city && stage.finish_city ? `${stage.start_city} → ${stage.finish_city}` : race.host_city ?? '—'}</div></div>
+                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Route</div><div className="mt-1 text-sm font-medium">{stage.start_city && stage.finish_city
+                          ? stage.start_city === stage.finish_city
+                            ? `${stage.start_city} circuit`
+                            : `${stage.start_city} → ${stage.finish_city}`
+                          : race.host_city ?? '—'}</div></div>
                         <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Distance / start</div><div className="mt-1 text-sm font-medium">{stage.distance_km} km · {stage.planned_start_time_label ?? '—'}</div></div>
                       </div>
                       <p className="mt-4 text-sm text-slate-500">Stage results will appear after this stage is completed.</p>
