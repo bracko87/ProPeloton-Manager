@@ -2339,13 +2339,13 @@ export default function ExternalRiderProfilePage({
   function formatTransferAmount(value: number | null | undefined) {
     if (value == null || Number.isNaN(value)) return "—";
     const roundedToThousand = Math.round(Number(value) / 1000) * 1000;
-    return `$${roundedToThousand.toLocaleString(locale)}`;
+    return `${roundedToThousand.toLocaleString('en-US')}`;
   }
 
   function formatCurrencyInput(value: string) {
     const digits = value.replace(/[^\d]/g, "");
     if (!digits) return "";
-    return `$${Number(digits).toLocaleString(locale)}`;
+    return `${Number(digits).toLocaleString('en-US')}`;
   }
 
   function parseCurrencyInput(value: string) {
