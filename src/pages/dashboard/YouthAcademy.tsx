@@ -2730,6 +2730,21 @@ export default function YouthAcademyPage(): JSX.Element {
                   </div>
                 </div>
 
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-800">
+                  <div className="font-medium text-blue-950">
+                    {t('scouting.weeklyResetTitle', {
+                      defaultValue: 'Weekly report reset',
+                    })}
+                  </div>
+                  <div className="mt-1">
+                    {t('scouting.weeklyResetHelp', {
+                      date: gameDateLabel(scoutingData?.next_reset_on),
+                      defaultValue:
+                        'All open scout reports and recruitment work stay visible through Sunday. On Monday {{date}}, this list resets and the first free search becomes available again. A rider who signs for your Academy is removed immediately and appears in the Youth Riders squad.',
+                    })}
+                  </div>
+                </div>
+
                 <button
                   type="button"
                   disabled={
@@ -2976,7 +2991,10 @@ export default function YouthAcademyPage(): JSX.Element {
                               {report.display_name}
                             </div>
                             <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                              {report.age}
+                              {t('scouting.ageValue', {
+                                age: report.age,
+                                defaultValue: 'Age {{age}}',
+                              })}
                             </span>
                           </div>
                           <div className="mt-1 text-xs text-slate-500">
@@ -2996,6 +3014,68 @@ export default function YouthAcademyPage(): JSX.Element {
                           </div>
                           <div className="text-xs text-slate-500">
                             {t('scouting.confidence', { value: report.confidence })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                          <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                            {t('scouting.age', { defaultValue: 'Age' })}
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-slate-900">
+                            {report.age}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                          <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                            {t('scouting.country', { defaultValue: 'Country' })}
+                          </div>
+                          <div className="mt-1 flex items-center gap-2 text-sm font-medium text-slate-900">
+                            {flag ? <img src={flag} alt="" className="h-3.5 w-5 rounded-sm object-cover" /> : null}
+                            {report.country_code}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                          <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                            {t('scouting.riderRole', { defaultValue: 'Rider type' })}
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-slate-900">
+                            {t(`scouting.roles.${report.role}`)}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                          <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                            {t('scouting.source', { defaultValue: 'Current status' })}
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-slate-900">
+                            {report.target_kind === 'academy'
+                              ? report.source_academy_name ?? t('scouting.otherAcademy')
+                              : t('scouting.unattachedProspect')}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                          <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                            {t('scouting.assessment', { defaultValue: 'Assessment' })}
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-slate-900">
+                            {t(`scouting.assessmentBands.${report.assessment_band
+                              .toLowerCase()
+                              .replaceAll(' ', '_')}`)}
+                          </div>
+                          <div className="mt-0.5 text-[11px] text-slate-500">
+                            {t('scouting.confidence', { value: report.confidence })}
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                          <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                            {t('scouting.weekReset', { defaultValue: 'Weekly reset' })}
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-slate-900">
+                            {gameDateLabel(scoutingData?.next_reset_on)}
+                          </div>
+                          <div className="mt-0.5 text-[11px] text-slate-500">
+                            {t('scouting.mondayReset', { defaultValue: 'Monday' })}
                           </div>
                         </div>
                       </div>
