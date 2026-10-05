@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import MainLayout from '../../components/layout/MainLayout'
 import SeasonRolloverGate from '../../components/season/SeasonRolloverGate'
 import RestartTeamModal from '../../components/team/RestartTeamModal'
+import LocaleDateFormattingBridge from '../../components/i18n/LocaleDateFormattingBridge'
 import { supabase } from '../../lib/supabase'
 import { getMyClubContext } from '../../lib/clubContext'
 
@@ -338,6 +339,7 @@ export default function ClubDashboard(): JSX.Element {
 
   return (
     <SeasonRolloverGate>
+      <LocaleDateFormattingBridge />
       <MainLayout>
         {content}
 
