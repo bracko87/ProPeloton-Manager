@@ -338,13 +338,11 @@ function differenceInDays(a: Date, b: Date): number {
 
 function formatCurrency(
   value: number | null | undefined,
-  locale?: string
+  _locale?: string
 ): string {
-  return new Intl.NumberFormat(locale || undefined, {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number(value ?? 0))
+  const amount = Math.round(Number(value ?? 0))
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function titleCaseFromSnake(value: string | null | undefined): string {
