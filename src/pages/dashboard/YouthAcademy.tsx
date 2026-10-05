@@ -409,6 +409,7 @@ type YouthRace = {
   is_home_regional?: boolean
   qualified: boolean
   invitation_status?: 'pending' | 'accepted' | 'declined' | 'expired' | 'waitlist' | null
+  application_pending?: boolean
   invitation_type?: string | null
   invitation_response_deadline?: string | null
   entry_id?: string | null
@@ -5058,23 +5059,26 @@ export default function YouthAcademyPage(): JSX.Element {
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                             {formatLabel}
                           </span>
-                          {race.invitation_status ? (
+                          {race.invitation_status &&
+                          (race.invitation_status !== 'pending' || race.application_pending) ? (
                             <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                               race.invitation_status === 'accepted'
                                 ? 'bg-emerald-50 text-emerald-700'
-                                : race.invitation_status === 'pending'
+                                : race.application_pending
                                   ? 'bg-amber-50 text-amber-800'
                                   : 'bg-slate-100 text-slate-600'
                             }`}>
-                              {t(`calendar.invitationStatuses.${race.invitation_status}`, {
-                                defaultValue: humanize(race.invitation_status),
-                              })}
+                              {race.application_pending
+                                ? t('calendar.applicationPending', { defaultValue: 'Application Pending' })
+                                : t(`calendar.invitationStatuses.${race.invitation_status}`, {
+                                    defaultValue: humanize(race.invitation_status),
+                                  })}
                             </span>
                           ) : null}
                           {isScheduled &&
                           !isParticipating &&
                           isManagerEntry ? (
-                            race.invitation_status === 'pending' ? (
+                            race.application_pending ? (
                               <button
                                 type="button"
                                 disabled={data.read_only || raceAction !== null}
@@ -5098,7 +5102,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               </button>
                             )
                           ) : null}
-                          {isScheduled && isParticipating && isManagerEntry ? (
+                          {isScheduled && isParticipating ? (
                             <button
                               type="button"
                               disabled={data.read_only || raceAction !== null}
@@ -5274,7 +5278,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               </div>
                             ) : null}
 
-                            {isScheduled && isManagerEntry && !race.entry_id && race.invitation_status === 'pending' ? (
+                            {isScheduled && isManagerEntry && !race.entry_id && race.application_pending ? (
                               <div className="mt-4">
                                 <button
                                   type="button"
@@ -5295,7 +5299,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               </div>
                             ) : null}
     
-                            {isScheduled && race.invitation_status === 'pending' && race.invitation_response_deadline ? (
+                            {isScheduled && race.application_pending && race.invitation_response_deadline ? (
                               <div className="mt-3 text-xs text-amber-700">
                                 {t('calendar.responseDeadline', { date: gameDateLabel(race.invitation_response_deadline) })}
                               </div>
@@ -10553,7 +10557,7 @@ export default function YouthAcademyPage(): JSX.Element {
                                     ? t('calendar.entering')
                                     : t('calendar.applyRace', { defaultValue: 'Apply for Race' })}
                                 </button>
-                                {race.invitation_status === 'pending' ? (
+                                {race.application_pending ? (
                                   <button
                                     type="button"
                                     disabled={data.read_only || raceAction !== null}
