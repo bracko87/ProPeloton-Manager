@@ -174,12 +174,10 @@ function getStatementSortValue(row: StatementRow): number {
  * formatMoney
  * Format a number as a currency string.
  */
-function formatMoney(n: number, currency: CurrencyCode = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(n)
+function formatMoney(n: number, _currency: CurrencyCode = 'USD'): string {
+  const amount = Math.round(Number(n) || 0)
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 /**
