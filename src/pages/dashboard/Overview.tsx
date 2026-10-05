@@ -5590,7 +5590,7 @@ function getFeedAccent(level: FeedLevel) {
 function getFeedIcon(level: FeedLevel) {
   switch (level) {
     case "finance":
-      return "€";
+      return "$";
     case "training":
       return "TC";
     case "infrastructure":
