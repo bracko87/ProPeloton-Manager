@@ -382,6 +382,22 @@ type YouthRace = {
   terrain_type: string
   distance_km: number
   entry_cost: number
+  entry_fee?: number
+  cost_preview?: {
+    available?: boolean
+    entry_fee?: number
+    rider_count?: number
+    staff_count?: number
+    race_days?: number
+    travel_cost_total?: number
+    accommodation_cost_total?: number
+    logistics_cost_total?: number
+    staff_accommodation_cost_total?: number
+    equipment_support_cost_total?: number
+    total_cost?: number
+    is_local_market?: boolean
+  } | null
+  is_local_market?: boolean
   prize_fund_cash?: number
   start_time_region_code?: string | null
   planned_start_time_label?: string | null
@@ -644,7 +660,7 @@ type TabKey =
 function money(value: number | null | undefined): string {
   return new Intl.NumberFormat(undefined, {
     style: 'currency',
-    currency: 'EUR',
+    currency: 'USD',
     maximumFractionDigits: 0,
   }).format(Number(value ?? 0))
 }
@@ -719,9 +735,9 @@ function youthStaffLevel(score: number): string {
 }
 
 function youthSalaryRange(role: string): string {
-  if (role === 'youth_academy_director') return '€432–€1,296/week'
-  if (role === 'u16_head_coach') return '€405–€1,269/week'
-  return '€351–€1,215/week'
+  if (role === 'youth_academy_director') return '$432–$1,296/week'
+  if (role === 'u16_head_coach') return '$405–$1,269/week'
+  return '$351–$1,215/week'
 }
 
 function percent(part: number | null | undefined, total: number | null | undefined): number {
@@ -5040,11 +5056,6 @@ export default function YouthAcademyPage(): JSX.Element {
                           <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${competitionClassBadgeClass(race.competition_class)}`}>
                             {competitionClassLabel(race.competition_class)}
                           </span>
-                          {race.planned_start_time_label ? (
-                            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
-                              {race.planned_start_time_label}
-                            </span>
-                          ) : null}
                           {isParticipating ? (
                             <>
                               <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
@@ -5109,7 +5120,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               >
                                 {raceAction === race.id
                                   ? t('calendar.entering')
-                                  : t('calendar.enterRace')}
+                                  : t('calendar.applyRace', { defaultValue: 'Apply for Race' })}
                               </button>
                             </>
                           ) : null}
@@ -5153,7 +5164,17 @@ export default function YouthAcademyPage(): JSX.Element {
                             })}
                           </span>
                           <span>·</span>
-                          <span>{money(race.entry_cost)}</span>
+                          <span>
+                            {t('calendar.entryFee', { defaultValue: 'Entry fee' })}: {money(race.entry_fee ?? race.entry_cost)}
+                          </span>
+                          {race.cost_preview?.total_cost ? (
+                            <>
+                              <span>·</span>
+                              <span>
+                                {t('calendar.estimatedRaceCost', { defaultValue: 'Estimated total cost' })}: {money(race.cost_preview.total_cost)}
+                              </span>
+                            </>
+                          ) : null}
                           {race.invitation_response_deadline ? (
                             <>
                               <span>·</span>
@@ -5259,7 +5280,9 @@ export default function YouthAcademyPage(): JSX.Element {
                                   onClick={() => void enterYouthRace(race)}
                                   className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                                 >
-                                  {raceAction === race.id ? t('calendar.entering') : t('calendar.enterRace')}
+                                  {raceAction === race.id
+                                    ? t('calendar.entering')
+                                    : t('calendar.applyRace', { defaultValue: 'Apply for Race' })}
                                 </button>
                                 {race.invitation_status === 'pending' ? (
                                   <button
