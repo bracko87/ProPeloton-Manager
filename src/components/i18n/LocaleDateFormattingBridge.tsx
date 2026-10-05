@@ -46,7 +46,7 @@ function formatGameDate(
     timeZone: 'UTC',
   }).format(date)
 
-  return `${label} · Season ${season}`
+  return label + ' · Season ' + season
 }
 
 function transformGameDates(
@@ -56,7 +56,6 @@ function transformGameDates(
 ): string {
   let value = source
 
-  // ISO game dates, including dates embedded inside notification text.
   value = value.replace(
     /\b(20\d{2})-(\d{2})-(\d{2})\b/g,
     (match, y, m, d) => {
@@ -67,319 +66,75 @@ function transformGameDates(
     },
   )
 
-  // English day-first game dates: 04 May 2000.
   value = value.replace(
     /\b(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(20\d{2})\b/gi,
     (match, d, monthToken, y) => {
       const year = Number(y)
       const season = seasonForGameYear(year, currentSeason)
       if (!season) return match
-      const probe = new Date(`${monthToken} ${d}, ${year} UTC`)
+      const probe = new Date(String(monthToken) + ' ' + d + ', ' + year + ' UTC')
       return Number.isNaN(probe.getTime())
         ? match
         : formatGameDate(probe, season, language)
     },
   )
 
-  // English month-first game dates: May 04, 2000.
   value = value.replace(
     /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2}),\s*(20\d{2})\b/gi,
     (match, monthToken, d, y) => {
       const year = Number(y)
       const season = seasonForGameYear(year, currentSeason)
       if (!season) return match
-      const probe = new Date(`${monthToken} ${d}, ${year} UTC`)
+      const probe = new Date(String(monthToken) + ' ' + d + ', ' + year + ' UTC')
       return Number.isNaN(probe.getTime())
         ? match
         : formatGameDate(probe, season, language)
     },
   )
 
-  // Explicit "Year 2000" style labels become Season 1.
   value = value.replace(/\bYear\s+(20\d{2})\b/gi, (match, y) => {
     const season = seasonForGameYear(Number(y), currentSeason)
-    return season ? `Season ${season}` : match
+    return season ? 'Season ' + season : match
   })
 
   return value
 }
 
+function normalizeDollarDigits(raw: string): string {
+  const value = raw.trim().replace(/\s+/g, '')
+  const negative = value.startsWith('-')
+  let digits = negative ? value.slice(1) : value
+
+  if (/^\d{1,3}(?:\.\d{3})+$/.test(digits)) {
+    digits = digits.replace(/\./g, '')
+  } else if (/^\d{1,3}(?:,\d{3})+$/.test(digits)) {
+    digits = digits.replace(/,/g, '')
+  }
+
+  const numeric = Number(digits)
+  if (!Number.isFinite(numeric)) return raw.trim()
+
+  return (negative ? '-' : '') + Math.round(Math.abs(numeric)).toLocaleString('en-US')
+}
+
 function transformMoney(source: string): string {
-  return source
-    .replace(/\bUS\$\s*/g, '
-function transformTextNode(
-  textNode: Text,
-  language: string | undefined,
-  currentSeason: number,
-): void {
-  const current = textNode.nodeValue ?? ''
-  const parent = textNode.parentElement
-  if (!current || !parent) return
-  if (['SCRIPT', 'STYLE', 'TEXTAREA', 'OPTION'].includes(parent.tagName)) return
+  let value = source
+    .replace(/\bUS\$\s*/g, '$')
+    .replace(/\bUSD\s*/g, '$')
+    .replace(/\bEUR\s*/g, '$')
+    .replace(/€\s*/g, '$')
 
-  const dateAndCurrency = transformMoney(
-    transformGameDates(current, language, currentSeason),
-  )
-  const next = transformBareMoneyValue(dateAndCurrency, parent)
-
-  if (next !== current) {
-    textNode.nodeValue = next
-  }
-}
-
-function applyToDocument(
-  language: string | undefined,
-  currentSeason: number,
-): void {
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
-  let node = walker.nextNode()
-
-  while (node) {
-    transformTextNode(node as Text, language, currentSeason)
-    node = walker.nextNode()
-  }
-}
-
-export default function LocaleDateFormattingBridge(): null {
-  const { i18n } = useTranslation()
-
-  useEffect(() => {
-    let disposed = false
-    let observer: MutationObserver | null = null
-    let applying = false
-
-    const start = async (): Promise<void> => {
-      let currentSeason = 1
-      try {
-        const { data } = await supabase.rpc('get_current_season_number')
-        const parsed = Number(data ?? 1)
-        if (Number.isFinite(parsed) && parsed >= 1) currentSeason = parsed
-      } catch {
-        // Formatting still works for Season 1 if the helper is unavailable.
-      }
-
-      if (disposed || typeof document === 'undefined') return
-
-      const apply = (): void => {
-        if (applying) return
-        applying = true
-        try {
-          applyToDocument(
-            i18n.resolvedLanguage ?? i18n.language,
-            currentSeason,
-          )
-        } finally {
-          applying = false
-        }
-      }
-
-      apply()
-      observer = new MutationObserver(apply)
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-      })
-
-      const handleLanguageChanged = (): void => apply()
-      i18n.on('languageChanged', handleLanguageChanged)
-
-      return
-    }
-
-    void start()
-
-    return () => {
-      disposed = true
-      observer?.disconnect()
-    }
-  }, [i18n])
-
-  return null
-}
-)
-    .replace(/\bUSD\s*/g, '
-function transformTextNode(
-  textNode: Text,
-  language: string | undefined,
-  currentSeason: number,
-): void {
-  const current = textNode.nodeValue ?? ''
-  const parent = textNode.parentElement
-  if (!current || !parent) return
-  if (['SCRIPT', 'STYLE', 'TEXTAREA', 'OPTION'].includes(parent.tagName)) return
-
-  const next = transformMoney(
-    transformGameDates(current, language, currentSeason),
+  value = value.replace(
+    /(-?\d[\d.,\s]*\d|-?\d)\s*\$/g,
+    (_match, amount) => '$' + normalizeDollarDigits(String(amount)),
   )
 
-  if (next !== current) {
-    textNode.nodeValue = next
-  }
-}
-
-function applyToDocument(
-  language: string | undefined,
-  currentSeason: number,
-): void {
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
-  let node = walker.nextNode()
-
-  while (node) {
-    transformTextNode(node as Text, language, currentSeason)
-    node = walker.nextNode()
-  }
-}
-
-export default function LocaleDateFormattingBridge(): null {
-  const { i18n } = useTranslation()
-
-  useEffect(() => {
-    let disposed = false
-    let observer: MutationObserver | null = null
-    let applying = false
-
-    const start = async (): Promise<void> => {
-      let currentSeason = 1
-      try {
-        const { data } = await supabase.rpc('get_current_season_number')
-        const parsed = Number(data ?? 1)
-        if (Number.isFinite(parsed) && parsed >= 1) currentSeason = parsed
-      } catch {
-        // Formatting still works for Season 1 if the helper is unavailable.
-      }
-
-      if (disposed || typeof document === 'undefined') return
-
-      const apply = (): void => {
-        if (applying) return
-        applying = true
-        try {
-          applyToDocument(
-            i18n.resolvedLanguage ?? i18n.language,
-            currentSeason,
-          )
-        } finally {
-          applying = false
-        }
-      }
-
-      apply()
-      observer = new MutationObserver(apply)
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-      })
-
-      const handleLanguageChanged = (): void => apply()
-      i18n.on('languageChanged', handleLanguageChanged)
-
-      return
-    }
-
-    void start()
-
-    return () => {
-      disposed = true
-      observer?.disconnect()
-    }
-  }, [i18n])
-
-  return null
-}
-)
-    .replace(/€\s*/g, '
-function transformTextNode(
-  textNode: Text,
-  language: string | undefined,
-  currentSeason: number,
-): void {
-  const current = textNode.nodeValue ?? ''
-  const parent = textNode.parentElement
-  if (!current || !parent) return
-  if (['SCRIPT', 'STYLE', 'TEXTAREA', 'OPTION'].includes(parent.tagName)) return
-
-  const next = transformMoney(
-    transformGameDates(current, language, currentSeason),
+  value = value.replace(
+    /\$\s*(-?\d[\d.,\s]*\d|-?\d)/g,
+    (_match, amount) => '$' + normalizeDollarDigits(String(amount)),
   )
 
-  if (next !== current) {
-    textNode.nodeValue = next
-  }
-}
-
-function applyToDocument(
-  language: string | undefined,
-  currentSeason: number,
-): void {
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
-  let node = walker.nextNode()
-
-  while (node) {
-    transformTextNode(node as Text, language, currentSeason)
-    node = walker.nextNode()
-  }
-}
-
-export default function LocaleDateFormattingBridge(): null {
-  const { i18n } = useTranslation()
-
-  useEffect(() => {
-    let disposed = false
-    let observer: MutationObserver | null = null
-    let applying = false
-
-    const start = async (): Promise<void> => {
-      let currentSeason = 1
-      try {
-        const { data } = await supabase.rpc('get_current_season_number')
-        const parsed = Number(data ?? 1)
-        if (Number.isFinite(parsed) && parsed >= 1) currentSeason = parsed
-      } catch {
-        // Formatting still works for Season 1 if the helper is unavailable.
-      }
-
-      if (disposed || typeof document === 'undefined') return
-
-      const apply = (): void => {
-        if (applying) return
-        applying = true
-        try {
-          applyToDocument(
-            i18n.resolvedLanguage ?? i18n.language,
-            currentSeason,
-          )
-        } finally {
-          applying = false
-        }
-      }
-
-      apply()
-      observer = new MutationObserver(apply)
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-      })
-
-      const handleLanguageChanged = (): void => apply()
-      i18n.on('languageChanged', handleLanguageChanged)
-
-      return
-    }
-
-    void start()
-
-    return () => {
-      disposed = true
-      observer?.disconnect()
-    }
-  }, [i18n])
-
-  return null
-}
-)
+  return value
 }
 
 const MONEY_CONTEXT_RE =
@@ -427,14 +182,17 @@ function transformBareMoneyValue(source: string, parent: HTMLElement): string {
     return source
   }
 
-  const normalized = raw.replace(/\s+/g, '')
-  const amount = Number(normalized.replace(/,/g, ''))
-  if (!Number.isFinite(amount)) return source
+  const normalized = normalizeDollarDigits(raw)
+  const numeric = Number(normalized.replace(/,/g, ''))
+  if (!Number.isFinite(numeric)) return source
 
-  const formatted = `${amount < 0 ? '-' : ''}${Math.abs(Math.round(amount)).toLocaleString('en-US')}`
+  const formatted =
+    (numeric < 0 ? '-$' : '$') +
+    Math.abs(Math.round(numeric)).toLocaleString('en-US')
+
   const leading = source.match(/^\s*/)?.[0] ?? ''
   const trailing = source.match(/\s*$/)?.[0] ?? ''
-  return `${leading}${formatted}${trailing}`
+  return leading + formatted + trailing
 }
 
 function transformTextNode(
@@ -445,11 +203,12 @@ function transformTextNode(
   const current = textNode.nodeValue ?? ''
   const parent = textNode.parentElement
   if (!current || !parent) return
-  if (['SCRIPT', 'STYLE', 'TEXTAREA', 'OPTION'].includes(parent.tagName)) return
+  if (['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return
 
-  const next = transformMoney(
+  const dateAndCurrency = transformMoney(
     transformGameDates(current, language, currentSeason),
   )
+  const next = transformBareMoneyValue(dateAndCurrency, parent)
 
   if (next !== current) {
     textNode.nodeValue = next
