@@ -74,15 +74,12 @@ function intlLocale(language: string | undefined): string {
 
 function formatCurrency(
   value: number | null | undefined,
-  language: string | undefined,
+  _language: string | undefined,
 ): string {
   if (value == null || Number.isNaN(value)) return '—'
-
-  return new Intl.NumberFormat(intlLocale(language), {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number(value))
+  const amount = Math.round(Number(value))
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function getCountryName(
