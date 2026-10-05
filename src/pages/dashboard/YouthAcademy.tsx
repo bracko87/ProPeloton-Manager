@@ -2283,7 +2283,7 @@ export default function YouthAcademyPage(): JSX.Element {
                             </div>
                             <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-medium text-blue-800">
                               {t('staff.onCourseUntil', {
-                                date: member.active_course.returns_on,
+                                date: gameDateLabel(member.active_course.returns_on),
                                 defaultValue: 'On course until {{date}}',
                               })}
                             </span>
@@ -3282,6 +3282,16 @@ export default function YouthAcademyPage(): JSX.Element {
                 savedValue && savedValue !== 'manager'
                   ? staff.find(member => member.role_type === savedStaffRole)
                   : undefined
+              const responsibilityName = String(item.key).replace(/_decider$/, '')
+              const activeCover = temporaryCovers.find(
+                cover => cover.responsibility === responsibilityName
+              )
+              const availableCoverStaff = staff.filter(
+                member =>
+                  member.available !== false &&
+                  !member.active_course &&
+                  member.id !== savedStaff?.id
+              )
 
               return (
                 <div
@@ -3311,28 +3321,114 @@ export default function YouthAcademyPage(): JSX.Element {
                   </div>
 
                   {temporaryManager ? (
-                    <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs leading-5 text-blue-800">
-                      <div className="font-medium text-blue-900">
-                        {t('settings.managerTemporaryHandover', {
-                          defaultValue: 'Temporarily handled by Manager',
-                        })}
-                      </div>
-                      <div className="mt-1">
-                        {savedStaff?.active_course
-                          ? t('settings.managerTemporaryHandoverCourse', {
-                              staff: savedStaff.staff_name,
-                              course: savedStaff.active_course.title,
-                              date: savedStaff.active_course.returns_on,
-                              role: t(`settings.options.${String(savedValue)}`),
+                    <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-xs leading-5 text-blue-800">
+                      {activeCover ? (
+                        <>
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="font-medium text-blue-950">
+                                {t('settings.temporaryStaffCover', {
+                                  defaultValue: 'Temporary staff cover active',
+                                })}
+                              </div>
+                              <div className="mt-1">
+                                {activeCover.cover_staff_name} · {humanizeCode(activeCover.cover_staff_role)}
+                              </div>
+                            </div>
+                            <span className="rounded-full bg-white px-2.5 py-1 font-medium text-blue-900">
+                              {t('settings.coverEffectiveness', {
+                                value: activeCover.effective_quality_percent,
+                                defaultValue: '{{value}}% work quality',
+                              })}
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            {t('settings.coverPenaltyHelp', {
+                              penalty: activeCover.quality_penalty_percent,
                               defaultValue:
-                                '{{staff}} is attending {{course}} until {{date}}. The saved assignment remains {{role}} and resumes automatically when an available staff member returns.',
-                            })
-                          : t('settings.managerTemporaryHandoverUnavailable', {
-                              role: t(`settings.options.${String(savedValue)}`),
-                              defaultValue:
-                                'The delegated {{role}} is currently unavailable. The saved assignment is preserved and will resume automatically when an available staff member returns.',
+                                'Because this is outside the staff member’s normal role, work quality is reduced by {{penalty}}% until the originally assigned role returns.',
                             })}
-                      </div>
+                          </div>
+                          {savedStaff?.active_course ? (
+                            <div className="mt-1">
+                              {t('settings.originalStaffReturns', {
+                                staff: savedStaff.staff_name,
+                                course: savedStaff.active_course.title,
+                                date: gameDateLabel(savedStaff.active_course.returns_on),
+                                defaultValue:
+                                  '{{staff}} is on {{course}} until {{date}}. The original assignment resumes automatically when the role is available again.',
+                              })}
+                            </div>
+                          ) : null}
+                          <button
+                            type="button"
+                            disabled={data.read_only || temporaryCoverAction !== null}
+                            onClick={() => void setTemporaryCover(responsibilityName, null)}
+                            className="mt-3 rounded-md border border-blue-300 bg-white px-3 py-1.5 font-medium text-blue-900 disabled:opacity-50"
+                          >
+                            {temporaryCoverAction === responsibilityName
+                              ? t('settings.updatingCover', { defaultValue: 'Updating…' })
+                              : t('settings.returnToManager', { defaultValue: 'Return temporary duty to Manager' })}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="font-medium text-blue-950">
+                            {t('settings.managerTemporaryHandover', {
+                              defaultValue: 'Temporarily handled by Manager',
+                            })}
+                          </div>
+                          <div className="mt-1">
+                            {savedStaff?.active_course
+                              ? t('settings.managerTemporaryHandoverCourse', {
+                                  staff: savedStaff.staff_name,
+                                  course: savedStaff.active_course.title,
+                                  date: gameDateLabel(savedStaff.active_course.returns_on),
+                                  role: t(`settings.options.${String(savedValue)}`),
+                                  defaultValue:
+                                    '{{staff}} is attending {{course}} until {{date}}. The saved assignment remains {{role}} and resumes automatically when an available staff member returns.',
+                                })
+                              : t('settings.managerTemporaryHandoverUnavailable', {
+                                  role: t(`settings.options.${String(savedValue)}`),
+                                  defaultValue:
+                                    'The delegated {{role}} is currently unavailable. The saved assignment is preserved and will resume automatically when an available staff member returns.',
+                                })}
+                          </div>
+                          <div className="mt-3 border-t border-blue-200 pt-3">
+                            <div className="font-medium text-blue-950">
+                              {t('settings.assignTemporaryCover', {
+                                defaultValue: 'Assign another staff member temporarily',
+                              })}
+                            </div>
+                            <div className="mt-1 text-blue-700">
+                              {t('settings.assignTemporaryCoverHelp', {
+                                defaultValue:
+                                  'An available Youth staff member can take this duty until the original role returns. Because it is outside their normal role, effectiveness will be reduced by 20–50%.',
+                              })}
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {availableCoverStaff.map(member => (
+                                <button
+                                  key={member.id}
+                                  type="button"
+                                  disabled={data.read_only || temporaryCoverAction !== null}
+                                  onClick={() => void setTemporaryCover(responsibilityName, member.id)}
+                                  className="rounded-md border border-blue-300 bg-white px-3 py-1.5 font-medium text-blue-900 disabled:opacity-50"
+                                >
+                                  {member.staff_name} · {humanizeCode(member.role_type)}
+                                </button>
+                              ))}
+                              {availableCoverStaff.length === 0 ? (
+                                <span className="text-blue-700">
+                                  {t('settings.noTemporaryCoverAvailable', {
+                                    defaultValue: 'No other Youth Academy staff member is currently available.',
+                                  })}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ) : savedValue ? (
                     <div className="mt-3 text-xs text-slate-500">
