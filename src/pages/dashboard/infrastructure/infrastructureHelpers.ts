@@ -70,56 +70,18 @@ export function toNumber(
  * Examples:
  * - 0         -> "$0"
  * - 1_200     -> "$1,200"
- * - 2_500_000 -> "$2.5M"
+ * - 2_500_000 -> "$2,500,000"
  *
  * @param raw - Amount as number/string/unknown.
  */
 export function formatCash(
   raw: unknown,
 ): string {
-  const amount =
-    toNumber(
-      raw,
-      0,
-    )
+  const numeric = toNumber(raw, 0)
+  const amount = Math.round(Number.isFinite(numeric) ? numeric : 0)
+  const sign = amount < 0 ? '-' : ''
 
-  const sign =
-    amount < 0
-      ? '-'
-      : ''
-
-  const abs =
-    Math.abs(amount)
-
-  const formatWithSeparators = (
-    value: number,
-  ): string =>
-    value.toLocaleString(
-      'en-US',
-      {
-        maximumFractionDigits: 0,
-      },
-    )
-
-  if (abs >= 1_000_000_000) {
-    return `${sign}$${(
-      abs / 1_000_000_000
-    ).toFixed(1)}B`
-  }
-
-  if (abs >= 1_000_000) {
-    return `${sign}$${(
-      abs / 1_000_000
-    ).toFixed(1)}M`
-  }
-
-  if (abs >= 1_000) {
-    return `${sign}$${formatWithSeparators(
-      abs,
-    )}`
-  }
-
-  return `${sign}$${abs.toFixed(0)}`
+  return `${sign}$${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 //////////////////////////
