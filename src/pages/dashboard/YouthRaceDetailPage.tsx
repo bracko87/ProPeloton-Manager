@@ -1292,25 +1292,47 @@ export default function YouthRaceDetailPage(): JSX.Element {
                   }}
                   className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-slate-300 hover:bg-white"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        Stage {stage.stage_number} · {shortDate(stage.stage_date)}
+                  <div className="flex items-start gap-3">
+                    <StageProfileIcon type={stage.stage_type} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Stage {stage.stage_number} · {shortDate(stage.stage_date)}
+                          </div>
+                          <div className="mt-1 text-base font-semibold text-slate-900">
+                            {humanize(stage.stage_type)} stage
+                          </div>
+                        </div>
+                        <span className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700">
+                          Start {stage.planned_start_time_label ?? '—'}
+                        </span>
                       </div>
-                      <div className="mt-1 text-base font-semibold text-slate-900">{humanize(stage.stage_type)}</div>
+                      <div className="mt-3 flex items-center gap-2 text-sm text-slate-700">
+                        <span className="text-slate-400">↗</span>
+                        <span className="truncate">
+                          {stage.start_city && stage.finish_city
+                            ? stage.start_city === stage.finish_city
+                              ? `${stage.start_city} circuit`
+                              : `${stage.start_city} → ${stage.finish_city}`
+                            : race.host_city ?? 'Route TBC'}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-medium">
+                        <span className="rounded-full bg-white px-2 py-1 text-slate-700">{stage.distance_km} km</span>
+                        <span className="rounded-full bg-white px-2 py-1 text-slate-700">{humanize(stage.stage_type)}</span>
+                        <span className={`rounded-full px-2 py-1 ${
+                          stage.status === 'completed'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : stage.status === 'active'
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {humanize(stage.status)}
+                        </span>
+                      </div>
                     </div>
-                    <span className="rounded-full bg-white px-2 py-1 text-[11px] font-medium text-slate-600">
-                      {stage.planned_start_time_label ?? '—'}
-                    </span>
                   </div>
-                  <div className="mt-3 text-sm text-slate-600">
-                    {stage.start_city && stage.finish_city
-                      ? stage.start_city === stage.finish_city
-                        ? `${stage.start_city} circuit`
-                        : `${stage.start_city} → ${stage.finish_city}`
-                      : race.host_city ?? 'Route TBC'}
-                  </div>
-                  <div className="mt-1 text-sm text-slate-600">{stage.distance_km} km</div>
                 </button>
               ))}
             </div>
