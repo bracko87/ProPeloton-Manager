@@ -441,7 +441,7 @@ function formatMoney(value: unknown) {
   const numeric = Number(value ?? 0);
   const amount = Math.round(Number.isFinite(numeric) ? numeric : 0);
   const sign = amount < 0 ? "-" : "";
-  return sign + '
+  return sign + String.fromCharCode(36) + Math.abs(amount).toLocaleString('en-US')
 }
 
 function normalizeNumericValue(value: unknown, fallback = 0): number {
