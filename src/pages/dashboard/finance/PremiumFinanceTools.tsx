@@ -64,7 +64,7 @@ function resolvePremiumStatus(data: unknown): boolean {
 function formatCurrency(value: number): string {
   const amount = Math.round(Number.isFinite(value) ? value : 0)
   const sign = amount < 0 ? '-' : ''
-  return sign + '
+  return sign + String.fromCharCode(36) + Math.abs(amount).toLocaleString('en-US')
 }
 
 function formatNumber(value: number | null | undefined): string {
