@@ -1,0 +1,49 @@
+name: Youth Academy Build Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/pages/dashboard/YouthAcademy.tsx'
+      - 'src/i18n/locales/**/youthAcademy.json'
+      - 'supabase/migrations/*youth*.sql'
+      - '.github/workflows/youth-academy-build-check.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/pages/dashboard/YouthAcademy.tsx'
+      - 'src/i18n/locales/**/youthAcademy.json'
+      - 'supabase/migrations/*youth*.sql'
+      - '.github/workflows/youth-academy-build-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Production build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify build output
+        shell: bash
+        run: |
+          test -f dist/index.html
+          echo "Youth Academy production build verified."
