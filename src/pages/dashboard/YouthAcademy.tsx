@@ -5621,14 +5621,21 @@ export default function YouthAcademyPage(): JSX.Element {
                             </div>
                           </td>
                           <td className="py-3 pr-3">
-                            {rider.joined_game_date} · {t('history.ageValue', { age: rider.joined_age })}
+                            {gameDateLabel(rider.joined_game_date)} ·{' '}
+                            {t('history.ageValue', { age: rider.joined_age })}
                           </td>
                           <td className="py-3 pr-3">
                             {rider.graduated_on
-                              ? `${rider.graduated_on} · ${t('history.ageValue', { age: rider.graduation_age })}`
+                              ? `${gameDateLabel(rider.graduated_on)} · ${t('history.ageValue', { age: rider.graduation_age })}`
                               : '—'}
                           </td>
-                          <td className="py-3 pr-3">{humanize(rider.graduation_decision)}</td>
+                          <td className="py-3 pr-3">
+                            {rider.graduation_decision === 'release'
+                              ? t('history.freeAgentAcademyAlumni', {
+                                  defaultValue: 'Free Agent · former Youth Academy rider',
+                                })
+                              : humanize(rider.graduation_decision)}
+                          </td>
                           <td className="py-3 pr-3">{rider.race_starts}</td>
                           <td className="py-3 pr-3">{rider.wins}</td>
                           <td className="py-3 pr-3">
