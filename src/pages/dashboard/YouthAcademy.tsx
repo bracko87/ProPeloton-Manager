@@ -383,6 +383,8 @@ type YouthRace = {
   distance_km: number
   entry_cost: number
   prize_fund_cash?: number
+  start_time_region_code?: string | null
+  planned_start_time_label?: string | null
   lineup_size: number
   team_limit?: number
   entries_count?: number
@@ -458,7 +460,9 @@ type YouthRankingRow = {
 type YouthAcademyStandingRow = {
   rank: number
   academy_id: string
+  club_id?: string
   academy_name: string
+  logo_path?: string | null
   country_code: string
   points: number
   starts: number
@@ -736,6 +740,13 @@ function monthLabel(month: number | null | undefined): string {
 function flagUrl(code: string | null | undefined): string | null {
   const safe = String(code ?? '').trim().toLowerCase()
   return /^[a-z]{2}$/.test(safe) ? `https://flagcdn.com/w40/${safe}.png` : null
+}
+
+function resolveClubLogoUrl(path: string | null | undefined): string | null {
+  const value = String(path ?? '').trim()
+  if (!value) return null
+  if (/^(https?:|data:|blob:)/.test(value)) return value
+  return supabase.storage.from('club-logos').getPublicUrl(value).data?.publicUrl ?? null
 }
 
 function competitionClassBadgeClass(value: YouthCompetitionClass): string {
@@ -5029,19 +5040,28 @@ export default function YouthAcademyPage(): JSX.Element {
                           <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${competitionClassBadgeClass(race.competition_class)}`}>
                             {competitionClassLabel(race.competition_class)}
                           </span>
-                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
-                            {t('calendar.teamCountCompact', {
-                              current: Number(race.entries_count ?? 0),
-                              max: Number(race.team_limit ?? 16),
-                              defaultValue: '{{current}} / {{max}} teams',
-                            })}
-                          </span>
-                          <span className="rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-800">
-                            {t('calendar.prizeFundCompact', {
-                              value: money(race.prize_fund_cash),
-                              defaultValue: 'Prize fund {{value}}',
-                            })}
-                          </span>
+                          {race.planned_start_time_label ? (
+                            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
+                              {race.planned_start_time_label}
+                            </span>
+                          ) : null}
+                          {isParticipating ? (
+                            <>
+                              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
+                                {t('calendar.teamCountCompact', {
+                                  current: Number(race.entries_count ?? 0),
+                                  max: Number(race.team_limit ?? 16),
+                                  defaultValue: '{{current}} / {{max}} teams',
+                                })}
+                              </span>
+                              <span className="rounded-full border border-yellow-200 bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-800">
+                                {t('calendar.prizeFundCompact', {
+                                  value: money(race.prize_fund_cash),
+                                  defaultValue: 'Prize fund {{value}}',
+                                })}
+                              </span>
+                            </>
+                          ) : null}
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                             {formatLabel}
                           </span>
@@ -5467,6 +5487,9 @@ export default function YouthAcademyPage(): JSX.Element {
                       {t('rankings.rank')}
                     </th>
                     <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      {t('rankings.logo', { defaultValue: 'Logo' })}
+                    </th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
                       {t('rankings.academy')}
                     </th>
                     <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">
@@ -5483,7 +5506,7 @@ export default function YouthAcademyPage(): JSX.Element {
                 <tbody>
                   {phase3Loading && !youthRankings ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
+                      <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
                         {t('rankings.loading')}
                       </td>
                     </tr>
@@ -5500,11 +5523,21 @@ export default function YouthAcademyPage(): JSX.Element {
                           <td className="px-4 py-3 text-sm font-semibold text-slate-900">
                             {team.rank}
                           </td>
+                          <td className="px-4 py-3">
+                            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1">
+                              {resolveClubLogoUrl(team.logo_path) ? (
+                                <img
+                                  src={resolveClubLogoUrl(team.logo_path) ?? ''}
+                                  alt=""
+                                  className="h-full w-full object-contain"
+                                />
+                              ) : (
+                                <span className="text-[9px] text-slate-400">—</span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3 text-sm font-semibold text-slate-900">
                             <div className="flex items-center gap-2">
-                              {flag ? (
-                                <img src={flag} alt="" className="h-4 w-6 object-cover" />
-                              ) : null}
                               <span>{team.academy_name}</span>
                               {team.is_mine ? (
                                 <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-medium text-yellow-800">
@@ -5516,7 +5549,10 @@ export default function YouthAcademyPage(): JSX.Element {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-sm text-slate-700">
-                            {team.country_code}
+                            <div className="flex items-center gap-2">
+                              {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
+                              <span>{team.country_code}</span>
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-right text-sm text-slate-700">
                             {team.starts}
@@ -5531,7 +5567,7 @@ export default function YouthAcademyPage(): JSX.Element {
                   {!phase3Loading &&
                   (selectedRankingDivision?.teams?.length ?? 0) === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-4 py-6 text-center text-sm text-slate-500">
+                      <td colSpan={6} className="px-4 py-6 text-center text-sm text-slate-500">
                         {t('rankings.noPoints')}
                       </td>
                     </tr>
@@ -5549,6 +5585,29 @@ export default function YouthAcademyPage(): JSX.Element {
                 {t('rankings.promotionNote')}
               </span>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-900">
+              {t('rankings.competitionSystem', { defaultValue: 'Youth competition system' })}
+            </h3>
+            <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3 text-sm text-slate-600">
+              <div className="rounded-lg bg-slate-50 p-3">
+                <div className="font-medium text-slate-900">World Class · 16 teams</div>
+                <p className="mt-1 text-xs leading-5">Bottom four are relegated at season end.</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <div className="font-medium text-slate-900">Continental West & East · 20 teams each</div>
+                <p className="mt-1 text-xs leading-5">Each group winner is promoted directly. Places 2–4 enter the six-team World promotion playoff; the best two are promoted.</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <div className="font-medium text-slate-900">Regional · unlimited</div>
+                <p className="mt-1 text-xs leading-5">Each Regional winner is promoted to its mapped Continental group. Continental groups are balanced back to exactly 20 teams.</p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-500">
+              Team standings use race-result points. Rider rankings use General Classification points plus the class weighting: Regional ×1.0, Continental ×1.5 and World ×2.5. Sprint, mountain and time-trial classifications are tracked separately inside stage races.
+            </p>
           </div>
 
           <div className="rounded bg-white p-4 shadow">
