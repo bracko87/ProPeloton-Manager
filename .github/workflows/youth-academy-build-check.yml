@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'src/pages/dashboard/YouthAcademy.tsx'
+      - 'src/pages/dashboard/YouthRaceDetailPage.tsx'
+      - 'src/App.tsx'
       - 'src/i18n/locales/**/youthAcademy.json'
       - 'supabase/migrations/*youth*.sql'
       - '.github/workflows/youth-academy-build-check.yml'
@@ -12,6 +14,8 @@ on:
     branches: [main]
     paths:
       - 'src/pages/dashboard/YouthAcademy.tsx'
+      - 'src/pages/dashboard/YouthRaceDetailPage.tsx'
+      - 'src/App.tsx'
       - 'src/i18n/locales/**/youthAcademy.json'
       - 'supabase/migrations/*youth*.sql'
       - '.github/workflows/youth-academy-build-check.yml'
