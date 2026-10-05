@@ -562,6 +562,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                     <span className="w-7 text-center text-xs font-semibold text-slate-500">
                       {team.team_position ? `#${team.team_position}` : index + 1}
                     </span>
+                    <JerseyThumb url={team.jersey_url} name={team.club_name} />
                     {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium text-slate-900">
