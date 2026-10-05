@@ -5072,8 +5072,7 @@ export default function YouthAcademyPage(): JSX.Element {
                           ) : null}
                           {isScheduled &&
                           !isParticipating &&
-                          isManagerEntry &&
-                          race.qualified ? (
+                          isManagerEntry ? (
                             <button
                               type="button"
                               disabled={data.read_only || raceAction !== null}
@@ -5214,13 +5213,7 @@ export default function YouthAcademyPage(): JSX.Element {
                           </div>
                         ) : (
                           <>
-                            {isScheduled && !race.qualified ? (
-                              <p className="mt-4 text-sm text-slate-500">
-                                {t('calendar.qualificationHelp')}
-                              </p>
-                            ) : null}
-    
-                            {isScheduled && isManagerEntry && !race.entry_id && race.qualified ? (
+                            {isScheduled && isManagerEntry && !race.entry_id ? (
                               <div className="mt-4 flex flex-wrap items-end gap-3">
                                 <label className="text-xs text-slate-600">
                                   {t('calendar.strategy')}
@@ -5265,7 +5258,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               </div>
                             ) : null}
     
-                            {isScheduled && !isManagerEntry && !race.entry_id && race.qualified ? (
+                            {isScheduled && !isManagerEntry && !race.entry_id ? (
                               <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                                 {t('calendar.coachEntryHelp')}
                               </div>
