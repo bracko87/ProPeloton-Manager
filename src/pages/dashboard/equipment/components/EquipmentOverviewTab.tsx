@@ -71,12 +71,10 @@ function toNumber(value: unknown): number {
   return Number.isFinite(numberValue) ? numberValue : 0
 }
 
-function formatMoney(value: unknown, locale: string): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(toNumber(value))
+function formatMoney(value: unknown, _locale: string): string {
+  const amount = Math.round(toNumber(value))
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function getEquipmentCategoryTranslationKey(category: string): string | null {
