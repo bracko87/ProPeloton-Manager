@@ -139,11 +139,9 @@ type YouthRaceDetailPayload = {
 }
 
 function money(value: number | null | undefined): string {
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number(value ?? 0))
+  const amount = Math.round(Number(value ?? 0))
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function shortDate(value: string | null | undefined): string {
