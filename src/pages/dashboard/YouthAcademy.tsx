@@ -4583,15 +4583,6 @@ export default function YouthAcademyPage(): JSX.Element {
                           ) : null}
                         </div>
                         {isPastPrelaunch ? (
-                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
-                              {t('calendar.pastPrelaunch', {
-                                defaultValue: 'Past · pre-launch',
-                              })}
-                            </span>
-                          ) : null}
-                        </div>
-    
-                        {isPastPrelaunch ? (
                           <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600">
                             {t('calendar.prelaunchHelp', {
                               defaultValue:
@@ -4708,7 +4699,7 @@ export default function YouthAcademyPage(): JSX.Element {
     
                             {isScheduled && race.invitation_status === 'pending' && race.invitation_response_deadline ? (
                               <div className="mt-3 text-xs text-amber-700">
-                                {t('calendar.responseDeadline', { date: race.invitation_response_deadline })}
+                                {t('calendar.responseDeadline', { date: gameDateLabel(race.invitation_response_deadline) })}
                               </div>
                             ) : null}
     
