@@ -1,39 +1,8 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { supabase } from '../../lib/supabase'
 
-type DateState = {
-  original: string
-  lastRendered: string
-}
-
-const textState = new WeakMap<Text, DateState>()
-
-const MONTH_INDEX: Record<string, number> = {
-  Jan: 0,
-  January: 0,
-  Feb: 1,
-  February: 1,
-  Mar: 2,
-  March: 2,
-  Apr: 3,
-  April: 3,
-  May: 4,
-  Jun: 5,
-  June: 5,
-  Jul: 6,
-  July: 6,
-  Aug: 7,
-  August: 7,
-  Sep: 8,
-  Sept: 8,
-  September: 8,
-  Oct: 9,
-  October: 9,
-  Nov: 10,
-  November: 10,
-  Dec: 11,
-  December: 11,
-}
+const GAME_BASE_YEAR = 2000
 
 function localeForLanguage(language: string | undefined): string {
   if (language?.startsWith('sr')) return 'sr-Latn-RS'
@@ -46,98 +15,130 @@ function localeForLanguage(language: string | undefined): string {
   return 'en-GB'
 }
 
-function parseEnglishDate(value: string): Date | null {
-  const trimmed = value.trim()
+function seasonForGameYear(year: number, currentSeason: number): number | null {
+  const season = year - GAME_BASE_YEAR + 1
+  if (season < 1) return null
+  if (season > Math.max(2, currentSeason + 1)) return null
+  return season
+}
 
-  let day: number
-  let monthToken: string
-  let year: number
-
-  const dayFirst = trimmed.match(
-    /^(\d{1,2})\s+(Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+(\d{4})$/,
-  )
-
-  if (dayFirst) {
-    day = Number(dayFirst[1])
-    monthToken = dayFirst[2]
-    year = Number(dayFirst[3])
-  } else {
-    const monthFirst = trimmed.match(
-      /^(Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\s+(\d{1,2}),\s*(\d{4})$/,
-    )
-
-    if (!monthFirst) return null
-
-    monthToken = monthFirst[1]
-    day = Number(monthFirst[2])
-    year = Number(monthFirst[3])
-  }
-
-  const month = MONTH_INDEX[monthToken]
-  if (month === undefined) return null
-
-  const date = new Date(Date.UTC(year, month, day))
-  if (Number.isNaN(date.getTime())) return null
-
+function validUtcDate(year: number, month: number, day: number): Date | null {
+  const date = new Date(Date.UTC(year, month - 1, day))
   if (
+    Number.isNaN(date.getTime()) ||
     date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month ||
+    date.getUTCMonth() !== month - 1 ||
     date.getUTCDate() !== day
   ) {
     return null
   }
-
   return date
 }
 
-function formatLocalizedDate(date: Date, language: string | undefined): string {
-  return new Intl.DateTimeFormat(localeForLanguage(language), {
+function formatGameDate(
+  date: Date,
+  season: number,
+  language: string | undefined,
+): string {
+  const label = new Intl.DateTimeFormat(localeForLanguage(language), {
     day: '2-digit',
     month: 'short',
-    year: 'numeric',
     timeZone: 'UTC',
   }).format(date)
+
+  return `${label} · Season ${season}`
 }
 
-function translateTextNode(textNode: Text, language: string | undefined): void {
+function transformGameDates(
+  source: string,
+  language: string | undefined,
+  currentSeason: number,
+): string {
+  let value = source
+
+  // ISO game dates, including dates embedded inside notification text.
+  value = value.replace(
+    /\b(20\d{2})-(\d{2})-(\d{2})\b/g,
+    (match, y, m, d) => {
+      const year = Number(y)
+      const season = seasonForGameYear(year, currentSeason)
+      const date = validUtcDate(year, Number(m), Number(d))
+      return season && date ? formatGameDate(date, season, language) : match
+    },
+  )
+
+  // English day-first game dates: 04 May 2000.
+  value = value.replace(
+    /\b(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(20\d{2})\b/gi,
+    (match, d, monthToken, y) => {
+      const year = Number(y)
+      const season = seasonForGameYear(year, currentSeason)
+      if (!season) return match
+      const probe = new Date(`${monthToken} ${d}, ${year} UTC`)
+      return Number.isNaN(probe.getTime())
+        ? match
+        : formatGameDate(probe, season, language)
+    },
+  )
+
+  // English month-first game dates: May 04, 2000.
+  value = value.replace(
+    /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2}),\s*(20\d{2})\b/gi,
+    (match, monthToken, d, y) => {
+      const year = Number(y)
+      const season = seasonForGameYear(year, currentSeason)
+      if (!season) return match
+      const probe = new Date(`${monthToken} ${d}, ${year} UTC`)
+      return Number.isNaN(probe.getTime())
+        ? match
+        : formatGameDate(probe, season, language)
+    },
+  )
+
+  // Explicit "Year 2000" style labels become Season 1.
+  value = value.replace(/\bYear\s+(20\d{2})\b/gi, (match, y) => {
+    const season = seasonForGameYear(Number(y), currentSeason)
+    return season ? `Season ${season}` : match
+  })
+
+  return value
+}
+
+function transformMoney(source: string): string {
+  return source
+    .replace(/\bUS\$\s*/g, '$')
+    .replace(/\bUSD\s*/g, '$')
+    .replace(/€\s*/g, '$')
+}
+
+function transformTextNode(
+  textNode: Text,
+  language: string | undefined,
+  currentSeason: number,
+): void {
   const current = textNode.nodeValue ?? ''
-  let state = textState.get(textNode)
+  const parent = textNode.parentElement
+  if (!current || !parent) return
+  if (['SCRIPT', 'STYLE', 'TEXTAREA', 'OPTION'].includes(parent.tagName)) return
 
-  if (!state) {
-    if (!parseEnglishDate(current)) return
+  const next = transformMoney(
+    transformGameDates(current, language, currentSeason),
+  )
 
-    state = {
-      original: current,
-      lastRendered: current,
-    }
-    textState.set(textNode, state)
-  } else if (current !== state.lastRendered && parseEnglishDate(current)) {
-    state.original = current
-  }
-
-  const sourceDate = parseEnglishDate(state.original)
-  if (!sourceDate) return
-
-  const isEnglish = !language || language.startsWith('en')
-  const leading = state.original.match(/^\s*/)?.[0] ?? ''
-  const trailing = state.original.match(/\s*$/)?.[0] ?? ''
-  const next = isEnglish
-    ? state.original
-    : `${leading}${formatLocalizedDate(sourceDate, language)}${trailing}`
-
-  if (textNode.nodeValue !== next) {
+  if (next !== current) {
     textNode.nodeValue = next
   }
-
-  state.lastRendered = next
 }
 
-function applyToDocument(language: string | undefined): void {
+function applyToDocument(
+  language: string | undefined,
+  currentSeason: number,
+): void {
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
   let node = walker.nextNode()
 
   while (node) {
-    translateTextNode(node as Text, language)
+    transformTextNode(node as Text, language, currentSeason)
     node = walker.nextNode()
   }
 }
@@ -146,34 +147,54 @@ export default function LocaleDateFormattingBridge(): null {
   const { i18n } = useTranslation()
 
   useEffect(() => {
+    let disposed = false
+    let observer: MutationObserver | null = null
     let applying = false
 
-    const apply = (): void => {
-      if (applying || typeof document === 'undefined') return
-      applying = true
-
+    const start = async (): Promise<void> => {
+      let currentSeason = 1
       try {
-        applyToDocument(i18n.resolvedLanguage ?? i18n.language)
-      } finally {
-        applying = false
+        const { data } = await supabase.rpc('get_current_season_number')
+        const parsed = Number(data ?? 1)
+        if (Number.isFinite(parsed) && parsed >= 1) currentSeason = parsed
+      } catch {
+        // Formatting still works for Season 1 if the helper is unavailable.
       }
+
+      if (disposed || typeof document === 'undefined') return
+
+      const apply = (): void => {
+        if (applying) return
+        applying = true
+        try {
+          applyToDocument(
+            i18n.resolvedLanguage ?? i18n.language,
+            currentSeason,
+          )
+        } finally {
+          applying = false
+        }
+      }
+
+      apply()
+      observer = new MutationObserver(apply)
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      })
+
+      const handleLanguageChanged = (): void => apply()
+      i18n.on('languageChanged', handleLanguageChanged)
+
+      return
     }
 
-    apply()
-
-    const observer = new MutationObserver(apply)
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-    })
-
-    const handleLanguageChanged = (): void => apply()
-    i18n.on('languageChanged', handleLanguageChanged)
+    void start()
 
     return () => {
-      observer.disconnect()
-      i18n.off('languageChanged', handleLanguageChanged)
+      disposed = true
+      observer?.disconnect()
     }
   }, [i18n])
 
