@@ -49,7 +49,7 @@ type YouthRiderProfilePayload = {
 function money(value: number | null | undefined): string {
   const amount = Math.round(Number(value ?? 0))
   const sign = amount < 0 ? '-' : ''
-  return sign + '
+  return sign + String.fromCharCode(36) + Math.abs(amount).toLocaleString('en-US')
 }
 
 function humanize(value: string | null | undefined): string {
