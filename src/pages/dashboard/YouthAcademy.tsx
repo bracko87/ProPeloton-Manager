@@ -3701,6 +3701,7 @@ export default function YouthAcademyPage(): JSX.Element {
               ['inventory', t('equipment.tabs.inventory', { defaultValue: 'Inventory' })],
               ['market', t('equipment.tabs.market', { defaultValue: 'Market' })],
               ['assets', t('equipment.tabs.assets', { defaultValue: 'Assets' })],
+              ['race-supplies', t('equipment.tabs.raceSupplies', { defaultValue: 'Race supplies' })],
             ] as Array<[YouthEquipmentInnerTab, string]>).map(([key, label]) => (
               <button
                 key={key}
@@ -3723,18 +3724,36 @@ export default function YouthAcademyPage(): JSX.Element {
                 title={t('equipment.title')}
                 right={
                   <span className="text-xs text-slate-500">
-                    {t(
-                      equipmentData?.equipment_decider === 'academy_director'
-                        ? 'equipment.directorManaged'
-                        : 'equipment.managerManaged'
-                    )}
+                    {equipmentData?.temporary_cover
+                      ? `${equipmentData.temporary_cover.cover_staff_name} · ${100 - equipmentData.temporary_cover.quality_penalty_percent}%`
+                      : t(
+                          equipmentData?.equipment_decider === 'academy_director'
+                            ? 'equipment.directorManaged'
+                            : 'equipment.managerManaged'
+                        )}
                   </span>
                 }
               >
                 <p className="text-sm leading-6 text-slate-600">
                   {t('equipment.description')}
                 </p>
-                {equipmentData?.equipment_decider === 'academy_director' ? (
+                {equipmentData?.temporary_cover ? (
+                  <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                    <div className="text-sm font-medium text-blue-950">
+                      {t('equipment.temporaryCoverManaged', {
+                        staff: equipmentData.temporary_cover.cover_staff_name,
+                        defaultValue: 'Temporarily managed by {{staff}}',
+                      })}
+                    </div>
+                    <p className="mt-1 text-xs leading-5 text-blue-800">
+                      {t('equipment.temporaryCoverManagedHelp', {
+                        penalty: equipmentData.temporary_cover.quality_penalty_percent,
+                        defaultValue:
+                          'This staff member is covering Equipment outside their normal role. Purchase quality is reduced by {{penalty}}%, and the Academy keeps a safety reserve before buying anything.',
+                      })}
+                    </p>
+                  </div>
+                ) : equipmentData?.equipment_decider === 'academy_director' ? (
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4">
                     <p className="max-w-2xl text-sm text-slate-600">
                       {t('equipment.directorHelp')}
@@ -3766,31 +3785,35 @@ export default function YouthAcademyPage(): JSX.Element {
                     })}
                   </p>
                 </Card>
-                <Card title={t('equipment.availableMarket', {
-                  defaultValue: 'Market items',
+                <Card title={t('equipment.assetsOwned', {
+                  defaultValue: 'Team assets',
                 })}>
                   <div className="text-2xl font-semibold">
-                    {equipmentData?.catalog?.length ?? 0}
+                    {(equipmentData?.assets ?? []).reduce(
+                      (sum, item) => sum + Number(item.quantity ?? 0),
+                      0
+                    )}
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
-                    {t('equipment.overviewMarketHelp', {
-                      defaultValue: 'Youth-approved Tier 1–2 equipment available to buy.',
+                    {t('equipment.assetsOwnedHelp', {
+                      defaultValue: 'Youth Academy assets are limited to Team Cars and Team Buses.',
                     })}
                   </p>
                 </Card>
-                <Card title={t('equipment.averageQuality', {
-                  defaultValue: 'Average quality',
+                <Card title={t('equipment.raceSupplyStock', {
+                  defaultValue: 'Race-supply stock',
                 })}>
                   <div className="text-2xl font-semibold">
-                    {(equipmentData?.inventory?.length ?? 0) > 0
-                      ? Math.round(
-                          (equipmentData?.inventory ?? []).reduce(
-                            (sum, item) => sum + Number(item.quality_score ?? 0),
-                            0
-                          ) / Math.max(1, equipmentData?.inventory?.length ?? 0)
-                        )
-                      : 0}
+                    {(equipmentData?.race_supplies ?? []).reduce(
+                      (sum, item) => sum + Number(item.quantity_available ?? 0),
+                      0
+                    )}
                   </div>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {t('equipment.raceSupplyStockHelp', {
+                      defaultValue: 'Same race-supply categories used by the senior team.',
+                    })}
+                  </p>
                 </Card>
                 <Card title={t('equipment.averageCondition', {
                   defaultValue: 'Average condition',
@@ -3887,7 +3910,8 @@ export default function YouthAcademyPage(): JSX.Element {
                       <span>{t('equipment.quality')}: {item.quality_score}</span>
                       <span>{t('equipment.durability')}: {item.durability_score}</span>
                     </div>
-                    {equipmentData?.equipment_decider !== 'academy_director' ? (
+                    {equipmentData?.equipment_decider !== 'academy_director' &&
+                    !equipmentData?.temporary_cover ? (
                       <button
                         type="button"
                         disabled={data.read_only || equipmentAction !== null}
@@ -3906,75 +3930,161 @@ export default function YouthAcademyPage(): JSX.Element {
           ) : null}
 
           {equipmentInnerTab === 'assets' ? (
-            <Card title={t('equipment.assetOverview', { defaultValue: 'Youth Academy assets' })}>
-              {(() => {
-                const groups = new Map<
-                  string,
-                  { count: number; quality: number; condition: number; value: number }
-                >()
-                for (const item of equipmentData?.inventory ?? []) {
-                  const current = groups.get(item.equipment_category) ?? {
-                    count: 0,
-                    quality: 0,
-                    condition: 0,
-                    value: 0,
-                  }
-                  current.count += 1
-                  current.quality += Number(item.quality_score ?? 0)
-                  current.condition += Number(item.condition_percent ?? 0)
-                  current.value += Number(item.purchase_cost ?? 0)
-                  groups.set(item.equipment_category, current)
-                }
-
-                if (groups.size === 0) {
-                  return (
-                    <div className="text-sm text-slate-500">
-                      {t('equipment.noInventory')}
-                    </div>
-                  )
-                }
-
-                return (
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {Array.from(groups.entries()).map(([category, group]) => (
-                      <div
-                        key={category}
-                        className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"
-                      >
-                        <div className="font-semibold text-slate-900">
-                          {humanizeCode(category)}
+            <div className="space-y-4">
+              <Card title={t('equipment.assetOverview', { defaultValue: 'Youth Academy assets' })}>
+                <p className="mb-4 text-xs leading-5 text-slate-500">
+                  {t('equipment.assetRestrictionHelp', {
+                    defaultValue:
+                      'The Youth Academy may own only Team Cars and Team Buses. These assets are paid from the Youth Academy budget and are separate from the senior-team fleet.',
+                  })}
+                </p>
+                {(equipmentData?.assets?.length ?? 0) === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">
+                    {t('equipment.noYouthAssets', { defaultValue: 'No Youth Academy transport assets owned yet.' })}
+                  </div>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {(equipmentData?.assets ?? []).map(asset => (
+                      <div key={asset.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="font-medium text-slate-900">{asset.asset_name}</div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {humanizeCode(asset.asset_key)} · {t('equipment.level', { value: asset.asset_level, defaultValue: 'Level {{value}}' })}
+                            </div>
+                          </div>
+                          <span className="rounded-full bg-white px-2.5 py-1 text-xs text-slate-700">
+                            ×{asset.quantity}
+                          </span>
                         </div>
-                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <div className="text-slate-500">
-                              {t('equipment.items', { defaultValue: 'Items' })}
-                            </div>
-                            <div className="mt-1 font-semibold">{group.count}</div>
-                          </div>
-                          <div>
-                            <div className="text-slate-500">{t('equipment.quality')}</div>
-                            <div className="mt-1 font-semibold">
-                              {Math.round(group.quality / group.count)}
-                            </div>
-                          </div>
+                        <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
                           <div>
                             <div className="text-slate-500">{t('equipment.condition')}</div>
-                            <div className="mt-1 font-semibold">
-                              {Math.round(group.condition / group.count)}%
-                            </div>
+                            <div className="mt-1 font-medium">{Math.round(Number(asset.condition_percent))}%</div>
                           </div>
                           <div>
-                            <div className="text-slate-500">
-                              {t('equipment.invested', { defaultValue: 'Invested' })}
-                            </div>
-                            <div className="mt-1 font-semibold">{money(group.value)}</div>
+                            <div className="text-slate-500">{t('equipment.invested', { defaultValue: 'Invested' })}</div>
+                            <div className="mt-1 font-medium">{money(asset.purchase_cost_total)}</div>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                )
-              })()}
+                )}
+              </Card>
+
+              <Card title={t('equipment.assetMarket', { defaultValue: 'Youth transport market' })}>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {(equipmentData?.asset_catalog ?? []).map(asset => {
+                    const actionKey = `asset:${asset.asset_key}:${asset.asset_level}`
+                    return (
+                      <div key={actionKey} className="rounded-xl border border-slate-200 bg-white p-4">
+                        <div className="font-medium text-slate-900">{asset.asset_name}</div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {humanizeCode(asset.asset_key)} · {t('equipment.level', { value: asset.asset_level, defaultValue: 'Level {{value}}' })}
+                        </div>
+                        <div className="mt-3 text-sm font-medium">{money(asset.cost)}</div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {t('equipment.deliveryDays', {
+                            count: asset.delivery_game_days,
+                            defaultValue: '{{count}} game days delivery',
+                          })}
+                        </div>
+                        {equipmentData?.equipment_decider !== 'academy_director' &&
+                        !equipmentData?.temporary_cover ? (
+                          <button
+                            type="button"
+                            disabled={data.read_only || equipmentAction !== null}
+                            onClick={() => void purchaseYouthAsset(asset)}
+                            className="mt-4 w-full rounded-md bg-yellow-400 px-3 py-2 text-sm font-medium text-black disabled:opacity-50"
+                          >
+                            {equipmentAction === actionKey
+                              ? t('equipment.purchasing')
+                              : t('equipment.purchase')}
+                          </button>
+                        ) : null}
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
+            </div>
+          ) : null}
+
+          {equipmentInnerTab === 'race-supplies' ? (
+            <Card title={t('equipment.raceSupplies', { defaultValue: 'Youth Academy race supplies' })}>
+              <p className="mb-4 text-xs leading-5 text-slate-500">
+                {t('equipment.raceSuppliesHelp', {
+                  defaultValue:
+                    'The Youth Academy uses the same supply categories as the senior team: bottles, gels, nutrition packs, complete race jerseys and rain jackets. Purchases come from the Youth Academy budget.',
+                })}
+              </p>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {(equipmentData?.race_supplies ?? []).map(item => {
+                  const actionKey = `supply:${item.catalog_item_id}`
+                  const imageUrl =
+                    typeof item.metadata?.image_url === 'string'
+                      ? item.metadata.image_url
+                      : null
+                  return (
+                    <div key={item.supply_key} className="rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-start gap-3">
+                        {imageUrl ? (
+                          <img src={imageUrl} alt="" className="h-12 w-12 rounded-lg object-contain" />
+                        ) : null}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-slate-900">{item.display_name}</div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            {t('equipment.inStock', {
+                              count: item.quantity_available,
+                              defaultValue: '{{count}} in stock',
+                            })}
+                          </div>
+                        </div>
+                        <div className="text-sm font-medium">{money(item.unit_price)}</div>
+                      </div>
+                      {equipmentData?.equipment_decider !== 'academy_director' &&
+                      !equipmentData?.temporary_cover ? (
+                        <div className="mt-4 flex items-end gap-2">
+                          <label className="min-w-0 flex-1 text-xs text-slate-600">
+                            {t('equipment.quantity', { defaultValue: 'Quantity' })}
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={raceSupplyQuantities[item.catalog_item_id] ?? 10}
+                              onChange={event =>
+                                setRaceSupplyQuantities(current => ({
+                                  ...current,
+                                  [item.catalog_item_id]: Number(event.target.value || 1),
+                                }))
+                              }
+                              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            disabled={data.read_only || equipmentAction !== null}
+                            onClick={() => void purchaseYouthRaceSupply(item)}
+                            className="rounded-md bg-yellow-400 px-4 py-2 text-sm font-medium text-black disabled:opacity-50"
+                          >
+                            {equipmentAction === actionKey
+                              ? t('equipment.purchasing')
+                              : t('equipment.purchase')}
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-xs leading-5 text-slate-500">
+                          {t('equipment.staffManagedPurchase', {
+                            defaultValue:
+                              'Purchasing is delegated. Staff will restock this item only when stock is below the operational target and the safety reserve remains intact.',
+                          })}
+                        </p>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </Card>
           ) : null}
         </div>
