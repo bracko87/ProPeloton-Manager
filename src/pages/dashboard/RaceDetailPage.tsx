@@ -3757,8 +3757,9 @@ function normalizeRaceRewardsOverview(value: unknown): RaceRewardsOverviewPayloa
 
 function formatCash(value?: number | null): string {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return '—'
-
-  return `$${new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(Number(value))}`
+  const amount = Math.round(Number(value))
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function formatGameDateFromParts(
