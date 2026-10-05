@@ -123,9 +123,9 @@ type YouthRaceDetailPayload = {
     ranking_points?: number
   }>
   classifications: {
-    sprint: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; points: number }>
-    mountain: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; points: number }>
-    time_trial: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; points: number }>
+    sprint: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; jersey_url?: string | null; points: number }>
+    mountain: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; jersey_url?: string | null; points: number }>
+    time_trial: Array<{ rider_id: string; rider_name: string; country_code: string; academy_name: string; jersey_url?: string | null; points: number }>
   }
   team_results: Array<{
     team_position: number
@@ -763,7 +763,13 @@ export default function YouthRaceDetailPage(): JSX.Element {
                       {rows.map((row, index) => (
                         <div key={row.rider_id} className="grid grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
                           <strong>#{index + 1}</strong>
-                          <span>{row.rider_name}</span>
+                          <span className="flex min-w-0 items-center gap-2">
+                            <JerseyThumb url={row.jersey_url} name={row.academy_name} />
+                            <span className="min-w-0">
+                              <span className="block truncate font-medium">{row.rider_name}</span>
+                              <span className="block truncate text-xs text-slate-500">{row.academy_name}</span>
+                            </span>
+                          </span>
                           <span className="font-medium">{row.points} pts</span>
                         </div>
                       ))}
