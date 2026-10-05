@@ -2900,6 +2900,12 @@ export default function YouthAcademyPage(): JSX.Element {
                                 }
                                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
                               />
+                              <span className="mt-1.5 block text-[11px] leading-4 text-slate-500">
+                                {t('scouting.weeklyStipendHelp', {
+                                  defaultValue:
+                                    'Recurring weekly cash support paid to the rider/family while the rider is in your Academy.',
+                                })}
+                              </span>
                             </label>
                             <label className="text-xs text-slate-600">
                               {t('scouting.accommodation')}
@@ -2918,6 +2924,12 @@ export default function YouthAcademyPage(): JSX.Element {
                                 }
                                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
                               />
+                              <span className="mt-1.5 block text-[11px] leading-4 text-slate-500">
+                                {t('scouting.accommodationHelp', {
+                                  defaultValue:
+                                    'Recurring weekly housing/relocation support. It is added to the stipend when calculating the rider’s weekly Academy cost.',
+                                })}
+                              </span>
                             </label>
                             <label className="text-xs text-slate-600">
                               {t('scouting.compensationOffer')}
@@ -2936,11 +2948,33 @@ export default function YouthAcademyPage(): JSX.Element {
                                 }
                                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 disabled:bg-slate-100"
                               />
+                              <span className="mt-1.5 block text-[11px] leading-4 text-slate-500">
+                                {report.target_kind === 'academy'
+                                  ? t('scouting.compensationOfferHelp', {
+                                      defaultValue:
+                                        'One-time development fee paid to the rider’s current Academy if the transfer is accepted. It is not a weekly cost.',
+                                    })
+                                  : t('scouting.compensationOfferUnattachedHelp', {
+                                      defaultValue:
+                                        'No Academy compensation is due for an unattached rider, so this value is fixed at 0.',
+                                    })}
+                              </span>
                             </label>
                           </div>
                           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                             <p className="max-w-2xl text-xs leading-5 text-slate-500">
-                              {t('scouting.offerHelp')}
+                              {t('scouting.offerCostSummary', {
+                                weekly: money(
+                                  Math.max(0, Number(draft.stipend || 0)) +
+                                    Math.max(0, Number(draft.accommodation || 0))
+                                ),
+                                compensation:
+                                  report.target_kind === 'academy'
+                                    ? money(Math.max(0, Number(draft.compensation || 0)))
+                                    : money(0),
+                                defaultValue:
+                                  'Weekly Academy cost: {{weekly}} (stipend + accommodation). One-time Academy compensation: {{compensation}}. The rider/family also consider location, staff quality and the overall support package.',
+                              })}
                             </p>
                             <button
                               type="button"
