@@ -116,6 +116,7 @@ import {
   useAuth,
 } from './context/AuthProvider'
 import SiteAnalyticsTracker from './components/analytics/SiteAnalyticsTracker'
+import LocaleDateFormattingBridge from './components/i18n/LocaleDateFormattingBridge'
 import { useAppAdmin } from './hooks/useAppAdmin'
 import {
   validateTeamRankingConfig,
@@ -389,6 +390,7 @@ export default function App(): JSX.Element {
     <AuthProvider>
       <HashRouter>
         <SiteAnalyticsTracker />
+        <LocaleDateFormattingBridge />
         <Routes>
           {/* Public / account routes */}
           <Route
