@@ -4866,9 +4866,9 @@ export default function YouthAcademyPage(): JSX.Element {
                     <option value="all">
                       {t('calendar.allCompetitions', { defaultValue: 'All competitions' })}
                     </option>
-                    <option value="world">{t('calendar.competition.world')}</option>
-                    <option value="continental">{t('calendar.competition.continental')}</option>
-                    <option value="regional">{t('calendar.competition.regional')}</option>
+                    <option value="world">{competitionClassLabel('world')}</option>
+                    <option value="continental">{competitionClassLabel('continental')}</option>
+                    <option value="regional">{competitionClassLabel('regional')}</option>
                   </select>
                   <select
                     value={calendarScope}
@@ -4998,8 +4998,8 @@ export default function YouthAcademyPage(): JSX.Element {
                           </div>
                           <div className="mt-1 text-xs text-slate-500">
                             {race.host_city
-                              ? `${race.host_city} · ${humanize(race.terrain_type)} · ${race.distance_km} km`
-                              : `${humanize(race.terrain_type)} · ${race.distance_km} km`}
+                              ? `${race.host_city} · ${humanize(race.terrain_type)} · ${race.distance_km} km${raceDays > 1 ? ' / stage' : ''}`
+                              : `${humanize(race.terrain_type)} · ${race.distance_km} km${raceDays > 1 ? ' / stage' : ''}`}
                           </div>
                         </div>
 
