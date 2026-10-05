@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Crown, GraduationCap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { getInfrastructureAssetImageUrl } from './infrastructure/infrastructureAssetImages'
 
 type AcademyRider = {
   id: string
@@ -190,17 +191,28 @@ type YouthFinancePayload = {
 
 type YouthEquipmentCatalogItem = {
   id: string
+  item_key?: string
   display_name: string
   equipment_category: string
   tier: number
   quality_score: number
   durability_score: number
   price: number
+  effects?: Record<string, unknown>
+  metadata?: Record<string, unknown>
+  image_url?: string | null
+  terrain_role?: string | null
+  brand_name?: string | null
+  brand_logo_url?: string | null
+  owned_count?: number
+  category_owned_count?: number
+  category_cap?: number
 }
 
 type YouthEquipmentInventoryItem = {
   id: string
   catalog_item_id: string
+  item_key?: string
   display_name: string
   equipment_category: string
   quality_score: number
@@ -209,10 +221,16 @@ type YouthEquipmentInventoryItem = {
   purchase_cost: number
   status: string
   purchased_on: string
+  effects?: Record<string, unknown>
+  image_url?: string | null
+  terrain_role?: string | null
+  brand_name?: string | null
+  brand_logo_url?: string | null
+  metadata?: Record<string, unknown>
 }
 
 type YouthAssetCatalogItem = {
-  asset_key: 'team_car' | 'team_bus'
+  asset_key: 'team_car' | 'team_bus' | 'equipment_van'
   asset_level: number
   asset_name: string
   cost: number
@@ -223,7 +241,7 @@ type YouthAssetCatalogItem = {
 
 type YouthAssetItem = {
   id: string
-  asset_key: 'team_car' | 'team_bus'
+  asset_key: 'team_car' | 'team_bus' | 'equipment_van'
   asset_level: number
   asset_name: string
   quantity: number
@@ -243,6 +261,20 @@ type YouthRaceSupplyItem = {
   unit_price: number
   last_purchased_game_date?: string | null
   metadata?: Record<string, unknown>
+}
+
+type YouthRaceEquipmentSetup = {
+  race_type: 'flat' | 'hilly' | 'mountain' | 'time_trial'
+  frame_catalog_item_id?: string | null
+  wheelset_catalog_item_id?: string | null
+  tires_catalog_item_id?: string | null
+  groupset_catalog_item_id?: string | null
+  helmet_catalog_item_id?: string | null
+  shoes_catalog_item_id?: string | null
+  configured_by_staff_id?: string | null
+  configured_by: string
+  quality_penalty_percent: number
+  configured_on: string
 }
 
 type YouthEquipmentPayload = {
@@ -266,6 +298,13 @@ type YouthEquipmentPayload = {
     metadata?: Record<string, unknown>
   }>
   race_supplies?: YouthRaceSupplyItem[]
+  durable_category_cap?: number
+  asset_caps?: {
+    team_car: number
+    team_bus: number
+    equipment_van: number
+  }
+  race_setups?: YouthRaceEquipmentSetup[]
 }
 
 type YouthGraduation = {
@@ -741,6 +780,8 @@ export default function YouthAcademyPage(): JSX.Element {
   const [budgetTransferLoading, setBudgetTransferLoading] = useState(false)
   const [equipmentData, setEquipmentData] = useState<YouthEquipmentPayload | null>(null)
   const [equipmentInnerTab, setEquipmentInnerTab] = useState<YouthEquipmentInnerTab>('overview')
+  const [equipmentMarketCategory, setEquipmentMarketCategory] = useState('all')
+  const [assetMarketOpen, setAssetMarketOpen] = useState(false)
   const [raceSupplyQuantities, setRaceSupplyQuantities] = useState<Record<string, number>>({})
   const [temporaryCovers, setTemporaryCovers] = useState<YouthTemporaryCover[]>([])
   const [temporaryCoverAction, setTemporaryCoverAction] = useState<string | null>(null)
@@ -771,6 +812,16 @@ export default function YouthAcademyPage(): JSX.Element {
   const [raceReportFrequency, setRaceReportFrequency] = useState<
     'every_race' | 'important_only' | 'podium_exceptional' | 'problems_only' | 'never'
   >('important_only')
+
+  const competitionClassLabel = (
+    competitionClass: YouthCompetitionClass | null | undefined
+  ): string => {
+    if (competitionClass === 'world') {
+      return t('calendar.competition.worldClass', { defaultValue: 'World Class' })
+    }
+    if (competitionClass === 'continental') return t('calendar.competition.continental')
+    return t('calendar.competition.regional')
+  }
 
   const competitionLabel = (
     competitionClass: YouthCompetitionClass | null | undefined,
@@ -1081,6 +1132,24 @@ export default function YouthAcademyPage(): JSX.Element {
       setError(coverError?.message ?? t('errors.save'))
     } finally {
       setTemporaryCoverAction(null)
+    }
+  }
+
+  const configureYouthEquipmentSetups = async (): Promise<void> => {
+    if (data?.read_only || equipmentAction) return
+    setEquipmentAction('race-setups')
+    setError(null)
+    try {
+      const { data: payload, error: setupError } = await supabase.rpc(
+        'configure_my_youth_equipment_setups_v1'
+      )
+      if (setupError) throw setupError
+      setEquipmentData(payload as YouthEquipmentPayload)
+    } catch (setupError: any) {
+      console.error('Youth Academy race equipment setup failed:', setupError)
+      setError(setupError?.message ?? t('errors.equipmentPurchase'))
+    } finally {
+      setEquipmentAction(null)
     }
   }
 
@@ -2101,7 +2170,9 @@ export default function YouthAcademyPage(): JSX.Element {
                           onClick={() => void decideGraduation(item, 'release')}
                           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium disabled:opacity-50"
                         >
-                          {t('graduation.release')}
+                          {t('graduation.releaseToFreeAgents', {
+                            defaultValue: 'Release to Free Agents',
+                          })}
                         </button>
                       </div>
                     </div>
@@ -3876,7 +3947,7 @@ export default function YouthAcademyPage(): JSX.Element {
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
                     {t('equipment.assetsOwnedHelp', {
-                      defaultValue: 'Youth Academy assets are limited to Team Cars and Team Buses.',
+                      defaultValue: 'Youth Academy assets are limited to 3 Team Cars, 1 Team Bus and 1 Equipment Van.',
                     })}
                   </p>
                 </Card>
@@ -3910,6 +3981,115 @@ export default function YouthAcademyPage(): JSX.Element {
                   </div>
                 </Card>
               </div>
+
+              <Card
+                title={t('equipment.raceSetupsTitle', {
+                  defaultValue: 'Race equipment configurations',
+                })}
+                right={
+                  equipmentData?.equipment_decider === 'manager' &&
+                  !equipmentData?.temporary_cover ? (
+                    <button
+                      type="button"
+                      disabled={data.read_only || equipmentAction !== null}
+                      onClick={() => void configureYouthEquipmentSetups()}
+                      className="rounded-md bg-yellow-400 px-3 py-1.5 text-xs font-medium text-black disabled:opacity-50"
+                    >
+                      {equipmentAction === 'race-setups'
+                        ? t('equipment.configuringSetups', { defaultValue: 'Configuring…' })
+                        : t('equipment.configureSetups', { defaultValue: 'Configure setups' })}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      {t('equipment.staffConfiguresSetups', {
+                        defaultValue: 'Managed by the Equipment responsible person',
+                      })}
+                    </span>
+                  )
+                }
+              >
+                <p className="mb-4 text-xs leading-5 text-slate-500">
+                  {t('equipment.raceSetupsHelp', {
+                    defaultValue:
+                      'One Youth Academy setup is maintained for Flat, Hilly, Mountain and Time Trial races. The Equipment responsible person selects the best owned combination for each race type.',
+                  })}
+                </p>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {(['flat', 'hilly', 'mountain', 'time_trial'] as const).map(raceType => {
+                    const setup = equipmentData?.race_setups?.find(
+                      item => item.race_type === raceType
+                    )
+                    const categories = [
+                      ['frame', setup?.frame_catalog_item_id],
+                      ['wheelset', setup?.wheelset_catalog_item_id],
+                      ['tires', setup?.tires_catalog_item_id],
+                      ['groupset', setup?.groupset_catalog_item_id],
+                      ['helmet', setup?.helmet_catalog_item_id],
+                      ['shoes', setup?.shoes_catalog_item_id],
+                    ] as const
+                    const configuredCount = categories.filter(([, id]) => Boolean(id)).length
+
+                    return (
+                      <div
+                        key={raceType}
+                        className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="font-semibold text-slate-900">
+                              {raceType === 'time_trial'
+                                ? t('equipment.raceTypes.timeTrial', { defaultValue: 'Time Trial' })
+                                : humanizeCode(raceType)}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {t('equipment.setupItemsConfigured', {
+                                configured: configuredCount,
+                                total: 6,
+                                defaultValue: '{{configured}} / {{total}} categories configured',
+                              })}
+                            </div>
+                          </div>
+                          {setup?.quality_penalty_percent ? (
+                            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                              -{setup.quality_penalty_percent}%
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="mt-3 space-y-1.5 text-xs">
+                          {categories.map(([category, catalogId]) => {
+                            const item = equipmentData?.catalog?.find(
+                              candidate => candidate.id === catalogId
+                            )
+                            return (
+                              <div
+                                key={category}
+                                className="flex items-center justify-between gap-2"
+                              >
+                                <span className="text-slate-500">{humanizeCode(category)}</span>
+                                <span className="max-w-[62%] truncate font-medium text-slate-800">
+                                  {item?.display_name ??
+                                    t('equipment.notOwnedYet', { defaultValue: 'Not owned yet' })}
+                                </span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div className="mt-3 border-t border-slate-200 pt-2 text-[11px] text-slate-500">
+                          {setup
+                            ? t('equipment.setupConfiguredBy', {
+                                person: setup.configured_by,
+                                date: gameDateLabel(setup.configured_on),
+                                defaultValue: 'Configured by {{person}} · {{date}}',
+                              })
+                            : t('equipment.setupPending', {
+                                defaultValue: 'Waiting for enough owned equipment.',
+                              })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
             </div>
           ) : null}
 
@@ -3918,8 +4098,9 @@ export default function YouthAcademyPage(): JSX.Element {
               title={t('equipment.inventory')}
               right={
                 <span className="text-xs text-slate-500">
-                  {t('equipment.itemsOwned', {
-                    count: equipmentData?.inventory?.length ?? 0,
+                  {t('equipment.categoryCap', {
+                    cap: equipmentData?.durable_category_cap ?? 22,
+                    defaultValue: 'Maximum {{cap}} per category',
                   })}
                 </span>
               }
@@ -3927,31 +4108,92 @@ export default function YouthAcademyPage(): JSX.Element {
               {(equipmentData?.inventory?.length ?? 0) === 0 ? (
                 <div className="text-sm text-slate-500">{t('equipment.noInventory')}</div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[720px] text-left text-sm">
-                    <thead className="bg-slate-50 text-xs text-slate-500">
-                      <tr>
-                        <th className="px-3 py-3">{t('equipment.item')}</th>
-                        <th className="px-3 py-3">{t('equipment.category')}</th>
-                        <th className="px-3 py-3">{t('equipment.quality')}</th>
-                        <th className="px-3 py-3">{t('equipment.condition')}</th>
-                        <th className="px-3 py-3 text-right">{t('equipment.cost')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {(equipmentData?.inventory ?? []).map(item => (
-                        <tr key={item.id}>
-                          <td className="px-3 py-3 font-medium">{item.display_name}</td>
-                          <td className="px-3 py-3">{humanizeCode(item.equipment_category)}</td>
-                          <td className="px-3 py-3">{item.quality_score}</td>
-                          <td className="px-3 py-3">
-                            {Number(item.condition_percent).toFixed(0)}%
-                          </td>
-                          <td className="px-3 py-3 text-right">{money(item.purchase_cost)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="space-y-3">
+                  {(equipmentData?.inventory ?? []).map(item => {
+                    const imageUrl =
+                      item.image_url ??
+                      (typeof item.metadata?.image_url === 'string'
+                        ? String(item.metadata.image_url)
+                        : null)
+                    return (
+                      <div
+                        key={item.id}
+                        className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-[150px_minmax(0,1fr)_180px] md:items-center"
+                      >
+                        <div className="flex h-28 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50 p-2">
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={item.display_name}
+                              loading="lazy"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          ) : (
+                            <span className="text-2xl font-semibold text-slate-300">
+                              {item.display_name
+                                .split(' ')
+                                .slice(0, 2)
+                                .map(part => part.charAt(0))
+                                .join('')}
+                            </span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                            {item.brand_name ??
+                              t('equipment.genericBrand', { defaultValue: 'Youth equipment' })}
+                          </div>
+                          <div className="mt-1 text-base font-semibold text-slate-900">
+                            {item.display_name}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-medium text-slate-700">
+                              {humanizeCode(item.equipment_category)}
+                            </span>
+                            {item.terrain_role ? (
+                              <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-1 font-medium text-blue-700">
+                                {humanizeCode(item.terrain_role)}
+                              </span>
+                            ) : null}
+                            <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-1 font-medium text-emerald-700">
+                              {t('equipment.conditionValue', {
+                                value: Math.round(Number(item.condition_percent)),
+                                defaultValue: '{{value}}% condition',
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 p-3 text-xs">
+                          <div>
+                            <div className="text-slate-400">{t('equipment.quality')}</div>
+                            <div className="mt-1 font-semibold text-slate-900">
+                              {item.quality_score}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-slate-400">{t('equipment.durability')}</div>
+                            <div className="mt-1 font-semibold text-slate-900">
+                              {item.durability_score}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-slate-400">{t('equipment.cost')}</div>
+                            <div className="mt-1 font-semibold text-slate-900">
+                              {money(item.purchase_cost)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-slate-400">
+                              {t('equipment.acquired', { defaultValue: 'Acquired' })}
+                            </div>
+                            <div className="mt-1 font-semibold text-slate-900">
+                              {gameDateLabel(item.purchased_on)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </Card>
@@ -3959,63 +4201,182 @@ export default function YouthAcademyPage(): JSX.Element {
 
           {equipmentInnerTab === 'market' ? (
             <Card title={t('equipment.catalog')}>
-              <p className="mb-4 text-xs leading-5 text-slate-500">
-                {equipmentData?.equipment_decider === 'academy_director'
-                  ? t('equipment.marketDelegated', {
-                      defaultValue:
-                        'Equipment purchasing is delegated to the Youth Academy Director. You can review the market here, while the Director uses the Academy budget and role bonus when filling equipment needs.',
-                    })
-                  : t('equipment.catalogHelp')}
-              </p>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {(equipmentData?.catalog ?? []).map(item => (
-                  <div
-                    key={item.id}
-                    className="rounded-xl border border-slate-200 bg-white p-4"
+              <div className="mb-4 flex flex-col gap-3 border-b border-slate-100 pb-4 lg:flex-row lg:items-end lg:justify-between">
+                <p className="max-w-3xl text-xs leading-5 text-slate-500">
+                  {equipmentData?.equipment_decider === 'academy_director' ||
+                  equipmentData?.temporary_cover
+                    ? t('equipment.marketDelegated', {
+                        defaultValue:
+                          'Equipment purchasing is delegated. You can review the Youth market here; the responsible staff member buys gradually, keeps a safety reserve, rotates models and never exceeds 22 items in a category.',
+                      })
+                    : t('equipment.catalogHelp')}
+                </p>
+                <label className="text-xs font-medium text-slate-500">
+                  {t('equipment.category', { defaultValue: 'Category' })}
+                  <select
+                    value={equipmentMarketCategory}
+                    onChange={event => setEquipmentMarketCategory(event.target.value)}
+                    className="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="font-semibold text-slate-900">
-                          {item.display_name}
+                    <option value="all">{t('equipment.allCategories', { defaultValue: 'All categories' })}</option>
+                    {['frame', 'wheelset', 'tires', 'groupset', 'helmet', 'shoes'].map(category => (
+                      <option key={category} value={category}>
+                        {humanizeCode(category)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="space-y-4">
+                {(equipmentData?.catalog ?? [])
+                  .filter(
+                    item =>
+                      equipmentMarketCategory === 'all' ||
+                      item.equipment_category === equipmentMarketCategory
+                  )
+                  .map(item => {
+                    const imageUrl =
+                      item.image_url ??
+                      (typeof item.metadata?.image_url === 'string'
+                        ? String(item.metadata.image_url)
+                        : null)
+                    const categoryCap =
+                      item.category_cap ?? equipmentData?.durable_category_cap ?? 22
+                    const categoryOwned = Number(item.category_owned_count ?? 0)
+                    const capReached = categoryOwned >= categoryCap
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-[190px_minmax(0,1fr)_190px] md:items-center"
+                      >
+                        <div className="flex h-36 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 p-3">
+                          {imageUrl ? (
+                            <img
+                              src={imageUrl}
+                              alt={item.display_name}
+                              loading="lazy"
+                              className="max-h-full max-w-full object-contain"
+                            />
+                          ) : (
+                            <span className="text-3xl font-semibold text-slate-300">
+                              {item.display_name
+                                .split(' ')
+                                .slice(0, 2)
+                                .map(part => part.charAt(0))
+                                .join('')}
+                            </span>
+                          )}
                         </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {humanizeCode(item.equipment_category)} · {t('equipment.tier', {
-                            tier: item.tier,
-                          })}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                            {item.brand_logo_url ? (
+                              <img
+                                src={item.brand_logo_url}
+                                alt=""
+                                className="h-5 w-5 object-contain"
+                              />
+                            ) : null}
+                            <span>{item.brand_name ?? t('equipment.genericBrand', { defaultValue: 'Youth equipment' })}</span>
+                          </div>
+                          <div className="mt-1 text-lg font-semibold text-slate-900">
+                            {item.display_name}
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 font-medium text-slate-700">
+                              {humanizeCode(item.equipment_category)}
+                            </span>
+                            {item.terrain_role ? (
+                              <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-1 font-medium text-blue-700">
+                                {humanizeCode(item.terrain_role)}
+                              </span>
+                            ) : null}
+                            <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-1 font-medium text-violet-700">
+                              {t('equipment.tier', { tier: item.tier })}
+                            </span>
+                          </div>
+                          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-500">
+                            <span>{t('equipment.quality')}: <strong className="text-slate-800">{item.quality_score}</strong></span>
+                            <span>{t('equipment.durability')}: <strong className="text-slate-800">{item.durability_score}</strong></span>
+                            <span>
+                              {t('equipment.ownedCategory', {
+                                owned: categoryOwned,
+                                cap: categoryCap,
+                                defaultValue: 'Category stock {{owned}} / {{cap}}',
+                              })}
+                            </span>
+                            <span>
+                              {t('equipment.thisModelOwned', {
+                                count: Number(item.owned_count ?? 0),
+                                defaultValue: 'This model ×{{count}}',
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex h-full flex-col justify-between rounded-xl bg-slate-50 p-4">
+                          <div>
+                            <div className="text-xs text-slate-400">
+                              {t('equipment.academyPrice', { defaultValue: 'Academy price' })}
+                            </div>
+                            <div className="mt-1 text-xl font-semibold text-slate-900">
+                              {money(item.price)}
+                            </div>
+                          </div>
+                          {capReached ? (
+                            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                              {t('equipment.categoryLimitReached', {
+                                cap: categoryCap,
+                                defaultValue: 'Category limit reached ({{cap}}).',
+                              })}
+                            </div>
+                          ) : equipmentData?.equipment_decider !== 'academy_director' &&
+                            !equipmentData?.temporary_cover ? (
+                            <button
+                              type="button"
+                              disabled={data.read_only || equipmentAction !== null}
+                              onClick={() => void purchaseEquipment(item)}
+                              className="mt-4 w-full rounded-md bg-yellow-400 px-3 py-2 text-sm font-medium text-black transition hover:bg-yellow-300 disabled:opacity-50"
+                            >
+                              {equipmentAction === item.id
+                                ? t('equipment.purchasing')
+                                : t('equipment.purchase')}
+                            </button>
+                          ) : (
+                            <div className="mt-4 text-xs leading-5 text-slate-500">
+                              {t('equipment.staffManagedPurchase', {
+                                defaultValue:
+                                  'Purchasing is delegated. Staff buy only when needed and rotate models for setup variety.',
+                              })}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="text-sm font-semibold">{money(item.price)}</div>
-                    </div>
-                    <div className="mt-3 flex gap-4 text-xs text-slate-500">
-                      <span>{t('equipment.quality')}: {item.quality_score}</span>
-                      <span>{t('equipment.durability')}: {item.durability_score}</span>
-                    </div>
-                    {equipmentData?.equipment_decider !== 'academy_director' &&
-                    !equipmentData?.temporary_cover ? (
-                      <button
-                        type="button"
-                        disabled={data.read_only || equipmentAction !== null}
-                        onClick={() => void purchaseEquipment(item)}
-                        className="mt-4 w-full rounded-md bg-yellow-400 px-3 py-2 text-sm font-medium text-black transition hover:bg-yellow-300 disabled:opacity-50"
-                      >
-                        {equipmentAction === item.id
-                          ? t('equipment.purchasing')
-                          : t('equipment.purchase')}
-                      </button>
-                    ) : null}
-                  </div>
-                ))}
+                    )
+                  })}
               </div>
             </Card>
           ) : null}
 
           {equipmentInnerTab === 'assets' ? (
             <div className="space-y-4">
-              <Card title={t('equipment.assetOverview', { defaultValue: 'Youth Academy assets' })}>
+              <Card
+                title={t('equipment.assetOverview', { defaultValue: 'Youth Academy assets' })}
+                right={
+                  <button
+                    type="button"
+                    onClick={() => setAssetMarketOpen(open => !open)}
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {assetMarketOpen
+                      ? t('equipment.hideAssetMarket', { defaultValue: 'Hide transport market' })
+                      : t('equipment.showAssetMarket', { defaultValue: 'Browse transport market' })}
+                  </button>
+                }
+              >
                 <p className="mb-4 text-xs leading-5 text-slate-500">
                   {t('equipment.assetRestrictionHelp', {
                     defaultValue:
-                      'The Youth Academy may own only Team Cars and Team Buses. These assets are paid from the Youth Academy budget and are separate from the senior-team fleet.',
+                      'The Youth Academy may own up to 3 Team Cars, 1 Team Bus and 1 Equipment Van. These assets are paid from the Youth Academy budget and are separate from the senior-team fleet.',
                   })}
                 </p>
                 {(equipmentData?.assets?.length ?? 0) === 0 ? (
@@ -4023,71 +4384,188 @@ export default function YouthAcademyPage(): JSX.Element {
                     {t('equipment.noYouthAssets', { defaultValue: 'No Youth Academy transport assets owned yet.' })}
                   </div>
                 ) : (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {(equipmentData?.assets ?? []).map(asset => (
-                      <div key={asset.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="font-medium text-slate-900">{asset.asset_name}</div>
-                            <div className="mt-1 text-xs text-slate-500">
-                              {humanizeCode(asset.asset_key)} · {t('equipment.level', { value: asset.asset_level, defaultValue: 'Level {{value}}' })}
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {(equipmentData?.assets ?? []).map(asset => {
+                      const imageUrl = getInfrastructureAssetImageUrl(
+                        asset.asset_key,
+                        asset.asset_level
+                      )
+                      const cap =
+                        equipmentData?.asset_caps?.[asset.asset_key] ??
+                        (asset.asset_key === 'team_car' ? 3 : 1)
+                      return (
+                        <div
+                          key={asset.id}
+                          className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                        >
+                          <div className="flex h-40 items-center justify-center bg-slate-50 p-3">
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt={asset.asset_name}
+                                loading="lazy"
+                                className="max-h-full max-w-full object-contain"
+                              />
+                            ) : (
+                              <span className="text-5xl" aria-hidden="true">
+                                {asset.asset_key === 'team_bus'
+                                  ? '🚌'
+                                  : asset.asset_key === 'equipment_van'
+                                    ? '🚐'
+                                    : '🚗'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="font-semibold text-slate-900">
+                                  {asset.asset_name}
+                                </div>
+                                <div className="mt-1 text-xs text-slate-500">
+                                  {humanizeCode(asset.asset_key)} ·{' '}
+                                  {t('equipment.level', {
+                                    value: asset.asset_level,
+                                    defaultValue: 'Level {{value}}',
+                                  })}
+                                </div>
+                              </div>
+                              <span className="rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700">
+                                ×{asset.quantity} / {cap}
+                              </span>
+                            </div>
+                            <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                              <div className="rounded-lg bg-slate-50 p-2.5">
+                                <div className="text-slate-400">{t('equipment.condition')}</div>
+                                <div className="mt-1 font-semibold text-slate-900">
+                                  {Math.round(Number(asset.condition_percent))}%
+                                </div>
+                              </div>
+                              <div className="rounded-lg bg-slate-50 p-2.5">
+                                <div className="text-slate-400">
+                                  {t('equipment.invested', { defaultValue: 'Invested' })}
+                                </div>
+                                <div className="mt-1 font-semibold text-slate-900">
+                                  {money(asset.purchase_cost_total)}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <span className="rounded-full bg-white px-2.5 py-1 text-xs text-slate-700">
-                            ×{asset.quantity}
-                          </span>
                         </div>
-                        <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <div className="text-slate-500">{t('equipment.condition')}</div>
-                            <div className="mt-1 font-medium">{Math.round(Number(asset.condition_percent))}%</div>
-                          </div>
-                          <div>
-                            <div className="text-slate-500">{t('equipment.invested', { defaultValue: 'Invested' })}</div>
-                            <div className="mt-1 font-medium">{money(asset.purchase_cost_total)}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </Card>
 
-              <Card title={t('equipment.assetMarket', { defaultValue: 'Youth transport market' })}>
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  {(equipmentData?.asset_catalog ?? []).map(asset => {
-                    const actionKey = `asset:${asset.asset_key}:${asset.asset_level}`
-                    return (
-                      <div key={actionKey} className="rounded-xl border border-slate-200 bg-white p-4">
-                        <div className="font-medium text-slate-900">{asset.asset_name}</div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {humanizeCode(asset.asset_key)} · {t('equipment.level', { value: asset.asset_level, defaultValue: 'Level {{value}}' })}
+              {assetMarketOpen ? (
+                <Card title={t('equipment.assetMarket', { defaultValue: 'Youth transport market' })}>
+                  <div className="space-y-4">
+                    {(equipmentData?.asset_catalog ?? []).map(asset => {
+                      const actionKey = `asset:${asset.asset_key}:${asset.asset_level}`
+                      const imageUrl = getInfrastructureAssetImageUrl(
+                        asset.asset_key,
+                        asset.asset_level
+                      )
+                      const cap =
+                        equipmentData?.asset_caps?.[asset.asset_key] ??
+                        asset.max_total_quantity
+                      const owned = (equipmentData?.assets ?? [])
+                        .filter(item => item.asset_key === asset.asset_key)
+                        .reduce((sum, item) => sum + Number(item.quantity ?? 0), 0)
+                      const atCap = owned >= cap
+
+                      return (
+                        <div
+                          key={actionKey}
+                          className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-[220px_minmax(0,1fr)_180px] md:items-center"
+                        >
+                          <div className="flex h-36 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 p-3">
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt={asset.asset_name}
+                                loading="lazy"
+                                className="max-h-full max-w-full object-contain"
+                              />
+                            ) : (
+                              <span className="text-5xl" aria-hidden="true">
+                                {asset.asset_key === 'team_bus'
+                                  ? '🚌'
+                                  : asset.asset_key === 'equipment_van'
+                                    ? '🚐'
+                                    : '🚗'}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold text-slate-900">
+                              {asset.asset_name}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {humanizeCode(asset.asset_key)} ·{' '}
+                              {t('equipment.level', {
+                                value: asset.asset_level,
+                                defaultValue: 'Level {{value}}',
+                              })}
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+                              <span>
+                                {t('equipment.deliveryDays', {
+                                  count: asset.delivery_game_days,
+                                  defaultValue: '{{count}} game days delivery',
+                                })}
+                              </span>
+                              <span>
+                                {t('equipment.assetOwnedCount', {
+                                  owned,
+                                  cap,
+                                  defaultValue: 'Owned {{owned}} / {{cap}}',
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="rounded-xl bg-slate-50 p-4">
+                            <div className="text-xs text-slate-400">
+                              {t('equipment.academyPrice', { defaultValue: 'Academy price' })}
+                            </div>
+                            <div className="mt-1 text-xl font-semibold text-slate-900">
+                              {money(asset.cost)}
+                            </div>
+                            {atCap ? (
+                              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                                {t('equipment.assetLimitReached', {
+                                  cap,
+                                  defaultValue: 'Asset limit reached ({{cap}}).',
+                                })}
+                              </div>
+                            ) : equipmentData?.equipment_decider !== 'academy_director' &&
+                              !equipmentData?.temporary_cover ? (
+                              <button
+                                type="button"
+                                disabled={data.read_only || equipmentAction !== null}
+                                onClick={() => void purchaseYouthAsset(asset)}
+                                className="mt-3 w-full rounded-md bg-yellow-400 px-3 py-2 text-sm font-medium text-black disabled:opacity-50"
+                              >
+                                {equipmentAction === actionKey
+                                  ? t('equipment.purchasing')
+                                  : t('equipment.purchase')}
+                              </button>
+                            ) : (
+                              <p className="mt-3 text-xs leading-5 text-slate-500">
+                                {t('equipment.staffManagedPurchase', {
+                                  defaultValue:
+                                    'Asset purchasing is delegated to the Equipment responsible person.',
+                                })}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="mt-3 text-sm font-medium">{money(asset.cost)}</div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {t('equipment.deliveryDays', {
-                            count: asset.delivery_game_days,
-                            defaultValue: '{{count}} game days delivery',
-                          })}
-                        </div>
-                        {equipmentData?.equipment_decider !== 'academy_director' &&
-                        !equipmentData?.temporary_cover ? (
-                          <button
-                            type="button"
-                            disabled={data.read_only || equipmentAction !== null}
-                            onClick={() => void purchaseYouthAsset(asset)}
-                            className="mt-4 w-full rounded-md bg-yellow-400 px-3 py-2 text-sm font-medium text-black disabled:opacity-50"
-                          >
-                            {equipmentAction === actionKey
-                              ? t('equipment.purchasing')
-                              : t('equipment.purchase')}
-                          </button>
-                        ) : null}
-                      </div>
-                    )
-                  })}
-                </div>
-              </Card>
+                      )
+                    })}
+                  </div>
+                </Card>
+              ) : null}
             </div>
           ) : null}
 
@@ -4454,22 +4932,34 @@ export default function YouthAcademyPage(): JSX.Element {
                 const isManagerSquad =
                   raceCalendar?.race_squad_decider === 'manager' && !hasRaceSquadCover
                 const isEntered = race.entry_status === 'entered'
-                const isCompleted = race.status === 'completed'
+                const currentGameDate = String(raceCalendar?.game_date ?? '').slice(0, 10)
+                const raceStartDate = String(race.race_date ?? '').slice(0, 10)
+                const raceEndDate = String(race.race_end_date ?? race.race_date ?? '').slice(0, 10)
+                const isActive =
+                  Boolean(currentGameDate) &&
+                  currentGameDate >= raceStartDate &&
+                  currentGameDate <= raceEndDate &&
+                  race.status !== 'completed'
+                const isCompleted =
+                  race.status === 'completed' ||
+                  (Boolean(currentGameDate) && currentGameDate > raceEndDate)
                 const isPastPrelaunch = race.status === 'cancelled' && race.prelaunch_past === true
-                const isScheduled = race.status === 'scheduled'
+                const isScheduled = !isActive && !isCompleted
 
                 const isExpanded = calendarExpandedRaceId === race.id
                 const statusLabel = isCompleted
-                  ? t('calendar.raceFinished', { defaultValue: 'Race finished' })
-                  : isEntered
-                    ? t('calendar.entered', { defaultValue: 'Entered' })
-                    : isPastPrelaunch
-                      ? t('calendar.pastPrelaunch', { defaultValue: 'Past · pre-launch' })
-                      : t('calendar.scheduled', { defaultValue: 'Scheduled' })
+                  ? t('calendar.finished', { defaultValue: 'Finished' })
+                  : isActive
+                    ? t('calendar.active', { defaultValue: 'Active' })
+                    : t('calendar.scheduled', { defaultValue: 'Scheduled' })
+                const raceDays = Math.max(1, Number(race.race_days ?? 1))
                 const formatLabel =
-                  race.race_days && race.race_days > 1
-                    ? t('calendar.stageRace', { defaultValue: 'Stage Race' })
-                    : t('calendar.oneDay')
+                  raceDays === 1
+                    ? t('calendar.oneDay', { defaultValue: '1 Day' })
+                    : t('calendar.multiDay', {
+                        count: raceDays,
+                        defaultValue: '{{count}} Days',
+                      })
                 const hostFlag = flagUrl(race.host_country_code)
 
                 return (
@@ -4516,14 +5006,14 @@ export default function YouthAcademyPage(): JSX.Element {
                           <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                             isCompleted
                               ? 'bg-slate-100 text-slate-700'
-                              : isEntered
+                              : isActive
                                 ? 'bg-emerald-50 text-emerald-700'
                                 : 'bg-amber-50 text-amber-800'
                           }`}>
                             {statusLabel}
                           </span>
                           <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">
-                            {competitionLabel(race.competition_class, race.division_code)}
+                            {competitionClassLabel(race.competition_class)}
                           </span>
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                             {formatLabel}
