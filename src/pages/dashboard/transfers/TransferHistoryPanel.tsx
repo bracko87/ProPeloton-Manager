@@ -48,7 +48,7 @@ function formatCurrency(
   if (value == null || Number.isNaN(value)) return '—'
   const amount = Math.round(Number(value))
   const sign = amount < 0 ? '-' : ''
-  return sign + '
+  return sign + String.fromCharCode(36) + Math.abs(amount).toLocaleString('en-US')
 }
 
 function formatHistoryGameDate(
