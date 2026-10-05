@@ -5,13 +5,7 @@ set deleted_at=coalesce(un.deleted_at,now())
 from public.notifications n
 where un.notification_id=n.id
   and n.payload_json ? 'rider_id'
-  and (
-    n.title ilike '%selected for National Championship%'
-    or upper(coalesce(n.type_code,'')) in (
-      'CHAMPIONSHIP_PARTICIPATION_REQUIRED',
-      'NATIONAL_CHAMPIONSHIP_SELECTED'
-    )
-  );
+  and n.title ilike '%selected for National Championship%';
 
 do $block$
 declare x record;
