@@ -4936,12 +4936,13 @@ export default function YouthAcademyPage(): JSX.Element {
                 const raceStartDate = String(race.race_date ?? '').slice(0, 10)
                 const raceEndDate = String(race.race_end_date ?? race.race_date ?? '').slice(0, 10)
                 const isActive =
+                  race.status === 'scheduled' &&
                   Boolean(currentGameDate) &&
                   currentGameDate >= raceStartDate &&
-                  currentGameDate <= raceEndDate &&
-                  race.status !== 'completed'
+                  currentGameDate <= raceEndDate
                 const isCompleted =
                   race.status === 'completed' ||
+                  race.status === 'cancelled' ||
                   (Boolean(currentGameDate) && currentGameDate > raceEndDate)
                 const isPastPrelaunch = race.status === 'cancelled' && race.prelaunch_past === true
                 const isScheduled = !isActive && !isCompleted
