@@ -21,6 +21,7 @@ type YouthRaceDetailPayload = {
     terrain_type: string
     distance_km: number
     entry_cost: number
+    entry_fee?: number
     prize_fund_cash: number
     lineup_size: number
     team_limit: number
@@ -38,6 +39,8 @@ type YouthRaceDetailPayload = {
     distance_km: number
     planned_start_time_label?: string | null
     start_time_region_code?: string | null
+    start_city?: string | null
+    finish_city?: string | null
     sprint_points_total: number
     mountain_points_total: number
     time_trial_points_total: number
@@ -49,6 +52,7 @@ type YouthRaceDetailPayload = {
       country_code: string
       academy_id: string
       academy_name: string
+      jersey_url?: string | null
       result_status: string
       gap_seconds?: number | null
       time_seconds?: number | null
@@ -64,11 +68,19 @@ type YouthRaceDetailPayload = {
     entered_by: string
     strategy: 'conservative' | 'balanced' | 'aggressive'
     race_squad_decider: 'manager' | 'u16_head_coach'
+    entry_fee?: number
+    travel_cost_total?: number
+    accommodation_cost_total?: number
+    logistics_cost_total?: number
+    staff_accommodation_cost_total?: number
+    equipment_support_cost_total?: number
+    total_participation_cost?: number
   }
   teams: Array<{
     academy_id: string
     club_name: string
     country_code: string
+    jersey_url?: string | null
     is_ai: boolean
     entry_status: string
     lineup_count: number
@@ -101,6 +113,7 @@ type YouthRaceDetailPayload = {
     country_code: string
     academy_id: string
     academy_name: string
+    jersey_url?: string | null
     result_status: string
     gap_seconds?: number | null
     general_points?: number
@@ -119,6 +132,7 @@ type YouthRaceDetailPayload = {
     academy_id: string
     academy_name: string
     country_code: string
+    jersey_url?: string | null
     prize_cash: number
     is_mine: boolean
   }>
@@ -127,7 +141,7 @@ type YouthRaceDetailPayload = {
 function money(value: number | null | undefined): string {
   return new Intl.NumberFormat(undefined, {
     style: 'currency',
-    currency: 'EUR',
+    currency: 'USD',
     maximumFractionDigits: 0,
   }).format(Number(value ?? 0))
 }
@@ -396,11 +410,6 @@ export default function YouthRaceDetailPage(): JSX.Element {
             <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${classBadge(race.competition_class)}`}>
               {classLabel(race.competition_class)}
             </span>
-            {race.planned_start_time_label ? (
-              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
-                {race.planned_start_time_label} · {humanize(race.start_time_region_code)}
-              </span>
-            ) : null}
             <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
               {race.entries_count} / {race.team_limit} teams
             </span>
@@ -443,13 +452,10 @@ export default function YouthRaceDetailPage(): JSX.Element {
                 ? `${shortDate(race.race_date)} – ${shortDate(race.race_end_date)}`
                 : shortDate(race.race_date)],
               ['Race length', raceDays === 1 ? '1 day' : `${raceDays} days`],
-              ['Start time', race.planned_start_time_label
-                ? `${race.planned_start_time_label} · ${humanize(race.start_time_region_code)}`
-                : '—'],
               ['Distance', `${race.distance_km} km${raceDays > 1 ? ' / stage' : ''}`],
               ['Teams', `${race.entries_count} / ${race.team_limit}`],
               ['Prize fund', money(race.prize_fund_cash)],
-              ['Entry fee', money(race.entry_cost)],
+              ['Entry fee', money(race.entry_fee ?? race.entry_cost)],
               ['My entry', humanize(payload.my_entry.status)],
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg bg-slate-50 p-3">
@@ -462,6 +468,27 @@ export default function YouthRaceDetailPage(): JSX.Element {
             The prize fund is paid to the best Youth Academy teams after the race.
             Up to five teams receive prize money, with the winner receiving the largest share.
           </p>
+
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <h3 className="text-sm font-semibold text-slate-900">Participation cost</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                ['Entry fee', money(payload.my_entry.entry_fee ?? race.entry_fee ?? race.entry_cost)],
+                ['Travel', money(payload.my_entry.travel_cost_total)],
+                ['Rider accommodation', money(payload.my_entry.accommodation_cost_total)],
+                ['Staff accommodation', money(payload.my_entry.staff_accommodation_cost_total)],
+                ['Logistics', money(payload.my_entry.logistics_cost_total)],
+                ['Equipment & race support', money(payload.my_entry.equipment_support_cost_total)],
+                ['Staff travelling', '2'],
+                ['Total deducted', money(payload.my_entry.total_participation_cost ?? race.entry_cost)],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg bg-slate-50 p-3">
+                  <div className="text-xs text-slate-500">{label}</div>
+                  <div className="mt-1 text-sm font-medium text-slate-900">{value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="mt-5 border-t border-slate-100 pt-5">
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -490,12 +517,12 @@ export default function YouthRaceDetailPage(): JSX.Element {
                       {stage.planned_start_time_label ?? '—'}
                     </span>
                   </div>
-                  <div className="mt-3 text-sm text-slate-600">{stage.distance_km} km</div>
-                  <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
-                    {stage.sprint_points_total > 0 ? <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">Sprint {stage.sprint_points_total}</span> : null}
-                    {stage.mountain_points_total > 0 ? <span className="rounded-full bg-orange-50 px-2 py-1 text-orange-700">Mountain {stage.mountain_points_total}</span> : null}
-                    {stage.time_trial_points_total > 0 ? <span className="rounded-full bg-violet-50 px-2 py-1 text-violet-700">TT {stage.time_trial_points_total}</span> : null}
+                  <div className="mt-3 text-sm text-slate-600">
+                    {stage.start_city && stage.finish_city
+                      ? `${stage.start_city} → ${stage.finish_city}`
+                      : race.host_city ?? 'Route TBC'}
                   </div>
+                  <div className="mt-1 text-sm text-slate-600">{stage.distance_km} km</div>
                 </button>
               ))}
             </div>
@@ -752,6 +779,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                       <div className="grid gap-2 sm:grid-cols-3">
                         <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Date</div><div className="mt-1 text-sm font-medium">{shortDate(stage.stage_date)}</div></div>
                         <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Type</div><div className="mt-1 text-sm font-medium">{humanize(stage.stage_type)}</div></div>
+                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Route</div><div className="mt-1 text-sm font-medium">{stage.start_city && stage.finish_city ? `${stage.start_city} → ${stage.finish_city}` : race.host_city ?? '—'}</div></div>
                         <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Distance / start</div><div className="mt-1 text-sm font-medium">{stage.distance_km} km · {stage.planned_start_time_label ?? '—'}</div></div>
                       </div>
                       <p className="mt-4 text-sm text-slate-500">Stage results will appear after this stage is completed.</p>
