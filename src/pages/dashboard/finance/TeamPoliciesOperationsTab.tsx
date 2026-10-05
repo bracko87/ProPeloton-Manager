@@ -301,12 +301,10 @@ const POLICY_STRUCTURE: Array<{
   },
 ]
 
-function formatMoney(n: number, currency: 'USD' | 'EUR' = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(n)
+function formatMoney(n: number, _currency: 'USD' | 'EUR' = 'USD'): string {
+  const amount = Math.round(Number(n) || 0)
+  const sign = amount < 0 ? '-' : ''
+  return `${sign}${Math.abs(amount).toLocaleString('en-US')}`
 }
 
 function toNumber(value: string | number | null | undefined): number {
