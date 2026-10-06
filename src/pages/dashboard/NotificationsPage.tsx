@@ -2372,6 +2372,9 @@ export default function NotificationsPage(): JSX.Element {
                   const isExpanded = expandedId === item.user_notification_id
                   const isSeasonStartNotice = item.type_code === 'SEASON_STARTED'
                   const isNationalFeatureNotice = isConsolidatedNationalNotification(item)
+                  const isYouthAcademyFeatureNotice = String(item.type_code ?? '')
+                    .toUpperCase()
+                    .startsWith('YOUTH_')
                   const groupedNationalSelectionRows = getGroupedNationalSelectionRows(item)
                   const isGroupedNationalSelection = groupedNationalSelectionRows.length > 0
                   const imageSrc = getNotificationImageSrc(item)
@@ -2681,7 +2684,9 @@ export default function NotificationsPage(): JSX.Element {
                                         className={
                                         isNationalFeatureNotice
                                           ? 'w-full max-w-[300px] rounded-xl border border-slate-200 bg-white object-contain p-4 shadow-sm'
-                                          : 'w-full max-w-[340px] rounded-xl object-cover shadow-sm'
+                                          : isYouthAcademyFeatureNotice
+                                            ? 'w-full max-w-[340px] rounded-xl border border-slate-200 bg-white object-cover shadow-sm'
+                                            : 'w-full max-w-[340px] rounded-xl object-cover shadow-sm'
                                       }
                                         draggable={false}
                                       />
@@ -3960,7 +3965,7 @@ export default function NotificationsPage(): JSX.Element {
                                       className={
                                         isSeasonStartNotice
                                           ? 'rounded-xl border border-sky-200 bg-sky-50 px-3 py-3 text-sm leading-6 text-slate-700'
-                                          : isNationalFeatureNotice
+                                          : isNationalFeatureNotice || isYouthAcademyFeatureNotice
                                             ? 'rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700 shadow-sm whitespace-pre-line'
                                             : 'text-sm leading-6 text-slate-700'
                                       }
@@ -3972,7 +3977,7 @@ export default function NotificationsPage(): JSX.Element {
                                   {!isGroupedNationalSelection && detailRows.length > 0 ? (
                                     <div
                                       className={
-                                        isSeasonStartNotice || isNationalFeatureNotice
+                                        isSeasonStartNotice || isNationalFeatureNotice || isYouthAcademyFeatureNotice
                                           ? 'mt-4 grid gap-3 sm:grid-cols-2'
                                           : 'mt-4 space-y-2'
                                       }
@@ -3981,12 +3986,12 @@ export default function NotificationsPage(): JSX.Element {
                                         <div
                                           key={`${item.user_notification_id}-${row.label}-${index}`}
                                           className={
-                                            isSeasonStartNotice || isNationalFeatureNotice
+                                            isSeasonStartNotice || isNationalFeatureNotice || isYouthAcademyFeatureNotice
                                               ? 'rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm'
                                               : 'text-sm leading-6 text-slate-700'
                                           }
                                         >
-                                          {isSeasonStartNotice || isNationalFeatureNotice ? (
+                                          {isSeasonStartNotice || isNationalFeatureNotice || isYouthAcademyFeatureNotice ? (
                                             <>
                                               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                                 {row.label}
@@ -4030,7 +4035,7 @@ export default function NotificationsPage(): JSX.Element {
                                       className={
                                         isSeasonStartNotice
                                           ? 'mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-6 text-amber-900'
-                                          : isNationalFeatureNotice
+                                          : isNationalFeatureNotice || isYouthAcademyFeatureNotice
                                             ? 'mt-4 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-600 shadow-sm'
                                             : 'mt-4 text-sm leading-6 text-slate-600'
                                       }
