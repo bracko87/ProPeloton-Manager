@@ -123,7 +123,8 @@
     "raceSupplies": "Race supplies",
     "equipmentUpdates": "Equipment updates",
     "infrastructureUpdates": "Infrastructure updates",
-    "systemMessages": "System messages"
+    "systemMessages": "System messages",
+    "youthAcademy": "Youth Academy"
   },
   "roles": {
     "assignedAdvisor": "Assigned advisor",
