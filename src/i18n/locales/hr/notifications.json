@@ -123,7 +123,8 @@
     "raceSupplies": "Zalihe za utrku",
     "equipmentUpdates": "Ažuriranja opreme",
     "infrastructureUpdates": "Ažuriranja infrastrukture",
-    "systemMessages": "Sustavne poruke"
+    "systemMessages": "Sustavne poruke",
+    "youthAcademy": "Omladinska akademija"
   },
   "roles": {
     "assignedAdvisor": "dodjela savjetnik",
