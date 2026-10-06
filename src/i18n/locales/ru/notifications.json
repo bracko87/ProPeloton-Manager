@@ -679,7 +679,15 @@
     "WORLD": "Мир",
     "POSITION": "Пост",
     "RESIGNED": "Ушёл в отставку",
-    "VACANT": "Вакантен"
+    "VACANT": "Вакантен",
+    "ACADEMY": "Академия",
+    "BUDGET": "Бюджет",
+    "DECISION": "Решение",
+    "DEVELOPMENT": "Развитие",
+    "HANDOVER": "Передача",
+    "MONTHLY": "Ежемесячно",
+    "RECRUITMENT": "Набор",
+    "YOUTH": "Молодёжь"
   },
   "reportVariants": {
     "rider_skill_change": "Изменение навыка гонщика",
