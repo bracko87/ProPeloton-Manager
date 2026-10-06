@@ -647,6 +647,14 @@ type AcademyPayload = {
   scouting_programs?: ScoutingProgram[]
 }
 
+type YouthInfrastructureSnapshot = {
+  youth_academy_level: number
+  team_residential_campus_level: number
+  sprint_performance_circuit_level: number
+  climbing_performance_center_level: number
+  team_time_trial_center_level: number
+}
+
 type TabKey =
   | 'overview'
   | 'riders'
@@ -732,6 +740,39 @@ function youthStaffLevel(score: number): string {
   if (score < 75) return 'Strong'
   if (score < 90) return 'Elite'
   return 'World Class'
+}
+
+function academyStaffOverview(member: AcademyStaff | undefined): {
+  score: number
+  level: string
+  skills: Array<{
+    key: 'expertise' | 'experience' | 'potential' | 'leadership' | 'efficiency'
+    value: number
+  }>
+} | null {
+  if (!member) return null
+
+  const skills =
+    member.role_type === 'youth_academy_director'
+      ? [
+          { key: 'leadership' as const, value: member.leadership },
+          { key: 'efficiency' as const, value: member.efficiency },
+          { key: 'experience' as const, value: member.experience },
+        ]
+      : member.role_type === 'u16_head_coach'
+        ? [
+            { key: 'expertise' as const, value: member.expertise },
+            { key: 'potential' as const, value: member.potential },
+            { key: 'efficiency' as const, value: member.efficiency },
+          ]
+        : [
+            { key: 'expertise' as const, value: member.expertise },
+            { key: 'experience' as const, value: member.experience },
+            { key: 'efficiency' as const, value: member.efficiency },
+          ]
+
+  const score = youthStaffScore(member)
+  return { score, level: youthStaffLevel(score), skills }
 }
 
 function youthSalaryRange(role: string): string {
@@ -854,6 +895,8 @@ export default function YouthAcademyPage(): JSX.Element {
   >({})
   const [historyData, setHistoryData] = useState<YouthHistoryPayload | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [youthInfrastructure, setYouthInfrastructure] =
+    useState<YouthInfrastructureSnapshot | null>(null)
   const [raceReportFrequency, setRaceReportFrequency] = useState<
     'every_race' | 'important_only' | 'podium_exceptional' | 'problems_only' | 'never'
   >('important_only')
@@ -1295,6 +1338,34 @@ export default function YouthAcademyPage(): JSX.Element {
     }
   }
 
+  const loadYouthInfrastructure = async (): Promise<void> => {
+    if (!data?.club_id) return
+
+    try {
+      const { data: row, error: infrastructureError } = await supabase
+        .from('club_infrastructure')
+        .select(
+          'youth_academy_level,team_residential_campus_level,sprint_performance_circuit_level,climbing_performance_center_level,team_time_trial_center_level'
+        )
+        .eq('club_id', data.club_id)
+        .maybeSingle()
+
+      if (infrastructureError) throw infrastructureError
+
+      setYouthInfrastructure(
+        (row ?? {
+          youth_academy_level: 0,
+          team_residential_campus_level: 0,
+          sprint_performance_circuit_level: 0,
+          climbing_performance_center_level: 0,
+          team_time_trial_center_level: 0,
+        }) as YouthInfrastructureSnapshot
+      )
+    } catch (infrastructureError) {
+      console.error('Youth infrastructure overview load failed:', infrastructureError)
+    }
+  }
+
   const loadRaceMonth = async (
     month = calendarMonth || raceCalendar?.current_month || 1,
     competitionClass = calendarClassFilter,
@@ -1533,6 +1604,7 @@ export default function YouthAcademyPage(): JSX.Element {
     if (tab === 'overview' && data?.activated) {
       void loadRaceCalendar()
       void loadHistory()
+      void loadYouthInfrastructure()
     }
     if (tab === 'scouting' && data?.activated) {
       void loadScouting()
@@ -1552,7 +1624,7 @@ export default function YouthAcademyPage(): JSX.Element {
     if (tab === 'history' && data?.activated) {
       void loadHistory()
     }
-  }, [tab, data?.activated])
+  }, [tab, data?.activated, data?.club_id])
 
   useEffect(() => {
     if (tab !== 'calendar' || !data?.activated || !calendarMonth) return
@@ -1727,16 +1799,16 @@ export default function YouthAcademyPage(): JSX.Element {
     const races = [...(raceCalendar?.races ?? [])]
     const gameDate = String(raceCalendar?.game_date ?? '')
     const eligibleNext = races
-      .filter(race =>
-        race.status === 'scheduled' &&
-        (!gameDate || race.race_date >= gameDate) &&
-        (
-          Boolean(race.entry_id) ||
-          race.invitation_status === 'accepted' ||
-          race.invitation_status === 'pending' ||
-          race.qualified
+      .filter(race => {
+        const confirmedEntry =
+          Boolean(race.entry_id) && String(race.entry_status ?? 'entered') !== 'withdrawn'
+
+        return (
+          race.status === 'scheduled' &&
+          (!gameDate || race.race_date >= gameDate) &&
+          (confirmedEntry || race.invitation_status === 'accepted')
         )
-      )
+      })
       .sort((a, b) => a.race_date.localeCompare(b.race_date))
 
     const completed = races
@@ -1755,6 +1827,156 @@ export default function YouthAcademyPage(): JSX.Element {
 
     return { previousRace, nextRace, latestResult }
   }, [raceCalendar?.races, raceCalendar?.game_date])
+
+  const overviewDevelopment = useMemo(() => {
+    const rows = historyData?.development_history ?? []
+    const recentWeeks = Array.from(new Set(rows.map(row => row.week_start)))
+      .sort((a, b) => b.localeCompare(a))
+      .slice(0, 4)
+    const recentWeekSet = new Set(recentWeeks)
+    const byRider = new Map<
+      string,
+      {
+        rider_id: string
+        rider_name: string
+        country_code: string
+        development_focus: string
+        total_gain: number
+        tracked_weeks: Set<string>
+        latest_readiness: number
+        latest_fatigue: number
+      }
+    >()
+
+    riders.forEach(rider => {
+      byRider.set(rider.id, {
+        rider_id: rider.id,
+        rider_name: rider.display_name,
+        country_code: rider.country_code,
+        development_focus: rider.development_focus,
+        total_gain: 0,
+        tracked_weeks: new Set<string>(),
+        latest_readiness: rider.readiness,
+        latest_fatigue: rider.fatigue,
+      })
+    })
+
+    rows
+      .filter(row => recentWeekSet.has(row.week_start))
+      .forEach(row => {
+        const current = byRider.get(row.youth_rider_id)
+        if (!current) return
+
+        current.total_gain += Number(row.primary_delta ?? 0) + Number(row.secondary_delta ?? 0)
+        current.tracked_weeks.add(row.week_start)
+        current.development_focus = row.development_focus || current.development_focus
+
+        if (row.week_start === recentWeeks[0]) {
+          current.latest_readiness = Number(row.readiness_after ?? current.latest_readiness)
+          current.latest_fatigue = Number(row.fatigue_after ?? current.latest_fatigue)
+        }
+      })
+
+    return Array.from(byRider.values())
+      .map(item => ({
+        ...item,
+        weeks: item.tracked_weeks.size,
+        avg_gain:
+          item.tracked_weeks.size > 0
+            ? item.total_gain / item.tracked_weeks.size
+            : 0,
+      }))
+      .sort(
+        (a, b) =>
+          b.avg_gain - a.avg_gain ||
+          b.total_gain - a.total_gain ||
+          a.rider_name.localeCompare(b.rider_name)
+      )
+  }, [historyData?.development_history, riders])
+
+  const averageReadiness = riders.length
+    ? Math.round(
+        riders.reduce((sum, rider) => sum + Number(rider.readiness ?? 0), 0) /
+          riders.length
+      )
+    : 0
+  const averageFatigue = riders.length
+    ? Math.round(
+        riders.reduce((sum, rider) => sum + Number(rider.fatigue ?? 0), 0) /
+          riders.length
+      )
+    : 0
+  const filledYouthStaffRoles = [academyDirector, headCoach, youthScout].filter(Boolean).length
+  const developmentMaxRate = Math.max(
+    1,
+    ...overviewDevelopment.map(item => Number(item.avg_gain ?? 0))
+  )
+
+  const overviewInfrastructureItems: Array<{
+    key: keyof YouthInfrastructureSnapshot
+    title: string
+    maxLevel: number
+    effect: string
+    requirement: string
+  }> = [
+    {
+      key: 'youth_academy_level',
+      title: t('overview.infrastructureYouthAcademy', { defaultValue: 'Youth Academy facility' }),
+      maxLevel: 2,
+      effect: t('overview.infrastructureYouthAcademyEffect', {
+        defaultValue:
+          'Level 1: +8% U16 training and +6% race development. Level 2: +15% training, +12% race development and +12% U16 Head Coach effectiveness.',
+      }),
+      requirement: t('overview.infrastructureCoreFacility', {
+        defaultValue: 'Core development facility',
+      }),
+    },
+    {
+      key: 'team_residential_campus_level',
+      title: t('overview.infrastructureResidential', { defaultValue: 'Team Residential Campus' }),
+      maxLevel: 1,
+      effect: t('overview.infrastructureResidentialEffect', {
+        defaultValue:
+          'Waives U16 home-base accommodation and improves U16 recovery effectiveness by 5%.',
+      }),
+      requirement: t('overview.infrastructureResidentialRequirement', {
+        defaultValue: 'Requires Youth Academy Level 1',
+      }),
+    },
+    {
+      key: 'sprint_performance_circuit_level',
+      title: t('overview.infrastructureSprint', { defaultValue: 'Sprint Performance Circuit' }),
+      maxLevel: 1,
+      effect: t('overview.infrastructureSprintEffect', {
+        defaultValue: '+12% U16 sprint-focused development and +5% sprint race development.',
+      }),
+      requirement: t('overview.infrastructureTrainingRequirement', {
+        defaultValue: 'Requires Training Center Level 2',
+      }),
+    },
+    {
+      key: 'climbing_performance_center_level',
+      title: t('overview.infrastructureClimbing', { defaultValue: 'Climbing Performance Center' }),
+      maxLevel: 1,
+      effect: t('overview.infrastructureClimbingEffect', {
+        defaultValue: '+12% U16 climbing-focused development and +5% climbing race development.',
+      }),
+      requirement: t('overview.infrastructureTrainingRequirement', {
+        defaultValue: 'Requires Training Center Level 2',
+      }),
+    },
+    {
+      key: 'team_time_trial_center_level',
+      title: t('overview.infrastructureTtt', { defaultValue: 'Team Time Trial Center' }),
+      maxLevel: 1,
+      effect: t('overview.infrastructureTttEffect', {
+        defaultValue: '+10% U16 time-trial development and +5% U16 TTT race development.',
+      }),
+      requirement: t('overview.infrastructureTrainingRequirement', {
+        defaultValue: 'Requires Training Center Level 2',
+      }),
+    },
+  ]
 
   const rankingDivisions = useMemo(
     () =>
@@ -1967,41 +2189,268 @@ export default function YouthAcademyPage(): JSX.Element {
                   ? t('overview.directorReady', { name: academyDirector.staff_name })
                   : t('overview.directorMissing')}
               </p>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <div className="rounded-lg bg-slate-50 p-3">
-                  <div className="text-xs text-slate-500">{t('overview.nextRace')}</div>
-                  <div className="mt-1 text-sm font-medium">
-                    {overviewRaceSnapshot.nextRace?.race_name ??
-                      t('overview.noUpcomingRace', { defaultValue: 'No upcoming Academy race selected' })}
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  {
+                    label: t('overview.roster'),
+                    value: `${riders.length}/16`,
+                    detail: t('overview.openRosterPlaces', {
+                      count: Math.max(0, 16 - riders.length),
+                      defaultValue: '{{count}} open roster place(s)',
+                    }),
+                  },
+                  {
+                    label: t('overview.averageReadiness', { defaultValue: 'Average readiness' }),
+                    value: `${averageReadiness}%`,
+                    detail: t('overview.teamCondition', { defaultValue: 'Current Youth roster condition' }),
+                  },
+                  {
+                    label: t('overview.averageFatigue', { defaultValue: 'Average fatigue' }),
+                    value: `${averageFatigue}%`,
+                    detail: t('overview.teamLoad', { defaultValue: 'Current Youth roster load' }),
+                  },
+                  {
+                    label: t('overview.staff'),
+                    value: `${filledYouthStaffRoles}/3`,
+                    detail: t('overview.staffCoverage', { defaultValue: 'Core Academy staff roles filled' }),
+                  },
+                  {
+                    label: t('overview.recruitment'),
+                    value: humanize(data.budget?.scouting_range),
+                    detail: t('overview.recruitmentReach', { defaultValue: 'Current scouting programme reach' }),
+                  },
+                  {
+                    label: t('overview.reputation'),
+                    value: String(data.academy?.reputation ?? 0),
+                    detail: t('overview.reputationDetail', { defaultValue: 'Current Academy reputation' }),
+                  },
+                ].map(item => (
+                  <div key={item.label} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                    <div className="text-xs text-slate-500">{item.label}</div>
+                    <div className="mt-1 text-base font-semibold text-slate-900">{item.value}</div>
+                    <div className="mt-1 text-[11px] text-slate-400">{item.detail}</div>
                   </div>
-                </div>
-                <div className="rounded-lg bg-slate-50 p-3">
-                  <div className="text-xs text-slate-500">{t('overview.recruitment')}</div>
-                  <div className="mt-1 text-sm font-medium">{humanize(data.budget?.scouting_range)}</div>
-                </div>
-                <div className="rounded-lg bg-slate-50 p-3">
-                  <div className="text-xs text-slate-500">{t('overview.reputation')}</div>
-                  <div className="mt-1 text-sm font-medium">{data.academy?.reputation ?? 0}</div>
-                </div>
+                ))}
               </div>
             </Card>
           </div>
 
           <div className="[&>section]:h-full">
             <Card title={t('overview.staff')}>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <div className="text-xs text-slate-500">{t('roles.director')}</div>
-                  <div className="font-medium">{academyDirector?.staff_name ?? t('notAssigned')}</div>
+              <div className="space-y-3">
+                {[
+                  {
+                    role: t('roles.director'),
+                    member: academyDirector,
+                    missing: t('notAssigned'),
+                  },
+                  {
+                    role: t('roles.headCoach'),
+                    member: headCoach,
+                    missing: t('notAssigned'),
+                  },
+                  {
+                    role: t('roles.scout'),
+                    member: youthScout,
+                    missing: t('optionalNotHired'),
+                  },
+                ].map(item => {
+                  const member = item.member
+                  const overview = academyStaffOverview(member)
+                  const flag = flagUrl(member?.country_code)
+
+                  return (
+                    <div
+                      key={item.role}
+                      className="rounded-lg border border-slate-100 bg-slate-50/70 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[11px] uppercase tracking-wide text-slate-400">
+                            {item.role}
+                          </div>
+                          <div className="mt-1 flex items-center gap-2">
+                            {flag ? (
+                              <img
+                                src={flag}
+                                alt=""
+                                className="h-4 w-6 shrink-0 rounded-sm object-cover"
+                              />
+                            ) : null}
+                            <span className="truncate text-sm font-semibold text-slate-900">
+                              {member?.staff_name ?? item.missing}
+                            </span>
+                          </div>
+                        </div>
+                        {overview ? (
+                          <div className="shrink-0 text-right">
+                            <div className="text-xs font-semibold text-slate-800">
+                              {overview.level}
+                            </div>
+                            <div className="text-[11px] text-slate-400">{overview.score}/100</div>
+                          </div>
+                        ) : null}
+                      </div>
+                      {overview ? (
+                        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                          {overview.skills.map(skill => (
+                            <span key={skill.key}>
+                              {t(`staff.${skill.key}`)} {skill.value}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          </div>
+
+          <div className="xl:col-span-3">
+            <Card
+              title={t('overview.developmentTitle', { defaultValue: 'Rider development form' })}
+              right={
+                <span className="text-xs text-slate-500">
+                  {t('overview.developmentWindow', { defaultValue: 'Recent 4 development weeks' })}
+                </span>
+              }
+            >
+              {historyLoading && !historyData ? (
+                <div className="text-sm text-slate-500">{t('loading')}</div>
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {overviewDevelopment.map((item, index) => {
+                    const flag = flagUrl(item.country_code)
+                    const ratePercent = Math.max(
+                      0,
+                      Math.min(100, (item.avg_gain / developmentMaxRate) * 100)
+                    )
+
+                    return (
+                      <div
+                        key={item.rider_id}
+                        className="rounded-xl border border-slate-200 bg-white p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-slate-400">
+                                #{index + 1}
+                              </span>
+                              {flag ? (
+                                <img
+                                  src={flag}
+                                  alt=""
+                                  className="h-4 w-6 shrink-0 rounded-sm object-cover"
+                                />
+                              ) : null}
+                              <Link
+                                to={`/dashboard/youth-academy/riders/${item.rider_id}`}
+                                className="truncate text-sm font-semibold text-slate-900 hover:text-amber-700 hover:underline"
+                              >
+                                {item.rider_name}
+                              </Link>
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              {humanize(item.development_focus)}
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <div className="text-sm font-semibold text-emerald-700">
+                              +{item.total_gain}
+                            </div>
+                            <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                              {t('overview.skillPoints', { defaultValue: 'skill pts' })}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-500">
+                              {t('overview.developmentSpeed', { defaultValue: 'Development speed' })}
+                            </span>
+                            <span className="font-semibold text-slate-800">
+                              +{item.avg_gain.toFixed(2)} / {t('week')}
+                            </span>
+                          </div>
+                          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className="h-full rounded-full bg-emerald-500"
+                              style={{ width: `${ratePercent}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
+                          <span>
+                            {t('riders.readiness')}: {item.latest_readiness}%
+                          </span>
+                          <span>
+                            {t('history.fatigue')}: {item.latest_fatigue}%
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                <div>
-                  <div className="text-xs text-slate-500">{t('roles.headCoach')}</div>
-                  <div className="font-medium">{headCoach?.staff_name ?? t('notAssigned')}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">{t('roles.scout')}</div>
-                  <div className="font-medium">{youthScout?.staff_name ?? t('optionalNotHired')}</div>
-                </div>
+              )}
+            </Card>
+          </div>
+
+          <div className="xl:col-span-3">
+            <Card
+              title={t('overview.infrastructureTitle', { defaultValue: 'U16 infrastructure effects' })}
+              right={
+                <Link
+                  to="/dashboard/infrastructure"
+                  className="text-xs font-medium text-slate-700 underline underline-offset-2"
+                >
+                  {t('overview.openInfrastructure', { defaultValue: 'Open Infrastructure' })}
+                </Link>
+              }
+            >
+              <p className="mb-4 text-sm leading-6 text-slate-600">
+                {t('overview.infrastructureHelp', {
+                  defaultValue:
+                    'Youth Academy capacity remains fixed at 16. Infrastructure does not unlock extra roster places; these facilities improve U16 development, recovery or operating costs.',
+                })}
+              </p>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                {overviewInfrastructureItems.map(item => {
+                  const level = Number(youthInfrastructure?.[item.key] ?? 0)
+
+                  return (
+                    <div
+                      key={item.key}
+                      className="flex min-h-[172px] flex-col rounded-xl border border-slate-200 bg-slate-50/70 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-sm font-semibold text-slate-900">{item.title}</div>
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${
+                            level > 0
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}
+                        >
+                          {level > 0
+                            ? t('overview.infrastructureLevel', {
+                                level,
+                                max: item.maxLevel,
+                                defaultValue: 'Level {{level}}/{{max}}',
+                              })
+                            : t('overview.notBuilt', { defaultValue: 'Not built' })}
+                        </span>
+                      </div>
+                      <p className="mt-3 flex-1 text-xs leading-5 text-slate-600">{item.effect}</p>
+                      <div className="mt-3 border-t border-slate-200 pt-2 text-[11px] text-slate-400">
+                        {item.requirement}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </Card>
           </div>
@@ -2019,68 +2468,199 @@ export default function YouthAcademyPage(): JSX.Element {
                 </button>
               }
             >
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-lg bg-slate-50 p-4">
-                  <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    {t('overview.previousRace', { defaultValue: 'Previous race' })}
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="min-h-[210px] rounded-xl border border-slate-200 bg-slate-50/70 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      {t('overview.previousRace', { defaultValue: 'Previous race' })}
+                    </div>
+                    {overviewRaceSnapshot.previousRace &&
+                    flagUrl(overviewRaceSnapshot.previousRace.host_country_code) ? (
+                      <img
+                        src={flagUrl(overviewRaceSnapshot.previousRace.host_country_code) ?? ''}
+                        alt=""
+                        className="h-5 w-8 rounded-sm object-cover"
+                      />
+                    ) : null}
                   </div>
                   {overviewRaceSnapshot.previousRace ? (
                     <>
-                      <div className="mt-2 text-sm font-semibold text-slate-900">
+                      <Link
+                        to={`/dashboard/youth-academy/races/${overviewRaceSnapshot.previousRace.id}`}
+                        className="mt-3 block text-base font-semibold leading-6 text-slate-900 hover:text-amber-700 hover:underline"
+                      >
                         {overviewRaceSnapshot.previousRace.race_name}
+                      </Link>
+                      <div className="mt-2 text-xs text-slate-500">
+                        {shortGameDate(overviewRaceSnapshot.previousRace.race_date)} ·{' '}
+                        {t('season', { defaultValue: 'Season' })}{' '}
+                        {raceCalendar?.season_number ?? data.budget?.season_number ?? 1}
+                        {overviewRaceSnapshot.previousRace.host_city
+                          ? ` · ${overviewRaceSnapshot.previousRace.host_city}`
+                          : ''}
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        {overviewRaceSnapshot.previousRace.race_date} · {competitionLabel(
-                          overviewRaceSnapshot.previousRace.competition_class,
-                          overviewRaceSnapshot.previousRace.division_code
-                        )}
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span
+                          className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${competitionClassBadgeClass(
+                            overviewRaceSnapshot.previousRace.competition_class
+                          )}`}
+                        >
+                          {competitionLabel(
+                            overviewRaceSnapshot.previousRace.competition_class,
+                            overviewRaceSnapshot.previousRace.division_code
+                          )}
+                        </span>
+                        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] text-slate-700">
+                          {humanize(overviewRaceSnapshot.previousRace.terrain_type)}
+                        </span>
+                        <span className="rounded-full bg-slate-200 px-2.5 py-1 text-[11px] text-slate-700">
+                          {overviewRaceSnapshot.previousRace.distance_km} km
+                        </span>
+                      </div>
+                      <div className="mt-4 text-xs font-medium text-emerald-700">
+                        {t('overview.completedRace', { defaultValue: 'Completed' })}
                       </div>
                     </>
                   ) : (
-                    <div className="mt-2 text-sm text-slate-500">
+                    <div className="mt-3 text-sm text-slate-500">
                       {t('overview.noPreviousRace', { defaultValue: 'No completed Academy race yet' })}
                     </div>
                   )}
                 </div>
 
-                <div className="rounded-lg bg-slate-50 p-4">
-                  <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    {t('overview.nextRace', { defaultValue: 'Next race' })}
+                <div className="min-h-[210px] rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      {t('overview.nextRace', { defaultValue: 'Next race' })}
+                    </div>
+                    {overviewRaceSnapshot.nextRace &&
+                    flagUrl(overviewRaceSnapshot.nextRace.host_country_code) ? (
+                      <img
+                        src={flagUrl(overviewRaceSnapshot.nextRace.host_country_code) ?? ''}
+                        alt=""
+                        className="h-5 w-8 rounded-sm object-cover"
+                      />
+                    ) : null}
                   </div>
                   {overviewRaceSnapshot.nextRace ? (
                     <>
-                      <div className="mt-2 text-sm font-semibold text-slate-900">
-                        {overviewRaceSnapshot.nextRace.race_name}
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">
+                          {t('overview.confirmedEntry', { defaultValue: 'Confirmed entry' })}
+                        </span>
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        {overviewRaceSnapshot.nextRace.race_date} · {competitionLabel(
-                          overviewRaceSnapshot.nextRace.competition_class,
-                          overviewRaceSnapshot.nextRace.division_code
-                        )}
+                      <Link
+                        to={`/dashboard/youth-academy/races/${overviewRaceSnapshot.nextRace.id}`}
+                        className="mt-2 block text-base font-semibold leading-6 text-slate-900 hover:text-amber-700 hover:underline"
+                      >
+                        {overviewRaceSnapshot.nextRace.race_name}
+                      </Link>
+                      <div className="mt-2 text-xs text-slate-500">
+                        {shortGameDate(overviewRaceSnapshot.nextRace.race_date)} ·{' '}
+                        {t('season', { defaultValue: 'Season' })}{' '}
+                        {raceCalendar?.season_number ?? data.budget?.season_number ?? 1}
+                        {overviewRaceSnapshot.nextRace.host_city
+                          ? ` · ${overviewRaceSnapshot.nextRace.host_city}`
+                          : ''}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span
+                          className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${competitionClassBadgeClass(
+                            overviewRaceSnapshot.nextRace.competition_class
+                          )}`}
+                        >
+                          {competitionLabel(
+                            overviewRaceSnapshot.nextRace.competition_class,
+                            overviewRaceSnapshot.nextRace.division_code
+                          )}
+                        </span>
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[11px] text-slate-700">
+                          {humanize(overviewRaceSnapshot.nextRace.terrain_type)}
+                        </span>
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[11px] text-slate-700">
+                          {overviewRaceSnapshot.nextRace.distance_km} km
+                        </span>
+                        {Number(overviewRaceSnapshot.nextRace.race_days ?? 1) > 1 ? (
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[11px] text-slate-700">
+                            {overviewRaceSnapshot.nextRace.race_days}{' '}
+                            {t('overview.raceDays', { defaultValue: 'days' })}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                        <span>
+                          {t('overview.enteredBy', { defaultValue: 'Entered by' })}:{' '}
+                          {humanizeCode(overviewRaceSnapshot.nextRace.entered_by)}
+                        </span>
+                        <span>
+                          {t('overview.lineup', { defaultValue: 'Lineup' })}:{' '}
+                          {overviewRaceSnapshot.nextRace.lineup?.length ?? 0}/
+                          {overviewRaceSnapshot.nextRace.lineup_size}
+                        </span>
                       </div>
                     </>
                   ) : (
-                    <div className="mt-2 text-sm text-slate-500">
-                      {t('overview.noUpcomingRace', { defaultValue: 'No upcoming Academy race selected' })}
+                    <div className="mt-3 text-sm text-slate-500">
+                      {t('overview.noUpcomingRace', {
+                        defaultValue: 'No confirmed upcoming Academy race',
+                      })}
                     </div>
                   )}
                 </div>
 
-                <div className="rounded-lg bg-slate-50 p-4">
-                  <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    {t('overview.latestResult', { defaultValue: 'Latest result' })}
+                <div className="min-h-[210px] rounded-xl border border-slate-200 bg-slate-50/70 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      {t('overview.latestResult', { defaultValue: 'Latest result' })}
+                    </div>
+                    {overviewRaceSnapshot.previousRace &&
+                    flagUrl(overviewRaceSnapshot.previousRace.host_country_code) ? (
+                      <img
+                        src={flagUrl(overviewRaceSnapshot.previousRace.host_country_code) ?? ''}
+                        alt=""
+                        className="h-5 w-8 rounded-sm object-cover"
+                      />
+                    ) : null}
                   </div>
                   {overviewRaceSnapshot.previousRace && overviewRaceSnapshot.latestResult ? (
                     <>
-                      <div className="mt-2 text-sm font-semibold text-slate-900">
-                        #{overviewRaceSnapshot.latestResult.position} · {overviewRaceSnapshot.latestResult.name}
+                      <div className="mt-3 text-2xl font-semibold text-slate-900">
+                        #{overviewRaceSnapshot.latestResult.position}
                       </div>
-                      <div className="mt-1 text-xs text-slate-500">
+                      <div className="mt-1 text-sm font-semibold text-slate-800">
+                        {overviewRaceSnapshot.latestResult.name ??
+                          overviewRaceSnapshot.latestResult.rider_name ??
+                          t('overview.rider', { defaultValue: 'Rider' })}
+                      </div>
+                      <Link
+                        to={`/dashboard/youth-academy/races/${overviewRaceSnapshot.previousRace.id}`}
+                        className="mt-3 block text-sm font-medium text-slate-700 hover:text-amber-700 hover:underline"
+                      >
                         {overviewRaceSnapshot.previousRace.race_name}
+                      </Link>
+                      <div className="mt-2 text-xs text-slate-500">
+                        {shortGameDate(overviewRaceSnapshot.previousRace.race_date)}
+                        {overviewRaceSnapshot.previousRace.host_city
+                          ? ` · ${overviewRaceSnapshot.previousRace.host_city}`
+                          : ''}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {Number(overviewRaceSnapshot.latestResult.regional_points ?? 0) > 0 ? (
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[11px] text-slate-700">
+                            +{overviewRaceSnapshot.latestResult.regional_points}{' '}
+                            {t('history.regionalPoints')}
+                          </span>
+                        ) : null}
+                        {Number(overviewRaceSnapshot.latestResult.world_points ?? 0) > 0 ? (
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[11px] text-slate-700">
+                            +{overviewRaceSnapshot.latestResult.world_points}{' '}
+                            {t('history.worldPoints')}
+                          </span>
+                        ) : null}
                       </div>
                     </>
                   ) : (
-                    <div className="mt-2 text-sm text-slate-500">
+                    <div className="mt-3 text-sm text-slate-500">
                       {t('overview.noResult', { defaultValue: 'No Youth race result yet' })}
                     </div>
                   )}
