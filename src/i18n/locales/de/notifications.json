@@ -673,7 +673,15 @@
     "WORLD": "Welt",
     "POSITION": "Position",
     "RESIGNED": "Zurückgetreten",
-    "VACANT": "Vakant"
+    "VACANT": "Vakant",
+    "ACADEMY": "Akademie",
+    "BUDGET": "Budget",
+    "DECISION": "Entscheidung",
+    "DEVELOPMENT": "Entwicklung",
+    "HANDOVER": "Übergabe",
+    "MONTHLY": "Monatlich",
+    "RECRUITMENT": "Rekrutierung",
+    "YOUTH": "Jugend"
   },
   "reportVariants": {
     "rider_skill_change": "Änderung einer Fahrerfähigkeit",
