@@ -93,7 +93,7 @@
     "r8": "Rider shortlist additions",
     "developing": "Desarrollo del servicio de equipo",
     "activationRenewal": "Activación {{activation}} / renovación {{renewal}}",
-    "note": "Free managers keep the complete core game and manual control. Premium adds analysis, automation and two optional development programmes. Developing Team costs 100 coins to activate and 100 coins per season to renew. Youth Academy has no coin activation fee; its budget and operating costs use normal club money.",
+    "note": "Free conserva todo el juego principal y el control manual. Developing Team se desbloquea tras 30 días reales O 60 días de juego, cuesta 100 monedas al activar y 100 por temporada. La Academia Juvenil usa la misma regla 30/60, cuesta 50 monedas una sola vez y no tiene renovación estacional con monedas; después usa dinero normal del club.",
     "premiumOnly": "Solo Premium",
     "r9": "World-race replays",
     "r10": "Templates & Smart Prefill",
@@ -104,7 +104,7 @@
     "freeReplay": "2 coins per race",
     "premiumReplay": "Included",
     "youthAcademy": "Youth Academy / U16 development",
-    "youthAcademyPremium": "Included with Premium · 16 rider places"
+    "youthAcademyPremium": "Premium + 50 monedas una vez · 16 plazas"
   },
   "packages": {
     "title": "¿Necesitas Coins adicionales?",
@@ -144,7 +144,7 @@
   },
   "services": {
     "title": "Premium development services",
-    "description": "Manage the two Premium-only development programmes. Developing Team uses coins for seasonal access; Youth Academy uses normal club money for its budget and operating costs.",
+    "description": "Gestiona los dos programas Premium. Developing Team cuesta 100 monedas al activar y 100 por temporada. La Academia Juvenil cuesta 50 monedas una vez, sin renovación estacional, y después usa dinero del club.",
     "loading": "Cargando servicios de Coins...",
     "unavailable": "Actualmente no se dispone de información sobre el servicio de desarrollo del Equipo.",
     "unavailableHelp": "El resto de Premium, facturación y gestión de Coins sigue disponible.",
@@ -183,13 +183,13 @@
     "available": "Available",
     "premiumRequired": "Premium required",
     "loadingYouth": "Loading…",
-    "descriptionYouthAcademy": "A separate U16 development programme with its own riders, staff, budget, scouting, equipment, race calendar, rankings, development history and graduation pathway. Premium is required to activate and manage it.",
+    "descriptionYouthAcademy": "Programa U16 separado con corredores, personal, presupuesto, scouting, equipamiento, calendario, rankings, historial y graduación. Requiere Premium. Una Academia nueva se desbloquea tras 30 días reales O 60 días de juego y cuesta 50 monedas una vez.",
     "youthCapacity": "Academy capacity",
     "youthStarterRiders": "Starter riders",
     "youthStarterStaff": "Starter staff",
     "youthStarterStaffValue": "Director + U16 Head Coach",
     "youthActivationCost": "Activation",
-    "youthActivationCostValue": "No coin fee · club-cash budget",
+    "youthActivationCostValue": "{{cost}} monedas una vez · sin renovación estacional",
     "ridersCount": "{{count}} riders",
     "youthFeatureScouting": "Scouting and recruitment programme",
     "youthFeatureRacing": "U16 race calendar, entries, results and rankings",
@@ -201,7 +201,11 @@
     "youthFeaturePathway": "Graduation pathway into senior or Developing Team",
     "youthReadOnly": "Premium is currently inactive. Academy data is preserved, but management remains read-only until Premium returns.",
     "openYouthAcademy": "Open Youth Academy",
-    "viewYouthAcademy": "View Youth Academy"
+    "viewYouthAcademy": "View Youth Academy",
+    "locked": "Bloqueado",
+    "youthUnlock": "Desbloqueo",
+    "youthUnlockValue": "{{real}} días reales O {{game}} días de juego",
+    "youthWaiting": "Progreso: {{realPlayed}}/{{realRequired}} días reales o {{gamePlayed}}/{{gameRequired}} días de juego."
   },
   "history": {
     "title": "Historial de facturación y compra",
@@ -259,7 +263,8 @@
     "developingReactivation": "Reactivación del equipo de desarrollo — Temporada {{season}}",
     "developingSeasonalReactivation": "Reactivación estacional del Equipo de Desarrollo",
     "extraScout": "Informe de exploración adicional",
-    "premiumGrant": "Premium subvención mensual por Coins"
+    "premiumGrant": "Premium subvención mensual por Coins",
+    "youthAcademyActivation": "Activación de la Academia Juvenil"
   },
   "common": {
     "coins": "Coins {{count}}",
