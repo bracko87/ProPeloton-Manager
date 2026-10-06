@@ -8,6 +8,22 @@ alter table public.club_infrastructure
   add column if not exists climbing_performance_center_level smallint not null default 0,
   add column if not exists team_time_trial_center_level smallint not null default 0;
 
+alter table public.infrastructure_facility_upgrade_config
+  drop constraint if exists infrastructure_facility_upgrade_config_facility_key_check,
+  add constraint infrastructure_facility_upgrade_config_facility_key_check
+    check(facility_key in (
+      'club_house',
+      'training_center',
+      'medical_center',
+      'scouting_office',
+      'youth_academy',
+      'mechanics_workshop',
+      'team_residential_campus',
+      'sprint_performance_circuit',
+      'climbing_performance_center',
+      'team_time_trial_center'
+    ));
+
 alter table public.club_infrastructure
   drop constraint if exists club_infrastructure_team_residential_campus_level_check,
   add constraint club_infrastructure_team_residential_campus_level_check
