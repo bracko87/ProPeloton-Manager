@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Crown, GraduationCap } from 'lucide-react'
+import { BookOpen, Crown, GraduationCap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { getInfrastructureAssetImageUrl } from './infrastructure/infrastructureAssetImages'
 
@@ -624,6 +624,15 @@ type AcademyPayload = {
   default_season_budget?: number
   default_scouting_range?: string
   default_scouting_cost?: number
+  activation_coin_cost?: number
+  renewal_coin_cost?: number
+  coin_balance?: number
+  real_days_played?: number
+  game_days_played?: number
+  unlock_real_days_required?: number
+  unlock_game_days_required?: number
+  time_requirement_met?: boolean
+  can_activate?: boolean
   academy?: {
     id: string
     capacity: number
@@ -2022,13 +2031,22 @@ export default function YouthAcademyPage(): JSX.Element {
             <li>• {t('premium.staff')}</li>
             <li>• {t('premium.scouting')}</li>
           </ul>
-          <Link
-            to="/dashboard/pro"
-            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white"
-          >
-            <Crown size={16} />
-            {t('premium.openPremium')}
-          </Link>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              to="/dashboard/pro"
+              className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white"
+            >
+              <Crown size={16} />
+              {t('premium.openPremium')}
+            </Link>
+            <Link
+              to="/dashboard/manual?section=youth-academy"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800"
+            >
+              <BookOpen size={16} />
+              {t('manual.read')}
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -2051,12 +2069,26 @@ export default function YouthAcademyPage(): JSX.Element {
             {t('activation.description')}
           </p>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {[
               [t('activation.capacityLabel'), '16'],
               [t('activation.starterRidersLabel'), '6'],
               [t('activation.staffLabel'), '2'],
-              [t('activation.infrastructureLabel'), t('activation.none')],
+              [
+                t('activation.coinCostLabel'),
+                t('activation.coins', { count: data.activation_coin_cost ?? 50 }),
+              ],
+              [
+                t('activation.unlockLabel'),
+                t('activation.unlockValue', {
+                  real: data.unlock_real_days_required ?? 30,
+                  game: data.unlock_game_days_required ?? 60,
+                }),
+              ],
+              [
+                t('activation.coinBalanceLabel'),
+                t('activation.coins', { count: data.coin_balance ?? 0 }),
+              ],
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -2084,20 +2116,47 @@ export default function YouthAcademyPage(): JSX.Element {
             </p>
           </div>
 
+          {!data.time_requirement_met ? (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
+              {t('activation.waiting', {
+                realPlayed: data.real_days_played ?? 0,
+                realRequired: data.unlock_real_days_required ?? 30,
+                gamePlayed: data.game_days_played ?? 0,
+                gameRequired: data.unlock_game_days_required ?? 60,
+              })}
+            </div>
+          ) : (data.coin_balance ?? 0) < (data.activation_coin_cost ?? 50) ? (
+            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
+              {t('activation.needCoins', {
+                cost: data.activation_coin_cost ?? 50,
+                balance: data.coin_balance ?? 0,
+              })}
+            </div>
+          ) : null}
+
           {error ? (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
             </div>
           ) : null}
 
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => void activate()}
-            className="mt-5 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {saving ? t('activation.activating') : t('activation.activate')}
-          </button>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={saving || data.can_activate === false}
+              onClick={() => void activate()}
+              className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {saving ? t('activation.activating') : t('activation.activate')}
+            </button>
+            <Link
+              to="/dashboard/manual?section=youth-academy"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800"
+            >
+              <BookOpen size={16} />
+              {t('manual.read')}
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -2668,6 +2727,31 @@ export default function YouthAcademyPage(): JSX.Element {
                 </div>
               </div>
             </Card>
+          </div>
+
+          <div className="xl:col-span-3">
+            <section className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <BookOpen size={18} className="text-amber-700" />
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      {t('manual.title')}
+                    </h3>
+                  </div>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                    {t('manual.description')}
+                  </p>
+                </div>
+                <Link
+                  to="/dashboard/manual?section=youth-academy"
+                  className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white"
+                >
+                  <BookOpen size={16} />
+                  {t('manual.read')}
+                </Link>
+              </div>
+            </section>
           </div>
         </div>
       ) : null}
