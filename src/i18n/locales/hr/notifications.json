@@ -676,7 +676,15 @@
     "WORLD": "Svijet",
     "POSITION": "Mjesto",
     "RESIGNED": "Podnio ostavku",
-    "VACANT": "Upražnjeno"
+    "VACANT": "Upražnjeno",
+    "ACADEMY": "Akademija",
+    "BUDGET": "Proračun",
+    "DECISION": "Odluka",
+    "DEVELOPMENT": "Razvoj",
+    "HANDOVER": "Primopredaja",
+    "MONTHLY": "Mjesečno",
+    "RECRUITMENT": "Regrutacija",
+    "YOUTH": "Mladi"
   },
   "reportVariants": {
     "rider_skill_change": "Promjena vještine vozača",
