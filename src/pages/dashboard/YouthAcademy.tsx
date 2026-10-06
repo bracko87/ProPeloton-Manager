@@ -1590,6 +1590,7 @@ export default function YouthAcademyPage(): JSX.Element {
     void load()
   }, [])
 
+  // Notification actions deep-link directly to the relevant Youth Academy tab.
   useEffect(() => {
     const requestedTab = new URLSearchParams(location.search).get('tab') as TabKey | null
     if (requestedTab && [
