@@ -521,6 +521,99 @@ function getNotificationPayloadRecord(
   return {}
 }
 
+
+type GroupedNationalSelectionRow = {
+  key: string
+  dateLabel: string
+  riderName: string
+  assignmentLabel: string
+}
+
+function formatGroupedNationalSelectionDate(
+  value: unknown,
+  seasonNumber: number
+): string {
+  const raw = String(value ?? '').slice(0, 10)
+  const date = new Date(`${raw}T00:00:00Z`)
+  const dateLabel = Number.isNaN(date.getTime())
+    ? raw || '—'
+    : new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        timeZone: 'UTC',
+      }).format(date)
+  return `${dateLabel} · Season ${seasonNumber}`
+}
+
+function getGroupedNationalSelectionRows(
+  item: NotificationItem
+): GroupedNationalSelectionRow[] {
+  const code = String(item.type_code ?? '').trim().toUpperCase()
+  if (
+    code !== 'NATIONAL_CHAMPIONSHIP_SELECTED' &&
+    code !== 'CHAMPIONSHIP_PARTICIPATION_REQUIRED'
+  ) {
+    return []
+  }
+
+  const payload = getNotificationPayloadRecord(item)
+  const riders = Array.isArray(payload.riders) ? payload.riders : []
+  const seasonNumber = Math.max(1, Number(payload.season_number ?? 1) || 1)
+
+  return riders
+    .map((value, index) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+      const rider = value as Record<string, unknown>
+      const riderName = String(rider.rider_name ?? '').trim()
+      if (!riderName) return null
+
+      const entryPath = String(rider.entry_path ?? '').trim().toLowerCase()
+      const heatNumber = Math.max(1, Number(rider.heat_number ?? 1) || 1)
+      const dateValue =
+        entryPath === 'qualification'
+          ? rider.qualification_date
+          : payload.final_date
+      const rawDate = String(dateValue ?? '').slice(0, 10)
+      const assignmentLabel =
+        entryPath === 'qualification'
+          ? `Qualification Group ${heatNumber}`
+          : 'Direct Final'
+
+      return {
+        key: String(rider.rider_id ?? `${riderName}-${index}`),
+        dateLabel: formatGroupedNationalSelectionDate(dateValue, seasonNumber),
+        riderName,
+        assignmentLabel,
+        _sortDate: rawDate,
+        _sortHeat: entryPath === 'qualification' ? heatNumber : 999,
+      }
+    })
+    .filter((row): row is GroupedNationalSelectionRow & {
+      _sortDate: string
+      _sortHeat: number
+    } => Boolean(row))
+    .sort((a, b) =>
+      a._sortDate.localeCompare(b._sortDate) ||
+      a._sortHeat - b._sortHeat ||
+      a.riderName.localeCompare(b.riderName)
+    )
+    .map(({ _sortDate, _sortHeat, ...row }) => row)
+}
+
+function getGroupedNationalSelectionSummary(item: NotificationItem): string {
+  const payload = getNotificationPayloadRecord(item)
+  const count = Math.max(
+    0,
+    Number(payload.rider_count ?? 0) ||
+      (Array.isArray(payload.riders) ? payload.riders.length : 0)
+  )
+  const country = String(
+    payload.country_name ?? payload.country_code ?? 'National'
+  ).trim()
+  const season = Math.max(1, Number(payload.season_number ?? 1) || 1)
+  return `${count} rider(s) selected for the ${country} National Championship · Season ${season}.`
+}
+
 function getNotificationRiderDefaultScope(
   item: NotificationItem
 ): AdvisorRiderScope {
@@ -2279,6 +2372,8 @@ export default function NotificationsPage(): JSX.Element {
                   const isExpanded = expandedId === item.user_notification_id
                   const isSeasonStartNotice = item.type_code === 'SEASON_STARTED'
                   const isNationalFeatureNotice = isConsolidatedNationalNotification(item)
+                  const groupedNationalSelectionRows = getGroupedNationalSelectionRows(item)
+                  const isGroupedNationalSelection = groupedNationalSelectionRows.length > 0
                   const imageSrc = getNotificationImageSrc(item)
                   const introText = getNotificationIntroText(item)
                   const detailRows = getNotificationDetailRows(item)
@@ -3845,7 +3940,22 @@ export default function NotificationsPage(): JSX.Element {
                                 }`}
                               >
                                 <div className="min-w-0">
-                                  {introText ? (
+                                  {isGroupedNationalSelection ? (
+                                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm leading-6 text-slate-700 shadow-sm">
+                                      <div>{getGroupedNationalSelectionSummary(item)}</div>
+                                      <div className="mt-4 space-y-1">
+                                        {groupedNationalSelectionRows.map(row => (
+                                          <div key={row.key}>
+                                            <span>{row.dateLabel} · </span>
+                                            <strong className="font-bold text-slate-950">
+                                              {row.riderName}
+                                            </strong>
+                                            <span> — {row.assignmentLabel}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ) : introText ? (
                                     <p
                                       className={
                                         isSeasonStartNotice
@@ -3859,7 +3969,7 @@ export default function NotificationsPage(): JSX.Element {
                                     </p>
                                   ) : null}
 
-                                  {detailRows.length > 0 ? (
+                                  {!isGroupedNationalSelection && detailRows.length > 0 ? (
                                     <div
                                       className={
                                         isSeasonStartNotice || isNationalFeatureNotice
@@ -3911,7 +4021,11 @@ export default function NotificationsPage(): JSX.Element {
                                     </div>
                                   ) : null}
 
-                                  {extraText ? (
+                                  {isGroupedNationalSelection ? (
+                                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-sm font-semibold leading-6 text-red-700">
+                                      Approve or refuse each rider from the National Championships duty page. Approved riders are locked from one game day before through one game day after their Championship event.
+                                    </div>
+                                  ) : extraText ? (
                                     <p
                                       className={
                                         isSeasonStartNotice

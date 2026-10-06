@@ -4963,8 +4963,7 @@ export default function YouthAcademyPage(): JSX.Element {
                 const hasRaceSquadCover = temporaryCovers.some(
                   cover => cover.responsibility === 'race_squad'
                 )
-                const isManagerEntry =
-                  raceCalendar?.race_entry_decider === 'manager' && !hasRaceEntryCover
+                const isManagerEntry = true
                 const isManagerSquad =
                   raceCalendar?.race_squad_decider === 'manager' && !hasRaceSquadCover
                 const isEntered = race.entry_status === 'entered'
@@ -4973,6 +4972,25 @@ export default function YouthAcademyPage(): JSX.Element {
                 const currentGameDate = String(raceCalendar?.game_date ?? '').slice(0, 10)
                 const raceStartDate = String(race.race_date ?? '').slice(0, 10)
                 const raceEndDate = String(race.race_end_date ?? race.race_date ?? '').slice(0, 10)
+                const gameDateMs = currentGameDate ? Date.parse(`${currentGameDate}T00:00:00Z`) : Number.NaN
+                const raceDateMs = raceStartDate ? Date.parse(`${raceStartDate}T00:00:00Z`) : Number.NaN
+                const daysUntilRace =
+                  Number.isFinite(gameDateMs) && Number.isFinite(raceDateMs)
+                    ? Math.round((raceDateMs - gameDateMs) / 86_400_000)
+                    : null
+                const applicationWindowOpen =
+                  daysUntilRace !== null && daysUntilRace > 7 && daysUntilRace <= 150
+                const applicationWindowFuture =
+                  daysUntilRace !== null && daysUntilRace > 150
+                const applicationOpenDate =
+                  Number.isFinite(raceDateMs)
+                    ? new Date(raceDateMs - 150 * 86_400_000).toISOString().slice(0, 10)
+                    : null
+                const applicationDecisionDate =
+                  race.invitation_response_deadline ||
+                  (Number.isFinite(raceDateMs)
+                    ? new Date(raceDateMs - 7 * 86_400_000).toISOString().slice(0, 10)
+                    : null)
                 const isActive =
                   race.status === 'scheduled' &&
                   Boolean(currentGameDate) &&
@@ -5075,6 +5093,11 @@ export default function YouthAcademyPage(): JSX.Element {
                                   })}
                             </span>
                           ) : null}
+                          {race.application_pending && applicationDecisionDate ? (
+                            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                              Decision {shortGameDate(applicationDecisionDate)}
+                            </span>
+                          ) : null}
                           {isScheduled &&
                           !isParticipating &&
                           isManagerEntry ? (
@@ -5089,7 +5112,7 @@ export default function YouthAcademyPage(): JSX.Element {
                                   ? t('calendar.declining')
                                   : t('calendar.withdrawApplication', { defaultValue: 'Withdraw Application' })}
                               </button>
-                            ) : (
+                            ) : applicationWindowOpen ? (
                               <button
                                 type="button"
                                 disabled={data.read_only || raceAction !== null}
@@ -5100,6 +5123,12 @@ export default function YouthAcademyPage(): JSX.Element {
                                   ? t('calendar.entering')
                                   : t('calendar.applyRace', { defaultValue: 'Apply for Race' })}
                               </button>
+                            ) : (
+                              <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500">
+                                {applicationWindowFuture && applicationOpenDate
+                                  ? `Applications open ${shortGameDate(applicationOpenDate)}`
+                                  : 'Applications closed'}
+                              </span>
                             )
                           ) : null}
                           {isScheduled && isParticipating ? (

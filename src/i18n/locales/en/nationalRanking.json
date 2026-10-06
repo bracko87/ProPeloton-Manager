@@ -30,8 +30,8 @@
   },
   "duty": {
     "title": "My National Duty",
-    "description": "These riders are entered automatically. You manage only each rider's equipment and individual race strategy.",
-    "locked": "Individual race — no team tactics. Staff, assets and club supplies are unavailable.",
+    "description": "Approve or refuse each rider\u2019s National Championship duty here. Approved riders are synced automatically to Race Preparation.",
+    "locked": "Decision page only — equipment and strategy are handled in Race Preparation.",
     "directQualifier": "Direct qualifier",
     "qualificationHeat": "Qualification Group {{number}}",
     "noPlan": "No editable National Duty plan is currently open for this rider.",

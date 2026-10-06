@@ -1670,27 +1670,19 @@ export default function NationalRankingPage(): JSX.Element {
             </div>
           </div>
 
-          <div className="rounded bg-white p-4 shadow">
-            <div className="font-semibold text-slate-900">{t('organizer.title')}</div>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-700">
-              <span className="rounded-full bg-slate-100 px-3 py-1">
-                {t('organizer.bidons', {
-                  count: String(data?.organizer_supplies?.bidons_water_bottles ?? 8),
-                })}
-              </span>
-              <span className="rounded-full bg-slate-100 px-3 py-1">
-                {t('organizer.gels', {
-                  count: String(data?.organizer_supplies?.energy_gels ?? 6),
-                })}
-              </span>
-              <span className="rounded-full bg-slate-100 px-3 py-1">
-                {t('organizer.nutrition', {
-                  count: String(data?.organizer_supplies?.nutrition_packs ?? 2),
-                })}
-              </span>
-              <span className="rounded-full bg-slate-100 px-3 py-1">{t('organizer.kit')}</span>
-              <span className="rounded-full bg-slate-100 px-3 py-1">{t('organizer.rain')}</span>
+          <div className="flex flex-col gap-3 rounded border border-sky-200 bg-sky-50 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="font-semibold text-slate-900">Participation decisions only</div>
+              <div className="mt-1 text-sm leading-6 text-slate-600">
+                Approve or refuse National Championship duty here. Once approved, the rider is added automatically to the correct Qualification Group or Final start list. Rider equipment and individual strategy are configured only in Race Preparation.
+              </div>
             </div>
+            <Link
+              to="/dashboard/race-preparation"
+              className="inline-flex shrink-0 items-center justify-center rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              Open Race Preparation
+            </Link>
           </div>
 
           {(worldData?.my_entries?.length ?? 0) > 0 ? (
@@ -2085,87 +2077,38 @@ export default function NationalRankingPage(): JSX.Element {
                       </div>
                     ) : null}
 
-                    {showQualification &&
-                    entry.participation_decision !== 'rejected' ? (
+                    {entry.participation_decision === 'approved' &&
+                    (showQualification || showFinal) ? (
+                      <div className="flex flex-col gap-3 rounded border border-emerald-200 bg-emerald-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="text-sm leading-6 text-emerald-900">
+                          <strong>{entry.rider_name}</strong> is approved and has been synced automatically to {
+                            entry.entry_path === 'qualification'
+                              ? `Qualification Group ${entry.heat_number ?? '—'}`
+                              : 'the National Championship Final'
+                          }. Equipment and individual race strategy are managed in Race Preparation.
+                        </div>
+                        <Link
+                          to="/dashboard/race-preparation"
+                          className="inline-flex shrink-0 items-center justify-center rounded bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-600"
+                        >
+                          Open Race Preparation
+                        </Link>
+                      </div>
+                    ) : null}
+
+                    {false && showQualification ? (
                       <NationalDutyPlanCard
                         entry={entry}
                         eventType="qualification"
                         eventDate={entry.duty_window_start_date ?? edition?.qualification_date}
-                        raceHref={
-                          edition
-                            ? `/dashboard/national-championships/${edition.id}/qualification/${entry.heat_number ?? 1}`
-                            : null
-                        }
-                        plan={
-                          drafts[planKey(entry.rider_id, 'qualification')] ??
-                          planFromValue(entry.qualification_plan)
-                        }
+                        raceHref={null}
+                        plan={drafts[planKey(entry.rider_id, 'qualification')] ?? planFromValue(entry.qualification_plan)}
                         equipmentPresets={data?.equipment_presets ?? []}
-                        onChange={next =>
-                          setDrafts(current => ({
-                            ...current,
-                            [planKey(entry.rider_id, 'qualification')]: next,
-                          }))
-                        }
+                        onChange={() => undefined}
                         onSave={() => void savePlan(entry, 'qualification')}
-                        saving={
-                          savingKey === planKey(entry.rider_id, 'qualification')
-                        }
+                        saving={savingKey === planKey(entry.rider_id, 'qualification')}
                       />
                     ) : null}
-
-                    {showFinal && entry.participation_decision !== 'rejected' ? (
-                      <div className="space-y-2">
-                        <NationalDutyPlanCard
-                          entry={entry}
-                          eventType="final"
-                          eventDate={edition?.final_date}
-                          raceHref={
-                            edition
-                              ? `/dashboard/national-championships/${edition.id}/final`
-                              : null
-                          }
-                          plan={
-                            drafts[planKey(entry.rider_id, 'final')] ??
-                            planFromValue(entry.final_plan)
-                          }
-                          equipmentPresets={data?.equipment_presets ?? []}
-                          onChange={next =>
-                            setDrafts(current => ({
-                              ...current,
-                              [planKey(entry.rider_id, 'final')]: next,
-                            }))
-                          }
-                          onSave={() => void savePlan(entry, 'final')}
-                          saving={savingKey === planKey(entry.rider_id, 'final')}
-                        />
-
-                        <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-red-200 bg-red-50 px-4 py-3">
-                          <div className="text-xs leading-5 text-red-800">
-                            A qualified rider can still be withdrawn before the final. The rider will be removed immediately from the final startlist and receives the National Championship refusal morale penalty.
-                          </div>
-                          <button
-                            type="button"
-                            disabled={
-                              finalWithdrawalSavingRiderId === entry.rider_id
-                            }
-                            onClick={() => void withdrawFromNationalFinal(entry)}
-                            className="inline-flex shrink-0 items-center gap-2 rounded border border-red-300 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {finalWithdrawalSavingRiderId === entry.rider_id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : null}
-                            Withdraw from final
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {((!showQualification && !showFinal) ||
-                      entry.participation_decision === 'rejected') ? (
-                      <div className="rounded border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                        {t('duty.noPlan')}
-                      </div>
                     ) : null}
                   </div>
                 </div>

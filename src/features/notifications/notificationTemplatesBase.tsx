@@ -2292,7 +2292,7 @@ export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
     getExtraText: () =>
       'All National Championship participation costs are covered. Open National Championship to approve or refuse the rider before the deadline.',
     actions: [
-      withFallbackHref('Open National Championship', '/dashboard/national-ranking?tab=duty'),
+      withFallbackHref('Open My National Duties', '/dashboard/national-ranking?tab=duty'),
       MARK_READ_ACTION,
     ],
   },
