@@ -261,8 +261,8 @@ const COMPARISON_ROWS = [
   ['comparison.r5', '✓', '✓'],
   ['comparison.r6', '—', '✓'],
   ['comparison.r7', '—', '30'],
-  ['comparison.r8', '2/day, then 1 coin', 'Unlimited coin-free'],
-  ['comparison.r9', '2 coins / race', 'Included'],
+  ['comparison.r8', 'comparison.freeShortlist', 'comparison.premiumShortlist'],
+  ['comparison.r9', 'comparison.freeReplay', 'comparison.premiumReplay'],
   ['comparison.r10', '—', '✓'],
   ['comparison.r11', '—', '✓'],
   ['comparison.r12', '✓', '✓'],
@@ -1718,10 +1718,10 @@ export default function ProPackagesPage(): JSX.Element {
                     {t(benefit)}
                   </td>
                   <td className="px-5 py-4 text-center text-gray-700">
-                    {free}
+                    {free.startsWith('comparison.') ? t(free) : free}
                   </td>
                   <td className="px-5 py-4 text-center font-bold text-gray-900">
-                    {premium}
+                    {premium.startsWith('comparison.') ? t(premium) : premium}
                   </td>
                 </tr>
               ))}
