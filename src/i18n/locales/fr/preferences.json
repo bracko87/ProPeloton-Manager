@@ -145,6 +145,10 @@
     "worldNations": {
       "label": "World Nations & compétitions internationales",
       "description": "Affiche les tirages, mises à jour de course, finales World Nations et notifications de championnats internationaux."
+    },
+    "youthAcademy": {
+      "label": "Académie des jeunes",
+      "description": "Afficher les notifications de l'Académie des jeunes : activation, rapports de course, décisions et relais délégués du personnel, résumés mensuels du recrutement et du développement, ainsi que les alertes budgétaires. La fréquence des rapports de course reste réglée dans l'Académie des jeunes."
     }
   },
   "advisorCategories": {
