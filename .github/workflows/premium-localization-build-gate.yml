@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
     paths:
+      - 'src/pages/ProPackages.tsx'
+      - 'src/pages/dashboard/Manual.tsx'
+      - 'src/i18n/locales/**/proPackages.json'
+      - 'src/i18n/locales/**/manual.json'
       - 'src/pages/dashboard/PremiumCommandCenter.tsx'
       - 'src/pages/dashboard/Training.tsx'
       - 'src/pages/dashboard/training/PremiumRiderDevelopmentPanel.tsx'
@@ -25,6 +29,10 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'src/pages/ProPackages.tsx'
+      - 'src/pages/dashboard/Manual.tsx'
+      - 'src/i18n/locales/**/proPackages.json'
+      - 'src/i18n/locales/**/manual.json'
       - 'src/pages/dashboard/PremiumCommandCenter.tsx'
       - 'src/pages/dashboard/Training.tsx'
       - 'src/pages/dashboard/training/PremiumRiderDevelopmentPanel.tsx'
