@@ -20,16 +20,23 @@
   },
   "activation": {
     "title": "Aktiviraj Omladinsku akademiju",
-    "description": "Aktivacija kreira odvojenu U16 akademiju. Počinješ sa šest lokalnih vozača, prosečnim direktorom akademije i U16 glavnim trenerom. Omladinski skaut je opcioni. V1 nema infrastrukturne uslove.",
+    "description": "Aktivacija kreira odvojenu U16 akademiju. Nova akademija zahteva Premium, 30 dana u realnom vremenu ILI 60 dana u igri od osnivanja kluba, jednokratnu naknadu od 50 coin-a i budžet akademije koji izabereš. Počinješ sa šest lokalnih vozača, direktorom akademije i U16 glavnim trenerom. Omladinski skaut je opcioni.",
     "capacityLabel": "Maksimalno vozača",
     "starterRidersLabel": "Početni vozači",
     "staffLabel": "Uključeno osoblje",
     "infrastructureLabel": "Infrastruktura",
     "none": "Nije potrebna",
     "seasonBudget": "Sezonski budžet akademije",
-    "budgetHelp": "Budžet pokriva podršku vozačima, osoblje, skauting, opremu, kampove, putovanja i troškove omladinskih trka.",
+    "budgetHelp": "Naknada za aktivaciju je odvojena od budžeta u novcu kluba. Budžet akademije pokriva podršku vozačima, osoblje, skauting, opremu, kampove, putovanja i omladinska takmičenja.",
     "activate": "Aktiviraj Omladinsku akademiju",
-    "activating": "Aktivacija…"
+    "activating": "Aktivacija…",
+    "coinCostLabel": "Jednokratna coin naknada",
+    "unlockLabel": "Uslov za otključavanje",
+    "coinBalanceLabel": "Coin stanje",
+    "coins": "{{count}} coin-a",
+    "unlockValue": "{{real}} realnih dana ILI {{game}} dana u igri",
+    "waiting": "Još nije otključano. Napredak: {{realPlayed}}/{{realRequired}} realnih dana ili {{gamePlayed}}/{{gameRequired}} dana u igri. Akademija se otključava čim ispuniš prvi od ova dva uslova.",
+    "needCoins": "Aktivacija Omladinske akademije košta {{cost}} coin-a. Trenutno imaš {{balance}}."
   },
   "header": {
     "capacity": "{{current}} / {{max}} vozača"
@@ -579,5 +586,10 @@
     "class": "Klasa",
     "result": "Rezultat",
     "points": "Bodovi"
+  },
+  "manual": {
+    "title": "Treba ti pomoć za Omladinsku akademiju?",
+    "description": "Otvori kompletan priručnik za pravila aktivacije, osoblje, skauting, regrutovanje, budžet, opremu, trke, rangiranje, razvoj i promociju vozača.",
+    "read": "Pročitaj priručnik Omladinske akademije"
   }
 }
