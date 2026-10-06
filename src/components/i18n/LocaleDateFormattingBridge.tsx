@@ -195,6 +195,26 @@ function transformBareMoneyValue(source: string, parent: HTMLElement): string {
   return leading + formatted + trailing
 }
 
+function preserveEuroCurrencyForCurrentRoute(): boolean {
+  if (typeof window === 'undefined') return false
+
+  const hashPath = window.location.hash
+    .replace(/^#/, '')
+    .split('?')[0]
+    .replace(/\/$/, '')
+
+  const pathname = window.location.pathname
+    .split('?')[0]
+    .replace(/\/$/, '')
+
+  return (
+    hashPath === '/dashboard/pro' ||
+    hashPath === '/dashboard/pro-packages' ||
+    pathname === '/dashboard/pro' ||
+    pathname === '/dashboard/pro-packages'
+  )
+}
+
 function transformTextNode(
   textNode: Text,
   language: string | undefined,
@@ -205,10 +225,18 @@ function transformTextNode(
   if (!current || !parent) return
   if (['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return
 
-  const dateAndCurrency = transformMoney(
-    transformGameDates(current, language, currentSeason),
+  const dateFormatted = transformGameDates(
+    current,
+    language,
+    currentSeason,
   )
-  const next = transformBareMoneyValue(dateAndCurrency, parent)
+
+  const next = preserveEuroCurrencyForCurrentRoute()
+    ? dateFormatted
+    : transformBareMoneyValue(
+        transformMoney(dateFormatted),
+        parent,
+      )
 
   if (next !== current) {
     textNode.nodeValue = next
