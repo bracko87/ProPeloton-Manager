@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'scripts/build.mjs'
       - 'src/pages/ProPackages.tsx'
       - 'src/pages/dashboard/Manual.tsx'
       - 'src/i18n/locales/**/proPackages.json'
@@ -29,6 +31,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'scripts/build.mjs'
       - 'src/pages/ProPackages.tsx'
       - 'src/pages/dashboard/Manual.tsx'
       - 'src/i18n/locales/**/proPackages.json'
@@ -84,3 +88,10 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      - name: Verify cache-busted app bundle
+        shell: bash
+        run: |
+          ! grep -F "__PPM_BUILD_VERSION__" dist/index.html
+          grep -E '/main\.js\?v=[0-9]+' dist/index.html
+          grep -E '/main\.css\?v=[0-9]+' dist/index.html
