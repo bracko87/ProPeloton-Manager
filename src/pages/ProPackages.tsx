@@ -105,6 +105,15 @@ type YouthAcademyServiceStatus = {
   capacity: number
   starter_riders?: number
   default_season_budget?: number
+  activation_coin_cost?: number
+  renewal_coin_cost?: number
+  coin_balance?: number
+  real_days_played?: number
+  game_days_played?: number
+  unlock_real_days_required?: number
+  unlock_game_days_required?: number
+  time_requirement_met?: boolean
+  can_activate?: boolean
   academy?: {
     id: string
     active_riders: number
@@ -429,6 +438,9 @@ function describeCoinTransaction(reason: string, payload: any) {
   }
 
   if (reason === 'scout_report_extra') return appI18n.t('transactions.extraScout', { ns: 'proPackages' })
+  if (reason === 'youth_academy_activation') {
+    return appI18n.t('transactions.youthAcademyActivation', { ns: 'proPackages' })
+  }
   if (reason === 'premium_monthly_grant') return appI18n.t('transactions.premiumGrant', { ns: 'proPackages' })
 
   return titleFromSnake(reason)
@@ -2116,9 +2128,11 @@ export default function ProPackagesPage(): JSX.Element {
                     ? t('services.loadingYouth')
                     : youthAcademyService?.activated
                       ? t('services.active')
-                      : premiumStatus?.is_premium
-                        ? t('services.available')
-                        : t('services.premiumRequired')}
+                      : !premiumStatus?.is_premium
+                        ? t('services.premiumRequired')
+                        : youthAcademyService?.can_activate
+                          ? t('services.available')
+                          : t('services.locked')}
                 </span>
               </div>
 
@@ -2126,7 +2140,7 @@ export default function ProPackagesPage(): JSX.Element {
                 {t('services.descriptionYouthAcademy')}
               </p>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 <MembershipItem
                   label={t('services.youthCapacity')}
                   value={t('services.ridersCount', { count: youthAcademyService?.capacity ?? 16 })}
@@ -2141,9 +2155,31 @@ export default function ProPackagesPage(): JSX.Element {
                 />
                 <MembershipItem
                   label={t('services.youthActivationCost')}
-                  value={t('services.youthActivationCostValue')}
+                  value={t('services.youthActivationCostValue', {
+                    cost: youthAcademyService?.activation_coin_cost ?? 50,
+                  })}
+                />
+                <MembershipItem
+                  label={t('services.youthUnlock')}
+                  value={t('services.youthUnlockValue', {
+                    real: youthAcademyService?.unlock_real_days_required ?? 30,
+                    game: youthAcademyService?.unlock_game_days_required ?? 60,
+                  })}
                 />
               </div>
+
+              {!youthAcademyService?.activated &&
+              premiumStatus?.is_premium &&
+              youthAcademyService?.time_requirement_met === false ? (
+                <p className="mt-4 text-sm text-amber-800">
+                  {t('services.youthWaiting', {
+                    realPlayed: youthAcademyService?.real_days_played ?? 0,
+                    realRequired: youthAcademyService?.unlock_real_days_required ?? 30,
+                    gamePlayed: youthAcademyService?.game_days_played ?? 0,
+                    gameRequired: youthAcademyService?.unlock_game_days_required ?? 60,
+                  })}
+                </p>
+              ) : null}
 
               <ul className="mt-4 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
                 <li>✓ {t('services.youthFeatureScouting')}</li>
