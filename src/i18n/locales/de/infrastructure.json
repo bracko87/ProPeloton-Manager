@@ -54,6 +54,7 @@
     "maxLevel": "Max. Level",
     "slotsFull": "Plätze voll",
     "configMissing": "Konfiguration fehlt",
+    "prerequisiteRequired": "Voraussetzung erforderlich",
     "deliveryStatus": "Lieferung",
     "details": "Details",
     "allClear": "Alles in Ordnung",
@@ -118,8 +119,12 @@
   "facilityNames": {
     "clubHouse": "Clubhaus",
     "trainingCenter": "Trainingszentrum",
+    "sprintPerformanceCircuit": "Sprint-Leistungsrundkurs",
+    "climbingPerformanceCenter": "Kletter-Leistungszentrum",
+    "teamTimeTrialCenter": "Mannschaftszeitfahrzentrum",
     "medicalCenter": "Medizinzentrum",
     "youthAcademy": "Nachwuchsakademie",
+    "teamResidentialCampus": "Team-Wohncampus",
     "mechanicsWorkshop": "Mechanikerwerkstatt",
     "scoutingOffice": "Scouting-Büro"
   },
@@ -128,10 +133,18 @@
     "clubHouseLong": "Das Clubhaus ist die zentrale operative Basis des Teams. Es unterstützt Verwaltung, Cluborganisation und zukünftiges wirtschaftliches Wachstum. Höhere Level helfen, eine größere Personalstruktur und zukünftige Managementsysteme freizuschalten.",
     "trainingCenterShort": "Zentrale Trainingsbasis für Fahrerentwicklung und tägliche Trainerarbeit.",
     "trainingCenterLong": "Das Trainingszentrum verbessert die Wirksamkeit des Trainerpersonals und unterstützt Trainingsqualität, Fahrerentwicklung und die Kontrolle von Überlastungsrisiken. Höhere Level erweitern außerdem die Trainerkapazität.",
+    "sprintPerformanceCircuitShort": "Geschlossener Hochgeschwindigkeitskurs für Beschleunigungs-, Sprint- und Antrittstraining.",
+    "sprintPerformanceCircuitLong": "Voraussetzung: Trainingszentrum Level 2. Verbessert die sprintorientierte Entwicklung um 4 % bei Fahrern der ersten Mannschaft, 8 % bei U23-Fahrern und 12 % bei U16-Fahrern. Die sprintbezogene Rennentwicklung von U23 und U16 erhält zusätzlich 5 %.",
+    "climbingPerformanceCenterShort": "Spezialisiertes Kletterlabor für kontrolliertes Steigungstraining.",
+    "climbingPerformanceCenterLong": "Voraussetzung: Trainingszentrum Level 2. Verbessert die kletterorientierte Entwicklung um 4 % bei Fahrern der ersten Mannschaft, 8 % bei U23-Fahrern und 12 % bei U16-Fahrern. Die kletterbezogene Rennentwicklung von U23 und U16 erhält zusätzlich 5 %.",
+    "teamTimeTrialCenterShort": "Indoor-Aerokurs für Tempoarbeit, Ablösungen und Formation im Mannschaftszeitfahren.",
+    "teamTimeTrialCenterLong": "Voraussetzung: Trainingszentrum Level 2. Verbessert die zeitfahrorientierte Entwicklung um 4 % bei Fahrern der ersten Mannschaft, 7 % bei U23-Fahrern und 10 % bei U16-Fahrern, erhöht die TTT-Rennentwicklung von U23 und U16 um 5 % und verbessert die Effizienz der Mannschaftszeitfahr-Formation um 5 %.",
     "medicalCenterShort": "Medizinische Einrichtung für Prävention, Behandlung, Erholung und Fahrergesundheit.",
     "medicalCenterLong": "Das Medizinzentrum unterstützt Teamärzte, Physiotherapeuten und Ernährungsberater. Es reduziert starke medizinische Begrenzungen, verbessert Verletzungsprävention und Erholung und erweitert die medizinische Personalkapazität.",
     "youthAcademyShort": "Langfristige Entwicklungseinrichtung für zukünftige Fahrer und Nachwuchsförderung.",
-    "youthAcademyLong": "Die Nachwuchsakademie ist eine strategische langfristige Investition. Sie unterstützt Nachwuchsentwicklungssysteme, schaltet die Rolle des U23-Cheftrainers frei und verbessert später Training und Entwicklung von U23-Fahrern.",
+    "youthAcademyLong": "Die Nachwuchsakademie ist eine strategische langfristige Investition für die U23- und U16-Entwicklung. Sie schaltet die Rolle des U23-Cheftrainers frei, verbessert Training und Rennentwicklung des Entwicklungsteams und stärkt zusätzlich Training, Rennentwicklung und Cheftrainer-Wirkung der U16-Akademie.",
+    "teamResidentialCampusShort": "Dauerhafte Unterkunft am Teamstandort für Fahrer und festes Personal des gesamten Clubs.",
+    "teamResidentialCampusLong": "Voraussetzung: Nachwuchsakademie Level 1. Bietet club-eigene Unterkunft am Heimatstandort für erste Mannschaft, U23, U16 und festes Personal. Unterkunftskosten am Heimatstandort entfallen; Hotels bei Rennen und Trainingslagern bleiben kostenpflichtig. Die Erholungseffektivität von U16 und U23 steigt um 5 %.",
     "mechanicsWorkshopShort": "Technische Basis für Wartung und Ausrüstungsunterstützung.",
     "mechanicsWorkshopLong": "Die Mechanikerwerkstatt verbessert die technische Unterstützungskapazität und bereitet den Club auf tiefere Ausrüstungssysteme, schnellere Reparaturen und geringere Wartungskosten vor. Höhere Level schalten zusätzliche Mechanikerplätze frei.",
     "scoutingOfficeShort": "Scouting- und Analysezentrum für Berichte, Marktinformationen und Talentsuche.",
@@ -502,6 +515,14 @@
         "effect": "U23-Fahrer erhalten 10 % Bonus auf Training und Entwicklung, sobald das U23-System diesen Effekt anwendet."
       }
     }
+  },
+  "legacyUi": {
+    "teamBusGarage": "Teambus-Garage",
+    "teamBusGarageDescription": "Teambusse verbessern Reisekomfort, Erholung, Ermüdungskontrolle und Logistik bei Etappenrennen. Verwalten Sie die Garage nach Plätzen, starten Sie neue Lieferungen, reparieren Sie verschlissene Busse oder verkaufen Sie verfügbare Busse.",
+    "equipmentVanGarage": "Garage für Ausrüstungstransporter",
+    "equipmentVanGarageDescription": "Ausrüstungstransporter unterstützen Fahrradtransport, Ersatzteilabdeckung, Rennlogistik und allgemeine Einsatzbereitschaft. Verwalten Sie die Garage nach Plätzen, starten Sie Lieferungen, reparieren Sie verschlissene Transporter oder verkaufen Sie verfügbare Fahrzeuge.",
+    "mobileWorkshopGarageDescription": "Mobile Werkstätten ermöglichen technische Reparaturen vor Ort, schnellere Reaktion auf Probleme, Mechanikerabdeckung und zusätzliche Servicekapazität. Verwalten Sie die Garage nach Plätzen, starten Sie Lieferungen, reparieren Sie verschlissene Werkstätten oder verkaufen Sie verfügbare Einheiten.",
+    "medicalVanGarageDescription": "Medizintransporter unterstützen medizinische Reaktion am Renntag, Zugang zur Behandlung, Verletzungskontrolle und medizinische Abdeckung. Verwalten Sie die Garage nach Plätzen, starten Sie Lieferungen, reparieren Sie verschlissene Transporter oder verkaufen Sie verfügbare Fahrzeuge."
   },
   "facilityGuide": {
     "title": "Übersicht der Einrichtungslevel",

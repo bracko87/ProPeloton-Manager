@@ -54,6 +54,7 @@
     "maxLevel": "Maksimalni nivo",
     "slotsFull": "Sva mesta zauzeta",
     "configMissing": "Nedostaje konfiguracija",
+    "prerequisiteRequired": "Potreban preduslov",
     "deliveryStatus": "Isporuka",
     "details": "Detalji",
     "allClear": "Sve je u redu",
@@ -118,8 +119,12 @@
   "facilityNames": {
     "clubHouse": "Sedište kluba",
     "trainingCenter": "Trening centar",
+    "sprintPerformanceCircuit": "Sprint performans krug",
+    "climbingPerformanceCenter": "Centar za razvoj penjanja",
+    "teamTimeTrialCenter": "Centar za ekipni hronometar",
     "medicalCenter": "Medicinski centar",
     "youthAcademy": "Akademija mladih",
+    "teamResidentialCampus": "Stambeni kamp tima",
     "mechanicsWorkshop": "Mehaničarska radionica",
     "scoutingOffice": "Skauting kancelarija"
   },
@@ -128,10 +133,18 @@
     "clubHouseLong": "Sedište kluba je osnovna operativna baza tima. Podržava administraciju, organizaciju kluba i budući poslovni razvoj. Viši nivoi pomažu u otključavanju šire strukture osoblja i budućih sistema upravljanja.",
     "trainingCenterShort": "Glavna baza za razvoj vozača i svakodnevni rad trenera.",
     "trainingCenterLong": "Trening centar povećava efikasnost trenerskog osoblja i podržava kvalitet treninga, razvoj vozača i upravljanje rizikom od preopterećenja. Viši nivoi povećavaju i kapacitet trenera.",
+    "sprintPerformanceCircuitShort": "Zatvoren brzi krug za trening ubrzanja, sprinta i završnog izbačaja.",
+    "sprintPerformanceCircuitLong": "Zahteva Trening centar Nivo 2. Povećava razvoj usmeren na Sprint za 4% u Prvom timu, 8% kod U23 i 12% kod U16 vozača. Razvoj sprint veština kroz trke kod U23 i U16 dobija dodatnih 5%.",
+    "climbingPerformanceCenterShort": "Specijalizovani centar za kontrolisani trening penjanja.",
+    "climbingPerformanceCenterLong": "Zahteva Trening centar Nivo 2. Povećava razvoj usmeren na Penjanje za 4% u Prvom timu, 8% kod U23 i 12% kod U16 vozača. Razvoj veština penjanja kroz trke kod U23 i U16 dobija dodatnih 5%.",
+    "teamTimeTrialCenterShort": "Zatvoren aero krug za tempo, smene i formaciju ekipnog hronometra.",
+    "teamTimeTrialCenterLong": "Zahteva Trening centar Nivo 2. Povećava razvoj usmeren na Hronometar za 4% u Prvom timu, 7% kod U23 i 10% kod U16 vozača, dodaje 5% TTT razvoju kroz trke kod U23/U16 i poboljšava efikasnost tempa i formacije ekipnog hronometra za 5%.",
     "medicalCenterShort": "Medicinski objekat za prevenciju, lečenje, oporavak i zdravlje vozača.",
     "medicalCenterLong": "Medicinski centar podržava timske doktore, fizioterapeute i nutricioniste. Smanjuje medicinska ograničenja, poboljšava prevenciju povreda i oporavak i povećava kapacitet medicinskog osoblja.",
     "youthAcademyShort": "Dugoročni razvojni objekat za buduće vozače i napredak mladih.",
-    "youthAcademyLong": "Akademija mladih je strateška dugoročna investicija. Podržava sisteme razvoja mladih, otključava ulogu U23 Glavnog trenera i kasnije poboljšava trening i razvoj U23 vozača.",
+    "youthAcademyLong": "Akademija mladih je strateška dugoročna investicija za razvoj U23 i U16 vozača. Otključava ulogu U23 Glavnog trenera, poboljšava trening i razvoj kroz trke Razvojnog tima i dodatno jača trening, razvoj kroz trke i efikasnost Glavnog trenera U16 Akademije.",
+    "teamResidentialCampusShort": "Stalni smeštaj u klupskoj bazi za vozače i stalno osoblje.",
+    "teamResidentialCampusLong": "Zahteva Akademiju mladih Nivo 1. Obezbeđuje klupski smeštaj za Prvi tim, U23, U16 i stalno osoblje. Troškovi smeštaja u bazi postaju $0, dok se hoteli na trkama i trening kampovima i dalje plaćaju. Efikasnost oporavka U16 i U23 raste za 5%.",
     "mechanicsWorkshopShort": "Tehnička baza za održavanje opreme i podršku timu.",
     "mechanicsWorkshopLong": "Mehaničarska radionica povećava kapacitet tehničke podrške i priprema klub za naprednije sisteme opreme, brže popravke i niže troškove održavanja. Viši nivoi otključavaju dodatna mesta za mehaničare.",
     "scoutingOfficeShort": "Centar za skauting, izveštaje, informacije sa tržišta i otkrivanje talenata.",
@@ -502,6 +515,14 @@
         "effect": "U23 vozači dobijaju 10% bonusa na trening i razvoj kada U23 sistem primenjuje ovaj efekat."
       }
     }
+  },
+  "legacyUi": {
+    "teamBusGarage": "Garaža timskih autobusa",
+    "teamBusGarageDescription": "Timski autobusi poboljšavaju udobnost putovanja, oporavak, kontrolu umora i logistiku etapnih trka. Upravljajte garažom po mestima, pokrenite nove isporuke, popravljajte istrošene autobuse ili prodajte dostupne.",
+    "equipmentVanGarage": "Garaža kombija za opremu",
+    "equipmentVanGarageDescription": "Kombiji za opremu podržavaju transport bicikala, rezervne delove, logistiku opreme za trke i ukupnu spremnost. Upravljajte garažom po mestima, pokrenite isporuke, popravljajte istrošene kombije ili prodajte dostupne.",
+    "mobileWorkshopGarageDescription": "Mobilne radionice podržavaju popravke na licu mesta, bržu reakciju na probleme, podršku mehaničarima i servisni kapacitet opreme. Upravljajte garažom po mestima, isporukama, popravkama i prodajom.",
+    "medicalVanGarageDescription": "Medicinski kombiji podržavaju zdravstvenu reakciju tokom trke, pristup lečenju, kontrolu povreda i medicinsku podršku. Upravljajte garažom po mestima, isporukama, popravkama i prodajom."
   },
   "facilityGuide": {
     "title": "Vodič kroz nivoe objekta",
