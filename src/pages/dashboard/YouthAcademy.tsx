@@ -5077,6 +5077,9 @@ export default function YouthAcademyPage(): JSX.Element {
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                             {formatLabel}
                           </span>
+                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
+                            {Number(race.entries_count ?? 0)} / {Number(race.team_limit ?? 20)} teams
+                          </span>
                           {race.invitation_status &&
                           (race.invitation_status !== 'pending' || race.application_pending) ? (
                             <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
