@@ -123,7 +123,8 @@
     "raceSupplies": "Forniture per corse",
     "equipmentUpdates": "Aggiornamenti delle attrezzature",
     "infrastructureUpdates": "Aggiornamenti dell'infrastruttura",
-    "systemMessages": "Messaggi di sistema"
+    "systemMessages": "Messaggi di sistema",
+    "youthAcademy": "Accademia giovanile"
   },
   "roles": {
     "assignedAdvisor": "Consulente assegnato",
