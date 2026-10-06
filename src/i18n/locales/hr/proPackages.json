@@ -93,7 +93,7 @@
     "r8": "Rider shortlist additions",
     "developing": "Usluga Razvojnog tima",
     "activationRenewal": "{{activation}} aktivacija / {{renewal}} obnova",
-    "note": "Free managers keep the complete core game and manual control. Premium adds analysis, automation and two optional development programmes. Developing Team costs 100 coins to activate and 100 coins per season to renew. Youth Academy has no coin activation fee; its budget and operating costs use normal club money.",
+    "note": "Free zadržava cijelu osnovnu igru i ručnu kontrolu. Developing Team otključava se nakon 30 stvarnih dana ILI 60 dana u igri, košta 100 coina za aktivaciju i 100 po sezoni. Akademija mladih ima isti uvjet 30/60, košta 50 coina samo jednom i nema sezonsku obnovu coinima; zatim koristi normalan novac kluba.",
     "premiumOnly": "Samo Premium",
     "r9": "World-race replays",
     "r10": "Templates & Smart Prefill",
@@ -104,7 +104,7 @@
     "freeReplay": "2 coins per race",
     "premiumReplay": "Included",
     "youthAcademy": "Youth Academy / U16 development",
-    "youthAcademyPremium": "Included with Premium · 16 rider places"
+    "youthAcademyPremium": "Premium + jednokratno 50 coina · 16 mjesta"
   },
   "packages": {
     "title": "Potrebni su vam dodatni Coins?",
@@ -144,7 +144,7 @@
   },
   "services": {
     "title": "Premium development services",
-    "description": "Manage the two Premium-only development programmes. Developing Team uses coins for seasonal access; Youth Academy uses normal club money for its budget and operating costs.",
+    "description": "Dva Premium razvojna programa: Developing Team košta 100 coina za aktivaciju i 100 po sezoni; Akademija mladih 50 coina jednokratno, bez sezonske coin obnove, a zatim koristi novac kluba.",
     "loading": "Učitavanje usluga za Coins...",
     "unavailable": "Podaci o usluzi Razvojnog tima trenutno nisu dostupni.",
     "unavailableHelp": "Ostale funkcije za Premium, naplatu i upravljanje Coins i dalje su dostupne.",
@@ -183,13 +183,13 @@
     "available": "Available",
     "premiumRequired": "Premium required",
     "loadingYouth": "Loading…",
-    "descriptionYouthAcademy": "A separate U16 development programme with its own riders, staff, budget, scouting, equipment, race calendar, rankings, development history and graduation pathway. Premium is required to activate and manage it.",
+    "descriptionYouthAcademy": "Zaseban U16 program s vozačima, osobljem, budžetom, skautingom, opremom, kalendarom, rangiranjem, razvojem i promocijom. Premium je obavezan. Nova akademija otključava se nakon 30 stvarnih dana ILI 60 dana u igri i košta 50 coina jednokratno.",
     "youthCapacity": "Academy capacity",
     "youthStarterRiders": "Starter riders",
     "youthStarterStaff": "Starter staff",
     "youthStarterStaffValue": "Director + U16 Head Coach",
     "youthActivationCost": "Activation",
-    "youthActivationCostValue": "No coin fee · club-cash budget",
+    "youthActivationCostValue": "{{cost}} coina jednom · bez sezonske obnove",
     "ridersCount": "{{count}} riders",
     "youthFeatureScouting": "Scouting and recruitment programme",
     "youthFeatureRacing": "U16 race calendar, entries, results and rankings",
@@ -201,7 +201,11 @@
     "youthFeaturePathway": "Graduation pathway into senior or Developing Team",
     "youthReadOnly": "Premium is currently inactive. Academy data is preserved, but management remains read-only until Premium returns.",
     "openYouthAcademy": "Open Youth Academy",
-    "viewYouthAcademy": "View Youth Academy"
+    "viewYouthAcademy": "View Youth Academy",
+    "locked": "Zaključano",
+    "youthUnlock": "Otključavanje",
+    "youthUnlockValue": "{{real}} stvarnih dana ILI {{game}} dana u igri",
+    "youthWaiting": "Napredak: {{realPlayed}}/{{realRequired}} stvarnih dana ili {{gamePlayed}}/{{gameRequired}} dana u igri."
   },
   "history": {
     "title": "Povijest naplate i kupovina",
@@ -259,7 +263,8 @@
     "developingReactivation": "Reaktivacija Razvojnog tima — sezona {{season}}",
     "developingSeasonalReactivation": "Sezonska reaktivacija Razvojnog tima",
     "extraScout": "Dodatni skauting izvještaj",
-    "premiumGrant": "Mjesečna Premium dodjela Coins"
+    "premiumGrant": "Mjesečna Premium dodjela Coins",
+    "youthAcademyActivation": "Aktivacija Akademije mladih"
   },
   "common": {
     "coins": "{{count}} Coins",
