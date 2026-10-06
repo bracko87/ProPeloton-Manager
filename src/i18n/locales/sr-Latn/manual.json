@@ -3517,10 +3517,11 @@
         "11": "Akademija ima poseban sezonski budžet i ledger. Početni novac dolazi iz senior kluba. Transferi senior→Youth smanjuju senior cash, a Youth→senior koriste samo slobodna i nevezana sredstva.",
         "12": "Akademija ima sopstvenu opremu, assets, race supplies i setup-e. Sve se finansira iz Academy budžeta i zavisi od stanja/dostupnosti.",
         "13": "U16 takmičenje je results-only i ima World, Continental West/East i Regional nivo. Kalendar, pozivi, wildcards i mesečni plan kontrolišu pristup i broj trka.",
-        "14": "Različite postave mogu voziti trke koje se preklapaju, ali isti vozač ne može. Proveri spremnost, umor i lineup pre potvrde.",
-        "15": "Prihod od trka ide direktno u fond Akademije, ne u senior cash. Trke su razvoj i ograničen prihod, ali nisu zamena za dovoljan budžet.",
-        "16": "Overview prikazuje razvoj, spremnost/umor, pokrivenost osobljem, infrastrukturne efekte, prethodnu/sledeću trku i poslednji rezultat.",
-        "17": "Sa 16 godina sledi odluka o izlasku. Ako uslovi i mesto dozvoljavaju, vozač može u Developing Team; alternativno koristi podržani pathway ili release."
+        "14": "Hijerarhija sezone je jasna: World Class ima 16 akademija i poslednje četiri ispadaju. Continental West i East imaju po 20 timova; oba šampiona ulaze direktno. Mesta 2, 3 i 4 iz obe Continental divizije čine playoff tabelu sa šest timova, a najbolja dva takođe ulaze u World Class. Pobednik svake od šest Regional divizija promoviše se u odgovarajuću Continental grupu.",
+        "15": "Različite postave mogu voziti trke koje se preklapaju, ali isti vozač ne može. Proveri spremnost, umor i lineup pre potvrde.",
+        "16": "Prihod od trka ide direktno u fond Akademije, ne u senior cash. Trke su razvoj i ograničen prihod, ali nisu zamena za dovoljan budžet.",
+        "17": "Overview prikazuje razvoj, spremnost/umor, pokrivenost osobljem, infrastrukturne efekte, prethodnu/sledeću trku i poslednji rezultat.",
+        "18": "Sa 16 godina sledi odluka o izlasku. Ako uslovi i mesto dozvoljavaju, vozač može u Developing Team; alternativno koristi podržani pathway ili release."
       },
       "tips": {
         "0": "50 coin-a je samo ulazna naknada; ostavi dovoljno novca kluba za budžet i rad Akademije.",
