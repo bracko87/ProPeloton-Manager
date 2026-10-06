@@ -20,16 +20,23 @@
   },
   "activation": {
     "title": "Attiva Accademia Giovanile",
-    "description": "L'attivazione crea la tua accademia U16 separata. Inizi con sei corridori locali, un Direttore dell'Accademia Giovanile di livello medio e un allenatore capo U16. Lo scout giovanile è facoltativo. V1 non richiede infrastrutture.",
+    "description": "L'attivazione crea la tua accademia U16 separata. Una nuova accademia richiede Premium, 30 giorni reali O 60 giorni di gioco dalla creazione del club, una quota una tantum di 50 coin e il budget dell'accademia scelto. Inizi con sei corridori locali, un Direttore dell'Accademia e un Allenatore U16. Lo Scout Giovanile è opzionale.",
     "capacityLabel": "Numero massimo di corridori",
     "starterRidersLabel": "Corridori iniziali",
     "staffLabel": "Staff incluso",
     "infrastructureLabel": "Requisito infrastruttura",
     "none": "Nessuno",
     "seasonBudget": "Budget stagionale dell'accademia",
-    "budgetHelp": "Il budget finanzia supporto ai corridori, staff, scouting, equipaggiamento, camp, viaggi e costi delle competizioni giovanili.",
+    "budgetHelp": "La quota di attivazione è separata da questo budget in denaro del club. Il budget dell'accademia finanzia supporto corridori, staff, scouting, equipaggiamento, ritiri, viaggi e competizioni giovanili.",
     "activate": "Attiva Accademia Giovanile",
-    "activating": "Attivazione…"
+    "activating": "Attivazione…",
+    "coinCostLabel": "Quota coin una tantum",
+    "unlockLabel": "Requisito di sblocco",
+    "coinBalanceLabel": "Saldo coin",
+    "coins": "{{count}} coin",
+    "unlockValue": "{{real}} giorni reali O {{game}} giorni di gioco",
+    "waiting": "Non ancora sbloccata. Progresso: {{realPlayed}}/{{realRequired}} giorni reali oppure {{gamePlayed}}/{{gameRequired}} giorni di gioco. Il primo requisito raggiunto sblocca l'accademia.",
+    "needCoins": "L'attivazione dell'Accademia Giovanile costa {{cost}} coin. Il saldo attuale è {{balance}}."
   },
   "header": {
     "capacity": "{{current}} / {{max}} corridori"
@@ -579,5 +586,10 @@
     "class": "Classe",
     "result": "Risultato",
     "points": "Punti"
+  },
+  "manual": {
+    "title": "Serve aiuto con l'Accademia Giovanile?",
+    "description": "Apri il manuale completo per regole di attivazione, staff, scouting, reclutamento, budget, equipaggiamento, gare, classifiche, sviluppo e passaggio di categoria.",
+    "read": "Leggi il manuale dell'Accademia Giovanile"
   }
 }
