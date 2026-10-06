@@ -70,5 +70,17 @@ jobs:
       - name: Validate translations
         run: npm run check:i18n
 
+      - name: Validate Pro Packages EUR catalog
+        shell: bash
+        run: |
+          grep -F "const PRO_PREMIUM_PRICE_EUR = 3.29" src/pages/ProPackages.tsx
+          grep -F "coins_70: 2.99" src/pages/ProPackages.tsx
+          grep -F "coins_130: 4.99" src/pages/ProPackages.tsx
+          grep -F "coins_270: 9.99" src/pages/ProPackages.tsx
+          grep -F "coins_390: 13.99" src/pages/ProPackages.tsx
+          grep -F "coins_570: 19.99" src/pages/ProPackages.tsx
+          grep -F "coins_900: 29.99" src/pages/ProPackages.tsx
+          grep -F 'return `€${safeValue.toFixed(2)}`' src/pages/ProPackages.tsx
+
       - name: Production build
         run: npm run build
