@@ -185,6 +185,20 @@ const COIN_HISTORY_PAGE_SIZE = 20
 // Display fallbacks only. get_developing_team_status() is the authoritative source.
 const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 100
 const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 100
+
+// Canonical real-money catalog for the Pro Packages page.
+ // Keep these values aligned with the billing database and Stripe catalog.
+ // This page is the only ProPeloton area that intentionally displays EUR.
+const PRO_PREMIUM_PRICE_EUR = 3.29
+const PRO_PREMIUM_MONTHLY_COINS = 30
+const PRO_COIN_PACKAGE_PRICES_EUR: Record<string, number> = {
+  coins_70: 2.99,
+  coins_130: 4.99,
+  coins_270: 9.99,
+  coins_390: 13.99,
+  coins_570: 19.99,
+  coins_900: 29.99,
+}
 const STRIPE_RETURN_RETRY_DELAYS_MS = [0, 1500, 3000, 5000, 8000, 12000]
 
 type StripeReturnResult = 'success' | 'cancel' | 'portal_return'
@@ -282,10 +296,8 @@ const PREMIUM_ADVANTAGES = [
 ] as const
 
 function eur(value: number) {
-  return new Intl.NumberFormat(appI18n.resolvedLanguage ?? appI18n.language ?? 'en', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(value)
+  const safeValue = Number.isFinite(Number(value)) ? Number(value) : 0
+  return `€${safeValue.toFixed(2)}`
 }
 
 function moneyFromCents(
@@ -660,14 +672,8 @@ export default function ProPackagesPage(): JSX.Element {
       !billingCancelAtPeriodEnd,
   )
 
-  const premiumPrice = premiumPlan
-    ? eur(Number(premiumPlan.price_cents) / 100)
-    : '€3.29'
-
-  const premiumCoins =
-    premiumPlan?.coins_per_paid_invoice ??
-    premiumStatus?.coins_per_paid_invoice ??
-    30
+  const premiumPrice = eur(PRO_PREMIUM_PRICE_EUR)
+  const premiumCoins = PRO_PREMIUM_MONTHLY_COINS
 
   const statusLabel = useMemo(() => {
     if (hasManualPremiumAccess) {
@@ -917,7 +923,9 @@ export default function ProPackagesPage(): JSX.Element {
       .map((row) => ({
         code: row.code,
         coins: Number(row.coins),
-        priceEur: Number(row.price_cents) / 100,
+        priceEur:
+          PRO_COIN_PACKAGE_PRICES_EUR[row.code] ??
+          Number(row.price_cents) / 100,
         tagline: taglineForCoins(Number(row.coins)),
       }))
       .sort((a, b) => a.coins - b.coins)
