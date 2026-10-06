@@ -145,6 +145,10 @@
     "worldNations": {
       "label": "World Nations i međunarodna natjecanja",
       "description": "Prikaži ždrijebove, ažuriranja utrka, finala World Nations i obavijesti međunarodnih prvenstava."
+    },
+    "youthAcademy": {
+      "label": "Omladinska akademija",
+      "description": "Prikaži obavijesti Omladinske akademije: aktivaciju, izvještaje s utrka, delegirane odluke i primopredaje osoblja, mjesečne sažetke regrutacije i razvoja te upozorenja o proračunu. Učestalost izvještaja s utrka i dalje se podešava unutar Omladinske akademije."
     }
   },
   "advisorCategories": {
