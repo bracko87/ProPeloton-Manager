@@ -145,6 +145,10 @@
     "worldNations": {
       "label": "World Nations & international competitions",
       "description": "Show World Nations draws, race updates, finals and international championship notifications."
+    },
+    "youthAcademy": {
+      "label": "Youth Academy",
+      "description": "Show Youth Academy activation, race reports, delegated staff decisions and handovers, monthly recruitment and development summaries, and Academy budget warnings. Race-report frequency is still controlled inside Youth Academy."
     }
   },
   "advisorCategories": {
