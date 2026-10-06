@@ -1711,6 +1711,18 @@ export default function YouthAcademyPage(): JSX.Element {
     [raceMonthData?.races]
   )
 
+  const visibleYouthRaceClassCounts = useMemo(
+    () =>
+      (raceMonthData?.races ?? []).reduce(
+        (counts, race) => {
+          counts[race.competition_class] += 1
+          return counts
+        },
+        { world: 0, continental: 0, regional: 0 } as Record<YouthCompetitionClass, number>
+      ),
+    [raceMonthData?.races]
+  )
+
   const overviewRaceSnapshot = useMemo(() => {
     const races = [...(raceCalendar?.races ?? [])]
     const gameDate = String(raceCalendar?.game_date ?? '')
@@ -4930,9 +4942,9 @@ export default function YouthAcademyPage(): JSX.Element {
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                 <span>
                   {t('calendar.classCounts', {
-                    world: Number(raceMonthData?.class_counts?.world ?? 0),
-                    continental: Number(raceMonthData?.class_counts?.continental ?? 0),
-                    regional: Number(raceMonthData?.class_counts?.regional ?? 0),
+                    world: visibleYouthRaceClassCounts.world,
+                    continental: visibleYouthRaceClassCounts.continental,
+                    regional: visibleYouthRaceClassCounts.regional,
                     defaultValue:
                       'World {{world}} · Continental {{continental}} · Regional {{regional}}',
                   })}
@@ -5004,11 +5016,13 @@ export default function YouthAcademyPage(): JSX.Element {
                 const isScheduled = !isActive && !isCompleted
 
                 const isExpanded = calendarExpandedRaceId === race.id
-                const statusLabel = isCompleted
-                  ? t('calendar.finished', { defaultValue: 'Finished' })
-                  : isActive
-                    ? t('calendar.active', { defaultValue: 'Active' })
-                    : t('calendar.scheduled', { defaultValue: 'Scheduled' })
+                const statusLabel = isPastPrelaunch
+                  ? t('calendar.pastPrelaunch', { defaultValue: 'Past · pre-launch' })
+                  : isCompleted
+                    ? t('calendar.finished', { defaultValue: 'Finished' })
+                    : isActive
+                      ? t('calendar.active', { defaultValue: 'Active' })
+                      : t('calendar.scheduled', { defaultValue: 'Scheduled' })
                 const raceDays = Math.max(1, Number(race.race_days ?? 1))
                 const formatLabel =
                   raceDays === 1
@@ -5077,9 +5091,11 @@ export default function YouthAcademyPage(): JSX.Element {
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                             {formatLabel}
                           </span>
-                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
-                            {Number(race.entries_count ?? 0)} / {Number(race.team_limit ?? 20)} teams
-                          </span>
+                          {!isPastPrelaunch ? (
+                            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
+                              {Number(race.entries_count ?? 0)} / {Number(race.team_limit ?? 20)} teams
+                            </span>
+                          ) : null}
                           {race.invitation_status &&
                           (race.invitation_status !== 'pending' || race.application_pending) ? (
                             <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
