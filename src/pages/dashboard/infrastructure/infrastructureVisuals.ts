@@ -36,6 +36,22 @@ export const facilityLevelImageUrls: Partial<
     1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Youth%20Academy%20lvl%201.png',
     2: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Youth%20Academy%20lvl%202.png',
   },
+  team_residential_campus: {
+    0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Team%20Residential%20Campus%20lvl%200.png',
+    1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Team%20Residential%20Campus%20lvl1.png',
+  },
+  sprint_performance_circuit: {
+    0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Sprint%20Performance%20Circuit%20lvl%200.png',
+    1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Sprint%20Performance%20Circuit%20lvl%201.png',
+  },
+  climbing_performance_center: {
+    0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Climbing%20Performance%20Center%20lvl%200.png',
+    1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Climbing%20Performance%20Center%20lvl%201.png',
+  },
+  team_time_trial_center: {
+    0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Team%20Time%20Trial%20Center%20lvl%200.png',
+    1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Team%20Time%20Trial%20Center%20lvl%201.png',
+  },
   mechanics_workshop: {
     0: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Mechanics%20Workshop%20lvl%200.png',
     1: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Infrastructure/Mechanics%20Workshop%20lvl%201.png',
