@@ -145,6 +145,10 @@
     "worldNations": {
       "label": "World Nations e competizioni internazionali",
       "description": "Mostra sorteggi, aggiornamenti gara, finali World Nations e notifiche dei campionati internazionali."
+    },
+    "youthAcademy": {
+      "label": "Accademia giovanile",
+      "description": "Mostra le notifiche dell'Accademia giovanile: attivazione, report gara, decisioni e passaggi di responsabilità delegati allo staff, riepiloghi mensili di reclutamento e sviluppo e avvisi di budget. La frequenza dei report gara resta gestita nell'Accademia giovanile."
     }
   },
   "advisorCategories": {
