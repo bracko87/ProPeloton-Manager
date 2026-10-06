@@ -4975,7 +4975,8 @@ export default function YouthAcademyPage(): JSX.Element {
                 const hasRaceSquadCover = temporaryCovers.some(
                   cover => cover.responsibility === 'race_squad'
                 )
-                const isManagerEntry = true
+                const isManagerEntry =
+                  raceCalendar?.race_entry_decider === 'manager' && !hasRaceEntryCover
                 const isManagerSquad =
                   raceCalendar?.race_squad_decider === 'manager' && !hasRaceSquadCover
                 const isEntered = race.entry_status === 'entered'
@@ -5091,11 +5092,6 @@ export default function YouthAcademyPage(): JSX.Element {
                           <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                             {formatLabel}
                           </span>
-                          {!isPastPrelaunch ? (
-                            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
-                              {Number(race.entries_count ?? 0)} / {Number(race.team_limit ?? 20)} teams
-                            </span>
-                          ) : null}
                           {race.invitation_status &&
                           (race.invitation_status !== 'pending' || race.application_pending) ? (
                             <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -5114,7 +5110,7 @@ export default function YouthAcademyPage(): JSX.Element {
                           ) : null}
                           {race.application_pending && applicationDecisionDate ? (
                             <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                              Decision {shortGameDate(applicationDecisionDate)}
+                              Decision on {shortGameDate(applicationDecisionDate)}
                             </span>
                           ) : null}
                           {isScheduled &&
@@ -5150,7 +5146,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               </span>
                             )
                           ) : null}
-                          {isScheduled && isParticipating ? (
+                          {isScheduled && isParticipating && isManagerEntry ? (
                             <button
                               type="button"
                               disabled={data.read_only || raceAction !== null}
@@ -5194,13 +5190,6 @@ export default function YouthAcademyPage(): JSX.Element {
                       <div className="border-t border-slate-100 bg-slate-50/30 p-4">
                         <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-600">
                           <span>{competitionLabel(race.competition_class, race.division_code)}</span>
-                          <span>·</span>
-                          <span>
-                            {t('calendar.teams', {
-                              current: Number(race.entries_count ?? 0),
-                              max: Number(race.team_limit ?? 16),
-                            })}
-                          </span>
                           <span>·</span>
                           <span>
                             {t('calendar.prizeFundCompact', {
