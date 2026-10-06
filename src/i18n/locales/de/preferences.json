@@ -145,6 +145,10 @@
     "worldNations": {
       "label": "World Nations & internationale Wettbewerbe",
       "description": "Benachrichtigungen zu World Nations, Rennaktualisierungen, Finals und internationalen Meisterschaften anzeigen."
+    },
+    "youthAcademy": {
+      "label": "Jugendakademie",
+      "description": "Zeige Benachrichtigungen zur Jugendakademie: Aktivierung, Rennberichte, delegierte Personalentscheidungen und Übergaben, monatliche Rekrutierungs- und Entwicklungszusammenfassungen sowie Budgetwarnungen. Die Häufigkeit der Rennberichte wird weiterhin in der Jugendakademie gesteuert."
     }
   },
   "advisorCategories": {
