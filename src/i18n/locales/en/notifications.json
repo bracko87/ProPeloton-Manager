@@ -673,7 +673,15 @@
     "WORLD": "World",
     "POSITION": "Position",
     "RESIGNED": "Resigned",
-    "VACANT": "Vacant"
+    "VACANT": "Vacant",
+    "ACADEMY": "Academy",
+    "BUDGET": "Budget",
+    "DECISION": "Decision",
+    "DEVELOPMENT": "Development",
+    "HANDOVER": "Handover",
+    "MONTHLY": "Monthly",
+    "RECRUITMENT": "Recruitment",
+    "YOUTH": "Youth"
   },
   "reportVariants": {
     "rider_skill_change": "Rider skill change",
