@@ -98,6 +98,21 @@ type DevelopingTeamServiceStatus = {
   can_change_auto_renew: boolean
 }
 
+type YouthAcademyServiceStatus = {
+  premium: boolean
+  activated: boolean
+  read_only?: boolean
+  capacity: number
+  starter_riders?: number
+  default_season_budget?: number
+  academy?: {
+    id: string
+    active_riders: number
+    reputation: number
+    activated_season: number
+  } | null
+}
+
 type DbCoinPackage = {
   code: string
   coins: number
@@ -243,11 +258,14 @@ const COMPARISON_ROWS = [
   ['comparison.r2', '✓', '✓'],
   ['comparison.r3', '✓', '✓'],
   ['comparison.r4', '✓', '✓'],
-  ['comparison.r5', '—', '✓'],
-  ['comparison.r6', '—', '50'],
-  ['comparison.r7', '✓', '✓'],
-  ['comparison.r8', '✓', '✓'],
-  ['comparison.r9', '—', '✓'],
+  ['comparison.r5', '✓', '✓'],
+  ['comparison.r6', '—', '✓'],
+  ['comparison.r7', '—', '30'],
+  ['comparison.r8', '2/day, then 1 coin', 'Unlimited coin-free'],
+  ['comparison.r9', '2 coins / race', 'Included'],
+  ['comparison.r10', '—', '✓'],
+  ['comparison.r11', '—', '✓'],
+  ['comparison.r12', '✓', '✓'],
 ] as const
 
 const PREMIUM_ADVANTAGES = [
@@ -260,6 +278,7 @@ const PREMIUM_ADVANTAGES = [
   'advantages.a7',
   'advantages.a8',
   'advantages.a9',
+  'advantages.a10',
 ] as const
 
 function eur(value: number) {
@@ -537,10 +556,13 @@ export default function ProPackagesPage(): JSX.Element {
     developingTeamService,
     setDevelopingTeamService,
   ] = useState<DevelopingTeamServiceStatus | null>(null)
+  const [youthAcademyService, setYouthAcademyService] =
+    useState<YouthAcademyServiceStatus | null>(null)
   const [
     loadingDevelopingTeamService,
     setLoadingDevelopingTeamService,
   ] = useState(true)
+  const [loadingYouthAcademyService, setLoadingYouthAcademyService] = useState(true)
   const [
     developingTeamServiceError,
     setDevelopingTeamServiceError,
@@ -640,12 +662,12 @@ export default function ProPackagesPage(): JSX.Element {
 
   const premiumPrice = premiumPlan
     ? eur(Number(premiumPlan.price_cents) / 100)
-    : '€4.99'
+    : '€3.29'
 
   const premiumCoins =
     premiumPlan?.coins_per_paid_invoice ??
     premiumStatus?.coins_per_paid_invoice ??
-    50
+    30
 
   const statusLabel = useMemo(() => {
     if (hasManualPremiumAccess) {
@@ -934,6 +956,21 @@ export default function ProPackagesPage(): JSX.Element {
     }
   }
 
+  async function loadYouthAcademyService() {
+    setLoadingYouthAcademyService(true)
+
+    try {
+      const { data, error } = await supabase.rpc('get_my_youth_academy_v1')
+      if (error) throw error
+      setYouthAcademyService((data ?? null) as YouthAcademyServiceStatus | null)
+    } catch (loadError) {
+      console.error('Failed to load Youth Academy service:', loadError)
+      setYouthAcademyService(null)
+    } finally {
+      setLoadingYouthAcademyService(false)
+    }
+  }
+
   async function handleDevelopingTeamAutoRenewChange(
     enabled: boolean,
   ) {
@@ -1115,6 +1152,7 @@ export default function ProPackagesPage(): JSX.Element {
       loadPremiumData(),
       loadPackages(),
       loadDevelopingTeamService(),
+      loadYouthAcademyService(),
       premiumInvoicesOpen
         ? loadPremiumInvoiceHistory()
         : Promise.resolve(),
@@ -1133,6 +1171,7 @@ export default function ProPackagesPage(): JSX.Element {
       loadPremiumData(),
       loadPackages(),
       loadDevelopingTeamService(),
+      loadYouthAcademyService(),
     ])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -1698,6 +1737,17 @@ export default function ProPackagesPage(): JSX.Element {
                   {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}
                 </td>
               </tr>
+              <tr className="border-t border-black/5">
+                <td className="px-5 py-4 font-medium text-gray-900">
+                  {t('comparison.youthAcademy')}
+                </td>
+                <td className="px-5 py-4 text-center font-semibold text-gray-500">
+                  {t('comparison.premiumOnly')}
+                </td>
+                <td className="px-5 py-4 text-center font-bold text-gray-900">
+                  {t('comparison.youthAcademyPremium')}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -2039,6 +2089,82 @@ export default function ProPackagesPage(): JSX.Element {
             )}
           </div>
         )}
+
+        <div className="mt-5 rounded-2xl border border-yellow-200 bg-yellow-50/40 p-5 shadow-sm">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="text-lg font-extrabold text-black">
+                  {t('services.youthAcademy')}
+                </h4>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                  youthAcademyService?.activated
+                    ? 'bg-green-100 text-green-800'
+                    : premiumStatus?.is_premium
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-gray-100 text-gray-700'
+                }`}>
+                  {loadingYouthAcademyService
+                    ? t('services.loadingYouth')
+                    : youthAcademyService?.activated
+                      ? t('services.active')
+                      : premiumStatus?.is_premium
+                        ? t('services.available')
+                        : t('services.premiumRequired')}
+                </span>
+              </div>
+
+              <p className="mt-2 max-w-4xl text-sm leading-6 text-gray-700">
+                {t('services.descriptionYouthAcademy')}
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <MembershipItem
+                  label={t('services.youthCapacity')}
+                  value={t('services.ridersCount', { count: youthAcademyService?.capacity ?? 16 })}
+                />
+                <MembershipItem
+                  label={t('services.youthStarterRiders')}
+                  value={t('services.ridersCount', { count: youthAcademyService?.starter_riders ?? 6 })}
+                />
+                <MembershipItem
+                  label={t('services.youthStarterStaff')}
+                  value={t('services.youthStarterStaffValue')}
+                />
+                <MembershipItem
+                  label={t('services.youthActivationCost')}
+                  value={t('services.youthActivationCostValue')}
+                />
+              </div>
+
+              <ul className="mt-4 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
+                <li>✓ {t('services.youthFeatureScouting')}</li>
+                <li>✓ {t('services.youthFeatureRacing')}</li>
+                <li>✓ {t('services.youthFeatureBudget')}</li>
+                <li>✓ {t('services.youthFeatureEquipment')}</li>
+                <li>✓ {t('services.youthFeatureDevelopment')}</li>
+                <li>✓ {t('services.youthFeatureInfrastructure')}</li>
+                <li>✓ {t('services.youthFeatureResponsibilities')}</li>
+                <li>✓ {t('services.youthFeaturePathway')}</li>
+              </ul>
+
+              {youthAcademyService?.read_only ? (
+                <p className="mt-4 text-sm font-medium text-amber-800">
+                  {t('services.youthReadOnly')}
+                </p>
+              ) : null}
+            </div>
+
+            <a
+              href="#/dashboard/youth-academy"
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800"
+            >
+              {youthAcademyService?.activated
+                ? t('services.openYouthAcademy')
+                : t('services.viewYouthAcademy')}
+            </a>
+          </div>
+        </div>
       </section>
 
       {/* Section 6 — Billing and purchase history */}
