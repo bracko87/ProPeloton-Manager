@@ -673,7 +673,15 @@
     "WORLD": "Mondiale",
     "POSITION": "Ruolo",
     "RESIGNED": "Dimesso",
-    "VACANT": "Vacante"
+    "VACANT": "Vacante",
+    "ACADEMY": "Accademia",
+    "BUDGET": "Budget",
+    "DECISION": "Decisione",
+    "DEVELOPMENT": "Sviluppo",
+    "HANDOVER": "Passaggio",
+    "MONTHLY": "Mensile",
+    "RECRUITMENT": "Reclutamento",
+    "YOUTH": "Giovani"
   },
   "reportVariants": {
     "rider_skill_change": "Cambio di abilità del corridore",
