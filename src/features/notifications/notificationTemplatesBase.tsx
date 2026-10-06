@@ -1710,22 +1710,259 @@ function getNationsTopThreeLabel(item: NotificationItem): string | null {
 /* Template Registry                                                          */
 /* -------------------------------------------------------------------------- */
 
+const YOUTH_ACADEMY_NOTIFICATION_IMAGE =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Event%20images/Youth%20Academy%20Update.png'
+
+function getYouthAcademyImage(): string {
+  return YOUTH_ACADEMY_NOTIFICATION_IMAGE
+}
+
+function getYouthAcademyAction(item: NotificationItem): string {
+  return getActionHrefFromItem(item) || '/dashboard/youth-academy'
+}
+
+function getYouthRaceAction(item: NotificationItem): string {
+  const payload = getPayload(item)
+  const raceId = pickFirstString(payload, ['race_id'])
+  return raceId
+    ? `/dashboard/youth-academy/races/${raceId}`
+    : getYouthAcademyAction(item)
+}
+
+function getYouthStaffRoleLabel(item: NotificationItem): string | null {
+  const payload = getPayload(item)
+  const raw = pickFirstString(payload, ['staff_role', 'role_type', 'original_role'])
+  return raw ? formatLabel(raw.replace(/^youth_/, '').replace(/^u16_/, 'U16 ')) : null
+}
+
+function getYouthTestModeRow(item: NotificationItem): NotificationDetailRow | null {
+  const payload = getPayload(item)
+  return pickFirstBoolean(payload, ['is_test_notification', 'test_notification'])
+    ? detailRow('Mode', 'Test notification')
+    : null
+}
+
 export const NOTIFICATION_TEMPLATES: Record<string, NotificationTemplate> = {
 
   YOUTH_ACADEMY_STARTED: {
     defaultTitle: 'Your Youth Academy is ready',
     defaultMessage:
       'Your U16 programme is active. Review responsibilities, scouting, racing and the dedicated Academy budget before the first events.',
+    imageSrc: YOUTH_ACADEMY_NOTIFICATION_IMAGE,
+    getImageSrc: getYouthAcademyImage,
     getIntroText: (item) =>
       item.message ||
       'Your U16 programme is active. Review responsibilities, scouting, racing and the dedicated Academy budget before the first events.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const season = pickFirstNumber(payload, ['season_number'])
+      return compactRows([
+        getYouthTestModeRow(item),
+        detailRow('Programme', 'U16 Youth Academy'),
+        detailRow('Season', season !== null ? `Season ${season}` : null),
+        detailRow('Starter riders', '6 riders'),
+        detailRow('Academy capacity', '16 riders'),
+        detailRow('Starter staff', 'Academy Director + U16 Head Coach'),
+      ])
+    },
     getExtraText: () =>
-      'The Youth Academy has its own riders, staff, race calendar and budget. The starter guide explains the complete workflow.',
+      'The Academy has its own riders, staff responsibilities, scouting programme, race calendar and dedicated budget. Review the Overview page before the first event.',
     actions: [
-      withFallbackHref(
-        'Open Youth Academy manual',
-        '/dashboard/manual?section=youth-academy'
-      ),
+      {
+        key: 'open-youth-academy',
+        label: 'Open Youth Academy',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/youth-academy',
+        show: () => true,
+      },
+      {
+        key: 'open-youth-manual',
+        label: 'Youth Academy manual',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/manual?section=youth-academy',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  YOUTH_RACE_REPORT: {
+    defaultTitle: 'Youth Academy race report',
+    defaultMessage: 'Your Youth Academy race report is ready.',
+    imageSrc: YOUTH_ACADEMY_NOTIFICATION_IMAGE,
+    getImageSrc: getYouthAcademyImage,
+    getIntroText: (item) =>
+      item.message || 'Your Youth Academy race report is ready.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const bestFinish = pickFirstNumber(payload, ['best_finish'])
+      const podiums = pickFirstNumber(payload, ['podium_count'])
+      const regionalPoints = pickFirstNumber(payload, ['regional_points'])
+      const worldPoints = pickFirstNumber(payload, ['world_points'])
+      const developmentEvents = pickFirstNumber(payload, ['development_events'])
+      const dnf = pickFirstNumber(payload, ['dnf_count'])
+      const dns = pickFirstNumber(payload, ['dns_count'])
+      return compactRows([
+        getYouthTestModeRow(item),
+        detailRow('Race', pickFirstString(payload, ['race_name'])),
+        detailRow(
+          'Race date',
+          formatContractSeasonLabel(pickFirstString(payload, ['race_date']))
+        ),
+        detailRow(
+          'Competition',
+          formatLabel(pickFirstString(payload, ['race_level', 'competition_class']))
+        ),
+        detailRow('Best finish', bestFinish !== null ? `#${bestFinish}` : 'No classified finish'),
+        detailRow('Podiums', podiums !== null ? String(podiums) : null),
+        detailRow('Regional points', regionalPoints !== null ? `+${regionalPoints}` : null),
+        detailRow('World points', worldPoints !== null ? `+${worldPoints}` : null),
+        detailRow(
+          'Development events',
+          developmentEvents !== null ? String(developmentEvents) : null
+        ),
+        detailRow(
+          'DNF / DNS',
+          dnf !== null || dns !== null ? `${dnf ?? 0} / ${dns ?? 0}` : null
+        ),
+      ])
+    },
+    getExtraText: (item) => {
+      const payload = getPayload(item)
+      const reportClass = pickFirstString(payload, ['report_class'])
+      if (reportClass === 'problem') {
+        return 'A DNF or DNS was recorded. Open the race to review the affected riders and the complete result.'
+      }
+      if (reportClass === 'exceptional') {
+        return 'This was an exceptional Academy performance. Open the race to review the full rider results and development gains.'
+      }
+      return 'Open the race to review the complete Youth result, rider positions, points, fatigue and development gains.'
+    },
+    actions: [
+      {
+        key: 'open-youth-race',
+        label: 'Open Youth race',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: getYouthRaceAction,
+        show: () => true,
+      },
+      {
+        key: 'open-youth-academy',
+        label: 'Youth Academy',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/youth-academy',
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  YOUTH_STAFF_DECISION: {
+    defaultTitle: 'Youth Academy staff decision',
+    defaultMessage: 'A delegated Youth Academy staff member completed a management decision.',
+    imageSrc: YOUTH_ACADEMY_NOTIFICATION_IMAGE,
+    getImageSrc: getYouthAcademyImage,
+    getIntroText: (item) =>
+      item.message ||
+      'A delegated Youth Academy staff member completed a management decision.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const responsibility = pickFirstString(payload, ['responsibility'])
+      const score = pickFirstNumber(payload, ['staff_score_used'])
+      const temporary = pickFirstBoolean(payload, ['temporary_cover'])
+      const penalty = pickFirstNumber(payload, ['quality_penalty_percent'])
+      return compactRows([
+        getYouthTestModeRow(item),
+        detailRow('Staff member', pickFirstString(payload, ['staff_name'])),
+        detailRow('Staff role', getYouthStaffRoleLabel(item)),
+        detailRow(
+          'Responsibility',
+          responsibility
+            ? formatLabel(responsibility.replace(/_decider$/, ''))
+            : null
+        ),
+        detailRow('Staff score', score !== null ? `${score}/100` : null),
+        detailRow('Temporary cover', temporary !== null ? (temporary ? 'Yes' : 'No') : null),
+        detailRow(
+          'Effective quality',
+          penalty !== null ? `${Math.max(0, 100 - penalty)}%` : null
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'This is an informational confirmation of a delegated Academy action. You can review or change staff responsibilities from the Youth Academy page.',
+    actions: [
+      {
+        key: 'open-youth-academy',
+        label: 'Open Youth Academy',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: getYouthAcademyAction,
+        show: () => true,
+      },
+      MARK_READ_ACTION,
+    ],
+  },
+
+  YOUTH_STAFF_HANDOVER: {
+    defaultTitle: 'Youth Academy responsibility handover',
+    defaultMessage: 'Youth Academy responsibilities have been temporarily reassigned.',
+    imageSrc: YOUTH_ACADEMY_NOTIFICATION_IMAGE,
+    getImageSrc: getYouthAcademyImage,
+    getIntroText: (item) =>
+      item.message || 'Youth Academy responsibilities have been temporarily reassigned.',
+    getDetailRows: (item) => {
+      const payload = getPayload(item)
+      const responsibilities = pickStringArray(payload, ['responsibilities'])
+      const singleResponsibility = pickFirstString(payload, ['responsibility'])
+      const penalty = pickFirstNumber(payload, ['quality_penalty_percent'])
+      return compactRows([
+        getYouthTestModeRow(item),
+        detailRow('Staff member', pickFirstString(payload, ['staff_name'])),
+        detailRow('Staff role', getYouthStaffRoleLabel(item)),
+        detailRow(
+          'Responsibilities',
+          responsibilities.length > 0
+            ? responsibilities.map(value => formatLabel(value)).join(', ')
+            : singleResponsibility
+              ? formatLabel(singleResponsibility)
+              : null
+        ),
+        detailRow('Course', pickFirstString(payload, ['course_title'])),
+        detailRow(
+          'Returns',
+          pickFirstString(payload, ['returns_on_label']) ||
+            formatContractSeasonLabel(pickFirstString(payload, ['returns_on']))
+        ),
+        detailRow(
+          'Cover effectiveness',
+          penalty !== null ? `${Math.max(0, 100 - penalty)}%` : null
+        ),
+      ])
+    },
+    getExtraText: () =>
+      'Temporary cover remains active only while the originally assigned Youth staff role is unavailable. Saved responsibility assignments resume automatically when that staff member returns.',
+    actions: [
+      {
+        key: 'open-youth-responsibilities',
+        label: 'Open Youth Academy',
+        variant: 'primary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/youth-academy',
+        show: () => true,
+      },
+      {
+        key: 'open-staff',
+        label: 'Open staff',
+        variant: 'secondary',
+        kind: 'navigate',
+        getHref: () => '/dashboard/staff',
+        show: () => true,
+      },
       MARK_READ_ACTION,
     ],
   },
