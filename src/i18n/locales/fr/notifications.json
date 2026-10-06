@@ -673,7 +673,15 @@
     "WORLD": "Mondial",
     "POSITION": "Poste",
     "RESIGNED": "Démissionné",
-    "VACANT": "Vacant"
+    "VACANT": "Vacant",
+    "ACADEMY": "Académie",
+    "BUDGET": "Budget",
+    "DECISION": "Décision",
+    "DEVELOPMENT": "Développement",
+    "HANDOVER": "Transfert",
+    "MONTHLY": "Mensuel",
+    "RECRUITMENT": "Recrutement",
+    "YOUTH": "Jeunes"
   },
   "reportVariants": {
     "rider_skill_change": "Évolution d’une compétence du coureur",
