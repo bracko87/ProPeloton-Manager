@@ -3413,61 +3413,89 @@
     },
     "youth-academy": {
       "category": "Riders",
-      "title": "Youth Academy: U16 Starter Guide",
-      "subtitle": "How to run your Premium U16 programme, riders, staff, scouting, races and budget.",
-      "overview": "Youth Academy is a Premium U16 development programme with a fixed capacity of 16 riders. Recruit and develop young riders with dedicated staff and courses, manage scouting, racing and a separate Academy budget, and decide their pathway at age 16.",
+      "title": "Youth Academy: Complete U16 Guide",
+      "subtitle": "Activation, staff, scouting, recruitment, budget, equipment, racing, development and graduation.",
+      "overview": "Youth Academy is a Premium-only U16 development programme with a fixed capacity of 16 riders. A new Academy unlocks after 30 real-life days OR 60 in-game days from club creation and costs 50 coins once to activate. There is no seasonal coin renewal. After activation, the Academy is funded and operated with normal club money through its separate Academy budget.",
       "facts": {
         "0": {
           "label": "Capacity",
           "value": "Maximum 16 Youth Riders"
         },
         "1": {
+          "label": "Unlock",
+          "value": "Premium + 30 real-life days OR 60 in-game days"
+        },
+        "2": {
+          "label": "Activation",
+          "value": "50 coins once; no seasonal coin renewal"
+        },
+        "3": {
           "label": "Starting package",
           "value": "6 local Youth Riders, Youth Academy Director and U16 Head Coach"
         },
-        "2": {
+        "4": {
           "label": "Optional staff",
-          "value": "Up to 3 Youth Scouts can be hired through the Staff Market"
+          "value": "Maximum 1 Youth Scout through the Staff Market"
         },
-        "3": {
-          "label": "Scouting frequency",
+        "5": {
+          "label": "Scouting searches",
           "value": "1 free search + up to 3 Coin searches per in-game week"
         },
-        "4": {
+        "6": {
+          "label": "Scouting programme cash cost",
+          "value": "Local $5,000 · Regional $20,000 · Continental $50,000 · Worldwide $120,000 per season"
+        },
+        "7": {
           "label": "Competition structure",
           "value": "World Class, Continental West/East and Regional Class"
         },
-        "5": {
-          "label": "Budget",
-          "value": "Separate Youth Academy fund with race income and two-way senior-team transfers"
+        "8": {
+          "label": "Academy budget",
+          "value": "Separate club-cash fund with race income and two-way senior-team transfers"
+        },
+        "9": {
+          "label": "Graduation",
+          "value": "A pathway decision is required at age 16"
         }
       },
       "details": {
-        "0": "Open Youth Rider profiles from the Youth Riders tab. Attributes, readiness, fatigue, development focus, support agreement and race history are visible; exact hidden potential stays hidden behind Talent Assessment.",
-        "1": "The Academy starts with six local riders and can grow to 16. Youth staff use the same Poor, Basic, Competent, Strong, Elite and World Class quality scale as senior staff.",
-        "2": "Youth staff have role bonuses: Director quality improves Academy management and equipment purchasing; U16 Head Coach quality affects development and race selection; Youth Scout quality affects prospect selection and report accuracy.",
-        "3": "Youth staff can improve through dedicated courses opened from the normal Staff profile. Course costs are paid from the Youth Academy budget.",
-        "4": "The Youth Scout has one free search per in-game week plus up to three extra Coin searches: Local 2, Regional 5, Continental 8 and Worldwide 12 Coins. Scout level controls output: Poor 1, Basic 2, Competent 3, Strong 4, Elite 5 and World Class 6 reports per search; stronger scouts also identify stronger prospects more effectively and assess them with higher confidence.",
-        "5": "Responsibilities are confirmed per decision area. Recruitment and negotiations can be delegated to the Academy Director; race participation and lineups can be delegated to the U16 Head Coach.",
-        "6": "Youth competition uses World Class, Continental West/East and Regional divisions. The Calendar can show the complete monthly list or only your Academy opportunities. The same rider cannot be used in overlapping races.",
-        "7": "World Class Academies receive invitations and declined places can be filled by weighted wildcards. Monthly plans control race volume and racing spend.",
-        "8": "The activation allocation is permanent history. Current Academy funds change through spending, Youth race income and explicit transfers, and race income goes directly to the Academy.",
-        "9": "Adjust Budget moves money in either direction. Youth-to-senior transfers are limited to unspent and uncommitted Academy funds.",
-        "10": "At age 16, riders require a graduation decision: temporary pathway, Developing Team when eligible and space exists, or release."
+        "0": "Activation is available only to Premium managers. The 30-real-day OR 60-game-day rule is the same maturity gate used for the Developing Team; whichever threshold is reached first unlocks the Academy. The one-time 50-coin activation fee is separate from the Academy cash allocation selected during activation.",
+        "1": "There is no Youth Academy seasonal coin renewal. This is intentional because the Academy already has meaningful club-cash costs for rider support, staff, scouting programmes, equipment, assets, race supplies, travel and competition. Existing Academies are not charged again when Premium access later returns.",
+        "2": "If Premium expires, the Academy and its data are preserved. Management becomes read-only until Premium is active again; riders, staff, history, budget and Academy records are not deleted.",
+        "3": "The Academy starts with six local riders and has a hard cap of 16. Infrastructure can improve U16 development, recovery or operating efficiency, but it does not raise the 16-rider capacity.",
+        "4": "Youth Rider profiles show riding attributes, readiness, fatigue, development focus, support agreement and race history. Exact hidden potential is intentionally not exposed; use Talent Assessment bands and scouting confidence instead.",
+        "5": "The included starter staff are the Youth Academy Director and U16 Head Coach. A maximum of one Youth Scout can be hired from the normal Staff Market. Youth roles use the same quality ladder as senior staff and can take dedicated staff courses paid from the Academy budget.",
+        "6": "Youth staff have role-specific effects. Director quality supports Academy management and eligible equipment purchasing. U16 Head Coach quality affects training, workload, development and race selection. Youth Scout quality affects which prospects are found, assessment confidence and how many reports a search can produce.",
+        "7": "The Youth Scout has one free prospect search per in-game week. After that, up to three additional searches can be bought in the same game week: Local 2 coins, Regional 5, Continental 8 and Worldwide 12. Stronger scouts can return more reports and identify stronger prospects more effectively; they do not create artificial talent.",
+        "8": "Scouting reach also has a normal club-cash programme cost per season: Local $5,000, Regional $20,000, Continental $50,000 and Worldwide $120,000. Coin charges apply only to extra searches after the weekly free search.",
+        "9": "Recruitment can target unattached prospects or riders already in another Academy. Offers may include weekly stipend, accommodation support and compensation. Recruitment and negotiation responsibility can remain with the manager or be delegated where the Academy settings allow it.",
+        "10": "Responsibilities are configured by decision area. Recruitment and negotiations can be delegated to the Academy Director. Training, race participation and race lineups can be delegated to the U16 Head Coach. Equipment remains visible and controllable through the Academy workflow.",
+        "11": "The Academy has its own seasonal budget and ledger. The initial allocation is paid from senior-club cash and remains recorded as history. Senior-to-Youth transfers reduce senior cash and increase Academy funds. Youth-to-senior transfers are limited to unspent and uncommitted Academy money.",
+        "12": "Academy equipment includes its own items, assets, race supplies and race setups. Equipment and Academy assets use the Academy budget, and condition or availability can affect what is usable.",
+        "13": "Youth competition is results-based and organised into World Class, Continental West/East and Regional classes. The Calendar can show all monthly races or only Academy opportunities. Invitations, wildcards and monthly participation plans control access and planned race volume.",
+        "14": "Different Youth squads can race on overlapping dates, but the same rider cannot be selected for overlapping events. Always check readiness, fatigue and lineup status before confirming Youth race participation.",
+        "15": "Race income goes directly to the Youth Academy fund rather than senior-team cash. Racing should therefore be treated as both development and a limited Academy-finance source, not as a replacement for adequate season funding.",
+        "16": "The Overview page includes recent development form, rider readiness/fatigue, staff coverage, infrastructure effects, previous and next races and the latest result. Use it as the Academy dashboard, then open the specialist tabs for the final decision.",
+        "17": "At age 16, a rider requires a graduation decision. Depending on eligibility and available space, the rider can follow the supported pathway, move to the Developing Team, or be released."
       },
       "tips": {
-        "0": "Open Youth staff profiles to review level, role skills, bonuses, contract season and courses.",
-        "1": "Use the free weekly scouting search first; spend Coins on extra searches only when useful.",
-        "2": "Rotate the roster so younger and weaker riders also gain race experience.",
-        "3": "Approve the monthly race plan before invitations and deadlines become urgent.",
-        "4": "Keep enough Academy funds for support, payroll, scouting, courses, equipment and travel.",
-        "5": "Check Youth Rider readiness and fatigue regularly."
+        "0": "Treat the 50-coin activation as the entry fee only; keep enough club cash for the Academy budget and ongoing operations.",
+        "1": "Use the free weekly scouting search first. Spend coins on extra searches only when more prospect coverage is genuinely useful.",
+        "2": "Do not hire multiple Youth Scouts expecting extra slots: the Academy allows one Youth Scout.",
+        "3": "Rotate race selections so development opportunities are not concentrated only on the strongest riders.",
+        "4": "Approve monthly race plans before invitations and entry deadlines become urgent.",
+        "5": "Keep enough Academy funds for rider support, staff, scouting, courses, equipment, assets, supplies and race travel.",
+        "6": "Check readiness and fatigue before races and review recent development trends on the Overview page.",
+        "7": "If Premium lapses, reactivate Premium to regain management access; the Academy is preserved and does not require another 50-coin activation."
       },
       "relatedLinks": {
         "0": "Open Youth Academy",
         "1": "Open Youth Riders",
-        "2": "Open Staff",
-        "3": "Open Staff Market"
+        "2": "Open Youth Scouting",
+        "3": "Open Youth Calendar",
+        "4": "Open Staff",
+        "5": "Open Infrastructure",
+        "6": "Open Pro Packages"
       }
     }
   }
