@@ -20,16 +20,23 @@
   },
   "activation": {
     "title": "Jugendakademie aktivieren",
-    "description": "Die Aktivierung erstellt deine separate U16-Akademie. Du startest mit sechs lokalen Fahrern, einem durchschnittlichen Akademiedirektor und einem U16-Cheftrainer. Ein Jugendscout ist optional. V1 hat keine Infrastrukturvoraussetzung.",
+    "description": "Die Aktivierung erstellt deine separate U16-Akademie. Neue Akademien benötigen Premium, 30 reale Tage ODER 60 Spieltage seit der Clubgründung, einmalig 50 Coins sowie das von dir gewählte Akademiebudget. Du startest mit sechs lokalen Fahrern, einem Akademiedirektor und einem U16-Cheftrainer. Ein Jugendscout ist optional.",
     "capacityLabel": "Maximale Fahrerzahl",
     "starterRidersLabel": "Startfahrer",
     "staffLabel": "Enthaltenes Personal",
     "infrastructureLabel": "Infrastrukturvoraussetzung",
     "none": "Keine",
     "seasonBudget": "Saisonbudget der Akademie",
-    "budgetHelp": "Dieses Budget finanziert Fahrerunterstützung, Personal, Scouting, Ausrüstung, Camps, Reisen und Kosten für Jugendwettbewerbe.",
+    "budgetHelp": "Die Aktivierungsgebühr ist vom Clubgeld-Budget getrennt. Das Akademiebudget finanziert Fahrerunterstützung, Personal, Scouting, Ausrüstung, Camps, Reisen und Jugendwettbewerbe.",
     "activate": "Jugendakademie aktivieren",
-    "activating": "Aktivierung…"
+    "activating": "Aktivierung…",
+    "coinCostLabel": "Einmalige Coin-Gebühr",
+    "unlockLabel": "Freischaltbedingung",
+    "coinBalanceLabel": "Coin-Guthaben",
+    "coins": "{{count}} Coins",
+    "unlockValue": "{{real}} reale Tage ODER {{game}} Spieltage",
+    "waiting": "Noch nicht freigeschaltet. Fortschritt: {{realPlayed}}/{{realRequired}} reale Tage oder {{gamePlayed}}/{{gameRequired}} Spieltage. Die zuerst erfüllte Bedingung schaltet die Akademie frei.",
+    "needCoins": "Die Aktivierung der Jugendakademie kostet {{cost}} Coins. Dein aktuelles Guthaben beträgt {{balance}}."
   },
   "header": {
     "capacity": "{{current}} / {{max}} Fahrer"
@@ -579,5 +586,10 @@
     "class": "Klasse",
     "result": "Ergebnis",
     "points": "Punkte"
+  },
+  "manual": {
+    "title": "Hilfe zur Jugendakademie?",
+    "description": "Öffne das vollständige Handbuch zur Jugendakademie mit Aktivierungsregeln, Personal, Scouting, Rekrutierung, Budget, Ausrüstung, Rennen, Ranglisten, Entwicklung und Abschluss.",
+    "read": "Handbuch zur Jugendakademie lesen"
   }
 }
