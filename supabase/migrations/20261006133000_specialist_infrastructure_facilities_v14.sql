@@ -22,13 +22,7 @@ alter table public.club_infrastructure
   add constraint club_infrastructure_team_time_trial_center_level_check
     check(team_time_trial_center_level between 0 and 1);
 
-insert into public.infrastructure_facility_max_levels(facility_key,max_level)
-values
-  ('team_residential_campus',1),
-  ('sprint_performance_circuit',1),
-  ('climbing_performance_center',1),
-  ('team_time_trial_center',1)
-on conflict(facility_key) do update set max_level=excluded.max_level;
+-- Max levels are derived automatically by public.infrastructure_facility_max_levels from upgrade config rows.
 
 insert into public.infrastructure_facility_upgrade_config(
   facility_key,target_level,cost_cash,duration_game_days,
