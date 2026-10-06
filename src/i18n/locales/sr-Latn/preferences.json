@@ -145,6 +145,10 @@
     "worldNations": {
       "label": "World Nations i međunarodna takmičenja",
       "description": "Prikazuje žrebove, ažuriranja trka, finala World Nations i obaveštenja međunarodnih prvenstava."
+    },
+    "youthAcademy": {
+      "label": "Omladinska akademija",
+      "description": "Prikaži obaveštenja Omladinske akademije: aktivaciju, izveštaje sa trka, delegirane odluke i primopredaje osoblja, mesečne izveštaje o regrutovanju i razvoju, kao i upozorenja o budžetu. Učestalost izveštaja sa trka i dalje se podešava u Omladinskoj akademiji."
     }
   },
   "advisorCategories": {
