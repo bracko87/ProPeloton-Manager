@@ -4053,7 +4053,9 @@ export default function NotificationsPage(): JSX.Element {
                                       className={
                                         isNationalFeatureNotice
                                           ? 'w-full max-w-[300px] rounded-xl border border-slate-200 bg-white object-contain p-4 shadow-sm'
-                                          : 'w-full max-w-[340px] rounded-xl object-cover shadow-sm'
+                                          : isYouthAcademyFeatureNotice
+                                            ? 'w-full max-w-[340px] rounded-xl border border-slate-200 bg-white object-cover shadow-sm'
+                                            : 'w-full max-w-[340px] rounded-xl object-cover shadow-sm'
                                       }
                                       draggable={false}
                                     />
