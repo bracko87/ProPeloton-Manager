@@ -244,6 +244,7 @@ export const NOTIFICATION_PREFERENCE_GROUP_ORDER = [
   'raceWeather',
   'raceResults',
   'riderHealth',
+  'youthAcademy',
   'teamUpdates',
   'staffContracts',
   'staffCourses',
@@ -324,6 +325,12 @@ export const NOTIFICATION_PREFERENCE_GROUPS: Record<
     label: 'Team medical report',
     description:
       'Show one daily Core medical summary covering injuries, sickness, reduced fitness and recoveries. Team Doctor Advisory remains separate treatment and recovery guidance.',
+    section: 'team',
+  },
+  youthAcademy: {
+    label: 'Youth Academy',
+    description:
+      'Show Youth Academy activation, race reports, delegated staff decisions and handovers, monthly recruitment and development summaries, and Academy budget warnings. Race-report frequency is still controlled inside Youth Academy.',
     section: 'team',
   },
   teamUpdates: {
@@ -487,6 +494,15 @@ const EXACT_TYPE_GROUPS: Record<string, NotificationPreferenceGroup> = {
   RACE_PREPARATION_DAILY_REPORT: 'racePreparation',
   STAGE_PLANNING_DAILY_REPORT: 'stagePlanReminders',
   RIDER_HEALTH_DAILY_REPORT: 'riderHealth',
+
+  // Youth Academy module notifications.
+  YOUTH_ACADEMY_STARTED: 'youthAcademy',
+  YOUTH_RACE_REPORT: 'youthAcademy',
+  YOUTH_STAFF_DECISION: 'youthAcademy',
+  YOUTH_STAFF_HANDOVER: 'youthAcademy',
+  YOUTH_RECRUITMENT_MONTHLY_SUMMARY: 'youthAcademy',
+  YOUTH_DEVELOPMENT_MONTHLY_SUMMARY: 'youthAcademy',
+  YOUTH_ACADEMY_BUDGET_WARNING: 'youthAcademy',
 
   // Existing decision/high-priority types that remain active.
   RACE_APPLICATION_ACCEPTED: 'raceApplicationResults',
@@ -666,6 +682,8 @@ export function getNotificationTypeFromEvent(
 
   if (EXACT_TYPE_GROUPS[rawCode]) return EXACT_TYPE_GROUPS[rawCode]
   if (EXACT_TYPE_GROUPS[upper]) return EXACT_TYPE_GROUPS[upper]
+
+  if (upper.startsWith('YOUTH_')) return 'youthAcademy'
 
   if (upper.startsWith('NATIONAL_ASSOCIATION_') || upper.startsWith('NATIONAL_COACH_')) {
     return 'nationalAssociation'
