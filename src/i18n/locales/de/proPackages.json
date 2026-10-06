@@ -93,7 +93,7 @@
     "r8": "Fahrer zur Shortlist hinzufügen",
     "developing": "Team-Service entwickeln",
     "activationRenewal": "{{activation}} Aktivierung / {{renewal}} Verlängerung",
-    "note": "Free behält das komplette Kernspiel und manuelle Kontrolle. Premium ergänzt Analyse, Automation und zwei optionale Entwicklungsprogramme. Developing Team kostet 100 Coins zur Aktivierung und 100 Coins pro Saison. Die Jugendakademie hat keine Coin-Aktivierungsgebühr; Budget und Betriebskosten werden mit normalem Clubgeld bezahlt.",
+    "note": "Free behält das komplette Kernspiel und manuelle Kontrolle. Premium ergänzt Analyse, Automation und zwei optionale Entwicklungsprogramme. Developing Team wird nach 30 realen Tagen ODER 60 Spieltagen freigeschaltet, kostet 100 Coins zur Aktivierung und 100 Coins pro Saison. Die Jugendakademie hat dieselbe 30/60-Tage-Regel, kostet einmalig 50 Coins und hat keine saisonale Coin-Verlängerung; Budget und Betriebskosten werden danach mit normalem Clubgeld bezahlt.",
     "premiumOnly": "Nur Premium",
     "r9": "Wiederholungen von Weltrennen",
     "r10": "Vorlagen & Smart Prefill",
@@ -104,7 +104,7 @@
     "freeReplay": "2 Coins pro Rennen",
     "premiumReplay": "Enthalten",
     "youthAcademy": "Jugendakademie / U16-Entwicklung",
-    "youthAcademyPremium": "Mit Premium enthalten · 16 Fahrerplätze"
+    "youthAcademyPremium": "Premium + einmalig 50 Coins · 16 Fahrerplätze"
   },
   "packages": {
     "title": "Brauchen Sie weitere Coins?",
@@ -144,7 +144,7 @@
   },
   "services": {
     "title": "Premium-Entwicklungsdienste",
-    "description": "Verwalte die zwei Premium-exklusiven Entwicklungsprogramme. Developing Team nutzt Coins für den Saisonzugang; die Jugendakademie nutzt normales Clubgeld.",
+    "description": "Verwalte die zwei Premium-exklusiven Entwicklungsprogramme. Developing Team kostet 100 Coins zur Aktivierung und 100 Coins pro Saison. Die Jugendakademie kostet einmalig 50 Coins, hat keine saisonale Coin-Verlängerung und nutzt danach normales Clubgeld.",
     "loading": "Münzdienste werden geladen...",
     "unavailable": "Die Entwicklung von Team-Service-Informationen ist derzeit nicht verfügbar.",
     "unavailableHelp": "Der übrige Premium-, Abrechnungs- und Coin-Verwaltungsbereich bleibt verfügbar.",
@@ -183,13 +183,13 @@
     "available": "Verfügbar",
     "premiumRequired": "Premium erforderlich",
     "loadingYouth": "Lädt…",
-    "descriptionYouthAcademy": "Separates U16-Programm mit eigenen Fahrern, Personal, Budget, Scouting, Ausrüstung, Rennkalender, Ranglisten, Entwicklungshistorie und Abschlussweg.",
+    "descriptionYouthAcademy": "Separates U16-Programm mit eigenen Fahrern, Personal, Budget, Scouting, Ausrüstung, Rennkalender, Ranglisten, Entwicklungshistorie und Abschlussweg. Premium ist erforderlich. Neue Akademien werden nach 30 realen Tagen ODER 60 Spieltagen freigeschaltet und kosten einmalig 50 Coins.",
     "youthCapacity": "Akademiekapazität",
     "youthStarterRiders": "Starterfahrer",
     "youthStarterStaff": "Starterpersonal",
     "youthStarterStaffValue": "Direktor + U16 Head Coach",
     "youthActivationCost": "Aktivierung",
-    "youthActivationCostValue": "Keine Coin-Gebühr · Clubgeld-Budget",
+    "youthActivationCostValue": "Einmalig {{cost}} Coins · keine Saisonverlängerung",
     "ridersCount": "{{count}} Fahrer",
     "youthFeatureScouting": "Scouting- und Rekrutierungsprogramm",
     "youthFeatureRacing": "U16-Rennkalender, Meldungen, Ergebnisse und Ranglisten",
@@ -201,7 +201,11 @@
     "youthFeaturePathway": "Übergang ins Senior- oder Developing Team",
     "youthReadOnly": "Premium ist derzeit inaktiv. Akademiedaten bleiben erhalten, die Verwaltung ist bis zur Reaktivierung schreibgeschützt.",
     "openYouthAcademy": "Jugendakademie öffnen",
-    "viewYouthAcademy": "Jugendakademie ansehen"
+    "viewYouthAcademy": "Jugendakademie ansehen",
+    "locked": "Gesperrt",
+    "youthUnlock": "Freischaltung",
+    "youthUnlockValue": "{{real}} reale Tage ODER {{game}} Spieltage",
+    "youthWaiting": "Fortschritt: {{realPlayed}}/{{realRequired}} reale Tage oder {{gamePlayed}}/{{gameRequired}} Spieltage."
   },
   "history": {
     "title": "Rechnungs- und Kaufgeschichte",
@@ -259,7 +263,8 @@
     "developingReactivation": "Reaktivierung des Teams entwickeln — Jahreszeit {{season}}",
     "developingSeasonalReactivation": "Entwicklung der saisonalen Reaktivierung des Teams",
     "extraScout": "Zusätzlicher Scouting-Bericht",
-    "premiumGrant": "Premium monatliche Münzzulage"
+    "premiumGrant": "Premium monatliche Münzzulage",
+    "youthAcademyActivation": "Aktivierung der Jugendakademie"
   },
   "common": {
     "coins": "{{count}} Coins",
