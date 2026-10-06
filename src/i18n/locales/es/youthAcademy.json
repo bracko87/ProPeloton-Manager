@@ -20,16 +20,23 @@
   },
   "activation": {
     "title": "Activar Academia Juvenil",
-    "description": "La activación crea tu academia U16 independiente. Empiezas con seis ciclistas locales, un Director de Academia Juvenil de nivel medio y un entrenador principal U16. El ojeador juvenil es opcional. V1 no exige infraestructura.",
+    "description": "La activación crea tu academia U16 independiente. Una academia nueva requiere Premium, 30 días reales O 60 días de juego desde la creación del club, una tarifa única de 50 monedas y el presupuesto de academia que elijas. Empiezas con seis corredores locales, un Director de Academia y un Entrenador Principal U16. El Ojeador Juvenil es opcional.",
     "capacityLabel": "Máximo de ciclistas",
     "starterRidersLabel": "Ciclistas iniciales",
     "staffLabel": "Personal incluido",
     "infrastructureLabel": "Requisito de infraestructura",
     "none": "Ninguno",
     "seasonBudget": "Presupuesto de temporada",
-    "budgetHelp": "Este presupuesto financia apoyo a ciclistas, personal, scouting, equipamiento, concentraciones, viajes y costes de competición juvenil.",
+    "budgetHelp": "La tarifa de activación es independiente de este presupuesto en dinero del club. El presupuesto de la academia cubre apoyo a corredores, personal, ojeo, equipamiento, concentraciones, viajes y competiciones juveniles.",
     "activate": "Activar Academia Juvenil",
-    "activating": "Activando…"
+    "activating": "Activando…",
+    "coinCostLabel": "Tarifa única en monedas",
+    "unlockLabel": "Requisito de desbloqueo",
+    "coinBalanceLabel": "Saldo de monedas",
+    "coins": "{{count}} monedas",
+    "unlockValue": "{{real}} días reales O {{game}} días de juego",
+    "waiting": "Todavía no está desbloqueada. Progreso: {{realPlayed}}/{{realRequired}} días reales o {{gamePlayed}}/{{gameRequired}} días de juego. La primera condición que cumplas desbloquea la academia.",
+    "needCoins": "Activar la Academia Juvenil cuesta {{cost}} monedas. Tu saldo actual es {{balance}}."
   },
   "header": {
     "capacity": "{{current}} / {{max}} ciclistas"
@@ -579,5 +586,10 @@
     "class": "Clase",
     "result": "Resultado",
     "points": "Puntos"
+  },
+  "manual": {
+    "title": "¿Necesitas ayuda con la Academia Juvenil?",
+    "description": "Abre el manual completo de la Academia Juvenil para consultar activación, personal, ojeo, reclutamiento, presupuesto, equipamiento, carreras, rankings, desarrollo y graduación.",
+    "read": "Leer manual de la Academia Juvenil"
   }
 }
