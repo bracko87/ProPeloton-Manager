@@ -673,7 +673,15 @@
     "WORLD": "Mundial",
     "POSITION": "Puesto",
     "RESIGNED": "Dimitió",
-    "VACANT": "Vacante"
+    "VACANT": "Vacante",
+    "ACADEMY": "Academia",
+    "BUDGET": "Presupuesto",
+    "DECISION": "Decisión",
+    "DEVELOPMENT": "Desarrollo",
+    "HANDOVER": "Traspaso",
+    "MONTHLY": "Mensual",
+    "RECRUITMENT": "Reclutamiento",
+    "YOUTH": "Juvenil"
   },
   "reportVariants": {
     "rider_skill_change": "Cambio de habilidad del ciclista",
