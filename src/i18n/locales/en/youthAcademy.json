@@ -20,16 +20,23 @@
   },
   "activation": {
     "title": "Activate Youth Academy",
-    "description": "Activation creates your separate U16 academy. You start with six local riders, an average Youth Academy Director and U16 Head Coach. Youth Scout is optional. V1 has no infrastructure requirement.",
+    "description": "Activation creates your separate U16 academy. New Academies require Premium, 30 real-life days OR 60 in-game days since club creation, a one-time 50 coin activation fee, and the Academy budget you choose. You start with six local riders, a Youth Academy Director and U16 Head Coach. Youth Scout is optional.",
     "capacityLabel": "Maximum riders",
     "starterRidersLabel": "Starting riders",
     "staffLabel": "Included staff",
     "infrastructureLabel": "Infrastructure requirement",
     "none": "None",
     "seasonBudget": "Season Academy budget",
-    "budgetHelp": "This budget funds rider support, staff, scouting, equipment, camps, travel and youth competition costs.",
+    "budgetHelp": "The activation fee is separate from this club-cash budget. The Academy budget funds rider support, staff, scouting, equipment, camps, travel and youth competition costs.",
     "activate": "Activate Youth Academy",
-    "activating": "Activating…"
+    "activating": "Activating…",
+    "coinCostLabel": "One-time coin fee",
+    "unlockLabel": "Unlock requirement",
+    "coinBalanceLabel": "Coin balance",
+    "coins": "{{count}} coins",
+    "unlockValue": "{{real}} real-life days OR {{game}} in-game days",
+    "waiting": "Not unlocked yet. Progress: {{realPlayed}}/{{realRequired}} real-life days or {{gamePlayed}}/{{gameRequired}} in-game days. Whichever requirement is reached first unlocks the Academy.",
+    "needCoins": "Youth Academy activation costs {{cost}} coins. Your current balance is {{balance}}."
   },
   "header": {
     "capacity": "{{current}} / {{max}} riders"
@@ -579,5 +586,10 @@
     "class": "Class",
     "result": "Result",
     "points": "Points"
+  },
+  "manual": {
+    "title": "Need help with the Youth Academy?",
+    "description": "Open the full Youth Academy manual for activation rules, staff, scouting, recruitment, budget, equipment, racing, rankings, development and graduation.",
+    "read": "Read Youth Academy manual"
   }
 }
