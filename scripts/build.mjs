@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild'
-import { copyFile } from 'node:fs/promises'
+import { copyFile, readFile, writeFile } from 'node:fs/promises'
 import { rimraf } from 'rimraf'
 import stylePlugin from 'esbuild-style-plugin'
 import autoprefixer from 'autoprefixer'
@@ -8,6 +8,30 @@ import tailwindcss from 'tailwindcss'
 const args = process.argv.slice(2)
 const isProd = args[0] === '--production'
 const indexNowKey = '2b44bc2a682f02d72a345de371fa2f83'
+
+const cacheBustedIndexPlugin = {
+  name: 'cache-busted-index',
+  setup(build) {
+    build.onEnd(async (result) => {
+      if (result.errors.length > 0) return
+
+      const indexPath = 'dist/index.html'
+      const buildVersion = String(Date.now())
+
+      try {
+        const html = await readFile(indexPath, 'utf8')
+        const stamped = html.replaceAll(
+          '__PPM_BUILD_VERSION__',
+          buildVersion,
+        )
+        await writeFile(indexPath, stamped, 'utf8')
+      } catch (error) {
+        console.error('Failed to stamp cache-busting build version:', error)
+        throw error
+      }
+    })
+  },
+}
 
 await rimraf('dist')
 
@@ -31,6 +55,7 @@ const esbuildOpts = {
     '.png': 'file',
   },
   plugins: [
+    cacheBustedIndexPlugin,
     stylePlugin({
       postcss: {
         plugins: [tailwindcss, autoprefixer],
