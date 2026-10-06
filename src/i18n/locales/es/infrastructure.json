@@ -508,11 +508,11 @@
     "youth_academy": {
       "level1": {
         "unlock": "Desbloquea la ranura de entrenador de cabeza U23.",
-        "effect": "Activa el soporte de entrenamiento dedicado de equipo U23/desarrollo."
+        "effect": "U23: desarrollo con entrenamiento regular +6%; progreso de desarrollo en carrera +5%. U16: desarrollo regular +8%; progreso de desarrollo en carrera +6%."
       },
       "level2": {
         "unlock": "Mejor apoyo al desarrollo de los jóvenes.",
-        "effect": "los ciclistas de U23 reciben un 10% de bonificación en entrenamiento y desarrollo una vez que el sistema U23 aplica este efecto."
+        "effect": "U23: desarrollo con entrenamiento regular +12%; desarrollo en carrera +10%; efecto de desarrollo del Entrenador Principal U23 +10%; pérdida por entrenamiento fuera de foco -20%. U16: desarrollo regular +15%; desarrollo en carrera +12%; efecto de desarrollo del Entrenador Principal U16 +12%."
       }
     }
   },
@@ -630,15 +630,15 @@
     "youth_academy": {
       "level0": {
         "unlock": "No hay infraestructura específica de academia U23 ni plaza de Entrenador Principal U23.",
-        "effect": "No hay ningún bonus específico de academia para entrenamiento o desarrollo U23 activo."
+        "effect": "No hay ningún bonus específico de academia activo para entrenamiento o desarrollo U23 o U16."
       },
       "level1": {
         "unlock": "Desbloquea una plaza de Entrenador Principal U23.",
-        "effect": "Desarrollo mediante entrenamiento regular U23 +6%; progreso de desarrollo en carreras U23 +5%; se aplica solo a ciclistas del Equipo de Desarrollo."
+        "effect": "U23: desarrollo mediante entrenamiento regular +6%; progreso de desarrollo en carreras +5%. U16: desarrollo regular +8%; progreso de desarrollo en carreras +6%."
       },
       "level2": {
         "unlock": "Programa élite de desarrollo de la academia; no añade otra plaza de personal.",
-        "effect": "Desarrollo mediante entrenamiento regular U23 +12%; progreso de desarrollo en carreras U23 +10%; efecto de desarrollo del Entrenador Principal U23 +10% de eficacia; pérdida por entrenamiento U23 fuera de foco -20%; se aplica solo a ciclistas del Equipo de Desarrollo."
+        "effect": "U23: desarrollo mediante entrenamiento regular +12%; progreso de desarrollo en carreras +10%; efecto de desarrollo del Entrenador Principal U23 +10% de eficacia; pérdida por entrenamiento fuera de foco -20%. U16: desarrollo regular +15%; progreso de desarrollo en carreras +12%; efecto de desarrollo del Entrenador Principal U16 +12% de eficacia."
       }
     },
     "mechanics_workshop": {

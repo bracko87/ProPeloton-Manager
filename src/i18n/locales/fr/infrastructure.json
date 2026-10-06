@@ -508,11 +508,11 @@
     "youth_academy": {
       "level1": {
         "unlock": "Débloque U23 emplacement de l'entraîneur-chef.",
-        "effect": "Permet un support dédié U23/development-team coaching."
+        "effect": "U23 : développement par entraînement régulier +6 % ; progression du développement en course +5 %. U16 : développement régulier +8 % ; progression du développement en course +6 %."
       },
       "level2": {
         "unlock": "Meilleure aide au développement des jeunes.",
-        "effect": "Les coureurs U23 reçoivent 10% de bonus sur l'entraînement et le développement une fois que le système U23 applique cet effet."
+        "effect": "U23 : développement par entraînement régulier +12 % ; développement en course +10 % ; effet de développement de l'Entraîneur principal U23 +10 % ; déclin hors priorité -20 %. U16 : développement régulier +15 % ; développement en course +12 % ; effet de développement de l'Entraîneur principal U16 +12 %."
       }
     }
   },
@@ -630,15 +630,15 @@
     "youth_academy": {
       "level0": {
         "unlock": "Aucune infrastructure dédiée à l'académie U23 ni poste d'Entraîneur principal U23.",
-        "effect": "Aucun bonus spécifique à l'académie pour l'entraînement ou le développement U23 n'est actif."
+        "effect": "Aucun bonus spécifique à l'académie pour l'entraînement ou le développement U23 ou U16 n'est actif."
       },
       "level1": {
         "unlock": "Débloque un poste d'Entraîneur principal U23.",
-        "effect": "Développement par entraînement régulier U23 +6 % ; progression du développement en course U23 +5 % ; s'applique uniquement aux coureurs de l'Équipe de développement."
+        "effect": "U23 : développement par entraînement régulier +6 % ; progression du développement en course +5 %. U16 : développement régulier +8 % ; progression du développement en course +6 %."
       },
       "level2": {
         "unlock": "Programme de développement élite de l'académie ; aucun poste de personnel supplémentaire.",
-        "effect": "Développement par entraînement régulier U23 +12 % ; progression du développement en course U23 +10 % ; effet de développement de l'Entraîneur principal U23 +10 % d'efficacité ; déclin de l'entraînement U23 hors priorité -20 % ; s'applique uniquement aux coureurs de l'Équipe de développement."
+        "effect": "U23 : développement par entraînement régulier +12 % ; progression du développement en course +10 % ; effet de développement de l'Entraîneur principal U23 +10 % d'efficacité ; déclin hors priorité -20 %. U16 : développement régulier +15 % ; progression du développement en course +12 % ; effet de développement de l'Entraîneur principal U16 +12 % d'efficacité."
       }
     },
     "mechanics_workshop": {

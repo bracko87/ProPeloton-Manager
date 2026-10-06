@@ -508,11 +508,11 @@
     "youth_academy": {
       "level1": {
         "unlock": "Schaltet den Platz für den U23-Cheftrainer frei.",
-        "effect": "Ermöglicht spezielle Coaching-Unterstützung für U23/Entwicklungsteam."
+        "effect": "U23: reguläre Trainingsentwicklung +6%; Rennentwicklungsfortschritt +5%. U16: reguläre Entwicklung +8%; Rennentwicklungsfortschritt +6%."
       },
       "level2": {
         "unlock": "Bessere Unterstützung der Nachwuchsentwicklung.",
-        "effect": "U23-Fahrer erhalten 10 % Bonus auf Training und Entwicklung, sobald das U23-System diesen Effekt anwendet."
+        "effect": "U23: reguläre Trainingsentwicklung +12%; Rennentwicklung +10%; Entwicklungseffekt des U23-Cheftrainers +10%; Abbau außerhalb des Trainingsfokus -20%. U16: reguläre Entwicklung +15%; Rennentwicklung +12%; Entwicklungseffekt des U16-Cheftrainers +12%."
       }
     }
   },
@@ -630,15 +630,15 @@
     "youth_academy": {
       "level0": {
         "unlock": "Keine eigene U23-Akademieinfrastruktur und kein Platz für einen U23-Cheftrainer.",
-        "effect": "Kein akademiespezifischer Bonus für U23-Training oder -Entwicklung ist aktiv."
+        "effect": "Kein akademiespezifischer Bonus für U23- oder U16-Training bzw. -Entwicklung ist aktiv."
       },
       "level1": {
         "unlock": "Schaltet einen Platz für den U23-Cheftrainer frei.",
-        "effect": "Reguläre U23-Trainingsentwicklung +6%; U23-Rennentwicklungsfortschritt +5%; gilt nur für Fahrer des Entwicklungsteams."
+        "effect": "U23: reguläre Trainingsentwicklung +6%; Rennentwicklungsfortschritt +5%. U16: reguläre Entwicklung +8%; Rennentwicklungsfortschritt +6%."
       },
       "level2": {
         "unlock": "Elite-Entwicklungsprogramm der Akademie; kein zusätzlicher Personalplatz.",
-        "effect": "Reguläre U23-Trainingsentwicklung +12%; U23-Rennentwicklungsfortschritt +10%; Entwicklungseffekt des U23-Cheftrainers +10% Wirksamkeit; Abbau bei U23-Training außerhalb des Fokus -20%; gilt nur für Fahrer des Entwicklungsteams."
+        "effect": "U23: reguläre Trainingsentwicklung +12%; Rennentwicklungsfortschritt +10%; Entwicklungseffekt des U23-Cheftrainers +10% Wirksamkeit; Abbau außerhalb des Trainingsfokus -20%. U16: reguläre Entwicklung +15%; Rennentwicklungsfortschritt +12%; Entwicklungseffekt des U16-Cheftrainers +12%."
       }
     },
     "mechanics_workshop": {

@@ -508,11 +508,11 @@
     "youth_academy": {
       "level1": {
         "unlock": "Sblocca U23 Head Coach slot.",
-        "effect": "Abilita il supporto dedicato U23/development-team coaching."
+        "effect": "U23: sviluppo con allenamento regolare +6%; progresso di sviluppo in gara +5%. U16: sviluppo regolare +8%; progresso di sviluppo in gara +6%."
       },
       "level2": {
         "unlock": "Migliore sostegno allo sviluppo dei giovani.",
-        "effect": "I ciclisti U23 ricevono un bonus del 10% sull'allenamento e lo sviluppo una volta che il sistema U23 applica questo effetto."
+        "effect": "U23: sviluppo con allenamento regolare +12%; sviluppo in gara +10%; effetto di sviluppo del Capo Allenatore U23 +10%; decadimento fuori focus -20%. U16: sviluppo regolare +15%; sviluppo in gara +12%; effetto di sviluppo del Capo Allenatore U16 +12%."
       }
     }
   },
@@ -630,15 +630,15 @@
     "youth_academy": {
       "level0": {
         "unlock": "Nessuna infrastruttura dedicata all'accademia U23 né slot per il Capo Allenatore U23.",
-        "effect": "Nessun bonus specifico dell'accademia per allenamento o sviluppo U23 è attivo."
+        "effect": "Nessun bonus specifico dell'accademia per allenamento o sviluppo U23 o U16 è attivo."
       },
       "level1": {
         "unlock": "Sblocca uno slot Capo Allenatore U23.",
-        "effect": "Sviluppo tramite allenamento regolare U23 +6%; progresso di sviluppo nelle gare U23 +5%; si applica solo ai corridori della Squadra di Sviluppo."
+        "effect": "U23: sviluppo tramite allenamento regolare +6%; progresso di sviluppo nelle gare +5%. U16: sviluppo regolare +8%; progresso di sviluppo nelle gare +6%."
       },
       "level2": {
         "unlock": "Programma élite di sviluppo dell'accademia; nessuno slot staff aggiuntivo.",
-        "effect": "Sviluppo tramite allenamento regolare U23 +12%; progresso di sviluppo nelle gare U23 +10%; effetto di sviluppo del Capo Allenatore U23 +10% efficacia; decadimento dell'allenamento U23 fuori focus -20%; si applica solo ai corridori della Squadra di Sviluppo."
+        "effect": "U23: sviluppo tramite allenamento regolare +12%; progresso di sviluppo nelle gare +10%; effetto di sviluppo del Capo Allenatore U23 +10% di efficacia; decadimento fuori focus -20%. U16: sviluppo regolare +15%; progresso di sviluppo nelle gare +12%; effetto di sviluppo del Capo Allenatore U16 +12% di efficacia."
       }
     },
     "mechanics_workshop": {

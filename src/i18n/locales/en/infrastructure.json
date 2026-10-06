@@ -508,11 +508,11 @@
     "youth_academy": {
       "level1": {
         "unlock": "Unlocks U23 Head Coach slot.",
-        "effect": "Enables dedicated U23/development-team coaching support."
+        "effect": "U23 regular-training development +6%; U23 race-development progress +5%; U16 regular development +8%; U16 race-development progress +6%."
       },
       "level2": {
         "unlock": "Better youth development support.",
-        "effect": "U23 riders receive 10% bonus on training and development once the U23 system applies this effect."
+        "effect": "U23 regular-training development +12%; U23 race-development progress +10%; U23 Head Coach development effect +10%; U23 off-focus training decay -20%; U16 regular development +15%; U16 race-development progress +12%; U16 Head Coach development effectiveness +12%."
       }
     }
   },
@@ -630,15 +630,15 @@
     "youth_academy": {
       "level0": {
         "unlock": "No dedicated U23 academy infrastructure or U23 Head Coach slot.",
-        "effect": "No academy-specific U23 training or development bonus is active."
+        "effect": "No academy-specific U23 or U16 training/development bonus is active."
       },
       "level1": {
         "unlock": "Unlocks U23 Head Coach slot.",
-        "effect": "U23 regular-training development +6%; U23 race-development progress +5%; applies only to riders in the Developing Team."
+        "effect": "U23 regular-training development +6%; U23 race-development progress +5%; U16 regular development +8%; U16 race-development progress +6%."
       },
       "level2": {
         "unlock": "Elite academy development program; no additional staff slot.",
-        "effect": "U23 regular-training development +12%; U23 race-development progress +10%; U23 Head Coach development effect +10% effectiveness; U23 off-focus training decay -20%; applies only to riders in the Developing Team."
+        "effect": "U23 regular-training development +12%; U23 race-development progress +10%; U23 Head Coach development effect +10% effectiveness; U23 off-focus training decay -20%; U16 regular development +15%; U16 race-development progress +12%; U16 Head Coach development effectiveness +12%."
       }
     },
     "mechanics_workshop": {

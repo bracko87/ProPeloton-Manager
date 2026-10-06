@@ -508,11 +508,11 @@
     "youth_academy": {
       "level1": {
         "unlock": "Otključava mesto za U23 Glavnog trenera.",
-        "effect": "Omogućava posebnu trenersku podršku U23/razvojnom timu."
+        "effect": "U23: razvoj kroz redovan trening +6%; napredak razvoja kroz trke +5%. U16: redovan razvoj +8%; napredak razvoja kroz trke +6%."
       },
       "level2": {
         "unlock": "Bolja podrška razvoju mladih.",
-        "effect": "U23 vozači dobijaju 10% bonusa na trening i razvoj kada U23 sistem primenjuje ovaj efekat."
+        "effect": "U23: razvoj kroz redovan trening +12%; razvoj kroz trke +10%; razvojni efekat U23 glavnog trenera +10%; pad treninga van fokusa -20%. U16: redovan razvoj +15%; razvoj kroz trke +12%; razvojni efekat U16 glavnog trenera +12%."
       }
     }
   },
@@ -630,15 +630,15 @@
     "youth_academy": {
       "level0": {
         "unlock": "Nema posebne U23 akademijske infrastrukture niti mesta za U23 glavnog trenera.",
-        "effect": "Nije aktivan poseban akademijski bonus za U23 trening ili razvoj."
+        "effect": "Nije aktivan poseban akademijski bonus za U23 ili U16 trening i razvoj."
       },
       "level1": {
         "unlock": "Otključava mesto za U23 glavnog trenera.",
-        "effect": "Razvoj kroz redovan U23 trening +6%; napredak razvoja kroz U23 trke +5%; važi samo za vozače Razvojnog tima."
+        "effect": "U23: razvoj kroz redovan trening +6%; napredak razvoja kroz trke +5%. U16: redovan razvoj +8%; napredak razvoja kroz trke +6%."
       },
       "level2": {
         "unlock": "Elitni program razvoja akademije; nema dodatnog mesta za osoblje.",
-        "effect": "Razvoj kroz redovan U23 trening +12%; napredak razvoja kroz U23 trke +10%; razvojni efekat U23 glavnog trenera +10% efikasnosti; pad treninga van fokusa za U23 -20%; važi samo za vozače Razvojnog tima."
+        "effect": "U23: razvoj kroz redovan trening +12%; napredak razvoja kroz trke +10%; razvojni efekat U23 glavnog trenera +10% efikasnosti; pad treninga van fokusa -20%. U16: redovan razvoj +15%; napredak razvoja kroz trke +12%; razvojni efekat U16 glavnog trenera +12%."
       }
     },
     "mechanics_workshop": {
