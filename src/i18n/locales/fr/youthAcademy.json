@@ -20,16 +20,23 @@
   },
   "activation": {
     "title": "Activer l'Académie Jeunes",
-    "description": "L'activation crée votre académie U16 séparée. Vous commencez avec six coureurs locaux, un Directeur de l'Académie Jeunes de niveau moyen et un entraîneur principal U16. Le scout jeunes est facultatif. V1 n'exige aucune infrastructure.",
+    "description": "L'activation crée votre académie U16 séparée. Une nouvelle académie nécessite Premium, 30 jours réels OU 60 jours de jeu depuis la création du club, des frais uniques de 50 coins et le budget d'académie choisi. Vous commencez avec six coureurs locaux, un Directeur d'Académie et un Entraîneur U16. Le Scout Jeunes est facultatif.",
     "capacityLabel": "Nombre maximal de coureurs",
     "starterRidersLabel": "Coureurs de départ",
     "staffLabel": "Personnel inclus",
     "infrastructureLabel": "Infrastructure requise",
     "none": "Aucune",
     "seasonBudget": "Budget de saison de l'académie",
-    "budgetHelp": "Ce budget finance le soutien aux coureurs, le personnel, le scouting, l'équipement, les stages, les voyages et les coûts des compétitions jeunes.",
+    "budgetHelp": "Les frais d'activation sont séparés de ce budget en argent du club. Le budget de l'académie finance le soutien des coureurs, le personnel, le scouting, l'équipement, les stages, les déplacements et les compétitions jeunes.",
     "activate": "Activer l'Académie Jeunes",
-    "activating": "Activation…"
+    "activating": "Activation…",
+    "coinCostLabel": "Frais uniques en coins",
+    "unlockLabel": "Condition de déblocage",
+    "coinBalanceLabel": "Solde de coins",
+    "coins": "{{count}} coins",
+    "unlockValue": "{{real}} jours réels OU {{game}} jours de jeu",
+    "waiting": "Pas encore débloquée. Progression : {{realPlayed}}/{{realRequired}} jours réels ou {{gamePlayed}}/{{gameRequired}} jours de jeu. La première condition remplie débloque l'académie.",
+    "needCoins": "L'activation de l'Académie Jeunes coûte {{cost}} coins. Votre solde actuel est {{balance}}."
   },
   "header": {
     "capacity": "{{current}} / {{max}} coureurs"
@@ -579,5 +586,10 @@
     "class": "Classe",
     "result": "Résultat",
     "points": "Points"
+  },
+  "manual": {
+    "title": "Besoin d'aide pour l'Académie Jeunes ?",
+    "description": "Ouvrez le manuel complet pour les règles d'activation, le personnel, le scouting, le recrutement, le budget, l'équipement, les courses, les classements, le développement et la graduation.",
+    "read": "Lire le manuel de l'Académie Jeunes"
   }
 }
