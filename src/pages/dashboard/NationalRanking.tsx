@@ -2096,20 +2096,6 @@ export default function NationalRankingPage(): JSX.Element {
                       </div>
                     ) : null}
 
-                    {false && showQualification ? (
-                      <NationalDutyPlanCard
-                        entry={entry}
-                        eventType="qualification"
-                        eventDate={entry.duty_window_start_date ?? edition?.qualification_date}
-                        raceHref={null}
-                        plan={drafts[planKey(entry.rider_id, 'qualification')] ?? planFromValue(entry.qualification_plan)}
-                        equipmentPresets={data?.equipment_presets ?? []}
-                        onChange={() => undefined}
-                        onSave={() => void savePlan(entry, 'qualification')}
-                        saving={savingKey === planKey(entry.rider_id, 'qualification')}
-                      />
-                    ) : null}
-                    ) : null}
                   </div>
                 </div>
               )
