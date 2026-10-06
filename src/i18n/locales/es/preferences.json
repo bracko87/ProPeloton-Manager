@@ -145,6 +145,10 @@
     "worldNations": {
       "label": "World Nations y competiciones internacionales",
       "description": "Muestra sorteos, actualizaciones de carrera, finales de World Nations y notificaciones de campeonatos internacionales."
+    },
+    "youthAcademy": {
+      "label": "Academia juvenil",
+      "description": "Muestra notificaciones de la Academia juvenil: activación, informes de carrera, decisiones y relevos delegados del personal, resúmenes mensuales de reclutamiento y desarrollo, y avisos de presupuesto. La frecuencia de los informes de carrera se sigue controlando dentro de la Academia juvenil."
     }
   },
   "advisorCategories": {
