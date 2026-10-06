@@ -10,6 +10,17 @@
   path = "/api/analytics-geo"
   function = "analytics-geo"
 
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
 [[headers]]
   for = "/ads.txt"
   [headers.values]
