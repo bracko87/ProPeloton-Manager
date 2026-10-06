@@ -3457,61 +3457,89 @@
     },
     "youth-academy": {
       "category": "Vozači",
-      "title": "Youth Academy: U16 početni vodič",
-      "subtitle": "Kako voditi Premium U16 program, vozače, osoblje, scouting, trke i budžet.",
-      "overview": "Youth Academy je Premium U16 razvojni program za najviše 16 vozača. Regrutuj i razvijaj talente uz posebno osoblje i kurseve, upravljaj scoutingom, trkama i odvojenim budžetom i odluči njihov put sa 16 godina.",
+      "title": "Omladinska akademija: Kompletan U16 vodič",
+      "subtitle": "Aktivacija, osoblje, skauting, regrutovanje, budžet, oprema, trke, razvoj i promocija.",
+      "overview": "Omladinska akademija je Premium U16 razvojni program sa fiksnih 16 mesta. Nova akademija se otključava nakon 30 realnih dana ILI 60 dana u igri od osnivanja kluba i košta 50 coin-a samo jednom. Nema sezonske coin obnove; nakon aktivacije koristi poseban budžet iz normalnog novca kluba.",
       "facts": {
         "0": {
           "label": "Kapacitet",
-          "value": "Najviše 16 Youth vozača"
+          "value": "Maksimalno 16 mladih vozača"
         },
         "1": {
-          "label": "Početni paket",
-          "value": "6 lokalnih vozača, Direktor Akademije i U16 trener"
+          "label": "Otključavanje",
+          "value": "Premium + 30 realnih dana ILI 60 dana u igri"
         },
         "2": {
-          "label": "Opcionalno osoblje",
-          "value": "Do 3 Youth Scouta preko Staff Marketa"
+          "label": "Aktivacija",
+          "value": "50 coin-a jednom; bez sezonske coin obnove"
         },
         "3": {
-          "label": "Scouting učestalost",
-          "value": "1 besplatna + do 3 Coin pretrage po nedelji igre"
+          "label": "Početni paket",
+          "value": "6 lokalnih vozača, Direktor Akademije i U16 Head Coach"
         },
         "4": {
+          "label": "Opcionalno osoblje",
+          "value": "Maksimalno 1 Youth Scout preko Staff Marketa"
+        },
+        "5": {
+          "label": "Skauting pretrage",
+          "value": "1 besplatna + do 3 Coin pretrage po nedelji igre"
+        },
+        "6": {
+          "label": "Skauting program",
+          "value": "Lokalni $5.000 · Regionalni $20.000 · Kontinentalni $50.000 · Svetski $120.000 po sezoni"
+        },
+        "7": {
           "label": "Takmičenja",
           "value": "Svetska klasa, Kontinentalni Zapad/Istok i Regionalna klasa"
         },
-        "5": {
+        "8": {
           "label": "Budžet",
-          "value": "Odvojeni Academy fond sa prihodima od trka i transferima u oba smera"
+          "value": "Poseban fond sa prihodima od trka i transferima sa senior timom u oba smera"
+        },
+        "9": {
+          "label": "Promocija",
+          "value": "Sa 16 godina mora se doneti odluka o sledećem putu"
         }
       },
       "details": {
-        "0": "Youth profili prikazuju atribute, spremnost, umor, fokus razvoja, podršku i istoriju trka; tačan skriveni potencijal ostaje iza Talent Assessmenta.",
-        "1": "Akademija počinje sa šest vozača i može da poraste na 16. Youth osoblje koristi istu skalu kao seniori: Slab, Osnovni, Kompetentan, Jak, Elitan i Svetska klasa.",
-        "2": "Uloge imaju bonuse: Direktor poboljšava upravljanje i kupovinu opreme, U16 trener razvoj i izbor za trke, Scout izbor talenata i preciznost izveštaja.",
-        "3": "Youth osoblje napreduje kroz posebne kurseve na standardnom Staff profilu. Trošak se plaća iz Academy budžeta.",
-        "4": "Youth Scout ima jednu besplatnu pretragu po nedelji igre i do tri dodatne Coin pretrage: Lokalna 2, Regionalna 5, Kontinentalna 8 i Svetska 12 Coina. Nivo Scouta određuje broj izveštaja: Slab 1, Osnovni 2, Kompetentan 3, Jak 4, Elitan 5 i Svetska klasa 6 po pretrazi; bolji Scout efikasnije pronalazi jače talente i daje sigurnije procene.",
-        "5": "Odgovornosti se potvrđuju po temi. Regrutacija i pregovori mogu biti delegirani Direktoru, a trke i postave U16 treneru.",
-        "6": "Takmičenje ima Svetsku, Kontinentalnu Zapad/Istok i Regionalne divizije. Kalendar prikazuje ceo mesec ili samo prilike Akademije. Isti vozač ne može na trke koje se preklapaju.",
-        "7": "World Class Akademije dobijaju pozive; slobodna mesta popunjavaju ponderisani wildcardovi. Mesečni plan ograničava broj trka i trošak.",
-        "8": "Početna alokacija ostaje trajna istorija. Fond se menja kroz troškove, Youth prihode i transfere; prihod od trka ide direktno Akademiji.",
-        "9": "Adjust Budget prebacuje novac u oba smera, ali povrat seniorima koristi samo slobodna sredstva.",
-        "10": "Sa 16 godina sledi odluka: privremeni pathway, Developing Team ako ima mesta ili release."
+        "0": "Aktivacija je samo za Premium menadžere. Pravilo 30 realnih ILI 60 dana u igri isto je kao zrelosni uslov Developing Team-a; dovoljno je ispuniti prvi prag. Jednokratnih 50 coin-a odvojeno je od novčane alokacije Akademije.",
+        "1": "Nema sezonske coin obnove. Akademija već ima značajne troškove u novcu kluba: podrška vozačima, osoblje, skauting programi, oprema, assets, potrošni materijal, putovanja i takmičenja. Posle prekida Premiuma postojeća Akademija se ne plaća ponovo.",
+        "2": "Ako Premium istekne, Akademija i svi podaci ostaju. Upravljanje postaje read-only dok Premium ponovo ne bude aktivan.",
+        "3": "Akademija počinje sa šest lokalnih vozača i ima tvrdi limit 16. Infrastruktura može poboljšati razvoj, oporavak ili troškove, ali ne povećava kapacitet.",
+        "4": "Profili mladih pokazuju atribute, spremnost, umor, fokus razvoja, podršku i istoriju trka. Tačan skriveni potencijal nije prikazan; koristi Talent Assessment i sigurnost skautinga.",
+        "5": "Početno osoblje su Direktor Akademije i U16 Head Coach. Može se zaposliti najviše jedan Youth Scout. Youth osoblje koristi istu skalu kvaliteta i može pohađati kurseve plaćene iz budžeta Akademije.",
+        "6": "Direktor utiče na upravljanje i određene kupovine opreme. U16 trener utiče na trening, opterećenje, razvoj i izbor za trke. Scout utiče na izbor talenata, sigurnost procene i broj izveštaja.",
+        "7": "Scout ima jednu besplatnu pretragu po nedelji igre, a zatim do tri dodatne: Lokalna 2 coin-a, Regionalna 5, Kontinentalna 8, Svetska 12. Bolji Scout daje više i kvalitetnije izveštaje, ali ne stvara veštački talent.",
+        "8": "Domet skautinga ima i trošak u novcu kluba po sezoni: Lokalni $5.000, Regionalni $20.000, Kontinentalni $50.000, Svetski $120.000. Coin-i se koriste samo za dodatne pretrage.",
+        "9": "Možeš regrutovati slobodne talente ili vozače iz druge Akademije. Ponuda može uključiti stipendiju, smeštaj i kompenzaciju. Odgovornost može ostati kod menadžera ili biti delegirana.",
+        "10": "Regrutovanje i pregovori mogu biti kod Direktora; trening, prijave i postave kod U16 trenera. Sve odluke ostaju vidljive menadžeru.",
+        "11": "Akademija ima poseban sezonski budžet i ledger. Početni novac dolazi iz senior kluba. Transferi senior→Youth smanjuju senior cash, a Youth→senior koriste samo slobodna i nevezana sredstva.",
+        "12": "Akademija ima sopstvenu opremu, assets, race supplies i setup-e. Sve se finansira iz Academy budžeta i zavisi od stanja/dostupnosti.",
+        "13": "U16 takmičenje je results-only i ima World, Continental West/East i Regional nivo. Kalendar, pozivi, wildcards i mesečni plan kontrolišu pristup i broj trka.",
+        "14": "Različite postave mogu voziti trke koje se preklapaju, ali isti vozač ne može. Proveri spremnost, umor i lineup pre potvrde.",
+        "15": "Prihod od trka ide direktno u fond Akademije, ne u senior cash. Trke su razvoj i ograničen prihod, ali nisu zamena za dovoljan budžet.",
+        "16": "Overview prikazuje razvoj, spremnost/umor, pokrivenost osobljem, infrastrukturne efekte, prethodnu/sledeću trku i poslednji rezultat.",
+        "17": "Sa 16 godina sledi odluka o izlasku. Ako uslovi i mesto dozvoljavaju, vozač može u Developing Team; alternativno koristi podržani pathway ili release."
       },
       "tips": {
-        "0": "Otvori Youth staff profile za nivo, veštine, bonuse, sezonu ugovora i kurseve.",
-        "1": "Prvo koristi besplatnu nedeljnu scouting pretragu.",
-        "2": "Rotiraj postavu da svi vozači skupljaju iskustvo.",
-        "3": "Odobri mesečni plan na vreme.",
-        "4": "Čuvaj budžet za podršku, plate, scouting, kurseve, opremu i putovanja.",
-        "5": "Redovno prati spremnost i umor."
+        "0": "50 coin-a je samo ulazna naknada; ostavi dovoljno novca kluba za budžet i rad Akademije.",
+        "1": "Prvo koristi besplatnu nedeljnu pretragu.",
+        "2": "Ne zapošljavaj više Scouta očekujući dodatna mesta: dozvoljen je jedan.",
+        "3": "Rotiraj trkačke postave da razvoj ne ide samo najboljima.",
+        "4": "Odobri mesečne planove pre rokova.",
+        "5": "Čuvaj budžet za vozače, osoblje, skauting, kurseve, opremu, assets, supplies i putovanja.",
+        "6": "Pre trka proveri spremnost i umor i prati razvoj na Overview-u.",
+        "7": "Ako Premium istekne, obnovi samo Premium; Akademija ostaje sačuvana i nema novu naknadu od 50 coin-a."
       },
       "relatedLinks": {
-        "0": "Otvori Akademiju mladih",
+        "0": "Otvori Omladinsku akademiju",
         "1": "Otvori mlade vozače",
-        "2": "Otvori osoblje",
-        "3": "Otvori tržište osoblja"
+        "2": "Otvori Youth Scouting",
+        "3": "Otvori Youth Calendar",
+        "4": "Otvori Staff",
+        "5": "Otvori Infrastructure",
+        "6": "Otvori Pro Packages"
       }
     }
   }
