@@ -7,6 +7,7 @@ on:
       - 'index.html'
       - 'scripts/build.mjs'
       - 'src/pages/ProPackages.tsx'
+      - 'src/components/i18n/LocaleDateFormattingBridge.tsx'
       - 'src/pages/dashboard/Manual.tsx'
       - 'src/i18n/locales/**/proPackages.json'
       - 'src/i18n/locales/**/manual.json'
@@ -34,6 +35,7 @@ on:
       - 'index.html'
       - 'scripts/build.mjs'
       - 'src/pages/ProPackages.tsx'
+      - 'src/components/i18n/LocaleDateFormattingBridge.tsx'
       - 'src/pages/dashboard/Manual.tsx'
       - 'src/i18n/locales/**/proPackages.json'
       - 'src/i18n/locales/**/manual.json'
@@ -85,6 +87,9 @@ jobs:
           grep -F "coins_570: 19.99" src/pages/ProPackages.tsx
           grep -F "coins_900: 29.99" src/pages/ProPackages.tsx
           grep -F 'return `€${safeValue.toFixed(2)}`' src/pages/ProPackages.tsx
+          grep -F "hashPath === '/dashboard/pro'" src/components/i18n/LocaleDateFormattingBridge.tsx
+          grep -F "hashPath === '/dashboard/pro-packages'" src/components/i18n/LocaleDateFormattingBridge.tsx
+          grep -F "preserveEuroCurrencyForCurrentRoute()" src/components/i18n/LocaleDateFormattingBridge.tsx
 
       - name: Production build
         run: npm run build
