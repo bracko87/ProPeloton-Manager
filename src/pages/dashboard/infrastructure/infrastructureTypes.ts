@@ -47,6 +47,10 @@ export type ClubInfrastructureRow = {
   medical_center_level: number
   scouting_level: number
   youth_academy_level: number
+  team_residential_campus_level: number
+  sprint_performance_circuit_level: number
+  climbing_performance_center_level: number
+  team_time_trial_center_level: number
   mechanics_workshop_level: number
   team_car_fleet_quantity: number
   team_bus_quantity: number
@@ -174,6 +178,10 @@ export type FacilityKey =
   | 'medical_center'
   | 'scouting_office'
   | 'youth_academy'
+  | 'team_residential_campus'
+  | 'sprint_performance_circuit'
+  | 'climbing_performance_center'
+  | 'team_time_trial_center'
   | 'mechanics_workshop'
 
 export type AssetKey =

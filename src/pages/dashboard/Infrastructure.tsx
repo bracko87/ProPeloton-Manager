@@ -131,6 +131,21 @@ const facilityTranslationKeysByName = {
     short: 'facilityDescriptions.trainingCenterShort',
     long: 'facilityDescriptions.trainingCenterLong',
   },
+  'Sprint Performance Circuit': {
+    name: 'facilityNames.sprintPerformanceCircuit',
+    short: 'facilityDescriptions.sprintPerformanceCircuitShort',
+    long: 'facilityDescriptions.sprintPerformanceCircuitLong',
+  },
+  'Climbing Performance Center': {
+    name: 'facilityNames.climbingPerformanceCenter',
+    short: 'facilityDescriptions.climbingPerformanceCenterShort',
+    long: 'facilityDescriptions.climbingPerformanceCenterLong',
+  },
+  'Team Time Trial Center': {
+    name: 'facilityNames.teamTimeTrialCenter',
+    short: 'facilityDescriptions.teamTimeTrialCenterShort',
+    long: 'facilityDescriptions.teamTimeTrialCenterLong',
+  },
   'Medical Center': {
     name: 'facilityNames.medicalCenter',
     short: 'facilityDescriptions.medicalCenterShort',
@@ -140,6 +155,11 @@ const facilityTranslationKeysByName = {
     name: 'facilityNames.youthAcademy',
     short: 'facilityDescriptions.youthAcademyShort',
     long: 'facilityDescriptions.youthAcademyLong',
+  },
+  'Team Residential Campus': {
+    name: 'facilityNames.teamResidentialCampus',
+    short: 'facilityDescriptions.teamResidentialCampusShort',
+    long: 'facilityDescriptions.teamResidentialCampusLong',
   },
   'Mechanics Workshop': {
     name: 'facilityNames.mechanicsWorkshop',
@@ -927,6 +947,10 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
         medical_center_level,
         scouting_level,
         youth_academy_level,
+        team_residential_campus_level,
+        sprint_performance_circuit_level,
+        climbing_performance_center_level,
+        team_time_trial_center_level,
         mechanics_workshop_level,
         team_car_fleet_quantity,
         team_bus_quantity,
@@ -1596,6 +1620,15 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
           ? facilityConfigsByKeyLevel.get(`${item.id}:${nextLevel}`) ?? null
           : null
 
+      const prerequisiteMet =
+        item.id === 'team_residential_campus'
+          ? infrastructure.youth_academy_level >= 1
+          : item.id === 'sprint_performance_circuit' ||
+              item.id === 'climbing_performance_center' ||
+              item.id === 'team_time_trial_center'
+            ? infrastructure.training_center_level >= 2
+            : true
+
       const facilityTranslation =
         item.name in facilityTranslationKeysByName
           ? facilityTranslationKeysByName[
@@ -1613,14 +1646,21 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
         currentValue: level,
         maxValue: maxLevel,
         owned: level > 0,
-        canAct: !pendingJob && !isMaxed && !!nextConfig && hasFacilitySlot,
+        canAct:
+          !pendingJob &&
+          !isMaxed &&
+          !!nextConfig &&
+          hasFacilitySlot &&
+          prerequisiteMet,
         actionLabel: pendingJob
           ? t('common.inProgress')
           : isMaxed
             ? t('common.maxLevel')
-            : !hasFacilitySlot
-              ? t('common.slotsFull')
-              : nextConfig
+            : !prerequisiteMet
+              ? t('common.prerequisiteRequired', { defaultValue: 'Prerequisite Required' })
+              : !hasFacilitySlot
+                ? t('common.slotsFull')
+                : nextConfig
                 ? level > 0
                   ? t('common.upgrade')
                   : t('common.build')

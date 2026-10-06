@@ -55,8 +55,12 @@ export const facilityLevelImageUrls: Partial<
 const themes: Record<FacilityKey, { name: string; wall: string; roof: string; accent: string }> = {
   club_house: { name: 'Club House', wall: '#496b86', roof: '#263746', accent: '#f2c14e' },
   training_center: { name: 'Training Center', wall: '#3974bf', roof: '#1f426b', accent: '#7dd3fc' },
+  sprint_performance_circuit: { name: 'Sprint Performance Circuit', wall: '#2563eb', roof: '#1e3a8a', accent: '#facc15' },
+  climbing_performance_center: { name: 'Climbing Performance Center', wall: '#64748b', roof: '#334155', accent: '#84cc16' },
+  team_time_trial_center: { name: 'Team Time Trial Center', wall: '#334155', roof: '#111827', accent: '#22d3ee' },
   medical_center: { name: 'Medical Center', wall: '#e5e7eb', roof: '#64748b', accent: '#dc2626' },
   youth_academy: { name: 'Youth Academy', wall: '#c9983d', roof: '#765421', accent: '#f8e08e' },
+  team_residential_campus: { name: 'Team Residential Campus', wall: '#d6d3d1', roof: '#57534e', accent: '#38bdf8' },
   mechanics_workshop: { name: 'Mechanics Workshop', wall: '#64748b', roof: '#334155', accent: '#f59e0b' },
   scouting_office: { name: 'Scouting Office', wall: '#536273', roof: '#263241', accent: '#38bdf8' },
 }
@@ -78,10 +82,18 @@ function facilityDetail(key: FacilityKey, level: number): string {
   switch (key) {
     case 'training_center':
       return '<ellipse cx="400" cy="354" rx="180" ry="35" fill="none" stroke="#f8fafc" stroke-width="7" opacity=".85"/><ellipse cx="400" cy="354" rx="142" ry="24" fill="none" stroke="#64748b" stroke-width="3" opacity=".65"/>'
+    case 'sprint_performance_circuit':
+      return '<ellipse cx="400" cy="357" rx="215" ry="48" fill="none" stroke="#facc15" stroke-width="8"/><path d="M220 357 H580" stroke="#f8fafc" stroke-width="4" stroke-dasharray="18 12"/>'
+    case 'climbing_performance_center':
+      return '<path d="M215 356 L315 286 L390 333 L500 240 L585 356" fill="none" stroke="#84cc16" stroke-width="9" stroke-linejoin="round"/><path d="M280 356 L520 356" stroke="#f8fafc" stroke-width="4"/>'
+    case 'team_time_trial_center':
+      return '<rect x="235" y="308" width="330" height="72" rx="36" fill="none" stroke="#22d3ee" stroke-width="8"/><path d="M280 344 H520" stroke="#f8fafc" stroke-width="4" stroke-dasharray="20 12"/>'
     case 'medical_center':
       return '<rect x="382" y="185" width="36" height="106" rx="4" fill="#dc2626"/><rect x="347" y="220" width="106" height="36" rx="4" fill="#dc2626"/>'
     case 'youth_academy':
       return '<circle cx="278" cy="348" r="13" fill="none" stroke="#334155" stroke-width="4"/><circle cx="326" cy="348" r="13" fill="none" stroke="#334155" stroke-width="4"/><path d="M278 348 L295 324 L326 348 L305 348 L291 334" fill="none" stroke="#334155" stroke-width="4" stroke-linecap="round"/>'
+    case 'team_residential_campus':
+      return '<rect x="280" y="260" width="78" height="76" rx="4" fill="#78716c"/><rect x="442" y="260" width="78" height="76" rx="4" fill="#78716c"/><path d="M360 350 H440" stroke="#38bdf8" stroke-width="8"/>'
     case 'mechanics_workshop':
       return '<rect x="267" y="261" width="70" height="67" rx="3" fill="#263241"/><rect x="365" y="261" width="70" height="67" rx="3" fill="#263241"/><rect x="463" y="261" width="70" height="67" rx="3" fill="#263241"/>'
     case 'scouting_office':

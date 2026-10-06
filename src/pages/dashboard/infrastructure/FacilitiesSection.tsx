@@ -50,6 +50,10 @@ const fallbackMonthlyMaintenance: Record<FacilityKey, number[]> = {
   training_center: [0, 2000, 4000, 7000, 11000, 17000],
   medical_center: [0, 2500, 5000, 8000, 13000, 20000],
   youth_academy: [0, 15000, 40000],
+  team_residential_campus: [0, 6000],
+  sprint_performance_circuit: [0, 4000],
+  climbing_performance_center: [0, 5000],
+  team_time_trial_center: [0, 7000],
   mechanics_workshop: [0, 8000, 20000, 45000, 80000],
   scouting_office: [0, 6000, 15000, 35000, 65000],
 }
