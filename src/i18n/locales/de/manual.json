@@ -3473,10 +3473,11 @@
         "11": "Die Akademie hat ein eigenes Saisonbudget und Ledger. Die Startzuweisung kommt aus Senior-Clubgeld. Transfers Senior→Youth senken Senior-Cash; Youth→Senior ist nur aus freien, nicht gebundenen Akademiemitteln möglich.",
         "12": "Die Akademie besitzt eigene Ausrüstung, Assets, Rennbedarf und Setups. Käufe laufen über das Akademiebudget; Zustand und Verfügbarkeit bestimmen die Nutzbarkeit.",
         "13": "Jugendrennen sind ergebnisbasiert und in World Class, Continental West/Ost und Regional organisiert. Kalender, Einladungen, Wildcards und Monatspläne steuern Zugang und Rennumfang.",
-        "14": "Verschiedene Jugendaufstellungen dürfen an überschneidenden Terminen starten, derselbe Fahrer aber nicht. Prüfe vor Bestätigung Bereitschaft, Ermüdung und Aufstellung.",
-        "15": "Renneinnahmen fließen direkt in den Akademiefonds, nicht in Senior-Cash. Rennen sind Entwicklung plus begrenzte Finanzierung, aber kein Ersatz für ein solides Saisonbudget.",
-        "16": "Die Übersicht zeigt Entwicklungstrends, Bereitschaft/Ermüdung, Personalabdeckung, Infrastruktureffekte, letztes/nächstes Rennen und das neueste Ergebnis.",
-        "17": "Mit 16 ist eine Abschlussentscheidung nötig. Je nach Berechtigung und Platz kann ein Fahrer im unterstützten Pfad bleiben, ins Developing Team wechseln oder freigegeben werden."
+        "14": "Die Saisonhierarchie ist fest: World Class hat 16 Akademien, die letzten vier steigen ab. Continental West und East haben je 20 Teams; beide Meister steigen direkt auf. Die Plätze 2, 3 und 4 aus beiden Continental-Divisionen bilden eine Sechser-Playoff-Tabelle, deren beste zwei ebenfalls in die World Class aufsteigen. Der Sieger jeder der sechs Regionaldivisionen steigt in die zugeordnete Continental-Gruppe auf.",
+        "15": "Verschiedene Jugendaufstellungen dürfen an überschneidenden Terminen starten, derselbe Fahrer aber nicht. Prüfe vor Bestätigung Bereitschaft, Ermüdung und Aufstellung.",
+        "16": "Renneinnahmen fließen direkt in den Akademiefonds, nicht in Senior-Cash. Rennen sind Entwicklung plus begrenzte Finanzierung, aber kein Ersatz für ein solides Saisonbudget.",
+        "17": "Die Übersicht zeigt Entwicklungstrends, Bereitschaft/Ermüdung, Personalabdeckung, Infrastruktureffekte, letztes/nächstes Rennen und das neueste Ergebnis.",
+        "18": "Mit 16 ist eine Abschlussentscheidung nötig. Je nach Berechtigung und Platz kann ein Fahrer im unterstützten Pfad bleiben, ins Developing Team wechseln oder freigegeben werden."
       },
       "tips": {
         "0": "Die 50 Coins sind nur die Eintrittsgebühr; plane zusätzlich genug Clubgeld für Budget und Betrieb ein.",
