@@ -32,6 +32,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'This page is the control centre for your riders’ national championship pathway. It is separate from Team Ranking: Team Ranking compares clubs, while National Ranking follows riders inside their nationality.\n\nUse the three main areas for different jobs: Ranking shows the current national order and qualification status, My National Duty shows riders from your club who need attention, and History lets you review completed championship outcomes.',
         tip:
           'Start here whenever a National Championship notification arrives. The Ranking tab tells you why a rider is in the current position; My National Duty tells you what you actually need to do.',
+        accessNote: 'National Ranking and National Championships are core gameplay. You do not need Premium or a separate Coin purchase to follow your riders, respond to National Duty or compete in the championship structure.',
         primaryAction: 'Next',
       },
       {
@@ -117,6 +118,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'The National Association is different from the National Championship. National Championships are rider competitions based on nationality. The National Association is the shared country organisation used by eligible human managers to organise the National Team.\n\nFrom this area you can follow membership, activation or renewal, the elected National Coach, call-ups, squad preparation, equipment, World Nations competition, Association communication and historical records.',
         tip:
           'Think of National Ranking as “my riders for their countries” and National Association as “our managers running one country team together.”',
+        accessNote: 'The National Association is not Premium-only. Eligible managers can use it, but Association activation and seasonal renewal are shared Coin-funded requirements.',
         primaryAction: 'Next',
       },
       {
@@ -126,6 +128,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'Each country has one National Association. A forming Association needs the required number of eligible managers and the shared activation funding before it becomes active. Contributions are pooled toward the requirement; they do not buy ownership, sporting power or extra voting rights.\n\nOnce you are a member, the Overview shows the current Association status, member count and the actions that are available to you.',
         tip:
           'Contribute only what is still needed. The page shows the remaining activation or renewal amount so members can coordinate instead of overfunding.',
+        accessNote: 'Association membership itself does not give extra voting power for spending more Coins. Formation normally needs at least 5 eligible managers and a shared 50-Coin activation target; the page shows the live requirement.',
         primaryAction: 'Next',
       },
       {
@@ -135,6 +138,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'An active Association must also remain valid for future seasons. The renewal area shows when the renewal window opens, the target season, how many Coins have already been contributed and how many are still required.\n\nRenewal is a shared Association responsibility. It keeps the organisation active; it does not change rider strength or race performance.',
         tip:
           'Check renewal status early in the window. Leaving the full amount to one manager at the deadline is an unnecessary risk.',
+        accessNote: 'Seasonal Association renewal is a shared Coin requirement, normally 30 Coins for the Association as a whole. Members can contribute toward the remaining amount shown on the page.',
         primaryAction: 'Next',
       },
       {
@@ -171,6 +175,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'The Equipment area is where the Association prepares National Team equipment configurations for international competition. Keep several profile-appropriate setups ready so the coach can choose a suitable configuration for different race days instead of rebuilding everything at the last moment.\n\nAssociation funding and Coins are administrative resources; they are not a shortcut that directly purchases race-engine strength.',
         tip:
           'Prepare equipment before the competition window opens. A saved flat, climbing and time-trial-oriented setup makes race-day preparation much faster.',
+        accessNote: 'National Team equipment and competition preparation are sporting systems, not Coin power purchases. Association Coins are used for activation/renewal rather than buying race-engine strength.',
         primaryAction: 'Next',
       },
       {
@@ -282,6 +287,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'Youth Academy is a Premium long-term development programme for young riders. These riders are not ready-made professionals and they remain separate from your First Squad while they develop.\n\nThe Academy has a fixed capacity, so every place matters. The goal is to recruit promising young riders, develop them over time and then make a graduation decision when they reach the end of the U16 pathway.',
         tip:
           'Do not fill every place only because it is available. Keep room for stronger scouting discoveries and for the age balance you want inside the Academy.',
+        accessNote: 'Youth Academy is Premium-only and also has its own Coin access cost. The current setup uses 50 Coins for activation and 50 Coins for each later seasonal renewal while Premium remains active.',
         primaryAction: 'Next',
       },
       {
@@ -309,6 +315,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'The Budget area separates Academy operating money from your normal senior-team decisions. It tracks the seasonal budget and the main costs created by staff, scouting, equipment, racing and development.\n\nYou can move money between the senior club and the Academy where the page allows it, but every transfer should fit your complete club finances. A strong Academy is useful only if it does not leave the First Squad unable to operate.',
         tip:
           'Set a seasonal Academy budget before spending heavily. It is easier to control scouting and equipment decisions when you already know the maximum amount you are willing to invest.',
+        accessNote: 'Normal Academy operating costs use club/Academy cash: staff, equipment, travel, racing and development. Coins are not a replacement for the Academy budget.',
         primaryAction: 'Next',
       },
       {
@@ -318,6 +325,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'Scouting is how you discover new youth prospects. The Scouting area lets you control search range, scouting investment and the reports generated by your youth scouting programme. Wider searches can expose you to more prospects but also require more resources.\n\nReports are assessments, not perfect truth. Youth Potential is intentionally uncertain, so scouting quality improves your decision but does not reveal a guaranteed future superstar.',
         tip:
           'Compare several reports before committing a valuable Academy place. A slightly lower-rated rider with the right profile and age can be a better fit than the first exciting prospect you see.',
+        accessNote: 'Normal scouting uses the Academy scouting budget. Extra scouting searches can offer a Coin action; always check the Coin cost shown on the button before confirming.',
         primaryAction: 'Next',
       },
       {
@@ -336,6 +344,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'Youth riders use their own Academy equipment system. The Equipment area covers inventory, market purchases, support assets, race supplies and race setups used by the Academy.\n\nYou do not need top-level equipment everywhere. Match spending to the races you actually plan to enter and to the age of the riders who will use it.',
         tip:
           'Buy for your calendar, not for the catalogue. Expensive equipment that never matches your selected races only reduces the development budget.',
+        accessNote: 'Youth equipment, assets and race supplies use the Academy economy. Premium provides access to the Academy itself; normal equipment purchases are not paid by Coins unless the page explicitly labels a Coin action.',
         primaryAction: 'Next',
       },
       {
@@ -372,6 +381,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
           'When a youth rider reaches graduation, the Academy asks you to choose the next step. The normal development bridge is the Developing Team when it is available and has room, while other implemented options can include a direct senior route or release outcome.\n\nGraduation is not automatic promotion. Check the rider, available squad places and the pathway that best protects long-term development before confirming the decision.',
         tip:
           'Plan graduation space in advance. A strong prospect is much easier to manage when you already know whether the Developing Team or First Squad has a place available.',
+        accessNote: 'Graduation itself does not cost Coins. If you move a rider into the Developing Team, remember that the Developing Team is a separate Coin-activated service and is not included automatically with Youth Academy Premium access.',
         primaryAction: 'Finish tutorial',
         secondaryAction: 'Learn More',
       },
@@ -408,6 +418,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         title: 'Plan Developing Team Capacity',
         body:
           'The Developing Team is available to Free and Premium managers for 100 Coins activation and 100 Coins per season. Premium is not required.\n\nIf you intend to use it for Academy graduates, keep roster space and movement timing in mind before the graduation deadline.',
+        accessNote: 'The Developing Team is not Premium-only. It is a separate service with a 100-Coin activation and 100-Coin seasonal renewal under the current rules.',
         primaryAction: 'Finish tutorial',
         tip: 'Keep at least one development place available when you know a strong Academy rider is approaching graduation.',
         secondaryAction: 'Learn More',
@@ -429,6 +440,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         title: 'Available to Every Manager',
         body:
           'The Developing Team is not Premium-only. Free and Premium managers can activate it after the normal service unlock conditions are met. First activation costs 100 Coins and each seasonal renewal costs 100 Coins.\n\nPremium-only automation or advanced analysis remains separate from normal Developing Team access.',
+        accessNote: 'This page is available to Free and Premium managers after the Developing Team service is activated. Current access costs are 100 Coins to activate and 100 Coins per season to renew.',
         primaryAction: 'Next',
         tip: 'Activate the service when you have a real development need; the recurring cost is easier to justify when the roster will actually be used.',
       },
@@ -453,6 +465,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         title: 'U23 Staff and Development',
         body:
           'The Developing Team has its own development context and can use the U23 Head Coach as part of the service. Normal U23 staff use does not require Premium.\n\nUse the team as a genuine development layer rather than simply an overflow roster.',
+        accessNote: 'Normal Developing Team roster, movement and U23 staff management do not require Premium. Premium only adds selected advanced analytics and convenience tools around the service.',
         primaryAction: 'Finish tutorial',
         tip: 'A good U23 coach should support the riders you actually keep here; do not treat the Developing Team as a separate senior squad.',
         secondaryAction: 'Learn More',
