@@ -9559,6 +9559,9 @@ export default function OverviewPage() {
       "statistics",
       "transfers",
       "finance",
+      "national-championships",
+      "national-association",
+      "youth-academy",
       "menu",
     ] as const;
 
@@ -9604,6 +9607,42 @@ export default function OverviewPage() {
       currentStep?.key ?? null,
     );
 
+    setTutorialMode("closed");
+  }
+
+  async function handleFinishMainTutorial() {
+    const currentStep = overviewTutorialSteps[tutorialStepIndex];
+    const remainingTutorialKeys = [
+      "squad",
+      "training",
+      "equipment",
+      "facilities",
+      "calendar",
+      "race-detail",
+      "race-preparation",
+      "team-ranking",
+      "statistics",
+      "transfers",
+      "finance",
+      "national-championships",
+      "national-association",
+      "youth-academy",
+      "menu",
+    ] as const;
+
+    await saveTutorialProgress(
+      "overview",
+      "completed",
+      currentStep?.key ?? null,
+    );
+
+    await Promise.all(
+      remainingTutorialKeys.map((tutorialKey) =>
+        saveTutorialProgress(tutorialKey, "skipped", null),
+      ),
+    );
+
+    window.sessionStorage.removeItem("ppm:auto-start-tutorial");
     setTutorialMode("closed");
   }
 
@@ -9947,8 +9986,16 @@ export default function OverviewPage() {
             stepLabel={`${currentIndex + 1} / ${steps.length}`}
             primaryAction={activeStep.primaryAction}
             secondaryAction={activeStep.secondaryAction}
+            finishAction={
+              currentIndex === steps.length - 1 ? "Finish tutorial" : undefined
+            }
             onPrimary={handleNext}
             onSecondary={handleSecondary}
+            onFinish={
+              currentIndex === steps.length - 1
+                ? () => void handleFinishMainTutorial()
+                : undefined
+            }
             onClose={handleClose}
             compact={activeStep.compact}
           />
