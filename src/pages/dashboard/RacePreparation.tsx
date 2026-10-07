@@ -4258,6 +4258,7 @@ export default function RacePreparationPage(): JSX.Element {
           variant="panel"
           title={racePreparationTutorialSteps[tutorialStepIndex].title}
           body={racePreparationTutorialSteps[tutorialStepIndex].body}
+          accessNote={racePreparationTutorialSteps[tutorialStepIndex].accessNote}
           tip={racePreparationTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${racePreparationTutorialSteps.length}`}
           primaryAction={
