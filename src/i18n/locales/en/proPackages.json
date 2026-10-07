@@ -79,7 +79,7 @@
   },
   "comparison": {
     "title": "Free vs Premium",
-    "description": "Free includes the complete core cycling-management game. Premium adds advanced planning and analysis plus the exclusive Developing Team, U23 Head Coach and Youth Academy.",
+    "description": "Free includes the complete core cycling-management game plus optional coin-funded Developing Team access. Premium adds advanced planning and analysis plus the exclusive Youth Academy.",
     "benefit": "Benefit",
     "free": "Free",
     "premium": "Premium",
@@ -93,7 +93,7 @@
     "r8": "Rider shortlist additions",
     "developing": "Developing Team service",
     "activationRenewal": "{{activation}} activation / {{renewal}} renewal",
-    "note": "Free managers keep the complete core game and manual control. Premium adds analysis, automation and two optional development programmes. Developing Team unlocks after 30 real-life days OR 60 in-game days, costs 100 coins to activate and 100 coins per season to renew. Youth Academy uses the same 30/60-day unlock rule, costs 50 coins once to activate, has no seasonal coin renewal, and then uses normal club money for its budget and operating costs.",
+    "note": "Free managers keep the complete core game and can unlock Developing Team after 30 real-life days OR 60 in-game days for 100 coins, with 100 coins renewal per season. Youth Academy remains Premium-only, uses the same 30/60-day unlock rule, costs 50 coins to activate and 50 coins per season to renew, then uses normal club money for its budget and operating costs.",
     "premiumOnly": "Premium only",
     "r9": "World-race replays",
     "r10": "Templates & Smart Prefill",
@@ -104,7 +104,7 @@
     "freeReplay": "2 coins per race",
     "premiumReplay": "Included",
     "youthAcademy": "Youth Academy / U16 development",
-    "youthAcademyPremium": "Premium + 50 coin one-time activation · 16 rider places"
+    "youthAcademyPremium": "Premium + 50 activation / 50 renewal · 16 rider places"
   },
   "packages": {
     "title": "Need additional coins?",
@@ -143,8 +143,8 @@
     "manageNoteSuffix": "above to cancel future renewal, update billing details or view Stripe-hosted invoices."
   },
   "services": {
-    "title": "Premium development services",
-    "description": "Manage the two Premium-only development programmes. Developing Team costs 100 coins to activate and 100 coins per season. Youth Academy costs 50 coins once, has no seasonal coin renewal and then uses normal club money for its budget and operations.",
+    "title": "Development services",
+    "description": "Developing Team is available to all managers for 100 coins activation and 100 coins per season. Youth Academy remains Premium-only at 50 coins activation plus 50 coins per season.",
     "loading": "Loading coin services...",
     "unavailable": "Developing Team service information is currently unavailable.",
     "unavailableHelp": "The rest of Premium, billing and coin management remains available.",
@@ -152,8 +152,8 @@
     "active": "Active",
     "expired": "Expired",
     "notActivated": "Not activated",
-    "descriptionDeveloping": "Build and manage a U23 development squad as a Premium member.",
-    "readOnly": "Your Developing Team data remains stored, but access is paused until Premium is active again.",
+    "descriptionDeveloping": "Build and manage a U23 development squad. Premium is not required for the service itself.",
+    "readOnly": "Your Developing Team data remains stored, but seasonal access must be reactivated or renewed.",
     "reactivationPrice": "Reactivation price: {{cost}} coins.",
     "firstActivationPrice": "First activation price: {{cost}} coins.",
     "laterPrice": "Later renewal or reactivation: {{cost}} coins per season.",
@@ -170,12 +170,12 @@
     "startSeason": "Start of Season {{season}}",
     "autoRenew": "Automatically renew each season",
     "autoRenewPrefix": "When enabled,",
-    "autoRenewSuffix": "coins will be deducted at the beginning of the next season only while Premium is active. If Premium ends or the wallet balance is too low, renewal will fail and access will be paused.",
+    "autoRenewSuffix": "coins will be deducted at the beginning of the next season. If the wallet balance is too low, renewal will fail and access will be paused.",
     "reactivation": "Reactivation price",
     "firstActivation": "First activation",
     "laterRenewals": "Later renewals",
     "coinsPerSeason": "{{cost}} coins per season",
-    "autoEnabled": "Automatic renewal enabled. {{cost}} coins will be charged at the beginning of the next season if Premium is active.",
+    "autoEnabled": "Automatic renewal enabled. {{cost}} coins will be charged at the beginning of the next season if the wallet balance is sufficient.",
     "autoDisabled": "Automatic renewal disabled. No Developing Team renewal charge will be made automatically.",
     "autoFailed": "Failed to update Developing Team automatic renewal.",
     "loadFailed": "Failed to load Developing Team service.",
@@ -183,13 +183,13 @@
     "available": "Available",
     "premiumRequired": "Premium required",
     "loadingYouth": "Loading…",
-    "descriptionYouthAcademy": "A separate U16 development programme with its own riders, staff, budget, scouting, equipment, race calendar, rankings, development history and graduation pathway. Premium is required. New Academies unlock after 30 real-life days OR 60 in-game days and cost 50 coins once to activate.",
+    "descriptionYouthAcademy": "A separate Premium-only U16 development programme with its own riders, staff, budget, scouting, equipment, race calendar, rankings, development history and graduation pathway. New Academies unlock after 30 real-life days OR 60 in-game days, cost 50 coins to activate and 50 coins per later season to renew.",
     "youthCapacity": "Academy capacity",
     "youthStarterRiders": "Starter riders",
     "youthStarterStaff": "Starter staff",
     "youthStarterStaffValue": "Director + U16 Head Coach",
-    "youthActivationCost": "Activation",
-    "youthActivationCostValue": "{{cost}} coins once · no seasonal renewal",
+    "youthActivationCost": "Activation / renewal",
+    "youthActivationCostValue": "{{activation}} activation / {{renewal}} renewal per season",
     "ridersCount": "{{count}} riders",
     "youthFeatureScouting": "Scouting and recruitment programme",
     "youthFeatureRacing": "U16 race calendar, entries, results and rankings",
@@ -199,13 +199,14 @@
     "youthFeatureInfrastructure": "U16 infrastructure development and recovery effects",
     "youthFeatureResponsibilities": "Manager/staff responsibilities and delegation",
     "youthFeaturePathway": "Graduation pathway into senior or Developing Team",
-    "youthReadOnly": "Premium is currently inactive. Academy data is preserved, but management remains read-only until Premium returns.",
+    "youthReadOnly": "Academy data is preserved, but management is read-only while Premium is inactive or the current season renewal has not been paid.",
     "openYouthAcademy": "Open Youth Academy",
     "viewYouthAcademy": "View Youth Academy",
     "locked": "Locked",
     "youthUnlock": "Unlock timing",
     "youthUnlockValue": "{{real}} real-life days OR {{game}} in-game days",
-    "youthWaiting": "Unlock progress: {{realPlayed}}/{{realRequired}} real-life days or {{gamePlayed}}/{{gameRequired}} in-game days."
+    "youthWaiting": "Unlock progress: {{realPlayed}}/{{realRequired}} real-life days or {{gamePlayed}}/{{gameRequired}} in-game days.",
+    "renewalRequired": "Renewal required"
   },
   "history": {
     "title": "Billing and purchase history",
@@ -264,7 +265,9 @@
     "developingSeasonalReactivation": "Developing Team seasonal reactivation",
     "extraScout": "Extra scouting report",
     "premiumGrant": "Premium monthly coin grant",
-    "youthAcademyActivation": "Youth Academy activation"
+    "youthAcademyActivation": "Youth Academy activation",
+    "youthAcademyRenewal": "Youth Academy renewal — Season {{season}}",
+    "youthAcademySeasonalRenewal": "Youth Academy seasonal renewal"
   },
   "common": {
     "coins": "{{count}} coins",
