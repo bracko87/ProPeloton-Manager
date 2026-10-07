@@ -341,8 +341,8 @@
     },
     "policies": {
       "title": "Team Policies and Operations",
-      "body": "Team Policies and Operations control how your club is run.\n\nChanging policies can make your club more attractive to riders and staff, but it can also increase the cost of travel, race support, training camps, and daily operations.\n\nThis section helps you balance comfort, performance, attractiveness, and cost.\n\nAfter Finance, the next tutorial will explain the main Menu.",
-      "primary": "Continue to Menu",
+      "body": "Team Policies and Operations control how your club is run.\n\nChanging policies can make your club more attractive to riders and staff, but it can also increase the cost of travel, race support, training camps, and daily operations.\n\nThis section helps you balance comfort, performance, attractiveness, and cost.\n\nAfter Finance, the tutorial will briefly introduce National Ranking, the National Association, and the Youth Academy before finishing with the main Menu.",
+      "primary": "Continue to National Ranking",
       "secondary": "Finish for now"
     }
   },
