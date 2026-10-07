@@ -102,7 +102,7 @@
     },
     "developing": {
       "title": "Sviluppo della finestra di squadra e movimento",
-      "body": "La tua Squadra di Sviluppo è una seconda squadra esclusiva Premium per giovani ciclisti non ancora pronti per la Prima Squadra ma che possono gareggiare nelle competizioni assegnate.\n\nÈ necessario un abbonamento Premium attivo per creare e usare la Squadra di Sviluppo. La prima attivazione costa 100 Coins e ogni rinnovo stagionale costa 100 Coins. Anche l'Allenatore Capo U23 è esclusivo Premium.\n\nSe Premium scade, l'accesso viene sospeso, ma squadra, ciclisti, contratti, risultati e cronologia restano salvati. I ciclisti possono spostarsi tra Prima Squadra e Squadra di Sviluppo solo durante le normali finestre di movimento.",
+      "body": "La Squadra di Sviluppo è il passaggio normale per i giovani ciclisti non ancora pronti per la Prima Squadra e può partecipare alle competizioni di sviluppo assegnate.\n\nÈ disponibile ai manager Free e Premium. L'attivazione costa 100 Coins e il rinnovo 100 Coins per stagione. Premium non è richiesto per il servizio né per il normale utilizzo dell'Allenatore Capo U23.\n\nI diplomati della Youth Academy possono passare alla Squadra di Sviluppo prima di arrivare alla Prima Squadra. I movimenti restano limitati alle normali finestre. Automazione e analisi avanzata Premium rimangono separate dal servizio di base.",
       "primary": "Successivo"
     },
     "staff": {
@@ -169,7 +169,7 @@
     },
     "buildings": {
       "title": "Strutture",
-      "body": "Questa è la pagina Infrastruttura. La scheda Servizi mostra gli edifici che il vostro club può possedere e aggiornare. Ogni squadra inizia con una Clubhouse di livello 1 di base. Più tardi, è possibile costruire e aggiornare strutture importanti come il Centro di formazione, Medical Center, Accademia Giovanile, Meccanica Workshop, e Scouting Office. Servizi sono importanti perché migliorano il vostro club e può anche definire quanti membri del personale si è autorizzati a avere.",
+      "body": "Questa è la pagina Infrastruttura.\n\nLa scheda Strutture mostra gli edifici che il club può possedere e migliorare. Ogni squadra inizia con un Clubhouse di livello 1.\n\nPiù avanti puoi costruire e migliorare Training Center, Medical Center, strutture di supporto all'accademia, Mechanics Workshop e Scouting Office. Il programma separato Youth Academy / U16 è una funzione Premium con proprie regole di attivazione e accesso stagionale tramite Coins.\n\nLe strutture migliorano il club e possono anche determinare quanti membri dello staff puoi avere.",
       "primary": "Successivo"
     },
     "projects": {
