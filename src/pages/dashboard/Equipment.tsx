@@ -617,6 +617,7 @@ export default function EquipmentPage(): JSX.Element {
           variant="panel"
           title={equipmentTutorialSteps[tutorialStepIndex].title}
           body={equipmentTutorialSteps[tutorialStepIndex].body}
+          accessNote={equipmentTutorialSteps[tutorialStepIndex].accessNote}
           tip={equipmentTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${equipmentTutorialSteps.length}`}
           primaryAction={
