@@ -555,15 +555,15 @@ set
   notes=excluded.notes,
   updated_at=now();
 
-perform public.sync_race_stage_points_from_stage_json_v1(
+select public.sync_race_stage_points_from_stage_json_v1(
   '3279c6e9-83f9-4c6c-98a9-1d4e82865397',
   true
 );
-perform public.sync_race_stage_points_from_stage_json_v1(
+select public.sync_race_stage_points_from_stage_json_v1(
   'f8ac702f-a395-4381-8e39-401da0a717ea',
   true
 );
-perform public.sync_race_stage_points_from_stage_json_v1(
+select public.sync_race_stage_points_from_stage_json_v1(
   '6813d409-18ae-41aa-a5b3-3a7b684e416c',
   true
 );
