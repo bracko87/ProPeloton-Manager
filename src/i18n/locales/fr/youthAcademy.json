@@ -2,7 +2,7 @@
   "loading": "Chargement de l'Académie Jeunes…",
   "title": "Académie Jeunes",
   "subtitle": "Programme Premium de développement U16 pour les coureurs de 12 à 16 ans.",
-  "readOnly": "Premium est inactif. Les coureurs et l'historique de l'académie sont conservés, mais la gestion passe en lecture seule.",
+  "readOnly": "La gestion de l'Académie est en lecture seule car Premium est inactif ou la saison actuelle n'a pas été renouvelée.",
   "week": "semaine",
   "save": "Enregistrer les modifications",
   "saving": "Enregistrement…",
@@ -11,7 +11,7 @@
   "optionalNotHired": "Facultatif — non recruté",
   "premium": {
     "title": "Académie Jeunes Premium",
-    "description": "L'Académie Jeunes est un système de développement réservé aux membres Premium. Un membre Premium peut activer facultativement une académie U16 d'une capacité fixe de 16 coureurs.",
+    "description": "L'Académie Jeunes est une couche de développement réservée à Premium. Les membres Premium peuvent activer une académie U16 de 16 places puis renouveler son accès pour 50 coins chaque saison.",
     "capacity": "Capacité fixe de 16 jeunes coureurs",
     "localStart": "Départ avec 6 jeunes coureurs locaux",
     "staff": "Directeur de l'Académie Jeunes moyen + entraîneur principal U16 inclus",
@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Activer l'Académie Jeunes",
-    "description": "L'activation crée votre académie U16 séparée. Une nouvelle académie nécessite Premium, 30 jours réels OU 60 jours de jeu depuis la création du club, des frais uniques de 50 coins et le budget d'académie choisi. Vous commencez avec six coureurs locaux, un Directeur d'Académie et un Entraîneur U16. Le Scout Jeunes est facultatif.",
+    "description": "L'activation crée votre académie U16 séparée. Elle nécessite Premium, 30 jours réels OU 60 jours de jeu depuis la création du club, 50 coins d'activation et le budget choisi. À partir de la saison suivante, l'accès coûte 50 coins par saison tant que Premium reste actif. Vous commencez avec six coureurs locaux, un Directeur d'Académie et un Coach U16. Le Youth Scout est facultatif.",
     "capacityLabel": "Nombre maximal de coureurs",
     "starterRidersLabel": "Coureurs de départ",
     "staffLabel": "Personnel inclus",
@@ -30,13 +30,15 @@
     "budgetHelp": "Les frais d'activation sont séparés de ce budget en argent du club. Le budget de l'académie finance le soutien des coureurs, le personnel, le scouting, l'équipement, les stages, les déplacements et les compétitions jeunes.",
     "activate": "Activer l'Académie Jeunes",
     "activating": "Activation…",
-    "coinCostLabel": "Frais uniques en coins",
+    "coinCostLabel": "Frais d'activation",
     "unlockLabel": "Condition de déblocage",
     "coinBalanceLabel": "Solde de coins",
     "coins": "{{count}} coins",
     "unlockValue": "{{real}} jours réels OU {{game}} jours de jeu",
     "waiting": "Pas encore débloquée. Progression : {{realPlayed}}/{{realRequired}} jours réels ou {{gamePlayed}}/{{gameRequired}} jours de jeu. La première condition remplie débloque l'académie.",
-    "needCoins": "L'activation de l'Académie Jeunes coûte {{cost}} coins. Votre solde actuel est {{balance}}."
+    "needCoins": "L'activation de l'Académie Jeunes coûte {{cost}} coins. Votre solde actuel est {{balance}}.",
+    "renewalCostLabel": "Renouvellement de saison",
+    "coinsPerSeason": "{{count}} coins / saison"
   },
   "header": {
     "capacity": "{{current}} / {{max}} coureurs"
@@ -339,7 +341,8 @@
     "reportFrequency": "Impossible d'enregistrer la préférence de rapports jeunes.",
     "monthlyRacePlan": "Impossible d'enregistrer le plan mensuel des courses jeunes.",
     "raceInvitationDecline": "Impossible de refuser l'invitation à la course jeunes.",
-    "budgetTransfer": "Impossible de transférer les fonds de l'Académie."
+    "budgetTransfer": "Impossible de transférer les fonds de l'Académie.",
+    "renew": "Échec du renouvellement de l'Académie Jeunes."
   },
   "equipment": {
     "title": "Équipement jeunes",
@@ -591,5 +594,14 @@
     "title": "Besoin d'aide pour l'Académie Jeunes ?",
     "description": "Ouvrez le manuel complet pour les règles d'activation, le personnel, le scouting, le recrutement, le budget, l'équipement, les courses, les classements, le développement et la graduation.",
     "read": "Lire le manuel de l'Académie Jeunes"
+  },
+  "renewal": {
+    "title": "Renouvellement Académie Jeunes — Saison {{season}}",
+    "description": "Renouvelez l'accès à l'Académie pour la saison actuelle pour {{cost}} coins.",
+    "premiumRequired": "Un Premium actif est requis avant d'acheter le renouvellement saisonnier de {{cost}} coins.",
+    "action": "Renouveler pour {{cost}} coins",
+    "renewing": "Renouvellement…",
+    "getCoins": "Acheter des coins",
+    "readOnly": "L'Académie Jeunes doit être renouvelée pour la saison actuelle avant toute action de gestion."
   }
 }
