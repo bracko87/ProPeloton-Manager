@@ -341,8 +341,8 @@
     },
     "policies": {
       "title": "Políticas y operaciones del equipo",
-      "body": "Team Policy controla aspectos de la operativa de tu club. Cambiar estas políticas puede hacerlo más atractivo para ciclistas y personal, pero también aumentar los costes de viajes, apoyo en carrera, concentraciones de entrenamiento y operaciones diarias. Esta sección te ayuda a equilibrar comodidad, rendimiento, atractivo y coste. Después de Finanzas, el siguiente tutorial explica el menú principal.",
-      "primary": "Continuar al menú",
+      "body": "Las políticas y operaciones del equipo controlan cómo funciona tu club.\n\nCambiar estas políticas puede hacerlo más atractivo para ciclistas y personal, pero también puede aumentar los costes de viajes, apoyo en carrera, concentraciones de entrenamiento y operaciones diarias.\n\nEsta sección te ayuda a equilibrar comodidad, rendimiento, atractivo y coste.\n\nDespués de Finanzas, el tutorial presentará brevemente el Ranking Nacional, la Asociación Nacional y la Academia Juvenil antes de terminar con el menú principal.",
+      "primary": "Continuar al Ranking Nacional",
       "secondary": "Termina por ahora."
     }
   },
