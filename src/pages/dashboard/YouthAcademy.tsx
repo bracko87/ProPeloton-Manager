@@ -2086,7 +2086,7 @@ export default function YouthAcademyPage(): JSX.Element {
           <p className="mt-1 text-sm text-slate-500">{t('subtitle')}</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div data-tutorial-target="youth-academy-page" className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2">
             <GraduationCap size={22} />
             <h2 className="text-lg font-semibold">{t('activation.title')}</h2>
