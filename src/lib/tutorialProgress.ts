@@ -91,6 +91,12 @@ const TUTORIAL_FALLBACK_HASH_BY_KEY: Partial<Record<TutorialKey, string>> = {
   sponsors: '#/dashboard/finance',
   staff: '#/dashboard/staff',
   settings: '#/dashboard/preferences',
+  'national-championships': '#/dashboard/national-ranking',
+  'national-association': '#/dashboard/national-association',
+  'national-coach': '#/dashboard/national-association/squad',
+  'youth-academy': '#/dashboard/youth-academy',
+  'developing-team': '#/dashboard/developing-team',
+  'new-season': '#/dashboard/season-reset-preview',
 }
 
 function canUseWindow(): boolean {
