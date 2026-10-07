@@ -79,7 +79,7 @@
   },
   "comparison": {
     "title": "Gratuit vs Premium",
-    "description": "Free includes the complete core cycling-management game. Premium adds advanced planning and analysis plus the exclusive Developing Team, U23 Head Coach and Youth Academy.",
+    "description": "Free inclut le jeu de gestion complet ainsi que l'accès optionnel à l'Équipe de Développement financé en coins. Premium ajoute la planification avancée, l'analyse et l'Académie Jeunes exclusive.",
     "benefit": "Avantages",
     "free": "Gratuit",
     "premium": "Premium",
@@ -93,7 +93,7 @@
     "r8": "Rider shortlist additions",
     "developing": "Développement du service d'équipe",
     "activationRenewal": "Activation {{activation}} / Renouvellement {{renewal}}",
-    "note": "Free conserve tout le jeu principal et le contrôle manuel. Developing Team se débloque après 30 jours réels OU 60 jours de jeu, coûte 100 coins à l'activation et 100 par saison. L'Académie Jeunes utilise la même règle 30/60, coûte 50 coins une seule fois et n'a pas de renouvellement saisonnier en coins ; elle utilise ensuite l'argent normal du club.",
+    "note": "Les managers Free peuvent débloquer l'Équipe de Développement après 30 jours réels OU 60 jours de jeu pour 100 coins, puis 100 coins par saison. L'Académie Jeunes reste Premium-only, suit la même règle 30/60, coûte 50 coins à l'activation puis 50 coins par saison.",
     "premiumOnly": "Premium uniquement",
     "r9": "World-race replays",
     "r10": "Templates & Smart Prefill",
@@ -104,7 +104,7 @@
     "freeReplay": "2 coins per race",
     "premiumReplay": "Included",
     "youthAcademy": "Youth Academy / U16 development",
-    "youthAcademyPremium": "Premium + 50 coins une fois · 16 places"
+    "youthAcademyPremium": "Premium + 50 activation / 50 renouvellement · 16 places"
   },
   "packages": {
     "title": "Besoin de Coins supplémentaires?",
@@ -143,8 +143,8 @@
     "manageNoteSuffix": "ci-dessus pour annuler le renouvellement futur, mettre à jour les détails de facturation ou afficher les factures hébergées par Stripe."
   },
   "services": {
-    "title": "Premium development services",
-    "description": "Gérez les deux programmes Premium. Developing Team coûte 100 coins à l'activation et 100 par saison. L'Académie Jeunes coûte 50 coins une fois, sans renouvellement saisonnier, puis utilise l'argent du club.",
+    "title": "Services de développement",
+    "description": "L'Équipe de Développement est disponible pour tous : 100 coins d'activation et 100 coins par saison. L'Académie Jeunes reste Premium-only : 50 coins d'activation plus 50 coins par saison.",
     "loading": "Chargement des services de Coins...",
     "unavailable": "Les renseignements sur le service de l'équipe en développement sont actuellement indisponibles.",
     "unavailableHelp": "Le reste de Premium, la facturation et la gestion des Coins restent disponibles.",
@@ -152,8 +152,8 @@
     "active": "Actif",
     "expired": "Expiré",
     "notActivated": "Non activé",
-    "descriptionDeveloping": "Créez et gérez une équipe de développement U23 en tant que membre Premium.",
-    "readOnly": "Les données de votre Équipe de Développement restent enregistrées, mais l'accès est suspendu jusqu'à ce que Premium soit de nouveau actif.",
+    "descriptionDeveloping": "Créez et gérez une équipe U23 de développement. Premium n'est pas requis pour le service lui-même.",
+    "readOnly": "Les données de l'Équipe de Développement sont conservées, mais l'accès saisonnier doit être réactivé ou renouvelé.",
     "reactivationPrice": "Prix de réactivation: {{cost}} Coins.",
     "firstActivationPrice": "Premier prix d'activation: {{cost}} coins.",
     "laterPrice": "Renouvellement ou réactivation ultérieur: {{cost}} Coins par saison.",
@@ -170,12 +170,12 @@
     "startSeason": "Début de la saison {{season}}",
     "autoRenew": "Renouveler automatiquement chaque saison",
     "autoRenewPrefix": "Lorsque activé,",
-    "autoRenewSuffix": "Coins seront débités au début de la saison suivante uniquement si Premium est actif. Si Premium expire ou si le solde est insuffisant, le renouvellement échouera et l'accès sera suspendu.",
+    "autoRenewSuffix": "coins seront débités au début de la saison suivante. Si le solde est insuffisant, le renouvellement échoue et l'accès est suspendu.",
     "reactivation": "Prix de réactivation",
     "firstActivation": "Première activation",
     "laterRenewals": "Renouvellements ultérieurs",
     "coinsPerSeason": "Coins de monnaie {{cost}} par saison",
-    "autoEnabled": "Renouvellement automatique activé. {{cost}} Coins seront débités au début de la saison suivante si Premium est actif.",
+    "autoEnabled": "Renouvellement automatique activé. {{cost}} coins seront débités au début de la saison suivante si le solde est suffisant.",
     "autoDisabled": "Renouvellement automatique désactivé. Aucun frais de renouvellement de l'équipe en développement ne sera effectué automatiquement.",
     "autoFailed": "Impossible de mettre à jour le renouvellement automatique de l'équipe en développement.",
     "loadFailed": "Échec du chargement du service de l'équipe en développement.",
@@ -183,13 +183,13 @@
     "available": "Available",
     "premiumRequired": "Premium required",
     "loadingYouth": "Loading…",
-    "descriptionYouthAcademy": "Programme U16 séparé avec coureurs, staff, budget, scouting, équipement, calendrier, classements, développement et graduation. Premium est requis. Une nouvelle Académie se débloque après 30 jours réels OU 60 jours de jeu et coûte 50 coins une fois.",
+    "descriptionYouthAcademy": "Programme U16 Premium-only avec coureurs, staff, budget, scouting, équipement, calendrier, classements, historique et parcours de graduation. Déblocage après 30 jours réels OU 60 jours de jeu, 50 coins à l'activation puis 50 coins par saison.",
     "youthCapacity": "Academy capacity",
     "youthStarterRiders": "Starter riders",
     "youthStarterStaff": "Starter staff",
     "youthStarterStaffValue": "Director + U16 Head Coach",
-    "youthActivationCost": "Activation",
-    "youthActivationCostValue": "{{cost}} coins une fois · sans renouvellement saisonnier",
+    "youthActivationCost": "Activation / renouvellement",
+    "youthActivationCostValue": "{{activation}} activation / {{renewal}} renouvellement par saison",
     "ridersCount": "{{count}} riders",
     "youthFeatureScouting": "Scouting and recruitment programme",
     "youthFeatureRacing": "U16 race calendar, entries, results and rankings",
@@ -199,13 +199,14 @@
     "youthFeatureInfrastructure": "U16 infrastructure development and recovery effects",
     "youthFeatureResponsibilities": "Manager/staff responsibilities and delegation",
     "youthFeaturePathway": "Graduation pathway into senior or Developing Team",
-    "youthReadOnly": "Premium is currently inactive. Academy data is preserved, but management remains read-only until Premium returns.",
+    "youthReadOnly": "Les données sont conservées, mais la gestion est en lecture seule si Premium est inactif ou si la saison actuelle n'a pas été renouvelée.",
     "openYouthAcademy": "Open Youth Academy",
     "viewYouthAcademy": "View Youth Academy",
     "locked": "Verrouillé",
     "youthUnlock": "Déblocage",
     "youthUnlockValue": "{{real}} jours réels OU {{game}} jours de jeu",
-    "youthWaiting": "Progression : {{realPlayed}}/{{realRequired}} jours réels ou {{gamePlayed}}/{{gameRequired}} jours de jeu."
+    "youthWaiting": "Progression : {{realPlayed}}/{{realRequired}} jours réels ou {{gamePlayed}}/{{gameRequired}} jours de jeu.",
+    "renewalRequired": "Renouvellement requis"
   },
   "history": {
     "title": "Historique de facturation et d'achat",
@@ -264,7 +265,9 @@
     "developingSeasonalReactivation": "Réactivation saisonnière de l'équipe",
     "extraScout": "Rapport supplémentaire de dépistage",
     "premiumGrant": "Premium subvention mensuelle de Coins",
-    "youthAcademyActivation": "Activation de l'Académie Jeunes"
+    "youthAcademyActivation": "Activation de l'Académie Jeunes",
+    "youthAcademyRenewal": "Renouvellement Académie Jeunes — Saison {{season}}",
+    "youthAcademySeasonalRenewal": "Renouvellement saisonnier Académie Jeunes"
   },
   "common": {
     "coins": "Coins de monnaie {{count}}",
