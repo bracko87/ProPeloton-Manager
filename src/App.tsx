@@ -116,6 +116,7 @@ import {
   useAuth,
 } from './context/AuthProvider'
 import SiteAnalyticsTracker from './components/analytics/SiteAnalyticsTracker'
+import FeatureTutorialHost from './components/tutorial/FeatureTutorialHost'
 import LocaleDateFormattingBridge from './components/i18n/LocaleDateFormattingBridge'
 import { useAppAdmin } from './hooks/useAppAdmin'
 import {
@@ -391,6 +392,7 @@ export default function App(): JSX.Element {
       <HashRouter>
         <SiteAnalyticsTracker />
         <LocaleDateFormattingBridge />
+        <FeatureTutorialHost />
         <Routes>
           {/* Public / account routes */}
           <Route
