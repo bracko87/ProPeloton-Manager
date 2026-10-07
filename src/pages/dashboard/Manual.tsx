@@ -253,8 +253,8 @@ const manualSections: ManualSection[] = [
     details: [
       'Premium is not required to create, reactivate, renew or use the Developing Team. First activation costs 100 coins and seasonal renewal or reactivation costs 100 coins.',
       'First activation costs 100 coins and seasonal renewal costs 100 coins. The normal time requirement still applies before first activation.',
-      'If seasonal renewal is not paid, Developing Team access becomes unavailable until reactivated; the team, riders, contracts, results and history remain stored.'
-      'Preferences loads Developing Team status from the backend and shows days played, coin balance, costs, requirement status and movement-window state.'
+      'If seasonal renewal is not paid, Developing Team access becomes unavailable until reactivated; the team, riders, contracts, results and history remain stored.',
+      'Preferences loads Developing Team status from the backend and shows days played, coin balance, costs, requirement status and movement-window state.',
       'After activation, the app pins the active club back to the main club so the dashboard does not accidentally switch to the developing club.',
       'Developing Team riders can be moved to the First Squad only if the movement window is open and the First Squad has space.',
       'If a Developing Team rider is 24 or older, the UI can show an action warning. If the movement window is open, action is required now; otherwise the rider must move next window.',
@@ -2845,7 +2845,7 @@ const manualSections: ManualSection[] = [
     title: 'Youth Academy: Complete U16 Guide',
     subtitle: 'Activation, staff, scouting, recruitment, budget, equipment, racing, development and graduation.',
     overview:
-      'Youth Academy is a Premium-only U16 development programme with a fixed capacity of 16 riders. A new Academy unlocks after 30 real-life days OR 60 in-game days from club creation, costs 50 coins to activate and 50 coins per later season to renew. Academy operations are funded with normal club money through its separate Academy budget.'
+      'Youth Academy is a Premium-only U16 development programme with a fixed capacity of 16 riders. A new Academy unlocks after 30 real-life days OR 60 in-game days from club creation, costs 50 coins to activate and 50 coins per later season to renew. Academy operations are funded with normal club money through its separate Academy budget.',
     facts: [
       { label: 'Capacity', value: 'Maximum 16 Youth Riders' },
       { label: 'Unlock', value: 'Premium + 30 real-life days OR 60 in-game days' },
@@ -2859,9 +2859,9 @@ const manualSections: ManualSection[] = [
       { label: 'Graduation', value: 'A pathway decision is required at age 16' },
     ],
     details: [
-      'Activation is available only to Premium managers. The 30-real-day OR 60-game-day rule is the same maturity gate used for the Developing Team; whichever threshold is reached first unlocks the Academy. The 50-coin activation fee is separate from the Academy cash allocation selected during activation.'
-      'Youth Academy access costs 50 coins to activate and 50 coins for each later in-game season. Premium must also be active. If Premium or the current-season renewal is missing, the Academy is preserved but management is read-only until both requirements are restored.'
-      'If Premium expires, the Academy and its data are preserved. Management becomes read-only until Premium is active again; riders, staff, history, budget and Academy records are not deleted.',
+      'Activation is available only to Premium managers. The 30-real-day OR 60-game-day rule is the same maturity gate used for the Developing Team; whichever threshold is reached first unlocks the Academy. The 50-coin activation fee is separate from the Academy cash allocation selected during activation.',
+      'Youth Academy access costs 50 coins to activate and 50 coins for each later in-game season. Premium must also be active. If Premium or the current-season renewal is missing, the Academy is preserved but management is read-only until both requirements are restored.',
+      'If Premium expires or the current season has not been renewed, the Academy and its data are preserved. Management becomes read-only until Premium is active and the season renewal is paid; riders, staff, history, budget and Academy records are not deleted.',
       'The Academy starts with six local riders and has a hard cap of 16. Infrastructure can improve U16 development, recovery or operating efficiency, but it does not raise the 16-rider capacity.',
       'Youth Rider profiles show riding attributes, readiness, fatigue, development focus, support agreement and race history. Exact hidden potential is intentionally not exposed; use Talent Assessment bands and scouting confidence instead.',
       'The included starter staff are the Youth Academy Director and U16 Head Coach. A maximum of one Youth Scout can be hired from the normal Staff Market. Youth roles use the same quality ladder as senior staff and can take dedicated staff courses paid from the Academy budget.',
