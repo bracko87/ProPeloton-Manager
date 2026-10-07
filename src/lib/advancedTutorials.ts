@@ -16,48 +16,85 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
     key: 'national-championships',
     title: 'National Championships & National Ranking',
     description:
-      'Understand rider-only national ranking, qualification, National Duty, finals and champion recognition.',
+      'Understand National Ranking, qualification, National Duty, preparation, finals and championship history.',
     route: '/dashboard/national-ranking',
     routePrefixes: [
       '/dashboard/national-ranking',
       '/dashboard/national-championships/',
     ],
-    target: 'national-ranking-page',
+    target: 'dashboard-page-body',
     contextualEligibility: 'always',
     steps: [
       {
-        key: 'national-championships-ranking',
-        title: 'National Ranking',
+        key: 'national-championships-page-map',
+        title: 'National Ranking: What This Page Is For',
         body:
-          'Every rider competes in the National Championship of the rider’s nationality. National Ranking is separate from Team Ranking and is used to determine the rider’s position in the national championship structure.\n\nA sufficiently strong ranking can place a rider directly into the National Final, while riders from larger cycling nations may first need to qualify.',
+          'This page is the control centre for your riders’ national championship pathway. It is separate from Team Ranking: Team Ranking compares clubs, while National Ranking follows riders inside their nationality.\n\nUse the three main areas for different jobs: Ranking shows the current national order and qualification status, My National Duty shows riders from your club who need attention, and History lets you review completed championship outcomes.',
+        tip:
+          'Start here whenever a National Championship notification arrives. The Ranking tab tells you why a rider is in the current position; My National Duty tells you what you actually need to do.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'national-championships-ranking',
+        title: 'Ranking, Snapshot and Qualification Status',
+        body:
+          'The Ranking tab shows riders from the selected country together with their national position and the information used by the championship system. You can see the live or frozen state of the ranking, the current snapshot, rider totals and the qualification status assigned to each rider.\n\nWhen the ranking is still live, positions can continue to change. Once the championship draw is fixed, the status becomes much more important than the raw position because it tells you whether a rider is a direct finalist, assigned to a qualification heat, already qualified, eliminated or withdrawn.',
+        tip:
+          'Do not look only at the number beside the rider. Always read the qualification-status column as well, especially after the draw has been confirmed.',
         primaryAction: 'Next',
       },
       {
         key: 'national-championships-qualification',
-        title: 'Qualification and the National Final',
+        title: 'Qualification Groups and the National Final',
         body:
-          'The size of the national rider population determines whether qualification groups are needed. Large cycling nations can use several qualification groups; smaller nations can send the eligible field directly to the Final.\n\nQualification winners and other qualified riders join the direct qualifiers in the National Championship Final.',
+          'Countries do not all use the same route to the title. The championship system looks at the national rider population and creates qualification groups when the field is too large for the Final. Smaller rider populations can have more direct access to the Final.\n\nThe draw area shows the qualification heats, their dates and the Final. Riders who qualify from the heats join the direct qualifiers in the National Championship Final. Open the linked race page when you want to inspect the route and event details.',
+        tip:
+          'Check the draw before planning club races around the same dates. A rider who appears safe today can still create a calendar conflict once National Duty is confirmed.',
         primaryAction: 'Next',
       },
       {
         key: 'national-championships-duty',
-        title: 'National Duty Blocks Club Racing',
+        title: 'My National Duty: Approve, Refuse and Plan Around It',
         body:
-          'When one of your riders receives National Championship duty, review the notification and the My National Duty section. You can approve or refuse participation according to the current rules.\n\nImportant: an approved rider is unavailable for normal club racing during the confirmed National Duty window. The block is reflected in calendars, rider availability and race lineup selection so the rider has not “disappeared” from your club.',
+          'My National Duty is the action area for riders from your club. It shows which riders are involved, their championship route, duty dates and any decision that still needs your approval.\n\nIf you approve National Duty, the rider becomes unavailable for normal club racing during the confirmed duty window. A refusal can have sporting or morale consequences depending on the decision shown on the page, so read the confirmation text before acting.',
+        tip:
+          'Treat National Duty like a real race commitment. Before approving, compare the duty window with accepted club races and rider recovery plans.',
         primaryAction: 'Next',
       },
       {
         key: 'national-championships-preparation',
-        title: 'Preparation and Notifications',
+        title: 'Preparation, Rider Plans and Race Pages',
         body:
-          'National Championship participation is connected to the normal preparation flow. When your rider is involved, notifications guide you to the relevant event and approved riders are synchronized into National Championship preparation.\n\nCheck deadlines early because an accepted National Duty window can overlap with club plans.',
+          'When a rider is involved in qualification or the Final, use the available race links and preparation controls to review the event. Where a rider plan is available, check the selected strategy and equipment setup instead of leaving the rider on an unsuitable default.\n\nNational Championship preparation is individual: one club can have several riders in different countries or different championship stages at the same time. Each rider therefore needs to be checked separately.',
+        tip:
+          'Open every rider entry once before the deadline. A short review of strategy, equipment and the race profile is safer than assuming one setup fits all riders.',
         primaryAction: 'Next',
       },
       {
-        key: 'national-championships-champion',
-        title: 'Champion Recognition',
+        key: 'national-championships-final-confirmation',
+        title: 'Final Confirmation and Withdrawals',
         body:
-          'The National Final decides the country’s champion. Championship results feed the rider’s career history and recognition, including National Champion status and the championship visual identity used by the game where applicable.\n\nUse the National Ranking page throughout the season to follow qualification status and upcoming duty.',
+          'Reaching the Final can create a separate confirmation step. When the page asks for a second confirmation, the manager must approve or refuse the Final independently from the earlier qualification decision.\n\nThe page shows the confirmation deadline and current decision. If withdrawal is still allowed, use it carefully because the rider is removed from the Final start list and the page will show any consequence attached to that decision.',
+        tip:
+          'A qualification approval does not always finish the job. Recheck My National Duty after qualification results because a new Final decision may appear.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'national-championships-results',
+        title: 'Results, Champion Status and History',
+        body:
+          'After the races are completed, the National Championship result becomes part of the rider’s competitive history. The Final decides the national champion, while qualification results explain how riders reached or missed the title race.\n\nUse the History tab when you want to review previous championship outcomes instead of only the current live edition.',
+        tip:
+          'History is useful when comparing riders: it shows championship achievement that is easy to miss when you look only at current international points.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'national-championships-routine',
+        title: 'A Simple National Championship Routine',
+        body:
+          'You do not need to manage this page every day. A practical routine is: check the Ranking when the championship draw is approaching, react to National Duty notifications, confirm riders before deadlines, review qualification results, then return if a Final confirmation appears.\n\nThat is enough to keep National Championships under control without interfering with normal club management.',
+        tip:
+          'The most important rule is simple: never ignore a National Duty notification. It can affect both championship participation and your club race availability.',
         primaryAction: 'Finish tutorial',
         secondaryAction: 'Learn More',
       },
@@ -67,52 +104,109 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
     key: 'national-association',
     title: 'National Association & National Team',
     description:
-      'Learn membership, funding, elections, call-ups and the World Nations competition.',
+      'Learn membership, funding, elections, squad selection, equipment, World Nations, chat and history.',
     route: '/dashboard/national-association',
     routePrefixes: ['/dashboard/national-association'],
-    target: 'national-association-page',
+    target: 'dashboard-page-body',
     contextualEligibility: 'always',
     steps: [
       {
         key: 'national-association-distinction',
-        title: 'Championship or National Team?',
+        title: 'National Association: What It Controls',
         body:
-          'These are two different international systems.\n\nNational Championship = an individual rider competition based on nationality.\n\nNational Association / National Team = a shared, manager-driven country organisation that elects a National Coach and enters international team competition.',
+          'The National Association is different from the National Championship. National Championships are rider competitions based on nationality. The National Association is the shared country organisation used by eligible human managers to organise the National Team.\n\nFrom this area you can follow membership, activation or renewal, the elected National Coach, call-ups, squad preparation, equipment, World Nations competition, Association communication and historical records.',
+        tip:
+          'Think of National Ranking as “my riders for their countries” and National Association as “our managers running one country team together.”',
         primaryAction: 'Next',
       },
       {
         key: 'national-association-membership',
-        title: 'Membership and Activation',
+        title: 'Membership, Activation and Shared Funding',
         body:
-          'Each country has one National Association for eligible human-controlled clubs. A forming Association needs at least five eligible managers and the shared one-time 50-Coin founding requirement before activation.\n\nCoin contributions fund activation or renewal only. They do not buy sporting strength, ownership or extra voting power.',
+          'Each country has one National Association. A forming Association needs the required number of eligible managers and the shared activation funding before it becomes active. Contributions are pooled toward the requirement; they do not buy ownership, sporting power or extra voting rights.\n\nOnce you are a member, the Overview shows the current Association status, member count and the actions that are available to you.',
+        tip:
+          'Contribute only what is still needed. The page shows the remaining activation or renewal amount so members can coordinate instead of overfunding.',
         primaryAction: 'Next',
       },
       {
         key: 'national-association-renewal',
-        title: 'Seasonal Renewal and Voting',
+        title: 'Seasonal Renewal',
         body:
-          'After activation, the Association must meet its seasonal membership and renewal rules. Beginning in January, members can jointly fund the 30-Coin renewal before the February deadline.\n\nEvery active member has exactly one vote per election round, including candidates. Contributions never create extra votes.',
+          'An active Association must also remain valid for future seasons. The renewal area shows when the renewal window opens, the target season, how many Coins have already been contributed and how many are still required.\n\nRenewal is a shared Association responsibility. It keeps the organisation active; it does not change rider strength or race performance.',
+        tip:
+          'Check renewal status early in the window. Leaving the full amount to one manager at the deadline is an unnecessary risk.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'national-association-overview',
+        title: 'Overview, Members and Current Activity',
+        body:
+          'The Association Overview is your daily status page. It shows current-season information, active call-ups, selected riders, upcoming World Nations events and recent competition information.\n\nThe member directory lets you see who belongs to the Association, which club each member manages, contribution information and who currently holds the National Coach role.',
+        tip:
+          'Before opening a deeper tab, scan the Overview first. It will usually tell you whether the Association currently needs funding, a call-up response or race preparation.',
         primaryAction: 'Next',
       },
       {
         key: 'national-association-elections',
-        title: 'National Coach Elections',
+        title: 'Elections and the National Coach',
         body:
-          'The Association elects its National Coach through candidate registration, manifestos, voting and runoff rounds when required. The Elections tab shows the current phase, candidates, dates and available actions.\n\nWinning the election gives the coach sporting-management responsibility; it does not create a guaranteed rider place.',
+          'The Elections area controls the National Coach election cycle. Managers can follow candidature registration, candidate statements, voting and runoff rounds when required. Every active member has one vote in a round; Coin contributions do not create additional votes.\n\nThe winner becomes responsible for sporting selection and National Team preparation, but winning the election does not guarantee any manager’s riders a place in the squad.',
+        tip:
+          'Judge candidates by how they plan to select and prepare the team, not by how much they contributed to Association funding.',
         primaryAction: 'Next',
       },
       {
         key: 'national-association-callups',
-        title: 'National Team Call-ups',
+        title: 'Call-ups and the 10-Rider National Squad',
         body:
-          'The National Coach sends provisional call-ups to eligible riders. Your club receives the request and can review the duty window before responding.\n\nAccepting makes that rider unavailable to the club during the confirmed National Duty window. The coach can then build the final 10-rider National Team squad from accepted or automatically accepted call-ups.',
+          'The National Coach works from the eligible national rider pool and sends call-ups to build the National Team squad. Clubs receive those requests and can review the duty window before responding.\n\nAccepted riders can be used to form the final 10-rider National Team squad. Once National Duty is confirmed, those riders are unavailable to their normal clubs during the relevant duty period.',
+        tip:
+          'If one of your riders is called up, check your club calendar before accepting. If you are the coach, check availability before locking the final 10.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'national-association-equipment',
+        title: 'National Team Equipment',
+        body:
+          'The Equipment area is where the Association prepares National Team equipment configurations for international competition. Keep several profile-appropriate setups ready so the coach can choose a suitable configuration for different race days instead of rebuilding everything at the last moment.\n\nAssociation funding and Coins are administrative resources; they are not a shortcut that directly purchases race-engine strength.',
+        tip:
+          'Prepare equipment before the competition window opens. A saved flat, climbing and time-trial-oriented setup makes race-day preparation much faster.',
         primaryAction: 'Next',
       },
       {
         key: 'national-association-world-nations',
         title: 'World Nations Competition',
         body:
-          'Every active Association enters the World Nations structure automatically. Qualification groups reduce the field toward the 16-team World Final, where the remaining nations compete in a three-day event.\n\nEach competition round uses National Team lineups and standardised system-covered equipment and resources, so Association Coins do not purchase race performance.',
+          'Active National Associations enter the World Nations structure. The Competition area shows the international schedule and progression from qualification toward the final rounds.\n\nFor race days, the coach selects the required lineup from the confirmed National Team squad and prepares the team for the actual stage profile. Different race days can need different rider combinations and equipment choices.',
+        tip:
+          'Do not treat the complete event as one race. Review every race day separately and keep the strongest profile-specific riders available for the days that suit them.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'national-association-chat',
+        title: 'Association Chat and Coordination',
+        body:
+          'The Association is shared by several human managers, so communication matters. Use the Chat area to coordinate funding, elections, call-up expectations and competition preparation instead of making every decision in isolation.\n\nThe coach still owns sporting decisions, but clear communication helps club managers understand why riders are being requested and when they will be unavailable.',
+        tip:
+          'Short messages are enough: funding still needed, election deadline, call-up deadline and race-day plan are the four things members most often need to know.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'national-association-history',
+        title: 'History and Competition Records',
+        body:
+          'History keeps the Association’s long-term record: previous leadership, competition participation and completed National Team outcomes. It becomes more useful as several seasons pass because it shows how the country developed beyond one current event.\n\nUse History when you want context; use Overview and Competition when you need to act now.',
+        tip:
+          'History is especially useful before an election or a new competition cycle because it shows what the Association achieved under previous management.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'national-association-routine',
+        title: 'A Simple Association Routine',
+        body:
+          'For a normal member, the routine is straightforward: keep membership and renewal healthy, vote when elections are open, answer rider call-ups and follow World Nations results.\n\nFor the National Coach, add squad selection, equipment preparation and race-day lineups. You do not need to manage every Association section every day.',
+        tip:
+          'If the Overview shows no pending funding, election, call-up or competition action, you can safely return to normal club management.',
         primaryAction: 'Finish tutorial',
         secondaryAction: 'Learn More',
       },
@@ -170,59 +264,109 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
     key: 'youth-academy',
     title: 'Youth Academy / U16',
     description:
-      'Learn the Premium U16 pathway, uncertain potential, delegation, youth racing, costs and graduation.',
+      'Learn the U16 pathway, staff, budget, scouting, development settings, equipment, racing, rankings and graduation.',
     route: '/dashboard/youth-academy',
     routePrefixes: ['/dashboard/youth-academy'],
-    target: 'youth-academy-page',
+    target: 'dashboard-page-body',
     contextualEligibility: 'premium-youth',
     steps: [
       {
         key: 'youth-academy-access',
-        title: 'Premium U16 Development',
+        title: 'Youth Academy: Long-Term U16 Development',
         body:
-          'Youth Academy is a Premium-only long-term development programme for riders roughly aged 12–16. It is not a source of ready-made professionals.\n\nAfter the normal unlock requirement is met, Premium managers can activate the Academy for 50 Coins. Academy access then costs 50 Coins per later season while Premium remains active. Capacity is fixed at 16 youth riders.',
+          'Youth Academy is a Premium long-term development programme for young riders. These riders are not ready-made professionals and they remain separate from your First Squad while they develop.\n\nThe Academy has a fixed capacity, so every place matters. The goal is to recruit promising young riders, develop them over time and then make a graduation decision when they reach the end of the U16 pathway.',
+        tip:
+          'Do not fill every place only because it is available. Keep room for stronger scouting discoveries and for the age balance you want inside the Academy.',
         primaryAction: 'Next',
       },
       {
-        key: 'youth-academy-pathway',
-        title: 'The Development Pathway',
+        key: 'youth-academy-overview',
+        title: 'Overview and Your Academy Roster',
         body:
-          'Youth riders belong to a separate U16 population and are not professional First Squad riders yet. Recruitment, development, racing and graduation happen inside the Academy.\n\nThe normal long-term pathway is Youth Academy → Developing Team → First Squad, although the final promotion decision depends on the rider, available places and the options shown at graduation.',
+          'The Overview gives you the quickest picture of the Academy: current riders, capacity, development status and the most important actions that need attention.\n\nUse it as the Academy home screen. From here you can decide whether the next priority is staffing, funding, scouting, equipment, racing or a graduation decision.',
+        tip:
+          'When you open Youth Academy, first check capacity and pending actions. That prevents a scouting or graduation deadline from being missed.',
         primaryAction: 'Next',
       },
       {
-        key: 'youth-academy-potential',
-        title: 'Potential Is Intentionally Uncertain',
+        key: 'youth-academy-staff',
+        title: 'Academy Staff',
         body:
-          'Youth Potential is shown as an assessment band such as Limited, Promising, Very Promising or Exceptional. These are estimates, not an exact hidden Potential number.\n\nAssessment quality becomes more useful as scouting and development information improves, so early impressions can be less precise than later ones.',
+          'Youth Academy has its own specialist staff structure. Roles such as Head of Academy, Head Coach, Assistant and Scout influence different parts of recruitment and development.\n\nStaff quality matters, but salaries also come from the Academy economy. Build a staff group that matches the size and ambition of your programme instead of automatically hiring the most expensive option in every role.',
+        tip:
+          'Prioritise the role that supports your current weakness. If recruitment is weak, improve scouting; if you already have strong prospects, coaching and development become more important.',
         primaryAction: 'Next',
       },
       {
-        key: 'youth-academy-delegation',
-        title: 'Manage or Delegate',
+        key: 'youth-academy-budget',
+        title: 'Budget and Academy Finances',
         body:
-          'You set the Academy direction: staff, budget, development philosophy, racing philosophy and responsibility settings. Routine work can be delegated to the Youth Academy staff where the page allows it.\n\nYou do not need to manually control every U16 decision. Delegation can cover recurring areas such as scouting, recruitment, equipment or race entry while you keep overall control.',
+          'The Budget area separates Academy operating money from your normal senior-team decisions. It tracks the seasonal budget and the main costs created by staff, scouting, equipment, racing and development.\n\nYou can move money between the senior club and the Academy where the page allows it, but every transfer should fit your complete club finances. A strong Academy is useful only if it does not leave the First Squad unable to operate.',
+        tip:
+          'Set a seasonal Academy budget before spending heavily. It is easier to control scouting and equipment decisions when you already know the maximum amount you are willing to invest.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'youth-academy-scouting',
+        title: 'Scouting and Recruitment',
+        body:
+          'Scouting is how you discover new youth prospects. The Scouting area lets you control search range, scouting investment and the reports generated by your youth scouting programme. Wider searches can expose you to more prospects but also require more resources.\n\nReports are assessments, not perfect truth. Youth Potential is intentionally uncertain, so scouting quality improves your decision but does not reveal a guaranteed future superstar.',
+        tip:
+          'Compare several reports before committing a valuable Academy place. A slightly lower-rated rider with the right profile and age can be a better fit than the first exciting prospect you see.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'youth-academy-settings',
+        title: 'Development Philosophy and Delegation',
+        body:
+          'Settings define how the Academy should operate. You can choose development priorities and, where supported, decide whether recurring responsibilities stay with you or are delegated to Academy staff.\n\nDelegation is useful for managers who want the Academy to progress without manually controlling every scouting, recruitment, equipment or race-entry decision. You still control the overall direction.',
+        tip:
+          'Delegate routine work, not strategy. Decide the Academy philosophy yourself, then let staff handle repetitive actions that fit that philosophy.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'youth-academy-equipment',
+        title: 'Equipment, Assets and Race Supplies',
+        body:
+          'Youth riders use their own Academy equipment system. The Equipment area covers inventory, market purchases, support assets, race supplies and race setups used by the Academy.\n\nYou do not need top-level equipment everywhere. Match spending to the races you actually plan to enter and to the age of the riders who will use it.',
+        tip:
+          'Buy for your calendar, not for the catalogue. Expensive equipment that never matches your selected races only reduces the development budget.',
         primaryAction: 'Next',
       },
       {
         key: 'youth-academy-racing',
-        title: 'Youth Racing and Development',
+        title: 'Calendar, Race Entry and Rider Workload',
         body:
-          'Youth racing is designed around age, readiness, fatigue and long-term development. Younger riders should not be treated like senior professionals or raced constantly.\n\nThe Academy calendar, competition hierarchy, rankings and race reports let you follow progress without requiring full senior-style management for every event.',
+          'The Academy calendar contains youth competitions with different levels and competition classes. Race entry and squad selection can be managed directly or delegated where your settings allow it.\n\nYouth racing should support development, not replace it. Age, readiness and fatigue matter, so avoid treating U16 riders like senior professionals who must race constantly.',
+        tip:
+          'Use racing to test development. If a rider is tired or still very young, another training and recovery block can be more valuable than one extra race.',
         primaryAction: 'Next',
       },
       {
-        key: 'youth-academy-economy',
-        title: 'Coins Unlock Access; Club Cash Runs It',
+        key: 'youth-academy-rankings',
+        title: 'Youth Rankings and Competition Levels',
         body:
-          'Coins are used for Academy access and selected optional actions. Normal club money funds the Academy’s operating budget, staff, equipment, travel, racing and development costs.\n\nPremium and Coins do not directly buy hidden rider talent or race-engine strength. Sporting success still depends on talent, development choices and management.',
+          'Rankings let you compare Academy performance across the available regional, continental and world structures. They show how your Academy and riders are progressing against similar youth programmes.\n\nUse rankings as context, not as the only development goal. A prospect can be developing well even if the Academy is not winning every youth competition.',
+        tip:
+          'Look at both results and development. Chasing a youth ranking at the expense of fatigue or long-term growth can hurt the riders you are trying to improve.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'youth-academy-history',
+        title: 'History and Race Reports',
+        body:
+          'The History area keeps completed race information and development context so you can understand how riders and the Academy progressed over time. Race reports are useful for spotting repeated strengths, weaknesses and whether your racing philosophy is working.\n\nAs seasons pass, History becomes the best place to compare what different Academy generations achieved before graduation.',
+        tip:
+          'Review history periodically, not after every race. Patterns across several events are more useful than reacting to one unusually good or bad result.',
         primaryAction: 'Next',
       },
       {
         key: 'youth-academy-graduation',
-        title: 'Graduation',
+        title: 'Graduation and the Next Development Stage',
         body:
-          'When a youth rider reaches the graduation stage, review the available pathway promptly. Moving the rider to the Developing Team is the normal bridge when that service is active and has room. Other implemented options can include a direct senior pathway or release/free-agent outcome.\n\nThe Developing Team is available to all managers for 100 Coins activation and 100 Coins per season; it does not require Premium.',
+          'When a youth rider reaches graduation, the Academy asks you to choose the next step. The normal development bridge is the Developing Team when it is available and has room, while other implemented options can include a direct senior route or release outcome.\n\nGraduation is not automatic promotion. Check the rider, available squad places and the pathway that best protects long-term development before confirming the decision.',
+        tip:
+          'Plan graduation space in advance. A strong prospect is much easier to manage when you already know whether the Developing Team or First Squad has a place available.',
         primaryAction: 'Finish tutorial',
         secondaryAction: 'Learn More',
       },
