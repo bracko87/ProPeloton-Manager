@@ -27,6 +27,7 @@ export type TutorialStep = {
   key: string
   title: string
   body: string
+  accessNote?: string
   tip?: string
   primaryAction?: string
   secondaryAction?: string
