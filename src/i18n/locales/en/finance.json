@@ -459,6 +459,8 @@
     "teamPoliciesDescription": "Longer-term support packages and internal club standards for riders and staff.",
     "housingSupport": "Housing Support",
     "housingSupportDescription": "Shared housing support policy for active riders and staff.",
+    "housingSupportCampusDisabled": "Housing Support is included in the Team Residential Campus and is no longer charged as a separate team policy. Travel accommodation for races, tours and Training Camps remains separate and still applies.",
+    "housingSupportCampusIncluded": "Included through Team Residential Campus · $0 housing-policy charge",
     "nutritionSupport": "Nutrition Support",
     "nutritionSupportDescription": "Weekly nutrition and fueling support for the whole team.",
     "recoverySupport": "Recovery Support",
