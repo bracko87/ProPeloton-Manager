@@ -727,28 +727,31 @@ export const menuTutorialSteps: TutorialStep[] = [
   },
   {
     key: 'menu-coins',
-    title: 'Coins',
+    title: 'Coins and Coin Unlocks',
     target: 'header-coins',
     body:
-      'This shows your current coin balance.\n\n' +
-      'Coins are used for selected game features, unlocks, and convenience options inside ProPeloton Manager.\n\n' +
-      'You can check your balance here at any time and purchase more through Menu → Pro Packages.\n\n' +
-      'Running low on coins does not suspend your account. You can continue playing, but some optional features or premium-style actions may not be available until you add more coins.',
+      'This shows your current Coin balance. Coins are separate from Premium and are used only where the game clearly labels a Coin action.\n\n' +
+      'Important examples include activating and renewing the Developing Team, Youth Academy activation and seasonal renewal when Premium is active, shared National Association activation/renewal funding, permanent extra Equipment setup slots, eligible extra Infrastructure garage slots, and selected optional actions such as extra Youth scouting searches.\n\n' +
+      'You can purchase more Coins through Menu → Pro Packages. Running out of Coins does not suspend your account or stop normal core gameplay.',
+    accessNote:
+      'A Coin button is never the same thing as Premium. Some services need Coins even for Premium users, while some locked features can be opened either by Premium access or by a permanent Coin unlock.',
     primaryAction: 'Next',
-    tip: 'Use Coins for features you value rather than spending them simply because a button is available.',
+    tip:
+      'Before spending Coins, read the button and the Access box carefully. The game should always tell you whether the cost is one-time, seasonal, shared, or optional.',
   },
   {
     key: 'menu-premium',
-    title: 'Premium Account',
+    title: 'Premium Account and Premium Center',
     target: 'header-premium',
     body:
-      'This is your Premium access area.\n\n' +
-      'A Premium account can make the game easier and more comfortable by giving access to extra features, more advanced views, and useful convenience tools.\n\n' +
-      'Premium can also help you unlock more of the game’s full management experience.\n\n' +
-      'By purchasing Premium or Pro Packages, you also directly support our team and help us continue developing ProPeloton Manager faster and better.',
-    accessNote: 'Premium is the account-level upgrade for advanced analysis, automation and selected Premium modules. Coins are separate and are still used for some one-time or seasonal unlocks even if you have Premium.',
+      'The Premium button opens the Premium area and Premium Command Center. Premium focuses on deeper analysis, automation and convenience rather than replacing the normal management game.\n\n' +
+      'Examples of Premium tools include Head Coach training automation and smart templates, advanced rider-development analysis, the Season Planner, Equipment Intelligence and comparison tools, the Race Strategy Lab, Financial Simulator, Sponsor Intelligence, and other Premium Command Center views. Youth Academy also requires Premium access before it can be activated.\n\n' +
+      'The normal Squad, manual Training, Calendar, Race Preparation, Equipment buying, Finance, Transfers, rankings and race participation remain available through core gameplay.',
+    accessNote:
+      'Premium is an account-level upgrade. Coins remain separate: Premium does not automatically pay Coin activation or seasonal renewal costs for services such as Youth Academy or the Developing Team.',
     primaryAction: 'Next',
-    tip: 'Premium adds convenience and depth, but the core club can still be managed through normal gameplay systems.',
+    tip:
+      'When a Premium panel is locked, you can usually continue using the core page normally. Premium should add depth and convenience, not block the basic management loop.',
   },
   {
     key: 'menu-finished',
