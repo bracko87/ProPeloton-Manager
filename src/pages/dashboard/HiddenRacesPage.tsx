@@ -210,7 +210,7 @@ export default function HiddenRacesPage(): JSX.Element {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold text-slate-950">Hidden Races</h1>
           <span className="rounded-full border border-yellow-300 bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-800">
-            Admin test view
+            Test view
           </span>
         </div>
         <p className="mt-1 text-sm text-slate-500">
