@@ -179,7 +179,7 @@
   },
   "developingTeam": {
     "title": "Entwicklung des Teams",
-    "description": "Premium-exklusives U23-Entwicklungsteam mit 100 Coins Aktivierung und 100 Coins Verlängerung pro Saison.",
+    "description": "U23-Entwicklungsteam für alle Manager nach 30 realen oder 60 Spieltagen, mit 100 Coins Aktivierung und 100 Coins Saisonverlängerung.",
     "loading": "Status des Entwicklungsteams wird geladen...",
     "realLifeProgress": "Fortschritt in der Praxis",
     "realLifeMinimum": "Mindestens 30 Tage erforderlich",
@@ -209,11 +209,11 @@
     "ageRule": "Nur Fahrer im Alter von 23 oder jünger sind berechtigt.",
     "movementRule": "Die Fahrer bewegen sich nur während der Bewegungsfenster zwischen den Kader.",
     "teamLabel": "Team",
-    "premiumOnlyTitle": "Nur mit Premium",
-    "premiumOnlyDescription": "Entwicklungsteam und U23-Cheftrainer sind nur mit aktivem Premium verfügbar. Die Aktivierung kostet {{activation}} Coins, die Verlängerung pro Saison {{renewal}} Coins.",
-    "premiumInactiveDescription": "Die Daten deines bestehenden Entwicklungsteams bleiben gespeichert, aber der Zugriff ist ohne aktives Premium pausiert.",
-    "unlockPremium": "Premium freischalten",
-    "premiumModalRequirement": "Eine aktive Premium-Mitgliedschaft ist für das Entwicklungsteam und den U23-Cheftrainer erforderlich."
+    "premiumOnlyTitle": "Für alle Manager verfügbar",
+    "premiumOnlyDescription": "Für das Entwicklungsteam ist kein Premium nötig. Die Aktivierung kostet {{activation}} Coins und jede Saisonverlängerung {{renewal}} Coins.",
+    "premiumInactiveDescription": "Premium ist für das Entwicklungsteam selbst optional und betrifft nur separate Premium-Analyse- und Automationsfunktionen.",
+    "unlockPremium": "Premium-Vorteile ansehen",
+    "premiumModalRequirement": "Für die Aktivierung des Entwicklungsteams ist kein Premium erforderlich."
   },
   "dangerZone": {
     "title": "Gefahrenzone",
