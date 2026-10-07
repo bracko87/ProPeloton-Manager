@@ -616,8 +616,8 @@ export const financeTutorialSteps: TutorialStep[] = [
       'Team Policies and Operations control how your club is run.\n\n' +
       'Changing policies can make your club more attractive to riders and staff, but it can also increase the cost of travel, race support, training camps, and daily operations.\n\n' +
       'This section helps you balance comfort, performance, attractiveness, and cost.\n\n' +
-      'After Finance, the next tutorial will explain the main Menu.',
-    primaryAction: 'Continue to Menu',
+      'After Finance, the tutorial will briefly introduce National Ranking, the National Association, and the Youth Academy before finishing with the main Menu.',
+    primaryAction: 'Continue to National Ranking',
     secondaryAction: 'Finish for now',
   },
 ]
