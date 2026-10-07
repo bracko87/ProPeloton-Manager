@@ -459,6 +459,8 @@
     "teamPoliciesDescription": "Paquetes de soporte a largo plazo y estándares internos del club para ciclistas y personal.",
     "housingSupport": "Apoyo a la vivienda",
     "housingSupportDescription": "Política de apoyo a la vivienda compartida para los ciclistas y el personal activos.",
+    "housingSupportCampusDisabled": "El apoyo de vivienda está incluido en el Team Residential Campus y ya no se cobra como una política separada del equipo. El alojamiento de viaje para carreras, vueltas y concentraciones de entrenamiento sigue siendo independiente y continúa aplicándose.",
+    "housingSupportCampusIncluded": "Incluido con Team Residential Campus · $0 de cargo de vivienda",
     "nutritionSupport": "Apoyo nutricional",
     "nutritionSupportDescription": "Apoyo semanal a la nutrición y el combustible para todo el equipo.",
     "recoverySupport": "Apoyo a la recuperación",
