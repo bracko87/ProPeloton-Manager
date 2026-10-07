@@ -2,7 +2,7 @@
   "loading": "Jugendakademie wird geladen…",
   "title": "Jugendakademie",
   "subtitle": "Premium-U16-Entwicklungsprogramm für Fahrer im Alter von 12–16 Jahren.",
-  "readOnly": "Premium ist inaktiv. Akademiehistorie und Fahrer bleiben erhalten, die Verwaltung ist jedoch schreibgeschützt.",
+  "readOnly": "Die Akademieverwaltung ist schreibgeschützt, weil Premium inaktiv ist oder die aktuelle Saison noch nicht verlängert wurde.",
   "week": "Woche",
   "save": "Änderungen speichern",
   "saving": "Speichern…",
@@ -11,7 +11,7 @@
   "optionalNotHired": "Optional — nicht eingestellt",
   "premium": {
     "title": "Premium-Jugendakademie",
-    "description": "Die Jugendakademie ist ein exklusiver Premium-Entwicklungsbereich. Premium-Mitglieder können optional eine U16-Akademie mit einer festen Kapazität von 16 Fahrern aktivieren.",
+    "description": "Die Jugendakademie ist eine Premium-exklusive Entwicklungsebene. Premium-Mitglieder können optional eine U16-Akademie mit fest 16 Fahrerplätzen aktivieren und den Zugang anschließend jede Saison für 50 Coins verlängern.",
     "capacity": "Feste Kapazität von 16 Jugendfahrern",
     "localStart": "Start mit 6 lokalen Jugendfahrern",
     "staff": "Durchschnittlicher Akademiedirektor + U16-Cheftrainer inklusive",
@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Jugendakademie aktivieren",
-    "description": "Die Aktivierung erstellt deine separate U16-Akademie. Neue Akademien benötigen Premium, 30 reale Tage ODER 60 Spieltage seit der Clubgründung, einmalig 50 Coins sowie das von dir gewählte Akademiebudget. Du startest mit sechs lokalen Fahrern, einem Akademiedirektor und einem U16-Cheftrainer. Ein Jugendscout ist optional.",
+    "description": "Die Aktivierung erstellt deine separate U16-Akademie. Neue Akademien benötigen Premium, 30 reale ODER 60 Spieltage seit Clubgründung, 50 Coins Aktivierungsgebühr und das gewählte Akademiebudget. Ab der nächsten Saison kostet der Akademiezugang 50 Coins pro Saison, solange Premium aktiv ist. Du startest mit sechs lokalen Fahrern, Akademiedirektor und U16 Head Coach. Ein Youth Scout ist optional.",
     "capacityLabel": "Maximale Fahrerzahl",
     "starterRidersLabel": "Startfahrer",
     "staffLabel": "Enthaltenes Personal",
@@ -30,13 +30,15 @@
     "budgetHelp": "Die Aktivierungsgebühr ist vom Clubgeld-Budget getrennt. Das Akademiebudget finanziert Fahrerunterstützung, Personal, Scouting, Ausrüstung, Camps, Reisen und Jugendwettbewerbe.",
     "activate": "Jugendakademie aktivieren",
     "activating": "Aktivierung…",
-    "coinCostLabel": "Einmalige Coin-Gebühr",
+    "coinCostLabel": "Aktivierungsgebühr",
     "unlockLabel": "Freischaltbedingung",
     "coinBalanceLabel": "Coin-Guthaben",
     "coins": "{{count}} Coins",
     "unlockValue": "{{real}} reale Tage ODER {{game}} Spieltage",
     "waiting": "Noch nicht freigeschaltet. Fortschritt: {{realPlayed}}/{{realRequired}} reale Tage oder {{gamePlayed}}/{{gameRequired}} Spieltage. Die zuerst erfüllte Bedingung schaltet die Akademie frei.",
-    "needCoins": "Die Aktivierung der Jugendakademie kostet {{cost}} Coins. Dein aktuelles Guthaben beträgt {{balance}}."
+    "needCoins": "Die Aktivierung der Jugendakademie kostet {{cost}} Coins. Dein aktuelles Guthaben beträgt {{balance}}.",
+    "renewalCostLabel": "Saisonverlängerung",
+    "coinsPerSeason": "{{count}} Coins / Saison"
   },
   "header": {
     "capacity": "{{current}} / {{max}} Fahrer"
@@ -339,7 +341,8 @@
     "reportFrequency": "Die Einstellung für Jugend-Rennberichte konnte nicht gespeichert werden.",
     "monthlyRacePlan": "Der monatliche Jugend-Rennplan konnte nicht gespeichert werden.",
     "raceInvitationDecline": "Die Einladung zum Jugendrennen konnte nicht abgelehnt werden.",
-    "budgetTransfer": "Youth-Academie-Geld konnte nicht übertragen werden."
+    "budgetTransfer": "Youth-Academie-Geld konnte nicht übertragen werden.",
+    "renew": "Verlängerung der Jugendakademie fehlgeschlagen."
   },
   "equipment": {
     "title": "Jugendausrüstung",
@@ -591,5 +594,14 @@
     "title": "Hilfe zur Jugendakademie?",
     "description": "Öffne das vollständige Handbuch zur Jugendakademie mit Aktivierungsregeln, Personal, Scouting, Rekrutierung, Budget, Ausrüstung, Rennen, Ranglisten, Entwicklung und Abschluss.",
     "read": "Handbuch zur Jugendakademie lesen"
+  },
+  "renewal": {
+    "title": "Jugendakademie verlängern — Saison {{season}}",
+    "description": "Verlängere den Akademiezugang für die aktuelle Saison für {{cost}} Coins.",
+    "premiumRequired": "Aktives Premium ist erforderlich, bevor die Saisonverlängerung für {{cost}} Coins gekauft werden kann.",
+    "action": "Für {{cost}} Coins verlängern",
+    "renewing": "Wird verlängert…",
+    "getCoins": "Coins kaufen",
+    "readOnly": "Der Jugendakademie-Zugang muss für die aktuelle Saison verlängert werden, bevor Verwaltungsaktionen möglich sind."
   }
 }
