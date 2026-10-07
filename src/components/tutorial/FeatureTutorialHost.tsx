@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useAuth } from '../../context/AuthProvider'
-import { supabase } from '../../lib/supabase'
 import {
+  advancedTutorialModules,
   findAdvancedTutorialModule,
   type AdvancedTutorialModule,
 } from '../../lib/advancedTutorials'
+import { supabase } from '../../lib/supabase'
 import {
   getTutorialProgress,
   saveTutorialProgress,
@@ -14,6 +15,10 @@ import TutorialOverlay from './TutorialOverlay'
 import TutorialTargetFrame from './TutorialTargetFrame'
 
 type TutorialMode = 'closed' | 'invite' | 'steps'
+
+function getModuleByKey(key: string): AdvancedTutorialModule | null {
+  return advancedTutorialModules.find(module => module.key === key) ?? null
+}
 
 async function isContextuallyEligible(
   module: AdvancedTutorialModule,
@@ -77,15 +82,62 @@ async function isContextuallyEligible(
   return true
 }
 
+async function resolveYouthTutorial(
+  defaultModule: AdvancedTutorialModule,
+): Promise<AdvancedTutorialModule> {
+  const graduationModule = getModuleByKey('youth-graduation')
+  if (!graduationModule) return defaultModule
+
+  const [academyProgress, graduationProgress] = await Promise.all([
+    getTutorialProgress('youth-academy'),
+    getTutorialProgress('youth-graduation'),
+  ])
+
+  // Explicit Help restarts always win.
+  if (academyProgress?.status === 'started') return defaultModule
+  if (graduationProgress?.status === 'started') return graduationModule
+
+  // The general Academy tutorial should be encountered before the contextual
+  // graduation guide.
+  if (
+    !academyProgress ||
+    academyProgress.status === 'not_started'
+  ) {
+    return defaultModule
+  }
+
+  if (
+    graduationProgress?.status === 'completed' ||
+    graduationProgress?.status === 'skipped'
+  ) {
+    return defaultModule
+  }
+
+  const { data, error } = await supabase.rpc('get_my_youth_graduations_v1')
+  if (error) {
+    console.warn('Could not resolve Youth graduation tutorial trigger:', error.message)
+    return defaultModule
+  }
+
+  const graduations = Array.isArray(data)
+    ? (data as Array<{ completed_on?: string | null }>)
+    : []
+
+  return graduations.some(item => !item.completed_on)
+    ? graduationModule
+    : defaultModule
+}
+
 export default function FeatureTutorialHost(): JSX.Element | null {
   const { user, loading: authLoading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const module = useMemo(
+  const routeModule = useMemo(
     () => findAdvancedTutorialModule(location.pathname),
     [location.pathname],
   )
 
+  const [module, setModule] = useState<AdvancedTutorialModule | null>(null)
   const [mode, setMode] = useState<TutorialMode>('closed')
   const [stepIndex, setStepIndex] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -96,14 +148,28 @@ export default function FeatureTutorialHost(): JSX.Element | null {
     async function loadModule(): Promise<void> {
       setMode('closed')
       setStepIndex(0)
+      setModule(null)
 
-      if (authLoading || !user || !module || !location.pathname.startsWith('/dashboard/')) {
+      if (
+        authLoading ||
+        !user ||
+        !routeModule ||
+        !location.pathname.startsWith('/dashboard/')
+      ) {
         return
       }
 
       setLoading(true)
 
-      const progress = await getTutorialProgress(module.key)
+      const resolvedModule =
+        routeModule.key === 'youth-academy'
+          ? await resolveYouthTutorial(routeModule)
+          : routeModule
+
+      if (!alive) return
+      setModule(resolvedModule)
+
+      const progress = await getTutorialProgress(resolvedModule.key)
       if (!alive) return
 
       // Explicit restart/resume from Help is represented by "started" plus the
@@ -111,7 +177,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
       // even when the contextual trigger is not currently available so users
       // can always revisit a completed/skipped tutorial from Help.
       if (progress?.status === 'started') {
-        const savedIndex = module.steps.findIndex(
+        const savedIndex = resolvedModule.steps.findIndex(
           step => step.key === progress.last_step_key,
         )
         setStepIndex(savedIndex >= 0 ? savedIndex : 0)
@@ -126,7 +192,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
         return
       }
 
-      const eligible = await isContextuallyEligible(module)
+      const eligible = await isContextuallyEligible(resolvedModule)
       if (!alive) return
 
       setMode(eligible ? 'invite' : 'closed')
@@ -138,7 +204,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
     return () => {
       alive = false
     }
-  }, [authLoading, location.pathname, module, user])
+  }, [authLoading, location.pathname, routeModule, user])
 
   if (!module || loading || mode === 'closed') return null
 
@@ -160,11 +226,45 @@ export default function FeatureTutorialHost(): JSX.Element | null {
     setMode('closed')
   }
 
+  async function maybeOfferGraduationTutorial(): Promise<boolean> {
+    if (!module || module.key !== 'youth-academy') return false
+
+    const graduationModule = getModuleByKey('youth-graduation')
+    if (!graduationModule) return false
+
+    const graduationProgress = await getTutorialProgress('youth-graduation')
+    if (
+      graduationProgress?.status === 'completed' ||
+      graduationProgress?.status === 'skipped'
+    ) {
+      return false
+    }
+
+    const { data, error } = await supabase.rpc('get_my_youth_graduations_v1')
+    if (error) return false
+
+    const graduations = Array.isArray(data)
+      ? (data as Array<{ completed_on?: string | null }>)
+      : []
+
+    if (!graduations.some(item => !item.completed_on)) return false
+
+    setModule(graduationModule)
+    setStepIndex(0)
+    setMode('invite')
+    return true
+  }
+
   async function nextStep(): Promise<void> {
     if (!module || !activeStep) return
 
     if (isLastStep) {
       await saveTutorialProgress(module.key, 'completed', activeStep.key)
+
+      if (await maybeOfferGraduationTutorial()) {
+        return
+      }
+
       setMode('closed')
       return
     }
@@ -193,7 +293,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
     await saveTutorialProgress(
       module.key,
       'completed',
-      activeStep?.key ?? module.steps.at(-1)?.key ?? null,
+      activeStep?.key ?? module.steps[module.steps.length - 1]?.key ?? null,
     )
     setMode('closed')
     navigate('/dashboard/manual')
@@ -217,7 +317,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
 
   return (
     <>
-      <TutorialTargetFrame target={module.target ?? null} />
+      <TutorialTargetFrame target={activeStep.target ?? module.target ?? null} />
       <TutorialOverlay
         open
         title={activeStep.title}
