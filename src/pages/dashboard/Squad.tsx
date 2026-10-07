@@ -1179,6 +1179,7 @@ export default function SquadPage() {
             variant="panel"
             title={tTutorial(`${currentTutorialTranslationKey}.title`)}
             body={tTutorial(`${currentTutorialTranslationKey}.body`)}
+            accessNote={currentTutorialStep.accessNote}
             tip={currentTutorialStep.tip}
             stepLabel={`${tutorialStepIndex + 1}/${squadTutorialSteps.length}`}
             primaryAction={tTutorial(`${currentTutorialTranslationKey}.primary`)}
