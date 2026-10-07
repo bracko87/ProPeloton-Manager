@@ -1605,7 +1605,7 @@ export default function DevelopingTeamPage() {
             </div>
           )}
 
-          <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
+          <div data-tutorial-target="developing-team-page" className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
             <div className="text-base font-semibold text-gray-800">
               {developingTeamStatus?.developing_club_name ?? t('squad:nav.developingTeam')}
             </div>
