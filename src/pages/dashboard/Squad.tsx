@@ -582,17 +582,15 @@ export default function SquadPage() {
 
       setGameDate(normalizedGameDate)
 
-      const developingClubFallbackPromise = hasPremiumAccess
-        ? supabase
-            .from('clubs')
-            .select('id')
-            .eq('owner_user_id', userId)
-            .eq('club_type', 'developing')
-            .is('deleted_at', null)
-            .order('created_at', { ascending: true })
-            .limit(1)
-            .maybeSingle()
-        : Promise.resolve({ data: null, error: null })
+      const developingClubFallbackPromise = supabase
+        .from('clubs')
+        .select('id')
+        .eq('owner_user_id', userId)
+        .eq('club_type', 'developing')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
 
       const clubPromise = supabase
         .from('clubs')
@@ -995,11 +993,6 @@ export default function SquadPage() {
   async function handleMoveToDevelopingTeam(riderId: string) {
     if (movingRiderId) return
 
-    if (!isPremium) {
-      setMoveActionMessage(t('nav.unlockDeveloping'))
-      return
-    }
-
     if (!developingTeamStatus?.is_purchased || !developingTeamStatus?.is_active || !developingTeamStatus.developing_club_id) {
       setMoveActionMessage(t('nav.unlockDeveloping'))
       return
@@ -1048,11 +1041,10 @@ export default function SquadPage() {
     developingTeamStatus !== null || developingTeamStatusError !== null
 
   const hasDevelopingTeam =
-    isPremium &&
     developingTeamStatus?.is_purchased === true &&
     developingTeamStatus?.is_active === true
   const showDevelopingTeamLockedState =
-    isPremium && developingTeamStatusResolved && !hasDevelopingTeam
+    developingTeamStatusResolved && !hasDevelopingTeam
   const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
 
   const movementWindowSummary = developingTeamStatus
@@ -1113,13 +1105,9 @@ export default function SquadPage() {
             <span
               className="inline-flex cursor-not-allowed select-none items-center gap-2 rounded-md bg-gray-50 px-4 py-2 text-sm font-medium text-gray-400 opacity-80"
               title={
-                isPremiumLoading
-                  ? t('roster.checkingPremium')
-                  : !isPremium
-                    ? t('premium.unlock')
-                    : developingTeamStatusError
-                      ? t('nav.developingUnavailable')
-                      : t('nav.unlockDeveloping')
+                developingTeamStatusError
+                  ? t('nav.developingUnavailable')
+                  : t('nav.unlockDeveloping')
               }
               aria-disabled="true"
               role="link"
