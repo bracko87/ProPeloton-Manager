@@ -83,6 +83,19 @@ export const overviewTutorialSteps: TutorialStep[] = [
     tip: 'Start simple. Add advanced systems only when the basic routine of squad, training, races and finances feels comfortable.',
   },
   {
+    key: 'welcome-access-model',
+    title: 'Free, Premium and Coins',
+    body:
+      'ProPeloton Manager uses three different access types, and the tutorial will point them out whenever they matter.\n\n' +
+      'Core gameplay is available without Premium. Premium unlocks selected advanced analysis, automation, convenience tools and specific Premium modules. Coins are a separate resource used for selected one-time or seasonal unlocks.\n\n' +
+      'A feature can therefore be Free, Premium-only, Coin-unlocked, or available through either Premium or a permanent Coin unlock. The locked panel or button will always show which rule applies.',
+    accessNote:
+      'Premium and Coins are separate. Having Premium does not automatically replace every Coin-based service cost, and spending Coins does not automatically make the account Premium.',
+    primaryAction: 'Next',
+    tip:
+      'Whenever you see a locked feature during this tutorial, read the Access box. It will tell you whether the feature is part of the free game, Premium, a Coin unlock, or a combination.',
+  },
+  {
     key: 'welcome-tutorial-purpose',
     title: 'What This Tutorial Will Do',
     body:
@@ -109,6 +122,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'This is your Overview page — the main dashboard for your team.\n\n' +
       'Think of this page as your daily control room. When you log in, this is usually the first place you should check.\n\n' +
       'Here you can quickly see the most important information about your club, including team status, current alerts, finances, races, rider condition, and season progress.',
+    accessNote: 'Core Overview is available to every manager. Some advanced dashboard analysis and convenience panels are Premium, while selected optional unlocks elsewhere in the game may use Coins.',
     primaryAction: 'Next',
     tip: 'Use Overview as your daily checklist. If nothing here needs attention, your club is usually safe to continue to the next game day.',
   },
@@ -220,6 +234,7 @@ export const squadTutorialSteps: TutorialStep[] = [
       'Your Developing Team is the normal bridge for young riders who are not yet ready for the First Squad and can race in assigned development competitions.\n\n' +
       'The Developing Team is available to Free and Premium managers. It costs 100 coins to activate and 100 coins per season to renew. Premium membership is not required for the Developing Team service or normal U23 Head Coach use.\n\n' +
       'Youth Academy graduates can move into the Developing Team before progressing to the First Squad. Riders can move between the First Squad and Developing Team only during the normal movement windows. Premium-only automation or advanced analysis remains separate from the core Developing Team service.',
+    accessNote: 'The Developing Team is not Premium-only. It is a separate service that can be activated with Coins and renewed seasonally; Premium only adds selected advanced analysis/automation around it.',
     primaryAction: 'Next',
     tip: 'Use the Developing Team as a pathway, not just extra storage. Keep places available for riders who still need development.',
     target: 'squad-developing-team',
@@ -255,6 +270,7 @@ export const trainingTutorialSteps: TutorialStep[] = [
       'In Regular Training, you can control what your riders train when they are not assigned to another activity such as a race or training camp.\n\n' +
       'You can set team default training for the First Team and Developing Team, and you can also adjust training for individual riders. Each rider can train a specific focus such as sprint, climbing, flat, time trial, endurance, resistance, race IQ, teamwork, or recovery.\n\n' +
       'Training intensity matters. Harder training can improve riders faster, but it can also make them more tired before upcoming races. You can also choose Day Off when a rider needs rest and fatigue recovery.',
+    accessNote: 'Manual regular training and team/rider training controls remain available without Premium. Premium adds Head Coach automation, smart template/prefill tools and advanced rider-development analysis.',
     primaryAction: 'Next',
     tip: 'Avoid pushing every rider with the same workload. Match training to role, fatigue and the next important races.',
   },
@@ -289,6 +305,7 @@ export const equipmentTutorialSteps: TutorialStep[] = [
       'The Overview tab gives you a summary of your team equipment and your race setup configurations.\n\n' +
       'The Default Race Setup is the setup used when you do not choose a specific setup for a race. Below that, you can create different race setup configurations that can later be selected in Race Preparation.\n\n' +
       'Each setup can bring different bonuses to your riders, depending on the equipment inside it and how many usable items are available.',
+    accessNote: 'Core equipment management is available without Premium. Premium adds Equipment Intelligence and selected automation. Saved setup slots 3 and 4 are available with Premium or can be permanently unlocked with Coins.',
     primaryAction: 'Next',
     tip: 'Build equipment around the races you actually plan to enter. A balanced inventory is usually safer for a new club.',
   },
@@ -309,6 +326,7 @@ export const equipmentTutorialSteps: TutorialStep[] = [
       'The Market tab is where you buy new equipment.\n\n' +
       'Each item has a price and can bring different bonuses. Better equipment can improve race performance, but it also costs more.\n\n' +
       'When you purchase equipment, it is sent to your Inventory and can later be used in race setups.',
+    accessNote: 'Buying normal equipment uses club cash. The market itself is not Premium-only, but Premium adds comparison/intelligence tools that help evaluate multiple items more quickly.',
     primaryAction: 'Next',
     tip: 'Compare bonuses and negative effects, not only price. The most expensive item is not automatically the best fit for every rider or race.',
   },
@@ -367,6 +385,7 @@ export const facilitiesTutorialSteps: TutorialStep[] = [
       'This includes team cars, team buses, equipment vans, mobile workshops, and medical vans. These assets can support your team during races, travel, preparation, and training camps.\n\n' +
       'Each asset can have different levels, costs, condition, bonuses, and limits. Open the details for each asset to understand what it brings and how it can help your team perform better.\n\n' +
       'To use this page fully, some advanced functions, management options, or extended tools may require a Premium account or coin purchase.',
+    accessNote: 'Normal facilities and asset purchases use club cash. Garage capacity starts with free slots; additional capacity can include Premium slots, and eligible locked slots can also be permanently unlocked with the Coin price shown on the page.',
     primaryAction: 'Continue to Calendar',
     tip: 'Buy support assets for your real race programme. More vehicles are useful only when you have enough races to use them.',
     secondaryAction: 'Finish for now',
@@ -390,6 +409,7 @@ export const calendarTutorialSteps: TutorialStep[] = [
       'This is the Season Calendar.\n\n' +
       'It gives you an overview of your team’s daily activities. For each day, you can see what is happening with your club, including races, training camps, events, holidays, and other important activities.\n\n' +
       'Use this view when you want to understand your team schedule day by day.',
+    accessNote: 'The normal Season Calendar is available without Premium. The advanced Season Planner and its deeper schedule analysis are Premium features.',
     primaryAction: 'Next',
     tip: 'Use Season Calendar to spot clashes between racing, training camps and recovery before they become a problem.',
   },
@@ -400,6 +420,7 @@ export const calendarTutorialSteps: TutorialStep[] = [
       'This is the Race Calendar.\n\n' +
       'Here you can see all races in the season. Races can be one-day races or multi-day stage races. Each race shows useful information such as date, race status, race category, race type, team limits, and application status.\n\n' +
       'Races are divided by month, so each month has its own list of available races.',
+    accessNote: 'The Race Calendar and standard filters are available without Premium. Premium adds extra planning intelligence such as sponsor-goal filtering and deeper season-planning context.',
     primaryAction: 'Next',
     tip: 'Choose races that fit both your squad strength and your budget. Early points and prize money are often more valuable than prestige alone.',
   },
@@ -481,6 +502,7 @@ export const racePreparationTutorialSteps: TutorialStep[] = [
       'Here you prepare the tactics for each stage. You can define rider roles, equipment, supplies, team tactics, and individual tactics for every stage. A Race Jersey Kit shortage is a performance warning, not a participation blocker: the plan can still be saved and the team still races.\n\n' +
       'Stage Plans are important because different stages need different plans. A flat sprint stage, mountain stage, time trial, or hilly stage may all require different riders, tactics, and support.\n\n' +
       'After Race Preparation, the next recommended page is Team Ranking.',
+    accessNote: 'Race Plan and Stage Plans are core gameplay. Premium adds the Race Strategy Lab, smart prefills and advanced strategy analysis; Premium is not required to submit a normal race or stage plan.',
     primaryAction: 'Continue to Team Ranking',
     tip: 'Do not copy the same plan to every stage. Rider roles and tactics should change with the terrain and race objective.',
     secondaryAction: 'Finish for now',
@@ -623,6 +645,7 @@ export const financeTutorialSteps: TutorialStep[] = [
       'This is the Finance page.\n\n' +
       'The Overview tab shows the main financial situation of your club, including current balance, income, expenses, cashflow, and financial summaries.\n\n' +
       'If your team has emergency debt or financial problems, this is where you can quickly understand the current situation.',
+    accessNote: 'Core finance, balance, income, expenses and transactions are available without Premium. The Financial Simulator and deeper forecasting tools are Premium features.',
     primaryAction: 'Next',
     tip: 'Keep enough cash for upcoming salaries, races and planned projects instead of spending the complete balance immediately.',
   },
@@ -635,6 +658,7 @@ export const financeTutorialSteps: TutorialStep[] = [
       'Sponsor contracts can be standard contracts or naming-rights contracts. A standard sponsor contract gives your club sponsor money without changing your team name.\n\n' +
       'A naming-rights contract is usually worth more money, but the sponsor name becomes part of your team name during the season. At the beginning of the next season, your original team name returns.\n\n' +
       'If your team does not have a sponsor yet, you can use the sponsor offers area to look for new deals.',
+    accessNote: 'Normal sponsor contracts and sponsor objectives remain part of the core game. Premium adds Sponsor Intelligence and deeper objective/risk analysis.',
     primaryAction: 'Next',
     tip: 'Compare guaranteed money with achievable objectives. A smaller realistic bonus can be better than a larger target your team cannot reach.',
   },
@@ -722,6 +746,7 @@ export const menuTutorialSteps: TutorialStep[] = [
       'A Premium account can make the game easier and more comfortable by giving access to extra features, more advanced views, and useful convenience tools.\n\n' +
       'Premium can also help you unlock more of the game’s full management experience.\n\n' +
       'By purchasing Premium or Pro Packages, you also directly support our team and help us continue developing ProPeloton Manager faster and better.',
+    accessNote: 'Premium is the account-level upgrade for advanced analysis, automation and selected Premium modules. Coins are separate and are still used for some one-time or seasonal unlocks even if you have Premium.',
     primaryAction: 'Next',
     tip: 'Premium adds convenience and depth, but the core club can still be managed through normal gameplay systems.',
   },
