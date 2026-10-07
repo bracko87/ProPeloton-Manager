@@ -179,7 +179,7 @@
   },
   "developingTeam": {
     "title": "Equipo de desarrollo",
-    "description": "Equipo de desarrollo U23 exclusivo de Premium con activación de 100 Coins y renovación estacional de 100 Coins.",
+    "description": "Equipo de Desarrollo U23 disponible para todos tras 30 días reales o 60 días de juego, con 100 Coins de activación y 100 Coins de renovación por temporada.",
     "loading": "Cargando el estado del equipo en desarrollo...",
     "realLifeProgress": "Progresos en la vida real",
     "realLifeMinimum": "Mínimo 30 días requeridos",
@@ -209,11 +209,11 @@
     "ageRule": "Sólo los ciclistas de 23 años o menos son elegibles.",
     "movementRule": "los ciclistas se mueven entre escuadrones sólo durante las ventanas de movimiento.",
     "teamLabel": "Equipo",
-    "premiumOnlyTitle": "Función exclusiva de Premium",
-    "premiumOnlyDescription": "El Equipo de Desarrollo y el Entrenador Principal U23 solo están disponibles con Premium activo. La activación cuesta {{activation}} Coins y cada renovación de temporada {{renewal}} Coins.",
-    "premiumInactiveDescription": "Los datos de tu Equipo de Desarrollo existente permanecen guardados, pero el acceso se pausa mientras Premium esté inactivo.",
-    "unlockPremium": "Desbloquear Premium",
-    "premiumModalRequirement": "Se requiere una membresía Premium activa para usar el Equipo de Desarrollo y el Entrenador Principal U23."
+    "premiumOnlyTitle": "Disponible para todos los mánagers",
+    "premiumOnlyDescription": "Premium no es necesario para el Equipo de Desarrollo. La activación cuesta {{activation}} Coins y cada renovación estacional {{renewal}} Coins.",
+    "premiumInactiveDescription": "Premium es opcional para el Equipo de Desarrollo y solo afecta a funciones separadas de análisis y automatización Premium.",
+    "unlockPremium": "Ver ventajas Premium",
+    "premiumModalRequirement": "No se requiere Premium para activar el Equipo de Desarrollo."
   },
   "dangerZone": {
     "title": "Zona de peligro",
