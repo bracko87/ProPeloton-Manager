@@ -2,7 +2,7 @@
   "loading": "Cargando Academia Juvenil…",
   "title": "Academia Juvenil",
   "subtitle": "Programa Premium de desarrollo U16 para ciclistas de 12 a 16 años.",
-  "readOnly": "Premium está inactivo. Los ciclistas y el historial de la academia se conservan, pero la gestión queda en modo solo lectura.",
+  "readOnly": "La gestión de la Academia está en solo lectura porque Premium está inactivo o la temporada actual no se ha renovado.",
   "week": "semana",
   "save": "Guardar cambios",
   "saving": "Guardando…",
@@ -11,7 +11,7 @@
   "optionalNotHired": "Opcional — no contratado",
   "premium": {
     "title": "Academia Juvenil Premium",
-    "description": "La Academia Juvenil es un sistema de desarrollo exclusivo de Premium. Los miembros Premium pueden activar opcionalmente una academia U16 con capacidad fija para 16 ciclistas.",
+    "description": "La Academia Juvenil es una capa de desarrollo exclusiva de Premium. Los miembros Premium pueden activar una academia U16 de 16 plazas y renovar el acceso por 50 Coins cada temporada.",
     "capacity": "Capacidad fija de 16 ciclistas juveniles",
     "localStart": "Empieza con 6 ciclistas juveniles locales",
     "staff": "Director de Academia Juvenil medio + entrenador principal U16 incluidos",
@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Activar Academia Juvenil",
-    "description": "La activación crea tu academia U16 independiente. Una academia nueva requiere Premium, 30 días reales O 60 días de juego desde la creación del club, una tarifa única de 50 monedas y el presupuesto de academia que elijas. Empiezas con seis corredores locales, un Director de Academia y un Entrenador Principal U16. El Ojeador Juvenil es opcional.",
+    "description": "La activación crea tu academia U16 separada. Requiere Premium, 30 días reales O 60 días de juego desde la creación del club, 50 Coins de activación y el presupuesto elegido. Desde la temporada siguiente, el acceso cuesta 50 Coins por temporada mientras Premium siga activo. Empiezas con seis ciclistas locales, Director de Academia y Entrenador U16. El Youth Scout es opcional.",
     "capacityLabel": "Máximo de ciclistas",
     "starterRidersLabel": "Ciclistas iniciales",
     "staffLabel": "Personal incluido",
@@ -30,13 +30,15 @@
     "budgetHelp": "La tarifa de activación es independiente de este presupuesto en dinero del club. El presupuesto de la academia cubre apoyo a corredores, personal, ojeo, equipamiento, concentraciones, viajes y competiciones juveniles.",
     "activate": "Activar Academia Juvenil",
     "activating": "Activando…",
-    "coinCostLabel": "Tarifa única en monedas",
+    "coinCostLabel": "Coste de activación",
     "unlockLabel": "Requisito de desbloqueo",
     "coinBalanceLabel": "Saldo de monedas",
     "coins": "{{count}} monedas",
     "unlockValue": "{{real}} días reales O {{game}} días de juego",
     "waiting": "Todavía no está desbloqueada. Progreso: {{realPlayed}}/{{realRequired}} días reales o {{gamePlayed}}/{{gameRequired}} días de juego. La primera condición que cumplas desbloquea la academia.",
-    "needCoins": "Activar la Academia Juvenil cuesta {{cost}} monedas. Tu saldo actual es {{balance}}."
+    "needCoins": "Activar la Academia Juvenil cuesta {{cost}} monedas. Tu saldo actual es {{balance}}.",
+    "renewalCostLabel": "Renovación de temporada",
+    "coinsPerSeason": "{{count}} Coins / temporada"
   },
   "header": {
     "capacity": "{{current}} / {{max}} ciclistas"
@@ -339,7 +341,8 @@
     "reportFrequency": "No se pudo guardar la preferencia de informes juveniles.",
     "monthlyRacePlan": "No se pudo guardar el plan mensual de carreras juveniles.",
     "raceInvitationDecline": "No se pudo rechazar la invitación a la carrera juvenil.",
-    "budgetTransfer": "No se pudieron transferir fondos de la Academia."
+    "budgetTransfer": "No se pudieron transferir fondos de la Academia.",
+    "renew": "Error al renovar la Academia Juvenil."
   },
   "equipment": {
     "title": "Equipamiento juvenil",
@@ -591,5 +594,14 @@
     "title": "¿Necesitas ayuda con la Academia Juvenil?",
     "description": "Abre el manual completo de la Academia Juvenil para consultar activación, personal, ojeo, reclutamiento, presupuesto, equipamiento, carreras, rankings, desarrollo y graduación.",
     "read": "Leer manual de la Academia Juvenil"
+  },
+  "renewal": {
+    "title": "Renovación de Academia Juvenil — Temporada {{season}}",
+    "description": "Renueva el acceso de la Academia para la temporada actual por {{cost}} Coins.",
+    "premiumRequired": "Se requiere Premium activo antes de comprar la renovación estacional de {{cost}} Coins.",
+    "action": "Renovar por {{cost}} Coins",
+    "renewing": "Renovando…",
+    "getCoins": "Comprar Coins",
+    "readOnly": "Debes renovar la Academia Juvenil para la temporada actual antes de poder gestionarla."
   }
 }
