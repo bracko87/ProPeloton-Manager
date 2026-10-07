@@ -195,11 +195,11 @@ export default function TutorialTargetFrame({
         left: frameRect.left,
         width: frameRect.width,
         height: frameRect.height,
-        zIndex: 800,
+        zIndex: 999,
         borderRadius: 0,
-        border: '3px solid rgba(239, 68, 68, 0.98)',
+        border: '3px solid rgba(250, 204, 21, 0.98)',
         boxShadow:
-          '0 0 0 2px rgba(255, 255, 255, 0.75), 0 0 18px rgba(239, 68, 68, 0.72)',
+          '0 0 0 9999px rgba(2, 6, 23, 0.72), 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 22px rgba(250, 204, 21, 0.72)',
         background: 'transparent',
       }}
     />,
