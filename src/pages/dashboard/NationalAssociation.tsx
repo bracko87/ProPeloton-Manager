@@ -760,7 +760,7 @@ export default function NationalAssociationPage(): JSX.Element {
         </section>
       ) : (
         <>
-          <section className="overflow-hidden rounded bg-white shadow">
+          <section data-tutorial-target="national-association-page" className="overflow-hidden rounded bg-white shadow">
             <div className="grid gap-px bg-slate-200 md:grid-cols-4">
               <div className="bg-white p-4">
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
