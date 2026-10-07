@@ -5,8 +5,11 @@
 
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
+import { advancedTutorialModules } from '../lib/advancedTutorials'
+import { overviewTutorialSteps, type TutorialKey } from '../lib/tutorials'
+import { saveTutorialProgress } from '../lib/tutorialProgress'
 
 const DISCORD_INVITE_URL = 'https://discord.gg/BpgqTXsjAW'
 const TENNIS_LEGACY_URL = 'https://tennislegacygame.com/?source=propeloton_manager'
@@ -17,7 +20,28 @@ const TENNIS_LEGACY_URL = 'https://tennislegacygame.com/?source=propeloton_manag
  */
 export default function HelpPage(): JSX.Element {
   const { t } = useTranslation('help')
+  const navigate = useNavigate()
   const [openFaqKey, setOpenFaqKey] = useState<string | null>('new-team-first')
+  const [startingTutorialKey, setStartingTutorialKey] = useState<TutorialKey | null>(null)
+
+  async function startOrRestartTutorial(tutorialKey: TutorialKey): Promise<void> {
+    if (startingTutorialKey) return
+
+    const coreTutorial = tutorialKey === 'overview'
+    const module = advancedTutorialModules.find(item => item.key === tutorialKey)
+    const firstStep = coreTutorial ? overviewTutorialSteps[0] : module?.steps[0]
+    const route = coreTutorial ? '/dashboard/overview' : module?.route
+
+    if (!firstStep || !route) return
+
+    setStartingTutorialKey(tutorialKey)
+    try {
+      await saveTutorialProgress(tutorialKey, 'started', firstStep.key)
+      navigate(route)
+    } finally {
+      setStartingTutorialKey(null)
+    }
+  }
 
   function recordCrossGameClick(): void {
     void supabase.rpc('record_cross_game_referral_event_v1', {
@@ -349,6 +373,83 @@ export default function HelpPage(): JSX.Element {
           >
             {t('hero.discord')}
           </a>
+        </div>
+      </section>
+
+      <section
+        id="tutorials"
+        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+      >
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-yellow-700">
+              Tutorials
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-slate-900">
+              Start or restart any game tutorial
+            </h2>
+            <p className="mt-1 max-w-4xl text-sm leading-relaxed text-slate-600">
+              The beginner tutorial is shown to new managers during their first game session.
+              Advanced tutorials stay short and appear contextually when you first reach the
+              relevant system. You can always restart any tutorial here later.
+            </p>
+          </div>
+
+          <Link
+            to="/dashboard/manual"
+            className="self-start rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50 md:self-auto"
+          >
+            Full Game Manual
+          </Link>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <article className="rounded-xl border border-yellow-200 bg-yellow-50/60 p-4">
+            <div className="text-xs font-medium uppercase tracking-wide text-yellow-800">
+              Core beginner tutorial
+            </div>
+            <h3 className="mt-1 text-base font-semibold text-slate-900">
+              ProPeloton Manager Basics
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Restarts the complete beginner flow covering Overview, Squad, Training,
+              Equipment, Infrastructure, Calendar, Race Detail and Preparation, rankings,
+              statistics, transfers, finance, notifications/menu and the existing core sections.
+            </p>
+            <button
+              type="button"
+              disabled={Boolean(startingTutorialKey)}
+              onClick={() => void startOrRestartTutorial('overview')}
+              className="mt-3 rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {startingTutorialKey === 'overview' ? 'Starting…' : 'Start / Restart Tutorial'}
+            </button>
+          </article>
+
+          {advancedTutorialModules.map(module => (
+            <article
+              key={module.key}
+              className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+            >
+              <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Feature tutorial
+              </div>
+              <h3 className="mt-1 text-base font-semibold text-slate-900">
+                {module.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                {module.description}
+              </p>
+              <button
+                type="button"
+                disabled={Boolean(startingTutorialKey)}
+                onClick={() => void startOrRestartTutorial(module.key)}
+                className="mt-3 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {startingTutorialKey === module.key ? 'Starting…' : 'Start / Restart'}
+              </button>
+            </article>
+          ))}
         </div>
       </section>
 
