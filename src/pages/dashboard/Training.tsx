@@ -4595,6 +4595,7 @@ export default function TrainingPage(): JSX.Element {
           variant="panel"
           title={trainingTutorialSteps[tutorialStepIndex].title}
           body={trainingTutorialSteps[tutorialStepIndex].body}
+          accessNote={trainingTutorialSteps[tutorialStepIndex].accessNote}
           tip={trainingTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${trainingTutorialSteps.length}`}
           primaryAction={
