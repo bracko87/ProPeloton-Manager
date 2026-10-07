@@ -341,8 +341,8 @@
     },
     "policies": {
       "title": "Politiche e operazioni del gruppo",
-      "body": "Le politiche e le operazioni del team controllano come il vostro club è gestito. Cambiare le politiche può rendere il vostro club più attraente per i ciclisti e il personale, ma può anche aumentare il costo di viaggio, supporto gara, campi di allenamento e le operazioni quotidiane. Questa sezione aiuta a bilanciare il comfort, le prestazioni, l'attrattiva e i costi. Dopo la finanza, il prossimo tutorial vi spiegherà il Menu principale.",
-      "primary": "Continua al menu",
+      "body": "Le Politiche e Operazioni del Team determinano come viene gestito il club.\n\nCambiare le politiche può rendere il club più attraente per corridori e staff, ma può anche aumentare i costi di viaggio, supporto gara, ritiri di allenamento e operazioni quotidiane.\n\nQuesta sezione aiuta a bilanciare comfort, prestazioni, attrattiva e costi.\n\nDopo le Finanze, il tutorial introdurrà brevemente Ranking Nazionale, Associazione Nazionale e Youth Academy, prima di concludere con il Menu principale.",
+      "primary": "Continua al Ranking Nazionale",
       "secondary": "Finisci per ora"
     }
   },
