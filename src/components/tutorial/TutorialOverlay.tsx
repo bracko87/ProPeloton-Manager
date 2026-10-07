@@ -556,7 +556,9 @@ export default function TutorialOverlay({
 
   return createPortal(
     <>
-      <div className="pointer-events-none fixed inset-0 z-[999] bg-black/10" />
+      {variant === 'invite' ? (
+        <div className="pointer-events-none fixed inset-0 z-[998] bg-black/55" />
+      ) : null}
 
       <aside
         ref={panelRef}
