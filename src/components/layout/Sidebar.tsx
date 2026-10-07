@@ -22,8 +22,10 @@ import {
   Sparkles,
   Trophy,
   GraduationCap,
+  Archive,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { useAppAdmin } from '../../hooks/useAppAdmin'
 import BugReportButton from '../dashboard/BugReportButton'
 
 interface SidebarProps {
@@ -36,6 +38,7 @@ interface NavItem {
   descriptionKey: string
   icon: React.ComponentType<{ size?: number; className?: string }>
   aliases?: string[]
+  adminOnly?: boolean
 }
 
 const GAME_LOGO_URL =
@@ -65,6 +68,13 @@ const navItems: NavItem[] = [
     labelKey: 'calendar',
     descriptionKey: 'descriptions.calendar',
     icon: Calendar,
+  },
+  {
+    to: '/dashboard/hidden-races',
+    labelKey: 'hiddenRaces',
+    descriptionKey: 'descriptions.hiddenRaces',
+    icon: Archive,
+    adminOnly: true,
   },
   {
     to: '/dashboard/race-preparation',
@@ -145,6 +155,7 @@ export default function Sidebar({
   collapsed = false,
 }: SidebarProps): JSX.Element {
   const { t } = useTranslation('navigation')
+  const { isAdmin } = useAppAdmin()
   const navigate = useNavigate()
   const location = useLocation()
   const [isPremium, setIsPremium] = useState<boolean | null>(null)
@@ -241,6 +252,8 @@ export default function Sidebar({
 
         <nav className="p-4 space-y-2">
           {navItems.map(item => {
+            if (item.adminOnly && !isAdmin) return null
+
             const Icon = item.icon
             const active = isPathActive(location.pathname, item)
             const premiumLocked =
