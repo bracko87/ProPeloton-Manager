@@ -179,7 +179,7 @@
   },
   "developingTeam": {
     "title": "Razvojni tim",
-    "description": "Premium-only U23 razvojni tim sa aktivacijom od 100 Coins i sezonskom obnovom od 100 Coins.",
+    "description": "U23 Razvojni tim dostupan svim menadžerima nakon 30 realnih ili 60 dana u igri, uz 100 coin-a za aktivaciju i 100 coin-a za sezonsku obnovu.",
     "loading": "Učitavanje statusa Razvojnog tima...",
     "realLifeProgress": "Napredak u realnom vremenu",
     "realLifeMinimum": "Potrebno najmanje 30 dana",
@@ -209,11 +209,11 @@
     "ageRule": "Mogu učestvovati samo vozači od 23 godine ili mlađi.",
     "movementRule": "Vozači prelaze između ekipa samo tokom movement window perioda.",
     "teamLabel": "Tim",
-    "premiumOnlyTitle": "Samo za Premium",
-    "premiumOnlyDescription": "Razvojni tim i U23 glavni trener dostupni su samo dok je Premium aktivan. Aktivacija košta {{activation}} Coins, a obnova svake sezone {{renewal}} Coins.",
-    "premiumInactiveDescription": "Podaci postojećeg Razvojnog tima ostaju sačuvani, ali pristup je pauziran dok Premium nije aktivan.",
-    "unlockPremium": "Otključaj Premium",
-    "premiumModalRequirement": "Aktivno Premium članstvo je potrebno za Razvojni tim i U23 glavnog trenera."
+    "premiumOnlyTitle": "Dostupno svim menadžerima",
+    "premiumOnlyDescription": "Premium nije potreban za Razvojni tim. Aktivacija košta {{activation}} coin-a, a svaka sezonska obnova {{renewal}} coin-a.",
+    "premiumInactiveDescription": "Premium je opcionalan za sam Razvojni tim i odnosi se samo na odvojene Premium analitičke i automatizovane funkcije.",
+    "unlockPremium": "Pogledaj Premium pogodnosti",
+    "premiumModalRequirement": "Premium nije potreban za aktivaciju Razvojnog tima."
   },
   "dangerZone": {
     "title": "Opasna zona",
