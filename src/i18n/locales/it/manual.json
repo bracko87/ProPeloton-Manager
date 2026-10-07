@@ -391,13 +391,13 @@
     "developing-team": {
       "category": "Ciclisti",
       "title": "Gruppo di sviluppo",
-      "subtitle": "Struttura U23 esclusiva Premium, attivazione, rinnovo e finestre di movimento.",
-      "overview": "La Squadra di Sviluppo è una seconda squadra esclusiva Premium collegata al club principale. Premium deve restare attivo per usarla o usare l'Allenatore Capo U23; i dati restano salvati se Premium scade.",
+      "subtitle": "Struttura U23 finanziata con Coins, attivazione, rinnovo e finestre di movimento.",
+      "overview": "La Squadra di Sviluppo è una seconda squadra collegata al club principale e finanziata con Coins. È disponibile per tutti dopo 30 giorni reali O 60 giorni di gioco. Premium non è richiesto per il servizio principale né per l'Allenatore Capo U23.",
       "details": [
-        "Premium attivo è richiesto per creare, riattivare, rinnovare o usare la Squadra di Sviluppo. Anche l'Allenatore Capo U23 è esclusivo Premium.",
+        "Premium non è richiesto per creare, riattivare, rinnovare o usare la Squadra di Sviluppo. La prima attivazione costa 100 Coins e ogni rinnovo o riattivazione stagionale 100 Coins.",
         "La prima attivazione costa 100 Coins e ogni rinnovo stagionale 100 Coins. Rimane il normale requisito temporale prima della prima attivazione.",
-        "Se Premium scade, l'accesso viene sospeso e le funzioni U23 disattivate; squadra, ciclisti, contratti, risultati e cronologia restano salvati.",
-        "Preferenze mostra accesso Premium, giorni giocati, saldo, costi, requisiti e finestra di movimento.",
+        "Se il rinnovo stagionale non viene pagato, l'accesso viene sospeso fino alla riattivazione; squadra, ciclisti, contratti, risultati e cronologia restano salvati.",
+        "Preferenze mostra giorni giocati, saldo Coins, costi, requisiti e stato della finestra di movimento.",
         "Dopo l'attivazione il club principale resta il club attivo.",
         "I ciclisti possono salire in Prima Squadra solo con finestra aperta e spazio disponibile.",
         "I ciclisti di 24+ devono essere spostati quando consentito."
@@ -405,7 +405,7 @@
       "facts": [
         {
           "label": "Disponibilità",
-          "value": "Solo membri Premium"
+          "value": "Tutti i manager dopo 30 giorni reali O 60 giorni di gioco"
         },
         {
           "label": "Attivazione",
@@ -1681,12 +1681,12 @@
       "category": "Ciclisti",
       "title": "Guida profonda del team di sviluppo",
       "subtitle": "Accesso Premium, attivazione, rinnovo, rosa e regole di movimento.",
-      "overview": "La squadra di sviluppo è una seconda squadra esclusiva Premium. I dati restano salvati se Premium scade.",
+      "overview": "La squadra di sviluppo è una seconda squadra finanziata con Coins e disponibile a tutti dopo il normale requisito temporale. I dati restano salvati se l'accesso stagionale scade.",
       "details": [
-        "Premium è richiesto oltre ai normali requisiti di tempo e Coins.",
+        "Premium non è richiesto; restano validi i normali requisiti di tempo e Coins.",
         "La prima attivazione costa 100 Coins e ogni rinnovo stagionale 100 Coins.",
-        "Se Premium scade, l'accesso viene disabilitato senza cancellare i dati della squadra.",
-        "Allenatore Capo U23, automazione U23 e accesso del coach U23 in gara richiedono Premium attivo.",
+        "Se l'accesso stagionale scade, viene disattivato senza eliminare squadra, ciclisti, contratti, risultati o cronologia.",
+        "L'Allenatore Capo U23 è disponibile con una Squadra di Sviluppo attiva e il normale requisito infrastrutturale. Premium resta richiesto solo per automazione U23 e analisi avanzate esplicitamente Premium.",
         "Il contesto del club principale viene ripristinato dopo l'attivazione.",
         "Promuovere un ciclista richiede finestra aperta e spazio in Prima Squadra.",
         "I ciclisti di 24+ devono essere spostati quando possibile.",
@@ -1738,7 +1738,7 @@
         "Nutrizionista sostiene sistemi di nutrizione / recupero.",
         "Meccanica supporta le riparazioni e i sistemi tecnici.",
         "Scout / Analyst supporta informazioni esterne del ciclista.",
-        "L'Allenatore Capo U23 supporta i ciclisti della Squadra di Sviluppo ed è disponibile solo ai membri Premium con una Squadra di Sviluppo attiva."
+        "L'Allenatore Capo U23 supporta i ciclisti della Squadra di Sviluppo ed è disponibile con una Squadra di Sviluppo attiva, soggetto al normale requisito infrastrutturale."
       ],
       "facts": [
         {
@@ -2517,7 +2517,7 @@
         "I suggerimenti dei consulenti dovrebbero utilizzare il profilo attuale della tappa, il meteo, i ciclisti selezionati e le risorse disponibili.",
         "Il manager dovrebbe confrontare i suggerimenti con gli obiettivi del team. Un direttore sportivo può suggerire un piano generico sicuro quando l'utente vuole un obiettivo di fuga aggressivo.",
         "Le proposte sono più preziose per i nuovi giocatori che non capiscono ancora tutti i controlli di stage-plan.",
-        "Analisi e strumenti Premium non modificano segretamente la forza nel motore di gara. Squadra di Sviluppo e Allenatore Capo U23 sono invece funzioni gameplay esplicitamente esclusive Premium.",
+        "Analisi e strumenti Premium non modificano segretamente la forza nel motore di gara. La Squadra di Sviluppo è un servizio separato finanziato con Coins e disponibile a tutti; analisi e automazione esplicitamente Premium restano Premium.",
         "Salvare sempre il piano finale dopo aver rivisto i consigli."
       ],
       "facts": [
@@ -3415,7 +3415,7 @@
       "category": "Corridori",
       "title": "Accademia Giovanile: guida U16 completa",
       "subtitle": "Attivazione, staff, scouting, reclutamento, budget, equipaggiamento, gare, sviluppo e passaggio di categoria.",
-      "overview": "L'Accademia Giovanile è un programma Premium U16 con 16 posti fissi. Una nuova Accademia si sblocca dopo 30 giorni reali O 60 giorni di gioco dalla creazione del club e costa 50 coin una sola volta. Non esiste rinnovo stagionale in coin; dopo l'attivazione usa un budget separato in denaro normale del club.",
+      "overview": "L'Accademia Giovanile è un programma U16 esclusivo Premium con 16 posti. Si sblocca dopo 30 giorni reali O 60 giorni di gioco, costa 50 Coins di attivazione e 50 Coins per ogni stagione successiva. Le operazioni usano denaro normale del club tramite un budget separato.",
       "facts": {
         "0": {
           "label": "Capacità",
@@ -3426,8 +3426,8 @@
           "value": "Premium + 30 giorni reali O 60 giorni di gioco"
         },
         "2": {
-          "label": "Attivazione",
-          "value": "50 coin una volta; nessun rinnovo stagionale"
+          "label": "Attivazione / rinnovo",
+          "value": "50 Coins attivazione; 50 Coins per stagione"
         },
         "3": {
           "label": "Pacchetto iniziale",
@@ -3459,9 +3459,9 @@
         }
       },
       "details": {
-        "0": "Activation is available only to Premium managers. The 30-real-day OR 60-game-day rule is the same maturity gate used for the Developing Team; whichever threshold is reached first unlocks the Academy. The one-time 50-coin activation fee is separate from the Academy cash allocation selected during activation.",
-        "1": "There is no Youth Academy seasonal coin renewal. This is intentional because the Academy already has meaningful club-cash costs for rider support, staff, scouting programmes, equipment, assets, race supplies, travel and competition. Existing Academies are not charged again when Premium access later returns.",
-        "2": "If Premium expires, the Academy and its data are preserved. Management becomes read-only until Premium is active again; riders, staff, history, budget and Academy records are not deleted.",
+        "0": "Solo i manager Premium possono attivarla. Si applica anche il requisito di 30 giorni reali O 60 giorni di gioco. I 50 Coins di attivazione sono separati dal budget dell'Accademia.",
+        "1": "L'accesso costa 50 Coins di attivazione e 50 Coins per ogni stagione successiva. Premium deve essere attivo. Se manca Premium o il rinnovo della stagione corrente, l'Accademia resta salvata ma la gestione è in sola lettura.",
+        "2": "Se Premium scade o una nuova stagione non è ancora stata rinnovata, Accademia e dati restano salvati. Ciclisti, staff, cronologia, budget e record non vengono eliminati.",
         "3": "The Academy starts with six local riders and has a hard cap of 16. Infrastructure can improve U16 development, recovery or operating efficiency, but it does not raise the 16-rider capacity.",
         "4": "Youth Rider profiles show riding attributes, readiness, fatigue, development focus, support agreement and race history. Exact hidden potential is intentionally not exposed; use Talent Assessment bands and scouting confidence instead.",
         "5": "The included starter staff are the Youth Academy Director and U16 Head Coach. A maximum of one Youth Scout can be hired from the normal Staff Market. Youth roles use the same quality ladder as senior staff and can take dedicated staff courses paid from the Academy budget.",
@@ -3487,7 +3487,7 @@
         "4": "Approva i piani mensili prima delle scadenze.",
         "5": "Mantieni fondi per corridori, staff, scouting, corsi, equipaggiamento, asset, supplies e viaggi.",
         "6": "Controlla prontezza, fatica e trend prima delle gare.",
-        "7": "Se Premium scade, l'Accademia resta salvata e non richiede altri 50 coin."
+        "7": "Se Premium scade durante una stagione già rinnovata, riattiva Premium per riprendere l'accesso. All'inizio di una nuova stagione sono richiesti anche 50 Coins per il rinnovo."
       },
       "relatedLinks": {
         "0": "Open Youth Academy",
