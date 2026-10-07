@@ -42,7 +42,8 @@
     "statistics": "Performance et analyse",
     "premiumCenter": "Planification, simulation et automatisation avancées",
     "nationalAssociation": "Gestion de l'équipe nationale et de World Nations",
-    "youthAcademy": "Programme Premium de développement U16"
+    "youthAcademy": "Programme Premium de développement U16",
+    "hiddenRaces": "Parcours de réserve pour compétitions spéciales"
   },
   "header": {
     "toggleSidebar": "Afficher ou masquer la barre latérale",
@@ -159,5 +160,6 @@
   },
   "premiumCenter": "Centre Premium",
   "nationalAssociation": "Association nationale",
-  "youthAcademy": "Académie Jeunes"
+  "youthAcademy": "Académie Jeunes",
+  "hiddenRaces": "Courses cachées"
 }
