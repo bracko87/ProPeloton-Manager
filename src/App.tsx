@@ -57,6 +57,7 @@ import YouthRaceDetailPage from './pages/dashboard/YouthRaceDetailPage'
 import YouthRiderProfilePage from './pages/dashboard/riders/YouthRiderProfilePage'
 import StaffPage from './pages/dashboard/Staff'
 import CalendarPage from './pages/dashboard/CalendarPage'
+import HiddenRacesPage from './pages/dashboard/HiddenRacesPage'
 import RaceDetailPage from './pages/dashboard/RaceDetailPage'
 import RacePreparationPage from './pages/dashboard/RacePreparation'
 import TeamRankingPage from './pages/dashboard/TeamRanking'
@@ -533,6 +534,15 @@ export default function App(): JSX.Element {
             <Route
               path="calendar"
               element={<CalendarPage />}
+            />
+
+            <Route
+              path="hidden-races"
+              element={
+                <RequireAppAdmin>
+                  <HiddenRacesPage />
+                </RequireAppAdmin>
+              }
             />
 
             {/* Real race detail route */}
