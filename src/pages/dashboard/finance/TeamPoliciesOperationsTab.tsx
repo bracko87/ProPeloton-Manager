@@ -606,6 +606,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
   const [lastMonthActualCost, setLastMonthActualCost] = useState<number | null>(null)
   const [tripForecasts, setTripForecasts] = useState<TripForecastRow[]>([])
   const [policyEstimate, setPolicyEstimate] = useState<PolicyEstimateRow | null>(null)
+  const [residentialCampusActive, setResidentialCampusActive] = useState(false)
 
   async function loadPage(): Promise<void> {
     setLoading(true)
@@ -623,7 +624,7 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
       setClubId(resolvedClubId)
 
-      const [catalogRes, policyRes, premiumStatusRes] = await Promise.all([
+      const [catalogRes, policyRes, premiumStatusRes, campusRes] = await Promise.all([
         supabase
           .from('team_policy_option_catalog')
           .select(
@@ -636,6 +637,11 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
           p_club_id: resolvedClubId,
         }),
         supabase.rpc('get_my_premium_status'),
+        supabase
+          .from('club_infrastructure')
+          .select('team_residential_campus_level')
+          .eq('club_id', resolvedClubId)
+          .maybeSingle(),
       ])
 
       if (catalogRes.error) throw catalogRes.error
@@ -650,6 +656,24 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
       } else {
         setIsPremium(getPremiumAccessFromResult(premiumStatusRes.data))
       }
+
+      if (campusRes.error) {
+        console.warn(
+          'Failed to load Team Residential Campus status for Team Policies & Operations:',
+          campusRes.error
+        )
+      }
+
+      const nextResidentialCampusActive =
+        Number(
+          (
+            (campusRes.data ?? null) as {
+              team_residential_campus_level?: number | null
+            } | null
+          )?.team_residential_campus_level ?? 0
+        ) >= 1
+
+      setResidentialCampusActive(nextResidentialCampusActive)
 
       const catalogRows = (catalogRes.data ?? []) as CatalogRow[]
       const policyRow = policyRes.data as ClubPolicyRow
@@ -673,10 +697,12 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
           'logisticsSupportLevel',
           policyRow.logistics_support_level
         ),
-        riderHousingSupport: coerceToAllowed(
-          'riderHousingSupport',
-          policyRow.rider_housing_support
-        ),
+        riderHousingSupport: nextResidentialCampusActive
+          ? 'none'
+          : coerceToAllowed(
+              'riderHousingSupport',
+              policyRow.rider_housing_support
+            ),
         nutritionSupportLevel: coerceToAllowed(
           'nutritionSupportLevel',
           policyRow.nutrition_support_level
@@ -799,6 +825,8 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
   }, [sections, policyState, policyEstimate])
 
   function updatePolicy(key: string, value: string): void {
+    if (key === 'riderHousingSupport' && residentialCampusActive) return
+
     setSaveMessage(null)
     setError(null)
     setPolicyState(current => ({
@@ -828,7 +856,9 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
         p_ground_transport: policyState.groundTransport,
         p_logistics_support_level: policyState.logisticsSupportLevel,
         p_team_vehicle_policy: 'none',
-        p_rider_housing_support: policyState.riderHousingSupport,
+        p_rider_housing_support: residentialCampusActive
+          ? 'none'
+          : policyState.riderHousingSupport,
         p_nutrition_support_level: policyState.nutritionSupportLevel,
         p_recovery_support_level: policyState.recoverySupportLevel,
         p_staff_equipment_level: policyState.staffEquipmentLevel,
@@ -1134,15 +1164,35 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
 
           <div className="mt-4 space-y-4">
             {section.items.map(item => {
-              const selectedValue = policyState[item.key] ?? item.options[0]?.value ?? ''
+              const housingCoveredByCampus =
+                item.key === 'riderHousingSupport' && residentialCampusActive
+              const selectedValue = housingCoveredByCampus
+                ? 'none'
+                : policyState[item.key] ?? item.options[0]?.value ?? ''
 
               return (
-                <div key={item.key} className="rounded border border-gray-200 p-4">
+                <div
+                  key={item.key}
+                  className={`rounded border border-gray-200 p-4 ${
+                    housingCoveredByCampus ? 'bg-gray-100 opacity-70' : ''
+                  }`}
+                >
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="max-w-2xl">
-                      <div className="font-medium text-gray-900">{t(item.titleKey)}</div>
+                      <div
+                        className={`font-medium ${
+                          housingCoveredByCampus ? 'text-gray-500' : 'text-gray-900'
+                        }`}
+                      >
+                        {t(item.titleKey)}
+                      </div>
                       <div className="mt-1 text-sm text-gray-600">
-                        {t(item.descriptionKey)}
+                        {housingCoveredByCampus
+                          ? t('policies.housingSupportCampusDisabled', {
+                              defaultValue:
+                                'Housing Support is included in the Team Residential Campus and is no longer charged as a separate team policy. Travel accommodation for races, tours and Training Camps remains separate and still applies.',
+                            })
+                          : t(item.descriptionKey)}
                       </div>
                     </div>
 
@@ -1155,9 +1205,10 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                       </label>
                       <select
                         id={item.key}
-                        className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+                        className="w-full rounded border border-gray-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
                         value={selectedValue}
                         onChange={event => updatePolicy(item.key, event.target.value)}
+                        disabled={housingCoveredByCampus}
                       >
                         {item.options.map(option => (
                           <option key={option.value} value={option.value}>
@@ -1167,7 +1218,11 @@ export function TeamPoliciesOperationsTab(): JSX.Element {
                       </select>
 
                       <div className="mt-1 text-xs text-slate-500">
-                        Every level is available to all managers; normal club cash costs still apply.
+                        {housingCoveredByCampus
+                          ? t('policies.housingSupportCampusIncluded', {
+                              defaultValue: 'Included through Team Residential Campus · $0 housing-policy charge',
+                            })
+                          : 'Every level is available to all managers; normal club cash costs still apply.'}
                       </div>
                     </div>
                   </div>
