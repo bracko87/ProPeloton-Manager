@@ -42,7 +42,8 @@
     "statistics": "Эффективность и анализ",
     "premiumCenter": "Расширенное планирование, симуляции и автоматизация",
     "nationalAssociation": "Управление сборной и World Nations",
-    "youthAcademy": "Премиальная программа развития U16"
+    "youthAcademy": "Премиальная программа развития U16",
+    "hiddenRaces": "Резервные маршруты для специальных соревнований"
   },
   "header": {
     "toggleSidebar": "Боковой блок@ info: whatsthis",
@@ -159,5 +160,6 @@
   },
   "premiumCenter": "Premium-центр",
   "nationalAssociation": "Национальная ассоциация",
-  "youthAcademy": "Молодёжная академия"
+  "youthAcademy": "Молодёжная академия",
+  "hiddenRaces": "Скрытые гонки"
 }
