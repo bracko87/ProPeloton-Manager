@@ -2505,7 +2505,10 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
       {!tutorialLoading && tutorialMode === 'steps' ? (
         <>
           <TutorialTargetFrame
-            target={facilitiesTutorialSteps[tutorialStepIndex].target ?? null}
+            target={
+              facilitiesTutorialSteps[tutorialStepIndex].target ??
+              'dashboard-page-body'
+            }
           />
 
           <TutorialOverlay
@@ -2513,6 +2516,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
             variant="panel"
             title={facilitiesTutorialSteps[tutorialStepIndex].title}
             body={facilitiesTutorialSteps[tutorialStepIndex].body}
+            tip={facilitiesTutorialSteps[tutorialStepIndex].tip}
             stepLabel={`${tutorialStepIndex + 1}/${facilitiesTutorialSteps.length}`}
             primaryAction={
               facilitiesTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
