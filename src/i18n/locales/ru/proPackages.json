@@ -79,7 +79,7 @@
   },
   "comparison": {
     "title": "Бесплатно в сравнении с Premium",
-    "description": "Free includes the complete core cycling-management game. Premium adds advanced planning and analysis plus the exclusive Developing Team, U23 Head Coach and Youth Academy.",
+    "description": "Free включает полную основную игру и опциональный доступ к Команде развития за монеты. Premium добавляет расширенное планирование и аналитику, а также эксклюзивную Молодёжную академию.",
     "benefit": "Пособие",
     "free": "Свободные",
     "premium": "Premium",
@@ -93,7 +93,7 @@
     "r8": "Rider shortlist additions",
     "developing": "Развитие группового обслуживания",
     "activationRenewal": "{{activation}} активация/ {{renewal}} Продление",
-    "note": "Free сохраняет всю основную игру и ручное управление. Developing Team открывается после 30 реальных ИЛИ 60 игровых дней, стоит 100 монет при активации и 100 за сезон. Молодёжная академия использует то же правило 30/60, стоит 50 монет один раз и не требует сезонного продления за монеты; дальше расходы идут из обычных денег клуба.",
+    "note": "Free-менеджеры могут открыть Команду развития после 30 реальных ИЛИ 60 игровых дней за 100 монет и продлевать за 100 монет каждый сезон. Молодёжная академия остаётся Premium-only, использует ту же схему 30/60, стоит 50 монет за активацию и 50 монет за сезон.",
     "premiumOnly": "Только Premium",
     "r9": "World-race replays",
     "r10": "Templates & Smart Prefill",
@@ -104,7 +104,7 @@
     "freeReplay": "2 coins per race",
     "premiumReplay": "Included",
     "youthAcademy": "Youth Academy / U16 development",
-    "youthAcademyPremium": "Premium + 50 монет один раз · 16 мест"
+    "youthAcademyPremium": "Premium + 50 активация / 50 продление · 16 мест"
   },
   "packages": {
     "title": "Нужны дополнительные Coins?",
@@ -143,8 +143,8 @@
     "manageNoteSuffix": "выше, отменять будущие обновления, обновлять детали счетов или просмотр Stripe- Организовал счета."
   },
   "services": {
-    "title": "Premium development services",
-    "description": "Две Premium-программы развития. Developing Team стоит 100 монет при активации и 100 за сезон. Молодёжная академия стоит 50 монет один раз, без сезонного продления, затем использует деньги клуба.",
+    "title": "Сервисы развития",
+    "description": "Команда развития доступна всем: 100 монет активация и 100 монет за сезон. Молодёжная академия остаётся Premium-only: 50 монет активация плюс 50 монет за сезон.",
     "loading": "Загрузка Coinsных услуг...",
     "unavailable": "В настоящее время отсутствует информация об услугах, предоставляемых группами.",
     "unavailableHelp": "Остальные Premium, по-прежнему имеются возможности для выставления счетов и управления Coins.",
@@ -152,8 +152,8 @@
     "active": "Активен",
     "expired": "Прерван",
     "notActivated": "Не активирован",
-    "descriptionDeveloping": "Создавайте и управляйте командой развития U23 с активным Premium.",
-    "readOnly": "Данные вашей команды развития сохраняются, но доступ приостановлен до повторной активации Premium.",
+    "descriptionDeveloping": "Создайте и управляйте командой развития U23. Premium для самого сервиса не требуется.",
+    "readOnly": "Данные Команды развития сохраняются, но сезонный доступ нужно реактивировать или продлить.",
     "reactivationPrice": "Цена на восстановление: {{cost}} Coins.",
     "firstActivationPrice": "Первая цена активации: {{cost}} Coins.",
     "laterPrice": "Позднее возобновление или возобновление: {{cost}} Coins В сезоне.",
@@ -170,12 +170,12 @@
     "startSeason": "Начало сезона {{season}}",
     "autoRenew": "Автоматически возобновлять каждый сезон",
     "autoRenewPrefix": "При включении,",
-    "autoRenewSuffix": "Coins будут списаны в начале следующего сезона только при активном Premium. Если Premium закончится или Coins будет недостаточно, продление не выполнится и доступ будет приостановлен.",
+    "autoRenewSuffix": "монет будут списаны в начале следующего сезона. При недостатке баланса продление не пройдёт и доступ будет приостановлен.",
     "reactivation": "Стоимость реактивации",
     "firstActivation": "Первая активация",
     "laterRenewals": "Последующие обновления",
     "coinsPerSeason": "{{cost}} Coins в сезоне",
-    "autoEnabled": "Автопродление включено. В начале следующего сезона будет списано {{cost}} Coins, если Premium активен.",
+    "autoEnabled": "Автопродление включено. {{cost}} монет будут списаны в начале следующего сезона при достаточном балансе.",
     "autoDisabled": "Автоматическое обновление отключено.",
     "autoFailed": "Не удалось обновить автоматическое продление команды развития.",
     "loadFailed": "Не удалось загрузить сервис команды развития.",
@@ -183,13 +183,13 @@
     "available": "Available",
     "premiumRequired": "Premium required",
     "loadingYouth": "Loading…",
-    "descriptionYouthAcademy": "Отдельная U16-программа с гонщиками, персоналом, бюджетом, скаутингом, экипировкой, календарём, рейтингами, развитием и выпуском. Нужен Premium. Новая академия открывается после 30 реальных ИЛИ 60 игровых дней и стоит 50 монет один раз.",
+    "descriptionYouthAcademy": "Premium-only программа U16 со своими гонщиками, персоналом, бюджетом, скаутингом, экипировкой, календарём, рейтингами, историей развития и выпуском. Открывается после 30 реальных ИЛИ 60 игровых дней, стоит 50 монет за активацию и 50 монет за каждый последующий сезон.",
     "youthCapacity": "Academy capacity",
     "youthStarterRiders": "Starter riders",
     "youthStarterStaff": "Starter staff",
     "youthStarterStaffValue": "Director + U16 Head Coach",
-    "youthActivationCost": "Activation",
-    "youthActivationCostValue": "{{cost}} монет один раз · без сезонного продления",
+    "youthActivationCost": "Активация / продление",
+    "youthActivationCostValue": "{{activation}} активация / {{renewal}} продление за сезон",
     "ridersCount": "{{count}} riders",
     "youthFeatureScouting": "Scouting and recruitment programme",
     "youthFeatureRacing": "U16 race calendar, entries, results and rankings",
@@ -199,13 +199,14 @@
     "youthFeatureInfrastructure": "U16 infrastructure development and recovery effects",
     "youthFeatureResponsibilities": "Manager/staff responsibilities and delegation",
     "youthFeaturePathway": "Graduation pathway into senior or Developing Team",
-    "youthReadOnly": "Premium is currently inactive. Academy data is preserved, but management remains read-only until Premium returns.",
+    "youthReadOnly": "Данные сохраняются, но управление доступно только для чтения, если Premium неактивен или текущий сезон не продлён.",
     "openYouthAcademy": "Open Youth Academy",
     "viewYouthAcademy": "View Youth Academy",
     "locked": "Закрыто",
     "youthUnlock": "Условие открытия",
     "youthUnlockValue": "{{real}} реальных ИЛИ {{game}} игровых дней",
-    "youthWaiting": "Прогресс: {{realPlayed}}/{{realRequired}} реальных дней или {{gamePlayed}}/{{gameRequired}} игровых дней."
+    "youthWaiting": "Прогресс: {{realPlayed}}/{{realRequired}} реальных дней или {{gamePlayed}}/{{gameRequired}} игровых дней.",
+    "renewalRequired": "Требуется продление"
   },
   "history": {
     "title": "Производственная деятельность по выставлению счетов и покупке",
@@ -264,7 +265,9 @@
     "developingSeasonalReactivation": "Группа по разработке сезонных технологий",
     "extraScout": "Дополнительный отчет об разведке",
     "premiumGrant": "Premium ежемесячное денежное дотирование",
-    "youthAcademyActivation": "Активация Молодёжной академии"
+    "youthAcademyActivation": "Активация Молодёжной академии",
+    "youthAcademyRenewal": "Продление Молодёжной академии — Сезон {{season}}",
+    "youthAcademySeasonalRenewal": "Сезонное продление Молодёжной академии"
   },
   "common": {
     "coins": "{{count}} Coins",
