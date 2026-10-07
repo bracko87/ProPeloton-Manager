@@ -112,7 +112,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         key: 'national-association-world-nations',
         title: 'World Nations Competition',
         body:
-          'Every active Association enters the World Nations structure automatically. Qualification groups reduce the field toward the World Final, where the final nations compete in a three-day event.\n\nEach competition round uses National Team lineups and standardised system-covered equipment and resources, so Association Coins do not purchase race performance.',
+          'Every active Association enters the World Nations structure automatically. Qualification groups reduce the field toward the 16-team World Final, where the remaining nations compete in a three-day event.\n\nEach competition round uses National Team lineups and standardised system-covered equipment and resources, so Association Coins do not purchase race performance.',
         primaryAction: 'Finish tutorial',
         secondaryAction: 'Learn More',
       },
@@ -223,6 +223,40 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         title: 'Graduation',
         body:
           'When a youth rider reaches the graduation stage, review the available pathway promptly. Moving the rider to the Developing Team is the normal bridge when that service is active and has room. Other implemented options can include a direct senior pathway or release/free-agent outcome.\n\nThe Developing Team is available to all managers for 100 Coins activation and 100 Coins per season; it does not require Premium.',
+        primaryAction: 'Finish tutorial',
+        secondaryAction: 'Learn More',
+      },
+    ],
+  },
+  {
+    key: 'youth-graduation',
+    title: 'Youth Academy Graduation',
+    description:
+      'A short contextual guide for moving an U16 graduate into the next development stage.',
+    route: '/dashboard/youth-academy',
+    routePrefixes: ['/dashboard/youth-academy'],
+    target: 'youth-academy-page',
+    contextualEligibility: 'premium-youth',
+    steps: [
+      {
+        key: 'youth-graduation-review',
+        title: 'A Youth Rider Is Ready to Graduate',
+        body:
+          'A rider has reached the point where an Academy graduation decision is required. Review the rider, available squad places and the deadline shown on the Academy page before choosing the next step.\n\nGraduation is a development decision, not an automatic promotion into the First Squad.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'youth-graduation-pathway',
+        title: 'Choose the Right Pathway',
+        body:
+          'The normal pathway is Youth Academy → Developing Team → First Squad. If your Developing Team is active and has room, it is usually the natural next stage for a rider who still needs development.\n\nThe page can also offer other implemented outcomes such as a temporary pathway, direct Developing Team movement or release to the professional free-agent pool. Read the consequences before confirming.',
+        primaryAction: 'Next',
+      },
+      {
+        key: 'youth-graduation-developing',
+        title: 'Plan Developing Team Capacity',
+        body:
+          'The Developing Team is available to Free and Premium managers for 100 Coins activation and 100 Coins per season. Premium is not required.\n\nIf you intend to use it for Academy graduates, keep roster space and movement timing in mind before the graduation deadline.',
         primaryAction: 'Finish tutorial',
         secondaryAction: 'Learn More',
       },
