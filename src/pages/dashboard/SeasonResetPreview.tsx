@@ -342,7 +342,7 @@ export default function SeasonResetPreviewPage(): JSX.Element {
 
   return (
     <div className="w-full">
-      <h2 className="text-xl font-semibold">{t('page.title')}</h2>
+      <h2 data-tutorial-target="new-season-page" className="text-xl font-semibold">{t('page.title')}</h2>
       <p className="mt-1 text-sm text-slate-600">{t('page.description')}</p>
 
       {loading ? (
