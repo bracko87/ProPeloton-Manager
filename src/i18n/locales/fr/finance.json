@@ -459,6 +459,8 @@
     "teamPoliciesDescription": "Des packs de soutien à plus long terme et des normes internes pour les coureurs et le personnel.",
     "housingSupport": "Support au logement",
     "housingSupportDescription": "Politique de soutien au logement partagée pour les coureurs et le personnel actifs.",
+    "housingSupportCampusDisabled": "Le soutien au logement est inclus dans le Team Residential Campus et n'est plus facturé comme une politique d'équipe distincte. L'hébergement de voyage pour les courses, tours et stages d'entraînement reste séparé et continue de s'appliquer.",
+    "housingSupportCampusIncluded": "Inclus via Team Residential Campus · $0 de frais de logement",
     "nutritionSupport": "Soutien à la nutrition",
     "nutritionSupportDescription": "Nutrition hebdomadaire et soutien à l'ensemble de l'équipe.",
     "recoverySupport": "Soutien à la récupération",
