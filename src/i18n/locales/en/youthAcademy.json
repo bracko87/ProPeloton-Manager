@@ -2,7 +2,7 @@
   "loading": "Loading Youth Academy…",
   "title": "Youth Academy",
   "subtitle": "Premium U16 development programme for riders aged 12–16.",
-  "readOnly": "Premium is inactive. Your academy history and riders are preserved, but management is read-only.",
+  "readOnly": "Academy management is read-only because Premium is inactive or the current season has not been renewed.",
   "week": "week",
   "save": "Save changes",
   "saving": "Saving…",
@@ -11,7 +11,7 @@
   "optionalNotHired": "Optional — not hired",
   "premium": {
     "title": "Premium Youth Academy",
-    "description": "Youth Academy is a Premium-only development layer. Premium members can optionally activate an U16 academy with a fixed 16-rider capacity.",
+    "description": "Youth Academy is a Premium-only development layer. Premium members can optionally activate an U16 academy with a fixed 16-rider capacity, then renew Academy access for 50 coins each season.",
     "capacity": "Fixed capacity of 16 Youth Riders",
     "localStart": "Start with 6 local Youth Riders",
     "staff": "Average Youth Academy Director + U16 Head Coach included",
@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Activate Youth Academy",
-    "description": "Activation creates your separate U16 academy. New Academies require Premium, 30 real-life days OR 60 in-game days since club creation, a one-time 50 coin activation fee, and the Academy budget you choose. You start with six local riders, a Youth Academy Director and U16 Head Coach. Youth Scout is optional.",
+    "description": "Activation creates your separate U16 academy. New Academies require Premium, 30 real-life days OR 60 in-game days since club creation, a 50-coin activation fee, and the Academy budget you choose. From the next season onward, Academy access costs 50 coins per season while Premium remains active. You start with six local riders, a Youth Academy Director and U16 Head Coach. Youth Scout is optional.",
     "capacityLabel": "Maximum riders",
     "starterRidersLabel": "Starting riders",
     "staffLabel": "Included staff",
@@ -30,13 +30,15 @@
     "budgetHelp": "The activation fee is separate from this club-cash budget. The Academy budget funds rider support, staff, scouting, equipment, camps, travel and youth competition costs.",
     "activate": "Activate Youth Academy",
     "activating": "Activating…",
-    "coinCostLabel": "One-time coin fee",
+    "coinCostLabel": "Activation coin fee",
     "unlockLabel": "Unlock requirement",
     "coinBalanceLabel": "Coin balance",
     "coins": "{{count}} coins",
     "unlockValue": "{{real}} real-life days OR {{game}} in-game days",
     "waiting": "Not unlocked yet. Progress: {{realPlayed}}/{{realRequired}} real-life days or {{gamePlayed}}/{{gameRequired}} in-game days. Whichever requirement is reached first unlocks the Academy.",
-    "needCoins": "Youth Academy activation costs {{cost}} coins. Your current balance is {{balance}}."
+    "needCoins": "Youth Academy activation costs {{cost}} coins. Your current balance is {{balance}}.",
+    "renewalCostLabel": "Season renewal",
+    "coinsPerSeason": "{{count}} coins / season"
   },
   "header": {
     "capacity": "{{current}} / {{max}} riders"
@@ -339,7 +341,8 @@
     "reportFrequency": "Could not save Youth Race Reports preference.",
     "monthlyRacePlan": "Could not save the monthly Youth race plan.",
     "raceInvitationDecline": "Could not decline the Youth race invitation.",
-    "budgetTransfer": "Could not transfer Youth Academy funds."
+    "budgetTransfer": "Could not transfer Youth Academy funds.",
+    "renew": "Youth Academy renewal failed."
   },
   "equipment": {
     "title": "Youth equipment",
@@ -591,5 +594,14 @@
     "title": "Need help with the Youth Academy?",
     "description": "Open the full Youth Academy manual for activation rules, staff, scouting, recruitment, budget, equipment, racing, rankings, development and graduation.",
     "read": "Read Youth Academy manual"
+  },
+  "renewal": {
+    "title": "Youth Academy renewal — Season {{season}}",
+    "description": "Renew Academy access for the current season for {{cost}} coins.",
+    "premiumRequired": "An active Premium membership is required before the {{cost}}-coin seasonal renewal can be purchased.",
+    "action": "Renew for {{cost}} Coins",
+    "renewing": "Renewing…",
+    "getCoins": "Get coins",
+    "readOnly": "Youth Academy access must be renewed for the current season before management actions are available."
   }
 }
