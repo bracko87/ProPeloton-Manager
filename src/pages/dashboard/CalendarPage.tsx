@@ -2875,6 +2875,7 @@ export default function CalendarPage(): JSX.Element {
           variant="panel"
           title={currentTutorialText.title}
           body={currentTutorialText.body}
+          accessNote={calendarTutorialSteps[tutorialStepIndex].accessNote}
           tip={calendarTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${calendarTutorialSteps.length}`}
           primaryAction={
