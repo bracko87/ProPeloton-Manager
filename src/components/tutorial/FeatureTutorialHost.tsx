@@ -390,6 +390,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
           open
           title={bridgeStep.title}
           body={bridgeStep.body}
+          accessNote={bridgeStep.accessNote}
           tip={bridgeStep.tip}
           stepLabel={`${stepIndex + 1}/${module.steps.length}`}
           primaryAction={
@@ -432,6 +433,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
         open
         title={activeStep.title}
         body={activeStep.body}
+        accessNote={activeStep.accessNote}
         tip={activeStep.tip}
         stepLabel={`${stepIndex + 1}/${module.steps.length}`}
         primaryAction={activeStep.primaryAction ?? (isLastStep ? 'Finish tutorial' : 'Next')}
