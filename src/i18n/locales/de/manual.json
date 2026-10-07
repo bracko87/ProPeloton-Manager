@@ -391,13 +391,13 @@
     "developing-team": {
       "category": "Fahrer",
       "title": "Entwicklung des Teams",
-      "subtitle": "Premium-exklusive U23-Struktur, Aktivierung, Verlängerung und Wechselzeiträume.",
-      "overview": "Das Entwicklungsteam ist ein Premium-exklusives zweites Team des Hauptclubs. Premium muss aktiv bleiben, um das Team und den U23-Cheftrainer zu nutzen; bei Ablauf bleiben alle Daten gespeichert.",
+      "subtitle": "Coin-finanziertes U23-Team mit Aktivierung, Saisonverlängerung und Wechselzeiträumen.",
+      "overview": "Das Entwicklungsteam ist ein coin-finanziertes zweites Team des Hauptclubs. Es ist nach 30 realen Tagen ODER 60 Spieltagen für alle Manager verfügbar. Premium ist für den Kernservice und den U23-Cheftrainer nicht erforderlich.",
       "details": [
-        "Eine aktive Premium-Mitgliedschaft ist erforderlich, um das Entwicklungsteam zu erstellen, zu reaktivieren, zu verlängern oder zu nutzen. Auch der U23-Cheftrainer ist Premium-exklusiv.",
+        "Premium ist für Erstellung, Reaktivierung, Verlängerung oder Nutzung des Entwicklungsteams nicht erforderlich. Die erste Aktivierung kostet 100 Coins, jede Saisonverlängerung oder Reaktivierung 100 Coins.",
         "Die erste Aktivierung kostet 100 Coins, jede Saisonverlängerung 100 Coins. Vor der ersten Aktivierung gilt weiterhin die normale Zeitvoraussetzung.",
-        "Läuft Premium ab, wird der Zugriff pausiert und U23-Cheftrainer-Funktionen werden deaktiviert; Team, Fahrer, Verträge, Ergebnisse und Historie bleiben gespeichert.",
-        "Die Einstellungen zeigen Premium-Zugriff, Spieltage, Coin-Guthaben, Kosten, Voraussetzungen und Wechselzeitraum.",
+        "Wird die Saisonverlängerung nicht bezahlt, ist der Zugriff bis zur Reaktivierung nicht verfügbar; Team, Fahrer, Verträge, Ergebnisse und Historie bleiben gespeichert.",
+        "Die Einstellungen zeigen Spieltage, Coin-Guthaben, Kosten, Voraussetzungen und Wechselzeitraum.",
         "Nach der Aktivierung bleibt der Hauptclub der aktive Club.",
         "Fahrer können nur bei offenem Wechselzeitraum und freiem Platz in die erste Mannschaft wechseln.",
         "Fahrer ab 24 sollten im erlaubten Wechselzeitraum verschoben werden."
@@ -405,7 +405,7 @@
       "facts": [
         {
           "label": "Verfügbarkeit",
-          "value": "Nur Premium-Mitglieder"
+          "value": "Alle Manager nach 30 realen Tagen ODER 60 Spieltagen"
         },
         {
           "label": "Aktivierung",
@@ -1681,12 +1681,12 @@
       "category": "Fahrer",
       "title": "Team-Tiefführer entwickeln",
       "subtitle": "Premium-Zugriff, Aktivierung, Verlängerung, Kader und Wechselregeln.",
-      "overview": "Das Entwicklungsteam ist ein Premium-exklusives zweites Team. Die Daten bleiben gespeichert, wenn Premium ausläuft.",
+      "overview": "Das Entwicklungsteam ist ein coin-finanziertes zweites Team für alle Manager nach der normalen Freischaltfrist. Die Daten bleiben bei abgelaufenem Saisonzugang gespeichert.",
       "details": [
-        "Premium ist zusätzlich zu den normalen Zeit- und Coin-Voraussetzungen erforderlich.",
+        "Premium ist nicht erforderlich; die normalen Zeit- und Coin-Voraussetzungen gelten weiterhin.",
         "Die erste Aktivierung kostet 100 Coins, jede Saisonverlängerung 100 Coins.",
-        "Bei Ablauf von Premium wird der Zugriff deaktiviert, ohne Teamdaten zu löschen.",
-        "U23-Cheftrainer, U23-Trainingsautomatisierung und U23-Renncoach-Zugriff benötigen aktives Premium.",
+        "Läuft der Saisonzugang ab, wird der Zugriff deaktiviert, ohne Team, Fahrer, Verträge, Ergebnisse oder Historie zu löschen.",
+        "Der U23-Cheftrainer ist mit aktivem Entwicklungsteam und der normalen Infrastrukturvoraussetzung verfügbar. Premium bleibt nur für ausdrücklich gekennzeichnete U23-Automatisierung und erweiterte Analysen erforderlich.",
         "Nach Aktivierung bleibt der Hauptclub-Kontext aktiv.",
         "Eine Beförderung benötigt einen offenen Wechselzeitraum und freien Platz im ersten Kader.",
         "Fahrer ab 24 sollten verschoben werden, sobald es möglich ist.",
@@ -1738,7 +1738,7 @@
         "Ernährungswissenschaftler unterstützt Ernährung/recovery systeme.",
         "Mechanik unterstützt Reparaturen und technische Systeme.",
         "Scout / Analyst unterstützt externe Fahrerinformationen.",
-        "Der U23-Cheftrainer unterstützt Fahrer des Entwicklungsteams und ist nur für Premium-Mitglieder mit aktivem Entwicklungsteam verfügbar."
+        "Der U23-Cheftrainer unterstützt Fahrer des Entwicklungsteams und ist mit aktivem Entwicklungsteam verfügbar, sofern die normale Infrastrukturvoraussetzung erfüllt ist."
       ],
       "facts": [
         {
@@ -2517,7 +2517,7 @@
         "Die Beratungsvorschläge sollten das aktuelle Etappenprofil, das Wetter, ausgewählte Fahrer und die verfügbaren Ressourcen verwenden.",
         "Der Manager sollte Vorschläge mit Teamzielen vergleichen. Ein Sportdirektor kann einen sicheren generischen Plan vorschlagen, wenn der Benutzer ein aggressives Breakaway-Ziel will.",
         "Die Vorschläge sind für neue Spieler von größter Bedeutung, die noch nicht alle Etappenplansteuerungen verstehen.",
-        "Premium-Analyse und Komfortfunktionen verändern die Rennstärke nicht versteckt. Entwicklungsteam und U23-Cheftrainer sind dagegen ausdrücklich Premium-exklusive Gameplay-Funktionen.",
+        "Premium-Analyse und Komfortfunktionen verändern die Rennstärke nicht versteckt. Das Entwicklungsteam ist ein separater coin-finanzierter Service für alle Manager; ausdrücklich gekennzeichnete Premium-Analyse und Automatisierung bleiben Premium.",
         "Speichern Sie immer den endgültigen Plan nach Überprüfung der Beratung."
       ],
       "facts": [
@@ -3415,7 +3415,7 @@
       "category": "Fahrer",
       "title": "Jugendakademie: Vollständiger U16-Leitfaden",
       "subtitle": "Aktivierung, Personal, Scouting, Rekrutierung, Budget, Ausrüstung, Rennen, Entwicklung und Abschluss.",
-      "overview": "Die Jugendakademie ist ein Premium-exklusives U16-Entwicklungsprogramm mit fest 16 Fahrerplätzen. Eine neue Akademie wird nach 30 realen Tagen ODER 60 Spieltagen seit Clubgründung freigeschaltet und kostet einmalig 50 Coins. Es gibt keine saisonale Coin-Verlängerung. Danach läuft sie über ein separates Akademiebudget aus normalem Clubgeld.",
+      "overview": "Die Jugendakademie ist ein Premium-exklusives U16-Entwicklungsprogramm mit 16 Fahrerplätzen. Sie wird nach 30 realen ODER 60 Spieltagen freigeschaltet, kostet 50 Coins zur Aktivierung und 50 Coins pro späterer Saison. Der Betrieb läuft über normales Clubgeld im separaten Akademiebudget.",
       "facts": {
         "0": {
           "label": "Kapazität",
@@ -3426,8 +3426,8 @@
           "value": "Premium + 30 reale Tage ODER 60 Spieltage"
         },
         "2": {
-          "label": "Aktivierung",
-          "value": "Einmalig 50 Coins; keine saisonale Coin-Verlängerung"
+          "label": "Aktivierung / Verlängerung",
+          "value": "50 Coins Aktivierung; 50 Coins pro Saison"
         },
         "3": {
           "label": "Startpaket",
@@ -3459,9 +3459,9 @@
         }
       },
       "details": {
-        "0": "Nur Premium-Manager können aktivieren. Die 30-real-ODER-60-Spieltag-Regel entspricht der Reife-Sperre des Developing Teams; die zuerst erfüllte Grenze schaltet frei. Die einmaligen 50 Coins sind getrennt von der bei Aktivierung gewählten Geldzuweisung.",
-        "1": "Es gibt keine saisonale Coin-Verlängerung. Die Akademie verursacht bereits echte Clubkosten für Fahrerunterstützung, Personal, Scoutingprogramme, Ausrüstung, Assets, Rennbedarf, Reisen und Wettbewerb. Nach einer Premium-Pause wird eine bestehende Akademie nicht erneut mit 50 Coins belastet.",
-        "2": "Läuft Premium aus, bleiben Akademie und Daten erhalten. Die Verwaltung wird schreibgeschützt, bis Premium wieder aktiv ist; Fahrer, Personal, Historie und Budget werden nicht gelöscht.",
+        "0": "Nur Premium-Manager können aktivieren. Zusätzlich gilt die 30-real-ODER-60-Spieltag-Freischaltung. Die 50 Coins Aktivierungsgebühr sind getrennt von der bei Aktivierung gewählten Geldzuweisung.",
+        "1": "Der Akademiezugang kostet 50 Coins zur Aktivierung und 50 Coins für jede spätere Spielsaison. Premium muss ebenfalls aktiv sein. Fehlt Premium oder die Verlängerung der aktuellen Saison, bleibt die Akademie erhalten, aber die Verwaltung ist schreibgeschützt.",
+        "2": "Läuft Premium ab oder wurde eine neue Saison noch nicht verlängert, bleiben Akademie und Daten erhalten. Fahrer, Personal, Historie, Budget und Akademiedaten werden nicht gelöscht.",
         "3": "Die Akademie startet mit sechs lokalen Fahrern und hat eine harte Obergrenze von 16. Infrastruktur kann Entwicklung, Erholung oder Betriebseffizienz verbessern, erhöht aber niemals die 16 Plätze.",
         "4": "Jugendfahrerprofile zeigen Attribute, Bereitschaft, Ermüdung, Entwicklungsfokus, Unterstützungsvereinbarung und Rennhistorie. Das exakte versteckte Potenzial bleibt verborgen; nutze Talentbewertung und Scouting-Sicherheit.",
         "5": "Enthalten sind Akademiedirektor und U16 Head Coach. Zusätzlich kann maximal ein Youth Scout über den normalen Staff Market eingestellt werden. Jugendpersonal nutzt dieselbe Qualitätsstufe wie Senior-Personal und kann Kurse aus dem Akademiebudget besuchen.",
@@ -3487,7 +3487,7 @@
         "4": "Bestätige Monatspläne rechtzeitig vor Einladungen und Fristen.",
         "5": "Halte Mittel für Fahrer, Personal, Scouting, Kurse, Ausrüstung, Assets, Bedarf und Reisen frei.",
         "6": "Prüfe vor Rennen Bereitschaft und Ermüdung sowie Entwicklungstrends auf der Übersicht.",
-        "7": "Nach Premium-Ablauf reicht die Premium-Reaktivierung; die Akademie bleibt erhalten und kostet nicht erneut 50 Coins."
+        "7": "Läuft Premium während einer bereits bezahlten Saison aus, genügt die Premium-Reaktivierung. Mit einer neuen Saison werden zusätzlich 50 Coins für die Akademie-Verlängerung fällig."
       },
       "relatedLinks": {
         "0": "Jugendakademie öffnen",
