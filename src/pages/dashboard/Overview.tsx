@@ -8925,7 +8925,21 @@ export default function OverviewPage() {
       if (!alive) return;
 
       if (!progress || progress.status === "not_started") {
-        setTutorialMode("invite");
+        // New managers start the core tutorial automatically during their
+        // first game session, matching the Tennis Legacy onboarding model.
+        // Existing accounts are backfilled to skipped by the accompanying
+        // migration so they are not unexpectedly forced through onboarding.
+        const firstStep = overviewTutorialSteps[0];
+        await saveTutorialProgress(
+          "overview",
+          "started",
+          firstStep?.key ?? null,
+        );
+
+        if (!alive) return;
+
+        setTutorialStepIndex(0);
+        setTutorialMode("steps");
       } else if (progress.status === "started") {
         const savedStepIndex = overviewTutorialSteps.findIndex(
           (step) => step.key === progress.last_step_key,
