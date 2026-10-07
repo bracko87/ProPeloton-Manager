@@ -17,6 +17,7 @@ import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import {
   financeTutorialSteps,
   financeWelcomeTutorial,
@@ -743,11 +744,18 @@ export default function FinancePage(): JSX.Element {
       ) : null}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialTargetFrame
+          target={financeTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
         <TutorialOverlay
           open
           variant="panel"
           title={financeTutorialSteps[tutorialStepIndex].title}
           body={financeTutorialSteps[tutorialStepIndex].body}
+          tip={financeTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${financeTutorialSteps.length}`}
           primaryAction={
             financeTutorialSteps[tutorialStepIndex].primaryAction ?? t('common.next')
