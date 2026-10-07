@@ -9977,12 +9977,15 @@ export default function OverviewPage() {
 
       {isTutorialOpen && activeStep ? (
         <>
-          <TutorialTargetFrame target={activeStep?.target ?? null} />
+          <TutorialTargetFrame
+            target={activeStep?.target ?? "dashboard-page-body"}
+          />
 
           <TutorialOverlay
             open={isTutorialOpen}
             title={activeStep.title}
             body={activeStep.body}
+            tip={activeStep.tip}
             stepLabel={`${currentIndex + 1} / ${steps.length}`}
             primaryAction={activeStep.primaryAction}
             secondaryAction={activeStep.secondaryAction}
@@ -10019,7 +10022,10 @@ export default function OverviewPage() {
       {!menuTutorialLoading && menuTutorialMode === "steps" ? (
         <>
           <TutorialTargetFrame
-            target={menuTutorialSteps[menuTutorialStepIndex].target}
+            target={
+              menuTutorialSteps[menuTutorialStepIndex].target ??
+              "dashboard-page-body"
+            }
           />
 
           <TutorialOverlay
@@ -10027,6 +10033,7 @@ export default function OverviewPage() {
             variant="panel"
             title={menuTutorialSteps[menuTutorialStepIndex].title}
             body={menuTutorialSteps[menuTutorialStepIndex].body}
+            tip={menuTutorialSteps[menuTutorialStepIndex].tip}
             stepLabel={`${menuTutorialStepIndex + 1}/${menuTutorialSteps.length}`}
             primaryAction={
               menuTutorialSteps[menuTutorialStepIndex].primaryAction ?? "Next"
