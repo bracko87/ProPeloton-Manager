@@ -459,6 +459,8 @@
     "teamPoliciesDescription": "Längerfristige Unterstützungspakete und interne Clubstandards für Fahrer und Mitarbeiter.",
     "housingSupport": "Unterstützung für den Wohnungsbau",
     "housingSupportDescription": "Gemeinsame Wohnungsförderungspolitik für aktive Fahrer und Mitarbeiter.",
+    "housingSupportCampusDisabled": "Die Wohnungsunterstützung ist im Team Residential Campus enthalten und wird nicht mehr als separate Teamrichtlinie berechnet. Reiseunterkünfte für Rennen, Rundfahrten und Trainingslager bleiben davon getrennt und gelten weiterhin.",
+    "housingSupportCampusIncluded": "Im Team Residential Campus enthalten · $0 Wohnkosten-Richtlinie",
     "nutritionSupport": "Ernährungsförderung",
     "nutritionSupportDescription": "Wöchentliche Ernährung und Unterstützung für das gesamte Team.",
     "recoverySupport": "Unterstützung bei der Wiederherstellung",
