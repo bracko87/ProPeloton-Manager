@@ -15,6 +15,7 @@ type TutorialOverlayProps = {
   open: boolean
   title: string
   body: string
+  accessNote?: string
   tip?: string
   stepLabel?: string
   primaryAction: string
@@ -131,6 +132,7 @@ export default function TutorialOverlay({
   open,
   title,
   body,
+  accessNote,
   tip,
   stepLabel,
   primaryAction,
@@ -241,12 +243,16 @@ export default function TutorialOverlay({
       ? SMOOTH_START_OFFER.secondaryAction
       : secondaryAction
 
+  const displayAccessNote =
+    smoothStartMode === null ? accessNote : undefined
   const displayTip =
     smoothStartMode === null ? tip : undefined
 
   const localizedTitle =
     localizeTutorialLiteral(displayTitle) ?? displayTitle
   const localizedBody = localizeTutorialLiteral(displayBody) ?? displayBody
+  const localizedAccessNote =
+    localizeTutorialLiteral(displayAccessNote) ?? displayAccessNote
   const localizedTip = localizeTutorialLiteral(displayTip) ?? displayTip
   const localizedPrimaryAction =
     localizeTutorialLiteral(displayPrimaryAction) ?? displayPrimaryAction
@@ -269,6 +275,7 @@ export default function TutorialOverlay({
         displayStepLabel ?? '',
         displayTitle,
         displayBody,
+        displayAccessNote ?? '',
         displayTip ?? '',
         displayPrimaryAction,
         displaySecondaryAction ?? '',
@@ -282,6 +289,7 @@ export default function TutorialOverlay({
       displayStepLabel,
       displayTitle,
       displayBody,
+      displayAccessNote,
       displayTip,
       displayPrimaryAction,
       displaySecondaryAction,
@@ -645,6 +653,17 @@ export default function TutorialOverlay({
           <div className="whitespace-pre-line text-sm font-normal leading-7 text-slate-700">
             {localizedBody}
           </div>
+
+          {localizedAccessNote ? (
+            <div className="mt-5 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3">
+              <div className="text-[11px] font-normal uppercase tracking-[0.18em] text-violet-800">
+                {t('common.access', { defaultValue: 'Access' })}
+              </div>
+              <div className="mt-1 text-sm font-normal leading-6 text-slate-700">
+                {localizedAccessNote}
+              </div>
+            </div>
+          ) : null}
 
           {localizedTip ? (
             <div className="mt-5 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3">
