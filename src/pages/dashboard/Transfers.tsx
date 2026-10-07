@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import {
   transfersTutorialSteps,
   transfersWelcomeTutorial,
@@ -3710,11 +3711,18 @@ export default function TransfersPage() {
       ) : null}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialTargetFrame
+          target={transfersTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
         <TutorialOverlay
           open
           variant="panel"
           title={transfersTutorialSteps[tutorialStepIndex].title}
           body={transfersTutorialSteps[tutorialStepIndex].body}
+          tip={transfersTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${transfersTutorialSteps.length}`}
           primaryAction={
             transfersTutorialSteps[tutorialStepIndex].primaryAction ?? t('common.next')
