@@ -3722,6 +3722,7 @@ export default function TransfersPage() {
           variant="panel"
           title={transfersTutorialSteps[tutorialStepIndex].title}
           body={transfersTutorialSteps[tutorialStepIndex].body}
+          accessNote={transfersTutorialSteps[tutorialStepIndex].accessNote}
           tip={transfersTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${transfersTutorialSteps.length}`}
           primaryAction={
