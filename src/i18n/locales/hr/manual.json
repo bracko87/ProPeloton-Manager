@@ -391,13 +391,13 @@
     "developing-team": {
       "category": "Vozači",
       "title": "Razvojni tim",
-      "subtitle": "Premium-only U23 struktura, aktivacija, obnova i periodi za premještanje.",
-      "overview": "Razvojni tim je Premium-only drugi tim povezan s glavnim klubom. Premium mora ostati aktivan za korištenje tima i U23 glavnog trenera; podaci ostaju spremljeni ako Premium istekne.",
+      "subtitle": "U23 struktura financirana coinima, aktivacija, obnova i periodi za premještanje.",
+      "overview": "Razvojni tim je drugi tim povezan s glavnim klubom i financiran coinima. Dostupan je svim menadžerima nakon 30 stvarnih ILI 60 dana u igri. Premium nije potreban za osnovni servis ni U23 glavnog trenera.",
       "details": [
-        "Aktivni Premium potreban je za stvaranje, reaktivaciju, obnovu ili korištenje Razvojnog tima. U23 glavni trener također je Premium-only.",
+        "Premium nije potreban za stvaranje, reaktivaciju, obnovu ili korištenje Razvojnog tima. Prva aktivacija košta 100 coina, a svaka sezonska obnova ili reaktivacija 100 coina.",
         "Prva aktivacija košta 100 Coins, a svaka sezonska obnova 100 Coins. Uobičajeni vremenski uvjet i dalje vrijedi prije prve aktivacije.",
-        "Ako Premium istekne, pristup se pauzira i U23 funkcije se isključuju; tim, vozači, ugovori, rezultati i povijest ostaju spremljeni.",
-        "Postavke prikazuju Premium pristup, dane igranja, saldo, troškove, uvjete i period premještanja.",
+        "Ako sezonska obnova nije plaćena, pristup se pauzira do reaktivacije; tim, vozači, ugovori, rezultati i povijest ostaju spremljeni.",
+        "Postavke prikazuju dane igranja, saldo coina, troškove, uvjete i period premještanja.",
         "Nakon aktivacije glavni klub ostaje aktivni klub.",
         "Promocija zahtijeva otvoren period i slobodno mjesto u Prvom timu.",
         "Vozače od 24+ treba premjestiti kada igra to dopušta."
@@ -405,7 +405,7 @@
       "facts": [
         {
           "label": "Dostupnost",
-          "value": "Samo Premium članovi"
+          "value": "Svi menadžeri nakon 30 stvarnih ILI 60 dana u igri"
         },
         {
           "label": "Aktivacija",
@@ -1681,12 +1681,12 @@
       "category": "Vozači",
       "title": "Vodič za razvoj dubokog tima",
       "subtitle": "Premium pristup, aktivacija, obnova, kadar i pravila premještanja.",
-      "overview": "Razvojni tim je Premium-only drugi tim. Podaci ostaju spremljeni ako Premium istekne.",
+      "overview": "Razvojni tim je drugi tim financiran coinima i dostupan svima nakon normalnog vremenskog uvjeta. Podaci ostaju spremljeni ako sezonski pristup istekne.",
       "details": [
-        "Premium je potreban uz normalne vremenske i Coin uvjete.",
+        "Premium nije potreban; normalni vremenski i coin uvjeti i dalje vrijede.",
         "Prva aktivacija košta 100 Coins, a svaka sezonska obnova 100 Coins.",
-        "Ako Premium istekne, pristup se deaktivira bez brisanja podataka.",
-        "U23 glavni trener, U23 automatizacija treninga i U23 trkaći trener zahtijevaju aktivni Premium.",
+        "Ako sezonski pristup istekne, pristup se deaktivira bez brisanja tima, vozača, ugovora, rezultata ili povijesti.",
+        "U23 glavni trener dostupan je uz aktivan Razvojni tim i normalni infrastrukturni uvjet. Premium ostaje potreban samo za izričito Premium U23 automatizaciju i naprednu analitiku.",
         "Nakon aktivacije vraća se kontekst glavnog kluba.",
         "Promocija zahtijeva otvoren period i slobodno mjesto u Prvom timu.",
         "Vozače od 24+ treba premjestiti kada je moguće.",
@@ -1738,7 +1738,7 @@
         "Hranioc podržava sistem ishrane i oporavivanja.",
         "Mehanika podržava popravke i tehnički sistem.",
         "Izviđač / Analitičar podržava spoljašnje podatke o vozaču.",
-        "U23 glavni trener podržava vozače Razvojnog tima i dostupan je samo Premium članovima s aktivnim Razvojnim timom."
+        "U23 glavni trener podržava vozače Razvojnog tima i dostupan je uz aktivan Razvojni tim, uz normalni infrastrukturni uvjet."
       ],
       "facts": [
         {
@@ -2517,7 +2517,7 @@
         "Predlogi savjetnika treba da koriste trenutni bini profil, vrijeme, odabrane vozače i raspoložive resurse.",
         "Menadžer treba da uporedi sugestije sa ciljevima tima. Direktor sporta može predložiti siguran generički plan kada korisnik želi agresivnu metu za otpuštanje.",
         "Predlogi su najvredniji za nove igrače koji još uvek ne razumeju sve kontrole pozorničkog plana.",
-        "Premium analitika i praktični alati ne mijenjaju skriveno snagu u race engineu. Razvojni tim i U23 glavni trener zasebne su, izričito Premium-only gameplay funkcije.",
+        "Premium analitika i praktični alati ne mijenjaju skriveno snagu u race engineu. Razvojni tim je zaseban servis financiran coinima i dostupan svima; izričito Premium analitika i automatizacija ostaju Premium.",
         "Uvek spremi konačni plan nakon pregleda savjeta."
       ],
       "facts": [
@@ -3415,7 +3415,7 @@
       "category": "Vozači",
       "title": "Akademija mladih: potpuni U16 vodič",
       "subtitle": "Aktivacija, osoblje, scouting, regrutacija, budžet, oprema, utrke, razvoj i promocija.",
-      "overview": "Akademija mladih je Premium U16 program s fiksnih 16 mjesta. Nova Akademija otključava se nakon 30 stvarnih dana ILI 60 dana u igri od osnivanja kluba i košta jednokratno 50 coina. Nema sezonske coin obnove; nakon aktivacije koristi poseban budžet iz normalnog novca kluba.",
+      "overview": "Akademija mladih je Premium U16 program s 16 mjesta. Otključava se nakon 30 stvarnih ILI 60 dana u igri, košta 50 coina za aktivaciju i 50 coina za svaku kasniju sezonu. Operacije se financiraju normalnim novcem kluba kroz odvojeni budžet Akademije.",
       "facts": {
         "0": {
           "label": "Kapacitet",
@@ -3426,8 +3426,8 @@
           "value": "Premium + 30 stvarnih dana ILI 60 dana u igri"
         },
         "2": {
-          "label": "Aktivacija",
-          "value": "50 coina jednom; bez sezonske coin obnove"
+          "label": "Aktivacija / obnova",
+          "value": "50 coina aktivacija; 50 coina po sezoni"
         },
         "3": {
           "label": "Početni paket",
@@ -3459,9 +3459,9 @@
         }
       },
       "details": {
-        "0": "Activation is available only to Premium managers. The 30-real-day OR 60-game-day rule is the same maturity gate used for the Developing Team; whichever threshold is reached first unlocks the Academy. The one-time 50-coin activation fee is separate from the Academy cash allocation selected during activation.",
-        "1": "There is no Youth Academy seasonal coin renewal. This is intentional because the Academy already has meaningful club-cash costs for rider support, staff, scouting programmes, equipment, assets, race supplies, travel and competition. Existing Academies are not charged again when Premium access later returns.",
-        "2": "If Premium expires, the Academy and its data are preserved. Management becomes read-only until Premium is active again; riders, staff, history, budget and Academy records are not deleted.",
+        "0": "Aktivacija je dostupna samo Premium menadžerima. Vrijedi i uvjet 30 stvarnih ILI 60 dana u igri. Aktivacijskih 50 coina odvojeno je od budžeta Akademije.",
+        "1": "Pristup Akademiji košta 50 coina za aktivaciju i 50 coina za svaku kasniju sezonu. Premium također mora biti aktivan. Ako nedostaje Premium ili obnova trenutne sezone, Akademija ostaje spremljena, ali upravljanje je samo za čitanje.",
+        "2": "Ako Premium istekne ili nova sezona još nije obnovljena, Akademija i podaci ostaju spremljeni. Vozači, osoblje, povijest, budžet i zapisi se ne brišu.",
         "3": "The Academy starts with six local riders and has a hard cap of 16. Infrastructure can improve U16 development, recovery or operating efficiency, but it does not raise the 16-rider capacity.",
         "4": "Youth Rider profiles show riding attributes, readiness, fatigue, development focus, support agreement and race history. Exact hidden potential is intentionally not exposed; use Talent Assessment bands and scouting confidence instead.",
         "5": "The included starter staff are the Youth Academy Director and U16 Head Coach. A maximum of one Youth Scout can be hired from the normal Staff Market. Youth roles use the same quality ladder as senior staff and can take dedicated staff courses paid from the Academy budget.",
@@ -3487,7 +3487,7 @@
         "4": "Odobri mjesečne planove prije rokova.",
         "5": "Čuvaj sredstva za vozače, osoblje, scouting, tečajeve, opremu, assets, supplies i putovanja.",
         "6": "Prije utrka provjeri spremnost, umor i trend razvoja.",
-        "7": "Ako Premium istekne, Akademija ostaje sačuvana i ne plaćaš ponovno 50 coina."
+        "7": "Ako Premium istekne tijekom već obnovljene sezone, ponovno aktiviraj Premium za pristup. Na početku nove sezone potrebno je i 50 coina za sezonsku obnovu."
       },
       "relatedLinks": {
         "0": "Open Youth Academy",
