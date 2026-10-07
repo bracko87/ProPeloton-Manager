@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import {
   statisticsTutorialSteps,
   statisticsWelcomeTutorial,
@@ -1684,11 +1685,18 @@ export default function StatisticsPage() {
       ) : null}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialTargetFrame
+          target={statisticsTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
         <TutorialOverlay
           open
           variant="panel"
           title={statisticsTutorialSteps[tutorialStepIndex].title}
           body={statisticsTutorialSteps[tutorialStepIndex].body}
+          tip={statisticsTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${statisticsTutorialSteps.length}`}
           primaryAction={
             statisticsTutorialSteps[tutorialStepIndex].primaryAction ?? 'Next'
