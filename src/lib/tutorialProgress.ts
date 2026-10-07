@@ -42,12 +42,37 @@ export type TutorialNavigationState = {
 }
 
 const TUTORIAL_AUTO_START_STORAGE_KEY = 'ppm:auto-start-tutorial'
+const TUTORIAL_ACTIVE_SESSION_STORAGE_KEY = 'ppm:tutorial-active-session-v2'
 const TUTORIAL_HISTORY_STORAGE_KEY = 'ppm:tutorial-history-v1'
 const TUTORIAL_LAST_RESTORE_STORAGE_KEY = 'ppm:tutorial-last-restore-v1'
 
 export const TUTORIAL_HISTORY_CHANGED_EVENT = 'ppm:tutorial-history-changed'
 export const TUTORIAL_RESTORE_NAVIGATION_EVENT =
   'ppm:tutorial-restore-navigation'
+
+function getActiveTutorialSessionKey(): TutorialKey | null {
+  if (!canUseWindow()) return null
+
+  const value = window.sessionStorage.getItem(TUTORIAL_ACTIVE_SESSION_STORAGE_KEY)
+  return value ? (value as TutorialKey) : null
+}
+
+function setActiveTutorialSessionKey(tutorialKey: TutorialKey): void {
+  if (!canUseWindow()) return
+  window.sessionStorage.setItem(TUTORIAL_ACTIVE_SESSION_STORAGE_KEY, tutorialKey)
+}
+
+function clearActiveTutorialSessionKey(tutorialKey?: TutorialKey): void {
+  if (!canUseWindow()) return
+
+  if (!tutorialKey || getActiveTutorialSessionKey() === tutorialKey) {
+    window.sessionStorage.removeItem(TUTORIAL_ACTIVE_SESSION_STORAGE_KEY)
+  }
+}
+
+export function isTutorialActiveInThisSession(tutorialKey: TutorialKey): boolean {
+  return getActiveTutorialSessionKey() === tutorialKey
+}
 
 const TUTORIAL_FALLBACK_HASH_BY_KEY: Partial<Record<TutorialKey, string>> = {
   overview: '#/dashboard/overview',
@@ -237,6 +262,7 @@ function clearFinishedTutorialSessionState(
 ): void {
   if (status === 'skipped') {
     clearPendingTutorialAutoStart()
+    clearActiveTutorialSessionKey(tutorialKey)
     clearStoredRestoreNavigation()
     removeTutorialFromHistory(tutorialKey)
     return
@@ -244,6 +270,7 @@ function clearFinishedTutorialSessionState(
 
   if (status === 'completed') {
     clearPendingTutorialAutoStart(tutorialKey)
+    clearActiveTutorialSessionKey(tutorialKey)
     clearStoredRestoreNavigation(tutorialKey)
   }
 }
@@ -508,6 +535,21 @@ export async function getTutorialProgress(
 
   if (progress) {
     clearFinishedTutorialSessionState(tutorialKey, progress.status)
+
+    // Do not reopen an unfinished tutorial automatically on a later login or
+    // browser session. Explicit Help-page restarts and the current tutorial
+    // chain mark the module active in sessionStorage and can still resume.
+    if (
+      progress.status === 'started' &&
+      !isTutorialActiveInThisSession(tutorialKey) &&
+      canUseWindow() &&
+      window.sessionStorage.getItem(TUTORIAL_AUTO_START_STORAGE_KEY) !== tutorialKey
+    ) {
+      return {
+        ...progress,
+        status: 'skipped',
+      }
+    }
   }
 
   return progress
@@ -531,6 +573,10 @@ export async function saveTutorialProgress(
   }
 
   const savedProgress = data as TutorialProgress
+
+  if (status === 'started') {
+    setActiveTutorialSessionKey(tutorialKey)
+  }
 
   clearFinishedTutorialSessionState(tutorialKey, status)
 
