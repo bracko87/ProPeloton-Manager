@@ -1036,23 +1036,6 @@ export default function DevelopingTeamPage() {
       setIsPremium(hasPremiumAccess)
       setIsPremiumLoading(false)
 
-      if (!hasPremiumAccess) {
-        setRows([])
-        setHealthOverviewRows([])
-        setCompetitionSummary(null)
-        setCompetitionLoading(false)
-        setDevelopingTeamStatus({
-          team_exists: false,
-          is_purchased: false,
-          is_active: false,
-          is_read_only: true,
-        } as unknown as DevelopingTeamPageStatus)
-        setDevelopingTeamSeasonDashboardData(createEmptySquadSeasonDashboardData())
-        setLoading(false)
-        navigate('/dashboard/squad', { replace: true })
-        return
-      }
-
       const userId = authData.user?.id
       if (!userId) throw new Error('Not authenticated.')
 
@@ -1251,8 +1234,9 @@ export default function DevelopingTeamPage() {
           })
       }
 
-      // Developing Team is Premium-only. Operational race data is loaded only
-      // after Premium access has been confirmed for this page.
+      // Developing Team operational data is available to every manager with
+      // active seasonal access. Premium still gates the advanced analytics
+      // surfaces rendered by DevelopingSquadTab.
       void fetchSquadSeasonDashboardData(developingClubId, seasonYear)
         .then((dashboardData) => {
           setDevelopingTeamSeasonDashboardData(dashboardData)
