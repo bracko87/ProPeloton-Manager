@@ -110,6 +110,7 @@ export default function TutorialTargetFrame({
     let animationFrameId = 0
     let secondAnimationFrameId = 0
     let timeoutId = 0
+    let missingTargetTimeoutId = 0
     let intervalId = 0
     let cancelled = false
 
@@ -137,6 +138,13 @@ export default function TutorialTargetFrame({
     })
 
     timeoutId = window.setTimeout(updateFrame, 120)
+    missingTargetTimeoutId = window.setTimeout(() => {
+      if (!cancelled && target && !findTargetElement(target)) {
+        console.warn(
+          `Tutorial target "${target}" is unavailable. Continuing without a highlight.`,
+        )
+      }
+    }, 1200)
     intervalId = window.setInterval(updateFrame, 250)
 
     const targetElement = findTargetElement(target)
@@ -166,6 +174,7 @@ export default function TutorialTargetFrame({
       window.cancelAnimationFrame(animationFrameId)
       window.cancelAnimationFrame(secondAnimationFrameId)
       window.clearTimeout(timeoutId)
+      window.clearTimeout(missingTargetTimeoutId)
       window.clearInterval(intervalId)
       window.removeEventListener('resize', updateFrame)
       window.removeEventListener('scroll', updateFrame, true)
