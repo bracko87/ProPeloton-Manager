@@ -102,7 +102,7 @@
     },
     "developing": {
       "title": "Team und Bewegungsfenster entwickeln",
-      "body": "Dein Entwicklungsteam ist ein Premium-exklusives zweites Team für junge Fahrer, die noch nicht für die erste Mannschaft bereit sind, aber an zugewiesenen Rennen teilnehmen können.\n\nFür Erstellung und Nutzung ist eine aktive Premium-Mitgliedschaft erforderlich. Die erste Aktivierung kostet 100 Coins und jede Saisonverlängerung 100 Coins. Auch der U23-Cheftrainer ist Premium-exklusiv.\n\nWenn Premium ausläuft, wird der Zugriff pausiert, aber Team, Fahrer, Verträge, Ergebnisse und Historie bleiben gespeichert. Wechsel zwischen erster Mannschaft und Entwicklungsteam sind weiterhin nur in den normalen Wechselzeiträumen möglich.",
+      "body": "Dein Entwicklungsteam ist die normale Entwicklungsstufe für junge Fahrer, die noch nicht für die erste Mannschaft bereit sind und in zugewiesenen Entwicklungsrennen starten können.\n\nDas Entwicklungsteam steht Free- und Premium-Managern zur Verfügung. Die Aktivierung kostet 100 Coins und jede Saisonverlängerung 100 Coins. Für den Dienst oder die normale Nutzung des U23-Cheftrainers ist kein Premium nötig.\n\nAbsolventen der Youth Academy können zuerst ins Entwicklungsteam wechseln, bevor sie in die erste Mannschaft aufsteigen. Wechsel zwischen erster Mannschaft und Entwicklungsteam sind nur in den normalen Wechselzeiträumen möglich. Premium-Automatisierung oder erweiterte Analysen bleiben vom Basisdienst getrennt.",
       "primary": "Nächste"
     },
     "staff": {
@@ -169,7 +169,7 @@
     },
     "buildings": {
       "title": "Einrichtungen",
-      "body": "Das ist die Infrastrukturseite. Auf der Registerkarte Einrichtungen werden die Gebäude angezeigt, die Ihr Club besitzen kann, und das Upgrade. Jedes Team beginnt mit einem grundlegenden Level 1 Clubhouse. Später können Sie wichtige Einrichtungen wie das Trainingszentrum, das Medical Center, die Jugendakademie, den Mechanik Workshop und das Scouting Office bauen und aktualisieren.",
+      "body": "Das ist die Infrastrukturseite.\n\nDie Registerkarte Einrichtungen zeigt die Gebäude, die dein Club besitzen und verbessern kann. Jedes Team beginnt mit einem einfachen Clubhouse auf Level 1.\n\nSpäter kannst du wichtige Einrichtungen wie Training Center, Medical Center, Academy-Unterstützung, Mechanics Workshop und Scouting Office bauen und verbessern. Das separate Youth Academy / U16-Programm ist eine Premium-Funktion mit eigenen Aktivierungs- und saisonalen Coin-Zugangsregeln.\n\nEinrichtungen verbessern deinen Club und können auch bestimmen, wie viele Mitarbeiter du beschäftigen darfst.",
       "primary": "Nächste"
     },
     "projects": {
