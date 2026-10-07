@@ -331,6 +331,32 @@ export default function FeatureTutorialHost(): JSX.Element | null {
     if (!module) return
 
     if (mode === 'core-bridge') {
+      stopCoreBridge()
+      return
+    }
+
+    if (mode === 'invite') {
+      await skipTutorial()
+      return
+    }
+
+    await saveTutorialProgress(module.key, 'started', activeStep?.key ?? null)
+    setMode('closed')
+  }
+
+  async function learnMore(): Promise<void> {
+    if (!module) return
+
+    await saveTutorialProgress(
+      module.key,
+      'completed',
+      activeStep?.key ?? module.steps[module.steps.length - 1]?.key ?? null,
+    )
+    setMode('closed')
+    navigate('/dashboard/manual')
+  }
+
+  if (mode === 'core-bridge') {
     const bridge = CORE_BRIDGE_FLOW[module.key]
     const bridgeStep = module.steps[0]
 
@@ -353,27 +379,6 @@ export default function FeatureTutorialHost(): JSX.Element | null {
         />
       </>
     )
-  }
-
-  if (mode === 'invite') {
-      await skipTutorial()
-      return
-    }
-
-    await saveTutorialProgress(module.key, 'started', activeStep?.key ?? null)
-    setMode('closed')
-  }
-
-  async function learnMore(): Promise<void> {
-    if (!module) return
-
-    await saveTutorialProgress(
-      module.key,
-      'completed',
-      activeStep?.key ?? module.steps[module.steps.length - 1]?.key ?? null,
-    )
-    setMode('closed')
-    navigate('/dashboard/manual')
   }
 
   if (mode === 'invite') {
