@@ -107,6 +107,11 @@ type YouthAcademyServiceStatus = {
   default_season_budget?: number
   activation_coin_cost?: number
   renewal_coin_cost?: number
+  current_season?: number
+  renewed_through_season?: number | null
+  season_access_active?: boolean
+  renewal_required?: boolean
+  can_renew?: boolean
   coin_balance?: number
   real_days_played?: number
   game_days_played?: number
@@ -440,6 +445,12 @@ function describeCoinTransaction(reason: string, payload: any) {
   if (reason === 'scout_report_extra') return appI18n.t('transactions.extraScout', { ns: 'proPackages' })
   if (reason === 'youth_academy_activation') {
     return appI18n.t('transactions.youthAcademyActivation', { ns: 'proPackages' })
+  }
+  if (reason === 'youth_academy_season_renewal') {
+    const season = Number(payload?.season_number ?? payload?.season)
+    return Number.isFinite(season)
+      ? appI18n.t('transactions.youthAcademyRenewal', { ns: 'proPackages', season })
+      : appI18n.t('transactions.youthAcademySeasonalRenewal', { ns: 'proPackages' })
   }
   if (reason === 'premium_monthly_grant') return appI18n.t('transactions.premiumGrant', { ns: 'proPackages' })
 
@@ -1750,8 +1761,8 @@ export default function ProPackagesPage(): JSX.Element {
                 <td className="px-5 py-4 font-medium text-gray-900">
                   {t('comparison.developing')}
                 </td>
-                <td className="px-5 py-4 text-center font-semibold text-gray-500">
-                  {t('comparison.premiumOnly')}
+                <td className="px-5 py-4 text-center font-semibold text-gray-700">
+                  {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}
                 </td>
                 <td className="px-5 py-4 text-center font-bold text-gray-900">
                   {t('comparison.activationRenewal', { activation: developingTeamActivationCost, renewal: developingTeamRenewalCost })}
@@ -2126,13 +2137,15 @@ export default function ProPackagesPage(): JSX.Element {
                 }`}>
                   {loadingYouthAcademyService
                     ? t('services.loadingYouth')
-                    : youthAcademyService?.activated
-                      ? t('services.active')
-                      : !premiumStatus?.is_premium
-                        ? t('services.premiumRequired')
-                        : youthAcademyService?.can_activate
-                          ? t('services.available')
-                          : t('services.locked')}
+                    : youthAcademyService?.activated && youthAcademyService?.renewal_required
+                      ? t('services.renewalRequired')
+                      : youthAcademyService?.activated
+                        ? t('services.active')
+                        : !premiumStatus?.is_premium
+                          ? t('services.premiumRequired')
+                          : youthAcademyService?.can_activate
+                            ? t('services.available')
+                            : t('services.locked')}
                 </span>
               </div>
 
@@ -2156,7 +2169,8 @@ export default function ProPackagesPage(): JSX.Element {
                 <MembershipItem
                   label={t('services.youthActivationCost')}
                   value={t('services.youthActivationCostValue', {
-                    cost: youthAcademyService?.activation_coin_cost ?? 50,
+                    activation: youthAcademyService?.activation_coin_cost ?? 50,
+                    renewal: youthAcademyService?.renewal_coin_cost ?? 50,
                   })}
                 />
                 <MembershipItem
