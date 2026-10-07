@@ -2,7 +2,7 @@
   "loading": "Caricamento Accademia Giovanile…",
   "title": "Accademia Giovanile",
   "subtitle": "Programma Premium U16 per ciclisti dai 12 ai 16 anni.",
-  "readOnly": "Premium non è attivo. Corridori e storico dell'accademia restano salvati, ma la gestione è in sola lettura.",
+  "readOnly": "La gestione dell'Accademia è in sola lettura perché Premium è inattivo o la stagione corrente non è stata rinnovata.",
   "week": "settimana",
   "save": "Salva modifiche",
   "saving": "Salvataggio…",
@@ -11,7 +11,7 @@
   "optionalNotHired": "Facoltativo — non ingaggiato",
   "premium": {
     "title": "Accademia Giovanile Premium",
-    "description": "L'Accademia Giovanile è un sistema di sviluppo riservato ai membri Premium. Un membro Premium può attivare facoltativamente un'accademia U16 con capacità fissa di 16 corridori.",
+    "description": "L'Accademia Giovanile è un livello di sviluppo esclusivo Premium. I membri Premium possono attivare un'accademia U16 da 16 posti e rinnovare l'accesso per 50 Coins ogni stagione.",
     "capacity": "Capacità fissa di 16 giovani corridori",
     "localStart": "Inizio con 6 giovani corridori locali",
     "staff": "Direttore dell'Accademia Giovanile medio + allenatore capo U16 inclusi",
@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Attiva Accademia Giovanile",
-    "description": "L'attivazione crea la tua accademia U16 separata. Una nuova accademia richiede Premium, 30 giorni reali O 60 giorni di gioco dalla creazione del club, una quota una tantum di 50 coin e il budget dell'accademia scelto. Inizi con sei corridori locali, un Direttore dell'Accademia e un Allenatore U16. Lo Scout Giovanile è opzionale.",
+    "description": "L'attivazione crea la tua accademia U16 separata. Servono Premium, 30 giorni reali O 60 giorni di gioco dalla creazione del club, 50 Coins di attivazione e il budget scelto. Dalla stagione successiva, l'accesso costa 50 Coins per stagione finché Premium resta attivo. Inizi con sei corridori locali, Direttore Accademia e Allenatore U16. Youth Scout è opzionale.",
     "capacityLabel": "Numero massimo di corridori",
     "starterRidersLabel": "Corridori iniziali",
     "staffLabel": "Staff incluso",
@@ -30,13 +30,15 @@
     "budgetHelp": "La quota di attivazione è separata da questo budget in denaro del club. Il budget dell'accademia finanzia supporto corridori, staff, scouting, equipaggiamento, ritiri, viaggi e competizioni giovanili.",
     "activate": "Attiva Accademia Giovanile",
     "activating": "Attivazione…",
-    "coinCostLabel": "Quota coin una tantum",
+    "coinCostLabel": "Costo di attivazione",
     "unlockLabel": "Requisito di sblocco",
     "coinBalanceLabel": "Saldo coin",
     "coins": "{{count}} coin",
     "unlockValue": "{{real}} giorni reali O {{game}} giorni di gioco",
     "waiting": "Non ancora sbloccata. Progresso: {{realPlayed}}/{{realRequired}} giorni reali oppure {{gamePlayed}}/{{gameRequired}} giorni di gioco. Il primo requisito raggiunto sblocca l'accademia.",
-    "needCoins": "L'attivazione dell'Accademia Giovanile costa {{cost}} coin. Il saldo attuale è {{balance}}."
+    "needCoins": "L'attivazione dell'Accademia Giovanile costa {{cost}} coin. Il saldo attuale è {{balance}}.",
+    "renewalCostLabel": "Rinnovo stagione",
+    "coinsPerSeason": "{{count}} Coins / stagione"
   },
   "header": {
     "capacity": "{{current}} / {{max}} corridori"
@@ -339,7 +341,8 @@
     "reportFrequency": "Impossibile salvare la preferenza dei report giovanili.",
     "monthlyRacePlan": "Impossibile salvare il piano mensile delle gare giovanili.",
     "raceInvitationDecline": "Impossibile rifiutare l'invito alla gara giovanile.",
-    "budgetTransfer": "Impossibile trasferire i fondi dell'Accademia."
+    "budgetTransfer": "Impossibile trasferire i fondi dell'Accademia.",
+    "renew": "Rinnovo dell'Accademia Giovanile non riuscito."
   },
   "equipment": {
     "title": "Attrezzatura giovanile",
@@ -591,5 +594,14 @@
     "title": "Serve aiuto con l'Accademia Giovanile?",
     "description": "Apri il manuale completo per regole di attivazione, staff, scouting, reclutamento, budget, equipaggiamento, gare, classifiche, sviluppo e passaggio di categoria.",
     "read": "Leggi il manuale dell'Accademia Giovanile"
+  },
+  "renewal": {
+    "title": "Rinnovo Accademia Giovanile — Stagione {{season}}",
+    "description": "Rinnova l'accesso all'Accademia per la stagione corrente per {{cost}} Coins.",
+    "premiumRequired": "È richiesto Premium attivo prima di acquistare il rinnovo stagionale da {{cost}} Coins.",
+    "action": "Rinnova per {{cost}} Coins",
+    "renewing": "Rinnovo…",
+    "getCoins": "Acquista Coins",
+    "readOnly": "L'Accademia Giovanile deve essere rinnovata per la stagione corrente prima delle azioni di gestione."
   }
 }
