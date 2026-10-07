@@ -391,13 +391,13 @@
     "developing-team": {
       "category": "Coureurs",
       "title": "Équipe en développement",
-      "subtitle": "Structure U23 réservée à Premium, activation, renouvellement et fenêtres de mouvement.",
-      "overview": "L'Équipe de Développement est une deuxième équipe réservée à Premium liée au club principal. Premium doit rester actif pour l'utiliser ou utiliser l'Entraîneur Principal U23 ; les données restent conservées si Premium expire.",
+      "subtitle": "Structure U23 financée en coins, activation, renouvellement et fenêtres de mouvement.",
+      "overview": "L'Équipe de Développement est une deuxième équipe financée en coins et liée au club principal. Elle est disponible pour tous après 30 jours réels OU 60 jours de jeu. Premium n'est pas requis pour le service principal ni pour l'Entraîneur Principal U23.",
       "details": [
-        "Un Premium actif est requis pour créer, réactiver, renouveler ou utiliser l'Équipe de Développement. L'Entraîneur Principal U23 est également réservé à Premium.",
+        "Premium n'est pas requis pour créer, réactiver, renouveler ou utiliser l'Équipe de Développement. La première activation coûte 100 coins et chaque renouvellement ou réactivation saisonnier 100 coins.",
         "La première activation coûte 100 Coins et chaque renouvellement saisonnier 100 Coins. La condition de temps normale reste nécessaire avant la première activation.",
-        "Si Premium expire, l'accès est suspendu et les fonctions U23 sont désactivées ; équipe, coureurs, contrats, résultats et historique restent conservés.",
-        "Les Préférences affichent l'accès Premium, les jours joués, le solde, les coûts, les conditions et la fenêtre de mouvement.",
+        "Si le renouvellement saisonnier n'est pas payé, l'accès est suspendu jusqu'à réactivation ; équipe, coureurs, contrats, résultats et historique restent conservés.",
+        "Les Préférences affichent les jours joués, le solde de coins, les coûts, les conditions et la fenêtre de mouvement.",
         "Après activation, le club principal reste le club actif.",
         "Les coureurs ne peuvent rejoindre l'équipe première qu'avec une fenêtre ouverte et une place libre.",
         "Les coureurs de 24 ans et plus doivent être déplacés lorsque le jeu l'autorise."
@@ -405,7 +405,7 @@
       "facts": [
         {
           "label": "Disponibilité",
-          "value": "Membres Premium uniquement"
+          "value": "Tous les managers après 30 jours réels OU 60 jours de jeu"
         },
         {
           "label": "Coût d'activation",
@@ -1681,12 +1681,12 @@
       "category": "Coureurs",
       "title": "Guide détaillé de l'équipe en développement",
       "subtitle": "Accès Premium, activation, renouvellement, effectif et règles de mouvement.",
-      "overview": "L'équipe de développement est une deuxième équipe réservée à Premium. Ses données restent conservées lorsque Premium expire.",
+      "overview": "L'équipe de développement est une deuxième équipe financée en coins et disponible pour tous après la condition de temps normale. Les données restent conservées si l'accès saisonnier expire.",
       "details": [
-        "Premium est requis en plus des conditions normales de temps et de Coins.",
+        "Premium n'est pas requis ; les conditions normales de temps et de coins restent applicables.",
         "La première activation coûte 100 Coins et chaque renouvellement saisonnier 100 Coins.",
-        "Si Premium expire, l'accès est désactivé sans supprimer les données de l'équipe.",
-        "L'Entraîneur Principal U23, l'automatisation d'entraînement U23 et l'accès au coach U23 en course exigent Premium actif.",
+        "Si l'accès saisonnier expire, il est désactivé sans supprimer l'équipe, les coureurs, contrats, résultats ni l'historique.",
+        "L'Entraîneur Principal U23 est disponible avec une Équipe de Développement active et la condition d'infrastructure normale. Premium reste requis seulement pour l'automatisation U23 et les analyses avancées explicitement Premium.",
         "Le contexte du club principal est restauré après l'activation.",
         "La promotion d'un coureur exige une fenêtre ouverte et une place libre en équipe première.",
         "Les coureurs de 24 ans et plus doivent être déplacés dès que possible.",
@@ -1738,7 +1738,7 @@
         "Nutritionniste soutient les systèmes de nutrition et de récupération.",
         "Le mécanicien soutient les réparations et les systèmes techniques.",
         "Scout / Analyste prend en charge l'information externe sur les coureurs.",
-        "L'Entraîneur Principal U23 soutient les coureurs de l'Équipe de Développement et n'est disponible que pour les membres Premium disposant d'une Équipe de Développement active."
+        "L'Entraîneur Principal U23 soutient les coureurs de l'Équipe de Développement et est disponible avec une équipe active, sous réserve de la condition d'infrastructure normale."
       ],
       "facts": [
         {
@@ -2517,7 +2517,7 @@
         "Les suggestions des conseillers devraient utiliser le profil d'étape actuel, la météo, certains coureurs et les ressources disponibles.",
         "Le gestionnaire doit comparer les suggestions avec les objectifs de l'équipe. Un directeur du sport peut suggérer un plan générique sûr lorsque l'utilisateur veut une cible agressive de rupture.",
         "Les suggestions sont les plus utiles pour les nouveaux joueurs qui ne comprennent pas encore tous les contrôles de plan d'étape.",
-        "Les outils Premium d'analyse et de confort ne modifient pas secrètement la puissance dans le moteur de course. L'Équipe de Développement et l'Entraîneur Principal U23 sont, séparément, des fonctions de jeu explicitement réservées à Premium.",
+        "Les outils Premium d'analyse et de confort ne modifient pas secrètement la puissance en course. L'Équipe de Développement est un service séparé financé en coins et disponible pour tous ; les analyses et automatisations explicitement Premium restent Premium.",
         "Gardez toujours le plan final après avoir examiné les conseils."
       ],
       "facts": [
@@ -3415,7 +3415,7 @@
       "category": "Coureurs",
       "title": "Académie Jeunes : guide U16 complet",
       "subtitle": "Activation, staff, scouting, recrutement, budget, équipement, courses, développement et graduation.",
-      "overview": "L'Académie Jeunes est un programme Premium U16 limité à 16 places. Une nouvelle Académie se débloque après 30 jours réels OU 60 jours de jeu depuis la création du club et coûte 50 coins une seule fois. Il n'y a pas de renouvellement saisonnier en coins ; elle fonctionne ensuite avec un budget séparé en argent normal du club.",
+      "overview": "L'Académie Jeunes est un programme U16 réservé à Premium avec 16 places. Elle se débloque après 30 jours réels OU 60 jours de jeu, coûte 50 coins à l'activation puis 50 coins par saison suivante. Son fonctionnement utilise l'argent normal du club via un budget séparé.",
       "facts": {
         "0": {
           "label": "Capacité",
@@ -3426,8 +3426,8 @@
           "value": "Premium + 30 jours réels OU 60 jours de jeu"
         },
         "2": {
-          "label": "Activation",
-          "value": "50 coins une fois ; aucun renouvellement saisonnier"
+          "label": "Activation / renouvellement",
+          "value": "50 coins d'activation ; 50 coins par saison"
         },
         "3": {
           "label": "Pack de départ",
@@ -3459,9 +3459,9 @@
         }
       },
       "details": {
-        "0": "Activation is available only to Premium managers. The 30-real-day OR 60-game-day rule is the same maturity gate used for the Developing Team; whichever threshold is reached first unlocks the Academy. The one-time 50-coin activation fee is separate from the Academy cash allocation selected during activation.",
-        "1": "There is no Youth Academy seasonal coin renewal. This is intentional because the Academy already has meaningful club-cash costs for rider support, staff, scouting programmes, equipment, assets, race supplies, travel and competition. Existing Academies are not charged again when Premium access later returns.",
-        "2": "If Premium expires, the Academy and its data are preserved. Management becomes read-only until Premium is active again; riders, staff, history, budget and Academy records are not deleted.",
+        "0": "Seuls les managers Premium peuvent l'activer. La condition de 30 jours réels OU 60 jours de jeu s'applique également. Les 50 coins d'activation sont séparés du budget attribué à l'Académie.",
+        "1": "L'accès coûte 50 coins à l'activation puis 50 coins pour chaque saison suivante. Premium doit aussi être actif. Si Premium ou le renouvellement de la saison actuelle manque, l'Académie est conservée mais sa gestion passe en lecture seule.",
+        "2": "Si Premium expire ou si une nouvelle saison n'a pas encore été renouvelée, l'Académie et ses données sont conservées. Coureurs, staff, historique, budget et données ne sont pas supprimés.",
         "3": "The Academy starts with six local riders and has a hard cap of 16. Infrastructure can improve U16 development, recovery or operating efficiency, but it does not raise the 16-rider capacity.",
         "4": "Youth Rider profiles show riding attributes, readiness, fatigue, development focus, support agreement and race history. Exact hidden potential is intentionally not exposed; use Talent Assessment bands and scouting confidence instead.",
         "5": "The included starter staff are the Youth Academy Director and U16 Head Coach. A maximum of one Youth Scout can be hired from the normal Staff Market. Youth roles use the same quality ladder as senior staff and can take dedicated staff courses paid from the Academy budget.",
@@ -3487,7 +3487,7 @@
         "4": "Validez les plans mensuels avant les échéances.",
         "5": "Gardez des fonds pour coureurs, staff, scouting, cours, équipement, assets, supplies et déplacements.",
         "6": "Vérifiez forme, fatigue et tendances avant les courses.",
-        "7": "Si Premium expire, l'Académie est conservée et ne demande pas une nouvelle activation à 50 coins."
+        "7": "Si Premium expire pendant une saison déjà renouvelée, réactivez Premium pour reprendre l'accès. Au début d'une nouvelle saison, le renouvellement de 50 coins est aussi requis."
       },
       "relatedLinks": {
         "0": "Open Youth Academy",
