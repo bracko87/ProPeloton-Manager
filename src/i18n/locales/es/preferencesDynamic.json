@@ -30,18 +30,18 @@
     "premiumRequired": "Se requiere una membresía Premium para acceder al Developing Team."
   },
   "service": {
-    "summary": "Solo para miembros Premium. La primera activación cuesta {{activation}} monedas. Cada renovación de temporada o reactivación posterior cuesta {{renewal}} monedas. La membresía Premium debe permanecer activa.",
-    "eligibilityCosts": "Requisitos: membresía Premium activa más 30 días reales o 60 días dentro del juego. Primera activación: {{activation}} monedas. Renovación o reactivación: {{renewal}} monedas por temporada.",
+    "summary": "Disponible para todos. La primera activación cuesta {{activation}} Coins. Cada renovación o reactivación posterior cuesta {{renewal}} Coins.",
+    "eligibilityCosts": "Requisitos: 30 días reales o 60 días de juego. Primera activación: {{activation}} Coins. Renovación o reactivación: {{renewal}} Coins por temporada.",
     "accessUntilSeason": "El acceso sigue disponible hasta el final de la temporada {{season}}.",
     "season": "Temporada {{season}}",
     "endSeason": "Fin de temporada {{season}}",
     "startSeason": "Inicio de la temporada {{season}}",
     "coins": "Coins {{count}}",
-    "autoRenewHelp": "Si está activada, se descontarán {{cost}} monedas al comienzo de la siguiente temporada solo mientras Premium esté activo. Si Premium termina o no tienes saldo suficiente, el acceso al Developing Team dejará de estar disponible.",
+    "autoRenewHelp": "Si está activada, se descontarán {{cost}} Coins al inicio de la próxima temporada. Si no hay saldo suficiente, el acceso se pausa hasta reactivarlo.",
     "activateSeason": "Activar para la temporada {{season}}",
     "existingTeam": "Su equipo de desarrollo existente será activado para esta temporada.",
     "newTeam": "Se creará y activará un equipo de desarrollo para esta temporada.",
-    "activationAccess": "El acceso dura hasta el final de la temporada actual del juego mientras Premium siga activo. La renovación automática se activa por defecto y puede desactivarse en cualquier momento.",
+    "activationAccess": "El acceso dura hasta el final de la temporada actual. La renovación automática está activada por defecto y puede desactivarse en cualquier momento.",
     "needCoins": "Necesitas Coins {{cost}} para activar el acceso al equipo de desarrollo. Balance actual: Coins {{balance}}.",
     "team": "Equipo: {{name}}",
     "closeActivation": "Cerrar confirmación de activación del equipo de desarrollo",
@@ -49,9 +49,9 @@
     "confirmReactivate": "¿Reactivar el equipo de desarrollo para la temporada {{season}}?",
     "deductCoins": "Se descontarán {{cost}} Coins de tu saldo.",
     "accessThisSeason": "El acceso dura hasta el final de esta temporada del juego.",
-    "autoRenewModal": "La renovación automática se activará por defecto. Solo puede renovar mientras Premium esté activo y puedes desactivarla en cualquier momento en Preferencias o Premium y facturación.",
+    "autoRenewModal": "La renovación automática se activará por defecto y puede desactivarse en cualquier momento en Preferencias o Premium y Facturación.",
     "actionActivate": "Activar para {{cost}} Coins",
     "actionReactivate": "Reactivar para {{cost}} Coins",
-    "premiumRequired": "Developing Team es una función de juego exclusiva de Premium. Activa Premium primero; cuando seas elegible, la primera activación cuesta {{activation}} monedas y cada renovación o reactivación posterior cuesta {{renewal}} monedas por temporada. Tus datos U23 existentes se conservan si Premium termina."
+    "premiumRequired": "El Equipo de Desarrollo no requiere Premium. Al cumplir los requisitos, la primera activación cuesta {{activation}} Coins y las posteriores renovaciones o reactivaciones {{renewal}} Coins por temporada."
   }
 }
