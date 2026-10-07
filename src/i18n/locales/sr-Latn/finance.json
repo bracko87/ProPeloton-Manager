@@ -459,6 +459,8 @@
     "teamPoliciesDescription": "Dugoročniji paketi podrške i interni standardi kluba za vozače i osoblje.",
     "housingSupport": "Podrška za smeštaj",
     "housingSupportDescription": "Zajednička politika podrške za smeštaj aktivnih vozača i osoblja.",
+    "housingSupportCampusDisabled": "Podrška za smeštaj uključena je u Team Residential Campus i više se ne naplaćuje kao posebna timska politika. Putni smeštaj za trke, ture i trening kampove ostaje odvojen i i dalje se primenjuje.",
+    "housingSupportCampusIncluded": "Uključeno kroz Team Residential Campus · $0 troška politike smeštaja",
     "nutritionSupport": "Nutritivna podrška",
     "nutritionSupportDescription": "Nedeljna podrška za ishranu i energiju celog tima.",
     "recoverySupport": "Podrška za oporavak",
