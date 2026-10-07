@@ -14,7 +14,25 @@ import {
 import TutorialOverlay from './TutorialOverlay'
 import TutorialTargetFrame from './TutorialTargetFrame'
 
-type TutorialMode = 'closed' | 'invite' | 'steps'
+type TutorialMode = 'closed' | 'invite' | 'steps' | 'core-bridge'
+
+const CORE_BRIDGE_FLOW: Record<string, { nextKey: string; nextRoute: string; primaryAction: string }> = {
+  'national-championships': {
+    nextKey: 'national-association',
+    nextRoute: '/dashboard/national-association',
+    primaryAction: 'Continue to National Association',
+  },
+  'national-association': {
+    nextKey: 'youth-academy',
+    nextRoute: '/dashboard/youth-academy',
+    primaryAction: 'Continue to Youth Academy',
+  },
+  'youth-academy': {
+    nextKey: 'menu',
+    nextRoute: '/dashboard/overview',
+    primaryAction: 'Continue to Menu',
+  },
+}
 
 function getModuleByKey(key: string): AdvancedTutorialModule | null {
   return advancedTutorialModules.find(module => module.key === key) ?? null
@@ -161,6 +179,20 @@ export default function FeatureTutorialHost(): JSX.Element | null {
 
       setLoading(true)
 
+      const autoStartTutorial = window.sessionStorage.getItem('ppm:auto-start-tutorial')
+      const isCoreBridge =
+        autoStartTutorial === routeModule.key &&
+        Object.prototype.hasOwnProperty.call(CORE_BRIDGE_FLOW, routeModule.key)
+
+      if (isCoreBridge) {
+        if (!alive) return
+        setModule(routeModule)
+        setStepIndex(0)
+        setMode('core-bridge')
+        setLoading(false)
+        return
+      }
+
       const resolvedModule =
         routeModule.key === 'youth-academy'
           ? await resolveYouthTutorial(routeModule)
@@ -210,6 +242,26 @@ export default function FeatureTutorialHost(): JSX.Element | null {
 
   const activeStep = module.steps[stepIndex] ?? module.steps[0]
   const isLastStep = stepIndex >= module.steps.length - 1
+
+  async function continueCoreBridge(): Promise<void> {
+    if (!module) return
+
+    const bridge = CORE_BRIDGE_FLOW[module.key]
+    if (!bridge) {
+      window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+      setMode('closed')
+      return
+    }
+
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', bridge.nextKey)
+    setMode('closed')
+    navigate(bridge.nextRoute)
+  }
+
+  function stopCoreBridge(): void {
+    window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+    setMode('closed')
+  }
 
   async function startTutorial(): Promise<void> {
     if (!module || module.steps.length === 0) return
@@ -278,7 +330,32 @@ export default function FeatureTutorialHost(): JSX.Element | null {
   async function closeTutorial(): Promise<void> {
     if (!module) return
 
-    if (mode === 'invite') {
+    if (mode === 'core-bridge') {
+    const bridge = CORE_BRIDGE_FLOW[module.key]
+    const bridgeStep = module.steps[0]
+
+    if (!bridge || !bridgeStep) return null
+
+    return (
+      <>
+        <TutorialTargetFrame target={bridgeStep.target ?? module.target ?? null} />
+        <TutorialOverlay
+          open
+          title={bridgeStep.title}
+          body={bridgeStep.body}
+          stepLabel="Quick introduction"
+          primaryAction={bridge.primaryAction}
+          secondaryAction="Finish for now"
+          onPrimary={() => void continueCoreBridge()}
+          onSecondary={stopCoreBridge}
+          onClose={stopCoreBridge}
+          compact
+        />
+      </>
+    )
+  }
+
+  if (mode === 'invite') {
       await skipTutorial()
       return
     }
