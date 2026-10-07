@@ -1098,7 +1098,7 @@ export default function NationalRankingPage(): JSX.Element {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div data-tutorial-target="national-ranking-page" className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex items-start gap-3">
           {countryFlag ? (
             <img
