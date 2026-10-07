@@ -2037,6 +2037,7 @@ export default function TeamRankingPage(): JSX.Element {
           variant="panel"
           title={localizedTutorialStep?.title ?? teamRankingTutorialSteps[tutorialStepIndex].title}
           body={localizedTutorialStep?.body ?? teamRankingTutorialSteps[tutorialStepIndex].body}
+          accessNote={teamRankingTutorialSteps[tutorialStepIndex].accessNote}
           tip={teamRankingTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${teamRankingTutorialSteps.length}`}
           primaryAction={
