@@ -19,6 +19,7 @@ export type TutorialKey =
   | 'national-association'
   | 'national-coach'
   | 'youth-academy'
+  | 'youth-graduation'
   | 'developing-team'
   | 'new-season'
 
