@@ -538,11 +538,7 @@ export default function App(): JSX.Element {
 
             <Route
               path="hidden-races"
-              element={
-                <RequireAppAdmin>
-                  <HiddenRacesPage />
-                </RequireAppAdmin>
-              }
+              element={<HiddenRacesPage />}
             />
 
             {/* Real race detail route */}
