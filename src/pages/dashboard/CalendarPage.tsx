@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { supabase } from '../../lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import PremiumSeasonPlannerPanel from './calendar/PremiumSeasonPlannerPanel'
 import {
   PremiumFeatureLock,
@@ -2863,11 +2864,18 @@ export default function CalendarPage(): JSX.Element {
       ) : null}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialTargetFrame
+          target={calendarTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
         <TutorialOverlay
           open
           variant="panel"
           title={currentTutorialText.title}
           body={currentTutorialText.body}
+          tip={calendarTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${calendarTutorialSteps.length}`}
           primaryAction={
             tutorialStepIndex === calendarTutorialSteps.length - 1
