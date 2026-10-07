@@ -1,6 +1,7 @@
 // src/components/tutorial/TutorialOverlay.tsx
 import React from 'react'
 import { createPortal } from 'react-dom'
+import { GripHorizontal } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   getTutorialNavigationState,
@@ -139,6 +140,17 @@ export default function TutorialOverlay({
 }: TutorialOverlayProps): JSX.Element | null {
   const { t, i18n } = useTranslation('tutorials')
   const bodyScrollRef = React.useRef<HTMLDivElement | null>(null)
+  const panelRef = React.useRef<HTMLElement | null>(null)
+  const dragRef = React.useRef<{
+    pointerId: number
+    offsetX: number
+    offsetY: number
+  } | null>(null)
+  const [manualPosition, setManualPosition] = React.useState<{
+    left: number
+    top: number
+  } | null>(null)
+  const [dragging, setDragging] = React.useState(false)
   const [previousBusy, setPreviousBusy] = React.useState(false)
   const [smoothStartMode, setSmoothStartMode] =
     React.useState<SmoothStartMode>(null)
@@ -389,6 +401,92 @@ export default function TutorialOverlay({
     onSecondary?.()
   }
 
+  React.useEffect(() => {
+    if (!open) {
+      setManualPosition(null)
+      dragRef.current = null
+      setDragging(false)
+    }
+  }, [open])
+
+  React.useEffect(() => {
+    if (!manualPosition) return
+
+    function clampToViewport(): void {
+      const panel = panelRef.current
+      if (!panel) return
+
+      const rect = panel.getBoundingClientRect()
+      const margin = 8
+      setManualPosition(current => {
+        if (!current) return current
+        const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin)
+        const maxTop = Math.max(margin, window.innerHeight - rect.height - margin)
+        return {
+          left: Math.min(Math.max(current.left, margin), maxLeft),
+          top: Math.min(Math.max(current.top, margin), maxTop),
+        }
+      })
+    }
+
+    window.addEventListener('resize', clampToViewport)
+    return () => window.removeEventListener('resize', clampToViewport)
+  }, [manualPosition])
+
+  function handleDragStart(event: React.PointerEvent<HTMLDivElement>): void {
+    if (variant !== 'panel' || event.button !== 0) return
+
+    const target = event.target as HTMLElement
+    if (target.closest('button, a, input, select, textarea')) return
+
+    const panel = panelRef.current
+    if (!panel) return
+
+    const rect = panel.getBoundingClientRect()
+    dragRef.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+    }
+    setManualPosition({ left: rect.left, top: rect.top })
+    setDragging(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+    event.preventDefault()
+  }
+
+  function handleDragMove(event: React.PointerEvent<HTMLDivElement>): void {
+    const drag = dragRef.current
+    const panel = panelRef.current
+    if (!drag || drag.pointerId !== event.pointerId || !panel) return
+
+    const rect = panel.getBoundingClientRect()
+    const margin = 8
+    const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin)
+    const maxTop = Math.max(margin, window.innerHeight - rect.height - margin)
+
+    setManualPosition({
+      left: Math.min(
+        Math.max(event.clientX - drag.offsetX, margin),
+        maxLeft,
+      ),
+      top: Math.min(
+        Math.max(event.clientY - drag.offsetY, margin),
+        maxTop,
+      ),
+    })
+  }
+
+  function handleDragEnd(event: React.PointerEvent<HTMLDivElement>): void {
+    if (dragRef.current?.pointerId !== event.pointerId) return
+
+    dragRef.current = null
+    setDragging(false)
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }
+
   if (!open) return null
 
   if (variant === 'invite') {
@@ -461,13 +559,33 @@ export default function TutorialOverlay({
       <div className="pointer-events-none fixed inset-0 z-[999] bg-black/10" />
 
       <aside
+        ref={panelRef}
         key={`tutorial-panel-${contentKey}`}
         data-tutorial-overlay-panel="true"
+        data-tutorial-draggable="true"
         className={`fixed right-4 top-24 z-[1000] flex max-h-[calc(100vh-112px)] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ${
           compact ? 'w-[560px]' : 'w-[640px]'
         }`}
+        style={
+          manualPosition
+            ? {
+                left: manualPosition.left,
+                top: manualPosition.top,
+                right: 'auto',
+              }
+            : undefined
+        }
       >
-        <div className="shrink-0 bg-black px-6 py-5 text-white">
+        <div
+          className={`shrink-0 touch-none bg-black px-6 py-5 text-white ${
+            dragging ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+          onPointerDown={handleDragStart}
+          onPointerMove={handleDragMove}
+          onPointerUp={handleDragEnd}
+          onPointerCancel={handleDragEnd}
+          title="Drag tutorial window"
+        >
           <div className="flex items-start justify-between gap-4">
             <div>
               {displayStepLabel ? (
@@ -481,6 +599,11 @@ export default function TutorialOverlay({
               </h3>
             </div>
 
+            <div className="flex items-center gap-2">
+              <GripHorizontal
+                aria-hidden="true"
+                className="h-5 w-5 text-white/55"
+              />
             {onClose && !smoothStartIsActive ? (
               <button
                 type="button"
@@ -491,6 +614,7 @@ export default function TutorialOverlay({
                 ×
               </button>
             ) : null}
+            </div>
           </div>
         </div>
 
