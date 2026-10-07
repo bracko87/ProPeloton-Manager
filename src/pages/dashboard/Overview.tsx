@@ -9990,6 +9990,7 @@ export default function OverviewPage() {
             open={isTutorialOpen}
             title={activeStep.title}
             body={activeStep.body}
+            accessNote={activeStep.accessNote}
             tip={activeStep.tip}
             stepLabel={`${currentIndex + 1} / ${steps.length}`}
             primaryAction={activeStep.primaryAction}
@@ -10035,6 +10036,7 @@ export default function OverviewPage() {
             variant="panel"
             title={menuTutorialSteps[menuTutorialStepIndex].title}
             body={menuTutorialSteps[menuTutorialStepIndex].body}
+            accessNote={menuTutorialSteps[menuTutorialStepIndex].accessNote}
             tip={menuTutorialSteps[menuTutorialStepIndex].tip}
             stepLabel={`${menuTutorialStepIndex + 1}/${menuTutorialSteps.length}`}
             primaryAction={
