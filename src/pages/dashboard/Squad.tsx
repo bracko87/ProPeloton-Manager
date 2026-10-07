@@ -1171,7 +1171,7 @@ export default function SquadPage() {
       {!tutorialLoading && tutorialMode === 'steps' ? (
         <>
           <TutorialTargetFrame
-            target={currentTutorialStep.target ?? null}
+            target={currentTutorialStep.target ?? 'dashboard-page-body'}
           />
 
           <TutorialOverlay
@@ -1179,6 +1179,7 @@ export default function SquadPage() {
             variant="panel"
             title={tTutorial(`${currentTutorialTranslationKey}.title`)}
             body={tTutorial(`${currentTutorialTranslationKey}.body`)}
+            tip={currentTutorialStep.tip}
             stepLabel={`${tutorialStepIndex + 1}/${squadTutorialSteps.length}`}
             primaryAction={tTutorial(`${currentTutorialTranslationKey}.primary`)}
             secondaryAction={
