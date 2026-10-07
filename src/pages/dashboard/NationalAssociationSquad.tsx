@@ -506,7 +506,7 @@ export default function NationalAssociationSquadPage(): JSX.Element {
   const isCoach = workspace?.allowed === true
 
   return (
-    <div className="w-full space-y-6">
+    <div data-tutorial-target="national-coach-page" className="w-full space-y-6">
       <NationalAssociationHeader
         association={association}
         isCoach={isCoach}
