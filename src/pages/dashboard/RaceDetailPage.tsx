@@ -19828,6 +19828,7 @@ export default function RaceDetailPage({
           variant="panel"
           title={t(tutorialStepIndex === 0 ? 'tutorial.profileTitle' : 'tutorial.stagesTitle')}
           body={t(tutorialStepIndex === 0 ? 'tutorial.profileBody' : 'tutorial.stagesBody')}
+          accessNote={raceDetailTutorialSteps[tutorialStepIndex].accessNote}
           tip={raceDetailTutorialSteps[tutorialStepIndex].tip}
           stepLabel={t('tutorial.step', { current: tutorialStepIndex + 1, total: raceDetailTutorialSteps.length })}
           primaryAction={
