@@ -179,7 +179,7 @@
   },
   "developingTeam": {
     "title": "Équipe en développement",
-    "description": "Équipe de développement U23 réservée à Premium, avec activation à 100 Coins et renouvellement saisonnier à 100 Coins.",
+    "description": "Équipe de Développement U23 disponible pour tous après 30 jours réels ou 60 jours de jeu, avec 100 coins d'activation et 100 coins de renouvellement par saison.",
     "loading": "Chargement du statut d'équipe en développement...",
     "realLifeProgress": "Progrès réels",
     "realLifeMinimum": "Au moins 30 jours requis",
@@ -209,11 +209,11 @@
     "ageRule": "Seuls les coureurs âgés de 23 ans ou plus sont éligibles.",
     "movementRule": "Les coureurs ne se déplacent entre les équipes que pendant les fenêtres de mouvement.",
     "teamLabel": "Équipe",
-    "premiumOnlyTitle": "Fonction réservée à Premium",
-    "premiumOnlyDescription": "L'Équipe de Développement et l'Entraîneur Principal U23 sont disponibles uniquement avec Premium actif. L'activation coûte {{activation}} Coins et le renouvellement chaque saison {{renewal}} Coins.",
-    "premiumInactiveDescription": "Les données de votre Équipe de Développement existante restent conservées, mais l'accès est suspendu lorsque Premium est inactif.",
-    "unlockPremium": "Débloquer Premium",
-    "premiumModalRequirement": "Un abonnement Premium actif est requis pour utiliser l'Équipe de Développement et l'Entraîneur Principal U23."
+    "premiumOnlyTitle": "Disponible pour tous les managers",
+    "premiumOnlyDescription": "Premium n'est pas requis pour l'Équipe de Développement. L'activation coûte {{activation}} coins et chaque renouvellement saisonnier {{renewal}} coins.",
+    "premiumInactiveDescription": "Premium est facultatif pour l'Équipe de Développement elle-même et concerne seulement des fonctions séparées d'analyse et d'automatisation Premium.",
+    "unlockPremium": "Voir les avantages Premium",
+    "premiumModalRequirement": "Premium n'est pas requis pour activer l'Équipe de Développement."
   },
   "dangerZone": {
     "title": "Zone de danger",
