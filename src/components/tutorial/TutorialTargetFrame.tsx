@@ -17,6 +17,8 @@ const FRAME_PADDING = 4
 const VIEWPORT_MARGIN = 4
 const MIN_FRAME_SIZE = 20
 
+const DASHBOARD_PAGE_BODY_TARGET = 'dashboard-page-body'
+
 const TARGET_ALIASES: Record<string, string[]> = {
   'header-premium': ['header-membership'],
   'overview-staff-briefing': ['overview-attention'],
@@ -32,6 +34,10 @@ function getTutorialTargetSelector(target: string): string {
 }
 
 function findTargetElement(target: string): HTMLElement | null {
+  if (target === DASHBOARD_PAGE_BODY_TARGET) {
+    return document.querySelector<HTMLElement>('main')
+  }
+
   const targetCandidates = [target, ...(TARGET_ALIASES[target] ?? [])]
 
   for (const targetCandidate of targetCandidates) {
