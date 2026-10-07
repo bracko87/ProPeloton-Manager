@@ -10,6 +10,7 @@ import {
   PremiumFeatureLoading,
 } from '../../components/premium/PremiumFeatureLock'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import HeadCoachTrainingPanel, {
   type HeadCoachAutomationSnapshot
 } from '../../components/training/HeadCoachTrainingPanel'
@@ -4583,11 +4584,18 @@ export default function TrainingPage(): JSX.Element {
       ) : null}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialTargetFrame
+          target={trainingTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
         <TutorialOverlay
           open
           variant="panel"
           title={trainingTutorialSteps[tutorialStepIndex].title}
           body={trainingTutorialSteps[tutorialStepIndex].body}
+          tip={trainingTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${trainingTutorialSteps.length}`}
           primaryAction={
             trainingTutorialSteps[tutorialStepIndex].primaryAction ?? t('common.next')
