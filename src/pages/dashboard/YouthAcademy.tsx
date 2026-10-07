@@ -626,6 +626,11 @@ type AcademyPayload = {
   default_scouting_cost?: number
   activation_coin_cost?: number
   renewal_coin_cost?: number
+  current_season?: number
+  renewed_through_season?: number | null
+  season_access_active?: boolean
+  renewal_required?: boolean
+  can_renew?: boolean
   coin_balance?: number
   real_days_played?: number
   game_days_played?: number
@@ -1676,6 +1681,27 @@ export default function YouthAcademyPage(): JSX.Element {
     }
   }
 
+  const renew = async (): Promise<void> => {
+    if (saving || !data?.activated) return
+    setSaving(true)
+    setError(null)
+    try {
+      const { data: payload, error: renewError } = await supabase.rpc(
+        'renew_my_youth_academy_v1'
+      )
+      if (renewError) throw renewError
+      const next = payload as AcademyPayload
+      setData(next)
+      setDraftRange(next.budget?.scouting_range ?? 'local')
+      setDraftSettings(next.settings)
+    } catch (renewError: any) {
+      console.error('Youth Academy renewal failed:', renewError)
+      setError(renewError?.message ?? t('errors.renew'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const saveSettings = async (): Promise<void> => {
     if (!data?.activated || !draftSettings || saving) return
     setSaving(true)
@@ -2079,6 +2105,10 @@ export default function YouthAcademyPage(): JSX.Element {
                 t('activation.coins', { count: data.activation_coin_cost ?? 50 }),
               ],
               [
+                t('activation.renewalCostLabel'),
+                t('activation.coinsPerSeason', { count: data.renewal_coin_cost ?? 50 }),
+              ],
+              [
                 t('activation.unlockLabel'),
                 t('activation.unlockValue', {
                   real: data.unlock_real_days_required ?? 30,
@@ -2193,10 +2223,61 @@ export default function YouthAcademyPage(): JSX.Element {
         </div>
         {data.read_only ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            {t('readOnly')}
+            {data.renewal_required ? t('renewal.readOnly') : t('readOnly')}
           </div>
         ) : null}
       </div>
+
+      {data.renewal_required ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+          <div className="text-sm font-semibold text-amber-950">
+            {t('renewal.title', { season: data.current_season ?? 1 })}
+          </div>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-amber-900">
+            {data.premium
+              ? t('renewal.description', { cost: data.renewal_coin_cost ?? 50 })
+              : t('renewal.premiumRequired', { cost: data.renewal_coin_cost ?? 50 })}
+          </p>
+
+          {error ? (
+            <div className="mt-3 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            {data.premium ? (
+              <button
+                type="button"
+                onClick={() => void renew()}
+                disabled={saving || data.can_renew === false}
+                className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving
+                  ? t('renewal.renewing')
+                  : t('renewal.action', { cost: data.renewal_coin_cost ?? 50 })}
+              </button>
+            ) : (
+              <Link
+                to="/dashboard/pro"
+                className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white"
+              >
+                <Crown size={16} />
+                {t('premium.openPremium')}
+              </Link>
+            )}
+
+            {data.premium && (data.coin_balance ?? 0) < (data.renewal_coin_cost ?? 50) ? (
+              <Link
+                to="/dashboard/pro"
+                className="text-sm font-semibold text-amber-900 underline underline-offset-2"
+              >
+                {t('renewal.getCoins')}
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       <div className="mb-1 inline-flex flex-wrap rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
         {tabKeys.map(key => (
