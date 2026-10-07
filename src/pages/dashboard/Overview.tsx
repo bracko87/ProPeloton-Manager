@@ -9978,7 +9978,12 @@ export default function OverviewPage() {
       {isTutorialOpen && activeStep ? (
         <>
           <TutorialTargetFrame
-            target={activeStep?.target ?? "dashboard-page-body"}
+            target={
+              activeStep?.target ??
+              (activeStep?.key.startsWith("overview-")
+                ? "dashboard-page-body"
+                : null)
+            }
           />
 
           <TutorialOverlay
@@ -10022,10 +10027,7 @@ export default function OverviewPage() {
       {!menuTutorialLoading && menuTutorialMode === "steps" ? (
         <>
           <TutorialTargetFrame
-            target={
-              menuTutorialSteps[menuTutorialStepIndex].target ??
-              "dashboard-page-body"
-            }
+            target={menuTutorialSteps[menuTutorialStepIndex].target ?? null}
           />
 
           <TutorialOverlay
