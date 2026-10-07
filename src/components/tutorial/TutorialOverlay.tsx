@@ -241,10 +241,13 @@ export default function TutorialOverlay({
       ? SMOOTH_START_OFFER.secondaryAction
       : secondaryAction
 
+  const displayTip =
+    smoothStartMode === null ? tip : undefined
+
   const localizedTitle =
     localizeTutorialLiteral(displayTitle) ?? displayTitle
   const localizedBody = localizeTutorialLiteral(displayBody) ?? displayBody
-  const localizedTip = localizeTutorialLiteral(tip) ?? tip
+  const localizedTip = localizeTutorialLiteral(displayTip) ?? displayTip
   const localizedPrimaryAction =
     localizeTutorialLiteral(displayPrimaryAction) ?? displayPrimaryAction
   const localizedSecondaryAction =
@@ -266,7 +269,7 @@ export default function TutorialOverlay({
         displayStepLabel ?? '',
         displayTitle,
         displayBody,
-        tip ?? '',
+        displayTip ?? '',
         displayPrimaryAction,
         displaySecondaryAction ?? '',
         finishAction ?? '',
@@ -279,7 +282,7 @@ export default function TutorialOverlay({
       displayStepLabel,
       displayTitle,
       displayBody,
-      tip,
+      displayTip,
       displayPrimaryAction,
       displaySecondaryAction,
       finishAction,
