@@ -60,6 +60,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'Welcome to ProPeloton Manager.\n\n' +
       'You are now the manager of your own cycling team. Your job is to build the club, take care of your riders, prepare races, manage money, improve the team, and guide your club through the season.',
     primaryAction: 'Next',
+    tip: 'Do not try to master every system at once. Follow the tutorial flow and learn the pages in the same order you will normally use them.',
   },
   {
     key: 'welcome-game-type',
@@ -68,6 +69,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'This is a cycling management game.\n\n' +
       'You are not controlling the bike directly during the race. Instead, you make the important manager decisions before and during the season: which riders to keep, how to train them, which races to enter, what equipment to use, which staff to hire, and how to spend your money.',
     primaryAction: 'Next',
+    tip: 'Your biggest performance gains come from good management decisions before the race, not from clicking faster during the race.',
   },
   {
     key: 'welcome-simple-or-deep',
@@ -77,6 +79,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'At the beginning, you can play in a simple way: follow alerts, check your squad, enter races, prepare your team, and watch results.\n\n' +
       'Later, if you want more depth, you can use advanced systems like rider fatigue, morale, race sharpness, sponsor objectives, equipment bonuses, training camps, scouting, transfer negotiations, taxes, infrastructure, and promotion or relegation.',
     primaryAction: 'Next',
+    tip: 'Start simple. Add advanced systems only when the basic routine of squad, training, races and finances feels comfortable.',
   },
   {
     key: 'welcome-tutorial-purpose',
@@ -86,6 +89,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'You will learn what each page is for, which buttons are important, and what you should check as a new manager.\n\n' +
       'The tutorial will not explain every small detail at once. For deeper explanations, you can always use the full game manual later.',
     primaryAction: 'Next',
+    tip: 'Use Previous whenever you want to re-read a step. You can also return to tutorials later from Help.',
   },
   {
     key: 'welcome-start-overview',
@@ -95,6 +99,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'This is your main manager dashboard. It gives you the fastest picture of your team: current alerts, news, finances, races, sponsor messages, rider condition, and season progress.\n\n' +
       'After this introduction, I will explain the Overview page step by step.',
     primaryAction: 'Start Overview tutorial',
+    tip: 'A good daily habit is to open Overview first and only then move to the page that needs action.',
   },
   {
     key: 'overview-dashboard',
@@ -104,6 +109,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'Think of this page as your daily control room. When you log in, this is usually the first place you should check.\n\n' +
       'Here you can quickly see the most important information about your club, including team status, current alerts, finances, races, rider condition, and season progress.',
     primaryAction: 'Next',
+    tip: 'Use Overview as your daily checklist. If nothing here needs attention, your club is usually safe to continue to the next game day.',
   },
   {
     key: 'overview-staff-briefing',
@@ -114,6 +120,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'These assistants help you manage important parts of your club more efficiently, such as race planning, rider health, preparation, and equipment support.\n\n' +
       'Some assistant functions, staff tools, or automation-related features may require a Premium account or coin purchase to use fully.',
     primaryAction: 'Next',
+    tip: 'Advisors are most useful when you give them a clear role. Do not renew every advisor automatically if you are not using the advice.',
     target: 'overview-attention',
   },
   {
@@ -124,6 +131,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'It combines upcoming races, races happening today, weekly finances, active operations, and the most important current action items. It is a factual dashboard summary, not a Staff Advisor report.\n\n' +
       'Use the Open buttons on priority rows to jump directly to the page that needs attention.',
     primaryAction: 'Next',
+    tip: 'Open priority items directly from this panel instead of searching through the menu.',
     target: 'overview-manager-focus',
   },
   {
@@ -134,6 +142,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'This is important because accepted races often still need preparation. You may need to select riders, staff, assets, equipment, supplies, and stage tactics before the deadlines.\n\n' +
       'If this panel shows an upcoming race, you should check Race Preparation early.',
     primaryAction: 'Next',
+    tip: 'Check the next accepted race early; race-plan and rider deadlines can arrive faster than expected.',
     target: 'overview-next-team-race',
   },
   {
@@ -143,6 +152,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'The Last Team Race panel shows your most recent finished race when available.\n\n' +
       'Use this to quickly review how your team performed. Results can help you decide if riders need rest, if tactics worked well, or if your squad needs changes before the next event.',
     primaryAction: 'Next',
+    tip: 'After a difficult race, check rider condition before immediately assigning hard training or another race.',
     target: 'overview-last-team-race',
   },
   {
@@ -152,6 +162,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'The Main Sponsor panel shows your primary sponsor information when you have an active main sponsor.\n\n' +
       'Sponsors are important because they can provide money, bonuses, objectives, and sometimes branding effects. Some sponsor contracts are simple, while naming-rights sponsors can temporarily change your team name during the season.',
     primaryAction: 'Next',
+    tip: 'Sponsor objectives can change which races are worth targeting, so compare them with your calendar plans.',
     target: 'overview-main-sponsor',
   },
   {
@@ -163,6 +174,7 @@ export const overviewTutorialSteps: TutorialStep[] = [
       'Some advanced dashboard sections, summaries, or additional data views may require a Premium account or coin purchase to unlock. If a panel is locked, you can still play normally, but Premium or coins can make the game easier and give you a deeper view of your club.\n\n' +
       'As your club grows, this page becomes more useful because it helps you connect short-term actions, like preparing the next race, with long-term goals such as building a stronger squad and improving your ranking.',
     primaryAction: 'Continue to Squad',
+    tip: 'Use the dashboard for direction, then open the specialist page when you need to make a detailed decision.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -184,6 +196,7 @@ export const squadTutorialSteps: TutorialStep[] = [
       'In the general view, you can see important rider information such as age, country, role, overall level, condition, market value, wages, contract details, and international points.\n\n' +
       'Use this page whenever you want to understand the current strength and structure of your team.',
     primaryAction: 'Next',
+    tip: 'Look at squad balance, not only overall ratings. A team needs different rider types for different race profiles.',
     target: 'squad-riders-table',
   },
   {
@@ -195,6 +208,7 @@ export const squadTutorialSteps: TutorialStep[] = [
       'By clicking the View button, you can open the full rider profile with more detailed information.\n\n' +
       'Some advanced rider tools, additional dashboards, or convenience features may require a Premium account or coin purchase.',
     primaryAction: 'Next',
+    tip: 'Open rider profiles before important decisions; condition, fatigue, contract and development context can matter as much as the headline rating.',
     target: 'squad-rider-view-button',
     compact: true,
   },
@@ -206,6 +220,7 @@ export const squadTutorialSteps: TutorialStep[] = [
       'The Developing Team is available to Free and Premium managers. It costs 100 coins to activate and 100 coins per season to renew. Premium membership is not required for the Developing Team service or normal U23 Head Coach use.\n\n' +
       'Youth Academy graduates can move into the Developing Team before progressing to the First Squad. Riders can move between the First Squad and Developing Team only during the normal movement windows. Premium-only automation or advanced analysis remains separate from the core Developing Team service.',
     primaryAction: 'Next',
+    tip: 'Use the Developing Team as a pathway, not just extra storage. Keep places available for riders who still need development.',
     target: 'squad-developing-team',
   },
   {
@@ -216,6 +231,7 @@ export const squadTutorialSteps: TutorialStep[] = [
       'Staff members have their own skills and can be sent on courses. Staff limits can also be improved by upgrading your infrastructure.\n\n' +
       'After Squad, the next recommended page is Training, where you can set regular training and plan training camps for your riders.',
     primaryAction: 'Continue to Training',
+    tip: 'Staff limits and specialisations matter. Hire for a real need instead of filling every available slot immediately.',
     secondaryAction: 'Finish for now',
     target: 'squad-staff',
   },
@@ -239,6 +255,7 @@ export const trainingTutorialSteps: TutorialStep[] = [
       'You can set team default training for the First Team and Developing Team, and you can also adjust training for individual riders. Each rider can train a specific focus such as sprint, climbing, flat, time trial, endurance, resistance, race IQ, teamwork, or recovery.\n\n' +
       'Training intensity matters. Harder training can improve riders faster, but it can also make them more tired before upcoming races. You can also choose Day Off when a rider needs rest and fatigue recovery.',
     primaryAction: 'Next',
+    tip: 'Avoid pushing every rider with the same workload. Match training to role, fatigue and the next important races.',
   },
   {
     key: 'training-camps',
@@ -249,6 +266,7 @@ export const trainingTutorialSteps: TutorialStep[] = [
       'Staff can improve the effect of the camp or help protect riders better, depending on their skills and availability. Before booking, you can review the cost, weather risk, selected riders, selected staff, and validation warnings.\n\n' +
       'After Training, the next recommended page is Equipment.',
     primaryAction: 'Continue to Equipment',
+    tip: 'Book camps around the race calendar. A strong camp is wasted if it leaves riders tired for your main target.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -271,6 +289,7 @@ export const equipmentTutorialSteps: TutorialStep[] = [
       'The Default Race Setup is the setup used when you do not choose a specific setup for a race. Below that, you can create different race setup configurations that can later be selected in Race Preparation.\n\n' +
       'Each setup can bring different bonuses to your riders, depending on the equipment inside it and how many usable items are available.',
     primaryAction: 'Next',
+    tip: 'Build equipment around the races you actually plan to enter. A balanced inventory is usually safer for a new club.',
   },
   {
     key: 'equipment-inventory',
@@ -280,6 +299,7 @@ export const equipmentTutorialSteps: TutorialStep[] = [
       'Here you can see items such as bikes, wheels, tires, and other equipment you purchased. You can check quality, condition, value, bonuses, and availability.\n\n' +
       'If you no longer need some equipment, you can sell it from your inventory.',
     primaryAction: 'Next',
+    tip: 'Check what you already own before buying more. Duplicate equipment can lock unnecessary money in inventory.',
   },
   {
     key: 'equipment-market',
@@ -289,6 +309,7 @@ export const equipmentTutorialSteps: TutorialStep[] = [
       'Each item has a price and can bring different bonuses. Better equipment can improve race performance, but it also costs more.\n\n' +
       'When you purchase equipment, it is sent to your Inventory and can later be used in race setups.',
     primaryAction: 'Next',
+    tip: 'Compare bonuses and negative effects, not only price. The most expensive item is not automatically the best fit for every rider or race.',
   },
   {
     key: 'equipment-race-supplies',
@@ -300,6 +321,7 @@ export const equipmentTutorialSteps: TutorialStep[] = [
       'Race Jersey Kits are strongly recommended, but a shortage does not remove your team or block a Stage Plan. Riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty. A complete shortage means -30% positive preparation bonuses, +8% in-stage energy use and +15% post-stage fatigue.\n\n' +
       'After Equipment, the next recommended page is Infrastructure.',
     primaryAction: 'Continue to Infrastructure',
+    tip: 'Keep a small reserve of important consumables so a late race preparation does not force an emergency purchase.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -322,6 +344,7 @@ export const facilitiesTutorialSteps: TutorialStep[] = [
       'Later, you can build and upgrade important facilities such as the Training Center, Medical Center, Academy-support facilities, Mechanics Workshop, and Scouting Office. The separate Youth Academy / U16 programme is a Premium feature with its own activation and seasonal access rules.\n\n' +
       'Facilities are important because they improve your club and can also define how many staff members you are allowed to have.',
     primaryAction: 'Next',
+    tip: 'Upgrade the facility that removes your current bottleneck first, such as staff capacity, training, medical support or scouting.',
     target: 'facilities-buildings',
   },
   {
@@ -332,6 +355,7 @@ export const facilitiesTutorialSteps: TutorialStep[] = [
       'You can start a build or upgrade project when your club has enough money and available project capacity.\n\n' +
       'You can also cancel an infrastructure project. If you cancel immediately, you receive a full refund. If you cancel later, the refund can be smaller.',
     primaryAction: 'Next',
+    tip: 'Before starting a long build, check both the cost and the construction time so it does not compete with more urgent spending.',
     target: 'facilities-buildings',
   },
   {
@@ -343,6 +367,7 @@ export const facilitiesTutorialSteps: TutorialStep[] = [
       'Each asset can have different levels, costs, condition, bonuses, and limits. Open the details for each asset to understand what it brings and how it can help your team perform better.\n\n' +
       'To use this page fully, some advanced functions, management options, or extended tools may require a Premium account or coin purchase.',
     primaryAction: 'Continue to Calendar',
+    tip: 'Buy support assets for your real race programme. More vehicles are useful only when you have enough races to use them.',
     secondaryAction: 'Finish for now',
     target: 'facilities-assets',
   },
@@ -365,6 +390,7 @@ export const calendarTutorialSteps: TutorialStep[] = [
       'It gives you an overview of your team’s daily activities. For each day, you can see what is happening with your club, including races, training camps, events, holidays, and other important activities.\n\n' +
       'Use this view when you want to understand your team schedule day by day.',
     primaryAction: 'Next',
+    tip: 'Use Season Calendar to spot clashes between racing, training camps and recovery before they become a problem.',
   },
   {
     key: 'calendar-races',
@@ -374,6 +400,7 @@ export const calendarTutorialSteps: TutorialStep[] = [
       'Here you can see all races in the season. Races can be one-day races or multi-day stage races. Each race shows useful information such as date, race status, race category, race type, team limits, and application status.\n\n' +
       'Races are divided by month, so each month has its own list of available races.',
     primaryAction: 'Next',
+    tip: 'Choose races that fit both your squad strength and your budget. Early points and prize money are often more valuable than prestige alone.',
   },
   {
     key: 'calendar-open-race',
@@ -383,6 +410,7 @@ export const calendarTutorialSteps: TutorialStep[] = [
       'Use the Open Race button when you want to see more details about a race or apply for it.\n\n' +
       'Next, we will open one race profile so you can see what information is available there.',
     primaryAction: 'Open Race Profile',
+    tip: 'Open the race profile before applying. The route, category, dates and rider requirements should match your plan.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -396,6 +424,7 @@ export const raceDetailTutorialSteps: TutorialStep[] = [
       'Here you can see the most important race information: how many teams can participate, the prize fund, when applications close, when participating teams are announced, and how many riders each team can bring.\n\n' +
       'For stage races, you can also see how many stages are included.',
     primaryAction: 'Next',
+    tip: 'Before applying, check the complete date window and rider limits, not only the race day itself.',
   },
   {
     key: 'race-detail-stages-results',
@@ -405,6 +434,7 @@ export const raceDetailTutorialSteps: TutorialStep[] = [
       'You can review stage profiles, route maps, terrain split, stage weather, sprint points, mountain points, and other stage details. Weather is only published close to the race, so it may appear later.\n\n' +
       'Further down, Race Information shows participating teams and riders before the race, and results after the race. If your team participates and the race is active or finished, you can use Watch Race or Watch Replay to follow the action on the map.',
     primaryAction: 'Continue to Race Preparation',
+    tip: 'For stage races, inspect more than one stage. A race that looks suitable overall can still contain one decisive stage that does not fit your team.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -427,6 +457,7 @@ export const racePreparationTutorialSteps: TutorialStep[] = [
       'Here you can see the most important race information, but also your team’s preparation status. For example, you may see Race Plan Open, Stage Plans Open, Rider Deadline Reached, Race Active, Race Finished, or All Set.\n\n' +
       'When your team is accepted to a race, you should come here to prepare your riders, staff, assets, equipment, supplies, and tactics. This is one of the pages you will visit most often during the season.',
     primaryAction: 'Next',
+    tip: 'Visit Race Preparation as soon as a team is accepted. Waiting until the deadline removes your ability to react to conflicts.',
   },
   {
     key: 'race-preparation-race-plan',
@@ -439,6 +470,7 @@ export const racePreparationTutorialSteps: TutorialStep[] = [
       'The rider list shows who can be selected and who is blocked because they are already assigned to another overlapping race. You can also assign race staff and race assets if they are available.\n\n' +
       'The cost preview updates while you build the plan, so you can see how much the race will cost. On the right side, the bonus preview shows possible support bonuses from staff, assets, equipment, and team policies.',
     primaryAction: 'Next',
+    tip: 'Build the rider list first, then staff, assets and support. That makes the cost and availability picture easier to understand.',
   },
   {
     key: 'race-preparation-stage-plans',
@@ -449,6 +481,7 @@ export const racePreparationTutorialSteps: TutorialStep[] = [
       'Stage Plans are important because different stages need different plans. A flat sprint stage, mountain stage, time trial, or hilly stage may all require different riders, tactics, and support.\n\n' +
       'After Race Preparation, the next recommended page is Team Ranking.',
     primaryAction: 'Continue to Team Ranking',
+    tip: 'Do not copy the same plan to every stage. Rider roles and tactics should change with the terrain and race objective.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -470,6 +503,7 @@ export const teamRankingTutorialSteps: TutorialStep[] = [
       'Here you can see rankings for all competitions and tiers, including WorldTeam, ProTeam, Continental, and Amateur divisions.\n\n' +
       'Each team has a place in its competition based on international points earned during the season. You can switch between tiers and divisions to see how teams are ranked across the whole cycling world.',
     primaryAction: 'Next',
+    tip: 'Compare your team mainly with the clubs around your promotion or relegation zone, not only with the overall leader.',
   },
   {
     key: 'team-ranking-points',
@@ -480,6 +514,7 @@ export const teamRankingTutorialSteps: TutorialStep[] = [
       'This page is important because it shows where your team stands compared with other teams, and what you need to achieve to move up.\n\n' +
       'After Team Ranking, the next recommended page is Statistics.',
     primaryAction: 'Continue to Statistics',
+    tip: 'When planning the calendar, consider where realistic points are available. Consistent scoring can matter more than one ambitious race.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -501,6 +536,7 @@ export const statisticsTutorialSteps: TutorialStep[] = [
       'The Teams section shows team statistics across all competitions in one place. In Current, you can see the current season and compare which teams are the most successful by points.\n\n' +
       'You can use filters to look at different tiers, divisions, countries, user teams, AI teams, active teams, and inactive teams. You can also open a team profile to see more details about that team.',
     primaryAction: 'Next',
+    tip: 'Use filters to compare like with like. Your closest competitive tier is usually more useful than the global table.',
   },
   {
     key: 'statistics-teams-history',
@@ -510,6 +546,7 @@ export const statisticsTutorialSteps: TutorialStep[] = [
       'Here you can review past winners, old season snapshots, historical positions, and how teams performed in earlier seasons.\n\n' +
       'This becomes more useful as your world progresses through multiple seasons.',
     primaryAction: 'Next',
+    tip: 'History helps you judge whether improvement is real. Compare several seasons instead of one short run of results.',
   },
   {
     key: 'statistics-riders',
@@ -520,6 +557,7 @@ export const statisticsTutorialSteps: TutorialStep[] = [
       'This page helps you understand which riders are dominating the season and which riders may be interesting to follow, scout, or sign.\n\n' +
       'After Statistics, the next recommended page is Transfers.',
     primaryAction: 'Continue to Transfers',
+    tip: 'Statistics are a good scouting starting point, but always open the rider profile before making a transfer decision.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -542,6 +580,7 @@ export const transfersTutorialSteps: TutorialStep[] = [
       'Before you scout a rider, some information may be hidden or less precise. Scouting gives you better information about the rider’s skills and potential.\n\n' +
       'Each transfer listing shows how long the offer is valid and the starting price for negotiations. If you click Make Offer, you can offer money to the selling team. If the team accepts, you then negotiate the rider contract.',
     primaryAction: 'Next',
+    tip: 'Scout before spending heavily. Hidden or uncertain information makes expensive transfer offers much riskier.',
   },
   {
     key: 'transfers-rider-free-agents',
@@ -551,6 +590,7 @@ export const transfersTutorialSteps: TutorialStep[] = [
       'The big difference is that there is no selling team between you and the rider. If you want a free agent, you go directly into contract negotiation.\n\n' +
       'You can negotiate salary, contract duration, and agent fee. The offer outlook helps you understand whether your offer looks strong, risky, or unlikely to succeed.',
     primaryAction: 'Next',
+    tip: 'Free agents avoid a transfer fee, but salary and agent costs can still make the total deal expensive.',
   },
   {
     key: 'transfers-staff',
@@ -561,6 +601,7 @@ export const transfersTutorialSteps: TutorialStep[] = [
       'Staff limits are important. If your club has already reached the maximum number for a staff role, you cannot hire another staff member for that role until you increase the limit, usually through infrastructure upgrades.\n\n' +
       'After Transfers, the next recommended page is Finance.',
     primaryAction: 'Continue to Finance',
+    tip: 'Check role limits before negotiating. Infrastructure can be the real blocker even when the staff member is available.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -582,6 +623,7 @@ export const financeTutorialSteps: TutorialStep[] = [
       'The Overview tab shows the main financial situation of your club, including current balance, income, expenses, cashflow, and financial summaries.\n\n' +
       'If your team has emergency debt or financial problems, this is where you can quickly understand the current situation.',
     primaryAction: 'Next',
+    tip: 'Keep enough cash for upcoming salaries, races and planned projects instead of spending the complete balance immediately.',
   },
   {
     key: 'finance-sponsors',
@@ -593,6 +635,7 @@ export const financeTutorialSteps: TutorialStep[] = [
       'A naming-rights contract is usually worth more money, but the sponsor name becomes part of your team name during the season. At the beginning of the next season, your original team name returns.\n\n' +
       'If your team does not have a sponsor yet, you can use the sponsor offers area to look for new deals.',
     primaryAction: 'Next',
+    tip: 'Compare guaranteed money with achievable objectives. A smaller realistic bonus can be better than a larger target your team cannot reach.',
   },
   {
     key: 'finance-transactions',
@@ -601,6 +644,7 @@ export const financeTutorialSteps: TutorialStep[] = [
       'The Transactions tab shows your club’s financial history.\n\n' +
       'Here you can see income and expenses during the season, including prize money, sponsor payments, salaries, transfers, infrastructure costs, equipment purchases, training camps, tax withdrawals, and other financial movements.',
     primaryAction: 'Next',
+    tip: 'Use Transactions when the balance changes unexpectedly. It is the fastest way to find exactly where money moved.',
   },
   {
     key: 'finance-tax',
@@ -609,6 +653,7 @@ export const financeTutorialSteps: TutorialStep[] = [
       'The Tax tab shows your club’s tax situation.\n\n' +
       'Transactions can create tax obligations, and a tax audit happens once per month. This page helps you see how much tax has been calculated, what has already been paid, and what still needs to be paid.',
     primaryAction: 'Next',
+    tip: 'Treat tax as committed money. Do not plan future spending as if the complete visible balance is freely available.',
   },
   {
     key: 'finance-policies',
@@ -619,6 +664,7 @@ export const financeTutorialSteps: TutorialStep[] = [
       'This section helps you balance comfort, performance, attractiveness, and cost.\n\n' +
       'After Finance, the tutorial will briefly introduce National Ranking, the National Association, and the Youth Academy before finishing with the main Menu.',
     primaryAction: 'Continue to National Ranking',
+    tip: 'Policies should fit your budget. Improve comfort and support gradually rather than maxing every recurring cost at once.',
     secondaryAction: 'Finish for now',
   },
 ]
@@ -641,6 +687,7 @@ export const menuTutorialSteps: TutorialStep[] = [
       'Inside the menu, you can find Inbox for internal messages, profile settings, themes and customization settings, forum or Discord links, game preferences, help with the in-game manual and frequently asked questions, Contact Us, Pro Packages, and Invite Friends referral progress.\n\n' +
       'Use this menu whenever you need account settings, help, support, preferences, or extra game options.',
     primaryAction: 'Next',
+    tip: 'Use Help and the manual whenever a system is unclear; you do not need to remember the entire tutorial.',
   },
   {
     key: 'menu-notifications',
@@ -651,6 +698,7 @@ export const menuTutorialSteps: TutorialStep[] = [
       'Notifications tell you about important events such as race deadlines, preparation reminders, sponsor updates, finances, transfers, and other game actions that need your attention.\n\n' +
       'You can manage which notifications you want to receive from the Preferences option inside the Menu.',
     primaryAction: 'Next',
+    tip: 'Do not ignore red notification counts. Many important deadlines are surfaced here before they become problems.',
   },
   {
     key: 'menu-coins',
@@ -662,6 +710,7 @@ export const menuTutorialSteps: TutorialStep[] = [
       'You can check your balance here at any time and purchase more through Menu → Pro Packages.\n\n' +
       'Running low on coins does not suspend your account. You can continue playing, but some optional features or premium-style actions may not be available until you add more coins.',
     primaryAction: 'Next',
+    tip: 'Use Coins for features you value rather than spending them simply because a button is available.',
   },
   {
     key: 'menu-premium',
@@ -673,6 +722,7 @@ export const menuTutorialSteps: TutorialStep[] = [
       'Premium can also help you unlock more of the game’s full management experience.\n\n' +
       'By purchasing Premium or Pro Packages, you also directly support our team and help us continue developing ProPeloton Manager faster and better.',
     primaryAction: 'Next',
+    tip: 'Premium adds convenience and depth, but the core club can still be managed through normal gameplay systems.',
   },
   {
     key: 'menu-finished',
@@ -682,5 +732,6 @@ export const menuTutorialSteps: TutorialStep[] = [
       'If you have questions later, you can always check the in-game manual, read the frequently asked questions, contact us, or join our Discord community.\n\n' +
       'Good luck with your team!',
     primaryAction: 'Finish tutorial',
+    tip: 'After the tutorial, a simple routine is enough: Overview → next race → rider condition → finances → any notifications.',
   },
 ]
