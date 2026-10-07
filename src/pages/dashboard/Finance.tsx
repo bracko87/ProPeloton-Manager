@@ -755,6 +755,7 @@ export default function FinancePage(): JSX.Element {
           variant="panel"
           title={financeTutorialSteps[tutorialStepIndex].title}
           body={financeTutorialSteps[tutorialStepIndex].body}
+          accessNote={financeTutorialSteps[tutorialStepIndex].accessNote}
           tip={financeTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${financeTutorialSteps.length}`}
           primaryAction={
