@@ -238,11 +238,11 @@ const manualSections: ManualSection[] = [
     id: 'developing-team',
     category: 'Riders',
     title: 'Developing Team',
-    subtitle: 'Premium-only U23 structure, activation, renewal and movement windows.',
+    subtitle: 'Coin-funded U23 structure, activation, renewal and movement windows.',
     overview:
-      'The Developing Team is a Premium-only second team connected to the main club. Premium must remain active to use it or the U23 Head Coach; stored team data is preserved if Premium expires.',
+      'The Developing Team is a coin-funded second team connected to the main club. It is available to every manager after the normal 30 real-life day OR 60 in-game day maturity gate. Premium is not required for the core Developing Team service or the U23 Head Coach.',
     facts: [
-      { label: 'Availability', value: 'Premium members only' },
+      { label: 'Availability', value: 'All managers after 30 real-life days OR 60 in-game days' },
       { label: 'Activation cost', value: '100 coins' },
       { label: 'Season renewal', value: '100 coins per season' },
       { label: 'Developing Team max in UI', value: '8 riders' },
@@ -251,10 +251,10 @@ const manualSections: ManualSection[] = [
       { label: 'Age warning', value: 'Riders aged 24+ require attention' },
     ],
     details: [
-      'An active Premium membership is required before the Developing Team can be created, reactivated, renewed or used. The U23 Head Coach is also Premium-only.',
+      'Premium is not required to create, reactivate, renew or use the Developing Team. First activation costs 100 coins and seasonal renewal or reactivation costs 100 coins.',
       'First activation costs 100 coins and seasonal renewal costs 100 coins. The normal time requirement still applies before first activation.',
-      'If Premium expires, Developing Team access is paused and U23 Head Coach functions are disabled; the team, riders, contracts, results and history remain stored.',
-      'Preferences loads Developing Team status from the backend and shows Premium access, days played, coin balance, costs, requirement status and movement-window state.',
+      'If seasonal renewal is not paid, Developing Team access becomes unavailable until reactivated; the team, riders, contracts, results and history remain stored.'
+      'Preferences loads Developing Team status from the backend and shows days played, coin balance, costs, requirement status and movement-window state.'
       'After activation, the app pins the active club back to the main club so the dashboard does not accidentally switch to the developing club.',
       'Developing Team riders can be moved to the First Squad only if the movement window is open and the First Squad has space.',
       'If a Developing Team rider is 24 or older, the UI can show an action warning. If the movement window is open, action is required now; otherwise the rider must move next window.',
@@ -1352,7 +1352,7 @@ const manualSections: ManualSection[] = [
     "category": "Riders",
     "title": "Developing Team Deep Guide",
     "subtitle": "Premium access, activation, renewal, roster and movement-window rules.",
-    "overview": "The development squad is a Premium-only second team. It stays connected to the main club and its data remains stored if Premium access expires.",
+    "overview": "The development squad is a coin-funded second team available to all managers after the normal maturity gate. It stays connected to the main club and its data remains stored if seasonal access expires.",
     "facts": [
       {
         "label": "Availability",
@@ -1382,7 +1382,7 @@ const manualSections: ManualSection[] = [
     "details": [
       "Premium membership is required in addition to the normal time and coin requirements.",
       "The first activation costs 100 coins and each seasonal renewal costs 100 coins.",
-      "If Premium expires, access is disabled without deleting the Developing Team, riders, contracts, results or history.",
+      "If seasonal renewal expires, access is disabled without deleting the Developing Team, riders, contracts, results or history.",
       "The U23 Head Coach, U23 training automation and U23 race-coach access require active Premium.",
       "The main club context is restored after activating the development team.",
       "Promoting a rider requires both an open movement window and free First Squad capacity.",
@@ -1427,7 +1427,7 @@ const manualSections: ManualSection[] = [
       "Nutritionist supports nutrition/recovery systems.",
       "Mechanic supports repairs and technical systems.",
       "Scout / Analyst supports external rider information.",
-      "U23 Head Coach supports developing-team riders and is available only to Premium members with an active Developing Team."
+      "U23 Head Coach supports developing-team riders and is available to managers with an active Developing Team, subject to the normal infrastructure requirement."
     ],
     "tips": [
       "Hire the staff role that solves the current club bottleneck."
@@ -2114,7 +2114,7 @@ const manualSections: ManualSection[] = [
       "Advisor suggestions should use the current stage profile, weather, selected riders and available resources.",
       "The manager should compare suggestions with team objectives. A Sport Director may suggest a safe generic plan when the user wants an aggressive breakaway target.",
       "Suggestions are most valuable for new players who do not yet understand all stage-plan controls.",
-      "Premium analysis and convenience features do not secretly alter race-engine strength. Separately, the Developing Team and U23 Head Coach are explicit Premium-only gameplay features.",
+      "Premium analysis and convenience features do not secretly alter race-engine strength. The Developing Team is a separate coin-funded service available to all managers; Premium still gates its explicitly Premium analysis and automation surfaces.",
       "Always save the final plan after reviewing advice."
     ],
     "tips": [
@@ -2845,11 +2845,11 @@ const manualSections: ManualSection[] = [
     title: 'Youth Academy: Complete U16 Guide',
     subtitle: 'Activation, staff, scouting, recruitment, budget, equipment, racing, development and graduation.',
     overview:
-      'Youth Academy is a Premium-only U16 development programme with a fixed capacity of 16 riders. A new Academy unlocks after 30 real-life days OR 60 in-game days from club creation and costs 50 coins once to activate. There is no seasonal coin renewal. After activation, the Academy is funded and operated with normal club money through its separate Academy budget.',
+      'Youth Academy is a Premium-only U16 development programme with a fixed capacity of 16 riders. A new Academy unlocks after 30 real-life days OR 60 in-game days from club creation, costs 50 coins to activate and 50 coins per later season to renew. Academy operations are funded with normal club money through its separate Academy budget.'
     facts: [
       { label: 'Capacity', value: 'Maximum 16 Youth Riders' },
       { label: 'Unlock', value: 'Premium + 30 real-life days OR 60 in-game days' },
-      { label: 'Activation', value: '50 coins once; no seasonal coin renewal' },
+      { label: 'Activation / renewal', value: '50 coins activation; 50 coins per season' },
       { label: 'Starting package', value: '6 local Youth Riders, Youth Academy Director and U16 Head Coach' },
       { label: 'Optional staff', value: 'Maximum 1 Youth Scout through the Staff Market' },
       { label: 'Scouting searches', value: '1 free search + up to 3 Coin searches per in-game week' },
@@ -2859,8 +2859,8 @@ const manualSections: ManualSection[] = [
       { label: 'Graduation', value: 'A pathway decision is required at age 16' },
     ],
     details: [
-      'Activation is available only to Premium managers. The 30-real-day OR 60-game-day rule is the same maturity gate used for the Developing Team; whichever threshold is reached first unlocks the Academy. The one-time 50-coin activation fee is separate from the Academy cash allocation selected during activation.',
-      'There is no Youth Academy seasonal coin renewal. This is intentional because the Academy already has meaningful club-cash costs for rider support, staff, scouting programmes, equipment, assets, race supplies, travel and competition. Existing Academies are not charged again when Premium access later returns.',
+      'Activation is available only to Premium managers. The 30-real-day OR 60-game-day rule is the same maturity gate used for the Developing Team; whichever threshold is reached first unlocks the Academy. The 50-coin activation fee is separate from the Academy cash allocation selected during activation.'
+      'Youth Academy access costs 50 coins to activate and 50 coins for each later in-game season. Premium must also be active. If Premium or the current-season renewal is missing, the Academy is preserved but management is read-only until both requirements are restored.'
       'If Premium expires, the Academy and its data are preserved. Management becomes read-only until Premium is active again; riders, staff, history, budget and Academy records are not deleted.',
       'The Academy starts with six local riders and has a hard cap of 16. Infrastructure can improve U16 development, recovery or operating efficiency, but it does not raise the 16-rider capacity.',
       'Youth Rider profiles show riding attributes, readiness, fatigue, development focus, support agreement and race history. Exact hidden potential is intentionally not exposed; use Talent Assessment bands and scouting confidence instead.',
