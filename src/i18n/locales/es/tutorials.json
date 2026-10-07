@@ -102,7 +102,7 @@
     },
     "developing": {
       "title": "Desarrollo de la ventana de equipo y movimiento",
-      "body": "Tu Equipo de Desarrollo es un segundo equipo exclusivo de Premium para ciclistas jóvenes que aún no están preparados para la Primera Plantilla, pero pueden competir en carreras asignadas.\n\nSe necesita una membresía Premium activa para crear y usar el Equipo de Desarrollo. La primera activación cuesta 100 Coins y cada renovación de temporada cuesta 100 Coins. El Entrenador Principal U23 también es exclusivo de Premium.\n\nSi Premium caduca, el acceso queda pausado, pero el equipo, los ciclistas, los contratos, los resultados y el historial permanecen guardados. Los ciclistas solo pueden moverse entre la Primera Plantilla y el Equipo de Desarrollo durante las ventanas normales de movimiento.",
+      "body": "Tu Equipo de Desarrollo es el puente normal para ciclistas jóvenes que aún no están preparados para la Primera Plantilla y pueden competir en carreras de desarrollo asignadas.\n\nEl Equipo de Desarrollo está disponible para managers Free y Premium. Cuesta 100 Coins activarlo y 100 Coins por temporada renovarlo. No se necesita Premium para el servicio ni para el uso normal del Entrenador Principal U23.\n\nLos graduados de la Youth Academy pueden pasar primero al Equipo de Desarrollo antes de llegar a la Primera Plantilla. Los movimientos solo pueden hacerse durante las ventanas normales. La automatización o el análisis avanzado Premium siguen siendo funciones separadas.",
       "primary": "Siguiente"
     },
     "staff": {
@@ -169,7 +169,7 @@
     },
     "buildings": {
       "title": "Instalaciones",
-      "body": "Esta es la página de Infraestructura. La pestaña Instalaciones muestra los edificios que tu club puede poseer y actualizar. Cada equipo comienza con una casa Club de Nivel 1 básica. Más tarde, puedes construir y actualizar instalaciones importantes como el Centro de Entrenamiento, Centro Médico, Academia Juvenil, Taller de Mecánica y Oficina de Scouting. Las instalaciones son importantes porque mejoran tu club y también pueden definir cuántos miembros del personal se te permite tener.",
+      "body": "Esta es la página de Infraestructura.\n\nLa pestaña Instalaciones muestra los edificios que tu club puede poseer y mejorar. Cada equipo comienza con un Clubhouse básico de nivel 1.\n\nMás adelante puedes construir y mejorar instalaciones como Training Center, Medical Center, instalaciones de apoyo a la academia, Mechanics Workshop y Scouting Office. El programa separado Youth Academy / U16 es una función Premium con reglas propias de activación y acceso estacional con Coins.\n\nLas instalaciones mejoran tu club y también pueden definir cuántos miembros del personal puedes tener.",
       "primary": "Siguiente"
     },
     "projects": {
