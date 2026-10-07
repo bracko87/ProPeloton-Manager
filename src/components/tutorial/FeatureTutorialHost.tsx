@@ -253,6 +253,24 @@ export default function FeatureTutorialHost(): JSX.Element | null {
       return
     }
 
+    const currentStep = module.steps[stepIndex] ?? module.steps[0]
+    const isLastCoreStep = stepIndex >= module.steps.length - 1
+
+    if (!isLastCoreStep) {
+      const nextIndex = stepIndex + 1
+      const nextStep = module.steps[nextIndex]
+
+      await saveTutorialProgress(module.key, 'started', nextStep?.key ?? null)
+      setStepIndex(nextIndex)
+      return
+    }
+
+    await saveTutorialProgress(
+      module.key,
+      'completed',
+      currentStep?.key ?? null,
+    )
+
     window.sessionStorage.setItem('ppm:auto-start-tutorial', bridge.nextKey)
     setMode('closed')
     navigate(bridge.nextRoute)
@@ -358,24 +376,32 @@ export default function FeatureTutorialHost(): JSX.Element | null {
 
   if (mode === 'core-bridge') {
     const bridge = CORE_BRIDGE_FLOW[module.key]
-    const bridgeStep = module.steps[0]
+    const bridgeStep = module.steps[stepIndex] ?? module.steps[0]
+    const isLastCoreStep = stepIndex >= module.steps.length - 1
 
     if (!bridge || !bridgeStep) return null
 
     return (
       <>
-        <TutorialTargetFrame target={bridgeStep.target ?? module.target ?? null} />
+        <TutorialTargetFrame
+          target={bridgeStep.target ?? module.target ?? 'dashboard-page-body'}
+        />
         <TutorialOverlay
           open
           title={bridgeStep.title}
           body={bridgeStep.body}
-          stepLabel="Quick introduction"
-          primaryAction={bridge.primaryAction}
+          tip={bridgeStep.tip}
+          stepLabel={`${stepIndex + 1}/${module.steps.length}`}
+          primaryAction={
+            isLastCoreStep
+              ? bridge.primaryAction
+              : bridgeStep.primaryAction ?? 'Next'
+          }
           secondaryAction="Finish for now"
           onPrimary={() => void continueCoreBridge()}
           onSecondary={stopCoreBridge}
           onClose={stopCoreBridge}
-          compact
+          compact={bridgeStep.compact}
         />
       </>
     )
@@ -399,11 +425,14 @@ export default function FeatureTutorialHost(): JSX.Element | null {
 
   return (
     <>
-      <TutorialTargetFrame target={activeStep.target ?? module.target ?? null} />
+      <TutorialTargetFrame
+        target={activeStep.target ?? module.target ?? 'dashboard-page-body'}
+      />
       <TutorialOverlay
         open
         title={activeStep.title}
         body={activeStep.body}
+        tip={activeStep.tip}
         stepLabel={`${stepIndex + 1}/${module.steps.length}`}
         primaryAction={activeStep.primaryAction ?? (isLastStep ? 'Finish tutorial' : 'Next')}
         secondaryAction={
