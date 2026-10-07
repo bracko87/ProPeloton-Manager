@@ -15,6 +15,12 @@ export type TutorialKey =
   | 'sponsors'
   | 'staff'
   | 'settings'
+  | 'national-championships'
+  | 'national-association'
+  | 'national-coach'
+  | 'youth-academy'
+  | 'developing-team'
+  | 'new-season'
 
 export type TutorialStep = {
   key: string
@@ -194,9 +200,9 @@ export const squadTutorialSteps: TutorialStep[] = [
     key: 'squad-developing-team',
     title: 'Developing Team and Movement Window',
     body:
-      'Your Developing Team is a Premium-only second team for young riders who are not yet ready for the First Squad but can still race in assigned competitions.\n\n' +
-      'An active Premium membership is required to create and use the Developing Team. First activation costs 100 coins and each seasonal renewal costs 100 coins. The U23 Head Coach is also Premium-only.\n\n' +
-      'If Premium expires, Developing Team access is paused but the team, riders, contracts, results and history remain stored. Riders can only move between the First Squad and Developing Team during the normal movement windows.',
+      'Your Developing Team is the normal bridge for young riders who are not yet ready for the First Squad and can race in assigned development competitions.\n\n' +
+      'The Developing Team is available to Free and Premium managers. It costs 100 coins to activate and 100 coins per season to renew. Premium membership is not required for the Developing Team service or normal U23 Head Coach use.\n\n' +
+      'Youth Academy graduates can move into the Developing Team before progressing to the First Squad. Riders can move between the First Squad and Developing Team only during the normal movement windows. Premium-only automation or advanced analysis remains separate from the core Developing Team service.',
     primaryAction: 'Next',
     target: 'squad-developing-team',
   },
@@ -311,7 +317,7 @@ export const facilitiesTutorialSteps: TutorialStep[] = [
     body:
       'This is the Infrastructure page.\n\n' +
       'The Facilities tab shows the buildings your club can own and upgrade. Every team starts with a basic Level 1 Clubhouse.\n\n' +
-      'Later, you can build and upgrade important facilities such as the Training Center, Medical Center, Youth Academy, Mechanics Workshop, and Scouting Office.\n\n' +
+      'Later, you can build and upgrade important facilities such as the Training Center, Medical Center, Academy-support facilities, Mechanics Workshop, and Scouting Office. The separate Youth Academy / U16 programme is a Premium feature with its own activation and seasonal access rules.\n\n' +
       'Facilities are important because they improve your club and can also define how many staff members you are allowed to have.',
     primaryAction: 'Next',
     target: 'facilities-buildings',
