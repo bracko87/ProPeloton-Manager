@@ -109,8 +109,8 @@ type Race = {
   id: string
   name: string
   short_name?: string | null
-  start_date: string
-  end_date: string
+  start_date: string | null
+  end_date: string | null
   country_code?: string | null
   host_city?: string | null
   category: string
@@ -1506,6 +1506,10 @@ function formatRaceDateRangeLabel(
 
   if (!race) return `${trRaceDetail('summary.raceDates')}: —`
 
+  if (!race.start_date && !race.end_date) {
+    return 'Schedule: Reserve · No scheduled date'
+  }
+
   const startParts = getGameDatePartsFromStoredRaceDate(race.start_date)
   const endParts = getGameDatePartsFromStoredRaceDate(race.end_date ?? race.start_date)
 
@@ -1615,7 +1619,7 @@ function getRaceApplicationWindowParts(
   currentSeasonNumber: number,
   currentMonthNumber: number
 ): { openParts: GameDateParts; closeParts: GameDateParts; startParts: GameDateParts } | null {
-  if (!race || !currentMonthStart) return null
+  if (!race || !currentMonthStart || !race.start_date) return null
 
   const startParts = getGameDatePartsFromCanonical(
     race.start_date,
