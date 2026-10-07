@@ -2516,6 +2516,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
             variant="panel"
             title={facilitiesTutorialSteps[tutorialStepIndex].title}
             body={facilitiesTutorialSteps[tutorialStepIndex].body}
+            accessNote={facilitiesTutorialSteps[tutorialStepIndex].accessNote}
             tip={facilitiesTutorialSteps[tutorialStepIndex].tip}
             stepLabel={`${tutorialStepIndex + 1}/${facilitiesTutorialSteps.length}`}
             primaryAction={
