@@ -5,10 +5,9 @@ import { Link } from 'react-router'
 import {
   Archive,
   ChevronRight,
-  Mountain,
-  Route,
+  DollarSign,
   Search,
-  ShieldCheck,
+  Users,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -27,25 +26,15 @@ type HiddenRaceRow = {
   active?: boolean | null
   is_calendar_public?: boolean | null
   pool_key?: string | null
-  intended_uses?: string[] | null
-  difficulty?: string | null
-  pool_notes?: string | null
   start_date?: string | null
   end_date?: string | null
-  stage_id?: string | null
-  stage_name?: string | null
-  stage_number?: number | null
-  start_city?: string | null
-  finish_city?: string | null
-  distance_km?: number | string | null
-  terrain_type?: string | null
-  profile_type?: string | null
-  stage_format?: string | null
-  elevation_gain_m?: number | string | null
-  flat_pct?: number | string | null
-  hilly_pct?: number | string | null
-  mountain_pct?: number | string | null
-  route_label?: string | null
+  target_teams?: number | null
+  min_teams?: number | null
+  max_teams?: number | null
+  min_riders_per_team?: number | null
+  max_riders_per_team?: number | null
+  prize_fund_cash?: number | string | null
+  prize_fund_source?: string | null
   created_at?: string | null
   updated_at?: string | null
 }
@@ -64,32 +53,10 @@ function normalizeText(value: string | null | undefined): string {
   return String(value ?? '').trim()
 }
 
-function titleCase(value: string | null | undefined): string {
-  const normalized = normalizeText(value)
-  if (!normalized) return '—'
-
-  return normalized
-    .split('_')
-    .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
-}
-
-function numberValue(value: number | string | null | undefined): number | null {
+function formatCash(value: number | string | null | undefined): string {
   const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
-
-function formatDistance(value: number | string | null | undefined): string {
-  const parsed = numberValue(value)
-  if (parsed === null) return '—'
-  return `${parsed.toFixed(parsed % 1 === 0 ? 0 : 1)} km`
-}
-
-function formatElevation(value: number | string | null | undefined): string {
-  const parsed = numberValue(value)
-  if (parsed === null) return '—'
-  return `${Math.round(parsed).toLocaleString('en-US')} m`
+  if (!Number.isFinite(parsed)) return '—'
+  return `$${Math.round(parsed).toLocaleString('en-US')}`
 }
 
 function countryFlagUrl(code: string | null | undefined): string | null {
@@ -99,32 +66,12 @@ function countryFlagUrl(code: string | null | undefined): string | null {
     : null
 }
 
-function useLabel(value: string): string {
-  switch (value) {
-    case 'national_championship':
-      return 'National Championship'
-    case 'national_association':
-      return 'National Association'
-    case 'qualification':
-      return 'Qualification'
-    case 'final':
-      return 'Final'
-    case 'general_reserve':
-      return 'General reserve'
-    case 'youth_eligible':
-      return 'Youth eligible'
-    default:
-      return titleCase(value)
-  }
-}
-
 export default function HiddenRacesPage(): JSX.Element {
   const [rows, setRows] = useState<HiddenRaceRow[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [searchValue, setSearchValue] = useState('')
   const [countryFilter, setCountryFilter] = useState('all')
-  const [terrainFilter, setTerrainFilter] = useState('all')
 
   useEffect(() => {
     let alive = true
@@ -169,22 +116,12 @@ export default function HiddenRacesPage(): JSX.Element {
     )
   }, [rows])
 
-  const terrainOptions = useMemo(
-    () =>
-      [...new Set(rows.map(row => normalizeText(row.terrain_type)).filter(Boolean))]
-        .sort((left, right) => left.localeCompare(right)),
-    [rows]
-  )
-
   const filteredRows = useMemo(() => {
     const search = searchValue.trim().toLowerCase()
 
     return rows.filter(row => {
       const code = normalizeText(row.country_code).toUpperCase()
-      const terrain = normalizeText(row.terrain_type)
-
       if (countryFilter !== 'all' && code !== countryFilter) return false
-      if (terrainFilter !== 'all' && terrain !== terrainFilter) return false
 
       if (!search) return true
 
@@ -193,16 +130,12 @@ export default function HiddenRacesPage(): JSX.Element {
         row.country_name,
         row.country_code,
         row.host_city,
-        row.start_city,
-        row.finish_city,
-        row.route_label,
-        row.terrain_type,
-        row.profile_type,
+        row.category,
       ]
         .map(value => normalizeText(value).toLowerCase())
         .some(value => value.includes(search))
     })
-  }, [countryFilter, rows, searchValue, terrainFilter])
+  }, [countryFilter, rows, searchValue])
 
   return (
     <div className="space-y-6">
@@ -276,18 +209,6 @@ export default function HiddenRacesPage(): JSX.Element {
                 ))}
               </select>
 
-              <select
-                value={terrainFilter}
-                onChange={event => setTerrainFilter(event.target.value)}
-                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-yellow-400"
-              >
-                <option value="all">All profiles</option>
-                {terrainOptions.map(terrain => (
-                  <option key={terrain} value={terrain}>
-                    {titleCase(terrain)}
-                  </option>
-                ))}
-              </select>
             </div>
           </div>
         </div>
@@ -314,12 +235,9 @@ export default function HiddenRacesPage(): JSX.Element {
         <div className="divide-y divide-slate-100">
           {filteredRows.map(row => {
             const flagUrl = countryFlagUrl(row.country_code)
-            const uses = Array.isArray(row.intended_uses) ? row.intended_uses : []
-            const routeLabel =
-              normalizeText(row.route_label) ||
-              [normalizeText(row.start_city), normalizeText(row.finish_city)]
-                .filter(Boolean)
-                .join(' → ')
+            const targetTeams = row.target_teams ?? null
+            const minRiders = row.min_riders_per_team ?? null
+            const maxRiders = row.max_riders_per_team ?? null
 
             return (
               <div
@@ -356,46 +274,33 @@ export default function HiddenRacesPage(): JSX.Element {
                   </div>
 
                   <div className="mt-1 text-sm text-slate-500">
-                    {routeLabel || 'Route details will be added with the stage.'}
+                    {row.stage_count && row.stage_count > 1
+                      ? `${row.stage_count}-stage race`
+                      : 'One-day race'}
+                    {normalizeText(row.host_city)
+                      ? ` · Host: ${normalizeText(row.host_city)}`
+                      : ''}
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700">
-                      <Route size={13} />
-                      {formatDistance(row.distance_km)}
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">
+                      Category {normalizeText(row.category) || '—'}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700">
-                      <Mountain size={13} />
-                      {formatElevation(row.elevation_gain_m)}
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-700">
+                      <Users size={13} />
+                      {targetTeams !== null ? `${targetTeams} teams` : 'Teams —'}
                     </span>
-                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-700">
-                      {titleCase(row.terrain_type)}
+                    <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs text-violet-700">
+                      <Users size={13} />
+                      {minRiders !== null && maxRiders !== null
+                        ? `${minRiders}–${maxRiders} riders / team`
+                        : 'Riders —'}
                     </span>
-                    {normalizeText(row.profile_type) ? (
-                      <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs text-violet-700">
-                        {titleCase(row.profile_type)}
-                      </span>
-                    ) : null}
-                    {normalizeText(row.difficulty) ? (
-                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs text-amber-700">
-                        {titleCase(row.difficulty)}
-                      </span>
-                    ) : null}
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs text-emerald-700">
+                      <DollarSign size={13} />
+                      Prize fund {formatCash(row.prize_fund_cash)}
+                    </span>
                   </div>
-
-                  {uses.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <ShieldCheck size={14} className="text-slate-400" />
-                      {uses.map(use => (
-                        <span
-                          key={use}
-                          className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700"
-                        >
-                          {useLabel(use)}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
                 </div>
 
                 <div className="flex items-center justify-end">
