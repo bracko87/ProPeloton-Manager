@@ -2,7 +2,7 @@
   "loading": "Učitavanje Omladinske akademije…",
   "title": "Omladinska akademija",
   "subtitle": "Premium U16 razvojni program za vozače od 12 do 16 godina.",
-  "readOnly": "Premium nije aktivan. Vozači i povijest akademije ostaju sačuvani, ali je upravljanje samo za čitanje.",
+  "readOnly": "Upravljanje Akademijom je samo za čitanje jer Premium nije aktivan ili trenutna sezona nije obnovljena.",
   "week": "tjedno",
   "save": "Spremi promjene",
   "saving": "Spremanje…",
@@ -11,7 +11,7 @@
   "optionalNotHired": "Opcionalno — nije angažiran",
   "premium": {
     "title": "Premium Omladinska akademija",
-    "description": "Omladinska akademija je Premium razvojni sustav. Premium član može opcionalno aktivirati U16 akademiju s fiksnim kapacitetom od 16 vozača.",
+    "description": "Akademija mladih je Premium razvojni sloj. Premium članovi mogu aktivirati U16 akademiju sa 16 mjesta i zatim obnavljati pristup za 50 coina svake sezone.",
     "capacity": "Fiksni kapacitet od 16 mladih vozača",
     "localStart": "Početak sa 6 lokalnih mladih vozača",
     "staff": "Prosječan direktor Omladinske akademije + U16 glavni trener uključeni",
@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Aktiviraj Omladinsku akademiju",
-    "description": "Aktivacija stvara zasebnu U16 akademiju. Nova akademija zahtijeva Premium, 30 stvarnih dana ILI 60 dana u igri od osnivanja kluba, jednokratnu naknadu od 50 coina i odabrani budžet akademije. Počinješ sa šest lokalnih vozača, direktorom akademije i U16 glavnim trenerom. Omladinski skaut je opcionalan.",
+    "description": "Aktivacija stvara odvojenu U16 akademiju. Potrebni su Premium, 30 stvarnih ILI 60 dana u igri od osnivanja kluba, 50 coina za aktivaciju i odabrani budžet. Od sljedeće sezone pristup košta 50 coina po sezoni dok je Premium aktivan. Počinješ sa šest lokalnih vozača, Direktorom Akademije i U16 glavnim trenerom. Youth Scout je opcionalan.",
     "capacityLabel": "Maksimalno vozača",
     "starterRidersLabel": "Početni vozači",
     "staffLabel": "Uključeno osoblje",
@@ -30,13 +30,15 @@
     "budgetHelp": "Naknada za aktivaciju odvojena je od budžeta kluba. Budžet akademije financira podršku vozačima, osoblje, skauting, opremu, kampove, putovanja i natjecanja.",
     "activate": "Aktiviraj Omladinsku akademiju",
     "activating": "Aktivacija…",
-    "coinCostLabel": "Jednokratna coin naknada",
+    "coinCostLabel": "Aktivacijska naknada",
     "unlockLabel": "Uvjet otključavanja",
     "coinBalanceLabel": "Coin stanje",
     "coins": "{{count}} coina",
     "unlockValue": "{{real}} stvarnih dana ILI {{game}} dana u igri",
     "waiting": "Još nije otključano. Napredak: {{realPlayed}}/{{realRequired}} stvarnih dana ili {{gamePlayed}}/{{gameRequired}} dana u igri. Akademija se otključava čim ispuniš prvi uvjet.",
-    "needCoins": "Aktivacija Omladinske akademije košta {{cost}} coina. Trenutno stanje je {{balance}}."
+    "needCoins": "Aktivacija Omladinske akademije košta {{cost}} coina. Trenutno stanje je {{balance}}.",
+    "renewalCostLabel": "Sezonska obnova",
+    "coinsPerSeason": "{{count}} coina / sezona"
   },
   "header": {
     "capacity": "{{current}} / {{max}} vozača"
@@ -339,7 +341,8 @@
     "reportFrequency": "Nije moguće spremiti postavku U16 izvještaja.",
     "monthlyRacePlan": "Nije moguće spremiti mjesečni plan utrka mladih.",
     "raceInvitationDecline": "Nije moguće odbiti pozivnicu za utrku mladih.",
-    "budgetTransfer": "Nije moguće prenijeti sredstva Akademije."
+    "budgetTransfer": "Nije moguće prenijeti sredstva Akademije.",
+    "renew": "Obnova Akademije mladih nije uspjela."
   },
   "equipment": {
     "title": "Oprema za mlade",
@@ -591,5 +594,14 @@
     "title": "Trebaš pomoć za Omladinsku akademiju?",
     "description": "Otvori cijeli priručnik s pravilima aktivacije, osobljem, skautingom, regrutiranjem, budžetom, opremom, utrkama, rangiranjem, razvojem i promocijom.",
     "read": "Pročitaj priručnik Omladinske akademije"
+  },
+  "renewal": {
+    "title": "Obnova Akademije mladih — Sezona {{season}}",
+    "description": "Obnovi pristup Akademiji za trenutnu sezonu za {{cost}} coina.",
+    "premiumRequired": "Aktivan Premium potreban je prije kupnje sezonske obnove od {{cost}} coina.",
+    "action": "Obnovi za {{cost}} coina",
+    "renewing": "Obnavljanje…",
+    "getCoins": "Kupi coine",
+    "readOnly": "Akademiju mladih treba obnoviti za trenutnu sezonu prije upravljanja."
   }
 }
