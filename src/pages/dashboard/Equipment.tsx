@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import {
   equipmentTutorialSteps,
   equipmentWelcomeTutorial,
@@ -605,11 +606,18 @@ export default function EquipmentPage(): JSX.Element {
       ) : null}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialTargetFrame
+          target={equipmentTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
         <TutorialOverlay
           open
           variant="panel"
           title={equipmentTutorialSteps[tutorialStepIndex].title}
           body={equipmentTutorialSteps[tutorialStepIndex].body}
+          tip={equipmentTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${equipmentTutorialSteps.length}`}
           primaryAction={
             equipmentTutorialSteps[tutorialStepIndex].primaryAction ?? t('common.next')
