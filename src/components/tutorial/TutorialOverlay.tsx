@@ -18,9 +18,11 @@ type TutorialOverlayProps = {
   stepLabel?: string
   primaryAction: string
   secondaryAction?: string
+  finishAction?: string
   variant?: 'invite' | 'panel'
   onPrimary: () => void
   onSecondary?: () => void
+  onFinish?: () => void
   onClose?: () => void
   primaryDisabled?: boolean
   compact?: boolean
@@ -131,9 +133,11 @@ export default function TutorialOverlay({
   stepLabel,
   primaryAction,
   secondaryAction,
+  finishAction,
   variant = 'panel',
   onPrimary,
   onSecondary,
+  onFinish,
   onClose,
   primaryDisabled = false,
   compact = false,
@@ -242,6 +246,8 @@ export default function TutorialOverlay({
     localizeTutorialLiteral(displayPrimaryAction) ?? displayPrimaryAction
   const localizedSecondaryAction =
     localizeTutorialLiteral(displaySecondaryAction) ?? displaySecondaryAction
+  const localizedFinishAction =
+    localizeTutorialLiteral(finishAction) ?? finishAction
 
   const localizedPreviousAction = t('common.previous', {
     defaultValue: 'Previous',
@@ -259,6 +265,7 @@ export default function TutorialOverlay({
         displayBody,
         displayPrimaryAction,
         displaySecondaryAction ?? '',
+        finishAction ?? '',
         compact ? 'compact' : 'regular',
         smoothStartMode ?? 'standard',
         smoothStartStepIndex,
@@ -270,6 +277,7 @@ export default function TutorialOverlay({
       displayBody,
       displayPrimaryAction,
       displaySecondaryAction,
+      finishAction,
       compact,
       smoothStartMode,
       smoothStartStepIndex,
@@ -672,14 +680,26 @@ export default function TutorialOverlay({
               ) : null}
             </div>
 
-            <button
-              type="button"
-              onClick={handleDisplayedPrimary}
-              disabled={primaryDisabled}
-              className={primaryActionClass}
-            >
-              {localizedPrimaryAction}
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              {localizedFinishAction && onFinish ? (
+                <button
+                  type="button"
+                  onClick={onFinish}
+                  className={footerActionClass}
+                >
+                  {localizedFinishAction}
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                onClick={handleDisplayedPrimary}
+                disabled={primaryDisabled}
+                className={primaryActionClass}
+              >
+                {localizedPrimaryAction}
+              </button>
+            </div>
           </div>
         </div>
       </aside>
