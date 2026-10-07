@@ -341,8 +341,8 @@
     },
     "policies": {
       "title": "Politiques et opérations de l'équipe",
-      "body": "Les politiques d'équipe et les opérations contrôlent la façon dont votre club est géré. Les politiques changeantes peuvent rendre votre club plus attrayant pour les coureurs et le personnel, mais elles peuvent également augmenter le coût des voyages, du soutien de course, des camps d'entraînement et des opérations quotidiennes.",
-      "primary": "Continuer vers le menu",
+      "body": "Les politiques et opérations de l'équipe déterminent la façon dont votre club est géré.\n\nModifier ces politiques peut rendre votre club plus attractif pour les coureurs et le personnel, mais peut aussi augmenter les coûts de voyage, de soutien en course, de stages d'entraînement et d'exploitation quotidienne.\n\nCette section vous aide à équilibrer confort, performance, attractivité et coûts.\n\nAprès les Finances, le tutoriel présentera brièvement le Classement national, l'Association nationale et l'Académie des jeunes avant de terminer par le menu principal.",
+      "primary": "Continuer vers le Classement national",
       "secondary": "Terminez pour l'instant"
     }
   },
