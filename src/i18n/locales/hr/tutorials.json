@@ -102,7 +102,7 @@
     },
     "developing": {
       "title": "Razvojni tim i period za premeštanje",
-      "body": "Razvojni tim je Premium-only drugi tim za mlade vozače koji još nisu spremni za Prvi tim, ali mogu nastupati u dodijeljenim utrkama.\n\nZa stvaranje i korištenje Razvojnog tima potrebno je aktivno Premium članstvo. Prva aktivacija košta 100 Coins, a svaka sezonska obnova 100 Coins. U23 glavni trener također je dostupan samo uz Premium.\n\nAko Premium istekne, pristup Razvojnom timu se pauzira, ali tim, vozači, ugovori, rezultati i povijest ostaju spremljeni. Vozači se između Prvog i Razvojnog tima mogu premještati samo tijekom uobičajenih razdoblja za premještanje.",
+      "body": "Razvojni tim je uobičajeni korak za mlade vozače koji još nisu spremni za Prvi tim i mogu nastupati u dodijeljenim razvojnim utrkama.\n\nRazvojni tim dostupan je Free i Premium menadžerima. Aktivacija košta 100 Coins, a obnova 100 Coins po sezoni. Premium nije potreban za uslugu niti za normalno korištenje U23 glavnog trenera.\n\nDiplomci Youth Academy mogu prvo prijeći u Razvojni tim prije napredovanja u Prvi tim. Premeštanja su moguća samo tokom redovnih perioda. Premium automatizacija i napredna analiza ostaju odvojene od osnovne usluge.",
       "primary": "Dalje"
     },
     "staff": {
@@ -169,7 +169,7 @@
     },
     "buildings": {
       "title": "Objekti",
-      "body": "Ovo je stranica Infrastruktura.\n\nKartica Objekti prikazuje zgrade koje vaš klub može posedovati i unapređivati. Svaki tim počinje sa osnovnim Klupskim centrom nivoa 1.\n\nKasnije možete graditi i unapređivati važne objekte kao što su Trening centar, Medicinski centar, Omladinska akademija, Mehaničarska radionica i Skauting kancelarija.\n\nObjekti su važni jer unapređuju klub i mogu određivati koliko članova osoblja smete da imate.",
+      "body": "Ovo je stranica Infrastruktura.\n\nKartica Objekti prikazuje zgrade koje klub može posedovati i unapređivati. Svaki tim počinje sa osnovnim Klupskim centrom nivoa 1.\n\nKasnije možete graditi i unapređivati Trening centar, Medicinski centar, objekte podrške akademiji, Mehaničarsku radionicu i Skauting kancelariju. Odvojeni Youth Academy / U16 program je Premium funkcija sa sopstvenim pravilima aktivacije i sezonskog Coin pristupa.\n\nObjekti unapređuju klub i mogu određivati koliko članova osoblja možete imati.",
       "primary": "Dalje"
     },
     "projects": {
