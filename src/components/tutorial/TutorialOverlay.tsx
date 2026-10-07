@@ -15,6 +15,7 @@ type TutorialOverlayProps = {
   open: boolean
   title: string
   body: string
+  tip?: string
   stepLabel?: string
   primaryAction: string
   secondaryAction?: string
@@ -130,6 +131,7 @@ export default function TutorialOverlay({
   open,
   title,
   body,
+  tip,
   stepLabel,
   primaryAction,
   secondaryAction,
@@ -242,6 +244,7 @@ export default function TutorialOverlay({
   const localizedTitle =
     localizeTutorialLiteral(displayTitle) ?? displayTitle
   const localizedBody = localizeTutorialLiteral(displayBody) ?? displayBody
+  const localizedTip = localizeTutorialLiteral(tip) ?? tip
   const localizedPrimaryAction =
     localizeTutorialLiteral(displayPrimaryAction) ?? displayPrimaryAction
   const localizedSecondaryAction =
@@ -263,6 +266,7 @@ export default function TutorialOverlay({
         displayStepLabel ?? '',
         displayTitle,
         displayBody,
+        tip ?? '',
         displayPrimaryAction,
         displaySecondaryAction ?? '',
         finishAction ?? '',
@@ -275,6 +279,7 @@ export default function TutorialOverlay({
       displayStepLabel,
       displayTitle,
       displayBody,
+      tip,
       displayPrimaryAction,
       displaySecondaryAction,
       finishAction,
@@ -637,6 +642,17 @@ export default function TutorialOverlay({
           <div className="whitespace-pre-line text-sm font-normal leading-7 text-slate-700">
             {localizedBody}
           </div>
+
+          {localizedTip ? (
+            <div className="mt-5 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3">
+              <div className="text-[11px] font-normal uppercase tracking-[0.18em] text-yellow-800">
+                {t('common.tip', { defaultValue: 'Tip' })}
+              </div>
+              <div className="mt-1 text-sm font-normal leading-6 text-slate-700">
+                {localizedTip}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-4">
