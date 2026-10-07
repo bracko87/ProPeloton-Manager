@@ -569,8 +569,8 @@ export default function FinancePage(): JSX.Element {
 
     await saveTutorialProgress('finance', 'completed', currentStep?.key ?? null)
 
-    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'menu')
-    navigate('/dashboard/overview')
+    window.sessionStorage.setItem('ppm:auto-start-tutorial', 'national-championships')
+    navigate('/dashboard/national-ranking')
   }
 
   async function handleFinishFinanceTutorialForNow() {
