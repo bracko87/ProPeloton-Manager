@@ -10,6 +10,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import { teamRankingTutorialSteps } from '../../lib/tutorials'
 import {
   getTutorialProgress,
@@ -2025,11 +2026,18 @@ export default function TeamRankingPage(): JSX.Element {
       ) : null}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialTargetFrame
+          target={teamRankingTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
         <TutorialOverlay
           open
           variant="panel"
           title={localizedTutorialStep?.title ?? teamRankingTutorialSteps[tutorialStepIndex].title}
           body={localizedTutorialStep?.body ?? teamRankingTutorialSteps[tutorialStepIndex].body}
+          tip={teamRankingTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${teamRankingTutorialSteps.length}`}
           primaryAction={
             localizedTutorialStep?.primaryAction ?? t('tutorial.next')
