@@ -1696,6 +1696,7 @@ export default function StatisticsPage() {
           variant="panel"
           title={statisticsTutorialSteps[tutorialStepIndex].title}
           body={statisticsTutorialSteps[tutorialStepIndex].body}
+          accessNote={statisticsTutorialSteps[tutorialStepIndex].accessNote}
           tip={statisticsTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${statisticsTutorialSteps.length}`}
           primaryAction={
