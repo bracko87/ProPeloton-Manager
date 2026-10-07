@@ -219,7 +219,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
       'A role tutorial for the elected coach: eligible riders, call-ups, final squad and race-day lineups.',
     route: '/dashboard/national-association/squad',
     routePrefixes: ['/dashboard/national-association/squad'],
-    target: 'national-coach-page',
+    target: 'dashboard-page-body',
     contextualEligibility: 'national-coach',
     steps: [
       {
@@ -228,6 +228,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'As the elected National Coach, you manage sporting selection for the country. The workspace shows the eligible rider pool, availability, National Ranking context and the current competition cycle.\n\nThe role does not reveal hidden rider information that a normal manager would not otherwise be allowed to see.',
         primaryAction: 'Next',
+        tip: 'Before selecting riders, check the competition cycle and availability. The best ten on paper are not useful if several are unavailable for the same duty window.',
       },
       {
         key: 'national-coach-callups',
@@ -235,6 +236,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'Build a provisional selection of exactly 10 riders. Nothing is sent while the selection remains a draft. When you lock the 10, invitations are sent to the riders’ clubs.\n\nExplicit declines reopen those places for replacement; accepted and still-pending riders remain locked according to the current response rules.',
         primaryAction: 'Next',
+        tip: 'Build a balanced ten, not ten riders with the same strength. Keep the race profiles in mind before you send invitations.',
       },
       {
         key: 'national-coach-final-squad',
@@ -242,6 +244,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'Once the selection has the required accepted or automatically accepted riders, confirm the final 10-rider National Team squad. That squad is then locked for the current selection cycle.\n\nUse rider availability and the competition schedule before committing the final group.',
         primaryAction: 'Next',
+        tip: 'Do one final availability check before confirming. After the squad is locked, replacement options are intentionally limited.',
       },
       {
         key: 'national-coach-lineups',
@@ -249,6 +252,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'World Nations race days use exactly seven riders selected from the confirmed 10. Reserves stay available inside the squad, and the competition rules limit how many rider changes can be made between consecutive days.\n\nPrepare each race-day lineup and equipment setup for the actual profile rather than treating all three days the same.',
         primaryAction: 'Next',
+        tip: 'Use the reserves actively. The best seven for one race day may not be the best seven for the next profile.',
       },
       {
         key: 'national-coach-duty',
@@ -256,6 +260,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'A call-up is not only a National Team action. Once National Duty is confirmed, that rider becomes unavailable to the rider’s normal club for the relevant window.\n\nUse call-ups responsibly and watch the competition calendar so clubs have clear information before their riders are committed.',
         primaryAction: 'Finish tutorial',
+        tip: 'Clear call-ups help both the National Team and the clubs. Avoid creating unnecessary conflicts when another suitable rider is available.',
         secondaryAction: 'Learn More',
       },
     ],
@@ -379,7 +384,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
       'A short contextual guide for moving an U16 graduate into the next development stage.',
     route: '/dashboard/youth-academy',
     routePrefixes: ['/dashboard/youth-academy'],
-    target: 'youth-academy-page',
+    target: 'dashboard-page-body',
     contextualEligibility: 'premium-youth',
     steps: [
       {
@@ -388,6 +393,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'A rider has reached the point where an Academy graduation decision is required. Review the rider, available squad places and the deadline shown on the Academy page before choosing the next step.\n\nGraduation is a development decision, not an automatic promotion into the First Squad.',
         primaryAction: 'Next',
+        tip: 'Check the deadline first, then compare the rider with available Developing Team and First Squad places.',
       },
       {
         key: 'youth-graduation-pathway',
@@ -395,6 +401,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'The normal pathway is Youth Academy → Developing Team → First Squad. If your Developing Team is active and has room, it is usually the natural next stage for a rider who still needs development.\n\nThe page can also offer other implemented outcomes such as a temporary pathway, direct Developing Team movement or release to the professional free-agent pool. Read the consequences before confirming.',
         primaryAction: 'Next',
+        tip: 'Choose the pathway that gives the rider useful development time, not simply the fastest route to the senior squad.',
       },
       {
         key: 'youth-graduation-developing',
@@ -402,6 +409,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'The Developing Team is available to Free and Premium managers for 100 Coins activation and 100 Coins per season. Premium is not required.\n\nIf you intend to use it for Academy graduates, keep roster space and movement timing in mind before the graduation deadline.',
         primaryAction: 'Finish tutorial',
+        tip: 'Keep at least one development place available when you know a strong Academy rider is approaching graduation.',
         secondaryAction: 'Learn More',
       },
     ],
@@ -413,7 +421,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
       'Understand the U23 bridge from Youth Academy graduates toward the First Squad.',
     route: '/dashboard/developing-team',
     routePrefixes: ['/dashboard/developing-team'],
-    target: 'developing-team-page',
+    target: 'dashboard-page-body',
     contextualEligibility: 'always',
     steps: [
       {
@@ -422,6 +430,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'The Developing Team is not Premium-only. Free and Premium managers can activate it after the normal service unlock conditions are met. First activation costs 100 Coins and each seasonal renewal costs 100 Coins.\n\nPremium-only automation or advanced analysis remains separate from normal Developing Team access.',
         primaryAction: 'Next',
+        tip: 'Activate the service when you have a real development need; the recurring cost is easier to justify when the roster will actually be used.',
       },
       {
         key: 'developing-team-purpose',
@@ -429,6 +438,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'Use the Developing Team for young riders who need more professional development before taking a permanent First Squad role. It can contain existing development riders and graduates arriving from the Youth Academy.\n\nThe intended pathway is development, racing experience and eventual promotion when the rider is ready.',
         primaryAction: 'Next',
+        tip: 'Give young riders meaningful racing and training time instead of leaving them permanently between the Academy and First Squad.',
       },
       {
         key: 'developing-team-movement',
@@ -436,6 +446,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'Owning the Developing Team does not allow unlimited instant movement. Riders can move between the Developing Team and First Squad only when the current movement rules and roster limits allow it.\n\nPlan ahead for graduating youth riders and First Squad vacancies so you do not create avoidable bottlenecks.',
         primaryAction: 'Next',
+        tip: 'Plan movement windows before contract or graduation deadlines so a roster limit does not trap a rider in the wrong team.',
       },
       {
         key: 'developing-team-staff',
@@ -443,6 +454,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'The Developing Team has its own development context and can use the U23 Head Coach as part of the service. Normal U23 staff use does not require Premium.\n\nUse the team as a genuine development layer rather than simply an overflow roster.',
         primaryAction: 'Finish tutorial',
+        tip: 'A good U23 coach should support the riders you actually keep here; do not treat the Developing Team as a separate senior squad.',
         secondaryAction: 'Learn More',
       },
     ],
@@ -454,7 +466,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
       'A short guide to the player-facing systems that recalculate or move forward at season change.',
     route: '/dashboard/season-reset-preview',
     routePrefixes: ['/dashboard/season-reset-preview'],
-    target: 'new-season-page',
+    target: 'dashboard-page-body',
     contextualEligibility: 'always',
     steps: [
       {
@@ -463,6 +475,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'Season transition moves the game into a new planning cycle. A new race calendar and new competitive context can change which events, objectives and rider commitments matter next.\n\nReview the new calendar before carrying old-season assumptions into the next campaign.',
         primaryAction: 'Next',
+        tip: 'Rebuild the season plan from the new calendar instead of copying last season race for race.',
       },
       {
         key: 'new-season-national',
@@ -470,6 +483,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'National Championship structures and National Ranking qualification status are prepared for the new season. National Association renewal and election windows also follow their seasonal schedule.\n\nCheck National Duty and Association pages again even if everything was settled at the end of the previous season.',
         primaryAction: 'Next',
+        tip: 'Check National Ranking and Association pages after rollover because new-season windows can create actions even when the previous season ended cleanly.',
       },
       {
         key: 'new-season-riders',
@@ -477,6 +491,7 @@ export const advancedTutorialModules: AdvancedTutorialModule[] = [
         body:
           'Riders age, youth development moves forward, contracts can enter new phases, and team objectives can change. Youth Academy graduation and Developing Team planning become especially important when riders cross development milestones.\n\nUse the transition preview as a planning aid, not as a technical database report.',
         primaryAction: 'Finish tutorial',
+        tip: 'Season change is a good moment to review contracts, youth graduation and squad space together rather than as separate problems.',
         secondaryAction: 'Learn More',
       },
     ],
