@@ -163,7 +163,6 @@ export default function PreferencesPage(): JSX.Element {
     useState<string | null>(null)
 
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(null)
-  const [isPremium, setIsPremium] = useState(false)
   const [isLoadingDevelopingTeamStatus, setIsLoadingDevelopingTeamStatus] = useState(true)
   const [developingTeamError, setDevelopingTeamError] = useState<string | null>(null)
   const [isActivatingDevelopingTeam, setIsActivatingDevelopingTeam] = useState(false)
@@ -188,29 +187,16 @@ export default function PreferencesPage(): JSX.Element {
     setDevelopingTeamError(null)
 
     try {
-      const [statusResult, premiumResult] = await Promise.all([
-        supabase.rpc('get_developing_team_status'),
-        supabase.rpc('get_my_premium_status'),
-      ])
+      const statusResult = await supabase.rpc('get_developing_team_status')
 
       if (statusResult.error) {
         throw statusResult.error
       }
 
-      if (premiumResult.error) {
-        console.warn('get_my_premium_status failed:', premiumResult.error)
-      }
-
       const normalized = Array.isArray(statusResult.data)
         ? statusResult.data[0]
         : statusResult.data
-      const premiumRows = Array.isArray(premiumResult.data)
-        ? premiumResult.data
-        : premiumResult.data
-          ? [premiumResult.data]
-          : []
 
-      setIsPremium(!premiumResult.error && premiumRows[0]?.is_premium === true)
       setDevelopingTeamStatus((normalized ?? null) as DevelopingTeamStatus | null)
     } catch (e: any) {
       console.error('loadDevelopingTeamStatus failed:', e)
@@ -662,8 +648,7 @@ export default function PreferencesPage(): JSX.Element {
     : t('activation.activate', { ns: 'preferencesDynamic', cost: activationCoinCost })
 
   const developingTeamCanSubmitActivation = Boolean(
-    isPremium &&
-      developingTeamStatus &&
+    developingTeamStatus &&
       developingTeamIsEligible &&
       developingTeamHasEnoughCoins &&
       !developingTeamIsActive &&
@@ -779,32 +764,6 @@ export default function PreferencesPage(): JSX.Element {
               {t('service.summary', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}
             </p>
 
-            <div className={`mt-4 rounded-xl border p-4 ${isPremium ? 'border-yellow-200 bg-yellow-50' : 'border-amber-200 bg-amber-50'}`}>
-              <div className="text-sm font-semibold text-gray-900">
-                {t('developingTeam.premiumOnlyTitle', { ns: 'preferences' })}
-              </div>
-              <p className="mt-1 text-sm leading-6 text-gray-700">
-                {t('developingTeam.premiumOnlyDescription', {
-                  ns: 'preferences',
-                  activation: activationCoinCost,
-                  renewal: renewalCoinCost,
-                })}
-              </p>
-              {!isPremium ? (
-                <div className="mt-3">
-                  <p className="text-xs leading-5 text-amber-800">
-                    {t('developingTeam.premiumInactiveDescription', { ns: 'preferences' })}
-                  </p>
-                  <a
-                    href="#/dashboard/pro"
-                    className="mt-3 inline-flex rounded-md bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-                  >
-                    {t('developingTeam.unlockPremium', { ns: 'preferences' })}
-                  </a>
-                </div>
-              ) : null}
-            </div>
-
             {isLoadingDevelopingTeamStatus ? (
               <div className="mt-4 text-sm text-gray-500">{t('developingTeam.loading', { ns: 'preferences' })}</div>
             ) : (
@@ -845,7 +804,7 @@ export default function PreferencesPage(): JSX.Element {
                   {t('service.eligibilityCosts', { ns: 'preferencesDynamic', activation: activationCoinCost, renewal: renewalCoinCost })}
                 </div>
 
-                {!isPremium ? null : developingTeamIsActive ? (
+                {developingTeamIsActive ? (
                   <div className="mt-4 rounded-xl border border-green-200 bg-green-50/60 p-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -906,7 +865,6 @@ export default function PreferencesPage(): JSX.Element {
                         type="checkbox"
                         checked={developingTeamStatus?.auto_renew === true}
                         disabled={
-                          !isPremium ||
                           !developingTeamStatus?.can_change_auto_renew ||
                           isUpdatingDevelopingTeamAutoRenew
                         }
@@ -1135,7 +1093,6 @@ export default function PreferencesPage(): JSX.Element {
             </div>
 
             <div className="space-y-3 px-6 py-5 text-sm leading-6 text-gray-700">
-              <p>{t('developingTeam.premiumModalRequirement', { ns: 'preferences' })}</p>
               <p>{t('service.deductCoins', { ns: 'preferencesDynamic', cost: developingTeamActionCost })}</p>
               <p>{t('service.accessThisSeason', { ns: 'preferencesDynamic' })}</p>
               <p>{t('service.autoRenewModal', { ns: 'preferencesDynamic' })}</p>
