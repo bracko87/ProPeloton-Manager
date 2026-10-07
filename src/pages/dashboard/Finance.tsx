@@ -569,6 +569,7 @@ export default function FinancePage(): JSX.Element {
 
     await saveTutorialProgress('finance', 'completed', currentStep?.key ?? null)
 
+    // Keep onboarding concise: bridge through three one-card advanced intros before Menu.
     window.sessionStorage.setItem('ppm:auto-start-tutorial', 'national-championships')
     navigate('/dashboard/national-ranking')
   }
