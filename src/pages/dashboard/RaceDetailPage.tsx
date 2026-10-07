@@ -42,6 +42,7 @@ import {
   type UniversalReplayCheckpoint,
 } from '../../universal-race-engine/runRaceEngine'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
+import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import { raceDetailTutorialSteps } from '../../lib/tutorials'
 import {
   getTutorialProgress,
@@ -19816,11 +19817,18 @@ export default function RaceDetailPage({
       )}
 
       {!tutorialLoading && tutorialMode === 'steps' ? (
+        <TutorialTargetFrame
+          target={raceDetailTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === 'steps' ? (
         <TutorialOverlay
           open
           variant="panel"
           title={t(tutorialStepIndex === 0 ? 'tutorial.profileTitle' : 'tutorial.stagesTitle')}
           body={t(tutorialStepIndex === 0 ? 'tutorial.profileBody' : 'tutorial.stagesBody')}
+          tip={raceDetailTutorialSteps[tutorialStepIndex].tip}
           stepLabel={t('tutorial.step', { current: tutorialStepIndex + 1, total: raceDetailTutorialSteps.length })}
           primaryAction={
             tutorialStepIndex === raceDetailTutorialSteps.length - 1 ? t('tutorial.continuePreparation') : t('tutorial.next')
