@@ -42,7 +42,8 @@
     "statistics": "Učinak i analitika",
     "premiumCenter": "Napredno planiranje, simulacije i automatizacija",
     "nationalAssociation": "Upravljanje reprezentacijom i World Nations",
-    "youthAcademy": "Premium U16 program razvoja mladih vozača"
+    "youthAcademy": "Premium U16 program razvoja mladih vozača",
+    "hiddenRaces": "Rezervne rute za posebna takmičenja"
   },
   "header": {
     "toggleSidebar": "Prikaži ili sakrij bočnu navigaciju",
@@ -159,5 +160,6 @@
   },
   "premiumCenter": "Premium centar",
   "nationalAssociation": "Nacionalni savez",
-  "youthAcademy": "Omladinska akademija"
+  "youthAcademy": "Omladinska akademija",
+  "hiddenRaces": "Skrivene trke"
 }
