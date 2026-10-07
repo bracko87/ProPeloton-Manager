@@ -18,6 +18,7 @@ import type { TFunction } from "i18next";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router";
 import TutorialOverlay from "../../components/tutorial/TutorialOverlay";
+import TutorialTargetFrame from "../../components/tutorial/TutorialTargetFrame";
 import {
   racePreparationTutorialSteps,
   racePreparationWelcomeTutorial,
@@ -4246,11 +4247,18 @@ export default function RacePreparationPage(): JSX.Element {
       ) : null}
 
       {!tutorialLoading && tutorialMode === "steps" ? (
+        <TutorialTargetFrame
+          target={racePreparationTutorialSteps[tutorialStepIndex].target ?? 'dashboard-page-body'}
+        />
+      ) : null}
+
+      {!tutorialLoading && tutorialMode === "steps" ? (
         <TutorialOverlay
           open
           variant="panel"
           title={racePreparationTutorialSteps[tutorialStepIndex].title}
           body={racePreparationTutorialSteps[tutorialStepIndex].body}
+          tip={racePreparationTutorialSteps[tutorialStepIndex].tip}
           stepLabel={`${tutorialStepIndex + 1}/${racePreparationTutorialSteps.length}`}
           primaryAction={
             racePreparationTutorialSteps[tutorialStepIndex].primaryAction ??
