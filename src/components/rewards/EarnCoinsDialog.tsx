@@ -3,7 +3,7 @@
  * No survey or third-party request begins until the player opts in.
  * The user-specific secure link is minted by an authenticated Edge Function.
  */
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Coins, ExternalLink, Loader2, RefreshCw, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
@@ -33,7 +33,7 @@ const english: Labels = {
   title: 'Earn Free Coins', subtitle: 'Complete optional surveys with CPX Research.',
   start: 'Browse Surveys', loading: 'Connecting to surveys…', close: 'Close',
   earned: 'Net survey Coins', retained: 'Fractional Coins saved', rate: '$1 earned = 15 Coins',
-  note: 'Rewards arrive automatically after CPX confirms completion. Invalid or canceled survey rewards may be reversed.',
+  note: 'CPX displays Reward Points (100 points = 15 Coins). Rewards arrive after confirmation; canceled rewards may be reversed.',
   refresh: 'Refresh rewards', privacy: 'Opening surveys shares your game account identifier and connection data with CPX Research. Participation is optional.',
   history: 'Recent survey activity', empty: 'No survey activity yet.',
   completed: 'Completed', canceled: 'Reversed', openTab: 'Open surveys in new tab',
@@ -46,7 +46,7 @@ const german: Labels = {
   start: 'Umfragen öffnen', loading: 'Umfragen werden geladen…', close: 'Schließen',
   earned: 'Netto-Umfrage-Coins', retained: 'Gespeicherter Coin-Rest',
   rate: '1 $ Verdienst = 15 Coins',
-  note: 'Coins werden nach bestätigtem Abschluss gutgeschrieben. Stornierte Belohnungen können abgezogen werden.',
+  note: 'CPX zeigt Reward Points an (100 Punkte = 15 Coins). Coins werden nach Bestätigung gutgeschrieben; Stornierungen werden abgezogen.',
   refresh: 'Belohnungen aktualisieren',
   privacy: 'Beim Öffnen werden deine Spielkonto-ID und Verbindungsdaten an CPX Research übertragen. Die Teilnahme ist freiwillig.',
   history: 'Letzte Umfragen', empty: 'Noch keine Umfragen.',
@@ -60,7 +60,7 @@ const serbian: Labels = {
   start: 'Otvori ankete', loading: 'Povezivanje…', close: 'Zatvori',
   earned: 'Neto Coins od anketa', retained: 'Sačuvani delovi Coin-a',
   rate: '1 $ zarade = 15 Coins',
-  note: 'Coins stižu nakon potvrde ankete. Poništene nagrade mogu biti oduzete.',
+  note: 'CPX prikazuje Reward Points (100 poena = 15 Coins). Nagrade stižu nakon potvrde, a poništene mogu biti oduzete.',
   refresh: 'Osveži nagrade', history: 'Poslednje ankete',
   empty: 'Nema anketa.', completed: 'Završeno', canceled: 'Poništeno',
   openTab: 'Otvori ankete u novoj kartici', retry: 'Pokušaj ponovo',
@@ -89,6 +89,12 @@ export default function EarnCoinsDialog({
   const [summary, setSummary] = useState<RewardSummary | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
+  // Header and Packages provide inline close handlers. Keep the latest handler
+  // without restarting the open effect (and re-fetching rewards) on every
+  // parent rerender or wallet balance update.
+  const closeRef = useRef(onClose)
+  useEffect(() => { closeRef.current = onClose }, [onClose])
+
   const refresh = useCallback(async () => {
     setRefreshing(true)
     try {
@@ -111,11 +117,11 @@ export default function EarnCoinsDialog({
     }
     void refresh()
     function escape(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') closeRef.current()
     }
     document.addEventListener('keydown', escape)
     return () => document.removeEventListener('keydown', escape)
-  }, [open, onClose, refresh])
+  }, [open, refresh])
 
   async function openSurveys() {
     setStarting(true)
