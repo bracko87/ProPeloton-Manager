@@ -14,6 +14,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import appI18n from '../i18n'
 import { supabase } from '../lib/supabase'
+import EarnCoinsDialog, { useEarnCoinsLabel } from '@/components/rewards/EarnCoinsDialog'
+import { Coins } from 'lucide-react'
 
 type CoinStatusRow = {
   balance: number
@@ -559,6 +561,9 @@ async function callAuthenticatedEdgeFunction<
 }
 
 export default function ProPackagesPage(): JSX.Element {
+  const earnCoinsLabel = useEarnCoinsLabel()
+  const [earnCoinsOpen, setEarnCoinsOpen] = useState(false)
+
   const { t, i18n } = useTranslation('proPackages')
   const stripeReturnHandledRef = useRef(false)
   const [balance, setBalance] = useState(0)
@@ -1907,6 +1912,26 @@ export default function ProPackagesPage(): JSX.Element {
           </div>
         )}
       </section>
+
+      {/* Earn free Coins alongside purchasable packages. */}
+      <section className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h3 className="flex items-center gap-2 text-xl font-bold text-black">
+              <Coins size={22} className="text-amber-700" /> {earnCoinsLabel}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-gray-700">
+              Complete optional CPX Research surveys and earn 15 Coins for every $1 in verified survey revenue.
+              No payment required. Canceled survey rewards can be reversed.
+            </p>
+          </div>
+          <button type="button" onClick={() => setEarnCoinsOpen(true)}
+            className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white hover:bg-neutral-800 sm:w-auto">
+            <Coins size={18} /> {earnCoinsLabel}
+          </button>
+        </div>
+      </section>
+      <EarnCoinsDialog open={earnCoinsOpen} onClose={() => setEarnCoinsOpen(false)} />
 
       {/* Section 4 — Current membership */}
       <section className="mt-10">

@@ -53,6 +53,8 @@ import {
   Settings,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import EarnCoinsDialog, { useEarnCoinsLabel } from '@/components/rewards/EarnCoinsDialog'
+import { Coins } from 'lucide-react'
 import {
   canReceiveNotificationItem,
   readNotificationPreferences,
@@ -301,6 +303,8 @@ export default function Header({
   coinBalance = 0,
 }: HeaderProps) {
   const { t } = useTranslation('navigation')
+  const earnCoinsLabel = useEarnCoinsLabel()
+  const [earnCoinsOpen, setEarnCoinsOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
@@ -1024,7 +1028,7 @@ export default function Header({
   }, [isProfileMenuOpen, loadInboxUnreadCount])
 
   return (
-    <header className="flex items-center justify-between px-6 py-3 border-b border-yellow-500 bg-yellow-400">
+    <header className="relative flex items-center justify-between gap-2 px-3 py-3 sm:px-6 border-b border-yellow-500 bg-yellow-400">
       <div className="flex items-center gap-4 min-w-0 shrink-0">
         <button
           onClick={onToggle}
@@ -1103,7 +1107,19 @@ export default function Header({
         </div>
       </div>
 
+      <button type="button" onClick={() => setEarnCoinsOpen(true)}
+        title={earnCoinsLabel}
+        className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-lg border border-black/25 bg-black px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 xl:inline-flex">
+        <Coins size={18} aria-hidden="true" /> {earnCoinsLabel}
+      </button>
+
       <div className="flex items-center gap-3 shrink-0">
+        <button type="button" onClick={() => setEarnCoinsOpen(true)}
+          title={earnCoinsLabel} aria-label={earnCoinsLabel}
+          className="inline-flex items-center justify-center gap-1 rounded-md bg-black px-2.5 py-2 text-xs font-semibold text-white hover:bg-neutral-800 xl:hidden">
+          <Coins size={17} aria-hidden="true" />
+          <span className="hidden lg:inline">{earnCoinsLabel}</span>
+        </button>
         <button
           type="button"
           data-tutorial-target="header-membership"
@@ -1277,6 +1293,7 @@ export default function Header({
           ) : null}
         </div>
       </div>
+      <EarnCoinsDialog open={earnCoinsOpen} onClose={() => setEarnCoinsOpen(false)} />
     </header>
   )
 }
