@@ -22,7 +22,6 @@ import {
   Sparkles,
   Trophy,
   GraduationCap,
-  Archive,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
@@ -66,12 +65,6 @@ const navItems: NavItem[] = [
     labelKey: 'calendar',
     descriptionKey: 'descriptions.calendar',
     icon: Calendar,
-  },
-  {
-    to: '/dashboard/hidden-races',
-    labelKey: 'hiddenRaces',
-    descriptionKey: 'descriptions.hiddenRaces',
-    icon: Archive,
   },
   {
     to: '/dashboard/race-preparation',
