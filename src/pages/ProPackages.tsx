@@ -566,6 +566,7 @@ export default function ProPackagesPage(): JSX.Element {
 
   const [premiumPlan, setPremiumPlan] =
     useState<PremiumPlanRow | null>(null)
+  const [premiumPlans, setPremiumPlans] = useState<PremiumPlanRow[]>([])
   const [premiumStatus, setPremiumStatus] =
     useState<PremiumStatusRow | null>(null)
   const [premiumDetails, setPremiumDetails] =
@@ -696,6 +697,10 @@ export default function ProPackagesPage(): JSX.Element {
   )
 
   const premiumPrice = eur(PRO_PREMIUM_PRICE_EUR)
+  const quarterlyPlan = premiumPlans.find(plan => plan.code === 'premium_quarterly')
+  const yearlyPlan = premiumPlans.find(plan => plan.code === 'premium_yearly')
+  const monthlyPlan = premiumPlans.find(plan => plan.code === 'premium_monthly')
+  const featuredPrice = eur((quarterlyPlan?.price_cents ?? 949) / 100)
   const premiumCoins = PRO_PREMIUM_MONTHLY_COINS
 
   const statusLabel = useMemo(() => {
@@ -878,9 +883,8 @@ export default function ProPackagesPage(): JSX.Element {
             .select(
               'code, name, description, price_cents, currency, interval_unit, interval_count, coins_per_paid_invoice, active',
             )
-            .eq('code', 'premium_monthly')
-            .eq('active', true)
-            .maybeSingle(),
+            .in('code', ['premium_monthly', 'premium_quarterly', 'premium_yearly'])
+            .eq('active', true),
           supabase.rpc('get_my_premium_status'),
           supabase
             .from('user_premium_subscriptions')
@@ -895,9 +899,9 @@ export default function ProPackagesPage(): JSX.Element {
       if (statusResult.error) throw statusResult.error
       if (detailsResult.error) throw detailsResult.error
 
-      setPremiumPlan(
-        (planResult.data as PremiumPlanRow | null) ?? null,
-      )
+      const availablePlans = (planResult.data ?? []) as PremiumPlanRow[]
+      setPremiumPlans(availablePlans)
+      setPremiumPlan(availablePlans.find(plan => plan.code === 'premium_monthly') ?? null)
 
       const statusRows =
         (statusResult.data ?? []) as PremiumStatusRow[]
@@ -913,6 +917,7 @@ export default function ProPackagesPage(): JSX.Element {
     } catch (loadError: any) {
       console.error('Failed to load Premium data:', loadError)
       setPremiumPlan(null)
+      setPremiumPlans([])
       setPremiumStatus(null)
       setPremiumDetails(null)
       setPremiumBilling(null)
@@ -1334,7 +1339,7 @@ export default function ProPackagesPage(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function handleStartPremiumCheckout() {
+  async function handleStartPremiumCheckout(planCode: 'premium_monthly' | 'premium_quarterly' | 'premium_yearly' = 'premium_quarterly') {
     setPremiumError(null)
     setPremiumNotice(null)
     setStartingPremiumCheckout(true)
@@ -1342,7 +1347,7 @@ export default function ProPackagesPage(): JSX.Element {
     try {
       const response = await callAuthenticatedEdgeFunction(
         'create-premium-checkout',
-        { plan_code: 'premium_monthly' },
+        { plan_code: planCode },
       )
 
       if (!response.url) {
@@ -1545,13 +1550,13 @@ export default function ProPackagesPage(): JSX.Element {
             </div>
 
             <h3 className="mt-4 text-2xl font-extrabold text-black">
-              {premiumPlan?.name ?? t('premium.defaultName')}
+              ProPeloton Manager Premium
             </h3>
 
             <div className="mt-2 text-3xl font-extrabold text-black">
-              {premiumPrice}
+              {featuredPrice}
               <span className="ml-2 text-sm font-medium text-gray-500">
-                {t('premium.perMonth')}
+                / 3 months · €3.16/month
               </span>
             </div>
 
@@ -1630,10 +1635,13 @@ export default function ProPackagesPage(): JSX.Element {
               {t('premium.membership')}
             </div>
             <div className="mt-2 text-4xl font-extrabold text-black">
-              {premiumPrice}
+              {featuredPrice}
             </div>
             <div className="mt-1 text-sm text-gray-600">
-              {t('premium.perMonth')}
+              / 3 months · €3.16/month · 90 Coins
+            </div>
+            <div className="mt-3 inline-block rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-black">
+              Most popular
             </div>
 
             {showManageSubscription ? (
@@ -1671,11 +1679,11 @@ export default function ProPackagesPage(): JSX.Element {
                 ) : !premiumCheckoutBlocked ? (
                   <button
                     type="button"
-                    onClick={() => void handleStartPremiumCheckout()}
+                    onClick={() => void handleStartPremiumCheckout('premium_quarterly')}
                     disabled={
                       loadingPremium ||
                       startingPremiumCheckout ||
-                      !premiumPlan
+                      !quarterlyPlan
                     }
                     className="mt-3 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
                   >
@@ -1688,11 +1696,11 @@ export default function ProPackagesPage(): JSX.Element {
             ) : (
               <button
                 type="button"
-                onClick={() => void handleStartPremiumCheckout()}
+                onClick={() => void handleStartPremiumCheckout('premium_quarterly')}
                 disabled={
                   loadingPremium ||
                   startingPremiumCheckout ||
-                  !premiumPlan ||
+                  !quarterlyPlan ||
                   premiumCheckoutBlocked
                 }
                 className="mt-6 w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-extrabold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-60"
@@ -1705,6 +1713,31 @@ export default function ProPackagesPage(): JSX.Element {
                       ? t('premium.alreadyExists')
                       : t('premium.become')}
               </button>
+            )}
+
+            {!premiumCheckoutBlocked && (
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <button
+                  type="button"
+                  onClick={() => void handleStartPremiumCheckout('premium_monthly')}
+                  disabled={loadingPremium || startingPremiumCheckout || !monthlyPlan}
+                  className="rounded-xl border border-gray-200 bg-white p-4 text-left text-black hover:border-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <div className="font-semibold">1 Month</div>
+                  <div className="mt-1 text-lg font-bold">{eur((monthlyPlan?.price_cents ?? 329) / 100)}</div>
+                  <div className="text-xs text-gray-600">per month · 30 Coins</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleStartPremiumCheckout('premium_yearly')}
+                  disabled={loadingPremium || startingPremiumCheckout || !yearlyPlan}
+                  className="rounded-xl border border-gray-200 bg-white p-4 text-left text-black hover:border-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <div className="font-semibold">12 Months · Save 15%</div>
+                  <div className="mt-1 text-lg font-bold">{eur((yearlyPlan?.price_cents ?? 3349) / 100)}</div>
+                  <div className="text-xs text-gray-600">€2.79/month · 360 Coins</div>
+                </button>
+              </div>
             )}
 
             <div className="mt-3 text-xs text-gray-500">
