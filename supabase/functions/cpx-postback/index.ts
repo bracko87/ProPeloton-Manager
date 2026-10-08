@@ -54,12 +54,19 @@ serve(async (req) => {
   const signature = (query.get("hash") ?? "").toLowerCase();
   const userId = query.get("user_id") ?? "";
   const status = Number(query.get("status"));
-  const rewardType = (query.get("type") ?? "").toLowerCase();
+  const callbackType = (query.get("type") ?? "").toLowerCase();
+  // CPX sends type=reversal when status=2. The RPC retrieves the original
+  // transaction type by trans_id before reversing the reward.
+  // Normalize for the RPC's accepted complete/out/bonus type constraints.
+  const rewardType = status === 2 && callbackType === "reversal"
+    ? "complete"
+    : callbackType;
 
   if (!/^[A-Za-z0-9_:.\-]{1,128}$/.test(transId) ||
       !/^[0-9a-f]{32}$/.test(signature) ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId) ||
       ![1, 2].includes(status) ||
+      (callbackType === "reversal" && status !== 2) ||
       !["complete", "out", "bonus"].includes(rewardType)) {
     return reply(400, "invalid parameters");
   }
