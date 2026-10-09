@@ -1531,7 +1531,13 @@ export default function PremiumCommandCenter(): JSX.Element {
                       : 'border-transparent text-slate-500 hover:text-slate-700',
                   ].join(' ')}
                 >
-                  {t(`tabs.${item.key}`)}
+                  {t('tabs.' + item.key, {defaultValue: ({
+                      youth:'Youth Academy & Talent Pipeline',
+                      national:'National Competitions Command',
+                      scouting:'Scouting Intelligence',
+                      staff:'Staff, Training & Recovery',
+                      infrastructure:'Infrastructure & Logistics Planner',
+                    } as Partial<Record<TabKey,string>>)[item.key] ?? item.key})}
                 </button>
               )
             })}
@@ -1974,6 +1980,174 @@ export default function PremiumCommandCenter(): JSX.Element {
                 </div>
               </Card>
             </div>
+          ) : null}
+
+
+          {workspace && tab === 'youth' ? (
+            <CommandWorkspaceDetail
+              title={t('tabs.youth', { defaultValue: 'Youth Academy & Talent Pipeline' })}
+              description="Track U16 invitations and squad readiness, scouting and graduation decisions, with direct access to the Developing Team pathway. Academy activation remains subject to its normal Premium and Coins rules."
+              metrics={[
+                { label: 'Youth Academy status', value: workspace.youth_command.available ? 'Active' : 'Inactive',
+                  note: workspace.youth_command.has_academy ? 'Academy exists' : 'Activation is managed on the Youth Academy page' },
+                { label: 'U16 rider occupancy', value: workspace.youth_command.riders_count + ' / ' + workspace.youth_command.rider_limit },
+                { label: 'Upcoming U16 entries', value: workspace.youth_command.upcoming_races },
+                { label: 'Invitations pending', value: workspace.youth_command.pending_invitations },
+                { label: 'Graduation decisions', value: workspace.youth_command.graduation_decisions_pending },
+                { label: 'Riders nearing age 16', value: workspace.youth_command.riders_nearing_graduation,
+                  note: 'Within 60 game days' },
+                { label: 'Scouting reports', value: workspace.youth_command.scouting_reports_total },
+                { label: 'Unreviewed discoveries', value: workspace.youth_command.scouting_reports_pending },
+              ]}
+              links={[
+                {to:'/dashboard/youth-academy',label:'Manage U16 academy'},
+                {to:'/dashboard/developing-team',label:'Developing Team / U23'},
+                {to:'/dashboard/staff',label:'Academy staff'},
+              ]}
+            >
+              <CommandDataList title="Next U16 races & invitations"
+                items={workspace.youth_command.latest_races.map(race => ({
+                  id: race.race_id,
+                  title: race.race_name,
+                  subtitle: formatGameDate(race.race_date) + ' · ' + humanize(race.status ?? 'available'),
+                  to: '/dashboard/youth-academy/races/' + race.race_id,
+                }))}
+                empty={workspace.youth_command.available
+                  ? 'No U16 race entries or invitations currently pending.'
+                  : 'Activate the Youth Academy to manage race invitations.'}
+              />
+            </CommandWorkspaceDetail>
+          ) : null}
+
+          {workspace && tab === 'national' ? (
+            <CommandWorkspaceDetail
+              title={t('tabs.national', { defaultValue: 'National Competitions Command' })}
+              description="Monitor championships and national-team readiness. Association management and coach decisions remain subject to existing membership and coach permissions."
+              metrics={[
+                {label:'Your national role',value:workspace.national_command.is_coach ? 'National Coach'
+                  : workspace.national_command.has_association ? 'Member' : 'Not joined'},
+                {label:'National Association',value:workspace.national_command.association_name ?? 'None'},
+                {label:'Championships involving your riders',value:workspace.national_command.national_championships_upcoming},
+                {label:'10-rider national squad',value:workspace.national_command.selected_riders + ' / ' + workspace.national_command.squad_target},
+                {label:'Seven-rider lineups confirmed',value:workspace.national_command.lineups_ready + ' / ' + workspace.national_command.lineup_target},
+                {label:'Upcoming lineup deadlines',value:workspace.national_command.pending_lineup_deadlines,
+                  note:'Within the next 21 game days'},
+                {label:'Next World Nations event',value:workspace.national_command.next_event_date
+                  ? formatGameDate(workspace.national_command.next_event_date) : 'Not scheduled'},
+              ]}
+              links={[
+                {to:'/dashboard/national-ranking',label:'National Championships'},
+                {to:'/dashboard/national-association',label:'National Association'},
+                {to:'/dashboard/national-association/squad',label:'National squad'},
+                {to:'/dashboard/national-association/world-nations',label:'World Nations'},
+              ]}
+            >
+              <Card className="p-5">
+                <div className="text-sm font-semibold text-slate-900">
+                  {workspace.national_command.squad_ready ? 'National squad confirmed' : 'National squad not yet confirmed'}
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {workspace.national_command.is_coach
+                    ? 'As National Coach, check rider call-ups, confirm your 10-rider squad and submit seven-rider lineups before each event deadline.'
+                    : workspace.national_command.has_association
+                      ? 'You are an association member. Only the active National Coach can submit and confirm national-team selections.'
+                      : 'You have no current National Association membership. Championship entries still depend on your riders and the tournament rules.'}
+                </p>
+              </Card>
+            </CommandWorkspaceDetail>
+          ) : null}
+
+          {workspace && tab === 'scouting' ? (
+            <CommandWorkspaceDetail
+              title={t('tabs.scouting', { defaultValue: 'Scouting Intelligence' })}
+              description="Review scouting workload and reports and connect discoveries to your transfer shortlist. Scouting reports remain private to your club."
+              metrics={[
+                {label:'Unread scout reports',value:workspace.scouting_command.unread_reports},
+                {label:'All scouting reports',value:workspace.scouting_command.reports_total},
+                {label:'Active scouting tasks',value:workspace.scouting_command.active_tasks},
+                {label:'Scouted shortlist targets',value:workspace.scouting_command.shortlist_matches},
+              ]}
+              links={[
+                {to:'/dashboard/scouting',label:'Scout reports'},
+                {to:'/dashboard/transfers',label:'Transfers & shortlist'},
+                {to:'/dashboard/staff',label:'Scouting staff'},
+              ]}
+            >
+              <CommandDataList title="Recent scouting reports"
+                items={workspace.scouting_command.recent_reports.map(report => ({
+                  id: report.id,
+                  title: report.rider_name,
+                  subtitle: humanize(report.precision_tier) + ' · ' + humanize(report.review_status) +
+                    ' · ' + formatRealDate(report.created_at),
+                  to: '/dashboard/external-riders/' + report.rider_id,
+                }))}
+                empty="No completed scouting reports yet."
+              />
+            </CommandWorkspaceDetail>
+          ) : null}
+
+          {workspace && tab === 'staff' ? (
+            <CommandWorkspaceDetail
+              title={t('tabs.staff', { defaultValue: 'Staff, Training & Recovery' })}
+              description="Track staff coverage, contract renewals, rider availability and training fatigue. Fatigue watch uses the 70-point threshold."
+              metrics={[
+                {label:'Active staff',value:workspace.staff_command.active_staff},
+                {label:'Vacant core staff roles',value:workspace.staff_command.vacant_key_roles,
+                  note:'Head Coach, Team Doctor, Sport Director'},
+                {label:'Contracts expiring soon',value:workspace.staff_command.expiring_contracts,
+                  note:'Within 30 game days'},
+                {label:'Fatigue watch',value:workspace.staff_command.fatigue_watch,
+                  note:'Riders with fatigue of 70 or higher'},
+                {label:'Unavailable riders',value:workspace.staff_command.injured_or_unavailable},
+              ]}
+              links={[
+                {to:'/dashboard/staff',label:'Staff & contracts'},
+                {to:'/dashboard/training',label:'Training & recovery'},
+                {to:'/dashboard/squad',label:'Rider squad'},
+              ]}
+            >
+              <CommandDataList title="Staff contract watch (next 60 days)"
+                items={workspace.staff_command.upcoming_contracts.map(staff => ({
+                  id: staff.id,
+                  title: staff.staff_name,
+                  subtitle: humanize(staff.role_type) + ' · Expires ' + formatGameDate(staff.contract_expires_at),
+                  to:'/dashboard/staff',
+                }))}
+                empty="No active staff contracts expire within the next 60 game days."
+              />
+            </CommandWorkspaceDetail>
+          ) : null}
+
+          {workspace && tab === 'infrastructure' ? (
+            <CommandWorkspaceDetail
+              title={t('tabs.infrastructure', { defaultValue: 'Infrastructure & Logistics Planner' })}
+              description="Track construction and repairs, equipment condition, supplies and facility maintenance. Shortages mean fewer than five units remaining."
+              metrics={[
+                {label:'Facility jobs in progress',value:workspace.infrastructure_command.jobs_in_progress},
+                {label:'Facility upgrades completed',value:workspace.infrastructure_command.facility_upgrades_completed},
+                {label:'Asset repairs in progress',value:workspace.infrastructure_command.repair_jobs_in_progress},
+                {label:'Equipment below 50% condition',value:workspace.infrastructure_command.equipment_under_50_condition},
+                {label:'Low race supplies',value:workspace.infrastructure_command.supply_shortages},
+                {label:'Facility maintenance per month',value:formatCurrency(workspace.infrastructure_command.monthly_maintenance),
+                  note:'Based on current facility levels'},
+              ]}
+              links={[
+                {to:'/dashboard/infrastructure',label:'Infrastructure & asset repairs'},
+                {to:'/dashboard/equipment',label:'Equipment & race supplies'},
+                {to:'/dashboard/finance',label:'Club finances'},
+              ]}
+            >
+              <CommandDataList title="Upcoming facility projects"
+                items={workspace.infrastructure_command.upcoming_projects.map((project,index) => ({
+                  id: project.target_key + ':' + index,
+                  title: humanize(project.target_key),
+                  subtitle: humanize(project.status) +
+                    (project.complete_game_date ? ' · Due ' + formatGameDate(project.complete_game_date) : ''),
+                  to:'/dashboard/infrastructure',
+                }))}
+                empty="No active facility construction jobs."
+              />
+            </CommandWorkspaceDetail>
           ) : null}
 
           {workspace && tab === 'strategy' ? (
