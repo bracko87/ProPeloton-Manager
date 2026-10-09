@@ -468,7 +468,8 @@
     "releasing": "Otpuštanje...",
     "removedFromList": "Vozač je uklonjen sa transfer liste.",
     "cancelListingFailed": "Transfer lista nije mogla da se otkaže.",
-    "releasePreviewFailed": "Pregled troška otpuštanja nije mogao da se učita."
+    "releasePreviewFailed": "Pregled troška otpuštanja nije mogao da se učita.",
+    "gameDateUnavailable": "Datum u igri nije dostupan"
   },
   "ownedTransfer": {
     "title": "Transfer lista",
