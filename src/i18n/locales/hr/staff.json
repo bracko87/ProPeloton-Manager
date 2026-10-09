@@ -231,7 +231,8 @@
     "courseInProgressButton": "Kurs je u toku",
     "sendOnCourse": "Pošalji na kurs",
     "release": "Otpusti",
-    "scoutingReports": "Skauting izvještaji"
+    "scoutingReports": "Skauting izvještaji",
+    "completionDate": "Završetak: {{date}}"
   },
   "release": {
     "title": "Otpusti člana osoblja",
@@ -523,5 +524,31 @@
       "description": "Napredna procjena za pouzdanije izvještaje.",
       "focus": "Preciznost + Potencijal"
     }
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% učinkovitosti treninga",
+    "developmentSupport": "{{value}}% podrške razvoju",
+    "overloadRisk": "{{value}}% rizika od preopterećenja",
+    "dailyTrainingOutput": "{{value}}% učinka dnevnog treninga",
+    "riderDevelopmentSupport": "{{value}}% podrške razvoju vozača",
+    "combinedDevelopmentSupport": "{{value}}% zajedničke razvojne podrške",
+    "combinedOverloadRisk": "{{value}}% zajedničkog rizika od preopterećenja",
+    "u16CoachingSupport": "{{value}}% podrške U16 treneru",
+    "focusTrainingEfficiency": "{{value}}% učinkovitosti treninga ({{focus}})"
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "Trening centar razine 0 ograničava dio bonusa trenerskog osoblja.",
+    "medicalCenter": "Medicinski centar razine 0 ograničava dio bonusa medicinskog osoblja.",
+    "mechanicsWorkshop": "Mehaničarska radionica razine 0 ograničava brzinu i popuste održavanja. Osnovna podrška ostaje aktivna.",
+    "scoutingOffice": "Skautski ured razine 0 ograničava dio bonusa skauta i analitičara."
+  },
+  "contractDisplay": {
+    "noDate": "Datum ugovora nije dostupan",
+    "missingDate": "Datum isteka ugovora nije dostupan",
+    "expired": "Istekao",
+    "seasonDate": "Sezona {{season}} – {{date}}"
+  },
+  "roleInfo": {
+    "capacityFallback": "Kapacitet prati trenutačno ograničenje osoblja za ovu ulogu."
   }
 }
