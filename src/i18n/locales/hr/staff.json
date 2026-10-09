@@ -245,7 +245,9 @@
     "warning": "Član osoblja će odmah biti uklonjen iz tima. Bonusi ovog mjesta prestaće dok ne angažujete zamenu.",
     "payment": "Klub će platiti jednokratnu naknadu za otpuštanje u visini šest nedeljnih plaća.",
     "releasing": "Otpuštanje...",
-    "confirm": "Potvrdi otpuštanje"
+    "confirm": "Potvrdi otpuštanje",
+    "successMessage": "{{name}} je otpušten s pozicije {{role}}. Isplaćena naknada: {{amount}}.",
+    "failureMessage": "Otpuštanje člana osoblja nije uspjelo. Pokušajte ponovno."
   },
   "contract": {
     "title": "Produži ugovor",
@@ -274,7 +276,14 @@
     "submitting": "Slanje...",
     "submit": "Pošalji ponudu",
     "extended": "Ugovor člana osoblja je uspješno produžen.",
-    "discussionCompleted": "Pregovori o ugovoru su završeni."
+    "discussionCompleted": "Pregovori o ugovoru su završeni.",
+    "invalidWeeklySalary": "Unesite ispravnu tjednu plaću.",
+    "acceptedWithTerms": "{{name}} je prihvatio novi ugovor: {{salary}} tjedno do {{season}}. sezone.",
+    "countered": "{{name}} traži povoljnije uvjete ugovora.",
+    "rejected": "{{name}} je odbio ponudu.",
+    "minimumWeeklySalary": "Najniža prihvatljiva tjedna plaća iznosi {{salary}}.",
+    "wantsCloserTo": "{{name}} traži tjednu plaću bližu iznosu od {{salary}}.",
+    "offerFailed": "Pregovori o ugovoru nisu uspjeli. Pokušajte ponovno."
   },
   "course": {
     "title": "Kurs za osoblje",
