@@ -245,7 +245,9 @@
     "warning": "Questo rimuoverà immediatamente il membro del personale dalla squadra. I bonus del personale da questa slot si fermerà fino a quando non si firma un sostituto.",
     "payment": "Il club pagherà una compensazione di rilascio una tantum pari a 6 settimane di stipendio.",
     "releasing": "Rilasciando...",
-    "confirm": "Conferma rilascio"
+    "confirm": "Conferma rilascio",
+    "successMessage": "{{name}} è stato sollevato dall'incarico di {{role}}. Indennità corrisposta: {{amount}}.",
+    "failureMessage": "Impossibile rimuovere questo membro dello staff. Riprova."
   },
   "contract": {
     "title": "Estendere il contratto",
@@ -274,7 +276,14 @@
     "submitting": "Invio...",
     "submit": "Invia offerta",
     "extended": "Il contratto di lavoro è stato prorogato con successo.",
-    "discussionCompleted": "Discussione contrattuale completata."
+    "discussionCompleted": "Discussione contrattuale completata.",
+    "invalidWeeklySalary": "Inserisci uno stipendio settimanale valido.",
+    "acceptedWithTerms": "{{name}} ha accettato il nuovo contratto: {{salary}} a settimana fino alla stagione {{season}}.",
+    "countered": "{{name}} richiede condizioni contrattuali migliori.",
+    "rejected": "{{name}} ha rifiutato l'offerta.",
+    "minimumWeeklySalary": "Lo stipendio settimanale minimo accettabile è {{salary}}.",
+    "wantsCloserTo": "{{name}} richiede uno stipendio settimanale più vicino a {{salary}}.",
+    "offerFailed": "Impossibile completare la trattativa contrattuale. Riprova."
   },
   "course": {
     "title": "Corso di perfezionamento",
