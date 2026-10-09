@@ -231,7 +231,8 @@
     "courseInProgressButton": "Kurs läuft",
     "sendOnCourse": "Zum Kurs schicken",
     "release": "Freistellen",
-    "scoutingReports": "Scouting-Berichte"
+    "scoutingReports": "Scouting-Berichte",
+    "completionDate": "Abschluss: {{date}}"
   },
   "release": {
     "title": "Mitarbeiter freistellen",
@@ -523,5 +524,31 @@
       "description": "Fortgeschrittene Talentbewertung für verlässlichere Berichte.",
       "focus": "Genauigkeit + Potenzial"
     }
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% Trainingseffizienz",
+    "developmentSupport": "{{value}}% Entwicklungsförderung",
+    "overloadRisk": "{{value}}% Überlastungsrisiko",
+    "dailyTrainingOutput": "{{value}}% tägliche Trainingsleistung",
+    "riderDevelopmentSupport": "{{value}}% Fahrerentwicklung",
+    "combinedDevelopmentSupport": "{{value}}% gemeinsame Entwicklungsförderung",
+    "combinedOverloadRisk": "{{value}}% gemeinsames Überlastungsrisiko",
+    "u16CoachingSupport": "{{value}}% U16-Trainerunterstützung",
+    "focusTrainingEfficiency": "{{value}}% Trainingseffizienz ({{focus}})"
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "Trainingszentrum Stufe 0 begrenzt einen Teil der Trainerboni.",
+    "medicalCenter": "Medizinzentrum Stufe 0 begrenzt einen Teil der medizinischen Boni.",
+    "mechanicsWorkshop": "Mechanikerwerkstatt Stufe 0 begrenzt Wartungsgeschwindigkeit und Rabatte. Die grundlegende Unterstützung bleibt aktiv.",
+    "scoutingOffice": "Scoutingbüro Stufe 0 begrenzt einen Teil der Scout- und Analystenboni."
+  },
+  "contractDisplay": {
+    "noDate": "Kein Vertragsdatum",
+    "missingDate": "Vertragsablaufdatum nicht verfügbar",
+    "expired": "Abgelaufen",
+    "seasonDate": "Saison {{season}} – {{date}}"
+  },
+  "roleInfo": {
+    "capacityFallback": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung."
   }
 }
