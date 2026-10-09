@@ -17,6 +17,7 @@ if (languages.length === 0 || !languages.includes('en')) {
 }
 
 const strictNamespaces = ['premiumCenter', 'nations']
+const auditedFeatureNamespaces = ['proPackages', 'staff', 'overview', 'riderProfile']
 const requiredNavigationKeys = ['premiumCenter', 'descriptions.premiumCenter']
 
 const premiumSourceFiles = [
@@ -288,12 +289,32 @@ for (const [namespace, keys] of Object.entries(guardedTranslations)) {
   }
 }
 
+// Regression: important gameplay translation namespaces must never rename
+// i18next interpolation variables ({{coins}}, {{count}}, etc.).
+for (const namespace of auditedFeatureNamespaces) {
+  const baseline = flatten(readJson(path.join(localeRoot, 'en', namespace + '.json')))
+  for (const language of languages.filter(code => code !== 'en')) {
+    const translated = flatten(readJson(path.join(localeRoot, language, namespace + '.json')))
+    for (const [key, value] of baseline) {
+      if (!translated.has(key)) {
+        warnings.push('[missing feature translation] ' + language + ':' + namespace + '.' + key)
+        continue
+      }
+      const localized = translated.get(key)
+      if (typeof value === 'string' && typeof localized === 'string' &&
+          !arraysEqual(placeholders(value), placeholders(localized))) {
+        errors.push('Feature interpolation mismatch ' + language + ':' + namespace + '.' + key)
+      }
+    }
+  }
+}
+
 for (const language of languages) {
   const folder = path.join(localeRoot, language)
   for (const name of fs.readdirSync(folder).filter(value => value.endsWith('.json'))) {
     const file = readJson(path.join(folder, name))
     for (const [key, value] of flatten(file)) {
-      if (typeof value === 'string' && /{{\\s*Coins\\s*}}/.test(value)) {
+      if (typeof value === 'string' && /\{\{\s*Coins\s*\}\}/.test(value)) {
         errors.push('Currency text polluted an interpolation token: ' + language + '/' + name + ':' + key)
       }
     }
