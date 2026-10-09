@@ -636,5 +636,8 @@
     "riskControl": "Risikokontrolle",
     "facilityCap": "{{facility}} begrenzt einen Teil der Personalboni. Aktuelle Stufe: {{level}}.",
     "maintenanceCap": "{{facility}} begrenzt Wartungstempo und Rabatte. Aktuelle Stufe: {{level}}."
+  },
+  "specializations": {
+    "general": "Allgemein"
   }
 }
