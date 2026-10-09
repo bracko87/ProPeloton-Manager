@@ -302,11 +302,9 @@ function youthCompactGap(seconds: number | null | undefined): string {
 function YouthStandingTable({
   rows,
   pointsMode = false,
-  isStage = false,
 }: {
   rows: YouthStandingRow[]
   pointsMode?: boolean
-  isStage?: boolean
 }): JSX.Element {
   if (rows.length === 0) {
     return <p className="p-4 text-sm text-slate-500">Results will appear when the stage has been processed.</p>
@@ -975,7 +973,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                   </div>
                 </div>
                 <div className="mt-4 overflow-hidden rounded-xl bg-white">
-                  <YouthStandingTable rows={selectedStageStandingRows.slice(0, 15)} pointsMode={stagePointsMode} isStage />
+                  <YouthStandingTable rows={selectedStageStandingRows.slice(0, 15)} pointsMode={stagePointsMode} />
                 </div>
                 <div className="mt-4 flex justify-end">
                   <button type="button" disabled={!selectedStageStandingRows.length} onClick={() => setFullStandingModal('stage')}
@@ -1042,7 +1040,6 @@ export default function YouthRaceDetailPage(): JSX.Element {
                   <YouthStandingTable
                     rows={fullStandingModal === 'race' ? raceStandingRows : selectedStageStandingRows}
                     pointsMode={fullStandingModal === 'race' ? resultView !== 'general' : stagePointsMode}
-                    isStage={fullStandingModal === 'stage'}
                   />
                 </div>
               </div>
