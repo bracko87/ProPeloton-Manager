@@ -8929,7 +8929,12 @@ export default function OverviewPage() {
         // automatic onboarding for managers who explicitly turned off prompts.
         const { data: currentAuth } = await supabase.auth.getUser();
         const userId = currentAuth.user?.id;
-        if (userId) {
+        if (!userId) {
+          setTutorialMode("closed");
+          setTutorialLoading(false);
+          return;
+        }
+        {
           const { data: preferences, error: prefError } = await supabase
             .from("user_tutorial_preferences")
             .select("auto_tutorials_disabled")
@@ -8994,6 +8999,12 @@ export default function OverviewPage() {
         const manualChain = window.sessionStorage.getItem("ppm:manual-tutorial-chain") === "1";
         const { data: currentAuth } = await supabase.auth.getUser();
         const userId = currentAuth.user?.id;
+        if (!userId && !manualChain) {
+          window.sessionStorage.removeItem("ppm:auto-start-tutorial");
+          setMenuTutorialMode("closed");
+          setMenuTutorialLoading(false);
+          return;
+        }
         if (userId && !manualChain) {
           const { data: preferences, error: prefError } = await supabase
             .from("user_tutorial_preferences")
