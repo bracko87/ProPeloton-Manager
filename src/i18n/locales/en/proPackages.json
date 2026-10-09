@@ -18,7 +18,7 @@
     "membership": "Premium membership",
     "advancedTools": "Premium Command Center with advanced planning, simulations, analytics and management tools.",
     "marketTools": "Transfer Command with saved searches, market alerts and unlimited coin-free shortlist additions.",
-    "capacity": "Exclusive Developing Team, U23 Head Coach and Youth Academy access.",
+    "capacity": "Youth Academy / U16 is Premium-only, plus 50 Coins activation and 50 Coins per season for renewal. Developing Team / U23 is available to Free and Premium managers for 100 Coins activation and 100 Coins renewal.",
     "receive": "Receive",
     "monthlyCoinsSuffix": "coins after every successful monthly payment.",
     "cancelAnytime": "Cancel at any time; normal gameplay remains free.",
@@ -63,7 +63,14 @@
     "manualAccessHelp": "Your Premium access is currently provided by a complimentary/test entitlement. There is no recurring subscription to cancel.",
     "canceledBillingHelp": "The previous Stripe subscription is canceled. You can still open billing details or start a new paid subscription.",
     "statusCanceled": "Canceled",
-    "startPaidSubscription": "Start paid Premium subscription"
+    "startPaidSubscription": "Start paid Premium subscription",
+    "quarterlySummary": "/ 3 months · {{monthlyPrice}}/month",
+    "quarterlySummaryCoins": "/ 3 months · {{monthlyPrice}}/month · {{coins}} Coins",
+    "mostPopular": "Most popular",
+    "monthlyTitle": "1 Month",
+    "monthlySummary": "per month · {{coins}} Coins",
+    "yearlyTitle": "12 Months · Save 15%",
+    "yearlySummary": "{{monthlyPrice}}/month · {{coins}} Coins"
   },
   "advantages": {
     "a1": "30 coins after every successful monthly Premium payment.",
@@ -73,8 +80,8 @@
     "a5": "Rider Development Lab with development trends, prospect watch and advanced squad analysis.",
     "a6": "Templates, saved workflows and Smart Prefill automation that you review before saving.",
     "a7": "Unlimited world-race replays included without the normal 2-coin replay charge.",
-    "a8": "Exclusive Developing Team access plus the U23 Head Coach: 100 coins to activate and 100 coins per season to renew.",
-    "a9": "Exclusive Youth Academy: 16 U16 places, six local starter riders, Youth Academy Director, U16 Head Coach, scouting, racing, budget, equipment, infrastructure effects and graduation pathways.",
+    "a8": "Developing Team / U23 is open to Free and Premium managers for 100 Coins activation and 100 Coins per season. Premium is not required.",
+    "a9": "Premium-only Youth Academy / U16: up to 16 riders, six starter riders, academy staff, scouting, racing and graduation; 50 Coins activation and 50 Coins per-season renewal.",
     "a10": "Premium improves information, planning and convenience only — it never increases race-engine strength, transfer acceptance or hidden rider skills."
   },
   "comparison": {
@@ -273,5 +280,27 @@
     "coins": "{{count}} coins",
     "coin": "{{count}} coin",
     "notAuthenticated": "Not authenticated. Please log in again."
+  },
+  "earnCoins": {
+    "title": "Earn Free Coins",
+    "subtitle": "Complete optional surveys with CPX Research.",
+    "start": "Browse Surveys",
+    "loading": "Connecting to surveys…",
+    "close": "Close",
+    "earned": "Net survey Coins",
+    "retained": "Fractional Coins carried forward",
+    "rate": "$1 earned = 15 Coins",
+    "note": "CPX shows Reward Points (100 points = 15 Coins). Rewards are credited after verification, and canceled rewards may be reversed.",
+    "refresh": "Refresh rewards",
+    "privacy": "Opening surveys shares your game account identifier and connection data with CPX Research. Participation is optional.",
+    "history": "Recent survey activity",
+    "empty": "No survey activity yet.",
+    "completed": "Completed",
+    "canceled": "Reversed",
+    "openTab": "Open surveys in a new tab",
+    "error": "Surveys could not be opened. Try again later.",
+    "retry": "Try again",
+    "status": "Survey",
+    "bannerDescription": "Complete optional CPX Research surveys to earn 15 Coins for each $1 of verified survey revenue. No payment required; reversed surveys may remove Coins."
   }
 }
