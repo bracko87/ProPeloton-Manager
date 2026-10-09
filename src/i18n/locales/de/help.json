@@ -154,7 +154,11 @@
     "starting": "Wird gestartet…",
     "dismiss": "Tutorial dauerhaft überspringen",
     "dismissed": "Übersprungen – erscheint erst nach manuellem Neustart wieder.",
-    "dismissedNotice": "Tutorial übersprungen."
+    "dismissedNotice": "Tutorial übersprungen.",
+    "inviteTitle": "Brauchst du Hilfe bei {{feature}}?",
+    "startTutorial": "Tutorial starten",
+    "noThanks": "Nein, danke",
+    "finishForNow": "Vorerst beenden"
   },
   "tutorialModules": {
     "national-championships": {
