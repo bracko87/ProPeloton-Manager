@@ -9657,6 +9657,8 @@ export default function OverviewPage() {
       currentStep?.key ?? null,
     );
 
+    window.sessionStorage.removeItem("ppm:manual-tutorial-chain");
+    window.sessionStorage.removeItem("ppm:auto-start-tutorial");
     setTutorialMode("closed");
   }
 
@@ -9717,6 +9719,8 @@ export default function OverviewPage() {
 
   async function handleSkipMenuTutorial() {
     await saveTutorialProgress("menu", "skipped", null);
+    window.sessionStorage.removeItem("ppm:manual-tutorial-chain");
+    window.sessionStorage.removeItem("ppm:auto-start-tutorial");
     setMenuTutorialMode("closed");
   }
 
@@ -9735,6 +9739,8 @@ export default function OverviewPage() {
     }
 
     await saveTutorialProgress("menu", "completed", currentStep?.key ?? null);
+    window.sessionStorage.removeItem("ppm:manual-tutorial-chain");
+    window.sessionStorage.removeItem("ppm:auto-start-tutorial");
     setMenuTutorialMode("closed");
   }
 
