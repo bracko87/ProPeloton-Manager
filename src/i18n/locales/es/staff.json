@@ -231,7 +231,8 @@
     "courseInProgressButton": "Curso en curso",
     "sendOnCourse": "Enviar curso",
     "release": "Liberación",
-    "scoutingReports": "Informes de exploración"
+    "scoutingReports": "Informes de exploración",
+    "completionDate": "Finalización: {{date}}"
   },
   "release": {
     "title": "Personal de liberación",
@@ -526,5 +527,31 @@
   },
   "legacyUi": {
     "unlockDevelopingTeam": "Desbloquea primero el equipo de desarrollo en Preferencias."
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% de eficiencia de entrenamiento",
+    "developmentSupport": "{{value}}% de apoyo al desarrollo",
+    "overloadRisk": "{{value}}% de riesgo de sobrecarga",
+    "dailyTrainingOutput": "{{value}}% de rendimiento del entrenamiento diario",
+    "riderDevelopmentSupport": "{{value}}% de apoyo al desarrollo de ciclistas",
+    "combinedDevelopmentSupport": "{{value}}% de apoyo combinado al desarrollo",
+    "combinedOverloadRisk": "{{value}}% de riesgo combinado de sobrecarga",
+    "u16CoachingSupport": "{{value}}% de apoyo al entrenador U16",
+    "focusTrainingEfficiency": "{{value}}% de eficiencia de entrenamiento ({{focus}})"
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "El centro de entrenamiento de nivel 0 limita parte de las bonificaciones de los entrenadores.",
+    "medicalCenter": "El centro médico de nivel 0 limita parte de las bonificaciones médicas.",
+    "mechanicsWorkshop": "El taller de nivel 0 limita la velocidad y los descuentos de mantenimiento. El apoyo básico sigue activo.",
+    "scoutingOffice": "La oficina de scouting de nivel 0 limita parte de las bonificaciones de los ojeadores."
+  },
+  "contractDisplay": {
+    "noDate": "Sin fecha de contrato",
+    "missingDate": "Fecha de vencimiento del contrato no disponible",
+    "expired": "Vencido",
+    "seasonDate": "Temporada {{season}} - {{date}}"
+  },
+  "roleInfo": {
+    "capacityFallback": "La capacidad depende del límite actual del puesto."
   }
 }
