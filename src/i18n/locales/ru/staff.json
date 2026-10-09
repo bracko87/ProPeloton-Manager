@@ -231,7 +231,8 @@
     "courseInProgressButton": "Незавершенный курс",
     "sendOnCourse": "Отправить курс",
     "release": "Выпуск",
-    "scoutingReports": "Скауты"
+    "scoutingReports": "Скауты",
+    "completionDate": "Завершение: {{date}}"
   },
   "release": {
     "title": "Освобожденные сотрудники",
@@ -526,5 +527,31 @@
   },
   "legacyUi": {
     "unlockDevelopingTeam": "Сначала отключите развивающуюся группу по преференциям."
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% эффективности тренировок",
+    "developmentSupport": "{{value}}% поддержки развития",
+    "overloadRisk": "{{value}}% риска перегрузки",
+    "dailyTrainingOutput": "{{value}}% эффективности ежедневных тренировок",
+    "riderDevelopmentSupport": "{{value}}% поддержки развития гонщиков",
+    "combinedDevelopmentSupport": "{{value}}% общей поддержки развития",
+    "combinedOverloadRisk": "{{value}}% общего риска перегрузки",
+    "u16CoachingSupport": "{{value}}% поддержки тренера U16",
+    "focusTrainingEfficiency": "{{value}}% эффективности тренировок ({{focus}})"
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "Тренировочный центр уровня 0 ограничивает часть бонусов тренеров.",
+    "medicalCenter": "Медицинский центр уровня 0 ограничивает часть медицинских бонусов.",
+    "mechanicsWorkshop": "Механическая мастерская уровня 0 ограничивает скорость и скидки на обслуживание. Базовая помощь остаётся активной.",
+    "scoutingOffice": "Скаутский офис уровня 0 ограничивает часть бонусов скаутов."
+  },
+  "contractDisplay": {
+    "noDate": "Дата контракта отсутствует",
+    "missingDate": "Дата окончания контракта недоступна",
+    "expired": "Истёк",
+    "seasonDate": "Сезон {{season}} - {{date}}"
+  },
+  "roleInfo": {
+    "capacityFallback": "Вместимость определяется текущим лимитом персонала для этой роли."
   }
 }
