@@ -18,7 +18,7 @@
     "membership": "Premium članstvo",
     "advancedTools": "Premium Command Center sa naprednim planiranjem, simulacijama, analizom i alatima za upravljanje.",
     "marketTools": "Transfer Command sa sačuvanim pretragama, tržišnim upozorenjima i neograničenim dodavanjem na listu bez coin-a.",
-    "capacity": "Ekskluzivan pristup Developing Team-u, U23 Head Coach-u i Omladinskoj akademiji.",
+    "capacity": "Omladinska akademija / U16 zahteva Premium i 50 Coins za aktivaciju, uz 50 Coins po sezoni za obnovu. Razvojni tim / U23 dostupan je svim menadžerima za 100 Coins za aktivaciju i 100 Coins za obnovu.",
     "receive": "Dobijte",
     "monthlyCoinsSuffix": "novčića nakon svake uspešne mesečne uplate.",
     "cancelAnytime": "Otkažite u bilo kom trenutku; osnovno igranje ostaje besplatno.",
@@ -63,7 +63,14 @@
     "manualAccessHelp": "Tvoj Premium pristup trenutno dolazi iz besplatne/testne pogodnosti. Nema ponavljajuće pretplate za otkazivanje.",
     "canceledBillingHelp": "Prethodna Stripe pretplata je otkazana. I dalje možeš otvoriti podatke naplate ili pokrenuti novu plaćenu pretplatu.",
     "statusCanceled": "Otkazano",
-    "startPaidSubscription": "Pokreni plaćenu Premium pretplatu"
+    "startPaidSubscription": "Pokreni plaćenu Premium pretplatu",
+    "quarterlySummary": "/ 3 meseca · {{monthlyPrice}} mesečno",
+    "quarterlySummaryCoins": "/ 3 meseca · {{monthlyPrice}} mesečno · {{coins}} Coins",
+    "mostPopular": "Najpopularnije",
+    "monthlyTitle": "1 mesec",
+    "monthlySummary": "mesečno · {{coins}} Coins",
+    "yearlyTitle": "12 meseci · Uštedi 15%",
+    "yearlySummary": "{{monthlyPrice}} mesečno · {{coins}} Coins"
   },
   "advantages": {
     "a1": "30 coin-a posle svake uspešne mesečne Premium uplate.",
@@ -73,8 +80,8 @@
     "a5": "Rider Development Lab sa trendovima razvoja i naprednom analizom ekipe.",
     "a6": "Šabloni, sačuvani tokovi i Smart Prefill koje proveravaš pre čuvanja.",
     "a7": "Neograničene reprize svetskih trka bez standardne cene od 2 coin-a.",
-    "a8": "Ekskluzivan Developing Team i U23 Head Coach: 100 coin-a aktivacija i 100 coin-a po sezoni.",
-    "a9": "Ekskluzivna Omladinska akademija: 16 U16 mesta, šest lokalnih startera, direktor, U16 Head Coach, skauting, trke, budžet, oprema, infrastruktura i razvojni put.",
+    "a8": "Razvojni tim / U23 dostupan je Free i Premium menadžerima: aktivacija 100 Coins i obnova 100 Coins po sezoni. Premium nije potreban.",
+    "a9": "Omladinska akademija / U16 samo uz Premium: do 16 vozača, šest početnih vozača, osoblje, skauting, trke i završetak akademije; aktivacija i sezonska obnova po 50 Coins.",
     "a10": "Premium poboljšava informacije, planiranje i komfor — nikada snagu u trci, prihvatanje transfera ili skrivene veštine."
   },
   "comparison": {
@@ -273,5 +280,27 @@
     "coins": "{{count}} novčića",
     "coin": "{{count}} novčić",
     "notAuthenticated": "Niste prijavljeni. Prijavite se ponovo."
+  },
+  "earnCoins": {
+    "title": "Zaradi besplatne Coins",
+    "subtitle": "Popuni opcione ankete kompanije CPX Research.",
+    "start": "Pregledaj ankete",
+    "loading": "Povezivanje sa anketama…",
+    "close": "Zatvori",
+    "earned": "Neto Coins od anketa",
+    "retained": "Sačuvani delovi Coins",
+    "rate": "1 $ zarade = 15 Coins",
+    "note": "CPX prikazuje Reward Points (100 poena = 15 Coins). Nagrade stižu nakon potvrde, a poništene nagrade mogu biti oduzete.",
+    "refresh": "Osveži nagrade",
+    "privacy": "Otvaranjem anketa CPX Research dobija identifikator naloga u igri i podatke o vezi. Učešće je dobrovoljno.",
+    "history": "Nedavne ankete",
+    "empty": "Još nema aktivnosti sa anketama.",
+    "completed": "Završeno",
+    "canceled": "Poništeno",
+    "openTab": "Otvori ankete u novoj kartici",
+    "error": "Ankete trenutno nije moguće otvoriti. Pokušaj ponovo kasnije.",
+    "retry": "Pokušaj ponovo",
+    "status": "Anketa",
+    "bannerDescription": "Popuni dobrovoljne CPX Research ankete i zaradi 15 Coins za svaki 1 $ potvrđene zarade od anketa. Plaćanje nije potrebno. Poništene ankete mogu dovesti do oduzimanja Coins."
   }
 }
