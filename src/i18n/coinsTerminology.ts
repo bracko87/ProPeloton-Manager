@@ -7,10 +7,10 @@
  */
 const CURRENCY_WORDS: Record<string, RegExp[]> = {
   'sr-Latn': [/novčić(?:ima|em|a|e|u|i)?/giu, /novcic(?:ima|em|a|e|u|i)?/giu],
-  hr: [/novčić(?:ima|em|a|e|u|i)?/giu, /novcic(?:ima|em|a|e|u|i)?/giu],
+  hr: [/novčić(?:ima|em|a|e|u|i)?/giu, /novcic(?:ima|em|a|e|u|i)?/giu, /kovanic(?:ama|om|a|e|u|i)?/giu],
   de: [/Münz(?:en|e)/giu],
   es: [/monedas?/giu],
-  it: [/monete?/giu],
+  it: [/monet[ae]/giu],
   fr: [/jetons?/giu],
   ru: [/монет(?!изац)(?:ами|ах|ой|ою|ы|а|е|у)?/giu],
 }
@@ -40,7 +40,13 @@ function normalizeText(text: string, locale: string, keyPath: string): string {
   if (locale === 'fr') {
     const currencyKey = /coin|reward|curren|purchase|price|package|wallet|premium|activat|renew|billing|cost|service|transfer|payment/i.test(keyPath)
     if (currencyKey) result = replaceFullWords(result, /pièces?/giu)
-    else result = result.replace(/(\d+\s+)pièces?\b/giu, '$1Coins')
+    else {
+      result = result.replace(/(\d+\s+)pièces?\b/giu, '$1Coins')
+      // Explicit payment contexts, but never equipment spare parts.
+      if (/\b(payer|paiement|coût|dépenser|gagner|récompense|solde|acheter)\b/i.test(result)) {
+        result = replaceFullWords(result, /pièces?/giu)
+      }
+    }
   }
   return result
 }
