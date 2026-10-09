@@ -639,5 +639,8 @@
     "riskControl": "Control del riesgo",
     "facilityCap": "{{facility}} limita algunas bonificaciones del personal. Nivel actual: {{level}}.",
     "maintenanceCap": "{{facility}} limita velocidad y descuentos de mantenimiento. Nivel actual: {{level}}."
+  },
+  "specializations": {
+    "general": "General"
   }
 }
