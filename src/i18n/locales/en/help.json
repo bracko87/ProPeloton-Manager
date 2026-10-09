@@ -154,7 +154,11 @@
     "starting": "Starting…",
     "dismiss": "Dismiss tutorial",
     "dismissed": "Dismissed — it will not start again unless you restart it.",
-    "dismissedNotice": "Tutorial dismissed."
+    "dismissedNotice": "Tutorial dismissed.",
+    "inviteTitle": "Need help with {{feature}}?",
+    "startTutorial": "Start tutorial",
+    "noThanks": "No thanks",
+    "finishForNow": "Finish for now"
   },
   "tutorialModules": {
     "national-championships": {
