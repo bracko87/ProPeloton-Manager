@@ -594,7 +594,190 @@
     "seasonDate": "Saison {{season}} – {{date}}"
   },
   "roleInfo": {
-    "capacityFallback": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung."
+    "capacityFallback": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+    "head_coach": {
+      "purpose": "Leitet Coaching, Trainingsplanung und langfristige Fahrerentwicklung.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Training.",
+        "Wichtiger Wert: Erholungsplanung.",
+        "Wichtiger Wert: Nachwuchsentwicklung.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Führungsstärke."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Reguläres Training, Trainingslager, Fahrerentwicklung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "trainer": {
+      "purpose": "Verbessert die tägliche Trainingsleistung und unterstützt die Pläne des Cheftrainers.",
+      "capacitySummary": "Bis zu fünf Trainer unterstützen die erste Mannschaft.",
+      "attributes": [
+        "Wichtiger Wert: Tägliches Training.",
+        "Wichtiger Wert: Trainingseffizienz.",
+        "Wichtiger Wert: Potenzialentwicklung.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Führungsstärke."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Tägliches Training, Trainingsqualität, Fahrerentwicklung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "team_doctor": {
+      "purpose": "Leitet medizinische Erholung, Diagnose und Verletzungsprävention.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Erholung.",
+        "Wichtiger Wert: Prävention.",
+        "Wichtiger Wert: Diagnose.",
+        "Wichtiger Wert: Führungsstärke."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Erholungsgeschwindigkeit, Verletzungsprävention, Behandlung medizinischer Fälle.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "physio": {
+      "purpose": "Konzentriert sich auf Rehabilitation, Erholungsgeschwindigkeit und die Rückkehr zur vollen Fitness.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Rehabilitation.",
+        "Wichtiger Wert: Erholungsgeschwindigkeit.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Loyalität."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Rückkehr zur Fitness, Erholungsgeschwindigkeit, Erholung von Ermüdung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "nutritionist": {
+      "purpose": "Unterstützt Erholung, konstante Fitness und die Arbeit des medizinischen Personals.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Ernährung.",
+        "Wichtiger Wert: Erholung.",
+        "Wichtiger Wert: Konstanz.",
+        "Wichtiger Wert: Erfahrung."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Erholungsunterstützung, Konstante Fitness, Rennvorbereitung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "mechanic": {
+      "purpose": "Fahrrad-Setup, effiziente Wartung und mechanische Zuverlässigkeit am Renntag.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Fahrrad-Setup.",
+        "Wichtiger Wert: Zuverlässigkeit.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Loyalität."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Ausrüstungs-Setup, Wartungseffizienz, Mechanische Zuverlässigkeit.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "sport_director": {
+      "purpose": "Plant Renntaktik, Moral, Teamarbeit und Helferunterstützung.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Rennplanung.",
+        "Wichtiger Wert: Teamkontrolle.",
+        "Wichtiger Wert: Führungsstärke.",
+        "Wichtiger Wert: Erfahrung."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Renntaktik, Teammoral, Helferunterstützung.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "scout_analyst": {
+      "purpose": "Scouting-Qualität, Sichtbarkeit von Talenten und Transferinformationen.",
+      "capacitySummary": "Kapazität richtet sich nach der aktuellen Rollenbegrenzung.",
+      "attributes": [
+        "Wichtiger Wert: Bewertung.",
+        "Wichtiger Wert: Netzwerk.",
+        "Wichtiger Wert: Genauigkeit.",
+        "Wichtiger Wert: Erfahrung."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Scouting-Genauigkeit, Talentsuche, Transferinformationen.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "u23_head_coach": {
+      "purpose": "Plant Training des Entwicklungsteams und taktische Unterstützung bei U23-Rennen.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Training.",
+        "Wichtiger Wert: Nachwuchsentwicklung.",
+        "Wichtiger Wert: Führungsstärke.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Loyalität."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: U23-Training, Nachwuchsentwicklung, U23-Renntaktik.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "youth_academy_director": {
+      "purpose": "Leitet das U16-Akademieprogramm, Budget, delegierte Rekrutierung und operative Anfragen.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Teamkontrolle.",
+        "Wichtiger Wert: Erfahrung.",
+        "Wichtiger Wert: Führungsstärke.",
+        "Wichtiger Wert: Loyalität."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Akademiebudget, Rekrutierungsmanagement, Jugendprogramm.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "u16_head_coach": {
+      "purpose": "Steuert U16-Training, Belastung, Entwicklungsschwerpunkte und Rennauswahl.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Tägliches Training.",
+        "Wichtiger Wert: Erholungsplanung.",
+        "Wichtiger Wert: Nachwuchsentwicklung.",
+        "Wichtiger Wert: Führungsstärke."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: U16-Training, Belastungssteuerung, Rennauswahl.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    },
+    "youth_scout": {
+      "purpose": "Findet und bewertet U16-Talente innerhalb des finanzierten Scouting-Gebiets der Jugendakademie.",
+      "capacitySummary": "Für diese Position ist ein Platz vorgesehen.",
+      "attributes": [
+        "Wichtiger Wert: Bewertung.",
+        "Wichtiger Wert: Netzwerk.",
+        "Wichtiger Wert: Genauigkeit.",
+        "Wichtiger Wert: Erfahrung."
+      ],
+      "gameplay": [
+        "Wirkt sich aus auf: Jugendscouting, Talentbewertung, Rekrutierungsreichweite.",
+        "Die Fähigkeiten und Verfügbarkeit dieser Person bestimmen den tatsächlichen Beitrag.",
+        "Fortbildungen und überschneidende Aufgaben können den Beitrag vorübergehend begrenzen."
+      ]
+    }
   },
   "qualityExplanation": {
     "coachingTitle": "So funktioniert die Trainerqualität",
