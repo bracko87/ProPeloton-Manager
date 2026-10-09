@@ -243,6 +243,32 @@ function getVisibleNextRaceSelection<T extends {
 }
 
 
+/**
+ * UI-only formatting: never expose stored rider role enums (free_role,
+ * lead_out, etc.) directly. Keep raw values in the RPC and race engine.
+ */
+function formatRaceRiderRole(role: string | null | undefined, t: (key: string, options?: { defaultValue?: string }) => string): string {
+  if (!role?.trim()) return '—'
+  const normalized = role.trim().toLowerCase().replace(/[\s-]+/g, '_')
+  const human = normalized.replace(/_+/g, ' ').replace(/^./, letter => letter.toUpperCase())
+  const knownRoles: Record<string, string> = {
+    free_role: 'freeRole',
+    team_leader: 'teamLeader',
+    gc_leader: 'gcLeader',
+    lead_out: 'leadOut',
+    sprinter: 'sprinter',
+    climber: 'climber',
+    domestique: 'domestique',
+    support: 'support',
+    time_trial: 'timeTrial',
+    breakaway: 'breakaway',
+    all_rounder: 'allRounder',
+  }
+  return knownRoles[normalized]
+    ? t('riderRoles.' + knownRoles[normalized], { defaultValue: human })
+    : human
+}
+
 function getRaceSummarySubtitle(
   raceName: string | null | undefined,
   stageLabel: string | null | undefined,
@@ -1478,6 +1504,12 @@ export default function FirstSquadTab({
                 ) : null}
               </div>
 
+              {!visibleLastTeamRace ? (
+                <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                  {t('races.noFinished')}
+                </div>
+              ) : null}
+
               {visibleLastTeamRace?.rows?.length ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -1493,7 +1525,7 @@ export default function FirstSquadTab({
                       {visibleLastTeamRace.rows.map((row) => (
                         <tr key={row.riderId} className="border-b border-gray-100 last:border-0">
                           <td className="py-3 pr-4 font-medium text-gray-800">{row.riderName}</td>
-                          <td className="py-3 pr-4 text-gray-600">{row.role ?? '—'}</td>
+                          <td className="py-3 pr-4 text-gray-600">{formatRaceRiderRole(row.role, t)}</td>
                           <td className="py-3 pr-4 text-gray-700">
                             {row.resultLabel || formatOrdinal(row.position)}
                           </td>
@@ -1537,7 +1569,7 @@ export default function FirstSquadTab({
                       {visibleNextRaceSelection.rows.map((row) => (
                         <tr key={row.riderId} className="border-b border-gray-100 last:border-0">
                           <td className="py-3 pr-4 font-medium text-gray-800">{row.riderName}</td>
-                          <td className="py-3 pr-4 text-gray-600">{row.role ?? '—'}</td>
+                          <td className="py-3 pr-4 text-gray-600">{formatRaceRiderRole(row.role, t)}</td>
                           <td className="py-3 text-right font-semibold text-emerald-700">
                             {row.raceSharpness !== null && row.raceSharpness !== undefined
                               ? `${Math.round(row.raceSharpness)}/100`
