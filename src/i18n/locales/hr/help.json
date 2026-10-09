@@ -154,7 +154,11 @@
     "starting": "Pokretanje…",
     "dismiss": "Odbaci vodič",
     "dismissed": "Odbačeno – neće se ponovno pojaviti bez ručnog pokretanja.",
-    "dismissedNotice": "Vodič je odbačen."
+    "dismissedNotice": "Vodič je odbačen.",
+    "inviteTitle": "Trebaš li pomoć za {{feature}}?",
+    "startTutorial": "Pokreni vodič",
+    "noThanks": "Ne, hvala",
+    "finishForNow": "Završi za sada"
   },
   "tutorialModules": {
     "national-championships": {
