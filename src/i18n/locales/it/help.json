@@ -135,5 +135,55 @@
     "description": "Se qualcosa non va, includere il nome della pagina, il nome del team, il nome del ciclista, il nome della gara, gli screenshot e i passi necessari per riprodurre il problema. Questo ci aiuta a trovare e risolvere i problemi più velocemente.",
     "contact": "Contattaci",
     "discord": "Chiedi su Discord"
+  },
+  "tutorialControl": {
+    "eyebrow": "Tutorial",
+    "title": "Avvia o riavvia qualsiasi tutorial",
+    "description": "Il tutorial iniziale guida i nuovi manager. Le guide avanzate possono apparire alla scoperta delle funzionalità. Puoi ignorarle definitivamente o disattivare gli avvisi automatici.",
+    "manual": "Manuale completo",
+    "autoTitle": "Tutorial automatici",
+    "autoOff": "I tutorial automatici sono disattivati. Puoi comunque avviarli manualmente.",
+    "autoOn": "Le guide possono apparire quando scopri nuove funzioni.",
+    "enableAuto": "Attiva tutorial automatici",
+    "disableAuto": "Disattiva tutorial automatici",
+    "coreLabel": "Tutorial iniziale",
+    "featureLabel": "Tutorial funzionalità",
+    "coreTitle": "Fondamenti di ProPeloton Manager",
+    "coreDescription": "Riavvia la guida completa ai sistemi di gioco principali.",
+    "startRestart": "Avvia / Riavvia",
+    "starting": "Avvio…",
+    "dismiss": "Ignora tutorial",
+    "dismissed": "Ignorato: non riapparirà finché non lo riavvii.",
+    "dismissedNotice": "Tutorial ignorato."
+  },
+  "tutorialModules": {
+    "national-championships": {
+      "title": "Campionati e classifiche nazionali",
+      "description": "Qualificazioni, convocazioni, preparazione e storico dei campionati."
+    },
+    "national-association": {
+      "title": "Federazione e nazionale",
+      "description": "Iscrizione, fondi, elezioni, formazione, World Nations e storico."
+    },
+    "national-coach": {
+      "title": "CT della nazionale",
+      "description": "Corridori idonei, convocazioni, squadra finale e formazioni."
+    },
+    "youth-academy": {
+      "title": "Accademia giovanile / U16",
+      "description": "Scouting, staff, bilancio, gare, classifiche e passaggio di categoria."
+    },
+    "youth-graduation": {
+      "title": "Passaggio dall'accademia giovanile",
+      "description": "Dall'U16 alla fase successiva dello sviluppo."
+    },
+    "developing-team": {
+      "title": "Squadra di sviluppo",
+      "description": "Percorso U23 verso la prima squadra."
+    },
+    "new-season": {
+      "title": "Nuova stagione",
+      "description": "Cambiamenti più importanti a inizio stagione."
+    }
   }
 }
