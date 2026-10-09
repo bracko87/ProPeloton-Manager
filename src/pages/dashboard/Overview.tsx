@@ -8925,6 +8925,24 @@ export default function OverviewPage() {
       if (!alive) return;
 
       if (!progress || progress.status === "not_started") {
+        // Manual starts are saved as "started" and handled below. Suppress
+        // automatic onboarding for managers who explicitly turned off prompts.
+        const { data: currentAuth } = await supabase.auth.getUser();
+        const userId = currentAuth.user?.id;
+        if (userId) {
+          const { data: preferences, error: prefError } = await supabase
+            .from("user_tutorial_preferences")
+            .select("auto_tutorials_disabled")
+            .eq("user_id", userId)
+            .maybeSingle();
+          if (!alive) return;
+          if (prefError || preferences?.auto_tutorials_disabled === true) {
+            if (prefError) console.warn("Could not verify tutorial auto-prompt preference:", prefError.message);
+            setTutorialMode("closed");
+            setTutorialLoading(false);
+            return;
+          }
+        }
         // New managers start the core tutorial automatically during their
         // first game session, matching the Tennis Legacy onboarding model.
         // Existing accounts are backfilled to skipped by the accompanying
@@ -8971,6 +8989,25 @@ export default function OverviewPage() {
         window.sessionStorage.getItem("ppm:auto-start-tutorial") === "menu";
 
       if (autoStartTutorial) {
+        // Complete a manually requested tutorial chain even when automatic
+        // prompts are globally disabled; otherwise respect the stored choice.
+        const manualChain = window.sessionStorage.getItem("ppm:manual-tutorial-chain") === "1";
+        const { data: currentAuth } = await supabase.auth.getUser();
+        const userId = currentAuth.user?.id;
+        if (userId && !manualChain) {
+          const { data: preferences, error: prefError } = await supabase
+            .from("user_tutorial_preferences")
+            .select("auto_tutorials_disabled")
+            .eq("user_id", userId)
+            .maybeSingle();
+          if (!alive) return;
+          if (prefError || preferences?.auto_tutorials_disabled === true) {
+            window.sessionStorage.removeItem("ppm:auto-start-tutorial");
+            setMenuTutorialMode("closed");
+            setMenuTutorialLoading(false);
+            return;
+          }
+        }
         window.sessionStorage.removeItem("ppm:auto-start-tutorial");
 
         const firstStep = menuTutorialSteps[0];
@@ -9571,6 +9608,8 @@ export default function OverviewPage() {
       ),
     );
 
+    window.sessionStorage.removeItem("ppm:auto-start-tutorial");
+    window.sessionStorage.removeItem("ppm:manual-tutorial-chain");
     setTutorialMode("closed");
   }
 
@@ -9643,26 +9682,16 @@ export default function OverviewPage() {
     );
 
     window.sessionStorage.removeItem("ppm:auto-start-tutorial");
+    window.sessionStorage.removeItem("ppm:manual-tutorial-chain");
     setTutorialMode("closed");
   }
 
   async function handleCloseOverviewTutorial() {
-    const currentStep = overviewTutorialSteps[tutorialStepIndex];
-
-    if (tutorialMode === "invite") {
-      await saveTutorialProgress("overview", "skipped", null);
-      setTutorialMode("closed");
-      return;
-    }
-
-    if (tutorialMode === "steps") {
-      await saveTutorialProgress(
-        "overview",
-        "started",
-        currentStep?.key ?? null,
-      );
-    }
-
+    // A closed active tutorial is dismissed persistently rather than saved
+    // as an unfinished flow that can surprise the player on another page.
+    await saveTutorialProgress("overview", "skipped", null);
+    window.sessionStorage.removeItem("ppm:auto-start-tutorial");
+    window.sessionStorage.removeItem("ppm:manual-tutorial-chain");
     setTutorialMode("closed");
   }
 
@@ -9699,10 +9728,9 @@ export default function OverviewPage() {
   }
 
   async function handleCloseMenuTutorial() {
-    const currentStep = menuTutorialSteps[menuTutorialStepIndex];
-
-    await saveTutorialProgress("menu", "started", currentStep?.key ?? null);
-
+    await saveTutorialProgress("menu", "skipped", null);
+    window.sessionStorage.removeItem("ppm:auto-start-tutorial");
+    window.sessionStorage.removeItem("ppm:manual-tutorial-chain");
     setMenuTutorialMode("closed");
   }
 
