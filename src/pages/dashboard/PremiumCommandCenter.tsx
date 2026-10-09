@@ -5,6 +5,12 @@ import {
   Activity,
   Calculator,
   CalendarRange,
+  GraduationCap,
+  Flag,
+  ScanSearch,
+  HeartPulse,
+  Building2,
+  AlertTriangle,
   ChevronRight,
   Crown,
   Gauge,
@@ -35,6 +41,11 @@ type TabKey =
   | 'finance'
   | 'sponsors'
   | 'development'
+  | 'youth'
+  | 'national'
+  | 'scouting'
+  | 'staff'
+  | 'infrastructure'
   | 'templates'
 
 type PremiumStatusRow = {
@@ -190,6 +201,73 @@ type Workspace = {
   }
   sponsor_intelligence: SponsorObjective[]
   rider_development: RiderDevelopment[]
+  youth_command: {
+    available: boolean
+    has_academy: boolean
+    riders_count: number
+    rider_limit: number
+    upcoming_races: number
+    pending_invitations: number
+    scouting_reports_pending: number
+    scouting_reports_total: number
+    graduation_decisions_pending: number
+    riders_nearing_graduation: number
+    latest_races: Array<{race_id: string; race_name: string; race_date: string; status: string | null}>
+  }
+  national_command: {
+    has_association: boolean
+    association_name: string | null
+    country_code: string | null
+    role: string | null
+    is_coach: boolean
+    national_championships_upcoming: number
+    next_event_date: string | null
+    squad_ready: boolean
+    selected_riders: number
+    squad_target: number
+    lineups_ready: number
+    lineup_target: number
+    pending_lineup_deadlines: number
+  }
+  scouting_command: {
+    unread_reports: number
+    reports_total: number
+    active_tasks: number
+    shortlist_matches: number
+    recent_reports: Array<{
+      id: string; rider_id: string; rider_name: string; precision_tier: string | null;
+      review_status: string | null; created_at: string
+    }>
+  }
+  staff_command: {
+    active_staff: number
+    vacant_key_roles: number
+    expiring_contracts: number
+    fatigue_watch: number
+    injured_or_unavailable: number
+    upcoming_contracts: Array<{
+      id: string; staff_name: string; role_type: string; contract_expires_at: string
+    }>
+  }
+  infrastructure_command: {
+    jobs_in_progress: number
+    facility_upgrades_completed: number
+    repair_jobs_in_progress: number
+    equipment_under_50_condition: number
+    supply_shortages: number
+    monthly_maintenance: number
+    upcoming_projects: Array<{
+      target_key: string; job_type: string; status: string; complete_game_date: string | null
+    }>
+  }
+  attention_queue: Array<{
+    issue_id: string
+    severity: 'info' | 'warning' | 'danger'
+    title: string
+    description: string
+    route: string
+    priority: number
+  }>
 }
 
 type StrategyCandidate = {
@@ -281,6 +359,11 @@ const TABS: Array<{
   { key: 'finance', icon: Calculator },
   { key: 'sponsors', icon: Target },
   { key: 'development', icon: TrendingUp },
+  { key: 'youth', icon: GraduationCap },
+  { key: 'national', icon: Flag },
+  { key: 'scouting', icon: ScanSearch },
+  { key: 'staff', icon: HeartPulse },
+  { key: 'infrastructure', icon: Building2 },
   { key: 'templates', icon: WandSparkles },
 ]
 
@@ -804,7 +887,7 @@ export default function PremiumCommandCenter(): JSX.Element {
 
       try {
         const [workspaceResult, templateResult, automationResult] = await Promise.all([
-          supabase.rpc('premium_get_command_center_v1', {
+          supabase.rpc('premium_get_command_center_v2', {
             p_club_id: targetClubId,
           }),
           supabase.rpc('premium_list_templates_v1', {
