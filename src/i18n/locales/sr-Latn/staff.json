@@ -819,5 +819,8 @@
     "riskControl": "Kontrola rizika",
     "facilityCap": "{{facility}} ograničava deo trenerskih ili medicinskih bonusa. Trenutni nivo: {{level}}.",
     "maintenanceCap": "{{facility}} ograničava brzinu i popuste održavanja. Trenutni nivo: {{level}}."
+  },
+  "specializations": {
+    "general": "Opšte"
   }
 }
