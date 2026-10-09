@@ -642,5 +642,11 @@
   },
   "specializations": {
     "general": "Generale"
+  },
+  "facilityNames": {
+    "trainingCenter": "Centro di allenamento",
+    "medicalCenter": "Centro medico",
+    "mechanicsWorkshop": "Officina meccanica",
+    "scoutingOffice": "Ufficio scouting"
   }
 }
