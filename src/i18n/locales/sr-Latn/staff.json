@@ -822,5 +822,11 @@
   },
   "specializations": {
     "general": "Opšte"
+  },
+  "facilityNames": {
+    "trainingCenter": "Trening centar",
+    "medicalCenter": "Medicinski centar",
+    "mechanicsWorkshop": "Mehaničarska radionica",
+    "scoutingOffice": "Skauting kancelarija"
   }
 }
