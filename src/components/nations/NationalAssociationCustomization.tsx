@@ -67,12 +67,21 @@ export default function NationalAssociationCustomization(): JSX.Element {
 
 Jersey type: National Team jersey
 Country / team name: [ENTER COUNTRY OR TEAM NAME]
+Manufacturer / apparel brand: [ENTER ADIDAS, NIKE, SPECIALIZED, CASTELLI, ANOTHER MANUFACTURER, OR NONE]
 Primary color: [ENTER PRIMARY COLOR]
 Secondary color: [ENTER SECONDARY COLOR]
 Accent color: [OPTIONAL ACCENT COLOR]
 Motifs / symbols: [ENTER NATIONAL OR TEAM MOTIFS]
 Optional text: [ENTER TEXT OR WRITE NONE]
-Logos: [USE ONLY LOGOS I PROVIDE, OTHERWISE NO BRAND LOGOS]
+National crest / team logo: [DESCRIBE THE NATIONAL EMBLEM OR ATTACH YOUR LOGO]
+Manufacturer logo: [USE THE CHOSEN MANUFACTURER'S LOGO, OR WRITE NONE]
+
+Manufacturer styling:
+- if a manufacturer is specified, follow its recognizable cycling/sportswear design language as closely as possible: characteristic panel shapes, sleeve trim, stripe placement, typography and logo position
+- for example, use Adidas-inspired three-stripe treatments, Nike-inspired athletic styling, or Specialized-inspired cycling apparel styling as appropriate to the chosen brand
+- create an original national-team jersey rather than reproducing an existing retail product
+- keep the chosen manufacturer's branding consistent, with no unrelated manufacturer or sponsor logos
+- if the manufacturer is NONE, create a clean unbranded jersey without any manufacturer logo
 
 Image requirements:
 - square 1:1 image, preferably 1536 × 1536 px
@@ -316,7 +325,7 @@ Generate only the finished jersey image.`
                   Create a jersey with ChatGPT
                 </div>
                 <p className="mt-1 text-xs leading-5 text-slate-600">
-                  Copy this prompt, replace the bracketed fields with your colors, country/team name and motifs, then paste it into ChatGPT image generation.
+                  Copy this prompt, choose a jersey manufacturer (such as Adidas, Nike or Specialized), and replace the bracketed fields with your team details, colors and motifs. The design should reflect the manufacturer's style.
                 </p>
               </div>
               <button
