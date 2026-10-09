@@ -213,6 +213,7 @@ type Workspace = {
     graduation_decisions_pending: number
     riders_nearing_graduation: number
     latest_races: Array<{race_id: string; race_name: string; race_date: string; status: string | null}>
+    graduation_candidates: Array<{id: string; youth_rider_id: string; rider_name: string; decision: string; became_eligible_on: string}>
   }
   national_command: {
     has_association: boolean
@@ -228,12 +229,14 @@ type Workspace = {
     lineups_ready: number
     lineup_target: number
     pending_lineup_deadlines: number
+    upcoming_events: Array<{event_id: string; event_date: string; race_day: number; race_type: string; lineup_deadline: string; lineup_ready: boolean}>
   }
   scouting_command: {
     unread_reports: number
     reports_total: number
     active_tasks: number
     shortlist_matches: number
+    active_task_details: Array<{id: string; rider_id: string; rider_name: string; status: string; completes_at_game_ts: string | null}>
     recent_reports: Array<{
       id: string; rider_id: string; rider_name: string; precision_tier: string | null;
       review_status: string | null; created_at: string
@@ -245,6 +248,7 @@ type Workspace = {
     expiring_contracts: number
     fatigue_watch: number
     injured_or_unavailable: number
+    recovery_watch: Array<{rider_id: string; rider_name: string; fatigue: number; availability_status: string; unavailable_until: string | null}>
     upcoming_contracts: Array<{
       id: string; staff_name: string; role_type: string; contract_expires_at: string
     }>
@@ -256,6 +260,7 @@ type Workspace = {
     equipment_under_50_condition: number
     supply_shortages: number
     monthly_maintenance: number
+    next_upgrades: Array<{facility_key: string; target_level: number; cost_cash: number; duration_game_days: number}>
     upcoming_projects: Array<{
       target_key: string; job_type: string; status: string; complete_game_date: string | null
     }>
@@ -1999,6 +2004,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                 {to:'/dashboard/staff',label:'Academy staff'},
               ]}
             >
+              <CommandDataList title="Graduation decisions awaiting review"
+                items={workspace.youth_command.graduation_candidates.map(candidate => ({
+                  id: candidate.id,
+                  title: candidate.rider_name,
+                  subtitle: 'Eligible since ' + formatGameDate(candidate.became_eligible_on),
+                  to:'/dashboard/youth-academy',
+                }))}
+                empty="No graduation decisions currently pending."
+              />
               <CommandDataList title="Next U16 races & invitations"
                 items={workspace.youth_command.latest_races.map(race => ({
                   id: race.race_id,
@@ -2036,6 +2050,17 @@ export default function PremiumCommandCenter(): JSX.Element {
                 {to:'/dashboard/national-association/world-nations',label:'World Nations'},
               ]}
             >
+              <CommandDataList title="Next World Nations race days"
+                items={workspace.national_command.upcoming_events.map(event => ({
+                  id: event.event_id,
+                  title: 'Race Day ' + event.race_day + ': ' + humanize(event.race_type),
+                  subtitle: formatGameDate(event.event_date) + ' · ' +
+                    (event.lineup_ready ? 'Lineup submitted' : 'Lineup pending') +
+                    ' · Deadline ' + formatGameDate(event.lineup_deadline),
+                  to:'/dashboard/national-association/world-nations/events/' + event.event_id,
+                }))}
+                empty="No upcoming national race days."
+              />
               <Card className="p-5">
                 <div className="text-sm font-semibold text-slate-900">
                   {workspace.national_command.squad_ready ? 'National squad confirmed' : 'National squad not yet confirmed'}
@@ -2067,6 +2092,16 @@ export default function PremiumCommandCenter(): JSX.Element {
                 {to:'/dashboard/staff',label:'Scouting staff'},
               ]}
             >
+              <CommandDataList title="Scouting tasks in progress"
+                items={workspace.scouting_command.active_task_details.map(task => ({
+                  id: task.id,
+                  title: task.rider_name,
+                  subtitle: humanize(task.status) +
+                    (task.completes_at_game_ts ? ' · Due ' + formatGameDate(task.completes_at_game_ts) : ''),
+                  to:'/dashboard/scouting',
+                }))}
+                empty="No scouting assignments in progress."
+              />
               <CommandDataList title="Recent scouting reports"
                 items={workspace.scouting_command.recent_reports.map(report => ({
                   id: report.id,
@@ -2100,6 +2135,16 @@ export default function PremiumCommandCenter(): JSX.Element {
                 {to:'/dashboard/squad',label:'Rider squad'},
               ]}
             >
+              <CommandDataList title="Rider recovery watch"
+                items={workspace.staff_command.recovery_watch.map(rider => ({
+                  id: rider.rider_id,
+                  title: rider.rider_name,
+                  subtitle: 'Fatigue ' + rider.fatigue + ' · ' + humanize(rider.availability_status) +
+                    (rider.unavailable_until ? ' · Until ' + formatGameDate(rider.unavailable_until) : ''),
+                  to:'/dashboard/my-riders/' + rider.rider_id,
+                }))}
+                empty="No riders are on the recovery watch list."
+              />
               <CommandDataList title="Staff contract watch (next 60 days)"
                 items={workspace.staff_command.upcoming_contracts.map(staff => ({
                   id: staff.id,
@@ -2131,6 +2176,15 @@ export default function PremiumCommandCenter(): JSX.Element {
                 {to:'/dashboard/finance',label:'Club finances'},
               ]}
             >
+              <CommandDataList title="Next available facility upgrades (cost comparison)"
+                items={workspace.infrastructure_command.next_upgrades.map((upgrade,index) => ({
+                  id: upgrade.facility_key + ':' + index,
+                  title: humanize(upgrade.facility_key) + ' · Level ' + upgrade.target_level,
+                  subtitle: formatCurrency(upgrade.cost_cash) + ' · ' + upgrade.duration_game_days + ' game-day build',
+                  to:'/dashboard/infrastructure',
+                }))}
+                empty="No additional facility upgrades are currently configured."
+              />
               <CommandDataList title="Upcoming facility projects"
                 items={workspace.infrastructure_command.upcoming_projects.map((project,index) => ({
                   id: project.target_key + ':' + index,
