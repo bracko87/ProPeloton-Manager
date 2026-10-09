@@ -1713,6 +1713,19 @@ function normalizeOverviewRaceBase(
 }
 
 /**
+ * Render backend rider-role identifiers as labels rather than raw enum names.
+ * Works for free_role, team_leader, lead_out, etc. and keeps the API values
+ * unchanged for gameplay logic.
+ */
+function formatOverviewRiderRole(value: unknown): string | null {
+  const text = asString(value, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+  return text ? text.replace(/\b\w/g, character => character.toUpperCase()) : null
+}
+
+/**
  * normalizeOverviewNextRace
  * Converts the squad dashboard RPC payload into a compact next race widget payload.
  */
@@ -1730,7 +1743,7 @@ function normalizeOverviewNextRace(
     (row, index) => ({
       riderId: asString(row.riderId ?? row.rider_id, `next-rider:${index}`),
       riderName: asString(row.riderName ?? row.rider_name, "Unnamed rider"),
-      role: asString(row.role, "").replace(/_/g, " ").trim().replace(/^./, first => first.toUpperCase()) || null,
+      role: formatOverviewRiderRole(row.role),
       raceSharpness:
         row.raceSharpness === null || row.raceSharpness === undefined
           ? null
@@ -1769,7 +1782,7 @@ function normalizeOverviewLastRace(
     (row, index) => ({
       riderId: asString(row.riderId ?? row.rider_id, `last-rider:${index}`),
       riderName: asString(row.riderName ?? row.rider_name, "Unnamed rider"),
-      role: asString(row.role, "").replace(/_/g, " ").trim().replace(/^./, first => first.toUpperCase()) || null,
+      role: formatOverviewRiderRole(row.role),
       position:
         row.position === null || row.position === undefined
           ? null
