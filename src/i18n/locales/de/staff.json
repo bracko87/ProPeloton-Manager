@@ -645,5 +645,8 @@
     "medicalCenter": "Medizinzentrum",
     "mechanicsWorkshop": "Mechanikerwerkstatt",
     "scoutingOffice": "Scoutingbüro"
+  },
+  "legacyUi": {
+    "unlockDevelopingTeam": "Schalte zuerst das Entwicklungsteam in den Einstellungen frei."
   }
 }
