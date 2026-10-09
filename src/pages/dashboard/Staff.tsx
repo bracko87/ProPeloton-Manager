@@ -1526,6 +1526,16 @@ function PremiumFeatureLoading() {
 }
 
 
+function translateStaffFacilityName(value: string, t: TFunction): string {
+  const keys: Record<string, string> = {
+    'Training Center': 'facilityNames.trainingCenter',
+    'Medical Center': 'facilityNames.medicalCenter',
+    'Mechanics Workshop': 'facilityNames.mechanicsWorkshop',
+    'Scouting Office': 'facilityNames.scoutingOffice',
+  }
+  return keys[value] ? t(keys[value], { defaultValue: value }) : value
+}
+
 function translateStaffSpecialization(value: string | null | undefined, t: TFunction): string {
   const normalized = (value ?? '').trim()
   if (!normalized || normalized.toLowerCase() === 'general') {
@@ -1697,12 +1707,12 @@ function translateScoutExplanationText(value: string, t: TFunction): string {
   if (added[value]) return t('qualityExplanation.' + added[value], { defaultValue: value })
   const facilityCap = value.match(/^(.+?) (?:Lv \d+ )?can cap part of (?:coaching|trainer|medical|U23 coaching) bonuses(?:\. Current level: Lv (\d+))?\.$/)
   if (facilityCap) return t('qualityExplanation.facilityCap', {
-    facility: facilityCap[1],
+    facility: translateStaffFacilityName(facilityCap[1], t),
     level: facilityCap[2] ?? '0',
   })
   const maintenanceCap = value.match(/^(.+?) controls how much maintenance speed and cost discount can be used\. Current level: Lv (\d+)\.$/)
   if (maintenanceCap) return t('qualityExplanation.maintenanceCap', {
-    facility: maintenanceCap[1], level: maintenanceCap[2],
+    facility: translateStaffFacilityName(maintenanceCap[1], t), level: maintenanceCap[2],
   })
   const exact: Record<string, string> = {
     'How Scout Quality Works': 'scoutingExplainer.title',
@@ -2721,6 +2731,7 @@ function StaffQualityPanel({
     const key = QUALITY_TRANSLATION_KEYS[value as keyof typeof QUALITY_TRANSLATION_KEYS]
     if (key) return t(key)
     if (value === 'Unknown') return t('common.unknown')
+    if (['Training Center', 'Medical Center', 'Mechanics Workshop', 'Scouting Office'].includes(value)) return translateStaffFacilityName(value, t)
     return value
   }
 
