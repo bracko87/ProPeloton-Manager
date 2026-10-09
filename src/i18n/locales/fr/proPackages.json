@@ -18,7 +18,7 @@
     "membership": "Membre de Premium",
     "advancedTools": "Premium Command Center with advanced planning, simulations, analytics and management tools.",
     "marketTools": "Transfer Command with saved searches, market alerts and unlimited coin-free shortlist additions.",
-    "capacity": "Exclusive Developing Team, U23 Head Coach and Youth Academy access.",
+    "capacity": "L'académie des jeunes / U16 est réservée à Premium, avec 50 Coins d'activation et 50 Coins de renouvellement par saison. L'équipe de développement / U23 est disponible aux managers Free et Premium pour 100 Coins à l'activation et au renouvellement.",
     "receive": "Recevez",
     "monthlyCoinsSuffix": "Coins après chaque paiement mensuel réussi.",
     "cancelAnytime": "Annuler à tout moment; le gameplay normal reste libre.",
@@ -63,7 +63,14 @@
     "manualAccessHelp": "Votre accès Premium provient actuellement d’un accès gratuit/de test. Il n’y a aucun abonnement récurrent à annuler.",
     "canceledBillingHelp": "L’ancien abonnement Stripe est annulé. Vous pouvez toujours consulter la facturation ou démarrer un nouvel abonnement payant.",
     "statusCanceled": "Annulé",
-    "startPaidSubscription": "Démarrer un abonnement Premium payant"
+    "startPaidSubscription": "Démarrer un abonnement Premium payant",
+    "quarterlySummary": "/ 3 mois · {{monthlyPrice}}/mois",
+    "quarterlySummaryCoins": "/ 3 mois · {{monthlyPrice}}/mois · {{coins}} Coins",
+    "mostPopular": "Le plus populaire",
+    "monthlyTitle": "1 mois",
+    "monthlySummary": "par mois · {{coins}} Coins",
+    "yearlyTitle": "12 mois · Économisez 15 %",
+    "yearlySummary": "{{monthlyPrice}}/mois · {{coins}} Coins"
   },
   "advantages": {
     "a1": "30 coins after every successful monthly Premium payment.",
@@ -73,8 +80,8 @@
     "a5": "Rider Development Lab with development trends, prospect watch and advanced squad analysis.",
     "a6": "Templates, saved workflows and Smart Prefill automation that you review before saving.",
     "a7": "Unlimited world-race replays included without the normal 2-coin replay charge.",
-    "a8": "Exclusive Developing Team access plus the U23 Head Coach: 100 coins to activate and 100 coins per season to renew.",
-    "a9": "Exclusive Youth Academy: 16 U16 places, six local starter riders, Youth Academy Director, U16 Head Coach, scouting, racing, budget, equipment, infrastructure effects and graduation pathways.",
+    "a8": "Équipe de développement / U23 accessible aux managers Free et Premium : 100 Coins à l'activation et 100 Coins à chaque renouvellement saisonnier. Premium non requis.",
+    "a9": "Académie des jeunes / U16 réservée à Premium : jusqu'à 16 coureurs, six coureurs de départ, personnel, recrutement, courses et progression ; activation et renouvellement à 50 Coins.",
     "a10": "Premium improves information, planning and convenience only — it never increases race-engine strength, transfer acceptance or hidden rider skills."
   },
   "comparison": {
@@ -273,5 +280,27 @@
     "coins": "Coins de monnaie {{count}}",
     "coin": "Coin {{count}}",
     "notAuthenticated": "Non authentifié. Veuillez vous connecter à nouveau."
+  },
+  "earnCoins": {
+    "title": "Gagnez des Coins gratuits",
+    "subtitle": "Répondez à des sondages facultatifs CPX Research.",
+    "start": "Voir les sondages",
+    "loading": "Connexion aux sondages…",
+    "close": "Fermer",
+    "earned": "Coins nets issus des sondages",
+    "retained": "Fractions de Coins conservées",
+    "rate": "1 $ gagné = 15 Coins",
+    "note": "CPX affiche des Reward Points (100 points = 15 Coins). Les récompenses sont créditées après vérification ; une annulation peut entraîner leur retrait.",
+    "refresh": "Actualiser les récompenses",
+    "privacy": "L'ouverture des sondages transmet votre identifiant de jeu et vos données de connexion à CPX Research. La participation est facultative.",
+    "history": "Activité récente",
+    "empty": "Aucune activité récente.",
+    "completed": "Terminé",
+    "canceled": "Annulé",
+    "openTab": "Ouvrir les sondages dans un nouvel onglet",
+    "error": "Impossible d'ouvrir les sondages. Réessayez plus tard.",
+    "retry": "Réessayer",
+    "status": "Sondage",
+    "bannerDescription": "Participez aux sondages facultatifs de CPX Research et gagnez 15 Coins pour chaque dollar de revenu confirmé. Aucun paiement requis. Les récompenses annulées peuvent être retirées."
   }
 }
