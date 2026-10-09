@@ -154,7 +154,11 @@
     "starting": "Pokretanje…",
     "dismiss": "Odbaci tutorijal",
     "dismissed": "Odbačen — neće se ponovo pojaviti dok ga ručno ne pokreneš.",
-    "dismissedNotice": "Tutorijal je odbačen."
+    "dismissedNotice": "Tutorijal je odbačen.",
+    "inviteTitle": "Treba li ti pomoć za {{feature}}?",
+    "startTutorial": "Pokreni tutorijal",
+    "noThanks": "Ne, hvala",
+    "finishForNow": "Završi za sada"
   },
   "tutorialModules": {
     "national-championships": {
