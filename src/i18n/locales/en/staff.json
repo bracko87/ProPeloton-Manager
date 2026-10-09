@@ -3,7 +3,8 @@
     "title": "Team Staff",
     "subtitle": "Manage multiple staff roles through dedicated role tabs and per-role staff lists.",
     "loading": "Loading staff...",
-    "explainPositions": "Explain all staff positions"
+    "explainPositions": "Explain all staff positions",
+    "loadFailed": "Could not load the Staff page. Please try again."
   },
   "summary": {
     "weeklyWages": "Weekly Staff Wages",
@@ -283,7 +284,8 @@
     "rejected": "{{name}} rejected the offer.",
     "minimumWeeklySalary": "Minimum acceptable weekly salary is {{salary}}.",
     "wantsCloserTo": "{{name}} wants a weekly salary closer to {{salary}}.",
-    "offerFailed": "Could not complete the staff contract negotiation. Please try again."
+    "offerFailed": "Could not complete the staff contract negotiation. Please try again.",
+    "quoteFailed": "Could not load the contract quote. Please try again."
   },
   "course": {
     "title": "Staff Course",
@@ -294,7 +296,10 @@
     "start": "Start Course",
     "starting": "Starting...",
     "none": "No course options are configured for this staff role yet. This prevents the wrong course type from being started until backend course codes are added for this role.",
-    "back": "Back to Staff"
+    "back": "Back to Staff",
+    "startedWithTarget": "{{name}} started {{course}}. Expected completion: {{date}}.",
+    "started": "{{name}} started a staff course.",
+    "startFailed": "Could not start the staff course. Please try again."
   },
   "information": {
     "title": "Staff Positions Explained",
