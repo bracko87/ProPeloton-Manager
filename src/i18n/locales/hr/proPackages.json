@@ -282,13 +282,13 @@
     "notAuthenticated": "Niste prijavljeni. Prijavite se ponovno."
   },
   "earnCoins": {
-    "title": "Zaradi besplatne Coins",
+    "title": "Zaradi Coins besplatno",
     "subtitle": "Ispuni neobavezne ankete CPX Researcha.",
     "start": "Pregledaj ankete",
     "loading": "Povezivanje s anketama…",
     "close": "Zatvori",
     "earned": "Neto Coins od anketa",
-    "retained": "Sačuvani dijelovi Coins",
+    "retained": "Sačuvani decimalni dio Coins nagrade",
     "rate": "1 $ zarade = 15 Coins",
     "note": "CPX prikazuje Reward Points (100 bodova = 15 Coins). Nagrade stižu nakon provjere, a poništene se mogu oduzeti.",
     "refresh": "Osvježi nagrade",
