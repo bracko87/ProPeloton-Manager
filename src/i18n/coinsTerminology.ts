@@ -19,7 +19,7 @@ function replaceFullWords(value: string, expression: RegExp): string {
   return value.replace(expression, (word: string, index: number, input: string) => {
     const before = input.slice(0, index)
     const after = input.slice(index + word.length)
-    if (/[\\p{L}\\p{N}]/u.test(before.slice(-1)) || /[\\p{L}\\p{N}]/u.test(after.slice(0, 1))) {
+    if (/[\p{L}\p{N}]/u.test(before.slice(-1)) || /[\p{L}\p{N}]/u.test(after.slice(0, 1))) {
       return word
     }
     return 'Coins'
@@ -40,7 +40,7 @@ function normalizeText(text: string, locale: string, keyPath: string): string {
   if (locale === 'fr') {
     const currencyKey = /coin|reward|curren|purchase|price|package|wallet|premium|activat|renew|billing|cost|service|transfer|payment/i.test(keyPath)
     if (currencyKey) result = replaceFullWords(result, /pièces?/giu)
-    else result = result.replace(/(\\d+\\s+)pièces?\\b/giu, '$1Coins')
+    else result = result.replace(/(\d+\s+)pièces?\b/giu, '$1Coins')
   }
   return result
 }
