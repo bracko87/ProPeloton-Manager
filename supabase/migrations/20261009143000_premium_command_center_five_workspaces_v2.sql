@@ -1,6 +1,5 @@
--- Premium Command Center v2: read-only analytics and manager attention queue.
--- Applied to project okuravitxocyevkexfgi; retained in git for reproducible deployments.
--- All data is manager-scoped and subject to the existing Premium access guard.
+-- Premium Command Center v2: scoped read-only analytics and attention queue.
+-- All data is manager-scoped and Premium-protected by the existing access guard.
 
 CREATE OR REPLACE FUNCTION public.premium_get_command_center_v2(p_club_id uuid)
  RETURNS jsonb
@@ -73,6 +72,16 @@ begin
       where r.academy_id=v_youth_id and r.status in ('new','unreviewed')),0),
     'scouting_reports_total',coalesce((select count(*)::integer from public.youth_scouting_reports r
       where r.academy_id=v_youth_id),0),
+    'graduation_candidates',coalesce((
+      select jsonb_agg(to_jsonb(x) order by x.became_eligible_on)
+      from (
+        select g.id,g.youth_rider_id,r.display_name rider_name,g.decision,g.became_eligible_on
+        from public.youth_graduation_records g
+        join public.youth_riders r on r.id=g.youth_rider_id
+        where g.academy_id=v_youth_id and g.decision='pending'
+        order by g.became_eligible_on limit 5
+      ) x
+    ),'[]'::jsonb),
     'graduation_decisions_pending',coalesce((select count(*)::integer from public.youth_graduation_records g
       where g.academy_id=v_youth_id and g.decision='pending'),0),
     'riders_nearing_graduation',coalesce((select count(*)::integer from public.youth_riders r
@@ -135,6 +144,24 @@ begin
         where sq.association_id=v_assoc_id and sq.status in ('confirmed','on_duty')
         order by sq.created_at desc limit 1)
     ),0),
+    'upcoming_events',coalesce((
+      select jsonb_agg(to_jsonb(x) order by x.event_date,x.race_day)
+      from (
+        select e.id event_id,e.event_date,e.race_day,e.race_type,
+          (e.event_date-3) lineup_deadline,
+          case when l.id is not null and l.status in ('confirmed','locked','completed')
+            and (select count(*) from public.national_team_lineup_members lm where lm.lineup_id=l.id)=7
+            then true else false end lineup_ready
+        from public.nations_group_events e
+        join public.nations_competition_groups g on g.id=e.group_id
+        join public.nations_group_entries ge on ge.group_id=g.id and ge.status<>'withdrawn'
+        join public.nations_competition_entries ne on ne.id=ge.competition_entry_id
+        left join public.national_team_squads s on s.association_id=ne.association_id and s.cycle_key=e.cycle_key
+        left join public.national_team_lineups l on l.squad_id=s.id and l.race_day=e.race_day
+        where ne.association_id=v_assoc_id and e.event_date>=v_today
+        order by e.event_date,e.race_day limit 5
+      ) x
+    ),'[]'::jsonb),
     'squad_target',10,
     'lineups_ready',coalesce((
       select count(*)::integer from public.national_team_lineups l
@@ -167,6 +194,16 @@ begin
     'active_tasks',coalesce((select count(*)::integer from public.rider_scout_tasks task
       where task.club_id=v_club and task.status not in
         ('completed','failed','cancelled','canceled','expired')),0),
+    'active_task_details',coalesce((
+      select jsonb_agg(to_jsonb(x) order by x.completes_at_game_ts)
+      from (
+        select t.id,t.rider_id,r.display_name rider_name,t.status,t.completes_at_game_ts
+        from public.rider_scout_tasks t
+        join public.riders r on r.id=t.rider_id
+        where t.club_id=v_club and t.status not in ('completed','failed','cancelled','canceled','expired')
+        order by t.completes_at_game_ts nulls last limit 5
+      ) x
+    ),'[]'::jsonb),
     'shortlist_matches',coalesce((select count(*)::integer from public.transfer_shortlist s
       where s.club_id=v_club and s.target_type='rider' and s.removed_at is null
       and exists(select 1 from public.rider_scout_reports report
@@ -202,6 +239,16 @@ begin
       select count(*)::integer from public.club_roster cr join public.riders r on r.id=cr.rider_id
       where cr.club_id=v_club and r.availability_status<>'fit'
     ),0),
+    'recovery_watch',coalesce((
+      select jsonb_agg(to_jsonb(x) order by x.fatigue desc)
+      from (
+        select r.id rider_id,r.display_name rider_name,r.fatigue,r.availability_status,
+          r.unavailable_until
+        from public.club_roster cr join public.riders r on r.id=cr.rider_id
+        where cr.club_id=v_club and (r.fatigue>=70 or r.availability_status<>'fit')
+        order by r.fatigue desc,r.display_name limit 8
+      ) x
+    ),'[]'::jsonb),
     'upcoming_contracts',coalesce((
       select jsonb_agg(to_jsonb(x) order by x.contract_expires_at)
       from (
@@ -246,6 +293,29 @@ begin
         on c.facility_key=active_facilities.facility_key and c.target_level=active_facilities.level
       where ci.club_id=v_club
     ),0),
+    'next_upgrades',coalesce((
+      select jsonb_agg(to_jsonb(x) order by x.cost_cash,x.facility_key)
+      from (
+        select c.facility_key,c.target_level,c.cost_cash,c.duration_game_days
+        from public.club_infrastructure ci
+        join lateral (select * from (values
+          ('club_house',ci.hq_level),
+          ('training_center',ci.training_center_level),
+          ('medical_center',ci.medical_center_level),
+          ('scouting_office',ci.scouting_level),
+          ('mechanics_workshop',ci.mechanics_workshop_level),
+          ('youth_academy',ci.youth_academy_level),
+          ('team_residential_campus',ci.team_residential_campus_level),
+          ('sprint_performance_circuit',ci.sprint_performance_circuit_level),
+          ('climbing_performance_center',ci.climbing_performance_center_level),
+          ('team_time_trial_center',ci.team_time_trial_center_level)
+        ) as f(facility_key,level)) available on true
+        join public.infrastructure_facility_upgrade_config c
+          on c.facility_key=available.facility_key and c.target_level=available.level+1
+        where ci.club_id=v_club
+        order by c.cost_cash,c.facility_key limit 5
+      ) x
+    ),'[]'::jsonb),
     'upcoming_projects',coalesce((
       select jsonb_agg(to_jsonb(x) order by x.complete_game_date)
       from (
