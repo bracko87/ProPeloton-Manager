@@ -468,7 +468,8 @@
     "releasing": "Rilasciando...",
     "removedFromList": "Rider rimosso dalla lista dei trasferimenti.",
     "cancelListingFailed": "Impossibile annullare l' elenco dei trasferimenti.",
-    "releasePreviewFailed": "Impossibile caricare l'anteprima di rilascio."
+    "releasePreviewFailed": "Impossibile caricare l'anteprima di rilascio.",
+    "gameDateUnavailable": "Data di gioco non disponibile"
   },
   "ownedTransfer": {
     "title": "Elenco trasferimenti",
