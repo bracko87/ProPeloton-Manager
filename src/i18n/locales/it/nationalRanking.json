@@ -1,12 +1,12 @@
 {
-  "title": "Classifica nazionale {{country}}",
+  "title": "Campionato nazionale — {{country}}",
   "eyebrow": "Competizione nazionale",
   "description": "Classifica nazionale individuale dei corridori, qualificazione al campionato, impegno nazionale e preparazione individuale. I punti della classifica a squadre non vengono influenzati.",
   "country": "Paese",
-  "loading": "Caricamento classifica nazionale…",
+  "loading": "Caricamento campionato nazionale…",
   "errors": {
-    "unavailable": "La classifica nazionale non è disponibile.",
-    "load": "Impossibile caricare la classifica nazionale.",
+    "unavailable": "I dati del campionato nazionale non sono disponibili.",
+    "load": "Impossibile caricare il campionato nazionale.",
     "save": "Impossibile salvare il piano del corridore."
   },
   "cards": {
