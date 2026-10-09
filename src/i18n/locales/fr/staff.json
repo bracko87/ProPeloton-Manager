@@ -245,7 +245,9 @@
     "warning": "Cela va retirer le membre du personnel de l'équipe immédiatement. Les primes du personnel de cette emplacement s'arrêtera jusqu'à ce que vous signez un remplacement.",
     "payment": "Le club versera une indemnité unique de libération égale à 6 semaines de salaire.",
     "releasing": "Relâcher...",
-    "confirm": "Confirmer la publication"
+    "confirm": "Confirmer la publication",
+    "successMessage": "{{name}} a été libéré de son poste de {{role}}. Indemnité versée : {{amount}}.",
+    "failureMessage": "Impossible de libérer ce membre du personnel. Veuillez réessayer."
   },
   "contract": {
     "title": "Prolongation du contrat",
@@ -274,7 +276,14 @@
     "submitting": "Soumettre...",
     "submit": "Soumettre l'offre",
     "extended": "Le contrat de travail a été prolongé avec succès.",
-    "discussionCompleted": "Fin de la discussion sur le contrat."
+    "discussionCompleted": "Fin de la discussion sur le contrat.",
+    "invalidWeeklySalary": "Saisissez un salaire hebdomadaire valide.",
+    "acceptedWithTerms": "{{name}} a accepté le nouveau contrat : {{salary}} par semaine jusqu'à la saison {{season}}.",
+    "countered": "{{name}} souhaite de meilleures conditions contractuelles.",
+    "rejected": "{{name}} a refusé l'offre.",
+    "minimumWeeklySalary": "Le salaire hebdomadaire minimum acceptable est de {{salary}}.",
+    "wantsCloserTo": "{{name}} souhaite un salaire hebdomadaire plus proche de {{salary}}.",
+    "offerFailed": "Impossible de finaliser la négociation du contrat. Veuillez réessayer."
   },
   "course": {
     "title": "Cours de personnel",
