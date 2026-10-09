@@ -137,7 +137,8 @@
     "noRace": "No race found yet",
     "noFinished": "No finished full-race classification found for this squad yet.",
     "noNext": "No next not-started submitted race plan found for this squad yet.",
-    "stages": "{{count}} stages"
+    "stages": "{{count}} stages",
+    "noFinishedClassification": "No finished race classification is available yet."
   },
   "transfer": {
     "listed": "Rider is on the transfer list"
@@ -155,5 +156,18 @@
     "Oct": "Oct",
     "Nov": "Nov",
     "Dec": "Dec"
+  },
+  "riderRoles": {
+    "freeRole": "Free role",
+    "teamLeader": "Team leader",
+    "gcLeader": "GC leader",
+    "leadOut": "Lead-out rider",
+    "sprinter": "Sprinter",
+    "climber": "Climber",
+    "domestique": "Domestique",
+    "support": "Support rider",
+    "timeTrial": "Time trial specialist",
+    "breakaway": "Breakaway rider",
+    "allRounder": "All-rounder"
   }
 }
