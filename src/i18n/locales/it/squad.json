@@ -137,7 +137,8 @@
     "noRace": "Nessuna gara trovata",
     "noFinished": "Non è ancora stata trovata alcuna classificazione completa per questa squadra.",
     "noNext": "Non è stato trovato nessun prossimo Race Plan non avviato per questa squadra.",
-    "stages": "Stadi {{count}}"
+    "stages": "Stadi {{count}}",
+    "noFinishedClassification": "Non è ancora disponibile una classifica finale di gara."
   },
   "transfer": {
     "listed": "Rider è nella lista dei trasferimenti"
@@ -155,5 +156,18 @@
     "Oct": "Ott",
     "Nov": "Nov",
     "Dec": "Dic"
+  },
+  "riderRoles": {
+    "freeRole": "Ruolo libero",
+    "teamLeader": "Capitano",
+    "gcLeader": "Capitano per la generale",
+    "leadOut": "Ultimo uomo",
+    "sprinter": "Velocista",
+    "climber": "Scalatore",
+    "domestique": "Gregario",
+    "support": "Supporto",
+    "timeTrial": "Cronoman",
+    "breakaway": "Fuggitivo",
+    "allRounder": "Passista completo"
   }
 }
