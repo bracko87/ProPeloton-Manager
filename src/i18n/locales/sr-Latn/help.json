@@ -135,5 +135,55 @@
     "description": "Ako nešto izgleda pogrešno, navedite naziv stranice, tima, vozača i trke, dodajte snimke ekrana i korake potrebne za ponavljanje problema. To nam pomaže da brže pronađemo i ispravimo greške.",
     "contact": "Kontaktirajte nas",
     "discord": "Pitaj na Discordu"
+  },
+  "tutorialControl": {
+    "eyebrow": "Tutorijali",
+    "title": "Pokreni ili ponovo pokreni bilo koji tutorijal",
+    "description": "Početni tutorijal uvodi nove menadžere u igru, a dodatni vodiči mogu se pojaviti pri otvaranju novih funkcija. Svaki vodič možeš odbiti, ponovo pokrenuti ili isključiti automatska pojavljivanja.",
+    "manual": "Kompletan priručnik",
+    "autoTitle": "Automatsko prikazivanje tutorijala",
+    "autoOff": "Automatski tutorijali su isključeni. Tutorijale i dalje možeš pokrenuti ručno.",
+    "autoOn": "Tutorijali se mogu prikazati kada prvi put otvoriš novu funkciju.",
+    "enableAuto": "Uključi automatske tutorijale",
+    "disableAuto": "Isključi automatske tutorijale",
+    "coreLabel": "Osnovni tutorijal",
+    "featureLabel": "Tutorijal funkcije",
+    "coreTitle": "Osnove ProPeloton Managera",
+    "coreDescription": "Ponovo pokreće kompletan uvod u osnovne delove igre.",
+    "startRestart": "Pokreni / Ponovo pokreni",
+    "starting": "Pokretanje…",
+    "dismiss": "Odbaci tutorijal",
+    "dismissed": "Odbačen — neće se ponovo pojaviti dok ga ručno ne pokreneš.",
+    "dismissedNotice": "Tutorijal je odbačen."
+  },
+  "tutorialModules": {
+    "national-championships": {
+      "title": "Nacionalno prvenstvo i rangiranje",
+      "description": "Kvalifikacije, nacionalne obaveze, priprema za trke i istorija prvenstva."
+    },
+    "national-association": {
+      "title": "Nacionalni savez i reprezentacija",
+      "description": "Članstvo, finansiranje, izbori, sastav reprezentacije, World Nations i istorija."
+    },
+    "national-coach": {
+      "title": "Selektor reprezentacije",
+      "description": "Podobni vozači, pozivi, konačni sastav i izbor za dane trka."
+    },
+    "youth-academy": {
+      "title": "Omladinska akademija / U16",
+      "description": "Skauting mladih, osoblje, budžet, trke, rangiranje i prelazak u stariji uzrast."
+    },
+    "youth-graduation": {
+      "title": "Prelazak iz omladinske akademije",
+      "description": "Prebacivanje vozača U16 u narednu fazu razvoja."
+    },
+    "developing-team": {
+      "title": "Razvojni tim",
+      "description": "U23 razvojni put prema prvom timu."
+    },
+    "new-season": {
+      "title": "Prelazak u novu sezonu",
+      "description": "Važne promene na prelasku u novu sezonu."
+    }
   }
 }
