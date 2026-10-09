@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/squad-staff-translation-qa.yml'
       - 'src/pages/dashboard/Staff.tsx'
+      - 'src/components/i18n/StaffLegacyLocalizationBridge.tsx'
       - 'src/pages/dashboard/Squad.tsx'
       - 'src/features/squad/components/FirstSquadTab.tsx'
       - 'src/features/squad/components/RiderProfilePage.tsx'
@@ -36,6 +37,15 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs'
+          const bridge = fs.readFileSync('src/components/i18n/StaffLegacyLocalizationBridge.tsx', 'utf8')
+          for (const name of ['Head Coach','Trainer','Team Doctor','Physio','Nutritionist','Mechanic','Sport Director','Scout / Analyst','U23 Head Coach','Youth Academy Director','U16 Head Coach','Youth Scout']) {
+            if (!bridge.includes("'" + name + "': 'staff:roles." ) && !bridge.includes(name + ": 'staff:roles.")) {
+              throw new Error('Missing staff role in legacy UI: ' + name)
+            }
+          }
+          for (const code of ['head_coach','trainer','team_doctor','physio','nutritionist','mechanic','sport_director','scout_analyst','u23_head_coach','youth_academy_director','u16_head_coach','youth_scout']) {
+            if (!bridge.includes("  " + code + ": 'staff:roles.")) throw new Error('Missing staff enum UI translation: ' + code)
+          }
           for (const lang of ['en','sr-Latn','hr','de','es','it','fr','ru']) {
             const staff = JSON.parse(fs.readFileSync('src/i18n/locales/'+lang+'/staff.json'))
             const squad = JSON.parse(fs.readFileSync('src/i18n/locales/'+lang+'/squad.json'))
