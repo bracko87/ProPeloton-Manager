@@ -1531,13 +1531,7 @@ export default function PremiumCommandCenter(): JSX.Element {
                       : 'border-transparent text-slate-500 hover:text-slate-700',
                   ].join(' ')}
                 >
-                  {t('tabs.' + item.key, {defaultValue: ({
-                      youth:'Youth Academy & Talent Pipeline',
-                      national:'National Competitions Command',
-                      scouting:'Scouting Intelligence',
-                      staff:'Staff, Training & Recovery',
-                      infrastructure:'Infrastructure & Logistics Planner',
-                    } as Partial<Record<TabKey,string>>)[item.key] ?? item.key})}
+                  {t(`tabs.${item.key}`)}
                 </button>
               )
             })}
