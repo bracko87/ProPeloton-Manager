@@ -4426,7 +4426,9 @@ export default function RiderProfilePage({
   const { t, i18n } = useTranslation('riderProfile')
   const location = useLocation()
   const navigate = useNavigate()
-  const uiLocale = i18n.resolvedLanguage?.startsWith('sr') ? 'sr-Latn-RS' : 'en-GB'
+  const uiLocale = (i18n.resolvedLanguage ?? i18n.language)?.startsWith('sr')
+    ? 'sr-Latn-RS'
+    : (i18n.resolvedLanguage ?? i18n.language ?? 'en-GB')
 
   function getRaceDetailReturnState() {
     const currentPath = `${location.pathname}${location.search}${location.hash}`
@@ -5292,7 +5294,11 @@ export default function RiderProfilePage({
   const localizedContractEnd = selectedRider?.contract_expires_season
     ? t('ownedRenewal.seasonDate', {
         season: selectedRider.contract_expires_season,
-        date: formatShortGameDate(selectedRider.contract_expires_at),
+        date: selectedRider.contract_expires_at
+          ? new Date(selectedRider.contract_expires_at).toLocaleDateString(uiLocale, {
+              day: '2-digit', month: 'short', timeZone: 'UTC',
+            })
+          : '—',
       })
     : contractExpiryUi.label
   const contractDaysRemaining = getDaysRemaining(
