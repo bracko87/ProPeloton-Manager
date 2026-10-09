@@ -639,5 +639,8 @@
     "riskControl": "Controllo dei rischi",
     "facilityCap": "{{facility}} limita alcuni bonus dello staff. Livello attuale: {{level}}.",
     "maintenanceCap": "{{facility}} limita velocità e sconti di manutenzione. Livello attuale: {{level}}."
+  },
+  "specializations": {
+    "general": "Generale"
   }
 }
