@@ -154,7 +154,11 @@
     "starting": "Запуск…",
     "dismiss": "Отклонить обучение",
     "dismissed": "Отклонено — не появится до ручного перезапуска.",
-    "dismissedNotice": "Обучение отклонено."
+    "dismissedNotice": "Обучение отклонено.",
+    "inviteTitle": "Нужна помощь с {{feature}}?",
+    "startTutorial": "Начать обучение",
+    "noThanks": "Нет, спасибо",
+    "finishForNow": "Завершить пока"
   },
   "tutorialModules": {
     "national-championships": {
