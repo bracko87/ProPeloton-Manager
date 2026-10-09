@@ -137,7 +137,8 @@
     "noRace": "Još nema pronađene utrke",
     "noFinished": "Još nema završene kompletne klasifikacije utrke za ovaj tim.",
     "noNext": "Još nema sljedećeg potvrđenog plana utrke koja nije počela.",
-    "stages": "{{count}} etapa"
+    "stages": "{{count}} etapa",
+    "noFinishedClassification": "Još nema konačnog poretka završene utrke."
   },
   "transfer": {
     "listed": "Vozač je na transfer listi"
@@ -155,5 +156,18 @@
     "Oct": "Okt",
     "Nov": "Nov",
     "Dec": "Dec"
+  },
+  "riderRoles": {
+    "freeRole": "Slobodna uloga",
+    "teamLeader": "Vođa ekipe",
+    "gcLeader": "Vođa ukupnog poretka",
+    "leadOut": "Pomoćnik sprintera",
+    "sprinter": "Sprinter",
+    "climber": "Brdaš",
+    "domestique": "Pomoćni vozač",
+    "support": "Potpora",
+    "timeTrial": "Specijalist za kronometar",
+    "breakaway": "Vozač za bijeg",
+    "allRounder": "Svestrani vozač"
   }
 }
