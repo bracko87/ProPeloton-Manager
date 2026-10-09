@@ -597,7 +597,190 @@
     "seasonDate": "Stagione {{season}} - {{date}}"
   },
   "roleInfo": {
-    "capacityFallback": "La capacità dipende dall'attuale limite per questo ruolo."
+    "capacityFallback": "La capacità dipende dall'attuale limite per questo ruolo.",
+    "head_coach": {
+      "purpose": "Guida l'allenamento, pianificazione di formazione e sviluppo di lungo termine del ciclista.",
+      "capacitySummary": "Per questo ruolo è previsto un posto.",
+      "attributes": [
+        "Abilità fondamentale: Allenamento.",
+        "Abilità fondamentale: Pianificazione del recupero.",
+        "Abilità fondamentale: Sviluppo della gioventù.",
+        "Abilità fondamentale: Esperienza.",
+        "Abilità fondamentale: Leadership."
+      ],
+      "gameplay": [
+        "Influisce su: Formazione regolare, Campi di addestramento, Sviluppo del ciclista.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "trainer": {
+      "purpose": "Migliora la produzione di allenamento giornaliero e supporta i piani di allenamento.",
+      "capacitySummary": "Fino a cinque allenatori possono supportare la prima squadra.",
+      "attributes": [
+        "Abilità fondamentale: Formazione giornaliera.",
+        "Abilità fondamentale: Efficienza della formazione.",
+        "Abilità fondamentale: Crescita potenziale.",
+        "Abilità fondamentale: Esperienza.",
+        "Abilità fondamentale: Leadership."
+      ],
+      "gameplay": [
+        "Influisce su: Formazione giornaliera, Qualità della formazione, Sviluppo del ciclista.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "team_doctor": {
+      "purpose": "Guida recupero medico, diagnosi e prevenzione delle lesioni.",
+      "capacitySummary": "La capacità dipende dall'attuale limite per questo ruolo.",
+      "attributes": [
+        "Abilità fondamentale: Recupero.",
+        "Abilità fondamentale: Prevenzione.",
+        "Abilità fondamentale: Diagnosi.",
+        "Abilità fondamentale: Leadership."
+      ],
+      "gameplay": [
+        "Influisce su: Velocità di recupero, Prevenzione delle lesioni, Gestione dei casi medici.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "physio": {
+      "purpose": "Si concentra sulla riabilitazione, la velocità di recupero e il ritorno all'idoneità.",
+      "capacitySummary": "La capacità dipende dall'attuale limite per questo ruolo.",
+      "attributes": [
+        "Abilità fondamentale: Riabilitazione.",
+        "Abilità fondamentale: Velocità di recupero.",
+        "Abilità fondamentale: Esperienza.",
+        "Abilità fondamentale: Lealtà."
+      ],
+      "gameplay": [
+        "Influisce su: Ritorno al fitness, Velocità di recupero, Recupero dell'affaticamento.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "nutritionist": {
+      "purpose": "Supporta il recupero, la consistenza del fitness e la produzione del personale medico.",
+      "capacitySummary": "La capacità dipende dall'attuale limite per questo ruolo.",
+      "attributes": [
+        "Abilità fondamentale: Nutrizione.",
+        "Abilità fondamentale: Recupero.",
+        "Abilità fondamentale: Coerenza.",
+        "Abilità fondamentale: Esperienza."
+      ],
+      "gameplay": [
+        "Influisce su: Sostegno al recupero, Coerenza dell'idoneità, Preparazione della gara.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "mechanic": {
+      "purpose": "Configurazione della bici, efficienza di manutenzione e affidabilità meccanica di gara-giorni.",
+      "capacitySummary": "La capacità dipende dall'attuale limite per questo ruolo.",
+      "attributes": [
+        "Abilità fondamentale: Configurazione della bici.",
+        "Abilità fondamentale: Affidabilità.",
+        "Abilità fondamentale: Esperienza.",
+        "Abilità fondamentale: Lealtà."
+      ],
+      "gameplay": [
+        "Influisce su: Installazione di apparecchiature, Efficienza di manutenzione, Affidabilità meccanica.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "sport_director": {
+      "purpose": "Tattiche di gara programmate, morale, lavoro di squadra e supporto domestico.",
+      "capacitySummary": "La capacità dipende dall'attuale limite per questo ruolo.",
+      "attributes": [
+        "Abilità fondamentale: Pianificazione della corsa.",
+        "Abilità fondamentale: Controllo squadra.",
+        "Abilità fondamentale: Leadership.",
+        "Abilità fondamentale: Esperienza."
+      ],
+      "gameplay": [
+        "Influisce su: Tattiche di gara, Morale della squadra, Supporto domestico.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "scout_analyst": {
+      "purpose": "Scouting qualità, visibilità prospettiva e trasferimento di intelligenza.",
+      "capacitySummary": "La capacità dipende dall'attuale limite per questo ruolo.",
+      "attributes": [
+        "Abilità fondamentale: Valutazione.",
+        "Abilità fondamentale: Rete.",
+        "Abilità fondamentale: Precisione.",
+        "Abilità fondamentale: Esperienza."
+      ],
+      "gameplay": [
+        "Influisce su: Precisione di scouting, Scoperta prospettica, Informazioni di trasferimento.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "u23_head_coach": {
+      "purpose": "Formazione programmata per lo sviluppo del team e supporto tattico per la gara U23.",
+      "capacitySummary": "Per questo ruolo è previsto un posto.",
+      "attributes": [
+        "Abilità fondamentale: Allenamento.",
+        "Abilità fondamentale: Sviluppo della gioventù.",
+        "Abilità fondamentale: Leadership.",
+        "Abilità fondamentale: Esperienza.",
+        "Abilità fondamentale: Lealtà."
+      ],
+      "gameplay": [
+        "Influisce su: Formazione U23, Sviluppo della gioventù, Tattiche di gara U23.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "youth_academy_director": {
+      "purpose": "Gestisce il programma U16, il budget, il reclutamento delegato e le richieste operative.",
+      "capacitySummary": "Per questo ruolo è previsto un posto.",
+      "attributes": [
+        "Abilità fondamentale: Controllo squadra.",
+        "Abilità fondamentale: Esperienza.",
+        "Abilità fondamentale: Leadership.",
+        "Abilità fondamentale: Lealtà."
+      ],
+      "gameplay": [
+        "Influisce su: Budget dell'accademia, Gestione del reclutamento, Programma giovanile.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "u16_head_coach": {
+      "purpose": "Gestisce allenamento U16, carico, focus di sviluppo e selezione per le gare.",
+      "capacitySummary": "Per questo ruolo è previsto un posto.",
+      "attributes": [
+        "Abilità fondamentale: Formazione giornaliera.",
+        "Abilità fondamentale: Pianificazione del recupero.",
+        "Abilità fondamentale: Sviluppo della gioventù.",
+        "Abilità fondamentale: Leadership."
+      ],
+      "gameplay": [
+        "Influisce su: Allenamento U16, Gestione del carico, Selezione per le gare.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    },
+    "youth_scout": {
+      "purpose": "Individua e valuta talenti U16 nell'area di scouting finanziata dall'Accademia Giovanile.",
+      "capacitySummary": "Per questo ruolo è previsto un posto.",
+      "attributes": [
+        "Abilità fondamentale: Valutazione.",
+        "Abilità fondamentale: Rete.",
+        "Abilità fondamentale: Precisione.",
+        "Abilità fondamentale: Esperienza."
+      ],
+      "gameplay": [
+        "Influisce su: Scouting giovanile, Valutazione del talento, Portata del reclutamento.",
+        "Le competenze e la disponibilità del membro dello staff determinano il contributo effettivo.",
+        "Corsi e incarichi sovrapposti possono ridurre temporaneamente il contributo."
+      ]
+    }
   },
   "qualityExplanation": {
     "coachingTitle": "Come funziona la qualità dell'allenatore",
