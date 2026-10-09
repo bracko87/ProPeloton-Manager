@@ -18,7 +18,7 @@
     "membership": "Premium Членство",
     "advancedTools": "Premium Command Center with advanced planning, simulations, analytics and management tools.",
     "marketTools": "Transfer Command with saved searches, market alerts and unlimited coin-free shortlist additions.",
-    "capacity": "Exclusive Developing Team, U23 Head Coach and Youth Academy access.",
+    "capacity": "Молодёжная академия / U16 доступна только с Premium: активация 50 Coins и продление 50 Coins за сезон. Команда развития / U23 доступна менеджерам Free и Premium: активация 100 Coins и продление 100 Coins.",
     "receive": "Получать",
     "monthlyCoinsSuffix": "Coins после каждого успешного ежемесячного платежа.",
     "cancelAnytime": "Отмена в любое время; нормальная игра остается свободной.",
@@ -63,7 +63,14 @@
     "manualAccessHelp": "Сейчас доступ Premium предоставлен бесплатно/для тестирования. Регулярной подписки для отмены нет.",
     "canceledBillingHelp": "Предыдущая подписка Stripe отменена. Вы по-прежнему можете открыть платежные данные или оформить новую платную подписку.",
     "statusCanceled": "Отменена",
-    "startPaidSubscription": "Оформить платную подписку Premium"
+    "startPaidSubscription": "Оформить платную подписку Premium",
+    "quarterlySummary": "/ 3 месяца · {{monthlyPrice}}/мес.",
+    "quarterlySummaryCoins": "/ 3 месяца · {{monthlyPrice}}/мес. · {{coins}} Coins",
+    "mostPopular": "Самый популярный",
+    "monthlyTitle": "1 месяц",
+    "monthlySummary": "в месяц · {{coins}} Coins",
+    "yearlyTitle": "12 месяцев · Экономия 15%",
+    "yearlySummary": "{{monthlyPrice}}/мес. · {{coins}} Coins"
   },
   "advantages": {
     "a1": "30 coins after every successful monthly Premium payment.",
@@ -73,8 +80,8 @@
     "a5": "Rider Development Lab with development trends, prospect watch and advanced squad analysis.",
     "a6": "Templates, saved workflows and Smart Prefill automation that you review before saving.",
     "a7": "Unlimited world-race replays included without the normal 2-coin replay charge.",
-    "a8": "Exclusive Developing Team access plus the U23 Head Coach: 100 coins to activate and 100 coins per season to renew.",
-    "a9": "Exclusive Youth Academy: 16 U16 places, six local starter riders, Youth Academy Director, U16 Head Coach, scouting, racing, budget, equipment, infrastructure effects and graduation pathways.",
+    "a8": "Команда развития / U23 доступна менеджерам Free и Premium: 100 Coins за активацию и 100 Coins за продление на сезон. Premium не требуется.",
+    "a9": "Молодёжная академия / U16 только с Premium: до 16 гонщиков, шесть стартовых гонщиков, персонал, скаутинг, гонки и развитие; активация и продление по 50 Coins.",
     "a10": "Premium improves information, planning and convenience only — it never increases race-engine strength, transfer acceptance or hidden rider skills."
   },
   "comparison": {
@@ -273,5 +280,27 @@
     "coins": "{{count}} Coins",
     "coin": "{{count}} Coinsа",
     "notAuthenticated": "Не заверен. Пожалуйста, заходите еще раз."
+  },
+  "earnCoins": {
+    "title": "Зарабатывайте Coins бесплатно",
+    "subtitle": "Проходите необязательные опросы CPX Research.",
+    "start": "Открыть опросы",
+    "loading": "Подключение к опросам…",
+    "close": "Закрыть",
+    "earned": "Coins за опросы (нетто)",
+    "retained": "Накопленные доли Coins",
+    "rate": "1 $ заработка = 15 Coins",
+    "note": "CPX отображает Reward Points (100 баллов = 15 Coins). Начисление происходит после проверки; отменённые награды могут быть списаны.",
+    "refresh": "Обновить награды",
+    "privacy": "При открытии опросов CPX Research получает идентификатор вашего игрового аккаунта и данные подключения. Участие добровольное.",
+    "history": "Недавние опросы",
+    "empty": "Пока нет активности.",
+    "completed": "Завершён",
+    "canceled": "Отменён",
+    "openTab": "Открыть опросы в новой вкладке",
+    "error": "Не удалось открыть опросы. Попробуйте позже.",
+    "retry": "Повторить",
+    "status": "Опрос",
+    "bannerDescription": "Проходите необязательные опросы CPX Research и получайте 15 Coins за каждый 1 $ подтверждённого дохода. Оплата не требуется; отменённые награды могут списываться."
   }
 }
