@@ -3055,7 +3055,7 @@ function getLastCourseInfo(row: ClubStaffRow) {
 }
 
 function translateStaffCourseGain(gain: string, t: TFunction): string {
-  const match = gain.match(/^([+-]\\d+(?:\\.\\d+)?)\\s+(.+)$/)
+  const match = gain.match(/^([+-]\d+(?:\.\d+)?)\s+(.+)$/)
   if (!match) return gain
 
   const [, amount, label] = match
