@@ -594,7 +594,190 @@
     "seasonDate": "Sezona {{season}} – {{date}}"
   },
   "roleInfo": {
-    "capacityFallback": "Kapacitet prati trenutačno ograničenje osoblja za ovu ulogu."
+    "capacityFallback": "Kapacitet prati trenutačno ograničenje osoblja za ovu ulogu.",
+    "head_coach": {
+      "purpose": "Vodi treniranje, planiranje treninga i dugoročni razvoj vozača.",
+      "capacitySummary": "Za ovu je ulogu predviđeno jedno mjesto.",
+      "attributes": [
+        "Važna vještina: Trening.",
+        "Važna vještina: Planiranje oporavka.",
+        "Važna vještina: Razvoj mladih.",
+        "Važna vještina: Iskustvo.",
+        "Važna vještina: Liderstvo."
+      ],
+      "gameplay": [
+        "Utječe na: Redovni trening, Trening kampovi, Razvoj vozača.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "trainer": {
+      "purpose": "Poboljšava svakodnevni trening i podržava planove glavnog trenera.",
+      "capacitySummary": "Prvoj ekipi može pomagati do pet trenera.",
+      "attributes": [
+        "Važna vještina: Dnevni trening.",
+        "Važna vještina: Efikasnost treninga.",
+        "Važna vještina: Razvoj potencijala.",
+        "Važna vještina: Iskustvo.",
+        "Važna vještina: Liderstvo."
+      ],
+      "gameplay": [
+        "Utječe na: Dnevni trening, Kvalitet treninga, Razvoj vozača.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "team_doctor": {
+      "purpose": "Vodi medicinski oporavak, dijagnostiku i prevenciju ozljeda.",
+      "capacitySummary": "Kapacitet prati trenutačno ograničenje osoblja za ovu ulogu.",
+      "attributes": [
+        "Važna vještina: Oporavak.",
+        "Važna vještina: Prevencija.",
+        "Važna vještina: Dijagnostika.",
+        "Važna vještina: Liderstvo."
+      ],
+      "gameplay": [
+        "Utječe na: Brzina oporavka, Prevencija ozljeda, Vođenje medicinskih slučajeva.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "physio": {
+      "purpose": "Fokusira se na rehabilitaciju, brzinu oporavka i povratak u punu spremnost.",
+      "capacitySummary": "Kapacitet prati trenutačno ograničenje osoblja za ovu ulogu.",
+      "attributes": [
+        "Važna vještina: Rehabilitacija.",
+        "Važna vještina: Brzina oporavka.",
+        "Važna vještina: Iskustvo.",
+        "Važna vještina: Lojalnost."
+      ],
+      "gameplay": [
+        "Utječe na: Povratak u formu, Brzina oporavka, Oporavak od umora.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "nutritionist": {
+      "purpose": "Podržava oporavak, stabilnost forme i rad medicinskog osoblja.",
+      "capacitySummary": "Kapacitet prati trenutačno ograničenje osoblja za ovu ulogu.",
+      "attributes": [
+        "Važna vještina: Ishrana.",
+        "Važna vještina: Oporavak.",
+        "Važna vještina: Stabilnost.",
+        "Važna vještina: Iskustvo."
+      ],
+      "gameplay": [
+        "Utječe na: Podrška oporavku, Stabilnost forme, Priprema utrke.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "mechanic": {
+      "purpose": "Postavka bicikala, efikasnost održavanja i mehanička pouzdanost tokom utrke.",
+      "capacitySummary": "Kapacitet prati trenutačno ograničenje osoblja za ovu ulogu.",
+      "attributes": [
+        "Važna vještina: Postavka bicikla.",
+        "Važna vještina: Pouzdanost.",
+        "Važna vještina: Iskustvo.",
+        "Važna vještina: Lojalnost."
+      ],
+      "gameplay": [
+        "Utječe na: Postavka opreme, Efikasnost održavanja, Mehanička pouzdanost.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "sport_director": {
+      "purpose": "Planirane taktike utrke, moral, timski rad i podrška domestique vozača.",
+      "capacitySummary": "Kapacitet prati trenutačno ograničenje osoblja za ovu ulogu.",
+      "attributes": [
+        "Važna vještina: Planiranje utrke.",
+        "Važna vještina: Kontrola tima.",
+        "Važna vještina: Liderstvo.",
+        "Važna vještina: Iskustvo."
+      ],
+      "gameplay": [
+        "Utječe na: Taktika utrke, Moral tima, Podrška domestique vozača.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "scout_analyst": {
+      "purpose": "Kvalitet skautinga, pregled potencijalnih vozača i informacije za transfere.",
+      "capacitySummary": "Kapacitet prati trenutačno ograničenje osoblja za ovu ulogu.",
+      "attributes": [
+        "Važna vještina: Procena.",
+        "Važna vještina: Mreža.",
+        "Važna vještina: Preciznost.",
+        "Važna vještina: Iskustvo."
+      ],
+      "gameplay": [
+        "Utječe na: Preciznost skautinga, Pronalaženje talenata, Transfer informacije.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "u23_head_coach": {
+      "purpose": "Planirani trening Razvojnog tima i taktička podrška na U23 utrkama.",
+      "capacitySummary": "Za ovu je ulogu predviđeno jedno mjesto.",
+      "attributes": [
+        "Važna vještina: Trening.",
+        "Važna vještina: Razvoj mladih.",
+        "Važna vještina: Liderstvo.",
+        "Važna vještina: Iskustvo.",
+        "Važna vještina: Lojalnost."
+      ],
+      "gameplay": [
+        "Utječe na: U23 trening, Razvoj mladih, U23 taktika utrke.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "youth_academy_director": {
+      "purpose": "Vodi U16 program akademije, budžet, delegirano regrutiranje i operativne zahtjeve.",
+      "capacitySummary": "Za ovu je ulogu predviđeno jedno mjesto.",
+      "attributes": [
+        "Važna vještina: Kontrola tima.",
+        "Važna vještina: Iskustvo.",
+        "Važna vještina: Liderstvo.",
+        "Važna vještina: Lojalnost."
+      ],
+      "gameplay": [
+        "Utječe na: Budžet akademije, Upravljanje regrutiranjem, Omladinski program.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "u16_head_coach": {
+      "purpose": "Upravlja U16 treningom, opterećenjem, razvojnim fokusom i izborom za utrke.",
+      "capacitySummary": "Za ovu je ulogu predviđeno jedno mjesto.",
+      "attributes": [
+        "Važna vještina: Dnevni trening.",
+        "Važna vještina: Planiranje oporavka.",
+        "Važna vještina: Razvoj mladih.",
+        "Važna vještina: Liderstvo."
+      ],
+      "gameplay": [
+        "Utječe na: U16 trening, Upravljanje opterećenjem, Izbor za utrke.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    },
+    "youth_scout": {
+      "purpose": "Pronalazi i procjenjuje U16 talente unutar financiranog dosega skautinga akademije.",
+      "capacitySummary": "Za ovu je ulogu predviđeno jedno mjesto.",
+      "attributes": [
+        "Važna vještina: Procena.",
+        "Važna vještina: Mreža.",
+        "Važna vještina: Preciznost.",
+        "Važna vještina: Iskustvo."
+      ],
+      "gameplay": [
+        "Utječe na: Omladinski skauting, Procjena talenta, Doseg regrutiranja.",
+        "Vještine i dostupnost osoblja određuju stvarni doprinos.",
+        "Tečajevi i preklapanje zadataka mogu privremeno smanjiti doprinos."
+      ]
+    }
   },
   "qualityExplanation": {
     "coachingTitle": "Kako djeluje kvaliteta trenera",
