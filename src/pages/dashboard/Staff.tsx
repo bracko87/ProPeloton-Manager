@@ -3054,6 +3054,23 @@ function getLastCourseInfo(row: ClubStaffRow) {
   }
 }
 
+function localizeStaffCourseValue(
+  role: StaffRole,
+  code: string | null | undefined,
+  value: string | null | undefined,
+  field: 'title' | 'focus',
+  t: TFunction
+): string {
+  const label = (value ?? '').trim()
+  const options = buildCourseOptions(role)
+  const match = options.find(option =>
+    code ? option.code === code : field === 'title' ? option.title === label : option.focusLabel === label
+  )
+  return match
+    ? t(`courseOptions.${match.code}.${field}`, { defaultValue: label })
+    : label
+}
+
 function mapStaffMember(
   row: ClubStaffRow,
   currentGameDate: string | null,
@@ -3530,7 +3547,7 @@ function StaffListRow({
           {staff.activeCourse ? (
             <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
               <div className="text-xs font-medium text-blue-900">{t('detail.courseInProgressButton')}</div>
-              <div className="mt-1 text-xs text-blue-800">{staff.activeCourse.title}</div>
+              <div className="mt-1 text-xs text-blue-800">{localizeStaffCourseValue(staff.role, staff.activeCourse.code, staff.activeCourse.title, 'title', t)}</div>
             </div>
           ) : null}
 
@@ -3884,7 +3901,7 @@ function StaffDetailModal({
                     {staff.activeCourse ? (
                       <div className="mt-2 text-xs">
                         {t('detail.courseInProgress', {
-                          course: staff.activeCourse.title,
+                          course: localizeStaffCourseValue(staff.role, staff.activeCourse.code, staff.activeCourse.title, 'title', t),
                           date: formatGameDateShort(staff.activeCourse.completesOnGameDate),
                         })}
                       </div>
@@ -3896,9 +3913,9 @@ function StaffDetailModal({
               {staff.activeCourse ? (
                 <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
                   <div className="text-sm font-semibold text-blue-900">{t('detail.currentCourse')}</div>
-                  <div className="mt-2 text-sm text-blue-800">{staff.activeCourse.title}</div>
+                  <div className="mt-2 text-sm text-blue-800">{localizeStaffCourseValue(staff.role, staff.activeCourse.code, staff.activeCourse.title, 'title', t)}</div>
                   <div className="mt-2 space-y-1 text-xs text-blue-700">
-                    <div>{t('common.focus', { value: staff.activeCourse.focusLabel })}</div>
+                    <div>{t('common.focus', { value: localizeStaffCourseValue(staff.role, staff.activeCourse.code, staff.activeCourse.focusLabel, 'focus', t) })}</div>
                     <div>{t('common.duration', { count: staff.activeCourse.durationDays })}</div>
                     <div>{t('detail.completionDate', { date: formatGameDateShort(staff.activeCourse.completesOnGameDate) })}</div>
                   </div>
@@ -3966,7 +3983,7 @@ function StaffDetailModal({
                 <div className="mt-4 rounded-xl border border-green-100 bg-green-50 p-4">
                   <div className="text-sm font-semibold text-green-900">{t('detail.lastCourseGains')}</div>
                   {staff.lastCourseTitle ? (
-                    <div className="mt-1 text-sm text-green-800">{staff.lastCourseTitle}</div>
+                    <div className="mt-1 text-sm text-green-800">{localizeStaffCourseValue(staff.role, null, staff.lastCourseTitle, 'title', t)}</div>
                   ) : null}
 
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -4881,10 +4898,10 @@ export default function StaffPage() {
 
         await reloadStaffPage(resolvedClub.id, hasPremiumAccess)
       } catch (err) {
-        const message = getErrorMessage(err, 'Failed to load staff page.')
+        console.warn('Failed to load staff page:', err)
 
         if (!mounted) return
-        setError(message)
+        setError(t('page.loadFailed'))
       } finally {
         if (mounted) {
           setLoading(false)
@@ -4928,10 +4945,10 @@ export default function StaffPage() {
         )
       } catch (err) {
         if (cancelled) return
-        const message = getErrorMessage(err, 'Failed to load extension quote.')
+        console.warn('Failed to load staff contract quote:', err)
         setExtendQuote(null)
         setExtendContractSalary('')
-        setExtendContractError(message)
+        setExtendContractError(t('contract.quoteFailed'))
       } finally {
         if (!cancelled) setExtendQuoteLoading(false)
       }
@@ -5334,16 +5351,18 @@ export default function StaffPage() {
 
       if (result) {
         setPageMessage(
-          `${previousStaff.name} started ${result.course_title}. Completion target ${formatGameDateShort(
-            result.completes_on_game_date
-          )}.`
+          t('course.startedWithTarget', {
+            name: previousStaff.name,
+            course: localizeStaffCourseValue(previousStaff.role, courseCode, result.course_title, 'title', t),
+            date: formatGameDateShort(result.completes_on_game_date),
+          })
         )
       } else {
-        setPageMessage(`${previousStaff.name} started a staff course.`)
+        setPageMessage(t('course.started', { name: previousStaff.name }))
       }
     } catch (err) {
-      const message = getErrorMessage(err, 'Failed to start staff course.')
-      setCourseError(message)
+      console.warn('Failed to start staff course:', err)
+      setCourseError(t('course.startFailed'))
     } finally {
       setCourseStartLoadingCode(null)
     }
@@ -5548,11 +5567,11 @@ export default function StaffPage() {
                       className="rounded-xl border border-green-100 bg-green-50 p-4"
                     >
                       <div className="text-sm font-semibold text-green-900">
-                        {result.course_title}
+                        {localizeStaffCourseValue(result.role_type as StaffRole, result.course_code, result.course_title, 'title', t)}
                       </div>
                       <div className="mt-1 text-sm text-green-800">{result.staff_name}</div>
                       <div className="mt-1 text-xs text-green-700">
-                        {t('common.focus', { value: result.focus_label })}
+                        {t('common.focus', { value: localizeStaffCourseValue(result.role_type as StaffRole, result.course_code, result.focus_label, 'focus', t) })}
                       </div>
                       <div className="mt-1 text-xs text-green-700">
                         {t('common.completed', { date: formatGameDateShort(result.completed_game_date) })}
