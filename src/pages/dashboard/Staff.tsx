@@ -1524,6 +1524,34 @@ function PremiumFeatureLoading() {
 
 
 function translateStaffEffect(effect: string, t: TFunction): string {
+  const percentage = effect.match(/^([+-]\\d+)% (.*)$/)
+  if (percentage) {
+    const additional: Record<string, string> = {
+      'training efficiency': 'trainingEfficiency',
+      'development support': 'developmentSupport',
+      'overload risk': 'overloadRisk',
+      'daily training output': 'dailyTrainingOutput',
+      'rider development support': 'riderDevelopmentSupport',
+      'combined development support': 'combinedDevelopmentSupport',
+      'combined overload risk': 'combinedOverloadRisk',
+      'U16 coaching support': 'u16CoachingSupport',
+    }
+    const key = additional[percentage[2]]
+    if (key) return t('additionalEffects.' + key, { value: percentage[1] })
+    const trainingFocus = percentage[2].match(/^(.+) training efficiency$/)
+    if (trainingFocus) {
+      return t('additionalEffects.focusTrainingEfficiency', {
+        value: percentage[1], focus: trainingFocus[1],
+      })
+    }
+  }
+  const warnings: Record<string, string> = {
+    'Training Center Lv 0 caps part of coaching staff bonuses.': 'trainingCenter',
+    'Medical Center Lv 0 caps part of medical staff bonuses.': 'medicalCenter',
+    'Mechanics Workshop Lv 0 caps maintenance speed and cost discounts. Basic setup, condition-loss and mechanical-risk support are live.': 'mechanicsWorkshop',
+    'Scouting Office Lv 0 caps part of scout and analyst bonuses.': 'scoutingOffice',
+  }
+  if (warnings[effect]) return t('infrastructureWarnings.' + warnings[effect])
   let match = effect.match(/^\+(\d+)% scouting accuracy$/)
   if (match) return t('effectText.scoutingAccuracy', { value: match[1] })
 
