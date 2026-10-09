@@ -29,6 +29,14 @@ type TeamRow = {
   flag_url?: string | null
   logo_url?: string | null
   jersey_url?: string | null
+  national_coach_name?: string | null
+  national_coach_kind?: 'test_ai' | 'human' | null
+  national_coach_status?: string | null
+  submitted_riders?: Array<{
+    rider_id: string
+    rider_name: string
+    country_code: string
+  }>
 }
 
 type TeamResult = {
@@ -1018,7 +1026,20 @@ export default function WorldNationsEventPage(): JSX.Element {
                         const ids = [candidate.id, candidate.team_id, candidate.club_id, candidate.participating_club_id, candidate.race_team_entry_id]
                         return ids.some(id => id && id === team.team_id)
                       })
-                      const riders = raceTeam?.riders ?? []
+                      // Before race-stage participant synchronization, show the actual
+                      // confirmed national-team lineup. Never mistake a scheduled
+                      // submission for a stage that has already been simulated.
+                      const submittedRiders = data.status === 'completed'
+                        ? []
+                        : (team.submitted_riders ?? []).map((rider, index) => ({
+                            id: rider.rider_id,
+                            rider_id: rider.rider_id,
+                            team_id: team.team_id ?? '',
+                            rider_name_snapshot: rider.rider_name,
+                            country_code_snapshot: rider.country_code,
+                            start_number: index + 1,
+                          }))
+                      const riders = raceTeam?.riders?.length ? raceTeam.riders : submittedRiders
                       const nationalFlag = flagUrl(team.country_code)
 
                       return (
@@ -1040,6 +1061,11 @@ export default function WorldNationsEventPage(): JSX.Element {
                               ) : null}
                               <span>National Team</span>
                             </div>
+                            {team.national_coach_kind === 'test_ai' && team.national_coach_name ? (
+                              <div className="mt-1 text-xs text-slate-500">
+                                Test National Coach: {team.national_coach_name}
+                              </div>
+                            ) : null}
                           </div>
 
                           <div className="grid md:grid-cols-[190px_minmax(0,1fr)]">
