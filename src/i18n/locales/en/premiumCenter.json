@@ -14,7 +14,12 @@
     "finance": "Financial Simulator",
     "sponsors": "Sponsor Intelligence",
     "development": "Rider Development",
-    "templates": "Templates & Automation"
+    "templates": "Templates & Automation",
+    "youth": "Youth Academy & Talent Pipeline",
+    "national": "National Competitions Command",
+    "scouting": "Scouting Intelligence",
+    "staff": "Staff, Training & Recovery",
+    "infrastructure": "Infrastructure & Logistics Planner"
   },
   "common": {
     "refresh": "Refresh",
@@ -461,5 +466,15 @@
     "openDetail": "Open detailed workspace →",
     "nextActions": "Next activity",
     "nextActionsHint": "The next race and sponsor items most likely to need a manager action."
+  },
+  "newWorkspaces": {
+    "attention": "Manager Attention Queue",
+    "attentionDetail": "Important decisions and upcoming deadlines across your club.",
+    "items": "items",
+    "clear": "No immediate decisions detected in the monitored systems.",
+    "notActive": "Not activated",
+    "nationalCoach": "National Coach",
+    "member": "Association member",
+    "noAssociation": "No association"
   }
 }
