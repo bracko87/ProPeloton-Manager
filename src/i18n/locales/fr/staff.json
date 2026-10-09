@@ -231,7 +231,8 @@
     "courseInProgressButton": "Cours en cours",
     "sendOnCourse": "Envoyer sur le cours",
     "release": "Libération",
-    "scoutingReports": "Rapports de scoutisme"
+    "scoutingReports": "Rapports de scoutisme",
+    "completionDate": "Fin : {{date}}"
   },
   "release": {
     "title": "Personnel de libération",
@@ -526,5 +527,31 @@
   },
   "legacyUi": {
     "unlockDevelopingTeam": "Débloquer l'équipe de développement dans Préférences d'abord."
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% d'efficacité de l'entraînement",
+    "developmentSupport": "{{value}}% de soutien au développement",
+    "overloadRisk": "{{value}}% de risque de surcharge",
+    "dailyTrainingOutput": "{{value}}% de rendement de l'entraînement quotidien",
+    "riderDevelopmentSupport": "{{value}}% de soutien au développement des coureurs",
+    "combinedDevelopmentSupport": "{{value}}% de soutien combiné au développement",
+    "combinedOverloadRisk": "{{value}}% de risque combiné de surcharge",
+    "u16CoachingSupport": "{{value}}% de soutien à l'entraîneur U16",
+    "focusTrainingEfficiency": "{{value}}% d'efficacité de l'entraînement ({{focus}})"
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "Le centre d'entraînement niveau 0 limite une partie des bonus des entraîneurs.",
+    "medicalCenter": "Le centre médical niveau 0 limite une partie des bonus médicaux.",
+    "mechanicsWorkshop": "L'atelier mécanique niveau 0 limite la vitesse et les réductions d'entretien. Le soutien de base reste actif.",
+    "scoutingOffice": "Le bureau de recrutement niveau 0 limite certains bonus des recruteurs."
+  },
+  "contractDisplay": {
+    "noDate": "Date du contrat indisponible",
+    "missingDate": "Date d'expiration du contrat indisponible",
+    "expired": "Expiré",
+    "seasonDate": "Saison {{season}} - {{date}}"
+  },
+  "roleInfo": {
+    "capacityFallback": "La capacité dépend de la limite actuelle de ce poste."
   }
 }
