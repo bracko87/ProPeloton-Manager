@@ -1730,7 +1730,7 @@ function normalizeOverviewNextRace(
     (row, index) => ({
       riderId: asString(row.riderId ?? row.rider_id, `next-rider:${index}`),
       riderName: asString(row.riderName ?? row.rider_name, "Unnamed rider"),
-      role: asString(row.role, "") || null,
+      role: asString(row.role, "").replace(/_/g, " ").trim() || null,
       raceSharpness:
         row.raceSharpness === null || row.raceSharpness === undefined
           ? null
@@ -1769,7 +1769,7 @@ function normalizeOverviewLastRace(
     (row, index) => ({
       riderId: asString(row.riderId ?? row.rider_id, `last-rider:${index}`),
       riderName: asString(row.riderName ?? row.rider_name, "Unnamed rider"),
-      role: asString(row.role, "") || null,
+      role: asString(row.role, "").replace(/_/g, " ").trim() || null,
       position:
         row.position === null || row.position === undefined
           ? null
@@ -7122,7 +7122,7 @@ function LastTeamRaceCard({
 
       {loading && !race?.raceName ? (
         <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-          Loading latest finished full race...
+          {t("races.loadingLast")}
         </div>
       ) : race?.raceName ? (
         <RacePreviewStrip
@@ -7138,7 +7138,7 @@ function LastTeamRaceCard({
         />
       ) : (
         <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-          No finished full race found for the first team or developing team yet.
+          {t("races.noLast")}
         </div>
       )}
     </Card>
@@ -7167,7 +7167,7 @@ function NextTeamRaceCard({
 
       {loading && !race?.raceName ? (
         <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-          Loading next submitted race plan...
+          {t("races.loadingNext")}
         </div>
       ) : race?.raceName ? (
         <RacePreviewStrip
