@@ -96,6 +96,9 @@ type YouthRaceDetailPayload = {
     role: string
     readiness: number
     fatigue: number
+    status?: string
+    eligible?: boolean
+    eligibility_reason?: string | null
   }>
   eligible_riders: Array<{
     rider_id: string
@@ -538,6 +541,10 @@ export default function YouthRaceDetailPage(): JSX.Element {
   })()
   const stagePointsMode = stageResultView !== 'stage_general'
 
+  const invalidLineupRiders = payload.my_lineup.filter(rider => rider.eligible === false)
+  const isUpcomingYouthRace = race.status === 'scheduled' && String(payload.game_date).slice(0, 10) <= String(race.race_date).slice(0, 10)
+  const invalidSelectedRiders = invalidLineupRiders.filter(rider => selectedRiders.includes(rider.rider_id))
+  const showSquadEligibilityWarning = isUpcomingYouthRace && invalidLineupRiders.length > 0
   const tabs: Array<{ key: DetailTab; label: string }> = [
     { key: 'overview', label: 'Overview' },
     { key: 'teams', label: `Teams (${payload.teams.length})` },
@@ -555,6 +562,20 @@ export default function YouthRaceDetailPage(): JSX.Element {
         ← Back to Youth Calendar
       </button>
 
+      {showSquadEligibilityWarning ? (
+        <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">
+            Youth race lineup needs attention: {invalidLineupRiders.length} ineligible rider{invalidLineupRiders.length === 1 ? '' : 's'}
+          </p>
+          <p className="mt-1">Riders must be aged 12–15 at race start. A rider who turns 16, leaves the academy, or becomes otherwise ineligible cannot start.
+            {payload.my_entry.race_squad_decider === 'manager'
+              ? ' Replace the affected riders in My Squad and save the updated lineup.'
+              : ' Your U16 Head Coach will attempt replacements before the start.'}
+          </p>
+          <button type="button" onClick={() => setTab('squad')}
+            className="mt-2 rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-100">Review My Squad</button>
+        </div>
+      ) : null}
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex min-w-0 gap-5">
@@ -801,6 +822,27 @@ export default function YouthRaceDetailPage(): JSX.Element {
         >
           {canManageSquad ? (
             <>
+              {showSquadEligibilityWarning ? (
+                <div role="alert" className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                  <p className="font-semibold">Replace ineligible riders before the race.</p>
+                  <div className="mt-2 space-y-2">
+                    {invalidLineupRiders.map(rider => (
+                      <div key={rider.rider_id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                        <span><strong>{rider.name}</strong>{' — '}
+                          {rider.eligibility_reason === 'turns_16_before_start' ? 'turns 16 before race start'
+                          : rider.eligibility_reason === 'no_longer_in_academy' ? 'no longer in the academy' : 'not eligible for this race'}
+                        </span>
+                        {selectedRiders.includes(rider.rider_id) ? (
+                          <button type="button" onClick={() => setSelectedRiders(current => current.filter(id => id !== rider.rider_id))}
+                            className="rounded-lg border border-amber-300 px-2 py-1 text-xs font-semibold hover:bg-amber-50">
+                            Remove from selection
+                          </button>
+                        ) : <span className="text-xs text-emerald-700">Removed from selection</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                 {payload.eligible_riders.map(rider => {
                   const selected = selectedRiders.includes(rider.rider_id)
@@ -865,7 +907,8 @@ export default function YouthRaceDetailPage(): JSX.Element {
                   disabled={
                     saving ||
                     selectedRiders.length < 3 ||
-                    selectedRiders.length > race.lineup_size
+                    selectedRiders.length > race.lineup_size ||
+                    invalidSelectedRiders.length > 0
                   }
                   onClick={() => void saveLineup()}
                   className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
