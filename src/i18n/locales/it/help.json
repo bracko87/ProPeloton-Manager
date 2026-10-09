@@ -154,7 +154,11 @@
     "starting": "Avvio…",
     "dismiss": "Ignora tutorial",
     "dismissed": "Ignorato: non riapparirà finché non lo riavvii.",
-    "dismissedNotice": "Tutorial ignorato."
+    "dismissedNotice": "Tutorial ignorato.",
+    "inviteTitle": "Hai bisogno di aiuto per {{feature}}?",
+    "startTutorial": "Avvia tutorial",
+    "noThanks": "No, grazie",
+    "finishForNow": "Termina per ora"
   },
   "tutorialModules": {
     "national-championships": {
