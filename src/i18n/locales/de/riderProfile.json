@@ -468,7 +468,8 @@
     "releasing": "Fahrer wird freigegeben...",
     "removedFromList": "Fahrer aus der Transferliste entfernt.",
     "cancelListingFailed": "Die Transferlistung konnte nicht aufgehoben werden.",
-    "releasePreviewFailed": "Die Vorschau der Freigabe konnte nicht geladen werden."
+    "releasePreviewFailed": "Die Vorschau der Freigabe konnte nicht geladen werden.",
+    "gameDateUnavailable": "Spieldatum nicht verfügbar"
   },
   "ownedTransfer": {
     "title": "Transferliste",
