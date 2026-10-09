@@ -27,6 +27,16 @@ function replaceFullWords(value: string, expression: RegExp): string {
 }
 
 function normalizeText(text: string, locale: string, keyPath: string): string {
+  // i18next interpolation variables are code identifiers, not translatable text.
+  // Never rewrite {{coins}}, {{count}}, formatting options or HTML tags.
+  const parts = text.split(/(\{\{[\s\S]*?\}\})/g)
+  return parts.map(part => {
+    if (/^\{\{[\s\S]*?\}\}$/.test(part)) return part
+    return normalizeCurrencyWords(part, locale, keyPath)
+  }).join('')
+}
+
+function normalizeCurrencyWords(text: string, locale: string, keyPath: string): string {
   let result = text
   for (const expression of CURRENCY_WORDS[locale] ?? []) {
     result = replaceFullWords(result, expression)
