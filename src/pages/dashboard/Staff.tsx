@@ -1526,6 +1526,18 @@ function PremiumFeatureLoading() {
 }
 
 
+function translateStaffSpecialization(value: string | null | undefined, t: TFunction): string {
+  const normalized = (value ?? '').trim()
+  if (!normalized || normalized.toLowerCase() === 'general') {
+    return t('specializations.general')
+  }
+  const attribute = ATTRIBUTE_TRANSLATION_KEYS[normalized as keyof typeof ATTRIBUTE_TRANSLATION_KEYS]
+  if (attribute) return t(attribute)
+  const quality = QUALITY_TRANSLATION_KEYS[normalized as keyof typeof QUALITY_TRANSLATION_KEYS]
+  if (quality) return t(quality)
+  return normalized.replace(/_/g, ' ')
+}
+
 function translateStaffEffect(effect: string, t: TFunction): string {
   const percentage = effect.match(/^([+-]\\d+)% (.*)$/)
   if (percentage) {
@@ -3482,7 +3494,7 @@ function StaffListRow({
               <div className="truncate text-sm font-semibold text-gray-900">{staff.name}</div>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                 <span>
-                  {staff.specialization} • {t('common.scope', { scope: scopeLabel })}
+                  {translateStaffSpecialization(staff.specialization, t)} • {t('common.scope', { scope: scopeLabel })}
                 </span>
                 <span className="rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
                   {staff.ageYears === null ? t('common.ageUnknown') : t('common.ageYears', { age: staff.ageYears })}
@@ -3771,7 +3783,7 @@ function StaffDetailModal({
         <div className="flex items-start justify-between border-b border-gray-100 p-5">
           <div>
             <div className="text-lg font-semibold text-gray-900">{t(ROLE_TRANSLATION_KEYS[staff.role].label)}</div>
-            <div className="mt-1 text-sm text-gray-500">{staff.specialization}</div>
+            <div className="mt-1 text-sm text-gray-500">{translateStaffSpecialization(staff.specialization, t)}</div>
           </div>
 
           <button
