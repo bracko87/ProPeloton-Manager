@@ -135,5 +135,55 @@
     "description": "Ako nešto izgleda pogrešno, navedite naziv stranice, tima, vozača i utrke, dodajte snimke ekrana i korake potrebne za ponavljanje problema. To nam pomaže da brže pronađemo i ispravimo greške.",
     "contact": "Kontaktirajte nas",
     "discord": "Pitaj na Discordu"
+  },
+  "tutorialControl": {
+    "eyebrow": "Tutorijali",
+    "title": "Pokreni ili ponovno pokreni bilo koji vodič",
+    "description": "Početni vodič pomaže novim menadžerima, a dodatni vodiči mogu se pojaviti uz nove funkcije. Svaki možeš odbaciti ili isključiti automatske prikaze.",
+    "manual": "Cijeli priručnik",
+    "autoTitle": "Automatski vodiči",
+    "autoOff": "Automatski vodiči su isključeni. Možeš ih pokrenuti ručno.",
+    "autoOn": "Vodiči se mogu prikazati pri prvom otvaranju nove funkcije.",
+    "enableAuto": "Uključi automatske vodiče",
+    "disableAuto": "Isključi automatske vodiče",
+    "coreLabel": "Početni vodič",
+    "featureLabel": "Vodič za funkciju",
+    "coreTitle": "Osnove ProPeloton Managera",
+    "coreDescription": "Ponovno pokreni uvod u ključne dijelove igre.",
+    "startRestart": "Pokreni / Ponovno pokreni",
+    "starting": "Pokretanje…",
+    "dismiss": "Odbaci vodič",
+    "dismissed": "Odbačeno – neće se ponovno pojaviti bez ručnog pokretanja.",
+    "dismissedNotice": "Vodič je odbačen."
+  },
+  "tutorialModules": {
+    "national-championships": {
+      "title": "Nacionalna prvenstva i poredak",
+      "description": "Kvalifikacije, obveze, priprema utrka i povijest prvenstva."
+    },
+    "national-association": {
+      "title": "Nacionalni savez i reprezentacija",
+      "description": "Članstvo, financiranje, izbori, sastav, World Nations i povijest."
+    },
+    "national-coach": {
+      "title": "Izbornik reprezentacije",
+      "description": "Dostupni vozači, pozivi, konačni sastav i nastupi po danima."
+    },
+    "youth-academy": {
+      "title": "Omladinska akademija / U16",
+      "description": "Skauting, osoblje, proračun, utrke, rangiranje i završetak akademije."
+    },
+    "youth-graduation": {
+      "title": "Završetak omladinske akademije",
+      "description": "Prijelaz iz U16 u sljedeću razvojnu fazu."
+    },
+    "developing-team": {
+      "title": "Razvojna ekipa",
+      "description": "U23 razvoj do prve ekipe."
+    },
+    "new-season": {
+      "title": "Nova sezona",
+      "description": "Promjene pri prijelazu u novu sezonu."
+    }
   }
 }
