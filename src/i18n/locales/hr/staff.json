@@ -3,7 +3,8 @@
     "title": "Osoblje tima",
     "subtitle": "Upravljajte različitim ulogama osoblja kroz posebne kartice i liste za svaku ulogu.",
     "loading": "Učitavanje osoblja...",
-    "explainPositions": "Objasni sve pozicije osoblja"
+    "explainPositions": "Objasni sve pozicije osoblja",
+    "loadFailed": "Stranica osoblja nije se mogla učitati. Pokušajte ponovno."
   },
   "summary": {
     "weeklyWages": "Tjedne plaće osoblja",
@@ -283,7 +284,8 @@
     "rejected": "{{name}} je odbio ponudu.",
     "minimumWeeklySalary": "Najniža prihvatljiva tjedna plaća iznosi {{salary}}.",
     "wantsCloserTo": "{{name}} traži tjednu plaću bližu iznosu od {{salary}}.",
-    "offerFailed": "Pregovori o ugovoru nisu uspjeli. Pokušajte ponovno."
+    "offerFailed": "Pregovori o ugovoru nisu uspjeli. Pokušajte ponovno.",
+    "quoteFailed": "Ponuda za produljenje ugovora nije se mogla učitati. Pokušajte ponovno."
   },
   "course": {
     "title": "Kurs za osoblje",
@@ -294,7 +296,10 @@
     "start": "Pokreni kurs",
     "starting": "Pokretanje...",
     "none": "Za ovu ulogu još nisu podešene opcije kurseva. Time se sprečava pokretanje pogrešnog kursa dok odgovarajući backend kodovi ne budu dodati.",
-    "back": "Nazad na osoblje"
+    "back": "Nazad na osoblje",
+    "startedWithTarget": "{{name}} je započeo tečaj {{course}}. Očekivani završetak: {{date}}.",
+    "started": "{{name}} je započeo tečaj za osoblje.",
+    "startFailed": "Tečaj za osoblje nije se mogao pokrenuti. Pokušajte ponovno."
   },
   "information": {
     "title": "Objašnjenje pozicija osoblja",
