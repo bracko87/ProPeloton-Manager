@@ -597,7 +597,190 @@
     "seasonDate": "Saison {{season}} - {{date}}"
   },
   "roleInfo": {
-    "capacityFallback": "La capacité dépend de la limite actuelle de ce poste."
+    "capacityFallback": "La capacité dépend de la limite actuelle de ce poste.",
+    "head_coach": {
+      "purpose": "Dirige l'encadrement, la planification de la formation et le développement à long terme des coureurs.",
+      "capacitySummary": "Un seul poste est prévu pour ce rôle.",
+      "attributes": [
+        "Compétence importante: Entraînement.",
+        "Compétence importante: Planification du rétablissement.",
+        "Compétence importante: Développement de la jeunesse.",
+        "Compétence importante: Expérience.",
+        "Compétence importante: Leadership."
+      ],
+      "gameplay": [
+        "Contribue à: Formation régulière, Camps d ' entraînement, Développement de la cavalière.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "trainer": {
+      "purpose": "Améliore les résultats de formation quotidiens et soutient les plans d'entraîneur-chef.",
+      "capacitySummary": "Jusqu'à cinq entraîneurs peuvent soutenir l'équipe première.",
+      "attributes": [
+        "Compétence importante: Formation quotidienne.",
+        "Compétence importante: Efficacité de la formation.",
+        "Compétence importante: Croissance potentielle.",
+        "Compétence importante: Expérience.",
+        "Compétence importante: Leadership."
+      ],
+      "gameplay": [
+        "Contribue à: Formation quotidienne, Qualité de la formation, Développement de la cavalière.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "team_doctor": {
+      "purpose": "Dirige la récupération médicale, le diagnostic et la prévention des blessures.",
+      "capacitySummary": "La capacité dépend de la limite actuelle de ce poste.",
+      "attributes": [
+        "Compétence importante: Récupération.",
+        "Compétence importante: Prévention.",
+        "Compétence importante: Diagnostic.",
+        "Compétence importante: Leadership."
+      ],
+      "gameplay": [
+        "Contribue à: Vitesse de récupération, Prévention des blessures, Traitement des dossiers médicaux.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "physio": {
+      "purpose": "Il se concentre sur la réadaptation, la vitesse de récupération et le retour à l'état d'adaptation.",
+      "capacitySummary": "La capacité dépend de la limite actuelle de ce poste.",
+      "attributes": [
+        "Compétence importante: Réhabilitation.",
+        "Compétence importante: Vitesse de récupération.",
+        "Compétence importante: Expérience.",
+        "Compétence importante: Fidélité."
+      ],
+      "gameplay": [
+        "Contribue à: Retour à la forme physique, Vitesse de récupération, Récupération de la fatigue.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "nutritionist": {
+      "purpose": "Soutient la récupération, la constance de la condition physique et le rendement du personnel médical.",
+      "capacitySummary": "La capacité dépend de la limite actuelle de ce poste.",
+      "attributes": [
+        "Compétence importante: Nutrition.",
+        "Compétence importante: Récupération.",
+        "Compétence importante: Cohérence.",
+        "Compétence importante: Expérience."
+      ],
+      "gameplay": [
+        "Contribue à: Support au relèvement, Cohérence de la condition physique, Préparation des courses.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "mechanic": {
+      "purpose": "Configuration du vélo, efficacité de maintenance et fiabilité mécanique de la course-jour.",
+      "capacitySummary": "La capacité dépend de la limite actuelle de ce poste.",
+      "attributes": [
+        "Compétence importante: Configuration du vélo.",
+        "Compétence importante: Fiabilité.",
+        "Compétence importante: Expérience.",
+        "Compétence importante: Fidélité."
+      ],
+      "gameplay": [
+        "Contribue à: Configuration de l'équipement, Efficacité de l'entretien, Fiabilité mécanique.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "sport_director": {
+      "purpose": "Tacticité de course prévue, moral, travail d'équipe et soutien dômes.",
+      "capacitySummary": "La capacité dépend de la limite actuelle de ce poste.",
+      "attributes": [
+        "Compétence importante: Planification raciale.",
+        "Compétence importante: Contrôle d'équipe.",
+        "Compétence importante: Leadership.",
+        "Compétence importante: Expérience."
+      ],
+      "gameplay": [
+        "Contribue à: Tacticité de course, moral de l'équipe, Soutien domestique.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "scout_analyst": {
+      "purpose": "Qualité du scoutisme, visibilité de la perspective et transfert de l'intelligence.",
+      "capacitySummary": "La capacité dépend de la limite actuelle de ce poste.",
+      "attributes": [
+        "Compétence importante: Évaluation.",
+        "Compétence importante: Réseau.",
+        "Compétence importante: Précision.",
+        "Compétence importante: Expérience."
+      ],
+      "gameplay": [
+        "Contribue à: Précision du scoutisme, Prospection de découverte, Transfert de renseignements.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "u23_head_coach": {
+      "purpose": "Formation en équipe de développement prévue et soutien tactique de course U23.",
+      "capacitySummary": "Un seul poste est prévu pour ce rôle.",
+      "attributes": [
+        "Compétence importante: Entraînement.",
+        "Compétence importante: Développement de la jeunesse.",
+        "Compétence importante: Leadership.",
+        "Compétence importante: Expérience.",
+        "Compétence importante: Fidélité."
+      ],
+      "gameplay": [
+        "Contribue à: Formation U23, Développement de la jeunesse, U23 tactique de course.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "youth_academy_director": {
+      "purpose": "Gère le programme U16, le budget, le recrutement délégué et les demandes opérationnelles.",
+      "capacitySummary": "Un seul poste est prévu pour ce rôle.",
+      "attributes": [
+        "Compétence importante: Contrôle d'équipe.",
+        "Compétence importante: Expérience.",
+        "Compétence importante: Leadership.",
+        "Compétence importante: Fidélité."
+      ],
+      "gameplay": [
+        "Contribue à: Budget de l'académie, Gestion du recrutement, Programme jeunes.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "u16_head_coach": {
+      "purpose": "Gère l'entraînement U16, la charge, les axes de développement et la sélection en course.",
+      "capacitySummary": "Un seul poste est prévu pour ce rôle.",
+      "attributes": [
+        "Compétence importante: Formation quotidienne.",
+        "Compétence importante: Planification du rétablissement.",
+        "Compétence importante: Développement de la jeunesse.",
+        "Compétence importante: Leadership."
+      ],
+      "gameplay": [
+        "Contribue à: Entraînement U16, Gestion de la charge, Sélection en course.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    },
+    "youth_scout": {
+      "purpose": "Découvre et évalue les talents U16 dans la zone de scouting financée par l'Académie Jeunes.",
+      "capacitySummary": "Un seul poste est prévu pour ce rôle.",
+      "attributes": [
+        "Compétence importante: Évaluation.",
+        "Compétence importante: Réseau.",
+        "Compétence importante: Précision.",
+        "Compétence importante: Expérience."
+      ],
+      "gameplay": [
+        "Contribue à: Scouting jeunes, Évaluation du talent, Portée du recrutement.",
+        "Les compétences et la disponibilité du membre du personnel déterminent sa contribution réelle.",
+        "Les formations et les missions simultanées peuvent temporairement réduire sa contribution."
+      ]
+    }
   },
   "qualityExplanation": {
     "coachingTitle": "Comment fonctionne la qualité de l'entraîneur",
