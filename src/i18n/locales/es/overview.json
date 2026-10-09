@@ -170,11 +170,11 @@
   "races": {
     "lastTitle": "Última carrera de equipo",
     "lastSubtitle": "Última carrera completa finalizada que involucra a su primer equipo o equipo en desarrollo.",
-    "loadingLast": "Cargando última carrera completa terminada...",
-    "noLast": "No se ha encontrado ninguna carrera completa para el primer equipo o equipo en desarrollo.",
+    "loadingLast": "Cargando la última carrera finalizada…",
+    "noLast": "Todavía no se ha encontrado una carrera finalizada del primer equipo o del equipo de desarrollo.",
     "nextTitle": "Siguiente carrera de equipo",
     "nextSubtitle": "Siguiente carrera presentada que no ha comenzado todavía.",
-    "loadingNext": "Cargando siguiente Race Plan enviado...",
+    "loadingNext": "Cargando el próximo plan de carrera enviado…",
     "noNext": "No se ha encontrado ninguna carrera de envío para el primer equipo o equipo en desarrollo todavía.",
     "upcomingTitle": "Calendario siguiente",
     "upcomingSubtitle": "Las siguientes cinco carreras aceptadas, fechas límite de carrera y hitos del club.",
@@ -187,7 +187,8 @@
     "noTodaySubtitle": "No hay eventos de carreras programados para el día de juego actual.",
     "noRace": "No se ha encontrado ninguna carrera todavía",
     "stages": "{{count}} etapas",
-    "today": "Hoy"
+    "today": "Hoy",
+    "noFinishedClassification": "Todavía no hay clasificación final de una carrera."
   },
   "squad": {
     "title": "Pulso de escuadrón",
