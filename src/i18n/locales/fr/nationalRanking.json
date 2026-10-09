@@ -1,12 +1,12 @@
 {
-  "title": "Classement national {{country}}",
+  "title": "Championnat national — {{country}}",
   "eyebrow": "Compétition nationale",
   "description": "Classement national individuel des coureurs, qualification au championnat, devoir national et préparation individuelle. Les points du classement par équipes ne sont pas affectés.",
   "country": "Pays",
-  "loading": "Chargement du classement national…",
+  "loading": "Chargement du championnat national…",
   "errors": {
-    "unavailable": "Le classement national est indisponible.",
-    "load": "Impossible de charger le classement national.",
+    "unavailable": "Les données du championnat national sont indisponibles.",
+    "load": "Impossible de charger le championnat national.",
     "save": "Impossible d’enregistrer le plan du coureur."
   },
   "cards": {
