@@ -276,6 +276,68 @@ function buildPointRows(
   })
 
   /*
+   * The current time-trial replay model intentionally has no road-race point
+   * battles, so it may expose neither pointLedger nor checkpoint events for an
+   * intermediate scoring line. Until the engine gains split-specific pacing,
+   * use the authoritative TT finish times as a proportional split baseline.
+   * This is deterministic, format-scoped, and preserves the exact configured
+   * points/bonus scheme without affecting road-stage point battles.
+   */
+  const timeTrialFormat = [
+    'individual_time_trial',
+    'team_time_trial',
+    'pair_time_trial',
+    'prologue',
+  ].includes(input.stage.stageFormat)
+  if (timeTrialFormat) {
+    const officialTimeOrder = result.finishResolution.classification
+      .filter(
+        (entry) =>
+          entry.status === 'finished' &&
+          entry.officialTimeSeconds !== null,
+      )
+      .slice()
+      .sort(
+        (left, right) =>
+          (left.officialTimeSeconds ?? Number.MAX_SAFE_INTEGER) -
+            (right.officialTimeSeconds ?? Number.MAX_SAFE_INTEGER) ||
+          left.rank - right.rank ||
+          left.riderId.localeCompare(right.riderId),
+      )
+
+    input.points
+      .filter((point) => !finishLinePointIds.has(point.pointId))
+      .forEach((point) => {
+        if (rows.some((row) => row.pointId === point.pointId)) return
+        const scoringPlaceCount = Math.max(
+          point.pointsScheme.length,
+          point.timeBonusSeconds.length,
+        )
+        officialTimeOrder
+          .slice(0, scoringPlaceCount)
+          .forEach((entry, index) => {
+            const pointsAwarded = point.pointsScheme[index] ?? 0
+            const bonusSecondsAwarded =
+              point.timeBonusSeconds[index] ?? 0
+            if (pointsAwarded <= 0 && bonusSecondsAwarded <= 0) return
+            const key = `${point.pointId}:${entry.riderId}`
+            if (seenPointRiders.has(key)) return
+            seenPointRiders.add(key)
+            rows.push({
+              pointId: point.pointId,
+              riderId: entry.riderId,
+              teamId: entry.teamId,
+              rank: index + 1,
+              pointsAwarded,
+              bonusSecondsAwarded,
+              riderNameSnapshot: riderName(input, entry.riderId),
+              teamNameSnapshot: teamName(input, entry.teamId),
+            })
+          })
+      })
+  }
+
+  /*
    * Any sporting point physically located on the finish line must use the exact
    * authoritative finish classification. This includes the normal FINISH point
    * and summit KOM/sprint points at the same kilometre. A rider cannot be second
