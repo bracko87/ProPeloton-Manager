@@ -828,5 +828,8 @@
     "medicalCenter": "Medicinski centar",
     "mechanicsWorkshop": "Mehaničarska radionica",
     "scoutingOffice": "Skauting kancelarija"
+  },
+  "legacyUi": {
+    "unlockDevelopingTeam": "Prvo otključajte Razvojni tim u Podešavanjima."
   }
 }
