@@ -2418,7 +2418,7 @@ function RichRiderPerformanceAnalysisPage({
               yMin={0}
               yMax={100}
               yTickCount={11}
-              axisFontSize={8}
+              axisFontSize={7}
               showVerticalGridLines
               selectableSeries
               lineWidth={1.5}
