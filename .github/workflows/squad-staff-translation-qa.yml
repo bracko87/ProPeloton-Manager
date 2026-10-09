@@ -49,6 +49,17 @@ jobs:
           for (const lang of ['en','sr-Latn','hr','de','es','it','fr','ru']) {
             const staff = JSON.parse(fs.readFileSync('src/i18n/locales/'+lang+'/staff.json'))
             const squad = JSON.parse(fs.readFileSync('src/i18n/locales/'+lang+'/squad.json'))
+            const requiredMessages = {
+              page: ['loadFailed'],
+              contract: ['invalidWeeklySalary','acceptedWithTerms','countered','rejected','minimumWeeklySalary','wantsCloserTo','offerFailed','quoteFailed'],
+              release: ['successMessage','failureMessage'],
+              course: ['startedWithTarget','started','startFailed'],
+            }
+            for (const [group, keys] of Object.entries(requiredMessages)) {
+              for (const key of keys) {
+                if (!staff[group]?.[key]) throw new Error(lang+': missing localized staff feedback '+group+'.'+key)
+              }
+            }
             for (const role of ['head_coach','trainer','team_doctor','physio','nutritionist','mechanic','sport_director','scout_analyst','u23_head_coach','youth_academy_director','u16_head_coach','youth_scout']) {
               const detail = staff.roleInfo?.[role]
               if (!detail?.purpose || !detail?.capacitySummary ||
