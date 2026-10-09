@@ -245,7 +245,9 @@
     "warning": "Esto eliminará al miembro del personal de la escuadra inmediatamente. Bonos del personal de esta ranura se detendrá hasta que firme un reemplazo.",
     "payment": "El club pagará una compensación de liberación única igual a 6 semanas de salario.",
     "releasing": "Liberando...",
-    "confirm": "Confirmar la liberación"
+    "confirm": "Confirmar la liberación",
+    "successMessage": "{{name}} ha sido desvinculado de su puesto de {{role}}. Indemnización abonada: {{amount}}.",
+    "failureMessage": "No se pudo desvincular a este empleado. Inténtalo de nuevo."
   },
   "contract": {
     "title": "Extender contrato",
@@ -274,7 +276,14 @@
     "submitting": "Presentando...",
     "submit": "Enviar oferta",
     "extended": "Se ha prorrogado con éxito el contrato del personal.",
-    "discussionCompleted": "Se completó la discusión del contrato."
+    "discussionCompleted": "Se completó la discusión del contrato.",
+    "invalidWeeklySalary": "Introduce un salario semanal válido.",
+    "acceptedWithTerms": "{{name}} ha aceptado el nuevo contrato: {{salary}} por semana hasta la temporada {{season}}.",
+    "countered": "{{name}} solicita mejores condiciones contractuales.",
+    "rejected": "{{name}} ha rechazado la oferta.",
+    "minimumWeeklySalary": "El salario semanal mínimo aceptable es {{salary}}.",
+    "wantsCloserTo": "{{name}} solicita un salario semanal más cercano a {{salary}}.",
+    "offerFailed": "No se pudo completar la negociación del contrato. Inténtalo de nuevo."
   },
   "course": {
     "title": "Curso para el personal",
