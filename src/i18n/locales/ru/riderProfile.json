@@ -468,7 +468,8 @@
     "releasing": "Отпускаю...",
     "removedFromList": "гонщик из списка, в котором он был переведен.",
     "cancelListingFailed": "Невозможно отменить перевод.",
-    "releasePreviewFailed": "Невозможно загрузить предварительный просмотр."
+    "releasePreviewFailed": "Невозможно загрузить предварительный просмотр.",
+    "gameDateUnavailable": "Игровая дата недоступна"
   },
   "ownedTransfer": {
     "title": "Список переводов",
