@@ -231,7 +231,8 @@
     "courseInProgressButton": "Course In Progress",
     "sendOnCourse": "Send on Course",
     "release": "Release",
-    "scoutingReports": "Scouting Reports"
+    "scoutingReports": "Scouting Reports",
+    "completionDate": "Completion: {{date}}"
   },
   "release": {
     "title": "Release Staff",
@@ -526,5 +527,31 @@
   },
   "legacyUi": {
     "unlockDevelopingTeam": "Unlock Developing Team in Preferences first."
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% training efficiency",
+    "developmentSupport": "{{value}}% development support",
+    "overloadRisk": "{{value}}% overload risk",
+    "dailyTrainingOutput": "{{value}}% daily training output",
+    "riderDevelopmentSupport": "{{value}}% rider development support",
+    "combinedDevelopmentSupport": "{{value}}% combined development support",
+    "combinedOverloadRisk": "{{value}}% combined overload risk",
+    "u16CoachingSupport": "{{value}}% U16 coaching support",
+    "focusTrainingEfficiency": "{{value}}% {{focus}} training efficiency"
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "Training Center Lv 0 caps part of coaching staff bonuses.",
+    "medicalCenter": "Medical Center Lv 0 caps part of medical staff bonuses.",
+    "mechanicsWorkshop": "Mechanics Workshop Lv 0 caps maintenance speed and cost discounts. Basic setup, condition and mechanical-risk support remain active.",
+    "scoutingOffice": "Scouting Office Lv 0 caps part of scout and analyst bonuses."
+  },
+  "contractDisplay": {
+    "noDate": "No contract date",
+    "missingDate": "Contract expiration date unavailable",
+    "expired": "Expired",
+    "seasonDate": "Season {{season}} - {{date}}"
+  },
+  "roleInfo": {
+    "capacityFallback": "Capacity follows the current staff-role limit."
   }
 }
