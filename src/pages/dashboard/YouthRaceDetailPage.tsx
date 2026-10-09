@@ -359,6 +359,8 @@ export default function YouthRaceDetailPage(): JSX.Element {
   const [selectedStageNumber, setSelectedStageNumber] = useState(1)
   const [resultView, setResultView] = useState<'general' | 'sprint' | 'mountain'>('general')
   const [stageResultView, setStageResultView] = useState<'stage_general' | 'stage_sprint' | 'stage_mountain'>('stage_general')
+  const [raceInfoExpanded, setRaceInfoExpanded] = useState(true)
+  const [raceInfoTab, setRaceInfoTab] = useState<'participants' | 'results'>('results')
   const [fullStandingModal, setFullStandingModal] = useState<'race' | 'stage' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -871,12 +873,24 @@ export default function YouthRaceDetailPage(): JSX.Element {
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Race information</div>
               <h2 className="mt-1 text-lg font-semibold text-slate-950">Participants and results</h2>
             </div>
+            <button type="button" onClick={() => setRaceInfoExpanded(current => !current)}
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
+              {raceInfoExpanded ? 'Hide' : 'Show'}
+            </button>
           </div>
+          {raceInfoExpanded ? (
           <div className="space-y-6 p-4 sm:p-6">
             <div className="flex rounded-2xl bg-slate-100 p-1">
-              <button type="button" onClick={() => setTab('teams')} className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-900">Teams &amp; riders</button>
-              <button type="button" className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm">Results</button>
+              <button type="button" onClick={() => setRaceInfoTab('participants')}
+                className={'rounded-xl px-4 py-2 text-sm font-semibold ' + (raceInfoTab === 'participants' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900')}>
+                Teams &amp; riders
+              </button>
+              <button type="button" onClick={() => setRaceInfoTab('results')}
+                className={'rounded-xl px-4 py-2 text-sm font-semibold ' + (raceInfoTab === 'results' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900')}>
+                Results
+              </button>
             </div>
+            {raceInfoTab === 'results' ? (
             <div className="grid gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
               <div className="min-w-0 rounded-2xl bg-slate-50 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -934,7 +948,20 @@ export default function YouthRaceDetailPage(): JSX.Element {
                 </div>
               </div>
             </div>
-            {isFinished ? (
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {payload.teams.map(team => (
+                  <div key={team.academy_id} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4">
+                    <JerseyThumb url={team.jersey_url} name={team.club_name} />
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-slate-950">{team.club_name}</div>
+                      <div className="text-xs text-slate-500">{team.lineup_count} riders</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {isFinished && raceInfoTab === 'results' ? (
               <Section title="Team classification & prize money">
                 <div className="space-y-2">
                   {payload.team_results.map(team => (
@@ -951,6 +978,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
               </Section>
             ) : null}
           </div>
+          ) : null}
           {fullStandingModal ? (
             <div role="dialog" aria-modal="true" aria-label={fullStandingModal === 'race' ? 'Full race standing' : 'Full stage standing'}
               className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm"
