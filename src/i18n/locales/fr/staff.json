@@ -3,7 +3,8 @@
     "title": "Personnel d ' équipe",
     "subtitle": "Gérer plusieurs rôles de personnel au moyen d'onglets de rôles et de listes de personnel par rôle.",
     "loading": "Chargement du personnel...",
-    "explainPositions": "Expliquer tous les postes d'agent"
+    "explainPositions": "Expliquer tous les postes d'agent",
+    "loadFailed": "Impossible de charger la page du personnel. Veuillez réessayer."
   },
   "summary": {
     "weeklyWages": "Salaires hebdomadaires du personnel",
@@ -283,7 +284,8 @@
     "rejected": "{{name}} a refusé l'offre.",
     "minimumWeeklySalary": "Le salaire hebdomadaire minimum acceptable est de {{salary}}.",
     "wantsCloserTo": "{{name}} souhaite un salaire hebdomadaire plus proche de {{salary}}.",
-    "offerFailed": "Impossible de finaliser la négociation du contrat. Veuillez réessayer."
+    "offerFailed": "Impossible de finaliser la négociation du contrat. Veuillez réessayer.",
+    "quoteFailed": "Impossible de charger la proposition de contrat. Veuillez réessayer."
   },
   "course": {
     "title": "Cours de personnel",
@@ -294,7 +296,10 @@
     "start": "Début du cours",
     "starting": "Commencer...",
     "none": "Aucune option de cours n'est encore configurée pour ce rôle de personnel. Cela empêche le mauvais type de cours d'être démarré jusqu'à ce que des codes de cours de backend soient ajoutés pour ce rôle.",
-    "back": "Retour au personnel"
+    "back": "Retour au personnel",
+    "startedWithTarget": "{{name}} a commencé la formation {{course}}. Fin prévue : {{date}}.",
+    "started": "{{name}} a commencé une formation du personnel.",
+    "startFailed": "Impossible de démarrer la formation du personnel. Veuillez réessayer."
   },
   "information": {
     "title": "Postes expliqués",
