@@ -208,7 +208,7 @@ function getVisibleLastTeamRace<T extends {
   stageLabel?: string | null
   stageCount?: number | null
 }>(race?: T | null): T | undefined {
-  if (!race?.raceName) return undefined
+  if (!race?.raceName || /^races\.noFinishedClassification$/i.test(race.raceName)) return undefined
 
   /*
    * Last Team Race must be a finished whole race, not the latest completed
@@ -1528,7 +1528,9 @@ export default function FirstSquadTab({
                           <td className="py-3 pr-4 font-medium text-gray-800">{row.riderName}</td>
                           <td className="py-3 pr-4 text-gray-600">{formatRaceRiderRole(row.role, t)}</td>
                           <td className="py-3 pr-4 text-gray-700">
-                            {row.resultLabel || formatOrdinal(row.position)}
+                            {row.resultLabel === 'races.noFinishedClassification'
+                              ? t('races.noFinishedClassification')
+                              : row.resultLabel || formatOrdinal(row.position)}
                           </td>
                           <td className="py-3 text-right font-semibold text-slate-900">
                             {row.points.toLocaleString()}
