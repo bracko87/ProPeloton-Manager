@@ -18,7 +18,7 @@
     "membership": "Premium Mitgliedschaft",
     "advancedTools": "Premium Command Center mit erweiterter Planung, Simulationen, Analysen und Management-Tools.",
     "marketTools": "Transfer Command mit gespeicherten Suchen, Marktalarmen und unbegrenzten coinfreien Shortlist-Zugängen.",
-    "capacity": "Exklusiver Zugang zu Developing Team, U23 Head Coach und Jugendakademie.",
+    "capacity": "Die Jugendakademie / U16 ist Premium-exklusiv; Aktivierung und saisonale Verlängerung kosten jeweils 50 Coins. Das Entwicklungsteam / U23 steht Free- und Premium-Managern für jeweils 100 Coins zur Verfügung.",
     "receive": "Empfangen",
     "monthlyCoinsSuffix": "Coins nach jeder erfolgreichen monatlichen Zahlung.",
     "cancelAnytime": "Abbrechen jederzeit; normales Gameplay bleibt frei.",
@@ -63,7 +63,14 @@
     "manualAccessHelp": "Dein Premium-Zugang stammt derzeit aus einer kostenlosen/Test-Freischaltung. Es gibt kein wiederkehrendes Abonnement zum Kündigen.",
     "canceledBillingHelp": "Das vorherige Stripe-Abonnement ist gekündigt. Du kannst weiterhin Rechnungsdaten öffnen oder ein neues kostenpflichtiges Abonnement starten.",
     "statusCanceled": "Gekündigt",
-    "startPaidSubscription": "Kostenpflichtiges Premium starten"
+    "startPaidSubscription": "Kostenpflichtiges Premium starten",
+    "quarterlySummary": "/ 3 Monate · {{monthlyPrice}}/Monat",
+    "quarterlySummaryCoins": "/ 3 Monate · {{monthlyPrice}}/Monat · {{coins}} Coins",
+    "mostPopular": "Am beliebtesten",
+    "monthlyTitle": "1 Monat",
+    "monthlySummary": "pro Monat · {{coins}} Coins",
+    "yearlyTitle": "12 Monate · 15 % sparen",
+    "yearlySummary": "{{monthlyPrice}}/Monat · {{coins}} Coins"
   },
   "advantages": {
     "a1": "30 Coins nach jeder erfolgreichen monatlichen Premium-Zahlung.",
@@ -73,8 +80,8 @@
     "a5": "Rider Development Lab mit Entwicklungstrends, Talentbeobachtung und erweiterter Kaderanalyse.",
     "a6": "Vorlagen, gespeicherte Workflows und Smart Prefill, die du vor dem Speichern prüfst.",
     "a7": "Unbegrenzte Wiederholungen von Weltrennen ohne die normale Gebühr von 2 Coins.",
-    "a8": "Exklusives Developing Team plus U23 Head Coach: 100 Coins Aktivierung und 100 Coins pro Saison Verlängerung.",
-    "a9": "Exklusive Jugendakademie: 16 U16-Plätze, sechs lokale Starter, Akademiedirektor, U16 Head Coach, Scouting, Rennen, Budget, Ausrüstung, Infrastruktureffekte und Aufstiegswege.",
+    "a8": "Entwicklungsteam / U23 für Free- und Premium-Manager: 100 Coins Aktivierung und 100 Coins pro Saison für die Verlängerung. Kein Premium erforderlich.",
+    "a9": "Premium-exklusive Jugendakademie / U16: bis zu 16 Fahrer, sechs Startfahrer, Personal, Scouting, Rennen und Übergänge; 50 Coins Aktivierung und 50 Coins pro Saison.",
     "a10": "Premium verbessert nur Information, Planung und Komfort – niemals Rennstärke, Transferakzeptanz oder verborgene Fahrerwerte."
   },
   "comparison": {
@@ -273,5 +280,27 @@
     "coins": "{{count}} Coins",
     "coin": "{{count}} Coins",
     "notAuthenticated": "Bitte melden Sie sich wieder an."
+  },
+  "earnCoins": {
+    "title": "Gratis Coins verdienen",
+    "subtitle": "Nimm freiwillig an Umfragen von CPX Research teil.",
+    "start": "Umfragen ansehen",
+    "loading": "Verbindung zu Umfragen…",
+    "close": "Schließen",
+    "earned": "Netto-Coins aus Umfragen",
+    "retained": "Gespeicherte Coin-Bruchteile",
+    "rate": "1 $ Verdienst = 15 Coins",
+    "note": "CPX zeigt Reward Points (100 Punkte = 15 Coins). Coins werden nach Prüfung gutgeschrieben; stornierte Umfragen können abgezogen werden.",
+    "refresh": "Belohnungen aktualisieren",
+    "privacy": "Beim Öffnen von Umfragen werden deine Spielkonto-ID und Verbindungsdaten an CPX Research übermittelt. Die Teilnahme ist freiwillig.",
+    "history": "Letzte Umfrageaktivität",
+    "empty": "Noch keine Umfrageaktivität.",
+    "completed": "Abgeschlossen",
+    "canceled": "Rückgängig gemacht",
+    "openTab": "Umfragen in neuem Tab öffnen",
+    "error": "Umfragen konnten nicht geöffnet werden. Bitte später erneut versuchen.",
+    "retry": "Erneut versuchen",
+    "status": "Umfrage",
+    "bannerDescription": "Nimm freiwillig an CPX Research-Umfragen teil und erhalte 15 Coins je 1 $ bestätigter Umfragevergütung. Keine Zahlung nötig; stornierte Umfragen können Coins wieder abziehen."
   }
 }
