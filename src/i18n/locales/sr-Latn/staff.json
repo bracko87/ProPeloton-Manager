@@ -523,5 +523,191 @@
       "description": "Napredna procena za pouzdanije izveštaje.",
       "focus": "Preciznost + Potencijal"
     }
+  },
+  "roleInfo": {
+    "capacityFallback": "Kapacitet zavisi od trenutno dostupnih mesta za ovu ulogu.",
+    "head_coach": {
+      "purpose": "Vodi strategiju redovnog treninga, kvalitet treninga, planiranje opterećenja i dugoročni razvoj vozača.",
+      "capacitySummary": "Jedan glavni trener za prvi tim.",
+      "attributes": [
+        "Trening određuje kvalitet sesija i preciznost fokusa.",
+        "Planiranje oporavka poboljšava raspodelu opterećenja, intenzitet i odluke o odmoru.",
+        "Razvoj mladih jača planove i podršku mlađim vozačima.",
+        "Iskustvo i liderstvo poboljšavaju doslednost i koordinaciju tima.",
+        "Lojalnost u manjoj meri doprinosi pouzdanosti."
+      ],
+      "gameplay": [
+        "Obezbeđuje pasivne efekte treninga, razvoja mladih i smanjenja rizika od preopterećenja.",
+        "Po izboru može upravljati planom redovnog treninga za danas, sutra i prekosutra.",
+        "Kursevi i preklapanje zaduženja mogu smanjiti ili privremeno obustaviti njegov doprinos."
+      ]
+    },
+    "trainer": {
+      "purpose": "Pomaže glavnom treneru kroz kvalitetniji dnevni trening, napredak vozača i upravljanje opterećenjem.",
+      "capacitySummary": "Do pet trenera može pomagati prvom timu.",
+      "attributes": [
+        "Dnevni trening povećava doprinos treningu.",
+        "Efikasnost treninga poboljšava sprovođenje sesija i kontrolu opterećenja.",
+        "Rast potencijala podržava dugoročni razvoj.",
+        "Iskustvo i liderstvo doprinose doslednosti i saradnji trenera.",
+        "Lojalnost dodatno povećava pouzdanost."
+      ],
+      "gameplay": [
+        "Doprinos trenera sabira se sa doprinosom glavnog trenera u sistemu redovnog treninga.",
+        "Dodatni treneri pružaju veću podršku, ali kursevi i druga zaduženja umanjuju njihov raspoloživ doprinos.",
+        "Treneri pomažu u planiranju, dok glavni trener upravlja automatizacijom."
+      ]
+    },
+    "team_doctor": {
+      "purpose": "Zadužen je za dijagnostiku, sprečavanje povreda i bolesti, medicinski oporavak i povratak vozača u formu.",
+      "capacitySummary": "Kapacitet zavisi od ograničenja medicinskog osoblja.",
+      "attributes": [
+        "Oporavak i prevencija smanjuju zdravstvene rizike i vreme oporavka.",
+        "Dijagnostika i iskustvo poboljšavaju rešavanje medicinskih slučajeva.",
+        "Liderstvo doprinosi koordinaciji medicinskog tima.",
+        "Potencijal i lojalnost pružaju dodatnu podršku."
+      ],
+      "gameplay": [
+        "Doprinosi zajedničkom smanjenju rizika od povreda i bolesti.",
+        "Ubrzava vraćanje u formu, dnevni oporavak i kontrolu zamora posle zdravstvenih problema.",
+        "Doprinos može biti pauziran dok je član osoblja nedostupan ili na kursu."
+      ]
+    },
+    "physio": {
+      "purpose": "Specijalista za rehabilitaciju, fizički oporavak, upravljanje zamorom i bezbedan povratak u punu formu.",
+      "capacitySummary": "Kapacitet zavisi od ograničenja medicinskog osoblja.",
+      "attributes": [
+        "Rehabilitacija određuje podršku pri oporavku.",
+        "Brzina oporavka ubrzava povratak u punu formu.",
+        "Iskustvo pomaže u težim slučajevima rehabilitacije.",
+        "Liderstvo, potencijal i lojalnost imaju dodatni uticaj."
+      ],
+      "gameplay": [
+        "Radi zajedno sa doktorom tima i nutricionistom u medicinskom sistemu.",
+        "Pomaže u trajanju oporavka, dnevnom oporavku i kontroli zamora.",
+        "Doprinos može biti pauziran zbog nedostupnosti ili kursa."
+      ]
+    },
+    "nutritionist": {
+      "purpose": "Planira ishranu, održavanje fizičke forme i rutine oporavka tokom treninga i trka.",
+      "capacitySummary": "Kapacitet zavisi od ograničenja medicinskog osoblja.",
+      "attributes": [
+        "Planiranje ishrane najviše utiče na rezultate.",
+        "Podrška oporavku pomaže kod zamora i zdravstvenih problema.",
+        "Lojalnost doprinosi doslednosti.",
+        "Iskustvo, potencijal i liderstvo pružaju dodatnu podršku."
+      ],
+      "gameplay": [
+        "Zajedno sa doktorom i fizioterapeutom utiče na medicinsku podršku.",
+        "Podržava dnevni oporavak, smanjenje zdravstvenog rizika i stabilnost fizičke forme.",
+        "Pomaže u ishrani tokom trka, hidrataciji, kontroli zamora i oporavku posle etape."
+      ]
+    },
+    "mechanic": {
+      "purpose": "Brine o podešavanju bicikala, efikasnom održavanju, stanju opreme i mehaničkoj pouzdanosti.",
+      "capacitySummary": "Kapacitet zavisi od ograničenja za mehaničare.",
+      "attributes": [
+        "Podešavanje poboljšava konfiguraciju opreme.",
+        "Pouzdanost smanjuje habanje i rizik od kvarova.",
+        "Iskustvo omogućava stabilan tehnički rad tokom trka.",
+        "Disciplina, inovativnost i lojalnost dodatno utiču na rezultate."
+      ],
+      "gameplay": [
+        "Doprinosi kvalitetu podešavanja, manjem gubitku stanja opreme i manjem riziku od kvarova.",
+        "Brzina i cena održavanja zavise i od nivoa mehaničarske radionice.",
+        "Stvarni efekti mehaničara primenjuju se u održavanju i trkačkom sistemu."
+      ]
+    },
+    "sport_director": {
+      "purpose": "Vodi taktiku na trkama, organizaciju, motivaciju, timski rad i koordinaciju pomoćnih vozača.",
+      "capacitySummary": "Kapacitet zavisi od ograničenja za sportskog direktora.",
+      "attributes": [
+        "Taktika poboljšava odluke u planu trke.",
+        "Organizacija jača sprovođenje plana i koordinaciju osoblja.",
+        "Motivacija i liderstvo povećavaju moral i timski rad.",
+        "Iskustvo, dugoročna vizija i lojalnost imaju dodatni značaj."
+      ],
+      "gameplay": [
+        "Uloga, ugovori, kursevi i ograničenja osoblja su aktivni.",
+        "Izabrani sportski direktori daju podršku tokom trke na osnovu kvaliteta i dostupnosti.",
+        "Ta podrška ulazi u trkački sistem kao ograničeni bonus pripremi i učinku."
+      ]
+    },
+    "scout_analyst": {
+      "purpose": "Procenuje vozače, poboljšava preciznost skautinga, pronalazi talente i pomaže pri istraživanju transfera.",
+      "capacitySummary": "Kapacitet zavisi od ograničenja za skauting osoblje.",
+      "attributes": [
+        "Procena povećava kvalitet izveštaja.",
+        "Preciznost poboljšava pouzdanost otkrivenih podataka.",
+        "Mreža kontakata proširuje područje pretrage.",
+        "Osećaj za talente, komunikacija i lojalnost doprinose kvalitetu."
+      ],
+      "gameplay": [
+        "Zadaci skautinga i njihovo dovršavanje su aktivni.",
+        "Kvalitet izveštaja i vidljivost talenata koriste sposobnosti skauta.",
+        "Dodatne analize transfera mogu se razvijati oko postojećeg skauting sistema."
+      ]
+    },
+    "u23_head_coach": {
+      "purpose": "Vodi trening razvojnog tima, napredak mladih i taktiku U23 trka po etapama.",
+      "capacitySummary": "Jedan U23 glavni trener nakon otključavanja Razvojnog tima.",
+      "attributes": [
+        "Trening mladih određuje kvalitet redovnog treninga Razvojnog tima.",
+        "Efikasnost treninga podržava planiranje opterećenja i oporavka.",
+        "Razvoj mladih doprinosi dugoročnom napretku.",
+        "Iskustvo i liderstvo pomažu doslednosti i spremnosti za trke.",
+        "Lojalnost dodatno doprinosi pouzdanosti."
+      ],
+      "gameplay": [
+        "Može da upravlja trodnevnim planom treninga U23 vozača kada je angažovan i aktiviran.",
+        "Automatsko planiranje taktike po etapama radi prilikom slanja plana trke i nakon završetka etapa.",
+        "Kvalitet trenera može doprineti ograničenom bonusu podrške na trci."
+      ]
+    },
+    "youth_academy_director": {
+      "purpose": "Upravlja U16 akademijom, budžetom, delegiranjem regrutacije, kampovima i zahtevima za troškove.",
+      "capacitySummary": "Jedan direktor nakon aktivacije Premium Omladinske akademije.",
+      "attributes": [
+        "Stručnost povećava kvalitet programa i finansijskih preporuka.",
+        "Liderstvo pomaže pri delegiranom skautingu i odlukama.",
+        "Efikasnost poboljšava planiranje i korišćenje budžeta.",
+        "Iskustvo povećava doslednost preporuka."
+      ],
+      "gameplay": [
+        "Prilikom prve aktivacije akademije dobija se direktor prosečnog kvaliteta.",
+        "Može dobiti odgovornost za regrutaciju, prijave na trke, kampove, opremu i pregovore sa talentima.",
+        "U prvoj verziji U16 akademija ne zavisi od infrastrukture."
+      ]
+    },
+    "u16_head_coach": {
+      "purpose": "Vodi U16 trening, opterećenje, razvojne prioritete, spremnost i izbor sastava za trke.",
+      "capacitySummary": "Jedan U16 glavni trener nakon aktivacije Premium Omladinske akademije.",
+      "attributes": [
+        "Stručnost određuje kvalitet U16 treninga.",
+        "Efikasnost pomaže planiranju opterećenja i oporavka.",
+        "Potencijal doprinosi dugoročnim odlukama o razvoju.",
+        "Liderstvo pomaže izboru sastava i razvoju tima."
+      ],
+      "gameplay": [
+        "Prilikom prve aktivacije akademije dobija se trener prosečnog kvaliteta.",
+        "Bira sastav za trke kada mu je ta odgovornost poverena.",
+        "U prvoj verziji U16 akademija ne zavisi od infrastrukture."
+      ]
+    },
+    "youth_scout": {
+      "purpose": "Pronalazi i procenjuje U16 talente u okviru skauting područja finansiranog iz budžeta akademije.",
+      "capacitySummary": "Jedan opcioni skaut mladih po aktiviranoj Premium akademiji.",
+      "attributes": [
+        "Stručnost poboljšava procenu mladih talenata.",
+        "Iskustvo povećava broj pronalazaka i kvalitet mreže kontakata.",
+        "Efikasnost jača pouzdanost procene.",
+        "Potencijal poboljšava prepoznavanje talenta."
+      ],
+      "gameplay": [
+        "Ne dodeljuje se automatski; menadžer ga može zaposliti na tržištu osoblja.",
+        "Budžet određuje domet skautinga: lokalni, regionalni, kontinentalni ili svetski.",
+        "Kvalitet skauta utiče na pretragu i procenu, ali ne menja skriveni potencijal vozača."
+      ]
+    }
   }
 }
