@@ -1221,9 +1221,9 @@ export default function FirstSquadTab({
 
                         <td
                           className={`p-2 ${activeListView === 'skills' ? 'truncate' : ''}`}
-                          title={r.role}
+                          title={formatRaceRiderRole(r.role, t)}
                         >
-                          {r.role}
+                          {formatRaceRiderRole(r.role, t)}
                         </td>
 
                         <td className="p-2">
