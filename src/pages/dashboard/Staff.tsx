@@ -1549,7 +1549,7 @@ function translateStaffSpecialization(value: string | null | undefined, t: TFunc
 }
 
 function translateStaffEffect(effect: string, t: TFunction): string {
-  const percentage = effect.match(/^([+-]\\d+)% (.*)$/)
+  const percentage = effect.match(/^([+-]\d+)% (.*)$/)
   if (percentage) {
     const additional: Record<string, string> = {
       'training efficiency': 'trainingEfficiency',
@@ -1573,7 +1573,7 @@ function translateStaffEffect(effect: string, t: TFunction): string {
       })
     }
   }
-  const numericEffect = effect.match(/^([+-]\\d+(?:%)?) (.+)$/)
+  const numericEffect = effect.match(/^([+-]\d+(?:%)?) (.+)$/)
   const numericEffectKeys: Record<string, string> = {
     'injury and sickness risk contribution': 'healthRiskContribution',
     'return-to-fitness speed contribution': 'returnToFitnessContribution',
