@@ -231,7 +231,8 @@
     "courseInProgressButton": "Kurs je u toku",
     "sendOnCourse": "Pošalji na kurs",
     "release": "Otpusti",
-    "scoutingReports": "Skauting izveštaji"
+    "scoutingReports": "Skauting izveštaji",
+    "completionDate": "Završetak: {{date}}"
   },
   "release": {
     "title": "Otpusti člana osoblja",
@@ -709,5 +710,28 @@
         "Kvalitet skauta utiče na pretragu i procenu, ali ne menja skriveni potencijal vozača."
       ]
     }
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% efikasnosti treninga",
+    "developmentSupport": "{{value}}% podrške razvoju",
+    "overloadRisk": "{{value}}% rizika od preopterećenja",
+    "dailyTrainingOutput": "{{value}}% učinka dnevnog treninga",
+    "riderDevelopmentSupport": "{{value}}% podrške razvoju vozača",
+    "combinedDevelopmentSupport": "{{value}}% zajedničke podrške razvoju",
+    "combinedOverloadRisk": "{{value}}% zajedničkog rizika od preopterećenja",
+    "u16CoachingSupport": "{{value}}% podrške U16 treneru",
+    "focusTrainingEfficiency": "{{value}}% efikasnosti treninga ({{focus}})"
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "Trening centar nivoa 0 ograničava deo bonusa trenerskog osoblja.",
+    "medicalCenter": "Medicinski centar nivoa 0 ograničava deo bonusa medicinskog osoblja.",
+    "mechanicsWorkshop": "Mehaničarska radionica nivoa 0 ograničava brzinu i popuste za održavanje. Osnovni bonusi podešavanja i pouzdanosti ostaju aktivni.",
+    "scoutingOffice": "Skauting kancelarija nivoa 0 ograničava deo bonusa skauta i analitičara."
+  },
+  "contractDisplay": {
+    "noDate": "Datum ugovora nije dostupan",
+    "missingDate": "Nije dostupan datum isteka ugovora",
+    "expired": "Istekao",
+    "seasonDate": "Sezona {{season}} - {{date}}"
   }
 }
