@@ -1730,7 +1730,7 @@ function normalizeOverviewNextRace(
     (row, index) => ({
       riderId: asString(row.riderId ?? row.rider_id, `next-rider:${index}`),
       riderName: asString(row.riderName ?? row.rider_name, "Unnamed rider"),
-      role: asString(row.role, "").replace(/_/g, " ").trim() || null,
+      role: asString(row.role, "").replace(/_/g, " ").trim().replace(/^./, first => first.toUpperCase()) || null,
       raceSharpness:
         row.raceSharpness === null || row.raceSharpness === undefined
           ? null
@@ -1769,7 +1769,7 @@ function normalizeOverviewLastRace(
     (row, index) => ({
       riderId: asString(row.riderId ?? row.rider_id, `last-rider:${index}`),
       riderName: asString(row.riderName ?? row.rider_name, "Unnamed rider"),
-      role: asString(row.role, "").replace(/_/g, " ").trim() || null,
+      role: asString(row.role, "").replace(/_/g, " ").trim().replace(/^./, first => first.toUpperCase()) || null,
       position:
         row.position === null || row.position === undefined
           ? null
