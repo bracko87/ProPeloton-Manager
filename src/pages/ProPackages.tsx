@@ -1561,7 +1561,7 @@ export default function ProPackagesPage(): JSX.Element {
             <div className="mt-2 text-3xl font-extrabold text-black">
               {featuredPrice}
               <span className="ml-2 text-sm font-medium text-gray-500">
-                / 3 months · €3.16/month
+                {t('premium.quarterlySummary', { monthlyPrice: eur((quarterlyPlan?.price_cents ?? 949) / 300) })}
               </span>
             </div>
 
@@ -1643,10 +1643,10 @@ export default function ProPackagesPage(): JSX.Element {
               {featuredPrice}
             </div>
             <div className="mt-1 text-sm text-gray-600">
-              / 3 months · €3.16/month · 90 Coins
+              {t('premium.quarterlySummaryCoins', { monthlyPrice: eur((quarterlyPlan?.price_cents ?? 949) / 300), coins: quarterlyPlan?.coins_per_paid_invoice ?? 90 })}
             </div>
             <div className="mt-3 inline-block rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-black">
-              Most popular
+              {t('premium.mostPopular')}
             </div>
 
             {showManageSubscription ? (
@@ -1728,9 +1728,9 @@ export default function ProPackagesPage(): JSX.Element {
                   disabled={loadingPremium || startingPremiumCheckout || !monthlyPlan}
                   className="rounded-xl border border-gray-200 bg-white p-4 text-left text-black hover:border-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <div className="font-semibold">1 Month</div>
+                  <div className="font-semibold">{t('premium.monthlyTitle')}</div>
                   <div className="mt-1 text-lg font-bold">{eur((monthlyPlan?.price_cents ?? 329) / 100)}</div>
-                  <div className="text-xs text-gray-600">per month · 30 Coins</div>
+                  <div className="text-xs text-gray-600">{t('premium.monthlySummary', { coins: monthlyPlan?.coins_per_paid_invoice ?? 30 })}</div>
                 </button>
                 <button
                   type="button"
@@ -1738,9 +1738,9 @@ export default function ProPackagesPage(): JSX.Element {
                   disabled={loadingPremium || startingPremiumCheckout || !yearlyPlan}
                   className="rounded-xl border border-gray-200 bg-white p-4 text-left text-black hover:border-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <div className="font-semibold">12 Months · Save 15%</div>
+                  <div className="font-semibold">{t('premium.yearlyTitle')}</div>
                   <div className="mt-1 text-lg font-bold">{eur((yearlyPlan?.price_cents ?? 3349) / 100)}</div>
-                  <div className="text-xs text-gray-600">€2.79/month · 360 Coins</div>
+                  <div className="text-xs text-gray-600">{t('premium.yearlySummary', { monthlyPrice: eur((yearlyPlan?.price_cents ?? 3349) / 1200), coins: yearlyPlan?.coins_per_paid_invoice ?? 360 })}</div>
                 </button>
               </div>
             )}
@@ -1921,8 +1921,7 @@ export default function ProPackagesPage(): JSX.Element {
               <Coins size={22} className="text-amber-700" /> {earnCoinsLabel}
             </h3>
             <p className="mt-2 text-sm leading-6 text-gray-700">
-              Complete optional CPX Research surveys and earn 15 Coins for every $1 in verified survey revenue.
-              No payment required. Canceled survey rewards can be reversed.
+              {t('earnCoins.bannerDescription')}
             </p>
           </div>
           <button type="button" onClick={() => setEarnCoinsOpen(true)}
