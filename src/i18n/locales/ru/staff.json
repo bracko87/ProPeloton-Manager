@@ -642,5 +642,11 @@
   },
   "specializations": {
     "general": "Общая специализация"
+  },
+  "facilityNames": {
+    "trainingCenter": "Тренировочный центр",
+    "medicalCenter": "Медицинский центр",
+    "mechanicsWorkshop": "Механическая мастерская",
+    "scoutingOffice": "Скаутский офис"
   }
 }
