@@ -170,11 +170,11 @@
   "races": {
     "lastTitle": "Ultima gara di squadra",
     "lastSubtitle": "Ultima gara completa terminata che coinvolge la tua prima squadra o squadra in via di sviluppo.",
-    "loadingLast": "Caricamento ultima gara completa finita...",
-    "noLast": "Non è stata ancora trovata nessuna gara completa per la prima squadra o per la squadra in via di sviluppo.",
+    "loadingLast": "Caricamento dell'ultima gara completata…",
+    "noLast": "Nessuna gara completata per la prima squadra o la squadra di sviluppo.",
     "nextTitle": "Prossima gara del team",
     "nextSubtitle": "La prossima gara presentata non è ancora iniziata.",
-    "loadingNext": "Caricamento del prossimo Race Plan presentato...",
+    "loadingNext": "Caricamento del prossimo piano gara inviato…",
     "noNext": "Non è ancora stata trovata alcuna gara per la prima squadra o per la squadra in via di sviluppo.",
     "upcomingTitle": "Prossima pianificazione",
     "upcomingSubtitle": "Le prossime cinque gare accettate, le scadenze e le tappe principali del club.",
@@ -187,7 +187,8 @@
     "noTodaySubtitle": "Non ci sono eventi in programma per il giorno della partita.",
     "noRace": "Nessuna gara trovata",
     "stages": "Stadi {{count}}",
-    "today": "Oggi"
+    "today": "Oggi",
+    "noFinishedClassification": "Non è ancora disponibile una classifica finale."
   },
   "squad": {
     "title": "Polso della squadra",
