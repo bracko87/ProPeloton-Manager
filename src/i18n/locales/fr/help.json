@@ -154,7 +154,11 @@
     "starting": "Démarrage…",
     "dismiss": "Ignorer le tutoriel",
     "dismissed": "Ignoré : ne réapparaîtra pas sans lancement manuel.",
-    "dismissedNotice": "Tutoriel ignoré."
+    "dismissedNotice": "Tutoriel ignoré.",
+    "inviteTitle": "Besoin d'aide avec {{feature}} ?",
+    "startTutorial": "Lancer le tutoriel",
+    "noThanks": "Non merci",
+    "finishForNow": "Terminer pour le moment"
   },
   "tutorialModules": {
     "national-championships": {
