@@ -1,12 +1,12 @@
 {
-  "title": "Ranking nacional de {{country}}",
+  "title": "Campeonato nacional — {{country}}",
   "eyebrow": "Competición nacional",
   "description": "Ranking nacional individual de ciclistas, clasificación al campeonato, deber nacional y preparación individual. Los puntos del ranking por equipos no se ven afectados.",
   "country": "País",
-  "loading": "Cargando ranking nacional…",
+  "loading": "Cargando campeonato nacional…",
   "errors": {
-    "unavailable": "El ranking nacional no está disponible.",
-    "load": "No se pudo cargar el ranking nacional.",
+    "unavailable": "Los datos del campeonato nacional no están disponibles.",
+    "load": "No se pudo cargar el campeonato nacional.",
     "save": "No se pudo guardar el plan del ciclista."
   },
   "cards": {
