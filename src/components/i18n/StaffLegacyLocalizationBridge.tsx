@@ -15,6 +15,21 @@ const ROLE_KEYS: Record<string, string> = {
   'Sport Director': 'staff:roles.sportDirector.label',
   'Scout / Analyst': 'staff:roles.scoutAnalyst.label',
   'U23 Head Coach': 'staff:roles.u23HeadCoach.label',
+  'Youth Academy Director': 'staff:roles.youthAcademyDirector.label',
+  'U16 Head Coach': 'staff:roles.u16HeadCoach.label',
+  'Youth Scout': 'staff:roles.youthScout.label',
+  head_coach: 'staff:roles.headCoach.label',
+  trainer: 'staff:roles.trainer.label',
+  team_doctor: 'staff:roles.teamDoctor.label',
+  physio: 'staff:roles.physio.label',
+  nutritionist: 'staff:roles.nutritionist.label',
+  mechanic: 'staff:roles.mechanic.label',
+  sport_director: 'staff:roles.sportDirector.label',
+  scout_analyst: 'staff:roles.scoutAnalyst.label',
+  u23_head_coach: 'staff:roles.u23HeadCoach.label',
+  youth_academy_director: 'staff:roles.youthAcademyDirector.label',
+  u16_head_coach: 'staff:roles.u16HeadCoach.label',
+  youth_scout: 'staff:roles.youthScout.label',
 }
 
 const options: LegacyLocalizationBridgeOptions = {
@@ -74,8 +89,12 @@ const options: LegacyLocalizationBridgeOptions = {
       key.endsWith('.staffList')
     ) {
       const role = params.role
-      if (role && ROLE_KEYS[role]) {
-        params.role = t(ROLE_KEYS[role])
+      if (role) {
+        // Accept both display labels and database enum codes. Never expose
+        // underscore-delimited role values in translated staff messages.
+        params.role = ROLE_KEYS[role]
+          ? t(ROLE_KEYS[role])
+          : role.replace(/_/g, ' ')
       }
     }
 
