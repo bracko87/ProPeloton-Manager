@@ -468,7 +468,8 @@
     "releasing": "Liberando...",
     "removedFromList": "El ciclista se ha retirado de la lista de transferencias.",
     "cancelListingFailed": "No se pudo cancelar la lista de transferencias.",
-    "releasePreviewFailed": "No se pudo cargar la vista previa de la liberación."
+    "releasePreviewFailed": "No se pudo cargar la vista previa de la liberación.",
+    "gameDateUnavailable": "Fecha del juego no disponible"
   },
   "ownedTransfer": {
     "title": "Lista de transferencias",
