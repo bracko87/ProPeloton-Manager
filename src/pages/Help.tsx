@@ -83,6 +83,9 @@ export default function HelpPage(): JSX.Element {
       const saved = await saveTutorialProgress(tutorialKey, 'started', firstStep.key)
       if (!saved) return
       setDismissedKeys(previous => previous.filter(key => key !== tutorialKey))
+      if (coreTutorial) {
+        window.sessionStorage.setItem('ppm:manual-tutorial-chain', '1')
+      }
       navigate(route)
     } finally {
       setStartingTutorialKey(null)
