@@ -370,8 +370,7 @@ begin
     'results', v_results
   );
 end;
-$function$
-
+$function$;
 
 -- The one-race unit may require more than the default 120-second limit.
 -- Scope the longer limit to the clock cron command, leaving global settings intact.
