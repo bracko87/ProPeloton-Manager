@@ -1,0 +1,57 @@
+name: Squad and Staff translation QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/squad-staff-translation-qa.yml'
+      - 'src/pages/dashboard/Staff.tsx'
+      - 'src/pages/dashboard/Squad.tsx'
+      - 'src/features/squad/components/FirstSquadTab.tsx'
+      - 'src/features/squad/components/RiderProfilePage.tsx'
+      - 'src/i18n/locales/**/staff.json'
+      - 'src/i18n/locales/**/squad.json'
+      - 'scripts/check-i18n.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Check translation placeholders
+        run: npm run check:i18n
+      - name: Verify role dictionaries and no raw classification key
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          for (const lang of ['en','sr-Latn','hr','de','es','it','fr','ru']) {
+            const staff = JSON.parse(fs.readFileSync('src/i18n/locales/'+lang+'/staff.json'))
+            const squad = JSON.parse(fs.readFileSync('src/i18n/locales/'+lang+'/squad.json'))
+            for (const role of ['head_coach','trainer','team_doctor','physio','nutritionist','mechanic','sport_director','scout_analyst','u23_head_coach','youth_academy_director','u16_head_coach','youth_scout']) {
+              const detail = staff.roleInfo?.[role]
+              if (!detail?.purpose || !detail?.capacitySummary ||
+                  !Array.isArray(detail.attributes) || !detail.attributes.length ||
+                  !Array.isArray(detail.gameplay) || !detail.gameplay.length) {
+                throw new Error(lang+': missing '+role+' role explanation')
+              }
+            }
+            for (const key of ['freeRole','teamLeader','gcLeader','leadOut','sprinter','climber','domestique','support','timeTrial','breakaway','allRounder']) {
+              if (!squad.riderRoles?.[key]) throw new Error(lang+': missing role '+key)
+            }
+            if (!squad.races?.noFinishedClassification) throw new Error(lang+': missing finished-race fallback')
+          }
+          NODE
+      - name: Production build
+        run: npm run build
