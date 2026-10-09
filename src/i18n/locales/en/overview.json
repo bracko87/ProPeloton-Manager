@@ -170,11 +170,11 @@
   "races": {
     "lastTitle": "Last Team Race",
     "lastSubtitle": "Latest finished full race involving your first team or developing team.",
-    "loadingLast": "Loading latest finished full race...",
+    "loadingLast": "Loading latest finished full race…",
     "noLast": "No finished full race found for the first team or developing team yet.",
     "nextTitle": "Next Team Race",
     "nextSubtitle": "Next submitted race that has not started yet.",
-    "loadingNext": "Loading next submitted race plan...",
+    "loadingNext": "Loading next submitted race plan…",
     "noNext": "No upcoming submitted race found for the first team or developing team yet.",
     "upcomingTitle": "Upcoming Schedule",
     "upcomingSubtitle": "Next five accepted races, race deadlines, and club milestones.",
@@ -187,7 +187,8 @@
     "noTodaySubtitle": "There are no race events scheduled for the current game day.",
     "noRace": "No race found yet",
     "stages": "{{count}} stages",
-    "today": "Today"
+    "today": "Today",
+    "noFinishedClassification": "No finished race classification available yet."
   },
   "squad": {
     "title": "Squad Pulse",
