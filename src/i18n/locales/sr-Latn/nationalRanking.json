@@ -1,12 +1,12 @@
 {
-  "title": "Nacionalni rang — {{country}}",
+  "title": "Nacionalno prvenstvo — {{country}}",
   "eyebrow": "Nacionalno takmičenje",
   "description": "Individualni nacionalni rang vozača, kvalifikacije za prvenstvo, nacionalna obaveza i individualna priprema. Bodovi ekipnog ranga se ne menjaju.",
   "country": "Država",
-  "loading": "Učitavanje nacionalnog ranga…",
+  "loading": "Učitavanje nacionalnog prvenstva…",
   "errors": {
-    "unavailable": "Nacionalni rang nije dostupan.",
-    "load": "Nije moguće učitati nacionalni rang.",
+    "unavailable": "Podaci nacionalnog prvenstva nisu dostupni.",
+    "load": "Nije moguće učitati nacionalno prvenstvo.",
     "save": "Nije moguće sačuvati plan vozača."
   },
   "cards": {
