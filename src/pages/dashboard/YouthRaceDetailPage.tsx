@@ -288,6 +288,17 @@ function youthTime(seconds: number | null | undefined): string {
   return [hours, minutes, remainder].map(part => String(part).padStart(2, '0')).join(':')
 }
 
+function youthCompactGap(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(Number(seconds))) return '—'
+  const total = Math.max(0, Math.round(Number(seconds)))
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const remainder = total % 60
+  if (hours > 0) return `+${hours}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+  if (minutes > 0) return `+${minutes}:${String(remainder).padStart(2, '0')}`
+  return `+${remainder}s`
+}
+
 function YouthStandingTable({
   rows,
   pointsMode = false,
@@ -300,6 +311,11 @@ function YouthStandingTable({
   if (rows.length === 0) {
     return <p className="p-4 text-sm text-slate-500">Results will appear when the stage has been processed.</p>
   }
+  // Show actual elapsed-time differences rather than the legacy stage gap field,
+  // which can differ from the displayed elapsed times.
+  const leaderTime = !pointsMode
+    ? rows.find(row => row.result_status === 'finished' && row.time_seconds != null)?.time_seconds
+    : undefined
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[480px] border-collapse text-left text-sm">
@@ -307,9 +323,9 @@ function YouthStandingTable({
           <tr className="border-b border-slate-200 bg-white text-xs font-semibold uppercase tracking-wide text-slate-500">
             <th className="px-3 py-3">#</th>
             <th className="px-3 py-3">Rider</th>
-            <th className="px-3 py-3">Team</th>
+            <th className="w-[34%] px-3 py-3">Team</th>
             <th className="px-3 py-3 text-right">{pointsMode ? 'Points' : 'Time'}</th>
-            {!pointsMode ? <th className="px-3 py-3 text-right">{isStage ? 'Gap' : 'Gap'}</th> : null}
+            {!pointsMode ? <th className="px-3 py-3 text-right">Gap</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -322,20 +338,40 @@ function YouthStandingTable({
                 {row.rider_name}
               </td>
               <td className="px-3 py-2">
-                <div className="flex min-w-[110px] items-center gap-2">
-                  <span className="flex h-9 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50">
-                    {row.jersey_url ? (
-                      <img src={row.jersey_url} alt={row.academy_name + ' jersey'} className="h-full w-full object-contain" />
-                    ) : <span className="truncate px-1 text-[10px] text-slate-500">{row.academy_name}</span>}
-                  </span>
-                </div>
+                <span className="relative block h-9 w-full min-w-[130px] max-w-[220px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" title={row.academy_name}>
+                  {row.jersey_url ? (
+                    <>
+                      <img
+                        src={row.jersey_url}
+                        alt={row.academy_name + ' jersey'}
+                        loading="lazy"
+                        className="pointer-events-none absolute inset-0 h-full w-full scale-[5] object-contain opacity-95"
+                        style={{ objectPosition: '50% 37%', transformOrigin: '50% 37%' }}
+                      />
+                      <span className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-slate-950/5" />
+                    </>
+                  ) : (
+                    <span className="flex h-full items-center justify-center truncate px-2 text-xs text-slate-500">
+                      {row.academy_name}
+                    </span>
+                  )}
+                </span>
               </td>
               <td className="whitespace-nowrap px-3 py-2 text-right font-medium text-slate-900">
                 {pointsMode ? String(Math.max(0, Number(row.points ?? 0))) : row.result_status && row.result_status !== 'finished' ? '—' : youthTime(row.time_seconds)}
               </td>
               {!pointsMode ? (
                 <td className="whitespace-nowrap px-3 py-2 text-right text-slate-500">
-                  {row.result_status && row.result_status !== 'finished' ? '—' : row.gap_seconds === 0 ? 'Leader' : row.gap_seconds == null ? '—' : '+' + youthTime(row.gap_seconds)}
+                  {row.result_status && row.result_status !== 'finished'
+                      ? '—'
+                      : (() => {
+                          const timeGap = row.time_seconds != null && leaderTime != null
+                            ? Math.max(0, Math.round(Number(row.time_seconds) - Number(leaderTime)))
+                            : row.gap_seconds
+                          if (timeGap == null) return '—'
+                          if (Number(timeGap) === 0) return index === 0 ? 'Leader' : 's.t.'
+                          return youthCompactGap(timeGap)
+                        })()}
                 </td>
               ) : null}
             </tr>
@@ -362,6 +398,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
   const [raceInfoExpanded, setRaceInfoExpanded] = useState(true)
   const [raceInfoTab, setRaceInfoTab] = useState<'participants' | 'results'>('results')
   const [fullStandingModal, setFullStandingModal] = useState<'race' | 'stage' | null>(null)
+  const [teamClassificationExpanded, setTeamClassificationExpanded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = async (): Promise<void> => {
@@ -906,7 +943,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                   </select>
                 </div>
                 <div className="mt-4 overflow-hidden rounded-xl bg-white">
-                  <YouthStandingTable rows={raceStandingRows.slice(0, 12)} pointsMode={resultView !== 'general'} />
+                  <YouthStandingTable rows={raceStandingRows.slice(0, 15)} pointsMode={resultView !== 'general'} />
                 </div>
                 <div className="mt-4 flex justify-end">
                   <button type="button" disabled={!raceStandingRows.length} onClick={() => setFullStandingModal('race')}
@@ -938,7 +975,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                   </div>
                 </div>
                 <div className="mt-4 overflow-hidden rounded-xl bg-white">
-                  <YouthStandingTable rows={selectedStageStandingRows.slice(0, 12)} pointsMode={stagePointsMode} isStage />
+                  <YouthStandingTable rows={selectedStageStandingRows.slice(0, 15)} pointsMode={stagePointsMode} isStage />
                 </div>
                 <div className="mt-4 flex justify-end">
                   <button type="button" disabled={!selectedStageStandingRows.length} onClick={() => setFullStandingModal('stage')}
@@ -962,8 +999,20 @@ export default function YouthRaceDetailPage(): JSX.Element {
               </div>
             )}
             {isFinished && raceInfoTab === 'results' ? (
-              <Section title="Team classification & prize money">
-                <div className="space-y-2">
+              <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <button
+                  type="button"
+                  aria-expanded={teamClassificationExpanded}
+                  onClick={() => setTeamClassificationExpanded(current => !current)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                >
+                  <span>Team classification &amp; prize money</span>
+                  <span className="text-xs font-medium text-slate-500">
+                    {teamClassificationExpanded ? 'Hide ▲' : 'Show ▼'}
+                  </span>
+                </button>
+                {teamClassificationExpanded ? (
+                <div className="space-y-2 border-t border-slate-100 p-4">
                   {payload.team_results.map(team => (
                     <div key={team.academy_id} className={'grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-sm ' + (team.is_mine ? 'bg-yellow-50' : 'bg-slate-50')}>
                       <strong>#{team.team_position}</strong>
@@ -975,7 +1024,8 @@ export default function YouthRaceDetailPage(): JSX.Element {
                     </div>
                   ))}
                 </div>
-              </Section>
+                ) : null}
+              </section>
             ) : null}
           </div>
           ) : null}
