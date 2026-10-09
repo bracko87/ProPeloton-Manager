@@ -1551,6 +1551,65 @@ function translateStaffEffect(effect: string, t: TFunction): string {
       })
     }
   }
+  const numericEffect = effect.match(/^([+-]\\d+(?:%)?) (.+)$/)
+  const numericEffectKeys: Record<string, string> = {
+    'injury and sickness risk contribution': 'healthRiskContribution',
+    'return-to-fitness speed contribution': 'returnToFitnessContribution',
+    'daily recovery support': 'dailyRecoverySupport',
+    'fatigue floor after health cases': 'fatigueFloorReduction',
+    'setup quality bonus': 'setupQuality',
+    'equipment condition loss': 'equipmentConditionLoss',
+    'mechanical risk': 'mechanicalRisk',
+    'equipment maintenance speed': 'maintenanceSpeed',
+    'equipment maintenance cost': 'maintenanceCost',
+    'youth prospect discovery support': 'youthProspectDiscovery',
+    'youth assessment quality': 'youthAssessment',
+    'combined training output': 'combinedTraining',
+    'combined injury and sickness risk': 'combinedHealthRisk',
+    'combined return-to-fitness speed': 'combinedFitnessSpeed',
+    'combined daily recovery support': 'combinedDailyRecovery',
+    'combined setup quality bonus': 'combinedSetup',
+    'combined equipment condition loss': 'combinedConditionLoss',
+    'combined mechanical risk': 'combinedMechanicalRisk',
+    'combined maintenance speed': 'combinedMaintenanceSpeed',
+    'combined maintenance cost': 'combinedMaintenanceCost',
+    'workload-planning support': 'workloadPlanning',
+    'prospect discovery support': 'prospectDiscovery',
+    'assessment support': 'assessmentSupport',
+  }
+  if (numericEffect && numericEffectKeys[numericEffect[2]]) {
+    return t('additionalEffects.' + numericEffectKeys[numericEffect[2]], {
+      value: numericEffect[1],
+    })
+  }
+  const textEffects: Record<string, string> = {
+    'Mechanic equipment effects paused while this staff member is unavailable.': 'mechanicPaused',
+    'Maintenance speed bonus requires Mechanics Workshop Lv 1+': 'requiresWorkshop',
+    'Planned: tactical execution support': 'plannedTactics',
+    'Planned: teamwork and domestique coordination': 'plannedTeamwork',
+    'Planned: small morale stability boost': 'plannedMorale',
+    'Planned: U23 training support': 'plannedU23Training',
+    'Planned: developing-team race tactics': 'plannedU23Tactics',
+    'Planned: young rider development boost': 'plannedYouthDevelopment',
+    'Youth Academy programme and budget management': 'academyBudget',
+    'Delegated recruitment and operating decisions': 'delegatedRecruitment',
+    'No infrastructure dependency in V1': 'noInfrastructure',
+    'U16 training and workload management': 'u16Workload',
+    'Youth rider development planning': 'youthPlanning',
+    'Youth race squad selection when delegated': 'youthRaceSelection',
+    'Scouting range is funded from the Youth Academy budget': 'youthScoutingBudget',
+    'No active contribution yet from this role.': 'noContribution',
+    'All assigned staff in this impact group are currently on course, so active contribution is temporarily paused.': 'groupPaused',
+    'Future impact: better tactical execution, teamwork and domestique support.': 'futureTactics',
+    'Future impact: small morale stability bonus.': 'futureMorale',
+    'Future impact: U23 training support and young rider development.': 'futureU23',
+  }
+  if (textEffects[effect]) return t('additionalEffects.' + textEffects[effect])
+  const trainerBoost = effect.match(/^Head Coach boosts trainer contribution by \+(\d+)%\.$/)
+  if (trainerBoost) return t('additionalEffects.trainerBoost', { value: trainerBoost[1] })
+  const activeMechanics = effect.match(/^(\d+) active mechanics? contributing live technical support\.$/)
+  if (activeMechanics) return t('additionalEffects.activeMechanics', { count: Number(activeMechanics[1]) })
+
   const warnings: Record<string, string> = {
     'Training Center Lv 0 caps part of coaching staff bonuses.': 'trainingCenter',
     'Medical Center Lv 0 caps part of medical staff bonuses.': 'medicalCenter',
