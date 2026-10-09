@@ -597,7 +597,190 @@
     "seasonDate": "Temporada {{season}} - {{date}}"
   },
   "roleInfo": {
-    "capacityFallback": "La capacidad depende del límite actual del puesto."
+    "capacityFallback": "La capacidad depende del límite actual del puesto.",
+    "head_coach": {
+      "purpose": "Dirige el entrenamiento, la planificación de entrenamiento y el desarrollo de ciclistas a largo plazo.",
+      "capacitySummary": "Esta función tiene una plaza asignada.",
+      "attributes": [
+        "Habilidad clave: Entrenamiento.",
+        "Habilidad clave: Planificación de la recuperación.",
+        "Habilidad clave: Desarrollo de la juventud.",
+        "Habilidad clave: Experiencia.",
+        "Habilidad clave: Liderazgo."
+      ],
+      "gameplay": [
+        "Influye en: Capacitación periódica, Campamentos de capacitación, Desarrollo del ciclista.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "trainer": {
+      "purpose": "Mejora la producción diaria de entrenamiento y apoya los planes de entrenadores.",
+      "capacitySummary": "Hasta cinco entrenadores pueden apoyar al primer equipo.",
+      "attributes": [
+        "Habilidad clave: Capacitación diaria.",
+        "Habilidad clave: Eficiencia en la capacitación.",
+        "Habilidad clave: Crecimiento potencial.",
+        "Habilidad clave: Experiencia.",
+        "Habilidad clave: Liderazgo."
+      ],
+      "gameplay": [
+        "Influye en: Capacitación diaria, Calidad de la formación, Desarrollo del ciclista.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "team_doctor": {
+      "purpose": "Lidera la recuperación médica, el diagnóstico y la prevención de lesiones.",
+      "capacitySummary": "La capacidad depende del límite actual del puesto.",
+      "attributes": [
+        "Habilidad clave: Recuperación.",
+        "Habilidad clave: Prevención.",
+        "Habilidad clave: Diagnóstico.",
+        "Habilidad clave: Liderazgo."
+      ],
+      "gameplay": [
+        "Influye en: Velocidad de recuperación, Prevención de lesiones, Tratamiento de casos médicos.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "physio": {
+      "purpose": "Se centra en la rehabilitación, la velocidad de recuperación y la capacidad de retorno a la aptitud.",
+      "capacitySummary": "La capacidad depende del límite actual del puesto.",
+      "attributes": [
+        "Habilidad clave: Rehabilitación.",
+        "Habilidad clave: Velocidad de recuperación.",
+        "Habilidad clave: Experiencia.",
+        "Habilidad clave: Lealtad."
+      ],
+      "gameplay": [
+        "Influye en: Retorno a la aptitud, Velocidad de recuperación, Recuperación de la fatiga.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "nutritionist": {
+      "purpose": "Apoya la recuperación, la consistencia de la aptitud y la producción del personal médico.",
+      "capacitySummary": "La capacidad depende del límite actual del puesto.",
+      "attributes": [
+        "Habilidad clave: Nutrición.",
+        "Habilidad clave: Recuperación.",
+        "Habilidad clave: Coherencia.",
+        "Habilidad clave: Experiencia."
+      ],
+      "gameplay": [
+        "Influye en: Apoyo a la recuperación, Consistencia de la aptitud, Preparación de la carrera.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "mechanic": {
+      "purpose": "Configuración de bicicletas, eficiencia de mantenimiento y fiabilidad mecánica de día de carrera.",
+      "capacitySummary": "La capacidad depende del límite actual del puesto.",
+      "attributes": [
+        "Habilidad clave: Configuración de la bicicleta.",
+        "Habilidad clave: Fiabilidad.",
+        "Habilidad clave: Experiencia.",
+        "Habilidad clave: Lealtad."
+      ],
+      "gameplay": [
+        "Influye en: Configuración del equipo, Eficiencia en el mantenimiento, Fiabilidad mecánica.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "sport_director": {
+      "purpose": "Tácticas de carrera planificadas, moral, trabajo en equipo y apoyo de gregarios.",
+      "capacitySummary": "La capacidad depende del límite actual del puesto.",
+      "attributes": [
+        "Habilidad clave: Planificación de la carrera.",
+        "Habilidad clave: Control de equipo.",
+        "Habilidad clave: Liderazgo.",
+        "Habilidad clave: Experiencia."
+      ],
+      "gameplay": [
+        "Influye en: Tácticas raciales, Equipo moral, Apoyo Domestique.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "scout_analyst": {
+      "purpose": "Explorando calidad, visibilidad de la perspectiva y transferencia de inteligencia.",
+      "capacitySummary": "La capacidad depende del límite actual del puesto.",
+      "attributes": [
+        "Habilidad clave: Evaluación.",
+        "Habilidad clave: Red.",
+        "Habilidad clave: Precisión.",
+        "Habilidad clave: Experiencia."
+      ],
+      "gameplay": [
+        "Influye en: Precisión del scout, Descubrimiento de la perspectiva, Transferencia de información.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "u23_head_coach": {
+      "purpose": "Planeado el entrenamiento de equipo y el apoyo táctico de carrera U23.",
+      "capacitySummary": "Esta función tiene una plaza asignada.",
+      "attributes": [
+        "Habilidad clave: Entrenamiento.",
+        "Habilidad clave: Desarrollo de la juventud.",
+        "Habilidad clave: Liderazgo.",
+        "Habilidad clave: Experiencia.",
+        "Habilidad clave: Lealtad."
+      ],
+      "gameplay": [
+        "Influye en: Entrenamiento U23, Desarrollo de la juventud, Tácticas de carrera U23.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "youth_academy_director": {
+      "purpose": "Dirige el programa U16, el presupuesto, la captación delegada y las solicitudes operativas.",
+      "capacitySummary": "Esta función tiene una plaza asignada.",
+      "attributes": [
+        "Habilidad clave: Control de equipo.",
+        "Habilidad clave: Experiencia.",
+        "Habilidad clave: Liderazgo.",
+        "Habilidad clave: Lealtad."
+      ],
+      "gameplay": [
+        "Influye en: Presupuesto de la academia, Gestión de captación, Programa juvenil.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "u16_head_coach": {
+      "purpose": "Gestiona el entrenamiento U16, la carga, el enfoque de desarrollo y la selección para carreras.",
+      "capacitySummary": "Esta función tiene una plaza asignada.",
+      "attributes": [
+        "Habilidad clave: Capacitación diaria.",
+        "Habilidad clave: Planificación de la recuperación.",
+        "Habilidad clave: Desarrollo de la juventud.",
+        "Habilidad clave: Liderazgo."
+      ],
+      "gameplay": [
+        "Influye en: Entrenamiento U16, Gestión de carga, Selección para carreras.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    },
+    "youth_scout": {
+      "purpose": "Descubre y evalúa talentos U16 dentro del alcance de scouting financiado por la Academia Juvenil.",
+      "capacitySummary": "Esta función tiene una plaza asignada.",
+      "attributes": [
+        "Habilidad clave: Evaluación.",
+        "Habilidad clave: Red.",
+        "Habilidad clave: Precisión.",
+        "Habilidad clave: Experiencia."
+      ],
+      "gameplay": [
+        "Influye en: Scouting juvenil, Evaluación de talento, Alcance de captación.",
+        "Las habilidades y la disponibilidad del empleado determinan su aportación efectiva.",
+        "Los cursos y las tareas simultáneas pueden reducir temporalmente su aportación."
+      ]
+    }
   },
   "qualityExplanation": {
     "coachingTitle": "Cómo funciona la calidad del entrenador",
