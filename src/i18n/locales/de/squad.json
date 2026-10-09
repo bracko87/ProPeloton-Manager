@@ -137,7 +137,8 @@
     "noRace": "Noch kein Rennen gefunden",
     "noFinished": "Für diesen Kader wurde noch keine vollständige Endklassifikation eines beendeten Rennens gefunden.",
     "noNext": "Für diesen Kader wurde noch kein eingereichter Race Plan für ein noch nicht gestartetes Rennen gefunden.",
-    "stages": "{{count}} Etappen"
+    "stages": "{{count}} Etappen",
+    "noFinishedClassification": "Noch keine abgeschlossene Rennwertung vorhanden."
   },
   "transfer": {
     "listed": "Fahrer steht auf der Transferliste"
@@ -155,5 +156,18 @@
     "Oct": "Okt",
     "Nov": "Nov",
     "Dec": "Dez"
+  },
+  "riderRoles": {
+    "freeRole": "Freie Rolle",
+    "teamLeader": "Teamkapitän",
+    "gcLeader": "Gesamtklassement-Kapitän",
+    "leadOut": "Anfahrer",
+    "sprinter": "Sprinter",
+    "climber": "Bergfahrer",
+    "domestique": "Helfer",
+    "support": "Unterstützer",
+    "timeTrial": "Zeitfahrspezialist",
+    "breakaway": "Ausreißer",
+    "allRounder": "Allrounder"
   }
 }
