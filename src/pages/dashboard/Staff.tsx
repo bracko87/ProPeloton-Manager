@@ -1578,6 +1578,55 @@ function translateStaffEffect(effect: string, t: TFunction): string {
 }
 
 function translateScoutExplanationText(value: string, t: TFunction): string {
+  const added: Record<string, string> = {
+    'How Coaching Quality Works': 'coachingTitle',
+    'Head coach quality is based on training skill, recovery planning, youth development and leadership. Higher quality improves training output, development support and overload management.': 'coachingBody',
+    'Overall coaching profile': 'overallCoaching',
+    'Daily training output': 'dailyOutput',
+    'Long-term rider growth': 'longTermGrowth',
+    'How Trainer Quality Works': 'trainerTitle',
+    'Trainer quality is based on daily training skill, training efficiency, potential growth and experience. Trainers support the coaching group and improve regular training quality.': 'trainerBody',
+    'Overall trainer profile': 'trainerProfile',
+    'Daily training delivery': 'dailyDelivery',
+    'Fatigue and workload support': 'workloadSupport',
+    'How Medical Quality Works': 'medicalTitle',
+    'How Recovery Quality Works': 'recoveryTitle',
+    'How Nutrition Quality Works': 'nutritionTitle',
+    'Medical staff quality contributes to injury and sickness risk, return-to-fitness speed, daily recovery support and fatigue floor after health cases. Team Doctor, Physio and Nutritionist are combined in the medical staff impact group.': 'medicalBody',
+    'Injury and sickness prevention': 'injuryPrevention',
+    'Recovery duration support': 'recoveryDuration',
+    'Fatigue recovery support': 'fatigueRecovery',
+    'How Technical Quality Works': 'technicalTitle',
+    'Mechanic quality is live. Setup, reliability, innovation and experience now support equipment setup quality, maintenance, equipment condition loss and race-day mechanical reliability.': 'technicalBody',
+    'Overall mechanic profile': 'mechanicProfile',
+    'Race setup support': 'raceSetup',
+    'Mechanical issue prevention': 'mechanicalPrevention',
+    'Repair speed and cost with Workshop levels': 'repairSupport',
+    'How Tactical Quality Works': 'tacticalTitle',
+    'Sport director quality is based on tactics, motivation, organization and experience. This profile prepares race tactics, morale stability and team coordination for the race engine.': 'tacticalBody',
+    'Overall race leadership': 'raceLeadership',
+    'Tactical preparation': 'tacticalPreparation',
+    'Morale and organization': 'moraleOrganization',
+    'How Youth Coaching Quality Works': 'youthTitle',
+    'U23 head coach quality is based on youth training, youth development, leadership and experience. This profile supports developing-team rider growth and race readiness.': 'youthBody',
+    'Overall U23 coaching profile': 'youthProfile',
+    'Young rider progression': 'youngProgression',
+    'U23 race preparation': 'youthRacePreparation',
+    'Quality thresholds': 'thresholds',
+    'Basic: below 55 · Solid: 55–69 · Strong: 70–84 · Elite: 85+': 'thresholdScale',
+    'Maintenance Support': 'maintenanceSupport',
+    'Risk Control': 'riskControl',
+  }
+  if (added[value]) return t('qualityExplanation.' + added[value], { defaultValue: value })
+  const facilityCap = value.match(/^(.+?) (?:Lv \d+ )?can cap part of (?:coaching|trainer|medical|U23 coaching) bonuses(?:\. Current level: Lv (\d+))?\.$/)
+  if (facilityCap) return t('qualityExplanation.facilityCap', {
+    facility: facilityCap[1],
+    level: facilityCap[2] ?? '0',
+  })
+  const maintenanceCap = value.match(/^(.+?) controls how much maintenance speed and cost discount can be used\. Current level: Lv (\d+)\.$/)
+  if (maintenanceCap) return t('qualityExplanation.maintenanceCap', {
+    facility: maintenanceCap[1], level: maintenanceCap[2],
+  })
   const exact: Record<string, string> = {
     'How Scout Quality Works': 'scoutingExplainer.title',
     'Scout attributes create the scout’s true ability. The Scouting Office can cap the final report quality, so a strong scout may still produce basic reports until the office is upgraded.': 'scoutingExplainer.body',
