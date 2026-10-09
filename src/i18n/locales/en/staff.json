@@ -845,5 +845,25 @@
     "medicalCenter": "Medical Center",
     "mechanicsWorkshop": "Mechanics Workshop",
     "scoutingOffice": "Scouting Office"
+  },
+  "courseGainLabels": {
+    "academyManagement": "Academy Management",
+    "assessmentAccuracy": "Assessment Accuracy",
+    "budgetEfficiency": "Budget Efficiency",
+    "communication": "Communication",
+    "discipline": "Discipline",
+    "discoveryNetwork": "Discovery Network",
+    "innovation": "Innovation",
+    "longTermPlanning": "Long-Term Planning",
+    "longTermVision": "Long-Term Vision",
+    "motivation": "Motivation",
+    "potential": "Potential",
+    "prospectSense": "Prospect Sense",
+    "raceSelection": "Race Selection",
+    "talentSense": "Talent Sense",
+    "u16Training": "U16 Training",
+    "workloadManagement": "Workload Management",
+    "youthEvaluation": "Youth Evaluation",
+    "youthTraining": "Youth Training"
   }
 }
