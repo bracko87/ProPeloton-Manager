@@ -154,7 +154,11 @@
     "starting": "Iniciando…",
     "dismiss": "Descartar tutorial",
     "dismissed": "Descartado: no aparecerá de nuevo salvo que lo reinicies.",
-    "dismissedNotice": "Tutorial descartado."
+    "dismissedNotice": "Tutorial descartado.",
+    "inviteTitle": "¿Necesitas ayuda con {{feature}}?",
+    "startTutorial": "Iniciar tutorial",
+    "noThanks": "No, gracias",
+    "finishForNow": "Terminar por ahora"
   },
   "tutorialModules": {
     "national-championships": {
