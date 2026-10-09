@@ -5120,18 +5120,20 @@ export default function StaffPage() {
       await reloadStaffPage(clubId, isPremium)
 
       const releasedName = releaseConfirmStaff.name
-      const releasedRole = releaseConfirmStaff.roleLabel
+      const releasedRole = t(ROLE_TRANSLATION_KEYS[releaseConfirmStaff.role].label)
 
       setReleaseConfirmStaff(null)
       setSelectedStaff(null)
       setPageMessage(
-        `${releasedName} was released from ${releasedRole}. Release compensation paid: ${formatCurrency(
-          releaseCost
-        )}.`
+        t('release.successMessage', {
+          name: releasedName,
+          role: releasedRole,
+          amount: formatCurrency(releaseCost),
+        })
       )
     } catch (err) {
-      const message = getErrorMessage(err, 'Failed to release staff member.')
-      setPageMessage(message)
+      console.warn('Failed to release staff member:', err)
+      setPageMessage(t('release.failureMessage'))
     } finally {
       setReleaseLoadingId(null)
     }
@@ -5143,7 +5145,7 @@ export default function StaffPage() {
     const parsedSalary = Number(extendContractSalary)
 
     if (!Number.isFinite(parsedSalary) || parsedSalary <= 0) {
-      setExtendContractError('Please enter a valid weekly salary.')
+      setExtendContractError(t('contract.invalidWeeklySalary'))
       return
     }
 
@@ -5210,19 +5212,29 @@ export default function StaffPage() {
         if (status === 'accepted') {
           setExtendResultTone('success')
           setExtendResultMessage(
-            `${result.staff_name} accepted the new contract: ${formatCurrency(
-              result.new_salary_weekly
-            )}/week until Season ${result.new_season_number}.`
+            t('contract.acceptedWithTerms', {
+              name: result.staff_name,
+              salary: formatCurrency(result.new_salary_weekly),
+              season: result.new_season_number,
+            })
           )
         } else if (status === 'countered') {
           setExtendResultTone('warning')
-          setExtendResultMessage(result.decision_message || `${result.staff_name} wants improved terms.`)
+          const counterAmount = result.decision_message?.match(/wants closer to\s+\$?([\d,]+(?:\.\d+)?)\s+per week/i)?.[1]
+          setExtendResultMessage(
+            counterAmount
+              ? t('contract.wantsCloserTo', {
+                  name: result.staff_name,
+                  salary: formatCurrency(Number(counterAmount.replace(/,/g, ''))),
+                })
+              : t('contract.countered', { name: result.staff_name })
+          )
         } else if (status === 'rejected') {
           setExtendResultTone('error')
-          setExtendResultMessage(result.decision_message || `${result.staff_name} rejected the offer.`)
+          setExtendResultMessage(t('contract.rejected', { name: result.staff_name }))
         } else {
           setExtendResultTone('warning')
-          setExtendResultMessage(result.decision_message || t('contract.discussionCompleted'))
+          setExtendResultMessage(t('contract.discussionCompleted'))
         }
       } else {
         setExtendResultTone('success')
@@ -5231,25 +5243,28 @@ export default function StaffPage() {
     } catch (err) {
       const rawMessage = getErrorMessage(err, 'Failed to extend staff contract.')
 
-      const friendlyMessage = rawMessage.includes('Minimum acceptable salary is')
-        ? rawMessage.replace(
-            /^extend_club_staff_contract:\s*/i,
-            ''
-          ).replace(
-            'Minimum acceptable salary is',
-            'Minimum acceptable weekly salary is $'
-          )
-        : rawMessage.includes('wants closer to')
-          ? rawMessage.replace(
-              /^extend_club_staff_contract:\s*/i,
-              ''
-            ).replace(
-              /(.+?) wants closer to (\d+) per week\.?/i,
-              '$1 wants a weekly salary closer to $$$2.'
-            )
-          : rawMessage.replace(/^extend_club_staff_contract:\s*/i, '')
+      // Translate known RPC negotiation failures without exposing backend
+      // English messages in a non-English interface.
+      const minimumAmount = rawMessage.match(/Minimum acceptable salary is\s+\$?([\d,]+(?:\.\d+)?)/i)?.[1]
+      const closerAmount = rawMessage.match(/wants closer to\s+\$?([\d,]+(?:\.\d+)?)\s+per week/i)?.[1]
+      if (minimumAmount) {
+        setExtendContractError(
+          t('contract.minimumWeeklySalary', {
+            salary: formatCurrency(Number(minimumAmount.replace(/,/g, ''))),
+          })
+        )
+      } else if (closerAmount) {
+        setExtendContractError(
+          t('contract.wantsCloserTo', {
+            name: extendContractStaff.name,
+            salary: formatCurrency(Number(closerAmount.replace(/,/g, ''))),
+          })
+        )
+      } else {
+        console.warn('Unrecognized staff contract negotiation error:', rawMessage)
+        setExtendContractError(t('contract.offerFailed'))
+      }
 
-      setExtendContractError(friendlyMessage)
     } finally {
       setExtendSubmitLoading(false)
     }
