@@ -135,5 +135,55 @@
     "description": "If something looks wrong, please include the page name, team name, rider name, race name, screenshots, and the steps needed to reproduce the issue. This helps us find and fix problems faster.",
     "contact": "Contact Us",
     "discord": "Ask on Discord"
+  },
+  "tutorialControl": {
+    "eyebrow": "Tutorials",
+    "title": "Start or restart any game tutorial",
+    "description": "The beginner tutorial introduces new managers; advanced guides can appear contextually. You may dismiss a tutorial, restart it here, or disable all automatic tutorial prompts.",
+    "manual": "Full Game Manual",
+    "autoTitle": "Automatic tutorial prompts",
+    "autoOff": "Automatic tutorials are disabled. You can still start any tutorial manually below.",
+    "autoOn": "Automatic tutorials may appear when you discover a new feature.",
+    "enableAuto": "Enable automatic tutorials",
+    "disableAuto": "Stop automatic tutorials",
+    "coreLabel": "Core beginner tutorial",
+    "featureLabel": "Feature tutorial",
+    "coreTitle": "ProPeloton Manager Basics",
+    "coreDescription": "Restart the complete beginner tour of the game’s core sections.",
+    "startRestart": "Start / Restart",
+    "starting": "Starting…",
+    "dismiss": "Dismiss tutorial",
+    "dismissed": "Dismissed — it will not start again unless you restart it.",
+    "dismissedNotice": "Tutorial dismissed."
+  },
+  "tutorialModules": {
+    "national-championships": {
+      "title": "National Championships & National Ranking",
+      "description": "Qualification, national duty, race preparation and championship history."
+    },
+    "national-association": {
+      "title": "National Association & National Team",
+      "description": "Membership, funding, elections, national squads, World Nations and history."
+    },
+    "national-coach": {
+      "title": "National Coach",
+      "description": "Eligible riders, call-ups, the final squad and race-day selections."
+    },
+    "youth-academy": {
+      "title": "Youth Academy / U16",
+      "description": "Youth scouting, staff, budget, racing, rankings and graduation."
+    },
+    "youth-graduation": {
+      "title": "Youth Academy Graduation",
+      "description": "Move eligible U16 graduates into their next development stage."
+    },
+    "developing-team": {
+      "title": "Developing Team",
+      "description": "The U23 development pathway toward your First Squad."
+    },
+    "new-season": {
+      "title": "New Season Transition",
+      "description": "Key changes when the season advances."
+    }
   }
 }
