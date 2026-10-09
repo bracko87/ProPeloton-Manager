@@ -636,5 +636,8 @@
     "riskControl": "Kontrola rizika",
     "facilityCap": "{{facility}} ograničava dio bonusa osoblja. Trenutačna razina: {{level}}.",
     "maintenanceCap": "{{facility}} ograničava brzinu i popuste održavanja. Trenutačna razina: {{level}}."
+  },
+  "specializations": {
+    "general": "Općenito"
   }
 }
