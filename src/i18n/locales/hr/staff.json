@@ -845,5 +845,25 @@
   },
   "legacyUi": {
     "unlockDevelopingTeam": "Najprije otključajte razvojnu ekipu u Postavkama."
+  },
+  "courseGainLabels": {
+    "academyManagement": "Upravljanje akademijom",
+    "assessmentAccuracy": "Točnost procjene",
+    "budgetEfficiency": "Učinkovitost proračuna",
+    "communication": "Komunikacija",
+    "discipline": "Disciplina",
+    "discoveryNetwork": "Mreža za otkrivanje talenata",
+    "innovation": "Inovativnost",
+    "longTermPlanning": "Dugoročno planiranje",
+    "longTermVision": "Dugoročna vizija",
+    "motivation": "Motivacija",
+    "potential": "Potencijal",
+    "prospectSense": "Osjećaj za talente",
+    "raceSelection": "Odabir za utrke",
+    "talentSense": "Prepoznavanje talenata",
+    "u16Training": "Trening U16",
+    "workloadManagement": "Upravljanje opterećenjem",
+    "youthEvaluation": "Procjena mladih talenata",
+    "youthTraining": "Trening mladih"
   }
 }
