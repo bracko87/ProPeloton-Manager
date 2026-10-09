@@ -3,7 +3,8 @@
     "title": "Teampersonal",
     "subtitle": "Verwalten Sie verschiedene Personalrollen über eigene Rollen-Tabs und separate Mitarbeiterlisten.",
     "loading": "Personal wird geladen...",
-    "explainPositions": "Alle Personalpositionen erklären"
+    "explainPositions": "Alle Personalpositionen erklären",
+    "loadFailed": "Die Personalseite konnte nicht geladen werden. Bitte versuchen Sie es erneut."
   },
   "summary": {
     "weeklyWages": "Wöchentliche Personalkosten",
@@ -283,7 +284,8 @@
     "rejected": "{{name}} hat das Angebot abgelehnt.",
     "minimumWeeklySalary": "Das mindestens akzeptierte Wochengehalt beträgt {{salary}}.",
     "wantsCloserTo": "{{name}} möchte ein Wochengehalt näher an {{salary}}.",
-    "offerFailed": "Die Vertragsverhandlung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
+    "offerFailed": "Die Vertragsverhandlung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.",
+    "quoteFailed": "Das Vertragsangebot konnte nicht geladen werden. Bitte versuchen Sie es erneut."
   },
   "course": {
     "title": "Personalkurs",
@@ -294,7 +296,10 @@
     "start": "Kurs starten",
     "starting": "Wird gestartet...",
     "none": "Für diese Personalrolle sind noch keine Kursoptionen konfiguriert. Dadurch wird verhindert, dass ein falscher Kurstyp gestartet wird, bevor die entsprechenden Backend-Kurscodes für diese Rolle hinzugefügt wurden.",
-    "back": "Zurück zum Personal"
+    "back": "Zurück zum Personal",
+    "startedWithTarget": "{{name}} hat den Kurs {{course}} begonnen. Voraussichtlicher Abschluss: {{date}}.",
+    "started": "{{name}} hat eine Personalschulung begonnen.",
+    "startFailed": "Die Personalschulung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
   },
   "information": {
     "title": "Personalpositionen erklärt",
