@@ -10000,6 +10000,8 @@ export default function OverviewPage() {
           onPrimary={handleStartOverviewTutorial}
           onSecondary={handleSkipOverviewTutorial}
           onClose={handleCloseOverviewTutorial}
+          onDismiss={() => void handleCloseOverviewTutorial()}
+          dismissLabel={t("help:tutorialControl.dismiss")}
         />
       ) : null}
 
@@ -10034,6 +10036,8 @@ export default function OverviewPage() {
                 : undefined
             }
             onClose={handleClose}
+            onDismiss={() => void handleCloseOverviewTutorial()}
+            dismissLabel={t("help:tutorialControl.dismiss")}
             compact={activeStep.compact}
           />
         </>
@@ -10050,6 +10054,8 @@ export default function OverviewPage() {
           onPrimary={handleStartMenuTutorial}
           onSecondary={handleSkipMenuTutorial}
           onClose={handleSkipMenuTutorial}
+          onDismiss={() => void handleSkipMenuTutorial()}
+          dismissLabel={t("help:tutorialControl.dismiss")}
         />
       ) : null}
 
@@ -10072,6 +10078,8 @@ export default function OverviewPage() {
             }
             onPrimary={handleNextMenuTutorialStep}
             onClose={handleCloseMenuTutorial}
+            onDismiss={() => void handleSkipMenuTutorial()}
+            dismissLabel={t("help:tutorialControl.dismiss")}
             compact={menuTutorialSteps[menuTutorialStepIndex].compact}
           />
         </>
