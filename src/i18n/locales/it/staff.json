@@ -231,7 +231,8 @@
     "courseInProgressButton": "Corso in corso",
     "sendOnCourse": "Invia corso",
     "release": "Rilascio",
-    "scoutingReports": "Relazioni di scouting"
+    "scoutingReports": "Relazioni di scouting",
+    "completionDate": "Completamento: {{date}}"
   },
   "release": {
     "title": "Personale addetto alla liberazione",
@@ -526,5 +527,31 @@
   },
   "legacyUi": {
     "unlockDevelopingTeam": "Sblocca il team di sviluppo nelle preferenze."
+  },
+  "additionalEffects": {
+    "trainingEfficiency": "{{value}}% efficienza allenamento",
+    "developmentSupport": "{{value}}% supporto allo sviluppo",
+    "overloadRisk": "{{value}}% rischio di sovraccarico",
+    "dailyTrainingOutput": "{{value}}% rendimento allenamento giornaliero",
+    "riderDevelopmentSupport": "{{value}}% supporto allo sviluppo dei corridori",
+    "combinedDevelopmentSupport": "{{value}}% supporto combinato allo sviluppo",
+    "combinedOverloadRisk": "{{value}}% rischio combinato di sovraccarico",
+    "u16CoachingSupport": "{{value}}% supporto allenatore U16",
+    "focusTrainingEfficiency": "{{value}}% efficienza allenamento ({{focus}})"
+  },
+  "infrastructureWarnings": {
+    "trainingCenter": "Il centro di allenamento di livello 0 limita parte dei bonus dello staff.",
+    "medicalCenter": "Il centro medico di livello 0 limita parte dei bonus medici.",
+    "mechanicsWorkshop": "L'officina di livello 0 limita velocità e sconti di manutenzione. Il supporto di base resta attivo.",
+    "scoutingOffice": "L'ufficio scouting di livello 0 limita parte dei bonus di scouting."
+  },
+  "contractDisplay": {
+    "noDate": "Data contratto non disponibile",
+    "missingDate": "Scadenza del contratto non disponibile",
+    "expired": "Scaduto",
+    "seasonDate": "Stagione {{season}} - {{date}}"
+  },
+  "roleInfo": {
+    "capacityFallback": "La capacità dipende dall'attuale limite per questo ruolo."
   }
 }
