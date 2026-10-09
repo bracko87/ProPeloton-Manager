@@ -170,11 +170,11 @@
   "races": {
     "lastTitle": "Letztes Teamrennen",
     "lastSubtitle": "Das zuletzt vollständig beendete Rennen Ihres ersten Teams oder Entwicklungsteams.",
-    "loadingLast": "Letztes vollständig beendetes Rennen wird geladen...",
-    "noLast": "Für das erste Team oder Entwicklungsteam wurde noch kein vollständig beendetes Rennen gefunden.",
+    "loadingLast": "Letztes abgeschlossenes Rennen wird geladen…",
+    "noLast": "Noch kein abgeschlossenes Rennen des ersten oder Entwicklungsteams gefunden.",
     "nextTitle": "Nächstes Teamrennen",
     "nextSubtitle": "Das nächste gemeldete Rennen, das noch nicht gestartet ist.",
-    "loadingNext": "Nächster eingereichter Race Plan wird geladen...",
+    "loadingNext": "Nächster eingereichter Rennplan wird geladen…",
     "noNext": "Für das erste Team oder Entwicklungsteam wurde noch kein bevorstehendes gemeldetes Rennen gefunden.",
     "upcomingTitle": "Kommende Termine",
     "upcomingSubtitle": "Die nächsten fünf angenommenen Rennen, Rennfristen und Club-Meilensteine.",
@@ -187,7 +187,8 @@
     "noTodaySubtitle": "Für den aktuellen Spieltag sind keine Rennen angesetzt.",
     "noRace": "Noch kein Rennen gefunden",
     "stages": "{{count}} Etappen",
-    "today": "Heute"
+    "today": "Heute",
+    "noFinishedClassification": "Noch keine abgeschlossene Rennklassifikation vorhanden."
   },
   "squad": {
     "title": "Kaderstatus",
