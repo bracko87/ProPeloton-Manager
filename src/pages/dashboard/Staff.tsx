@@ -3054,6 +3054,22 @@ function getLastCourseInfo(row: ClubStaffRow) {
   }
 }
 
+function translateStaffCourseGain(gain: string, t: TFunction): string {
+  const match = gain.match(/^([+-]\\d+(?:\\.\\d+)?)\\s+(.+)$/)
+  if (!match) return gain
+
+  const [, amount, label] = match
+  const attributeKey = ATTRIBUTE_TRANSLATION_KEYS[label as keyof typeof ATTRIBUTE_TRANSLATION_KEYS]
+  const qualityKey = QUALITY_TRANSLATION_KEYS[label as keyof typeof QUALITY_TRANSLATION_KEYS]
+  if (attributeKey || qualityKey) return amount + ' ' + t(attributeKey ?? qualityKey)
+
+  // Support role-specific gain labels without exposing raw English strings.
+  const key = label
+    .replace(/[^a-zA-Z0-9]+(.)/g, (_, next: string) => next.toUpperCase())
+    .replace(/^./, char => char.toLowerCase())
+  return amount + ' ' + t('courseGainLabels.' + key, { defaultValue: label })
+}
+
 function localizeStaffCourseValue(
   role: StaffRole,
   code: string | null | undefined,
@@ -3992,7 +4008,7 @@ function StaffDetailModal({
                         key={gain}
                         className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-green-800"
                       >
-                        {gain}
+                        {translateStaffCourseGain(gain, t)}
                       </span>
                     ))}
                   </div>
@@ -5583,7 +5599,7 @@ export default function StaffPage() {
                             key={gain}
                             className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-green-800"
                           >
-                            {gain}
+                            {translateStaffCourseGain(gain, t)}
                           </span>
                         ))}
                       </div>
