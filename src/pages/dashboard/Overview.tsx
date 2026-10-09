@@ -1718,11 +1718,13 @@ function normalizeOverviewRaceBase(
  * unchanged for gameplay logic.
  */
 function formatOverviewRiderRole(value: unknown): string | null {
+  // Presentation only. Keep the original role enum for racing rules.
   const text = asString(value, "")
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-  return text ? text.replace(/\b\w/g, character => character.toUpperCase()) : null
+    .toLowerCase()
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : null
 }
 
 /**
