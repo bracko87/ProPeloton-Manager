@@ -597,7 +597,190 @@
     "seasonDate": "Season {{season}} - {{date}}"
   },
   "roleInfo": {
-    "capacityFallback": "Capacity follows the current staff-role limit."
+    "capacityFallback": "Capacity follows the current staff-role limit.",
+    "head_coach": {
+      "purpose": "Leads regular training strategy, training quality, fatigue-aware planning and long-term rider development.",
+      "capacitySummary": "One Head Coach for the first team.",
+      "attributes": [
+        "Training controls session quality and focus precision.",
+        "Recovery Planning improves load balancing, intensity selection and rest decisions.",
+        "Youth Development strengthens plans and development support for younger riders.",
+        "Experience and Leadership improve consistency, role awareness and team-wide coordination.",
+        "Loyalty provides a smaller reliability contribution."
+      ],
+      "gameplay": [
+        "Provides passive training, development, youth-development and overload-risk effects.",
+        "Can optionally manage the rolling Today, Tomorrow and Day +2 regular-training plan.",
+        "Courses and overlapping assignments can reduce or pause the contribution."
+      ]
+    },
+    "trainer": {
+      "purpose": "Supports the Head Coach by improving daily training delivery, progression quality and workload management.",
+      "capacitySummary": "Up to five Trainers can support the first team.",
+      "attributes": [
+        "Daily Training improves training contribution.",
+        "Training Efficiency supports session delivery and workload handling.",
+        "Potential Growth supports long-term development.",
+        "Experience and Leadership improve consistency and coaching coordination.",
+        "Loyalty provides a smaller reliability contribution."
+      ],
+      "gameplay": [
+        "Trainer contributions combine with the Head Coach in the live regular-training system.",
+        "More Trainers increase support, but each active course or assignment reduces available contribution.",
+        "Trainers support planning; the Head Coach remains the automation owner."
+      ]
+    },
+    "team_doctor": {
+      "purpose": "Leads diagnosis, injury and sickness prevention, medical recovery and return-to-fitness decisions.",
+      "capacitySummary": "Capacity follows the live medical-staff role limit.",
+      "attributes": [
+        "Recovery and Prevention reduce health risk and recovery duration.",
+        "Diagnosis and Experience support medical-case quality.",
+        "Leadership coordinates the medical group.",
+        "Potential and Loyalty provide supporting contributions."
+      ],
+      "gameplay": [
+        "Contributes to combined injury and sickness risk reduction.",
+        "Improves return-to-fitness speed, daily recovery support and health-case fatigue floors.",
+        "The contribution can pause while the staff member is unavailable or on a course."
+      ]
+    },
+    "physio": {
+      "purpose": "Specialises in rehabilitation, physical recovery, fatigue management and a safe return to full fitness.",
+      "capacitySummary": "Capacity follows the live medical-staff role limit.",
+      "attributes": [
+        "Rehabilitation drives recovery support.",
+        "Recovery Speed improves the return-to-fitness process.",
+        "Experience supports difficult rehabilitation cases.",
+        "Leadership, Potential and Loyalty provide secondary support."
+      ],
+      "gameplay": [
+        "Combines with the Team Doctor and Nutritionist in the live medical-support calculation.",
+        "Supports recovery duration, daily recovery and health-case fatigue handling.",
+        "The contribution can pause while unavailable or on a course."
+      ]
+    },
+    "nutritionist": {
+      "purpose": "Supports recovery routines, rider fitness consistency and nutrition planning around training and competition.",
+      "capacitySummary": "Capacity follows the live medical-staff role limit.",
+      "attributes": [
+        "Nutrition Planning improves the main contribution.",
+        "Recovery Support helps fatigue and health recovery.",
+        "Consistency is represented by Loyalty.",
+        "Experience, Potential and Leadership provide secondary support."
+      ],
+      "gameplay": [
+        "Combines with the Team Doctor and Physio in the live medical-support calculation.",
+        "Supports daily recovery, health-risk reduction and fitness consistency.",
+        "Now also contributes to race feeding, hydration/fatigue control, post-stage recovery and health protection in Race Preparation."
+      ]
+    },
+    "mechanic": {
+      "purpose": "Controls bike setup quality, maintenance efficiency, equipment condition protection and mechanical reliability.",
+      "capacitySummary": "Capacity follows the live mechanic role limit.",
+      "attributes": [
+        "Setup improves equipment configuration quality.",
+        "Reliability reduces equipment wear and mechanical risk.",
+        "Experience supports consistent race-day technical work.",
+        "Discipline, Innovation and Loyalty provide supporting contributions."
+      ],
+      "gameplay": [
+        "Provides setup-quality, condition-loss and mechanical-risk effects.",
+        "Supports maintenance speed and cost when the Mechanics Workshop is sufficiently developed.",
+        "The canonical backend mechanic effects are used by maintenance and race systems."
+      ]
+    },
+    "sport_director": {
+      "purpose": "Owns race tactics, in-race organisation, motivation, teamwork and domestique coordination.",
+      "capacitySummary": "Capacity follows the live Sport Director role limit.",
+      "attributes": [
+        "Tactics improves race-plan decision quality.",
+        "Organization supports execution and staff coordination.",
+        "Motivation and Leadership support morale and teamwork.",
+        "Experience, Long-Term Vision and Loyalty provide secondary value."
+      ],
+      "gameplay": [
+        "The role, contracts, courses and capacity are live.",
+        "Selected Sport Directors now generate live Race Support from their staff quality and availability.",
+        "Race Support is consumed by the universal race engine as a capped readiness/performance and preparation-support bonus."
+      ]
+    },
+    "scout_analyst": {
+      "purpose": "Evaluates riders, improves scouting accuracy, discovers prospects and supports transfer research.",
+      "capacitySummary": "Capacity follows the live scouting role limit.",
+      "attributes": [
+        "Evaluation improves report quality.",
+        "Accuracy improves confidence in revealed information.",
+        "Network supports discovery coverage.",
+        "Prospect Sense, Communication and Loyalty provide supporting value."
+      ],
+      "gameplay": [
+        "Rider scouting tasks and due-task completion are live.",
+        "Scouting quality and prospect visibility use the staff role.",
+        "Broader transfer-intelligence features can continue to expand around the live scouting core."
+      ]
+    },
+    "u23_head_coach": {
+      "purpose": "Manages developing-team training, young-rider development and stage-by-stage U23 race tactics.",
+      "capacitySummary": "One U23 Head Coach after the Developing Team is unlocked.",
+      "attributes": [
+        "Youth Training controls regular-training quality for the developing team.",
+        "Training Efficiency supports load and recovery planning.",
+        "Youth Development improves long-term progression decisions.",
+        "Experience and Leadership improve consistency and race readiness.",
+        "Loyalty provides a smaller reliability contribution."
+      ],
+      "gameplay": [
+        "Can manage the same rolling three-day training system for U23 riders once hired and enabled.",
+        "Automatic stage-by-stage U23 race planning is live, including initial generation on race-plan submission and regeneration after completed stages.",
+        "When U23 automation is enabled, coach quality also contributes a capped Race Support bonus to the universal race engine."
+      ]
+    },
+    "youth_academy_director": {
+      "purpose": "Runs the U16 academy programme, operating budget, recruitment delegation, camps and spending requests.",
+      "capacitySummary": "One Youth Academy Director after the Premium Youth Academy is activated.",
+      "attributes": [
+        "Expertise supports programme quality and financial recommendations.",
+        "Leadership supports delegated recruitment and academy decisions.",
+        "Efficiency improves operating planning and budget use.",
+        "Experience improves consistency of academy recommendations."
+      ],
+      "gameplay": [
+        "Included automatically at average quality on first Youth Academy activation.",
+        "Can own delegated recruitment, race-entry, camp, equipment and prospect-negotiation decisions.",
+        "Youth Academy V1 has no infrastructure dependency."
+      ]
+    },
+    "u16_head_coach": {
+      "purpose": "Controls U16 training, workload, development emphasis, readiness and normal youth-race squad selection.",
+      "capacitySummary": "One U16 Head Coach after the Premium Youth Academy is activated.",
+      "attributes": [
+        "Expertise represents U16 training quality.",
+        "Efficiency supports workload and recovery planning.",
+        "Potential supports long-term development decisions.",
+        "Leadership supports race selection and team development."
+      ],
+      "gameplay": [
+        "Included automatically at average quality on first Youth Academy activation.",
+        "Owns race squad selection when that responsibility is delegated.",
+        "Youth Academy V1 has no infrastructure dependency."
+      ]
+    },
+    "youth_scout": {
+      "purpose": "Discovers and assesses U16 prospects inside the scouting range funded from the Youth Academy budget.",
+      "capacitySummary": "One optional Youth Scout per activated Premium Youth Academy.",
+      "attributes": [
+        "Expertise improves prospect evaluation.",
+        "Experience improves discovery volume and network quality.",
+        "Efficiency improves assessment confidence.",
+        "Potential supports talent recognition."
+      ],
+      "gameplay": [
+        "Not assigned automatically; the manager may hire a Youth Scout from the Staff market.",
+        "Scouting budget controls geographic reach: Local, Regional, Continental or Worldwide.",
+        "Scout quality controls discovery effectiveness and assessment quality, not hidden Potential."
+      ]
+    }
   },
   "qualityExplanation": {
     "coachingTitle": "How Coaching Quality Works",
