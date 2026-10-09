@@ -468,7 +468,8 @@
     "releasing": "Releasing...",
     "removedFromList": "Rider removed from transfer list.",
     "cancelListingFailed": "Could not cancel transfer listing.",
-    "releasePreviewFailed": "Could not load release preview."
+    "releasePreviewFailed": "Could not load release preview.",
+    "gameDateUnavailable": "Game date unavailable"
   },
   "ownedTransfer": {
     "title": "Transfer List",
