@@ -845,5 +845,25 @@
     "medicalCenter": "Centro medico",
     "mechanicsWorkshop": "Officina meccanica",
     "scoutingOffice": "Ufficio scouting"
+  },
+  "courseGainLabels": {
+    "academyManagement": "Gestione dell'accademia",
+    "assessmentAccuracy": "Precisione di valutazione",
+    "budgetEfficiency": "Efficienza del budget",
+    "communication": "Comunicazione",
+    "discipline": "Disciplina",
+    "discoveryNetwork": "Rete di scoperta dei talenti",
+    "innovation": "Innovazione",
+    "longTermPlanning": "Pianificazione a lungo termine",
+    "longTermVision": "Visione a lungo termine",
+    "motivation": "Motivazione",
+    "potential": "Potenziale",
+    "prospectSense": "Fiuto per i talenti",
+    "raceSelection": "Selezione per le gare",
+    "talentSense": "Individuazione dei talenti",
+    "u16Training": "Allenamento U16",
+    "workloadManagement": "Gestione del carico",
+    "youthEvaluation": "Valutazione dei giovani",
+    "youthTraining": "Allenamento giovanile"
   }
 }
