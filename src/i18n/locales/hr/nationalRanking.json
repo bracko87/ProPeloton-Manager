@@ -1,12 +1,12 @@
 {
-  "title": "Nacionalni poredak — {{country}}",
+  "title": "Nacionalno prvenstvo — {{country}}",
   "eyebrow": "Nacionalno natjecanje",
   "description": "Individualni nacionalni poredak vozača, kvalifikacije za prvenstvo, nacionalna obveza i individualna priprema. Bodovi ekipnog poretka nisu pogođeni.",
   "country": "Država",
-  "loading": "Učitavanje nacionalnog poretka…",
+  "loading": "Učitavanje nacionalnog prvenstva…",
   "errors": {
-    "unavailable": "Nacionalni poredak nije dostupan.",
-    "load": "Nije moguće učitati nacionalni poredak.",
+    "unavailable": "Podaci nacionalnog prvenstva nisu dostupni.",
+    "load": "Nije moguće učitati nacionalno prvenstvo.",
     "save": "Nije moguće spremiti plan vozača."
   },
   "cards": {
