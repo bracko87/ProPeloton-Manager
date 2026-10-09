@@ -9,6 +9,7 @@ import {
 import { supabase } from '../../lib/supabase'
 import {
   getTutorialProgress,
+  isTutorialActiveInThisSession,
   saveTutorialProgress,
 } from '../../lib/tutorialProgress'
 import TutorialOverlay from './TutorialOverlay'
@@ -179,12 +180,27 @@ export default function FeatureTutorialHost(): JSX.Element | null {
 
       setLoading(true)
 
+      // A manager may disable all contextual tutorial prompts persistently.
+      // Explicit Help restarts are still allowed for the selected tutorial.
+      const { data: tutorialPrefs, error: prefsError } = await supabase
+        .from('user_tutorial_preferences')
+        .select('auto_tutorials_disabled')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (!alive) return
+      if (prefsError) {
+        console.warn('Could not load tutorial prompt preference:', prefsError.message)
+        // Do not auto-open prompts while the preference is unknown.
+        setLoading(false)
+        return
+      }
+      const autoTutorialsDisabled = tutorialPrefs?.auto_tutorials_disabled === true
       const autoStartTutorial = window.sessionStorage.getItem('ppm:auto-start-tutorial')
       const isCoreBridge =
         autoStartTutorial === routeModule.key &&
         Object.prototype.hasOwnProperty.call(CORE_BRIDGE_FLOW, routeModule.key)
 
-      if (isCoreBridge) {
+      if (isCoreBridge && (!autoTutorialsDisabled || isTutorialActiveInThisSession(routeModule.key))) {
         if (!alive) return
         setModule(routeModule)
         setStepIndex(0)
@@ -224,6 +240,11 @@ export default function FeatureTutorialHost(): JSX.Element | null {
         return
       }
 
+      if (autoTutorialsDisabled) {
+        setMode('closed')
+        setLoading(false)
+        return
+      }
       const eligible = await isContextuallyEligible(resolvedModule)
       if (!alive) return
 
@@ -276,8 +297,9 @@ export default function FeatureTutorialHost(): JSX.Element | null {
     navigate(bridge.nextRoute)
   }
 
-  function stopCoreBridge(): void {
+  async function stopCoreBridge(): Promise<void> {
     window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+    if (module) await saveTutorialProgress(module.key, 'skipped', null)
     setMode('closed')
   }
 
@@ -358,7 +380,9 @@ export default function FeatureTutorialHost(): JSX.Element | null {
       return
     }
 
-    await saveTutorialProgress(module.key, 'started', activeStep?.key ?? null)
+    // Closing an unfinished tutorial is a persistent dismissal, not a
+    // resumable "started" state that can unexpectedly reopen.
+    await saveTutorialProgress(module.key, 'skipped', null)
     setMode('closed')
   }
 
@@ -400,8 +424,8 @@ export default function FeatureTutorialHost(): JSX.Element | null {
           }
           secondaryAction="Finish for now"
           onPrimary={() => void continueCoreBridge()}
-          onSecondary={stopCoreBridge}
-          onClose={stopCoreBridge}
+          onSecondary={() => void stopCoreBridge()}
+          onClose={() => void stopCoreBridge()}
           compact={bridgeStep.compact}
         />
       </>
