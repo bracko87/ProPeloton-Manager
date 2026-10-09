@@ -432,6 +432,8 @@ export default function FeatureTutorialHost(): JSX.Element | null {
           onPrimary={() => void continueCoreBridge()}
           onSecondary={() => void stopCoreBridge()}
           onClose={() => void stopCoreBridge()}
+          onDismiss={() => void stopCoreBridge()}
+          dismissLabel={t('tutorialControl.dismiss')}
           compact={bridgeStep.compact}
         />
       </>
@@ -452,6 +454,8 @@ export default function FeatureTutorialHost(): JSX.Element | null {
         onPrimary={() => void startTutorial()}
         onSecondary={() => void skipTutorial()}
         onClose={() => void skipTutorial()}
+        onDismiss={() => void skipTutorial()}
+        dismissLabel={t('tutorialControl.dismiss')}
       />
     )
   }
@@ -477,6 +481,8 @@ export default function FeatureTutorialHost(): JSX.Element | null {
         onPrimary={() => void nextStep()}
         onSecondary={() => void (isLastStep ? learnMore() : skipTutorial())}
         onClose={() => void closeTutorial()}
+        onDismiss={() => void skipTutorial()}
+        dismissLabel={t('tutorialControl.dismiss')}
         compact={activeStep.compact}
       />
     </>
