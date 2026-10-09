@@ -845,5 +845,25 @@
   },
   "legacyUi": {
     "unlockDevelopingTeam": "Schalte zuerst das Entwicklungsteam in den Einstellungen frei."
+  },
+  "courseGainLabels": {
+    "academyManagement": "Akademieleitung",
+    "assessmentAccuracy": "Bewertungsgenauigkeit",
+    "budgetEfficiency": "Budgeteffizienz",
+    "communication": "Kommunikation",
+    "discipline": "Disziplin",
+    "discoveryNetwork": "Talentsichtungsnetzwerk",
+    "innovation": "Innovation",
+    "longTermPlanning": "Langfristige Planung",
+    "longTermVision": "Langfristige Vision",
+    "motivation": "Motivation",
+    "potential": "Potenzial",
+    "prospectSense": "Talentgespür",
+    "raceSelection": "Rennauswahl",
+    "talentSense": "Talenterkennung",
+    "u16Training": "U16-Training",
+    "workloadManagement": "Belastungssteuerung",
+    "youthEvaluation": "Nachwuchsbewertung",
+    "youthTraining": "Nachwuchstraining"
   }
 }
