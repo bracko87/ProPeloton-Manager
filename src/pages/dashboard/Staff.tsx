@@ -3,6 +3,7 @@ import { useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { supabase } from '../../lib/supabase'
+import appI18n from '../../i18n'
 import PremiumFeatureLock from '../../components/premium/PremiumFeatureLock'
 
 type StaffRole =
@@ -979,15 +980,14 @@ function formatGameDateShort(value: string | null | undefined) {
   const date = parseIsoDateUtc(value)
   if (!date) return 'No contract date'
 
-  const shortLabel = date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    timeZone: 'UTC',
+  const language = appI18n.resolvedLanguage ?? appI18n.language ?? 'en'
+  const shortLabel = date.toLocaleDateString(language === 'sr-Latn' ? 'sr-Latn-RS' : language, {
+    day: '2-digit', month: 'short', timeZone: 'UTC',
   })
-
   const seasonNumber = getSeasonNumberFromDate(value)
-
-  return `Season ${seasonNumber ?? '?'} - ${shortLabel}`
+  return appI18n.t('contractDisplay.seasonDate', {
+    ns: 'staff', season: seasonNumber ?? '?', date: shortLabel,
+  })
 }
 
 function getDaysRemaining(dateValue: string | null | undefined, currentGameDate: string | null) {
@@ -1012,7 +1012,10 @@ function formatContractUi(
     }
   }
 
-  const primary = t('contractDisplay.seasonDate', { season: getSeasonNumberFromDate(dateValue) ?? '?', date: parseIsoDateUtc(dateValue)?.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' }) ?? '—' })
+  const primary = t('contractDisplay.seasonDate', { season: getSeasonNumberFromDate(dateValue) ?? '?', date: parseIsoDateUtc(dateValue)?.toLocaleDateString(
+      appI18n.resolvedLanguage === 'sr-Latn' ? 'sr-Latn-RS' : (appI18n.resolvedLanguage ?? appI18n.language ?? 'en'),
+      { day: '2-digit', month: 'short', timeZone: 'UTC' },
+    ) ?? '—' })
   const daysRemaining = getDaysRemaining(dateValue, currentGameDate)
 
   let secondary = ''
@@ -1541,7 +1544,10 @@ function translateStaffEffect(effect: string, t: TFunction): string {
     const trainingFocus = percentage[2].match(/^(.+) training efficiency$/)
     if (trainingFocus) {
       return t('additionalEffects.focusTrainingEfficiency', {
-        value: percentage[1], focus: trainingFocus[1],
+        value: percentage[1],
+        focus: ATTRIBUTE_TRANSLATION_KEYS[trainingFocus[1] as keyof typeof ATTRIBUTE_TRANSLATION_KEYS]
+          ? t(ATTRIBUTE_TRANSLATION_KEYS[trainingFocus[1] as keyof typeof ATTRIBUTE_TRANSLATION_KEYS])
+          : trainingFocus[1],
       })
     }
   }
