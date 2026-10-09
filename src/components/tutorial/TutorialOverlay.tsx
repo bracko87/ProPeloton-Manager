@@ -26,6 +26,8 @@ type TutorialOverlayProps = {
   onSecondary?: () => void
   onFinish?: () => void
   onClose?: () => void
+  onDismiss?: () => void
+  dismissLabel?: string
   primaryDisabled?: boolean
   compact?: boolean
 }
@@ -143,6 +145,8 @@ export default function TutorialOverlay({
   onSecondary,
   onFinish,
   onClose,
+  onDismiss,
+  dismissLabel = 'Dismiss tutorial',
   primaryDisabled = false,
   compact = false,
 }: TutorialOverlayProps): JSX.Element | null {
@@ -679,7 +683,16 @@ export default function TutorialOverlay({
 
         <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-4">
           <div className="flex w-full items-center justify-between gap-4">
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              {onDismiss ? (
+                <button
+                  type="button"
+                  onClick={onDismiss}
+                  className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-800 hover:bg-red-100"
+                >
+                  {dismissLabel}
+                </button>
+              ) : null}
               {localizedSecondaryAction &&
               (onSecondary || smoothStartIsActive) ? (
                 <button
