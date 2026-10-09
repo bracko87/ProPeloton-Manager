@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthProvider'
 import {
   advancedTutorialModules,
@@ -149,6 +150,7 @@ async function resolveYouthTutorial(
 
 export default function FeatureTutorialHost(): JSX.Element | null {
   const { user, loading: authLoading } = useAuth()
+  const { t } = useTranslation('help')
   const location = useLocation()
   const navigate = useNavigate()
   const routeModule = useMemo(
@@ -375,7 +377,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
     if (!module) return
 
     if (mode === 'core-bridge') {
-      stopCoreBridge()
+      await stopCoreBridge()
       return
     }
 
@@ -426,7 +428,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
               ? bridge.primaryAction
               : bridgeStep.primaryAction ?? 'Next'
           }
-          secondaryAction="Finish for now"
+          secondaryAction={t('tutorialControl.finishForNow')}
           onPrimary={() => void continueCoreBridge()}
           onSecondary={() => void stopCoreBridge()}
           onClose={() => void stopCoreBridge()}
@@ -441,10 +443,12 @@ export default function FeatureTutorialHost(): JSX.Element | null {
       <TutorialOverlay
         open
         variant="invite"
-        title={`Need help with ${module.title}?`}
-        body={module.description}
-        primaryAction="Start tutorial"
-        secondaryAction="No thanks"
+        title={t('tutorialControl.inviteTitle', {
+          feature: t('tutorialModules.' + module.key + '.title', { defaultValue: module.title }),
+        })}
+        body={t('tutorialModules.' + module.key + '.description', { defaultValue: module.description })}
+        primaryAction={t('tutorialControl.startTutorial')}
+        secondaryAction={t('tutorialControl.noThanks')}
         onPrimary={() => void startTutorial()}
         onSecondary={() => void skipTutorial()}
         onClose={() => void skipTutorial()}
