@@ -67,7 +67,7 @@ begin
   return jsonb_build_object('status','confirmed','edition_id',e.id,'rider_id',en.rider_id,
     'duty_type',p_duty_type,'event_date',v_event_date,'blocked_from',v_from,'blocked_until',v_until);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.national_championship_lifecycle_reconcile_v1()
@@ -218,5 +218,5 @@ begin
     'startlists_synced',v_startlists_synced
   );
 end;
-$function$
+$function$;
 
