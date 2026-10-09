@@ -245,7 +245,9 @@
     "warning": "Der Mitarbeiter wird sofort aus dem Personal entfernt. Die Boni dieses Platzes entfallen, bis Sie einen Ersatz verpflichten.",
     "payment": "Der Club zahlt einmalig eine Abfindung in Höhe von 6 Wochengehältern.",
     "releasing": "Wird freigestellt...",
-    "confirm": "Freistellung bestätigen"
+    "confirm": "Freistellung bestätigen",
+    "successMessage": "{{name}} wurde als {{role}} entlassen. Gezahlt wurde eine Abfindung von {{amount}}.",
+    "failureMessage": "Der Mitarbeiter konnte nicht entlassen werden. Bitte versuchen Sie es erneut."
   },
   "contract": {
     "title": "Vertrag verlängern",
@@ -274,7 +276,14 @@
     "submitting": "Wird gesendet...",
     "submit": "Angebot senden",
     "extended": "Personalvertrag erfolgreich verlängert.",
-    "discussionCompleted": "Vertragsverhandlung abgeschlossen."
+    "discussionCompleted": "Vertragsverhandlung abgeschlossen.",
+    "invalidWeeklySalary": "Bitte geben Sie ein gültiges Wochengehalt ein.",
+    "acceptedWithTerms": "{{name}} hat den neuen Vertrag angenommen: {{salary}} pro Woche bis Saison {{season}}.",
+    "countered": "{{name}} wünscht bessere Vertragsbedingungen.",
+    "rejected": "{{name}} hat das Angebot abgelehnt.",
+    "minimumWeeklySalary": "Das mindestens akzeptierte Wochengehalt beträgt {{salary}}.",
+    "wantsCloserTo": "{{name}} möchte ein Wochengehalt näher an {{salary}}.",
+    "offerFailed": "Die Vertragsverhandlung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
   },
   "course": {
     "title": "Personalkurs",
