@@ -1491,6 +1491,7 @@ function MultiLineTrendChart({
   selectableSeries = false,
   lineWidth = 3,
   dotRadius = 4.5,
+  axisFontSize = 10,
 }: {
   series: Array<{
     name: string
@@ -1506,6 +1507,7 @@ function MultiLineTrendChart({
   selectableSeries?: boolean
   lineWidth?: number
   dotRadius?: number
+  axisFontSize?: number
 }) {
   const [hiddenSeriesNames, setHiddenSeriesNames] = useState<Set<string>>(
     () => new Set(),
@@ -1655,7 +1657,7 @@ function MultiLineTrendChart({
                 y={y}
                 textAnchor="end"
                 dominantBaseline="middle"
-                className="fill-slate-400 text-[10px]"
+                className="fill-slate-400" fontSize={axisFontSize}
               >
                 {Math.round(value)}
               </text>
@@ -1673,7 +1675,7 @@ function MultiLineTrendChart({
               x={xFor(index)}
               y={height - 10}
               textAnchor="middle"
-              className="fill-slate-400 text-[10px]"
+              className="fill-slate-400" fontSize={axisFontSize}
             >
               {label}
             </text>
@@ -2416,6 +2418,7 @@ function RichRiderPerformanceAnalysisPage({
               yMin={0}
               yMax={100}
               yTickCount={11}
+              axisFontSize={8}
               showVerticalGridLines
               selectableSeries
               lineWidth={1.5}
@@ -5286,6 +5289,20 @@ export default function RiderProfilePage({
     gameDate ?? null,
     selectedRider?.contract_expires_season,
   )
+  const localizedContractEnd = selectedRider?.contract_expires_season
+    ? t('ownedRenewal.seasonDate', {
+        season: selectedRider.contract_expires_season,
+        date: formatShortGameDate(selectedRider.contract_expires_at),
+      })
+    : contractExpiryUi.label
+  const contractDaysRemaining = getDaysRemaining(
+    selectedRider?.contract_expires_at, gameDate ?? null,
+  )
+  const localizedContractNote = contractDaysRemaining === null
+    ? t('ownedContract.gameDateUnavailable')
+    : t(contractDaysRemaining === 1 ? 'ownedProfile.dayRemaining' : 'ownedProfile.daysRemaining', {
+        count: contractDaysRemaining,
+      })
   const profileAge = getAgeFromBirthDate(selectedRider?.birth_date, gameDate ?? null)
   const movementWindowInfo = getMovementWindowInfo(gameDate)
   const isU23Ineligible = currentTeamType === 'developing' && profileAge !== null && profileAge >= 24
@@ -5594,7 +5611,7 @@ export default function RiderProfilePage({
                       <DetailRow label={t('ownedProfile.weeklyWage')} value={formatWeeklySalary(selectedRider.salary)} />
                       <DetailRow label={t('ownedProfile.marketValue')} value={formatCompactMoneyValue(selectedRider.market_value)} />
                       <DetailRow label={t('ownedProfile.askingPrice')} value={askingPriceDisplay} />
-                      <DetailRow label={t('ownedProfile.contractEnd')} value={contractExpiryUi.label} valueClassName={contractExpiryUi.valueClassName} />
+                      <DetailRow label={t('ownedProfile.contractEnd')} value={localizedContractEnd} valueClassName={contractExpiryUi.valueClassName} />
                       <DetailRow label={t('ownedProfile.availability')} value={healthUi.label} />
                     </div>
                   </div>
@@ -5722,8 +5739,8 @@ export default function RiderProfilePage({
                   <div className="divide-y divide-slate-100">
                     <DetailRow label={t('ownedProfile.weeklyWage')} value={formatWeeklySalary(selectedRider.salary)} />
                     <DetailRow label={t('ownedContract.seasonWage')} value={formatMoney(getSeasonWage(selectedRider.salary))} />
-                    <DetailRow label={t('ownedProfile.contractEnd')} value={contractExpiryUi.label} valueClassName={contractExpiryUi.valueClassName} />
-                    {contractExpiryUi.sublabel ? <DetailRow label={t('ownedContract.contractNote')} value={contractExpiryUi.sublabel} /> : null}
+                    <DetailRow label={t('ownedProfile.contractEnd')} value={localizedContractEnd} valueClassName={contractExpiryUi.valueClassName} />
+                    {selectedRider.contract_expires_at ? <DetailRow label={t('ownedContract.contractNote')} value={localizedContractNote} /> : null}
                     <DetailRow label={t('ownedProfile.marketValue')} value={formatCompactMoneyValue(selectedRider.market_value)} />
                     <DetailRow label={t('ownedProfile.askingPrice')} value={askingPriceDisplay} />
                     <DetailRow label={t('ownedContract.pricingMode')} value={selectedRider.asking_price_manual ? t('ownedContract.manual') : t('ownedContract.suggested')} />
