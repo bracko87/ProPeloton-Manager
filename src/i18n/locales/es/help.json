@@ -135,5 +135,55 @@
     "description": "Si algo se ve mal, por favor incluya el nombre de la página, nombre del equipo, nombre del ciclista, nombre de la carrera, capturas de pantalla y los pasos necesarios para reproducir el problema. Esto nos ayuda a encontrar y solucionar problemas más rápido.",
     "contact": "Contáctenos",
     "discord": "Preguntar en Discord"
+  },
+  "tutorialControl": {
+    "eyebrow": "Tutoriales",
+    "title": "Iniciar o reiniciar cualquier tutorial",
+    "description": "El tutorial inicial ayuda a los nuevos mánagers. Las guías avanzadas pueden aparecer al descubrir funciones. Puedes descartarlas o desactivar todas las sugerencias automáticas.",
+    "manual": "Manual completo del juego",
+    "autoTitle": "Tutoriales automáticos",
+    "autoOff": "Los tutoriales automáticos están desactivados. Puedes iniciarlos manualmente.",
+    "autoOn": "Pueden aparecer guías al acceder a funciones nuevas.",
+    "enableAuto": "Activar tutoriales automáticos",
+    "disableAuto": "Desactivar tutoriales automáticos",
+    "coreLabel": "Tutorial básico",
+    "featureLabel": "Tutorial de función",
+    "coreTitle": "Fundamentos de ProPeloton Manager",
+    "coreDescription": "Reinicia la introducción completa a los sistemas principales.",
+    "startRestart": "Iniciar / Reiniciar",
+    "starting": "Iniciando…",
+    "dismiss": "Descartar tutorial",
+    "dismissed": "Descartado: no aparecerá de nuevo salvo que lo reinicies.",
+    "dismissedNotice": "Tutorial descartado."
+  },
+  "tutorialModules": {
+    "national-championships": {
+      "title": "Campeonatos y clasificación nacionales",
+      "description": "Clasificación, selección nacional, preparación e historial de campeonatos."
+    },
+    "national-association": {
+      "title": "Federación y selección nacional",
+      "description": "Miembros, fondos, elecciones, convocatorias, World Nations e historial."
+    },
+    "national-coach": {
+      "title": "Seleccionador nacional",
+      "description": "Ciclistas elegibles, convocatorias, equipo final y alineaciones."
+    },
+    "youth-academy": {
+      "title": "Academia juvenil / U16",
+      "description": "Ojeadores, personal, presupuesto, carreras, clasificaciones y graduación."
+    },
+    "youth-graduation": {
+      "title": "Graduación de la academia juvenil",
+      "description": "El paso de U16 a la siguiente etapa de formación."
+    },
+    "developing-team": {
+      "title": "Equipo de desarrollo",
+      "description": "El camino U23 hacia el primer equipo."
+    },
+    "new-season": {
+      "title": "Cambio de temporada",
+      "description": "Cambios importantes al comenzar una nueva temporada."
+    }
   }
 }
