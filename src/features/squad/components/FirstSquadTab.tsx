@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import {
   openPremiumPage,
   PremiumFeatureLoading as PremiumSectionLoading,
@@ -247,7 +248,7 @@ function getVisibleNextRaceSelection<T extends {
  * UI-only formatting: never expose stored rider role enums (free_role,
  * lead_out, etc.) directly. Keep raw values in the RPC and race engine.
  */
-function formatRaceRiderRole(role: string | null | undefined, t: (key: string, options?: { defaultValue?: string }) => string): string {
+function formatRaceRiderRole(role: string | null | undefined, t: TFunction<'squad'>): string {
   if (!role?.trim()) return '—'
   const normalized = role.trim().toLowerCase().replace(/[\s-]+/g, '_')
   const human = normalized.replace(/_+/g, ' ').replace(/^./, letter => letter.toUpperCase())
