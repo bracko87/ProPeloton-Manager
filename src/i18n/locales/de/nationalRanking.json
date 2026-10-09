@@ -1,12 +1,12 @@
 {
-  "title": "Nationale Rangliste {{country}}",
+  "title": "Nationale Meisterschaft — {{country}}",
   "eyebrow": "Nationaler Wettbewerb",
   "description": "Nationale Einzelrangliste der Fahrer mit Meisterschaftsqualifikation, National Duty und individueller Rennvorbereitung. Die Team-Ranglistenpunkte werden nicht beeinflusst.",
   "country": "Land",
-  "loading": "Nationale Rangliste wird geladen…",
+  "loading": "Nationale Meisterschaft wird geladen…",
   "errors": {
-    "unavailable": "Die nationale Rangliste ist nicht verfügbar.",
-    "load": "Die nationale Rangliste konnte nicht geladen werden.",
+    "unavailable": "Daten zur nationalen Meisterschaft sind nicht verfügbar.",
+    "load": "Die nationale Meisterschaft konnte nicht geladen werden.",
     "save": "Der Fahrerplan konnte nicht gespeichert werden."
   },
   "cards": {
