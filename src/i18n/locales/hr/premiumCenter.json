@@ -14,7 +14,12 @@
     "finance": "Financijski simulator",
     "sponsors": "Sponsor Intelligence",
     "development": "Razvoj vozača",
-    "templates": "Predlošci i automatizacija"
+    "templates": "Predlošci i automatizacija",
+    "youth": "Omladinska akademija i razvoj talenata",
+    "national": "Nacionalna natjecanja",
+    "scouting": "Skautska analiza",
+    "staff": "Osoblje, trening i oporavak",
+    "infrastructure": "Infrastruktura i logistika"
   },
   "common": {
     "refresh": "Osvježi",
@@ -461,5 +466,15 @@
     "openDetail": "Otvori detaljni prikaz →",
     "nextActions": "Sljedeće aktivnosti",
     "nextActionsHint": "Sljedeće utrke i sponzorski ciljevi koji će najvjerojatnije tražiti akciju menadžera."
+  },
+  "newWorkspaces": {
+    "attention": "Zadaci koji zahtijevaju pažnju",
+    "attentionDetail": "Važne odluke i nadolazeći rokovi u tvojem klubu.",
+    "items": "stavki",
+    "clear": "Trenutačno nema hitnih odluka u praćenim područjima.",
+    "notActive": "Nije aktivirano",
+    "nationalCoach": "Izbornik reprezentacije",
+    "member": "Član saveza",
+    "noAssociation": "Nema saveza"
   }
 }
