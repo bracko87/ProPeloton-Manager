@@ -639,5 +639,11 @@
   },
   "specializations": {
     "general": "Općenito"
+  },
+  "facilityNames": {
+    "trainingCenter": "Trening centar",
+    "medicalCenter": "Medicinski centar",
+    "mechanicsWorkshop": "Mehaničarska radionica",
+    "scoutingOffice": "Skautski ured"
   }
 }
