@@ -245,7 +245,9 @@
     "warning": "This will remove the staff member from the squad immediately. Staff bonuses from this slot will stop until you sign a replacement.",
     "payment": "The club will pay a one-time release compensation equal to 6 weeks of salary.",
     "releasing": "Releasing...",
-    "confirm": "Confirm Release"
+    "confirm": "Confirm Release",
+    "successMessage": "{{name}} was released from {{role}}. Release compensation paid: {{amount}}.",
+    "failureMessage": "Could not release this staff member. Please try again."
   },
   "contract": {
     "title": "Extend Contract",
@@ -274,7 +276,14 @@
     "submitting": "Submitting...",
     "submit": "Submit Offer",
     "extended": "Staff contract extended successfully.",
-    "discussionCompleted": "Contract discussion completed."
+    "discussionCompleted": "Contract discussion completed.",
+    "invalidWeeklySalary": "Please enter a valid weekly salary.",
+    "acceptedWithTerms": "{{name}} accepted the new contract: {{salary}} per week until Season {{season}}.",
+    "countered": "{{name}} wants improved contract terms.",
+    "rejected": "{{name}} rejected the offer.",
+    "minimumWeeklySalary": "Minimum acceptable weekly salary is {{salary}}.",
+    "wantsCloserTo": "{{name}} wants a weekly salary closer to {{salary}}.",
+    "offerFailed": "Could not complete the staff contract negotiation. Please try again."
   },
   "course": {
     "title": "Staff Course",
