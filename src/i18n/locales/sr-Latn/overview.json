@@ -170,11 +170,11 @@
   "races": {
     "lastTitle": "Poslednja trka tima",
     "lastSubtitle": "Poslednja završena kompletna trka u kojoj je učestvovao prvi ili razvojni tim.",
-    "loadingLast": "Učitavanje poslednje završene kompletne trke...",
-    "noLast": "Još nije pronađena završena kompletna trka za prvi ili razvojni tim.",
+    "loadingLast": "Učitavanje poslednje završene trke…",
+    "noLast": "Još nije pronađena završena trka prvog ili razvojnog tima.",
     "nextTitle": "Sledeća trka tima",
     "nextSubtitle": "Sledeća prijavljena trka koja još nije počela.",
-    "loadingNext": "Učitavanje sledećeg prijavljenog plana trke...",
+    "loadingNext": "Učitavanje sledećeg prijavljenog plana trke…",
     "noNext": "Nije pronađena naredna prijavljena trka za prvi ili razvojni tim.",
     "upcomingTitle": "Predstojeći raspored",
     "upcomingSubtitle": "Sledećih pet prihvaćenih trka, rokova za trke i klupskih događaja.",
@@ -187,7 +187,8 @@
     "noTodaySubtitle": "Za trenutni dan u igri nema zakazanih trka.",
     "noRace": "Još nema pronađene trke",
     "stages": "{{count}} etapa",
-    "today": "Danas"
+    "today": "Danas",
+    "noFinishedClassification": "Još nema konačnog plasmana završene trke."
   },
   "squad": {
     "title": "Puls ekipe",
