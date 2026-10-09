@@ -639,5 +639,11 @@
   },
   "specializations": {
     "general": "Allgemein"
+  },
+  "facilityNames": {
+    "trainingCenter": "Trainingszentrum",
+    "medicalCenter": "Medizinzentrum",
+    "mechanicsWorkshop": "Mechanikerwerkstatt",
+    "scoutingOffice": "Scoutingbüro"
   }
 }
