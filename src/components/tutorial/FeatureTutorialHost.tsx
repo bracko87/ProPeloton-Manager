@@ -192,11 +192,11 @@ export default function FeatureTutorialHost(): JSX.Element | null {
       if (!alive) return
       if (prefsError) {
         console.warn('Could not load tutorial prompt preference:', prefsError.message)
-        // Do not auto-open prompts while the preference is unknown.
-        setLoading(false)
-        return
       }
-      const autoTutorialsDisabled = tutorialPrefs?.auto_tutorials_disabled === true
+      // On a transient preference error, fail closed for *automatic* prompts
+      // but preserve an explicit, in-session Help restart.
+      const autoTutorialsDisabled =
+        Boolean(prefsError) || tutorialPrefs?.auto_tutorials_disabled === true
       const autoStartTutorial = window.sessionStorage.getItem('ppm:auto-start-tutorial')
       const isCoreBridge =
         autoStartTutorial === routeModule.key &&
