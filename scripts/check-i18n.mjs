@@ -243,6 +243,63 @@ for (const relativePath of premiumSourceFiles) {
   }
 }
 
+// Regression gate: all interpolated parameters must keep their exact
+// identifiers (e.g. {{coins}}, not {{Coins}}). Check affected UI surfaces
+// in every locale, and reject any poisoned interpolation across the site.
+const guardedTranslations = {
+  proPackages: [
+    'premium.quarterlySummary',
+    'premium.quarterlySummaryCoins',
+    'premium.monthlySummary',
+    'premium.yearlySummary',
+    'common.coins',
+    'earnCoins.bannerDescription',
+  ],
+  staff: [
+    'contractDisplay.seasonDate',
+    'detail.completionDate',
+    'additionalEffects.trainingEfficiency',
+    'additionalEffects.healthRiskContribution',
+    'additionalEffects.trainerBoost',
+    'qualityExplanation.facilityCap',
+    'qualityExplanation.maintenanceCap',
+  ],
+  riderProfile: ['ownedContract.gameDateUnavailable', 'ownedRenewal.seasonDate'],
+  overview: ['races.noFinishedClassification', 'races.loadingLast', 'races.loadingNext'],
+  help: ['tutorialControl.inviteTitle'],
+}
+
+for (const [namespace, keys] of Object.entries(guardedTranslations)) {
+  const english = readJson(path.join(localeRoot, 'en', namespace + '.json'))
+  for (const language of languages) {
+    const localePath = path.join(localeRoot, language, namespace + '.json')
+    const locale = readJson(localePath)
+    for (const key of keys) {
+      const baseline = readPath(english, key)
+      const translation = readPath(locale, key)
+      if (typeof baseline !== 'string' || typeof translation !== 'string') {
+        errors.push('Missing key ' + language + ':' + namespace + '.' + key)
+        continue
+      }
+      if (!arraysEqual(placeholders(translation), placeholders(baseline))) {
+        errors.push('Interpolation mismatch ' + language + ':' + namespace + '.' + key)
+      }
+    }
+  }
+}
+
+for (const language of languages) {
+  const folder = path.join(localeRoot, language)
+  for (const name of fs.readdirSync(folder).filter(value => value.endsWith('.json'))) {
+    const file = readJson(path.join(folder, name))
+    for (const [key, value] of flatten(file)) {
+      if (typeof value === 'string' && /{{\\s*Coins\\s*}}/.test(value)) {
+        errors.push('Currency text polluted an interpolation token: ' + language + '/' + name + ':' + key)
+      }
+    }
+  }
+}
+
 if (warnings.length > 0) {
   console.warn('\nTranslation warnings:')
   for (const warning of warnings) console.warn(`  - ${warning}`)
