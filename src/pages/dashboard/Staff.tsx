@@ -4365,9 +4365,35 @@ function StaffRolesInformationModal({
   membersByRole: Record<StaffRole, StaffListMember[]>
   onClose: () => void
 }) {
-  const { t } = useTranslation('staff')
+  const { t, i18n } = useTranslation('staff')
 
   if (!open) return null
+
+  const translatedRoleInformation = (role: StaffRole) => {
+    const source = STAFF_ROLE_INFORMATION[role]
+    const localized = i18n.getResourceBundle(i18n.resolvedLanguage ?? i18n.language, 'staff')
+    const localizedRole = localized?.roleInfo?.[role] as Partial<StaffRoleInformation> | undefined
+    const meta = getRoleMeta(role)
+    const translatedImpactAreas = meta.impactAreas.map(label =>
+      t(IMPACT_AREA_TRANSLATION_KEYS[label as keyof typeof IMPACT_AREA_TRANSLATION_KEYS] ?? label, {
+        defaultValue: label,
+      }),
+    )
+    return {
+      purpose: localizedRole?.purpose ?? (i18n.language === 'en'
+        ? source.purpose
+        : t(ROLE_TRANSLATION_KEYS[role].subtitle)),
+      capacitySummary: localizedRole?.capacitySummary ?? (
+        i18n.language === 'en' ? source.capacitySummary : t('roleInfo.capacityFallback')
+      ),
+      attributes: localizedRole?.attributes ?? (
+        i18n.language === 'en' ? source.attributes : translatedImpactAreas
+      ),
+      gameplay: localizedRole?.gameplay ?? (
+        i18n.language === 'en' ? source.gameplay : [t(ROLE_TRANSLATION_KEYS[role].subtitle)]
+      ),
+    }
+  }
 
   return (
     <div
@@ -4402,7 +4428,7 @@ function StaffRolesInformationModal({
 
         <div className="grid gap-4 p-6 lg:grid-cols-2">
           {ROLE_TABS.map((roleMeta) => {
-            const information = STAFF_ROLE_INFORMATION[roleMeta.role]
+            const information = translatedRoleInformation(roleMeta.role)
             const assigned = membersByRole[roleMeta.role]?.length ?? 0
             const limit = getRoleLimit(roleMeta.role, roleLimitMap)
 
