@@ -200,7 +200,9 @@ export default function FeatureTutorialHost(): JSX.Element | null {
         autoStartTutorial === routeModule.key &&
         Object.prototype.hasOwnProperty.call(CORE_BRIDGE_FLOW, routeModule.key)
 
-      if (isCoreBridge && (!autoTutorialsDisabled || isTutorialActiveInThisSession(routeModule.key))) {
+      if (isCoreBridge && (!autoTutorialsDisabled ||
+          isTutorialActiveInThisSession(routeModule.key) ||
+          window.sessionStorage.getItem('ppm:manual-tutorial-chain') === '1')) {
         if (!alive) return
         setModule(routeModule)
         setStepIndex(0)
@@ -269,6 +271,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
 
     const bridge = CORE_BRIDGE_FLOW[module.key]
     if (!bridge) {
+      window.sessionStorage.removeItem('ppm:manual-tutorial-chain')
       window.sessionStorage.removeItem('ppm:auto-start-tutorial')
       setMode('closed')
       return
@@ -299,6 +302,7 @@ export default function FeatureTutorialHost(): JSX.Element | null {
 
   async function stopCoreBridge(): Promise<void> {
     window.sessionStorage.removeItem('ppm:auto-start-tutorial')
+    window.sessionStorage.removeItem('ppm:manual-tutorial-chain')
     if (module) await saveTutorialProgress(module.key, 'skipped', null)
     setMode('closed')
   }
