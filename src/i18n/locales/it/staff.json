@@ -3,7 +3,8 @@
     "title": "Personale di squadra",
     "subtitle": "Gestire più ruoli del personale attraverso schede di ruolo dedicate e liste di personale per ruolo.",
     "loading": "Caricamento personale...",
-    "explainPositions": "Spiega tutte le posizioni del personale"
+    "explainPositions": "Spiega tutte le posizioni del personale",
+    "loadFailed": "Impossibile caricare la pagina dello staff. Riprova."
   },
   "summary": {
     "weeklyWages": "Salari settimanali del personale",
@@ -283,7 +284,8 @@
     "rejected": "{{name}} ha rifiutato l'offerta.",
     "minimumWeeklySalary": "Lo stipendio settimanale minimo accettabile è {{salary}}.",
     "wantsCloserTo": "{{name}} richiede uno stipendio settimanale più vicino a {{salary}}.",
-    "offerFailed": "Impossibile completare la trattativa contrattuale. Riprova."
+    "offerFailed": "Impossibile completare la trattativa contrattuale. Riprova.",
+    "quoteFailed": "Impossibile caricare la proposta contrattuale. Riprova."
   },
   "course": {
     "title": "Corso di perfezionamento",
@@ -294,7 +296,10 @@
     "start": "Avvia corso",
     "starting": "Inizio...",
     "none": "Non sono ancora configurate opzioni per questo ruolo del personale. Ciò impedisce che il tipo di corso sbagliato venga avviato fino a quando non vengono aggiunti i codici del corso di backend per questo ruolo.",
-    "back": "Torna al personale"
+    "back": "Torna al personale",
+    "startedWithTarget": "{{name}} ha iniziato il corso {{course}}. Completamento previsto: {{date}}.",
+    "started": "{{name}} ha iniziato un corso per lo staff.",
+    "startFailed": "Impossibile avviare il corso dello staff. Riprova."
   },
   "information": {
     "title": "Posizioni del personale spiegate",
