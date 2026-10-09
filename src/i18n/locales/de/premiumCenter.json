@@ -14,7 +14,12 @@
     "finance": "Finanzsimulator",
     "sponsors": "Sponsor-Intelligence",
     "development": "Fahrerentwicklung",
-    "templates": "Vorlagen & Automatisierung"
+    "templates": "Vorlagen & Automatisierung",
+    "youth": "Jugendakademie & Talentförderung",
+    "national": "Nationale Wettbewerbe",
+    "scouting": "Scouting-Analyse",
+    "staff": "Personal, Training & Regeneration",
+    "infrastructure": "Infrastruktur & Logistikplanung"
   },
   "common": {
     "refresh": "Aktualisieren",
@@ -461,5 +466,15 @@
     "openDetail": "Detailbereich öffnen →",
     "nextActions": "Nächste Aktivitäten",
     "nextActionsHint": "Die nächsten Renn- und Sponsorenpunkte, die wahrscheinlich eine Manager-Aktion benötigen."
+  },
+  "newWorkspaces": {
+    "attention": "Handlungsbedarf für Manager",
+    "attentionDetail": "Wichtige Entscheidungen und bevorstehende Fristen in deinem Verein.",
+    "items": "Einträge",
+    "clear": "In den überwachten Bereichen sind keine dringenden Entscheidungen erforderlich.",
+    "notActive": "Nicht aktiviert",
+    "nationalCoach": "Nationaltrainer",
+    "member": "Verbandsmitglied",
+    "noAssociation": "Kein Verband"
   }
 }
