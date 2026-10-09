@@ -1007,19 +1007,19 @@ function formatContractUi(
 ) {
   if (!dateValue) {
     return {
-      primary: 'No contract date',
-      secondary: 'Missing contract_expires_at in club_staff',
+      primary: t('contractDisplay.noDate'),
+      secondary: t('contractDisplay.missingDate'),
     }
   }
 
-  const primary = formatGameDateShort(dateValue)
+  const primary = t('contractDisplay.seasonDate', { season: getSeasonNumberFromDate(dateValue) ?? '?', date: parseIsoDateUtc(dateValue)?.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' }) ?? '—' })
   const daysRemaining = getDaysRemaining(dateValue, currentGameDate)
 
   let secondary = ''
 
   if (daysRemaining !== null) {
     if (daysRemaining < 0) {
-      secondary = 'Expired'
+      secondary = t('contractDisplay.expired')
     } else if (daysRemaining === 0) {
       secondary = t('assignment.expiresToday')
     } else if (daysRemaining === 1) {
@@ -3731,7 +3731,7 @@ function StaffDetailModal({
                   <div className="mt-2 space-y-1 text-xs text-blue-700">
                     <div>{t('common.focus', { value: staff.activeCourse.focusLabel })}</div>
                     <div>{t('common.duration', { count: staff.activeCourse.durationDays })}</div>
-                    <div>Completion: {formatGameDateShort(staff.activeCourse.completesOnGameDate)}</div>
+                    <div>{t('detail.completionDate', { date: formatGameDateShort(staff.activeCourse.completesOnGameDate) })}</div>
                   </div>
                   <div className="mt-2 text-xs text-blue-700">
                     {t('detail.courseCannotCancel')}
@@ -3757,7 +3757,7 @@ function StaffDetailModal({
                 <>
                   {staff.facilityWarning ? (
                     <div className="mt-4 rounded-lg bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
-                      {staff.facilityWarning}
+                      {translateStaffEffect(staff.facilityWarning, t)}
                     </div>
                   ) : null}
 
@@ -5304,7 +5304,7 @@ export default function StaffPage() {
 
           {selectedRoleWarning ? (
             <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-              {selectedRoleWarning}
+              {translateStaffEffect(selectedRoleWarning, t)}
             </div>
           ) : null}
 
