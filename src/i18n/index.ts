@@ -1,5 +1,6 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
+import { enforceCoinsCurrencyName } from './coinsTerminology'
 
 import enAccountPages from './locales/en/accountPages.json'
 import enAppShell from './locales/en/appShell.json'
@@ -693,6 +694,10 @@ const resources = {
     tutorials: ruTutorials,
   },
 } as const
+
+// Ensure in-game Coins are never translated or declined by any language pack.
+// This also covers existing translations and newly added resource strings.
+enforceCoinsCurrencyName(resources as unknown as Record<string, unknown>)
 
 const initialLanguage = getStoredLanguage()
 
