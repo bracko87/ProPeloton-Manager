@@ -232,6 +232,50 @@ function buildPointRows(
       }))
 
   /*
+   * Individual time trials can finalize intermediate classifications directly
+   * into replay checkpoints without duplicating those rows in pointLedger.
+   * Checkpoint intermediateResults are produced by the same deterministic
+   * engine run, so use them only as a missing-row fallback and de-duplicate
+   * repeated checkpoint snapshots.
+   */
+  const seenPointRiders = new Set(
+    rows.map((row) => `${row.pointId}:${row.riderId}`),
+  )
+  const canonicalPointIds = new Set(input.points.map((point) => point.pointId))
+  result.replayTimeline.checkpoints.forEach((checkpoint) => {
+    checkpoint.intermediateResults.forEach((event) => {
+      if (
+        finishLinePointIds.has(event.pointId) ||
+        !canonicalPointIds.has(event.pointId)
+      ) {
+        return
+      }
+
+      event.rankings.forEach((ranking) => {
+        if (
+          ranking.pointsAwarded <= 0 &&
+          ranking.bonusSecondsAwarded <= 0
+        ) {
+          return
+        }
+        const key = `${event.pointId}:${ranking.riderId}`
+        if (seenPointRiders.has(key)) return
+        seenPointRiders.add(key)
+        rows.push({
+          pointId: event.pointId,
+          riderId: ranking.riderId,
+          teamId: ranking.teamId,
+          rank: ranking.rank,
+          pointsAwarded: ranking.pointsAwarded,
+          bonusSecondsAwarded: ranking.bonusSecondsAwarded,
+          riderNameSnapshot: riderName(input, ranking.riderId),
+          teamNameSnapshot: teamName(input, ranking.teamId),
+        })
+      })
+    })
+  })
+
+  /*
    * Any sporting point physically located on the finish line must use the exact
    * authoritative finish classification. This includes the normal FINISH point
    * and summit KOM/sprint points at the same kilometre. A rider cannot be second
