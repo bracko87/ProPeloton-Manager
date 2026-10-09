@@ -845,5 +845,25 @@
     "medicalCenter": "Медицинский центр",
     "mechanicsWorkshop": "Механическая мастерская",
     "scoutingOffice": "Скаутский офис"
+  },
+  "courseGainLabels": {
+    "academyManagement": "Управление академией",
+    "assessmentAccuracy": "Точность оценки",
+    "budgetEfficiency": "Эффективность бюджета",
+    "communication": "Коммуникация",
+    "discipline": "Дисциплина",
+    "discoveryNetwork": "Сеть поиска талантов",
+    "innovation": "Инновации",
+    "longTermPlanning": "Долгосрочное планирование",
+    "longTermVision": "Долгосрочное видение",
+    "motivation": "Мотивация",
+    "potential": "Потенциал",
+    "prospectSense": "Чутьё на таланты",
+    "raceSelection": "Отбор на гонки",
+    "talentSense": "Выявление талантов",
+    "u16Training": "Тренировки U16",
+    "workloadManagement": "Управление нагрузкой",
+    "youthEvaluation": "Оценка молодых гонщиков",
+    "youthTraining": "Подготовка молодёжи"
   }
 }
