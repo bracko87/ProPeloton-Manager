@@ -14,7 +14,12 @@
     "finance": "Simulador financiero",
     "sponsors": "Sponsor Intelligence",
     "development": "Desarrollo de corredores",
-    "templates": "Plantillas y automatización"
+    "templates": "Plantillas y automatización",
+    "youth": "Academia juvenil y talentos",
+    "national": "Competiciones nacionales",
+    "scouting": "Inteligencia de ojeadores",
+    "staff": "Personal, entrenamiento y recuperación",
+    "infrastructure": "Infraestructura y logística"
   },
   "common": {
     "refresh": "Actualizar",
@@ -461,5 +466,15 @@
     "openDetail": "Abrir área detallada →",
     "nextActions": "Próxima actividad",
     "nextActionsHint": "Las próximas carreras y objetivos de patrocinio que probablemente requieran una acción."
+  },
+  "newWorkspaces": {
+    "attention": "Acciones prioritarias del mánager",
+    "attentionDetail": "Decisiones importantes y próximos plazos de tu club.",
+    "items": "elementos",
+    "clear": "No se detectaron decisiones urgentes en los sistemas supervisados.",
+    "notActive": "Sin activar",
+    "nationalCoach": "Seleccionador nacional",
+    "member": "Miembro de la federación",
+    "noAssociation": "Sin federación"
   }
 }
