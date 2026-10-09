@@ -135,5 +135,55 @@
     "description": "Falls etwas schief aussieht, bitte den Seitennamen, Teamnamen, Fahrernamen, Rennnamen, Screenshots und die Schritte zur Reproduktion des Problems angeben. Dies hilft uns, Probleme schneller zu finden und zu beheben.",
     "contact": "Kontaktieren Sie uns",
     "discord": "Fragen Sie an Discord"
+  },
+  "tutorialControl": {
+    "eyebrow": "Tutorials",
+    "title": "Jedes Tutorial starten oder neu starten",
+    "description": "Das Einsteiger-Tutorial führt neue Manager durch das Spiel. Weitere Anleitungen können beim ersten Öffnen neuer Funktionen erscheinen. Du kannst sie dauerhaft überspringen oder automatische Hinweise deaktivieren.",
+    "manual": "Vollständiges Spielhandbuch",
+    "autoTitle": "Automatische Tutorial-Hinweise",
+    "autoOff": "Automatische Tutorials sind deaktiviert. Du kannst sie weiterhin manuell starten.",
+    "autoOn": "Bei neuen Funktionen können automatisch Tutorials erscheinen.",
+    "enableAuto": "Automatische Tutorials aktivieren",
+    "disableAuto": "Automatische Tutorials deaktivieren",
+    "coreLabel": "Einsteiger-Tutorial",
+    "featureLabel": "Funktionstutorial",
+    "coreTitle": "Grundlagen von ProPeloton Manager",
+    "coreDescription": "Startet die vollständige Einführung in die wichtigsten Spielbereiche neu.",
+    "startRestart": "Starten / Neu starten",
+    "starting": "Wird gestartet…",
+    "dismiss": "Tutorial dauerhaft überspringen",
+    "dismissed": "Übersprungen – erscheint erst nach manuellem Neustart wieder.",
+    "dismissedNotice": "Tutorial übersprungen."
+  },
+  "tutorialModules": {
+    "national-championships": {
+      "title": "Nationale Meisterschaften und Rangliste",
+      "description": "Qualifikation, Nationalmannschaftseinsätze, Rennvorbereitung und Meisterschaftshistorie."
+    },
+    "national-association": {
+      "title": "Nationaler Verband und Nationalteam",
+      "description": "Mitgliedschaft, Finanzierung, Wahlen, Kader, World Nations und Historie."
+    },
+    "national-coach": {
+      "title": "Nationaltrainer",
+      "description": "Fahrerauswahl, Einberufungen, endgültiger Kader und Renntagsaufstellungen."
+    },
+    "youth-academy": {
+      "title": "Jugendakademie / U16",
+      "description": "Jugendscouting, Mitarbeiter, Budget, Rennen, Ranglisten und Aufstieg."
+    },
+    "youth-graduation": {
+      "title": "Abschluss der Jugendakademie",
+      "description": "U16-Absolventen in die nächste Entwicklungsstufe überführen."
+    },
+    "developing-team": {
+      "title": "Entwicklungsteam",
+      "description": "U23-Entwicklung auf dem Weg zum ersten Team."
+    },
+    "new-season": {
+      "title": "Wechsel in die neue Saison",
+      "description": "Wichtige Änderungen beim Saisonwechsel."
+    }
   }
 }
