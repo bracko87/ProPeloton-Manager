@@ -29,50 +29,29 @@ type Labels = {
   error: string; retry: string; status: string
 }
 
-const english: Labels = {
-  title: 'Earn Free Coins', subtitle: 'Complete optional surveys with CPX Research.',
-  start: 'Browse Surveys', loading: 'Connecting to surveys…', close: 'Close',
-  earned: 'Net survey Coins', retained: 'Fractional Coins saved', rate: '$1 earned = 15 Coins',
-  note: 'CPX displays Reward Points (100 points = 15 Coins). Rewards arrive after confirmation; canceled rewards may be reversed.',
-  refresh: 'Refresh rewards', privacy: 'Opening surveys shares your game account identifier and connection data with CPX Research. Participation is optional.',
-  history: 'Recent survey activity', empty: 'No survey activity yet.',
-  completed: 'Completed', canceled: 'Reversed', openTab: 'Open surveys in new tab',
-  error: 'Surveys could not be opened. Please try again later.', retry: 'Try again',
-  status: 'Survey',
-}
-
-const german: Labels = {
-  ...english, title: 'Gratis-Coins verdienen', subtitle: 'Freiwillige Umfragen von CPX Research ausfüllen.',
-  start: 'Umfragen öffnen', loading: 'Umfragen werden geladen…', close: 'Schließen',
-  earned: 'Netto-Umfrage-Coins', retained: 'Gespeicherter Coin-Rest',
-  rate: '1 $ Verdienst = 15 Coins',
-  note: 'CPX zeigt Reward Points an (100 Punkte = 15 Coins). Coins werden nach Bestätigung gutgeschrieben; Stornierungen werden abgezogen.',
-  refresh: 'Belohnungen aktualisieren',
-  privacy: 'Beim Öffnen werden deine Spielkonto-ID und Verbindungsdaten an CPX Research übertragen. Die Teilnahme ist freiwillig.',
-  history: 'Letzte Umfragen', empty: 'Noch keine Umfragen.',
-  completed: 'Abgeschlossen', canceled: 'Storniert',
-  openTab: 'Umfragen in neuem Tab öffnen', error: 'Umfragen sind momentan nicht verfügbar.',
-  retry: 'Erneut versuchen', status: 'Umfrage',
-}
-
-const serbian: Labels = {
-  ...english, title: 'Zaradi besplatne Coins', subtitle: 'Popuni dobrovoljne CPX Research ankete.',
-  start: 'Otvori ankete', loading: 'Povezivanje…', close: 'Zatvori',
-  earned: 'Neto Coins od anketa', retained: 'Sačuvani delovi Coin-a',
-  rate: '1 $ zarade = 15 Coins',
-  note: 'CPX prikazuje Reward Points (100 poena = 15 Coins). Nagrade stižu nakon potvrde, a poništene mogu biti oduzete.',
-  refresh: 'Osveži nagrade', history: 'Poslednje ankete',
-  empty: 'Nema anketa.', completed: 'Završeno', canceled: 'Poništeno',
-  openTab: 'Otvori ankete u novoj kartici', retry: 'Pokušaj ponovo',
-  error: 'Ankete trenutno nisu dostupne.',
-}
-
 function useCopy(): Labels {
-  const { i18n } = useTranslation()
-  const language = (i18n.resolvedLanguage ?? i18n.language ?? 'en').toLowerCase()
-  if (language.startsWith('de')) return german
-  if (language.startsWith('sr') || language.startsWith('hr')) return serbian
-  return english
+  const { t } = useTranslation('proPackages')
+  return {
+    title: t('earnCoins.title'),
+    subtitle: t('earnCoins.subtitle'),
+    start: t('earnCoins.start'),
+    loading: t('earnCoins.loading'),
+    close: t('earnCoins.close'),
+    earned: t('earnCoins.earned'),
+    retained: t('earnCoins.retained'),
+    rate: t('earnCoins.rate'),
+    note: t('earnCoins.note'),
+    refresh: t('earnCoins.refresh'),
+    privacy: t('earnCoins.privacy'),
+    history: t('earnCoins.history'),
+    empty: t('earnCoins.empty'),
+    completed: t('earnCoins.completed'),
+    canceled: t('earnCoins.canceled'),
+    openTab: t('earnCoins.openTab'),
+    error: t('earnCoins.error'),
+    retry: t('earnCoins.retry'),
+    status: t('earnCoins.status'),
+  }
 }
 
 export function useEarnCoinsLabel(): string {
