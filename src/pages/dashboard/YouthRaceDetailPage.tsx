@@ -116,6 +116,7 @@ type YouthRaceDetailPayload = {
     jersey_url?: string | null
     result_status: string
     gap_seconds?: number | null
+    time_seconds?: number | null
     general_points?: number
     sprint_points?: number
     mountain_points?: number
@@ -264,6 +265,87 @@ function Section({
   )
 }
 
+
+type YouthStandingRow = {
+  rider_id: string
+  rider_name: string
+  country_code?: string | null
+  academy_name: string
+  jersey_url?: string | null
+  position?: number | null
+  result_status?: string
+  time_seconds?: number | null
+  gap_seconds?: number | null
+  points?: number | null
+}
+
+function youthTime(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(Number(seconds))) return '—'
+  const value = Math.max(0, Math.round(Number(seconds)))
+  const hours = Math.floor(value / 3600)
+  const minutes = Math.floor((value % 3600) / 60)
+  const remainder = value % 60
+  return [hours, minutes, remainder].map(part => String(part).padStart(2, '0')).join(':')
+}
+
+function YouthStandingTable({
+  rows,
+  pointsMode = false,
+  isStage = false,
+}: {
+  rows: YouthStandingRow[]
+  pointsMode?: boolean
+  isStage?: boolean
+}): JSX.Element {
+  if (rows.length === 0) {
+    return <p className="p-4 text-sm text-slate-500">Results will appear when the stage has been processed.</p>
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[480px] border-collapse text-left text-sm">
+        <thead>
+          <tr className="border-b border-slate-200 bg-white text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <th className="px-3 py-3">#</th>
+            <th className="px-3 py-3">Rider</th>
+            <th className="px-3 py-3">Team</th>
+            <th className="px-3 py-3 text-right">{pointsMode ? 'Points' : 'Time'}</th>
+            {!pointsMode ? <th className="px-3 py-3 text-right">{isStage ? 'Gap' : 'Gap'}</th> : null}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={row.rider_id + ':' + index} className="border-b border-slate-100 bg-white last:border-b-0 hover:bg-slate-50">
+              <td className="px-3 py-2 font-semibold text-slate-900">
+                {row.position ?? (row.result_status && row.result_status !== 'finished' ? row.result_status.toUpperCase() : index + 1)}
+              </td>
+              <td className="max-w-[220px] truncate px-3 py-2 font-medium text-slate-950" title={row.rider_name}>
+                {row.rider_name}
+              </td>
+              <td className="px-3 py-2">
+                <div className="flex min-w-[110px] items-center gap-2">
+                  <span className="flex h-9 w-28 shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50">
+                    {row.jersey_url ? (
+                      <img src={row.jersey_url} alt={row.academy_name + ' jersey'} className="h-full w-full object-contain" />
+                    ) : <span className="truncate px-1 text-[10px] text-slate-500">{row.academy_name}</span>}
+                  </span>
+                </div>
+              </td>
+              <td className="whitespace-nowrap px-3 py-2 text-right font-medium text-slate-900">
+                {pointsMode ? String(Math.max(0, Number(row.points ?? 0))) : row.result_status && row.result_status !== 'finished' ? '—' : youthTime(row.time_seconds)}
+              </td>
+              {!pointsMode ? (
+                <td className="whitespace-nowrap px-3 py-2 text-right text-slate-500">
+                  {row.result_status && row.result_status !== 'finished' ? '—' : row.gap_seconds === 0 ? 'Leader' : row.gap_seconds == null ? '—' : '+' + youthTime(row.gap_seconds)}
+                </td>
+              ) : null}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export default function YouthRaceDetailPage(): JSX.Element {
   const { raceId } = useParams()
   const navigate = useNavigate()
@@ -275,7 +357,9 @@ export default function YouthRaceDetailPage(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [selectedStageNumber, setSelectedStageNumber] = useState(1)
-  const [resultView, setResultView] = useState<'general' | 'sprint' | 'mountain' | 'time_trial'>('general')
+  const [resultView, setResultView] = useState<'general' | 'sprint' | 'mountain'>('general')
+  const [stageResultView, setStageResultView] = useState<'stage_general' | 'stage_sprint' | 'stage_mountain'>('stage_general')
+  const [fullStandingModal, setFullStandingModal] = useState<'race' | 'stage' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = async (): Promise<void> => {
@@ -393,6 +477,30 @@ export default function YouthRaceDetailPage(): JSX.Element {
   const { race } = payload
   const raceDays = Math.max(1, Number(race.race_days ?? 1))
   const isFinished = race.status === 'completed'
+  const selectedResultStage = payload.stages.find(item => item.stage_number === selectedStageNumber)
+  const selectedStageHasSprint = Number(selectedResultStage?.sprint_points_total ?? 0) > 0
+  const selectedStageHasMountain = Number(selectedResultStage?.mountain_points_total ?? 0) > 0
+  const raceStandingRows: YouthStandingRow[] = resultView === 'general'
+    ? payload.rider_results.map(rider => ({
+        ...rider,
+        time_seconds: rider.time_seconds ?? null,
+      }))
+    : (payload.classifications?.[resultView] ?? []).map((rider, index) => ({
+        ...rider,
+        position: index + 1,
+        result_status: 'finished',
+      }))
+  const selectedStageStandingRows: YouthStandingRow[] = (() => {
+    const results = selectedResultStage?.status === 'completed' ? selectedResultStage.results : []
+    if (stageResultView === 'stage_general') return results
+    const key = stageResultView === 'stage_sprint' ? 'sprint_points' : 'mountain_points'
+    return [...results]
+      .filter(result => result.result_status === 'finished' && Number(result[key] ?? 0) > 0)
+      .sort((a, b) => Number(b[key] ?? 0) - Number(a[key] ?? 0) || Number(a.position ?? 9999) - Number(b.position ?? 9999))
+      .map((result, index) => ({ ...result, position: index + 1, points: Number(result[key] ?? 0) }))
+  })()
+  const stagePointsMode = stageResultView !== 'stage_general'
+
   const tabs: Array<{ key: DetailTab; label: string }> = [
     { key: 'overview', label: 'Overview' },
     { key: 'teams', label: `Teams (${payload.teams.length})` },
@@ -757,162 +865,112 @@ export default function YouthRaceDetailPage(): JSX.Element {
       ) : null}
 
       {tab === 'results' ? (
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
-            {([
-              ['general', 'General'],
-              ['sprint', 'Sprint'],
-              ['mountain', 'Mountain'],
-              ['time_trial', 'Time Trial'],
-            ] as const).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setResultView(key)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                  resultView === key ? 'bg-yellow-400 text-black' : 'text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Race information</div>
+              <h2 className="mt-1 text-lg font-semibold text-slate-950">Participants and results</h2>
+            </div>
           </div>
-
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-            <Section title={
-              resultView === 'general'
-                ? 'General classification'
-                : resultView === 'sprint'
-                  ? 'Sprint classification'
-                  : resultView === 'mountain'
-                    ? 'Mountain classification'
-                    : 'Time Trial classification'
-            }>
-              {resultView === 'general' ? (
-                payload.rider_results.length === 0 ? (
-                  <p className="text-sm text-slate-500">General classification will appear as stages are completed.</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {payload.rider_results.map((result, index) => {
-                      const flag = flagUrl(result.country_code)
-                      return (
-                        <div key={`${result.rider_id}:${index}`} className="grid grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                          <strong>{result.position ? `#${result.position}` : result.result_status.toUpperCase()}</strong>
-                          <span className="flex min-w-0 items-center gap-2">
-                            <JerseyThumb url={result.jersey_url} name={result.academy_name} />
-                            {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
-                            <span className="min-w-0">
-                              <span className="block truncate font-medium">{result.rider_name}</span>
-                              <span className="block truncate text-xs text-slate-500">{result.academy_name}</span>
-                            </span>
-                          </span>
-                          <span className="text-xs font-medium text-slate-600">{Number(result.ranking_points ?? 0)} pts</span>
-                        </div>
-                      )
-                    })}
+          <div className="space-y-6 p-4 sm:p-6">
+            <div className="flex rounded-2xl bg-slate-100 p-1">
+              <button type="button" onClick={() => setTab('teams')} className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-500 hover:text-slate-900">Teams &amp; riders</button>
+              <button type="button" className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm">Results</button>
+            </div>
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
+              <div className="min-w-0 rounded-2xl bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-semibold text-slate-950">Race classifications</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">Current tour standings</p>
                   </div>
-                )
-              ) : (
-                (() => {
-                  const rows = payload.classifications?.[resultView] ?? []
-                  return rows.length === 0 ? (
-                    <p className="text-sm text-slate-500">No points are available for this classification in this race.</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {rows.map((row, index) => (
-                        <div key={row.rider_id} className="grid grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                          <strong>#{index + 1}</strong>
-                          <span className="flex min-w-0 items-center gap-2">
-                            <JerseyThumb url={row.jersey_url} name={row.academy_name} />
-                            <span className="min-w-0">
-                              <span className="block truncate font-medium">{row.rider_name}</span>
-                              <span className="block truncate text-xs text-slate-500">{row.academy_name}</span>
-                            </span>
-                          </span>
-                          <span className="font-medium">{row.points} pts</span>
-                        </div>
+                  <select value={resultView} onChange={event => setResultView(event.target.value as 'general' | 'sprint' | 'mountain')}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                    <option value="general">General classification</option>
+                    <option value="sprint">Sprint points</option>
+                    <option value="mountain">Mountain points</option>
+                  </select>
+                </div>
+                <div className="mt-4 overflow-hidden rounded-xl bg-white">
+                  <YouthStandingTable rows={raceStandingRows.slice(0, 12)} pointsMode={resultView !== 'general'} />
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button type="button" disabled={!raceStandingRows.length} onClick={() => setFullStandingModal('race')}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 disabled:opacity-40">
+                    Full race standing
+                  </button>
+                </div>
+              </div>
+              <div className="min-w-0 rounded-2xl bg-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="font-semibold text-slate-950">Stage results – Stage {selectedStageNumber}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <select value={selectedStageNumber} onChange={event => {
+                      setSelectedStageNumber(Number(event.target.value))
+                      setStageResultView('stage_general')
+                    }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                      {payload.stages.map(stage => (
+                        <option value={stage.stage_number} key={stage.id}>
+                          Stage {stage.stage_number} · {shortDate(stage.stage_date)} · {humanize(stage.stage_type)}
+                        </option>
                       ))}
-                    </div>
-                  )
-                })()
-              )}
-            </Section>
-
-            <Section
-              title="Stage results"
-              right={
-                <select
-                  value={selectedStageNumber}
-                  onChange={event => setSelectedStageNumber(Number(event.target.value))}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs"
-                >
-                  {payload.stages.map(stage => (
-                    <option key={stage.id} value={stage.stage_number}>
-                      Stage {stage.stage_number} · {shortDate(stage.stage_date)} · {humanize(stage.stage_type)}
-                    </option>
-                  ))}
-                </select>
-              }
-            >
-              {(() => {
-                const stage = payload.stages.find(item => item.stage_number === selectedStageNumber)
-                if (!stage) return <p className="text-sm text-slate-500">No stage selected.</p>
-                if (stage.status !== 'completed' || stage.results.length === 0) {
-                  return (
-                    <div>
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Date</div><div className="mt-1 text-sm font-medium">{shortDate(stage.stage_date)}</div></div>
-                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Type</div><div className="mt-1 text-sm font-medium">{humanize(stage.stage_type)}</div></div>
-                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Route</div><div className="mt-1 text-sm font-medium">{stage.start_city && stage.finish_city
-                          ? stage.start_city === stage.finish_city
-                            ? `${stage.start_city} circuit`
-                            : `${stage.start_city} → ${stage.finish_city}`
-                          : race.host_city ?? '—'}</div></div>
-                        <div className="rounded-lg bg-slate-50 p-3"><div className="text-xs text-slate-500">Distance / start</div><div className="mt-1 text-sm font-medium">{stage.distance_km} km · {stage.planned_start_time_label ?? '—'}</div></div>
-                      </div>
-                      <p className="mt-4 text-sm text-slate-500">Stage results will appear after this stage is completed.</p>
-                    </div>
-                  )
-                }
-                return (
-                  <div className="space-y-1.5">
-                    {stage.results.map((result, index) => (
-                      <div key={`${result.rider_id}:${index}`} className="grid grid-cols-[46px_minmax(0,1fr)_minmax(130px,210px)] items-center gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                        <strong>{result.position ? `#${result.position}` : result.result_status.toUpperCase()}</strong>
-                        <span className="truncate font-medium">{result.rider_name}</span>
-                        <span className="flex min-w-0 items-center justify-end gap-2 text-xs text-slate-500">
-                          <JerseyThumb url={result.jersey_url} name={result.academy_name} />
-                          <span className="truncate">{result.academy_name}</span>
-                        </span>
-                      </div>
-                    ))}
+                    </select>
+                    <select value={stageResultView} onChange={event => setStageResultView(event.target.value as 'stage_general' | 'stage_sprint' | 'stage_mountain')}
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                      <option value="stage_general">Stage result</option>
+                      {selectedStageHasSprint ? <option value="stage_sprint">Sprint points</option> : null}
+                      {selectedStageHasMountain ? <option value="stage_mountain">Mountain points</option> : null}
+                    </select>
                   </div>
-                )
-              })()}
-            </Section>
-          </div>
-
-          {isFinished ? (
-            <Section title="Team classification & prize money">
-              <div className="space-y-2">
-                {payload.team_results.map(team => {
-                  const flag = flagUrl(team.country_code)
-                  return (
-                    <div key={team.academy_id} className={`grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-sm ${team.is_mine ? 'bg-yellow-50' : 'bg-slate-50'}`}>
+                </div>
+                <div className="mt-4 overflow-hidden rounded-xl bg-white">
+                  <YouthStandingTable rows={selectedStageStandingRows.slice(0, 12)} pointsMode={stagePointsMode} isStage />
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button type="button" disabled={!selectedStageStandingRows.length} onClick={() => setFullStandingModal('stage')}
+                    className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 disabled:opacity-40">
+                    Full stage standing
+                  </button>
+                </div>
+              </div>
+            </div>
+            {isFinished ? (
+              <Section title="Team classification & prize money">
+                <div className="space-y-2">
+                  {payload.team_results.map(team => (
+                    <div key={team.academy_id} className={'grid grid-cols-[48px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-3 py-2 text-sm ' + (team.is_mine ? 'bg-yellow-50' : 'bg-slate-50')}>
                       <strong>#{team.team_position}</strong>
                       <span className="flex min-w-0 items-center gap-2">
                         <JerseyThumb url={team.jersey_url} name={team.academy_name} />
-                        {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
                         <span className="truncate">{team.academy_name}</span>
                       </span>
                       <span className="font-medium text-emerald-700">{team.prize_cash > 0 ? money(team.prize_cash) : '—'}</span>
                     </div>
-                  )
-                })}
+                  ))}
+                </div>
+              </Section>
+            ) : null}
+          </div>
+          {fullStandingModal ? (
+            <div role="dialog" aria-modal="true" aria-label={fullStandingModal === 'race' ? 'Full race standing' : 'Full stage standing'}
+              className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-sm"
+              onMouseDown={event => { if (event.target === event.currentTarget) setFullStandingModal(null) }}>
+              <div className="flex max-h-[88vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                  <h3 className="text-lg font-semibold text-slate-950">{fullStandingModal === 'race' ? 'Full race standing' : 'Full stage standing'}</h3>
+                  <button type="button" onClick={() => setFullStandingModal(null)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm">Close</button>
+                </div>
+                <div className="overflow-y-auto p-5">
+                  <YouthStandingTable
+                    rows={fullStandingModal === 'race' ? raceStandingRows : selectedStageStandingRows}
+                    pointsMode={fullStandingModal === 'race' ? resultView !== 'general' : stagePointsMode}
+                    isStage={fullStandingModal === 'stage'}
+                  />
+                </div>
               </div>
-            </Section>
+            </div>
           ) : null}
-        </div>
+        </section>
       ) : null}
     </div>
   )
