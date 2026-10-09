@@ -682,7 +682,7 @@ export default function TutorialOverlay({
         </div>
 
         <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-4">
-          <div className="flex w-full items-center justify-between gap-4">
+          <div className="flex w-full flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               {onDismiss ? (
                 <button
@@ -731,7 +731,7 @@ export default function TutorialOverlay({
               ) : null}
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="ml-auto flex shrink-0 items-center gap-2">
               {localizedFinishAction && onFinish ? (
                 <button
                   type="button"
