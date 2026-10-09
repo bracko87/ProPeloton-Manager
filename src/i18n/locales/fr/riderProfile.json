@@ -468,7 +468,8 @@
     "releasing": "Relâcher...",
     "removedFromList": "Rider retiré de la liste de transfert.",
     "cancelListingFailed": "Impossible d'annuler la liste des transferts.",
-    "releasePreviewFailed": "Impossible de charger l'aperçu de la libération."
+    "releasePreviewFailed": "Impossible de charger l'aperçu de la libération.",
+    "gameDateUnavailable": "Date du jeu indisponible"
   },
   "ownedTransfer": {
     "title": "Liste de transfert",
