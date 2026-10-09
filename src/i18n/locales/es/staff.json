@@ -3,7 +3,8 @@
     "title": "Personal de equipo",
     "subtitle": "Administra múltiples roles del personal a través de pestañas de roles y listas de personal por roles.",
     "loading": "Cargando personal...",
-    "explainPositions": "Explicar todos los puestos de personal"
+    "explainPositions": "Explicar todos los puestos de personal",
+    "loadFailed": "No se pudo cargar la página de personal. Inténtalo de nuevo."
   },
   "summary": {
     "weeklyWages": "Salarios semanales del personal",
@@ -283,7 +284,8 @@
     "rejected": "{{name}} ha rechazado la oferta.",
     "minimumWeeklySalary": "El salario semanal mínimo aceptable es {{salary}}.",
     "wantsCloserTo": "{{name}} solicita un salario semanal más cercano a {{salary}}.",
-    "offerFailed": "No se pudo completar la negociación del contrato. Inténtalo de nuevo."
+    "offerFailed": "No se pudo completar la negociación del contrato. Inténtalo de nuevo.",
+    "quoteFailed": "No se pudo cargar la propuesta de contrato. Inténtalo de nuevo."
   },
   "course": {
     "title": "Curso para el personal",
@@ -294,7 +296,10 @@
     "start": "Curso de inicio",
     "starting": "Comenzando...",
     "none": "Todavía no hay opciones de curso configuradas para este rol del personal. Esto impide que el tipo de curso incorrecto se inicie hasta que se añadan códigos de curso de backend para este rol.",
-    "back": "Volver al personal"
+    "back": "Volver al personal",
+    "startedWithTarget": "{{name}} ha comenzado el curso {{course}}. Finalización prevista: {{date}}.",
+    "started": "{{name}} ha comenzado un curso de formación del personal.",
+    "startFailed": "No se pudo iniciar el curso del personal. Inténtalo de nuevo."
   },
   "information": {
     "title": "Puestos de personal explicados",
