@@ -736,6 +736,75 @@ function CommandSummaryCard({
   )
 }
 
+
+function CommandWorkspaceDetail({
+  title, description, metrics, links, children,
+}: {
+  title: string
+  description: string
+  metrics: Array<{ label: string; value: string | number; note?: string }>
+  links: Array<{ to: string; label: string }>
+  children?: React.ReactNode
+}): JSX.Element {
+  return (
+    <div className="space-y-5">
+      <Card className="p-5">
+        <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+        <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+      </Card>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {metrics.map(item => (
+          <Card key={item.label} className="p-5">
+            <div className="text-sm font-medium text-slate-600">{item.label}</div>
+            <div className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">{item.value}</div>
+            {item.note ? <div className="mt-2 text-xs text-slate-500">{item.note}</div> : null}
+          </Card>
+        ))}
+      </div>
+      {children}
+      <Card className="p-5">
+        <div className="mb-3 text-sm font-semibold text-slate-900">Open management pages</div>
+        <div className="flex flex-wrap gap-3">
+          {links.map(link => (
+            <Link key={link.to} to={link.to}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 no-underline shadow-sm hover:border-yellow-300 hover:bg-yellow-50 hover:no-underline">
+              {link.label}<ChevronRight size={15} />
+            </Link>
+          ))}
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+function CommandDataList({
+  title, items, empty,
+}: {
+  title: string
+  items: Array<{ id: string; title: string; subtitle: string; to: string }>
+  empty: string
+}): JSX.Element {
+  return (
+    <Card className="p-5">
+      <h3 className="mb-3 font-semibold text-slate-950">{title}</h3>
+      {items.length ? (
+        <div className="grid gap-2 md:grid-cols-2">
+          {items.map(item => (
+            <Link key={item.id} to={item.to}
+              className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-900 no-underline hover:border-yellow-300 hover:bg-white hover:no-underline">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">{item.title}</div>
+                <div className="mt-1 truncate text-xs text-slate-500">{item.subtitle}</div>
+              </div>
+              <ChevronRight size={15} className="shrink-0 text-slate-400"/>
+            </Link>
+          ))}
+        </div>
+      ) : <p className="text-sm text-slate-500">{empty}</p>}
+    </Card>
+  )
+}
+
 function PremiumPreview(): JSX.Element {
   const { t } = useTranslation('premiumCenter')
   const featureCards = [
@@ -1497,6 +1566,45 @@ export default function PremiumCommandCenter(): JSX.Element {
                 </div>
               </Card>
 
+
+              <Card className="p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="flex items-center gap-2 font-semibold text-slate-950">
+                      <AlertTriangle size={17} className="text-amber-600"/>
+                      {t('newWorkspaces.attention', { defaultValue: 'Manager Attention Queue' })}
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {t('newWorkspaces.attentionDetail', { defaultValue: 'Important decisions and upcoming deadlines across your club.' })}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                    {workspace.attention_queue.length} {t('newWorkspaces.items', { defaultValue: 'items' })}
+                  </span>
+                </div>
+                {workspace.attention_queue.length ? (
+                  <div className="mt-4 grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
+                    {workspace.attention_queue.map(issue => (
+                      <Link key={issue.issue_id} to={issue.route}
+                        className={'flex items-start justify-between gap-3 rounded-xl border p-3 no-underline hover:bg-white hover:no-underline ' +
+                          (issue.severity === 'danger' ? 'border-red-200 bg-red-50 text-red-900' :
+                           issue.severity === 'warning' ? 'border-amber-200 bg-amber-50 text-amber-950' :
+                           'border-slate-200 bg-slate-50 text-slate-900')}>
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold">{issue.title}</div>
+                          <div className="mt-1 text-xs opacity-75">{issue.description}</div>
+                        </div>
+                        <ChevronRight size={15} className="mt-0.5 shrink-0"/>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+                    {t('newWorkspaces.clear', { defaultValue: 'No immediate decisions detected in the monitored systems.' })}
+                  </div>
+                )}
+              </Card>
+
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 <CommandSummaryCard
                   title={t('tabs.strategy')}
@@ -1653,6 +1761,93 @@ export default function PremiumCommandCenter(): JSX.Element {
                   visual={<MiniBars values={commandSummaryStats?.developmentBars ?? [0, 0, 0, 0, 0, 0]} />}
                   tone="default"
                   onClick={() => changeTab('development')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+
+
+                <CommandSummaryCard
+                  title={t('tabs.youth', { defaultValue: 'Youth Academy & Talent Pipeline' })}
+                  metric={workspace.youth_command.available
+                    ? workspace.youth_command.riders_count + ' / ' + workspace.youth_command.rider_limit + ' riders'
+                    : t('newWorkspaces.notActive', { defaultValue: 'Not activated' })}
+                  body={workspace.youth_command.pending_invitations + ' pending invitations · ' +
+                    workspace.youth_command.graduation_decisions_pending + ' graduation decisions'}
+                  detailLeft={'Upcoming U16 races: ' + workspace.youth_command.upcoming_races}
+                  detailRight={'Scouting reports: ' + workspace.youth_command.scouting_reports_total}
+                  visual={<SegmentedBar segments={[
+                    { value: workspace.youth_command.riders_count, className: 'bg-emerald-400' },
+                    { value: Math.max(0,workspace.youth_command.rider_limit - workspace.youth_command.riders_count), className: 'bg-slate-200' },
+                  ]}/>}
+                  tone={workspace.youth_command.pending_invitations + workspace.youth_command.graduation_decisions_pending > 0 ? 'warning' : 'default'}
+                  onClick={() => changeTab('youth')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+                <CommandSummaryCard
+                  title={t('tabs.national', { defaultValue: 'National Competitions Command' })}
+                  metric={workspace.national_command.is_coach
+                    ? t('newWorkspaces.nationalCoach', { defaultValue: 'National Coach' })
+                    : workspace.national_command.has_association
+                      ? t('newWorkspaces.member', { defaultValue: 'Association member' })
+                      : t('newWorkspaces.noAssociation', { defaultValue: 'No association' })}
+                  body={workspace.national_command.association_name ??
+                    'National Championship and World Nations deadlines'}
+                  detailLeft={'Squad: ' + workspace.national_command.selected_riders + '/10'}
+                  detailRight={'Ready lineups: ' + workspace.national_command.lineups_ready + '/3'}
+                  visual={<SegmentedBar segments={[
+                    { value: workspace.national_command.lineups_ready, className: 'bg-emerald-400' },
+                    { value: Math.max(0,3 - workspace.national_command.lineups_ready), className: 'bg-slate-200' },
+                  ]}/>}
+                  tone={workspace.national_command.is_coach && workspace.national_command.pending_lineup_deadlines > 0 ? 'warning' : 'default'}
+                  onClick={() => changeTab('national')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+                <CommandSummaryCard
+                  title={t('tabs.scouting', { defaultValue: 'Scouting Intelligence' })}
+                  metric={workspace.scouting_command.unread_reports + ' unread reports'}
+                  body={workspace.scouting_command.active_tasks + ' scouting tasks in progress'}
+                  detailLeft={'Total reports: ' + workspace.scouting_command.reports_total}
+                  detailRight={'Shortlist matches: ' + workspace.scouting_command.shortlist_matches}
+                  visual={<MiniBars values={[
+                    workspace.scouting_command.reports_total,
+                    workspace.scouting_command.active_tasks,
+                    workspace.scouting_command.shortlist_matches,
+                  ]}/>}
+                  tone={workspace.scouting_command.unread_reports > 0 ? 'warning' : 'default'}
+                  onClick={() => changeTab('scouting')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+                <CommandSummaryCard
+                  title={t('tabs.staff', { defaultValue: 'Staff, Training & Recovery' })}
+                  metric={workspace.staff_command.fatigue_watch + ' riders on fatigue watch'}
+                  body={workspace.staff_command.injured_or_unavailable + ' unavailable riders · ' +
+                    workspace.staff_command.expiring_contracts + ' expiring staff contracts'}
+                  detailLeft={'Active staff: ' + workspace.staff_command.active_staff}
+                  detailRight={'Vacant core roles: ' + workspace.staff_command.vacant_key_roles}
+                  visual={<MiniBars values={[
+                    workspace.staff_command.fatigue_watch,
+                    workspace.staff_command.injured_or_unavailable,
+                    workspace.staff_command.expiring_contracts,
+                    workspace.staff_command.vacant_key_roles,
+                  ]}/>}
+                  tone={workspace.staff_command.injured_or_unavailable + workspace.staff_command.expiring_contracts > 0 ? 'warning' : 'default'}
+                  onClick={() => changeTab('staff')}
+                  actionLabel={t('commandOverview.openDetail')}
+                />
+                <CommandSummaryCard
+                  title={t('tabs.infrastructure', { defaultValue: 'Infrastructure & Logistics Planner' })}
+                  metric={workspace.infrastructure_command.jobs_in_progress + ' facility jobs'}
+                  body={workspace.infrastructure_command.repair_jobs_in_progress + ' asset repairs · ' +
+                    workspace.infrastructure_command.equipment_under_50_condition + ' worn equipment items'}
+                  detailLeft={'Low supplies: ' + workspace.infrastructure_command.supply_shortages}
+                  detailRight={formatCurrency(workspace.infrastructure_command.monthly_maintenance) + ' / month'}
+                  visual={<MiniBars values={[
+                    workspace.infrastructure_command.jobs_in_progress,
+                    workspace.infrastructure_command.repair_jobs_in_progress,
+                    workspace.infrastructure_command.equipment_under_50_condition,
+                    workspace.infrastructure_command.supply_shortages,
+                  ]}/>}
+                  tone={workspace.infrastructure_command.equipment_under_50_condition + workspace.infrastructure_command.supply_shortages > 0 ? 'warning' : 'default'}
+                  onClick={() => changeTab('infrastructure')}
                   actionLabel={t('commandOverview.openDetail')}
                 />
 
