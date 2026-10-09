@@ -55,6 +55,9 @@ jobs:
               release: ['successMessage','failureMessage'],
               course: ['startedWithTarget','started','startFailed'],
             }
+            for (const key of ['academyManagement','assessmentAccuracy','budgetEfficiency','communication','discipline','discoveryNetwork','innovation','longTermPlanning','longTermVision','motivation','potential','prospectSense','raceSelection','talentSense','u16Training','workloadManagement','youthEvaluation','youthTraining']) {
+              if (!staff.courseGainLabels?.[key]) throw new Error(lang+': missing localized course gain '+key)
+            }
             for (const [group, keys] of Object.entries(requiredMessages)) {
               for (const key of keys) {
                 if (!staff[group]?.[key]) throw new Error(lang+': missing localized staff feedback '+group+'.'+key)
