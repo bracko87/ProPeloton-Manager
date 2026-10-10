@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Jugendakademie aktivieren",
-    "description": "Die Aktivierung erstellt deine separate U16-Akademie. Neue Akademien benötigen Premium, 30 reale ODER 60 Spieltage seit Clubgründung, 50 Coins Aktivierungsgebühr und das gewählte Akademiebudget. Ab der nächsten Saison kostet der Akademiezugang 50 Coins pro Saison, solange Premium aktiv ist. Du startest mit sechs lokalen Fahrern, Akademiedirektor und U16 Head Coach. Ein Youth Scout ist optional.",
+    "description": "Die eigenständige U16-Akademie wird nach 90 Spieltagen seit Gründung deines Hauptclubs freigeschaltet. Zur Aktivierung brauchst du ein bezahltes Premium-Abo (die kostenlose Testphase ist nur eine Vorschau), 50 Coins und das gewählte Akademiebudget. Jede Saison kostet die Verlängerung 50 Coins bei aktivem bezahltem Premium. Du startest mit sechs lokalen Fahrern, einem Akademieleiter und einem U16-Cheftrainer.",
     "capacityLabel": "Maximale Fahrerzahl",
     "starterRidersLabel": "Startfahrer",
     "staffLabel": "Enthaltenes Personal",
@@ -34,8 +34,8 @@
     "unlockLabel": "Freischaltbedingung",
     "coinBalanceLabel": "Coin-Guthaben",
     "coins": "{{count}} Coins",
-    "unlockValue": "{{real}} reale Tage ODER {{game}} Spieltage",
-    "waiting": "Noch nicht freigeschaltet. Fortschritt: {{realPlayed}}/{{realRequired}} reale Tage oder {{gamePlayed}}/{{gameRequired}} Spieltage. Die zuerst erfüllte Bedingung schaltet die Akademie frei.",
+    "unlockValue": "{{game}} Spieltage",
+    "waiting": "Fortschritt zur Freischaltung: {{gamePlayed}}/{{gameRequired}} Spieltage. Ein bezahltes Premium-Abo ist ebenfalls erforderlich.",
     "needCoins": "Die Aktivierung der Jugendakademie kostet {{cost}} Coins. Dein aktuelles Guthaben beträgt {{balance}}.",
     "renewalCostLabel": "Saisonverlängerung",
     "coinsPerSeason": "{{count}} Coins / Saison"
