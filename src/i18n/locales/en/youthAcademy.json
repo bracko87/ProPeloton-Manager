@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Activate Youth Academy",
-    "description": "Activation creates your separate U16 academy. New Academies require Premium, 30 real-life days OR 60 in-game days since club creation, a 50-coin activation fee, and the Academy budget you choose. From the next season onward, Academy access costs 50 coins per season while Premium remains active. You start with six local riders, a Youth Academy Director and U16 Head Coach. Youth Scout is optional.",
+    "description": "A separate U16 academy unlocks after 90 game days since your main club was created. Activation requires a paid Premium subscription (the free Premium trial is a preview only), 50 Coins and your chosen Academy budget. Seasonal renewal costs 50 Coins while paid Premium remains active. You start with six local riders, an Academy Director and an U16 Head Coach.",
     "capacityLabel": "Maximum riders",
     "starterRidersLabel": "Starting riders",
     "staffLabel": "Included staff",
@@ -34,8 +34,8 @@
     "unlockLabel": "Unlock requirement",
     "coinBalanceLabel": "Coin balance",
     "coins": "{{count}} coins",
-    "unlockValue": "{{real}} real-life days OR {{game}} in-game days",
-    "waiting": "Not unlocked yet. Progress: {{realPlayed}}/{{realRequired}} real-life days or {{gamePlayed}}/{{gameRequired}} in-game days. Whichever requirement is reached first unlocks the Academy.",
+    "unlockValue": "{{game}} game days",
+    "waiting": "Academy unlock progress: {{gamePlayed}}/{{gameRequired}} game days. Paid Premium is also required.",
     "needCoins": "Youth Academy activation costs {{cost}} coins. Your current balance is {{balance}}.",
     "renewalCostLabel": "Season renewal",
     "coinsPerSeason": "{{count}} coins / season"
