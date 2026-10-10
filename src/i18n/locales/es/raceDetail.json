@@ -200,7 +200,12 @@
     "participatingRiders": "los ciclistas que participan en esta carrera",
     "age": "{{age}} años",
     "riderDetailsUnavailable": "{{count}} ciclistas asignados. Los detalles de los ciclistas todavía no están disponibles.",
-    "noRiders": "Todavía no hay ciclistas asignados."
+    "noRiders": "Todavía no hay ciclistas asignados.",
+    "individualRiders": "Ciclistas",
+    "nationalRiderCount": "{{count}} ciclistas confirmados",
+    "noNationalRiders": "Aún no hay ciclistas confirmados en la lista de salida del Campeonato Nacional.",
+    "riderKit": "Maillot del equipo actual",
+    "freeAgent": "Sin equipo"
   },
   "results": {
     "classifications": "Clasificaciones raciales",
