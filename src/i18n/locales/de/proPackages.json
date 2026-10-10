@@ -315,6 +315,9 @@
     "startPlaying": "Spiel starten",
     "continueFree": "Kostenlos weiterspielen",
     "viewPro": "Pro-Pakete ansehen",
-    "countdown": "Premium-Test: noch {{count}} Tage"
+    "countdown": "Premium-Test: noch {{count}} Tage",
+    "freeTrialStatus": "Kostenlose Premium-Testphase",
+    "accessUntil": "Dein kostenloser Zugang endet am {{date}}. Es wurde kein Abo und keine Zahlung ausgelöst.",
+    "subscriptionOffer": "Gefällt dir Premium? Wähle unten ein kostenpflichtiges Paket, um die Zusatzfunktionen nach der Testphase weiter zu nutzen."
   }
 }
