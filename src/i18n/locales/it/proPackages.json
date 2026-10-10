@@ -315,6 +315,9 @@
     "startPlaying": "Inizia a giocare",
     "continueFree": "Continua gratis",
     "viewPro": "Vedi pacchetti Pro",
-    "countdown": "Prova Premium: {{count}} giorni rimanenti"
+    "countdown": "Prova Premium: {{count}} giorni rimanenti",
+    "freeTrialStatus": "Prova Premium gratuita",
+    "accessUntil": "L'accesso gratuito termina il {{date}}. Non è stato attivato alcun abbonamento o pagamento.",
+    "subscriptionOffer": "Ti piace Premium? Scegli uno dei pacchetti a pagamento per mantenere le funzioni extra dopo la prova."
   }
 }
