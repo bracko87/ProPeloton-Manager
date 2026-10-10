@@ -159,7 +159,7 @@
     "active": "Aktiv",
     "expired": "Abgelaufen",
     "notActivated": "Nicht aktiviert",
-    "descriptionDeveloping": "Baue und verwalte ein U23-Entwicklungsteam. Für den Dienst selbst ist kein Premium erforderlich.",
+    "descriptionDeveloping": "Baue dein U23-Entwicklungsteam nach 60 Spieltagen auf. Premium ist für diesen Dienst nicht erforderlich.",
     "readOnly": "Deine Entwicklungsteam-Daten bleiben erhalten; der Saisonzugang muss reaktiviert oder verlängert werden.",
     "reactivationPrice": "Reaktivierungspreis: {{cost}} Coins.",
     "firstActivationPrice": "Erster Aktivierungspreis: {{cost}} Coins.",
@@ -190,7 +190,7 @@
     "available": "Verfügbar",
     "premiumRequired": "Premium erforderlich",
     "loadingYouth": "Lädt…",
-    "descriptionYouthAcademy": "Separates Premium-only U16-Programm mit Fahrern, Personal, Budget, Scouting, Ausrüstung, Rennkalender, Rankings, Entwicklungshistorie und Abschlussweg. Neue Akademien öffnen nach 30 realen ODER 60 Spieltagen, kosten 50 Coins Aktivierung und 50 Coins pro weiterer Saison.",
+    "descriptionYouthAcademy": "Eigenständiges U16-Programm mit Fahrern, Personal, Scouting, Ausrüstung und Rennen. Freischaltung nach 90 Spieltagen, mit bezahltem Premium und 50 Coins. Verlängerung: 50 Coins pro Saison.",
     "youthCapacity": "Akademiekapazität",
     "youthStarterRiders": "Starterfahrer",
     "youthStarterStaff": "Starterpersonal",
@@ -211,8 +211,8 @@
     "viewYouthAcademy": "Jugendakademie ansehen",
     "locked": "Gesperrt",
     "youthUnlock": "Freischaltung",
-    "youthUnlockValue": "{{real}} reale Tage ODER {{game}} Spieltage",
-    "youthWaiting": "Fortschritt: {{realPlayed}}/{{realRequired}} reale Tage oder {{gamePlayed}}/{{gameRequired}} Spieltage.",
+    "youthUnlockValue": "{{game}} Spieltage",
+    "youthWaiting": "Fortschritt zur Freischaltung: {{gamePlayed}}/{{gameRequired}} Spieltage. Ein bezahltes Premium-Abo ist ebenfalls erforderlich.",
     "renewalRequired": "Verlängerung erforderlich"
   },
   "history": {
