@@ -2233,8 +2233,7 @@ export default function ProPackagesPage(): JSX.Element {
                 <MembershipItem
                   label={t('services.youthUnlock')}
                   value={t('services.youthUnlockValue', {
-                    real: youthAcademyService?.unlock_real_days_required ?? 30,
-                    game: youthAcademyService?.unlock_game_days_required ?? 60,
+                    game: youthAcademyService?.unlock_game_days_required ?? 90,
                   })}
                 />
               </div>
@@ -2244,10 +2243,8 @@ export default function ProPackagesPage(): JSX.Element {
               youthAcademyService?.time_requirement_met === false ? (
                 <p className="mt-4 text-sm text-amber-800">
                   {t('services.youthWaiting', {
-                    realPlayed: youthAcademyService?.real_days_played ?? 0,
-                    realRequired: youthAcademyService?.unlock_real_days_required ?? 30,
                     gamePlayed: youthAcademyService?.game_days_played ?? 0,
-                    gameRequired: youthAcademyService?.unlock_game_days_required ?? 60,
+                    gameRequired: youthAcademyService?.unlock_game_days_required ?? 90,
                   })}
                 </p>
               ) : null}
