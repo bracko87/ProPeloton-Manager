@@ -35,6 +35,7 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 import Footer from './Footer'
 import ProPackagesPage from '../../pages/ProPackages'
+import WelcomePremiumTrial from '@/components/premium/WelcomePremiumTrial'
 import { getMyClubContext } from '@/lib/clubContext'
 import { supabase } from '@/lib/supabase'
 
@@ -651,6 +652,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
         <Footer />
       </div>
+
+      <WelcomePremiumTrial />
 
       {showInactivityWarning ? (
         <div className="fixed bottom-6 right-6 z-[130] w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-amber-300 bg-white p-5 shadow-2xl">
