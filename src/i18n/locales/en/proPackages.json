@@ -315,6 +315,9 @@
     "startPlaying": "Start playing",
     "continueFree": "Continue playing free",
     "viewPro": "View Pro Packages",
-    "countdown": "Premium trial: {{count}} days left"
+    "countdown": "Premium trial: {{count}} days left",
+    "freeTrialStatus": "Free Premium Trial",
+    "accessUntil": "Your complimentary access ends on {{date}}. No subscription or payment was created.",
+    "subscriptionOffer": "Enjoying Premium? Choose a paid package below to keep the extra features after your trial."
   }
 }
