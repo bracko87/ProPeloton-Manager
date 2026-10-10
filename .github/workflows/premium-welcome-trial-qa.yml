@@ -1,0 +1,86 @@
+name: Premium Welcome Trial and Game-Day Unlock QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/premium-welcome-trial-qa.yml'
+      - 'src/components/premium/WelcomePremiumTrial.tsx'
+      - 'src/components/layout/MainLayout.tsx'
+      - 'src/components/layout/Header.tsx'
+      - 'src/pages/ProPackages.tsx'
+      - 'src/pages/dashboard/YouthAcademy.tsx'
+      - 'src/i18n/locales/**/proPackages.json'
+      - 'src/i18n/locales/**/youthAcademy.json'
+      - 'supabase/migrations/*premium_trial*.sql'
+      - 'supabase/migrations/*premium_trial*.sql'
+      - 'supabase/migrations/*u23_60_u16_90*.sql'
+      - 'supabase/migrations/*trial_no_permanent_coin*.sql'
+      - 'supabase/migrations/*one_time_trial*.sql'
+      - 'supabase/migrations/*first_week_premium_trial*.sql'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Check trial, coin, paid-only and unlock invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          const read = p => fs.readFileSync(p, 'utf8')
+          const guard = (ok,msg) => {if (!ok) throw new Error(msg)}
+          const trial = read('supabase/migrations/20261010195500_first_week_premium_trial_core_v1.sql')
+          const days = read('supabase/migrations/20261010201000_u23_60_u16_90_game_days_paid_access_v1.sql')
+          const scheduled = read('supabase/migrations/20261010210000_premium_trial_scheduled_notifications_v1.sql')
+          const noFee = read('supabase/migrations/20261010204500_trial_no_permanent_coin_waivers_v1.sql')
+          const antiAbuse = read('supabase/migrations/20261010220000_one_time_trial_email_claim_guard_v1.sql')
+          const popups = read('src/components/premium/WelcomePremiumTrial.tsx')
+          const layout = read('src/components/layout/MainLayout.tsx')
+          const header = read('src/components/layout/Header.tsx')
+          const prod = read('src/pages/ProPackages.tsx')
+          const youth = read('src/pages/dashboard/YouthAcademy.tsx')
+          guard(trial.includes("interval '7 days'"),'Trial must last seven real days')
+          guard(trial.includes('v_created >= v_launch'),'Trial must exclude existing users')
+          guard(trial.includes('user_has_paid_premium_access_v1'),'Paid access must be distinct')
+          guard(!trial.includes('apply_coin_delta'),'Trial must not grant duplicate welcome Coins')
+          guard(days.includes('v_time_met := v_game_days >= 60;'),'U23 must require 60 game days')
+          guard(days.includes('v_time_met:=v_game_days>=90;'),'U16 must require 90 game days')
+          guard(days.includes('user_has_paid_premium_access_v1'),'U16 must require paid Premium')
+          guard(noFee.includes('user_has_paid_premium_access_v1'),'Trial cannot bypass permanent Coin unlock fees')
+          guard(scheduled.includes('cron.schedule('),'Trial notices require hourly scheduling')
+          guard(antiAbuse.includes('premium_trial_claim_history_v1'),'One-time claims must resist re-registration')
+          guard(popups.includes('dismiss_expired') && popups.includes('dismiss_welcome'),'Both popup acknowledgements required')
+          guard(layout.includes('<WelcomePremiumTrial />'),'Dashboard must mount welcome flow')
+          guard(header.includes('premiumTrialDaysLeft'),'Header must show active trial countdown')
+          guard(prod.includes('isWelcomePremiumTrial'),'Trial must be separate from billed subscription')
+          guard(youth.includes('unlock_game_days_required ?? 90'),'U16 UI must match 90 days')
+          const keys = ['welcomeTitle','welcomeBody','expiredTitle','expiredBody','premiumDays','welcomeCoins','noBilling','keepPlaying','startPlaying','continueFree','viewPro','countdown','freeTrialStatus','accessUntil','subscriptionOffer']
+          const tokens = str => [...str.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g)].map(m=>m[1]).sort().join(',')
+          const en = JSON.parse(read('src/i18n/locales/en/proPackages.json'))
+          for (const lang of ['en','sr-Latn','hr','de','es','it','fr','ru']) {
+            const p = JSON.parse(read('src/i18n/locales/'+lang+'/proPackages.json'))
+            const y = JSON.parse(read('src/i18n/locales/'+lang+'/youthAcademy.json'))
+            for (const key of keys) {
+              guard(typeof p.trial?.[key]==='string' && p.trial[key].trim(),lang+': missing trial.'+key)
+              guard(tokens(p.trial[key])===tokens(en.trial[key]),lang+': placeholder mismatch trial.'+key)
+            }
+            guard(tokens(y.activation.unlockValue)==='game',lang+': U16 unlock must be game-days only')
+            guard(tokens(y.activation.waiting)==='gamePlayed,gameRequired',lang+': U16 waiting must be game-days only')
+            guard(tokens(p.services.youthUnlockValue)==='game',lang+': package U16 unlock must be game-days only')
+            guard(tokens(p.services.youthWaiting)==='gamePlayed,gameRequired',lang+': package waiting must be game-days only')
+          }
+          NODE
+      - name: Install dependencies
+        run: npm ci
+      - name: Production build
+        run: npm run build
