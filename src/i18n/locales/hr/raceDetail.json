@@ -200,7 +200,12 @@
     "participatingRiders": "Vozači koji sudjeluju u ovoj utrci",
     "age": "{{age}} god.",
     "riderDetailsUnavailable": "Dodijeljeno je {{count}} vozača. Detalji vozača još nisu dostupni.",
-    "noRiders": "Još nema dodijeljenih vozača."
+    "noRiders": "Još nema dodijeljenih vozača.",
+    "individualRiders": "Vozači",
+    "nationalRiderCount": "{{count}} potvrđenih vozača",
+    "noNationalRiders": "Još nema potvrđenih vozača na startnoj listi Nacionalnog prvenstva.",
+    "riderKit": "Dres trenutačne ekipe",
+    "freeAgent": "Slobodan vozač"
   },
   "results": {
     "classifications": "Klasifikacije utrke",
