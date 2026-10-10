@@ -39,6 +39,30 @@ jobs:
           ]) {
             if (!source.includes(fragment)) throw new Error('NC rider list regression: ' + fragment)
           }
+          // Protect every result view against using the temporary one-rider
+          // National Championship team entry instead of rider-to-club jerseys.
+          for (const name of ['RaceClassificationTable', 'StageResultsTable', 'StagePointResultsTable']) {
+            const match = source.match(new RegExp('function ' + name + '\\\\(\\{[\\s\\S]*?function ', 'm'))
+            if (!match || !match[0].includes('<RaceResultRiderKit') || !match[0].includes('ncClubKits')) {
+              throw new Error('NC result kit regression in ' + name)
+            }
+          }
+          if (!source.includes('useNationalChampionshipClubKits(race.id, isNationalChampionshipRace(race))')) {
+            throw new Error('NC participant and result kits no longer use a shared lookup')
+          }
+          // General classification must follow stage timing: winner total time,
+          // every rider at the same time "s.t.", actual gaps "+...".
+          for (const fragment of [
+            'function formatGeneralClassificationTime(',
+            "if (row.rank === 1) return formatRaceClock(row.total_time_seconds)",
+            "if (gap === 0) return 's.t.'",
+            "return \`+\\${formatGapValue(gap)}\\`",
+            "const isGeneralView = view === 'general'",
+            'isPointsView || isGeneralView ? 4 : 5',
+            'formatGeneralClassificationTime(row,',
+          ]) {
+            if (!source.includes(fragment)) throw new Error('General classification timing regression: ' + fragment)
+          }
           const migration = fs.readFileSync('supabase/migrations/20261010060000_national_championship_rider_current_club_lookup.sql', 'utf8')
           for (const fragment of ['SECURITY DEFINER', 'REVOKE ALL', 'GRANT EXECUTE', 'public.race_participant_riders', 'public.club_riders']) {
             if (!migration.includes(fragment)) throw new Error('NC safe-lookup migration regression: ' + fragment)
