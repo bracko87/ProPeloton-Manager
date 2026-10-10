@@ -200,7 +200,12 @@
     "participatingRiders": "I ciclisti che partecipano a questa gara",
     "age": "Ers {{age}}",
     "riderDetailsUnavailable": "Rider {{count}} assegnati. Dettagli del ciclista non sono ancora disponibili.",
-    "noRiders": "Non sono ancora stati assegnati dei ciclisti."
+    "noRiders": "Non sono ancora stati assegnati dei ciclisti.",
+    "individualRiders": "Corridori",
+    "nationalRiderCount": "{{count}} corridori confermati",
+    "noNationalRiders": "Non ci sono ancora corridori confermati nella lista di partenza del Campionato Nazionale.",
+    "riderKit": "Maglia della squadra attuale",
+    "freeAgent": "Senza squadra"
   },
   "results": {
     "classifications": "Classificazioni delle corse",
