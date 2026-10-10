@@ -315,6 +315,9 @@
     "startPlaying": "Commencer à jouer",
     "continueFree": "Continuer gratuitement",
     "viewPro": "Voir les offres Pro",
-    "countdown": "Essai Premium : {{count}} jours restants"
+    "countdown": "Essai Premium : {{count}} jours restants",
+    "freeTrialStatus": "Essai Premium gratuit",
+    "accessUntil": "Votre accès offert se termine le {{date}}. Aucun abonnement ni paiement n'a été créé.",
+    "subscriptionOffer": "Vous aimez Premium ? Choisissez une offre payante ci-dessous pour conserver les fonctionnalités après l'essai."
   }
 }
