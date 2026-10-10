@@ -159,7 +159,7 @@
     "active": "Aktivno",
     "expired": "Isteklo",
     "notActivated": "Nije aktivirano",
-    "descriptionDeveloping": "Izgradi i vodi U23 razvojnu momčad. Premium nije potreban za samu uslugu.",
+    "descriptionDeveloping": "Osnuj i vodi U23 razvojnu ekipu nakon 60 dana u igri. Premium nije potreban za ovu uslugu.",
     "readOnly": "Podaci Razvojnog tima ostaju sačuvani, ali sezonski pristup treba reaktivirati ili obnoviti.",
     "reactivationPrice": "Cena reaktivacije: {{cost}} Coins.",
     "firstActivationPrice": "Cena prve aktivacije: {{cost}} Coins.",
@@ -190,7 +190,7 @@
     "available": "Available",
     "premiumRequired": "Premium required",
     "loadingYouth": "Loading…",
-    "descriptionYouthAcademy": "Premium-only U16 program s vozačima, osobljem, budžetom, scoutingom, opremom, kalendarom, rangiranjem, poviješću razvoja i putem izlaska. Otključava se nakon 30 stvarnih ILI 60 dana u igri, košta 50 coina za aktivaciju i 50 coina po kasnijoj sezoni.",
+    "descriptionYouthAcademy": "Zaseban U16 program s vozačima, osobljem, skautingom, opremom i utrkama. Otključava se nakon 90 dana u igri. Aktivacija zahtijeva plaćeni Premium i 50 Coinova, a obnova 50 Coinova po sezoni.",
     "youthCapacity": "Academy capacity",
     "youthStarterRiders": "Starter riders",
     "youthStarterStaff": "Starter staff",
@@ -211,8 +211,8 @@
     "viewYouthAcademy": "View Youth Academy",
     "locked": "Zaključano",
     "youthUnlock": "Otključavanje",
-    "youthUnlockValue": "{{real}} stvarnih dana ILI {{game}} dana u igri",
-    "youthWaiting": "Napredak: {{realPlayed}}/{{realRequired}} stvarnih dana ili {{gamePlayed}}/{{gameRequired}} dana u igri.",
+    "youthUnlockValue": "{{game}} dana u igri",
+    "youthWaiting": "Napredak do otključavanja akademije: {{gamePlayed}}/{{gameRequired}} dana u igri. Potreban je i plaćeni Premium.",
     "renewalRequired": "Potrebna obnova"
   },
   "history": {
