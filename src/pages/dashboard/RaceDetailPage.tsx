@@ -6758,6 +6758,42 @@ function NationalChampionshipRidersList({
   )
 }
 
+
+/** Results jerseys for NC are keyed by RIDER, never by temporary race team. */
+function RaceResultRiderKit({
+  riderId,
+  teamId,
+  teamName,
+  participantTeams,
+  ncClubKits,
+  onOpenTeamProfile,
+}: {
+  riderId: string | null
+  teamId: string | null
+  teamName: string | null
+  participantTeams: RaceParticipantTeam[]
+  ncClubKits?: Record<string, NationalRiderClubKit> | null
+  onOpenTeamProfile: (teamId: string) => void
+}): JSX.Element {
+  const { t } = useTranslation('raceDetail')
+  if (ncClubKits === undefined) {
+    return (
+      <ResultTeamJerseyCell
+        teamId={teamId}
+        teamName={teamName}
+        participantTeams={participantTeams}
+        onOpenTeamProfile={onOpenTeamProfile}
+      />
+    )
+  }
+  if (ncClubKits === null) {
+    return <div className="h-9 w-full animate-pulse rounded-lg bg-slate-100" aria-label={t('participants.loading')} />
+  }
+  const kit = riderId ? ncClubKits[riderId] : undefined
+  const name = kit?.teamName ?? t('participants.freeAgent')
+  return <NationalRiderJerseyStrip url={kit?.jerseyUrl} name={name} />
+}
+
 function RaceParticipantsGrid({
   teams,
   loading,
@@ -8138,6 +8174,7 @@ function RaceResultsHub({
                   rows={classificationRows}
                   view={classificationView}
                   participantTeams={participantTeams}
+                  ncClubKits={isNationalChampionshipRace(race) ? ncClubKits : undefined}
                   currentClubId={viewerTeamId}
                   viewerClubFamilyIds={viewerTeamIds}
                   onOpenTeamProfile={openTeamProfileFromRaceInfo}
@@ -8213,6 +8250,7 @@ function RaceResultsHub({
                       []
                     }
                     participantTeams={participantTeams}
+                    ncClubKits={isNationalChampionshipRace(race) ? ncClubKits : undefined}
                     classificationRows={classificationPayload?.classifications ?? []}
                     currentClubId={viewerTeamId}
                     viewerClubFamilyIds={viewerTeamIds}
@@ -8224,6 +8262,7 @@ function RaceResultsHub({
                     rows={stagePointRows}
                     view={stagePointAggregateView}
                     participantTeams={participantTeams}
+                    ncClubKits={isNationalChampionshipRace(race) ? ncClubKits : undefined}
                     currentClubId={viewerTeamId}
                     viewerClubFamilyIds={viewerTeamIds}
                     onOpenTeamProfile={openTeamProfileFromRaceInfo}
@@ -8501,6 +8540,7 @@ function RaceClassificationTable({
   participantTeams,
   currentClubId,
   viewerClubFamilyIds,
+  ncClubKits,
   onOpenTeamProfile,
   onOpenRiderProfile,
 }: {
@@ -8509,6 +8549,7 @@ function RaceClassificationTable({
   participantTeams: RaceParticipantTeam[]
   currentClubId?: string | null
   viewerClubFamilyIds?: string[]
+  ncClubKits?: Record<string, NationalRiderClubKit> | null
   onOpenTeamProfile: (teamId: string) => void
   onOpenRiderProfile: (riderId: string) => void
 }) {
@@ -8579,11 +8620,13 @@ function RaceClassificationTable({
     )
   }
 
-  const renderLinkedTeamName = (teamId?: string | null, label?: string | null) => (
-    <ResultTeamJerseyCell
-      teamId={teamId}
-      teamName={label}
+  const renderLinkedTeamName = (teamId?: string | null, label?: string | null, riderId?: string | null) => (
+    <RaceResultRiderKit
+      riderId={riderId ?? null}
+      teamId={teamId ?? null}
+      teamName={label ?? null}
       participantTeams={participantTeams}
+      ncClubKits={ncClubKits}
       onOpenTeamProfile={onOpenTeamProfile}
     />
   )
@@ -8606,7 +8649,7 @@ function RaceClassificationTable({
       <td className="max-w-0 px-2 py-1.5 text-slate-500">
         {row.entity_type === 'team'
           ? '—'
-          : renderLinkedTeamName(row.team_id, row.team_name_snapshot)}
+          : renderLinkedTeamName(row.team_id, row.team_name_snapshot, row.rider_id)}
       </td>
 
       <td className="px-3 py-3 text-right font-semibold text-slate-900">
@@ -8667,6 +8710,7 @@ function StageResultsTable({
   classificationRows,
   currentClubId,
   viewerClubFamilyIds,
+  ncClubKits,
   onOpenTeamProfile,
   onOpenRiderProfile,
 }: {
@@ -8675,6 +8719,7 @@ function StageResultsTable({
   classificationRows?: RaceClassificationRow[]
   currentClubId?: string | null
   viewerClubFamilyIds?: string[]
+  ncClubKits?: Record<string, NationalRiderClubKit> | null
   onOpenTeamProfile: (teamId: string) => void
   onOpenRiderProfile: (riderId: string) => void
 }) {
@@ -8782,10 +8827,12 @@ function StageResultsTable({
   }
 
   const renderLinkedStageResultTeamName = (row: RaceStageResultRow) => (
-    <ResultTeamJerseyCell
+    <RaceResultRiderKit
+      riderId={row.rider_id}
       teamId={row.team_id}
       teamName={row.team_name_snapshot}
       participantTeams={participantTeams}
+      ncClubKits={ncClubKits}
       onOpenTeamProfile={onOpenTeamProfile}
     />
   )
@@ -8851,6 +8898,7 @@ function StagePointResultsTable({
   participantTeams,
   currentClubId,
   viewerClubFamilyIds,
+  ncClubKits,
   onOpenTeamProfile,
   onOpenRiderProfile,
 }: {
@@ -8859,6 +8907,7 @@ function StagePointResultsTable({
   participantTeams: RaceParticipantTeam[]
   currentClubId?: string | null
   viewerClubFamilyIds?: string[]
+  ncClubKits?: Record<string, NationalRiderClubKit> | null
   onOpenTeamProfile: (teamId: string) => void
   onOpenRiderProfile: (riderId: string) => void
 }) {
@@ -8927,10 +8976,12 @@ function StagePointResultsTable({
   }
 
   const renderLinkedPointTeamName = (row: AggregatedStagePointResultRow) => (
-    <ResultTeamJerseyCell
+    <RaceResultRiderKit
+      riderId={row.rider_id}
       teamId={row.team_id}
       teamName={row.team_name_snapshot}
       participantTeams={participantTeams}
+      ncClubKits={ncClubKits}
       onOpenTeamProfile={onOpenTeamProfile}
     />
   )
