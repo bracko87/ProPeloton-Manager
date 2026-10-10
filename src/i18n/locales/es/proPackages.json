@@ -159,7 +159,7 @@
     "active": "Activa",
     "expired": "Expirado",
     "notActivated": "No activado",
-    "descriptionDeveloping": "Crea y gestiona una plantilla U23 de desarrollo. Premium no es necesario para el servicio.",
+    "descriptionDeveloping": "Crea y dirige tu equipo de desarrollo sub-23 después de 60 días de juego. Este servicio no requiere Premium.",
     "readOnly": "Los datos del Equipo de Desarrollo se conservan; el acceso estacional debe reactivarse o renovarse.",
     "reactivationPrice": "Precio de reactivación: {{cost}} Coins.",
     "firstActivationPrice": "Primer precio de activación: {{cost}} Coins.",
@@ -190,7 +190,7 @@
     "available": "Available",
     "premiumRequired": "Premium required",
     "loadingYouth": "Loading…",
-    "descriptionYouthAcademy": "Programa U16 Premium-only con ciclistas, staff, presupuesto, scouting, equipamiento, calendario, rankings, historial y ruta de graduación. Se desbloquea tras 30 días reales O 60 días de juego, cuesta 50 Coins de activación y 50 Coins por temporada posterior.",
+    "descriptionYouthAcademy": "Programa sub-16 independiente con ciclistas, personal, ojeadores, equipamiento y carreras. Se desbloquea tras 90 días de juego. Requiere Premium de pago y 50 Coins; renovación de 50 Coins por temporada.",
     "youthCapacity": "Academy capacity",
     "youthStarterRiders": "Starter riders",
     "youthStarterStaff": "Starter staff",
@@ -211,8 +211,8 @@
     "viewYouthAcademy": "View Youth Academy",
     "locked": "Bloqueado",
     "youthUnlock": "Desbloqueo",
-    "youthUnlockValue": "{{real}} días reales O {{game}} días de juego",
-    "youthWaiting": "Progreso: {{realPlayed}}/{{realRequired}} días reales o {{gamePlayed}}/{{gameRequired}} días de juego.",
+    "youthUnlockValue": "{{game}} días de juego",
+    "youthWaiting": "Progreso para desbloquear la Academia: {{gamePlayed}}/{{gameRequired}} días de juego. También es necesario Premium de pago.",
     "renewalRequired": "Renovación necesaria"
   },
   "history": {
