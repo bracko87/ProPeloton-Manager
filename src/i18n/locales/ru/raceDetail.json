@@ -200,7 +200,12 @@
     "participatingRiders": "гонщик, участвующие в этой гонке",
     "age": "{{age}} Ух",
     "riderDetailsUnavailable": "{{count}} Подробности о гонщиках пока отсутствуют.",
-    "noRiders": "гонщик пока не назначили."
+    "noRiders": "гонщик пока не назначили.",
+    "individualRiders": "Гонщики",
+    "nationalRiderCount": "Подтверждено гонщиков: {{count}}",
+    "noNationalRiders": "В стартовом списке национального чемпионата пока нет подтверждённых гонщиков.",
+    "riderKit": "Форма текущей команды",
+    "freeAgent": "Без команды"
   },
   "results": {
     "classifications": "гоночные классификации",
