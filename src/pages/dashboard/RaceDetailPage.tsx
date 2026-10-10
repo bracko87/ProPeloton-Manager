@@ -6574,14 +6574,13 @@ function NationalChampionshipRidersList({
     let cancelled = false
 
     async function loadCurrentRiderClubs() {
-      // Match the authoritative National Ranking membership rule: most recent
-      // club_riders entry wins; deleted clubs mean the rider is a free agent.
-      const { data: memberships, error: membershipError } = await supabase
-        .from('club_riders')
-        .select('id, rider_id, club_id, created_at')
-        .in('rider_id', riderIds)
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
+      // SECURITY DEFINER RPC returns only club id/name for riders already
+      // registered in this NC race. Browser access to other clubs' rosters is
+      // correctly forbidden by RLS, so do not query club_riders directly.
+      const { data: membershipRows, error: membershipError } = await supabase.rpc(
+        'get_nc_participant_current_clubs_v1',
+        { p_race_id: raceId }
+      )
 
       if (cancelled) return
       if (membershipError) {
@@ -6590,54 +6589,43 @@ function NationalChampionshipRidersList({
         return
       }
 
-      const currentClubIdByRider = new Map<string, string | null>()
-      for (const membership of memberships ?? []) {
-        if (!currentClubIdByRider.has(membership.rider_id)) {
-          currentClubIdByRider.set(membership.rider_id, membership.club_id ?? null)
-        }
+      type PublicClubRow = {
+        rider_id: string
+        club_id: string | null
+        club_name: string | null
+        club_type: string | null
+        parent_club_id: string | null
+      }
+      const visibleMemberships = (membershipRows ?? []) as PublicClubRow[]
+      const clubById = new Map<string, PublicClubRow>()
+      for (const row of visibleMemberships) {
+        if (row.club_id && row.club_name) clubById.set(row.club_id, row)
       }
 
-      const clubIds = Array.from(new Set(
-        Array.from(currentClubIdByRider.values()).filter(
-          (id): id is string => Boolean(id)
-        )
-      ))
-      if (clubIds.length === 0) {
+      if (clubById.size === 0) {
         setClubKits({})
         return
       }
 
-      const { data: clubRows, error: clubError } = await supabase
-        .from('clubs')
-        .select('id, name, deleted_at, club_type, parent_club_id')
-        .in('id', clubIds)
-
-      if (cancelled) return
-      if (clubError) {
-        console.warn('Could not load National Championship current clubs:', clubError.message)
-        setClubKits({})
-        return
-      }
-
-      const activeClubs = (clubRows ?? []).filter(club => club.deleted_at == null)
-      const activeById = new Map(activeClubs.map(club => [club.id, club]))
-      const kitTeams: RaceParticipantTeam[] = activeClubs.map(club => ({
-        id: club.id,
+      // The regular race jersey loader already handles current club kits:
+      // user-customized team_kits, AI preview kits and Developing Team parents.
+      const kitTeams: RaceParticipantTeam[] = Array.from(clubById.values()).map(club => ({
+        id: club.club_id!,
         race_id: raceId,
-        team_id: club.id,
-        club_id: club.id,
+        team_id: club.club_id!,
+        club_id: club.club_id,
         owner_club_id: club.club_type === 'developing'
-          ? club.parent_club_id ?? club.id
-          : club.id,
-        participating_club_id: club.id,
+          ? club.parent_club_id ?? club.club_id
+          : club.club_id,
+        participating_club_id: club.club_id,
         parent_club_id: club.parent_club_id,
         status: 'accepted',
-        club_name: club.name,
+        club_name: club.club_name,
         country_code: null,
         club_tier: null,
         world_tier: null,
         assigned_riders_count: 0,
-        team_name_snapshot: club.name,
+        team_name_snapshot: club.club_name,
         logo_url_snapshot: null,
         jersey_url_snapshot: null,
         country_code_snapshot: null,
@@ -6645,24 +6633,39 @@ function NationalChampionshipRidersList({
         riders: [],
       }))
 
-      const brandedTeams = await loadParticipantTeamLogos(kitTeams, raceId)
-      if (cancelled) return
-      const jerseyByClubId = new Map(brandedTeams.map(team => [
-        team.club_id ?? team.team_id,
-        team.jersey_url_snapshot ?? null,
-      ] as const))
+      try {
+        const brandedTeams = await loadParticipantTeamLogos(kitTeams, raceId)
+        if (cancelled) return
+        const jerseyByClubId = new Map(brandedTeams.map(team => [
+          team.club_id ?? team.team_id,
+          team.jersey_url_snapshot ?? null,
+        ] as const))
 
-      const next: Record<string, NationalRiderClubKit> = {}
-      for (const [riderId, clubId] of currentClubIdByRider.entries()) {
-        const club = clubId ? activeById.get(clubId) : null
-        if (!club) continue
-        next[riderId] = {
-          clubId: club.id,
-          teamName: club.name,
-          jerseyUrl: jerseyByClubId.get(club.id) ?? null,
+        const next: Record<string, NationalRiderClubKit> = {}
+        for (const row of visibleMemberships) {
+          if (!row.club_id || !row.club_name) continue
+          next[row.rider_id] = {
+            clubId: row.club_id,
+            teamName: row.club_name,
+            jerseyUrl: jerseyByClubId.get(row.club_id) ?? null,
+          }
         }
+        setClubKits(next)
+      } catch (kitError) {
+        console.warn('Could not load National Championship jersey assets:', kitError)
+        if (cancelled) return
+        const next: Record<string, NationalRiderClubKit> = {}
+        for (const row of visibleMemberships) {
+          if (row.club_id && row.club_name) {
+            next[row.rider_id] = {
+              clubId: row.club_id,
+              teamName: row.club_name,
+              jerseyUrl: null,
+            }
+          }
+        }
+        setClubKits(next)
       }
-      setClubKits(next)
     }
 
     void loadCurrentRiderClubs()
