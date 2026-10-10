@@ -159,7 +159,7 @@
     "active": "Активен",
     "expired": "Прерван",
     "notActivated": "Не активирован",
-    "descriptionDeveloping": "Создайте и управляйте командой развития U23. Premium для самого сервиса не требуется.",
+    "descriptionDeveloping": "Создайте команду развития U23 после 60 игровых дней. Для этого сервиса Premium не требуется.",
     "readOnly": "Данные Команды развития сохраняются, но сезонный доступ нужно реактивировать или продлить.",
     "reactivationPrice": "Цена на восстановление: {{cost}} Coins.",
     "firstActivationPrice": "Первая цена активации: {{cost}} Coins.",
@@ -190,7 +190,7 @@
     "available": "Available",
     "premiumRequired": "Premium required",
     "loadingYouth": "Loading…",
-    "descriptionYouthAcademy": "Premium-only программа U16 со своими гонщиками, персоналом, бюджетом, скаутингом, экипировкой, календарём, рейтингами, историей развития и выпуском. Открывается после 30 реальных ИЛИ 60 игровых дней, стоит 50 монет за активацию и 50 монет за каждый последующий сезон.",
+    "descriptionYouthAcademy": "Отдельная академия U16 с гонщиками, персоналом, скаутингом, оборудованием и гонками. Откроется через 90 игровых дней. Для активации нужны платный Premium и 50 Coins; продление — 50 Coins за сезон.",
     "youthCapacity": "Academy capacity",
     "youthStarterRiders": "Starter riders",
     "youthStarterStaff": "Starter staff",
@@ -211,8 +211,8 @@
     "viewYouthAcademy": "View Youth Academy",
     "locked": "Закрыто",
     "youthUnlock": "Условие открытия",
-    "youthUnlockValue": "{{real}} реальных ИЛИ {{game}} игровых дней",
-    "youthWaiting": "Прогресс: {{realPlayed}}/{{realRequired}} реальных дней или {{gamePlayed}}/{{gameRequired}} игровых дней.",
+    "youthUnlockValue": "{{game}} игровых дней",
+    "youthWaiting": "До открытия академии: {{gamePlayed}}/{{gameRequired}} игровых дней. Также требуется платный Premium.",
     "renewalRequired": "Требуется продление"
   },
   "history": {
