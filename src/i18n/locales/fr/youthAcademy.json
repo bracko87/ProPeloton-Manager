@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Activer l'Académie Jeunes",
-    "description": "L'activation crée votre académie U16 séparée. Elle nécessite Premium, 30 jours réels OU 60 jours de jeu depuis la création du club, 50 coins d'activation et le budget choisi. À partir de la saison suivante, l'accès coûte 50 coins par saison tant que Premium reste actif. Vous commencez avec six coureurs locaux, un Directeur d'Académie et un Coach U16. Le Youth Scout est facultatif.",
+    "description": "L'Académie U16 indépendante se débloque après 90 jours de jeu depuis la création de votre club principal. Son activation nécessite un abonnement Premium payant (l'essai gratuit sert uniquement d'aperçu), 50 Coins et le budget choisi. Le renouvellement coûte 50 Coins par saison avec un Premium payant actif. Vous commencez avec six jeunes coureurs, un directeur et un entraîneur U16.",
     "capacityLabel": "Nombre maximal de coureurs",
     "starterRidersLabel": "Coureurs de départ",
     "staffLabel": "Personnel inclus",
@@ -34,8 +34,8 @@
     "unlockLabel": "Condition de déblocage",
     "coinBalanceLabel": "Solde de coins",
     "coins": "{{count}} coins",
-    "unlockValue": "{{real}} jours réels OU {{game}} jours de jeu",
-    "waiting": "Pas encore débloquée. Progression : {{realPlayed}}/{{realRequired}} jours réels ou {{gamePlayed}}/{{gameRequired}} jours de jeu. La première condition remplie débloque l'académie.",
+    "unlockValue": "{{game}} jours de jeu",
+    "waiting": "Progression avant le déblocage de l'Académie : {{gamePlayed}}/{{gameRequired}} jours de jeu. Un Premium payant est également requis.",
     "needCoins": "L'activation de l'Académie Jeunes coûte {{cost}} coins. Votre solde actuel est {{balance}}.",
     "renewalCostLabel": "Renouvellement de saison",
     "coinsPerSeason": "{{count}} coins / saison"
