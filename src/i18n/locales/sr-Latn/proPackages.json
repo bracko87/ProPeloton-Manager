@@ -302,5 +302,19 @@
     "retry": "Pokušaj ponovo",
     "status": "Anketa",
     "bannerDescription": "Popuni dobrovoljne CPX Research ankete i zaradi 15 Coins za svaki 1 $ potvrđene zarade od anketa. Plaćanje nije potrebno. Poništene ankete mogu dovesti do oduzimanja Coins."
+  },
+  "trial": {
+    "welcomeTitle": "Dobro došli u ProPeloton Manager!",
+    "welcomeBody": "Drago nam je što ste na startnoj liniji! Poklanjamo vam 20 Coin-a dobrodošlice i sedam stvarnih dana Premium pristupa. Istražite napredne opcije i izgradite svoj biciklistički tim.",
+    "expiredTitle": "Vaš Premium probni period je istekao",
+    "expiredBody": "Hvala što igrate! Besplatni Premium probni period od sedam dana je završen. Nadamo se da su vam se dopale dodatne opcije. Možete nastaviti besplatno ili posetiti stranicu Pro paketa kad god poželite.",
+    "premiumDays": "dana Premium pristupa",
+    "welcomeCoins": "Coin-a dobrodošlice",
+    "noBilling": "Nisu potrebni kartica ni plaćanje. Probni period se automatski završava bez pretplate.",
+    "keepPlaying": "Vaš tim, vozači i napredak ostaju sačuvani. Nastavite da igrate besplatno koliko god želite.",
+    "startPlaying": "Počni igru",
+    "continueFree": "Nastavi besplatno",
+    "viewPro": "Pogledaj Pro pakete",
+    "countdown": "Premium proba: još {{count}} dana"
   }
 }
