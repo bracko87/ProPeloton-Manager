@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Activar Academia Juvenil",
-    "description": "La activación crea tu academia U16 separada. Requiere Premium, 30 días reales O 60 días de juego desde la creación del club, 50 Coins de activación y el presupuesto elegido. Desde la temporada siguiente, el acceso cuesta 50 Coins por temporada mientras Premium siga activo. Empiezas con seis ciclistas locales, Director de Academia y Entrenador U16. El Youth Scout es opcional.",
+    "description": "La Academia sub-16 independiente se desbloquea tras 90 días de juego desde la creación de tu club principal. Para activarla necesitas una suscripción Premium de pago (la prueba gratuita es solo una vista previa), 50 Coins y el presupuesto elegido. La renovación cuesta 50 Coins por temporada mientras Premium de pago siga activo. Comienzas con seis ciclistas locales, un director de academia y un entrenador principal sub-16.",
     "capacityLabel": "Máximo de ciclistas",
     "starterRidersLabel": "Ciclistas iniciales",
     "staffLabel": "Personal incluido",
@@ -34,8 +34,8 @@
     "unlockLabel": "Requisito de desbloqueo",
     "coinBalanceLabel": "Saldo de monedas",
     "coins": "{{count}} monedas",
-    "unlockValue": "{{real}} días reales O {{game}} días de juego",
-    "waiting": "Todavía no está desbloqueada. Progreso: {{realPlayed}}/{{realRequired}} días reales o {{gamePlayed}}/{{gameRequired}} días de juego. La primera condición que cumplas desbloquea la academia.",
+    "unlockValue": "{{game}} días de juego",
+    "waiting": "Progreso para desbloquear la Academia: {{gamePlayed}}/{{gameRequired}} días de juego. También es necesario Premium de pago.",
     "needCoins": "Activar la Academia Juvenil cuesta {{cost}} monedas. Tu saldo actual es {{balance}}.",
     "renewalCostLabel": "Renovación de temporada",
     "coinsPerSeason": "{{count}} Coins / temporada"
