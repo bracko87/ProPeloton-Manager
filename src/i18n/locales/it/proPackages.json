@@ -302,5 +302,19 @@
     "retry": "Riprova",
     "status": "Sondaggio",
     "bannerDescription": "Completa sondaggi facoltativi di CPX Research e ottieni 15 Coins per ogni 1 $ di ricavi verificati. Nessun pagamento richiesto; i premi revocati possono ridurre i Coins."
+  },
+  "trial": {
+    "welcomeTitle": "Benvenuto in ProPeloton Manager!",
+    "welcomeBody": "Siamo felici di averti sulla linea di partenza! Ricevi 20 Coin di benvenuto e sette giorni reali di accesso Premium. Scopri le funzioni avanzate e crea la tua squadra ciclistica.",
+    "expiredTitle": "La prova Premium è terminata",
+    "expiredBody": "Grazie per essere rimasto con noi! La prova Premium gratuita di sette giorni è finita. Speriamo che le funzioni aggiuntive ti siano piaciute. Puoi continuare gratis oppure visitare la pagina dei pacchetti Pro quando vuoi.",
+    "premiumDays": "giorni Premium",
+    "welcomeCoins": "Coin di benvenuto",
+    "noBilling": "Non serve alcun pagamento né carta. La prova termina automaticamente senza attivare abbonamenti.",
+    "keepPlaying": "La tua squadra, i corridori e i progressi restano al sicuro. Continua a giocare gratis quanto vuoi.",
+    "startPlaying": "Inizia a giocare",
+    "continueFree": "Continua gratis",
+    "viewPro": "Vedi pacchetti Pro",
+    "countdown": "Prova Premium: {{count}} giorni rimanenti"
   }
 }
