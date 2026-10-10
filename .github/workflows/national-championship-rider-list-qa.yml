@@ -58,7 +58,7 @@ jobs:
             'function formatGeneralClassificationTime(',
             "if (row.rank === 1) return formatRaceClock(row.total_time_seconds)",
             "if (gap === 0) return 's.t.'",
-            "return \`+\\${formatGapValue(gap)}\\`",
+            'if (gap !== null) return',
             "const isGeneralView = view === 'general'",
             'isPointsView || isGeneralView ? 4 : 5',
             'formatGeneralClassificationTime(row,',
