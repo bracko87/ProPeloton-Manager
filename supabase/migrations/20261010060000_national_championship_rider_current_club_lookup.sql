@@ -48,6 +48,6 @@ AS $function$
 $function$;
 
 REVOKE ALL ON FUNCTION public.get_nc_participant_current_clubs_v1(uuid)
-  FROM PUBLIC;
+  FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_nc_participant_current_clubs_v1(uuid)
   TO authenticated;
