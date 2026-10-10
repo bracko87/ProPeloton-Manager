@@ -338,6 +338,7 @@ export default function Header({
   ] = useState<ClubDisplayIdentity | null>(null)
   const [identityRefreshKey, setIdentityRefreshKey] = useState(0)
   const [isPremium, setIsPremium] = useState(false)
+  const [premiumTrialDaysLeft, setPremiumTrialDaysLeft] = useState<number | null>(null)
   const [isPremiumStatusLoading, setIsPremiumStatusLoading] =
     useState(true)
 
@@ -796,12 +797,14 @@ export default function Header({
         error,
       )
       setIsPremium(false)
+      setPremiumTrialDaysLeft(null)
       setIsPremiumStatusLoading(false)
       return
     }
 
     if (typeof data === 'boolean') {
       setIsPremium(data)
+      setPremiumTrialDaysLeft(null)
       setIsPremiumStatusLoading(false)
       return
     }
@@ -835,6 +838,13 @@ export default function Header({
     )
 
     setIsPremium(resolvedIsPremium)
+    setPremiumTrialDaysLeft(
+      resolvedIsPremium &&
+      row?.stripe_status === 'free_trial' &&
+      hasCurrentAccessUntil
+        ? Math.max(1, Math.ceil((accessUntilMs - Date.now()) / 86400000))
+        : null
+    )
     setIsPremiumStatusLoading(false)
   }, [])
 
@@ -1131,7 +1141,9 @@ export default function Header({
           ) : isPremium ? (
             <>
               <Crown size={15} aria-hidden="true" />
-              <span>{t('header.premium')}</span>
+              <span>{premiumTrialDaysLeft !== null
+                ? t('trial.countdown', { ns: 'proPackages', count: premiumTrialDaysLeft })
+                : t('header.premium')}</span>
             </>
           ) : (
             <span>{t('header.free')}</span>
