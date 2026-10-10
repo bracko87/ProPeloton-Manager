@@ -200,7 +200,12 @@
     "participatingRiders": "Fahrer, die an diesem Rennen teilnehmen",
     "age": "{{age}} J.",
     "riderDetailsUnavailable": "{{count}} Fahrer zugewiesen. Fahrerdetails sind noch nicht verfügbar.",
-    "noRiders": "Noch keine Fahrer zugewiesen."
+    "noRiders": "Noch keine Fahrer zugewiesen.",
+    "individualRiders": "Fahrer",
+    "nationalRiderCount": "{{count}} bestätigte Fahrer",
+    "noNationalRiders": "Für die Nationale Meisterschaft sind noch keine Fahrer bestätigt.",
+    "riderKit": "Trikot des aktuellen Teams",
+    "freeAgent": "Vereinslos"
   },
   "results": {
     "classifications": "Rennwertungen",
