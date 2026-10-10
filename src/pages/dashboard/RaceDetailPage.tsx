@@ -3130,6 +3130,30 @@ function formatStageGap(seconds?: number | null): string {
   return `+${formatGapValue(seconds)}`
 }
 
+/**
+ * Match the stage-results timing convention in general classification:
+ * leader = total elapsed time, same-time finishers = s.t., others = +gap.
+ * When the backend omits a gap, derive it from cumulative elapsed times.
+ */
+function formatGeneralClassificationTime(
+  row: RaceClassificationRow,
+  leaderSeconds: number | null
+): string {
+  if (row.rank === 1) return formatRaceClock(row.total_time_seconds)
+  const explicitGap = row.gap_seconds == null ? null : Number(row.gap_seconds)
+  const parsedTime = row.total_time_seconds == null ? null : Number(row.total_time_seconds)
+  const calculatedGap = leaderSeconds !== null &&
+    parsedTime !== null && Number.isFinite(parsedTime)
+      ? Math.max(0, parsedTime - leaderSeconds)
+      : null
+  const gap = explicitGap !== null && Number.isFinite(explicitGap)
+    ? Math.max(0, explicitGap)
+    : calculatedGap
+  if (gap === 0) return 's.t.'
+  if (gap !== null) return `+${formatGapValue(gap)}`
+  return formatRaceClock(row.total_time_seconds)
+}
+
 function formatClassificationGap(seconds?: number | null): string {
   if (seconds === null || seconds === undefined) return '—'
   if (Number(seconds) === 0) return 'Leader'
@@ -8562,7 +8586,12 @@ function RaceClassificationTable({
   }
 
   const isPointsView = view === 'points' || view === 'mountain'
-  const columnCount = isPointsView ? 4 : 5
+  const isGeneralView = view === 'general'
+  const columnCount = isPointsView || isGeneralView ? 4 : 5
+  const leaderRow = rows.find(row => row.entity_type !== 'team' && row.rank === 1)
+  const leaderTotalSeconds = leaderRow?.total_time_seconds == null
+    ? null
+    : Number(leaderRow.total_time_seconds)
   const viewerTeamId = getViewerTeamId(currentClubId)
   const viewerTeamIds = getViewerTeamIds(viewerTeamId, viewerClubFamilyIds)
   const userRiderIds = getUserRiderIdSet(participantTeams, viewerTeamIds)
@@ -8655,10 +8684,12 @@ function RaceClassificationTable({
       <td className="px-3 py-3 text-right font-semibold text-slate-900">
         {isPointsView
           ? formatResultPoints(row.points)
-          : formatRaceClock(row.total_time_seconds)}
+          : isGeneralView
+            ? formatGeneralClassificationTime(row, Number.isFinite(leaderTotalSeconds) ? leaderTotalSeconds : null)
+            : formatRaceClock(row.total_time_seconds)}
       </td>
 
-      {!isPointsView ? (
+      {!isPointsView && !isGeneralView ? (
         <td className="px-3 py-3 text-right text-slate-500">
           {formatClassificationGap(row.gap_seconds)}
         </td>
@@ -8671,10 +8702,10 @@ function RaceClassificationTable({
       <table className="min-w-full table-fixed text-sm">
         <colgroup>
           <col className="w-[8%]" />
-          <col className={isPointsView ? 'w-[40%]' : 'w-[37%]'} />
-          <col className={isPointsView ? 'w-[35%]' : 'w-[32%]'} />
-          <col className={isPointsView ? 'w-[17%]' : 'w-[16%]'} />
-          {!isPointsView ? <col className="w-[7%]" /> : null}
+          <col className={isPointsView ? 'w-[40%]' : isGeneralView ? 'w-[43%]' : 'w-[37%]'} />
+          <col className={isPointsView ? 'w-[35%]' : isGeneralView ? 'w-[35%]' : 'w-[32%]'} />
+          <col className={isPointsView ? 'w-[17%]' : isGeneralView ? 'w-[14%]' : 'w-[16%]'} />
+          {!isPointsView && !isGeneralView ? <col className="w-[7%]" /> : null}
         </colgroup>
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -8684,7 +8715,7 @@ function RaceClassificationTable({
             <th className="px-3 py-3 text-right">
               {isPointsView ? t('results.pointsColumn') : t('results.time')}
             </th>
-            {!isPointsView ? (
+            {!isPointsView && !isGeneralView ? (
               <th className="px-3 py-3 text-right">{t('results.gap')}</th>
             ) : null}
           </tr>
