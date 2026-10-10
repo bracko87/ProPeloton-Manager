@@ -43,7 +43,7 @@ jobs:
           // National Championship team entry instead of rider-to-club jerseys.
           for (const name of ['RaceClassificationTable', 'StageResultsTable', 'StagePointResultsTable']) {
             const start = source.indexOf('function ' + name + '({')
-            const end = source.indexOf('\\nfunction ', start + 10)
+            const end = source.indexOf('\nfunction ', start + 10)
             const table = start >= 0 && end > start ? source.slice(start, end) : ''
             if (!table.includes('<RaceResultRiderKit') || !table.includes('ncClubKits')) {
               throw new Error('NC result kit regression in ' + name)
