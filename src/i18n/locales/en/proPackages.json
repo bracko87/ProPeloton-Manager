@@ -159,7 +159,7 @@
     "active": "Active",
     "expired": "Expired",
     "notActivated": "Not activated",
-    "descriptionDeveloping": "Build and manage a U23 development squad. Premium is not required for the service itself.",
+    "descriptionDeveloping": "Build and manage your U23 development squad after 60 game days. Premium is not required for the service itself.",
     "readOnly": "Your Developing Team data remains stored, but seasonal access must be reactivated or renewed.",
     "reactivationPrice": "Reactivation price: {{cost}} coins.",
     "firstActivationPrice": "First activation price: {{cost}} coins.",
@@ -190,7 +190,7 @@
     "available": "Available",
     "premiumRequired": "Premium required",
     "loadingYouth": "Loading…",
-    "descriptionYouthAcademy": "A separate Premium-only U16 development programme with its own riders, staff, budget, scouting, equipment, race calendar, rankings, development history and graduation pathway. New Academies unlock after 30 real-life days OR 60 in-game days, cost 50 coins to activate and 50 coins per later season to renew.",
+    "descriptionYouthAcademy": "A separate U16 programme with riders, staff, scouting, equipment and its own competitions. Unlocks after 90 game days. Activation requires paid Premium and 50 Coins; renewal costs 50 Coins per season.",
     "youthCapacity": "Academy capacity",
     "youthStarterRiders": "Starter riders",
     "youthStarterStaff": "Starter staff",
@@ -211,8 +211,8 @@
     "viewYouthAcademy": "View Youth Academy",
     "locked": "Locked",
     "youthUnlock": "Unlock timing",
-    "youthUnlockValue": "{{real}} real-life days OR {{game}} in-game days",
-    "youthWaiting": "Unlock progress: {{realPlayed}}/{{realRequired}} real-life days or {{gamePlayed}}/{{gameRequired}} in-game days.",
+    "youthUnlockValue": "{{game}} game days",
+    "youthWaiting": "Academy unlock progress: {{gamePlayed}}/{{gameRequired}} game days. Paid Premium is also required.",
     "renewalRequired": "Renewal required"
   },
   "history": {
