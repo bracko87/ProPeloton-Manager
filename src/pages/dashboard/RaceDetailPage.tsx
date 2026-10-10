@@ -6562,7 +6562,7 @@ function NationalChampionshipRidersList({
     () => riders.map(rider => rider.rider_id).sort().join(','),
     [riders]
   )
-  const [clubKits, setClubKits] = useState<Record<string, NationalRiderClubKit>>({})
+  const [clubKits, setClubKits] = useState<Record<string, NationalRiderClubKit> | null>(null)
 
   useEffect(() => {
     const riderIds = riderIdsKey.split(',').filter(Boolean)
@@ -6572,6 +6572,7 @@ function NationalChampionshipRidersList({
     }
 
     let cancelled = false
+    setClubKits(null)
 
     async function loadCurrentRiderClubs() {
       // SECURITY DEFINER RPC returns only club id/name for riders already
@@ -6709,8 +6710,10 @@ function NationalChampionshipRidersList({
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
             {riders.map((rider, index) => {
-              const kit = clubKits[rider.rider_id]
-              const teamName = kit?.teamName ?? t('participants.freeAgent')
+              const kit = clubKits?.[rider.rider_id]
+              const teamName = clubKits === null
+                ? '—'
+                : kit?.teamName ?? t('participants.freeAgent')
               return (
                 <tr key={rider.rider_id} className="hover:bg-slate-50">
                   <td className="px-4 py-3 font-semibold text-slate-700">{index + 1}</td>
@@ -6728,7 +6731,14 @@ function NationalChampionshipRidersList({
                   </td>
                   <td className="px-4 py-3 text-slate-600">{teamName}</td>
                   <td className="px-4 py-2">
-                    <NationalRiderJerseyStrip url={kit?.jerseyUrl} name={teamName} />
+                    {clubKits === null ? (
+                      <div
+                        className="h-9 w-full max-w-[240px] animate-pulse rounded-lg bg-slate-100"
+                        aria-label={t('participants.loading')}
+                      />
+                    ) : (
+                      <NationalRiderJerseyStrip url={kit?.jerseyUrl} name={teamName} />
+                    )}
                   </td>
                 </tr>
               )
