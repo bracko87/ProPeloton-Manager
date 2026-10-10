@@ -634,6 +634,11 @@ const TERRAIN_TRANSLATION_KEYS: Record<string, string> = {
 
 const DEFAULT_TEAM_JERSEY_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit34.png'
+// Individual national champions race in their current club kit; riders without
+// a current club receive the same neutral kit as the dedicated NC event page.
+const NATIONAL_FREE_AGENT_JERSEY_URL =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit53.png'
+
 const DEFAULT_TEAM_LOGO_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Logo/default%20logo.png'
 
@@ -6456,6 +6461,282 @@ function RaceFavoritesBox({
   )
 }
 
+
+type NationalRiderClubKit = {
+  clubId: string
+  teamName: string
+  jerseyUrl: string | null
+}
+
+function isNationalChampionshipRace(race: Race): boolean {
+  const metadata = getRecord(race.metadata)
+  return (
+    race.category?.trim().toUpperCase() === 'NC' ||
+    metadata.national_championship === true ||
+    metadata.national_championship === 'true'
+  )
+}
+
+function NationalRiderJerseyStrip({
+  url,
+  name,
+}: {
+  url: string | null | undefined
+  name: string
+}): JSX.Element {
+  const preferredUrl = url?.trim() || NATIONAL_FREE_AGENT_JERSEY_URL
+  const [imageUrl, setImageUrl] = useState(preferredUrl)
+
+  useEffect(() => {
+    setImageUrl(preferredUrl)
+  }, [preferredUrl])
+
+  return (
+    <div
+      className="relative h-9 w-full min-w-[150px] max-w-[240px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+      title={name}
+    >
+      <img
+        src={imageUrl}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full scale-[5] object-contain"
+        style={{ objectPosition: '50% 37%', transformOrigin: '50% 37%' }}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => {
+          setImageUrl(current =>
+            current !== NATIONAL_FREE_AGENT_JERSEY_URL
+              ? NATIONAL_FREE_AGENT_JERSEY_URL
+              : current
+          )
+        }}
+      />
+      <span className="sr-only">{name}</span>
+    </div>
+  )
+}
+
+/**
+ * National Championships are individual races. The standard participant-team
+ * records may be one temporary race entry per rider, not the rider's real club.
+ * Resolve each rider's latest club_riders membership, then use the existing
+ * current-club branding/kit resolution (AI previews and custom team_kits).
+ * Never show temporary race-entry club names or jerseys as a rider's club.
+ */
+function NationalChampionshipRidersList({
+  teams,
+  raceId,
+  countryCode,
+  loading,
+  error,
+  onOpenRiderProfile,
+}: {
+  teams: RaceParticipantTeam[]
+  raceId: string
+  countryCode?: string | null
+  loading: boolean
+  error: string | null
+  onOpenRiderProfile: (riderId: string) => void
+}): JSX.Element {
+  const { t } = useTranslation('raceDetail')
+  const riders = useMemo(() => {
+    const unique = new Map<string, RaceParticipantRider>()
+    for (const team of teams) {
+      for (const rider of team.riders) {
+        if (rider.rider_id && !unique.has(rider.rider_id)) {
+          unique.set(rider.rider_id, rider)
+        }
+      }
+    }
+    return Array.from(unique.values()).sort((a, b) =>
+      (a.start_number ?? Number.MAX_SAFE_INTEGER) -
+        (b.start_number ?? Number.MAX_SAFE_INTEGER) ||
+      getRaceParticipantRiderDisplayName(a).localeCompare(
+        getRaceParticipantRiderDisplayName(b)
+      )
+    )
+  }, [teams])
+
+  const riderIdsKey = useMemo(
+    () => riders.map(rider => rider.rider_id).sort().join(','),
+    [riders]
+  )
+  const [clubKits, setClubKits] = useState<Record<string, NationalRiderClubKit>>({})
+
+  useEffect(() => {
+    const riderIds = riderIdsKey.split(',').filter(Boolean)
+    if (riderIds.length === 0) {
+      setClubKits({})
+      return
+    }
+
+    let cancelled = false
+
+    async function loadCurrentRiderClubs() {
+      // Match the authoritative National Ranking membership rule: most recent
+      // club_riders entry wins; deleted clubs mean the rider is a free agent.
+      const { data: memberships, error: membershipError } = await supabase
+        .from('club_riders')
+        .select('id, rider_id, club_id, created_at')
+        .in('rider_id', riderIds)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+
+      if (cancelled) return
+      if (membershipError) {
+        console.warn('Could not resolve National Championship rider clubs:', membershipError.message)
+        setClubKits({})
+        return
+      }
+
+      const currentClubIdByRider = new Map<string, string | null>()
+      for (const membership of memberships ?? []) {
+        if (!currentClubIdByRider.has(membership.rider_id)) {
+          currentClubIdByRider.set(membership.rider_id, membership.club_id ?? null)
+        }
+      }
+
+      const clubIds = Array.from(new Set(
+        Array.from(currentClubIdByRider.values()).filter(
+          (id): id is string => Boolean(id)
+        )
+      ))
+      if (clubIds.length === 0) {
+        setClubKits({})
+        return
+      }
+
+      const { data: clubRows, error: clubError } = await supabase
+        .from('clubs')
+        .select('id, name, deleted_at, club_type, parent_club_id')
+        .in('id', clubIds)
+
+      if (cancelled) return
+      if (clubError) {
+        console.warn('Could not load National Championship current clubs:', clubError.message)
+        setClubKits({})
+        return
+      }
+
+      const activeClubs = (clubRows ?? []).filter(club => club.deleted_at == null)
+      const activeById = new Map(activeClubs.map(club => [club.id, club]))
+      const kitTeams: RaceParticipantTeam[] = activeClubs.map(club => ({
+        id: club.id,
+        race_id: raceId,
+        team_id: club.id,
+        club_id: club.id,
+        owner_club_id: club.club_type === 'developing'
+          ? club.parent_club_id ?? club.id
+          : club.id,
+        participating_club_id: club.id,
+        parent_club_id: club.parent_club_id,
+        status: 'accepted',
+        club_name: club.name,
+        country_code: null,
+        club_tier: null,
+        world_tier: null,
+        assigned_riders_count: 0,
+        team_name_snapshot: club.name,
+        logo_url_snapshot: null,
+        jersey_url_snapshot: null,
+        country_code_snapshot: null,
+        ranking_snapshot: null,
+        riders: [],
+      }))
+
+      const brandedTeams = await loadParticipantTeamLogos(kitTeams, raceId)
+      if (cancelled) return
+      const jerseyByClubId = new Map(brandedTeams.map(team => [
+        team.club_id ?? team.team_id,
+        team.jersey_url_snapshot ?? null,
+      ] as const))
+
+      const next: Record<string, NationalRiderClubKit> = {}
+      for (const [riderId, clubId] of currentClubIdByRider.entries()) {
+        const club = clubId ? activeById.get(clubId) : null
+        if (!club) continue
+        next[riderId] = {
+          clubId: club.id,
+          teamName: club.name,
+          jerseyUrl: jerseyByClubId.get(club.id) ?? null,
+        }
+      }
+      setClubKits(next)
+    }
+
+    void loadCurrentRiderClubs()
+    return () => {
+      cancelled = true
+    }
+  }, [riderIdsKey, raceId])
+
+  if (loading) {
+    return <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">{t('participants.loading')}</div>
+  }
+  if (error) {
+    return <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{t('participants.loadError', { error })}</div>
+  }
+  if (riders.length === 0) {
+    return <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">{t('participants.noNationalRiders')}</div>
+  }
+
+  return (
+    <div>
+      <div className="mb-4 text-sm font-semibold text-slate-700">
+        {t('participants.nationalRiderCount', { count: riders.length })}
+      </div>
+      <div className="overflow-x-auto rounded-2xl border border-slate-200">
+        <table className="w-full min-w-[720px] table-fixed text-sm">
+          <colgroup>
+            <col className="w-[7%]" />
+            <col className="w-[12%]" />
+            <col className="w-[28%]" />
+            <col className="w-[24%]" />
+            <col className="w-[29%]" />
+          </colgroup>
+          <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3">#</th>
+              <th className="px-4 py-3">{t('results.country')}</th>
+              <th className="px-4 py-3">{t('results.rider')}</th>
+              <th className="px-4 py-3">{t('results.team')}</th>
+              <th className="px-4 py-3">{t('participants.riderKit')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {riders.map((rider, index) => {
+              const kit = clubKits[rider.rider_id]
+              const teamName = kit?.teamName ?? t('participants.freeAgent')
+              return (
+                <tr key={rider.rider_id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 font-semibold text-slate-700">{index + 1}</td>
+                  <td className="px-4 py-3">
+                    <SmallCountryFlag code={rider.country_code_snapshot ?? rider.country_code ?? countryCode} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => onOpenRiderProfile(rider.rider_id)}
+                      className="text-left font-semibold text-slate-950 hover:underline"
+                    >
+                      {getRaceParticipantRiderDisplayName(rider)}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">{teamName}</td>
+                  <td className="px-4 py-2">
+                    <NationalRiderJerseyStrip url={kit?.jerseyUrl} name={teamName} />
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 function RaceParticipantsGrid({
   teams,
   loading,
@@ -7735,7 +8016,9 @@ function RaceResultsHub({
                   : 'text-slate-500',
               ].join(' ')}
             >
-              {t('participants.teamsRiders')}
+              {isNationalChampionshipRace(race)
+                ? t('participants.individualRiders')
+                : t('participants.teamsRiders')}
             </button>
 
             <button
@@ -7767,16 +8050,27 @@ function RaceResultsHub({
               error={inlineApplicationQuoteError}
             />
           ) : (
-            <RaceParticipantsGrid
-              teams={participantTeams}
-              loading={participantsLoading}
-              error={participantsError}
-              favorites={raceFavorites}
-              favoritesLoading={raceFavoritesLoading}
-              favoritesError={raceFavoritesError}
-              onOpenTeamProfile={openTeamProfileFromRaceInfo}
-              onOpenRiderProfile={openRiderProfileFromRaceInfo}
-            />
+            isNationalChampionshipRace(race) ? (
+              <NationalChampionshipRidersList
+                teams={participantTeams}
+                raceId={race.id}
+                countryCode={race.country_code}
+                loading={participantsLoading}
+                error={participantsError}
+                onOpenRiderProfile={openRiderProfileFromRaceInfo}
+              />
+            ) : (
+              <RaceParticipantsGrid
+                teams={participantTeams}
+                loading={participantsLoading}
+                error={participantsError}
+                favorites={raceFavorites}
+                favoritesLoading={raceFavoritesLoading}
+                favoritesError={raceFavoritesError}
+                onOpenTeamProfile={openTeamProfileFromRaceInfo}
+                onOpenRiderProfile={openRiderProfileFromRaceInfo}
+              />
+            )
           )}
         </div>
       ) : (
