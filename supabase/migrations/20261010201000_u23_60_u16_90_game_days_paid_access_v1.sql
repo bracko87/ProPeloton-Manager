@@ -233,7 +233,7 @@ begin
       and v_balance >= v_activation_cost
     );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_developing_team_and_charge_activation_v1()
  RETURNS TABLE(developing_club_id uuid, developing_club_name text)
@@ -400,7 +400,7 @@ begin
 
   return query
   select v_new_club_id, v_new_club_name;
-end;$function$
+end;$function$;
 
 CREATE OR REPLACE FUNCTION public.get_my_youth_academy_base_v23()
  RETURNS jsonb
@@ -587,7 +587,7 @@ begin
     )
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.activate_my_youth_academy_v1(p_season_budget bigint DEFAULT 100000)
  RETURNS jsonb
@@ -765,7 +765,7 @@ begin
 
   return public.get_my_youth_academy_v1();
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.user_has_youth_academy_access_v1(p_user_id uuid)
  RETURNS boolean
@@ -789,7 +789,7 @@ AS $function$
         and coalesce(a.renewed_through_season, a.activated_season, 0)
             >= coalesce(public.get_current_season_number(), 1)
     );
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.renew_my_youth_academy_v1()
  RETURNS jsonb
@@ -887,4 +887,4 @@ begin
 
   return public.get_my_youth_academy_v1();
 end;
-$function$
+$function$;
