@@ -6524,49 +6524,19 @@ function NationalRiderJerseyStrip({
  * current-club branding/kit resolution (AI previews and custom team_kits).
  * Never show temporary race-entry club names or jerseys as a rider's club.
  */
-function NationalChampionshipRidersList({
-  teams,
-  raceId,
-  countryCode,
-  loading,
-  error,
-  onOpenRiderProfile,
-}: {
-  teams: RaceParticipantTeam[]
-  raceId: string
-  countryCode?: string | null
-  loading: boolean
-  error: string | null
-  onOpenRiderProfile: (riderId: string) => void
-}): JSX.Element {
-  const { t } = useTranslation('raceDetail')
-  const riders = useMemo(() => {
-    const unique = new Map<string, RaceParticipantRider>()
-    for (const team of teams) {
-      for (const rider of team.riders) {
-        if (rider.rider_id && !unique.has(rider.rider_id)) {
-          unique.set(rider.rider_id, rider)
-        }
-      }
-    }
-    return Array.from(unique.values()).sort((a, b) =>
-      (a.start_number ?? Number.MAX_SAFE_INTEGER) -
-        (b.start_number ?? Number.MAX_SAFE_INTEGER) ||
-      getRaceParticipantRiderDisplayName(a).localeCompare(
-        getRaceParticipantRiderDisplayName(b)
-      )
-    )
-  }, [teams])
-
-  const riderIdsKey = useMemo(
-    () => riders.map(rider => rider.rider_id).sort().join(','),
-    [riders]
-  )
+/**
+ * Resolve registered National Championship riders to their CURRENT club kits.
+ * Race-entry/team snapshots aren't authoritative for individual championships.
+ * Share one lookup across participant list and all results panels.
+ */
+function useNationalChampionshipClubKits(
+  raceId: string,
+  enabled: boolean
+): Record<string, NationalRiderClubKit> | null {
   const [clubKits, setClubKits] = useState<Record<string, NationalRiderClubKit> | null>(null)
 
   useEffect(() => {
-    const riderIds = riderIdsKey.split(',').filter(Boolean)
-    if (riderIds.length === 0) {
+    if (!enabled || !raceId) {
       setClubKits({})
       return
     }
@@ -6673,7 +6643,45 @@ function NationalChampionshipRidersList({
     return () => {
       cancelled = true
     }
-  }, [riderIdsKey, raceId])
+  }, [raceId, enabled])
+
+  return clubKits
+}
+
+function NationalChampionshipRidersList({
+  teams,
+  countryCode,
+  clubKits,
+  loading,
+  error,
+  onOpenRiderProfile,
+}: {
+  teams: RaceParticipantTeam[]
+  countryCode?: string | null
+  clubKits: Record<string, NationalRiderClubKit> | null
+  loading: boolean
+  error: string | null
+  onOpenRiderProfile: (riderId: string) => void
+}): JSX.Element {
+  const { t } = useTranslation('raceDetail')
+  const riders = useMemo(() => {
+    const unique = new Map<string, RaceParticipantRider>()
+    for (const team of teams) {
+      for (const rider of team.riders) {
+        if (rider.rider_id && !unique.has(rider.rider_id)) {
+          unique.set(rider.rider_id, rider)
+        }
+      }
+    }
+    return Array.from(unique.values()).sort((a, b) =>
+      (a.start_number ?? Number.MAX_SAFE_INTEGER) -
+        (b.start_number ?? Number.MAX_SAFE_INTEGER) ||
+      getRaceParticipantRiderDisplayName(a).localeCompare(
+        getRaceParticipantRiderDisplayName(b)
+      )
+    )
+  }, [teams])
+
 
   if (loading) {
     return <div className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">{t('participants.loading')}</div>
@@ -7200,6 +7208,7 @@ function RaceResultsHub({
   engineTestModeLabel?: string | null
 }) {
   const { t } = useTranslation('raceDetail')
+  const ncClubKits = useNationalChampionshipClubKits(race.id, isNationalChampionshipRace(race))
   const [activeTab, setActiveTab] = useState<RaceInfoTab>(restoreRaceInformationTab ?? 'participants')
   const raceInformationSectionRef = useRef<HTMLElement | null>(null)
   const [classificationView, setClassificationView] =
@@ -8066,8 +8075,8 @@ function RaceResultsHub({
             isNationalChampionshipRace(race) ? (
               <NationalChampionshipRidersList
                 teams={participantTeams}
-                raceId={race.id}
                 countryCode={race.country_code}
+                clubKits={ncClubKits}
                 loading={participantsLoading}
                 error={participantsError}
                 onOpenRiderProfile={openRiderProfileFromRaceInfo}
