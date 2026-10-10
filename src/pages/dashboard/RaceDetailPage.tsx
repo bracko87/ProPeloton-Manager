@@ -3156,7 +3156,7 @@ function formatGeneralClassificationTime(
 
 function formatClassificationGap(seconds?: number | null): string {
   if (seconds === null || seconds === undefined) return '—'
-  if (Number(seconds) === 0) return 'Leader'
+  if (Number(seconds) === 0) return 's.t.'
   return `+${formatGapValue(seconds)}`
 }
 
@@ -8447,12 +8447,25 @@ function RaceResultsHub({
                             </div>
                           </td>
                           <td className="px-3 py-3 font-semibold text-slate-950">{riderName}</td>
-                          <td className="px-3 py-3 text-slate-600">{row.team_name_snapshot ?? '—'}</td>
+                          <td className="px-3 py-3 text-slate-600">
+                            {isNationalChampionshipRace(race) ? (
+                              <RaceResultRiderKit
+                                riderId={row.rider_id}
+                                teamId={row.team_id}
+                                teamName={row.team_name_snapshot}
+                                participantTeams={participantTeams}
+                                ncClubKits={ncClubKits}
+                                onOpenTeamProfile={openTeamProfileFromRaceInfo}
+                              />
+                            ) : row.team_name_snapshot ?? '—'}
+                          </td>
                           <td className="px-3 py-3 text-right font-semibold">
                             {isActive ? formatRaceClock(row.total_time_seconds) : '—'}
                           </td>
                           <td className="px-3 py-3 text-right text-slate-600">
-                            {isActive ? formatClassificationGap(row.gap_seconds) : '—'}
+                            {isActive
+                              ? row.rank === 1 ? '—' : formatClassificationGap(row.gap_seconds)
+                              : '—'}
                           </td>
                           <td className="px-3 py-3 font-semibold text-slate-700">
                             <div>{statusLabel}</div>
@@ -8526,14 +8539,25 @@ function RaceResultsHub({
                             </div>
                           </td>
                           <td className="px-3 py-3 font-semibold text-slate-950">{riderName}</td>
-                          <td className="px-3 py-3 text-slate-600">{row.team_name_snapshot ?? '—'}</td>
+                          <td className="px-3 py-3 text-slate-600">
+                            {isNationalChampionshipRace(race) ? (
+                              <RaceResultRiderKit
+                                riderId={row.rider_id}
+                                teamId={row.team_id}
+                                teamName={row.team_name_snapshot}
+                                participantTeams={participantTeams}
+                                ncClubKits={ncClubKits}
+                                onOpenTeamProfile={openTeamProfileFromRaceInfo}
+                              />
+                            ) : row.team_name_snapshot ?? '—'}
+                          </td>
                           <td className="px-3 py-3 text-right font-semibold">
                             {isFinished ? formatRaceClock(row.elapsed_seconds) : '—'}
                           </td>
                           <td className="px-3 py-3 text-right text-slate-600">
                             {isFinished
                               ? row.rank === 1
-                                ? 'Leader'
+                                ? '—'
                                 : gapSeconds === 0
                                   ? 's.t.'
                                   : gapSeconds !== null
@@ -8655,7 +8679,7 @@ function RaceClassificationTable({
       teamId={teamId ?? null}
       teamName={label ?? null}
       participantTeams={participantTeams}
-      ncClubKits={ncClubKits}
+      ncClubKits={riderId ? ncClubKits : undefined}
       onOpenTeamProfile={onOpenTeamProfile}
     />
   )
