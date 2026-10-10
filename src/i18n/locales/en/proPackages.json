@@ -302,5 +302,19 @@
     "retry": "Try again",
     "status": "Survey",
     "bannerDescription": "Complete optional CPX Research surveys to earn 15 Coins for each $1 of verified survey revenue. No payment required; reversed surveys may remove Coins."
+  },
+  "trial": {
+    "welcomeTitle": "Welcome to ProPeloton Manager!",
+    "welcomeBody": "We're happy you're on the starting line! Enjoy 20 welcome Coins and seven real-world days of Premium access. Explore the advanced tools and build your cycling team.",
+    "expiredTitle": "Your Premium trial has ended",
+    "expiredBody": "Thank you for playing! Your free seven-day Premium trial is over. We hope you enjoyed the advanced features. You can continue for free, or visit the Pro Package page whenever you'd like.",
+    "premiumDays": "days of Premium",
+    "welcomeCoins": "Welcome Coins",
+    "noBilling": "No payment or card is required. The trial expires automatically. No subscription will be created.",
+    "keepPlaying": "Your team, riders and progress remain safe. Keep racing with the free features for as long as you like.",
+    "startPlaying": "Start playing",
+    "continueFree": "Continue playing free",
+    "viewPro": "View Pro Packages",
+    "countdown": "Premium trial: {{count}} days left"
   }
 }
