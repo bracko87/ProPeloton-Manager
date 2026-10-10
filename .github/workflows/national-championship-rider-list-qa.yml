@@ -9,6 +9,7 @@ on:
       - 'src/pages/dashboard/NationalChampionshipRacePage.tsx'
       - 'src/i18n/locales/**/raceDetail.json'
       - 'supabase/migrations/*national_championship_rider_current_club_lookup.sql'
+      - 'supabase/migrations/*nc_rider_current_club_jerseys_v2.sql'
   workflow_dispatch:
 
 permissions:
@@ -30,10 +31,10 @@ jobs:
           import fs from 'node:fs'
           const source = fs.readFileSync('src/pages/dashboard/RaceDetailPage.tsx', 'utf8')
           for (const fragment of [
-            "race.category?.trim().toUpperCase() === 'NC'",
+            "['NC', 'NCQ'].includes(race.category?.trim().toUpperCase() ?? '')",
             'NationalChampionshipRidersList',
-            "'get_nc_participant_current_clubs_v1'",
-            "loadParticipantTeamLogos(kitTeams, raceId)",
+            "'get_nc_participant_current_clubs_v2'",
+            "jerseyUrl: row.jersey_url?.trim() || null",
             'NATIONAL_FREE_AGENT_JERSEY_URL',
             "t('participants.individualRiders')",
           ]) {
@@ -68,6 +69,15 @@ jobs:
           const migration = fs.readFileSync('supabase/migrations/20261010060000_national_championship_rider_current_club_lookup.sql', 'utf8')
           for (const fragment of ['SECURITY DEFINER', 'REVOKE ALL', 'GRANT EXECUTE', 'public.race_participant_riders', 'public.club_riders']) {
             if (!migration.includes(fragment)) throw new Error('NC safe-lookup migration regression: ' + fragment)
+          }
+          const kitMigration = fs.readFileSync('supabase/migrations/20261010064500_nc_rider_current_club_jerseys_v2.sql', 'utf8')
+          for (const fragment of [
+            'get_nc_participant_current_clubs_v2', 'public.club_riders',
+            'public.team_kits', 'public.ai_team_kit_previews',
+            'member.club_id IS NULL THEN NULL',
+            'REVOKE ALL', 'TO authenticated',
+          ]) {
+            if (!kitMigration.includes(fragment)) throw new Error('NC current jersey RPC regression: ' + fragment)
           }
           const keys = ['individualRiders', 'nationalRiderCount', 'noNationalRiders', 'riderKit', 'freeAgent']
           const placeholders = str => [...str.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g)]
