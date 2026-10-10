@@ -1,0 +1,62 @@
+name: National Championship rider list QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/national-championship-rider-list-qa.yml'
+      - 'src/pages/dashboard/RaceDetailPage.tsx'
+      - 'src/pages/dashboard/NationalChampionshipRacePage.tsx'
+      - 'src/i18n/locales/**/raceDetail.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Check NC-specific rider presentation and language keys
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          const source = fs.readFileSync('src/pages/dashboard/RaceDetailPage.tsx', 'utf8')
+          for (const fragment of [
+            "race.category?.trim().toUpperCase() === 'NC'",
+            'NationalChampionshipRidersList',
+            ".from('club_riders')",
+            "loadParticipantTeamLogos(kitTeams, raceId)",
+            'NATIONAL_FREE_AGENT_JERSEY_URL',
+            "t('participants.individualRiders')",
+          ]) {
+            if (!source.includes(fragment)) throw new Error('NC rider list regression: ' + fragment)
+          }
+          const keys = ['individualRiders', 'nationalRiderCount', 'noNationalRiders', 'riderKit', 'freeAgent']
+          const placeholders = str => [...str.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g)]
+            .map(match => match[1]).sort().join(',')
+          const english = JSON.parse(fs.readFileSync('src/i18n/locales/en/raceDetail.json', 'utf8'))
+          for (const lang of ['en','sr-Latn','hr','de','es','it','fr','ru']) {
+            const locale = JSON.parse(fs.readFileSync('src/i18n/locales/'+lang+'/raceDetail.json', 'utf8'))
+            for (const key of keys) {
+              const text = locale.participants?.[key]
+              const expected = english.participants?.[key]
+              if (typeof text !== 'string' || text.trim() === '') {
+                throw new Error(lang + ': missing participants.' + key)
+              }
+              if (placeholders(text) !== placeholders(expected)) {
+                throw new Error(lang + ': interpolation mismatch in participants.' + key)
+              }
+            }
+          }
+          NODE
+      - name: Install dependencies
+        run: npm ci
+      - name: Production build
+        run: npm run build
