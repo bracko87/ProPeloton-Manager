@@ -2111,8 +2111,7 @@ export default function YouthAcademyPage(): JSX.Element {
               [
                 t('activation.unlockLabel'),
                 t('activation.unlockValue', {
-                  real: data.unlock_real_days_required ?? 30,
-                  game: data.unlock_game_days_required ?? 60,
+                  game: data.unlock_game_days_required ?? 90,
                 }),
               ],
               [
@@ -2149,10 +2148,8 @@ export default function YouthAcademyPage(): JSX.Element {
           {!data.time_requirement_met ? (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
               {t('activation.waiting', {
-                realPlayed: data.real_days_played ?? 0,
-                realRequired: data.unlock_real_days_required ?? 30,
                 gamePlayed: data.game_days_played ?? 0,
-                gameRequired: data.unlock_game_days_required ?? 60,
+                gameRequired: data.unlock_game_days_required ?? 90,
               })}
             </div>
           ) : (data.coin_balance ?? 0) < (data.activation_coin_cost ?? 50) ? (
