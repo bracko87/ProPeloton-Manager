@@ -678,6 +678,9 @@ export default function ProPackagesPage(): JSX.Element {
       !hasActiveRecurringSubscription,
   )
 
+  const isWelcomePremiumTrial = premiumStatus?.is_premium === true &&
+    premiumStatus.stripe_status === 'free_trial'
+
   const premiumCheckoutBlocked = [
     'trialing',
     'active',
@@ -709,6 +712,7 @@ export default function ProPackagesPage(): JSX.Element {
   const premiumCoins = PRO_PREMIUM_MONTHLY_COINS
 
   const statusLabel = useMemo(() => {
+    if (isWelcomePremiumTrial) return t('trial.freeTrialStatus')
     if (hasManualPremiumAccess) {
       return t('premium.accessOverride')
     }
@@ -749,6 +753,7 @@ export default function ProPackagesPage(): JSX.Element {
     billingStatus,
     hasActiveRecurringSubscription,
     hasManualPremiumAccess,
+    isWelcomePremiumTrial,
     premiumStatus?.is_premium,
     t,
   ])
@@ -1598,7 +1603,13 @@ export default function ProPackagesPage(): JSX.Element {
               </li>
             </ul>
 
-            {hasManualPremiumAccess ? (
+            {isWelcomePremiumTrial ? (
+              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                <div className="font-bold">{t('trial.freeTrialStatus')}</div>
+                <div className="mt-1">{t('trial.accessUntil', { date: formatDate(premiumStatus?.access_until) })}</div>
+                <div className="mt-1">{t('trial.subscriptionOffer')}</div>
+              </div>
+            ) : hasManualPremiumAccess ? (
               <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 <div className="font-bold">
                   {t('premium.accessOverrideActive')}
