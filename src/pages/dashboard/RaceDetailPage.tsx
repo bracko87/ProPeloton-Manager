@@ -6495,9 +6495,11 @@ type NationalRiderClubKit = {
 function isNationalChampionshipRace(race: Race): boolean {
   const metadata = getRecord(race.metadata)
   return (
-    race.category?.trim().toUpperCase() === 'NC' ||
+    ['NC', 'NCQ'].includes(race.category?.trim().toUpperCase() ?? '') ||
     metadata.national_championship === true ||
-    metadata.national_championship === 'true'
+    metadata.national_championship === 'true' ||
+    metadata.individual_only === true ||
+    /\\bNational (?:Road Championship|Qualification)\\b/i.test(race.name ?? '')
   )
 }
 
@@ -6569,98 +6571,40 @@ function useNationalChampionshipClubKits(
     setClubKits(null)
 
     async function loadCurrentRiderClubs() {
-      // SECURITY DEFINER RPC returns only club id/name for riders already
-      // registered in this NC race. Browser access to other clubs' rosters is
-      // correctly forbidden by RLS, so do not query club_riders directly.
-      const { data: membershipRows, error: membershipError } = await supabase.rpc(
-        'get_nc_participant_current_clubs_v1',
+      // Resolve jersey assets alongside actual club membership on the server.
+      // NC race team_id is an INDIVIDUAL rider entry, never the real club id.
+      // Browser lookups of other clubs can be denied by RLS, and a previous
+      // client-side asset merge silently replaced every kit with a generic one.
+      const { data: clubRows, error: clubError } = await supabase.rpc(
+        'get_nc_participant_current_clubs_v2',
         { p_race_id: raceId }
       )
 
       if (cancelled) return
-      if (membershipError) {
-        console.warn('Could not resolve National Championship rider clubs:', membershipError.message)
-        setClubKits({})
+      if (clubError) {
+        console.warn('Could not load National Championship rider jerseys:', clubError.message)
+        // Don't misrepresent a failed club lookup as every rider being a
+        // free agent. Preserve a neutral loading state until the next attempt.
+        setClubKits(null)
         return
       }
 
-      type PublicClubRow = {
+      type CurrentRiderKitRow = {
         rider_id: string
         club_id: string | null
         club_name: string | null
-        club_type: string | null
-        parent_club_id: string | null
+        jersey_url: string | null
       }
-      const visibleMemberships = (membershipRows ?? []) as PublicClubRow[]
-      const clubById = new Map<string, PublicClubRow>()
-      for (const row of visibleMemberships) {
-        if (row.club_id && row.club_name) clubById.set(row.club_id, row)
-      }
-
-      if (clubById.size === 0) {
-        setClubKits({})
-        return
-      }
-
-      // The regular race jersey loader already handles current club kits:
-      // user-customized team_kits, AI preview kits and Developing Team parents.
-      const kitTeams: RaceParticipantTeam[] = Array.from(clubById.values()).map(club => ({
-        id: club.club_id!,
-        race_id: raceId,
-        team_id: club.club_id!,
-        club_id: club.club_id,
-        owner_club_id: club.club_type === 'developing'
-          ? club.parent_club_id ?? club.club_id
-          : club.club_id,
-        participating_club_id: club.club_id,
-        parent_club_id: club.parent_club_id,
-        status: 'accepted',
-        club_name: club.club_name,
-        country_code: null,
-        club_tier: null,
-        world_tier: null,
-        assigned_riders_count: 0,
-        team_name_snapshot: club.club_name,
-        logo_url_snapshot: null,
-        jersey_url_snapshot: null,
-        country_code_snapshot: null,
-        ranking_snapshot: null,
-        riders: [],
-      }))
-
-      try {
-        const brandedTeams = await loadParticipantTeamLogos(kitTeams, raceId)
-        if (cancelled) return
-        const jerseyByClubId = new Map(brandedTeams.map(team => [
-          team.club_id ?? team.team_id,
-          team.jersey_url_snapshot ?? null,
-        ] as const))
-
-        const next: Record<string, NationalRiderClubKit> = {}
-        for (const row of visibleMemberships) {
-          if (!row.club_id || !row.club_name) continue
-          next[row.rider_id] = {
-            clubId: row.club_id,
-            teamName: row.club_name,
-            jerseyUrl: jerseyByClubId.get(row.club_id) ?? null,
-          }
+      const next: Record<string, NationalRiderClubKit> = {}
+      for (const row of (clubRows ?? []) as CurrentRiderKitRow[]) {
+        if (!row.rider_id || !row.club_id || !row.club_name) continue
+        next[row.rider_id] = {
+          clubId: row.club_id,
+          teamName: row.club_name,
+          jerseyUrl: row.jersey_url?.trim() || null,
         }
-        setClubKits(next)
-      } catch (kitError) {
-        console.warn('Could not load National Championship jersey assets:', kitError)
-        if (cancelled) return
-        const next: Record<string, NationalRiderClubKit> = {}
-        for (const row of visibleMemberships) {
-          if (row.club_id && row.club_name) {
-            next[row.rider_id] = {
-              clubId: row.club_id,
-              teamName: row.club_name,
-              jerseyUrl: null,
-            }
-          }
-        }
-        setClubKits(next)
       }
+      setClubKits(next)
     }
 
     void loadCurrentRiderClubs()
