@@ -6499,7 +6499,7 @@ function isNationalChampionshipRace(race: Race): boolean {
     metadata.national_championship === true ||
     metadata.national_championship === 'true' ||
     metadata.individual_only === true ||
-    /\\bNational (?:Road Championship|Qualification)\\b/i.test(race.name ?? '')
+    /\bNational (?:Road Championship|Qualification)\b/i.test(race.name ?? '')
   )
 }
 
