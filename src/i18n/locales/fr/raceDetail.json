@@ -200,7 +200,12 @@
     "participatingRiders": "Les coureurs participant à cette course",
     "age": "{{age}} yrs",
     "riderDetailsUnavailable": "{{count}} riders assignés. Les détails de Rider ne sont pas encore disponibles.",
-    "noRiders": "Pas encore de riders assignés."
+    "noRiders": "Pas encore de riders assignés.",
+    "individualRiders": "Coureurs",
+    "nationalRiderCount": "{{count}} coureurs confirmés",
+    "noNationalRiders": "Aucun coureur n'est encore confirmé sur la liste de départ du Championnat national.",
+    "riderKit": "Maillot de l'équipe actuelle",
+    "freeAgent": "Sans équipe"
   },
   "results": {
     "classifications": "Classement des courses",
