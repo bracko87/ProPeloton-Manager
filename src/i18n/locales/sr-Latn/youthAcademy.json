@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Aktiviraj Omladinsku akademiju",
-    "description": "Aktivacija kreira odvojenu U16 akademiju. Potrebni su Premium, 30 realnih ILI 60 dana u igri od osnivanja kluba, 50 coin-a za aktivaciju i izabrani Academy budžet. Od sledeće sezone pristup košta 50 coin-a po sezoni dok je Premium aktivan. Počinješ sa šest lokalnih vozača, Direktorom Akademije i U16 Head Coach-em. Youth Scout je opcion.",
+    "description": "Posebna U16 akademija se otključava nakon 90 dana u igri od osnivanja glavnog kluba. Aktivacija zahteva plaćeni Premium (besplatni probni period služi samo za pregled), 50 Coin-a i izabrani budžet. Obnova košta 50 Coin-a po sezoni uz aktivan plaćeni Premium. Počinješ sa šest lokalnih vozača, direktorom akademije i U16 glavnim trenerom.",
     "capacityLabel": "Maksimalno vozača",
     "starterRidersLabel": "Početni vozači",
     "staffLabel": "Uključeno osoblje",
@@ -34,8 +34,8 @@
     "unlockLabel": "Uslov za otključavanje",
     "coinBalanceLabel": "Coin stanje",
     "coins": "{{count}} coin-a",
-    "unlockValue": "{{real}} realnih dana ILI {{game}} dana u igri",
-    "waiting": "Još nije otključano. Napredak: {{realPlayed}}/{{realRequired}} realnih dana ili {{gamePlayed}}/{{gameRequired}} dana u igri. Akademija se otključava čim ispuniš prvi od ova dva uslova.",
+    "unlockValue": "{{game}} dana u igri",
+    "waiting": "Napredak do otključavanja akademije: {{gamePlayed}}/{{gameRequired}} dana u igri. Potreban je i plaćeni Premium.",
     "needCoins": "Aktivacija Omladinske akademije košta {{cost}} coin-a. Trenutno imaš {{balance}}.",
     "renewalCostLabel": "Sezonska obnova",
     "coinsPerSeason": "{{count}} coin-a / sezona"
