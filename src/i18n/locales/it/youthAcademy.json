@@ -20,7 +20,7 @@
   },
   "activation": {
     "title": "Attiva Accademia Giovanile",
-    "description": "L'attivazione crea la tua accademia U16 separata. Servono Premium, 30 giorni reali O 60 giorni di gioco dalla creazione del club, 50 Coins di attivazione e il budget scelto. Dalla stagione successiva, l'accesso costa 50 Coins per stagione finché Premium resta attivo. Inizi con sei corridori locali, Direttore Accademia e Allenatore U16. Youth Scout è opzionale.",
+    "description": "L'Accademia U16 si sblocca dopo 90 giorni di gioco dalla fondazione della squadra principale. L'attivazione richiede un abbonamento Premium a pagamento (la prova gratuita offre solo un'anteprima), 50 Coin e il budget scelto. Il rinnovo costa 50 Coin a stagione con Premium a pagamento attivo. Si parte con sei corridori locali, un direttore e un allenatore U16.",
     "capacityLabel": "Numero massimo di corridori",
     "starterRidersLabel": "Corridori iniziali",
     "staffLabel": "Staff incluso",
@@ -34,8 +34,8 @@
     "unlockLabel": "Requisito di sblocco",
     "coinBalanceLabel": "Saldo coin",
     "coins": "{{count}} coin",
-    "unlockValue": "{{real}} giorni reali O {{game}} giorni di gioco",
-    "waiting": "Non ancora sbloccata. Progresso: {{realPlayed}}/{{realRequired}} giorni reali oppure {{gamePlayed}}/{{gameRequired}} giorni di gioco. Il primo requisito raggiunto sblocca l'accademia.",
+    "unlockValue": "{{game}} giorni di gioco",
+    "waiting": "Avanzamento sblocco Accademia: {{gamePlayed}}/{{gameRequired}} giorni di gioco. È richiesto anche Premium a pagamento.",
     "needCoins": "L'attivazione dell'Accademia Giovanile costa {{cost}} coin. Il saldo attuale è {{balance}}.",
     "renewalCostLabel": "Rinnovo stagione",
     "coinsPerSeason": "{{count}} Coins / stagione"
