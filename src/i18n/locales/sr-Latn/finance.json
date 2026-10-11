@@ -513,5 +513,15 @@
     "continueMenu": "Nastavi na Meni",
     "finishNow": "Završi za sada",
     "skip": "Preskoči vodič"
+  },
+  "legacyUi": {
+    "planningTitle": "Centar za finansijsko planiranje",
+    "saved": "Sačuvano",
+    "selectPreset": "Izaberi šablon",
+    "noSchedules": "Nema sačuvanih rasporeda finansijskih pravila.",
+    "presetApplied": "Šablon je primenjen na pravila aktivnog kluba.",
+    "selectPresetDate": "Izaberi šablon i datum u igri.",
+    "scheduleSaved": "Raspored automatskih pravila je sačuvan.",
+    "limitsSaved": "Ograničenja finansijskog planiranja su sačuvana."
   }
 }
