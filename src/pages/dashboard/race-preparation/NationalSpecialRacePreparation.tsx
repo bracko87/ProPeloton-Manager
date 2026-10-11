@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import NationalSpecialStagePlanV3 from './NationalSpecialStagePlanV3'
+import appI18n from '../../../i18n'
 
 export type NationalTeamListEvent = {
   kind: 'national_team'
@@ -45,7 +46,10 @@ export type NationalRankingListEvent = {
   special_plan_status?: string | null
 }
 
-export type NationalSpecialSelection =
+export const nr = (key: string, options: Record<string, unknown> = {}): string =>
+  String(appI18n.t(key, { ns: 'racePreparation', ...options }))
+
+type NationalSpecialSelection =
   | { kind: 'national_team'; event: NationalTeamListEvent; submitted?: boolean }
   | { kind: 'national_ranking'; event: NationalRankingListEvent; submitted?: boolean }
 
@@ -223,7 +227,7 @@ function PlanHeader({ workspace }: { workspace: Workspace }): JSX.Element {
   const team = workspace.kind === 'national_team'
   const name = team
     ? `${workspace.round_label} · ${workspace.group_label} · ${raceTypeLabel(workspace.race_type)}`
-    : `${countryName(workspace.country_code)} National Championship · ${workspace.event_type === 'final' ? 'Final' : 'Qualification'}`
+    : `${countryName(workspace.country_code)} National Championship · ${workspace.event_type === 'final' ? nr('national.final') : nr('national.qualification')}`
   const code = team ? workspace.host_country_code : workspace.country_code
   const flag = flagUrl(code)
 
@@ -231,44 +235,44 @@ function PlanHeader({ workspace }: { workspace: Workspace }): JSX.Element {
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected race</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{nr('national.selectedRace')}</div>
           <div className="mt-2 flex items-center gap-2">
             {flag ? <img src={flag} alt="" className="h-5 w-7 rounded-sm border border-slate-200 object-cover" /> : null}
             <h2 className="text-xl font-bold text-slate-950">{name}</h2>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${team ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}`}>
-              {team ? 'National Team' : 'National Ranking'}
+              {team ? nr('national.nationalTeam') : nr('national.nationalRanking')}
             </span>
           </div>
           <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-700">
             <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              Race date: <strong>{dateLabel(workspace.event_date)}</strong>
+              {nr('national.raceDateLabel')} <strong>{dateLabel(workspace.event_date)}</strong>
             </span>
             <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              Riders: <strong>{team ? '7 / 10' : `${workspace.riders.length} fixed`}</strong>
+              {nr('national.ridersLabel')} <strong>{team ? nr('national.sevenOfTen') : nr('national.fixedCount', { count: workspace.riders.length })}</strong>
             </span>
             <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-              Host: <strong>{countryName(code)}</strong>
+              {nr('national.hostLabel')} <strong>{countryName(code)}</strong>
             </span>
           </div>
         </div>
         <div className="rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-800">
-          {workspace.plan_status === 'submitted' ? 'Race Plan Submitted' : 'Race Plan Open'}
+          {workspace.plan_status === 'submitted' ? nr('national.racePlanSubmitted') : nr('national.racePlanOpen')}
         </div>
       </div>
 
       <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 md:grid-cols-3">
         <div className="rounded-xl bg-slate-50 p-4">
-          <div className="text-xs text-slate-500">Race Plan opens</div>
+          <div className="text-xs text-slate-500">{nr('national.racePlanOpens')}</div>
           <div className="mt-1 font-semibold text-slate-950">{dateLabel(workspace.setup_window_opens_on)}</div>
         </div>
         <div className="rounded-xl bg-slate-50 p-4">
-          <div className="text-xs text-slate-500">Rider deadline</div>
+          <div className="text-xs text-slate-500">{nr('national.riderDeadline')}</div>
           <div className="mt-1 font-semibold text-slate-950">
             {dateLabel(workspace.kind === 'national_team' ? workspace.lineup_deadline_on : workspace.rider_submission_deadline_on)}
           </div>
         </div>
         <div className="rounded-xl bg-slate-50 p-4">
-          <div className="text-xs text-slate-500">Stages</div>
+          <div className="text-xs text-slate-500">{nr('stagePlans.title')}</div>
           <div className="mt-1 font-semibold text-slate-950">1</div>
         </div>
       </div>
@@ -280,8 +284,8 @@ function LockedStaffCard(): JSX.Element {
   const roles = ['Sport Director', 'Team Doctor', 'Physio', 'Mechanic']
   return (
     <section className="rounded-2xl border bg-white p-5 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-950">2. Race Staff</h3>
-      <p className="mt-1 text-sm text-slate-500">National races do not use club race staff.</p>
+      <h3 className="text-lg font-semibold text-slate-950">{nr('racePlan.raceStaffTitle')}</h3>
+      <p className="mt-1 text-sm text-slate-500">{nr('national.noClubStaff')}</p>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {roles.map(role => (
           <label key={role} className="block opacity-55">
@@ -312,12 +316,12 @@ function CostCard({
   return (
     <aside className="space-y-6">
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-950">Cost Preview</h3>
+        <h3 className="text-lg font-semibold text-slate-950">{nr('racePlan.costPreview')}</h3>
         <div className="mt-5 space-y-3 text-sm">
           {['Travel tickets','Accommodation','Asset transport','Team logistics & operations'].map(label => (
             <div key={label} className="flex justify-between"><span>{label}</span><span>$0</span></div>
           ))}
-          <div className="flex justify-between border-t pt-3 text-base font-bold"><span>Total</span><span>$0</span></div>
+          <div className="flex justify-between border-t pt-3 text-base font-bold"><span>{nr('racePlan.total')}</span><span>$0</span></div>
         </div>
         <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
           National race costs are system-covered. Submitting the Race Plan confirms the sporting setup only.
@@ -325,18 +329,18 @@ function CostCard({
         <div className="mt-5 flex flex-col gap-2">
           {showSave ? (
             <button type="button" disabled={saving} onClick={onSave} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-              {saving ? 'Saving…' : 'Save Race Plan'}
+              {saving ? nr('stagePlans.saving') : nr('racePlan.save')}
             </button>
           ) : null}
           <button type="button" disabled={saving || !canSubmit} onClick={onSubmit} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-            {saving ? 'Submitting…' : 'Submit Race Plan'}
+            {saving ? nr('national.submitting') : nr('racePlan.submit')}
           </button>
         </div>
       </section>
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-950">Validation</h3>
+        <h3 className="text-lg font-semibold text-slate-950">{nr('racePlan.validation')}</h3>
         <div className={`mt-4 rounded-xl px-3 py-2 text-sm ${canSubmit ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
-          {canSubmit ? 'Race Plan is ready to submit.' : 'Complete the required rider selection before submitting.'}
+          {canSubmit ? nr('national.readyToSubmit') : nr('national.completeSelection')}
         </div>
       </section>
     </aside>
@@ -375,7 +379,7 @@ export function NationalSpecialRacePlan({
     setWorkspace(null)
     setMessage(null)
     setError(null)
-    void load().catch(caught => setError(caught?.message ?? 'Could not load National Race Plan.'))
+    void load().catch(caught => setError(caught?.message ?? nr('national.loadRacePlanFailed')))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection.kind, selection.kind === 'national_team' ? selection.event.event_id : selection.event.event_key])
 
@@ -412,7 +416,7 @@ export function NationalSpecialRacePlan({
         p_submit: submit,
       })
       if (rpcError) throw rpcError
-      setMessage(submit ? 'Race Plan submitted. Stage Plans are now available.' : 'Race Plan draft saved.')
+      setMessage(submit ? nr('national.submittedStageReady') : nr('national.draftSaved'))
       await load()
       if (submit) {
         onSubmitted({ ...selection, submitted: true })
@@ -420,7 +424,7 @@ export function NationalSpecialRacePlan({
       }
       return data
     } catch (caught: any) {
-      setError(caught?.message ?? 'Could not save National Team Race Plan.')
+      setError(caught?.message ?? nr('national.saveRacePlanFailed'))
     } finally {
       setSaving(false)
     }
@@ -437,19 +441,19 @@ export function NationalSpecialRacePlan({
         p_preview_rider_ids: workspace.riders.map(r => r.rider_id),
       })
       if (rpcError) throw rpcError
-      setMessage('Race Plan submitted. Stage Plans are now available.')
+      setMessage(nr('national.submittedStageReady'))
       await load()
       onSubmitted({ ...selection, submitted: true })
       onOpenStagePlans()
     } catch (caught: any) {
-      setError(caught?.message ?? 'Could not submit National Ranking Race Plan.')
+      setError(caught?.message ?? nr('national.submitRacePlanFailed'))
     } finally {
       setSaving(false)
     }
   }
 
   if (!workspace) {
-    return <div className="rounded-2xl border bg-white p-6 shadow-sm">{error ?? 'Loading National Race Plan…'}</div>
+    return <div className="rounded-2xl border bg-white p-6 shadow-sm">{error ?? nr('national.loadingRacePlan')}</div>
   }
 
   const teamMode = workspace.kind === 'national_team'
@@ -464,11 +468,11 @@ export function NationalSpecialRacePlan({
       <section className="grid gap-6 xl:grid-cols-[1.4fr_0.8fr]">
         <div className="space-y-6">
           <section className="rounded-2xl border bg-white p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-950">1. Riders</h3>
+            <h3 className="text-lg font-semibold text-slate-950">{nr('racePlan.ridersTitle')}</h3>
             <div className="mt-1 text-sm text-slate-600">
               {teamMode
-                ? `Selected riders: ${selectedRiders.length} · Required: 7 · confirmed National Team squad: 10`
-                : `Automatically selected riders: ${workspace.riders.length}. Rider selection is locked for National Ranking races.`}
+                ? nr('national.selectedTeamRiders', { count: selectedRiders.length })
+                : nr('national.autoSelectedRiders', { count: workspace.riders.length })}
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {workspace.riders.map(rider => {
@@ -490,14 +494,14 @@ export function NationalSpecialRacePlan({
                         <div className="font-semibold text-slate-950">{rider.rider_name}</div>
                         <div className="mt-1 text-xs text-slate-500">
                           {roleLabel(rider.role)}{rider.club_name ? ` · ${rider.club_name}` : ''}
-                          {rider.national_rank ? ` · National rank #${rider.national_rank}` : ''}
+                          {rider.national_rank ? nr('national.nationalRankSuffix', { rank: rider.national_rank }) : ''}
                         </div>
                         <div className="mt-2 text-xs text-slate-500">
-                          Fatigue: {Math.round(Number(rider.fatigue ?? 0))} · Sharpness: {Math.round(Number(rider.race_sharpness ?? 0))}
+                          {nr('national.fatigueLabel')} {Math.round(Number(rider.fatigue ?? 0))} · {nr('national.sharpnessLabel')} {Math.round(Number(rider.race_sharpness ?? 0))}
                         </div>
                       </div>
                       <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${selected ? 'bg-yellow-200 text-yellow-900' : 'bg-slate-100 text-slate-500'}`}>
-                        {selected ? 'Selected' : 'Not selected'}
+                        {selected ? nr('national.selected') : nr('national.notSelected')}
                       </span>
                     </div>
                   </button>
@@ -509,11 +513,11 @@ export function NationalSpecialRacePlan({
           <LockedStaffCard />
 
           <section className="rounded-2xl border bg-white p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-950">3. Race Assets</h3>
+            <h3 className="text-lg font-semibold text-slate-950">{nr('racePlan.assetsTitle')}</h3>
             <p className="mt-1 text-sm text-slate-500">
               {teamMode
-                ? 'Only the three National Team car slots are available. All other race assets are disabled.'
-                : 'National Ranking races use organizer resources. Club race assets are not used.'}
+                ? nr('national.threeCarsOnly')
+                : nr('national.organizerAssets')}
             </p>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {['Team Bus','Equipment Van','Mobile Workshop','Medical Van'].map(label => (
@@ -526,14 +530,14 @@ export function NationalSpecialRacePlan({
               ))}
               {[0,1,2].map(slot => (
                 <label key={slot} className={`block ${teamMode ? '' : 'opacity-55'}`}>
-                  <span className="text-sm font-medium text-slate-700">Team Car {slot + 1}</span>
+                  <span className="text-sm font-medium text-slate-700">{nr('national.teamCarNumber', { number: slot + 1 })}</span>
                   <select
                     disabled={!teamMode || workspace.plan_status === 'submitted'}
                     value={selectedCars[slot] ?? ''}
                     onChange={event => setCarSlot(slot,event.target.value)}
                     className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-500"
                   >
-                    <option value="">{teamMode ? 'No car selected' : 'Organizer supplied'}</option>
+                    <option value="">{teamMode ? nr('national.noCar') : nr('national.organizerSupplied')}</option>
                     {teamMode ? workspace.team_cars.map(car => (
                       <option key={car.id} value={car.id} disabled={selectedCars.includes(car.id) && selectedCars[slot] !== car.id}>
                         {car.display_name} · Level {car.asset_level ?? 1} · {Math.round(Number(car.condition_percent ?? 100))}% condition
