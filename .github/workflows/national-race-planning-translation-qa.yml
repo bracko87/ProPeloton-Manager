@@ -1,0 +1,71 @@
+name: National Race Planning and Translation QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/national-race-planning-translation-qa.yml'
+      - 'src/pages/dashboard/race-preparation/NationalSpecial*.tsx'
+      - 'src/pages/dashboard/race-preparation/UnifiedNationalRacePreparationPanel.tsx'
+      - 'src/pages/dashboard/WorldNationsEventPage.tsx'
+      - 'src/pages/dashboard/Training.tsx'
+      - 'src/pages/dashboard/training/PremiumRiderDevelopmentPanel.tsx'
+      - 'src/components/training/HeadCoachTrainingPanel.tsx'
+      - 'src/i18n/locales/**/training.json'
+      - 'src/i18n/locales/**/racePreparation.json'
+      - 'src/i18n/locales/**/nations.json'
+      - 'src/i18n/locales/**/premiumCenter.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Verify updated national and training text resources
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          const locales=['en','sr-Latn','hr','de','es','it','fr','ru']
+          const keys=(value,prefix='',out={})=>{
+            for(const [key,v] of Object.entries(value??{})){
+              const path=prefix?prefix+'.'+key:key
+              if(typeof v==='string') out[path]=v
+              else if(v&&typeof v==='object'&&!Array.isArray(v)) keys(v,path,out)
+            }
+            return out
+          }
+          const placeholders=v=>[...v.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g)].map(m=>m[1]).sort().join('|')
+          for(const ns of ['training','racePreparation','nations','premiumCenter']){
+            const reference=keys(JSON.parse(fs.readFileSync('src/i18n/locales/en/'+ns+'.json','utf8')))
+            const prefixes=ns==='training'?['regular.manual','regular.save','regular.clear','regular.create','regular.removed']:
+              ns==='racePreparation'?['national.','nationalStage.']:
+              ns==='nations'?['world.eventPage.']:['development.noHistory']
+            for(const lang of locales){
+              const actual=keys(JSON.parse(fs.readFileSync('src/i18n/locales/'+lang+'/'+ns+'.json','utf8')))
+              for(const [key,text] of Object.entries(reference)){
+                if(!prefixes.some(prefix=>key.startsWith(prefix)))continue
+                if(typeof actual[key]!=='string'||!actual[key].trim())throw Error(lang+': missing '+ns+'.'+key)
+                if(placeholders(actual[key])!==placeholders(text))throw Error(lang+': interpolation mismatch '+ns+'.'+key)
+              }
+            }
+          }
+          const chart=fs.readFileSync('src/pages/dashboard/training/PremiumRiderDevelopmentPanel.tsx','utf8')
+          if(!chart.includes("development.noHistoryTitle"))throw Error('Missing no-history chart state')
+          const prep=fs.readFileSync('src/pages/dashboard/race-preparation/UnifiedNationalRacePreparationPanel.tsx','utf8')
+          if(!prep.includes("national.nationalRacesDescription"))throw Error('National race text missing')
+          NODE
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate translations
+        run: npm run check:i18n --if-present
+      - name: Production build
+        run: npm run build
