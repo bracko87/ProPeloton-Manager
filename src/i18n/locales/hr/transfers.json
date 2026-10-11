@@ -535,5 +535,15 @@
     "continueFinance": "Nastavi na Financije",
     "finish": "Završi za sada",
     "skip": "Preskoči tutorijal"
+  },
+  "legacyUi": {
+    "riderColon": "Vozač:",
+    "loadingNegotiation": "Učitavanje pregovora o transferu…",
+    "rider": "Vozač",
+    "preferredMinimumSalary": "Željena minimalna plaća",
+    "preferredContract": "Željeni ugovor",
+    "riderResponse": "Odgovor vozača",
+    "salary": "Plaća",
+    "country": "Država"
   }
 }
