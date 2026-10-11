@@ -2,7 +2,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { supabase } from '../../../lib/supabase'
+import appI18n from '../../../i18n'
 import type { NationalSpecialSelection } from './NationalSpecialRacePreparation'
+
+const nr = (key: string, options: Record<string, unknown> = {}): string =>
+  String(appI18n.t(key, { ns: 'racePreparation', ...options }))
 
 type JsonRecord = Record<string, unknown>
 
@@ -89,7 +93,7 @@ const ROAD_ROLES = [
   ['breakaway_chaser', 'Breakaway Chaser'],
   ['rouleur', 'Rouleur'],
   ['protected_rider', 'Protected Rider'],
-  ['free_role', 'Free Role'],
+  ['free_role', nr('screen.freeRole')],
 ] as const
 
 const ROAD_STRATEGIES = [
@@ -168,9 +172,9 @@ function roleLabel(value?: string | null): string {
 }
 
 function raceTypeLabel(value?: string | null): string {
-  if (value === 'team_time_trial') return 'Team Time Trial'
-  if (value === 'flat_road_race') return 'Flat Road Race'
-  if (value === 'hilly_mountain_road_race') return 'Hilly / Mountain Road Race'
+  if (value === 'team_time_trial') return nr('national.teamTimeTrial')
+  if (value === 'flat_road_race') return nr('national.flatRoadRace')
+  if (value === 'hilly_mountain_road_race') return nr('national.hillyRoadRace')
   return roleLabel(value)
 }
 
@@ -552,7 +556,7 @@ export default function NationalSpecialStagePlanV3({
     setTiming(null)
     setMessage(null)
     setError(null)
-    void load().catch(caught => setError(caught?.message || 'Could not load National Stage Plan.'))
+    void load().catch(caught => setError(caught?.message || nr('nationalStage.loadFailed')))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection])
 
@@ -562,7 +566,7 @@ export default function NationalSpecialStagePlanV3({
   if (!workspace) {
     return (
       <div className="rounded-2xl border bg-white p-6 shadow-sm">
-        {error || 'Loading National Stage Plan…'}
+        {error || nr('nationalStage.loading')}
       </div>
     )
   }
@@ -651,10 +655,10 @@ export default function NationalSpecialStagePlanV3({
       }
 
       setSaved(true)
-      setMessage('Stage Plan saved.')
+      setMessage(nr('stagePlans.saved'))
       await load()
     } catch (caught: any) {
-      setError(caught?.message || 'Could not save Stage Plan.')
+      setError(caught?.message || nr('nationalStage.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -677,22 +681,22 @@ export default function NationalSpecialStagePlanV3({
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected race</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{nr('national.selectedRace')}</div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {hostFlag ? <img src={hostFlag} alt="" className="h-5 w-7 rounded-sm border border-slate-200 object-cover" /> : null}
               <h2 className="text-xl font-bold text-slate-950">
                 {isTeam
-                  ? (workspace.round_label || 'National Team') + ' · ' + (workspace.group_label || '') + ' · ' + raceTypeLabel(workspace.race_type)
-                  : countryName(workspace.country_code) + ' National Championship · ' + titleFromSnake(workspace.event_type)}
+                  ? (workspace.round_label || nr('national.nationalTeam')) + ' · ' + (workspace.group_label || '') + ' · ' + raceTypeLabel(workspace.race_type)
+                  : countryName(workspace.country_code) + ' ' + nr('national.nationalChampionship') + ' · ' + titleFromSnake(workspace.event_type)}
               </h2>
               <span className={'rounded-full px-3 py-1 text-xs font-semibold ' + (isTeam ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700')}>
-                {isTeam ? 'National Team' : 'National Ranking'}
+                {isTeam ? nr('national.nationalTeam') : nr('national.nationalRanking')}
               </span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-700">
-              <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Race date: <strong>{dateLabel(workspace.event_date)}</strong></span>
-              <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Riders: <strong>{riders.length}</strong></span>
-              <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">Host: <strong>{countryName(hostCode)}</strong></span>
+              <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">{nr('national.raceDateLabel')} <strong>{dateLabel(workspace.event_date)}</strong></span>
+              <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">{nr('national.ridersLabel')} <strong>{riders.length}</strong></span>
+              <span className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">{nr('national.hostLabel')} <strong>{countryName(hostCode)}</strong></span>
             </div>
           </div>
           <span className="rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-800">
@@ -704,7 +708,7 @@ export default function NationalSpecialStagePlanV3({
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Stage Plans</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{nr('stagePlans.title')}</h2>
             <p className="mt-1 text-sm text-slate-600">
               Select a stage below to review its profile, then configure equipment, team tactics and individual tactics for that stage.
             </p>
@@ -717,14 +721,14 @@ export default function NationalSpecialStagePlanV3({
         <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="grid gap-5 xl:grid-cols-[0.58fr_1.42fr]">
             <div className="min-w-0">
-              <div className="text-xs uppercase tracking-wide text-slate-500">Selected Stage Profile</div>
-              <h3 className="mt-1 text-lg font-semibold text-slate-900">Stage 1: {profileTitle}</h3>
+              <div className="text-xs uppercase tracking-wide text-slate-500">{nr('screen.selectedStageProfile')}</div>
+              <h3 className="mt-1 text-lg font-semibold text-slate-900">{nr('stagePlans.stage', { stage: 1 })}: {profileTitle}</h3>
               <div className="mt-4 grid gap-2">
-                <CompactInfo label="Date" value={stageStartLabel} />
-                <CompactInfo label="Route" value={routeLabel} />
-                <CompactInfo label="Profile" value={profileLabel} />
+                <CompactInfo label={nr('screen.date')} value={stageStartLabel} />
+                <CompactInfo label={nr('screen.route')} value={routeLabel} />
+                <CompactInfo label={nr('screen.profile')} value={profileLabel} />
                 <CompactInfo
-                  label="Distance"
+                  label={nr('screen.distance')}
                   value={distance === null ? '—' : distance.toFixed(distance % 1 === 0 ? 0 : 1) + ' km'}
                 />
               </div>
@@ -747,12 +751,12 @@ export default function NationalSpecialStagePlanV3({
         <section className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-orange-900">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <div className="text-sm font-semibold">Missing Stage Plans</div>
-              <div className="mt-1 text-xs">Open this stage and save a real stage plan before race start.</div>
+              <div className="text-sm font-semibold">{nr('screen.missingStagePlans')}</div>
+              <div className="mt-1 text-xs">{nr('screen.openStageSaveHelp')}</div>
             </div>
             <div className="text-right text-xs">
-              <div>Saved 0/1 stages</div>
-              <div className="font-semibold">Missing 1</div>
+              <div>{nr('screen.savedStages', { saved: 0, total: 1 })}</div>
+              <div className="font-semibold">{nr('screen.missingCount', { count: 1 })}</div>
             </div>
           </div>
         </section>
@@ -765,41 +769,41 @@ export default function NationalSpecialStagePlanV3({
             : 'border-emerald-200 bg-emerald-50 text-emerald-900'
         )}>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-            <span className="font-semibold">Stage Plan lock</span>
+            <span className="font-semibold">{nr('screen.stagePlanLock')}</span>
             <span>·</span>
-            <span>Locks 3 hours before stage start</span>
+            <span>{nr('screen.locksBefore')}</span>
             <span>·</span>
-            <span>Lock time: {stageLockLabel}</span>
+            <span>{nr('screen.lockTime')}: {stageLockLabel}</span>
             <span>·</span>
-            <span>Stage start: {stageStartLabel}</span>
+            <span>{nr('screen.stageStart')}: {stageStartLabel}</span>
             <span className={'rounded-full px-2 py-0.5 text-[11px] font-semibold ' + (
               stageLocked
                 ? 'bg-red-100 text-red-800'
                 : 'bg-emerald-100 text-emerald-800'
             )}>
-              Status: {stageLocked ? 'Locked' : 'Open'}
+              {nr('screen.statusLabel')} {stageLocked ? nr('screen.statusLockedValue') : nr('screen.statusOpenValue')}
             </span>
           </div>
           <div className="mt-1 text-xs">
             {stageLocked
-              ? 'This Stage Plan is locked because the three-hour cutoff has been reached.'
-              : 'This Stage Plan is still open and can be edited until the lock time is reached.'}
+              ? nr('nationalStage.lockedHint')
+              : nr('screen.openLockHint')}
           </div>
         </section>
       ) : null}
 
       <section className="rounded-2xl border bg-white p-4 shadow-sm">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Stages</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{nr('stagePlans.title')}</div>
         <div className={'mt-3 rounded-2xl border p-4 ' + (saved ? 'border-emerald-200 bg-emerald-50/40' : 'border-yellow-300 bg-yellow-50/70')}>
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="text-sm text-slate-600">S1 · {dateLabel(workspace.event_date)}</div>
-              <div className="mt-1 text-base font-semibold text-slate-950">Stage 1</div>
+              <div className="mt-1 text-base font-semibold text-slate-950">{nr('stagePlans.stage', { stage: 1 })}</div>
               <div className="mt-1 text-xs text-slate-500">{routeLabel}</div>
               <div className="mt-1 text-xs text-slate-500">{profileLabel} · {distance === null ? '—' : distance.toFixed(1) + ' km'}</div>
             </div>
             <span className={'rounded-full px-2.5 py-1 text-[10px] font-semibold ' + (saved ? 'bg-emerald-100 text-emerald-800' : 'bg-orange-100 text-orange-800')}>
-              {saved ? 'Stage Plan Saved' : 'Missing Stage Plan'}
+              {saved ? nr('nationalStage.stageSaved') : nr('screen.missingStagePlan')}
             </span>
           </div>
         </div>
@@ -811,7 +815,7 @@ export default function NationalSpecialStagePlanV3({
             <div className="text-sm font-semibold text-slate-900">
               Selected stage save <span className="font-normal text-slate-500">· Stage 1 · {dateLabel(workspace.event_date)}</span>
             </div>
-            <div className="mt-1 text-xs text-slate-500">{saved ? 'Stage Plan saved.' : 'Not saved yet.'}</div>
+            <div className="mt-1 text-xs text-slate-500">{saved ? nr('stagePlans.saved') : nr('screen.notSavedYet')}</div>
           </div>
           <button
             type="button"
@@ -819,7 +823,7 @@ export default function NationalSpecialStagePlanV3({
             onClick={() => void save()}
             className="rounded-xl bg-yellow-400 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
           >
-            {saving ? 'Saving…' : 'Save Stage Plan'}
+            {saving ? nr('stagePlans.saving') : nr('stagePlans.save')}
           </button>
         </div>
       </section>
@@ -831,7 +835,7 @@ export default function NationalSpecialStagePlanV3({
         <section className="rounded-2xl border bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">1. Rider Equipment Packages</h2>
+              <h2 className="text-lg font-semibold text-slate-900">{nr('screen.riderEquipmentPackages')}</h2>
               <p className="mt-1 text-sm text-slate-600">
                 Choose one equipment package for each rider for this stage.
               </p>
@@ -868,10 +872,10 @@ export default function NationalSpecialStagePlanV3({
                   }}
                   className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"
                 >
-                  <option value="">{isTeam ? 'Choose equipment package' : 'Default race equipment'}</option>
+                  <option value="">{isTeam ? nr('screen.chooseEquipmentPackage') : nr('nationalStage.defaultEquipment')}</option>
                   {presets.map(preset => (
                     <option key={preset.id} value={preset.id} disabled={preset.is_empty}>
-                      {preset.setup_name}{preset.is_empty ? ' · incomplete' : ''}
+                      {preset.setup_name}{preset.is_empty ? ' · ' + nr('nationalStage.incomplete') : ''}
                     </option>
                   ))}
                 </select>
@@ -884,14 +888,14 @@ export default function NationalSpecialStagePlanV3({
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                {isTT ? '2. Time Trial Pacing & Roles' : '2. Stage Roles'}
+                {isTT ? nr('nationalStage.ttPacingRoles') : nr('screen.stageRoles')}
               </h2>
               <p className="mt-1 text-sm text-slate-600">
                 {isTeam
                   ? isTT
-                    ? 'Set the National Team pacing plan and rider roles for this time trial.'
-                    : 'Choose one clear role for each rider. Detailed race orders are set below.'
-                  : 'National Ranking riders compete independently. Team roles are locked.'}
+                    ? nr('nationalStage.ttPacingHelp')
+                    : nr('nationalStage.stageRolesHelp')
+                  : nr('nationalStage.independentRolesHelp')}
               </p>
             </div>
             {isTeam ? (
@@ -910,7 +914,7 @@ export default function NationalSpecialStagePlanV3({
 
           {isTeam && isTT ? (
             <label className="mt-4 block">
-              <span className="text-sm font-medium text-slate-700">Pacing plan</span>
+              <span className="text-sm font-medium text-slate-700">{nr('nationalStage.pacingPlan')}</span>
               <select
                 disabled={stageLocked}
                 value={teamStrategy}
@@ -926,14 +930,14 @@ export default function NationalSpecialStagePlanV3({
           ) : null}
 
           <div className="mt-4">
-            <div className="mb-2 text-sm font-semibold text-slate-900">Rider stage roles</div>
+            <div className="mb-2 text-sm font-semibold text-slate-900">{nr('screen.riderStageRoles')}</div>
             <div className="space-y-3">
               {riders.map(rider => (
                 <div key={rider.rider_id} className="grid items-center gap-3 rounded-xl border border-slate-200 p-3 md:grid-cols-[1fr_240px]">
                   <div>
                     <div className="font-medium text-slate-900">{rider.rider_name}</div>
                     <div className="mt-1 text-xs text-slate-500">
-                      Engine role: {isTeam ? roleLabel(roles[rider.rider_id] || 'free_role') : 'Free Role'}
+                      Engine role: {isTeam ? roleLabel(roles[rider.rider_id] || 'free_role') : nr('screen.freeRole')}
                     </div>
                   </div>
                   {isTeam ? (
@@ -963,11 +967,11 @@ export default function NationalSpecialStagePlanV3({
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">3. Individual Tactics</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{nr('screen.individualTactics')}</h2>
             <p className="mt-1 text-sm text-slate-600">
               {isTT
-                ? 'Time-trial pacing is split into Before split and After split.'
-                : 'Phases 1–4 contain the rider-specific race orders.'}
+                ? nr('nationalStage.ttPhasesHelp')
+                : nr('nationalStage.phaseHelp')}
             </p>
           </div>
           <button
@@ -986,7 +990,7 @@ export default function NationalSpecialStagePlanV3({
               className="grid gap-2 px-2 pb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
               style={{ gridTemplateColumns: '250px repeat(' + visiblePhases.length + ', minmax(150px, 1fr))' }}
             >
-              <div>Rider</div>
+              <div>{nr('screen.rider')}</div>
               {visiblePhases.map(phase => (
                 <div key={phase.key}>
                   <div>{phase.label}</div>
@@ -1028,7 +1032,7 @@ export default function NationalSpecialStagePlanV3({
         <section className="rounded-2xl border bg-slate-50 p-5 opacity-70 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-slate-700">4. Stage Race Supplies</h2>
+              <h2 className="text-lg font-semibold text-slate-700">{nr('screen.stageRaceSupplies')}</h2>
               <p className="mt-1 text-sm text-slate-500">
                 National competition supplies are system-provided and cannot be changed.
               </p>
@@ -1036,7 +1040,7 @@ export default function NationalSpecialStagePlanV3({
             <span className="rounded-full bg-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-500">Locked</span>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {['Water bottles', 'Energy gels', 'Nutrition packs', 'Rain jackets / race clothing'].map(label => (
+            {[nr('nationalStage.waterBottles'), nr('nationalStage.energyGels'), nr('nationalStage.nutritionPacks'), nr('nationalStage.rainClothes')].map(label => (
               <label key={label} className="block">
                 <span className="text-xs font-semibold text-slate-500">{label}</span>
                 <select disabled value="system" className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-400">
@@ -1050,7 +1054,7 @@ export default function NationalSpecialStagePlanV3({
         <section className="rounded-2xl border bg-slate-50 p-5 opacity-70 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-slate-700">5. Final Stage Calculation</h2>
+              <h2 className="text-lg font-semibold text-slate-700">{nr('screen.finalStageCalculation')}</h2>
               <p className="mt-1 text-sm text-slate-500">
                 This engine preview is read-only for National competition races.
               </p>
@@ -1059,12 +1063,12 @@ export default function NationalSpecialStagePlanV3({
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {[
-              ['Equipment', 'Included'],
-              ['Stage roles', isTeam ? 'Included' : 'Independent rider'],
-              ['Individual tactics', 'Included'],
-              ['Supplies', 'System supplied'],
-              ['National race costs', 'System covered'],
-              ['Club assets', 'Not applied'],
+              [nr('stagePlans.equipment'), nr('nationalStage.included')],
+              [nr('stagePlans.riderRoles'), isTeam ? nr('nationalStage.included') : nr('nationalStage.independentRider')],
+              [nr('stagePlans.individualTactics'), nr('nationalStage.included')],
+              [nr('stagePlans.supplies'), nr('nationalStage.systemSupplied')],
+              [nr('nationalStage.nationalRaceCosts'), nr('nationalStage.systemCovered')],
+              [nr('nationalStage.clubAssets'), nr('nationalStage.notApplied')],
             ].map(row => (
               <div key={row[0]} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
                 <div className="text-xs text-slate-400">{row[0]}</div>
