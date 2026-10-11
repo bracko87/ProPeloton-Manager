@@ -72,6 +72,7 @@ jobs:
             stats.push({lang,missing,mismatch,englishIdentical})
             console.log(lang+': missing='+missing+' interpolations='+mismatch+' English-identical long strings='+englishIdentical)
           }
+          console.log('Audit examples: '+JSON.stringify(examples))
           const lines=['## Full eight-language resource audit','', '| Language | Missing keys | Interpolation mismatches | English-identical long strings to review |','|---|---:|---:|---:|',...stats.map(s=>'| '+s.lang+' | '+s.missing+' | '+s.mismatch+' | '+s.englishIdentical+' |'),'','English-identical strings are review candidates, not automatic translation errors.','', '### First items needing review',...examples.map(x=>'- '+x)]
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join('\n')+'\n')
           if(missingTotal || mismatchTotal){
