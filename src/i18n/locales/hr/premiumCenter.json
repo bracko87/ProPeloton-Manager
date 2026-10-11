@@ -19,7 +19,9 @@
     "national": "Nacionalna natjecanja",
     "scouting": "Skautska analiza",
     "staff": "Osoblje, trening i oporavak",
-    "infrastructure": "Infrastruktura i logistika"
+    "infrastructure": "Infrastruktura i logistika",
+    "scrollLeft": "Pomakni kartice ulijevo",
+    "scrollRight": "Pomakni kartice udesno"
   },
   "common": {
     "refresh": "Osvježi",
