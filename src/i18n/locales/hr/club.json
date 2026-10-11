@@ -207,5 +207,9 @@
     "cancel": "Otkaži",
     "sending": "Slanje...",
     "send": "Pošalji prijavu"
+  },
+  "legacyUi": {
+    "jerseyPreviewUnavailable": "Pregled dresa nije dostupan",
+    "unknownCountry": "Nepoznata država"
   }
 }
