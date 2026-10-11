@@ -2538,7 +2538,7 @@ export default function TrainingPage(): JSX.Element {
         )
 
         setRegularMessage(
-          `Saved a one-day training override for ${riderName}. The Head Coach resumes control next game day.`
+          t('regular.savedOneDayOverride', { name: riderName })
         )
         return
       }
@@ -2563,13 +2563,13 @@ export default function TrainingPage(): JSX.Element {
         familyClubs.map(team => team.club_id)
       )
       setRegularMessage(
-        `Saved regular training override for ${riderName}.`
+        t('regular.savedOverride', { name: riderName })
       )
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
-          : 'Failed to save rider regular training override.'
+          : t('regular.saveOverrideFailed')
       setError(message)
     } finally {
       setRegularSavingRiderId(null)
@@ -2619,7 +2619,7 @@ export default function TrainingPage(): JSX.Element {
         )
 
         setRegularMessage(
-          `Removed today's manual override for ${riderName}. The Head Coach plan was restored.`
+          t('regular.removedTodayOverride', { name: riderName })
         )
         return
       }
@@ -2635,13 +2635,13 @@ export default function TrainingPage(): JSX.Element {
         familyClubs.map(team => team.club_id)
       )
       setRegularMessage(
-        `Removed regular training override for ${riderName}.`
+        t('regular.removedOverride', { name: riderName })
       )
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
-          : 'Failed to remove rider regular training override.'
+          : t('regular.clearOverrideFailed')
       setError(message)
     } finally {
       setRegularSavingRiderId(null)
@@ -3540,7 +3540,7 @@ export default function TrainingPage(): JSX.Element {
               <p className="mt-1 text-sm text-gray-600">
                 {isPremium
                   ? t('regular.riderOverridesPremium')
-                  : 'Set individual training here. Manual rider controls and Team Defaults remain fully available without Premium.'}
+                  : t('regular.manualTrainingHelp')}
               </p>
             </div>
 
@@ -3649,7 +3649,7 @@ export default function TrainingPage(): JSX.Element {
                                 ? t('regular.oneDayOverride')
                                 : effective.auto_when_free
                                   ? t('regular.autoWhenFree')
-                                  : 'Manual only.'}
+                                  : t('regular.manualOnly')}
                           </div>
                         </div>
 
@@ -3664,11 +3664,11 @@ export default function TrainingPage(): JSX.Element {
                               ? t('common.saving')
                               : coachEnabled
                                 ? hasTodayOverride
-                                  ? 'Save Today Override'
+                                  ? t('regular.saveTodayOverride')
                                   : t('regular.overrideToday')
                                 : hasPersistentOverride
-                                  ? 'Save Override'
-                                  : 'Create Override'}
+                                  ? t('regular.saveOverride')
+                                  : t('regular.createOverride')}
                           </button>
 
                           <button
@@ -3682,7 +3682,7 @@ export default function TrainingPage(): JSX.Element {
                           >
                             {coachEnabled
                               ? t('regular.clearTodayOverride')
-                              : 'Clear Override'}
+                              : t('regular.clearOverride')}
                           </button>
 
                           {isPremium ? (
