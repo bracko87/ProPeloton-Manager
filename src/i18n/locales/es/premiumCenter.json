@@ -282,7 +282,9 @@
     "latestWeek": "Última semana",
     "editChartRiders": "Editar corredores",
     "doneEditingRiders": "Listo",
-    "editChartRidersHint": "Sustituye cualquier corredor del gráfico por otro de la plantilla que aún no aparezca."
+    "editChartRidersHint": "Sustituye cualquier corredor del gráfico por otro de la plantilla que aún no aparezca.",
+    "noHistoryTitle": "Todavía no hay desarrollo de corredores registrado",
+    "noHistoryDescription": "Aún no hay historial semanal de desarrollo de estos corredores. El gráfico aparecerá cuando el procesamiento semanal registre mejoras reales. No se han inventado valores."
   },
   "templates": {
     "title": "Plantillas y Smart Prefill",
