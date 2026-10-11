@@ -482,7 +482,7 @@ export default function HeadCoachTrainingPanel({
       const message =
         error instanceof Error
           ? error.message
-          : 'Failed to load Head Coach training management.'
+          : t('coach.loadFailed')
       onError?.(message)
     } finally {
       setLoading(false)
@@ -552,8 +552,8 @@ export default function HeadCoachTrainingPanel({
 
       onMessage?.(
         enabled
-          ? `${team.team_label} Head Coach management enabled. Today's assignments are now shown in Rider Overrides below.`
-          : `${team.team_label} Head Coach management disabled. Team Defaults and persistent Rider Overrides are active again.`
+          ? t('coach.enableSuccess', { team: team.team_label === 'U23' ? t('common.u23') : t('common.firstTeam') })
+          : t('coach.disableSuccess', { team: team.team_label === 'U23' ? t('common.u23') : t('common.firstTeam') })
       )
     } catch (error) {
       const message =
