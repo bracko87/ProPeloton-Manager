@@ -383,5 +383,14 @@
   },
   "dates": {
     "compactSeason": "S{{season}}"
+  },
+  "legacyUi": {
+    "rider": "Fahrer",
+    "preRaceAvailability": "Verfügbarkeit vor dem Rennen",
+    "stageUses": "Etappennutzung: vorher / verbraucht / nachher",
+    "riderTeam": "Fahrer / Team",
+    "stageResult": "Etappenergebnis",
+    "generalClassification": "Gesamtwertung",
+    "invalidRaceId": "Ungültige oder fehlende Renn-ID."
   }
 }
