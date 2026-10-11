@@ -101,5 +101,15 @@
     "title": "Sie werden bald ausgeloggt sein",
     "body": "Ihr Spiel ist fast 30 Minuten inaktiv. Sie werden automatisch in etwa einer Minute ausgeloggt.",
     "stay": "Angemeldet bleiben"
+  },
+  "legacyUi": {
+    "close": "Schließen",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "previousSlide": "Vorherige Folie",
+    "nextSlide": "Nächste Folie",
+    "closeNavigation": "Navigation schließen",
+    "previousPage": "Zur vorherigen Seite",
+    "nextPage": "Zur nächsten Seite"
   }
 }
