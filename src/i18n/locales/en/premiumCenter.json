@@ -282,7 +282,9 @@
     "latestWeek": "Latest week",
     "editChartRiders": "Edit riders",
     "doneEditingRiders": "Done",
-    "editChartRidersHint": "Replace any plotted rider with another squad rider who is not already in the chart."
+    "editChartRidersHint": "Replace any plotted rider with another squad rider who is not already in the chart.",
+    "noHistoryTitle": "No recorded rider development yet",
+    "noHistoryDescription": "No weekly development history is available for these riders. The chart will populate after completed game-week processing records actual training gains. No values have been invented."
   },
   "templates": {
     "title": "Templates & Smart Prefill",
