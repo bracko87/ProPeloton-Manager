@@ -282,7 +282,9 @@
     "latestWeek": "Posljednji tjedan",
     "editChartRiders": "Uredi vozače",
     "doneEditingRiders": "Gotovo",
-    "editChartRidersHint": "Zamijeni bilo kojeg prikazanog vozača drugim vozačem iz momčadi koji još nije na grafikonu."
+    "editChartRidersHint": "Zamijeni bilo kojeg prikazanog vozača drugim vozačem iz momčadi koji još nije na grafikonu.",
+    "noHistoryTitle": "Još nema zabilježenog razvoja vozača",
+    "noHistoryDescription": "Za ove vozače još nema tjedne povijesti razvoja. Grafikon će se prikazati kada obrada završenog tjedna u igri zabilježi stvarni napredak. Nisu prikazane izmišljene vrijednosti."
   },
   "templates": {
     "title": "Predlošci i Smart Prefill",
