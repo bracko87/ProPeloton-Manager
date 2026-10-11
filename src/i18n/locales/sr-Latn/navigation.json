@@ -66,7 +66,7 @@
     "originalClub": "Originalni klub:",
     "clubCountry": "Država kluba",
     "manager": "Menadžer",
-    "ranking": "{{positionNumber}}. mesto u {{competition}}"
+    "ranking": "{{positionOrdinal}} mesto u {{competition}}"
   },
   "footer": {
     "season": "Sezona",
